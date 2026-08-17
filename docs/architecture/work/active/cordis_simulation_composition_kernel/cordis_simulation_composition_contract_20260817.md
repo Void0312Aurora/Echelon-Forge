@@ -258,4 +258,6 @@ native canonical-byte/hash recomputation, a generated resolved-envelope schema,
 typed-scope fail-closed validation, and Python/schema/native parity repairs.
 Byte-for-byte Cordis producer conformance, Unicode implementation diversity,
 artifact provenance, production provider construction, and behavior parity
-remain later gates beginning in P2-B/P6.
+remain later gates beginning in P2-B/P2-C1. P2-C0 separately owns the
+producer-neutral high-level request and owner-derived catalog-lock contracts;
+it does not amend these frozen P1-B low-level fields or hash semantics.

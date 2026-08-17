@@ -88,9 +88,10 @@ plugin 派发或跨语言 service lookup 放入逐 step 路径。
 2. typed runtime projection 把该意图转换为 capability、policy、profile 与配置要求。
    已冻结的 P1-B requested manifest 继续作为 canonical 低层交换 contract，而不是未来
    唯一 authoring abstraction。
-3. Cordis 是必需的长期声明式组合控制面。它把已准入 profile/plugin/service/configuration
-   展开为 canonical 低层 request。原生与 Python compatibility producer 可为离线和
-   embedded 运行生成同一 contract，但不能取代本计划引入 Cordis 的目标。
+3. Cordis 是必需的长期声明式组合控制面。它通过 Cordis primitives 加仓库自有的
+   DeepSeek-Harness-style profile/bundle layer，独占维护中高层 runtime request 到
+   canonical 低层 request 的 lowering。原生与 Python 离线路径只能消费 canonical
+   低层 manifest 或生成的 frozen profile，不独立解析任意高层 request。
 4. model、system、backend、domain、evidence 与 security owner 分别把自己的实现类别
    准入 `AdmittedCatalogLock`；共享 lifecycle registry 本身不授予语义准入。
 5. 原生 C++ composition compiler/root 重新校验、解析、实例化并冻结精确 runtime plan，
@@ -109,14 +110,16 @@ plugin 派发或跨语言 service lookup 放入逐 step 路径。
 | `P1 Composition Contract` | 冻结 manifest schema、service key、plugin descriptor、scope、兼容规则和确定性解析。 | P0 accepted | schema fixture、校验规则、canonical encoding 和 contract test 存在 | pass |
 | `P2-A Native Lifecycle Kernel` | 实现隔离的 C++ catalog、scoped transaction、replacement、rollback、freeze 和确定性 disposal substrate。 | P1 contract frozen | 聚焦原生与架构门禁通过 | pass |
 | `P2-B Default Provider Migration` | 把默认 model/service 构造迁到准入原生 provider 后，并输出首份 production composition identity。 | P2-A accepted | 默认 behavior/replay parity 保持，raw provider capture 被移除，resolved plan 带有 evidence | ready |
-| `P2-C Cordis Default-Profile Vertical Slice` | 引入首条仓库自有 Cordis profile/plugin 路径，把默认 runtime request 投影到 canonical P1-B contract。 | P2-B production path stable | Cordis 与原生 compatibility producer 输出字节等价的默认 request，并由原生侧重新校验和实例化 | planned |
-| `P3-A System Package Composition` | 把仓库准入的 system package 编译进冻结的原生 stage graph。 | P2-B 与 owner admission rule accepted | 默认图 parity 保持，且没有 package 拥有私有 pipeline | planned |
-| `P3-B Capability And Profile Projection` | 把 capability/policy request 与 compatibility profile 名称下沉为 owner 准入的 contribution bundle。 | P3-A declaration boundary stable | domain label 只作为 compatibility bundle，而不是永久 composition ontology | planned |
-| `P4 Backend Composition` | 通过准入 provider 选择 CPU、CUDA-resident、diagnostics 和未来 backend。 | P2-B 和 backend contract 可用 | `RuntimeFacade` 不再点名具体 backend，准入继续由 capability 驱动 | planned |
-| `P5 Evidence And Replay Expansion` | 将 P2-B/P2-C identity baseline 扩展到 graph、backend、host、replay 与 comparison evidence。 | production composition exists | 无法解释的 composition mismatch 被拒绝 | planned |
-| `P6 Cordis Package Maturation` | 完成仓库自有 Cordis profile、configuration overlay、diagnostics、provenance 与 plugin ergonomics。 | P2-C accepted 且 owner contract 可用 | 维护中的 Cordis composition 覆盖准入 production profile，但不成为 hot-path executor | planned |
-| `P7 Conditional Node Host` | 仅为获批用例增加 Node-API hosting，不改变原生/Python 可用性或 step 语义。 | Cordis producer accepted 且 host decision approved | Node-hosted 运行使用同一原生 owner 与 parity gate | conditional |
-| `P8 Migration And Closure` | 删除被取代的 truth path、提升稳定规则并关闭或路由残余。 | 必需 native、Cordis、system、backend、evidence 与 parity gate accepted | Cordis 计划具备准入 producer/native 纵向路径；可选 Node/外部生态残余有具名 owner | planned |
+| `P2-C0 Projection And Catalog-Lock Contract` | 冻结 producer-neutral `RuntimeCompositionRequest` DTO 与 owner-derived `AdmittedCatalogLock` artifact、identity 和 admission rule。 | P2-B production path/identity stable | Cordis 获得唯一 typed 高层输入与版本化 owner-approved catalog lock；离线路径被限制为 canonical 低层 artifact | planned |
+| `P2-C1 Cordis Default-Profile Vertical Slice` | 使用 Cordis primitives 加仓库 profile/bundle layer lower 默认 request，并通过 production native path 实例化。 | P2-C0 accepted | Experiment fixture -> request -> Cordis -> manifest/catalog lock -> native realization 的正负 admission case 通过 | planned |
+| `P3-A System Contribution Migration` | 把仓库准入的 system package 编译进冻结的原生 stage graph。 | P2-C1 accepted；除非另有显式 independent-stream amendment | 默认图 parity 保持，且没有 package 拥有私有 pipeline | planned |
+| `P3-B Capability And Profile Projection` | 把 capability/policy request 与 compatibility profile 名称下沉为 owner 准入的 contribution bundle。 | P2-C0 与 P3-A declaration boundary stable | domain label 只作为 compatibility bundle，而不是永久 composition ontology | planned |
+| `P4-A Backend Provider Migration` | 通过准入 provider 选择 CPU、CUDA-resident、diagnostics 和未来 backend。 | P2-C1 与 backend contract 可用 | `RuntimeFacade` 不再点名具体 backend，准入继续由 capability 驱动 | planned |
+| `P5-A Composition Evidence Expansion` | 将 P2-B/P2-C0/P2-C1 identity baseline 扩展到 graph、backend、host、replay 与 comparison evidence。 | production Cordis/native composition exists | 无法解释的 composition/catalog-lock mismatch 被拒绝 | planned |
+| `P6-A Cordis Package Maturation` | 在 Cordis primitives 之上完成仓库自有 configuration overlay、profile/bundle package、diagnostics、provenance 与 plugin ergonomics。 | P2-C1 accepted 且 owner contract 可用 | 维护中的 Cordis composition 覆盖准入 production bundle，但不成为 hot-path executor | planned |
+| `P6-B Node Host Adapter` | 仅为获批用例增加 Node-API hosting，不改变原生/Python 可用性或 step 语义。 | P6-A accepted 且 host decision approved | Node-hosted 运行使用同一原生 owner 与 parity gate | conditional / held pending host decision |
+| `P7-A Host And Batch Parity` | 证明 native、Python 与 Cordis-produced parity；仅在 P6-B 获准时加入 Node 行。 | P4-A/P5-A/P6-A accepted | 准入 profile 通过正确性和批准的 batch budget | planned |
+| `P8-A Migration Closure` | 删除被取代的 truth path、提升稳定规则并关闭或路由残余。 | 必需 native、Cordis、system、backend、evidence 与 parity gate accepted | Cordis 计划具备准入 producer/native 纵向路径；可选 Node/外部生态残余有具名 owner | planned |
 
 这些阶段描述依赖顺序，不是截止日期，也不是降低长期目标的理由。阶段可以拆成有界
 实现切片，但改变以上架构决策必须有显式替代决定。
@@ -187,9 +190,11 @@ architecture suite 为 20 passed、1 个环境 skip。这些证据只证明隔�
 
 立即工作是 P2-B 默认 provider 迁移。它必须把现有默认 model、factory、event store、
 damage bridge 与 weapon-release service 构造移到获准的原生 provider 后，保持已接受
-的默认行为/replay 基线，并输出首份 production composition identity。随后执行 P2-C
-首个 Cordis 纵向切片：仓库自有 Cordis 默认 profile 必须输出由原生侧重新校验和实例化
-的同一 canonical request。system family、backend 与 binding 迁移继续作为独立后续切片；
+的默认行为/replay 基线，并输出首份 production composition identity。随后执行 P2-C0，
+冻结高层 request 与 owner-derived catalog-lock artifact，避免产生第二 resolver；再执行
+P2-C1 首个 Cordis 纵向切片：Cordis primitives 加仓库 profile/bundle layer 必须把默认
+request lower 为由原生侧重新校验和实例化的 canonical manifest/catalog lock。system
+family、backend 与 binding 迁移继续作为独立后续切片；
 Node hosting 保持 conditional，不作为 Cordis producer/native 路径的闭合前置条件。
 
 长期残余包括插件真实性与分发政策、多进程宿主、远程 composition catalog、第三方

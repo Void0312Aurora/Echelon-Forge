@@ -67,8 +67,8 @@ Contract baseline：
 | Model/provider migration | absent | 既有 interface/setter | provider factory、kernel builder、lifetime-safe consumption |
 | System composition | absent | 静态注册与 stage manifest 并存 | contribution contract 与 graph compilation |
 | Backend composition | partial baseline | 已有语义 backend interface/capability contract | provider selection 与 facade construction migration |
-| Composition evidence | contract-only baseline | 隔离内核保留 native requested/resolved identity | P2-B 接入 production identity，随后 P5-A 扩展 graph/backend/host/replay evidence |
-| Cordis control plane | absent / required target | 已有架构与 P1-B producer contract；不存在仓库内 Cordis package | P2-C 默认 profile producer/native 纵向切片，随后 P6-A package maturation |
+| Composition evidence | contract-only baseline | 隔离内核保留 native requested/resolved identity | P2-B 接入 production identity，P2-C0/P2-C1 接入 request/catalog-lock identity，随后 P5-A 扩展 graph/backend/host/replay evidence |
+| Cordis control plane | absent / required target | 已有架构与 P1-B 低层 producer contract；不存在高层 request/catalog-lock artifact 或仓库内 Cordis package | P2-C0 projection/catalog-lock contract、P2-C1 默认 profile producer/native 纵向切片，随后 P6-A package maturation |
 | Node host | absent | Node-API 只是候选 host boundary | 批准 binding target 与 lifecycle/parity test |
 | Runtime acceptance | partial | P2-A 证明隔离 lifecycle 边界 | 默认行为、system、backend、evidence、Cordis、host、parity 与 closure gate |
 
@@ -109,7 +109,7 @@ Contract baseline：
 | `unique_ptr`、singleton ref、captured pointer 形成双重 model ownership | 正确性/use-after-free | 将 production default 迁到 P2-A scoped handle 并移除 raw capture | P2-B |
 | 中央静态 system list | 扩展性/profile 歧义 | contribution descriptor 编译到 stage contract | P3 |
 | 直接具体 backend 构造 | backend 演进和测试隔离 | backend provider admission | P4 |
-| Experiment/Cordis/native 权威重叠 | composition truth 竞争 | 显式 intent projection、owner catalog lock、canonical request、native revalidation | P2-C/P3/P6 |
+| Experiment/Cordis/native 权威重叠 | composition truth 竞争 | 显式 intent projection、owner catalog lock、canonical request、native revalidation | P2-C0/P2-C1/P3/P6 |
 | 异步 Cordis lifecycle | 若直接复制会使 teardown 非确定 | 原生 dependency-safe lifecycle transaction | P2/P6 |
 | per-world host overhead | world-batch 规模风险 | shared resolved profile + 轻量 native world scope | P2/P7 |
 | 跨语言调用诱因 | 吞吐与确定性风险 | architecture guard 与 call-graph test | P6/P7 |
@@ -121,12 +121,14 @@ Contract baseline：
 1. 通过 P2-B provider 与 kernel builder 迁移默认 profile，同时证明 behavior/replay parity、
    移除 raw provider capture，并输出 production composition identity；
 2. 增加迁移特有 reset、重复 rebuild 与 lifetime 证据；
-3. 执行 P2-C：通过仓库自有 Cordis profile/plugin 路径投影默认 runtime request，并证明
-   canonical/native realization parity；
-4. 编译 owner 准入的 system package 与 capability/profile projection；
-5. 迁移 backend selection，并把 evidence 扩展到 graph/backend/host 表面；
-6. 成熟化 Cordis package 与 tooling；
-7. 仅在另行批准后增加 Node host，再运行适用的 producer/host/backend/batch parity 并
+3. 执行 P2-C0：冻结 producer-neutral 高层 request 与 owner-derived catalog-lock
+   artifact/identity，并禁止第二个 offline high-level resolver；
+4. 执行 P2-C1：通过 Cordis primitives 加仓库 profile/bundle layer lower 默认 request，
+   并证明端到端 native realization 与负向 admission；
+5. 编译 owner 准入的 system package 与 capability/profile projection；
+6. 迁移 backend selection，并把 evidence 扩展到 graph/backend/host 表面；
+7. 成熟化 Cordis package 与 tooling；
+8. 仅在另行批准后增加 Node host，再运行适用的 producer/host/backend/batch parity 并
    移除双路径。
 
 ## 显式拒绝的声明

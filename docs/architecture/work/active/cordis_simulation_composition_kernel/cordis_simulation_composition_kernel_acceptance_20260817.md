@@ -36,8 +36,9 @@ plugin, backend, domain, remote host, or hot-reload mode is accepted.
 | Stage graph integrity | existing stage contract validation plus exact default graph comparison | plugin order or host event order affects stage execution | planned |
 | Domain profile admission | minimal/common/air/naval/ground/combined profile validation against owner contracts | profile bypasses domain maturity or creates a private lifecycle | planned |
 | Backend admission | facade selects admitted provider; CPU/CUDA and unsupported-profile gates | concrete backend remains construction truth or rejected profile silently falls back | planned |
-| Evidence and replay | P2-B production manifest identity followed by provider/graph/backend/host/catalog identity expansion and mismatch policy | replay/comparison proceeds with unexplained composition mismatch | planned |
-| Cordis conformance | repository-owned Cordis default-profile producer and native compatibility producer yield equivalent admitted canonical manifests and native realization | native side trusts Cordis without revalidation, Cordis bypasses owner admission, or private Cordis identity leaks into contract | planned / required for program closure |
+| Projection and catalog-lock authority | versioned producer-neutral request DTO, deterministic owner-derived lock, canonical bytes/hashes, category-owner matrix, positive/negative admission cases, and offline high-level-lowering guard | Cordis owns a private catalog, two high-level resolvers exist, or native cannot verify lock identity/selection | planned / P2-C0 |
+| Evidence and replay | P2-B production manifest identity, P2-C0 request/catalog-lock identity, then provider/graph/backend/host expansion and mismatch policy | replay/comparison proceeds with unexplained composition or catalog-lock mismatch | planned |
+| Cordis conformance | Cordis primitives plus the repository profile/bundle layer lower the real default request through the owner lock into canonical manifest and native realization | native side trusts Cordis without revalidation, Cordis bypasses owner admission, a private Cordis catalog exists, or parity covers only a synthetic manifest fixture | planned / P2-C1 / required for program closure |
 | Binding isolation | Python and C++ always use the same native owner; Node does so if separately admitted | binding owns simulation truth, raw ECS bypass, per-step callback, or Node becomes required for offline native/Python operation | planned |
 | Batch and performance | representative startup, memory, throughput, determinism, and teardown measurements | mandatory per-world Node context, hot-path lookup/crossing, or unapproved regression | planned |
 | Security and provenance | repository-owned/admitted plugin policy for accepted scope | unreviewed external native plugin execution or missing artifact provenance | planned |
@@ -81,7 +82,8 @@ plugin, backend, domain, remote host, or hot-reload mode is accepted.
 ### Host and performance
 
 - standalone C++ and Python operation with Node absent;
-- Node/Cordis host lifecycle and exception translation;
+- Cordis producer lifecycle, failure, and conformance from P2-C1 onward;
+- Node host lifecycle and exception translation only if P6-B is admitted;
 - no Node/Python/IPC frame in maintained step call graphs;
 - large world-batch startup, memory, step, reset, and teardown probes;
 - cold and warm composition measurements separated from step throughput.
@@ -129,8 +131,8 @@ provenance, external DSO ABI pinning, and all Cordis/host claims remain open.
 The subproject may close only after every required gate is accepted or moved to
 a separately named active/held owner with no dual truth path. Required gates
 include default-provider parity, production composition identity, explicit
-Experiment-to-runtime projection, owner-specific admission, and at least one
-repository-owned Cordis producer/native realization path. A deferred Node host,
+Experiment-to-runtime projection, a versioned owner-derived catalog lock, and
+at least one repository-owned Cordis producer/native realization path. A deferred Node host,
 marketplace, remote host, or external-plugin distribution program is compatible
-with closure; a deferred Cordis vertical slice, lifecycle, deterministic
+with closure; a deferred P2-C0 contract, P2-C1 Cordis vertical slice, lifecycle, deterministic
 composition, evidence identity, or default-profile parity gate is not.

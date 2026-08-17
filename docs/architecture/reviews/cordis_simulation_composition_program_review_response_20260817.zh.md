@@ -24,8 +24,9 @@ Authority: 对咨询性审阅的 owner 回复。原 review 继续作为不可变
 接受，并已修订 active plan。
 
 审阅进一步建议让 Cordis 保持可选 adapter；该结论未被采纳。本计划的目标就是把 Cordis
-的 context、service、injection、effect、profile 与 plugin composition 模型引入仿真
-runtime 架构。如果让 Cordis 永久保持可选，项目会退化为通用原生 manifest/lifecycle
+plugin/context/service/injection/event/effect primitives 与仓库自有的
+DeepSeek-Harness-style profile/bundle layer 引入仿真 runtime 架构。如果让 Cordis 永久
+保持可选，项目会退化为通用原生 manifest/lifecycle
 重构，无法满足该目标。
 
 修正后的决定是：
@@ -33,7 +34,7 @@ runtime 架构。如果让 Cordis 永久保持可选，项目会退化为通用�
 | 问题 | Owner 决定 |
 | --- | --- |
 | 谁拥有实验意图？ | Experiment Face。 |
-| 谁拥有声明式 runtime capability/plugin/service/profile 组合？ | 显式 runtime-composition projection 之后的 Cordis。 |
+| 谁拥有维护中的高层声明式 lowering？ | 显式 runtime-composition projection 之后，由 Cordis primitives 加仓库自有 profile/bundle layer 拥有。 |
 | 谁准入 implementation？ | 相应 model、system、backend、domain、evidence 与 security owner，通过 `AdmittedCatalogLock`。 |
 | 谁确定性校验、解析、实例化、冻结和销毁 plan？ | 原生 composition compiler/root。 |
 | 谁拥有可执行仿真语义？ | Flecs、原生 scheduler、backend、batch/runtime、episode 与 engine owner。 |
@@ -53,14 +54,16 @@ realization substrate，用来避免 host-runtime 语义进入仿真 truth path�
 | Context hierarchy | application、backend、batch、world 与 episode 的管理 ownership boundary |
 | Service/injection | typed runtime provider requirement 与 binding |
 | Effect | 可逆管理 registration 与 staged host-side action |
-| Profile/plugin | 声明式 capability/profile/package composition |
+| Plugin 与 administrative event | 声明式扩展与 host-lifecycle coordination primitive |
+| 仓库自有的 DeepSeek-Harness-style profile/bundle layer | 在 Cordis primitives 上进行 capability/profile/package authoring 与 ordered configuration |
 | Cordis resolution | 从已准入 declaration 构造 canonical requested composition |
 | 原生 composition compiler/root | 独立重新校验、精确实现 binding、事务化 realization、generation handover 与确定性 disposal |
 
 DeepSeek Harness 的相关性在于它展示了 Cordis 作为可组合 harness/control layer、而不是
 数值 executor 的整体架构模式。Echelon Forge 不会把 DeepSeek Harness 嵌入为仿真 runtime；
-这里是把底层 Cordis composition model 应用到 simulation provider、package、profile 与
-管理生命周期，同时继续让既有原生 engine 掌握确定性执行权威。
+这里是把 Cordis primitives 应用到 simulation provider 与管理生命周期，再由仓库自有的
+DeepSeek-Harness-style profile/bundle layer 负责 package/profile authoring，同时继续让
+既有原生 engine 掌握确定性执行权威。
 
 ## 3. 修订后的权威流
 
@@ -68,8 +71,8 @@ DeepSeek Harness 的相关性在于它展示了 Cordis 作为可组合 harness/c
 flowchart LR
     EXP["ExperimentSpec\nsimulation + policy + evaluation 意图"]
     PROJECT["RuntimeCompositionRequest\ncapability + policy + 配置"]
-    CORDIS["Cordis 声明式控制面\ncontext + service + profile + plugin"]
-    COMPAT["原生 / Python compatibility producer\n离线与 embedded"]
+    CORDIS["Cordis primitives + 仓库 profile/bundle layer\n高层声明式 lowering"]
+    FROZEN["Canonical manifest / generated frozen profile\n离线与 embedded 输入"]
     REQUEST["Canonical 低层\nSimulationCompositionManifest"]
     CATALOG["AdmittedCatalogLock\nowner 批准的实现 + provenance"]
     NATIVE["原生 composition compiler/root\n重新校验 + 解析 + 实例化 + 冻结"]
@@ -79,9 +82,9 @@ flowchart LR
 
     EXP --> PROJECT
     PROJECT --> CORDIS
-    PROJECT --> COMPAT
+    CATALOG --> CORDIS
     CORDIS --> REQUEST
-    COMPAT --> REQUEST
+    FROZEN --> REQUEST
     REQUEST --> NATIVE
     CATALOG --> NATIVE
     NATIVE --> PLAN
@@ -89,16 +92,17 @@ flowchart LR
     FACADE --> EXEC
 ```
 
-这消除了 Experiment Face 与 Cordis 的表面冲突：Experiment Face 拥有意图；Cordis 拥有
-该投影意图的声明式 runtime composition；按 owner 分类的权威准入实现；原生路径拥有
-确定性 realization。
+这消除了 Experiment Face 与 Cordis 的表面冲突：Experiment Face 拥有意图；Cordis 是
+该投影意图唯一维护中的高层 lowering path；按 owner 分类的权威准入实现；原生路径拥有
+确定性 realization。原生/Python 离线路径消费 canonical 低层 artifact，不实现第二套
+capability/profile resolver。
 
 ## 4. Finding 处置
 
 | Finding | 处置 | 已纳入修改 |
 | --- | --- | --- |
 | `F-01` composition 权威歧义 | 接受 | 在 README、architecture、status、task 与 acceptance 中增加显式 Experiment intent -> runtime projection -> Cordis declaration -> owner admission -> native realization 权威链。 |
-| `F-02` Cordis 独特价值未证明却成为 prerequisite | 不接受其前提；接受 evidence concern | Cordis 保持战略目标，但首个真实 Cordis 证明被前移到 production 默认 provider 迁移之后的 `P2-C`。在更广 Cordis/host 工作前，它必须针对真实默认路径证明 canonical/native parity。 |
+| `F-02` Cordis 独特价值未证明却成为 prerequisite | 不接受其前提；接受 evidence concern | Cordis 保持战略目标。P2-C0/P2-C1 把技术可行性与权威 conformance 前移到 production 迁移之后；它们本身不宣称已经证明广义生态 ROI 或全部 operational advantage。 |
 | `F-03` 一个 package 混合三类计划 | 部分接受 | native、system/profile、Cordis、backend/evidence 与 Node 工作现在可以有界验收。建议中的可选 Program C 被拆成必需 Cordis producer 路径和 conditional Node/外部生态路径。 |
 | `F-04` 通用 plugin plane 掩盖 owner admission | 接受 | 增加 `AdmittedCatalogLock` 和显式 category owner。共享 lifecycle mechanics 不授予 model/system/backend/domain/evidence/security admission。 |
 | `F-05` system 应编译准入 package | 接受 | `P3-A` 改为由既有原生 graph/scheduler owner 编译仓库准入 system package；继续禁止 discovery order 和私有 pipeline。 |
@@ -125,9 +129,10 @@ flowchart LR
 
 ### Stream C1 — Required Cordis Composition Path
 
-- P2-C 是最小默认 profile 纵向切片。
-- P6-A 在纵向路径被证明后，成熟化 Cordis profile、overlay、diagnostics、provenance、
-  dependency resolution 与 package ergonomics。
+- P2-C0 冻结高层 request 与 owner-derived catalog-lock artifact。
+- P2-C1 是最小默认 profile 纵向切片，使用 Cordis primitives 加仓库 profile/bundle layer。
+- P6-A 在纵向路径被证明后，在 Cordis primitives 上成熟化仓库 profile/bundle layer、
+  overlay、diagnostics、provenance、dependency resolution 与 package ergonomics。
 - 整体计划 closure 要求 C1；否则不能声称 Cordis 已实际引入。
 
 ### Stream C2 — Conditional Host And External Ecosystem
@@ -141,15 +146,16 @@ flowchart LR
 维护中的顺序现在是：
 
 1. `P2-B Default Provider Migration`；
-2. `P2-C Cordis Default-Profile Vertical Slice`；
-3. `P3-A System Contribution Migration`；
-4. `P3-B Capability And Profile Projection`；
-5. `P4-A Backend Provider Migration`；
-6. `P5-A Composition Evidence Expansion`；
-7. `P6-A Cordis Package Maturation`；
-8. conditional `P6-B Node Host Adapter`；
-9. 适用的 producer/host/backend/batch parity；
-10. migration closure 与 residual routing。
+2. `P2-C0 Projection And Catalog-Lock Contract`；
+3. `P2-C1 Cordis Default-Profile Vertical Slice`；
+4. `P3-A System Contribution Migration`；
+5. `P3-B Capability And Profile Projection`；
+6. `P4-A Backend Provider Migration`；
+7. `P5-A Composition Evidence Expansion`；
+8. `P6-A Cordis Package Maturation`；
+9. conditional/held `P6-B Node Host Adapter`；
+10. `P7-A Host And Batch Parity`，仅在 Node 获准时加入 Node 行；
+11. `P8-A Migration Closure` 与 residual routing。
 
 `153d5f4e` 修订的 active 文档包括：
 
@@ -169,23 +175,42 @@ package，但必须：
 - 移除不安全 raw provider capture；
 - 保持 behavior/replay parity；
 - 输出稳定 requested/resolved production identity；
-- 留下 P2-C 可消费的显式 projection/evidence seam。
+- 留下 P2-C0 可消费的稳定 production identity/evidence seam。
 
-P2-B 获得验收后，P2-C 成为下一战略 cluster。它必须针对 production 默认路径证明
-Cordis model，而不是仅针对 synthetic schema fixture。
+P2-B 获得验收后，P2-C0 成为下一战略 cluster，随后执行 P2-C1。P2-C1 必须针对
+production 默认路径证明 Cordis primitives 加仓库 profile/bundle layer，而不是仅针对
+synthetic schema fixture。没有单独的 architecture-owner amendment，不得先 release 后续
+implementation cluster。
 
-## 8. 请求重新审阅
+## 8. 首次重新审阅修订
+
+独立 `gpt-5.6-sol` / `max` reviewer 对 `abe9b619` 提出 3 个 P2 修正与 2 个 P3
+clarification。本回复与 active plan 现已：
+
+- 把 Cordis 设为唯一维护中的高层 lowering path，并把原生/Python 离线运行限制为
+  canonical 低层 artifact；
+- 把原 P2-C 拆成 P2-C0 request/catalog-lock contract 与 P2-C1 端到端 Cordis production
+  realization；
+- 在 phase table、task dependency、queue、acceptance contract 与 P1-B follow-on wording
+  中统一把 P2-C0/P2-C1 放在后续 implementation work 前；
+- 把 P6-B 标为 conditional/held，并仅在获准时要求 Node test；
+- 区分 Cordis primitives 与仓库自有的 DeepSeek-Harness-style profile/bundle layer。
+
+P2-B 继续 eligible。P2-C0、P2-C1 与后续 implementation work 在修订后的权威链通过独立
+重新审阅前保持 held。
+
+## 9. 请求重新审阅
 
 请求独立 reviewer 基于修订计划重新评估：
 
 1. Experiment Face/Cordis/admission/native 权威链是否无歧义？
-2. P2-C 是否足够早地证明真实 Cordis 关系，从而支持后续 package maturation？
+2. P2-C0/P2-C1 是否足够早地证明真实 Cordis 关系，从而支持后续 package maturation？
 3. 按 owner 分类的 system/backend/domain/evidence admission 是否得到保留？
 4. 独立切片验收是否避免 Node/外部生态阻塞，同时没有把 Cordis 变为可选？
 5. closure rule 是否准确要求 Cordis producer/native conformance，同时允许 Node 和外部
    distribution 保持 conditional？
 
-## 9. 最终回复状态
+## 10. 最终回复状态
 
 回复状态：`architecture findings partially accepted and incorporated`。
 

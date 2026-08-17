@@ -235,4 +235,6 @@ P2-A 随后在隔离的 `ef_composition` library 中实现以下约束：
 该实现 checkpoint 不修改 P1-B hash 语义；它加入 native canonical-byte/hash 重算、生成的
 resolved-envelope schema、typed-scope fail-closed validation 与 Python/schema/native parity
 修复。Cordis producer 逐字节 conformance、Unicode 多实现一致性、artifact provenance、
-production provider construction 与 behavior parity 仍是 P2-B/P6 起的后续 gate。
+production provider construction 与 behavior parity 仍是 P2-B/P2-C1 起的后续 gate。
+P2-C0 另行拥有 producer-neutral 高层 request 与 owner-derived catalog-lock contract；它不
+修改这些已冻结的 P1-B 低层字段或 hash 语义。

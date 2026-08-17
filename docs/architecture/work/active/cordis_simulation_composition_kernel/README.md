@@ -103,10 +103,11 @@ The target is a layered composition architecture:
    remains the canonical low-level interchange contract, not the only future
    authoring abstraction.
 3. Cordis is the required long-term declarative composition control plane. It
-   expands admitted profiles/plugins/services/configuration into the canonical
-   low-level request. Native and Python compatibility producers may target the
-   same contract for offline and embedded operation, but they do not replace
-   the Cordis program objective.
+   exclusively lowers maintained high-level runtime requests through Cordis
+   primitives plus a repository-owned, DeepSeek-Harness-style profile/bundle
+   layer into the canonical low-level request. Native and Python offline paths
+   may consume canonical low-level manifests or generated frozen profiles; they
+   do not independently lower arbitrary high-level requests.
 4. Model, system, backend, domain, evidence, and security owners admit their own
    implementation categories into an `AdmittedCatalogLock`; a common lifecycle
    registry does not grant semantic admission.
@@ -128,14 +129,16 @@ The complete design is in
 | `P1 Composition Contract` | Freeze manifest schema, service keys, plugin descriptors, scopes, compatibility rules, and deterministic resolution. | P0 accepted | Schema fixtures, validation rules, canonical encoding, and contract tests exist | pass |
 | `P2-A Native Lifecycle Kernel` | Implement the isolated C++ catalog, scoped transaction, replacement, rollback, freeze, and deterministic disposal substrate. | P1 contract frozen | Focused native and architecture gates pass | pass |
 | `P2-B Default Provider Migration` | Move default model/service construction behind admitted native providers and emit the first production composition identity. | P2-A accepted | Default behavior/replay parity holds, raw provider capture is removed, and the resolved plan is evidence-bearing | ready |
-| `P2-C Cordis Default-Profile Vertical Slice` | Introduce the first repository-owned Cordis profile/plugin path and project the default runtime request into the canonical P1-B contract. | P2-B production path stable | Cordis and native compatibility producers emit byte-equivalent default requests that native code revalidates and realizes | planned |
-| `P3-A System Package Composition` | Compile repository-admitted system packages into the frozen native stage graph. | P2-B and owner admission rules accepted | Default graph parity holds and no package owns a private pipeline | planned |
-| `P3-B Capability And Profile Projection` | Lower capability/policy requests and compatibility profile names into owner-admitted contribution bundles. | P3-A declaration boundary stable | Domain labels remain compatibility bundles rather than the permanent composition ontology | planned |
-| `P4 Backend Composition` | Select CPU, CUDA-resident, diagnostics, and future backends through admitted providers. | P2-B and backend contracts available | `RuntimeFacade` no longer names a concrete backend and admission remains capability-driven | planned |
-| `P5 Evidence And Replay Expansion` | Extend the P2-B/P2-C identity baseline across graph, backend, host, replay, and comparison evidence. | production composition exists | Unexplained composition mismatch is rejected | planned |
-| `P6 Cordis Package Maturation` | Complete repository-owned Cordis profiles, configuration overlays, diagnostics, provenance, and plugin ergonomics. | P2-C accepted and owner contracts available | maintained Cordis composition covers admitted production profiles without becoming a hot-path executor | planned |
-| `P7 Conditional Node Host` | Add Node-API hosting only for approved use cases, without changing native/Python availability or step semantics. | Cordis producer accepted and host decision approved | Node-hosted runs use the same native owner and parity gates | conditional |
-| `P8 Migration And Closure` | Remove superseded truth paths, promote stable rules, and close or route residuals. | required native, Cordis, system, backend, evidence, and parity gates accepted | the Cordis program has an admitted producer/native vertical path; optional Node/external ecosystem residuals have named owners | planned |
+| `P2-C0 Projection And Catalog-Lock Contract` | Freeze the producer-neutral `RuntimeCompositionRequest` DTO and owner-derived `AdmittedCatalogLock` artifact, identity, and admission rules. | P2-B production path and identity stable | Cordis has one typed high-level input and one versioned owner-approved catalog lock; offline paths are restricted to canonical low-level artifacts | planned |
+| `P2-C1 Cordis Default-Profile Vertical Slice` | Use Cordis primitives plus the repository profile/bundle layer to lower the default request and realize it through the production native path. | P2-C0 accepted | Experiment fixture -> request -> Cordis -> manifest/catalog lock -> native realization passes positive and negative admission cases | planned |
+| `P3-A System Contribution Migration` | Compile repository-admitted system packages into the frozen native stage graph. | P2-C1 accepted, unless an explicit independent-stream amendment is approved | Default graph parity holds and no package owns a private pipeline | planned |
+| `P3-B Capability And Profile Projection` | Lower capability/policy requests and compatibility profile names into owner-admitted contribution bundles. | P2-C0 and P3-A declaration boundaries stable | Domain labels remain compatibility bundles rather than the permanent composition ontology | planned |
+| `P4-A Backend Provider Migration` | Select CPU, CUDA-resident, diagnostics, and future backends through admitted providers. | P2-C1 and backend contracts available | `RuntimeFacade` no longer names a concrete backend and admission remains capability-driven | planned |
+| `P5-A Composition Evidence Expansion` | Extend the P2-B/P2-C0/P2-C1 identity baseline across graph, backend, host, replay, and comparison evidence. | production Cordis/native composition exists | Unexplained composition or catalog-lock mismatch is rejected | planned |
+| `P6-A Cordis Package Maturation` | Complete repository-owned configuration overlays, profile/bundle packages, diagnostics, provenance, and plugin ergonomics over Cordis primitives. | P2-C1 accepted and owner contracts available | maintained Cordis composition covers admitted production bundles without becoming a hot-path executor | planned |
+| `P6-B Node Host Adapter` | Add Node-API hosting only for approved use cases, without changing native/Python availability or step semantics. | P6-A accepted and a host decision approved | Node-hosted runs use the same native owner and parity gates | conditional / held pending host decision |
+| `P7-A Host And Batch Parity` | Prove native, Python, and Cordis-produced parity; add Node rows only if P6-B is admitted. | P4-A/P5-A/P6-A accepted | admitted profiles satisfy correctness and approved batch budgets | planned |
+| `P8-A Migration Closure` | Remove superseded truth paths, promote stable rules, and close or route residuals. | required native, Cordis, system, backend, evidence, and parity gates accepted | the Cordis program has an admitted producer/native vertical path; optional Node/external ecosystem residuals have named owners | planned |
 
 Phases describe dependency order, not a deadline or a reason to weaken the
 long-term target. A phase may be split into bounded implementation slices, but
@@ -227,11 +230,13 @@ Immediate work is P2-B default-provider migration. It must move the existing
 default model, factory, event-store, damage-bridge, and weapon-release service
 construction behind admitted native providers, preserve the accepted default
 behavior/replay baseline, and export the first production composition identity.
-P2-C follows as the first Cordis vertical slice: a repository-owned Cordis
-default profile must emit the same canonical request that native code
-revalidates and realizes. System-family, backend, and binding migrations remain
-separate later slices; Node hosting remains conditional rather than a closure
-prerequisite for the Cordis producer/native path.
+P2-C0 follows to freeze the high-level request and owner-derived catalog-lock
+artifacts without creating a second resolver. P2-C1 then provides the first
+Cordis vertical slice: Cordis primitives plus the repository profile/bundle
+layer must lower the default request into the canonical manifest/catalog lock
+that native code revalidates and realizes. System-family, backend, and binding
+migrations remain separate later slices; Node hosting remains conditional
+rather than a closure prerequisite for the Cordis producer/native path.
 
 Long-term residuals include plugin authenticity and distribution policy,
 multi-process hosting, remote composition catalogs, third-party compatibility,

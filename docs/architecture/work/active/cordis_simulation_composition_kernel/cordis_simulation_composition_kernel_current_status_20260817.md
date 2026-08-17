@@ -74,8 +74,8 @@ Contract baseline:
 | Model/provider migration | absent | existing interfaces and setters | provider factories, kernel builder, lifetime-safe consumption |
 | System composition | absent | static registration and stage manifests coexist | contribution contract and graph compilation |
 | Backend composition | partial baseline | semantic backend interface and capability contracts exist | provider selection and facade construction migration |
-| Composition evidence | contract-only baseline | native requested/resolved identities are retained by the isolated kernel | production identity in P2-B, then graph/backend/host/replay expansion in P5-A |
-| Cordis control plane | absent / required target | architecture and P1-B producer contract exist; no repository Cordis package exists | P2-C default-profile producer/native vertical slice, then P6-A package maturation |
+| Composition evidence | contract-only baseline | native requested/resolved identities are retained by the isolated kernel | production identity in P2-B, request/catalog-lock identities in P2-C0/P2-C1, then graph/backend/host/replay expansion in P5-A |
+| Cordis control plane | absent / required target | architecture and P1-B low-level producer contract exist; no high-level request/catalog-lock artifact or repository Cordis package exists | P2-C0 projection/catalog-lock contract, P2-C1 default-profile producer/native vertical slice, then P6-A package maturation |
 | Node host | absent | Node-API is only a candidate host boundary | approved binding target and lifecycle/parity tests |
 | Runtime acceptance | partial | P2-A proves the isolated lifecycle boundary | default behavior, systems, backend, evidence, Cordis, hosts, parity, and closure gates |
 
@@ -128,7 +128,7 @@ Contract baseline:
 | dual model ownership through `unique_ptr`, singleton refs, and captured pointers | correctness and use-after-free | migrate production defaults to P2-A scoped handles and remove raw capture | P2-B |
 | central static system list | extensibility and profile ambiguity | contribution descriptors compiled into stage contracts | P3 |
 | direct concrete backend construction | backend evolution and test isolation | backend provider admission | P4 |
-| Experiment/Cordis/native authority overlap | competing composition truth | explicit intent projection, owner catalog lock, canonical request, native revalidation | P2-C/P3/P6 |
+| Experiment/Cordis/native authority overlap | competing composition truth | explicit intent projection, owner catalog lock, canonical request, native revalidation | P2-C0/P2-C1/P3/P6 |
 | asynchronous Cordis lifecycle | nondeterministic teardown if copied directly | native dependency-safe lifecycle transaction | P2/P6 |
 | per-world host overhead | world-batch scale risk | shared resolved profile plus lightweight native world scopes | P2/P7 |
 | cross-language call temptation | throughput and determinism risk | architecture guard and call-graph test | P6/P7 |
@@ -141,13 +141,17 @@ Contract baseline:
    with behavior/replay parity, removal of raw provider capture, and production
    composition identity;
 2. add migration-specific reset, repeated rebuild, and lifetime evidence;
-3. execute P2-C: project the default runtime request through a repository-owned
-   Cordis profile/plugin path and prove canonical/native realization parity;
-4. compile owner-admitted system packages and capability/profile projections;
-5. migrate backend selection and expand evidence across graph/backend/host
+3. execute P2-C0: freeze the producer-neutral high-level request and
+   owner-derived catalog-lock artifact/identity, while forbidding a second
+   offline high-level resolver;
+4. execute P2-C1: lower the default request through Cordis primitives plus the
+   repository profile/bundle layer and prove end-to-end native realization and
+   negative admission;
+5. compile owner-admitted system packages and capability/profile projections;
+6. migrate backend selection and expand evidence across graph/backend/host
    surfaces;
-6. mature the Cordis package and tooling;
-7. add Node hosting only if separately approved, then run applicable
+7. mature the Cordis package and tooling;
+8. add Node hosting only if separately approved, then run applicable
    producer/host/backend/batch parity and retire dual paths.
 
 ## Explicitly Refused Claims

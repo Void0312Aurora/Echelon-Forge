@@ -27,9 +27,10 @@ and closure defects in the previous plan. Those defects are accepted and the
 active plan has been revised.
 
 The review's further conclusion that Cordis should remain an optional adapter
-is not adopted. The program objective is specifically to introduce Cordis's
-context, service, injection, effect, profile, and plugin composition model into
-the simulation runtime architecture. Treating Cordis as indefinitely optional
+is not adopted. The program objective is specifically to introduce Cordis
+plugin/context/service/injection/event/effect primitives together with a
+repository-owned, DeepSeek-Harness-style profile/bundle layer into the
+simulation runtime architecture. Treating Cordis as indefinitely optional
 would turn the project into a generic native manifest/lifecycle refactor and
 would not satisfy that objective.
 
@@ -38,7 +39,7 @@ The corrected decision is:
 | Question | Owner decision |
 | --- | --- |
 | Who owns experiment intent? | The Experiment Face. |
-| Who owns declarative runtime capability/plugin/service/profile composition? | Cordis, after an explicit runtime-composition projection. |
+| Who owns maintained high-level declarative lowering? | Cordis primitives plus the repository-owned profile/bundle layer, after an explicit runtime-composition projection. |
 | Who admits implementations? | The applicable model, system, backend, domain, evidence, and security owners through an `AdmittedCatalogLock`. |
 | Who deterministically validates, resolves, realizes, freezes, and disposes the plan? | The native composition compiler/root. |
 | Who owns executable simulation semantics? | Flecs, the native scheduler, backend, batch/runtime, episode, and engine owners. |
@@ -59,15 +60,17 @@ The intended mapping is:
 | Context hierarchy | application, backend, batch, world, and episode administrative ownership boundaries |
 | Services and injection | typed runtime provider requirements and bindings |
 | Effects | reversible administrative registrations and staged host-side actions |
-| Profiles and plugins | declarative capability/profile/package composition |
+| Plugins and administrative events | declarative extension and host-lifecycle coordination primitives |
+| Repository-owned, DeepSeek-Harness-style profile/bundle layer | capability/profile/package authoring and ordered configuration over Cordis primitives |
 | Cordis resolution | construction of the canonical requested composition from admitted declarations |
 | Native composition compiler/root | independent revalidation, exact implementation binding, transactional realization, generation handover, and deterministic disposal |
 
 DeepSeek Harness is relevant because it demonstrates the larger architectural
 pattern in which Cordis supplies a compositional harness/control layer rather
 than numerical execution. Echelon Forge is not embedding DeepSeek Harness as
-its simulation runtime. It is applying the underlying Cordis composition model
-to simulation providers, packages, profiles, and administrative lifecycle while
+its simulation runtime. It is applying Cordis primitives to simulation
+providers and administrative lifecycle, then supplying a repository-owned,
+DeepSeek-Harness-style profile/bundle layer for package/profile authoring, while
 keeping the existing native engine authoritative for deterministic execution.
 
 ## 3. Amended Authority Flow
@@ -76,8 +79,8 @@ keeping the existing native engine authoritative for deterministic execution.
 flowchart LR
     EXP["ExperimentSpec\nsimulation + policy + evaluation intent"]
     PROJECT["RuntimeCompositionRequest\ncapabilities + policies + configuration"]
-    CORDIS["Cordis declarative control plane\ncontexts + services + profiles + plugins"]
-    COMPAT["Native / Python compatibility producer\noffline and embedded"]
+    CORDIS["Cordis primitives + repository profile/bundle layer\nhigh-level declarative lowering"]
+    FROZEN["Canonical manifest / generated frozen profile\noffline and embedded input"]
     REQUEST["Canonical low-level\nSimulationCompositionManifest"]
     CATALOG["AdmittedCatalogLock\nowner-approved implementations + provenance"]
     NATIVE["Native composition compiler/root\nrevalidate + resolve + realize + freeze"]
@@ -87,9 +90,9 @@ flowchart LR
 
     EXP --> PROJECT
     PROJECT --> CORDIS
-    PROJECT --> COMPAT
+    CATALOG --> CORDIS
     CORDIS --> REQUEST
-    COMPAT --> REQUEST
+    FROZEN --> REQUEST
     REQUEST --> NATIVE
     CATALOG --> NATIVE
     NATIVE --> PLAN
@@ -98,16 +101,18 @@ flowchart LR
 ```
 
 This resolves the apparent conflict between the Experiment Face and Cordis:
-the Experiment Face owns intent; Cordis owns declarative runtime composition of
-that projected intent; owner-specific authorities admit implementations; the
-native path owns deterministic realization.
+the Experiment Face owns intent; Cordis is the only maintained high-level
+lowering path for that projected intent; owner-specific authorities admit
+implementations; the native path owns deterministic realization. Offline
+native/Python paths consume canonical low-level artifacts and do not implement
+a second capability/profile resolver.
 
 ## 4. Finding Disposition
 
 | Finding | Disposition | Incorporated change |
 | --- | --- | --- |
 | `F-01` composition authority ambiguity | accepted | Added the explicit Experiment intent -> runtime projection -> Cordis declaration -> owner admission -> native realization chain to the README, architecture, status, task, and acceptance surfaces. |
-| `F-02` Cordis prerequisite before unique value is established | premise rejected; evidence concern accepted | Cordis remains the strategic target, but the first real Cordis proof moved forward to `P2-C` immediately after production default-provider migration. It must demonstrate canonical/native parity against the real default path before broader Cordis or host work. |
+| `F-02` Cordis prerequisite before unique value is established | premise rejected; evidence concern accepted | Cordis remains the strategic target. P2-C0/P2-C1 move technical feasibility and authority conformance immediately after production migration. They do not by themselves claim that broad ecosystem ROI or every operational advantage is proven. |
 | `F-03` one package conflates three programs | partially accepted | Native, system/profile, Cordis, backend/evidence, and Node work now have bounded acceptance. The proposed optional Program C is split into a required Cordis producer path and a conditional Node/external-ecosystem path. |
 | `F-04` universal plugin plane obscures owner admission | accepted | Added `AdmittedCatalogLock` and explicit category owners. Shared lifecycle mechanics do not grant model/system/backend/domain/evidence/security admission. |
 | `F-05` systems should compile admitted packages | accepted | `P3-A` now targets repository-admitted system packages compiled by the existing native graph/scheduler owners; discovery order and private pipelines remain forbidden. |
@@ -137,9 +142,12 @@ Cordis program boundary is too broad. The amended delivery streams are:
 
 ### Stream C1 — Required Cordis Composition Path
 
-- P2-C is the minimum default-profile vertical slice.
-- P6-A matures Cordis profiles, overlays, diagnostics, provenance, dependency
-  resolution, and package ergonomics after the vertical path is proven.
+- P2-C0 freezes the high-level request and owner-derived catalog-lock artifacts.
+- P2-C1 is the minimum default-profile vertical slice and uses Cordis
+  primitives plus the repository-owned profile/bundle layer.
+- P6-A matures the repository profile/bundle layer, overlays, diagnostics,
+  provenance, dependency resolution, and package ergonomics over Cordis
+  primitives after the vertical path is proven.
 - Overall program closure requires C1; otherwise Cordis has not actually been
   introduced.
 
@@ -156,15 +164,16 @@ Cordis program boundary is too broad. The amended delivery streams are:
 The maintained sequence is now:
 
 1. `P2-B Default Provider Migration`;
-2. `P2-C Cordis Default-Profile Vertical Slice`;
-3. `P3-A System Contribution Migration`;
-4. `P3-B Capability And Profile Projection`;
-5. `P4-A Backend Provider Migration`;
-6. `P5-A Composition Evidence Expansion`;
-7. `P6-A Cordis Package Maturation`;
-8. conditional `P6-B Node Host Adapter`;
-9. applicable producer/host/backend/batch parity;
-10. migration closure and residual routing.
+2. `P2-C0 Projection And Catalog-Lock Contract`;
+3. `P2-C1 Cordis Default-Profile Vertical Slice`;
+4. `P3-A System Contribution Migration`;
+5. `P3-B Capability And Profile Projection`;
+6. `P4-A Backend Provider Migration`;
+7. `P5-A Composition Evidence Expansion`;
+8. `P6-A Cordis Package Maturation`;
+9. conditional/held `P6-B Node Host Adapter`;
+10. `P7-A Host And Batch Parity` with Node rows only if admitted;
+11. `P8-A Migration Closure` and residual routing.
 
 The active documents amended by `153d5f4e` are:
 
@@ -184,19 +193,39 @@ the Cordis package in the same write set. It must, however:
 - remove the unsafe raw provider capture;
 - preserve behavior and replay parity;
 - export stable requested/resolved production identity;
-- leave an explicit projection/evidence seam that P2-C can consume.
+- leave stable production identity/evidence seams that P2-C0 can consume.
 
-After P2-B is accepted, P2-C becomes the next strategic cluster. It must prove
-the Cordis model against the production default path, not merely against a
-synthetic schema fixture.
+After P2-B is accepted, P2-C0 becomes the next strategic cluster and P2-C1
+follows it. P2-C1 must prove Cordis primitives plus the repository profile/
+bundle layer against the production default path, not merely against a
+synthetic schema fixture. No later implementation cluster is released first
+without a separate architecture-owner amendment.
 
-## 8. Requested Re-review
+## 8. First Re-review Amendments
+
+An independent `gpt-5.6-sol` / `max` re-review of `abe9b619` requested three
+P2 corrections and two P3 clarifications. This response and the active plan now:
+
+- make Cordis the sole maintained high-level lowering path while restricting
+  offline native/Python operation to canonical low-level artifacts;
+- split the former P2-C into P2-C0 request/catalog-lock contract work and P2-C1
+  end-to-end Cordis production realization;
+- encode P2-C0/P2-C1 ahead of later implementation work in the phase table,
+  task dependencies, queue, acceptance contract, and P1-B follow-on wording;
+- mark P6-B as conditional/held and require Node tests only if it is admitted;
+- distinguish Cordis primitives from the repository-owned,
+  DeepSeek-Harness-style profile/bundle layer.
+
+P2-B remains eligible. P2-C0, P2-C1, and later implementation work remain held
+until this amended authority chain passes independent re-review.
+
+## 9. Requested Re-review
 
 The independent reviewer is asked to re-evaluate the amended plan on these
 questions:
 
 1. Is the Experiment Face/Cordis/admission/native authority chain unambiguous?
-2. Does P2-C prove a real Cordis relationship early enough to justify later
+2. Do P2-C0/P2-C1 prove a real Cordis relationship early enough to justify later
    package maturation?
 3. Are owner-specific system/backend/domain/evidence admission boundaries
    preserved?
@@ -205,7 +234,7 @@ questions:
 5. Does the closure rule accurately require Cordis producer/native conformance
    while allowing Node and external distribution to remain conditional?
 
-## 9. Final Response State
+## 10. Final Response State
 
 Response state: `architecture findings partially accepted and incorporated`.
 
