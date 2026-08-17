@@ -27,13 +27,19 @@ Last verified: `2026-08-17`
 它不重新定义仿真状态、事件排序、stage 语义、backend parity、experiment authority
 或领域成熟度。
 
-长期目标既不是一个简单 C++ factory，也不是 JavaScript 驱动的仿真循环，而是双层内核：
+长期目标既不是一个简单 C++ factory，也不是 JavaScript 驱动的仿真循环，而是四层
+权威链：
 
-- Cordis 控制面拥有声明式插件组合与外部扩展打包；
-- 原生组合内核拥有已验证实例化、资源生命周期、执行图冻结、rollback，以及向仿真
-  引擎的确定性交接。
+- Experiment Face 拥有用户可见实验意图；
+- runtime projection 把该意图表达为 typed capability、policy、profile 与配置；
+- Cordis 在按 owner 准入的类别之上拥有长期声明式 plugin/service/profile 组合，并输出
+  canonical 低层 request；
+- 原生 composition compiler/root 拥有确定性重新校验、解析、实例化、资源生命周期、
+  执行图冻结、rollback，以及向仿真引擎的交接。
 
-因此 Cordis 作为组合控制面进入仿真内核架构，而不是作为数值或因果-时序执行器。
+因此 Cordis 是本计划必需的声明式 composition control plane，而不是 experiment policy、
+实现准入、数值执行或因果-时序语义 owner。原生与 Python compatibility producer 保留
+离线/embedded 运行，但不能据此把 Cordis 降为可选的计划结果。
 
 ## 2. 证据基线
 
@@ -83,10 +89,12 @@ stage-node manifest 已经提供重要语义接缝。缺失的是选择实现、
 
 ```mermaid
 flowchart TD
-    CFG["Content / experiment / operator 配置"]
-    CORDIS["Cordis 控制面\n插件发现与依赖解析"]
-    NATIVE_DESC["原生 profile 来源\n离线与嵌入式部署"]
-    MANIFEST["Canonical SimulationCompositionManifest"]
+    EXP["ExperimentSpec\nsimulation + policy + evaluation 意图"]
+    PROJECT["Runtime composition projection\ncapability + policy + 配置"]
+    CORDIS["Cordis 控制面\nprofile + plugin + service + injection"]
+    COMPAT["原生 / Python compatibility producer\n离线与嵌入式部署"]
+    MANIFEST["Canonical 低层\nSimulationCompositionManifest"]
+    CATALOG["AdmittedCatalogLock\nowner 批准的实现 + provenance"]
     VALIDATE["原生组合校验器\n版本、能力、冲突与图规则"]
     ROOT["原生 CompositionRoot\nprovider、scope、rollback、freeze"]
     BACKEND["IWorldBatchBackend provider"]
@@ -96,11 +104,13 @@ flowchart TD
     STATE["版本化状态与仿真 event queue"]
     EVIDENCE["Diagnostics / replay / comparison evidence"]
 
-    CFG --> CORDIS
-    CFG --> NATIVE_DESC
+    EXP --> PROJECT
+    PROJECT --> CORDIS
+    PROJECT --> COMPAT
     CORDIS --> MANIFEST
-    NATIVE_DESC --> MANIFEST
+    COMPAT --> MANIFEST
     MANIFEST --> VALIDATE
+    CATALOG --> VALIDATE
     VALIDATE --> ROOT
     ROOT --> BACKEND
     BACKEND --> BATCH
@@ -111,13 +121,19 @@ flowchart TD
     STAGE --> EVIDENCE
 ```
 
-Cordis 和原生 profile 来源是可替换的 manifest producer；原生 validator 与
-realization path 是共同且权威的。
+Cordis 是维护中的长期声明式 runtime composition producer。Node 缺失时，原生/Python
+compatibility producer 可以输出同一低层 manifest。所有 producer 都必须经过相同的
+owner admission 与原生重新校验边界；任何 producer 都不得绕过该边界或成为第二执行真值。
 
 ## 5. 权威矩阵
 
 | 事项 | 权威 | Cordis 角色 | 原生组合角色 | 仿真角色 |
 | --- | --- | --- | --- | --- |
+| 实验意图 | Experiment Face | 消费投影后的 runtime requirement，不重新定义 policy/evaluation 意图 | 无 | 执行已接受的 runtime 部分 |
+| Runtime composition projection | experiment/runtime contract owner | 把 capability、policy、profile 与配置展开为声明式 request | 校验低层 request 完整且 canonical | 无 |
+| Plugin/service/profile composition | Cordis 控制面 | 把仓库自有声明式 package 解析为 canonical request | 独立重新解析并拒绝偏差 | 无 |
+| 实现准入 | 相应 model、system、backend、domain、evidence、security owner | 仅从锁定的 admitted catalog 选择 | 核验精确 descriptor、implementation、service type、capability 与 provenance | 无 |
+| Compatibility production | 原生/Python adapter | 无 | 为离线/embedded 运行输出同一低层 request，但不取代 Cordis 目标角色 | 无 |
 | 插件发现 | Cordis 控制面或原生静态 catalog | 发现 descriptor 与配置 | 拒绝未知或未准入 descriptor | 无 |
 | 依赖解析 | canonical composition contract | 生成请求图 | 确定性重新解析/核验 | 无 |
 | Provider 实例 | 原生 composition root | 命名 provider 与配置 | 构造、拥有、暴露 typed handle、销毁 | 消费冻结 handle |
@@ -161,6 +177,19 @@ schema 字段。
 
 schema 不得序列化 C++ pointer、Cordis object identity、Flecs entity ID、文件系统发现
 顺序或宿主绝对路径。
+
+长期概念模型分为：
+
+1. `RuntimeCompositionRequest`：投影后的实验意图、所需 capability/policy、profile
+   constraint 与配置；
+2. `AdmittedCatalogLock`：owner 批准的 implementation、version、capability、provenance
+   与 trust decision；
+3. `ResolvedRuntimePlan`：精确 provider、binding、system/stage graph、scope generation
+   与 evidence hash。
+
+已冻结的 P1-B requested manifest 继续作为 producer 与原生 compiler 之间的 canonical
+低层交换和 compatibility artifact。它可以按设计携带精确 descriptor，但不得成为未来
+experiment author 唯一可见的 public authoring abstraction。
 
 ### 6.2 Plugin descriptor
 
@@ -309,7 +338,7 @@ system plugin 不拥有调度，只贡献声明：
 原生 scheduler 把获准 contribution 编译为维护中的 causal-temporal graph。plugin 不得
 调用 `ecs.progress()` 或直接运行未声明系统形成私有 pipeline。
 
-长期 profile 至少应包含：
+Compatibility 与 acceptance profile 至少应包含：
 
 - minimal contract-test runtime；
 - common CPU exact runtime；
@@ -318,11 +347,13 @@ system plugin 不拥有调度，只贡献声明：
 - diagnostics/replay profile；
 - 迁移期间复现当前默认 kernel 的 compatibility profile。
 
-profile 选择 contribution，不定义第二套语义生命周期。
+长期 authoring 选择 typed capability 与 policy。domain label 可以为迁移和易用性下沉为
+owner 准入的 capability bundle，但不能成为永久 ontology，也不能定义第二套语义生命周期。
 
 ## 10. Cordis 控制面
 
-Cordis package 应表达：
+首个 Cordis 纵向切片必须表达默认 compatibility profile，并为原生重新校验输出字节等价
+的 canonical P1-B request。成熟 Cordis package 随后应表达：
 
 - 一个用于 plugin catalog 与配置的 host/application context；
 - backend 或独立 runtime instance 的 child context；
@@ -333,8 +364,9 @@ Cordis package 应表达：
 不得把仿真 entity 或 mutable state 作为通用 Cordis service 暴露，也不得以 Cordis
 event ordering 作为仿真 event ordering。
 
-Cordis producer 输出完整 manifest；原生侧必须再次校验并可拒绝。Cordis resolution
-成功不等于 runtime admission 证据。
+Cordis producer 从显式 runtime-composition projection 与 admitted catalog 输出完整低层
+manifest；原生侧必须再次校验并可拒绝。Cordis resolution 成功不等于 runtime admission
+证据。
 
 ## 11. 宿主与 binding 模型
 
@@ -467,15 +499,19 @@ tests/runtime/composition/      lifecycle、parity、replay 与 failure test
 迁移采用 strangler 方式并保留单一默认行为路径：
 
 1. 记录当前默认构造与 stage-order 基线；
-2. 引入 manifest 与原生 validator，但暂不改变构造；
-3. 通过 compatibility profile 的 provider 构造既有默认实现；
-4. 消除不安全替换并把 service 生命周期绑定到 scope；
-5. 把系统注册拆为声明式 contribution，同时保持精确默认图；
-6. 把 backend 选择迁入 provider；
-7. 输出 composition evidence，并要求 replay/comparison 消费；
-8. 加入 Cordis 作为第二个 manifest producer；
-9. 加入 Node host；
-10. 只有 caller/parity 证据获验收后，才删除被取代的 constructor、setter 和静态组合真值。
+2. 引入低层 manifest 与原生 validator，但暂不改变构造；
+3. 通过 compatibility profile 的 provider 构造既有默认实现，并输出首份 production
+   composition identity；
+4. 在同一 canonical request 与原生 realization path 上加入仓库自有 Cordis 默认 profile
+   producer 纵向切片；
+5. 消除不安全替换并把 service 生命周期绑定到 scope；
+6. 把系统注册拆为 owner 准入 package，同时保持精确默认图；
+7. 把 capability/policy 与 compatibility profile 名称下沉到这些 package；
+8. 把 backend 选择迁入准入 provider；
+9. 把 composition evidence 扩展到 graph、backend、host、replay 与 comparison 表面；
+10. 成熟化 Cordis package、overlay、diagnostics、provenance 与 tooling；
+11. 仅在独立 host 用例获批后加入 Node host；
+12. 只有 caller/parity 证据获验收后，才删除被取代的 constructor、setter 和静态组合真值。
 
 compatibility wrapper 必须带移除条件，不得成为永久第二组合机制。
 
@@ -499,6 +535,12 @@ transaction 与 handle-generation 机制，但尚未迁移 production default；
 否决为长期目标，因为这会丢失预期的 Cordis plugin/control-plane 关系。原生生命周期
 语义仍然必要，但准入的 Cordis producer 也是计划交付物。
 
+### 原生 substrate 存在后仍让 Cordis 永久保持可选
+
+否决，因为本计划的目标是引入 Cordis 的 context/service/injection/effect/profile 组合模型，
+而不只是建设通用 manifest reader。原生和 system 切片可以独立获得有界验收，Node/外部
+打包也可保持 conditional，但整体计划关闭必须包含准入的 Cordis producer/native 纵向路径。
+
 ### 让 Cordis 成为运行仿真的唯一方式
 
 否决，因为 Python training、standalone C++、离线部署和原生校验不能依赖 Node 可用性。
@@ -513,7 +555,9 @@ transaction 与 handle-generation 机制，但尚未迁移 production default；
 
 - 允许维护中的 stage 发生跨语言调用；
 - 允许 episode 内热替换影响 truth 的插件；
-- 让 Cordis/Node 成为 native/Python 部署必需依赖；
+- 让 Node 成为 native/Python 部署必需依赖；
+- 让 Cordis 取代 Experiment Face 意图或按 owner 分类的准入，或绕过原生重新校验；
+- 在没有显式替代架构决定时移除必需的 Cordis producer/native closure gate；
 - 让 plugin order 决定 stage/event order；
 - 引入新的 composition truth source；
 - 通过通用 Cordis service 暴露 raw ECS state；

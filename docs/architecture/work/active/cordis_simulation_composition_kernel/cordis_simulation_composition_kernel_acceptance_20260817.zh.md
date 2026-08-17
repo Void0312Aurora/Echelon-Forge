@@ -26,7 +26,7 @@ Last verified: `2026-08-17`
 
 | 门禁 | 必需证据 | 拒绝条件 | 状态 |
 | --- | --- | --- | --- |
-| 文档与权威 | 双语 active package、父路由、有效链接、同步元数据 | orphan task、owner 冲突或 runtime 过度声明 | pass |
+| 文档与权威 | 双语 active package、父路由、有效链接、同步元数据、显式 Experiment projection/Cordis/admission/native 权威链 | orphan task、composition owner 竞争或 runtime 过度声明 | pass |
 | Composition census | constructor、replacement、registration、backend、stage、reset、binding、test 的可复现 inventory | 迁移范围内仍有未知 owner 或未分类 replacement path | pass |
 | Contract/canonicalization | versioned schema、invalid-input matrix、canonical byte fixture、permutation-stable hash | 结果依赖发现顺序、host 或歧义 provider 语义 | pass |
 | 原生 lifecycle | scope isolation、transactional construction、dependency-safe teardown、rollback、failure injection | 部分 runnable state、stale handle 或 teardown 顺序歧义 | partial：P2-A baseline pass；production migration 证据未完成 |
@@ -34,9 +34,9 @@ Last verified: `2026-08-17`
 | Stage graph integrity | 既有 stage contract validation 与精确默认图 comparison | plugin/host event order 影响 stage execution | planned |
 | Domain profile admission | minimal/common/air/naval/ground/combined 对 owner contract 的校验 | profile 绕开领域成熟度或创建私有 lifecycle | planned |
 | Backend admission | facade 选择准入 provider；CPU/CUDA 与 unsupported-profile gate | 具体 backend 仍是构造真值或拒绝 profile 静默 fallback | planned |
-| Evidence/replay | 导出 manifest/provider/graph/backend/host identity 并执行 mismatch policy | unexplained composition mismatch 下仍继续 replay/comparison | planned |
-| Cordis conformance | Cordis/native producer 生成等价准入 canonical manifest | 原生侧不重新校验或私有 Cordis identity 泄漏到 contract | planned |
-| Binding isolation | Python/C++/Node host 使用同一 native owner 与粗粒度 facade 语义 | binding 拥有仿真真值、raw ECS bypass 或逐 step callback | planned |
+| Evidence/replay | 先在 P2-B 输出 production manifest identity，再扩展 provider/graph/backend/host/catalog identity 并执行 mismatch policy | unexplained composition mismatch 下仍继续 replay/comparison | planned |
+| Cordis conformance | 仓库自有 Cordis 默认 profile producer 与原生 compatibility producer 生成等价的准入 canonical manifest 和原生 realization | 原生侧不重新校验、Cordis 绕开 owner admission 或私有 Cordis identity 泄漏到 contract | planned / program closure required |
+| Binding isolation | Python/C++ 始终使用同一 native owner；Node 在另行准入时也必须如此 | binding 拥有仿真真值、raw ECS bypass、逐 step callback，或 Node 成为离线 native/Python 必需依赖 | planned |
 | Batch/performance | 代表性启动、内存、吞吐、determinism、teardown 测量 | mandatory per-world Node context、hot-path lookup/crossing 或未批准回归 | planned |
 | Security/provenance | 已接受范围的仓库拥有/准入 plugin policy | 未评审外部 native plugin 执行或缺失 artifact provenance | planned |
 | Migration closure | caller inventory、removal gate、standard/reference 提升、index/archive 同步 | 双 composition path、永久未记录 wrapper 或 stale route | planned |
@@ -93,10 +93,12 @@ removal/compatibility 决定，以及同步后的文档/archive route。
 
 ## 部分验收
 
-native composition、Cordis control-plane conformance、Node hosting 可以分别作为有界
-切片验收，但父状态必须写清边界。native composition 验收不代表 Cordis/Node 验收；
-Cordis manifest conformance 不代表外部 plugin trust；Node host 验收不代表测试矩阵外的
-性能/backend parity。
+native composition、Cordis producer/native 纵向切片、system/profile composition、
+backend/evidence integration 与 Node hosting 可以分别作为有界切片验收，但父状态必须
+写清边界。native composition 验收不代表 Cordis/Node 验收；Cordis manifest conformance
+不代表外部 plugin trust；Node host 验收不代表测试矩阵外的性能/backend parity。独立
+切片验收避免 conditional Node 或外部生态决策阻塞 native/runtime 进展，但不会从整体
+计划 closure 中移除 Cordis 纵向切片。
 
 已接受的 P2-A 边界仅包括独立 `ef_composition` library，以及 closed JSON ingestion、原生
 hash revalidation、typed-scope guard、不可变 plugin/factory identity、进程内语义
@@ -111,5 +113,8 @@ system capture 修复、artifact provenance、外部 DSO ABI pinning 与全部 C
 ## 收口规则
 
 只有全部必需 gate 已接受，或迁入具名的独立 active/held owner 且不留下双重真值路径，
-本子项目才可关闭。推迟 marketplace/remote-host 与关闭兼容；推迟 lifecycle、deterministic
-composition、evidence identity 或 default-profile parity 与关闭不兼容。
+本子项目才可关闭。必需 gate 包含默认 provider parity、production composition identity、
+显式 Experiment-to-runtime projection、按 owner 分类的 admission，以及至少一条仓库自有
+Cordis producer/native realization 路径。推迟 Node host、marketplace、remote host 或外部
+plugin distribution 与关闭兼容；推迟 Cordis 纵向切片、lifecycle、deterministic composition、
+evidence identity 或 default-profile parity 与关闭不兼容。

@@ -25,7 +25,8 @@ Parent: [Cordis Simulation Composition Kernel](README.md)
 | 3 | `P1-B Manifest And Resolution Contract` | pass | P1-A passed and contract write set remains bounded | runtime contract/schema inputs and focused tests | schema decision, fixtures, invalid-manifest matrix, versioning and canonicalization evidence |
 | 4 | `P2-A Native Lifecycle Kernel` | pass / independently repaired | P1-A/P1-B gates passed | isolated native composition library, focused C++ test, architecture guard, and CMake/CI wiring | 14 tests/430 assertions in normal MSVC and ASan builds; hash, typed-scope, lifecycle-state, rollback, serialized replacement rebuild, reentrant lifetime, plugin/factory identity, in-process semantic service-type identity, handover, invalidation, and deterministic validation evidence |
 | 5 | `P2-B Default Provider Migration` | ready / not dispatched | P2-A passed; engine/provider write set remains bounded | default provider entries, kernel builder, engine construction seams, focused parity/lifetime tests | default behavior/replay parity and removal of concrete model construction/raw capture |
-| 6 | all later clusters | held | their declared dependencies pass | task-cluster write sets only | cluster-specific evidence packet |
+| 6 | `P2-C Cordis Default-Profile Vertical Slice` | held / planned | P2-B production composition and identity are stable | bounded repository-owned Cordis package/profile, projection adapter, canonical fixtures, conformance tests | byte-equivalent default request, native revalidation/realization parity, and offline-native regression evidence |
+| 7 | all later clusters | held | their declared dependencies and owner admission rules pass | task-cluster write sets only | cluster-specific evidence packet |
 
 ## Next Dispatch Packet
 
@@ -36,6 +37,7 @@ write set:
   src/core/engine/** construction and ownership seams
   approved default provider entries adjacent to their model/service owners
   focused lifecycle, behavior, replay, and ownership tests
+  bounded composition identity/evidence DTO joins
   bounded design/status updates inside this subproject
 non-goals:
   system-family contribution split or central registration-list replacement
@@ -47,8 +49,9 @@ validation:
   reset/rebuild and repeated create/destroy lifetime evidence
   no concrete default model construction in SimulationKernel
   no registered system retaining a replaceable provider raw pointer
+  stable requested/resolved identity exported from the production path
 closure:
-  the default profile constructs the current kernel through ef_composition without semantic drift or a second construction truth
+  the default profile constructs the current kernel through ef_composition without semantic drift or a second construction truth, and leaves a stable projection/evidence seam for P2-C
 ```
 
 ## Queue Rules
@@ -67,9 +70,15 @@ closure:
   cannot silently override the standard.
 - Acceptance and closure remain unassigned until implementation evidence
   exists.
+- P2-C is the next strategic slice after P2-B. It proves Cordis against the
+  production default path while keeping Node hosting, external packaging, and
+  system modularization out of the slice.
+- Bounded native acceptance does not imply Cordis acceptance. Overall program
+  closure does require P2-C Cordis/native conformance; Node hosting remains
+  conditional on a separate host decision.
 
 ## Next Queue Update Trigger
 
-Update this queue when P2-B is dispatched or completed, when a cluster is
-blocked or re-scoped, or when an accepted result changes the next dependency.
-Do not update it merely to record elapsed time.
+Update this queue when P2-B is dispatched or completed, when P2-C becomes
+eligible, when a cluster is blocked or re-scoped, or when an accepted result
+changes the next dependency. Do not update it merely to record elapsed time.

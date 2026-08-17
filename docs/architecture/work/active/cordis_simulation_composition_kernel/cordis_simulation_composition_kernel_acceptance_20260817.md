@@ -28,7 +28,7 @@ plugin, backend, domain, remote host, or hot-reload mode is accepted.
 
 | Gate | Required evidence | Reject condition | State |
 | --- | --- | --- | --- |
-| Documentation and authority | bilingual active package, parent route, valid links, synchronized maintained metadata | orphan task, conflicting owner, or runtime overclaim | pass |
+| Documentation and authority | bilingual active package, parent route, valid links, synchronized maintained metadata, explicit Experiment projection/Cordis/admission/native authority chain | orphan task, competing composition owner, or runtime overclaim | pass |
 | Composition census | reproducible inventory of construction, replacement, registration, backend, stage, reset, binding, and test edges | unknown owner or unclassified replacement path remains in migration scope | pass |
 | Contract and canonicalization | versioned schema, invalid-input matrix, canonical byte fixtures, permutation-stable hash | discovery/order/host-dependent result or ambiguous provider semantics | pass |
 | Native lifecycle | scope isolation, transactional construction, dependency-safe teardown, rollback, failure injection | partial runnable state, stale handle, teardown order ambiguity | partial: P2-A baseline pass; production migration evidence open |
@@ -36,9 +36,9 @@ plugin, backend, domain, remote host, or hot-reload mode is accepted.
 | Stage graph integrity | existing stage contract validation plus exact default graph comparison | plugin order or host event order affects stage execution | planned |
 | Domain profile admission | minimal/common/air/naval/ground/combined profile validation against owner contracts | profile bypasses domain maturity or creates a private lifecycle | planned |
 | Backend admission | facade selects admitted provider; CPU/CUDA and unsupported-profile gates | concrete backend remains construction truth or rejected profile silently falls back | planned |
-| Evidence and replay | manifest/provider/graph/backend/host identity exported and mismatch policy enforced | replay/comparison proceeds with unexplained composition mismatch | planned |
-| Cordis conformance | Cordis and native producers yield equivalent admitted canonical manifests | native side trusts Cordis without revalidation or private Cordis identity leaks into contract | planned |
-| Binding isolation | Python, C++, and Node hosts use the same native owner and coarse facade semantics | binding owns simulation truth, raw ECS bypass, or per-step callback | planned |
+| Evidence and replay | P2-B production manifest identity followed by provider/graph/backend/host/catalog identity expansion and mismatch policy | replay/comparison proceeds with unexplained composition mismatch | planned |
+| Cordis conformance | repository-owned Cordis default-profile producer and native compatibility producer yield equivalent admitted canonical manifests and native realization | native side trusts Cordis without revalidation, Cordis bypasses owner admission, or private Cordis identity leaks into contract | planned / required for program closure |
+| Binding isolation | Python and C++ always use the same native owner; Node does so if separately admitted | binding owns simulation truth, raw ECS bypass, per-step callback, or Node becomes required for offline native/Python operation | planned |
 | Batch and performance | representative startup, memory, throughput, determinism, and teardown measurements | mandatory per-world Node context, hot-path lookup/crossing, or unapproved regression | planned |
 | Security and provenance | repository-owned/admitted plugin policy for accepted scope | unreviewed external native plugin execution or missing artifact provenance | planned |
 | Migration closure | caller inventory, removal gates, standards/reference promotion, index/archive sync | dual composition path, permanent undocumented wrapper, stale current route | planned |
@@ -103,12 +103,15 @@ Final acceptance must retain:
 
 ## Partial Acceptance
 
-Native composition, Cordis control-plane conformance, and Node hosting may be
-accepted as separate bounded slices only if the parent status names the exact
-accepted boundary. Native composition acceptance must not imply Cordis or Node
+Native composition, the Cordis producer/native vertical slice, system/profile
+composition, backend/evidence integration, and Node hosting may be accepted as
+separate bounded slices only if the parent status names the exact accepted
+boundary. Native composition acceptance must not imply Cordis or Node
 acceptance; Cordis manifest conformance must not imply external plugin trust;
 Node host acceptance must not imply performance or backend parity beyond the
-tested matrix.
+tested matrix. Independent slice acceptance prevents a conditional Node or
+external-ecosystem decision from blocking native/runtime progress, but it does
+not remove the Cordis vertical slice from overall program closure.
 
 The accepted P2-A boundary is the independent `ef_composition` library and its
 closed JSON ingestion, native hash revalidation, typed-scope guards, immutable
@@ -124,7 +127,10 @@ provenance, external DSO ABI pinning, and all Cordis/host claims remain open.
 ## Closure Rule
 
 The subproject may close only after every required gate is accepted or moved to
-a separately named active/held owner with no dual truth path. A deferred
-marketplace or remote-host program is compatible with closure; a deferred
-lifecycle, deterministic composition, evidence identity, or default-profile
-parity gate is not.
+a separately named active/held owner with no dual truth path. Required gates
+include default-provider parity, production composition identity, explicit
+Experiment-to-runtime projection, owner-specific admission, and at least one
+repository-owned Cordis producer/native realization path. A deferred Node host,
+marketplace, remote host, or external-plugin distribution program is compatible
+with closure; a deferred Cordis vertical slice, lifecycle, deterministic
+composition, evidence identity, or default-profile parity gate is not.

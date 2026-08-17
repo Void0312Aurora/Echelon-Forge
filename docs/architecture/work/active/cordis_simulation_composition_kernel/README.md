@@ -29,12 +29,15 @@ Related authority:
 
 ## Purpose
 
-This subproject introduces Cordis as the long-term composition control plane for
-the simulation runtime while preserving C++ as the authority for deterministic
-simulation execution. It establishes a versioned composition contract, native
-lifecycle kernel, provider model, plugin admission model, evidence identity,
-and optional Node/Cordis host without placing JavaScript, asynchronous plugin
-dispatch, or cross-language service lookup in the per-step path.
+This subproject introduces Cordis as the long-term declarative composition
+control plane for the simulation runtime while preserving the Experiment Face
+as the owner of experiment intent and C++ as the authority for deterministic
+resolution, realization, and execution. It establishes an explicit projection
+from experiment intent into runtime composition, a versioned low-level
+composition contract, owner-specific admission, a native lifecycle kernel,
+evidence identity, and an optional Node host without placing JavaScript,
+asynchronous plugin dispatch, or cross-language service lookup in the per-step
+path.
 
 The project is not justified as a short-term refactor or performance shortcut.
 Its purpose is to provide a durable architecture for multiple model families,
@@ -91,18 +94,28 @@ Out of scope:
 
 ## Architecture Decision
 
-The target is a dual-layer composition architecture:
+The target is a layered composition architecture:
 
-1. Cordis is the long-term declarative composition control plane and plugin
-   ecosystem boundary.
-2. A native C++ composition kernel validates and realizes the resolved
-   manifest, owns runtime resources, freezes the executable graph, and performs
-   deterministic teardown and rollback.
-3. Flecs owns ECS state and registered systems; the existing stage contracts
-   own causal-temporal execution semantics.
-4. Cordis lifecycle events are administrative events. Simulation events remain
-   native, timestamped, ordered, and replayable.
-5. The maintained step path contains no Cordis or binding call.
+1. The Experiment Face owns user-visible experiment intent across simulation,
+   policy, and evaluation dimensions.
+2. A typed runtime projection converts that intent into capability, policy,
+   profile, and configuration requirements. The frozen P1-B requested manifest
+   remains the canonical low-level interchange contract, not the only future
+   authoring abstraction.
+3. Cordis is the required long-term declarative composition control plane. It
+   expands admitted profiles/plugins/services/configuration into the canonical
+   low-level request. Native and Python compatibility producers may target the
+   same contract for offline and embedded operation, but they do not replace
+   the Cordis program objective.
+4. Model, system, backend, domain, evidence, and security owners admit their own
+   implementation categories into an `AdmittedCatalogLock`; a common lifecycle
+   registry does not grant semantic admission.
+5. A native C++ composition compiler/root revalidates, resolves, realizes, and
+   freezes the exact runtime plan, owns resources, and performs deterministic
+   teardown and rollback.
+6. Flecs, the native scheduler, backends, and episode/runtime owners retain
+   executable semantics. Cordis lifecycle events are administrative, and the
+   maintained step path contains no Cordis or binding call.
 
 The complete design is in
 [Cordis simulation composition architecture](cordis_simulation_composition_kernel_architecture.md).
@@ -113,14 +126,16 @@ The complete design is in
 | --- | --- | --- | --- | --- |
 | `P0 Authority and Boundary` | Establish the owner, target architecture, non-goals, task clusters, and acceptance model. | User authorization and inspected repository baseline | Bilingual project documents and parent architecture links pass document gates | pass |
 | `P1 Composition Contract` | Freeze manifest schema, service keys, plugin descriptors, scopes, compatibility rules, and deterministic resolution. | P0 accepted | Schema fixtures, validation rules, canonical encoding, and contract tests exist | pass |
-| `P2 Native Lifecycle Kernel` | Implement C++ context, provider registry, scoped resources, rollback, freeze, and deterministic disposal. | P1 contract frozen | Native lifecycle tests cover success, failure rollback, scope isolation, and teardown | pass |
-| `P3 Kernel Construction Migration` | Move default model and service construction into providers and a kernel builder. | P2 accepted | Default profile preserves current behavior and no system captures replaceable owning pointers | planned |
-| `P4 System and Domain Composition` | Convert system families into governed contributions bound to stage manifests and extension points. | P3 default profile stable | Minimal, air, naval, ground, and combined profiles validate without a central all-domain registration list | planned |
-| `P5 Backend Composition` | Select CPU, CUDA-resident, diagnostics, and future backends through admitted providers. | P2 and backend contracts available | `RuntimeFacade` no longer names a concrete backend and admission remains capability-driven | planned |
-| `P6 Evidence and Replay Identity` | Make composition identity part of diagnostics, replay, comparison, and experiment evidence. | P1 schema and P3/P4 realization | Resolved manifest, provider versions, stage-graph hash, and backend profile are stable evidence fields | planned |
-| `P7 Cordis Control Plane` | Implement Cordis plugins, configuration loading, dependency resolution, and manifest emission. | Native contract and canonical encoding frozen | Cordis and native producers generate byte-equivalent admitted manifests for shared fixtures | planned |
-| `P8 Node Host and Ecosystem` | Add a Node-API host and governed external-plugin packaging without changing the step path. | P7 accepted and host use cases approved | Node-hosted and Python-hosted runs consume the same native composition and parity gates | planned |
-| `P9 Migration and Closure` | Remove superseded setters and construction paths, promote stable rules, and close or split residuals. | P1-P8 acceptance evidence | Parent indexes, standards, reference, acceptance, and archive routes are synchronized | planned |
+| `P2-A Native Lifecycle Kernel` | Implement the isolated C++ catalog, scoped transaction, replacement, rollback, freeze, and deterministic disposal substrate. | P1 contract frozen | Focused native and architecture gates pass | pass |
+| `P2-B Default Provider Migration` | Move default model/service construction behind admitted native providers and emit the first production composition identity. | P2-A accepted | Default behavior/replay parity holds, raw provider capture is removed, and the resolved plan is evidence-bearing | ready |
+| `P2-C Cordis Default-Profile Vertical Slice` | Introduce the first repository-owned Cordis profile/plugin path and project the default runtime request into the canonical P1-B contract. | P2-B production path stable | Cordis and native compatibility producers emit byte-equivalent default requests that native code revalidates and realizes | planned |
+| `P3-A System Package Composition` | Compile repository-admitted system packages into the frozen native stage graph. | P2-B and owner admission rules accepted | Default graph parity holds and no package owns a private pipeline | planned |
+| `P3-B Capability And Profile Projection` | Lower capability/policy requests and compatibility profile names into owner-admitted contribution bundles. | P3-A declaration boundary stable | Domain labels remain compatibility bundles rather than the permanent composition ontology | planned |
+| `P4 Backend Composition` | Select CPU, CUDA-resident, diagnostics, and future backends through admitted providers. | P2-B and backend contracts available | `RuntimeFacade` no longer names a concrete backend and admission remains capability-driven | planned |
+| `P5 Evidence And Replay Expansion` | Extend the P2-B/P2-C identity baseline across graph, backend, host, replay, and comparison evidence. | production composition exists | Unexplained composition mismatch is rejected | planned |
+| `P6 Cordis Package Maturation` | Complete repository-owned Cordis profiles, configuration overlays, diagnostics, provenance, and plugin ergonomics. | P2-C accepted and owner contracts available | maintained Cordis composition covers admitted production profiles without becoming a hot-path executor | planned |
+| `P7 Conditional Node Host` | Add Node-API hosting only for approved use cases, without changing native/Python availability or step semantics. | Cordis producer accepted and host decision approved | Node-hosted runs use the same native owner and parity gates | conditional |
+| `P8 Migration And Closure` | Remove superseded truth paths, promote stable rules, and close or route residuals. | required native, Cordis, system, backend, evidence, and parity gates accepted | the Cordis program has an admitted producer/native vertical path; optional Node/external ecosystem residuals have named owners | planned |
 
 Phases describe dependency order, not a deadline or a reason to weaken the
 long-term target. A phase may be split into bounded implementation slices, but
@@ -144,8 +159,10 @@ Expected maintained outputs include:
 - native lifecycle and provider libraries with focused tests;
 - default and domain/backend composition profiles;
 - generated or validated stage graph and composition hash;
-- Cordis package and Node host adapter using the same contract;
-- Python, C++, and Node host parity evidence;
+- Cordis package using the same low-level contract and a separately approved
+  Node host adapter when required;
+- Python, C++, and Cordis-producer parity evidence, plus Node host parity when
+  that adapter is admitted;
 - lifecycle, replay, failure-injection, batch-scale, and performance reports;
 - architecture guards preventing per-step cross-language calls and dual
   composition truth.
@@ -188,6 +205,11 @@ This subproject can be marked accepted only when:
   models or backends directly;
 - stage ordering remains governed by maintained stage contracts rather than
   Cordis plugin order;
+- experiment intent reaches Cordis through an explicit runtime-composition
+  projection, and owner-specific admission remains visible in the resolved
+  catalog lock;
+- at least one repository-owned Cordis default-profile path emits the canonical
+  request consumed and revalidated by the native composition compiler;
 - Python and standalone C++ operation do not require Node;
 - the Node/Cordis host, when enabled, does not enter the per-step call graph;
 - CPU/CUDA parity and representative world-batch performance gates remain
@@ -201,9 +223,13 @@ This subproject can be marked accepted only when:
 
 Immediate work is P2-B default-provider migration. It must move the existing
 default model, factory, event-store, damage-bridge, and weapon-release service
-construction behind admitted native providers while preserving the accepted
-default behavior and replay baseline. System-family, backend, binding, and
-Cordis migration remain separate later slices.
+construction behind admitted native providers, preserve the accepted default
+behavior/replay baseline, and export the first production composition identity.
+P2-C follows as the first Cordis vertical slice: a repository-owned Cordis
+default profile must emit the same canonical request that native code
+revalidates and realizes. System-family, backend, and binding migrations remain
+separate later slices; Node hosting remains conditional rather than a closure
+prerequisite for the Cordis producer/native path.
 
 Long-term residuals include plugin authenticity and distribution policy,
 multi-process hosting, remote composition catalogs, third-party compatibility,

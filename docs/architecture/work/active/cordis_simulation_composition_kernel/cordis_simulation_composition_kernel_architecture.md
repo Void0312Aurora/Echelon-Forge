@@ -29,15 +29,22 @@ It does not redefine simulation state, event ordering, stage semantics, backend
 parity, experiment authority, or domain maturity.
 
 The durable target is not merely a C++ factory and not a JavaScript-driven
-simulation loop. It is a two-level kernel:
+simulation loop. It is a four-layer authority chain:
 
-- a Cordis control plane owns declarative plugin composition and external
-  extension packaging;
-- a native composition kernel owns validated realization, resource lifetime,
-  graph freeze, rollback, and deterministic handoff to the simulation engine.
+- the Experiment Face owns user-visible experiment intent;
+- a runtime projection expresses that intent as typed capabilities, policies,
+  profiles, and configuration;
+- Cordis owns long-term declarative plugin/service/profile composition over
+  owner-admitted categories and emits the canonical low-level request;
+- a native composition compiler/root owns deterministic revalidation,
+  resolution, realization, resource lifetime, graph freeze, rollback, and
+  handoff to the simulation engine.
 
-Cordis is therefore introduced into the simulation kernel architecture as its
-composition control plane, not as its numerical or causal-temporal executor.
+Cordis is therefore introduced as the required declarative composition control
+plane for this program, not as the owner of experiment policy, implementation
+admission, numerical execution, or causal-temporal semantics. Native and Python
+compatibility producers preserve offline/embedded operation, but they do not
+turn Cordis into an optional program outcome.
 
 ## 2. Evidence Baseline
 
@@ -99,10 +106,12 @@ binds their lifetimes, and records the selected graph as evidence.
 
 ```mermaid
 flowchart TD
-    CFG["Content / experiment / operator configuration"]
-    CORDIS["Cordis control plane\nplugin discovery and dependency resolution"]
-    NATIVE_DESC["Native profile source\noffline and embedded deployments"]
-    MANIFEST["Canonical SimulationCompositionManifest"]
+    EXP["ExperimentSpec\nsimulation + policy + evaluation intent"]
+    PROJECT["Runtime composition projection\ncapabilities + policies + configuration"]
+    CORDIS["Cordis control plane\nprofiles + plugins + services + injection"]
+    COMPAT["Native / Python compatibility producer\noffline and embedded deployments"]
+    MANIFEST["Canonical low-level\nSimulationCompositionManifest"]
+    CATALOG["AdmittedCatalogLock\nowner-approved implementations + provenance"]
     VALIDATE["Native composition validator\nversions, capabilities, conflicts, graph rules"]
     ROOT["Native CompositionRoot\nproviders, scopes, rollback, freeze"]
     BACKEND["IWorldBatchBackend provider"]
@@ -112,11 +121,13 @@ flowchart TD
     STATE["Versioned state and simulation event queue"]
     EVIDENCE["Diagnostics / replay / comparison evidence"]
 
-    CFG --> CORDIS
-    CFG --> NATIVE_DESC
+    EXP --> PROJECT
+    PROJECT --> CORDIS
+    PROJECT --> COMPAT
     CORDIS --> MANIFEST
-    NATIVE_DESC --> MANIFEST
+    COMPAT --> MANIFEST
     MANIFEST --> VALIDATE
+    CATALOG --> VALIDATE
     VALIDATE --> ROOT
     ROOT --> BACKEND
     BACKEND --> BATCH
@@ -127,13 +138,21 @@ flowchart TD
     STAGE --> EVIDENCE
 ```
 
-Cordis and the native profile source are alternative manifest producers. The
-native validator and realization path are common and authoritative.
+Cordis is the maintained long-term producer for declarative runtime
+composition. Native/Python compatibility producers may emit the same low-level
+manifest when Node is absent. All producers cross the same owner-admission and
+native revalidation boundary; none may bypass it or become a second execution
+truth.
 
 ## 5. Authority Matrix
 
 | Concern | Authority | Cordis role | Native composition role | Simulation role |
 | --- | --- | --- | --- | --- |
+| Experiment intent | Experiment Face | Consume projected runtime requirements; do not redefine policy/evaluation intent | none | execute the accepted runtime portion |
+| Runtime composition projection | Experiment/runtime contract owners | Expand capabilities, policies, profiles, and configuration into a declarative request | Validate that the low-level request is complete and canonical | none |
+| Plugin/service/profile composition | Cordis control plane | Resolve repository-owned declarative packages into the canonical request | Independently re-resolve and reject divergence | none |
+| Implementation admission | applicable model, system, backend, domain, evidence, and security owners | Select only from the locked admitted catalog | Verify exact descriptor, implementation, service type, capability, and provenance match | none |
+| Compatibility production | native/Python adapters | none | Emit the same low-level request for offline/embedded operation without displacing Cordis's target role | none |
 | Plugin discovery | Cordis control plane or native static catalog | Discover descriptors and configuration | Reject unknown or unadmitted descriptors | none |
 | Dependency resolution | Canonical composition contract | Produce requested graph | Re-resolve/verify deterministically | none |
 | Provider instances | Native composition root | Name provider and config | Construct, own, expose typed handle, dispose | Consume frozen handle |
@@ -178,6 +197,20 @@ than duplicating every schema field.
 
 The schema must not serialize C++ pointers, Cordis object identities, Flecs
 entity IDs, filesystem discovery order, or host-specific absolute paths.
+
+The durable conceptual split is:
+
+1. `RuntimeCompositionRequest`: projected experiment intent, required
+   capabilities/policies, profile constraints, and configuration;
+2. `AdmittedCatalogLock`: owner-approved implementations, versions,
+   capabilities, provenance, and trust decisions;
+3. `ResolvedRuntimePlan`: exact providers, bindings, system/stage graph, scope
+   generations, and evidence hashes.
+
+The frozen P1-B requested manifest remains the canonical low-level interchange
+and compatibility artifact between producers and the native compiler. It may
+carry exact descriptors by design, but it must not become the only public
+authoring abstraction exposed to experiment authors.
 
 ### 6.2 Plugin descriptor
 
@@ -338,7 +371,7 @@ The native scheduler compiles accepted contributions into the maintained
 causal-temporal graph. A plugin must not call `ecs.progress()` or directly run
 an undeclared system as a private pipeline.
 
-Long-term profiles should include at least:
+Compatibility and acceptance profiles should include at least:
 
 - minimal contract-test runtime;
 - common CPU exact runtime;
@@ -348,11 +381,15 @@ Long-term profiles should include at least:
 - compatibility profile reproducing the current default kernel during
   migration.
 
-Profiles select contributions; they do not define a second semantic lifecycle.
+Long-term authoring selects typed capabilities and policies. Domain labels may
+lower into owner-admitted capability bundles for migration and usability, but
+they do not become the permanent ontology or a second semantic lifecycle.
 
 ## 10. Cordis Control Plane
 
-The Cordis package should model:
+The first Cordis vertical slice must model the default compatibility profile
+and emit byte-equivalent canonical P1-B request bytes for native revalidation.
+The mature Cordis package should then model:
 
 - one host/application context for plugin catalogs and configuration;
 - child contexts for backend or independently managed runtime instances;
@@ -366,9 +403,10 @@ It must not expose simulation entities or mutable state as general Cordis
 services. It also must not use Cordis event ordering as simulation event
 ordering.
 
-The Cordis producer emits a complete manifest. The native side must validate it
-again and may reject it. Successful Cordis resolution is not sufficient runtime
-admission evidence.
+The Cordis producer emits a complete low-level manifest from an explicit
+runtime-composition projection and an admitted catalog. The native side must
+validate it again and may reject it. Successful Cordis resolution is not
+sufficient runtime admission evidence.
 
 ## 11. Host And Binding Model
 
@@ -512,17 +550,23 @@ No empty directory tree should be created before its first accepted slice.
 The migration must be strangler-style and preserve one default behavior path:
 
 1. record the current default construction and stage-order baseline;
-2. introduce the manifest and native validator without changing construction;
+2. introduce the low-level manifest and native validator without changing
+   construction;
 3. construct existing defaults through providers behind a compatibility
-   profile;
-4. eliminate unsafe replacement and bind service lifetime to scopes;
-5. split system registration into declared contributions while preserving the
+   profile and emit the first production composition identity;
+4. add the repository-owned Cordis default-profile producer as a vertical slice
+   over the same canonical request and native realization path;
+5. eliminate unsafe replacement and bind service lifetime to scopes;
+6. split system registration into owner-admitted packages while preserving the
    exact default graph;
-6. move backend selection behind providers;
-7. emit composition evidence and require it for replay/comparison;
-8. add Cordis as a second manifest producer;
-9. add the Node host;
-10. retire superseded constructors, setters, and static composition truth only
+7. lower capabilities/policies and compatibility profile names into those
+   packages;
+8. move backend selection behind admitted providers;
+9. expand composition evidence across graph, backend, host, replay, and
+   comparison surfaces;
+10. mature Cordis packages, overlays, diagnostics, provenance, and tooling;
+11. add a Node host only after a separate host use case is approved;
+12. retire superseded constructors, setters, and static composition truth only
     after caller and parity evidence is accepted.
 
 Compatibility wrappers must carry removal criteria. They must not become a
@@ -552,6 +596,14 @@ Rejected as the long-term target because it would lose the intended Cordis
 plugin/control-plane relationship. Native lifecycle semantics remain necessary,
 but the admitted Cordis producer is still a planned deliverable.
 
+### Keep Cordis indefinitely optional after the native substrate exists
+
+Rejected for this program because the objective is to introduce Cordis's
+context/service/injection/effect/profile composition model, not merely to build
+a generic manifest reader. Bounded native and system slices may be accepted
+independently, and Node/external packaging may remain conditional, but overall
+program closure requires an admitted Cordis producer/native vertical path.
+
 ### Make Cordis the only way to run the simulator
 
 Rejected because Python training, standalone C++, offline deployment, and
@@ -569,7 +621,11 @@ following:
 
 - allowing cross-language calls during a maintained stage;
 - permitting truth-affecting hot replacement inside an episode;
-- making Cordis or Node mandatory for native/Python deployments;
+- making Node mandatory for native/Python deployments;
+- allowing Cordis to supersede Experiment Face intent or owner-specific
+  admission, or allowing it to bypass native revalidation;
+- removing the required Cordis producer/native closure gate without an explicit
+  replacement architecture decision;
 - allowing plugin order to determine stage or event order;
 - introducing an additional composition truth source;
 - exposing raw ECS state through general Cordis services;

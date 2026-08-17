@@ -25,7 +25,8 @@ Last verified: `2026-08-17`
 | 3 | `P1-B Manifest And Resolution Contract` | pass | P1-A 已通过且 contract write set 保持有界 | runtime contract/schema input 与聚焦测试 | schema decision、fixture、invalid-manifest matrix、versioning/canonicalization evidence |
 | 4 | `P2-A Native Lifecycle Kernel` | pass / independently repaired | P1-A/P1-B gate 已通过 | 隔离原生 composition library、聚焦 C++ test、architecture guard 与 CMake/CI wiring | 普通 MSVC 与 ASan build 均为 14 tests/430 assertions；hash、typed-scope、lifecycle-state、rollback、串行化 replacement rebuild、重入 lifetime、plugin/factory identity、进程内语义 service-type identity、handover、invalidation 与 deterministic validation 证据 |
 | 5 | `P2-B Default Provider Migration` | ready / not dispatched | P2-A 已通过且 engine/provider write set 保持有界 | 默认 provider 入口、kernel builder、engine construction seam、聚焦 parity/lifetime test | 默认 behavior/replay parity 与移除具体 model 构造/raw capture |
-| 6 | 后续全部任务簇 | held | 各自依赖通过 | task-cluster write set | 任务簇专属 evidence packet |
+| 6 | `P2-C Cordis Default-Profile Vertical Slice` | held / planned | P2-B production composition/identity 稳定 | 有界仓库自有 Cordis package/profile、projection adapter、canonical fixture、conformance test | 字节等价默认 request、原生重新校验/实例化 parity 与 offline-native regression 证据 |
+| 7 | 后续全部任务簇 | held | 各自依赖与 owner admission rule 通过 | task-cluster write set | 任务簇专属 evidence packet |
 
 ## 下一派发包
 
@@ -36,6 +37,7 @@ write set:
   src/core/engine/** construction/ownership seam
   与 model/service owner 相邻的获准默认 provider 入口
   聚焦 lifecycle、behavior、replay 与 ownership test
+  有界 composition identity/evidence DTO join
   本子项目内有界 design/status 更新
 non-goals:
   system-family contribution 拆分或替换中央 registration list
@@ -47,8 +49,9 @@ validation:
   reset/rebuild 与重复 create/destroy lifetime evidence
   SimulationKernel 不再构造具体默认 model
   已注册 system 不再保留可替换 provider raw pointer
+  production path 导出稳定 requested/resolved identity
 closure:
-  默认 profile 通过 ef_composition 构造当前 kernel，且无语义漂移或第二套 construction truth
+  默认 profile 通过 ef_composition 构造当前 kernel，且无语义漂移或第二套 construction truth，并为 P2-C 留下稳定 projection/evidence seam
 ```
 
 ## 队列规则
@@ -62,8 +65,12 @@ closure:
 - 若发现与维护中的 architecture standard 冲突，暂停相关任务簇并路由有界 standard
   review；task 文档不得静默覆盖 standard。
 - 在实现证据存在前，不派发 acceptance/closure。
+- P2-C 是 P2-B 之后的下一战略切片。它针对 production 默认路径证明 Cordis，同时把
+  Node hosting、外部打包与 system modularization 排除在该切片之外。
+- 有界原生验收不代表 Cordis 验收。整体计划关闭要求 P2-C Cordis/native conformance；
+  Node hosting 仍取决于独立 host 决策。
 
 ## 下次更新触发
 
-P2-B 派发或完成、任务簇 blocked/rescoped，或 accepted 结果改变下一依赖时更新。
-不得仅为记录时间流逝而更新。
+P2-B 派发或完成、P2-C 具备派发条件、任务簇 blocked/rescoped，或 accepted 结果改变
+下一依赖时更新。不得仅为记录时间流逝而更新。

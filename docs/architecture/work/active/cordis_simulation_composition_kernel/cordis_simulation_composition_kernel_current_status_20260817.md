@@ -24,14 +24,15 @@ Contract baseline:
 ## Change At This Checkpoint
 
 - created and validated an owner-local active architecture subproject;
-- established Cordis as the long-term composition control plane rather than the
-  deterministic stage executor;
-- established a native composition kernel as the realization and lifecycle
-  authority;
+- established the Experiment Face as experiment-intent authority, an explicit
+  runtime projection seam, Cordis as the required long-term declarative
+  composition control plane, owner-specific implementation admission, and the
+  native composition kernel as deterministic realization/lifecycle authority;
 - defined a host-neutral manifest, deterministic freeze, evidence, and offline
   deployment direction;
-- split the program into finite contract, native, migration, Cordis, host,
-  parity, and closure clusters;
+- split the program into finite, independently accepted slices while retaining
+  a Cordis producer/native vertical path as an overall closure requirement and
+  treating Node hosting as conditional;
 - completed the source-grounded P1-A census of constructors, setters, raw
   captures, service refs, system registrations, backend selection, lifecycle,
   stage registries, bindings, build ownership, and relevant tests;
@@ -73,8 +74,8 @@ Contract baseline:
 | Model/provider migration | absent | existing interfaces and setters | provider factories, kernel builder, lifetime-safe consumption |
 | System composition | absent | static registration and stage manifests coexist | contribution contract and graph compilation |
 | Backend composition | partial baseline | semantic backend interface and capability contracts exist | provider selection and facade construction migration |
-| Composition evidence | absent | existing replay/diagnostic infrastructure is available | manifest and graph identity integration |
-| Cordis control plane | absent | external architecture reference only | package workspace, plugin SDK, manifest producer, conformance tests |
+| Composition evidence | contract-only baseline | native requested/resolved identities are retained by the isolated kernel | production identity in P2-B, then graph/backend/host/replay expansion in P5-A |
+| Cordis control plane | absent / required target | architecture and P1-B producer contract exist; no repository Cordis package exists | P2-C default-profile producer/native vertical slice, then P6-A package maturation |
 | Node host | absent | Node-API is only a candidate host boundary | approved binding target and lifecycle/parity tests |
 | Runtime acceptance | partial | P2-A proves the isolated lifecycle boundary | default behavior, systems, backend, evidence, Cordis, hosts, parity, and closure gates |
 
@@ -127,7 +128,7 @@ Contract baseline:
 | dual model ownership through `unique_ptr`, singleton refs, and captured pointers | correctness and use-after-free | migrate production defaults to P2-A scoped handles and remove raw capture | P2-B |
 | central static system list | extensibility and profile ambiguity | contribution descriptors compiled into stage contracts | P3 |
 | direct concrete backend construction | backend evolution and test isolation | backend provider admission | P4 |
-| multiple potential manifest producers | divergent composition truth | canonical schema, native revalidation, stable hash | P1/P6 |
+| Experiment/Cordis/native authority overlap | competing composition truth | explicit intent projection, owner catalog lock, canonical request, native revalidation | P2-C/P3/P6 |
 | asynchronous Cordis lifecycle | nondeterministic teardown if copied directly | native dependency-safe lifecycle transaction | P2/P6 |
 | per-world host overhead | world-batch scale risk | shared resolved profile plus lightweight native world scopes | P2/P7 |
 | cross-language call temptation | throughput and determinism risk | architecture guard and call-graph test | P6/P7 |
@@ -137,17 +138,26 @@ Contract baseline:
 ## Recommended Next Action Order
 
 1. migrate the default profile through P2-B providers and a kernel builder,
-   with behavior/replay parity and removal of raw provider capture;
+   with behavior/replay parity, removal of raw provider capture, and production
+   composition identity;
 2. add migration-specific reset, repeated rebuild, and lifetime evidence;
-3. split system and backend composition;
-4. make composition identity part of evidence;
-5. add the Cordis producer and only then the Node host;
-6. run host/backend/batch parity and retire dual paths.
+3. execute P2-C: project the default runtime request through a repository-owned
+   Cordis profile/plugin path and prove canonical/native realization parity;
+4. compile owner-admitted system packages and capability/profile projections;
+5. migrate backend selection and expand evidence across graph/backend/host
+   surfaces;
+6. mature the Cordis package and tooling;
+7. add Node hosting only if separately approved, then run applicable
+   producer/host/backend/batch parity and retire dual paths.
 
 ## Explicitly Refused Claims
 
-- Cordis integration is not implemented; P2-A is a host-neutral native
-  prerequisite, not Cordis itself.
+- Cordis integration is not implemented; P2-A is its host-neutral native
+  substrate, not Cordis itself. This absence limits the current acceptance
+  claim but does not make Cordis optional in the target program.
+- Cordis will not own experiment intent, semantic implementation admission, or
+  deterministic execution; those boundaries are explicit prerequisites for
+  introducing it safely.
 - The current runtime is not plugin-composed.
 - The proposed architecture does not make simulation faster by itself.
 - Existing interfaces do not prove lifecycle-safe replacement.
