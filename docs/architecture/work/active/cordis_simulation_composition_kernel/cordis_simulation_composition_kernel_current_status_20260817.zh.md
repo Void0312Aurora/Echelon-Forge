@@ -1,8 +1,8 @@
 # Cordis 仿真组合内核当前状态 — 2026-08-17
 
-状态：`2026-08-17` P2-A 原生 lifecycle baseline；composition ownership/migration edge
-已分类，P1-B contract 与隔离的原生 realization kernel 已通过，下一步是 P2-B，不声明
-已实现 Cordis 集成。
+状态：`2026-08-17` P2-A 原生 lifecycle baseline 加独立审阅修复；composition
+ownership/migration edge 已分类，P1-B contract 与隔离的原生 realization kernel 已通过，
+下一步是 P2-B，不声明已实现 Cordis 集成。
 
 语言：
 
@@ -42,11 +42,13 @@ Contract baseline：
   34 个 system，并增加 fail-closed invalid matrix 与 permutation-stability test；
 - 增加隔离的 `ef_composition` static library，不依赖 engine、facade、Flecs、binding 或
   Cordis；
-- 实现 closed requested/resolved JSON ingestion、冻结 provider catalog、原生 contract
-  revalidation、scoped transactional construction、typed generation handle、failure rollback、
-  barrier-governed scope rebuild、确定性逆序 disposal 与幂等 shutdown；
-- 普通 MSVC build 与 MSVC AddressSanitizer 下均通过 8 个聚焦 C++ test case、149 个
-  assertion；聚焦 CTest 与 architecture suite 通过，只有一个既有 `g++` 不可用环境 skip；
+- 实现 closed requested/resolved JSON ingestion、原生 SHA-256 重算、typed-scope guard、冻结
+  factory identity、lifecycle 状态转换、scoped transactional construction、typed generation
+  handle、failure rollback、replacement-aware barrier rebuild、handover admission、确定性逆序
+  disposal、identity accessor 与幂等 shutdown；
+- 普通 MSVC build 与 MSVC AddressSanitizer 下均通过 13 个聚焦 C++ test case、277 个
+  assertion；composition architecture/contract 为 20 passed、1 个 toolchain-dependent
+  `g++` skip；
 - 未迁移默认 provider、kernel/facade constructor、system registration、backend selection、
   binding、Cordis package 或 Node host。
 
@@ -56,8 +58,8 @@ Contract baseline：
 | --- | --- | --- | --- |
 | 架构权威 | P0 pass / project active | 父 README、目标架构、父路由与文档验证 | 后续提升已接受 runtime 规则 |
 | Composition census | P1-A pass | [基于源码的 census](cordis_simulation_composition_census_20260817.zh.md)，包含 owner/scope/replacement/disposition table | 在 generated evidence 替代前保持 census guard 同步 |
-| Manifest contract | P1-B pass | [contract baseline](cordis_simulation_composition_contract_20260817.zh.md)、generated schema、纯 C++ value type、canonical fixture、invalid corpus 与 deterministic test | 持续守护 producer/schema/header parity；在外部 producer admission 时接入 canonical-byte/hash verification |
-| 原生 lifecycle kernel | P2-A pass / isolated | `ef_composition`、原生 JSON ingestion/validation、scoped transaction、typed generation handle、rollback/rebuild/disposal test 与 MSVC ASan 证据 | P2-B 接入真实默认 provider；广义原生验收前增加迁移特有 reset/replay 证据 |
+| Manifest contract | P1-B pass / repaired | requested/resolved generated schema、纯 C++ value type、canonical fixture、invalid corpus、deterministic test 与原生 requested/resolved hash 重算 | 持续守护 producer/schema/header parity；外部 admission 前证明 Cordis 逐字节等价输出与 artifact provenance |
+| 原生 lifecycle kernel | P2-A pass / isolated / repaired | `ef_composition`、typed-scope guard、不可变 factory metadata、lifecycle 状态机、scoped transaction、replacement-aware rebuild、handover admission、identity accessor、rollback/disposal test、CI wiring 与 MSVC ASan 证据 | P2-B 接入真实默认 provider；广义原生验收前增加迁移特有 reset/replay 与真实 registry handover 证据 |
 | Model/provider migration | absent | 既有 interface/setter | provider factory、kernel builder、lifetime-safe consumption |
 | System composition | absent | 静态注册与 stage manifest 并存 | contribution contract 与 graph compilation |
 | Backend composition | partial baseline | 已有语义 backend interface/capability contract | provider selection 与 facade construction migration |
@@ -88,10 +90,13 @@ Contract baseline：
     join 拥有的 stage、backend、domain、capability 或 artifact admission。
 14. P2-A 能解析并重新校验冻结的默认 fixture，但原生 realization 目前使用 test factory；
     production 默认 provider 尚未迁入 catalog。
-15. P2-A 保留 requested/resolved hash 字段，但不会独立重算共享 canonical byte stream；
-    外部 Cordis/native producer trust 仍需 canonical-byte conformance join。
+15. P2-A 现会按冻结 canonical field rule 独立重算 requested/resolved hash，并拒绝 stale/
+    tampered identity；外部 Cordis/native producer trust 仍需逐字节 conformance 与 artifact
+    provenance 证据。
 16. typed handle 在成功替换 generation 时失效，但 lifecycle rebuild/stop 必须发生在受治理
     quiescent barrier；调用方不得让 `try_get()` 返回的裸指针跨越该 barrier。
+17. material composition iteration 必须独立审阅。默认矩阵覆盖 lifecycle/ownership、
+    contract/canonicalization 与 integration/CI/documentation；未解决 P1 会阻断下一 cluster。
 
 ## 残余登记
 

@@ -12,7 +12,8 @@ setup/evidence-aware；full ground movement、sensing、fires、damage 或 runti
 contract 尚未维护。
 
 `simulation_composition_contract.h` 与生成的
-`composition/simulation_composition_manifest.v1.schema.json` 定义 host-neutral composition
+`composition/simulation_composition_manifest.v1.schema.json` 与
+`composition/resolved_simulation_composition.v1.schema.json` 定义 host-neutral composition
 value contract。它们命名 version、scope、service、provider/system contribution、backend
 request、evidence policy 与 stable validation error；不构造 provider、不持有 scope resource、
 不解析 Cordis object，也不注册 Flecs system。Executable schema source 与 canonical fixture

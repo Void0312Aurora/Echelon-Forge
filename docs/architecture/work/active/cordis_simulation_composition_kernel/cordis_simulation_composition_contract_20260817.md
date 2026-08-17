@@ -1,7 +1,7 @@
 # Cordis Simulation Composition Contract — 2026-08-17
 
-Status: `2026-08-17` P1-B contract baseline implemented and validated; native
-provider realization and lifecycle transactions remain P2 work.
+Status: `2026-08-17` P1-B contract baseline and P2-A native realization/identity
+repair implemented and validated; production-provider migration remains P2-B.
 
 Language:
 
@@ -24,18 +24,20 @@ may produce the requested JSON shape. Native code remains responsible for
 revalidation, capability/stage admission, provider construction, scope
 transactions, executable graph realization, and evidence export.
 
-The contract is deliberately split into four artifacts:
+The contract is deliberately split into five artifact classes:
 
 | Artifact | Authority and purpose |
 | --- | --- |
 | [`simulation_composition_contract.py`](../../../../../tools/maintenance/simulation_composition_contract.py) | executable schema source, normalization rules, stable diagnostics, deterministic graph ordering, and compatibility-fixture generator |
 | [`simulation_composition_manifest.v1.schema.json`](../../../../../src/runtime/contracts/composition/simulation_composition_manifest.v1.schema.json) | generated host-neutral transport schema |
+| [`resolved_simulation_composition.v1.schema.json`](../../../../../src/runtime/contracts/composition/resolved_simulation_composition.v1.schema.json) | generated closed resolved-envelope transport schema |
 | [`simulation_composition_contract.h`](../../../../../src/runtime/contracts/simulation_composition_contract.h) | JSON-library-independent C++ value contract, stable service keys, scopes, versions, and error codes |
 | default requested/resolved fixtures | frozen cross-implementation conformance and migration baseline |
 
-The Python executable specification is not a runtime owner. P2 must implement
-the native resolver/validator against these fixtures and prove canonical-byte,
-diagnostic-code, and ordering parity before constructing any provider.
+The Python executable specification is not a runtime owner. The native
+resolver/validator now recomputes the same requested/resolved SHA-256 against
+these fixtures and proves diagnostic-code and ordering parity before constructing
+any provider.
 
 ## Versioned Envelopes
 
@@ -236,12 +238,17 @@ P2-A subsequently implemented these constraints in the isolated
 - scope construction is transactional and disposal reverses the realized
   dependency graph;
 - handles carry scope generation and reject stale access;
-- successful native realization exports the requested/resolved hashes rather
-  than recomputing a private identity;
+- successful native realization recomputes and exports the requested/resolved
+  hashes using the frozen canonical field rules rather than trusting a producer
+  claim or creating a private identity;
+- replacement rebuild accepts a newly validated manifest/catalog, preserves the
+  old identity on failure, and requires token/generation-safe effect handover;
 - the Python executable specification remains a conformance oracle and never
   enters the maintained simulation step path.
 
-This implementation checkpoint does not amend P1-B. It preserves the frozen
-fixtures and requested/resolved hash fields, while deferring independent
-canonical-byte/hash recomputation to the external-producer conformance join.
-Production provider construction and behavior parity begin in P2-B.
+This implementation checkpoint does not amend the P1-B hash semantics. It adds
+native canonical-byte/hash recomputation, a generated resolved-envelope schema,
+typed-scope fail-closed validation, and Python/schema/native parity repairs.
+Byte-for-byte Cordis producer conformance, Unicode implementation diversity,
+artifact provenance, production provider construction, and behavior parity
+remain later gates beginning in P2-B/P6.

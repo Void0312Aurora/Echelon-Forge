@@ -12,7 +12,8 @@ setup/evidence-aware only; no full ground movement, sensing, fires, damage, or
 runtime contract is maintained yet.
 
 `simulation_composition_contract.h` and the generated
-`composition/simulation_composition_manifest.v1.schema.json` define the
+`composition/simulation_composition_manifest.v1.schema.json` plus
+`composition/resolved_simulation_composition.v1.schema.json` define the
 host-neutral composition value contract. They name versions, scopes, services,
 provider/system contributions, backend requests, evidence policy, and stable
 validation errors. They do not construct providers, own scope resources, parse

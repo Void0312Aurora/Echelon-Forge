@@ -53,6 +53,9 @@ production type name。
 - 任务簇到达 round cap 后停止并重新划分范围，不能自动增加无限 repair wave。
 - runtime 修改必须进行相称的 build、test、parity、lifecycle 和 evidence 校验；docs-only
   检查不能关闭 runtime 任务簇。
+- 每个 material implementation/repair cluster 在提交稳定后必须进行独立只读审阅。默认矩阵
+  覆盖 lifecycle/ownership、contract/canonicalization、integration/CI/docs，并使用
+  `gpt-5.6-sol`、`max` reasoning；除非后续显式决策改变配置。未解决 P1 会阻断下一 cluster。
 - 委派时遵循
   [Subagent 使用规范](../../../../engineering/automation/standards/subagent_usage_policy.zh.md)。
 

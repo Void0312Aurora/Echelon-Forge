@@ -1,8 +1,9 @@
 # Cordis Simulation Composition Kernel Current Status — 2026-08-17
 
-Status: `2026-08-17` P2-A native lifecycle baseline; composition ownership and
-migration edges are classified, the P1-B contract and isolated native
-realization kernel passed, P2-B is next, and no Cordis integration is claimed.
+Status: `2026-08-17` P2-A native lifecycle baseline plus independent-review
+repair; composition ownership and migration edges are classified, the P1-B
+contract and isolated native realization kernel passed, P2-B is next, and no
+Cordis integration is claimed.
 
 Language:
 
@@ -47,13 +48,14 @@ Contract baseline:
   and permutation-stability tests;
 - added an isolated `ef_composition` static library with no engine, facade,
   Flecs, binding, or Cordis dependency;
-- implemented closed requested/resolved JSON ingestion, a frozen provider
-  catalog, native contract revalidation, scoped transactional construction,
-  typed generation handles, failure rollback, barrier-governed scope rebuild,
-  deterministic reverse disposal, and idempotent shutdown;
-- passed 8 focused C++ test cases with 149 assertions in the normal MSVC build
-  and under MSVC AddressSanitizer; passed the focused CTest and architecture
-  suites, with one existing environment skip where `g++` is unavailable;
+- implemented closed requested/resolved JSON ingestion, native SHA-256
+  recomputation, typed-scope guards, frozen factory identity, lifecycle state
+  transitions, scoped transactional construction, typed generation handles,
+  failure rollback, replacement-aware barrier rebuild, handover admission,
+  deterministic reverse disposal, identity accessors, and idempotent shutdown;
+- passed 13 focused C++ test cases with 277 assertions in the normal MSVC build
+  and under MSVC AddressSanitizer; composition architecture/contract tests are
+  20 passed with one toolchain-dependent `g++` skip;
 - did not migrate default providers, kernel/facade constructors, system
   registration, backend selection, bindings, Cordis packages, or Node hosting.
 
@@ -63,8 +65,8 @@ Contract baseline:
 | --- | --- | --- | --- |
 | Architecture authority | P0 pass / project active | parent README, target architecture, parent route, and document validation | later promotion of accepted runtime rules |
 | Composition census | P1-A pass | [source-grounded census](cordis_simulation_composition_census_20260817.md) with owner/scope/replacement/disposition tables | keep census guard synchronized until generated evidence replaces it |
-| Manifest contract | P1-B pass | [contract baseline](cordis_simulation_composition_contract_20260817.md), generated schema, pure C++ value types, canonical fixtures, invalid corpus, and deterministic tests | keep producer/schema/header parity guarded; join canonical-byte/hash verification to external producer admission |
-| Native lifecycle kernel | P2-A pass / isolated | `ef_composition`, native JSON ingestion and validation, scoped transactions, typed generation handles, rollback/rebuild/disposal tests, and MSVC ASan evidence | integrate real default providers in P2-B; add migration-specific reset/replay evidence before broad native acceptance |
+| Manifest contract | P1-B pass / repaired | requested/resolved generated schemas, pure C++ value types, canonical fixtures, invalid corpus, deterministic tests, and native requested/resolved hash recomputation | keep producer/schema/header parity guarded; prove byte-equivalent Cordis output and artifact provenance before external admission |
+| Native lifecycle kernel | P2-A pass / isolated / repaired | `ef_composition`, typed-scope guards, immutable factory metadata, lifecycle state machine, scoped transactions, replacement-aware rebuild, handover admission, identity accessors, rollback/disposal tests, CI wiring, and MSVC ASan evidence | integrate real default providers in P2-B; add migration-specific reset/replay and real registry handover evidence before broad native acceptance |
 | Model/provider migration | absent | existing interfaces and setters | provider factories, kernel builder, lifetime-safe consumption |
 | System composition | absent | static registration and stage manifests coexist | contribution contract and graph compilation |
 | Backend composition | partial baseline | semantic backend interface and capability contracts exist | provider selection and facade construction migration |
@@ -104,12 +106,16 @@ Contract baseline:
 14. P2-A can parse and revalidate the frozen default fixture, but native
     realization currently uses test factories; production default providers
     have not moved behind the catalog.
-15. P2-A preserves requested/resolved hash fields but does not independently
-    recompute the shared canonical byte stream; external Cordis/native producer
-    trust still requires a canonical-byte conformance join.
+15. P2-A now independently recomputes requested/resolved hashes against the
+    frozen canonical field rules and rejects stale/tampered identities; external
+    Cordis/native producer trust still requires byte-equivalent conformance and
+    artifact provenance evidence.
 16. Typed handles invalidate on successful generation replacement, but lifecycle
     rebuild and stop must run at a governed quiescent barrier; callers must not
     retain the raw pointer returned by `try_get()` across that barrier.
+17. Independent review is mandatory for material composition iterations. The
+    default matrix covers lifecycle/ownership, contract/canonicalization, and
+    integration/CI/documentation; unresolved P1 findings block the next cluster.
 
 ## Residual Register
 

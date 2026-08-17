@@ -62,6 +62,11 @@ APIs, runtime strings, schema field names, or production type names.
   an unbounded repair wave.
 - Runtime changes require proportionate build, test, parity, lifecycle, and
   evidence validation; documentation-only checks cannot close them.
+- Every material implementation or repair cluster receives an independent
+  read-only review after its commits are stable. The default matrix covers
+  lifecycle/ownership, contract/canonicalization, and integration/CI/docs using
+  `gpt-5.6-sol` at `max` reasoning unless an explicit later decision changes the
+  review configuration. Unresolved P1 findings block the next cluster.
 - Follow the
   [Subagent Usage Policy](../../../../engineering/automation/standards/subagent_usage_policy.md)
   whenever work is delegated.

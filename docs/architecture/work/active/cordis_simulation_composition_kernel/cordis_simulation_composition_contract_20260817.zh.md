@@ -1,7 +1,7 @@
 # Cordis 仿真组合合同 — 2026-08-17
 
-状态：`2026-08-17` P1-B contract baseline 已实现并验证；native provider realization
-与 lifecycle transaction 仍属于 P2。
+状态：`2026-08-17` P1-B contract baseline 与 P2-A 原生 realization/identity 修复已实现并
+验证；production provider migration 仍属于 P2-B。
 
 语言：
 
@@ -23,18 +23,19 @@ Cordis、native static profile、Python tooling 或未来 Node host 均可生成
 shape。Native code 继续负责 revalidation、capability/stage admission、provider
 construction、scope transaction、executable graph realization 与 evidence export。
 
-Contract 有四类 artifact：
+Contract 有五类 artifact：
 
 | Artifact | 权威与用途 |
 | --- | --- |
 | [`simulation_composition_contract.py`](../../../../../tools/maintenance/simulation_composition_contract.py) | executable schema source、normalization rule、stable diagnostics、deterministic graph ordering 与 compatibility-fixture generator |
 | [`simulation_composition_manifest.v1.schema.json`](../../../../../src/runtime/contracts/composition/simulation_composition_manifest.v1.schema.json) | 生成的 host-neutral transport schema |
+| [`resolved_simulation_composition.v1.schema.json`](../../../../../src/runtime/contracts/composition/resolved_simulation_composition.v1.schema.json) | 生成的 closed resolved-envelope transport schema |
 | [`simulation_composition_contract.h`](../../../../../src/runtime/contracts/simulation_composition_contract.h) | 与 JSON library 无关的 C++ value contract、stable service key、scope、version 与 error code |
 | default requested/resolved fixture | 冻结的 cross-implementation conformance 与 migration baseline |
 
-Python executable specification 不是 runtime owner。P2 必须针对这些 fixture 实现 native
-resolver/validator，并在构造任何 provider 前证明 canonical-byte、diagnostic-code 与 ordering
-parity。
+Python executable specification 不是 runtime owner。Native resolver/validator 现会针对这些
+fixture 重算相同的 requested/resolved SHA-256，并在构造任何 provider 前证明
+diagnostic-code 与 ordering parity。
 
 ## 版本化 Envelope
 
@@ -218,10 +219,14 @@ P2-A 随后在隔离的 `ef_composition` library 中实现以下约束：
 - complete manifest/graph admission 前不得创建 runtime resource；
 - scope construction 必须 transactional，disposal 反向遍历 realized dependency graph；
 - handle 携带 scope generation，并拒绝 stale access；
-- successful native realization 导出 requested/resolved hash，不得重新计算私有 identity；
+- successful native realization 按冻结 canonical field rule 重算并导出 requested/resolved
+  hash，既不信任 producer claim，也不创建私有 identity；
+- replacement rebuild 接受新验证的 manifest/catalog，失败时保留旧 identity，并要求
+  token/generation-safe effect handover；
 - Python executable specification 只作为 conformance oracle，绝不进入 maintained simulation
   step path。
 
-该实现 checkpoint 不修改 P1-B。它保留冻结 fixture 与 requested/resolved hash 字段，同时
-把独立 canonical-byte/hash 重算延后到 external-producer conformance join。production
-provider construction 与 behavior parity 从 P2-B 开始。
+该实现 checkpoint 不修改 P1-B hash 语义；它加入 native canonical-byte/hash 重算、生成的
+resolved-envelope schema、typed-scope fail-closed validation 与 Python/schema/native parity
+修复。Cordis producer 逐字节 conformance、Unicode 多实现一致性、artifact provenance、
+production provider construction 与 behavior parity 仍是 P2-B/P6 起的后续 gate。
