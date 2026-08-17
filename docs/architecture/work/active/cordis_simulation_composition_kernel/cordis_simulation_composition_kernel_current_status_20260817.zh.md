@@ -45,8 +45,9 @@ Contract baseline：
 - 实现 closed requested/resolved JSON ingestion、原生 SHA-256 重算、typed-scope guard、冻结
   factory identity、lifecycle 状态转换、scoped transactional construction、typed generation
   handle、failure rollback、replacement-aware barrier rebuild、handover admission、确定性逆序
-  disposal、identity accessor 与幂等 shutdown；
-- 普通 MSVC build 与 MSVC AddressSanitizer 下均通过 13 个聚焦 C++ test case、286 个
+  disposal、value-snapshot identity accessor、串行化 lifecycle control、重入 wrapper 生命周期
+  保持、完整 plugin/factory identity check、稳定 service ABI check 与幂等 shutdown；
+- 普通 MSVC build 与 MSVC AddressSanitizer 下均通过 14 个聚焦 C++ test case、381 个
   assertion；composition architecture/contract 为 20 passed、1 个 toolchain-dependent
   `g++` skip；
 - 未迁移默认 provider、kernel/facade constructor、system registration、backend selection、

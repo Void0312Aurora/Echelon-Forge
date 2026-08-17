@@ -115,6 +115,12 @@ echelon_forge.sorted_utf8_json.v1
 10. source-file order、plugin discovery order、map insertion order、filesystem path、PID、
     timestamp、object address 不进入 hash input。
 
+canonical contract 的长期语义仍是 Unicode NFC。P2-A 原生 v1 admission profile 当前只
+接受 ASCII string 与 object key。ASCII 已经是 NFC，因此这是确定性的安全子集，而不是
+第二套 hash 语言。在 Python/Cordis producer 与原生 runtime 共享同一个 normalization
+implementation 之前，非 ASCII 输入 fail closed；该 gate 通过前不得宣称更宽 Unicode
+domain 的 Cordis producer conformance。
+
 禁止浮点是有意决策，用于避免基础 contract 的跨语言数字渲染歧义。后续版本可引入单独
 测试的 numeric canonicalization standard，但不能静默改变 v1 hash。
 

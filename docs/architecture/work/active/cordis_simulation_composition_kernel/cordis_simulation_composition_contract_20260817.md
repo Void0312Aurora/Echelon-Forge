@@ -118,6 +118,13 @@ Rules:
 10. source-file order, plugin discovery order, map insertion order, filesystem
     paths, process IDs, timestamps, and object addresses are not hash inputs.
 
+The canonical contract remains Unicode NFC. The P2-A native v1 admission
+profile currently accepts ASCII strings and object keys only. ASCII is already
+NFC, so this is a deterministic subset rather than a second hash language.
+Non-ASCII input fails closed until the Python/Cordis producer and native runtime
+share one normalization implementation; Cordis producer conformance must not be
+claimed for the wider Unicode domain before that gate passes.
+
 The floating-point restriction is intentional. It avoids cross-language number
 rendering ambiguity in the foundational contract. A later version may adopt a
 separately tested numeric canonicalization standard, but it cannot silently
