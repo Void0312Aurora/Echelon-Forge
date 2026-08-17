@@ -65,7 +65,8 @@ plugin 派发或跨语言 service lookup 放入逐 step 路径。
   contract；
 - 保证 composition resolution 确定、可验证、可散列，并在维护中的仿真执行前冻结；
 - 增加 Cordis package，解析准入插件并生成原生 runtime 消费的同一版本化 manifest；
-- 只在原生组合合同稳定后增加 Node-API host adapter；
+- 只有在原生组合合同稳定后、P6-B 又经独立 host decision 获准时，才增加 Node-API
+  host adapter；
 - 保持 Python/nanobind 和 standalone C++ 部署不依赖 Node runtime；
 - 通过受治理 extension point 支持未来 domain、model、backend、diagnostics 和
   experiment plugin。

@@ -72,8 +72,8 @@ In scope:
   before maintained simulation execution;
 - add a Cordis package that resolves admitted plugins and emits the same
   versioned manifest consumed by the native runtime;
-- provide a Node-API host adapter only after the native composition contract is
-  stable;
+- provide a Node-API host adapter only if P6-B is admitted by a separate host
+  decision after the native composition contract is stable;
 - preserve Python/nanobind and standalone C++ deployments without requiring a
   Node runtime;
 - support future domain, model, backend, diagnostics, and experiment plugins

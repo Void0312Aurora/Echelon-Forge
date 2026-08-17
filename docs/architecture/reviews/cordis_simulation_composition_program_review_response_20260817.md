@@ -16,7 +16,8 @@ Review answered:
 Review basis: `b9f289c81fd4`
 Response plan revision: `153d5f4e`
 First re-review repair: `89eca276`
-Decision state: `partially accepted and incorporated; Cordis strategic target retained; re-review requested`
+First re-review basis: `0d8635794b9052b92034adab7df6afd2fe2f987f`
+Decision state: `review findings incorporated; independent re-review approved with no P1/P2 blockers`
 Authority: owner response to an advisory review. The review remains an immutable
 independent judgment snapshot; this response changes the active program only
 through the cited active-work documents and commits.
@@ -217,27 +218,33 @@ P2 corrections and two P3 clarifications. This response and the active plan now:
 - distinguish Cordis primitives from the repository-owned,
   DeepSeek-Harness-style profile/bundle layer.
 
-P2-B remains eligible. P2-C0, P2-C1, and later implementation work remain held
-until this amended authority chain passes independent re-review.
+The independent re-review of `0d863579` returned `APPROVE` with no P1 or P2
+blockers and confirmed that the three P2 findings and the Cordis terminology P3
+were closed. It identified one non-blocking P3 wording residual where the scope
+and target-boundary narrative still made Node look like a default deliverable;
+that wording is now conditional on an independent P6-B host decision.
 
-## 9. Requested Re-review
+## 9. Re-review Disposition
 
-The independent reviewer is asked to re-evaluate the amended plan on these
-questions:
+The reviewer confirmed that:
 
-1. Is the Experiment Face/Cordis/admission/native authority chain unambiguous?
-2. Do P2-C0/P2-C1 prove a real Cordis relationship early enough to justify later
-   package maturation?
-3. Are owner-specific system/backend/domain/evidence admission boundaries
-   preserved?
-4. Does independent slice acceptance avoid Node/external-ecosystem blockage
-   without making Cordis optional?
-5. Does the closure rule accurately require Cordis producer/native conformance
-   while allowing Node and external distribution to remain conditional?
+1. the Experiment Face/Cordis/admission/native authority chain is unambiguous;
+2. P2-C0/P2-C1 require a real Cordis relationship early enough to justify later
+   package maturation and cannot pass on serializer-only evidence;
+3. owner-specific system/backend/domain/evidence admission boundaries remain
+   preserved;
+4. independent slice acceptance avoids Node/external-ecosystem blockage without
+   making Cordis optional; and
+5. closure requires Cordis producer/native conformance while Node and external
+   distribution remain conditional.
+
+The release boundary is therefore P2-B now, P2-C0 after P2-B acceptance, P2-C1
+after P2-C0 acceptance, and later implementation work only after P2-C1 and its
+owner dependencies. P6-B remains separately held pending a host decision.
 
 ## 10. Final Response State
 
-Response state: `architecture findings partially accepted and incorporated`.
+Response state: `architecture findings incorporated and independently reviewed`.
 
 The review's authority, typed-admission, capability-composition, abstraction,
 evidence-timing, and independent-slice concerns have materially changed the

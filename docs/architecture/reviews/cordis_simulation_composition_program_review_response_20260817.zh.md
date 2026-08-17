@@ -15,7 +15,8 @@ Review answered:
 Review basis: `b9f289c81fd4`
 Response plan revision: `153d5f4e`
 First re-review repair: `89eca276`
-Decision state: `partially accepted and incorporated; Cordis strategic target retained; re-review requested`
+First re-review basis: `0d8635794b9052b92034adab7df6afd2fe2f987f`
+Decision state: `review findings incorporated; independent re-review approved with no P1/P2 blockers`
 Authority: 对咨询性审阅的 owner 回复。原 review 继续作为不可变的独立判断快照；本回复
 仅通过引用的 active-work 文档与 commit 修改当前计划。
 
@@ -197,23 +198,28 @@ clarification。本回复与 active plan 现已：
 - 把 P6-B 标为 conditional/held，并仅在获准时要求 Node test；
 - 区分 Cordis primitives 与仓库自有的 DeepSeek-Harness-style profile/bundle layer。
 
-P2-B 继续 eligible。P2-C0、P2-C1 与后续 implementation work 在修订后的权威链通过独立
-重新审阅前保持 held。
+对 `0d863579` 的独立重新审阅给出 `APPROVE`，未发现 P1/P2 blocker，并确认 3 个 P2
+问题与 Cordis 术语 P3 已关闭。审阅另发现 1 个非阻断 P3：scope 与目标目录叙述仍让
+Node 看起来像默认交付物；现已把这些措辞统一改为只有 P6-B 经独立 host decision 获准
+时才成立。
 
-## 9. 请求重新审阅
+## 9. 重新审阅结论
 
-请求独立 reviewer 基于修订计划重新评估：
+reviewer 已确认：
 
-1. Experiment Face/Cordis/admission/native 权威链是否无歧义？
-2. P2-C0/P2-C1 是否足够早地证明真实 Cordis 关系，从而支持后续 package maturation？
-3. 按 owner 分类的 system/backend/domain/evidence admission 是否得到保留？
-4. 独立切片验收是否避免 Node/外部生态阻塞，同时没有把 Cordis 变为可选？
-5. closure rule 是否准确要求 Cordis producer/native conformance，同时允许 Node 和外部
-   distribution 保持 conditional？
+1. Experiment Face/Cordis/admission/native 权威链无歧义；
+2. P2-C0/P2-C1 足够早地要求真实 Cordis 关系，且不能只靠 serializer evidence 通过；
+3. 按 owner 分类的 system/backend/domain/evidence admission 边界得到保留；
+4. 独立切片验收避免 Node/外部生态阻塞，同时没有把 Cordis 变为可选；
+5. closure 要求 Cordis producer/native conformance，而 Node 与外部分发保持 conditional。
+
+因此 release 边界为：当前推进 P2-B；P2-B 验收后推进 P2-C0；P2-C0 验收后推进 P2-C1；
+P2-C1 与相应 owner dependency 通过后才推进后续 implementation work。P6-B 继续单独
+held，等待 host decision。
 
 ## 10. 最终回复状态
 
-回复状态：`architecture findings partially accepted and incorporated`。
+回复状态：`architecture findings incorporated and independently reviewed`。
 
 review 提出的权威、typed admission、capability composition、抽象、evidence timing 与
 independent-slice concern 已实质改变计划。让 Cordis 成为可选 adapter 的建议未采纳，

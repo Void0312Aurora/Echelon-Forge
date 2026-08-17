@@ -444,7 +444,10 @@ Python / C++ caller
 This remains the default training and embedded path and carries no Node
 dependency.
 
-### 11.2 Cordis/Node mode
+### 11.2 Conditional Cordis/Node mode
+
+This is not a default target mode. It exists only if P6-B is admitted through
+an independent host decision after the native composition contract is stable.
 
 ```text
 Node application
@@ -455,16 +458,18 @@ Node application
   -> RuntimeFacade/backend/kernel
 ```
 
-The Node adapter should expose coarse operations equivalent to facade use cases:
-configure, load content, reset/setup, inject, advance, evaluate, export, and
-diagnostics. It should not mirror every ECS or kernel method.
+If P6-B is admitted, the Node adapter should expose coarse operations equivalent
+to facade use cases: configure, load content, reset/setup, inject, advance,
+evaluate, export, and diagnostics. It should not mirror every ECS or kernel
+method.
 
 ### 11.3 Common native ABI direction
 
-The project should evaluate a narrow native host ABI beneath both nanobind and
-Node-API adapters so that bindings do not become independent runtime owners.
-This is a P1/P2 design question; it must not force an early C ABI if the typed
-C++ facade can remain the shared owner safely.
+The project should preserve the typed native owner beneath nanobind. Only if
+P6-B is admitted should it evaluate a narrow native host ABI beneath both
+nanobind and Node-API adapters so that bindings do not become independent
+runtime owners. That evaluation must not force an early C ABI if the typed C++
+facade can remain the shared owner safely.
 
 ## 12. Evidence, Replay, And Comparability
 
@@ -558,7 +563,7 @@ src/runtime/providers/          backend and runtime provider implementations
 src/runtime/contracts/          host-neutral DTOs and generated schema surfaces
 src/core/engine/                deterministic world and stage execution
 src/interfaces/python/          nanobind adapter only
-src/interfaces/node/            Node-API adapter only
+src/interfaces/node/            conditional Node-API adapter; only if P6-B is admitted
 packages/cordis-runtime/        Cordis control-plane package and plugin SDK
 tests/architecture/composition/ ownership, determinism, and dependency guards
 tests/runtime/composition/      lifecycle, parity, replay, and failure tests

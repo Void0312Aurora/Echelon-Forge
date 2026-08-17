@@ -395,7 +395,10 @@ Python / C++ caller
 
 这是默认训练和嵌入路径，不携带 Node 依赖。
 
-### 11.2 Cordis/Node 模式
+### 11.2 条件式 Cordis/Node 模式
+
+这不是默认目标模式。只有原生组合合同稳定后，P6-B 又经独立 host decision 获准时，
+才存在该模式。
 
 ```text
 Node application
@@ -406,14 +409,15 @@ Node application
   -> RuntimeFacade/backend/kernel
 ```
 
-Node adapter 应暴露与 facade 用例等价的粗粒度操作：configure、load content、reset/setup、
-inject、advance、evaluate、export、diagnostics，而不是镜像每个 ECS 或 kernel 方法。
+如果 P6-B 获准，Node adapter 应暴露与 facade 用例等价的粗粒度操作：configure、load
+content、reset/setup、inject、advance、evaluate、export、diagnostics，而不是镜像每个
+ECS 或 kernel 方法。
 
 ### 11.3 共同原生 ABI 方向
 
-项目应评估 nanobind 与 Node-API adapter 下方的窄 native host ABI，避免 binding 成为
-独立 runtime owner。这是 P1/P2 设计问题；如果 typed C++ facade 能安全作为共同 owner，
-则不应过早强制引入 C ABI。
+项目应先保持 nanobind 下方的 typed native owner。只有 P6-B 获准时，才应评估 nanobind
+与 Node-API adapter 下方的窄 native host ABI，避免 binding 成为独立 runtime owner；
+如果 typed C++ facade 能安全作为共同 owner，则该评估不应过早强制引入 C ABI。
 
 ## 12. Evidence、replay 与可比较性
 
@@ -499,7 +503,7 @@ src/runtime/providers/          backend 与 runtime provider 实现
 src/runtime/contracts/          host-neutral DTO 与生成 schema 表面
 src/core/engine/                确定性 world 与 stage execution
 src/interfaces/python/          仅 nanobind adapter
-src/interfaces/node/            仅 Node-API adapter
+src/interfaces/node/            条件式 Node-API adapter；仅在 P6-B 获准时存在
 packages/cordis-runtime/        Cordis 控制面 package 与 plugin SDK
 tests/architecture/composition/ ownership、determinism 与 dependency guard
 tests/runtime/composition/      lifecycle、parity、replay 与 failure test
