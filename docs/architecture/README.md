@@ -52,6 +52,11 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
   advisory macro review that retains the native composition direction while
   requiring authority and program-boundary revision before later
   system/plugin/host phases.
+- [Response to the Cordis simulation composition program architecture review — 2026-08-17](reviews/cordis_simulation_composition_program_review_response_20260817.md):
+  active-owner disposition that incorporates the authority, typed-admission,
+  capability, evidence-timing, and independent-slice findings while retaining
+  Cordis as a required strategic composition target and keeping Node
+  conditional.
 - [Architecture review — 2026-06-03](reviews/architecture_review_20260603.md)
 - [Architecture norms and correctness review — 2026-06-03 (Chinese only)](reviews/architecture_norms_correctness_review_20260603.zh.md)
 - [Architecture refactoring audit — 2026-05-22](reviews/architecture_refactoring_audit_20260522.md)

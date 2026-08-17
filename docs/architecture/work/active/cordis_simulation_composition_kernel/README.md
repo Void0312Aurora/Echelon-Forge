@@ -150,6 +150,8 @@ change.
 - [Current status and residual register](cordis_simulation_composition_kernel_current_status_20260817.md)
 - [Dispatch queue](cordis_simulation_composition_kernel_dispatch_queue_20260817.md)
 - [Acceptance contract](cordis_simulation_composition_kernel_acceptance_20260817.md)
+- [Independent program architecture review](../../../reviews/cordis_simulation_composition_program_review_20260817.md)
+- [Active-owner response to the program architecture review](../../../reviews/cordis_simulation_composition_program_review_response_20260817.md)
 
 ## Outputs And Evidence
 

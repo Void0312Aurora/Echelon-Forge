@@ -129,6 +129,8 @@ plugin 派发或跨语言 service lookup 放入逐 step 路径。
 - [当前状态与残余登记](cordis_simulation_composition_kernel_current_status_20260817.zh.md)
 - [派发队列](cordis_simulation_composition_kernel_dispatch_queue_20260817.zh.md)
 - [验收合同](cordis_simulation_composition_kernel_acceptance_20260817.zh.md)
+- [独立计划架构审阅](../../../reviews/cordis_simulation_composition_program_review_20260817.zh.md)
+- [active owner 对计划架构审阅的回复](../../../reviews/cordis_simulation_composition_program_review_response_20260817.zh.md)
 
 ## 输出与证据
 
