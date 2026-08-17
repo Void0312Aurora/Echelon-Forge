@@ -1,0 +1,126 @@
+# Cordis Simulation Composition Kernel Acceptance Contract — 2026-08-17
+
+Status: `2026-08-17` acceptance contract; documentation/authority and
+composition-census and contract/canonicalization gates passed. The P2-A
+isolated native lifecycle baseline is partially accepted; migration-joined
+runtime realization remains open.
+
+Language:
+
+- English canonical: `cordis_simulation_composition_kernel_acceptance_20260817.md`
+- Chinese companion: [cordis_simulation_composition_kernel_acceptance_20260817.zh.md](cordis_simulation_composition_kernel_acceptance_20260817.zh.md)
+
+Document kind: `task`
+Lifecycle: `maintained`
+Canonical: `docs/architecture/work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_acceptance_20260817.md`
+Owner: `architecture/runtime-composition`
+Last verified: `2026-08-17`
+
+Parent: [Cordis Simulation Composition Kernel](README.md)
+
+## Acceptance Boundary
+
+Acceptance means the scoped long-term composition architecture is implemented,
+integrated, evidenced, and routed. It does not mean every future third-party
+plugin, backend, domain, remote host, or hot-reload mode is accepted.
+
+## Gate Matrix
+
+| Gate | Required evidence | Reject condition | State |
+| --- | --- | --- | --- |
+| Documentation and authority | bilingual active package, parent route, valid links, synchronized maintained metadata | orphan task, conflicting owner, or runtime overclaim | pass |
+| Composition census | reproducible inventory of construction, replacement, registration, backend, stage, reset, binding, and test edges | unknown owner or unclassified replacement path remains in migration scope | pass |
+| Contract and canonicalization | versioned schema, invalid-input matrix, canonical byte fixtures, permutation-stable hash | discovery/order/host-dependent result or ambiguous provider semantics | pass |
+| Native lifecycle | scope isolation, transactional construction, dependency-safe teardown, rollback, failure injection | partial runnable state, stale handle, teardown order ambiguity | partial: P2-A baseline pass; production migration evidence open |
+| Default behavior parity | pre/post default-profile state, event, observation, reward, termination, and replay comparisons | unexplained semantic divergence hidden by tolerance or fallback | planned |
+| Stage graph integrity | existing stage contract validation plus exact default graph comparison | plugin order or host event order affects stage execution | planned |
+| Domain profile admission | minimal/common/air/naval/ground/combined profile validation against owner contracts | profile bypasses domain maturity or creates a private lifecycle | planned |
+| Backend admission | facade selects admitted provider; CPU/CUDA and unsupported-profile gates | concrete backend remains construction truth or rejected profile silently falls back | planned |
+| Evidence and replay | manifest/provider/graph/backend/host identity exported and mismatch policy enforced | replay/comparison proceeds with unexplained composition mismatch | planned |
+| Cordis conformance | Cordis and native producers yield equivalent admitted canonical manifests | native side trusts Cordis without revalidation or private Cordis identity leaks into contract | planned |
+| Binding isolation | Python, C++, and Node hosts use the same native owner and coarse facade semantics | binding owns simulation truth, raw ECS bypass, or per-step callback | planned |
+| Batch and performance | representative startup, memory, throughput, determinism, and teardown measurements | mandatory per-world Node context, hot-path lookup/crossing, or unapproved regression | planned |
+| Security and provenance | repository-owned/admitted plugin policy for accepted scope | unreviewed external native plugin execution or missing artifact provenance | planned |
+| Migration closure | caller inventory, removal gates, standards/reference promotion, index/archive sync | dual composition path, permanent undocumented wrapper, stale current route | planned |
+
+## Required Validation Families
+
+### Architecture and dependency
+
+- ownership and forbidden-include tests;
+- one composition authority guard;
+- no cross-language stage-call guard;
+- no direct concrete model/backend construction at retired locations;
+- no task-label leakage into production identifiers.
+
+### Contract
+
+- schema generation and freshness;
+- accepted and rejected manifest corpus;
+- canonical serialization across host/platform implementations;
+- dependency/conflict/capability resolution matrix;
+- stable service-key and version compatibility tests.
+
+### Lifecycle
+
+- construction and reverse dependency teardown;
+- constructor failure at every resource index;
+- nested scope isolation;
+- reset, resize, backend failure, and shutdown;
+- repeated create/destroy and sanitizer/leak checks where supported;
+- no dangling pointer after provider or scope transition.
+
+### Simulation parity
+
+- deterministic state and event trace under the default compatibility profile;
+- observation/action/reward/termination equivalence;
+- exact-stage graph identity;
+- replay and comparison mismatch handling;
+- CPU and admitted CUDA profile parity under existing backend contracts.
+
+### Host and performance
+
+- standalone C++ and Python operation with Node absent;
+- Node/Cordis host lifecycle and exception translation;
+- no Node/Python/IPC frame in maintained step call graphs;
+- large world-batch startup, memory, step, reset, and teardown probes;
+- cold and warm composition measurements separated from step throughput.
+
+## Evidence Package Requirements
+
+Final acceptance must retain:
+
+- baseline revision and toolchain;
+- manifest/schema versions and fixture hashes;
+- resolved composition and stage graph identities;
+- exact validation commands and outcomes;
+- host/backend/profile matrix;
+- performance environment and raw measurements;
+- failure-injection matrix;
+- known residuals and forbidden claims;
+- accepted removal/compatibility decisions;
+- synchronized documentation and archive routes.
+
+## Partial Acceptance
+
+Native composition, Cordis control-plane conformance, and Node hosting may be
+accepted as separate bounded slices only if the parent status names the exact
+accepted boundary. Native composition acceptance must not imply Cordis or Node
+acceptance; Cordis manifest conformance must not imply external plugin trust;
+Node host acceptance must not imply performance or backend parity beyond the
+tested matrix.
+
+The accepted P2-A boundary is the independent `ef_composition` library and its
+closed JSON ingestion, native revalidation, transactional scoped construction,
+generation invalidation, rollback, rebuild, and reverse-disposal behavior.
+Normal MSVC and MSVC AddressSanitizer runs each passed 8 tests and 149
+assertions. Default-provider integration, reset/replay parity, system capture
+repair, canonical-byte recomputation, and all Cordis/host claims remain open.
+
+## Closure Rule
+
+The subproject may close only after every required gate is accepted or moved to
+a separately named active/held owner with no dual truth path. A deferred
+marketplace or remote-host program is compatible with closure; a deferred
+lifecycle, deterministic composition, evidence identity, or default-profile
+parity gate is not.

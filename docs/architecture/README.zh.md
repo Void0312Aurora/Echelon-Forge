@@ -1,12 +1,12 @@
 # 架构文档
 
-语言：英文为规范页；[中文配套](README.md)。
+语言：[英文规范页](README.md)；本页为中文配套。
 
 Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/README.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-08-08`
+Last verified: `2026-08-17`
 
 本 owner 覆盖跨领域系统架构、runtime 分层、contracts、后端和架构决策。
 维护中的 standards、reference、issues 与 reviews 现均位于本 owner；旧 plan
@@ -25,6 +25,12 @@ packet 只作为归档 provenance。
 
 - [Truth-leak 清单](reference/t8_g4_truth_leak_inventory.zh.md)：当前 declared/open
   权威泄漏及其验证边界。
+
+## 活跃工作
+
+- [Cordis 仿真组合内核](work/active/cordis_simulation_composition_kernel/README.zh.md)：
+  面向长期的 active 计划，覆盖 Cordis 组合控制面、原生生命周期内核、确定性 manifest
+  realization、provider/system/backend composition 和 host parity；尚不声明 runtime 集成。
 
 ## 开放问题
 

@@ -11,6 +11,8 @@ owner and schema exist.
 ## Allowed
 
 - Stable request/result types.
+- Host-neutral composition ingestion, validation, scoped lifecycle ownership,
+  and deterministic rollback/teardown outside the simulation step path.
 - Facade, capability query, and batch runtime operation entry points.
 - Combined calls to `core/engine` and `core/mission`.
 - Common command/tasking contracts, air/naval maintained slices, ground-bootstrap setup evidence, and engagement evidence exports.
@@ -26,17 +28,22 @@ owner and schema exist.
 ## Subdirectory Conventions
 
 - `contracts/`: Stable DTOs shared by facade, engine, and binding; must not contain runtime owner or engine headers.
+- `composition/`: Isolated native composition ingestion, provider catalog,
+  transaction, scope generation, typed-handle, and teardown owner.
 - `facade/`: Current maintained typed runtime facade.
 
 ## Current Entry Points for Reading
 
 - [contracts/README.md](contracts/README.md)
+- [composition/README.md](composition/README.md)
 - [facade/README.md](facade/README.md)
 
 ## Current File Locations
 
 - `contracts/`
   - `world_batch_contracts.h`, `engagement_contracts.h`, `platform_capability_contracts.h`
+- `composition/`
+  - `composition_json.h`, `provider_catalog.h`, `composition_runtime.h`
 - `facade/`
   - `runtime_facade.h`, `runtime_facade.cpp`, `runtime_facade_types.h`
 
