@@ -14,7 +14,7 @@ struct CompositionIdentity {
 
 using CompositionIdentityResult = CompositionResult<CompositionIdentity>;
 
-[[nodiscard]] CompositionIdentityResult compute_composition_identity(
-    const composition_contracts::ResolvedSimulationComposition &resolved);
+[[nodiscard]] CompositionIdentityResult
+compute_composition_identity(const composition_contracts::ResolvedSimulationComposition &resolved);
 
 } // namespace runtime::composition
