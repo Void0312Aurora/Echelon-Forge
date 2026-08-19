@@ -36,7 +36,6 @@ class ISensorModel;
 class IAcousticModel;
 class IControlModel;
 class IGuidanceModel;
-class IWeaponReleaseDamageBridge;
 struct UnitDefinition;
 class IEngagementEventStore;
 
