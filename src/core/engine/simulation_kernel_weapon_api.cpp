@@ -2,15 +2,17 @@
 
 flecs::entity SimulationKernel::fire_missile(uint64_t attacker_id, uint64_t target_id) {
     ensure_active("fire_missile");
-    if (!weapon_release_service_) {
+    IWeaponReleaseService *service = weapon_release_service();
+    if (service == nullptr) {
         return flecs::entity::null();
     }
-    return weapon_release_service_->fire_missile(attacker_id, target_id);
+    return service->fire_missile(attacker_id, target_id);
 }
 
 bool SimulationKernel::fire_naval_weapon(uint64_t attacker_id, uint64_t target_id,
                                          int weapon_type_code) {
     ensure_active("fire_naval_weapon");
-    return weapon_release_service_ &&
-           weapon_release_service_->fire_naval_weapon(attacker_id, target_id, weapon_type_code);
+    IWeaponReleaseService *service = weapon_release_service();
+    return service != nullptr &&
+           service->fire_naval_weapon(attacker_id, target_id, weapon_type_code);
 }

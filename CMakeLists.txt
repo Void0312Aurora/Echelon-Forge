@@ -132,6 +132,16 @@ set(EF_CORE_ENGINE_SOURCES
     src/core/engine/simulation_kernel_damage_debug_api.cpp
     src/core/engine/exact_stage_inventory.cpp
     src/core/engine/world_batch_runtime.cpp
+    src/runtime/providers/default_simulation_provider_catalog.cpp
+)
+
+# The default provider catalog embeds the generated resolved manifest. Keep an
+# explicit dependency because localized MSVC /showIncludes output is not always
+# consumed by every Ninja/CMake toolchain combination.
+set_property(
+    SOURCE src/runtime/providers/default_simulation_provider_catalog.cpp
+    APPEND PROPERTY OBJECT_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/contracts/composition/default_compatibility_manifest.v1.generated.h"
 )
 
 set(EF_CORE_GEOMETRY_SOURCES
@@ -274,6 +284,7 @@ endif()
 # resolve after ef_core on a single-pass link line.  CMake derives that order
 # from this dependency edge automatically for every downstream consumer.
 target_link_libraries(ef_core PUBLIC
+    ef_composition
     ef_content
     flecs::flecs
     spdlog::spdlog
@@ -567,6 +578,9 @@ target_link_libraries(ef_test PRIVATE
     doctest::doctest
 )
 target_include_directories(ef_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+if (MSVC)
+    target_compile_definitions(ef_test PRIVATE _USE_MATH_DEFINES)
+endif()
 
 # P2-A is intentionally a focused native target. It links only the isolated
 # lifecycle library and doctest, so passing this target cannot be mistaken for

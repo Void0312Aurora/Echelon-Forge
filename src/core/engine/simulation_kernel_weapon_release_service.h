@@ -20,8 +20,7 @@ struct UnitDefinition;
 
 class SimulationKernelWeaponReleaseService final : public IWeaponReleaseService {
   public:
-    SimulationKernelWeaponReleaseService(flecs::world &ecs,
-                                         const std::unique_ptr<IUnitFactory> &unit_factory,
+    SimulationKernelWeaponReleaseService(flecs::world &ecs, IUnitFactory &unit_factory,
                                          MissileTuning &missile_tuning, std::mt19937 &rng,
                                          IEngagementLaunchRecorder &launch_recorder,
                                          IEngagementEventRecorder &damage_recorder,
@@ -47,7 +46,7 @@ class SimulationKernelWeaponReleaseService final : public IWeaponReleaseService 
     resolve_missile_launch_definition(flecs::entity attacker, const PilotAction *pilot) const;
 
     flecs::world &ecs_;
-    const std::unique_ptr<IUnitFactory> &unit_factory_;
+    IUnitFactory &unit_factory_;
     MissileTuning &missile_tuning_;
     std::mt19937 &rng_;
     IEngagementLaunchRecorder &launch_recorder_;

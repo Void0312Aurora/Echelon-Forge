@@ -172,6 +172,7 @@ void SimulationKernel::register_components_and_systems() {
     ecs.component<ControlModelRef>();
     ecs.component<GuidanceModelRef>();
     ecs.component<EnvironmentModelRef>();
+    ecs.component<WeaponReleaseServiceRef>();
 
     // Define Pipeline Phases (explicit ordering)
     // Phase 1: Control - writes platform Velocity based on commands
@@ -198,8 +199,7 @@ void SimulationKernel::register_components_and_systems() {
         ecs); // Phase 3.45: Actuators (control-surface commands -> lagged deflections)
     register_aerodynamics_system(
         ecs); // Phase 3.5: Aerodynamics (lift/drag + aero torques + control-surface moments)
-    register_ground_contact_system(
-        ecs, environment_model_.get()); // Phase 3.6: Ground contact/friction/pitch damping
+    register_ground_contact_system(ecs); // Phase 3.6: Ground contact/friction/pitch damping
     register_rotational_integration_system(
         ecs);                      // Phase 3.7: Rotational Dynamics (ALL torques -> attitude)
     register_guidance_system(ecs); // Phase 4: Guidance
@@ -215,10 +215,9 @@ void SimulationKernel::register_components_and_systems() {
         ecs); // Phase 6.5: Build local/fused track picture from sensor + prior inbox
     register_data_link_system(ecs);        // Phase 6.55: Share current track picture to peers
     register_embarked_air_ops_system(ecs); // Phase 6.57: Embarked helo token launch/recover/relay
-    register_pilot_weapon_release_system(
-        ecs, *weapon_release_service_); // Phase 6.58: Pilot weapon release bridge
+    register_pilot_weapon_release_system(ecs); // Phase 6.58: Pilot weapon release bridge
     register_naval_mission_weapon_release_system(
-        ecs, *weapon_release_service_); // Phase 6.59: Naval mission weapon release bridge
+        ecs);                           // Phase 6.59: Naval mission weapon release bridge
     register_instrument_system(ecs);    // Phase 6.6: Instruments (Read Physics & Sensor State)
     register_damage_system_common(ecs); // Phase 7: Damage/Effects
     register_aircraft_damage_system(ecs);
@@ -229,12 +228,4 @@ void SimulationKernel::register_components_and_systems() {
     register_ew_system(ecs);              // Phase 8: EW Actions
     register_logistics_system(ecs);       // Phase 9: Common/base logistics
     register_naval_logistics_system(ecs); // Phase 9.1: Naval underway replenishment
-
-    ecs.set<EffectsModelRef>({effects_model_.get()});
-    ecs.set<EngagementEventRecorderRef>({engagement_event_store_.get()});
-    ecs.set<SensorModelRef>({sensor_model_.get()});
-    ecs.set<AcousticModelRef>({acoustic_model_.get()});
-    ecs.set<ControlModelRef>({control_model_.get()});
-    ecs.set<GuidanceModelRef>({guidance_model_.get()});
-    ecs.set<EnvironmentModelRef>({environment_model_.get()});
 }

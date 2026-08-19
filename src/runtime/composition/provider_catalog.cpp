@@ -11,7 +11,7 @@ namespace {
 
 namespace contracts = composition_contracts;
 
-constexpr std::array<std::string_view, 12> kKnownServiceKeys = {
+constexpr std::array<std::string_view, 13> kKnownServiceKeys = {
     contracts::kServiceEnvironmentModel,
     contracts::kServiceUnitFactory,
     contracts::kServiceEffectsModel,
@@ -20,6 +20,7 @@ constexpr std::array<std::string_view, 12> kKnownServiceKeys = {
     contracts::kServiceControlModel,
     contracts::kServiceGuidanceModel,
     contracts::kServiceEngagementEventRecorder,
+    contracts::kServiceEngagementEventStore,
     contracts::kServiceWeaponReleaseDamageBridge,
     contracts::kServiceWeaponRelease,
     contracts::kServiceWorldBatchBackend,

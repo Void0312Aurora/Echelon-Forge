@@ -8,22 +8,16 @@
 #include <vector>
 
 namespace {
-bool collect_visual_scene(
-    SimulationKernel& kernel,
-    uint64_t entity_id,
-    Math::Vector3& cam_pos,
-    double& cam_heading,
-    double& cam_pitch,
-    std::vector<arb::VisibleObject>& objects,
-    int& my_side
-) {
+bool collect_visual_scene(SimulationKernel &kernel, uint64_t entity_id, Math::Vector3 &cam_pos,
+                          double &cam_heading, double &cam_pitch,
+                          std::vector<arb::VisibleObject> &objects, int &my_side) {
     auto e = kernel.get_world().entity(entity_id);
     if (!e.is_valid()) {
         return false;
     }
 
-    const Transform* cam_t = e.get<Transform>();
-    const Alliance* cam_a = e.get<Alliance>();
+    const Transform *cam_t = e.get<Transform>();
+    const Alliance *cam_a = e.get<Alliance>();
     if (!cam_t) {
         return false;
     }
@@ -34,7 +28,8 @@ bool collect_visual_scene(
     my_side = cam_a ? static_cast<int>(cam_a->side) : 0;
 
     objects.clear();
-    kernel.get_world().each([&](flecs::entity other_e, const Transform& t, const Velocity& v, const Alliance& a, const KeyEntity& k) {
+    kernel.get_world().each([&](flecs::entity other_e, const Transform &t, const Velocity &v,
+                                const Alliance &a, const KeyEntity &k) {
         if (other_e.id() == entity_id) {
             return;
         }
@@ -48,12 +43,30 @@ bool collect_visual_scene(
         obj.vz = v.vz;
 
         switch (k.type) {
-            case UnitType::Aircraft: obj.bounding_radius = 10.0; obj.cls = 0; break;
-            case UnitType::Ship: obj.bounding_radius = 50.0; obj.cls = 2; break;
-            case UnitType::Submarine: obj.bounding_radius = 40.0; obj.cls = 2; break;
-            case UnitType::Missile: obj.bounding_radius = 2.0; obj.cls = 0; break;
-            case UnitType::Facility: obj.bounding_radius = 20.0; obj.cls = 1; break;
-            default: obj.bounding_radius = 5.0; obj.cls = 1; break;
+        case UnitType::Aircraft:
+            obj.bounding_radius = 10.0;
+            obj.cls = 0;
+            break;
+        case UnitType::Ship:
+            obj.bounding_radius = 50.0;
+            obj.cls = 2;
+            break;
+        case UnitType::Submarine:
+            obj.bounding_radius = 40.0;
+            obj.cls = 2;
+            break;
+        case UnitType::Missile:
+            obj.bounding_radius = 2.0;
+            obj.cls = 0;
+            break;
+        case UnitType::Facility:
+            obj.bounding_radius = 20.0;
+            obj.cls = 1;
+            break;
+        default:
+            obj.bounding_radius = 5.0;
+            obj.cls = 1;
+            break;
         }
 
         const int other_side = static_cast<int>(a.side);
@@ -81,18 +94,20 @@ std::vector<float> SimulationKernel::get_visual_observation(uint64_t entity_id) 
     double cam_pitch = 0.0;
     int my_side = 0;
     std::vector<VisibleObject> objects;
-    if (!collect_visual_scene(*this, entity_id, cam_pos, cam_heading, cam_pitch, objects, my_side)) {
+    if (!collect_visual_scene(*this, entity_id, cam_pos, cam_heading, cam_pitch, objects,
+                              my_side)) {
         return output;
     }
 
     RetinaBuffer buf;
-    render_retina(cam_pos, cam_heading, cam_pitch, 180.0, 90.0, objects, environment_model_.get(), buf);
+    render_retina(cam_pos, cam_heading, cam_pitch, 180.0, 90.0, objects, environment_model(), buf);
     buf.to_tensor(output.data());
 
     return output;
 }
 
-std::vector<float> SimulationKernel::get_visual_observation_downsampled(uint64_t entity_id, int factor) {
+std::vector<float> SimulationKernel::get_visual_observation_downsampled(uint64_t entity_id,
+                                                                        int factor) {
     using namespace arb;
 
     const int downsample = factor > 1 ? factor : 1;
@@ -105,22 +120,15 @@ std::vector<float> SimulationKernel::get_visual_observation_downsampled(uint64_t
     double cam_pitch = 0.0;
     int my_side = 0;
     std::vector<VisibleObject> objects;
-    if (!collect_visual_scene(*this, entity_id, cam_pos, cam_heading, cam_pitch, objects, my_side)) {
-        return std::vector<float>(
-            static_cast<size_t>(ARB_HEIGHT / downsample) * static_cast<size_t>(ARB_WIDTH / downsample) * static_cast<size_t>(ARB_CHANNELS),
-            0.0f
-        );
+    if (!collect_visual_scene(*this, entity_id, cam_pos, cam_heading, cam_pitch, objects,
+                              my_side)) {
+        return std::vector<float>(static_cast<size_t>(ARB_HEIGHT / downsample) *
+                                      static_cast<size_t>(ARB_WIDTH / downsample) *
+                                      static_cast<size_t>(ARB_CHANNELS),
+                                  0.0f);
     }
 
-    return render_retina_tensor(
-        cam_pos,
-        cam_heading,
-        cam_pitch,
-        180.0,
-        90.0,
-        objects,
-        environment_model_.get(),
-        ARB_HEIGHT / downsample,
-        ARB_WIDTH / downsample
-    );
+    return render_retina_tensor(cam_pos, cam_heading, cam_pitch, 180.0, 90.0, objects,
+                                environment_model(), ARB_HEIGHT / downsample,
+                                ARB_WIDTH / downsample);
 }

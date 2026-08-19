@@ -1,4 +1,12 @@
-{
+#pragma once
+
+#include <array>
+#include <string_view>
+
+namespace runtime::composition_contracts::generated {
+
+inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJsonChunks = {
+    R"EFJSON({
   "manifest": {
     "backend_request": {
       "backend_profile_id": "cpu_exact.reference",
@@ -247,7 +255,8 @@
         "component_id": "MassProperties",
         "plugin_id": "builtin.core_runtime",
         "registration_id": "flecs.component.mass_properties"
-      },
+    )EFJSON",
+    R"EFJSON(  },
       {
         "component_id": "Missile",
         "plugin_id": "builtin.core_runtime",
@@ -495,7 +504,8 @@
         "plugin_id": "builtin.core_runtime",
         "provider_id": "builtin.backend.flecs_cpu",
         "required_capabilities": [],
-        "required_services": [],
+    )EFJSON",
+    R"EFJSON(    "required_services": [],
         "restart_policy": "rebuild_scope_generation",
         "scope": "backend",
         "teardown_policy": "reverse_dependency_order"
@@ -738,7 +748,8 @@
         "consumer_kind": "provider",
         "provider_id": "builtin.environment.default",
         "service_key": "simulation.environment.model"
-      },
+    )EFJSON",
+    R"EFJSON(  },
       {
         "consumer_id": "builtin.sensor.default",
         "consumer_kind": "provider",
@@ -984,7 +995,8 @@
         "contribution_id": "builtin.system.command_link",
         "domain": "common",
         "executable_node_ids": [
-          "CommandLinkAction",
+        )EFJSON",
+    R"EFJSON(  "CommandLinkAction",
           "CommandLinkMission",
           "CommandLinkMovement"
         ],
@@ -1243,7 +1255,8 @@
         "required_components": [],
         "required_services": [],
         "semantic_stage_ids": [],
-        "write_state_shards": []
+   )EFJSON",
+    R"EFJSON(     "write_state_shards": []
       },
       {
         "after": [
@@ -1500,7 +1513,8 @@
         "domain": "naval",
         "executable_node_ids": [],
         "plugin_id": "builtin.core_runtime",
-        "provided_components": [],
+        ")EFJSON",
+    R"EFJSON(provided_components": [],
         "read_state_shards": [],
         "registration_factory_id": "register_sonar_system",
         "required_barriers": [],
@@ -1648,3 +1662,10 @@
     "builtin.system.naval_logistics"
   ]
 }
+)EFJSON",
+};
+
+inline constexpr std::string_view kDefaultCompatibilityRequestedSha256 = "c6581f81cc50b8f3ce155919a45737683c9a503645db59ef280cbcebac020c46";
+inline constexpr std::string_view kDefaultCompatibilityResolvedSha256 = "138e82a8a59fa4d3960da23f1c0acdda4e7a634f3a02e7f9268933c3a38bc7a5";
+
+} // namespace runtime::composition_contracts::generated

@@ -46,6 +46,10 @@ RESOLVED_SCHEMA_PATH = (
   REPO_ROOT
   / "src/runtime/contracts/composition/resolved_simulation_composition.v1.schema.json"
 )
+DEFAULT_RESOLVED_HEADER_PATH = (
+  REPO_ROOT
+  / "src/runtime/contracts/composition/default_compatibility_manifest.v1.generated.h"
+)
 
 ID_RE = re.compile(r"^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$")
 VERSION_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$")
@@ -72,6 +76,7 @@ SERVICE_KEYS = (
   "simulation.control.model",
   "simulation.guidance.model",
   "runtime.engagement_event_recorder",
+  "runtime.engagement_event_store",
   "runtime.weapon_release.damage_bridge",
   "runtime.weapon_release.service",
   BACKEND_SERVICE_KEY,
@@ -1409,6 +1414,7 @@ DEFAULT_COMPONENTS = (
   "ControlModelRef",
   "GuidanceModelRef",
   "EnvironmentModelRef",
+  "WeaponReleaseServiceRef",
 )
 
 DEFAULT_SYSTEMS = (
@@ -1533,7 +1539,7 @@ def default_compatibility_manifest() -> dict[str, Any]:
     _provider(
       "builtin.engagement_event_store",
       "world",
-      ("runtime.engagement_event_recorder",),
+      ("runtime.engagement_event_recorder", "runtime.engagement_event_store"),
     ),
     _provider(
       "builtin.weapon_release.damage_bridge",
@@ -1547,7 +1553,7 @@ def default_compatibility_manifest() -> dict[str, Any]:
       ("runtime.weapon_release.service",),
       (
         "simulation.unit_factory",
-        "runtime.engagement_event_recorder",
+        "runtime.engagement_event_store",
         "runtime.weapon_release.damage_bridge",
       ),
     ),
@@ -1689,8 +1695,39 @@ def _pretty_json(value: Any) -> str:
   return json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
 
 
+def _default_resolved_header(value: Any) -> str:
+  payload = _pretty_json(value)
+  chunks = [payload[offset:offset + 8000] for offset in range(0, len(payload), 8000)]
+  rendered_chunks = "\n".join(
+    f'    R"EFJSON({chunk})EFJSON",' for chunk in chunks
+  )
+  return (
+    "#pragma once\n\n"
+    "#include <array>\n"
+    "#include <string_view>\n\n"
+    "namespace runtime::composition_contracts::generated {\n\n"
+    f"inline constexpr std::array<std::string_view, {len(chunks)}> "
+    "kDefaultCompatibilityResolvedJsonChunks = {\n"
+    f"{rendered_chunks}\n"
+    "};\n\n"
+    "inline constexpr std::string_view kDefaultCompatibilityRequestedSha256 = "
+    f'"{value["requested_manifest_sha256"]}";\n'
+    "inline constexpr std::string_view kDefaultCompatibilityResolvedSha256 = "
+    f'"{value["resolved_manifest_sha256"]}";\n\n'
+    "} // namespace runtime::composition_contracts::generated\n"
+  )
+
+
 def _write_or_check(path: Path, value: Any, *, check: bool) -> bool:
   expected = _pretty_json(value)
+  if check:
+    return path.is_file() and path.read_text(encoding="utf-8") == expected
+  path.parent.mkdir(parents=True, exist_ok=True)
+  path.write_text(expected, encoding="utf-8")
+  return True
+
+
+def _write_or_check_text(path: Path, expected: str, *, check: bool) -> bool:
   if check:
     return path.is_file() and path.read_text(encoding="utf-8") == expected
   path.parent.mkdir(parents=True, exist_ok=True)
@@ -1721,18 +1758,31 @@ def main(argv: list[str] | None = None) -> int:
     resolved = resolve_manifest(requested)
     _write_or_check(REQUESTED_FIXTURE_PATH, requested, check=False)
     _write_or_check(RESOLVED_FIXTURE_PATH, resolved, check=False)
+    _write_or_check_text(
+      DEFAULT_RESOLVED_HEADER_PATH,
+      _default_resolved_header(resolved),
+      check=False,
+    )
     print(REQUESTED_FIXTURE_PATH.relative_to(REPO_ROOT).as_posix())
     print(RESOLVED_FIXTURE_PATH.relative_to(REPO_ROOT).as_posix())
+    print(DEFAULT_RESOLVED_HEADER_PATH.relative_to(REPO_ROOT).as_posix())
     return 0
   if args.command == "check":
     requested = normalize_manifest(default_compatibility_manifest())
+    resolved = resolve_manifest(requested)
     checks = (
       (SCHEMA_PATH, manifest_schema()),
       (REQUESTED_FIXTURE_PATH, requested),
       (RESOLVED_SCHEMA_PATH, resolved_schema()),
-      (RESOLVED_FIXTURE_PATH, resolve_manifest(requested)),
+      (RESOLVED_FIXTURE_PATH, resolved),
     )
     stale = [path for path, value in checks if not _write_or_check(path, value, check=True)]
+    if not _write_or_check_text(
+      DEFAULT_RESOLVED_HEADER_PATH,
+      _default_resolved_header(resolved),
+      check=True,
+    ):
+      stale.append(DEFAULT_RESOLVED_HEADER_PATH)
     for path in stale:
       print(f"stale: {path.relative_to(REPO_ROOT).as_posix()}")
     return 1 if stale else 0

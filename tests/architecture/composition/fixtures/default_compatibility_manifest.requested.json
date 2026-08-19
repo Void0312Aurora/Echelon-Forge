@@ -421,6 +421,11 @@
       "component_id": "WeaponCooldown",
       "plugin_id": "builtin.core_runtime",
       "registration_id": "flecs.component.weapon_cooldown"
+    },
+    {
+      "component_id": "WeaponReleaseServiceRef",
+      "plugin_id": "builtin.core_runtime",
+      "registration_id": "flecs.component.weapon_release_service_ref"
     }
   ],
   "composition_id": "builtin.default_compatibility",
@@ -537,7 +542,8 @@
       "conflicts": [],
       "implementation_version": "1.0.0",
       "offered_services": [
-        "runtime.engagement_event_recorder"
+        "runtime.engagement_event_recorder",
+        "runtime.engagement_event_store"
       ],
       "plugin_id": "builtin.core_runtime",
       "provider_id": "builtin.engagement_event_store",
@@ -652,7 +658,7 @@
       "provider_id": "builtin.weapon_release.service",
       "required_capabilities": [],
       "required_services": [
-        "runtime.engagement_event_recorder",
+        "runtime.engagement_event_store",
         "runtime.weapon_release.damage_bridge",
         "simulation.unit_factory"
       ],
@@ -748,7 +754,7 @@
       "consumer_id": "builtin.weapon_release.service",
       "consumer_kind": "provider",
       "provider_id": "builtin.engagement_event_store",
-      "service_key": "runtime.engagement_event_recorder"
+      "service_key": "runtime.engagement_event_store"
     },
     {
       "consumer_id": "builtin.weapon_release.service",

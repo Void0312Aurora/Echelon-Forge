@@ -7,6 +7,7 @@
 
 #include "core/engine/simulation_kernel.h"
 #include "core/engine/simulation_kernel_command_surface.h"
+#include "runtime/contracts/composition/default_compatibility_manifest.v1.generated.h"
 #include "components/command/command_link.h"
 #include "components/command/command_link_qos.h"
 #include "components/domains/naval/combat/weapon_naval.h"
@@ -20,8 +21,9 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
-#include <vector>
 #include <string>
+#include <stdexcept>
+#include <vector>
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -54,6 +56,32 @@ TEST_SUITE("simulation_kernel_smoke") {
             // explicitly to verify it is idempotent.
             kernel.shutdown();
         }
+    }
+
+    TEST_CASE("default_composition_exposes_identity_and_world_rebuild") {
+        SimulationKernel kernel;
+        CHECK(kernel.requested_composition_sha256() ==
+              runtime::composition_contracts::generated::kDefaultCompatibilityRequestedSha256);
+        CHECK(kernel.resolved_composition_sha256() ==
+              runtime::composition_contracts::generated::kDefaultCompatibilityResolvedSha256);
+
+        const auto requested_before = kernel.requested_composition_sha256();
+        const auto resolved_before = kernel.resolved_composition_sha256();
+        std::string error;
+        CHECK(kernel.rebuild_world_composition("mid_step", &error) == false);
+        CHECK(error.find("runtime.composition.rebuild_barrier_rejected") != std::string::npos);
+        CHECK(kernel.requested_composition_sha256() == requested_before);
+        CHECK(kernel.resolved_composition_sha256() == resolved_before);
+
+        error.clear();
+        CHECK(kernel.rebuild_world_composition("world_rebuild", &error));
+        CHECK(error.empty());
+        CHECK(kernel.requested_composition_sha256() == requested_before);
+        CHECK(kernel.resolved_composition_sha256() == resolved_before);
+
+        auto entity = kernel.spawn_unit(Side::Blue, "Aircraft", 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0,
+                                        100.0, 0.0, 0.0);
+        CHECK(entity.is_valid());
     }
 
     TEST_CASE("reset_is_deterministic") {

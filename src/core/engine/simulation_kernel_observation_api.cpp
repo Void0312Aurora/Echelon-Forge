@@ -1,5 +1,5 @@
 #include "simulation_kernel.h"
-#include "simulation_kernel_engagement_event_store.h"
+#include "core/interfaces/engagement_event_store.h"
 
 #include "components/combat/health.h"
 #include "components/combat/scoring.h"
@@ -54,7 +54,8 @@ std::vector<double> SimulationKernel::get_unit_position(uint64_t entity_id) {
 }
 
 RecentEngagementEvents SimulationKernel::export_recent_engagement_events() const {
-    return engagement_event_store_->export_recent_events_sorted();
+    IEngagementEventStore *store = engagement_event_store();
+    return store ? store->export_recent_events_sorted() : RecentEngagementEvents{};
 }
 
 std::vector<double> SimulationKernel::get_unit_velocity(uint64_t entity_id) {

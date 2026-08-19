@@ -7,11 +7,9 @@
 #include <flecs.h>
 
 #include "core/engine/engagement_event_types.h"
-#include "core/interfaces/engagement_event_recorder.h"
-#include "core/interfaces/engagement_launch_recorder.h"
+#include "core/interfaces/engagement_event_store.h"
 
-class SimulationKernelEngagementEventStore final : public IEngagementEventRecorder,
-                                                   public IEngagementLaunchRecorder {
+class SimulationKernelEngagementEventStore final : public IEngagementEventStore {
   public:
     explicit SimulationKernelEngagementEventStore(flecs::world &ecs);
 
@@ -52,8 +50,8 @@ class SimulationKernelEngagementEventStore final : public IEngagementEventRecord
                                              double cooldown_delta_s, double event_time_s) override;
 
     void set_pending_effects_launch_event_id(std::uint64_t launch_event_id) override;
-    RecentEngagementEvents export_recent_events_sorted() const;
-    void clear();
+    RecentEngagementEvents export_recent_events_sorted() const override;
+    void clear() override;
 
   private:
     void reset_if_event_clock_rewound(double event_time_s);

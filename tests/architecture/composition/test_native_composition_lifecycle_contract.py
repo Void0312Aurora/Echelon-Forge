@@ -9,6 +9,9 @@ from tests.architecture.helpers import REPO_ROOT
 COMPOSITION = REPO_ROOT / "src/runtime/composition"
 CMAKE = REPO_ROOT / "CMakeLists.txt"
 LIFECYCLE_TEST = REPO_ROOT / "src/tests/test_composition_lifecycle.cpp"
+KERNEL_HEADER = REPO_ROOT / "src/core/engine/simulation_kernel.h"
+KERNEL_SOURCE = REPO_ROOT / "src/core/engine/simulation_kernel.cpp"
+PROVIDER_SOURCE = REPO_ROOT / "src/runtime/providers/default_simulation_provider_catalog.cpp"
 
 
 def _text(path: Path) -> str:
@@ -120,6 +123,7 @@ def test_lifecycle_api_freezes_transaction_scope_handle_and_effect_semantics() -
     "active.store(false",
     "candidate_generations",
     "provider_order.rbegin()",
+    "if (!replacement)",
   ):
     assert behavior in implementation
 
@@ -173,3 +177,33 @@ def test_focused_cpp_suite_covers_failure_atomicity_and_stale_handles() -> None:
   assert "factory identity changed while lifecycle effects" in _text(
     COMPOSITION / "composition_runtime.cpp"
   )
+
+
+def test_simulation_kernel_uses_composition_owned_default_services() -> None:
+  header = _text(KERNEL_HEADER)
+  source = _text(KERNEL_SOURCE)
+  provider = _text(PROVIDER_SOURCE)
+
+  assert "DefaultSimulationComposition" in header
+  assert "build_default_simulation_composition" in source
+  assert "CompositionKernel::realize" in provider
+  assert "default_compatibility_manifest.v1.generated.h" in provider
+
+  for legacy_constructor in (
+    "make_default_environment_model(",
+    "make_default_effects_model(",
+    "make_default_sensor_model(",
+    "make_default_acoustic_model(",
+    "make_default_control_model(",
+    "make_default_guidance_model(",
+    "make_simulation_kernel_weapon_release_service(",
+    "std::make_unique<DefaultUnitFactory>",
+  ):
+    assert legacy_constructor not in source
+
+  for direct_capture in (
+    "register_pilot_weapon_release_system(ecs,",
+    "register_naval_mission_weapon_release_system(ecs,",
+    "[environment]",
+  ):
+    assert direct_capture not in source

@@ -520,7 +520,7 @@ TEST_SUITE("composition_lifecycle") {
             composition::parse_simulation_composition_manifest_json(requested_fixture);
         REQUIRE(requested.ok());
         CHECK(requested.value().providers.size() == 11);
-        CHECK(requested.value().component_contributions.size() == 82);
+        CHECK(requested.value().component_contributions.size() == 83);
         CHECK(requested.value().system_contributions.size() == 34);
 
         std::string requested_with_extra_field = requested_fixture;
@@ -542,7 +542,7 @@ TEST_SUITE("composition_lifecycle") {
         REQUIRE(parsed.ok());
         auto resolved = std::move(parsed).value();
         CHECK(resolved.manifest.providers.size() == 11);
-        CHECK(resolved.manifest.component_contributions.size() == 82);
+        CHECK(resolved.manifest.component_contributions.size() == 83);
         CHECK(resolved.manifest.system_contributions.size() == 34);
         CHECK(resolved.provider_construction_order.size() == 11);
         CHECK(resolved.system_registration_order.size() == 34);
@@ -721,6 +721,33 @@ TEST_SUITE("composition_lifecycle") {
                                                        "effect.dispose:provider.backend",
                                                        "effect.dispose:provider.application",
                                                    });
+    }
+
+    TEST_CASE("composition roots can acquire only admitted provider services") {
+        Trace trace;
+        CatalogBundle bundle(trace);
+        auto runtime = realize(make_resolved(), bundle.catalog);
+
+        const auto environment =
+            runtime.root_service<int>("provider.application", contracts::kServiceEnvironmentModel);
+        CHECK(environment.valid());
+        CHECK(environment.provider_id() == "provider.application");
+        CHECK_FALSE(
+            runtime
+                .root_service<double>("provider.application", contracts::kServiceEnvironmentModel)
+                .valid());
+        CHECK_FALSE(
+            runtime.root_service<int>("provider.application", contracts::kServiceEffectsModel)
+                .valid());
+        CHECK_FALSE(
+            runtime.root_service<int>("provider.missing", contracts::kServiceEnvironmentModel)
+                .valid());
+
+        runtime.stop();
+        CHECK_FALSE(environment.valid());
+        CHECK_FALSE(
+            runtime.root_service<int>("provider.application", contracts::kServiceEnvironmentModel)
+                .valid());
     }
 
     TEST_CASE("construction and effect failures roll back all staged providers") {

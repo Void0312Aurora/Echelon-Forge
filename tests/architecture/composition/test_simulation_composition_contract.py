@@ -176,7 +176,7 @@ def test_default_compatibility_fixture_is_valid_and_resolves() -> None:
   resolved = contract.resolve_manifest(requested)
   assert resolved == _read_json(RESOLVED)
   assert len(requested["providers"]) == 11
-  assert len(requested["component_contributions"]) == 82
+  assert len(requested["component_contributions"]) == 83
   assert len(requested["system_contributions"]) == 34
   assert len(resolved["provider_construction_order"]) == 11
   assert len(resolved["system_registration_order"]) == 34
@@ -187,7 +187,7 @@ def test_default_fixture_tracks_current_component_and_system_registration() -> N
   source = SYSTEM_REGISTRATION.read_text(encoding="utf-8")
   source_without_line_comments = re.sub(r"//[^\n]*", "", source)
   component_names = re.findall(r"ecs\.component<([^>]+)>\(\);", source_without_line_comments)
-  assert len(component_names) == 82
+  assert len(component_names) == 83
   assert set(component_names) == {
     row["component_id"] for row in requested["component_contributions"]
   }

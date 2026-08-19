@@ -34,6 +34,7 @@ inline constexpr std::string_view kServiceControlModel = "simulation.control.mod
 inline constexpr std::string_view kServiceGuidanceModel = "simulation.guidance.model";
 inline constexpr std::string_view kServiceEngagementEventRecorder =
     "runtime.engagement_event_recorder";
+inline constexpr std::string_view kServiceEngagementEventStore = "runtime.engagement_event_store";
 inline constexpr std::string_view kServiceWeaponReleaseDamageBridge =
     "runtime.weapon_release.damage_bridge";
 inline constexpr std::string_view kServiceWeaponRelease = "runtime.weapon_release.service";

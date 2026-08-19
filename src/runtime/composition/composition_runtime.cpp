@@ -456,6 +456,16 @@ struct CompositionRuntime::Impl {
         return handle;
     }
 
+    [[nodiscard]] detail::UntypedServiceHandle
+    lookup_root_service(std::string_view provider_id, std::string_view service_key,
+                        const std::type_info &requested_type) const {
+        const auto provider = records.find(provider_id);
+        if (provider == records.end() || !provider->second) {
+            return {};
+        }
+        return provider->second->service(service_key, requested_type);
+    }
+
     [[nodiscard]] CompositionStatus
     build_candidates(const PreparedPlan &prepared, const std::vector<std::string> &provider_ids,
                      const std::array<std::uint64_t, 5> &candidate_generations,
@@ -681,13 +691,17 @@ struct CompositionRuntime::Impl {
 
     [[nodiscard]] CompositionStatus
     validate_factory_identity_after_commit(const PreparedPlan &prepared,
-                                           const RecordMap &candidates) const {
+                                           const RecordMap &candidates,
+                                           const RecordMap *active_records) const {
         for (const auto &provider_id : prepared.resolved.provider_construction_order) {
             const auto *descriptor = descriptor_for(prepared, provider_id);
             const auto *plugin =
                 descriptor == nullptr ? nullptr : plugin_for(prepared, descriptor->plugin_id);
             const auto prepared_factory = prepared.factories.find(provider_id);
             const auto *live_record = find_record(candidates, provider_id);
+            if (live_record == nullptr && active_records != nullptr) {
+                live_record = find_record(*active_records, provider_id);
+            }
             if (descriptor == nullptr || plugin == nullptr ||
                 prepared_factory == prepared.factories.end() || !prepared_factory->second ||
                 live_record == nullptr || !live_record->factory) {
@@ -737,9 +751,10 @@ struct CompositionRuntime::Impl {
         return CompositionStatus::success();
     }
 
-    [[nodiscard]] CompositionStatus
-    commit_candidates(const PreparedPlan &prepared, RecordMap &candidates,
-                      const std::vector<std::string> &provider_ids) {
+    [[nodiscard]] CompositionStatus commit_candidates(const PreparedPlan &prepared,
+                                                      RecordMap &candidates,
+                                                      const std::vector<std::string> &provider_ids,
+                                                      const RecordMap *active_records = nullptr) {
         CandidateRollbackGuard candidate_guard{candidates, provider_ids};
         for (const auto &provider_id : provider_ids) {
             const auto record = candidates.find(provider_id);
@@ -781,7 +796,8 @@ struct CompositionRuntime::Impl {
                 }
             }
         }
-        auto identity_status = validate_factory_identity_after_commit(prepared, candidates);
+        auto identity_status =
+            validate_factory_identity_after_commit(prepared, candidates, active_records);
         if (!identity_status) {
             release_records(candidates, provider_ids, true);
             return identity_status;
@@ -1027,6 +1043,18 @@ struct CompositionRuntime::Impl {
             return CompositionStatus::failure(
                 {std::string(kErrorRuntimeNotFrozen), {}, "composition runtime is not frozen"});
         }
+        if (!replacement) {
+            try {
+                replacement = std::make_unique<PreparedPlan>(*plan);
+            } catch (const std::exception &exception) {
+                return CompositionStatus::failure(exception_error(
+                    kErrorProviderConstructionFailed, std::string(contracts::to_string(scope)),
+                    exception));
+            } catch (...) {
+                return CompositionStatus::failure(unknown_exception_error(
+                    kErrorProviderConstructionFailed, std::string(contracts::to_string(scope))));
+            }
+        }
         if (!contracts::is_valid_scope(scope)) {
             return CompositionStatus::failure({
                 std::string(contracts::kErrorInvalidScopePolicy),
@@ -1151,7 +1179,7 @@ struct CompositionRuntime::Impl {
             }
         }
 
-        auto commit_status = commit_candidates(*replacement, candidates, affected);
+        auto commit_status = commit_candidates(*replacement, candidates, affected, &records);
         if (!commit_status) {
             return commit_status;
         }
@@ -1264,6 +1292,26 @@ CompositionRuntime::lookup_service_for(std::string_view consumer_kind, std::stri
                                       service_key, requested_type, nullptr);
 }
 
+detail::UntypedServiceHandle
+CompositionRuntime::lookup_root_service(std::string_view provider_id, std::string_view service_key,
+                                        const std::type_info &requested_type) const {
+    const auto impl = impl_;
+    if (impl == nullptr) {
+        return {};
+    }
+    std::lock_guard lock(impl->lifecycle_mutex);
+    if (impl->state != Impl::LifecycleState::frozen || impl->plan == nullptr) {
+        return {};
+    }
+    const auto *descriptor = Impl::descriptor_for(*impl->plan, provider_id);
+    if (descriptor == nullptr ||
+        std::find(descriptor->offered_services.begin(), descriptor->offered_services.end(),
+                  service_key) == descriptor->offered_services.end()) {
+        return {};
+    }
+    return impl->lookup_root_service(provider_id, service_key, requested_type);
+}
+
 CompositionStatus CompositionRuntime::rebuild_scope(composition_contracts::CompositionScope scope,
                                                     std::string_view barrier) {
     const auto impl = impl_;
@@ -1272,12 +1320,7 @@ CompositionStatus CompositionRuntime::rebuild_scope(composition_contracts::Compo
             {std::string(kErrorRuntimeShutdown), {}, "composition runtime is stopped"});
     }
     try {
-        std::lock_guard lock(impl->lifecycle_mutex);
-        if (impl->plan == nullptr) {
-            return CompositionStatus::failure(
-                {std::string(kErrorRuntimeShutdown), {}, "composition runtime is stopped"});
-        }
-        return impl->rebuild(scope, barrier, std::make_unique<Impl::PreparedPlan>(*impl->plan));
+        return impl->rebuild(scope, barrier, nullptr);
     } catch (const std::exception &exception) {
         return CompositionStatus::failure(exception_error(
             kErrorProviderConstructionFailed, std::string(contracts::to_string(scope)), exception));

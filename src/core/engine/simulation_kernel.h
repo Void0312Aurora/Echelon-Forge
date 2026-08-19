@@ -6,6 +6,7 @@
 #include <memory>
 #include <random>
 #include <string>
+#include <string_view>
 #include <map>
 #include <vector>
 #include "components/basic/common.h"
@@ -37,7 +38,11 @@ class IControlModel;
 class IGuidanceModel;
 class IWeaponReleaseDamageBridge;
 struct UnitDefinition;
-class SimulationKernelEngagementEventStore;
+class IEngagementEventStore;
+
+namespace runtime::providers {
+class DefaultSimulationComposition;
+}
 
 struct ExactStepStageDescriptor {
     int order = 0;
@@ -99,6 +104,10 @@ class SimulationKernel {
 
     double get_time_step() const { return time_step; }
     void set_time_step(double dt);
+    [[nodiscard]] std::string requested_composition_sha256() const;
+    [[nodiscard]] std::string resolved_composition_sha256() const;
+    [[nodiscard]] bool rebuild_world_composition(std::string_view barrier,
+                                                 std::string *error = nullptr);
 
     // Configuration
     bool load_database(const std::string &path);
@@ -231,14 +240,6 @@ class SimulationKernel {
         double detonation_pitch_deg, double detonation_roll_deg);
     RecentEngagementEvents export_recent_engagement_events() const;
 
-    // Unit factory override (for modular swaps)
-    void set_unit_factory(std::unique_ptr<IUnitFactory> factory);
-    void set_effects_model(std::unique_ptr<IEffectsModel> model);
-    void set_sensor_model(std::unique_ptr<ISensorModel> model);
-    void set_acoustic_model(std::unique_ptr<IAcousticModel> model);
-    void set_control_model(std::unique_ptr<IControlModel> model);
-    void set_guidance_model(std::unique_ptr<IGuidanceModel> model);
-    void set_environment_model(std::unique_ptr<IEnvironmentModel> model);
     bool load_unit_definitions(const std::string &path, std::string *error = nullptr);
     void set_missile_tuning(const MissileTuning &tuning);
     const MissileTuning &get_missile_tuning() const { return missile_tuning_; }
@@ -247,6 +248,15 @@ class SimulationKernel {
   private:
     void ensure_active(const char *operation) const;
     void register_components_and_systems();
+    [[nodiscard]] IEnvironmentModel *environment_model() const noexcept;
+    [[nodiscard]] IUnitFactory *unit_factory() const noexcept;
+    [[nodiscard]] IEffectsModel *effects_model() const noexcept;
+    [[nodiscard]] ISensorModel *sensor_model() const noexcept;
+    [[nodiscard]] IAcousticModel *acoustic_model() const noexcept;
+    [[nodiscard]] IControlModel *control_model() const noexcept;
+    [[nodiscard]] IGuidanceModel *guidance_model() const noexcept;
+    [[nodiscard]] IEngagementEventStore *engagement_event_store() const noexcept;
+    [[nodiscard]] IWeaponReleaseService *weapon_release_service() const noexcept;
 
     flecs::world ecs;
     double time_step = 1.0 / 60.0; // 60 Hz by default
@@ -255,17 +265,8 @@ class SimulationKernel {
     // In production we might use Xoshiro/PCG
     std::mt19937 rng;
 
-    std::unique_ptr<IEnvironmentModel> environment_model_;
-    std::unique_ptr<IUnitFactory> unit_factory_;
-    std::unique_ptr<IEffectsModel> effects_model_;
-    std::unique_ptr<ISensorModel> sensor_model_;
-    std::unique_ptr<IAcousticModel> acoustic_model_;
-    std::unique_ptr<IControlModel> control_model_;
-    std::unique_ptr<IGuidanceModel> guidance_model_;
     MissileTuning missile_tuning_;
-    std::unique_ptr<SimulationKernelEngagementEventStore> engagement_event_store_;
-    std::unique_ptr<IWeaponReleaseDamageBridge> weapon_release_damage_bridge_;
-    std::unique_ptr<IWeaponReleaseService> weapon_release_service_;
+    std::unique_ptr<runtime::providers::DefaultSimulationComposition> composition_;
     bool exact_stage_trace_frame_active_ = false;
     bool shutdown_complete_ = false;
 };
