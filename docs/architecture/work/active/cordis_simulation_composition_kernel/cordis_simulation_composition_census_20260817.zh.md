@@ -70,7 +70,7 @@ type 存在后，P2/P3 guard 应补充这些更强检查。
 | kernel-owned 可替换 model/factory provider | 7 | environment、unit factory、effects、sensor、acoustic、control、guidance |
 | kernel-owned service/event object | 3 | engagement event store、weapon-release damage bridge、weapon-release service |
 | 发布到 Flecs 的 singleton service/model ref | 7 | 六个 model ref 加 engagement recorder；unit factory 通过 release service 使用 |
-| 中央函数内 component registration call | 82 | component availability 固定在一条 constructor-time 路径 |
+| 中央函数内 component registration call | 83 | component availability 固定在一条 constructor-time 路径 |
 | 中央函数内 active system registration call | 34 | common、air、naval、ground、combat、EW、logistics 一并安装 |
 | exact-step stage descriptor | 30 | 有序 trace/step inventory；只有子集存在详细 contract descriptor |
 | 维护中的 stage-node manifest seed entry | 5 | 语义 lifecycle slice，不是完整 executable system graph |
@@ -160,7 +160,7 @@ execution order。
 
 | 表面 | 当前用途 | 覆盖 | 目标处置 |
 | --- | --- | --- | --- |
-| `simulation_kernel_systems.cpp` | 构造 executable Flecs component/system graph | 82 个 component call 与 34 个 active registration call | 从已准入 native contribution 生成/realize |
+| `simulation_kernel_systems.cpp` | 构造 executable Flecs component/system graph | 83 个 component call 与 34 个 active registration call | 从已准入 native contribution 生成/realize |
 | `exact_stage_inventory.cpp` | exact-step trace inventory 与选定 stage 详细 contract | 30 个 descriptor；详细 contract 覆盖选定 exact 子集 | 使用相同 canonical node identity，并拒绝未解释 parity gap |
 | `stage_node_manifest_registry.h` | 维护中的 causal/runtime semantic manifest | 维护中 selected slice 的 5 个 node | 保持 semantic authority，并成为 admission input，而非平行 executable graph |
 
@@ -251,7 +251,7 @@ P2 实现前，P1-B 必须确定：
    domain/capability requirement、registration factory 的 system contribution schema；
 7. 将既有 request admission 与 realization 连接起来、且不提升 candidate capability 的
    backend provider contract；
-8. 精确命名当前 7 个 provider、3 个 service、82 个 component registration 与 34 个
+8. 精确命名当前 7 个 provider、3 个 service、83 个 component registration 与 34 个
    system call 的 default compatibility profile；任何 accepted deviation 必须显式记录；
 9. manifest hash、resolver version、provider version、executable graph hash、backend
    profile、host mode、scope generation 等 composition evidence field；
@@ -276,7 +276,7 @@ semantic requirement 作为 census output 冻结；后续变更必须有显式 a
   而无法启动；当前 Windows PATH 未安装或不可见 `g++`。这 7 项都是环境 launch failure，
   不是 assertion failure；
 - `git diff --check`：干净；
-- 计数复核：82 个 component registration、34 个 active system registration、30 个
+- 计数复核：83 个 component registration、34 个 active system registration、30 个
   exact-stage descriptor、5 个 stage-node manifest seed entry。
 
 Full-tree link audit 仍报告 effects review archive 下一个既有 missing target；full-tree

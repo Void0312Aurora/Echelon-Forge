@@ -110,7 +110,7 @@ plugin 派发或跨语言 service lookup 放入逐 step 路径。
 | `P0 Authority and Boundary` | 建立 owner、目标架构、非目标、任务簇和验收模型。 | 用户授权和已检查的仓库基线 | 双语子项目文档和父架构链接通过文档门禁 | pass |
 | `P1 Composition Contract` | 冻结 manifest schema、service key、plugin descriptor、scope、兼容规则和确定性解析。 | P0 accepted | schema fixture、校验规则、canonical encoding 和 contract test 存在 | pass |
 | `P2-A Native Lifecycle Kernel` | 实现隔离的 C++ catalog、scoped transaction、replacement、rollback、freeze 和确定性 disposal substrate。 | P1 contract frozen | 聚焦原生与架构门禁通过 | pass |
-| `P2-B Default Provider Migration` | 把默认 model/service 构造迁到准入原生 provider 后，并输出首份 production composition identity。 | P2-A accepted | 默认 behavior/replay parity 保持，raw provider capture 被移除，resolved plan 带有 evidence | ready |
+| `P2-B Default Provider Migration` | 把默认 model/service 构造迁到准入原生 provider 后，并输出首份 production composition identity。 | P2-A accepted | 默认 behavior/replay parity 保持，raw provider capture 被移除，resolved plan 带有 evidence | implementation / pending review |
 | `P2-C0 Projection And Catalog-Lock Contract` | 冻结 producer-neutral `RuntimeCompositionRequest` DTO 与 owner-derived `AdmittedCatalogLock` artifact、identity 和 admission rule。 | P2-B production path/identity stable | Cordis 获得唯一 typed 高层输入与版本化 owner-approved catalog lock；离线路径被限制为 canonical 低层 artifact | planned |
 | `P2-C1 Cordis Default-Profile Vertical Slice` | 使用 Cordis primitives 加仓库 profile/bundle layer lower 默认 request，并通过 production native path 实例化。 | P2-C0 accepted | Experiment fixture -> request -> Cordis -> manifest/catalog lock -> native realization 的正负 admission case 通过 | planned |
 | `P3-A System Contribution Migration` | 把仓库准入的 system package 编译进冻结的原生 stage graph。 | P2-C1 accepted；除非另有显式 independent-stream amendment | 默认图 parity 保持，且没有 package 拥有私有 pipeline | planned |
@@ -156,7 +156,7 @@ plugin 派发或跨语言 service lookup 放入逐 step 路径。
 文档 diff check 通过。
 
 P1-A 随后记录当前 construction/migration 基线：7 个可替换 model/factory provider、
-3 个 kernel-owned service/event object、7 个发布到 Flecs 的 singleton ref、82 个中央
+3 个 kernel-owned service/event object、7 个发布到 Flecs 的 singleton ref、83 个中央
 component-registration call、34 个 active system-registration call、30 个 exact-stage
 descriptor、5 个 maintained stage-node manifest entry，以及 3 个 Python 可见 runtime
 ownership tier。完整证据与限制见 composition census。

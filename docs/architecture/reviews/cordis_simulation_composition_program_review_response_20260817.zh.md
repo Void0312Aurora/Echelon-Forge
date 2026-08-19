@@ -168,10 +168,10 @@ capability/profile resolver。
 - [当前状态](../work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_current_status_20260817.zh.md)；
 - [验收合同](../work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_acceptance_20260817.zh.md)。
 
-## 7. 立即派发决定
+## 7. 2026-08-18 基线时的立即派发决定
 
-`P2-B` 仍是下一 eligible implementation cluster。它不得在同一 write set 实现 Cordis
-package，但必须：
+在该决策时点，`P2-B` 是下一 eligible implementation cluster。它不得在同一 write set
+实现 Cordis package，但必须：
 
 - 通过准入原生 provider 构造 production 默认 profile；
 - 移除不安全 raw provider capture；
@@ -179,10 +179,10 @@ package，但必须：
 - 输出稳定 requested/resolved production identity；
 - 留下 P2-C0 可消费的稳定 production identity/evidence seam。
 
-P2-B 获得验收后，P2-C0 成为下一战略 cluster，随后执行 P2-C1。P2-C1 必须针对
-production 默认路径证明 Cordis primitives 加仓库 profile/bundle layer，而不是仅针对
-synthetic schema fixture。没有单独的 architecture-owner amendment，不得先 release 后续
-implementation cluster。
+P2-B 实现现已完成并待独立验收审阅，见第 10 节。该验收通过后，P2-C0 成为下一战略
+cluster，随后执行 P2-C1。P2-C1 必须针对 production 默认路径证明 Cordis primitives 加
+仓库 profile/bundle layer，而不是仅针对 synthetic schema fixture。没有单独的
+architecture-owner amendment，不得先 release 后续 implementation cluster。
 
 ## 8. 首次重新审阅修订
 
@@ -217,7 +217,24 @@ reviewer 已确认：
 P2-C1 与相应 owner dependency 通过后才推进后续 implementation work。P6-B 继续单独
 held，等待 host decision。
 
-## 10. 最终回复状态
+## 10. P2-B 实现修订 — 2026-08-19
+
+维护中的默认 profile 现通过 native composition root 进入。`SimulationKernel` 不再直接构造
+默认 model、event store、weapon-release service 或 unit factory。production catalog 通过
+embedded resolved profile 完成 realization，并通过 lifecycle effect 发布带 generation 语义的
+Flecs ref；registration-time raw provider capture 已移除，同时输出 production requested/resolved
+identity。world rebuild 也通过同一个 native composition runtime 执行并保持 identity。
+
+这不是退回 native-only 计划，而是直接为 Cordis 打通 production seam：P2-C0 将在此基础上绑定
+request/catalog-lock，P2-C1 必须通过 Cordis primitives 加仓库 profile/bundle layer 作用于该真实
+仿真路径。本修订不宣称 Cordis 已经集成。本切片的 backend provider 只记录已准入的默认 profile
+identity；backend execution 构造仍属 P4，仿真 step path 不放入 host callback。
+
+本修订证据为 15 个 native lifecycle case / 443 个 assertion、32 个 simulation smoke case /
+824 个 assertion、21 个 composition architecture/contract test（1 个 toolchain skip）以及 12
+个 include-direction/flat-boundary test。P2-B 仍待独立审阅与 replay/fault-injection evidence。
+
+## 11. 最终回复状态
 
 回复状态：`architecture findings incorporated and independently reviewed`。
 

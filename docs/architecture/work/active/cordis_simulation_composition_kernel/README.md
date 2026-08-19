@@ -128,7 +128,7 @@ The complete design is in
 | `P0 Authority and Boundary` | Establish the owner, target architecture, non-goals, task clusters, and acceptance model. | User authorization and inspected repository baseline | Bilingual project documents and parent architecture links pass document gates | pass |
 | `P1 Composition Contract` | Freeze manifest schema, service keys, plugin descriptors, scopes, compatibility rules, and deterministic resolution. | P0 accepted | Schema fixtures, validation rules, canonical encoding, and contract tests exist | pass |
 | `P2-A Native Lifecycle Kernel` | Implement the isolated C++ catalog, scoped transaction, replacement, rollback, freeze, and deterministic disposal substrate. | P1 contract frozen | Focused native and architecture gates pass | pass |
-| `P2-B Default Provider Migration` | Move default model/service construction behind admitted native providers and emit the first production composition identity. | P2-A accepted | Default behavior/replay parity holds, raw provider capture is removed, and the resolved plan is evidence-bearing | ready |
+| `P2-B Default Provider Migration` | Move default model/service construction behind admitted native providers and emit the first production composition identity. | P2-A accepted | Default behavior/replay parity holds, raw provider capture is removed, and the resolved plan is evidence-bearing | implementation / pending review |
 | `P2-C0 Projection And Catalog-Lock Contract` | Freeze the producer-neutral `RuntimeCompositionRequest` DTO and owner-derived `AdmittedCatalogLock` artifact, identity, and admission rules. | P2-B production path and identity stable | Cordis has one typed high-level input and one versioned owner-approved catalog lock; offline paths are restricted to canonical low-level artifacts | planned |
 | `P2-C1 Cordis Default-Profile Vertical Slice` | Use Cordis primitives plus the repository profile/bundle layer to lower the default request and realize it through the production native path. | P2-C0 accepted | Experiment fixture -> request -> Cordis -> manifest/catalog lock -> native realization passes positive and negative admission cases | planned |
 | `P3-A System Contribution Migration` | Compile repository-admitted system packages into the frozen native stage graph. | P2-C1 accepted, unless an explicit independent-stream amendment is approved | Default graph parity holds and no package owns a private pipeline | planned |
@@ -182,7 +182,7 @@ documentation-governance tests, and a clean documentation diff check.
 
 P1-A subsequently recorded the current construction and migration baseline: 7
 replaceable model/factory providers, 3 kernel-owned service/event objects, 7
-published Flecs singleton refs, 82 central component-registration calls, 34
+published Flecs singleton refs, 83 central component-registration calls, 34
 active system-registration calls, 30 exact-stage descriptors, 5 maintained
 stage-node manifest entries, and 3 Python-visible runtime ownership tiers. The
 full evidence and limitations are in the composition census.

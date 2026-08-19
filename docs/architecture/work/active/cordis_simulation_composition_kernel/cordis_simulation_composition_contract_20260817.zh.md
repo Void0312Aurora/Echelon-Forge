@@ -183,7 +183,7 @@ backend mismatch、invalid policy 与 noncanonical number。
 | 包含 CPU backend 的 provider | 11 |
 | kernel model/factory provider | 7 |
 | kernel service/event provider | 3 |
-| component contribution | 82 |
+| component contribution | 83 |
 | system contribution | 34 |
 | scope policy | 5 |
 
@@ -203,7 +203,7 @@ P1-B architecture suite 证明：
 - generated schema 与 requested/resolved fixture freshness；
 - schema object closed 且 host-neutral；
 - C++ version、scope、service key、error code 与 executable specification 一致；
-- default fixture 精确跟踪 `simulation_kernel_systems.cpp` 中 82 个 component 与 34 个
+- default fixture 精确跟踪 `simulation_kernel_systems.cpp` 中 83 个 component 与 34 个
   system call；
 - 每个 required service 有唯一 scope-safe binding；
 - 32 种 input permutation 生成相同 byte、hash 与 order；

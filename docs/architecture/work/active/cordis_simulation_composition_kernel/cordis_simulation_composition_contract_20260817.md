@@ -196,7 +196,7 @@ The generated default fixture freezes the pre-migration composition inventory:
 | providers including CPU backend | 11 |
 | kernel model/factory providers | 7 |
 | kernel service/event providers | 3 |
-| component contributions | 82 |
+| component contributions | 83 |
 | system contributions | 34 |
 | scope policies | 5 |
 
@@ -219,7 +219,7 @@ The P1-B architecture suite proves:
 - schema objects are closed and host-neutral;
 - C++ versions, scopes, service keys, and error codes match the executable
   specification;
-- the default fixture exactly tracks the 82 component and 34 system calls in
+- the default fixture exactly tracks the 83 component and 34 system calls in
   `simulation_kernel_systems.cpp`;
 - every required service has one explicit scope-safe binding;
 - 32 input permutations resolve to identical bytes, hashes, and orders;

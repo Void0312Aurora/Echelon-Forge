@@ -186,10 +186,11 @@ The active documents amended by `153d5f4e` are:
 - [current status](../work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_current_status_20260817.md);
 - [acceptance contract](../work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_acceptance_20260817.md).
 
-## 7. Immediate Dispatch Decision
+## 7. Immediate Dispatch Decision At The 2026-08-18 Baseline
 
-`P2-B` remains the next eligible implementation cluster. It must not implement
-the Cordis package in the same write set. It must, however:
+At this decision point, `P2-B` was the next eligible implementation cluster. It
+was not to implement the Cordis package in the same write set. It was required
+to:
 
 - construct the production default profile through admitted native providers;
 - remove the unsafe raw provider capture;
@@ -197,11 +198,12 @@ the Cordis package in the same write set. It must, however:
 - export stable requested/resolved production identity;
 - leave stable production identity/evidence seams that P2-C0 can consume.
 
-After P2-B is accepted, P2-C0 becomes the next strategic cluster and P2-C1
-follows it. P2-C1 must prove Cordis primitives plus the repository profile/
-bundle layer against the production default path, not merely against a
-synthetic schema fixture. No later implementation cluster is released first
-without a separate architecture-owner amendment.
+The P2-B implementation is now complete and pending independent acceptance
+review, as recorded in Section 10. After that acceptance, P2-C0 becomes the
+next strategic cluster and P2-C1 follows it. P2-C1 must prove Cordis primitives
+plus the repository profile/bundle layer against the production default path,
+not merely against a synthetic schema fixture. No later implementation cluster
+is released first without a separate architecture-owner amendment.
 
 ## 8. First Re-review Amendments
 
@@ -242,7 +244,30 @@ The release boundary is therefore P2-B now, P2-C0 after P2-B acceptance, P2-C1
 after P2-C0 acceptance, and later implementation work only after P2-C1 and its
 owner dependencies. P6-B remains separately held pending a host decision.
 
-## 10. Final Response State
+## 10. P2-B Implementation Amendment — 2026-08-19
+
+The maintained default profile now enters through the native composition root.
+`SimulationKernel` no longer constructs the default models, event store,
+weapon-release service, or unit factory directly. The production catalog
+realizes the embedded resolved profile, publishes generation-aware Flecs
+references through lifecycle effects, removes registration-time raw provider
+captures, and exposes requested/resolved production identity. World rebuild is
+exercised through the same native composition runtime and preserves identity.
+
+This is a direct Cordis-enabling change, not a retreat to a native-only plan:
+P2-B creates the real production realization seam that P2-C0 can bind to and
+P2-C1 must exercise through Cordis primitives plus the repository profile/bundle
+layer. It deliberately does not claim that Cordis has already been integrated.
+The backend provider in this slice records the admitted default profile
+identity only; backend execution construction remains the separately governed
+P4 migration, and no host callback is placed in the simulation step path.
+
+Evidence at this amendment is 15 native lifecycle cases / 443 assertions, 32
+simulation smoke cases / 824 assertions, 21 composition architecture/contract
+tests with one toolchain skip, and 12 include-direction/flat-boundary tests.
+P2-B remains pending independent review and replay/fault-injection evidence.
+
+## 11. Final Response State
 
 Response state: `architecture findings incorporated and independently reviewed`.
 

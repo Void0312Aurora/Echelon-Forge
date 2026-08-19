@@ -1,8 +1,8 @@
 # Cordis 仿真组合内核当前状态 — 2026-08-17
 
-状态：`2026-08-17` P2-A 原生 lifecycle baseline 加独立审阅修复；composition
-ownership/migration edge 已分类，P1-B contract 与隔离的原生 realization kernel 已通过，
-下一步是 P2-B，不声明已实现 Cordis 集成。
+状态：`2026-08-19` P2-B production-provider migration 已进入实现阶段；在 P2-A
+原生 lifecycle baseline 与独立审阅修复基础上，默认 kernel 现通过原生 composition root
+构造，但在 P2-C0/P2-C1 完成前不声明 Cordis 集成。
 
 语言：
 
@@ -13,7 +13,7 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_current_status_20260817.md`
 Owner: `architecture/runtime-composition`
-Last verified: `2026-08-17`
+Last verified: `2026-08-19`
 
 父项目：[Cordis 仿真组合内核](README.zh.md)
 
@@ -32,15 +32,15 @@ Contract baseline：
 - 完成基于源码的 P1-A census，覆盖 constructor、setter、raw capture、service ref、
   system registration、backend selection、lifecycle、stage registry、binding、build ownership
   与 relevant test；
-- 分类 7 个可替换 provider、3 个 kernel-owned service/event object、82 个中央 component
+- 分类 7 个可替换 provider、3 个 kernel-owned service/event object、83 个中央 component
   registration、34 个 active system registration、30 个 exact stage、5 个 maintained
   stage-node manifest 与 3 个 Python runtime tier；
 - 将 environment raw capture、backend admission/materialization 分裂、三种 scheduling
   truth surface 设为 P1-B 硬约束；
-- 实现 host-neutral requested/resolved manifest contract，包含 5 个 scope、12 个稳定
+- 实现 host-neutral requested/resolved manifest contract，包含 5 个 scope、13 个稳定
   service key、稳定 failure code、显式 service binding、兼容规则与排除自身 hash 字段的
   SHA-256 identity；
-- 增加 generated schema 与默认兼容 fixture，覆盖 11 个 provider、82 个 component、
+- 增加 generated schema 与默认兼容 fixture，覆盖 11 个 provider、83 个 component、
   34 个 system，并增加 fail-closed invalid matrix 与 permutation-stability test；
 - 增加隔离的 `ef_composition` static library，不依赖 engine、facade、Flecs、binding 或
   Cordis；
@@ -50,11 +50,13 @@ Contract baseline：
   disposal、value-snapshot identity accessor、串行化 lifecycle control、重入 wrapper 生命周期
   保持、完整 plugin/factory identity check、进程内语义 service-type identity check 与幂等
   shutdown；
-- 普通 MSVC build 与 MSVC AddressSanitizer 下均通过 14 个聚焦 C++ test case、430 个
-  assertion；composition architecture/contract 为 20 passed、1 个 toolchain-dependent
-  `g++` skip；
-- 未迁移默认 provider、kernel/facade constructor、system registration、backend selection、
-  binding、Cordis package 或 Node host。
+- native lifecycle 通过 15 个 test case、443 个 assertion，default simulation smoke 通过
+  32 个 test case、824 个 assertion；composition architecture/contract 为 21 passed、1 个
+  toolchain-dependent `g++` skip；
+- 已将默认 model/event/service ownership 迁移到准入的 native provider 与 composition-root
+  builder；system 通过 generation-aware Flecs ref 读取可替换 service，不再保留 registration-time
+  raw capture；backend provider 当前只承担 identity/admission，backend execution migration 仍属
+  P4；Cordis package 与 Node host 不在本切片内。
 
 ## 成熟度矩阵
 
@@ -63,11 +65,11 @@ Contract baseline：
 | 架构权威 | P0 pass / project active | 父 README、目标架构、父路由与文档验证 | 后续提升已接受 runtime 规则 |
 | Composition census | P1-A pass | [基于源码的 census](cordis_simulation_composition_census_20260817.zh.md)，包含 owner/scope/replacement/disposition table | 在 generated evidence 替代前保持 census guard 同步 |
 | Manifest contract | P1-B pass / repaired | requested/resolved generated schema、纯 C++ value type、canonical fixture、invalid corpus、deterministic test 与原生 requested/resolved hash 重算 | 持续守护 producer/schema/header parity；外部 admission 前证明 Cordis 逐字节等价输出与 artifact provenance |
-| 原生 lifecycle kernel | P2-A pass / isolated / repaired | `ef_composition`、typed-scope guard、不可变 factory metadata、lifecycle 状态机、scoped transaction、replacement-aware rebuild、handover admission、identity accessor、rollback/disposal test、CI wiring 与 MSVC ASan 证据 | P2-B 接入真实默认 provider；广义原生验收前增加迁移特有 reset/replay 与真实 registry handover 证据 |
-| Model/provider migration | absent | 既有 interface/setter | provider factory、kernel builder、lifetime-safe consumption |
+| 原生 lifecycle kernel | P2-A pass / isolated / repaired | `ef_composition`、typed-scope guard、不可变 factory metadata、lifecycle 状态机、scoped transaction、replacement-aware rebuild、handover admission、identity accessor、rollback/disposal test、CI wiring 与 MSVC ASan 证据 | 完成 P2-B migration evidence，并在广义原生验收前增加真实 registry handover 证据 |
+| Model/provider migration | P2-B implementation / 待独立审阅 | 11-provider default catalog、embedded resolved-plan、native root-service handle、production identity、world rebuild 与 smoke/lifecycle evidence | replay 对比、fault-injected teardown、重复 create/destroy evidence、独立审阅 |
 | System composition | absent | 静态注册与 stage manifest 并存 | contribution contract 与 graph compilation |
 | Backend composition | partial baseline | 已有语义 backend interface/capability contract | provider selection 与 facade construction migration |
-| Composition evidence | contract-only baseline | 隔离内核保留 native requested/resolved identity | P2-B 接入 production identity，P2-C0/P2-C1 接入 request/catalog-lock identity，随后 P5-A 扩展 graph/backend/host/replay evidence |
+| Composition evidence | P2-B production identity 已实现 / 待审阅 | `SimulationKernel` 输出 generated requested/resolved identity，world rebuild 保持 identity | P2-C0/P2-C1 接入 request/catalog-lock identity，随后 P5-A 扩展 graph/backend/host/replay evidence |
 | Cordis control plane | absent / required target | 已有架构与 P1-B 低层 producer contract；不存在高层 request/catalog-lock artifact 或仓库内 Cordis package | P2-C0 projection/catalog-lock contract、P2-C1 默认 profile producer/native 纵向切片，随后 P6-A package maturation |
 | Node host | absent | Node-API 只是候选 host boundary | 批准 binding target 与 lifecycle/parity test |
 | Runtime acceptance | partial | P2-A 证明隔离 lifecycle 边界 | 默认行为、system、backend、evidence、Cordis、host、parity 与 closure gate |
@@ -88,7 +90,7 @@ Contract baseline：
 11. 已检查范围内，provider setter 在 declaration/definition 与 architecture documentation
     外没有 production caller；这只降低 compatibility risk，不会让当前 replacement semantic
     变得安全。
-12. P1-B 默认兼容 manifest 以确定方式表示 11 个 provider、82 个 component registration
+12. 默认兼容 manifest 以确定方式表示 11 个 provider、83 个 component registration
     与 34 个 system registration。
 13. P1-B resolution 有意保持无资源：它证明结构与语义的确定性，但不能授予由后续 runtime
     join 拥有的 stage、backend、domain、capability 或 artifact admission。
@@ -106,7 +108,7 @@ Contract baseline：
 
 | 残余 | 风险 | 必需处置 | Owner phase |
 | --- | --- | --- | --- |
-| `unique_ptr`、singleton ref、captured pointer 形成双重 model ownership | 正确性/use-after-free | 将 production default 迁到 P2-A scoped handle 并移除 raw capture | P2-B |
+| `unique_ptr`、singleton ref、captured pointer 形成双重 model ownership | 正确性/use-after-free | provider-owned handle 与 singleton effect 已实现；补齐 replay/fault-injection evidence 并退役兼容 seam | P2-B |
 | 中央静态 system list | 扩展性/profile 歧义 | contribution descriptor 编译到 stage contract | P3 |
 | 直接具体 backend 构造 | backend 演进和测试隔离 | backend provider admission | P4 |
 | Experiment/Cordis/native 权威重叠 | composition truth 竞争 | 显式 intent projection、owner catalog lock、canonical request、native revalidation | P2-C0/P2-C1/P3/P6 |
@@ -118,10 +120,9 @@ Contract baseline：
 
 ## 推荐下一步顺序
 
-1. 通过 P2-B provider 与 kernel builder 迁移默认 profile，同时证明 behavior/replay parity、
-   移除 raw provider capture，并输出 production composition identity；
-2. 增加迁移特有 reset、重复 rebuild 与 lifetime 证据；
-3. 执行 P2-C0：冻结 producer-neutral 高层 request 与 owner-derived catalog-lock
+1. 完成 P2-B 独立审阅，补齐 behavior/replay parity、重复 rebuild、provider failure/teardown
+   与 create/destroy lifetime evidence；
+2. 执行 P2-C0：冻结 producer-neutral 高层 request 与 owner-derived catalog-lock
    artifact/identity，并禁止第二个 offline high-level resolver；
 4. 执行 P2-C1：通过 Cordis primitives 加仓库 profile/bundle layer lower 默认 request，
    并证明端到端 native realization 与负向 admission；
@@ -130,6 +131,23 @@ Contract baseline：
 7. 成熟化 Cordis package 与 tooling；
 8. 仅在另行批准后增加 Node host，再运行适用的 producer/host/backend/batch parity 并
    移除双路径。
+
+## P2-B 实现修订 — 2026-08-19
+
+默认 model、event-store、unit-factory、effects、sensor、acoustic、control、guidance、
+damage-bridge 与 weapon-release 的 ownership 现通过 native provider catalog 与 composition
+root 进入。`SimulationKernel` 输出 production requested/resolved identity；可替换 system
+consumer 从带 generation 语义的 Flecs ref 解析 service，不再保留 registration-time raw capture。
+backend provider 在本切片只记录已准入的默认 profile identity，backend execution migration 仍属 P4。
+
+这是真实 Cordis 后续切片所需的 production seam，不是退回 native-only：P2-C0 将把
+request/catalog-lock evidence 绑定到该 root，P2-C1 必须通过 Cordis primitives 加仓库
+profile/bundle layer 把默认 request lower 到该真实路径。P2-B 不声明 Cordis 已集成。
+
+当前 migration evidence 为 15 个 native lifecycle case / 443 个 assertion、32 个 simulation
+smoke case / 824 个 assertion、21 个 composition architecture/contract test（1 个 toolchain
+skip）以及 12 个 include-direction/flat-boundary test。P2-B 仍待独立审阅、replay parity、
+fault-injected provider teardown 与重复 create/destroy evidence。
 
 ## 显式拒绝的声明
 

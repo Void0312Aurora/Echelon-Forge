@@ -1,9 +1,9 @@
 # Cordis Simulation Composition Kernel Current Status — 2026-08-17
 
-Status: `2026-08-17` P2-A native lifecycle baseline plus independent-review
-repair; composition ownership and migration edges are classified, the P1-B
-contract and isolated native realization kernel passed, P2-B is next, and no
-Cordis integration is claimed.
+Status: `2026-08-19` P2-B production-provider migration implementation is in
+progress after the P2-A native lifecycle baseline and independent-review repair;
+the default kernel now constructs through the native composition root, while
+Cordis integration is still not claimed pending P2-C0/P2-C1.
 
 Language:
 
@@ -14,7 +14,7 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_current_status_20260817.md`
 Owner: `architecture/runtime-composition`
-Last verified: `2026-08-17`
+Last verified: `2026-08-19`
 
 Parent: [Cordis Simulation Composition Kernel](README.md)
 
@@ -36,16 +36,16 @@ Contract baseline:
 - completed the source-grounded P1-A census of constructors, setters, raw
   captures, service refs, system registrations, backend selection, lifecycle,
   stage registries, bindings, build ownership, and relevant tests;
-- classified 7 replaceable providers, 3 kernel-owned service/event objects, 82
+- classified 7 replaceable providers, 3 kernel-owned service/event objects, 83
   central component registrations, 34 active system registrations, 30 exact
   stages, 5 maintained stage-node manifests, and 3 Python runtime tiers;
 - made the raw environment capture, split backend admission/materialization,
   and three scheduling truth surfaces hard P1-B constraints;
 - implemented a host-neutral requested/resolved manifest contract with five
-  scopes, 12 stable service keys, stable failure codes, explicit service
+  scopes, 13 stable service keys, stable failure codes, explicit service
   bindings, compatibility rules, and self-excluding SHA-256 identity;
 - added generated schema and default compatibility fixtures covering 11
-  providers, 82 components, and 34 systems, plus a fail-closed invalid matrix
+  providers, 83 components, and 34 systems, plus a fail-closed invalid matrix
   and permutation-stability tests;
 - added an isolated `ef_composition` static library with no engine, facade,
   Flecs, binding, or Cordis dependency;
@@ -57,11 +57,14 @@ Contract baseline:
   lifecycle control, reentrant wrapper lifetime retention, full plugin/factory
   identity checks, in-process semantic service-type identity checks, and
   idempotent shutdown;
-- passed 14 focused C++ test cases with 430 assertions in the normal MSVC build
-  and under MSVC AddressSanitizer; composition architecture/contract tests are
-  20 passed with one toolchain-dependent `g++` skip;
-- did not migrate default providers, kernel/facade constructors, system
-  registration, backend selection, bindings, Cordis packages, or Node hosting.
+- passed 15 focused native lifecycle cases with 443 assertions and 32 default
+  simulation smoke cases with 824 assertions; composition architecture/contract
+  tests are 21 passed with one toolchain-dependent `g++` skip;
+- migrated the default model/event/service ownership into admitted native
+  providers and a composition-root builder; systems now resolve replaceable
+  services through generation-aware Flecs refs rather than registration-time
+  raw captures; backend execution migration, Cordis packages, and Node hosting
+  remain outside this slice.
 
 ## Maturity Matrix
 
@@ -70,11 +73,11 @@ Contract baseline:
 | Architecture authority | P0 pass / project active | parent README, target architecture, parent route, and document validation | later promotion of accepted runtime rules |
 | Composition census | P1-A pass | [source-grounded census](cordis_simulation_composition_census_20260817.md) with owner/scope/replacement/disposition tables | keep census guard synchronized until generated evidence replaces it |
 | Manifest contract | P1-B pass / repaired | requested/resolved generated schemas, pure C++ value types, canonical fixtures, invalid corpus, deterministic tests, and native requested/resolved hash recomputation | keep producer/schema/header parity guarded; prove byte-equivalent Cordis output and artifact provenance before external admission |
-| Native lifecycle kernel | P2-A pass / isolated / repaired | `ef_composition`, typed-scope guards, immutable factory metadata, lifecycle state machine, scoped transactions, replacement-aware rebuild, handover admission, identity accessors, rollback/disposal tests, CI wiring, and MSVC ASan evidence | integrate real default providers in P2-B; add migration-specific reset/replay and real registry handover evidence before broad native acceptance |
-| Model/provider migration | absent | existing interfaces and setters | provider factories, kernel builder, lifetime-safe consumption |
+| Native lifecycle kernel | P2-A pass / isolated / repaired | `ef_composition`, typed-scope guards, immutable factory metadata, lifecycle state machine, scoped transactions, replacement-aware rebuild, handover admission, identity accessors, rollback/disposal tests, CI wiring, and MSVC ASan evidence | complete P2-B migration evidence and add real registry handover evidence before broad native acceptance |
+| Model/provider migration | P2-B implementation / pending independent review | 11-provider default catalog, embedded resolved-plan input, native root-service handles, production identity accessors, world rebuild and smoke/lifecycle evidence | replay fixture comparison, fault-injected provider teardown, repeated create/destroy evidence, independent review |
 | System composition | absent | static registration and stage manifests coexist | contribution contract and graph compilation |
 | Backend composition | partial baseline | semantic backend interface and capability contracts exist | provider selection and facade construction migration |
-| Composition evidence | contract-only baseline | native requested/resolved identities are retained by the isolated kernel | production identity in P2-B, request/catalog-lock identities in P2-C0/P2-C1, then graph/backend/host/replay expansion in P5-A |
+| Composition evidence | P2-B production identity implemented / pending review | `SimulationKernel` exports generated requested/resolved identities and world-rebuild preserves them | request/catalog-lock identities in P2-C0/P2-C1, then graph/backend/host/replay expansion in P5-A |
 | Cordis control plane | absent / required target | architecture and P1-B low-level producer contract exist; no high-level request/catalog-lock artifact or repository Cordis package exists | P2-C0 projection/catalog-lock contract, P2-C1 default-profile producer/native vertical slice, then P6-A package maturation |
 | Node host | absent | Node-API is only a candidate host boundary | approved binding target and lifecycle/parity tests |
 | Runtime acceptance | partial | P2-A proves the isolated lifecycle boundary | default behavior, systems, backend, evidence, Cordis, hosts, parity, and closure gates |
@@ -102,8 +105,8 @@ Contract baseline:
     declarations/definitions and architecture documentation, but this lowers
     only compatibility risk; it does not make the current replacement semantics
     safe.
-12. the P1-B default compatibility manifest deterministically represents 11
-    providers, 82 component registrations, and 34 system registrations.
+12. the default compatibility manifest deterministically represents 11
+    providers, 83 component registrations, and 34 system registrations.
 13. P1-B resolution is deliberately resource-free: it proves structural and
     semantic determinism but cannot grant stage, backend, domain, capability, or
     artifact admission owned by later runtime joins.
@@ -125,7 +128,7 @@ Contract baseline:
 
 | Residual | Risk | Required disposition | Owner phase |
 | --- | --- | --- | --- |
-| dual model ownership through `unique_ptr`, singleton refs, and captured pointers | correctness and use-after-free | migrate production defaults to P2-A scoped handles and remove raw capture | P2-B |
+| dual model ownership through `unique_ptr`, singleton refs, and captured pointers | correctness and use-after-free | provider-owned handles and singleton effects are implemented; complete replay/fault-injection evidence and retire remaining compatibility seams | P2-B |
 | central static system list | extensibility and profile ambiguity | contribution descriptors compiled into stage contracts | P3 |
 | direct concrete backend construction | backend evolution and test isolation | backend provider admission | P4 |
 | Experiment/Cordis/native authority overlap | competing composition truth | explicit intent projection, owner catalog lock, canonical request, native revalidation | P2-C0/P2-C1/P3/P6 |
@@ -137,11 +140,9 @@ Contract baseline:
 
 ## Recommended Next Action Order
 
-1. migrate the default profile through P2-B providers and a kernel builder,
-   with behavior/replay parity, removal of raw provider capture, and production
-   composition identity;
-2. add migration-specific reset, repeated rebuild, and lifetime evidence;
-3. execute P2-C0: freeze the producer-neutral high-level request and
+1. complete P2-B independent review with behavior/replay parity, repeated
+   rebuild, provider failure/teardown, and create/destroy lifetime evidence;
+2. execute P2-C0: freeze the producer-neutral high-level request and
    owner-derived catalog-lock artifact/identity, while forbidding a second
    offline high-level resolver;
 4. execute P2-C1: lower the default request through Cordis primitives plus the
@@ -153,6 +154,28 @@ Contract baseline:
 7. mature the Cordis package and tooling;
 8. add Node hosting only if separately approved, then run applicable
    producer/host/backend/batch parity and retire dual paths.
+
+## P2-B Implementation Amendment — 2026-08-19
+
+The default model, event-store, unit-factory, effects, sensor, acoustic,
+control, guidance, damage-bridge, and weapon-release ownership now enters
+through the native provider catalog and composition root. `SimulationKernel`
+exports production requested/resolved identity, and replaceable system
+consumers resolve services from generation-aware Flecs references rather than
+registration-time raw captures. The backend provider records the admitted
+default profile identity only; backend execution migration remains P4.
+
+This is the production seam required for the next Cordis slices, not a native-
+only retreat: P2-C0 will bind request/catalog-lock evidence to this root and
+P2-C1 must lower the default request through Cordis primitives plus the
+repository profile/bundle layer into this real path. Cordis integration is not
+claimed by P2-B.
+
+Current migration evidence is 15 native lifecycle cases / 443 assertions, 32
+simulation smoke cases / 824 assertions, 21 composition architecture/contract
+tests with one toolchain skip, and 12 include-direction/flat-boundary tests.
+P2-B remains pending independent review, replay parity, fault-injected provider
+teardown, and repeated create/destroy evidence.
 
 ## Explicitly Refused Claims
 

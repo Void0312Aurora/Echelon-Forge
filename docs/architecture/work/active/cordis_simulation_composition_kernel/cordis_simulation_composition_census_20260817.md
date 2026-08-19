@@ -76,7 +76,7 @@ guards after the production composition types exist.
 | kernel-owned replaceable model/factory providers | 7 | environment, unit factory, effects, sensor, acoustic, control, guidance |
 | kernel-owned service/event objects | 3 | engagement event store, weapon-release damage bridge, weapon-release service |
 | published Flecs singleton service/model refs | 7 | six model refs plus engagement recorder; unit factory is consumed through the release service |
-| component registration calls in the central function | 82 | component availability is fixed by one constructor-time path |
+| component registration calls in the central function | 83 | component availability is fixed by one constructor-time path |
 | active system registration calls in the central function | 34 | common, air, naval, ground, combat, EW, and logistics families are installed together |
 | exact-step stage descriptors | 30 | ordered trace/step inventory; only a subset has detailed contract descriptors |
 | maintained stage-node manifest seed entries | 5 | semantic lifecycle slice, not a complete executable system graph |
@@ -174,7 +174,7 @@ system execution order.
 
 | Surface | Current purpose | Coverage | Required target disposition |
 | --- | --- | --- | --- |
-| `simulation_kernel_systems.cpp` | constructs the executable Flecs component/system graph | 82 component calls and 34 active registration calls | generated/realized from admitted native contributions |
+| `simulation_kernel_systems.cpp` | constructs the executable Flecs component/system graph | 83 component calls and 34 active registration calls | generated/realized from admitted native contributions |
 | `exact_stage_inventory.cpp` | exact-step trace inventory and detailed contracts for selected stages | 30 descriptors; detailed contracts cover a selected exact subset | consume the same canonical node identities and reject unresolved parity gaps |
 | `stage_node_manifest_registry.h` | maintained causal/runtime semantic manifests | 5 nodes for the maintained selected slice | remain semantic authority and become an admission input, not a parallel executable graph |
 
@@ -272,7 +272,7 @@ P1-B must settle the following before P2 implementation:
 7. A backend provider contract that joins existing request admission with
    realization without promoting candidate capabilities.
 8. A default compatibility profile that exactly names the current seven
-   providers, three services, 82 component registrations, and 34 system calls,
+   providers, three services, 83 component registrations, and 34 system calls,
    with accepted deviations recorded explicitly.
 9. Composition evidence fields for manifest hash, resolver version, provider
    versions, executable graph hash, backend profile, host mode, and scope
@@ -301,7 +301,7 @@ Validation on `2026-08-17` produced:
   on this Windows PATH. All seven were environment launch failures, not failed
   assertions;
 - `git diff --check`: clean;
-- count replay: 82 component registrations, 34 active system registrations,
+- count replay: 83 component registrations, 34 active system registrations,
   30 exact-stage descriptors, and 5 stage-node manifest seed entries.
 
 A full-tree link audit still reports one pre-existing missing target under the
