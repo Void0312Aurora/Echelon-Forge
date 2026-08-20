@@ -11,8 +11,10 @@
 struct WorldBatchVisualBindingCompatibilityScene {
     gpu::VisualRenderRequest request{};
     std::vector<gpu::VisibleObjectPacked> objects;
-    // The scene is intentionally self-contained. Provider pointers must not
-    // escape the WorldLease acquired during collection because the owning
-    // world may be stopped before this DTO is rendered.
+    // ABI/source-compatibility tombstone. Collection always stores nullptr and
+    // rendering ignores this field; provider pointers must not escape the
+    // WorldLease acquired during collection.
+    [[deprecated("use environment_snapshot; provider pointers do not escape collection")]]
+    IEnvironmentModel *environment = nullptr;
     DefaultEnvironmentSnapshot environment_snapshot{};
 };

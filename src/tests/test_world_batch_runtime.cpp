@@ -138,6 +138,7 @@ TEST_SUITE("world_batch_runtime") {
         ref.entity_id = camera.id();
         auto scenes = runtime.collect_visual_binding_compatibility_scenes_batch({ref}, 4, false);
         REQUIRE(scenes.size() == 1);
+        CHECK(scenes.front().environment == nullptr);
         CHECK(scenes.front().environment_snapshot.valid);
         CHECK(scenes.front().environment_snapshot.raster.width == 200);
         CHECK(scenes.front().environment_snapshot.raster.height == 200);
@@ -155,6 +156,7 @@ TEST_SUITE("world_batch_runtime") {
                           scenes, false));
         CHECK(rendered.batch_size == 1);
         CHECK(rendered.flat.size() == rendered.frame_size);
+        CHECK(rendered.flat == before_shutdown.flat);
     }
 
 } // TEST_SUITE("world_batch_runtime")

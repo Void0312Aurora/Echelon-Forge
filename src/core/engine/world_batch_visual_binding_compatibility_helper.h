@@ -43,6 +43,7 @@ inline bool collect_scene_from_candidate_ids(const SimulationKernel &kernel,
     }
 
     const auto *env_ref = world.get<EnvironmentModelRef>();
+    out_scene->environment = nullptr;
 
     const int factor = std::max(1, downsample);
     gpu::VisualRenderRequest request{};
