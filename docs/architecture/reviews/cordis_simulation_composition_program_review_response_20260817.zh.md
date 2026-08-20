@@ -242,3 +242,32 @@ review 提出的权威、typed admission、capability composition、抽象、evi
 independent-slice concern 已实质改变计划。让 Cordis 成为可选 adapter 的建议未采纳，
 因为它与计划战略目标冲突。修订后的计划不再把 Cordis 推迟到很长的 native-only 序列
 之后，而是要求更早提供可执行的 Cordis 证据。
+
+## 12. P2-B 生命周期审阅修复回复 — 2026-08-20
+
+独立 `gpt-5.6-sol` / `max` implementation review 对 `3b1ecf9c` 报告了两个 P1 blocker
+与两个 P2 residual。P1 是 public、无 lease 的 Flecs world reference，以及未加锁的配置
+getter；P2 是缺少通用 service-handle borrow lease，且只统计 `SimObject` 不能证明所有
+Flecs entity 都处于 quiescent 状态。
+
+本次修复没有扩大 replacement 声明，而是：
+
+- 从 `DefaultSimulationComposition` public surface 删除 raw provider accessor，仅为受同步
+  `SimulationKernel` friend path 保留；
+- 将 `get_time_step()`、`get_missile_tuning()` 改为加锁并按值返回；
+- 用显式 mutable/const RAII world lease 替换无 lease 的 `get_world()` reference；lease 在
+  完整生命周期内持有 kernel operation lock，diagnostics binding 也遵守同一规则；
+- 将 raw Flecs access 与 rebuild/shutdown 串行化，并加入 shutdown blocking test；
+- 获取任意 raw-world lease 后永久关闭当前 provider-rebuild barrier；managed world/provider
+  state 已 mutation、exact-stage trace frame 活跃或仍存在 `SimObject` 时同样拒绝 rebuild；
+- 输出并测试 world generation，不把 manifest hash 不变误写为 provider generation 未变化。
+
+该策略有意 fail closed。它不宣称 `SimObject` 是所有 Flecs entity 的完整 registry，也不
+宣称 compatibility lease 释放后能重新开启 provider replacement。剩余的长生命周期 raw
+provider dependency，以及未来可重新开启的 typed borrow/reconfiguration protocol，继续登记
+到 P2-C1/P2-C2，而不会被 P2-B 验收声明掩盖。
+
+修复证据为 15/15 个 native lifecycle case、443 个 assertion，以及 37/37 个
+simulation-kernel smoke case、849 个 assertion。聚焦 composition/structural 运行除已独立
+复现的既有 binding-count guard（期望 `85`、实际 `87`）外均为绿色；该失败不在 P2-B
+write set。P2-B 改变验收状态前，已针对修复提交请求最终独立复核。

@@ -36,16 +36,6 @@ class DefaultSimulationComposition {
     DefaultSimulationComposition(DefaultSimulationComposition &&) = delete;
     DefaultSimulationComposition &operator=(DefaultSimulationComposition &&) = delete;
 
-    [[nodiscard]] IEnvironmentModel *environment_model() const noexcept;
-    [[nodiscard]] IUnitFactory *unit_factory() const noexcept;
-    [[nodiscard]] IEffectsModel *effects_model() const noexcept;
-    [[nodiscard]] ISensorModel *sensor_model() const noexcept;
-    [[nodiscard]] IAcousticModel *acoustic_model() const noexcept;
-    [[nodiscard]] IControlModel *control_model() const noexcept;
-    [[nodiscard]] IGuidanceModel *guidance_model() const noexcept;
-    [[nodiscard]] IEngagementEventStore *engagement_event_store() const noexcept;
-    [[nodiscard]] IWeaponReleaseService *weapon_release_service() const noexcept;
-
     [[nodiscard]] std::string requested_manifest_sha256() const;
     [[nodiscard]] std::string resolved_manifest_sha256() const;
     [[nodiscard]] std::uint64_t world_generation() const noexcept;
@@ -56,6 +46,17 @@ class DefaultSimulationComposition {
     struct Impl;
     explicit DefaultSimulationComposition(std::unique_ptr<Impl> impl) noexcept;
 
+    [[nodiscard]] IEnvironmentModel *environment_model() const noexcept;
+    [[nodiscard]] IUnitFactory *unit_factory() const noexcept;
+    [[nodiscard]] IEffectsModel *effects_model() const noexcept;
+    [[nodiscard]] ISensorModel *sensor_model() const noexcept;
+    [[nodiscard]] IAcousticModel *acoustic_model() const noexcept;
+    [[nodiscard]] IControlModel *control_model() const noexcept;
+    [[nodiscard]] IGuidanceModel *guidance_model() const noexcept;
+    [[nodiscard]] IEngagementEventStore *engagement_event_store() const noexcept;
+    [[nodiscard]] IWeaponReleaseService *weapon_release_service() const noexcept;
+
+    friend class ::SimulationKernel;
     friend composition::CompositionResult<std::unique_ptr<DefaultSimulationComposition>>
     build_default_simulation_composition(SimulationKernel &kernel, flecs::world &world,
                                          MissileTuning &missile_tuning, std::mt19937 &rng);

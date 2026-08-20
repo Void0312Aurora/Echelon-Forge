@@ -50,7 +50,7 @@ future external plugin packages without creating additional truth paths.
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
 | Model composition | native provider root | P2-B routes default environment, effects, sensor, acoustic, control, guidance, event-store, release-service, and unit-factory ownership through the admitted native catalog | System-family and backend construction remain later slices |
-| Service lifetime | generation-governed | provider handles are refreshed atomically under wrapper/kernel lifecycle locks; system consumers resolve generation-aware Flecs refs at execution time | Long-lived raw dependency references and broader handover evidence remain residuals |
+| Service lifetime | generation-governed / fail-closed raw-world quarantine | provider handles are refreshed atomically under wrapper/kernel lifecycle locks; system consumers resolve generation-aware Flecs refs at execution time; remaining raw Flecs access uses an operation-lock-backed RAII lease and permanently closes provider rebuild | Long-lived raw dependency references, typed replacement leases, and broader handover evidence remain residuals |
 | System composition | static | one registration function installs the shared, air, naval, and ground system set in a fixed sequence | Registration order is not a plugin dependency graph or profile contract |
 | Backend selection | partially abstracted | `IWorldBatchBackend` exists, but `RuntimeFacade` constructs `FlecsCpuBackend` directly | Backend capability contracts exist without a general provider-selection root |
 | Stage semantics | established foundation | maintained stage-node manifests describe semantic stage, read/write shards, clock, latency, synchronization, and barriers | The registry is not yet the sole input to system composition |
@@ -191,9 +191,12 @@ full evidence and limitations are in the composition census.
 P1-B then froze the host-neutral requested/resolved contract and default
 compatibility fixtures. P2-A provided the isolated native realization library;
 P2-B now routes the production default kernel through that root, exports
-requested/resolved identity and world-scope generation, and rejects non-
-quiescent world rebuilds. The current focused evidence is recorded in the
-current-status document; Cordis producer integration remains P2-C0/P2-C1.
+requested/resolved identity and world-scope generation, and allows provider
+rebuild only before managed-world mutation or raw Flecs lease exposure. Active
+trace frames and managed `SimObject` entities also reject rebuild. Raw Flecs
+leases serialize with rebuild/shutdown but are deliberately fail-closed rather
+than reopenable. The current focused evidence is recorded in the current-status
+document; Cordis producer integration remains P2-C0/P2-C1.
 
 ## Acceptance Gate
 

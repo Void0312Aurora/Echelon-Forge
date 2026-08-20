@@ -346,6 +346,7 @@ SimulationKernel::exact_gpu_migration_stage_contract_inventory() const {
 void SimulationKernel::begin_exact_stage_trace_frame() {
     auto composition_lock = acquire_composition_operation();
     ensure_active("begin_exact_stage_trace_frame");
+    world_state_mutated_ = true;
     if (exact_stage_trace_frame_active_) {
         throw std::logic_error("exact-stage trace frame already active");
     }

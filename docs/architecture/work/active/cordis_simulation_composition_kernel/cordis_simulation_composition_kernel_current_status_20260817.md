@@ -57,8 +57,8 @@ Contract baseline:
   lifecycle control, reentrant wrapper lifetime retention, full plugin/factory
   identity checks, in-process semantic service-type identity checks, and
   idempotent shutdown;
-- passed 15 focused native lifecycle cases with 443 assertions and 32 default
-  simulation smoke cases with 824 assertions; composition architecture/contract
+- passed 15 focused native lifecycle cases with 443 assertions and 37 default
+  simulation smoke cases with 849 assertions; composition architecture/contract
   tests are 21 passed with one toolchain-dependent `g++` skip;
 - migrated the default model/event/service ownership into admitted native
   providers and a composition-root builder; systems now resolve replaceable
@@ -74,7 +74,7 @@ Contract baseline:
 | Composition census | P1-A pass | [source-grounded census](cordis_simulation_composition_census_20260817.md) with owner/scope/replacement/disposition tables | keep census guard synchronized until generated evidence replaces it |
 | Manifest contract | P1-B pass / repaired | requested/resolved generated schemas, pure C++ value types, canonical fixtures, invalid corpus, deterministic tests, and native requested/resolved hash recomputation | keep producer/schema/header parity guarded; prove byte-equivalent Cordis output and artifact provenance before external admission |
 | Native lifecycle kernel | P2-A pass / production-enabling substrate | `ef_composition`, typed-scope guards, immutable factory metadata, lifecycle state machine, scoped transactions, replacement-aware rebuild, handover admission, identity accessors, rollback/disposal tests, CI wiring, and MSVC ASan evidence | real registry handover and broader native acceptance evidence |
-| Model/provider migration | P2-B implemented / pending independent review | 11-provider default catalog, embedded resolved-plan input, native root-service handles, production identity accessors, generation/quiescence guards, world rebuild and smoke/lifecycle evidence | replay fixture comparison, fault-injected provider teardown, repeated create/destroy evidence, final independent review |
+| Model/provider migration | P2-B implemented / pending independent revalidation | 11-provider default catalog, embedded resolved-plan input, private native root-service accessors, production identity/generation accessors, operation locking, leased raw-world quarantine, fail-closed rebuild guards, and smoke/lifecycle evidence | replay fixture comparison, fault-injected provider teardown, repeated create/destroy evidence, final independent revalidation |
 | System composition | absent | static registration and stage manifests coexist | contribution contract and graph compilation |
 | Backend composition | partial baseline | semantic backend interface and capability contracts exist | provider selection and facade construction migration |
 | Composition evidence | P2-B production identity implemented / pending review | `SimulationKernel` exports generated requested/resolved identities and world-rebuild preserves them | request/catalog-lock identities in P2-C0/P2-C1, then graph/backend/host/replay expansion in P5-A |
@@ -132,6 +132,7 @@ traceability and must not be read as the current P2-B implementation state.
 | Residual | Risk | Required disposition | Owner phase |
 | --- | --- | --- | --- |
 | residual raw dependency references in long-lived provider-owned services | correctness and use-after-free | retain kernel operation lock for current path; migrate remaining long-lived dependencies to handles and add replay/fault-injection evidence | P2-C1/P2-C2 |
+| raw Flecs compatibility lease permanently closes provider rebuild | extensibility and accidental retention of the broad ECS surface | keep the lease explicit and operation-lock-backed; migrate remaining consumers to typed kernel/facade operations before introducing a reopenable world-reconfiguration lease | P2-C2/P3 |
 | central static system list | extensibility and profile ambiguity | contribution descriptors compiled into stage contracts | P3 |
 | direct concrete backend construction | backend evolution and test isolation | backend provider admission | P4 |
 | Experiment/Cordis/native authority overlap | competing composition truth | explicit intent projection, owner catalog lock, canonical request, native revalidation | P2-C0/P2-C1/P3/P6 |
@@ -176,19 +177,23 @@ claimed by P2-B.
 
 The lifecycle repair batch now serializes kernel ECS/provider operations with
 world rebuild and shutdown, refreshes the complete root-handle set atomically,
-exports world-scope generation, and rejects rebuild while `SimObject` entities
-or an exact-stage trace frame make the world non-quiescent. This closes the
-reviewed provider UAF/concurrent-refresh gap for the current native path without
-claiming that long-lived raw dependency references or replay/fault-injection
-evidence are complete.
+exports world-scope generation, and protects remaining raw Flecs access with an
+explicit RAII world lease. The lease holds the same operation lock used by
+rebuild/shutdown; acquiring one permanently closes the current fail-closed
+provider-rebuild barrier. Rebuild is also rejected after provider/world state
+mutation, during an exact-stage trace frame, or while managed `SimObject`
+entities remain. This is a conservative compatibility quarantine, not a claim
+that arbitrary Flecs entities are proven quiescent or that a reopenable world
+lease has been implemented.
 
-Current migration evidence is 15 native lifecycle cases / 443 assertions, 33
-simulation smoke cases / 837 assertions, 21 composition architecture/contract
+Current migration evidence is 15 native lifecycle cases / 443 assertions, 37
+simulation smoke cases / 849 assertions, 21 composition architecture/contract
 tests with one toolchain skip, and 12 include-direction/flat-boundary tests.
-The lifecycle repair batch additionally covers generation increments, quiescent
-rebuild rejection, serialized concurrent rebuild requests, and kernel-wide ECS
-operation locking. P2-B remains pending final independent review, replay parity,
-fault-injected provider teardown, and repeated create/destroy evidence.
+The lifecycle repair batch additionally covers generation increments,
+managed-entity/state-mutation/raw-world rebuild rejection, serialized concurrent
+rebuild requests, getter/setter synchronization, and world-lease serialization
+against shutdown. P2-B remains pending final independent revalidation, replay
+parity, fault-injected provider teardown, and repeated create/destroy evidence.
 
 ## Explicitly Refused Claims
 

@@ -30,7 +30,9 @@ inline bool collect_scene_from_candidate_ids(const SimulationKernel &kernel,
         return false;
     }
 
-    auto entity = kernel.get_world().entity(entity_id);
+    auto world_lease = kernel.acquire_world_lease();
+    const auto &world = world_lease.world();
+    auto entity = world.entity(entity_id);
     if (!entity.is_valid()) {
         return false;
     }
@@ -40,7 +42,7 @@ inline bool collect_scene_from_candidate_ids(const SimulationKernel &kernel,
         return false;
     }
 
-    const auto *env_ref = kernel.get_world().get<EnvironmentModelRef>();
+    const auto *env_ref = world.get<EnvironmentModelRef>();
     out_scene->environment = env_ref != nullptr ? env_ref->model : nullptr;
 
     const int factor = std::max(1, downsample);
@@ -59,9 +61,9 @@ inline bool collect_scene_from_candidate_ids(const SimulationKernel &kernel,
     const int viewer_side =
         camera_alliance != nullptr ? static_cast<int>(camera_alliance->side) : 0;
     out_scene->objects.clear();
-    kernel.get_world().each([&](flecs::entity other_entity, const Transform &transform,
-                                const Velocity &velocity, const Alliance &alliance,
-                                const KeyEntity &key) {
+    world.each([&](flecs::entity other_entity, const Transform &transform,
+                   const Velocity &velocity, const Alliance &alliance,
+                   const KeyEntity &key) {
         if (other_entity.id() == entity_id) {
             return;
         }

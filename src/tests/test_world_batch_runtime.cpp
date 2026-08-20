@@ -96,7 +96,8 @@ TEST_SUITE("world_batch_runtime") {
         auto &world = runtime.world_raw_quarantine(0);
         world.set_wind(25.0, 270.0, 5.0);
 
-        const auto *env_ref = world.get_world().get<EnvironmentModelRef>();
+        auto world_lease = world.acquire_world_lease();
+        const auto *env_ref = world_lease.world().get<EnvironmentModelRef>();
         REQUIRE(env_ref != nullptr);
         REQUIRE(env_ref->model != nullptr);
         const auto windy = env_ref->model->get_atmosphere_at(0.0, 0.0, 1000.0);

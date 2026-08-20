@@ -11,7 +11,8 @@ namespace {
 bool collect_visual_scene(SimulationKernel &kernel, uint64_t entity_id, Math::Vector3 &cam_pos,
                           double &cam_heading, double &cam_pitch,
                           std::vector<arb::VisibleObject> &objects, int &my_side) {
-    auto e = kernel.get_world().entity(entity_id);
+    auto world_lease = kernel.acquire_world_lease();
+    auto e = world_lease.world().entity(entity_id);
     if (!e.is_valid()) {
         return false;
     }
@@ -28,8 +29,8 @@ bool collect_visual_scene(SimulationKernel &kernel, uint64_t entity_id, Math::Ve
     my_side = cam_a ? static_cast<int>(cam_a->side) : 0;
 
     objects.clear();
-    kernel.get_world().each([&](flecs::entity other_e, const Transform &t, const Velocity &v,
-                                const Alliance &a, const KeyEntity &k) {
+    world_lease.world().each([&](flecs::entity other_e, const Transform &t, const Velocity &v,
+                                 const Alliance &a, const KeyEntity &k) {
         if (other_e.id() == entity_id) {
             return;
         }

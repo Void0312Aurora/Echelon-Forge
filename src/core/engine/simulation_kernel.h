@@ -8,6 +8,7 @@
 #include <random>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <map>
 #include <vector>
 #include "components/basic/common.h"
@@ -71,6 +72,45 @@ struct ExactStepStageContractDescriptor {
 
 class SimulationKernel {
   public:
+    class WorldLease {
+      public:
+        WorldLease(WorldLease &&) noexcept = default;
+        WorldLease &operator=(WorldLease &&) noexcept = default;
+        WorldLease(const WorldLease &) = delete;
+        WorldLease &operator=(const WorldLease &) = delete;
+
+        // The returned reference is valid only while this lease remains alive.
+        [[nodiscard]] flecs::world &world() const noexcept { return *world_; }
+
+      private:
+        friend class SimulationKernel;
+        WorldLease(std::unique_lock<std::recursive_mutex> lock, flecs::world &world) noexcept
+            : lock_(std::move(lock)), world_(&world) {}
+
+        std::unique_lock<std::recursive_mutex> lock_;
+        flecs::world *world_ = nullptr;
+    };
+
+    class ConstWorldLease {
+      public:
+        ConstWorldLease(ConstWorldLease &&) noexcept = default;
+        ConstWorldLease &operator=(ConstWorldLease &&) noexcept = default;
+        ConstWorldLease(const ConstWorldLease &) = delete;
+        ConstWorldLease &operator=(const ConstWorldLease &) = delete;
+
+        // Flecs const-world access is not mutation-proof; the reference must not escape this lease.
+        [[nodiscard]] const flecs::world &world() const noexcept { return *world_; }
+
+      private:
+        friend class SimulationKernel;
+        ConstWorldLease(std::unique_lock<std::recursive_mutex> lock,
+                        const flecs::world &world) noexcept
+            : lock_(std::move(lock)), world_(&world) {}
+
+        std::unique_lock<std::recursive_mutex> lock_;
+        const flecs::world *world_ = nullptr;
+    };
+
     SimulationKernel();
     ~SimulationKernel();
     SimulationKernel(const SimulationKernel &) = delete;
@@ -98,11 +138,13 @@ class SimulationKernel {
                              double heading, double pitch, double roll, double vx, double vy,
                              double vz);
 
-    // Get the Flecs world (for systems/bindings)
-    flecs::world &get_world() { return ecs; }
-    const flecs::world &get_world() const { return ecs; }
+    // Compatibility/quarantine access for systems and bindings that still require raw Flecs.
+    // Rebuild and shutdown are serialized for the lease lifetime, and acquiring any raw-world
+    // lease closes the fail-closed world-provider rebuild barrier for this kernel instance.
+    [[nodiscard]] WorldLease acquire_world_lease();
+    [[nodiscard]] ConstWorldLease acquire_world_lease() const;
 
-    double get_time_step() const { return time_step; }
+    double get_time_step() const;
     void set_time_step(double dt);
     [[nodiscard]] std::string requested_composition_sha256() const;
     [[nodiscard]] std::string resolved_composition_sha256() const;
@@ -243,7 +285,7 @@ class SimulationKernel {
 
     bool load_unit_definitions(const std::string &path, std::string *error = nullptr);
     void set_missile_tuning(const MissileTuning &tuning);
-    const MissileTuning &get_missile_tuning() const { return missile_tuning_; }
+    MissileTuning get_missile_tuning() const;
     void shutdown();
 
   private:
@@ -273,6 +315,8 @@ class SimulationKernel {
     MissileTuning missile_tuning_;
     std::unique_ptr<runtime::providers::DefaultSimulationComposition> composition_;
     mutable std::recursive_mutex composition_lifecycle_mutex_;
+    mutable bool raw_world_access_exposed_ = false;
+    bool world_state_mutated_ = false;
     bool exact_stage_trace_frame_active_ = false;
     bool shutdown_complete_ = false;
 };

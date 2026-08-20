@@ -67,6 +67,7 @@ void SimulationKernel::shutdown() {
 bool SimulationKernel::load_unit_definitions(const std::string &path, std::string *error) {
     auto composition_lock = acquire_composition_operation();
     ensure_active("load_unit_definitions");
+    world_state_mutated_ = true;
     IUnitFactory *factory = unit_factory();
     if (factory == nullptr) {
         if (error) *error = "Unit factory not set.";
@@ -111,12 +112,14 @@ void SimulationKernel::step() {
     // Fixed timestep update
     // We pass the fixed delta_time to progress
     // This overrides the internal clock measuring
+    world_state_mutated_ = true;
     ecs.progress(time_step);
 }
 
 bool SimulationKernel::load_database(const std::string &path) {
     auto composition_lock = acquire_composition_operation();
     ensure_active("load_database");
+    world_state_mutated_ = true;
     std::string error;
     IUnitFactory *factory = unit_factory();
     if (factory != nullptr && factory->load_definitions(path, &error)) {
@@ -142,6 +145,7 @@ flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_na
                                            double roll, double vx, double vy, double vz) {
     auto composition_lock = acquire_composition_operation();
     ensure_active("spawn_unit");
+    world_state_mutated_ = true;
     IUnitFactory *factory = unit_factory();
     if (factory == nullptr) {
         spdlog::error("Unit factory not set; cannot spawn unit.");
@@ -161,6 +165,7 @@ flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_na
 void SimulationKernel::clear_zones() {
     auto composition_lock = acquire_composition_operation();
     ensure_active("clear_zones");
+    world_state_mutated_ = true;
     if (IEnvironmentModel *model = environment_model()) {
         model->clear_zones();
     }
@@ -170,6 +175,7 @@ void SimulationKernel::add_zone(const std::string &name, double x, double y, dou
                                 double height, double heading, int surface_type) {
     auto composition_lock = acquire_composition_operation();
     ensure_active("add_zone");
+    world_state_mutated_ = true;
     if (IEnvironmentModel *model = environment_model()) {
         model->add_zone(name, x, y, width, height, heading,
                         static_cast<IEnvironmentModel::SurfaceType>(surface_type));
@@ -179,6 +185,7 @@ void SimulationKernel::add_zone(const std::string &name, double x, double y, dou
 void SimulationKernel::set_wind(double speed_mps, double dir_from_deg, double shear_mps_per_km) {
     auto composition_lock = acquire_composition_operation();
     ensure_active("set_wind");
+    world_state_mutated_ = true;
     if (IEnvironmentModel *model = environment_model()) {
         model->set_wind(speed_mps, dir_from_deg, shear_mps_per_km);
     }
@@ -187,6 +194,7 @@ void SimulationKernel::set_wind(double speed_mps, double dir_from_deg, double sh
 void SimulationKernel::set_sun_direction(double azimuth_deg, double elevation_deg) {
     auto composition_lock = acquire_composition_operation();
     ensure_active("set_sun_direction");
+    world_state_mutated_ = true;
     if (IEnvironmentModel *model = environment_model()) {
         model->set_sun_direction(azimuth_deg, elevation_deg);
     }
@@ -204,6 +212,7 @@ Vec3 SimulationKernel::get_sun_direction() const {
 void SimulationKernel::set_terrain_type(const std::string &terrain_type) {
     auto composition_lock = acquire_composition_operation();
     ensure_active("set_terrain_type");
+    world_state_mutated_ = true;
     if (IEnvironmentModel *model = environment_model()) {
         model->set_terrain_type(terrain_type);
     }
@@ -213,6 +222,7 @@ void SimulationKernel::set_maritime_state(double sea_state, double wave_heading_
                                           double wave_period_s) {
     auto composition_lock = acquire_composition_operation();
     ensure_active("set_maritime_state");
+    world_state_mutated_ = true;
     if (IEnvironmentModel *model = environment_model()) {
         model->set_maritime_state(sea_state, wave_heading_deg, wave_period_s);
     }
@@ -221,6 +231,7 @@ void SimulationKernel::set_maritime_state(double sea_state, double wave_heading_
 void SimulationKernel::clear_maritime_state() {
     auto composition_lock = acquire_composition_operation();
     ensure_active("clear_maritime_state");
+    world_state_mutated_ = true;
     if (IEnvironmentModel *model = environment_model()) {
         model->clear_maritime_state();
     }
@@ -250,6 +261,32 @@ std::uint64_t SimulationKernel::world_composition_generation() const noexcept {
     return composition_ ? composition_->world_generation() : 0;
 }
 
+SimulationKernel::WorldLease SimulationKernel::acquire_world_lease() {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("acquire_world_lease");
+    raw_world_access_exposed_ = true;
+    return WorldLease(std::move(composition_lock), ecs);
+}
+
+SimulationKernel::ConstWorldLease SimulationKernel::acquire_world_lease() const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("acquire_world_lease");
+    raw_world_access_exposed_ = true;
+    return ConstWorldLease(std::move(composition_lock), ecs);
+}
+
+double SimulationKernel::get_time_step() const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_time_step");
+    return time_step;
+}
+
+MissileTuning SimulationKernel::get_missile_tuning() const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_missile_tuning");
+    return missile_tuning_;
+}
+
 bool SimulationKernel::rebuild_world_composition(std::string_view barrier, std::string *error) {
     auto composition_lock = acquire_composition_operation();
     ensure_active("rebuild_world_composition");
@@ -264,10 +301,24 @@ bool SimulationKernel::rebuild_world_composition(std::string_view barrier, std::
         }
         return false;
     }
+    if (raw_world_access_exposed_) {
+        if (error) {
+            *error = std::string(runtime::composition::kErrorRebuildBarrierRejected) +
+                     ":world:raw Flecs world access has been exposed; rebuild requires a world lease";
+        }
+        return false;
+    }
     if (ecs.count<SimObject>() != 0) {
         if (error) {
             *error = std::string(runtime::composition::kErrorRebuildBarrierRejected) +
                      ":world:non-quiescent world contains SimObject entities";
+        }
+        return false;
+    }
+    if (world_state_mutated_) {
+        if (error) {
+            *error = std::string(runtime::composition::kErrorRebuildBarrierRejected) +
+                     ":world:world state has been mutated since composition construction";
         }
         return false;
     }

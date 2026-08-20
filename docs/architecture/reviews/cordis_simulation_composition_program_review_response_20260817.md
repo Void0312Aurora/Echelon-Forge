@@ -277,3 +277,45 @@ plan. Its recommendation to make Cordis an optional adapter has not been
 adopted because it conflicts with the program's strategic objective. The
 revised plan now requires earlier executable evidence of Cordis rather than
 deferring it behind a long native-only sequence.
+
+## 12. P2-B Lifecycle Review Repair Response — 2026-08-20
+
+The independent `gpt-5.6-sol` / `max` implementation review of `3b1ecf9c`
+reported two P1 blockers and two P2 residuals. The P1 blockers were the public
+unleased Flecs-world reference and unlocked configuration getters. The P2
+residuals were the lack of a general service-handle borrow lease and the fact
+that a `SimObject` count alone is not proof that every Flecs entity is
+quiescent.
+
+The repair does not widen the replacement claim. It:
+
+- removes the public raw provider accessors from
+  `DefaultSimulationComposition`, retaining them only for the synchronized
+  `SimulationKernel` friend path;
+- changes `get_time_step()` and `get_missile_tuning()` to locked value-returning
+  operations;
+- replaces the unleased `get_world()` reference with explicit mutable/const
+  RAII world leases that hold the kernel operation lock for their full
+  lifetime, including diagnostics binding access;
+- serializes raw Flecs access with rebuild and shutdown and adds a shutdown
+  blocking test;
+- permanently closes the current provider-rebuild barrier after any raw-world
+  lease is acquired, and also rejects rebuild after managed world/provider
+  mutation, during an exact-stage trace frame, or while `SimObject` entities
+  remain; and
+- exports and tests world generation without implying that unchanged manifest
+  hashes identify the same provider generation.
+
+This is deliberately fail-closed. It does not claim that `SimObject` is a
+complete registry of all Flecs entities, nor that the compatibility lease can
+be released to reopen provider replacement. Remaining long-lived raw provider
+dependencies and a future reopenable typed borrow/reconfiguration protocol stay
+registered for P2-C1/P2-C2 rather than being hidden by the P2-B acceptance
+claim.
+
+Repair evidence is 15/15 native lifecycle cases with 443 assertions and 37/37
+simulation-kernel smoke cases with 849 assertions. The focused composition and
+structural run is green except for the independently reproduced pre-existing
+binding-count guard (`85` expected versus `87` actual), which is outside the
+P2-B write set. Final independent revalidation is requested against the repair
+commit before P2-B acceptance status changes.

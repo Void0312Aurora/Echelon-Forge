@@ -140,11 +140,18 @@ void bind_simulation_kernel_legacy_compatibility_debug_surface(
     nb::class_<SimulationKernel> &kernel);
 void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKernel> &kernel);
 
-flecs::entity diagnostics_legacy_binding_entity_quarantine_lookup(SimulationKernel &self,
-                                                                  uint64_t entity_id) {
+struct DiagnosticsLegacyEntityLease {
+    SimulationKernel::WorldLease world_lease;
+    flecs::entity entity;
+};
+
+DiagnosticsLegacyEntityLease
+diagnostics_legacy_binding_entity_quarantine_lookup(SimulationKernel &self, uint64_t entity_id) {
     // WP22-R3 quarantine marker: raw entity binding access must stay localized
     // to diagnostics/legacy helpers instead of widening the maintained surface.
-    return self.get_world().entity(entity_id);
+    auto world_lease = self.acquire_world_lease();
+    auto entity = world_lease.world().entity(entity_id);
+    return {std::move(world_lease), entity};
 }
 
 void diagnostics_mark_read_only_snapshot(nb::dict &out, const char *diagnostics_surface_kind,
@@ -840,7 +847,9 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
         .def(
             "get_sensor_debug_view",
             [](SimulationKernel &self, uint64_t entity_id) {
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     return SensorDebugView{};
                 }
@@ -855,7 +864,9 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
             "get_track_debug_view",
             [](SimulationKernel &self, uint64_t entity_id) {
                 std::vector<TrackDebugView> out;
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     return out;
                 }
@@ -874,7 +885,9 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
             "get_tentative_track_debug_view",
             [](SimulationKernel &self, uint64_t entity_id) {
                 std::vector<TrackDebugView> out;
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     return out;
                 }
@@ -893,7 +906,9 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
             "get_flight_dynamics_debug_view",
             [](SimulationKernel &self, uint64_t entity_id) {
                 FlightDynamicsDebugView out;
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     return out;
                 }
@@ -993,7 +1008,9 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
             "debug_get_pending_movement_command",
             [](SimulationKernel &self, uint64_t entity_id) {
                 nb::dict out;
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     return out;
                 }
@@ -1033,7 +1050,9 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
             "debug_get_pending_action_command",
             [](SimulationKernel &self, uint64_t entity_id) {
                 nb::dict out;
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     return out;
                 }
@@ -1068,7 +1087,9 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
             [](SimulationKernel &self, uint64_t entity_id) {
                 nb::dict out;
                 nb::list queued;
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     out["queued"] = queued;
                     return out;
@@ -1117,7 +1138,9 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
             "debug_get_missile_runtime_state",
             [](SimulationKernel &self, uint64_t entity_id) {
                 nb::dict out;
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     return out;
                 }
@@ -1358,7 +1381,9 @@ void bind_simulation_kernel_legacy_compatibility_debug_surface(
             "debug_set_legacy_movement_command",
             [](SimulationKernel &self, uint64_t entity_id, double target_heading_deg,
                double target_speed_mps, double target_altitude_m, bool active) {
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     throw std::invalid_argument(
                         "Invalid entity ID for debug_set_legacy_movement_command");
@@ -1374,7 +1399,9 @@ void bind_simulation_kernel_legacy_compatibility_debug_surface(
             "debug_get_legacy_movement_command",
             [](SimulationKernel &self, uint64_t entity_id) {
                 nb::dict out;
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     return out;
                 }
@@ -1424,7 +1451,9 @@ void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKe
             [](SimulationKernel &self, uint64_t entity_id, double x_m, double y_m, double z_m,
                double heading_deg, double pitch_deg, double roll_deg, double vx_mps, double vy_mps,
                double vz_mps) {
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     throw std::invalid_argument("Invalid entity ID for debug_set_unit_truth_state");
                 }
@@ -1442,7 +1471,9 @@ void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKe
             "set_missile_guidance_mechanism_profile",
             [](SimulationKernel &self, uint64_t entity_id, int capture_mode, int pn_mode,
                int lead_mode, int kinematics_source, int apn_mode) {
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 const Missile *missile = e.is_valid() ? e.get<Missile>() : nullptr;
                 if (!missile) {
                     throw std::invalid_argument(

@@ -56,7 +56,8 @@ void check_control_law_state(
         &expected) {
     for (std::size_t world = 0; world < entity_ids.size(); ++world) {
         const auto &kernel = runtime.world_raw_quarantine(world);
-        const auto entity = kernel.get_world().entity(entity_ids[world]);
+        auto world_lease = kernel.acquire_world_lease();
+        const auto entity = world_lease.world().entity(entity_ids[world]);
         const auto *control = entity.get<ControlLawState>();
         REQUIRE(control != nullptr);
         CHECK(control->stick_roll_filt ==

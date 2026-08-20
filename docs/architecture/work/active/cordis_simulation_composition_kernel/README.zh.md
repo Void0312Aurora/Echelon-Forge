@@ -44,7 +44,7 @@ plugin 派发或跨语言 service lookup 放入逐 step 路径。
 | 区域 | 状态 | 证据 | 边界 |
 | --- | --- | --- | --- |
 | 模型组合 | 原生 provider root | P2-B 将默认 environment、effects、sensor、acoustic、control、guidance、event-store、release-service 和 unit-factory ownership 通过准入 native catalog 路由 | system family 与 backend 构造仍属后续切片 |
-| Service 生命周期 | generation-governed | provider handle 在 wrapper/kernel lifecycle lock 下原子刷新；system consumer 在执行时解析 generation-aware Flecs ref | 长期 raw dependency reference 与更广 handover evidence 仍是残余 |
+| Service 生命周期 | generation-governed / fail-closed raw-world quarantine | provider handle 在 wrapper/kernel lifecycle lock 下原子刷新；system consumer 在执行时解析 generation-aware Flecs ref；剩余 raw Flecs access 使用 operation-lock-backed RAII lease，且会永久关闭 provider rebuild | 长期 raw dependency reference、typed replacement lease 与更广 handover evidence 仍是残余 |
 | 系统组合 | 静态 | 单一注册函数以固定序列安装 shared、air、naval 和 ground 系统集 | 注册顺序不是插件依赖图或 profile 契约 |
 | 后端选择 | 部分抽象 | `IWorldBatchBackend` 已存在，但 `RuntimeFacade` 直接构造 `FlecsCpuBackend` | 后端能力合同存在，但缺少通用 provider-selection root |
 | Stage 语义 | 已有基础 | 维护中的 stage-node manifest 描述 semantic stage、read/write shard、clock、latency、sync 和 barrier | registry 还不是系统组合的唯一输入 |
@@ -163,8 +163,11 @@ ownership tier。完整证据与限制见 composition census。
 
 P1-B 随后冻结 host-neutral requested/resolved contract 与默认兼容 fixture。P2-A 提供了
 隔离的原生 realization library；P2-B 现已把 production default kernel 接入该 root，输出
-requested/resolved identity 与 world-scope generation，并拒绝非 quiescent world rebuild。
-当前聚焦证据见 current-status 文档；Cordis producer integration 仍属于 P2-C0/P2-C1。
+requested/resolved identity 与 world-scope generation，并仅允许在受监管 world 尚未 mutation、
+也未暴露 raw Flecs lease 前执行 provider rebuild。active trace frame 与受监管 `SimObject`
+实体同样会拒绝 rebuild。raw Flecs lease 会与 rebuild/shutdown 串行化，但当前有意采用
+fail-closed 而非可重新开启的策略。当前聚焦证据见 current-status 文档；Cordis producer
+integration 仍属于 P2-C0/P2-C1。
 
 ## 验收门
 

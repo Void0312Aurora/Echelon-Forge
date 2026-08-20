@@ -50,7 +50,8 @@ TorqueProbe run_surface_torque_probe(double elevator_pos, double aileron_pos, do
                                      double pitch_integrity, double roll_integrity,
                                      double yaw_integrity) {
     SimulationKernel kernel;
-    flecs::world &world = kernel.get_world();
+    auto world_lease = kernel.acquire_world_lease();
+    flecs::world &world = world_lease.world();
 
     AeroState aero{};
     aero.dynamic_pressure = 20000.0; // well above the q<0.1 skip guard

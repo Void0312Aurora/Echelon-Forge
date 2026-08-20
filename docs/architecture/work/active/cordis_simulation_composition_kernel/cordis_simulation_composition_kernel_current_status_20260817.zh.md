@@ -51,7 +51,7 @@ Contract baseline：
   保持、完整 plugin/factory identity check、进程内语义 service-type identity check 与幂等
   shutdown；
 - native lifecycle 通过 15 个 test case、443 个 assertion，default simulation smoke 通过
-  33 个 test case、837 个 assertion；composition architecture/contract 为 21 passed、1 个
+  37 个 test case、849 个 assertion；composition architecture/contract 为 21 passed、1 个
   toolchain-dependent `g++` skip；
 - 已将默认 model/event/service ownership 迁移到准入的 native provider 与 composition-root
   builder；system 通过 generation-aware Flecs ref 读取可替换 service，不再保留 registration-time
@@ -66,7 +66,7 @@ Contract baseline：
 | Composition census | P1-A pass | [基于源码的 census](cordis_simulation_composition_census_20260817.zh.md)，包含 owner/scope/replacement/disposition table | 在 generated evidence 替代前保持 census guard 同步 |
 | Manifest contract | P1-B pass / repaired | requested/resolved generated schema、纯 C++ value type、canonical fixture、invalid corpus、deterministic test 与原生 requested/resolved hash 重算 | 持续守护 producer/schema/header parity；外部 admission 前证明 Cordis 逐字节等价输出与 artifact provenance |
 | 原生 lifecycle kernel | P2-A pass / production-enabling substrate | `ef_composition`、typed-scope guard、不可变 factory metadata、lifecycle 状态机、scoped transaction、replacement-aware rebuild、handover admission、identity accessor、rollback/disposal test、CI wiring 与 MSVC ASan 证据 | 真实 registry handover 与更广原生验收证据 |
-| Model/provider migration | P2-B implemented / 待独立审阅 | 11-provider default catalog、embedded resolved-plan、native root-service handle、production identity、generation/quiescence guard、world rebuild 与 smoke/lifecycle evidence | replay 对比、fault-injected teardown、重复 create/destroy evidence、最终独立审阅 |
+| Model/provider migration | P2-B implemented / 待独立复核 | 11-provider default catalog、embedded resolved-plan、私有 native root-service accessor、production identity/generation accessor、operation lock、raw-world lease quarantine、fail-closed rebuild guard 与 smoke/lifecycle evidence | replay 对比、fault-injected teardown、重复 create/destroy evidence、最终独立复核 |
 | System composition | absent | 静态注册与 stage manifest 并存 | contribution contract 与 graph compilation |
 | Backend composition | partial baseline | 已有语义 backend interface/capability contract | provider selection 与 facade construction migration |
 | Composition evidence | P2-B production identity 已实现 / 待审阅 | `SimulationKernel` 输出 generated requested/resolved identity，world rebuild 保持 identity | P2-C0/P2-C1 接入 request/catalog-lock identity，随后 P5-A 扩展 graph/backend/host/replay evidence |
@@ -111,6 +111,7 @@ Contract baseline：
 | 残余 | 风险 | 必需处置 | Owner phase |
 | --- | --- | --- | --- |
 | 长生命周期 provider service 中残留 raw dependency reference | 正确性/use-after-free | 当前路径保留 kernel operation lock；后续改为 handle 并补齐 replay/fault-injection evidence | P2-C1/P2-C2 |
+| raw Flecs compatibility lease 会永久关闭 provider rebuild | 可扩展性与 broad ECS surface 被长期保留的风险 | 保持显式且由 operation lock 保护的 lease；引入可重新开启的 world-reconfiguration lease 前，把剩余 consumer 迁移到 typed kernel/facade operation | P2-C2/P3 |
 | 中央静态 system list | 扩展性/profile 歧义 | contribution descriptor 编译到 stage contract | P3 |
 | 直接具体 backend 构造 | backend 演进和测试隔离 | backend provider admission | P4 |
 | Experiment/Cordis/native 权威重叠 | composition truth 竞争 | 显式 intent projection、owner catalog lock、canonical request、native revalidation | P2-C0/P2-C1/P3/P6 |
@@ -147,16 +148,19 @@ request/catalog-lock evidence 绑定到该 root，P2-C1 必须通过 Cordis prim
 profile/bundle layer 把默认 request lower 到该真实路径。P2-B 不声明 Cordis 已集成。
 
 本次 lifecycle 修复批次将 kernel ECS/provider operation 与 world rebuild、shutdown 串行化，
-以原子方式刷新完整 root-handle 集，输出 world-scope generation，并在存在 `SimObject`
-实体或 exact-stage trace frame 使 world 非 quiescent 时拒绝 rebuild。这解决了当前 native
-路径已审阅的 provider UAF/concurrent-refresh 缺口，但不宣称长生命周期 raw dependency
-reference 或 replay/fault-injection evidence 已全部完成。
+以原子方式刷新完整 root-handle 集，输出 world-scope generation，并用显式 RAII world
+lease 保护剩余 raw Flecs access。lease 在存续期间持有 rebuild/shutdown 共用的 operation
+lock；一旦获取，当前 fail-closed provider-rebuild barrier 将永久关闭。存在受监管
+`SimObject`、发生 provider/world state mutation，或 exact-stage trace frame 活跃时也会拒绝
+rebuild。这是保守的 compatibility quarantine，不代表已证明任意 Flecs entity 均 quiescent，
+也不代表已实现可重新开启的 world lease。
 
-当前 migration evidence 为 15 个 native lifecycle case / 443 个 assertion、33 个 simulation
-smoke case / 837 个 assertion、21 个 composition architecture/contract test（1 个 toolchain
+当前 migration evidence 为 15 个 native lifecycle case / 443 个 assertion、37 个 simulation
+smoke case / 849 个 assertion、21 个 composition architecture/contract test（1 个 toolchain
 skip）以及 12 个 include-direction/flat-boundary test。新增 evidence 覆盖 generation 递增、
-quiescent rebuild 拒绝、并发 rebuild 串行化与 kernel-wide ECS operation lock。P2-B 仍待最终
-独立审阅、replay parity、fault-injected provider teardown 与重复 create/destroy evidence。
+受监管实体/state mutation/raw-world rebuild 拒绝、并发 rebuild 串行化、getter/setter 同步，
+以及 world lease 对 shutdown 的串行化。P2-B 仍待最终独立复核、replay parity、
+fault-injected provider teardown 与重复 create/destroy evidence。
 
 ## 显式拒绝的声明
 

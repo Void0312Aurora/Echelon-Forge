@@ -88,7 +88,8 @@ TEST_CASE("CPU reference pins the fixed airborne flight-dynamics window") {
     }
 
     for (std::size_t world = 0; world < ids.size(); ++world) {
-        const auto entity = runtime.world_raw_quarantine(world).get_world().entity(ids[world]);
+        auto world_lease = runtime.world_raw_quarantine(world).acquire_world_lease();
+        const auto entity = world_lease.world().entity(ids[world]);
         const auto *transform = entity.get<Transform>();
         const auto *velocity = entity.get<Velocity>();
         const auto *angular = entity.get<AngularVelocity>();
