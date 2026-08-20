@@ -300,9 +300,14 @@ The repair does not widen the replacement claim. It:
 - serializes raw Flecs access with rebuild and shutdown and adds a shutdown
   blocking test;
 - permanently closes the current provider-rebuild barrier after any raw-world
-  lease is acquired, and also rejects rebuild after managed world/provider
+  lease is acquired, and also rejects rebuild after managed world/provider/clock
   mutation, during an exact-stage trace frame, or while `SimObject` entities
-  remain; and
+  remain;
+- removes the provider pointer from the compatibility visual-scene DTO and
+  renders from copied environment snapshots, with a regression proving that a
+  collected scene remains renderable after world shutdown; and
+- makes moved-from world leases fail closed instead of retaining an unlocked
+  raw-world pointer; and
 - exports and tests world generation without implying that unchanged manifest
   hashes identify the same provider generation.
 
@@ -313,9 +318,10 @@ dependencies and a future reopenable typed borrow/reconfiguration protocol stay
 registered for P2-C1/P2-C2 rather than being hidden by the P2-B acceptance
 claim.
 
-Repair evidence is 15/15 native lifecycle cases with 443 assertions and 37/37
-simulation-kernel smoke cases with 849 assertions. The focused composition and
+Repair commit `17991c14` evidence is 15/15 native lifecycle cases with 443
+assertions, 39/39 simulation-kernel smoke cases with 870 assertions, and 6/6
+world-batch runtime cases with 53 assertions. The focused composition and
 structural run is green except for the independently reproduced pre-existing
 binding-count guard (`85` expected versus `87` actual), which is outside the
-P2-B write set. Final independent revalidation is requested against the repair
-commit before P2-B acceptance status changes.
+P2-B write set. Final independent revalidation is requested against
+`17991c14` before P2-B acceptance status changes.

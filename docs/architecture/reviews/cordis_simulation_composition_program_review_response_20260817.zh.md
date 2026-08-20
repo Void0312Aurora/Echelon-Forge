@@ -258,8 +258,11 @@ Flecs entity 都处于 quiescent 状态。
 - 用显式 mutable/const RAII world lease 替换无 lease 的 `get_world()` reference；lease 在
   完整生命周期内持有 kernel operation lock，diagnostics binding 也遵守同一规则；
 - 将 raw Flecs access 与 rebuild/shutdown 串行化，并加入 shutdown blocking test；
-- 获取任意 raw-world lease 后永久关闭当前 provider-rebuild barrier；managed world/provider
-  state 已 mutation、exact-stage trace frame 活跃或仍存在 `SimObject` 时同样拒绝 rebuild；
+- 获取任意 raw-world lease 后永久关闭当前 provider-rebuild barrier；managed world/provider/
+  clock state 已 mutation、exact-stage trace frame 活跃或仍存在 `SimObject` 时同样拒绝 rebuild；
+- 从 compatibility visual-scene DTO 删除 provider pointer，改为复制的 environment snapshot，
+  并加入“world shutdown 后仍可渲染已收集 scene”的回归测试；
+- 让 moved-from world lease fail closed，不保留已经失去 lock 的 raw-world pointer；
 - 输出并测试 world generation，不把 manifest hash 不变误写为 provider generation 未变化。
 
 该策略有意 fail closed。它不宣称 `SimObject` 是所有 Flecs entity 的完整 registry，也不
@@ -267,7 +270,8 @@ Flecs entity 都处于 quiescent 状态。
 provider dependency，以及未来可重新开启的 typed borrow/reconfiguration protocol，继续登记
 到 P2-C1/P2-C2，而不会被 P2-B 验收声明掩盖。
 
-修复证据为 15/15 个 native lifecycle case、443 个 assertion，以及 37/37 个
-simulation-kernel smoke case、849 个 assertion。聚焦 composition/structural 运行除已独立
-复现的既有 binding-count guard（期望 `85`、实际 `87`）外均为绿色；该失败不在 P2-B
-write set。P2-B 改变验收状态前，已针对修复提交请求最终独立复核。
+修复提交 `17991c14` 的证据为 15/15 个 native lifecycle case、443 个 assertion，39/39 个
+simulation-kernel smoke case、870 个 assertion，以及 6/6 个 world-batch runtime case、53 个
+assertion。聚焦 composition/structural 运行除已独立复现的既有 binding-count guard（期望
+`85`、实际 `87`）外均为绿色；该失败不在 P2-B write set。P2-B 改变验收状态前，已针对
+`17991c14` 请求最终独立复核。
