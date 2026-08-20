@@ -395,6 +395,7 @@ bool SimulationKernel::run_exact_stage_direct(const std::string &stage_name) {
         return false;
     }
     ecs_run(ecs.c_ptr(), system.id(), time_step, nullptr);
+    world_state_mutated_ = true;
     return true;
 }
 
@@ -410,6 +411,7 @@ void SimulationKernel::restore_exact_replay_world_time(double world_time_s) {
         ecs_frame_begin(ecs.c_ptr(), static_cast<ecs_ftime_t>(world_time_s));
         ecs_frame_end(ecs.c_ptr());
     }
+    world_state_mutated_ = true;
 }
 
 void SimulationKernel::step_exact_stage_traceable_pipeline() {

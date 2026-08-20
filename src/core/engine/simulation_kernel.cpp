@@ -31,6 +31,9 @@ SimulationKernel::SimulationKernel() {
         ecs_enable(ecs.c_ptr(), resupply_logic.id(), false);
     }
     reset(42); // Default reset
+    // Constructor initialization establishes generation 1's clean baseline;
+    // later explicit resets are truth mutations and close the rebuild barrier.
+    world_state_mutated_ = false;
 }
 
 SimulationKernel::~SimulationKernel() {
@@ -80,6 +83,7 @@ void SimulationKernel::set_missile_tuning(const MissileTuning &tuning) {
     auto composition_lock = acquire_composition_operation();
     ensure_active("set_missile_tuning");
     missile_tuning_ = tuning;
+    world_state_mutated_ = true;
 }
 
 void SimulationKernel::reset(unsigned int seed) {
@@ -98,6 +102,7 @@ void SimulationKernel::reset(unsigned int seed) {
     ecs_reset_clock(ecs.c_ptr());
 
     rng.seed(seed);
+    world_state_mutated_ = true;
 
     spdlog::info("Simulation Reset with seed {}", seed);
 }
@@ -138,6 +143,7 @@ void SimulationKernel::set_time_step(double dt) {
             "SimulationKernel time step must be finite and greater than zero");
     }
     time_step = dt;
+    world_state_mutated_ = true;
 }
 
 flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_name, double x,

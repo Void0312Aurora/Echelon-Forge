@@ -51,7 +51,8 @@ Contract baseline：
   保持、完整 plugin/factory identity check、进程内语义 service-type identity check 与幂等
   shutdown；
 - native lifecycle 通过 15 个 test case、443 个 assertion，default simulation smoke 通过
-  37 个 test case、849 个 assertion；composition architecture/contract 为 21 passed、1 个
+  39 个 test case、870 个 assertion；world-batch compatibility 还验证了跨 shutdown 的
+  snapshot-owned visual scene；composition architecture/contract 为 21 passed、1 个
   toolchain-dependent `g++` skip；
 - 已将默认 model/event/service ownership 迁移到准入的 native provider 与 composition-root
   builder；system 通过 generation-aware Flecs ref 读取可替换 service，不再保留 registration-time
@@ -151,15 +152,18 @@ profile/bundle layer 把默认 request lower 到该真实路径。P2-B 不声明
 以原子方式刷新完整 root-handle 集，输出 world-scope generation，并用显式 RAII world
 lease 保护剩余 raw Flecs access。lease 在存续期间持有 rebuild/shutdown 共用的 operation
 lock；一旦获取，当前 fail-closed provider-rebuild barrier 将永久关闭。存在受监管
-`SimObject`、发生 provider/world state mutation，或 exact-stage trace frame 活跃时也会拒绝
-rebuild。这是保守的 compatibility quarantine，不代表已证明任意 Flecs entity 均 quiescent，
-也不代表已实现可重新开启的 world lease。
+`SimObject`、发生 provider/world/clock state mutation，或 exact-stage trace frame 活跃时也会拒绝
+rebuild；compatibility visual scene 只携带复制的 environment snapshot，不保存 provider pointer。
+这是保守的 compatibility quarantine，不代表已证明任意 Flecs entity 均 quiescent，也不代表
+已实现可重新开启的 world lease。
 
-当前 migration evidence 为 15 个 native lifecycle case / 443 个 assertion、37 个 simulation
-smoke case / 849 个 assertion、21 个 composition architecture/contract test（1 个 toolchain
-skip）以及 12 个 include-direction/flat-boundary test。新增 evidence 覆盖 generation 递增、
-受监管实体/state mutation/raw-world rebuild 拒绝、并发 rebuild 串行化、getter/setter 同步，
-以及 world lease 对 shutdown 的串行化。P2-B 仍待最终独立复核、replay parity、
+当前 migration evidence 为 15 个 native lifecycle case / 443 个 assertion、39 个 simulation
+smoke case / 870 个 assertion、6 个 world-batch runtime case / 53 个 assertion、21 个
+composition architecture/contract test（1 个 toolchain skip）以及 12 个
+include-direction/flat-boundary test。新增 evidence 覆盖 generation 递增、
+受监管实体/provider/clock-state-mutation/raw-world rebuild 拒绝、并发 rebuild 串行化、
+getter/setter 同步、moved-from lease fail-closed、world lease 对 shutdown 的串行化，以及
+shutdown 后 snapshot-only visual rendering。P2-B 仍待最终独立复核、replay parity、
 fault-injected provider teardown 与重复 create/destroy evidence。
 
 ## 显式拒绝的声明

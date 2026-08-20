@@ -118,6 +118,23 @@ TEST_SUITE("simulation_kernel_smoke") {
         CHECK(kernel.world_composition_generation() == 1);
     }
 
+    TEST_CASE("moved_from_world_leases_fail_closed") {
+        SimulationKernel kernel;
+        {
+            auto lease = kernel.acquire_world_lease();
+            auto moved = std::move(lease);
+            CHECK_THROWS_AS(lease.world(), std::logic_error);
+            CHECK(moved.world().count<SimObject>() == 0);
+        }
+        {
+            const auto &const_kernel = kernel;
+            auto lease = const_kernel.acquire_world_lease();
+            auto moved = std::move(lease);
+            CHECK_THROWS_AS(lease.world(), std::logic_error);
+            CHECK(moved.world().count<SimObject>() == 0);
+        }
+    }
+
     TEST_CASE("world_lease_serializes_kernel_shutdown") {
         using namespace std::chrono_literals;
 
@@ -150,6 +167,42 @@ TEST_SUITE("simulation_kernel_smoke") {
         CHECK_FALSE(kernel.rebuild_world_composition("world_rebuild", &error));
         CHECK(error.find("world state has been mutated") != std::string::npos);
         CHECK(kernel.world_composition_generation() == 1);
+    }
+
+    TEST_CASE("truth_configuration_and_clock_mutations_close_the_rebuild_barrier") {
+        auto expect_rejected = [](auto mutate) {
+            SimulationKernel kernel;
+            mutate(kernel);
+            std::string error;
+            CHECK_FALSE(kernel.rebuild_world_composition("world_rebuild", &error));
+            CHECK(error.find("world state has been mutated") != std::string::npos);
+            CHECK(kernel.world_composition_generation() == 1);
+        };
+
+        SUBCASE("missile tuning") {
+            expect_rejected([](SimulationKernel &kernel) {
+                kernel.set_missile_tuning(kernel.get_missile_tuning());
+            });
+        }
+        SUBCASE("time step") {
+            expect_rejected([](SimulationKernel &kernel) {
+                kernel.set_time_step(kernel.get_time_step() * 2.0);
+            });
+        }
+        SUBCASE("explicit reset") {
+            expect_rejected([](SimulationKernel &kernel) { kernel.reset(7); });
+        }
+        SUBCASE("exact replay clock restore") {
+            expect_rejected(
+                [](SimulationKernel &kernel) { kernel.restore_exact_replay_world_time(0.0); });
+        }
+        SUBCASE("direct exact-stage execution") {
+            expect_rejected([](SimulationKernel &kernel) {
+                const auto inventory = kernel.exact_gpu_migration_stage_inventory();
+                REQUIRE_FALSE(inventory.empty());
+                REQUIRE(kernel.run_exact_stage_direct(inventory.front().name));
+            });
+        }
     }
 
     TEST_CASE("concurrent_world_rebuild_requests_are_serialized") {

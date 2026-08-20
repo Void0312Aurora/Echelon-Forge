@@ -43,7 +43,6 @@ inline bool collect_scene_from_candidate_ids(const SimulationKernel &kernel,
     }
 
     const auto *env_ref = world.get<EnvironmentModelRef>();
-    out_scene->environment = env_ref != nullptr ? env_ref->model : nullptr;
 
     const int factor = std::max(1, downsample);
     gpu::VisualRenderRequest request{};
@@ -119,9 +118,9 @@ inline bool collect_scene_from_candidate_ids(const SimulationKernel &kernel,
     });
 
     out_scene->environment_snapshot = {};
-    if (out_scene->environment != nullptr) {
-        (void)extract_default_environment_snapshot(out_scene->environment,
-                                                   &out_scene->environment_snapshot);
+    if (env_ref != nullptr && env_ref->model != nullptr &&
+        !extract_default_environment_snapshot(env_ref->model, &out_scene->environment_snapshot)) {
+        return false;
     }
     return true;
 }
@@ -167,15 +166,12 @@ render_scenes_batch(const std::vector<WorldBatchVisualBindingCompatibilityScene>
     requests.reserve(scenes.size());
     objects_batch.reserve(scenes.size());
 
-    std::vector<IEnvironmentModel *> envs;
-    envs.reserve(scenes.size());
     std::vector<DefaultEnvironmentSnapshot> snapshots;
     snapshots.reserve(scenes.size());
 
     for (const auto &scene : scenes) {
         requests.push_back(scene.request);
         objects_batch.push_back(scene.objects);
-        envs.push_back(scene.environment);
         snapshots.push_back(scene.environment_snapshot);
     }
 
@@ -198,22 +194,27 @@ render_scenes_batch(const std::vector<WorldBatchVisualBindingCompatibilityScene>
     if (can_batch && !requests.empty()) {
         if (use_gpu) {
             auto rendered =
-                gpu::render_visual_experiment_batch_export(requests, objects_batch, envs.front());
+                gpu::render_visual_experiment_batch_export_from_snapshot(
+                    requests, objects_batch,
+                    snapshots.front().valid ? &snapshots.front() : nullptr);
             out.flat = std::move(rendered.flat);
             out.device_ptr = rendered.device_ptr;
             out.device_float_count = rendered.device_float_count;
         } else {
-            out.flat =
-                gpu::render_visual_reference_cpu_batch(requests, objects_batch, envs.front());
+            out.flat = gpu::render_visual_reference_cpu_batch_from_snapshot(
+                requests, objects_batch, snapshots.front().valid ? &snapshots.front() : nullptr);
         }
         return out;
     }
 
     for (std::size_t idx = 0; idx < requests.size(); ++idx) {
-        auto rendered =
-            use_gpu
-                ? gpu::render_visual_experiment(requests[idx], objects_batch[idx], envs[idx])
-                : gpu::render_visual_reference_cpu(requests[idx], objects_batch[idx], envs[idx]);
+        auto rendered = use_gpu
+                            ? gpu::render_visual_experiment_from_snapshot(
+                                  requests[idx], objects_batch[idx],
+                                  snapshots[idx].valid ? &snapshots[idx] : nullptr)
+                            : gpu::render_visual_reference_cpu_from_snapshot(
+                                  requests[idx], objects_batch[idx],
+                                  snapshots[idx].valid ? &snapshots[idx] : nullptr);
         std::copy(rendered.begin(), rendered.end(),
                   out.flat.begin() + static_cast<std::ptrdiff_t>(idx * out.frame_size));
     }

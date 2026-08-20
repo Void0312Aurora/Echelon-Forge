@@ -6,6 +6,7 @@
 #include <memory>
 #include <mutex>
 #include <random>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -74,13 +75,25 @@ class SimulationKernel {
   public:
     class WorldLease {
       public:
-        WorldLease(WorldLease &&) noexcept = default;
-        WorldLease &operator=(WorldLease &&) noexcept = default;
+        WorldLease(WorldLease &&other) noexcept
+            : lock_(std::move(other.lock_)), world_(std::exchange(other.world_, nullptr)) {}
+        WorldLease &operator=(WorldLease &&other) noexcept {
+            if (this != &other) {
+                lock_ = std::move(other.lock_);
+                world_ = std::exchange(other.world_, nullptr);
+            }
+            return *this;
+        }
         WorldLease(const WorldLease &) = delete;
         WorldLease &operator=(const WorldLease &) = delete;
 
         // The returned reference is valid only while this lease remains alive.
-        [[nodiscard]] flecs::world &world() const noexcept { return *world_; }
+        [[nodiscard]] flecs::world &world() const {
+            if (world_ == nullptr || !lock_.owns_lock()) {
+                throw std::logic_error("SimulationKernel WorldLease is not active");
+            }
+            return *world_;
+        }
 
       private:
         friend class SimulationKernel;
@@ -93,13 +106,25 @@ class SimulationKernel {
 
     class ConstWorldLease {
       public:
-        ConstWorldLease(ConstWorldLease &&) noexcept = default;
-        ConstWorldLease &operator=(ConstWorldLease &&) noexcept = default;
+        ConstWorldLease(ConstWorldLease &&other) noexcept
+            : lock_(std::move(other.lock_)), world_(std::exchange(other.world_, nullptr)) {}
+        ConstWorldLease &operator=(ConstWorldLease &&other) noexcept {
+            if (this != &other) {
+                lock_ = std::move(other.lock_);
+                world_ = std::exchange(other.world_, nullptr);
+            }
+            return *this;
+        }
         ConstWorldLease(const ConstWorldLease &) = delete;
         ConstWorldLease &operator=(const ConstWorldLease &) = delete;
 
         // Flecs const-world access is not mutation-proof; the reference must not escape this lease.
-        [[nodiscard]] const flecs::world &world() const noexcept { return *world_; }
+        [[nodiscard]] const flecs::world &world() const {
+            if (world_ == nullptr || !lock_.owns_lock()) {
+                throw std::logic_error("SimulationKernel ConstWorldLease is not active");
+            }
+            return *world_;
+        }
 
       private:
         friend class SimulationKernel;

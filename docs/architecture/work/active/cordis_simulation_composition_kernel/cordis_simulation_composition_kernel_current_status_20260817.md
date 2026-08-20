@@ -57,8 +57,9 @@ Contract baseline:
   lifecycle control, reentrant wrapper lifetime retention, full plugin/factory
   identity checks, in-process semantic service-type identity checks, and
   idempotent shutdown;
-- passed 15 focused native lifecycle cases with 443 assertions and 37 default
-  simulation smoke cases with 849 assertions; composition architecture/contract
+- passed 15 focused native lifecycle cases with 443 assertions and 39 default
+  simulation smoke cases with 870 assertions; world-batch compatibility also
+  verifies snapshot-owned visual scenes across shutdown; composition architecture/contract
   tests are 21 passed with one toolchain-dependent `g++` skip;
 - migrated the default model/event/service ownership into admitted native
   providers and a composition-root builder; systems now resolve replaceable
@@ -180,20 +181,24 @@ world rebuild and shutdown, refreshes the complete root-handle set atomically,
 exports world-scope generation, and protects remaining raw Flecs access with an
 explicit RAII world lease. The lease holds the same operation lock used by
 rebuild/shutdown; acquiring one permanently closes the current fail-closed
-provider-rebuild barrier. Rebuild is also rejected after provider/world state
-mutation, during an exact-stage trace frame, or while managed `SimObject`
-entities remain. This is a conservative compatibility quarantine, not a claim
+provider-rebuild barrier. Rebuild is also rejected after provider/world/clock
+state mutation, during an exact-stage trace frame, or while managed `SimObject`
+entities remain. Compatibility visual scenes carry copied environment snapshots
+instead of provider pointers. This is a conservative compatibility quarantine, not a claim
 that arbitrary Flecs entities are proven quiescent or that a reopenable world
 lease has been implemented.
 
-Current migration evidence is 15 native lifecycle cases / 443 assertions, 37
-simulation smoke cases / 849 assertions, 21 composition architecture/contract
-tests with one toolchain skip, and 12 include-direction/flat-boundary tests.
+Current migration evidence is 15 native lifecycle cases / 443 assertions, 39
+simulation smoke cases / 870 assertions, 6 world-batch runtime cases / 53
+assertions, 21 composition architecture/contract tests with one toolchain skip,
+and 12 include-direction/flat-boundary tests.
 The lifecycle repair batch additionally covers generation increments,
-managed-entity/state-mutation/raw-world rebuild rejection, serialized concurrent
-rebuild requests, getter/setter synchronization, and world-lease serialization
-against shutdown. P2-B remains pending final independent revalidation, replay
-parity, fault-injected provider teardown, and repeated create/destroy evidence.
+managed-entity/provider/clock-state-mutation/raw-world rebuild rejection,
+serialized concurrent rebuild requests, getter/setter synchronization,
+moved-from lease fail-closed behavior, world-lease serialization against
+shutdown, and snapshot-only visual rendering after shutdown. P2-B remains
+pending final independent revalidation, replay parity, fault-injected provider
+teardown, and repeated create/destroy evidence.
 
 ## Explicitly Refused Claims
 

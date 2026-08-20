@@ -49,7 +49,7 @@ plugin 派发或跨语言 service lookup 放入逐 step 路径。
 | 后端选择 | 部分抽象 | `IWorldBatchBackend` 已存在，但 `RuntimeFacade` 直接构造 `FlecsCpuBackend` | 后端能力合同存在，但缺少通用 provider-selection root |
 | Stage 语义 | 已有基础 | 维护中的 stage-node manifest 描述 semantic stage、read/write shard、clock、latency、sync 和 barrier | registry 还不是系统组合的唯一输入 |
 | Composition contract | P1-B pass | 已有版本化 requested/resolved manifest、稳定 service key/scope/error code、canonical hash、默认兼容 fixture 与 fail-closed resolution test | 这是无资源的 contract baseline；不会构造 provider 或拥有 runtime resource |
-| 原生 lifecycle kernel | P2-A pass | 隔离的 `ef_composition` library、closed native JSON ingestion、catalog/factory metadata validation、scoped transactional realization、typed generation handle、rollback、rebuild 与逆序 disposal test | 尚未把默认 model、service、system、backend、binding 或 Cordis producer 迁入该 library |
+| 原生 lifecycle kernel | P2-A 历史基线；P2-B 原生 realization 已实现 | 隔离的 `ef_composition` library、closed native JSON ingestion、catalog/factory metadata validation、scoped transactional realization、typed generation handle、rollback、rebuild、逆序 disposal test，以及 P2-B 默认 provider realization seam | system family、backend、binding 迁移与 Cordis producer 集成仍属后续切片；Cordis 尚未集成 |
 | Cordis 集成 | 不存在 | 仓库中没有维护中的 Cordis、Node-API 或 Node package 表面 | 这是新的跨 runtime 边界，不是普通依赖升级 |
 
 ## 范围
