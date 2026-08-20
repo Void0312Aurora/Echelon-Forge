@@ -189,14 +189,15 @@ that arbitrary Flecs entities are proven quiescent or that a reopenable world
 lease has been implemented.
 
 Current migration evidence is 15 native lifecycle cases / 443 assertions, 39
-simulation smoke cases / 870 assertions, 6 world-batch runtime cases / 53
+simulation smoke cases / 870 assertions, 6 world-batch runtime cases / 55
 assertions, 21 composition architecture/contract tests with one toolchain skip,
 and 12 include-direction/flat-boundary tests.
 The lifecycle repair batch additionally covers generation increments,
 managed-entity/provider/clock-state-mutation/raw-world rebuild rejection,
 serialized concurrent rebuild requests, getter/setter synchronization,
 moved-from lease fail-closed behavior, world-lease serialization against
-shutdown, and snapshot-only visual rendering after shutdown. P2-B remains
+shutdown, snapshot-only visual rendering after shutdown, and the ABI-compatible
+legacy visual field tombstone. P2-B remains
 pending final independent revalidation, replay parity, fault-injected provider
 teardown, and repeated create/destroy evidence.
 

@@ -158,12 +158,13 @@ rebuild；compatibility visual scene 只携带复制的 environment snapshot，�
 已实现可重新开启的 world lease。
 
 当前 migration evidence 为 15 个 native lifecycle case / 443 个 assertion、39 个 simulation
-smoke case / 870 个 assertion、6 个 world-batch runtime case / 53 个 assertion、21 个
+smoke case / 870 个 assertion、6 个 world-batch runtime case / 55 个 assertion、21 个
 composition architecture/contract test（1 个 toolchain skip）以及 12 个
 include-direction/flat-boundary test。新增 evidence 覆盖 generation 递增、
 受监管实体/provider/clock-state-mutation/raw-world rebuild 拒绝、并发 rebuild 串行化、
 getter/setter 同步、moved-from lease fail-closed、world lease 对 shutdown 的串行化，以及
-shutdown 后 snapshot-only visual rendering。P2-B 仍待最终独立复核、replay parity、
+shutdown 后 snapshot-only visual rendering，以及 ABI-compatible legacy visual field tombstone。
+P2-B 仍待最终独立复核、replay parity、
 fault-injected provider teardown 与重复 create/destroy evidence。
 
 ## 显式拒绝的声明

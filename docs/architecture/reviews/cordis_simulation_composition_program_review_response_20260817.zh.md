@@ -271,7 +271,7 @@ provider dependency，以及未来可重新开启的 typed borrow/reconfiguratio
 到 P2-C1/P2-C2，而不会被 P2-B 验收声明掩盖。
 
 修复提交 `17991c14` 的证据为 15/15 个 native lifecycle case、443 个 assertion，39/39 个
-simulation-kernel smoke case、870 个 assertion，以及 6/6 个 world-batch runtime case、53 个
+simulation-kernel smoke case、870 个 assertion，以及 6/6 个 world-batch runtime case、55 个
 assertion。聚焦 composition/structural 运行除已独立复现的既有 binding-count guard（期望
 `85`、实际 `87`）外均为绿色；该失败不在 P2-B write set。P2-B 改变验收状态前，已针对
 `17991c14` 请求最终独立复核。
