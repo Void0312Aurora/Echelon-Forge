@@ -24,6 +24,7 @@
 #include <string>
 #include <stdexcept>
 #include <vector>
+#include <thread>
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -64,12 +65,14 @@ TEST_SUITE("simulation_kernel_smoke") {
               runtime::composition_contracts::generated::kDefaultCompatibilityRequestedSha256);
         CHECK(kernel.resolved_composition_sha256() ==
               runtime::composition_contracts::generated::kDefaultCompatibilityResolvedSha256);
+        CHECK(kernel.world_composition_generation() == 1);
 
         const auto requested_before = kernel.requested_composition_sha256();
         const auto resolved_before = kernel.resolved_composition_sha256();
         std::string error;
         CHECK(kernel.rebuild_world_composition("mid_step", &error) == false);
         CHECK(error.find("runtime.composition.rebuild_barrier_rejected") != std::string::npos);
+        CHECK(kernel.world_composition_generation() == 1);
         CHECK(kernel.requested_composition_sha256() == requested_before);
         CHECK(kernel.resolved_composition_sha256() == resolved_before);
 
@@ -78,10 +81,49 @@ TEST_SUITE("simulation_kernel_smoke") {
         CHECK(error.empty());
         CHECK(kernel.requested_composition_sha256() == requested_before);
         CHECK(kernel.resolved_composition_sha256() == resolved_before);
+        CHECK(kernel.world_composition_generation() == 2);
 
         auto entity = kernel.spawn_unit(Side::Blue, "Aircraft", 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0,
                                         100.0, 0.0, 0.0);
         CHECK(entity.is_valid());
+
+        error.clear();
+        CHECK_FALSE(kernel.rebuild_world_composition("world_rebuild", &error));
+        CHECK(error.find("non-quiescent world contains SimObject entities") != std::string::npos);
+        CHECK(kernel.world_composition_generation() == 2);
+
+        kernel.reset(42);
+        error.clear();
+        CHECK(kernel.rebuild_world_composition("world_rebuild", &error));
+        CHECK(error.empty());
+        CHECK(kernel.world_composition_generation() == 3);
+        CHECK(kernel.requested_composition_sha256() == requested_before);
+        CHECK(kernel.resolved_composition_sha256() == resolved_before);
+    }
+
+    TEST_CASE("concurrent_world_rebuild_requests_are_serialized") {
+        SimulationKernel kernel;
+        constexpr int rebuild_count = 4;
+        std::vector<int> results(rebuild_count, 0);
+        std::vector<std::thread> workers;
+        workers.reserve(rebuild_count);
+
+        for (int index = 0; index < rebuild_count; ++index) {
+            workers.emplace_back([&kernel, &results, index] {
+                std::string error;
+                results[index] = kernel.rebuild_world_composition("world_rebuild", &error) &&
+                                         error.empty()
+                                     ? 1
+                                     : -1;
+            });
+        }
+        for (auto &worker : workers) {
+            worker.join();
+        }
+
+        CHECK(std::all_of(results.begin(), results.end(),
+                          [](int result) { return result == 1; }));
+        CHECK(kernel.world_composition_generation() == 1 + rebuild_count);
     }
 
     TEST_CASE("reset_is_deterministic") {

@@ -1,6 +1,6 @@
 # Cordis Simulation Composition Kernel Dispatch Queue — 2026-08-17
 
-Status: `2026-08-19` current queue; P0, P1-A, P1-B, and P2-A passed. P2-B is
+Status: `2026-08-20` current queue; P0, P1-A, P1-B, and P2-A passed. P2-B is
 implemented in the active worktree and pending independent review/evidence.
 
 Language:
@@ -12,7 +12,7 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_dispatch_queue_20260817.md`
 Owner: `architecture/runtime-composition`
-Last verified: `2026-08-17`
+Last verified: `2026-08-20`
 
 Parent: [Cordis Simulation Composition Kernel](README.md)
 
@@ -24,7 +24,7 @@ Parent: [Cordis Simulation Composition Kernel](README.md)
 | 2 | `P1-A Composition Census` | pass | P0-A passed | read-only source inventory plus current-status evidence updates | complete ownership/scope/replacement inventory |
 | 3 | `P1-B Manifest And Resolution Contract` | pass | P1-A passed and contract write set remains bounded | runtime contract/schema inputs and focused tests | schema decision, fixtures, invalid-manifest matrix, versioning and canonicalization evidence |
 | 4 | `P2-A Native Lifecycle Kernel` | pass / independently repaired | P1-A/P1-B gates passed | isolated native composition library, focused C++ test, architecture guard, and CMake/CI wiring | 14 tests/430 assertions in normal MSVC and ASan builds; hash, typed-scope, lifecycle-state, rollback, serialized replacement rebuild, reentrant lifetime, plugin/factory identity, in-process semantic service-type identity, handover, invalidation, and deterministic validation evidence |
-| 5 | `P2-B Default Provider Migration` | implementation / pending review | P2-A passed; engine/provider write set remains bounded | default provider entries, kernel builder, engine construction seams, focused parity/lifetime tests | default behavior/replay parity, failure/lifetime evidence, and removal of concrete model construction/raw capture |
+| 5 | `P2-B Default Provider Migration` | implemented / pending independent review | P2-A passed; engine/provider write set remains bounded | default provider entries, kernel builder, engine construction seams, focused parity/lifetime tests | default behavior/replay parity, failure/lifetime evidence, and removal of concrete model construction/raw capture |
 | 6 | `P2-C0 Projection And Catalog-Lock Contract` | held / planned | P2-B production composition and identity are stable | producer-neutral request DTO, owner-derived catalog-lock artifact/generator, identity and negative-admission fixtures | one high-level request contract, one verifiable owner lock, and a guard preventing offline high-level lowering |
 | 7 | `P2-C1 Cordis Default-Profile Vertical Slice` | held / planned | P2-C0 accepted | bounded Cordis package using Cordis primitives plus repository profile/bundle layer, production adapters, end-to-end fixtures | Experiment fixture -> request -> Cordis -> manifest/lock -> native production realization, including negative admission and offline regression |
 | 8 | all later clusters | held | P2-C1 accepted and their declared owner dependencies pass, or an explicit independent-stream amendment is approved | task-cluster write sets only | cluster-specific evidence packet |

@@ -1,6 +1,6 @@
 # Cordis 仿真组合内核当前状态 — 2026-08-17
 
-状态：`2026-08-19` P2-B production-provider migration 已进入实现阶段；在 P2-A
+状态：`2026-08-20` P2-B production-provider migration 已完成实现；在 P2-A
 原生 lifecycle baseline 与独立审阅修复基础上，默认 kernel 现通过原生 composition root
 构造，但在 P2-C0/P2-C1 完成前不声明 Cordis 集成。
 
@@ -13,7 +13,7 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_current_status_20260817.md`
 Owner: `architecture/runtime-composition`
-Last verified: `2026-08-19`
+Last verified: `2026-08-20`
 
 父项目：[Cordis 仿真组合内核](README.zh.md)
 
@@ -51,7 +51,7 @@ Contract baseline：
   保持、完整 plugin/factory identity check、进程内语义 service-type identity check 与幂等
   shutdown；
 - native lifecycle 通过 15 个 test case、443 个 assertion，default simulation smoke 通过
-  32 个 test case、824 个 assertion；composition architecture/contract 为 21 passed、1 个
+  33 个 test case、837 个 assertion；composition architecture/contract 为 21 passed、1 个
   toolchain-dependent `g++` skip；
 - 已将默认 model/event/service ownership 迁移到准入的 native provider 与 composition-root
   builder；system 通过 generation-aware Flecs ref 读取可替换 service，不再保留 registration-time
@@ -65,8 +65,8 @@ Contract baseline：
 | 架构权威 | P0 pass / project active | 父 README、目标架构、父路由与文档验证 | 后续提升已接受 runtime 规则 |
 | Composition census | P1-A pass | [基于源码的 census](cordis_simulation_composition_census_20260817.zh.md)，包含 owner/scope/replacement/disposition table | 在 generated evidence 替代前保持 census guard 同步 |
 | Manifest contract | P1-B pass / repaired | requested/resolved generated schema、纯 C++ value type、canonical fixture、invalid corpus、deterministic test 与原生 requested/resolved hash 重算 | 持续守护 producer/schema/header parity；外部 admission 前证明 Cordis 逐字节等价输出与 artifact provenance |
-| 原生 lifecycle kernel | P2-A pass / isolated / repaired | `ef_composition`、typed-scope guard、不可变 factory metadata、lifecycle 状态机、scoped transaction、replacement-aware rebuild、handover admission、identity accessor、rollback/disposal test、CI wiring 与 MSVC ASan 证据 | 完成 P2-B migration evidence，并在广义原生验收前增加真实 registry handover 证据 |
-| Model/provider migration | P2-B implementation / 待独立审阅 | 11-provider default catalog、embedded resolved-plan、native root-service handle、production identity、world rebuild 与 smoke/lifecycle evidence | replay 对比、fault-injected teardown、重复 create/destroy evidence、独立审阅 |
+| 原生 lifecycle kernel | P2-A pass / production-enabling substrate | `ef_composition`、typed-scope guard、不可变 factory metadata、lifecycle 状态机、scoped transaction、replacement-aware rebuild、handover admission、identity accessor、rollback/disposal test、CI wiring 与 MSVC ASan 证据 | 真实 registry handover 与更广原生验收证据 |
+| Model/provider migration | P2-B implemented / 待独立审阅 | 11-provider default catalog、embedded resolved-plan、native root-service handle、production identity、generation/quiescence guard、world rebuild 与 smoke/lifecycle evidence | replay 对比、fault-injected teardown、重复 create/destroy evidence、最终独立审阅 |
 | System composition | absent | 静态注册与 stage manifest 并存 | contribution contract 与 graph compilation |
 | Backend composition | partial baseline | 已有语义 backend interface/capability contract | provider selection 与 facade construction migration |
 | Composition evidence | P2-B production identity 已实现 / 待审阅 | `SimulationKernel` 输出 generated requested/resolved identity，world rebuild 保持 identity | P2-C0/P2-C1 接入 request/catalog-lock identity，随后 P5-A 扩展 graph/backend/host/replay evidence |
@@ -74,7 +74,9 @@ Contract baseline：
 | Node host | absent | Node-API 只是候选 host boundary | 批准 binding target 与 lifecycle/parity test |
 | Runtime acceptance | partial | P2-A 证明隔离 lifecycle 边界 | 默认行为、system、backend、evidence、Cordis、host、parity 与 closure gate |
 
-## 已核验基线事实
+## 历史基线事实（P2-B 前，采集于 2026-08-17）
+
+以下事实用于追溯迁移前 census，不应被理解为当前 P2-B 实现状态。
 
 1. `SimulationKernel` 构造具体默认 model 与相关 service。
 2. `SimulationKernel` 手工销毁 world 和 model/service owner。
@@ -94,8 +96,8 @@ Contract baseline：
     与 34 个 system registration。
 13. P1-B resolution 有意保持无资源：它证明结构与语义的确定性，但不能授予由后续 runtime
     join 拥有的 stage、backend、domain、capability 或 artifact admission。
-14. P2-A 能解析并重新校验冻结的默认 fixture，但原生 realization 目前使用 test factory；
-    production 默认 provider 尚未迁入 catalog。
+14. P2-A 能解析并重新校验冻结的默认 fixture；当时原生 realization 使用 test factory，
+    production 默认 provider 尚未迁入 catalog。P2-B 已完成该迁移。
 15. P2-A 现会按冻结 canonical field rule 独立重算 requested/resolved hash，并拒绝 stale/
     tampered identity；外部 Cordis/native producer trust 仍需逐字节 conformance 与 artifact
     provenance 证据。
@@ -108,7 +110,7 @@ Contract baseline：
 
 | 残余 | 风险 | 必需处置 | Owner phase |
 | --- | --- | --- | --- |
-| `unique_ptr`、singleton ref、captured pointer 形成双重 model ownership | 正确性/use-after-free | provider-owned handle 与 singleton effect 已实现；补齐 replay/fault-injection evidence 并退役兼容 seam | P2-B |
+| 长生命周期 provider service 中残留 raw dependency reference | 正确性/use-after-free | 当前路径保留 kernel operation lock；后续改为 handle 并补齐 replay/fault-injection evidence | P2-C1/P2-C2 |
 | 中央静态 system list | 扩展性/profile 歧义 | contribution descriptor 编译到 stage contract | P3 |
 | 直接具体 backend 构造 | backend 演进和测试隔离 | backend provider admission | P4 |
 | Experiment/Cordis/native 权威重叠 | composition truth 竞争 | 显式 intent projection、owner catalog lock、canonical request、native revalidation | P2-C0/P2-C1/P3/P6 |
@@ -132,7 +134,7 @@ Contract baseline：
 8. 仅在另行批准后增加 Node host，再运行适用的 producer/host/backend/batch parity 并
    移除双路径。
 
-## P2-B 实现修订 — 2026-08-19
+## P2-B 实现修订 — 2026-08-20
 
 默认 model、event-store、unit-factory、effects、sensor、acoustic、control、guidance、
 damage-bridge 与 weapon-release 的 ownership 现通过 native provider catalog 与 composition
@@ -144,10 +146,17 @@ backend provider 在本切片只记录已准入的默认 profile identity，back
 request/catalog-lock evidence 绑定到该 root，P2-C1 必须通过 Cordis primitives 加仓库
 profile/bundle layer 把默认 request lower 到该真实路径。P2-B 不声明 Cordis 已集成。
 
-当前 migration evidence 为 15 个 native lifecycle case / 443 个 assertion、32 个 simulation
-smoke case / 824 个 assertion、21 个 composition architecture/contract test（1 个 toolchain
-skip）以及 12 个 include-direction/flat-boundary test。P2-B 仍待独立审阅、replay parity、
-fault-injected provider teardown 与重复 create/destroy evidence。
+本次 lifecycle 修复批次将 kernel ECS/provider operation 与 world rebuild、shutdown 串行化，
+以原子方式刷新完整 root-handle 集，输出 world-scope generation，并在存在 `SimObject`
+实体或 exact-stage trace frame 使 world 非 quiescent 时拒绝 rebuild。这解决了当前 native
+路径已审阅的 provider UAF/concurrent-refresh 缺口，但不宣称长生命周期 raw dependency
+reference 或 replay/fault-injection evidence 已全部完成。
+
+当前 migration evidence 为 15 个 native lifecycle case / 443 个 assertion、33 个 simulation
+smoke case / 837 个 assertion、21 个 composition architecture/contract test（1 个 toolchain
+skip）以及 12 个 include-direction/flat-boundary test。新增 evidence 覆盖 generation 递增、
+quiescent rebuild 拒绝、并发 rebuild 串行化与 kernel-wide ECS operation lock。P2-B 仍待最终
+独立审阅、replay parity、fault-injected provider teardown 与重复 create/destroy evidence。
 
 ## 显式拒绝的声明
 

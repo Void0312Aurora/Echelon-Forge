@@ -1,8 +1,9 @@
 # Cordis Simulation Composition Kernel
 
-Status: `2026-08-17` active design; P0 authority/documentation, P1-A
+Status: `2026-08-20` active implementation; P0 authority/documentation, P1-A
 composition census, P1-B manifest/resolution contract, and P2-A native
-lifecycle baseline passed. P2-B default-provider migration is next.
+lifecycle baseline passed. P2-B default-provider migration is implemented and
+awaits independent acceptance review and residual evidence.
 
 Language:
 
@@ -13,7 +14,7 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/cordis_simulation_composition_kernel/README.md`
 Owner: `architecture/runtime-composition`
-Last verified: `2026-08-17`
+Last verified: `2026-08-20`
 
 Related authority:
 
@@ -48,8 +49,8 @@ future external plugin packages without creating additional truth paths.
 
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
-| Model composition | coupled | `SimulationKernel` constructs default environment, effects, sensor, acoustic, control, guidance, and unit-factory implementations | Existing interfaces permit replacement but do not provide a coherent composition owner |
-| Service lifetime | inconsistent | model pointers are published through Flecs refs, while `GroundContactSystem` captures the environment model pointer at registration | Replacing a provider is not a complete lifecycle transition |
+| Model composition | native provider root | P2-B routes default environment, effects, sensor, acoustic, control, guidance, event-store, release-service, and unit-factory ownership through the admitted native catalog | System-family and backend construction remain later slices |
+| Service lifetime | generation-governed | provider handles are refreshed atomically under wrapper/kernel lifecycle locks; system consumers resolve generation-aware Flecs refs at execution time | Long-lived raw dependency references and broader handover evidence remain residuals |
 | System composition | static | one registration function installs the shared, air, naval, and ground system set in a fixed sequence | Registration order is not a plugin dependency graph or profile contract |
 | Backend selection | partially abstracted | `IWorldBatchBackend` exists, but `RuntimeFacade` constructs `FlecsCpuBackend` directly | Backend capability contracts exist without a general provider-selection root |
 | Stage semantics | established foundation | maintained stage-node manifests describe semantic stage, read/write shards, clock, latency, synchronization, and barriers | The registry is not yet the sole input to system composition |
@@ -128,7 +129,7 @@ The complete design is in
 | `P0 Authority and Boundary` | Establish the owner, target architecture, non-goals, task clusters, and acceptance model. | User authorization and inspected repository baseline | Bilingual project documents and parent architecture links pass document gates | pass |
 | `P1 Composition Contract` | Freeze manifest schema, service keys, plugin descriptors, scopes, compatibility rules, and deterministic resolution. | P0 accepted | Schema fixtures, validation rules, canonical encoding, and contract tests exist | pass |
 | `P2-A Native Lifecycle Kernel` | Implement the isolated C++ catalog, scoped transaction, replacement, rollback, freeze, and deterministic disposal substrate. | P1 contract frozen | Focused native and architecture gates pass | pass |
-| `P2-B Default Provider Migration` | Move default model/service construction behind admitted native providers and emit the first production composition identity. | P2-A accepted | Default behavior/replay parity holds, raw provider capture is removed, and the resolved plan is evidence-bearing | implementation / pending review |
+| `P2-B Default Provider Migration` | Move default model/service construction behind admitted native providers and emit the first production composition identity. | P2-A accepted | Default behavior/replay parity holds, raw provider capture is removed, and the resolved plan is evidence-bearing | implemented / pending independent review |
 | `P2-C0 Projection And Catalog-Lock Contract` | Freeze the producer-neutral `RuntimeCompositionRequest` DTO and owner-derived `AdmittedCatalogLock` artifact, identity, and admission rules. | P2-B production path and identity stable | Cordis has one typed high-level input and one versioned owner-approved catalog lock; offline paths are restricted to canonical low-level artifacts | planned |
 | `P2-C1 Cordis Default-Profile Vertical Slice` | Use Cordis primitives plus the repository profile/bundle layer to lower the default request and realize it through the production native path. | P2-C0 accepted | Experiment fixture -> request -> Cordis -> manifest/catalog lock -> native realization passes positive and negative admission cases | planned |
 | `P3-A System Contribution Migration` | Compile repository-admitted system packages into the frozen native stage graph. | P2-C1 accepted, unless an explicit independent-stream amendment is approved | Default graph parity holds and no package owns a private pipeline | planned |
@@ -188,12 +189,11 @@ stage-node manifest entries, and 3 Python-visible runtime ownership tiers. The
 full evidence and limitations are in the composition census.
 
 P1-B then froze the host-neutral requested/resolved contract and default
-compatibility fixtures. P2-A now provides an independent native realization
-library and focused lifecycle evidence: 14 C++ test cases and 430 assertions
-pass in the normal MSVC build and again under MSVC AddressSanitizer. The
-architecture composition suite records 20 passed tests and 1 environment skip.
-This proves the isolated lifecycle boundary, not integration with the current
-simulation constructors or behavioral parity.
+compatibility fixtures. P2-A provided the isolated native realization library;
+P2-B now routes the production default kernel through that root, exports
+requested/resolved identity and world-scope generation, and rejects non-
+quiescent world rebuilds. The current focused evidence is recorded in the
+current-status document; Cordis producer integration remains P2-C0/P2-C1.
 
 ## Acceptance Gate
 
@@ -226,11 +226,9 @@ This subproject can be marked accepted only when:
 
 ## Residuals And Next Steps
 
-Immediate work is P2-B default-provider migration. It must move the existing
-default model, factory, event-store, damage-bridge, and weapon-release service
-construction behind admitted native providers, preserve the accepted default
-behavior/replay baseline, and export the first production composition identity.
-P2-C0 follows to freeze the high-level request and owner-derived catalog-lock
+P2-B implementation is complete at the native production seam. Its acceptance
+still requires independent review, replay/fault-injection evidence, and
+repeated create/destroy evidence. P2-C0 follows to freeze the high-level request and owner-derived catalog-lock
 artifacts without creating a second resolver. P2-C1 then provides the first
 Cordis vertical slice: Cordis primitives plus the repository profile/bundle
 layer must lower the default request into the canonical manifest/catalog lock

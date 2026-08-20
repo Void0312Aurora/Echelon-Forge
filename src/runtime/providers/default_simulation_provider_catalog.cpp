@@ -462,6 +462,7 @@ struct DefaultSimulationComposition::Impl {
         : runtime(std::move(runtime_value)) {}
 
     [[nodiscard]] bool refresh_handles() {
+        std::lock_guard lock(lifecycle_mutex);
         environment_model = runtime.root_service<IEnvironmentModel>(
             kEnvironmentProviderId, contracts::kServiceEnvironmentModel);
         unit_factory = runtime.root_service<IUnitFactory>(kUnitFactoryProviderId,
@@ -486,6 +487,7 @@ struct DefaultSimulationComposition::Impl {
     }
 
     composition::CompositionRuntime runtime;
+    mutable std::recursive_mutex lifecycle_mutex;
     composition::ServiceHandle<IEnvironmentModel> environment_model;
     composition::ServiceHandle<IUnitFactory> unit_factory;
     composition::ServiceHandle<IEffectsModel> effects_model;
@@ -505,47 +507,75 @@ DefaultSimulationComposition::~DefaultSimulationComposition() {
 }
 
 IEnvironmentModel *DefaultSimulationComposition::environment_model() const noexcept {
-    return impl_ ? impl_->environment_model.try_get() : nullptr;
+    if (!impl_) return nullptr;
+    std::lock_guard lock(impl_->lifecycle_mutex);
+    return impl_->environment_model.try_get();
 }
 
 IUnitFactory *DefaultSimulationComposition::unit_factory() const noexcept {
-    return impl_ ? impl_->unit_factory.try_get() : nullptr;
+    if (!impl_) return nullptr;
+    std::lock_guard lock(impl_->lifecycle_mutex);
+    return impl_->unit_factory.try_get();
 }
 
 IEffectsModel *DefaultSimulationComposition::effects_model() const noexcept {
-    return impl_ ? impl_->effects_model.try_get() : nullptr;
+    if (!impl_) return nullptr;
+    std::lock_guard lock(impl_->lifecycle_mutex);
+    return impl_->effects_model.try_get();
 }
 
 ISensorModel *DefaultSimulationComposition::sensor_model() const noexcept {
-    return impl_ ? impl_->sensor_model.try_get() : nullptr;
+    if (!impl_) return nullptr;
+    std::lock_guard lock(impl_->lifecycle_mutex);
+    return impl_->sensor_model.try_get();
 }
 
 IAcousticModel *DefaultSimulationComposition::acoustic_model() const noexcept {
-    return impl_ ? impl_->acoustic_model.try_get() : nullptr;
+    if (!impl_) return nullptr;
+    std::lock_guard lock(impl_->lifecycle_mutex);
+    return impl_->acoustic_model.try_get();
 }
 
 IControlModel *DefaultSimulationComposition::control_model() const noexcept {
-    return impl_ ? impl_->control_model.try_get() : nullptr;
+    if (!impl_) return nullptr;
+    std::lock_guard lock(impl_->lifecycle_mutex);
+    return impl_->control_model.try_get();
 }
 
 IGuidanceModel *DefaultSimulationComposition::guidance_model() const noexcept {
-    return impl_ ? impl_->guidance_model.try_get() : nullptr;
+    if (!impl_) return nullptr;
+    std::lock_guard lock(impl_->lifecycle_mutex);
+    return impl_->guidance_model.try_get();
 }
 
 IEngagementEventStore *DefaultSimulationComposition::engagement_event_store() const noexcept {
-    return impl_ ? impl_->engagement_event_store.try_get() : nullptr;
+    if (!impl_) return nullptr;
+    std::lock_guard lock(impl_->lifecycle_mutex);
+    return impl_->engagement_event_store.try_get();
 }
 
 IWeaponReleaseService *DefaultSimulationComposition::weapon_release_service() const noexcept {
-    return impl_ ? impl_->weapon_release_service.try_get() : nullptr;
+    if (!impl_) return nullptr;
+    std::lock_guard lock(impl_->lifecycle_mutex);
+    return impl_->weapon_release_service.try_get();
 }
 
 std::string DefaultSimulationComposition::requested_manifest_sha256() const {
-    return impl_ ? impl_->runtime.requested_manifest_sha256() : std::string{};
+    if (!impl_) return {};
+    std::lock_guard lock(impl_->lifecycle_mutex);
+    return impl_->runtime.requested_manifest_sha256();
 }
 
 std::string DefaultSimulationComposition::resolved_manifest_sha256() const {
-    return impl_ ? impl_->runtime.resolved_manifest_sha256() : std::string{};
+    if (!impl_) return {};
+    std::lock_guard lock(impl_->lifecycle_mutex);
+    return impl_->runtime.resolved_manifest_sha256();
+}
+
+std::uint64_t DefaultSimulationComposition::world_generation() const noexcept {
+    if (!impl_) return 0;
+    std::lock_guard lock(impl_->lifecycle_mutex);
+    return impl_->runtime.scope_generation(contracts::CompositionScope::world);
 }
 
 composition::CompositionStatus
@@ -557,6 +587,7 @@ DefaultSimulationComposition::rebuild_world(std::string_view barrier) {
             "default simulation composition is stopped",
         });
     }
+    std::lock_guard lock(impl_->lifecycle_mutex);
     auto status = impl_->runtime.rebuild_scope(contracts::CompositionScope::world, barrier);
     if (!status) {
         return status;
@@ -574,6 +605,7 @@ DefaultSimulationComposition::rebuild_world(std::string_view barrier) {
 
 void DefaultSimulationComposition::stop() noexcept {
     if (impl_) {
+        std::lock_guard lock(impl_->lifecycle_mutex);
         impl_->runtime.stop();
     }
 }

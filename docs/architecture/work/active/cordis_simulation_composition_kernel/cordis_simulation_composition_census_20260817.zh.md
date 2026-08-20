@@ -1,7 +1,8 @@
 # Cordis 仿真组合普查 — 2026-08-17
 
-状态：`2026-08-17` P1-A composition census 已通过；本文是基于源码的基线，
-不是 runtime 实现，也不是已冻结的 P1-B schema。
+状态：`2026-08-17` P1-A composition census 已通过；本文是 P2-B 之前的历史源码
+基线，不是当前 runtime 实现，也不是已冻结的 P1-B schema。当前实现状态另见
+current-status 文档。
 
 语言：
 

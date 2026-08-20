@@ -86,6 +86,8 @@ bool collect_visual_scene(SimulationKernel &kernel, uint64_t entity_id, Math::Ve
 } // namespace
 
 std::vector<float> SimulationKernel::get_visual_observation(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_visual_observation");
     using namespace arb;
 
     std::vector<float> output(ARB_HEIGHT * ARB_WIDTH * ARB_CHANNELS, 0.0f);
@@ -108,6 +110,8 @@ std::vector<float> SimulationKernel::get_visual_observation(uint64_t entity_id) 
 
 std::vector<float> SimulationKernel::get_visual_observation_downsampled(uint64_t entity_id,
                                                                         int factor) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_visual_observation_downsampled");
     using namespace arb;
 
     const int downsample = factor > 1 ? factor : 1;

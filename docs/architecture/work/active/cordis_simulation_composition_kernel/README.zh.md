@@ -1,8 +1,8 @@
 # Cordis 仿真组合内核
 
-状态：`2026-08-17` active design；P0 权威/文档门禁、P1-A composition census 与
-P1-B manifest/resolution contract、P2-A 原生 lifecycle baseline 已通过。下一步是
-P2-B 默认 provider 迁移。
+状态：`2026-08-20` active implementation；P0 权威/文档门禁、P1-A composition census、
+P1-B manifest/resolution contract、P2-A 原生 lifecycle baseline 已通过。P2-B 默认
+provider 迁移已实现，当前等待独立验收审阅与残余证据。
 
 语言：
 
@@ -13,7 +13,7 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/cordis_simulation_composition_kernel/README.md`
 Owner: `architecture/runtime-composition`
-Last verified: `2026-08-17`
+Last verified: `2026-08-20`
 
 相关权威：
 
@@ -43,8 +43,8 @@ plugin 派发或跨语言 service lookup 放入逐 step 路径。
 
 | 区域 | 状态 | 证据 | 边界 |
 | --- | --- | --- | --- |
-| 模型组合 | 耦合 | `SimulationKernel` 构造默认 environment、effects、sensor、acoustic、control、guidance 和 unit factory 实现 | 既有接口允许替换，但没有一致的 composition owner |
-| Service 生命周期 | 不一致 | 模型指针通过 Flecs ref 发布，而 `GroundContactSystem` 在注册时捕获 environment model 指针 | provider 替换不是完整生命周期迁移 |
+| 模型组合 | 原生 provider root | P2-B 将默认 environment、effects、sensor、acoustic、control、guidance、event-store、release-service 和 unit-factory ownership 通过准入 native catalog 路由 | system family 与 backend 构造仍属后续切片 |
+| Service 生命周期 | generation-governed | provider handle 在 wrapper/kernel lifecycle lock 下原子刷新；system consumer 在执行时解析 generation-aware Flecs ref | 长期 raw dependency reference 与更广 handover evidence 仍是残余 |
 | 系统组合 | 静态 | 单一注册函数以固定序列安装 shared、air、naval 和 ground 系统集 | 注册顺序不是插件依赖图或 profile 契约 |
 | 后端选择 | 部分抽象 | `IWorldBatchBackend` 已存在，但 `RuntimeFacade` 直接构造 `FlecsCpuBackend` | 后端能力合同存在，但缺少通用 provider-selection root |
 | Stage 语义 | 已有基础 | 维护中的 stage-node manifest 描述 semantic stage、read/write shard、clock、latency、sync 和 barrier | registry 还不是系统组合的唯一输入 |
@@ -110,7 +110,7 @@ plugin 派发或跨语言 service lookup 放入逐 step 路径。
 | `P0 Authority and Boundary` | 建立 owner、目标架构、非目标、任务簇和验收模型。 | 用户授权和已检查的仓库基线 | 双语子项目文档和父架构链接通过文档门禁 | pass |
 | `P1 Composition Contract` | 冻结 manifest schema、service key、plugin descriptor、scope、兼容规则和确定性解析。 | P0 accepted | schema fixture、校验规则、canonical encoding 和 contract test 存在 | pass |
 | `P2-A Native Lifecycle Kernel` | 实现隔离的 C++ catalog、scoped transaction、replacement、rollback、freeze 和确定性 disposal substrate。 | P1 contract frozen | 聚焦原生与架构门禁通过 | pass |
-| `P2-B Default Provider Migration` | 把默认 model/service 构造迁到准入原生 provider 后，并输出首份 production composition identity。 | P2-A accepted | 默认 behavior/replay parity 保持，raw provider capture 被移除，resolved plan 带有 evidence | implementation / pending review |
+| `P2-B Default Provider Migration` | 把默认 model/service 构造迁到准入原生 provider 后，并输出首份 production composition identity。 | P2-A accepted | 默认 behavior/replay parity 保持，raw provider capture 被移除，resolved plan 带有 evidence | implemented / pending independent review |
 | `P2-C0 Projection And Catalog-Lock Contract` | 冻结 producer-neutral `RuntimeCompositionRequest` DTO 与 owner-derived `AdmittedCatalogLock` artifact、identity 和 admission rule。 | P2-B production path/identity stable | Cordis 获得唯一 typed 高层输入与版本化 owner-approved catalog lock；离线路径被限制为 canonical 低层 artifact | planned |
 | `P2-C1 Cordis Default-Profile Vertical Slice` | 使用 Cordis primitives 加仓库 profile/bundle layer lower 默认 request，并通过 production native path 实例化。 | P2-C0 accepted | Experiment fixture -> request -> Cordis -> manifest/catalog lock -> native realization 的正负 admission case 通过 | planned |
 | `P3-A System Contribution Migration` | 把仓库准入的 system package 编译进冻结的原生 stage graph。 | P2-C1 accepted；除非另有显式 independent-stream amendment | 默认图 parity 保持，且没有 package 拥有私有 pipeline | planned |
@@ -161,11 +161,10 @@ component-registration call、34 个 active system-registration call、30 个 ex
 descriptor、5 个 maintained stage-node manifest entry，以及 3 个 Python 可见 runtime
 ownership tier。完整证据与限制见 composition census。
 
-P1-B 随后冻结 host-neutral requested/resolved contract 与默认兼容 fixture。P2-A 现已
-提供独立的原生 realization library 与聚焦生命周期证据：普通 MSVC build 中 14 个 C++
-test case、430 个 assertion 全部通过，并在 MSVC AddressSanitizer 下再次通过；composition
-architecture suite 为 20 passed、1 个环境 skip。这些证据只证明隔离的 lifecycle 边界，
-不证明已经接入当前仿真 constructor 或完成行为 parity。
+P1-B 随后冻结 host-neutral requested/resolved contract 与默认兼容 fixture。P2-A 提供了
+隔离的原生 realization library；P2-B 现已把 production default kernel 接入该 root，输出
+requested/resolved identity 与 world-scope generation，并拒绝非 quiescent world rebuild。
+当前聚焦证据见 current-status 文档；Cordis producer integration 仍属于 P2-C0/P2-C1。
 
 ## 验收门
 
@@ -189,9 +188,8 @@ architecture suite 为 20 passed、1 个环境 skip。这些证据只证明隔�
 
 ## 残余与下一步
 
-立即工作是 P2-B 默认 provider 迁移。它必须把现有默认 model、factory、event store、
-damage bridge 与 weapon-release service 构造移到获准的原生 provider 后，保持已接受
-的默认行为/replay 基线，并输出首份 production composition identity。随后执行 P2-C0，
+P2-B 在 native production seam 上的实现已经完成，仍需独立审阅、replay/fault-injection
+证据与重复 create/destroy 证据才能完成验收。随后执行 P2-C0，
 冻结高层 request 与 owner-derived catalog-lock artifact，避免产生第二 resolver；再执行
 P2-C1 首个 Cordis 纵向切片：Cordis primitives 加仓库 profile/bundle layer 必须把默认
 request lower 为由原生侧重新校验和实例化的 canonical manifest/catalog lock。system

@@ -1,7 +1,7 @@
 # Cordis Simulation Composition Kernel Current Status — 2026-08-17
 
-Status: `2026-08-19` P2-B production-provider migration implementation is in
-progress after the P2-A native lifecycle baseline and independent-review repair;
+Status: `2026-08-20` P2-B production-provider migration implementation is
+complete after the P2-A native lifecycle baseline and independent-review repair;
 the default kernel now constructs through the native composition root, while
 Cordis integration is still not claimed pending P2-C0/P2-C1.
 
@@ -14,7 +14,7 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_current_status_20260817.md`
 Owner: `architecture/runtime-composition`
-Last verified: `2026-08-19`
+Last verified: `2026-08-20`
 
 Parent: [Cordis Simulation Composition Kernel](README.md)
 
@@ -73,8 +73,8 @@ Contract baseline:
 | Architecture authority | P0 pass / project active | parent README, target architecture, parent route, and document validation | later promotion of accepted runtime rules |
 | Composition census | P1-A pass | [source-grounded census](cordis_simulation_composition_census_20260817.md) with owner/scope/replacement/disposition tables | keep census guard synchronized until generated evidence replaces it |
 | Manifest contract | P1-B pass / repaired | requested/resolved generated schemas, pure C++ value types, canonical fixtures, invalid corpus, deterministic tests, and native requested/resolved hash recomputation | keep producer/schema/header parity guarded; prove byte-equivalent Cordis output and artifact provenance before external admission |
-| Native lifecycle kernel | P2-A pass / isolated / repaired | `ef_composition`, typed-scope guards, immutable factory metadata, lifecycle state machine, scoped transactions, replacement-aware rebuild, handover admission, identity accessors, rollback/disposal tests, CI wiring, and MSVC ASan evidence | complete P2-B migration evidence and add real registry handover evidence before broad native acceptance |
-| Model/provider migration | P2-B implementation / pending independent review | 11-provider default catalog, embedded resolved-plan input, native root-service handles, production identity accessors, world rebuild and smoke/lifecycle evidence | replay fixture comparison, fault-injected provider teardown, repeated create/destroy evidence, independent review |
+| Native lifecycle kernel | P2-A pass / production-enabling substrate | `ef_composition`, typed-scope guards, immutable factory metadata, lifecycle state machine, scoped transactions, replacement-aware rebuild, handover admission, identity accessors, rollback/disposal tests, CI wiring, and MSVC ASan evidence | real registry handover and broader native acceptance evidence |
+| Model/provider migration | P2-B implemented / pending independent review | 11-provider default catalog, embedded resolved-plan input, native root-service handles, production identity accessors, generation/quiescence guards, world rebuild and smoke/lifecycle evidence | replay fixture comparison, fault-injected provider teardown, repeated create/destroy evidence, final independent review |
 | System composition | absent | static registration and stage manifests coexist | contribution contract and graph compilation |
 | Backend composition | partial baseline | semantic backend interface and capability contracts exist | provider selection and facade construction migration |
 | Composition evidence | P2-B production identity implemented / pending review | `SimulationKernel` exports generated requested/resolved identities and world-rebuild preserves them | request/catalog-lock identities in P2-C0/P2-C1, then graph/backend/host/replay expansion in P5-A |
@@ -82,7 +82,10 @@ Contract baseline:
 | Node host | absent | Node-API is only a candidate host boundary | approved binding target and lifecycle/parity tests |
 | Runtime acceptance | partial | P2-A proves the isolated lifecycle boundary | default behavior, systems, backend, evidence, Cordis, hosts, parity, and closure gates |
 
-## Verified Baseline Facts
+## Historical Baseline Facts (pre-P2-B, captured 2026-08-17)
+
+The following facts describe the pre-migration census. They are retained for
+traceability and must not be read as the current P2-B implementation state.
 
 1. `SimulationKernel` constructs concrete default models and related services.
 2. `SimulationKernel` manually tears down the world and model/service owners.
@@ -110,9 +113,9 @@ Contract baseline:
 13. P1-B resolution is deliberately resource-free: it proves structural and
     semantic determinism but cannot grant stage, backend, domain, capability, or
     artifact admission owned by later runtime joins.
-14. P2-A can parse and revalidate the frozen default fixture, but native
-    realization currently uses test factories; production default providers
-    have not moved behind the catalog.
+14. P2-A could parse and revalidate the frozen default fixture, but native
+    realization in that baseline used test factories; P2-B has since moved the
+    production default providers behind the catalog.
 15. P2-A now independently recomputes requested/resolved hashes against the
     frozen canonical field rules and rejects stale/tampered identities; external
     Cordis/native producer trust still requires byte-equivalent conformance and
@@ -128,7 +131,7 @@ Contract baseline:
 
 | Residual | Risk | Required disposition | Owner phase |
 | --- | --- | --- | --- |
-| dual model ownership through `unique_ptr`, singleton refs, and captured pointers | correctness and use-after-free | provider-owned handles and singleton effects are implemented; complete replay/fault-injection evidence and retire remaining compatibility seams | P2-B |
+| residual raw dependency references in long-lived provider-owned services | correctness and use-after-free | retain kernel operation lock for current path; migrate remaining long-lived dependencies to handles and add replay/fault-injection evidence | P2-C1/P2-C2 |
 | central static system list | extensibility and profile ambiguity | contribution descriptors compiled into stage contracts | P3 |
 | direct concrete backend construction | backend evolution and test isolation | backend provider admission | P4 |
 | Experiment/Cordis/native authority overlap | competing composition truth | explicit intent projection, owner catalog lock, canonical request, native revalidation | P2-C0/P2-C1/P3/P6 |
@@ -155,7 +158,7 @@ Contract baseline:
 8. add Node hosting only if separately approved, then run applicable
    producer/host/backend/batch parity and retire dual paths.
 
-## P2-B Implementation Amendment — 2026-08-19
+## P2-B Implementation Amendment — 2026-08-20
 
 The default model, event-store, unit-factory, effects, sensor, acoustic,
 control, guidance, damage-bridge, and weapon-release ownership now enters
@@ -171,11 +174,21 @@ P2-C1 must lower the default request through Cordis primitives plus the
 repository profile/bundle layer into this real path. Cordis integration is not
 claimed by P2-B.
 
-Current migration evidence is 15 native lifecycle cases / 443 assertions, 32
-simulation smoke cases / 824 assertions, 21 composition architecture/contract
+The lifecycle repair batch now serializes kernel ECS/provider operations with
+world rebuild and shutdown, refreshes the complete root-handle set atomically,
+exports world-scope generation, and rejects rebuild while `SimObject` entities
+or an exact-stage trace frame make the world non-quiescent. This closes the
+reviewed provider UAF/concurrent-refresh gap for the current native path without
+claiming that long-lived raw dependency references or replay/fault-injection
+evidence are complete.
+
+Current migration evidence is 15 native lifecycle cases / 443 assertions, 33
+simulation smoke cases / 837 assertions, 21 composition architecture/contract
 tests with one toolchain skip, and 12 include-direction/flat-boundary tests.
-P2-B remains pending independent review, replay parity, fault-injected provider
-teardown, and repeated create/destroy evidence.
+The lifecycle repair batch additionally covers generation increments, quiescent
+rebuild rejection, serialized concurrent rebuild requests, and kernel-wide ECS
+operation locking. P2-B remains pending final independent review, replay parity,
+fault-injected provider teardown, and repeated create/destroy evidence.
 
 ## Explicitly Refused Claims
 

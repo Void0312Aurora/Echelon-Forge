@@ -3,6 +3,8 @@
 #include "runtime/composition/composition_error.h"
 
 #include <memory>
+#include <cstdint>
+#include <mutex>
 #include <random>
 #include <string>
 #include <string_view>
@@ -46,6 +48,7 @@ class DefaultSimulationComposition {
 
     [[nodiscard]] std::string requested_manifest_sha256() const;
     [[nodiscard]] std::string resolved_manifest_sha256() const;
+    [[nodiscard]] std::uint64_t world_generation() const noexcept;
     [[nodiscard]] composition::CompositionStatus rebuild_world(std::string_view barrier);
     void stop() noexcept;
 

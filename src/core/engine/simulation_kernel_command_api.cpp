@@ -173,6 +173,8 @@ inline void warn_if_mission_command_queue_dropped(
 
 
 void SimulationKernel::set_unit_command(uint64_t entity_id, double heading_deg, double speed_mps, double altitude_m) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("set_unit_command");
     auto e = resolve_valid_entity_or_warn(ecs, entity_id, "set command");
     if (e.is_valid()) {
         if (entity_is_ship(e)) {
@@ -229,6 +231,8 @@ void SimulationKernel::set_unit_command(uint64_t entity_id, double heading_deg, 
 }
 
 void SimulationKernel::set_unit_stick_command(uint64_t entity_id, double stick_roll, double stick_pitch, double throttle, bool gear_down) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("set_unit_stick_command");
     auto e = resolve_valid_entity_or_warn(ecs, entity_id, "set stick command");
     if (e.is_valid()) {
         set_quarantined_compatibility_stick_movement_command(
@@ -249,6 +253,8 @@ void SimulationKernel::set_unit_action(uint64_t entity_id,
                                        bool release_chaff,
                                        bool release_flare,
                                        bool jettison_tanks) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("set_unit_action");
     auto e = resolve_valid_entity_or_warn(ecs, entity_id, "set action");
     if (e.is_valid()) {
         auto clamp_cmd = [](double v) { return std::clamp(v, -1.0, 1.0); };
@@ -296,6 +302,8 @@ void SimulationKernel::set_unit_action(uint64_t entity_id,
 }
 
 void SimulationKernel::set_command_link(uint64_t entity_id, double latency_s, double drop_prob) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("set_command_link");
     auto e = resolve_valid_entity_or_warn(ecs, entity_id, "set command link");
     if (!e.is_valid()) {
         return;
@@ -328,6 +336,8 @@ void SimulationKernel::set_action_space_config(uint64_t entity_id,
                                                double max_speed_mps,
                                                double min_alt_m,
                                                double max_alt_m) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("set_action_space_config");
     auto e = resolve_valid_entity_or_warn(ecs, entity_id, "set action space config");
     if (!e.is_valid()) {
         return;
@@ -351,6 +361,8 @@ void SimulationKernel::set_command_lag(uint64_t entity_id,
                                        double heading_tau_s,
                                        double speed_tau_s,
                                        double altitude_tau_s) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("set_command_lag");
     auto e = resolve_valid_entity_or_warn(ecs, entity_id, "set command lag");
     if (!e.is_valid()) {
         return;
@@ -361,6 +373,8 @@ void SimulationKernel::set_command_lag(uint64_t entity_id,
 }
 
 void SimulationKernel::send_message_command(uint64_t entity_id, uint64_t recipient_id, int msg_type, uint64_t msg_arg) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("send_message_command");
     auto e = ecs.entity(entity_id);
     if (!e.is_valid()) return;
 
@@ -376,6 +390,8 @@ void SimulationKernel::send_message_command(uint64_t entity_id, uint64_t recipie
 
 
 void SimulationKernel::set_pilot_action(uint64_t entity_id, const PilotAction& action) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("set_pilot_action");
     auto e = resolve_valid_entity_or_warn(ecs, entity_id, "set pilot action");
     if (e.is_valid()) {
         set_active_component(e, action);
@@ -383,6 +399,8 @@ void SimulationKernel::set_pilot_action(uint64_t entity_id, const PilotAction& a
 }
 
 void SimulationKernel::set_mission_command(uint64_t entity_id, const MissionCommand& cmd) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("set_mission_command");
     auto e = resolve_valid_entity_or_warn(ecs, entity_id, "set mission command");
     if (e.is_valid()) {
         const CommandLink* link = e.get<CommandLink>();
@@ -407,6 +425,8 @@ void SimulationKernel::set_mission_command(uint64_t entity_id, const MissionComm
 }
 
 void SimulationKernel::set_task_order(uint64_t entity_id, const TaskOrder& order) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("set_task_order");
     auto e = resolve_valid_entity_or_warn(ecs, entity_id, "set task order");
     if (e.is_valid()) {
         set_active_component(e, order);
@@ -414,6 +434,8 @@ void SimulationKernel::set_task_order(uint64_t entity_id, const TaskOrder& order
 }
 
 void SimulationKernel::set_leader_intent(uint64_t entity_id, const LeaderIntent& intent) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("set_leader_intent");
     auto e = resolve_valid_entity_or_warn(ecs, entity_id, "set leader intent");
     if (e.is_valid()) {
         set_active_component(e, intent);
@@ -421,6 +443,8 @@ void SimulationKernel::set_leader_intent(uint64_t entity_id, const LeaderIntent&
 }
 
 void SimulationKernel::set_pilot_report(uint64_t entity_id, const PilotReport& report) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("set_pilot_report");
     auto e = resolve_valid_entity_or_warn(ecs, entity_id, "set pilot report");
     if (e.is_valid()) {
         set_active_component(e, report);
@@ -428,6 +452,8 @@ void SimulationKernel::set_pilot_report(uint64_t entity_id, const PilotReport& r
 }
 
 TaskOrder SimulationKernel::get_task_order(uint64_t entity_id) const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_task_order");
     auto e = ecs.entity(entity_id);
     if (e.is_valid()) {
         return get_component_or_default<TaskOrder>(e);
@@ -436,6 +462,8 @@ TaskOrder SimulationKernel::get_task_order(uint64_t entity_id) const {
 }
 
 LeaderIntent SimulationKernel::get_leader_intent(uint64_t entity_id) const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_leader_intent");
     auto e = ecs.entity(entity_id);
     if (e.is_valid()) {
         return get_component_or_default<LeaderIntent>(e);
@@ -444,6 +472,8 @@ LeaderIntent SimulationKernel::get_leader_intent(uint64_t entity_id) const {
 }
 
 MissionCommand SimulationKernel::get_mission_command(uint64_t entity_id) const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_mission_command");
     auto e = ecs.entity(entity_id);
     if (e.is_valid()) {
         return get_component_or_default<MissionCommand>(e);
@@ -452,6 +482,8 @@ MissionCommand SimulationKernel::get_mission_command(uint64_t entity_id) const {
 }
 
 PilotReport SimulationKernel::get_pilot_report(uint64_t entity_id) const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_pilot_report");
     auto e = ecs.entity(entity_id);
     if (e.is_valid()) {
         return get_component_or_default<PilotReport>(e);

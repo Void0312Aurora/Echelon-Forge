@@ -189,6 +189,8 @@ build_debug_effects_damage_event_record(const DebugEffectsDamageEventRecordInput
 
 bool SimulationKernel::debug_apply_proximity_hit(uint64_t attacker_id, uint64_t target_id,
                                                  double damage, double fuse_distance) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_apply_proximity_hit");
     if (attacker_id == 0 || target_id == 0) {
         return false;
     }
@@ -283,6 +285,8 @@ bool SimulationKernel::debug_apply_local_proximity_hit(uint64_t attacker_id, uin
                                                        double local_forward_m, double local_right_m,
                                                        double local_up_m, double damage,
                                                        double fuse_distance) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_apply_local_proximity_hit");
     if (attacker_id == 0 || target_id == 0) {
         return false;
     }
@@ -368,6 +372,8 @@ bool SimulationKernel::debug_apply_local_proximity_hit(uint64_t attacker_id, uin
 bool SimulationKernel::debug_apply_profiled_local_proximity_hit(
     uint64_t attacker_id, uint64_t target_id, double local_forward_m, double local_right_m,
     double local_up_m, const WarheadProfile &warhead_profile) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_apply_profiled_local_proximity_hit");
     return debug_apply_profiled_local_proximity_hit_with_velocity(
         attacker_id, target_id, local_forward_m, local_right_m, local_up_m, warhead_profile, 0.0,
         0.0, 0.0);
@@ -377,6 +383,8 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity(
     uint64_t attacker_id, uint64_t target_id, double local_forward_m, double local_right_m,
     double local_up_m, const WarheadProfile &warhead_profile, double missile_vx_mps,
     double missile_vy_mps, double missile_vz_mps) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_apply_profiled_local_proximity_hit_with_velocity");
     if (attacker_id == 0 || target_id == 0) {
         return false;
     }
@@ -395,6 +403,8 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_an
     double local_up_m, const WarheadProfile &warhead_profile, double missile_vx_mps,
     double missile_vy_mps, double missile_vz_mps, double detonation_heading_deg,
     double detonation_pitch_deg, double detonation_roll_deg) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_apply_profiled_local_proximity_hit_with_velocity_and_attitude");
     if (attacker_id == 0 || target_id == 0) {
         return false;
     }

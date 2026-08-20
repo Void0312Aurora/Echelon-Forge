@@ -43,6 +43,8 @@ TrackClass classify_observation_contact(const Alliance *owner_alliance,
 } // namespace
 
 std::vector<double> SimulationKernel::get_unit_position(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_unit_position");
     auto e = ecs.entity(entity_id);
     if (e.is_alive()) {
         const Transform *t = e.get<Transform>();
@@ -54,11 +56,15 @@ std::vector<double> SimulationKernel::get_unit_position(uint64_t entity_id) {
 }
 
 RecentEngagementEvents SimulationKernel::export_recent_engagement_events() const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("export_recent_engagement_events");
     IEngagementEventStore *store = engagement_event_store();
     return store ? store->export_recent_events_sorted() : RecentEngagementEvents{};
 }
 
 std::vector<double> SimulationKernel::get_unit_velocity(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_unit_velocity");
     auto e = ecs.entity(entity_id);
     if (e.is_alive()) {
         const Velocity *v = e.get<Velocity>();
@@ -70,6 +76,8 @@ std::vector<double> SimulationKernel::get_unit_velocity(uint64_t entity_id) {
 }
 
 double SimulationKernel::get_unit_heading(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_unit_heading");
     auto e = ecs.entity(entity_id);
     if (!e.is_alive()) {
         return 0.0;
@@ -95,6 +103,8 @@ double SimulationKernel::get_unit_heading(uint64_t entity_id) {
 }
 
 std::vector<Detection> SimulationKernel::get_detections(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_detections");
     auto e = ecs.entity(entity_id);
     if (e.is_alive()) {
         const ContactList *c = e.get<ContactList>();
@@ -106,6 +116,8 @@ std::vector<Detection> SimulationKernel::get_detections(uint64_t entity_id) {
 }
 
 InstrumentState SimulationKernel::get_instrument_state(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_instrument_state");
     auto e = ecs.entity(entity_id);
     if (e.is_alive()) {
         if (const InstrumentState *inst = e.get<InstrumentState>()) {
@@ -116,6 +128,8 @@ InstrumentState SimulationKernel::get_instrument_state(uint64_t entity_id) {
 }
 
 EGI SimulationKernel::get_egi_state(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_egi_state");
     auto e = ecs.entity(entity_id);
     if (e.is_alive()) {
         if (const EGI *egi = e.get<EGI>()) {
@@ -126,6 +140,8 @@ EGI SimulationKernel::get_egi_state(uint64_t entity_id) {
 }
 
 int SimulationKernel::get_unit_type(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_unit_type");
     auto e = ecs.entity(entity_id);
     if (!e.is_alive()) {
         return 0;
@@ -136,11 +152,15 @@ int SimulationKernel::get_unit_type(uint64_t entity_id) {
 }
 
 bool SimulationKernel::is_unit_active(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("is_unit_active");
     return ecs.entity(entity_id).is_alive();
 }
 
 void SimulationKernel::set_contact_list(uint64_t entity_id,
                                         const std::vector<Detection> &detections) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("set_contact_list");
     auto e = ecs.entity(entity_id);
     if (e.is_alive()) {
         ContactList contacts{};
@@ -160,6 +180,8 @@ void SimulationKernel::set_contact_list(uint64_t entity_id,
 }
 
 void SimulationKernel::set_unit_ammo(uint64_t entity_id, int missiles_remaining, int max_missiles) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("set_unit_ammo");
     auto e = ecs.entity(entity_id);
     if (!e.is_alive()) {
         spdlog::warn("Attempted to set ammo for invalid entity ID: {}", entity_id);
@@ -172,6 +194,8 @@ void SimulationKernel::set_unit_ammo(uint64_t entity_id, int missiles_remaining,
 
 void SimulationKernel::set_weapon_cooldown(uint64_t entity_id, double cooldown_s,
                                            double last_fire_time) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("set_weapon_cooldown");
     auto e = ecs.entity(entity_id);
     if (!e.is_alive()) {
         spdlog::warn("Attempted to set weapon cooldown for invalid entity ID: {}", entity_id);
@@ -181,6 +205,8 @@ void SimulationKernel::set_weapon_cooldown(uint64_t entity_id, double cooldown_s
 }
 
 double SimulationKernel::debug_get_last_scan_time(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_get_last_scan_time");
     auto e = ecs.entity(entity_id);
     if (e.is_alive()) {
         const Sensor *s = e.get<Sensor>();
@@ -192,6 +218,8 @@ double SimulationKernel::debug_get_last_scan_time(uint64_t entity_id) {
 }
 
 int SimulationKernel::debug_get_contact_count(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_get_contact_count");
     auto e = ecs.entity(entity_id);
     if (e.is_alive()) {
         const ContactList *c = e.get<ContactList>();
@@ -201,6 +229,8 @@ int SimulationKernel::debug_get_contact_count(uint64_t entity_id) {
 }
 
 std::vector<double> SimulationKernel::debug_get_mass_state(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_get_mass_state");
     auto e = ecs.entity(entity_id);
     if (!e.is_alive()) return {};
 
@@ -215,6 +245,8 @@ std::vector<double> SimulationKernel::debug_get_mass_state(uint64_t entity_id) {
 }
 
 std::vector<double> SimulationKernel::get_unit_health(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_unit_health");
     auto e = ecs.entity(entity_id);
     if (!e.is_alive()) return {0.0, 0.0};
 
@@ -225,6 +257,8 @@ std::vector<double> SimulationKernel::get_unit_health(uint64_t entity_id) {
 }
 
 std::vector<double> SimulationKernel::get_unit_damage_state(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_unit_damage_state");
     auto e = ecs.entity(entity_id);
     if (!e.is_alive()) return {0.0, 0.0, 0.0, 0.0};
 
@@ -240,6 +274,8 @@ std::vector<double> SimulationKernel::get_unit_damage_state(uint64_t entity_id) 
 }
 
 std::vector<double> SimulationKernel::debug_get_aircraft_damage_state(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_get_aircraft_damage_state");
     auto e = ecs.entity(entity_id);
     if (!e.is_alive()) {
         return {};
@@ -286,6 +322,8 @@ std::vector<double> SimulationKernel::debug_get_aircraft_damage_state(uint64_t e
 
 std::vector<double>
 SimulationKernel::debug_get_aircraft_vulnerability_evidence_state(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_get_aircraft_vulnerability_evidence_state");
     auto e = ecs.entity(entity_id);
     if (!e.is_alive()) {
         return {};
@@ -307,6 +345,8 @@ SimulationKernel::debug_get_aircraft_vulnerability_evidence_state(uint64_t entit
 
 std::vector<double>
 SimulationKernel::debug_get_aircraft_vulnerability_authority_state(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_get_aircraft_vulnerability_authority_state");
     auto e = ecs.entity(entity_id);
     if (!e.is_alive()) {
         return {};
@@ -329,6 +369,8 @@ SimulationKernel::debug_get_aircraft_vulnerability_authority_state(uint64_t enti
 }
 
 std::vector<double> SimulationKernel::debug_get_naval_weapon_counts(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_get_naval_weapon_counts");
     auto e = ecs.entity(entity_id);
     if (!e.is_alive()) return {};
 
@@ -355,6 +397,8 @@ std::vector<double> SimulationKernel::debug_get_naval_weapon_counts(uint64_t ent
 }
 
 std::vector<double> SimulationKernel::get_unit_fuel(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_unit_fuel");
     auto e = ecs.entity(entity_id);
     if (e.is_alive()) {
         if (const FuelSystem *f = e.get<FuelSystem>()) {
@@ -366,6 +410,8 @@ std::vector<double> SimulationKernel::get_unit_fuel(uint64_t entity_id) {
 }
 
 std::vector<double> SimulationKernel::debug_get_naval_stores(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_get_naval_stores");
     auto e = ecs.entity(entity_id);
     if (e.is_alive()) {
         if (const NavalStores *stores = e.get<NavalStores>()) {
@@ -380,6 +426,8 @@ std::vector<double> SimulationKernel::debug_get_naval_stores(uint64_t entity_id)
 }
 
 std::vector<double> SimulationKernel::debug_get_logistics_node(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_get_logistics_node");
     auto e = ecs.entity(entity_id);
     if (e.is_alive()) {
         if (const LogisticsNode *node = e.get<LogisticsNode>()) {
@@ -400,6 +448,8 @@ std::vector<double> SimulationKernel::debug_get_logistics_node(uint64_t entity_i
 }
 
 std::vector<double> SimulationKernel::debug_get_resupply_state(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_get_resupply_state");
     auto e = ecs.entity(entity_id);
     if (e.is_alive()) {
         if (const ResupplyState *state = e.get<ResupplyState>()) {
@@ -423,6 +473,8 @@ std::vector<double> SimulationKernel::debug_get_resupply_state(uint64_t entity_i
 }
 
 std::vector<double> SimulationKernel::debug_get_data_link_state(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_get_data_link_state");
     auto e = ecs.entity(entity_id);
     if (e.is_alive()) {
         if (const DataLink *link = e.get<DataLink>()) {
@@ -444,6 +496,8 @@ std::vector<double> SimulationKernel::debug_get_data_link_state(uint64_t entity_
 }
 
 std::vector<double> SimulationKernel::debug_get_ground_contact_state(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_get_ground_contact_state");
     auto e = ecs.entity(entity_id);
     if (!e.is_alive()) {
         return {};
@@ -469,6 +523,8 @@ std::vector<double> SimulationKernel::debug_get_ground_contact_state(uint64_t en
 }
 
 std::vector<CommPacket> SimulationKernel::get_unit_messages(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_unit_messages");
     auto e = ecs.entity(entity_id);
     if (e.is_alive()) {
         if (const CommQueue *q = e.get<CommQueue>()) {
@@ -479,6 +535,8 @@ std::vector<CommPacket> SimulationKernel::get_unit_messages(uint64_t entity_id) 
 }
 
 std::uint64_t SimulationKernel::debug_get_embarked_helo(uint64_t entity_id) const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_get_embarked_helo");
     auto e = ecs.entity(entity_id);
     if (e.is_alive()) {
         if (const EmbarkedAirOps *ops = e.get<EmbarkedAirOps>()) {
@@ -489,6 +547,8 @@ std::uint64_t SimulationKernel::debug_get_embarked_helo(uint64_t entity_id) cons
 }
 
 std::vector<UnitData> SimulationKernel::get_all_units() {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_all_units");
     std::vector<UnitData> units;
 
     auto query = ecs.query<const KeyEntity, const Transform, const Velocity, const Alliance>();
@@ -509,6 +569,8 @@ std::vector<UnitData> SimulationKernel::get_all_units() {
 }
 
 AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_agent_observation");
     AgentObservation obs{};
     obs.id = entity_id;
     obs.sim_time = 0.0;

@@ -1,7 +1,8 @@
 # Cordis Simulation Composition Census — 2026-08-17
 
-Status: `2026-08-17` P1-A composition census passed; this is a source-grounded
-baseline, not a runtime implementation or a frozen P1-B schema.
+Status: `2026-08-17` P1-A composition census passed; this is a historical,
+pre-P2-B source-grounded baseline, not the current runtime implementation or a
+frozen P1-B schema. Current implementation status is tracked separately.
 
 Language:
 

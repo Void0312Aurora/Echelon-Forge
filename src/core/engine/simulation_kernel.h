@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <random>
 #include <string>
 #include <string_view>
@@ -105,6 +106,7 @@ class SimulationKernel {
     void set_time_step(double dt);
     [[nodiscard]] std::string requested_composition_sha256() const;
     [[nodiscard]] std::string resolved_composition_sha256() const;
+    [[nodiscard]] std::uint64_t world_composition_generation() const noexcept;
     [[nodiscard]] bool rebuild_world_composition(std::string_view barrier,
                                                  std::string *error = nullptr);
 
@@ -246,6 +248,10 @@ class SimulationKernel {
 
   private:
     void ensure_active(const char *operation) const;
+    using CompositionOperationLock = std::unique_lock<std::recursive_mutex>;
+    [[nodiscard]] CompositionOperationLock acquire_composition_operation() const {
+        return CompositionOperationLock(composition_lifecycle_mutex_);
+    }
     void register_components_and_systems();
     [[nodiscard]] IEnvironmentModel *environment_model() const noexcept;
     [[nodiscard]] IUnitFactory *unit_factory() const noexcept;
@@ -266,6 +272,7 @@ class SimulationKernel {
 
     MissileTuning missile_tuning_;
     std::unique_ptr<runtime::providers::DefaultSimulationComposition> composition_;
+    mutable std::recursive_mutex composition_lifecycle_mutex_;
     bool exact_stage_trace_frame_active_ = false;
     bool shutdown_complete_ = false;
 };

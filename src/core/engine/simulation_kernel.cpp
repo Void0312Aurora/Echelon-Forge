@@ -45,6 +45,7 @@ void SimulationKernel::ensure_active(const char *operation) const {
 }
 
 void SimulationKernel::shutdown() {
+    auto composition_lock = acquire_composition_operation();
     if (shutdown_complete_) {
         return;
     }
@@ -64,6 +65,7 @@ void SimulationKernel::shutdown() {
 }
 
 bool SimulationKernel::load_unit_definitions(const std::string &path, std::string *error) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("load_unit_definitions");
     IUnitFactory *factory = unit_factory();
     if (factory == nullptr) {
@@ -74,11 +76,13 @@ bool SimulationKernel::load_unit_definitions(const std::string &path, std::strin
 }
 
 void SimulationKernel::set_missile_tuning(const MissileTuning &tuning) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("set_missile_tuning");
     missile_tuning_ = tuning;
 }
 
 void SimulationKernel::reset(unsigned int seed) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("reset");
     if (IEngagementEventStore *store = engagement_event_store()) {
         store->clear();
@@ -98,6 +102,7 @@ void SimulationKernel::reset(unsigned int seed) {
 }
 
 void SimulationKernel::step() {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("step");
     if (exact_stage_trace_frame_active_) {
         throw std::logic_error(
@@ -110,6 +115,7 @@ void SimulationKernel::step() {
 }
 
 bool SimulationKernel::load_database(const std::string &path) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("load_database");
     std::string error;
     IUnitFactory *factory = unit_factory();
@@ -122,6 +128,7 @@ bool SimulationKernel::load_database(const std::string &path) {
 }
 
 void SimulationKernel::set_time_step(double dt) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("set_time_step");
     if (!std::isfinite(dt) || dt <= 0.0) {
         throw std::invalid_argument(
@@ -133,6 +140,7 @@ void SimulationKernel::set_time_step(double dt) {
 flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_name, double x,
                                            double y, double z, double heading, double pitch,
                                            double roll, double vx, double vy, double vz) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("spawn_unit");
     IUnitFactory *factory = unit_factory();
     if (factory == nullptr) {
@@ -151,6 +159,7 @@ flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_na
 }
 
 void SimulationKernel::clear_zones() {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("clear_zones");
     if (IEnvironmentModel *model = environment_model()) {
         model->clear_zones();
@@ -159,6 +168,7 @@ void SimulationKernel::clear_zones() {
 
 void SimulationKernel::add_zone(const std::string &name, double x, double y, double width,
                                 double height, double heading, int surface_type) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("add_zone");
     if (IEnvironmentModel *model = environment_model()) {
         model->add_zone(name, x, y, width, height, heading,
@@ -167,6 +177,7 @@ void SimulationKernel::add_zone(const std::string &name, double x, double y, dou
 }
 
 void SimulationKernel::set_wind(double speed_mps, double dir_from_deg, double shear_mps_per_km) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("set_wind");
     if (IEnvironmentModel *model = environment_model()) {
         model->set_wind(speed_mps, dir_from_deg, shear_mps_per_km);
@@ -174,12 +185,16 @@ void SimulationKernel::set_wind(double speed_mps, double dir_from_deg, double sh
 }
 
 void SimulationKernel::set_sun_direction(double azimuth_deg, double elevation_deg) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("set_sun_direction");
     if (IEnvironmentModel *model = environment_model()) {
         model->set_sun_direction(azimuth_deg, elevation_deg);
     }
 }
 
 Vec3 SimulationKernel::get_sun_direction() const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_sun_direction");
     if (IEnvironmentModel *model = environment_model()) {
         return model->get_sun_direction();
     }
@@ -187,6 +202,7 @@ Vec3 SimulationKernel::get_sun_direction() const {
 }
 
 void SimulationKernel::set_terrain_type(const std::string &terrain_type) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("set_terrain_type");
     if (IEnvironmentModel *model = environment_model()) {
         model->set_terrain_type(terrain_type);
@@ -195,6 +211,7 @@ void SimulationKernel::set_terrain_type(const std::string &terrain_type) {
 
 void SimulationKernel::set_maritime_state(double sea_state, double wave_heading_deg,
                                           double wave_period_s) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("set_maritime_state");
     if (IEnvironmentModel *model = environment_model()) {
         model->set_maritime_state(sea_state, wave_heading_deg, wave_period_s);
@@ -202,6 +219,7 @@ void SimulationKernel::set_maritime_state(double sea_state, double wave_heading_
 }
 
 void SimulationKernel::clear_maritime_state() {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("clear_maritime_state");
     if (IEnvironmentModel *model = environment_model()) {
         model->clear_maritime_state();
@@ -209,6 +227,8 @@ void SimulationKernel::clear_maritime_state() {
 }
 
 IEnvironmentModel::MaritimeState SimulationKernel::get_maritime_state() const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_maritime_state");
     if (IEnvironmentModel *model = environment_model()) {
         return model->get_maritime_state();
     }
@@ -216,17 +236,39 @@ IEnvironmentModel::MaritimeState SimulationKernel::get_maritime_state() const {
 }
 
 std::string SimulationKernel::requested_composition_sha256() const {
+    auto composition_lock = acquire_composition_operation();
     return composition_ ? composition_->requested_manifest_sha256() : std::string{};
 }
 
 std::string SimulationKernel::resolved_composition_sha256() const {
+    auto composition_lock = acquire_composition_operation();
     return composition_ ? composition_->resolved_manifest_sha256() : std::string{};
 }
 
+std::uint64_t SimulationKernel::world_composition_generation() const noexcept {
+    auto composition_lock = acquire_composition_operation();
+    return composition_ ? composition_->world_generation() : 0;
+}
+
 bool SimulationKernel::rebuild_world_composition(std::string_view barrier, std::string *error) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("rebuild_world_composition");
     if (!composition_) {
         if (error) *error = "default simulation composition is unavailable";
+        return false;
+    }
+    if (exact_stage_trace_frame_active_) {
+        if (error) {
+            *error = std::string(runtime::composition::kErrorRebuildBarrierRejected) +
+                     ":world:exact-stage trace frame is active";
+        }
+        return false;
+    }
+    if (ecs.count<SimObject>() != 0) {
+        if (error) {
+            *error = std::string(runtime::composition::kErrorRebuildBarrierRejected) +
+                     ":world:non-quiescent world contains SimObject entities";
+        }
         return false;
     }
     auto status = composition_->rebuild_world(barrier);
