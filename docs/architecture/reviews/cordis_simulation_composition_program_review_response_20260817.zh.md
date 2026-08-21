@@ -9,7 +9,7 @@ Document kind: `review`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/reviews/cordis_simulation_composition_program_review_response_20260817.md`
 Owner: `architecture/runtime-composition`
-Last verified: `2026-08-17`
+Last verified: `2026-08-21`
 Review answered:
 [Cordis 仿真组合计划架构审阅](cordis_simulation_composition_program_review_20260817.zh.md)
 Review basis: `b9f289c81fd4`
@@ -275,3 +275,19 @@ simulation-kernel smoke case、870 个 assertion，以及 6/6 个 world-batch ru
 assertion。聚焦 composition/structural 运行除已独立复现的既有 binding-count guard（期望
 `85`、实际 `87`）外均为绿色；该失败不在 P2-B write set。P2-B 改变验收状态前，已针对
 `17991c14` 请求最终独立复核。
+
+## 13. 有界 P2-B 收口更新 — 2026-08-21
+
+最终有界 evidence batch 只补齐冻结的三项收口内容：
+
+- 在同一 MSVC toolchain 下，用 P2-B 前 commit `a618b423` 对比十步默认 profile 短 trace；
+- 对真实 default catalog 注入 effects-publication failure，验证 staged provider rollback/
+  teardown 后，原有 kernel 的 identity、generation 与后续 step 仍有效；
+- 重复创建并销毁 kernel 八次，每次显式验证幂等 shutdown。
+
+当前聚焦结果为 15/15 个 native lifecycle case、443 个 assertion，41/41 个
+simulation-kernel smoke case、889 个 assertion，以及 6/6 个 world-batch runtime case、55 个
+assertion。迁移前 checkout 的基线构建需要额外的 `/D_USE_MATH_DEFINES /EHsc`；没有修改基线
+源码。这是有界 compatibility check，不是通用 replay system。CUDA/backend parity、Cordis
+producer integration、广泛 provenance 或 typed-borrow 收口仍属于后续 gate。最新 commit 仍需
+新的 `gpt-5.6-sol` / `max` 独立复核后，才能把 P2-B 标记为 accepted。

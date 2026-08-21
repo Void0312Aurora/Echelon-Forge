@@ -10,7 +10,7 @@ Document kind: `review`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/reviews/cordis_simulation_composition_program_review_response_20260817.md`
 Owner: `architecture/runtime-composition`
-Last verified: `2026-08-17`
+Last verified: `2026-08-21`
 Review answered:
 [Cordis simulation composition program architecture review](cordis_simulation_composition_program_review_20260817.md)
 Review basis: `b9f289c81fd4`
@@ -325,3 +325,23 @@ structural run is green except for the independently reproduced pre-existing
 binding-count guard (`85` expected versus `87` actual), which is outside the
 P2-B write set. Final independent revalidation is requested against
 `17991c14` before P2-B acceptance status changes.
+
+## 13. Bounded P2-B Closure Update — 2026-08-21
+
+The final bounded evidence batch adds only the three frozen closure items:
+
+- a ten-step default-profile trace compared with pre-P2-B commit `a618b423`
+  under the same MSVC toolchain;
+- a real default-catalog effects-publication failure whose staged providers
+  roll back and tear down while the pre-existing kernel identity, generation,
+  and subsequent step remain valid; and
+- eight repeated kernel create/destroy cycles with explicit idempotent shutdown.
+
+The current focused results are 15/15 native lifecycle cases with 443
+assertions, 41/41 simulation-kernel smoke cases with 889 assertions, and 6/6
+world-batch runtime cases with 55 assertions. The baseline build required
+`/D_USE_MATH_DEFINES /EHsc` for the pre-P2-B checkout; no baseline source was
+changed. This is a bounded compatibility check, not a generic replay system.
+CUDA/backend parity, Cordis producer integration, and broader provenance or
+typed-borrow closure remain later gates. The latest commit requires a fresh
+`gpt-5.6-sol` / `max` independent review before P2-B is marked accepted.

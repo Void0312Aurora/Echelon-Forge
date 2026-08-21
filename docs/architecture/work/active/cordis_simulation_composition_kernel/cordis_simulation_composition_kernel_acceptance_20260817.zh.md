@@ -19,8 +19,8 @@ Last verified: `2026-08-17`
 
 ## 验收边界
 
-验收表示本范围内的长期组合架构已经实现、集成、形成证据并完成路由；不表示未来所有
-第三方 plugin、backend、domain、remote host 或 hot-reload 模式均已验收。
+本合同区分有界的 native P2-B 验收与后续全局收口。P2-B 证明 production
+provider seam；尚未实现的 Cordis、backend、host 或性能迁移不属于本次验收。
 
 ## 门禁矩阵
 
@@ -29,13 +29,13 @@ Last verified: `2026-08-17`
 | 文档与权威 | 双语 active package、父路由、有效链接、同步元数据、显式 Experiment projection/Cordis/admission/native 权威链 | orphan task、composition owner 竞争或 runtime 过度声明 | pass |
 | Composition census | constructor、replacement、registration、backend、stage、reset、binding、test 的可复现 inventory | 迁移范围内仍有未知 owner 或未分类 replacement path | pass |
 | Contract/canonicalization | versioned schema、invalid-input matrix、canonical byte fixture、permutation-stable hash | 结果依赖发现顺序、host 或歧义 provider 语义 | pass |
-| 原生 lifecycle | scope isolation、transactional construction、dependency-safe teardown、rollback、failure injection | 部分 runnable state、stale handle 或 teardown 顺序歧义 | partial：P2-A baseline pass；production migration 证据未完成 |
-| 默认行为 parity | 迁移前后 state、event、observation、reward、termination、replay comparison | 通过 tolerance/fallback 隐藏无法解释的语义差异 | planned |
+| 原生 lifecycle | P2-B production provider 构造、一条 failure/teardown rollback 路径，以及无悬垂 service reference | 部分 runnable state、stale handle 或 teardown 顺序歧义 | P2-B blocker |
+| 默认行为 parity | 一次受控的迁移前后默认 state/event/observation/replay 对比 | 通过 tolerance/fallback 隐藏无法解释的语义差异 | P2-B blocker |
 | Stage graph integrity | 既有 stage contract validation 与精确默认图 comparison | plugin/host event order 影响 stage execution | planned |
 | Domain profile admission | minimal/common/air/naval/ground/combined 对 owner contract 的校验 | profile 绕开领域成熟度或创建私有 lifecycle | planned |
 | Backend admission | facade 选择准入 provider；CPU/CUDA 与 unsupported-profile gate | 具体 backend 仍是构造真值或拒绝 profile 静默 fallback | planned |
 | Projection/catalog-lock authority | versioned producer-neutral request DTO、确定性 owner-derived lock、canonical bytes/hash、category-owner matrix、正负 admission case 与 offline high-level-lowering guard | Cordis 拥有私有 catalog、存在两个高层 resolver，或原生侧无法核验 lock identity/selection | planned / P2-C0 |
-| Evidence/replay | 先在 P2-B 输出 production manifest identity，在 P2-C0 输出 request/catalog-lock identity，再扩展 provider/graph/backend/host identity 并执行 mismatch policy | unexplained composition/catalog-lock mismatch 下仍继续 replay/comparison | planned |
+| Evidence/replay | P2-B 输出 production manifest identity 与受控 parity trace；P2-C0 及后续阶段再扩展 request/catalog-lock、graph、backend、host 与 mismatch policy | unexplained composition/catalog-lock mismatch 下仍继续 replay/comparison | P2-B blocker / later expansion |
 | Cordis conformance | Cordis primitives 加仓库 profile/bundle layer 通过 owner lock lower 真实默认 request，生成 canonical manifest 并完成原生 realization | 原生侧不重新校验、Cordis 绕开 owner admission、存在私有 Cordis catalog，或 parity 仅覆盖 synthetic manifest fixture | planned / P2-C1 / program closure required |
 | Binding isolation | Python/C++ 始终使用同一 native owner；Node 在另行准入时也必须如此 | binding 拥有仿真真值、raw ECS bypass、逐 step callback，或 Node 成为离线 native/Python 必需依赖 | planned |
 | Batch/performance | 代表性启动、内存、吞吐、determinism、teardown 测量 | mandatory per-world Node context、hot-path lookup/crossing 或未批准回归 | planned |
@@ -94,6 +94,12 @@ matrix、性能环境和原始测量、failure-injection matrix、已知残余�
 removal/compatibility 决定，以及同步后的文档/archive route。
 
 ## 部分验收
+
+P2-B 作为有界 native slice，只有在以下六项阻塞项关闭后才能验收：native provider
+构造已脱离 kernel concrete ownership/raw capture；一次受控 behavior/replay 对比；一条
+production failure/teardown rollback 路径；重复 create/destroy；稳定 identity/generation；
+以及无未解决 P1/P0 的最终独立审阅。其余 gate 属于 P2-C0、P2-C1、后续 implementation
+cluster 或全局收口。
 
 native composition、Cordis producer/native 纵向切片、system/profile composition、
 backend/evidence integration 与 Node hosting 可以分别作为有界切片验收，但父状态必须

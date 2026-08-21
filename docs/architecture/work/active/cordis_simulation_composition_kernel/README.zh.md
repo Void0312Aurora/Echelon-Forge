@@ -169,30 +169,33 @@ requested/resolved identity 与 world-scope generation，并仅允许在受监�
 fail-closed 而非可重新开启的策略。当前聚焦证据见 current-status 文档；Cordis producer
 integration 仍属于 P2-C0/P2-C1。
 
-## 验收门
+## P2-B 验收门
 
-只有满足以下条件，本子项目才能标记为 accepted：
+P2-B 在 native production seam 上满足以下有界条件后验收：
 
-- 默认原生 composition 与迁移前已接受基线在行为和 replay 上等价；
-- composition resolution 确定且具有稳定身份；
-- 影响 truth 的 provider 和 stage contribution 在获准重配置 barrier 之间不可变；
-- 生命周期 failure injection 证明完整 rollback 且无悬垂 service reference；
-- `SimulationKernel` 和 `RuntimeFacade` 不再直接构造具体默认 model/backend；
-- stage 顺序继续由维护中的 stage contract 管理，而不是 Cordis plugin 顺序；
-- 实验意图通过显式 runtime-composition projection 到达 Cordis，且 resolved catalog lock
-  中可见按 owner 分类的准入；
-- 至少一条仓库自有 Cordis 默认 profile 路径输出 canonical request，并由原生 composition
-  compiler 消费和重新校验；
-- Python 和 standalone C++ 运行不要求 Node；
-- 启用 Node/Cordis host 时，它不进入逐 step call graph；
-- CPU/CUDA parity 和代表性 world-batch 性能保持在另行冻结的容差内；
-- composition provenance 通过维护中的 diagnostics/replay evidence 导出；
-- 父索引、standard、reference 和 archive 路由同步且不扩大能力声明。
+- 默认 provider profile 通过 native composition root 构造，`SimulationKernel`
+  中不再存在具体默认构造或 registration-time raw capture；
+- 一个受控默认 trace 与已接受的迁移前基线在行为/replay 上等价；
+- 一条 production provider 构造/teardown 失败路径证明 rollback 完整且无悬垂
+  service reference；
+- 重复 kernel create/destroy 运行不出现生命周期漂移；
+- requested/resolved composition identity 与 world generation 稳定且可观测；
+- 最新实现批次通过一次独立 `gpt-5.6-sol/max` 审阅，且没有未解决的 P1/P0。
+
+以上是 P2-B 唯一的验收阻塞项。已有 lifecycle、lease、mutation-barrier、ABI
+与 architecture 测试用于支撑这些门禁；不得借此把更广的 backend、host 或性能要求
+继续加入本切片。
+
+## 全局收口门
+
+stage/profile contribution 迁移、Cordis request/catalog-lock projection、真实 Cordis
+默认 profile 纵向路径、backend 与 CPU/CUDA parity、host/batch 性能、扩展 provenance
+以及 Node host 决策，属于后续切片或全局收口，不属于 native P2-B 验收阻塞项。
 
 ## 残余与下一步
 
-P2-B 在 native production seam 上的实现已经完成，仍需独立审阅、replay/fault-injection
-证据与重复 create/destroy 证据才能完成验收。随后执行 P2-C0，
+P2-B 在 native production seam 上的实现已经完成，剩余阻塞项仅为受控 parity trace、
+一条 production failure/teardown 证据、重复 create/destroy 证据与最终独立审阅。随后执行 P2-C0，
 冻结高层 request 与 owner-derived catalog-lock artifact，避免产生第二 resolver；再执行
 P2-C1 首个 Cordis 纵向切片：Cordis primitives 加仓库 profile/bundle layer 必须把默认
 request lower 为由原生侧重新校验和实例化的 canonical manifest/catalog lock。system

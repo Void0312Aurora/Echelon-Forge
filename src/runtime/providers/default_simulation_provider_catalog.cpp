@@ -192,14 +192,22 @@ class SimulationKernelWeaponReleaseDamageBridge final : public IWeaponReleaseDam
 template <typename Ref, typename Service>
 class SingletonServiceEffect final : public composition::ILifecycleEffect {
   public:
-    SingletonServiceEffect(flecs::world &world, Service *Ref::*member, Service *service)
-        : world_(world), member_(member), service_(service) {
+    SingletonServiceEffect(flecs::world &world, Service *Ref::*member, Service *service,
+                           bool fail_commit = false)
+        : world_(world), member_(member), service_(service), fail_commit_(fail_commit) {
         if (const Ref *current = world_.get<Ref>()) {
             previous_ = current->*member_;
         }
     }
 
     [[nodiscard]] composition::CompositionStatus commit() override {
+        if (fail_commit_) {
+            return composition::CompositionStatus::failure({
+                std::string(composition::kErrorLifecycleEffectCommitFailed),
+                {},
+                "injected default-provider publication failure",
+            });
+        }
         try {
             Ref next{};
             next.*member_ = service_;
@@ -261,14 +269,16 @@ class SingletonServiceEffect final : public composition::ILifecycleEffect {
     Service *Ref::*member_ = nullptr;
     Service *service_ = nullptr;
     Service *previous_ = nullptr;
+    bool fail_commit_ = false;
     bool committed_ = false;
 };
 
 template <typename Ref, typename Service>
 void adopt_singleton_effect(composition::ProviderConstructionContext &context, flecs::world &world,
-                            Service *Ref::*member, Service *service) {
+                            Service *Ref::*member, Service *service, bool fail_commit = false) {
     context.adopt_effect(
-        std::make_unique<SingletonServiceEffect<Ref, Service>>(world, member, service));
+        std::make_unique<SingletonServiceEffect<Ref, Service>>(world, member, service,
+                                                                fail_commit));
 }
 
 template <typename Dependency>
@@ -288,7 +298,8 @@ make_factory(std::string_view provider_id, contracts::CompositionScope scope,
 
 composition::CompositionStatus
 register_default_factories(composition::ProviderCatalog &catalog, SimulationKernel &kernel,
-                           flecs::world &world, MissileTuning &missile_tuning, std::mt19937 &rng) {
+                           flecs::world &world, MissileTuning &missile_tuning, std::mt19937 &rng,
+                           std::string_view fail_effect_provider = {}) {
     const auto register_factory = [&](std::shared_ptr<composition::IProviderFactory> factory) {
         return catalog.register_factory(std::move(factory));
     };
@@ -306,10 +317,11 @@ register_default_factories(composition::ProviderCatalog &catalog, SimulationKern
     status = register_factory(make_factory(
         kEffectsProviderId, contracts::CompositionScope::world,
         {{std::string(contracts::kServiceEffectsModel), &typeid(IEffectsModel)}},
-        [&world](composition::ProviderConstructionContext &context) {
+        [&world, fail_effect_provider](composition::ProviderConstructionContext &context) {
             auto service = make_default_effects_model();
             IEffectsModel *pointer = service.get();
-            adopt_singleton_effect(context, world, &EffectsModelRef::model, pointer);
+            adopt_singleton_effect(context, world, &EffectsModelRef::model, pointer,
+                                   fail_effect_provider == kEffectsProviderId);
             return single_service_instance(contracts::kServiceEffectsModel, std::move(service));
         }));
     if (!status) return status;
@@ -615,6 +627,49 @@ build_default_simulation_composition(SimulationKernel &kernel, flecs::world &wor
                                      MissileTuning &missile_tuning, std::mt19937 &rng) {
     composition::ProviderCatalog catalog;
     auto catalog_status = register_default_factories(catalog, kernel, world, missile_tuning, rng);
+    if (!catalog_status) {
+        return DefaultSimulationCompositionResult::failure(catalog_status.error());
+    }
+
+    std::string resolved_json;
+    for (const auto chunk : contracts::generated::kDefaultCompatibilityResolvedJsonChunks) {
+        resolved_json.append(chunk);
+    }
+    auto parsed = composition::parse_resolved_composition_json(resolved_json);
+    if (!parsed) {
+        return DefaultSimulationCompositionResult::failure(parsed.error());
+    }
+    auto realized = composition::CompositionKernel::realize(std::move(parsed).value(), catalog);
+    if (!realized) {
+        return DefaultSimulationCompositionResult::failure(realized.error());
+    }
+
+    auto impl = std::make_unique<DefaultSimulationComposition::Impl>(std::move(realized).value());
+    if (!impl->refresh_handles()) {
+        impl->runtime.stop();
+        return DefaultSimulationCompositionResult::failure({
+            std::string(composition::kErrorServiceUnavailable),
+            "builtin.default_compatibility",
+            "realized default composition did not expose every required root service",
+        });
+    }
+    return DefaultSimulationCompositionResult::success(
+        std::unique_ptr<DefaultSimulationComposition>(
+            new DefaultSimulationComposition(std::move(impl))));
+}
+
+DefaultSimulationCompositionResult
+build_default_simulation_composition_for_testing(
+    SimulationKernel &kernel, flecs::world &world, MissileTuning &missile_tuning,
+    std::mt19937 &rng, DefaultSimulationCompositionFaultInjection fault) {
+    composition::ProviderCatalog catalog;
+    const auto fail_effect_provider =
+        fault == DefaultSimulationCompositionFaultInjection::fail_effects_publication
+            ? kEffectsProviderId
+            : std::string_view{};
+    auto catalog_status =
+        register_default_factories(catalog, kernel, world, missile_tuning, rng,
+                                   fail_effect_provider);
     if (!catalog_status) {
         return DefaultSimulationCompositionResult::failure(catalog_status.error());
     }

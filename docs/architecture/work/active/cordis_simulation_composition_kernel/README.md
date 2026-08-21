@@ -198,40 +198,43 @@ leases serialize with rebuild/shutdown but are deliberately fail-closed rather
 than reopenable. The current focused evidence is recorded in the current-status
 document; Cordis producer integration remains P2-C0/P2-C1.
 
-## Acceptance Gate
+## P2-B Acceptance Gate
 
-This subproject can be marked accepted only when:
+P2-B is accepted at the native production seam when the following bounded
+conditions are met:
 
-- the default native composition is behaviorally and replay equivalent to the
+- the default provider profile is constructed through the native composition
+  root, with no concrete default construction or registration-time raw capture
+  left in `SimulationKernel`;
+- one controlled default trace is behaviorally/replay equivalent to the
   accepted pre-migration baseline;
-- composition resolution is deterministic and has a stable identity;
-- truth-affecting providers and stage contributions are immutable between
-  simulation barriers authorized for reconfiguration;
-- lifecycle failure injection proves complete rollback and no dangling service
-  references;
-- `SimulationKernel` and `RuntimeFacade` no longer construct concrete default
-  models or backends directly;
-- stage ordering remains governed by maintained stage contracts rather than
-  Cordis plugin order;
-- experiment intent reaches Cordis through an explicit runtime-composition
-  projection, and owner-specific admission remains visible in the resolved
-  catalog lock;
-- at least one repository-owned Cordis default-profile path emits the canonical
-  request consumed and revalidated by the native composition compiler;
-- Python and standalone C++ operation do not require Node;
-- the Node/Cordis host, when enabled, does not enter the per-step call graph;
-- CPU/CUDA parity and representative world-batch performance gates remain
-  within separately frozen tolerances;
-- composition provenance is exported through maintained diagnostics and replay
-  evidence;
-- parent indexes, standards, reference surfaces, and archive routes are
-  synchronized without expanding capability claims.
+- one production provider construction/teardown failure path proves rollback
+  and absence of dangling service references;
+- repeated kernel create/destroy runs complete without lifecycle drift;
+- requested/resolved composition identity and world generation remain stable
+  and observable;
+- the latest implementation batch passes one independent `gpt-5.6-sol/max`
+  review with no unresolved P1/P0 finding.
+
+These are the only P2-B acceptance blockers. The existing lifecycle, lease,
+mutation-barrier, ABI, and architecture tests support the gate; they are not a
+license to add broader backend, host, or performance requirements to this
+slice.
+
+## Program Closure Gates
+
+The following remain required for later slices or overall program closure, not
+for native P2-B acceptance: stage/profile contribution migration, Cordis
+request/catalog-lock projection, a real Cordis default-profile vertical path,
+backend and CPU/CUDA parity, host/batch performance, expanded provenance, and
+Node-host decisions.
 
 ## Residuals And Next Steps
 
-P2-B implementation is complete at the native production seam. Its acceptance
-still requires independent review, replay/fault-injection evidence, and
-repeated create/destroy evidence. P2-C0 follows to freeze the high-level request and owner-derived catalog-lock
+P2-B implementation is complete at the native production seam. Its remaining
+blockers are limited to the controlled parity trace, one production
+failure/teardown evidence path, repeated create/destroy evidence, and final
+independent review. P2-C0 follows to freeze the high-level request and owner-derived catalog-lock
 artifacts without creating a second resolver. P2-C1 then provides the first
 Cordis vertical slice: Cordis primitives plus the repository profile/bundle
 layer must lower the default request into the canonical manifest/catalog lock

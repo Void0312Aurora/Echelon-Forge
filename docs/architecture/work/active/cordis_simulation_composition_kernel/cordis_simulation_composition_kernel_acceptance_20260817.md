@@ -20,9 +20,9 @@ Parent: [Cordis Simulation Composition Kernel](README.md)
 
 ## Acceptance Boundary
 
-Acceptance means the scoped long-term composition architecture is implemented,
-integrated, evidenced, and routed. It does not mean every future third-party
-plugin, backend, domain, remote host, or hot-reload mode is accepted.
+This contract distinguishes bounded native P2-B acceptance from later program
+closure. P2-B proves the production provider seam; it does not accept Cordis,
+backend, host, or performance migrations that have not been implemented.
 
 ## Gate Matrix
 
@@ -31,13 +31,13 @@ plugin, backend, domain, remote host, or hot-reload mode is accepted.
 | Documentation and authority | bilingual active package, parent route, valid links, synchronized maintained metadata, explicit Experiment projection/Cordis/admission/native authority chain | orphan task, competing composition owner, or runtime overclaim | pass |
 | Composition census | reproducible inventory of construction, replacement, registration, backend, stage, reset, binding, and test edges | unknown owner or unclassified replacement path remains in migration scope | pass |
 | Contract and canonicalization | versioned schema, invalid-input matrix, canonical byte fixtures, permutation-stable hash | discovery/order/host-dependent result or ambiguous provider semantics | pass |
-| Native lifecycle | scope isolation, transactional construction, dependency-safe teardown, rollback, failure injection | partial runnable state, stale handle, teardown order ambiguity | partial: P2-A baseline pass; production migration evidence open |
-| Default behavior parity | pre/post default-profile state, event, observation, reward, termination, and replay comparisons | unexplained semantic divergence hidden by tolerance or fallback | planned |
+| Native lifecycle | P2-B production provider construction, one failure/teardown rollback path, and no dangling service reference | partial runnable state, stale handle, teardown order ambiguity | P2-B blocker |
+| Default behavior parity | one controlled pre/post default-profile state/event/observation/replay comparison | unexplained semantic divergence hidden by tolerance or fallback | P2-B blocker |
 | Stage graph integrity | existing stage contract validation plus exact default graph comparison | plugin order or host event order affects stage execution | planned |
 | Domain profile admission | minimal/common/air/naval/ground/combined profile validation against owner contracts | profile bypasses domain maturity or creates a private lifecycle | planned |
 | Backend admission | facade selects admitted provider; CPU/CUDA and unsupported-profile gates | concrete backend remains construction truth or rejected profile silently falls back | planned |
 | Projection and catalog-lock authority | versioned producer-neutral request DTO, deterministic owner-derived lock, canonical bytes/hashes, category-owner matrix, positive/negative admission cases, and offline high-level-lowering guard | Cordis owns a private catalog, two high-level resolvers exist, or native cannot verify lock identity/selection | planned / P2-C0 |
-| Evidence and replay | P2-B production manifest identity, P2-C0 request/catalog-lock identity, then provider/graph/backend/host expansion and mismatch policy | replay/comparison proceeds with unexplained composition or catalog-lock mismatch | planned |
+| Evidence and replay | P2-B production manifest identity and controlled parity trace; P2-C0 and later phases extend this across request/catalog-lock, graph, backend, host, and mismatch policy | replay/comparison proceeds with unexplained composition or catalog-lock mismatch | P2-B blocker / later expansion |
 | Cordis conformance | Cordis primitives plus the repository profile/bundle layer lower the real default request through the owner lock into canonical manifest and native realization | native side trusts Cordis without revalidation, Cordis bypasses owner admission, a private Cordis catalog exists, or parity covers only a synthetic manifest fixture | planned / P2-C1 / required for program closure |
 | Binding isolation | Python and C++ always use the same native owner; Node does so if separately admitted | binding owns simulation truth, raw ECS bypass, per-step callback, or Node becomes required for offline native/Python operation | planned |
 | Batch and performance | representative startup, memory, throughput, determinism, and teardown measurements | mandatory per-world Node context, hot-path lookup/crossing, or unapproved regression | planned |
@@ -104,6 +104,13 @@ Final acceptance must retain:
 - synchronized documentation and archive routes.
 
 ## Partial Acceptance
+
+P2-B may be accepted as a bounded native slice once its six blockers are closed:
+native provider construction without concrete kernel ownership/raw capture,
+one controlled behavior/replay comparison, one production failure/teardown
+rollback path, repeated create/destroy, stable identity/generation, and final
+independent review with no unresolved P1/P0. The remaining rows below belong to
+P2-C0, P2-C1, later implementation clusters, or overall program closure.
 
 Native composition, the Cordis producer/native vertical slice, system/profile
 composition, backend/evidence integration, and Node hosting may be accepted as

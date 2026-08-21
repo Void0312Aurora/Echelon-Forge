@@ -51,7 +51,7 @@ Contract baseline：
   保持、完整 plugin/factory identity check、进程内语义 service-type identity check 与幂等
   shutdown；
 - native lifecycle 通过 15 个 test case、443 个 assertion，default simulation smoke 通过
-  39 个 test case、870 个 assertion；world-batch compatibility 还验证了跨 shutdown 的
+  41 个 test case、889 个 assertion；world-batch compatibility 还验证了跨 shutdown 的
   snapshot-owned visual scene；composition architecture/contract 为 21 passed、1 个
   toolchain-dependent `g++` skip；
 - 已将默认 model/event/service ownership 迁移到准入的 native provider 与 composition-root
@@ -67,7 +67,7 @@ Contract baseline：
 | Composition census | P1-A pass | [基于源码的 census](cordis_simulation_composition_census_20260817.zh.md)，包含 owner/scope/replacement/disposition table | 在 generated evidence 替代前保持 census guard 同步 |
 | Manifest contract | P1-B pass / repaired | requested/resolved generated schema、纯 C++ value type、canonical fixture、invalid corpus、deterministic test 与原生 requested/resolved hash 重算 | 持续守护 producer/schema/header parity；外部 admission 前证明 Cordis 逐字节等价输出与 artifact provenance |
 | 原生 lifecycle kernel | P2-A pass / production-enabling substrate | `ef_composition`、typed-scope guard、不可变 factory metadata、lifecycle 状态机、scoped transaction、replacement-aware rebuild、handover admission、identity accessor、rollback/disposal test、CI wiring 与 MSVC ASan 证据 | 真实 registry handover 与更广原生验收证据 |
-| Model/provider migration | P2-B implemented / 待独立复核 | 11-provider default catalog、embedded resolved-plan、私有 native root-service accessor、production identity/generation accessor、operation lock、raw-world lease quarantine、fail-closed rebuild guard 与 smoke/lifecycle evidence | replay 对比、fault-injected teardown、重复 create/destroy evidence、最终独立复核 |
+| Model/provider migration | P2-B implemented / 待独立复核 | 11-provider default catalog、embedded resolved-plan、私有 native root-service accessor、production identity/generation accessor、operation lock、raw-world lease quarantine、fail-closed rebuild guard 与 smoke/lifecycle evidence | 一条受控 behavior/replay 对比、一个 production provider failure/teardown 路径、重复 create/destroy evidence、最终独立复核 |
 | System composition | absent | 静态注册与 stage manifest 并存 | contribution contract 与 graph compilation |
 | Backend composition | partial baseline | 已有语义 backend interface/capability contract | provider selection 与 facade construction migration |
 | Composition evidence | P2-B production identity 已实现 / 待审阅 | `SimulationKernel` 输出 generated requested/resolved identity，world rebuild 保持 identity | P2-C0/P2-C1 接入 request/catalog-lock identity，随后 P5-A 扩展 graph/backend/host/replay evidence |
@@ -124,8 +124,8 @@ Contract baseline：
 
 ## 推荐下一步顺序
 
-1. 完成 P2-B 独立审阅，补齐 behavior/replay parity、重复 rebuild、provider failure/teardown
-   与 create/destroy lifetime evidence；
+1. 完成 P2-B 独立审阅，保留一条受控 behavior/replay parity、一个 provider failure/teardown
+   路径与重复 create/destroy lifetime evidence；
 2. 执行 P2-C0：冻结 producer-neutral 高层 request 与 owner-derived catalog-lock
    artifact/identity，并禁止第二个 offline high-level resolver；
 4. 执行 P2-C1：通过 Cordis primitives 加仓库 profile/bundle layer lower 默认 request，
@@ -157,15 +157,17 @@ rebuild；compatibility visual scene 只携带复制的 environment snapshot，�
 这是保守的 compatibility quarantine，不代表已证明任意 Flecs entity 均 quiescent，也不代表
 已实现可重新开启的 world lease。
 
-当前 migration evidence 为 15 个 native lifecycle case / 443 个 assertion、39 个 simulation
-smoke case / 870 个 assertion、6 个 world-batch runtime case / 55 个 assertion、21 个
+当前 migration evidence 为 15 个 native lifecycle case / 443 个 assertion、41 个 simulation
+smoke case / 889 个 assertion、6 个 world-batch runtime case / 55 个 assertion、21 个
 composition architecture/contract test（1 个 toolchain skip）以及 12 个
 include-direction/flat-boundary test。新增 evidence 覆盖 generation 递增、
 受监管实体/provider/clock-state-mutation/raw-world rebuild 拒绝、并发 rebuild 串行化、
 getter/setter 同步、moved-from lease fail-closed、world lease 对 shutdown 的串行化，以及
 shutdown 后 snapshot-only visual rendering，以及 ABI-compatible legacy visual field tombstone。
-P2-B 仍待最终独立复核、replay parity、
-fault-injected provider teardown 与重复 create/destroy evidence。
+新增的有界 gate 已覆盖：同一 MSVC toolchain 下以 pre-P2-B commit `a618b423` 为基线的
+固定十步默认短 trace、真实 default catalog 的 effects-publication failure rollback，以及
+八次 kernel create/destroy。P2-B 仍待最终独立复核；不引入通用 replay framework，也不把
+CUDA/backend parity 或 Cordis vertical slice提前纳入本切片。
 
 ## 显式拒绝的声明
 

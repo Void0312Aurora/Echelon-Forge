@@ -8,6 +8,7 @@
 #include "core/engine/simulation_kernel.h"
 #include "core/engine/simulation_kernel_command_surface.h"
 #include "runtime/contracts/composition/default_compatibility_manifest.v1.generated.h"
+#include "runtime/providers/default_simulation_provider_catalog.h"
 #include "components/command/command_link.h"
 #include "components/command/command_link_qos.h"
 #include "components/domains/naval/combat/weapon_naval.h"
@@ -24,6 +25,7 @@
 #include <cmath>
 #include <future>
 #include <limits>
+#include <random>
 #include <string>
 #include <stdexcept>
 #include <vector>
@@ -51,13 +53,14 @@ bool all_finite(const std::vector<double> &v) {
 
 TEST_SUITE("simulation_kernel_smoke") {
 
-    TEST_CASE("construct_and_destroy") {
-        // Verify the kernel can be constructed and destroyed without crashing.
-        // The constructor already calls reset(42) and registers all systems.
-        {
+    TEST_CASE("repeated_construct_and_destroy") {
+        // P2-B evidence: the production composition root must be reusable,
+        // not merely valid for one process-lifetime construction.
+        for (int iteration = 0; iteration < 8; ++iteration) {
             SimulationKernel kernel;
-            // Default shutdown happens in the destructor — we also call it
-            // explicitly to verify it is idempotent.
+            CHECK(kernel.world_composition_generation() == 1);
+            // Default shutdown happens in the destructor — explicitly call it
+            // as well to retain the idempotence check in every iteration.
             kernel.shutdown();
         }
     }
@@ -102,6 +105,35 @@ TEST_SUITE("simulation_kernel_smoke") {
         CHECK(kernel.world_composition_generation() == 2);
         CHECK(kernel.requested_composition_sha256() == requested_before);
         CHECK(kernel.resolved_composition_sha256() == resolved_before);
+    }
+
+    TEST_CASE("default_provider_publication_failure_rolls_back_without_dangling_refs") {
+        SimulationKernel kernel;
+        const auto requested_before = kernel.requested_composition_sha256();
+        const auto resolved_before = kernel.resolved_composition_sha256();
+        const auto generation_before = kernel.world_composition_generation();
+
+        MissileTuning tuning{};
+        std::mt19937 rng(42);
+        runtime::providers::DefaultSimulationCompositionResult result;
+        {
+            auto lease = kernel.acquire_world_lease();
+            result = runtime::providers::build_default_simulation_composition_for_testing(
+                kernel, lease.world(), tuning, rng,
+                runtime::providers::DefaultSimulationCompositionFaultInjection::
+                    fail_effects_publication);
+        }
+
+        CHECK_FALSE(result.ok());
+        CHECK(result.error().code == runtime::composition::kErrorLifecycleEffectCommitFailed);
+        CHECK(kernel.requested_composition_sha256() == requested_before);
+        CHECK(kernel.resolved_composition_sha256() == resolved_before);
+        CHECK(kernel.world_composition_generation() == generation_before);
+
+        // The pre-existing production composition remains usable after the
+        // failed staged composition has rolled back and torn down.
+        kernel.step();
+        CHECK(kernel.world_composition_generation() == generation_before);
     }
 
     TEST_CASE("raw_world_access_permanently_closes_the_rebuild_barrier") {
@@ -262,6 +294,30 @@ TEST_SUITE("simulation_kernel_smoke") {
         CHECK(pos_a[0] == doctest::Approx(pos_b[0]));
         CHECK(pos_a[1] == doctest::Approx(pos_b[1]));
         CHECK(pos_a[2] == doctest::Approx(pos_b[2]));
+    }
+
+    TEST_CASE("default_profile_matches_pre_p2b_short_trace_baseline") {
+        // Bounded P2-B behavior gate. The trace is intentionally small and
+        // fixed: reset(12345), spawn one Aircraft at the established smoke
+        // coordinates, advance ten default steps, and compare position. The
+        // expected values were captured from pre-migration commit a618b423
+        // with the same MSVC toolchain and are not a general replay framework.
+        SimulationKernel kernel;
+        kernel.reset(12345);
+        const auto entity =
+            kernel.spawn_unit(Side::Blue, "Aircraft", 100.0, 200.0, 3000.0, 45.0, 0.0, 0.0, 150.0,
+                              0.0, 0.0);
+        REQUIRE(entity.is_valid());
+
+        for (int i = 0; i < 10; ++i) {
+            kernel.step();
+        }
+
+        const auto position = kernel.get_unit_position(entity.id());
+        REQUIRE(position.size() == 3);
+        CHECK(position[0] == doctest::Approx(124.98344579568997).epsilon(1e-12));
+        CHECK(position[1] == doctest::Approx(200.00005491125401).epsilon(1e-12));
+        CHECK(position[2] == doctest::Approx(2999.861936582312).epsilon(1e-12));
     }
 
     TEST_CASE("reset_with_different_seeds_both_work") {

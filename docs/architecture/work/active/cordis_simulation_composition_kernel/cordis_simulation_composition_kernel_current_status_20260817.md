@@ -57,8 +57,8 @@ Contract baseline:
   lifecycle control, reentrant wrapper lifetime retention, full plugin/factory
   identity checks, in-process semantic service-type identity checks, and
   idempotent shutdown;
-- passed 15 focused native lifecycle cases with 443 assertions and 39 default
-  simulation smoke cases with 870 assertions; world-batch compatibility also
+- passed 15 focused native lifecycle cases with 443 assertions and 41 default
+  simulation smoke cases with 889 assertions; world-batch compatibility also
   verifies snapshot-owned visual scenes across shutdown; composition architecture/contract
   tests are 21 passed with one toolchain-dependent `g++` skip;
 - migrated the default model/event/service ownership into admitted native
@@ -75,7 +75,7 @@ Contract baseline:
 | Composition census | P1-A pass | [source-grounded census](cordis_simulation_composition_census_20260817.md) with owner/scope/replacement/disposition tables | keep census guard synchronized until generated evidence replaces it |
 | Manifest contract | P1-B pass / repaired | requested/resolved generated schemas, pure C++ value types, canonical fixtures, invalid corpus, deterministic tests, and native requested/resolved hash recomputation | keep producer/schema/header parity guarded; prove byte-equivalent Cordis output and artifact provenance before external admission |
 | Native lifecycle kernel | P2-A pass / production-enabling substrate | `ef_composition`, typed-scope guards, immutable factory metadata, lifecycle state machine, scoped transactions, replacement-aware rebuild, handover admission, identity accessors, rollback/disposal tests, CI wiring, and MSVC ASan evidence | real registry handover and broader native acceptance evidence |
-| Model/provider migration | P2-B implemented / pending independent revalidation | 11-provider default catalog, embedded resolved-plan input, private native root-service accessors, production identity/generation accessors, operation locking, leased raw-world quarantine, fail-closed rebuild guards, and smoke/lifecycle evidence | replay fixture comparison, fault-injected provider teardown, repeated create/destroy evidence, final independent revalidation |
+| Model/provider migration | P2-B implemented / pending independent revalidation | 11-provider default catalog, embedded resolved-plan input, private native root-service accessors, production identity/generation accessors, operation locking, leased raw-world quarantine, fail-closed rebuild guards, bounded trace/failure/lifetime evidence, and smoke/lifecycle evidence | final independent revalidation |
 | System composition | absent | static registration and stage manifests coexist | contribution contract and graph compilation |
 | Backend composition | partial baseline | semantic backend interface and capability contracts exist | provider selection and facade construction migration |
 | Composition evidence | P2-B production identity implemented / pending review | `SimulationKernel` exports generated requested/resolved identities and world-rebuild preserves them | request/catalog-lock identities in P2-C0/P2-C1, then graph/backend/host/replay expansion in P5-A |
@@ -188,8 +188,8 @@ instead of provider pointers. This is a conservative compatibility quarantine, n
 that arbitrary Flecs entities are proven quiescent or that a reopenable world
 lease has been implemented.
 
-Current migration evidence is 15 native lifecycle cases / 443 assertions, 39
-simulation smoke cases / 870 assertions, 6 world-batch runtime cases / 55
+Current migration evidence is 15 native lifecycle cases / 443 assertions, 41
+simulation smoke cases / 889 assertions, 6 world-batch runtime cases / 55
 assertions, 21 composition architecture/contract tests with one toolchain skip,
 and 12 include-direction/flat-boundary tests.
 The lifecycle repair batch additionally covers generation increments,
@@ -197,9 +197,12 @@ managed-entity/provider/clock-state-mutation/raw-world rebuild rejection,
 serialized concurrent rebuild requests, getter/setter synchronization,
 moved-from lease fail-closed behavior, world-lease serialization against
 shutdown, snapshot-only visual rendering after shutdown, and the ABI-compatible
-legacy visual field tombstone. P2-B remains
-pending final independent revalidation, replay parity, fault-injected provider
-teardown, and repeated create/destroy evidence.
+legacy visual field tombstone. The bounded gate now also covers one fixed
+ten-step default trace against pre-P2-B commit `a618b423` under the same MSVC
+toolchain, one real default-catalog effects-publication failure rollback, and
+eight kernel create/destroy cycles. P2-B now only awaits final independent
+revalidation; it does not introduce a generic replay framework or pull CUDA,
+backend parity, or the Cordis vertical slice into this slice.
 
 ## Explicitly Refused Claims
 

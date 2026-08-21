@@ -27,6 +27,14 @@ struct MissileTuning;
 
 namespace runtime::providers {
 
+// Test-only fault injection for the production catalog's transactional
+// publication path. This is intentionally narrow: it exercises rollback and
+// teardown of the real default provider factories without becoming a runtime
+// configuration surface.
+enum class DefaultSimulationCompositionFaultInjection {
+    fail_effects_publication,
+};
+
 class DefaultSimulationComposition {
   public:
     ~DefaultSimulationComposition();
@@ -60,12 +68,21 @@ class DefaultSimulationComposition {
     friend composition::CompositionResult<std::unique_ptr<DefaultSimulationComposition>>
     build_default_simulation_composition(SimulationKernel &kernel, flecs::world &world,
                                          MissileTuning &missile_tuning, std::mt19937 &rng);
+    friend composition::CompositionResult<std::unique_ptr<DefaultSimulationComposition>>
+    build_default_simulation_composition_for_testing(
+        SimulationKernel &kernel, flecs::world &world, MissileTuning &missile_tuning,
+        std::mt19937 &rng, DefaultSimulationCompositionFaultInjection fault);
 
     std::unique_ptr<Impl> impl_;
 };
 
 using DefaultSimulationCompositionResult =
     composition::CompositionResult<std::unique_ptr<DefaultSimulationComposition>>;
+
+[[nodiscard]] DefaultSimulationCompositionResult
+build_default_simulation_composition_for_testing(
+    SimulationKernel &kernel, flecs::world &world, MissileTuning &missile_tuning,
+    std::mt19937 &rng, DefaultSimulationCompositionFaultInjection fault);
 
 [[nodiscard]] DefaultSimulationCompositionResult
 build_default_simulation_composition(SimulationKernel &kernel, flecs::world &world,

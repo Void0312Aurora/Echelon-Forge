@@ -24,7 +24,7 @@ Last verified: `2026-08-20`
 | 2 | `P1-A Composition Census` | pass | P0-A 已通过 | 只读源码 inventory 与 current-status evidence 更新 | 完整 ownership/scope/replacement inventory |
 | 3 | `P1-B Manifest And Resolution Contract` | pass | P1-A 已通过且 contract write set 保持有界 | runtime contract/schema input 与聚焦测试 | schema decision、fixture、invalid-manifest matrix、versioning/canonicalization evidence |
 | 4 | `P2-A Native Lifecycle Kernel` | pass / independently repaired | P1-A/P1-B gate 已通过 | 隔离原生 composition library、聚焦 C++ test、architecture guard 与 CMake/CI wiring | 普通 MSVC 与 ASan build 均为 14 tests/430 assertions；hash、typed-scope、lifecycle-state、rollback、串行化 replacement rebuild、重入 lifetime、plugin/factory identity、进程内语义 service-type identity、handover、invalidation 与 deterministic validation 证据 |
-| 5 | `P2-B Default Provider Migration` | implemented / pending independent review | P2-A 已通过且 engine/provider write set 保持有界 | 默认 provider 入口、kernel builder、engine construction seam、聚焦 parity/lifetime test | 默认 behavior/replay parity、failure/lifetime evidence 与移除具体 model 构造/raw capture |
+| 5 | `P2-B Default Provider Migration` | implemented / pending independent review | P2-A 已通过且 engine/provider write set 保持有界 | 默认 provider 入口、kernel builder、engine construction seam、聚焦 parity/lifetime test | 一条受控迁移前后 behavior/replay 对比、一个 production failure/teardown 路径、重复 create/destroy、独立复核 |
 | 6 | `P2-C0 Projection And Catalog-Lock Contract` | held / planned | P2-B production composition/identity 稳定 | producer-neutral request DTO、owner-derived catalog-lock artifact/generator、identity 与负向 admission fixture | 唯一高层 request contract、可核验 owner lock，以及阻止 offline high-level lowering 的 guard |
 | 7 | `P2-C1 Cordis Default-Profile Vertical Slice` | held / planned | P2-C0 accepted | 使用 Cordis primitives 加仓库 profile/bundle layer 的有界 Cordis package、production adapter、端到端 fixture | Experiment fixture -> request -> Cordis -> manifest/lock -> native production realization，包括负向 admission 与 offline regression |
 | 8 | 后续全部任务簇 | held | P2-C1 accepted 且各自 owner dependency 通过，或已有显式 independent-stream amendment | task-cluster write set | 任务簇专属 evidence packet |
@@ -45,8 +45,8 @@ non-goals:
   backend 或 binding migration
   Cordis package 或 Node host
 validation:
-  迁移前后默认 behavior/replay comparison
-  production provider construction 与逆序 teardown failure injection
+  一条受控迁移前后默认 behavior/replay comparison
+  一个 production provider construction 与逆序 teardown failure path
   reset/rebuild 与重复 create/destroy lifetime evidence
   SimulationKernel 不再构造具体默认 model
   已注册 system 不再保留可替换 provider raw pointer
