@@ -42,6 +42,7 @@ class IControlModel;
 class IGuidanceModel;
 struct UnitDefinition;
 class IEngagementEventStore;
+class SimulationKernelCompositionTestAccess;
 
 namespace runtime::providers {
 class DefaultSimulationComposition;
@@ -180,10 +181,6 @@ class SimulationKernel {
     [[nodiscard]] std::string executable_composition_graph_sha256() const;
     [[nodiscard]] bool rebuild_world_composition(std::string_view barrier,
                                                  std::string *error = nullptr);
-    // Test-only rollback probe. Keeps provider implementation types out of
-    // test callers while exercising the production composition publication path.
-    [[nodiscard]] std::string probe_default_provider_publication_failure_for_testing();
-
     // Configuration
     bool load_database(const std::string &path);
     void clear_zones();
@@ -320,6 +317,7 @@ class SimulationKernel {
     void shutdown();
 
   private:
+    friend class SimulationKernelCompositionTestAccess;
     void ensure_active(const char *operation) const;
     using CompositionOperationLock = std::unique_lock<std::recursive_mutex>;
     [[nodiscard]] CompositionOperationLock acquire_composition_operation() const {

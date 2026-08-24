@@ -1,4 +1,7 @@
 #include "runtime/providers/default_simulation_provider_catalog.h"
+#if defined(EF_RUNTIME_COMPOSITION_TESTING)
+#include "runtime/providers/internal/default_simulation_provider_catalog_test_access.h"
+#endif
 
 #include "components/physics/instruments.h"
 #include "core/engine/simulation_kernel.h"
@@ -454,7 +457,8 @@ register_default_factories(composition::ProviderCatalog &catalog, SimulationKern
     status = register_factory(make_factory(
         kWeaponReleaseProviderId, contracts::CompositionScope::world,
         {{std::string(contracts::kServiceWeaponRelease), &typeid(IWeaponReleaseService)}},
-        [&world, &missile_tuning, &rng](composition::ProviderConstructionContext &context) {
+        [&world, &missile_tuning, &rng,
+         fail_effect_provider](composition::ProviderConstructionContext &context) {
             auto unit_factory = context.service<IUnitFactory>(contracts::kServiceUnitFactory);
             auto event_store =
                 context.service<IEngagementEventStore>(contracts::kServiceEngagementEventStore);
@@ -468,7 +472,8 @@ register_default_factories(composition::ProviderCatalog &catalog, SimulationKern
                 world, *unit_factory.try_get(), missile_tuning, rng, *event_store.try_get(),
                 *event_store.try_get(), *damage_bridge.try_get());
             IWeaponReleaseService *pointer = service.get();
-            adopt_singleton_effect(context, world, &WeaponReleaseServiceRef::service, pointer);
+            adopt_singleton_effect(context, world, &WeaponReleaseServiceRef::service, pointer,
+                                   fail_effect_provider == kWeaponReleaseProviderId);
             return single_service_instance(contracts::kServiceWeaponRelease, std::move(service));
         }));
     if (!status) return status;
@@ -693,17 +698,15 @@ std::string default_compatibility_resolved_manifest_json() {
     return resolved_json;
 }
 
+#if defined(EF_RUNTIME_COMPOSITION_TESTING)
 DefaultSimulationCompositionResult
 build_default_simulation_composition_for_testing(SimulationKernel &kernel, flecs::world &world,
-                                                 MissileTuning &missile_tuning, std::mt19937 &rng,
-                                                 DefaultSimulationCompositionFaultInjection fault) {
-    const auto fail_effect_provider =
-        fault == DefaultSimulationCompositionFaultInjection::fail_effects_publication
-            ? kEffectsProviderId
-            : std::string_view{};
+                                                 MissileTuning &missile_tuning, std::mt19937 &rng) {
+    constexpr std::string_view fail_effect_provider = kWeaponReleaseProviderId;
     const std::string resolved_json = default_compatibility_resolved_manifest_json();
     return build_default_simulation_composition_impl(kernel, world, missile_tuning, rng,
                                                      resolved_json, fail_effect_provider);
 }
+#endif
 
 } // namespace runtime::providers

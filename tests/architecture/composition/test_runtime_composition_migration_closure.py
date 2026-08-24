@@ -209,6 +209,8 @@ def test_p8a_inventory_classifies_retained_callers_and_names_residual_owners(
         "src/runtime/facade/runtime_facade_counterfactual.cpp"
     ]
     assert surfaces["simulation_kernel.test_fault_injection"]["callers"] == [
+        "src/core/engine/testing/simulation_kernel_composition_test_access.cpp",
+        "src/core/engine/testing/simulation_kernel_composition_test_access.h",
         "src/tests/test_simulation_kernel_smoke.cpp"
     ]
     assert all(row["owner"] and row["activation_gate"] for row in record["residuals"])

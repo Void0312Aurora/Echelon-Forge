@@ -7,6 +7,7 @@
 
 #include "core/engine/simulation_kernel.h"
 #include "core/engine/simulation_kernel_command_surface.h"
+#include "core/engine/testing/simulation_kernel_composition_test_access.h"
 #include "runtime/composition/composition_error.h"
 #include "runtime/contracts/composition/default_compatibility_manifest.v1.generated.h"
 #include "components/command/command_link.h"
@@ -112,10 +113,11 @@ TEST_SUITE("simulation_kernel_smoke") {
         const auto resolved_before = kernel.resolved_composition_sha256();
         const auto generation_before = kernel.world_composition_generation();
 
-        const std::string error_code =
-            kernel.probe_default_provider_publication_failure_for_testing();
+        const auto probe = SimulationKernelCompositionTestAccess::
+            probe_default_provider_publication_failure_for_testing(kernel);
 
-        CHECK(error_code == runtime::composition::kErrorLifecycleEffectCommitFailed);
+        CHECK(probe.error_code == runtime::composition::kErrorLifecycleEffectCommitFailed);
+        CHECK(probe.singleton_references_restored);
         CHECK(kernel.requested_composition_sha256() == requested_before);
         CHECK(kernel.resolved_composition_sha256() == resolved_before);
         CHECK(kernel.world_composition_generation() == generation_before);

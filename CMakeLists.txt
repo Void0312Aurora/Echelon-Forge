@@ -690,6 +690,7 @@ FetchContent_MakeAvailable(doctest)
 
 set(EF_TEST_SOURCES
     src/tests/test_main.cpp
+    src/core/engine/testing/simulation_kernel_composition_test_access.cpp
     src/tests/test_simulation_kernel_smoke.cpp
     src/tests/test_components_basic.cpp
     src/tests/test_content_compile_passes.cpp
@@ -714,6 +715,14 @@ set(EF_TEST_SOURCES
 )
 
 add_executable(ef_test ${EF_TEST_SOURCES})
+# Compile the private rollback implementation only into test-enabled ef_core.
+# The public provider header and SimulationKernel API expose no callable seam.
+set_property(
+    SOURCE
+        src/core/engine/testing/simulation_kernel_composition_test_access.cpp
+        src/runtime/providers/default_simulation_provider_catalog.cpp
+    APPEND PROPERTY COMPILE_DEFINITIONS EF_RUNTIME_COMPOSITION_TESTING
+)
 # test_runtime_facade_*.cpp reference RuntimeFacade symbols, so ef_test links
 # ef_facade ahead of ef_core; the remaining suites keep their direct ef_core /
 # ef_gpu_experiments edges unchanged.

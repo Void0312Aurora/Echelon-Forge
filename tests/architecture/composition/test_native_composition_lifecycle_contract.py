@@ -230,3 +230,28 @@ def test_simulation_kernel_uses_composition_owned_default_services() -> None:
     "[environment]",
   ):
     assert direct_capture not in source
+
+
+def test_production_provider_rollback_probe_is_test_build_only_and_fails_late() -> None:
+  header = _text(KERNEL_HEADER)
+  provider_header = _text(
+    REPO_ROOT / "src/runtime/providers/default_simulation_provider_catalog.h"
+  )
+  provider_test_access = _text(
+    REPO_ROOT
+    / "src/runtime/providers/internal/default_simulation_provider_catalog_test_access.h"
+  )
+  provider = _text(PROVIDER_SOURCE)
+  cmake = _text(CMAKE)
+  smoke = _text(REPO_ROOT / "src/tests/test_simulation_kernel_smoke.cpp")
+
+  assert "friend class SimulationKernelCompositionTestAccess" in header
+  assert "probe_default_provider_publication_failure_for_testing" not in header
+  assert "build_default_simulation_composition_for_testing" not in provider_header
+  assert "build_default_simulation_composition_for_testing" in provider_test_access
+  assert "#if defined(EF_RUNTIME_COMPOSITION_TESTING)" in provider
+  assert "src/core/engine/testing/simulation_kernel_composition_test_access.cpp" in cmake
+  assert "APPEND PROPERTY COMPILE_DEFINITIONS EF_RUNTIME_COMPOSITION_TESTING" in cmake
+  assert "fail_effect_provider = kWeaponReleaseProviderId" in provider
+  assert "fail_effect_provider == kWeaponReleaseProviderId" in provider
+  assert "singleton_references_restored" in smoke

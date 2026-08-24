@@ -28,14 +28,6 @@ struct MissileTuning;
 
 namespace runtime::providers {
 
-// Test-only fault injection for the production catalog's transactional
-// publication path. This is intentionally narrow: it exercises rollback and
-// teardown of the real default provider factories without becoming a runtime
-// configuration surface.
-enum class DefaultSimulationCompositionFaultInjection {
-    fail_effects_publication,
-};
-
 class DefaultSimulationComposition {
   public:
     ~DefaultSimulationComposition();
@@ -72,10 +64,6 @@ class DefaultSimulationComposition {
                                          MissileTuning &missile_tuning, std::mt19937 &rng,
                                          std::string_view resolved_manifest_json);
     friend composition::CompositionResult<std::unique_ptr<DefaultSimulationComposition>>
-    build_default_simulation_composition_for_testing(
-        SimulationKernel &kernel, flecs::world &world, MissileTuning &missile_tuning,
-        std::mt19937 &rng, DefaultSimulationCompositionFaultInjection fault);
-    friend composition::CompositionResult<std::unique_ptr<DefaultSimulationComposition>>
     build_default_simulation_composition_impl(SimulationKernel &kernel, flecs::world &world,
                                               MissileTuning &missile_tuning, std::mt19937 &rng,
                                               std::string_view resolved_manifest_json,
@@ -92,11 +80,6 @@ using DefaultSimulationCompositionResult =
 // production builder itself never interprets an empty manifest as fallback
 // authority.
 [[nodiscard]] std::string default_compatibility_resolved_manifest_json();
-
-[[nodiscard]] DefaultSimulationCompositionResult
-build_default_simulation_composition_for_testing(SimulationKernel &kernel, flecs::world &world,
-                                                 MissileTuning &missile_tuning, std::mt19937 &rng,
-                                                 DefaultSimulationCompositionFaultInjection fault);
 
 [[nodiscard]] DefaultSimulationCompositionResult
 build_default_simulation_composition(SimulationKernel &kernel, flecs::world &world,

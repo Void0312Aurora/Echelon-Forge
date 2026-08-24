@@ -999,12 +999,12 @@ def verify_source_truth() -> None:
         excluded_paths={
             "src/runtime/providers/default_simulation_provider_catalog.cpp",
             "src/runtime/providers/default_simulation_provider_catalog.h",
+            "src/runtime/providers/internal/default_simulation_provider_catalog_test_access.h",
         },
     )
-    if fault_injection_callers != ["src/core/engine/simulation_kernel.cpp"] or (
-        len(re.findall(r"\bbuild_default_simulation_composition_for_testing\s*\(", kernel_code))
-        != 1
-    ) or (
+    if fault_injection_callers != [
+        "src/core/engine/testing/simulation_kernel_composition_test_access.cpp"
+    ] or (
         len(
             re.findall(
                 r"\bprobe_default_provider_publication_failure_for_testing\s*\(",
