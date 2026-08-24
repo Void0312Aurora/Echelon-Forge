@@ -771,12 +771,24 @@ add_executable(ef_backend_provider_migration_test
     src/tests/test_main.cpp
     src/tests/test_backend_provider_migration.cpp
 )
-target_link_libraries(ef_backend_provider_migration_test PRIVATE
-    ef_facade
-    ef_gpu_experiments
-    doctest::doctest
-    nlohmann_json::nlohmann_json
-)
+if (UNIX AND NOT APPLE)
+    target_link_libraries(ef_backend_provider_migration_test PRIVATE
+        -Wl,--start-group
+        ef_facade
+        ef_core
+        ef_gpu_experiments
+        -Wl,--end-group
+        doctest::doctest
+        nlohmann_json::nlohmann_json
+    )
+else()
+    target_link_libraries(ef_backend_provider_migration_test PRIVATE
+        ef_facade
+        ef_gpu_experiments
+        doctest::doctest
+        nlohmann_json::nlohmann_json
+    )
+endif()
 target_include_directories(ef_backend_provider_migration_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
@@ -792,12 +804,24 @@ add_executable(ef_composition_evidence_test
     src/tests/test_composition_evidence.cpp
     src/tests/test_runtime_facade_maintained_replay_envelope.cpp
 )
-target_link_libraries(ef_composition_evidence_test PRIVATE
-    ef_facade
-    ef_gpu_experiments
-    doctest::doctest
-    nlohmann_json::nlohmann_json
-)
+if (UNIX AND NOT APPLE)
+    target_link_libraries(ef_composition_evidence_test PRIVATE
+        -Wl,--start-group
+        ef_facade
+        ef_core
+        ef_gpu_experiments
+        -Wl,--end-group
+        doctest::doctest
+        nlohmann_json::nlohmann_json
+    )
+else()
+    target_link_libraries(ef_composition_evidence_test PRIVATE
+        ef_facade
+        ef_gpu_experiments
+        doctest::doctest
+        nlohmann_json::nlohmann_json
+    )
+endif()
 target_include_directories(ef_composition_evidence_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
