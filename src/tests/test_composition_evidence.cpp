@@ -27,6 +27,9 @@
 #pragma comment(lib, "psapi.lib")
 #elif defined(__linux__)
 #include <unistd.h>
+#if defined(__GLIBC__)
+#include <malloc.h>
+#endif
 #elif defined(__APPLE__)
 #include <mach/mach.h>
 #include <sys/resource.h>
@@ -72,6 +75,14 @@ RuntimeWindowResult composition_evidence_window(RuntimeFacade &facade, std::uint
 
 double elapsed_ms(const SteadyClock::time_point start) {
     return std::chrono::duration<double, std::milli>(SteadyClock::now() - start).count();
+}
+
+void trim_process_allocator() {
+#if defined(__GLIBC__)
+    // Normalize retained free glibc arenas out of the live-memory sample. The
+    // trim is measurement-only and deliberately excluded from teardown timing.
+    malloc_trim(0);
+#endif
 }
 
 std::uint64_t current_rss_bytes() {
@@ -449,6 +460,7 @@ Json run_native_semantic_parity_workload() {
 }
 
 Json run_native_batch_measurement() {
+    trim_process_allocator();
     const std::uint64_t rss_before = current_rss_bytes();
     const std::uint64_t peak_rss_before = peak_rss_bytes();
     RuntimeBatchConfig config{};
@@ -523,6 +535,7 @@ Json run_native_batch_measurement() {
     const SteadyClock::time_point teardown_start = SteadyClock::now();
     facade.reset();
     const double teardown_ms = elapsed_ms(teardown_start);
+    trim_process_allocator();
     const std::uint64_t rss_after_teardown = current_rss_bytes();
     if (rss_before == 0 || rss_after_construct == 0 || rss_after_setup == 0 ||
         rss_after_steps == 0 || rss_after_resets == 0 || rss_after_teardown == 0) {

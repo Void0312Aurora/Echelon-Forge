@@ -357,6 +357,22 @@ def peak_rss_bytes() -> int:
     return 0
 
 
+def trim_process_allocator() -> None:
+  """Exclude free glibc arena retention from live teardown RSS samples."""
+  if not sys.platform.startswith("linux"):
+    return
+  try:
+    libc = ctypes.CDLL(None)
+    malloc_trim = libc.malloc_trim
+    malloc_trim.argtypes = [ctypes.c_size_t]
+    malloc_trim.restype = ctypes.c_int
+    malloc_trim(0)
+  except (AttributeError, OSError):
+    # Non-glibc Linux runtimes may not expose malloc_trim. Their allocator
+    # behavior remains visible instead of being guessed or silently emulated.
+    return
+
+
 def _setup_request(ef_py: Any, world_count: int) -> Any:
   request = ef_py.BatchWorldSetupRequest()
   request.seeds = [WORKLOAD["seed_base"] + world for world in range(world_count)]
@@ -619,6 +635,7 @@ def _python_semantic_workload(ef_py: Any) -> dict[str, Any]:
 
 def _python_batch_measurement(ef_py: Any) -> dict[str, Any]:
   gc.collect()
+  trim_process_allocator()
   rss_before = current_rss_bytes()
   peak_rss_before = peak_rss_bytes()
   config = ef_py.RuntimeBatchConfig()
@@ -669,6 +686,7 @@ def _python_batch_measurement(ef_py: Any) -> dict[str, Any]:
   del facade
   gc.collect()
   teardown_ms = (time.perf_counter() - start) * 1000.0
+  trim_process_allocator()
   rss_after_teardown = current_rss_bytes()
   rss_samples = (
     rss_before,
