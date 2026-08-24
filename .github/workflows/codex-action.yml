@@ -62,7 +62,7 @@ env:
   CODEX_RESPONSES_API_ENDPOINT: https://cpa.void0312.com:8443/v1/responses
   CODEX_MODEL: gpt-5.6-sol
   CODEX_EFFORT: max
-  CODEX_ARGS: '["--config","disable_response_storage=true","--config","model_providers.codex-action-responses-proxy.service_tier=\"standard\""]'
+  CODEX_ARGS: '["--config","disable_response_storage=true"]'
 
 jobs:
   pr-review:
@@ -122,7 +122,7 @@ jobs:
 
       - name: Run Codex
         id: run_codex
-        uses: openai/codex-action@v1
+        uses: openai/codex-action@52fe01ec70a42f454c9d2ebd47598f9fd6893d56 # v1.11
         with:
           openai-api-key: ${{ secrets.CPA_OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
           responses-api-endpoint: ${{ env.CODEX_RESPONSES_API_ENDPOINT }}
@@ -248,7 +248,7 @@ jobs:
 
       - name: Run Codex
         id: run_codex
-        uses: openai/codex-action@v1
+        uses: openai/codex-action@52fe01ec70a42f454c9d2ebd47598f9fd6893d56 # v1.11
         with:
           openai-api-key: ${{ secrets.CPA_OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
           responses-api-endpoint: ${{ env.CODEX_RESPONSES_API_ENDPOINT }}
@@ -328,7 +328,7 @@ jobs:
 
       - name: Run Codex
         id: run_codex
-        uses: openai/codex-action@v1
+        uses: openai/codex-action@52fe01ec70a42f454c9d2ebd47598f9fd6893d56 # v1.11
         with:
           openai-api-key: ${{ secrets.CPA_OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
           responses-api-endpoint: ${{ env.CODEX_RESPONSES_API_ENDPOINT }}
@@ -479,7 +479,7 @@ jobs:
 
       - name: Run Codex
         id: run_codex
-        uses: openai/codex-action@v1
+        uses: openai/codex-action@52fe01ec70a42f454c9d2ebd47598f9fd6893d56 # v1.11
         with:
           openai-api-key: ${{ secrets.CPA_OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
           responses-api-endpoint: ${{ env.CODEX_RESPONSES_API_ENDPOINT }}
@@ -544,7 +544,7 @@ jobs:
 
       - name: Run Codex
         id: run_codex
-        uses: openai/codex-action@v1
+        uses: openai/codex-action@52fe01ec70a42f454c9d2ebd47598f9fd6893d56 # v1.11
         with:
           openai-api-key: ${{ secrets.CPA_OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
           responses-api-endpoint: ${{ env.CODEX_RESPONSES_API_ENDPOINT }}

@@ -30,3 +30,16 @@ def test_comment_task_remains_owner_scoped_and_read_only() -> None:
   assert "github.actor == 'Void0312Aurora'" in block
   assert '["OWNER","MEMBER","COLLABORATOR"]' in block
   assert "sandbox: read-only" in block
+
+
+def test_codex_action_is_pinned_and_avoids_protected_config_overrides() -> None:
+  workflow = WORKFLOW.read_text(encoding="utf-8")
+  pinned_action = (
+    "uses: openai/codex-action@"
+    "52fe01ec70a42f454c9d2ebd47598f9fd6893d56 # v1.11"
+  )
+
+  assert workflow.count(pinned_action) == 5
+  assert "uses: openai/codex-action@v1" not in workflow
+  assert "service_tier" not in workflow
+  assert """CODEX_ARGS: '["--config","disable_response_storage=true"]'""" in workflow
