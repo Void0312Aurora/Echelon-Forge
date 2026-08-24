@@ -1,11 +1,12 @@
 #include "runtime/facade/runtime_facade_internal.h"
 
-#include "runtime/facade/internal/flecs_cpu_backend.h"
+#include "runtime/facade/internal/world_batch_backend_provider.h"
 
 #include <algorithm>
 #include <bit>
 #include <cstdint>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -70,14 +71,19 @@ bool execution_source_snapshot_versions_equal(
 } // namespace
 
 RuntimeFacade::RuntimeFacade(std::size_t world_count)
-    : runtime_(std::make_unique<FlecsCpuBackend>(world_count)),
-      counterfactual_worldlines_(std::make_unique<CounterfactualWorldlineRegistry>()),
-      identity_(std::make_shared<RuntimeFacadeIdentity>()) {}
-
-RuntimeFacade::RuntimeFacade(const RuntimeBatchConfig &config)
-    : runtime_(std::make_unique<FlecsCpuBackend>(config.world_count)),
-      counterfactual_worldlines_(std::make_unique<CounterfactualWorldlineRegistry>()),
+    : counterfactual_worldlines_(std::make_unique<CounterfactualWorldlineRegistry>()),
       identity_(std::make_shared<RuntimeFacadeIdentity>()) {
+    runtime::backend_provider::WorldBatchBackendProviderMaterialization materialized =
+        runtime::backend_provider::materialize_default_world_batch_backend(world_count);
+    if (!materialized) {
+        throw std::runtime_error(materialized.error.code + "@" + materialized.error.subject + ": " +
+                                 materialized.error.detail);
+    }
+    identity_->backend_identity = std::move(materialized.identity);
+    runtime_ = std::move(materialized.backend);
+}
+
+RuntimeFacade::RuntimeFacade(const RuntimeBatchConfig &config) : RuntimeFacade(config.world_count) {
     configure_batch(config);
 }
 
@@ -162,6 +168,29 @@ bool RuntimeFacade::runtime_window_result_evidence_matches_identity(
                            diagnostics_trace_equal) &&
            execution_source_snapshot_versions_equal(window_result.executed_nodes,
                                                     sealed.execution_source_snapshot_versions);
+}
+
+RuntimeCompositionEvidenceComparison RuntimeFacade::runtime_window_composition_evidence_comparison(
+    const RuntimeWindowResult &window_result) const {
+    if (!runtime_window_result_belongs_to_this_facade(window_result)) {
+        return {
+            .compatible = false,
+            .mismatches = {"window:composition_evidence_identity_unavailable"},
+        };
+    }
+
+    const RuntimeCompositionEvidenceResult &sealed =
+        window_result.identity_token_.identity_->composition_evidence;
+    if (!sealed.available) {
+        const std::string code = sealed.error_code.empty()
+                                     ? "composition_evidence.commit_snapshot_unavailable"
+                                     : sealed.error_code;
+        return {
+            .compatible = false,
+            .mismatches = {"sealed:" + code},
+        };
+    }
+    return compare_composition_evidence(sealed.evidence);
 }
 
 bool RuntimeFacade::runtime_window_trace_ids_recorded_by_this_window(

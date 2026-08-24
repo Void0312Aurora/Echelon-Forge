@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://echelon-forge.local/contracts/runtime_host_batch_parity_budget.v1.schema.json",
+  "title": "Echelon Forge Runtime Host And Batch Parity Budget v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "budget_id",
+    "budget_version",
+    "profile_id",
+    "profile_version",
+    "workload",
+    "semantic",
+    "absolute_limits",
+    "python_vs_native_limits",
+    "node_row_policy"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "echelon_forge.runtime_host_batch_parity_budget.v1"
+    },
+    "budget_id": {
+      "const": "default_cpu_exact.host_batch.v1"
+    },
+    "budget_version": {
+      "const": "1.0.0"
+    },
+    "profile_id": {
+      "const": "builtin.default_compatibility"
+    },
+    "profile_version": {
+      "const": "1.0.0"
+    },
+    "workload": {
+      "$ref": "#/$defs/workload"
+    },
+    "semantic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["absolute_tolerance", "repeat_count", "require_exact_composition_identity"],
+      "properties": {
+        "absolute_tolerance": {
+          "type": "number",
+          "const": 1e-12
+        },
+        "repeat_count": {
+          "type": "integer",
+          "const": 2
+        },
+        "require_exact_composition_identity": {
+          "const": true
+        }
+      }
+    },
+    "absolute_limits": {
+      "$ref": "#/$defs/metric_limits"
+    },
+    "python_vs_native_limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ratio_max", "slack"],
+      "properties": {
+        "ratio_max": {
+          "$ref": "#/$defs/metric_limits"
+        },
+        "slack": {
+          "$ref": "#/$defs/metric_limits"
+        }
+      }
+    },
+    "node_row_policy": {
+      "const": "conditional_held_p6b_not_admitted"
+    }
+  },
+  "$defs": {
+    "workload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "semantic_world_count",
+        "semantic_steps",
+        "measurement_world_count",
+        "warmup_steps",
+        "measurement_steps",
+        "reset_iterations",
+        "worker_threads",
+        "seed_base",
+        "time_step_s"
+      ],
+      "properties": {
+        "semantic_world_count": {"type": "integer", "const": 2},
+        "semantic_steps": {"type": "integer", "const": 3},
+        "measurement_world_count": {"type": "integer", "const": 32},
+        "warmup_steps": {"type": "integer", "const": 3},
+        "measurement_steps": {"type": "integer", "const": 20},
+        "reset_iterations": {"type": "integer", "const": 5},
+        "worker_threads": {"type": "integer", "const": 1},
+        "seed_base": {"type": "integer", "const": 42},
+        "time_step_s": {"type": "number", "const": 0.05}
+      }
+    },
+    "metric_limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cold_construct_ms",
+        "warm_construct_ms",
+        "setup_ms",
+        "step_ms_per_world",
+        "reset_ms_per_world",
+        "teardown_ms",
+        "sampled_peak_delta_bytes_per_world",
+        "peak_rss_delta_bytes_per_world",
+        "teardown_residual_bytes_per_world"
+      ],
+      "properties": {
+        "cold_construct_ms": {"type": "number", "exclusiveMinimum": 0},
+        "warm_construct_ms": {"type": "number", "exclusiveMinimum": 0},
+        "setup_ms": {"type": "number", "exclusiveMinimum": 0},
+        "step_ms_per_world": {"type": "number", "exclusiveMinimum": 0},
+        "reset_ms_per_world": {"type": "number", "exclusiveMinimum": 0},
+        "teardown_ms": {"type": "number", "exclusiveMinimum": 0},
+        "sampled_peak_delta_bytes_per_world": {"type": "number", "exclusiveMinimum": 0},
+        "peak_rss_delta_bytes_per_world": {"type": "number", "exclusiveMinimum": 0},
+        "teardown_residual_bytes_per_world": {"type": "number", "exclusiveMinimum": 0}
+      }
+    }
+  }
+}

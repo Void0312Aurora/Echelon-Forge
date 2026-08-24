@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <cstdint>
+#include <array>
 #include <mutex>
 #include <random>
 #include <string>
@@ -47,6 +48,7 @@ class DefaultSimulationComposition {
     [[nodiscard]] std::string requested_manifest_sha256() const;
     [[nodiscard]] std::string resolved_manifest_sha256() const;
     [[nodiscard]] std::uint64_t world_generation() const noexcept;
+    [[nodiscard]] std::array<std::uint64_t, 5> scope_generations() const noexcept;
     [[nodiscard]] composition::CompositionStatus rebuild_world(std::string_view barrier);
     void stop() noexcept;
 
@@ -67,11 +69,17 @@ class DefaultSimulationComposition {
     friend class ::SimulationKernel;
     friend composition::CompositionResult<std::unique_ptr<DefaultSimulationComposition>>
     build_default_simulation_composition(SimulationKernel &kernel, flecs::world &world,
-                                         MissileTuning &missile_tuning, std::mt19937 &rng);
+                                         MissileTuning &missile_tuning, std::mt19937 &rng,
+                                         std::string_view resolved_manifest_json);
     friend composition::CompositionResult<std::unique_ptr<DefaultSimulationComposition>>
     build_default_simulation_composition_for_testing(
         SimulationKernel &kernel, flecs::world &world, MissileTuning &missile_tuning,
         std::mt19937 &rng, DefaultSimulationCompositionFaultInjection fault);
+    friend composition::CompositionResult<std::unique_ptr<DefaultSimulationComposition>>
+    build_default_simulation_composition_impl(SimulationKernel &kernel, flecs::world &world,
+                                              MissileTuning &missile_tuning, std::mt19937 &rng,
+                                              std::string_view resolved_manifest_json,
+                                              std::string_view fail_effect_provider);
 
     std::unique_ptr<Impl> impl_;
 };
@@ -79,13 +87,20 @@ class DefaultSimulationComposition {
 using DefaultSimulationCompositionResult =
     composition::CompositionResult<std::unique_ptr<DefaultSimulationComposition>>;
 
+// Materialize the repository-owned default compatibility artifact from the
+// generated contract header. Default callers use these exact bytes; the
+// production builder itself never interprets an empty manifest as fallback
+// authority.
+[[nodiscard]] std::string default_compatibility_resolved_manifest_json();
+
 [[nodiscard]] DefaultSimulationCompositionResult
-build_default_simulation_composition_for_testing(
-    SimulationKernel &kernel, flecs::world &world, MissileTuning &missile_tuning,
-    std::mt19937 &rng, DefaultSimulationCompositionFaultInjection fault);
+build_default_simulation_composition_for_testing(SimulationKernel &kernel, flecs::world &world,
+                                                 MissileTuning &missile_tuning, std::mt19937 &rng,
+                                                 DefaultSimulationCompositionFaultInjection fault);
 
 [[nodiscard]] DefaultSimulationCompositionResult
 build_default_simulation_composition(SimulationKernel &kernel, flecs::world &world,
-                                     MissileTuning &missile_tuning, std::mt19937 &rng);
+                                     MissileTuning &missile_tuning, std::mt19937 &rng,
+                                     std::string_view resolved_manifest_json);
 
 } // namespace runtime::providers

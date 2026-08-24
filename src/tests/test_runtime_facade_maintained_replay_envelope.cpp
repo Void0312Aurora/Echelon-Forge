@@ -57,7 +57,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
     }
 
     TEST_CASE("minted window evidence assembles an admitted validated envelope field by field") {
-        RuntimeFacade facade(0);
+        RuntimeFacade facade(1);
         const std::uint64_t minted = facade.allocate_trace_id();
         CHECK(minted == 1);
         const RuntimeWindowResult window_result = minted_window_result(facade, minted);
@@ -108,17 +108,18 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
         CHECK(validation.errors.empty());
 
         // Evidence refs: producer label first, then the canonical ordered refs.
-        REQUIRE(result.evidence_refs.size() == 5);
+        REQUIRE(result.evidence_refs.size() == 6);
         CHECK(result.evidence_refs[0] == "RuntimeFacade.build_maintained_replay_envelope");
         CHECK(result.evidence_refs[1] == "snapshot_version_ref=global:0");
         CHECK(result.evidence_refs[2] == "barrier_id=window_commit");
         CHECK(result.evidence_refs[3] == "event_order_ref=event:trace:1");
         CHECK(result.evidence_refs[4] == "facade_provenance_ref=obs:0");
+        CHECK(result.evidence_refs[5].starts_with("composition_evidence_sha256="));
     }
 
     TEST_CASE("window identity rejects a foreign facade with overlapping numeric ids") {
-        RuntimeFacade first(0);
-        RuntimeFacade second(0);
+        RuntimeFacade first(1);
+        RuntimeFacade second(1);
         const std::uint64_t first_trace = first.allocate_trace_id();
         const std::uint64_t second_trace = second.allocate_trace_id();
         CHECK(first_trace == 1);
@@ -143,7 +144,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
     }
 
     TEST_CASE("window identity rejects a hand-built result with copied local evidence") {
-        RuntimeFacade facade(0);
+        RuntimeFacade facade(1);
         const std::uint64_t trace_id = facade.allocate_trace_id();
         REQUIRE(trace_id == 1);
         const RuntimeWindowResult real_window = minted_window_result(facade, trace_id);
@@ -162,7 +163,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
     }
 
     TEST_CASE("copied genuine token cannot authenticate substituted evidence") {
-        RuntimeFacade facade(0);
+        RuntimeFacade facade(1);
         const std::uint64_t trace_id = facade.allocate_trace_id();
         const RuntimeWindowResult genuine = minted_window_result(facade, trace_id);
         RuntimeWindowResult synthetic = genuine;
@@ -176,7 +177,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
     }
 
     TEST_CASE("window identity follows the run through facade move construction") {
-        RuntimeFacade source(0);
+        RuntimeFacade source(1);
         const RuntimeWindowResult before_move =
             minted_window_result(source, source.allocate_trace_id());
 
@@ -200,7 +201,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
     }
 
     TEST_CASE("move assignment replaces the target window identity with the source run") {
-        RuntimeFacade source(0);
+        RuntimeFacade source(1);
         const RuntimeWindowResult source_window =
             minted_window_result(source, source.allocate_trace_id());
         const RuntimeWindowResult second_source_window =
@@ -209,7 +210,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
         // Keep the source cursor ahead of target so move-assignment must carry
         // its next window identity into the destination. Without that transfer,
         // the post-move mint reuses sequence 2 already held by second_source_window.
-        RuntimeFacade target(0);
+        RuntimeFacade target(1);
         const RuntimeWindowResult replaced_target_window =
             minted_window_result(target, target.allocate_trace_id());
 
@@ -243,7 +244,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
     }
 
     TEST_CASE("self move assignment preserves the minted window identity") {
-        RuntimeFacade facade(0);
+        RuntimeFacade facade(1);
         const RuntimeWindowResult window = minted_window_result(facade, facade.allocate_trace_id());
 
         RuntimeFacade &alias = facade;
@@ -255,7 +256,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
     }
 
     TEST_CASE("producer is read-only and idempotent over the allocator cursors") {
-        RuntimeFacade facade(0);
+        RuntimeFacade facade(1);
         (void)facade.allocate_trace_id();
         (void)facade.allocate_run_snapshot_version();
         const std::uint64_t trace_cursor = facade.peek_next_trace_id();
@@ -278,7 +279,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
     }
 
     TEST_CASE("placeholder trace ids against an untouched allocator fail closed") {
-        RuntimeFacade facade(0);
+        RuntimeFacade facade(1);
         // No allocate_trace_id call: peek == 1, so the default maintained
         // path's placeholder trace_ids = [1] is provably not run-minted.
         const RuntimeWindowResult window_result = minted_window_result(facade, 1);
@@ -295,7 +296,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
     }
 
     TEST_CASE("post-return trace substitution fails the sealed evidence gate") {
-        RuntimeFacade facade(0);
+        RuntimeFacade facade(1);
         const std::uint64_t minted = facade.allocate_trace_id();
         RuntimeWindowResult window_result = minted_window_result(facade, minted);
         // peek is now 2; an id equal to the cursor was never handed out.
@@ -310,7 +311,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
     }
 
     TEST_CASE("caller-owned identity inputs fail closed with stable named reasons") {
-        RuntimeFacade facade(0);
+        RuntimeFacade facade(1);
         const std::uint64_t minted = facade.allocate_trace_id();
 
         SUBCASE("blank run id") {
@@ -328,7 +329,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
     }
 
     TEST_CASE("sealed identity rejects every producer-relevant evidence mutation") {
-        RuntimeFacade facade(0);
+        RuntimeFacade facade(1);
         const std::uint64_t minted = facade.allocate_trace_id();
         constexpr const char *mismatch =
             "maintained_replay_envelope_window_evidence_does_not_match_minted_window";
@@ -398,7 +399,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
     }
 
     TEST_CASE("run-global snapshot qualification is opt-in, additive, and allocator-checked") {
-        RuntimeFacade facade(0);
+        RuntimeFacade facade(1);
         const std::uint64_t minted_trace = facade.allocate_trace_id();
         const std::uint64_t minted_snapshot = facade.allocate_run_snapshot_version();
 
@@ -443,7 +444,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
     }
 
     TEST_CASE("an allocated but unrecorded ancestry parent fails closed") {
-        RuntimeFacade facade(0);
+        RuntimeFacade facade(1);
         const std::uint64_t unrecorded_parent = facade.allocate_trace_id();
         const std::uint64_t child_anchor = facade.allocate_trace_id();
         REQUIRE(unrecorded_parent == 1);

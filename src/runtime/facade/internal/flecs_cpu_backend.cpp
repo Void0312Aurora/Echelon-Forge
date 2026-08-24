@@ -238,10 +238,20 @@ FlecsCpuBackend::export_state(const runtime::backend::ExportRequest &request) co
 }
 
 runtime::backend::Diagnostics FlecsCpuBackend::diagnostics() const {
-    return {
+    runtime::backend::Diagnostics diagnostics{
         .backend_id = "flecs_cpu_reference",
         .world_count = runtime_.world_count(),
     };
+    for (const auto &world : runtime_.composition_diagnostics()) {
+        diagnostics.world_compositions.push_back({
+            .world_index = world.world_index,
+            .requested_manifest_sha256 = world.requested_manifest_sha256,
+            .resolved_manifest_sha256 = world.resolved_manifest_sha256,
+            .executable_graph_sha256 = world.executable_graph_sha256,
+            .scope_generations = world.scope_generations,
+        });
+    }
+    return diagnostics;
 }
 
 std::vector<std::vector<std::uint64_t>>

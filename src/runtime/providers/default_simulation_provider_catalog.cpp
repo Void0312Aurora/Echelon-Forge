@@ -19,7 +19,9 @@
 #include "runtime/composition/composition_runtime.h"
 #include "runtime/composition/provider_catalog.h"
 #include "runtime/contracts/composition/default_compatibility_manifest.v1.generated.h"
+#include "runtime/contracts/backend_profile_contracts.h"
 #include "runtime/contracts/simulation_composition_contract.h"
+#include "runtime/contracts/world_batch_backend_provider_contract.h"
 
 #include <flecs.h>
 
@@ -30,6 +32,7 @@
 #include <string>
 #include <typeinfo>
 #include <utility>
+#include <vector>
 
 namespace runtime::providers {
 namespace {
@@ -38,7 +41,6 @@ namespace composition = runtime::composition;
 namespace contracts = runtime::composition_contracts;
 
 constexpr std::string_view kBuiltinPluginId = "builtin.core_runtime";
-constexpr std::string_view kBackendProviderId = "builtin.backend.flecs_cpu";
 constexpr std::string_view kEnvironmentProviderId = "builtin.environment.default";
 constexpr std::string_view kUnitFactoryProviderId = "builtin.unit_factory.default";
 constexpr std::string_view kEffectsProviderId = "builtin.effects.default";
@@ -172,7 +174,14 @@ class EngagementEventStoreInstance final : public composition::IProviderInstance
 };
 
 struct DefaultWorldBatchBackendSelection {
-    std::string profile_id = "cpu_exact.reference";
+    std::string provider_id =
+        std::string(runtime::world_batch_backend_contracts::kDefaultProviderId);
+    std::string implementation_version =
+        std::string(runtime::world_batch_backend_contracts::kDefaultImplementationVersion);
+    std::string profile_id =
+        std::string(runtime::backend_profiles::kBackendProfileIdCpuExactReference);
+    std::vector<std::string> admitted_capabilities = {
+        std::string(runtime::world_batch_backend_contracts::kCpuExactCapabilityId)};
 };
 
 class SimulationKernelWeaponReleaseDamageBridge final : public IWeaponReleaseDamageBridge {
@@ -276,9 +285,8 @@ class SingletonServiceEffect final : public composition::ILifecycleEffect {
 template <typename Ref, typename Service>
 void adopt_singleton_effect(composition::ProviderConstructionContext &context, flecs::world &world,
                             Service *Ref::*member, Service *service, bool fail_commit = false) {
-    context.adopt_effect(
-        std::make_unique<SingletonServiceEffect<Ref, Service>>(world, member, service,
-                                                                fail_commit));
+    context.adopt_effect(std::make_unique<SingletonServiceEffect<Ref, Service>>(
+        world, member, service, fail_commit));
 }
 
 template <typename Dependency>
@@ -305,7 +313,8 @@ register_default_factories(composition::ProviderCatalog &catalog, SimulationKern
     };
 
     auto status = register_factory(make_factory(
-        kBackendProviderId, contracts::CompositionScope::backend,
+        runtime::world_batch_backend_contracts::kDefaultProviderId,
+        contracts::CompositionScope::backend,
         {{std::string(contracts::kServiceWorldBatchBackend),
           &typeid(DefaultWorldBatchBackendSelection)}},
         [](composition::ProviderConstructionContext &) {
@@ -590,6 +599,18 @@ std::uint64_t DefaultSimulationComposition::world_generation() const noexcept {
     return impl_->runtime.scope_generation(contracts::CompositionScope::world);
 }
 
+std::array<std::uint64_t, 5> DefaultSimulationComposition::scope_generations() const noexcept {
+    if (!impl_) return {};
+    std::lock_guard lock(impl_->lifecycle_mutex);
+    return {
+        impl_->runtime.scope_generation(contracts::CompositionScope::application),
+        impl_->runtime.scope_generation(contracts::CompositionScope::backend),
+        impl_->runtime.scope_generation(contracts::CompositionScope::batch),
+        impl_->runtime.scope_generation(contracts::CompositionScope::world),
+        impl_->runtime.scope_generation(contracts::CompositionScope::episode),
+    };
+}
+
 composition::CompositionStatus
 DefaultSimulationComposition::rebuild_world(std::string_view barrier) {
     if (!impl_) {
@@ -622,19 +643,17 @@ void DefaultSimulationComposition::stop() noexcept {
     }
 }
 
-DefaultSimulationCompositionResult
-build_default_simulation_composition(SimulationKernel &kernel, flecs::world &world,
-                                     MissileTuning &missile_tuning, std::mt19937 &rng) {
+DefaultSimulationCompositionResult build_default_simulation_composition_impl(
+    SimulationKernel &kernel, flecs::world &world, MissileTuning &missile_tuning, std::mt19937 &rng,
+    std::string_view resolved_manifest_json, std::string_view fail_effect_provider) {
     composition::ProviderCatalog catalog;
-    auto catalog_status = register_default_factories(catalog, kernel, world, missile_tuning, rng);
+    auto catalog_status = register_default_factories(catalog, kernel, world, missile_tuning, rng,
+                                                     fail_effect_provider);
     if (!catalog_status) {
         return DefaultSimulationCompositionResult::failure(catalog_status.error());
     }
 
-    std::string resolved_json;
-    for (const auto chunk : contracts::generated::kDefaultCompatibilityResolvedJsonChunks) {
-        resolved_json.append(chunk);
-    }
+    const std::string resolved_json(resolved_manifest_json);
     auto parsed = composition::parse_resolved_composition_json(resolved_json);
     if (!parsed) {
         return DefaultSimulationCompositionResult::failure(parsed.error());
@@ -659,46 +678,32 @@ build_default_simulation_composition(SimulationKernel &kernel, flecs::world &wor
 }
 
 DefaultSimulationCompositionResult
-build_default_simulation_composition_for_testing(
-    SimulationKernel &kernel, flecs::world &world, MissileTuning &missile_tuning,
-    std::mt19937 &rng, DefaultSimulationCompositionFaultInjection fault) {
-    composition::ProviderCatalog catalog;
-    const auto fail_effect_provider =
-        fault == DefaultSimulationCompositionFaultInjection::fail_effects_publication
-            ? kEffectsProviderId
-            : std::string_view{};
-    auto catalog_status =
-        register_default_factories(catalog, kernel, world, missile_tuning, rng,
-                                   fail_effect_provider);
-    if (!catalog_status) {
-        return DefaultSimulationCompositionResult::failure(catalog_status.error());
-    }
+build_default_simulation_composition(SimulationKernel &kernel, flecs::world &world,
+                                     MissileTuning &missile_tuning, std::mt19937 &rng,
+                                     std::string_view resolved_manifest_json) {
+    return build_default_simulation_composition_impl(kernel, world, missile_tuning, rng,
+                                                     resolved_manifest_json, {});
+}
 
+std::string default_compatibility_resolved_manifest_json() {
     std::string resolved_json;
     for (const auto chunk : contracts::generated::kDefaultCompatibilityResolvedJsonChunks) {
         resolved_json.append(chunk);
     }
-    auto parsed = composition::parse_resolved_composition_json(resolved_json);
-    if (!parsed) {
-        return DefaultSimulationCompositionResult::failure(parsed.error());
-    }
-    auto realized = composition::CompositionKernel::realize(std::move(parsed).value(), catalog);
-    if (!realized) {
-        return DefaultSimulationCompositionResult::failure(realized.error());
-    }
+    return resolved_json;
+}
 
-    auto impl = std::make_unique<DefaultSimulationComposition::Impl>(std::move(realized).value());
-    if (!impl->refresh_handles()) {
-        impl->runtime.stop();
-        return DefaultSimulationCompositionResult::failure({
-            std::string(composition::kErrorServiceUnavailable),
-            "builtin.default_compatibility",
-            "realized default composition did not expose every required root service",
-        });
-    }
-    return DefaultSimulationCompositionResult::success(
-        std::unique_ptr<DefaultSimulationComposition>(
-            new DefaultSimulationComposition(std::move(impl))));
+DefaultSimulationCompositionResult
+build_default_simulation_composition_for_testing(SimulationKernel &kernel, flecs::world &world,
+                                                 MissileTuning &missile_tuning, std::mt19937 &rng,
+                                                 DefaultSimulationCompositionFaultInjection fault) {
+    const auto fail_effect_provider =
+        fault == DefaultSimulationCompositionFaultInjection::fail_effects_publication
+            ? kEffectsProviderId
+            : std::string_view{};
+    const std::string resolved_json = default_compatibility_resolved_manifest_json();
+    return build_default_simulation_composition_impl(kernel, world, missile_tuning, rng,
+                                                     resolved_json, fail_effect_provider);
 }
 
 } // namespace runtime::providers

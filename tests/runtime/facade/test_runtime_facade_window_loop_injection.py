@@ -131,7 +131,9 @@ def test_runtime_facade_exposes_window_loop_api() -> None:
     source,
     "RuntimeWindowResult RuntimeFacade::run_window",
   )
-  assert "return execute_runtime_window(" in body
+  assert "RuntimeWindowResult result = execute_runtime_window(" in body
+  assert "RuntimeCompositionEvidenceResult composition_evidence = export_composition_evidence();" in body
+  assert ".composition_evidence = std::move(composition_evidence)" in body
   assert "set_pilot_actions_batch(assignments)" in body
   assert "set_mission_commands_maintained_batch(assignments)" in body
   assert "set_mission_commands_batch(assignments)" not in body

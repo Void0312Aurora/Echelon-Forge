@@ -29,6 +29,9 @@ class RuntimeFacade {
     void configure_batch(const RuntimeBatchConfig &config);
     RuntimeBatchConfig batch_config() const noexcept;
     RuntimeCapabilities capabilities() const noexcept;
+    [[nodiscard]] RuntimeCompositionEvidenceResult export_composition_evidence() const;
+    [[nodiscard]] RuntimeCompositionEvidenceComparison
+    compare_composition_evidence(const RuntimeCompositionEvidence &expected) const;
     RuntimeBackendAdmission admit_backend_request(const RuntimeBackendRequest &request) const;
     RuntimeFidelityAdmission admit_fidelity_request(const RuntimeFidelityRequest &request) const;
     RuntimeCounterfactualSnapshot snapshot_counterfactual_entity(
@@ -442,6 +445,8 @@ class RuntimeFacade {
         const RuntimeWindowResult &window_result) const noexcept;
     bool runtime_window_result_evidence_matches_identity(
         const RuntimeWindowResult &window_result) const noexcept;
+    RuntimeCompositionEvidenceComparison
+    runtime_window_composition_evidence_comparison(const RuntimeWindowResult &window_result) const;
     bool runtime_window_trace_ids_recorded_by_this_window(
         const RuntimeWindowResult &window_result) const noexcept;
     bool runtime_window_snapshot_recorded_by_this_window(
@@ -472,8 +477,8 @@ class RuntimeFacade {
     static constexpr std::uint64_t kInvalidatedEvidenceCursor = 0;
 
     struct CounterfactualWorldlineRegistry;
-    // Single execution owner. The maintained implementation is
-    // FlecsCpuBackend, but the facade depends only on the internal backend SPI.
+    // Single execution owner. The admitted native provider materializes the
+    // maintained implementation behind the internal backend SPI.
     std::unique_ptr<IWorldBatchBackend> runtime_;
     std::unique_ptr<CounterfactualWorldlineRegistry> counterfactual_worldlines_;
     // Opaque run identity used to bind RuntimeWindowResult products to the

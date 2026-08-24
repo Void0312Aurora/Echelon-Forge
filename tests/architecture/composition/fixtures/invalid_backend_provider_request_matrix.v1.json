@@ -1,0 +1,148 @@
+{
+  "cases": [
+    {
+      "case_id": "unknown_schema",
+      "expected_error": "backend_provider.invalid_request_schema",
+      "request": {
+        "backend_profile_id": "cpu_exact.reference",
+        "provider_id": "builtin.backend.flecs_cpu",
+        "provider_implementation_version": "1.0.0",
+        "required_capabilities": [
+          "runtime.cpu_exact"
+        ],
+        "schema_version": "echelon_forge.runtime_backend_provider_request.v2"
+      }
+    },
+    {
+      "case_id": "unknown_profile",
+      "expected_error": "backend_provider.profile_not_found",
+      "request": {
+        "backend_profile_id": "missing.profile",
+        "provider_id": "builtin.backend.flecs_cpu",
+        "provider_implementation_version": "1.0.0",
+        "required_capabilities": [
+          "runtime.cpu_exact"
+        ],
+        "schema_version": "echelon_forge.runtime_backend_provider_request.v1"
+      }
+    },
+    {
+      "case_id": "diagnostics_profile",
+      "expected_error": "backend_provider.profile_not_maintained",
+      "request": {
+        "backend_profile_id": "gpu_helpers.diagnostics_only",
+        "provider_id": "builtin.backend.flecs_cpu",
+        "provider_implementation_version": "1.0.0",
+        "required_capabilities": [
+          "runtime.cpu_exact"
+        ],
+        "schema_version": "echelon_forge.runtime_backend_provider_request.v1"
+      }
+    },
+    {
+      "case_id": "gpu_exact_candidate",
+      "expected_error": "backend_provider.profile_not_maintained",
+      "request": {
+        "backend_profile_id": "gpu_exact.unmaintained_candidate",
+        "provider_id": "builtin.backend.flecs_cpu",
+        "provider_implementation_version": "1.0.0",
+        "required_capabilities": [
+          "runtime.cpu_exact"
+        ],
+        "schema_version": "echelon_forge.runtime_backend_provider_request.v1"
+      }
+    },
+    {
+      "case_id": "resident_state_candidate",
+      "expected_error": "backend_provider.profile_not_maintained",
+      "request": {
+        "backend_profile_id": "resident_state.unmaintained_candidate",
+        "provider_id": "builtin.backend.flecs_cpu",
+        "provider_implementation_version": "1.0.0",
+        "required_capabilities": [
+          "runtime.cpu_exact"
+        ],
+        "schema_version": "echelon_forge.runtime_backend_provider_request.v1"
+      }
+    },
+    {
+      "case_id": "shadow_compare_candidate",
+      "expected_error": "backend_provider.profile_not_maintained",
+      "request": {
+        "backend_profile_id": "shadow_compare.unmaintained_candidate",
+        "provider_id": "builtin.backend.flecs_cpu",
+        "provider_implementation_version": "1.0.0",
+        "required_capabilities": [
+          "runtime.cpu_exact"
+        ],
+        "schema_version": "echelon_forge.runtime_backend_provider_request.v1"
+      }
+    },
+    {
+      "case_id": "unknown_provider",
+      "expected_error": "backend_provider.provider_not_found",
+      "request": {
+        "backend_profile_id": "cpu_exact.reference",
+        "provider_id": "missing.backend.provider",
+        "provider_implementation_version": "1.0.0",
+        "required_capabilities": [
+          "runtime.cpu_exact"
+        ],
+        "schema_version": "echelon_forge.runtime_backend_provider_request.v1"
+      }
+    },
+    {
+      "case_id": "provider_version_mismatch",
+      "expected_error": "backend_provider.provider_version_mismatch",
+      "request": {
+        "backend_profile_id": "cpu_exact.reference",
+        "provider_id": "builtin.backend.flecs_cpu",
+        "provider_implementation_version": "2.0.0",
+        "required_capabilities": [
+          "runtime.cpu_exact"
+        ],
+        "schema_version": "echelon_forge.runtime_backend_provider_request.v1"
+      }
+    },
+    {
+      "case_id": "capability_required",
+      "expected_error": "backend_provider.capability_required",
+      "request": {
+        "backend_profile_id": "cpu_exact.reference",
+        "provider_id": "builtin.backend.flecs_cpu",
+        "provider_implementation_version": "1.0.0",
+        "required_capabilities": [],
+        "schema_version": "echelon_forge.runtime_backend_provider_request.v1"
+      }
+    },
+    {
+      "case_id": "capability_duplicate",
+      "expected_error": "backend_provider.capability_duplicate",
+      "request": {
+        "backend_profile_id": "cpu_exact.reference",
+        "provider_id": "builtin.backend.flecs_cpu",
+        "provider_implementation_version": "1.0.0",
+        "required_capabilities": [
+          "runtime.cpu_exact",
+          "runtime.cpu_exact"
+        ],
+        "schema_version": "echelon_forge.runtime_backend_provider_request.v1"
+      }
+    },
+    {
+      "case_id": "capability_not_admitted",
+      "expected_error": "backend_provider.capability_not_admitted",
+      "request": {
+        "backend_profile_id": "cpu_exact.reference",
+        "provider_id": "builtin.backend.flecs_cpu",
+        "provider_implementation_version": "1.0.0",
+        "required_capabilities": [
+          "runtime.cpu_exact",
+          "runtime.resident_state"
+        ],
+        "schema_version": "echelon_forge.runtime_backend_provider_request.v1"
+      }
+    }
+  ],
+  "schema_version": "echelon_forge.invalid_backend_provider_request_matrix.v1"
+}

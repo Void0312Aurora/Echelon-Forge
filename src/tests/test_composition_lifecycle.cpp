@@ -3,8 +3,11 @@
 #include "runtime/composition/composition_json.h"
 #include "runtime/composition/composition_identity.h"
 #include "runtime/composition/composition_runtime.h"
+#include "runtime/contracts/runtime_composition_projection_contract.h"
 
 #include <doctest/doctest.h>
+
+#include <nlohmann/json.hpp>
 
 #include <algorithm>
 #include <chrono>
@@ -30,6 +33,7 @@ namespace {
 
 namespace composition = runtime::composition;
 namespace contracts = runtime::composition_contracts;
+namespace projection_contracts = runtime::projection_contracts;
 
 struct Trace {
     std::vector<std::string> entries;
@@ -510,6 +514,103 @@ composition::CompositionRuntime realize(contracts::ResolvedSimulationComposition
 } // namespace
 
 TEST_SUITE("composition_lifecycle") {
+
+    TEST_CASE(
+        "native P2-C0 projection revalidation reproduces request lock and authority fixtures") {
+        const std::string request_path = std::string(EF_SOURCE_ROOT) +
+                                         "/tests/architecture/composition/fixtures/"
+                                         "default_runtime_composition_request.v1.json";
+        const std::string lock_path = std::string(EF_SOURCE_ROOT) +
+                                      "/tests/architecture/composition/fixtures/"
+                                      "default_admitted_catalog_lock.v1.json";
+        const std::string authority_path = std::string(EF_SOURCE_ROOT) +
+                                           "/tests/architecture/composition/fixtures/"
+                                           "owner_authority_registry.v1.json";
+        const auto request = read_text_file(request_path);
+        const auto lock = read_text_file(lock_path);
+        const auto authority = read_text_file(authority_path);
+        const auto valid = projection_contracts::validate_runtime_composition_projection_json(
+            request, lock, authority);
+        CHECK(valid.valid);
+        CHECK(valid.issues.empty());
+
+        auto forged_lock = nlohmann::json::parse(lock);
+        forged_lock["entries"][0]["provenance"]["artifact_kind"] = "native_package";
+        forged_lock["entries"][0]["provenance"]["artifact_sha256"] = nullptr;
+        const auto rejected_provenance =
+            projection_contracts::validate_runtime_composition_projection_json(
+                request, forged_lock.dump(), authority);
+        CHECK_FALSE(rejected_provenance.valid);
+        CHECK(std::any_of(
+            rejected_provenance.issues.begin(), rejected_provenance.issues.end(),
+            [](const auto &issue) { return issue.code == "projection.provenance_hash_required"; }));
+
+        auto partial_lock = nlohmann::json::parse(lock);
+        partial_lock["entries"].erase(partial_lock["entries"].begin());
+        const auto rejected_partial =
+            projection_contracts::validate_runtime_composition_projection_json(
+                request, partial_lock.dump(), authority);
+        CHECK_FALSE(rejected_partial.valid);
+        CHECK(std::any_of(rejected_partial.issues.begin(), rejected_partial.issues.end(),
+                          [](const auto &issue) {
+                              return issue.code == "projection.identity_mismatch" ||
+                                     issue.code == "projection.unmet_capability";
+                          }));
+
+        auto malformed_request = nlohmann::json::parse(request);
+        malformed_request["intent"]["extra"] = true;
+        const auto rejected_request =
+            projection_contracts::validate_runtime_composition_projection_json(
+                malformed_request.dump(), lock, authority);
+        CHECK_FALSE(rejected_request.valid);
+        CHECK(std::any_of(
+            rejected_request.issues.begin(), rejected_request.issues.end(),
+            [](const auto &issue) { return issue.code == "projection.unexpected_field"; }));
+
+        auto forged_authority = nlohmann::json::parse(authority);
+        forged_authority["categories"][0]["owner_id"] = "owner.attacker";
+        const auto rejected_authority =
+            projection_contracts::validate_runtime_composition_projection_json(
+                request, lock, forged_authority.dump());
+        CHECK_FALSE(rejected_authority.valid);
+        CHECK(std::any_of(rejected_authority.issues.begin(), rejected_authority.issues.end(),
+                          [](const auto &issue) {
+                              return issue.code == "projection.invalid_authority" ||
+                                     issue.code == "projection.identity_mismatch";
+                          }));
+
+        auto invalid_contract_version = nlohmann::json::parse(lock);
+        invalid_contract_version["contract_version"] =
+            "echelon_forge.admitted_catalog_lock_contract.v0";
+        const auto rejected_contract_version =
+            projection_contracts::validate_runtime_composition_projection_json(
+                request, invalid_contract_version.dump(), authority);
+        CHECK_FALSE(rejected_contract_version.valid);
+        CHECK(std::any_of(rejected_contract_version.issues.begin(),
+                          rejected_contract_version.issues.end(), [](const auto &issue) {
+                              return issue.code == "projection.unsupported_contract_version";
+                          }));
+
+        auto invalid_lock_id = nlohmann::json::parse(lock);
+        invalid_lock_id["lock_id"] = "Invalid Lock Id";
+        const auto rejected_lock_id =
+            projection_contracts::validate_runtime_composition_projection_json(
+                request, invalid_lock_id.dump(), authority);
+        CHECK_FALSE(rejected_lock_id.valid);
+        CHECK(std::any_of(
+            rejected_lock_id.issues.begin(), rejected_lock_id.issues.end(),
+            [](const auto &issue) { return issue.code == "projection.invalid_identifier"; }));
+
+        auto invalid_lock_version = nlohmann::json::parse(lock);
+        invalid_lock_version["lock_version"] = "v1";
+        const auto rejected_lock_version =
+            projection_contracts::validate_runtime_composition_projection_json(
+                request, invalid_lock_version.dump(), authority);
+        CHECK_FALSE(rejected_lock_version.valid);
+        CHECK(std::any_of(
+            rejected_lock_version.issues.begin(), rejected_lock_version.issues.end(),
+            [](const auto &issue) { return issue.code == "projection.invalid_version"; }));
+    }
 
     TEST_CASE("native JSON ingestion reproduces the frozen P1-B resolved fixture") {
         const std::string requested_fixture_path = std::string(EF_SOURCE_ROOT) +

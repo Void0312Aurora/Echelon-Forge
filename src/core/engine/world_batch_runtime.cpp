@@ -257,6 +257,22 @@ const SimulationKernel &WorldBatchRuntime::world_raw_quarantine(size_t index) co
     return checked_world(index);
 }
 
+std::vector<WorldCompositionDiagnostics> WorldBatchRuntime::composition_diagnostics() const {
+    std::vector<WorldCompositionDiagnostics> diagnostics;
+    diagnostics.reserve(worlds_.size());
+    for (std::size_t index = 0; index < worlds_.size(); ++index) {
+        const SimulationKernel &world = checked_world(index);
+        diagnostics.push_back({
+            .world_index = index,
+            .requested_manifest_sha256 = world.requested_composition_sha256(),
+            .resolved_manifest_sha256 = world.resolved_composition_sha256(),
+            .executable_graph_sha256 = world.executable_composition_graph_sha256(),
+            .scope_generations = world.composition_scope_generations(),
+        });
+    }
+    return diagnostics;
+}
+
 size_t WorldBatchRuntime::resolve_worker_threads(size_t task_count) const noexcept {
     if (task_count == 0) {
         return 1;

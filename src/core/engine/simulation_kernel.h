@@ -1,6 +1,7 @@
 #pragma once
 
 #include <flecs.h>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -137,6 +138,7 @@ class SimulationKernel {
     };
 
     SimulationKernel();
+    explicit SimulationKernel(std::string resolved_manifest_json);
     ~SimulationKernel();
     SimulationKernel(const SimulationKernel &) = delete;
     SimulationKernel &operator=(const SimulationKernel &) = delete;
@@ -174,6 +176,8 @@ class SimulationKernel {
     [[nodiscard]] std::string requested_composition_sha256() const;
     [[nodiscard]] std::string resolved_composition_sha256() const;
     [[nodiscard]] std::uint64_t world_composition_generation() const noexcept;
+    [[nodiscard]] std::array<std::uint64_t, 5> composition_scope_generations() const noexcept;
+    [[nodiscard]] std::string executable_composition_graph_sha256() const;
     [[nodiscard]] bool rebuild_world_composition(std::string_view barrier,
                                                  std::string *error = nullptr);
 

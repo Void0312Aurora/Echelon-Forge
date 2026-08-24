@@ -830,9 +830,14 @@ RuntimeWindowResult RuntimeFacade::run_window(const RuntimeWindowRequest &reques
     }
     const std::uint64_t window_sequence = next_window_identity_++;
     RuntimeWindowEvidenceSnapshot sealed = sealed_window_evidence(result);
+    RuntimeCompositionEvidenceResult composition_evidence = export_composition_evidence();
     const std::shared_ptr<const RuntimeWindowIdentity> window_identity =
-        std::make_shared<RuntimeWindowIdentity>(
-            RuntimeWindowIdentity{identity_, window_sequence, std::move(sealed)});
+        std::make_shared<RuntimeWindowIdentity>(RuntimeWindowIdentity{
+            .facade_identity = identity_,
+            .window_sequence = window_sequence,
+            .evidence = std::move(sealed),
+            .composition_evidence = std::move(composition_evidence),
+        });
     identity_->recorded_window_sequences.try_emplace(window_sequence, window_identity);
 
     for (const std::uint64_t trace_id : window_identity->evidence.engagement_trace_ids) {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -25,6 +26,14 @@ struct WorldEntityKinematics {
     double roll = 0.0;
 };
 
+struct WorldCompositionDiagnostics {
+    std::size_t world_index = 0;
+    std::string requested_manifest_sha256;
+    std::string resolved_manifest_sha256;
+    std::string executable_graph_sha256;
+    std::array<std::uint64_t, 5> scope_generations{};
+};
+
 class WorldBatchRuntime {
   public:
     explicit WorldBatchRuntime(size_t world_count = 0);
@@ -45,6 +54,7 @@ class WorldBatchRuntime {
     bool try_get_entity_kinematics(const WorldEntityRef &ref, WorldEntityKinematics *state) const;
     bool try_set_entity_kinematics(const WorldEntityRef &ref, const WorldEntityKinematics &state);
     RecentEngagementEvents export_recent_engagement_events(size_t world_index) const;
+    [[nodiscard]] std::vector<WorldCompositionDiagnostics> composition_diagnostics() const;
 
     // Raw escape hatch only. Maintained facade code should
     // use batch-owned helper methods instead of keeping raw SimulationKernel handles.

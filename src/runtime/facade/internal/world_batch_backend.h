@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <array>
 #include <optional>
 #include <string>
 #include <vector>
@@ -201,6 +202,14 @@ struct ExportResult {
 struct Diagnostics {
     std::string backend_id;
     std::size_t world_count = 0;
+    struct WorldComposition {
+        std::size_t world_index = 0;
+        std::string requested_manifest_sha256;
+        std::string resolved_manifest_sha256;
+        std::string executable_graph_sha256;
+        std::array<std::uint64_t, 5> scope_generations{};
+    };
+    std::vector<WorldComposition> world_compositions;
 };
 
 } // namespace runtime::backend

@@ -966,6 +966,20 @@ RuntimeFacade::build_maintained_replay_envelope(const RuntimeWindowResult &windo
         return result;
     }
 
+    // P5-A: replay admission consumes the immutable composition snapshot
+    // sealed at window commit and compares it with the facade's currently
+    // realized composition.  Resizing/reconfiguration, provider/profile/host
+    // substitution, scope-generation drift, or a zero-world commit therefore
+    // fails closed with named mismatch paths instead of silently replaying
+    // under a different runtime identity.
+    const RuntimeCompositionEvidenceComparison composition_comparison =
+        runtime_window_composition_evidence_comparison(window_result);
+    if (!composition_comparison.compatible) {
+        result.rejection_reason = std::string(kMaintainedReplayEnvelopeCompositionEvidenceMismatch);
+        result.errors = composition_comparison.mismatches;
+        return result;
+    }
+
     // From this point on, assemble only from the immutable evidence sealed by
     // run_window. The public RuntimeWindowResult remains copyable for DTO
     // compatibility, but a copied token cannot authenticate substituted fields.
@@ -1126,6 +1140,9 @@ RuntimeFacade::build_maintained_replay_envelope(const RuntimeWindowResult &windo
         ordered_replay_envelope_evidence_refs(result.envelope);
     result.evidence_refs.insert(result.evidence_refs.end(), ordered_refs.begin(),
                                 ordered_refs.end());
+    result.evidence_refs.push_back(
+        "composition_evidence_sha256=" +
+        window_result.identity_token_.identity_->composition_evidence.evidence.evidence_sha256);
     return result;
 }
 

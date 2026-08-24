@@ -1,0 +1,59 @@
+{
+  "absolute_limits": {
+    "cold_construct_ms": 5000.0,
+    "peak_rss_delta_bytes_per_world": 67108864.0,
+    "reset_ms_per_world": 5.0,
+    "sampled_peak_delta_bytes_per_world": 67108864.0,
+    "setup_ms": 5000.0,
+    "step_ms_per_world": 5.0,
+    "teardown_ms": 5000.0,
+    "teardown_residual_bytes_per_world": 4194304.0,
+    "warm_construct_ms": 5000.0
+  },
+  "budget_id": "default_cpu_exact.host_batch.v1",
+  "budget_version": "1.0.0",
+  "node_row_policy": "conditional_held_p6b_not_admitted",
+  "profile_id": "builtin.default_compatibility",
+  "profile_version": "1.0.0",
+  "python_vs_native_limits": {
+    "ratio_max": {
+      "cold_construct_ms": 8.0,
+      "peak_rss_delta_bytes_per_world": 4.0,
+      "reset_ms_per_world": 10.0,
+      "sampled_peak_delta_bytes_per_world": 4.0,
+      "setup_ms": 8.0,
+      "step_ms_per_world": 10.0,
+      "teardown_ms": 8.0,
+      "teardown_residual_bytes_per_world": 4.0,
+      "warm_construct_ms": 8.0
+    },
+    "slack": {
+      "cold_construct_ms": 1000.0,
+      "peak_rss_delta_bytes_per_world": 33554432.0,
+      "reset_ms_per_world": 1.0,
+      "sampled_peak_delta_bytes_per_world": 33554432.0,
+      "setup_ms": 1000.0,
+      "step_ms_per_world": 1.0,
+      "teardown_ms": 1000.0,
+      "teardown_residual_bytes_per_world": 4194304.0,
+      "warm_construct_ms": 1000.0
+    }
+  },
+  "schema_version": "echelon_forge.runtime_host_batch_parity_budget.v1",
+  "semantic": {
+    "absolute_tolerance": 1e-12,
+    "repeat_count": 2,
+    "require_exact_composition_identity": true
+  },
+  "workload": {
+    "measurement_steps": 20,
+    "measurement_world_count": 32,
+    "reset_iterations": 5,
+    "seed_base": 42,
+    "semantic_steps": 3,
+    "semantic_world_count": 2,
+    "time_step_s": 0.05,
+    "warmup_steps": 3,
+    "worker_threads": 1
+  }
+}

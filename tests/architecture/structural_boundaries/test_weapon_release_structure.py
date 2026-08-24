@@ -5,6 +5,7 @@ from tests.architecture.structural_boundaries.helpers import *
 
 def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_systems_stays_inline_free() -> None:
   systems_text = _text(SIMULATION_KERNEL_SYSTEMS)
+  registry_text = _text(REPO_ROOT / "src" / "core" / "engine" / "system_contribution_registry.cpp")
   helper_text = _text(PILOT_WEAPON_RELEASE_SYSTEM)
   naval_helper_text = _text(NAVAL_MISSION_WEAPON_RELEASE_SYSTEM)
   engagement_event_types_text = _text(ENGAGEMENT_EVENT_TYPES)
@@ -44,14 +45,8 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
     systems_text,
     "IWeaponReleaseService& weapon_release_service = *this",
   )
-  assert re.search(
-    r"register_pilot_weapon_release_system\(\s*ecs\s*\)",
-    systems_text,
-  )
-  assert re.search(
-    r"register_naval_mission_weapon_release_system\(\s*ecs\s*\)",
-    systems_text,
-  )
+  assert "register_pilot_weapon_release_system" in registry_text
+  assert "register_naval_mission_weapon_release_system" in registry_text
   assert "ecs.set<EngagementEventRecorderRef>({this})" not in systems_text
   assert "ecs.set<EngagementEventRecorderRef>" not in systems_text
   assert "&EngagementEventRecorderRef::recorder" in provider_catalog_text

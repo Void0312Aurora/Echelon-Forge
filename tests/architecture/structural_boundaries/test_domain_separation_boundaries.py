@@ -123,6 +123,7 @@ def test_system_and_model_domain_slices_stay_packaged_under_domains_root() -> No
 
 def test_domain_separation_split_generic_files_route_domain_owned_runtime() -> None:
   systems_text = _text(SIMULATION_KERNEL_SYSTEMS)
+  registry_text = _text(REPO_ROOT / "src" / "core" / "engine" / "system_contribution_registry.cpp")
   logistics_text = _text(GENERIC_LOGISTICS_SYSTEM)
   naval_logistics_text = _text(NAVAL_LOGISTICS_SYSTEM)
   instrument_text = _text(REPO_ROOT / "src" / "systems" / "physics" / "instrument_system.h")
@@ -157,10 +158,10 @@ def test_domain_separation_split_generic_files_route_domain_owned_runtime() -> N
   assert "NavalUnderwayResupply" in naval_logistics_text
   assert "underway_replenishment_enabled" in naval_logistics_text
   assert '#include "systems/domains/naval/naval_logistics_system.h"' in systems_text
-  assert "register_logistics_system(ecs);" in systems_text
-  assert "register_naval_logistics_system(ecs);" in systems_text
+  assert "register_logistics_system" in registry_text
+  assert "register_naval_logistics_system" in registry_text
   assert '#include "systems/domains/air/propulsion_system.h"' in systems_text
-  assert "flight_dynamics::register_propulsion_system(" in systems_text
+  assert "flight_dynamics::register_propulsion_system" in registry_text
 
   assert '#include "components/physics/propulsion_readouts.h"' in logistics_text
   assert '#include "systems/domains/air/propulsion_system.h"' not in logistics_text

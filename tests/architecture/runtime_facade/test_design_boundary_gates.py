@@ -80,6 +80,7 @@ def test_world_batch_backend_seam_is_used_without_exposing_engine_or_gpu_owners(
   cpu_backend = _read(RUNTIME_FACADE / "internal/flecs_cpu_backend.h")
   probe = _read(REPO_ROOT / "src/tests/test_world_batch_backend_contract.cpp")
   facade_source = _read(RUNTIME_FACADE / "runtime_facade.cpp")
+  provider_source = _read(RUNTIME_FACADE / "internal/world_batch_backend_provider.cpp")
 
   assert "class IWorldBatchBackend" in interface
   for operation in (
@@ -109,7 +110,8 @@ def test_world_batch_backend_seam_is_used_without_exposing_engine_or_gpu_owners(
   assert "class FlecsCpuBackend final : public IWorldBatchBackend" in cpu_backend
   assert "WorldBatchRuntime runtime_;" in cpu_backend
   assert "public WorldBatchRuntime" not in cpu_backend
-  assert "std::make_unique<FlecsCpuBackend>" in facade_source
+  assert "FlecsCpuBackend" not in facade_source
+  assert "std::make_unique<FlecsCpuBackend>" in provider_source
   assert '#include "runtime/facade/internal/world_batch_backend.h"' in probe
   assert "class IndependentBackendProbe final : public IWorldBatchBackend" in probe
   assert "world_batch_runtime.h" not in probe.lower()

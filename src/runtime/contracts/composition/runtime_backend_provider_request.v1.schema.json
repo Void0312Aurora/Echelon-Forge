@@ -1,0 +1,44 @@
+{
+  "$id": "echelon_forge.runtime_backend_provider_request.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "backend_profile_id": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "provider_id": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "provider_implementation_version": {
+      "minLength": 1,
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+      "type": "string"
+    },
+    "required_capabilities": {
+      "items": {
+        "minLength": 1,
+        "pattern": "^[\\u0000-\\u007F]*$",
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "schema_version": {
+      "const": "echelon_forge.runtime_backend_provider_request.v1"
+    }
+  },
+  "required": [
+    "schema_version",
+    "backend_profile_id",
+    "provider_id",
+    "provider_implementation_version",
+    "required_capabilities"
+  ],
+  "title": "Echelon Forge Runtime Backend Provider Request v1",
+  "type": "object"
+}

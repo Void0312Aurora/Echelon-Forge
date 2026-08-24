@@ -1,0 +1,304 @@
+{
+  "$id": "echelon_forge.runtime_composition_evidence.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "backend": {
+      "additionalProperties": false,
+      "properties": {
+        "admitted_capabilities": {
+          "items": {
+            "minLength": 1,
+            "pattern": "^[\\u0000-\\u007F]*$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "backend_profile_id": {
+          "minLength": 1,
+          "pattern": "^[\\u0000-\\u007F]*$",
+          "type": "string"
+        },
+        "implementation_version": {
+          "minLength": 1,
+          "pattern": "^[\\u0000-\\u007F]*$",
+          "type": "string"
+        },
+        "provider_id": {
+          "minLength": 1,
+          "pattern": "^[\\u0000-\\u007F]*$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "provider_id",
+        "implementation_version",
+        "backend_profile_id",
+        "admitted_capabilities"
+      ],
+      "type": "object"
+    },
+    "binding_version": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "canonical_json": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "canonicalization": {
+      "const": "echelon_forge.sorted_utf8_json.v1"
+    },
+    "catalog_lock_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "composition_id": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "evidence_contract_version": {
+      "const": "1.0.0"
+    },
+    "evidence_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "executable_graph_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "hash_algorithm": {
+      "const": "sha256"
+    },
+    "host_mode": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "profile_projection_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "provider_versions": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "implementation_version": {
+            "minLength": 1,
+            "pattern": "^[\\u0000-\\u007F]*$",
+            "type": "string"
+          },
+          "provider_id": {
+            "minLength": 1,
+            "pattern": "^[\\u0000-\\u007F]*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider_id",
+          "implementation_version"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "requested_manifest_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "requested_profile_id": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "requested_profile_version": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "resolved_manifest_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "resolver_contract_version": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "runtime_request_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "echelon_forge.runtime_composition_evidence.v1"
+    },
+    "stage_contract_version": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "world_instances": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "scope_generations": {
+            "allOf": [
+              {
+                "contains": {
+                  "properties": {
+                    "scope": {
+                      "const": "application"
+                    }
+                  },
+                  "required": [
+                    "scope"
+                  ],
+                  "type": "object"
+                },
+                "maxContains": 1,
+                "minContains": 1
+              },
+              {
+                "contains": {
+                  "properties": {
+                    "scope": {
+                      "const": "backend"
+                    }
+                  },
+                  "required": [
+                    "scope"
+                  ],
+                  "type": "object"
+                },
+                "maxContains": 1,
+                "minContains": 1
+              },
+              {
+                "contains": {
+                  "properties": {
+                    "scope": {
+                      "const": "batch"
+                    }
+                  },
+                  "required": [
+                    "scope"
+                  ],
+                  "type": "object"
+                },
+                "maxContains": 1,
+                "minContains": 1
+              },
+              {
+                "contains": {
+                  "properties": {
+                    "scope": {
+                      "const": "world"
+                    }
+                  },
+                  "required": [
+                    "scope"
+                  ],
+                  "type": "object"
+                },
+                "maxContains": 1,
+                "minContains": 1
+              },
+              {
+                "contains": {
+                  "properties": {
+                    "scope": {
+                      "const": "episode"
+                    }
+                  },
+                  "required": [
+                    "scope"
+                  ],
+                  "type": "object"
+                },
+                "maxContains": 1,
+                "minContains": 1
+              }
+            ],
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "generation": {
+                  "maximum": 9223372036854775807,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "instance_id": {
+                  "minLength": 1,
+                  "pattern": "^[\\u0000-\\u007F]*$",
+                  "type": "string"
+                },
+                "scope": {
+                  "enum": [
+                    "application",
+                    "backend",
+                    "batch",
+                    "world",
+                    "episode"
+                  ]
+                }
+              },
+              "required": [
+                "scope",
+                "instance_id",
+                "generation"
+              ],
+              "type": "object"
+            },
+            "maxItems": 5,
+            "minItems": 5,
+            "type": "array"
+          },
+          "world_index": {
+            "maximum": 9223372036854775807,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "world_index",
+          "scope_generations"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "evidence_contract_version",
+    "composition_id",
+    "requested_profile_id",
+    "requested_profile_version",
+    "runtime_request_sha256",
+    "requested_manifest_sha256",
+    "resolved_manifest_sha256",
+    "catalog_lock_sha256",
+    "profile_projection_sha256",
+    "resolver_contract_version",
+    "provider_versions",
+    "backend",
+    "executable_graph_sha256",
+    "stage_contract_version",
+    "host_mode",
+    "binding_version",
+    "world_instances",
+    "canonicalization",
+    "hash_algorithm",
+    "canonical_json",
+    "evidence_sha256"
+  ],
+  "type": "object"
+}

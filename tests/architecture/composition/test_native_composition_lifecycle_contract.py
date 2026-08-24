@@ -9,6 +9,8 @@ from tests.architecture.helpers import REPO_ROOT
 COMPOSITION = REPO_ROOT / "src/runtime/composition"
 CMAKE = REPO_ROOT / "CMakeLists.txt"
 LIFECYCLE_TEST = REPO_ROOT / "src/tests/test_composition_lifecycle.cpp"
+PROJECTION_HEADER = REPO_ROOT / "src/runtime/contracts/runtime_composition_projection_contract.h"
+PROJECTION_SOURCE = REPO_ROOT / "src/runtime/composition/runtime_composition_projection_contract.cpp"
 KERNEL_HEADER = REPO_ROOT / "src/core/engine/simulation_kernel.h"
 KERNEL_SOURCE = REPO_ROOT / "src/core/engine/simulation_kernel.cpp"
 PROVIDER_SOURCE = REPO_ROOT / "src/runtime/providers/default_simulation_provider_catalog.cpp"
@@ -82,6 +84,7 @@ def test_native_composition_target_is_an_independent_link_unit() -> None:
   links = focused.split("target_link_libraries", 1)[1].split(")", 1)[0]
   assert "ef_composition" in links
   assert "doctest::doctest" in links
+  assert "nlohmann_json::nlohmann_json" in links
   for forbidden in ("ef_core", "ef_facade", "ef_cuda", "ef_gpu"):
     assert forbidden not in links
 
@@ -177,6 +180,26 @@ def test_focused_cpp_suite_covers_failure_atomicity_and_stale_handles() -> None:
   assert "factory identity changed while lifecycle effects" in _text(
     COMPOSITION / "composition_runtime.cpp"
   )
+
+
+def test_native_p2c0_projection_revalidation_is_wired_into_focused_suite() -> None:
+  header = _text(PROJECTION_HEADER)
+  source = _text(PROJECTION_SOURCE)
+  cmake = _text(CMAKE)
+  lifecycle = _text(LIFECYCLE_TEST)
+  assert "validate_runtime_composition_projection_json" in header
+  assert "validate_runtime_composition_projection_json" in source
+  assert "#include <utility>" in source
+  assert "runtime_composition_projection_contract.cpp" in cmake
+  assert "native P2-C0 projection revalidation reproduces request lock and authority fixtures" in lifecycle
+  for token in (
+    "projection.request_identity_mismatch",
+    "projection.missing_category",
+    "projection.unmet_capability",
+    "projection.provenance_hash_required",
+    "projection.canonical_bytes_mismatch",
+  ):
+    assert token in source or token in lifecycle
 
 
 def test_simulation_kernel_uses_composition_owned_default_services() -> None:

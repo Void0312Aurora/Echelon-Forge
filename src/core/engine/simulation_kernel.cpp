@@ -17,10 +17,13 @@
 #include <stdexcept>
 #include <string>
 
-SimulationKernel::SimulationKernel() {
+SimulationKernel::SimulationKernel()
+    : SimulationKernel(runtime::providers::default_compatibility_resolved_manifest_json()) {}
+
+SimulationKernel::SimulationKernel(std::string resolved_manifest_json) {
     register_components_and_systems();
-    auto composition =
-        runtime::providers::build_default_simulation_composition(*this, ecs, missile_tuning_, rng);
+    auto composition = runtime::providers::build_default_simulation_composition(
+        *this, ecs, missile_tuning_, rng, resolved_manifest_json);
     if (!composition) {
         const auto &error = composition.error();
         throw std::runtime_error("default simulation composition failed: " + error.code + ":" +
@@ -267,6 +270,11 @@ std::uint64_t SimulationKernel::world_composition_generation() const noexcept {
     return composition_ ? composition_->world_generation() : 0;
 }
 
+std::array<std::uint64_t, 5> SimulationKernel::composition_scope_generations() const noexcept {
+    auto composition_lock = acquire_composition_operation();
+    return composition_ ? composition_->scope_generations() : std::array<std::uint64_t, 5>{};
+}
+
 SimulationKernel::WorldLease SimulationKernel::acquire_world_lease() {
     auto composition_lock = acquire_composition_operation();
     ensure_active("acquire_world_lease");
@@ -309,8 +317,9 @@ bool SimulationKernel::rebuild_world_composition(std::string_view barrier, std::
     }
     if (raw_world_access_exposed_) {
         if (error) {
-            *error = std::string(runtime::composition::kErrorRebuildBarrierRejected) +
-                     ":world:raw Flecs world access has been exposed; rebuild requires a world lease";
+            *error =
+                std::string(runtime::composition::kErrorRebuildBarrierRejected) +
+                ":world:raw Flecs world access has been exposed; rebuild requires a world lease";
         }
         return false;
     }

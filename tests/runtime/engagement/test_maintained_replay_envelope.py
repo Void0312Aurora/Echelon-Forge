@@ -206,9 +206,7 @@ def test_every_envelope_field_traces_to_the_real_window_product(real_run) -> Non
 
     # Honest restore claim: the maintained path registers no worldline snapshot.
     assert envelope.snapshot_restore_supported is False
-    assert envelope.restore_support_boundary == (
-        "restore_unsupported_until_snapshot_restore_proof"
-    )
+    assert envelope.restore_support_boundary == ("restore_unsupported_until_snapshot_restore_proof")
 
     # Evidence refs: producer label first, then the canonical ordered refs.
     assert list(result.evidence_refs) == [
@@ -217,6 +215,8 @@ def test_every_envelope_field_traces_to_the_real_window_product(real_run) -> Non
         "barrier_id=window_commit",
         f"event_order_ref=event:trace:{anchor}",
         f"facade_provenance_ref={envelope.facade_provenance_ref.packet_ref}",
+        "composition_evidence_sha256="
+        f"{real_run[0].facade.export_composition_evidence().evidence.evidence_sha256}",
     ]
 
 
@@ -512,9 +512,7 @@ def test_optin_qualification_makes_the_snapshot_ref_run_globally_unique(real_run
         # The appended value is the run's own minted version, recovered from the
         # window's real executed-node records -- not a caller-invented number.
         recovered = qualified_ref.rsplit(":run_snapshot:", 1)[1]
-        real_node_versions = {
-            str(node.source_snapshot_version) for node in evidence.executed_nodes
-        }
+        real_node_versions = {str(node.source_snapshot_version) for node in evidence.executed_nodes}
         assert f"snapshot:{recovered}" in real_node_versions
 
         # Still a valid envelope under the independent validator.

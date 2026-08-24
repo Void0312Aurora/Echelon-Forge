@@ -1,0 +1,71 @@
+{
+  "cases": [
+    {
+      "code": "evidence.catalog_lock_mismatch",
+      "id": "catalog-lock",
+      "path": "/catalog_lock_sha256",
+      "value": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "code": "evidence.profile_projection_mismatch",
+      "id": "projection",
+      "path": "/profile_projection_sha256",
+      "value": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "code": "evidence.provider_identity_mismatch",
+      "id": "provider-version",
+      "path": "/provider_versions/0/implementation_version",
+      "value": "9.9.9"
+    },
+    {
+      "code": "evidence.provider_identity_mismatch",
+      "id": "backend-profile",
+      "path": "/backend/backend_profile_id",
+      "value": "gpu.candidate"
+    },
+    {
+      "code": "evidence.graph_identity_mismatch",
+      "id": "graph",
+      "path": "/executable_graph_sha256",
+      "value": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "code": "evidence.host_identity_mismatch",
+      "id": "host",
+      "path": "/host_mode",
+      "value": "python.direct"
+    },
+    {
+      "code": "evidence.invalid_scope_generation",
+      "id": "scope",
+      "path": "/world_instances/0/scope_generations/0/generation",
+      "value": 0
+    },
+    {
+      "code": "evidence.invalid_scope_generation",
+      "id": "duplicate-scope",
+      "path": "/world_instances/0/scope_generations/1/scope",
+      "value": "application"
+    },
+    {
+      "code": "evidence.invalid_world_instances",
+      "id": "noncontiguous-world",
+      "path": "/world_instances/0/world_index",
+      "value": 1
+    },
+    {
+      "code": "evidence.non_ascii_string",
+      "id": "non-ascii-instance",
+      "path": "/world_instances/0/scope_generations/0/instance_id",
+      "value": "composition:1/world:0/applicatión"
+    },
+    {
+      "code": "evidence.invalid_scope_generation",
+      "id": "generation-overflow",
+      "path": "/world_instances/0/scope_generations/0/generation",
+      "value": 9223372036854775808
+    }
+  ],
+  "schema_version": "echelon_forge.invalid_runtime_composition_evidence_matrix.v1"
+}

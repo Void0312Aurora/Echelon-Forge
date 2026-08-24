@@ -5,6 +5,7 @@
 
 #include "runtime/contracts/stage_node_manifest_registry.h"
 #include "runtime/facade/internal/world_batch_backend.h"
+#include "runtime/facade/internal/world_batch_backend_provider.h"
 #include "runtime/facade/internal/world_batch_compatibility_port.h"
 
 #include <algorithm>
@@ -28,7 +29,23 @@
 // substituted public DTO fields therefore cannot authenticate the substitute.
 struct RuntimeWindowIdentity;
 
+// This context is deliberately absent from the public DTO header. Host
+// identities are minted only by fixed facade construction paths, never from
+// caller-supplied strings.
+struct RuntimeFacadeHostContext {
+    std::string host_mode = "native_cpp";
+    std::string binding_version = "native.v1";
+};
+
 struct RuntimeFacadeIdentity {
+    runtime::backend_provider::WorldBatchBackendProviderIdentity backend_identity;
+    RuntimeFacadeHostContext host_context;
+    // Monotonic facade-owned composition incarnation. Backend/world scope
+    // generations are owned by each realized kernel and may restart after a
+    // world is destroyed. Including this non-resetting incarnation in scope
+    // instance ids prevents shrink/regrow ABA from authenticating an old
+    // window against a newly materialized world at the same index.
+    std::uint64_t composition_incarnation = 1;
     // Only ids observed on a genuine run_window result while they were already
     // below their facade allocator cursor enter these registries. The weak
     // token reference is the immutable window anchor that recorded the id;
@@ -93,6 +110,11 @@ struct RuntimeWindowIdentity {
     std::weak_ptr<const RuntimeFacadeIdentity> facade_identity;
     std::uint64_t window_sequence = 0;
     RuntimeWindowEvidenceSnapshot evidence{};
+    // Commit-time composition snapshot.  Keep the full result so a window
+    // minted without a realized composition (notably a zero-world facade)
+    // remains an authentic window but cannot later enter maintained
+    // replay/comparison through an invented identity.
+    RuntimeCompositionEvidenceResult composition_evidence{};
 };
 
 namespace runtime_facade_internal {
@@ -233,6 +255,8 @@ inline constexpr std::string_view kMaintainedReplayEnvelopeWindowIdentityForeign
     "maintained_replay_envelope_window_identity_not_minted_by_this_facade";
 inline constexpr std::string_view kMaintainedReplayEnvelopeWindowEvidenceMismatch =
     "maintained_replay_envelope_window_evidence_does_not_match_minted_window";
+inline constexpr std::string_view kMaintainedReplayEnvelopeCompositionEvidenceMismatch =
+    "maintained_replay_envelope_composition_evidence_mismatch";
 inline constexpr std::string_view kMaintainedReplayEnvelopeEpisodeIdRequired =
     "maintained_replay_envelope_episode_id_required";
 inline constexpr std::string_view kMaintainedReplayEnvelopeMissingObservationProvenance =
