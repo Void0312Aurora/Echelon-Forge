@@ -1,0 +1,21 @@
+{
+  "name": "@echelon-forge/cordis-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Repository-owned Cordis package and producer for admitted simulation profiles.",
+  "exports": {
+    ".": "./src/index.mjs",
+    "./contracts/*": "./contracts/*",
+    "./packages/*": "./packages/*",
+    "./profiles/*": "./profiles/*",
+    "./overlays/*": "./overlays/*"
+  },
+  "scripts": {
+    "produce": "node src/cli.mjs produce",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "cordis": "4.0.0-rc.8"
+  }
+}

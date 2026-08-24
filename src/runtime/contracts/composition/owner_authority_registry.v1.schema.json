@@ -1,0 +1,76 @@
+{
+  "$id": "echelon_forge.owner_authority_registry.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "canonical_json": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "canonicalization": {
+      "const": "echelon_forge.sorted_utf8_json.v1"
+    },
+    "categories": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "enum": [
+              "model",
+              "system",
+              "backend",
+              "domain",
+              "evidence",
+              "security"
+            ]
+          },
+          "owner_id": {
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "owner_id"
+        ],
+        "type": "object"
+      },
+      "minItems": 6,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "hash_algorithm": {
+      "const": "sha256"
+    },
+    "registry_id": {
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+      "type": "string"
+    },
+    "registry_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "registry_version": {
+      "minLength": 1,
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "echelon_forge.owner_authority_registry.v1"
+    }
+  },
+  "required": [
+    "schema_version",
+    "registry_id",
+    "registry_version",
+    "categories",
+    "canonicalization",
+    "hash_algorithm",
+    "canonical_json",
+    "registry_sha256"
+  ],
+  "type": "object"
+}

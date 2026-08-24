@@ -25,8 +25,13 @@ RESOLVED_SCHEMA = REPO_ROOT / (
 FIXTURES = REPO_ROOT / "tests/architecture/composition/fixtures"
 REQUESTED = FIXTURES / "default_compatibility_manifest.requested.json"
 RESOLVED = FIXTURES / "default_compatibility_manifest.resolved.json"
+GENERATED_RESOLVED_HEADER = REPO_ROOT / (
+  "src/runtime/contracts/composition/"
+  "default_compatibility_manifest.v1.generated.h"
+)
 INVALID_MATRIX = FIXTURES / "invalid_manifest_matrix.v1.json"
 SYSTEM_REGISTRATION = REPO_ROOT / "src/core/engine/simulation_kernel_systems.cpp"
+SYSTEM_REGISTRY = REPO_ROOT / "src/core/engine/system_contribution_registry.cpp"
 
 
 def _read_json(path: Path) -> dict:
@@ -83,10 +88,14 @@ def _apply_invalid_case(base: dict, case: dict) -> dict:
 
 def test_generated_schema_and_default_fixtures_are_fresh() -> None:
   requested = contract.normalize_manifest(contract.default_compatibility_manifest())
+  resolved = contract.resolve_manifest(requested)
   assert SCHEMA.read_text(encoding="utf-8") == _pretty(contract.manifest_schema())
   assert RESOLVED_SCHEMA.read_text(encoding="utf-8") == _pretty(contract.resolved_schema())
   assert REQUESTED.read_text(encoding="utf-8") == _pretty(requested)
-  assert RESOLVED.read_text(encoding="utf-8") == _pretty(contract.resolve_manifest(requested))
+  assert RESOLVED.read_text(encoding="utf-8") == _pretty(resolved)
+  assert GENERATED_RESOLVED_HEADER.read_text(
+    encoding="utf-8"
+  ) == contract._default_resolved_header(resolved)
 
 
 def test_manifest_schema_is_closed_host_neutral_and_integer_canonical() -> None:
@@ -184,29 +193,54 @@ def test_default_compatibility_fixture_is_valid_and_resolves() -> None:
 
 def test_default_fixture_tracks_current_component_and_system_registration() -> None:
   requested = _read_json(REQUESTED)
-  source = SYSTEM_REGISTRATION.read_text(encoding="utf-8")
-  source_without_line_comments = re.sub(r"//[^\n]*", "", source)
-  component_names = re.findall(r"ecs\.component<([^>]+)>\(\);", source_without_line_comments)
-  assert len(component_names) == 83
-  assert set(component_names) == {
-    row["component_id"] for row in requested["component_contributions"]
+  engine_source = SYSTEM_REGISTRATION.read_text(encoding="utf-8")
+  registry_source = SYSTEM_REGISTRY.read_text(encoding="utf-8")
+  assert "register_default_component_contributions(ecs)" in engine_source
+  assert "register_default_system_contributions(ecs)" in engine_source
+  assert not re.search(r"ecs\.component<[^>]+>\(\);", engine_source)
+  assert not re.search(r"ecs\.system<[^>]+>", engine_source)
+  assert not re.search(r"register_(?!default_)[a-z0-9_]+\s*\(ecs\)", engine_source)
+
+  component_block = registry_source.split(
+    "#define EF_DEFAULT_COMPONENT_CONTRIBUTIONS", 1
+  )[1].split("#define EF_DEFAULT_SYSTEM_CONTRIBUTIONS", 1)[0]
+  component_block = re.sub(r"\\\s*", "", component_block)
+  component_rows = re.findall(
+    r"X\(([^,]+),\s*\"([^\"]+)\",\s*\"([^\"]+)\"\)",
+    component_block,
+  )
+  assert len(component_rows) == 83
+  assert {(row[1], row[2]) for row in component_rows} == {
+    (row["component_id"], row["registration_id"])
+    for row in requested["component_contributions"]
   }
 
-  system_block = source.split("Register Systems IN ORDER", 1)[1]
-  system_block = re.sub(r"//[^\n]*", "", system_block)
-  system_block = system_block.split("ecs.set<EffectsModelRef>", 1)[0]
-  registration_calls = re.findall(
-    r"((?:flight_dynamics::)?register_[a-z0-9_]+)\s*\(", system_block
+  system_block = registry_source.split(
+    "#define EF_DEFAULT_SYSTEM_CONTRIBUTIONS", 1
+  )[1].split("#define EF_COMPONENT_ROW", 1)[0]
+  system_block = re.sub(r"\\\s*", "", system_block)
+  system_rows = re.findall(
+    r"X\(\"([^\"]+)\",\s*\"([^\"]+)\",\s*\"([^\"]+)\",\s*"
+    r"\"([^\"]+)\",\s*(\d+),\s*\"([^\"]*)\"",
+    system_block,
   )
-  assert len(registration_calls) == 34
-  normalized_calls = [name.replace("::", ".") for name in registration_calls]
-  by_factory = {
-    row["registration_factory_id"]: row["contribution_id"]
-    for row in requested["system_contributions"]
-  }
-  assert set(normalized_calls) == set(by_factory)
-  assert _read_json(RESOLVED)["system_registration_order"] == [
-    by_factory[name] for name in normalized_calls
+  assert len(system_rows) == 34
+  assert [row[0] for row in sorted(system_rows, key=lambda row: int(row[4]))] == (
+    _read_json(RESOLVED)["system_registration_order"]
+  )
+  by_id = {row["contribution_id"]: row for row in requested["system_contributions"]}
+  for contribution_id, factory, domain, stage_id, order, after in system_rows:
+    row = by_id[contribution_id]
+    assert factory == row["registration_factory_id"]
+    assert domain == row["domain"]
+    assert stage_id == f"legacy.stage.{int(order):02d}"
+    assert after == (row["after"][0] if row["after"] else "")
+  assert re.findall(
+    r'X\("(builtin\.kernel\.system\.[^\"]+)",\s*"([^\"]+)",\s*(\d+),',
+    registry_source,
+  ) == [
+    ("builtin.kernel.system.rwr_reset", "kernel.pre_update.00", "0"),
+    ("builtin.kernel.system.esm_reset", "kernel.pre_update.01", "1"),
   ]
 
 

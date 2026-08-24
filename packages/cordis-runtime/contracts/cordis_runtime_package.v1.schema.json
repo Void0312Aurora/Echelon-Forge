@@ -1,0 +1,217 @@
+{
+  "$id": "echelon_forge.cordis_runtime_package.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "ascii": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "dependency": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "dependency_id": {
+              "$ref": "#/$defs/ascii"
+            },
+            "kind": {
+              "const": "npm_package"
+            },
+            "package_name": {
+              "$ref": "#/$defs/ascii"
+            },
+            "requires": {
+              "items": {
+                "$ref": "#/$defs/ascii"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            "version": {
+              "$ref": "#/$defs/semver"
+            }
+          },
+          "required": [
+            "dependency_id",
+            "kind",
+            "package_name",
+            "version",
+            "requires"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "dependency_id": {
+              "$ref": "#/$defs/ascii"
+            },
+            "kind": {
+              "const": "repository_artifact"
+            },
+            "path": {
+              "$ref": "#/$defs/relative_path"
+            },
+            "requires": {
+              "items": {
+                "$ref": "#/$defs/ascii"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            "sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          },
+          "required": [
+            "dependency_id",
+            "kind",
+            "path",
+            "sha256",
+            "requires"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "relative_path": {
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))[0-9A-Za-z._/-]+$",
+      "type": "string"
+    },
+    "semver": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+      "type": "string"
+    },
+    "sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "echelon_forge.cordis_runtime_package.v1"
+    },
+    "package_id": {
+      "$ref": "#/$defs/ascii"
+    },
+    "package_version": {
+      "$ref": "#/$defs/semver"
+    },
+    "profile": {
+      "additionalProperties": false,
+      "properties": {
+        "profile_id": {
+          "$ref": "#/$defs/ascii"
+        },
+        "profile_version": {
+          "$ref": "#/$defs/semver"
+        },
+        "module_dependency_id": {
+          "$ref": "#/$defs/ascii"
+        },
+        "bundle_dependency_id": {
+          "$ref": "#/$defs/ascii"
+        }
+      },
+      "required": [
+        "profile_id",
+        "profile_version",
+        "module_dependency_id",
+        "bundle_dependency_id"
+      ],
+      "type": "object"
+    },
+    "cordis_dependency_id": {
+      "$ref": "#/$defs/ascii"
+    },
+    "dependencies": {
+      "items": {
+        "$ref": "#/$defs/dependency"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "overlays": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "overlay_id": {
+            "$ref": "#/$defs/ascii"
+          },
+          "path": {
+            "$ref": "#/$defs/relative_path"
+          },
+          "sha256": {
+            "$ref": "#/$defs/sha256"
+          },
+          "required": {
+            "const": true
+          },
+          "requires": {
+            "items": {
+              "$ref": "#/$defs/ascii"
+            },
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "overlay_id",
+          "path",
+          "sha256",
+          "required",
+          "requires"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "provenance_policy": {
+      "additionalProperties": false,
+      "properties": {
+        "require_package_lock": {
+          "const": true
+        },
+        "require_artifact_hashes": {
+          "const": true
+        }
+      },
+      "required": [
+        "require_package_lock",
+        "require_artifact_hashes"
+      ],
+      "type": "object"
+    },
+    "diagnostics_policy": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "echelon_forge.cordis_runtime_package_diagnostics.v1"
+        },
+        "redact_absolute_paths": {
+          "const": true
+        }
+      },
+      "required": [
+        "schema_version",
+        "redact_absolute_paths"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema_version",
+    "package_id",
+    "package_version",
+    "profile",
+    "cordis_dependency_id",
+    "dependencies",
+    "overlays",
+    "provenance_policy",
+    "diagnostics_policy"
+  ],
+  "type": "object"
+}

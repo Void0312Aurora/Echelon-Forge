@@ -1,0 +1,138 @@
+{
+  "authority_registry_sha256": "5c360890992168709c79fc3b633808d5ff564b52d4f55cd7ee019811ba8d651f",
+  "canonical_json": "{\"authority_registry_sha256\":\"5c360890992168709c79fc3b633808d5ff564b52d4f55cd7ee019811ba8d651f\",\"canonicalization\":\"echelon_forge.sorted_utf8_json.v1\",\"category_authorities\":[{\"category\":\"backend\",\"owner_id\":\"owner.backend\"},{\"category\":\"domain\",\"owner_id\":\"owner.domain\"},{\"category\":\"evidence\",\"owner_id\":\"owner.evidence\"},{\"category\":\"model\",\"owner_id\":\"owner.model\"},{\"category\":\"security\",\"owner_id\":\"owner.security\"},{\"category\":\"system\",\"owner_id\":\"owner.scheduler\"}],\"contract_version\":\"echelon_forge.admitted_catalog_lock_contract.v1\",\"entries\":[{\"capabilities\":[\"runtime.world_batch.cpu\"],\"category\":\"backend\",\"descriptor_id\":\"builtin.backend.flecs_cpu\",\"implementation_id\":\"echelon_forge.native_builtin\",\"implementation_version\":\"1.0.0\",\"owner_id\":\"owner.backend\",\"provenance\":{\"artifact_identity\":\"echelon-forge-source-tree\",\"artifact_kind\":\"repository_builtin\",\"artifact_sha256\":null},\"trust_decision\":\"admitted\"},{\"capabilities\":[\"domain.combined\"],\"category\":\"domain\",\"descriptor_id\":\"builtin.domain.combined\",\"implementation_id\":\"echelon_forge.native_builtin\",\"implementation_version\":\"1.0.0\",\"owner_id\":\"owner.domain\",\"provenance\":{\"artifact_identity\":\"echelon-forge-source-tree\",\"artifact_kind\":\"repository_builtin\",\"artifact_sha256\":null},\"trust_decision\":\"admitted\"},{\"capabilities\":[\"runtime.composition.evidence\"],\"category\":\"evidence\",\"descriptor_id\":\"builtin.composition.evidence\",\"implementation_id\":\"echelon_forge.native_builtin\",\"implementation_version\":\"1.0.0\",\"owner_id\":\"owner.evidence\",\"provenance\":{\"artifact_identity\":\"echelon-forge-source-tree\",\"artifact_kind\":\"repository_builtin\",\"artifact_sha256\":null},\"trust_decision\":\"admitted\"},{\"capabilities\":[\"simulation.model.default\"],\"category\":\"model\",\"descriptor_id\":\"builtin.default.models\",\"implementation_id\":\"echelon_forge.native_builtin\",\"implementation_version\":\"1.0.0\",\"owner_id\":\"owner.model\",\"provenance\":{\"artifact_identity\":\"echelon-forge-source-tree\",\"artifact_kind\":\"repository_builtin\",\"artifact_sha256\":null},\"trust_decision\":\"admitted\"},{\"capabilities\":[\"runtime.repository_builtin\"],\"category\":\"security\",\"descriptor_id\":\"builtin.repository.admission\",\"implementation_id\":\"echelon_forge.native_builtin\",\"implementation_version\":\"1.0.0\",\"owner_id\":\"owner.security\",\"provenance\":{\"artifact_identity\":\"echelon-forge-source-tree\",\"artifact_kind\":\"repository_builtin\",\"artifact_sha256\":null},\"trust_decision\":\"admitted\"},{\"capabilities\":[\"deterministic.step\",\"simulation.system.default\"],\"category\":\"system\",\"descriptor_id\":\"builtin.default.system_graph\",\"implementation_id\":\"echelon_forge.native_builtin\",\"implementation_version\":\"1.0.0\",\"owner_id\":\"owner.scheduler\",\"provenance\":{\"artifact_identity\":\"echelon-forge-source-tree\",\"artifact_kind\":\"repository_builtin\",\"artifact_sha256\":null},\"trust_decision\":\"admitted\"}],\"hash_algorithm\":\"sha256\",\"lock_id\":\"default.admitted_catalog\",\"lock_version\":\"1.0.0\",\"request_schema_version\":\"echelon_forge.runtime_composition_request.v1\",\"request_sha256\":\"5c2954d6d04c77fe803130db14d7e5b56391dcf51e482c73ac8cd96877698d6f\",\"schema_version\":\"echelon_forge.admitted_catalog_lock.v1\"}",
+  "canonicalization": "echelon_forge.sorted_utf8_json.v1",
+  "category_authorities": [
+    {
+      "category": "backend",
+      "owner_id": "owner.backend"
+    },
+    {
+      "category": "domain",
+      "owner_id": "owner.domain"
+    },
+    {
+      "category": "evidence",
+      "owner_id": "owner.evidence"
+    },
+    {
+      "category": "model",
+      "owner_id": "owner.model"
+    },
+    {
+      "category": "security",
+      "owner_id": "owner.security"
+    },
+    {
+      "category": "system",
+      "owner_id": "owner.scheduler"
+    }
+  ],
+  "contract_version": "echelon_forge.admitted_catalog_lock_contract.v1",
+  "entries": [
+    {
+      "capabilities": [
+        "runtime.world_batch.cpu"
+      ],
+      "category": "backend",
+      "descriptor_id": "builtin.backend.flecs_cpu",
+      "implementation_id": "echelon_forge.native_builtin",
+      "implementation_version": "1.0.0",
+      "owner_id": "owner.backend",
+      "provenance": {
+        "artifact_identity": "echelon-forge-source-tree",
+        "artifact_kind": "repository_builtin",
+        "artifact_sha256": null
+      },
+      "trust_decision": "admitted"
+    },
+    {
+      "capabilities": [
+        "domain.combined"
+      ],
+      "category": "domain",
+      "descriptor_id": "builtin.domain.combined",
+      "implementation_id": "echelon_forge.native_builtin",
+      "implementation_version": "1.0.0",
+      "owner_id": "owner.domain",
+      "provenance": {
+        "artifact_identity": "echelon-forge-source-tree",
+        "artifact_kind": "repository_builtin",
+        "artifact_sha256": null
+      },
+      "trust_decision": "admitted"
+    },
+    {
+      "capabilities": [
+        "runtime.composition.evidence"
+      ],
+      "category": "evidence",
+      "descriptor_id": "builtin.composition.evidence",
+      "implementation_id": "echelon_forge.native_builtin",
+      "implementation_version": "1.0.0",
+      "owner_id": "owner.evidence",
+      "provenance": {
+        "artifact_identity": "echelon-forge-source-tree",
+        "artifact_kind": "repository_builtin",
+        "artifact_sha256": null
+      },
+      "trust_decision": "admitted"
+    },
+    {
+      "capabilities": [
+        "simulation.model.default"
+      ],
+      "category": "model",
+      "descriptor_id": "builtin.default.models",
+      "implementation_id": "echelon_forge.native_builtin",
+      "implementation_version": "1.0.0",
+      "owner_id": "owner.model",
+      "provenance": {
+        "artifact_identity": "echelon-forge-source-tree",
+        "artifact_kind": "repository_builtin",
+        "artifact_sha256": null
+      },
+      "trust_decision": "admitted"
+    },
+    {
+      "capabilities": [
+        "runtime.repository_builtin"
+      ],
+      "category": "security",
+      "descriptor_id": "builtin.repository.admission",
+      "implementation_id": "echelon_forge.native_builtin",
+      "implementation_version": "1.0.0",
+      "owner_id": "owner.security",
+      "provenance": {
+        "artifact_identity": "echelon-forge-source-tree",
+        "artifact_kind": "repository_builtin",
+        "artifact_sha256": null
+      },
+      "trust_decision": "admitted"
+    },
+    {
+      "capabilities": [
+        "deterministic.step",
+        "simulation.system.default"
+      ],
+      "category": "system",
+      "descriptor_id": "builtin.default.system_graph",
+      "implementation_id": "echelon_forge.native_builtin",
+      "implementation_version": "1.0.0",
+      "owner_id": "owner.scheduler",
+      "provenance": {
+        "artifact_identity": "echelon-forge-source-tree",
+        "artifact_kind": "repository_builtin",
+        "artifact_sha256": null
+      },
+      "trust_decision": "admitted"
+    }
+  ],
+  "hash_algorithm": "sha256",
+  "lock_id": "default.admitted_catalog",
+  "lock_sha256": "ec36d4f134e003e852a87f0dc2edb8095bbd798855d88b099e0174d45efa7f94",
+  "lock_version": "1.0.0",
+  "request_schema_version": "echelon_forge.runtime_composition_request.v1",
+  "request_sha256": "5c2954d6d04c77fe803130db14d7e5b56391dcf51e482c73ac8cd96877698d6f",
+  "schema_version": "echelon_forge.admitted_catalog_lock.v1"
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": "echelon_forge.cordis_runtime_configuration_overlay.v1",
+  "overlay_id": "builtin.default_compatibility.overlay.default",
+  "overlay_version": "1.0.0",
+  "target_profile": {
+    "profile_id": "builtin.default_compatibility",
+    "profile_version": "1.0.0"
+  },
+  "precedence": 0,
+  "configuration_patch": {
+    "seed": 42,
+    "time_step_ns": 16666667
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "cases": [
+    {
+      "artifact": "request",
+      "code": "projection.unexpected_field",
+      "id": "request_unknown_field",
+      "path": "/unknown",
+      "value": true
+    },
+    {
+      "artifact": "request",
+      "code": "projection.duplicate_value",
+      "id": "request_duplicate_capability",
+      "path": "/required_capabilities",
+      "value": [
+        "deterministic.step",
+        "deterministic.step"
+      ]
+    },
+    {
+      "artifact": "lock",
+      "code": "projection.unknown_category",
+      "id": "lock_unknown_category",
+      "path": "/entries/0/category",
+      "value": "plugin"
+    },
+    {
+      "artifact": "lock",
+      "code": "projection.owner_mismatch",
+      "id": "lock_owner_mismatch",
+      "path": "/entries/0/owner_id",
+      "value": "owner.other"
+    },
+    {
+      "artifact": "lock",
+      "code": "projection.unadmitted_implementation",
+      "id": "lock_unadmitted",
+      "path": "/entries/0/trust_decision",
+      "value": "quarantined"
+    },
+    {
+      "artifact": "lock",
+      "code": "projection.identity_mismatch",
+      "id": "lock_identity_mismatch",
+      "path": "/lock_sha256",
+      "value": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "lock_fixture": "default_admitted_catalog_lock.v1.json",
+  "request_fixture": "default_runtime_composition_request.v1.json"
+}

@@ -1,0 +1,75 @@
+{
+  "cases": [
+    {
+      "code": "profile.projection_mismatch",
+      "path": "/requested_profile/profile_id",
+      "value": "attacker.profile"
+    },
+    {
+      "code": "profile.projection_mismatch",
+      "path": "/required_capabilities/0",
+      "value": "attacker.capability"
+    },
+    {
+      "code": "profile.projection_mismatch",
+      "path": "/required_policies/0",
+      "value": "attacker.policy"
+    },
+    {
+      "code": "profile.projection_mismatch",
+      "path": "/catalog_entries/0/owner_id",
+      "value": "owner.attacker"
+    },
+    {
+      "code": "profile.projection_mismatch",
+      "path": "/component_contributions/0/registration_id",
+      "value": "attacker.registration"
+    },
+    {
+      "code": "profile.projection_mismatch",
+      "path": "/system_contributions/0/stage_order",
+      "value": 99
+    },
+    {
+      "code": "profile.projection_mismatch",
+      "path": "/compatibility_claims/0",
+      "value": "attacker.claim"
+    },
+    {
+      "code": "profile.invalid_json_type",
+      "path": "/required_capabilities",
+      "value": 7
+    },
+    {
+      "code": "profile.invalid_json_type",
+      "path": "/required_policies",
+      "value": null
+    },
+    {
+      "code": "profile.invalid_json_type",
+      "path": "/catalog_entries",
+      "value": "not-an-array"
+    },
+    {
+      "code": "profile.invalid_json_type",
+      "path": "/catalog_entries/0/capabilities",
+      "value": 7
+    },
+    {
+      "code": "profile.invalid_json_type",
+      "path": "/component_contributions/0",
+      "value": false
+    },
+    {
+      "code": "profile.invalid_json_type",
+      "path": "/system_contributions/0/stage_order",
+      "value": false
+    },
+    {
+      "code": "profile.invalid_json_type",
+      "path": "/compatibility_claims",
+      "value": false
+    }
+  ],
+  "projection_fixture": "default_runtime_profile_projection.v1.json"
+}

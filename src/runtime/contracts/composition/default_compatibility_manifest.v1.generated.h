@@ -1665,7 +1665,16 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
 )EFJSON",
 };
 
-inline constexpr std::string_view kDefaultCompatibilityRequestedSha256 = "c6581f81cc50b8f3ce155919a45737683c9a503645db59ef280cbcebac020c46";
-inline constexpr std::string_view kDefaultCompatibilityResolvedSha256 = "138e82a8a59fa4d3960da23f1c0acdda4e7a634f3a02e7f9268933c3a38bc7a5";
+inline constexpr std::string_view kDefaultCompatibilityRequestedSha256 =
+    "c6581f81cc50b8f3ce155919a45737683c9a503645db59ef280cbcebac020c46";
+inline constexpr std::string_view kDefaultCompatibilityResolvedSha256 =
+    "138e82a8a59fa4d3960da23f1c0acdda4e7a634f3a02e7f9268933c3a38bc7a5";
+
+inline constexpr std::string_view kDefaultBackendProfileId = "cpu_exact.reference";
+inline constexpr std::string_view kDefaultBackendProviderId = "builtin.backend.flecs_cpu";
+inline constexpr std::string_view kDefaultBackendImplementationVersion = "1.0.0";
+inline constexpr std::array<std::string_view, 1> kDefaultBackendRequiredCapabilities = {
+    "runtime.cpu_exact",
+};
 
 } // namespace runtime::composition_contracts::generated

@@ -1,0 +1,94 @@
+{
+  "$id": "echelon_forge.cordis_runtime_package_diagnostics.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "ascii": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "semver": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "echelon_forge.cordis_runtime_package_diagnostics.v1"
+    },
+    "status": {
+      "const": "ready_for_native_validation"
+    },
+    "package_id": {
+      "$ref": "#/$defs/ascii"
+    },
+    "package_version": {
+      "$ref": "#/$defs/semver"
+    },
+    "events": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "$ref": "#/$defs/ascii"
+          },
+          "severity": {
+            "const": "info"
+          },
+          "subject_id": {
+            "$ref": "#/$defs/ascii"
+          }
+        },
+        "required": [
+          "code",
+          "severity",
+          "subject_id"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "summary": {
+      "additionalProperties": false,
+      "properties": {
+        "dependency_count": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "overlay_count": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "request_lock_binding": {
+          "const": "validated"
+        },
+        "provenance_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "required": [
+        "dependency_count",
+        "overlay_count",
+        "request_lock_binding",
+        "provenance_sha256"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema_version",
+    "status",
+    "package_id",
+    "package_version",
+    "events",
+    "summary"
+  ],
+  "type": "object"
+}

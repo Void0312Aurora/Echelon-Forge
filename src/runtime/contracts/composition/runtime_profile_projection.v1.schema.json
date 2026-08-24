@@ -1,0 +1,204 @@
+{
+  "$id": "echelon_forge.runtime_profile_projection.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "authority_registry_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "canonical_json": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "canonicalization": {
+      "const": "echelon_forge.sorted_utf8_json.v1"
+    },
+    "catalog_entries": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "capabilities": {
+            "items": {
+              "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "category": {
+            "enum": [
+              "model",
+              "system",
+              "backend",
+              "domain",
+              "evidence",
+              "security"
+            ]
+          },
+          "descriptor_id": {
+            "minLength": 1,
+            "pattern": "^[\\u0000-\\u007F]*$",
+            "type": "string"
+          },
+          "owner_id": {
+            "minLength": 1,
+            "pattern": "^[\\u0000-\\u007F]*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "owner_id",
+          "descriptor_id",
+          "capabilities"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "compatibility_claims": {
+      "items": {
+        "minLength": 1,
+        "pattern": "^[\\u0000-\\u007F]*$",
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "component_contributions": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "component_id": {
+            "minLength": 1,
+            "pattern": "^[\\u0000-\\u007F]*$",
+            "type": "string"
+          },
+          "registration_id": {
+            "minLength": 1,
+            "pattern": "^[\\u0000-\\u007F]*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "component_id",
+          "registration_id"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "hash_algorithm": {
+      "const": "sha256"
+    },
+    "lock_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "projection_id": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "projection_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "projection_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+      "type": "string"
+    },
+    "request_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "requested_profile": {
+      "additionalProperties": false,
+      "properties": {
+        "profile_id": {
+          "minLength": 1,
+          "pattern": "^[\\u0000-\\u007F]*$",
+          "type": "string"
+        },
+        "profile_version": {
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "profile_id",
+        "profile_version"
+      ],
+      "type": "object"
+    },
+    "required_capabilities": {
+      "items": {
+        "minLength": 1,
+        "pattern": "^[\\u0000-\\u007F]*$",
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "required_policies": {
+      "items": {
+        "minLength": 1,
+        "pattern": "^[\\u0000-\\u007F]*$",
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "schema_version": {
+      "const": "echelon_forge.runtime_profile_projection.v1"
+    },
+    "system_contributions": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "contribution_id": {
+            "minLength": 1,
+            "pattern": "^[\\u0000-\\u007F]*$",
+            "type": "string"
+          },
+          "stage_order": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "contribution_id",
+          "stage_order"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "projection_id",
+    "projection_version",
+    "requested_profile",
+    "request_sha256",
+    "lock_sha256",
+    "authority_registry_sha256",
+    "required_capabilities",
+    "required_policies",
+    "catalog_entries",
+    "component_contributions",
+    "system_contributions",
+    "compatibility_claims",
+    "canonicalization",
+    "hash_algorithm",
+    "canonical_json",
+    "projection_sha256"
+  ],
+  "type": "object"
+}

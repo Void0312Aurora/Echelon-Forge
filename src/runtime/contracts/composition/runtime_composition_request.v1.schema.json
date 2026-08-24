@@ -1,0 +1,167 @@
+{
+  "$defs": {
+    "canonical_value": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "maximum": 9223372036854775807,
+          "minimum": -9223372036854775808,
+          "type": "integer"
+        },
+        {
+          "pattern": "^[\\u0000-\\u007F]*$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/canonical_value"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/canonical_value"
+          },
+          "propertyNames": {
+            "pattern": "^[\\u0000-\\u007F]*$"
+          },
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$id": "echelon_forge.runtime_composition_request.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "configuration": {
+      "$ref": "#/$defs/canonical_value"
+    },
+    "contract_versions": {
+      "additionalProperties": false,
+      "properties": {
+        "composition": {
+          "minLength": 1,
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+          "type": "string"
+        },
+        "content": {
+          "minLength": 1,
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+          "type": "string"
+        },
+        "runtime": {
+          "minLength": 1,
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+          "type": "string"
+        },
+        "stage": {
+          "minLength": 1,
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "composition",
+        "runtime",
+        "content",
+        "stage"
+      ],
+      "type": "object"
+    },
+    "intent": {
+      "additionalProperties": false,
+      "properties": {
+        "evaluation_id": {
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+          "type": "string"
+        },
+        "policy_id": {
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+          "type": "string"
+        },
+        "simulation_id": {
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "simulation_id",
+        "policy_id",
+        "evaluation_id"
+      ],
+      "type": "object"
+    },
+    "request_id": {
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+      "type": "string"
+    },
+    "request_version": {
+      "minLength": 1,
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+      "type": "string"
+    },
+    "requested_profile": {
+      "additionalProperties": false,
+      "properties": {
+        "profile_id": {
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+          "type": "string"
+        },
+        "profile_version": {
+          "minLength": 1,
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "profile_id",
+        "profile_version"
+      ],
+      "type": "object"
+    },
+    "required_capabilities": {
+      "items": {
+        "minLength": 1,
+        "pattern": "^[\\u0000-\\u007F]*$",
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "required_policies": {
+      "items": {
+        "minLength": 1,
+        "pattern": "^[\\u0000-\\u007F]*$",
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "schema_version": {
+      "const": "echelon_forge.runtime_composition_request.v1"
+    }
+  },
+  "required": [
+    "schema_version",
+    "request_id",
+    "request_version",
+    "contract_versions",
+    "intent",
+    "requested_profile",
+    "required_capabilities",
+    "required_policies",
+    "configuration"
+  ],
+  "type": "object"
+}

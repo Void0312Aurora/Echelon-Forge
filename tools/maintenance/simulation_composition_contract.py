@@ -1701,6 +1701,16 @@ def _default_resolved_header(value: Any) -> str:
   rendered_chunks = "\n".join(
     f'    R"EFJSON({chunk})EFJSON",' for chunk in chunks
   )
+  backend_request = value["manifest"]["backend_request"]
+  backend_provider = next(
+    provider
+    for provider in value["manifest"]["providers"]
+    if provider["provider_id"] == backend_request["provider_id"]
+  )
+  backend_capabilities = backend_request["required_capabilities"]
+  rendered_backend_capabilities = "\n".join(
+    f'    "{capability}",' for capability in backend_capabilities
+  )
   return (
     "#pragma once\n\n"
     "#include <array>\n"
@@ -1710,10 +1720,20 @@ def _default_resolved_header(value: Any) -> str:
     "kDefaultCompatibilityResolvedJsonChunks = {\n"
     f"{rendered_chunks}\n"
     "};\n\n"
-    "inline constexpr std::string_view kDefaultCompatibilityRequestedSha256 = "
-    f'"{value["requested_manifest_sha256"]}";\n'
-    "inline constexpr std::string_view kDefaultCompatibilityResolvedSha256 = "
-    f'"{value["resolved_manifest_sha256"]}";\n\n'
+    "inline constexpr std::string_view kDefaultCompatibilityRequestedSha256 =\n"
+    f'    "{value["requested_manifest_sha256"]}";\n'
+    "inline constexpr std::string_view kDefaultCompatibilityResolvedSha256 =\n"
+    f'    "{value["resolved_manifest_sha256"]}";\n\n'
+    "inline constexpr std::string_view kDefaultBackendProfileId = "
+    f'"{backend_request["backend_profile_id"]}";\n'
+    "inline constexpr std::string_view kDefaultBackendProviderId = "
+    f'"{backend_request["provider_id"]}";\n'
+    "inline constexpr std::string_view kDefaultBackendImplementationVersion = "
+    f'"{backend_provider["implementation_version"]}";\n'
+    f"inline constexpr std::array<std::string_view, {len(backend_capabilities)}> "
+    "kDefaultBackendRequiredCapabilities = {\n"
+    f"{rendered_backend_capabilities}\n"
+    "};\n\n"
     "} // namespace runtime::composition_contracts::generated\n"
   )
 
@@ -1723,7 +1743,7 @@ def _write_or_check(path: Path, value: Any, *, check: bool) -> bool:
   if check:
     return path.is_file() and path.read_text(encoding="utf-8") == expected
   path.parent.mkdir(parents=True, exist_ok=True)
-  path.write_text(expected, encoding="utf-8")
+  path.write_text(expected, encoding="utf-8", newline="\n")
   return True
 
 
@@ -1731,7 +1751,7 @@ def _write_or_check_text(path: Path, expected: str, *, check: bool) -> bool:
   if check:
     return path.is_file() and path.read_text(encoding="utf-8") == expected
   path.parent.mkdir(parents=True, exist_ok=True)
-  path.write_text(expected, encoding="utf-8")
+  path.write_text(expected, encoding="utf-8", newline="\n")
   return True
 
 

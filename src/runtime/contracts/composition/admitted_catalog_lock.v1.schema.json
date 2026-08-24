@@ -1,0 +1,223 @@
+{
+  "$id": "echelon_forge.admitted_catalog_lock.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "authority_registry_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "canonical_json": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "canonicalization": {
+      "const": "echelon_forge.sorted_utf8_json.v1"
+    },
+    "category_authorities": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "enum": [
+              "model",
+              "system",
+              "backend",
+              "domain",
+              "evidence",
+              "security"
+            ]
+          },
+          "owner_id": {
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "owner_id"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "contract_version": {
+      "const": "echelon_forge.admitted_catalog_lock_contract.v1"
+    },
+    "entries": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "capabilities": {
+            "items": {
+              "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "category": {
+            "enum": [
+              "model",
+              "system",
+              "backend",
+              "domain",
+              "evidence",
+              "security"
+            ]
+          },
+          "descriptor_id": {
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+            "type": "string"
+          },
+          "implementation_id": {
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+            "type": "string"
+          },
+          "implementation_version": {
+            "minLength": 1,
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+            "type": "string"
+          },
+          "owner_id": {
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+            "type": "string"
+          },
+          "provenance": {
+            "additionalProperties": false,
+            "oneOf": [
+              {
+                "properties": {
+                  "artifact_kind": {
+                    "const": "repository_builtin"
+                  }
+                },
+                "required": [
+                  "artifact_kind",
+                  "artifact_identity",
+                  "artifact_sha256"
+                ]
+              },
+              {
+                "properties": {
+                  "artifact_kind": {
+                    "enum": [
+                      "native_package",
+                      "cordis_package"
+                    ]
+                  },
+                  "artifact_sha256": {
+                    "pattern": "^[0-9a-f]{64}$",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "artifact_kind",
+                  "artifact_identity",
+                  "artifact_sha256"
+                ]
+              }
+            ],
+            "properties": {
+              "artifact_identity": {
+                "minLength": 1,
+                "pattern": "^[\\u0000-\\u007F]*$",
+                "type": "string"
+              },
+              "artifact_kind": {
+                "enum": [
+                  "repository_builtin",
+                  "native_package",
+                  "cordis_package"
+                ]
+              },
+              "artifact_sha256": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "artifact_kind",
+              "artifact_identity",
+              "artifact_sha256"
+            ],
+            "type": "object"
+          },
+          "trust_decision": {
+            "enum": [
+              "admitted"
+            ]
+          }
+        },
+        "required": [
+          "category",
+          "owner_id",
+          "descriptor_id",
+          "implementation_id",
+          "implementation_version",
+          "capabilities",
+          "provenance",
+          "trust_decision"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "hash_algorithm": {
+      "const": "sha256"
+    },
+    "lock_id": {
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+      "type": "string"
+    },
+    "lock_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "lock_version": {
+      "minLength": 1,
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+      "type": "string"
+    },
+    "request_schema_version": {
+      "const": "echelon_forge.runtime_composition_request.v1"
+    },
+    "request_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "echelon_forge.admitted_catalog_lock.v1"
+    }
+  },
+  "required": [
+    "schema_version",
+    "contract_version",
+    "lock_id",
+    "lock_version",
+    "request_schema_version",
+    "request_sha256",
+    "category_authorities",
+    "entries",
+    "authority_registry_sha256",
+    "canonicalization",
+    "hash_algorithm",
+    "canonical_json",
+    "lock_sha256"
+  ],
+  "type": "object"
+}

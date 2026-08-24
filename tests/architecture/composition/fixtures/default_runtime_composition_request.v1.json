@@ -1,0 +1,32 @@
+{
+  "configuration": {
+    "seed": 42,
+    "time_step_ns": 16666667
+  },
+  "contract_versions": {
+    "composition": "1.0.0",
+    "content": "1.0.0",
+    "runtime": "1.0.0",
+    "stage": "1.0.0"
+  },
+  "intent": {
+    "evaluation_id": "default.evaluation",
+    "policy_id": "default.policy",
+    "simulation_id": "default.simulation"
+  },
+  "request_id": "default.experiment",
+  "request_version": "1.0.0",
+  "requested_profile": {
+    "profile_id": "builtin.default_compatibility",
+    "profile_version": "1.0.0"
+  },
+  "required_capabilities": [
+    "deterministic.step",
+    "runtime.world_batch.cpu"
+  ],
+  "required_policies": [
+    "native_step_authority",
+    "no_mid_episode_truth_reconfiguration"
+  ],
+  "schema_version": "echelon_forge.runtime_composition_request.v1"
+}
