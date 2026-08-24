@@ -892,6 +892,10 @@ def verify_source_truth() -> None:
         raise ClosureError(
             "production composition builder still treats empty input as fallback authority"
         )
+    if provider_code.count("kDefaultCompatibilityResolvedJsonChunks") != 1:
+        raise ClosureError(
+            "generated default manifest chunks must have exactly one production materializer"
+        )
     if len(re.findall(r"\bresolved_manifest_json\b", provider_code)) != 6:
         raise ClosureError(
             "preflight and shared native realizer must each receive explicit manifest bytes"

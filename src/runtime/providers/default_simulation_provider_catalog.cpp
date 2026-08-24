@@ -485,11 +485,8 @@ register_default_factories(composition::ProviderCatalog &catalog, SimulationKern
 
 composition::CompositionStatus
 admit_default_executable_graph(const contracts::ResolvedSimulationComposition &resolved) {
-    std::string admitted_json;
-    for (const auto chunk : contracts::generated::kDefaultCompatibilityResolvedJsonChunks) {
-        admitted_json.append(chunk);
-    }
-    auto admitted = composition::parse_resolved_composition_json(admitted_json);
+    auto admitted = composition::parse_resolved_composition_json(
+        default_compatibility_resolved_manifest_json());
     if (!admitted) {
         return composition::CompositionStatus::failure({
             std::string(composition::kErrorExecutableGraphMismatch),
