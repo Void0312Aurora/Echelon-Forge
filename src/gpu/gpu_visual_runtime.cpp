@@ -90,8 +90,7 @@ class SnapshotEnvironmentModel final : public IEnvironmentModel {
                z2 + 0.5 >= get_terrain_elevation(x2, y2);
     }
 
-    double get_weather_attenuation(double, double, double, double, double, double,
-                                   int) override {
+    double get_weather_attenuation(double, double, double, double, double, double, int) override {
         return 0.0;
     }
 
@@ -128,14 +127,14 @@ class SnapshotEnvironmentModel final : public IEnvironmentModel {
         }
 
         const auto &raster = snapshot_.raster;
-        if (raster.resolution_m > 0.0 && raster.width > 0 && raster.height > 0 && x >= raster.origin_x &&
-            y >= raster.origin_y) {
+        if (raster.resolution_m > 0.0 && raster.width > 0 && raster.height > 0 &&
+            x >= raster.origin_x && y >= raster.origin_y) {
             const int col = static_cast<int>((x - raster.origin_x) / raster.resolution_m);
             const int row = static_cast<int>((y - raster.origin_y) / raster.resolution_m);
             if (col >= 0 && col < raster.width && row >= 0 && row < raster.height) {
-                const std::size_t index = static_cast<std::size_t>(row) *
-                                              static_cast<std::size_t>(raster.width) +
-                                          static_cast<std::size_t>(col);
+                const std::size_t index =
+                    static_cast<std::size_t>(row) * static_cast<std::size_t>(raster.width) +
+                    static_cast<std::size_t>(col);
                 if (index < raster.surface_codes.size()) {
                     return cell_for_surface(static_cast<SurfaceType>(raster.surface_codes[index]),
                                             0.0, cell.elevation);
@@ -155,10 +154,8 @@ class SnapshotEnvironmentModel final : public IEnvironmentModel {
     void clear_maritime_state() override {}
 
     MaritimeState get_maritime_state() const override {
-        return MaritimeState{snapshot_.maritime_state_configured,
-                              snapshot_.sea_state,
-                              snapshot_.wave_heading_deg,
-                              snapshot_.wave_period_s};
+        return MaritimeState{snapshot_.maritime_state_configured, snapshot_.sea_state,
+                             snapshot_.wave_heading_deg, snapshot_.wave_period_s};
     }
 
   private:
@@ -296,9 +293,10 @@ std::vector<float> render_visual_reference_cpu(const VisualRenderRequest &reques
         request.out_height, request.out_width);
 }
 
-std::vector<float> render_visual_reference_cpu_from_snapshot(
-    const VisualRenderRequest &request, const std::vector<VisibleObjectPacked> &objects,
-    const DefaultEnvironmentSnapshot *snapshot) {
+std::vector<float>
+render_visual_reference_cpu_from_snapshot(const VisualRenderRequest &request,
+                                          const std::vector<VisibleObjectPacked> &objects,
+                                          const DefaultEnvironmentSnapshot *snapshot) {
     if (snapshot == nullptr || !snapshot->valid) {
         return render_visual_reference_cpu(request, objects, nullptr);
     }
@@ -369,9 +367,10 @@ std::vector<float> render_visual_experiment(const VisualRenderRequest &request,
     return render_visual_reference_cpu(request, objects, env);
 }
 
-std::vector<float> render_visual_experiment_from_snapshot(
-    const VisualRenderRequest &request, const std::vector<VisibleObjectPacked> &objects,
-    const DefaultEnvironmentSnapshot *snapshot) {
+std::vector<float>
+render_visual_experiment_from_snapshot(const VisualRenderRequest &request,
+                                       const std::vector<VisibleObjectPacked> &objects,
+                                       const DefaultEnvironmentSnapshot *snapshot) {
     return render_visual_experiment_batch_export_from_snapshot({request}, {objects}, snapshot).flat;
 }
 
@@ -469,7 +468,8 @@ VisualBatchRenderExport render_visual_experiment_batch_export_from_snapshot(
         if (!flat.empty()) {
             const void *device_ptr = detail::last_visual_output_device_ptr_cuda();
             const std::size_t device_float_count = detail::last_visual_output_float_count_cuda();
-            const bool valid_device_output = device_ptr != nullptr && device_float_count == flat.size();
+            const bool valid_device_output =
+                device_ptr != nullptr && device_float_count == flat.size();
             return VisualBatchRenderExport{
                 .flat = std::move(flat),
                 .device_ptr = valid_device_output ? device_ptr : nullptr,
@@ -484,7 +484,8 @@ VisualBatchRenderExport render_visual_experiment_batch_export_from_snapshot(
         if (!flat.empty()) {
             const void *device_ptr = detail::last_visual_output_device_ptr_cuda();
             const std::size_t device_float_count = detail::last_visual_output_float_count_cuda();
-            const bool valid_device_output = device_ptr != nullptr && device_float_count == flat.size();
+            const bool valid_device_output =
+                device_ptr != nullptr && device_float_count == flat.size();
             return VisualBatchRenderExport{
                 .flat = std::move(flat),
                 .device_ptr = valid_device_output ? device_ptr : nullptr,

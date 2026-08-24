@@ -1047,9 +1047,9 @@ struct CompositionRuntime::Impl {
             try {
                 replacement = std::make_unique<PreparedPlan>(*plan);
             } catch (const std::exception &exception) {
-                return CompositionStatus::failure(exception_error(
-                    kErrorProviderConstructionFailed, std::string(contracts::to_string(scope)),
-                    exception));
+                return CompositionStatus::failure(
+                    exception_error(kErrorProviderConstructionFailed,
+                                    std::string(contracts::to_string(scope)), exception));
             } catch (...) {
                 return CompositionStatus::failure(unknown_exception_error(
                     kErrorProviderConstructionFailed, std::string(contracts::to_string(scope))));

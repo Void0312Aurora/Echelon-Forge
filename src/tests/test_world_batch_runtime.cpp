@@ -104,8 +104,8 @@ TEST_SUITE("world_batch_runtime") {
     TEST_CASE("visual compatibility scenes own snapshots across world shutdown") {
         WorldBatchRuntime runtime(1);
         auto &world = runtime.world_raw_quarantine(0);
-        const auto camera = world.spawn_unit(Side::Blue, "Aircraft", 0.0, 0.0, 1000.0, 0.0,
-                                             0.0, 0.0, 0.0, 0.0, 0.0);
+        const auto camera = world.spawn_unit(Side::Blue, "Aircraft", 0.0, 0.0, 1000.0, 0.0, 0.0,
+                                             0.0, 0.0, 0.0, 0.0);
         REQUIRE(camera.is_valid());
 
         WorldEntityRef ref{};

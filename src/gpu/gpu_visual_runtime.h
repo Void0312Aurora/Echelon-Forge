@@ -91,9 +91,10 @@ std::vector<float> render_visual_reference_cpu(const VisualRenderRequest &reques
                                                const std::vector<VisibleObjectPacked> &objects,
                                                IEnvironmentModel *env);
 
-std::vector<float> render_visual_reference_cpu_from_snapshot(
-    const VisualRenderRequest &request, const std::vector<VisibleObjectPacked> &objects,
-    const DefaultEnvironmentSnapshot *snapshot);
+std::vector<float>
+render_visual_reference_cpu_from_snapshot(const VisualRenderRequest &request,
+                                          const std::vector<VisibleObjectPacked> &objects,
+                                          const DefaultEnvironmentSnapshot *snapshot);
 
 std::vector<float> render_visual_reference_cpu_batch_from_snapshot(
     const std::vector<VisualRenderRequest> &requests,
@@ -125,8 +126,9 @@ std::vector<float> render_visual_experiment(const VisualRenderRequest &request,
                                             const std::vector<VisibleObjectPacked> &objects,
                                             IEnvironmentModel *env);
 
-std::vector<float> render_visual_experiment_from_snapshot(
-    const VisualRenderRequest &request, const std::vector<VisibleObjectPacked> &objects,
-    const DefaultEnvironmentSnapshot *snapshot);
+std::vector<float>
+render_visual_experiment_from_snapshot(const VisualRenderRequest &request,
+                                       const std::vector<VisibleObjectPacked> &objects,
+                                       const DefaultEnvironmentSnapshot *snapshot);
 
 } // namespace gpu

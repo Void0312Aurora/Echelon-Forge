@@ -247,18 +247,16 @@ TEST_SUITE("simulation_kernel_smoke") {
         for (int index = 0; index < rebuild_count; ++index) {
             workers.emplace_back([&kernel, &results, index] {
                 std::string error;
-                results[index] = kernel.rebuild_world_composition("world_rebuild", &error) &&
-                                         error.empty()
-                                     ? 1
-                                     : -1;
+                results[index] =
+                    kernel.rebuild_world_composition("world_rebuild", &error) && error.empty() ? 1
+                                                                                               : -1;
             });
         }
         for (auto &worker : workers) {
             worker.join();
         }
 
-        CHECK(std::all_of(results.begin(), results.end(),
-                          [](int result) { return result == 1; }));
+        CHECK(std::all_of(results.begin(), results.end(), [](int result) { return result == 1; }));
         CHECK(kernel.world_composition_generation() == 1 + rebuild_count);
     }
 
@@ -304,9 +302,8 @@ TEST_SUITE("simulation_kernel_smoke") {
         // with the same MSVC toolchain and are not a general replay framework.
         SimulationKernel kernel;
         kernel.reset(12345);
-        const auto entity =
-            kernel.spawn_unit(Side::Blue, "Aircraft", 100.0, 200.0, 3000.0, 45.0, 0.0, 0.0, 150.0,
-                              0.0, 0.0);
+        const auto entity = kernel.spawn_unit(Side::Blue, "Aircraft", 100.0, 200.0, 3000.0, 45.0,
+                                              0.0, 0.0, 150.0, 0.0, 0.0);
         REQUIRE(entity.is_valid());
 
         for (int i = 0; i < 10; ++i) {
