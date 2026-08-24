@@ -1001,8 +1001,16 @@ def verify_source_truth() -> None:
             "src/runtime/providers/default_simulation_provider_catalog.h",
         },
     )
-    if fault_injection_callers != ["src/tests/test_simulation_kernel_smoke.cpp"] or (
-        len(re.findall(r"\bbuild_default_simulation_composition_for_testing\s*\(", smoke_test_code))
+    if fault_injection_callers != ["src/core/engine/simulation_kernel.cpp"] or (
+        len(re.findall(r"\bbuild_default_simulation_composition_for_testing\s*\(", kernel_code))
+        != 1
+    ) or (
+        len(
+            re.findall(
+                r"\bprobe_default_provider_publication_failure_for_testing\s*\(",
+                smoke_test_code,
+            )
+        )
         != 1
     ):
         raise ClosureError(
@@ -1138,10 +1146,10 @@ def build_record() -> dict[str, Any]:
                 "classification": "test_only_fault_injection",
                 "owner": "core/engine",
                 "callers": scan_cpp_symbol_callers(
-                    "build_default_simulation_composition_for_testing",
+                    "probe_default_provider_publication_failure_for_testing",
                     excluded_paths={
-                        "src/runtime/providers/default_simulation_provider_catalog.cpp",
-                        "src/runtime/providers/default_simulation_provider_catalog.h",
+                        "src/core/engine/simulation_kernel.cpp",
+                        "src/core/engine/simulation_kernel.h",
                     },
                 ),
                 "disposition": (

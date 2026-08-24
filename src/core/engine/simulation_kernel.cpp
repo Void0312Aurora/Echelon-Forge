@@ -43,6 +43,15 @@ SimulationKernel::~SimulationKernel() {
     shutdown();
 }
 
+std::string SimulationKernel::probe_default_provider_publication_failure_for_testing() {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("probe_default_provider_publication_failure_for_testing");
+    auto result = runtime::providers::build_default_simulation_composition_for_testing(
+        *this, ecs, missile_tuning_, rng,
+        runtime::providers::DefaultSimulationCompositionFaultInjection::fail_effects_publication);
+    return result ? std::string{} : result.error().code;
+}
+
 void SimulationKernel::ensure_active(const char *operation) const {
     if (shutdown_complete_) {
         throw std::logic_error(std::string("SimulationKernel::") + operation +

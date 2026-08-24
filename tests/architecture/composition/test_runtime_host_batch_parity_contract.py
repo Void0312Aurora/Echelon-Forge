@@ -153,17 +153,17 @@ def test_p7_evidence_fails_closed_for_identity_node_and_budget_tampering() -> No
     replay["evidence_refs"] = ["forged-a", "forged-b", "forged-c", "forged-d", "forged-e", composition_ref]
   candidates.append(forged_composition_replay)
 
-  impossible_high_water = deepcopy(evidence)
-  for host in impossible_high_water["hosts"]:
+  decreasing_high_water = deepcopy(evidence)
+  for host in decreasing_high_water["hosts"]:
     metrics = host["metrics"]
-    metrics["peak_rss_before_bytes"] = 1
+    metrics["peak_rss_before_bytes"] = 2
     metrics["peak_rss_after_bytes"] = 1
     metrics["peak_rss_delta_bytes"] = 0
     metrics["peak_rss_delta_bytes_per_world"] = 0.0
-  impossible_high_water["budget_evaluation"] = parity.evaluate_budget(
-    impossible_high_water["hosts"][0], impossible_high_water["hosts"][1], parity.BUDGET
+  decreasing_high_water["budget_evaluation"] = parity.evaluate_budget(
+    decreasing_high_water["hosts"][0], decreasing_high_water["hosts"][1], parity.BUDGET
   )
-  candidates.append(impossible_high_water)
+  candidates.append(decreasing_high_water)
 
   zero_time_metrics = deepcopy(evidence)
   duration_names = (

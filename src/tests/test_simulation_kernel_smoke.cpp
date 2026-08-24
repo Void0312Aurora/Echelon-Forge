@@ -7,8 +7,8 @@
 
 #include "core/engine/simulation_kernel.h"
 #include "core/engine/simulation_kernel_command_surface.h"
+#include "runtime/composition/composition_error.h"
 #include "runtime/contracts/composition/default_compatibility_manifest.v1.generated.h"
-#include "runtime/providers/default_simulation_provider_catalog.h"
 #include "components/command/command_link.h"
 #include "components/command/command_link_qos.h"
 #include "components/domains/naval/combat/weapon_naval.h"
@@ -25,7 +25,6 @@
 #include <cmath>
 #include <future>
 #include <limits>
-#include <random>
 #include <string>
 #include <stdexcept>
 #include <vector>
@@ -113,19 +112,10 @@ TEST_SUITE("simulation_kernel_smoke") {
         const auto resolved_before = kernel.resolved_composition_sha256();
         const auto generation_before = kernel.world_composition_generation();
 
-        MissileTuning tuning{};
-        std::mt19937 rng(42);
-        runtime::providers::DefaultSimulationCompositionResult result;
-        {
-            auto lease = kernel.acquire_world_lease();
-            result = runtime::providers::build_default_simulation_composition_for_testing(
-                kernel, lease.world(), tuning, rng,
-                runtime::providers::DefaultSimulationCompositionFaultInjection::
-                    fail_effects_publication);
-        }
+        const std::string error_code =
+            kernel.probe_default_provider_publication_failure_for_testing();
 
-        CHECK_FALSE(result.ok());
-        CHECK(result.error().code == runtime::composition::kErrorLifecycleEffectCommitFailed);
+        CHECK(error_code == runtime::composition::kErrorLifecycleEffectCommitFailed);
         CHECK(kernel.requested_composition_sha256() == requested_before);
         CHECK(kernel.resolved_composition_sha256() == resolved_before);
         CHECK(kernel.world_composition_generation() == generation_before);
