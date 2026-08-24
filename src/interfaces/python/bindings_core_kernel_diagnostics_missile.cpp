@@ -15,7 +15,9 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
             "debug_get_missile_runtime_state",
             [](SimulationKernel &self, uint64_t entity_id) {
                 nb::dict out;
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     return out;
                 }

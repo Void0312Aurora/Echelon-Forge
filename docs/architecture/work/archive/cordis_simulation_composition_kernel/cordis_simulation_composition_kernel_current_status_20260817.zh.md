@@ -85,10 +85,10 @@ Contract baseline：
 | System composition | P3-A 默认图有界切片已接受 | owner-derived registry 校验 count、identity、dependency edge 与 stage order；native conformance 在 realization 前另行校验冻结 default artifact | profile-specific omission、完整 semantic-stage/read-write join 与更广 package admission |
 | Capability/profile projection | P3-B 默认 profile 有界切片已接受 | 版本化 projection contract join capability/policy、owner catalog、83 个 component identity 与 34 项 native system order；Cordis/native conformance 重复校验该 join | 更多 profile、完整 semantic-stage/read-write metadata 与外部 package admission |
 | Backend composition | P4-A 默认 provider 有界切片已接受 | `RuntimeFacade` 通过从 generated resolved manifest 派生的 native provider catalog 实例化维护中的 CPU-exact backend；聚焦原生准入与 fail-before-factory 测试通过；独立审阅返回 P0/P1/P2 = 0/0/0 | 更广 maintained profile、CUDA parity、diagnostics/provider evidence |
-| Composition evidence | P5-A 默认 CPU-exact 有界切片已接受 | 版本化 schema/generator 绑定 request、requested/resolved manifest、catalog lock、profile projection、11 个 provider version、精确 CPU backend、83+2+34 executable graph、全部 world/五类 scope、原生执行 owner identity 与 window-commit snapshot；replay/comparison 拒绝无法解释的 mismatch | 更广 profile/backend、完整 state replay、调用语言/模块来源证明、外部 package |
+| Composition evidence | P5-A 默认 CPU-exact 有界切片已接受 | 版本化 schema/generator 绑定 request、requested/resolved manifest、catalog lock、profile projection、11 个 provider version、精确 CPU backend、83+2+34 executable graph、全部 world/五类 scope 与原生执行 owner identity；直接 composition comparison 拒绝无法解释的 mismatch | 更广 profile/backend、完整 state replay、调用语言/模块来源证明、外部 package |
 | Projection/catalog-lock control plane | P2-C0 accepted bounded slice | 已有 producer-neutral request 与 owner-derived lock schema、generated fixture、canonical identity 重算、负向 admission matrix、native revalidation 和 offline low-level-only guard | P2-C1/P3-B 默认 profile join 已作为有界切片接受；更广 profile 仍为 residual |
 | Cordis control plane | P2-C1/P3-B/P6-A 默认 profile package 有界切片已接受 | 严格 package/overlay schema 与 SDK export 固定 Cordis `4.0.0-rc.8`、package lock、profile module/bundle 和默认 overlay；确定性解析、LF 稳定原始 hash、封存 provenance、diagnostics 与不变的 native admission 均通过；独立审阅返回 P0/P1/P2 = 0/0/0 | 更广/改变 truth 的 profile 需 owner 准入；外部签名/plugin、更广 backend parity 与 Node host 仍开放 |
-| Host/batch parity | P7-A 默认 CPU-exact 有界切片已接受 | Cordis artifact 先通过 native conformance；native-direct 与本地 `ef_py` 行匹配同一冻结 action/state/event/reward/termination/replay reference 与精确 composition identity；32-world cold/warm、loaded reset、current/high-water RSS、teardown residual 与 throughput gate 通过；独立审阅返回 P0/P1/P2 = 0/0/0 | Node 行由 P6-B held；更广 profile/backend、CUDA parity、多轮 leak characterization 与完整 replay 仍开放 |
+| Host/batch parity | P7-A 默认 CPU-exact 有界切片已接受 | Cordis artifact 先通过 native conformance；native-direct 与本地 `ef_py` 行匹配同一冻结 action/state/event/window/composition-comparison reference 与精确 composition identity；32-world cold/warm、loaded reset、current/high-water RSS、teardown residual 与 throughput gate 通过；独立审阅返回 P0/P1/P2 = 0/0/0 | Node 行由 P6-B held；更广 profile/backend、CUDA parity、多轮 leak characterization 与完整 replay 仍开放 |
 | Node host | absent | Node-API 只是候选 host boundary | 批准 binding target 与 lifecycle/parity test |
 | Runtime acceptance | accepted bounded default CPU-exact closure | 默认 behavior、system、backend、evidence、Cordis producer、native/Python parity、caller inventory、retired-surface proof、standard promotion 与 archive routing | 具名 held 残余需独立 admission |
 
@@ -160,8 +160,8 @@ production 与已记录的 test-only publication-failure seam 委托同一个内
 封存 closure record 绑定已接受 request、catalog lock、profile projection、requested/resolved
 manifest、package provenance/dependency graph、composition evidence 与 P7 parity evidence。live
 inventory 分类维护中的 `RuntimeFacade`、默认 kernel compatibility/diagnostic、
-native nested-facade、`WorldBatchRuntime`、Cordis/native bridge 与 test-only fault-injection
-caller，共十个 retained surface。validator 从 payload 与 live package bytes 重算上游 artifact
+`WorldBatchRuntime`、Cordis/native bridge 与 test-only fault-injection caller，
+共九个 retained surface。validator 从 payload 与 live package bytes 重算上游 artifact
 identity，并拒绝 strict-schema、caller-classification、lexical、underlying-payload 与重新封存
 forgery attack。稳定规则已提升到 runtime composition baseline，owner index 已把本 package
 路由为 completed work；Node、更广 profile/provider、CUDA、外部 plugin signing/distribution
@@ -172,10 +172,10 @@ forgery attack。稳定规则已提升到 runtime composition baseline，owner i
 已接受的 P7-A 切片保持 Cordis 的 producer/control-plane 角色，每项输出 artifact 均先通过
 既有 native conformance binary。直接 C++ 与本地 `ef_py` caller 行随后证明精确 composition
 join，并匹配独立封存的 semantic reference；该 reference 覆盖非零 typed pilot action、
-observation/state、window event trace、非零 reward、termination/truncation 输出与 maintained
-replay envelope。batch evidence 分离 cold/warm construction，测量 32-world warmed step loop，
+observation/state、window event trace 与直接 composition comparison。batch evidence 分离
+cold/warm construction，测量 32-world warmed step loop，
 在每次 timed reset 前重建同一 loaded workload，并记录 current/OS high-water RSS 与 teardown
-residual memory。validator 重算全部派生 metric，拒绝重新封存的 semantic、replay、identity、
+residual memory。validator 重算全部派生 metric，拒绝重新封存的 semantic、composition、identity、
 metric、host 与 environment forgery。独立 `gpt-5.6-sol/max` 审阅返回 P0/P1/P2 = 0/0/0。
 
 该验收不增加 Node 行、不扩大准入 profile/backend、不声明 CUDA parity，也不声明完整

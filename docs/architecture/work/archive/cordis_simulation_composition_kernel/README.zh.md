@@ -213,7 +213,7 @@ component/system call 替换为 owner-derived registry，但尚未填满全部 s
 capability/policy requirement 与 owner lock/native graph；它不是通用多 profile resolver。
 P4-A 仅接受维护中的默认 CPU-exact provider。P5-A 将该切片绑定到 request/manifest/lock/
 profile、11 个 provider version、83+2+34 executable graph、精确 backend identity、全部
-realized world 与五类 scope，以及 window commit 时封存的 replay/comparison evidence。
+realized world 与五类 scope，以及严格 composition-comparison evidence。
 host 字段记录原生执行 owner（`native_cpp/native.v1`），不声明调用语言证明；Python
 caller-origin attestation 仍是 residual。P6-A 现已固定 Cordis/package-lock/profile module/
 bundle/default overlay 的精确字节，解析确定性四节点依赖图，拒绝缺失、重复、成环、冲突
@@ -222,7 +222,7 @@ request/lock/profile projection。它不拥有 provider、backend 选择、compo
 或 system order。更广 P2-C1 profile/provider、CUDA parity、binding 迁移、外部签名/plugin
 与完整 replay 继续作为独立 held 计划。P7-A 增加严格 native-direct 与
 本地 `ef_py` caller 行，将其 join 到 Cordis-produced artifact，并冻结 action/state/event/
-reward/termination/replay 语义参考及保守的 32-world cold/warm/reset/RSS/teardown budget。
+window/composition-comparison 语义参考及保守的 32-world cold/warm/reset/RSS/teardown budget。
 独立 `gpt-5.6-sol/max` 审阅返回 P0/P1/P2 = 0/0/0。P8-A 删除了隐式 empty-manifest
 fallback，封存 live caller/truth-path inventory，证明退场 setter/concrete-construction surface
 不存在，提升维护中 standard，并路由全部可选 residual。

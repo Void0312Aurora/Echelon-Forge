@@ -39,7 +39,7 @@ provider seam；尚未实现的 Cordis、backend、host 或性能迁移不属于
 | Domain profile admission | 默认 compatibility profile 的 capability/policy join 与 owner-derived contribution bundle；更广 minimal/common/air/naval/ground/combined profile | profile 绕开领域成熟度或创建私有 lifecycle | accepted bounded P3-B default-profile slice；更广 domain profile planned |
 | Backend admission | facade 按精确 profile/provider/version/capability identity 选择准入 provider；unsupported candidate 与 construction failure 均 fail closed | 具体 backend 仍是构造真值、忽略 identity drift 或拒绝 profile 静默 fallback | P4-A 默认 provider 有界切片已接受；更广 provider admission 仍开放 |
 | Projection/catalog-lock authority | versioned producer-neutral request DTO、确定性 owner-derived lock、canonical bytes/hash、category-owner matrix、正负 admission case 与 offline high-level-lowering guard | Cordis 拥有私有 catalog、存在两个高层 resolver，或原生侧无法核验 lock identity/selection | accepted bounded P2-C0 |
-| Evidence/replay | 精确 request/manifest/lock/profile identity、11 个 provider version、83+2+34 graph identity、精确 backend identity、原生执行 owner、全部 world/五类 scope、commit-sealed evidence 与严格 replay/comparison mismatch rejection | unexplained composition/catalog-lock/backend/graph/scope mismatch 下仍继续 replay/comparison，或当前状态覆盖已提交 window | P5-A 默认 CPU-exact 有界切片已接受；更广 profile/backend 与完整 state replay 仍开放 |
+| Evidence/comparison | 精确 request/manifest/lock/profile identity、11 个 provider version、83+2+34 graph identity、精确 backend identity、原生执行 owner、全部 world/五类 scope与严格 composition mismatch rejection | unexplained composition/catalog-lock/backend/graph/scope mismatch 下仍继续 comparison | P5-A 默认 CPU-exact 有界切片已接受；更广 profile/backend 与完整 state replay 仍开放 |
 | Cordis conformance | Cordis primitives 加仓库 profile/bundle layer 通过 owner lock lower 真实默认 request，生成 canonical manifest 并完成原生 realization | 原生侧不重新校验、Cordis 绕开 owner admission、存在私有 Cordis catalog，或 parity 仅覆盖 synthetic manifest fixture | accepted bounded P2-C1 default-profile slice；必需默认纵向路径已纳入 P8 closure |
 | Binding isolation | Python/C++ 使用同一原生执行 owner；Node 在另行准入时也必须如此 | binding 拥有仿真真值、raw ECS bypass、逐 step callback，或 Node 成为离线 native/Python 必需依赖 | P7-A native-direct/本地 `ef_py` caller evidence 有界范围已接受；Node 仍开放 |
 | Batch/performance | 代表性启动、内存、吞吐、determinism、teardown 测量 | mandatory per-world Node context、hot-path lookup/crossing 或未批准回归 | P7-A 32-world CPU-exact 回归 envelope 有界范围已接受；更广硬件/profile characterization 仍开放 |
@@ -78,7 +78,7 @@ provider seam；尚未实现的 Cordis、backend、host 或性能迁移不属于
 - default compatibility profile 下确定性 state/event trace；
 - observation/action/reward/termination equivalence；
 - exact-stage graph identity；
-- replay/comparison mismatch handling；
+- composition comparison mismatch handling；
 - 既有 backend contract 下 CPU 与准入 CUDA profile parity。
 
 ### Host 与性能
@@ -144,8 +144,8 @@ P5-A 作为默认 CPU-exact composition-evidence 有界切片接受。
 catalog lock、profile projection、全部 11 个 provider version、精确 backend identity，
 以及由 owner registry 派生的 83 个 component、2 个 kernel system 与 34 个 resolved system
 执行图。每个 realized world 记录全部五类 scope；单调 facade incarnation 阻止 resize 或
-`configure_batch` ABA；zero-world evidence fail closed；window commit 封存 maintained replay
-与 comparison 使用的 identity；所有无法解释的 mismatch 均被拒绝。已接受 host 字段仅表示
+`configure_batch` ABA；zero-world evidence fail closed；直接 composition comparison
+拒绝所有无法解释的 mismatch。已接受 host 字段仅表示
 原生执行 owner（`native_cpp/native.v1`），包括 Python 作为粗粒度 caller 的情况；不声明
 调用语言或物理模块来源证明。更广 profile/backend、完整 simulation-state replay、Node 与
 外部 package provenance 仍开放。
@@ -164,10 +164,10 @@ Node hosting 或 CUDA parity。
 P7-A 作为默认 CPU-exact host/batch parity 有界切片接受。Cordis 继续只是 producer/control
 plane，其 artifact 在 direct C++ 与本地 `ef_py` 行执行前先通过 native conformance。两行均
 匹配独立封存的 semantic reference，覆盖非零 typed action、state/observation、window event
-trace、非零 reward、termination/truncation、精确 composition 与 maintained replay evidence。
+trace、精确 composition 与直接 composition comparison。
 冻结的 32-world budget 分离 cold/warm construction 与 warmed stepping，在每次 timed reset
 前恢复同一 loaded workload，测量 current/OS high-water RSS，并 gate teardown residual memory。
-validator 重算派生值并拒绝重新封存的 semantic、replay、graph、metric、host/environment 与
+validator 重算派生值并拒绝重新封存的 semantic、composition、graph、metric、host/environment 与
 integer-alias forgery。独立 `gpt-5.6-sol/max` 审阅返回 P0/P1/P2 = 0/0/0。Node 继续由 P6-B
 held；更广 profile/backend、CUDA parity 与完整 replay 在有界闭合之外继续 held。
 
@@ -175,7 +175,7 @@ P8-A 作为有界 migration closure 接受。native builder 不再含隐式 empt
 默认 constructor 显式使用 generated resolved artifact，并与 explicit Cordis/native manifest
 bridge 汇入同一条路径。production 与已记录的 test-only publication-failure seam 共享一个
 内部 native realizer。封存 live inventory 证明七个 model setter 与 kernel/facade 退场位置
-的 concrete construction 不存在，分类十个 retained caller surface，并在接受 identity 前
+的 concrete construction 不存在，分类九个 retained caller surface，并在接受 identity 前
 重新验证 request、lock、projection、manifest、package bytes/provenance、composition evidence
 与 parity evidence。严格 schema 与 focused attack test 会拒绝被修改的上游 payload、未分类
 native caller、额外 authority/truth 字段与重新封存 closure forgery。稳定规则已进入维护中的

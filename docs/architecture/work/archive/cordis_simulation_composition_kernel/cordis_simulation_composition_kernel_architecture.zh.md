@@ -550,15 +550,15 @@ compatibility wrapper 必须带移除条件，不得成为永久第二组合机�
 backend-provider 有界迁移，在独立 `gpt-5.6-sol` / `max` 审阅返回 P0/P1/P2 = 0/0/0
 后已接受。步骤 10，即 P5-A，接受维护中默认 CPU-exact realization 的精确 evidence：
 request/manifest/lock/profile identity、全部 11 个 provider、83+2+34 executable graph、
-精确 backend identity、原生执行 owner、每个 world/五类 scope、commit sealing，以及
-replay/comparison mismatch rejection。其 host 字段不证明调用语言或物理模块来源。
+精确 backend identity、原生执行 owner、每个 world/五类 scope，以及
+直接 composition-comparison mismatch rejection。其 host 字段不证明调用语言或物理模块来源。
 步骤 11，即 P6-A，增加严格仓库自有 package/overlay SDK、确定性四节点依赖解析、跨平台
 稳定原始字节 pin、精确 producer/package-lock identity、与实际 request/lock/profile
 projection 绑定的封存 provenance，以及不包含本机路径的 diagnostics，同时不拥有
 provider/backend/graph truth。独立 `gpt-5.6-sol` / `max` 审阅返回 P0/P1/P2 = 0/0/0。
 这些结果使 P7-A eligible，并保持 P6-B conditional。步骤 12，即 P7-A，把 Cordis-produced
 artifact identity 绑定到 native-direct/本地 `ef_py` 行与冻结的非零 action/state/event/
-reward/termination/replay reference，并接受保守的 32-world cold/warm/reset/RSS/teardown
+window/composition-comparison reference，并接受保守的 32-world cold/warm/reset/RSS/teardown
 回归 envelope。独立 `gpt-5.6-sol` / `max` 审阅返回 P0/P1/P2 = 0/0/0。P8-A 随后闭合
 有界默认 CPU-exact 计划；这些结果不准入更广 profile/package/backend、完整 replay、CUDA、
 外部 plugin 或 Node hosting。

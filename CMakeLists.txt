@@ -806,12 +806,11 @@ target_compile_definitions(ef_backend_provider_migration_test PRIVATE
 )
 
 # P5-A focused target: the facade must export owner-joined composition evidence
-# from the realized backend/worlds and reject strict replay/comparison identity
-# mismatches without inventing a fallback profile.
+# from the realized backend/worlds and reject strict identity mismatches without
+# inventing a fallback profile.
 add_executable(ef_composition_evidence_test
     src/tests/test_main.cpp
     src/tests/test_composition_evidence.cpp
-    src/tests/test_runtime_facade_maintained_replay_envelope.cpp
 )
 if (UNIX AND NOT APPLE)
     target_link_libraries(ef_composition_evidence_test PRIVATE

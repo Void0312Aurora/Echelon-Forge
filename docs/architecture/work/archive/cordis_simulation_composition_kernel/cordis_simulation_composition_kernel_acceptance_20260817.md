@@ -42,7 +42,7 @@ backend, host, or performance migrations that have not been implemented.
 | Domain profile admission | default compatibility profile capability/policy join and owner-derived contribution bundle; broader minimal/common/air/naval/ground/combined profiles | profile bypasses domain maturity or creates a private lifecycle | accepted bounded P3-B default-profile slice; broader domain profiles planned |
 | Backend admission | facade selects an admitted provider with exact profile/provider/version/capability identity; unsupported candidates and construction failures are fail-closed | concrete backend remains construction truth, identity drift is ignored, or rejected profile silently falls back | accepted bounded P4-A default-provider slice; broader provider admission remains open |
 | Projection and catalog-lock authority | versioned producer-neutral request DTO, deterministic owner-derived lock, canonical bytes/hashes, category-owner matrix, positive/negative admission cases, and offline high-level-lowering guard | Cordis owns a private catalog, two high-level resolvers exist, or native cannot verify lock identity/selection | accepted bounded P2-C0 |
-| Evidence and replay | exact request/manifest/lock/profile identities, 11 provider versions, 83+2+34 graph identity, exact backend identity, native execution owner, all worlds/five scopes, commit-sealed evidence, and strict replay/comparison mismatch rejection | replay/comparison proceeds with unexplained composition/catalog-lock/backend/graph/scope mismatch, or current state overwrites a committed window | accepted bounded P5-A default CPU-exact slice; broader profile/backend and complete state replay remain open |
+| Evidence and comparison | exact request/manifest/lock/profile identities, 11 provider versions, 83+2+34 graph identity, exact backend identity, native execution owner, all worlds/five scopes, and strict composition mismatch rejection | comparison proceeds with unexplained composition/catalog-lock/backend/graph/scope mismatch | accepted bounded P5-A default CPU-exact slice; broader profile/backend and complete state replay remain open |
 | Cordis conformance | Cordis primitives plus the repository profile/bundle layer lower the real default request through the owner lock into canonical manifest and native realization | native side trusts Cordis without revalidation, Cordis bypasses owner admission, a private Cordis catalog exists, or parity covers only a synthetic manifest fixture | accepted bounded P2-C1 default-profile slice; required default vertical path is included in P8 closure |
 | Binding isolation | Python and C++ use the same native execution owner; Node does so if separately admitted | binding owns simulation truth, raw ECS bypass, per-step callback, or Node becomes required for offline native/Python operation | accepted for bounded P7-A native-direct/local-`ef_py` caller evidence; Node remains open |
 | Batch and performance | representative startup, memory, throughput, determinism, and teardown measurements | mandatory per-world Node context, hot-path lookup/crossing, or unapproved regression | accepted bounded P7-A 32-world CPU-exact regression envelope; broader hardware/profile characterization remains open |
@@ -166,9 +166,8 @@ resolved manifests, catalog lock, profile projection, all 11 provider versions,
 the exact backend identity, and the owner-derived executable graph of 83
 components, 2 kernel systems, and 34 resolved systems. Every realized world
 records all five scopes; a monotonic facade incarnation prevents resize or
-`configure_batch` ABA; zero-world evidence fails closed; window commit seals the
-identity consumed by maintained replay and comparison; and mismatches are
-rejected. The accepted host fields mean native execution owner
+`configure_batch` ABA; zero-world evidence fails closed; direct composition
+comparison rejects unexplained mismatches. The accepted host fields mean native execution owner
 (`native_cpp/native.v1`), including when Python is the coarse caller. They do
 not attest caller language or physical module origin. Broader profiles/backends,
 complete simulation-state replay, Node, and external package provenance remain
@@ -192,12 +191,11 @@ P7-A is accepted as a bounded default CPU-exact host/batch parity slice. Cordis
 remains a producer/control plane whose artifacts pass native conformance before
 the direct C++ and local `ef_py` rows execute. Both rows match a separately
 sealed semantic reference covering non-zero typed actions, state/observations,
-window event traces, non-zero reward, termination/truncation, exact composition,
-and maintained replay evidence. A frozen 32-world budget separates cold/warm
+window event traces, exact composition, and direct composition comparison. A frozen 32-world budget separates cold/warm
 construction and warmed stepping, restores the same loaded workload before
 every timed reset, measures current and OS high-water RSS, and gates teardown
 residual memory. The validator recomputes derived values and rejects re-sealed
-semantic, replay, graph, metric, host/environment, and integer-alias forgeries.
+semantic, composition, graph, metric, host/environment, and integer-alias forgeries.
 Independent `gpt-5.6-sol/max` review returned P0/P1/P2 = 0/0/0. Node remains
 held behind P6-B; broader profiles/backends, CUDA parity, and complete replay
 remain held outside the bounded closure.
@@ -208,7 +206,7 @@ uses the generated resolved artifact and converges with the explicit
 Cordis/native manifest bridge. Production and the documented test-only
 publication-failure seam share one internal native realizer. The sealed live
 inventory proves seven model setters and concrete construction at retired
-kernel/facade locations absent, classifies ten retained caller surfaces, and
+kernel/facade locations absent, classifies nine retained caller surfaces, and
 revalidates the request, lock, projection, manifests, package bytes/provenance,
 composition evidence, and parity evidence before accepting their identities.
 Strict schema and focused attack tests reject altered upstream payloads,

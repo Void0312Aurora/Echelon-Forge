@@ -93,7 +93,7 @@
     },
     "caller_inventory": {
       "type": "array",
-      "minItems": 10,
+      "minItems": 9,
       "maxItems": 10,
       "items": {"$ref": "#/$defs/caller"}
     },

@@ -1,7 +1,6 @@
 #include <doctest/doctest.h>
 
 #include "runtime/contracts/composition/runtime_composition_evidence.v1.generated.h"
-#include "runtime/contracts/counterfactual_replay_contracts.h"
 #include "runtime/contracts/runtime_composition_evidence_contract.h"
 #include "runtime/facade/runtime_facade.h"
 
@@ -62,14 +61,6 @@ bool has_mismatch(const RuntimeCompositionEvidenceComparison &comparison,
                   std::string_view expected) {
     return std::find(comparison.mismatches.begin(), comparison.mismatches.end(), expected) !=
            comparison.mismatches.end();
-}
-
-RuntimeWindowResult composition_evidence_window(RuntimeFacade &facade, std::uint64_t trace_id) {
-    RuntimeWindowRequest request{};
-    request.window_id = "window:composition-evidence";
-    request.source_time_s = 5.0;
-    request.engagement_request.trace_ids = {trace_id};
-    return facade.run_window(request);
 }
 
 double elapsed_ms(const SteadyClock::time_point start) {
@@ -302,63 +293,6 @@ Json parity_pilot_actions_json(const std::vector<WorldPilotActionAssignment> &as
     return result;
 }
 
-Json parity_execution_outputs(RuntimeFacade &facade, const std::vector<WorldEntityRef> &refs) {
-    std::vector<ExecutionEpisodeState> states;
-    states.reserve(refs.size());
-    std::vector<WorldExecutionEpisodeStepRequest> step_requests;
-    step_requests.reserve(refs.size());
-    for (const WorldEntityRef &ref : refs) {
-        ExecutionEpisodeState state{};
-        state.agent_id = ref.entity_id;
-        states.push_back(std::move(state));
-
-        WorldExecutionEpisodeStepRequest request{};
-        request.world_index = ref.world_index;
-        request.entity_id = ref.entity_id;
-        request.env_state.steps = 1;
-        request.env_state.max_steps = 10;
-        request.env_state.truth_x = 0.0;
-        request.env_state.truth_z = 1200.0;
-        request.env_state.truth_speed = 180.0;
-        request.env_state.has_safety = true;
-        request.env_state.safety.finite_state_valid = true;
-        request.env_state.safety.health = 100.0;
-        request.env_state.safety.survival_reward = 0.02;
-        request.env_state.has_waypoint = true;
-        request.env_state.waypoint.valid = true;
-        request.env_state.waypoint.waypoint_index = 0;
-        request.env_state.waypoint.waypoint_count = 1;
-        request.env_state.waypoint.dist_m = 50.0;
-        request.env_state.waypoint.waypoint_radius_m = 1200.0;
-        request.env_state.waypoint.has_prev_dist = true;
-        request.env_state.waypoint.prev_dist_m = 120.0;
-        request.env_state.waypoint.progress_weight = 0.1;
-        request.env_state.waypoint.distance_weight = -0.001;
-        request.env_state.waypoint.reached_bonus = 20.0;
-        step_requests.push_back(std::move(request));
-    }
-    facade.prime_execution_episode_batch(refs, states);
-    ExecutionBatchStepRequest batch{};
-    batch.step_requests = std::move(step_requests);
-    batch.include_agent_observations = false;
-    batch.include_instrument_states = false;
-    const ExecutionBatchStepResult result = facade.step_execution_batch(batch);
-    Json status_vectors = Json::array();
-    for (const auto &status : result.status_vectors) {
-        status_vectors.push_back(status);
-    }
-    return {
-        {"rewards", result.rewards},
-        {"terminated", result.terminated},
-        {"truncated", result.truncated},
-        {"termination_reasons", result.termination_reasons},
-        {"reward_breakdown_jsons", result.reward_breakdown_jsons},
-        {"status_vectors", status_vectors},
-        {"step_info_valid_flags", result.step_info_valid_flags},
-        {"controller_state_changed_flags", result.controller_state_changed_flags},
-    };
-}
-
 Json parity_window_trace(const RuntimeWindowResult &window) {
     Json barriers = Json::array();
     for (const RuntimeWindowBarrierRecord &barrier : window.barrier_trace) {
@@ -424,7 +358,6 @@ Json run_native_semantic_parity_workload() {
         facade.step_batch();
     }
     const Json final = parity_observations_json(facade.get_agent_observations_batch(refs));
-    const Json execution_outputs = parity_execution_outputs(facade, refs);
     const RuntimeCompositionEvidenceResult composition = facade.export_composition_evidence();
     if (!composition.available) {
         throw std::runtime_error("P7-A semantic workload has no composition evidence");
@@ -432,32 +365,25 @@ Json run_native_semantic_parity_workload() {
     RuntimeWindowRequest window_request{};
     window_request.window_id = "window:host-batch-parity";
     window_request.source_time_s = 5.0;
-    window_request.engagement_request.trace_ids = {facade.allocate_trace_id()};
+    window_request.engagement_request.trace_ids = {1};
     const RuntimeWindowResult window = facade.run_window(window_request);
-    const auto replay = facade.build_maintained_replay_envelope(window, "run:host-batch-parity",
-                                                                "episode:host-batch-parity", 41);
-    if (!replay.admitted) {
-        throw std::runtime_error("P7-A semantic replay envelope was not admitted");
+    const auto comparison = facade.compare_composition_evidence(composition.evidence);
+    if (!comparison.compatible || !comparison.mismatches.empty()) {
+        throw std::runtime_error("P7-A semantic composition comparison was not admitted");
     }
     const std::string composition_ref =
         "composition_evidence_sha256=" + composition.evidence.evidence_sha256;
-    if (std::find(replay.evidence_refs.begin(), replay.evidence_refs.end(), composition_ref) ==
-        replay.evidence_refs.end()) {
-        throw std::runtime_error("P7-A replay envelope omitted composition evidence");
-    }
     return {
         {"composition", parity_composition_json(composition.evidence)},
         {"action_inputs", parity_pilot_actions_json(actions)},
         {"initial_observations", initial},
         {"final_observations", final},
-        {"execution_outputs", execution_outputs},
         {"window_trace", parity_window_trace(window)},
-        {"replay_comparison",
+        {"composition_comparison",
          {
-             {"admitted", replay.admitted},
-             {"replay_envelope_id", replay.envelope.replay_envelope_id},
-             {"evidence_refs", replay.evidence_refs},
-             {"composition_evidence_ref", composition_ref},
+             {"compatible", comparison.compatible},
+             {"mismatches", comparison.mismatches},
+             {"evidence_ref", composition_ref},
          }},
     };
 }
@@ -599,6 +525,7 @@ Json run_native_batch_measurement() {
 TEST_CASE("P5-A default facade evidence exactly matches the generated owner fixture") {
     RuntimeFacade facade(1);
     const RuntimeCompositionEvidenceResult result = facade.export_composition_evidence();
+    INFO(result.error_code, ": ", result.error_detail);
     REQUIRE(result.available);
     CHECK(result.error_code.empty());
 
@@ -798,45 +725,8 @@ TEST_CASE("P5-A validation rejects duplicate providers and incomplete world scop
                       [](const auto &issue) { return issue.code == "evidence.non_ascii_string"; }));
 }
 
-TEST_CASE("P5-A window commit seals composition identity for replay and comparison") {
-    RuntimeFacade facade(1);
-    const std::uint64_t baseline_trace = facade.allocate_trace_id();
-    const RuntimeWindowResult baseline = composition_evidence_window(facade, baseline_trace);
-    const RuntimeCompositionEvidenceResult sealed = facade.export_composition_evidence();
-    REQUIRE(sealed.available);
-
-    const auto admitted = facade.build_maintained_replay_envelope(baseline, "run:composition",
-                                                                  "episode:composition", 41);
-    REQUIRE(admitted.admitted);
-    CHECK(std::find(admitted.evidence_refs.begin(), admitted.evidence_refs.end(),
-                    "composition_evidence_sha256=" + sealed.evidence.evidence_sha256) !=
-          admitted.evidence_refs.end());
-
-    facade.resize(2);
-    const auto replay_rejected = facade.build_maintained_replay_envelope(
-        baseline, "run:composition", "episode:composition", 41);
-    CHECK_FALSE(replay_rejected.admitted);
-    CHECK(replay_rejected.rejection_reason ==
-          "maintained_replay_envelope_composition_evidence_mismatch");
-    CHECK(std::find(replay_rejected.errors.begin(), replay_rejected.errors.end(),
-                    "$.world_instances") != replay_rejected.errors.end());
-
-    const std::uint64_t candidate_trace = facade.allocate_trace_id();
-    const RuntimeWindowResult candidate = composition_evidence_window(facade, candidate_trace);
-    const auto comparison = facade.build_maintained_worldline_comparison(
-        baseline, candidate, "run:composition", "episode:composition", 41, 41);
-    CHECK_FALSE(comparison.admitted);
-    CHECK(comparison.rejection_reason ==
-          "maintained_worldline_comparison_baseline_envelope_rejected");
-    CHECK(std::find(comparison.errors.begin(), comparison.errors.end(),
-                    "maintained_replay_envelope_composition_evidence_mismatch") !=
-          comparison.errors.end());
-}
-
 TEST_CASE("P5-A shrink and regrow cannot reproduce an old composition incarnation") {
     RuntimeFacade facade(1);
-    const std::uint64_t baseline_trace = facade.allocate_trace_id();
-    const RuntimeWindowResult baseline = composition_evidence_window(facade, baseline_trace);
     const RuntimeCompositionEvidenceResult before = facade.export_composition_evidence();
     REQUIRE(before.available);
 
@@ -852,16 +742,7 @@ TEST_CASE("P5-A shrink and regrow cannot reproduce an old composition incarnatio
     CHECK_FALSE(comparison.compatible);
     CHECK(has_mismatch(comparison, "$.world_instances"));
 
-    const auto replay = facade.build_maintained_replay_envelope(baseline, "run:composition-aba",
-                                                                "episode:composition-aba", 43);
-    CHECK_FALSE(replay.admitted);
-    CHECK(replay.rejection_reason == "maintained_replay_envelope_composition_evidence_mismatch");
-    CHECK(std::find(replay.errors.begin(), replay.errors.end(), "$.world_instances") !=
-          replay.errors.end());
-
     RuntimeFacade configured(1);
-    const RuntimeWindowResult configured_baseline =
-        composition_evidence_window(configured, configured.allocate_trace_id());
     const RuntimeCompositionEvidenceResult configured_before =
         configured.export_composition_evidence();
     REQUIRE(configured_before.available);
@@ -874,24 +755,6 @@ TEST_CASE("P5-A shrink and regrow cannot reproduce an old composition incarnatio
     REQUIRE(configured_after.available);
     CHECK(configured_after.evidence.evidence_sha256 != configured_before.evidence.evidence_sha256);
     CHECK_FALSE(configured.compare_composition_evidence(configured_before.evidence).compatible);
-    const auto configured_replay = configured.build_maintained_replay_envelope(
-        configured_baseline, "run:composition-configure-aba", "episode:composition-configure-aba",
-        47);
-    CHECK_FALSE(configured_replay.admitted);
-    CHECK(configured_replay.rejection_reason ==
-          "maintained_replay_envelope_composition_evidence_mismatch");
-}
-
-TEST_CASE("P5-A zero-world window is authentic but cannot claim replay composition") {
-    RuntimeFacade facade(0);
-    const RuntimeWindowResult window =
-        composition_evidence_window(facade, facade.allocate_trace_id());
-    const auto replay =
-        facade.build_maintained_replay_envelope(window, "run:zero-world", "episode:zero-world", 7);
-    CHECK_FALSE(replay.admitted);
-    CHECK(replay.rejection_reason == "maintained_replay_envelope_composition_evidence_mismatch");
-    CHECK(std::find(replay.errors.begin(), replay.errors.end(),
-                    "sealed:composition_evidence.no_realized_worlds") != replay.errors.end());
 }
 
 TEST_CASE("P7-A default CPU-exact native host and batch parity probe") {

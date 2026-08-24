@@ -100,7 +100,9 @@ void bind_simulation_kernel_diagnostics_hit_and_view_surface(nb::class_<Simulati
         .def(
             "get_sensor_debug_view",
             [](SimulationKernel &self, uint64_t entity_id) {
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     return SensorDebugView{};
                 }
@@ -115,7 +117,9 @@ void bind_simulation_kernel_diagnostics_hit_and_view_surface(nb::class_<Simulati
             "get_track_debug_view",
             [](SimulationKernel &self, uint64_t entity_id) {
                 std::vector<TrackDebugView> out;
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     return out;
                 }
@@ -134,7 +138,9 @@ void bind_simulation_kernel_diagnostics_hit_and_view_surface(nb::class_<Simulati
             "get_tentative_track_debug_view",
             [](SimulationKernel &self, uint64_t entity_id) {
                 std::vector<TrackDebugView> out;
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     return out;
                 }
@@ -153,7 +159,9 @@ void bind_simulation_kernel_diagnostics_hit_and_view_surface(nb::class_<Simulati
             "get_flight_dynamics_debug_view",
             [](SimulationKernel &self, uint64_t entity_id) {
                 FlightDynamicsDebugView out;
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     return out;
                 }

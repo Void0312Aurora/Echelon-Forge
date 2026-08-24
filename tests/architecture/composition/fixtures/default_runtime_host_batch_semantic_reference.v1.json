@@ -1,5 +1,5 @@
 {
-  "canonical_json": "{\"canonicalization\":\"echelon_forge.sorted_utf8_json.v1\",\"hash_algorithm\":\"sha256\",\"profile_id\":\"builtin.default_compatibility\",\"profile_version\":\"1.0.0\",\"reference_version\":\"1.0.0\",\"schema_version\":\"echelon_forge.runtime_host_batch_semantic_reference.v1\",\"semantic\":{\"action_inputs\":[{\"active\":true,\"entity_id\":581,\"gear_handle\":0.0,\"rudder\":0.05,\"stick_pitch\":0.2,\"stick_roll\":-0.1,\"throttle\":0.75,\"world_index\":0},{\"active\":true,\"entity_id\":581,\"gear_handle\":0.0,\"rudder\":0.05,\"stick_pitch\":0.2,\"stick_roll\":-0.1,\"throttle\":0.75,\"world_index\":1}],\"composition\":{\"backend_implementation_version\":\"1.0.0\",\"backend_profile_id\":\"cpu_exact.reference\",\"backend_provider_id\":\"builtin.backend.flecs_cpu\",\"binding_version\":\"native.v1\",\"catalog_lock_sha256\":\"ec36d4f134e003e852a87f0dc2edb8095bbd798855d88b099e0174d45efa7f94\",\"evidence_sha256\":\"ee2ee6e3fd12b21da2d29517e359a09a445e12e4eb5ed6cd149bcbec6e2fceb4\",\"executable_graph_sha256\":\"c6527d5e0398078e440bbea477a8e8de7c711f18f0ec38b7cd96dc5d798c8d02\",\"host_mode\":\"native_cpp\",\"profile_projection_sha256\":\"a6983836e82df80805ac3f0f4f4a6975edccf3024d8ff231a67009a596a28c09\",\"provider_count\":11,\"requested_manifest_sha256\":\"c6581f81cc50b8f3ce155919a45737683c9a503645db59ef280cbcebac020c46\",\"resolved_manifest_sha256\":\"138e82a8a59fa4d3960da23f1c0acdda4e7a634f3a02e7f9268933c3a38bc7a5\",\"runtime_request_sha256\":\"5c2954d6d04c77fe803130db14d7e5b56391dcf51e482c73ac8cd96877698d6f\",\"world_count\":2},\"execution_outputs\":{\"controller_state_changed_flags\":[false,false],\"reward_breakdown_jsons\":[\"{\\\"survival\\\": 0.02, \\\"total\\\": 19.97, \\\"tracked_total\\\": 19.97, \\\"untracked\\\": 0.0, \\\"waypoint_distance\\\": -0.05, \\\"waypoint_reached_bonus\\\": 20.0}\",\"{\\\"survival\\\": 0.02, \\\"total\\\": 19.97, \\\"tracked_total\\\": 19.97, \\\"untracked\\\": 0.0, \\\"waypoint_distance\\\": -0.05, \\\"waypoint_reached_bonus\\\": 20.0}\"],\"rewards\":[19.97,19.97],\"status_vectors\":[[0.0,1.0,1.0,0.0],[0.0,1.0,1.0,0.0]],\"step_info_valid_flags\":[false,false],\"terminated\":[false,false],\"termination_reasons\":[\"running\",\"running\"],\"truncated\":[false,false]},\"final_observations\":[{\"entity_id\":581,\"heading\":90.00274679519706,\"health\":100.0,\"pitch\":0.552385441487548,\"roll\":-0.05393131361066139,\"sim_time\":0.15000000223517418,\"speed\":199.50730570410252,\"vx\":199.5030481329565,\"vy\":3.113098270140649e-05,\"vz\":-1.3033859629751705,\"x\":1029.9646723983371,\"y\":7.782745791323571e-07,\"z\":1499.895952801882},{\"entity_id\":581,\"heading\":90.00274679519706,\"health\":100.0,\"pitch\":0.552385441487548,\"roll\":-0.05393131361066139,\"sim_time\":0.15000000223517418,\"speed\":199.50730570410252,\"vx\":199.5030481329565,\"vy\":3.113098270140649e-05,\"vz\":-1.3033859629751705,\"x\":1129.964672398337,\"y\":7.782745791323571e-07,\"z\":1499.895952801882}],\"initial_observations\":[{\"entity_id\":581,\"heading\":90.0,\"health\":100.0,\"pitch\":0.0,\"roll\":0.0,\"sim_time\":0.0,\"speed\":200.0,\"vx\":200.0,\"vy\":0.0,\"vz\":0.0,\"x\":1000.0,\"y\":0.0,\"z\":1500.0},{\"entity_id\":581,\"heading\":90.0,\"health\":100.0,\"pitch\":0.0,\"roll\":0.0,\"sim_time\":0.0,\"speed\":200.0,\"vx\":200.0,\"vy\":0.0,\"vz\":0.0,\"x\":1100.0,\"y\":0.0,\"z\":1500.0}],\"replay_comparison\":{\"admitted\":true,\"composition_evidence_ref\":\"composition_evidence_sha256=ee2ee6e3fd12b21da2d29517e359a09a445e12e4eb5ed6cd149bcbec6e2fceb4\",\"evidence_refs\":[\"RuntimeFacade.build_maintained_replay_envelope\",\"snapshot_version_ref=global:0\",\"barrier_id=window_commit\",\"event_order_ref=event:trace:1\",\"facade_provenance_ref=obs:0\",\"composition_evidence_sha256=ee2ee6e3fd12b21da2d29517e359a09a445e12e4eb5ed6cd149bcbec6e2fceb4\"],\"replay_envelope_id\":\"replay:maintained:run:host-batch-parity:trace:1\"},\"window_trace\":{\"barriers\":[{\"barrier_id\":\"input_injection\",\"node_id\":\"\",\"sequence\":1},{\"barrier_id\":\"window_commit\",\"node_id\":\"\",\"sequence\":2},{\"barrier_id\":\"export\",\"node_id\":\"\",\"sequence\":3}],\"engagement\":{\"barrier_id\":\"export\",\"barrier_sequence\":1,\"diagnostics_trace_count\":0,\"effects_event_count\":0,\"launch_event_count\":0,\"producer_node_id\":\"observation_export.v1\",\"snapshot_version\":0,\"source_time_s\":0.0,\"trace_ids\":[1]},\"executed_nodes\":[{\"decision_barrier_id\":\"input_injection\",\"decision_reason\":\"control cadence had no trigger or hold candidate\",\"execution_state\":\"skipped\",\"node_id\":\"fire_control_launch.v1\",\"source_snapshot_version\":\"\",\"target_window_id\":\"window:host-batch-parity\",\"trigger_source\":\"input_injection:none\",\"visible_input_count\":0},{\"decision_barrier_id\":\"window_commit\",\"decision_reason\":\"physics cadence had no upstream launch/effects trigger\",\"execution_state\":\"skipped\",\"node_id\":\"effects_damage.v1\",\"source_snapshot_version\":\"\",\"target_window_id\":\"window:host-batch-parity\",\"trigger_source\":\"window_commit:none\",\"visible_input_count\":0},{\"decision_barrier_id\":\"export\",\"decision_reason\":\"maintained observation/export cadence triggered by the export barrier\",\"execution_state\":\"executed\",\"node_id\":\"observation_export.v1\",\"source_snapshot_version\":\"\",\"target_window_id\":\"window:host-batch-parity\",\"trigger_source\":\"export:maintained_facade_export\",\"visible_input_count\":0}]}},\"semantic_steps\":3,\"semantic_world_count\":2}",
+  "canonical_json": "{\"canonicalization\":\"echelon_forge.sorted_utf8_json.v1\",\"hash_algorithm\":\"sha256\",\"profile_id\":\"builtin.default_compatibility\",\"profile_version\":\"1.0.0\",\"reference_version\":\"1.0.0\",\"schema_version\":\"echelon_forge.runtime_host_batch_semantic_reference.v1\",\"semantic\":{\"action_inputs\":[{\"active\":true,\"entity_id\":581,\"gear_handle\":0.0,\"rudder\":0.05,\"stick_pitch\":0.2,\"stick_roll\":-0.1,\"throttle\":0.75,\"world_index\":0},{\"active\":true,\"entity_id\":581,\"gear_handle\":0.0,\"rudder\":0.05,\"stick_pitch\":0.2,\"stick_roll\":-0.1,\"throttle\":0.75,\"world_index\":1}],\"composition\":{\"backend_implementation_version\":\"1.0.0\",\"backend_profile_id\":\"cpu_exact.reference\",\"backend_provider_id\":\"builtin.backend.flecs_cpu\",\"binding_version\":\"native.v1\",\"catalog_lock_sha256\":\"ec36d4f134e003e852a87f0dc2edb8095bbd798855d88b099e0174d45efa7f94\",\"evidence_sha256\":\"ee2ee6e3fd12b21da2d29517e359a09a445e12e4eb5ed6cd149bcbec6e2fceb4\",\"executable_graph_sha256\":\"c6527d5e0398078e440bbea477a8e8de7c711f18f0ec38b7cd96dc5d798c8d02\",\"host_mode\":\"native_cpp\",\"profile_projection_sha256\":\"a6983836e82df80805ac3f0f4f4a6975edccf3024d8ff231a67009a596a28c09\",\"provider_count\":11,\"requested_manifest_sha256\":\"c6581f81cc50b8f3ce155919a45737683c9a503645db59ef280cbcebac020c46\",\"resolved_manifest_sha256\":\"138e82a8a59fa4d3960da23f1c0acdda4e7a634f3a02e7f9268933c3a38bc7a5\",\"runtime_request_sha256\":\"5c2954d6d04c77fe803130db14d7e5b56391dcf51e482c73ac8cd96877698d6f\",\"world_count\":2},\"composition_comparison\":{\"compatible\":true,\"evidence_ref\":\"composition_evidence_sha256=ee2ee6e3fd12b21da2d29517e359a09a445e12e4eb5ed6cd149bcbec6e2fceb4\",\"mismatches\":[]},\"final_observations\":[{\"entity_id\":581,\"heading\":90.00274679519706,\"health\":100.0,\"pitch\":0.552385441487548,\"roll\":-0.05393131361066139,\"sim_time\":0.15000000223517418,\"speed\":199.50730570410252,\"vx\":199.5030481329565,\"vy\":3.113098270140649e-05,\"vz\":-1.3033859629751705,\"x\":1029.9646723983371,\"y\":7.782745791323571e-07,\"z\":1499.895952801882},{\"entity_id\":581,\"heading\":90.00274679519706,\"health\":100.0,\"pitch\":0.552385441487548,\"roll\":-0.05393131361066139,\"sim_time\":0.15000000223517418,\"speed\":199.50730570410252,\"vx\":199.5030481329565,\"vy\":3.113098270140649e-05,\"vz\":-1.3033859629751705,\"x\":1129.964672398337,\"y\":7.782745791323571e-07,\"z\":1499.895952801882}],\"initial_observations\":[{\"entity_id\":581,\"heading\":90.0,\"health\":100.0,\"pitch\":0.0,\"roll\":0.0,\"sim_time\":0.0,\"speed\":200.0,\"vx\":200.0,\"vy\":0.0,\"vz\":0.0,\"x\":1000.0,\"y\":0.0,\"z\":1500.0},{\"entity_id\":581,\"heading\":90.0,\"health\":100.0,\"pitch\":0.0,\"roll\":0.0,\"sim_time\":0.0,\"speed\":200.0,\"vx\":200.0,\"vy\":0.0,\"vz\":0.0,\"x\":1100.0,\"y\":0.0,\"z\":1500.0}],\"window_trace\":{\"barriers\":[{\"barrier_id\":\"input_injection\",\"node_id\":\"\",\"sequence\":1},{\"barrier_id\":\"window_commit\",\"node_id\":\"\",\"sequence\":2},{\"barrier_id\":\"export\",\"node_id\":\"\",\"sequence\":3}],\"engagement\":{\"barrier_id\":\"export\",\"barrier_sequence\":1,\"diagnostics_trace_count\":0,\"effects_event_count\":0,\"launch_event_count\":0,\"producer_node_id\":\"observation_export.v1\",\"snapshot_version\":0,\"source_time_s\":0.0,\"trace_ids\":[1]},\"executed_nodes\":[{\"decision_barrier_id\":\"input_injection\",\"decision_reason\":\"control cadence had no trigger or hold candidate\",\"execution_state\":\"skipped\",\"node_id\":\"fire_control_launch.v1\",\"source_snapshot_version\":\"\",\"target_window_id\":\"window:host-batch-parity\",\"trigger_source\":\"input_injection:none\",\"visible_input_count\":0},{\"decision_barrier_id\":\"window_commit\",\"decision_reason\":\"physics cadence had no upstream launch/effects trigger\",\"execution_state\":\"skipped\",\"node_id\":\"effects_damage.v1\",\"source_snapshot_version\":\"\",\"target_window_id\":\"window:host-batch-parity\",\"trigger_source\":\"window_commit:none\",\"visible_input_count\":0},{\"decision_barrier_id\":\"export\",\"decision_reason\":\"maintained observation/export cadence triggered by the export barrier\",\"execution_state\":\"executed\",\"node_id\":\"observation_export.v1\",\"source_snapshot_version\":\"\",\"target_window_id\":\"window:host-batch-parity\",\"trigger_source\":\"export:maintained_facade_export\",\"visible_input_count\":0}]}},\"semantic_steps\":3,\"semantic_world_count\":2}",
   "canonicalization": "echelon_forge.sorted_utf8_json.v1",
   "hash_algorithm": "sha256",
   "profile_id": "builtin.default_compatibility",
@@ -45,49 +45,10 @@
       "runtime_request_sha256": "5c2954d6d04c77fe803130db14d7e5b56391dcf51e482c73ac8cd96877698d6f",
       "world_count": 2
     },
-    "execution_outputs": {
-      "controller_state_changed_flags": [
-        false,
-        false
-      ],
-      "reward_breakdown_jsons": [
-        "{\"survival\": 0.02, \"total\": 19.97, \"tracked_total\": 19.97, \"untracked\": 0.0, \"waypoint_distance\": -0.05, \"waypoint_reached_bonus\": 20.0}",
-        "{\"survival\": 0.02, \"total\": 19.97, \"tracked_total\": 19.97, \"untracked\": 0.0, \"waypoint_distance\": -0.05, \"waypoint_reached_bonus\": 20.0}"
-      ],
-      "rewards": [
-        19.97,
-        19.97
-      ],
-      "status_vectors": [
-        [
-          0.0,
-          1.0,
-          1.0,
-          0.0
-        ],
-        [
-          0.0,
-          1.0,
-          1.0,
-          0.0
-        ]
-      ],
-      "step_info_valid_flags": [
-        false,
-        false
-      ],
-      "terminated": [
-        false,
-        false
-      ],
-      "termination_reasons": [
-        "running",
-        "running"
-      ],
-      "truncated": [
-        false,
-        false
-      ]
+    "composition_comparison": {
+      "compatible": true,
+      "evidence_ref": "composition_evidence_sha256=ee2ee6e3fd12b21da2d29517e359a09a445e12e4eb5ed6cd149bcbec6e2fceb4",
+      "mismatches": []
     },
     "final_observations": [
       {
@@ -153,19 +114,6 @@
         "z": 1500.0
       }
     ],
-    "replay_comparison": {
-      "admitted": true,
-      "composition_evidence_ref": "composition_evidence_sha256=ee2ee6e3fd12b21da2d29517e359a09a445e12e4eb5ed6cd149bcbec6e2fceb4",
-      "evidence_refs": [
-        "RuntimeFacade.build_maintained_replay_envelope",
-        "snapshot_version_ref=global:0",
-        "barrier_id=window_commit",
-        "event_order_ref=event:trace:1",
-        "facade_provenance_ref=obs:0",
-        "composition_evidence_sha256=ee2ee6e3fd12b21da2d29517e359a09a445e12e4eb5ed6cd149bcbec6e2fceb4"
-      ],
-      "replay_envelope_id": "replay:maintained:run:host-batch-parity:trace:1"
-    },
     "window_trace": {
       "barriers": [
         {
@@ -231,7 +179,7 @@
       ]
     }
   },
-  "semantic_reference_sha256": "a0f3666effd463585613dba8259ddb28f92d450a5cc60a0091374e52255fc7a3",
+  "semantic_reference_sha256": "a70161224b58964834eabd05255753dc9b37fbca79929b97a23c8c3a2efffeb9",
   "semantic_steps": 3,
   "semantic_world_count": 2
 }

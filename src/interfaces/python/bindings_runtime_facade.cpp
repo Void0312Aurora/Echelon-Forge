@@ -16,6 +16,9 @@ void bind_runtime_facade(nb::module_ &m) {
         .def(nb::init<const RuntimeBatchConfig &>(), nb::arg("config"))
         .def("batch_config", &RuntimeFacade::batch_config)
         .def("capabilities", &RuntimeFacade::capabilities)
+        .def("export_composition_evidence", &RuntimeFacade::export_composition_evidence)
+        .def("compare_composition_evidence", &RuntimeFacade::compare_composition_evidence,
+             nb::arg("expected"))
         .def("admit_backend_request", &RuntimeFacade::admit_backend_request, nb::arg("request"))
         .def("admit_fidelity_request", &RuntimeFacade::admit_fidelity_request, nb::arg("request"))
         .def("world_count", &RuntimeFacade::world_count)

@@ -54,7 +54,10 @@ RuntimeCompositionEvidenceResult RuntimeFacade::export_composition_evidence() co
         !backend_capabilities_match) {
         return unavailable(
             "composition_evidence.backend_identity_mismatch",
-            "materialized backend identity does not match the generated owner anchor");
+            "materialized backend identity does not match the generated owner anchor: " +
+                backend_identity.provider_id + "@" + backend_identity.implementation_version + "/" +
+                backend_identity.backend_profile_id +
+                "/capabilities=" + std::to_string(backend_identity.admitted_capabilities.size()));
     }
 
     RuntimeCompositionEvidence value;

@@ -96,10 +96,10 @@ Contract baseline:
 | System composition | P3-A accepted bounded default-graph slice | owner-derived registry validates counts, identities, dependency edges, and stage order; native conformance separately checks the frozen default artifact before realization | profile-specific omission, complete semantic-stage/read-write joins, and broader package admission |
 | Capability/profile projection | P3-B accepted bounded default-profile slice | versioned projection contract joins request capabilities/policies, owner catalog entries, 83 component identities, and 34 native system-order entries; Cordis/native conformance revalidate the join | additional profiles, complete semantic-stage/read-write metadata, external package admission |
 | Backend composition | P4-A accepted bounded default-provider slice | `RuntimeFacade` materializes the maintained CPU-exact backend through a native provider catalog derived from the generated resolved manifest; focused native admission and fail-before-factory tests pass; independent review returned P0/P1/P2 = 0/0/0 | broader maintained profiles, CUDA parity, diagnostics/provider evidence |
-| Composition evidence | P5-A accepted bounded default CPU-exact slice | versioned schema/generator binds request, requested/resolved manifest, catalog lock, profile projection, 11 provider versions, exact CPU backend, the 83+2+34 executable graph, all worlds/five scopes, native execution-owner identity, and window-commit snapshots; replay/comparison reject unexplained mismatch | broader profiles/backends, complete state replay, caller-language/module-origin attestation, external packages |
+| Composition evidence | P5-A accepted bounded default CPU-exact slice | versioned schema/generator binds request, requested/resolved manifest, catalog lock, profile projection, 11 provider versions, exact CPU backend, the 83+2+34 executable graph, all worlds/five scopes, and native execution-owner identity; direct composition comparison rejects unexplained mismatch | broader profiles/backends, complete state replay, caller-language/module-origin attestation, external packages |
 | Projection/catalog-lock control plane | P2-C0 accepted bounded slice | producer-neutral request and owner-derived lock schemas, generated fixtures, canonical identity recomputation, negative admission matrix, native revalidation, and offline low-level-only guard exist | P2-C1/P3-B default-profile joins are accepted bounded slices; broader profiles remain residual |
 | Cordis control plane | P2-C1/P3-B/P6-A accepted bounded default-profile package slice | strict package/overlay schemas and SDK exports pin Cordis `4.0.0-rc.8`, package lock, profile module/bundle, and default overlay; deterministic resolution, LF-stable raw hashes, sealed provenance, diagnostics, and unchanged native admission are green; independent review returned P0/P1/P2 = 0/0/0 | broader/truth-changing profiles need owner admission; external signing/plugins, broader backend parity, and Node host remain |
-| Host and batch parity | P7-A accepted bounded default CPU-exact slice | Cordis artifacts pass native conformance; native-direct and local-`ef_py` rows match one frozen action/state/event/reward/termination/replay reference and exact composition identities; 32-world cold/warm, loaded reset, current/high-water RSS, teardown residual, and throughput gates pass; independent review returned P0/P1/P2 = 0/0/0 | Node row held behind P6-B; broader profiles/backends, CUDA parity, multi-run leak characterization, and complete replay remain |
+| Host and batch parity | P7-A accepted bounded default CPU-exact slice | Cordis artifacts pass native conformance; native-direct and local-`ef_py` rows match one frozen action/state/event/window/composition-comparison reference and exact composition identities; 32-world cold/warm, loaded reset, current/high-water RSS, teardown residual, and throughput gates pass; independent review returned P0/P1/P2 = 0/0/0 | Node row held behind P6-B; broader profiles/backends, CUDA parity, multi-run leak characterization, and complete replay remain |
 | Node host | absent | Node-API is only a candidate host boundary | approved binding target and lifecycle/parity tests |
 | Runtime acceptance | accepted bounded default CPU-exact closure | default behavior, systems, backend, evidence, Cordis producer, native/Python parity, caller inventory, retired-surface proof, standard promotion, and archive routing | named held residuals require separate admission |
 
@@ -187,8 +187,8 @@ The sealed closure record binds the accepted request, catalog lock, profile
 projection, requested/resolved manifests, package provenance/dependency graph,
 composition evidence, and P7 parity evidence. Its live inventory classifies
 maintained `RuntimeFacade`, default-kernel compatibility/diagnostic,
-native nested-facade, `WorldBatchRuntime`, Cordis/native bridge, and test-only
-fault-injection callers across ten retained surfaces. Validation recomputes
+`WorldBatchRuntime`, Cordis/native bridge, and test-only fault-injection callers
+across nine retained surfaces. Validation recomputes
 upstream artifact identities from their payloads and live package bytes;
 strict-schema, caller-classification, lexical, underlying-payload, and re-sealed
 forgery attacks are rejected. Stable rules were promoted to the runtime
@@ -203,12 +203,12 @@ The accepted P7-A slice keeps Cordis in the producer/control-plane role and
 runs every emitted artifact through the existing native conformance binary.
 Direct C++ and local `ef_py` caller rows then prove exact composition joins and
 match a separately sealed semantic reference covering non-zero typed pilot
-actions, observations/state, window event traces, non-zero reward,
-termination/truncation outputs, and the maintained replay envelope. The batch
+actions, observations/state, window event traces, and direct composition
+comparison. The batch
 evidence separates cold and warm construction, measures a 32-world warmed step
 loop, reconstructs the same loaded workload before each timed reset, records
 current and OS high-water RSS, and gates teardown residual memory. All derived
-metrics are recomputed during validation; re-sealed semantic, replay, identity,
+metrics are recomputed during validation; re-sealed semantic, composition, identity,
 metric, host, and environment forgeries are rejected. Independent
 `gpt-5.6-sol/max` review returned P0/P1/P2 = 0/0/0.
 

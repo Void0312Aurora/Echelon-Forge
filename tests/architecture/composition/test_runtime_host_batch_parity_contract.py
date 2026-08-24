@@ -142,16 +142,15 @@ def test_p7_evidence_fails_closed_for_identity_node_and_budget_tampering() -> No
     host["semantic"]["final_observations"][0]["x"] += 1_000_000.0
   candidates.append(shared_semantic_regression)
 
-  forged_composition_replay = deepcopy(evidence)
-  for host in forged_composition_replay["hosts"]:
+  forged_composition_comparison = deepcopy(evidence)
+  for host in forged_composition_comparison["hosts"]:
     composition = host["semantic"]["composition"]
     composition["executable_graph_sha256"] = "0" * 64
     composition["evidence_sha256"] = "1" * 64
     composition_ref = f"composition_evidence_sha256={composition['evidence_sha256']}"
-    replay = host["semantic"]["replay_comparison"]
-    replay["composition_evidence_ref"] = composition_ref
-    replay["evidence_refs"] = ["forged-a", "forged-b", "forged-c", "forged-d", "forged-e", composition_ref]
-  candidates.append(forged_composition_replay)
+    comparison = host["semantic"]["composition_comparison"]
+    comparison["evidence_ref"] = composition_ref
+  candidates.append(forged_composition_comparison)
 
   decreasing_high_water = deepcopy(evidence)
   for host in decreasing_high_water["hosts"]:
@@ -235,8 +234,8 @@ def test_p7_native_probe_is_wired_to_the_maintained_facade_and_fixed_workload() 
   assert '"conditional_held_p6b_not_admitted"' in source
   assert "facade.step_batch()" in source
   assert "facade.set_pilot_actions_batch(actions)" in source
-  assert "facade.step_execution_batch(batch)" in source
   assert "parity_window_trace(window)" in source
+  assert "facade.compare_composition_evidence(composition.evidence)" in source
   assert "facade->reset_batch()" in source
 
 

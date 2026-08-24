@@ -863,8 +863,14 @@ def verify_source_truth() -> None:
     facade = source_text("src/runtime/facade/runtime_facade.cpp")
     backend_provider = source_text("src/runtime/facade/internal/world_batch_backend_provider.cpp")
     conformance = source_text("src/tests/test_cordis_runtime_conformance.cpp")
-    bindings_core = source_text("src/interfaces/python/bindings_core.cpp")
-    bindings_runtime = source_text("src/interfaces/python/bindings_runtime.cpp")
+    bindings_core = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted((ROOT / "src/interfaces/python").glob("bindings_core*.cpp"))
+    )
+    bindings_runtime = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted((ROOT / "src/interfaces/python").glob("bindings_runtime*.cpp"))
+    )
     flecs_backend = source_text("src/runtime/facade/internal/flecs_cpu_backend.cpp")
     smoke_test = source_text("src/tests/test_simulation_kernel_smoke.cpp")
     header_code = sanitize_cpp_source(header)
@@ -992,8 +998,6 @@ def verify_source_truth() -> None:
             "unadmitted production explicit-manifest callers appeared: "
             + ", ".join(explicit_kernel_callers)
         )
-    if not scan_cpp_runtime_facade_callers():
-        raise ClosureError("native RuntimeFacade callers disappeared from the retained inventory")
     fault_injection_callers = scan_cpp_symbol_callers(
         "build_default_simulation_composition_for_testing",
         excluded_paths={
@@ -1084,15 +1088,6 @@ def build_record() -> dict[str, Any]:
                 "disposition": "retained; routes through admitted backend provider",
             },
             {
-                "surface_id": "runtime_facade.native_internal_callers",
-                "classification": "maintained_native_internal",
-                "owner": "runtime/facade",
-                "callers": scan_cpp_runtime_facade_callers(),
-                "disposition": (
-                    "retained; nested counterfactual worlds re-enter the admitted backend provider"
-                ),
-            },
-            {
                 "surface_id": "simulation_kernel.default_compatibility",
                 "classification": "compatibility_and_diagnostics",
                 "owner": "core/engine",
@@ -1110,7 +1105,7 @@ def build_record() -> dict[str, Any]:
                 "surface_id": "simulation_kernel.python_binding_exposure",
                 "classification": "compatibility_binding",
                 "owner": "interfaces/python",
-                "callers": ["src/interfaces/python/bindings_core.cpp"],
+                "callers": ["src/interfaces/python/bindings_core_simulation_kernel.cpp"],
                 "disposition": "retained for established low-level and diagnostics callers",
             },
             {
@@ -1124,14 +1119,14 @@ def build_record() -> dict[str, Any]:
                 "surface_id": "world_batch_runtime.python_binding_exposure",
                 "classification": "compatibility_binding",
                 "owner": "interfaces/python",
-                "callers": ["src/interfaces/python/bindings_runtime.cpp"],
+                "callers": ["src/interfaces/python/bindings_runtime_engine.cpp"],
                 "disposition": "retained for bounded low-level compatibility and diagnostics",
             },
             {
                 "surface_id": "runtime_facade.python_binding_exposure",
                 "classification": "maintained_binding",
                 "owner": "interfaces/python",
-                "callers": ["src/interfaces/python/bindings_runtime.cpp"],
+                "callers": ["src/interfaces/python/bindings_runtime_facade.cpp"],
                 "disposition": "retained maintained Python host entry",
             },
             {

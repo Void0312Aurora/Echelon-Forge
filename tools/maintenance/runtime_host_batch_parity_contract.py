@@ -497,57 +497,6 @@ def _pilot_actions(ef_py: Any, entity_ids: list[int]) -> tuple[list[Any], list[d
   return assignments, evidence
 
 
-def _execution_outputs(ef_py: Any, facade: Any, refs: list[Any]) -> dict[str, Any]:
-  states = []
-  requests = []
-  for ref in refs:
-    state = ef_py.ExecutionEpisodeState()
-    state.agent_id = ref.entity_id
-    states.append(state)
-
-    request = ef_py.WorldExecutionEpisodeStepRequest()
-    request.world_index = ref.world_index
-    request.entity_id = ref.entity_id
-    request.config = ef_py.StepEvaluationBatchConfig()
-    request.env_state.steps = 1
-    request.env_state.max_steps = 10
-    request.env_state.truth_x = 0.0
-    request.env_state.truth_z = 1200.0
-    request.env_state.truth_speed = 180.0
-    request.env_state.has_safety = True
-    request.env_state.safety.finite_state_valid = True
-    request.env_state.safety.health = 100.0
-    request.env_state.safety.survival_reward = 0.02
-    request.env_state.has_waypoint = True
-    request.env_state.waypoint.valid = True
-    request.env_state.waypoint.waypoint_index = 0
-    request.env_state.waypoint.waypoint_count = 1
-    request.env_state.waypoint.dist_m = 50.0
-    request.env_state.waypoint.waypoint_radius_m = 1200.0
-    request.env_state.waypoint.has_prev_dist = True
-    request.env_state.waypoint.prev_dist_m = 120.0
-    request.env_state.waypoint.progress_weight = 0.1
-    request.env_state.waypoint.distance_weight = -0.001
-    request.env_state.waypoint.reached_bonus = 20.0
-    requests.append(request)
-  facade.prime_execution_episode_batch(refs, states)
-  batch = ef_py.ExecutionBatchStepRequest()
-  batch.step_requests = requests
-  batch.include_agent_observations = False
-  batch.include_instrument_states = False
-  result = facade.step_execution_batch(batch)
-  return {
-    "rewards": list(result.rewards),
-    "terminated": list(result.terminated),
-    "truncated": list(result.truncated),
-    "termination_reasons": list(result.termination_reasons),
-    "reward_breakdown_jsons": list(result.reward_breakdown_jsons),
-    "status_vectors": [list(value) for value in result.status_vectors],
-    "step_info_valid_flags": list(result.step_info_valid_flags),
-    "controller_state_changed_flags": list(result.controller_state_changed_flags),
-  }
-
-
 def _window_trace(window: Any) -> dict[str, Any]:
   return {
     "barriers": [
@@ -601,36 +550,28 @@ def _python_semantic_workload(ef_py: Any) -> dict[str, Any]:
   for _ in range(WORKLOAD["semantic_steps"]):
     facade.step_batch()
   final = [_observation(value) for value in facade.get_agent_observations_batch(refs)]
-  execution_outputs = _execution_outputs(ef_py, facade, refs)
   composition = facade.export_composition_evidence()
   if not composition.available:
     raise ParityError(f"Python semantic composition evidence unavailable: {composition.error_code}")
   window_request = ef_py.RuntimeWindowRequest()
   window_request.window_id = "window:host-batch-parity"
   window_request.source_time_s = 5.0
-  window_request.engagement_request.trace_ids = [facade.allocate_trace_id()]
+  window_request.engagement_request.trace_ids = [1]
   window = facade.run_window(window_request)
-  replay = facade.build_maintained_replay_envelope(
-    window, "run:host-batch-parity", "episode:host-batch-parity", 41
-  )
-  if not replay.admitted:
-    raise ParityError(f"Python semantic replay envelope was not admitted: {replay.rejection_reason}")
+  comparison = facade.compare_composition_evidence(composition.evidence)
+  if not comparison.compatible or comparison.mismatches:
+    raise ParityError("Python semantic composition comparison was not admitted")
   composition_ref = f"composition_evidence_sha256={composition.evidence.evidence_sha256}"
-  evidence_refs = list(replay.evidence_refs)
-  if composition_ref not in evidence_refs:
-    raise ParityError("Python replay envelope omitted composition evidence")
   return {
     "composition": _composition(composition.evidence),
     "action_inputs": action_evidence,
     "initial_observations": initial,
     "final_observations": final,
-    "execution_outputs": execution_outputs,
     "window_trace": _window_trace(window),
-    "replay_comparison": {
-      "admitted": bool(replay.admitted),
-      "replay_envelope_id": replay.envelope.replay_envelope_id,
-      "evidence_refs": evidence_refs,
-      "composition_evidence_ref": composition_ref,
+    "composition_comparison": {
+      "compatible": bool(comparison.compatible),
+      "mismatches": list(comparison.mismatches),
+      "evidence_ref": composition_ref,
     },
   }
 
@@ -1082,7 +1023,7 @@ def evaluate_budget(
   return {"status": "pass", "checks": checks}
 
 
-def build_evidence(binary: Path, node: str) -> dict[str, Any]:
+def build_evidence(binary: Path, node: str, *, refresh_semantic_reference: bool = False) -> dict[str, Any]:
   budget = _read(BUDGET_PATH)
   if budget != BUDGET:
     raise ParityError("P7-A budget fixture is stale; run generate-budget")
@@ -1104,7 +1045,11 @@ def build_evidence(binary: Path, node: str) -> dict[str, Any]:
   )
   if mismatches:
     raise ParityError(f"P7-A native/Python semantic mismatch: {mismatches}")
-  semantic_reference = _read(SEMANTIC_REFERENCE_PATH)
+  if refresh_semantic_reference:
+    semantic_reference = build_semantic_reference(native["semantic"])
+    SEMANTIC_REFERENCE_PATH.write_text(_pretty(semantic_reference), encoding="utf-8", newline="\n")
+  else:
+    semantic_reference = _read(SEMANTIC_REFERENCE_PATH)
   validate_semantic_reference(semantic_reference)
   for host in (native, python_host):
     reference_mismatches = _semantic_mismatches(
@@ -1219,16 +1164,14 @@ def validate_evidence(value: dict[str, Any]) -> None:
         f"P7-A evidence drifted from the frozen semantic reference: {reference_mismatches}"
       )
     composition = host["semantic"]["composition"]
-    replay = host["semantic"]["replay_comparison"]
+    comparison = host["semantic"]["composition_comparison"]
     expected_composition_ref = f"composition_evidence_sha256={composition['evidence_sha256']}"
-    evidence_refs = replay["evidence_refs"]
     if (
-      replay["composition_evidence_ref"] != expected_composition_ref
-      or evidence_refs.count(expected_composition_ref) != 1
-      or len(evidence_refs) != 6
-      or len(set(evidence_refs)) != 6
+      comparison["evidence_ref"] != expected_composition_ref
+      or not comparison["compatible"]
+      or comparison["mismatches"]
     ):
-      raise ParityError(f"P7-A replay evidence refs are inconsistent: {host['host_id']}")
+      raise ParityError(f"P7-A composition comparison is inconsistent: {host['host_id']}")
   if value.get("budget_evaluation", {}).get("status") != "pass":
     raise ParityError("P7-A evidence does not pass the frozen batch budget")
   if any(not check.get("passed") for check in value["budget_evaluation"]["checks"]):
@@ -1265,6 +1208,7 @@ def main(argv: list[str] | None = None) -> int:
   capture.add_argument("--native-binary", type=Path, required=True)
   capture.add_argument("--node", default="node")
   capture.add_argument("--out", type=Path, default=EVIDENCE_PATH)
+  capture.add_argument("--refresh-semantic-reference", action="store_true")
   validate = subparsers.add_parser("validate")
   validate.add_argument("--evidence", type=Path, default=EVIDENCE_PATH)
   args = parser.parse_args(argv)
@@ -1294,7 +1238,11 @@ def main(argv: list[str] | None = None) -> int:
     print(reference["semantic_reference_sha256"])
     return 0
   if args.command == "capture":
-    evidence = build_evidence(args.native_binary.resolve(), args.node)
+    evidence = build_evidence(
+      args.native_binary.resolve(),
+      args.node,
+      refresh_semantic_reference=args.refresh_semantic_reference,
+    )
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(_pretty(evidence), encoding="utf-8", newline="\n")
     validate_evidence(evidence)

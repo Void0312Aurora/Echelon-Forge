@@ -235,23 +235,21 @@
     "semantic": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["composition", "action_inputs", "initial_observations", "final_observations", "execution_outputs", "window_trace", "replay_comparison"],
+      "required": ["composition", "action_inputs", "initial_observations", "final_observations", "window_trace", "composition_comparison"],
       "properties": {
         "composition": {"$ref": "#/$defs/composition"},
         "action_inputs": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"$ref": "#/$defs/action_input"}},
         "initial_observations": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"$ref": "#/$defs/observation"}},
         "final_observations": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"$ref": "#/$defs/observation"}},
-        "execution_outputs": {"$ref": "#/$defs/execution_outputs"},
         "window_trace": {"$ref": "#/$defs/window_trace"},
-        "replay_comparison": {
+        "composition_comparison": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["admitted", "replay_envelope_id", "evidence_refs", "composition_evidence_ref"],
+          "required": ["compatible", "mismatches", "evidence_ref"],
           "properties": {
-            "admitted": {"const": true},
-            "replay_envelope_id": {"const": "replay:maintained:run:host-batch-parity:trace:1"},
-            "evidence_refs": {"type": "array", "minItems": 6, "maxItems": 6, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
-            "composition_evidence_ref": {"type": "string", "pattern": "^composition_evidence_sha256=[0-9a-f]{64}$"}
+            "compatible": {"const": true},
+            "mismatches": {"type": "array", "maxItems": 0},
+            "evidence_ref": {"type": "string", "pattern": "^composition_evidence_sha256=[0-9a-f]{64}$"}
           }
         }
       }

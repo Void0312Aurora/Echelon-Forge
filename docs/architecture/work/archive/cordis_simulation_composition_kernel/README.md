@@ -255,7 +255,7 @@ capability/policy requirements and the owner lock/native graph; it is not a
 general multi-profile resolver. P4-A accepts only the maintained default
 CPU-exact provider. P5-A binds that slice to request/manifest/lock/profile,
 11 provider versions, the 83+2+34 executable graph, exact backend identity,
-all realized worlds and five scopes, and sealed replay/comparison evidence.
+all realized worlds and five scopes, and strict composition-comparison evidence.
 Its host fields identify the native execution owner (`native_cpp/native.v1`),
 not the caller language; Python caller-origin attestation is not claimed.
 P6-A now pins the exact Cordis/package-lock/profile module/bundle/default
@@ -267,7 +267,7 @@ path-free diagnostics. It does not own providers, backend selection, component
   binding migration, external signing/plugins, and complete replay remain
   separate held programs. P7-A adds strict native-direct and
 local-`ef_py` caller rows joined to the
-Cordis-produced artifacts, a frozen action/state/event/reward/termination/replay
+Cordis-produced artifacts, a frozen action/state/event/window/composition-comparison
 semantic reference, and conservative 32-world cold/warm/reset/RSS/teardown
   budgets. Independent `gpt-5.6-sol/max` review returned P0/P1/P2 = 0/0/0.
   P8-A removed the implicit empty-manifest fallback, sealed a live caller and

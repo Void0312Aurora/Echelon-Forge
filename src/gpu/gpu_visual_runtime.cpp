@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <iomanip>
+#include <numbers>
 #include <stdexcept>
 #include <sstream>
 #include <utility>
@@ -110,7 +111,7 @@ class SnapshotEnvironmentModel final : public IEnvironmentModel {
             const double dy = y - zone.center_y;
             bool inside = false;
             if (zone.type == 0) {
-                const double yaw = (90.0 - zone.heading_deg) * M_PI / 180.0;
+                const double yaw = (90.0 - zone.heading_deg) * std::numbers::pi_v<double> / 180.0;
                 const double c = std::cos(yaw);
                 const double s = std::sin(yaw);
                 const double local_len = dx * c + dy * s;

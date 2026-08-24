@@ -34,7 +34,7 @@ Last verified: `2026-08-23`
 | 9 | `P5-A Composition Evidence Expansion` | 默认 CPU-exact 有界切片已接受 | P4-A 已接受且相关 P2/P3 identity join 可用 | evidence/replay contract、facade diagnostics、schema generator、聚焦测试、CMake/CI、有界文档 | 精确 request/manifest/lock/profile/provider/backend/graph/world/scope evidence、commit sealing、mismatch rejection 与独立审阅 |
 | 10 | `P6-A Cordis Package Maturation` | 默认 profile package 有界切片已接受 | P2-C1/P3/P4/P5 有界 contract 已接受 | 获批 `packages/cordis-runtime/**`、workspace manifest/lockfile、fixture、package test、有界文档 | 仓库自有 overlay/bundle、LF 稳定原始 pin、封存 provenance/diagnostics/dependency evidence、canonical native parity 与独立 P0/P1/P2 = 0/0/0 |
 | 11 | `P6-B Node Host Adapter` | conditional / held | P6-A 已接受且有显式 host decision | 仅限获批 Node adapter | 仅在获批时返回 native-owner lifecycle/parity evidence |
-| 12 | `P7-A Host And Batch Parity` | 默认 CPU-exact 有界切片已接受 | P4-A/P5-A/P6-A 已接受；Node 行要求 P6-B | integration test、benchmark/probe tool、evidence package、有界修复 | 冻结 action/state/event/reward/termination/replay 语义、严格 producer/host join、批准的 32-world 测量与独立 P0/P1/P2 = 0/0/0 |
+| 12 | `P7-A Host And Batch Parity` | 默认 CPU-exact 有界切片已接受 | P4-A/P5-A/P6-A 已接受；Node 行要求 P6-B | integration test、benchmark/probe tool、evidence package、有界修复 | 冻结 action/state/event/window/composition-comparison 语义、严格 producer/host join、批准的 32-world 测量与独立 P0/P1/P2 = 0/0/0 |
 | 13 | `P8-A Migration Closure` | accepted bounded closure | 必需有界 native/Cordis/system/backend/evidence/parity gate 已接受 | composition caller/truth path、稳定 architecture rule、acceptance/archive、owner index | 完整 acceptance matrix、删除或显式保留 compatibility path、具名 residual owner 与同步文档 |
 | 14 | 后续全部任务簇 | 由各自声明依赖 held | 各自 owner dependency 通过，或已有显式 independent-stream amendment | task-cluster write set | 任务簇专属 evidence packet |
 

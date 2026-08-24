@@ -20,6 +20,80 @@ void bind_runtime_runtime(nb::module_ &m) {
     runtime_batch_config_class.def_rw(#name, &RuntimeBatchConfig::name);
 #include "runtime/facade/detail/runtime/runtime_batch_config.inc"
 
+    nb::class_<runtime::composition_evidence_contracts::ProviderVersionEvidence>(
+        m, "RuntimeProviderVersionEvidence")
+        .def(nb::init<>())
+        .def_rw("provider_id",
+                &runtime::composition_evidence_contracts::ProviderVersionEvidence::provider_id)
+        .def_rw("implementation_version", &runtime::composition_evidence_contracts::
+                                              ProviderVersionEvidence::implementation_version);
+
+    nb::class_<runtime::composition_evidence_contracts::BackendEvidence>(
+        m, "RuntimeBackendCompositionEvidence")
+        .def(nb::init<>())
+        .def_rw("provider_id",
+                &runtime::composition_evidence_contracts::BackendEvidence::provider_id)
+        .def_rw("implementation_version",
+                &runtime::composition_evidence_contracts::BackendEvidence::implementation_version)
+        .def_rw("backend_profile_id",
+                &runtime::composition_evidence_contracts::BackendEvidence::backend_profile_id)
+        .def_rw("admitted_capabilities",
+                &runtime::composition_evidence_contracts::BackendEvidence::admitted_capabilities);
+
+    nb::class_<runtime::composition_evidence_contracts::ScopeGenerationEvidence>(
+        m, "RuntimeScopeGenerationEvidence")
+        .def(nb::init<>())
+        .def_rw("scope", &runtime::composition_evidence_contracts::ScopeGenerationEvidence::scope)
+        .def_rw("instance_id",
+                &runtime::composition_evidence_contracts::ScopeGenerationEvidence::instance_id)
+        .def_rw("generation",
+                &runtime::composition_evidence_contracts::ScopeGenerationEvidence::generation);
+
+    nb::class_<runtime::composition_evidence_contracts::WorldInstanceEvidence>(
+        m, "RuntimeWorldInstanceEvidence")
+        .def(nb::init<>())
+        .def_rw("world_index",
+                &runtime::composition_evidence_contracts::WorldInstanceEvidence::world_index)
+        .def_rw("scope_generations",
+                &runtime::composition_evidence_contracts::WorldInstanceEvidence::scope_generations);
+
+    nb::class_<RuntimeCompositionEvidence>(m, "RuntimeCompositionEvidence")
+        .def(nb::init<>())
+        .def_rw("schema_version", &RuntimeCompositionEvidence::schema_version)
+        .def_rw("evidence_contract_version", &RuntimeCompositionEvidence::evidence_contract_version)
+        .def_rw("composition_id", &RuntimeCompositionEvidence::composition_id)
+        .def_rw("requested_profile_id", &RuntimeCompositionEvidence::requested_profile_id)
+        .def_rw("requested_profile_version", &RuntimeCompositionEvidence::requested_profile_version)
+        .def_rw("runtime_request_sha256", &RuntimeCompositionEvidence::runtime_request_sha256)
+        .def_rw("requested_manifest_sha256", &RuntimeCompositionEvidence::requested_manifest_sha256)
+        .def_rw("resolved_manifest_sha256", &RuntimeCompositionEvidence::resolved_manifest_sha256)
+        .def_rw("catalog_lock_sha256", &RuntimeCompositionEvidence::catalog_lock_sha256)
+        .def_rw("profile_projection_sha256", &RuntimeCompositionEvidence::profile_projection_sha256)
+        .def_rw("resolver_contract_version", &RuntimeCompositionEvidence::resolver_contract_version)
+        .def_rw("provider_versions", &RuntimeCompositionEvidence::provider_versions)
+        .def_rw("backend", &RuntimeCompositionEvidence::backend)
+        .def_rw("executable_graph_sha256", &RuntimeCompositionEvidence::executable_graph_sha256)
+        .def_rw("stage_contract_version", &RuntimeCompositionEvidence::stage_contract_version)
+        .def_rw("host_mode", &RuntimeCompositionEvidence::host_mode)
+        .def_rw("binding_version", &RuntimeCompositionEvidence::binding_version)
+        .def_rw("world_instances", &RuntimeCompositionEvidence::world_instances)
+        .def_rw("canonicalization", &RuntimeCompositionEvidence::canonicalization)
+        .def_rw("hash_algorithm", &RuntimeCompositionEvidence::hash_algorithm)
+        .def_rw("canonical_json", &RuntimeCompositionEvidence::canonical_json)
+        .def_rw("evidence_sha256", &RuntimeCompositionEvidence::evidence_sha256);
+
+    nb::class_<RuntimeCompositionEvidenceResult>(m, "RuntimeCompositionEvidenceResult")
+        .def(nb::init<>())
+        .def_rw("available", &RuntimeCompositionEvidenceResult::available)
+        .def_rw("evidence", &RuntimeCompositionEvidenceResult::evidence)
+        .def_rw("error_code", &RuntimeCompositionEvidenceResult::error_code)
+        .def_rw("error_detail", &RuntimeCompositionEvidenceResult::error_detail);
+
+    nb::class_<RuntimeCompositionEvidenceComparison>(m, "RuntimeCompositionEvidenceComparison")
+        .def(nb::init<>())
+        .def_rw("compatible", &RuntimeCompositionEvidenceComparison::compatible)
+        .def_rw("mismatches", &RuntimeCompositionEvidenceComparison::mismatches);
+
     nb::class_<RuntimeBackendRequest>(m, "RuntimeBackendRequest")
         .def(nb::init<>())
         .def_rw("backend_profile_id", &RuntimeBackendRequest::backend_profile_id)

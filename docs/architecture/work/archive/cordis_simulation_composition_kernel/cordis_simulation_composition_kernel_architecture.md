@@ -621,7 +621,7 @@ migration, was accepted after independent `gpt-5.6-sol` / `max` review returned
 P0/P1/P2 = 0/0/0. Step 10, P5-A, accepts exact evidence for the maintained
 default CPU-exact realization: request/manifest/lock/profile identity, all 11
 providers, the 83+2+34 executable graph, exact backend identity, native execution
-owner, every world/five scopes, commit sealing, and replay/comparison mismatch
+owner, every world/five scopes, and direct composition-comparison mismatch
 rejection. Its host fields do not attest caller language or physical module
 origin. Step 11, P6-A, adds a strict repository-owned package/overlay SDK,
 deterministic four-node dependency resolution, cross-platform-stable raw-byte
@@ -631,7 +631,7 @@ owning provider/backend/graph truth. Independent `gpt-5.6-sol` / `max` review
 returned P0/P1/P2 = 0/0/0. These results make P7-A eligible and keep P6-B
 conditional. Step 12, P7-A, binds the Cordis-produced artifact identities to
 native-direct and local-`ef_py` rows plus a frozen non-zero action/state/event/
-reward/termination/replay reference, and accepts a conservative 32-world
+window/composition-comparison reference, and accepts a conservative 32-world
 cold/warm/reset/RSS/teardown regression envelope. Independent
 `gpt-5.6-sol` / `max` review returned P0/P1/P2 = 0/0/0. P8-A subsequently
 closed the bounded default CPU-exact program; these results do not admit
