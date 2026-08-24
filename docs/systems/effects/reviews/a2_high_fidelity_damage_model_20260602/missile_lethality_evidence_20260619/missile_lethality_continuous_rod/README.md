@@ -2,7 +2,7 @@
 
 Status: `2026-06-11` archived pointer. The accepted MLF-4 evidence package was
 moved to
-[archive/mlf_4_continuous_rod_accepted_20260611](archive/mlf_4_continuous_rod_accepted_20260611/README.md).
+archive/mlf_4_continuous_rod_accepted_20260611 (`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_continuous_rod/archive/mlf_4_continuous_rod_accepted_20260611/README.md`).
 
 Language:
 
@@ -28,5 +28,3 @@ continuous-rod/cutting family, the system can now explain what cut exposure was
 created, how it changes with range/aspect/orientation, and which component rows
 received cut exposure. These facts still do not directly say the target
 fragments, crashes, or is killed.
-
-Archive index: [archive/README.md](archive/README.md)

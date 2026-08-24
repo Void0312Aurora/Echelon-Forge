@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/standards/runtime_workflow_and_contract_baseline.md`
 Owner: `architecture/runtime-workflow`
-Last verified: `2026-08-08`
+Last verified: `2026-08-13`
 
 状态：维护中的 runtime workflow 与 contract 基线，服从
 [严格仿真架构基线](simulation_system_architecture_design.zh.md)。
@@ -18,7 +18,7 @@ Last verified: `2026-08-08`
 - Python 侧的 scenario/task 输入编排
 - `ScenarioLoader` 内的 command/behavior bridge
 - C++ mission runtime 的纯计算层
-- episode/controller 的状态装配与 roundtrip
+- Python 所有的 episode 状态、reward/status 回写与 autoreset
 
 当“当前代码实际怎么工作”会影响命名、归属或合同设计时，应以本文档为标准入口。
 
@@ -37,7 +37,7 @@ Last verified: `2026-08-08`
 
 高层链路如下：
 
-`scenario JSON -> load/compile -> normalize task + mission command -> behavior/command-chain update -> runtime step inputs -> C++ mission/runtime products -> episode/controller roundtrip`
+`scenario JSON -> load/compile -> normalize task + mission command -> behavior/command-chain update -> runtime step inputs -> C++ mission/runtime products -> Python product 回写/autoreset`
 
 在仓库里的主要阶段可以概括为：
 
@@ -132,24 +132,25 @@ mission-command 等数据，但这不代表这些词全部都是 common-core ont
 
 - Python binding 关注点
 - scenario JSON 解析
-- episode controller state import/export
+- 有状态 episode 编排
 - loader 侧 command/phase ownership 的临时逻辑
 
-## 阶段 5：Product 回写与 Episode Roundtrip
+## 阶段 5：Product 回写与 Episode 状态
 
 主要代码入口：
 
 - [gym_envs/scenario_loader/execution_runtime/mainline.py](../../../gym_envs/scenario_loader/execution_runtime/mainline.py)
 - [src/core/mission/episode/](../../../src/core/mission/episode)
-- [tests/runtime/execution/test_execution_episode_controller.py](../../../tests/runtime/execution/test_execution_episode_controller.py)
+- [tests/runtime/exact/test_execution_mainline_behavior_snapshot.py](../../../tests/runtime/exact/test_execution_mainline_behavior_snapshot.py)
 - [tests/runtime/execution/test_execution_episode_state.py](../../../tests/runtime/execution/test_execution_episode_state.py)
 
 本阶段负责：
 
-- 将 runtime product 回写到维护中的 episode/controller state
+- 将 runtime product 回写到 Python 维护的 episode state
 - reward breakdown 持久化
 - termination/status tracking
-- episode state 的 import/export 与 roundtrip
+- autoreset 与 episode 边界 transition
+- `ExecutionEpisodeState` 兼容 DTO 的 import/export roundtrip
 
 这些逻辑不应再被塞回纯 runtime kernel。
 

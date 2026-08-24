@@ -1,8 +1,17 @@
-"""Focused I87 C3/C20 typed-observation pilot gates."""
+"""Focused I87 C3/C20 typed-observation pilot gates.
+
+The pilot's spec data source is the pure Python static declaration in
+``python/rl/runtime/world_batch/typed_observation_view.py``
+(``maintained_observation_view_spec``); the retired C++
+``RuntimeFacade.describe_maintained_observation_view`` export only mirrored
+those constants, so these gates now exercise the static declaration plus the
+fail-closed admission seam directly.
+"""
 
 from __future__ import annotations
 
 import ast
+import dataclasses
 import json
 import tempfile
 from pathlib import Path
@@ -16,11 +25,13 @@ from python.runtime_bootstrap import ensure_repo_imports
 
 ensure_repo_imports()
 
-import ef_py  # noqa: E402
 import python.rl.runtime.world_batch.adapter as adapter_module  # noqa: E402
 import python.rl.runtime.world_batch._vec_env_support as vec_env_support  # noqa: E402
 import python.rl.runtime.world_batch.observation_batching as observation_batching  # noqa: E402
 from python.rl.runtime.world_batch.adapter import RuntimeFacadeAdapter  # noqa: E402
+from python.rl.runtime.world_batch.typed_observation_view import (  # noqa: E402
+    maintained_observation_view_spec,
+)
 from tests.support._world_batch_vec_env_test_support import (  # noqa: E402
     _inline_vec_env_scenario,
 )
@@ -36,69 +47,24 @@ _C3_PATH = _REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "observati
 _C20_PATH = _REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "_vec_env_support.py"
 
 
-def _valid_spec() -> ef_py.ObservationViewSpec:
-    if not hasattr(ef_py.ObservationViewSpec(), "view_id"):
-        pytest.skip("local ef_py build predates the I60 ObservationViewSpec export")
-    spec = ef_py.ObservationViewSpec()
-    spec.schema_version = "1.0"
-    spec.view_id = "gym_envs.observation_view"
-    spec.information_layer_produced = ["Agent Observation"]
-    spec.information_layer_consumed = [
-        "World Truth",
-        "Track State",
-        "Shared Tactical Picture",
-    ]
-    spec.semantic_stage = ["P10 ObservationExport"]
-    spec.required_fields = []
-    spec.optional_fields = []
-    return spec
+def _valid_spec():
+    return maintained_observation_view_spec()
 
 
-class _CountingFacade:
-    def __init__(self, spec: object) -> None:
-        self.spec = spec
-        self.describe_calls = 0
+def test_default_off_leaves_spec_unset_and_has_no_post_construction_enable() -> None:
+    adapter = RuntimeFacadeAdapter(1)
 
-    def describe_maintained_observation_view(self):
-        self.describe_calls += 1
-        return self.spec
-
-
-def _require_typed_export() -> None:
-    if not hasattr(ef_py.RuntimeFacade(0), "describe_maintained_observation_view"):
-        pytest.skip("local ef_py build lacks the maintained ObservationViewSpec facade export")
-
-
-def test_default_off_never_describes_and_has_no_post_construction_enable() -> None:
-    facade = _CountingFacade(object())
-    original = adapter_module.ef_py.RuntimeFacade
-    adapter_module.ef_py.RuntimeFacade = lambda _world_count: facade
-    try:
-        adapter = RuntimeFacadeAdapter(1)
-    finally:
-        adapter_module.ef_py.RuntimeFacade = original
-
-    assert facade.describe_calls == 0
     assert adapter.typed_observation_view_spec is None
     assert not hasattr(adapter, "enable_typed_observation_view")
 
 
-def test_opt_in_describes_the_same_facade_exactly_once() -> None:
-    _require_typed_export()
-    spec = _valid_spec()
-    facade = _CountingFacade(spec)
-    original = adapter_module.ef_py.RuntimeFacade
-    adapter_module.ef_py.RuntimeFacade = lambda _world_count: facade
-    try:
-        adapter = RuntimeFacadeAdapter(1, use_typed_observation_view=True)
-    finally:
-        adapter_module.ef_py.RuntimeFacade = original
+def test_opt_in_admits_the_static_declaration_exactly_once() -> None:
+    adapter = RuntimeFacadeAdapter(1, use_typed_observation_view=True)
 
-    assert adapter.facade is facade
-    assert facade.describe_calls == 1
+    spec = adapter.typed_observation_view_spec
+    assert spec is not None
+    assert spec == _valid_spec()
     assert adapter.typed_observation_view_spec is spec
-    assert adapter.typed_observation_view_spec is spec
-    assert facade.describe_calls == 1
 
 
 @pytest.mark.parametrize(
@@ -107,47 +73,39 @@ def test_opt_in_describes_the_same_facade_exactly_once() -> None:
         ("view_id", "gym_envs.other_view", "view_id"),
         ("schema_version", "2.0", "schema_version"),
         ("schema_version", "1", "schema_version"),
-        ("information_layer_produced", ["Decision Belief"], "information_layer_produced"),
-        ("information_layer_consumed", ["World Truth"], "information_layer_consumed"),
-        ("semantic_stage", ["P2 TaskingIntent"], "semantic_stage"),
+        ("information_layer_produced", ("Decision Belief",), "information_layer_produced"),
+        ("information_layer_consumed", ("World Truth",), "information_layer_consumed"),
+        ("semantic_stage", ("P2 TaskingIntent",), "semantic_stage"),
     ],
 )
 def test_opt_in_structural_admission_fails_closed(
     field: str,
     value: object,
     needle: str,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    _require_typed_export()
-    spec = _valid_spec()
-    setattr(spec, field, value)
-    facade = _CountingFacade(spec)
-    original = adapter_module.ef_py.RuntimeFacade
-    adapter_module.ef_py.RuntimeFacade = lambda _world_count: facade
-    try:
-        with pytest.raises(RuntimeError, match=needle):
-            RuntimeFacadeAdapter(1, use_typed_observation_view=True)
-    finally:
-        adapter_module.ef_py.RuntimeFacade = original
-    assert facade.describe_calls == 1
+    tampered = dataclasses.replace(_valid_spec(), **{field: value})
+    monkeypatch.setattr(
+        adapter_module, "maintained_observation_view_spec", lambda: tampered
+    )
+    with pytest.raises(RuntimeError, match=needle):
+        RuntimeFacadeAdapter(1, use_typed_observation_view=True)
 
 
 @pytest.mark.parametrize("field", ["required_fields", "optional_fields"])
-def test_nonempty_field_catalogue_is_not_a_wildcard_and_fails_closed(field: str) -> None:
-    _require_typed_export()
-    spec = _valid_spec()
-    setattr(spec, field, ["own_ship.x"])
-    facade = _CountingFacade(spec)
-    original = adapter_module.ef_py.RuntimeFacade
-    adapter_module.ef_py.RuntimeFacade = lambda _world_count: facade
-    try:
-        with pytest.raises(RuntimeError, match=f"{field}.*structural-only"):
-            RuntimeFacadeAdapter(1, use_typed_observation_view=True)
-    finally:
-        adapter_module.ef_py.RuntimeFacade = original
+def test_nonempty_field_catalogue_is_not_a_wildcard_and_fails_closed(
+    field: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    tampered = dataclasses.replace(_valid_spec(), **{field: ("own_ship.x",)})
+    monkeypatch.setattr(
+        adapter_module, "maintained_observation_view_spec", lambda: tampered
+    )
+    with pytest.raises(RuntimeError, match=f"{field}.*structural-only"):
+        RuntimeFacadeAdapter(1, use_typed_observation_view=True)
 
 
 def test_c3_and_c20_pass_opaque_truth_to_compiled_kernels_and_use_reader() -> None:
-    _require_typed_export()
     truth = object()
     inst = SimpleNamespace(alt_baro=100.0)
     reader_calls: list[tuple[object, str]] = []
@@ -222,7 +180,6 @@ def test_c3_and_c20_pass_opaque_truth_to_compiled_kernels_and_use_reader() -> No
 
 
 def test_c3_opt_in_and_default_off_observations_are_exactly_equal() -> None:
-    _require_typed_export()
     if WorldBatchVecEnv is None:
         pytest.skip("optional RL VecEnv dependencies are unavailable")
     with tempfile.TemporaryDirectory() as tmpdir:

@@ -12,10 +12,9 @@ maintained mission scope.
 ## Allowed
 
 - Mission runtime, objective runtime, reward runtime, and termination runtime.
-- `ExecutionEpisodeController` and its state import/export.
-- Mission command codecs, episode transitions, and reward breakdown helpers.
-- Pure C++ episode products for `WorldBatchRuntime` or `RuntimeFacade`.
-- Bounded interpretation of the `MissionCommand` compatibility shell and its air/naval owner slices where episode state or codecs need them.
+- `ExecutionEpisodeState`, batch preparation, and reward-breakdown serialization.
+- Pure C++ episode products for Python bindings, GPU helpers, or facade internals.
+- Bounded storage and comparison of the `MissionCommand` compatibility shell in episode state.
 
 ## Forbidden
 
@@ -34,11 +33,11 @@ mission/
     detail/
 ```
 
-- `runtime/`: pure mission/runtime kernels and runtime products, including mission, objective, reward, termination, observation, step, frame, and episode runtime. This layer does not own episode controller state and does not interpret Python or facade contracts.
-- `episode/`: episode state, batch preparation, and `ExecutionEpisodeController`. This layer assembles scenario/env state into runtime inputs and applies runtime products back onto episode state.
-- `episode/detail/`: internal helpers used only by the episode controller, including mission-command codecs, post-waypoint/landing transitions, and reward breakdown JSON. External code should not include headers from here directly unless it is extending the same detail-domain split during controller refactoring.
+- `runtime/`: pure mission/runtime kernels and runtime products, including mission, objective, reward, termination, observation, step, frame, and episode runtime. This layer does not own stateful episode orchestration and does not interpret Python or facade contracts.
+- `episode/`: episode state DTOs, batch preparation, and the public reward-breakdown utility.
+- `episode/detail/`: private reward-breakdown implementation. External code should include the public header in `episode/`.
 
-When adding new mission JSON fields, transition rules, or reward breakdown terms in the future, place them first in the corresponding helper under `episode/detail/` instead of stuffing them back into the controller main file. New pure reward/objective/termination computation should live in `runtime/`; new episode state import/export or batch-prepare contracts should live in `episode/`.
+New pure reward/objective/termination computation belongs in `runtime/`; new episode-state or batch-prepare contracts belong in `episode/`. Stateful transition rules belong to the maintained Python orchestration rather than a new parallel C++ controller.
 
 ## Dependency Direction
 

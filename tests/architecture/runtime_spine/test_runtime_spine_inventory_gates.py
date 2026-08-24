@@ -29,13 +29,6 @@ RUNTIME_WINDOW_HELPERS = (
   / "facade"
   / "runtime_window_coordinator_helpers.h"
 )
-COUNTERFACTUAL_CONSTANTS = (
-  REPO_ROOT
-  / "src"
-  / "runtime"
-  / "contracts"
-  / "counterfactual_replay_contract_constants.h"
-)
 
 EXPECTED_CLASSIFICATIONS = {
   "src/runtime/facade/runtime_window_coordinator.h": "maintained_spine",
@@ -60,7 +53,6 @@ EXPECTED_CLASSIFICATIONS = {
   "tests/runtime/engagement/test_diagnostics_trace_contract.py": "diagnostics_only",
   "tests/runtime/bindings/test_lazy_binding_resolution.py": "compatibility_wrapper",
   "python/scenario/compiler/generation_request.py": "blocked",
-  "src/runtime/contracts/counterfactual_replay_contracts.h": "blocked",
   "tests/training/test_diagnostics_callback_contracts.py": "unknown_requires_owner",
 }
 
@@ -220,7 +212,6 @@ def test_blocked_and_compatibility_entries_do_not_hide_maintained_default_claims
   entries = _entries_by_path()
 
   assert entries["python/scenario/compiler/generation_request.py"]["classification"] == "blocked"
-  assert entries["src/runtime/contracts/counterfactual_replay_contracts.h"]["classification"] == "blocked"
   assert entries["src/runtime/facade/runtime_facade.h"]["classification"] == "maintained_spine"
   assert entries["python/rl/runtime/world_batch/adapter.py"]["classification"] == "compatibility_wrapper"
 
@@ -233,15 +224,10 @@ def test_blocked_and_compatibility_entries_do_not_hide_maintained_default_claims
   generation_request_source = (
     REPO_ROOT / "python" / "scenario" / "compiler" / "generation_request.py"
   ).read_text(encoding="utf-8")
-  replay_source = (
-    REPO_ROOT / "src" / "runtime" / "contracts" / "counterfactual_replay_contracts.h"
-  ).read_text(encoding="utf-8")
-  replay_constants_source = COUNTERFACTUAL_CONSTANTS.read_text(encoding="utf-8")
 
   assert "runtime_compatibility_quarantine() noexcept" not in facade_header
   assert "self.facade.runtime_compatibility_quarantine()" not in adapter_source
   assert "authoritative_state_mutation_allowed: bool = False" in generation_request_source
-  assert "metadata_only" in replay_source or "metadata_only" in replay_constants_source
 
 
 def test_legacy_key_paths_have_bounded_status_owner_gate_and_reason() -> None:

@@ -14,7 +14,7 @@ Language:
 Inputs:
 
 - Parent A2 follow-on index: [../../README.md](../../README.md)
-- MLF archive registry: [../../archive_registry.md](../../../../../../task/review/archive/phase3c_closeout_20260808/archive_registry.md)
+- MLF archive registry: `git show 095fdd5c:docs/task/review/archive/phase3c_closeout_20260808/archive_registry.md`
 - MLF-9 statistical trends:
   [../missile_lethality_pk_statistical_trends/README.md](../missile_lethality_pk_statistical_trends/README.md)
 - MLF-6 structural failure:
@@ -51,7 +51,7 @@ turning them into real AIM-120C, F-16C, MQ-9, or Pk truth.
 
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
-| MLF-1..MLF-9 chain evidence | accepted / archived | [archive registry](../../../../../../task/review/archive/phase3c_closeout_20260808/archive_registry.md) | Supplies replayable simulation facts, not released calibration authority |
+| MLF-1..MLF-9 chain evidence | accepted / archived | archive registry (`git show 095fdd5c:docs/task/review/archive/phase3c_closeout_20260808/archive_registry.md`) | Supplies replayable simulation facts, not released calibration authority |
 | MLF-9 statistical trends | accepted / archived | [MLF-9 README](../missile_lethality_pk_statistical_trends/README.md) | Trends remain synthetic; no real Pk or weapon/target-specific lethality |
 | A2 calibration residual register | retained / non-authoritative | [residual register](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md) | Some research blockers are closed, but authority blockers and fail-closed source gates remain |
 | Source admission and rights packets | retained / mixed pass/fail-closed | retained artifacts under the A2 calibration package | Gate evidence exists; it does not automatically authorize selected outputs |
@@ -149,7 +149,7 @@ This subproject can be marked accepted only when:
 ## Archive
 
 MLF-10 has been physically archived under the parent A2 local archive and
-registered in [../../archive_registry.md](../../../../../../task/review/archive/phase3c_closeout_20260808/archive_registry.md). The
+registered in `git show 095fdd5c:docs/task/review/archive/phase3c_closeout_20260808/archive_registry.md`. The
 original active path now contains only a lightweight compatibility pointer.
 Future authority-promotion work should cite this accepted gate package or open
 an explicitly scoped follow-on rather than extending the pointer path.

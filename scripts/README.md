@@ -7,6 +7,11 @@ shells, not general multi-domain product entrypoints.
 
 Current retained scripts:
 
+- [benchmark_cuda_resident_rb9.py](benchmark_cuda_resident_rb9.py)
+  - Merges the separately built RB9 CPU/CUDA diagnostic evidence reports into a
+    provisional comparison that stays outside the maintained-backend claim.
+  - Imported directly by `tests/architecture/runtime_profiles/test_cuda_resident_performance.py`,
+    so it is a test-covered module, not only an operator shell.
 - [benchmark_multi_agent.py](benchmark_multi_agent.py)
   - Thin compatibility launcher for `python.rl.support.multi_agent_benchmark.main`.
   - Kept because it is referenced by existing performance-plan documentation.
@@ -26,6 +31,7 @@ Maintenance guidance:
 - Retained shell workflows should source
   [tools/maintenance/cmo_env.sh](../tools/maintenance/cmo_env.sh)
   so `.venv` and build-dir detection stay unified.
-- If a script becomes historical or machine-specific, archive it under
-  `tools/archive/legacy_scripts/`.
+- If a script becomes historical or machine-specific, delete it and add a
+  line to the retirement register in `tools/README.md` (git history is the
+  archive).
 - Workspace cleanup helpers belong under `tools/maintenance/`, not here.

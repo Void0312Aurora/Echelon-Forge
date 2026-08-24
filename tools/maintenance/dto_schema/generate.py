@@ -4,13 +4,34 @@
 One command covers every generated product: the C++ X-macro .inc fragments,
 the Python builder modules under gym_envs/scenario_loader/_generated/, and
 that package's __init__.py.
+
+The two halves have different coverage: every registered schema renders an
+.inc fragment, while a Python builder is rendered only for the schemas in
+python_builder.BUILDER_SCHEMA_NAMES. A builder for an unlisted schema is
+therefore an orphan by construction and is removed by --write.
+
+Beyond per-file byte comparison, the CLI is self-contained on two integrity
+properties so no separate test is needed to trust a green --check:
+
+- the schemas/ directory and the SCHEMA_MODULES registry must agree (a
+  schema module that exists on disk but is unregistered, or registered but
+  missing, aborts every command);
+- gym_envs/scenario_loader/_generated/ is a fully generated directory, so
+  *.py files there that no whitelisted schema owns fail --check and are
+  removed by --write. Ownership is compared case-insensitively on every
+  platform (str.casefold): a directory entry that matches a registered
+  artifact except for spelling case is reported as a case mismatch and is
+  never deleted, because the generator cannot tell from a path string
+  whether the underlying filesystem folds case (e.g. APFS under a POSIX
+  Python), and deleting the wrong directory entry would destroy the very
+  file the write loop manages.
 """
 
 from __future__ import annotations
 
 import argparse
 from collections import Counter
-from collections.abc import Callable
+from collections.abc import Callable, Collection, Iterable
 import difflib
 import functools
 import hashlib
@@ -30,6 +51,10 @@ from tools.maintenance.dto_schema.model import DtoSchema  # noqa: E402
 from tools.maintenance.dto_schema.schemas import SCHEMA_MODULES  # noqa: E402
 
 
+SCHEMAS_PACKAGE = "tools.maintenance.dto_schema.schemas"
+SCHEMAS_DIR = Path(__file__).resolve().parent / "schemas"
+
+
 def _load_schema(module_name: str) -> DtoSchema:
   module: ModuleType = importlib.import_module(module_name)
   schema = getattr(module, "SCHEMA", None)
@@ -38,7 +63,45 @@ def _load_schema(module_name: str) -> DtoSchema:
   return schema
 
 
+def registry_inconsistencies(
+  registered_modules: tuple[str, ...],
+  schemas_dir: Path,
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+  """Compare the SCHEMA_MODULES registry against the schemas/ directory.
+
+  Returns (unregistered, missing): schema modules present on disk but absent
+  from the registry, and registered module names without a backing file.
+  Schema modules live in grouped subpackages, so the scan is recursive and
+  module names are derived from the path relative to schemas/.
+  """
+  on_disk = {
+    ".".join(
+      (SCHEMAS_PACKAGE, *path.relative_to(schemas_dir).with_suffix("").parts)
+    )
+    for path in schemas_dir.rglob("*.py")
+    if path.name != "__init__.py"
+  }
+  registered = set(registered_modules)
+  return (
+    tuple(sorted(on_disk - registered)),
+    tuple(sorted(registered - on_disk)),
+  )
+
+
 def load_schemas() -> tuple[tuple[str, DtoSchema], ...]:
+  unregistered, missing = registry_inconsistencies(SCHEMA_MODULES, SCHEMAS_DIR)
+  if unregistered or missing:
+    problems = []
+    if unregistered:
+      problems.append(
+        "schema modules on disk but not in SCHEMA_MODULES: "
+        f"{list(unregistered)}"
+      )
+    if missing:
+      problems.append(
+        f"registered schema modules missing on disk: {list(missing)}"
+      )
+    raise ValueError("; ".join(problems))
   registrations = tuple(
     (module_name, _load_schema(module_name)) for module_name in SCHEMA_MODULES
   )
@@ -76,6 +139,8 @@ def artifact_renderers(
   for _, schema in registrations:
     artifacts.append((schema.output_path, functools.partial(render_schema, schema)))
   for _, schema in registrations:
+    if not python_builder.has_python_builder(schema):
+      continue
     artifacts.append(
       (
         python_builder.builder_output_path(schema),
@@ -103,18 +168,85 @@ def manifest_payload(
         "name": schema.name,
         "schema": module_name.replace(".", "/") + ".py",
         "output": schema.output_path,
-        "python_builder": python_builder.builder_output_path(schema),
+        # null for a schema outside python_builder.BUILDER_SCHEMA_NAMES: it
+        # renders an .inc fragment but no Python builder.
+        "python_builder": (
+          python_builder.builder_output_path(schema)
+          if python_builder.has_python_builder(schema)
+          else None
+        ),
         "field_count": len(schema.fields),
         "groups": dict(sorted(group_counts.items())),
       }
     )
   return {
-    "version": 2,
+    "version": 3,
     "generator": "tools/maintenance/dto_schema/generate.py",
     "canonical_line_ending": "LF",
     "schemas": schemas,
+    "python_builder_schemas": sorted(python_builder.BUILDER_SCHEMA_NAMES),
     "python_builder_package_init": python_builder.PACKAGE_INIT_PATH,
   }
+
+
+def classify_generated_files(
+  owned: Collection[str],
+  found: Iterable[str],
+  normalize: Callable[[str], str] = str.casefold,
+) -> tuple[tuple[str, ...], tuple[tuple[str, str], ...]]:
+  """Split scanned generated-package paths into orphans and case mismatches.
+
+  Ownership is decided on normalize-folded paths (str.casefold by default,
+  so case is folded unconditionally on every platform). A found path that
+  folds onto a registered artifact but differs in exact spelling is a
+  (actual, registered) case mismatch: on a case-insensitive filesystem it
+  is the very directory entry the write loop manages, so it must never be
+  classified as a deletable orphan. Python cannot tell from a path string
+  whether the filesystem folds case (os.path.normcase is the identity on a
+  POSIX Python even over case-insensitive APFS), so the classification
+  refuses to delete on every platform and defers case-variant cleanup to a
+  human. Only paths that fold onto nothing registered are orphans.
+  """
+  owned_by_norm = {normalize(path): path for path in owned}
+  unexpected: list[str] = []
+  mismatched: list[tuple[str, str]] = []
+  for path in found:
+    canonical = owned_by_norm.get(normalize(path))
+    if canonical is None:
+      unexpected.append(path)
+    elif canonical != path:
+      mismatched.append((path, canonical))
+  return tuple(sorted(unexpected)), tuple(sorted(mismatched))
+
+
+def scan_generated_package(
+  registrations: tuple[tuple[str, DtoSchema], ...],
+  output_root: Path,
+) -> tuple[tuple[str, ...], tuple[tuple[str, str], ...]]:
+  """Classify the generated package's top-level *.py files.
+
+  The generated package directory holds only generator output, so any other
+  Python file there is a stale or hand-added artifact. Only regular files at
+  the directory's top level are scanned; directories (even ones named like
+  x.py), __pycache__, and non-.py entries are ignored. The .py suffix is
+  matched case-insensitively so the scan behaves the same on case-folding
+  and case-sensitive filesystems.
+  """
+  package_dir = output_root / python_builder.GENERATED_PACKAGE_DIR
+  if not package_dir.is_dir():
+    return ((), ())
+  owned = {
+    python_builder.builder_output_path(schema)
+    for _, schema in registrations
+    if python_builder.has_python_builder(schema)
+  }
+  owned.add(python_builder.PACKAGE_INIT_PATH)
+  found = tuple(
+    f"{python_builder.GENERATED_PACKAGE_DIR}/{path.name}"
+    for path in package_dir.iterdir()
+    if path.is_file() and path.suffix.casefold() == ".py"
+  )
+  return classify_generated_files(owned, found)
 
 
 def _uniform_line_ending(content: bytes) -> str | None:
@@ -167,6 +299,23 @@ def check_outputs(
     stale = True
     print(f"stale: {path}")
     print(_diff_summary(path, actual, expected))
+  unexpected, case_mismatched = scan_generated_package(
+    registrations, output_root
+  )
+  for path in unexpected:
+    stale = True
+    print(f"unexpected: {path}")
+    print(
+      "  file is not owned by any registered schema; remove it or run "
+      "generate.py --write"
+    )
+  for actual, registered in case_mismatched:
+    stale = True
+    print(f"case-mismatch: {actual}")
+    print(
+      f"  directory entry differs from registered artifact {registered} "
+      "only by case; rename it by hand (generate.py never deletes it)"
+    )
   return 1 if stale else 0
 
 
@@ -185,7 +334,19 @@ def write_outputs(
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(expected)
     print(f"wrote: {path}")
-  return 0
+  unexpected, case_mismatched = scan_generated_package(
+    registrations, output_root
+  )
+  for path in unexpected:
+    (output_root / path).unlink()
+    print(f"removed: {path}")
+  for actual, registered in case_mismatched:
+    print(f"case mismatch (not removed): {actual}")
+    print(
+      f"  directory entry differs from registered artifact {registered} "
+      "only by case; refusing to delete, rename it by hand"
+    )
+  return 1 if case_mismatched else 0
 
 
 def _build_parser() -> argparse.ArgumentParser:

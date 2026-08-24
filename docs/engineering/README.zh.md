@@ -15,6 +15,7 @@ Last verified: `2026-08-08`
 - [documentation](documentation/README.zh.md)：生命周期、双语维护、结构实例与标准维护；
 - [release](release/README.zh.md)：依赖与发布治理；
 - [testing](testing/README.zh.md)：全仓测试组织、基础设施残差与保留治理评审；
+- [workspace](workspace/README.zh.md)：链接 worktree 的放置与属主、仓库相对路径长度预算；
 - [reviews](reviews/engineering_discipline_review_20260603.zh.md)：保留的工程评估，
   其证据属性不会因迁移而变成 standard。
 

@@ -20,7 +20,7 @@ Architecture Program. It records (a) the maintained
 observation/reward consumer census, (b) where the G4 layer-declaration
 mechanism was landed, and (c) the World-Truth direct reads on policy paths, each
 adjudicated. Per the
-[SCAL Conformance Census](../../plan/archive/unified_architecture_program_completed_20260727/scal_conformance_census_20260720.md) precedent this is
+SCAL Conformance Census (`git show 095fdd5c:docs/plan/archive/unified_architecture_program_completed_20260727/scal_conformance_census_20260720.md`) precedent this is
 a descriptive register (`reference`): it changes no runtime behavior. The first
 slice landed the G4 declaration mechanism (pure metadata plus an architecture
 test) and inventoried the truth leaks without closing any. The **second slice
@@ -711,9 +711,9 @@ The accepted implementation is intentionally limited to C3/C20:
 
 - Historical origin: completed Unified Architecture Program T8 slice; current
   authority is the simulation architecture standard below.
-- [SCAL Conformance Census (2026-07-20)](../../plan/archive/unified_architecture_program_completed_20260727/scal_conformance_census_20260720.md)
+- SCAL Conformance Census (2026-07-20) (`git show 095fdd5c:docs/plan/archive/unified_architecture_program_completed_20260727/scal_conformance_census_20260720.md`)
   (V3–V7 register; first-batch consumer priority; structural precedent)
-- [T6 Residual Ledger (2026-07-20)](../../plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.md) (sibling `reference`
+- T6 Residual Ledger (2026-07-20) (`git show 77610218:docs/plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.md`) (sibling `reference`
   register)
 - [Simulation System Architecture Design](../standards/simulation_system_architecture_design.md)
   (§3 information-state layers; §6 P0-P10 stages; §15 G4; §16 representation strategy)

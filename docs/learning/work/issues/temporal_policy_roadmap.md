@@ -1,6 +1,6 @@
 # Temporal HMoE Policy Plan - 2026-05-25
 
-Language: English canonical; [Chinese companion](temporal_policy_roadmap.zh.md).
+Language: English canonical; Chinese companion not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`

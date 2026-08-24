@@ -108,7 +108,9 @@ Frozen experimental GPU helper phase-0 probes:
 
 ## GPU Phase 0 Build
 
-The retained GPU helper scaffolding is still opt-in. To build it:
+The retained GPU helper scaffolding is still opt-in, and every probe below
+carries `EXCLUDE_FROM_ALL`, so a plain `cmake --build` never builds one.
+Name the target explicitly:
 
 ```bash
 cmake -S . -B build-gpu -DEF_ENABLE_CUDA_EXPERIMENTS=ON
@@ -168,8 +170,9 @@ Then launch the local Arma side against the forwarded endpoint, for example
 with the existing PowerShell helper in `ArmaOnly` mode plus
 `-ReuseExistingBackend`.
 
-The former repo-side `UniversalEnv`-backed Arma proxy backend is archived under
-`tools/archive/`; it is no longer a maintained diagnostics entrypoint.
+The former repo-side `UniversalEnv`-backed Arma proxy backend is retired; see
+the Retirement Register in `tools/README.md` for its recovery address. It is no
+longer a maintained diagnostics entrypoint.
 
 Show family-specific help:
 

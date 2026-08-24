@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/standards/runtime_workflow_and_contract_baseline.md`
 Owner: `architecture/runtime-workflow`
-Last verified: `2026-08-08`
+Last verified: `2026-08-13`
 
 Status: maintained runtime workflow and contract baseline, subordinate to the
 [strict simulation architecture baseline](simulation_system_architecture_design.md).
@@ -18,7 +18,7 @@ This document fixes the maintained workflow boundary between:
 - scenario/task input orchestration in Python
 - command/behavior bridge logic in the scenario loader
 - pure computation in the C++ mission runtime
-- episode/controller state assembly and roundtrip
+- Python-owned episode state, reward/status application, and autoreset
 
 It is the standards entrypoint for "how the current code actually works" when
 that answer affects naming, ownership, or contract design.
@@ -39,7 +39,7 @@ This document therefore answers:
 
 The current high-level workflow is:
 
-`scenario JSON -> load/compile -> normalize task + mission command -> behavior/command-chain update -> runtime step inputs -> C++ mission/runtime products -> episode/controller roundtrip`
+`scenario JSON -> load/compile -> normalize task + mission command -> behavior/command-chain update -> runtime step inputs -> C++ mission/runtime products -> Python product application/autoreset`
 
 In repository terms, the main stages are:
 
@@ -136,24 +136,25 @@ This stage must remain free of:
 
 - Python binding concerns
 - scenario JSON parsing
-- episode controller state import/export
+- stateful episode orchestration
 - ad hoc loader-side command/phase ownership logic
 
-## Stage 5: Product Application And Episode Roundtrip
+## Stage 5: Product Application And Episode State
 
 Primary code entrypoints:
 
 - [gym_envs/scenario_loader/execution_runtime/mainline.py](../../../gym_envs/scenario_loader/execution_runtime/mainline.py)
 - [src/core/mission/episode/](../../../src/core/mission/episode)
-- [tests/runtime/execution/test_execution_episode_controller.py](../../../tests/runtime/execution/test_execution_episode_controller.py)
+- [tests/runtime/exact/test_execution_mainline_behavior_snapshot.py](../../../tests/runtime/exact/test_execution_mainline_behavior_snapshot.py)
 - [tests/runtime/execution/test_execution_episode_state.py](../../../tests/runtime/execution/test_execution_episode_state.py)
 
 This stage owns:
 
-- applying runtime products back onto maintained episode/controller state
+- applying runtime products to the Python-maintained episode state
 - reward breakdown persistence
 - termination/status tracking
-- import/export and roundtrip of episode state
+- autoreset and episode-boundary transitions
+- DTO import/export roundtrip for `ExecutionEpisodeState` compatibility
 
 It should not be merged back into pure runtime kernels.
 

@@ -14,6 +14,7 @@
   - 按能力域与共享 surface 分组的运行时契约测试，位于 `air_combat/`、`bindings/`、`core/`、`engagement/`、`execution/`、`facade/`、`ground/`、`link/`、`mission/`、`multi_agent/`、`naval/` 和 `navigation/` 下。
 - `architecture/`
   - 源码/文档护栏和治理检查，与运行时行为测试有意分离。
+  - 拆分为默认守卫层与按需 `governance_audit` 审计层；见下文"架构测试分层"。
   - 通过一层语义子目录显式标出 guard owner：`build_system/`、
     `causal_runtime/`、`command_tasking/`、`compatibility_quarantine/`、
     `damage_model/`、`governance/`、`ground/`、`platform_spawn/`、
@@ -48,7 +49,8 @@
   - 仅为追溯保留的历史测试资产。
   - 这些文件不属于活跃 pytest 或 JSON contract 覆盖；只有移回维护态测试 surface 并加入相关 matrix 或 suite 后，才应重新视为活跃覆盖。
 - `suites/`
-  - 建议性的 suite 治理元数据，包括测试系统矩阵草案和 focused/local suite manifest。
+  - 建议性的 suite 治理元数据，以及签入的架构分层 manifest
+    （`architecture_guard_suite.json`、`governance_audit_suite.json`）。
   - 这些文件本身不会改变 CI wiring。
 - `diagnostics/`
   - 仅用于临时探索性诊断。
@@ -64,7 +66,7 @@
 独立的 Python 测试现在应是例外，而非默认。
 
 手动的一次性探针不应位于 `tests/` 的顶层。
-如果文件主要用于人工检查而非自动回归，请优先使用 `tools/diagnostics/` 存放维护的诊断脚本，或使用 `tools/archive/` 存放仅用于参考的遗留/手动探针。
+如果文件主要用于人工检查而非自动回归，请优先使用 `tools/diagnostics/` 存放维护的诊断脚本；仅用于参考的遗留/手动探针应直接删除并在 `tools/README.md` 的退役登记中留一行（git 历史即归档）。
 
 当需要独立测试时，优先考虑：
 
@@ -167,6 +169,60 @@ Suite tier 含义：
 `tests/suites/` 此前存放咨询性治理矩阵（`test_system_matrix.json`、`contract_system_matrix.json`）和草稿 `focused_runtime_suite.json`。这些文件已被移除：它们没有被任何 runner 或 CI 步骤引用，且跨文件一致性由元测试而非行为来保证。当前 CI 会运行维护态 pytest smoke 套件、C++ CTest smoke 目标，以及维护态 JSON 契约 smoke 套件。
 
 如果某个 smoke 路径在重构中被移动，先更新 `tests/smoke/ci_smoke_suite.json`。CI 和顶层文档应引用这条 suite runner，而不是重复书写单个测试文件路径。对于 node ID 条目，runner 会先检查基础文件路径，再把完整 node ID 交给 pytest。
+
+## 架构测试分层
+
+`tests/architecture/` 中混有两类失败受众不同的门禁，现通过 pytest marker
+拆分，使默认开发回归不再为证据审计买单：
+
+- **守卫层（默认，无标记）。** 普通代码变更就能破坏的代码结构性质：
+  include 方向、runtime facade 收口边界、分层/领域边界、information-state
+  truth-read 禁令、DTO/schema 与生成物一致性、census/inventory 棘轮，以及
+  在线门禁工具的 fail-closed 行为。这些测试在每次默认 pytest 调用中继续运行。
+- **治理审计层（`governance_audit` 标记）。** 证据与流程门禁：证据文档与
+  retained manifest、admission / signoff / provenance / release closeout
+  工作流、文档健康度（链接、双语一致、信息架构、内容 pin），以及仓库自动化
+  workflow pin。每个文件带有模块级
+  `pytestmark = pytest.mark.governance_audit`；marker 注册在
+  `pyproject.toml`。CUDA 证据模块退役后，不再需要 collection-time marker 例外。
+
+判定规则：测试对象是代码的结构性质（普通代码变更可使其变红）→ 守卫层；
+测试校验的是证据文档、签入清单、来源/签核/溯源记录或文档健康度 → 审计层。
+拿不准的文件默认归守卫层。
+
+默认回归入口 —— 通过 suite runner 运行签入的分层 manifest：
+
+```bash
+source tools/maintenance/cmo_env.sh
+
+# 开发回归（仅守卫层）
+cmo_python tools/runners/run_pytest_suite.py --suite tests/suites/architecture_guard_suite.json
+
+# 治理/证据审计层（按需）
+cmo_python tools/runners/run_pytest_suite.py --suite tests/suites/governance_audit_suite.json
+```
+
+默认循环请优先用守卫层 manifest，而不是 `-m "not governance_audit"`。marker
+反选并不能省下审计层的 import 开销：pytest 必须先 import 模块才能读到该模块的
+`pytestmark`，所以 `-m "not governance_audit"` 仍会收集审计层模块，只是跳过
+运行其中的测试。manifest 按文件路径选择，审计层模块根本不会被 import。
+
+marker 仍是层级归属的权威定义，需要在显式路径上按 marker 切片时继续使用：
+
+```bash
+# 仅守卫层
+pytest -m "not governance_audit" tests/architecture
+
+# 仅治理/证据审计层
+pytest -m governance_audit tests/architecture
+```
+
+`tests/runners/test_pytest_suite_manifests.py` 中的元测试保证两份 manifest
+无重复条目、互斥、完整覆盖 `tests/architecture` 全部测试文件，并与真实的
+`pytest --collect-only -m governance_audit` 收集结果保持锁步，
+使层级归属变更必须通过显式的 manifest 编辑完成。CI smoke 套件列出显式文件
+与 node ID，不受 marker 拆分影响：已提升进 smoke 的条目即使所属文件位于审计
+层，也继续作为 CI gate 运行。
 
 ## 依赖说明
 

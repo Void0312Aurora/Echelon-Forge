@@ -30,7 +30,6 @@ SCHEMA_DOMAINS = frozenset(
     "learning",
     "platform",
     "runtime",
-    "scenario",
     "tasking",
     "window",
   }
@@ -46,7 +45,6 @@ INC_LAYOUTS = (
         "kill_chain",
         "learning",
         "platform",
-        "scenario",
         "tasking",
       }
     ),

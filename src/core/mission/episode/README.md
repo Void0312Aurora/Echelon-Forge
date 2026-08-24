@@ -1,22 +1,23 @@
 # `src/core/mission/episode` Boundary
 
-`mission/episode` owns execution-episode state, batched input preparation, and controller orchestration. It transforms scenario/env state into `mission/runtime` inputs and applies runtime products back onto episode state.
+`mission/episode` owns execution-episode state DTOs, batched input preparation, and reward-breakdown serialization. Stateful step orchestration remains in the maintained Python mainline; this directory does not own a second episode controller.
 
 ## Allowed
 
 - `ExecutionEpisodeState` import/export and evolution of its state fields.
 - `StepEvaluationBatchConfig`, `StepEvaluationBatchEnvState`, and batch-prepare contracts.
-- The prepare/evaluate/step coordination logic of `ExecutionEpisodeController`.
+- Stable reward-breakdown serialization for `ExecutionEpisodeRuntimeProducts`.
 
 ## Forbidden
 
 - Direct implementation of reward/objective/termination formulas; those belong in `mission/runtime`.
 - Python/nanobind bindings and facade adaptation.
-- Exposing the controller's internal JSON codecs, transitions, and breakdown helpers as public APIs across layers.
+- A parallel stateful episode stepping owner or mission-command transition codec.
+- Exposing breakdown implementation helpers as public APIs across layers.
 
 ## Subdirectories
 
-- `detail/`: private helpers for the controller. External code generally should not include headers from here.
+- `detail/`: private reward-breakdown implementation. External code should include the public episode header instead.
 
 ## Dependency Direction
 

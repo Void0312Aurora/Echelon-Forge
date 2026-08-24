@@ -1,16 +1,22 @@
 from __future__ import annotations
 
 import importlib
+from pathlib import Path
 import types
+from typing import TYPE_CHECKING
 
 import pytest
 
-from tools.maintenance.dto_schema.generate import load_schemas
-from tools.maintenance.dto_schema.model import DtoSchema, Field
-from tools.maintenance.dto_schema.python_builder import render_builder_text
+if TYPE_CHECKING:
+  from tools.maintenance.dto_schema.model import DtoSchema
+
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def _load_builder_module(schema: DtoSchema, name: str) -> types.ModuleType:
+  from tools.maintenance.dto_schema.python_builder import render_builder_text
+
   source = render_builder_text(schema)
   module = types.ModuleType(name)
   exec(compile(source, f"<generated {name}>", "exec"), module.__dict__)
@@ -48,6 +54,8 @@ class _Source:
 
 
 def test_all_readonly_schema_generates_no_assigner() -> None:
+  from tools.maintenance.dto_schema.model import DtoSchema, Field
+
   schema = DtoSchema(
     name="readonly_probe",
     output_path="src/fake/readonly_probe.inc",
@@ -73,6 +81,8 @@ def test_all_readonly_schema_generates_no_assigner() -> None:
 
 
 def test_mixed_schema_assigner_skips_readonly_fields() -> None:
+  from tools.maintenance.dto_schema.model import DtoSchema, Field
+
   schema = DtoSchema(
     name="mixed_probe",
     output_path="src/fake/mixed_probe.inc",
@@ -106,13 +116,51 @@ def test_mixed_schema_assigner_skips_readonly_fields() -> None:
   assert dto.gamma == 1.0
 
 
-def test_generated_builders_match_schema_writability() -> None:
-  registrations = load_schemas()
-  assert registrations
+def test_checked_in_builders_are_exactly_the_whitelist() -> None:
+  """The generated package holds one builder per whitelisted schema, no more.
 
-  all_readonly_modules = []
-  readonly_field_total = 0
-  for _, schema in registrations:
+  Rendering a builder for every registered schema is what produced a package
+  where 103 of 104 modules had no importer other than the loop that used to
+  live here. Pinning the directory against BUILDER_SCHEMA_NAMES makes the
+  package regrowing -- or a name added to the whitelist without the importer
+  that justifies it -- a gate failure rather than a silent return to
+  generated-file bookkeeping.
+  """
+  from tools.maintenance.dto_schema import python_builder
+  from tools.maintenance.dto_schema.generate import load_schemas
+
+  assert python_builder.BUILDER_SCHEMA_NAMES == frozenset(
+    {"safety_runtime_inputs"}
+  )
+
+  registered = {schema.name for _, schema in load_schemas()}
+  assert python_builder.BUILDER_SCHEMA_NAMES <= registered
+
+  package_dir = REPO_ROOT / python_builder.GENERATED_PACKAGE_DIR
+  checked_in = {
+    path.name
+    for path in package_dir.iterdir()
+    if path.is_file() and path.suffix.casefold() == ".py"
+  }
+  assert checked_in == {"__init__.py"} | {
+    f"{name}_builder.py" for name in python_builder.BUILDER_SCHEMA_NAMES
+  }
+
+
+def test_whitelisted_builders_match_schema_writability() -> None:
+  from tools.maintenance.dto_schema import python_builder
+  from tools.maintenance.dto_schema.generate import load_schemas
+
+  whitelisted = [
+    schema
+    for _, schema in load_schemas()
+    if python_builder.has_python_builder(schema)
+  ]
+  assert {schema.name for schema in whitelisted} == (
+    python_builder.BUILDER_SCHEMA_NAMES
+  )
+
+  for schema in whitelisted:
     module = importlib.import_module(
       f"gym_envs.scenario_loader._generated.{schema.name}_builder"
     )
@@ -125,11 +173,31 @@ def test_generated_builders_match_schema_writability() -> None:
     assert module.READONLY_FIELDS == readonly
     assert hasattr(module, "assign_from_object") == bool(writable)
 
-    readonly_field_total += len(readonly)
-    if not writable:
-      all_readonly_modules.append(schema.name)
 
-  assert sorted(all_readonly_modules) == [
+def test_products_schemas_stay_all_readonly() -> None:
+  """Read-only coverage is a property of the schemas, not of builder files.
+
+  This pin used to ride along with the per-builder import loop, so shrinking
+  that loop to the whitelist would have dropped it. It is stated directly
+  against the schema registry it was always about; that the renderer still
+  handles both shapes is covered by the two rendering tests above, which
+  build their schema in-process and need no checked-in module.
+  """
+  from tools.maintenance.dto_schema.generate import load_schemas
+
+  registrations = load_schemas()
+  assert registrations
+
+  all_readonly = sorted(
+    schema.name
+    for _, schema in registrations
+    if all(field.readonly for field in schema.fields)
+  )
+  readonly_field_total = sum(
+    1 for _, schema in registrations for field in schema.fields if field.readonly
+  )
+
+  assert all_readonly == [
     "approach_reward_products",
     "mission_nav_products",
     "objective_products",

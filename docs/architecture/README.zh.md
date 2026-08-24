@@ -37,14 +37,14 @@ packet 只作为归档 provenance。
 
 ## 开放问题
 
-- [系统模块化 issue](work/issues/modularization_plan.zh.md)：draft residual 分析；
+- [系统模块化 issue](work/issues/modularization_plan.md)：draft residual 分析；
   目录位置不授权实施。
-- [系统分层与引擎封装](work/issues/system_layering_and_engine_encapsulation_plan.zh.md)
-- [架构与性能研究后续](work/issues/architecture_and_performance_research_followup.zh.md)
-- [Runtime facade contract](work/issues/runtime_facade_contract_plan.zh.md)
-- [C++ 依赖与 DTO 残差](work/issues/cpp_dependency_and_dto_residuals.zh.md)
-- [Exact-runtime refactor](work/issues/exact_runtime/cpp_exact_runtime_refactor_plan.zh.md)
-- [GPU 主线集成检查表](work/issues/exact_runtime/gpu_execution_mainline_integration_checklist.zh.md)
+- [系统分层与引擎封装](work/issues/system_layering_and_engine_encapsulation_plan.md)
+- [架构与性能研究后续](work/issues/architecture_and_performance_research_followup.md)
+- [Runtime facade contract](work/issues/runtime_facade_contract_plan.md)
+- [C++ 依赖与 DTO 残差](work/issues/cpp_dependency_and_dto_residuals.md)
+- [Exact-runtime refactor](work/issues/exact_runtime/cpp_exact_runtime_refactor_plan.md)
+- [GPU 主线集成检查表](work/issues/exact_runtime/gpu_execution_mainline_integration_checklist.md)
 
 ## 评审
 

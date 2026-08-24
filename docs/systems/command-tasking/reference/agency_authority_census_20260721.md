@@ -643,7 +643,7 @@ correction above stands as recorded.
   authority is the simulation architecture standard below.
 - [Simulation System Architecture Design](../../../architecture/standards/simulation_system_architecture_design.md)
   (Agency face; AgentRole schema; DoctrineFamily; merge/source-priority rule)
-- [SCAL Conformance Census (2026-07-20)](../../../plan/archive/unified_architecture_program_completed_20260727/scal_conformance_census_20260720.md)
+- SCAL Conformance Census (2026-07-20) (`git show 095fdd5c:docs/plan/archive/unified_architecture_program_completed_20260727/scal_conformance_census_20260720.md`)
   (sibling `reference`-kind register; structural precedent)
 - `python/tasking_contracts/agency_registry.py` (registered vocabulary owner)
 - `tests/architecture/agency/test_authority_registry_gate.py` and

@@ -142,7 +142,3 @@
 - 轨迹随机性、导引头/天气/环境不确定性，以及飞行员/控制权限后果，是相邻包，不属于第一轮近炸引信切片。
 - PF-R5 已确认 surrogate 在触发半径、初始横向/高度偏置和机制族上的趋势，但 live guidance 会把实际最近距离压在较窄区间，并让初始偏置对称性成为残余。
 - 真实引信阈值、Pk、deterministic fuze authority 或具体弹种杀伤声明仍被拒绝。
-
-## Archive
-
-归档索引：[archive/README.zh.md](archive/README.zh.md)。当前还没有历史记录进入 archive。

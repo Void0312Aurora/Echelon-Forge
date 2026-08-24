@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cctype>
 #include <stdexcept>
+#include <numbers>
 
 namespace {
 
@@ -126,7 +127,7 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
         // Wind (world frame). dir_from is NAV: 0=N, CW positive. Convert to a "to" unit vector.
         double dir_to_deg = std::fmod(base_wind_dir_from_deg_ + 180.0, 360.0);
         if (dir_to_deg < 0.0) dir_to_deg += 360.0;
-        double dir_to_rad = dir_to_deg * M_PI / 180.0;
+        double dir_to_rad = dir_to_deg * std::numbers::pi_v<double> / 180.0;
         double ux = std::sin(dir_to_rad);
         double uy = std::cos(dir_to_rad);
 
@@ -186,8 +187,8 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
     Vec3 get_sun_direction() override {
         // Unit vector pointing toward the sun. NAV azimuth: 0=North (+Y), CW
         // positive toward East (+X); elevation above the horizon.
-        const double az_rad = sun_azimuth_deg_ * M_PI / 180.0;
-        const double el_rad = sun_elevation_deg_ * M_PI / 180.0;
+        const double az_rad = sun_azimuth_deg_ * std::numbers::pi_v<double> / 180.0;
+        const double el_rad = sun_elevation_deg_ * std::numbers::pi_v<double> / 180.0;
         const double horizontal = std::cos(el_rad);
         return {std::sin(az_rad) * horizontal, std::cos(az_rad) * horizontal, std::sin(el_rad)};
     }
@@ -221,7 +222,8 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
 
             if (zone.type == 0) { // Rect (rotated by heading)
                 // Convert NAV heading (0=N, CW) to math yaw (0=+X, CCW).
-                double yaw = std::fmod(90.0 - zone.heading, 360.0) * M_PI / 180.0;
+                double yaw =
+                    std::fmod(90.0 - zone.heading, 360.0) * std::numbers::pi_v<double> / 180.0;
                 double c = std::cos(yaw);
                 double s = std::sin(yaw);
 

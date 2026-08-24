@@ -13,26 +13,6 @@
 #include "components/tasking/leader_intent.h"
 #include "components/tasking/pilot_report.h"
 #include "components/tasking/task_order.h"
-// HELD include-direction edge (ratcheted at I38, censused at I41,
-// re-adjudicated this iteration, 2026-07-27): WorldExecutionEpisodeStepRequest's
-// config/env_state fields (detail/tasking/world_execution_episode_step_request.inc)
-// are typed StepEvaluationBatchConfig/StepEvaluationBatchEnvState, owned by
-// this mission header. T1 dto_schema single-sourcing cannot close the edge
-// byte-equivalently: StepEvaluationBatchEnvState embeds ten mission-owned
-// aggregates by value, including ExecutionEpisodeState, which itself embeds
-// core/geometry's SpatialRouteWaypoint -- runtime/contracts' policy-allowed
-// include target set is {components}, and the include-direction scanner
-// counts .inc textual includes as edges, so any contracts-located definition
-// of these types merely re-creates the violation (contracts -> mission
-// and/or contracts -> core_geometry). Do not reverse the dependency; the
-// edge closes only via the T1 DTO-family-completion migration. Pinned by
-// tests/architecture/governance/test_cpp_include_direction.py and the
-// allowlist entry in
-// tests/architecture/fixtures/cpp_include_direction_allowlist_20260720.json;
-// adjudication record:
-// docs/plan/archive/unified_architecture_program_completed_20260727/
-// t6_residual_ledger.md section 7.5.
-#include "core/mission/episode/execution_episode_batch_prepare.h"
 #include "runtime/contracts/platform_capability_contracts.h"
 
 struct WorldEntityRef {
@@ -1084,9 +1064,3 @@ world_pilot_report_maintained_batch_contract(
     WorldPilotReportMaintainedAssignment &assignment) noexcept {
     return assignment.pilot_report;
 }
-
-struct WorldExecutionEpisodeStepRequest {
-#define EF_WORLD_EXECUTION_EPISODE_STEP_REQUEST_FIELD(type, name, default_value)                   \
-    type name = default_value;
-#include "runtime/contracts/detail/tasking/world_execution_episode_step_request.inc"
-};

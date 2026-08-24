@@ -1,18 +1,6 @@
 import ef_py
 
 
-def compiled_execution_step_enabled(loader) -> bool:
-    return bool(getattr(loader, "use_compiled_execution_step_runtime", True)) and hasattr(
-        ef_py, "ExecutionStepRuntimeInputs"
-    ) and hasattr(ef_py, "compute_execution_step_runtime")
-
-
-def compiled_execution_frame_enabled(loader) -> bool:
-    return bool(getattr(loader, "use_compiled_execution_step_runtime", True)) and hasattr(
-        ef_py, "ExecutionFrameRuntimeInputs"
-    ) and hasattr(ef_py, "compute_execution_frame_runtime")
-
-
 def compiled_execution_episode_enabled(loader) -> bool:
     return bool(getattr(loader, "use_compiled_execution_step_runtime", True)) and hasattr(
         ef_py, "ExecutionEpisodeRuntimeInputs"
@@ -31,6 +19,14 @@ def compute_execution_step_runtime_products(
     objective_specs=None,
     objective_inputs=None,
 ):
+    """Compute step-scoped runtime products through the compiled runtime.
+
+    The execution mainline consumes the episode-aggregate products prepared by
+    prepare_step_evaluation; the only remaining consumer of this helper is the
+    non-finite-state guard in compute_full_step, which recomputes fail-closed
+    safety products when a caller-provided step evaluation lacks the episode
+    products. It is a defensive recompute, not a parallel evaluation path.
+    """
     inputs = ef_py.ExecutionStepRuntimeInputs()
     inputs.truncated = bool(truncated)
     inputs.safety = safety_inputs if safety_inputs is not None else loader._build_neutral_execution_safety_inputs()

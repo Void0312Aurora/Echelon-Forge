@@ -49,7 +49,7 @@ Outdated historical design notes.
 
 | Document | Description |
 |----------|-------------|
-| [Takeoff to Cruise Mixed Mode](../manual/archive/takeoff_to_cruise_mixedmode_notes.md) | Frozen historical P3 experiment baseline; archive sources are not part of the maintained migration |
+| Takeoff to Cruise Mixed Mode (`git show 780837fe:docs/manual/archive/takeoff_to_cruise_mixedmode_notes.md`) | Frozen historical P3 experiment baseline; archive sources are not part of the maintained migration |
 
 Landing task semantics route through the current
 [Air landing reference](../domains/air/reference/landing_task.md).

@@ -81,13 +81,13 @@ adapter surface，并建立海军拥有的 command、action、observation 与配
 ## Task Clusters
 
 - 任务簇计划：
-  [naval_domain_surface_split_task_clusters_20260601.zh.md](naval_domain_surface_split_task_clusters_20260601.zh.md)
+  [naval_domain_surface_split_task_clusters_20260601.md](naval_domain_surface_split_task_clusters_20260601.md)
 - 当前状态：
-  [naval_domain_surface_split_current_status_20260601.zh.md](naval_domain_surface_split_current_status_20260601.zh.md)
+  [naval_domain_surface_split_current_status_20260601.md](naval_domain_surface_split_current_status_20260601.md)
 - 分发队列：
-  [naval_domain_surface_split_dispatch_queue_20260601.zh.md](naval_domain_surface_split_dispatch_queue_20260601.zh.md)
+  [naval_domain_surface_split_dispatch_queue_20260601.md](naval_domain_surface_split_dispatch_queue_20260601.md)
 - 验收门：
-  [naval_domain_surface_split_acceptance_20260601.zh.md](naval_domain_surface_split_acceptance_20260601.zh.md)
+  [naval_domain_surface_split_acceptance_20260601.md](naval_domain_surface_split_acceptance_20260601.md)
 
 ## Outputs And Evidence
 

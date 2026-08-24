@@ -56,7 +56,7 @@ Full-project architecture quality assessment. Evaluating whether implementations
 | `src/core/engine/simulation_kernel.h` | Owns the Flecs world and model interfaces, but its public API still spans reset/step/setup, raw world access, legacy command, tasking, observation, debug, weapon, and model override responsibilities. |
 | `src/core/interfaces/` | `IControlModel`, `ISensorModel`, `IAcousticModel`, `IGuidanceModel`, `IEffectsModel`, `IEnvironmentModel`, `IUnitFactory` — all pure virtual with `make_default_*()` factories. Consistent `I*`/`*ModelRef`/`make_default_*()` pattern. |
 | `src/systems/` | Each ECS system in its own file, organized by domain. Systems use Flecs singleton injection (`ControlModelRef`, `SensorModelRef`, etc.) for dependency inversion. |
-| `src/interfaces/python/bindings_core.cpp` | API surface split into 4 named tiers: `maintained`, `diagnostics_introspection`, `legacy_compatibility`, `diagnostics_override` — with explicit quarantine markers ("WP22-R1-2 quarantine marker"). |
+| `src/interfaces/python/bindings_core.cpp` | API surface split into 4 named tiers: `maintained`, `diagnostics_introspection`, `legacy_compatibility`, `diagnostics_override` — with an explicit `read_only_diagnostics_quarantine` marker. |
 
 **Key Design Decision**: Core behavior domains use replaceable strategy interfaces, and systems fetch model references via Flecs singletons. This is real dependency inversion, but not a complete separation of all behavioral logic: several systems and factories still carry inline domain logic.
 
@@ -243,7 +243,7 @@ step/reset exceptions occur.
 
 | Indicator | Rating | Evidence |
 |-----------|--------|----------|
-| Awareness of technical debt | **Strong** | Quarantine markers ("WP22-R1-2"), removed `runtime_compatibility_enabled` gates, explicit legacy path labeling, GPU experimental README boundaries |
+| Awareness of technical debt | **Strong** | Semantic quarantine markers (`read_only_diagnostics_quarantine`), removed `runtime_compatibility_enabled` gates, explicit legacy path labeling, GPU experimental README boundaries |
 | Interface design discipline | **Strong** | 7 pure virtual C++ interfaces, consistent `I*`/`*ModelRef`/`make_default_*()` pattern, 4-tier Python binding API surface |
 | Immutability usage | **Good** | Frozen dataclasses: `CompiledScenario`, `CompiledWorldLayoutTemplate`, `HMoERouteBatch`, `MultiAgentControlSlot` |
 | Error handling | **Research-grade** | C++ uses typed exceptions/checks. Python has many broad `except Exception` sites, especially in runtime/support paths; exact counts require scope-qualified commands. |

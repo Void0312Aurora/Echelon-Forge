@@ -10,7 +10,7 @@ Review basis: `2026-06-14` geometry-only acceptance and retained opt-in proxy ev
 Status: `2026-06-14` accepted / retained. The F-16C fine-geometry engineering
 proxy is closed against the geometry-only acceptance gate, with the closeout
 record under
-[archive/tg_f16c_fine_geometry_accepted_20260614](../../../../task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/README.md); default unit database replacement, default runtime-path replacement, policy/reward diagnostics, and training benefit are not acceptance gates for this subproject. This
+archive/tg_f16c_fine_geometry_accepted_20260614 (`git show 77610218:docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/README.md`); default unit database replacement, default runtime-path replacement, policy/reward diagnostics, and training benefit are not acceptance gates for this subproject. This
 subproject promotes the
 [Lethality Hitbox Geometry Fidelity Gap](../../work/issues/lethality_hitbox_geometry_fidelity_gap/README.md)
 into the maintained A2 follow-on surface for F-16 outer-shape, surface-component,
@@ -58,7 +58,7 @@ boundaries, true Pk, or weapon-specific lethality.
 | F-16 audit asset | active candidate | glTF source package, extracted files, hashes, and attribution are retained | Supports outer-shape review, not true internal component boundaries |
 | Old FlightGear F-16 | rejected for mainline derivation | Archived under `assets/archive`; strong GPLv2 FlightGear source candidate | Must not enter mainline derived geometry |
 | Current hitboxes | known gap | The issue records 4 m nose-aspect near miss with no component damage | Must not be treated as true outer shape or true component layout |
-| Geometry acceptance | accepted / retained | [archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.md](../../../../task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.md) | Accepts only the F-16C fine-geometry engineering proxy; not default runtime replacement, training benefit, structural breakup, debris, Pk, or weapon-specific conclusions |
+| Geometry acceptance | accepted / retained | `git show 77610218:docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.md` | Accepts only the F-16C fine-geometry engineering proxy; not default runtime replacement, training benefit, structural breakup, debris, Pk, or weapon-specific conclusions |
 | Downstream opt-in proxy | retained handoff evidence | TG-P7-R1 through R6 generated the opt-in proxy database, trace, and training-comparison artifacts | Not a closure gate for this subproject; the default database and main projection path remain the control path |
 
 ## Scope
@@ -123,7 +123,7 @@ Out of scope:
 - Current status:
   [missile_lethality_target_geometry_current_status_20260611.md](missile_lethality_target_geometry_current_status_20260611.md)
 - Geometry acceptance closeout:
-  [archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.md](../../../../task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.md)
+  `git show 77610218:docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.md`
 - First dispatch queue:
   [missile_lethality_target_geometry_dispatch_queue_20260611.md](missile_lethality_target_geometry_dispatch_queue_20260611.md)
 - Fine geometry proxy design draft:
@@ -484,8 +484,7 @@ This subproject can be marked accepted only when:
 ## Archive
 
 Current geometry acceptance package:
-[archive/tg_f16c_fine_geometry_accepted_20260614/README.md](../../../../task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/README.md).
+`git show 77610218:docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/README.md`.
 
-Archive index: [archive/README.md](../../../../task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/README.md). The
-`review_packets/f16c_20260611/` path remains a stable retained evidence surface
-for maintained tools, tests, and opt-in configs.
+The `review_packets/f16c_20260611/` path remains a stable retained evidence
+surface for maintained tools, tests, and opt-in configs.

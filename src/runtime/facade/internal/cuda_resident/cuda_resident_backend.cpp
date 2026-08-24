@@ -265,9 +265,7 @@ runtime::backend::InputResult
 CudaResidentBackend::inject(const runtime::backend::InputBatch &input) {
     if (input.kinematics_write.has_value() || !input.launch_requests.empty() ||
         !input.mission_commands.empty() || !input.task_orders.empty() ||
-        !input.leader_intents.empty() || !input.pilot_reports.empty() ||
-        input.clear_execution_episode_controller || input.prime_execution_episode_controller ||
-        !input.execution_episode_refs.empty() || !input.execution_episode_states.empty()) {
+        !input.leader_intents.empty() || !input.pilot_reports.empty()) {
         throw std::logic_error(
             "CUDA fixed-air resident input injection supports only selected pilot flight controls");
     }
@@ -299,17 +297,13 @@ CudaResidentBackend::inject(const runtime::backend::InputBatch &input) {
 
 runtime::backend::EvaluationResult
 CudaResidentBackend::evaluate(const runtime::backend::EvaluationRequest &request) const {
-    if (!request.execution_episode_requests.empty()) {
-        throw std::logic_error(
-            "CUDA resident backend evaluation supports only an empty execution request");
-    }
+    (void)request;
     return {};
 }
 
 runtime::backend::AdvanceResult
 CudaResidentBackend::advance(const runtime::backend::AdvanceRequest &request) {
-    if (request.kind != runtime::backend::AdvanceKind::WorldBatch ||
-        !request.execution_episode_requests.empty()) {
+    if (request.kind != runtime::backend::AdvanceKind::WorldBatch) {
         throw std::logic_error(
             "CUDA fixed-air resident backend advances only a published control-preparation, "
             "flight-dynamics, and observation-projection device window");
@@ -323,8 +317,7 @@ CudaResidentBackend::advance(const runtime::backend::AdvanceRequest &request) {
 
 runtime::backend::ExportResult
 CudaResidentBackend::export_state(const runtime::backend::ExportRequest &request) const {
-    if (request.include_recent_engagement_events || request.include_execution_episode_ready ||
-        request.include_execution_episode_states || request.include_mission_commands ||
+    if (request.include_recent_engagement_events || request.include_mission_commands ||
         request.include_task_orders || request.include_leader_intents ||
         request.include_pilot_reports) {
         throw std::logic_error(

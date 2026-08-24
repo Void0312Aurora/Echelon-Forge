@@ -2,11 +2,16 @@
 
 Downloaded from Sketchfab on 2026-05-25 for local visualization use.
 
+The `audit/` source packages for both models were retired from the working
+tree; their per-file sizes, SHA-256 digests, and Git recovery commands are
+recorded in [../audit_ledger.md](../audit_ledger.md). The runtime GLB files
+below are unaffected, and the attribution obligations still apply.
+
 ## MQ-9 Reaper Drone - Game Ready Military Asset
 
 - File: `mq9_reaper_game_ready_aesthetic_modeler.glb`
 - Runtime visual file: `mq9_reaper_game_ready_aesthetic_modeler.glb`
-- Audit glTF package: `audit/mq9_reaper_game_ready_aesthetic_modeler/a02057e7401a4f4ea130cb75cc73d8cb_gltf.zip`
+- Audit glTF package: retired, see `../audit_ledger.md`
 - Author: The Aesthetic Modeler
 - Source: https://sketchfab.com/3d-models/mq-9-reaper-drone-game-ready-military-asset-a02057e7401a4f4ea130cb75cc73d8cb
 - License: Creative Commons Attribution (CC BY)
@@ -17,7 +22,7 @@ Downloaded from Sketchfab on 2026-05-25 for local visualization use.
 
 - File: `shahed_136_faintastic18.glb`
 - Runtime visual file: `shahed_136_faintastic18.glb`
-- Audit glTF package: `audit/shahed_136_faintastic18/bc8754128c9d48c48baadeff1db8f0c7_gltf.zip`
+- Audit glTF package: retired, see `../audit_ledger.md`
 - Author: faintastic18
 - Source: https://sketchfab.com/3d-models/shahed-136-bc8754128c9d48c48baadeff1db8f0c7
 - License: Creative Commons Attribution (CC BY)

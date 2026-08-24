@@ -1,12 +1,20 @@
 """Admission contract for the I87 typed observation data-flow pilot.
 
 The pilot is deliberately bounded to the standard world-batch execution-
-observation builder.  It consumes the T1-generated ``ObservationViewSpec``
-export before reading the existing typed ``ObservationBatchPacket`` payload;
-it does not change the TL13 loader seam or the default observation path.
+observation builder.  It consumes the maintained ``ObservationViewSpec``
+declaration before reading the existing typed ``ObservationBatchPacket``
+payload; it does not change the TL13 loader seam or the default observation
+path.
+
+The spec is a pure Python static declaration
+(:func:`maintained_observation_view_spec`).  It used to be mirrored through
+the retired C++ ``RuntimeFacade.describe_maintained_observation_view`` export;
+after the maintained-evidence producer retirement the Python constants below
+are the single source of truth (they always were the authoritative registry --
+the C++ export only mirrored them and was gated against this module).
 
 ``required_fields == []`` and ``optional_fields == []`` have one narrow meaning
-in this pilot: the export is *structural-only*.  The field catalogue is
+in this pilot: the declaration is *structural-only*.  The field catalogue is
 unspecified here and remains owned by the existing observation implementation.
 Empty lists are therefore neither a wildcard nor a claim that the observation
 has zero fields.  The pilot performs no field filtering and makes no
@@ -16,11 +24,13 @@ fails closed until an explicit catalogue owner and projection rule land.
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from typing import Any
 
 
 MAINTAINED_VIEW_ID = "gym_envs.observation_view"
 MAINTAINED_SCHEMA_MAJOR = 1
+MAINTAINED_SCHEMA_VERSION = "1.0"
 MAINTAINED_PRODUCED_LAYERS = ("Agent Observation",)
 MAINTAINED_CONSUMED_LAYERS = (
     "World Truth",
@@ -28,6 +38,31 @@ MAINTAINED_CONSUMED_LAYERS = (
     "Shared Tactical Picture",
 )
 MAINTAINED_SEMANTIC_STAGES = ("P10 ObservationExport",)
+
+
+@dataclass(frozen=True)
+class MaintainedObservationViewSpec:
+    """Static Python declaration of the maintained observation view.
+
+    Field names and defaults mirror the ``ObservationViewSpec`` DTO shape the
+    admission checker reads (schema_version / view_id / layer tuples / empty
+    structural-only field catalogues), so the seven downstream
+    ``typed_observation_view_spec`` consumers keep reading the same attributes.
+    """
+
+    schema_version: str = MAINTAINED_SCHEMA_VERSION
+    view_id: str = MAINTAINED_VIEW_ID
+    information_layer_produced: tuple[str, ...] = MAINTAINED_PRODUCED_LAYERS
+    information_layer_consumed: tuple[str, ...] = MAINTAINED_CONSUMED_LAYERS
+    semantic_stage: tuple[str, ...] = MAINTAINED_SEMANTIC_STAGES
+    required_fields: tuple[str, ...] = field(default_factory=tuple)
+    optional_fields: tuple[str, ...] = field(default_factory=tuple)
+
+
+def maintained_observation_view_spec() -> MaintainedObservationViewSpec:
+    """Return the maintained observation-view declaration (static registry)."""
+
+    return MaintainedObservationViewSpec()
 
 
 def _schema_major(version: Any) -> int | None:
@@ -110,8 +145,11 @@ __all__ = [
     "MAINTAINED_CONSUMED_LAYERS",
     "MAINTAINED_PRODUCED_LAYERS",
     "MAINTAINED_SCHEMA_MAJOR",
+    "MAINTAINED_SCHEMA_VERSION",
     "MAINTAINED_SEMANTIC_STAGES",
     "MAINTAINED_VIEW_ID",
+    "MaintainedObservationViewSpec",
     "admit_typed_observation_view_spec",
+    "maintained_observation_view_spec",
     "typed_observation_view_admission_violations",
 ]

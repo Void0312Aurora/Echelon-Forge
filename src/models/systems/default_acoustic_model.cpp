@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <numbers>
 
 #include "components/domains/naval/platform/ship_platform.h"
 #include "components/domains/naval/platform/submarine_platform.h"
@@ -11,10 +12,6 @@
 #include "core/interfaces/environment_model.h"
 
 namespace {
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 double wrap_angle_deg(double angle) {
     while (angle > 180.0)
@@ -27,7 +24,7 @@ double wrap_angle_deg(double angle) {
 double nav_bearing_rel_deg(const Transform &owner, const Transform &target) {
     const double dx = target.x - owner.x;
     const double dy = target.y - owner.y;
-    const double bearing_math_deg = std::atan2(dy, dx) * 180.0 / M_PI;
+    const double bearing_math_deg = std::atan2(dy, dx) * 180.0 / std::numbers::pi_v<double>;
     const double bearing_nav_deg = Math::normalize_heading_deg(90.0 - bearing_math_deg);
     return wrap_angle_deg(bearing_nav_deg - owner.heading);
 }
@@ -43,7 +40,7 @@ double splitmix01(std::uint64_t seed) {
 double splitmix_normal(std::uint64_t seed_a, std::uint64_t seed_b) {
     const double u1 = std::max(1.0e-12, splitmix01(seed_a));
     const double u2 = splitmix01(seed_b);
-    return std::sqrt(-2.0 * std::log(u1)) * std::cos(2.0 * M_PI * u2);
+    return std::sqrt(-2.0 * std::log(u1)) * std::cos(2.0 * std::numbers::pi_v<double> * u2);
 }
 
 double platform_self_noise_bias_db(const flecs::entity &entity, double speed_mps) {
@@ -201,7 +198,8 @@ class DefaultAcousticModel : public IAcousticModel {
 
             const double horiz_m = std::sqrt(std::max(0.0, dx * dx + dy * dy));
             const double elevation_deg =
-                horiz_m > 1.0e-6 ? std::atan2(dz, horiz_m) * 180.0 / M_PI : 0.0;
+                horiz_m > 1.0e-6 ? std::atan2(dz, horiz_m) * 180.0 / std::numbers::pi_v<double>
+                                 : 0.0;
 
             Detection detection{};
             detection.target_id = target.id();

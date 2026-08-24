@@ -45,6 +45,6 @@ runner, or governance change is present and the focused check is rerun.
 ## Source And Retention
 
 The detailed dated reproductions and already-fixed repairs remain in the
-[completed T6 ledger](../../../plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.md).
+completed T6 ledger (`git show 77610218:docs/plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.md`).
 This page is the current route for test maintainers; it does not duplicate the
 ledger's historical iteration narrative.

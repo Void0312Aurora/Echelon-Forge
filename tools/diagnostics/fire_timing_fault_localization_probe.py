@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from types import ModuleType
 
 _REPO_ROOT_HINT = os.path.dirname(os.path.abspath(__file__))
 _REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
@@ -15,6 +14,7 @@ if _REPO_ROOT_HINT not in sys.path:
 from python.runtime_bootstrap import ensure_repo_imports
 
 ensure_repo_imports()
+from tools.diagnostics.common import build_mode_dispatch_parser, dispatch_mode_module
 from tools.diagnostics.fire_timing_fault_localization import (
     chain_breakpoint,
     learnability_audit,
@@ -24,77 +24,34 @@ from tools.diagnostics.fire_timing_fault_localization import (
 )
 
 
-VALID_MODES = {
-    "chain_breakpoint",
-    "learnability_audit",
-    "real_update",
-    "structural_toy",
-    "window_position_sweep",
+DEFAULT_MODE = "chain_breakpoint"
+MODE_MODULES = {
+    "chain_breakpoint": chain_breakpoint,
+    "learnability_audit": learnability_audit,
+    "real_update": real_update,
+    "structural_toy": structural_toy,
+    "window_position_sweep": window_position_sweep,
 }
-
-
-def _extract_mode(argv: list[str]) -> str:
-    for index, arg in enumerate(argv):
-        if arg == "--mode" and index + 1 < len(argv):
-            value = str(argv[index + 1]).strip()
-            return value if value in VALID_MODES else "chain_breakpoint"
-        if arg.startswith("--mode="):
-            value = str(arg.split("=", 1)[1]).strip()
-            return value if value in VALID_MODES else "chain_breakpoint"
-    return "chain_breakpoint"
-
-
-def _remove_mode(argv: list[str]) -> list[str]:
-    out: list[str] = []
-    skip_next = False
-    for arg in argv:
-        if skip_next:
-            skip_next = False
-            continue
-        if arg == "--mode":
-            skip_next = True
-            continue
-        if arg.startswith("--mode="):
-            continue
-        out.append(arg)
-    return out
-
-
-def _run_module(module: ModuleType, argv: list[str]) -> int:
-    old_argv = sys.argv
-    try:
-        sys.argv = [old_argv[0], *argv]
-        return int(module.main())
-    finally:
-        sys.argv = old_argv
+VALID_MODES = set(MODE_MODULES)
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Fire-timing fault-localization diagnostic probe.")
-    parser.add_argument("--mode", choices=sorted(VALID_MODES), default="chain_breakpoint")
-    parser.epilog = (
-        "Use --mode structural_toy for the abstract grouped-stopping toy, "
-        "--mode real_update for the real update-path probe, or "
-        "--mode chain_breakpoint for fixed-batch breakpoint attribution, or "
-        "--mode learnability_audit for oracle fire-timing learnability checks, or "
-        "--mode window_position_sweep for legal-window launch-position effect sweeps."
+    return build_mode_dispatch_parser(
+        description="Fire-timing fault-localization diagnostic probe.",
+        valid_modes=VALID_MODES,
+        default=DEFAULT_MODE,
+        epilog=(
+            "Use --mode structural_toy for the abstract grouped-stopping toy, "
+            "--mode real_update for the real update-path probe, or "
+            "--mode chain_breakpoint for fixed-batch breakpoint attribution, or "
+            "--mode learnability_audit for oracle fire-timing learnability checks, or "
+            "--mode window_position_sweep for legal-window launch-position effect sweeps."
+        ),
     )
-    return parser
 
 
 def main(argv: list[str] | None = None) -> int:
-    raw_argv = list(sys.argv[1:] if argv is None else argv)
-    mode = _extract_mode(raw_argv)
-    mode_argv = _remove_mode(raw_argv)
-    if mode == "structural_toy":
-        return _run_module(structural_toy, mode_argv)
-    if mode == "real_update":
-        return _run_module(real_update, mode_argv)
-    if mode == "learnability_audit":
-        return _run_module(learnability_audit, mode_argv)
-    if mode == "window_position_sweep":
-        return _run_module(window_position_sweep, mode_argv)
-    return _run_module(chain_breakpoint, mode_argv)
+    return dispatch_mode_module(argv, modules=MODE_MODULES, default=DEFAULT_MODE)
 
 
 if __name__ == "__main__":

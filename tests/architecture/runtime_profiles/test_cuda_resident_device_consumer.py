@@ -10,9 +10,6 @@ STORE_LEASE = CUDA_DIR / "cuda_world_store_device_lease.cpp"
 CONSUMER = CUDA_DIR / "cuda_resident_device_consumer.cpp"
 CONSUMER_HEADER = CUDA_DIR / "cuda_resident_device_consumer.h"
 DEVICE = CUDA_DIR / "cuda_world_store_cuda_observation.cu"
-PROBE_SESSION = (
-    REPO_ROOT / "src/tools/experimental/cuda_resident/cuda_resident_rb9_probe_session.cpp"
-)
 PERFORMANCE = REPO_ROOT / "src/runtime/contracts/cuda_resident_performance_contract.h"
 CPP_TEST = REPO_ROOT / "src/tests/test_cuda_resident_device_consumer.cpp"
 CMAKE = REPO_ROOT / "CMakeLists.txt"
@@ -103,46 +100,6 @@ def test_cr2_3_submit_wait_and_diagnostic_have_separate_transfer_boundaries() ->
     assert diagnostic.count("cudaMemcpy(") == 2
     assert diagnostic.count("cudaMemcpyDeviceToHost") == 2
     assert "cudaDeviceSynchronize" not in diagnostic
-
-
-def test_cr2_3_probe_stops_all_timers_before_deferred_diagnostic_readback() -> None:
-    session = _text(PROBE_SESSION)
-    window = _function(
-        session,
-        "WindowTiming ProbeSession::run_window",
-        "void ProbeSession::validate_pending_device_consumers",
-    )
-    acquisition = window.index("acquire_device_observation_lease")
-    submit = window.index("device_consumer.submit")
-    wait = window.index("device_consumer.await")
-    collected = window.index("const auto collected = Clock::now();", wait)
-    retain = window.index("pending_device_consumer_receipts.push_back", collected)
-    assert acquisition < submit < wait < collected < retain
-    assert "materialize_for_diagnostics" not in window
-    assert "export_device_observation_view" not in window
-    assert "consume_device_observation_view" not in window
-    drain = _function(
-        session,
-        "void ProbeSession::validate_pending_device_consumers",
-        "std::string ProbeSession::state_digest",
-    )
-    assert "materialize_for_diagnostics" in drain
-
-    probe = _text(REPO_ROOT / "src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp")
-    cold = probe.split("for (std::size_t sample = 0; sample < args.cold_samples", 1)[1]
-    cold = cold.split("ProbeSession warmed", 1)[0]
-    assert cold.index("cold_total_samples.push_back") < cold.index(
-        "validate_pending_device_consumers"
-    )
-    rollout = probe.split("for (std::size_t rollout = 0; rollout < args.rollout_samples", 1)[1]
-    rollout = rollout.split("ProbeSession deterministic", 1)[0]
-    assert rollout.index("rollout_samples.push_back") < rollout.index(
-        "validate_pending_device_consumers"
-    )
-    assert "(mode.device_consumer ? args.rollout_windows : std::size_t{1})" in probe
-    assert '"deferred_device_consumer_receipts"' in probe
-    assert '"deferred_after_sample_timer"' in probe
-    assert '"learner_facing_device_lease_available"' in probe
 
 
 def test_cr2_3_performance_ledger_excludes_diagnostic_d2h_but_records_wait_and_alloc_risk() -> None:

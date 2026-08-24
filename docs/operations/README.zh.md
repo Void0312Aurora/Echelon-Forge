@@ -33,7 +33,7 @@ Last verified: `2026-08-08`
 
 | 文档 | 说明 |
 |------|------|
-| [可视化技术栈演进](visualization/work/issues/viz_stack_evolution.zh.md) | 维护中的北极星计划；不是实施权威 |
+| [可视化技术栈演进](visualization/work/issues/viz_stack_evolution.md) | 维护中的北极星计划；不是实施权威 |
 
 ### 已验收可视化评审
 
@@ -49,7 +49,7 @@ Last verified: `2026-08-08`
 
 | 文档 | 说明 |
 |------|------|
-| [起飞到巡航混合模式](../manual/archive/takeoff_to_cruise_mixedmode_notes.zh.md) | 冻结的历史 P3 实验基线；归档源不进入维护树迁移 |
+| 起飞到巡航混合模式 (`git show 780837fe:docs/manual/archive/takeoff_to_cruise_mixedmode_notes.zh.md`) | 冻结的历史 P3 实验基线；归档源不进入维护树迁移 |
 
 着陆任务语义路由到当前
 [Air 着陆 reference](../domains/air/reference/landing_task.zh.md)。

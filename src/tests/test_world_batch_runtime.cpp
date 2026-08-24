@@ -28,27 +28,16 @@ TEST_SUITE("world_batch_runtime") {
         CHECK(runtime.effective_worker_threads() == 1);
     }
 
-    TEST_CASE("resize preserves existing world references and controller prefixes") {
+    TEST_CASE("resize preserves existing world references") {
         WorldBatchRuntime runtime(1);
         SimulationKernel *world0 = &runtime.world_raw_quarantine(0);
 
-        WorldEntityRef ref0{};
-        ref0.world_index = 0;
-        ref0.entity_id = 77;
-        ExecutionEpisodeState state0{};
-        state0.agent_id = ref0.entity_id;
-        runtime.prime_execution_episode_controller_batch({ref0}, {state0});
-
         runtime.resize(1);
         CHECK(&runtime.world_raw_quarantine(0) == world0);
-        CHECK(runtime.execution_episode_controller_ready(0));
 
         runtime.resize(3);
         CHECK(runtime.world_count() == 3);
         CHECK(&runtime.world_raw_quarantine(0) == world0);
-        CHECK(runtime.execution_episode_controller_ready(0));
-        CHECK_FALSE(runtime.execution_episode_controller_ready(1));
-        CHECK_FALSE(runtime.execution_episode_controller_ready(2));
 
         SimulationKernel *world1 = &runtime.world_raw_quarantine(1);
         runtime.resize(2);
@@ -92,7 +81,7 @@ TEST_SUITE("world_batch_runtime") {
         CHECK_THROWS_AS(runtime.try_set_entity_kinematics(bad_world_ref, state), std::out_of_range);
     }
 
-    TEST_CASE("complete world setup clears episode controller and missing wind resets calm") {
+    TEST_CASE("complete world setup with missing wind resets calm") {
         WorldBatchRuntime runtime(1);
         auto &world = runtime.world_raw_quarantine(0);
         world.set_wind(25.0, 270.0, 5.0);
@@ -104,26 +93,12 @@ TEST_SUITE("world_batch_runtime") {
         const auto windy = env_ref->model->get_atmosphere_at(0.0, 0.0, 1000.0);
         CHECK(std::hypot(windy.wind_velocity.x, windy.wind_velocity.y) > 1.0);
 
-        WorldEntityRef ref{};
-        ref.world_index = 0;
-        ref.entity_id = 77;
-        ExecutionEpisodeState state{};
-        state.agent_id = ref.entity_id;
-        runtime.prime_execution_episode_controller_batch({ref}, {state});
-        REQUIRE(runtime.execution_episode_controller_ready(0));
-
         runtime.apply_world_setup_batch({123}, {}, {}, {}, {});
 
-        CHECK_FALSE(runtime.execution_episode_controller_ready(0));
         const auto calm = env_ref->model->get_atmosphere_at(0.0, 0.0, 1000.0);
         CHECK(calm.wind_velocity.x == doctest::Approx(0.0));
         CHECK(calm.wind_velocity.y == doctest::Approx(0.0));
         CHECK(calm.wind_velocity.z == doctest::Approx(0.0));
-
-        runtime.prime_execution_episode_controller_batch({ref}, {state});
-        REQUIRE(runtime.execution_episode_controller_ready(0));
-        runtime.apply_world_layout(0, 456, "flat", 0.0, 0.0, 0.0, false, 0.0, 0.0, 8.0, {}, {});
-        CHECK_FALSE(runtime.execution_episode_controller_ready(0));
     }
 
     TEST_CASE("visual compatibility scenes own snapshots across world shutdown") {

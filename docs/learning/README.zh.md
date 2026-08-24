@@ -51,14 +51,14 @@ policy-architecture standard。
 
 ## 开放工作入口
 
-- [分层 MoE 执行策略](work/issues/hierarchical_moe_execution_policy.zh.md)：维护中的设计方向，不是实现标准。
-- [强化学习与自博弈](work/issues/rl_selfplay.zh.md)：草拟路线图。
-- [Temporal policy 路线图](work/issues/temporal_policy_roadmap.zh.md)
+- [分层 MoE 执行策略](work/issues/hierarchical_moe_execution_policy.md)：维护中的设计方向，不是实现标准。
+- [强化学习与自博弈](work/issues/rl_selfplay.md)：草拟路线图。
+- [Temporal policy 路线图](work/issues/temporal_policy_roadmap.md)
 - [Causal-transformer HMoE](work/issues/causal_transformer_hmoe/README.zh.md)
 - [Launch-window 标签失衡](work/issues/launch_window_label_imbalance/README.zh.md)
 - [HMoE 层级计算缺口](work/issues/hmoe_hierarchical_computation_gap/README.zh.md)
 - [Policy hold baseline drift](work/issues/policy_hold_baseline_drift/README.zh.md)
-- [协同训练基础与性能](work/issues/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md)
+- [协同训练基础与性能](work/issues/multi_agent_cooperative_training_foundation_and_performance_plan.md)
 - [协同执行管线发现](work/issues/p8_cooperative_execution_pipeline_findings_and_plan.zh.md)
 
 这些页面都只是 `work/issues` 下的规划输入，路径本身不授予实施权威。

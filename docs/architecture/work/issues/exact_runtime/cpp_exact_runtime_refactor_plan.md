@@ -2,13 +2,13 @@
 
 Language:
 - English canonical: `cpp_exact_runtime_refactor_plan.md`
-- Chinese companion: [cpp_exact_runtime_refactor_plan.zh.md](cpp_exact_runtime_refactor_plan.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`
 Canonical: `docs/architecture/work/issues/exact_runtime/cpp_exact_runtime_refactor_plan.md`
 Owner: `architecture/exact-runtime`
-Last verified: `2026-08-08`
+Last verified: `2026-08-13`
 Content status: migrated candidate plan; historical landed-state claims remain
 bounded to the cited I43 snapshot and require current revalidation.
 
@@ -16,12 +16,22 @@ Navigation:
 
 - [Architecture Documentation](../../../README.md)
 - [system_layering_and_engine_encapsulation_plan.md](../system_layering_and_engine_encapsulation_plan.md)
-- [architecture_and_performance_research_followup.zh.md](../architecture_and_performance_research_followup.zh.md)
+- [architecture_and_performance_research_followup.md](../architecture_and_performance_research_followup.md)
 
 Status: draft issue. The document records a 2026-04-03 proposal and a
 2026-07-21 I43 landed-fact census; neither snapshot supplies current execution
 authorization. See "T4 Census (I43)" after Work Packages for its evidence
 boundary.
+
+Current-state disposition (2026-08-13): the plan's stop-loss rule was invoked.
+The opt-in compiled `ExecutionEpisodeController`, shadow comparator, and
+world-batch/facade cutover surface were retired after the held performance gate
+showed a slower path and the second stateful owner remained feature-incomplete.
+The maintained Python orchestration, `ExecutionEpisodeState` compatibility DTO,
+batch preparation, and stateless compiled runtime products remain. All
+controller-specific proposals and landed-state descriptions below are retained
+as historical evidence, not current implementation direction.
+
 Document role:
 
 - This document describes a candidate next mainline acceleration/refactor path.
@@ -58,7 +68,7 @@ Relevant references:
 - gpu_exact_world_step_rearchitecture_plan.md (`git show 70c07a77:docs/plan/archive/exact_runtime/gpu_exact_world_step_rearchitecture_plan.md`)
 - [gpu_execution_mainline_integration_checklist.md](gpu_execution_mainline_integration_checklist.md)
 - [system_layering_and_engine_encapsulation_plan.md](../system_layering_and_engine_encapsulation_plan.md)
-- [architecture_and_performance_research_followup.zh.md](../architecture_and_performance_research_followup.zh.md)
+- [architecture_and_performance_research_followup.md](../architecture_and_performance_research_followup.md)
 - [simulation_kernel.cpp](../../../../../src/core/engine/simulation_kernel.cpp)
 - [world_batch_runtime.cpp](../../../../../src/core/engine/world_batch_runtime.cpp)
 - [gym_envs/scenario_loader/core.py](../../../../../gym_envs/scenario_loader/core.py)

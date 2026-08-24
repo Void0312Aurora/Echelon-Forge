@@ -96,7 +96,7 @@
 
 ## GPU 阶段 0 构建
 
-保留的 GPU 辅助框架仍然是可选的。要构建它：
+保留的 GPU 辅助脚手架仍然是可选的：下面每个探针都带 `EXCLUDE_FROM_ALL`，普通的 `cmake --build` 不会构建它们，必须显式指定目标名：
 
 ```bash
 cmake -S . -B build-gpu -DEF_ENABLE_CUDA_EXPERIMENTS=ON
@@ -155,8 +155,8 @@ ssh -N -L 8765:127.0.0.1:8765 HEI
 随后本地 Arma 侧可继续复用现有 PowerShell helper，以 `ArmaOnly` 模式配合
 `-ReuseExistingBackend` 连接该转发端口。
 
-此前仓库内基于 `UniversalEnv` 的 Arma proxy backend 已归档到 `tools/archive/`，
-不再作为维护的 diagnostics 入口。
+此前仓库内基于 `UniversalEnv` 的 Arma proxy backend 已退役，取回地址见
+`tools/README.zh.md` 的「退役登记」；它不再作为维护的 diagnostics 入口。
 
 显示族特定帮助：
 

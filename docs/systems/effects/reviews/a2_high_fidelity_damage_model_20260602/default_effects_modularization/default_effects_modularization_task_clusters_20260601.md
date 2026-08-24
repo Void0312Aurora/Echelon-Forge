@@ -7,7 +7,7 @@ Parent subproject:
 - [README.md](README.md)
 - [README.zh.md](README.zh.md)
 - [Closure sync](default_effects_modularization_closure_sync_20260602.md)
-- [Archive closeout](archive/default_effects_modularization_closeout_20260602.md)
+- Archive closeout (`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/default_effects_modularization/archive/default_effects_modularization_closeout_20260602.md`)
 
 ## Boundary Decision
 

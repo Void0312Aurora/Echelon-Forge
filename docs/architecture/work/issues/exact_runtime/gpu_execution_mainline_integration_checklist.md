@@ -2,7 +2,7 @@
 
 Language:
 - English canonical: `gpu_execution_mainline_integration_checklist.md`
-- Chinese companion: [gpu_execution_mainline_integration_checklist.zh.md](gpu_execution_mainline_integration_checklist.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`
@@ -264,10 +264,9 @@ Notes:
   `flight_shaping_backend` plus the latest visual/flight-shaping runtime stats,
   and supports a `--flight-shaping-backend` override for maintained `p5`-like
   A/B measurement.
-- The next frozen follow-on for this phase is
-  [gpu_execution_phase4_rollout_hot_path_freeze.md](../../../../../tests/fixtures/runtime_profiles/cuda_resident_program_2/gpu_execution_phase4_rollout_hot_path_freeze.md),
-  which isolates `WorldBatchVecEnv` host-copy semantics before any further
-  default changes.
+- The frozen follow-on that isolated `WorldBatchVecEnv` host-copy semantics is
+  now historical. Its final copy can be inspected with
+  `git show c0e4f31f:tests/fixtures/runtime_profiles/cuda_resident_program_2/gpu_execution_phase4_rollout_hot_path_freeze.md`.
 - Initial Phase 4C results from that freeze show `observation_return_mode=view`
   is valid and sometimes slightly faster, but the maintained `p5` gain
   collapses toward noise at larger batch sizes, so the maintained default

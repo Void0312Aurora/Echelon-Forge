@@ -3,8 +3,7 @@
 Pins ``--help`` output for every tool touched by the argparse-group
 migration (I20's ``add_probe_run_args``/``add_model_load_args``/
 ``add_json_out_arg`` reach extended to nine partial-match call sites, plus
-the two new groups: KCES before-report args and the independent-review
-retained-gate output args). The fixtures under
+the KCES before-report args group). The fixtures under
 ``tests/tools/fixtures/argparse_migration_help/`` were captured from this
 tree right after the migration landed and were diffed byte-for-byte against
 a pre-migration capture of the same invocations during development (see the
@@ -65,9 +64,6 @@ INVOCATIONS: list[tuple[str, list[str]]] = [
     ("kces_stage_attribution", ["tools/diagnostics/kill_chain_expectation_stage_attribution.py", "--help"]),
     ("kces_visualize", ["tools/diagnostics/kill_chain_expectation_visualize.py", "--help"]),
     ("kces_envelope_audit", ["tools/diagnostics/kces/envelope_audit.py", "--help"]),
-    ("review_closeout", ["tools/maintenance/independent_review/review_closeout.py", "--help"]),
-    ("scope_bucket_review", ["tools/maintenance/independent_review/scope_bucket_review.py", "--help"]),
-    ("uncertainty_review", ["tools/maintenance/independent_review/uncertainty_review.py", "--help"]),
 ]
 
 

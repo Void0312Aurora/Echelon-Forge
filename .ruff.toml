@@ -5,7 +5,6 @@ extend-exclude = [
   "dist",
   "experiments",
   "experiments_tmp",
-  "tools/archive",
 ]
 
 [lint]

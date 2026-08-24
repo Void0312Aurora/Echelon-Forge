@@ -456,9 +456,9 @@ class MultiTimescaleActionController:
     def finalize_step_result(self, obs, reward, info, prepared: PreparedMultiTimescaleAction):
         self._last_obs = obs
         info_out = dict(info or {})
-        info_out["effective_action"] = np.asarray(prepared.action, dtype=np.float32, copy=True)
+        info_out["effective_action"] = np.array(prepared.action, dtype=np.float32)
         if prepared.baseline_action is not None and prepared.baseline_action.size == prepared.action.size:
-            info_out["baseline_action"] = np.asarray(prepared.baseline_action, dtype=np.float32, copy=True)
+            info_out["baseline_action"] = np.array(prepared.baseline_action, dtype=np.float32)
         if prepared.scripted_active_mode is not None:
             info_out["scripted_baseline_mode_active"] = str(prepared.scripted_active_mode)
 
@@ -467,7 +467,7 @@ class MultiTimescaleActionController:
             reward_out -= float(prepared.rate_penalty)
             info_out["action_rate_penalty"] = float(prepared.rate_penalty)
 
-        self._held_action = np.asarray(prepared.action, dtype=np.float32, copy=True)
+        self._held_action = np.array(prepared.action, dtype=np.float32)
         self._t += 1
         return obs, reward_out, info_out
 
@@ -934,9 +934,9 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
     def finalize_step_result(self, obs, reward, info, prepared: PreparedMultiTimescaleAction):
         self._last_obs = obs
         info_out = dict(info or {})
-        info_out["effective_action"] = np.asarray(prepared.action, dtype=np.float32, copy=True)
+        info_out["effective_action"] = np.array(prepared.action, dtype=np.float32)
         if prepared.baseline_action is not None and prepared.baseline_action.size == prepared.action.size:
-            info_out["baseline_action"] = np.asarray(prepared.baseline_action, dtype=np.float32, copy=True)
+            info_out["baseline_action"] = np.array(prepared.baseline_action, dtype=np.float32)
         if prepared.scripted_active_mode is not None:
             info_out["scripted_baseline_mode_active"] = str(prepared.scripted_active_mode)
 
@@ -945,7 +945,7 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
             reward_out -= float(prepared.rate_penalty)
             info_out["action_rate_penalty"] = float(prepared.rate_penalty)
 
-        self._held_action = np.asarray(prepared.action, dtype=np.float32, copy=True)
+        self._held_action = np.array(prepared.action, dtype=np.float32)
         self._t += 1
         return obs, reward_out, info_out
 

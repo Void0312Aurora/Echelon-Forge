@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-17",
+  "generated_at": "2026-08-24",
   "root": "docs",
   "pairs": [
     {
@@ -7,36 +7,27 @@
       "english": "docs/README.md",
       "chinese": "docs/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "a7a362d20f0abdecdac27ddb6f3b9d6a7ee7b6b52fb4ae531c579cc3418853a5",
-      "chinese_hash": "6c7fd341d85425916d853005454fc549f6222445ff633f0eb965bc99fdfaed0a"
+      "last_verified": "2026-08-13",
+      "english_hash": "54dc31cf974be737e674ab30437f4ca9d19af631e091fea920b1895199836e7b",
+      "chinese_hash": "0bec064e0a934cc9d913044fe7c3ed456180183d1e346aa480fe72608794c8d1"
     },
     {
       "pair_id": "architecture/README",
       "english": "docs/architecture/README.md",
       "chinese": "docs/architecture/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-23",
+      "last_verified": "2026-08-24",
       "english_hash": "4e4e568953491b09dea67e56b4353f1cbb8abcc4e81ccdf953c9f21c3e377295",
-      "chinese_hash": "d6acf8b704df3d430808ac932679ba69fe745a350628485dd90df6a9f4b1c860"
+      "chinese_hash": "0b95294a8e8c4e57ff18182b5d033031d8a4f0d49dcc971b25037ee89348e750"
     },
     {
       "pair_id": "architecture/reference/t8_g4_truth_leak_inventory",
       "english": "docs/architecture/reference/t8_g4_truth_leak_inventory.md",
       "chinese": "docs/architecture/reference/t8_g4_truth_leak_inventory.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-12",
-      "english_hash": "deacb0d52a14dc41b6738d13e2cbccc17feb86cac02caddf58b6c9c4c1761b63",
-      "chinese_hash": "403f5d66c97a4b168a8eeeaba44a8ba99fd41dd95b10c76f632b26e7c08fcd72"
-    },
-    {
-      "pair_id": "architecture/standards/runtime_workflow_and_contract_baseline",
-      "english": "docs/architecture/standards/runtime_workflow_and_contract_baseline.md",
-      "chinese": "docs/architecture/standards/runtime_workflow_and_contract_baseline.zh.md",
-      "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "bbf6fe118d10a8a1556b4a599e5f8e3b595300372f347c913f5dc0f328eab75b",
-      "chinese_hash": "dfca5b13860511da1e25c8d543c35e85ccb076acb7ca5e82fa67f1088ad88a05"
+      "last_verified": "2026-08-13",
+      "english_hash": "2d9e9f29075d62284b0f5a6abd46c24ebe69649ec643e99401d039b25a585287",
+      "chinese_hash": "89cbb0594d5ad8dd339d4abcb7bfa554d289619ca4bc8fdd620180abc5b35a50"
     },
     {
       "pair_id": "architecture/standards/runtime_composition_baseline",
@@ -46,6 +37,15 @@
       "last_verified": "2026-08-23",
       "english_hash": "0060c63839bca65907aa7cd8bd92e2747f8eabc76202b5a96d971cd4cf8527ff",
       "chinese_hash": "8372ea39528d2a8b9f5be8470ecc7792dddb0c4acfe19bdf69d7c1ac3792f3f3"
+    },
+    {
+      "pair_id": "architecture/standards/runtime_workflow_and_contract_baseline",
+      "english": "docs/architecture/standards/runtime_workflow_and_contract_baseline.md",
+      "chinese": "docs/architecture/standards/runtime_workflow_and_contract_baseline.zh.md",
+      "source_of_truth": "english",
+      "last_verified": "2026-08-14",
+      "english_hash": "d928f5760fdc93a356405f0f29b29e5964d1a164065ab60710e34fd946d089bb",
+      "chinese_hash": "42f9408f2be7b25496ba8713e3952a014de4b9d350ae44a6fff4475cd4e002ff"
     },
     {
       "pair_id": "architecture/standards/simulation_conventions",
@@ -61,9 +61,9 @@
       "english": "docs/architecture/standards/simulation_system_architecture_design.md",
       "chinese": "docs/architecture/standards/simulation_system_architecture_design.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-09",
-      "english_hash": "2b59e91befb3d5198a1b0bce2be42d73e84dcc6d90006099ad63ffa3627bb61d",
-      "chinese_hash": "6210fb35842825cb34cb6c5a984212a3fd1384156f65953fbee4a921f7f594dd"
+      "last_verified": "2026-08-13",
+      "english_hash": "d3d41e4f540209d869bfaefabd0f3616ce776055f726070512b9e213481331fd",
+      "chinese_hash": "303ddcde53dfee68d8a7180ccb01740cc7c2950b0ae9dd8da90cf54bed002796"
     },
     {
       "pair_id": "domains/README",
@@ -79,9 +79,9 @@
       "english": "docs/domains/air/README.md",
       "chinese": "docs/domains/air/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
+      "last_verified": "2026-08-12",
       "english_hash": "afdfd7c453c80125e4945f6647e3793a9c1d62373d963366e35aa20af6bce61d",
-      "chinese_hash": "f8f8131e4d82c2263decfa57453faf509ece05e2c7f122231a630a794a4ed356"
+      "chinese_hash": "e22a3f14e499a019726398f60fb263bc5affdc103ec970cb97ce5e1772052bf3"
     },
     {
       "pair_id": "domains/air/reference/landing_task",
@@ -269,8 +269,8 @@
       "chinese": "docs/engineering/README.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-08-08",
-      "english_hash": "0d3ed9a9d7d621b95c8a6c8155b07a881ef1f543fba76d15001bb4dc7208f7a6",
-      "chinese_hash": "97288074d64954d7538c5195295e51e7db0bd4ea8a74fa8ab78a717c8be19703"
+      "english_hash": "d8f4a3ba75ee0ac419ef7100ee77c45651f755d0d6bf624566c071730cac32f1",
+      "chinese_hash": "c2e7d74c034c70dbb37e66c299aa3e8c737d01e71dc19a85633d885084420597"
     },
     {
       "pair_id": "engineering/automation/README",
@@ -295,9 +295,9 @@
       "english": "docs/engineering/automation/rules/document_authority_map.md",
       "chinese": "docs/engineering/automation/rules/document_authority_map.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
+      "last_verified": "2026-08-12",
       "english_hash": "cc9d004b5a792e510d7c55b8fb21da2801a621c12f0b8bf1dc30a92541e78d1a",
-      "chinese_hash": "3aaba85ddcf1716b44541ccb9eccb89cfcd2a14967d3f1a6b5a3ab01b54c088b"
+      "chinese_hash": "6e10fc9bae90b0b7d199900111945ad2bd3ebdd7bea585cc163303b587a689a4"
     },
     {
       "pair_id": "engineering/automation/rules/subproject_creation_standard",
@@ -340,45 +340,45 @@
       "english": "docs/engineering/documentation/reference/bilingual_document_clusters.md",
       "chinese": "docs/engineering/documentation/reference/bilingual_document_clusters.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-07",
-      "english_hash": "bcd0c86648904f9e0b8debee3de724fc89969aa0ac2cb70dd2490de61465ecae",
-      "chinese_hash": "f993de7bcb4e104de1cb7f2d486c64ff62a69224ccfaf1f28d66e25ac9f1aef9"
+      "last_verified": "2026-08-12",
+      "english_hash": "974f5ff87217d61e3e183c1afd8922638fb67b7e6544928422eb09c48d17d9f7",
+      "chinese_hash": "19b65a67c550bf268e824518f61e5ba1b023b3f035416367cf3ae431c88d5cfe"
     },
     {
       "pair_id": "engineering/documentation/reference/document_alignment_map",
       "english": "docs/engineering/documentation/reference/document_alignment_map.md",
       "chinese": "docs/engineering/documentation/reference/document_alignment_map.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-09",
+      "last_verified": "2026-08-12",
       "english_hash": "e72764c12cb67d5f558c0626c8852b8fc6fc4f2928052d315829f2a2cf8abedc",
-      "chinese_hash": "30e261367408f2000f558548eea366326800b21313248d43bf9dac6522134f1a"
+      "chinese_hash": "1b03056c41900cb69e983a012d662ec23d6a14d4f6877ea1b50bb2411c61c50a"
     },
     {
       "pair_id": "engineering/documentation/reviews/internal_code_residual_audit_20260807",
       "english": "docs/engineering/documentation/reviews/internal_code_residual_audit_20260807.md",
       "chinese": "docs/engineering/documentation/reviews/internal_code_residual_audit_20260807.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-09",
+      "last_verified": "2026-08-12",
       "english_hash": "6eee34b04db2ce24c560ad0e1e438225a0b07c1f8c4a40892b79e26cbe39264b",
-      "chinese_hash": "64c00745973dd669bfbc2941f06760d830ca2cca33d8bf26679b5d9d5e081a26"
+      "chinese_hash": "02d0808c0ec88d074021104e5a2710a71e3753c5ffbeb1aac52d04a868deb727"
     },
     {
       "pair_id": "engineering/documentation/standards/bilingual_documentation_policy",
       "english": "docs/engineering/documentation/standards/bilingual_documentation_policy.md",
       "chinese": "docs/engineering/documentation/standards/bilingual_documentation_policy.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "d7972b56a00745fa39213d3b85f45097403261f7cb20f725c797f1a71e1d2891",
-      "chinese_hash": "ce23b6f3602d01e87afce8649989b94c26ced39aedc77d8b8c745045852880b5"
+      "last_verified": "2026-08-13",
+      "english_hash": "f3502a18e4b0c6e5a92ee1d6a5891c0e083cb068597304efeef17326177c2af0",
+      "chinese_hash": "9f3d96219afa508890f2513ef399a78e91602f655c6e8c8e067cf6ff2f280e80"
     },
     {
       "pair_id": "engineering/documentation/standards/document_lifecycle_policy",
       "english": "docs/engineering/documentation/standards/document_lifecycle_policy.md",
       "chinese": "docs/engineering/documentation/standards/document_lifecycle_policy.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "6be5a4c7f26ba710bdb33e6fc811aef10d0a5d8a27d2b5d9223f7b49686cc748",
-      "chinese_hash": "954110f73b600202f5888d6291f67244275c3df3275fd7b5c5c37c74719ea3dc"
+      "last_verified": "2026-08-13",
+      "english_hash": "7fbe647de6284d1752f68a3f11873e1806f6ec73171c0375424fc30f9360b48b",
+      "chinese_hash": "d633b2a0405a1426ef76961233efec8d2b854b6abf68721f83f7a71cdbfa85c4"
     },
     {
       "pair_id": "engineering/documentation/standards/internal_code_policy",
@@ -394,9 +394,9 @@
       "english": "docs/engineering/documentation/standards/standards_maintenance_policy.md",
       "chinese": "docs/engineering/documentation/standards/standards_maintenance_policy.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "6126dab2f4952d336a811e9e40d616d3d2eb00297626732c4fff07bc478e8673",
-      "chinese_hash": "513ae7e7d33bb5c647ff1ed671a252314026d30fc9832af48a6f0de72596f073"
+      "last_verified": "2026-08-13",
+      "english_hash": "f0e0234c1fe2723b4cbd496c79c289c1372a899198d1095021be9e7e294deb58",
+      "chinese_hash": "1268d6890b53daf3c67043b7c9f6561181d7aca603c59cf952fa77f5c7f3827b"
     },
     {
       "pair_id": "engineering/documentation/structure_examples",
@@ -439,18 +439,18 @@
       "english": "docs/engineering/testing/reference/known_test_infrastructure_residuals.md",
       "chinese": "docs/engineering/testing/reference/known_test_infrastructure_residuals.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "fc0afbd91208812964f7877fef9944a879818057f3dfb39e78fab7ac6623b3e1",
-      "chinese_hash": "aa49a9421f5297f68be79a123a106eeeb0c3fa173b916580543239d79cb5f443"
+      "last_verified": "2026-08-13",
+      "english_hash": "ec8db03252654055adcb5286e477c299528883a670e5bbe3f9897105ff467968",
+      "chinese_hash": "2bd97b90658ba487e1f364a63341e32c6d22d4089e21193e323e80e71571f570"
     },
     {
       "pair_id": "learning/README",
       "english": "docs/learning/README.md",
       "chinese": "docs/learning/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
+      "last_verified": "2026-08-12",
       "english_hash": "7c7ca4b3d52543081500a189a286e512787901672ae4ceefdb3983ac4a7283c2",
-      "chinese_hash": "5a3a1ab44e0782adfd5f3a22a76f0491bc0d49c6ae606e3c05153ea80ddc8c4c"
+      "chinese_hash": "1ea73b97d541de4d7e52c5c29378b9662e4ccef1db3b0426b4db1367e3802678"
     },
     {
       "pair_id": "learning/standards/policy_execution_architecture",
@@ -466,9 +466,9 @@
       "english": "docs/operations/README.md",
       "chinese": "docs/operations/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "036e8ad4bf2f7f048ebe8ba3ed8e24d93084b7d17c900f459e816ffc4459cb58",
-      "chinese_hash": "bacf210241ef7677834a6e35c8748aaf38b677d1c73d0631900aa68a5201ff4c"
+      "last_verified": "2026-08-13",
+      "english_hash": "4fd0feb24751715d6c73fe805b90b1c693dd2f95d368bdaeab16dd74900f31aa",
+      "chinese_hash": "6599bb4527753c3dbe6d790d5b26b70b177eb7d7d677b1e8bfe9859f451d4108"
     },
     {
       "pair_id": "operations/howto/scenario_configuration_guide",
@@ -511,9 +511,9 @@
       "english": "docs/operations/reference/src_layer_map.md",
       "chinese": "docs/operations/reference/src_layer_map.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "68645041679f6df52b937a4a89dcba91304bfb73f995aa0bef8347a60d04b735",
-      "chinese_hash": "c2be51051ef0c4de4db54cc463b8a4daf15955b64d03746eb48dd5906d8b2f3c"
+      "last_verified": "2026-08-12",
+      "english_hash": "33fed70c853d6d3b436ef371403ecf27af5a5229255b5b81fbd0de0232ffced8",
+      "chinese_hash": "135106892799b36d8579b6103a997310994173479f95cc2afd589589d8ed9082"
     },
     {
       "pair_id": "operations/visualization/reviews/bilingual_display_20260606/README",
@@ -568,15 +568,6 @@
       "last_verified": "2026-08-09",
       "english_hash": "a552a969b881b5927eecd9afe8ecbf4113c7b7eaa35232d5633227a8160090c8",
       "chinese_hash": "54ac7bb2f0289f5f46396765986f43a1222727e963e0a83a6d5fad1c0be411db"
-    },
-    {
-      "pair_id": "operations/visualization/work/issues/viz_stack_evolution",
-      "english": "docs/operations/visualization/work/issues/viz_stack_evolution.md",
-      "chinese": "docs/operations/visualization/work/issues/viz_stack_evolution.zh.md",
-      "source_of_truth": "english",
-      "last_verified": "2026-08-07",
-      "english_hash": "c6fdda69662058b89aa6b661695fa92e3689ee93c5bfe72276f492527b5a2af6",
-      "chinese_hash": "29d0d31d7228b606d2a53d80ef891075aa072ccfb613f4f555a66902798511ba"
     },
     {
       "pair_id": "project/README",
@@ -637,18 +628,18 @@
       "english": "docs/systems/README.md",
       "chinese": "docs/systems/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
+      "last_verified": "2026-08-12",
       "english_hash": "42a4028b11a693b748885904e9b8929df3ced0fe901a3f8aa7fcaeac013f5004",
-      "chinese_hash": "237c95dee4fb32fdcb5a0bfd725a5b5dff3ce2954624c4ba1c7b7223290849fd"
+      "chinese_hash": "68e0ca452fc42d2b75a90f09521956321b0b4fdcba01fdf9280e3452ca4ef16d"
     },
     {
       "pair_id": "systems/command-tasking/reference/agency_authority_census_20260721",
       "english": "docs/systems/command-tasking/reference/agency_authority_census_20260721.md",
       "chinese": "docs/systems/command-tasking/reference/agency_authority_census_20260721.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-09",
-      "english_hash": "587ccec6421f7602d65938a99c675ad4a0ff152ac289bded94c5fc82958268c7",
-      "chinese_hash": "648b583dc866b47bc2e8e049b86ca2acc3c2956c3257c0b78c9c638e76d07fbd"
+      "last_verified": "2026-08-13",
+      "english_hash": "94d03a359361849f8355152949744ce14d9baf8b118090b3fb849f4a1e36aba1",
+      "chinese_hash": "e5b04126a1f5bdadac811eddb09b429e9e72e4617f860c0b4484aa0cb875e05f"
     },
     {
       "pair_id": "systems/command-tasking/reference/t9_authority_representation_adjudication_20260726",

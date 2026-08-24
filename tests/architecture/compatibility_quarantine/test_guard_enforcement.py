@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import subprocess
 import textwrap
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from tests.architecture.helpers import (
   dependency_include_path,
   dependency_link_args,
 )
+from tools.maintenance.document_scope import is_sealed_evidence_doc
 
 
 def _optional_dependency_include(dependency: str):
@@ -46,21 +48,23 @@ requires_flecs = pytest.mark.skipif(
     "CMO_BUILD_DIR (no _deps/flecs-src); see T6 residual ledger section 5"
   ),
 )
-ALLOWLIST_EVIDENCE_DOC_CANDIDATES = (
-  REPO_ROOT
-  / "docs"
-  / "task"
-  / "simulation_architecture"
-  / "wp9_contract_infrastructure_closure"
-  / "wp9_guard_allowlist_evidence_20260520.md",
-  REPO_ROOT
-  / "docs"
-  / "task"
-  / "simulation_architecture"
-  / "archive"
-  / "wp9_contract_infrastructure_closure"
-  / "wp9_guard_allowlist_evidence_20260520.md",
+# The wp9 evidence doc was retired into git history (docs/archive_ledger.md);
+# the guard reads the immutable pinned object recorded in the ledger.
+ALLOWLIST_EVIDENCE_DOC_GIT_PIN = (
+  "74408a39:docs/task/simulation_architecture/archive/"
+  "wp9_contract_infrastructure_closure/wp9_guard_allowlist_evidence_20260520.md"
 )
+
+
+def _git_pinned_text(pin: str) -> str:
+  return subprocess.run(
+    ["git", "show", pin],
+    cwd=REPO_ROOT,
+    check=True,
+    capture_output=True,
+    text=True,
+    encoding="utf-8",
+  ).stdout
 
 # The allowlist stays explicit and label-driven so the guard can distinguish
 # compatibility-only bridges, diagnostics-only evidence, and test-only fixtures.
@@ -91,8 +95,6 @@ SIM_DIRECT_ACCESS_ALLOWLIST = {
       "tools/geometry/",
     },
     "files": {
-      "tools/maintenance/damage_model.py",
-      "tools/maintenance/candidate_artifacts/runtime_authority_exercise.py",
       "world_model_train.py",
     },
   },
@@ -138,24 +140,43 @@ DEFAULT_UNIT_FACTORY_HEADER = (
 DEFAULT_FACTORY_SPAWN_COMMAND_PROJECTION_HEADER = (
   REPO_ROOT / "src" / "components" / "command" / "default_factory_spawn_command_projection.h"
 )
-WP22_COMMAND_RETIREMENT_DOC_EN = (
-  REPO_ROOT
-  / "docs"
-  / "task"
-  / "simulation_architecture"
-  / "archive"
-  / "wp22_legacy_compatibility_retirement"
-  / "wp22_command_dto_legacy_surface_retirement_cluster_20260522.md"
+# Retired into git history with the Tier C archive; pins match docs/archive_ledger.md.
+WP22_COMMAND_RETIREMENT_DOC_EN_GIT_PIN = (
+  "6d1aa276:docs/task/simulation_architecture/archive/"
+  "wp22_legacy_compatibility_retirement/wp22_command_dto_legacy_surface_retirement_cluster_20260522.md"
 )
-WP22_COMMAND_RETIREMENT_DOC_ZH = (
-  REPO_ROOT
-  / "docs"
-  / "task"
-  / "simulation_architecture"
-  / "archive"
-  / "wp22_legacy_compatibility_retirement"
-  / "wp22_command_dto_legacy_surface_retirement_cluster_20260522.zh.md"
+WP22_COMMAND_RETIREMENT_DOC_ZH_GIT_PIN = (
+  "6d1aa276:docs/task/simulation_architecture/archive/"
+  "wp22_legacy_compatibility_retirement/wp22_command_dto_legacy_surface_retirement_cluster_20260522.zh.md"
 )
+
+
+DOCS_ROOT = REPO_ROOT / "docs"
+
+
+def _is_sealed_evidence_script(path: Path) -> bool:
+  """Whether ``path`` sits inside a Tier D sealed dated evidence packet.
+
+  A Tier D packet under ``docs/**/reviews/<packet>_<YYYYMMDD>/`` records what
+  was inspected on a stated date, is read only, and is frequently SHA-256
+  pinned by a retained-artifact manifest, so its bytes are never rewritten to
+  follow a later runtime seam (see "Tier D: sealed dated evidence" in
+  docs/engineering/documentation/standards/bilingual_documentation_policy.md).
+  A validation script retained inside such a packet is therefore a historical
+  record rather than part of the live code surface this guard governs, and the
+  scan stops at the packet boundary instead of naming individual files -- a
+  per-file allowlist would have to grow with every new evidence packet.
+  ``is_sealed_evidence_doc`` is the repository's single source of truth for
+  where that boundary falls.
+
+  Only the docs tree is narrowed. A ``reviews`` directory anywhere on the live
+  code surface (``python/``, ``tools/``, ``gym_envs/`` and peers) stays in
+  scope.
+  """
+
+  if not path.is_relative_to(DOCS_ROOT):
+    return False
+  return is_sealed_evidence_doc(path, DOCS_ROOT)
 
 
 def _iter_python_files() -> list[Path]:
@@ -164,6 +185,7 @@ def _iter_python_files() -> list[Path]:
     path
     for path in sorted(REPO_ROOT.rglob("*.py"))
     if not any(part.startswith(excluded_prefixes) for part in path.parts)
+    and not _is_sealed_evidence_script(path)
   ]
 
 
@@ -206,13 +228,6 @@ def _iter_cpp_headers() -> list[Path]:
     for path in sorted(REPO_ROOT.joinpath("src").rglob("*.h"))
     if not any(part.startswith(excluded_prefixes) for part in path.parts)
   ]
-
-
-def _allowlist_evidence_doc() -> Path:
-  for candidate in ALLOWLIST_EVIDENCE_DOC_CANDIDATES:
-    if candidate.is_file():
-      return candidate
-  return ALLOWLIST_EVIDENCE_DOC_CANDIDATES[0]
 
 
 def _compile_and_run(source: str):
@@ -258,9 +273,7 @@ def test_direct_sim_access_is_limited_to_explicitly_labeled_allowlists() -> None
 
 
 def test_wp9_guard_allowlist_evidence_doc_matches_the_explicit_labels() -> None:
-  doc_path = _allowlist_evidence_doc()
-  assert doc_path.is_file(), "wp9 guard allowlist evidence doc is missing from both active and archived locations"
-  text = doc_path.read_text(encoding="utf-8")
+  text = _git_pinned_text(ALLOWLIST_EVIDENCE_DOC_GIT_PIN)
 
   for label in ("compatibility_only", "diagnostics_only", "test_only"):
     assert label in text
@@ -524,8 +537,8 @@ def test_wp22_command_docs_and_headers_mark_legacy_resolution_as_compatibility_o
 
 
 def test_wp22_command_retirement_docs_keep_allowlist_and_default_factory_blockers_explicit() -> None:
-  text_en = WP22_COMMAND_RETIREMENT_DOC_EN.read_text(encoding="utf-8")
-  text_zh = WP22_COMMAND_RETIREMENT_DOC_ZH.read_text(encoding="utf-8")
+  text_en = _git_pinned_text(WP22_COMMAND_RETIREMENT_DOC_EN_GIT_PIN)
+  text_zh = _git_pinned_text(WP22_COMMAND_RETIREMENT_DOC_ZH_GIT_PIN)
 
   for required in (
     "Noether pass",

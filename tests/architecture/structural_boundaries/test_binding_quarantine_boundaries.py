@@ -6,7 +6,7 @@ from tests.architecture.structural_boundaries.helpers import *
 def test_wp22_bindings_core_keeps_explicit_diagnostics_and_legacy_allowlists() -> None:
   names = _simulation_kernel_binding_names()
   binding_set = set(names)
-  text = _text(BINDINGS_CORE)
+  text = bindings_core_text()
 
   assert "Maintained SimulationKernel API surface" in text
   assert "Diagnostics-only introspection surface." in text
@@ -31,15 +31,12 @@ def test_wp22_bindings_core_keeps_explicit_diagnostics_and_legacy_allowlists() -
   assert "debug_set_legacy_movement_command" in BINDINGS_LEGACY_ALLOWLIST
 
 def test_wp22_bindings_core_direct_world_entity_drilling_stays_quarantined() -> None:
-  text = _text(BINDINGS_CORE)
+  text = bindings_core_text()
   maintained_block = _extract_function_block(
     text,
     "void bind_simulation_kernel_maintained_surface("
   )
-  diagnostics_block = _extract_function_block(
-    text,
-    "void bind_simulation_kernel_diagnostics_introspection_surface("
-  )
+  diagnostics_block = _diagnostics_introspection_text(text)
   legacy_block = _extract_function_block(
     text,
     "void bind_simulation_kernel_legacy_compatibility_debug_surface("
@@ -66,7 +63,7 @@ def test_wp22_bindings_core_direct_world_entity_drilling_stays_quarantined() -> 
   assert "lookup_entity(" not in text
 
 def test_wp22_legacy_debug_setter_routes_through_bridge_helpers_not_direct_component_writes() -> None:
-  text = _text(BINDINGS_CORE)
+  text = bindings_core_text()
   legacy_block = _extract_function_block(
     text,
     "void bind_simulation_kernel_legacy_compatibility_debug_surface("
@@ -86,16 +83,13 @@ def test_wp22_legacy_debug_setter_routes_through_bridge_helpers_not_direct_compo
     text,
     "void diagnostics_quarantined_legacy_movement_bridge_write("
   )
-  assert "WP22-R1-2 quarantine marker" in bridge_helper_block
+  assert "Diagnostics quarantine" in bridge_helper_block
   assert "set_compatibility_autopilot_movement_command(" in bridge_helper_block
   assert "deactivate_compatibility_movement_command(e)" in bridge_helper_block
 
 def test_wp22_debug_movement_mirror_and_pending_shells_carry_quarantine_snapshot_markers() -> None:
-  text = _text(BINDINGS_CORE)
-  diagnostics_block = _extract_function_block(
-    text,
-    "void bind_simulation_kernel_diagnostics_introspection_surface("
-  )
+  text = bindings_core_text()
+  diagnostics_block = _diagnostics_introspection_text(text)
   legacy_block = _extract_function_block(
     text,
     "void bind_simulation_kernel_legacy_compatibility_debug_surface("
@@ -137,12 +131,20 @@ def test_wp22_debug_movement_mirror_and_pending_shells_carry_quarantine_snapshot
   assert 'out["quarantined_surface"] = true;' in marker_helper
   assert 'out["read_only_snapshot"] = true;' in marker_helper
   assert 'out["maintained_truth"] = false;' in marker_helper
-  assert 'out["diagnostics_quarantine_marker"] = "WP22-R1-2";' in marker_helper
+  assert (
+    'out["diagnostics_quarantine_marker"] = "read_only_diagnostics_quarantine";'
+    in marker_helper
+  )
 
 def test_wp22_bindings_core_still_exposes_broad_surface_as_quarantined_fact() -> None:
   names = _simulation_kernel_binding_names()
-  assert len(names) == 85, (
-    "WP22-E first wave expects the broad SimulationKernel binding count to stay explicit; "
+  # 85 at the WP22-E first wave; the viz unified-scene-rendering merge later
+  # added set_sun_direction/get_sun_direction (non-debug maintained surface),
+  # which this count guard silently missed until 2026-08-13.
+  # 87 -> 86 on 2026-08-13: the dead-binding sweep removed get_egi_state
+  # (zero python consumers; the EGI component itself stays alive in C++).
+  assert len(names) == 86, (
+    "WP22-E expects the broad SimulationKernel binding count to stay explicit; "
     "update this guard only with a deliberate allowlist reshaping change"
   )
 

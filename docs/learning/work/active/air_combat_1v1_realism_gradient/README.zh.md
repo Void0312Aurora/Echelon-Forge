@@ -36,7 +36,7 @@ Stage-2 C2/ROE 入口已建立并完成第一轮 8k 续训；Stage-2 训练质�
 - A1 的下一步不再是“让模型知道怎么发射”，而是把这个发射能力迁移到 Stage-2
   机动目标入口，并检查发射纪律是否还能保持。
 - 第一轮 Stage-2 入口和短训记录：
-  [A1 Stage-2 C2/ROE Entry And Short Train 2026-06-08](a1_stage2_c2_roe_entry_and_short_train_20260608.zh.md)。
+  [A1 Stage-2 C2/ROE Entry And Short Train 2026-06-08](a1_stage2_c2_roe_entry_and_short_train_20260608.md)。
 
 本状态不验收命中、毁伤、击杀或完整 `combat_win`。Stage-1 和 Stage-2 probes 都显示
 模型能发射，但效果/伤害仍弱或缺失；这些现象记录为后续训练质量和效果链问题，不再把

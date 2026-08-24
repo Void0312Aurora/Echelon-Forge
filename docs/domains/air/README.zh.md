@@ -48,8 +48,8 @@ Last verified: `2026-08-08`
 2. [飞行员动作合同](standards/pilot_action_contract.zh.md)
 3. [空中任务命令与 tasking 合同](standards/mission_command_and_tasking_contract.zh.md)
 4. [飞行员汇报合同](standards/pilot_reporting_contract.zh.md)
-5. [空空杀伤链期望包络](work/issues/kill_chain_expectation_envelope.zh.md)
-6. [Air 改进 backlog](work/issues/improvement_backlog.zh.md)
+5. [空空杀伤链期望包络](work/issues/kill_chain_expectation_envelope.md)
+6. [Air 改进 backlog](work/issues/improvement_backlog.md)
 
 前四份文档共同定义当前 air 接口在下列几层之间的边界：
 
@@ -102,6 +102,6 @@ Air 改进 backlog 同样属于 draft issue surface。其条目在被单独授�
 - [运行时工作流与合同基线](../../architecture/standards/runtime_workflow_and_contract_baseline.zh.md)
 - [USAF 画像](../joint/service_profiles/standards/air_force_profile.zh.md)
 - [着陆任务 Reference](reference/landing_task.zh.md)
-- [空空杀伤链期望包络](work/issues/kill_chain_expectation_envelope.zh.md)
+- [空空杀伤链期望包络](work/issues/kill_chain_expectation_envelope.md)
 - [Kill-chain 期望标准化评审](reviews/kill_chain_expectation_standardization_20260706/README.zh.md)
 - [Learning owner 的活跃空战工作](../../learning/README.zh.md)

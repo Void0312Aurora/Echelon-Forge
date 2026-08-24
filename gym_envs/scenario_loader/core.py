@@ -52,7 +52,6 @@ from .route_generation import (
 )
 from .runtime_state import (
     SCENARIO_LOADER_STATE_SHELL_ATTRS as _SCENARIO_LOADER_STATE_SHELL_ATTRS,
-    apply_execution_episode_runtime_fields as _apply_execution_episode_runtime_fields_impl,
     apply_execution_episode_state as _apply_execution_episode_state_impl,
     build_execution_episode_state as _build_execution_episode_state_impl,
     make_scenario_loader_state_shell as _make_scenario_loader_state_shell_impl,
@@ -75,12 +74,7 @@ from .step_evaluation import (
     prepare_step_evaluation as _prepare_step_evaluation_impl,
 )
 from .execution_runtime import (
-    build_execution_episode_controller_shadow_config as _build_execution_episode_controller_shadow_config_impl,
-    compare_execution_episode_controller_shadow as _compare_execution_episode_controller_shadow_impl,
-    compare_execution_episode_runtime_products as _compare_execution_episode_runtime_products_impl,
     compute_full_step as _compute_full_step_impl,
-    consume_execution_episode_controller_mainline_step as _consume_execution_episode_controller_mainline_step_impl,
-    execution_episode_status_vector as _execution_episode_status_vector_impl,
 )
 from .navigation_runtime import (
     active_waypoint_arrival_products as _active_waypoint_arrival_products_impl,
@@ -143,8 +137,6 @@ from .reward_runtime import (
     build_safety_runtime_inputs as _build_safety_runtime_inputs_impl,
     compile_conditional_objectives as _compile_conditional_objectives_impl,
     compiled_execution_episode_enabled as _compiled_execution_episode_enabled_impl,
-    compiled_execution_frame_enabled as _compiled_execution_frame_enabled_impl,
-    compiled_execution_step_enabled as _compiled_execution_step_enabled_impl,
     compute_execution_step_runtime_products as _compute_execution_step_runtime_products_impl,
     compute_flight_shaping_products as _compute_flight_shaping_products_impl,
 )
@@ -290,20 +282,6 @@ class ScenarioLoader:
 
     def apply_execution_episode_state(self, state) -> None:
         _apply_execution_episode_state_impl(self, state)
-
-    def apply_execution_episode_runtime_fields(
-        self,
-        state,
-        *,
-        include_navigation_state: bool = True,
-        include_navigation_structure: bool = True,
-    ) -> None:
-        _apply_execution_episode_runtime_fields_impl(
-            self,
-            state,
-            include_navigation_state=include_navigation_state,
-            include_navigation_structure=include_navigation_structure,
-        )
 
     def _task_order_spec(self) -> dict:
         return _task_order_spec_impl(self)
@@ -645,22 +623,6 @@ class ScenarioLoader:
             reward_breakdown=reward_breakdown,
         )
 
-    def consume_execution_episode_controller_mainline_step(
-        self,
-        *,
-        truth,
-        step_eval: dict,
-        frame_products,
-        controller_state,
-    ):
-        return _consume_execution_episode_controller_mainline_step_impl(
-            self,
-            truth=truth,
-            step_eval=step_eval,
-            frame_products=frame_products,
-            controller_state=controller_state,
-        )
-
     def _build_waypoint_step_state(self, cfg: dict, *, truth=None, inst=None, turn_relief_activation: float = 0.0):
         return _build_waypoint_step_state_impl(
             self,
@@ -771,9 +733,6 @@ class ScenarioLoader:
             time_step_s=time_step_s,
         )
 
-    def _compiled_execution_step_enabled(self) -> bool:
-        return _compiled_execution_step_enabled_impl(self)
-
     @staticmethod
     def _build_neutral_execution_safety_inputs():
         return _build_neutral_execution_safety_inputs_impl()
@@ -801,9 +760,6 @@ class ScenarioLoader:
             objective_specs=objective_specs,
             objective_inputs=objective_inputs,
         )
-
-    def _compiled_execution_frame_enabled(self) -> bool:
-        return _compiled_execution_frame_enabled_impl(self)
 
     def _compiled_execution_episode_enabled(self) -> bool:
         return _compiled_execution_episode_enabled_impl(self)
@@ -890,7 +846,6 @@ class ScenarioLoader:
         steps: int,
         max_steps: int,
         mission_obs_mode: str | None = None,
-        defer_compiled_runtime: bool = False,
         compact_output: bool = False,
     ):
         return _prepare_step_evaluation_impl(
@@ -902,46 +857,9 @@ class ScenarioLoader:
             steps=steps,
             max_steps=max_steps,
             mission_obs_mode=mission_obs_mode,
-            defer_compiled_runtime=defer_compiled_runtime,
             compact_output=compact_output,
         )
 
-    def _build_execution_episode_controller_shadow_config(self):
-        return _build_execution_episode_controller_shadow_config_impl(self)
-
-    @staticmethod
-    def _execution_episode_status_vector(products):
-        return _execution_episode_status_vector_impl(products)
-
-    @staticmethod
-    def _compare_execution_episode_runtime_products(reference, shadow, *, abs_tol: float = 1.0e-6):
-        return _compare_execution_episode_runtime_products_impl(reference, shadow, abs_tol=abs_tol)
-
-    def compare_execution_episode_controller_shadow(
-        self,
-        *,
-        truth,
-        inst_obj,
-        inst_vec,
-        ils_vec,
-        steps: int,
-        max_steps: int,
-        mission_obs_mode: str | None = None,
-        abs_tol: float = 1.0e-6,
-        advance_state: bool = False,
-    ):
-        return _compare_execution_episode_controller_shadow_impl(
-            self,
-            truth=truth,
-            inst_obj=inst_obj,
-            inst_vec=inst_vec,
-            ils_vec=ils_vec,
-            steps=steps,
-            max_steps=max_steps,
-            mission_obs_mode=mission_obs_mode,
-            abs_tol=abs_tol,
-            advance_state=advance_state,
-        )
 
     def _turn_lead_distance_m(self, turn_angle_deg: float, speed_mps: float, bank_limit_deg: float) -> float:
         return _turn_lead_distance_m_impl(self, turn_angle_deg, speed_mps, bank_limit_deg)

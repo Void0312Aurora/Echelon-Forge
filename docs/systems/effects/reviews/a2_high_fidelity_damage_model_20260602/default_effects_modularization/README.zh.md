@@ -12,7 +12,7 @@ Inputs:
 - 父任务入口：[A2 高保真空战毁伤模型](../README.zh.md)
 - Agent 子项目创建标准：[subproject_creation_standard.zh.md](../../../../../engineering/automation/rules/subproject_creation_standard.zh.md)
 - Subagent 使用规范：[subagent_usage_policy.zh.md](../../../../../engineering/automation/standards/subagent_usage_policy.zh.md)
-- 触发评估：[Echelon Forge 综合评估](../../../../../evaluation/archive/echelon_forge_comprehensive_assessment_20260601.zh.md)
+- 触发评估：Echelon Forge 综合评估 (`git show a32e67bd:docs/evaluation/archive/echelon_forge_comprehensive_assessment_20260601.zh.md`)
 - 代码面：[default_effects_model.cpp](../../../../../../src/models/weapons/default_effects_model.cpp)
 
 ## Purpose
@@ -70,7 +70,7 @@ Out of scope:
 - 当前状态：[default_effects_modularization_current_status_20260601.md](default_effects_modularization_current_status_20260601.md)
 - 第一轮验收：[default_effects_modularization_acceptance_20260601.md](default_effects_modularization_acceptance_20260601.md)
 - 收口同步：[default_effects_modularization_closure_sync_20260602.md](default_effects_modularization_closure_sync_20260602.md)
-- 归档收口：[archive/default_effects_modularization_closeout_20260602.md](archive/default_effects_modularization_closeout_20260602.md)
+- 归档收口：`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/default_effects_modularization/archive/default_effects_modularization_closeout_20260602.md`
 
 ## Outputs And Evidence
 
@@ -103,5 +103,4 @@ Out of scope:
 
 ## Archive
 
-- Archive index：[archive/README.md](archive/README.md)
-- 最终收口：[archive/default_effects_modularization_closeout_20260602.md](archive/default_effects_modularization_closeout_20260602.md)
+- 最终收口：`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/default_effects_modularization/archive/default_effects_modularization_closeout_20260602.md`

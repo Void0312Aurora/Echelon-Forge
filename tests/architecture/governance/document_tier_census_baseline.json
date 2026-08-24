@@ -1,0 +1,21 @@
+{
+  "description": "Maintained-surface tier attribution for every tracked Markdown file under docs/.",
+  "source": "git ls-files -- docs, filtered to *.md, classified by tools/maintenance/document_scope.classify_document",
+  "update_command": "EF_UPDATE_DOCUMENT_TIER_CENSUS=1 pytest tests/architecture/governance/test_document_tier_census.py",
+  "total_documents": 795,
+  "tiers": {
+    "tier_a": 146,
+    "tier_b": 66,
+    "tier_c": 0,
+    "tier_d": 583
+  },
+  "chinese_only_pages": {
+    "total": 175,
+    "by_tier": {
+      "tier_a": 0,
+      "tier_b": 4,
+      "tier_c": 0,
+      "tier_d": 171
+    }
+  }
+}

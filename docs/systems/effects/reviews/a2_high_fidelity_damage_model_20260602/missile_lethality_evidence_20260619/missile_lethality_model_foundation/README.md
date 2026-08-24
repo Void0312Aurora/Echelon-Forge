@@ -1,7 +1,7 @@
 # A2 Missile Lethality Model Foundation
 
 Status: `2026-06-09` archived pointer. The accepted MLF-1 package was moved to
-[archive/mlf_1_chain_contract_accepted_20260609](archive/mlf_1_chain_contract_accepted_20260609/README.md).
+archive/mlf_1_chain_contract_accepted_20260609 (`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.md`).
 
 Language:
 

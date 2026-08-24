@@ -149,22 +149,13 @@ runtime::backend::InputResult FlecsCpuBackend::inject(const runtime::backend::In
     if (!input.pilot_reports.empty()) {
         runtime_.set_pilot_reports_maintained_batch(input.pilot_reports.get());
     }
-    if (input.clear_execution_episode_controller) {
-        runtime_.clear_execution_episode_controller_batch();
-    }
-    if (input.prime_execution_episode_controller) {
-        runtime_.prime_execution_episode_controller_batch(input.execution_episode_refs.get(),
-                                                          input.execution_episode_states.get());
-    }
     return result;
 }
 
 runtime::backend::EvaluationResult
 FlecsCpuBackend::evaluate(const runtime::backend::EvaluationRequest &request) const {
-    return {
-        .execution_episode_products =
-            runtime_.evaluate_execution_episode_batch(request.execution_episode_requests.get()),
-    };
+    (void)request;
+    return {};
 }
 
 runtime::backend::AdvanceResult
@@ -173,14 +164,6 @@ FlecsCpuBackend::advance(const runtime::backend::AdvanceRequest &request) {
     switch (request.kind) {
     case runtime::backend::AdvanceKind::WorldBatch:
         runtime_.step_batch();
-        return result;
-    case runtime::backend::AdvanceKind::StepExecutionProducts:
-        result.execution_episode_products =
-            runtime_.step_execution_episode_batch(request.execution_episode_requests.get());
-        return result;
-    case runtime::backend::AdvanceKind::StepExecutionResults:
-        result.execution_episode_step_results =
-            runtime_.step_execution_episode_results_batch(request.execution_episode_requests.get());
         return result;
     }
     throw std::invalid_argument("unknown backend advance kind");
@@ -208,13 +191,6 @@ FlecsCpuBackend::export_state(const runtime::backend::ExportRequest &request) co
     }
     if (request.include_world_time_step) {
         result.world_time_step = runtime_.world_time_step(required_world_index(request));
-    }
-    if (request.include_execution_episode_ready) {
-        result.execution_episode_ready =
-            runtime_.execution_episode_controller_ready(required_world_index(request));
-    }
-    if (request.include_execution_episode_states) {
-        result.execution_episode_states = runtime_.export_execution_episode_states_batch(refs);
     }
     if (request.include_agent_observations) {
         result.agent_observations = runtime_.get_agent_observations_batch(refs);

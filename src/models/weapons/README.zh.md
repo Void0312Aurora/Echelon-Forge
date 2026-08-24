@@ -24,12 +24,15 @@ runtime，也不拥有 ground fires/damage runtime。
 
 系统调度放在 `systems/combat`，状态放在 `components/combat`，模型实现放在本目录。
 
-`detail/default_effects_*_detail.inc` 文件是 `default_effects_model.cpp` 的私有
+`detail/default_effects_*_detail.h` 文件是 `default_effects_model.cpp` 的私有
 实现片段。namespace 级片段用于保持 helper 的本地链接，并把 `on_proximity_hit`
 拆为 direct-hit、spatial-projection、system-effect、domain routing、
 result-population 与 legacy/fallback 子模块。它们不是独立 API，也不是新的模型入口。
+它们没有 include guard，只有在 `default_effects_model.cpp` 的匿名 namespace 内展开
+才有效；使用 `.h` 后缀是为了让仓库的结构工具把它们计为 C++ 源码，并把 `.inc` 留给
+X-macro 字段表。
 
-`detail/default_effects_domain_routing_detail.inc` 是 Air/Naval/Ground effects
+`detail/default_effects_domain_routing_detail.h` 是 Air/Naval/Ground effects
 ownership 的 generic router。Air consequence handling 位于
 `models/domains/air/default_effects_air_domain.h`；naval 与 ground 路径当前只是显式
 placeholder owner shell，等待各自 damage fidelity 拥有 runtime owner。

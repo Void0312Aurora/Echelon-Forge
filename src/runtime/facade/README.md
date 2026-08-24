@@ -12,11 +12,11 @@ full ground runtime are available.
 
 - `RuntimeFacade`.
 - Facade request/result/capability types.
-- Bulk reset, setup, step, command, tasking, episode, and observation operations.
+- Bulk reset, setup, step, command, tasking, and observation operations.
 - Tasking packet and engagement-event exports that carry common, air, and naval evidence contracts.
 - Typed platform setup/capability evidence for early ground-aware admission.
 - Dedicated diagnostics-trace query/export operations.
-- Controlled wrapping of `WorldBatchRuntime` and `ExecutionEpisodeController`.
+- Controlled wrapping of `WorldBatchRuntime`.
 - Public header only exposes facade/contracts types; the underlying `WorldBatchRuntime` owner should remain in the implementation.
 
 ## Prohibited

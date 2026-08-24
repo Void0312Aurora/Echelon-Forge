@@ -1,1 +1,0 @@
-"""Scenario-generation DTO schemas."""

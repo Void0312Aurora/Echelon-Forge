@@ -13,11 +13,16 @@ from tests.support.paths import PYTHON_EXECUTABLE, REPO_ROOT, repo_path
 MAINTENANCE_ROOT = repo_path("tools", "maintenance").resolve()
 
 
-def run_maintenance_cli(
+def _resolve_invocation(
   script: str,
-  *args: str | Path,
-  capture_output: bool = True,
-) -> subprocess.CompletedProcess[str]:
+  args: tuple[str | Path, ...],
+) -> tuple[Path, list[str]]:
+  """Split ``script`` into an entrypoint path plus its argument vector.
+
+  The path boundary is the security-relevant half: callers may name a script
+  plus leading sub-command words in one string, but the resolved file must
+  still live under ``tools/maintenance``.
+  """
   script_args = shlex.split(script, posix=os.name != "nt")
   if not script_args:
     raise ValueError("maintenance script must not be empty")
@@ -30,12 +35,21 @@ def run_maintenance_cli(
       "maintenance script must stay within tools/maintenance"
     ) from exc
 
+  return script_path, [*script_args[1:], *(str(arg) for arg in args)]
+
+
+def run_maintenance_cli(
+  script: str,
+  *args: str | Path,
+  capture_output: bool = True,
+) -> subprocess.CompletedProcess[str]:
+  script_path, cli_args = _resolve_invocation(script, args)
+
   return subprocess.run(
     [
       PYTHON_EXECUTABLE,
       str(script_path),
-      *script_args[1:],
-      *(str(arg) for arg in args),
+      *cli_args,
     ],
     cwd=REPO_ROOT,
     check=True,

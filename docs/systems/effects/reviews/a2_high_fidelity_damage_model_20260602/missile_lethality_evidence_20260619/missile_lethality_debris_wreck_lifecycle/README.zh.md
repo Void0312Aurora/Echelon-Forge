@@ -146,6 +146,5 @@ MLF-8 内暂时保留：
 ## 归档
 
 MLF-8 已物理归档到 A2 父级本地 archive 下，并登记在
-[../../archive_registry.zh.md](../../../../../../task/review/archive/phase3c_closeout_20260808/archive_registry.zh.md)。原 active 路径现在只保留
-轻量指针。本地 [archive/](archive/README.zh.md) 目录只用于此归档证据包内部未来
-可能出现的 superseded records。
+`git show 095fdd5c:docs/task/review/archive/phase3c_closeout_20260808/archive_registry.zh.md`。原 active 路径现在只保留
+轻量指针。

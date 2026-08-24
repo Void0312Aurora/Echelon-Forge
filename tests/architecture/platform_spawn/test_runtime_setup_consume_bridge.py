@@ -1,43 +1,27 @@
 from __future__ import annotations
 
+import subprocess
 import textwrap
-from pathlib import Path
 
 from tests.architecture.helpers import REPO_ROOT, compile_cpp_snippet
 
-WP20_C_DOC_CANDIDATES = (
-  REPO_ROOT
-  / "docs"
-  / "task"
-  / "simulation_architecture"
-  / "wp20_public_capability_platform_composition"
-  / "wp20_runtime_setup_consume_bridge_cluster_20260521.md",
-  REPO_ROOT
-  / "docs"
-  / "task"
-  / "simulation_architecture"
-  / "archive"
-  / "wp20_public_capability_platform_composition"
-  / "wp20_runtime_setup_consume_bridge_cluster_20260521.md",
+WP20_C_DOC_GIT_PIN = (
+  "c700b51f:docs/task/simulation_architecture/archive/"
+  "wp20_public_capability_platform_composition/"
+  "wp20_runtime_setup_consume_bridge_cluster_20260521.md"
 )
 RUNTIME_FACADE_SOURCE = (
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade.cpp"
 )
 RUNTIME_FACADE_SOURCE_FILES = (
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_world_setup.cpp",
-  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_counterfactual.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_config.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_query.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_command_api.cpp",
-  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_execution.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_packet.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_internal.h",
 )
-
-
-def _text(path: Path) -> str:
-  return path.read_text(encoding="utf-8")
 
 
 def _runtime_facade_source_text() -> str:
@@ -45,12 +29,16 @@ def _runtime_facade_source_text() -> str:
 
 
 def _wp20_doc_text() -> str:
-  for candidate in WP20_C_DOC_CANDIDATES:
-    if candidate.is_file():
-      return _text(candidate)
-  raise AssertionError(
-    "missing WP20 runtime setup consume bridge doc at active or archive path"
-  )
+  # The Tier C document was retired into git history; the archive ledger pins
+  # this immutable object so the guard keeps its evidence anchor off-disk.
+  return subprocess.run(
+    ["git", "show", WP20_C_DOC_GIT_PIN],
+    cwd=REPO_ROOT,
+    check=True,
+    capture_output=True,
+    text=True,
+    encoding="utf-8",
+  ).stdout
 
 
 def _compile_and_run(source: str):

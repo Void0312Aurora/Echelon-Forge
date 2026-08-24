@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 
-from tests.architecture.damage_model import helpers as damage_model_helpers
 from tests.support import cli
 
 
@@ -19,7 +18,7 @@ def test_run_maintenance_cli_preserves_script_and_argument_order(monkeypatch) ->
   monkeypatch.setattr(cli.subprocess, "run", fake_run)
 
   result = cli.run_maintenance_cli(
-    "damage_model.py benchmark-evidence",
+    "dto_schema/generate.py --check",
     "--manifest",
     Path("candidate.json"),
     capture_output=False,
@@ -30,8 +29,8 @@ def test_run_maintenance_cli_preserves_script_and_argument_order(monkeypatch) ->
     (
       [
         cli.PYTHON_EXECUTABLE,
-        str(cli.MAINTENANCE_ROOT / "damage_model.py"),
-        "benchmark-evidence",
+        str(cli.MAINTENANCE_ROOT / "dto_schema" / "generate.py"),
+        "--check",
         "--manifest",
         "candidate.json",
       ],
@@ -54,7 +53,7 @@ def test_run_maintenance_json_cli_parses_stdout(monkeypatch) -> None:
   )
   monkeypatch.setattr(cli, "run_maintenance_cli", lambda *args, **kwargs: completed)
 
-  assert cli.run_maintenance_json_cli("damage_model.py") == {"status": "clean"}
+  assert cli.run_maintenance_json_cli("dto_schema/generate.py") == {"status": "clean"}
 
 
 def test_run_maintenance_cli_rejects_empty_script() -> None:
@@ -72,8 +71,3 @@ def test_run_maintenance_cli_rejects_empty_script() -> None:
 def test_run_maintenance_cli_rejects_scripts_outside_maintenance(script: str) -> None:
   with pytest.raises(ValueError, match="must stay within tools/maintenance"):
     cli.run_maintenance_cli(script)
-
-
-def test_damage_model_helpers_reexport_shared_cli_api() -> None:
-  assert damage_model_helpers.run_maintenance_cli is cli.run_maintenance_cli
-  assert damage_model_helpers.run_maintenance_json_cli is cli.run_maintenance_json_cli

@@ -1,9 +1,5 @@
 from __future__ import annotations
 
-import json
-
-import ef_py
-
 
 def _inline_vec_env_scenario() -> dict:
   return {
@@ -59,21 +55,6 @@ def _inline_vec_env_maritime_scenario() -> dict:
     "wave_period_s": 11.0,
   }
   return scenario
-
-
-def _legacy_step_result_state_with_poisoned_report_fields(source_state) -> ef_py.ExecutionEpisodeState:
-  state = ef_py.ExecutionEpisodeState()
-  state.agent_id = int(getattr(source_state, "agent_id", 0))
-  state.step_count = int(getattr(source_state, "step_count", 0)) + 100
-  state.prev_altitude_m = float(getattr(source_state, "prev_altitude_m", 0.0)) + 250.0
-  state.last_termination_reason = "legacy_step_result_reason"
-  state.last_reward_total = 91.25
-  state.last_reward_breakdown_json = json.dumps(
-    {"legacy_total": 91.25, "total": 91.25},
-    ensure_ascii=True,
-    sort_keys=True,
-  )
-  return state
 
 
 def _inline_vec_env_route_transition_scenario() -> dict:
@@ -164,64 +145,3 @@ def _inline_air_combat_scripted_opponent_scenario() -> dict:
       },
     ],
   }
-
-
-def _controller_runtime_state_matches_loader_state(runtime_state, loader_state) -> bool:
-  def _canonicalize_json(raw: str) -> str:
-    if not isinstance(raw, str) or not raw.strip():
-      return str(raw or "")
-    try:
-      parsed = json.loads(raw)
-    except Exception:
-      return str(raw)
-
-    def _strip_internal_fields(value):
-      if isinstance(value, dict):
-        return {
-          str(key): _strip_internal_fields(item)
-          for key, item in value.items()
-          if not str(key).startswith("_")
-        }
-      if isinstance(value, list):
-        return [_strip_internal_fields(item) for item in value]
-      return value
-
-    return json.dumps(_strip_internal_fields(parsed), ensure_ascii=True, sort_keys=True)
-
-  def _route_digest(state) -> list[tuple[float, float, float, float, float, float, str]]:
-    route = []
-    for waypoint in list(getattr(state, "route_waypoints", [])):
-      route.append(
-        (
-          float(getattr(waypoint, "x_m", 0.0)),
-          float(getattr(waypoint, "y_m", 0.0)),
-          float(getattr(waypoint, "z_m", 0.0)),
-          float(getattr(waypoint, "radius_m", 0.0)),
-          float(getattr(waypoint, "altitude_m", 0.0)),
-          float(getattr(waypoint, "speed_mps", 0.0)),
-          str(getattr(waypoint, "waypoint_mode", "")),
-        )
-      )
-    return route
-
-  runtime_digest = {
-    "has_mission_command_json": bool(getattr(runtime_state, "has_mission_command_json", False)),
-    "mission_command_json": _canonicalize_json(str(getattr(runtime_state, "mission_command_json", ""))),
-    "route_waypoints": _route_digest(runtime_state),
-    "has_post_waypoint_transition_json": bool(getattr(runtime_state, "has_post_waypoint_transition_json", False)),
-    "post_waypoint_transition_json": _canonicalize_json(str(getattr(runtime_state, "post_waypoint_transition_json", ""))),
-    "mission_phase_name": str(getattr(runtime_state, "mission_phase_name", "")),
-    "has_cached_route_ref_id": bool(getattr(runtime_state, "has_cached_route_ref_id", False)),
-    "cached_route_ref_id": int(getattr(runtime_state, "cached_route_ref_id", 0)),
-  }
-  loader_digest = {
-    "has_mission_command_json": bool(getattr(loader_state, "has_mission_command_json", False)),
-    "mission_command_json": _canonicalize_json(str(getattr(loader_state, "mission_command_json", ""))),
-    "route_waypoints": _route_digest(loader_state),
-    "has_post_waypoint_transition_json": bool(getattr(loader_state, "has_post_waypoint_transition_json", False)),
-    "post_waypoint_transition_json": _canonicalize_json(str(getattr(loader_state, "post_waypoint_transition_json", ""))),
-    "mission_phase_name": str(getattr(loader_state, "mission_phase_name", "")),
-    "has_cached_route_ref_id": bool(getattr(loader_state, "has_cached_route_ref_id", False)),
-    "cached_route_ref_id": int(getattr(loader_state, "cached_route_ref_id", 0)),
-  }
-  return runtime_digest == loader_digest

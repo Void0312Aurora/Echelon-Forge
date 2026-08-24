@@ -116,4 +116,4 @@ CUDA 资源证据合同和实验 probe session 保留了带版本的 schema 值�
 ## 相关文档
 
 - [内部代号命名规范](../standards/internal_code_policy.zh.md)
-- [CUDA 常驻后端语义阶段迁移](../../../architecture/work/issues/exact_runtime/cuda_resident_semantic_stage_migration_20260807.zh.md)
+- [CUDA 常驻后端语义阶段迁移](../../../architecture/work/issues/exact_runtime/cuda_resident_semantic_stage_migration_20260807.md)

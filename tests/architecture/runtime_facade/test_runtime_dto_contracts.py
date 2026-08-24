@@ -103,16 +103,12 @@ def test_observation_view_spec_exposes_versioned_checkpoint_compatibility_surfac
   assert "parse_observation_schema_version" in header_text
 
 
-def test_observation_batch_packet_and_step_result_surface_promote_batch1_dtos() -> None:
+def test_observation_batch_packet_surface_promotes_provenance_metadata() -> None:
   header = _text(FACADE_TYPES)
   packet = _struct_body(header, "ObservationBatchPacket")
-  step_result = _struct_body(header, "ExecutionBatchStepResult")
 
   for field in ("snapshot_version", "barrier_id", "source_time_s"):
     assert field in packet
-
-  for field in ("termination_specs", "reward_reports"):
-    assert field in step_result
 
 
 def test_device_resident_output_descriptor_stays_additive_export_only_surface() -> None:

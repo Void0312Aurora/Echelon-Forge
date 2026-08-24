@@ -2,32 +2,39 @@
 
 Language:
 - English canonical: `architecture_and_performance_research_followup.md`
-- Chinese companion: [architecture_and_performance_research_followup.zh.md](architecture_and_performance_research_followup.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`
 Canonical: `docs/architecture/work/issues/architecture_and_performance_research_followup.md`
 Owner: `architecture/performance`
-Last verified: `2026-08-08`
+Last verified: `2026-08-13`
 Content status: migrated research snapshot; recommendations and implementation
 inventory require fresh evidence before promotion or execution.
 
 Document Navigation:
 
 - [Architecture Documentation](../../README.md)
-- [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
-- [runtime_facade_contract_plan.zh.md](runtime_facade_contract_plan.zh.md)
+- [system_layering_and_engine_encapsulation_plan.md](system_layering_and_engine_encapsulation_plan.md)
+- [runtime_facade_contract_plan.md](runtime_facade_contract_plan.md)
 - runtime_facade_task_bootstrap_plan.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md`)
 
 Status: draft issue based on the `2026-05-10` investigation snapshot. It is
 not an active implementation plan.
+
+Current-state note (2026-08-13): the compiled `ExecutionEpisodeController`
+experiment and its facade/batch cutover surface were retired after the held
+performance gate did not justify a second stateful stepping owner. References
+to that experiment below are historical inventory; the maintained path is the
+Python orchestration over retained C++ runtime kernels and batch preparation.
+
 Document positioning:
 
 - This document answers "why such layering, where are the performance bottlenecks, and how should subsequent roadmaps be prioritized".
 - This document provides arguments and trade-off recommendations, but is not a frozen execution plan.
 - Recommendations produced by this document should be distilled into contract plans, special initiatives, or new frozen task tickets.
 
-This document is a further in-depth version of [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md), focusing on the following questions:
+This document is a further in-depth version of [system_layering_and_engine_encapsulation_plan.md](system_layering_and_engine_encapsulation_plan.md), focusing on the following questions:
 
 1. Whether the current architecture's actual boundaries are consistent with the documentation description.
 2. How the layered design should balance future extensibility, performance, and backend replacement.
@@ -61,7 +68,8 @@ Representative file and package sizes are as follows:
 - [src/interfaces/python/](../../../../src/interfaces/python): about `6682` lines across the split binding files; `python_module.cpp` is now only the small module registration wrapper.
 - [src/core/engine/simulation_kernel.cpp](../../../../src/core/engine/simulation_kernel.cpp): about `229` lines after the engine split.
 - [src/core/engine/world_batch_runtime.cpp](../../../../src/core/engine/world_batch_runtime.cpp): about `1255` lines.
-- [src/core/mission/episode/execution_episode_controller.cpp](../../../../src/core/mission/episode/execution_episode_controller.cpp): about `347` lines.
+- `src/core/mission/episode/execution_episode_controller.cpp`: about `347`
+  lines in the 2026-05-10 snapshot; retired on 2026-08-13.
 
 This indicates:
 
@@ -72,8 +80,8 @@ This indicates:
 
 Although the old architecture documents are marked as archived, their judgment of real code hotspots is still basically accurate:
 
-- [docs/Archive/architecture/layers/execution_layer.md](../../../Archive/architecture/layers/execution_layer.md)
-- [docs/Archive/architecture/layers/operation_physics_layer.md](../../../Archive/architecture/layers/operation_physics_layer.md)
+- `git show 3e677c20:docs/Archive/architecture/layers/execution_layer.md`
+- `git show 3e677c20:docs/Archive/architecture/layers/operation_physics_layer.md`
 
 The structural risks they point out still hold today:
 
@@ -132,8 +140,9 @@ This shows:
 
 ### 3. Rollout Hot Path Bottleneck Has Been Further Identified
 
-[gpu_execution_phase4_rollout_hot_path_freeze.md](../../../../tests/fixtures/runtime_profiles/cuda_resident_program_2/gpu_execution_phase4_rollout_hot_path_freeze.md)
-further confirms:
+The retired `gpu_execution_phase4_rollout_hot_path_freeze.md` evidence record
+(recoverable with `git show c0e4f31f:tests/fixtures/runtime_profiles/cuda_resident_program_2/gpu_execution_phase4_rollout_hot_path_freeze.md`)
+further confirmed:
 
 - Learner-side device-resident minibatch already has benefits
 - `collect_rollouts()` is still not ideal
@@ -324,7 +333,7 @@ Therefore, layering should not just be "directory reorganization", but should be
 ### 2. Most Critical New Layering Requirement
 
 On top of the existing
-[system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md),
+[system_layering_and_engine_encapsulation_plan.md](system_layering_and_engine_encapsulation_plan.md),
 it is recommended to add three performance-oriented requirements:
 
 #### A. Facade layer must natively support batch and zero-copy

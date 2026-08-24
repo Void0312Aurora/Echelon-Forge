@@ -3,9 +3,7 @@
 #include "runtime/facade/runtime_window_coordinator.h"
 
 #include <algorithm>
-#include <charconv>
 #include <cstdint>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -13,40 +11,6 @@
 namespace {
 
 using namespace runtime_facade_internal;
-
-constexpr std::string_view kRunSnapshotVersionPrefix = "snapshot:";
-
-std::optional<std::uint64_t> parse_run_snapshot_version(std::string_view value) noexcept {
-    if (!value.starts_with(kRunSnapshotVersionPrefix)) {
-        return std::nullopt;
-    }
-    value.remove_prefix(kRunSnapshotVersionPrefix.size());
-    if (value.empty()) {
-        return std::nullopt;
-    }
-    std::uint64_t parsed = 0;
-    const auto [end, error] = std::from_chars(value.data(), value.data() + value.size(), parsed);
-    if (error != std::errc{} || end != value.data() + value.size() || parsed == 0) {
-        return std::nullopt;
-    }
-    return parsed;
-}
-
-RuntimeWindowEvidenceSnapshot sealed_window_evidence(const RuntimeWindowResult &result) {
-    RuntimeWindowEvidenceSnapshot sealed{};
-    sealed.source_time_s = result.context.source_time_s;
-    sealed.observation_provenance = result.observation_packet.provenance;
-    sealed.engagement_trace_ids = result.engagement_packet.trace_ids;
-    sealed.engagement_producer_node_id = result.engagement_packet.producer_node_id;
-    sealed.engagement_barrier_detail = result.engagement_packet.barrier_detail;
-    sealed.barrier_trace = result.barrier_trace;
-    sealed.diagnostics_traces = result.diagnostics_traces;
-    sealed.execution_source_snapshot_versions.reserve(result.executed_nodes.size());
-    for (const auto &record : result.executed_nodes) {
-        sealed.execution_source_snapshot_versions.push_back(record.source_snapshot_version);
-    }
-    return sealed;
-}
 
 std::string track_source_name(int source) {
     switch (source) {
@@ -790,11 +754,7 @@ RuntimeFacade::export_diagnostics_traces(const EngagementBatchRequest &request) 
 }
 
 RuntimeWindowResult RuntimeFacade::run_window(const RuntimeWindowRequest &request) {
-    if (identity_ != nullptr) {
-        identity_->prune_expired_window_identity_registries();
-    }
-
-    RuntimeWindowResult result = execute_runtime_window(
+    return execute_runtime_window(
         request,
         RuntimeWindowCoordinatorCallbacks{
             .apply_pilot_actions =
@@ -819,55 +779,6 @@ RuntimeWindowResult RuntimeFacade::run_window(const RuntimeWindowRequest &reques
                     return export_diagnostics_traces(engagement_request);
                 },
         });
-
-    // The identity is intentionally attached only at the public facade seam,
-    // after the coordinator has produced the result.  Synthetic results made
-    // through the binding have no identity, and a result from another facade
-    // carries a different shared identity object even when its numeric trace
-    // ids overlap this run.
-    if (identity_ == nullptr || next_window_identity_ == kInvalidatedEvidenceCursor) {
-        return result;
-    }
-    const std::uint64_t window_sequence = next_window_identity_++;
-    RuntimeWindowEvidenceSnapshot sealed = sealed_window_evidence(result);
-    RuntimeCompositionEvidenceResult composition_evidence = export_composition_evidence();
-    const std::shared_ptr<const RuntimeWindowIdentity> window_identity =
-        std::make_shared<RuntimeWindowIdentity>(RuntimeWindowIdentity{
-            .facade_identity = identity_,
-            .window_sequence = window_sequence,
-            .evidence = std::move(sealed),
-            .composition_evidence = std::move(composition_evidence),
-        });
-    identity_->recorded_window_sequences.try_emplace(window_sequence, window_identity);
-
-    for (const std::uint64_t trace_id : window_identity->evidence.engagement_trace_ids) {
-        if (trace_id >= 1U && trace_id < next_trace_id_) {
-            identity_->recorded_trace_window_sequences.try_emplace(trace_id, window_identity);
-        }
-    }
-    if (!window_identity->evidence.engagement_trace_ids.empty()) {
-        const std::uint64_t anchor_trace_id = window_identity->evidence.engagement_trace_ids.back();
-        const auto trace_it = identity_->recorded_trace_window_sequences.find(anchor_trace_id);
-        const std::shared_ptr<const RuntimeWindowIdentity> recorded_trace =
-            trace_it == identity_->recorded_trace_window_sequences.end() ? nullptr
-                                                                         : trace_it->second.lock();
-        if (recorded_trace != nullptr && recorded_trace.get() == window_identity.get()) {
-            identity_->recorded_anchor_window_sequences.try_emplace(anchor_trace_id,
-                                                                    window_identity);
-        }
-    }
-
-    for (const std::string &source_version :
-         window_identity->evidence.execution_source_snapshot_versions) {
-        const std::optional<std::uint64_t> parsed = parse_run_snapshot_version(source_version);
-        if (parsed.has_value() && *parsed < next_run_snapshot_version_) {
-            identity_->recorded_snapshot_window_sequences.try_emplace(*parsed, window_identity);
-        }
-    }
-
-    identity_->retain_recent_window_identity(window_identity);
-    result.identity_token_.identity_ = window_identity;
-    return result;
 }
 
 EngagementEventPacket

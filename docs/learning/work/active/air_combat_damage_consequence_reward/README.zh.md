@@ -71,9 +71,9 @@ diagnostics-only bridge 已具备。受控 fixed-fire bridge 能报告 release/e
 ## 任务簇
 
 - 任务簇计划：
-  [damage_consequence_reward_surface_task_clusters_20260609.zh.md](damage_consequence_reward_surface_task_clusters_20260609.zh.md)
+  [damage_consequence_reward_surface_task_clusters_20260609.md](damage_consequence_reward_surface_task_clusters_20260609.md)
 - 当前派发队列：
-  [damage_consequence_reward_surface_dispatch_queue_20260609.zh.md](damage_consequence_reward_surface_dispatch_queue_20260609.zh.md)
+  [damage_consequence_reward_surface_dispatch_queue_20260609.md](damage_consequence_reward_surface_dispatch_queue_20260609.md)
 
 ## 输出和证据
 

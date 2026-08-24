@@ -26,14 +26,17 @@ mission runtime or any ground fires/damage runtime.
 
 System scheduling is placed in `systems/combat`, state is placed in `components/combat`, and model implementations are placed in this directory.
 
-`detail/default_effects_*_detail.inc` files are private implementation
+`detail/default_effects_*_detail.h` files are private implementation
 fragments for `default_effects_model.cpp`. Namespace-level fragments keep helper
 linkage local while splitting `on_proximity_hit` into direct-hit,
 spatial-projection, system-effect, domain routing, result-population, and
 legacy/fallback submodules. They are not standalone APIs or additional model
-entry points.
+entry points. They carry no include guard and are only valid expanded inside
+`default_effects_model.cpp`'s anonymous namespace; the `.h` suffix keeps them
+counted as C++ source by the repository's structure tooling and reserves `.inc`
+for X-macro field tables.
 
-`detail/default_effects_domain_routing_detail.inc` is the generic router for
+`detail/default_effects_domain_routing_detail.h` is the generic router for
 Air/Naval/Ground effects ownership. Air consequence handling lives in
 `models/domains/air/default_effects_air_domain.h`; naval and ground routes are explicit
 placeholder owner shells until their damage fidelity work has runtime owners.

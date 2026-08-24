@@ -3,6 +3,10 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from tests.architecture.structural_boundaries.helpers import (
+  bindings_core_text,
+  bindings_runtime_text,
+)
 from tests.support.xmacro_text import expand_binding_field_incs
 from tests.support.xmacro_text import expand_header_field_incs
 
@@ -17,18 +21,14 @@ RUNTIME_FACADE_HEADER = REPO_ROOT / "src" / "runtime" / "facade" / "runtime_faca
 RUNTIME_FACADE_SOURCE = REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade.cpp"
 RUNTIME_FACADE_SOURCE_FILES = (
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_world_setup.cpp",
-  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_counterfactual.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_config.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_query.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_command_api.cpp",
-  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_execution.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_packet.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_internal.h",
 )
 RUNTIME_FACADE_TYPES = REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_types.h"
-BINDINGS_CORE = REPO_ROOT / "src" / "interfaces" / "python" / "bindings_core.cpp"
-BINDINGS_RUNTIME = REPO_ROOT / "src" / "interfaces" / "python" / "bindings_runtime.cpp"
 SCENARIO_WORLD_SETUP = REPO_ROOT / "python" / "scenario" / "runtime" / "world_setup.py"
 RL_WORLD_BATCH_ADAPTER = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "adapter.py"
 EXAMPLES_CONFIG = REPO_ROOT / "examples" / "config"
@@ -44,11 +44,15 @@ def _text(path: Path) -> str:
   # an X-macro #include rather than inline field text. Expand it here so
   # this file's source-text boundary guards keep matching the compiled
   # shape instead of the indirected #include line.
-  if path == BINDINGS_RUNTIME:
-    return expand_binding_field_incs(text)
   if path in _HEADER_FIELD_INC_OWNERS:
     return expand_header_field_incs(text)
   return text
+
+
+def _bindings_runtime_source_text() -> str:
+  # The decomposed bindings_runtime surface, in registration order, with the
+  # schema-owned X-macro field includes expanded (see _text above).
+  return expand_binding_field_incs(bindings_runtime_text())
 
 
 def _runtime_facade_source_text() -> str:
@@ -60,8 +64,6 @@ def test_wp14_boundary_guard_no_public_spawn_platform_surface_exists() -> None:
     SIMULATION_KERNEL_HEADER,
     WORLD_BATCH_HEADER,
     RUNTIME_FACADE_HEADER,
-    BINDINGS_CORE,
-    BINDINGS_RUNTIME,
     SCENARIO_WORLD_SETUP,
     RL_WORLD_BATCH_ADAPTER,
   ):
@@ -69,6 +71,14 @@ def test_wp14_boundary_guard_no_public_spawn_platform_surface_exists() -> None:
     assert "spawn_platform" not in text, (
       "WP14 first slice must not expose a public spawn_platform path; "
       f"found forbidden token in {path.relative_to(REPO_ROOT).as_posix()}"
+    )
+  for surface_name, surface_text in (
+    ("bindings_core", bindings_core_text()),
+    ("bindings_runtime", _bindings_runtime_source_text()),
+  ):
+    assert "spawn_platform" not in surface_text, (
+      "WP14 first slice must not expose a public spawn_platform path; "
+      f"found forbidden token in the {surface_name} binding surface"
     )
 
 
@@ -104,7 +114,7 @@ def test_wp14_boundary_guard_runtime_capabilities_remains_backend_fidelity_only(
       f"found platform token {forbidden!r} inside RuntimeCapabilities"
     )
 
-  binding_source = _text(BINDINGS_RUNTIME)
+  binding_source = _bindings_runtime_source_text()
   runtime_caps_binding_start = binding_source.index('nb::class_<RuntimeCapabilities>')
   runtime_batch_config_start = binding_source.index('nb::class_<RuntimeBatchConfig>')
   runtime_capabilities_binding_block = binding_source[
@@ -126,7 +136,7 @@ def test_wp14_boundary_guard_runtime_capabilities_remains_backend_fidelity_only(
 def test_wp14_boundary_guard_legacy_type_name_spawn_surfaces_remain_present() -> None:
   kernel_header = _text(SIMULATION_KERNEL_HEADER)
   world_batch_contracts = _text(WORLD_BATCH_CONTRACTS)
-  bindings_core = _text(BINDINGS_CORE)
+  bindings_core = bindings_core_text()
   facade_types = _text(RUNTIME_FACADE_TYPES)
 
   assert re.search(
@@ -323,7 +333,7 @@ def test_wp22_boundary_guard_runtime_facade_promotes_maintained_typed_setup_with
     facade_source.index(
       "materialize_type_name_projection_typed_platform_spawn_request("
     ):
-    facade_source.index("single_world_counterfactual_setup(")
+    facade_source.index("fidelity_contract_request_from_facade(")
   ]
 
   assert "validate_maintained_typed_platform_spawn_request" in apply_world_setup_block

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <numbers>
 
 #include <flecs.h>
 
@@ -10,10 +11,6 @@
 #include "components/command/pilot_action.h"
 #include "components/domains/naval/platform/ship_platform.h"
 #include "core/interfaces/environment_model.h"
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 namespace {
 
@@ -58,7 +55,7 @@ inline double ship_station_target_bearing_deg(double reference_x_m, double refer
     if (std::abs(dx) < 1.0e-9 && std::abs(dy) < 1.0e-9) {
         return Math::normalize_heading_deg(fallback_heading_deg);
     }
-    const double bearing_deg = std::atan2(dx, dy) * 180.0 / M_PI;
+    const double bearing_deg = std::atan2(dx, dy) * 180.0 / std::numbers::pi_v<double>;
     return Math::normalize_heading_deg(bearing_deg);
 }
 
@@ -238,20 +235,22 @@ inline void register_ship_motion_system(flecs::world &ecs) {
 
                     if (sea_state_scale > 0.0) {
                         wave_period_s = std::max(2.0, wave_period_s > 0.0 ? wave_period_s : 8.0);
-                        const double omega = (2.0 * M_PI) / wave_period_s;
+                        const double omega = (2.0 * std::numbers::pi_v<double>) / wave_period_s;
                         const double roll_amplitude_deg =
                             std::max(0.0, ship[i].max_roll_deg_sea_state_6) * sea_state_scale *
                             (0.35 + 0.65 * beam_seas_factor);
                         const double pitch_amplitude_deg =
                             std::max(0.0, ship[i].max_pitch_deg_sea_state_6) * sea_state_scale *
                             (0.35 + 0.65 * head_seas_factor);
-                        const double phase_seed = std::fmod(
-                            static_cast<double>(it.entity(i).id() % 1024ULL) * 0.137, 2.0 * M_PI);
+                        const double phase_seed =
+                            std::fmod(static_cast<double>(it.entity(i).id() % 1024ULL) * 0.137,
+                                      2.0 * std::numbers::pi_v<double>);
                         transform[i].roll =
                             roll_amplitude_deg * std::sin(omega * current_time + phase_seed);
                         transform[i].pitch =
                             pitch_amplitude_deg *
-                            std::sin(omega * current_time * 0.93 + phase_seed * 0.7 + M_PI / 6.0);
+                            std::sin(omega * current_time * 0.93 + phase_seed * 0.7 +
+                                     std::numbers::pi_v<double> / 6.0);
                     } else {
                         transform[i].pitch = 0.0;
                         transform[i].roll = 0.0;

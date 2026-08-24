@@ -232,7 +232,6 @@ class SimulationKernel {
     std::vector<Detection> get_detections(uint64_t entity_id);         // Sensor Output
     void set_contact_list(uint64_t entity_id, const std::vector<Detection> &detections);
     InstrumentState get_instrument_state(uint64_t entity_id); // Returns instrument state or default
-    EGI get_egi_state(uint64_t entity_id);                    // Returns EGI state or default
     std::vector<double> get_unit_velocity(uint64_t entity_id); // Returns [vx, vy, vz]
     double get_unit_heading(uint64_t entity_id);               // Returns heading
     int get_unit_type(uint64_t entity_id);                     // Returns UnitType enum value or 0

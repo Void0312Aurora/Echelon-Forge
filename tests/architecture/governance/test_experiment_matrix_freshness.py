@@ -4,12 +4,12 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+from typing import TYPE_CHECKING
 
 import pytest
 
-from python.experiment.air_combat_matrix import CONFIG_BASE_ID, MATRIX_DIR, MatrixEntry, RenderStyle
-from python.experiment.definition import ConfigComposition, Experiment, ScenarioRef, SeedSpec
-from tools.maintenance.experiment_matrix import generate as experiment_matrix_generate
+if TYPE_CHECKING:
+  from python.experiment.air_combat_matrix import MatrixEntry, RenderStyle
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 GENERATOR = REPO_ROOT / "tools" / "maintenance" / "experiment_matrix" / "generate.py"
@@ -199,6 +199,14 @@ def _synthetic_matrix_entry(
   delta: dict[str, object],
   render: RenderStyle,
 ) -> MatrixEntry:
+  from python.experiment.air_combat_matrix import CONFIG_BASE_ID, MATRIX_DIR, MatrixEntry
+  from python.experiment.definition import (
+    ConfigComposition,
+    Experiment,
+    ScenarioRef,
+    SeedSpec,
+  )
+
   experiment = Experiment(
     experiment_id,
     ScenarioRef("scenarios/air_combat/air_combat_1v1_headon_sensor_smoke_v1.json"),
@@ -219,6 +227,9 @@ def test_generator_escapes_object_keys_containing_quotes() -> None:
   A hand-written ``f'"{key}"'`` interpolation (the pre-fix approach) produces
   illegal JSON for any key containing a quote character.
   """
+  from python.experiment.air_combat_matrix import RenderStyle
+  from tools.maintenance.experiment_matrix import generate as experiment_matrix_generate
+
   key = 'weird "quoted" key'
   entry = _synthetic_matrix_entry(
     "synthetic_quote_key_probe_v1",
@@ -242,6 +253,9 @@ def test_generator_literal_override_rejects_type_drifted_scalars() -> None:
   override for an int field (or vice versa) because Python's ``==`` treats
   ``True == 1``. The generator must reject the mismatch instead.
   """
+  from python.experiment.air_combat_matrix import RenderStyle
+  from tools.maintenance.experiment_matrix import generate as experiment_matrix_generate
+
   assert json.loads("true") == 1
 
   entry = _synthetic_matrix_entry(

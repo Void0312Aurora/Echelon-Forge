@@ -38,9 +38,9 @@ Last verified: `2026-08-08`
 
 相关代码：
 
-- [default_effects_geometry_detail.inc](../../../../../../src/models/weapons/detail/default_effects_geometry_detail.inc)
-- [default_effects_direct_hit_detail.inc](../../../../../../src/models/weapons/detail/default_effects_direct_hit_detail.inc)
-- [default_effects_spatial_projection_detail.inc](../../../../../../src/models/weapons/detail/default_effects_spatial_projection_detail.inc)
+- [default_effects_geometry_detail.h](../../../../../../src/models/weapons/detail/default_effects_geometry_detail.h)
+- [default_effects_direct_hit_detail.h](../../../../../../src/models/weapons/detail/default_effects_direct_hit_detail.h)
+- [default_effects_spatial_projection_detail.h](../../../../../../src/models/weapons/detail/default_effects_spatial_projection_detail.h)
 
 ### F-16 当前盒子
 
@@ -93,9 +93,9 @@ MLF-5 热力图复核中：
 - A2 MLF-5 归档入口：
   [docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/README.zh.md](../../../reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/README.zh.md)
 - MLF-5 扩大方位/距离矩阵：
-  [missile_lethality_component_failure_expanded_matrix_20260611.zh.md](../../../reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_expanded_matrix_20260611.zh.md)
+  missile_lethality_component_failure_expanded_matrix_20260611.zh.md (`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_expanded_matrix_20260611.zh.md`)
 - MLF-5 可视化摘要：
-  [missile_lethality_component_failure_visual_summary_20260611.zh.md](../../../reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_visual_summary_20260611.zh.md)
+  missile_lethality_component_failure_visual_summary_20260611.zh.md (`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_visual_summary_20260611.zh.md`)
 - F-16 当前几何数据：
   [examples/config/database/aircraft/units/f16c_block50.json](../../../../../../examples/config/database/aircraft/units/f16c_block50.json)
 - MQ-9 当前几何数据：
@@ -112,9 +112,9 @@ MLF-5 热力图复核中：
 5. **修正近炸投影**：贴近外壳的非直接近炸不应出现无部件受损的硬断崖，除非有明确遮挡/方向原因和诊断字段。
 6. **更新可视化**：热力图应同时显示坐标点、表面距离、是否直接命中、候选部件数和受影响部件数。
 
-工具设计入口：[命中盒几何审阅工具设计](geometry_visual_review_design_20260611.zh.md)。该设计建议先用 GLB 生成外形审阅包和三视图叠加图，再由人工确认外形区域、部件盒和测试点是否合理。
+工具设计入口：[命中盒几何审阅工具设计](geometry_visual_review_design_20260611.md)。该设计建议先用 GLB 生成外形审阅包和三视图叠加图，再由人工确认外形区域、部件盒和测试点是否合理。
 
-Sketchfab 替代候选入口：[Sketchfab F-16 替代模型短名单](sketchfab_f16_replacement_shortlist_20260611.zh.md)。主线几何候选应从 CC BY 4.0 或更宽松许可的 Sketchfab 模型重新进入，不再从 FlightGear GPL v2 资产派生。
+Sketchfab 替代候选入口：[Sketchfab F-16 替代模型短名单](sketchfab_f16_replacement_shortlist_20260611.md)。主线几何候选应从 CC BY 4.0 或更宽松许可的 Sketchfab 模型重新进入，不再从 FlightGear GPL v2 资产派生。
 
 第一轮主线子项目：[A2 目标外形与部件几何建模](../../../reviews/f16c_target_geometry_20260614/README.zh.md)。该子项目已按 geometry-only 验收门闭合；后续 runtime 默认路径替换、训练诊断或其他机型复用必须另行验收。
 

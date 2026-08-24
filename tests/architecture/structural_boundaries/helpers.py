@@ -6,62 +6,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CMAKE_LISTS = REPO_ROOT / "CMakeLists.txt"
-COUNTERFACTUAL_HEADER = (
-  REPO_ROOT
-  / "src"
-  / "runtime"
-  / "contracts"
-  / "counterfactual_replay_contracts.h"
-)
-COUNTERFACTUAL_CONSTANTS = (
-  REPO_ROOT
-  / "src"
-  / "runtime"
-  / "contracts"
-  / "counterfactual_replay_contract_constants.h"
-)
-COUNTERFACTUAL_TYPES = (
-  REPO_ROOT
-  / "src"
-  / "runtime"
-  / "contracts"
-  / "counterfactual_replay_contract_types.h"
-)
-COUNTERFACTUAL_VALIDATION = (
-  REPO_ROOT
-  / "src"
-  / "runtime"
-  / "contracts"
-  / "counterfactual_replay_contract_validation.h"
-)
-COUNTERFACTUAL_VALIDATION_HELPERS = (
-  REPO_ROOT
-  / "src"
-  / "runtime"
-  / "contracts"
-  / "counterfactual_replay_validation_helpers.h"
-)
-COUNTERFACTUAL_REPLAY_VALIDATION = (
-  REPO_ROOT
-  / "src"
-  / "runtime"
-  / "contracts"
-  / "counterfactual_replay_replay_validation.h"
-)
-COUNTERFACTUAL_COUNTERFACTUAL_VALIDATION = (
-  REPO_ROOT
-  / "src"
-  / "runtime"
-  / "contracts"
-  / "counterfactual_replay_counterfactual_validation.h"
-)
-COUNTERFACTUAL_EXPERIMENT_VALIDATION = (
-  REPO_ROOT
-  / "src"
-  / "runtime"
-  / "contracts"
-  / "counterfactual_replay_experiment_validation.h"
-)
 WINDOW_COORDINATOR = (
   REPO_ROOT
   / "src"
@@ -224,6 +168,7 @@ BINDINGS_CORE = (
   / "python"
   / "bindings_core.cpp"
 )
+BINDINGS_DIR = REPO_ROOT / "src" / "interfaces" / "python"
 DEFAULT_EFFECTS_MODEL = (
   REPO_ROOT
   / "src"
@@ -267,7 +212,7 @@ DEFAULT_EFFECTS_LEGACY_DETAIL = (
   / "models"
   / "weapons"
   / "detail"
-  / "default_effects_legacy_detail.inc"
+  / "default_effects_legacy_detail.h"
 )
 DEFAULT_EFFECTS_AIR_DOMAIN = (
   REPO_ROOT
@@ -283,7 +228,7 @@ DEFAULT_EFFECTS_DOMAIN_ROUTING_DETAIL = (
   / "models"
   / "weapons"
   / "detail"
-  / "default_effects_domain_routing_detail.inc"
+  / "default_effects_domain_routing_detail.h"
 )
 COMPONENT_DOMAINS_ROOT = REPO_ROOT / "src" / "components" / "domains"
 SYSTEM_DOMAINS_ROOT = REPO_ROOT / "src" / "systems" / "domains"
@@ -367,6 +312,14 @@ DOMAIN_SEPARATION_RETIRED_PUBLIC_FILES = (
   / "weapons"
   / "detail"
   / "default_effects_air_platform_resolution_detail.inc",
+  # The default_effects fragment family moved from .inc to _detail.h; both
+  # spellings of the retired air-platform fragment stay banned.
+  REPO_ROOT
+  / "src"
+  / "models"
+  / "weapons"
+  / "detail"
+  / "default_effects_air_platform_resolution_detail.h",
 )
 DOMAIN_SEPARATION_RETIRED_INCLUDE_STRINGS = (
   '#include "components/combat/damage.h"',
@@ -378,35 +331,8 @@ DOMAIN_SEPARATION_RETIRED_INCLUDE_STRINGS = (
   '#include "systems/physics/control_system.h"',
   '#include "systems/physics/propulsion_system.h"',
   '#include "models/weapons/detail/default_effects_air_platform_resolution_detail.inc"',
+  '#include "models/weapons/detail/default_effects_air_platform_resolution_detail.h"',
 )
-STRUCTURAL_DOC_EN = (
-  REPO_ROOT
-  / "docs"
-  / "task"
-  / "simulation_architecture"
-  / "archive"
-  / "wp22_legacy_compatibility_retirement"
-  / "wp22_structural_god_file_decomposition_cluster_20260522.md"
-)
-STRUCTURAL_DOC_ZH = (
-  REPO_ROOT
-  / "docs"
-  / "task"
-  / "simulation_architecture"
-  / "archive"
-  / "wp22_legacy_compatibility_retirement"
-  / "wp22_structural_god_file_decomposition_cluster_20260522.zh.md"
-)
-
-COUNTERFACTUAL_CONSTANT_ALLOWLIST = {
-  "kReplayRestoreSupportBoundaryUnsupported",
-  "kWorldlineBranchSupportStateMetadataOnly",
-  "kCounterfactualRequestRejectionRestoreUnsupportedBoundary",
-  "kScenarioGenerationArtifactKindRequestMetadata",
-  "kCounterfactualAdmissionStateAdmitted",
-  "kExperimentProfileClaimScopeDescriptive",
-}
-
 WINDOW_COORDINATOR_MAIN_MARKERS = {
   "classify_runtime_window_inputs(",
   "execute_runtime_window(",
@@ -501,7 +427,6 @@ AIR_CONTROL_RESOLUTION = (
   / "control_input_resolution.h"
 )
 
-COUNTERFACTUAL_CLOSURE_BLOCKING_MAX_LINES = 1500
 WINDOW_COORDINATOR_CLOSURE_BLOCKING_MAX_LINES = 1000
 INLINE_REGISTERED_SYSTEM_PATTERN = re.compile(
   r'ecs\.system<[^>]+>\("([^"]+)"\)\s*\n\s*\.kind\(flecs::(OnUpdate|PreUpdate)\)'
@@ -622,8 +547,76 @@ def _assert_debug_damage_paths_use_dto_builder(text: str) -> None:
     assert "engagement_events::apply_effects_result_fields(" not in caller_block
 
 
+def _python_binding_sources() -> list[str]:
+  """File names of EF_PYTHON_BINDING_SOURCES in CMake (= registration) order."""
+  lines = _text(CMAKE_LISTS).splitlines()
+  start = next(
+    index for index, line in enumerate(lines)
+    if line.strip().startswith("set(EF_PYTHON_BINDING_SOURCES")
+  )
+  names: list[str] = []
+  for line in lines[start + 1:]:
+    stripped = line.strip()
+    if stripped == ")":
+      break
+    match = re.fullmatch(r"src/interfaces/python/(\S+\.cpp)", stripped)
+    if match:
+      names.append(match.group(1))
+  return names
+
+
+def _binding_surface_text(prefix: str, detail_header: str) -> str:
+  """Concatenated source text of one decomposed binding surface.
+
+  The per-domain split keeps registration order locked across the
+  orchestrator, the internal header, and the CMake source list, so joining
+  the slices in CMake order reproduces the original single-file text for
+  source-shape guards. The internal header goes first because the shared
+  helpers that used to sit above bind_* in the single file now live there.
+  """
+  parts = [_text(BINDINGS_DIR / detail_header)]
+  parts.extend(
+    _text(BINDINGS_DIR / name)
+    for name in _python_binding_sources()
+    if name == f"{prefix}.cpp" or name.startswith(f"{prefix}_")
+  )
+  return "\n".join(parts)
+
+
+def bindings_core_text() -> str:
+  return _binding_surface_text("bindings_core", "bindings_core_detail.h")
+
+
+def bindings_runtime_text() -> str:
+  return _binding_surface_text("bindings_runtime", "bindings_runtime_detail.h")
+
+
+def bindings_command_text() -> str:
+  return _binding_surface_text("bindings_command", "bindings_command_detail.h")
+
+
+def _diagnostics_introspection_text(text: str) -> str:
+  """The diagnostics introspection surface, joined from its three sub-slices.
+
+  bind_simulation_kernel_diagnostics_introspection_surface is a thin
+  orchestrator since the bindings_core decomposition; the quarantine
+  assertions apply to the concatenation of the three sub-surface bodies,
+  which is textually equivalent to the old single function body.
+  """
+  return "".join(
+    _extract_function_block(
+      text, f"void bind_simulation_kernel_diagnostics_{part}("
+    )
+    for part in (
+      "hit_and_view_surface",
+      "platform_state_surface",
+      "missile_runtime_surface",
+    )
+  )
+
+
 def _simulation_kernel_binding_names() -> list[str]:
-  text = _text(BINDINGS_CORE)
+  text = bindings_core_text()
   start = text.index('nb::class_<SimulationKernel> simulation_kernel(m, "SimulationKernel");')
   block = text[start:]
   names = re.findall(r'\.def\s*\(\s*"([^"]+)"', block)

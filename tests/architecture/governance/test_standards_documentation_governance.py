@@ -5,23 +5,23 @@ import re
 import shlex
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.governance_audit
+
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-GOVERNANCE_ARCHIVE_PARTS = (
-  "docs",
-  "task",
-  "review",
-  "archive",
-  "standards_documentation_governance",
-)
+
+# The 2026-06-10 standards-governance subproject lived under
+# docs/task/review/archive/standards_documentation_governance/ and was retired
+# on 2026-08-13 (see docs/archive_ledger.md). The assertions that read its
+# status, dispatch, and cluster pages went with it; what those pages recorded
+# as "closed" is asserted here directly against the code and the maintained
+# standards, which is the durable half of that coverage.
 
 
 def _text(*parts: str) -> str:
   return REPO_ROOT.joinpath(*parts).read_text(encoding="utf-8")
-
-
-def _governance_text(filename: str) -> str:
-  return _text(*GOVERNANCE_ARCHIVE_PARTS, filename)
 
 
 def _constrained_workflow_packages(workflow: str) -> set[str]:
@@ -70,54 +70,11 @@ def test_standards_maintenance_policy_is_registered() -> None:
 
   assert "standards/standards_maintenance_policy.md" in documentation_readme
   assert "standards/standards_maintenance_policy.zh.md" in documentation_readme_zh
-  assert "retired `docs/plan/` and `docs/task/` roots contain archives only" in policy
-  assert "已退役的 `docs/plan/` 与 `docs/task/` 根只包含归档" in policy_zh
+  assert "The retired `docs/plan/` and `docs/task/` roots no longer exist" in policy
+  assert "已退役的 `docs/plan/` 与 `docs/task/` 根已不再存在" in policy_zh
 
 
-def test_standards_governance_tracks_all_alignment_gaps() -> None:
-  readme = _governance_text("README.md")
-  clusters = _governance_text("standards_documentation_governance_task_clusters_20260610.md")
-  status = _governance_text("standards_documentation_governance_current_status_20260610.md")
-  dispatch = _governance_text("standards_documentation_governance_dispatch_queue_20260610.md")
-
-  assert "standards_implementation_alignment_review_20260610.md" in readme
-  assert "standards_documentation_governance_current_status_20260610.md" in readme
-  assert "standards_documentation_governance_dispatch_queue_20260610.md" in readme
-  assert "archived accepted governance slice" in readme
-  assert "SG-P1" in clusters
-  for gap_id in ("GAP-001", "GAP-002", "GAP-003", "GAP-004", "GAP-005", "GAP-006"):
-    assert gap_id in clusters
-    assert gap_id in status
-    assert gap_id in dispatch
-
-  assert "SG-G6" in clusters
-  assert "held pending MLF-3 acceptance evidence" in clusters
-  assert "No production `demo` domain" in status
-  assert "SDG-D1" in dispatch
-  assert "unaccepted or untracked test alone" in dispatch
-
-
-def test_standards_governance_status_assigns_drift_classes_and_batches() -> None:
-  status = _governance_text("standards_documentation_governance_current_status_20260610.md")
-
-  for drift_class in (
-    "Semantic mismatch",
-    "Implementation ahead of standard",
-    "Status/date stale",
-    "Planning supplement drift",
-    "Held standards admission",
-  ):
-    assert drift_class in status
-
-  for batch in ("Batch A", "Batch B", "Batch C", "Batch D"):
-    assert batch in status
-
-  assert "MoveStatic" in status
-  assert "G0/G1 static limitation" in status
-
-
-def test_standards_governance_batch_a_closure_is_backed_by_code_and_standard() -> None:
-  status = _governance_text("standards_documentation_governance_current_status_20260610.md")
+def test_ground_task_mode_closure_is_backed_by_code_and_standard() -> None:
   ground_enums = _text(
     "src",
     "components",
@@ -126,7 +83,11 @@ def test_standards_governance_batch_a_closure_is_backed_by_code_and_standard() -
     "tasking",
     "ground_tasking_enums.h",
   )
-  bindings = _text("src", "interfaces", "python", "bindings_command.cpp")
+  # The command binding surface is decomposed into per-domain translation
+  # units; read the slices joined in registration order.
+  from tests.architecture.structural_boundaries.helpers import bindings_command_text
+
+  bindings = bindings_command_text()
   command_standard = _text(
     "docs",
     "domains",
@@ -135,8 +96,6 @@ def test_standards_governance_batch_a_closure_is_backed_by_code_and_standard() -
     "command_link_and_reporting_baseline.md",
   )
 
-  assert "GAP-001" in status
-  assert "closed" in status
   assert "MoveStatic = 1" in ground_enums
   assert "HoldStatic" not in ground_enums
   assert '.value("MoveStatic", GroundTaskMode::MoveStatic)' in bindings
@@ -153,10 +112,7 @@ def test_standards_governance_batch_a_closure_is_backed_by_code_and_standard() -
   assert "track fusion" in command_standard
 
 
-def test_standards_governance_batch_b_observation_modes_are_registered() -> None:
-  status = _governance_text("standards_documentation_governance_current_status_20260610.md")
-  dispatch = _governance_text("standards_documentation_governance_dispatch_queue_20260610.md")
-  clusters = _governance_text("standards_documentation_governance_task_clusters_20260610.md")
+def test_air_and_naval_observation_modes_are_registered() -> None:
   air_obs = _text(
     "docs",
     "domains",
@@ -175,13 +131,6 @@ def test_standards_governance_batch_b_observation_modes_are_registered() -> None
   alignment_map = _text(
     "docs", "engineering", "documentation", "reference", "document_alignment_map.md"
   )
-
-  assert "GAP-002" in status
-  assert "Closed by registering `air_combat_c2_roe_v1/v2`" in status
-  sdg_b1_row = next(line for line in dispatch.splitlines() if line.startswith("| `SDG-B1`"))
-  sg_g2_row = next(line for line in clusters.splitlines() if line.startswith("| `SG-G2`"))
-  assert sdg_b1_row.endswith("| pass |")
-  assert sg_g2_row.endswith("| pass |")
 
   for required in (
     "air_combat_c2_roe_v1",
@@ -205,10 +154,7 @@ def test_standards_governance_batch_b_observation_modes_are_registered() -> None
   assert "Naval Observation Contract](../../../domains/naval/standards/observation_contract.md)" in alignment_map
 
 
-def test_standards_governance_gap_004_status_headers_are_refreshed() -> None:
-  status = _governance_text("standards_documentation_governance_current_status_20260610.md")
-  dispatch = _governance_text("standards_documentation_governance_dispatch_queue_20260610.md")
-  clusters = _governance_text("standards_documentation_governance_task_clusters_20260610.md")
+def test_owner_standards_declare_current_status_headers() -> None:
   air_act = _text(
     "docs",
     "domains",
@@ -234,13 +180,6 @@ def test_standards_governance_gap_004_status_headers_are_refreshed() -> None:
     "minimal_task_structure.md",
   )
 
-  assert "GAP-004" in status
-  assert "Closed by refreshing stale or missing status lines" in status
-  sdg_b2_row = next(line for line in dispatch.splitlines() if line.startswith("| `SDG-B2`"))
-  sg_g4_row = next(line for line in clusters.splitlines() if line.startswith("| `SG-G4`"))
-  assert sdg_b2_row.endswith("| pass |")
-  assert sg_g4_row.endswith("| pass |")
-
   assert "Status: specialization baseline for maintained air action input" in air_act
   assert "learned-policy behavior" in air_act
   assert "Status: maintained runtime workflow and contract baseline" in bridge
@@ -251,21 +190,11 @@ def test_standards_governance_gap_004_status_headers_are_refreshed() -> None:
 
 
 def test_modularization_issue_tracks_landed_interfaces_and_residuals() -> None:
-  status = _governance_text("standards_documentation_governance_current_status_20260610.md")
-  dispatch = _governance_text("standards_documentation_governance_dispatch_queue_20260610.md")
-  clusters = _governance_text("standards_documentation_governance_task_clusters_20260610.md")
   plan = _text("docs", "architecture", "work", "issues", "modularization_plan.md")
   architecture_readme = _text("docs", "architecture", "README.md")
   alignment_map = _text(
     "docs", "engineering", "documentation", "reference", "document_alignment_map.md"
   )
-
-  assert "GAP-005" in status
-  assert "Closed by retaining the plan as an active planning supplement" in status
-  sdg_c1_row = next(line for line in dispatch.splitlines() if line.startswith("| `SDG-C1`"))
-  sg_g5_row = next(line for line in clusters.splitlines() if line.startswith("| `SG-G5`"))
-  assert sdg_c1_row.endswith("| pass |")
-  assert sg_g5_row.endswith("| pass |")
 
   for root in (
     ("src", "components", "domains"),

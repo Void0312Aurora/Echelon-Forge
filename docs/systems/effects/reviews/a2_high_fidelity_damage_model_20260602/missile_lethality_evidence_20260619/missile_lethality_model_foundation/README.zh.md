@@ -1,7 +1,7 @@
 # A2 通用导弹杀伤模型基础
 
 状态：`2026-06-09` 归档指针。已验收的 MLF-1 证据包已移入
-[archive/mlf_1_chain_contract_accepted_20260609](archive/mlf_1_chain_contract_accepted_20260609/README.zh.md)。
+archive/mlf_1_chain_contract_accepted_20260609 (`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.zh.md`)。
 
 语言：
 

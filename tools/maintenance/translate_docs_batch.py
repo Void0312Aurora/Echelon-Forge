@@ -16,13 +16,21 @@ from typing import Iterable
 from urllib import error, request
 
 try:
+  from tools.maintenance.docs_link import MarkdownLink, sub_markdown_links
   from tools.maintenance.document_scope import (
+    classify_document,
     filter_paths,
     is_local_only_doc,
     is_strict_bilingual_doc,
   )
 except ModuleNotFoundError:  # Direct script execution from tools/maintenance.
-  from document_scope import filter_paths, is_local_only_doc, is_strict_bilingual_doc
+  from docs_link import MarkdownLink, sub_markdown_links
+  from document_scope import (
+    classify_document,
+    filter_paths,
+    is_local_only_doc,
+    is_strict_bilingual_doc,
+  )
 
 
 DEFAULT_BASE_URL_ENV = "DOCS_TRANSLATE_BASE_URL"
@@ -33,7 +41,6 @@ FALLBACK_MODEL_ENVS = ("MODEL",)
 FALLBACK_API_KEY_ENVS = ("API_KEY",)
 DEFAULT_ENDPOINT = "/chat/completions"
 DEFAULT_CLUSTER_REGISTRY = Path("docs/engineering/documentation/reference/bilingual_document_clusters.json")
-MARKDOWN_LINK_RE = re.compile(r"\[([^\]]*)\]\(([^)]+)\)")
 LANGUAGE_CJK_RE = re.compile(r"[\u4e00-\u9fff]")
 LANGUAGE_LATIN_RE = re.compile(r"[A-Za-z]")
 LEADING_DRAFT_NOTE_RE = re.compile(
@@ -323,7 +330,7 @@ def normalize_for_language_detection(text: str) -> str:
   cleaned = FENCED_CODE_BLOCK_RE.sub(" ", cleaned)
   cleaned = INLINE_CODE_RE.sub(" ", cleaned)
   cleaned = URL_RE.sub(" ", cleaned)
-  cleaned = MARKDOWN_LINK_RE.sub(lambda m: m.group(1), cleaned)
+  cleaned = sub_markdown_links(cleaned, lambda link: link.text)
   return cleaned
 
 
@@ -651,7 +658,11 @@ def collect_source_files(args: argparse.Namespace) -> list[Path]:
     pattern = "*.md"
 
   files = sorted(p for p in root.rglob(pattern) if p.is_file())
-  files = filter_paths(files, include_local_only=args.include_local_only)
+  files = filter_paths(files, include_local_only=args.include_local_only, root=root)
+  # Sealed dated evidence (Tier D) has no translation lane at all: its bytes
+  # are routinely hash-pinned by retained-artifact manifests, so it stays
+  # excluded even under --include-local-only.
+  files = [p for p in files if classify_document(p, root) != "tier_d"]
   if args.source_lang == "en":
     files = [p for p in files if not has_lang_suffix(p, "zh") and not has_lang_suffix(p, "en")]
   if args.source_lang == "zh":
@@ -725,16 +736,14 @@ def mask_link_destinations(text: str) -> tuple[str, dict[str, str]]:
   replacements: dict[str, str] = {}
   counter = 0
 
-  def repl(match: re.Match[str]) -> str:
+  def repl(link: MarkdownLink) -> str:
     nonlocal counter
-    label = match.group(1)
-    target = match.group(2)
     placeholder = f"__DOC_LINK_{counter:04d}__"
-    replacements[placeholder] = target
+    replacements[placeholder] = link.raw_target
     counter += 1
-    return f"[{label}]({placeholder})"
+    return link.render(placeholder)
 
-  return MARKDOWN_LINK_RE.sub(repl, text), replacements
+  return sub_markdown_links(text, repl), replacements
 
 
 def unmask_link_destinations(text: str, replacements: dict[str, str]) -> str:
@@ -749,14 +758,13 @@ def relativize_workspace_links(text: str, doc_path: Path, workspace_root: Path) 
   workspace_root = workspace_root.resolve()
   doc_dir = doc_path.parent.resolve()
 
-  def repl(match: re.Match[str]) -> str:
-    label = match.group(1)
-    target = match.group(2)
+  def repl(link: MarkdownLink) -> str:
+    target = link.raw_target
     stripped = target.split("#", 1)[0]
     suffix = target[len(stripped) :]
 
     if not stripped.startswith("/"):
-      return match.group(0)
+      return link.raw
 
     line_suffix = ""
     candidate = stripped
@@ -769,19 +777,19 @@ def relativize_workspace_links(text: str, doc_path: Path, workspace_root: Path) 
     try:
       resolved = candidate_path.resolve()
     except OSError:
-      return match.group(0)
+      return link.raw
 
     try:
       rel_from_workspace = resolved.relative_to(workspace_root)
     except ValueError:
-      return match.group(0)
+      return link.raw
 
     relative_target = os.path.relpath(workspace_root / rel_from_workspace, start=doc_dir)
     relative_target = Path(relative_target).as_posix()
     rewritten = relative_target + line_suffix + suffix
-    return f"[{label}]({rewritten})"
+    return link.render(rewritten)
 
-  return MARKDOWN_LINK_RE.sub(repl, text)
+  return sub_markdown_links(text, repl)
 
 
 def read_api_settings(args: argparse.Namespace) -> tuple[str, str, str]:

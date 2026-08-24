@@ -111,8 +111,3 @@ Last verified: `2026-08-08`
 - 继续处理 `tests/architecture/damage_model/` 剩余文件级 literal/source-scan guard；
 - 在 `tests/runtime/air_combat/weapon_guidance_realism/` 包级运行转绿前不提升 smoke；
 - 产出区分 Python/C++ 的 coverage 记录，写明测量 root，避免过度声明。
-
-## Archive
-
-被替代的状态快照、过期风险报告和已关闭 cluster packet 放入
-[archive/README.md](../../../../task/review/test_system_governance/archive/README.md)。archive 仅作 provenance，不作为当前测试系统健康的默认权威。

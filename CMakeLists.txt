@@ -12,6 +12,8 @@ option(EF_ENABLE_CUDA_EXPERIMENTS "Enable experimental CUDA GPU helper surface (
 # being ON triggers enable_language(CUDA) and find_package(CUDAToolkit).
 option(EF_ENABLE_CUDA_RESIDENT_BACKEND "Enable experimental CUDA-resident world-step backend" OFF)
 option(EF_ENABLE_PROJECT_WARNINGS "Enable warning flags for maintained project targets" ON)
+option(EF_ENABLE_COMPILER_CACHE "Route C/C++ compiles through a compiler cache (sccache/ccache) when one is installed" OFF)
+option(EF_FETCHCONTENT_REVALIDATE_PINS "Re-run the git update/patch steps of the pinned FetchContent dependencies on every configure" ON)
 
 function(ef_enable_project_warnings target_name)
     if (NOT EF_ENABLE_PROJECT_WARNINGS)
@@ -29,6 +31,70 @@ function(ef_enable_project_warnings target_name)
     )
 endfunction()
 
+# --- Compiler Cache -------------------------------------------------------
+# A compiler cache is a pass-through wrapper: CMake prefixes every compile
+# command with it (the LAUNCHER slot the generators already emit), the wrapper
+# hashes the preprocessed translation unit together with the argument vector,
+# and on a miss it execs the identical compiler command line.  Flags, defines,
+# include paths and the emitted object are therefore unchanged; only the wall
+# time of a repeated compile changes.
+#
+# Measured on this repository's Windows toolchain (sccache 0.17.0, MSVC 14.44,
+# Ninja, Release) the full ef_py command shape
+#     /bigobj /MP /Os /showIncludes /Fo<obj> /Fd<pdb> /FS
+# reports zero "Non-cacheable compilations" and zero "Unsupported compiler
+# calls".  Two details matter for MSVC correctness and both were verified:
+#   * /MP, which nanobind_add_module forces onto ef_py, is normalised away.  It
+#     cannot change codegen for the one-translation-unit-per-invocation command
+#     lines Ninja generates, so a /MP compile hits the same entry as the /MP-less
+#     one instead of being rejected.
+#   * The /showIncludes stream is NOT replayed verbatim, and on a toolchain
+#     whose diagnostics are not ASCII that costs Ninja its header dependencies.
+#     Measured here (MSVC 14.44 with only 2052\clui.dll installed, so cl emits
+#     GBK and VSLANG cannot force English): cl writes the prefix as the bytes
+#     D7 A2 D2 E2 3A 20 B0 FC BA AC CE C4 BC FE, which is exactly what CMake
+#     detects and writes into rules.ninja, but sccache hands Ninja
+#     D7 A2 EF BF BD 3A 20 EF BF BD -- the non-UTF-8 bytes replaced by U+FFFD.
+#     Ninja compares bytes, so the prefix never matches: it echoes every
+#     /showIncludes line instead of consuming it and records "#deps 0" for the
+#     object. A minimal two-target Ninja experiment with an identical
+#     msvc_deps_prefix confirms the split -- the compiler alone records the
+#     header, the same compiler behind sccache records nothing.
+#     The consequence is that editing a header does not rebuild its dependents.
+#     Configure with -DEF_ENABLE_COMPILER_CACHE=OFF to trade the cache back for
+#     correct incremental builds until the cache stops transcoding the stream.
+# Separate-PDB configurations (/Zi, i.e. Debug and RelWithDebInfo) stay correct
+# as well: when several translation units share one /Fd target PDB, sccache
+# classifies the compiles it cannot replay safely as non-cacheable and runs the
+# real compiler, so the shared PDB never loses a translation unit; it just
+# caches less.
+#
+# Default OFF: ordinary incremental builds must keep compiler-produced header
+# dependency data intact.  Pass -DEF_ENABLE_COMPILER_CACHE=ON only on a
+# toolchain whose launcher is known to preserve that data.  An externally
+# supplied CMAKE_<LANG>_COMPILER_LAUNCHER always wins over this block.
+if (EF_ENABLE_COMPILER_CACHE
+    AND NOT CMAKE_C_COMPILER_LAUNCHER
+    AND NOT CMAKE_CXX_COMPILER_LAUNCHER)
+    find_program(EF_COMPILER_CACHE_EXECUTABLE NAMES sccache ccache)
+    mark_as_advanced(EF_COMPILER_CACHE_EXECUTABLE)
+    if (EF_COMPILER_CACHE_EXECUTABLE)
+        get_filename_component(EF_COMPILER_CACHE_NAME "${EF_COMPILER_CACHE_EXECUTABLE}" NAME_WE)
+        if (MSVC
+            AND CMAKE_GENERATOR MATCHES "Ninja"
+            AND EF_COMPILER_CACHE_NAME STREQUAL "sccache")
+            message(WARNING
+                "Compiler cache disabled: sccache does not preserve localized "
+                "MSVC /showIncludes dependencies for Ninja"
+            )
+        else()
+            set(CMAKE_C_COMPILER_LAUNCHER "${EF_COMPILER_CACHE_EXECUTABLE}")
+            set(CMAKE_CXX_COMPILER_LAUNCHER "${EF_COMPILER_CACHE_EXECUTABLE}")
+            message(STATUS "Compiler cache: ${EF_COMPILER_CACHE_EXECUTABLE}")
+        endif()
+    endif()
+endif()
+
 if (CMAKE_RANLIB)
     # Ensure static archives get a symbol index on all toolchains.
     set(CMAKE_C_ARCHIVE_FINISH "<CMAKE_RANLIB> <TARGET>")
@@ -40,12 +106,41 @@ find_package(Threads REQUIRED)
 
 include(FetchContent)
 
+# --- Pinned Dependency Re-Validation ---------------------------------------
+# Every dependency below is pinned to an exact commit hash.  By default the git
+# update step runs on each configure so a reused build tree cannot silently
+# retain a checkout that differs from the declared pin.  That confirmation is
+# not free.  With UPDATE_DISCONNECTED=FALSE the update step is marked ALWAYS,
+# which forces the nested populate project to re-run its whole chain (update -> patch ->
+# configure -> build -> install -> test) on every reconfigure.  Measured on this
+# tree with CMake 3.31.6 + Ninja on Windows, each connected dependency costs
+# 6.5-6.9 s of configure time, while nanobind -- the one declaration that had
+# already opted into UPDATE_DISCONNECTED -- costs 1.6 s.
+#
+# CMake 3.27 fixed UPDATE_DISCONNECTED so a changed declaration re-runs the
+# update step.  Older supported CMake versions can retain stale populated
+# sources, so the performance opt-out is rejected there instead of weakening
+# the pin contract.
+if (NOT EF_FETCHCONTENT_REVALIDATE_PINS AND CMAKE_VERSION VERSION_LESS 3.27)
+    message(FATAL_ERROR
+        "EF_FETCHCONTENT_REVALIDATE_PINS=OFF requires CMake 3.27 or newer; "
+        "older CMake versions can retain stale FetchContent revisions"
+    )
+endif()
+
+if (EF_FETCHCONTENT_REVALIDATE_PINS)
+    set(EF_FETCHCONTENT_PIN_MODE "")
+else()
+    set(EF_FETCHCONTENT_PIN_MODE UPDATE_DISCONNECTED TRUE)
+endif()
+
 # 1. Flecs (ECS)
 FetchContent_Declare(
     flecs
     GIT_REPOSITORY https://github.com/SanderMertens/flecs.git
     GIT_TAG        eeb9eaa64243536c5d5c19279c9c305a52d0b9b3 # v4.0.0
     SOURCE_SUBDIR  __cmo_no_upstream_cmake_project__
+    ${EF_FETCHCONTENT_PIN_MODE}
 )
 FetchContent_MakeAvailable(flecs)
 
@@ -75,6 +170,7 @@ FetchContent_Declare(
     spdlog
     GIT_REPOSITORY https://github.com/gabime/spdlog.git
     GIT_TAG        7c02e204c92545f869e2f04edaab1f19fe8b19fd # v1.13.0
+    ${EF_FETCHCONTENT_PIN_MODE}
 )
 FetchContent_MakeAvailable(spdlog)
 
@@ -93,11 +189,6 @@ FetchContent_MakeAvailable(spdlog)
 # bindings are migrated, backport just the visibility guard.  The patch is a
 # no-op on MSVC and Linux GCC, which already take the intended code path.
 #
-# UPDATE_DISCONNECTED caveat: on CMake < 3.27 a future GIT_TAG bump may leave
-# an already-populated _deps/nanobind-src on the old revision, and the patch
-# script would still apply cleanly against the stale source instead of failing
-# closed.  Tag bumps therefore want a clean _deps (delete the nanobind-src /
-# nanobind-subbuild dirs before reconfiguring).
 FetchContent_Declare(
     nanobind
     GIT_REPOSITORY https://github.com/wjakob/nanobind.git
@@ -105,7 +196,7 @@ FetchContent_Declare(
     PATCH_COMMAND  "${CMAKE_COMMAND}"
                    "-DNANOBIND_DEFS_HEADER=<SOURCE_DIR>/include/nanobind/nb_defs.h"
                    -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/patches/nanobind_mingw_visibility.cmake"
-    UPDATE_DISCONNECTED TRUE
+    ${EF_FETCHCONTENT_PIN_MODE}
 )
 FetchContent_MakeAvailable(nanobind)
 
@@ -114,6 +205,7 @@ FetchContent_Declare(
     nlohmann_json
     GIT_REPOSITORY https://github.com/nlohmann/json.git
     GIT_TAG        9cca280a4d0ccf0c08f47a99aa71d1b0e52f8d03 # v3.11.3
+    ${EF_FETCHCONTENT_PIN_MODE}
 )
 FetchContent_MakeAvailable(nlohmann_json)
 
@@ -172,13 +264,10 @@ set(EF_CORE_MISSION_RUNTIME_SOURCES
 set(EF_CORE_MISSION_EPISODE_SOURCES
     src/core/mission/episode/execution_episode_state.cpp
     src/core/mission/episode/execution_episode_batch_prepare.cpp
-    src/core/mission/episode/execution_episode_controller.cpp
 )
 
 set(EF_CORE_MISSION_EPISODE_DETAIL_SOURCES
-    src/core/mission/episode/detail/episode_transition_runtime.cpp
     src/core/mission/episode/detail/episode_reward_breakdown.cpp
-    src/core/mission/episode/detail/mission_command_codec.cpp
 )
 
 set(EF_CORE_MISSION_SOURCES
@@ -193,11 +282,9 @@ set(EF_RUNTIME_FACADE_SOURCES
     src/runtime/facade/runtime_facade.cpp
     src/runtime/facade/runtime_facade_composition_evidence.cpp
     src/runtime/facade/runtime_facade_config.cpp
-    src/runtime/facade/runtime_facade_counterfactual.cpp
     src/runtime/facade/runtime_facade_world_setup.cpp
     src/runtime/facade/runtime_facade_query.cpp
     src/runtime/facade/runtime_facade_command_api.cpp
-    src/runtime/facade/runtime_facade_execution.cpp
     src/runtime/facade/runtime_facade_packet.cpp
 )
 
@@ -286,13 +373,6 @@ target_include_directories(ef_core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# The legacy core still uses the standard M_PI extension in several translation
-# units. Opt in on MSVC so the real Flecs CPU backend can be built without
-# changing the model formulas or their constants.
-if (MSVC)
-    target_compile_definitions(ef_core PRIVATE _USE_MATH_DEFINES)
-endif()
-
 # ef_content is listed first: ef_core's engine/model TUs call into the content
 # loader (e.g. simulation_kernel.cpp -> default_unit_factory.h ->
 # load_unit_definitions_json), and content never calls back, so ef_content must
@@ -315,11 +395,8 @@ target_link_libraries(ef_core PUBLIC
 # models) may #include runtime/facade (see
 # test_facade_application_layer_has_no_incoming_edges_outside_its_permitted_callers),
 # while facade TUs call down into engine/mission freely.  The remaining named
-# T3 units (engine, mission) are NOT splittable yet: they are symbol-cyclic
-# through the ratcheted world_batch_runtime.h -> execution_episode_controller.h
-# edge (engine owns mission controllers by value), so cutting either one today
-# would manufacture a static-library cycle; that stays deferred to the T4
-# batch-wrapper design per the I41 allowlist verdicts.
+# T3 units (engine, mission) stay in one archive: splitting them is deferred
+# to the T4 batch-wrapper design per the I41 allowlist verdicts.
 #
 # Because the facade sits on top, ef_core must NOT link ef_facade (that would
 # declare a cycle); instead the two consumers whose TUs reference facade
@@ -362,9 +439,67 @@ target_link_libraries(ef_app PRIVATE ef_core)
 set(EF_PYTHON_BINDING_SOURCES
     src/interfaces/python/python_module.cpp
     src/interfaces/python/bindings_command.cpp
+    # bind_command() domain slices, listed in nanobind registration order.
+    src/interfaces/python/bindings_command_enums.cpp
+    src/interfaces/python/bindings_command_comm.cpp
+    src/interfaces/python/bindings_command_pilot_report.cpp
+    src/interfaces/python/bindings_command_pilot_action.cpp
+    src/interfaces/python/bindings_command_mission_command.cpp
+    src/interfaces/python/bindings_command_task_order.cpp
+    src/interfaces/python/bindings_command_task_order_api.cpp
+    src/interfaces/python/bindings_command_leader_intent.cpp
     src/interfaces/python/bindings_core.cpp
+    # bind_core() domain slices, listed in nanobind registration order.
+    src/interfaces/python/bindings_core_enums.cpp
+    src/interfaces/python/bindings_core_instruments.cpp
+    src/interfaces/python/bindings_core_weapon_profiles.cpp
+    src/interfaces/python/bindings_core_unit_data.cpp
+    src/interfaces/python/bindings_core_debug_views.cpp
+    src/interfaces/python/bindings_core_observation.cpp
+    src/interfaces/python/bindings_core_simulation_kernel.cpp
+    # SimulationKernel method-surface slices, in the same registration order;
+    # the diagnostics sub-slices follow their own orchestration shell.
+    src/interfaces/python/bindings_core_kernel_maintained.cpp
+    src/interfaces/python/bindings_core_kernel_diagnostics.cpp
+    src/interfaces/python/bindings_core_kernel_diagnostics_views.cpp
+    src/interfaces/python/bindings_core_kernel_diagnostics_platform_state.cpp
+    src/interfaces/python/bindings_core_kernel_diagnostics_missile.cpp
+    src/interfaces/python/bindings_core_kernel_legacy.cpp
+    src/interfaces/python/bindings_core_kernel_override.cpp
     src/interfaces/python/bindings_episode.cpp
+    # bind_episode() domain slices, listed in nanobind registration order.
+    src/interfaces/python/bindings_episode_geometry.cpp
+    src/interfaces/python/bindings_episode_mission_nav.cpp
+    src/interfaces/python/bindings_episode_waypoint_approach.cpp
+    src/interfaces/python/bindings_episode_flight_shaping.cpp
+    src/interfaces/python/bindings_episode_objective.cpp
+    src/interfaces/python/bindings_episode_termination.cpp
+    src/interfaces/python/bindings_episode_execution_runtime.cpp
+    src/interfaces/python/bindings_episode_state_batch.cpp
     src/interfaces/python/bindings_runtime.cpp
+    # bind_runtime() domain slices, listed in nanobind registration order.
+    src/interfaces/python/bindings_runtime_runtime.cpp
+    src/interfaces/python/bindings_runtime_fidelity.cpp
+    src/interfaces/python/bindings_runtime_platform.cpp
+    src/interfaces/python/bindings_runtime_engagement.cpp
+    # bind_runtime_engagement() sub-slices, in the same registration order.
+    src/interfaces/python/bindings_runtime_engagement_events.cpp
+    src/interfaces/python/bindings_runtime_engagement_damage.cpp
+    src/interfaces/python/bindings_runtime_engagement_track_launch.cpp
+    src/interfaces/python/bindings_runtime_engagement_munition.cpp
+    src/interfaces/python/bindings_runtime_kill_chain.cpp
+    src/interfaces/python/bindings_runtime_policy.cpp
+    src/interfaces/python/bindings_runtime_batch_setup.cpp
+    src/interfaces/python/bindings_runtime_experiment.cpp
+    src/interfaces/python/bindings_runtime_batch_request.cpp
+    src/interfaces/python/bindings_runtime_learning.cpp
+    src/interfaces/python/bindings_runtime_batch_packet.cpp
+    src/interfaces/python/bindings_runtime_tasking.cpp
+    src/interfaces/python/bindings_runtime_window.cpp
+    src/interfaces/python/bindings_runtime_platform_world.cpp
+    src/interfaces/python/bindings_runtime_tasking_world.cpp
+    src/interfaces/python/bindings_runtime_engine.cpp
+    src/interfaces/python/bindings_runtime_facade.cpp
     src/interfaces/python/bindings_gpu.cpp
 )
 
@@ -440,15 +575,8 @@ target_compile_definitions(ef_cuda_resident_backend PRIVATE
 )
 if (EF_ENABLE_CUDA_RESIDENT_BACKEND)
     target_link_libraries(ef_cuda_resident_backend PUBLIC CUDA::cudart)
-    # `-maxrregcount=0` is an explicit no-cap declaration, not a tuning knob: it
-    # is the value ptxas already uses by default. It is stated here because the
-    # resource-evidence contract records `maxrregcount_argument` as provenance
-    # and its collector requires the argument to be present and zero, so that a
-    # future register-pressure experiment cannot be mistaken for the baseline.
-    # Register counts are byte-identical with and without it.
     target_compile_options(ef_cuda_resident_backend PRIVATE
         $<$<COMPILE_LANGUAGE:CUDA>:--ptxas-options=-v>
-        $<$<COMPILE_LANGUAGE:CUDA>:-maxrregcount=0>
     )
 endif()
 
@@ -492,49 +620,56 @@ else()
     target_link_libraries(ef_py PRIVATE ef_gpu_experiments)
 endif()
 
-add_executable(ef_gpu_visual_phase0_probe
+# The phase-0 probes are diagnostics entry points with no test, CI or tooling
+# caller: the only references outside their own sources are the two
+# tools/diagnostics READMEs, which already build them by name.  Each one
+# still relinks the whole engine, and gpu_visual_candidate_phase0_probe.cpp
+# does not even compile under MSVC (it calls __builtin_popcount), so leaving
+# them in the default target made `cmake --build` fail on Windows for output
+# nobody consumes.  EXCLUDE_FROM_ALL keeps every probe buildable by name.
+add_executable(ef_gpu_visual_phase0_probe EXCLUDE_FROM_ALL
     src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_visual_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 
-add_executable(ef_gpu_execution_observation_phase0_probe
+add_executable(ef_gpu_execution_observation_phase0_probe EXCLUDE_FROM_ALL
     src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_execution_observation_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 
-add_executable(ef_gpu_flight_shaping_phase0_probe
+add_executable(ef_gpu_flight_shaping_phase0_probe EXCLUDE_FROM_ALL
     src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_flight_shaping_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 
-add_executable(ef_gpu_interaction_broadphase_phase0_probe
+add_executable(ef_gpu_interaction_broadphase_phase0_probe EXCLUDE_FROM_ALL
     src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_interaction_broadphase_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 
-add_executable(ef_gpu_sensor_candidate_phase0_probe
+add_executable(ef_gpu_sensor_candidate_phase0_probe EXCLUDE_FROM_ALL
     src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_sensor_candidate_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 
-add_executable(ef_gpu_comm_candidate_phase0_probe
+add_executable(ef_gpu_comm_candidate_phase0_probe EXCLUDE_FROM_ALL
     src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_comm_candidate_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 
-add_executable(ef_gpu_visual_candidate_phase0_probe
+add_executable(ef_gpu_visual_candidate_phase0_probe EXCLUDE_FROM_ALL
     src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_visual_candidate_phase0_probe PRIVATE
@@ -549,6 +684,7 @@ FetchContent_Declare(
     doctest
     GIT_REPOSITORY https://github.com/doctest/doctest.git
     GIT_TAG        ae7a13539fb71f270b87eb2e874fbac80bc8dda2 # v2.4.11
+    ${EF_FETCHCONTENT_PIN_MODE}
 )
 FetchContent_MakeAvailable(doctest)
 
@@ -562,22 +698,18 @@ set(EF_TEST_SOURCES
     src/tests/test_structural_failure_system.cpp
     src/tests/test_control_surface_damage_coupling.cpp
     src/tests/test_world_batch_backend_contract.cpp
+    # Only the CUDA-resident suites without a second home stay here.  The
+    # lifecycle, state, device-consumer, performance and replay translation
+    # units are compiled and run by ef_cuda_resident_lifecycle_test /
+    # ef_cuda_resident_replay_test, which link nothing but
+    # ef_cuda_resident_backend + doctest -- proof they need no ef_core symbol.
+    # Listing them here too compiled each one a second time against the full
+    # engine graph and made ctest execute the same doctest cases twice.
     src/tests/test_cuda_resident_backend_admission.cpp
-    src/tests/test_cuda_resident_backend_lifecycle.cpp
-    src/tests/test_cuda_resident_backend_state.cpp
     src/tests/test_cuda_resident_fixed_air_cpu_reference.cpp
     src/tests/test_cuda_resident_control_preparation_cpu_reference.cpp
     src/tests/test_cuda_resident_flight_dynamics_cpu_reference.cpp
-    src/tests/test_cuda_resident_observation_projection_cpu_reference.cpp
-    src/tests/test_cuda_resident_device_consumer.cpp
-    src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
-    src/tests/test_cuda_resident_replay.cpp
-    src/tests/test_cuda_resident_replay_projection.cpp
-    src/tests/test_cuda_resident_replay_support.cpp
-    src/tests/test_cuda_resident_performance.cpp
     src/tests/test_world_batch_runtime.cpp
-    src/tests/test_runtime_facade_evidence_allocators.cpp
-    src/tests/test_runtime_facade_maintained_replay_envelope.cpp
     src/tests/test_default_effects_model.cpp
 )
 
@@ -727,147 +859,6 @@ target_include_directories(ef_cuda_resident_full_window_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# CR2-2b compiles one probe source twice so the real Flecs CPU adapter and the
-# CUDA-resident backend consume the same owned trace through the same Runner.
-# CPU database loading remains outside the runner's semantic window surface.
-if (EF_ENABLE_CUDA_RESIDENT_BACKEND)
-    add_executable(ef_cuda_resident_full_window_cuda_probe
-        src/tools/experimental/cuda_resident/cuda_resident_full_window_probe.cpp
-    )
-    target_link_libraries(ef_cuda_resident_full_window_cuda_probe PRIVATE
-        ef_cuda_resident_backend
-        ef_cuda_resident_full_window_runner
-        nlohmann_json::nlohmann_json
-    )
-    target_compile_definitions(ef_cuda_resident_full_window_cuda_probe PRIVATE
-        EF_CR2_FULL_WINDOW_CUDA_PROBE=1
-    )
-    target_include_directories(ef_cuda_resident_full_window_cuda_probe PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-    )
-
-    # CR2-6 compiles the production matrix probe separately for the current
-    # CUDA-resident lane. Both lanes use the same backend SPI window sequence;
-    # the device-consumer suffix remains an explicit CUDA-only mode.
-    add_executable(ef_cuda_resident_cr2_matrix_cuda_probe
-        src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_probe.cpp
-        src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_session.cpp
-        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
-    )
-    target_link_libraries(ef_cuda_resident_cr2_matrix_cuda_probe PRIVATE
-        ef_cuda_resident_backend
-        nlohmann_json::nlohmann_json
-    )
-    target_compile_definitions(ef_cuda_resident_cr2_matrix_cuda_probe PRIVATE
-        EF_CR2_MATRIX_CUDA_PROBE=1
-        EF_CR2_MATRIX_BUILD_CONFIG="$<CONFIG>"
-    )
-    target_include_directories(ef_cuda_resident_cr2_matrix_cuda_probe PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-    )
-else()
-    add_executable(ef_cuda_resident_full_window_cpu_probe
-        src/tools/experimental/cuda_resident/cuda_resident_full_window_probe.cpp
-    )
-    target_link_libraries(ef_cuda_resident_full_window_cpu_probe PRIVATE
-        ef_facade
-        ef_core
-        ef_gpu_experiments
-        ef_cuda_resident_full_window_runner
-        nlohmann_json::nlohmann_json
-    )
-    target_compile_definitions(ef_cuda_resident_full_window_cpu_probe PRIVATE
-        EF_CR2_FULL_WINDOW_CPU_PROBE=1
-    )
-    target_include_directories(ef_cuda_resident_full_window_cpu_probe PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-    )
-
-    add_executable(ef_cuda_resident_cr2_matrix_cpu_probe
-        src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_probe.cpp
-        src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_session.cpp
-        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
-    )
-    target_link_libraries(ef_cuda_resident_cr2_matrix_cpu_probe PRIVATE
-        ef_facade
-        ef_core
-        ef_gpu_experiments
-        nlohmann_json::nlohmann_json
-    )
-    target_compile_definitions(ef_cuda_resident_cr2_matrix_cpu_probe PRIVATE
-        EF_CR2_MATRIX_CPU_PROBE=1
-        EF_CR2_MATRIX_BUILD_CONFIG="$<CONFIG>"
-    )
-    target_include_directories(ef_cuda_resident_cr2_matrix_cpu_probe PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-    )
-endif()
-
-# RB9 measures the same frozen trace through two separately built Release
-# probes. The CUDA-on probe keeps the existing ef_core/MSVC debt out of its
-# graph; the CUDA-off probe uses the real FlecsCpuBackend instead of the RB8
-# fixture oracle. Neither target is a maintained backend or admission surface.
-if (EF_ENABLE_CUDA_RESIDENT_BACKEND)
-    add_executable(ef_cuda_resident_rb9_cuda_probe
-        src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp
-        src/tools/experimental/cuda_resident/cuda_resident_rb9_probe_session.cpp
-        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
-    )
-    target_link_libraries(ef_cuda_resident_rb9_cuda_probe PRIVATE
-        ef_cuda_resident_backend
-        nlohmann_json::nlohmann_json
-    )
-    target_compile_definitions(ef_cuda_resident_rb9_cuda_probe PRIVATE
-        EF_RB9_CUDA_PROBE=1
-        EF_RB9_BUILD_CONFIG="$<CONFIG>"
-    )
-    target_include_directories(ef_cuda_resident_rb9_cuda_probe PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-    )
-
-    # CP-4 restored the capture entry point against a versioned kernel catalog
-    # (kKernelSpecsV2 with a static-asserted 1:1 migration from frozen v1);
-    # CP-5 moved it to v3 (kKernelSpecsV3 with a static-asserted fold from
-    # frozen v2) after fusing the window graph. Backend and profiler
-    # dependencies stay restored here. v1/v2 identifiers stay frozen and
-    # kCaptureProbeV1Retired stays true; each generation supersedes the
-    # previous rather than reviving it.
-    add_executable(ef_cuda_resident_resource_probe
-        src/tools/experimental/cuda_resident/cuda_resident_resource_probe.cpp
-        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
-    )
-    target_link_libraries(ef_cuda_resident_resource_probe PRIVATE
-        ef_cuda_resident_backend
-        nlohmann_json::nlohmann_json
-        CUDA::cudart
-    )
-    target_compile_definitions(ef_cuda_resident_resource_probe PRIVATE
-        EF_RESOURCE_CAPTURE_BUILD_CONFIG="$<CONFIG>"
-    )
-    target_include_directories(ef_cuda_resident_resource_probe PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-    )
-else()
-    add_executable(ef_cuda_resident_rb9_cpu_probe
-        src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp
-        src/tools/experimental/cuda_resident/cuda_resident_rb9_probe_session.cpp
-        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
-    )
-    target_link_libraries(ef_cuda_resident_rb9_cpu_probe PRIVATE
-        ef_facade
-        ef_core
-        ef_gpu_experiments
-        nlohmann_json::nlohmann_json
-    )
-    target_compile_definitions(ef_cuda_resident_rb9_cpu_probe PRIVATE
-        EF_RB9_CPU_PROBE=1
-        EF_RB9_BUILD_CONFIG="$<CONFIG>"
-    )
-    target_include_directories(ef_cuda_resident_rb9_cpu_probe PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-    )
-endif()
-
 # CTest entries for all doctest suites plus focused structural-failure lanes.
 add_test(NAME ef_test_all COMMAND ef_test)
 set_tests_properties(ef_test_all PROPERTIES WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
@@ -921,13 +912,6 @@ set(EF_PROJECT_WARNING_TARGETS
     ef_cuda_resident_lifecycle_test
     ef_cuda_resident_replay_test
     ef_cuda_resident_full_window_test
-    ef_cuda_resident_full_window_cpu_probe
-    ef_cuda_resident_full_window_cuda_probe
-    ef_cuda_resident_cr2_matrix_cpu_probe
-    ef_cuda_resident_cr2_matrix_cuda_probe
-    ef_cuda_resident_rb9_cpu_probe
-    ef_cuda_resident_rb9_cuda_probe
-    ef_cuda_resident_resource_probe
 )
 
 foreach(target_name IN LISTS EF_PROJECT_WARNING_TARGETS)

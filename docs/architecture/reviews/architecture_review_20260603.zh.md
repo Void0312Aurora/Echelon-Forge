@@ -56,7 +56,7 @@ Migration note: 所有权与路径于 `2026-08-07` 变更；迁移期间未重�
 | `src/core/engine/simulation_kernel.h` | 拥有 Flecs world 和模型接口，但 public API 仍横跨 reset/step/setup、raw world access、legacy command、tasking、observation、debug、weapon、model override 等职责。 |
 | `src/core/interfaces/` | `IControlModel`、`ISensorModel`、`IAcousticModel`、`IGuidanceModel`、`IEffectsModel`、`IEnvironmentModel`、`IUnitFactory`——全部纯虚，配有 `make_default_*()` 工厂。一致的 `I*`/`*ModelRef`/`make_default_*()` 模式。 |
 | `src/systems/` | 每个 ECS 系统在独立文件中，按域组织。系统使用 Flecs 单例注入（`ControlModelRef`、`SensorModelRef` 等）进行依赖反转。 |
-| `src/interfaces/python/bindings_core.cpp` | API 表面分为 4 个命名层：`maintained`、`diagnostics_introspection`、`legacy_compatibility`、`diagnostics_override`——带有明确的 quarantine 标记（"WP22-R1-2 quarantine marker"）。 |
+| `src/interfaces/python/bindings_core.cpp` | API 表面分为 4 个命名层：`maintained`、`diagnostics_introspection`、`legacy_compatibility`、`diagnostics_override`——带有明确的 `read_only_diagnostics_quarantine` 标记。 |
 
 **关键设计决策**：核心行为域使用可替换 strategy interfaces，systems 通过 Flecs singleton 获取 model refs。这是真实的依赖反转，但不是所有行为逻辑都已经完全藏在 strategy interface 后面；若干 systems 和 factory 仍有内联领域逻辑。
 
@@ -242,7 +242,7 @@ helper-module maintainability 或 typed diagnostics contracts，而不是继续�
 
 | 指标 | 评级 | 证据 |
 |------|------|------|
-| 技术债务意识 | **强** | Quarantine 标记（"WP22-R1-2"）、已移除的 `runtime_compatibility_enabled` 门控、明确的遗留路径标记、GPU 实验性 README 边界 |
+| 技术债务意识 | **强** | 语义化 quarantine 标记（`read_only_diagnostics_quarantine`）、已移除的 `runtime_compatibility_enabled` 门控、明确的遗留路径标记、GPU 实验性 README 边界 |
 | 接口设计纪律 | **强** | 7 个纯虚 C++ 接口，一致的 `I*`/`*ModelRef`/`make_default_*()` 模式，4 层 Python 绑定 API 表面 |
 | 不可变性使用 | **良好** | Frozen dataclass：`CompiledScenario`、`CompiledWorldLayoutTemplate`、`HMoERouteBatch`、`MultiAgentControlSlot` |
 | 错误处理 | **研究级别** | C++ 使用 typed exceptions/checks。Python 有大量 broad `except Exception`，尤其在 runtime/support path；精确数字必须附 scope-qualified commands。 |

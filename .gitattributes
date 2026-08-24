@@ -2,50 +2,6 @@
 tools/environment/arnis/patches/*.patch -text
 tests/scenario/fixtures/environment_substrate/arnis_bundle_v1/** -text
 
-# RB9-RB11 evidence and decision hashes are over committed bytes, not a
-# platform newline representation.
-tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_rb9_evidence_20260730/** -text
-tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_rb10_hold_decision_20260731.json -text
-tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_rb11_closure_20260731.json -text
-tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_runtime_program_2_size_policy_20260731.json -text
-
-# CR2-6b content-addressed outputs use exact committed bytes.
-tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cr2_matrix_evidence_20260804/** -text
-tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cr2_matrix_evidence_20260804.json -text
-tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cr2_closure_20260805.json -text
-
-# CP achieved-counter evidence records hashes over committed bytes. The counter
-# report hashes its parent resource report, so both must be byte-stable.
-tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cp_resource_evidence_20260810.json -text
-tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cp_counter_evidence_20260810.json -text
-
-# CP-5 window-fusion measurement reports are content-addressed raw probe
-# outputs; the plan document records their SHA-256 over committed bytes.
-tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cp5_window_fusion_20260812/** -text
-
-# CP-5b v3 static resource evidence is the parent a future v3 counter capture
-# hashes against, so it must be byte-stable like its v1/v2 predecessors.
-tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cp_resource_evidence_20260812.json -text
-
-# CP-7b barrier-fold measurement reports and the v4 static parent follow the
-# same content-addressed byte-stability rule.
-tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cp7b_barrier_fold_20260812/** -text
-tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cp7b_resource_evidence_20260812.json -text
-
-# CP-6 learner-consumption measurement reports are content-addressed evidence,
-# and the evidence package hash-pins them to their declared generation.
-tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cp6_learner_consumption_20260812/** -text
-tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cp6_learner_consumption_evidence_20260813.json -text
-
-# CP-8 post-optimization matrix package: campaign reports, manifest, parity
-# artifact, and the validated evidence JSON are hash-pinned by the manifest
-# and the architecture gates, so they must stay byte-stable.
-tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cp8_matrix_evidence_20260812/** -text
-tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cp8_matrix_evidence_20260812.json -text
-
-# CP-9 promotion decision record is frozen evidence.
-tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cp9_promotion_decision_20260813.json -text
-
 # Historical A2 governance dependencies are manifest-pinned exact bytes.
 docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/retained_dependencies/** -text
 

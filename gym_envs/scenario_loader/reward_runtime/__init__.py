@@ -1,7 +1,5 @@
 from .compiled_runtime import (
     compiled_execution_episode_enabled,
-    compiled_execution_frame_enabled,
-    compiled_execution_step_enabled,
     compute_execution_step_runtime_products,
 )
 from .objectives import (
@@ -42,8 +40,6 @@ __all__ = [
     "build_safety_runtime_inputs",
     "compile_conditional_objectives",
     "compiled_execution_episode_enabled",
-    "compiled_execution_frame_enabled",
-    "compiled_execution_step_enabled",
     "compute_execution_step_runtime_products",
     "compute_flight_shaping_products",
     "combat_entity_terminal_state",

@@ -1,12 +1,11 @@
 # `src/core/mission/episode/detail` 边界
 
-`mission/episode/detail` 存放 `ExecutionEpisodeController` 的内部业务辅助逻辑。这里的头用于拆分实现文件和单域复用，不是稳定的跨层 API。
+`mission/episode/detail` 存放剩余 episode 工具的私有实现，不是稳定的跨层 API。
 
 ## 允许
 
-- mission-command JSON 往返和 route waypoint materialization。
-- post-waypoint、landing transition 和 controller pre-step behavior update。
 - reward breakdown 汇总与稳定 JSON 输出。
+- 仅供 `mission/episode` 公共工具内部使用的小型辅助逻辑。
 
 ## 禁止
 
@@ -16,4 +15,4 @@
 
 ## 依赖方向
 
-本目录可以依赖 `mission/episode` 与 `mission/runtime`。新增辅助逻辑时应保持 `episode_controller_detail` 命名空间，避免被误当成公共 API 使用。
+本目录可以依赖 `mission/episode` 与 `mission/runtime`。仅实现内部使用的辅助逻辑应放入匿名命名空间，避免形成意外的跨层 API。

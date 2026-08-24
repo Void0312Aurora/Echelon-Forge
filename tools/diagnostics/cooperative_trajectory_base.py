@@ -35,12 +35,9 @@ CLEARANCE_LABELS = {
 SLOT_COLORS = ["#2563eb", "#d97706", "#16a34a", "#dc2626"]
 
 
-def load_json_config(path: str) -> dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    if not isinstance(data, dict):
-        raise TypeError(f"expected dict JSON at {path!r}")
-    return data
+# Re-exported for diagnose_cooperative_trajectory; implementation lives in
+# tools.diagnostics.common (identical behavior, previously duplicated).
+from tools.diagnostics.common import load_json_config as load_json_config  # noqa: E402
 
 
 def load_policy_cpu(model_path: str, algo: str):

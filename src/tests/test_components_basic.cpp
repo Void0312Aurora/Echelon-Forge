@@ -23,6 +23,7 @@
 #include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <numbers>
 #include <string>
 #include <vector>
 
@@ -81,14 +82,14 @@ TEST_SUITE("components_basic") {
 
     TEST_CASE("math_to_radians") {
         CHECK(Math::to_radians(0.0) == doctest::Approx(0.0));
-        CHECK(Math::to_radians(180.0) == doctest::Approx(M_PI));
-        CHECK(Math::to_radians(360.0) == doctest::Approx(2.0 * M_PI));
+        CHECK(Math::to_radians(180.0) == doctest::Approx(std::numbers::pi_v<double>));
+        CHECK(Math::to_radians(360.0) == doctest::Approx(2.0 * std::numbers::pi_v<double>));
     }
 
     TEST_CASE("math_to_degrees") {
         CHECK(Math::to_degrees(0.0) == doctest::Approx(0.0));
-        CHECK(Math::to_degrees(M_PI) == doctest::Approx(180.0));
-        CHECK(Math::to_degrees(2.0 * M_PI) == doctest::Approx(360.0));
+        CHECK(Math::to_degrees(std::numbers::pi_v<double>) == doctest::Approx(180.0));
+        CHECK(Math::to_degrees(2.0 * std::numbers::pi_v<double>) == doctest::Approx(360.0));
     }
 
     TEST_CASE("math_normalize_heading_deg") {
