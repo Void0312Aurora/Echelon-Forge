@@ -26,7 +26,6 @@
 #include <psapi.h>
 #pragma comment(lib, "psapi.lib")
 #elif defined(__linux__)
-#include <unistd.h>
 #if defined(__GLIBC__)
 #include <malloc.h>
 #endif
@@ -96,13 +95,17 @@ std::uint64_t current_rss_bytes() {
     }
     return static_cast<std::uint64_t>(counters.WorkingSetSize);
 #elif defined(__linux__)
-    std::ifstream stream("/proc/self/statm");
-    std::uint64_t total_pages = 0;
-    std::uint64_t resident_pages = 0;
-    stream >> total_pages >> resident_pages;
-    const long page_size = sysconf(_SC_PAGESIZE);
-    return !stream.fail() && page_size > 0 ? resident_pages * static_cast<std::uint64_t>(page_size)
-                                           : 0;
+    std::ifstream stream("/proc/self/status");
+    std::string label;
+    while (stream >> label) {
+        if (label == "VmRSS:") {
+            std::uint64_t kibibytes = 0;
+            stream >> kibibytes;
+            return stream.fail() ? 0 : kibibytes * 1024U;
+        }
+        stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+    return 0;
 #elif defined(__APPLE__)
     mach_task_basic_info info{};
     mach_msg_type_number_t count = MACH_TASK_BASIC_INFO_COUNT;

@@ -290,10 +290,12 @@ def current_rss_bytes() -> int:
     return int(counters.WorkingSetSize) if ok else 0
   if sys.platform.startswith("linux"):
     try:
-      resident_pages = int(Path("/proc/self/statm").read_text().split()[1])
-      return resident_pages * int(os.sysconf("SC_PAGE_SIZE"))
+      for line in Path("/proc/self/status").read_text().splitlines():
+        if line.startswith("VmRSS:"):
+          return int(line.split()[1]) * 1024
     except (OSError, ValueError, IndexError):
       return 0
+    return 0
   if sys.platform == "darwin":
     try:
       result = subprocess.run(
