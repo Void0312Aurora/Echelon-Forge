@@ -81,6 +81,11 @@ using DefaultSimulationCompositionResult =
 // authority.
 [[nodiscard]] std::string default_compatibility_resolved_manifest_json();
 
+// Parse and bind an externally supplied resolved artifact to the exact native
+// executable graph before SimulationKernel registers anything into Flecs.
+[[nodiscard]] composition::CompositionStatus
+validate_default_simulation_composition_manifest(std::string_view resolved_manifest_json);
+
 [[nodiscard]] DefaultSimulationCompositionResult
 build_default_simulation_composition(SimulationKernel &kernel, flecs::world &world,
                                      MissileTuning &missile_tuning, std::mt19937 &rng,

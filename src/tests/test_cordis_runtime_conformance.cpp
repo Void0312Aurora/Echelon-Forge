@@ -1,7 +1,8 @@
 #include "core/engine/simulation_kernel.h"
+#include "core/engine/default_executable_composition_graph.h"
+#include "runtime/composition/composition_identity.h"
 #include "runtime/composition/composition_json.h"
 #include "runtime/contracts/runtime_composition_projection_contract.h"
-#include "systems/system_contribution_registry.h"
 
 #include <nlohmann/json.hpp>
 
@@ -72,51 +73,46 @@ bool exact_lock_entry(const Json &lock, std::string_view category, std::string_v
 }
 
 bool registry_matches_resolved(const auto &resolved, std::string *error) {
-    if (!runtime::systems::validate_default_contribution_graph(error)) {
-        return false;
+    return runtime::engine::validate_default_executable_composition_graph(resolved, error);
+}
+
+std::string mutated_resolved_graph_json(const auto &resolved, Json document) {
+    auto mutated = resolved;
+    const std::string removed_id = "builtin.system.naval_logistics";
+    std::erase_if(mutated.manifest.system_contributions,
+                  [&](const auto &row) { return row.contribution_id == removed_id; });
+    std::erase(mutated.system_registration_order, removed_id);
+    const auto identity = runtime::composition::compute_composition_identity(mutated);
+    if (!identity) {
+        throw std::runtime_error("cannot recompute mutated composition identity");
     }
-    const auto components = runtime::systems::default_component_contributions();
-    if (components.size() != resolved.manifest.component_contributions.size()) {
-        if (error != nullptr) *error = "component registry/resolved count mismatch";
-        return false;
+    mutated.requested_manifest_sha256 = identity.value().requested_manifest_sha256;
+    mutated.resolved_manifest_sha256 = identity.value().resolved_manifest_sha256;
+
+    auto &systems = document.at("manifest").at("system_contributions");
+    systems.erase(
+        std::remove_if(systems.begin(), systems.end(),
+                       [&](const Json &row) { return row.at("contribution_id") == removed_id; }),
+        systems.end());
+    auto &order = document.at("system_registration_order");
+    order.erase(std::remove(order.begin(), order.end(), removed_id), order.end());
+    document.at("requested_manifest_sha256") = mutated.requested_manifest_sha256;
+    document.at("resolved_manifest_sha256") = mutated.resolved_manifest_sha256;
+    const auto json = document.dump();
+    const auto reparsed = runtime::composition::parse_resolved_composition_json(json);
+    if (!reparsed) {
+        throw std::runtime_error("rehashed mutated composition cannot be parsed");
     }
-    for (const auto &row : resolved.manifest.component_contributions) {
-        const auto it =
-            std::find_if(components.begin(), components.end(), [&](const auto &candidate) {
-                return candidate.component_id == row.component_id &&
-                       candidate.registration_id == row.registration_id;
-            });
-        if (it == components.end()) {
-            if (error != nullptr) *error = "component registry/resolved identity mismatch";
-            return false;
-        }
+    const auto reparsed_identity =
+        runtime::composition::compute_composition_identity(reparsed.value());
+    if (!reparsed_identity ||
+        reparsed_identity.value().requested_manifest_sha256 !=
+            reparsed.value().requested_manifest_sha256 ||
+        reparsed_identity.value().resolved_manifest_sha256 !=
+            reparsed.value().resolved_manifest_sha256) {
+        throw std::runtime_error("mutated composition identity was not correctly rehashed");
     }
-    const auto systems = runtime::systems::default_system_contributions();
-    if (systems.size() != resolved.system_registration_order.size()) {
-        if (error != nullptr) *error = "system registry/resolved count mismatch";
-        return false;
-    }
-    for (std::size_t index = 0; index < systems.size(); ++index) {
-        if (systems[index].contribution_id != resolved.system_registration_order[index]) {
-            if (error != nullptr) *error = "system registry/resolved order mismatch";
-            return false;
-        }
-        const auto it =
-            std::find_if(resolved.manifest.system_contributions.begin(),
-                         resolved.manifest.system_contributions.end(), [&](const auto &row) {
-                             return row.contribution_id == systems[index].contribution_id;
-                         });
-        if (it == resolved.manifest.system_contributions.end() ||
-            it->registration_factory_id != systems[index].registration_factory_id ||
-            it->domain != systems[index].domain ||
-            (!systems[index].after_contribution_id.empty() &&
-             (it->after.size() != 1 ||
-              it->after.front() != systems[index].after_contribution_id))) {
-            if (error != nullptr) *error = "system registry/resolved metadata mismatch";
-            return false;
-        }
-    }
-    return true;
+    return json;
 }
 
 bool profile_projection_matches_artifacts(const Json &projection, const Json &request,
@@ -334,6 +330,19 @@ int main(int argc, char **argv) {
             std::cerr << "native contribution registry does not match resolved artifact: "
                       << registry_error << '\n';
             return 1;
+        }
+        const auto mutated_graph =
+            mutated_resolved_graph_json(resolved.value(), Json::parse(resolved_manifest));
+        try {
+            SimulationKernel invalid_kernel(mutated_graph);
+            std::cerr << "production kernel admitted a resolved graph that omits a native system\n";
+            return 1;
+        } catch (const std::runtime_error &error) {
+            if (std::string(error.what())
+                    .find(std::string(runtime::composition::kErrorExecutableGraphMismatch)) ==
+                std::string::npos) {
+                throw;
+            }
         }
         if (argc == 7 &&
             !profile_projection_matches_artifacts(profile_projection, request_doc, lock_doc,

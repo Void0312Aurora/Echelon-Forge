@@ -38,6 +38,8 @@ inline constexpr std::string_view kErrorFactoryMetadataMismatch =
     "runtime.composition.factory_metadata_mismatch";
 inline constexpr std::string_view kErrorManifestHashMismatch =
     "runtime.composition.manifest_hash_mismatch";
+inline constexpr std::string_view kErrorExecutableGraphMismatch =
+    "runtime.composition.executable_graph_mismatch";
 
 struct CompositionRuntimeError {
     std::string code;

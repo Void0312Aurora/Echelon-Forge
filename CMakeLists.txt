@@ -224,6 +224,7 @@ set(EF_CORE_ENGINE_SOURCES
     src/core/engine/simulation_kernel_damage_debug_api.cpp
     src/core/engine/exact_stage_inventory.cpp
     src/core/engine/world_batch_runtime.cpp
+    src/core/engine/default_executable_composition_graph.cpp
     src/core/engine/system_contribution_registry.cpp
     src/runtime/providers/default_simulation_provider_catalog.cpp
 )

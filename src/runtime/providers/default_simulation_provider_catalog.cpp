@@ -1,4 +1,6 @@
 #include "runtime/providers/default_simulation_provider_catalog.h"
+
+#include "core/engine/default_executable_composition_graph.h"
 #if defined(EF_RUNTIME_COMPOSITION_TESTING)
 #include "runtime/providers/internal/default_simulation_provider_catalog_test_access.h"
 #endif
@@ -481,6 +483,42 @@ register_default_factories(composition::ProviderCatalog &catalog, SimulationKern
     return catalog.freeze();
 }
 
+composition::CompositionStatus
+admit_default_executable_graph(const contracts::ResolvedSimulationComposition &resolved) {
+    std::string admitted_json;
+    for (const auto chunk : contracts::generated::kDefaultCompatibilityResolvedJsonChunks) {
+        admitted_json.append(chunk);
+    }
+    auto admitted = composition::parse_resolved_composition_json(admitted_json);
+    if (!admitted) {
+        return composition::CompositionStatus::failure({
+            std::string(composition::kErrorExecutableGraphMismatch),
+            "builtin.default_compatibility",
+            "generated default compatibility graph cannot be parsed",
+        });
+    }
+    const auto &expected = admitted.value();
+    if (resolved.manifest.component_contributions != expected.manifest.component_contributions ||
+        resolved.manifest.system_contributions != expected.manifest.system_contributions ||
+        resolved.system_registration_order != expected.system_registration_order) {
+        return composition::CompositionStatus::failure({
+            std::string(composition::kErrorExecutableGraphMismatch),
+            "builtin.default_compatibility",
+            "resolved contribution graph is not the complete admitted default graph",
+        });
+    }
+
+    std::string graph_error;
+    if (!runtime::engine::validate_default_executable_composition_graph(resolved, &graph_error)) {
+        return composition::CompositionStatus::failure({
+            std::string(composition::kErrorExecutableGraphMismatch),
+            "builtin.default_compatibility",
+            std::move(graph_error),
+        });
+    }
+    return composition::CompositionStatus::success();
+}
+
 } // namespace
 
 struct DefaultSimulationComposition::Impl {
@@ -663,6 +701,10 @@ DefaultSimulationCompositionResult build_default_simulation_composition_impl(
     if (!parsed) {
         return DefaultSimulationCompositionResult::failure(parsed.error());
     }
+    const auto graph_admission = admit_default_executable_graph(parsed.value());
+    if (!graph_admission) {
+        return DefaultSimulationCompositionResult::failure(graph_admission.error());
+    }
     auto realized = composition::CompositionKernel::realize(std::move(parsed).value(), catalog);
     if (!realized) {
         return DefaultSimulationCompositionResult::failure(realized.error());
@@ -696,6 +738,15 @@ std::string default_compatibility_resolved_manifest_json() {
         resolved_json.append(chunk);
     }
     return resolved_json;
+}
+
+composition::CompositionStatus
+validate_default_simulation_composition_manifest(std::string_view resolved_manifest_json) {
+    auto parsed = composition::parse_resolved_composition_json(resolved_manifest_json);
+    if (!parsed) {
+        return composition::CompositionStatus::failure(parsed.error());
+    }
+    return admit_default_executable_graph(parsed.value());
 }
 
 #if defined(EF_RUNTIME_COMPOSITION_TESTING)

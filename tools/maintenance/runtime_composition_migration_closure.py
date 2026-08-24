@@ -892,9 +892,9 @@ def verify_source_truth() -> None:
         raise ClosureError(
             "production composition builder still treats empty input as fallback authority"
         )
-    if len(re.findall(r"\bresolved_manifest_json\b", provider_code)) != 4:
+    if len(re.findall(r"\bresolved_manifest_json\b", provider_code)) != 6:
         raise ClosureError(
-            "shared native realizer must receive and consume explicit manifest bytes once"
+            "preflight and shared native realizer must each receive explicit manifest bytes"
         )
     if not re.search(
         r"\bconst\s+std::string\s+resolved_json\s*\(\s*resolved_manifest_json\s*\)\s*;",
@@ -930,10 +930,13 @@ def verify_source_truth() -> None:
     ):
         raise ClosureError("shared native composition realizer count is not exactly one")
     if (
-        len(re.findall(r"\bparse_resolved_composition_json\s*\(", provider_code)) != 1
+        len(re.findall(r"\bparse_resolved_composition_json\s*\(", provider_code)) != 3
         or len(re.findall(r"\bCompositionKernel\s*::\s*realize\s*\(", provider_code)) != 1
     ):
-        raise ClosureError("native production and test-only builders no longer share one realizer")
+        raise ClosureError(
+            "native admission must parse the candidate before registration, compare the generated "
+            "default graph, and retain one shared realizer"
+        )
     if not re.search(
         r"\bbuild_default_simulation_composition_impl\s*\(\s*kernel\s*,\s*world\s*,\s*"
         r"missile_tuning\s*,\s*rng\s*,\s*resolved_manifest_json\s*,\s*\{\s*\}\s*\)",

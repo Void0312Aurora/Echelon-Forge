@@ -21,6 +21,13 @@ SimulationKernel::SimulationKernel()
     : SimulationKernel(runtime::providers::default_compatibility_resolved_manifest_json()) {}
 
 SimulationKernel::SimulationKernel(std::string resolved_manifest_json) {
+    const auto admission = runtime::providers::validate_default_simulation_composition_manifest(
+        resolved_manifest_json);
+    if (!admission) {
+        const auto &error = admission.error();
+        throw std::runtime_error("default simulation composition failed: " + error.code + ":" +
+                                 error.subject + ":" + error.detail);
+    }
     register_components_and_systems();
     auto composition = runtime::providers::build_default_simulation_composition(
         *this, ecs, missile_tuning_, rng, resolved_manifest_json);
