@@ -1,0 +1,27 @@
+{
+  "profile_id": "builtin.default_compatibility",
+  "profile_version": "1.0.0",
+  "artifact_source": "repository_fixture_bundle",
+  "artifacts": {
+    "catalog_lock": {
+      "path": "tests/architecture/composition/fixtures/default_admitted_catalog_lock.v1.json",
+      "sha256": "ebfc82f5ddfdb1dda4fb5ce84095e9a4efd80cc97461e31d5a77e448222531fd"
+    },
+    "authority_registry": {
+      "path": "tests/architecture/composition/fixtures/owner_authority_registry.v1.json",
+      "sha256": "64946343104d4421fb318488e0bd550b696e5fb7b365f3884a626def57efc156"
+    },
+    "profile_projection": {
+      "path": "tests/architecture/composition/fixtures/default_runtime_profile_projection.v1.json",
+      "sha256": "e1ee115ab2261682fc8cb6c63dcfe39e23ca95472ac90fcd6c148f0f5e49227d"
+    },
+    "requested_manifest": {
+      "path": "tests/architecture/composition/fixtures/default_compatibility_manifest.requested.json",
+      "sha256": "9278023e22940f5a54357acf8bc60876aa7d9a3bf3f2b9f4c79921a2e6b9a991"
+    },
+    "resolved_manifest": {
+      "path": "tests/architecture/composition/fixtures/default_compatibility_manifest.resolved.json",
+      "sha256": "288363e10b74fcdb166b11f2adb4098c20efdc3f6f5ddc2c377f4ca62d4323b1"
+    }
+  }
+}

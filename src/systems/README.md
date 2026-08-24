@@ -2,6 +2,11 @@
 
 `systems/` contains ECS system registration and per-tick mutation logic. Code here consumes `components/` and `models/`, and is registered and scheduled by `core/engine`.
 
+The owner-admission declaration for the built-in component/system graph is
+`system_contribution_registry.h`; its implementation and native kernel entry
+point live under `core/engine`. Package or discovery order must not become
+Flecs execution order.
+
 This layer is multi-domain aware but not uniformly mature: air execution now has
 an explicit owner under `domains/air`, physics keeps shared primitives, naval
 has ship/submarine and embarked-air token systems under `domains/naval`, and

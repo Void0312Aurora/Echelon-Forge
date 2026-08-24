@@ -21,7 +21,11 @@
 The `SimulationKernel` public API stays in `simulation_kernel.h`. The implementation is split by responsibility:
 
 - `simulation_kernel_systems.cpp`
-  ECS component registration and system registration order.
+  Kernel entry point that delegates ECS component/system installation to the
+  owner-derived contribution registry.
+- `system_contribution_registry.cpp` and `../../systems/system_contribution_registry.h`
+  Admitted component/system descriptors, kernel-owned pre-update entries, and
+  the default stage-order registration seam.
 - `simulation_kernel_command_api.cpp`
   Legacy movement/action commands, command links, digital pilot/tasking setters/getters, and message commands.
 - `simulation_kernel_command_surface.*`

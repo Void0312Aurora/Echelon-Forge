@@ -1,0 +1,798 @@
+{
+  "$defs": {
+    "canonical_value": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "maximum": 9223372036854775807,
+          "minimum": -9223372036854775808,
+          "type": "integer"
+        },
+        {
+          "pattern": "^[\\u0000-\\u007F]*$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/canonical_value"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/canonical_value"
+          },
+          "propertyNames": {
+            "pattern": "^[\\u0000-\\u007F]*$"
+          },
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$id": "https://echelon-forge.local/contracts/resolved_simulation_composition.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "manifest": {
+      "additionalProperties": false,
+      "properties": {
+        "backend_request": {
+          "additionalProperties": false,
+          "properties": {
+            "backend_profile_id": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+              "type": "string"
+            },
+            "provider_id": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+              "type": "string"
+            },
+            "required_capabilities": {
+              "items": {
+                "minLength": 1,
+                "pattern": "^[\\u0000-\\u007F]*$",
+                "type": "string"
+              },
+              "minItems": 0,
+              "type": "array",
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "backend_profile_id",
+            "provider_id",
+            "required_capabilities"
+          ],
+          "type": "object"
+        },
+        "compatibility_claims": {
+          "items": {
+            "minLength": 1,
+            "pattern": "^[\\u0000-\\u007F]*$",
+            "type": "string"
+          },
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "component_contributions": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "component_id": {
+                "minLength": 1,
+                "pattern": "^[\\u0000-\\u007F]*$",
+                "type": "string"
+              },
+              "plugin_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+                "type": "string"
+              },
+              "registration_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "component_id",
+              "plugin_id",
+              "registration_id"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "composition_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+          "type": "string"
+        },
+        "contract_versions": {
+          "additionalProperties": false,
+          "properties": {
+            "composition": {
+              "const": "1.0.0"
+            },
+            "content": {
+              "minLength": 1,
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+              "type": "string"
+            },
+            "runtime": {
+              "minLength": 1,
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+              "type": "string"
+            },
+            "stage": {
+              "minLength": 1,
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "composition",
+            "runtime",
+            "content",
+            "stage"
+          ],
+          "type": "object"
+        },
+        "evidence_policy": {
+          "additionalProperties": false,
+          "properties": {
+            "canonicalization": {
+              "const": "echelon_forge.sorted_utf8_json.v1"
+            },
+            "hash_algorithm": {
+              "const": "sha256"
+            },
+            "include_graph_hash": {
+              "const": true
+            },
+            "include_provider_versions": {
+              "const": true
+            },
+            "include_scope_generations": {
+              "const": true
+            }
+          },
+          "required": [
+            "canonicalization",
+            "hash_algorithm",
+            "include_provider_versions",
+            "include_graph_hash",
+            "include_scope_generations"
+          ],
+          "type": "object"
+        },
+        "plugins": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "artifact": {
+                "additionalProperties": false,
+                "properties": {
+                  "identity": {
+                    "minLength": 1,
+                    "pattern": "^[\\u0000-\\u007F]*$",
+                    "type": "string"
+                  },
+                  "kind": {
+                    "enum": [
+                      "repository_builtin",
+                      "native_package",
+                      "cordis_package"
+                    ]
+                  },
+                  "sha256": {
+                    "pattern": "^[0-9a-f]{64}$",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "identity",
+                  "sha256"
+                ],
+                "type": "object"
+              },
+              "composition_contract_range": {
+                "minLength": 1,
+                "pattern": "^[\\u0000-\\u007F]*$",
+                "type": "string"
+              },
+              "configuration": {
+                "$ref": "#/$defs/canonical_value"
+              },
+              "conflicts": {
+                "items": {
+                  "minLength": 1,
+                  "pattern": "^[\\u0000-\\u007F]*$",
+                  "type": "string"
+                },
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "determinism_class": {
+                "enum": [
+                  "truth_affecting_deterministic",
+                  "diagnostics_only"
+                ]
+              },
+              "host_support": {
+                "items": {
+                  "enum": [
+                    "native",
+                    "cordis"
+                  ]
+                },
+                "minItems": 1,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "implementation_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+                "type": "string"
+              },
+              "plugin_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+                "type": "string"
+              },
+              "plugin_version": {
+                "minLength": 1,
+                "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+                "type": "string"
+              },
+              "required_capabilities": {
+                "items": {
+                  "minLength": 1,
+                  "pattern": "^[\\u0000-\\u007F]*$",
+                  "type": "string"
+                },
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "plugin_id",
+              "implementation_id",
+              "plugin_version",
+              "composition_contract_range",
+              "host_support",
+              "determinism_class",
+              "artifact",
+              "required_capabilities",
+              "conflicts",
+              "configuration"
+            ],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "providers": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "after_provider_ids": {
+                "items": {
+                  "minLength": 1,
+                  "pattern": "^[\\u0000-\\u007F]*$",
+                  "type": "string"
+                },
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "cardinality": {
+                "enum": [
+                  "one_per_scope"
+                ]
+              },
+              "configuration": {
+                "$ref": "#/$defs/canonical_value"
+              },
+              "conflicts": {
+                "items": {
+                  "minLength": 1,
+                  "pattern": "^[\\u0000-\\u007F]*$",
+                  "type": "string"
+                },
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "implementation_version": {
+                "minLength": 1,
+                "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+                "type": "string"
+              },
+              "offered_services": {
+                "items": {
+                  "minLength": 1,
+                  "pattern": "^[\\u0000-\\u007F]*$",
+                  "type": "string"
+                },
+                "minItems": 1,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "plugin_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+                "type": "string"
+              },
+              "provider_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+                "type": "string"
+              },
+              "required_capabilities": {
+                "items": {
+                  "minLength": 1,
+                  "pattern": "^[\\u0000-\\u007F]*$",
+                  "type": "string"
+                },
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "required_services": {
+                "items": {
+                  "minLength": 1,
+                  "pattern": "^[\\u0000-\\u007F]*$",
+                  "type": "string"
+                },
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "restart_policy": {
+                "enum": [
+                  "rebuild_scope_generation",
+                  "process_restart",
+                  "diagnostics_restart"
+                ]
+              },
+              "scope": {
+                "enum": [
+                  "application",
+                  "backend",
+                  "batch",
+                  "world",
+                  "episode"
+                ]
+              },
+              "teardown_policy": {
+                "enum": [
+                  "reverse_dependency_order"
+                ]
+              }
+            },
+            "required": [
+              "provider_id",
+              "plugin_id",
+              "implementation_version",
+              "scope",
+              "cardinality",
+              "offered_services",
+              "required_services",
+              "required_capabilities",
+              "conflicts",
+              "after_provider_ids",
+              "restart_policy",
+              "teardown_policy",
+              "configuration"
+            ],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "reconfiguration_policy": {
+          "additionalProperties": false,
+          "properties": {
+            "active_episode_change": {
+              "const": "forbidden"
+            },
+            "allowed_barriers": {
+              "items": {
+                "minLength": 1,
+                "pattern": "^[\\u0000-\\u007F]*$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array",
+              "uniqueItems": true
+            },
+            "truth_affecting_change": {
+              "const": "rebuild_scope_generation"
+            }
+          },
+          "required": [
+            "truth_affecting_change",
+            "active_episode_change",
+            "allowed_barriers"
+          ],
+          "type": "object"
+        },
+        "requested_profile": {
+          "additionalProperties": false,
+          "properties": {
+            "profile_id": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+              "type": "string"
+            },
+            "profile_version": {
+              "minLength": 1,
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "profile_id",
+            "profile_version"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": "echelon_forge.simulation_composition_manifest.v1"
+        },
+        "scope_policies": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "cardinality": {
+                "enum": [
+                  "singleton",
+                  "one_per_parent"
+                ]
+              },
+              "parent_scope": {
+                "enum": [
+                  "application",
+                  "backend",
+                  "batch",
+                  "world",
+                  "episode",
+                  null
+                ],
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "rebuild_trigger": {
+                "minLength": 1,
+                "pattern": "^[\\u0000-\\u007F]*$",
+                "type": "string"
+              },
+              "scope": {
+                "enum": [
+                  "application",
+                  "backend",
+                  "batch",
+                  "world",
+                  "episode"
+                ]
+              }
+            },
+            "required": [
+              "scope",
+              "parent_scope",
+              "cardinality",
+              "rebuild_trigger"
+            ],
+            "type": "object"
+          },
+          "maxItems": 5,
+          "minItems": 5,
+          "type": "array"
+        },
+        "service_bindings": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "consumer_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+                "type": "string"
+              },
+              "consumer_kind": {
+                "enum": [
+                  "provider",
+                  "system"
+                ]
+              },
+              "provider_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+                "type": "string"
+              },
+              "service_key": {
+                "minLength": 1,
+                "pattern": "^[\\u0000-\\u007F]*$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "consumer_kind",
+              "consumer_id",
+              "service_key",
+              "provider_id"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "system_contributions": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "after": {
+                "items": {
+                  "minLength": 1,
+                  "pattern": "^[\\u0000-\\u007F]*$",
+                  "type": "string"
+                },
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "before": {
+                "items": {
+                  "minLength": 1,
+                  "pattern": "^[\\u0000-\\u007F]*$",
+                  "type": "string"
+                },
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "conflicts": {
+                "items": {
+                  "minLength": 1,
+                  "pattern": "^[\\u0000-\\u007F]*$",
+                  "type": "string"
+                },
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "contribution_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+                "type": "string"
+              },
+              "domain": {
+                "enum": [
+                  "common",
+                  "air",
+                  "naval",
+                  "ground",
+                  "cross_domain",
+                  "diagnostics"
+                ]
+              },
+              "executable_node_ids": {
+                "items": {
+                  "minLength": 1,
+                  "pattern": "^[\\u0000-\\u007F]*$",
+                  "type": "string"
+                },
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "plugin_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+                "type": "string"
+              },
+              "provided_components": {
+                "items": {
+                  "minLength": 1,
+                  "pattern": "^[\\u0000-\\u007F]*$",
+                  "type": "string"
+                },
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "read_state_shards": {
+                "items": {
+                  "minLength": 1,
+                  "pattern": "^[\\u0000-\\u007F]*$",
+                  "type": "string"
+                },
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "registration_factory_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+                "type": "string"
+              },
+              "required_barriers": {
+                "items": {
+                  "minLength": 1,
+                  "pattern": "^[\\u0000-\\u007F]*$",
+                  "type": "string"
+                },
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "required_capabilities": {
+                "items": {
+                  "minLength": 1,
+                  "pattern": "^[\\u0000-\\u007F]*$",
+                  "type": "string"
+                },
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "required_components": {
+                "items": {
+                  "minLength": 1,
+                  "pattern": "^[\\u0000-\\u007F]*$",
+                  "type": "string"
+                },
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "required_services": {
+                "items": {
+                  "minLength": 1,
+                  "pattern": "^[\\u0000-\\u007F]*$",
+                  "type": "string"
+                },
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "semantic_stage_ids": {
+                "items": {
+                  "minLength": 1,
+                  "pattern": "^[\\u0000-\\u007F]*$",
+                  "type": "string"
+                },
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "write_state_shards": {
+                "items": {
+                  "minLength": 1,
+                  "pattern": "^[\\u0000-\\u007F]*$",
+                  "type": "string"
+                },
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "contribution_id",
+              "plugin_id",
+              "registration_factory_id",
+              "domain",
+              "required_services",
+              "required_components",
+              "provided_components",
+              "semantic_stage_ids",
+              "executable_node_ids",
+              "read_state_shards",
+              "write_state_shards",
+              "required_barriers",
+              "required_capabilities",
+              "conflicts",
+              "after",
+              "before"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "composition_id",
+        "contract_versions",
+        "requested_profile",
+        "plugins",
+        "providers",
+        "service_bindings",
+        "component_contributions",
+        "system_contributions",
+        "backend_request",
+        "scope_policies",
+        "reconfiguration_policy",
+        "evidence_policy",
+        "compatibility_claims"
+      ],
+      "type": "object"
+    },
+    "provider_construction_order": {
+      "items": {
+        "minLength": 1,
+        "pattern": "^[\\u0000-\\u007F]*$",
+        "type": "string"
+      },
+      "minItems": 0,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "requested_manifest_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "resolved_manifest_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "resolver_contract_version": {
+      "const": "echelon_forge.simulation_composition_resolver.v1"
+    },
+    "schema_version": {
+      "const": "echelon_forge.resolved_simulation_composition.v1"
+    },
+    "system_registration_order": {
+      "items": {
+        "minLength": 1,
+        "pattern": "^[\\u0000-\\u007F]*$",
+        "type": "string"
+      },
+      "minItems": 0,
+      "type": "array",
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "schema_version",
+    "resolver_contract_version",
+    "requested_manifest_sha256",
+    "resolved_manifest_sha256",
+    "provider_construction_order",
+    "system_registration_order",
+    "manifest"
+  ],
+  "title": "Echelon Forge Resolved Simulation Composition v1",
+  "type": "object"
+}

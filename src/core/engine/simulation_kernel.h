@@ -1,11 +1,16 @@
 #pragma once
 
 #include <flecs.h>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <random>
+#include <stdexcept>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <map>
 #include <vector>
 #include "components/basic/common.h"
@@ -35,9 +40,13 @@ class ISensorModel;
 class IAcousticModel;
 class IControlModel;
 class IGuidanceModel;
-class IWeaponReleaseDamageBridge;
 struct UnitDefinition;
-class SimulationKernelEngagementEventStore;
+class IEngagementEventStore;
+class SimulationKernelCompositionTestAccess;
+
+namespace runtime::providers {
+class DefaultSimulationComposition;
+}
 
 struct ExactStepStageDescriptor {
     int order = 0;
@@ -66,7 +75,71 @@ struct ExactStepStageContractDescriptor {
 
 class SimulationKernel {
   public:
+    class WorldLease {
+      public:
+        WorldLease(WorldLease &&other) noexcept
+            : lock_(std::move(other.lock_)), world_(std::exchange(other.world_, nullptr)) {}
+        WorldLease &operator=(WorldLease &&other) noexcept {
+            if (this != &other) {
+                lock_ = std::move(other.lock_);
+                world_ = std::exchange(other.world_, nullptr);
+            }
+            return *this;
+        }
+        WorldLease(const WorldLease &) = delete;
+        WorldLease &operator=(const WorldLease &) = delete;
+
+        // The returned reference is valid only while this lease remains alive.
+        [[nodiscard]] flecs::world &world() const {
+            if (world_ == nullptr || !lock_.owns_lock()) {
+                throw std::logic_error("SimulationKernel WorldLease is not active");
+            }
+            return *world_;
+        }
+
+      private:
+        friend class SimulationKernel;
+        WorldLease(std::unique_lock<std::recursive_mutex> lock, flecs::world &world) noexcept
+            : lock_(std::move(lock)), world_(&world) {}
+
+        std::unique_lock<std::recursive_mutex> lock_;
+        flecs::world *world_ = nullptr;
+    };
+
+    class ConstWorldLease {
+      public:
+        ConstWorldLease(ConstWorldLease &&other) noexcept
+            : lock_(std::move(other.lock_)), world_(std::exchange(other.world_, nullptr)) {}
+        ConstWorldLease &operator=(ConstWorldLease &&other) noexcept {
+            if (this != &other) {
+                lock_ = std::move(other.lock_);
+                world_ = std::exchange(other.world_, nullptr);
+            }
+            return *this;
+        }
+        ConstWorldLease(const ConstWorldLease &) = delete;
+        ConstWorldLease &operator=(const ConstWorldLease &) = delete;
+
+        // Flecs const-world access is not mutation-proof; the reference must not escape this lease.
+        [[nodiscard]] const flecs::world &world() const {
+            if (world_ == nullptr || !lock_.owns_lock()) {
+                throw std::logic_error("SimulationKernel ConstWorldLease is not active");
+            }
+            return *world_;
+        }
+
+      private:
+        friend class SimulationKernel;
+        ConstWorldLease(std::unique_lock<std::recursive_mutex> lock,
+                        const flecs::world &world) noexcept
+            : lock_(std::move(lock)), world_(&world) {}
+
+        std::unique_lock<std::recursive_mutex> lock_;
+        const flecs::world *world_ = nullptr;
+    };
+
     SimulationKernel();
+    explicit SimulationKernel(std::string resolved_manifest_json);
     ~SimulationKernel();
     SimulationKernel(const SimulationKernel &) = delete;
     SimulationKernel &operator=(const SimulationKernel &) = delete;
@@ -93,13 +166,21 @@ class SimulationKernel {
                              double heading, double pitch, double roll, double vx, double vy,
                              double vz);
 
-    // Get the Flecs world (for systems/bindings)
-    flecs::world &get_world() { return ecs; }
-    const flecs::world &get_world() const { return ecs; }
+    // Compatibility/quarantine access for systems and bindings that still require raw Flecs.
+    // Rebuild and shutdown are serialized for the lease lifetime, and acquiring any raw-world
+    // lease closes the fail-closed world-provider rebuild barrier for this kernel instance.
+    [[nodiscard]] WorldLease acquire_world_lease();
+    [[nodiscard]] ConstWorldLease acquire_world_lease() const;
 
-    double get_time_step() const { return time_step; }
+    double get_time_step() const;
     void set_time_step(double dt);
-
+    [[nodiscard]] std::string requested_composition_sha256() const;
+    [[nodiscard]] std::string resolved_composition_sha256() const;
+    [[nodiscard]] std::uint64_t world_composition_generation() const noexcept;
+    [[nodiscard]] std::array<std::uint64_t, 5> composition_scope_generations() const noexcept;
+    [[nodiscard]] std::string executable_composition_graph_sha256() const;
+    [[nodiscard]] bool rebuild_world_composition(std::string_view barrier,
+                                                 std::string *error = nullptr);
     // Configuration
     bool load_database(const std::string &path);
     void clear_zones();
@@ -230,22 +311,28 @@ class SimulationKernel {
         double detonation_pitch_deg, double detonation_roll_deg);
     RecentEngagementEvents export_recent_engagement_events() const;
 
-    // Unit factory override (for modular swaps)
-    void set_unit_factory(std::unique_ptr<IUnitFactory> factory);
-    void set_effects_model(std::unique_ptr<IEffectsModel> model);
-    void set_sensor_model(std::unique_ptr<ISensorModel> model);
-    void set_acoustic_model(std::unique_ptr<IAcousticModel> model);
-    void set_control_model(std::unique_ptr<IControlModel> model);
-    void set_guidance_model(std::unique_ptr<IGuidanceModel> model);
-    void set_environment_model(std::unique_ptr<IEnvironmentModel> model);
     bool load_unit_definitions(const std::string &path, std::string *error = nullptr);
     void set_missile_tuning(const MissileTuning &tuning);
-    const MissileTuning &get_missile_tuning() const { return missile_tuning_; }
+    MissileTuning get_missile_tuning() const;
     void shutdown();
 
   private:
+    friend class SimulationKernelCompositionTestAccess;
     void ensure_active(const char *operation) const;
+    using CompositionOperationLock = std::unique_lock<std::recursive_mutex>;
+    [[nodiscard]] CompositionOperationLock acquire_composition_operation() const {
+        return CompositionOperationLock(composition_lifecycle_mutex_);
+    }
     void register_components_and_systems();
+    [[nodiscard]] IEnvironmentModel *environment_model() const noexcept;
+    [[nodiscard]] IUnitFactory *unit_factory() const noexcept;
+    [[nodiscard]] IEffectsModel *effects_model() const noexcept;
+    [[nodiscard]] ISensorModel *sensor_model() const noexcept;
+    [[nodiscard]] IAcousticModel *acoustic_model() const noexcept;
+    [[nodiscard]] IControlModel *control_model() const noexcept;
+    [[nodiscard]] IGuidanceModel *guidance_model() const noexcept;
+    [[nodiscard]] IEngagementEventStore *engagement_event_store() const noexcept;
+    [[nodiscard]] IWeaponReleaseService *weapon_release_service() const noexcept;
 
     flecs::world ecs;
     double time_step = 1.0 / 60.0; // 60 Hz by default
@@ -254,17 +341,11 @@ class SimulationKernel {
     // In production we might use Xoshiro/PCG
     std::mt19937 rng;
 
-    std::unique_ptr<IEnvironmentModel> environment_model_;
-    std::unique_ptr<IUnitFactory> unit_factory_;
-    std::unique_ptr<IEffectsModel> effects_model_;
-    std::unique_ptr<ISensorModel> sensor_model_;
-    std::unique_ptr<IAcousticModel> acoustic_model_;
-    std::unique_ptr<IControlModel> control_model_;
-    std::unique_ptr<IGuidanceModel> guidance_model_;
     MissileTuning missile_tuning_;
-    std::unique_ptr<SimulationKernelEngagementEventStore> engagement_event_store_;
-    std::unique_ptr<IWeaponReleaseDamageBridge> weapon_release_damage_bridge_;
-    std::unique_ptr<IWeaponReleaseService> weapon_release_service_;
+    std::unique_ptr<runtime::providers::DefaultSimulationComposition> composition_;
+    mutable std::recursive_mutex composition_lifecycle_mutex_;
+    mutable bool raw_world_access_exposed_ = false;
+    bool world_state_mutated_ = false;
     bool exact_stage_trace_frame_active_ = false;
     bool shutdown_complete_ = false;
 };

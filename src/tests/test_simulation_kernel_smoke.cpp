@@ -7,6 +7,9 @@
 
 #include "core/engine/simulation_kernel.h"
 #include "core/engine/simulation_kernel_command_surface.h"
+#include "core/engine/testing/simulation_kernel_composition_test_access.h"
+#include "runtime/composition/composition_error.h"
+#include "runtime/contracts/composition/default_compatibility_manifest.v1.generated.h"
 #include "components/command/command_link.h"
 #include "components/command/command_link_qos.h"
 #include "components/domains/naval/combat/weapon_naval.h"
@@ -18,10 +21,15 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
+#include <atomic>
+#include <chrono>
 #include <cmath>
+#include <future>
 #include <limits>
-#include <vector>
 #include <string>
+#include <stdexcept>
+#include <vector>
+#include <thread>
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -45,15 +53,203 @@ bool all_finite(const std::vector<double> &v) {
 
 TEST_SUITE("simulation_kernel_smoke") {
 
-    TEST_CASE("construct_and_destroy") {
-        // Verify the kernel can be constructed and destroyed without crashing.
-        // The constructor already calls reset(42) and registers all systems.
-        {
+    TEST_CASE("repeated_construct_and_destroy") {
+        // P2-B evidence: the production composition root must be reusable,
+        // not merely valid for one process-lifetime construction.
+        for (int iteration = 0; iteration < 8; ++iteration) {
             SimulationKernel kernel;
-            // Default shutdown happens in the destructor — we also call it
-            // explicitly to verify it is idempotent.
+            CHECK(kernel.world_composition_generation() == 1);
+            // Default shutdown happens in the destructor — explicitly call it
+            // as well to retain the idempotence check in every iteration.
             kernel.shutdown();
         }
+    }
+
+    TEST_CASE("default_composition_exposes_identity_and_world_rebuild") {
+        SimulationKernel kernel;
+        CHECK(kernel.requested_composition_sha256() ==
+              runtime::composition_contracts::generated::kDefaultCompatibilityRequestedSha256);
+        CHECK(kernel.resolved_composition_sha256() ==
+              runtime::composition_contracts::generated::kDefaultCompatibilityResolvedSha256);
+        CHECK(kernel.world_composition_generation() == 1);
+
+        const auto requested_before = kernel.requested_composition_sha256();
+        const auto resolved_before = kernel.resolved_composition_sha256();
+        std::string error;
+        CHECK(kernel.rebuild_world_composition("mid_step", &error) == false);
+        CHECK(error.find("runtime.composition.rebuild_barrier_rejected") != std::string::npos);
+        CHECK(kernel.world_composition_generation() == 1);
+        CHECK(kernel.requested_composition_sha256() == requested_before);
+        CHECK(kernel.resolved_composition_sha256() == resolved_before);
+
+        error.clear();
+        CHECK(kernel.rebuild_world_composition("world_rebuild", &error));
+        CHECK(error.empty());
+        CHECK(kernel.requested_composition_sha256() == requested_before);
+        CHECK(kernel.resolved_composition_sha256() == resolved_before);
+        CHECK(kernel.world_composition_generation() == 2);
+
+        auto entity = kernel.spawn_unit(Side::Blue, "Aircraft", 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0,
+                                        100.0, 0.0, 0.0);
+        CHECK(entity.is_valid());
+
+        error.clear();
+        CHECK_FALSE(kernel.rebuild_world_composition("world_rebuild", &error));
+        CHECK(error.find("non-quiescent world contains SimObject entities") != std::string::npos);
+        CHECK(kernel.world_composition_generation() == 2);
+
+        kernel.reset(42);
+        error.clear();
+        CHECK_FALSE(kernel.rebuild_world_composition("world_rebuild", &error));
+        CHECK(error.find("world state has been mutated") != std::string::npos);
+        CHECK(kernel.world_composition_generation() == 2);
+        CHECK(kernel.requested_composition_sha256() == requested_before);
+        CHECK(kernel.resolved_composition_sha256() == resolved_before);
+    }
+
+    TEST_CASE("default_provider_publication_failure_rolls_back_without_dangling_refs") {
+        SimulationKernel kernel;
+        const auto requested_before = kernel.requested_composition_sha256();
+        const auto resolved_before = kernel.resolved_composition_sha256();
+        const auto generation_before = kernel.world_composition_generation();
+
+        const auto probe = SimulationKernelCompositionTestAccess::
+            probe_default_provider_publication_failure_for_testing(kernel);
+
+        CHECK(probe.error_code == runtime::composition::kErrorLifecycleEffectCommitFailed);
+        CHECK(probe.singleton_references_restored);
+        CHECK(kernel.requested_composition_sha256() == requested_before);
+        CHECK(kernel.resolved_composition_sha256() == resolved_before);
+        CHECK(kernel.world_composition_generation() == generation_before);
+
+        // The pre-existing production composition remains usable after the
+        // failed staged composition has rolled back and torn down.
+        kernel.step();
+        CHECK(kernel.world_composition_generation() == generation_before);
+    }
+
+    TEST_CASE("raw_world_access_permanently_closes_the_rebuild_barrier") {
+        SimulationKernel kernel;
+        CHECK(kernel.world_composition_generation() == 1);
+        {
+            auto world_lease = kernel.acquire_world_lease();
+            (void)world_lease.world();
+        }
+
+        std::string error;
+        CHECK_FALSE(kernel.rebuild_world_composition("world_rebuild", &error));
+        CHECK(error.find("raw Flecs world access has been exposed") != std::string::npos);
+        CHECK(kernel.world_composition_generation() == 1);
+    }
+
+    TEST_CASE("moved_from_world_leases_fail_closed") {
+        SimulationKernel kernel;
+        {
+            auto lease = kernel.acquire_world_lease();
+            auto moved = std::move(lease);
+            CHECK_THROWS_AS(lease.world(), std::logic_error);
+            CHECK(moved.world().count<SimObject>() == 0);
+        }
+        {
+            const auto &const_kernel = kernel;
+            auto lease = const_kernel.acquire_world_lease();
+            auto moved = std::move(lease);
+            CHECK_THROWS_AS(lease.world(), std::logic_error);
+            CHECK(moved.world().count<SimObject>() == 0);
+        }
+    }
+
+    TEST_CASE("world_lease_serializes_kernel_shutdown") {
+        using namespace std::chrono_literals;
+
+        SimulationKernel kernel;
+        std::promise<void> shutdown_started;
+        auto shutdown_started_future = shutdown_started.get_future();
+        std::future<void> shutdown;
+
+        {
+            auto world_lease = kernel.acquire_world_lease();
+            shutdown = std::async(std::launch::async, [&] {
+                shutdown_started.set_value();
+                kernel.shutdown();
+            });
+            shutdown_started_future.wait();
+            CHECK(shutdown.wait_for(50ms) == std::future_status::timeout);
+            CHECK(world_lease.world().count<SimObject>() == 0);
+        }
+
+        CHECK(shutdown.wait_for(2s) == std::future_status::ready);
+        shutdown.get();
+        CHECK_THROWS_AS(kernel.get_time_step(), std::logic_error);
+    }
+
+    TEST_CASE("provider_state_mutation_closes_the_rebuild_barrier_without_entities") {
+        SimulationKernel kernel;
+        kernel.set_wind(12.0, 225.0, 0.5);
+
+        std::string error;
+        CHECK_FALSE(kernel.rebuild_world_composition("world_rebuild", &error));
+        CHECK(error.find("world state has been mutated") != std::string::npos);
+        CHECK(kernel.world_composition_generation() == 1);
+    }
+
+    TEST_CASE("truth_configuration_and_clock_mutations_close_the_rebuild_barrier") {
+        auto expect_rejected = [](auto mutate) {
+            SimulationKernel kernel;
+            mutate(kernel);
+            std::string error;
+            CHECK_FALSE(kernel.rebuild_world_composition("world_rebuild", &error));
+            CHECK(error.find("world state has been mutated") != std::string::npos);
+            CHECK(kernel.world_composition_generation() == 1);
+        };
+
+        SUBCASE("missile tuning") {
+            expect_rejected([](SimulationKernel &kernel) {
+                kernel.set_missile_tuning(kernel.get_missile_tuning());
+            });
+        }
+        SUBCASE("time step") {
+            expect_rejected([](SimulationKernel &kernel) {
+                kernel.set_time_step(kernel.get_time_step() * 2.0);
+            });
+        }
+        SUBCASE("explicit reset") {
+            expect_rejected([](SimulationKernel &kernel) { kernel.reset(7); });
+        }
+        SUBCASE("exact replay clock restore") {
+            expect_rejected(
+                [](SimulationKernel &kernel) { kernel.restore_exact_replay_world_time(0.0); });
+        }
+        SUBCASE("direct exact-stage execution") {
+            expect_rejected([](SimulationKernel &kernel) {
+                const auto inventory = kernel.exact_gpu_migration_stage_inventory();
+                REQUIRE_FALSE(inventory.empty());
+                REQUIRE(kernel.run_exact_stage_direct(inventory.front().name));
+            });
+        }
+    }
+
+    TEST_CASE("concurrent_world_rebuild_requests_are_serialized") {
+        SimulationKernel kernel;
+        constexpr int rebuild_count = 4;
+        std::vector<int> results(rebuild_count, 0);
+        std::vector<std::thread> workers;
+        workers.reserve(rebuild_count);
+
+        for (int index = 0; index < rebuild_count; ++index) {
+            workers.emplace_back([&kernel, &results, index] {
+                std::string error;
+                results[index] =
+                    kernel.rebuild_world_composition("world_rebuild", &error) && error.empty() ? 1
+                                                                                               : -1;
+            });
+        }
+        for (auto &worker : workers) {
+            worker.join();
+        }
+
+        CHECK(std::all_of(results.begin(), results.end(), [](int result) { return result == 1; }));
+        CHECK(kernel.world_composition_generation() == 1 + rebuild_count);
     }
 
     TEST_CASE("reset_is_deterministic") {
@@ -88,6 +284,29 @@ TEST_SUITE("simulation_kernel_smoke") {
         CHECK(pos_a[0] == doctest::Approx(pos_b[0]));
         CHECK(pos_a[1] == doctest::Approx(pos_b[1]));
         CHECK(pos_a[2] == doctest::Approx(pos_b[2]));
+    }
+
+    TEST_CASE("default_profile_matches_pre_p2b_short_trace_baseline") {
+        // Bounded P2-B behavior gate. The trace is intentionally small and
+        // fixed: reset(12345), spawn one Aircraft at the established smoke
+        // coordinates, advance ten default steps, and compare position. The
+        // expected values were captured from pre-migration commit a618b423
+        // with the same MSVC toolchain and are not a general replay framework.
+        SimulationKernel kernel;
+        kernel.reset(12345);
+        const auto entity = kernel.spawn_unit(Side::Blue, "Aircraft", 100.0, 200.0, 3000.0, 45.0,
+                                              0.0, 0.0, 150.0, 0.0, 0.0);
+        REQUIRE(entity.is_valid());
+
+        for (int i = 0; i < 10; ++i) {
+            kernel.step();
+        }
+
+        const auto position = kernel.get_unit_position(entity.id());
+        REQUIRE(position.size() == 3);
+        CHECK(position[0] == doctest::Approx(124.98344579568997).epsilon(1e-12));
+        CHECK(position[1] == doctest::Approx(200.00005491125401).epsilon(1e-12));
+        CHECK(position[2] == doctest::Approx(2999.861936582312).epsilon(1e-12));
     }
 
     TEST_CASE("reset_with_different_seeds_both_work") {
@@ -302,7 +521,8 @@ TEST_SUITE("simulation_kernel_smoke") {
         REQUIRE(attacker.is_valid());
         REQUIRE(target.is_valid());
 
-        auto attacker_entity = kernel.get_world().entity(attacker.id());
+        auto world_lease = kernel.acquire_world_lease();
+        auto attacker_entity = world_lease.world().entity(attacker.id());
         attacker_entity.remove<Ammo>();
         attacker_entity.remove<NavalWeaponSystem>();
         kernel.set_weapon_cooldown(attacker.id(), 0.0, -1.0);
@@ -398,7 +618,8 @@ TEST_SUITE("simulation_kernel_smoke") {
 
         kernel.set_command_link(e.id(), -5.0, 2.0);
 
-        auto entity = kernel.get_world().entity(e.id());
+        auto world_lease = kernel.acquire_world_lease();
+        auto entity = world_lease.world().entity(e.id());
         const CommandLink *link = entity.get<CommandLink>();
         REQUIRE(link != nullptr);
         CHECK(link->latency_s == doctest::Approx(0.0));
@@ -524,6 +745,45 @@ TEST_SUITE("simulation_kernel_smoke") {
         CHECK(kernel.get_time_step() == doctest::Approx(0.1));
         kernel.set_time_step(1.0 / 120.0);
         CHECK(kernel.get_time_step() == doctest::Approx(1.0 / 120.0));
+    }
+
+    TEST_CASE("configuration_getters_and_setters_share_the_operation_lock") {
+        SimulationKernel kernel;
+        MissileTuning first{};
+        first.max_speed = 900.0;
+        MissileTuning second{};
+        second.max_speed = 1200.0;
+
+        std::atomic<bool> start{false};
+        std::atomic<bool> observations_valid{true};
+        std::thread writer([&] {
+            while (!start.load(std::memory_order_acquire)) {
+                std::this_thread::yield();
+            }
+            for (int iteration = 0; iteration < 1000; ++iteration) {
+                kernel.set_time_step((iteration % 2) == 0 ? 0.01 : 0.02);
+                kernel.set_missile_tuning((iteration % 2) == 0 ? first : second);
+            }
+        });
+        std::thread reader([&] {
+            start.store(true, std::memory_order_release);
+            for (int iteration = 0; iteration < 1000; ++iteration) {
+                const double time_step = kernel.get_time_step();
+                if (time_step != 0.01 && time_step != 0.02 &&
+                    time_step != doctest::Approx(1.0 / 60.0)) {
+                    observations_valid.store(false, std::memory_order_relaxed);
+                }
+                const auto tuning = kernel.get_missile_tuning();
+                if (!std::isnan(tuning.max_speed) && tuning.max_speed != 900.0 &&
+                    tuning.max_speed != 1200.0) {
+                    observations_valid.store(false, std::memory_order_relaxed);
+                }
+            }
+        });
+
+        writer.join();
+        reader.join();
+        CHECK(observations_valid.load(std::memory_order_relaxed));
     }
 
     TEST_CASE("step_time_rejects_non_positive_and_non_finite_values") {

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-14",
+  "generated_at": "2026-08-24",
   "root": "docs",
   "pairs": [
     {
@@ -16,9 +16,9 @@
       "english": "docs/architecture/README.md",
       "chinese": "docs/architecture/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-12",
-      "english_hash": "26e1068e5d09685c6e63ec1ad571294174da55c6339a6153bb8ead4050b92ec3",
-      "chinese_hash": "434904f2c59f378761a06f546d3a8492418f5ea271cc0142b0d042bca5a2b7a1"
+      "last_verified": "2026-08-24",
+      "english_hash": "4e4e568953491b09dea67e56b4353f1cbb8abcc4e81ccdf953c9f21c3e377295",
+      "chinese_hash": "0b95294a8e8c4e57ff18182b5d033031d8a4f0d49dcc971b25037ee89348e750"
     },
     {
       "pair_id": "architecture/reference/t8_g4_truth_leak_inventory",
@@ -28,6 +28,15 @@
       "last_verified": "2026-08-13",
       "english_hash": "2d9e9f29075d62284b0f5a6abd46c24ebe69649ec643e99401d039b25a585287",
       "chinese_hash": "89cbb0594d5ad8dd339d4abcb7bfa554d289619ca4bc8fdd620180abc5b35a50"
+    },
+    {
+      "pair_id": "architecture/standards/runtime_composition_baseline",
+      "english": "docs/architecture/standards/runtime_composition_baseline.md",
+      "chinese": "docs/architecture/standards/runtime_composition_baseline.zh.md",
+      "source_of_truth": "english",
+      "last_verified": "2026-08-23",
+      "english_hash": "0060c63839bca65907aa7cd8bd92e2747f8eabc76202b5a96d971cd4cf8527ff",
+      "chinese_hash": "8372ea39528d2a8b9f5be8470ecc7792dddb0c4acfe19bdf69d7c1ac3792f3f3"
     },
     {
       "pair_id": "architecture/standards/runtime_workflow_and_contract_baseline",

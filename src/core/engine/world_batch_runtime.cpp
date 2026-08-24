@@ -254,6 +254,22 @@ const SimulationKernel &WorldBatchRuntime::world_raw_quarantine(size_t index) co
     return checked_world(index);
 }
 
+std::vector<WorldCompositionDiagnostics> WorldBatchRuntime::composition_diagnostics() const {
+    std::vector<WorldCompositionDiagnostics> diagnostics;
+    diagnostics.reserve(worlds_.size());
+    for (std::size_t index = 0; index < worlds_.size(); ++index) {
+        const SimulationKernel &world = checked_world(index);
+        diagnostics.push_back({
+            .world_index = index,
+            .requested_manifest_sha256 = world.requested_composition_sha256(),
+            .resolved_manifest_sha256 = world.resolved_composition_sha256(),
+            .executable_graph_sha256 = world.executable_composition_graph_sha256(),
+            .scope_generations = world.composition_scope_generations(),
+        });
+    }
+    return diagnostics;
+}
+
 size_t WorldBatchRuntime::resolve_worker_threads(size_t task_count) const noexcept {
     if (task_count == 0) {
         return 1;
@@ -291,7 +307,8 @@ bool WorldBatchRuntime::try_get_entity_kinematics(const WorldEntityRef &ref,
 
     const auto world_index = static_cast<size_t>(ref.world_index);
     const auto &world = checked_world(world_index);
-    const auto entity = world.get_world().entity(ref.entity_id);
+    auto world_lease = world.acquire_world_lease();
+    const auto entity = world_lease.world().entity(ref.entity_id);
     if (!entity.is_valid()) {
         return false;
     }
@@ -318,7 +335,8 @@ bool WorldBatchRuntime::try_set_entity_kinematics(const WorldEntityRef &ref,
                                                   const WorldEntityKinematics &state) {
     const auto world_index = static_cast<size_t>(ref.world_index);
     auto &world = checked_world(world_index);
-    const auto entity = world.get_world().entity(ref.entity_id);
+    auto world_lease = world.acquire_world_lease();
+    const auto entity = world_lease.world().entity(ref.entity_id);
     if (!entity.is_valid()) {
         return false;
     }
@@ -709,7 +727,8 @@ WorldBatchRuntime::get_agent_observations_batch(const std::vector<WorldEntityRef
 
 InstrumentState WorldBatchRuntime::safe_get_instrument_state(const SimulationKernel &world,
                                                              uint64_t entity_id) {
-    auto e = world.get_world().entity(entity_id);
+    auto world_lease = world.acquire_world_lease();
+    auto e = world_lease.world().entity(entity_id);
     if (e.is_valid()) {
         const InstrumentState *inst = e.get<InstrumentState>();
         if (inst != nullptr) {
@@ -830,7 +849,8 @@ WorldBatchRuntime::get_sensor_candidate_ids_batch(const std::vector<WorldEntityR
     std::size_t max_entities_per_world = 0;
     for (std::size_t world_index = 0; world_index < worlds_.size(); ++world_index) {
         const auto &world = checked_world(world_index);
-        auto query = world.get_world().query<const KeyEntity, const Transform>();
+        auto world_lease = world.acquire_world_lease();
+        auto query = world_lease.world().query<const KeyEntity, const Transform>();
         int local_index = 0;
         query.each([&](flecs::entity entity, const KeyEntity &key, const Transform &transform) {
             gpu::InteractionEntityPacked packed{};
@@ -850,7 +870,8 @@ WorldBatchRuntime::get_sensor_candidate_ids_batch(const std::vector<WorldEntityR
         gpu::InteractionQueryPacked query{};
         query.world_index = static_cast<int>(ref.world_index);
         const auto &world = checked_world(static_cast<size_t>(ref.world_index));
-        auto entity = world.get_world().entity(ref.entity_id);
+        auto world_lease = world.acquire_world_lease();
+        auto entity = world_lease.world().entity(ref.entity_id);
         if (entity.is_valid()) {
             if (const auto *transform = entity.get<Transform>()) {
                 query.x = transform->x;
@@ -888,7 +909,8 @@ WorldBatchRuntime::get_visual_candidate_ids_batch(const std::vector<WorldEntityR
     std::size_t max_entities_per_world = 0;
     for (std::size_t world_index = 0; world_index < worlds_.size(); ++world_index) {
         const auto &world = checked_world(world_index);
-        auto query = world.get_world().query<const KeyEntity, const Transform>();
+        auto world_lease = world.acquire_world_lease();
+        auto query = world_lease.world().query<const KeyEntity, const Transform>();
         int local_index = 0;
         query.each([&](flecs::entity entity, const KeyEntity &key, const Transform &transform) {
             gpu::InteractionEntityPacked packed{};
@@ -908,7 +930,8 @@ WorldBatchRuntime::get_visual_candidate_ids_batch(const std::vector<WorldEntityR
         gpu::InteractionQueryPacked query{};
         query.world_index = static_cast<int>(ref.world_index);
         const auto &world = checked_world(static_cast<size_t>(ref.world_index));
-        auto entity = world.get_world().entity(ref.entity_id);
+        auto world_lease = world.acquire_world_lease();
+        auto entity = world_lease.world().entity(ref.entity_id);
         if (entity.is_valid()) {
             if (const auto *transform = entity.get<Transform>()) {
                 query.x = transform->x;
@@ -943,7 +966,8 @@ WorldBatchRuntime::get_comm_candidate_ids_batch(const std::vector<WorldEntityRef
     std::size_t max_entities_per_world = 0;
     for (std::size_t world_index = 0; world_index < worlds_.size(); ++world_index) {
         const auto &world = checked_world(world_index);
-        auto query = world.get_world().query<const Transform, const DataLink>();
+        auto world_lease = world.acquire_world_lease();
+        auto query = world_lease.world().query<const Transform, const DataLink>();
         int local_index = 0;
         query.each([&](flecs::entity entity, const Transform &transform, const DataLink &link) {
             if (!link.active) {
@@ -967,7 +991,8 @@ WorldBatchRuntime::get_comm_candidate_ids_batch(const std::vector<WorldEntityRef
         gpu::InteractionQueryPacked query{};
         query.world_index = static_cast<int>(ref.world_index);
         const auto &world = checked_world(static_cast<size_t>(ref.world_index));
-        auto entity = world.get_world().entity(ref.entity_id);
+        auto world_lease = world.acquire_world_lease();
+        auto entity = world_lease.world().entity(ref.entity_id);
         if (entity.is_valid()) {
             if (const auto *transform = entity.get<Transform>()) {
                 query.x = transform->x;
@@ -986,7 +1011,9 @@ WorldBatchRuntime::get_comm_candidate_ids_batch(const std::vector<WorldEntityRef
         run_interaction_broadphase_candidate_ids(entities, queries, ids_by_world, config, use_gpu);
     for (std::size_t idx = 0; idx < refs.size(); ++idx) {
         const auto &world = checked_world(static_cast<size_t>(refs[idx].world_index));
-        const auto owner = world.get_world().entity(refs[idx].entity_id);
+        auto world_lease = world.acquire_world_lease();
+        const auto &flecs_world = world_lease.world();
+        const auto owner = flecs_world.entity(refs[idx].entity_id);
         const auto *owner_link = owner.is_valid() ? owner.get<DataLink>() : nullptr;
         const auto *owner_alliance = owner.is_valid() ? owner.get<Alliance>() : nullptr;
         auto &ids = out[idx];
@@ -996,7 +1023,7 @@ WorldBatchRuntime::get_comm_candidate_ids_batch(const std::vector<WorldEntityRef
                                      if (owner_link == nullptr || owner_alliance == nullptr) {
                                          return true;
                                      }
-                                     const auto candidate = world.get_world().entity(candidate_id);
+                                     const auto candidate = flecs_world.entity(candidate_id);
                                      const auto *candidate_link =
                                          candidate.is_valid() ? candidate.get<DataLink>() : nullptr;
                                      const auto *candidate_alliance =

@@ -3,6 +3,7 @@
 #include "interfaces/python/binding_utils.h"
 
 #include <cstdint>
+#include <utility>
 
 #include <flecs.h>
 
@@ -91,11 +92,18 @@ struct FlightDynamicsDebugView {
     double rudder_deflection = 0.0;
 };
 
-inline flecs::entity diagnostics_legacy_binding_entity_quarantine_lookup(SimulationKernel &self,
-                                                                         uint64_t entity_id) {
-    // Diagnostics quarantine: raw entity binding access must stay localized
-    // to diagnostics/legacy helpers instead of widening the maintained surface.
-    return self.get_world().entity(entity_id);
+struct DiagnosticsLegacyEntityLease {
+    SimulationKernel::WorldLease world_lease;
+    flecs::entity entity;
+};
+
+inline DiagnosticsLegacyEntityLease
+diagnostics_legacy_binding_entity_quarantine_lookup(SimulationKernel &self, uint64_t entity_id) {
+    // WP22-R3 quarantine marker: raw entity binding access must stay localized
+    // to diagnostics/legacy helpers while the lease keeps that access valid.
+    auto world_lease = self.acquire_world_lease();
+    auto entity = world_lease.world().entity(entity_id);
+    return {std::move(world_lease), entity};
 }
 
 inline void diagnostics_mark_read_only_snapshot(nb::dict &out, const char *diagnostics_surface_kind,

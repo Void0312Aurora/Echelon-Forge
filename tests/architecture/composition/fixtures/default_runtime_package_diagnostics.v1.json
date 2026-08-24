@@ -1,0 +1,44 @@
+{
+  "events": [
+    {
+      "code": "package.descriptor.validated",
+      "severity": "info",
+      "subject_id": "builtin.default_compatibility.package"
+    },
+    {
+      "code": "dependency.graph.resolved",
+      "severity": "info",
+      "subject_id": "d1c797c36c0167df8371e6847533802ac6731dd1ffad00921c1295c0ce2d1fba"
+    },
+    {
+      "code": "configuration.overlay.applied",
+      "severity": "info",
+      "subject_id": "builtin.default_compatibility.overlay.default"
+    },
+    {
+      "code": "runtime.request_lock.bound",
+      "severity": "info",
+      "subject_id": "ec36d4f134e003e852a87f0dc2edb8095bbd798855d88b099e0174d45efa7f94"
+    },
+    {
+      "code": "runtime.profile_projection.bound",
+      "severity": "info",
+      "subject_id": "a6983836e82df80805ac3f0f4f4a6975edccf3024d8ff231a67009a596a28c09"
+    },
+    {
+      "code": "package.provenance.sealed",
+      "severity": "info",
+      "subject_id": "25b305e4ab6f6e375cf1addb151c151648da7b014ae3d2c962694d09c2ff899a"
+    }
+  ],
+  "package_id": "builtin.default_compatibility.package",
+  "package_version": "1.0.0",
+  "schema_version": "echelon_forge.cordis_runtime_package_diagnostics.v1",
+  "status": "ready_for_native_validation",
+  "summary": {
+    "dependency_count": 4,
+    "overlay_count": 1,
+    "provenance_sha256": "25b305e4ab6f6e375cf1addb151c151648da7b014ae3d2c962694d09c2ff899a",
+    "request_lock_binding": "validated"
+  }
+}

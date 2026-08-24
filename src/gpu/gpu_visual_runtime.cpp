@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <iomanip>
+#include <numbers>
 #include <stdexcept>
 #include <sstream>
 #include <utility>
@@ -37,6 +39,162 @@ std::size_t last_visual_output_float_count_cuda();
 } // namespace gpu::detail
 
 namespace {
+
+// Snapshot-backed read-only environment used by compatibility rendering after
+// collection has released the SimulationKernel WorldLease. It deliberately
+// implements the terrain subset consumed by the visual renderer while keeping
+// the DTO independent from provider lifetime.
+class SnapshotEnvironmentModel final : public IEnvironmentModel {
+  public:
+    explicit SnapshotEnvironmentModel(const DefaultEnvironmentSnapshot &snapshot)
+        : snapshot_(snapshot) {}
+
+    AtmosphericData get_atmosphere_at(double, double, double z) override {
+        AtmosphericData data{};
+        constexpr double kG = 9.80665;
+        constexpr double kR = 287.0;
+        constexpr double kL = 0.0065;
+        constexpr double kT0 = 288.15;
+        constexpr double kP0 = 101325.0;
+        const double h = std::max(0.0, z);
+        if (h < 11000.0) {
+            data.temperature = kT0 - kL * h;
+            data.pressure = kP0 * std::pow(1.0 - kL * h / kT0, kG / (kR * kL));
+        } else {
+            constexpr double kT11 = 216.65;
+            constexpr double kP11 = 22632.1;
+            data.temperature = kT11;
+            data.pressure = kP11 * std::exp(-kG * (h - 11000.0) / (kR * kT11));
+        }
+        data.air_density = data.pressure / (kR * data.temperature);
+        data.speed_of_sound = std::sqrt(1.4 * kR * data.temperature);
+        data.wind_velocity = {0.0, 0.0, 0.0};
+        return data;
+    }
+
+    double get_terrain_elevation(double x, double y) override {
+        if (snapshot_.flat_terrain) {
+            return 0.0;
+        }
+        constexpr double kPeakX = 25000.0;
+        constexpr double kPeakY = 25000.0;
+        constexpr double kPeakH = 2000.0;
+        constexpr double kSigmaSq = 25000000.0;
+        const double dx = x - kPeakX;
+        const double dy = y - kPeakY;
+        return kPeakH * std::exp(-(dx * dx + dy * dy) / (2.0 * kSigmaSq));
+    }
+
+    bool check_line_of_sight(double x1, double y1, double z1, double x2, double y2,
+                             double z2) override {
+        return z1 + 0.5 >= get_terrain_elevation(x1, y1) &&
+               z2 + 0.5 >= get_terrain_elevation(x2, y2);
+    }
+
+    double get_weather_attenuation(double, double, double, double, double, double, int) override {
+        return 0.0;
+    }
+
+    Vec3 get_sun_direction() override { return {0.0, 0.7071067811865476, 0.7071067811865476}; }
+
+    TerrainCell get_terrain_at(double x, double y) override {
+        TerrainCell cell{};
+        cell.elevation = get_terrain_elevation(x, y);
+        cell.type = SurfaceType::SoftDirt;
+        cell.friction_mult = 0.1;
+        cell.roughness = 0.5;
+        cell.vegetation_density = 0.5;
+        cell.runway_heading = 0.0;
+
+        for (const auto &zone : snapshot_.zones) {
+            const double dx = x - zone.center_x;
+            const double dy = y - zone.center_y;
+            bool inside = false;
+            if (zone.type == 0) {
+                const double yaw = (90.0 - zone.heading_deg) * std::numbers::pi_v<double> / 180.0;
+                const double c = std::cos(yaw);
+                const double s = std::sin(yaw);
+                const double local_len = dx * c + dy * s;
+                const double local_wid = dx * (-s) + dy * c;
+                inside = std::abs(local_wid) <= zone.width / 2.0 &&
+                         std::abs(local_len) <= zone.length / 2.0;
+            } else if (zone.type == 1) {
+                inside = dx * dx + dy * dy <= zone.width * zone.width;
+            }
+            if (inside) {
+                return cell_for_surface(static_cast<SurfaceType>(zone.surface_code),
+                                        zone.heading_deg, cell.elevation);
+            }
+        }
+
+        const auto &raster = snapshot_.raster;
+        if (raster.resolution_m > 0.0 && raster.width > 0 && raster.height > 0 &&
+            x >= raster.origin_x && y >= raster.origin_y) {
+            const int col = static_cast<int>((x - raster.origin_x) / raster.resolution_m);
+            const int row = static_cast<int>((y - raster.origin_y) / raster.resolution_m);
+            if (col >= 0 && col < raster.width && row >= 0 && row < raster.height) {
+                const std::size_t index =
+                    static_cast<std::size_t>(row) * static_cast<std::size_t>(raster.width) +
+                    static_cast<std::size_t>(col);
+                if (index < raster.surface_codes.size()) {
+                    return cell_for_surface(static_cast<SurfaceType>(raster.surface_codes[index]),
+                                            0.0, cell.elevation);
+                }
+            }
+        }
+        return cell;
+    }
+
+    void clear_zones() override {}
+    void add_zone(const std::string &, double, double, double, double, double,
+                  SurfaceType) override {}
+    void set_wind(double, double, double) override {}
+    void set_sun_direction(double, double) override {}
+    void set_terrain_type(const std::string &) override {}
+    void set_maritime_state(double, double, double) override {}
+    void clear_maritime_state() override {}
+
+    MaritimeState get_maritime_state() const override {
+        return MaritimeState{snapshot_.maritime_state_configured, snapshot_.sea_state,
+                             snapshot_.wave_heading_deg, snapshot_.wave_period_s};
+    }
+
+  private:
+    static TerrainCell cell_for_surface(SurfaceType surface, double runway_heading,
+                                        double elevation) {
+        TerrainCell cell{};
+        cell.elevation = elevation;
+        cell.type = surface;
+        cell.runway_heading = runway_heading;
+        switch (surface) {
+        case SurfaceType::Concrete:
+        case SurfaceType::Asphalt:
+            cell.friction_mult = 0.02;
+            cell.roughness = 0.0;
+            cell.vegetation_density = 0.0;
+            break;
+        case SurfaceType::HardPacked:
+            cell.friction_mult = 0.04;
+            cell.roughness = 0.2;
+            cell.vegetation_density = 0.1;
+            break;
+        case SurfaceType::Water:
+            cell.friction_mult = 0.1;
+            cell.roughness = 0.0;
+            cell.vegetation_density = 0.0;
+            break;
+        case SurfaceType::SoftDirt:
+        default:
+            cell.friction_mult = 0.1;
+            cell.roughness = 0.5;
+            cell.vegetation_density = 0.5;
+            break;
+        }
+        return cell;
+    }
+
+    const DefaultEnvironmentSnapshot &snapshot_;
+};
 
 std::vector<arb::VisibleObject>
 to_arb_objects(const std::vector<gpu::VisibleObjectPacked> &objects) {
@@ -136,6 +294,17 @@ std::vector<float> render_visual_reference_cpu(const VisualRenderRequest &reques
         request.out_height, request.out_width);
 }
 
+std::vector<float>
+render_visual_reference_cpu_from_snapshot(const VisualRenderRequest &request,
+                                          const std::vector<VisibleObjectPacked> &objects,
+                                          const DefaultEnvironmentSnapshot *snapshot) {
+    if (snapshot == nullptr || !snapshot->valid) {
+        return render_visual_reference_cpu(request, objects, nullptr);
+    }
+    SnapshotEnvironmentModel environment(*snapshot);
+    return render_visual_reference_cpu(request, objects, &environment);
+}
+
 std::vector<float> render_visual_reference_cpu_batch(
     const std::vector<VisualRenderRequest> &requests,
     const std::vector<std::vector<VisibleObjectPacked>> &objects_batch, IEnvironmentModel *env) {
@@ -164,6 +333,22 @@ std::vector<float> render_visual_reference_cpu_batch(
     return out;
 }
 
+std::vector<float> render_visual_reference_cpu_batch_from_snapshot(
+    const std::vector<VisualRenderRequest> &requests,
+    const std::vector<std::vector<VisibleObjectPacked>> &objects_batch,
+    const DefaultEnvironmentSnapshot *snapshot) {
+    if (requests.size() != objects_batch.size()) {
+        throw std::invalid_argument(
+            "render_visual_reference_cpu_batch_from_snapshot expects requests and objects_batch "
+            "to have equal size");
+    }
+    if (snapshot == nullptr || !snapshot->valid) {
+        return render_visual_reference_cpu_batch(requests, objects_batch, nullptr);
+    }
+    SnapshotEnvironmentModel environment(*snapshot);
+    return render_visual_reference_cpu_batch(requests, objects_batch, &environment);
+}
+
 std::vector<float> render_visual_experiment(const VisualRenderRequest &request,
                                             const std::vector<VisibleObjectPacked> &objects,
                                             IEnvironmentModel *env) {
@@ -181,6 +366,13 @@ std::vector<float> render_visual_experiment(const VisualRenderRequest &request,
     }
 #endif
     return render_visual_reference_cpu(request, objects, env);
+}
+
+std::vector<float>
+render_visual_experiment_from_snapshot(const VisualRenderRequest &request,
+                                       const std::vector<VisibleObjectPacked> &objects,
+                                       const DefaultEnvironmentSnapshot *snapshot) {
+    return render_visual_experiment_batch_export_from_snapshot({request}, {objects}, snapshot).flat;
 }
 
 VisualBatchRenderExport render_visual_experiment_batch_export(
@@ -244,6 +436,68 @@ VisualBatchRenderExport render_visual_experiment_batch_export(
 #endif
     return VisualBatchRenderExport{
         .flat = render_visual_reference_cpu_batch(requests, objects_batch, env),
+    };
+}
+
+VisualBatchRenderExport render_visual_experiment_batch_export_from_snapshot(
+    const std::vector<VisualRenderRequest> &requests,
+    const std::vector<std::vector<VisibleObjectPacked>> &objects_batch,
+    const DefaultEnvironmentSnapshot *snapshot) {
+    if (requests.size() != objects_batch.size()) {
+        throw std::invalid_argument(
+            "render_visual_experiment_batch_export_from_snapshot expects requests and "
+            "objects_batch to have equal size");
+    }
+    if (requests.empty()) {
+        return VisualBatchRenderExport{};
+    }
+#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+    bool all_object_only = true;
+    bool all_terrain_gpu_eligible = snapshot != nullptr && snapshot->valid;
+    for (const auto &request : requests) {
+        if (request.include_terrain) {
+            all_object_only = false;
+        } else {
+            all_terrain_gpu_eligible = false;
+        }
+        if (!(request.include_terrain && request.allow_gpu_terrain)) {
+            all_terrain_gpu_eligible = false;
+        }
+    }
+    if (all_object_only) {
+        auto flat = detail::render_visual_experiment_batch_cuda(requests, objects_batch);
+        if (!flat.empty()) {
+            const void *device_ptr = detail::last_visual_output_device_ptr_cuda();
+            const std::size_t device_float_count = detail::last_visual_output_float_count_cuda();
+            const bool valid_device_output =
+                device_ptr != nullptr && device_float_count == flat.size();
+            return VisualBatchRenderExport{
+                .flat = std::move(flat),
+                .device_ptr = valid_device_output ? device_ptr : nullptr,
+                .device_float_count = valid_device_output ? device_float_count : 0,
+                .used_cuda = valid_device_output,
+            };
+        }
+    }
+    if (all_terrain_gpu_eligible) {
+        auto flat = detail::render_visual_experiment_batch_cuda_with_terrain(
+            requests, objects_batch, *snapshot);
+        if (!flat.empty()) {
+            const void *device_ptr = detail::last_visual_output_device_ptr_cuda();
+            const std::size_t device_float_count = detail::last_visual_output_float_count_cuda();
+            const bool valid_device_output =
+                device_ptr != nullptr && device_float_count == flat.size();
+            return VisualBatchRenderExport{
+                .flat = std::move(flat),
+                .device_ptr = valid_device_output ? device_ptr : nullptr,
+                .device_float_count = valid_device_output ? device_float_count : 0,
+                .used_cuda = valid_device_output,
+            };
+        }
+    }
+#endif
+    return VisualBatchRenderExport{
+        .flat = render_visual_reference_cpu_batch_from_snapshot(requests, objects_batch, snapshot),
     };
 }
 

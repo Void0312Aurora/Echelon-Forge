@@ -27,7 +27,9 @@ void bind_simulation_kernel_legacy_compatibility_debug_surface(
             "debug_set_legacy_movement_command",
             [](SimulationKernel &self, uint64_t entity_id, double target_heading_deg,
                double target_speed_mps, double target_altitude_m, bool active) {
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     throw std::invalid_argument(
                         "Invalid entity ID for debug_set_legacy_movement_command");
@@ -43,7 +45,9 @@ void bind_simulation_kernel_legacy_compatibility_debug_surface(
             "debug_get_legacy_movement_command",
             [](SimulationKernel &self, uint64_t entity_id) {
                 nb::dict out;
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     return out;
                 }

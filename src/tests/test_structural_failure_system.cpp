@@ -707,7 +707,8 @@ TEST_SUITE("aircraft_damage_lifecycle") {
         FlatTestEnvironment environment;
         SimulationKernelEngagementEventStore store(world);
         world.set<EngagementEventRecorderRef>({&store});
-        register_ground_contact_system(world, &environment);
+        world.set<EnvironmentModelRef>({&environment});
+        register_ground_contact_system(world);
         register_structural_failure_system(world);
 
         ComponentDamageState damage{};

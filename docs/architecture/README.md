@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/README.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-08-08`
+Last verified: `2026-08-23`
 
 This owner covers cross-domain system architecture, runtime layers, contracts,
 backends, and architecture decisions. Maintained standards, references, issues,
@@ -22,11 +22,22 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
   to the strict simulation architecture baseline.
 - [Simulation system architecture design](standards/simulation_system_architecture_design.md):
   strict maintained layering, authority, and runtime baseline.
+- [Runtime composition baseline](standards/runtime_composition_baseline.md):
+  maintained default CPU-exact Cordis/owner/native authority chain, single
+  construction truth, compatibility rules, evidence gates, and held residuals.
 
 ## Reference
 
 - [Truth-leak inventory](reference/t8_g4_truth_leak_inventory.md): current
   declared/open authority leaks and their verification boundary.
+
+## Completed Work
+
+- [Cordis simulation composition kernel](work/archive/cordis_simulation_composition_kernel/README.md):
+  accepted bounded default CPU-exact composition program and historical
+  implementation evidence. Current authority is the runtime composition
+  standard above; Node, CUDA, broader profiles/providers, external plugins, and
+  complete replay remain held residuals.
 
 ## Open Issues
 
@@ -41,6 +52,15 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
 
 ## Reviews
 
+- [Cordis simulation composition program architecture review — 2026-08-17](reviews/cordis_simulation_composition_program_review_20260817.md):
+  advisory macro review that retains the native composition direction while
+  requiring authority and program-boundary revision before later
+  system/plugin/host phases.
+- [Response to the Cordis simulation composition program architecture review — 2026-08-17](reviews/cordis_simulation_composition_program_review_response_20260817.md):
+  active-owner disposition that incorporates the authority, typed-admission,
+  capability, evidence-timing, and independent-slice findings while retaining
+  Cordis as a required strategic composition target and keeping Node
+  conditional.
 - [Architecture review — 2026-06-03](reviews/architecture_review_20260603.md)
 - [Architecture norms and correctness review — 2026-06-03 (Chinese only)](reviews/architecture_norms_correctness_review_20260603.zh.md)
 - [Architecture refactoring audit — 2026-05-22](reviews/architecture_refactoring_audit_20260522.md)

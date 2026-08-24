@@ -1,0 +1,190 @@
+{
+  "$id": "echelon_forge.cordis_runtime_package_provenance.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "ascii": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "semver": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+      "type": "string"
+    },
+    "sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "echelon_forge.cordis_runtime_package_provenance.v1"
+    },
+    "package": {
+      "additionalProperties": false,
+      "properties": {
+        "package_id": {
+          "$ref": "#/$defs/ascii"
+        },
+        "package_version": {
+          "$ref": "#/$defs/semver"
+        },
+        "descriptor_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "required": [
+        "package_id",
+        "package_version",
+        "descriptor_sha256"
+      ],
+      "type": "object"
+    },
+    "profile": {
+      "additionalProperties": false,
+      "properties": {
+        "profile_id": {
+          "$ref": "#/$defs/ascii"
+        },
+        "profile_version": {
+          "$ref": "#/$defs/semver"
+        },
+        "module_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "bundle_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "required": [
+        "profile_id",
+        "profile_version",
+        "module_sha256",
+        "bundle_sha256"
+      ],
+      "type": "object"
+    },
+    "dependency_resolution": {
+      "additionalProperties": false,
+      "properties": {
+        "order": {
+          "items": {
+            "$ref": "#/$defs/ascii"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "graph_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "required": [
+        "order",
+        "graph_sha256"
+      ],
+      "type": "object"
+    },
+    "configuration_overlays": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "overlay_id": {
+            "$ref": "#/$defs/ascii"
+          },
+          "overlay_version": {
+            "$ref": "#/$defs/semver"
+          },
+          "precedence": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "sha256": {
+            "$ref": "#/$defs/sha256"
+          }
+        },
+        "required": [
+          "overlay_id",
+          "overlay_version",
+          "precedence",
+          "sha256"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "package_name": {
+          "const": "@echelon-forge/cordis-runtime"
+        },
+        "package_version": {
+          "$ref": "#/$defs/semver"
+        },
+        "cordis_version": {
+          "$ref": "#/$defs/semver"
+        },
+        "package_lock_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "required": [
+        "package_name",
+        "package_version",
+        "cordis_version",
+        "package_lock_sha256"
+      ],
+      "type": "object"
+    },
+    "runtime_artifacts": {
+      "additionalProperties": false,
+      "properties": {
+        "request_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "lock_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "profile_projection_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "required": [
+        "request_sha256",
+        "lock_sha256",
+        "profile_projection_sha256"
+      ],
+      "type": "object"
+    },
+    "canonicalization": {
+      "const": "echelon_forge.sorted_utf8_json.v1"
+    },
+    "hash_algorithm": {
+      "const": "sha256"
+    },
+    "canonical_json": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "provenance_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "required": [
+    "schema_version",
+    "package",
+    "profile",
+    "dependency_resolution",
+    "configuration_overlays",
+    "producer",
+    "runtime_artifacts",
+    "canonicalization",
+    "hash_algorithm",
+    "canonical_json",
+    "provenance_sha256"
+  ],
+  "type": "object"
+}

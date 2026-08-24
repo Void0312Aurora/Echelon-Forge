@@ -56,7 +56,8 @@ TEST_SUITE("missile_guidance_cadence") {
         SimulationKernel kernel;
         kernel.reset(42);
         kernel.set_time_step(0.05);
-        auto &world = kernel.get_world();
+        auto world_lease = kernel.acquire_world_lease();
+        auto &world = world_lease.world();
 
         auto target = world.entity()
                           .set<Transform>({12000.0, 0.0, 3000.0, 180.0, 0.0, 0.0})
@@ -102,7 +103,8 @@ TEST_SUITE("missile_guidance_cadence") {
         SimulationKernel kernel;
         kernel.reset(42);
         kernel.set_time_step(0.05);
-        auto &world = kernel.get_world();
+        auto world_lease = kernel.acquire_world_lease();
+        auto &world = world_lease.world();
 
         auto target = world.entity()
                           .set<Transform>({12000.0, 0.0, 3000.0, 180.0, 0.0, 0.0})

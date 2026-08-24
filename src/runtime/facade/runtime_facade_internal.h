@@ -5,6 +5,7 @@
 
 #include "runtime/contracts/stage_node_manifest_registry.h"
 #include "runtime/facade/internal/world_batch_backend.h"
+#include "runtime/facade/internal/world_batch_backend_provider.h"
 #include "runtime/facade/internal/world_batch_compatibility_port.h"
 
 #include <algorithm>
@@ -16,6 +17,19 @@
 #include <string>
 #include <string_view>
 #include <vector>
+
+struct RuntimeFacadeHostContext {
+    std::string host_mode = "native_cpp";
+    std::string binding_version = "native.v1";
+};
+
+struct RuntimeFacadeIdentity {
+    runtime::backend_provider::WorldBatchBackendProviderIdentity backend_identity;
+    RuntimeFacadeHostContext host_context;
+    // Backend/world generations may restart after a world is destroyed. This
+    // facade-owned incarnation makes shrink/regrow evidence identities ABA-safe.
+    std::uint64_t composition_incarnation = 1;
+};
 
 namespace runtime_facade_internal {
 

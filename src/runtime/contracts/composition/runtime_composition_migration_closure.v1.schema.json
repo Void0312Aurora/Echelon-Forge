@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "echelon_forge.runtime_composition_migration_closure.v1.schema.json",
+  "title": "Echelon Forge runtime composition migration closure",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "closure_id",
+    "closure_version",
+    "scope",
+    "authority_chain",
+    "truth_path",
+    "caller_inventory",
+    "retired_surfaces",
+    "acceptance_matrix",
+    "residuals",
+    "canonicalization",
+    "hash_algorithm",
+    "canonical_json",
+    "closure_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "echelon_forge.runtime_composition_migration_closure.v1"},
+    "closure_id": {"const": "default_cpu_exact.runtime_composition.p8a"},
+    "closure_version": {"const": "1.0.0"},
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_id", "backend_profile_id", "execution_owner", "status"],
+      "properties": {
+        "profile_id": {"const": "builtin.default_compatibility"},
+        "backend_profile_id": {"const": "cpu_exact.reference"},
+        "execution_owner": {"const": "native_cpp"},
+        "status": {"const": "accepted_bounded_default_cpu_exact"}
+      }
+    },
+    "authority_chain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_sha256",
+        "catalog_lock_sha256",
+        "profile_projection_sha256",
+        "requested_manifest_sha256",
+        "resolved_manifest_sha256",
+        "composition_evidence_sha256",
+        "cordis_package_provenance_sha256",
+        "cordis_dependency_graph_sha256",
+        "host_batch_budget_sha256",
+        "host_batch_semantic_reference_sha256",
+        "host_batch_evidence_sha256",
+        "request_schema_version",
+        "manifest_schema_version"
+      ],
+      "properties": {
+        "request_sha256": {"$ref": "#/$defs/sha256"},
+        "catalog_lock_sha256": {"$ref": "#/$defs/sha256"},
+        "profile_projection_sha256": {"$ref": "#/$defs/sha256"},
+        "requested_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "resolved_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "composition_evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "cordis_package_provenance_sha256": {"$ref": "#/$defs/sha256"},
+        "cordis_dependency_graph_sha256": {"$ref": "#/$defs/sha256"},
+        "host_batch_budget_sha256": {"$ref": "#/$defs/sha256"},
+        "host_batch_semantic_reference_sha256": {"$ref": "#/$defs/sha256"},
+        "host_batch_evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "request_schema_version": {"type": "string", "minLength": 1},
+        "manifest_schema_version": {"type": "string", "minLength": 1}
+      }
+    },
+    "truth_path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cordis_producer",
+        "native_manifest_constructor",
+        "native_composition_builder",
+        "native_shared_realizer",
+        "default_compatibility_artifact",
+        "backend_materializer",
+        "native_execution_owner"
+      ],
+      "properties": {
+        "cordis_producer": {"type": "string", "minLength": 1},
+        "native_manifest_constructor": {"type": "string", "minLength": 1},
+        "native_composition_builder": {"type": "string", "minLength": 1},
+        "native_shared_realizer": {"type": "string", "minLength": 1},
+        "default_compatibility_artifact": {"type": "string", "minLength": 1},
+        "backend_materializer": {"type": "string", "minLength": 1},
+        "native_execution_owner": {"type": "string", "minLength": 1}
+      }
+    },
+    "caller_inventory": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 10,
+      "items": {"$ref": "#/$defs/caller"}
+    },
+    "retired_surfaces": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {"$ref": "#/$defs/retired"}
+    },
+    "acceptance_matrix": {
+      "type": "array",
+      "minItems": 15,
+      "maxItems": 15,
+      "items": {"$ref": "#/$defs/gate"}
+    },
+    "residuals": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {"$ref": "#/$defs/residual"}
+    },
+    "canonicalization": {"const": "echelon_forge.sorted_utf8_json.v1"},
+    "hash_algorithm": {"const": "sha256"},
+    "canonical_json": {"type": "string", "minLength": 2},
+    "closure_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "caller": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["surface_id", "classification", "owner", "callers", "disposition"],
+      "properties": {
+        "surface_id": {"type": "string", "minLength": 1},
+        "classification": {"type": "string", "minLength": 1},
+        "owner": {"type": "string", "minLength": 1},
+        "callers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "disposition": {"type": "string", "minLength": 1}
+      }
+    },
+    "retired": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["surface_id", "status", "symbols"],
+      "properties": {
+        "surface_id": {"type": "string", "minLength": 1},
+        "status": {"const": "absent"},
+        "symbols": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cluster", "state", "evidence"],
+      "properties": {
+        "cluster": {"type": "string", "pattern": "^P[0-8](?:-[A-Z0-9]+)?$"},
+        "state": {"enum": ["accepted", "held"]},
+        "evidence": {"type": "string", "minLength": 1}
+      }
+    },
+    "residual": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["residual_id", "state", "owner", "activation_gate"],
+      "properties": {
+        "residual_id": {"type": "string", "minLength": 1},
+        "state": {"const": "held"},
+        "owner": {"type": "string", "minLength": 1},
+        "activation_gate": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

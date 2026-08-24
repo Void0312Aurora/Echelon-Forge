@@ -88,12 +88,12 @@ inline void record_mlf8_terminal_wreck_lifecycle(flecs::entity entity,
  * Implements a Penalty Method for ground interaction.
  * Integrates with EnvironmentModel for surface-dependent physics (Friction, Damage).
  */
-inline void register_ground_contact_system(flecs::world &ecs, IEnvironmentModel *env) {
+inline void register_ground_contact_system(flecs::world &ecs) {
     ecs.system<ForceAccumulator, const Transform, Velocity, const Mass, GroundState>(
            "GroundContact")
         .kind(flecs::OnUpdate)
         // Must run BEFORE Integration but AFTER Aerodynamics
-        .run([env](flecs::iter &it) {
+        .run([](flecs::iter &it) {
             while (it.next()) {
                 auto forces = it.field<ForceAccumulator>(0);
                 auto transform = it.field<const Transform>(1);
@@ -104,6 +104,11 @@ inline void register_ground_contact_system(flecs::world &ecs, IEnvironmentModel 
                     it.world().get<EngagementEventRecorderRef>();
                 IEngagementEventRecorder *recorder =
                     recorder_ref ? recorder_ref->recorder : nullptr;
+                const EnvironmentModelRef *environment_ref = it.world().get<EnvironmentModelRef>();
+                IEnvironmentModel *environment = environment_ref ? environment_ref->model : nullptr;
+                if (environment == nullptr) {
+                    continue;
+                }
                 const ecs_world_info_t *world_info = ecs_get_world_info(it.world().c_ptr());
                 const double current_time =
                     world_info ? static_cast<double>(world_info->world_time_total) : 0.0;
@@ -115,7 +120,7 @@ inline void register_ground_contact_system(flecs::world &ecs, IEnvironmentModel 
 
                     // 1. Detection: Query Environment
                     // Use current position (x, y)
-                    auto terrain = env->get_terrain_at(transform[i].x, transform[i].y);
+                    auto terrain = environment->get_terrain_at(transform[i].x, transform[i].y);
 
                     double terrain_z = canonicalize_environment_scalar(terrain.elevation);
                     ground[i].terrain_elevation = terrain_z;

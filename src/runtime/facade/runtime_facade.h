@@ -9,6 +9,7 @@
 #include "runtime/facade/runtime_facade_types.h"
 
 class IWorldBatchBackend;
+struct RuntimeFacadeIdentity;
 struct WorldBatchVisualBindingCompatibilityScene;
 struct RecentEngagementEvents;
 
@@ -25,6 +26,9 @@ class RuntimeFacade {
     void configure_batch(const RuntimeBatchConfig &config);
     RuntimeBatchConfig batch_config() const noexcept;
     RuntimeCapabilities capabilities() const noexcept;
+    [[nodiscard]] RuntimeCompositionEvidenceResult export_composition_evidence() const;
+    [[nodiscard]] RuntimeCompositionEvidenceComparison
+    compare_composition_evidence(const RuntimeCompositionEvidence &expected) const;
     RuntimeBackendAdmission admit_backend_request(const RuntimeBackendRequest &request) const;
     RuntimeFidelityAdmission admit_fidelity_request(const RuntimeFidelityRequest &request) const;
 
@@ -106,7 +110,10 @@ class RuntimeFacade {
     ObservationBatchPacket build_observation_packet(const ObservationBatchRequest &request) const;
     TaskingBatchPacket build_tasking_packet(const TaskingBatchRequest &request) const;
 
-    // Single execution owner. The maintained implementation is
-    // FlecsCpuBackend, but the facade depends only on the internal backend SPI.
+    // Single execution owner, materialized by the admitted backend provider
+    // behind the internal backend SPI.
     std::unique_ptr<IWorldBatchBackend> runtime_;
+    // Internal construction identity used to seal composition evidence. It is
+    // deliberately absent from the public DTO surface.
+    std::shared_ptr<RuntimeFacadeIdentity> identity_;
 };

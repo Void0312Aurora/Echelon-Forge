@@ -62,7 +62,9 @@ void bind_simulation_kernel_diagnostics_platform_state_surface(
             "debug_get_pending_movement_command",
             [](SimulationKernel &self, uint64_t entity_id) {
                 nb::dict out;
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     return out;
                 }
@@ -102,7 +104,9 @@ void bind_simulation_kernel_diagnostics_platform_state_surface(
             "debug_get_pending_action_command",
             [](SimulationKernel &self, uint64_t entity_id) {
                 nb::dict out;
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     return out;
                 }
@@ -137,7 +141,9 @@ void bind_simulation_kernel_diagnostics_platform_state_surface(
             [](SimulationKernel &self, uint64_t entity_id) {
                 nb::dict out;
                 nb::list queued;
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     out["queued"] = queued;
                     return out;

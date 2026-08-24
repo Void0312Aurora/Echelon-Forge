@@ -224,6 +224,28 @@ set(EF_CORE_ENGINE_SOURCES
     src/core/engine/simulation_kernel_damage_debug_api.cpp
     src/core/engine/exact_stage_inventory.cpp
     src/core/engine/world_batch_runtime.cpp
+    src/core/engine/default_executable_composition_graph.cpp
+    src/core/engine/system_contribution_registry.cpp
+    src/runtime/providers/default_simulation_provider_catalog.cpp
+)
+
+# The default provider catalog embeds the generated resolved manifest, and the
+# facade provider consumes the generated backend-request identity extracted from
+# it. Keep explicit dependencies because localized MSVC /showIncludes output is
+# not always consumed by every Ninja/CMake toolchain combination.
+set_property(
+    SOURCE
+        src/runtime/providers/default_simulation_provider_catalog.cpp
+        src/runtime/facade/internal/world_batch_backend_provider.cpp
+    APPEND PROPERTY OBJECT_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/contracts/composition/default_compatibility_manifest.v1.generated.h"
+)
+set_property(
+    SOURCE
+        src/core/engine/simulation_kernel_systems.cpp
+        src/runtime/facade/runtime_facade_composition_evidence.cpp
+    APPEND PROPERTY OBJECT_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/contracts/composition/runtime_composition_evidence.v1.generated.h"
 )
 
 set(EF_CORE_GEOMETRY_SOURCES
@@ -257,7 +279,9 @@ set(EF_CORE_MISSION_SOURCES
 
 set(EF_RUNTIME_FACADE_SOURCES
     src/runtime/facade/internal/flecs_cpu_backend.cpp
+    src/runtime/facade/internal/world_batch_backend_provider.cpp
     src/runtime/facade/runtime_facade.cpp
+    src/runtime/facade/runtime_facade_composition_evidence.cpp
     src/runtime/facade/runtime_facade_config.cpp
     src/runtime/facade/runtime_facade_world_setup.cpp
     src/runtime/facade/runtime_facade_query.cpp
@@ -279,11 +303,36 @@ set(EF_CONTENT_SOURCES
     src/content/content_compile_passes.cpp
 )
 
+set(EF_COMPOSITION_SOURCES
+    src/runtime/composition/composition_identity.cpp
+    src/runtime/composition/composition_json.cpp
+    src/runtime/composition/runtime_composition_projection_contract.cpp
+    src/runtime/composition/runtime_composition_evidence_contract.cpp
+    src/runtime/composition/provider_catalog.cpp
+    src/runtime/composition/composition_validation.cpp
+    src/runtime/composition/composition_runtime.cpp
+)
+
 set(EF_CORE_SOURCES
     ${EF_CORE_ENGINE_SOURCES}
     ${EF_CORE_GEOMETRY_SOURCES}
     ${EF_CORE_MISSION_SOURCES}
     ${EF_MODEL_DEFAULT_SOURCES}
+)
+
+# --- Native Composition Lifecycle Library ---
+# This target realizes the host-neutral composition contract without depending
+# on ef_core, Flecs, a binding runtime, or Cordis. Keeping it as an independent
+# link unit prevents lifecycle ownership from becoming another engine/facade
+# compatibility path before the later provider-migration clusters are accepted.
+add_library(ef_composition STATIC
+    ${EF_COMPOSITION_SOURCES}
+)
+target_include_directories(ef_composition PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_link_libraries(ef_composition PRIVATE
+    nlohmann_json::nlohmann_json
 )
 
 # --- Content Library (T3 first physical link-unit split, I46) ---
@@ -331,6 +380,7 @@ target_include_directories(ef_core PUBLIC
 # resolve after ef_core on a single-pass link line.  CMake derives that order
 # from this dependency edge automatically for every downstream consumer.
 target_link_libraries(ef_core PUBLIC
+    ef_composition
     ef_content
     flecs::flecs
     spdlog::spdlog
@@ -641,6 +691,7 @@ FetchContent_MakeAvailable(doctest)
 
 set(EF_TEST_SOURCES
     src/tests/test_main.cpp
+    src/core/engine/testing/simulation_kernel_composition_test_access.cpp
     src/tests/test_simulation_kernel_smoke.cpp
     src/tests/test_components_basic.cpp
     src/tests/test_content_compile_passes.cpp
@@ -665,6 +716,14 @@ set(EF_TEST_SOURCES
 )
 
 add_executable(ef_test ${EF_TEST_SOURCES})
+# Compile the private rollback implementation only into test-enabled ef_core.
+# The public provider header and SimulationKernel API expose no callable seam.
+set_property(
+    SOURCE
+        src/core/engine/testing/simulation_kernel_composition_test_access.cpp
+        src/runtime/providers/default_simulation_provider_catalog.cpp
+    APPEND PROPERTY COMPILE_DEFINITIONS EF_RUNTIME_COMPOSITION_TESTING
+)
 # test_runtime_facade_*.cpp reference RuntimeFacade symbols, so ef_test links
 # ef_facade ahead of ef_core; the remaining suites keep their direct ef_core /
 # ef_gpu_experiments edges unchanged.
@@ -676,6 +735,108 @@ target_link_libraries(ef_test PRIVATE
     doctest::doctest
 )
 target_include_directories(ef_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+if (MSVC)
+    target_compile_definitions(ef_test PRIVATE _USE_MATH_DEFINES)
+endif()
+
+# P2-A is intentionally a focused native target. It links only the isolated
+# lifecycle library and doctest, so passing this target cannot be mistaken for
+# constructor, system, backend, binding, or Cordis integration.
+add_executable(ef_composition_lifecycle_test
+    src/tests/test_main.cpp
+    src/tests/test_composition_lifecycle.cpp
+)
+target_link_libraries(ef_composition_lifecycle_test PRIVATE
+    ef_composition
+    doctest::doctest
+    nlohmann_json::nlohmann_json
+    Threads::Threads
+)
+target_include_directories(ef_composition_lifecycle_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_compile_definitions(ef_composition_lifecycle_test PRIVATE
+    EF_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+# P2-C1/P3-B conformance seam: Cordis-produced request, lock, manifest, and
+# profile-projection artifacts must survive native revalidation, then exercise
+# the production default provider composition for one native step.
+add_executable(ef_cordis_runtime_conformance_test
+    src/tests/test_cordis_runtime_conformance.cpp
+)
+target_link_libraries(ef_cordis_runtime_conformance_test PRIVATE
+    ef_core
+    ef_composition
+    nlohmann_json::nlohmann_json
+)
+target_include_directories(ef_cordis_runtime_conformance_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+# P4-A focused target: the generated default backend request must be admitted
+# by the native provider catalog, while diagnostics-only, candidate, unknown,
+# or capability-mismatched requests fail before any backend factory runs.
+add_executable(ef_backend_provider_migration_test
+    src/tests/test_main.cpp
+    src/tests/test_backend_provider_migration.cpp
+)
+if (UNIX AND NOT APPLE)
+    target_link_libraries(ef_backend_provider_migration_test PRIVATE
+        -Wl,--start-group
+        ef_facade
+        ef_core
+        ef_gpu_experiments
+        -Wl,--end-group
+        doctest::doctest
+        nlohmann_json::nlohmann_json
+    )
+else()
+    target_link_libraries(ef_backend_provider_migration_test PRIVATE
+        ef_facade
+        ef_gpu_experiments
+        doctest::doctest
+        nlohmann_json::nlohmann_json
+    )
+endif()
+target_include_directories(ef_backend_provider_migration_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_compile_definitions(ef_backend_provider_migration_test PRIVATE
+    EF_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+# P5-A focused target: the facade must export owner-joined composition evidence
+# from the realized backend/worlds and reject strict identity mismatches without
+# inventing a fallback profile.
+add_executable(ef_composition_evidence_test
+    src/tests/test_main.cpp
+    src/tests/test_composition_evidence.cpp
+)
+if (UNIX AND NOT APPLE)
+    target_link_libraries(ef_composition_evidence_test PRIVATE
+        -Wl,--start-group
+        ef_facade
+        ef_core
+        ef_gpu_experiments
+        -Wl,--end-group
+        doctest::doctest
+        nlohmann_json::nlohmann_json
+    )
+else()
+    target_link_libraries(ef_composition_evidence_test PRIVATE
+        ef_facade
+        ef_gpu_experiments
+        doctest::doctest
+        nlohmann_json::nlohmann_json
+    )
+endif()
+target_include_directories(ef_composition_evidence_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_compile_definitions(ef_composition_evidence_test PRIVATE
+    EF_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
+)
 
 # Focused target for CUDA-on resident-backend validation. It deliberately avoids
 # the full ef_core graph, whose current MSVC portability debt is unrelated to the
@@ -745,9 +906,23 @@ add_test(NAME cuda_resident_replay COMMAND ef_cuda_resident_replay_test)
 add_test(NAME cuda_resident_full_window COMMAND ef_cuda_resident_full_window_test)
 add_test(NAME default_effects_model COMMAND ef_test --test-suite=default_effects_model)
 set_tests_properties(default_effects_model PROPERTIES WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+add_test(NAME composition_lifecycle COMMAND ef_composition_lifecycle_test)
+add_test(NAME backend_provider_migration COMMAND ef_backend_provider_migration_test)
+add_test(NAME composition_evidence COMMAND ef_composition_evidence_test)
+add_test(
+    NAME cordis_runtime_conformance
+    COMMAND ef_cordis_runtime_conformance_test
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/default_runtime_composition_request.v1.json
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/default_admitted_catalog_lock.v1.json
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/owner_authority_registry.v1.json
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/default_compatibility_manifest.requested.json
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/default_compatibility_manifest.resolved.json
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/default_runtime_profile_projection.v1.json
+)
 endif()
 
 set(EF_PROJECT_WARNING_TARGETS
+    ef_composition
     ef_core
     ef_content
     ef_facade
@@ -764,6 +939,9 @@ set(EF_PROJECT_WARNING_TARGETS
     ef_gpu_comm_candidate_phase0_probe
     ef_gpu_visual_candidate_phase0_probe
     ef_test
+    ef_composition_lifecycle_test
+    ef_backend_provider_migration_test
+    ef_composition_evidence_test
     ef_cuda_resident_lifecycle_test
     ef_cuda_resident_replay_test
     ef_cuda_resident_full_window_test

@@ -148,9 +148,8 @@ def test_simulation_kernel_exposes_read_only_recent_engagement_events_getter() -
   assert "core/engine/engagement_event_types.h" in header
   assert "core/engine/simulation_kernel_engagement_event_store.h" not in header
   assert "core/engine/engagement_event_types.h" in store_header
-  assert "core/interfaces/engagement_event_recorder.h" in store_header
-  assert "core/interfaces/engagement_launch_recorder.h" in store_header
-  assert "public IEngagementLaunchRecorder" in store_header
+  assert "core/interfaces/engagement_event_store.h" in store_header
+  assert "public IEngagementEventStore" in store_header
   assert "SimulationKernel::export_recent_engagement_events() const" in observation_api
   assert "SimulationKernelEngagementEventStore::export_recent_events_sorted() const" in store_impl
 
@@ -160,7 +159,8 @@ def test_simulation_kernel_exposes_read_only_recent_engagement_events_getter() -
     re.DOTALL,
   )
   assert getter_body is not None
-  assert "engagement_event_store_->export_recent_events_sorted()" in getter_body.group("body")
+  assert "IEngagementEventStore *store = engagement_event_store();" in getter_body.group("body")
+  assert "store->export_recent_events_sorted()" in getter_body.group("body")
   assert "std::sort" not in getter_body.group("body")
   assert "fire_missile" not in getter_body.group("body")
   assert "fire_naval_weapon" not in getter_body.group("body")
@@ -204,7 +204,6 @@ def test_legacy_fire_and_debug_damage_paths_record_compatible_event_dtos() -> No
   release_service = _read("src/core/engine/simulation_kernel_weapon_release_service.cpp")
   release_service_header = _read("src/core/engine/simulation_kernel_weapon_release_service.h")
   kernel_header = _read("src/core/engine/simulation_kernel.h")
-  kernel_impl = _read("src/core/engine/simulation_kernel.cpp")
   services_header = _read("src/core/engine/simulation_kernel_services.h")
   services_impl = _read("src/core/engine/simulation_kernel_services.cpp")
   damage_api = _read("src/core/engine/simulation_kernel_damage_debug_api.cpp")
@@ -255,7 +254,7 @@ def test_legacy_fire_and_debug_damage_paths_record_compatible_event_dtos() -> No
   )
   assert "launch_recorder_.record_legacy_launch_event(" in release_service
   assert "damage_recorder_.record_effects_damage_event(" in release_service
-  assert "engagement_event_store_->record_effects_damage_event(" in damage_api
+  assert "engagement_event_store()->record_effects_damage_event(" in damage_api
   assert "SimulationKernelEngagementEventStore::record_legacy_launch_event(" in store_impl
   assert "SimulationKernelEngagementEventStore::record_effects_damage_event(" in store_impl
   assert "SimulationKernelEngagementEventStore::record_warhead_mechanism_event(" in store_impl
@@ -277,17 +276,17 @@ def test_legacy_fire_and_debug_damage_paths_record_compatible_event_dtos() -> No
   assert "engagement_events::apply_effects_result_fields(" in damage_api
   _assert_debug_damage_paths_use_dto_builder(damage_api)
   assert "std::move(event_record)" in release_service
-  assert "engagement_event_store_->capture_engagement_damage_state(target_id)" in damage_api
+  assert "engagement_event_store()->capture_engagement_damage_state(target_id)" in damage_api
   assert "class IWeaponReleaseDamageBridge" in damage_bridge_header
   assert "virtual bool apply_proximity_hit(" in damage_bridge_header
-  assert "class IWeaponReleaseDamageBridge;" in kernel_header
-  assert "std::unique_ptr<IWeaponReleaseDamageBridge> weapon_release_damage_bridge_" in kernel_header
+  provider_catalog = _read("src/runtime/providers/default_simulation_provider_catalog.cpp")
+  assert "class IWeaponReleaseDamageBridge;" not in kernel_header
+  assert "std::unique_ptr<IWeaponReleaseDamageBridge> weapon_release_damage_bridge_" not in kernel_header
   assert (
     "class SimulationKernelWeaponReleaseDamageBridge final : public IWeaponReleaseDamageBridge"
-    in kernel_impl
+    in provider_catalog
   )
-  assert "std::make_unique<SimulationKernelWeaponReleaseDamageBridge>(*this)" in kernel_impl
-  assert "*weapon_release_damage_bridge_" in kernel_impl
+  assert "std::make_unique<SimulationKernelWeaponReleaseDamageBridge>(kernel)" in provider_catalog
   assert _contains_cpp_fragment(services_header, "IWeaponReleaseDamageBridge &damage_bridge")
   assert _contains_cpp_fragment(services_impl, "IWeaponReleaseDamageBridge &damage_bridge")
   assert _contains_cpp_fragment(release_service_header, "IWeaponReleaseDamageBridge &damage_bridge_")

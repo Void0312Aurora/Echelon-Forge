@@ -1,0 +1,35 @@
+{
+  "canonical_json": "{\"canonicalization\":\"echelon_forge.sorted_utf8_json.v1\",\"categories\":[{\"category\":\"model\",\"owner_id\":\"owner.model\"},{\"category\":\"system\",\"owner_id\":\"owner.scheduler\"},{\"category\":\"backend\",\"owner_id\":\"owner.backend\"},{\"category\":\"domain\",\"owner_id\":\"owner.domain\"},{\"category\":\"evidence\",\"owner_id\":\"owner.evidence\"},{\"category\":\"security\",\"owner_id\":\"owner.security\"}],\"hash_algorithm\":\"sha256\",\"registry_id\":\"echelon_forge.runtime_composition_owners\",\"registry_version\":\"1.0.0\",\"schema_version\":\"echelon_forge.owner_authority_registry.v1\"}",
+  "canonicalization": "echelon_forge.sorted_utf8_json.v1",
+  "categories": [
+    {
+      "category": "model",
+      "owner_id": "owner.model"
+    },
+    {
+      "category": "system",
+      "owner_id": "owner.scheduler"
+    },
+    {
+      "category": "backend",
+      "owner_id": "owner.backend"
+    },
+    {
+      "category": "domain",
+      "owner_id": "owner.domain"
+    },
+    {
+      "category": "evidence",
+      "owner_id": "owner.evidence"
+    },
+    {
+      "category": "security",
+      "owner_id": "owner.security"
+    }
+  ],
+  "hash_algorithm": "sha256",
+  "registry_id": "echelon_forge.runtime_composition_owners",
+  "registry_sha256": "5c360890992168709c79fc3b633808d5ff564b52d4f55cd7ee019811ba8d651f",
+  "registry_version": "1.0.0",
+  "schema_version": "echelon_forge.owner_authority_registry.v1"
+}

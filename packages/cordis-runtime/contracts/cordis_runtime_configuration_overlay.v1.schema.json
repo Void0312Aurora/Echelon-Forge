@@ -1,0 +1,80 @@
+{
+  "$id": "echelon_forge.cordis_runtime_configuration_overlay.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "echelon_forge.cordis_runtime_configuration_overlay.v1"
+    },
+    "overlay_id": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "overlay_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+      "type": "string"
+    },
+    "target_profile": {
+      "additionalProperties": false,
+      "properties": {
+        "profile_id": {
+          "minLength": 1,
+          "pattern": "^[\\u0000-\\u007F]*$",
+          "type": "string"
+        },
+        "profile_version": {
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "profile_id",
+        "profile_version"
+      ],
+      "type": "object"
+    },
+    "precedence": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "configuration_patch": {
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          },
+          {
+            "not": {
+              "type": "integer"
+            },
+            "type": "number"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "minProperties": 1,
+      "propertyNames": {
+        "minLength": 1,
+        "pattern": "^[\\u0000-\\u007F]*$"
+      },
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema_version",
+    "overlay_id",
+    "overlay_version",
+    "target_profile",
+    "precedence",
+    "configuration_patch"
+  ],
+  "type": "object"
+}

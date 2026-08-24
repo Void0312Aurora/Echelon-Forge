@@ -1,0 +1,58 @@
+{
+  "schema_version": "echelon_forge.cordis_runtime_package.v1",
+  "package_id": "builtin.default_compatibility.package",
+  "package_version": "1.0.0",
+  "profile": {
+    "profile_id": "builtin.default_compatibility",
+    "profile_version": "1.0.0",
+    "module_dependency_id": "profile.module",
+    "bundle_dependency_id": "profile.bundle"
+  },
+  "cordis_dependency_id": "cordis.runtime",
+  "dependencies": [
+    {
+      "dependency_id": "cordis.runtime",
+      "kind": "npm_package",
+      "package_name": "cordis",
+      "version": "4.0.0-rc.8",
+      "requires": []
+    },
+    {
+      "dependency_id": "profile.module",
+      "kind": "repository_artifact",
+      "path": "profiles/default-compatibility.mjs",
+      "sha256": "80ced7048aa0d97a10c88f03160049a0d6f96f8414c3ba0674c6b049e052c98a",
+      "requires": [
+        "cordis.runtime"
+      ]
+    },
+    {
+      "dependency_id": "profile.bundle",
+      "kind": "repository_artifact",
+      "path": "profiles/default-compatibility.bundle.json",
+      "sha256": "10646a4aa6a9d27bdd98929c44fe297c15e73d38a392f7960debe0fb2b1a90f7",
+      "requires": [
+        "profile.module"
+      ]
+    }
+  ],
+  "overlays": [
+    {
+      "overlay_id": "builtin.default_compatibility.overlay.default",
+      "path": "overlays/default-compatibility.default.v1.json",
+      "sha256": "2ab04cf6d5f2e377e343949641058fe05fd9f3024891aa3892a1eb43ff00603e",
+      "required": true,
+      "requires": [
+        "profile.bundle"
+      ]
+    }
+  ],
+  "provenance_policy": {
+    "require_package_lock": true,
+    "require_artifact_hashes": true
+  },
+  "diagnostics_policy": {
+    "schema_version": "echelon_forge.cordis_runtime_package_diagnostics.v1",
+    "redact_absolute_paths": true
+  }
+}

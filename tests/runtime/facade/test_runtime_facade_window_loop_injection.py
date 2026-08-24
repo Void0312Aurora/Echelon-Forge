@@ -87,8 +87,6 @@ def test_runtime_facade_exposes_window_loop_api() -> None:
     source,
     "RuntimeWindowResult RuntimeFacade::run_window",
   )
-  # Since the maintained-evidence seam retirement run_window returns the
-  # coordinator result directly; the loop is still driven by the coordinator.
   assert "return execute_runtime_window(" in body
   assert "set_pilot_actions_batch(assignments)" in body
   assert "set_mission_commands_maintained_batch(assignments)" in body

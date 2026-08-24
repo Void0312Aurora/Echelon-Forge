@@ -1,61 +1,49 @@
 #include "simulation_kernel.h"
-#include "simulation_kernel_engagement_event_store.h"
-#include "simulation_kernel_services.h"
 
 #include "components/physics/instruments.h"
-#include "core/interfaces/environment_model.h"
-#include "core/interfaces/control_model.h"
 #include "core/interfaces/acoustic_model.h"
+#include "core/interfaces/control_model.h"
 #include "core/interfaces/effects_model.h"
+#include "core/interfaces/engagement_event_store.h"
+#include "core/interfaces/environment_model.h"
 #include "core/interfaces/guidance_model.h"
 #include "core/interfaces/sensor_model.h"
 #include "core/interfaces/unit_factory.h"
-#include "core/interfaces/weapon_release_damage_bridge.h"
-#include "models/core/default_unit_factory.h"
+#include "runtime/providers/default_simulation_provider_catalog.h"
 
 #include <spdlog/spdlog.h>
 
 #include <cmath>
-#include <cstdint>
 #include <stdexcept>
 #include <string>
-#include <utility>
-
-namespace {
-
-class SimulationKernelWeaponReleaseDamageBridge final : public IWeaponReleaseDamageBridge {
-  public:
-    explicit SimulationKernelWeaponReleaseDamageBridge(SimulationKernel &kernel)
-        : kernel_(kernel) {}
-
-    bool apply_proximity_hit(std::uint64_t attacker_id, std::uint64_t target_id, double damage,
-                             double fuse_distance) override {
-        return kernel_.debug_apply_proximity_hit(attacker_id, target_id, damage, fuse_distance);
-    }
-
-  private:
-    SimulationKernel &kernel_;
-};
-
-} // namespace
 
 SimulationKernel::SimulationKernel()
-    : environment_model_(make_default_environment_model()),
-      unit_factory_(std::make_unique<DefaultUnitFactory>()),
-      effects_model_(make_default_effects_model()), sensor_model_(make_default_sensor_model()),
-      acoustic_model_(make_default_acoustic_model()), control_model_(make_default_control_model()),
-      guidance_model_(make_default_guidance_model()),
-      engagement_event_store_(std::make_unique<SimulationKernelEngagementEventStore>(ecs)),
-      weapon_release_damage_bridge_(
-          std::make_unique<SimulationKernelWeaponReleaseDamageBridge>(*this)),
-      weapon_release_service_(make_simulation_kernel_weapon_release_service(
-          ecs, unit_factory_, missile_tuning_, rng, *engagement_event_store_,
-          *engagement_event_store_, *weapon_release_damage_bridge_)) {
+    : SimulationKernel(runtime::providers::default_compatibility_resolved_manifest_json()) {}
+
+SimulationKernel::SimulationKernel(std::string resolved_manifest_json) {
+    const auto admission = runtime::providers::validate_default_simulation_composition_manifest(
+        resolved_manifest_json);
+    if (!admission) {
+        const auto &error = admission.error();
+        throw std::runtime_error("default simulation composition failed: " + error.code + ":" +
+                                 error.subject + ":" + error.detail);
+    }
     register_components_and_systems();
+    auto composition = runtime::providers::build_default_simulation_composition(
+        *this, ecs, missile_tuning_, rng, resolved_manifest_json);
+    if (!composition) {
+        const auto &error = composition.error();
+        throw std::runtime_error("default simulation composition failed: " + error.code + ":" +
+                                 error.subject + ":" + error.detail);
+    }
+    composition_ = std::move(composition).value();
     if (auto resupply_logic = ecs.lookup("ResupplyLogic"); resupply_logic.is_valid()) {
         ecs_enable(ecs.c_ptr(), resupply_logic.id(), false);
     }
     reset(42); // Default reset
+    // Constructor initialization establishes generation 1's clean baseline;
+    // later explicit resets are truth mutations and close the rebuild barrier.
+    world_state_mutated_ = false;
 }
 
 SimulationKernel::~SimulationKernel() {
@@ -70,6 +58,7 @@ void SimulationKernel::ensure_active(const char *operation) const {
 }
 
 void SimulationKernel::shutdown() {
+    auto composition_lock = acquire_composition_operation();
     if (shutdown_complete_) {
         return;
     }
@@ -81,106 +70,38 @@ void SimulationKernel::shutdown() {
     }
 
     ecs.delete_with<SimObject>();
+    if (composition_) {
+        composition_->stop();
+        composition_.reset();
+    }
     ecs.reset();
-
-    weapon_release_service_.reset();
-    weapon_release_damage_bridge_.reset();
-    engagement_event_store_.reset();
-    environment_model_.reset();
-    unit_factory_.reset();
-    effects_model_.reset();
-    sensor_model_.reset();
-    acoustic_model_.reset();
-    control_model_.reset();
-    guidance_model_.reset();
-}
-
-void SimulationKernel::set_unit_factory(std::unique_ptr<IUnitFactory> factory) {
-    ensure_active("set_unit_factory");
-    if (factory) {
-        unit_factory_ = std::move(factory);
-    } else {
-        spdlog::warn("Attempted to set a null unit factory; keeping current factory.");
-    }
-}
-
-void SimulationKernel::set_effects_model(std::unique_ptr<IEffectsModel> model) {
-    ensure_active("set_effects_model");
-    if (model) {
-        effects_model_ = std::move(model);
-        ecs.set<EffectsModelRef>({effects_model_.get()});
-    } else {
-        spdlog::warn("Attempted to set a null effects model; keeping current model.");
-    }
-}
-
-void SimulationKernel::set_sensor_model(std::unique_ptr<ISensorModel> model) {
-    ensure_active("set_sensor_model");
-    if (model) {
-        sensor_model_ = std::move(model);
-        ecs.set<SensorModelRef>({sensor_model_.get()});
-    } else {
-        spdlog::warn("Attempted to set a null sensor model; keeping current model.");
-    }
-}
-
-void SimulationKernel::set_acoustic_model(std::unique_ptr<IAcousticModel> model) {
-    ensure_active("set_acoustic_model");
-    if (model) {
-        acoustic_model_ = std::move(model);
-        ecs.set<AcousticModelRef>({acoustic_model_.get()});
-    } else {
-        spdlog::warn("Attempted to set a null acoustic model; keeping current model.");
-    }
-}
-
-void SimulationKernel::set_control_model(std::unique_ptr<IControlModel> model) {
-    ensure_active("set_control_model");
-    if (model) {
-        control_model_ = std::move(model);
-        ecs.set<ControlModelRef>({control_model_.get()});
-    } else {
-        spdlog::warn("Attempted to set a null control model; keeping current model.");
-    }
-}
-
-void SimulationKernel::set_guidance_model(std::unique_ptr<IGuidanceModel> model) {
-    ensure_active("set_guidance_model");
-    if (model) {
-        guidance_model_ = std::move(model);
-        ecs.set<GuidanceModelRef>({guidance_model_.get()});
-    } else {
-        spdlog::warn("Attempted to set a null guidance model; keeping current model.");
-    }
-}
-
-void SimulationKernel::set_environment_model(std::unique_ptr<IEnvironmentModel> model) {
-    ensure_active("set_environment_model");
-    if (model) {
-        environment_model_ = std::move(model);
-        ecs.set<EnvironmentModelRef>({environment_model_.get()});
-    } else {
-        spdlog::warn("Attempted to set a null environment model; keeping current model.");
-    }
 }
 
 bool SimulationKernel::load_unit_definitions(const std::string &path, std::string *error) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("load_unit_definitions");
-    if (!unit_factory_) {
+    world_state_mutated_ = true;
+    IUnitFactory *factory = unit_factory();
+    if (factory == nullptr) {
         if (error) *error = "Unit factory not set.";
         return false;
     }
-    return unit_factory_->load_definitions(path, error);
+    return factory->load_definitions(path, error);
 }
 
 void SimulationKernel::set_missile_tuning(const MissileTuning &tuning) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("set_missile_tuning");
     missile_tuning_ = tuning;
+    world_state_mutated_ = true;
 }
 
 void SimulationKernel::reset(unsigned int seed) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("reset");
-    engagement_event_store_->clear();
+    if (IEngagementEventStore *store = engagement_event_store()) {
+        store->clear();
+    }
 
     // Delete all simulation entities (tagged with SimObject)
     // This is safer than delete_with<Transform> as it won't affect
@@ -191,11 +112,13 @@ void SimulationKernel::reset(unsigned int seed) {
     ecs_reset_clock(ecs.c_ptr());
 
     rng.seed(seed);
+    world_state_mutated_ = true;
 
     spdlog::info("Simulation Reset with seed {}", seed);
 }
 
 void SimulationKernel::step() {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("step");
     if (exact_stage_trace_frame_active_) {
         throw std::logic_error(
@@ -204,13 +127,17 @@ void SimulationKernel::step() {
     // Fixed timestep update
     // We pass the fixed delta_time to progress
     // This overrides the internal clock measuring
+    world_state_mutated_ = true;
     ecs.progress(time_step);
 }
 
 bool SimulationKernel::load_database(const std::string &path) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("load_database");
+    world_state_mutated_ = true;
     std::string error;
-    if (unit_factory_->load_definitions(path, &error)) {
+    IUnitFactory *factory = unit_factory();
+    if (factory != nullptr && factory->load_definitions(path, &error)) {
         spdlog::info("Database loaded from: {}", path);
         return true;
     }
@@ -219,19 +146,24 @@ bool SimulationKernel::load_database(const std::string &path) {
 }
 
 void SimulationKernel::set_time_step(double dt) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("set_time_step");
     if (!std::isfinite(dt) || dt <= 0.0) {
         throw std::invalid_argument(
             "SimulationKernel time step must be finite and greater than zero");
     }
     time_step = dt;
+    world_state_mutated_ = true;
 }
 
 flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_name, double x,
                                            double y, double z, double heading, double pitch,
                                            double roll, double vx, double vy, double vz) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("spawn_unit");
-    if (!unit_factory_) {
+    world_state_mutated_ = true;
+    IUnitFactory *factory = unit_factory();
+    if (factory == nullptr) {
         spdlog::error("Unit factory not set; cannot spawn unit.");
         return flecs::entity::null();
     }
@@ -239,7 +171,7 @@ flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_na
     // Optional: Check existence first or trust spawn to handle it.
     // The factory->spawn is responsible for lookup now.
     SpawnParams params{side, x, y, z, heading, pitch, roll, vx, vy, vz};
-    auto e = unit_factory_->spawn(ecs, unit_name, params);
+    auto e = factory->spawn(ecs, unit_name, params);
     if (e.is_valid()) {
         e.add<SimObject>(); // Tag for cleanup
     }
@@ -247,66 +179,214 @@ flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_na
 }
 
 void SimulationKernel::clear_zones() {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("clear_zones");
-    if (environment_model_) {
-        environment_model_->clear_zones();
+    world_state_mutated_ = true;
+    if (IEnvironmentModel *model = environment_model()) {
+        model->clear_zones();
     }
 }
 
 void SimulationKernel::add_zone(const std::string &name, double x, double y, double width,
                                 double height, double heading, int surface_type) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("add_zone");
-    if (environment_model_) {
-        environment_model_->add_zone(name, x, y, width, height, heading,
-                                     (IEnvironmentModel::SurfaceType)surface_type);
+    world_state_mutated_ = true;
+    if (IEnvironmentModel *model = environment_model()) {
+        model->add_zone(name, x, y, width, height, heading,
+                        static_cast<IEnvironmentModel::SurfaceType>(surface_type));
     }
 }
 
 void SimulationKernel::set_wind(double speed_mps, double dir_from_deg, double shear_mps_per_km) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("set_wind");
-    if (environment_model_) {
-        environment_model_->set_wind(speed_mps, dir_from_deg, shear_mps_per_km);
+    world_state_mutated_ = true;
+    if (IEnvironmentModel *model = environment_model()) {
+        model->set_wind(speed_mps, dir_from_deg, shear_mps_per_km);
     }
 }
 
 void SimulationKernel::set_sun_direction(double azimuth_deg, double elevation_deg) {
-    if (environment_model_) {
-        environment_model_->set_sun_direction(azimuth_deg, elevation_deg);
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("set_sun_direction");
+    world_state_mutated_ = true;
+    if (IEnvironmentModel *model = environment_model()) {
+        model->set_sun_direction(azimuth_deg, elevation_deg);
     }
 }
 
 Vec3 SimulationKernel::get_sun_direction() const {
-    if (environment_model_) {
-        return environment_model_->get_sun_direction();
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_sun_direction");
+    if (IEnvironmentModel *model = environment_model()) {
+        return model->get_sun_direction();
     }
     return {0.0, 0.7071, 0.7071};
 }
 
 void SimulationKernel::set_terrain_type(const std::string &terrain_type) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("set_terrain_type");
-    if (environment_model_) {
-        environment_model_->set_terrain_type(terrain_type);
+    world_state_mutated_ = true;
+    if (IEnvironmentModel *model = environment_model()) {
+        model->set_terrain_type(terrain_type);
     }
 }
 
 void SimulationKernel::set_maritime_state(double sea_state, double wave_heading_deg,
                                           double wave_period_s) {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("set_maritime_state");
-    if (environment_model_) {
-        environment_model_->set_maritime_state(sea_state, wave_heading_deg, wave_period_s);
+    world_state_mutated_ = true;
+    if (IEnvironmentModel *model = environment_model()) {
+        model->set_maritime_state(sea_state, wave_heading_deg, wave_period_s);
     }
 }
 
 void SimulationKernel::clear_maritime_state() {
+    auto composition_lock = acquire_composition_operation();
     ensure_active("clear_maritime_state");
-    if (environment_model_) {
-        environment_model_->clear_maritime_state();
+    world_state_mutated_ = true;
+    if (IEnvironmentModel *model = environment_model()) {
+        model->clear_maritime_state();
     }
 }
 
 IEnvironmentModel::MaritimeState SimulationKernel::get_maritime_state() const {
-    if (environment_model_) {
-        return environment_model_->get_maritime_state();
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_maritime_state");
+    if (IEnvironmentModel *model = environment_model()) {
+        return model->get_maritime_state();
     }
     return {};
+}
+
+std::string SimulationKernel::requested_composition_sha256() const {
+    auto composition_lock = acquire_composition_operation();
+    return composition_ ? composition_->requested_manifest_sha256() : std::string{};
+}
+
+std::string SimulationKernel::resolved_composition_sha256() const {
+    auto composition_lock = acquire_composition_operation();
+    return composition_ ? composition_->resolved_manifest_sha256() : std::string{};
+}
+
+std::uint64_t SimulationKernel::world_composition_generation() const noexcept {
+    auto composition_lock = acquire_composition_operation();
+    return composition_ ? composition_->world_generation() : 0;
+}
+
+std::array<std::uint64_t, 5> SimulationKernel::composition_scope_generations() const noexcept {
+    auto composition_lock = acquire_composition_operation();
+    return composition_ ? composition_->scope_generations() : std::array<std::uint64_t, 5>{};
+}
+
+SimulationKernel::WorldLease SimulationKernel::acquire_world_lease() {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("acquire_world_lease");
+    raw_world_access_exposed_ = true;
+    return WorldLease(std::move(composition_lock), ecs);
+}
+
+SimulationKernel::ConstWorldLease SimulationKernel::acquire_world_lease() const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("acquire_world_lease");
+    raw_world_access_exposed_ = true;
+    return ConstWorldLease(std::move(composition_lock), ecs);
+}
+
+double SimulationKernel::get_time_step() const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_time_step");
+    return time_step;
+}
+
+MissileTuning SimulationKernel::get_missile_tuning() const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_missile_tuning");
+    return missile_tuning_;
+}
+
+bool SimulationKernel::rebuild_world_composition(std::string_view barrier, std::string *error) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("rebuild_world_composition");
+    if (!composition_) {
+        if (error) *error = "default simulation composition is unavailable";
+        return false;
+    }
+    if (exact_stage_trace_frame_active_) {
+        if (error) {
+            *error = std::string(runtime::composition::kErrorRebuildBarrierRejected) +
+                     ":world:exact-stage trace frame is active";
+        }
+        return false;
+    }
+    if (raw_world_access_exposed_) {
+        if (error) {
+            *error =
+                std::string(runtime::composition::kErrorRebuildBarrierRejected) +
+                ":world:raw Flecs world access has been exposed; rebuild requires a world lease";
+        }
+        return false;
+    }
+    if (ecs.count<SimObject>() != 0) {
+        if (error) {
+            *error = std::string(runtime::composition::kErrorRebuildBarrierRejected) +
+                     ":world:non-quiescent world contains SimObject entities";
+        }
+        return false;
+    }
+    if (world_state_mutated_) {
+        if (error) {
+            *error = std::string(runtime::composition::kErrorRebuildBarrierRejected) +
+                     ":world:world state has been mutated since composition construction";
+        }
+        return false;
+    }
+    auto status = composition_->rebuild_world(barrier);
+    if (!status) {
+        if (error) {
+            const auto &failure = status.error();
+            *error = failure.code + ":" + failure.subject + ":" + failure.detail;
+        }
+        return false;
+    }
+    return true;
+}
+
+IEnvironmentModel *SimulationKernel::environment_model() const noexcept {
+    return composition_ ? composition_->environment_model() : nullptr;
+}
+
+IUnitFactory *SimulationKernel::unit_factory() const noexcept {
+    return composition_ ? composition_->unit_factory() : nullptr;
+}
+
+IEffectsModel *SimulationKernel::effects_model() const noexcept {
+    return composition_ ? composition_->effects_model() : nullptr;
+}
+
+ISensorModel *SimulationKernel::sensor_model() const noexcept {
+    return composition_ ? composition_->sensor_model() : nullptr;
+}
+
+IAcousticModel *SimulationKernel::acoustic_model() const noexcept {
+    return composition_ ? composition_->acoustic_model() : nullptr;
+}
+
+IControlModel *SimulationKernel::control_model() const noexcept {
+    return composition_ ? composition_->control_model() : nullptr;
+}
+
+IGuidanceModel *SimulationKernel::guidance_model() const noexcept {
+    return composition_ ? composition_->guidance_model() : nullptr;
+}
+
+IEngagementEventStore *SimulationKernel::engagement_event_store() const noexcept {
+    return composition_ ? composition_->engagement_event_store() : nullptr;
+}
+
+IWeaponReleaseService *SimulationKernel::weapon_release_service() const noexcept {
+    return composition_ ? composition_->weapon_release_service() : nullptr;
 }

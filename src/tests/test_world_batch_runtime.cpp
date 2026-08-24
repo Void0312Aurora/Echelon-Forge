@@ -1,4 +1,5 @@
 #include "core/engine/world_batch_runtime.h"
+#include "core/engine/world_batch_visual_binding_compatibility_helper.h"
 
 #include <doctest/doctest.h>
 
@@ -85,7 +86,8 @@ TEST_SUITE("world_batch_runtime") {
         auto &world = runtime.world_raw_quarantine(0);
         world.set_wind(25.0, 270.0, 5.0);
 
-        const auto *env_ref = world.get_world().get<EnvironmentModelRef>();
+        auto world_lease = world.acquire_world_lease();
+        const auto *env_ref = world_lease.world().get<EnvironmentModelRef>();
         REQUIRE(env_ref != nullptr);
         REQUIRE(env_ref->model != nullptr);
         const auto windy = env_ref->model->get_atmosphere_at(0.0, 0.0, 1000.0);
@@ -97,6 +99,39 @@ TEST_SUITE("world_batch_runtime") {
         CHECK(calm.wind_velocity.x == doctest::Approx(0.0));
         CHECK(calm.wind_velocity.y == doctest::Approx(0.0));
         CHECK(calm.wind_velocity.z == doctest::Approx(0.0));
+    }
+
+    TEST_CASE("visual compatibility scenes own snapshots across world shutdown") {
+        WorldBatchRuntime runtime(1);
+        auto &world = runtime.world_raw_quarantine(0);
+        const auto camera = world.spawn_unit(Side::Blue, "Aircraft", 0.0, 0.0, 1000.0, 0.0, 0.0,
+                                             0.0, 0.0, 0.0, 0.0);
+        REQUIRE(camera.is_valid());
+
+        WorldEntityRef ref{};
+        ref.world_index = 0;
+        ref.entity_id = camera.id();
+        auto scenes = runtime.collect_visual_binding_compatibility_scenes_batch({ref}, 4, false);
+        REQUIRE(scenes.size() == 1);
+        CHECK(scenes.front().environment == nullptr);
+        CHECK(scenes.front().environment_snapshot.valid);
+        CHECK(scenes.front().environment_snapshot.raster.width == 200);
+        CHECK(scenes.front().environment_snapshot.raster.height == 200);
+        CHECK(scenes.front().environment_snapshot.raster.surface_codes.size() == 40000);
+        CHECK(scenes.front().request.out_height == arb::ARB_HEIGHT / 4);
+        CHECK(scenes.front().request.out_width == arb::ARB_WIDTH / 4);
+
+        const auto before_shutdown =
+            world_batch_visual_binding_compatibility::render_scenes_batch(scenes, false);
+        CHECK(before_shutdown.batch_size == 1);
+
+        world.shutdown();
+        WorldBatchVisualObservationCompatibilityExport rendered{};
+        CHECK_NOTHROW(rendered = world_batch_visual_binding_compatibility::render_scenes_batch(
+                          scenes, false));
+        CHECK(rendered.batch_size == 1);
+        CHECK(rendered.flat.size() == rendered.frame_size);
+        CHECK(rendered.flat == before_shutdown.flat);
     }
 
 } // TEST_SUITE("world_batch_runtime")

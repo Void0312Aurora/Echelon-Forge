@@ -17,7 +17,9 @@ void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKe
             [](SimulationKernel &self, uint64_t entity_id, double x_m, double y_m, double z_m,
                double heading_deg, double pitch_deg, double roll_deg, double vx_mps, double vy_mps,
                double vz_mps) {
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 if (!e.is_valid()) {
                     throw std::invalid_argument("Invalid entity ID for debug_set_unit_truth_state");
                 }
@@ -35,7 +37,9 @@ void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKe
             "set_missile_guidance_mechanism_profile",
             [](SimulationKernel &self, uint64_t entity_id, int capture_mode, int pn_mode,
                int lead_mode, int kinematics_source, int apn_mode) {
-                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
                 const Missile *missile = e.is_valid() ? e.get<Missile>() : nullptr;
                 if (!missile) {
                     throw std::invalid_argument(

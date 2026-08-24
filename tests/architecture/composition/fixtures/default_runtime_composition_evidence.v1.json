@@ -1,0 +1,107 @@
+{
+  "backend": {
+    "admitted_capabilities": [
+      "runtime.cpu_exact"
+    ],
+    "backend_profile_id": "cpu_exact.reference",
+    "implementation_version": "1.0.0",
+    "provider_id": "builtin.backend.flecs_cpu"
+  },
+  "binding_version": "native.v1",
+  "canonical_json": "{\"backend\":{\"admitted_capabilities\":[\"runtime.cpu_exact\"],\"backend_profile_id\":\"cpu_exact.reference\",\"implementation_version\":\"1.0.0\",\"provider_id\":\"builtin.backend.flecs_cpu\"},\"binding_version\":\"native.v1\",\"canonicalization\":\"echelon_forge.sorted_utf8_json.v1\",\"catalog_lock_sha256\":\"ec36d4f134e003e852a87f0dc2edb8095bbd798855d88b099e0174d45efa7f94\",\"composition_id\":\"builtin.default_compatibility\",\"evidence_contract_version\":\"1.0.0\",\"executable_graph_sha256\":\"c6527d5e0398078e440bbea477a8e8de7c711f18f0ec38b7cd96dc5d798c8d02\",\"hash_algorithm\":\"sha256\",\"host_mode\":\"native_cpp\",\"profile_projection_sha256\":\"a6983836e82df80805ac3f0f4f4a6975edccf3024d8ff231a67009a596a28c09\",\"provider_versions\":[{\"implementation_version\":\"1.0.0\",\"provider_id\":\"builtin.acoustic.default\"},{\"implementation_version\":\"1.0.0\",\"provider_id\":\"builtin.backend.flecs_cpu\"},{\"implementation_version\":\"1.0.0\",\"provider_id\":\"builtin.control.default\"},{\"implementation_version\":\"1.0.0\",\"provider_id\":\"builtin.effects.default\"},{\"implementation_version\":\"1.0.0\",\"provider_id\":\"builtin.engagement_event_store\"},{\"implementation_version\":\"1.0.0\",\"provider_id\":\"builtin.environment.default\"},{\"implementation_version\":\"1.0.0\",\"provider_id\":\"builtin.guidance.default\"},{\"implementation_version\":\"1.0.0\",\"provider_id\":\"builtin.sensor.default\"},{\"implementation_version\":\"1.0.0\",\"provider_id\":\"builtin.unit_factory.default\"},{\"implementation_version\":\"1.0.0\",\"provider_id\":\"builtin.weapon_release.damage_bridge\"},{\"implementation_version\":\"1.0.0\",\"provider_id\":\"builtin.weapon_release.service\"}],\"requested_manifest_sha256\":\"c6581f81cc50b8f3ce155919a45737683c9a503645db59ef280cbcebac020c46\",\"requested_profile_id\":\"builtin.default_compatibility\",\"requested_profile_version\":\"1.0.0\",\"resolved_manifest_sha256\":\"138e82a8a59fa4d3960da23f1c0acdda4e7a634f3a02e7f9268933c3a38bc7a5\",\"resolver_contract_version\":\"echelon_forge.simulation_composition_resolver.v1\",\"runtime_request_sha256\":\"5c2954d6d04c77fe803130db14d7e5b56391dcf51e482c73ac8cd96877698d6f\",\"schema_version\":\"echelon_forge.runtime_composition_evidence.v1\",\"stage_contract_version\":\"1.0.0\",\"world_instances\":[{\"scope_generations\":[{\"generation\":1,\"instance_id\":\"composition:1/world:0/application\",\"scope\":\"application\"},{\"generation\":1,\"instance_id\":\"composition:1/world:0/backend\",\"scope\":\"backend\"},{\"generation\":1,\"instance_id\":\"composition:1/world:0/batch\",\"scope\":\"batch\"},{\"generation\":1,\"instance_id\":\"composition:1/world:0/episode\",\"scope\":\"episode\"},{\"generation\":1,\"instance_id\":\"composition:1/world:0/world\",\"scope\":\"world\"}],\"world_index\":0}]}",
+  "canonicalization": "echelon_forge.sorted_utf8_json.v1",
+  "catalog_lock_sha256": "ec36d4f134e003e852a87f0dc2edb8095bbd798855d88b099e0174d45efa7f94",
+  "composition_id": "builtin.default_compatibility",
+  "evidence_contract_version": "1.0.0",
+  "evidence_sha256": "cf086b6d766f6ecdb80c2df2f8bcce4b5592146c03c6917148327cb5fedb32aa",
+  "executable_graph_sha256": "c6527d5e0398078e440bbea477a8e8de7c711f18f0ec38b7cd96dc5d798c8d02",
+  "hash_algorithm": "sha256",
+  "host_mode": "native_cpp",
+  "profile_projection_sha256": "a6983836e82df80805ac3f0f4f4a6975edccf3024d8ff231a67009a596a28c09",
+  "provider_versions": [
+    {
+      "implementation_version": "1.0.0",
+      "provider_id": "builtin.acoustic.default"
+    },
+    {
+      "implementation_version": "1.0.0",
+      "provider_id": "builtin.backend.flecs_cpu"
+    },
+    {
+      "implementation_version": "1.0.0",
+      "provider_id": "builtin.control.default"
+    },
+    {
+      "implementation_version": "1.0.0",
+      "provider_id": "builtin.effects.default"
+    },
+    {
+      "implementation_version": "1.0.0",
+      "provider_id": "builtin.engagement_event_store"
+    },
+    {
+      "implementation_version": "1.0.0",
+      "provider_id": "builtin.environment.default"
+    },
+    {
+      "implementation_version": "1.0.0",
+      "provider_id": "builtin.guidance.default"
+    },
+    {
+      "implementation_version": "1.0.0",
+      "provider_id": "builtin.sensor.default"
+    },
+    {
+      "implementation_version": "1.0.0",
+      "provider_id": "builtin.unit_factory.default"
+    },
+    {
+      "implementation_version": "1.0.0",
+      "provider_id": "builtin.weapon_release.damage_bridge"
+    },
+    {
+      "implementation_version": "1.0.0",
+      "provider_id": "builtin.weapon_release.service"
+    }
+  ],
+  "requested_manifest_sha256": "c6581f81cc50b8f3ce155919a45737683c9a503645db59ef280cbcebac020c46",
+  "requested_profile_id": "builtin.default_compatibility",
+  "requested_profile_version": "1.0.0",
+  "resolved_manifest_sha256": "138e82a8a59fa4d3960da23f1c0acdda4e7a634f3a02e7f9268933c3a38bc7a5",
+  "resolver_contract_version": "echelon_forge.simulation_composition_resolver.v1",
+  "runtime_request_sha256": "5c2954d6d04c77fe803130db14d7e5b56391dcf51e482c73ac8cd96877698d6f",
+  "schema_version": "echelon_forge.runtime_composition_evidence.v1",
+  "stage_contract_version": "1.0.0",
+  "world_instances": [
+    {
+      "scope_generations": [
+        {
+          "generation": 1,
+          "instance_id": "composition:1/world:0/application",
+          "scope": "application"
+        },
+        {
+          "generation": 1,
+          "instance_id": "composition:1/world:0/backend",
+          "scope": "backend"
+        },
+        {
+          "generation": 1,
+          "instance_id": "composition:1/world:0/batch",
+          "scope": "batch"
+        },
+        {
+          "generation": 1,
+          "instance_id": "composition:1/world:0/episode",
+          "scope": "episode"
+        },
+        {
+          "generation": 1,
+          "instance_id": "composition:1/world:0/world",
+          "scope": "world"
+        }
+      ],
+      "world_index": 0
+    }
+  ]
+}

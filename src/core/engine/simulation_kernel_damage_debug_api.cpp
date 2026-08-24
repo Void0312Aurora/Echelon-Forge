@@ -1,5 +1,5 @@
 #include "simulation_kernel.h"
-#include "simulation_kernel_engagement_event_store.h"
+#include "core/interfaces/engagement_event_store.h"
 
 #include "components/basic/common.h"
 #include "components/domains/air/combat/damage_air.h"
@@ -189,6 +189,8 @@ build_debug_effects_damage_event_record(const DebugEffectsDamageEventRecordInput
 
 bool SimulationKernel::debug_apply_proximity_hit(uint64_t attacker_id, uint64_t target_id,
                                                  double damage, double fuse_distance) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_apply_proximity_hit");
     if (attacker_id == 0 || target_id == 0) {
         return false;
     }
@@ -209,7 +211,7 @@ bool SimulationKernel::debug_apply_proximity_hit(uint64_t attacker_id, uint64_t 
     }
 
     const EngagementDamageStateSnapshot before =
-        engagement_event_store_->capture_engagement_damage_state(target_id);
+        engagement_event_store()->capture_engagement_damage_state(target_id);
 
     Missile synthetic{};
     synthetic.attacker_id = attacker_id;
@@ -253,7 +255,7 @@ bool SimulationKernel::debug_apply_proximity_hit(uint64_t attacker_id, uint64_t 
     const EffectsResult effects_result =
         effects_ref->model->on_proximity_hit(ecs, impact, synthetic, target);
     const EngagementDamageStateSnapshot after =
-        engagement_event_store_->capture_engagement_damage_state(target_id);
+        engagement_event_store()->capture_engagement_damage_state(target_id);
     const ecs_world_info_t *info = ecs_get_world_info(ecs.c_ptr());
     const double current_time = info ? static_cast<double>(info->world_time_total) : 0.0;
     const auto detonation_local = world_point_to_local_body(*target_transform, impact_transform.x,
@@ -274,7 +276,7 @@ bool SimulationKernel::debug_apply_proximity_hit(uint64_t attacker_id, uint64_t 
         0.0,
         false,
     });
-    (void)engagement_event_store_->record_effects_damage_event(std::move(event_record));
+    (void)engagement_event_store()->record_effects_damage_event(std::move(event_record));
     impact.destruct();
     return true;
 }
@@ -283,6 +285,8 @@ bool SimulationKernel::debug_apply_local_proximity_hit(uint64_t attacker_id, uin
                                                        double local_forward_m, double local_right_m,
                                                        double local_up_m, double damage,
                                                        double fuse_distance) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_apply_local_proximity_hit");
     if (attacker_id == 0 || target_id == 0) {
         return false;
     }
@@ -303,7 +307,7 @@ bool SimulationKernel::debug_apply_local_proximity_hit(uint64_t attacker_id, uin
     }
 
     const EngagementDamageStateSnapshot before =
-        engagement_event_store_->capture_engagement_damage_state(target_id);
+        engagement_event_store()->capture_engagement_damage_state(target_id);
 
     Missile synthetic{};
     synthetic.attacker_id = attacker_id;
@@ -339,7 +343,7 @@ bool SimulationKernel::debug_apply_local_proximity_hit(uint64_t attacker_id, uin
     const EffectsResult effects_result =
         effects_ref->model->on_proximity_hit(ecs, impact, synthetic, target);
     const EngagementDamageStateSnapshot after =
-        engagement_event_store_->capture_engagement_damage_state(target_id);
+        engagement_event_store()->capture_engagement_damage_state(target_id);
     const ecs_world_info_t *info = ecs_get_world_info(ecs.c_ptr());
     const double current_time = info ? static_cast<double>(info->world_time_total) : 0.0;
     const auto detonation_local = world_point_to_local_body(*target_transform, impact_transform.x,
@@ -360,7 +364,7 @@ bool SimulationKernel::debug_apply_local_proximity_hit(uint64_t attacker_id, uin
         0.0,
         false,
     });
-    (void)engagement_event_store_->record_effects_damage_event(std::move(event_record));
+    (void)engagement_event_store()->record_effects_damage_event(std::move(event_record));
     impact.destruct();
     return true;
 }
@@ -368,6 +372,8 @@ bool SimulationKernel::debug_apply_local_proximity_hit(uint64_t attacker_id, uin
 bool SimulationKernel::debug_apply_profiled_local_proximity_hit(
     uint64_t attacker_id, uint64_t target_id, double local_forward_m, double local_right_m,
     double local_up_m, const WarheadProfile &warhead_profile) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_apply_profiled_local_proximity_hit");
     return debug_apply_profiled_local_proximity_hit_with_velocity(
         attacker_id, target_id, local_forward_m, local_right_m, local_up_m, warhead_profile, 0.0,
         0.0, 0.0);
@@ -377,6 +383,8 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity(
     uint64_t attacker_id, uint64_t target_id, double local_forward_m, double local_right_m,
     double local_up_m, const WarheadProfile &warhead_profile, double missile_vx_mps,
     double missile_vy_mps, double missile_vz_mps) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_apply_profiled_local_proximity_hit_with_velocity");
     if (attacker_id == 0 || target_id == 0) {
         return false;
     }
@@ -395,6 +403,8 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_an
     double local_up_m, const WarheadProfile &warhead_profile, double missile_vx_mps,
     double missile_vy_mps, double missile_vz_mps, double detonation_heading_deg,
     double detonation_pitch_deg, double detonation_roll_deg) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_apply_profiled_local_proximity_hit_with_velocity_and_attitude");
     if (attacker_id == 0 || target_id == 0) {
         return false;
     }
@@ -434,7 +444,7 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_an
     }
 
     const EngagementDamageStateSnapshot before =
-        engagement_event_store_->capture_engagement_damage_state(target_id);
+        engagement_event_store()->capture_engagement_damage_state(target_id);
 
     Missile synthetic{};
     synthetic.attacker_id = attacker_id;
@@ -476,7 +486,7 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_an
     const EffectsResult effects_result =
         effects_ref->model->on_proximity_hit(ecs, impact, synthetic, target);
     const EngagementDamageStateSnapshot after =
-        engagement_event_store_->capture_engagement_damage_state(target_id);
+        engagement_event_store()->capture_engagement_damage_state(target_id);
     const ecs_world_info_t *info = ecs_get_world_info(ecs.c_ptr());
     const double current_time = info ? static_cast<double>(info->world_time_total) : 0.0;
     const auto detonation_local = world_point_to_local_body(target_transform, impact_transform.x,
@@ -502,7 +512,7 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_an
         closure_mps,
         true,
     });
-    (void)engagement_event_store_->record_effects_damage_event(std::move(event_record));
+    (void)engagement_event_store()->record_effects_damage_event(std::move(event_record));
     impact.destruct();
     return true;
 }

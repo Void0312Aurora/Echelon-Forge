@@ -21,7 +21,10 @@
 `SimulationKernel` 的 public API 保持在 `simulation_kernel.h`。实现按职责拆分：
 
 - `simulation_kernel_systems.cpp`
-  ECS component registration 和系统注册顺序。
+  kernel entry point，将 ECS component/system 安装委托给 owner-derived contribution registry。
+- `system_contribution_registry.cpp` 与 `../../systems/system_contribution_registry.h`
+  准入 component/system descriptor、kernel-owned pre-update entry 与默认 stage-order
+  registration seam。
 - `simulation_kernel_command_api.cpp`
   legacy movement/action command、command link、digital pilot/tasking setters/getters、message command。
 - `simulation_kernel_command_surface.*`

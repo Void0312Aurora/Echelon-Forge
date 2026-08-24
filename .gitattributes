@@ -5,3 +5,18 @@ tests/scenario/fixtures/environment_substrate/arnis_bundle_v1/** -text
 # Historical A2 governance dependencies are manifest-pinned exact bytes.
 docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/retained_dependencies/** -text
 
+# Cordis package descriptors, overlays, profiles, bundles, and lockfiles are
+# raw-byte hash inputs for package resolution and provenance.
+packages/cordis-runtime/packages/*.json -text
+packages/cordis-runtime/overlays/*.json -text
+packages/cordis-runtime/profiles/*.json -text
+packages/cordis-runtime/profiles/*.mjs -text
+packages/cordis-runtime/package-lock.json -text
+
+# Cordis profile bundles hash these composition fixtures as raw bytes. Keep
+# their generated LF representation identical on Windows and Linux checkouts.
+tests/architecture/composition/fixtures/default_admitted_catalog_lock.v1.json -text
+tests/architecture/composition/fixtures/owner_authority_registry.v1.json -text
+tests/architecture/composition/fixtures/default_runtime_profile_projection.v1.json -text
+tests/architecture/composition/fixtures/default_compatibility_manifest.requested.json -text
+tests/architecture/composition/fixtures/default_compatibility_manifest.resolved.json -text

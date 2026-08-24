@@ -444,9 +444,9 @@ bool missile_launch_envelope_allows(const MissileTuning &tuning, const Detection
 } // namespace
 
 SimulationKernelWeaponReleaseService::SimulationKernelWeaponReleaseService(
-    flecs::world &ecs, const std::unique_ptr<IUnitFactory> &unit_factory,
-    MissileTuning &missile_tuning, std::mt19937 &rng, IEngagementLaunchRecorder &launch_recorder,
-    IEngagementEventRecorder &damage_recorder, IWeaponReleaseDamageBridge &damage_bridge)
+    flecs::world &ecs, IUnitFactory &unit_factory, MissileTuning &missile_tuning, std::mt19937 &rng,
+    IEngagementLaunchRecorder &launch_recorder, IEngagementEventRecorder &damage_recorder,
+    IWeaponReleaseDamageBridge &damage_bridge)
     : ecs_(ecs), unit_factory_(unit_factory), missile_tuning_(missile_tuning), rng_(rng),
       launch_recorder_(launch_recorder), damage_recorder_(damage_recorder),
       damage_bridge_(damage_bridge) {}
@@ -454,7 +454,7 @@ SimulationKernelWeaponReleaseService::SimulationKernelWeaponReleaseService(
 std::optional<SimulationKernelWeaponReleaseService::ResolvedMissileLaunchDefinition>
 SimulationKernelWeaponReleaseService::resolve_missile_launch_definition(
     flecs::entity attacker, const PilotAction *pilot) const {
-    if (!attacker.is_valid() || !unit_factory_) {
+    if (!attacker.is_valid()) {
         return std::nullopt;
     }
 
@@ -486,7 +486,7 @@ SimulationKernelWeaponReleaseService::resolve_missile_launch_definition(
             }
 
             const UnitDefinition *platform_definition =
-                unit_factory_->get_definition(*platform_name);
+                unit_factory_.get_definition(*platform_name);
             if (!platform_definition) {
                 continue;
             }
@@ -497,7 +497,7 @@ SimulationKernelWeaponReleaseService::resolve_missile_launch_definition(
             }
 
             const UnitDefinition *weapon_definition =
-                unit_factory_->get_definition(weapon_it->second);
+                unit_factory_.get_definition(weapon_it->second);
             if (!weapon_definition || weapon_definition->type != UnitType::Missile) {
                 continue;
             }

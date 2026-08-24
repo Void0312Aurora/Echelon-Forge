@@ -7,6 +7,8 @@
 ## 允许
 
 - 稳定 request/result 类型。
+- step path 外的 host-neutral composition ingestion、validation、scoped lifecycle ownership
+  与 deterministic rollback/teardown。
 - facade、capability query、批量 runtime 操作入口。
 - 对 `core/engine` 与 `core/mission` 的组合调用。
 - common command/tasking contract、air/naval maintained slice、ground-bootstrap setup evidence 和 engagement evidence export。
@@ -22,17 +24,22 @@
 ## 子目录约定
 
 - `contracts/`：facade、engine、binding 可共享的稳定 DTO，不能包含 runtime owner 或 engine headers。
+- `composition/`：隔离的原生 composition ingestion、provider catalog、transaction、scope
+  generation、typed handle 与 teardown owner。
 - `facade/`：当前维护中的 typed runtime facade。
 
 ## 当前阅读入口
 
 - [contracts/README.md](contracts/README.md)
+- [composition/README.md](composition/README.zh.md)
 - [facade/README.md](facade/README.md)
 
 ## 当前文件落点
 
 - `contracts/`
   - `world_batch_contracts.h`, `engagement_contracts.h`, `platform_capability_contracts.h`
+- `composition/`
+  - `composition_json.h`, `provider_catalog.h`, `composition_runtime.h`
 - `facade/`
   - `runtime_facade.h`, `runtime_facade.cpp`, `runtime_facade_types.h`
 

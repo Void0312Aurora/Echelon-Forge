@@ -1,0 +1,9 @@
+{
+  "backend_profile_id": "cpu_exact.reference",
+  "provider_id": "builtin.backend.flecs_cpu",
+  "provider_implementation_version": "1.0.0",
+  "required_capabilities": [
+    "runtime.cpu_exact"
+  ],
+  "schema_version": "echelon_forge.runtime_backend_provider_request.v1"
+}

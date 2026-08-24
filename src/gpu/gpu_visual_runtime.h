@@ -92,6 +92,16 @@ std::vector<float> render_visual_reference_cpu(const VisualRenderRequest &reques
                                                IEnvironmentModel *env);
 
 std::vector<float>
+render_visual_reference_cpu_from_snapshot(const VisualRenderRequest &request,
+                                          const std::vector<VisibleObjectPacked> &objects,
+                                          const DefaultEnvironmentSnapshot *snapshot);
+
+std::vector<float> render_visual_reference_cpu_batch_from_snapshot(
+    const std::vector<VisualRenderRequest> &requests,
+    const std::vector<std::vector<VisibleObjectPacked>> &objects_batch,
+    const DefaultEnvironmentSnapshot *snapshot);
+
+std::vector<float>
 render_visual_experiment_batch(const std::vector<VisualRenderRequest> &requests,
                                const std::vector<std::vector<VisibleObjectPacked>> &objects_batch,
                                IEnvironmentModel *env);
@@ -99,6 +109,11 @@ render_visual_experiment_batch(const std::vector<VisualRenderRequest> &requests,
 VisualBatchRenderExport render_visual_experiment_batch_export(
     const std::vector<VisualRenderRequest> &requests,
     const std::vector<std::vector<VisibleObjectPacked>> &objects_batch, IEnvironmentModel *env);
+
+VisualBatchRenderExport render_visual_experiment_batch_export_from_snapshot(
+    const std::vector<VisualRenderRequest> &requests,
+    const std::vector<std::vector<VisibleObjectPacked>> &objects_batch,
+    const DefaultEnvironmentSnapshot *snapshot);
 
 bool render_visual_experiment_batch_device_resident(
     const std::vector<VisualRenderRequest> &requests,
@@ -110,5 +125,10 @@ std::size_t last_visual_output_float_count();
 std::vector<float> render_visual_experiment(const VisualRenderRequest &request,
                                             const std::vector<VisibleObjectPacked> &objects,
                                             IEnvironmentModel *env);
+
+std::vector<float>
+render_visual_experiment_from_snapshot(const VisualRenderRequest &request,
+                                       const std::vector<VisibleObjectPacked> &objects,
+                                       const DefaultEnvironmentSnapshot *snapshot);
 
 } // namespace gpu

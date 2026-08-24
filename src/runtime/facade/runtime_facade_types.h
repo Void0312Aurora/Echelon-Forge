@@ -11,6 +11,7 @@
 #include "runtime/contracts/engagement_contracts.h"
 #include "runtime/contracts/policy_contracts.h"
 #include "runtime/contracts/runtime_dto_contracts.h"
+#include "runtime/contracts/runtime_composition_evidence_contract.h"
 #include "runtime/contracts/world_batch_contracts.h"
 
 struct RuntimeCapabilities {
@@ -22,6 +23,13 @@ struct RuntimeBatchConfig {
 #define EF_RUNTIME_BATCH_CONFIG_FIELD(type, name, default_value) type name = default_value;
 #include "runtime/facade/detail/runtime/runtime_batch_config.inc"
 };
+
+using RuntimeCompositionEvidence =
+    runtime::composition_evidence_contracts::RuntimeCompositionEvidence;
+using RuntimeCompositionEvidenceResult =
+    runtime::composition_evidence_contracts::RuntimeCompositionEvidenceResult;
+using RuntimeCompositionEvidenceComparison =
+    runtime::composition_evidence_contracts::EvidenceComparisonResult;
 
 // Explicit backend-selection preflight. This is deliberately separate from
 // RuntimeBatchConfig so the maintained two-field CPU default keeps its bytes

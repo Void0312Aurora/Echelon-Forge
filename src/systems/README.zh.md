@@ -2,6 +2,10 @@
 
 `systems/` 保存 ECS system registration 和每 tick mutation 逻辑。这里的代码消费 `components/` 与 `models/`，并由 `core/engine` 注册和调度。
 
+内置 component/system graph 的 owner-admission declaration 位于
+`system_contribution_registry.h`；其 implementation 与 native kernel entry 位于
+`core/engine`。package 或 discovery order 不得成为 Flecs execution order。
+
 本层是 multi-domain aware，但成熟度不均：air execution 现在由 `domains/air` 显式拥有，
 physics 保留共享 primitive，naval 的舰艇/潜艇和舰载航空 token system 位于
 `domains/naval`，ground 只限 terrain/ground-contact primitive，不是 full land

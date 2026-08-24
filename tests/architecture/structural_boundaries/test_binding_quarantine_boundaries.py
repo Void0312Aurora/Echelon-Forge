@@ -47,18 +47,19 @@ def test_wp22_bindings_core_direct_world_entity_drilling_stays_quarantined() -> 
   )
   quarantine_helper = _extract_function_block(
     text,
-    "flecs::entity diagnostics_legacy_binding_entity_quarantine_lookup("
+    "diagnostics_legacy_binding_entity_quarantine_lookup(SimulationKernel &self"
   )
 
-  assert "self.get_world().entity(" not in maintained_block
+  assert "self.acquire_world_lease()" not in maintained_block
   assert "lookup_entity(" not in maintained_block
-  assert "self.get_world().entity(" not in override_block
-  assert "Diagnostics quarantine" in quarantine_helper
-  assert "self.get_world().entity(" in quarantine_helper
+  assert "self.acquire_world_lease()" not in override_block
+  assert "WP22-R3 quarantine marker" in quarantine_helper
+  assert "self.acquire_world_lease()" in quarantine_helper
+  assert "world_lease.world().entity(" in quarantine_helper
   assert "diagnostics_legacy_binding_entity_quarantine_lookup(" in diagnostics_block
   assert "diagnostics_legacy_binding_entity_quarantine_lookup(" in legacy_block
-  assert "self.get_world().entity(" not in diagnostics_block
-  assert "self.get_world().entity(" not in legacy_block
+  assert "self.acquire_world_lease()" not in diagnostics_block
+  assert "self.acquire_world_lease()" not in legacy_block
   assert "lookup_entity(" not in text
 
 def test_wp22_legacy_debug_setter_routes_through_bridge_helpers_not_direct_component_writes() -> None:

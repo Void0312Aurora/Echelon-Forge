@@ -5,6 +5,7 @@ from tests.architecture.structural_boundaries.helpers import *
 
 def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_systems_stays_inline_free() -> None:
   systems_text = _text(SIMULATION_KERNEL_SYSTEMS)
+  registry_text = _text(REPO_ROOT / "src" / "core" / "engine" / "system_contribution_registry.cpp")
   helper_text = _text(PILOT_WEAPON_RELEASE_SYSTEM)
   naval_helper_text = _text(NAVAL_MISSION_WEAPON_RELEASE_SYSTEM)
   engagement_event_types_text = _text(ENGAGEMENT_EVENT_TYPES)
@@ -23,6 +24,13 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
   engagement_store_cpp_text = _text(SIMULATION_KERNEL_ENGAGEMENT_EVENT_STORE_CPP)
   damage_debug_text = _text(SIMULATION_KERNEL_DAMAGE_DEBUG_API)
   damage_bridge_text = _text(WEAPON_RELEASE_DAMAGE_BRIDGE)
+  provider_catalog_text = _text(
+    REPO_ROOT
+    / "src"
+    / "runtime"
+    / "providers"
+    / "default_simulation_provider_catalog.cpp"
+  )
   cmake_text = _text(CMAKE_LISTS)
   inline_systems = INLINE_REGISTERED_SYSTEM_PATTERN.findall(systems_text)
   inline_on_update = [name for name, kind in inline_systems if kind == "OnUpdate"]
@@ -37,24 +45,18 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
     systems_text,
     "IWeaponReleaseService& weapon_release_service = *this",
   )
-  assert re.search(
-    r"register_pilot_weapon_release_system\(\s*ecs,\s*\*weapon_release_service_\s*\)",
-    systems_text,
-  )
-  assert re.search(
-    r"register_naval_mission_weapon_release_system\(\s*ecs,\s*\*weapon_release_service_\s*\)",
-    systems_text,
-  )
+  assert "register_pilot_weapon_release_system" in registry_text
+  assert "register_naval_mission_weapon_release_system" in registry_text
   assert "ecs.set<EngagementEventRecorderRef>({this})" not in systems_text
-  assert "ecs.set<EngagementEventRecorderRef>({engagement_event_store_.get()})" in systems_text
+  assert "ecs.set<EngagementEventRecorderRef>" not in systems_text
+  assert "&EngagementEventRecorderRef::recorder" in provider_catalog_text
+  assert "&WeaponReleaseServiceRef::service" in provider_catalog_text
   assert "class SimulationKernel :" not in kernel_header_text
   assert "public IWeaponReleaseService" not in kernel_header_text
   assert "public IEngagementEventRecorder" not in kernel_header_text
-  assert "std::unique_ptr<IWeaponReleaseService> weapon_release_service_" in kernel_header_text
-  assert (
-    "std::unique_ptr<SimulationKernelEngagementEventStore> engagement_event_store_"
-    in kernel_header_text
-  )
+  assert "std::unique_ptr<IWeaponReleaseService> weapon_release_service_" not in kernel_header_text
+  assert "engagement_event_store_" not in kernel_header_text
+  assert "std::unique_ptr<runtime::providers::DefaultSimulationComposition> composition_" in kernel_header_text
   assert "RecentEngagementEvents recent_engagement_events_" not in kernel_header_text
   assert "struct RecentEngagementEvents" not in kernel_header_text
   assert '#include "core/engine/simulation_kernel_engagement_event_store.h"' not in kernel_header_text
@@ -67,9 +69,8 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
   assert "record_legacy_launch_event(" not in kernel_header_text
   assert "record_effects_damage_event(" not in kernel_header_text
   assert "capture_engagement_damage_state(" not in kernel_header_text
-  assert "public IEngagementEventRecorder" in engagement_store_text
-  assert "public IEngagementLaunchRecorder" in engagement_store_text
-  assert '#include "core/interfaces/engagement_launch_recorder.h"' in engagement_store_text
+  assert "public IEngagementEventStore" in engagement_store_text
+  assert '#include "core/interfaces/engagement_event_store.h"' in engagement_store_text
   assert "struct EngagementEffectsDamageEventRecord" in recorder_header_text
   for source_name, source_text in (
     ("engagement_event_recorder.h", recorder_header_text),
@@ -106,17 +107,18 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
     not in kernel_services_text
   )
   assert "make_simulation_kernel_weapon_release_service(" in kernel_services_text
-  assert "make_simulation_kernel_weapon_release_service(" in kernel_cpp_text
+  assert "make_simulation_kernel_weapon_release_service(" not in kernel_cpp_text
+  assert "make_simulation_kernel_weapon_release_service(" in provider_catalog_text
   assert not _contains_cpp_marker(
     kernel_cpp_text,
     "make_simulation_kernel_weapon_release_service(*this)",
   )
-  assert "std::make_unique<SimulationKernelEngagementEventStore>(ecs)" in kernel_cpp_text
+  assert "std::make_unique<SimulationKernelEngagementEventStore>(world)" in provider_catalog_text
   assert "src/core/engine/simulation_kernel_engagement_event_store.cpp" in cmake_text
   assert "src/core/engine/simulation_kernel_services.cpp" in cmake_text
   assert "src/core/engine/simulation_kernel_weapon_release_service.cpp" in cmake_text
-  assert "weapon_release_service_->fire_missile(" in weapon_api_text
-  assert "weapon_release_service_->fire_naval_weapon(" in weapon_api_text
+  assert "service->fire_missile(" in weapon_api_text
+  assert "service->fire_naval_weapon(" in weapon_api_text
   assert "SimulationKernelWeaponReleaseService::fire_missile(" in release_service_text
   assert "SimulationKernelWeaponReleaseService::fire_weapon_from_pilot_action(" in release_service_text
   assert "SimulationKernelWeaponReleaseService::fire_naval_weapon_from_mission_command(" in release_service_text
@@ -126,18 +128,16 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
   assert "class IWeaponReleaseDamageBridge" in damage_bridge_text
   assert "virtual bool apply_proximity_hit(" in damage_bridge_text
   assert '#include "core/interfaces/weapon_release_damage_bridge.h"' in release_service_header_text
-  assert '#include "core/interfaces/weapon_release_damage_bridge.h"' in kernel_cpp_text
-  assert "class IWeaponReleaseDamageBridge;" in kernel_header_text
-  assert "std::unique_ptr<IWeaponReleaseDamageBridge> weapon_release_damage_bridge_" in kernel_header_text
+  assert '#include "core/interfaces/weapon_release_damage_bridge.h"' in provider_catalog_text
+  assert "std::unique_ptr<IWeaponReleaseDamageBridge> weapon_release_damage_bridge_" not in kernel_header_text
   assert (
     "class SimulationKernelWeaponReleaseDamageBridge final : public IWeaponReleaseDamageBridge"
-    in kernel_cpp_text
+    in provider_catalog_text
   )
   assert _contains_cpp_marker(
-    kernel_cpp_text,
-    "std::make_unique<SimulationKernelWeaponReleaseDamageBridge>(*this)",
+    provider_catalog_text,
+    "std::make_unique<SimulationKernelWeaponReleaseDamageBridge>(kernel)",
   )
-  assert "*weapon_release_damage_bridge_" in kernel_cpp_text
   assert _contains_cpp_marker(
     kernel_services_header_text,
     "IWeaponReleaseDamageBridge& damage_bridge",
@@ -163,17 +163,18 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
   assert '#include "core/interfaces/weapon_release_service.h"' in helper_text
   assert '#include "core/interfaces/weapon_release_service.h"' in naval_helper_text
   assert "register_pilot_weapon_release_system(" in helper_text
-  assert _contains_cpp_marker(
-    helper_text,
-    "IWeaponReleaseService& weapon_release_service",
-  )
+  assert not _contains_cpp_marker(helper_text, "IWeaponReleaseService& weapon_release_service")
+  assert "e.world().get<WeaponReleaseServiceRef>()" in helper_text
+  assert "service_ref->service->fire_weapon_from_pilot_action(" in helper_text
   assert 'ecs.system<const PilotAction>("PilotWeaponRelease")' in helper_text
   assert "fire_weapon_from_pilot_action(" in helper_text
   assert "register_naval_mission_weapon_release_system(" in naval_helper_text
-  assert _contains_cpp_marker(
+  assert not _contains_cpp_marker(
     naval_helper_text,
     "IWeaponReleaseService& weapon_release_service",
   )
+  assert "e.world().get<WeaponReleaseServiceRef>()" in naval_helper_text
+  assert "service_ref->service->fire_naval_weapon_from_mission_command(" in naval_helper_text
   assert 'ecs.system<const MissionCommand, const NavalWeaponSystem>("NavalMissionWeaponRelease")' in naval_helper_text
   assert "fire_naval_weapon_from_mission_command(" in naval_helper_text
 

@@ -1,0 +1,552 @@
+{
+  "authority_registry_sha256": "5c360890992168709c79fc3b633808d5ff564b52d4f55cd7ee019811ba8d651f",
+  "canonical_json": "{\"authority_registry_sha256\":\"5c360890992168709c79fc3b633808d5ff564b52d4f55cd7ee019811ba8d651f\",\"canonicalization\":\"echelon_forge.sorted_utf8_json.v1\",\"catalog_entries\":[{\"capabilities\":[\"runtime.world_batch.cpu\"],\"category\":\"backend\",\"descriptor_id\":\"builtin.backend.flecs_cpu\",\"owner_id\":\"owner.backend\"},{\"capabilities\":[\"domain.combined\"],\"category\":\"domain\",\"descriptor_id\":\"builtin.domain.combined\",\"owner_id\":\"owner.domain\"},{\"capabilities\":[\"runtime.composition.evidence\"],\"category\":\"evidence\",\"descriptor_id\":\"builtin.composition.evidence\",\"owner_id\":\"owner.evidence\"},{\"capabilities\":[\"simulation.model.default\"],\"category\":\"model\",\"descriptor_id\":\"builtin.default.models\",\"owner_id\":\"owner.model\"},{\"capabilities\":[\"runtime.repository_builtin\"],\"category\":\"security\",\"descriptor_id\":\"builtin.repository.admission\",\"owner_id\":\"owner.security\"},{\"capabilities\":[\"deterministic.step\",\"simulation.system.default\"],\"category\":\"system\",\"descriptor_id\":\"builtin.default.system_graph\",\"owner_id\":\"owner.scheduler\"}],\"compatibility_claims\":[\"legacy.cpu_exact_backend.v1\",\"legacy.default_kernel_construction.v1\",\"legacy.registration_order.v1\"],\"component_contributions\":[{\"component_id\":\"AcousticModelRef\",\"registration_id\":\"flecs.component.acoustic_model_ref\"},{\"component_id\":\"ActionCommand\",\"registration_id\":\"flecs.component.action_command\"},{\"component_id\":\"ActionSpaceConfig\",\"registration_id\":\"flecs.component.action_space_config\"},{\"component_id\":\"AeroState\",\"registration_id\":\"flecs.component.aero_state\"},{\"component_id\":\"AeroTuning\",\"registration_id\":\"flecs.component.aero_tuning\"},{\"component_id\":\"AircraftDamageBaseline\",\"registration_id\":\"flecs.component.aircraft_damage_baseline\"},{\"component_id\":\"AircraftDamageState\",\"registration_id\":\"flecs.component.aircraft_damage_state\"},{\"component_id\":\"Alliance\",\"registration_id\":\"flecs.component.alliance\"},{\"component_id\":\"Ammo\",\"registration_id\":\"flecs.component.ammo\"},{\"component_id\":\"AngularVelocity\",\"registration_id\":\"flecs.component.angular_velocity\"},{\"component_id\":\"CommQueue\",\"registration_id\":\"flecs.component.comm_queue\"},{\"component_id\":\"CommandLag\",\"registration_id\":\"flecs.component.command_lag\"},{\"component_id\":\"CommandLink\",\"registration_id\":\"flecs.component.command_link\"},{\"component_id\":\"ComponentDamageState\",\"registration_id\":\"flecs.component.component_damage_state\"},{\"component_id\":\"ContactList\",\"registration_id\":\"flecs.component.contact_list\"},{\"component_id\":\"ControlLawState\",\"registration_id\":\"flecs.component.control_law_state\"},{\"component_id\":\"ControlModelRef\",\"registration_id\":\"flecs.component.control_model_ref\"},{\"component_id\":\"ControlSurfaceState\",\"registration_id\":\"flecs.component.control_surface_state\"},{\"component_id\":\"Countermeasures\",\"registration_id\":\"flecs.component.countermeasures\"},{\"component_id\":\"DataLink\",\"registration_id\":\"flecs.component.data_link\"},{\"component_id\":\"EGI\",\"registration_id\":\"flecs.component.egi\"},{\"component_id\":\"ESMReceiver\",\"registration_id\":\"flecs.component.esmreceiver\"},{\"component_id\":\"EffectsModelRef\",\"registration_id\":\"flecs.component.effects_model_ref\"},{\"component_id\":\"EmbarkedAirOps\",\"registration_id\":\"flecs.component.embarked_air_ops\"},{\"component_id\":\"EngagementEventRecorderRef\",\"registration_id\":\"flecs.component.engagement_event_recorder_ref\"},{\"component_id\":\"EngineTuning\",\"registration_id\":\"flecs.component.engine_tuning\"},{\"component_id\":\"EnvironmentModelRef\",\"registration_id\":\"flecs.component.environment_model_ref\"},{\"component_id\":\"FlightModel\",\"registration_id\":\"flecs.component.flight_model\"},{\"component_id\":\"ForceAccumulator\",\"registration_id\":\"flecs.component.force_accumulator\"},{\"component_id\":\"FuelSystem\",\"registration_id\":\"flecs.component.fuel_system\"},{\"component_id\":\"GearState\",\"registration_id\":\"flecs.component.gear_state\"},{\"component_id\":\"GroundState\",\"registration_id\":\"flecs.component.ground_state\"},{\"component_id\":\"GuidanceModelRef\",\"registration_id\":\"flecs.component.guidance_model_ref\"},{\"component_id\":\"Health\",\"registration_id\":\"flecs.component.health\"},{\"component_id\":\"HitboxConfig\",\"registration_id\":\"flecs.component.hitbox_config\"},{\"component_id\":\"Inertia\",\"registration_id\":\"flecs.component.inertia\"},{\"component_id\":\"InstrumentState\",\"registration_id\":\"flecs.component.instrument_state\"},{\"component_id\":\"Jammer\",\"registration_id\":\"flecs.component.jammer\"},{\"component_id\":\"KeyEntity\",\"registration_id\":\"flecs.component.key_entity\"},{\"component_id\":\"LaggedCommand\",\"registration_id\":\"flecs.component.lagged_command\"},{\"component_id\":\"LandingGear\",\"registration_id\":\"flecs.component.landing_gear\"},{\"component_id\":\"LeaderIntent\",\"registration_id\":\"flecs.component.leader_intent\"},{\"component_id\":\"Lifetime\",\"registration_id\":\"flecs.component.lifetime\"},{\"component_id\":\"Loadout\",\"registration_id\":\"flecs.component.loadout\"},{\"component_id\":\"LogisticsNode\",\"registration_id\":\"flecs.component.logistics_node\"},{\"component_id\":\"Mass\",\"registration_id\":\"flecs.component.mass\"},{\"component_id\":\"MassProperties\",\"registration_id\":\"flecs.component.mass_properties\"},{\"component_id\":\"Missile\",\"registration_id\":\"flecs.component.missile\"},{\"component_id\":\"MissionCommand\",\"registration_id\":\"flecs.component.mission_command\"},{\"component_id\":\"MissionCommandControlState\",\"registration_id\":\"flecs.component.mission_command_control_state\"},{\"component_id\":\"MissionCommandPendingQueue\",\"registration_id\":\"flecs.component.mission_command_pending_queue\"},{\"component_id\":\"MountedSensors\",\"registration_id\":\"flecs.component.mounted_sensors\"},{\"component_id\":\"MountedSonars\",\"registration_id\":\"flecs.component.mounted_sonars\"},{\"component_id\":\"MovementCommand\",\"registration_id\":\"flecs.component.movement_command\"},{\"component_id\":\"Munition\",\"registration_id\":\"flecs.component.munition\"},{\"component_id\":\"NavalStores\",\"registration_id\":\"flecs.component.naval_stores\"},{\"component_id\":\"NavalWeaponSystem\",\"registration_id\":\"flecs.component.naval_weapon_system\"},{\"component_id\":\"PendingActionCommand\",\"registration_id\":\"flecs.component.pending_action_command\"},{\"component_id\":\"PendingMissionCommand\",\"registration_id\":\"flecs.component.pending_mission_command\"},{\"component_id\":\"PendingMovementCommand\",\"registration_id\":\"flecs.component.pending_movement_command\"},{\"component_id\":\"PilotAction\",\"registration_id\":\"flecs.component.pilot_action\"},{\"component_id\":\"PilotReport\",\"registration_id\":\"flecs.component.pilot_report\"},{\"component_id\":\"PilotWeaponReleaseState\",\"registration_id\":\"flecs.component.pilot_weapon_release_state\"},{\"component_id\":\"PlatformDamageState\",\"registration_id\":\"flecs.component.platform_damage_state\"},{\"component_id\":\"Propulsion\",\"registration_id\":\"flecs.component.propulsion\"},{\"component_id\":\"RCSProfile\",\"registration_id\":\"flecs.component.rcsprofile\"},{\"component_id\":\"RWR\",\"registration_id\":\"flecs.component.rwr\"},{\"component_id\":\"ResupplyState\",\"registration_id\":\"flecs.component.resupply_state\"},{\"component_id\":\"Score\",\"registration_id\":\"flecs.component.score\"},{\"component_id\":\"Sensor\",\"registration_id\":\"flecs.component.sensor\"},{\"component_id\":\"SensorModelRef\",\"registration_id\":\"flecs.component.sensor_model_ref\"},{\"component_id\":\"ShipPlatform\",\"registration_id\":\"flecs.component.ship_platform\"},{\"component_id\":\"Sonar\",\"registration_id\":\"flecs.component.sonar\"},{\"component_id\":\"StallState\",\"registration_id\":\"flecs.component.stall_state\"},{\"component_id\":\"StructuralBreakupState\",\"registration_id\":\"flecs.component.structural_breakup_state\"},{\"component_id\":\"SubmarinePlatform\",\"registration_id\":\"flecs.component.submarine_platform\"},{\"component_id\":\"SystemHealth\",\"registration_id\":\"flecs.component.system_health\"},{\"component_id\":\"TaskOrder\",\"registration_id\":\"flecs.component.task_order\"},{\"component_id\":\"TrackDatabase\",\"registration_id\":\"flecs.component.track_database\"},{\"component_id\":\"Transform\",\"registration_id\":\"flecs.component.transform\"},{\"component_id\":\"Velocity\",\"registration_id\":\"flecs.component.velocity\"},{\"component_id\":\"WeaponCooldown\",\"registration_id\":\"flecs.component.weapon_cooldown\"},{\"component_id\":\"WeaponReleaseServiceRef\",\"registration_id\":\"flecs.component.weapon_release_service_ref\"}],\"hash_algorithm\":\"sha256\",\"lock_sha256\":\"ec36d4f134e003e852a87f0dc2edb8095bbd798855d88b099e0174d45efa7f94\",\"projection_id\":\"builtin.default_compatibility.projection\",\"projection_version\":\"1.0.0\",\"request_sha256\":\"5c2954d6d04c77fe803130db14d7e5b56391dcf51e482c73ac8cd96877698d6f\",\"requested_profile\":{\"profile_id\":\"builtin.default_compatibility\",\"profile_version\":\"1.0.0\"},\"required_capabilities\":[\"deterministic.step\",\"runtime.world_batch.cpu\"],\"required_policies\":[\"native_step_authority\",\"no_mid_episode_truth_reconfiguration\"],\"schema_version\":\"echelon_forge.runtime_profile_projection.v1\",\"system_contributions\":[{\"contribution_id\":\"builtin.system.command_link\",\"stage_order\":0},{\"contribution_id\":\"builtin.system.action_mapping\",\"stage_order\":1},{\"contribution_id\":\"builtin.system.command_lag\",\"stage_order\":2},{\"contribution_id\":\"builtin.system.control\",\"stage_order\":3},{\"contribution_id\":\"builtin.system.force_clear\",\"stage_order\":4},{\"contribution_id\":\"builtin.system.aero_state\",\"stage_order\":5},{\"contribution_id\":\"builtin.system.propulsion\",\"stage_order\":6},{\"contribution_id\":\"builtin.system.force\",\"stage_order\":7},{\"contribution_id\":\"builtin.system.actuator\",\"stage_order\":8},{\"contribution_id\":\"builtin.system.aerodynamics\",\"stage_order\":9},{\"contribution_id\":\"builtin.system.ground_contact\",\"stage_order\":10},{\"contribution_id\":\"builtin.system.rotational_integration\",\"stage_order\":11},{\"contribution_id\":\"builtin.system.guidance\",\"stage_order\":12},{\"contribution_id\":\"builtin.system.leapfrog_integration\",\"stage_order\":13},{\"contribution_id\":\"builtin.system.ship_motion\",\"stage_order\":14},{\"contribution_id\":\"builtin.system.submarine_motion\",\"stage_order\":15},{\"contribution_id\":\"builtin.system.navigation\",\"stage_order\":16},{\"contribution_id\":\"builtin.system.sensor\",\"stage_order\":17},{\"contribution_id\":\"builtin.system.sonar\",\"stage_order\":18},{\"contribution_id\":\"builtin.system.track_manager\",\"stage_order\":19},{\"contribution_id\":\"builtin.system.data_link\",\"stage_order\":20},{\"contribution_id\":\"builtin.system.embarked_air_ops\",\"stage_order\":21},{\"contribution_id\":\"builtin.system.pilot_weapon_release\",\"stage_order\":22},{\"contribution_id\":\"builtin.system.naval_weapon_release\",\"stage_order\":23},{\"contribution_id\":\"builtin.system.instrument\",\"stage_order\":24},{\"contribution_id\":\"builtin.system.damage_common\",\"stage_order\":25},{\"contribution_id\":\"builtin.system.aircraft_damage\",\"stage_order\":26},{\"contribution_id\":\"builtin.system.structural_failure\",\"stage_order\":27},{\"contribution_id\":\"builtin.system.structural_consequence\",\"stage_order\":28},{\"contribution_id\":\"builtin.system.naval_damage\",\"stage_order\":29},{\"contribution_id\":\"builtin.system.ground_damage\",\"stage_order\":30},{\"contribution_id\":\"builtin.system.ew\",\"stage_order\":31},{\"contribution_id\":\"builtin.system.logistics\",\"stage_order\":32},{\"contribution_id\":\"builtin.system.naval_logistics\",\"stage_order\":33}]}",
+  "canonicalization": "echelon_forge.sorted_utf8_json.v1",
+  "catalog_entries": [
+    {
+      "capabilities": [
+        "runtime.world_batch.cpu"
+      ],
+      "category": "backend",
+      "descriptor_id": "builtin.backend.flecs_cpu",
+      "owner_id": "owner.backend"
+    },
+    {
+      "capabilities": [
+        "domain.combined"
+      ],
+      "category": "domain",
+      "descriptor_id": "builtin.domain.combined",
+      "owner_id": "owner.domain"
+    },
+    {
+      "capabilities": [
+        "runtime.composition.evidence"
+      ],
+      "category": "evidence",
+      "descriptor_id": "builtin.composition.evidence",
+      "owner_id": "owner.evidence"
+    },
+    {
+      "capabilities": [
+        "simulation.model.default"
+      ],
+      "category": "model",
+      "descriptor_id": "builtin.default.models",
+      "owner_id": "owner.model"
+    },
+    {
+      "capabilities": [
+        "runtime.repository_builtin"
+      ],
+      "category": "security",
+      "descriptor_id": "builtin.repository.admission",
+      "owner_id": "owner.security"
+    },
+    {
+      "capabilities": [
+        "deterministic.step",
+        "simulation.system.default"
+      ],
+      "category": "system",
+      "descriptor_id": "builtin.default.system_graph",
+      "owner_id": "owner.scheduler"
+    }
+  ],
+  "compatibility_claims": [
+    "legacy.cpu_exact_backend.v1",
+    "legacy.default_kernel_construction.v1",
+    "legacy.registration_order.v1"
+  ],
+  "component_contributions": [
+    {
+      "component_id": "AcousticModelRef",
+      "registration_id": "flecs.component.acoustic_model_ref"
+    },
+    {
+      "component_id": "ActionCommand",
+      "registration_id": "flecs.component.action_command"
+    },
+    {
+      "component_id": "ActionSpaceConfig",
+      "registration_id": "flecs.component.action_space_config"
+    },
+    {
+      "component_id": "AeroState",
+      "registration_id": "flecs.component.aero_state"
+    },
+    {
+      "component_id": "AeroTuning",
+      "registration_id": "flecs.component.aero_tuning"
+    },
+    {
+      "component_id": "AircraftDamageBaseline",
+      "registration_id": "flecs.component.aircraft_damage_baseline"
+    },
+    {
+      "component_id": "AircraftDamageState",
+      "registration_id": "flecs.component.aircraft_damage_state"
+    },
+    {
+      "component_id": "Alliance",
+      "registration_id": "flecs.component.alliance"
+    },
+    {
+      "component_id": "Ammo",
+      "registration_id": "flecs.component.ammo"
+    },
+    {
+      "component_id": "AngularVelocity",
+      "registration_id": "flecs.component.angular_velocity"
+    },
+    {
+      "component_id": "CommQueue",
+      "registration_id": "flecs.component.comm_queue"
+    },
+    {
+      "component_id": "CommandLag",
+      "registration_id": "flecs.component.command_lag"
+    },
+    {
+      "component_id": "CommandLink",
+      "registration_id": "flecs.component.command_link"
+    },
+    {
+      "component_id": "ComponentDamageState",
+      "registration_id": "flecs.component.component_damage_state"
+    },
+    {
+      "component_id": "ContactList",
+      "registration_id": "flecs.component.contact_list"
+    },
+    {
+      "component_id": "ControlLawState",
+      "registration_id": "flecs.component.control_law_state"
+    },
+    {
+      "component_id": "ControlModelRef",
+      "registration_id": "flecs.component.control_model_ref"
+    },
+    {
+      "component_id": "ControlSurfaceState",
+      "registration_id": "flecs.component.control_surface_state"
+    },
+    {
+      "component_id": "Countermeasures",
+      "registration_id": "flecs.component.countermeasures"
+    },
+    {
+      "component_id": "DataLink",
+      "registration_id": "flecs.component.data_link"
+    },
+    {
+      "component_id": "EGI",
+      "registration_id": "flecs.component.egi"
+    },
+    {
+      "component_id": "ESMReceiver",
+      "registration_id": "flecs.component.esmreceiver"
+    },
+    {
+      "component_id": "EffectsModelRef",
+      "registration_id": "flecs.component.effects_model_ref"
+    },
+    {
+      "component_id": "EmbarkedAirOps",
+      "registration_id": "flecs.component.embarked_air_ops"
+    },
+    {
+      "component_id": "EngagementEventRecorderRef",
+      "registration_id": "flecs.component.engagement_event_recorder_ref"
+    },
+    {
+      "component_id": "EngineTuning",
+      "registration_id": "flecs.component.engine_tuning"
+    },
+    {
+      "component_id": "EnvironmentModelRef",
+      "registration_id": "flecs.component.environment_model_ref"
+    },
+    {
+      "component_id": "FlightModel",
+      "registration_id": "flecs.component.flight_model"
+    },
+    {
+      "component_id": "ForceAccumulator",
+      "registration_id": "flecs.component.force_accumulator"
+    },
+    {
+      "component_id": "FuelSystem",
+      "registration_id": "flecs.component.fuel_system"
+    },
+    {
+      "component_id": "GearState",
+      "registration_id": "flecs.component.gear_state"
+    },
+    {
+      "component_id": "GroundState",
+      "registration_id": "flecs.component.ground_state"
+    },
+    {
+      "component_id": "GuidanceModelRef",
+      "registration_id": "flecs.component.guidance_model_ref"
+    },
+    {
+      "component_id": "Health",
+      "registration_id": "flecs.component.health"
+    },
+    {
+      "component_id": "HitboxConfig",
+      "registration_id": "flecs.component.hitbox_config"
+    },
+    {
+      "component_id": "Inertia",
+      "registration_id": "flecs.component.inertia"
+    },
+    {
+      "component_id": "InstrumentState",
+      "registration_id": "flecs.component.instrument_state"
+    },
+    {
+      "component_id": "Jammer",
+      "registration_id": "flecs.component.jammer"
+    },
+    {
+      "component_id": "KeyEntity",
+      "registration_id": "flecs.component.key_entity"
+    },
+    {
+      "component_id": "LaggedCommand",
+      "registration_id": "flecs.component.lagged_command"
+    },
+    {
+      "component_id": "LandingGear",
+      "registration_id": "flecs.component.landing_gear"
+    },
+    {
+      "component_id": "LeaderIntent",
+      "registration_id": "flecs.component.leader_intent"
+    },
+    {
+      "component_id": "Lifetime",
+      "registration_id": "flecs.component.lifetime"
+    },
+    {
+      "component_id": "Loadout",
+      "registration_id": "flecs.component.loadout"
+    },
+    {
+      "component_id": "LogisticsNode",
+      "registration_id": "flecs.component.logistics_node"
+    },
+    {
+      "component_id": "Mass",
+      "registration_id": "flecs.component.mass"
+    },
+    {
+      "component_id": "MassProperties",
+      "registration_id": "flecs.component.mass_properties"
+    },
+    {
+      "component_id": "Missile",
+      "registration_id": "flecs.component.missile"
+    },
+    {
+      "component_id": "MissionCommand",
+      "registration_id": "flecs.component.mission_command"
+    },
+    {
+      "component_id": "MissionCommandControlState",
+      "registration_id": "flecs.component.mission_command_control_state"
+    },
+    {
+      "component_id": "MissionCommandPendingQueue",
+      "registration_id": "flecs.component.mission_command_pending_queue"
+    },
+    {
+      "component_id": "MountedSensors",
+      "registration_id": "flecs.component.mounted_sensors"
+    },
+    {
+      "component_id": "MountedSonars",
+      "registration_id": "flecs.component.mounted_sonars"
+    },
+    {
+      "component_id": "MovementCommand",
+      "registration_id": "flecs.component.movement_command"
+    },
+    {
+      "component_id": "Munition",
+      "registration_id": "flecs.component.munition"
+    },
+    {
+      "component_id": "NavalStores",
+      "registration_id": "flecs.component.naval_stores"
+    },
+    {
+      "component_id": "NavalWeaponSystem",
+      "registration_id": "flecs.component.naval_weapon_system"
+    },
+    {
+      "component_id": "PendingActionCommand",
+      "registration_id": "flecs.component.pending_action_command"
+    },
+    {
+      "component_id": "PendingMissionCommand",
+      "registration_id": "flecs.component.pending_mission_command"
+    },
+    {
+      "component_id": "PendingMovementCommand",
+      "registration_id": "flecs.component.pending_movement_command"
+    },
+    {
+      "component_id": "PilotAction",
+      "registration_id": "flecs.component.pilot_action"
+    },
+    {
+      "component_id": "PilotReport",
+      "registration_id": "flecs.component.pilot_report"
+    },
+    {
+      "component_id": "PilotWeaponReleaseState",
+      "registration_id": "flecs.component.pilot_weapon_release_state"
+    },
+    {
+      "component_id": "PlatformDamageState",
+      "registration_id": "flecs.component.platform_damage_state"
+    },
+    {
+      "component_id": "Propulsion",
+      "registration_id": "flecs.component.propulsion"
+    },
+    {
+      "component_id": "RCSProfile",
+      "registration_id": "flecs.component.rcsprofile"
+    },
+    {
+      "component_id": "RWR",
+      "registration_id": "flecs.component.rwr"
+    },
+    {
+      "component_id": "ResupplyState",
+      "registration_id": "flecs.component.resupply_state"
+    },
+    {
+      "component_id": "Score",
+      "registration_id": "flecs.component.score"
+    },
+    {
+      "component_id": "Sensor",
+      "registration_id": "flecs.component.sensor"
+    },
+    {
+      "component_id": "SensorModelRef",
+      "registration_id": "flecs.component.sensor_model_ref"
+    },
+    {
+      "component_id": "ShipPlatform",
+      "registration_id": "flecs.component.ship_platform"
+    },
+    {
+      "component_id": "Sonar",
+      "registration_id": "flecs.component.sonar"
+    },
+    {
+      "component_id": "StallState",
+      "registration_id": "flecs.component.stall_state"
+    },
+    {
+      "component_id": "StructuralBreakupState",
+      "registration_id": "flecs.component.structural_breakup_state"
+    },
+    {
+      "component_id": "SubmarinePlatform",
+      "registration_id": "flecs.component.submarine_platform"
+    },
+    {
+      "component_id": "SystemHealth",
+      "registration_id": "flecs.component.system_health"
+    },
+    {
+      "component_id": "TaskOrder",
+      "registration_id": "flecs.component.task_order"
+    },
+    {
+      "component_id": "TrackDatabase",
+      "registration_id": "flecs.component.track_database"
+    },
+    {
+      "component_id": "Transform",
+      "registration_id": "flecs.component.transform"
+    },
+    {
+      "component_id": "Velocity",
+      "registration_id": "flecs.component.velocity"
+    },
+    {
+      "component_id": "WeaponCooldown",
+      "registration_id": "flecs.component.weapon_cooldown"
+    },
+    {
+      "component_id": "WeaponReleaseServiceRef",
+      "registration_id": "flecs.component.weapon_release_service_ref"
+    }
+  ],
+  "hash_algorithm": "sha256",
+  "lock_sha256": "ec36d4f134e003e852a87f0dc2edb8095bbd798855d88b099e0174d45efa7f94",
+  "projection_id": "builtin.default_compatibility.projection",
+  "projection_sha256": "a6983836e82df80805ac3f0f4f4a6975edccf3024d8ff231a67009a596a28c09",
+  "projection_version": "1.0.0",
+  "request_sha256": "5c2954d6d04c77fe803130db14d7e5b56391dcf51e482c73ac8cd96877698d6f",
+  "requested_profile": {
+    "profile_id": "builtin.default_compatibility",
+    "profile_version": "1.0.0"
+  },
+  "required_capabilities": [
+    "deterministic.step",
+    "runtime.world_batch.cpu"
+  ],
+  "required_policies": [
+    "native_step_authority",
+    "no_mid_episode_truth_reconfiguration"
+  ],
+  "schema_version": "echelon_forge.runtime_profile_projection.v1",
+  "system_contributions": [
+    {
+      "contribution_id": "builtin.system.command_link",
+      "stage_order": 0
+    },
+    {
+      "contribution_id": "builtin.system.action_mapping",
+      "stage_order": 1
+    },
+    {
+      "contribution_id": "builtin.system.command_lag",
+      "stage_order": 2
+    },
+    {
+      "contribution_id": "builtin.system.control",
+      "stage_order": 3
+    },
+    {
+      "contribution_id": "builtin.system.force_clear",
+      "stage_order": 4
+    },
+    {
+      "contribution_id": "builtin.system.aero_state",
+      "stage_order": 5
+    },
+    {
+      "contribution_id": "builtin.system.propulsion",
+      "stage_order": 6
+    },
+    {
+      "contribution_id": "builtin.system.force",
+      "stage_order": 7
+    },
+    {
+      "contribution_id": "builtin.system.actuator",
+      "stage_order": 8
+    },
+    {
+      "contribution_id": "builtin.system.aerodynamics",
+      "stage_order": 9
+    },
+    {
+      "contribution_id": "builtin.system.ground_contact",
+      "stage_order": 10
+    },
+    {
+      "contribution_id": "builtin.system.rotational_integration",
+      "stage_order": 11
+    },
+    {
+      "contribution_id": "builtin.system.guidance",
+      "stage_order": 12
+    },
+    {
+      "contribution_id": "builtin.system.leapfrog_integration",
+      "stage_order": 13
+    },
+    {
+      "contribution_id": "builtin.system.ship_motion",
+      "stage_order": 14
+    },
+    {
+      "contribution_id": "builtin.system.submarine_motion",
+      "stage_order": 15
+    },
+    {
+      "contribution_id": "builtin.system.navigation",
+      "stage_order": 16
+    },
+    {
+      "contribution_id": "builtin.system.sensor",
+      "stage_order": 17
+    },
+    {
+      "contribution_id": "builtin.system.sonar",
+      "stage_order": 18
+    },
+    {
+      "contribution_id": "builtin.system.track_manager",
+      "stage_order": 19
+    },
+    {
+      "contribution_id": "builtin.system.data_link",
+      "stage_order": 20
+    },
+    {
+      "contribution_id": "builtin.system.embarked_air_ops",
+      "stage_order": 21
+    },
+    {
+      "contribution_id": "builtin.system.pilot_weapon_release",
+      "stage_order": 22
+    },
+    {
+      "contribution_id": "builtin.system.naval_weapon_release",
+      "stage_order": 23
+    },
+    {
+      "contribution_id": "builtin.system.instrument",
+      "stage_order": 24
+    },
+    {
+      "contribution_id": "builtin.system.damage_common",
+      "stage_order": 25
+    },
+    {
+      "contribution_id": "builtin.system.aircraft_damage",
+      "stage_order": 26
+    },
+    {
+      "contribution_id": "builtin.system.structural_failure",
+      "stage_order": 27
+    },
+    {
+      "contribution_id": "builtin.system.structural_consequence",
+      "stage_order": 28
+    },
+    {
+      "contribution_id": "builtin.system.naval_damage",
+      "stage_order": 29
+    },
+    {
+      "contribution_id": "builtin.system.ground_damage",
+      "stage_order": 30
+    },
+    {
+      "contribution_id": "builtin.system.ew",
+      "stage_order": 31
+    },
+    {
+      "contribution_id": "builtin.system.logistics",
+      "stage_order": 32
+    },
+    {
+      "contribution_id": "builtin.system.naval_logistics",
+      "stage_order": 33
+    }
+  ]
+}

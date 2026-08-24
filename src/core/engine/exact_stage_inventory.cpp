@@ -344,6 +344,9 @@ SimulationKernel::exact_gpu_migration_stage_contract_inventory() const {
 }
 
 void SimulationKernel::begin_exact_stage_trace_frame() {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("begin_exact_stage_trace_frame");
+    world_state_mutated_ = true;
     if (exact_stage_trace_frame_active_) {
         throw std::logic_error("exact-stage trace frame already active");
     }
@@ -352,6 +355,8 @@ void SimulationKernel::begin_exact_stage_trace_frame() {
 }
 
 void SimulationKernel::end_exact_stage_trace_frame() {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("end_exact_stage_trace_frame");
     if (!exact_stage_trace_frame_active_) {
         throw std::logic_error("exact-stage trace frame is not active");
     }
@@ -360,6 +365,8 @@ void SimulationKernel::end_exact_stage_trace_frame() {
 }
 
 bool SimulationKernel::run_exact_stage_trace_stage(const std::string &stage_name) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("run_exact_stage_trace_stage");
     const auto *descriptor = find_exact_gpu_stage_descriptor(stage_name);
     if (descriptor == nullptr || !descriptor->manual_trace_supported) {
         return false;
@@ -377,6 +384,8 @@ bool SimulationKernel::run_exact_stage_trace_stage(const std::string &stage_name
 }
 
 bool SimulationKernel::run_exact_stage_direct(const std::string &stage_name) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("run_exact_stage_direct");
     if (exact_stage_trace_frame_active_) {
         throw std::logic_error(
             "run_exact_stage_direct cannot execute while an exact-stage trace frame is active");
@@ -386,10 +395,13 @@ bool SimulationKernel::run_exact_stage_direct(const std::string &stage_name) {
         return false;
     }
     ecs_run(ecs.c_ptr(), system.id(), time_step, nullptr);
+    world_state_mutated_ = true;
     return true;
 }
 
 void SimulationKernel::restore_exact_replay_world_time(double world_time_s) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("restore_exact_replay_world_time");
     if (exact_stage_trace_frame_active_) {
         throw std::logic_error(
             "restore_exact_replay_world_time cannot run during an exact-stage trace frame");
@@ -399,9 +411,12 @@ void SimulationKernel::restore_exact_replay_world_time(double world_time_s) {
         ecs_frame_begin(ecs.c_ptr(), static_cast<ecs_ftime_t>(world_time_s));
         ecs_frame_end(ecs.c_ptr());
     }
+    world_state_mutated_ = true;
 }
 
 void SimulationKernel::step_exact_stage_traceable_pipeline() {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("step_exact_stage_traceable_pipeline");
     begin_exact_stage_trace_frame();
     try {
         for (const auto &descriptor : exact_gpu_stage_inventory()) {

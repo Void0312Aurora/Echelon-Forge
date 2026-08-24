@@ -3,6 +3,8 @@
 #include "runtime/contracts/cuda_resident_backend_admission.h"
 #include "runtime/contracts/fidelity_profile_contracts.h"
 
+#include <limits>
+#include <stdexcept>
 #include <string>
 
 namespace {
@@ -77,10 +79,11 @@ RuntimeBackendAdmission backend_admission_from_contract(
 } // namespace
 
 void RuntimeFacade::configure_batch(const RuntimeBatchConfig &config) {
-    runtime_->configure(runtime::backend::ConfigureRequest{
-        .world_count = config.world_count,
-        .worker_threads = config.worker_threads,
-    });
+    // Keep every public world-count mutation on the same incarnation path.
+    // Calling the backend directly here would let shrink/regrow recreate a
+    // world at generation 1 without invalidating commit-time evidence.
+    resize(config.world_count);
+    set_worker_threads(config.worker_threads);
 }
 
 RuntimeBatchConfig RuntimeFacade::batch_config() const noexcept {
@@ -197,6 +200,18 @@ std::size_t RuntimeFacade::world_count() const noexcept {
 }
 
 void RuntimeFacade::resize(std::size_t world_count) {
+    const std::size_t current_world_count = runtime_->configuration().world_count;
+    if (world_count == current_world_count) {
+        return;
+    }
+    if (identity_ == nullptr ||
+        identity_->composition_incarnation == std::numeric_limits<std::uint64_t>::max()) {
+        throw std::overflow_error("runtime facade composition incarnation exhausted");
+    }
+    // Advance before reconfiguration. If backend allocation throws after a
+    // partial mutation, previously sealed windows still fail closed instead of
+    // retaining an ABA-compatible incarnation.
+    ++identity_->composition_incarnation;
     runtime_->configure(runtime::backend::ConfigureRequest{.world_count = world_count});
 }
 
