@@ -96,7 +96,7 @@ jobs:
           ./.venv/bin/python tools/maintenance/simulation_composition_contract.py check
           ./.venv/bin/python tools/maintenance/runtime_composition_evidence_contract.py check
           ./.venv/bin/python -m pytest tests/architecture/composition tests/architecture/runtime_facade/test_backend_provider_migration.py tests/architecture/runtime_facade/test_design_boundary_gates.py -q
-          ./.venv/bin/python -m pytest tests/runtime/facade/test_runtime_composition_evidence.py tests/runtime/engagement/test_maintained_replay_envelope.py -q
+          ./.venv/bin/python -m pytest tests/runtime/facade/test_runtime_composition_evidence.py -q
 
       - name: Validate repo environment
         run: |

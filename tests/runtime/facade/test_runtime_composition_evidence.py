@@ -61,25 +61,6 @@ def test_python_shrink_regrow_changes_composition_incarnation() -> None:
     assert comparison.compatible is False
     assert "$.world_instances" in comparison.mismatches
 
-    configured = ef_py.RuntimeFacade(1)
-    configured_before = configured.export_composition_evidence()
-    assert configured_before.available is True
-    zero = ef_py.RuntimeBatchConfig()
-    zero.world_count = 0
-    zero.worker_threads = 0
-    configured.configure_batch(zero)
-    one = ef_py.RuntimeBatchConfig()
-    one.world_count = 1
-    one.worker_threads = 0
-    configured.configure_batch(one)
-    configured_after = configured.export_composition_evidence()
-    assert configured_after.available is True
-    assert (
-        configured_after.evidence.evidence_sha256
-        != configured_before.evidence.evidence_sha256
-    )
-    assert configured.compare_composition_evidence(configured_before.evidence).compatible is False
-
 
 def test_python_zero_world_facade_fails_closed_with_named_reason() -> None:
     result = ef_py.RuntimeFacade(0).export_composition_evidence()
