@@ -179,12 +179,12 @@ The maintained sequence is now:
 
 The active documents amended by `153d5f4e` are:
 
-- [program README](../work/active/cordis_simulation_composition_kernel/README.md);
-- [target architecture](../work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_architecture.md);
-- [task clusters](../work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_task_clusters_20260817.md);
-- [dispatch queue](../work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_dispatch_queue_20260817.md);
-- [current status](../work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_current_status_20260817.md);
-- [acceptance contract](../work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_acceptance_20260817.md).
+- [program README](../work/archive/cordis_simulation_composition_kernel/README.md);
+- [target architecture](../work/archive/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_architecture.md);
+- [task clusters](../work/archive/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_task_clusters_20260817.md);
+- [dispatch queue](../work/archive/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_dispatch_queue_20260817.md);
+- [current status](../work/archive/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_current_status_20260817.md);
+- [acceptance contract](../work/archive/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_acceptance_20260817.md).
 
 ## 7. Immediate Dispatch Decision At The 2026-08-18 Baseline
 

@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/README.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-08-17`
+Last verified: `2026-08-23`
 
 本 owner 覆盖跨领域系统架构、runtime 分层、contracts、后端和架构决策。
 维护中的 standards、reference、issues 与 reviews 现均位于本 owner；旧 plan
@@ -20,17 +20,20 @@ packet 只作为归档 provenance。
   维护 loader 到 runtime 的阶段归属与 roundtrip seam，并服从严格仿真架构基线。
 - [仿真系统架构设计](standards/simulation_system_architecture_design.zh.md)：
   严格维护中的分层、权威与 runtime 基线。
+- [Runtime composition 基线](standards/runtime_composition_baseline.zh.md)：维护中的默认
+  CPU-exact Cordis/owner/native 权威链、单一构造真值、兼容规则、证据 gate 与 held 残余。
 
 ## Reference
 
 - [Truth-leak 清单](reference/t8_g4_truth_leak_inventory.zh.md)：当前 declared/open
   权威泄漏及其验证边界。
 
-## 活跃工作
+## 已完成工作
 
-- [Cordis 仿真组合内核](work/active/cordis_simulation_composition_kernel/README.zh.md)：
-  面向长期的 active 计划，覆盖 Cordis 组合控制面、原生生命周期内核、确定性 manifest
-  realization、provider/system/backend composition 和 host parity；尚不声明 runtime 集成。
+- [Cordis 仿真组合内核](work/archive/cordis_simulation_composition_kernel/README.zh.md)：
+  已接受的有界默认 CPU-exact composition 计划与历史实现证据。当前权威是上面的
+  runtime composition standard；Node、CUDA、更广 profile/provider、外部 plugin 与完整
+  replay 继续作为 held 残余。
 
 ## 开放问题
 

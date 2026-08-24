@@ -1,7 +1,11 @@
 # Cordis 仿真组合内核架构
 
-状态：`2026-08-17` 维护中的目标架构；P1 contract 与 P2-A 隔离原生 lifecycle baseline
-已实现并验证。production provider、system、backend、Cordis 与 host 迁移仍为 planned。
+状态：`2026-08-23` 维护中的目标架构；P1 contract、P2-A 隔离原生 lifecycle baseline，
+以及 P2-B/P2-C0/P2-C1/P3-A/P3-B、P4-A 默认 provider、P5-A 默认 CPU-exact
+composition-evidence、P6-A 默认 profile Cordis package-maturation、P7-A 默认 CPU-exact
+host/batch parity 与 P8-A migration closure 均已实现并验证。本 plan 在稳定规则提升到
+维护中的 runtime composition baseline 后归档；更广 profile/package/backend、完整 replay、
+CUDA、外部 plugin 与 Node host 工作继续由分别具名 owner held。
 
 语言：
 
@@ -9,10 +13,10 @@
 - 中文配套页：`cordis_simulation_composition_kernel_architecture.zh.md`
 
 Document kind: `plan`
-Lifecycle: `maintained`
-Canonical: `docs/architecture/work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_architecture.md`
+Lifecycle: `archived`
+Canonical: `docs/architecture/work/archive/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_architecture.md`
 Owner: `architecture/runtime-composition`
-Last verified: `2026-08-17`
+Last verified: `2026-08-23`
 
 父项目：[Cordis 仿真组合内核](README.zh.md)
 
@@ -54,11 +58,17 @@ Last verified: `2026-08-17`
 model setter 替换 owning pointer 并更新部分 Flecs singleton ref。至少一个系统在注册
 时捕获 environment model 指针，因此 provider 替换不是完整且一致安全的迁移。
 
-### 2.3 静态系统安装
+### 2.3 Owner 准入的系统安装
 
-当前注册函数安装跨 shared physics、air、naval、ground、sensing、combat、EW 和
-logistics 的中央有序清单。这是可执行基线，但不是声明式 composition profile 或
-dependency graph。
+P3-A 有界切片已将原先中央 component/system call list 替换为
+`src/core/engine/system_contribution_registry.cpp`（systems layer declaration 在
+`src/systems/system_contribution_registry.h`）。owner-derived registry 在安装前校验自身
+owner row、metadata、dependency edge 与 stage order，然后安装 83 个 component、34 个
+manifest system contribution 与 2 个显式 kernel-owned pre-update reset system。native
+conformance 另行在 production realization 前把 registry 与冻结 resolved artifact join；
+其 stage label 与 dependency edge 保持已接受默认图；
+profile-specific omission 与完整 semantic read/write join 仍属于后续 projection 工作。该
+registry 是可执行的 owner boundary，不是 Cordis package pipeline，也不是第二套 resolver。
 
 ### 2.4 部分后端与 stage 抽象
 
@@ -524,19 +534,34 @@ tests/runtime/composition/      lifecycle、parity、replay 与 failure test
 5. 在这些 artifact 与 production native path 上加入仓库自有 Cordis 默认 profile producer
    端到端纵向切片；
 6. 消除不安全替换并把 service 生命周期绑定到 scope；
-7. 把系统注册拆为 owner 准入 package，同时保持精确默认图；
-8. 把 capability/policy 与 compatibility profile 名称下沉到这些 package；
+7. 把系统注册拆为 owner 准入 package，同时保持精确默认图；P3-A 有界 registry 切片现已接受；
+8. 把 capability/policy 与 compatibility profile 名称下沉到这些 package（P3-B）；
 9. 把 backend 选择迁入准入 provider；
-10. 把 composition evidence 扩展到 graph、backend、host、replay 与 comparison 表面；
+10. 把 composition evidence 扩展到 graph、backend、原生执行 owner、replay 与 comparison 表面；
 11. 成熟化 Cordis package、overlay、diagnostics、provenance 与 tooling；
-12. 仅在独立 host 用例获批后加入 Node host；
-13. 只有 caller/parity 证据获验收后，才删除被取代的 constructor、setter 和静态组合真值。
+12. 对 Cordis-produced artifact 与冻结 semantic reference 证明有界 native-direct/本地
+    `ef_py` caller 和 batch parity；
+13. 仅在独立 host 用例获批后加入 Node host；
+14. 只有 caller/parity 证据获验收后，才删除被取代的 constructor、setter 和静态组合真值。
 
 compatibility wrapper 必须带移除条件，不得成为永久第二组合机制。
 
-实现 checkpoint：迁移步骤 1、2 已完成。P2-A library 还证明了步骤 3、4 所需的 scoped
-transaction 与 handle-generation 机制，但尚未迁移 production default；步骤 3 是下一迁移
-切片。
+实现 checkpoint：迁移步骤 1 至 12 均已有有界且已接受的实现。步骤 9，即 P4-A 默认
+backend-provider 有界迁移，在独立 `gpt-5.6-sol` / `max` 审阅返回 P0/P1/P2 = 0/0/0
+后已接受。步骤 10，即 P5-A，接受维护中默认 CPU-exact realization 的精确 evidence：
+request/manifest/lock/profile identity、全部 11 个 provider、83+2+34 executable graph、
+精确 backend identity、原生执行 owner、每个 world/五类 scope、commit sealing，以及
+replay/comparison mismatch rejection。其 host 字段不证明调用语言或物理模块来源。
+步骤 11，即 P6-A，增加严格仓库自有 package/overlay SDK、确定性四节点依赖解析、跨平台
+稳定原始字节 pin、精确 producer/package-lock identity、与实际 request/lock/profile
+projection 绑定的封存 provenance，以及不包含本机路径的 diagnostics，同时不拥有
+provider/backend/graph truth。独立 `gpt-5.6-sol` / `max` 审阅返回 P0/P1/P2 = 0/0/0。
+这些结果使 P7-A eligible，并保持 P6-B conditional。步骤 12，即 P7-A，把 Cordis-produced
+artifact identity 绑定到 native-direct/本地 `ef_py` 行与冻结的非零 action/state/event/
+reward/termination/replay reference，并接受保守的 32-world cold/warm/reset/RSS/teardown
+回归 envelope。独立 `gpt-5.6-sol` / `max` 审阅返回 P0/P1/P2 = 0/0/0。P8-A 随后闭合
+有界默认 CPU-exact 计划；这些结果不准入更广 profile/package/backend、完整 replay、CUDA、
+外部 plugin 或 Node hosting。
 
 ## 19. 被否决方案
 
@@ -552,7 +577,8 @@ transaction 与 handle-generation 机制，但尚未迁移 production default；
 ### 在 C++ 重写全部 Cordis 并永久不接入 Cordis 本体
 
 否决为长期目标，因为这会丢失预期的 Cordis plugin/control-plane 关系。原生生命周期
-语义仍然必要，但准入的 Cordis producer 也是计划交付物。
+语义仍然必要；准入的 Cordis producer 默认 profile 切片已接受，但更广 profile/package
+扩展仍开放。
 
 ### 原生 substrate 存在后仍让 Cordis 永久保持可选
 

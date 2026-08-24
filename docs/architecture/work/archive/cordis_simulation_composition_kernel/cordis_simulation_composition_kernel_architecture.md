@@ -1,8 +1,13 @@
 # Cordis Simulation Composition Kernel Architecture
 
-Status: `2026-08-17` maintained target architecture; the P1 contract and P2-A
-isolated native lifecycle baseline are implemented and validated. Production
-provider, system, backend, Cordis, and host migrations remain planned.
+Status: `2026-08-23` maintained target architecture; the P1 contract, P2-A
+isolated native lifecycle baseline, and bounded P2-B/P2-C0/P2-C1/P3-A/P3-B,
+P4-A default-provider, P5-A default CPU-exact composition-evidence, P6-A
+default-profile Cordis package-maturation, P7-A default CPU-exact host/batch
+parity, and P8-A migration closure are implemented and validated. This plan is
+archived after promotion to the maintained runtime composition baseline;
+broader profile/package/backend, complete replay, CUDA, external plugins, and
+Node-host work remains held under separately named owners.
 
 Language:
 
@@ -10,10 +15,10 @@ Language:
 - Chinese companion: [cordis_simulation_composition_kernel_architecture.zh.md](cordis_simulation_composition_kernel_architecture.zh.md)
 
 Document kind: `plan`
-Lifecycle: `maintained`
-Canonical: `docs/architecture/work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_architecture.md`
+Lifecycle: `archived`
+Canonical: `docs/architecture/work/archive/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_architecture.md`
 Owner: `architecture/runtime-composition`
-Last verified: `2026-08-17`
+Last verified: `2026-08-23`
 
 Parent: [Cordis Simulation Composition Kernel](README.md)
 
@@ -64,12 +69,19 @@ Model setters replace owning pointers and update selected Flecs singleton refs.
 At least one system captures the environment model pointer during registration,
 so provider replacement is not a complete or uniformly safe transition.
 
-### 2.3 Static system installation
+### 2.3 Owner-admitted system installation
 
-The current registration function installs a central ordered list spanning
-shared physics, air, naval, ground, sensing, combat, electronic warfare, and
-logistics behavior. This is an executable baseline, but not a declarative
-composition profile or dependency graph.
+The P3-A bounded slice replaces the former central component/system call list
+with `src/core/engine/system_contribution_registry.cpp` and its systems-layer
+declaration. The owner-derived registry
+validates its owner rows, metadata, dependency edges, and stage order before
+installing 83 components, 34 manifest system contributions, and two explicitly
+kernel-owned pre-update reset systems. Native conformance separately joins the
+registry to the frozen resolved artifact before production realization. Its
+stage labels and dependency edges preserve the accepted default graph;
+profile-specific omission and complete semantic read/write joins remain later
+projection work. The registry is an executable owner boundary, not a
+Cordis package pipeline or a second resolver.
 
 ### 2.4 Partial backend and stage abstractions
 
@@ -587,24 +599,44 @@ The migration must be strangler-style and preserve one default behavior path:
    vertical slice over those artifacts and the production native path;
 6. eliminate unsafe replacement and bind service lifetime to scopes;
 7. split system registration into owner-admitted packages while preserving the
-   exact default graph;
+   exact default graph; the bounded P3-A registry slice is now accepted;
 8. lower capabilities/policies and compatibility profile names into those
-   packages;
+   packages (P3-B);
 9. move backend selection behind admitted providers;
-10. expand composition evidence across graph, backend, host, replay, and
-   comparison surfaces;
+10. expand composition evidence across graph, backend, native execution owner,
+    replay, and comparison surfaces;
 11. mature Cordis packages, overlays, diagnostics, provenance, and tooling;
-12. add a Node host only after a separate host use case is approved;
-13. retire superseded constructors, setters, and static composition truth only
+12. prove bounded native-direct/local-`ef_py` caller and batch parity against
+    Cordis-produced artifacts and a frozen semantic reference;
+13. add a Node host only after a separate host use case is approved;
+14. retire superseded constructors, setters, and static composition truth only
     after caller and parity evidence is accepted.
 
 Compatibility wrappers must carry removal criteria. They must not become a
 second permanent composition mechanism.
 
-Implementation checkpoint: migration steps 1 and 2 are complete. The P2-A
-library also proves the scoped transaction and handle-generation mechanisms
-needed by steps 3 and 4, but it has not yet moved production defaults; step 3
-is the next migration slice.
+Implementation checkpoint: migration steps 1 through 12 now have bounded,
+accepted implementations. Step 9, the bounded P4-A default backend-provider
+migration, was accepted after independent `gpt-5.6-sol` / `max` review returned
+P0/P1/P2 = 0/0/0. Step 10, P5-A, accepts exact evidence for the maintained
+default CPU-exact realization: request/manifest/lock/profile identity, all 11
+providers, the 83+2+34 executable graph, exact backend identity, native execution
+owner, every world/five scopes, commit sealing, and replay/comparison mismatch
+rejection. Its host fields do not attest caller language or physical module
+origin. Step 11, P6-A, adds a strict repository-owned package/overlay SDK,
+deterministic four-node dependency resolution, cross-platform-stable raw-byte
+pins, exact producer/package-lock identity, sealed provenance joined to the
+actual request/lock/profile projection, and path-free diagnostics without
+owning provider/backend/graph truth. Independent `gpt-5.6-sol` / `max` review
+returned P0/P1/P2 = 0/0/0. These results make P7-A eligible and keep P6-B
+conditional. Step 12, P7-A, binds the Cordis-produced artifact identities to
+native-direct and local-`ef_py` rows plus a frozen non-zero action/state/event/
+reward/termination/replay reference, and accepts a conservative 32-world
+cold/warm/reset/RSS/teardown regression envelope. Independent
+`gpt-5.6-sol` / `max` review returned P0/P1/P2 = 0/0/0. P8-A subsequently
+closed the bounded default CPU-exact program; these results do not admit
+broader profile/package/backend, complete replay, CUDA, external plugins, or
+Node hosting.
 
 ## 19. Rejected Alternatives
 
@@ -622,8 +654,9 @@ interactive development use case.
 ### Reimplement all of Cordis in C++ and omit Cordis itself permanently
 
 Rejected as the long-term target because it would lose the intended Cordis
-plugin/control-plane relationship. Native lifecycle semantics remain necessary,
-but the admitted Cordis producer is still a planned deliverable.
+plugin/control-plane relationship. Native lifecycle semantics remain necessary;
+the admitted Cordis producer's default-profile slice is accepted, while broader
+profile/package expansion remains open.
 
 ### Keep Cordis indefinitely optional after the native substrate exists
 

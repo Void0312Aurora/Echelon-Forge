@@ -16,9 +16,9 @@
       "english": "docs/architecture/README.md",
       "chinese": "docs/architecture/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-17",
-      "english_hash": "c3c6c23511bc418403db415131abd09604fd6700c0bac9246f7dc48224b8de3e",
-      "chinese_hash": "3ac3e885cf9d3249a2114af304d0135a22d2b4282929d191881c507e901f552d"
+      "last_verified": "2026-08-23",
+      "english_hash": "4e4e568953491b09dea67e56b4353f1cbb8abcc4e81ccdf953c9f21c3e377295",
+      "chinese_hash": "d6acf8b704df3d430808ac932679ba69fe745a350628485dd90df6a9f4b1c860"
     },
     {
       "pair_id": "architecture/reference/t8_g4_truth_leak_inventory",
@@ -37,6 +37,15 @@
       "last_verified": "2026-08-08",
       "english_hash": "bbf6fe118d10a8a1556b4a599e5f8e3b595300372f347c913f5dc0f328eab75b",
       "chinese_hash": "dfca5b13860511da1e25c8d543c35e85ccb076acb7ca5e82fa67f1088ad88a05"
+    },
+    {
+      "pair_id": "architecture/standards/runtime_composition_baseline",
+      "english": "docs/architecture/standards/runtime_composition_baseline.md",
+      "chinese": "docs/architecture/standards/runtime_composition_baseline.zh.md",
+      "source_of_truth": "english",
+      "last_verified": "2026-08-23",
+      "english_hash": "0060c63839bca65907aa7cd8bd92e2747f8eabc76202b5a96d971cd4cf8527ff",
+      "chinese_hash": "8372ea39528d2a8b9f5be8470ecc7792dddb0c4acfe19bdf69d7c1ac3792f3f3"
     },
     {
       "pair_id": "architecture/standards/simulation_conventions",

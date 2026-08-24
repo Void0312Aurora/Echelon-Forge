@@ -24,6 +24,11 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
       - name: Install system build tools
         run: |
           sudo apt-get update
@@ -33,7 +38,7 @@ jobs:
         run: |
           python -m venv .venv
           ./.venv/bin/python -m pip install --upgrade pip -c requirements/constraints-smoke.txt
-          ./.venv/bin/python -m pip install -c requirements/constraints-smoke.txt pytest numpy ruff gymnasium
+          ./.venv/bin/python -m pip install -c requirements/constraints-smoke.txt pytest numpy ruff gymnasium jsonschema
 
       - name: Run lint gates
         shell: bash
@@ -68,13 +73,30 @@ jobs:
         run: |
           cmake -S . -B build-workshop -G Ninja -DCMAKE_BUILD_TYPE=Release
 
+      - name: Install Cordis runtime producer dependencies
+        working-directory: packages/cordis-runtime
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Run Cordis runtime producer unit tests
+        working-directory: packages/cordis-runtime
+        run: npm test
+
       - name: Build ef_core, ef_py, and C++ tests
         run: |
-          cmake --build build-workshop --target ef_core ef_py ef_test ef_composition_lifecycle_test -j2
+          cmake --build build-workshop --target ef_core ef_py ef_test ef_composition_lifecycle_test ef_backend_provider_migration_test ef_composition_evidence_test ef_cordis_runtime_conformance_test -j2
 
       - name: Run C++ smoke tests
         run: |
-          ctest --test-dir build-workshop -R '^(ef_test_all|composition_lifecycle)$' --output-on-failure
+          ctest --test-dir build-workshop -R '^(ef_test_all|composition_lifecycle|backend_provider_migration|composition_evidence|cordis_runtime_conformance)$' --output-on-failure
+
+      - name: Run Cordis producer and composition architecture gates
+        env:
+          CMO_BUILD_DIR: build-workshop
+        run: |
+          ./.venv/bin/python tools/maintenance/simulation_composition_contract.py check
+          ./.venv/bin/python tools/maintenance/runtime_composition_evidence_contract.py check
+          ./.venv/bin/python -m pytest tests/architecture/composition tests/architecture/runtime_facade/test_backend_provider_migration.py tests/architecture/runtime_facade/test_design_boundary_gates.py -q
+          ./.venv/bin/python -m pytest tests/runtime/facade/test_runtime_composition_evidence.py tests/runtime/engagement/test_maintained_replay_envelope.py -q
 
       - name: Validate repo environment
         run: |

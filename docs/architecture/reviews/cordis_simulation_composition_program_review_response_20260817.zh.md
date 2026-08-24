@@ -161,12 +161,12 @@ capability/profile resolver。
 
 `153d5f4e` 修订的 active 文档包括：
 
-- [计划 README](../work/active/cordis_simulation_composition_kernel/README.zh.md)；
-- [目标架构](../work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_architecture.zh.md)；
-- [任务簇](../work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_task_clusters_20260817.zh.md)；
-- [派发队列](../work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_dispatch_queue_20260817.zh.md)；
-- [当前状态](../work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_current_status_20260817.zh.md)；
-- [验收合同](../work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_acceptance_20260817.zh.md)。
+- [计划 README](../work/archive/cordis_simulation_composition_kernel/README.zh.md)；
+- [目标架构](../work/archive/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_architecture.zh.md)；
+- [任务簇](../work/archive/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_task_clusters_20260817.zh.md)；
+- [派发队列](../work/archive/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_dispatch_queue_20260817.zh.md)；
+- [当前状态](../work/archive/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_current_status_20260817.zh.md)；
+- [验收合同](../work/archive/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_acceptance_20260817.zh.md)。
 
 ## 7. 2026-08-18 基线时的立即派发决定
 

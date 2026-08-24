@@ -10,8 +10,8 @@ Language:
 - Chinese companion: [cordis_simulation_composition_census_20260817.zh.md](cordis_simulation_composition_census_20260817.zh.md)
 
 Document kind: `reference`
-Lifecycle: `maintained`
-Canonical: `docs/architecture/work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_census_20260817.md`
+Lifecycle: `archived`
+Canonical: `docs/architecture/work/archive/cordis_simulation_composition_kernel/cordis_simulation_composition_census_20260817.md`
 Owner: `architecture/runtime-composition`
 Last verified: `2026-08-17`
 

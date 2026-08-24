@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/README.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-08-17`
+Last verified: `2026-08-23`
 
 This owner covers cross-domain system architecture, runtime layers, contracts,
 backends, and architecture decisions. Maintained standards, references, issues,
@@ -22,18 +22,22 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
   to the strict simulation architecture baseline.
 - [Simulation system architecture design](standards/simulation_system_architecture_design.md):
   strict maintained layering, authority, and runtime baseline.
+- [Runtime composition baseline](standards/runtime_composition_baseline.md):
+  maintained default CPU-exact Cordis/owner/native authority chain, single
+  construction truth, compatibility rules, evidence gates, and held residuals.
 
 ## Reference
 
 - [Truth-leak inventory](reference/t8_g4_truth_leak_inventory.md): current
   declared/open authority leaks and their verification boundary.
 
-## Active Work
+## Completed Work
 
-- [Cordis simulation composition kernel](work/active/cordis_simulation_composition_kernel/README.md):
-  active long-term program for a Cordis composition control plane, native
-  lifecycle kernel, deterministic manifest realization, provider/system/backend
-  composition, and host parity; no runtime integration is claimed yet.
+- [Cordis simulation composition kernel](work/archive/cordis_simulation_composition_kernel/README.md):
+  accepted bounded default CPU-exact composition program and historical
+  implementation evidence. Current authority is the runtime composition
+  standard above; Node, CUDA, broader profiles/providers, external plugins, and
+  complete replay remain held residuals.
 
 ## Open Issues
 

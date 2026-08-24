@@ -71,9 +71,9 @@ lifecycle findings。
 
 - [仿真系统架构设计](../standards/simulation_system_architecture_design.zh.md)，
   尤其是 Experiment Face、目标分层、架构规则与 capability-composition 方向；
-- [Cordis 仿真组合内核](../work/active/cordis_simulation_composition_kernel/README.zh.md)；
-- [Cordis 仿真组合架构](../work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_architecture.zh.md)；
-- [P1-B 组合 contract](../work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_contract_20260817.zh.md)；
+- [Cordis 仿真组合内核](../work/archive/cordis_simulation_composition_kernel/README.zh.md)；
+- [Cordis 仿真组合架构](../work/archive/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_architecture.zh.md)；
+- [P1-B 组合 contract](../work/archive/cordis_simulation_composition_kernel/cordis_simulation_composition_contract_20260817.zh.md)；
 - [系统模块化 issue](../work/issues/modularization_plan.zh.md)；
 - [Runtime facade contract 计划](../work/issues/runtime_facade_contract_plan.zh.md)；
 - [Runtime workflow 与 contract 基线](../standards/runtime_workflow_and_contract_baseline.zh.md)；
@@ -371,7 +371,7 @@ P7 与 P8 应移入该计划。no-go 决策不能阻塞 Program A 或 B 的 clos
 
 | Follow-up | Owner route | 所需结果 |
 | --- | --- | --- |
-| 澄清 composition authority | [active composition package](../work/active/cordis_simulation_composition_kernel/README.zh.md) 与 [仿真架构 standard](../standards/simulation_system_architecture_design.zh.md) | Experiment intent、runtime projection、native resolution 与 adapter role 无歧义 |
+| 澄清 composition authority | [active composition package](../work/archive/cordis_simulation_composition_kernel/README.zh.md) 与 [仿真架构 standard](../standards/simulation_system_architecture_design.zh.md) | Experiment intent、runtime projection、native resolution 与 adapter role 无歧义 |
 | 拆分 closure dependency | active composition package 或新的 owner-local work issue | Program A、B、C 分别授权并分别闭合 |
 | 治理 system package | [系统模块化 issue](../work/issues/modularization_plan.zh.md) | 在淘汰集中 system registration 前冻结 stage/capability admission |
 | 对齐 session construction | [runtime facade contract](../work/issues/runtime_facade_contract_plan.zh.md) | facade 消费 resolved native plan，但不成为 engine |

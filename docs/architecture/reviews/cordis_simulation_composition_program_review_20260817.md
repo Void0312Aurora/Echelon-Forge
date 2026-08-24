@@ -81,9 +81,9 @@ Primary architecture and work surfaces:
 - [Simulation system architecture design](../standards/simulation_system_architecture_design.md),
   especially the Experiment Face, target layering, architecture laws, and
   capability-composition direction;
-- [Cordis simulation composition kernel](../work/active/cordis_simulation_composition_kernel/README.md);
-- [Cordis simulation composition architecture](../work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_architecture.md);
-- [P1-B composition contract](../work/active/cordis_simulation_composition_kernel/cordis_simulation_composition_contract_20260817.md);
+- [Cordis simulation composition kernel](../work/archive/cordis_simulation_composition_kernel/README.md);
+- [Cordis simulation composition architecture](../work/archive/cordis_simulation_composition_kernel/cordis_simulation_composition_kernel_architecture.md);
+- [P1-B composition contract](../work/archive/cordis_simulation_composition_kernel/cordis_simulation_composition_contract_20260817.md);
 - [System modularization issue](../work/issues/modularization_plan.md);
 - [Runtime facade contract plan](../work/issues/runtime_facade_contract_plan.md);
 - [Runtime workflow and contract baseline](../standards/runtime_workflow_and_contract_baseline.md);
@@ -412,7 +412,7 @@ applicable owner:
 
 | Follow-up | Owner route | Required result |
 | --- | --- | --- |
-| Clarify composition authority | [active composition package](../work/active/cordis_simulation_composition_kernel/README.md) and [simulation architecture standard](../standards/simulation_system_architecture_design.md) | Experiment intent, runtime projection, native resolution, and adapter roles are unambiguous |
+| Clarify composition authority | [active composition package](../work/archive/cordis_simulation_composition_kernel/README.md) and [simulation architecture standard](../standards/simulation_system_architecture_design.md) | Experiment intent, runtime projection, native resolution, and adapter roles are unambiguous |
 | Split closure dependencies | active composition package or new owner-local work issues | Programs A, B, and C have independent authorization and closure |
 | Govern system packages | [system modularization issue](../work/issues/modularization_plan.md) | stage/capability admission is frozen before central registration removal |
 | Align session construction | [runtime facade contract](../work/issues/runtime_facade_contract_plan.md) | facade consumes resolved native plans without becoming the engine |
