@@ -1,8 +1,9 @@
 # Long-Horizon Architecture Governance Dispatch Queue
 
 Status: `2026-08-25` P0 and P1 architecture decisions plus P3-A public-contract
-foundation accepted. Independent P3-A initial/repair/final reviews closed every
-finding without short-term substitution. P2-A/P2-B and P3-B are ready; P3-C-P8
+and P3-B authority-envelope foundations accepted. Independent P3-A and P3-B
+reviews closed every finding without short-term substitution. P2-A/P2-B and
+P3-C-P8
 remain dependency-gated.
 
 Parent subproject: [Long-Horizon Architecture Governance](README.md)
@@ -42,7 +43,7 @@ Authoritative cluster definitions:
 | 13 | `P2-A` | ready | future governance worker | P1 accepted | classified live controls with attached lifecycle/expiry/renewal/removal metadata |
 | 14 | `P2-B` | ready | future diagnostics/operations worker | P1 accepted | repeatable sustainability, lifecycle, skew, retrieval and resource baselines |
 | 15 | `P3-A` | accepted | main thread + independent `gpt-5.6-sol` max reviewer | P1 accepted | `ef_runtime_contracts`, v1 identity/schema ownership, actual target/install graph gates, and final review pass |
-| 16 | `P3-B` | ready | future composition-contract worker | P3-A accepted | canonical JSON authority envelopes and versioned plan/release/rollout/checkpoint shells with single-owner adapters |
+| 16 | `P3-B` | accepted | main thread + independent `gpt-5.6-sol` max reviewer | P3-A accepted | canonical JSON authority envelopes, versioned plan/release/rollout/checkpoint shells, provenance binding, exact vectors and native/Cordis conformance |
 
 ## Later Dependency Queue
 
