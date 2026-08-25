@@ -753,6 +753,22 @@ if (BUILD_TESTING)
 add_executable(ef_runtime_contracts_compile_test
     src/tests/test_runtime_identity_contracts.cpp
 )
+
+add_executable(ef_runtime_authority_contract_test
+    src/tests/test_main.cpp
+    src/tests/test_runtime_authority_contract.cpp
+)
+target_link_libraries(ef_runtime_authority_contract_test PRIVATE
+    ef_runtime_authority_contracts
+    doctest::doctest
+    nlohmann_json::nlohmann_json
+)
+target_include_directories(ef_runtime_authority_contract_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_compile_definitions(ef_runtime_authority_contract_test PRIVATE
+    EF_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
+)
 target_link_libraries(ef_runtime_contracts_compile_test PRIVATE
     ef_runtime_contracts
 )
@@ -987,6 +1003,13 @@ add_test(NAME composition_lifecycle COMMAND ef_composition_lifecycle_test)
 add_test(NAME backend_provider_migration COMMAND ef_backend_provider_migration_test)
 add_test(NAME composition_evidence COMMAND ef_composition_evidence_test)
 add_test(NAME runtime_contracts_compile COMMAND ef_runtime_contracts_compile_test)
+add_test(NAME runtime_authority_contract COMMAND ef_runtime_authority_contract_test)
+add_test(
+    NAME runtime_authority_boundary
+    COMMAND ${CMAKE_COMMAND}
+        -DMANIFEST=${CMAKE_CURRENT_BINARY_DIR}/ef_runtime_authority_boundary_manifest.txt
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/verify_runtime_authority_boundary.cmake
+)
 add_test(
     NAME runtime_contracts_boundary
     COMMAND ${CMAKE_COMMAND}
