@@ -1,9 +1,9 @@
 # Long-Horizon Architecture Governance Dispatch Queue
 
-Status: `2026-08-25` P0 and P1 architecture decisions accepted. Independent P1
-initial and repair reviews closed every critical/high and final medium finding
-without short-term substitution. P2-A/P2-B and P3-A are ready; P3-B-P8 remain
-dependency-gated.
+Status: `2026-08-25` P0 and P1 architecture decisions plus P3-A public-contract
+foundation accepted. Independent P3-A initial/repair/final reviews closed every
+finding without short-term substitution. P2-A/P2-B and P3-B are ready; P3-C-P8
+remain dependency-gated.
 
 Parent subproject: [Long-Horizon Architecture Governance](README.md)
 
@@ -41,7 +41,8 @@ Authoritative cluster definitions:
 | 12 | `P1 final medium confirmation` | pass | same independent reviewer | checkpoint-source clarification | healthy source may create checkpoint; faulted/quarantined source cannot; integrated verdict remains pass |
 | 13 | `P2-A` | ready | future governance worker | P1 accepted | classified live controls with attached lifecycle/expiry/renewal/removal metadata |
 | 14 | `P2-B` | ready | future diagnostics/operations worker | P1 accepted | repeatable sustainability, lifecycle, skew, retrieval and resource baselines |
-| 15 | `P3-A` | ready | future contract/build worker | P1 accepted | engine-independent epoch-bearing public DTO target and negative dependency gates |
+| 15 | `P3-A` | accepted | main thread + independent `gpt-5.6-sol` max reviewer | P1 accepted | `ef_runtime_contracts`, v1 identity/schema ownership, actual target/install graph gates, and final review pass |
+| 16 | `P3-B` | ready | future composition-contract worker | P3-A accepted | canonical JSON authority envelopes and versioned plan/release/rollout/checkpoint shells with single-owner adapters |
 
 ## Later Dependency Queue
 
@@ -49,7 +50,7 @@ Authoritative cluster definitions:
 | --- | --- | --- | --- | --- |
 | Architecture foundation | `P1-A`, `P1-B`, `P1-C` | P0 accepted | research may overlap; normative integration serial | reviewed lifecycle/episode, artifact authority, rollout, platform/topology, operations, and security decisions |
 | Governance foundation | `P2-A`, `P2-B` | P1 terminology stable | parallel-safe with disjoint inventory/measurement files | classified controls and repeatable sustainability baseline |
-| Contract/public foundation | `P3-A`, `P3-B`, `P3-C` | P1 accepted | public DTO, canonical plan/release/state envelopes and rollout/ledger writers serial | final public types, authority shells and conditional storage before host publication |
+| Contract/public foundation | `P3-A`, `P3-B`, `P3-C` | P1 accepted; P3-B requires P3-A accepted | public DTO, canonical plan/release/state envelopes and rollout/ledger writers serial | final public types, authority shells and conditional storage before host publication |
 | Runtime candidate lifecycle | `P4-A`, `P4-B`, `P4-C` | P3 foundation stable | dark/shadow host before transfer authority; transfer before internal candidate seam | fenced candidate host, unique episode authority, immutable candidate kernel, no production cutover |
 | Consolidation and production rollout | `P5-A`, `P5-B`, `P5-C`, `P5-D` | P4 dark/shadow candidate gates | plan, qualified ledger/journal/checkpoint/receipt and package gates precede the unique P5-D production-canary decision | one plan, durable complete RunReceipt, facade-only package, caller migration, process-aware rollback and rebuild retirement |
 | Control migration | `P6-A`, `P6-B` | P2 classes and P5 boundaries available | excludes archive-retention policy/gate/suite paths owned by P7-A | purpose-specific tests and CI lanes |

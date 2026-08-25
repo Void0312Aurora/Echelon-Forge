@@ -37,8 +37,9 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
   active program for immutable admitted kernels, host-owned replacement,
   consolidated composition authority, physical facade boundaries, lifecycle-
   governed controls, and sustainable CI/evidence evolution. P0 authority and
-  baseline plus P1 target decisions are accepted; P2 control-lifecycle and P3
-  public-contract foundation may begin, while no runtime migration is accepted.
+  baseline, P1 target decisions, and the P3-A public identity/target foundation
+  are accepted; P2 control-lifecycle and P3-B authority-envelope work may
+  begin, while no runtime migration is accepted.
 
 ## Completed Work
 
@@ -71,6 +72,11 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
   shutdown, plan/release/checkpoint/receipt authority, canonical journal/storage,
   one production-canary cutover, package rollback, operations and security. The
   final repair snapshot passed with no unresolved critical/high finding.
+- [Long-horizon architecture governance P3-A review — 2026-08-25](reviews/long_horizon_architecture_governance_p3a_review_20260825.md):
+  independent `gpt-5.6-sol` max review of the engine-independent public identity
+  target, same-build value/schema authority, result/epoch semantics, actual
+  target/install graph, and negative bypass gates. The repaired snapshot passed
+  with no unresolved finding and no caller cutover.
 - [Cordis simulation composition program architecture review — 2026-08-17](reviews/cordis_simulation_composition_program_review_20260817.md):
   advisory macro review that retains the native composition direction while
   requiring authority and program-boundary revision before later

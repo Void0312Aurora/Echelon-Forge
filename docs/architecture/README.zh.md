@@ -33,8 +33,9 @@ packet 只作为归档 provenance。
 - [长期架构治理](work/active/long_horizon_architecture_governance/README.zh.md)：
   面向 immutable admitted kernel、host-owned replacement、收敛 composition
   authority、物理 facade boundary、具备生命周期的 control，以及可持续 CI/evidence
-  演进的 active program。P0 authority/baseline 与 P1 target decision 已接受；P2
-  control-lifecycle 与 P3 public-contract foundation 可开始，尚无 runtime 迁移被接受。
+  演进的 active program。P0 authority/baseline、P1 target decision 与 P3-A
+  public identity/target foundation 已接受；P2 control-lifecycle 与 P3-B
+  authority-envelope 工作可开始，尚无 runtime 迁移被接受。
 
 ## 已完成工作
 
@@ -65,6 +66,10 @@ packet 只作为归档 provenance。
   shutdown、plan/release/checkpoint/receipt authority、canonical journal/storage、
   唯一 production-canary cutover、package rollback、operations 与 security；最终
   修复快照无未解决 critical/high finding。
+- [长期架构治理 P3-A 审查 — 2026-08-25（英文）](reviews/long_horizon_architecture_governance_p3a_review_20260825.md)：
+  由独立 `gpt-5.6-sol` max reviewer 审查 engine-independent public identity
+  target、same-build value/schema authority、result/epoch 语义、实际 target/install
+  graph 与负向绕过门禁；修复快照无未解决 finding，且没有 caller cutover。
 - [Cordis 仿真组合计划架构审阅 — 2026-08-17](reviews/cordis_simulation_composition_program_review_20260817.zh.md)：
   总体咨询性审阅；保留原生 composition 方向，但要求在后续 system/plugin/host
   阶段前修订权威与计划边界。

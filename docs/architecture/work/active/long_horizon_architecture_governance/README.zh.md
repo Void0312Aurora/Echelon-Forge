@@ -1,8 +1,8 @@
 # 长期架构治理
 
-状态：`2026-08-25`，长期架构治理计划处于 active；P0 authority/baseline 与 P1
-target-architecture 决策已在独立复核后接受。P2-A/P2-B 与 P3-A 已 ready；尚无
-runtime 迁移阶段被接受。
+状态：`2026-08-25`，长期架构治理计划处于 active；P0 authority/baseline、P1
+target-architecture 决策与 P3-A public identity/target foundation 已在独立复核后接受。
+P2-A/P2-B 与 P3-B 已 ready；尚无 runtime 迁移阶段被接受。
 
 语言：
 
@@ -49,6 +49,7 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 | Composition replacement | 已实现，但战略方向未裁定 | `rebuild_world_composition`、mutation barrier、raw-world quarantine、scope generation 与 handover 机制 | 当前没有 maintained 非测试 caller 或 binding 要求原地 kernel rebuild |
 | Runtime 边界 | facade 方向已接受；compatibility surface 仍存在 | [runtime facade guards](../../../../../tests/architecture/runtime_facade/test_runtime_escape_hatches.py) | source scan 能描述边界，但不能让越界在物理上不可表示 |
 | Contract 与证据链 | 已覆盖 accepted 默认 profile | request、catalog lock、projection、requested/resolved manifest、provenance、parity 与 closure artifact | 中间迁移 artifact 仍是永久治理输入 |
+| Public runtime identity boundary | P3-A accepted | [`ef_runtime_contracts`](../../../../../include/echelon_forge/runtime_contracts/runtime_identity.h)、generated schema ownership、target/install manifest 与[独立审查](../../../reviews/long_horizon_architecture_governance_p3a_review_20260825.md) | 仅 same-build value contract；尚无 canonical serialization、host freshness、install/SDK、Linux qualification 或 caller cutover |
 | 测试与 CI 治理 | 已验证 CI smoke 为绿；完整 governance audit 非绿 | [CI smoke suite](../../../../../tests/smoke/ci_smoke_suite.json)、[governance audit suite](../../../../../tests/suites/governance_audit_suite.json) 与 `test_archive_retirement.py` | 远端基线跟踪的 20 个 owner-archive 文档使 retirement gate 失败 |
 | 文档生命周期 | policy、gate 与仓库路由冲突 | [文档生命周期规范](../../../../engineering/documentation/standards/document_lifecycle_policy.zh.md)、子项目规范与当前 architecture archive | standard 接受 owner-local archive，但 maintained gate 禁止所有 `docs/**/archive/**` 路径 |
 
@@ -134,7 +135,7 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 | `P0 Authority And Baseline` | 建立已核验 source、control、CI、evidence、ownership 基线及独立审查。 | 用户授权与最新 `origin/main` | 项目包、度量、审查 finding 与 owner index 保持当前 | accepted |
 | `P1 Target Architecture` | 固定 lifecycle、episode authority、versioning/rollout、platform/process topology、contract chain、boundary 与 control lifecycle 决策。 | P0 evidence accepted | 决策包含 compatibility、rollback、operations、storage 与 security activation 路径并通过独立审查 | accepted |
 | `P2 Control Lifecycle` | 将每个架构控制分类为 permanent、renewable、migratory 或 evidentiary，并明确 owner 与退役。 | P1 术语固定 | 既有控制完成分类，migration control 具备可执行退出条件 | P2-A/P2-B ready |
-| `P3 Contract And Public Boundary Foundation` | 在 host cutover 前落地 canonical authority envelope、plan/release/rollout/checkpoint shell、engine-independent DTO target、ledger foundation 与初始 visibility。 | P1 accepted | transitional adapter 单一 owner，host 可使用最终 public type/storage 且不发布第二 truth | P3-A ready |
+| `P3 Contract And Public Boundary Foundation` | 在 host cutover 前落地 canonical authority envelope、plan/release/rollout/checkpoint shell、engine-independent DTO target、ledger foundation 与初始 visibility。 | P1 accepted | transitional adapter 单一 owner，host 可使用最终 public type/storage 且不发布第二 truth | P3-A accepted；P3-B ready；P3-C planned |
 | `P4 Host Lifecycle And Immutable Kernel Candidate` | 实现 fenced host replacement、唯一 episode authority、完整 state transfer 与 dark/shadow immutable candidate path。 | P3 contract/boundary foundation 稳定 | candidate path 已 state-complete 且 fenced，但不得成为 production truth 或退役 production rebuild | planned |
 | `P5 Plan, Evidence, Binding, And Production Cutover` | 闭合 executable plan，引入完整 RunReceipt，完成 facade/diagnostics packaging，再执行唯一 production cutover/backout 并退役 rebuild。 | P4 candidate 通过 dark/shadow | Cordis/native/facade/wheel 使用同一 plan；supported caller 只切换一次且有 rollback evidence，rebuild 失去 production authority | planned |
 | `P6 Test And CI Architecture` | 按独立 failure audience 对齐 fast、qualification、nightly、release 与 research lane。 | P2 control class 与 P5 boundary 可用 | permanent gate 有具名检测价值，migration scan 已消失或带到期约束 | planned |
@@ -152,6 +153,7 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 - [P1-B authority 决策（英文）](decisions/p1b_plan_and_run_receipt_authority_decision_20260825.md)
 - [P1-C rollout 决策（英文）](decisions/p1c_rollout_operations_and_security_decision_20260825.md)
 - [P1 独立审查（英文）](../../../reviews/long_horizon_architecture_governance_p1_review_20260825.md)
+- [P3-A 独立审查（英文）](../../../reviews/long_horizon_architecture_governance_p3a_review_20260825.md)
 
 ## Outputs And Evidence
 
@@ -192,8 +194,9 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 
 ## Residuals And Next Steps
 
-- P1-A/P1-B/P1-C 已在独立初审与修复复核后获得 decision-level acceptance；只解锁
-  P2-A/P2-B 与 P3-A，不授权 runtime publication 或 production migration。
+- P1-A/P1-B/P1-C 已在独立初审与修复复核后获得 decision-level acceptance。P3-A
+  也在 initial/repair review 后单独接受；当前解锁 P2-A/P2-B 与 P3-B，不授权
+  runtime publication 或 production migration。
 - Dynamic in-place replacement 是候选例外，不是预设需求；其 admission 需要真实
   consumer 与 state-transfer proof。
 - 初始 accepted topology 默认为 in-process；只有 P1 与 P8 显式 admission 后才支持

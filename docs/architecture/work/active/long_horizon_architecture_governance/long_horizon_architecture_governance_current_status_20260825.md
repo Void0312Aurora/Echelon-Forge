@@ -5,8 +5,8 @@ at `82d5b6e893c442950e334eb3e9ec92f8174eeb35` and plan commit
 `c668bae91900df4b5488099384c95d9820209de2`. P1 target-architecture decisions
 are accepted after independent initial, repair and final-confirmation reviews.
 All critical/high and the final medium finding are closed; no review detected
-short-term substitution. P2-A/P2-B and P3-A are ready. No runtime code migration
-is accepted.
+short-term substitution. P3-A is accepted after independent initial/repair/final
+review; P2-A/P2-B and P3-B are ready. No runtime code migration is accepted.
 
 Parent subproject: [Long-Horizon Architecture Governance](README.md)
 
@@ -76,6 +76,14 @@ They must be remeasured before an implementation or acceptance claim.
   [P0 authority inventory](evidence/p0_authority_inventory_20260825.md): nine
   caller surfaces/23 paths, a fresh 25-target MSVC/Ninja graph, the closed
   artifact chain, full control/CI counts, and the 72-document retention scope.
+- Implemented and independently accepted P3-A: the build-tree-only
+  `ef_runtime_contracts` target, `runtime_contracts::v1` host/incarnation and
+  nested epoch-bearing identity values, generated public field lists through
+  the existing `dto_schema` registry, final target/install graph evidence, and
+  fail-closed negative dependency/schema gates.
+- Persisted the [independent P3-A review](../../../reviews/long_horizon_architecture_governance_p3a_review_20260825.md):
+  initial `pass_with_repairs`, then final `pass` after two high, four medium,
+  one low, and three repair-review findings were closed.
 
 ## Observed Baseline
 
@@ -107,7 +115,7 @@ They must be remeasured before an implementation or acceptance claim.
 | Host replacement | not implemented | no accepted host contract | P1 state machine plus P3 public contract/plan/rollout foundation |
 | Contract consolidation decision | accepted | P1-B classifies artifacts and adds singular plan/release/rollout/checkpoint-fragment/aggregate/receipt authorities, canonical envelope and ledger journal | P3-A then P3-B/P3-C implementation |
 | Rollout/operations decision | accepted | P1-C defines one production-canary decision, support rows, checkpoint-recovery/package-restart rollback, SLO/runbook and security gates | P2 measurements plus P3-C implementation |
-| Public contract foundation | ready | P1 accepted and current public DTO engine dependencies recorded | P3-A implementation and independent iteration review |
+| Public contract foundation | accepted P3-A | `ef_runtime_contracts` build/install manifests, eight registered public schemas, Windows/MSVC native checks and independent final review | P3-B canonical authority envelopes and P3-C rollout/ledger foundations |
 | Physical facade boundary | planned | current facade direction and source guards | CMake/package topology and diagnostics migration design |
 | Control lifecycle | planned | completed ratchet examples identified | accepted lifecycle vocabulary, owner model, and renewal/retirement process |
 | Test/CI architecture | planned | suite and timing baseline | failure-audience model and replacement evidence for retired scans |
@@ -177,8 +185,9 @@ program.
 
 1. Establish P2-A/P2-B control classification and measurements on disjoint
    governance/diagnostic surfaces.
-2. Land P3-A public DTO target, then P3-B/P3-C canonical plan/release/state and
-   ledger/rollout foundations before any host publication.
+2. Land P3-B canonical plan/release/state envelopes, then P3-C ledger/rollout
+   foundations before any host publication; P3-A is the accepted public DTO
+   predecessor for both.
 3. Implement the P4 dark/shadow host, episode/state-transfer authority, and
    immutable internal candidate without production caller cutover.
 4. Complete P5 plan/RunReceipt/facade-package gates, then execute the only
@@ -190,11 +199,12 @@ program.
 
 ## Explicit Overclaim Refusals
 
-- This checkpoint is a planning and evidence baseline, not implementation.
+- This checkpoint includes an accepted P3-A public-contract implementation, not
+  host/runtime migration or overall program acceptance.
 - Latest CI success does not validate the proposed architecture.
 - Zero production rebuild callers do not by themselves prove safe deletion.
 - A smaller source-scan suite does not prove stronger runtime boundaries.
 - A consolidated schema does not prove a singular execution owner.
-- Completing P0-P2 does not justify marking the long-horizon program accepted.
+- Completing P0-P3-A does not justify marking the long-horizon program accepted.
 - Passing dark/shadow host tests does not authorize caller cutover before epoch,
   state-transfer, episode-authority, rollout, and rollback gates.

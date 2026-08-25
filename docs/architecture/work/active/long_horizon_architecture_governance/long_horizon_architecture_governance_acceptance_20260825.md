@@ -1,8 +1,9 @@
 # Long-Horizon Architecture Governance Acceptance Contract
 
-Status: `2026-08-25` acceptance contract established; P0 authority/baseline and
-P1 target decisions are accepted, while the overall program remains `not
-accepted` because P2-P8 are unimplemented.
+Status: `2026-08-25` acceptance contract established; P0 authority/baseline,
+P1 target decisions, and P3-A public-contract foundation are accepted, while
+the overall program remains `not accepted` because P2-B/P3-B-P8 are not
+complete.
 
 Parent subproject: [Long-Horizon Architecture Governance](README.md)
 
@@ -134,6 +135,25 @@ P0 acceptance authorizes P1 decisions only. It proves no runtime change.
   conditional storage/fencing, non-authoritative shadow, rollback checkpoint,
   kill switch, and backout triggers are executable;
 - host work may run dark/shadow only until these gates pass.
+
+#### P3-A Public Identity And Target Foundation — Accepted
+
+P3-A is accepted independently after its `gpt-5.6-sol` max initial, repair and
+final reviews. Its accepted evidence is limited to:
+
+- the build-tree-only `ef_runtime_contracts` target and `runtime_contracts::v1`
+  same-build value-contract family with distinct host/incarnation identities;
+- generated public field lists owned by the existing `dto_schema` registry;
+- actual configure-time target/consumer checks plus generated target/install
+  manifests and negative graph/schema injection tests;
+- Windows AMD64 MSVC/Ninja compile and focused native/runtime-contract gates;
+- no public caller, facade, engine, binding, install/export or host publication
+  cutover.
+
+P3-A explicitly does not accept canonical JSON/storage (P3-B), rollout/ledger
+storage (P3-C), host freshness/lease validation (P4), Linux qualification, SDK
+ABI, or production migration. P3-B is now eligible to start; host work remains
+dark/shadow and the overall program remains `not accepted`.
 
 ### P4 Host Lifecycle And Immutable Kernel
 
@@ -323,8 +343,21 @@ Accepted P1 evidence:
   before P4 host publication and P5-B storage/receipt qualification before the
   sole P5-D production-canary cutover.
 
-P0/P1 authorize P2-A/P2-B and P3-A entry only. They do not accept any P2-P8
-implementation, platform support, host migration or production cutover.
+Accepted P3-A evidence:
+
+- [independent P3-A review](../../../reviews/long_horizon_architecture_governance_p3a_review_20260825.md)
+  with initial `pass_with_repairs` and final `pass`, no unresolved finding,
+  and no short-term substitution;
+- `ef_runtime_contracts` Windows/MSVC native compile and CTest boundary gates,
+  fresh `BUILD_TESTING=OFF` target build, 110-entry DTO manifest with eight
+  public schemas, and schema/flat-directory/negative injection tests;
+- explicit residual boundaries for P3-B canonical serialization, P3-C
+  rollout/ledger, P4 freshness/leases, P5 package/cutover and Linux support.
+
+P0/P1 authorized P2-A/P2-B and P3-A entry. P3-A is now accepted and authorizes
+P3-B entry only. These decisions do not accept P2-A/P2-B implementation,
+P3-C-P8 implementation, platform support, host migration or production
+cutover.
 
 ## Residual Policy
 
