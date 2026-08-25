@@ -1,8 +1,9 @@
 # Long-Horizon Architecture Governance Dispatch Queue
 
-Status: `2026-08-25` P0 queue accepted. Final independent plan review passed and
-the reproducible authority inventory closed P0-A. P1-A/P1-B/P1-C architecture
-decision work is ready; no P3-P8 implementation cluster is dispatchable.
+Status: `2026-08-25` P0 and P1 architecture decisions accepted. Independent P1
+initial and repair reviews closed every critical/high and final medium finding
+without short-term substitution. P2-A/P2-B and P3-A are ready; P3-B-P8 remain
+dependency-gated.
 
 Parent subproject: [Long-Horizon Architecture Governance](README.md)
 
@@ -32,9 +33,15 @@ Authoritative cluster definitions:
 | 4 | `P0-B first repair review` | repair-required | same independent reviewer | initial P0-C repair | original findings closed; one new P1 and four P2 findings returned |
 | 5 | `P0-C second repair` | completed | main thread | first repair-review findings | unique production cutover, P6/P7 ownership, executable validation, reproducible audit count, bilingual renewal bound |
 | 6 | `P0-B final repair review` | pass | same independent reviewer | frozen second repair | all original and new findings closed at plan level; no new finding or short-term substitution |
-| 7 | `P1-A` | ready | future architecture worker | P0 accepted | immutable-kernel/host replacement decision and compatibility map |
-| 8 | `P1-B` | ready | future architecture worker | P0 accepted | contract derivation and durable-authority decision |
-| 9 | `P1-C` | ready | future operations/security architecture worker | P0 accepted | rollout/backout, support matrix, operational ownership, and security activation decision |
+| 7 | `P1 integrated initial review` | repair-required | independent `gpt-5.6-sol` max reviewer | frozen P1 decisions | zero critical, eight high, four medium and two low findings; no short-term substitution |
+| 8 | `P1-A/B/C repair` | completed candidate | main thread | initial findings | quiescence/fault lifecycle, release/state authority, canonical wire/journal/storage, single canary cutover, rollback split and exact crosswalk repairs |
+| 9 | `P1 integrated first repair review` | repair-required | same independent reviewer | frozen first repair | original high findings closed; two new high lifecycle gaps found for bootstrap/recovery and normal shutdown |
+| 10 | `P1 second repair` | completed candidate | main thread | first repair-review findings | one-CAS initial/replacement/recovery transactions, terminal shutdown, exact per-path caller classes and singular checkpoint aggregation |
+| 11 | `P1 integrated second repair review` | pass | same independent reviewer | frozen second repair | no unresolved critical/high; P1-A/B/C pass; one medium clarification requested |
+| 12 | `P1 final medium confirmation` | pass | same independent reviewer | checkpoint-source clarification | healthy source may create checkpoint; faulted/quarantined source cannot; integrated verdict remains pass |
+| 13 | `P2-A` | ready | future governance worker | P1 accepted | classified live controls with attached lifecycle/expiry/renewal/removal metadata |
+| 14 | `P2-B` | ready | future diagnostics/operations worker | P1 accepted | repeatable sustainability, lifecycle, skew, retrieval and resource baselines |
+| 15 | `P3-A` | ready | future contract/build worker | P1 accepted | engine-independent epoch-bearing public DTO target and negative dependency gates |
 
 ## Later Dependency Queue
 
@@ -42,9 +49,9 @@ Authoritative cluster definitions:
 | --- | --- | --- | --- | --- |
 | Architecture foundation | `P1-A`, `P1-B`, `P1-C` | P0 accepted | research may overlap; normative integration serial | reviewed lifecycle/episode, artifact authority, rollout, platform/topology, operations, and security decisions |
 | Governance foundation | `P2-A`, `P2-B` | P1 terminology stable | parallel-safe with disjoint inventory/measurement files | classified controls and repeatable sustainability baseline |
-| Contract/public foundation | `P3-A`, `P3-B`, `P3-C` | P1 accepted | public DTO target, plan shell, and rollout writers serial | final public types and mixed-version contract before host publication |
+| Contract/public foundation | `P3-A`, `P3-B`, `P3-C` | P1 accepted | public DTO, canonical plan/release/state envelopes and rollout/ledger writers serial | final public types, authority shells and conditional storage before host publication |
 | Runtime candidate lifecycle | `P4-A`, `P4-B`, `P4-C` | P3 foundation stable | dark/shadow host before transfer authority; transfer before internal candidate seam | fenced candidate host, unique episode authority, immutable candidate kernel, no production cutover |
-| Consolidation and production rollout | `P5-A`, `P5-B`, `P5-C`, `P5-D` | P4 dark/shadow candidate gates | plan/receipt/package gates precede the unique P5-D production cutover | one plan, complete RunReceipt, facade-only package, caller migration, rebuild retirement, and rollback evidence |
+| Consolidation and production rollout | `P5-A`, `P5-B`, `P5-C`, `P5-D` | P4 dark/shadow candidate gates | plan, qualified ledger/journal/checkpoint/receipt and package gates precede the unique P5-D production-canary decision | one plan, durable complete RunReceipt, facade-only package, caller migration, process-aware rollback and rebuild retirement |
 | Control migration | `P6-A`, `P6-B` | P2 classes and P5 boundaries available | excludes archive-retention policy/gate/suite paths owned by P7-A | purpose-specific tests and CI lanes |
 | Evidence lifecycle | `P7-A`, `P7-B` | P2 classifications and P5 evidence ownership | P7-A decides retention before any archive-specific gate/suite/path change; routing precedes deletion | singular maintained authorities and retired migration residue |
 | Acceptance | `P8-A`, `P8-B` | P3-P7 mergeable | strictly serial | validated long-horizon result, independent verdict, standard promotion |

@@ -3,7 +3,10 @@
 Status: `2026-08-25` P0 authority and baseline accepted against `origin/main`
 at `82d5b6e893c442950e334eb3e9ec92f8174eeb35` and plan commit
 `c668bae91900df4b5488099384c95d9820209de2`. P1 target-architecture decisions
-are ready. No code migration is accepted.
+are accepted after independent initial, repair and final-confirmation reviews.
+All critical/high and the final medium finding are closed; no review detected
+short-term substitution. P2-A/P2-B and P3-A are ready. No runtime code migration
+is accepted.
 
 Parent subproject: [Long-Horizon Architecture Governance](README.md)
 
@@ -43,6 +46,15 @@ They must be remeasured before an implementation or acceptance claim.
 - Established an explicit long-horizon target rather than a cleanup-only plan.
 - Split the program into finite architecture, runtime, contract, boundary,
   test/CI, evidence, and acceptance clusters.
+- Froze P1-A/B/C lifecycle, artifact-authority and rollout decisions, then
+  repaired initial independent findings covering quiescence, failure lifecycle,
+  release/state authorities, canonical wire/journal/storage, single canary
+  cutover, rollback paths and exact caller/artifact crosswalks.
+- Repaired first-review follow-ups with one-CAS initial/replacement/checkpoint-
+  recovery publication, explicit terminal shutdown, exact per-path caller
+  classification and singular checkpoint fragment/aggregate ownership.
+- Persisted the [independent P1 review](../../../reviews/long_horizon_architecture_governance_p1_review_20260825.md)
+  and its final content-hash ledger after all findings closed.
 - Added independent plan review as a mandatory P0 gate.
 - Completed the first independent review. It confirmed the long-horizon target
   was not substituted by short-term cleanup, but found missing fencing/episode
@@ -91,9 +103,11 @@ They must be remeasured before an implementation or acceptance claim.
 | --- | --- | --- | --- |
 | P0 project authority | accepted | owner route, isolated worktree, independent plan-review pass, and accepted P0 authority inventory | P1 decisions only; no implementation authority |
 | Source/control baseline | accepted | reproducible caller, target/link, artifact, control/CI, and document commands in P0 evidence | remeasure at each decision/implementation acceptance boundary |
-| Immutable-kernel decision | ready | target and complete caller/target baseline recorded | state/identity/rollback compatibility design and independent review |
+| Immutable-kernel/host decision | accepted | P1-A freezes one-CAS bootstrap/replacement/checkpoint recovery, terminal shutdown, final-state fence, active-fault drain, all generations and exact P0 caller crosswalk | P4 implementation remains gated by P3 |
 | Host replacement | not implemented | no accepted host contract | P1 state machine plus P3 public contract/plan/rollout foundation |
-| Contract consolidation | planned | current chain inventoried at high level | exact derivation graph and compatibility/version transition |
+| Contract consolidation decision | accepted | P1-B classifies artifacts and adds singular plan/release/rollout/checkpoint-fragment/aggregate/receipt authorities, canonical envelope and ledger journal | P3-A then P3-B/P3-C implementation |
+| Rollout/operations decision | accepted | P1-C defines one production-canary decision, support rows, checkpoint-recovery/package-restart rollback, SLO/runbook and security gates | P2 measurements plus P3-C implementation |
+| Public contract foundation | ready | P1 accepted and current public DTO engine dependencies recorded | P3-A implementation and independent iteration review |
 | Physical facade boundary | planned | current facade direction and source guards | CMake/package topology and diagnostics migration design |
 | Control lifecycle | planned | completed ratchet examples identified | accepted lifecycle vocabulary, owner model, and renewal/retirement process |
 | Test/CI architecture | planned | suite and timing baseline | failure-audience model and replacement evidence for retired scans |
@@ -138,22 +152,22 @@ decision; absence from current CI is not sufficient.
 
 - Whether a future maintained profile truly requires identity-preserving
   in-place replacement rather than host-level reconstruction.
-- Which current application/backend/batch/world/episode scope distinctions
-  require independent mutable generations after kernel composition becomes
-  immutable.
+- Whether later profiles require additional generation namespaces beyond the
+  frozen host/world/entity/episode/request identities.
 - The complete production and diagnostics link graph after generated and
   platform-specific targets are considered.
-- Which composition artifacts are required as compatibility interchange versus
-  reproducible build inputs.
+- Exact last-reader dates and removal evidence for the now-classified
+  transitional/derived composition artifacts.
 - The historical unique defect yield and false-positive rate of individual
   source-scan and meta-manifest controls.
-- The storage, retention, and availability contract for evidence moved outside
-  the tracked source tree.
-- The authoritative handshake that moves Python autoreset/episode mirrors under
-  the native episode barrier without creating a second phase owner.
-- Supported N/N-1 producer/native/wheel combinations and the maximum rollback
-  window after an irreversible artifact or state write.
-- Current supported Windows/Linux build, wheel, and runtime topology matrix.
+- Concrete ArtifactLedger backend/provider, measured retention/availability
+  budgets and long-term provider-migration route; minimum pre-cutover semantics
+  are frozen.
+- Exact DTO/schema implementation of the frozen native episode handshake.
+- Release-specific N/N-1 producer/native/wheel generations and measured maximum
+  rollback window; ordering and irreversible-write semantics are frozen.
+- Exact release-qualified Windows/Linux toolchain and Python ABI rows; required
+  target families are frozen but not yet proven supported.
 
 Unknowns are P1-P2 evidence obligations. They may change mechanisms and sequence
 but do not authorize replacement of the long-horizon target with a smaller
@@ -161,18 +175,17 @@ program.
 
 ## Recommended Action Order
 
-1. Run P1-A/P1-B/P1-C lifecycle, artifact, rollout, platform/topology,
-   operations, and security decisions before dispatching implementation.
-2. Establish P2 control classification and measures in parallel with detailed
-   caller/artifact census.
-3. Land P3 public DTO/plan/rollout foundations before any host publication.
-4. Implement the P4 dark/shadow host, episode/state-transfer authority, and
+1. Establish P2-A/P2-B control classification and measurements on disjoint
+   governance/diagnostic surfaces.
+2. Land P3-A public DTO target, then P3-B/P3-C canonical plan/release/state and
+   ledger/rollout foundations before any host publication.
+3. Implement the P4 dark/shadow host, episode/state-transfer authority, and
    immutable internal candidate without production caller cutover.
-5. Complete P5 plan/RunReceipt/facade-package gates, then execute the only
+4. Complete P5 plan/RunReceipt/facade-package gates, then execute the only
    production cutover, caller migration, rollback window, and rebuild retirement.
-6. Replace test/CI and evidence/document controls only after their structural
+5. Replace test/CI and evidence/document controls only after their structural
    successors exist.
-7. Run P8 acceptance and independent review before promoting standards or
+6. Run P8 acceptance and independent review before promoting standards or
    retiring this project through the admitted history route.
 
 ## Explicit Overclaim Refusals

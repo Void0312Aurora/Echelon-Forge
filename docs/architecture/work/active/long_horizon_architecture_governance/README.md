@@ -1,8 +1,9 @@
 # Long-Horizon Architecture Governance
 
 Status: `2026-08-25` active long-horizon architecture-governance program; P0
-authority and baseline are accepted, P1 target-architecture decisions are
-ready, and no runtime migration phase is accepted yet.
+authority and baseline plus P1 target-architecture decisions are accepted after
+independent review. P2-A/P2-B and P3-A are ready; no runtime migration phase is
+accepted yet.
 
 Language:
 
@@ -26,6 +27,10 @@ Related authority:
 - [Subproject creation standard](../../../../engineering/automation/rules/subproject_creation_standard.md)
 - [Subagent usage policy](../../../../engineering/automation/standards/subagent_usage_policy.md)
 - [Independent P0-B plan review](../../../reviews/long_horizon_architecture_governance_plan_review_20260825.md)
+- [P1-A host lifecycle and episode authority decision](decisions/p1a_host_lifecycle_and_episode_authority_decision_20260825.md)
+- [P1-B plan and RunReceipt authority decision](decisions/p1b_plan_and_run_receipt_authority_decision_20260825.md)
+- [P1-C rollout, operations and security decision](decisions/p1c_rollout_operations_and_security_decision_20260825.md)
+- [Independent P1 architecture review](../../../reviews/long_horizon_architecture_governance_p1_review_20260825.md)
 
 ## Purpose
 
@@ -80,21 +85,28 @@ The target direction is:
 
 1. `SimulationKernel` is constructed from an immutable `ResolvedCompositionPlan` and does not change truth-affecting composition in place during its lifetime.
 2. A host-level composition owner has an explicit lifecycle state machine,
-   publication linearization point, monotonic incarnation epoch, fenced
-   world/entity/request/result references, instance leases, drain
-   timeout/cancellation/backpressure, and deterministic old-instance
-   reclamation. Native simulation owns the authoritative episode barrier;
-   Python mirrors participate through a versioned handshake.
+   one-CAS initial/replacement/checkpoint-recovery publication, terminal
+   shutdown, pre-publication quiescence and final-state transfer fence,
+   monotonic generations, fenced world/entity/request/result references,
+   jointly linearized instance leases, drain/quarantine budgets and
+   deterministic reclamation. Native simulation owns the authoritative episode
+   barrier; Python mirrors participate through a versioned handshake.
 3. The versioned resolved-plan shell and engine-independent public-contracts target exist before truth-changing host cutover; dark/shadow work cannot publish a seam based on transitional JSON or engine-owned DTOs.
-4. Durable composition artifacts converge on an experiment request, one closed
-   resolved executable plan, and per-run composition evidence. Catalog,
-   projection, and migration artifacts may remain build inputs but are not all
-   permanent interchange authorities.
-5. A versioned rollout contract governs N/N-1 producer/native/stored-plan/wheel combinations through one writer, bounded readers, canary/shadow parity, cutover receipts, rollback checkpoints, kill switches, and backout triggers.
+4. Durable execution artifacts converge on an experiment request, one closed
+   resolved executable plan, and native per-run receipt. Orthogonal
+   ReleaseManifest, RolloutDecision and StateCheckpoint authorities have one
+   writer/validator each. Catalog, projection, generated diagnostics/metadata
+   and migration artifacts have explicit derived/transitional/history routes.
+5. A canonical JSON/detached-digest contract and versioned rollout authority
+   govern N/N-1 producer/native/stored-plan/wheel combinations through one
+   writer, bounded readers, non-authoritative shadow, one production-canary
+   cutover decision, rollback checkpoints, kill switches, and backout triggers.
 6. Per-run `RunReceipt` binds exact plan bytes/hash, executable/module/wheel
    digests, build/toolchain/ABI/platform, scenario/content/config/seed,
    world/episode/run identity, lifecycle receipts, determinism profile,
-   result hashes, and completion state.
+   result hashes, and completion state. Durable journal admission precedes truth
+   mutation; recovery/finalization is fenced and rollback artifacts are
+   restorable before production cutover.
 7. Maintained Python, RL, visualization, and host paths link only through
    runtime contracts and facade targets. Raw engine access is isolated in a
    diagnostics-only build and package surface.
@@ -118,9 +130,9 @@ the same long-term authority, compatibility, and lifecycle result.
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
 | `P0 Authority And Baseline` | Establish verified source, control, CI, evidence, and ownership baselines plus independent review. | user authorization and latest `origin/main` | project packet, measurements, review findings, and owner index are current | accepted |
-| `P1 Target Architecture` | Freeze lifecycle, episode authority, versioning/rollout, platform/process topology, contract-chain, boundary, and control-lifecycle decisions. | P0 evidence accepted | decisions include compatibility, rollback, operations, and security activation paths and pass independent architecture review | ready |
-| `P2 Control Lifecycle` | Make every architecture control permanent, renewable, migratory, or evidentiary with explicit ownership and retirement. | P1 terminology frozen | existing controls are classified and migration controls have enforced exit criteria | planned |
-| `P3 Contract And Public Boundary Foundation` | Land the versioned resolved-plan shell, mixed-version rollout contract, engine-independent public DTO target, and initial target visibility before host cutover. | P1 accepted | transitional adapters are single-owner and host work can use final public types without publishing a second truth | planned |
+| `P1 Target Architecture` | Freeze lifecycle, episode authority, versioning/rollout, platform/process topology, contract-chain, boundary, and control-lifecycle decisions. | P0 evidence accepted | decisions include compatibility, rollback, operations, storage and security activation paths and pass independent architecture review | accepted |
+| `P2 Control Lifecycle` | Make every architecture control permanent, renewable, migratory, or evidentiary with explicit ownership and retirement. | P1 terminology frozen | existing controls are classified and migration controls have enforced exit criteria | P2-A/P2-B ready |
+| `P3 Contract And Public Boundary Foundation` | Land canonical authority envelopes, resolved-plan/release/rollout/checkpoint shells, engine-independent public DTO target, ledger foundation and target visibility before host cutover. | P1 accepted | transitional adapters are single-owner and host work can use final public types/storage without publishing a second truth | P3-A ready |
 | `P4 Host Lifecycle And Immutable Kernel Candidate` | Implement fenced host replacement, unique episode authority, complete state-transfer semantics, and an immutable candidate path in dark/shadow mode. | P3 contract/boundary foundation stable | the candidate path is state-complete and fenced but cannot become production truth or retire production rebuild | planned |
 | `P5 Plan, Evidence, Binding, And Production Cutover` | Close the executable plan, introduce complete RunReceipt, finish physical facade/diagnostics packaging, then execute the only production cutover/backout and retire rebuild. | P4 candidate proven in dark/shadow mode | Cordis/native/facade/wheel use one plan; supported callers cut over once with rollback evidence and rebuild loses production authority | planned |
 | `P6 Test And CI Architecture` | Align fast, qualification, nightly, release, and research lanes with unique failure audiences. | P2 control classes and P5 boundaries available | permanent gates have named detection value and migration scans are absent or expiring | planned |
@@ -134,6 +146,10 @@ the same long-term authority, compatibility, and lifecycle result.
 - [Dispatch queue](long_horizon_architecture_governance_dispatch_queue_20260825.md)
 - [Acceptance contract](long_horizon_architecture_governance_acceptance_20260825.md)
 - [P0 authority inventory](evidence/p0_authority_inventory_20260825.md)
+- [P1-A lifecycle decision](decisions/p1a_host_lifecycle_and_episode_authority_decision_20260825.md)
+- [P1-B authority decision](decisions/p1b_plan_and_run_receipt_authority_decision_20260825.md)
+- [P1-C rollout decision](decisions/p1c_rollout_operations_and_security_decision_20260825.md)
+- [P1 independent review](../../../reviews/long_horizon_architecture_governance_p1_review_20260825.md)
 
 ## Outputs And Evidence
 
@@ -173,8 +189,9 @@ cannot satisfy this gate.
 
 ## Residuals And Next Steps
 
-- P0 is accepted for architecture-decision entry only; P1-A/P1-B/P1-C must now
-  turn the recorded facts and unknowns into independently reviewed decisions.
+- P1-A/P1-B/P1-C are accepted at decision level after independent initial and
+  repair reviews; this unlocks P2-A/P2-B and P3-A only, not runtime publication
+  or production migration.
 - Dynamic in-place replacement remains a candidate exception, not an assumed
   requirement; its admission requires a real consumer and state-transfer proof.
 - The initial accepted topology is in-process unless P1 and P8 explicitly

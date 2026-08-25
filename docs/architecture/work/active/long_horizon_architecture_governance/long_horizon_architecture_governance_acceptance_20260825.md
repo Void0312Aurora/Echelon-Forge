@@ -1,8 +1,8 @@
 # Long-Horizon Architecture Governance Acceptance Contract
 
-Status: `2026-08-25` acceptance contract established; P0 authority/baseline is
-accepted, while the overall program remains `not accepted` because P1-P8 are
-unimplemented.
+Status: `2026-08-25` acceptance contract established; P0 authority/baseline and
+P1 target decisions are accepted, while the overall program remains `not
+accepted` because P2-P8 are unimplemented.
 
 Parent subproject: [Long-Horizon Architecture Governance](README.md)
 
@@ -28,8 +28,9 @@ The accepted result must have all of these properties:
 1. Kernel composition is immutable for the maintained production lifecycle.
 2. Replacement uses a host state machine with one publication linearization
    point, monotonic incarnation epoch, fenced world/entity/request/result
-   references, instance leases, bounded drain/cancellation/backpressure,
-   deterministic reclamation, and one native-owned episode barrier.
+   references, jointly linearized instance leases, pre-publication quiescence
+   and final-state transfer fence, bounded drain/cancellation/backpressure and
+   quarantine, deterministic reclamation, and one native-owned episode barrier.
 3. Any admitted in-place replacement exception proves a real
    identity-preserving consumer, complete versioned state transfer, stale-handle
    rejection, failure rollback, concurrency safety, and replay meaning.
@@ -37,12 +38,16 @@ The accepted result must have all of these properties:
    revalidates and executes. Cordis, Python, fixtures, packages, and diagnostics
    cannot create parallel execution truth.
 5. Mixed-version rollout has one writer, bounded N/N-1 readers, explicit
-   stored-plan rejection/downgrade rules, canary/shadow receipts, rollback
+   stored-plan rejection/re-resolution rules, canary/shadow receipts, rollback
    checkpoints, kill switches, and quantitative backout triggers.
+   ReleaseManifest, RolloutDecision and StateCheckpoint authorities have
+   singular writers/validators and one production-canary cutover decision.
 6. A versioned `RunReceipt` binds plan bytes/hash, executable/module/wheel
    digests, build/toolchain/ABI/platform, scenario/content/config/seed,
    world/episode/run identity, lifecycle receipts, determinism profile, result
    hashes, and completion state.
+   Durable journal admission precedes truth mutation, crash finalization is
+   fenced, and required artifacts are restorable before production cutover.
 7. Production bindings and packages physically depend on facade/contracts, not
    raw engine ownership. Raw access is separately built, named, packaged, and
    admitted for diagnostics only.
@@ -81,12 +86,17 @@ P0 acceptance authorizes P1 decisions only. It proves no runtime change.
 ### P1 Target Architecture
 
 - immutable-kernel/host replacement decision covers state, identity, drain,
-  lifecycle states, publication linearization, epoch/fencing/leases,
-  construction, validation, drain/cancellation/backpressure, reclamation,
-  failure, shutdown, concurrency, recovery, and native episode authority;
+  lifecycle states, one-CAS initial/replacement/checkpoint-recovery publication,
+  terminal shutdown, epoch/fencing/leases, construction, pre-publication
+  quiescence/final-transfer fence,
+  drain/cancellation/backpressure, bounded quarantine/reclamation, active-fault
+  paths, shutdown, concurrency, recovery, and native episode authority;
 - contract decision maps every current request, lock, projection, manifest,
-  provenance, parity, closure, and future RunReceipt artifact to a durable,
-  derived, transitional, or historical role;
+  generated evidence/diagnostics/metadata, provenance, parity, closure, plan,
+  release/rollout/checkpoint, and RunReceipt artifact to a durable, derived,
+  transitional, or historical role with singular writer/validator;
+- canonical wire/detached-digest rules, durable run-admission journal,
+  recovery fencing and minimum pre-cutover artifact storage are explicit;
 - N/N-1 compatibility, rollout, canary, kill-switch, rollback-window, stored
   artifact, and irreversible-write plans cover C++, Python, RL, visualization,
   diagnostics, world batch, Cordis, native binaries, wheels, and replay;
@@ -115,18 +125,23 @@ P0 acceptance authorizes P1 decisions only. It proves no runtime change.
 
 - an engine-independent public contracts target owns epoch-bearing
   world/entity/request/result DTOs before host publication;
-- a versioned resolved-plan shell and single-owner adapters exist before host
-  implementation becomes execution truth;
+- canonical JSON authority envelopes, versioned resolved-plan,
+  ReleaseManifest, RolloutDecision and StateCheckpoint shells plus single-owner
+  adapters exist before host implementation becomes execution truth;
 - current engine/component headers are absent from the future public facade
   contract shell;
-- one writer, bounded readers, stored-plan rejection/downgrade, canary/shadow,
-  rollback checkpoint, kill switch, and backout triggers are executable;
+- one writer, bounded readers, stored-plan rejection, minimum ArtifactLedger
+  conditional storage/fencing, non-authoritative shadow, rollback checkpoint,
+  kill switch, and backout triggers are executable;
 - host work may run dark/shadow only until these gates pass.
 
 ### P4 Host Lifecycle And Immutable Kernel
 
-- the host state machine constructs, validates, drains, publishes, leases,
-  fences, and reclaims runtime instances at one linearization point;
+- the host state machine constructs, validates, quiesces the old truth,
+  proves final transfer commit, boots from absent, recovers only from admitted
+  checkpoints without exporting faulted truth, jointly linearizes lease
+  admission/publication, terminates idempotently, drains, fences, quarantines
+  and reclaims runtime instances;
 - monotonic epochs reject stale references and in-flight work during candidate
   replacement, shadow transfer, and simulated cutover;
 - native simulation owns the episode barrier and Python mirrors use a versioned
@@ -148,6 +163,9 @@ P0 acceptance authorizes P1 decisions only. It proves no runtime change.
   independent high-level lowering;
 - `RunReceipt` binds actual executable/package/platform/run inputs, lifecycle
   transitions, results, and completion;
+- production ArtifactLedger qualification proves durable pre-mutation journal
+  admission, torn-write detection, stale-writer recovery fencing, immutable
+  release/rollout/checkpoint authorities and restore before P5-D;
 - CMake include/link visibility makes private engine ownership unavailable to
   production bindings; raw diagnostics use a separate opt-in target/module;
 - isolated wheels pass maintained facade/world-batch behavior on every
@@ -155,9 +173,11 @@ P0 acceptance authorizes P1 decisions only. It proves no runtime change.
 - P5-D is the only truth-changing production cutover and cannot start until
   P5-A closes the executable plan, P5-B emits complete RunReceipt, and P5-C
   proves facade-only production packaging;
-- P5-D migrates maintained callers, emits one cutover receipt, runs canary
-  adoption, version-skew, rollback, drain, stale-ref, leak, and operator drills,
-  and retires production rebuild only after the rollback gate passes;
+- P5-D conditionally commits one production-canary RolloutDecision, migrates
+  maintained callers, expands only its predeclared routing schedule, runs
+  version-skew, same-release and process-restart package rollback, drain,
+  stale-ref, leak, storage and operator drills, and retires production rebuild
+  only after the rollback gate passes;
 - unsupported process topologies fail closed;
 - redundant migration closure/interchange authorities retire without losing
   reproducible provenance.
@@ -193,6 +213,9 @@ P0 acceptance authorizes P1 decisions only. It proves no runtime change.
 - externally retained CI/release evidence has versioned manifests, checksums,
   minimum retention, availability, backup/restore, access-control,
   provider-migration, retrieval, and periodic restore-drill owners;
+- P7 extends the production storage foundation already accepted by P5-B; it
+  cannot defer selection of the first durable run/rollback store until after
+  P5-D;
 - required bilingual entry surfaces are synchronized without forcing all
   historical evidence into permanent translation governance;
 - link, lifecycle, archive, and sampled retrieval audits pass.
@@ -221,6 +244,10 @@ The program must remain `not accepted` if any of the following is true:
 - kernel composition is described as immutable while maintained callers still
   depend on production in-place rebuild;
 - host replacement silently discards or preserves undeclared state;
+- old truth can mutate after final state export or an active fault can bypass
+  drain/quarantine and zero-lease reclamation;
+- bootstrap, checkpoint recovery or normal shutdown requires an unreviewed
+  second publication/terminal path, faulted truth export, or default empty state;
 - publication lacks a linearization point, monotonic epoch, leases/fencing, or
   deterministic old-instance reclamation;
 - Python and native runtime can independently advance authoritative episode
@@ -231,6 +258,8 @@ The program must remain `not accepted` if any of the following is true:
 - production in-kernel rebuild retires before the single production cutover
   passes its rollback window and caller-adoption gate;
 - more than one component can author the production executable plan;
+- release routing, checkpoint or receipt state has multiple writers, or
+  production canary and full adoption use separate truth-selection seams;
 - fixture, generated header, package, Cordis, Python, or documentation state is
   treated as execution truth without native admission;
 - production wheel or bindings expose an implicit raw engine path;
@@ -241,6 +270,8 @@ The program must remain `not accepted` if any of the following is true:
   simplification;
 - a run is accepted without binding actual executable/package, platform,
   scenario/content/config/seed, lifecycle transitions, result, and completion;
+- truth mutation begins before durable journal admission, recovery can race a
+  stale writer, or rollback artifacts are ephemeral/unrestorable at P5-D;
 - an unsupported process topology runs without fail-closed fencing, recovery,
   authentication, authenticity, and quota gates;
 - externalized evidence lacks retention, restore, access, availability, or
@@ -281,8 +312,19 @@ Accepted P0 evidence:
   covering callers, targets/links, artifacts, controls/CI, and documents;
 - independent P0-B plan-review verdict with no unresolved critical/high finding.
 
-These inputs authorize P1-A/P1-B/P1-C decision work only. They do not accept a
-P1 decision or unlock P2-P8 implementation/acceptance.
+Accepted P1 evidence:
+
+- the three linked P1-A/P1-B/P1-C decisions with final SHA-256 ledger;
+- [independent P1 architecture review](../../../reviews/long_horizon_architecture_governance_p1_review_20260825.md)
+  covering initial, two repair and final-confirmation rounds;
+- no unresolved critical/high finding, all recorded medium findings closed, and
+  no short-term substitution detected;
+- synchronized phase dependencies requiring P3 contract/ledger foundations
+  before P4 host publication and P5-B storage/receipt qualification before the
+  sole P5-D production-canary cutover.
+
+P0/P1 authorize P2-A/P2-B and P3-A entry only. They do not accept any P2-P8
+implementation, platform support, host migration or production cutover.
 
 ## Residual Policy
 

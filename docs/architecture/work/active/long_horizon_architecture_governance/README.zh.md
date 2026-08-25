@@ -1,7 +1,8 @@
 # 长期架构治理
 
-状态：`2026-08-25`，长期架构治理计划处于 active；P0 authority/baseline 已接受，
-P1 target-architecture 决策已 ready，尚无 runtime 迁移阶段被接受。
+状态：`2026-08-25`，长期架构治理计划处于 active；P0 authority/baseline 与 P1
+target-architecture 决策已在独立复核后接受。P2-A/P2-B 与 P3-A 已 ready；尚无
+runtime 迁移阶段被接受。
 
 语言：
 
@@ -25,6 +26,10 @@ Last verified: `2026-08-25`
 - [子项目创建规范](../../../../engineering/automation/rules/subproject_creation_standard.zh.md)
 - [Subagent 使用规范](../../../../engineering/automation/standards/subagent_usage_policy.zh.md)
 - [独立 P0-B 计划审查（英文）](../../../reviews/long_horizon_architecture_governance_plan_review_20260825.md)
+- [P1-A host lifecycle 与 episode authority 决策（英文）](decisions/p1a_host_lifecycle_and_episode_authority_decision_20260825.md)
+- [P1-B plan 与 RunReceipt authority 决策（英文）](decisions/p1b_plan_and_run_receipt_authority_decision_20260825.md)
+- [P1-C rollout、operations 与 security 决策（英文）](decisions/p1c_rollout_operations_and_security_decision_20260825.md)
+- [独立 P1 architecture review（英文）](../../../reviews/long_horizon_architecture_governance_p1_review_20260825.md)
 
 ## Purpose
 
@@ -84,23 +89,28 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 
 1. `SimulationKernel` 从不可变 `ResolvedCompositionPlan` 构造，在生命周期内
    不原地改变会影响 truth 的 composition。
-2. host-level composition owner 具备显式 state machine、publication linearization
-   point、monotonic incarnation epoch、fenced world/entity/request/result ref、instance
-   lease、drain timeout/cancellation/backpressure 和 deterministic reclamation。Native
-   simulation 拥有 authoritative episode barrier；Python mirror 通过 versioned
-   handshake 参与。
+2. host-level composition owner 具备显式 state machine、共用单一 CAS 的 initial /
+   replacement / checkpoint-recovery publication、terminal shutdown、publication 前
+   quiescence 与 final-state transfer fence、monotonic generation、fenced
+   world/entity/request/result ref、共同线性化的 instance lease、drain/quarantine budget
+   和 deterministic reclamation。Native simulation 拥有 authoritative episode barrier；
+   Python mirror 通过 versioned handshake 参与。
 3. Versioned resolved-plan contract shell 与 engine-independent public-contract target
    必须先于 truth-changing host cutover。此前 host 只允许 dark/shadow，不能基于临时
    JSON 或 engine-owned DTO 发布 production seam。
-4. 耐久 composition artifact 收敛为 experiment request、一份闭合 resolved executable
-   plan 和 per-run composition evidence。Catalog、projection 与 migration artifact
-   可以保留为构建输入，但不再全部成为永久 interchange authority。
-5. Versioned rollout contract 管理 N/N-1 producer、native、stored-plan 与 wheel：
-   one writer、bounded reader、canary/shadow parity、cutover receipt、rollback
-   checkpoint、kill switch 与量化 backout trigger。
+4. 耐久 execution artifact 收敛为 experiment request、一份闭合 resolved executable
+   plan 与 native per-run receipt；正交的 ReleaseManifest、RolloutDecision 和
+   StateCheckpoint authority 各有唯一 writer/validator。Catalog、projection、generated
+   diagnostics/metadata 与 migration artifact 具备显式派生、过渡或历史路由。
+5. Canonical JSON/detached-digest contract 与 versioned rollout authority 管理 N/N-1
+   producer、native、stored-plan 与 wheel：one writer、bounded reader、非 authoritative
+   shadow、唯一 production-canary cutover decision、rollback checkpoint、kill switch
+   与量化 backout trigger。
 6. Per-run `RunReceipt` 绑定准确 plan bytes/hash、executable/module/wheel digest、
    build/toolchain/ABI/platform、scenario/content/config/seed、world/episode/run identity、
-   lifecycle receipt、determinism profile、result hash 与 completion state。
+   lifecycle receipt、determinism profile、result hash 与 completion state。Durable journal
+   admission 先于 truth mutation；recovery/finalization 具备 fencing，rollback artifact
+   在 production cutover 前已证明可恢复。
 7. Maintained Python、RL、visualization 和 host 路径只通过 runtime contract 与 facade
    target 链接。Raw engine access 被隔离到 diagnostics-only build/package surface。
 8. 稳定 invariant 优先由 compiler、target、type、runtime contract 与 behavior 执行。
@@ -122,9 +132,9 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 | 阶段 | 目标 | 进入条件 | 退出条件 | 状态 |
 | --- | --- | --- | --- | --- |
 | `P0 Authority And Baseline` | 建立已核验 source、control、CI、evidence、ownership 基线及独立审查。 | 用户授权与最新 `origin/main` | 项目包、度量、审查 finding 与 owner index 保持当前 | accepted |
-| `P1 Target Architecture` | 固定 lifecycle、episode authority、versioning/rollout、platform/process topology、contract chain、boundary 与 control lifecycle 决策。 | P0 evidence accepted | 决策包含 compatibility、rollback、operations 与 security activation 路径并通过独立审查 | ready |
-| `P2 Control Lifecycle` | 将每个架构控制分类为 permanent、renewable、migratory 或 evidentiary，并明确 owner 与退役。 | P1 术语固定 | 既有控制完成分类，migration control 具备可执行退出条件 | planned |
-| `P3 Contract And Public Boundary Foundation` | 在 host cutover 前落地 resolved-plan shell、mixed-version rollout contract、engine-independent DTO target 与初始 visibility。 | P1 accepted | transitional adapter 单一 owner，host 可使用最终 public type 且不发布第二 truth | planned |
+| `P1 Target Architecture` | 固定 lifecycle、episode authority、versioning/rollout、platform/process topology、contract chain、boundary 与 control lifecycle 决策。 | P0 evidence accepted | 决策包含 compatibility、rollback、operations、storage 与 security activation 路径并通过独立审查 | accepted |
+| `P2 Control Lifecycle` | 将每个架构控制分类为 permanent、renewable、migratory 或 evidentiary，并明确 owner 与退役。 | P1 术语固定 | 既有控制完成分类，migration control 具备可执行退出条件 | P2-A/P2-B ready |
+| `P3 Contract And Public Boundary Foundation` | 在 host cutover 前落地 canonical authority envelope、plan/release/rollout/checkpoint shell、engine-independent DTO target、ledger foundation 与初始 visibility。 | P1 accepted | transitional adapter 单一 owner，host 可使用最终 public type/storage 且不发布第二 truth | P3-A ready |
 | `P4 Host Lifecycle And Immutable Kernel Candidate` | 实现 fenced host replacement、唯一 episode authority、完整 state transfer 与 dark/shadow immutable candidate path。 | P3 contract/boundary foundation 稳定 | candidate path 已 state-complete 且 fenced，但不得成为 production truth 或退役 production rebuild | planned |
 | `P5 Plan, Evidence, Binding, And Production Cutover` | 闭合 executable plan，引入完整 RunReceipt，完成 facade/diagnostics packaging，再执行唯一 production cutover/backout 并退役 rebuild。 | P4 candidate 通过 dark/shadow | Cordis/native/facade/wheel 使用同一 plan；supported caller 只切换一次且有 rollback evidence，rebuild 失去 production authority | planned |
 | `P6 Test And CI Architecture` | 按独立 failure audience 对齐 fast、qualification、nightly、release 与 research lane。 | P2 control class 与 P5 boundary 可用 | permanent gate 有具名检测价值，migration scan 已消失或带到期约束 | planned |
@@ -138,6 +148,10 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 - [派发队列](long_horizon_architecture_governance_dispatch_queue_20260825.md)
 - [验收合同](long_horizon_architecture_governance_acceptance_20260825.md)
 - [P0 authority 清单（英文）](evidence/p0_authority_inventory_20260825.md)
+- [P1-A lifecycle 决策（英文）](decisions/p1a_host_lifecycle_and_episode_authority_decision_20260825.md)
+- [P1-B authority 决策（英文）](decisions/p1b_plan_and_run_receipt_authority_decision_20260825.md)
+- [P1-C rollout 决策（英文）](decisions/p1c_rollout_operations_and_security_decision_20260825.md)
+- [P1 独立审查（英文）](../../../reviews/long_horizon_architecture_governance_p1_review_20260825.md)
 
 ## Outputs And Evidence
 
@@ -178,8 +192,8 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 
 ## Residuals And Next Steps
 
-- P0 仅针对 architecture-decision entry 获得接受；P1-A/P1-B/P1-C 必须把已记录
-  fact 与 unknown 转化为通过独立审查的决策。
+- P1-A/P1-B/P1-C 已在独立初审与修复复核后获得 decision-level acceptance；只解锁
+  P2-A/P2-B 与 P3-A，不授权 runtime publication 或 production migration。
 - Dynamic in-place replacement 是候选例外，不是预设需求；其 admission 需要真实
   consumer 与 state-transfer proof。
 - 初始 accepted topology 默认为 in-process；只有 P1 与 P8 显式 admission 后才支持
