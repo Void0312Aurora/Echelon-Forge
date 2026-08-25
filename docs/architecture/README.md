@@ -36,8 +36,9 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
 - [Long-horizon architecture governance](work/active/long_horizon_architecture_governance/README.md):
   active program for immutable admitted kernels, host-owned replacement,
   consolidated composition authority, physical facade boundaries, lifecycle-
-  governed controls, and sustainable CI/evidence evolution. Plan review passed;
-  P0 inventories remain partial and no runtime migration phase is accepted.
+  governed controls, and sustainable CI/evidence evolution. P0 authority and
+  baseline are accepted; P1 decisions are ready and no runtime migration phase
+  is accepted.
 
 ## Completed Work
 

@@ -1,7 +1,8 @@
 # Long-Horizon Architecture Governance Acceptance Contract
 
-Status: `2026-08-25` acceptance contract established; current decision is
-`not accepted` because only P0 planning and baseline work exists.
+Status: `2026-08-25` acceptance contract established; P0 authority/baseline is
+accepted, while the overall program remains `not accepted` because P1-P8 are
+unimplemented.
 
 Parent subproject: [Long-Horizon Architecture Governance](README.md)
 
@@ -269,15 +270,19 @@ revalidation.
 
 ## Current Evidence
 
-Currently accepted only as P0 inputs:
+Accepted P0 evidence:
 
 - refreshed remote baseline and isolated branch/worktree;
 - source-backed governance and runtime observations in the
   [current-status file](long_horizon_architecture_governance_current_status_20260825.md);
 - finite [task clusters](long_horizon_architecture_governance_task_clusters_20260825.md);
-- explicit [dispatch order](long_horizon_architecture_governance_dispatch_queue_20260825.md).
+- explicit [dispatch order](long_horizon_architecture_governance_dispatch_queue_20260825.md);
+- reproducible [P0 authority inventory](evidence/p0_authority_inventory_20260825.md)
+  covering callers, targets/links, artifacts, controls/CI, and documents;
+- independent P0-B plan-review verdict with no unresolved critical/high finding.
 
-None of these inputs unlock P1-P8 acceptance.
+These inputs authorize P1-A/P1-B/P1-C decision work only. They do not accept a
+P1 decision or unlock P2-P8 implementation/acceptance.
 
 ## Residual Policy
 

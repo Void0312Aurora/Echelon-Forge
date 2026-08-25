@@ -33,8 +33,8 @@ packet 只作为归档 provenance。
 - [长期架构治理](work/active/long_horizon_architecture_governance/README.zh.md)：
   面向 immutable admitted kernel、host-owned replacement、收敛 composition
   authority、物理 facade boundary、具备生命周期的 control，以及可持续 CI/evidence
-  演进的 active program。计划审查已通过；P0 inventory 仍为 partial，尚无 runtime
-  迁移阶段被接受。
+  演进的 active program。P0 authority/baseline 已接受；P1 决策已 ready，尚无
+  runtime 迁移阶段被接受。
 
 ## 已完成工作
 

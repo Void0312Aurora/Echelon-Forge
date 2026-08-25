@@ -1,8 +1,8 @@
 # Long-Horizon Architecture Governance Dispatch Queue
 
-Status: `2026-08-25` P0 queue. Final independent plan review passed after two
-repair rounds. P0-A inventories remain partial, so no P1 implementation cluster
-is dispatchable yet.
+Status: `2026-08-25` P0 queue accepted. Final independent plan review passed and
+the reproducible authority inventory closed P0-A. P1-A/P1-B/P1-C architecture
+decision work is ready; no P3-P8 implementation cluster is dispatchable.
 
 Parent subproject: [Long-Horizon Architecture Governance](README.md)
 
@@ -26,14 +26,15 @@ Authoritative cluster definitions:
 
 | Order | Cluster | State | Dispatch owner | Dependency | Required return |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `P0-A` | partial | main thread | latest remote worktree | project packet and dated baseline exist; complete caller/control/target/artifact/document inventories remain |
+| 1 | `P0-A` | accepted | main thread | latest remote worktree | project packet plus reproducible caller/control/target/artifact/CI/document inventory accepted |
 | 2 | `P0-B initial review` | repair-required | independent diagnostics reviewer | complete P0 draft | six P1 and four P2 findings; no P0 finding; no short-term substitution detected |
 | 3 | `P0-C initial repair` | completed | main thread | initial P0-B findings | persisted review, finding disposition, revised synchronized packet, validation |
 | 4 | `P0-B first repair review` | repair-required | same independent reviewer | initial P0-C repair | original findings closed; one new P1 and four P2 findings returned |
 | 5 | `P0-C second repair` | completed | main thread | first repair-review findings | unique production cutover, P6/P7 ownership, executable validation, reproducible audit count, bilingual renewal bound |
 | 6 | `P0-B final repair review` | pass | same independent reviewer | frozen second repair | all original and new findings closed at plan level; no new finding or short-term substitution |
-| 7 | `P1-A` | blocked by P0 | future architecture worker | P0 accepted | immutable-kernel/host replacement decision and compatibility map |
-| 8 | `P1-B` | blocked by P0 | future architecture worker | P0 accepted | contract derivation and durable-authority decision |
+| 7 | `P1-A` | ready | future architecture worker | P0 accepted | immutable-kernel/host replacement decision and compatibility map |
+| 8 | `P1-B` | ready | future architecture worker | P0 accepted | contract derivation and durable-authority decision |
+| 9 | `P1-C` | ready | future operations/security architecture worker | P0 accepted | rollout/backout, support matrix, operational ownership, and security activation decision |
 
 ## Later Dependency Queue
 

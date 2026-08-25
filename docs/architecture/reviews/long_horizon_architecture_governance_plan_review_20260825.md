@@ -111,6 +111,15 @@ This closes P0-B plan review only. P0 overall remains partial until its live
 caller, control, target, artifact, and document inventories are complete. P1-P8
 remain unimplemented and unaccepted.
 
+## P0 Inventory Follow-On
+
+After the independent plan review, the main thread completed and accepted the
+reproducible
+[P0 authority inventory](../work/active/long_horizon_architecture_governance/evidence/p0_authority_inventory_20260825.md).
+That later evidence closes the stated P0 inventory condition and opens P1
+architecture-decision work. It does not alter the reviewer's historical verdict
+or claim that P1-P8 are implemented.
+
 ## Authority Boundary
 
 This review validates plan completeness only. It does not implement or accept

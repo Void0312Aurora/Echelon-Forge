@@ -1,8 +1,8 @@
 # Long-Horizon Architecture Governance
 
-Status: `2026-08-25` active long-horizon architecture-governance program; the
-independent plan review passed, P0 inventories remain partial, and no runtime
-migration phase is accepted yet.
+Status: `2026-08-25` active long-horizon architecture-governance program; P0
+authority and baseline are accepted, P1 target-architecture decisions are
+ready, and no runtime migration phase is accepted yet.
 
 Language:
 
@@ -117,8 +117,8 @@ the same long-term authority, compatibility, and lifecycle result.
 
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
-| `P0 Authority And Baseline` | Establish verified source, control, CI, evidence, and ownership baselines plus independent review. | user authorization and latest `origin/main` | project packet, measurements, review findings, and owner index are current | active |
-| `P1 Target Architecture` | Freeze lifecycle, episode authority, versioning/rollout, platform/process topology, contract-chain, boundary, and control-lifecycle decisions. | P0 evidence accepted | decisions include compatibility, rollback, operations, and security activation paths and pass independent architecture review | planned |
+| `P0 Authority And Baseline` | Establish verified source, control, CI, evidence, and ownership baselines plus independent review. | user authorization and latest `origin/main` | project packet, measurements, review findings, and owner index are current | accepted |
+| `P1 Target Architecture` | Freeze lifecycle, episode authority, versioning/rollout, platform/process topology, contract-chain, boundary, and control-lifecycle decisions. | P0 evidence accepted | decisions include compatibility, rollback, operations, and security activation paths and pass independent architecture review | ready |
 | `P2 Control Lifecycle` | Make every architecture control permanent, renewable, migratory, or evidentiary with explicit ownership and retirement. | P1 terminology frozen | existing controls are classified and migration controls have enforced exit criteria | planned |
 | `P3 Contract And Public Boundary Foundation` | Land the versioned resolved-plan shell, mixed-version rollout contract, engine-independent public DTO target, and initial target visibility before host cutover. | P1 accepted | transitional adapters are single-owner and host work can use final public types without publishing a second truth | planned |
 | `P4 Host Lifecycle And Immutable Kernel Candidate` | Implement fenced host replacement, unique episode authority, complete state-transfer semantics, and an immutable candidate path in dark/shadow mode. | P3 contract/boundary foundation stable | the candidate path is state-complete and fenced but cannot become production truth or retire production rebuild | planned |
@@ -133,6 +133,7 @@ the same long-term authority, compatibility, and lifecycle result.
 - [Current status and risk register](long_horizon_architecture_governance_current_status_20260825.md)
 - [Dispatch queue](long_horizon_architecture_governance_dispatch_queue_20260825.md)
 - [Acceptance contract](long_horizon_architecture_governance_acceptance_20260825.md)
+- [P0 authority inventory](evidence/p0_authority_inventory_20260825.md)
 
 ## Outputs And Evidence
 
@@ -172,8 +173,8 @@ cannot satisfy this gate.
 
 ## Residuals And Next Steps
 
-- P0 must complete the evidence ledger and independent plan review before P1
-  decisions become implementation authority.
+- P0 is accepted for architecture-decision entry only; P1-A/P1-B/P1-C must now
+  turn the recorded facts and unknowns into independently reviewed decisions.
 - Dynamic in-place replacement remains a candidate exception, not an assumed
   requirement; its admission requires a real consumer and state-transfer proof.
 - The initial accepted topology is in-process unless P1 and P8 explicitly

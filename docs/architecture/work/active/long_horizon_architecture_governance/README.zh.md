@@ -1,7 +1,7 @@
 # 长期架构治理
 
-状态：`2026-08-25`，长期架构治理计划处于 active；独立计划审查已通过，P0
-inventory 仍为 partial，尚无 runtime 迁移阶段被接受。
+状态：`2026-08-25`，长期架构治理计划处于 active；P0 authority/baseline 已接受，
+P1 target-architecture 决策已 ready，尚无 runtime 迁移阶段被接受。
 
 语言：
 
@@ -121,8 +121,8 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 
 | 阶段 | 目标 | 进入条件 | 退出条件 | 状态 |
 | --- | --- | --- | --- | --- |
-| `P0 Authority And Baseline` | 建立已核验 source、control、CI、evidence、ownership 基线及独立审查。 | 用户授权与最新 `origin/main` | 项目包、度量、审查 finding 与 owner index 保持当前 | active |
-| `P1 Target Architecture` | 固定 lifecycle、episode authority、versioning/rollout、platform/process topology、contract chain、boundary 与 control lifecycle 决策。 | P0 evidence accepted | 决策包含 compatibility、rollback、operations 与 security activation 路径并通过独立审查 | planned |
+| `P0 Authority And Baseline` | 建立已核验 source、control、CI、evidence、ownership 基线及独立审查。 | 用户授权与最新 `origin/main` | 项目包、度量、审查 finding 与 owner index 保持当前 | accepted |
+| `P1 Target Architecture` | 固定 lifecycle、episode authority、versioning/rollout、platform/process topology、contract chain、boundary 与 control lifecycle 决策。 | P0 evidence accepted | 决策包含 compatibility、rollback、operations 与 security activation 路径并通过独立审查 | ready |
 | `P2 Control Lifecycle` | 将每个架构控制分类为 permanent、renewable、migratory 或 evidentiary，并明确 owner 与退役。 | P1 术语固定 | 既有控制完成分类，migration control 具备可执行退出条件 | planned |
 | `P3 Contract And Public Boundary Foundation` | 在 host cutover 前落地 resolved-plan shell、mixed-version rollout contract、engine-independent DTO target 与初始 visibility。 | P1 accepted | transitional adapter 单一 owner，host 可使用最终 public type 且不发布第二 truth | planned |
 | `P4 Host Lifecycle And Immutable Kernel Candidate` | 实现 fenced host replacement、唯一 episode authority、完整 state transfer 与 dark/shadow immutable candidate path。 | P3 contract/boundary foundation 稳定 | candidate path 已 state-complete 且 fenced，但不得成为 production truth 或退役 production rebuild | planned |
@@ -137,6 +137,7 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 - [当前状态与风险登记](long_horizon_architecture_governance_current_status_20260825.md)
 - [派发队列](long_horizon_architecture_governance_dispatch_queue_20260825.md)
 - [验收合同](long_horizon_architecture_governance_acceptance_20260825.md)
+- [P0 authority 清单（英文）](evidence/p0_authority_inventory_20260825.md)
 
 ## Outputs And Evidence
 
@@ -177,8 +178,8 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 
 ## Residuals And Next Steps
 
-- P0 必须完成 evidence ledger 与独立计划审查，P1 决策才能成为 implementation
-  authority。
+- P0 仅针对 architecture-decision entry 获得接受；P1-A/P1-B/P1-C 必须把已记录
+  fact 与 unknown 转化为通过独立审查的决策。
 - Dynamic in-place replacement 是候选例外，不是预设需求；其 admission 需要真实
   consumer 与 state-transfer proof。
 - 初始 accepted topology 默认为 in-process；只有 P1 与 P8 显式 admission 后才支持

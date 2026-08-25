@@ -17,8 +17,8 @@
       "chinese": "docs/architecture/README.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-08-25",
-      "english_hash": "6fb80380e553c89dd5daacb868e578ffd9b1197c45aa3d4eecdfc287d51a8f9d",
-      "chinese_hash": "f0744635a96142dfb8413a3e984c853e12adc2a58f95ce127ba3c44543eca710"
+      "english_hash": "3d97cee27a9d0212f10d5eeaf8d03bba25ed0bed62043baa84898f650b628da4",
+      "chinese_hash": "249d3c1530775d44998c8b0de300d33905d1339f96289ec5920205fe867f840a"
     },
     {
       "pair_id": "architecture/reference/t8_g4_truth_leak_inventory",

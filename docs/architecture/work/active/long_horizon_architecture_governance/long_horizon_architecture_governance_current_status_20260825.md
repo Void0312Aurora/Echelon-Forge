@@ -1,10 +1,9 @@
 # Long-Horizon Architecture Governance Current Status
 
-Status: `2026-08-25` P0 source and governance baseline recorded against
-`origin/main` at `82d5b6e893c442950e334eb3e9ec92f8174eeb35`. The target
-architecture is planned. Initial and first repair reviews returned
-`repair-required`; the final independent repair review closed all plan findings
-with verdict `pass`. P0 inventories remain partial. No code migration is accepted.
+Status: `2026-08-25` P0 authority and baseline accepted against `origin/main`
+at `82d5b6e893c442950e334eb3e9ec92f8174eeb35` and plan commit
+`c668bae91900df4b5488099384c95d9820209de2`. P1 target-architecture decisions
+are ready. No code migration is accepted.
 
 Parent subproject: [Long-Horizon Architecture Governance](README.md)
 
@@ -61,6 +60,10 @@ They must be remeasured before an implementation or acceptance claim.
 - Completed the final independent repair review. It found no new P0/P1/P2
   finding, no short-term substitution, and passed the plan while keeping P0
   inventories and every P1-P8 implementation obligation open.
+- Accepted the reproducible
+  [P0 authority inventory](evidence/p0_authority_inventory_20260825.md): nine
+  caller surfaces/23 paths, a fresh 25-target MSVC/Ninja graph, the closed
+  artifact chain, full control/CI counts, and the 72-document retention scope.
 
 ## Observed Baseline
 
@@ -74,6 +77,8 @@ They must be remeasured before an implementation or acceptance claim.
 | In-kernel rebuild | `SimulationKernel::rebuild_world_composition` has tests and production definitions but no maintained non-test call or Python binding | source grep over current remote tree | in-place rebuild currently lacks a production consumer and must justify survival against host-level replacement |
 | Rebuild reachability | raw-world lease acquisition or ordinary world/configuration mutation permanently closes rebuild | `simulation_kernel.cpp` and lifecycle tests | the implemented capability is structurally unavailable after most real use begins |
 | Composition evidence | accepted default path binds request, catalog lock, projection, manifests, provenance, parity, and migration closure | runtime composition standard, fixtures, tools, and tests | reproducibility is strong, but derivation inputs and permanent authorities are not yet sharply separated |
+| Fresh target graph | current-worktree MSVC/Ninja configure exposes 25 `ef_*` targets; `ef_composition` built in eight steps | fresh ignored build directory, target help, Ninja graph query, and focused build | composition is physically separate, but facade/raw bindings/public DTOs still expose core ownership |
+| Closure inventory | existing generator validates nine caller surface groups, 23 caller paths, source truth, artifact joins, and held residuals | closure validation hash plus 69-pass/4-skip composition architecture suite | P1 can use the existing evidence owner without creating a second registry |
 | Kernel smoke test | `test_simulation_kernel_smoke.cpp` contains 41 top-level cases across composition, lifecycle, concurrency, commands, spawning, exact stages, and basic runtime behavior | source inspection | failure ownership and migration-test retirement are obscured even when coverage is valuable |
 | Numerical regression | the pre-P2-B short trace is explicitly labeled a same-toolchain migration baseline, not general physics correctness | named native test and comments | relocation or retirement needs replacement evidence; it is not proof that semantic tests are absent |
 | Latest CI | the verified remote run completed successfully in about 11 minutes; Python smoke was about 38 seconds, while native build and isolated wheel were the dominant steps | GitHub Actions job timestamps | governance simplification is primarily a maintenance and authority concern, not currently the largest CI-time optimization |
@@ -84,9 +89,9 @@ They must be remeasured before an implementation or acceptance claim.
 
 | Area | State | Evidence | Blocker to next state |
 | --- | --- | --- | --- |
-| P0 project authority | partial | owner route, project packet, dedicated branch/worktree, and final independent plan-review pass | complete caller/control/target/artifact/document inventories before P1 dispatch |
-| Source/control baseline | partial | dated facts and commands above | complete control, caller, target, artifact, and document inventory |
-| Immutable-kernel decision | planned | target recorded in README | state/identity/rollback compatibility design and independent review |
+| P0 project authority | accepted | owner route, isolated worktree, independent plan-review pass, and accepted P0 authority inventory | P1 decisions only; no implementation authority |
+| Source/control baseline | accepted | reproducible caller, target/link, artifact, control/CI, and document commands in P0 evidence | remeasure at each decision/implementation acceptance boundary |
+| Immutable-kernel decision | ready | target and complete caller/target baseline recorded | state/identity/rollback compatibility design and independent review |
 | Host replacement | not implemented | no accepted host contract | P1 state machine plus P3 public contract/plan/rollout foundation |
 | Contract consolidation | planned | current chain inventoried at high level | exact derivation graph and compatibility/version transition |
 | Physical facade boundary | planned | current facade direction and source guards | CMake/package topology and diagnostics migration design |
@@ -156,19 +161,18 @@ program.
 
 ## Recommended Action Order
 
-1. Complete the remaining P0 caller/control/target/artifact/document inventories.
-2. Run P1-A/P1-B/P1-C lifecycle, artifact, rollout, platform/topology,
+1. Run P1-A/P1-B/P1-C lifecycle, artifact, rollout, platform/topology,
    operations, and security decisions before dispatching implementation.
-3. Establish P2 control classification and measures in parallel with detailed
+2. Establish P2 control classification and measures in parallel with detailed
    caller/artifact census.
-4. Land P3 public DTO/plan/rollout foundations before any host publication.
-5. Implement the P4 dark/shadow host, episode/state-transfer authority, and
+3. Land P3 public DTO/plan/rollout foundations before any host publication.
+4. Implement the P4 dark/shadow host, episode/state-transfer authority, and
    immutable internal candidate without production caller cutover.
-6. Complete P5 plan/RunReceipt/facade-package gates, then execute the only
+5. Complete P5 plan/RunReceipt/facade-package gates, then execute the only
    production cutover, caller migration, rollback window, and rebuild retirement.
-7. Replace test/CI and evidence/document controls only after their structural
+6. Replace test/CI and evidence/document controls only after their structural
    successors exist.
-8. Run P8 acceptance and independent review before promoting standards or
+7. Run P8 acceptance and independent review before promoting standards or
    retiring this project through the admitted history route.
 
 ## Explicit Overclaim Refusals
