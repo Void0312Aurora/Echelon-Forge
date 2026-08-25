@@ -1,0 +1,42 @@
+{
+  "$id": "https://echelon-forge.local/contracts/authority/authority_payloads.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {"$ref": "#/$defs/resolved_composition_plan"},
+    {"$ref": "#/$defs/release_manifest"},
+    {"$ref": "#/$defs/rollout_decision"},
+    {"$ref": "#/$defs/state_checkpoint"}
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "generation": {"type": "string", "pattern": "^(?:0|[1-9][0-9]*)$"},
+    "resolved_composition_plan": {
+      "type": "object", "additionalProperties": false,
+      "required": ["authority_kind", "schema_version", "contract_version", "writer_role", "adapter_role", "plan_id", "request_sha256", "writer_generation", "reader_generation_min", "reader_generation_max", "source_artifact_sha256", "source_artifact_schema_version", "source_request_manifest_binding_sha256", "source_requested_manifest_sha256", "resolved_plan"],
+      "properties": {
+        "authority_kind": {"const": "resolved_composition_plan"}, "schema_version": {"const": "echelon_forge.resolved_composition_plan.v1"}, "contract_version": {"const": "echelon_forge.resolved_composition_plan_contract.v1"}, "writer_role": {"const": "plan_compiler"}, "adapter_role": {"const": "legacy_resolved_manifest_reader"}, "plan_id": {"type": "string", "minLength": 1}, "request_sha256": {"$ref": "#/$defs/sha256"}, "writer_generation": {"$ref": "#/$defs/generation"}, "reader_generation_min": {"$ref": "#/$defs/generation"}, "reader_generation_max": {"$ref": "#/$defs/generation"}, "source_artifact_sha256": {"$ref": "#/$defs/sha256"}, "source_artifact_schema_version": {"const": "echelon_forge.resolved_simulation_composition.v1"}, "source_request_manifest_binding_sha256": {"$ref": "#/$defs/sha256"}, "source_requested_manifest_sha256": {"$ref": "#/$defs/sha256"}, "resolved_plan": {"$ref": "../composition/resolved_simulation_composition.v1.schema.json"}
+      }
+    },
+    "release_manifest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["authority_kind", "schema_version", "contract_version", "writer_role", "release_id", "writer_generation", "reader_generation_min", "reader_generation_max", "package_set", "supported_rows", "provenance_sha256", "sbom_sha256", "toolchain_identity", "source_revision", "compatibility_generation", "minimum_reader_generation", "state_schema_generation", "rollback_policy"],
+      "properties": {
+        "authority_kind": {"const": "release_manifest"}, "schema_version": {"const": "echelon_forge.release_manifest.v1"}, "contract_version": {"const": "echelon_forge.release_manifest_contract.v1"}, "writer_role": {"const": "release_artifact_pipeline"}, "release_id": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9._:-]{0,127}$"}, "writer_generation": {"$ref": "#/$defs/generation"}, "reader_generation_min": {"$ref": "#/$defs/generation"}, "reader_generation_max": {"$ref": "#/$defs/generation"}, "package_set": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "object", "additionalProperties": false, "required": ["name", "sha256"], "properties": {"name": {"type": "string", "minLength": 1}, "sha256": {"$ref": "#/$defs/sha256"}}}}, "supported_rows": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "provenance_sha256": {"$ref": "#/$defs/sha256"}, "sbom_sha256": {"$ref": "#/$defs/sha256"}, "toolchain_identity": {"type": "string", "minLength": 1}, "source_revision": {"type": "string", "minLength": 1}, "compatibility_generation": {"$ref": "#/$defs/generation"}, "minimum_reader_generation": {"$ref": "#/$defs/generation"}, "state_schema_generation": {"$ref": "#/$defs/generation"}, "rollback_policy": {"enum": ["checkpoint-recovery", "package-restart"]}
+      }
+    },
+    "rollout_decision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["authority_kind", "schema_version", "contract_version", "writer_role", "decision_id", "release_id", "manifest_sha256", "plan_sha256", "plan_reader_generation_min", "plan_reader_generation_max", "predecessor_decision_id", "state", "writer_generation", "decision_sequence", "cohort", "rollback_deadline", "checkpoint_id", "irreversible_write_boundary"],
+      "properties": {
+        "authority_kind": {"const": "rollout_decision"}, "schema_version": {"const": "echelon_forge.rollout_decision.v1"}, "contract_version": {"const": "echelon_forge.rollout_decision_contract.v1"}, "writer_role": {"const": "release_controller"}, "decision_id": {"type": "string", "minLength": 1}, "release_id": {"type": "string", "minLength": 1}, "manifest_sha256": {"$ref": "#/$defs/sha256"}, "plan_sha256": {"$ref": "#/$defs/sha256"}, "plan_reader_generation_min": {"$ref": "#/$defs/generation"}, "plan_reader_generation_max": {"$ref": "#/$defs/generation"}, "predecessor_decision_id": {"type": "string"}, "state": {"enum": ["prepared", "shadow", "canary-ready", "production-canary", "adoption-expanding", "rollback-window", "stable", "backed-out"]}, "writer_generation": {"$ref": "#/$defs/generation"}, "decision_sequence": {"$ref": "#/$defs/generation"}, "cohort": {"type": "string", "minLength": 1}, "rollback_deadline": {"type": "string", "minLength": 1}, "checkpoint_id": {"type": "string"}, "irreversible_write_boundary": {"type": "string", "minLength": 1}
+      }
+    },
+    "state_checkpoint": {
+      "type": "object", "additionalProperties": false,
+      "required": ["authority_kind", "schema_version", "contract_version", "writer_role", "writer_generation", "checkpoint_id", "plan_sha256", "release_id", "decision_id", "run_id", "host_boot_id", "incarnation_epoch", "transfer_fence_sequence", "world_fragments", "aggregate_state_sha256", "state_schema_generation", "target_reader_generation_min", "target_reader_generation_max"],
+      "properties": {
+        "authority_kind": {"const": "state_checkpoint"}, "schema_version": {"const": "echelon_forge.state_checkpoint.v1"}, "contract_version": {"const": "echelon_forge.state_checkpoint_contract.v1"}, "writer_role": {"const": "runtime_host"}, "writer_generation": {"$ref": "#/$defs/generation"}, "checkpoint_id": {"type": "string", "minLength": 1}, "plan_sha256": {"$ref": "#/$defs/sha256"}, "release_id": {"type": "string", "minLength": 1}, "decision_id": {"type": "string", "minLength": 1}, "run_id": {"type": "string", "minLength": 1}, "host_boot_id": {"type": "string", "minLength": 1}, "incarnation_epoch": {"$ref": "#/$defs/generation"}, "transfer_fence_sequence": {"$ref": "#/$defs/generation"}, "world_fragments": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "object", "additionalProperties": false, "required": ["world_id", "episode_ids", "fragment_sequence", "state_sha256"], "properties": {"world_id": {"type": "string", "minLength": 1}, "episode_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "fragment_sequence": {"$ref": "#/$defs/generation"}, "state_sha256": {"$ref": "#/$defs/sha256"}}}}, "aggregate_state_sha256": {"$ref": "#/$defs/sha256"}, "state_schema_generation": {"$ref": "#/$defs/generation"}, "target_reader_generation_min": {"$ref": "#/$defs/generation"}, "target_reader_generation_max": {"$ref": "#/$defs/generation"}
+      }
+    }
+  }
+}
