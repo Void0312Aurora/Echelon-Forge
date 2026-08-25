@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/README.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-08-23`
+Last verified: `2026-08-25`
 
 本 owner 覆盖跨领域系统架构、runtime 分层、contracts、后端和架构决策。
 维护中的 standards、reference、issues 与 reviews 现均位于本 owner；旧 plan
@@ -28,6 +28,14 @@ packet 只作为归档 provenance。
 - [Truth-leak 清单](reference/t8_g4_truth_leak_inventory.zh.md)：当前 declared/open
   权威泄漏及其验证边界。
 
+## 活跃工作
+
+- [长期架构治理](work/active/long_horizon_architecture_governance/README.zh.md)：
+  面向 immutable admitted kernel、host-owned replacement、收敛 composition
+  authority、物理 facade boundary、具备生命周期的 control，以及可持续 CI/evidence
+  演进的 active program。计划审查已通过；P0 inventory 仍为 partial，尚无 runtime
+  迁移阶段被接受。
+
 ## 已完成工作
 
 - [Cordis 仿真组合内核](work/archive/cordis_simulation_composition_kernel/README.zh.md)：
@@ -48,6 +56,10 @@ packet 只作为归档 provenance。
 
 ## 评审
 
+- [长期架构治理计划审查 — 2026-08-25（英文）](reviews/long_horizon_architecture_governance_plan_review_20260825.md)：
+  独立 P0-B 审查，覆盖 lifecycle fencing、阶段顺序、mixed-version rollout、
+  RunReceipt、control retirement、operations、topology 与 evidence durability。
+  初审与第一次修复复审均为 repair-required；最终修复复审在不缩减长期终态的前提下通过。
 - [Cordis 仿真组合计划架构审阅 — 2026-08-17](reviews/cordis_simulation_composition_program_review_20260817.zh.md)：
   总体咨询性审阅；保留原生 composition 方向，但要求在后续 system/plugin/host
   阶段前修订权威与计划边界。

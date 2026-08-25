@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/README.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-08-23`
+Last verified: `2026-08-25`
 
 This owner covers cross-domain system architecture, runtime layers, contracts,
 backends, and architecture decisions. Maintained standards, references, issues,
@@ -31,6 +31,14 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
 - [Truth-leak inventory](reference/t8_g4_truth_leak_inventory.md): current
   declared/open authority leaks and their verification boundary.
 
+## Active Work
+
+- [Long-horizon architecture governance](work/active/long_horizon_architecture_governance/README.md):
+  active program for immutable admitted kernels, host-owned replacement,
+  consolidated composition authority, physical facade boundaries, lifecycle-
+  governed controls, and sustainable CI/evidence evolution. Plan review passed;
+  P0 inventories remain partial and no runtime migration phase is accepted.
+
 ## Completed Work
 
 - [Cordis simulation composition kernel](work/archive/cordis_simulation_composition_kernel/README.md):
@@ -52,6 +60,11 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
 
 ## Reviews
 
+- [Long-horizon architecture governance plan review — 2026-08-25](reviews/long_horizon_architecture_governance_plan_review_20260825.md):
+  independent P0-B review of lifecycle fencing, phase order, mixed-version
+  rollout, run receipts, control retirement, operations, topology, and
+  evidence durability. Initial and first repair verdicts were repair-required;
+  the final repair review passed without shrinking the long-horizon outcome.
 - [Cordis simulation composition program architecture review — 2026-08-17](reviews/cordis_simulation_composition_program_review_20260817.md):
   advisory macro review that retains the native composition direction while
   requiring authority and program-boundary revision before later

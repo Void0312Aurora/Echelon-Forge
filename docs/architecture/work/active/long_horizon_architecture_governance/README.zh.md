@@ -1,0 +1,194 @@
+# 长期架构治理
+
+状态：`2026-08-25`，长期架构治理计划处于 active；独立计划审查已通过，P0
+inventory 仍为 partial，尚无 runtime 迁移阶段被接受。
+
+语言：
+
+- 英文规范页：[README.md](README.md)
+- 中文配套页：`README.zh.md`
+
+Document kind: `task`
+Lifecycle: `maintained`
+Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/README.md`
+Owner: `cross-domain architecture`
+Last verified: `2026-08-25`
+
+相关权威：
+
+- [架构 owner](../../../README.zh.md)
+- [仿真系统架构设计](../../../standards/simulation_system_architecture_design.zh.md)
+- [Runtime workflow 与 contract 基线](../../../standards/runtime_workflow_and_contract_baseline.zh.md)
+- [Runtime composition 基线](../../../standards/runtime_composition_baseline.zh.md)
+- [已归档 Cordis composition 计划](../../archive/cordis_simulation_composition_kernel/README.zh.md)
+- [文档生命周期规范](../../../../engineering/documentation/standards/document_lifecycle_policy.zh.md)
+- [子项目创建规范](../../../../engineering/automation/rules/subproject_creation_standard.zh.md)
+- [Subagent 使用规范](../../../../engineering/automation/standards/subagent_usage_policy.zh.md)
+- [独立 P0-B 计划审查（英文）](../../../reviews/long_horizon_architecture_governance_plan_review_20260825.md)
+
+## Purpose
+
+本计划改变 Echelon Forge 演进 runtime 架构的方式，以及架构控制被创建、提升、
+续期和退役的方式。它不是一次仓库清理 wave，不得被重新定义成短期测试、CI 或
+文档减量项目。
+
+长期终态是：由一份闭合 executable plan 构造不可变的 admitted kernel；
+replacement 归属于 host-level 生命周期边界；production binding 在物理上只能依赖
+facade contract；治理控制必须退役或续期，而不是在每次迁移后永久累积。
+
+## Current State
+
+| 区域 | 状态 | 证据 | 边界 |
+| --- | --- | --- | --- |
+| Runtime composition | 已接受有界默认 CPU-exact 基线 | [runtime composition standard](../../../standards/runtime_composition_baseline.zh.md) 与 [`SimulationKernel`](../../../../../src/core/engine/simulation_kernel.cpp) | 已接受构造和证据不能证明 kernel 内 rebuild 存在生产消费者 |
+| Composition replacement | 已实现，但战略方向未裁定 | `rebuild_world_composition`、mutation barrier、raw-world quarantine、scope generation 与 handover 机制 | 当前没有 maintained 非测试 caller 或 binding 要求原地 kernel rebuild |
+| Runtime 边界 | facade 方向已接受；compatibility surface 仍存在 | [runtime facade guards](../../../../../tests/architecture/runtime_facade/test_runtime_escape_hatches.py) | source scan 能描述边界，但不能让越界在物理上不可表示 |
+| Contract 与证据链 | 已覆盖 accepted 默认 profile | request、catalog lock、projection、requested/resolved manifest、provenance、parity 与 closure artifact | 中间迁移 artifact 仍是永久治理输入 |
+| 测试与 CI 治理 | 已验证 CI smoke 为绿；完整 governance audit 非绿 | [CI smoke suite](../../../../../tests/smoke/ci_smoke_suite.json)、[governance audit suite](../../../../../tests/suites/governance_audit_suite.json) 与 `test_archive_retirement.py` | 远端基线跟踪的 20 个 owner-archive 文档使 retirement gate 失败 |
+| 文档生命周期 | policy、gate 与仓库路由冲突 | [文档生命周期规范](../../../../engineering/documentation/standards/document_lifecycle_policy.zh.md)、子项目规范与当前 architecture archive | standard 接受 owner-local archive，但 maintained gate 禁止所有 `docs/**/archive/**` 路径 |
+
+## Scope
+
+范围内：
+
+- 选择并实现长期 immutable-kernel 与 host-owned replacement 架构；
+- 定义 host lifecycle state machine、publication linearization point、
+  epoch/fencing/lease、唯一 episode-barrier authority、drain/reclamation 规则和完整
+  state-transfer census；
+- 把 runtime composition interchange 与 run evidence 收敛到最小的耐久 contract 链；
+- 通过 single-writer、bounded dual-reader、canary/shadow、rollback window 与
+  backout semantics 支持 producer/native/wheel 的 mixed-version rollout；
+- 用 CMake target、header visibility、package、type、runtime contract 与行为边界
+  替代 source-text 边界治理；
+- 为架构控制建立生命周期，包括 owner、检测目的、续期、到期、替代与退役；
+- 按反馈目的重新设计测试和 CI lane，同时不削弱 native、facade、wheel、replay、
+  parity 或 CPU-canonical correctness；
+- 在保留可复现 provenance 的同时，把历史 acceptance 与 evidence 移出永久执行权威；
+- 迁移既有 caller、compatibility 路径、文档和 evidence，且不创造第二个 runtime truth。
+- 定义受支持 platform/process topology、运营 owner、lifecycle SLO、adoption
+  telemetry，以及 multi-process/external host 的 fail-closed activation gate。
+
+范围外：
+
+- 削弱 deterministic CPU-exact execution，或在没有独立提升证据时把 CUDA 作为
+  canonical；
+- 在没有 authenticity、compatibility、state-transfer 与 failure-containment 规则时，
+  接受外部 plugin、remote catalog 或 live reload；
+- 只为改善仓库比率而删除 behavior、packaging 或 native admission evidence；
+- 声称文档、inventory 或 source-scan 通过就实现了目标架构；
+- 因核心迁移困难而用 cleanup-only 或短期交付计划替代长期目标。
+
+## Architecture Decision
+
+目标方向如下：
+
+1. `SimulationKernel` 从不可变 `ResolvedCompositionPlan` 构造，在生命周期内
+   不原地改变会影响 truth 的 composition。
+2. host-level composition owner 具备显式 state machine、publication linearization
+   point、monotonic incarnation epoch、fenced world/entity/request/result ref、instance
+   lease、drain timeout/cancellation/backpressure 和 deterministic reclamation。Native
+   simulation 拥有 authoritative episode barrier；Python mirror 通过 versioned
+   handshake 参与。
+3. Versioned resolved-plan contract shell 与 engine-independent public-contract target
+   必须先于 truth-changing host cutover。此前 host 只允许 dark/shadow，不能基于临时
+   JSON 或 engine-owned DTO 发布 production seam。
+4. 耐久 composition artifact 收敛为 experiment request、一份闭合 resolved executable
+   plan 和 per-run composition evidence。Catalog、projection 与 migration artifact
+   可以保留为构建输入，但不再全部成为永久 interchange authority。
+5. Versioned rollout contract 管理 N/N-1 producer、native、stored-plan 与 wheel：
+   one writer、bounded reader、canary/shadow parity、cutover receipt、rollback
+   checkpoint、kill switch 与量化 backout trigger。
+6. Per-run `RunReceipt` 绑定准确 plan bytes/hash、executable/module/wheel digest、
+   build/toolchain/ABI/platform、scenario/content/config/seed、world/episode/run identity、
+   lifecycle receipt、determinism profile、result hash 与 completion state。
+7. Maintained Python、RL、visualization 和 host 路径只通过 runtime contract 与 facade
+   target 链接。Raw engine access 被隔离到 diagnostics-only build/package surface。
+8. 稳定 invariant 优先由 compiler、target、type、runtime contract 与 behavior 执行。
+   Source scan 的 lifecycle metadata 附着在既有 gate declaration 上。到期 migration
+   control 不得静默续期：最多一次 bounded renewal，并要求独立 sponsor 和 forced
+   removal date；否则退役，或重新 admission 为 permanent semantic control。
+9. Accepted topology/platform matrix 必须显式。Unsupported multi-process fail closed；
+   activation 需要 single-writer leader fencing、persistent epoch、crash recovery、
+   authentication/authorization、artifact authenticity、quota 和同一 native owner。
+10. Normative standard 与当前 operator/developer 入口保持 maintained；已结束的 review
+   packet、dispatch record 与 acceptance evidence 迁入已准入的 review、git ledger、
+   release 或 CI artifact retention surface。
+
+阶段可以调整实现顺序，但必须保留这些结果。独立审查只有在替代机制达到相同的
+长期 authority、compatibility 与 lifecycle 结果时，才能替换既定机制。
+
+## Phase Plan
+
+| 阶段 | 目标 | 进入条件 | 退出条件 | 状态 |
+| --- | --- | --- | --- | --- |
+| `P0 Authority And Baseline` | 建立已核验 source、control、CI、evidence、ownership 基线及独立审查。 | 用户授权与最新 `origin/main` | 项目包、度量、审查 finding 与 owner index 保持当前 | active |
+| `P1 Target Architecture` | 固定 lifecycle、episode authority、versioning/rollout、platform/process topology、contract chain、boundary 与 control lifecycle 决策。 | P0 evidence accepted | 决策包含 compatibility、rollback、operations 与 security activation 路径并通过独立审查 | planned |
+| `P2 Control Lifecycle` | 将每个架构控制分类为 permanent、renewable、migratory 或 evidentiary，并明确 owner 与退役。 | P1 术语固定 | 既有控制完成分类，migration control 具备可执行退出条件 | planned |
+| `P3 Contract And Public Boundary Foundation` | 在 host cutover 前落地 resolved-plan shell、mixed-version rollout contract、engine-independent DTO target 与初始 visibility。 | P1 accepted | transitional adapter 单一 owner，host 可使用最终 public type 且不发布第二 truth | planned |
+| `P4 Host Lifecycle And Immutable Kernel Candidate` | 实现 fenced host replacement、唯一 episode authority、完整 state transfer 与 dark/shadow immutable candidate path。 | P3 contract/boundary foundation 稳定 | candidate path 已 state-complete 且 fenced，但不得成为 production truth 或退役 production rebuild | planned |
+| `P5 Plan, Evidence, Binding, And Production Cutover` | 闭合 executable plan，引入完整 RunReceipt，完成 facade/diagnostics packaging，再执行唯一 production cutover/backout 并退役 rebuild。 | P4 candidate 通过 dark/shadow | Cordis/native/facade/wheel 使用同一 plan；supported caller 只切换一次且有 rollback evidence，rebuild 失去 production authority | planned |
+| `P6 Test And CI Architecture` | 按独立 failure audience 对齐 fast、qualification、nightly、release 与 research lane。 | P2 control class 与 P5 boundary 可用 | permanent gate 有具名检测价值，migration scan 已消失或带到期约束 | planned |
+| `P7 Evidence And Documentation Lifecycle` | 保留可复现 proof，且不让 closed work package 留在永久权威。 | P2 class 与 P5 evidence ownership 稳定 | standard、current reference、历史记录与 generated evidence 有单一 owner 和路由 | planned |
+| `P8 Long-Horizon Acceptance` | 证明迁移 compatibility、operational sustainability 与不存在 duplicate truth。 | P3-P7 完成 | 完整 acceptance contract 与独立审查通过；长期规则提升且 task history 遵循已准入退役路由 | planned |
+
+## Task Clusters
+
+- [有限任务簇计划](long_horizon_architecture_governance_task_clusters_20260825.md)
+- [当前状态与风险登记](long_horizon_architecture_governance_current_status_20260825.md)
+- [派发队列](long_horizon_architecture_governance_dispatch_queue_20260825.md)
+- [验收合同](long_horizon_architecture_governance_acceptance_20260825.md)
+
+## Outputs And Evidence
+
+预期输出包括：
+
+- 经审查的架构决策和 compatibility map；
+- host-owned construction/replacement seam 与 immutable-kernel contract；
+- 收敛后的 composition-plan 与 run-evidence contract；
+- epoch-bearing ref、episode authority、lifecycle SLO、runbook 和 adoption/rollback
+  telemetry；
+- facade-only production binding 与隔离 raw diagnostics 的 CMake/package boundary；
+- 带续期和退役证据的 control 分类清单；
+- 按目的划分的 CI lane 与保留行为覆盖的测试迁移；
+- 具有可用 retrieval path 的 owner-local standard、reference、review、已准入历史保留
+  路由和 externalized evidence；
+- 足以拒绝第二 truth path 的 replay、parity、failure-injection、packaging、resource
+  与 migration evidence。
+
+## Acceptance Gate
+
+只有满足以下条件，本计划才能被接受：
+
+- maintained runtime composition 在一个 kernel 内不可变；任何例外都证明不可避免的
+  identity requirement 与完整 state-transfer semantics；
+- host replacement、facade ownership、raw diagnostics 隔离和 compatibility migration
+  已实现并通过测试；
+- request、resolved plan 与 run evidence 形成耐久 authority chain，不存在第二个
+  Cordis、Python、native 或 fixture-owned resolver；
+- replacement publication、lease、fencing、state transfer、mixed-version rollout、
+  canary/backout、完整 RunReceipt 和 supported topology/platform 规则已实现并测试；
+- 每个 permanent control 都说明受保护 invariant 与独立检测路径，每个 migration
+  control 都已退役，或获得最多一次、有界、带 forced removal date 的独立审查续期；
+- CI 与文档证据证明 ordinary development、qualification、release 与长期演进的
+  可持续性；
+- 独立架构审查对长期结果不存在未解决 critical/high finding。
+
+局部清理、绿色文档测试或更窄的短期计划不能满足此 gate。
+
+## Residuals And Next Steps
+
+- P0 必须完成 evidence ledger 与独立计划审查，P1 决策才能成为 implementation
+  authority。
+- Dynamic in-place replacement 是候选例外，不是预设需求；其 admission 需要真实
+  consumer 与 state-transfer proof。
+- 初始 accepted topology 默认为 in-process；只有 P1 与 P8 显式 admission 后才支持
+  fenced multi-process，其他 topology fail closed。
+- 外部 plugin distribution 与 CUDA promotion 保留既有 owner，必须接入而不是绕开
+  本计划。
+
+## Archive
+
+计划开放期间，active README 与 current-status 文件保持为入口。Accepted 决策提升到
+architecture standard 或 review。P7 必须先解决当前 owner-archive policy 与禁止所有
+`docs/**/archive/**` 路径的 gate 之间的冲突，再选择退役路由。在此之前，新 archive
+tree 不是已接受的 closure mechanism，active 目录也不得成为 append-only evidence store。
