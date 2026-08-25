@@ -345,6 +345,34 @@ target_include_directories(ef_runtime_contracts PUBLIC
 )
 target_compile_features(ef_runtime_contracts PUBLIC cxx_std_20)
 
+# P3-B authority contract owner: native consumes canonical bytes and detached
+# digests from the same schema/vector surface as Python and Cordis.  The one
+# legacy `ef_composition` edge is a read-only parser adapter for validating the
+# current resolved artifact; this target cannot publish, persist, or replace
+# that artifact and has no engine/facade/binding dependency.
+add_library(ef_runtime_authority_contracts STATIC
+    src/runtime/contracts/authority/runtime_authority_contract.h
+    src/runtime/contracts/authority/runtime_authority_contract.cpp
+)
+target_include_directories(ef_runtime_authority_contracts PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_compile_features(ef_runtime_authority_contracts PUBLIC cxx_std_20)
+target_link_libraries(ef_runtime_authority_contracts PRIVATE
+    ef_composition
+    nlohmann_json::nlohmann_json
+)
+file(GENERATE
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/ef_runtime_authority_boundary_manifest.txt"
+    CONTENT
+"type=$<TARGET_PROPERTY:ef_runtime_authority_contracts,TYPE>
+links=$<JOIN:$<TARGET_PROPERTY:ef_runtime_authority_contracts,LINK_LIBRARIES>,|>
+interface_links=$<JOIN:$<TARGET_PROPERTY:ef_runtime_authority_contracts,INTERFACE_LINK_LIBRARIES>,|>
+includes=$<JOIN:$<TARGET_PROPERTY:ef_runtime_authority_contracts,INCLUDE_DIRECTORIES>,|>
+interface_includes=$<JOIN:$<TARGET_PROPERTY:ef_runtime_authority_contracts,INTERFACE_INCLUDE_DIRECTORIES>,|>
+sources=$<JOIN:$<TARGET_PROPERTY:ef_runtime_authority_contracts,SOURCES>,|>
+")
+
 # Evaluated at generate time, after all target mutations. The CTest verifier
 # consumes actual target properties instead of re-parsing this CMake section.
 file(GENERATE
