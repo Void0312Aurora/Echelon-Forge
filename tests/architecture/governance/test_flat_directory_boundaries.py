@@ -1,7 +1,7 @@
 """Keep generated schema/include directories below the flatness threshold.
 
 The 2026-08-04 directory audit treats 20 files at one level as a confirmed
-flat-directory concern. These checks cover only the three directories selected
+flat-directory concern. These checks cover only the selected directories
 for immediate or near-term remediation; test, RL, and core-engine watch items
 remain outside this gate until their documented thresholds are crossed.
 """
@@ -30,6 +30,7 @@ SCHEMA_DOMAINS = frozenset(
     "learning",
     "platform",
     "runtime",
+    "runtime_contracts",
     "tasking",
     "window",
   }
@@ -52,6 +53,10 @@ INC_LAYOUTS = (
   (
     REPO_ROOT / "src" / "runtime" / "facade" / "detail",
     frozenset({"batch", "runtime", "window"}),
+  ),
+  (
+    REPO_ROOT / "include" / "echelon_forge" / "runtime_contracts",
+    frozenset({"detail"}),
   ),
 )
 
