@@ -1,8 +1,9 @@
 # 长期架构治理
 
 状态：`2026-08-25`，长期架构治理计划处于 active；P0 authority/baseline、P1
-target-architecture 决策与 P3-A public identity/target foundation 已在独立复核后接受。
-P2-A/P2-B 与 P3-B 已 ready；尚无 runtime 迁移阶段被接受。
+target-architecture 决策、P3-A public identity/target foundation 与 P3-B
+authority-envelope foundation 已在独立复核后接受。P2-A/P2-B 与 P3-C
+仍开放；尚无 runtime 迁移阶段被接受。
 
 语言：
 
@@ -49,7 +50,7 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 | Composition replacement | 已实现，但战略方向未裁定 | `rebuild_world_composition`、mutation barrier、raw-world quarantine、scope generation 与 handover 机制 | 当前没有 maintained 非测试 caller 或 binding 要求原地 kernel rebuild |
 | Runtime 边界 | facade 方向已接受；compatibility surface 仍存在 | [runtime facade guards](../../../../../tests/architecture/runtime_facade/test_runtime_escape_hatches.py) | source scan 能描述边界，但不能让越界在物理上不可表示 |
 | Contract 与证据链 | 已覆盖 accepted 默认 profile | request、catalog lock、projection、requested/resolved manifest、provenance、parity 与 closure artifact | 中间迁移 artifact 仍是永久治理输入 |
-| Public runtime identity boundary | P3-A accepted | [`ef_runtime_contracts`](../../../../../include/echelon_forge/runtime_contracts/runtime_identity.h)、generated schema ownership、target/install manifest 与[独立审查](../../../reviews/long_horizon_architecture_governance_p3a_review_20260825.md) | 仅 same-build value contract；尚无 canonical serialization、host freshness、install/SDK、Linux qualification 或 caller cutover |
+| Public/runtime authority boundary | P3-A/P3-B accepted | [`ef_runtime_contracts`](../../../../../include/echelon_forge/runtime_contracts/runtime_identity.h)、四个 authority schema、exact cross-language vector、native/Cordis gate 与[P3-B独立审查](../../../reviews/long_horizon_architecture_governance_p3b_review_20260825.md) | 仅 typed envelope foundation；尚无 durable ledger、host freshness、install/SDK、Linux qualification 或 caller cutover |
 | 测试与 CI 治理 | 已验证 CI smoke 为绿；完整 governance audit 非绿 | [CI smoke suite](../../../../../tests/smoke/ci_smoke_suite.json)、[governance audit suite](../../../../../tests/suites/governance_audit_suite.json) 与 `test_archive_retirement.py` | 远端基线跟踪的 20 个 owner-archive 文档使 retirement gate 失败 |
 | 文档生命周期 | policy、gate 与仓库路由冲突 | [文档生命周期规范](../../../../engineering/documentation/standards/document_lifecycle_policy.zh.md)、子项目规范与当前 architecture archive | standard 接受 owner-local archive，但 maintained gate 禁止所有 `docs/**/archive/**` 路径 |
 
@@ -154,6 +155,7 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 - [P1-C rollout 决策（英文）](decisions/p1c_rollout_operations_and_security_decision_20260825.md)
 - [P1 独立审查（英文）](../../../reviews/long_horizon_architecture_governance_p1_review_20260825.md)
 - [P3-A 独立审查（英文）](../../../reviews/long_horizon_architecture_governance_p3a_review_20260825.md)
+- [P3-B 独立审查（英文）](../../../reviews/long_horizon_architecture_governance_p3b_review_20260825.md)
 
 ## Outputs And Evidence
 
@@ -195,7 +197,7 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 ## Residuals And Next Steps
 
 - P1-A/P1-B/P1-C 已在独立初审与修复复核后获得 decision-level acceptance。P3-A
-  也在 initial/repair review 后单独接受；当前解锁 P2-A/P2-B 与 P3-B，不授权
+  与 P3-B 也在独立修复复核后单独接受；当前解锁 P2-A/P2-B 与 P3-C，不授权
   runtime publication 或 production migration。
 - Dynamic in-place replacement 是候选例外，不是预设需求；其 admission 需要真实
   consumer 与 state-transfer proof。

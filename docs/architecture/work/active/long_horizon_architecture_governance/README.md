@@ -1,9 +1,10 @@
 # Long-Horizon Architecture Governance
 
 Status: `2026-08-25` active long-horizon architecture-governance program; P0
-authority and baseline, P1 target-architecture decisions, and P3-A public
-identity/target foundation are accepted after independent review. P2-A/P2-B and
-P3-B are ready; no runtime migration phase is accepted yet.
+authority and baseline, P1 target-architecture decisions, P3-A public
+identity/target foundation, and P3-B authority-envelope foundation are accepted
+after independent review. P2-A/P2-B and P3-C remain open; no runtime migration
+phase is accepted yet.
 
 Language:
 
@@ -52,7 +53,7 @@ controls that expire or renew instead of accumulating after every migration.
 | Composition replacement | implemented but strategically unresolved | `rebuild_world_composition`, mutation barriers, raw-world quarantine, scope generations, and handover machinery | no maintained non-test caller or binding currently requires in-place kernel rebuild |
 | Runtime boundary | facade direction accepted; compatibility surfaces remain | [runtime facade guards](../../../../../tests/architecture/runtime_facade/test_runtime_escape_hatches.py) | source scans describe the boundary but do not make it physically unrepresentable |
 | Contract and evidence chain | complete for the accepted default profile | request, catalog lock, projection, requested/resolved manifests, provenance, parity, and closure artifacts | intermediate migration artifacts remain permanent governance inputs |
-| Public runtime identity boundary | P3-A accepted | [`ef_runtime_contracts`](../../../../../include/echelon_forge/runtime_contracts/runtime_identity.h), generated schema ownership, target/install manifest and [independent review](../../../reviews/long_horizon_architecture_governance_p3a_review_20260825.md) | same-build value contract only; no canonical serialization, host freshness, install/SDK, Linux qualification or caller cutover |
+| Public/runtime authority boundary | P3-A/P3-B accepted | [`ef_runtime_contracts`](../../../../../include/echelon_forge/runtime_contracts/runtime_identity.h), four authority schemas, exact cross-language vectors, native/Cordis gates and [P3-B independent review](../../../reviews/long_horizon_architecture_governance_p3b_review_20260825.md) | typed envelope foundation only; no durable ledger, host freshness, install/SDK, Linux qualification or caller cutover |
 | Test and CI governance | verified CI smoke was green; full governance audit is not | [CI smoke suite](../../../../../tests/smoke/ci_smoke_suite.json), [governance audit suite](../../../../../tests/suites/governance_audit_suite.json), and `test_archive_retirement.py` | the remote baseline tracks 20 owner-archive documents that fail the retirement gate |
 | Documentation lifecycle | policy, gate, and repository route conflict | [document lifecycle policy](../../../../engineering/documentation/standards/document_lifecycle_policy.md), subproject standard, and current architecture archive | standards admit owner-local archives while the maintained gate prohibits every `docs/**/archive/**` path |
 
@@ -152,6 +153,7 @@ the same long-term authority, compatibility, and lifecycle result.
 - [P1-C rollout decision](decisions/p1c_rollout_operations_and_security_decision_20260825.md)
 - [P1 independent review](../../../reviews/long_horizon_architecture_governance_p1_review_20260825.md)
 - [P3-A independent review](../../../reviews/long_horizon_architecture_governance_p3a_review_20260825.md)
+- [P3-B independent review](../../../reviews/long_horizon_architecture_governance_p3b_review_20260825.md)
 
 ## Outputs And Evidence
 
@@ -192,9 +194,9 @@ cannot satisfy this gate.
 ## Residuals And Next Steps
 
 - P1-A/P1-B/P1-C are accepted at decision level after independent initial and
-  repair reviews. P3-A is separately accepted after initial and repair review;
-  this unlocks P2-A/P2-B and P3-B, not runtime publication or production
-  migration.
+  repair reviews. P3-A and P3-B are separately accepted after independent
+  repair reviews; this unlocks P2-A/P2-B and P3-C, not runtime publication or
+  production migration.
 - Dynamic in-place replacement remains a candidate exception, not an assumed
   requirement; its admission requires a real consumer and state-transfer proof.
 - The initial accepted topology is in-process unless P1 and P8 explicitly
