@@ -1,0 +1,50 @@
+if (NOT DEFINED MANIFEST OR NOT EXISTS "${MANIFEST}")
+    message(FATAL_ERROR "runtime contracts boundary manifest is missing: ${MANIFEST}")
+endif()
+if (NOT DEFINED INSTALL_SCRIPT OR NOT EXISTS "${INSTALL_SCRIPT}")
+    message(FATAL_ERROR "generated install graph is missing: ${INSTALL_SCRIPT}")
+endif()
+
+file(READ "${MANIFEST}" manifest_text)
+
+function(read_manifest_field field output_variable)
+    string(REGEX MATCH "(^|\n)${field}=([^\n]*)" field_match "${manifest_text}")
+    if (NOT field_match)
+        message(FATAL_ERROR "runtime contracts manifest field is missing: ${field}")
+    endif()
+    set(${output_variable} "${CMAKE_MATCH_2}" PARENT_SCOPE)
+endfunction()
+
+read_manifest_field(type target_type)
+read_manifest_field(links target_links)
+read_manifest_field(interface_links target_interface_links)
+read_manifest_field(includes target_includes)
+read_manifest_field(interface_includes target_interface_includes)
+read_manifest_field(sources target_sources)
+
+file(TO_CMAKE_PATH "${EXPECTED_INCLUDE_ROOT}" expected_include_root)
+if (NOT target_type STREQUAL "STATIC_LIBRARY")
+    message(FATAL_ERROR "ef_runtime_contracts is not a static library: ${target_type}")
+endif()
+if (NOT target_links STREQUAL "" OR NOT target_interface_links STREQUAL "")
+    message(FATAL_ERROR
+        "ef_runtime_contracts gained link dependencies: ${target_links}|${target_interface_links}")
+endif()
+if (NOT target_includes STREQUAL expected_include_root OR
+    NOT target_interface_includes STREQUAL expected_include_root)
+    message(FATAL_ERROR
+        "ef_runtime_contracts include boundary drifted: ${target_includes}|${target_interface_includes}")
+endif()
+
+foreach(forbidden IN ITEMS ef_core ef_facade ef_composition flecs nanobind Cordis nlohmann)
+    string(FIND "${target_sources}" "${forbidden}" forbidden_position)
+    if (NOT forbidden_position EQUAL -1)
+        message(FATAL_ERROR "ef_runtime_contracts source graph contains ${forbidden}")
+    endif()
+endforeach()
+
+file(READ "${INSTALL_SCRIPT}" install_graph)
+string(FIND "${install_graph}" "ef_runtime_contracts" install_position)
+if (NOT install_position EQUAL -1)
+    message(FATAL_ERROR "P3-A ef_runtime_contracts entered the install/SDK graph")
+endif()

@@ -320,6 +320,44 @@ set(EF_CORE_SOURCES
     ${EF_MODEL_DEFAULT_SOURCES}
 )
 
+# --- Public Runtime Contracts Foundation (P3-A) ---
+# This target owns same-build, engine-independent value contracts for future
+# host publication. It does not claim a cross-release ABI or wire format, export
+# src/, link the engine/facade/composition graph, or activate a caller cutover.
+# Existing WorldEntityRef/facade surfaces remain transitional until the later
+# dark/shadow and P5-D gates.
+set(EF_RUNTIME_CONTRACTS_SOURCES
+    include/echelon_forge/runtime_contracts/runtime_identity.h
+    include/echelon_forge/runtime_contracts/detail/runtime_identity_128_fields.inc
+    include/echelon_forge/runtime_contracts/detail/runtime_host_identity_fields.inc
+    include/echelon_forge/runtime_contracts/detail/runtime_incarnation_ref_fields.inc
+    include/echelon_forge/runtime_contracts/detail/runtime_world_ref_fields.inc
+    include/echelon_forge/runtime_contracts/detail/runtime_entity_ref_fields.inc
+    include/echelon_forge/runtime_contracts/detail/runtime_episode_ref_fields.inc
+    include/echelon_forge/runtime_contracts/detail/runtime_request_ref_fields.inc
+    include/echelon_forge/runtime_contracts/detail/runtime_result_ref_fields.inc
+    src/runtime/contracts/public/runtime_identity.cpp
+)
+add_library(ef_runtime_contracts STATIC ${EF_RUNTIME_CONTRACTS_SOURCES})
+add_library(EchelonForge::runtime_contracts ALIAS ef_runtime_contracts)
+target_include_directories(ef_runtime_contracts PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+target_compile_features(ef_runtime_contracts PUBLIC cxx_std_20)
+
+# Evaluated at generate time, after all target mutations. The CTest verifier
+# consumes actual target properties instead of re-parsing this CMake section.
+file(GENERATE
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/ef_runtime_contracts_boundary_manifest.txt"
+    CONTENT
+"type=$<TARGET_PROPERTY:ef_runtime_contracts,TYPE>
+links=$<JOIN:$<TARGET_PROPERTY:ef_runtime_contracts,LINK_LIBRARIES>,|>
+interface_links=$<JOIN:$<TARGET_PROPERTY:ef_runtime_contracts,INTERFACE_LINK_LIBRARIES>,|>
+includes=$<JOIN:$<TARGET_PROPERTY:ef_runtime_contracts,INCLUDE_DIRECTORIES>,|>
+interface_includes=$<JOIN:$<TARGET_PROPERTY:ef_runtime_contracts,INTERFACE_INCLUDE_DIRECTORIES>,|>
+sources=$<JOIN:$<TARGET_PROPERTY:ef_runtime_contracts,SOURCES>,|>
+")
+
 # --- Native Composition Lifecycle Library ---
 # This target realizes the host-neutral composition contract without depending
 # on ef_core, Flecs, a binding runtime, or Cordis. Keeping it as an independent
@@ -681,6 +719,16 @@ target_link_libraries(ef_gpu_visual_candidate_phase0_probe PRIVATE
 # 5. doctest (C++ unit test framework)
 include(CTest)
 if (BUILD_TESTING)
+# P3-A focused native target. It intentionally links only the public contracts
+# target; a passing build proves the identity DTO shell has no engine, facade,
+# Flecs, binding-runtime, JSON, or Cordis compile/link dependency.
+add_executable(ef_runtime_contracts_compile_test
+    src/tests/test_runtime_identity_contracts.cpp
+)
+target_link_libraries(ef_runtime_contracts_compile_test PRIVATE
+    ef_runtime_contracts
+)
+
 FetchContent_Declare(
     doctest
     GIT_REPOSITORY https://github.com/doctest/doctest.git
@@ -909,6 +957,15 @@ set_tests_properties(default_effects_model PROPERTIES WORKING_DIRECTORY "${CMAKE
 add_test(NAME composition_lifecycle COMMAND ef_composition_lifecycle_test)
 add_test(NAME backend_provider_migration COMMAND ef_backend_provider_migration_test)
 add_test(NAME composition_evidence COMMAND ef_composition_evidence_test)
+add_test(NAME runtime_contracts_compile COMMAND ef_runtime_contracts_compile_test)
+add_test(
+    NAME runtime_contracts_boundary
+    COMMAND ${CMAKE_COMMAND}
+        -DMANIFEST=${CMAKE_CURRENT_BINARY_DIR}/ef_runtime_contracts_boundary_manifest.txt
+        -DINSTALL_SCRIPT=${CMAKE_CURRENT_BINARY_DIR}/cmake_install.cmake
+        -DEXPECTED_INCLUDE_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/include
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/verify_runtime_contracts_boundary.cmake
+)
 add_test(
     NAME cordis_runtime_conformance
     COMMAND ef_cordis_runtime_conformance_test
@@ -922,6 +979,7 @@ add_test(
 endif()
 
 set(EF_PROJECT_WARNING_TARGETS
+    ef_runtime_contracts
     ef_composition
     ef_core
     ef_content
@@ -939,6 +997,7 @@ set(EF_PROJECT_WARNING_TARGETS
     ef_gpu_comm_candidate_phase0_probe
     ef_gpu_visual_candidate_phase0_probe
     ef_test
+    ef_runtime_contracts_compile_test
     ef_composition_lifecycle_test
     ef_backend_provider_migration_test
     ef_composition_evidence_test
@@ -967,3 +1026,47 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/examples/agents" DESTINATION exam
     PATTERN "*.pyc" EXCLUDE
 )
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/scenarios" DESTINATION .)
+
+# P3-A temporary no-caller gate. P4-A may replace this with an explicit
+# dark/shadow consumer allowlist; production facade/binding consumers remain
+# forbidden until the unique P5-D cutover. Keeping this at the end observes the
+# final root target graph rather than a hand-picked CMake text region.
+function(ef_assert_p3a_runtime_contract_boundary)
+    get_target_property(contract_links ef_runtime_contracts LINK_LIBRARIES)
+    get_target_property(contract_interface_links ef_runtime_contracts INTERFACE_LINK_LIBRARIES)
+    get_target_property(contract_includes ef_runtime_contracts INCLUDE_DIRECTORIES)
+    get_target_property(contract_interface_includes ef_runtime_contracts INTERFACE_INCLUDE_DIRECTORIES)
+    get_target_property(contract_sources ef_runtime_contracts SOURCES)
+
+    if (contract_links OR contract_interface_links)
+        message(FATAL_ERROR "P3-A ef_runtime_contracts must not link another target")
+    endif()
+
+    set(expected_include "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>")
+    if (NOT "${contract_includes}" STREQUAL "${expected_include}" OR
+        NOT "${contract_interface_includes}" STREQUAL "${expected_include}")
+        message(FATAL_ERROR "P3-A ef_runtime_contracts must expose only the public include root")
+    endif()
+
+    if (NOT "${contract_sources}" STREQUAL "${EF_RUNTIME_CONTRACTS_SOURCES}")
+        message(FATAL_ERROR "P3-A ef_runtime_contracts source ownership drifted")
+    endif()
+
+    set(allowed_consumers ef_runtime_contracts_compile_test)
+    get_property(root_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
+    foreach(candidate IN LISTS root_targets)
+        if (candidate STREQUAL ef_runtime_contracts)
+            continue()
+        endif()
+        get_target_property(candidate_links ${candidate} LINK_LIBRARIES)
+        get_target_property(candidate_interface_links ${candidate} INTERFACE_LINK_LIBRARIES)
+        set(candidate_edges "${candidate_links};${candidate_interface_links}")
+        string(FIND "${candidate_edges}" "ef_runtime_contracts" contract_edge)
+        if (NOT contract_edge EQUAL -1 AND NOT candidate IN_LIST allowed_consumers)
+            message(FATAL_ERROR
+                "P3-A target ${candidate} consumes ef_runtime_contracts before its phase gate")
+        endif()
+    endforeach()
+endfunction()
+
+ef_assert_p3a_runtime_contract_boundary()
