@@ -13,6 +13,7 @@ SCHEMA = ROOT / "src" / "runtime" / "contracts" / "authority" / "authority_paylo
 VECTOR = ROOT / "tests" / "architecture" / "composition" / "fixtures" / "authority_cross_language_vector.v1.json"
 VECTOR_NAMES = (
   "authority_resolved_composition_plan.v1.json",
+  "authority_resolved_composition_plan.generation2.v1.json",
   "authority_cross_language_vector.v1.json",
   "authority_rollout_decision.v1.json",
   "authority_state_checkpoint.v1.json",
@@ -39,6 +40,7 @@ def test_cross_language_vector_is_referenced_by_all_three_lanes() -> None:
   assert "authority_cross_language_vector.v1.json" in cordis_test
   assert "authority_cross_language_vector.v1.json" in native_test
   assert "authority_resolved_composition_plan.v1.json" in native_test
+  assert "authority_resolved_composition_plan.generation2.v1.json" in native_test
   assert "authority_rollout_decision.v1.json" in native_test
   assert "authority_state_checkpoint.v1.json" in native_test
 

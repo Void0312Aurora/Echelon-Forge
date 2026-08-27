@@ -53,10 +53,14 @@ def _release_payload() -> dict[str, object]:
     "sbom_sha256": "c" * 64,
     "toolchain_identity": "msvc-v143",
     "source_revision": "82d5b6e893c442950e334eb3e9ec92f8174eeb35",
-    "compatibility_generation": "1",
+    "compatibility_generation": "2",
     "minimum_reader_generation": "1",
     "state_schema_generation": "1",
     "rollback_policy": "checkpoint-recovery",
+    "stored_artifact_inventory_sha256": "f" * 64,
+    "rollback_deadline": "2026-09-01T00:00:00Z",
+    "last_reader_deadline": "2026-10-01T00:00:00Z",
+    "irreversible_write_boundary": "none",
   }
 
 
