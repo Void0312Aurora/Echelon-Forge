@@ -1,14 +1,14 @@
 # Long-Horizon Architecture Governance Current Status
 
-Status: `2026-08-25` P0 authority and baseline accepted against `origin/main`
+Status: `2026-08-27` P0 authority and baseline accepted against `origin/main`
 at `82d5b6e893c442950e334eb3e9ec92f8174eeb35` and plan commit
 `c668bae91900df4b5488099384c95d9820209de2`. P1 target-architecture decisions
 are accepted after independent initial, repair and final-confirmation reviews.
 All critical/high and the final medium finding are closed; no review detected
-short-term substitution. P3-A is accepted after independent initial/repair/final
-review; P3-B authority-envelope foundation is accepted after its independent
-max repair review; P2-A/P2-B, P3-C-P8 and runtime migration remain open. No
-runtime code migration is accepted.
+short-term substitution. P3-A, P3-B and the non-production P3-C ledger and
+compatibility foundation are accepted after independent adversarial, repair and
+final-confirmation reviews; P2-A/P2-B, P4-P8 and runtime migration remain open.
+No runtime code migration or production cutover is accepted.
 
 Parent subproject: [Long-Horizon Architecture Governance](README.md)
 
@@ -16,7 +16,7 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/long_horizon_architecture_governance_current_status_20260825.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-08-25`
+Last verified: `2026-08-27`
 
 ## Verification Boundary
 
@@ -91,6 +91,14 @@ They must be remeasured before an implementation or acceptance claim.
   adapter provenance binding, Cordis/native consumers, exact canonical vectors,
   and fail-closed owner/compatibility checks. P3-B review found no unresolved
   Critical/High finding and no short-term substitution.
+- Implemented and independently accepted P3-C's non-production ArtifactLedger
+  and compatibility foundation: content-addressed artifacts, role/media ACLs,
+  fenced slots and writers, journals/checkpoints/snapshot validation, exact
+  N/N-1 plan/checkpoint/package readers, durable qualification/kill/backout
+  recovery, and fail-closed production authorization. The final
+  [P3-C review](../../../reviews/long_horizon_architecture_governance_p3c_review_20260827.md)
+  found no unresolved Critical/High/Medium blocker after the durable
+  kill-to-backout restart repair.
 
 ## Observed Baseline
 
@@ -118,11 +126,11 @@ They must be remeasured before an implementation or acceptance claim.
 | --- | --- | --- | --- |
 | P0 project authority | accepted | owner route, isolated worktree, independent plan-review pass, and accepted P0 authority inventory | P1 decisions only; no implementation authority |
 | Source/control baseline | accepted | reproducible caller, target/link, artifact, control/CI, and document commands in P0 evidence | remeasure at each decision/implementation acceptance boundary |
-| Immutable-kernel/host decision | accepted | P1-A freezes one-CAS bootstrap/replacement/checkpoint recovery, terminal shutdown, final-state fence, active-fault drain, all generations and exact P0 caller crosswalk | P4 implementation remains gated by P3 |
+| Immutable-kernel/host decision | accepted | P1-A freezes one-CAS bootstrap/replacement/checkpoint recovery, terminal shutdown, final-state fence, active-fault drain, all generations and exact P0 caller crosswalk | P4-A dark/shadow implementation is ready; production truth remains gated by P4/P5 |
 | Host replacement | not implemented | no accepted host contract | P1 state machine plus P3 public contract/plan/rollout foundation |
-| Contract consolidation decision | accepted | P1-B classifies artifacts and adds singular plan/release/rollout/checkpoint-fragment/aggregate/receipt authorities, canonical envelope and ledger journal | P3-A then P3-B/P3-C implementation |
-| Rollout/operations decision | accepted | P1-C defines one production-canary decision, support rows, checkpoint-recovery/package-restart rollback, SLO/runbook and security gates | P2 measurements plus P3-C implementation |
-| Public contract foundation | accepted P3-A/P3-B | `ef_runtime_contracts` target plus four authority schemas, typed envelopes, exact cross-language vectors, Windows/MSVC native checks and independent reviews | P3-C rollout/ledger foundations and P4 host freshness |
+| Contract consolidation decision | accepted | P1-B classifies artifacts and adds singular plan/release/rollout/checkpoint-fragment/aggregate/receipt authorities, canonical envelope and ledger journal | P4 candidate evidence and P5-A/P5-B production closure |
+| Rollout/operations decision | accepted | P1-C defines one production-canary decision, support rows, checkpoint-recovery/package-restart rollback, SLO/runbook and security gates | P2 measurements, P4 candidate evidence and P5 production qualification |
+| Public contract foundation | accepted P3-A/P3-B/P3-C | `ef_runtime_contracts`, authority/ledger schemas, exact vectors, non-production ledger/recovery and N/N-1 gates, Windows/MSVC native checks and independent reviews | P4 host freshness/state transfer; P5-B durable production ledger and P5-D cutover |
 | Physical facade boundary | planned | current facade direction and source guards | CMake/package topology and diagnostics migration design |
 | Control lifecycle | planned | completed ratchet examples identified | accepted lifecycle vocabulary, owner model, and renewal/retirement process |
 | Test/CI architecture | planned | suite and timing baseline | failure-audience model and replacement evidence for retired scans |
@@ -192,12 +200,12 @@ program.
 
 1. Establish P2-A/P2-B control classification and measurements on disjoint
    governance/diagnostic surfaces.
-2. Implement P3-C ledger/rollout and N/N-1 compatibility foundations before
-   any host publication; P3-A/P3-B are accepted public/authority predecessors.
-3. Implement the P4 dark/shadow host, episode/state-transfer authority, and
+2. Implement the P4 dark/shadow host, episode/state-transfer authority, and
    immutable internal candidate without production caller cutover.
-4. Complete P5 plan/RunReceipt/facade-package gates, then execute the only
-   production cutover, caller migration, rollback window, and rebuild retirement.
+3. Qualify P5-A/P5-B/P5-C plan, durable ledger/RunReceipt and facade-package
+   gates before any truth-changing activation.
+4. Execute the sole P5-D production cutover only after those gates, then finish
+   caller migration, rollback window, and rebuild retirement.
 5. Replace test/CI and evidence/document controls only after their structural
    successors exist.
 6. Run P8 acceptance and independent review before promoting standards or
@@ -205,13 +213,14 @@ program.
 
 ## Explicit Overclaim Refusals
 
-- This checkpoint includes accepted P3-A/P3-B contract foundations, not
-  host/runtime migration or overall program acceptance.
+- This checkpoint includes accepted P3-A/P3-B/P3-C contract, compatibility and
+  non-production ledger foundations, not host/runtime migration or overall
+  program acceptance.
 - Latest CI success does not validate the proposed architecture.
 - Zero production rebuild callers do not by themselves prove safe deletion.
 - A smaller source-scan suite does not prove stronger runtime boundaries.
-- Accepted authority schemas and envelopes do not prove durable storage,
-  singular runtime publication, or a complete execution owner.
-- Completing P0-P3-B does not justify marking the long-horizon program accepted.
+- Passing the P3-C simulator does not prove a production-qualified durable
+  backend, authenticity, singular runtime publication, or a complete RunReceipt.
+- Completing P0-P3 does not justify marking the long-horizon program accepted.
 - Passing dark/shadow host tests does not authorize caller cutover before epoch,
   state-transfer, episode-authority, rollout, and rollback gates.

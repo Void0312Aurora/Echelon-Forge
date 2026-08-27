@@ -1,10 +1,10 @@
 # Long-Horizon Architecture Governance Dispatch Queue
 
-Status: `2026-08-25` P0 and P1 architecture decisions plus P3-A public-contract
-and P3-B authority-envelope foundations accepted. Independent P3-A and P3-B
-reviews closed every finding without short-term substitution. P2-A/P2-B and
-P3-C-P8
-remain dependency-gated.
+Status: `2026-08-27` P0 and P1 architecture decisions plus the complete
+P3-A/P3-B/P3-C contract, authority-envelope, ledger and compatibility
+foundations are accepted. Independent P3 reviews closed every
+Critical/High/Medium finding without short-term substitution. P2-A/P2-B and
+P4-A are ready; P4-B-P8 remain dependency-gated.
 
 Parent subproject: [Long-Horizon Architecture Governance](README.md)
 
@@ -44,6 +44,8 @@ Authoritative cluster definitions:
 | 14 | `P2-B` | ready | future diagnostics/operations worker | P1 accepted | repeatable sustainability, lifecycle, skew, retrieval and resource baselines |
 | 15 | `P3-A` | accepted | main thread + independent `gpt-5.6-sol` max reviewer | P1 accepted | `ef_runtime_contracts`, v1 identity/schema ownership, actual target/install graph gates, and final review pass |
 | 16 | `P3-B` | accepted | main thread + independent `gpt-5.6-sol` max reviewer | P3-A accepted | canonical JSON authority envelopes, versioned plan/release/rollout/checkpoint shells, provenance binding, exact vectors and native/Cordis conformance |
+| 17 | `P3-C` | accepted | main thread + independent `gpt-5.6-sol` max reviewer | P3-B accepted | non-production ArtifactLedger, exact N/N-1 readers, fenced journals/checkpoints, durable kill/backout recovery and final review pass |
+| 18 | `P4-A` | ready | future runtime worker + independent `gpt-5.6-sol` max reviewer | P3 foundation accepted | dark/shadow one-CAS host lifecycle with quiescence, leases, fences, termination, quarantine and no production publication |
 
 ## Later Dependency Queue
 
@@ -51,8 +53,8 @@ Authoritative cluster definitions:
 | --- | --- | --- | --- | --- |
 | Architecture foundation | `P1-A`, `P1-B`, `P1-C` | P0 accepted | research may overlap; normative integration serial | reviewed lifecycle/episode, artifact authority, rollout, platform/topology, operations, and security decisions |
 | Governance foundation | `P2-A`, `P2-B` | P1 terminology stable | parallel-safe with disjoint inventory/measurement files | classified controls and repeatable sustainability baseline |
-| Contract/public foundation | `P3-A`, `P3-B`, `P3-C` | P1 accepted; P3-B requires P3-A accepted | public DTO, canonical plan/release/state envelopes and rollout/ledger writers serial | final public types, authority shells and conditional storage before host publication |
-| Runtime candidate lifecycle | `P4-A`, `P4-B`, `P4-C` | P3 foundation stable | dark/shadow host before transfer authority; transfer before internal candidate seam | fenced candidate host, unique episode authority, immutable candidate kernel, no production cutover |
+| Contract/public foundation | `P3-A`, `P3-B`, `P3-C` | accepted | public DTO, canonical plan/release/state envelopes and rollout/ledger writers serial | final public types, authority shells and non-production conditional storage before host publication |
+| Runtime candidate lifecycle | `P4-A`, `P4-B`, `P4-C` | P3 foundation accepted | dark/shadow host before transfer authority; transfer before internal candidate seam | fenced candidate host, unique episode authority, immutable candidate kernel, no production cutover |
 | Consolidation and production rollout | `P5-A`, `P5-B`, `P5-C`, `P5-D` | P4 dark/shadow candidate gates | plan, qualified ledger/journal/checkpoint/receipt and package gates precede the unique P5-D production-canary decision | one plan, durable complete RunReceipt, facade-only package, caller migration, process-aware rollback and rebuild retirement |
 | Control migration | `P6-A`, `P6-B` | P2 classes and P5 boundaries available | excludes archive-retention policy/gate/suite paths owned by P7-A | purpose-specific tests and CI lanes |
 | Evidence lifecycle | `P7-A`, `P7-B` | P2 classifications and P5 evidence ownership | P7-A decides retention before any archive-specific gate/suite/path change; routing precedes deletion | singular maintained authorities and retired migration residue |
