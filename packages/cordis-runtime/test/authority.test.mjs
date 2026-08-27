@@ -11,6 +11,7 @@ import {
 const vector = JSON.parse(readFileSync(new URL('../../../tests/architecture/composition/fixtures/authority_cross_language_vector.v1.json', import.meta.url), 'utf8'));
 const authorityVectors = [
   JSON.parse(readFileSync(new URL('../../../tests/architecture/composition/fixtures/authority_resolved_composition_plan.v1.json', import.meta.url), 'utf8')),
+  JSON.parse(readFileSync(new URL('../../../tests/architecture/composition/fixtures/authority_resolved_composition_plan.generation2.v1.json', import.meta.url), 'utf8')),
   vector,
   JSON.parse(readFileSync(new URL('../../../tests/architecture/composition/fixtures/authority_rollout_decision.v1.json', import.meta.url), 'utf8')),
   JSON.parse(readFileSync(new URL('../../../tests/architecture/composition/fixtures/authority_state_checkpoint.v1.json', import.meta.url), 'utf8')),

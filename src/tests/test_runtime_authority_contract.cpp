@@ -58,7 +58,8 @@ TEST_CASE("native rejects unknown payload fields before admission") {
 }
 
 TEST_CASE("native executes plan, rollout, and checkpoint authority fixtures") {
-    for (const auto name : {"authority_resolved_composition_plan.v1.json", "authority_rollout_decision.v1.json",
+    for (const auto name : {"authority_resolved_composition_plan.v1.json", "authority_resolved_composition_plan.generation2.v1.json",
+                            "authority_rollout_decision.v1.json",
                             "authority_state_checkpoint.v1.json"}) {
         const auto vector = authority_fixture(name);
         const auto result = runtime::authority_contracts::validate_authority_envelope_json(
