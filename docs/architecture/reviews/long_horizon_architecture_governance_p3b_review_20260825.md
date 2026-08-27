@@ -1,5 +1,11 @@
 # Long-Horizon Architecture Governance P3-B Independent Review
 
+Document kind: `review`
+Lifecycle: `accepted`
+Canonical: `docs/architecture/reviews/long_horizon_architecture_governance_p3b_review_20260825.md`
+Owner: `cross-domain architecture`
+Last verified: `2026-08-25`
+
 Status: `pass`
 
 Review target: `codex/long-horizon-governance-architecture` in the isolated
