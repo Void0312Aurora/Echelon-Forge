@@ -1,0 +1,88 @@
+{
+  "schema_version": "echelon_forge.stored_artifact_inventory.v1",
+  "contract_version": "echelon_forge.artifact_ledger_contract.v1",
+  "release_id": "release-2026-08-25",
+  "compatibility_generation": "2",
+  "writer_generation": "1",
+  "minimum_reader_generation": "1",
+  "rollback_deadline": "2026-09-01T00:00:00Z",
+  "last_reader_deadline": "2026-10-01T00:00:00Z",
+  "irreversible_write_boundary": "none",
+  "eligible_reader_ids": [
+    "reader-a",
+    "reader-b"
+  ],
+  "artifacts": [
+    {
+      "authority_kind": "release_package",
+      "blob_sha256": "db1295159faed4ed14bfd05382ab802b1a6a2e2327ba45e092789172e84b60f3",
+      "media_type": "application/vnd.echelon-forge.release-package.v1+octets",
+      "size": 47,
+      "writer_generation": "1",
+      "reader_generation_min": "1",
+      "reader_generation_max": "2",
+      "state_schema_generation": "1",
+      "truth_features": [],
+      "topology": "in-process",
+      "rollback_eligible": true
+    },
+    {
+      "authority_kind": "release_package",
+      "blob_sha256": "d8fb856348089eb0330cf241d65b314995a17fc5094684ab0912f5b952e819bf",
+      "media_type": "application/vnd.echelon-forge.release-package.v1+octets",
+      "size": 48,
+      "writer_generation": "2",
+      "reader_generation_min": "2",
+      "reader_generation_max": "2",
+      "state_schema_generation": "1",
+      "truth_features": [],
+      "topology": "in-process",
+      "rollback_eligible": false
+    },
+    {
+      "authority_kind": "resolved_composition_plan",
+      "blob_sha256": "81331667211321b65abff7c8866b774f189dafbdbf36ddbc42d51152a7f8e204",
+      "media_type": "application/vnd.echelon-forge.resolved-composition-plan-envelope.v1+json",
+      "size": 39069,
+      "writer_generation": "1",
+      "reader_generation_min": "1",
+      "reader_generation_max": "2",
+      "state_schema_generation": "1",
+      "truth_features": [
+        "native_step_authority"
+      ],
+      "topology": "in-process",
+      "rollback_eligible": true
+    },
+    {
+      "authority_kind": "resolved_composition_plan",
+      "blob_sha256": "3e11c4fff81cfe73cd090d26eba63b71756a7531a7ec15d3236cd84444894213",
+      "media_type": "application/vnd.echelon-forge.resolved-composition-plan-envelope.v1+json",
+      "size": 39069,
+      "writer_generation": "2",
+      "reader_generation_min": "2",
+      "reader_generation_max": "2",
+      "state_schema_generation": "1",
+      "truth_features": [
+        "native_step_authority"
+      ],
+      "topology": "in-process",
+      "rollback_eligible": false
+    },
+    {
+      "authority_kind": "state_checkpoint",
+      "blob_sha256": "5771ee8931b9cc258dd9485e215c99108c1400b0c757d4cdba456031f72bf2a3",
+      "media_type": "application/vnd.echelon-forge.state-checkpoint-envelope.v1+json",
+      "size": 1172,
+      "writer_generation": "1",
+      "reader_generation_min": "1",
+      "reader_generation_max": "2",
+      "state_schema_generation": "1",
+      "truth_features": [
+        "native_step_authority"
+      ],
+      "topology": "in-process",
+      "rollback_eligible": true
+    }
+  ]
+}

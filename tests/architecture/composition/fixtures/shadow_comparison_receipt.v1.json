@@ -1,0 +1,12 @@
+{
+  "schema_version": "echelon_forge.shadow_comparison_receipt.v1",
+  "contract_version": "echelon_forge.artifact_ledger_contract.v1",
+  "receipt_id": "shadow-1",
+  "authoritative": false,
+  "plan_sha256": "fb01e842df1dcdefb54f2525d861158a8e87eb5de59a7637e9b594bb40f7ea79",
+  "release_manifest_sha256": "b5f65d4083c26d1081a34fda245713ac9fa68ae836b60b3af6bad4377cdcfa55",
+  "rollout_decision_sha256": "487466807f3bd728f7bd3ec7de2e6cabd3e2427da89f29559a5a5f329d2f26d6",
+  "comparison_kind": "cpu-exact-result",
+  "outcome": "match",
+  "evidence_sha256": "9999999999999999999999999999999999999999999999999999999999999999"
+}

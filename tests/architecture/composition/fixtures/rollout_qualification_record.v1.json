@@ -1,0 +1,53 @@
+{
+  "schema_version": "echelon_forge.rollout_qualification_record.v1",
+  "contract_version": "echelon_forge.artifact_ledger_contract.v1",
+  "authoritative": false,
+  "production_activation_enabled": false,
+  "inventory_sha256": "fb56a78377f89d7781ad1455032029bff1a37419b697283cda35f32ea7cbfb89",
+  "release_manifest_blob_sha256": "905ed143117e779794821b1066f1136a325aae27dc7e2fb6a60fae07babf80c8",
+  "active_plan_blob_sha256": "81331667211321b65abff7c8866b774f189dafbdbf36ddbc42d51152a7f8e204",
+  "admissions_open": true,
+  "writer_advancement_frozen": false,
+  "kill_switch_record_sha256": "",
+  "predecessor_qualification_sha256": "",
+  "entry_evidence": {
+    "reader_deployments": [],
+    "shadow_receipt_sha256": "",
+    "storage_restore_drill_sha256": "",
+    "rollback_drill_sha256": "",
+    "cutover_drill_sha256": "",
+    "adoption_health_sha256": "",
+    "inventory_disposition_sha256": "",
+    "rollback_receipt_sha256": "",
+    "deadline_elapsed": false,
+    "no_unresolved_high_findings": false
+  },
+  "candidate_rollout_decision": {
+    "canonicalization": "echelon_forge.canonical_json.v2",
+    "domain": "release.rollout-decision",
+    "envelope_version": "echelon_forge.authority_envelope.v1",
+    "media_type": "application/vnd.echelon-forge.rollout-decision.v1+json",
+    "payload": {
+      "authority_kind": "rollout_decision",
+      "checkpoint_id": "",
+      "cohort": "qualification",
+      "contract_version": "echelon_forge.rollout_decision_contract.v1",
+      "decision_id": "decision-1",
+      "decision_sequence": "0",
+      "irreversible_write_boundary": "none",
+      "manifest_sha256": "b5f65d4083c26d1081a34fda245713ac9fa68ae836b60b3af6bad4377cdcfa55",
+      "plan_reader_generation_max": "2",
+      "plan_reader_generation_min": "1",
+      "plan_sha256": "fb01e842df1dcdefb54f2525d861158a8e87eb5de59a7637e9b594bb40f7ea79",
+      "predecessor_decision_id": "",
+      "release_id": "release-2026-08-25",
+      "rollback_deadline": "2026-09-01T00:00:00Z",
+      "schema_version": "echelon_forge.rollout_decision.v1",
+      "state": "prepared",
+      "writer_generation": "1",
+      "writer_role": "release_controller"
+    },
+    "payload_sha256": "487466807f3bd728f7bd3ec7de2e6cabd3e2427da89f29559a5a5f329d2f26d6",
+    "signatures": []
+  }
+}

@@ -266,16 +266,19 @@ ValidationResult validate_authority_envelope_json(std::string_view envelope_json
     if (kind == "release_manifest" &&
         !exact_fields(payload, {"authority_kind", "contract_version", "package_set", "provenance_sha256",
                                 "reader_generation_max", "reader_generation_min", "release_id", "sbom_sha256",
-                                "schema_version", "source_revision", "supported_rows", "toolchain_identity",
-                                "writer_generation", "writer_role", "compatibility_generation", "minimum_reader_generation",
-                                "state_schema_generation", "rollback_policy"})) {
+                                 "schema_version", "source_revision", "supported_rows", "toolchain_identity",
+                                 "writer_generation", "writer_role", "compatibility_generation", "minimum_reader_generation",
+                                 "state_schema_generation", "rollback_policy", "stored_artifact_inventory_sha256",
+                                 "rollback_deadline", "last_reader_deadline", "irreversible_write_boundary"})) {
         return invalid("authority.payload_fields", "release payload fields are not exact");
     }
     if (kind == "release_manifest") {
         for (const auto field : {"authority_kind", "contract_version", "release_id", "schema_version",
                                  "source_revision", "toolchain_identity", "writer_generation", "writer_role",
-                                 "reader_generation_min", "reader_generation_max", "provenance_sha256", "sbom_sha256",
-                                 "compatibility_generation", "minimum_reader_generation", "state_schema_generation", "rollback_policy"}) {
+                                  "reader_generation_min", "reader_generation_max", "provenance_sha256", "sbom_sha256",
+                                  "compatibility_generation", "minimum_reader_generation", "state_schema_generation", "rollback_policy",
+                                  "stored_artifact_inventory_sha256", "rollback_deadline", "last_reader_deadline",
+                                  "irreversible_write_boundary"}) {
             if (!payload.at(field).is_string() || payload.at(field).get<std::string>().empty()) {
                 return invalid("authority.payload_type", "release string field is empty or non-string");
             }
@@ -307,7 +310,7 @@ ValidationResult validate_authority_envelope_json(std::string_view envelope_json
             previous_package = name_key;
             first_package = false;
         }
-        for (const auto field : {"provenance_sha256", "sbom_sha256"}) {
+        for (const auto field : {"provenance_sha256", "sbom_sha256", "stored_artifact_inventory_sha256"}) {
             if (!sha256_string(payload.at(field))) return invalid("authority.payload_type", "release hash is not SHA-256");
         }
         if (payload.at("rollback_policy") != "checkpoint-recovery" && payload.at("rollback_policy") != "package-restart") {
