@@ -72,6 +72,7 @@ AUTHORITY_SPECS: dict[str, AuthoritySpec] = {
       "writer_generation", "reader_generation_min", "reader_generation_max", "package_set",
       "supported_rows", "provenance_sha256", "sbom_sha256", "toolchain_identity", "source_revision",
       "compatibility_generation", "minimum_reader_generation", "state_schema_generation", "rollback_policy",
+      "stored_artifact_inventory_sha256", "rollback_deadline", "last_reader_deadline", "irreversible_write_boundary",
     }),
   ),
   "rollout_decision": AuthoritySpec(
@@ -380,7 +381,7 @@ def validate_authority_payload(kind: str, payload: Mapping[str, Any]) -> dict[st
         raise AuthorityContractError("package_set entries have unknown fields")
       _require_sha256(item["sha256"], "package_set.sha256")
     _require_set_array(normalized["supported_rows"], "supported_rows")
-    for field in ("provenance_sha256", "sbom_sha256"):
+    for field in ("provenance_sha256", "sbom_sha256", "stored_artifact_inventory_sha256"):
       _require_sha256(normalized[field], field)
     for field in ("toolchain_identity", "source_revision"):
       _require_string(normalized[field], field)
@@ -390,6 +391,8 @@ def validate_authority_payload(kind: str, payload: Mapping[str, Any]) -> dict[st
     _require_string(normalized["rollback_policy"], "rollback_policy")
     if normalized["rollback_policy"] not in {"checkpoint-recovery", "package-restart"}:
       raise AuthorityContractError("rollback_policy is not an admitted enum")
+    for field in ("rollback_deadline", "last_reader_deadline", "irreversible_write_boundary"):
+      _require_string(normalized[field], field)
   elif kind == "rollout_decision":
     for field in ("decision_id", "release_id", "cohort", "rollback_deadline", "irreversible_write_boundary"):
       _require_string(normalized[field], field, identifier=field in {"decision_id", "release_id"})

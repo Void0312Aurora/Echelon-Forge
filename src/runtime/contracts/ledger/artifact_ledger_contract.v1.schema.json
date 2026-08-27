@@ -1,0 +1,164 @@
+{
+  "$id": "https://echelon-forge.local/contracts/ledger/artifact_ledger_contract.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {"$ref": "#/$defs/stored_artifact_inventory"},
+    {"$ref": "#/$defs/shadow_comparison_receipt"},
+    {"$ref": "#/$defs/kill_switch_record"},
+    {"$ref": "#/$defs/qualification_evidence"},
+    {"$ref": "#/$defs/rollout_qualification_record"}
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "generation": {"type": "string", "pattern": "^(?:0|[1-9][0-9]*)$"},
+    "optional_sha256": {"oneOf": [{"const": ""}, {"$ref": "#/$defs/sha256"}]},
+    "artifact_descriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority_kind", "blob_sha256", "media_type", "size", "writer_generation", "reader_generation_min", "reader_generation_max", "state_schema_generation", "truth_features", "topology", "rollback_eligible"],
+      "properties": {
+        "authority_kind": {"enum": ["resolved_composition_plan", "release_manifest", "rollout_decision", "state_checkpoint", "release_package"]},
+        "blob_sha256": {"$ref": "#/$defs/sha256"},
+        "media_type": {"type": "string", "minLength": 1},
+        "size": {"type": "integer", "minimum": 1, "maximum": 9007199254740991},
+        "writer_generation": {"$ref": "#/$defs/generation"},
+        "reader_generation_min": {"$ref": "#/$defs/generation"},
+        "reader_generation_max": {"$ref": "#/$defs/generation"},
+        "state_schema_generation": {"$ref": "#/$defs/generation"},
+        "truth_features": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "topology": {"enum": ["in-process"]},
+        "rollback_eligible": {"type": "boolean"}
+      }
+    },
+    "stored_artifact_inventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "contract_version", "release_id", "compatibility_generation", "writer_generation", "minimum_reader_generation", "rollback_deadline", "last_reader_deadline", "irreversible_write_boundary", "eligible_reader_ids", "artifacts"],
+      "properties": {
+        "schema_version": {"const": "echelon_forge.stored_artifact_inventory.v1"},
+        "contract_version": {"const": "echelon_forge.artifact_ledger_contract.v1"},
+        "release_id": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9._:-]{0,127}$"},
+        "compatibility_generation": {"$ref": "#/$defs/generation"},
+        "writer_generation": {"$ref": "#/$defs/generation"},
+        "minimum_reader_generation": {"$ref": "#/$defs/generation"},
+        "rollback_deadline": {"type": "string", "minLength": 1},
+        "last_reader_deadline": {"type": "string", "minLength": 1},
+        "irreversible_write_boundary": {"type": "string", "minLength": 1},
+        "eligible_reader_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "artifacts": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/artifact_descriptor"}}
+      }
+    },
+    "shadow_comparison_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "contract_version", "receipt_id", "authoritative", "plan_sha256", "release_manifest_sha256", "rollout_decision_sha256", "comparison_kind", "outcome", "evidence_sha256"],
+      "properties": {
+        "schema_version": {"const": "echelon_forge.shadow_comparison_receipt.v1"},
+        "contract_version": {"const": "echelon_forge.artifact_ledger_contract.v1"},
+        "receipt_id": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9._:-]{0,127}$"},
+        "authoritative": {"const": false},
+        "plan_sha256": {"$ref": "#/$defs/sha256"},
+        "release_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "rollout_decision_sha256": {"$ref": "#/$defs/sha256"},
+        "comparison_kind": {"type": "string", "minLength": 1},
+        "outcome": {"enum": ["match", "mismatch", "inconclusive"]},
+        "evidence_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "kill_switch_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "contract_version", "release_id", "admissions_open", "writer_advancement_frozen", "reasons", "authoritative_runtime_mutation"],
+      "properties": {
+        "schema_version": {"const": "echelon_forge.kill_switch_record.v1"},
+        "contract_version": {"const": "echelon_forge.artifact_ledger_contract.v1"},
+        "release_id": {"type": "string", "minLength": 1},
+        "admissions_open": {"const": false},
+        "writer_advancement_frozen": {"const": true},
+        "reasons": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "authoritative_runtime_mutation": {"const": false}
+      }
+    },
+    "qualification_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "contract_version", "release_id", "evidence_kind", "outcome", "evidence_sha256", "plan_sha256", "rollout_decision_sha256", "authoritative_runtime_mutation"],
+      "properties": {
+        "schema_version": {"const": "echelon_forge.qualification_evidence.v1"},
+        "contract_version": {"const": "echelon_forge.artifact_ledger_contract.v1"},
+        "release_id": {"type": "string", "minLength": 1},
+        "evidence_kind": {"enum": ["storage-restore-drill", "rollback-drill", "cutover-drill", "adoption-health", "inventory-disposition", "rollback-receipt"]},
+        "outcome": {"const": "pass"},
+        "evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "plan_sha256": {"$ref": "#/$defs/sha256"},
+        "rollout_decision_sha256": {"$ref": "#/$defs/sha256"},
+        "authoritative_runtime_mutation": {"const": false}
+      }
+    },
+    "reader_deployment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reader_id", "generation", "eligible", "healthy", "supported_generations", "admitted_artifact_digests", "supported_state_schema_generation", "supported_features", "supported_topologies"],
+      "properties": {
+        "reader_id": {"type": "string", "minLength": 1},
+        "generation": {"$ref": "#/$defs/generation"},
+        "eligible": {"type": "boolean"},
+        "healthy": {"type": "boolean"},
+        "supported_generations": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/generation"}},
+        "admitted_artifact_digests": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/sha256"}},
+        "supported_state_schema_generation": {"$ref": "#/$defs/generation"},
+        "supported_features": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "supported_topologies": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["in-process"]}}
+      }
+    },
+    "qualification_entry_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reader_deployments", "shadow_receipt_sha256", "storage_restore_drill_sha256", "rollback_drill_sha256", "cutover_drill_sha256", "adoption_health_sha256", "inventory_disposition_sha256", "rollback_receipt_sha256", "deadline_elapsed", "no_unresolved_high_findings"],
+      "properties": {
+        "reader_deployments": {"type": "array", "items": {"$ref": "#/$defs/reader_deployment"}},
+        "shadow_receipt_sha256": {"$ref": "#/$defs/optional_sha256"},
+        "storage_restore_drill_sha256": {"$ref": "#/$defs/optional_sha256"},
+        "rollback_drill_sha256": {"$ref": "#/$defs/optional_sha256"},
+        "cutover_drill_sha256": {"$ref": "#/$defs/optional_sha256"},
+        "adoption_health_sha256": {"$ref": "#/$defs/optional_sha256"},
+        "inventory_disposition_sha256": {"$ref": "#/$defs/optional_sha256"},
+        "rollback_receipt_sha256": {"$ref": "#/$defs/optional_sha256"},
+        "deadline_elapsed": {"type": "boolean"},
+        "no_unresolved_high_findings": {"type": "boolean"}
+      }
+    },
+    "rollout_qualification_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "contract_version", "authoritative", "production_activation_enabled", "inventory_sha256", "release_manifest_blob_sha256", "active_plan_blob_sha256", "admissions_open", "writer_advancement_frozen", "kill_switch_record_sha256", "predecessor_qualification_sha256", "entry_evidence", "candidate_rollout_decision"],
+      "properties": {
+        "schema_version": {"const": "echelon_forge.rollout_qualification_record.v1"},
+        "contract_version": {"const": "echelon_forge.artifact_ledger_contract.v1"},
+        "authoritative": {"const": false},
+        "production_activation_enabled": {"const": false},
+        "inventory_sha256": {"$ref": "#/$defs/sha256"},
+        "release_manifest_blob_sha256": {"$ref": "#/$defs/sha256"},
+        "active_plan_blob_sha256": {"$ref": "#/$defs/sha256"},
+        "admissions_open": {"type": "boolean"},
+        "writer_advancement_frozen": {"type": "boolean"},
+        "kill_switch_record_sha256": {"$ref": "#/$defs/optional_sha256"},
+        "predecessor_qualification_sha256": {"$ref": "#/$defs/optional_sha256"},
+        "entry_evidence": {"$ref": "#/$defs/qualification_entry_evidence"},
+        "candidate_rollout_decision": {
+          "allOf": [
+            {"$ref": "../authority/authority_envelope.v1.schema.json"},
+            {
+              "type": "object",
+              "properties": {
+                "domain": {"const": "release.rollout-decision"},
+                "media_type": {"const": "application/vnd.echelon-forge.rollout-decision.v1+json"},
+                "payload": {"type": "object", "properties": {"authority_kind": {"const": "rollout_decision"}}, "required": ["authority_kind"]}
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

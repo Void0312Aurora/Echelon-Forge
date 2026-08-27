@@ -99,6 +99,7 @@ const RELEASE_FIELDS = new Set([
   'schema_version', 'source_revision', 'supported_rows', 'toolchain_identity',
   'writer_generation', 'writer_role', 'compatibility_generation', 'minimum_reader_generation',
   'state_schema_generation', 'rollback_policy',
+  'stored_artifact_inventory_sha256', 'rollback_deadline', 'last_reader_deadline', 'irreversible_write_boundary',
 ]);
 
 function requireSha(value, field) {
@@ -131,13 +132,13 @@ export function buildReleaseManifestShell(payload) {
     throw new TypeError('release manifest owner or version mismatch');
   }
   requireIdentifier(payload.release_id, 'release_id');
-  ['source_revision', 'toolchain_identity'].forEach((field) => requireString(payload[field], field));
+  ['source_revision', 'toolchain_identity', 'rollback_deadline', 'last_reader_deadline', 'irreversible_write_boundary'].forEach((field) => requireString(payload[field], field));
   ['writer_generation', 'reader_generation_min', 'reader_generation_max'].forEach((field) => requireGeneration(payload[field], field));
   ['compatibility_generation', 'minimum_reader_generation', 'state_schema_generation'].forEach((field) => requireGeneration(payload[field], field));
   requireString(payload.rollback_policy, 'rollback_policy');
   if (!['checkpoint-recovery', 'package-restart'].includes(payload.rollback_policy)) throw new TypeError('release rollback policy is not admitted');
   if (!generationAtMost(payload.reader_generation_min, payload.reader_generation_max)) throw new TypeError('release reader generation window is inverted');
-  ['provenance_sha256', 'sbom_sha256'].forEach((field) => requireSha(payload[field], field));
+  ['provenance_sha256', 'sbom_sha256', 'stored_artifact_inventory_sha256'].forEach((field) => requireSha(payload[field], field));
   if (!Array.isArray(payload.package_set) || payload.package_set.length === 0 || payload.package_set.some((item) => !item || Object.keys(item).length !== 2 || typeof item.name !== 'string' || !item.name || typeof item.sha256 !== 'string')) {
     throw new TypeError('release package_set is not typed');
   }
