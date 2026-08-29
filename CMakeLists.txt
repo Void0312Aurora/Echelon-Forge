@@ -345,6 +345,34 @@ target_include_directories(ef_runtime_contracts PUBLIC
 )
 target_compile_features(ef_runtime_contracts PUBLIC cxx_std_20)
 
+# P4-A/P4-B dark/shadow host and state-transfer candidate. This is a native
+# lifecycle/authority-only link unit: it consumes engine-independent identity
+# contracts, but cannot link ef_core, ef_facade, Flecs, a binding runtime,
+# Cordis, or the production package. The candidate has no production mode;
+# P5-D remains the only cutover authority.
+add_library(ef_runtime_host_candidate STATIC
+    src/runtime/host/runtime_host_candidate.h
+    src/runtime/host/runtime_host_candidate.cpp
+    src/runtime/host/runtime_state_transfer_candidate.h
+    src/runtime/host/runtime_state_transfer_candidate.cpp
+)
+target_include_directories(ef_runtime_host_candidate
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/host>
+)
+target_compile_features(ef_runtime_host_candidate PUBLIC cxx_std_20)
+target_link_libraries(ef_runtime_host_candidate PUBLIC ef_runtime_contracts)
+file(GENERATE
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/ef_runtime_host_candidate_boundary_manifest.txt"
+    CONTENT
+"type=$<TARGET_PROPERTY:ef_runtime_host_candidate,TYPE>
+links=$<JOIN:$<TARGET_PROPERTY:ef_runtime_host_candidate,LINK_LIBRARIES>,|>
+interface_links=$<JOIN:$<TARGET_PROPERTY:ef_runtime_host_candidate,INTERFACE_LINK_LIBRARIES>,|>
+includes=$<JOIN:$<TARGET_PROPERTY:ef_runtime_host_candidate,INCLUDE_DIRECTORIES>,|>
+interface_includes=$<JOIN:$<TARGET_PROPERTY:ef_runtime_host_candidate,INTERFACE_INCLUDE_DIRECTORIES>,|>
+sources=$<JOIN:$<TARGET_PROPERTY:ef_runtime_host_candidate,SOURCES>,|>
+")
+
 # P3-B authority contract owner: native consumes canonical bytes and detached
 # digests from the same schema/vector surface as Python and Cordis.  The one
 # legacy `ef_composition` edge is a read-only parser adapter for validating the
@@ -773,6 +801,19 @@ target_link_libraries(ef_runtime_contracts_compile_test PRIVATE
     ef_runtime_contracts
 )
 
+add_executable(ef_runtime_host_candidate_test
+    src/tests/test_main.cpp
+    src/tests/test_runtime_host_candidate.cpp
+    src/tests/test_runtime_state_transfer_candidate.cpp
+)
+target_link_libraries(ef_runtime_host_candidate_test PRIVATE
+    ef_runtime_host_candidate
+    doctest::doctest
+)
+target_include_directories(ef_runtime_host_candidate_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/host
+)
+
 FetchContent_Declare(
     doctest
     GIT_REPOSITORY https://github.com/doctest/doctest.git
@@ -1003,6 +1044,14 @@ add_test(NAME composition_lifecycle COMMAND ef_composition_lifecycle_test)
 add_test(NAME backend_provider_migration COMMAND ef_backend_provider_migration_test)
 add_test(NAME composition_evidence COMMAND ef_composition_evidence_test)
 add_test(NAME runtime_contracts_compile COMMAND ef_runtime_contracts_compile_test)
+add_test(NAME runtime_host_candidate COMMAND ef_runtime_host_candidate_test)
+add_test(
+    NAME runtime_host_candidate_boundary
+    COMMAND ${CMAKE_COMMAND}
+        -DMANIFEST=${CMAKE_CURRENT_BINARY_DIR}/ef_runtime_host_candidate_boundary_manifest.txt
+        -DINSTALL_SCRIPT=${CMAKE_CURRENT_BINARY_DIR}/cmake_install.cmake
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/verify_runtime_host_candidate_boundary.cmake
+)
 add_test(NAME runtime_authority_contract COMMAND ef_runtime_authority_contract_test)
 add_test(
     NAME runtime_authority_boundary
@@ -1032,6 +1081,7 @@ endif()
 
 set(EF_PROJECT_WARNING_TARGETS
     ef_runtime_contracts
+    ef_runtime_host_candidate
     ef_composition
     ef_core
     ef_content
@@ -1050,6 +1100,7 @@ set(EF_PROJECT_WARNING_TARGETS
     ef_gpu_visual_candidate_phase0_probe
     ef_test
     ef_runtime_contracts_compile_test
+    ef_runtime_host_candidate_test
     ef_composition_lifecycle_test
     ef_backend_provider_migration_test
     ef_composition_evidence_test
@@ -1079,10 +1130,22 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/examples/agents" DESTINATION exam
 )
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/scenarios" DESTINATION .)
 
-# P3-A temporary no-caller gate. P4-A may replace this with an explicit
-# dark/shadow consumer allowlist; production facade/binding consumers remain
-# forbidden until the unique P5-D cutover. Keeping this at the end observes the
-# final root target graph rather than a hand-picked CMake text region.
+# P3-A temporary no-caller gate. P4-A/P4-B replace it only with the explicit
+# dark/shadow host/authority candidate; production facade/binding consumers
+# remain forbidden until the unique P5-D cutover. Keeping this at the end
+# observes the complete final directory/target graph rather than a hand-picked
+# root-only CMake text region.
+function(ef_collect_directory_targets directory output)
+    get_property(local_targets DIRECTORY "${directory}" PROPERTY BUILDSYSTEM_TARGETS)
+    set(collected ${local_targets})
+    get_property(child_directories DIRECTORY "${directory}" PROPERTY SUBDIRECTORIES)
+    foreach(child IN LISTS child_directories)
+        ef_collect_directory_targets("${child}" child_targets)
+        list(APPEND collected ${child_targets})
+    endforeach()
+    set(${output} ${collected} PARENT_SCOPE)
+endfunction()
+
 function(ef_assert_p3a_runtime_contract_boundary)
     get_target_property(contract_links ef_runtime_contracts LINK_LIBRARIES)
     get_target_property(contract_interface_links ef_runtime_contracts INTERFACE_LINK_LIBRARIES)
@@ -1104,9 +1167,10 @@ function(ef_assert_p3a_runtime_contract_boundary)
         message(FATAL_ERROR "P3-A ef_runtime_contracts source ownership drifted")
     endif()
 
-    set(allowed_consumers ef_runtime_contracts_compile_test)
-    get_property(root_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
-    foreach(candidate IN LISTS root_targets)
+    set(allowed_consumers ef_runtime_contracts_compile_test ef_runtime_host_candidate)
+    set(allowed_host_consumers ef_runtime_host_candidate_test)
+    ef_collect_directory_targets("${CMAKE_CURRENT_SOURCE_DIR}" all_targets)
+    foreach(candidate IN LISTS all_targets)
         if (candidate STREQUAL ef_runtime_contracts)
             continue()
         endif()
@@ -1117,6 +1181,11 @@ function(ef_assert_p3a_runtime_contract_boundary)
         if (NOT contract_edge EQUAL -1 AND NOT candidate IN_LIST allowed_consumers)
             message(FATAL_ERROR
                 "P3-A target ${candidate} consumes ef_runtime_contracts before its phase gate")
+        endif()
+        string(FIND "${candidate_edges}" "ef_runtime_host_candidate" host_edge)
+        if (NOT host_edge EQUAL -1 AND NOT candidate IN_LIST allowed_host_consumers)
+            message(FATAL_ERROR
+                "P4-B target ${candidate} consumes the dark/shadow host candidate before P4-C/P5-D")
         endif()
     endforeach()
 endfunction()

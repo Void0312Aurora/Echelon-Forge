@@ -1,0 +1,48 @@
+if (NOT DEFINED MANIFEST OR NOT EXISTS "${MANIFEST}")
+    message(FATAL_ERROR "runtime host candidate manifest is missing: ${MANIFEST}")
+endif()
+file(READ "${MANIFEST}" manifest_text)
+string(REPLACE "\r\n" "\n" manifest_text "${manifest_text}")
+
+function(read_manifest_field field output_variable)
+    string(REGEX MATCH "(^|\n)${field}=([^\n]*)" field_match "${manifest_text}")
+    if (NOT field_match)
+        message(FATAL_ERROR "runtime host candidate manifest field is missing: ${field}")
+    endif()
+    set(${output_variable} "${CMAKE_MATCH_2}" PARENT_SCOPE)
+endfunction()
+
+read_manifest_field(type target_type)
+read_manifest_field(links target_links)
+read_manifest_field(interface_links target_interface_links)
+read_manifest_field(includes target_includes)
+read_manifest_field(interface_includes target_interface_includes)
+read_manifest_field(sources target_sources)
+
+if (NOT target_type STREQUAL "STATIC_LIBRARY")
+    message(FATAL_ERROR "ef_runtime_host_candidate is not static: ${target_type}")
+endif()
+if (NOT target_links STREQUAL "ef_runtime_contracts" OR
+    NOT target_interface_links STREQUAL "ef_runtime_contracts")
+    message(FATAL_ERROR
+        "P4-A/P4-B host candidate must link only ef_runtime_contracts: ${target_links}|${target_interface_links}")
+endif()
+if (NOT target_interface_includes MATCHES "runtime/host")
+    message(FATAL_ERROR "P4-A/P4-B host candidate include boundary is missing its private API root")
+endif()
+
+foreach(forbidden IN ITEMS ef_core ef_facade ef_composition flecs nanobind Cordis
+        SimulationKernel WorldBatchRuntime RuntimeFacade)
+    string(FIND "${target_links}|${target_interface_links}|${target_sources}" "${forbidden}" position)
+    if (NOT position EQUAL -1)
+        message(FATAL_ERROR "P4-A/P4-B host candidate contains forbidden dependency: ${forbidden}")
+    endif()
+endforeach()
+
+if (DEFINED INSTALL_SCRIPT AND EXISTS "${INSTALL_SCRIPT}")
+    file(READ "${INSTALL_SCRIPT}" install_graph)
+    string(FIND "${install_graph}" "ef_runtime_host_candidate" install_position)
+    if (NOT install_position EQUAL -1)
+        message(FATAL_ERROR "P4-A/P4-B host candidate entered the install/SDK graph")
+    endif()
+endif()

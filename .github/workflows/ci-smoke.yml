@@ -81,13 +81,19 @@ jobs:
         working-directory: packages/cordis-runtime
         run: npm test
 
-      - name: Build ef_core, ef_py, and C++ tests
+      - name: Build ef_core, ef_py, host lifecycle candidate, and C++ tests
         run: |
-          cmake --build build-workshop --target ef_core ef_py ef_test ef_composition_lifecycle_test ef_backend_provider_migration_test ef_composition_evidence_test ef_cordis_runtime_conformance_test -j2
+          cmake --build build-workshop --target ef_core ef_py ef_runtime_host_candidate_test ef_test ef_composition_lifecycle_test ef_backend_provider_migration_test ef_composition_evidence_test ef_cordis_runtime_conformance_test -j2
 
       - name: Run C++ smoke tests
         run: |
-          ctest --test-dir build-workshop -R '^(ef_test_all|composition_lifecycle|backend_provider_migration|composition_evidence|cordis_runtime_conformance)$' --output-on-failure
+          ctest --test-dir build-workshop -R '^(ef_test_all|runtime_host_candidate|runtime_host_candidate_boundary|composition_lifecycle|backend_provider_migration|composition_evidence|cordis_runtime_conformance)$' --output-on-failure
+
+      - name: Run state-transfer and Python mirror contract gates
+        run: |
+          ./.venv/bin/python -m pytest -q --confcutdir=tests/architecture \
+            tests/architecture/composition/test_runtime_state_transfer_candidate_contract.py \
+            tests/runtime/test_runtime_episode_mirror.py
 
       - name: Run Cordis producer and composition architecture gates
         env:
