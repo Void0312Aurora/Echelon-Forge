@@ -44,7 +44,7 @@ state-transfer 协议。长期目标是具备 source-bound provenance、typed sc
 
 ```text
 ef_runtime_host_candidate_test：37 test cases，925 assertions
-focused Python architecture/mirror tests：12 passed
+focused Python architecture/mirror tests：23 passed
 ```
 
 CMake target 保持 static 且只链接 `ef_runtime_contracts`。CI smoke workflow 已显式构建、

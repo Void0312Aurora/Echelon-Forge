@@ -51,7 +51,7 @@ The isolated Windows/MSVC target currently passes:
 
 ```text
 ef_runtime_host_candidate_test: 37 test cases, 925 assertions
-focused Python architecture/mirror tests: 12 passed
+focused Python architecture/mirror tests: 23 passed
 ```
 
 The CMake target is deliberately static and links only `ef_runtime_contracts`.
