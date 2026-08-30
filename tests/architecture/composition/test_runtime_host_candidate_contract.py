@@ -46,6 +46,9 @@ def test_p4a_host_candidate_has_no_production_or_engine_dependency() -> None:
     assert "native_barrier_observed" not in header
     assert "RuntimeShadowEpisodeAdmissionProof" not in header
     assert "RuntimeNativeEpisodeCapability" in header
+    assert "RuntimeOwnerHandle" in header
+    assert "issue_owner_handle" in header
+    assert "owner handle is stale, forged, or already consumed" in source
     assert "RuntimeValidatedStateTransfer validated_transfer" in header
     for forbidden in ("RuntimeFacade", "SimulationKernel", "WorldBatchRuntime"):
         assert forbidden not in transfer_header
@@ -77,3 +80,4 @@ def test_p4a_publication_has_one_cas_and_no_reopen_after_successful_publish() ->
     assert "timeout CAS losses preserve state" in tests
     assert "lease settlement and terminal-result admission" in tests
     assert "candidate deadline quarantines cancellation-unacknowledged resources" in tests
+    assert "host-issued owner handles bind admission and are single-use" in tests
