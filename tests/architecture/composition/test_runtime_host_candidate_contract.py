@@ -81,3 +81,6 @@ def test_p4a_publication_has_one_cas_and_no_reopen_after_successful_publish() ->
     assert "lease settlement and terminal-result admission" in tests
     assert "candidate deadline quarantines cancellation-unacknowledged resources" in tests
     assert "host-issued owner handles bind admission and are single-use" in tests
+    assert "failed host-issued admission releases the token for retry" in tests
+    assert "token->consumed.exchange(true" in source
+    assert "owner handle resource identity drifted" in source

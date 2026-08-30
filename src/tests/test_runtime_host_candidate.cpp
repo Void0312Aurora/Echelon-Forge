@@ -1291,6 +1291,30 @@ TEST_CASE("host-issued owner handles bind admission and are single-use") {
     REQUIRE(runtime.commit_initial(begun.handle, initial_proof()).status);
 }
 
+TEST_CASE("failed host-issued admission releases the token for retry") {
+    host::RuntimeHostCandidate runtime({.host_id = logical_host_id(),
+                                        .mode = host::RuntimeHostMode::Dark});
+    const auto control = make_control();
+    const auto owner_handle = runtime.issue_owner_handle(control);
+    REQUIRE(owner_handle.valid());
+    const host::RuntimeCandidateRequest invalid_request{
+        .transaction_kind = host::RuntimeHostTransactionKind::Initial,
+        .plan = plan("", kHash),
+        .lifecycle_deadline_tick = 20,
+    };
+    CHECK(!runtime.begin_candidate(invalid_request, owner_handle).status);
+    CHECK(owner_handle.valid());
+    const host::RuntimeCandidateRequest valid_request{
+        .transaction_kind = host::RuntimeHostTransactionKind::Initial,
+        .plan = plan(),
+        .lifecycle_deadline_tick = 20,
+    };
+    const auto begun = runtime.begin_candidate(valid_request, owner_handle);
+    REQUIRE(begun.status);
+    REQUIRE(runtime.validate_candidate(begun.handle, validation()));
+    REQUIRE(runtime.commit_initial(begun.handle, initial_proof()).status);
+}
+
 TEST_CASE("destruction hands unreleased resources to an observable retry registry") {
     const std::size_t baseline = host::RuntimeHostCandidate::orphaned_host_count();
     const auto control = make_control(false);
