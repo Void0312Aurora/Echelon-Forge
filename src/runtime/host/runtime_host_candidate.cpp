@@ -1141,13 +1141,21 @@ RuntimeCandidateBeginResult RuntimeHostCandidate::begin_candidate(
                                   "owner handle is stale, forged, or already consumed"),
                 .handle = {}};
     }
+    if (token->control->resource_identity() != token->resource_identity) {
+        return {.status = failure(RuntimeHostError::InvalidArgument,
+                                  "owner handle resource identity drifted"),
+                .handle = {}};
+    }
+    if (token->consumed.exchange(true, std::memory_order_acq_rel)) {
+        return {.status = failure(RuntimeHostError::InvalidArgument,
+                                  "owner handle is stale, forged, or already consumed"),
+                .handle = {}};
+    }
     RuntimeCandidateRequest bound_request = request;
     bound_request.control = token->control;
     const RuntimeCandidateBeginResult result = begin_candidate(bound_request);
-    if (result.status && token->consumed.exchange(true, std::memory_order_acq_rel)) {
-        return {.status = failure(RuntimeHostError::InvalidArgument,
-                                  "owner handle was consumed concurrently"),
-                .handle = {}};
+    if (!result.status) {
+        token->consumed.store(false, std::memory_order_release);
     }
     return result;
 }
