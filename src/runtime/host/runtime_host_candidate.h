@@ -123,6 +123,24 @@ struct RuntimePlanBinding {
     bool operator==(const RuntimePlanBinding &) const = default;
 };
 
+struct RuntimeOwnerHandleToken;
+
+// Host-issued admission handle. The token is opaque to callers and can only
+// be minted by RuntimeHostCandidate::issue_owner_handle(). Copies are
+// intentionally allowed for transport, but admission consumes the token once.
+class RuntimeOwnerHandle {
+  public:
+    RuntimeOwnerHandle() = default;
+    [[nodiscard]] bool valid() const noexcept;
+    [[nodiscard]] RuntimeIdentity128 resource_identity() const noexcept;
+
+  private:
+    friend class RuntimeHostCandidate;
+    explicit RuntimeOwnerHandle(std::shared_ptr<RuntimeOwnerHandleToken> token) noexcept
+        : token_(std::move(token)) {}
+    std::shared_ptr<RuntimeOwnerHandleToken> token_;
+};
+
 // The host owns the control object until resources are explicitly released.
 // Hooks are called outside the host mutex. They must be noexcept; cancellation
 // reports an acknowledgement so publication cannot overtake a blocked hook.
@@ -330,6 +348,11 @@ class RuntimeHostCandidate {
 
     [[nodiscard]] RuntimeCandidateBeginResult
     begin_candidate(const RuntimeCandidateRequest &request);
+    [[nodiscard]] RuntimeCandidateBeginResult
+    begin_candidate(const RuntimeCandidateRequest &request,
+                    const RuntimeOwnerHandle &owner_handle);
+    [[nodiscard]] RuntimeOwnerHandle
+    issue_owner_handle(const std::shared_ptr<RuntimeInstanceControl> &control);
     [[nodiscard]] RuntimeHostStatus
     validate_candidate(const RuntimeCandidateHandle &handle,
                        const RuntimeCandidateValidationProof &proof);

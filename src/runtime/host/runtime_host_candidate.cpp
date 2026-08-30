@@ -152,6 +152,15 @@ struct RuntimeHostSharedState {
     bool orphan_handoff_recorded = false;
 };
 
+struct RuntimeOwnerHandleToken {
+    std::weak_ptr<RuntimeHostSharedState> issuer;
+    RuntimeHostIdentity host;
+    RuntimeIdentity128 host_instance_nonce;
+    RuntimeIdentity128 resource_identity;
+    std::shared_ptr<RuntimeInstanceControl> control;
+    std::atomic<bool> consumed{false};
+};
+
 struct RuntimeHostSlot {
     std::uint64_t candidate_sequence = 0;
     RuntimeHostTransactionKind transaction_kind = RuntimeHostTransactionKind::Initial;
@@ -1071,6 +1080,76 @@ RuntimeHostCandidate::~RuntimeHostCandidate() {
         // resource controls alive until their own explicit settlement.
     }
     retain_orphan_state(retiring);
+}
+
+bool RuntimeOwnerHandle::valid() const noexcept {
+    return token_ != nullptr && token_->host.well_formed() &&
+           token_->host_instance_nonce.well_formed() &&
+           token_->resource_identity.well_formed() && token_->control != nullptr &&
+           !token_->consumed.load(std::memory_order_acquire) &&
+           !token_->issuer.expired();
+}
+
+RuntimeIdentity128 RuntimeOwnerHandle::resource_identity() const noexcept {
+    return token_ == nullptr ? RuntimeIdentity128{} : token_->resource_identity;
+}
+
+RuntimeOwnerHandle RuntimeHostCandidate::issue_owner_handle(
+    const std::shared_ptr<RuntimeInstanceControl> &control) {
+    const std::shared_ptr<RuntimeHostSharedState> state = state_;
+    if (state == nullptr || control == nullptr) {
+        return {};
+    }
+    RuntimeIdentity128 resource_identity;
+    try {
+        resource_identity = control->resource_identity();
+    } catch (...) {
+        return {};
+    }
+    if (!resource_identity.well_formed()) {
+        return {};
+    }
+    std::lock_guard<std::mutex> lock(state->mutex);
+    if (state_ != state || state->host_state == RuntimeHostState::ShuttingDown ||
+        state->host_state == RuntimeHostState::Stopped ||
+        state->host_state == RuntimeHostState::FailStopped ||
+        resource_identity_in_use(*state, resource_identity)) {
+        return {};
+    }
+    try {
+        auto token = std::make_shared<RuntimeOwnerHandleToken>();
+        token->issuer = state;
+        token->host = state->identity;
+        token->host_instance_nonce = state->host_instance_nonce;
+        token->resource_identity = resource_identity;
+        token->control = control;
+        return RuntimeOwnerHandle(std::move(token));
+    } catch (...) {
+        return {};
+    }
+}
+
+RuntimeCandidateBeginResult RuntimeHostCandidate::begin_candidate(
+    const RuntimeCandidateRequest &request, const RuntimeOwnerHandle &owner_handle) {
+    const std::shared_ptr<RuntimeHostSharedState> state = state_;
+    const std::shared_ptr<RuntimeOwnerHandleToken> token = owner_handle.token_;
+    if (state == nullptr || token == nullptr || token->issuer.lock() != state ||
+        token->host != state->identity ||
+        token->host_instance_nonce != state->host_instance_nonce ||
+        token->control == nullptr || token->consumed.load(std::memory_order_acquire)) {
+        return {.status = failure(RuntimeHostError::InvalidArgument,
+                                  "owner handle is stale, forged, or already consumed"),
+                .handle = {}};
+    }
+    RuntimeCandidateRequest bound_request = request;
+    bound_request.control = token->control;
+    const RuntimeCandidateBeginResult result = begin_candidate(bound_request);
+    if (result.status && token->consumed.exchange(true, std::memory_order_acq_rel)) {
+        return {.status = failure(RuntimeHostError::InvalidArgument,
+                                  "owner handle was consumed concurrently"),
+                .handle = {}};
+    }
+    return result;
 }
 
 RuntimeCandidateBeginResult
