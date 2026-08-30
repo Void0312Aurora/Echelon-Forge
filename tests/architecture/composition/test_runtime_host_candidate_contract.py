@@ -48,6 +48,8 @@ def test_p4a_host_candidate_has_no_production_or_engine_dependency() -> None:
     assert "RuntimeNativeEpisodeCapability" in header
     assert "RuntimeOwnerHandle" in header
     assert "issue_owner_handle" in header
+    assert "RuntimeOwnerAdmissionBinding" in header
+    assert "owner handle admission binding does not match request" in source
     assert "owner handle is stale, forged, or already consumed" in source
     assert "RuntimeValidatedStateTransfer validated_transfer" in header
     for forbidden in ("RuntimeFacade", "SimulationKernel", "WorldBatchRuntime"):

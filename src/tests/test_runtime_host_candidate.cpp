@@ -1275,13 +1275,18 @@ TEST_CASE("host-issued owner handles bind admission and are single-use") {
     host::RuntimeHostCandidate runtime({.host_id = logical_host_id(),
                                         .mode = host::RuntimeHostMode::Dark});
     const auto control = make_control();
-    const auto owner_handle = runtime.issue_owner_handle(control);
-    REQUIRE(owner_handle.valid());
     const host::RuntimeCandidateRequest request{
         .transaction_kind = host::RuntimeHostTransactionKind::Initial,
         .plan = plan(),
         .lifecycle_deadline_tick = 20,
     };
+    const auto owner_handle = runtime.issue_owner_handle(
+        control,
+        {.transaction_kind = request.transaction_kind,
+         .expected_slot = request.expected_slot,
+         .plan = request.plan,
+         .world_slot_count = request.world_slot_count});
+    REQUIRE(owner_handle.valid());
     const auto begun = runtime.begin_candidate(request, owner_handle);
     REQUIRE(begun.status);
     CHECK(!owner_handle.valid());
@@ -1295,13 +1300,18 @@ TEST_CASE("failed host-issued admission releases the token for retry") {
     host::RuntimeHostCandidate runtime({.host_id = logical_host_id(),
                                         .mode = host::RuntimeHostMode::Dark});
     const auto control = make_control();
-    const auto owner_handle = runtime.issue_owner_handle(control);
-    REQUIRE(owner_handle.valid());
     const host::RuntimeCandidateRequest invalid_request{
         .transaction_kind = host::RuntimeHostTransactionKind::Initial,
-        .plan = plan("", kHash),
+        .plan = plan("other-plan", kHash2),
         .lifecycle_deadline_tick = 20,
     };
+    const auto owner_handle = runtime.issue_owner_handle(
+        control,
+        {.transaction_kind = invalid_request.transaction_kind,
+         .expected_slot = invalid_request.expected_slot,
+         .plan = plan(),
+         .world_slot_count = invalid_request.world_slot_count});
+    REQUIRE(owner_handle.valid());
     CHECK(!runtime.begin_candidate(invalid_request, owner_handle).status);
     CHECK(owner_handle.valid());
     const host::RuntimeCandidateRequest valid_request{
