@@ -161,6 +161,7 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 - [P3-C 独立审查（英文）](../../../reviews/long_horizon_architecture_governance_p3c_review_20260827.md)
 - [P4-A 独立审查（英文）](../../../reviews/long_horizon_architecture_governance_p4a_review_20260827.md)
 - [P4-B state-transfer candidate snapshot（英文）](p4b_state_transfer_candidate_20260830.md)：
+- [P4-B 修正路线](p4b_remediation_route_20260830.zh.md)
   记录 source/target owner 分离、typed artifacts、transaction abort guard、host-owned
   native control 与当前长期阻塞；candidate 仍不得成为 production truth。
 
