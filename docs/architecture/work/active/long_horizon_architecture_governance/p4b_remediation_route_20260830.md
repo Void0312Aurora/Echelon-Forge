@@ -23,13 +23,28 @@ This route is long-horizon; fixture compatibility is evidence only.
    interruption recovery; persist pre-mutation and terminal records; quarantine
    ambiguous records fail-closed.
 3. **Typed decoder and replay matrix**: maintain production owner adapters for
-   all twelve categories with explicit dispositions: transfer (ECS/RNG/clock/
-   episode), rederive (composition/provider/system graph, diagnostics/telemetry,
-   Python cache), drain/cancel (queues and in-flight work), outbox/receipt or
-   reject (side effects and device state), and not-applicable where declared.
-   Publish exact N/N-1 behavior, unknown-field policy, migration hashes, a
-   durable replay log, directional compatibility vectors, and rollback semantics.
-   Synthetic fixture bytes cannot satisfy this gate.
+   the following twelve categories and dispositions (the P1-A table remains the
+   semantic authority):
+
+   | Category | Required disposition |
+   | --- | --- |
+   | CompositionProviderSystemGraph | rederive |
+   | EcsComponentTruth | transfer |
+   | RngState | transfer |
+   | ClockCadence | transfer |
+   | DelayedEventsQueues | drain/cancel |
+   | CommandsLinksPendingIntent | transfer or reject, explicitly admitted per owner |
+   | EpisodeRewardTermination | transfer |
+   | PythonLoaderControllerCaches | rederive |
+   | BackendDeviceAllocationsLeases | drain/cancel or reject |
+   | InFlightRequestsResults | drain/cancel/idempotent replay |
+   | ExternalSideEffects | outbox/receipt or reject |
+   | DiagnosticsTelemetry | rederive |
+
+   Each row needs a maintained production owner, exact N/N-1 behavior,
+   unknown-field policy, migration hashes, a durable replay log, directional
+   compatibility vectors, and rollback semantics. Synthetic fixture bytes
+   cannot satisfy this gate.
 4. **Acceptance**: review independently after each work package and run a final
    integrated review; require native,
    Python, boundary, interruption-recovery and replay evidence. P4-C remains
