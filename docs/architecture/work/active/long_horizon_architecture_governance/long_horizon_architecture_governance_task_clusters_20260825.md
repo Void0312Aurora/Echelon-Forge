@@ -1,5 +1,8 @@
 # Long-Horizon Architecture Governance Task Clusters
 
+P4-B remediation is tracked by the subordinate [remediation route](p4b_remediation_route_20260830.md);
+this task-cluster document remains authoritative for phase scope and exit gates.
+
 Status: `2026-08-27` finite long-horizon execution plan for
 [Long-Horizon Architecture Governance](README.md). P0, P1 and the complete
 P3-A/P3-B/P3-C contract, authority, ledger and compatibility foundations and

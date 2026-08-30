@@ -13,6 +13,10 @@ truth publication, runtime caller migration or production cutover is accepted.
 
 Parent subproject: [Long-Horizon Architecture Governance](README.md)
 
+Current P4-B remediation entry point: [P4-B remediation route](p4b_remediation_route_20260830.md).
+This subordinate route does not replace this status document, the task-cluster
+plan, dispatch queue, or acceptance contract.
+
 Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/long_horizon_architecture_governance_current_status_20260825.md`
