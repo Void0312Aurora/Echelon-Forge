@@ -158,6 +158,9 @@ struct RuntimeOwnerHandleToken {
     RuntimeIdentity128 host_instance_nonce;
     RuntimeIdentity128 resource_identity;
     std::shared_ptr<RuntimeInstanceControl> control;
+    RuntimeIdentity128 authenticator;
+    bool binding_present = false;
+    RuntimeOwnerAdmissionBinding binding;
     std::atomic<bool> consumed{false};
 };
 
@@ -1086,6 +1089,7 @@ bool RuntimeOwnerHandle::valid() const noexcept {
     return token_ != nullptr && token_->host.well_formed() &&
            token_->host_instance_nonce.well_formed() &&
            token_->resource_identity.well_formed() && token_->control != nullptr &&
+           token_->authenticator.well_formed() &&
            !token_->consumed.load(std::memory_order_acquire) &&
            !token_->issuer.expired();
 }
@@ -1123,10 +1127,27 @@ RuntimeOwnerHandle RuntimeHostCandidate::issue_owner_handle(
         token->host_instance_nonce = state->host_instance_nonce;
         token->resource_identity = resource_identity;
         token->control = control;
+        token->authenticator = mint_identity_nonce();
         return RuntimeOwnerHandle(std::move(token));
     } catch (...) {
         return {};
     }
+}
+
+RuntimeOwnerHandle RuntimeHostCandidate::issue_owner_handle(
+    const std::shared_ptr<RuntimeInstanceControl> &control,
+    const RuntimeOwnerAdmissionBinding &binding) {
+    if (!binding.plan.well_formed() || binding.world_slot_count > kMaxWorldSlots ||
+        (binding.expected_slot.has_value() && !binding.expected_slot->well_formed())) {
+        return {};
+    }
+    RuntimeOwnerHandle handle = issue_owner_handle(control);
+    if (!handle.valid()) {
+        return {};
+    }
+    handle.token_->binding = binding;
+    handle.token_->binding_present = true;
+    return handle;
 }
 
 RuntimeCandidateBeginResult RuntimeHostCandidate::begin_candidate(
@@ -1144,6 +1165,16 @@ RuntimeCandidateBeginResult RuntimeHostCandidate::begin_candidate(
     if (token->control->resource_identity() != token->resource_identity) {
         return {.status = failure(RuntimeHostError::InvalidArgument,
                                   "owner handle resource identity drifted"),
+                .handle = {}};
+    }
+    if (token->binding_present &&
+        (token->binding.transaction_kind != request.transaction_kind ||
+         token->binding.expected_slot != request.expected_slot ||
+         token->binding.plan != request.plan ||
+         (token->binding.world_slot_count != 0 &&
+          token->binding.world_slot_count != request.world_slot_count))) {
+        return {.status = failure(RuntimeHostError::InvalidArgument,
+                                  "owner handle admission binding does not match request"),
                 .handle = {}};
     }
     if (token->consumed.exchange(true, std::memory_order_acq_rel)) {

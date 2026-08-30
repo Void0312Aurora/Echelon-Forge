@@ -123,6 +123,13 @@ struct RuntimePlanBinding {
     bool operator==(const RuntimePlanBinding &) const = default;
 };
 
+struct RuntimeOwnerAdmissionBinding {
+    RuntimeHostTransactionKind transaction_kind = RuntimeHostTransactionKind::Initial;
+    std::optional<RuntimeIncarnationRef> expected_slot;
+    RuntimePlanBinding plan;
+    std::uint64_t world_slot_count = 1;
+};
+
 struct RuntimeOwnerHandleToken;
 
 // Host-issued admission handle. The token is opaque to callers and can only
@@ -353,6 +360,9 @@ class RuntimeHostCandidate {
                     const RuntimeOwnerHandle &owner_handle);
     [[nodiscard]] RuntimeOwnerHandle
     issue_owner_handle(const std::shared_ptr<RuntimeInstanceControl> &control);
+    [[nodiscard]] RuntimeOwnerHandle issue_owner_handle(
+        const std::shared_ptr<RuntimeInstanceControl> &control,
+        const RuntimeOwnerAdmissionBinding &binding);
     [[nodiscard]] RuntimeHostStatus
     validate_candidate(const RuntimeCandidateHandle &handle,
                        const RuntimeCandidateValidationProof &proof);
