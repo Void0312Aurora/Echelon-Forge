@@ -50,7 +50,7 @@ recovery. A green fixture or mirror test is not sufficient for acceptance.
 The isolated Windows/MSVC target currently passes:
 
 ```text
-ef_runtime_host_candidate_test: 37 test cases, 925 assertions
+combined native candidate tests: 39 test cases, 937 assertions
 focused Python architecture/mirror tests: 23 passed
 ```
 
