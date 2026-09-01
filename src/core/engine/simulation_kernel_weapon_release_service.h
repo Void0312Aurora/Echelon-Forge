@@ -14,13 +14,15 @@
 class IEngagementEventRecorder;
 class IEngagementLaunchRecorder;
 class IUnitFactory;
+class SimulationKernel;
 struct MissileTuning;
 struct PilotAction;
 struct UnitDefinition;
 
 class SimulationKernelWeaponReleaseService final : public IWeaponReleaseService {
   public:
-    SimulationKernelWeaponReleaseService(flecs::world &ecs, IUnitFactory &unit_factory,
+    SimulationKernelWeaponReleaseService(SimulationKernel &kernel, flecs::world &ecs,
+                                         IUnitFactory &unit_factory,
                                          MissileTuning &missile_tuning, std::mt19937 &rng,
                                          IEngagementLaunchRecorder &launch_recorder,
                                          IEngagementEventRecorder &damage_recorder,
@@ -46,6 +48,7 @@ class SimulationKernelWeaponReleaseService final : public IWeaponReleaseService 
     resolve_missile_launch_definition(flecs::entity attacker, const PilotAction *pilot) const;
 
     flecs::world &ecs_;
+    SimulationKernel &kernel_;
     IUnitFactory &unit_factory_;
     MissileTuning &missile_tuning_;
     std::mt19937 &rng_;

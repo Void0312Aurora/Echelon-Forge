@@ -43,9 +43,14 @@ class IGuidanceModel;
 struct UnitDefinition;
 class IEngagementEventStore;
 class SimulationKernelCompositionTestAccess;
+class SimulationKernelWeaponReleaseService;
 
 namespace runtime::providers {
 class DefaultSimulationComposition;
+}
+
+namespace runtime::host::integration {
+class SimulationKernelStateOwnerBridge;
 }
 
 struct ExactStepStageDescriptor {
@@ -318,6 +323,8 @@ class SimulationKernel {
 
   private:
     friend class SimulationKernelCompositionTestAccess;
+    friend class SimulationKernelWeaponReleaseService;
+    friend class runtime::host::integration::SimulationKernelStateOwnerBridge;
     void ensure_active(const char *operation) const;
     using CompositionOperationLock = std::unique_lock<std::recursive_mutex>;
     [[nodiscard]] CompositionOperationLock acquire_composition_operation() const {
@@ -333,6 +340,7 @@ class SimulationKernel {
     [[nodiscard]] IGuidanceModel *guidance_model() const noexcept;
     [[nodiscard]] IEngagementEventStore *engagement_event_store() const noexcept;
     [[nodiscard]] IWeaponReleaseService *weapon_release_service() const noexcept;
+    void record_rng_draws_for_state_transfer(std::uint64_t count);
 
     flecs::world ecs;
     double time_step = 1.0 / 60.0; // 60 Hz by default
@@ -340,6 +348,7 @@ class SimulationKernel {
     // Deterministic RNG (using std::mt19937 for MVP as planned, better than rand())
     // In production we might use Xoshiro/PCG
     std::mt19937 rng;
+    std::uint64_t rng_draw_position_ = 0;
 
     MissileTuning missile_tuning_;
     std::unique_ptr<runtime::providers::DefaultSimulationComposition> composition_;

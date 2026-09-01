@@ -6,7 +6,7 @@
 #include <string_view>
 
 namespace flecs {
-class world;
+struct world;
 }
 
 namespace runtime::systems {

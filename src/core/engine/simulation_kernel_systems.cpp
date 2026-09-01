@@ -1,5 +1,6 @@
 #include "simulation_kernel.h"
 #include "simulation_kernel_engagement_event_store.h"
+#include "state_transfer_component_reflection.h"
 
 #include "components/combat/scoring.h"
 #include "components/combat/structural_failure.h"
@@ -47,6 +48,7 @@ void SimulationKernel::register_components_and_systems() {
     // Components and systems are admitted through the owner-derived registry.
     // The registry validates the frozen default artifact before touching Flecs.
     runtime::systems::register_default_component_contributions(ecs);
+    register_state_transfer_component_reflection(ecs);
 
     // Service references are components too; they are installed by the same
     // contribution registry so the component graph has one admission path.

@@ -1,4 +1,5 @@
 #include "simulation_kernel_weapon_release_service.h"
+#include "simulation_kernel.h"
 #include "simulation_kernel_missile_tuning.h"
 
 #include "core/interfaces/engagement_event_recorder.h"
@@ -464,10 +465,12 @@ bool missile_launch_envelope_allows(const MissileTuning &tuning, const Detection
 } // namespace
 
 SimulationKernelWeaponReleaseService::SimulationKernelWeaponReleaseService(
-    flecs::world &ecs, IUnitFactory &unit_factory, MissileTuning &missile_tuning, std::mt19937 &rng,
+    SimulationKernel &kernel, flecs::world &ecs, IUnitFactory &unit_factory,
+    MissileTuning &missile_tuning, std::mt19937 &rng,
     IEngagementLaunchRecorder &launch_recorder, IEngagementEventRecorder &damage_recorder,
     IWeaponReleaseDamageBridge &damage_bridge)
-    : ecs_(ecs), unit_factory_(unit_factory), missile_tuning_(missile_tuning), rng_(rng),
+    : ecs_(ecs), kernel_(kernel), unit_factory_(unit_factory),
+      missile_tuning_(missile_tuning), rng_(rng),
       launch_recorder_(launch_recorder), damage_recorder_(damage_recorder),
       damage_bridge_(damage_bridge) {}
 
@@ -806,6 +809,7 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
         std::max(0.0, finite_or_default(resolved_tuning.sustain_thrust_n,
                                         default_sustain_thrust_n(boost_thrust_n)));
 
+    kernel_.record_rng_draws_for_state_transfer(2);
     const uint64_t reset_seed_entropy =
         (static_cast<uint64_t>(rng_()) << 32U) ^ static_cast<uint64_t>(rng_());
     uint64_t missile_seed = splitmix64(static_cast<uint64_t>(current_time * 1000.0) ^

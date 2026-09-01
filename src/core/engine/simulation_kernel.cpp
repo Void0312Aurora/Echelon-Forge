@@ -16,6 +16,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <limits>
 #include <stdexcept>
 #include <string>
 
@@ -140,6 +141,7 @@ void SimulationKernel::reset(unsigned int seed) {
     ecs_reset_clock(ecs.c_ptr());
 
     rng.seed(seed);
+    rng_draw_position_ = 0;
     world_state_mutated_ = true;
 
     spdlog::info("Simulation Reset with seed {}", seed);
@@ -182,6 +184,13 @@ void SimulationKernel::set_time_step(double dt) {
     }
     time_step = dt;
     world_state_mutated_ = true;
+}
+
+void SimulationKernel::record_rng_draws_for_state_transfer(std::uint64_t count) {
+    if (count > std::numeric_limits<std::uint64_t>::max() - rng_draw_position_) {
+        throw std::overflow_error("SimulationKernel RNG draw position is exhausted");
+    }
+    rng_draw_position_ += count;
 }
 
 flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_name, double x,
