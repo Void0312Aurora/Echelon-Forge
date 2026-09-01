@@ -279,3 +279,16 @@ class ExecutionEpisodeStateTests(unittest.TestCase):
     self.assertEqual(int(post.get("recovery_base_id", 0)), 55)
     self.assertEqual(int(post.get("recovery_runway_id", 0)), 7)
     self.assertEqual(str(post.get("recovery_approach_type", "")), "ILS")
+
+    mirror_loader._runtime_eval_cache = {"step_evaluation": "poison"}
+    mirror_loader._air_combat_reward_last_report_id = 999
+    mirror_loader._air_combat_reward_release_count = 88
+    mirror_loader.mission_cmd["assigned_target_id"] = -1
+    mirror_loader.rederive_controller_caches_after_state_transfer(exported)
+
+    self.assertEqual(mirror_loader._runtime_eval_cache, {})
+    self.assertEqual(int(mirror_loader._air_combat_reward_last_report_id), 0)
+    self.assertEqual(int(mirror_loader._air_combat_reward_release_count), 0)
+    self.assertEqual(int(mirror_loader.mission_cmd.get("assigned_target_id", 0)), 9001)
+    rebuilt = mirror_loader.build_execution_episode_state()
+    self.assertTrue(bool(ef_py.execution_episode_states_equivalent(exported, rebuilt)))

@@ -55,6 +55,7 @@ from .runtime_state import (
     apply_execution_episode_state as _apply_execution_episode_state_impl,
     build_execution_episode_state as _build_execution_episode_state_impl,
     make_scenario_loader_state_shell as _make_scenario_loader_state_shell_impl,
+    rederive_loader_controller_caches_after_state_transfer as _rederive_loader_controller_caches_after_state_transfer_impl,
 )
 from .mission_observation import (
     build_mission_observation_runtime_inputs as _build_mission_observation_runtime_inputs_impl,
@@ -282,6 +283,11 @@ class ScenarioLoader:
 
     def apply_execution_episode_state(self, state) -> None:
         _apply_execution_episode_state_impl(self, state)
+
+    def rederive_controller_caches_after_state_transfer(self, native_state) -> None:
+        _rederive_loader_controller_caches_after_state_transfer_impl(
+            self, native_state
+        )
 
     def _task_order_spec(self) -> dict:
         return _task_order_spec_impl(self)
