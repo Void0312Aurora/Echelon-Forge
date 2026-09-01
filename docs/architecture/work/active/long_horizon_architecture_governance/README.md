@@ -1,11 +1,12 @@
 # Long-Horizon Architecture Governance
 
-Status: `2026-08-30` active long-horizon architecture-governance program; P0
+Status: `2026-08-31` active long-horizon architecture-governance program; P0
 authority and baseline, P1 target-architecture decisions, the complete
 P3-A/P3-B/P3-C contract, authority-envelope, ledger, and compatibility
 foundations, and P4-A dark/shadow host lifecycle are accepted after independent
-review. P4-B has a dark/shadow contract candidate under independent repair
-review but is not accepted. P2-A/P2-B, P4-C and P5-P8 remain open; no production truth
+review. P4-B candidate implementation is complete on the isolated branch;
+independent integrated review is pending and production acceptance is not
+granted. P2-A/P2-B, P4-C and P5-P8 remain open; no production truth
 publication, runtime caller migration, or production cutover is accepted yet.
 
 Language:
@@ -17,7 +18,7 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/README.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-08-27`
+Last verified: `2026-08-31`
 
 Related authority:
 
@@ -55,7 +56,7 @@ controls that expire or renew instead of accumulating after every migration.
 | Composition replacement | implemented but strategically unresolved | `rebuild_world_composition`, mutation barriers, raw-world quarantine, scope generations, and handover machinery | no maintained non-test caller or binding currently requires in-place kernel rebuild |
 | Runtime boundary | facade direction accepted; compatibility surfaces remain | [runtime facade guards](../../../../../tests/architecture/runtime_facade/test_runtime_escape_hatches.py) | source scans describe the boundary but do not make it physically unrepresentable |
 | Contract and evidence chain | complete for the accepted default profile | request, catalog lock, projection, requested/resolved manifests, provenance, parity, and closure artifacts | intermediate migration artifacts remain permanent governance inputs |
-| Public/runtime authority boundary | P3-A/P3-B/P3-C and P4-A accepted; P4-B candidate under repair review | [`ef_runtime_contracts`](../../../../../include/echelon_forge/runtime_contracts/runtime_identity.h), [`RuntimeHostCandidate`](../../../../../src/runtime/host/runtime_host_candidate.h), [P4-B candidate](p4b_state_transfer_candidate_20260830.md), authority and ledger schemas, exact vectors, non-production ArtifactLedger simulator, fresh Windows/MSVC native gates and [P4-A independent review](../../../reviews/long_horizon_architecture_governance_p4a_review_20260827.md) | P4-A/B are dark/shadow only; P4-C candidate integration plus P5-B/P5-D production durability, authenticity, activation and cutover remain gated |
+| Public/runtime authority boundary | P3-A/P3-B/P3-C and P4-A accepted; P4-B implementation complete, independent review pending | [`ef_runtime_contracts`](../../../../../include/echelon_forge/runtime_contracts/runtime_identity.h), [`RuntimeHostCandidate`](../../../../../src/runtime/host/runtime_host_candidate.h), [P4-B candidate](p4b_state_transfer_candidate_20260830.md), twelve-row owner adapters, exact vectors, non-production ArtifactLedger simulator, fresh Windows/MSVC native gates and [P4-A independent review](../../../reviews/long_horizon_architecture_governance_p4a_review_20260827.md) | P4-A/B remain dark/shadow only; independent P4-B review, P4-C integration, and P5-B/P5-D production durability, authenticity, activation and cutover remain gated |
 | Test and CI governance | verified CI smoke was green; full governance audit is not | [CI smoke suite](../../../../../tests/smoke/ci_smoke_suite.json), [governance audit suite](../../../../../tests/suites/governance_audit_suite.json), and `test_archive_retirement.py` | the remote baseline tracks 20 owner-archive documents that fail the retirement gate |
 | Documentation lifecycle | policy, gate, and repository route conflict | [document lifecycle policy](../../../../engineering/documentation/standards/document_lifecycle_policy.md), subproject standard, and current architecture archive | standards admit owner-local archives while the maintained gate prohibits every `docs/**/archive/**` path |
 
@@ -137,7 +138,7 @@ the same long-term authority, compatibility, and lifecycle result.
 | `P1 Target Architecture` | Freeze lifecycle, episode authority, versioning/rollout, platform/process topology, contract-chain, boundary, and control-lifecycle decisions. | P0 evidence accepted | decisions include compatibility, rollback, operations, storage and security activation paths and pass independent architecture review | accepted |
 | `P2 Control Lifecycle` | Make every architecture control permanent, renewable, migratory, or evidentiary with explicit ownership and retirement. | P1 terminology frozen | existing controls are classified and migration controls have enforced exit criteria | P2-A/P2-B ready |
 | `P3 Contract And Public Boundary Foundation` | Land canonical authority envelopes, resolved-plan/release/rollout/checkpoint shells, engine-independent public DTO target, ledger foundation and target visibility before host cutover. | P1 accepted | transitional adapters are single-owner and host work can use final public types/storage without publishing a second truth | P3-A/P3-B/P3-C accepted |
-| `P4 Host Lifecycle And Immutable Kernel Candidate` | Implement fenced host replacement, unique episode authority, complete state-transfer semantics, and an immutable candidate path in dark/shadow mode. | P3 contract/boundary foundation stable | the candidate path is state-complete and fenced but cannot become production truth or retire production rebuild | P4-A accepted; P4-B contract candidate under repair; P4-C planned |
+| `P4 Host Lifecycle And Immutable Kernel Candidate` | Implement fenced host replacement, unique episode authority, complete state-transfer semantics, and an immutable candidate path in dark/shadow mode. | P3 contract/boundary foundation stable | the candidate path is state-complete and fenced but cannot become production truth or retire production rebuild | P4-A accepted; P4-B implementation complete, independent review pending; P4-C planned |
 | `P5 Plan, Evidence, Binding, And Production Cutover` | Close the executable plan, introduce complete RunReceipt, finish physical facade/diagnostics packaging, then execute the only production cutover/backout and retire rebuild. | P4 candidate proven in dark/shadow mode | Cordis/native/facade/wheel use one plan; supported callers cut over once with rollback evidence and rebuild loses production authority | planned |
 | `P6 Test And CI Architecture` | Align fast, qualification, nightly, release, and research lanes with unique failure audiences. | P2 control classes and P5 boundaries available | permanent gates have named detection value and migration scans are absent or expiring | planned |
 | `P7 Evidence And Documentation Lifecycle` | Retain reproducible proof without keeping closed work packages in permanent authority. | P2 classes and P5 evidence ownership stable | standards, current references, historical records, and generated evidence have singular owners and routes | planned |

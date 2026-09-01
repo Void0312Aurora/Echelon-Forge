@@ -48,7 +48,7 @@ Authoritative cluster definitions:
 | 16 | `P3-B` | accepted | main thread + independent `gpt-5.6-sol` max reviewer | P3-A accepted | canonical JSON authority envelopes, versioned plan/release/rollout/checkpoint shells, provenance binding, exact vectors and native/Cordis conformance |
 | 17 | `P3-C` | accepted | main thread + independent `gpt-5.6-sol` max reviewer | P3-B accepted | non-production ArtifactLedger, exact N/N-1 readers, fenced journals/checkpoints, durable kill/backout recovery and final review pass |
 | 18 | `P4-A` | accepted | main thread + independent `gpt-5.6-sol` max reviewer | P3 foundation accepted | dark/shadow one-CAS host lifecycle with quiescence, leases, fences, termination, quarantine, timeout retry and no production publication |
-| 19 | `P4-B` | ready | future runtime/evidence worker + independent `gpt-5.6-sol` max reviewer | P4-A accepted | versioned native episode barrier and complete state-transfer census; no candidate seam or production publication |
+| 19 | `P4-B` | implementation-complete; independent review pending | main thread + independent `gpt-5.6-sol` max reviewer | P4-A accepted | twelve-row versioned native episode/state-transfer candidate, strict decoding, N/N-1 WAL evidence and host replacement; no production publication |
 
 ## Later Dependency Queue
 
