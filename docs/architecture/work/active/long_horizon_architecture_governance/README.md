@@ -159,8 +159,10 @@ the same long-term authority, compatibility, and lifecycle result.
 - [P3-B independent review](../../../reviews/long_horizon_architecture_governance_p3b_review_20260825.md)
 - [P3-C independent review](../../../reviews/long_horizon_architecture_governance_p3c_review_20260827.md)
 - [P4-A independent review](../../../reviews/long_horizon_architecture_governance_p4a_review_20260827.md)
+- [P4-B first independent review](../../../reviews/long_horizon_architecture_governance_p4b_review_20260831.md)
 - [P4-B state-transfer candidate snapshot](p4b_state_transfer_candidate_20260830.md)
 - [P4-B remediation route](p4b_remediation_route_20260830.md)
+- [P4-B owner adapter inventory](p4b_owner_adapter_inventory_20260830.md)
 
 ## Outputs And Evidence
 

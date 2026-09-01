@@ -160,10 +160,13 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 - [P3-B 独立审查（英文）](../../../reviews/long_horizon_architecture_governance_p3b_review_20260825.md)
 - [P3-C 独立审查（英文）](../../../reviews/long_horizon_architecture_governance_p3c_review_20260827.md)
 - [P4-A 独立审查（英文）](../../../reviews/long_horizon_architecture_governance_p4a_review_20260827.md)
+- [P4-B 首轮独立审查（英文）](../../../reviews/long_horizon_architecture_governance_p4b_review_20260831.md)
 - [P4-B state-transfer candidate snapshot（英文）](p4b_state_transfer_candidate_20260830.md)：
 - [P4-B 修正路线（英文权威）](p4b_remediation_route_20260830.md)
   记录 source/target owner 分离、typed artifacts、transaction abort guard、host-owned
-  native control 与当前验收边界；candidate 仍不得成为 production truth。
+  native control 与当前验收边界；candidate 仍不得成为 production truth。另记录
+  child-entity transfer scope 未决缺陷，须由独立复核裁定。
+- [P4-B owner adapter 清单（英文）](p4b_owner_adapter_inventory_20260830.md)
 
 ## Outputs And Evidence
 
