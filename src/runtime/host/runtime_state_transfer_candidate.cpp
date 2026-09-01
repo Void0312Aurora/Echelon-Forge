@@ -4,6 +4,9 @@
 #include <array>
 #include <atomic>
 #include <bit>
+#include <cstdio>
+#include <fcntl.h>
+#include <fstream>
 #include <iomanip>
 #include <limits>
 #include <mutex>
@@ -11,15 +14,22 @@
 #include <sstream>
 #include <utility>
 
+#ifdef _WIN32
+#include <io.h>
+#include <share.h>
+#include <sys/stat.h>
+#else
+#include <unistd.h>
+#include <sys/file.h>
+#endif
+
 namespace runtime::host {
 
 namespace {
 
 constexpr std::size_t kMaxTransitionReceipts = 4096;
 
-RuntimeStateTransferStatus success() {
-    return {};
-}
+RuntimeStateTransferStatus success() { return {}; }
 
 RuntimeStateTransferStatus failure(RuntimeStateTransferError error, std::string detail) {
     return {.error = error, .detail = std::move(detail)};
@@ -31,6 +41,295 @@ bool is_lower_hex_sha256(std::string_view value) {
                return (character >= '0' && character <= '9') ||
                       (character >= 'a' && character <= 'f');
            });
+}
+
+std::string sha256_hex(std::string_view input);
+
+std::string_view journal_phase_name(RuntimeStateOwnerImportTransactionPhase phase) noexcept {
+    switch (phase) {
+    case RuntimeStateOwnerImportTransactionPhase::Prepared:
+        return "prepared";
+    case RuntimeStateOwnerImportTransactionPhase::Committing:
+        return "committing";
+    case RuntimeStateOwnerImportTransactionPhase::Committed:
+        return "committed";
+    case RuntimeStateOwnerImportTransactionPhase::Aborting:
+        return "aborting";
+    case RuntimeStateOwnerImportTransactionPhase::Aborted:
+        return "aborted";
+    case RuntimeStateOwnerImportTransactionPhase::Ambiguous:
+        return "ambiguous";
+    }
+    return "unsupported";
+}
+
+std::optional<RuntimeStateOwnerImportTransactionPhase>
+parse_journal_phase(std::string_view value) noexcept {
+    constexpr std::array<std::pair<std::string_view,
+                                   RuntimeStateOwnerImportTransactionPhase>,
+                         6>
+        phases = {{{"prepared", RuntimeStateOwnerImportTransactionPhase::Prepared},
+                   {"committing", RuntimeStateOwnerImportTransactionPhase::Committing},
+                   {"committed", RuntimeStateOwnerImportTransactionPhase::Committed},
+                   {"aborting", RuntimeStateOwnerImportTransactionPhase::Aborting},
+                   {"aborted", RuntimeStateOwnerImportTransactionPhase::Aborted},
+                   {"ambiguous", RuntimeStateOwnerImportTransactionPhase::Ambiguous}}};
+    const auto position = std::find_if(
+        phases.begin(), phases.end(),
+        [value](const auto &entry) { return entry.first == value; });
+    return position == phases.end() ? std::nullopt
+                                    : std::optional<RuntimeStateOwnerImportTransactionPhase>(
+                                          position->second);
+}
+
+std::string journal_record_body(std::uint64_t sequence, std::string_view transaction_id,
+                                RuntimeStateOwnerImportTransactionPhase phase,
+                                std::string_view payload_sha256) {
+    std::string body;
+    body.reserve(64 + transaction_id.size() + payload_sha256.size());
+    body.append(std::to_string(sequence));
+    body.push_back('\t');
+    body.append(transaction_id);
+    body.push_back('\t');
+    body.append(journal_phase_name(phase));
+    body.push_back('\t');
+    body.append(payload_sha256);
+    return body;
+}
+
+bool valid_journal_component(std::string_view value) noexcept {
+    return !value.empty() && value.find_first_of("\t\r\n") == std::string_view::npos;
+}
+
+bool parse_journal_record_line(std::string_view line, RuntimeStateTransferJournalRecord &record) {
+    std::array<std::string_view, 5> fields{};
+    std::size_t field_count = 0;
+    std::size_t start = 0;
+    while (start <= line.size() && field_count < fields.size()) {
+        const std::size_t delimiter = line.find('\t', start);
+        const std::size_t end = delimiter == std::string_view::npos ? line.size() : delimiter;
+        fields[field_count++] = line.substr(start, end - start);
+        if (delimiter == std::string_view::npos) {
+            break;
+        }
+        if (field_count == fields.size()) {
+            return false;
+        }
+        start = delimiter + 1;
+    }
+    if (field_count != fields.size() || fields[0].empty() || fields[1].empty() ||
+        fields[2].empty() || !is_lower_hex_sha256(fields[3]) ||
+        !is_lower_hex_sha256(fields[4])) {
+        return false;
+    }
+    std::uint64_t sequence = 0;
+    try {
+        const std::string sequence_text(fields[0]);
+        std::size_t consumed = 0;
+        sequence = std::stoull(sequence_text, &consumed, 10);
+        if (consumed != sequence_text.size() || sequence == 0) {
+            return false;
+        }
+    } catch (...) {
+        return false;
+    }
+    const auto phase = parse_journal_phase(fields[2]);
+    if (!phase || !valid_journal_component(fields[1])) {
+        return false;
+    }
+    const std::string body = journal_record_body(sequence, fields[1], *phase, fields[3]);
+    if (sha256_hex(body) != fields[4]) {
+        return false;
+    }
+    record = {.sequence = sequence,
+              .transaction_id = std::string(fields[1]),
+              .phase = *phase,
+              .payload_sha256 = std::string(fields[3])};
+    return true;
+}
+
+bool valid_journal_transition(
+    const std::optional<RuntimeStateTransferJournalRecord> &previous,
+    RuntimeStateOwnerImportTransactionPhase next,
+    std::string_view payload_sha256) noexcept {
+    if (!previous) {
+        return next == RuntimeStateOwnerImportTransactionPhase::Prepared;
+    }
+    if (previous->payload_sha256 != payload_sha256) {
+        return false;
+    }
+    switch (previous->phase) {
+    case RuntimeStateOwnerImportTransactionPhase::Prepared:
+        return next == RuntimeStateOwnerImportTransactionPhase::Committing ||
+               next == RuntimeStateOwnerImportTransactionPhase::Aborting ||
+               next == RuntimeStateOwnerImportTransactionPhase::Aborted ||
+               next == RuntimeStateOwnerImportTransactionPhase::Ambiguous;
+    case RuntimeStateOwnerImportTransactionPhase::Committing:
+    case RuntimeStateOwnerImportTransactionPhase::Aborting:
+    case RuntimeStateOwnerImportTransactionPhase::Ambiguous:
+        return next == RuntimeStateOwnerImportTransactionPhase::Committed ||
+               next == RuntimeStateOwnerImportTransactionPhase::Aborted ||
+               next == RuntimeStateOwnerImportTransactionPhase::Ambiguous;
+    case RuntimeStateOwnerImportTransactionPhase::Committed:
+        // A composite transaction may compensate a previously committed
+        // child.  The owner verification path is the only caller allowed to
+        // append this terminal correction after proving the target matches
+        // its pre-image.
+        return next == RuntimeStateOwnerImportTransactionPhase::Committed ||
+               next == RuntimeStateOwnerImportTransactionPhase::Aborted;
+    case RuntimeStateOwnerImportTransactionPhase::Aborted:
+        // Re-affirming an already-aborted record is needed when recovery had
+        // to re-run after a failed verification; it does not permit an
+        // aborted transaction to become committed.
+        return next == RuntimeStateOwnerImportTransactionPhase::Aborted;
+    }
+    return false;
+}
+
+struct JournalScanResult {
+    RuntimeStateTransferStatus status;
+    std::vector<RuntimeStateTransferJournalRecord> records;
+    std::uint64_t next_sequence = 1;
+    std::uint64_t valid_size = 0;
+    std::uint64_t file_size = 0;
+};
+
+JournalScanResult scan_journal_file(const std::string &path) {
+    JournalScanResult result;
+    std::ifstream input(path, std::ios::binary);
+    if (!input) {
+        result.status = failure(RuntimeStateTransferError::ImportJournalUnavailable,
+                                "state-transfer journal cannot be opened");
+        return result;
+    }
+    const std::string bytes((std::istreambuf_iterator<char>(input)),
+                            std::istreambuf_iterator<char>());
+    result.file_size = static_cast<std::uint64_t>(bytes.size());
+    if (!input.eof() && input.fail()) {
+        result.status = failure(RuntimeStateTransferError::ImportJournalUnavailable,
+                                "state-transfer journal cannot be read");
+        return result;
+    }
+    const std::size_t complete_end = bytes.rfind('\n');
+    if (complete_end == std::string::npos) {
+        if (!bytes.empty()) {
+            result.status = failure(RuntimeStateTransferError::ImportJournalCorrupt,
+                                    "state-transfer journal has no complete frame");
+        }
+        return result;
+    }
+    result.valid_size = static_cast<std::uint64_t>(complete_end + 1);
+    std::size_t start = 0;
+    std::uint64_t previous_sequence = 0;
+    while (start <= complete_end) {
+        const std::size_t end = bytes.find('\n', start);
+        if (end == std::string::npos || end > complete_end) {
+            break;
+        }
+        if (end == start) {
+            result.status = failure(RuntimeStateTransferError::ImportJournalCorrupt,
+                                    "state-transfer journal contains an empty frame");
+            return result;
+        }
+        RuntimeStateTransferJournalRecord record;
+        if (!parse_journal_record_line(
+                std::string_view(bytes).substr(start, end - start), record) ||
+            record.sequence != previous_sequence + 1) {
+            result.status = failure(RuntimeStateTransferError::ImportJournalCorrupt,
+                                    "state-transfer journal frame integrity failed");
+            return result;
+        }
+        const auto previous = std::find_if(
+            result.records.rbegin(), result.records.rend(),
+            [&](const RuntimeStateTransferJournalRecord &candidate) {
+                return candidate.transaction_id == record.transaction_id;
+            });
+        const std::optional<RuntimeStateTransferJournalRecord> previous_record =
+            previous == result.records.rend()
+                ? std::nullopt
+                : std::optional<RuntimeStateTransferJournalRecord>(*previous);
+        if (!valid_journal_transition(previous_record, record.phase,
+                                      record.payload_sha256)) {
+            result.status = failure(RuntimeStateTransferError::ImportJournalCorrupt,
+                                    "state-transfer journal phase transition is invalid");
+            return result;
+        }
+        previous_sequence = record.sequence;
+        result.records.push_back(std::move(record));
+        start = end + 1;
+    }
+    if (previous_sequence == std::numeric_limits<std::uint64_t>::max()) {
+        result.status = failure(RuntimeStateTransferError::SequenceExhausted,
+                                "state-transfer journal sequence is exhausted");
+        return result;
+    }
+    result.next_sequence = previous_sequence + 1;
+    return result;
+}
+
+bool append_journal_bytes_and_sync(const std::string &path, std::string_view bytes) noexcept {
+    std::FILE *file = nullptr;
+    int descriptor = -1;
+#ifdef _WIN32
+    if (_sopen_s(&descriptor, path.c_str(),
+                 _O_WRONLY | _O_APPEND | _O_CREAT | _O_BINARY,
+                 _SH_DENYWR, _S_IREAD | _S_IWRITE) != 0 || descriptor < 0) {
+        descriptor = -1;
+    }
+    if (descriptor >= 0) {
+        file = _fdopen(descriptor, "ab");
+        if (file == nullptr) {
+            _close(descriptor);
+            descriptor = -1;
+        }
+    }
+#else
+    descriptor = ::open(path.c_str(), O_WRONLY | O_APPEND | O_CREAT, 0666);
+    if (descriptor >= 0 && ::flock(descriptor, LOCK_EX) == 0) {
+        file = ::fdopen(descriptor, "ab");
+    } else if (descriptor >= 0) {
+        ::close(descriptor);
+        descriptor = -1;
+    }
+#endif
+    if (file == nullptr) {
+        return false;
+    }
+    const bool wrote =
+        std::fwrite(bytes.data(), 1, bytes.size(), file) == bytes.size();
+    const bool flushed = wrote && std::fflush(file) == 0;
+#ifdef _WIN32
+    const bool synced = flushed && _commit(_fileno(file)) == 0;
+#else
+    const bool synced = flushed && ::fsync(fileno(file)) == 0;
+#endif
+    const bool closed = std::fclose(file) == 0;
+    return wrote && flushed && synced && closed;
+}
+
+bool truncate_journal_file(const std::string &path, std::uint64_t size) noexcept {
+#ifdef _WIN32
+    int descriptor = -1;
+    if (_sopen_s(&descriptor, path.c_str(), _O_RDWR | _O_BINARY, _SH_DENYNO,
+                 _S_IREAD | _S_IWRITE) != 0) {
+        descriptor = -1;
+    }
+    if (descriptor < 0) {
+        return false;
+    }
+    const bool truncated = _chsize_s(descriptor, size) == 0;
+    const bool synced = truncated && _commit(descriptor) == 0;
+    const bool closed = _close(descriptor) == 0;
+#else
+    const int descriptor = ::open(path.c_str(), O_RDWR);
+    if (descriptor < 0) {
+        return false;
+    }
+    const bool truncated = ::ftruncate(descriptor, static_cast<off_t>(size)) == 0;
+    const bool synced = truncated && ::fsync(descriptor) == 0;
+    const bool closed = ::close(descriptor) == 0;
+#endif
+    return truncated && synced && closed;
 }
 
 bool same_episode(const RuntimeEpisodeRef &lhs, const RuntimeEpisodeRef &rhs) {
@@ -53,7 +352,8 @@ RuntimeIdentity128 mint_nonce() {
     } catch (...) {
         output = {};
     }
-    const std::uint64_t fallback = fallback_sequence.fetch_add(1, std::memory_order_relaxed);
+    const std::uint64_t fallback =
+        fallback_sequence.fetch_add(1, std::memory_order_relaxed);
     output.low ^= fallback == 0 ? 1 : fallback;
     if (!output.well_formed()) {
         output.low = fallback == 0 ? 1 : fallback;
@@ -62,16 +362,19 @@ RuntimeIdentity128 mint_nonce() {
 }
 
 constexpr std::array<std::uint32_t, 64> kSha256RoundConstants = {
-    0x428a2f98U, 0x71374491U, 0xb5c0fbcfU, 0xe9b5dba5U, 0x3956c25bU, 0x59f111f1U, 0x923f82a4U,
-    0xab1c5ed5U, 0xd807aa98U, 0x12835b01U, 0x243185beU, 0x550c7dc3U, 0x72be5d74U, 0x80deb1feU,
-    0x9bdc06a7U, 0xc19bf174U, 0xe49b69c1U, 0xefbe4786U, 0x0fc19dc6U, 0x240ca1ccU, 0x2de92c6fU,
-    0x4a7484aaU, 0x5cb0a9dcU, 0x76f988daU, 0x983e5152U, 0xa831c66dU, 0xb00327c8U, 0xbf597fc7U,
-    0xc6e00bf3U, 0xd5a79147U, 0x06ca6351U, 0x14292967U, 0x27b70a85U, 0x2e1b2138U, 0x4d2c6dfcU,
-    0x53380d13U, 0x650a7354U, 0x766a0abbU, 0x81c2c92eU, 0x92722c85U, 0xa2bfe8a1U, 0xa81a664bU,
-    0xc24b8b70U, 0xc76c51a3U, 0xd192e819U, 0xd6990624U, 0xf40e3585U, 0x106aa070U, 0x19a4c116U,
-    0x1e376c08U, 0x2748774cU, 0x34b0bcb5U, 0x391c0cb3U, 0x4ed8aa4aU, 0x5b9cca4fU, 0x682e6ff3U,
-    0x748f82eeU, 0x78a5636fU, 0x84c87814U, 0x8cc70208U, 0x90befffaU, 0xa4506cebU, 0xbef9a3f7U,
-    0xc67178f2U,
+    0x428a2f98U, 0x71374491U, 0xb5c0fbcfU, 0xe9b5dba5U, 0x3956c25bU,
+    0x59f111f1U, 0x923f82a4U, 0xab1c5ed5U, 0xd807aa98U, 0x12835b01U,
+    0x243185beU, 0x550c7dc3U, 0x72be5d74U, 0x80deb1feU, 0x9bdc06a7U,
+    0xc19bf174U, 0xe49b69c1U, 0xefbe4786U, 0x0fc19dc6U, 0x240ca1ccU,
+    0x2de92c6fU, 0x4a7484aaU, 0x5cb0a9dcU, 0x76f988daU, 0x983e5152U,
+    0xa831c66dU, 0xb00327c8U, 0xbf597fc7U, 0xc6e00bf3U, 0xd5a79147U,
+    0x06ca6351U, 0x14292967U, 0x27b70a85U, 0x2e1b2138U, 0x4d2c6dfcU,
+    0x53380d13U, 0x650a7354U, 0x766a0abbU, 0x81c2c92eU, 0x92722c85U,
+    0xa2bfe8a1U, 0xa81a664bU, 0xc24b8b70U, 0xc76c51a3U, 0xd192e819U,
+    0xd6990624U, 0xf40e3585U, 0x106aa070U, 0x19a4c116U, 0x1e376c08U,
+    0x2748774cU, 0x34b0bcb5U, 0x391c0cb3U, 0x4ed8aa4aU, 0x5b9cca4fU,
+    0x682e6ff3U, 0x748f82eeU, 0x78a5636fU, 0x84c87814U, 0x8cc70208U,
+    0x90befffaU, 0xa4506cebU, 0xbef9a3f7U, 0xc67178f2U,
 };
 
 std::string sha256_hex(std::string_view input) {
@@ -100,9 +403,11 @@ std::string sha256_hex(std::string_view input) {
         }
         for (std::size_t index = 16; index < words.size(); ++index) {
             const std::uint32_t s0 = std::rotr(words[index - 15], 7) ^
-                                     std::rotr(words[index - 15], 18) ^ (words[index - 15] >> 3U);
+                                     std::rotr(words[index - 15], 18) ^
+                                     (words[index - 15] >> 3U);
             const std::uint32_t s1 = std::rotr(words[index - 2], 17) ^
-                                     std::rotr(words[index - 2], 19) ^ (words[index - 2] >> 10U);
+                                     std::rotr(words[index - 2], 19) ^
+                                     (words[index - 2] >> 10U);
             words[index] = words[index - 16] + s0 + words[index - 7] + s1;
         }
 
@@ -115,11 +420,13 @@ std::string sha256_hex(std::string_view input) {
         std::uint32_t g = hash[6];
         std::uint32_t h = hash[7];
         for (std::size_t index = 0; index < words.size(); ++index) {
-            const std::uint32_t sum1 = std::rotr(e, 6) ^ std::rotr(e, 11) ^ std::rotr(e, 25);
+            const std::uint32_t sum1 = std::rotr(e, 6) ^ std::rotr(e, 11) ^
+                                       std::rotr(e, 25);
             const std::uint32_t choose = (e & f) ^ ((~e) & g);
             const std::uint32_t temporary1 =
                 h + sum1 + choose + kSha256RoundConstants[index] + words[index];
-            const std::uint32_t sum0 = std::rotr(a, 2) ^ std::rotr(a, 13) ^ std::rotr(a, 22);
+            const std::uint32_t sum0 = std::rotr(a, 2) ^ std::rotr(a, 13) ^
+                                       std::rotr(a, 22);
             const std::uint32_t majority = (a & b) ^ (a & c) ^ (b & c);
             const std::uint32_t temporary2 = sum0 + majority;
             h = g;
@@ -183,7 +490,8 @@ void append_episode(std::string &output, std::string_view prefix,
     append_number(output, std::string(prefix) + "_world_generation",
                   episode.world.world_generation);
     append_identity(output, std::string(prefix) + "_episode_id", episode.episode_id);
-    append_number(output, std::string(prefix) + "_episode_generation", episode.episode_generation);
+    append_number(output, std::string(prefix) + "_episode_generation",
+                  episode.episode_generation);
 }
 
 std::string intent_fingerprint(const RuntimeEpisodeTransitionIntent &intent) {
@@ -203,7 +511,8 @@ CoordinatorRegistry &coordinator_registry() {
 bool reserve_world(const RuntimeWorldRef &world) {
     CoordinatorRegistry &registry = coordinator_registry();
     std::lock_guard<std::mutex> lock(registry.mutex);
-    if (std::find(registry.worlds.begin(), registry.worlds.end(), world) != registry.worlds.end()) {
+    if (std::find(registry.worlds.begin(), registry.worlds.end(), world) !=
+        registry.worlds.end()) {
         return false;
     }
     registry.worlds.push_back(world);
@@ -214,7 +523,8 @@ void release_world(const RuntimeWorldRef &world) noexcept {
     try {
         CoordinatorRegistry &registry = coordinator_registry();
         std::lock_guard<std::mutex> lock(registry.mutex);
-        const auto position = std::find(registry.worlds.begin(), registry.worlds.end(), world);
+        const auto position =
+            std::find(registry.worlds.begin(), registry.worlds.end(), world);
         if (position != registry.worlds.end()) {
             registry.worlds.erase(position);
         }
@@ -276,8 +586,8 @@ struct RuntimeEpisodeCoordinatorState {
         : episode(config.initial_episode), phase(config.initial_phase),
           step_sequence(config.initial_step_sequence),
           barrier_sequence(config.initial_barrier_sequence),
-          snapshot_id(config.initial_snapshot_id), snapshot_sha256(config.initial_snapshot_sha256),
-          coordinator_nonce(mint_nonce()) {}
+          snapshot_id(config.initial_snapshot_id),
+          snapshot_sha256(config.initial_snapshot_sha256), coordinator_nonce(mint_nonce()) {}
 
     ~RuntimeEpisodeCoordinatorState() { release_world(episode.world); }
 
@@ -325,6 +635,7 @@ struct RuntimeHostQuiescenceToken {
     RuntimeIncarnationRef source_slot;
     std::string source_plan_sha256;
     std::string target_plan_sha256;
+    RuntimeIdentity128 source_resource_identity;
     RuntimeIdentity128 candidate_resource_identity;
     std::shared_ptr<RuntimeStateTransferOwnerRegistry> source_owner_registry;
     std::shared_ptr<RuntimeStateTransferOwnerRegistry> target_owner_registry;
@@ -337,6 +648,8 @@ struct RuntimeHostQuiescenceToken {
     std::uint64_t lifecycle_ticket = 0;
     std::uint64_t candidate_sequence = 0;
     std::uint64_t mutation_fence_sequence = 0;
+    std::size_t source_read_only_result_leases = 0;
+    bool cooperative_cancellation_acknowledged = false;
     bool claimed = false;
     bool released = false;
 };
@@ -348,6 +661,7 @@ enum class RuntimeValidatedTransferLifecycle : std::uint8_t {
     Aborting,
     Committed,
     Aborted,
+    Ambiguous,
 };
 
 struct RuntimeValidatedStateTransferState {
@@ -448,7 +762,15 @@ struct ImportTransactionAbortGuard {
 
     ~ImportTransactionAbortGuard() noexcept {
         if (active && transaction != nullptr) {
-            transaction->abort();
+            const auto aborted = transaction->abort_with_deadline(0, 0);
+            if (aborted.phase != RuntimeStateOwnerImportTransactionPhase::Aborted) {
+                // The guard is used on every validation-failure edge.  A
+                // failed best-effort abort must not silently discard a
+                // transaction whose owner may still be Committing; give the
+                // durable transaction one bounded recovery attempt before the
+                // shared pointer is released.
+                (void)transaction->recover_with_deadline(0, 0);
+            }
         }
     }
 
@@ -456,6 +778,39 @@ struct ImportTransactionAbortGuard {
         active = false;
         transaction.reset();
     }
+};
+
+struct OwnerImportPreparationGuard {
+    std::vector<std::shared_ptr<RuntimeStateOwnerImportTransaction>> *transactions = nullptr;
+    bool active = true;
+
+    ~OwnerImportPreparationGuard() noexcept {
+        if (!active || transactions == nullptr) {
+            return;
+        }
+        for (auto position = transactions->rbegin(); position != transactions->rend();
+             ++position) {
+            if (*position != nullptr) {
+                (void)(*position)->abort_with_deadline(0, 0);
+            }
+        }
+    }
+
+    void disarm() noexcept { active = false; }
+};
+
+struct OwnerImportReceiptGuard {
+    RuntimeStateOwnerImportReceipt *receipt = nullptr;
+    bool active = true;
+
+    ~OwnerImportReceiptGuard() noexcept {
+        if (active && receipt != nullptr) {
+            receipt->observations.clear();
+            receipt->transaction.reset();
+        }
+    }
+
+    void disarm() noexcept { active = false; }
 };
 
 RuntimeStateTransferStatus validate_profile(const RuntimeStateTransferProfile &profile) {
@@ -478,30 +833,48 @@ RuntimeStateTransferStatus validate_profile(const RuntimeStateTransferProfile &p
                            "profile contains a duplicate state category");
         }
         seen[index] = true;
+        const RuntimeStateDecoderReplayRule *decoder_rule =
+            runtime_state_decoder_replay_rule(row.category);
         if (!supported_disposition(row.disposition) || row.owner_id.empty() ||
             row.schema_id.empty() || row.minimum_schema_generation == 0 ||
             row.maximum_schema_generation < row.minimum_schema_generation ||
             (category_requires_truth_schema(row.category) && !row.truth_affecting) ||
+            decoder_rule == nullptr || row.owner_id != decoder_rule->owner_id ||
+            row.schema_id != decoder_rule->schema_id ||
             row.owner_id != runtime_state_owner_id(row.category) ||
             row.schema_id != runtime_state_schema_id(row.category) ||
-            row.minimum_schema_generation < kRuntimeStateTransferPreviousGeneration ||
+            row.minimum_schema_generation < decoder_rule->previous_schema_generation ||
+            row.maximum_schema_generation > decoder_rule->current_schema_generation ||
             row.maximum_schema_generation > kRuntimeStateTransferContractGeneration) {
             return failure(RuntimeStateTransferError::InvalidCensusProfile,
                            "profile row ownership, disposition, or schema range is invalid");
+        }
+        if (row.disposition != decoder_rule->disposition) {
+            if (row.category == RuntimeStateCategory::BackendDeviceAllocationsLeases &&
+                row.disposition == RuntimeStateDisposition::Transfer) {
+                return failure(RuntimeStateTransferError::RawHandleTransferForbidden,
+                               "backend/device raw handles and leases cannot transfer");
+            }
+            if (row.category == RuntimeStateCategory::ExternalSideEffects &&
+                row.disposition == RuntimeStateDisposition::Reject) {
+                return failure(RuntimeStateTransferError::ReplacementRejected,
+                               "profile rejects replacement while external side effects are unresolved");
+            }
+            return failure(RuntimeStateTransferError::DispositionMismatch,
+                           "profile disposition does not match the decoder/replay matrix");
         }
     }
     return success();
 }
 
-RuntimeStateTransferStatus
-validate_category_semantics(const RuntimeStateCensusEntry &entry,
-                            const RuntimeEpisodeCoordinatorSnapshot &barrier_snapshot) {
+RuntimeStateTransferStatus validate_category_semantics(
+    const RuntimeStateCensusEntry &entry,
+    const RuntimeEpisodeCoordinatorSnapshot &barrier_snapshot) {
     switch (entry.category) {
     case RuntimeStateCategory::CompositionProviderSystemGraph:
         if (entry.disposition != RuntimeStateDisposition::Rederive) {
-            return failure(
-                RuntimeStateTransferError::DispositionMismatch,
-                "composition/provider/system graph must be rebuilt from the closed plan");
+            return failure(RuntimeStateTransferError::DispositionMismatch,
+                           "composition/provider/system graph must be rebuilt from the closed plan");
         }
         break;
     case RuntimeStateCategory::EcsComponentTruth:
@@ -532,7 +905,8 @@ validate_category_semantics(const RuntimeStateCensusEntry &entry,
         }
         break;
     case RuntimeStateCategory::InFlightRequestsResults:
-        if (entry.disposition == RuntimeStateDisposition::Transfer && !entry.replay_idempotent) {
+        if (entry.disposition == RuntimeStateDisposition::Transfer &&
+            !entry.replay_idempotent) {
             return failure(RuntimeStateTransferError::UnsettledWork,
                            "in-flight replay requires an explicit idempotency proof");
         }
@@ -546,9 +920,8 @@ validate_category_semantics(const RuntimeStateCensusEntry &entry,
         break;
     case RuntimeStateCategory::ExternalSideEffects:
         if (entry.disposition == RuntimeStateDisposition::Reject) {
-            return failure(
-                RuntimeStateTransferError::ReplacementRejected,
-                "profile rejects replacement while external side effects are unresolved");
+            return failure(RuntimeStateTransferError::ReplacementRejected,
+                           "profile rejects replacement while external side effects are unresolved");
         }
         if (entry.disposition != RuntimeStateDisposition::Drain &&
             entry.disposition != RuntimeStateDisposition::NotApplicable) {
@@ -584,9 +957,9 @@ validate_category_semantics(const RuntimeStateCensusEntry &entry,
     return success();
 }
 
-RuntimeStateTransferStatus
-validate_entry(const RuntimeStateCensusRowPolicy &policy, const RuntimeStateCensusEntry &entry,
-               const RuntimeEpisodeCoordinatorSnapshot &barrier_snapshot) {
+RuntimeStateTransferStatus validate_entry(
+    const RuntimeStateCensusRowPolicy &policy, const RuntimeStateCensusEntry &entry,
+    const RuntimeEpisodeCoordinatorSnapshot &barrier_snapshot) {
     if (entry.owner_id != policy.owner_id) {
         return failure(RuntimeStateTransferError::OwnerMismatch,
                        "state category owner does not match the admitted profile");
@@ -652,12 +1025,11 @@ validate_entry(const RuntimeStateCensusRowPolicy &policy, const RuntimeStateCens
     return validate_category_semantics(entry, barrier_snapshot);
 }
 
-std::string
-canonical_state_bundle_bytes(const RuntimeStateTransferProfile &profile,
-                             const RuntimeStateCensus &census,
-                             const std::vector<RuntimeStateOwnerArtifact> &artifacts,
-                             const RuntimeStateTransferEvidence &evidence,
-                             const RuntimeEpisodeCoordinatorSnapshot &barrier_snapshot) {
+std::string canonical_state_bundle_bytes(
+    const RuntimeStateTransferProfile &profile, const RuntimeStateCensus &census,
+    const std::vector<RuntimeStateOwnerArtifact> &artifacts,
+    const RuntimeStateTransferEvidence &evidence,
+    const RuntimeEpisodeCoordinatorSnapshot &barrier_snapshot) {
     std::string output("echelon_forge.runtime_state_transfer_bundle.v1\n");
     append_text(output, "profile_id", profile.profile_id);
     append_number(output, "profile_generation", profile.profile_generation);
@@ -673,11 +1045,13 @@ canonical_state_bundle_bytes(const RuntimeStateTransferProfile &profile,
 
     std::vector<RuntimeStateCensusEntry> sorted = census.entries;
     std::sort(sorted.begin(), sorted.end(), [](const auto &lhs, const auto &rhs) {
-        return static_cast<std::uint8_t>(lhs.category) < static_cast<std::uint8_t>(rhs.category);
+        return static_cast<std::uint8_t>(lhs.category) <
+               static_cast<std::uint8_t>(rhs.category);
     });
     for (const RuntimeStateCensusEntry &entry : sorted) {
         append_text(output, "category", runtime_state_category_name(entry.category));
-        append_text(output, "disposition", runtime_state_disposition_name(entry.disposition));
+        append_text(output, "disposition",
+                    runtime_state_disposition_name(entry.disposition));
         append_text(output, "owner_id", entry.owner_id);
         append_text(output, "schema_id", entry.schema_id);
         append_number(output, "schema_generation", entry.schema_generation);
@@ -686,12 +1060,15 @@ canonical_state_bundle_bytes(const RuntimeStateTransferProfile &profile,
                       entry.canonical_payload.size());
         output.push_back('\n');
         append_text(output, "payload_sha256", entry.canonical_payload_sha256);
-        append_text(output, "semantic_evidence_sha256", entry.semantic_evidence_sha256);
-        append_number(output, "unknown_truth_fields", entry.contains_unknown_truth_fields ? 1 : 0);
+        append_text(output, "semantic_evidence_sha256",
+                    entry.semantic_evidence_sha256);
+        append_number(output, "unknown_truth_fields",
+                      entry.contains_unknown_truth_fields ? 1 : 0);
         append_number(output, "replay_idempotent", entry.replay_idempotent ? 1 : 0);
         append_number(output, "item_count", entry.item_count);
         append_number(output, "settled_item_count", entry.settled_item_count);
-        append_number(output, "sequence_high_watermark", entry.sequence_high_watermark);
+        append_number(output, "sequence_high_watermark",
+                      entry.sequence_high_watermark);
         append_number(output, "rng_draw_position", entry.rng_draw_position);
         append_number(output, "simulation_tick", entry.simulation_tick);
         append_number(output, "step_sequence", entry.step_sequence);
@@ -704,9 +1081,11 @@ canonical_state_bundle_bytes(const RuntimeStateTransferProfile &profile,
                          static_cast<std::uint8_t>(rhs.category);
               });
     for (const RuntimeStateOwnerArtifact &artifact : sorted_artifacts) {
-        append_text(output, "artifact_category", runtime_state_category_name(artifact.category));
+        append_text(output, "artifact_category",
+                    runtime_state_category_name(artifact.category));
         append_text(output, "artifact_schema_id", artifact.schema_id);
-        append_number(output, "artifact_schema_generation", artifact.schema_generation);
+        append_number(output, "artifact_schema_generation",
+                      artifact.schema_generation);
         append_number(output, "artifact_payload_size", artifact.payload.size());
         output.append(reinterpret_cast<const char *>(artifact.payload.data()),
                       artifact.payload.size());
@@ -719,14 +1098,16 @@ canonical_state_bundle_bytes(const RuntimeStateTransferProfile &profile,
 std::string canonical_state_entry_bytes(const RuntimeStateCensusEntry &entry) {
     std::string output("echelon_forge.runtime_state_census_entry.v1\n");
     append_text(output, "category", runtime_state_category_name(entry.category));
-    append_text(output, "disposition", runtime_state_disposition_name(entry.disposition));
+    append_text(output, "disposition",
+                runtime_state_disposition_name(entry.disposition));
     append_text(output, "owner_id", entry.owner_id);
     append_text(output, "schema_id", entry.schema_id);
     append_number(output, "schema_generation", entry.schema_generation);
     append_text(output, "state_content_sha256", entry.state_content_sha256);
     append_text(output, "canonical_payload_sha256", entry.canonical_payload_sha256);
     append_text(output, "semantic_evidence_sha256", entry.semantic_evidence_sha256);
-    append_number(output, "unknown_truth_fields", entry.contains_unknown_truth_fields ? 1 : 0);
+    append_number(output, "unknown_truth_fields",
+                  entry.contains_unknown_truth_fields ? 1 : 0);
     append_number(output, "replay_idempotent", entry.replay_idempotent ? 1 : 0);
     append_number(output, "item_count", entry.item_count);
     append_number(output, "settled_item_count", entry.settled_item_count);
@@ -742,7 +1123,8 @@ std::string canonical_state_entry_bytes(const RuntimeStateCensusEntry &entry) {
     return output;
 }
 
-bool same_source_census(const RuntimeStateCensus &expected, const RuntimeStateCensus &observed) {
+bool same_source_census(const RuntimeStateCensus &expected,
+                        const RuntimeStateCensus &observed) {
     if (expected.contract_generation != observed.contract_generation ||
         expected.profile_id != observed.profile_id ||
         expected.profile_generation != observed.profile_generation ||
@@ -753,11 +1135,11 @@ bool same_source_census(const RuntimeStateCensus &expected, const RuntimeStateCe
         return false;
     }
     for (const RuntimeStateCensusEntry &expected_entry : expected.entries) {
-        const auto observed_entry =
-            std::find_if(observed.entries.begin(), observed.entries.end(),
-                         [&](const RuntimeStateCensusEntry &entry) {
-                             return entry.category == expected_entry.category;
-                         });
+        const auto observed_entry = std::find_if(
+            observed.entries.begin(), observed.entries.end(),
+            [&](const RuntimeStateCensusEntry &entry) {
+                return entry.category == expected_entry.category;
+            });
         if (observed_entry == observed.entries.end() ||
             canonical_state_entry_bytes(expected_entry) !=
                 canonical_state_entry_bytes(*observed_entry)) {
@@ -767,9 +1149,10 @@ bool same_source_census(const RuntimeStateCensus &expected, const RuntimeStateCe
     return true;
 }
 
-RuntimeStateTransferStatus validate_source_artifacts(const RuntimeStateTransferProfile &profile,
-                                                     const RuntimeStateCensus &census,
-                                                     const RuntimeStateOwnerExport &source_export) {
+RuntimeStateTransferStatus validate_source_artifacts(
+    const RuntimeStateTransferProfile &profile,
+    const RuntimeStateCensus &census,
+    const RuntimeStateOwnerExport &source_export) {
     if (source_export.artifacts.size() != kRuntimeStateCategoryCount) {
         return failure(RuntimeStateTransferError::MissingCategory,
                        "owner source export does not contain one artifact per category");
@@ -793,16 +1176,18 @@ RuntimeStateTransferStatus validate_source_artifacts(const RuntimeStateTransferP
         }
     }
     for (const RuntimeStateCensusRowPolicy &policy : profile.rows) {
-        const auto entry = std::find_if(census.entries.begin(), census.entries.end(),
-                                        [&](const RuntimeStateCensusEntry &candidate) {
-                                            return candidate.category == policy.category;
-                                        });
+        const auto entry = std::find_if(
+            census.entries.begin(), census.entries.end(),
+            [&](const RuntimeStateCensusEntry &candidate) {
+                return candidate.category == policy.category;
+            });
         const auto *artifact = artifacts[static_cast<std::size_t>(policy.category)];
         if (entry == census.entries.end() || artifact == nullptr ||
             artifact->schema_id != policy.schema_id ||
             artifact->schema_generation != entry->schema_generation ||
             (policy.disposition == RuntimeStateDisposition::Transfer &&
-             (artifact->payload.empty() || artifact->payload != entry->canonical_payload))) {
+             (artifact->payload.empty() ||
+              artifact->payload_sha256 != entry->state_content_sha256))) {
             return failure(RuntimeStateTransferError::PayloadDigestMismatch,
                            "owner source artifact is not bound to its census schema");
         }
@@ -810,7 +1195,949 @@ RuntimeStateTransferStatus validate_source_artifacts(const RuntimeStateTransferP
     return success();
 }
 
+class CompositeOwnerImportTransaction final : public RuntimeStateOwnerImportTransaction {
+  public:
+    explicit CompositeOwnerImportTransaction(
+        std::vector<std::shared_ptr<RuntimeStateOwnerImportTransaction>> transactions)
+        : transactions_(std::move(transactions)) {}
+
+    [[nodiscard]] RuntimeStateOwnerImportTransactionStatus
+    commit_with_deadline(std::uint64_t now_tick,
+                         std::uint64_t deadline_tick) noexcept override {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (terminal()) {
+            return status_;
+        }
+        status_.phase = RuntimeStateOwnerImportTransactionPhase::Committing;
+        bool committed_any = false;
+        std::vector<std::shared_ptr<RuntimeStateOwnerImportTransaction>> committed_children;
+        std::uint64_t last_journal_sequence = 0;
+        for (const auto &transaction : transactions_) {
+            if (transaction == nullptr) {
+                status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
+                           .error = RuntimeStateTransferError::ImportTransactionStateInvalid};
+                return status_;
+            }
+            const auto child = transaction->commit_with_deadline(now_tick, deadline_tick);
+            if (child.phase == RuntimeStateOwnerImportTransactionPhase::Committed &&
+                child.error == RuntimeStateTransferError::None && child.durable &&
+                child.journal_sequence != 0) {
+                committed_any = true;
+                committed_children.push_back(transaction);
+                last_journal_sequence =
+                    std::max(last_journal_sequence, child.journal_sequence);
+                continue;
+            }
+            // A later child can fail after earlier children have committed.
+            // Compensate in reverse order before exposing a terminal result;
+            // otherwise the target is left with a mixed owner state that no
+            // host-level rollback can prove safe.
+            bool compensated = true;
+            for (auto position = committed_children.rbegin();
+                 position != committed_children.rend(); ++position) {
+                if (!(*position)->rollback_committed()) {
+                    compensated = false;
+                }
+            }
+            status_ = {
+                .phase = committed_any
+                             ? (compensated
+                                    ? RuntimeStateOwnerImportTransactionPhase::Aborted
+                                    : RuntimeStateOwnerImportTransactionPhase::Ambiguous)
+                             : child.phase,
+                .error = committed_any && compensated
+                             ? RuntimeStateTransferError::None
+                             : (child.error == RuntimeStateTransferError::None
+                                    ? RuntimeStateTransferError::ImportTransactionAmbiguous
+                                    : child.error),
+                .journal_sequence = last_journal_sequence,
+                .durable = committed_any && compensated && last_journal_sequence != 0,
+            };
+            return status_;
+        }
+        status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Committed,
+                   .error = RuntimeStateTransferError::None,
+                   .journal_sequence = last_journal_sequence,
+                   .durable = !transactions_.empty() && last_journal_sequence != 0};
+        return status_;
+    }
+
+    [[nodiscard]] RuntimeStateOwnerImportTransactionStatus
+    abort_with_deadline(std::uint64_t now_tick,
+                        std::uint64_t deadline_tick) noexcept override {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (status_.phase == RuntimeStateOwnerImportTransactionPhase::Aborted) {
+            return status_;
+        }
+        if (status_.phase == RuntimeStateOwnerImportTransactionPhase::Committed) {
+            return {.phase = RuntimeStateOwnerImportTransactionPhase::Committed,
+                    .error = RuntimeStateTransferError::ImportTransactionStateInvalid,
+                    .journal_sequence = status_.journal_sequence,
+                    .durable = status_.durable};
+        }
+        status_.phase = RuntimeStateOwnerImportTransactionPhase::Aborting;
+        std::uint64_t last_journal_sequence = status_.journal_sequence;
+        for (auto position = transactions_.rbegin(); position != transactions_.rend();
+             ++position) {
+            if (*position == nullptr) {
+                status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
+                           .error = RuntimeStateTransferError::ImportTransactionStateInvalid,
+                           .journal_sequence = last_journal_sequence};
+                return status_;
+            }
+            const auto child = (*position)->abort_with_deadline(now_tick, deadline_tick);
+            last_journal_sequence =
+                std::max(last_journal_sequence, child.journal_sequence);
+            if (child.phase != RuntimeStateOwnerImportTransactionPhase::Aborted ||
+                child.error != RuntimeStateTransferError::None || !child.durable ||
+                child.journal_sequence == 0) {
+                status_ = {
+                    .phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
+                    .error = child.error == RuntimeStateTransferError::None
+                                 ? RuntimeStateTransferError::ImportTransactionAmbiguous
+                                 : child.error,
+                    .journal_sequence = last_journal_sequence,
+                    .durable = false,
+                };
+                return status_;
+            }
+        }
+        status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Aborted,
+                   .error = RuntimeStateTransferError::None,
+                   .journal_sequence = last_journal_sequence,
+                   .durable = !transactions_.empty() && last_journal_sequence != 0};
+        return status_;
+    }
+
+    [[nodiscard]] RuntimeStateOwnerImportTransactionStatus
+    recover_with_deadline(std::uint64_t now_tick,
+                          std::uint64_t deadline_tick) noexcept override {
+        std::lock_guard<std::mutex> lock(mutex_);
+        // A composite outcome is itself the durable result of the ordered
+        // child protocol.  Once compensation has produced Aborted (or all
+        // children have committed), do not re-derive a different outcome by
+        // inspecting child markers on a later recovery call.
+        if (terminal()) {
+            return status_;
+        }
+        bool saw_committed = false;
+        bool saw_aborted = false;
+        std::uint64_t last_journal_sequence = status_.journal_sequence;
+        for (const auto &transaction : transactions_) {
+            if (transaction == nullptr) {
+                status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
+                           .error = RuntimeStateTransferError::ImportTransactionStateInvalid,
+                           .journal_sequence = last_journal_sequence};
+                return status_;
+            }
+            auto child = transaction->status();
+            if (child.phase != RuntimeStateOwnerImportTransactionPhase::Committed &&
+                child.phase != RuntimeStateOwnerImportTransactionPhase::Aborted) {
+                child = transaction->recover_with_deadline(now_tick, deadline_tick);
+            }
+            last_journal_sequence =
+                std::max(last_journal_sequence, child.journal_sequence);
+            if (child.error != RuntimeStateTransferError::None || !child.durable ||
+                child.journal_sequence == 0) {
+                status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
+                           .error = child.error == RuntimeStateTransferError::None
+                                        ? RuntimeStateTransferError::ImportTransactionAmbiguous
+                                        : child.error,
+                           .journal_sequence = last_journal_sequence};
+                return status_;
+            }
+            saw_committed = saw_committed ||
+                            child.phase == RuntimeStateOwnerImportTransactionPhase::Committed;
+            saw_aborted = saw_aborted ||
+                          child.phase == RuntimeStateOwnerImportTransactionPhase::Aborted;
+        }
+        if (saw_committed == saw_aborted) {
+            status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
+                       .error = RuntimeStateTransferError::ImportTransactionAmbiguous,
+                       .journal_sequence = last_journal_sequence};
+            return status_;
+        }
+        status_ = {.phase = saw_committed
+                                ? RuntimeStateOwnerImportTransactionPhase::Committed
+                                : RuntimeStateOwnerImportTransactionPhase::Aborted,
+                   .error = RuntimeStateTransferError::None,
+                   .journal_sequence = last_journal_sequence,
+                   .durable = true};
+        return status_;
+    }
+
+    [[nodiscard]] RuntimeStateOwnerImportTransactionStatus
+    status() const noexcept override {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return status_;
+    }
+
+  private:
+    [[nodiscard]] bool terminal() const noexcept {
+        return status_.phase == RuntimeStateOwnerImportTransactionPhase::Committed ||
+               status_.phase == RuntimeStateOwnerImportTransactionPhase::Aborted;
+    }
+
+    mutable std::mutex mutex_;
+    std::vector<std::shared_ptr<RuntimeStateOwnerImportTransaction>> transactions_;
+    RuntimeStateOwnerImportTransactionStatus status_{};
+};
+
 } // namespace
+
+struct RuntimeStateTransferFileJournal::State {
+    explicit State(std::string value) : path(std::move(value)) {}
+
+    std::mutex mutex;
+    std::string path;
+    RuntimeStateTransferStatus initialization_status;
+    std::uint64_t next_sequence = 1;
+};
+
+RuntimeStateTransferFileJournal::RuntimeStateTransferFileJournal(std::string path)
+    : state_(std::make_unique<State>(std::move(path))) {
+    if (state_->path.empty()) {
+        state_->initialization_status = failure(
+            RuntimeStateTransferError::ImportJournalUnavailable,
+            "state-transfer journal path is empty");
+        return;
+    }
+    std::FILE *file = nullptr;
+#ifdef _WIN32
+    if (fopen_s(&file, state_->path.c_str(), "ab") != 0) {
+        file = nullptr;
+    }
+#else
+    file = std::fopen(state_->path.c_str(), "ab");
+#endif
+    if (file == nullptr || std::fclose(file) != 0) {
+        state_->initialization_status = failure(
+            RuntimeStateTransferError::ImportJournalUnavailable,
+            "state-transfer journal cannot be created");
+        return;
+    }
+    JournalScanResult scan = scan_journal_file(state_->path);
+    state_->initialization_status = scan.status;
+    state_->next_sequence = scan.next_sequence;
+    if (state_->initialization_status && scan.valid_size != scan.file_size &&
+        !truncate_journal_file(state_->path, scan.valid_size)) {
+        state_->initialization_status = failure(
+            RuntimeStateTransferError::ImportJournalUnavailable,
+            "state-transfer journal torn tail cannot be truncated on reopen");
+    }
+}
+
+RuntimeStateTransferFileJournal::~RuntimeStateTransferFileJournal() = default;
+
+RuntimeStateTransferJournalAppendResult
+RuntimeStateTransferFileJournal::append_and_sync(
+    std::string_view transaction_id,
+    RuntimeStateOwnerImportTransactionPhase phase,
+    std::string_view payload_sha256) noexcept {
+    RuntimeStateTransferJournalAppendResult result;
+    if (state_ == nullptr) {
+        result.status = failure(RuntimeStateTransferError::ImportJournalUnavailable,
+                                "state-transfer journal is unavailable");
+        return result;
+    }
+    try {
+        std::lock_guard<std::mutex> lock(state_->mutex);
+        if (!state_->initialization_status) {
+            result.status = state_->initialization_status;
+            return result;
+        }
+        if (!valid_journal_component(transaction_id) ||
+            !is_lower_hex_sha256(payload_sha256) ||
+            state_->next_sequence == 0) {
+            result.status = failure(RuntimeStateTransferError::InvalidArgument,
+                                    "state-transfer journal append is invalid");
+            return result;
+        }
+        JournalScanResult scan = scan_journal_file(state_->path);
+        if (!scan.status) {
+            state_->initialization_status = scan.status;
+            result.status = scan.status;
+            return result;
+        }
+        state_->next_sequence = scan.next_sequence;
+        if (scan.valid_size != scan.file_size &&
+            !truncate_journal_file(state_->path, scan.valid_size)) {
+            result.status = failure(RuntimeStateTransferError::ImportJournalUnavailable,
+                                    "state-transfer journal torn tail cannot be truncated");
+            return result;
+        }
+        const auto previous = std::find_if(
+            scan.records.rbegin(), scan.records.rend(),
+            [&](const RuntimeStateTransferJournalRecord &candidate) {
+                return candidate.transaction_id == transaction_id;
+            });
+        const std::optional<RuntimeStateTransferJournalRecord> previous_record =
+            previous == scan.records.rend()
+                ? std::nullopt
+                : std::optional<RuntimeStateTransferJournalRecord>(*previous);
+        if (!valid_journal_transition(previous_record, phase, payload_sha256)) {
+            result.status = failure(RuntimeStateTransferError::ImportTransactionStateInvalid,
+                                    "state-transfer journal transition is invalid");
+            return result;
+        }
+        const std::uint64_t sequence = state_->next_sequence;
+        const std::string body =
+            journal_record_body(sequence, transaction_id, phase, payload_sha256);
+        std::string line = body;
+        line.push_back('\t');
+        line.append(sha256_hex(body));
+        line.push_back('\n');
+        if (!append_journal_bytes_and_sync(state_->path, line)) {
+            result.status = failure(RuntimeStateTransferError::ImportJournalUnavailable,
+                                    "state-transfer journal append did not sync");
+            return result;
+        }
+        state_->next_sequence = sequence + 1;
+        result.sequence = sequence;
+    } catch (...) {
+        result.status = failure(RuntimeStateTransferError::ImportJournalUnavailable,
+                                "state-transfer journal append failed");
+    }
+    return result;
+}
+
+RuntimeStateTransferJournalReadResult RuntimeStateTransferFileJournal::latest(
+    std::string_view transaction_id) noexcept {
+    RuntimeStateTransferJournalReadResult result;
+    if (state_ == nullptr) {
+        result.status = failure(RuntimeStateTransferError::ImportJournalUnavailable,
+                                "state-transfer journal is unavailable");
+        return result;
+    }
+    try {
+        std::lock_guard<std::mutex> lock(state_->mutex);
+        if (!state_->initialization_status) {
+            result.status = state_->initialization_status;
+            return result;
+        }
+        if (!valid_journal_component(transaction_id)) {
+            result.status = failure(RuntimeStateTransferError::InvalidArgument,
+                                    "state-transfer transaction id is invalid");
+            return result;
+        }
+        JournalScanResult scan = scan_journal_file(state_->path);
+        if (!scan.status) {
+            state_->initialization_status = scan.status;
+            result.status = scan.status;
+            return result;
+        }
+        state_->next_sequence = scan.next_sequence;
+        const auto position = std::find_if(
+            scan.records.rbegin(), scan.records.rend(),
+            [&](const RuntimeStateTransferJournalRecord &candidate) {
+                return candidate.transaction_id == transaction_id;
+            });
+        if (position != scan.records.rend()) {
+            result.record = *position;
+        }
+    } catch (...) {
+        result.status = failure(RuntimeStateTransferError::ImportJournalUnavailable,
+                                "state-transfer journal read failed");
+    }
+    return result;
+}
+
+void RuntimeStateOwnerImportTransaction::commit() noexcept {}
+
+void RuntimeStateOwnerImportTransaction::abort() noexcept {}
+
+RuntimeStateOwnerImportTransactionStatus
+RuntimeStateOwnerImportTransaction::commit_with_deadline(
+    std::uint64_t now_tick, std::uint64_t deadline_tick) noexcept {
+    if (deadline_tick != 0 && now_tick >= deadline_tick) {
+        return {.phase = RuntimeStateOwnerImportTransactionPhase::Prepared,
+                .error = RuntimeStateTransferError::ImportTransactionDeadlineExceeded,
+                .journal_sequence = 0,
+                .durable = false};
+    }
+    commit();
+    return {.phase = RuntimeStateOwnerImportTransactionPhase::Committed,
+            .error = RuntimeStateTransferError::None,
+            .journal_sequence = 0,
+            .durable = false};
+}
+
+RuntimeStateOwnerImportTransactionStatus
+RuntimeStateOwnerImportTransaction::abort_with_deadline(
+    std::uint64_t now_tick, std::uint64_t deadline_tick) noexcept {
+    if (deadline_tick != 0 && now_tick >= deadline_tick) {
+        return {.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
+                .error = RuntimeStateTransferError::ImportTransactionDeadlineExceeded,
+                .journal_sequence = 0,
+                .durable = false};
+    }
+    abort();
+    return {.phase = RuntimeStateOwnerImportTransactionPhase::Aborted,
+            .error = RuntimeStateTransferError::None,
+            .journal_sequence = 0,
+            .durable = false};
+}
+
+RuntimeStateOwnerImportTransactionStatus
+RuntimeStateOwnerImportTransaction::recover_with_deadline(
+    std::uint64_t now_tick, std::uint64_t deadline_tick) noexcept {
+    (void)now_tick;
+    (void)deadline_tick;
+    return {.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
+            .error = RuntimeStateTransferError::ImportTransactionAmbiguous,
+            .journal_sequence = 0,
+            .durable = false};
+}
+
+bool RuntimeStateOwnerImportTransaction::rollback_committed() noexcept {
+    return false;
+}
+
+RuntimeStateOwnerImportTransactionStatus
+RuntimeStateOwnerImportTransaction::status() const noexcept {
+    return {.phase = RuntimeStateOwnerImportTransactionPhase::Prepared,
+            .error = RuntimeStateTransferError::None,
+            .journal_sequence = 0,
+            .durable = false};
+}
+
+RuntimeDurableOwnerImportTransaction::RuntimeDurableOwnerImportTransaction(
+    std::string transaction_id, std::string payload_sha256,
+    std::shared_ptr<RuntimeStateTransferJournal> journal,
+    RuntimeStateOwnerImportRecoveryCallbacks callbacks) noexcept
+    : transaction_id_(std::move(transaction_id)),
+      payload_sha256_(std::move(payload_sha256)), journal_(std::move(journal)),
+      callbacks_(std::move(callbacks)) {
+    if (!valid_journal_component(transaction_id_) ||
+        !is_lower_hex_sha256(payload_sha256_) || journal_ == nullptr ||
+        !callbacks_.commit || !callbacks_.abort || !callbacks_.recover) {
+        status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
+                   .error = RuntimeStateTransferError::InvalidArgument};
+        return;
+    }
+    const RuntimeStateTransferJournalReadResult existing =
+        journal_->latest(transaction_id_);
+    if (!existing.status) {
+        status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
+                   .error = existing.status.error};
+        return;
+    }
+    if (existing.record) {
+        if (existing.record->payload_sha256 != payload_sha256_) {
+            status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
+                       .error = RuntimeStateTransferError::ImportJournalCorrupt,
+                       .journal_sequence = existing.record->sequence};
+            return;
+        }
+        status_ = {.phase = existing.record->phase,
+                   .error = existing.record->phase ==
+                                    RuntimeStateOwnerImportTransactionPhase::Ambiguous
+                                ? RuntimeStateTransferError::ImportTransactionAmbiguous
+                                : RuntimeStateTransferError::None,
+                   .journal_sequence = existing.record->sequence,
+                   .durable = true};
+        // A terminal WAL record is only a claim until the owner verifies the
+        // corresponding bytes.  If verification is unavailable or fails,
+        // force the transaction through the normal recovery path instead of
+        // trusting a stale terminal marker after a crash.
+        if (status_.phase == RuntimeStateOwnerImportTransactionPhase::Committed ||
+            status_.phase == RuntimeStateOwnerImportTransactionPhase::Aborted) {
+            bool verified = false;
+            try {
+                verified = callbacks_.verify && callbacks_.verify();
+            } catch (...) {
+                verified = false;
+            }
+            if (!verified) {
+                status_.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous;
+                status_.error = RuntimeStateTransferError::ImportTransactionAmbiguous;
+            }
+        }
+        return;
+    }
+    const RuntimeStateTransferJournalAppendResult prepared =
+        journal_->append_and_sync(transaction_id_,
+                                  RuntimeStateOwnerImportTransactionPhase::Prepared,
+                                  payload_sha256_);
+    status_ = {.phase = prepared.status
+                            ? RuntimeStateOwnerImportTransactionPhase::Prepared
+                            : RuntimeStateOwnerImportTransactionPhase::Ambiguous,
+               .error = prepared.status.error,
+               .journal_sequence = prepared.sequence,
+               .durable = static_cast<bool>(prepared.status) && prepared.sequence != 0};
+}
+
+RuntimeStateOwnerImportTransactionStatus
+RuntimeDurableOwnerImportTransaction::append_terminal(
+    RuntimeStateOwnerImportTransactionPhase phase) noexcept {
+    const RuntimeStateTransferJournalAppendResult appended =
+        journal_->append_and_sync(transaction_id_, phase, payload_sha256_);
+    status_ = {.phase = appended.status ? phase
+                                        : RuntimeStateOwnerImportTransactionPhase::Ambiguous,
+               .error = appended.status.error,
+               .journal_sequence = appended.sequence,
+               .durable = static_cast<bool>(appended.status) && appended.sequence != 0};
+    if (phase == RuntimeStateOwnerImportTransactionPhase::Ambiguous && appended.status) {
+        status_.error = RuntimeStateTransferError::ImportTransactionAmbiguous;
+    }
+    return status_;
+}
+
+RuntimeStateOwnerImportTransactionStatus
+RuntimeDurableOwnerImportTransaction::commit_with_deadline(
+    std::uint64_t now_tick, std::uint64_t deadline_tick) noexcept {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (status_.phase == RuntimeStateOwnerImportTransactionPhase::Committed) {
+        return status_;
+    }
+    if (status_.phase != RuntimeStateOwnerImportTransactionPhase::Prepared ||
+        status_.error != RuntimeStateTransferError::None || !status_.durable) {
+        status_.error = RuntimeStateTransferError::ImportTransactionStateInvalid;
+        return status_;
+    }
+    if (deadline_tick != 0 && now_tick >= deadline_tick) {
+        status_.error = RuntimeStateTransferError::ImportTransactionDeadlineExceeded;
+        return status_;
+    }
+    const RuntimeStateTransferJournalAppendResult committing =
+        journal_->append_and_sync(transaction_id_,
+                                  RuntimeStateOwnerImportTransactionPhase::Committing,
+                                  payload_sha256_);
+    if (!committing.status) {
+        status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
+                   .error = committing.status.error,
+                   .journal_sequence = committing.sequence};
+        return status_;
+    }
+    status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Committing,
+               .error = RuntimeStateTransferError::None,
+               .journal_sequence = committing.sequence,
+               .durable = true};
+    bool applied = false;
+    try {
+        applied = callbacks_.commit();
+    } catch (...) {
+        applied = false;
+    }
+    bool deadline_crossed = false;
+    if (applied && deadline_tick != 0 && callbacks_.sample_tick) {
+        try {
+            if (callbacks_.sample_tick() >= deadline_tick) {
+                applied = false;
+                deadline_crossed = true;
+            }
+        } catch (...) {
+            applied = false;
+        }
+    }
+    auto terminal = append_terminal(applied
+                               ? RuntimeStateOwnerImportTransactionPhase::Committed
+                               : RuntimeStateOwnerImportTransactionPhase::Ambiguous);
+    if (deadline_crossed) {
+        terminal.error = RuntimeStateTransferError::ImportTransactionDeadlineExceeded;
+        status_.error = terminal.error;
+    }
+    return terminal;
+}
+
+RuntimeStateOwnerImportTransactionStatus
+RuntimeDurableOwnerImportTransaction::abort_with_deadline(
+    std::uint64_t now_tick, std::uint64_t deadline_tick) noexcept {
+    std::unique_lock<std::mutex> lock(mutex_);
+    if (status_.phase == RuntimeStateOwnerImportTransactionPhase::Aborted) {
+        return status_;
+    }
+    if (status_.phase == RuntimeStateOwnerImportTransactionPhase::Committed) {
+        status_.error = RuntimeStateTransferError::ImportTransactionStateInvalid;
+        return status_;
+    }
+    if (deadline_tick != 0 && now_tick >= deadline_tick) {
+        status_.error = RuntimeStateTransferError::ImportTransactionDeadlineExceeded;
+        return status_;
+    }
+    if (status_.phase != RuntimeStateOwnerImportTransactionPhase::Prepared) {
+        lock.unlock();
+        return recover_with_deadline(now_tick, deadline_tick);
+    }
+    const RuntimeStateTransferJournalAppendResult aborting =
+        journal_->append_and_sync(transaction_id_,
+                                  RuntimeStateOwnerImportTransactionPhase::Aborting,
+                                  payload_sha256_);
+    if (!aborting.status) {
+        status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
+                   .error = aborting.status.error,
+                   .journal_sequence = aborting.sequence};
+        return status_;
+    }
+    status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Aborting,
+               .error = RuntimeStateTransferError::None,
+               .journal_sequence = aborting.sequence,
+               .durable = true};
+    bool rolled_back = false;
+    try {
+        rolled_back = callbacks_.abort();
+    } catch (...) {
+        rolled_back = false;
+    }
+    bool deadline_crossed = false;
+    if (rolled_back && deadline_tick != 0 && callbacks_.sample_tick) {
+        try {
+            if (callbacks_.sample_tick() >= deadline_tick) {
+                rolled_back = false;
+                deadline_crossed = true;
+            }
+        } catch (...) {
+            rolled_back = false;
+        }
+    }
+    auto terminal = append_terminal(rolled_back
+                               ? RuntimeStateOwnerImportTransactionPhase::Aborted
+                               : RuntimeStateOwnerImportTransactionPhase::Ambiguous);
+    if (deadline_crossed) {
+        terminal.error = RuntimeStateTransferError::ImportTransactionDeadlineExceeded;
+        status_.error = terminal.error;
+    }
+    return terminal;
+}
+
+RuntimeStateOwnerImportTransactionStatus
+RuntimeDurableOwnerImportTransaction::recover_with_deadline(
+    std::uint64_t now_tick, std::uint64_t deadline_tick) noexcept {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (deadline_tick != 0 && now_tick >= deadline_tick) {
+        status_.error = RuntimeStateTransferError::ImportTransactionDeadlineExceeded;
+        return status_;
+    }
+    const RuntimeStateTransferJournalReadResult latest =
+        journal_->latest(transaction_id_);
+    if (!latest.status || !latest.record ||
+        latest.record->payload_sha256 != payload_sha256_) {
+        status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
+                   .error = latest.status
+                                ? RuntimeStateTransferError::ImportJournalCorrupt
+                                : latest.status.error};
+        return status_;
+    }
+    status_ = {.phase = latest.record->phase,
+               .error = RuntimeStateTransferError::None,
+               .journal_sequence = latest.record->sequence,
+               .durable = true};
+    if (status_.phase == RuntimeStateOwnerImportTransactionPhase::Committed ||
+        status_.phase == RuntimeStateOwnerImportTransactionPhase::Aborted) {
+        bool verified = false;
+        try {
+            verified = callbacks_.verify && callbacks_.verify();
+        } catch (...) {
+            verified = false;
+        }
+        if (verified) {
+            return status_;
+        }
+        status_.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous;
+        status_.error = RuntimeStateTransferError::ImportTransactionAmbiguous;
+    }
+    RuntimeStateOwnerImportTransactionPhase outcome =
+        RuntimeStateOwnerImportTransactionPhase::Ambiguous;
+    try {
+        outcome = callbacks_.recover();
+    } catch (...) {
+        outcome = RuntimeStateOwnerImportTransactionPhase::Ambiguous;
+    }
+    if (outcome != RuntimeStateOwnerImportTransactionPhase::Committed &&
+        outcome != RuntimeStateOwnerImportTransactionPhase::Aborted) {
+        outcome = RuntimeStateOwnerImportTransactionPhase::Ambiguous;
+    }
+    return append_terminal(outcome);
+}
+
+RuntimeStateOwnerImportTransactionStatus
+RuntimeDurableOwnerImportTransaction::status() const noexcept {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return status_;
+}
+
+bool RuntimeDurableOwnerImportTransaction::rollback_committed() noexcept {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (status_.phase != RuntimeStateOwnerImportTransactionPhase::Committed ||
+        !callbacks_.compensate) {
+        return false;
+    }
+    bool compensated = false;
+    try {
+        compensated = callbacks_.compensate();
+    } catch (...) {
+        compensated = false;
+    }
+    if (!compensated) {
+        return false;
+    }
+    // Compensation is a terminal correction, not an in-memory hint.  Persist
+    // the corrected outcome so a process restart cannot rediscover the child
+    // as Committed and reconstruct a mixed composite result.
+    const auto terminal = append_terminal(RuntimeStateOwnerImportTransactionPhase::Aborted);
+    return terminal.phase == RuntimeStateOwnerImportTransactionPhase::Aborted &&
+           terminal.error == RuntimeStateTransferError::None && terminal.durable &&
+           terminal.journal_sequence != 0;
+}
+
+RuntimeStateOwnerAdapterRegistry::RuntimeStateOwnerAdapterRegistry(
+    std::array<RuntimeStateOwnerAdapterRegistration, kRuntimeStateCategoryCount>
+        registrations,
+    RuntimeIdentity128 bound_resource_identity,
+    const void *owner_binding_token)
+    : bound_resource_identity_(bound_resource_identity),
+      owner_binding_token_(owner_binding_token) {
+    std::array<bool, kRuntimeStateCategoryCount> seen{};
+    for (auto &registration : registrations) {
+        if (!supported_category(registration.category)) {
+            registration_status_ = failure(
+                RuntimeStateTransferError::InvalidCensusProfile,
+                "owner adapter registry contains an unsupported category");
+            return;
+        }
+        const std::size_t index = static_cast<std::size_t>(registration.category);
+        if (seen[index]) {
+            registration_status_ = failure(
+                RuntimeStateTransferError::DuplicateCategory,
+                "owner adapter registry contains a duplicate category");
+            return;
+        }
+        const RuntimeStateDecoderReplayRule *rule =
+            runtime_state_decoder_replay_rule(registration.category);
+        if (rule == nullptr || registration.owner_id != rule->owner_id ||
+            registration.schema_id != rule->schema_id || !registration.export_state ||
+            registration.migration_sha256 != rule->migration_sha256 ||
+            !registration.migrate_previous || !registration.import_state) {
+            registration_status_ = failure(
+                RuntimeStateTransferError::InvalidCensusProfile,
+                "owner adapter registration does not match the decoder matrix");
+            return;
+        }
+        seen[index] = true;
+        registrations_[index] = std::move(registration);
+    }
+    if (!std::all_of(seen.begin(), seen.end(), [](bool value) { return value; })) {
+        registration_status_ = failure(
+            RuntimeStateTransferError::MissingCategory,
+            "owner adapter registry is missing a state category");
+    }
+}
+
+RuntimeStateTransferStatus
+RuntimeStateOwnerAdapterRegistry::registration_status() const noexcept {
+    return registration_status_;
+}
+
+const RuntimeStateOwnerAdapterRegistration *
+RuntimeStateOwnerAdapterRegistry::registration(RuntimeStateCategory category) const noexcept {
+    if (!registration_status_ || !supported_category(category)) {
+        return nullptr;
+    }
+    const auto index = static_cast<std::size_t>(category);
+    return registrations_[index].category == category ? &registrations_[index] : nullptr;
+}
+
+RuntimeStateOwnerExport RuntimeStateOwnerAdapterRegistry::export_source(
+    const RuntimeStateTransferProfile &profile,
+    const RuntimeIncarnationRef &source_slot,
+    const RuntimeStateOwnerExportContext &context) noexcept {
+    RuntimeStateOwnerExport output;
+    output.source_slot = source_slot;
+    output.census = {.profile_id = profile.profile_id,
+                     .profile_generation = profile.profile_generation,
+                     .source_slot = source_slot,
+                     .source_plan_sha256 = profile.source_plan_sha256,
+                     .target_plan_sha256 = profile.target_plan_sha256};
+    if (!registration_status_) {
+        output.status = registration_status_;
+        return output;
+    }
+    if (const RuntimeStateTransferStatus profile_status = validate_profile(profile);
+        !profile_status) {
+        output.status = profile_status;
+        return output;
+    }
+    if (!source_slot.well_formed()) {
+        output.status = failure(RuntimeStateTransferError::InvalidArgument,
+                                "owner source slot is invalid");
+        return output;
+    }
+    try {
+        output.census.entries.reserve(kRuntimeStateCategoryCount);
+        output.artifacts.reserve(kRuntimeStateCategoryCount);
+        for (const RuntimeStateCensusRowPolicy &policy : profile.rows) {
+            const auto &registration =
+                registrations_[static_cast<std::size_t>(policy.category)];
+            RuntimeStateOwnerAdapterExport exported =
+                registration.export_state(profile, source_slot, context);
+            if (exported.census_entry.category != policy.category ||
+                exported.census_entry.owner_id != policy.owner_id ||
+                exported.census_entry.schema_id != policy.schema_id ||
+                exported.census_entry.disposition != policy.disposition ||
+                exported.artifact.category != policy.category ||
+                exported.artifact.schema_id != policy.schema_id ||
+                exported.artifact.schema_generation !=
+                    exported.census_entry.schema_generation) {
+                output.status = failure(
+                    RuntimeStateTransferError::OwnerMismatch,
+                    "owner adapter export does not match its admitted category");
+                output.census.entries.clear();
+                output.artifacts.clear();
+                return output;
+            }
+            output.census.entries.push_back(std::move(exported.census_entry));
+            output.artifacts.push_back(std::move(exported.artifact));
+        }
+        output.status = validate_source_artifacts(profile, output.census, output);
+    } catch (...) {
+        output.status = failure(RuntimeStateTransferError::SemanticEvidenceMissing,
+                                "owner adapter export failed");
+        output.census.entries.clear();
+        output.artifacts.clear();
+    }
+    return output;
+}
+
+RuntimeStateOwnerImportReceipt RuntimeStateOwnerAdapterRegistry::import_and_observe(
+    const RuntimeStateTransferProfile &profile,
+    const RuntimeStateOwnerExport &source_export,
+    const RuntimeIdentity128 &candidate_resource_identity) noexcept {
+    RuntimeStateOwnerImportReceipt receipt;
+    receipt.candidate_resource_identity = candidate_resource_identity;
+    if (!registration_status_) {
+        receipt.status = registration_status_;
+        return receipt;
+    }
+    if (const RuntimeStateTransferStatus profile_status = validate_profile(profile);
+        !profile_status) {
+        receipt.status = profile_status;
+        return receipt;
+    }
+    if (!source_export.status) {
+        receipt.status = source_export.status;
+        return receipt;
+    }
+    if (!candidate_resource_identity.well_formed()) {
+        receipt.status = failure(RuntimeStateTransferError::InvalidArgument,
+                                 "candidate resource identity is invalid");
+        return receipt;
+    }
+    if (!source_export.source_slot.well_formed() ||
+        source_export.source_slot != source_export.census.source_slot ||
+        source_export.census.profile_id != profile.profile_id ||
+        source_export.census.profile_generation != profile.profile_generation ||
+        source_export.census.source_plan_sha256 != profile.source_plan_sha256 ||
+        source_export.census.target_plan_sha256 != profile.target_plan_sha256 ||
+        source_export.census.entries.size() != kRuntimeStateCategoryCount ||
+        (source_export.census.contract_generation !=
+             kRuntimeStateTransferContractGeneration &&
+         source_export.census.contract_generation !=
+             kRuntimeStateTransferPreviousGeneration)) {
+        receipt.status = failure(
+            RuntimeStateTransferError::InvalidArgument,
+            "owner source export does not bind the admitted profile and source slot");
+        return receipt;
+    }
+    if (const RuntimeStateTransferStatus artifact_status =
+            validate_source_artifacts(profile, source_export.census, source_export);
+        !artifact_status) {
+        receipt.status = artifact_status;
+        return receipt;
+    }
+    OwnerImportReceiptGuard receipt_failure{.receipt = &receipt};
+    try {
+        receipt.observations.reserve(kRuntimeStateCategoryCount);
+        std::vector<std::shared_ptr<RuntimeStateOwnerImportTransaction>> transactions;
+        transactions.reserve(kRuntimeStateCategoryCount);
+        OwnerImportPreparationGuard transactions_abort{.transactions = &transactions};
+        for (const RuntimeStateCensusRowPolicy &policy : profile.rows) {
+            const auto entry = std::find_if(
+                source_export.census.entries.begin(), source_export.census.entries.end(),
+                [&](const RuntimeStateCensusEntry &candidate) {
+                    return candidate.category == policy.category;
+                });
+            const auto artifact = std::find_if(
+                source_export.artifacts.begin(), source_export.artifacts.end(),
+                [&](const RuntimeStateOwnerArtifact &candidate) {
+                    return candidate.category == policy.category;
+                });
+            if (entry == source_export.census.entries.end() ||
+                artifact == source_export.artifacts.end()) {
+                receipt.status = failure(RuntimeStateTransferError::MissingCategory,
+                                         "owner adapter import is missing source state");
+                return receipt;
+            }
+            const auto &registration =
+                registrations_[static_cast<std::size_t>(policy.category)];
+            RuntimeStateOwnerArtifact admitted_artifact = *artifact;
+            if (artifact->schema_generation ==
+                kRuntimeStateTransferPreviousGeneration) {
+                admitted_artifact = registration.migrate_previous(*artifact);
+                if (admitted_artifact.category != policy.category ||
+                    admitted_artifact.schema_id != policy.schema_id ||
+                    admitted_artifact.schema_generation !=
+                        kRuntimeStateTransferContractGeneration ||
+                    !is_lower_hex_sha256(admitted_artifact.payload_sha256) ||
+                    runtime_state_payload_sha256(admitted_artifact.payload) !=
+                        admitted_artifact.payload_sha256) {
+                    receipt.status = failure(
+                        RuntimeStateTransferError::SchemaMismatch,
+                        "owner adapter N-1 migration did not produce admitted N bytes");
+                    return receipt;
+                }
+            } else if (artifact->schema_generation !=
+                       kRuntimeStateTransferContractGeneration) {
+                receipt.status = failure(
+                    RuntimeStateTransferError::SchemaMismatch,
+                    "owner adapter source generation is outside exact N/N-1");
+                return receipt;
+            }
+            RuntimeStateOwnerAdapterImport imported = registration.import_state(
+                profile, source_export.source_slot, *entry, *artifact, admitted_artifact,
+                candidate_resource_identity);
+            ImportTransactionAbortGuard imported_abort{
+                .transaction = imported.transaction,
+                .active = imported.transaction != nullptr,
+            };
+            if (imported.transaction == nullptr ||
+                imported.observation.category != policy.category ||
+                imported.observation.owner_id != policy.owner_id ||
+                imported.observation.schema_id != policy.schema_id ||
+                imported.observation.candidate_resource_identity !=
+                    candidate_resource_identity ||
+                imported.observation.source_schema_generation !=
+                    entry->schema_generation ||
+                imported.observation.schema_generation !=
+                    kRuntimeStateTransferContractGeneration ||
+                imported.observation.source_artifact_payload_sha256 !=
+                    artifact->payload_sha256 ||
+                !is_lower_hex_sha256(
+                    imported.observation.candidate_artifact_payload_sha256) ||
+                (policy.disposition == RuntimeStateDisposition::Transfer &&
+                 imported.observation.candidate_artifact_payload_sha256 !=
+                     admitted_artifact.payload_sha256) ||
+                !imported.observation.exact_schema_decoded) {
+                receipt.status = failure(
+                    RuntimeStateTransferError::SemanticEvidenceMissing,
+                    "owner adapter import did not produce bound decoded evidence");
+                return receipt;
+            }
+            receipt.observations.push_back(std::move(imported.observation));
+            transactions.push_back(std::move(imported.transaction));
+            imported_abort.disarm();
+        }
+        receipt.transaction =
+            std::make_shared<CompositeOwnerImportTransaction>(transactions);
+        transactions_abort.disarm();
+        receipt_failure.disarm();
+    } catch (...) {
+        receipt.status = failure(RuntimeStateTransferError::SemanticEvidenceMissing,
+                                 "owner adapter import failed");
+        receipt.observations.clear();
+        receipt.transaction.reset();
+    }
+    return receipt;
+}
 
 std::string_view runtime_state_category_name(RuntimeStateCategory category) noexcept {
     switch (category) {
@@ -842,7 +2169,8 @@ std::string_view runtime_state_category_name(RuntimeStateCategory category) noex
     return "unsupported";
 }
 
-std::string_view runtime_state_disposition_name(RuntimeStateDisposition disposition) noexcept {
+std::string_view
+runtime_state_disposition_name(RuntimeStateDisposition disposition) noexcept {
     switch (disposition) {
     case RuntimeStateDisposition::Transfer:
         return "transfer";
@@ -920,12 +2248,154 @@ std::string_view runtime_state_schema_id(RuntimeStateCategory category) noexcept
     return "unsupported";
 }
 
-std::string runtime_state_payload_sha256(const std::vector<std::uint8_t> &payload) {
-    return sha256_hex(
-        std::string_view(reinterpret_cast<const char *>(payload.data()), payload.size()));
+const std::array<RuntimeStateDecoderReplayRule, kRuntimeStateCategoryCount> &
+runtime_state_decoder_replay_matrix() noexcept {
+    // These digests pin the candidate's schema/generation declaration. They
+    // are not a substitute for a maintained owner migration implementation or
+    // a durable replay log.
+    static constexpr std::array<RuntimeStateDecoderReplayRule,
+                                 kRuntimeStateCategoryCount>
+        matrix = {{
+            {.category = RuntimeStateCategory::CompositionProviderSystemGraph,
+             .disposition = RuntimeStateDisposition::Rederive,
+             .owner_id = "native.plan-owner",
+             .schema_id = "echelon_forge.runtime_state.composition_graph.v1",
+             .unknown_field_policy = RuntimeStateUnknownFieldPolicy::IgnoreDerived,
+             .replay_policy = RuntimeStateReplayPolicy::Rederive,
+             .migration_sha256 =
+                 "9ef9e3832adec552a55887bffc9a4b60d893ebb0d4ae86bb2cb7914468c07ec7"},
+            {.category = RuntimeStateCategory::EcsComponentTruth,
+             .disposition = RuntimeStateDisposition::Transfer,
+             .owner_id = "native.ecs-owner",
+             .schema_id = "echelon_forge.runtime_state.ecs.v1",
+             .unknown_field_policy = RuntimeStateUnknownFieldPolicy::Reject,
+             .replay_policy = RuntimeStateReplayPolicy::Transfer,
+             .migration_sha256 =
+                 "5111035f03d8744cc88aa0e9716c86d1f14cace9a4c86bd1853570909bbcaf0f"},
+            {.category = RuntimeStateCategory::RngState,
+             .disposition = RuntimeStateDisposition::Transfer,
+             .owner_id = "native.rng-owner",
+             .schema_id = "echelon_forge.runtime_state.rng.v1",
+             .unknown_field_policy = RuntimeStateUnknownFieldPolicy::Reject,
+             .replay_policy = RuntimeStateReplayPolicy::Transfer,
+             .migration_sha256 =
+                 "cab140c97bf173773b815ccf9dda160229d17a9877d827f1bdb898f22e032f98"},
+            {.category = RuntimeStateCategory::ClockCadence,
+             .disposition = RuntimeStateDisposition::Transfer,
+             .owner_id = "native.clock-owner",
+             .schema_id = "echelon_forge.runtime_state.clock.v1",
+             .unknown_field_policy = RuntimeStateUnknownFieldPolicy::Reject,
+             .replay_policy = RuntimeStateReplayPolicy::Transfer,
+             .migration_sha256 =
+                 "77574d276c28d69262251a9f3235b172a4de0be65b3f95762a57c3887a366810"},
+            {.category = RuntimeStateCategory::DelayedEventsQueues,
+             .disposition = RuntimeStateDisposition::Transfer,
+             .owner_id = "native.event-queue-owner",
+             .schema_id = "echelon_forge.runtime_state.event_queue.v1",
+             .unknown_field_policy = RuntimeStateUnknownFieldPolicy::Reject,
+             .replay_policy = RuntimeStateReplayPolicy::Transfer,
+             .migration_sha256 =
+                 "22b62cc2ddda03a92fe5241d75d0b8eef1a9733177a7013629bb38e6254d454e"},
+            {.category = RuntimeStateCategory::CommandsLinksPendingIntent,
+             .disposition = RuntimeStateDisposition::Transfer,
+             .owner_id = "native.command-link-owner",
+             .schema_id = "echelon_forge.runtime_state.command_link.v1",
+             .unknown_field_policy = RuntimeStateUnknownFieldPolicy::Reject,
+             .replay_policy = RuntimeStateReplayPolicy::Transfer,
+             .migration_sha256 =
+                 "a06155fc719bd7c0310e3f126d639de62249521d3c693ab42a8ea744cd6dc422"},
+            {.category = RuntimeStateCategory::EpisodeRewardTermination,
+             .disposition = RuntimeStateDisposition::Transfer,
+             .owner_id = "native.episode-coordinator",
+             .schema_id = "echelon_forge.runtime_state.episode.v1",
+             .unknown_field_policy = RuntimeStateUnknownFieldPolicy::Reject,
+             .replay_policy = RuntimeStateReplayPolicy::Transfer,
+             .migration_sha256 =
+                 "f81ed76d9c3baeed2599dbabc2969e0713358871fbc73d1d6d0aa640a7b7dbba"},
+            {.category = RuntimeStateCategory::PythonLoaderControllerCaches,
+             .disposition = RuntimeStateDisposition::Rederive,
+             .owner_id = "python.mirror-owner",
+             .schema_id = "echelon_forge.runtime_state.python_mirror.v1",
+             .unknown_field_policy = RuntimeStateUnknownFieldPolicy::IgnoreDerived,
+             .replay_policy = RuntimeStateReplayPolicy::Rederive,
+             .migration_sha256 =
+                 "ff8ccbd6a22104c5519531c97a9b01024cec0dd7f5f8d57035a88d1560e911e7"},
+            {.category = RuntimeStateCategory::BackendDeviceAllocationsLeases,
+             .disposition = RuntimeStateDisposition::Rederive,
+             .owner_id = "native.backend-resource-owner",
+             .schema_id = "echelon_forge.runtime_state.backend_resource.v1",
+             .unknown_field_policy = RuntimeStateUnknownFieldPolicy::IgnoreDerived,
+             .replay_policy = RuntimeStateReplayPolicy::Rederive,
+             .migration_sha256 =
+                 "5ae26b98c49d2373b12b056dbed3ff2731ddf4282bd2677459b13bdf09af0a88"},
+            {.category = RuntimeStateCategory::InFlightRequestsResults,
+             .disposition = RuntimeStateDisposition::Drain,
+             .owner_id = "native.request-registry",
+             .schema_id = "echelon_forge.runtime_state.in_flight.v1",
+             .unknown_field_policy = RuntimeStateUnknownFieldPolicy::Reject,
+             .replay_policy = RuntimeStateReplayPolicy::Drain,
+             .migration_sha256 =
+                 "34c0e4d9b44f62737a8eea38951319a20177a040457a77aabbc183574010b383"},
+            {.category = RuntimeStateCategory::ExternalSideEffects,
+             .disposition = RuntimeStateDisposition::NotApplicable,
+             .owner_id = "native.side-effect-outbox",
+             .schema_id = "echelon_forge.runtime_state.side_effect_outbox.v1",
+             .unknown_field_policy = RuntimeStateUnknownFieldPolicy::Reject,
+             .replay_policy = RuntimeStateReplayPolicy::Reject,
+             .migration_sha256 =
+                 "ce084f5eb8fb333b0437e6f7a66badd5fb5ae2f192df859e4cb9b7fb07f79a92"},
+            {.category = RuntimeStateCategory::DiagnosticsTelemetry,
+             .disposition = RuntimeStateDisposition::Rederive,
+             .owner_id = "native.telemetry-owner",
+             .schema_id = "echelon_forge.runtime_state.telemetry.v1",
+             .unknown_field_policy = RuntimeStateUnknownFieldPolicy::IgnoreDerived,
+             .replay_policy = RuntimeStateReplayPolicy::Rederive,
+             .migration_sha256 =
+                 "3f205d207034c8f48dc00408a8836da76bd0a7cfe4e82b24e4c80a3ad5ccfd66"},
+        }};
+    return matrix;
 }
 
-std::vector<std::uint8_t> runtime_state_canonical_payload(const RuntimeStateCensusEntry &entry) {
+const RuntimeStateDecoderReplayRule *
+runtime_state_decoder_replay_rule(RuntimeStateCategory category) noexcept {
+    const auto index = static_cast<std::size_t>(category);
+    if (index >= kRuntimeStateCategoryCount) {
+        return nullptr;
+    }
+    return &runtime_state_decoder_replay_matrix()[index];
+}
+
+RuntimeStateTransferProfile runtime_state_transfer_profile_from_decoder_matrix(
+    std::string profile_id, std::uint32_t profile_generation,
+    std::string source_plan_sha256, std::string target_plan_sha256) {
+    RuntimeStateTransferProfile profile{
+        .profile_id = std::move(profile_id),
+        .profile_generation = profile_generation,
+        .source_plan_sha256 = std::move(source_plan_sha256),
+        .target_plan_sha256 = std::move(target_plan_sha256),
+    };
+    profile.rows.reserve(kRuntimeStateCategoryCount);
+    for (const RuntimeStateDecoderReplayRule &rule : runtime_state_decoder_replay_matrix()) {
+        profile.rows.push_back({
+            .category = rule.category,
+            .disposition = rule.disposition,
+            .owner_id = std::string(rule.owner_id),
+            .schema_id = std::string(rule.schema_id),
+            .minimum_schema_generation = rule.previous_schema_generation,
+            .maximum_schema_generation = rule.current_schema_generation,
+            .truth_affecting = category_requires_truth_schema(rule.category),
+        });
+    }
+    return profile;
+}
+
+std::string runtime_state_payload_sha256(const std::vector<std::uint8_t> &payload) {
+    return sha256_hex(std::string_view(
+        reinterpret_cast<const char *>(payload.data()), payload.size()));
+}
+
+std::vector<std::uint8_t> runtime_state_canonical_payload(
+    const RuntimeStateCensusEntry &entry) {
     std::string output("echelon_forge.runtime_state_payload.v1\n");
     append_text(output, "category", runtime_state_category_name(entry.category));
     append_text(output, "owner_id", entry.owner_id);
@@ -946,8 +2416,8 @@ std::string runtime_state_census_entry_sha256(const RuntimeStateCensusEntry &ent
     return sha256_hex(canonical_state_entry_bytes(entry));
 }
 
-std::string
-canonical_episode_transition_receipt_bytes(const RuntimeEpisodeTransitionReceipt &receipt) {
+std::string canonical_episode_transition_receipt_bytes(
+    const RuntimeEpisodeTransitionReceipt &receipt) {
     std::string output("echelon_forge.runtime_episode_transition_receipt.v1\n");
     append_number(output, "protocol_generation", receipt.protocol_generation);
     append_number(output, "kind", static_cast<std::uint8_t>(receipt.kind));
@@ -956,7 +2426,8 @@ canonical_episode_transition_receipt_bytes(const RuntimeEpisodeTransitionReceipt
     append_episode(output, "episode_after", receipt.episode_after);
     append_number(output, "previous_step_sequence", receipt.previous_step_sequence);
     append_number(output, "resulting_step_sequence", receipt.resulting_step_sequence);
-    append_number(output, "resulting_phase", static_cast<std::uint8_t>(receipt.resulting_phase));
+    append_number(output, "resulting_phase",
+                  static_cast<std::uint8_t>(receipt.resulting_phase));
     append_number(output, "terminal", receipt.terminal ? 1 : 0);
     append_number(output, "reset_applied", receipt.reset_applied ? 1 : 0);
     append_identity(output, "snapshot_id", receipt.snapshot_id);
@@ -965,8 +2436,8 @@ canonical_episode_transition_receipt_bytes(const RuntimeEpisodeTransitionReceipt
     return output;
 }
 
-std::string
-canonical_episode_transition_intent_bytes(const RuntimeEpisodeTransitionIntent &intent) {
+std::string canonical_episode_transition_intent_bytes(
+    const RuntimeEpisodeTransitionIntent &intent) {
     std::string output("echelon_forge.runtime_episode_transition_intent.v1\n");
     append_number(output, "protocol_generation", intent.protocol_generation);
     append_number(output, "kind", static_cast<std::uint8_t>(intent.kind));
@@ -985,14 +2456,15 @@ bool RuntimeEpisodeTransitionReceipt::well_formed() const noexcept {
                episode_before.well_formed() && episode_after.well_formed() &&
                snapshot_id.well_formed() && is_lower_hex_sha256(snapshot_sha256) &&
                is_lower_hex_sha256(receipt_sha256) &&
-               sha256_hex(canonical_episode_transition_receipt_bytes(*this)) == receipt_sha256;
+               sha256_hex(canonical_episode_transition_receipt_bytes(*this)) ==
+                   receipt_sha256;
     } catch (...) {
         return false;
     }
 }
 
-RuntimeEpisodeCoordinatorCreateResult
-RuntimeEpisodeCoordinatorCandidate::create(const RuntimeEpisodeCoordinatorConfig &config) {
+RuntimeEpisodeCoordinatorCreateResult RuntimeEpisodeCoordinatorCandidate::create(
+    const RuntimeEpisodeCoordinatorConfig &config) {
     if (config.production_authorized) {
         return {.status = failure(RuntimeStateTransferError::ProductionAuthorityForbidden,
                                   "P4-B coordinator is dark/shadow only"),
@@ -1004,7 +2476,8 @@ RuntimeEpisodeCoordinatorCandidate::create(const RuntimeEpisodeCoordinatorConfig
                                   "initial coordinator phase must be running or terminal"),
                 .coordinator = {}};
     }
-    if (!config.initial_episode.well_formed() || !config.initial_snapshot_id.well_formed() ||
+    if (!config.initial_episode.well_formed() ||
+        !config.initial_snapshot_id.well_formed() ||
         !is_lower_hex_sha256(config.initial_snapshot_sha256)) {
         return {.status = failure(RuntimeStateTransferError::InvalidArgument,
                                   "initial episode coordinator state is malformed"),
@@ -1034,9 +2507,8 @@ RuntimeEpisodeCoordinatorCandidate::RuntimeEpisodeCoordinatorCandidate(
 
 RuntimeEpisodeCoordinatorCandidate::~RuntimeEpisodeCoordinatorCandidate() = default;
 
-RuntimeEpisodeTransitionResult
-RuntimeEpisodeCoordinatorCandidate::submit(const RuntimeEpisodeTransitionIntent &intent,
-                                           RuntimeNativeEpisodeControl &control) {
+RuntimeEpisodeTransitionResult RuntimeEpisodeCoordinatorCandidate::submit(
+    const RuntimeEpisodeTransitionIntent &intent, RuntimeNativeEpisodeControl &control) {
     std::unique_lock<std::mutex> lock(state_->mutex);
     if (intent.production_authorized) {
         return {.status = failure(RuntimeStateTransferError::ProductionAuthorityForbidden,
@@ -1044,13 +2516,14 @@ RuntimeEpisodeCoordinatorCandidate::submit(const RuntimeEpisodeTransitionIntent 
     }
     if (intent.protocol_generation != kRuntimeEpisodeHandshakeGeneration ||
         !supported_intent(intent.kind) || !intent.expected_episode.well_formed() ||
-        !intent.idempotency_key.well_formed() || !is_lower_hex_sha256(intent.payload_sha256)) {
+        !intent.idempotency_key.well_formed() ||
+        !is_lower_hex_sha256(intent.payload_sha256)) {
         return {.status = failure(RuntimeStateTransferError::InvalidArgument,
                                   "episode transition intent is malformed")};
     }
     const std::string fingerprint = intent_fingerprint(intent);
-    const auto existing =
-        std::find_if(state_->receipts.begin(), state_->receipts.end(), [&](const auto &record) {
+    const auto existing = std::find_if(
+        state_->receipts.begin(), state_->receipts.end(), [&](const auto &record) {
             return record.idempotency_key == intent.idempotency_key;
         });
     if (existing != state_->receipts.end()) {
@@ -1098,8 +2571,10 @@ RuntimeEpisodeCoordinatorCandidate::submit(const RuntimeEpisodeTransitionIntent 
         }
         command.authorized_resulting_step_sequence = step_before + 1;
     } else {
-        if (state_->episode.episode_generation == std::numeric_limits<std::uint64_t>::max() ||
-            state_->episode.world.world_generation == std::numeric_limits<std::uint64_t>::max() ||
+        if (state_->episode.episode_generation ==
+                std::numeric_limits<std::uint64_t>::max() ||
+            state_->episode.world.world_generation ==
+                std::numeric_limits<std::uint64_t>::max() ||
             state_->barrier_sequence == std::numeric_limits<std::uint64_t>::max()) {
             return {.status = failure(RuntimeStateTransferError::SequenceExhausted,
                                       "reset episode or barrier sequence is exhausted")};
@@ -1132,7 +2607,8 @@ RuntimeEpisodeCoordinatorCandidate::submit(const RuntimeEpisodeTransitionIntent 
         return {.status = failure(RuntimeStateTransferError::NativeMutationFailed,
                                   "native mutation was not applied")};
     }
-    if (!mutation.snapshot_id.well_formed() || !is_lower_hex_sha256(mutation.snapshot_sha256) ||
+    if (!mutation.snapshot_id.well_formed() ||
+        !is_lower_hex_sha256(mutation.snapshot_sha256) ||
         (intent.kind == RuntimeEpisodeIntentKind::Reset && mutation.terminal)) {
         if (reset_world_reserved) {
             release_world(state_->episode.world);
@@ -1171,8 +2647,8 @@ RuntimeEpisodeCoordinatorCandidate::submit(const RuntimeEpisodeTransitionIntent 
         };
         if (intent.kind == RuntimeEpisodeIntentKind::Action) {
             state_->step_sequence = command.authorized_resulting_step_sequence;
-            state_->phase =
-                mutation.terminal ? RuntimeEpisodePhase::Terminal : RuntimeEpisodePhase::Running;
+            state_->phase = mutation.terminal ? RuntimeEpisodePhase::Terminal
+                                              : RuntimeEpisodePhase::Running;
             receipt.resulting_step_sequence = state_->step_sequence;
             receipt.resulting_phase = state_->phase;
             receipt.terminal = mutation.terminal;
@@ -1191,7 +2667,8 @@ RuntimeEpisodeCoordinatorCandidate::submit(const RuntimeEpisodeTransitionIntent 
         state_->snapshot_id = mutation.snapshot_id;
         state_->snapshot_sha256 = mutation.snapshot_sha256;
         truth_state_advanced = true;
-        receipt.receipt_sha256 = sha256_hex(canonical_episode_transition_receipt_bytes(receipt));
+        receipt.receipt_sha256 =
+            sha256_hex(canonical_episode_transition_receipt_bytes(receipt));
         state_->receipts.push_back({.idempotency_key = intent.idempotency_key,
                                     .intent_fingerprint = fingerprint,
                                     .receipt = receipt});
@@ -1222,9 +2699,10 @@ RuntimeStateTransferStatus RuntimeEpisodeCoordinatorCandidate::acknowledge_recei
         return failure(RuntimeStateTransferError::ConcurrentMutation,
                        "receipt acknowledgement cannot race a native episode mutation");
     }
-    const auto found =
-        std::find_if(state_->receipts.begin(), state_->receipts.end(), [&](const auto &record) {
-            return record.idempotency_key == receipt.idempotency_key && record.receipt == receipt;
+    const auto found = std::find_if(
+        state_->receipts.begin(), state_->receipts.end(), [&](const auto &record) {
+            return record.idempotency_key == receipt.idempotency_key &&
+                   record.receipt == receipt;
         });
     if (found == state_->receipts.end()) {
         if (receipt.resulting_step_sequence <= state_->compacted_step_sequence &&
@@ -1240,26 +2718,27 @@ RuntimeStateTransferStatus RuntimeEpisodeCoordinatorCandidate::acknowledge_recei
     state_->compacted_barrier_sequence =
         std::max(state_->compacted_barrier_sequence, receipt.barrier_sequence);
     state_->compacted_receipt_sha256 = receipt.receipt_sha256;
-    state_->receipts.erase(std::remove_if(state_->receipts.begin(), state_->receipts.end(),
-                                          [&](const auto &record) {
-                                              return record.receipt.resulting_step_sequence <=
-                                                         state_->compacted_step_sequence &&
-                                                     record.receipt.barrier_sequence <=
-                                                         state_->compacted_barrier_sequence;
-                                          }),
-                           state_->receipts.end());
+    state_->receipts.erase(
+        std::remove_if(state_->receipts.begin(), state_->receipts.end(), [&](const auto &record) {
+            return record.receipt.resulting_step_sequence <= state_->compacted_step_sequence &&
+                   record.receipt.barrier_sequence <= state_->compacted_barrier_sequence;
+        }),
+        state_->receipts.end());
     return success();
 }
 
-RuntimeEpisodeBarrierAdmission RuntimeEpisodeCoordinatorCandidate::open_replacement_barrier(
-    const RuntimeEpisodeRef &expected_episode, std::uint64_t expected_step_sequence) {
+RuntimeEpisodeBarrierAdmission
+RuntimeEpisodeCoordinatorCandidate::open_replacement_barrier(
+    const RuntimeEpisodeRef &expected_episode,
+    std::uint64_t expected_step_sequence) {
     std::lock_guard<std::mutex> lock(state_->mutex);
     if (!same_episode(expected_episode, state_->episode) ||
         expected_step_sequence != state_->step_sequence) {
         return {.status = failure(RuntimeStateTransferError::StaleIntent,
                                   "replacement barrier expectation is stale")};
     }
-    if (state_->phase != RuntimeEpisodePhase::Terminal || state_->mutation_in_progress) {
+    if (state_->phase != RuntimeEpisodePhase::Terminal ||
+        state_->mutation_in_progress) {
         return {.status = failure(RuntimeStateTransferError::BarrierRequired,
                                   "replacement requires the terminal native episode barrier")};
     }
@@ -1283,12 +2762,15 @@ RuntimeEpisodeBarrierAdmission RuntimeEpisodeCoordinatorCandidate::open_replacem
     token->coordinator_nonce = state_->coordinator_nonce;
     token->barrier_nonce = state_->open_barrier_nonce;
     token->snapshot = snapshot;
-    return {.status = success(), .capability = RuntimeEpisodeBarrierCapability(std::move(token))};
+    return {.status = success(),
+            .capability = RuntimeEpisodeBarrierCapability(std::move(token))};
 }
 
-RuntimeNativeEpisodeAdmission RuntimeEpisodeCoordinatorCandidate::issue_episode_capability() {
+RuntimeNativeEpisodeAdmission
+RuntimeEpisodeCoordinatorCandidate::issue_episode_capability() {
     std::lock_guard<std::mutex> lock(state_->mutex);
-    if (state_->phase != RuntimeEpisodePhase::Running || state_->mutation_in_progress) {
+    if (state_->phase != RuntimeEpisodePhase::Running ||
+        state_->mutation_in_progress) {
         return {.status = failure(RuntimeStateTransferError::AdmissionClosed,
                                   "native episode is not admitting shadow work"),
                 .capability = {}};
@@ -1298,7 +2780,8 @@ RuntimeNativeEpisodeAdmission RuntimeEpisodeCoordinatorCandidate::issue_episode_
     token->coordinator_nonce = state_->coordinator_nonce;
     token->episode = state_->episode;
     token->step_sequence = state_->step_sequence;
-    return {.status = success(), .capability = RuntimeNativeEpisodeCapability(std::move(token))};
+    return {.status = success(),
+            .capability = RuntimeNativeEpisodeCapability(std::move(token))};
 }
 
 RuntimeIdentity128 RuntimeEpisodeCoordinatorCandidate::coordinator_nonce() const noexcept {
@@ -1357,8 +2840,8 @@ RuntimeNativeEpisodeCapability::RuntimeNativeEpisodeCapability(
     RuntimeNativeEpisodeCapability &&other) noexcept
     : token_(std::move(other.token_)) {}
 
-RuntimeNativeEpisodeCapability &
-RuntimeNativeEpisodeCapability::operator=(RuntimeNativeEpisodeCapability &&other) noexcept {
+RuntimeNativeEpisodeCapability &RuntimeNativeEpisodeCapability::operator=(
+    RuntimeNativeEpisodeCapability &&other) noexcept {
     if (this != &other) {
         token_ = std::move(other.token_);
     }
@@ -1400,8 +2883,8 @@ RuntimeIdentity128 RuntimeNativeEpisodeCapability::coordinator_nonce() const noe
     return token_ == nullptr ? RuntimeIdentity128{} : token_->coordinator_nonce;
 }
 
-RuntimeStateTransferStatus
-RuntimeNativeEpisodeCapability::consume_for_host(const RuntimeIncarnationRef &expected_source) {
+RuntimeStateTransferStatus RuntimeNativeEpisodeCapability::consume_for_host(
+    const RuntimeIncarnationRef &expected_source) {
     if (token_ == nullptr) {
         return failure(RuntimeStateTransferError::InvalidArgument,
                        "native episode capability is empty");
@@ -1445,8 +2928,9 @@ RuntimeStateTransferStatus RuntimeNativeEpisodeCapability::validate_for_host(
         return failure(RuntimeStateTransferError::BarrierRequired,
                        "native episode capability was not claimed by the host");
     }
-    const auto coordinator = token_->coordinator_owner != nullptr ? token_->coordinator_owner
-                                                                  : token_->coordinator.lock();
+    const auto coordinator = token_->coordinator_owner != nullptr
+                                 ? token_->coordinator_owner
+                                 : token_->coordinator.lock();
     if (coordinator == nullptr) {
         return failure(RuntimeStateTransferError::StaleIntent,
                        "native episode coordinator no longer exists");
@@ -1475,8 +2959,8 @@ RuntimeEpisodeBarrierCapability::RuntimeEpisodeBarrierCapability(
     RuntimeEpisodeBarrierCapability &&other) noexcept
     : token_(std::move(other.token_)) {}
 
-RuntimeEpisodeBarrierCapability &
-RuntimeEpisodeBarrierCapability::operator=(RuntimeEpisodeBarrierCapability &&other) noexcept {
+RuntimeEpisodeBarrierCapability &RuntimeEpisodeBarrierCapability::operator=(
+    RuntimeEpisodeBarrierCapability &&other) noexcept {
     if (this != &other) {
         release_unclaimed_barrier(token_);
         token_ = std::move(other.token_);
@@ -1519,9 +3003,8 @@ RuntimeIdentity128 RuntimeEpisodeBarrierCapability::coordinator_nonce() const no
     return token_ == nullptr ? RuntimeIdentity128{} : token_->coordinator_nonce;
 }
 
-RuntimeStateTransferStatus
-RuntimeEpisodeBarrierCapability::bind_for_host(const RuntimeIdentity128 &host_instance_nonce,
-                                               std::uint64_t world_slot) noexcept {
+RuntimeStateTransferStatus RuntimeEpisodeBarrierCapability::bind_for_host(
+    const RuntimeIdentity128 &host_instance_nonce, std::uint64_t world_slot) noexcept {
     if (token_ == nullptr || !host_instance_nonce.well_formed()) {
         return failure(RuntimeStateTransferError::InvalidArgument,
                        "cannot bind an empty episode barrier to a host");
@@ -1551,8 +3034,8 @@ RuntimeHostQuiescenceCapability::RuntimeHostQuiescenceCapability(
     RuntimeHostQuiescenceCapability &&other) noexcept
     : token_(std::move(other.token_)) {}
 
-RuntimeHostQuiescenceCapability &
-RuntimeHostQuiescenceCapability::operator=(RuntimeHostQuiescenceCapability &&other) noexcept {
+RuntimeHostQuiescenceCapability &RuntimeHostQuiescenceCapability::operator=(
+    RuntimeHostQuiescenceCapability &&other) noexcept {
     if (this != &other) {
         release_unclaimed_quiescence(token_);
         token_ = std::move(other.token_);
@@ -1565,19 +3048,29 @@ RuntimeHostQuiescenceCapability::~RuntimeHostQuiescenceCapability() {
 }
 
 RuntimeHostQuiescenceCapability RuntimeHostQuiescenceCapability::mint_for_host(
-    const RuntimeIncarnationRef &source_slot, std::string source_plan_sha256,
-    std::string target_plan_sha256, RuntimeIdentity128 candidate_resource_identity,
+    const RuntimeIncarnationRef &source_slot,
+    std::string source_plan_sha256,
+    std::string target_plan_sha256,
+    RuntimeIdentity128 source_resource_identity,
+    RuntimeIdentity128 candidate_resource_identity,
     std::shared_ptr<RuntimeStateTransferOwnerRegistry> source_owner_registry,
     std::shared_ptr<RuntimeStateTransferOwnerRegistry> target_owner_registry,
-    const RuntimeIdentity128 &host_instance_nonce, std::function<bool()> host_revalidate,
-    std::function<void()> host_rollback, std::function<bool()> host_begin_transfer,
-    std::function<bool()> host_claim_transfer, std::function<void()> host_end_transfer,
-    std::uint64_t lifecycle_ticket, std::uint64_t candidate_sequence,
-    std::uint64_t mutation_fence_sequence) {
+    const RuntimeIdentity128 &host_instance_nonce,
+    std::function<bool()> host_revalidate,
+    std::function<void()> host_rollback,
+    std::function<bool()> host_begin_transfer,
+    std::function<bool()> host_claim_transfer,
+    std::function<void()> host_end_transfer,
+    std::uint64_t lifecycle_ticket,
+    std::uint64_t candidate_sequence,
+    std::uint64_t mutation_fence_sequence,
+    std::size_t source_read_only_result_leases,
+    bool cooperative_cancellation_acknowledged) {
     auto token = std::make_shared<RuntimeHostQuiescenceToken>();
     token->source_slot = source_slot;
     token->source_plan_sha256 = std::move(source_plan_sha256);
     token->target_plan_sha256 = std::move(target_plan_sha256);
+    token->source_resource_identity = source_resource_identity;
     token->candidate_resource_identity = candidate_resource_identity;
     token->source_owner_registry = std::move(source_owner_registry);
     token->target_owner_registry = std::move(target_owner_registry);
@@ -1590,6 +3083,9 @@ RuntimeHostQuiescenceCapability RuntimeHostQuiescenceCapability::mint_for_host(
     token->lifecycle_ticket = lifecycle_ticket;
     token->candidate_sequence = candidate_sequence;
     token->mutation_fence_sequence = mutation_fence_sequence;
+    token->source_read_only_result_leases = source_read_only_result_leases;
+    token->cooperative_cancellation_acknowledged =
+        cooperative_cancellation_acknowledged;
     return RuntimeHostQuiescenceCapability(std::move(token));
 }
 
@@ -1599,9 +3095,11 @@ bool RuntimeHostQuiescenceCapability::valid() const noexcept {
     }
     try {
         std::lock_guard<std::mutex> lock(token_->mutex);
-        return !token_->claimed && !token_->released && token_->source_slot.well_formed() &&
+        return !token_->claimed && !token_->released &&
+               token_->source_slot.well_formed() &&
                is_lower_hex_sha256(token_->source_plan_sha256) &&
                is_lower_hex_sha256(token_->target_plan_sha256) &&
+               token_->source_resource_identity.well_formed() &&
                token_->candidate_resource_identity.well_formed() &&
                token_->source_owner_registry != nullptr &&
                token_->target_owner_registry != nullptr &&
@@ -1609,8 +3107,10 @@ bool RuntimeHostQuiescenceCapability::valid() const noexcept {
                static_cast<bool>(token_->host_revalidate) &&
                static_cast<bool>(token_->host_begin_transfer) &&
                static_cast<bool>(token_->host_claim_transfer) &&
-               static_cast<bool>(token_->host_end_transfer) && token_->lifecycle_ticket != 0 &&
-               token_->candidate_sequence != 0 && token_->mutation_fence_sequence != 0;
+               static_cast<bool>(token_->host_end_transfer) &&
+               token_->lifecycle_ticket != 0 && token_->candidate_sequence != 0 &&
+               token_->mutation_fence_sequence != 0 &&
+               token_->cooperative_cancellation_acknowledged;
     } catch (...) {
         return false;
     }
@@ -1628,8 +3128,8 @@ RuntimeIdentity128 RuntimeHostQuiescenceCapability::candidate_resource_identity(
     return token_ == nullptr ? RuntimeIdentity128{} : token_->candidate_resource_identity;
 }
 
-RuntimeStateTransferValidationResult
-RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&request) {
+RuntimeStateTransferValidationResult RuntimeStateTransferValidator::validate(
+    RuntimeStateTransferValidationRequest &&request) {
     RuntimeStateTransferStatus status = validate_profile(request.profile);
     if (!status) {
         return {.status = status, .transfer = {}};
@@ -1647,13 +3147,45 @@ RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&
     const auto quiescence_token = request.host_quiescence.token_;
     if (quiescence_token->source_owner_registry == nullptr ||
         quiescence_token->target_owner_registry == nullptr) {
-        return {.status = failure(
-                    RuntimeStateTransferError::SemanticEvidenceMissing,
-                    "state transfer requires host-bound source and target owner registries"),
+        return {.status = failure(RuntimeStateTransferError::SemanticEvidenceMissing,
+                                  "state transfer requires host-bound source and target owner registries"),
                 .transfer = {}};
     }
-    if ((request.census.contract_generation != kRuntimeStateTransferContractGeneration &&
-         request.census.contract_generation != kRuntimeStateTransferPreviousGeneration) ||
+    if (quiescence_token->source_owner_registry ==
+        quiescence_token->target_owner_registry) {
+        return {.status = failure(
+                    RuntimeStateTransferError::SemanticEvidenceMissing,
+                    "state transfer requires distinct source and target owner registries"),
+                .transfer = {}};
+    }
+    const RuntimeIdentity128 source_bound_resource =
+        quiescence_token->source_owner_registry->bound_resource_identity();
+    const RuntimeIdentity128 target_bound_resource =
+        quiescence_token->target_owner_registry->bound_resource_identity();
+    if (!source_bound_resource.well_formed() ||
+        !target_bound_resource.well_formed() ||
+        source_bound_resource != quiescence_token->source_resource_identity ||
+        target_bound_resource != quiescence_token->candidate_resource_identity) {
+        return {.status = failure(
+                    RuntimeStateTransferError::SemanticEvidenceMissing,
+                    "owner registry is not bound to the admitted source or target resource"),
+                .transfer = {}};
+    }
+    const void *source_binding =
+        quiescence_token->source_owner_registry->owner_binding_token();
+    const void *target_binding =
+        quiescence_token->target_owner_registry->owner_binding_token();
+    if (source_binding != nullptr && target_binding != nullptr &&
+        source_binding == target_binding) {
+        return {.status = failure(
+                    RuntimeStateTransferError::SemanticEvidenceMissing,
+                    "source and target owner registries capture the same owner instance"),
+                .transfer = {}};
+    }
+    if ((request.census.contract_generation !=
+             kRuntimeStateTransferContractGeneration &&
+         request.census.contract_generation !=
+             kRuntimeStateTransferPreviousGeneration) ||
         request.census.profile_id != request.profile.profile_id ||
         request.census.profile_generation != request.profile.profile_generation ||
         !request.census.source_slot.well_formed() ||
@@ -1672,9 +3204,8 @@ RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&
             quiescence_token->target_plan_sha256 != request.profile.target_plan_sha256 ||
             quiescence_token->mutation_fence_sequence !=
                 request.evidence.source_final_mutation_fence_sequence) {
-            return {.status =
-                        failure(RuntimeStateTransferError::StaleIntent,
-                                "state census does not bind the current host quiescence fence"),
+            return {.status = failure(RuntimeStateTransferError::StaleIntent,
+                                      "state census does not bind the current host quiescence fence"),
                     .transfer = {}};
         }
     }
@@ -1689,13 +3220,13 @@ RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&
         if (!barrier_token->host_bound ||
             barrier_token->host_instance_nonce != quiescence_token->host_instance_nonce ||
             barrier_token->world_slot != barrier_token->snapshot.episode.world.world_slot) {
-            return {.status =
-                        failure(RuntimeStateTransferError::StaleIntent,
-                                "episode barrier is not bound to the quiesced host authority"),
+            return {.status = failure(RuntimeStateTransferError::StaleIntent,
+                                      "episode barrier is not bound to the quiesced host authority"),
                     .transfer = {}};
         }
     }
-    const RuntimeEpisodeCoordinatorSnapshot barrier_snapshot = request.episode_barrier.snapshot();
+    const RuntimeEpisodeCoordinatorSnapshot barrier_snapshot =
+        request.episode_barrier.snapshot();
     if (barrier_snapshot.phase != RuntimeEpisodePhase::ReplacementBarrier ||
         barrier_snapshot.episode.world.incarnation != request.census.source_slot) {
         return {.status = failure(RuntimeStateTransferError::StaleIntent,
@@ -1706,7 +3237,8 @@ RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&
     // Pin the host/candidate before asking any owner to read source truth.  A
     // blocking export/import callback must not race candidate reclamation.
     HostTransferReservationGuard transfer_reservation;
-    if (!quiescence_token->host_begin_transfer || !quiescence_token->host_begin_transfer()) {
+    if (!quiescence_token->host_begin_transfer ||
+        !quiescence_token->host_begin_transfer()) {
         return {.status = failure(RuntimeStateTransferError::StaleIntent,
                                   "host transfer reservation was revoked before source export"),
                 .transfer = {}};
@@ -1737,15 +3269,24 @@ RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&
         }
     }
     for (const RuntimeStateCensusRowPolicy &policy : request.profile.rows) {
-        status = validate_entry(policy, *entries[static_cast<std::size_t>(policy.category)],
+        status = validate_entry(policy,
+                                *entries[static_cast<std::size_t>(policy.category)],
                                 barrier_snapshot);
         if (!status) {
             return {.status = status, .transfer = {}};
         }
     }
 
-    RuntimeStateOwnerExport source_export = quiescence_token->source_owner_registry->export_source(
-        request.profile, request.census.source_slot, barrier_snapshot);
+    RuntimeStateOwnerExport source_export =
+        quiescence_token->source_owner_registry->export_source(
+            request.profile, request.census.source_slot,
+            RuntimeStateOwnerExportContext{
+                .barrier_snapshot = barrier_snapshot,
+                .source_read_only_result_leases =
+                    quiescence_token->source_read_only_result_leases,
+                .cooperative_cancellation_acknowledged =
+                    quiescence_token->cooperative_cancellation_acknowledged,
+            });
     if (!source_export.status) {
         return {.status = source_export.status, .transfer = {}};
     }
@@ -1762,7 +3303,8 @@ RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&
 
     RuntimeStateOwnerImportReceipt owner_receipt =
         quiescence_token->target_owner_registry->import_and_observe(
-            request.profile, source_export, request.host_quiescence.candidate_resource_identity());
+            request.profile, source_export,
+            request.host_quiescence.candidate_resource_identity());
     ImportTransactionAbortGuard import_abort{
         .transaction = owner_receipt.transaction,
         .active = owner_receipt.transaction != nullptr,
@@ -1775,14 +3317,24 @@ RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&
                                   "owner import did not return a rollback-capable transaction"),
                 .transfer = {}};
     }
+    const RuntimeStateOwnerImportTransactionStatus transaction_status =
+        owner_receipt.transaction->status();
+    if (transaction_status.error != RuntimeStateTransferError::None ||
+        transaction_status.phase != RuntimeStateOwnerImportTransactionPhase::Prepared) {
+        return {.status = failure(
+                    RuntimeStateTransferError::ImportTransactionStateInvalid,
+                    "owner import transaction is not in the prepared state"),
+                .transfer = {}};
+    }
     if (owner_receipt.candidate_resource_identity !=
-            request.host_quiescence.candidate_resource_identity() ||
+        request.host_quiescence.candidate_resource_identity() ||
         owner_receipt.observations.size() != kRuntimeStateCategoryCount) {
         return {.status = failure(RuntimeStateTransferError::SemanticEvidenceMissing,
                                   "owner receipt is not bound to the complete candidate import"),
                 .transfer = {}};
     }
-    std::array<const RuntimeStateOwnerObservation *, kRuntimeStateCategoryCount> observations{};
+    std::array<const RuntimeStateOwnerObservation *, kRuntimeStateCategoryCount>
+        observations{};
     for (const RuntimeStateOwnerObservation &observation : owner_receipt.observations) {
         if (!supported_category(observation.category)) {
             return {.status = failure(RuntimeStateTransferError::SchemaMismatch,
@@ -1798,43 +3350,51 @@ RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&
         observations[index] = &observation;
     }
     for (const RuntimeStateCensusRowPolicy &policy : request.profile.rows) {
-        const RuntimeStateCensusEntry &entry = *entries[static_cast<std::size_t>(policy.category)];
+        const RuntimeStateCensusEntry &entry =
+            *entries[static_cast<std::size_t>(policy.category)];
         const RuntimeStateOwnerObservation &observation =
             *observations[static_cast<std::size_t>(policy.category)];
-        const auto artifact =
-            std::find_if(source_export.artifacts.begin(), source_export.artifacts.end(),
-                         [&](const RuntimeStateOwnerArtifact &candidate) {
-                             return candidate.category == policy.category;
-                         });
+        const auto artifact = std::find_if(
+            source_export.artifacts.begin(), source_export.artifacts.end(),
+            [&](const RuntimeStateOwnerArtifact &candidate) {
+                return candidate.category == policy.category;
+            });
         if (artifact == source_export.artifacts.end()) {
             return {.status = failure(RuntimeStateTransferError::MissingCategory,
                                       "owner receipt has no source artifact"),
                     .transfer = {}};
         }
         RuntimeStateCensusEntry normalized_entry = entry;
-        normalized_entry.schema_generation = kRuntimeStateTransferContractGeneration;
-        if (entry.schema_generation != kRuntimeStateTransferContractGeneration) {
-            normalized_entry.canonical_payload = runtime_state_canonical_payload(normalized_entry);
+        normalized_entry.schema_generation =
+            kRuntimeStateTransferContractGeneration;
+        if (entry.schema_generation !=
+            kRuntimeStateTransferContractGeneration) {
+            normalized_entry.canonical_payload =
+                runtime_state_canonical_payload(normalized_entry);
             normalized_entry.canonical_payload_sha256 =
                 runtime_state_payload_sha256(normalized_entry.canonical_payload);
         }
-        if (observation.owner_id != policy.owner_id || observation.schema_id != policy.schema_id ||
+        if (observation.owner_id != policy.owner_id ||
+            observation.schema_id != policy.schema_id ||
             observation.source_schema_generation != entry.schema_generation ||
             observation.schema_generation != kRuntimeStateTransferContractGeneration ||
             observation.candidate_resource_identity !=
                 request.host_quiescence.candidate_resource_identity() ||
-            !observation.exact_schema_decoded || observation.contains_unknown_truth_fields ||
-            observation.contains_raw_process_handle || observation.item_count != entry.item_count ||
+            !observation.exact_schema_decoded ||
+            observation.contains_unknown_truth_fields ||
+            observation.contains_raw_process_handle ||
+            observation.item_count != entry.item_count ||
             observation.settled_item_count != entry.settled_item_count ||
             observation.source_entry_sha256 != runtime_state_census_entry_sha256(entry) ||
             observation.source_artifact_payload_sha256 != artifact->payload_sha256 ||
-            observation.candidate_artifact_payload_sha256 != artifact->payload_sha256 ||
+            !is_lower_hex_sha256(observation.candidate_artifact_payload_sha256) ||
+            (entry.schema_generation == kRuntimeStateTransferContractGeneration &&
+             observation.candidate_artifact_payload_sha256 != artifact->payload_sha256) ||
             observation.candidate_entry_sha256 !=
                 runtime_state_census_entry_sha256(normalized_entry) ||
             observation.semantic_replay_sha256 != entry.semantic_evidence_sha256) {
-            return {.status =
-                        failure(RuntimeStateTransferError::SemanticEvidenceMissing,
-                                "owner receipt does not prove exact source/import/replay equality"),
+            return {.status = failure(RuntimeStateTransferError::SemanticEvidenceMissing,
+                                      "owner receipt does not prove exact source/import/replay equality"),
                     .transfer = {}};
         }
     }
@@ -1849,28 +3409,32 @@ RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&
         state->source_slot = request.census.source_slot;
         state->source_plan_sha256 = request.profile.source_plan_sha256;
         state->target_plan_sha256 = request.profile.target_plan_sha256;
-        state->state_bundle_sha256 = sha256_hex(
-            canonical_state_bundle_bytes(request.profile, request.census, source_export.artifacts,
-                                         request.evidence, barrier_snapshot));
-        state->transfer_fence_sequence = request.evidence.source_final_mutation_fence_sequence;
+        state->state_bundle_sha256 = sha256_hex(canonical_state_bundle_bytes(
+            request.profile, request.census, source_export.artifacts,
+            request.evidence, barrier_snapshot));
+        state->transfer_fence_sequence =
+            request.evidence.source_final_mutation_fence_sequence;
         state->episode_barrier_sequence = barrier_snapshot.barrier_sequence;
         state->source_barrier_snapshot = barrier_snapshot;
         state->lifecycle_ticket = quiescence_token->lifecycle_ticket;
         state->candidate_sequence = quiescence_token->candidate_sequence;
-        state->candidate_resource_identity = quiescence_token->candidate_resource_identity;
+        state->candidate_resource_identity =
+            quiescence_token->candidate_resource_identity;
         state->quiescence_token = quiescence_token;
         state->barrier_token = barrier_token;
         state->coordinator_owner = barrier_token->coordinator.lock();
         state->import_transaction = owner_receipt.transaction;
-        if (!quiescence_token->host_claim_transfer || !quiescence_token->host_claim_transfer()) {
+        if (!quiescence_token->host_claim_transfer ||
+            !quiescence_token->host_claim_transfer()) {
             return {.status = failure(RuntimeStateTransferError::StaleIntent,
                                       "host transfer changed before capability claim"),
                     .transfer = {}};
         }
         {
-            std::scoped_lock capability_locks(quiescence_token->mutex, barrier_token->mutex);
-            if (quiescence_token->claimed || quiescence_token->released || barrier_token->claimed ||
-                barrier_token->released) {
+            std::scoped_lock capability_locks(quiescence_token->mutex,
+                                              barrier_token->mutex);
+            if (quiescence_token->claimed || quiescence_token->released ||
+                barrier_token->claimed || barrier_token->released) {
                 return {.status = failure(RuntimeStateTransferError::BarrierReplay,
                                           "host or episode barrier was already consumed"),
                         .transfer = {}};
@@ -1880,7 +3444,8 @@ RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&
         }
         state->host_end_transfer = transfer_reservation.disarm();
         import_abort.disarm();
-        return {.status = success(), .transfer = RuntimeValidatedStateTransfer(std::move(state))};
+        return {.status = success(),
+                .transfer = RuntimeValidatedStateTransfer(std::move(state))};
     } catch (...) {
         return {.status = failure(RuntimeStateTransferError::InvalidArgument,
                                   "state-transfer capability allocation failed"),
@@ -1896,8 +3461,8 @@ RuntimeValidatedStateTransfer::RuntimeValidatedStateTransfer(
     RuntimeValidatedStateTransfer &&other) noexcept
     : state_(std::move(other.state_)) {}
 
-RuntimeValidatedStateTransfer &
-RuntimeValidatedStateTransfer::operator=(RuntimeValidatedStateTransfer &&other) noexcept {
+RuntimeValidatedStateTransfer &RuntimeValidatedStateTransfer::operator=(
+    RuntimeValidatedStateTransfer &&other) noexcept {
     if (this != &other) {
         abort_for_host();
         state_ = std::move(other.state_);
@@ -1905,9 +3470,7 @@ RuntimeValidatedStateTransfer::operator=(RuntimeValidatedStateTransfer &&other) 
     return *this;
 }
 
-RuntimeValidatedStateTransfer::~RuntimeValidatedStateTransfer() {
-    abort_for_host();
-}
+RuntimeValidatedStateTransfer::~RuntimeValidatedStateTransfer() { abort_for_host(); }
 
 bool RuntimeValidatedStateTransfer::valid() const noexcept {
     if (state_ == nullptr) {
@@ -1922,16 +3485,56 @@ bool RuntimeValidatedStateTransfer::valid() const noexcept {
     }
 }
 
+bool RuntimeValidatedStateTransfer::committed() const noexcept {
+    if (state_ == nullptr) {
+        return false;
+    }
+    try {
+        std::lock_guard<std::mutex> lock(state_->mutex);
+        return state_->lifecycle == RuntimeValidatedTransferLifecycle::Committed;
+    } catch (...) {
+        return false;
+    }
+}
+
+bool RuntimeValidatedStateTransfer::aborted() const noexcept {
+    if (state_ == nullptr) {
+        return false;
+    }
+    try {
+        std::lock_guard<std::mutex> lock(state_->mutex);
+        return state_->lifecycle == RuntimeValidatedTransferLifecycle::Aborted;
+    } catch (...) {
+        return false;
+    }
+}
+
+bool RuntimeValidatedStateTransfer::ambiguous() const noexcept {
+    if (state_ == nullptr) {
+        return false;
+    }
+    try {
+        std::lock_guard<std::mutex> lock(state_->mutex);
+        return state_->lifecycle == RuntimeValidatedTransferLifecycle::Ambiguous ||
+               state_->lifecycle == RuntimeValidatedTransferLifecycle::Committing ||
+               state_->lifecycle == RuntimeValidatedTransferLifecycle::Aborting;
+    } catch (...) {
+        return false;
+    }
+}
+
 RuntimeIncarnationRef RuntimeValidatedStateTransfer::source_slot() const noexcept {
     return state_ == nullptr ? RuntimeIncarnationRef{} : state_->source_slot;
 }
 
 std::string_view RuntimeValidatedStateTransfer::target_plan_sha256() const noexcept {
-    return state_ == nullptr ? std::string_view{} : std::string_view(state_->target_plan_sha256);
+    return state_ == nullptr ? std::string_view{} :
+                               std::string_view(state_->target_plan_sha256);
 }
 
 std::string_view RuntimeValidatedStateTransfer::state_bundle_sha256() const noexcept {
-    return state_ == nullptr ? std::string_view{} : std::string_view(state_->state_bundle_sha256);
+    return state_ == nullptr ? std::string_view{} :
+                               std::string_view(state_->state_bundle_sha256);
 }
 
 std::uint64_t RuntimeValidatedStateTransfer::transfer_fence_sequence() const noexcept {
@@ -1948,15 +3551,15 @@ RuntimeValidatedStateTransfer::source_barrier_snapshot() const noexcept {
                              : state_->source_barrier_snapshot;
 }
 
-void RuntimeValidatedStateTransfer::abandon() noexcept {
-    abort_for_host();
-}
+void RuntimeValidatedStateTransfer::abandon() noexcept { abort_for_host(); }
 
 RuntimeStateTransferStatus RuntimeValidatedStateTransfer::prepare_for_host(
-    const RuntimeIncarnationRef &expected_source, std::string_view expected_source_plan_sha256,
+    const RuntimeIncarnationRef &expected_source,
+    std::string_view expected_source_plan_sha256,
     std::string_view expected_target_plan_sha256,
     const RuntimeIdentity128 &expected_candidate_resource_identity,
-    std::uint64_t expected_lifecycle_ticket, std::uint64_t expected_candidate_sequence,
+    std::uint64_t expected_lifecycle_ticket,
+    std::uint64_t expected_candidate_sequence,
     std::uint64_t expected_mutation_fence_sequence) {
     if (state_ == nullptr) {
         return failure(RuntimeStateTransferError::InvalidArgument,
@@ -2000,9 +3603,11 @@ RuntimeStateTransferStatus RuntimeValidatedStateTransfer::prepare_for_host(
     return success();
 }
 
-void RuntimeValidatedStateTransfer::commit_for_host() noexcept {
+RuntimeStateTransferStatus RuntimeValidatedStateTransfer::commit_for_host(
+    std::uint64_t now_tick, std::uint64_t deadline_tick) noexcept {
     if (state_ == nullptr) {
-        return;
+        return failure(RuntimeStateTransferError::InvalidArgument,
+                       "validated state transfer is empty");
     }
     try {
         std::function<void()> end_transfer;
@@ -2010,22 +3615,144 @@ void RuntimeValidatedStateTransfer::commit_for_host() noexcept {
         {
             std::lock_guard<std::mutex> state_lock(state_->mutex);
             if (state_->lifecycle != RuntimeValidatedTransferLifecycle::Prepared) {
-                return;
+                return failure(RuntimeStateTransferError::TransferAlreadyConsumed,
+                               "validated state transfer is not prepared");
             }
             state_->lifecycle = RuntimeValidatedTransferLifecycle::Committing;
             import_transaction = std::move(state_->import_transaction);
         }
+        RuntimeStateOwnerImportTransactionStatus transaction_status;
         if (import_transaction != nullptr) {
             // Owner callbacks run outside both the host and transfer mutexes;
             // they are allowed to inspect their own resource but cannot
             // re-enter this transfer while it is Committing.
-            import_transaction->commit();
+            transaction_status = import_transaction->commit_with_deadline(
+                now_tick, deadline_tick);
+        } else {
+            transaction_status = {
+                .phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
+                .error = RuntimeStateTransferError::ImportTransactionStateInvalid,
+                .journal_sequence = 0,
+                .durable = false};
+        }
+        const bool durable_commit =
+            transaction_status.phase == RuntimeStateOwnerImportTransactionPhase::Committed &&
+            transaction_status.durable && transaction_status.journal_sequence != 0;
+        if (!transaction_status || !durable_commit) {
+            const bool ambiguous =
+                transaction_status.phase == RuntimeStateOwnerImportTransactionPhase::Committing ||
+                transaction_status.phase == RuntimeStateOwnerImportTransactionPhase::Aborting ||
+                transaction_status.phase == RuntimeStateOwnerImportTransactionPhase::Ambiguous ||
+                transaction_status.phase == RuntimeStateOwnerImportTransactionPhase::Committed;
+            {
+                std::lock_guard<std::mutex> state_lock(state_->mutex);
+                if (state_->lifecycle == RuntimeValidatedTransferLifecycle::Committing) {
+                    state_->import_transaction = std::move(import_transaction);
+                    state_->lifecycle = ambiguous
+                                             ? RuntimeValidatedTransferLifecycle::Ambiguous
+                                             : RuntimeValidatedTransferLifecycle::Ready;
+                }
+            }
+            if (!ambiguous) {
+                abort_for_host();
+            }
+            const RuntimeStateTransferError error =
+                ambiguous && transaction_status.error == RuntimeStateTransferError::None
+                    ? RuntimeStateTransferError::ImportTransactionAmbiguous
+                    : (transaction_status.error == RuntimeStateTransferError::None
+                           ? RuntimeStateTransferError::ImportTransactionStateInvalid
+                           : transaction_status.error);
+            return failure(error, "owner import transaction did not commit");
         }
         {
-            std::lock_guard<std::mutex> state_lock(state_->mutex);
-            if (state_->lifecycle != RuntimeValidatedTransferLifecycle::Committing) {
-                return;
+        std::lock_guard<std::mutex> state_lock(state_->mutex);
+        if (state_->lifecycle != RuntimeValidatedTransferLifecycle::Committing) {
+            return failure(RuntimeStateTransferError::TransferAlreadyConsumed,
+                           "validated state transfer was consumed while committing");
+        }
+        const auto token = state_->barrier_token;
+        if (token != nullptr) {
+            std::lock_guard<std::mutex> token_lock(token->mutex);
+            const auto coordinator = token->coordinator.lock();
+            if (coordinator != nullptr) {
+                std::lock_guard<std::mutex> coordinator_lock(coordinator->mutex);
+                if (coordinator->phase == RuntimeEpisodePhase::ReplacementBarrier &&
+                    coordinator->open_barrier_nonce == token->barrier_nonce) {
+                    coordinator->phase = RuntimeEpisodePhase::TransferCommitted;
+                    coordinator->open_barrier_nonce = {};
+                }
             }
+            token->released = true;
+        }
+        state_->lifecycle = RuntimeValidatedTransferLifecycle::Committed;
+        if (state_->quiescence_token != nullptr) {
+            std::lock_guard<std::mutex> quiescence_lock(
+                state_->quiescence_token->mutex);
+            state_->quiescence_token->released = true;
+            state_->quiescence_token->host_rollback = {};
+        }
+        state_->coordinator_owner.reset();
+        end_transfer = std::move(state_->host_end_transfer);
+        }
+        if (end_transfer) {
+            end_transfer();
+        }
+        return success();
+    } catch (...) {
+        std::terminate();
+    }
+}
+
+RuntimeStateTransferStatus RuntimeValidatedStateTransfer::recover_for_host(
+    std::uint64_t now_tick, std::uint64_t deadline_tick) noexcept {
+    if (state_ == nullptr) {
+        return failure(RuntimeStateTransferError::InvalidArgument,
+                       "validated state transfer is empty");
+    }
+    try {
+        std::shared_ptr<RuntimeStateOwnerImportTransaction> import_transaction;
+        {
+            std::lock_guard<std::mutex> state_lock(state_->mutex);
+            if (state_->lifecycle == RuntimeValidatedTransferLifecycle::Committed ||
+                state_->lifecycle == RuntimeValidatedTransferLifecycle::Aborted) {
+                return success();
+            }
+            if (state_->lifecycle != RuntimeValidatedTransferLifecycle::Ambiguous &&
+                state_->lifecycle != RuntimeValidatedTransferLifecycle::Committing &&
+                state_->lifecycle != RuntimeValidatedTransferLifecycle::Aborting) {
+                return failure(RuntimeStateTransferError::TransferAlreadyConsumed,
+                               "validated state transfer is not recoverable");
+            }
+            import_transaction = state_->import_transaction;
+        }
+        if (import_transaction == nullptr) {
+            return failure(RuntimeStateTransferError::ImportTransactionStateInvalid,
+                           "ambiguous transfer has no owner transaction");
+        }
+        const auto recovered = import_transaction->recover_with_deadline(
+            now_tick, deadline_tick);
+        const bool committed =
+            recovered.phase == RuntimeStateOwnerImportTransactionPhase::Committed &&
+            recovered.error == RuntimeStateTransferError::None && recovered.durable &&
+            recovered.journal_sequence != 0;
+        const bool aborted =
+            recovered.phase == RuntimeStateOwnerImportTransactionPhase::Aborted &&
+            recovered.error == RuntimeStateTransferError::None && recovered.durable &&
+            recovered.journal_sequence != 0;
+        if (!committed && !aborted) {
+            std::lock_guard<std::mutex> state_lock(state_->mutex);
+            state_->lifecycle = RuntimeValidatedTransferLifecycle::Ambiguous;
+            return failure(recovered.error == RuntimeStateTransferError::None
+                               ? RuntimeStateTransferError::ImportTransactionAmbiguous
+                               : recovered.error,
+                           "owner import outcome remains ambiguous after recovery");
+        }
+
+        std::function<void()> rollback;
+        std::function<void()> end_transfer;
+        {
+            std::lock_guard<std::mutex> state_lock(state_->mutex);
+            state_->import_transaction.reset();
             const auto token = state_->barrier_token;
             if (token != nullptr) {
                 std::lock_guard<std::mutex> token_lock(token->mutex);
@@ -2034,26 +3761,43 @@ void RuntimeValidatedStateTransfer::commit_for_host() noexcept {
                     std::lock_guard<std::mutex> coordinator_lock(coordinator->mutex);
                     if (coordinator->phase == RuntimeEpisodePhase::ReplacementBarrier &&
                         coordinator->open_barrier_nonce == token->barrier_nonce) {
-                        coordinator->phase = RuntimeEpisodePhase::TransferCommitted;
+                        coordinator->phase = committed ? RuntimeEpisodePhase::TransferCommitted
+                                                       : RuntimeEpisodePhase::Terminal;
                         coordinator->open_barrier_nonce = {};
                     }
                 }
                 token->released = true;
             }
-            state_->lifecycle = RuntimeValidatedTransferLifecycle::Committed;
-            if (state_->quiescence_token != nullptr) {
-                std::lock_guard<std::mutex> quiescence_lock(state_->quiescence_token->mutex);
-                state_->quiescence_token->released = true;
-                state_->quiescence_token->host_rollback = {};
+            if (committed) {
+                state_->lifecycle = RuntimeValidatedTransferLifecycle::Committed;
+                if (state_->quiescence_token != nullptr) {
+                    std::lock_guard<std::mutex> quiescence_lock(
+                        state_->quiescence_token->mutex);
+                    state_->quiescence_token->released = true;
+                    state_->quiescence_token->host_rollback = {};
+                }
+            } else {
+                state_->lifecycle = RuntimeValidatedTransferLifecycle::Aborted;
+                if (state_->quiescence_token != nullptr) {
+                    std::lock_guard<std::mutex> quiescence_lock(
+                        state_->quiescence_token->mutex);
+                    state_->quiescence_token->released = true;
+                    rollback = std::move(state_->quiescence_token->host_rollback);
+                }
             }
             state_->coordinator_owner.reset();
             end_transfer = std::move(state_->host_end_transfer);
         }
+        if (rollback) {
+            rollback();
+        }
         if (end_transfer) {
             end_transfer();
         }
+        return success();
     } catch (...) {
-        std::terminate();
+        return failure(RuntimeStateTransferError::ImportTransactionAmbiguous,
+                       "exception while recovering owner import transaction");
     }
 }
 
@@ -2065,49 +3809,79 @@ void RuntimeValidatedStateTransfer::abort_for_host() noexcept {
         std::function<void()> rollback;
         std::function<void()> end_transfer;
         std::shared_ptr<RuntimeStateOwnerImportTransaction> import_transaction;
+        bool needs_recovery = false;
         {
             std::lock_guard<std::mutex> state_lock(state_->mutex);
             if (state_->lifecycle == RuntimeValidatedTransferLifecycle::Committed ||
-                state_->lifecycle == RuntimeValidatedTransferLifecycle::Aborted ||
-                state_->lifecycle == RuntimeValidatedTransferLifecycle::Committing ||
-                state_->lifecycle == RuntimeValidatedTransferLifecycle::Aborting) {
+                state_->lifecycle == RuntimeValidatedTransferLifecycle::Aborted) {
                 return;
             }
-            state_->lifecycle = RuntimeValidatedTransferLifecycle::Aborting;
-            import_transaction = std::move(state_->import_transaction);
+            needs_recovery =
+                state_->lifecycle == RuntimeValidatedTransferLifecycle::Ambiguous ||
+                state_->lifecycle == RuntimeValidatedTransferLifecycle::Committing ||
+                state_->lifecycle == RuntimeValidatedTransferLifecycle::Aborting;
+            if (!needs_recovery) {
+                state_->lifecycle = RuntimeValidatedTransferLifecycle::Aborting;
+                import_transaction = std::move(state_->import_transaction);
+            }
         }
+        if (needs_recovery) {
+            // Never discard an ambiguous transaction silently.  Recovery is
+            // deliberately best-effort here because this destructor has no
+            // trusted clock; the host's explicit recovery path remains the
+            // authoritative retry mechanism.
+            (void)recover_for_host(0, 0);
+            return;
+        }
+        RuntimeStateOwnerImportTransactionStatus abort_status;
         if (import_transaction != nullptr) {
             // Abort provisional target state before reopening the source, and
             // do so without holding either the transfer or host mutex.
-            import_transaction->abort();
+            abort_status = import_transaction->abort_with_deadline(0, 0);
+        } else {
+            abort_status = {
+                .phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
+                .error = RuntimeStateTransferError::ImportTransactionStateInvalid,
+                .journal_sequence = 0,
+                .durable = false};
+        }
+        if (!abort_status ||
+            abort_status.phase != RuntimeStateOwnerImportTransactionPhase::Aborted) {
+            std::lock_guard<std::mutex> state_lock(state_->mutex);
+            if (state_->lifecycle == RuntimeValidatedTransferLifecycle::Aborting) {
+                state_->import_transaction = std::move(import_transaction);
+                state_->lifecycle = RuntimeValidatedTransferLifecycle::Ambiguous;
+            }
+            return;
         }
         {
-            std::lock_guard<std::mutex> state_lock(state_->mutex);
-            if (state_->lifecycle != RuntimeValidatedTransferLifecycle::Aborting) {
-                return;
-            }
-            const auto token = state_->barrier_token;
-            if (token != nullptr) {
-                std::lock_guard<std::mutex> token_lock(token->mutex);
-                const auto coordinator = token->coordinator.lock();
-                if (coordinator != nullptr) {
-                    std::lock_guard<std::mutex> coordinator_lock(coordinator->mutex);
-                    if (coordinator->phase == RuntimeEpisodePhase::ReplacementBarrier &&
-                        coordinator->open_barrier_nonce == token->barrier_nonce) {
-                        coordinator->phase = RuntimeEpisodePhase::Terminal;
-                        coordinator->open_barrier_nonce = {};
-                    }
+        std::lock_guard<std::mutex> state_lock(state_->mutex);
+        if (state_->lifecycle != RuntimeValidatedTransferLifecycle::Aborting) {
+            return;
+        }
+        const auto token = state_->barrier_token;
+        if (token != nullptr) {
+            std::lock_guard<std::mutex> token_lock(token->mutex);
+            const auto coordinator = token->coordinator.lock();
+            if (coordinator != nullptr) {
+                std::lock_guard<std::mutex> coordinator_lock(coordinator->mutex);
+                if (coordinator->phase == RuntimeEpisodePhase::ReplacementBarrier &&
+                    coordinator->open_barrier_nonce == token->barrier_nonce) {
+                    coordinator->phase = RuntimeEpisodePhase::Terminal;
+                    coordinator->open_barrier_nonce = {};
                 }
-                token->released = true;
             }
-            state_->lifecycle = RuntimeValidatedTransferLifecycle::Aborted;
-            if (state_->quiescence_token != nullptr) {
-                std::lock_guard<std::mutex> quiescence_lock(state_->quiescence_token->mutex);
-                state_->quiescence_token->released = true;
-                rollback = std::move(state_->quiescence_token->host_rollback);
-            }
-            state_->coordinator_owner.reset();
-            end_transfer = std::move(state_->host_end_transfer);
+            token->released = true;
+        }
+        state_->lifecycle = RuntimeValidatedTransferLifecycle::Aborted;
+        if (state_->quiescence_token != nullptr) {
+            std::lock_guard<std::mutex> quiescence_lock(
+                state_->quiescence_token->mutex);
+            state_->quiescence_token->released = true;
+            rollback = std::move(state_->quiescence_token->host_rollback);
+        }
+        state_->coordinator_owner.reset();
+        end_transfer = std::move(state_->host_end_transfer);
         }
         if (rollback) {
             rollback();

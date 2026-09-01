@@ -161,6 +161,12 @@ class RuntimeInstanceControl {
     native_episode_control() const noexcept = 0;
     [[nodiscard]] virtual std::shared_ptr<RuntimeStateTransferOwnerRegistry>
     state_transfer_owner_registry() const noexcept = 0;
+    // Target-side transfer fence.  The host invokes these hooks around the
+    // owner import so external target mutators cannot race the final digest.
+    // Controls that have not implemented a real exclusivity fence fail closed;
+    // a no-op default must never authorize target mutation.
+    [[nodiscard]] virtual bool begin_state_transfer() noexcept { return false; }
+    virtual void end_state_transfer() noexcept {}
     [[nodiscard]] virtual bool request_cooperative_cancel() noexcept = 0;
     [[nodiscard]] virtual bool release_resources() noexcept = 0;
     [[nodiscard]] virtual bool resources_released() const noexcept = 0;
@@ -376,7 +382,8 @@ class RuntimeHostCandidate {
     prepare_checkpoint_recovery(const RuntimeCandidateHandle &handle,
                                 const RuntimeRecoveryCommitProof &proof);
     [[nodiscard]] RuntimePublicationResult
-    commit_prepared_candidate(const RuntimeCandidateHandle &handle);
+    commit_prepared_candidate(const RuntimeCandidateHandle &handle,
+                              std::uint64_t now_tick);
     [[nodiscard]] RuntimeHostStatus abort_candidate(const RuntimeCandidateHandle &handle);
 
     [[nodiscard]] RuntimeHostStatus mark_active_faulted(const RuntimeIncarnationRef &expected_slot,
