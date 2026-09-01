@@ -459,7 +459,7 @@ register_default_factories(composition::ProviderCatalog &catalog, SimulationKern
     status = register_factory(make_factory(
         kWeaponReleaseProviderId, contracts::CompositionScope::world,
         {{std::string(contracts::kServiceWeaponRelease), &typeid(IWeaponReleaseService)}},
-        [&world, &missile_tuning, &rng,
+        [&kernel, &world, &missile_tuning, &rng,
          fail_effect_provider](composition::ProviderConstructionContext &context) {
             auto unit_factory = context.service<IUnitFactory>(contracts::kServiceUnitFactory);
             auto event_store =
@@ -471,7 +471,8 @@ register_default_factories(composition::ProviderCatalog &catalog, SimulationKern
                     kWeaponReleaseProviderId, "weapon-release dependency is unavailable"));
             }
             auto service = make_simulation_kernel_weapon_release_service(
-                world, *unit_factory.try_get(), missile_tuning, rng, *event_store.try_get(),
+                kernel, world, *unit_factory.try_get(), missile_tuning, rng,
+                *event_store.try_get(),
                 *event_store.try_get(), *damage_bridge.try_get());
             IWeaponReleaseService *pointer = service.get();
             adopt_singleton_effect(context, world, &WeaponReleaseServiceRef::service, pointer,
