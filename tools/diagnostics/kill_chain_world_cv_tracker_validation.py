@@ -24,7 +24,7 @@ from tools.diagnostics import kill_chain_decoupling_probe as probe  # noqa: E402
 SCHEMA_VERSION = "a2.kill_chain_world_cv_tracker_validation.v1"
 DEFAULT_OUTPUT_DIR = (
   REPO_ROOT
-  / "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/"
+  / "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/"
   "kill_chain_world_cv_tracker_validation_20260715"
 )
 SEEDS = (20260621, 20260622, 20260623)

@@ -4,8 +4,8 @@
 未修改 tuning，也未增加默认发布权威。所有热图均按离散采样单元绘制，
 不对未采样区域做插值或平滑。
 
-- 第四阶段来源：`docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715.json`
-- 第五阶段来源：`docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715.json`
+- 第四阶段来源：`docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715.json`
+- 第五阶段来源：`docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715.json`
 - 选择的 nav gain：`4.0`
 - 默认发布状态：`held`
 

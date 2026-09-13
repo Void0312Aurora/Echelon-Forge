@@ -35,12 +35,12 @@ STAGE4_SCHEMA_VERSION = "a2.kill_chain_guidance_envelope_rebuild.v1"
 STAGE5_SCHEMA_VERSION = "a2.kill_chain_guidance_scalar_calibration.v1"
 DEFAULT_PREFIX = "kill_chain_guidance_calibration"
 DEFAULT_STAGE4_REPORT = REPO_ROOT / (
-  "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/"
+  "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/"
   "kill_chain_guidance_envelope_rebuild_20260715/"
   "kill_chain_guidance_envelope_rebuild_20260715.json"
 )
 DEFAULT_STAGE5_REPORT = REPO_ROOT / (
-  "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/"
+  "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/"
   "kill_chain_guidance_scalar_calibration_20260715/"
   "kill_chain_guidance_scalar_calibration_20260715.json"
 )

@@ -362,11 +362,11 @@ def _guidance_runtime_trace_sample(
     )
   )
   estimated_position = tuple(
-    _finite_float(runtime.get(f"target_track_{axis}_m", 0.0), 0.0)
+    finite_float(runtime.get(f"target_track_{axis}_m", 0.0), 0.0)
     for axis in ("x", "y", "z")
   )
   estimated_velocity = tuple(
-    _finite_float(runtime.get(f"target_track_v{axis}_mps", 0.0), 0.0)
+    finite_float(runtime.get(f"target_track_v{axis}_mps", 0.0), 0.0)
     for axis in ("x", "y", "z")
   )
   position_error = tuple(
@@ -459,7 +459,7 @@ def _guidance_runtime_trace_sample(
       for axis in ("x", "y", "z")
     ],
     "target_residual_xyz_m": [
-      _finite_float(runtime.get(f"target_residual_{axis}_m", 0.0), 0.0)
+      finite_float(runtime.get(f"target_residual_{axis}_m", 0.0), 0.0)
       for axis in ("x", "y", "z")
     ],
     "target_residual_norm_m": _finite_or_none(runtime.get("target_residual_norm_m")),
@@ -512,16 +512,16 @@ def _guidance_runtime_trace_sample(
     "guidance_capture_accel_mps2": finite_float(
       runtime.get("guidance_capture_accel_mps2", 0.0), 0.0
     ),
-    "guidance_capture_lateral_error": _finite_float(
+    "guidance_capture_lateral_error": finite_float(
       runtime.get("guidance_capture_lateral_error", 0.0), 0.0
     ),
-    "guidance_capture_base_range_factor": _finite_float(
+    "guidance_capture_base_range_factor": finite_float(
       runtime.get("guidance_capture_base_range_factor", 0.0), 0.0
     ),
-    "guidance_capture_terminal_weight": _finite_float(
+    "guidance_capture_terminal_weight": finite_float(
       runtime.get("guidance_capture_terminal_weight", 0.0), 0.0
     ),
-    "guidance_capture_raw_accel_mps2": _finite_float(
+    "guidance_capture_raw_accel_mps2": finite_float(
       runtime.get("guidance_capture_raw_accel_mps2", 0.0), 0.0
     ),
     "guidance_pn_accel_xyz_mps2": list(pn),
@@ -3647,13 +3647,13 @@ def run_guidance_case(
         "guidance_postclamp_accel_mps2",
       )
       if all(field in runtime for field in acceleration_diagnostic_fields):
-        capture_g = _finite_float(runtime["guidance_capture_accel_mps2"], 0.0) / 9.80665
-        preclamp_g = _finite_float(runtime["guidance_preclamp_accel_mps2"], 0.0) / 9.80665
-        postclamp_g = _finite_float(runtime["guidance_postclamp_accel_mps2"], 0.0) / 9.80665
+        capture_g = finite_float(runtime["guidance_capture_accel_mps2"], 0.0) / 9.80665
+        preclamp_g = finite_float(runtime["guidance_preclamp_accel_mps2"], 0.0) / 9.80665
+        postclamp_g = finite_float(runtime["guidance_postclamp_accel_mps2"], 0.0) / 9.80665
         max_capture_component_g = max(max_capture_component_g, capture_g)
         max_preclamp_command_g = max(max_preclamp_command_g, preclamp_g)
         max_postclamp_command_g = max(max_postclamp_command_g, postclamp_g)
-        resolved_limit_g = _finite_float(runtime.get("guidance_max_lateral_g", 0.0), 0.0)
+        resolved_limit_g = finite_float(runtime.get("guidance_max_lateral_g", 0.0), 0.0)
         if resolved_limit_g > 0.0 and preclamp_g > resolved_limit_g + 1.0e-9:
           guidance_saturated_sample_count += 1
       else:

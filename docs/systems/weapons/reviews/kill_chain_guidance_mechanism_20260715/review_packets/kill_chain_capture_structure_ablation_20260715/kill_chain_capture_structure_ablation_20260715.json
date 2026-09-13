@@ -15186,11 +15186,11 @@
     "The selected structure remains a candidate until the continuous launch window is rebuilt."
   ],
   "artifacts": {
-    "json": "/tmp/cmo-five-stage/docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_capture_structure_ablation_20260715/kill_chain_capture_structure_ablation_20260715.json",
-    "conclusions_zh": "/tmp/cmo-five-stage/docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_capture_structure_ablation_20260715/kill_chain_capture_structure_ablation_conclusions_20260715.zh.md",
-    "rows_csv": "/tmp/cmo-five-stage/docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_capture_structure_ablation_20260715/kill_chain_capture_structure_ablation_rows.csv",
-    "effects_csv": "/tmp/cmo-five-stage/docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_capture_structure_ablation_20260715/kill_chain_capture_structure_ablation_effects.csv",
-    "interactions_csv": "/tmp/cmo-five-stage/docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_capture_structure_ablation_20260715/kill_chain_capture_structure_ablation_interactions.csv",
-    "clamp_audit_csv": "/tmp/cmo-five-stage/docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_capture_structure_ablation_20260715/kill_chain_capture_structure_ablation_clamp_audit.csv"
+    "json": "/tmp/cmo-five-stage/docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_capture_structure_ablation_20260715/kill_chain_capture_structure_ablation_20260715.json",
+    "conclusions_zh": "/tmp/cmo-five-stage/docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_capture_structure_ablation_20260715/kill_chain_capture_structure_ablation_conclusions_20260715.zh.md",
+    "rows_csv": "/tmp/cmo-five-stage/docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_capture_structure_ablation_20260715/kill_chain_capture_structure_ablation_rows.csv",
+    "effects_csv": "/tmp/cmo-five-stage/docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_capture_structure_ablation_20260715/kill_chain_capture_structure_ablation_effects.csv",
+    "interactions_csv": "/tmp/cmo-five-stage/docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_capture_structure_ablation_20260715/kill_chain_capture_structure_ablation_interactions.csv",
+    "clamp_audit_csv": "/tmp/cmo-five-stage/docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_capture_structure_ablation_20260715/kill_chain_capture_structure_ablation_clamp_audit.csv"
   }
 }

@@ -93370,13 +93370,13 @@
     "APN gain remains frozen at 0.5 although the target has zero truth acceleration."
   ],
   "artifacts": {
-    "report_json": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715.json",
-    "runs_csv": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_runs.csv",
-    "cells_csv": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_cells.csv",
-    "theta_fuze_csv": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_theta_fuze.csv",
-    "range_boundaries_csv": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_range_boundaries.csv",
-    "old_label_differences_csv": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_old_label_differences.csv",
-    "conclusions_zh_md": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_conclusions.zh.md",
-    "manifest_json": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_manifest.json"
+    "report_json": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715.json",
+    "runs_csv": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_runs.csv",
+    "cells_csv": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_cells.csv",
+    "theta_fuze_csv": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_theta_fuze.csv",
+    "range_boundaries_csv": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_range_boundaries.csv",
+    "old_label_differences_csv": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_old_label_differences.csv",
+    "conclusions_zh_md": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_conclusions.zh.md",
+    "manifest_json": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_manifest.json"
   }
 }

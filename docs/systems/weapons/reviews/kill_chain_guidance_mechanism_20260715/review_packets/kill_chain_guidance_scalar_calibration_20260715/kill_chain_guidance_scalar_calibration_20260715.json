@@ -3,7 +3,7 @@
   "status": "scalar_calibration_completed_retained_baseline",
   "generated_at_utc": "2026-07-15T14:38:52.543699+00:00",
   "stage4_source": {
-    "path": "/tmp/cmo-five-stage/docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715.json",
+    "path": "/tmp/cmo-five-stage/docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715.json",
     "schema_version": "a2.kill_chain_guidance_envelope_rebuild.v1",
     "status": "continuous_launch_envelope_rebuilt",
     "stage4_passed": true
@@ -2918,16 +2918,16 @@
     "A retained N=4 result means no tested value showed clear constrained net benefit, not that N=4 is universally optimal."
   ],
   "artifacts": {
-    "report_json": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715.json",
-    "candidate_summary_csv": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_candidate_summary.csv",
-    "runs_csv": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_runs.csv",
-    "cells_csv": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_cells.csv",
-    "conclusions_zh_md": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_conclusions.zh.md",
-    "manifest_json": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_manifest.json"
+    "report_json": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715.json",
+    "candidate_summary_csv": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_candidate_summary.csv",
+    "runs_csv": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_runs.csv",
+    "cells_csv": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_cells.csv",
+    "conclusions_zh_md": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_conclusions.zh.md",
+    "manifest_json": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_manifest.json"
   },
   "raw_evidence": {
-    "runs_csv": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_runs.csv",
-    "cells_csv": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_cells.csv",
+    "runs_csv": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_runs.csv",
+    "cells_csv": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_cells.csv",
     "storage_policy": "raw rows are retained in CSV and omitted from summary JSON",
     "run_count": 13695,
     "cell_count": 2315

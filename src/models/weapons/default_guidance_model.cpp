@@ -530,11 +530,13 @@ void publish_world_cv_target_track(
     const Vec3 los_world = missile_guidance::normalize(relative_position);
     const double horizontal_m = std::hypot(relative_position.x, relative_position.y);
     const double nav_bearing_deg =
-        std::atan2(relative_position.x, relative_position.y) * 180.0 / M_PI;
+        std::atan2(relative_position.x, relative_position.y) * 180.0 /
+        std::numbers::pi_v<double>;
     const double bearing_deg = missile_guidance::normalize_angle_deg(
         nav_bearing_deg - transform.heading);
     const double elevation_deg =
-        std::atan2(relative_position.z, std::max(1.0e-9, horizontal_m)) * 180.0 / M_PI;
+        std::atan2(relative_position.z, std::max(1.0e-9, horizontal_m)) * 180.0 /
+        std::numbers::pi_v<double>;
     const double previous_bearing_deg = missile.filtered_bearing_deg;
     const double previous_elevation_deg = missile.filtered_elevation_deg;
 

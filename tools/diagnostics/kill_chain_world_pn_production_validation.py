@@ -25,7 +25,7 @@ from tools.diagnostics import kill_chain_guidance_exact_mechanism_ablation as ex
 SCHEMA_VERSION = "a2.kill_chain_world_pn_production_validation.v1"
 DEFAULT_OUTPUT_DIR = (
   REPO_ROOT
-  / "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/"
+  / "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/"
   "kill_chain_world_pn_production_validation_20260715"
 )
 FROZEN_TUNING = {

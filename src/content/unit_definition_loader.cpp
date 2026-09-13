@@ -431,8 +431,6 @@ void parse_missile_tuning_json_fields(const nlohmann::json &src,
     tuning.target_tracker_alpha =
         src.value("target_tracker_alpha", tuning.target_tracker_alpha);
     tuning.target_tracker_beta = src.value("target_tracker_beta", tuning.target_tracker_beta);
-    tuning.capture_guidance_mode =
-        src.value("capture_guidance_mode", tuning.capture_guidance_mode);
 
     *out_tuning = tuning;
 }
@@ -1380,7 +1378,8 @@ void parse_ammo_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
     }
 }
 
-void parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
+bool parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefinition &def,
+                                         std::string *error) {
     if (def.type == UnitType::Missile) {
         def.has_missile_tuning = true;
         auto &missile_tuning = def.missile_tuning;
@@ -1490,6 +1489,7 @@ void parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefin
             def.has_sensor = true;
         }
     }
+    return true;
 }
 
 void parse_command_link_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
@@ -1652,7 +1652,9 @@ bool parse_unit_json(
 
     def.has_ammo = entry.value("has_ammo", false);
     parse_ammo_json_fields(entry, def);
-    parse_missile_definition_json_fields(entry, def);
+    if (!parse_missile_definition_json_fields(entry, def, error)) {
+        return false;
+    }
 
     def.has_command_link = entry.value("has_command_link", false);
     parse_command_link_json_fields(entry, def);
