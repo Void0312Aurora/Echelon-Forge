@@ -47,6 +47,39 @@ struct DefaultEffectsScratch {
     double air_structure_spatial_scale = 0.0;
 
     double spatial_effect_scale = 0.0;
+    bool spatial_projection_trace_valid = false;
+    double spatial_projection_effect_scale = 0.0;
+    double spatial_projection_base_scale = 0.0;
+    double spatial_projection_curve_floor_scale = 0.0;
+    double spatial_projection_near_field_floor = 0.0;
+    double spatial_projection_floor_selected_scale = 0.0;
+    double spatial_projection_preclamp_scale = 0.0;
+    double spatial_projection_min_bound = 0.0;
+    double spatial_projection_max_bound = 0.0;
+    double spatial_projection_axis_weight = 1.0;
+    double spatial_projection_orientation_weight = 1.0;
+    double spatial_projection_armor_scale = 1.0;
+    double spatial_projection_exposure_scale = 1.0;
+    double spatial_projection_sampling_scale = 1.0;
+    bool spatial_projection_near_field_floor_applied = false;
+    bool spatial_projection_effect_scale_clamped = false;
+    bool fragment_angular_distribution_active = false;
+    std::string fragment_angular_distribution = "legacy_scalar";
+    double fragment_angular_signed_polar_cosine = 0.0;
+    double fragment_angular_polar_angle_deg = 0.0;
+    double fragment_angular_azimuth_deg = 0.0;
+    double fragment_angular_polar_density = 1.0;
+    double fragment_angular_azimuth_density = 1.0;
+    double fragment_angular_density = 1.0;
+    bool continuous_rod_ring_band_active = false;
+    bool continuous_rod_ring_band_intersection = false;
+    std::string continuous_rod_spatial_model = "legacy_side_sweep";
+    double continuous_rod_band_half_angle_deg = 0.0;
+    std::uint32_t continuous_rod_azimuthal_sample_count = 0;
+    std::uint32_t continuous_rod_polar_sample_count = 0;
+    std::uint32_t continuous_rod_intersecting_azimuthal_sample_count = 0;
+    double continuous_rod_angular_coverage_fraction = 0.0;
+    double continuous_rod_nearest_intersection_distance_m = 0.0;
     double sampled_mechanism_scale = 0.0;
     double sampled_armor_scale = 1.0;
     double sampled_exposure_scale = 1.0;
@@ -214,6 +247,62 @@ void record_default_effects_warhead_effect_sample(
     scratch.sampled_exposure_scale = std::min(scratch.sampled_exposure_scale, exposure_scale);
     record_default_effects_warhead_spatial_sample(scratch, spatial_sample);
     record_default_effects_mechanism_load(scratch, mechanism_load);
+}
+
+void record_default_effects_spatial_projection_trace(
+    DefaultEffectsScratch &scratch, const SpatialProjectionCandidate &candidate) {
+    if (scratch.spatial_projection_trace_valid) {
+        const double effect_delta = candidate.effect_scale - scratch.spatial_projection_effect_scale;
+        const bool effect_tied = std::abs(effect_delta) <= 1.0e-12;
+        if (effect_delta < -1.0e-12 ||
+            (effect_tied && candidate.preclamp_effect_scale <=
+                                 scratch.spatial_projection_preclamp_scale + 1.0e-12)) {
+            return;
+        }
+    }
+    scratch.spatial_projection_trace_valid = true;
+    scratch.spatial_projection_effect_scale = candidate.effect_scale;
+    scratch.spatial_projection_base_scale = candidate.base_effect_scale;
+    scratch.spatial_projection_curve_floor_scale = candidate.curve_floor_effect_scale;
+    scratch.spatial_projection_near_field_floor = candidate.near_field_effect_floor;
+    scratch.spatial_projection_floor_selected_scale = candidate.floor_selected_effect_scale;
+    scratch.spatial_projection_preclamp_scale = candidate.preclamp_effect_scale;
+    scratch.spatial_projection_min_bound = candidate.min_effect_scale;
+    scratch.spatial_projection_max_bound = candidate.max_effect_scale;
+    scratch.spatial_projection_axis_weight = candidate.axis_weight;
+    scratch.spatial_projection_orientation_weight = candidate.orientation_weight;
+    scratch.spatial_projection_armor_scale = candidate.armor_scale;
+    scratch.spatial_projection_exposure_scale = candidate.exposure_scale;
+    scratch.spatial_projection_sampling_scale = candidate.sampling_scale;
+    scratch.spatial_projection_near_field_floor_applied = candidate.near_field_floor_applied;
+    scratch.spatial_projection_effect_scale_clamped = candidate.effect_scale_clamped;
+    scratch.fragment_angular_distribution_active = candidate.fragment_angular_density.active;
+    scratch.fragment_angular_distribution = candidate.fragment_angular_density.distribution;
+    scratch.fragment_angular_signed_polar_cosine =
+        candidate.fragment_angular_density.signed_polar_cosine;
+    scratch.fragment_angular_polar_angle_deg =
+        candidate.fragment_angular_density.polar_angle_deg;
+    scratch.fragment_angular_azimuth_deg = candidate.fragment_angular_density.azimuth_deg;
+    scratch.fragment_angular_polar_density = candidate.fragment_angular_density.polar_density;
+    scratch.fragment_angular_azimuth_density =
+        candidate.fragment_angular_density.azimuth_density;
+    scratch.fragment_angular_density = candidate.fragment_angular_density.angular_density;
+    scratch.continuous_rod_ring_band_active = candidate.continuous_rod_ring_band.active;
+    scratch.continuous_rod_ring_band_intersection =
+        candidate.continuous_rod_ring_band.geometry_intersection;
+    scratch.continuous_rod_spatial_model = candidate.continuous_rod_ring_band.spatial_model;
+    scratch.continuous_rod_band_half_angle_deg =
+        candidate.continuous_rod_ring_band.band_half_angle_deg;
+    scratch.continuous_rod_azimuthal_sample_count =
+        candidate.continuous_rod_ring_band.azimuthal_sample_count;
+    scratch.continuous_rod_polar_sample_count =
+        candidate.continuous_rod_ring_band.polar_sample_count;
+    scratch.continuous_rod_intersecting_azimuthal_sample_count =
+        candidate.continuous_rod_ring_band.intersecting_azimuthal_sample_count;
+    scratch.continuous_rod_angular_coverage_fraction =
+        candidate.continuous_rod_ring_band.angular_coverage_fraction;
+    scratch.continuous_rod_nearest_intersection_distance_m =
+        candidate.continuous_rod_ring_band.nearest_intersection_distance_m;
 }
 
 void note_default_effects_air_system_hit(DefaultEffectsScratch &scratch, const std::string &system,

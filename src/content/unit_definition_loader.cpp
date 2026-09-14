@@ -515,6 +515,36 @@ void parse_warhead_json_fields(const nlohmann::json &src, MissileTuningDefinitio
     profile.gurney_constant_mps = src.value("gurney_constant_mps", profile.gurney_constant_mps);
     profile.fragment_mass_kg = src.value("fragment_mass_kg", profile.fragment_mass_kg);
     profile.fragment_count = src.value("fragment_count", profile.fragment_count);
+    profile.fragment_angular_distribution =
+        src.value("fragment_angular_distribution", profile.fragment_angular_distribution);
+    profile.fragment_polar_concentration =
+        src.value("fragment_polar_concentration", profile.fragment_polar_concentration);
+    profile.fragment_isotropic_fraction =
+        src.value("fragment_isotropic_fraction", profile.fragment_isotropic_fraction);
+    profile.fragment_azimuthal_modulation =
+        src.value("fragment_azimuthal_modulation", profile.fragment_azimuthal_modulation);
+    if (src.contains("fragment_azimuthal_lobes") &&
+        src["fragment_azimuthal_lobes"].is_number_unsigned()) {
+        profile.fragment_azimuthal_lobes = src["fragment_azimuthal_lobes"].get<std::uint32_t>();
+    }
+    profile.fragment_azimuthal_phase_deg =
+        src.value("fragment_azimuthal_phase_deg", profile.fragment_azimuthal_phase_deg);
+    profile.continuous_rod_spatial_model =
+        src.value("continuous_rod_spatial_model", profile.continuous_rod_spatial_model);
+    profile.continuous_rod_band_half_angle_deg = src.value(
+        "continuous_rod_band_half_angle_deg", profile.continuous_rod_band_half_angle_deg);
+    if (src.contains("continuous_rod_azimuthal_samples") &&
+        src["continuous_rod_azimuthal_samples"].is_number_unsigned()) {
+        profile.continuous_rod_azimuthal_samples =
+            src["continuous_rod_azimuthal_samples"].get<std::uint32_t>();
+    }
+    if (src.contains("continuous_rod_polar_samples") &&
+        src["continuous_rod_polar_samples"].is_number_unsigned()) {
+        profile.continuous_rod_polar_samples =
+            src["continuous_rod_polar_samples"].get<std::uint32_t>();
+    }
+    profile.continuous_rod_azimuthal_phase_deg = src.value(
+        "continuous_rod_azimuthal_phase_deg", profile.continuous_rod_azimuthal_phase_deg);
     profile.projection_radius_fraction =
         src.value("projection_radius_fraction", profile.projection_radius_fraction);
     profile.projection_min_radius_m =
@@ -523,6 +553,8 @@ void parse_warhead_json_fields(const nlohmann::json &src, MissileTuningDefinitio
         src.value("projection_max_radius_m", profile.projection_max_radius_m);
     profile.projection_min_effect_scale =
         src.value("projection_min_effect_scale", profile.projection_min_effect_scale);
+    profile.projection_curve_floor_effect_scale = src.value(
+        "projection_curve_floor_effect_scale", profile.projection_curve_floor_effect_scale);
     profile.projection_max_effect_scale =
         src.value("projection_max_effect_scale", profile.projection_max_effect_scale);
     profile.projection_falloff_exponent =
@@ -532,6 +564,8 @@ void parse_warhead_json_fields(const nlohmann::json &src, MissileTuningDefinitio
         profile.projection_max_projected_hitboxes =
             src["projection_max_projected_hitboxes"].get<std::uint32_t>();
     }
+    profile.projection_near_field_floor_enabled = src.value(
+        "projection_near_field_floor_enabled", profile.projection_near_field_floor_enabled);
     if (src.contains("damage") && src["damage"].is_number()) {
         profile.damage_scalar = src["damage"].get<double>();
         profile.damage_scalar_synthetic = false;

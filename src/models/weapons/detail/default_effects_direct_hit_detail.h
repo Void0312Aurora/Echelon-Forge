@@ -4,7 +4,8 @@
 template <typename ResolveSystemSeverity, typename ApplySystemEffect>
 void apply_default_effects_direct_hitboxes(
     DefaultEffectsScratch &scratch, const HitboxConfig &hitboxes, bool structured_air_target,
-    const Missile &missile, const Vec3 &local_imp, const Vec3 &warhead_orientation_axis_body,
+    const Missile &missile, const Vec3 &local_imp,
+    const WarheadOrientationFrame &warhead_orientation_frame,
     const Vec3 &missile_axis_body, double closure_mps, SystemHealth *sys_health,
     ResolveSystemSeverity &&resolve_system_severity, ApplySystemEffect &&apply_system_effect) {
     for (const auto &box : hitboxes.hitboxes) {
@@ -27,7 +28,7 @@ void apply_default_effects_direct_hitboxes(
                         component_projected_exposure_scale(local_imp, component);
                     const double orientation_weight = warhead_orientation_pattern_weight(
                         missile.warhead_profile, local_imp, component_box,
-                        warhead_orientation_axis_body);
+                        warhead_orientation_frame);
                     const WarheadSpatialSample spatial_sample =
                         sample_warhead_spatial_effect(missile, component_box, 0.0, 1.0, 1.0,
                                                       orientation_weight, exposure_scale, true);
@@ -72,7 +73,7 @@ void apply_default_effects_direct_hitboxes(
                 WarheadMechanismLoadEvidence mechanism_load{};
                 if (structured_air_target) {
                     const double orientation_weight = warhead_orientation_pattern_weight(
-                        missile.warhead_profile, local_imp, box, warhead_orientation_axis_body);
+                        missile.warhead_profile, local_imp, box, warhead_orientation_frame);
                     const WarheadSpatialSample spatial_sample = sample_warhead_spatial_effect(
                         missile, box, 0.0, 1.0, 1.0, orientation_weight, exposure_scale, true);
                     mechanism_load = with_surface_incidence(

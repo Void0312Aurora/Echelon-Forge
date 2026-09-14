@@ -44,6 +44,28 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                 out["warhead_gurney_constant_mps"] = missile->warhead_profile.gurney_constant_mps;
                 out["warhead_fragment_mass_kg"] = missile->warhead_profile.fragment_mass_kg;
                 out["warhead_fragment_count"] = missile->warhead_profile.fragment_count;
+                out["warhead_fragment_angular_distribution"] =
+                    missile->warhead_profile.fragment_angular_distribution;
+                out["warhead_continuous_rod_spatial_model"] =
+                    missile->warhead_profile.continuous_rod_spatial_model;
+                out["warhead_continuous_rod_band_half_angle_deg"] =
+                    missile->warhead_profile.continuous_rod_band_half_angle_deg;
+                out["warhead_continuous_rod_azimuthal_samples"] =
+                    missile->warhead_profile.continuous_rod_azimuthal_samples;
+                out["warhead_continuous_rod_polar_samples"] =
+                    missile->warhead_profile.continuous_rod_polar_samples;
+                out["warhead_continuous_rod_azimuthal_phase_deg"] =
+                    missile->warhead_profile.continuous_rod_azimuthal_phase_deg;
+                out["warhead_fragment_polar_concentration"] =
+                    missile->warhead_profile.fragment_polar_concentration;
+                out["warhead_fragment_isotropic_fraction"] =
+                    missile->warhead_profile.fragment_isotropic_fraction;
+                out["warhead_fragment_azimuthal_modulation"] =
+                    missile->warhead_profile.fragment_azimuthal_modulation;
+                out["warhead_fragment_azimuthal_lobes"] =
+                    missile->warhead_profile.fragment_azimuthal_lobes;
+                out["warhead_fragment_azimuthal_phase_deg"] =
+                    missile->warhead_profile.fragment_azimuthal_phase_deg;
                 out["warhead_projection_radius_fraction"] =
                     missile->warhead_profile.projection_radius_fraction;
                 out["warhead_projection_min_radius_m"] =
@@ -52,12 +74,16 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                     missile->warhead_profile.projection_max_radius_m;
                 out["warhead_projection_min_effect_scale"] =
                     missile->warhead_profile.projection_min_effect_scale;
+                out["warhead_projection_curve_floor_effect_scale"] =
+                    missile->warhead_profile.projection_curve_floor_effect_scale;
                 out["warhead_projection_max_effect_scale"] =
                     missile->warhead_profile.projection_max_effect_scale;
                 out["warhead_projection_falloff_exponent"] =
                     missile->warhead_profile.projection_falloff_exponent;
                 out["warhead_projection_max_projected_hitboxes"] =
                     missile->warhead_profile.projection_max_projected_hitboxes;
+                out["warhead_projection_near_field_floor_enabled"] =
+                    missile->warhead_profile.projection_near_field_floor_enabled;
                 out["warhead_provenance"] = missile->warhead_profile.provenance;
                 out["fuze_type"] = missile->fuze_profile.type;
                 out["fuze_trigger_radius_m"] = missile->fuze_profile.trigger_radius_m;
