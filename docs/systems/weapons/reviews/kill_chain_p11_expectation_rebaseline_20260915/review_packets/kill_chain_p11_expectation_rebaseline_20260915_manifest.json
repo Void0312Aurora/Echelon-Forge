@@ -1,0 +1,37 @@
+{
+  "schema_version": "a2.kill_chain_p11_expectation_rebaseline_manifest.v1",
+  "report_schema_version": "a2.kill_chain_p11_expectation_rebaseline.v1",
+  "generated_at_utc": "2026-09-15T10:23:06.646511+00:00",
+  "git": {
+    "head": "7bd3f6feed051c4f857365a7c86d38568fa9956c",
+    "branch": "codex/kill-chain-p10-maneuver-apn",
+    "worktree_porcelain": "?? docs/systems/weapons/reviews/kill_chain_p11_expectation_rebaseline_20260915/\n?? tests/tools/test_kill_chain_p11_expectation_rebaseline.py\n?? tools/diagnostics/kill_chain_p11_expectation_rebaseline.py"
+  },
+  "inputs": {
+    "tool": {
+      "path": "tools\\diagnostics\\kill_chain_p11_expectation_rebaseline.py",
+      "sha256": "66c2928fdde20fa29432408b556cfa16e80159956be24038b5365d91d90ae3ac"
+    },
+    "source_report": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_integrated_admission_20260915\\review_packets\\kill_chain_integrated_admission_20260915.json",
+      "sha256": "fb086fe5e70abb8ed27820a887299fba183bb1c6356b0c7b4c5f158793d60454"
+    }
+  },
+  "artifacts": {
+    "report_json": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p11_expectation_rebaseline_20260915\\review_packets\\kill_chain_p11_expectation_rebaseline_20260915.json",
+      "sha256": "14a125c0d7230bb9d051b1d4e8642ceef28af1a538da901568c4057001ac8f73",
+      "bytes": 66341
+    },
+    "cells_csv": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p11_expectation_rebaseline_20260915\\review_packets\\kill_chain_p11_expectation_rebaseline_20260915_cells.csv",
+      "sha256": "8ef71e1277d63fa4d4f19fc57a107263ff2ab132e3ad2fcb674ac6b0982a16dc",
+      "bytes": 16492
+    },
+    "conclusions_zh_md": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p11_expectation_rebaseline_20260915\\review_packets\\kill_chain_p11_expectation_rebaseline_20260915_conclusions.zh.md",
+      "sha256": "0d436d62566b63af55c538b01bddf60b8a8ac693cc3f6e291c5f36fa785bfad1",
+      "bytes": 995
+    }
+  }
+}
