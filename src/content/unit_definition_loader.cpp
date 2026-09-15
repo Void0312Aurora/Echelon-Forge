@@ -12,7 +12,7 @@
 #include <filesystem>
 #include <unordered_map>
 
-#include "models/weapons/missile_guidance_types.h"
+#include "components/combat/common/missile_guidance_types.h"
 
 namespace fs = std::filesystem;
 

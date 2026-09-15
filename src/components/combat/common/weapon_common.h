@@ -8,10 +8,9 @@
 #include <vector>
 
 #include "components/combat/common/missile_seeker_state.h"
+#include "components/combat/common/missile_world_tracker_state.h"
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"
-#include "models/weapons/kalman_seeker.h"
-#include "models/weapons/world_cv_alpha_beta_tracker.h"
 
 struct WarheadProfile {
     std::string family = "blast_fragmentation";

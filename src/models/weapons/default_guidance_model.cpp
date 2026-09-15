@@ -19,6 +19,7 @@
 #include "models/weapons/kalman_seeker.h"
 #include "models/weapons/missile_guidance_math.h"
 #include "models/weapons/missile_guidance_types.h"
+#include "models/weapons/world_cv_alpha_beta_tracker.h"
 
 namespace {
 

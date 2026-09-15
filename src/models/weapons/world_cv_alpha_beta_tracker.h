@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <limits>
 
+#include "components/combat/common/missile_world_tracker_state.h"
 #include "models/weapons/missile_guidance_math.h"
 
 namespace missile_guidance {
@@ -21,32 +22,6 @@ inline Vec3 suppress_world_cva_acceleration_roundoff(const Vec3 &value) {
             std::abs(value.y) < kRoundoffFloorMps2 ? 0.0 : value.y,
             std::abs(value.z) < kRoundoffFloorMps2 ? 0.0 : value.z};
 }
-
-// World-frame constant-acceleration tracker used only when the guidance
-// estimator explicitly opts into maneuver observability. The CV tracker below
-// intentionally publishes zero acceleration and remains unchanged.
-struct WorldCvaAlphaBetaGammaTrackerState {
-    static constexpr std::size_t kMeasurementHistoryCapacity = 100;
-    bool position_valid = false;
-    bool velocity_valid = false;
-    bool acceleration_valid = false;
-    std::uint32_t accepted_measurement_count = 0;
-    Vec3 corrected_position_world_m{};
-    Vec3 corrected_velocity_world_mps{};
-    Vec3 corrected_acceleration_world_mps2{};
-    Vec3 last_measurement_position_world_m{};
-    Vec3 first_measurement_position_world_m{};
-    std::array<Vec3, kMeasurementHistoryCapacity> measurement_history_positions{};
-    std::array<double, kMeasurementHistoryCapacity> measurement_history_times{};
-    std::size_t measurement_history_count = 0;
-    std::size_t measurement_history_next = 0;
-    Vec3 last_prediction_position_world_m{};
-    Vec3 last_residual_world_m{};
-    double correction_time_s = 0.0;
-    double first_measurement_time_s = -std::numeric_limits<double>::infinity();
-    double last_measurement_time_s = -std::numeric_limits<double>::infinity();
-    double last_update_dt_s = 0.0;
-};
 
 struct WorldCvaAlphaBetaGammaTrackerParams {
     double alpha = 0.20;
@@ -281,27 +256,6 @@ update_world_cva_alpha_beta_gamma_tracker(WorldCvaAlphaBetaGammaTrackerState &st
     output.measurement_rejected_invalid = rejected_invalid;
     return output;
 }
-
-// A world-frame constant-velocity tracker. The state is anchored at the most
-// recent accepted measurement timestamp; propagation to the caller's current
-// time is returned as an output and does not consume a measurement epoch.
-struct WorldCvAlphaBetaTrackerState {
-    bool position_valid = false;
-    bool velocity_valid = false;
-    std::uint32_t accepted_measurement_count = 0;
-
-    Vec3 corrected_position_world_m{};
-    Vec3 corrected_velocity_world_mps{};
-    Vec3 last_measurement_position_world_m{};
-    Vec3 first_measurement_position_world_m{};
-    Vec3 last_prediction_position_world_m{};
-    Vec3 last_residual_world_m{};
-
-    double correction_time_s = 0.0;
-    double first_measurement_time_s = -std::numeric_limits<double>::infinity();
-    double last_measurement_time_s = -std::numeric_limits<double>::infinity();
-    double last_update_dt_s = 0.0;
-};
 
 struct WorldCvAlphaBetaTrackerParams {
     double alpha = 0.20;
