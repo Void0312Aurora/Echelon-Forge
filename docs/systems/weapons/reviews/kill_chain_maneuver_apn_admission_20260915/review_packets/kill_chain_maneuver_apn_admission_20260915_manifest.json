@@ -1,0 +1,50 @@
+{
+  "schema_version": "a2.kill_chain_maneuver_apn_admission_manifest.v1",
+  "report_schema_version": "a2.kill_chain_maneuver_apn_admission.v1",
+  "generated_at_utc": "2026-09-15T00:20:14.831355+00:00",
+  "tool": {
+    "path": "tools\\diagnostics\\kill_chain_maneuver_apn_admission.py",
+    "sha256": "4581f7a2d53c6e18ef913fb81aeb734424233cf2ba56f9e09da860d1a22aa9fb"
+  },
+  "git": {
+    "head": "a5c821f1bd772d646be5d18cd61d8bb292707a73",
+    "branch": "codex/kill-chain-p10-maneuver-apn",
+    "worktree_porcelain": "M src/components/combat/common/weapon_common.h\n M src/content/unit_definition.h\n M src/content/unit_definition_loader.cpp\n M src/core/engine/simulation_kernel.cpp\n M src/core/engine/simulation_kernel_missile_tuning.h\n M src/core/engine/simulation_kernel_weapon_release_service.cpp\n M src/interfaces/python/bindings_core_kernel_diagnostics_missile.cpp\n M src/interfaces/python/bindings_core_weapon_profiles.cpp\n M src/models/core/default_unit_factory.h\n M src/models/weapons/default_guidance_model.cpp\n M src/models/weapons/missile_guidance_types.h\n M src/models/weapons/world_cv_alpha_beta_tracker.h\n M src/tests/test_components_basic.cpp\n M src/tests/test_world_cv_alpha_beta_tracker.cpp\n M tools/diagnostics/kill_chain_decoupling_probe.py\n?? docs/systems/weapons/reviews/kill_chain_maneuver_apn_admission_20260915/\n?? tests/tools/test_kill_chain_maneuver_apn_admission.py\n?? tools/diagnostics/kill_chain_maneuver_apn_admission.py\n?? tools/diagnostics/render_kill_chain_maneuver_apn_heatmap.py"
+  },
+  "runtime": {
+    "ef_py_path": "D:\\workshop\\Research\\Echelon-Forge\\build-kill-chain-p10-maneuver-apn\\Release\\ef_py.cp312-win_amd64.pyd",
+    "ef_py_sha256": "f59ed6d2dafd70ae9e22c7f50ddcd70b0fd08eef0a1e64048266b35ec5e1ee3e"
+  },
+  "artifacts": {
+    "report_json": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_maneuver_apn_admission_20260915\\review_packets\\kill_chain_maneuver_apn_admission_20260915.json",
+      "sha256": "a17c7eb7cc8cd231d7e844bcbce31373b147f617807ac329765e518c48ee4a3f",
+      "bytes": 201122
+    },
+    "clean_runs_csv": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_maneuver_apn_admission_20260915\\review_packets\\kill_chain_maneuver_apn_admission_20260915_clean_runs.csv",
+      "sha256": "a55690632dbf9051ef8d3b15bfd09716cea6d716dbe324b9770389222b21ece0",
+      "bytes": 46350
+    },
+    "noisy_runs_csv": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_maneuver_apn_admission_20260915\\review_packets\\kill_chain_maneuver_apn_admission_20260915_noisy_runs.csv",
+      "sha256": "72de0680a1e49de2aed3f6075ac38fa722f95c66b0bd143842b41aa952f7cda6",
+      "bytes": 12801
+    },
+    "candidate_summary_csv": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_maneuver_apn_admission_20260915\\review_packets\\kill_chain_maneuver_apn_admission_20260915_candidate_summary.csv",
+      "sha256": "e102f17e0ea37fb4618e2693abc46aa475174cfd4c7c6da6f7c5797283db99c5",
+      "bytes": 2053
+    },
+    "conclusions_zh_md": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_maneuver_apn_admission_20260915\\review_packets\\kill_chain_maneuver_apn_admission_20260915_conclusions.zh.md",
+      "sha256": "ffafa63037350a3f33e000ade5df8f88f3a4f4f3e7262c1c743d65c877d22647",
+      "bytes": 864
+    },
+    "heatmaps_png": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_maneuver_apn_admission_20260915\\review_packets\\kill_chain_maneuver_apn_admission_20260915_heatmaps.png",
+      "sha256": "4615b6c08ceac72128dff9499ddbcc267a3e48ae473dbeec458ba59f4ab7b0fa",
+      "bytes": 492377
+    }
+  }
+}

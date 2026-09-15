@@ -101,8 +101,8 @@ void SimulationKernel::set_missile_tuning(const MissileTuning &tuning) {
     }
     if (tuning.target_kinematics_estimator < -1 ||
         tuning.target_kinematics_estimator >
-            static_cast<int>(MissileTargetKinematicsEstimator::WorldCv)) {
-        throw std::invalid_argument("target_kinematics_estimator must be -1, 0, or 1");
+            static_cast<int>(MissileTargetKinematicsEstimator::WorldCva)) {
+        throw std::invalid_argument("target_kinematics_estimator must be -1, 0, 1, or 2");
     }
     if (tuning.capture_guidance_mode < -1 ||
         tuning.capture_guidance_mode >
@@ -116,6 +116,10 @@ void SimulationKernel::set_missile_tuning(const MissileTuning &tuning) {
     if (std::isfinite(tuning.target_tracker_beta) &&
         (tuning.target_tracker_beta < 0.0 || tuning.target_tracker_beta > 2.0)) {
         throw std::invalid_argument("target_tracker_beta must be in [0, 2]");
+    }
+    if (std::isfinite(tuning.target_tracker_gamma) &&
+        (tuning.target_tracker_gamma < 0.0 || tuning.target_tracker_gamma > 1.0)) {
+        throw std::invalid_argument("target_tracker_gamma must be in [0, 1]");
     }
     missile_tuning_ = tuning;
     world_state_mutated_ = true;

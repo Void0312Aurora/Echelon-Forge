@@ -5,6 +5,7 @@
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"
 #include "components/systems/sensor.h"
+#include "models/weapons/missile_guidance_types.h"
 
 void bind_simulation_kernel_diagnostics_missile_runtime_surface(
     nb::class_<SimulationKernel> &kernel) {
@@ -104,6 +105,7 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                 out["capture_guidance_mode"] = missile->capture_guidance_mode;
                 out["target_tracker_alpha"] = missile->target_tracker_alpha;
                 out["target_tracker_beta"] = missile->target_tracker_beta;
+                out["target_tracker_gamma"] = missile->target_tracker_gamma;
                 out["apn_target_accel_gain"] = missile->apn_target_accel_gain;
                 out["autopilot_order"] = missile->autopilot_order;
                 out["autopilot_damping"] = missile->autopilot_damping;
@@ -173,8 +175,13 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                 out["target_track_ax_mps2"] = missile->target_track_ax_mps2;
                 out["target_track_ay_mps2"] = missile->target_track_ay_mps2;
                 out["target_track_az_mps2"] = missile->target_track_az_mps2;
+                const bool uses_world_cva =
+                    missile->target_kinematics_estimator ==
+                    static_cast<int>(MissileTargetKinematicsEstimator::WorldCva);
                 out["target_measurement_timestamp_s"] =
-                    missile->world_cv_target_tracker.last_measurement_time_s;
+                    uses_world_cva
+                        ? missile->world_cva_target_tracker.last_measurement_time_s
+                        : missile->world_cv_target_tracker.last_measurement_time_s;
                 out["target_measurement_age_s"] = missile->target_measurement_age_s;
                 out["target_measurement_fresh"] = missile->target_measurement_fresh;
                 out["target_measurement_rejected_nonmonotonic"] =
@@ -183,8 +190,21 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                     missile->target_duplicate_measurement_count;
                 out["target_estimator_update_dt_s"] = missile->target_estimator_update_dt_s;
                 out["target_estimator_sample_count"] =
-                    missile->world_cv_target_tracker.accepted_measurement_count;
-                out["target_velocity_valid"] = missile->world_cv_target_tracker.velocity_valid;
+                    uses_world_cva
+                        ? missile->world_cva_target_tracker.accepted_measurement_count
+                        : missile->world_cv_target_tracker.accepted_measurement_count;
+                out["target_velocity_valid"] =
+                    uses_world_cva ? missile->world_cva_target_tracker.velocity_valid
+                                   : missile->world_cv_target_tracker.velocity_valid;
+                out["target_acceleration_valid"] =
+                    uses_world_cva && missile->world_cva_target_tracker.acceleration_valid;
+                out["target_acceleration_estimator_sample_count"] =
+                    uses_world_cva
+                        ? missile->world_cva_target_tracker.accepted_measurement_count
+                        : 0;
+                out["target_acceleration_x_mps2"] = missile->target_track_ax_mps2;
+                out["target_acceleration_y_mps2"] = missile->target_track_ay_mps2;
+                out["target_acceleration_z_mps2"] = missile->target_track_az_mps2;
                 out["target_measurement_x_m"] = missile->target_measurement_x_m;
                 out["target_measurement_y_m"] = missile->target_measurement_y_m;
                 out["target_measurement_z_m"] = missile->target_measurement_z_m;

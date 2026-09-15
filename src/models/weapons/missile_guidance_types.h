@@ -14,6 +14,7 @@ enum class MissilePnLosRateSource {
 enum class MissileTargetKinematicsEstimator {
     LegacyPolarDifference = 0,
     WorldCv = 1,
+    WorldCva = 2,
 };
 
 enum class MissileCaptureGuidanceMode {
@@ -30,6 +31,7 @@ struct MissileGuidanceDefaults {
         static_cast<int>(MissileCaptureGuidanceMode::LegacyPursuit);
     static constexpr double kWorldCvTrackerAlpha = 0.20;
     static constexpr double kWorldCvTrackerBeta = 0.02;
+    static constexpr double kWorldCvaTrackerGamma = 0.0002;
     static constexpr double kTrackFilterTauS = 0.12;
     static constexpr double kTrackMemoryTimeoutS = 0.75;
     static constexpr double kBoostTimeS = 3.0;

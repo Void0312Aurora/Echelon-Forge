@@ -1,0 +1,691 @@
+#!/usr/bin/env python3
+"""Build the P10 maneuver-tracker and APN admission evidence bundle.
+
+This is an engineering/synthetic admission only.  It proves whether non-zero
+target acceleration is observable and whether APN propagation is structurally
+identifiable.  It does not claim real AIM-120 performance or Pk authority.
+"""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import hashlib
+import json
+import math
+import statistics
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Callable, Iterable
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+  sys.path.insert(0, str(REPO_ROOT))
+
+from tools.diagnostics import kill_chain_decoupling_probe as probe  # noqa: E402
+
+
+SCHEMA_VERSION = "a2.kill_chain_maneuver_apn_admission.v1"
+GENERATED_ON = "2026-09-15"
+DEFAULT_OUTPUT_DIR = (
+  REPO_ROOT
+  / "docs/systems/weapons/reviews/kill_chain_maneuver_apn_admission_20260915/"
+  "review_packets"
+)
+DEFAULT_STEM = "kill_chain_maneuver_apn_admission_20260915"
+R_FUZE_M = 15.0
+RANGES_KM = (6.0, 8.0, 10.0)
+BEARINGS_DEG = (-60.0, -30.0, 0.0, 30.0, 60.0)
+TARGET_ACCELERATIONS_X_MPS2 = (-8.0, 0.0, 8.0)
+APN_GAINS = (0.0, 0.125, 0.25, 0.5)
+NOISY_SEEDS = (20260621, 20260622, 20260623)
+NOISY_RANGE_KM = 8.0
+NOISY_BEARINGS_DEG = (-30.0, 30.0)
+NOISY_ACCELERATIONS_X_MPS2 = (-8.0, 8.0)
+
+PRODUCTION_MECHANISM_TUNING: dict[str, float | int] = {
+  "pn_los_rate_source": 1,
+  "target_kinematics_estimator": 2,
+  "target_tracker_alpha": 0.20,
+  "target_tracker_beta": 0.02,
+  "target_tracker_gamma": 0.0002,
+  "capture_guidance_mode": 0,
+  "nav_gain": 4.0,
+  "max_lateral_g": 35.0,
+}
+
+TRACKER_GATES = {
+  "clean_max_acceleration_rmse_mps2": 1.25,
+  "clean_max_terminal_acceleration_error_mps2": 0.10,
+  "constant_velocity_max_false_acceleration_mps2": 1.0e-6,
+  "zero_truth_max_apn_acceleration_mps2": 1.0e-6,
+  "maneuver_min_identifiable_apn_acceleration_mps2": 0.10,
+  "max_component_sum_error_mps2": 1.0e-9,
+  "max_mirror_nearest_distance_error_m": 1.0e-3,
+  "max_achieved_lateral_g": 35.0 + 1.0e-6,
+}
+
+NOISY_PROMOTION_GATES = {
+  "max_acceleration_rmse_mps2": 12.0,
+  "max_estimated_acceleration_mps2": 32.0,
+}
+
+
+def _finite(value: Any, default: float = 0.0) -> float:
+  try:
+    parsed = float(value)
+  except (TypeError, ValueError):
+    return float(default)
+  return parsed if math.isfinite(parsed) else float(default)
+
+
+def _nearest_distance(result: dict[str, Any]) -> float:
+  for field in ("nearest_miss_distance_m", "truth_min_distance_m"):
+    value = result.get(field)
+    if value is not None and math.isfinite(float(value)):
+      return float(value)
+  raise RuntimeError(f"missing finite nearest distance for {result.get('case_id')}")
+
+
+def _stable_trace(result: dict[str, Any]) -> list[dict[str, Any]]:
+  return [
+    row
+    for row in list(result.get("guidance_runtime_trace", []) or [])
+    if _finite(row.get("time_s")) >= 1.0
+    and _finite(row.get("truth_distance_m")) > 1000.0
+    and bool(row.get("target_acceleration_valid"))
+  ]
+
+
+def _max(rows: Iterable[dict[str, Any]], field: str, default: float = 0.0) -> float:
+  values = [_finite(row.get(field), default) for row in rows]
+  return max(values, default=default)
+
+
+def _summarize_run(
+  result: dict[str, Any],
+  *,
+  tier: str,
+  range_km: float,
+  bearing_deg: float,
+  target_accel_x_mps2: float,
+  apn_gain: float,
+  seed: int,
+) -> dict[str, Any]:
+  stable = _stable_trace(result)
+  errors = [_finite(row.get("target_accel_error_mps2")) for row in stable]
+  terminal_error = errors[-1] if errors else math.inf
+  resolved = dict(result.get("resolved_guidance_runtime", {}) or {})
+  expected = {
+    key: value
+    for key, value in PRODUCTION_MECHANISM_TUNING.items()
+    if key != "max_lateral_g"
+  }
+  expected["guidance_max_lateral_g"] = PRODUCTION_MECHANISM_TUNING["max_lateral_g"]
+  expected["apn_target_accel_gain"] = apn_gain
+  resolved_mismatch = {
+    key: {"expected": value, "actual": resolved.get(key)}
+    for key, value in expected.items()
+    if resolved.get(key) != value
+  }
+  return {
+    "tier": tier,
+    "case_id": str(result.get("case_id", "")),
+    "range_km": float(range_km),
+    "bearing_deg": float(bearing_deg),
+    "target_accel_x_mps2": float(target_accel_x_mps2),
+    "apn_gain": float(apn_gain),
+    "seed": int(seed),
+    "nearest_distance_m": _nearest_distance(result),
+    "rho_fuze": _nearest_distance(result) / R_FUZE_M,
+    "entered_R_fuze": _nearest_distance(result) <= R_FUZE_M,
+    "max_achieved_lateral_g": _finite(result.get("max_achieved_lateral_g")),
+    "stable_trace_count": len(stable),
+    "acceleration_valid_observed": bool(stable),
+    "acceleration_rmse_mps2": (
+      math.sqrt(statistics.fmean(value * value for value in errors))
+      if errors
+      else math.inf
+    ),
+    "terminal_acceleration_error_mps2": terminal_error,
+    "max_estimated_acceleration_mps2": _max(stable, "target_track_accel_mps2"),
+    "max_apn_acceleration_mps2": _max(stable, "guidance_apn_lateral_accel_mps2"),
+    "max_component_sum_error_mps2": _max(stable, "guidance_component_sum_error_mps2"),
+    "resolved_runtime_mismatch": resolved_mismatch,
+  }
+
+
+def _run(
+  *,
+  tier: str,
+  range_km: float,
+  bearing_deg: float,
+  target_accel_x_mps2: float,
+  apn_gain: float,
+  seed: int,
+  noisy: bool,
+  runner: Callable[..., dict[str, Any]],
+) -> dict[str, Any]:
+  case_id = (
+    f"p10_{tier}_r{range_km:g}_b{bearing_deg:+g}_a{target_accel_x_mps2:+g}_"
+    f"g{apn_gain:g}_s{seed}"
+  ).replace("+", "p").replace("-", "m").replace(".", "p")
+  result = runner(
+    case_id=case_id,
+    range_m=float(range_km) * 1000.0,
+    bearing_deg=float(bearing_deg),
+    seed=int(seed),
+    guidance_tuning_overrides={
+      **PRODUCTION_MECHANISM_TUNING,
+      "apn_target_accel_gain": float(apn_gain),
+    },
+    collect_guidance_runtime_trace=True,
+    guidance_trace_stride=3,
+    guidance_measurement_period_s=0.05 if noisy else 0.0,
+    guidance_bearing_noise_std_deg=0.2 if noisy else 0.0,
+    guidance_range_noise_std_m=10.0 if noisy else 0.0,
+    target_acceleration_mps2=(float(target_accel_x_mps2), 0.0, 0.0),
+  )
+  return _summarize_run(
+    result,
+    tier=tier,
+    range_km=range_km,
+    bearing_deg=bearing_deg,
+    target_accel_x_mps2=target_accel_x_mps2,
+    apn_gain=apn_gain,
+    seed=seed,
+  )
+
+
+def _mirror_error(rows: list[dict[str, Any]]) -> float:
+  lookup = {
+    (
+      row["tier"], row["range_km"], row["bearing_deg"],
+      row["target_accel_x_mps2"], row["apn_gain"], row["seed"],
+    ): row
+    for row in rows
+  }
+  errors: list[float] = []
+  for row in rows:
+    mirrored = lookup.get(
+      (
+        row["tier"], row["range_km"], -row["bearing_deg"],
+        -row["target_accel_x_mps2"], row["apn_gain"], row["seed"],
+      )
+    )
+    if mirrored is not None:
+      errors.append(abs(row["nearest_distance_m"] - mirrored["nearest_distance_m"]))
+  return max(errors, default=math.inf)
+
+
+def _candidate_summary(rows: list[dict[str, Any]], gain: float) -> dict[str, Any]:
+  selected = [row for row in rows if row["apn_gain"] == gain]
+  distances = [row["nearest_distance_m"] for row in selected]
+  maneuver = [row for row in selected if row["target_accel_x_mps2"] != 0.0]
+  constant_velocity = [row for row in selected if row["target_accel_x_mps2"] == 0.0]
+  return {
+    "apn_gain": float(gain),
+    "run_count": len(selected),
+    "hit_count": sum(value <= R_FUZE_M for value in distances),
+    "miss_count": sum(value > R_FUZE_M for value in distances),
+    "worst_nearest_distance_m": max(distances, default=math.inf),
+    "mean_nearest_distance_m": statistics.fmean(distances) if distances else math.inf,
+    "total_excess_over_R_fuze_m": sum(max(0.0, value - R_FUZE_M) for value in distances),
+    "max_acceleration_rmse_mps2": max(
+      (row["acceleration_rmse_mps2"] for row in maneuver), default=math.inf
+    ),
+    "max_terminal_acceleration_error_mps2": max(
+      (row["terminal_acceleration_error_mps2"] for row in maneuver), default=math.inf
+    ),
+    "max_estimated_acceleration_mps2": max(
+      (row["max_estimated_acceleration_mps2"] for row in maneuver), default=math.inf
+    ),
+    "min_maneuver_apn_acceleration_mps2": min(
+      (row["max_apn_acceleration_mps2"] for row in maneuver), default=0.0
+    ),
+    "max_constant_velocity_apn_acceleration_mps2": max(
+      (row["max_apn_acceleration_mps2"] for row in constant_velocity), default=0.0
+    ),
+    "max_constant_velocity_false_acceleration_mps2": max(
+      (row["max_estimated_acceleration_mps2"] for row in constant_velocity), default=0.0
+    ),
+    "max_achieved_lateral_g": max(
+      (row["max_achieved_lateral_g"] for row in selected), default=math.inf
+    ),
+    "max_component_sum_error_mps2": max(
+      (row["max_component_sum_error_mps2"] for row in selected), default=math.inf
+    ),
+  }
+
+
+def _clear_net_benefit(candidate: dict[str, Any], baseline: dict[str, Any]) -> bool:
+  return bool(
+    candidate["apn_gain"] > 0.0
+    and candidate["hit_count"] >= baseline["hit_count"]
+    and candidate["worst_nearest_distance_m"] <= baseline["worst_nearest_distance_m"]
+    and candidate["total_excess_over_R_fuze_m"]
+    < baseline["total_excess_over_R_fuze_m"] - 0.1
+  )
+
+
+def build_report(
+  *,
+  ranges_km: tuple[float, ...] = RANGES_KM,
+  bearings_deg: tuple[float, ...] = BEARINGS_DEG,
+  accelerations_x_mps2: tuple[float, ...] = TARGET_ACCELERATIONS_X_MPS2,
+  apn_gains: tuple[float, ...] = APN_GAINS,
+  noisy_seeds: tuple[int, ...] = NOISY_SEEDS,
+  include_noisy: bool = True,
+  runner: Callable[..., dict[str, Any]] = probe.run_guidance_case,
+) -> dict[str, Any]:
+  clean_rows = [
+    _run(
+      tier="clean_stage4",
+      range_km=range_km,
+      bearing_deg=bearing_deg,
+      target_accel_x_mps2=acceleration,
+      apn_gain=gain,
+      seed=NOISY_SEEDS[0],
+      noisy=False,
+      runner=runner,
+    )
+    for gain in apn_gains
+    for range_km in ranges_km
+    for bearing_deg in bearings_deg
+    for acceleration in accelerations_x_mps2
+  ]
+  noisy_rows: list[dict[str, Any]] = []
+  if include_noisy:
+    noisy_rows = [
+      _run(
+        tier="noisy_stage5_holdout",
+        range_km=NOISY_RANGE_KM,
+        bearing_deg=bearing_deg,
+        target_accel_x_mps2=acceleration,
+        apn_gain=gain,
+        seed=seed,
+        noisy=True,
+        runner=runner,
+      )
+      for gain in apn_gains
+      for seed in noisy_seeds
+      for bearing_deg in NOISY_BEARINGS_DEG
+      for acceleration in NOISY_ACCELERATIONS_X_MPS2
+    ]
+
+  clean_candidates = [_candidate_summary(clean_rows, gain) for gain in apn_gains]
+  noisy_candidates = [_candidate_summary(noisy_rows, gain) for gain in apn_gains]
+  baseline = next(row for row in clean_candidates if row["apn_gain"] == 0.0)
+  beneficial_gains = [
+    row["apn_gain"] for row in clean_candidates if _clear_net_benefit(row, baseline)
+  ]
+  selected_gain = min(beneficial_gains) if beneficial_gains else 0.0
+  maneuver_clean = [row for row in clean_rows if row["target_accel_x_mps2"] != 0.0]
+  constant_velocity_clean = [
+    row for row in clean_rows if row["target_accel_x_mps2"] == 0.0
+  ]
+  nonzero_gain_maneuver = [
+    row for row in maneuver_clean if row["apn_gain"] > 0.0
+  ]
+  resolved_mismatch_count = sum(
+    bool(row["resolved_runtime_mismatch"]) for row in clean_rows + noisy_rows
+  )
+  clean_expected = (
+    len(ranges_km) * len(bearings_deg) * len(accelerations_x_mps2) * len(apn_gains)
+  )
+  noisy_expected = (
+    len(noisy_seeds)
+    * len(NOISY_BEARINGS_DEG)
+    * len(NOISY_ACCELERATIONS_X_MPS2)
+    * len(apn_gains)
+    if include_noisy
+    else 0
+  )
+  stage4_gates = {
+    "clean_matrix_complete": len(clean_rows) == clean_expected,
+    "resolved_runtime_matches_requested_tuning": resolved_mismatch_count == 0,
+    "all_maneuver_runs_observe_valid_acceleration": all(
+      row["acceleration_valid_observed"] for row in maneuver_clean
+    ),
+    "clean_acceleration_rmse_within_limit": max(
+      row["acceleration_rmse_mps2"] for row in maneuver_clean
+    ) <= TRACKER_GATES["clean_max_acceleration_rmse_mps2"],
+    "clean_terminal_acceleration_error_within_limit": max(
+      row["terminal_acceleration_error_mps2"] for row in maneuver_clean
+    ) <= TRACKER_GATES["clean_max_terminal_acceleration_error_mps2"],
+    "constant_velocity_false_acceleration_within_limit": max(
+      row["max_estimated_acceleration_mps2"] for row in constant_velocity_clean
+    ) <= TRACKER_GATES["constant_velocity_max_false_acceleration_mps2"],
+    "constant_velocity_apn_is_zero": max(
+      row["max_apn_acceleration_mps2"] for row in constant_velocity_clean
+    ) <= TRACKER_GATES["zero_truth_max_apn_acceleration_mps2"],
+    "maneuver_apn_is_identifiable": min(
+      row["max_apn_acceleration_mps2"] for row in nonzero_gain_maneuver
+    ) >= TRACKER_GATES["maneuver_min_identifiable_apn_acceleration_mps2"],
+    "component_sum_closes": max(
+      row["max_component_sum_error_mps2"] for row in clean_rows
+    ) <= TRACKER_GATES["max_component_sum_error_mps2"],
+    "mirror_nearest_distance_within_limit": _mirror_error(clean_rows)
+    <= TRACKER_GATES["max_mirror_nearest_distance_error_m"],
+    "lateral_acceleration_limit_respected": max(
+      row["max_achieved_lateral_g"] for row in clean_rows
+    ) <= TRACKER_GATES["max_achieved_lateral_g"],
+  }
+  noisy_tracker_rmse_max = max(
+    (row["acceleration_rmse_mps2"] for row in noisy_rows), default=math.inf
+  )
+  noisy_tracker_peak_max = max(
+    (row["max_estimated_acceleration_mps2"] for row in noisy_rows), default=math.inf
+  )
+  stage5_gates = {
+    "noisy_holdout_complete": include_noisy and len(noisy_rows) == noisy_expected,
+    "all_noisy_runs_observe_valid_acceleration": bool(noisy_rows) and all(
+      row["acceleration_valid_observed"] for row in noisy_rows
+    ),
+    "noisy_acceleration_rmse_within_limit": noisy_tracker_rmse_max
+    <= NOISY_PROMOTION_GATES["max_acceleration_rmse_mps2"],
+    "noisy_acceleration_peak_within_limit": noisy_tracker_peak_max
+    <= NOISY_PROMOTION_GATES["max_estimated_acceleration_mps2"],
+    "nonzero_apn_gain_has_clear_net_benefit": bool(beneficial_gains),
+  }
+  stage4_passed = all(stage4_gates.values())
+  stage5_passed = all(stage5_gates.values())
+  return {
+    "schema_version": SCHEMA_VERSION,
+    "status": (
+      "maneuver_apn_admission_passed"
+      if stage4_passed and stage5_passed
+      else "maneuver_tracker_structural_pass_apn_promotion_held"
+      if stage4_passed
+      else "maneuver_apn_structural_admission_failed"
+    ),
+    "generated_on": GENERATED_ON,
+    "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+    "authority_boundary": {
+      "engineering_synthetic_only": True,
+      "real_weapon_performance_authority": False,
+      "pk_authority": False,
+      "default_promotion_authority": False,
+    },
+    "production_mechanism_tuning": dict(PRODUCTION_MECHANISM_TUNING),
+    "matrix": {
+      "clean": {
+        "ranges_km": list(ranges_km),
+        "bearings_deg": list(bearings_deg),
+        "target_accelerations_x_mps2": list(accelerations_x_mps2),
+        "apn_gains": list(apn_gains),
+        "expected_run_count": clean_expected,
+      },
+      "noisy_holdout": {
+        "measurement_period_s": 0.05,
+        "bearing_noise_std_deg": 0.2,
+        "range_noise_std_m": 10.0,
+        "range_km": NOISY_RANGE_KM,
+        "bearings_deg": list(NOISY_BEARINGS_DEG),
+        "target_accelerations_x_mps2": list(NOISY_ACCELERATIONS_X_MPS2),
+        "seeds": list(noisy_seeds),
+        "expected_run_count": noisy_expected,
+      },
+    },
+    "counts": {
+      "clean_run_count": len(clean_rows),
+      "noisy_run_count": len(noisy_rows),
+      "total_run_count": len(clean_rows) + len(noisy_rows),
+      "resolved_runtime_mismatch_count": resolved_mismatch_count,
+    },
+    "stage4_structural_admission": {
+      "passed": stage4_passed,
+      "gates": stage4_gates,
+      "limits": dict(TRACKER_GATES),
+      "observed": {
+        "max_clean_acceleration_rmse_mps2": max(
+          row["acceleration_rmse_mps2"] for row in maneuver_clean
+        ),
+        "max_clean_terminal_acceleration_error_mps2": max(
+          row["terminal_acceleration_error_mps2"] for row in maneuver_clean
+        ),
+        "max_constant_velocity_false_acceleration_mps2": max(
+          row["max_estimated_acceleration_mps2"] for row in constant_velocity_clean
+        ),
+        "max_constant_velocity_apn_acceleration_mps2": max(
+          row["max_apn_acceleration_mps2"] for row in constant_velocity_clean
+        ),
+        "min_maneuver_apn_acceleration_mps2": min(
+          row["max_apn_acceleration_mps2"] for row in nonzero_gain_maneuver
+        ),
+        "max_component_sum_error_mps2": max(
+          row["max_component_sum_error_mps2"] for row in clean_rows
+        ),
+        "max_mirror_nearest_distance_error_m": _mirror_error(clean_rows),
+        "max_achieved_lateral_g": max(
+          row["max_achieved_lateral_g"] for row in clean_rows
+        ),
+      },
+    },
+    "stage5_apn_selection": {
+      "passed": stage5_passed,
+      "gates": stage5_gates,
+      "limits": dict(NOISY_PROMOTION_GATES),
+      "observed": {
+        "max_noisy_acceleration_rmse_mps2": noisy_tracker_rmse_max,
+        "max_noisy_estimated_acceleration_mps2": noisy_tracker_peak_max,
+      },
+      "selected_apn_gain": selected_gain,
+      "decision": (
+        "select_lowest_clear_net_benefit_candidate"
+        if beneficial_gains
+        else "retain_apn_gain_zero_no_clear_net_benefit"
+      ),
+      "clear_net_benefit_gains": beneficial_gains,
+      "default_promotion_ready": stage5_passed,
+    },
+    "admission": {
+      "maneuver_tracker_structural_admission": "passed" if stage4_passed else "failed",
+      "apn_mechanism_identifiability": (
+        "passed" if stage4_gates["maneuver_apn_is_identifiable"] else "failed"
+      ),
+      "noisy_acceleration_authority": (
+        "passed"
+        if stage5_gates["noisy_acceleration_rmse_within_limit"]
+        and stage5_gates["noisy_acceleration_peak_within_limit"]
+        else "held"
+      ),
+      "apn_default_promotion": "passed" if stage5_passed else "held",
+      "p10_complete": stage4_passed and stage5_passed,
+    },
+    "clean_candidate_summary": clean_candidates,
+    "noisy_candidate_summary": noisy_candidates,
+    "clean_runs": clean_rows,
+    "noisy_runs": noisy_rows,
+  }
+
+
+def _sha256(path: Path) -> str:
+  digest = hashlib.sha256()
+  with path.open("rb") as handle:
+    for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+      digest.update(chunk)
+  return digest.hexdigest()
+
+
+def _git_value(*args: str) -> str:
+  result = subprocess.run(
+    ["git", *args], cwd=REPO_ROOT, text=True, capture_output=True, check=False
+  )
+  return result.stdout.strip() if result.returncode == 0 else ""
+
+
+def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
+  columns = [
+    "tier", "case_id", "range_km", "bearing_deg", "target_accel_x_mps2",
+    "apn_gain", "seed", "nearest_distance_m", "rho_fuze", "entered_R_fuze",
+    "max_achieved_lateral_g", "stable_trace_count", "acceleration_valid_observed",
+    "acceleration_rmse_mps2", "terminal_acceleration_error_mps2",
+    "max_estimated_acceleration_mps2", "max_apn_acceleration_mps2",
+    "max_component_sum_error_mps2",
+  ]
+  with path.open("w", newline="", encoding="utf-8") as handle:
+    writer = csv.DictWriter(handle, fieldnames=columns, extrasaction="ignore")
+    writer.writeheader()
+    writer.writerows(rows)
+
+
+def _write_candidate_csv(path: Path, report: dict[str, Any]) -> None:
+  rows = []
+  for tier, field in (
+    ("clean_stage4", "clean_candidate_summary"),
+    ("noisy_stage5_holdout", "noisy_candidate_summary"),
+  ):
+    for row in report[field]:
+      rows.append({"tier": tier, **row})
+  columns = ["tier", *list(rows[0].keys())[1:]] if rows else ["tier"]
+  with path.open("w", newline="", encoding="utf-8") as handle:
+    writer = csv.DictWriter(handle, fieldnames=columns)
+    writer.writeheader()
+    writer.writerows(rows)
+
+
+def conclusions_zh(report: dict[str, Any]) -> str:
+  stage4 = report["stage4_structural_admission"]
+  stage5 = report["stage5_apn_selection"]
+  admission = report["admission"]
+  observed4 = stage4["observed"]
+  observed5 = stage5["observed"]
+  return "\n".join(
+    [
+      "# P10 机动目标 / APN 准入结论",
+      "",
+      f"- 总状态：`{report['status']}`。",
+      f"- clean stage-4 structural admission：`{stage4['passed']}`；"
+      f"CVA 最大稳定加速度 RMSE 为 "
+      f"`{observed4['max_clean_acceleration_rmse_mps2']:.3f} m/s²`，末值最大误差 "
+      f"`{observed4['max_clean_terminal_acceleration_error_mps2']:.3f} m/s²`。",
+      f"- 匀速目标最大伪加速度为 "
+      f"`{observed4['max_constant_velocity_false_acceleration_mps2']:.3e} m/s²`；"
+      f"匀速目标最大 APN 分量为 "
+      f"`{observed4['max_constant_velocity_apn_acceleration_mps2']:.3e} m/s²`。",
+      f"- 非零机动的最小可辨识 APN 分量为 "
+      f"`{observed4['min_maneuver_apn_acceleration_mps2']:.3f} m/s²`；"
+      f"镜像最近距离最大误差为 "
+      f"`{observed4['max_mirror_nearest_distance_error_m']:.6f} m`。",
+      f"- noisy stage-5 holdout：`{stage5['passed']}`；最大加速度 RMSE "
+      f"`{observed5['max_noisy_acceleration_rmse_mps2']:.3f} m/s²`，"
+      f"最大估计加速度 `{observed5['max_noisy_estimated_acceleration_mps2']:.3f} m/s²`。",
+      f"- APN gain 选择：`{stage5['selected_apn_gain']:g}`；"
+      f"`{stage5['decision']}`。",
+      f"- P10 complete：`{admission['p10_complete']}`；"
+      f"APN default promotion：`{admission['apn_default_promotion']}`。",
+      "",
+      "该结果只形成 synthetic engineering evidence。它不构成真实 AIM-120 性能、Pk、"
+      "默认武器参数或交战规则权威。",
+      "",
+    ]
+  )
+
+
+def write_bundle(report: dict[str, Any], *, output_dir: Path, stem: str) -> dict[str, str]:
+  output_dir.mkdir(parents=True, exist_ok=True)
+  paths = {
+    "report_json": output_dir / f"{stem}.json",
+    "clean_runs_csv": output_dir / f"{stem}_clean_runs.csv",
+    "noisy_runs_csv": output_dir / f"{stem}_noisy_runs.csv",
+    "candidate_summary_csv": output_dir / f"{stem}_candidate_summary.csv",
+    "conclusions_zh_md": output_dir / f"{stem}_conclusions.zh.md",
+    "manifest_json": output_dir / f"{stem}_manifest.json",
+  }
+  paths["report_json"].write_text(
+    json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False) + "\n",
+    encoding="utf-8",
+  )
+  _write_csv(paths["clean_runs_csv"], report["clean_runs"])
+  _write_csv(paths["noisy_runs_csv"], report["noisy_runs"])
+  _write_candidate_csv(paths["candidate_summary_csv"], report)
+  paths["conclusions_zh_md"].write_text(conclusions_zh(report), encoding="utf-8")
+  manifest = {
+    "schema_version": "a2.kill_chain_maneuver_apn_admission_manifest.v1",
+    "report_schema_version": SCHEMA_VERSION,
+    "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+    "tool": {
+      "path": str(Path(__file__).resolve().relative_to(REPO_ROOT)),
+      "sha256": _sha256(Path(__file__)),
+    },
+    "git": {
+      "head": _git_value("rev-parse", "HEAD"),
+      "branch": _git_value("branch", "--show-current"),
+      "worktree_porcelain": _git_value("status", "--short"),
+    },
+    "runtime": {
+      "ef_py_path": str(Path(probe.ef_py.__file__).resolve()),
+      "ef_py_sha256": _sha256(Path(probe.ef_py.__file__).resolve()),
+    },
+    "artifacts": {
+      key: {
+        "path": str(path.resolve().relative_to(REPO_ROOT)),
+        "sha256": _sha256(path),
+        "bytes": path.stat().st_size,
+      }
+      for key, path in paths.items()
+      if key != "manifest_json"
+    },
+  }
+  paths["manifest_json"].write_text(
+    json.dumps(manifest, ensure_ascii=False, indent=2, allow_nan=False) + "\n",
+    encoding="utf-8",
+  )
+  return {key: str(path.resolve()) for key, path in paths.items()}
+
+
+def _tuple_or_default(values: list[Any], default: tuple[Any, ...]) -> tuple[Any, ...]:
+  return tuple(values) if values else default
+
+
+def build_arg_parser() -> argparse.ArgumentParser:
+  parser = argparse.ArgumentParser(description=__doc__)
+  parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+  parser.add_argument("--stem", default=DEFAULT_STEM)
+  parser.add_argument("--range-km", type=float, action="append", default=[])
+  parser.add_argument("--bearing-deg", type=float, action="append", default=[])
+  parser.add_argument("--target-accel-x-mps2", type=float, action="append", default=[])
+  parser.add_argument("--apn-gain", type=float, action="append", default=[])
+  parser.add_argument("--seed", type=int, action="append", default=[])
+  parser.add_argument("--skip-noisy", action="store_true")
+  parser.add_argument("--strict", action="store_true")
+  return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+  args = build_arg_parser().parse_args(argv)
+  probe.ef_py.set_log_level("error")
+  report = build_report(
+    ranges_km=_tuple_or_default(args.range_km, RANGES_KM),
+    bearings_deg=_tuple_or_default(args.bearing_deg, BEARINGS_DEG),
+    accelerations_x_mps2=_tuple_or_default(
+      args.target_accel_x_mps2, TARGET_ACCELERATIONS_X_MPS2
+    ),
+    apn_gains=_tuple_or_default(args.apn_gain, APN_GAINS),
+    noisy_seeds=_tuple_or_default(args.seed, NOISY_SEEDS),
+    include_noisy=not bool(args.skip_noisy),
+  )
+  artifacts = write_bundle(report, output_dir=args.output_dir, stem=str(args.stem))
+  print(
+    json.dumps(
+      {
+        "status": report["status"],
+        "admission": report["admission"],
+        "counts": report["counts"],
+        "stage4": report["stage4_structural_admission"],
+        "stage5": report["stage5_apn_selection"],
+        "artifacts": artifacts,
+      },
+      ensure_ascii=False,
+      allow_nan=False,
+    )
+  )
+  return 1 if bool(args.strict) and not bool(report["admission"]["p10_complete"]) else 0
+
+
+if __name__ == "__main__":
+  raise SystemExit(main())

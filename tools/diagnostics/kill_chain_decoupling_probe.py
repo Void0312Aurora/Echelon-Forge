@@ -85,6 +85,7 @@ GUIDANCE_TUNING_OVERRIDE_FIELDS = frozenset(
     "target_kinematics_estimator",
     "target_tracker_alpha",
     "target_tracker_beta",
+    "target_tracker_gamma",
   }
 )
 GUIDANCE_MECHANISM_PROFILE_DEFAULTS = {
@@ -321,6 +322,7 @@ def _guidance_runtime_trace_sample(
   missile_velocity_mps: tuple[float, float, float],
   target_position_m: tuple[float, float, float],
   target_velocity_mps: tuple[float, float, float],
+  target_acceleration_mps2: tuple[float, float, float],
 ) -> dict[str, Any]:
   target_accel = (
     finite_float(runtime.get("target_track_ax_mps2", 0.0), 0.0),
@@ -432,6 +434,10 @@ def _guidance_runtime_trace_sample(
     ),
     "target_kinematics_valid": bool(runtime.get("target_kinematics_valid")),
     "target_velocity_valid": bool(runtime.get("target_velocity_valid")),
+    "target_acceleration_valid": bool(runtime.get("target_acceleration_valid")),
+    "target_acceleration_estimator_sample_count": int(
+      runtime.get("target_acceleration_estimator_sample_count", 0) or 0
+    ),
     "target_estimator_mode": int(runtime.get("target_kinematics_estimator", 0) or 0),
     "target_measurement_timestamp_s": _finite_or_none(
       runtime.get("target_measurement_timestamp_s")
@@ -476,6 +482,17 @@ def _guidance_runtime_trace_sample(
     "target_los_rate_error_xyz_rad_s": list(los_rate_error),
     "target_los_rate_error_rad_s": math.sqrt(sum(value * value for value in los_rate_error)),
     "target_track_accel_mps2": math.sqrt(sum(value * value for value in target_accel)),
+    "target_track_accel_xyz_mps2": list(target_accel),
+    "target_truth_accel_xyz_mps2": list(target_acceleration_mps2),
+    "target_accel_error_xyz_mps2": [
+      target_accel[index] - target_acceleration_mps2[index] for index in range(3)
+    ],
+    "target_accel_error_mps2": math.sqrt(
+      sum(
+        (target_accel[index] - target_acceleration_mps2[index]) ** 2
+        for index in range(3)
+      )
+    ),
     "seeker_mode": int(runtime.get("seeker_mode", 0) or 0),
     "guidance_mechanism_profile_active": bool(
       runtime.get("guidance_mechanism_profile_active")
@@ -808,21 +825,23 @@ def _set_unit_truth_state(
   *,
   x: float,
   y: float,
+  z: float = 5000.0,
   heading: float,
   vx: float,
   vy: float,
+  vz: float = 0.0,
 ) -> None:
   sim.debug_set_unit_truth_state(
     int(entity_id),
     float(x),
     float(y),
-    5000.0,
+    float(z),
     float(heading),
     0.0,
     0.0,
     float(vx),
     float(vy),
-    0.0,
+    float(vz),
   )
 
 def _spawn_structured_f16_pair(sim: ef_py.SimulationKernel) -> tuple[int, int]:
@@ -3511,6 +3530,7 @@ def run_guidance_case(
   guidance_measurement_period_s: float = 0.0,
   guidance_bearing_noise_std_deg: float = 0.0,
   guidance_range_noise_std_m: float = 0.0,
+  target_acceleration_mps2: tuple[float, float, float] = (0.0, 0.0, 0.0),
 ) -> dict[str, Any]:
   sim = _make_kernel(database_path, seed=seed)
   tuning = ef_py.MissileTuning()
@@ -3537,6 +3557,11 @@ def run_guidance_case(
   initial_y = float(range_m) * math.cos(bearing_rad)
   target_vx = 0.0
   target_vy = -250.0
+  target_ax, target_ay, target_az = (
+    float(value) for value in target_acceleration_mps2
+  )
+  if not all(math.isfinite(value) for value in (target_ax, target_ay, target_az)):
+    raise ValueError("target_acceleration_mps2 must contain finite values")
   blue_id, red_id = _spawn_geometry_pair(
     sim,
     red_x=initial_x,
@@ -3572,6 +3597,7 @@ def run_guidance_case(
       "capture_guidance_mode",
       "target_tracker_alpha",
       "target_tracker_beta",
+      "target_tracker_gamma",
       "apn_target_accel_gain",
       "guidance_max_lateral_g",
     )
@@ -3601,11 +3627,13 @@ def run_guidance_case(
     _set_unit_truth_state(
       sim,
       red_id,
-      x=initial_x + target_vx * time_s,
-      y=initial_y + target_vy * time_s,
+      x=initial_x + target_vx * time_s + 0.5 * target_ax * time_s * time_s,
+      y=initial_y + target_vy * time_s + 0.5 * target_ay * time_s * time_s,
+      z=5000.0 + 0.5 * target_az * time_s * time_s,
       heading=180.0,
-      vx=target_vx,
-      vy=target_vy,
+      vz=target_az * time_s,
+      vx=target_vx + target_ax * time_s,
+      vy=target_vy + target_ay * time_s,
     )
     if not sim.is_unit_active(missile_id):
       break
@@ -3677,6 +3705,7 @@ def run_guidance_case(
             missile_velocity_mps=missile_velocity,
             target_position_m=target_pos,
             target_velocity_mps=target_velocity,
+            target_acceleration_mps2=(target_ax, target_ay, target_az),
           )
         )
 
@@ -3716,6 +3745,14 @@ def run_guidance_case(
       "period_s": measurement_period_s,
       "bearing_noise_std_deg": bearing_noise_std_deg,
       "range_noise_std_m": range_noise_std_m,
+    },
+    "target_motion": {
+      "model": "constant_acceleration",
+      "initial_velocity_mps": [target_vx, target_vy, 0.0],
+      "acceleration_mps2": [target_ax, target_ay, target_az],
+      "acceleration_magnitude_mps2": math.sqrt(
+        target_ax * target_ax + target_ay * target_ay + target_az * target_az
+      ),
     },
     "missile_id": int(missile_id),
     "missile_runtime_projection": missile_runtime_projection,

@@ -9,6 +9,10 @@ using missile_guidance::WorldCvAlphaBetaTrackerInput;
 using missile_guidance::WorldCvAlphaBetaTrackerOutput;
 using missile_guidance::WorldCvAlphaBetaTrackerParams;
 using missile_guidance::WorldCvAlphaBetaTrackerState;
+using missile_guidance::WorldCvaAlphaBetaGammaTrackerInput;
+using missile_guidance::WorldCvaAlphaBetaGammaTrackerOutput;
+using missile_guidance::WorldCvaAlphaBetaGammaTrackerParams;
+using missile_guidance::WorldCvaAlphaBetaGammaTrackerState;
 using missile_guidance::operator+;
 using missile_guidance::operator-;
 using missile_guidance::operator*;
@@ -18,6 +22,15 @@ WorldCvAlphaBetaTrackerOutput observe(WorldCvAlphaBetaTrackerState &state,
                                       const Vec3 &position_world_m) {
     return missile_guidance::update_world_cv_alpha_beta_tracker(
         state, params, WorldCvAlphaBetaTrackerInput{time_s, true, position_world_m, time_s});
+}
+
+WorldCvaAlphaBetaGammaTrackerOutput observe_cva(
+    WorldCvaAlphaBetaGammaTrackerState &state,
+    const WorldCvaAlphaBetaGammaTrackerParams &params, double time_s,
+    const Vec3 &position_world_m) {
+    return missile_guidance::update_world_cva_alpha_beta_gamma_tracker(
+        state, params,
+        WorldCvaAlphaBetaGammaTrackerInput{time_s, true, position_world_m, time_s});
 }
 
 Vec3 reconstruct_world_measurement(const Vec3 &observer_world_m,
@@ -159,3 +172,90 @@ TEST_SUITE("world_cv_alpha_beta_tracker") {
     }
 
 } // TEST_SUITE("world_cv_alpha_beta_tracker")
+
+TEST_SUITE("world_cva_alpha_beta_gamma_tracker") {
+
+    TEST_CASE("constant acceleration becomes observable and converges") {
+        WorldCvaAlphaBetaGammaTrackerState state;
+        const WorldCvaAlphaBetaGammaTrackerParams params{0.20, 0.02, 0.0002, 0.5, 0.5};
+        const Vec3 initial{100.0, -200.0, 500.0};
+        const Vec3 velocity{20.0, -35.0, 4.0};
+        const Vec3 acceleration{8.0, -3.0, 1.5};
+        WorldCvaAlphaBetaGammaTrackerOutput output;
+
+        for (int sample = 0; sample <= 200; ++sample) {
+            const double time_s = static_cast<double>(sample) * 0.05;
+            const Vec3 truth = initial + velocity * time_s +
+                               acceleration * (0.5 * time_s * time_s);
+            output = observe_cva(state, params, time_s, truth);
+        }
+
+        REQUIRE(output.velocity_valid);
+        REQUIRE(output.acceleration_valid);
+        CHECK(output.position_world_m.x == doctest::Approx(700.0).epsilon(1.0e-4));
+        CHECK(output.velocity_world_mps.x == doctest::Approx(100.0).epsilon(2.0e-3));
+        CHECK(output.acceleration_world_mps2.x == doctest::Approx(8.0).epsilon(1.5e-2));
+        CHECK(output.acceleration_world_mps2.y == doctest::Approx(-3.0).epsilon(1.5e-2));
+        CHECK(output.acceleration_world_mps2.z == doctest::Approx(1.5).epsilon(1.5e-2));
+    }
+
+    TEST_CASE("constant velocity does not create false acceleration") {
+        WorldCvaAlphaBetaGammaTrackerState state;
+        const WorldCvaAlphaBetaGammaTrackerParams params{0.20, 0.02, 0.0002, 0.5, 0.5};
+        const Vec3 initial{500.0, -200.0, 1000.0};
+        const Vec3 velocity{-80.0, 35.0, -4.0};
+        WorldCvaAlphaBetaGammaTrackerOutput output;
+
+        for (int sample = 0; sample <= 100; ++sample) {
+            const double time_s = static_cast<double>(sample) * 0.05;
+            output = observe_cva(state, params, time_s, initial + velocity * time_s);
+        }
+
+        REQUIRE(output.acceleration_valid);
+        check_vector(output.position_world_m, initial + velocity * 5.0);
+        check_vector(output.velocity_world_mps, velocity);
+        check_vector(output.acceleration_world_mps2, {0.0, 0.0, 0.0});
+    }
+
+    TEST_CASE("coast propagates admitted acceleration without consuming a sample") {
+        WorldCvaAlphaBetaGammaTrackerState state;
+        const WorldCvaAlphaBetaGammaTrackerParams params{0.20, 0.02, 0.0002, 0.5, 0.5};
+        const Vec3 acceleration{6.0, 0.0, 0.0};
+        for (int sample = 0; sample <= 200; ++sample) {
+            const double time_s = static_cast<double>(sample) * 0.05;
+            observe_cva(state, params, time_s, acceleration * (0.5 * time_s * time_s));
+        }
+        REQUIRE(state.acceleration_valid);
+        const auto count = state.accepted_measurement_count;
+        const auto coast = missile_guidance::update_world_cva_alpha_beta_gamma_tracker(
+            state, params, WorldCvaAlphaBetaGammaTrackerInput{11.0, false, {}, 0.0});
+        CHECK(coast.coasted);
+        CHECK(coast.accepted_measurement_count == count);
+        CHECK(coast.position_world_m.x == doctest::Approx(363.0).epsilon(4.0e-3));
+        CHECK(coast.velocity_world_mps.x == doctest::Approx(66.0).epsilon(3.0e-3));
+        CHECK(coast.acceleration_world_mps2.x == doctest::Approx(6.0).epsilon(1.5e-2));
+    }
+
+    TEST_CASE("duplicate timestamps are rejected without correcting CVA state") {
+        WorldCvaAlphaBetaGammaTrackerState state;
+        const WorldCvaAlphaBetaGammaTrackerParams params{0.20, 0.02, 0.0002, 0.5, 0.5};
+        observe_cva(state, params, 0.0, {0.0, 0.0, 0.0});
+        observe_cva(state, params, 0.5, {5.0, 0.0, 0.0});
+        observe_cva(state, params, 1.0, {11.0, 0.0, 0.0});
+        const auto count = state.accepted_measurement_count;
+        const Vec3 corrected_position = state.corrected_position_world_m;
+        const Vec3 corrected_velocity = state.corrected_velocity_world_mps;
+        const Vec3 corrected_acceleration = state.corrected_acceleration_world_mps2;
+
+        const auto duplicate = missile_guidance::update_world_cva_alpha_beta_gamma_tracker(
+            state, params,
+            WorldCvaAlphaBetaGammaTrackerInput{2.0, true, {900.0, 0.0, 0.0}, 1.0});
+        CHECK_FALSE(duplicate.measurement_accepted);
+        CHECK(duplicate.measurement_rejected_nonmonotonic);
+        CHECK(state.accepted_measurement_count == count);
+        check_vector(state.corrected_position_world_m, corrected_position);
+        check_vector(state.corrected_velocity_world_mps, corrected_velocity);
+        check_vector(state.corrected_acceleration_world_mps2, corrected_acceleration);
+    }
+
+} // TEST_SUITE("world_cva_alpha_beta_gamma_tracker")
