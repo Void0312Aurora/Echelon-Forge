@@ -36,6 +36,9 @@ DEFAULT_OUTPUT_DIR = (
   "review_packets"
 )
 DEFAULT_STEM = "kill_chain_maneuver_apn_admission_20260915"
+DEFAULT_AIM120_DEFINITION = (
+  REPO_ROOT / "examples/config/database/weapons/air_to_air/aim_120c.json"
+)
 R_FUZE_M = 15.0
 RANGES_KM = (6.0, 8.0, 10.0)
 BEARINGS_DEG = (-60.0, -30.0, 0.0, 30.0, 60.0)
@@ -169,6 +172,7 @@ def _run(
   seed: int,
   noisy: bool,
   runner: Callable[..., dict[str, Any]],
+  apply_guidance_overrides: bool = True,
 ) -> dict[str, Any]:
   case_id = (
     f"p10_{tier}_r{range_km:g}_b{bearing_deg:+g}_a{target_accel_x_mps2:+g}_"
@@ -179,10 +183,14 @@ def _run(
     range_m=float(range_km) * 1000.0,
     bearing_deg=float(bearing_deg),
     seed=int(seed),
-    guidance_tuning_overrides={
-      **PRODUCTION_MECHANISM_TUNING,
-      "apn_target_accel_gain": float(apn_gain),
-    },
+    guidance_tuning_overrides=(
+      {
+        **PRODUCTION_MECHANISM_TUNING,
+        "apn_target_accel_gain": float(apn_gain),
+      }
+      if apply_guidance_overrides
+      else None
+    ),
     collect_guidance_runtime_trace=True,
     guidance_trace_stride=3,
     guidance_measurement_period_s=0.05 if noisy else 0.0,
@@ -272,6 +280,43 @@ def _clear_net_benefit(candidate: dict[str, Any], baseline: dict[str, Any]) -> b
   )
 
 
+def _run_identity(row: dict[str, Any]) -> tuple[Any, ...]:
+  return (
+    "noisy" if "noisy" in str(row["tier"]) else "clean",
+    row["range_km"],
+    row["bearing_deg"],
+    row["target_accel_x_mps2"],
+    row["seed"],
+  )
+
+
+def _config_backed_parity(
+  config_rows: list[dict[str, Any]], selected_rows: list[dict[str, Any]]
+) -> dict[str, float]:
+  selected = {_run_identity(row): row for row in selected_rows}
+  nearest_deltas: list[float] = []
+  acceleration_rmse_deltas: list[float] = []
+  for row in config_rows:
+    reference = selected.get(_run_identity(row))
+    if reference is None:
+      return {
+        "max_nearest_distance_delta_m": math.inf,
+        "max_acceleration_rmse_delta_mps2": math.inf,
+      }
+    nearest_deltas.append(
+      abs(row["nearest_distance_m"] - reference["nearest_distance_m"])
+    )
+    acceleration_rmse_deltas.append(
+      abs(row["acceleration_rmse_mps2"] - reference["acceleration_rmse_mps2"])
+    )
+  return {
+    "max_nearest_distance_delta_m": max(nearest_deltas, default=math.inf),
+    "max_acceleration_rmse_delta_mps2": max(
+      acceleration_rmse_deltas, default=math.inf
+    ),
+  }
+
+
 def build_report(
   *,
   ranges_km: tuple[float, ...] = RANGES_KM,
@@ -280,6 +325,7 @@ def build_report(
   apn_gains: tuple[float, ...] = APN_GAINS,
   noisy_seeds: tuple[int, ...] = NOISY_SEEDS,
   include_noisy: bool = True,
+  include_config_backed_confirmation: bool = False,
   runner: Callable[..., dict[str, Any]] = probe.run_guidance_case,
 ) -> dict[str, Any]:
   clean_rows = [
@@ -394,10 +440,96 @@ def build_report(
   }
   stage4_passed = all(stage4_gates.values())
   stage5_passed = all(stage5_gates.values())
+  config_backed_rows: list[dict[str, Any]] = []
+  config_backed_confirmation = {
+    "attempted": False,
+    "passed": False,
+    "selected_apn_gain": selected_gain,
+    "gates": {
+      "config_backed_matrix_complete": False,
+      "resolved_runtime_matches_selected_tuple": False,
+      "config_backed_matches_override_evidence": False,
+    },
+    "limits": {
+      "max_nearest_distance_delta_m": 1.0e-9,
+      "max_acceleration_rmse_delta_mps2": 1.0e-9,
+    },
+    "observed": {
+      "max_nearest_distance_delta_m": math.inf,
+      "max_acceleration_rmse_delta_mps2": math.inf,
+    },
+  }
+  if include_config_backed_confirmation and stage4_passed and stage5_passed:
+    config_backed_clean = [
+      _run(
+        tier="config_backed_clean",
+        range_km=range_km,
+        bearing_deg=bearing_deg,
+        target_accel_x_mps2=acceleration,
+        apn_gain=selected_gain,
+        seed=NOISY_SEEDS[0],
+        noisy=False,
+        runner=runner,
+        apply_guidance_overrides=False,
+      )
+      for range_km in ranges_km
+      for bearing_deg in bearings_deg
+      for acceleration in accelerations_x_mps2
+    ]
+    config_backed_noisy = [
+      _run(
+        tier="config_backed_noisy",
+        range_km=NOISY_RANGE_KM,
+        bearing_deg=bearing_deg,
+        target_accel_x_mps2=acceleration,
+        apn_gain=selected_gain,
+        seed=seed,
+        noisy=True,
+        runner=runner,
+        apply_guidance_overrides=False,
+      )
+      for seed in noisy_seeds
+      for bearing_deg in NOISY_BEARINGS_DEG
+      for acceleration in NOISY_ACCELERATIONS_X_MPS2
+    ]
+    config_backed_rows = config_backed_clean + config_backed_noisy
+    selected_rows = [
+      row for row in clean_rows + noisy_rows if row["apn_gain"] == selected_gain
+    ]
+    parity = _config_backed_parity(config_backed_rows, selected_rows)
+    config_expected = (
+      len(ranges_km) * len(bearings_deg) * len(accelerations_x_mps2)
+      + len(noisy_seeds) * len(NOISY_BEARINGS_DEG) * len(NOISY_ACCELERATIONS_X_MPS2)
+    )
+    config_gates = {
+      "config_backed_matrix_complete": len(config_backed_rows) == config_expected,
+      "resolved_runtime_matches_selected_tuple": all(
+        not row["resolved_runtime_mismatch"] for row in config_backed_rows
+      ),
+      "config_backed_matches_override_evidence": (
+        parity["max_nearest_distance_delta_m"] <= 1.0e-9
+        and parity["max_acceleration_rmse_delta_mps2"] <= 1.0e-9
+      ),
+    }
+    config_backed_confirmation = {
+      "attempted": True,
+      "passed": all(config_gates.values()),
+      "selected_apn_gain": selected_gain,
+      "gates": config_gates,
+      "limits": {
+        "max_nearest_distance_delta_m": 1.0e-9,
+        "max_acceleration_rmse_delta_mps2": 1.0e-9,
+      },
+      "observed": parity,
+    }
+  config_backed_passed = bool(config_backed_confirmation["passed"])
+  p10_complete = stage4_passed and stage5_passed and config_backed_passed
   return {
     "schema_version": SCHEMA_VERSION,
     "status": (
-      "maneuver_apn_admission_passed"
+      "maneuver_apn_config_backed_admission_passed"
+      if p10_complete
+      else "maneuver_apn_candidate_selected_default_promotion_ready"
       if stage4_passed and stage5_passed
       else "maneuver_tracker_structural_pass_apn_promotion_held"
       if stage4_passed
@@ -409,7 +541,7 @@ def build_report(
       "engineering_synthetic_only": True,
       "real_weapon_performance_authority": False,
       "pk_authority": False,
-      "default_promotion_authority": False,
+      "default_promotion_authority": config_backed_passed,
     },
     "production_mechanism_tuning": dict(PRODUCTION_MECHANISM_TUNING),
     "matrix": {
@@ -436,7 +568,8 @@ def build_report(
     "counts": {
       "clean_run_count": len(clean_rows),
       "noisy_run_count": len(noisy_rows),
-      "total_run_count": len(clean_rows) + len(noisy_rows),
+      "config_backed_run_count": len(config_backed_rows),
+      "total_run_count": len(clean_rows) + len(noisy_rows) + len(config_backed_rows),
       "resolved_runtime_mismatch_count": resolved_mismatch_count,
     },
     "stage4_structural_admission": {
@@ -485,6 +618,7 @@ def build_report(
       "clear_net_benefit_gains": beneficial_gains,
       "default_promotion_ready": stage5_passed,
     },
+    "config_backed_confirmation": config_backed_confirmation,
     "admission": {
       "maneuver_tracker_structural_admission": "passed" if stage4_passed else "failed",
       "apn_mechanism_identifiability": (
@@ -496,13 +630,16 @@ def build_report(
         and stage5_gates["noisy_acceleration_peak_within_limit"]
         else "held"
       ),
-      "apn_default_promotion": "passed" if stage5_passed else "held",
-      "p10_complete": stage4_passed and stage5_passed,
+      "apn_default_promotion": (
+        "passed" if config_backed_passed else "ready" if stage5_passed else "held"
+      ),
+      "p10_complete": p10_complete,
     },
     "clean_candidate_summary": clean_candidates,
     "noisy_candidate_summary": noisy_candidates,
     "clean_runs": clean_rows,
     "noisy_runs": noisy_rows,
+    "config_backed_runs": config_backed_rows,
   }
 
 
@@ -557,6 +694,7 @@ def conclusions_zh(report: dict[str, Any]) -> str:
   admission = report["admission"]
   observed4 = stage4["observed"]
   observed5 = stage5["observed"]
+  config_backed = report["config_backed_confirmation"]
   noisy_acceleration_passed = bool(
     stage5["gates"]["noisy_holdout_complete"]
     and stage5["gates"]["all_noisy_runs_observe_valid_acceleration"]
@@ -588,6 +726,9 @@ def conclusions_zh(report: dict[str, Any]) -> str:
       f"`{stage5['gates']['nonzero_apn_gain_has_clear_net_benefit']}`。",
       f"- APN gain 选择：`{stage5['selected_apn_gain']:g}`；"
       f"`{stage5['decision']}`。",
+      f"- config-backed 无 override 复验：`{config_backed['passed']}`；"
+      f"共 `{report['counts']['config_backed_run_count']}` runs，最近距最大差 "
+      f"`{config_backed['observed']['max_nearest_distance_delta_m']:.3e} m`。",
       f"- P10 complete：`{admission['p10_complete']}`；"
       f"APN default promotion：`{admission['apn_default_promotion']}`。",
       "",
@@ -604,6 +745,7 @@ def write_bundle(report: dict[str, Any], *, output_dir: Path, stem: str) -> dict
     "report_json": output_dir / f"{stem}.json",
     "clean_runs_csv": output_dir / f"{stem}_clean_runs.csv",
     "noisy_runs_csv": output_dir / f"{stem}_noisy_runs.csv",
+    "config_backed_runs_csv": output_dir / f"{stem}_config_backed_runs.csv",
     "candidate_summary_csv": output_dir / f"{stem}_candidate_summary.csv",
     "conclusions_zh_md": output_dir / f"{stem}_conclusions.zh.md",
     "manifest_json": output_dir / f"{stem}_manifest.json",
@@ -614,6 +756,7 @@ def write_bundle(report: dict[str, Any], *, output_dir: Path, stem: str) -> dict
   )
   _write_csv(paths["clean_runs_csv"], report["clean_runs"])
   _write_csv(paths["noisy_runs_csv"], report["noisy_runs"])
+  _write_csv(paths["config_backed_runs_csv"], report["config_backed_runs"])
   _write_candidate_csv(paths["candidate_summary_csv"], report)
   paths["conclusions_zh_md"].write_text(conclusions_zh(report), encoding="utf-8")
   manifest = {
@@ -632,6 +775,8 @@ def write_bundle(report: dict[str, Any], *, output_dir: Path, stem: str) -> dict
     "runtime": {
       "ef_py_path": str(Path(probe.ef_py.__file__).resolve()),
       "ef_py_sha256": _sha256(Path(probe.ef_py.__file__).resolve()),
+      "aim120_definition_path": str(DEFAULT_AIM120_DEFINITION.resolve()),
+      "aim120_definition_sha256": _sha256(DEFAULT_AIM120_DEFINITION),
     },
     "artifacts": {
       key: {
@@ -664,6 +809,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
   parser.add_argument("--apn-gain", type=float, action="append", default=[])
   parser.add_argument("--seed", type=int, action="append", default=[])
   parser.add_argument("--skip-noisy", action="store_true")
+  parser.add_argument("--skip-config-backed-confirmation", action="store_true")
   parser.add_argument("--strict", action="store_true")
   return parser
 
@@ -680,6 +826,9 @@ def main(argv: list[str] | None = None) -> int:
     apn_gains=_tuple_or_default(args.apn_gain, APN_GAINS),
     noisy_seeds=_tuple_or_default(args.seed, NOISY_SEEDS),
     include_noisy=not bool(args.skip_noisy),
+    include_config_backed_confirmation=(
+      not bool(args.skip_noisy) and not bool(args.skip_config_backed_confirmation)
+    ),
   )
   artifacts = write_bundle(report, output_dir=args.output_dir, stem=str(args.stem))
   print(

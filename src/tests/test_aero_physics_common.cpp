@@ -233,6 +233,40 @@ TEST_SUITE("missile_guidance_coordinates") {
               doctest::Approx(0.0).epsilon(1.0e-12));
     }
 
+    TEST_CASE("APN rejects target acceleration radial to the line of sight") {
+        const missile_guidance::Vec3 los = missile_guidance::normalize({0.6, 0.8, 0.0});
+        const missile_guidance::Vec3 velocity_dir =
+            missile_guidance::normalize({0.9, 0.3, 0.1});
+        const missile_guidance::Vec3 radial_acceleration{
+            los.x * 12.0, los.y * 12.0, los.z * 12.0};
+        const auto acceleration = missile_guidance::transverse_apn_target_acceleration(
+            radial_acceleration, los, velocity_dir);
+        CHECK(missile_guidance::norm(acceleration) == doctest::Approx(0.0).epsilon(1.0e-12));
+    }
+
+    TEST_CASE("APN retains only LOS-normal target acceleration in the command plane") {
+        const missile_guidance::Vec3 los = missile_guidance::normalize({0.6, 0.8, 0.0});
+        const missile_guidance::Vec3 velocity_dir =
+            missile_guidance::normalize({0.9, 0.3, 0.1});
+        const missile_guidance::Vec3 target_acceleration{8.0, -3.0, 1.5};
+        const auto baseline = missile_guidance::transverse_apn_target_acceleration(
+            target_acceleration, los, velocity_dir);
+        const missile_guidance::Vec3 target_acceleration_with_radial{
+            target_acceleration.x + los.x * 25.0,
+            target_acceleration.y + los.y * 25.0,
+            target_acceleration.z + los.z * 25.0,
+        };
+        const auto with_radial_component =
+            missile_guidance::transverse_apn_target_acceleration(
+                target_acceleration_with_radial, los, velocity_dir);
+
+        CHECK(missile_guidance::dot(baseline, velocity_dir) ==
+              doctest::Approx(0.0).epsilon(1.0e-12));
+        CHECK(with_radial_component.x == doctest::Approx(baseline.x).epsilon(1.0e-12));
+        CHECK(with_radial_component.y == doctest::Approx(baseline.y).epsilon(1.0e-12));
+        CHECK(with_radial_component.z == doctest::Approx(baseline.z).epsilon(1.0e-12));
+    }
+
     TEST_CASE("capture range factors expose the current double inverse-range schedule") {
         constexpr double speed_mps = 900.0;
         constexpr double reference_range_m = 6000.0;

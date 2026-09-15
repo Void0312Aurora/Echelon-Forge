@@ -51,7 +51,7 @@ def test_before_report_smoke_projects_heatmap_rows() -> None:
   assert runtime_row["warhead_load_field"]["R_effect_source"] == (
     "missile_runtime_projection.resolved_projection_radius_m"
   )
-  assert runtime_row["warhead_load_field"]["effect_band"] == "outside_effect"
+  assert runtime_row["warhead_load_field"]["effect_band"] == "core"
   detail = runtime_row["component_detail"]
   assert detail["schema_version"] == "a2.kill_chain_expectation_component_detail.v1"
   assert detail["R_effect_variant"] == "REV-RUNTIME-PROJECTION"

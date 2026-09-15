@@ -1178,7 +1178,8 @@ Vec3 profiled_guidance_acceleration(flecs::world world, const Transform &transfo
     Vec3 apn_world = {0.0, 0.0, 0.0};
     if (profile.apn_mode == MissileGuidanceMechanismProfile::kApnOn) {
         if (target_kinematics_available) {
-            apn_world = missile_guidance::project_lateral(target_accel, velocity_dir) *
+            apn_world = missile_guidance::transverse_apn_target_acceleration(
+                            target_accel, los_world, velocity_dir) *
                         (apn_gain * apn_terminal_fraction);
         } else if (!uses_world_target_tracker(missile) && apn_gain > 0.0 &&
                    missile.apn_rate_history_valid && dt > 1.0e-6) {
@@ -1579,7 +1580,8 @@ class DefaultGuidanceModel : public IGuidanceModel {
                     const Vec3 target_accel = {missile.target_track_ax_mps2,
                                                missile.target_track_ay_mps2,
                                                missile.target_track_az_mps2};
-                    Vec3 apn_world = missile_guidance::project_lateral(target_accel, velocity_dir) *
+                    Vec3 apn_world = missile_guidance::transverse_apn_target_acceleration(
+                                         target_accel, los_world, velocity_dir) *
                                      (apn_gain * lead_terminal_fraction);
                     const double apn_mag = missile_guidance::norm(apn_world);
                     if (apn_mag > apn_limit && apn_mag > 1.0e-6) {

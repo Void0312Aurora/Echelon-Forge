@@ -106,3 +106,35 @@ def test_mirror_error_pairs_bearing_and_acceleration_signs() -> None:
   ]
 
   assert admission._mirror_error(rows) == pytest.approx(0.0004)
+
+
+def test_config_backed_parity_keeps_clean_and_noisy_rows_distinct() -> None:
+  common = {
+    "range_km": 8.0,
+    "bearing_deg": 30.0,
+    "target_accel_x_mps2": 8.0,
+    "seed": 20260621,
+  }
+  selected = [
+    {
+      **common,
+      "tier": "clean_stage4",
+      "nearest_distance_m": 1.0,
+      "acceleration_rmse_mps2": 0.0,
+    },
+    {
+      **common,
+      "tier": "noisy_stage5_holdout",
+      "nearest_distance_m": 2.0,
+      "acceleration_rmse_mps2": 3.0,
+    },
+  ]
+  config_backed = [
+    {**selected[0], "tier": "config_backed_clean"},
+    {**selected[1], "tier": "config_backed_noisy"},
+  ]
+
+  parity = admission._config_backed_parity(config_backed, selected)
+
+  assert parity["max_nearest_distance_delta_m"] == 0.0
+  assert parity["max_acceleration_rmse_delta_mps2"] == 0.0
