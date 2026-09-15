@@ -13,17 +13,26 @@ def test_anchor_grid_counts_and_classification() -> None:
   )
 
   assert len(cases) == 93
-  assert sum(1 for case in cases if case["runtime_supported"]) == 78
-  assert sum(1 for case in cases if not case["runtime_supported"]) == 15
+  assert sum(1 for case in cases if case["runtime_supported"]) == 93
+  assert sum(1 for case in cases if not case["runtime_supported"]) == 0
 
   case_by_id = {str(case["case_id"]): case for case in cases}
   anchor = case_by_id["kces_anchor_grid_cv_8km_p30deg"]
   assert anchor["launch_class"] == "N"
   assert anchor["range_m"] == 8000.0
   assert anchor["signed_bearing_deg"] == 30.0
+  assert anchor["target_acceleration_mps2"] == [0.0, 0.0, 0.0]
   assert case_by_id["kces_anchor_grid_cv_4km_p45deg"]["launch_class"] == "M"
   assert case_by_id["kces_anchor_grid_cv_6km_m45deg"]["launch_class"] == "M"
   assert case_by_id["kces_anchor_grid_cv_16km_p30deg"]["launch_class"] == "O"
+  mild_left = case_by_id["kces_anchor_grid_mild_8km_m30deg"]
+  mild_right = case_by_id["kces_anchor_grid_mild_8km_p30deg"]
+  assert mild_left["target_motion_profile_id"] == (
+    "constant_lateral_acceleration_8mps2_v0"
+  )
+  assert mild_left["maneuver_severity"] == "mild_engineering_proxy"
+  assert mild_left["target_acceleration_mps2"] == [-8.0, 0.0, 0.0]
+  assert mild_right["target_acceleration_mps2"] == [8.0, 0.0, 0.0]
 
 
 def test_before_report_smoke_projects_heatmap_rows() -> None:
@@ -72,3 +81,21 @@ def test_before_report_smoke_projects_heatmap_rows() -> None:
   assert smaller_row["warhead_load_field"]["effect_band"] == "unclassified_missing_R_effect"
   assert smaller_row["component_detail"]["R_effect_m"] is None
   assert smaller_row["component_detail"]["component_rows"][0]["rho_effect_component"] is None
+
+
+def test_mild_maneuver_smoke_flows_acceleration_into_runtime() -> None:
+  report = harness.generate_before_report(
+    grid_tier="anchor-grid",
+    target_motion_layers=("mild_maneuver",),
+    case_ids=("kces_anchor_grid_mild_8km_p30deg",),
+    effect_variants=("REV-RUNTIME-PROJECTION",),
+    seed=20260621,
+  )
+
+  assert report["summary"]["case_count"] == 1
+  assert report["summary"]["runnable_case_count"] == 1
+  row = report["heatmap_rows"][0]
+  assert row["run_status"] == "generated"
+  assert row["launch_window"]["target_motion_layer"] == "mild_maneuver"
+  assert row["launch_window"]["target_acceleration_mps2"] == [8.0, 0.0, 0.0]
+  assert row["guidance_approach"]["entered_R_fuze"] is True

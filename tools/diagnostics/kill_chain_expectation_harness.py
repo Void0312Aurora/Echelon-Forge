@@ -37,7 +37,11 @@ HEATMAP_ROW_SCHEMA_VERSION = "a2.kill_chain_expectation_heatmap_row.v1"
 PROFILE_ID = "KCES-AIM120C-LIKE-FIGHTER-V0"
 DEFAULT_SEED = 20260621
 DEFAULT_R_FUZE_M = 15.0
-SUPPORTED_RUNTIME_TARGET_MOTION_LAYERS = {"nonmaneuvering_constant_velocity"}
+SUPPORTED_RUNTIME_TARGET_MOTION_LAYERS = {
+  "nonmaneuvering_constant_velocity",
+  "mild_maneuver",
+}
+MILD_MANEUVER_ACCELERATION_MPS2 = 8.0
 DEFAULT_EFFECT_VARIANTS = (
   "REV-RUNTIME-PROJECTION",
   "REV-EQ-FUZE",
@@ -85,6 +89,39 @@ def _motion_short_name(target_motion_layer: str) -> str:
   if target_motion_layer == "mild_maneuver":
     return "mild"
   return str(target_motion_layer).replace("_", "-")
+
+def _target_motion_profile(
+  target_motion_layer: str,
+  signed_bearing_deg: float,
+) -> dict[str, Any]:
+  if target_motion_layer == "nonmaneuvering_constant_velocity":
+    acceleration = (0.0, 0.0, 0.0)
+    return {
+      "target_motion_profile_id": "constant_velocity_v0",
+      "maneuver_severity": "none",
+      "target_acceleration_mps2": list(acceleration),
+      "target_acceleration_magnitude_mps2": 0.0,
+      "target_acceleration_policy": "zero_acceleration",
+    }
+  if target_motion_layer == "mild_maneuver":
+    sign = -1.0 if float(signed_bearing_deg) < 0.0 else 1.0
+    acceleration = (sign * MILD_MANEUVER_ACCELERATION_MPS2, 0.0, 0.0)
+    return {
+      "target_motion_profile_id": "constant_lateral_acceleration_8mps2_v0",
+      "maneuver_severity": "mild_engineering_proxy",
+      "target_acceleration_mps2": list(acceleration),
+      "target_acceleration_magnitude_mps2": MILD_MANEUVER_ACCELERATION_MPS2,
+      "target_acceleration_policy": (
+        "world_x_sign_follows_signed_bearing_positive_at_zero"
+      ),
+    }
+  return {
+    "target_motion_profile_id": "unsupported",
+    "maneuver_severity": "unclassified",
+    "target_acceleration_mps2": [0.0, 0.0, 0.0],
+    "target_acceleration_magnitude_mps2": 0.0,
+    "target_acceleration_policy": "unsupported",
+  }
 
 def _case_id(
   *,
@@ -143,6 +180,7 @@ def generate_case_grid(
         )
         if requested_ids and case_id not in requested_ids:
           continue
+        motion_profile = _target_motion_profile(layer, bearing_deg)
         rows.append(
           {
             "schema_version": CASE_GRID_SCHEMA_VERSION,
@@ -157,6 +195,7 @@ def generate_case_grid(
             "offset_deg": float(offset_deg),
             "signed_bearing_deg": float(bearing_deg),
             "launch_class": str(launch_class),
+            **motion_profile,
             "runtime_supported": layer in SUPPORTED_RUNTIME_TARGET_MOTION_LAYERS,
             "skip_reason": (
               ""
@@ -289,6 +328,12 @@ def _project_heatmap_rows(
         },
         "launch_window": {
           "target_motion_layer": grid_case["target_motion_layer"],
+          "target_motion_profile_id": grid_case["target_motion_profile_id"],
+          "maneuver_severity": grid_case["maneuver_severity"],
+          "target_acceleration_mps2": grid_case["target_acceleration_mps2"],
+          "target_acceleration_magnitude_mps2": grid_case[
+            "target_acceleration_magnitude_mps2"
+          ],
           "range_km": grid_case["range_km"],
           "offset_deg": grid_case["offset_deg"],
           "signed_bearing_deg": grid_case["signed_bearing_deg"],
@@ -349,6 +394,12 @@ def _project_heatmap_rows(
     },
     "launch_window": {
       "target_motion_layer": grid_case["target_motion_layer"],
+      "target_motion_profile_id": grid_case["target_motion_profile_id"],
+      "maneuver_severity": grid_case["maneuver_severity"],
+      "target_acceleration_mps2": grid_case["target_acceleration_mps2"],
+      "target_acceleration_magnitude_mps2": grid_case[
+        "target_acceleration_magnitude_mps2"
+      ],
       "range_km": grid_case["range_km"],
       "offset_deg": grid_case["offset_deg"],
       "signed_bearing_deg": grid_case["signed_bearing_deg"],
@@ -505,6 +556,9 @@ def generate_before_report(
           "case_id": str(case["case_id"]),
           "range_m": float(case["range_m"]),
           "bearing_deg": float(case["signed_bearing_deg"]),
+          "target_acceleration_mps2": tuple(
+            float(value) for value in case["target_acceleration_mps2"]
+          ),
         }
         for case in runnable_cases
       ),
