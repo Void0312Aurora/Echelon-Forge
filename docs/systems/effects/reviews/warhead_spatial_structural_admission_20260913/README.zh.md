@@ -12,4 +12,5 @@
 
 完整基线没有发现距离单调和左右镜像违规。近场托底在 66 行生效，最终截断在 50 行生效；相邻 45 度姿态的最大 `effect_scale` 变化为 `0.3717697996152012`。这只证明诊断轨迹可解释且当前 surrogate 的基础不变量成立，并不证明空间拓扑已经足够真实。破片模型仍是球面密度叠加标量方向权重，连续杆模型仍缺少膨胀杆环/环带与目标几何的显式相交，因此 Component Load 和整体杀伤链准入尚未开展。
 
-输出包：`review_packets/warhead_spatial_structural_admission_baseline_20260913.json`。
+生成的原始 JSON 包保留在仓库外的
+`artifacts/kill_chain/20260915/raw_review_packets/warhead_spatial_structural_admission_20260913/warhead_spatial_structural_admission_baseline_20260913.json`；仓库内保留本说明作为维护面。

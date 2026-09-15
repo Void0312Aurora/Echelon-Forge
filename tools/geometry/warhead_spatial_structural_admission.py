@@ -39,23 +39,21 @@ DEFAULT_DATABASE_PATH = Path(resolve_repo_path("examples", "config", "database")
 F16_UNIT_PATH = DEFAULT_DATABASE_PATH / "aircraft" / "units" / "f16c_block50.json"
 DEFAULT_OUTPUT_PATH = Path(
   resolve_repo_path(
-    "docs",
-    "systems",
-    "effects",
-    "reviews",
+    "artifacts",
+    "kill_chain",
+    "20260915",
+    "raw_review_packets",
     "warhead_spatial_angular_field_admission_20260914",
-    "review_packets",
     "warhead_spatial_angular_field_admission_20260914.json",
   )
 )
 BASELINE_REPORT_PATH = Path(
   resolve_repo_path(
-    "docs",
-    "systems",
-    "effects",
-    "reviews",
+    "artifacts",
+    "kill_chain",
+    "20260915",
+    "raw_review_packets",
     "warhead_spatial_structural_admission_20260913",
-    "review_packets",
     "warhead_spatial_structural_admission_baseline_20260913.json",
   )
 )

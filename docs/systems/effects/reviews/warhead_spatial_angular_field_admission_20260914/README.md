@@ -65,8 +65,9 @@ $env:CMO_BUILD_DIR = 'D:\workshop\Research\Echelon-Forge\build-warhead-spatial-a
 python tools/geometry/warhead_spatial_structural_admission.py
 ```
 
-The generated packet is
-`review_packets/warhead_spatial_angular_field_admission_20260914.json`.
+The generated raw packet is retained outside the repository at
+`artifacts/kill_chain/20260915/raw_review_packets/warhead_spatial_angular_field_admission_20260914/warhead_spatial_angular_field_admission_20260914.json`.
+The tracked conclusion and figures remain the maintained review surface.
 
 The human-readable inline heatmaps are in `warhead-spatial-evidence.html`; a
 static PNG is provided as `warhead-spatial-evidence.png`. Both can be

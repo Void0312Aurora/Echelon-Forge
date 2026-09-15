@@ -37,12 +37,11 @@ ABLATION_MIN_EFFECT_SCALE = 0.0
 TOLERANCE = 1.0e-9
 DEFAULT_OUTPUT_PATH = Path(
   resolve_repo_path(
-    "docs",
-    "systems",
-    "effects",
-    "reviews",
+    "artifacts",
+    "kill_chain",
+    "20260915",
+    "raw_review_packets",
     "continuous_rod_projection_floor_ablation_20260914",
-    "review_packets",
     "continuous_rod_projection_floor_ablation_20260914.json",
   )
 )

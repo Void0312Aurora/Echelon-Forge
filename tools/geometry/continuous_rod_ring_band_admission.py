@@ -42,23 +42,21 @@ MAX_COVERAGE_DELTA = 0.005
 MAX_EFFECT_SCALE_DELTA = 0.01
 DEFAULT_OUTPUT_PATH = Path(
   resolve_repo_path(
-    "docs",
-    "systems",
-    "effects",
-    "reviews",
+    "artifacts",
+    "kill_chain",
+    "20260915",
+    "raw_review_packets",
     "continuous_rod_ring_band_admission_20260914",
-    "review_packets",
     "continuous_rod_ring_band_admission_20260914.json",
   )
 )
 FRAGMENTATION_REPORT_PATH = Path(
   resolve_repo_path(
-    "docs",
-    "systems",
-    "effects",
-    "reviews",
+    "artifacts",
+    "kill_chain",
+    "20260915",
+    "raw_review_packets",
     "warhead_spatial_angular_field_admission_20260914",
-    "review_packets",
     "warhead_spatial_angular_field_admission_20260914.json",
   )
 )

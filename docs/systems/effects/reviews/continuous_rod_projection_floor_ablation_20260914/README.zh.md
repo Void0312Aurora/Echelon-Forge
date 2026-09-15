@@ -58,4 +58,5 @@ python tools/geometry/continuous_rod_projection_floor_ablation.py
 python tools/geometry/render_continuous_rod_projection_floor_ablation.py
 ```
 
-机器可读证据位于 `review_packets/continuous_rod_projection_floor_ablation_20260914.json`。
+原始机器可读 packet 留存在仓库外部的 artifact retention surface；仓库内只保留
+结论和 manifest 作为审查入口。

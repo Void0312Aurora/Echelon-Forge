@@ -38,7 +38,8 @@ $env:CMO_BUILD_DIR = 'D:\workshop\Research\Echelon-Forge\build-warhead-spatial-a
 python tools/geometry/warhead_spatial_structural_admission.py
 ```
 
-生成包为 `review_packets/warhead_spatial_angular_field_admission_20260914.json`。
+生成的原始包保留在仓库外的
+`artifacts/kill_chain/20260915/raw_review_packets/warhead_spatial_angular_field_admission_20260914/warhead_spatial_angular_field_admission_20260914.json`；仓库内保留结论与图像作为维护面。
 
 人类可读的内嵌热力图位于 `warhead-spatial-evidence.html`，静态 PNG 位于
 `warhead-spatial-evidence.png`；二者均可使用 `tools/geometry/` 下对应的

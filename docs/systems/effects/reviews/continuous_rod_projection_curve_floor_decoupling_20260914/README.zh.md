@@ -43,8 +43,9 @@ profile 未设置新字段时，内部曲线 floor 自动跟随原 `projection_m
 $env:CMO_BUILD_DIR = 'D:\workshop\Research\Echelon-Forge\build-warhead-spatial-admission-vs'
 python tools/geometry/continuous_rod_projection_curve_floor_decoupling.py
 python tools/geometry/render_continuous_rod_projection_floor_ablation.py `
-  --report docs/systems/effects/reviews/continuous_rod_projection_curve_floor_decoupling_20260914/review_packets/continuous_rod_projection_curve_floor_decoupling_20260914.json `
+--report artifacts/kill_chain/20260915/raw_review_packets/continuous_rod_projection_curve_floor_decoupling_20260914/continuous_rod_projection_curve_floor_decoupling_20260914.json `
   --output docs/systems/effects/reviews/continuous_rod_projection_curve_floor_decoupling_20260914/continuous-rod-projection-curve-floor-decoupling.png
 ```
 
-机器可读证据位于 `review_packets/continuous_rod_projection_curve_floor_decoupling_20260914.json`。
+原始机器可读 packet 留存在仓库外部的 artifact retention surface；仓库内只保留
+结论和 manifest 作为审查入口。

@@ -41,4 +41,6 @@ python tools/geometry/continuous_rod_ring_band_admission.py
 python tools/geometry/render_continuous_rod_ring_band_evidence.py
 ```
 
-The machine-readable packet is `review_packets/continuous_rod_ring_band_admission_20260914.json`.
+The raw machine-readable packet is retained outside the repository under the
+artifact retention surface; the tracked conclusion and manifest remain the
+review authority.

@@ -39,4 +39,6 @@ python tools/geometry/continuous_rod_projection_floor_ablation.py
 python tools/geometry/render_continuous_rod_projection_floor_ablation.py
 ```
 
-The machine-readable packet is `review_packets/continuous_rod_projection_floor_ablation_20260914.json`.
+The raw machine-readable packet is retained outside the repository under the
+artifact retention surface; the tracked conclusion and manifest remain the
+review authority.

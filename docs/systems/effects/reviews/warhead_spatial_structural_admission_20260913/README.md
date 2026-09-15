@@ -54,5 +54,6 @@ $env:CMO_BUILD_DIR = 'D:\workshop\Research\Echelon-Forge\build-warhead-spatial-a
 python tools/geometry/warhead_spatial_structural_admission.py
 ```
 
-The retained JSON packet is written under this review directory. A non-zero exit
-code means the model-owned hard decomposition did not close.
+The generated raw JSON packet is retained outside the repository under
+`artifacts/kill_chain/20260915/raw_review_packets/warhead_spatial_structural_admission_20260913/warhead_spatial_structural_admission_baseline_20260913.json`.
+A non-zero exit code means the model-owned hard decomposition did not close.
