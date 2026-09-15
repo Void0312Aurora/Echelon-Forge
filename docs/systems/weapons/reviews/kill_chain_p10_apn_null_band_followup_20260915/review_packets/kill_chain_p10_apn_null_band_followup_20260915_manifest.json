@@ -1,0 +1,63 @@
+{
+  "schema_version": "a2.kill_chain_p10_apn_null_band_followup_manifest.v1",
+  "report_schema_version": "a2.kill_chain_p10_apn_null_band_followup.v1",
+  "generated_at_utc": "2026-09-15T09:17:26.838066+00:00",
+  "git": {
+    "head": "ff7a92c2634cd1700534e2f823b62ddb06d0de7c",
+    "branch": "codex/kill-chain-p10-maneuver-apn",
+    "worktree_porcelain": "?? docs/systems/weapons/reviews/kill_chain_p10_apn_null_band_followup_20260915/\n?? tests/tools/test_kill_chain_p10_apn_null_band_followup.py\n?? tools/diagnostics/kill_chain_p10_apn_null_band_followup.py\n?? tools/diagnostics/render_kill_chain_p10_apn_null_band.py"
+  },
+  "inputs": {
+    "tool": {
+      "path": "tools\\diagnostics\\kill_chain_p10_apn_null_band_followup.py",
+      "sha256": "49283890a0708b7a62323679530be7e31563141c790831fe7a3c229a67ccbfc2"
+    },
+    "renderer": {
+      "path": "tools\\diagnostics\\render_kill_chain_p10_apn_null_band.py",
+      "sha256": "b27e47fdf4cc6088b7df374d7f40db7f5ef46bba46e3e539467d645c3535ac55"
+    },
+    "probe": {
+      "path": "tools\\diagnostics\\kill_chain_decoupling_probe.py",
+      "sha256": "bb82a6f60cf9fd66d2e05bd83557bdc7252708f016b5205724e76e61b3995967"
+    },
+    "p10_admission_tool": {
+      "path": "tools\\diagnostics\\kill_chain_maneuver_apn_admission.py",
+      "sha256": "c31bf9be6f8e2b17c00cfe0dd5cce4e25e1a7aaff6ce809049ed2d61b168be7c"
+    },
+    "aim120_definition": {
+      "path": "examples\\config\\database\\weapons\\air_to_air\\aim_120c.json",
+      "sha256": "f8a18e76a4a9e512b256ffd74f7c5a4d862d25f9be02ee24495e584a0dd632bc"
+    },
+    "ef_py": {
+      "path": "D:\\workshop\\Research\\Echelon-Forge\\build-kill-chain-p10-maneuver-apn\\Release\\ef_py.cp312-win_amd64.pyd",
+      "sha256": "a47e2548e25dfea5280b2b5d0251cc37ff0334e78f571832e85caee4f6d5b84e"
+    }
+  },
+  "artifacts": {
+    "report_json": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p10_apn_null_band_followup_20260915\\review_packets\\kill_chain_p10_apn_null_band_followup_20260915.json",
+      "sha256": "833210614d120645c3a8ba435346bf2aa0dabd720d0605b61f206f634a850edf",
+      "bytes": 181153
+    },
+    "runs_csv": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p10_apn_null_band_followup_20260915\\review_packets\\kill_chain_p10_apn_null_band_followup_20260915_runs.csv",
+      "sha256": "f59baec47bd8ede5fd26ea39e7dc8ca27ae9737c71909f639565868949a4248d",
+      "bytes": 48862
+    },
+    "cells_csv": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p10_apn_null_band_followup_20260915\\review_packets\\kill_chain_p10_apn_null_band_followup_20260915_cells.csv",
+      "sha256": "096d854999cc4be6c4732917a506a211e2799e8e818603b0baae0249b8ba7210",
+      "bytes": 5636
+    },
+    "conclusions_zh_md": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p10_apn_null_band_followup_20260915\\review_packets\\kill_chain_p10_apn_null_band_followup_20260915_conclusions.zh.md",
+      "sha256": "cba7549b2863fa1e3193dc611eb53644d280e5f3c09fcaa2071cbbfaea5bd851",
+      "bytes": 1133
+    },
+    "figure_png": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p10_apn_null_band_followup_20260915\\review_packets\\kill_chain_p10_apn_null_band_followup_20260915_figure.png",
+      "sha256": "5eb6e0c5984be6d5a2ee1f90a43215dfcb0a4f1b196f14125427528bdab43ff6",
+      "bytes": 332328
+    }
+  }
+}
