@@ -3,9 +3,9 @@
   "report_schema_version": "a2.kill_chain_p11_expectation_rebaseline.v1",
   "generated_at_utc": "2026-09-15T10:23:06.646511+00:00",
   "git": {
-    "head": "7bd3f6feed051c4f857365a7c86d38568fa9956c",
+    "head": "df8ed6fd5fa91acf47056f0f6956f2d7d8f0e3a9",
     "branch": "codex/kill-chain-p10-maneuver-apn",
-    "worktree_porcelain": "?? docs/systems/weapons/reviews/kill_chain_p11_expectation_rebaseline_20260915/\n?? tests/tools/test_kill_chain_p11_expectation_rebaseline.py\n?? tools/diagnostics/kill_chain_p11_expectation_rebaseline.py"
+    "worktree_porcelain": ""
   },
   "inputs": {
     "tool": {
