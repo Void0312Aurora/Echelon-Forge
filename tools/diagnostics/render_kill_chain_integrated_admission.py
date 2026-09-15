@@ -9,7 +9,10 @@ import json
 from pathlib import Path
 from typing import Any
 
-import matplotlib.pyplot as plt
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np
 from matplotlib.colors import ListedColormap
 
@@ -120,7 +123,7 @@ def render(report: dict[str, Any], output: Path) -> None:
     Patch(facecolor="#2a9d8f", label="C: complete effect chain"),
     Patch(facecolor="#f2c14e", label="F: in R_fuze, fuze blocked"),
     Patch(facecolor="#d9d9d9", label="O: outside, no load"),
-    Patch(facecolor="none", edgecolor="black", label="O!: legacy O expectation alert"),
+    Patch(facecolor="none", edgecolor="black", label="O!: accepted O expectation alert"),
     Patch(facecolor="none", edgecolor="black", label="T!: terminal-track residual"),
   ]
   fig.legend(
@@ -135,7 +138,9 @@ def render(report: dict[str, Any], output: Path) -> None:
   fig.suptitle(
     "P11 Integrated Kill-Chain Admission\n"
     f"Structure {'PASS' if evaluation['p11_structural_admission_passed'] else 'HELD'} · "
-    f"Legacy envelope {'PASS' if evaluation['legacy_expectation_envelope_passed'] else 'HELD'} · "
+    f"Accepted N/O envelope "
+    f"{'PASS' if evaluation['accepted_n_o_expectation_envelope_passed'] else 'HELD'} · "
+    f"Terminal track {'PASS' if evaluation['terminal_track_contract_passed'] else 'HELD'} · "
     f"{counts['run_count']} runs / {counts['cell_count']} cells",
     fontsize=16,
   )

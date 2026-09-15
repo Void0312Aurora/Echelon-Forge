@@ -40,6 +40,11 @@ DEFAULT_STEM = "kill_chain_integrated_admission_20260915"
 DEFAULT_AIM120_DEFINITION = (
   REPO_ROOT / "examples/config/database/weapons/air_to_air/aim_120c.json"
 )
+EXPECTATION_REBASELINE_REVIEW = (
+  REPO_ROOT
+  / "docs/systems/weapons/reviews/kill_chain_p11_expectation_rebaseline_20260915"
+  / "review_packets/kill_chain_p11_independent_review_acceptance_20260915.zh.md"
+)
 MOTION_LAYERS = ("nonmaneuvering_constant_velocity", "mild_maneuver")
 EXPECTED_CASES_PER_SEED = 93
 EXPECTED_GUIDANCE_RUNTIME: dict[str, float | int] = {
@@ -258,6 +263,7 @@ def _case_evidence(
     fuze=fuze,
     guidance_runtime_summary=guidance_runtime_summary,
   )
+  outcome_state = str(consequence.get("outcome_state", "") or "") or chain_state
   return {
     "case_id": str(grid_case["case_id"]),
     "seed": int(seed),
@@ -325,7 +331,7 @@ def _case_evidence(
     "consequence_zero_when_untriggered": (
       True if triggered else _consequence_is_zero(stages, runtime_facade)
     ),
-    "outcome_state": str(consequence.get("outcome_state", "") or ""),
+    "outcome_state": outcome_state,
     "chain_state": chain_state,
     "stage_ids_exact": stage_ids_exact,
     "stage_owners_clean": stage_owners_clean,
@@ -363,6 +369,7 @@ def _aggregate_cells(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         "bearing_deg": first["bearing_deg"],
         "launch_class": first["launch_class"],
         "seed_count": len(group),
+        "seeds": sorted({int(row["seed"]) for row in group}),
         "complete_effect_chain_count": sum(
           row["chain_state"] == "complete_effect_chain" for row in group
         ),
@@ -413,8 +420,32 @@ def _evaluate(
   expected_cases_per_seed: int = EXPECTED_CASES_PER_SEED,
 ) -> dict[str, Any]:
   expected_runs = int(expected_cases_per_seed) * len(seeds)
+  case_ids = {str(cell["case_id"]) for cell in cells}
+  actual_run_keys = [
+    (str(row["case_id"]), int(row["seed"])) for row in rows
+  ]
+  expected_run_keys = {
+    (case_id, int(seed)) for case_id in case_ids for seed in seeds
+  }
+  matrix_complete = (
+    len(case_ids) == int(expected_cases_per_seed)
+    and len(actual_run_keys) == expected_runs
+    and len(actual_run_keys) == len(set(actual_run_keys))
+    and set(actual_run_keys) == expected_run_keys
+    and all(
+      int(cell["seed_count"]) == len(seeds)
+      and set(int(seed) for seed in cell["seeds"]) == set(seeds)
+      for cell in cells
+    )
+  )
   structural_gates = {
-    "anchor_matrix_complete": len(rows) == expected_runs,
+    "anchor_matrix_complete": matrix_complete,
+    "unique_case_seed_pairs": len(actual_run_keys) == len(set(actual_run_keys)),
+    "each_cell_has_exact_required_seed_set": bool(cells) and all(
+      int(cell["seed_count"]) == len(seeds)
+      and set(int(seed) for seed in cell["seeds"]) == set(seeds)
+      for cell in cells
+    ),
     "all_cases_structurally_consistent": bool(rows) and all(
       row["structural_consistent"] for row in rows
     ),
@@ -441,6 +472,11 @@ def _evaluate(
     "nearest_distance_deterministic_across_seeds": bool(cells) and max(
       (cell["nearest_distance_spread_m"] for cell in cells), default=math.inf
     ) <= 1.0e-9,
+    "terminal_track_residual_causes_explicit": all(
+      not cell["in_radius_fuze_blocked"]
+      or bool(cell["terminal_track_residual_causes"])
+      for cell in cells
+    ),
   }
   expectation_gates = {
     "all_nominal_cells_enter_R_fuze": not any(
@@ -454,11 +490,22 @@ def _evaluate(
     ),
   }
   structural_passed = all(structural_gates.values())
+  accepted_n_o_passed = all(
+    expectation_gates[name]
+    for name in (
+      "all_nominal_cells_enter_R_fuze",
+      "legacy_outside_cells_have_no_fuze_entry_or_downstream_effect",
+    )
+  )
   expectation_passed = all(expectation_gates.values())
   return {
     "structural_gates": structural_gates,
     "expectation_gates": expectation_gates,
     "p11_structural_admission_passed": structural_passed,
+    "accepted_n_o_expectation_envelope_passed": accepted_n_o_passed,
+    "terminal_track_contract_passed": expectation_gates[
+      "all_in_radius_cases_resolve_to_fuze_trigger"
+    ],
     "legacy_expectation_envelope_passed": expectation_passed,
     "p11_complete": structural_passed and expectation_passed,
   }
@@ -529,6 +576,13 @@ def build_report(*, seeds: tuple[int, ...] = DEFAULT_SEEDS) -> dict[str, Any]:
       "deterministic_fuze_authority": False,
       "pk_authority": False,
     },
+    "expectation_baseline": {
+      "id": harness.EXPECTATION_BASELINE_ID,
+      "review_verdict": "accept-with-residuals",
+      "independent_review_equivalent_to_manual_review": True,
+      "review_record": str(EXPECTATION_REBASELINE_REVIEW.relative_to(REPO_ROOT)),
+      "terminal_track_residual_retained": True,
+    },
     "matrix": {
       "grid_tier": "anchor-grid",
       "motion_layers": list(MOTION_LAYERS),
@@ -560,8 +614,8 @@ def build_report(*, seeds: tuple[int, ...] = DEFAULT_SEEDS) -> dict[str, Any]:
       "in_radius_fuze_blocked_cause_counts": fuze_blocked_cause_counts,
       "nominal_guidance_residual_cells": nominal_residual_cells,
       "next_gate": (
-        "review legacy N/M/O envelope against P10 config-backed guidance and diagnose "
-        "in-radius terminal-track failures before declaring P11 complete"
+        "adjudicate terminal-track runtime contract without changing the accepted "
+        "N/M/O expectation baseline before declaring P11 complete"
       ),
     },
     "cells": cells,
@@ -600,11 +654,14 @@ def conclusions_zh(report: dict[str, Any]) -> str:
       f"- 总状态：`{report['status']}`。",
       f"- P11 结构准入：`{evaluation['p11_structural_admission_passed']}`；"
       f"P11 complete：`{evaluation['p11_complete']}`。",
+      f"- 独立审核接受的 N/M/O 包络："
+      f"`{evaluation['accepted_n_o_expectation_envelope_passed']}`；"
+      f"terminal-track contract：`{evaluation['terminal_track_contract_passed']}`。",
       f"- 三种子 anchor：`{counts['run_count']}` runs / `{counts['cell_count']}` cells；"
       f"结构违规 `{counts['structural_violation_run_count']}`。",
       f"- 完整触发链：`{counts['triggered_run_count']}` runs；未触发且无 load/response："
       f"`{counts['untriggered_run_count']}` runs。",
-      f"- 旧 O 类负控告警：`{counts['legacy_negative_control_alert_cell_count']}` cells；"
+      f"- O 类负控告警：`{counts['legacy_negative_control_alert_cell_count']}` cells；"
       f"N 类制导残差：`{counts['nominal_guidance_residual_cell_count']}` cells。",
       f"- 已进入 R_fuze 但 terminal-track 未闭合："
       f"`{counts['in_radius_fuze_blocked_cell_count']}` cells。",
@@ -613,8 +670,8 @@ def conclusions_zh(report: dict[str, Any]) -> str:
       "放宽引信终端跟踪门。",
       "",
       "本批证明 config-backed guidance→fuze→warhead load→component response→"
-      "platform consequence 的运行时结构闭合，但旧 N/M/O 包络已被 P10 默认制导改变。"
-      "在重新审查该包络并处理近距 terminal-track 残差前，不声明完整 P11 通过。",
+      "platform consequence 的运行时结构闭合，独立审核已接受重基线后的 N/M/O 包络。"
+      "近距 terminal-track runtime contract 仍未裁定，因此不声明完整 P11 通过。",
       "",
       "所有数据仍是 synthetic engineering evidence，不构成真实 AIM-120、F-16C、"
       "确定性引信或 Pk 权威。",
@@ -673,6 +730,10 @@ def write_bundle(report: dict[str, Any], *, output_dir: Path, stem: str) -> dict
       "aim120_definition": {
         "path": str(DEFAULT_AIM120_DEFINITION.resolve().relative_to(REPO_ROOT)),
         "sha256": _sha256(DEFAULT_AIM120_DEFINITION),
+      },
+      "expectation_rebaseline_review": {
+        "path": str(EXPECTATION_REBASELINE_REVIEW.resolve().relative_to(REPO_ROOT)),
+        "sha256": _sha256(EXPECTATION_REBASELINE_REVIEW),
       },
       "ef_py": {
         "path": str(Path(probe.ef_py.__file__).resolve()),

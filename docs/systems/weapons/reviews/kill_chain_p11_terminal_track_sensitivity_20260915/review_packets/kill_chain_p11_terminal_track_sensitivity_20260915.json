@@ -2,10 +2,10 @@
   "schema_version": "a2.kill_chain_p11_terminal_track_sensitivity.v1",
   "status": "p11_terminal_track_memory_sensitivity_explained",
   "generated_on": "2026-09-15",
-  "generated_at_utc": "2026-09-15T11:02:37.994129+00:00",
+  "generated_at_utc": "2026-09-15T12:18:27.764077+00:00",
   "source_report": {
     "path": "docs\\systems\\weapons\\reviews\\kill_chain_integrated_admission_20260915\\review_packets\\kill_chain_integrated_admission_20260915.json",
-    "sha256": "fb086fe5e70abb8ed27820a887299fba183bb1c6356b0c7b4c5f158793d60454"
+    "sha256": "876b1633f39d14efe472c6d38185e580aa07b91ac5599f8f6356646c960b81e8"
   },
   "authority_boundary": {
     "diagnostic_only": true,
@@ -77,7 +77,7 @@
       "all_cells_stable_across_seeds": true,
       "timeout_response_is_monotonic": true,
       "baseline_075s_reproduces_terminal_track_residual": true,
-      "at_least_one_timeout_restores_fuze_trigger": true
+      "all_cases_have_a_timeout_that_restores_fuze_trigger": true
     },
     "residual_explanation_ready": true,
     "default_timeout_change_authorized": false,
@@ -89,6 +89,11 @@
       "case_id": "kces_anchor_grid_mild_6km_m60deg",
       "requested_memory_timeout_s": 0.25,
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "states": [
         "outside_no_load"
       ],
@@ -111,6 +116,11 @@
       "case_id": "kces_anchor_grid_mild_6km_m60deg",
       "requested_memory_timeout_s": 0.5,
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "states": [
         "outside_no_load"
       ],
@@ -133,6 +143,11 @@
       "case_id": "kces_anchor_grid_mild_6km_m60deg",
       "requested_memory_timeout_s": 0.75,
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "states": [
         "in_radius_fuze_blocked"
       ],
@@ -155,6 +170,11 @@
       "case_id": "kces_anchor_grid_mild_6km_m60deg",
       "requested_memory_timeout_s": 1.0,
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "states": [
         "in_radius_fuze_blocked"
       ],
@@ -177,6 +197,11 @@
       "case_id": "kces_anchor_grid_mild_6km_m60deg",
       "requested_memory_timeout_s": 1.5,
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "states": [
         "in_radius_fuze_blocked"
       ],
@@ -199,6 +224,11 @@
       "case_id": "kces_anchor_grid_mild_6km_m60deg",
       "requested_memory_timeout_s": 2.0,
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "states": [
         "in_radius_fuze_blocked"
       ],
@@ -221,6 +251,11 @@
       "case_id": "kces_anchor_grid_mild_6km_m60deg",
       "requested_memory_timeout_s": 3.0,
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "states": [
         "complete_effect_chain"
       ],
@@ -243,6 +278,11 @@
       "case_id": "kces_anchor_grid_mild_6km_m60deg",
       "requested_memory_timeout_s": 5.0,
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "states": [
         "complete_effect_chain"
       ],
@@ -265,6 +305,11 @@
       "case_id": "kces_anchor_grid_mild_6km_p60deg",
       "requested_memory_timeout_s": 0.25,
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "states": [
         "outside_no_load"
       ],
@@ -287,6 +332,11 @@
       "case_id": "kces_anchor_grid_mild_6km_p60deg",
       "requested_memory_timeout_s": 0.5,
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "states": [
         "outside_no_load"
       ],
@@ -309,6 +359,11 @@
       "case_id": "kces_anchor_grid_mild_6km_p60deg",
       "requested_memory_timeout_s": 0.75,
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "states": [
         "in_radius_fuze_blocked"
       ],
@@ -331,6 +386,11 @@
       "case_id": "kces_anchor_grid_mild_6km_p60deg",
       "requested_memory_timeout_s": 1.0,
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "states": [
         "in_radius_fuze_blocked"
       ],
@@ -353,6 +413,11 @@
       "case_id": "kces_anchor_grid_mild_6km_p60deg",
       "requested_memory_timeout_s": 1.5,
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "states": [
         "in_radius_fuze_blocked"
       ],
@@ -375,6 +440,11 @@
       "case_id": "kces_anchor_grid_mild_6km_p60deg",
       "requested_memory_timeout_s": 2.0,
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "states": [
         "in_radius_fuze_blocked"
       ],
@@ -397,6 +467,11 @@
       "case_id": "kces_anchor_grid_mild_6km_p60deg",
       "requested_memory_timeout_s": 3.0,
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "states": [
         "complete_effect_chain"
       ],
@@ -419,6 +494,11 @@
       "case_id": "kces_anchor_grid_mild_6km_p60deg",
       "requested_memory_timeout_s": 5.0,
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "states": [
         "complete_effect_chain"
       ],

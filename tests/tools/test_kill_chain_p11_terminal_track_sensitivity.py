@@ -98,3 +98,36 @@ def test_track_break_timeout_is_an_explicit_probe_override() -> None:
   )
   assert applied == {"track_break_time_s": 1.5}
   assert tuning.track_break_time_s == 1.5
+
+
+def test_matrix_gate_rejects_duplicate_run_even_when_count_matches() -> None:
+  report = _synthetic_report()
+  runs = [dict(row) for row in report["runs"]]
+  runs[-1] = dict(runs[0])
+  audited = sensitivity.build_report(
+    runs,
+    seeds=(1, 2),
+    memory_timeouts_s=(0.75, 1.5),
+    source_report=sensitivity.DEFAULT_SOURCE_REPORT,
+  )
+  assert audited["evaluation"]["gates"]["expected_run_matrix_complete"] is False
+  assert audited["evaluation"]["residual_explanation_ready"] is False
+
+
+def test_transition_gate_requires_both_mirror_cases_to_restore() -> None:
+  report = _synthetic_report()
+  runs = [dict(row) for row in report["runs"]]
+  positive_case = sensitivity.DEFAULT_CASES[1]["case_id"]
+  for row in runs:
+    if row["case_id"] == positive_case and row["requested_memory_timeout_s"] == 1.5:
+      row["state"] = "in_radius_fuze_blocked"
+      row["fuze_triggered"] = False
+  audited = sensitivity.build_report(
+    runs,
+    seeds=(1, 2),
+    memory_timeouts_s=(0.75, 1.5),
+    source_report=sensitivity.DEFAULT_SOURCE_REPORT,
+  )
+  assert audited["evaluation"]["gates"][
+    "all_cases_have_a_timeout_that_restores_fuze_trigger"
+  ] is False

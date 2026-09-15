@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import csv
+
 from tools.diagnostics import kill_chain_expectation_harness as harness
 
 
@@ -15,6 +17,11 @@ def test_anchor_grid_counts_and_classification() -> None:
   assert len(cases) == 93
   assert sum(1 for case in cases if case["runtime_supported"]) == 93
   assert sum(1 for case in cases if not case["runtime_supported"]) == 0
+  assert {key: sum(case["launch_class"] == key for case in cases) for key in "NMO"} == {
+    "N": 63,
+    "M": 2,
+    "O": 28,
+  }
 
   case_by_id = {str(case["case_id"]): case for case in cases}
   anchor = case_by_id["kces_anchor_grid_cv_8km_p30deg"]
@@ -22,9 +29,11 @@ def test_anchor_grid_counts_and_classification() -> None:
   assert anchor["range_m"] == 8000.0
   assert anchor["signed_bearing_deg"] == 30.0
   assert anchor["target_acceleration_mps2"] == [0.0, 0.0, 0.0]
-  assert case_by_id["kces_anchor_grid_cv_4km_p45deg"]["launch_class"] == "M"
-  assert case_by_id["kces_anchor_grid_cv_6km_m45deg"]["launch_class"] == "M"
-  assert case_by_id["kces_anchor_grid_cv_16km_p30deg"]["launch_class"] == "O"
+  assert case_by_id["kces_anchor_grid_cv_4km_p45deg"]["launch_class"] == "N"
+  assert case_by_id["kces_anchor_grid_cv_6km_m45deg"]["launch_class"] == "N"
+  assert case_by_id["kces_anchor_grid_cv_16km_p30deg"]["launch_class"] == "N"
+  assert case_by_id["kces_anchor_grid_mild_6km_m60deg"]["launch_class"] == "M"
+  assert case_by_id["kces_anchor_grid_mild_6km_p60deg"]["launch_class"] == "M"
   mild_left = case_by_id["kces_anchor_grid_mild_8km_m30deg"]
   mild_right = case_by_id["kces_anchor_grid_mild_8km_p30deg"]
   assert mild_left["target_motion_profile_id"] == (
@@ -33,6 +42,31 @@ def test_anchor_grid_counts_and_classification() -> None:
   assert mild_left["maneuver_severity"] == "mild_engineering_proxy"
   assert mild_left["target_acceleration_mps2"] == [-8.0, 0.0, 0.0]
   assert mild_right["target_acceleration_mps2"] == [8.0, 0.0, 0.0]
+
+
+def test_anchor_grid_matches_independently_accepted_rebaseline() -> None:
+  evidence_path = (
+    harness.REPO_ROOT
+    / "docs/systems/weapons/reviews/kill_chain_p11_expectation_rebaseline_20260915"
+    / "review_packets/kill_chain_p11_expectation_rebaseline_20260915_cells.csv"
+  )
+  with evidence_path.open(newline="", encoding="utf-8") as handle:
+    accepted = {
+      str(row["case_id"]): str(row["candidate_launch_class"])
+      for row in csv.DictReader(handle)
+    }
+  generated = {
+    str(row["case_id"]): str(row["launch_class"])
+    for row in harness.generate_case_grid(
+      grid_tier="anchor-grid",
+      target_motion_layers=(
+        "nonmaneuvering_constant_velocity",
+        "mild_maneuver",
+      ),
+    )
+  }
+  assert len(accepted) == 93
+  assert generated == accepted
 
 
 def test_before_report_smoke_projects_heatmap_rows() -> None:

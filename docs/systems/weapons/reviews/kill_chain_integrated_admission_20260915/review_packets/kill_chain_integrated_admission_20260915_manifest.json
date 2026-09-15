@@ -1,28 +1,32 @@
 {
   "schema_version": "a2.kill_chain_integrated_admission_manifest.v1",
   "report_schema_version": "a2.kill_chain_integrated_admission.v1",
-  "generated_at_utc": "2026-09-15T05:44:34.489173+00:00",
+  "generated_at_utc": "2026-09-15T12:14:29.639903+00:00",
   "git": {
-    "head": "2705e99cc69ba8523a41775d39b9bb0512676fc6",
+    "head": "5ae8e06ae5a8a0cfcaac34f157800b42b90c2eda",
     "branch": "codex/kill-chain-p10-maneuver-apn",
-    "worktree_porcelain": ""
+    "worktree_porcelain": "M docs/systems/weapons/reviews/kill_chain_integrated_admission_20260915/review_packets/kill_chain_integrated_admission_20260915.json\n M docs/systems/weapons/reviews/kill_chain_integrated_admission_20260915/review_packets/kill_chain_integrated_admission_20260915_cells.csv\n M docs/systems/weapons/reviews/kill_chain_integrated_admission_20260915/review_packets/kill_chain_integrated_admission_20260915_conclusions.zh.md\n M docs/systems/weapons/reviews/kill_chain_integrated_admission_20260915/review_packets/kill_chain_integrated_admission_20260915_heatmaps.png\n M docs/systems/weapons/reviews/kill_chain_integrated_admission_20260915/review_packets/kill_chain_integrated_admission_20260915_runs.csv\n M tests/tools/test_kill_chain_expectation_harness.py\n M tests/tools/test_kill_chain_integrated_admission.py\n M tests/tools/test_kill_chain_p11_expectation_rebaseline.py\n M tests/tools/test_kill_chain_p11_terminal_track_sensitivity.py\n M tools/diagnostics/kill_chain_expectation_harness.py\n M tools/diagnostics/kill_chain_integrated_admission.py\n M tools/diagnostics/kill_chain_p11_expectation_rebaseline.py\n M tools/diagnostics/kill_chain_p11_terminal_track_sensitivity.py\n M tools/diagnostics/render_kill_chain_integrated_admission.py\n?? docs/systems/weapons/reviews/kill_chain_p11_expectation_rebaseline_20260915/review_packets/kill_chain_p11_independent_review_acceptance_20260915.zh.md"
   },
   "inputs": {
     "tool": {
       "path": "tools\\diagnostics\\kill_chain_integrated_admission.py",
-      "sha256": "54153dfaadcf04a92085bb6aaae567301939bcec31564dc2e399acec99cfa1fc"
+      "sha256": "389b34675b884a23119a32af267d02a4e56973b1ebfa0d2bd45abe502b68eb6d"
     },
     "expectation_harness": {
       "path": "tools\\diagnostics\\kill_chain_expectation_harness.py",
-      "sha256": "965bc0d03ab59c3f1f4501bccb9fdaef1454f333286c0a40ae92e553605aeebe"
+      "sha256": "2fe6e1af4e599cef093aa2ed0fca035729d33ba4276e1d2fd1eed600a7cbcc68"
     },
     "decoupling_probe": {
       "path": "tools\\diagnostics\\kill_chain_decoupling_probe.py",
-      "sha256": "bb82a6f60cf9fd66d2e05bd83557bdc7252708f016b5205724e76e61b3995967"
+      "sha256": "1f7475d86f6e3d146779df75bc3019b6b4097de059cbfa43f3bdbfc8da8b3efa"
     },
     "aim120_definition": {
       "path": "examples\\config\\database\\weapons\\air_to_air\\aim_120c.json",
       "sha256": "f8a18e76a4a9e512b256ffd74f7c5a4d862d25f9be02ee24495e584a0dd632bc"
+    },
+    "expectation_rebaseline_review": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p11_expectation_rebaseline_20260915\\review_packets\\kill_chain_p11_independent_review_acceptance_20260915.zh.md",
+      "sha256": "7a39cd5c38e47d1ebd68c00d85eced56547324226cde57bee310776f1ed375d2"
     },
     "ef_py": {
       "path": "D:\\workshop\\Research\\Echelon-Forge\\build-kill-chain-p10-maneuver-apn\\Release\\ef_py.cp312-win_amd64.pyd",
@@ -32,28 +36,28 @@
   "artifacts": {
     "report_json": {
       "path": "docs\\systems\\weapons\\reviews\\kill_chain_integrated_admission_20260915\\review_packets\\kill_chain_integrated_admission_20260915.json",
-      "sha256": "fb086fe5e70abb8ed27820a887299fba183bb1c6356b0c7b4c5f158793d60454",
-      "bytes": 708295
+      "sha256": "876b1633f39d14efe472c6d38185e580aa07b91ac5599f8f6356646c960b81e8",
+      "bytes": 698842
     },
     "runs_csv": {
       "path": "docs\\systems\\weapons\\reviews\\kill_chain_integrated_admission_20260915\\review_packets\\kill_chain_integrated_admission_20260915_runs.csv",
-      "sha256": "37f4622b896d61cdd82cc33e973c41613057e7610bdcca766a811378ccaf7f30",
-      "bytes": 127705
+      "sha256": "fd911256658d081459a6253c617a849b18a0e73dfb6964082bdc2b84ea99af39",
+      "bytes": 128479
     },
     "cells_csv": {
       "path": "docs\\systems\\weapons\\reviews\\kill_chain_integrated_admission_20260915\\review_packets\\kill_chain_integrated_admission_20260915_cells.csv",
-      "sha256": "e11ca35d86c4e8cb56709a0f4953e5e2ee80bd2c8606fc50e1dda53391d5049b",
-      "bytes": 22131
+      "sha256": "0ed0aff8d8abdfb1932c710f1f685476231580ce5eee7f033a725e3d054ae008",
+      "bytes": 25464
     },
     "conclusions_zh_md": {
       "path": "docs\\systems\\weapons\\reviews\\kill_chain_integrated_admission_20260915\\review_packets\\kill_chain_integrated_admission_20260915_conclusions.zh.md",
-      "sha256": "de9b8ece939562e96f17749231981ab1ecdcb19b994d0eecfa8668a28fb606f4",
-      "bytes": 1061
+      "sha256": "3bbdbaf3ec0ed78ce2c0ffe17834e902ed2ad47071631ecd7932a66f9f097990",
+      "bytes": 1136
     },
     "heatmaps_png": {
       "path": "docs\\systems\\weapons\\reviews\\kill_chain_integrated_admission_20260915\\review_packets\\kill_chain_integrated_admission_20260915_heatmaps.png",
-      "sha256": "00ece82b9f498d6b0cff1e5a3e25d7b8c582258f23c5525372c689e8df9a3d2b",
-      "bytes": 135317
+      "sha256": "0af469cb87bea017f181e0c6df019376a72ba2f290e4856a2dbece45d7817c4d",
+      "bytes": 133475
     }
   }
 }

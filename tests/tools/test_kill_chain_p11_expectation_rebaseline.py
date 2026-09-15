@@ -25,11 +25,21 @@ def _cell(case_id: str, old: str, state: str, *, blocked: bool = False) -> dict:
 
 
 def _report(cells: list[dict]) -> dict:
+  runs = [
+    {"case_id": cell["case_id"], "seed": seed}
+    for cell in cells
+    for seed in rebaseline.EXPECTED_SEEDS
+  ]
   return {
     "status": "integrated_structure_passed_residuals_open",
-    "matrix": {"case_count_per_seed": len(cells)},
+    "matrix": {
+      "case_count_per_seed": len(cells),
+      "expected_run_count": len(runs),
+      "seeds": list(rebaseline.EXPECTED_SEEDS),
+    },
     "evaluation": {"p11_structural_admission_passed": True},
     "cells": cells,
+    "runs": runs,
   }
 
 
@@ -81,3 +91,22 @@ def test_build_report_is_candidate_only_and_keeps_p11_incomplete() -> None:
   assert report["evaluation"]["legacy_expectation_harness_unchanged"] is True
   assert report["evaluation"]["p11_complete"] is False
   assert report["old_to_candidate_transition_counts"]["O->N"] == 1
+
+
+def test_source_matrix_gate_rejects_duplicate_case_seed_pair() -> None:
+  source = _report([_cell("a", "N", "complete_effect_chain")])
+  source["runs"][-1] = dict(source["runs"][0])
+  report = rebaseline.build_report(source, input_path=rebaseline.DEFAULT_INPUT)
+  assert report["source_matrix_audit"]["checks"]["unique_case_seed_pairs"] is False
+  assert report["evaluation"]["candidate_ready_for_manual_review"] is False
+
+
+def test_terminal_residual_gate_requires_nonempty_cause() -> None:
+  cell = _cell("blocked", "O", "in_radius_fuze_blocked", blocked=True)
+  cell["terminal_track_residual_causes"] = []
+  report = rebaseline.build_report(
+    _report([cell]), input_path=rebaseline.DEFAULT_INPUT
+  )
+  assert report["evaluation"]["gates"][
+    "terminal_track_residuals_remain_explicit"
+  ] is False

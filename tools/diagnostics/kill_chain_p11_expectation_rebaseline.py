@@ -35,6 +35,7 @@ DEFAULT_OUTPUT_DIR = (
 )
 DEFAULT_STEM = "kill_chain_p11_expectation_rebaseline_20260915"
 EXPECTED_SEED_COUNT = 3
+EXPECTED_SEEDS = (20260621, 20260622, 20260623)
 CLASS_ORDER = {"O": 0, "M": 1, "N": 2}
 
 
@@ -73,14 +74,21 @@ def _transition(old_class: str, candidate_class: str, cell: dict[str, Any]) -> s
 
 
 def _cell_rows(report: dict[str, Any]) -> list[dict[str, Any]]:
+  run_seeds: dict[str, set[int]] = defaultdict(set)
+  for run in list(report.get("runs", []) or []):
+    run_seeds[str(run.get("case_id", "") or "")].add(
+      int(run.get("seed", 0) or 0)
+    )
   rows: list[dict[str, Any]] = []
   for source in list(report.get("cells", []) or []):
     cell = dict(source)
     old_class = str(cell.get("launch_class", "") or "")
     candidate = _candidate_class(cell)
+    seeds = sorted(run_seeds.get(str(cell.get("case_id", "") or ""), set()))
     stable = (
       len(list(cell.get("chain_states", []) or [])) == 1
       and int(cell.get("seed_count", 0) or 0) == EXPECTED_SEED_COUNT
+      and tuple(seeds) == EXPECTED_SEEDS
       and bool(cell.get("structural_consistent", False))
     )
     rows.append(
@@ -102,6 +110,7 @@ def _cell_rows(report: dict[str, Any]) -> list[dict[str, Any]]:
         "transition": _transition(old_class, candidate, cell),
         "stable_across_seeds": stable,
         "seed_count": int(cell.get("seed_count", 0) or 0),
+        "seeds": seeds,
         "nearest_distance_min_m": _finite(cell.get("nearest_distance_min_m"), math.inf),
         "nearest_distance_max_m": _finite(cell.get("nearest_distance_max_m"), math.inf),
         "legacy_negative_control_alert": bool(
@@ -115,6 +124,38 @@ def _cell_rows(report: dict[str, Any]) -> list[dict[str, Any]]:
       }
     )
   return rows
+
+
+def _source_matrix_audit(
+  report: dict[str, Any], rows: list[dict[str, Any]]
+) -> dict[str, Any]:
+  case_ids = [str(row["case_id"]) for row in rows]
+  actual_run_keys = [
+    (str(run.get("case_id", "") or ""), int(run.get("seed", 0) or 0))
+    for run in list(report.get("runs", []) or [])
+  ]
+  expected_run_keys = {
+    (case_id, seed) for case_id in set(case_ids) for seed in EXPECTED_SEEDS
+  }
+  matrix = dict(report.get("matrix", {}) or {})
+  checks = {
+    "unique_cell_ids": len(case_ids) == len(set(case_ids)),
+    "expected_cell_count": len(rows)
+    == int(matrix.get("case_count_per_seed", 0) or 0),
+    "declared_seed_set_exact": tuple(sorted(int(seed) for seed in matrix.get("seeds", [])))
+    == EXPECTED_SEEDS,
+    "unique_case_seed_pairs": len(actual_run_keys) == len(set(actual_run_keys)),
+    "complete_case_seed_cartesian_product": set(actual_run_keys) == expected_run_keys,
+    "declared_run_count_exact": len(actual_run_keys)
+    == int(matrix.get("expected_run_count", 0) or 0),
+  }
+  return {
+    "checks": checks,
+    "passed": all(checks.values()),
+    "actual_cell_count": len(rows),
+    "actual_run_count": len(actual_run_keys),
+    "expected_seed_set": list(EXPECTED_SEEDS),
+  }
 
 
 def _angle_topology(rows: list[dict[str, Any]]) -> dict[str, Any]:
@@ -193,20 +234,22 @@ def build_report(input_report: dict[str, Any], *, input_path: Path) -> dict[str,
     row for row in rows if row["candidate_launch_class"] != row["old_launch_class"]
   ]
   terminal_rows = [row for row in rows if row["in_radius_fuze_blocked"]]
+  source_matrix_audit = _source_matrix_audit(input_report, rows)
   gates = {
     "source_report_structural_admission_passed": bool(
       input_report.get("evaluation", {})
       .get("p11_structural_admission_passed", False)
     ),
-    "source_anchor_matrix_complete": len(rows) == int(
-      input_report.get("matrix", {}).get("case_count_per_seed", 0) or 0
-    ),
+    "source_anchor_matrix_complete": source_matrix_audit["passed"],
     "all_cells_stable_across_required_seeds": stable,
     "candidate_classes_are_defined": bool(rows) and all(
       row["candidate_launch_class"] in CLASS_ORDER for row in rows
     ),
     "candidate_angle_topology_monotonic": topology["monotonic_angle_topology"],
-    "terminal_track_residuals_remain_explicit": bool(terminal_rows),
+    "terminal_track_residuals_remain_explicit": bool(terminal_rows) and all(
+      bool(str(row["terminal_track_residual_causes"]).strip())
+      for row in terminal_rows
+    ),
   }
   candidate_ready = all(gates.values())
   return {
@@ -258,6 +301,7 @@ def build_report(input_report: dict[str, Any], *, input_path: Path) -> dict[str,
       ),
     },
     "topology": topology,
+    "source_matrix_audit": source_matrix_audit,
     "cells": rows,
   }
 

@@ -2,7 +2,7 @@
   "schema_version": "a2.kill_chain_integrated_admission.v1",
   "status": "integrated_structure_passed_residuals_open",
   "generated_on": "2026-09-15",
-  "generated_at_utc": "2026-09-15T05:44:32.108109+00:00",
+  "generated_at_utc": "2026-09-15T12:14:26.669160+00:00",
   "authority_boundary": {
     "engineering_synthetic_only": true,
     "config_backed_runtime": true,
@@ -11,6 +11,13 @@
     "real_weapon_performance_authority": false,
     "deterministic_fuze_authority": false,
     "pk_authority": false
+  },
+  "expectation_baseline": {
+    "id": "P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS",
+    "review_verdict": "accept-with-residuals",
+    "independent_review_equivalent_to_manual_review": true,
+    "review_record": "docs\\systems\\weapons\\reviews\\kill_chain_p11_expectation_rebaseline_20260915\\review_packets\\kill_chain_p11_independent_review_acceptance_20260915.zh.md",
+    "terminal_track_residual_retained": true
   },
   "matrix": {
     "grid_tier": "anchor-grid",
@@ -45,7 +52,7 @@
     "triggered_run_count": 189,
     "untriggered_run_count": 90,
     "structural_violation_run_count": 0,
-    "legacy_negative_control_alert_cell_count": 18,
+    "legacy_negative_control_alert_cell_count": 0,
     "in_radius_fuze_blocked_cell_count": 2,
     "nominal_guidance_residual_cell_count": 0
   },
@@ -55,14 +62,16 @@
     "outside_no_load": 84
   },
   "outcome_state_counts": {
-    "": 48,
     "damage_applied": 189,
     "fuze_no_terminal_track": 6,
-    "missile_timeout": 36
+    "missile_timeout": 36,
+    "outside_no_load": 48
   },
   "evaluation": {
     "structural_gates": {
       "anchor_matrix_complete": true,
+      "unique_case_seed_pairs": true,
+      "each_cell_has_exact_required_seed_set": true,
       "all_cases_structurally_consistent": true,
       "all_cases_config_backed_without_guidance_override": true,
       "all_cases_have_required_stage_rows_and_owners": true,
@@ -71,528 +80,22 @@
       "authority_boundary_guarded": true,
       "multi_seed_anchor_evidence": true,
       "per_cell_chain_topology_stable_across_seeds": true,
-      "nearest_distance_deterministic_across_seeds": true
+      "nearest_distance_deterministic_across_seeds": true,
+      "terminal_track_residual_causes_explicit": true
     },
     "expectation_gates": {
       "all_nominal_cells_enter_R_fuze": true,
-      "legacy_outside_cells_have_no_fuze_entry_or_downstream_effect": false,
+      "legacy_outside_cells_have_no_fuze_entry_or_downstream_effect": true,
       "all_in_radius_cases_resolve_to_fuze_trigger": false
     },
     "p11_structural_admission_passed": true,
+    "accepted_n_o_expectation_envelope_passed": true,
+    "terminal_track_contract_passed": false,
     "legacy_expectation_envelope_passed": false,
     "p11_complete": false
   },
   "residuals": {
-    "legacy_negative_control_alert_cells": [
-      {
-        "case_id": "kces_anchor_grid_cv_10km_m60deg",
-        "target_motion_layer": "nonmaneuvering_constant_velocity",
-        "target_acceleration_x_mps2": 0.0,
-        "range_km": 10.0,
-        "bearing_deg": -60.0,
-        "launch_class": "O",
-        "seed_count": 3,
-        "complete_effect_chain_count": 3,
-        "in_radius_fuze_blocked_count": 0,
-        "outside_no_load_count": 0,
-        "chain_states": [
-          "complete_effect_chain"
-        ],
-        "outcome_states": [
-          "damage_applied"
-        ],
-        "nearest_distance_min_m": 0.0014000715131809443,
-        "nearest_distance_max_m": 0.0014000715131809443,
-        "nearest_distance_spread_m": 0.0,
-        "terminal_track_residual_causes": [],
-        "max_seeker_fov_excess_deg": 3.3358304914331,
-        "max_detection_fov_excess_deg": 3.3438321647741986,
-        "structural_consistent": true,
-        "nominal_guidance_residual": false,
-        "legacy_negative_control_alert": true,
-        "in_radius_fuze_blocked": false
-      },
-      {
-        "case_id": "kces_anchor_grid_cv_10km_p60deg",
-        "target_motion_layer": "nonmaneuvering_constant_velocity",
-        "target_acceleration_x_mps2": 0.0,
-        "range_km": 10.0,
-        "bearing_deg": 60.0,
-        "launch_class": "O",
-        "seed_count": 3,
-        "complete_effect_chain_count": 3,
-        "in_radius_fuze_blocked_count": 0,
-        "outside_no_load_count": 0,
-        "chain_states": [
-          "complete_effect_chain"
-        ],
-        "outcome_states": [
-          "damage_applied"
-        ],
-        "nearest_distance_min_m": 0.0013994803991079212,
-        "nearest_distance_max_m": 0.0013994803991079212,
-        "nearest_distance_spread_m": 0.0,
-        "terminal_track_residual_causes": [],
-        "max_seeker_fov_excess_deg": 3.3358304914331,
-        "max_detection_fov_excess_deg": 3.3438321647741986,
-        "structural_consistent": true,
-        "nominal_guidance_residual": false,
-        "legacy_negative_control_alert": true,
-        "in_radius_fuze_blocked": false
-      },
-      {
-        "case_id": "kces_anchor_grid_cv_12km_m45deg",
-        "target_motion_layer": "nonmaneuvering_constant_velocity",
-        "target_acceleration_x_mps2": 0.0,
-        "range_km": 12.0,
-        "bearing_deg": -45.0,
-        "launch_class": "O",
-        "seed_count": 3,
-        "complete_effect_chain_count": 3,
-        "in_radius_fuze_blocked_count": 0,
-        "outside_no_load_count": 0,
-        "chain_states": [
-          "complete_effect_chain"
-        ],
-        "outcome_states": [
-          "damage_applied"
-        ],
-        "nearest_distance_min_m": 0.0013841337507012703,
-        "nearest_distance_max_m": 0.0013841337507012703,
-        "nearest_distance_spread_m": 0.0,
-        "terminal_track_residual_causes": [],
-        "max_seeker_fov_excess_deg": 29.38132581345026,
-        "max_detection_fov_excess_deg": 29.39076212483991,
-        "structural_consistent": true,
-        "nominal_guidance_residual": false,
-        "legacy_negative_control_alert": true,
-        "in_radius_fuze_blocked": false
-      },
-      {
-        "case_id": "kces_anchor_grid_cv_12km_m60deg",
-        "target_motion_layer": "nonmaneuvering_constant_velocity",
-        "target_acceleration_x_mps2": 0.0,
-        "range_km": 12.0,
-        "bearing_deg": -60.0,
-        "launch_class": "O",
-        "seed_count": 3,
-        "complete_effect_chain_count": 3,
-        "in_radius_fuze_blocked_count": 0,
-        "outside_no_load_count": 0,
-        "chain_states": [
-          "complete_effect_chain"
-        ],
-        "outcome_states": [
-          "damage_applied"
-        ],
-        "nearest_distance_min_m": 0.0013925410669541598,
-        "nearest_distance_max_m": 0.0013925410669541598,
-        "nearest_distance_spread_m": 0.0,
-        "terminal_track_residual_causes": [],
-        "max_seeker_fov_excess_deg": 2.2050680840209225,
-        "max_detection_fov_excess_deg": 2.218540604662877,
-        "structural_consistent": true,
-        "nominal_guidance_residual": false,
-        "legacy_negative_control_alert": true,
-        "in_radius_fuze_blocked": false
-      },
-      {
-        "case_id": "kces_anchor_grid_cv_12km_p45deg",
-        "target_motion_layer": "nonmaneuvering_constant_velocity",
-        "target_acceleration_x_mps2": 0.0,
-        "range_km": 12.0,
-        "bearing_deg": 45.0,
-        "launch_class": "O",
-        "seed_count": 3,
-        "complete_effect_chain_count": 3,
-        "in_radius_fuze_blocked_count": 0,
-        "outside_no_load_count": 0,
-        "chain_states": [
-          "complete_effect_chain"
-        ],
-        "outcome_states": [
-          "damage_applied"
-        ],
-        "nearest_distance_min_m": 0.0013804545360618027,
-        "nearest_distance_max_m": 0.0013804545360618027,
-        "nearest_distance_spread_m": 0.0,
-        "terminal_track_residual_causes": [],
-        "max_seeker_fov_excess_deg": 29.38132581345026,
-        "max_detection_fov_excess_deg": 29.39076212483991,
-        "structural_consistent": true,
-        "nominal_guidance_residual": false,
-        "legacy_negative_control_alert": true,
-        "in_radius_fuze_blocked": false
-      },
-      {
-        "case_id": "kces_anchor_grid_cv_12km_p60deg",
-        "target_motion_layer": "nonmaneuvering_constant_velocity",
-        "target_acceleration_x_mps2": 0.0,
-        "range_km": 12.0,
-        "bearing_deg": 60.0,
-        "launch_class": "O",
-        "seed_count": 3,
-        "complete_effect_chain_count": 3,
-        "in_radius_fuze_blocked_count": 0,
-        "outside_no_load_count": 0,
-        "chain_states": [
-          "complete_effect_chain"
-        ],
-        "outcome_states": [
-          "damage_applied"
-        ],
-        "nearest_distance_min_m": 0.001392188458806662,
-        "nearest_distance_max_m": 0.001392188458806662,
-        "nearest_distance_spread_m": 0.0,
-        "terminal_track_residual_causes": [],
-        "max_seeker_fov_excess_deg": 2.2050680840209225,
-        "max_detection_fov_excess_deg": 2.218540604662877,
-        "structural_consistent": true,
-        "nominal_guidance_residual": false,
-        "legacy_negative_control_alert": true,
-        "in_radius_fuze_blocked": false
-      },
-      {
-        "case_id": "kces_anchor_grid_cv_16km_m30deg",
-        "target_motion_layer": "nonmaneuvering_constant_velocity",
-        "target_acceleration_x_mps2": 0.0,
-        "range_km": 16.0,
-        "bearing_deg": -30.0,
-        "launch_class": "O",
-        "seed_count": 3,
-        "complete_effect_chain_count": 3,
-        "in_radius_fuze_blocked_count": 0,
-        "outside_no_load_count": 0,
-        "chain_states": [
-          "complete_effect_chain"
-        ],
-        "outcome_states": [
-          "damage_applied"
-        ],
-        "nearest_distance_min_m": 0.0013849725587759766,
-        "nearest_distance_max_m": 0.0013849725587759766,
-        "nearest_distance_spread_m": 0.0,
-        "terminal_track_residual_causes": [],
-        "max_seeker_fov_excess_deg": 50.70359928092603,
-        "max_detection_fov_excess_deg": 50.707841756330396,
-        "structural_consistent": true,
-        "nominal_guidance_residual": false,
-        "legacy_negative_control_alert": true,
-        "in_radius_fuze_blocked": false
-      },
-      {
-        "case_id": "kces_anchor_grid_cv_16km_m45deg",
-        "target_motion_layer": "nonmaneuvering_constant_velocity",
-        "target_acceleration_x_mps2": 0.0,
-        "range_km": 16.0,
-        "bearing_deg": -45.0,
-        "launch_class": "O",
-        "seed_count": 3,
-        "complete_effect_chain_count": 3,
-        "in_radius_fuze_blocked_count": 0,
-        "outside_no_load_count": 0,
-        "chain_states": [
-          "complete_effect_chain"
-        ],
-        "outcome_states": [
-          "damage_applied"
-        ],
-        "nearest_distance_min_m": 0.0013812070147824122,
-        "nearest_distance_max_m": 0.0013812070147824122,
-        "nearest_distance_spread_m": 0.0,
-        "terminal_track_residual_causes": [],
-        "max_seeker_fov_excess_deg": 28.46224958128161,
-        "max_detection_fov_excess_deg": 28.472281490025594,
-        "structural_consistent": true,
-        "nominal_guidance_residual": false,
-        "legacy_negative_control_alert": true,
-        "in_radius_fuze_blocked": false
-      },
-      {
-        "case_id": "kces_anchor_grid_cv_16km_m60deg",
-        "target_motion_layer": "nonmaneuvering_constant_velocity",
-        "target_acceleration_x_mps2": 0.0,
-        "range_km": 16.0,
-        "bearing_deg": -60.0,
-        "launch_class": "O",
-        "seed_count": 3,
-        "complete_effect_chain_count": 3,
-        "in_radius_fuze_blocked_count": 0,
-        "outside_no_load_count": 0,
-        "chain_states": [
-          "complete_effect_chain"
-        ],
-        "outcome_states": [
-          "damage_applied"
-        ],
-        "nearest_distance_min_m": 0.0013948673822559003,
-        "nearest_distance_max_m": 0.0013948673822559003,
-        "nearest_distance_spread_m": 0.0,
-        "terminal_track_residual_causes": [],
-        "max_seeker_fov_excess_deg": 0.07838810567382382,
-        "max_detection_fov_excess_deg": 0.07837829291376863,
-        "structural_consistent": true,
-        "nominal_guidance_residual": false,
-        "legacy_negative_control_alert": true,
-        "in_radius_fuze_blocked": false
-      },
-      {
-        "case_id": "kces_anchor_grid_cv_16km_p30deg",
-        "target_motion_layer": "nonmaneuvering_constant_velocity",
-        "target_acceleration_x_mps2": 0.0,
-        "range_km": 16.0,
-        "bearing_deg": 30.0,
-        "launch_class": "O",
-        "seed_count": 3,
-        "complete_effect_chain_count": 3,
-        "in_radius_fuze_blocked_count": 0,
-        "outside_no_load_count": 0,
-        "chain_states": [
-          "complete_effect_chain"
-        ],
-        "outcome_states": [
-          "damage_applied"
-        ],
-        "nearest_distance_min_m": 0.0013792065935450569,
-        "nearest_distance_max_m": 0.0013792065935450569,
-        "nearest_distance_spread_m": 0.0,
-        "terminal_track_residual_causes": [],
-        "max_seeker_fov_excess_deg": 50.70359928092603,
-        "max_detection_fov_excess_deg": 50.707841756330396,
-        "structural_consistent": true,
-        "nominal_guidance_residual": false,
-        "legacy_negative_control_alert": true,
-        "in_radius_fuze_blocked": false
-      },
-      {
-        "case_id": "kces_anchor_grid_cv_16km_p45deg",
-        "target_motion_layer": "nonmaneuvering_constant_velocity",
-        "target_acceleration_x_mps2": 0.0,
-        "range_km": 16.0,
-        "bearing_deg": 45.0,
-        "launch_class": "O",
-        "seed_count": 3,
-        "complete_effect_chain_count": 3,
-        "in_radius_fuze_blocked_count": 0,
-        "outside_no_load_count": 0,
-        "chain_states": [
-          "complete_effect_chain"
-        ],
-        "outcome_states": [
-          "damage_applied"
-        ],
-        "nearest_distance_min_m": 0.0013778773114455735,
-        "nearest_distance_max_m": 0.0013778773114455735,
-        "nearest_distance_spread_m": 0.0,
-        "terminal_track_residual_causes": [],
-        "max_seeker_fov_excess_deg": 28.46224958128161,
-        "max_detection_fov_excess_deg": 28.472281490025594,
-        "structural_consistent": true,
-        "nominal_guidance_residual": false,
-        "legacy_negative_control_alert": true,
-        "in_radius_fuze_blocked": false
-      },
-      {
-        "case_id": "kces_anchor_grid_cv_16km_p60deg",
-        "target_motion_layer": "nonmaneuvering_constant_velocity",
-        "target_acceleration_x_mps2": 0.0,
-        "range_km": 16.0,
-        "bearing_deg": 60.0,
-        "launch_class": "O",
-        "seed_count": 3,
-        "complete_effect_chain_count": 3,
-        "in_radius_fuze_blocked_count": 0,
-        "outside_no_load_count": 0,
-        "chain_states": [
-          "complete_effect_chain"
-        ],
-        "outcome_states": [
-          "damage_applied"
-        ],
-        "nearest_distance_min_m": 0.0013948812775081538,
-        "nearest_distance_max_m": 0.0013948812775081538,
-        "nearest_distance_spread_m": 0.0,
-        "terminal_track_residual_causes": [],
-        "max_seeker_fov_excess_deg": 0.07838810567382382,
-        "max_detection_fov_excess_deg": 0.07837829291376863,
-        "structural_consistent": true,
-        "nominal_guidance_residual": false,
-        "legacy_negative_control_alert": true,
-        "in_radius_fuze_blocked": false
-      },
-      {
-        "case_id": "kces_anchor_grid_mild_10km_m30deg",
-        "target_motion_layer": "mild_maneuver",
-        "target_acceleration_x_mps2": -8.0,
-        "range_km": 10.0,
-        "bearing_deg": -30.0,
-        "launch_class": "O",
-        "seed_count": 3,
-        "complete_effect_chain_count": 3,
-        "in_radius_fuze_blocked_count": 0,
-        "outside_no_load_count": 0,
-        "chain_states": [
-          "complete_effect_chain"
-        ],
-        "outcome_states": [
-          "damage_applied"
-        ],
-        "nearest_distance_min_m": 0.001985961178841626,
-        "nearest_distance_max_m": 0.001985961178841626,
-        "nearest_distance_spread_m": 0.0,
-        "terminal_track_residual_causes": [],
-        "max_seeker_fov_excess_deg": 50.33786211553607,
-        "max_detection_fov_excess_deg": 50.34844494102407,
-        "structural_consistent": true,
-        "nominal_guidance_residual": false,
-        "legacy_negative_control_alert": true,
-        "in_radius_fuze_blocked": false
-      },
-      {
-        "case_id": "kces_anchor_grid_mild_10km_p30deg",
-        "target_motion_layer": "mild_maneuver",
-        "target_acceleration_x_mps2": 8.0,
-        "range_km": 10.0,
-        "bearing_deg": 30.0,
-        "launch_class": "O",
-        "seed_count": 3,
-        "complete_effect_chain_count": 3,
-        "in_radius_fuze_blocked_count": 0,
-        "outside_no_load_count": 0,
-        "chain_states": [
-          "complete_effect_chain"
-        ],
-        "outcome_states": [
-          "damage_applied"
-        ],
-        "nearest_distance_min_m": 0.0019186889627894018,
-        "nearest_distance_max_m": 0.0019186889627894018,
-        "nearest_distance_spread_m": 0.0,
-        "terminal_track_residual_causes": [],
-        "max_seeker_fov_excess_deg": 50.33786211553607,
-        "max_detection_fov_excess_deg": 50.34844494102407,
-        "structural_consistent": true,
-        "nominal_guidance_residual": false,
-        "legacy_negative_control_alert": true,
-        "in_radius_fuze_blocked": false
-      },
-      {
-        "case_id": "kces_anchor_grid_mild_6km_m60deg",
-        "target_motion_layer": "mild_maneuver",
-        "target_acceleration_x_mps2": -8.0,
-        "range_km": 6.0,
-        "bearing_deg": -60.0,
-        "launch_class": "O",
-        "seed_count": 3,
-        "complete_effect_chain_count": 0,
-        "in_radius_fuze_blocked_count": 3,
-        "outside_no_load_count": 0,
-        "chain_states": [
-          "in_radius_fuze_blocked"
-        ],
-        "outcome_states": [
-          "fuze_no_terminal_track"
-        ],
-        "nearest_distance_min_m": 13.317615731677678,
-        "nearest_distance_max_m": 13.317615731677678,
-        "nearest_distance_spread_m": 0.0,
-        "terminal_track_residual_causes": [
-          "seeker_fov_exit_then_memory_timeout"
-        ],
-        "max_seeker_fov_excess_deg": 0.29954074900371097,
-        "max_detection_fov_excess_deg": 85.45578310712699,
-        "structural_consistent": true,
-        "nominal_guidance_residual": false,
-        "legacy_negative_control_alert": true,
-        "in_radius_fuze_blocked": true
-      },
-      {
-        "case_id": "kces_anchor_grid_mild_6km_p60deg",
-        "target_motion_layer": "mild_maneuver",
-        "target_acceleration_x_mps2": 8.0,
-        "range_km": 6.0,
-        "bearing_deg": 60.0,
-        "launch_class": "O",
-        "seed_count": 3,
-        "complete_effect_chain_count": 0,
-        "in_radius_fuze_blocked_count": 3,
-        "outside_no_load_count": 0,
-        "chain_states": [
-          "in_radius_fuze_blocked"
-        ],
-        "outcome_states": [
-          "fuze_no_terminal_track"
-        ],
-        "nearest_distance_min_m": 13.31770270498944,
-        "nearest_distance_max_m": 13.31770270498944,
-        "nearest_distance_spread_m": 0.0,
-        "terminal_track_residual_causes": [
-          "seeker_fov_exit_then_memory_timeout"
-        ],
-        "max_seeker_fov_excess_deg": 0.29954074900371097,
-        "max_detection_fov_excess_deg": 85.45578310712699,
-        "structural_consistent": true,
-        "nominal_guidance_residual": false,
-        "legacy_negative_control_alert": true,
-        "in_radius_fuze_blocked": true
-      },
-      {
-        "case_id": "kces_anchor_grid_mild_8km_m60deg",
-        "target_motion_layer": "mild_maneuver",
-        "target_acceleration_x_mps2": -8.0,
-        "range_km": 8.0,
-        "bearing_deg": -60.0,
-        "launch_class": "O",
-        "seed_count": 3,
-        "complete_effect_chain_count": 3,
-        "in_radius_fuze_blocked_count": 0,
-        "outside_no_load_count": 0,
-        "chain_states": [
-          "complete_effect_chain"
-        ],
-        "outcome_states": [
-          "damage_applied"
-        ],
-        "nearest_distance_min_m": 0.001454337260595151,
-        "nearest_distance_max_m": 0.001454337260595151,
-        "nearest_distance_spread_m": 0.0,
-        "terminal_track_residual_causes": [],
-        "max_seeker_fov_excess_deg": 0.2703958404840847,
-        "max_detection_fov_excess_deg": 0.282850523930648,
-        "structural_consistent": true,
-        "nominal_guidance_residual": false,
-        "legacy_negative_control_alert": true,
-        "in_radius_fuze_blocked": false
-      },
-      {
-        "case_id": "kces_anchor_grid_mild_8km_p60deg",
-        "target_motion_layer": "mild_maneuver",
-        "target_acceleration_x_mps2": 8.0,
-        "range_km": 8.0,
-        "bearing_deg": 60.0,
-        "launch_class": "O",
-        "seed_count": 3,
-        "complete_effect_chain_count": 3,
-        "in_radius_fuze_blocked_count": 0,
-        "outside_no_load_count": 0,
-        "chain_states": [
-          "complete_effect_chain"
-        ],
-        "outcome_states": [
-          "damage_applied"
-        ],
-        "nearest_distance_min_m": 0.0014145202949789526,
-        "nearest_distance_max_m": 0.0014145202949789526,
-        "nearest_distance_spread_m": 0.0,
-        "terminal_track_residual_causes": [],
-        "max_seeker_fov_excess_deg": 0.2703958404840847,
-        "max_detection_fov_excess_deg": 0.282850523930648,
-        "structural_consistent": true,
-        "nominal_guidance_residual": false,
-        "legacy_negative_control_alert": true,
-        "in_radius_fuze_blocked": false
-      }
-    ],
+    "legacy_negative_control_alert_cells": [],
     "in_radius_fuze_blocked_cells": [
       {
         "case_id": "kces_anchor_grid_mild_6km_m60deg",
@@ -600,8 +103,13 @@
         "target_acceleration_x_mps2": -8.0,
         "range_km": 6.0,
         "bearing_deg": -60.0,
-        "launch_class": "O",
+        "launch_class": "M",
         "seed_count": 3,
+        "seeds": [
+          20260621,
+          20260622,
+          20260623
+        ],
         "complete_effect_chain_count": 0,
         "in_radius_fuze_blocked_count": 3,
         "outside_no_load_count": 0,
@@ -621,7 +129,7 @@
         "max_detection_fov_excess_deg": 85.45578310712699,
         "structural_consistent": true,
         "nominal_guidance_residual": false,
-        "legacy_negative_control_alert": true,
+        "legacy_negative_control_alert": false,
         "in_radius_fuze_blocked": true
       },
       {
@@ -630,8 +138,13 @@
         "target_acceleration_x_mps2": 8.0,
         "range_km": 6.0,
         "bearing_deg": 60.0,
-        "launch_class": "O",
+        "launch_class": "M",
         "seed_count": 3,
+        "seeds": [
+          20260621,
+          20260622,
+          20260623
+        ],
         "complete_effect_chain_count": 0,
         "in_radius_fuze_blocked_count": 3,
         "outside_no_load_count": 0,
@@ -651,7 +164,7 @@
         "max_detection_fov_excess_deg": 85.45578310712699,
         "structural_consistent": true,
         "nominal_guidance_residual": false,
-        "legacy_negative_control_alert": true,
+        "legacy_negative_control_alert": false,
         "in_radius_fuze_blocked": true
       }
     ],
@@ -659,7 +172,7 @@
       "seeker_fov_exit_then_memory_timeout": 2
     },
     "nominal_guidance_residual_cells": [],
-    "next_gate": "review legacy N/M/O envelope against P10 config-backed guidance and diagnose in-radius terminal-track failures before declaring P11 complete"
+    "next_gate": "adjudicate terminal-track runtime contract without changing the accepted N/M/O expectation baseline before declaring P11 complete"
   },
   "cells": [
     {
@@ -670,6 +183,11 @@
       "bearing_deg": -15.0,
       "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -696,8 +214,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": -30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -724,8 +247,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": -45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -752,8 +280,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": -60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -771,7 +304,7 @@
       "max_detection_fov_excess_deg": 3.3438321647741986,
       "structural_consistent": true,
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -782,6 +315,11 @@
       "bearing_deg": -75.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -789,7 +327,7 @@
         "outside_no_load"
       ],
       "outcome_states": [
-        ""
+        "outside_no_load"
       ],
       "nearest_distance_min_m": 7942.472099642712,
       "nearest_distance_max_m": 7942.472099642712,
@@ -810,6 +348,11 @@
       "bearing_deg": -90.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -838,6 +381,11 @@
       "bearing_deg": 0.0,
       "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -866,6 +414,11 @@
       "bearing_deg": 15.0,
       "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -892,8 +445,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": 30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -920,8 +478,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": 45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -948,8 +511,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": 60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -967,7 +535,7 @@
       "max_detection_fov_excess_deg": 3.3438321647741986,
       "structural_consistent": true,
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -978,6 +546,11 @@
       "bearing_deg": 75.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -985,7 +558,7 @@
         "outside_no_load"
       ],
       "outcome_states": [
-        ""
+        "outside_no_load"
       ],
       "nearest_distance_min_m": 7942.472137535024,
       "nearest_distance_max_m": 7942.472137535024,
@@ -1006,6 +579,11 @@
       "bearing_deg": 90.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -1032,8 +610,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": -15.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1060,8 +643,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": -30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1088,8 +676,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": -45.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1107,7 +700,7 @@
       "max_detection_fov_excess_deg": 29.39076212483991,
       "structural_consistent": true,
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -1116,8 +709,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": -60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1135,7 +733,7 @@
       "max_detection_fov_excess_deg": 2.218540604662877,
       "structural_consistent": true,
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -1146,6 +744,11 @@
       "bearing_deg": -75.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -1153,7 +756,7 @@
         "outside_no_load"
       ],
       "outcome_states": [
-        ""
+        "outside_no_load"
       ],
       "nearest_distance_min_m": 9679.150533334392,
       "nearest_distance_max_m": 9679.150533334392,
@@ -1174,6 +777,11 @@
       "bearing_deg": -90.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -1202,6 +810,11 @@
       "bearing_deg": 0.0,
       "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1228,8 +841,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": 15.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1256,8 +874,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": 30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1284,8 +907,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": 45.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1303,7 +931,7 @@
       "max_detection_fov_excess_deg": 29.39076212483991,
       "structural_consistent": true,
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -1312,8 +940,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": 60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1331,7 +964,7 @@
       "max_detection_fov_excess_deg": 2.218540604662877,
       "structural_consistent": true,
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -1342,6 +975,11 @@
       "bearing_deg": 75.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -1349,7 +987,7 @@
         "outside_no_load"
       ],
       "outcome_states": [
-        ""
+        "outside_no_load"
       ],
       "nearest_distance_min_m": 9679.15057195367,
       "nearest_distance_max_m": 9679.15057195367,
@@ -1370,6 +1008,11 @@
       "bearing_deg": 90.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -1396,8 +1039,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": -15.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1424,8 +1072,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": -30.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1443,7 +1096,7 @@
       "max_detection_fov_excess_deg": 50.707841756330396,
       "structural_consistent": true,
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -1452,8 +1105,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": -45.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1471,7 +1129,7 @@
       "max_detection_fov_excess_deg": 28.472281490025594,
       "structural_consistent": true,
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -1480,8 +1138,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": -60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1499,7 +1162,7 @@
       "max_detection_fov_excess_deg": 0.07837829291376863,
       "structural_consistent": true,
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -1510,6 +1173,11 @@
       "bearing_deg": -75.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -1517,7 +1185,7 @@
         "outside_no_load"
       ],
       "outcome_states": [
-        ""
+        "outside_no_load"
       ],
       "nearest_distance_min_m": 13158.387289284567,
       "nearest_distance_max_m": 13158.387289284567,
@@ -1538,6 +1206,11 @@
       "bearing_deg": -90.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -1564,8 +1237,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": 0.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1592,8 +1270,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": 15.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1620,8 +1303,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": 30.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1639,7 +1327,7 @@
       "max_detection_fov_excess_deg": 50.707841756330396,
       "structural_consistent": true,
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -1648,8 +1336,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": 45.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1667,7 +1360,7 @@
       "max_detection_fov_excess_deg": 28.472281490025594,
       "structural_consistent": true,
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -1676,8 +1369,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": 60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1695,7 +1393,7 @@
       "max_detection_fov_excess_deg": 0.07837829291376863,
       "structural_consistent": true,
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -1706,6 +1404,11 @@
       "bearing_deg": 75.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -1713,7 +1416,7 @@
         "outside_no_load"
       ],
       "outcome_states": [
-        ""
+        "outside_no_load"
       ],
       "nearest_distance_min_m": 13158.387328791705,
       "nearest_distance_max_m": 13158.387328791705,
@@ -1734,6 +1437,11 @@
       "bearing_deg": 90.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -1762,6 +1470,11 @@
       "bearing_deg": -15.0,
       "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1790,6 +1503,11 @@
       "bearing_deg": -30.0,
       "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1816,8 +1534,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": -45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1844,8 +1567,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": -60.0,
-      "launch_class": "M",
+      "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -1853,7 +1581,7 @@
         "outside_no_load"
       ],
       "outcome_states": [
-        ""
+        "outside_no_load"
       ],
       "nearest_distance_min_m": 542.9527683863769,
       "nearest_distance_max_m": 542.9527683863769,
@@ -1872,8 +1600,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": -75.0,
-      "launch_class": "M",
+      "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -1881,7 +1614,7 @@
         "outside_no_load"
       ],
       "outcome_states": [
-        ""
+        "outside_no_load"
       ],
       "nearest_distance_min_m": 3055.9151827696182,
       "nearest_distance_max_m": 3055.9151827696182,
@@ -1902,6 +1635,11 @@
       "bearing_deg": -90.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -1930,6 +1668,11 @@
       "bearing_deg": 0.0,
       "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1958,6 +1701,11 @@
       "bearing_deg": 15.0,
       "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -1986,6 +1734,11 @@
       "bearing_deg": 30.0,
       "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2012,8 +1765,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": 45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2040,8 +1798,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": 60.0,
-      "launch_class": "M",
+      "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -2049,7 +1812,7 @@
         "outside_no_load"
       ],
       "outcome_states": [
-        ""
+        "outside_no_load"
       ],
       "nearest_distance_min_m": 542.9527796211833,
       "nearest_distance_max_m": 542.9527796211833,
@@ -2068,8 +1831,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": 75.0,
-      "launch_class": "M",
+      "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -2077,7 +1845,7 @@
         "outside_no_load"
       ],
       "outcome_states": [
-        ""
+        "outside_no_load"
       ],
       "nearest_distance_min_m": 3055.9152361939014,
       "nearest_distance_max_m": 3055.9152361939014,
@@ -2098,6 +1866,11 @@
       "bearing_deg": 90.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -2126,6 +1899,11 @@
       "bearing_deg": -15.0,
       "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2154,6 +1932,11 @@
       "bearing_deg": -30.0,
       "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2180,8 +1963,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 6.0,
       "bearing_deg": -45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2208,8 +1996,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 6.0,
       "bearing_deg": -60.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2238,6 +2031,11 @@
       "bearing_deg": -75.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -2245,7 +2043,7 @@
         "outside_no_load"
       ],
       "outcome_states": [
-        ""
+        "outside_no_load"
       ],
       "nearest_distance_min_m": 4595.196123500637,
       "nearest_distance_max_m": 4595.196123500637,
@@ -2266,6 +2064,11 @@
       "bearing_deg": -90.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -2294,6 +2097,11 @@
       "bearing_deg": 0.0,
       "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2322,6 +2130,11 @@
       "bearing_deg": 15.0,
       "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2350,6 +2163,11 @@
       "bearing_deg": 30.0,
       "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2376,8 +2194,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 6.0,
       "bearing_deg": 45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2404,8 +2227,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 6.0,
       "bearing_deg": 60.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2434,6 +2262,11 @@
       "bearing_deg": 75.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -2441,7 +2274,7 @@
         "outside_no_load"
       ],
       "outcome_states": [
-        ""
+        "outside_no_load"
       ],
       "nearest_distance_min_m": 4595.196165135834,
       "nearest_distance_max_m": 4595.196165135834,
@@ -2462,6 +2295,11 @@
       "bearing_deg": 90.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -2490,6 +2328,11 @@
       "bearing_deg": -15.0,
       "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2518,6 +2361,11 @@
       "bearing_deg": -30.0,
       "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2544,8 +2392,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 8.0,
       "bearing_deg": -45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2572,8 +2425,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 8.0,
       "bearing_deg": -60.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2602,6 +2460,11 @@
       "bearing_deg": -75.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -2609,7 +2472,7 @@
         "outside_no_load"
       ],
       "outcome_states": [
-        ""
+        "outside_no_load"
       ],
       "nearest_distance_min_m": 6229.943256055514,
       "nearest_distance_max_m": 6229.943256055514,
@@ -2630,6 +2493,11 @@
       "bearing_deg": -90.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -2658,6 +2526,11 @@
       "bearing_deg": 0.0,
       "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2686,6 +2559,11 @@
       "bearing_deg": 15.0,
       "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2714,6 +2592,11 @@
       "bearing_deg": 30.0,
       "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2740,8 +2623,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 8.0,
       "bearing_deg": 45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2768,8 +2656,13 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 8.0,
       "bearing_deg": 60.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2798,6 +2691,11 @@
       "bearing_deg": 75.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -2805,7 +2703,7 @@
         "outside_no_load"
       ],
       "outcome_states": [
-        ""
+        "outside_no_load"
       ],
       "nearest_distance_min_m": 6229.943292955612,
       "nearest_distance_max_m": 6229.943292955612,
@@ -2826,6 +2724,11 @@
       "bearing_deg": 90.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -2852,8 +2755,13 @@
       "target_acceleration_x_mps2": -8.0,
       "range_km": 10.0,
       "bearing_deg": -30.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2871,7 +2779,7 @@
       "max_detection_fov_excess_deg": 50.34844494102407,
       "structural_consistent": true,
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -2882,6 +2790,11 @@
       "bearing_deg": -60.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -2889,7 +2802,7 @@
         "outside_no_load"
       ],
       "outcome_states": [
-        ""
+        "outside_no_load"
       ],
       "nearest_distance_min_m": 86.8042715092514,
       "nearest_distance_max_m": 86.8042715092514,
@@ -2908,8 +2821,13 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 10.0,
       "bearing_deg": 0.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2936,8 +2854,13 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 10.0,
       "bearing_deg": 30.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -2955,7 +2878,7 @@
       "max_detection_fov_excess_deg": 50.34844494102407,
       "structural_consistent": true,
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -2966,6 +2889,11 @@
       "bearing_deg": 60.0,
       "launch_class": "O",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 3,
@@ -2973,7 +2901,7 @@
         "outside_no_load"
       ],
       "outcome_states": [
-        ""
+        "outside_no_load"
       ],
       "nearest_distance_min_m": 86.8044902544037,
       "nearest_distance_max_m": 86.8044902544037,
@@ -2992,8 +2920,13 @@
       "target_acceleration_x_mps2": -8.0,
       "range_km": 6.0,
       "bearing_deg": -30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -3020,8 +2953,13 @@
       "target_acceleration_x_mps2": -8.0,
       "range_km": 6.0,
       "bearing_deg": -60.0,
-      "launch_class": "O",
+      "launch_class": "M",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 3,
       "outside_no_load_count": 0,
@@ -3041,7 +2979,7 @@
       "max_detection_fov_excess_deg": 85.45578310712699,
       "structural_consistent": true,
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": true
     },
     {
@@ -3052,6 +2990,11 @@
       "bearing_deg": 0.0,
       "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -3078,8 +3021,13 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 6.0,
       "bearing_deg": 30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -3106,8 +3054,13 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 6.0,
       "bearing_deg": 60.0,
-      "launch_class": "O",
+      "launch_class": "M",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 0,
       "in_radius_fuze_blocked_count": 3,
       "outside_no_load_count": 0,
@@ -3127,7 +3080,7 @@
       "max_detection_fov_excess_deg": 85.45578310712699,
       "structural_consistent": true,
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": true
     },
     {
@@ -3136,8 +3089,13 @@
       "target_acceleration_x_mps2": -8.0,
       "range_km": 8.0,
       "bearing_deg": -30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -3164,8 +3122,13 @@
       "target_acceleration_x_mps2": -8.0,
       "range_km": 8.0,
       "bearing_deg": -60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -3183,7 +3146,7 @@
       "max_detection_fov_excess_deg": 0.282850523930648,
       "structural_consistent": true,
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -3192,8 +3155,13 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 8.0,
       "bearing_deg": 0.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -3220,8 +3188,13 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 8.0,
       "bearing_deg": 30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -3248,8 +3221,13 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 8.0,
       "bearing_deg": 60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "seed_count": 3,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
       "complete_effect_chain_count": 3,
       "in_radius_fuze_blocked_count": 0,
       "outside_no_load_count": 0,
@@ -3267,7 +3245,7 @@
       "max_detection_fov_excess_deg": 0.282850523930648,
       "structural_consistent": true,
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     }
   ],
@@ -3333,7 +3311,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": -30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013695418887230077,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -3385,7 +3363,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": -45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001402140071388814,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -3437,7 +3415,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": -60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0014000715131809443,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -3477,7 +3455,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -3517,7 +3495,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -3697,7 +3675,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": 30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013663727542851292,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -3749,7 +3727,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": 45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013970930274600287,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -3801,7 +3779,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": 60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013994803991079212,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -3841,7 +3819,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -3881,7 +3859,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -3957,7 +3935,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": -15.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013705427274449233,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -4009,7 +3987,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": -30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001380850645794409,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -4061,7 +4039,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": -45.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013841337507012703,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -4101,7 +4079,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -4113,7 +4091,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": -60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013925410669541598,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -4153,7 +4131,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -4193,7 +4171,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -4321,7 +4299,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": 15.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013665419301073169,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -4373,7 +4351,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": 30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001375627849376836,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -4425,7 +4403,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": 45.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013804545360618027,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -4465,7 +4443,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -4477,7 +4455,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": 60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.001392188458806662,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -4517,7 +4495,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -4557,7 +4535,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -4633,7 +4611,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": -15.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013654878348433297,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -4685,7 +4663,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": -30.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013849725587759766,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -4725,7 +4703,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -4737,7 +4715,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": -45.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013812070147824122,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -4777,7 +4755,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -4789,7 +4767,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": -60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013948673822559003,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -4829,7 +4807,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -4869,7 +4847,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -4945,7 +4923,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": 0.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013622124199678543,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -4997,7 +4975,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": 15.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013631652629329033,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -5049,7 +5027,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": 30.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013792065935450569,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -5089,7 +5067,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -5101,7 +5079,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": 45.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013778773114455735,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -5141,7 +5119,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -5153,7 +5131,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": 60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013948812775081538,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -5193,7 +5171,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -5233,7 +5211,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -5413,7 +5391,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": -45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013931658301945674,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -5465,7 +5443,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": -60.0,
-      "launch_class": "M",
+      "launch_class": "O",
       "nearest_distance_m": 542.9527683863769,
       "entered_R_fuze": false,
       "fuze_triggered": false,
@@ -5493,7 +5471,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -5517,7 +5495,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": -75.0,
-      "launch_class": "M",
+      "launch_class": "O",
       "nearest_distance_m": 3055.9151827696182,
       "entered_R_fuze": false,
       "fuze_triggered": false,
@@ -5545,7 +5523,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -5777,7 +5755,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": 45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013873437514377823,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -5829,7 +5807,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": 60.0,
-      "launch_class": "M",
+      "launch_class": "O",
       "nearest_distance_m": 542.9527796211833,
       "entered_R_fuze": false,
       "fuze_triggered": false,
@@ -5857,7 +5835,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -5881,7 +5859,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": 75.0,
-      "launch_class": "M",
+      "launch_class": "O",
       "nearest_distance_m": 3055.9152361939014,
       "entered_R_fuze": false,
       "fuze_triggered": false,
@@ -5909,7 +5887,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -6089,7 +6067,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 6.0,
       "bearing_deg": -45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001415950266404028,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -6141,7 +6119,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 6.0,
       "bearing_deg": -60.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013987655603614427,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -6221,7 +6199,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -6453,7 +6431,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 6.0,
       "bearing_deg": 45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0014098320700831283,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -6505,7 +6483,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 6.0,
       "bearing_deg": 60.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013986641330858444,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -6585,7 +6563,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -6765,7 +6743,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 8.0,
       "bearing_deg": -45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0014012230987433575,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -6817,7 +6795,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 8.0,
       "bearing_deg": -60.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001404365961565786,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -6897,7 +6875,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -7129,7 +7107,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 8.0,
       "bearing_deg": 45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013961358746126986,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -7181,7 +7159,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 8.0,
       "bearing_deg": 60.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0014037486532474895,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -7261,7 +7239,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -7337,7 +7315,7 @@
       "target_acceleration_x_mps2": -8.0,
       "range_km": 10.0,
       "bearing_deg": -30.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.001985961178841626,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -7377,7 +7355,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -7417,7 +7395,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -7441,7 +7419,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 10.0,
       "bearing_deg": 0.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0019117927397961391,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -7493,7 +7471,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 10.0,
       "bearing_deg": 30.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0019186889627894018,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -7533,7 +7511,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -7573,7 +7551,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -7597,7 +7575,7 @@
       "target_acceleration_x_mps2": -8.0,
       "range_km": 6.0,
       "bearing_deg": -30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0019882532562915055,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -7649,7 +7627,7 @@
       "target_acceleration_x_mps2": -8.0,
       "range_km": 6.0,
       "bearing_deg": -60.0,
-      "launch_class": "O",
+      "launch_class": "M",
       "nearest_distance_m": 13.317615731677678,
       "entered_R_fuze": true,
       "fuze_triggered": false,
@@ -7689,7 +7667,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": true
     },
     {
@@ -7753,7 +7731,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 6.0,
       "bearing_deg": 30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0019518607616491003,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -7805,7 +7783,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 6.0,
       "bearing_deg": 60.0,
-      "launch_class": "O",
+      "launch_class": "M",
       "nearest_distance_m": 13.31770270498944,
       "entered_R_fuze": true,
       "fuze_triggered": false,
@@ -7845,7 +7823,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": true
     },
     {
@@ -7857,7 +7835,7 @@
       "target_acceleration_x_mps2": -8.0,
       "range_km": 8.0,
       "bearing_deg": -30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001979465518473262,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -7909,7 +7887,7 @@
       "target_acceleration_x_mps2": -8.0,
       "range_km": 8.0,
       "bearing_deg": -60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.001454337260595151,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -7949,7 +7927,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -7961,7 +7939,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 8.0,
       "bearing_deg": 0.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001903962693065239,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -8013,7 +7991,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 8.0,
       "bearing_deg": 30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001930825424082481,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -8065,7 +8043,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 8.0,
       "bearing_deg": 60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0014145202949789526,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -8105,7 +8083,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -8169,7 +8147,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": -30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013695418887230077,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -8221,7 +8199,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": -45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001402140071388814,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -8273,7 +8251,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": -60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0014000715131809443,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -8313,7 +8291,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -8353,7 +8331,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -8533,7 +8511,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": 30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013663727542851292,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -8585,7 +8563,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": 45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013970930274600287,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -8637,7 +8615,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": 60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013994803991079212,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -8677,7 +8655,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -8717,7 +8695,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -8793,7 +8771,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": -15.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013705427274449233,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -8845,7 +8823,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": -30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001380850645794409,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -8897,7 +8875,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": -45.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013841337507012703,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -8937,7 +8915,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -8949,7 +8927,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": -60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013925410669541598,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -8989,7 +8967,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -9029,7 +9007,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -9157,7 +9135,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": 15.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013665419301073169,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -9209,7 +9187,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": 30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001375627849376836,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -9261,7 +9239,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": 45.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013804545360618027,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -9301,7 +9279,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -9313,7 +9291,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": 60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.001392188458806662,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -9353,7 +9331,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -9393,7 +9371,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -9469,7 +9447,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": -15.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013654878348433297,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -9521,7 +9499,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": -30.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013849725587759766,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -9561,7 +9539,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -9573,7 +9551,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": -45.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013812070147824122,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -9613,7 +9591,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -9625,7 +9603,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": -60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013948673822559003,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -9665,7 +9643,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -9705,7 +9683,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -9781,7 +9759,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": 0.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013622124199678543,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -9833,7 +9811,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": 15.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013631652629329033,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -9885,7 +9863,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": 30.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013792065935450569,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -9925,7 +9903,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -9937,7 +9915,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": 45.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013778773114455735,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -9977,7 +9955,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -9989,7 +9967,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": 60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013948812775081538,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -10029,7 +10007,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -10069,7 +10047,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -10249,7 +10227,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": -45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013931658301945674,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -10301,7 +10279,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": -60.0,
-      "launch_class": "M",
+      "launch_class": "O",
       "nearest_distance_m": 542.9527683863769,
       "entered_R_fuze": false,
       "fuze_triggered": false,
@@ -10329,7 +10307,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -10353,7 +10331,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": -75.0,
-      "launch_class": "M",
+      "launch_class": "O",
       "nearest_distance_m": 3055.9151827696182,
       "entered_R_fuze": false,
       "fuze_triggered": false,
@@ -10381,7 +10359,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -10613,7 +10591,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": 45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013873437514377823,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -10665,7 +10643,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": 60.0,
-      "launch_class": "M",
+      "launch_class": "O",
       "nearest_distance_m": 542.9527796211833,
       "entered_R_fuze": false,
       "fuze_triggered": false,
@@ -10693,7 +10671,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -10717,7 +10695,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": 75.0,
-      "launch_class": "M",
+      "launch_class": "O",
       "nearest_distance_m": 3055.9152361939014,
       "entered_R_fuze": false,
       "fuze_triggered": false,
@@ -10745,7 +10723,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -10925,7 +10903,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 6.0,
       "bearing_deg": -45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001415950266404028,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -10977,7 +10955,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 6.0,
       "bearing_deg": -60.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013987655603614427,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -11057,7 +11035,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -11289,7 +11267,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 6.0,
       "bearing_deg": 45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0014098320700831283,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -11341,7 +11319,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 6.0,
       "bearing_deg": 60.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013986641330858444,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -11421,7 +11399,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -11601,7 +11579,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 8.0,
       "bearing_deg": -45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0014012230987433575,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -11653,7 +11631,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 8.0,
       "bearing_deg": -60.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001404365961565786,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -11733,7 +11711,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -11965,7 +11943,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 8.0,
       "bearing_deg": 45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013961358746126986,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -12017,7 +11995,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 8.0,
       "bearing_deg": 60.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0014037486532474895,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -12097,7 +12075,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -12173,7 +12151,7 @@
       "target_acceleration_x_mps2": -8.0,
       "range_km": 10.0,
       "bearing_deg": -30.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.001985961178841626,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -12213,7 +12191,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -12253,7 +12231,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -12277,7 +12255,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 10.0,
       "bearing_deg": 0.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0019117927397961391,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -12329,7 +12307,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 10.0,
       "bearing_deg": 30.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0019186889627894018,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -12369,7 +12347,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -12409,7 +12387,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -12433,7 +12411,7 @@
       "target_acceleration_x_mps2": -8.0,
       "range_km": 6.0,
       "bearing_deg": -30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0019882532562915055,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -12485,7 +12463,7 @@
       "target_acceleration_x_mps2": -8.0,
       "range_km": 6.0,
       "bearing_deg": -60.0,
-      "launch_class": "O",
+      "launch_class": "M",
       "nearest_distance_m": 13.317615731677678,
       "entered_R_fuze": true,
       "fuze_triggered": false,
@@ -12525,7 +12503,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": true
     },
     {
@@ -12589,7 +12567,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 6.0,
       "bearing_deg": 30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0019518607616491003,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -12641,7 +12619,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 6.0,
       "bearing_deg": 60.0,
-      "launch_class": "O",
+      "launch_class": "M",
       "nearest_distance_m": 13.31770270498944,
       "entered_R_fuze": true,
       "fuze_triggered": false,
@@ -12681,7 +12659,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": true
     },
     {
@@ -12693,7 +12671,7 @@
       "target_acceleration_x_mps2": -8.0,
       "range_km": 8.0,
       "bearing_deg": -30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001979465518473262,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -12745,7 +12723,7 @@
       "target_acceleration_x_mps2": -8.0,
       "range_km": 8.0,
       "bearing_deg": -60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.001454337260595151,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -12785,7 +12763,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -12797,7 +12775,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 8.0,
       "bearing_deg": 0.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001903962693065239,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -12849,7 +12827,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 8.0,
       "bearing_deg": 30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001930825424082481,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -12901,7 +12879,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 8.0,
       "bearing_deg": 60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0014145202949789526,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -12941,7 +12919,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -13005,7 +12983,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": -30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013695418887230077,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -13057,7 +13035,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": -45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001402140071388814,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -13109,7 +13087,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": -60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0014000715131809443,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -13149,7 +13127,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -13189,7 +13167,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -13369,7 +13347,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": 30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013663727542851292,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -13421,7 +13399,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": 45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013970930274600287,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -13473,7 +13451,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 10.0,
       "bearing_deg": 60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013994803991079212,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -13513,7 +13491,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -13553,7 +13531,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -13629,7 +13607,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": -15.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013705427274449233,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -13681,7 +13659,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": -30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001380850645794409,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -13733,7 +13711,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": -45.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013841337507012703,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -13773,7 +13751,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -13785,7 +13763,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": -60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013925410669541598,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -13825,7 +13803,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -13865,7 +13843,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -13993,7 +13971,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": 15.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013665419301073169,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -14045,7 +14023,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": 30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001375627849376836,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -14097,7 +14075,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": 45.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013804545360618027,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -14137,7 +14115,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -14149,7 +14127,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 12.0,
       "bearing_deg": 60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.001392188458806662,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -14189,7 +14167,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -14229,7 +14207,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -14305,7 +14283,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": -15.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013654878348433297,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -14357,7 +14335,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": -30.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013849725587759766,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -14397,7 +14375,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -14409,7 +14387,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": -45.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013812070147824122,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -14449,7 +14427,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -14461,7 +14439,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": -60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013948673822559003,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -14501,7 +14479,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -14541,7 +14519,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -14617,7 +14595,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": 0.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013622124199678543,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -14669,7 +14647,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": 15.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013631652629329033,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -14721,7 +14699,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": 30.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013792065935450569,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -14761,7 +14739,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -14773,7 +14751,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": 45.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013778773114455735,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -14813,7 +14791,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -14825,7 +14803,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 16.0,
       "bearing_deg": 60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013948812775081538,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -14865,7 +14843,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -14905,7 +14883,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -15085,7 +15063,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": -45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013931658301945674,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -15137,7 +15115,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": -60.0,
-      "launch_class": "M",
+      "launch_class": "O",
       "nearest_distance_m": 542.9527683863769,
       "entered_R_fuze": false,
       "fuze_triggered": false,
@@ -15165,7 +15143,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -15189,7 +15167,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": -75.0,
-      "launch_class": "M",
+      "launch_class": "O",
       "nearest_distance_m": 3055.9151827696182,
       "entered_R_fuze": false,
       "fuze_triggered": false,
@@ -15217,7 +15195,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -15449,7 +15427,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": 45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013873437514377823,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -15501,7 +15479,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": 60.0,
-      "launch_class": "M",
+      "launch_class": "O",
       "nearest_distance_m": 542.9527796211833,
       "entered_R_fuze": false,
       "fuze_triggered": false,
@@ -15529,7 +15507,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -15553,7 +15531,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 4.0,
       "bearing_deg": 75.0,
-      "launch_class": "M",
+      "launch_class": "O",
       "nearest_distance_m": 3055.9152361939014,
       "entered_R_fuze": false,
       "fuze_triggered": false,
@@ -15581,7 +15559,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -15761,7 +15739,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 6.0,
       "bearing_deg": -45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001415950266404028,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -15813,7 +15791,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 6.0,
       "bearing_deg": -60.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013987655603614427,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -15893,7 +15871,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -16125,7 +16103,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 6.0,
       "bearing_deg": 45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0014098320700831283,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -16177,7 +16155,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 6.0,
       "bearing_deg": 60.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013986641330858444,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -16257,7 +16235,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -16437,7 +16415,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 8.0,
       "bearing_deg": -45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0014012230987433575,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -16489,7 +16467,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 8.0,
       "bearing_deg": -60.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001404365961565786,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -16569,7 +16547,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -16801,7 +16779,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 8.0,
       "bearing_deg": 45.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0013961358746126986,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -16853,7 +16831,7 @@
       "target_acceleration_x_mps2": 0.0,
       "range_km": 8.0,
       "bearing_deg": 60.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0014037486532474895,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -16933,7 +16911,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -17009,7 +16987,7 @@
       "target_acceleration_x_mps2": -8.0,
       "range_km": 10.0,
       "bearing_deg": -30.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.001985961178841626,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -17049,7 +17027,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -17089,7 +17067,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -17113,7 +17091,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 10.0,
       "bearing_deg": 0.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0019117927397961391,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -17165,7 +17143,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 10.0,
       "bearing_deg": 30.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0019186889627894018,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -17205,7 +17183,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -17245,7 +17223,7 @@
       "component_response_row_count": 0,
       "consequence_present": false,
       "consequence_zero_when_untriggered": true,
-      "outcome_state": "",
+      "outcome_state": "outside_no_load",
       "chain_state": "outside_no_load",
       "stage_ids_exact": true,
       "stage_owners_clean": true,
@@ -17269,7 +17247,7 @@
       "target_acceleration_x_mps2": -8.0,
       "range_km": 6.0,
       "bearing_deg": -30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0019882532562915055,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -17321,7 +17299,7 @@
       "target_acceleration_x_mps2": -8.0,
       "range_km": 6.0,
       "bearing_deg": -60.0,
-      "launch_class": "O",
+      "launch_class": "M",
       "nearest_distance_m": 13.317615731677678,
       "entered_R_fuze": true,
       "fuze_triggered": false,
@@ -17361,7 +17339,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": true
     },
     {
@@ -17425,7 +17403,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 6.0,
       "bearing_deg": 30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.0019518607616491003,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -17477,7 +17455,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 6.0,
       "bearing_deg": 60.0,
-      "launch_class": "O",
+      "launch_class": "M",
       "nearest_distance_m": 13.31770270498944,
       "entered_R_fuze": true,
       "fuze_triggered": false,
@@ -17517,7 +17495,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": true
     },
     {
@@ -17529,7 +17507,7 @@
       "target_acceleration_x_mps2": -8.0,
       "range_km": 8.0,
       "bearing_deg": -30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001979465518473262,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -17581,7 +17559,7 @@
       "target_acceleration_x_mps2": -8.0,
       "range_km": 8.0,
       "bearing_deg": -60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.001454337260595151,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -17621,7 +17599,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     },
     {
@@ -17633,7 +17611,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 8.0,
       "bearing_deg": 0.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001903962693065239,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -17685,7 +17663,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 8.0,
       "bearing_deg": 30.0,
-      "launch_class": "M",
+      "launch_class": "N",
       "nearest_distance_m": 0.001930825424082481,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -17737,7 +17715,7 @@
       "target_acceleration_x_mps2": 8.0,
       "range_km": 8.0,
       "bearing_deg": 60.0,
-      "launch_class": "O",
+      "launch_class": "N",
       "nearest_distance_m": 0.0014145202949789526,
       "entered_R_fuze": true,
       "fuze_triggered": true,
@@ -17777,7 +17755,7 @@
       "structural_consistent": true,
       "structural_violations": [],
       "nominal_guidance_residual": false,
-      "legacy_negative_control_alert": true,
+      "legacy_negative_control_alert": false,
       "in_radius_fuze_blocked": false
     }
   ]

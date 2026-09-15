@@ -171,6 +171,7 @@ def _aggregate_cells(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         "case_id": case_id,
         "requested_memory_timeout_s": timeout,
         "seed_count": len(group),
+        "seeds": sorted({int(row["seed"]) for row in group}),
         "states": states,
         "stable_across_seeds": len(states) == 1,
         "state": states[0] if len(states) == 1 else "mixed",
@@ -216,7 +217,32 @@ def build_report(
 ) -> dict[str, Any]:
   cells = _aggregate_cells(runs)
   expected_run_count = len(DEFAULT_CASES) * len(seeds) * len(memory_timeouts_s)
-  stable = bool(cells) and all(bool(cell["stable_across_seeds"]) for cell in cells)
+  expected_case_ids = {str(case["case_id"]) for case in DEFAULT_CASES}
+  expected_run_keys = {
+    (case_id, float(timeout), int(seed))
+    for case_id in expected_case_ids
+    for timeout in memory_timeouts_s
+    for seed in seeds
+  }
+  actual_run_keys = [
+    (
+      str(row["case_id"]),
+      float(row["requested_memory_timeout_s"]),
+      int(row["seed"]),
+    )
+    for row in runs
+  ]
+  matrix_complete = (
+    len(actual_run_keys) == len(expected_run_keys)
+    and len(actual_run_keys) == len(set(actual_run_keys))
+    and set(actual_run_keys) == expected_run_keys
+  )
+  stable = bool(cells) and all(
+    bool(cell["stable_across_seeds"])
+    and int(cell["seed_count"]) == len(seeds)
+    and set(int(seed) for seed in cell["seeds"]) == set(seeds)
+    for cell in cells
+  )
   resolved_timeout = all(
     row["resolved_memory_timeout_s"] is not None
     and abs(float(row["resolved_memory_timeout_s"]) - float(row["requested_memory_timeout_s"]))
@@ -229,14 +255,20 @@ def build_report(
   baseline_residual = bool(baseline_cells) and all(
     cell["state"] == "in_radius_fuze_blocked" for cell in baseline_cells
   )
-  transition_observed = any(cell["state"] == "complete_effect_chain" for cell in cells)
+  transition_cases = {
+    str(cell["case_id"])
+    for cell in cells
+    if cell["state"] == "complete_effect_chain"
+  }
+  all_cases_transition = transition_cases == expected_case_ids
   gates = {
-    "expected_run_matrix_complete": len(runs) == expected_run_count,
+    "expected_run_matrix_complete": matrix_complete
+    and len(runs) == expected_run_count,
     "runtime_resolves_requested_memory_timeout": resolved_timeout,
     "all_cells_stable_across_seeds": stable,
     "timeout_response_is_monotonic": _monotonic_timeout_cells(cells),
     "baseline_075s_reproduces_terminal_track_residual": baseline_residual,
-    "at_least_one_timeout_restores_fuze_trigger": transition_observed,
+    "all_cases_have_a_timeout_that_restores_fuze_trigger": all_cases_transition,
   }
   candidate_ready = all(gates.values())
   state_counts = dict(sorted(Counter(str(row["state"]) for row in runs).items()))

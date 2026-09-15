@@ -35,6 +35,7 @@ SCHEMA_VERSION = "a2.kill_chain_expectation_before_report.v1"
 CASE_GRID_SCHEMA_VERSION = "a2.kill_chain_expectation_case_grid.v1"
 HEATMAP_ROW_SCHEMA_VERSION = "a2.kill_chain_expectation_heatmap_row.v1"
 PROFILE_ID = "KCES-AIM120C-LIKE-FIGHTER-V0"
+EXPECTATION_BASELINE_ID = "P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS"
 DEFAULT_SEED = 20260621
 DEFAULT_R_FUZE_M = 15.0
 SUPPORTED_RUNTIME_TARGET_MOTION_LAYERS = {
@@ -49,17 +50,17 @@ DEFAULT_EFFECT_VARIANTS = (
 )
 
 CV_ANCHOR_CLASSES: dict[float, dict[float, str]] = {
-  4.0: {0.0: "N", 15.0: "N", 30.0: "N", 45.0: "M", 60.0: "M", 75.0: "M", 90.0: "O"},
-  6.0: {0.0: "N", 15.0: "N", 30.0: "N", 45.0: "M", 60.0: "M", 75.0: "O", 90.0: "O"},
-  8.0: {0.0: "N", 15.0: "N", 30.0: "N", 45.0: "M", 60.0: "M", 75.0: "O", 90.0: "O"},
-  10.0: {0.0: "N", 15.0: "N", 30.0: "M", 45.0: "M", 60.0: "O", 75.0: "O", 90.0: "O"},
-  12.0: {0.0: "N", 15.0: "M", 30.0: "M", 45.0: "O", 60.0: "O", 75.0: "O", 90.0: "O"},
-  16.0: {0.0: "M", 15.0: "M", 30.0: "O", 45.0: "O", 60.0: "O", 75.0: "O", 90.0: "O"},
+  4.0: {0.0: "N", 15.0: "N", 30.0: "N", 45.0: "N", 60.0: "O", 75.0: "O", 90.0: "O"},
+  6.0: {0.0: "N", 15.0: "N", 30.0: "N", 45.0: "N", 60.0: "N", 75.0: "O", 90.0: "O"},
+  8.0: {0.0: "N", 15.0: "N", 30.0: "N", 45.0: "N", 60.0: "N", 75.0: "O", 90.0: "O"},
+  10.0: {0.0: "N", 15.0: "N", 30.0: "N", 45.0: "N", 60.0: "N", 75.0: "O", 90.0: "O"},
+  12.0: {0.0: "N", 15.0: "N", 30.0: "N", 45.0: "N", 60.0: "N", 75.0: "O", 90.0: "O"},
+  16.0: {0.0: "N", 15.0: "N", 30.0: "N", 45.0: "N", 60.0: "N", 75.0: "O", 90.0: "O"},
 }
 MILD_MANEUVER_ANCHOR_CLASSES: dict[float, dict[float, str]] = {
-  6.0: {0.0: "N", 30.0: "M", 60.0: "O"},
-  8.0: {0.0: "M", 30.0: "M", 60.0: "O"},
-  10.0: {0.0: "M", 30.0: "O", 60.0: "O"},
+  6.0: {0.0: "N", 30.0: "N", 60.0: "M"},
+  8.0: {0.0: "N", 30.0: "N", 60.0: "N"},
+  10.0: {0.0: "N", 30.0: "N", 60.0: "O"},
 }
 
 def _finite_or_none(value: Any) -> float | None:
@@ -592,6 +593,7 @@ def generate_before_report(
       else "before_report_generated"
     ),
     "profile_id": PROFILE_ID,
+    "expectation_baseline_id": EXPECTATION_BASELINE_ID,
     "grid_tier": str(grid_tier),
     "seed": int(seed),
     "effect_variants": list(effect_variants),

@@ -159,8 +159,118 @@ def test_evaluation_separates_structural_admission_from_legacy_envelope() -> Non
   )
 
   assert evaluation["p11_structural_admission_passed"] is True
+  assert evaluation["accepted_n_o_expectation_envelope_passed"] is False
   assert evaluation["legacy_expectation_envelope_passed"] is False
   assert evaluation["p11_complete"] is False
+
+
+def test_evaluation_accepts_n_o_baseline_but_retains_terminal_contract_hold() -> None:
+  rows = []
+  for seed in admission.DEFAULT_SEEDS:
+    rows.extend(
+      [
+        {
+          "case_id": "accepted_n",
+          "seed": seed,
+          "launch_class": "N",
+          "chain_state": "complete_effect_chain",
+          "outcome_state": "damage_applied",
+          "structural_consistent": True,
+          "no_guidance_override": True,
+          "resolved_runtime_mismatch": {},
+          "stage_ids_exact": True,
+          "stage_owners_clean": True,
+          "approach_and_fuze_observed": True,
+          "response_owner_clean": True,
+          "authority_guarded": True,
+          "nearest_distance_m": 1.0,
+          "nominal_guidance_residual": False,
+          "legacy_negative_control_alert": False,
+          "in_radius_fuze_blocked": False,
+          "terminal_track_residual_cause": "",
+          "target_motion_layer": "nonmaneuvering_constant_velocity",
+          "target_acceleration_x_mps2": 0.0,
+          "range_km": 8.0,
+          "bearing_deg": 0.0,
+        },
+        {
+          "case_id": "accepted_m_residual",
+          "seed": seed,
+          "launch_class": "M",
+          "chain_state": "in_radius_fuze_blocked",
+          "outcome_state": "in_radius_fuze_blocked",
+          "structural_consistent": True,
+          "no_guidance_override": True,
+          "resolved_runtime_mismatch": {},
+          "stage_ids_exact": True,
+          "stage_owners_clean": True,
+          "approach_and_fuze_observed": True,
+          "response_owner_clean": True,
+          "authority_guarded": True,
+          "nearest_distance_m": 13.3,
+          "nominal_guidance_residual": False,
+          "legacy_negative_control_alert": False,
+          "in_radius_fuze_blocked": True,
+          "terminal_track_residual_cause": "seeker_fov_exit_then_memory_timeout",
+          "target_motion_layer": "mild_maneuver",
+          "target_acceleration_x_mps2": 8.0,
+          "range_km": 6.0,
+          "bearing_deg": 60.0,
+        },
+      ]
+    )
+  cells = admission._aggregate_cells(rows)
+  evaluation = admission._evaluate(
+    rows,
+    cells,
+    admission.DEFAULT_SEEDS,
+    expected_cases_per_seed=2,
+  )
+  assert evaluation["p11_structural_admission_passed"] is True
+  assert evaluation["accepted_n_o_expectation_envelope_passed"] is True
+  assert evaluation["terminal_track_contract_passed"] is False
+  assert evaluation["p11_complete"] is False
+
+
+def test_structural_matrix_gate_rejects_duplicate_case_seed_pair() -> None:
+  rows = []
+  for seed in admission.DEFAULT_SEEDS:
+    rows.append(
+      {
+        "case_id": "case",
+        "seed": seed,
+        "launch_class": "O",
+        "chain_state": "outside_no_load",
+        "outcome_state": "outside_no_load",
+        "structural_consistent": True,
+        "no_guidance_override": True,
+        "resolved_runtime_mismatch": {},
+        "stage_ids_exact": True,
+        "stage_owners_clean": True,
+        "approach_and_fuze_observed": True,
+        "response_owner_clean": True,
+        "authority_guarded": True,
+        "nearest_distance_m": 20.0,
+        "nominal_guidance_residual": False,
+        "legacy_negative_control_alert": False,
+        "in_radius_fuze_blocked": False,
+        "terminal_track_residual_cause": "",
+        "target_motion_layer": "nonmaneuvering_constant_velocity",
+        "target_acceleration_x_mps2": 0.0,
+        "range_km": 8.0,
+        "bearing_deg": 90.0,
+      }
+    )
+  rows[-1] = dict(rows[0])
+  cells = admission._aggregate_cells(rows)
+  evaluation = admission._evaluate(
+    rows,
+    cells,
+    admission.DEFAULT_SEEDS,
+    expected_cases_per_seed=1,
+  )
+  assert evaluation["structural_gates"]["unique_case_seed_pairs"] is False
+  assert evaluation["p11_structural_admission_passed"] is False
 
 
 def test_heatmap_state_values_distinguish_complete_blocked_and_outside() -> None:
