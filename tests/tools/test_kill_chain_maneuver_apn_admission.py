@@ -22,7 +22,7 @@ def test_summarize_run_preserves_tracker_and_apn_evidence() -> None:
     },
     "guidance_runtime_trace": [
       {
-        "time_s": 1.5,
+        "time_s": 3.5,
         "truth_distance_m": 4000.0,
         "target_acceleration_valid": True,
         "target_accel_error_mps2": 1.0,
@@ -31,7 +31,7 @@ def test_summarize_run_preserves_tracker_and_apn_evidence() -> None:
         "guidance_component_sum_error_mps2": 1.0e-12,
       },
       {
-        "time_s": 2.0,
+        "time_s": 4.0,
         "truth_distance_m": 3000.0,
         "target_acceleration_valid": True,
         "target_accel_error_mps2": 0.5,

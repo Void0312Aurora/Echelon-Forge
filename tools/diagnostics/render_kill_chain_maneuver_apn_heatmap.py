@@ -196,9 +196,18 @@ def render(report: dict[str, Any], output: Path) -> None:
       ha="center", fontsize=8,
     )
 
+  stage4_passed = bool(report.get("stage4_structural_admission", {}).get("passed"))
+  stage5_gates = dict(report.get("stage5_apn_selection", {}).get("gates", {}) or {})
+  noisy_acceleration_passed = bool(
+    stage5_gates.get("noisy_acceleration_rmse_within_limit")
+    and stage5_gates.get("noisy_acceleration_peak_within_limit")
+  )
+  apn_promotion_passed = bool(stage5_gates.get("nonzero_apn_gain_has_clear_net_benefit"))
   fig.suptitle(
     "P10 Maneuver / APN Admission Evidence\n"
-    "Clean structural identifiability passes; noisy acceleration and APN promotion remain held",
+    f"Clean structural identifiability {'passes' if stage4_passed else 'is held'}; "
+    f"noisy acceleration authority {'passes' if noisy_acceleration_passed else 'is held'}; "
+    f"APN promotion {'passes' if apn_promotion_passed else 'remains held'}",
     fontsize=16,
   )
   output.parent.mkdir(parents=True, exist_ok=True)

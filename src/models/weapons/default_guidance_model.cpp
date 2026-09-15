@@ -638,7 +638,7 @@ bool update_world_cva_target_track_from_detection(Missile &missile, const Detect
             ? missile.target_tracker_gamma
             : MissileGuidanceDefaults::kWorldCvaTrackerGamma,
         0.5,
-        0.5,
+        MissileGuidanceDefaults::kWorldCvaTrackerMinimumAccelerationBaselineS,
     };
     const auto output = missile_guidance::update_world_cva_alpha_beta_gamma_tracker(
         missile.world_cva_target_tracker, params,

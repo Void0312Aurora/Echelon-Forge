@@ -177,7 +177,7 @@ TEST_SUITE("world_cva_alpha_beta_gamma_tracker") {
 
     TEST_CASE("constant acceleration becomes observable and converges") {
         WorldCvaAlphaBetaGammaTrackerState state;
-        const WorldCvaAlphaBetaGammaTrackerParams params{0.20, 0.02, 0.0002, 0.5, 0.5};
+        const WorldCvaAlphaBetaGammaTrackerParams params{0.20, 0.02, 0.5, 0.5, 0.5};
         const Vec3 initial{100.0, -200.0, 500.0};
         const Vec3 velocity{20.0, -35.0, 4.0};
         const Vec3 acceleration{8.0, -3.0, 1.5};
@@ -201,7 +201,7 @@ TEST_SUITE("world_cva_alpha_beta_gamma_tracker") {
 
     TEST_CASE("constant velocity does not create false acceleration") {
         WorldCvaAlphaBetaGammaTrackerState state;
-        const WorldCvaAlphaBetaGammaTrackerParams params{0.20, 0.02, 0.0002, 0.5, 0.5};
+        const WorldCvaAlphaBetaGammaTrackerParams params{0.20, 0.02, 0.5, 0.5, 0.5};
         const Vec3 initial{500.0, -200.0, 1000.0};
         const Vec3 velocity{-80.0, 35.0, -4.0};
         WorldCvaAlphaBetaGammaTrackerOutput output;
@@ -219,7 +219,7 @@ TEST_SUITE("world_cva_alpha_beta_gamma_tracker") {
 
     TEST_CASE("coast propagates admitted acceleration without consuming a sample") {
         WorldCvaAlphaBetaGammaTrackerState state;
-        const WorldCvaAlphaBetaGammaTrackerParams params{0.20, 0.02, 0.0002, 0.5, 0.5};
+        const WorldCvaAlphaBetaGammaTrackerParams params{0.20, 0.02, 0.5, 0.5, 0.5};
         const Vec3 acceleration{6.0, 0.0, 0.0};
         for (int sample = 0; sample <= 200; ++sample) {
             const double time_s = static_cast<double>(sample) * 0.05;
@@ -238,7 +238,7 @@ TEST_SUITE("world_cva_alpha_beta_gamma_tracker") {
 
     TEST_CASE("duplicate timestamps are rejected without correcting CVA state") {
         WorldCvaAlphaBetaGammaTrackerState state;
-        const WorldCvaAlphaBetaGammaTrackerParams params{0.20, 0.02, 0.0002, 0.5, 0.5};
+        const WorldCvaAlphaBetaGammaTrackerParams params{0.20, 0.02, 0.5, 0.5, 0.5};
         observe_cva(state, params, 0.0, {0.0, 0.0, 0.0});
         observe_cva(state, params, 0.5, {5.0, 0.0, 0.0});
         observe_cva(state, params, 1.0, {11.0, 0.0, 0.0});

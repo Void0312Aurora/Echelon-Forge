@@ -1,7 +1,9 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 
@@ -13,10 +15,18 @@ inline bool finite_world_cva_vector(const Vec3 &value) {
     return std::isfinite(value.x) && std::isfinite(value.y) && std::isfinite(value.z);
 }
 
+inline Vec3 suppress_world_cva_acceleration_roundoff(const Vec3 &value) {
+    constexpr double kRoundoffFloorMps2 = 1.0e-10;
+    return {std::abs(value.x) < kRoundoffFloorMps2 ? 0.0 : value.x,
+            std::abs(value.y) < kRoundoffFloorMps2 ? 0.0 : value.y,
+            std::abs(value.z) < kRoundoffFloorMps2 ? 0.0 : value.z};
+}
+
 // World-frame constant-acceleration tracker used only when the guidance
 // estimator explicitly opts into maneuver observability. The CV tracker below
 // intentionally publishes zero acceleration and remains unchanged.
 struct WorldCvaAlphaBetaGammaTrackerState {
+    static constexpr std::size_t kMeasurementHistoryCapacity = 100;
     bool position_valid = false;
     bool velocity_valid = false;
     bool acceleration_valid = false;
@@ -26,6 +36,10 @@ struct WorldCvaAlphaBetaGammaTrackerState {
     Vec3 corrected_acceleration_world_mps2{};
     Vec3 last_measurement_position_world_m{};
     Vec3 first_measurement_position_world_m{};
+    std::array<Vec3, kMeasurementHistoryCapacity> measurement_history_positions{};
+    std::array<double, kMeasurementHistoryCapacity> measurement_history_times{};
+    std::size_t measurement_history_count = 0;
+    std::size_t measurement_history_next = 0;
     Vec3 last_prediction_position_world_m{};
     Vec3 last_residual_world_m{};
     double correction_time_s = 0.0;
@@ -37,10 +51,93 @@ struct WorldCvaAlphaBetaGammaTrackerState {
 struct WorldCvaAlphaBetaGammaTrackerParams {
     double alpha = 0.20;
     double beta = 0.02;
-    double gamma = 0.0002;
+    double gamma = 0.5;
     double minimum_velocity_baseline_s = 0.5;
     double minimum_acceleration_baseline_s = 0.5;
 };
+
+inline void append_world_cva_measurement(WorldCvaAlphaBetaGammaTrackerState &state,
+                                         const Vec3 &position_world_m, double time_s) {
+    const std::size_t index = state.measurement_history_next;
+    state.measurement_history_positions[index] = position_world_m;
+    state.measurement_history_times[index] = time_s;
+    state.measurement_history_next =
+        (index + 1) % WorldCvaAlphaBetaGammaTrackerState::kMeasurementHistoryCapacity;
+    state.measurement_history_count = std::min(
+        state.measurement_history_count + 1,
+        WorldCvaAlphaBetaGammaTrackerState::kMeasurementHistoryCapacity);
+}
+
+inline bool estimate_world_cva_acceleration_from_history(
+    const WorldCvaAlphaBetaGammaTrackerState &state, Vec3 *out_acceleration_world_mps2) {
+    if (!out_acceleration_world_mps2 || state.measurement_history_count < 3) {
+        return false;
+    }
+
+    const double reference_time_s = state.last_measurement_time_s;
+    std::array<std::array<double, 3>, 3> normal{};
+    std::array<double, 3> rhs_x{};
+    std::array<double, 3> rhs_y{};
+    std::array<double, 3> rhs_z{};
+    for (std::size_t sample = 0; sample < state.measurement_history_count; ++sample) {
+        const std::size_t index =
+            (state.measurement_history_next +
+             WorldCvaAlphaBetaGammaTrackerState::kMeasurementHistoryCapacity -
+             state.measurement_history_count + sample) %
+            WorldCvaAlphaBetaGammaTrackerState::kMeasurementHistoryCapacity;
+        const double tau_s = state.measurement_history_times[index] - reference_time_s;
+        const std::array<double, 3> basis{1.0, tau_s, tau_s * tau_s};
+        const Vec3 &position = state.measurement_history_positions[index];
+        for (std::size_t row = 0; row < 3; ++row) {
+            for (std::size_t column = 0; column < 3; ++column) {
+                normal[row][column] += basis[row] * basis[column];
+            }
+            rhs_x[row] += basis[row] * position.x;
+            rhs_y[row] += basis[row] * position.y;
+            rhs_z[row] += basis[row] * position.z;
+        }
+    }
+
+    auto solve = [](std::array<std::array<double, 3>, 3> matrix,
+                    std::array<double, 3> rhs, std::array<double, 3> *solution) {
+        if (!solution) return false;
+        for (std::size_t pivot = 0; pivot < 3; ++pivot) {
+            std::size_t best = pivot;
+            for (std::size_t row = pivot + 1; row < 3; ++row) {
+                if (std::abs(matrix[row][pivot]) > std::abs(matrix[best][pivot])) best = row;
+            }
+            if (std::abs(matrix[best][pivot]) <= 1.0e-12) return false;
+            if (best != pivot) {
+                std::swap(matrix[best], matrix[pivot]);
+                std::swap(rhs[best], rhs[pivot]);
+            }
+            const double diagonal = matrix[pivot][pivot];
+            for (std::size_t column = pivot; column < 3; ++column)
+                matrix[pivot][column] /= diagonal;
+            rhs[pivot] /= diagonal;
+            for (std::size_t row = 0; row < 3; ++row) {
+                if (row == pivot) continue;
+                const double factor = matrix[row][pivot];
+                for (std::size_t column = pivot; column < 3; ++column)
+                    matrix[row][column] -= factor * matrix[pivot][column];
+                rhs[row] -= factor * rhs[pivot];
+            }
+        }
+        *solution = rhs;
+        return true;
+    };
+
+    std::array<double, 3> solution_x{};
+    std::array<double, 3> solution_y{};
+    std::array<double, 3> solution_z{};
+    if (!solve(normal, rhs_x, &solution_x) || !solve(normal, rhs_y, &solution_y) ||
+        !solve(normal, rhs_z, &solution_z)) {
+        return false;
+    }
+    *out_acceleration_world_mps2 = suppress_world_cva_acceleration_roundoff(
+        {2.0 * solution_x[2], 2.0 * solution_y[2], 2.0 * solution_z[2]});
+    return finite_world_cva_vector(*out_acceleration_world_mps2);
+}
 
 struct WorldCvaAlphaBetaGammaTrackerInput {
     double current_time_s = 0.0;
@@ -126,6 +223,8 @@ inline WorldCvaAlphaBetaGammaTrackerOutput update_world_cva_alpha_beta_gamma_tra
             state.last_measurement_time_s = input.measurement_time_s;
             state.last_update_dt_s = 0.0;
             state.accepted_measurement_count = 1;
+            append_world_cva_measurement(state, input.measurement_position_world_m,
+                                         input.measurement_time_s);
             accepted = true;
         } else {
             const double dt = input.measurement_time_s - state.last_measurement_time_s;
@@ -149,25 +248,29 @@ inline WorldCvaAlphaBetaGammaTrackerOutput update_world_cva_alpha_beta_gamma_tra
             } else {
                 const double alpha = std::clamp(params.alpha, 0.0, 1.0);
                 const double beta = std::clamp(params.beta, 0.0, 2.0);
-                const double gamma = std::clamp(params.gamma, 0.0, 1.0);
                 const Vec3 predicted_velocity = state.corrected_velocity_world_mps +
                                                 state.corrected_acceleration_world_mps2 * dt;
                 state.corrected_position_world_m = predicted + residual * alpha;
                 state.corrected_velocity_world_mps =
                     predicted_velocity + residual * (beta / dt);
-                if (state.acceleration_valid ||
-                    baseline >= std::max(0.0, params.minimum_acceleration_baseline_s)) {
-                    state.corrected_acceleration_world_mps2 =
-                        state.corrected_acceleration_world_mps2 +
-                        residual * (2.0 * gamma / (dt * dt));
-                    state.acceleration_valid = true;
-                }
             }
             state.last_measurement_position_world_m = input.measurement_position_world_m;
             state.correction_time_s = input.measurement_time_s;
             state.last_measurement_time_s = input.measurement_time_s;
             state.last_update_dt_s = dt;
             ++state.accepted_measurement_count;
+            append_world_cva_measurement(state, input.measurement_position_world_m,
+                                         input.measurement_time_s);
+            if (baseline >= std::max(0.0, params.minimum_acceleration_baseline_s)) {
+                Vec3 historical_acceleration{};
+                if (estimate_world_cva_acceleration_from_history(state, &historical_acceleration)) {
+                    const double gamma = std::clamp(params.gamma, 0.0, 1.0);
+                    state.corrected_acceleration_world_mps2 =
+                        state.corrected_acceleration_world_mps2 * (1.0 - gamma) +
+                        historical_acceleration * gamma;
+                    state.acceleration_valid = true;
+                }
+            }
             accepted = true;
         }
     }

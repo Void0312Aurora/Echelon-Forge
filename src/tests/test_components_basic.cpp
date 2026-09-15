@@ -434,7 +434,7 @@ TEST_SUITE("components_basic") {
     "capture_guidance_mode": "disabled",
     "target_tracker_alpha": 0.20,
     "target_tracker_beta": 0.02,
-    "target_tracker_gamma": 0.0002
+    "target_tracker_gamma": 0.5
   }
 })json";
         }
@@ -451,7 +451,7 @@ TEST_SUITE("components_basic") {
               static_cast<int>(MissileCaptureGuidanceMode::Disabled));
         CHECK(definitions[0].missile_tuning.target_tracker_alpha == doctest::Approx(0.20));
         CHECK(definitions[0].missile_tuning.target_tracker_beta == doctest::Approx(0.02));
-        CHECK(definitions[0].missile_tuning.target_tracker_gamma == doctest::Approx(0.0002));
+        CHECK(definitions[0].missile_tuning.target_tracker_gamma == doctest::Approx(0.5));
         std::filesystem::remove(valid_path);
 
         const std::filesystem::path default_path =

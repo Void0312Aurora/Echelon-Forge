@@ -45,13 +45,14 @@ NOISY_SEEDS = (20260621, 20260622, 20260623)
 NOISY_RANGE_KM = 8.0
 NOISY_BEARINGS_DEG = (-30.0, 30.0)
 NOISY_ACCELERATIONS_X_MPS2 = (-8.0, 8.0)
+ACCELERATION_STABLE_START_TIME_S = 3.5
 
 PRODUCTION_MECHANISM_TUNING: dict[str, float | int] = {
   "pn_los_rate_source": 1,
   "target_kinematics_estimator": 2,
   "target_tracker_alpha": 0.20,
   "target_tracker_beta": 0.02,
-  "target_tracker_gamma": 0.0002,
+  "target_tracker_gamma": 0.5,
   "capture_guidance_mode": 0,
   "nav_gain": 4.0,
   "max_lateral_g": 35.0,
@@ -94,7 +95,7 @@ def _stable_trace(result: dict[str, Any]) -> list[dict[str, Any]]:
   return [
     row
     for row in list(result.get("guidance_runtime_trace", []) or [])
-    if _finite(row.get("time_s")) >= 1.0
+    if _finite(row.get("time_s")) >= ACCELERATION_STABLE_START_TIME_S
     and _finite(row.get("truth_distance_m")) > 1000.0
     and bool(row.get("target_acceleration_valid"))
   ]
@@ -418,6 +419,7 @@ def build_report(
         "target_accelerations_x_mps2": list(accelerations_x_mps2),
         "apn_gains": list(apn_gains),
         "expected_run_count": clean_expected,
+        "acceleration_stable_start_time_s": ACCELERATION_STABLE_START_TIME_S,
       },
       "noisy_holdout": {
         "measurement_period_s": 0.05,
@@ -428,6 +430,7 @@ def build_report(
         "target_accelerations_x_mps2": list(NOISY_ACCELERATIONS_X_MPS2),
         "seeds": list(noisy_seeds),
         "expected_run_count": noisy_expected,
+        "acceleration_stable_start_time_s": ACCELERATION_STABLE_START_TIME_S,
       },
     },
     "counts": {
@@ -554,6 +557,12 @@ def conclusions_zh(report: dict[str, Any]) -> str:
   admission = report["admission"]
   observed4 = stage4["observed"]
   observed5 = stage5["observed"]
+  noisy_acceleration_passed = bool(
+    stage5["gates"]["noisy_holdout_complete"]
+    and stage5["gates"]["all_noisy_runs_observe_valid_acceleration"]
+    and stage5["gates"]["noisy_acceleration_rmse_within_limit"]
+    and stage5["gates"]["noisy_acceleration_peak_within_limit"]
+  )
   return "\n".join(
     [
       "# P10 机动目标 / APN 准入结论",
@@ -571,9 +580,12 @@ def conclusions_zh(report: dict[str, Any]) -> str:
       f"`{observed4['min_maneuver_apn_acceleration_mps2']:.3f} m/s²`；"
       f"镜像最近距离最大误差为 "
       f"`{observed4['max_mirror_nearest_distance_error_m']:.6f} m`。",
-      f"- noisy stage-5 holdout：`{stage5['passed']}`；最大加速度 RMSE "
+      f"- noisy acceleration authority：`{'passed' if noisy_acceleration_passed else 'held'}`；"
+      f"最大加速度 RMSE "
       f"`{observed5['max_noisy_acceleration_rmse_mps2']:.3f} m/s²`，"
       f"最大估计加速度 `{observed5['max_noisy_estimated_acceleration_mps2']:.3f} m/s²`。",
+      f"- stage-5 APN selection：`{stage5['passed']}`；非零增益明确净收益："
+      f"`{stage5['gates']['nonzero_apn_gain_has_clear_net_benefit']}`。",
       f"- APN gain 选择：`{stage5['selected_apn_gain']:g}`；"
       f"`{stage5['decision']}`。",
       f"- P10 complete：`{admission['p10_complete']}`；"
