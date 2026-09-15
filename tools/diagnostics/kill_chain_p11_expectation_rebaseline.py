@@ -25,13 +25,12 @@ SCHEMA_VERSION = "a2.kill_chain_p11_expectation_rebaseline.v1"
 GENERATED_ON = "2026-09-15"
 DEFAULT_INPUT = (
   REPO_ROOT
-  / "docs/systems/weapons/reviews/kill_chain_integrated_admission_20260915"
-  / "review_packets/kill_chain_integrated_admission_20260915.json"
+  / "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_integrated_admission_20260915"
+  / "kill_chain_integrated_admission_20260915.json"
 )
 DEFAULT_OUTPUT_DIR = (
   REPO_ROOT
-  / "docs/systems/weapons/reviews/kill_chain_p11_expectation_rebaseline_20260915"
-  / "review_packets"
+  / "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_p11_expectation_rebaseline_20260915"
 )
 DEFAULT_STEM = "kill_chain_p11_expectation_rebaseline_20260915"
 EXPECTED_SEED_COUNT = 3

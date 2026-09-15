@@ -35,17 +35,17 @@
   },
   "artifacts": {
     "report_json": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p10_apn_null_band_followup_20260915\\review_packets\\kill_chain_p10_apn_null_band_followup_20260915.json",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_p10_apn_null_band_followup_20260915/kill_chain_p10_apn_null_band_followup_20260915.json",
       "sha256": "833210614d120645c3a8ba435346bf2aa0dabd720d0605b61f206f634a850edf",
       "bytes": 181153
     },
     "runs_csv": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p10_apn_null_band_followup_20260915\\review_packets\\kill_chain_p10_apn_null_band_followup_20260915_runs.csv",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_p10_apn_null_band_followup_20260915/kill_chain_p10_apn_null_band_followup_20260915_runs.csv",
       "sha256": "f59baec47bd8ede5fd26ea39e7dc8ca27ae9737c71909f639565868949a4248d",
       "bytes": 48862
     },
     "cells_csv": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p10_apn_null_band_followup_20260915\\review_packets\\kill_chain_p10_apn_null_band_followup_20260915_cells.csv",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_p10_apn_null_band_followup_20260915/kill_chain_p10_apn_null_band_followup_20260915_cells.csv",
       "sha256": "096d854999cc4be6c4732917a506a211e2799e8e818603b0baae0249b8ba7210",
       "bytes": 5636
     },
@@ -55,7 +55,7 @@
       "bytes": 1133
     },
     "figure_png": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p10_apn_null_band_followup_20260915\\review_packets\\kill_chain_p10_apn_null_band_followup_20260915_figure.png",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_p10_apn_null_band_followup_20260915/kill_chain_p10_apn_null_band_followup_20260915_figure.png",
       "sha256": "5eb6e0c5984be6d5a2ee1f90a43215dfcb0a4f1b196f14125427528bdab43ff6",
       "bytes": 332328
     }

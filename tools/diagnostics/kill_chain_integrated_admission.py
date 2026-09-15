@@ -33,8 +33,7 @@ GENERATED_ON = "2026-09-15"
 DEFAULT_SEEDS = (20260621, 20260622, 20260623)
 DEFAULT_OUTPUT_DIR = (
   REPO_ROOT
-  / "docs/systems/weapons/reviews/kill_chain_integrated_admission_20260915"
-  / "review_packets"
+  / "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_integrated_admission_20260915"
 )
 DEFAULT_STEM = "kill_chain_integrated_admission_20260915"
 DEFAULT_AIM120_DEFINITION = (

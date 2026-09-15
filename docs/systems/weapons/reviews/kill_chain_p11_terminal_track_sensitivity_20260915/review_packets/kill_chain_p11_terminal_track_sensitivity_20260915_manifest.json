@@ -17,23 +17,23 @@
       "sha256": "1f7475d86f6e3d146779df75bc3019b6b4097de059cbfa43f3bdbfc8da8b3efa"
     },
     "source_report": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_integrated_admission_20260915\\review_packets\\kill_chain_integrated_admission_20260915.json",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_integrated_admission_20260915/kill_chain_integrated_admission_20260915.json",
       "sha256": "876b1633f39d14efe472c6d38185e580aa07b91ac5599f8f6356646c960b81e8"
     }
   },
   "artifacts": {
     "report_json": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p11_terminal_track_sensitivity_20260915\\review_packets\\kill_chain_p11_terminal_track_sensitivity_20260915.json",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_p11_terminal_track_sensitivity_20260915/kill_chain_p11_terminal_track_sensitivity_20260915.json",
       "sha256": "f4c944726fa1d4cfa5b9ea92ac5726a63858aef11031aae7ef4dba2608c66d1b",
       "bytes": 53450
     },
     "runs_csv": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p11_terminal_track_sensitivity_20260915\\review_packets\\kill_chain_p11_terminal_track_sensitivity_20260915_runs.csv",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_p11_terminal_track_sensitivity_20260915/kill_chain_p11_terminal_track_sensitivity_20260915_runs.csv",
       "sha256": "5f740e887fca1f757fd844a118797aacc8885d9135e14a6cfaac379270ec2142",
       "bytes": 11021
     },
     "cells_csv": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p11_terminal_track_sensitivity_20260915\\review_packets\\kill_chain_p11_terminal_track_sensitivity_20260915_cells.csv",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_p11_terminal_track_sensitivity_20260915/kill_chain_p11_terminal_track_sensitivity_20260915_cells.csv",
       "sha256": "a694d0782ae32d49942ff4bd40abb01297eec27f67b6883e2bf5515ffbbfad42",
       "bytes": 4045
     },
@@ -43,7 +43,7 @@
       "bytes": 893
     },
     "heatmap_png": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p11_terminal_track_sensitivity_20260915\\review_packets\\kill_chain_p11_terminal_track_sensitivity_20260915_heatmap.png",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_p11_terminal_track_sensitivity_20260915/kill_chain_p11_terminal_track_sensitivity_20260915_heatmap.png",
       "sha256": "2689d34113eaff6b1c40fd8f218054295727193586b9fee15977b19ac9fe92d4",
       "bytes": 157889
     }

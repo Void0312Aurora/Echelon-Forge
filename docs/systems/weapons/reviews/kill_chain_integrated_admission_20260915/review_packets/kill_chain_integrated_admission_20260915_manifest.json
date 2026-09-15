@@ -35,17 +35,17 @@
   },
   "artifacts": {
     "report_json": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_integrated_admission_20260915\\review_packets\\kill_chain_integrated_admission_20260915.json",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_integrated_admission_20260915/kill_chain_integrated_admission_20260915.json",
       "sha256": "876b1633f39d14efe472c6d38185e580aa07b91ac5599f8f6356646c960b81e8",
       "bytes": 698842
     },
     "runs_csv": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_integrated_admission_20260915\\review_packets\\kill_chain_integrated_admission_20260915_runs.csv",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_integrated_admission_20260915/kill_chain_integrated_admission_20260915_runs.csv",
       "sha256": "fd911256658d081459a6253c617a849b18a0e73dfb6964082bdc2b84ea99af39",
       "bytes": 128479
     },
     "cells_csv": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_integrated_admission_20260915\\review_packets\\kill_chain_integrated_admission_20260915_cells.csv",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_integrated_admission_20260915/kill_chain_integrated_admission_20260915_cells.csv",
       "sha256": "0ed0aff8d8abdfb1932c710f1f685476231580ce5eee7f033a725e3d054ae008",
       "bytes": 25464
     },
@@ -55,7 +55,7 @@
       "bytes": 1136
     },
     "heatmaps_png": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_integrated_admission_20260915\\review_packets\\kill_chain_integrated_admission_20260915_heatmaps.png",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_integrated_admission_20260915/kill_chain_integrated_admission_20260915_heatmaps.png",
       "sha256": "0af469cb87bea017f181e0c6df019376a72ba2f290e4856a2dbece45d7817c4d",
       "bytes": 133475
     }

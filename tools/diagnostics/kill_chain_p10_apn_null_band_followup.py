@@ -30,8 +30,7 @@ GENERATED_ON = "2026-09-15"
 DISCUSSION_URL = "https://github.com/Void0312Aurora/Echelon-Forge/discussions/32"
 DEFAULT_OUTPUT_DIR = (
   REPO_ROOT
-  / "docs/systems/weapons/reviews/kill_chain_p10_apn_null_band_followup_20260915"
-  / "review_packets"
+  / "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_p10_apn_null_band_followup_20260915"
 )
 DEFAULT_STEM = "kill_chain_p10_apn_null_band_followup_20260915"
 DEFAULT_AIM120_DEFINITION = (

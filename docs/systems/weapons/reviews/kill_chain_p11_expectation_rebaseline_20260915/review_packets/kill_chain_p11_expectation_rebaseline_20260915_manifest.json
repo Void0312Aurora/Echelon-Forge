@@ -13,18 +13,18 @@
       "sha256": "66c2928fdde20fa29432408b556cfa16e80159956be24038b5365d91d90ae3ac"
     },
     "source_report": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_integrated_admission_20260915\\review_packets\\kill_chain_integrated_admission_20260915.json",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_integrated_admission_20260915/kill_chain_integrated_admission_20260915.json",
       "sha256": "fb086fe5e70abb8ed27820a887299fba183bb1c6356b0c7b4c5f158793d60454"
     }
   },
   "artifacts": {
     "report_json": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p11_expectation_rebaseline_20260915\\review_packets\\kill_chain_p11_expectation_rebaseline_20260915.json",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_p11_expectation_rebaseline_20260915/kill_chain_p11_expectation_rebaseline_20260915.json",
       "sha256": "14a125c0d7230bb9d051b1d4e8642ceef28af1a538da901568c4057001ac8f73",
       "bytes": 66341
     },
     "cells_csv": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p11_expectation_rebaseline_20260915\\review_packets\\kill_chain_p11_expectation_rebaseline_20260915_cells.csv",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_p11_expectation_rebaseline_20260915/kill_chain_p11_expectation_rebaseline_20260915_cells.csv",
       "sha256": "8ef71e1277d63fa4d4f19fc57a107263ff2ab132e3ad2fcb674ac6b0982a16dc",
       "bytes": 16492
     },

@@ -22,8 +22,8 @@ from matplotlib.patches import Patch
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_REPORT = (
   REPO_ROOT
-  / "docs/systems/weapons/reviews/kill_chain_p11_terminal_track_sensitivity_20260915"
-  / "review_packets/kill_chain_p11_terminal_track_sensitivity_20260915.json"
+  / "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_p11_terminal_track_sensitivity_20260915"
+  / "kill_chain_p11_terminal_track_sensitivity_20260915.json"
 )
 DEFAULT_OUTPUT = DEFAULT_REPORT.with_name(
   "kill_chain_p11_terminal_track_sensitivity_20260915_heatmap.png"

@@ -48,13 +48,12 @@ DEFAULT_CASES = (
 DEFAULT_DATABASE_PATH = REPO_ROOT / "examples/config/database"
 DEFAULT_SOURCE_REPORT = (
   REPO_ROOT
-  / "docs/systems/weapons/reviews/kill_chain_integrated_admission_20260915"
-  / "review_packets/kill_chain_integrated_admission_20260915.json"
+  / "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_integrated_admission_20260915"
+  / "kill_chain_integrated_admission_20260915.json"
 )
 DEFAULT_OUTPUT_DIR = (
   REPO_ROOT
-  / "docs/systems/weapons/reviews/kill_chain_p11_terminal_track_sensitivity_20260915"
-  / "review_packets"
+  / "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_p11_terminal_track_sensitivity_20260915"
 )
 DEFAULT_STEM = "kill_chain_p11_terminal_track_sensitivity_20260915"
 STATE_ORDER = {"outside_no_load": 0, "in_radius_fuze_blocked": 1, "complete_effect_chain": 2}
