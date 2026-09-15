@@ -19,27 +19,27 @@
   },
   "artifacts": {
     "report_json": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_maneuver_apn_admission_20260915\\review_packets\\kill_chain_maneuver_apn_admission_20260915.json",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_maneuver_apn_admission_20260915/kill_chain_maneuver_apn_admission_20260915.json",
       "sha256": "4c780d33bdb9ccf8a013e3b41514cc874e415892eaca5a2ab7f0cfdfe91b8dad",
       "bytes": 251268
     },
     "clean_runs_csv": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_maneuver_apn_admission_20260915\\review_packets\\kill_chain_maneuver_apn_admission_20260915_clean_runs.csv",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_maneuver_apn_admission_20260915/kill_chain_maneuver_apn_admission_20260915_clean_runs.csv",
       "sha256": "05ad7b5b427f2e8bc60272832eb5b44da330efbba9697338285baf475fafb877",
       "bytes": 46702
     },
     "noisy_runs_csv": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_maneuver_apn_admission_20260915\\review_packets\\kill_chain_maneuver_apn_admission_20260915_noisy_runs.csv",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_maneuver_apn_admission_20260915/kill_chain_maneuver_apn_admission_20260915_noisy_runs.csv",
       "sha256": "f6296f91f25822d2022118e4a95615335cf4995a02bd724ae2a476f660597e61",
       "bytes": 12817
     },
     "config_backed_runs_csv": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_maneuver_apn_admission_20260915\\review_packets\\kill_chain_maneuver_apn_admission_20260915_config_backed_runs.csv",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_maneuver_apn_admission_20260915/kill_chain_maneuver_apn_admission_20260915_config_backed_runs.csv",
       "sha256": "c6a7635ce1cddf16f79c35fef35f493df1082551e2a3216e638d83b97a855055",
       "bytes": 16316
     },
     "candidate_summary_csv": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_maneuver_apn_admission_20260915\\review_packets\\kill_chain_maneuver_apn_admission_20260915_candidate_summary.csv",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_maneuver_apn_admission_20260915/kill_chain_maneuver_apn_admission_20260915_candidate_summary.csv",
       "sha256": "abc2a8651b6f01728357082ab21920779b70f83b3e1c25f058069d21a38df74a",
       "bytes": 2094
     },
@@ -49,7 +49,7 @@
       "bytes": 1044
     },
     "heatmaps_png": {
-      "path": "docs\\systems\\weapons\\reviews\\kill_chain_maneuver_apn_admission_20260915\\review_packets\\kill_chain_maneuver_apn_admission_20260915_heatmaps.png",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_maneuver_apn_admission_20260915/kill_chain_maneuver_apn_admission_20260915_heatmaps.png",
       "sha256": "ca5bfdae0e21d247647eaa083cc6dc5210969b4a108686d1378663678a1e0ab1",
       "bytes": 480435
     }
