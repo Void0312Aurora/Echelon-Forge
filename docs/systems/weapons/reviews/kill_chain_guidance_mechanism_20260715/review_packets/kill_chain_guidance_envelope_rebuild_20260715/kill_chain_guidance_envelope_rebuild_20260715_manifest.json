@@ -170,32 +170,32 @@
   },
   "artifacts": {
     "report_json": {
-      "path": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715.json",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715.json",
       "sha256": "72fd560589732f4e0bf6de3c23c1091e10428e17b00d62d01c705dd8c23306be",
       "bytes": 3530470
     },
     "runs_csv": {
-      "path": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_runs.csv",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_runs.csv",
       "sha256": "dc43dc370c37ec2514b6f54ab3d859a72dc272ecbfacedf072831ea2298e96b5",
       "bytes": 1072856
     },
     "cells_csv": {
-      "path": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_cells.csv",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_cells.csv",
       "sha256": "db1163f81789a9e33f77686c80c7f1e4ba242275f7c2f71a3ec7169600a7eafe",
       "bytes": 146186
     },
     "theta_fuze_csv": {
-      "path": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_theta_fuze.csv",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_theta_fuze.csv",
       "sha256": "07b7ac5cd354ef22b2d5777901630184cc8c412d97db9520db220772cb7aa0d3",
       "bytes": 1619
     },
     "range_boundaries_csv": {
-      "path": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_range_boundaries.csv",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_range_boundaries.csv",
       "sha256": "94af0682c17e6a31ea178229854a10d3902fb1d12812fe4e335dd25f2dae1852",
       "bytes": 2052
     },
     "old_label_differences_csv": {
-      "path": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_old_label_differences.csv",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_old_label_differences.csv",
       "sha256": "2099b71597d7580ddfc36ae1e358d61297fad5080be70d0634f76e6ef09fd862",
       "bytes": 3308
     },

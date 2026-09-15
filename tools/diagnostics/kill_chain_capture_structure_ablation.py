@@ -28,7 +28,7 @@ SCHEMA_VERSION = "a2.kill_chain_capture_structure_ablation.v1"
 DEFAULT_SEED = 20260621
 DEFAULT_OUTPUT_DIR = (
   REPO_ROOT
-  / "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/"
+  / "artifacts/kill_chain/20260915/raw_review_packets/"
   "kill_chain_capture_structure_ablation_20260715"
 )
 R_FUZE_M = 15.0

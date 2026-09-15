@@ -84,6 +84,19 @@ compat_data/
 ipc/
 *.zip
 checkpoint/
+
+# Raw review packets are generated evidence, not maintained authority. Keep
+# compact human-readable conclusions and explicit manifests in docs, while
+# retaining run-level JSON/CSV/plots only under the ignored artifact surface.
+docs/**/review_packets/**/*.json
+docs/**/review_packets/**/*.csv
+docs/**/review_packets/**/*.png
+docs/**/review_packets/**/*.svg
+!docs/**/review_packets/**/*manifest*.json
+# Curated human-readable figures remain review surfaces; raw matrices and
+# vector dumps stay in the ignored artifact retention surface.
+!docs/**/review_packets/**/*_heatmaps.png
+!docs/**/review_packets/**/*_figure.png
 # `scenarios/` is part of the maintained, versioned repo input surface.
 experiments/
 experiments_tmp/

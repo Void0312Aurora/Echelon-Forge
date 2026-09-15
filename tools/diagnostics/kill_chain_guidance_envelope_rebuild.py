@@ -37,7 +37,7 @@ SCHEMA_VERSION = "a2.kill_chain_guidance_envelope_rebuild.v1"
 MANIFEST_SCHEMA_VERSION = "a2.kill_chain_guidance_envelope_manifest.v1"
 DEFAULT_OUTPUT_DIR = (
   REPO_ROOT
-  / "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/"
+  / "artifacts/kill_chain/20260915/raw_review_packets/"
   "kill_chain_guidance_envelope_rebuild_20260715"
 )
 DEFAULT_STEM = "kill_chain_guidance_envelope_rebuild_20260715"

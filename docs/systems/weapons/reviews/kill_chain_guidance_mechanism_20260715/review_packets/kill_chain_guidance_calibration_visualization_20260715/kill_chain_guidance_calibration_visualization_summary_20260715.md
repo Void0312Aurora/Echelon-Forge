@@ -4,16 +4,16 @@
 未修改 tuning，也未增加默认发布权威。所有热图均按离散采样单元绘制，
 不对未采样区域做插值或平滑。
 
-- 第四阶段来源：`docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715.json`
-- 第五阶段来源：`docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715.json`
+- 第四阶段来源：`artifacts/kill_chain/20260915/raw_review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715.json`
+- 第五阶段来源：`artifacts/kill_chain/20260915/raw_review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715.json`
 - 选择的 nav gain：`4.0`
 - 默认发布状态：`held`
 
-| 图 | Matrix CSV | PNG | SVG |
-| --- | --- | --- | --- |
-| `stage4_launch_class` | [kill_chain_guidance_calibration_stage4_launch_class_heatmap_20260715.csv](kill_chain_guidance_calibration_stage4_launch_class_heatmap_20260715.csv) | [kill_chain_guidance_calibration_stage4_launch_class_heatmap_20260715.png](kill_chain_guidance_calibration_stage4_launch_class_heatmap_20260715.png) | [kill_chain_guidance_calibration_stage4_launch_class_heatmap_20260715.svg](kill_chain_guidance_calibration_stage4_launch_class_heatmap_20260715.svg) |
-| `stage4_log10_rho_edge` | [kill_chain_guidance_calibration_stage4_log10_rho_edge_heatmap_20260715.csv](kill_chain_guidance_calibration_stage4_log10_rho_edge_heatmap_20260715.csv) | [kill_chain_guidance_calibration_stage4_log10_rho_edge_heatmap_20260715.png](kill_chain_guidance_calibration_stage4_log10_rho_edge_heatmap_20260715.png) | [kill_chain_guidance_calibration_stage4_log10_rho_edge_heatmap_20260715.svg](kill_chain_guidance_calibration_stage4_log10_rho_edge_heatmap_20260715.svg) |
-| `stage5_state_changes_vs_N4` | [kill_chain_guidance_calibration_stage5_state_changes_vs_N4_heatmap_20260715.csv](kill_chain_guidance_calibration_stage5_state_changes_vs_N4_heatmap_20260715.csv) | [kill_chain_guidance_calibration_stage5_state_changes_vs_N4_heatmap_20260715.png](kill_chain_guidance_calibration_stage5_state_changes_vs_N4_heatmap_20260715.png) | [kill_chain_guidance_calibration_stage5_state_changes_vs_N4_heatmap_20260715.svg](kill_chain_guidance_calibration_stage5_state_changes_vs_N4_heatmap_20260715.svg) |
+| 图 | 维护中的 PNG | 原始矩阵（artifact retention surface） |
+| --- | --- | --- |
+| `stage4_launch_class` | [PNG](kill_chain_guidance_calibration_stage4_launch_class_heatmap_20260715.png) | `artifacts/kill_chain/20260915/raw_review_packets/kill_chain_guidance_calibration_visualization_20260715/kill_chain_guidance_calibration_stage4_launch_class_heatmap_20260715.csv` |
+| `stage4_log10_rho_edge` | [PNG](kill_chain_guidance_calibration_stage4_log10_rho_edge_heatmap_20260715.png) | `artifacts/kill_chain/20260915/raw_review_packets/kill_chain_guidance_calibration_visualization_20260715/kill_chain_guidance_calibration_stage4_log10_rho_edge_heatmap_20260715.csv` |
+| `stage5_state_changes_vs_N4` | [PNG](kill_chain_guidance_calibration_stage5_state_changes_vs_N4_heatmap_20260715.png) | `artifacts/kill_chain/20260915/raw_review_packets/kill_chain_guidance_calibration_visualization_20260715/kill_chain_guidance_calibration_stage5_state_changes_vs_N4_heatmap_20260715.csv` |
 
 ## 图示结论
 

@@ -12,7 +12,7 @@
     "worktree_porcelain": "?? docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_scalar_calibration_20260715/\n?? tests/tools/test_kill_chain_guidance_scalar_calibration.py\n?? tools/diagnostics/kill_chain_guidance_scalar_calibration.py"
   },
   "inputs": {
-    "stage4_report_path": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715.json",
+    "stage4_report_path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715.json",
     "stage4_report_sha256": "72fd560589732f4e0bf6de3c23c1091e10428e17b00d62d01c705dd8c23306be",
     "aim120_definition_path": "examples/config/database/weapons/air_to_air/aim_120c.json",
     "aim120_definition_sha256": "d285332b7cd6e1f56173cdfe0ca0904be1a8a2245bfa88bf16947c29498b85d2"
@@ -210,22 +210,22 @@
   },
   "artifacts": {
     "report_json": {
-      "path": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715.json",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715.json",
       "sha256": "a30486a6cd55d68d4e571f1f6a504e0149422b8daa5299208245e6a614cd0221",
       "bytes": 85733
     },
     "candidate_summary_csv": {
-      "path": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_candidate_summary.csv",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_candidate_summary.csv",
       "sha256": "6f128c215877ffd858a2046366a78866c46635428ea6a68a927025e9deb3afa8",
       "bytes": 4403
     },
     "runs_csv": {
-      "path": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_runs.csv",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_runs.csv",
       "sha256": "d6d0992161c2920c90085781f88d85827799c4e7dc904ad40ad167b9cae53a71",
       "bytes": 6644568
     },
     "cells_csv": {
-      "path": "docs/systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_cells.csv",
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_cells.csv",
       "sha256": "b0d390a8a2028a7cba7dcb7150aa793c524edfe677d1160536a5d56f2b0efc68",
       "bytes": 824439
     },
