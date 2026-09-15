@@ -140,9 +140,9 @@ struct Missile {
     bool active;                     // If false, missile is dead/inert
 
     // Selectable production PN law. Legacy remains the default until a weapon profile opts in.
-    int pn_los_rate_source = 0; // 0=legacy body-frame rates, 1=world-frame LOS history
+    int pn_los_rate_source = 0;          // 0=legacy body-frame rates, 1=world-frame LOS history
     int target_kinematics_estimator = 0; // 0=legacy, 1=world CV, 2=world constant-acceleration
-    int capture_guidance_mode = 1; // 0=disabled, 1=legacy pursuit schedule
+    int capture_guidance_mode = 1;       // 0=disabled, 1=legacy pursuit schedule
     double target_tracker_alpha = std::numeric_limits<double>::quiet_NaN();
     double target_tracker_beta = std::numeric_limits<double>::quiet_NaN();
     double target_tracker_gamma = std::numeric_limits<double>::quiet_NaN();

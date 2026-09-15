@@ -5,14 +5,14 @@
 namespace {
 
 using missile_guidance::Vec3;
-using missile_guidance::WorldCvAlphaBetaTrackerInput;
-using missile_guidance::WorldCvAlphaBetaTrackerOutput;
-using missile_guidance::WorldCvAlphaBetaTrackerParams;
-using missile_guidance::WorldCvAlphaBetaTrackerState;
 using missile_guidance::WorldCvaAlphaBetaGammaTrackerInput;
 using missile_guidance::WorldCvaAlphaBetaGammaTrackerOutput;
 using missile_guidance::WorldCvaAlphaBetaGammaTrackerParams;
 using missile_guidance::WorldCvaAlphaBetaGammaTrackerState;
+using missile_guidance::WorldCvAlphaBetaTrackerInput;
+using missile_guidance::WorldCvAlphaBetaTrackerOutput;
+using missile_guidance::WorldCvAlphaBetaTrackerParams;
+using missile_guidance::WorldCvAlphaBetaTrackerState;
 using missile_guidance::operator+;
 using missile_guidance::operator-;
 using missile_guidance::operator*;
@@ -24,13 +24,11 @@ WorldCvAlphaBetaTrackerOutput observe(WorldCvAlphaBetaTrackerState &state,
         state, params, WorldCvAlphaBetaTrackerInput{time_s, true, position_world_m, time_s});
 }
 
-WorldCvaAlphaBetaGammaTrackerOutput observe_cva(
-    WorldCvaAlphaBetaGammaTrackerState &state,
-    const WorldCvaAlphaBetaGammaTrackerParams &params, double time_s,
-    const Vec3 &position_world_m) {
+WorldCvaAlphaBetaGammaTrackerOutput observe_cva(WorldCvaAlphaBetaGammaTrackerState &state,
+                                                const WorldCvaAlphaBetaGammaTrackerParams &params,
+                                                double time_s, const Vec3 &position_world_m) {
     return missile_guidance::update_world_cva_alpha_beta_gamma_tracker(
-        state, params,
-        WorldCvaAlphaBetaGammaTrackerInput{time_s, true, position_world_m, time_s});
+        state, params, WorldCvaAlphaBetaGammaTrackerInput{time_s, true, position_world_m, time_s});
 }
 
 Vec3 reconstruct_world_measurement(const Vec3 &observer_world_m,
@@ -185,8 +183,7 @@ TEST_SUITE("world_cva_alpha_beta_gamma_tracker") {
 
         for (int sample = 0; sample <= 200; ++sample) {
             const double time_s = static_cast<double>(sample) * 0.05;
-            const Vec3 truth = initial + velocity * time_s +
-                               acceleration * (0.5 * time_s * time_s);
+            const Vec3 truth = initial + velocity * time_s + acceleration * (0.5 * time_s * time_s);
             output = observe_cva(state, params, time_s, truth);
         }
 
@@ -248,8 +245,7 @@ TEST_SUITE("world_cva_alpha_beta_gamma_tracker") {
         const Vec3 corrected_acceleration = state.corrected_acceleration_world_mps2;
 
         const auto duplicate = missile_guidance::update_world_cva_alpha_beta_gamma_tracker(
-            state, params,
-            WorldCvaAlphaBetaGammaTrackerInput{2.0, true, {900.0, 0.0, 0.0}, 1.0});
+            state, params, WorldCvaAlphaBetaGammaTrackerInput{2.0, true, {900.0, 0.0, 0.0}, 1.0});
         CHECK_FALSE(duplicate.measurement_accepted);
         CHECK(duplicate.measurement_rejected_nonmonotonic);
         CHECK(state.accepted_measurement_count == count);

@@ -224,8 +224,7 @@ bool parse_target_kinematics_estimator(const nlohmann::json &src, int *out_estim
     }
     const std::string name = value.get<std::string>();
     if (name == "legacy_polar_difference") {
-        *out_estimator =
-            static_cast<int>(MissileTargetKinematicsEstimator::LegacyPolarDifference);
+        *out_estimator = static_cast<int>(MissileTargetKinematicsEstimator::LegacyPolarDifference);
         return true;
     }
     if (name == "world_cv") {
@@ -243,8 +242,7 @@ bool parse_target_kinematics_estimator(const nlohmann::json &src, int *out_estim
     return false;
 }
 
-bool parse_capture_guidance_mode(const nlohmann::json &src, int *out_mode,
-                                 std::string *error) {
+bool parse_capture_guidance_mode(const nlohmann::json &src, int *out_mode, std::string *error) {
     if (!out_mode || !src.is_object() || !src.contains("capture_guidance_mode")) {
         return true;
     }
@@ -263,8 +261,7 @@ bool parse_capture_guidance_mode(const nlohmann::json &src, int *out_mode,
         return true;
     }
     if (error) {
-        *error = "Unknown capture_guidance_mode: " + name +
-                 "; expected disabled or legacy_pursuit";
+        *error = "Unknown capture_guidance_mode: " + name + "; expected disabled or legacy_pursuit";
     }
     return false;
 }
@@ -432,8 +429,7 @@ void parse_missile_tuning_json_fields(const nlohmann::json &src,
 #include "content/detail/missile_tuning_fields.inc"
     // These tracker gains were added after the X-macro list was frozen; keep
     // them explicit so the established field-list contract remains stable.
-    tuning.target_tracker_alpha =
-        src.value("target_tracker_alpha", tuning.target_tracker_alpha);
+    tuning.target_tracker_alpha = src.value("target_tracker_alpha", tuning.target_tracker_alpha);
     tuning.target_tracker_beta = src.value("target_tracker_beta", tuning.target_tracker_beta);
     tuning.target_tracker_gamma = src.value("target_tracker_gamma", tuning.target_tracker_gamma);
 
@@ -536,8 +532,8 @@ void parse_warhead_json_fields(const nlohmann::json &src, MissileTuningDefinitio
         src.value("fragment_azimuthal_phase_deg", profile.fragment_azimuthal_phase_deg);
     profile.continuous_rod_spatial_model =
         src.value("continuous_rod_spatial_model", profile.continuous_rod_spatial_model);
-    profile.continuous_rod_band_half_angle_deg = src.value(
-        "continuous_rod_band_half_angle_deg", profile.continuous_rod_band_half_angle_deg);
+    profile.continuous_rod_band_half_angle_deg =
+        src.value("continuous_rod_band_half_angle_deg", profile.continuous_rod_band_half_angle_deg);
     if (src.contains("continuous_rod_azimuthal_samples") &&
         src["continuous_rod_azimuthal_samples"].is_number_unsigned()) {
         profile.continuous_rod_azimuthal_samples =
@@ -548,8 +544,8 @@ void parse_warhead_json_fields(const nlohmann::json &src, MissileTuningDefinitio
         profile.continuous_rod_polar_samples =
             src["continuous_rod_polar_samples"].get<std::uint32_t>();
     }
-    profile.continuous_rod_azimuthal_phase_deg = src.value(
-        "continuous_rod_azimuthal_phase_deg", profile.continuous_rod_azimuthal_phase_deg);
+    profile.continuous_rod_azimuthal_phase_deg =
+        src.value("continuous_rod_azimuthal_phase_deg", profile.continuous_rod_azimuthal_phase_deg);
     profile.projection_radius_fraction =
         src.value("projection_radius_fraction", profile.projection_radius_fraction);
     profile.projection_min_radius_m =
@@ -1418,7 +1414,7 @@ void parse_ammo_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
 }
 
 bool parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefinition &def,
-                                         std::string *error) {
+                                          std::string *error) {
     if (def.type == UnitType::Missile) {
         def.has_missile_tuning = true;
         auto &missile_tuning = def.missile_tuning;
@@ -1428,8 +1424,8 @@ bool parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefin
         if (!parse_pn_los_rate_source(entry, &missile_tuning.pn_los_rate_source, error)) {
             return false;
         }
-        if (!parse_target_kinematics_estimator(
-                entry, &missile_tuning.target_kinematics_estimator, error)) {
+        if (!parse_target_kinematics_estimator(entry, &missile_tuning.target_kinematics_estimator,
+                                               error)) {
             return false;
         }
         if (!parse_capture_guidance_mode(entry, &missile_tuning.capture_guidance_mode, error)) {
@@ -1446,8 +1442,8 @@ bool parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefin
                     entry["missile_tuning"], &missile_tuning.target_kinematics_estimator, error)) {
                 return false;
             }
-            if (!parse_capture_guidance_mode(
-                    entry["missile_tuning"], &missile_tuning.capture_guidance_mode, error)) {
+            if (!parse_capture_guidance_mode(entry["missile_tuning"],
+                                             &missile_tuning.capture_guidance_mode, error)) {
                 return false;
             }
             parse_missile_tuning_json_fields(entry["missile_tuning"], &missile_tuning);
@@ -1461,8 +1457,8 @@ bool parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefin
                     guidance, &missile_tuning.target_kinematics_estimator, error)) {
                 return false;
             }
-            if (!parse_capture_guidance_mode(
-                    guidance, &missile_tuning.capture_guidance_mode, error)) {
+            if (!parse_capture_guidance_mode(guidance, &missile_tuning.capture_guidance_mode,
+                                             error)) {
                 return false;
             }
             parse_missile_tuning_json_fields(guidance, &missile_tuning);

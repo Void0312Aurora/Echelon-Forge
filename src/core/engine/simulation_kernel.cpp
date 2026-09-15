@@ -95,8 +95,7 @@ void SimulationKernel::set_missile_tuning(const MissileTuning &tuning) {
     auto composition_lock = acquire_composition_operation();
     ensure_active("set_missile_tuning");
     if (tuning.pn_los_rate_source < -1 ||
-        tuning.pn_los_rate_source >
-            static_cast<int>(MissilePnLosRateSource::WorldLosHistory)) {
+        tuning.pn_los_rate_source > static_cast<int>(MissilePnLosRateSource::WorldLosHistory)) {
         throw std::invalid_argument("pn_los_rate_source must be -1, 0, or 1");
     }
     if (tuning.target_kinematics_estimator < -1 ||

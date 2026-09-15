@@ -96,8 +96,7 @@ void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKe
                         MissileGuidanceMechanismProfile::kCaptureTerminalCurrentClamped ||
                     capture_terminal_weight_mode >
                         MissileGuidanceMechanismProfile::kCaptureTerminalReciprocalUnclamped) {
-                    throw std::invalid_argument(
-                        "capture_terminal_weight_mode must be in [0, 2]");
+                    throw std::invalid_argument("capture_terminal_weight_mode must be in [0, 2]");
                 }
                 if (capture_lead_blend_mode <
                         MissileGuidanceMechanismProfile::kCaptureLeadCurrentSchedule ||
@@ -119,8 +118,7 @@ void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKe
             "Attach a diagnostics-only exact guidance mechanism profile before first update",
             nb::arg("entity_id"), nb::arg("capture_mode"), nb::arg("pn_mode"), nb::arg("lead_mode"),
             nb::arg("kinematics_source"), nb::arg("apn_mode"),
-            nb::arg("capture_base_range_mode") = 0,
-            nb::arg("capture_terminal_weight_mode") = 0,
+            nb::arg("capture_base_range_mode") = 0, nb::arg("capture_terminal_weight_mode") = 0,
             nb::arg("capture_lead_blend_mode") = 0)
         .def("set_missile_tuning", &SimulationKernel::set_missile_tuning,
              "Override missile parameters for diagnostics", nb::arg("tuning"))

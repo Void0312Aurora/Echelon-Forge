@@ -63,13 +63,14 @@ inline void append_world_cva_measurement(WorldCvaAlphaBetaGammaTrackerState &sta
     state.measurement_history_times[index] = time_s;
     state.measurement_history_next =
         (index + 1) % WorldCvaAlphaBetaGammaTrackerState::kMeasurementHistoryCapacity;
-    state.measurement_history_count = std::min(
-        state.measurement_history_count + 1,
-        WorldCvaAlphaBetaGammaTrackerState::kMeasurementHistoryCapacity);
+    state.measurement_history_count =
+        std::min(state.measurement_history_count + 1,
+                 WorldCvaAlphaBetaGammaTrackerState::kMeasurementHistoryCapacity);
 }
 
-inline bool estimate_world_cva_acceleration_from_history(
-    const WorldCvaAlphaBetaGammaTrackerState &state, Vec3 *out_acceleration_world_mps2) {
+inline bool
+estimate_world_cva_acceleration_from_history(const WorldCvaAlphaBetaGammaTrackerState &state,
+                                             Vec3 *out_acceleration_world_mps2) {
     if (!out_acceleration_world_mps2 || state.measurement_history_count < 3) {
         return false;
     }
@@ -80,11 +81,10 @@ inline bool estimate_world_cva_acceleration_from_history(
     std::array<double, 3> rhs_y{};
     std::array<double, 3> rhs_z{};
     for (std::size_t sample = 0; sample < state.measurement_history_count; ++sample) {
-        const std::size_t index =
-            (state.measurement_history_next +
-             WorldCvaAlphaBetaGammaTrackerState::kMeasurementHistoryCapacity -
-             state.measurement_history_count + sample) %
-            WorldCvaAlphaBetaGammaTrackerState::kMeasurementHistoryCapacity;
+        const std::size_t index = (state.measurement_history_next +
+                                   WorldCvaAlphaBetaGammaTrackerState::kMeasurementHistoryCapacity -
+                                   state.measurement_history_count + sample) %
+                                  WorldCvaAlphaBetaGammaTrackerState::kMeasurementHistoryCapacity;
         const double tau_s = state.measurement_history_times[index] - reference_time_s;
         const std::array<double, 3> basis{1.0, tau_s, tau_s * tau_s};
         const Vec3 &position = state.measurement_history_positions[index];
@@ -98,8 +98,8 @@ inline bool estimate_world_cva_acceleration_from_history(
         }
     }
 
-    auto solve = [](std::array<std::array<double, 3>, 3> matrix,
-                    std::array<double, 3> rhs, std::array<double, 3> *solution) {
+    auto solve = [](std::array<std::array<double, 3>, 3> matrix, std::array<double, 3> rhs,
+                    std::array<double, 3> *solution) {
         if (!solution) return false;
         for (std::size_t pivot = 0; pivot < 3; ++pivot) {
             std::size_t best = pivot;
@@ -166,8 +166,9 @@ struct WorldCvaAlphaBetaGammaTrackerOutput {
     std::uint32_t accepted_measurement_count = 0;
 };
 
-inline WorldCvaAlphaBetaGammaTrackerOutput propagate_world_cva_alpha_beta_gamma_tracker(
-    const WorldCvaAlphaBetaGammaTrackerState &state, double current_time_s) {
+inline WorldCvaAlphaBetaGammaTrackerOutput
+propagate_world_cva_alpha_beta_gamma_tracker(const WorldCvaAlphaBetaGammaTrackerState &state,
+                                             double current_time_s) {
     WorldCvaAlphaBetaGammaTrackerOutput output;
     output.position_valid = state.position_valid;
     output.velocity_valid = state.velocity_valid;
@@ -182,24 +183,24 @@ inline WorldCvaAlphaBetaGammaTrackerOutput propagate_world_cva_alpha_beta_gamma_
         output.state_time_s = std::isfinite(current_time_s) ? current_time_s : 0.0;
         return output;
     }
-    const double requested_time_s = std::isfinite(current_time_s) ? current_time_s
-                                                                   : state.correction_time_s;
+    const double requested_time_s =
+        std::isfinite(current_time_s) ? current_time_s : state.correction_time_s;
     output.state_time_s = std::max(requested_time_s, state.correction_time_s);
     const double dt = output.state_time_s - state.correction_time_s;
     output.position_world_m = state.corrected_position_world_m +
                               state.corrected_velocity_world_mps * dt +
                               state.corrected_acceleration_world_mps2 * (0.5 * dt * dt);
-    output.velocity_world_mps = state.corrected_velocity_world_mps +
-                                state.corrected_acceleration_world_mps2 * dt;
+    output.velocity_world_mps =
+        state.corrected_velocity_world_mps + state.corrected_acceleration_world_mps2 * dt;
     output.acceleration_world_mps2 = state.corrected_acceleration_world_mps2;
     output.coasted = dt > 0.0;
     return output;
 }
 
-inline WorldCvaAlphaBetaGammaTrackerOutput update_world_cva_alpha_beta_gamma_tracker(
-    WorldCvaAlphaBetaGammaTrackerState &state,
-    const WorldCvaAlphaBetaGammaTrackerParams &params,
-    const WorldCvaAlphaBetaGammaTrackerInput &input) {
+inline WorldCvaAlphaBetaGammaTrackerOutput
+update_world_cva_alpha_beta_gamma_tracker(WorldCvaAlphaBetaGammaTrackerState &state,
+                                          const WorldCvaAlphaBetaGammaTrackerParams &params,
+                                          const WorldCvaAlphaBetaGammaTrackerInput &input) {
     bool accepted = false;
     bool rejected_nonmonotonic = false;
     bool rejected_invalid = false;
@@ -239,20 +240,20 @@ inline WorldCvaAlphaBetaGammaTrackerOutput update_world_cva_alpha_beta_gamma_tra
                 // Bootstrap over a widening baseline, matching the CV tracker's
                 // noise-resistant admission rule. Acceleration is not published
                 // until a later correction has a valid velocity state.
-                state.corrected_velocity_world_mps =
-                    (input.measurement_position_world_m - state.first_measurement_position_world_m) /
-                    baseline;
+                state.corrected_velocity_world_mps = (input.measurement_position_world_m -
+                                                      state.first_measurement_position_world_m) /
+                                                     baseline;
                 state.corrected_position_world_m = input.measurement_position_world_m;
-                state.velocity_valid = state.accepted_measurement_count >= 2 &&
-                                       baseline >= std::max(0.0, params.minimum_velocity_baseline_s);
+                state.velocity_valid =
+                    state.accepted_measurement_count >= 2 &&
+                    baseline >= std::max(0.0, params.minimum_velocity_baseline_s);
             } else {
                 const double alpha = std::clamp(params.alpha, 0.0, 1.0);
                 const double beta = std::clamp(params.beta, 0.0, 2.0);
                 const Vec3 predicted_velocity = state.corrected_velocity_world_mps +
                                                 state.corrected_acceleration_world_mps2 * dt;
                 state.corrected_position_world_m = predicted + residual * alpha;
-                state.corrected_velocity_world_mps =
-                    predicted_velocity + residual * (beta / dt);
+                state.corrected_velocity_world_mps = predicted_velocity + residual * (beta / dt);
             }
             state.last_measurement_position_world_m = input.measurement_position_world_m;
             state.correction_time_s = input.measurement_time_s;
@@ -411,10 +412,9 @@ update_world_cv_alpha_beta_tracker(WorldCvAlphaBetaTrackerState &state,
                 // noise is not published as a several-hundred-m/s velocity.
                 const double baseline_dt_s =
                     input.measurement_time_s - state.first_measurement_time_s;
-                state.corrected_velocity_world_mps =
-                    (input.measurement_position_world_m -
-                     state.first_measurement_position_world_m) /
-                    baseline_dt_s;
+                state.corrected_velocity_world_mps = (input.measurement_position_world_m -
+                                                      state.first_measurement_position_world_m) /
+                                                     baseline_dt_s;
                 state.last_prediction_position_world_m = state.corrected_position_world_m;
                 state.last_residual_world_m =
                     input.measurement_position_world_m - state.corrected_position_world_m;
