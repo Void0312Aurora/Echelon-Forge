@@ -86,6 +86,7 @@ GUIDANCE_TUNING_OVERRIDE_FIELDS = frozenset(
     "target_tracker_alpha",
     "target_tracker_beta",
     "target_tracker_gamma",
+    "track_break_time_s",
   }
 )
 GUIDANCE_MECHANISM_PROFILE_DEFAULTS = {

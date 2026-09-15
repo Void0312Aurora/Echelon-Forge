@@ -1,0 +1,51 @@
+{
+  "schema_version": "a2.kill_chain_p11_terminal_track_sensitivity_manifest.v1",
+  "report_schema_version": "a2.kill_chain_p11_terminal_track_sensitivity.v1",
+  "generated_at_utc": "2026-09-15T11:02:38.018129+00:00",
+  "git": {
+    "head": "920101e69b8ee968016724c82d5e5c3d2d421b27",
+    "branch": "codex/kill-chain-p10-maneuver-apn",
+    "worktree_porcelain": "M tools/diagnostics/kill_chain_decoupling_probe.py\n?? docs/systems/weapons/reviews/kill_chain_p11_terminal_track_sensitivity_20260915/\n?? tests/tools/test_kill_chain_p11_terminal_track_sensitivity.py\n?? tools/diagnostics/kill_chain_p11_terminal_track_sensitivity.py"
+  },
+  "inputs": {
+    "tool": {
+      "path": "tools\\diagnostics\\kill_chain_p11_terminal_track_sensitivity.py",
+      "sha256": "b002bd17e9b936ddf9a205271118b9d68f692d2b362a3b08aac0be50a3b11941"
+    },
+    "probe": {
+      "path": "tools\\diagnostics\\kill_chain_decoupling_probe.py",
+      "sha256": "1f7475d86f6e3d146779df75bc3019b6b4097de059cbfa43f3bdbfc8da8b3efa"
+    },
+    "source_report": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_integrated_admission_20260915\\review_packets\\kill_chain_integrated_admission_20260915.json",
+      "sha256": "fb086fe5e70abb8ed27820a887299fba183bb1c6356b0c7b4c5f158793d60454"
+    }
+  },
+  "artifacts": {
+    "report_json": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p11_terminal_track_sensitivity_20260915\\review_packets\\kill_chain_p11_terminal_track_sensitivity_20260915.json",
+      "sha256": "b64e11767ab838d1c450df976c5637e262f78ed612ab53c61c932ec07133d526",
+      "bytes": 52097
+    },
+    "runs_csv": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p11_terminal_track_sensitivity_20260915\\review_packets\\kill_chain_p11_terminal_track_sensitivity_20260915_runs.csv",
+      "sha256": "5f740e887fca1f757fd844a118797aacc8885d9135e14a6cfaac379270ec2142",
+      "bytes": 11021
+    },
+    "cells_csv": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p11_terminal_track_sensitivity_20260915\\review_packets\\kill_chain_p11_terminal_track_sensitivity_20260915_cells.csv",
+      "sha256": "b47afaf3198d92163a0869c06ee8476ad2e285fab33bac358d36e3b3c205842a",
+      "bytes": 3511
+    },
+    "conclusions_zh_md": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p11_terminal_track_sensitivity_20260915\\review_packets\\kill_chain_p11_terminal_track_sensitivity_20260915_conclusions.zh.md",
+      "sha256": "4f53e72099c4678921bb54fc1d1f986e1d43fd505ce1906cc6319b501f5636f8",
+      "bytes": 893
+    },
+    "heatmap_png": {
+      "path": "docs\\systems\\weapons\\reviews\\kill_chain_p11_terminal_track_sensitivity_20260915\\review_packets\\kill_chain_p11_terminal_track_sensitivity_20260915_heatmap.png",
+      "sha256": "2689d34113eaff6b1c40fd8f218054295727193586b9fee15977b19ac9fe92d4",
+      "bytes": 157889
+    }
+  }
+}
