@@ -3,9 +3,9 @@
   "report_schema_version": "a2.kill_chain_p11_terminal_track_sensitivity.v1",
   "generated_at_utc": "2026-09-15T11:02:38.018129+00:00",
   "git": {
-    "head": "920101e69b8ee968016724c82d5e5c3d2d421b27",
+    "head": "d6393f6658b6469ea2cc2e811912402b1eaecf38",
     "branch": "codex/kill-chain-p10-maneuver-apn",
-    "worktree_porcelain": "M tools/diagnostics/kill_chain_decoupling_probe.py\n?? docs/systems/weapons/reviews/kill_chain_p11_terminal_track_sensitivity_20260915/\n?? tests/tools/test_kill_chain_p11_terminal_track_sensitivity.py\n?? tools/diagnostics/kill_chain_p11_terminal_track_sensitivity.py"
+    "worktree_porcelain": ""
   },
   "inputs": {
     "tool": {
