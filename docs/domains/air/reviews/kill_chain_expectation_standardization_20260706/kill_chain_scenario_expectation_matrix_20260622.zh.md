@@ -7,6 +7,9 @@
 英文规范页：
 [kill_chain_scenario_expectation_matrix_20260622.md](kill_chain_scenario_expectation_matrix_20260622.md)
 
+本文是封存的 v1 历史期望证据。当前 candidate report 使用带 baseline identity 的
+v2 harness，并单独执行校验；本文不在原位重写。
+
 ## 矩阵政策
 
 P1 合同已将半径 policy 收口为：

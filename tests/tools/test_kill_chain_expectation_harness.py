@@ -134,6 +134,23 @@ def test_before_report_smoke_projects_heatmap_rows() -> None:
   assert smaller_row["component_detail"]["component_rows"][0]["rho_effect_component"] is None
 
 
+def test_case_grid_only_validates_case_grid_baseline_identity() -> None:
+  report = harness.generate_before_report(
+    grid_tier="anchor-grid",
+    target_motion_layers=("nonmaneuvering_constant_velocity",),
+    case_ids=("kces_anchor_grid_cv_8km_p30deg",),
+    effect_variants=("REV-RUNTIME-PROJECTION",),
+    seed=20260621,
+    case_grid_only=True,
+  )
+
+  assert report["expectation_baseline_id"] == harness.EXPECTATION_BASELINE_ID
+  assert report["heatmap_rows"] == []
+  assert report["case_grid"][0]["expectation_baseline_id"] == (
+    harness.EXPECTATION_BASELINE_ID
+  )
+
+
 def test_mild_maneuver_smoke_flows_acceleration_into_runtime() -> None:
   report = harness.generate_before_report(
     grid_tier="anchor-grid",

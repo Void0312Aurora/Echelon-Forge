@@ -26,14 +26,19 @@ Current schemas:
 
 | Artifact | Schema |
 | --- | --- |
-| before report | `a2.kill_chain_expectation_before_report.v1` |
-| case grid rows | `a2.kill_chain_expectation_case_grid.v1` |
-| heatmap rows | `a2.kill_chain_expectation_heatmap_row.v1` |
+| before report | `a2.kill_chain_expectation_before_report.v2` |
+| case grid rows | `a2.kill_chain_expectation_case_grid.v2` |
+| heatmap rows | `a2.kill_chain_expectation_heatmap_row.v2` |
 | component detail | `a2.kill_chain_expectation_component_detail.v1` |
 | visualization manifest | `a2.kill_chain_expectation_visualization_manifest.v1` |
 | first-review-stage attribution | `a2.kill_chain_expectation_stage_attribution.v1` |
 | response local diagnosis | `a2.kill_chain_expectation_response_diagnosis.v2` |
 | expectation-envelope audit | `a2.kill_chain_expectation_envelope_audit.v1` |
+
+The maintained v2 harness requires one `expectation_baseline_id` at report root
+and on every case-grid/heatmap row. Consumers reject missing or mixed baseline
+identity. Existing v1 packets remain sealed historical evidence; they are not
+rewritten and are not accepted as current v2 input.
 
 ## Implemented
 

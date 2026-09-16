@@ -641,7 +641,10 @@ def generate_before_report(
   }
   if include_raw_probe:
     report["raw_probe_report"] = probe_report
-  require_expectation_baseline_identity(report)
+  require_expectation_baseline_identity(
+    report,
+    rows_key="case_grid" if case_grid_only else "heatmap_rows",
+  )
   return report
 
 def build_arg_parser() -> argparse.ArgumentParser:
