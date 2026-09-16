@@ -26,6 +26,7 @@
 #include <fstream>
 #include <numbers>
 #include <string>
+#include <utility>
 #include <vector>
 
 // ---------------------------------------------------------------------------
@@ -75,6 +76,45 @@ TEST_SUITE("components_basic") {
         REQUIRE(definitions.size() == 1);
         CHECK(definitions.front().name == "preexisting_definition");
         CHECK(error.find("bad_evidence.json") != std::string::npos);
+
+        std::filesystem::remove_all(root);
+    }
+
+    TEST_CASE("unit definition loader rejects unknown warhead model selectors transactionally") {
+        const std::filesystem::path root =
+            std::filesystem::temp_directory_path() / "ef_warhead_selector_transaction_test";
+        std::filesystem::remove_all(root);
+        std::filesystem::create_directories(root);
+
+        for (const auto &[field, value] : std::vector<std::pair<std::string, std::string>>{
+                 {"fragment_angular_distribution", "polar_azimuth_typo"},
+                 {"continuous_rod_spatial_model", "ring_band_typo"},
+             }) {
+            const std::filesystem::path definition_path = root / "missile.json";
+            {
+                std::ofstream definition(definition_path);
+                definition << R"json({
+  "name": "Invalid_Warhead_Selector",
+  "type": "Missile",
+  "esm": {},
+  "warhead": {
+    ")json" << field << R"json(": ")json"
+                           << value << R"json("
+  }
+})json";
+            }
+
+            UnitDefinition sentinel{};
+            sentinel.name = "preexisting_definition";
+            std::vector<UnitDefinition> definitions{sentinel};
+            std::string error;
+
+            CHECK_FALSE(load_unit_definitions_json(root.string(), definitions, &error));
+            REQUIRE(definitions.size() == 1);
+            CHECK(definitions.front().name == "preexisting_definition");
+            CHECK(error.find(field) != std::string::npos);
+            CHECK(error.find(value) != std::string::npos);
+        }
 
         std::filesystem::remove_all(root);
     }

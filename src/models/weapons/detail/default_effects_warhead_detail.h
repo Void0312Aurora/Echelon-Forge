@@ -30,23 +30,6 @@ struct WarheadOrientationFrame {
     Vec3 up{0.0, 0.0, 1.0};
 };
 
-Vec3 warhead_vec3_cross(const Vec3 &lhs, const Vec3 &rhs) {
-    return {lhs.y * rhs.z - lhs.z * rhs.y, lhs.z * rhs.x - lhs.x * rhs.z,
-            lhs.x * rhs.y - lhs.y * rhs.x};
-}
-
-WarheadOrientationFrame make_warhead_orientation_frame_from_forward(const Vec3 &forward) {
-    const Vec3 normalized_forward = vec3_normalize(forward);
-    if (vec3_norm(normalized_forward) <= 1.0e-9) {
-        return {};
-    }
-    const Vec3 reference =
-        std::abs(normalized_forward.z) < 0.90 ? Vec3{0.0, 0.0, 1.0} : Vec3{0.0, 1.0, 0.0};
-    const Vec3 right = vec3_normalize(warhead_vec3_cross(reference, normalized_forward));
-    const Vec3 up = vec3_normalize(warhead_vec3_cross(normalized_forward, right));
-    return {.forward = normalized_forward, .right = right, .up = up};
-}
-
 struct FragmentAngularDensitySample {
     bool active = false;
     std::string distribution = "legacy_scalar";

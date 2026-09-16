@@ -62,6 +62,7 @@ WARHEAD_FAMILIES = ("blast_fragmentation", "continuous_rod")
 STANDOFF_DISTANCES_M = (0.5, 2.0, 6.0, 10.0)
 ATTITUDES_DEG = (0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0)
 MISSILE_SPEED_MPS = 900.0
+TARGET_HEADING_DEG = 180.0
 
 
 def _target_hitbox_envelope() -> dict[str, list[float]]:
@@ -120,6 +121,24 @@ def _velocity_toward_origin(point: tuple[float, float, float]) -> tuple[float, f
   return tuple(-value / magnitude * MISSILE_SPEED_MPS for value in point)
 
 
+def _target_body_velocity_to_world_enu(
+  velocity_body_mps: tuple[float, float, float] | list[float],
+  *,
+  target_heading_deg: float,
+) -> tuple[float, float, float]:
+  """Match Math::body_to_world for a level target and local-right convention."""
+  forward_mps, right_mps, up_mps = (float(value) for value in velocity_body_mps)
+  heading_rad = math.radians(float(target_heading_deg))
+  cos_heading = math.cos(heading_rad)
+  sin_heading = math.sin(heading_rad)
+  body_left_mps = -right_mps
+  return (
+    cos_heading * forward_mps - sin_heading * body_left_mps,
+    sin_heading * forward_mps + cos_heading * body_left_mps,
+    up_mps,
+  )
+
+
 def _case_definitions() -> Iterable[dict[str, Any]]:
   for family in WARHEAD_FAMILIES:
     for direction in DIRECTION_ANCHORS:
@@ -159,12 +178,15 @@ def _event_row(
   projection_min_effect_scale: float | None = None,
   projection_curve_floor_effect_scale: float | None = None,
   advance_simulation: bool = False,
+  target_heading_deg: float = TARGET_HEADING_DEG,
 ) -> dict[str, Any]:
   sim = matrix_probe.ef_py.SimulationKernel()
   sim.reset(int(seed))
   if not sim.load_database(str(DEFAULT_DATABASE_PATH)):
     raise RuntimeError(f"failed to load database: {DEFAULT_DATABASE_PATH}")
-  attacker_id, target_id = matrix_probe._spawn_structured_f16_pair(sim)
+  attacker_id, target_id = matrix_probe._spawn_structured_f16_pair(
+    sim, target_heading_deg=target_heading_deg
+  )
   profile = matrix_probe._make_warhead_profile(str(case["warhead_family"]))
   profile.projection_near_field_floor_enabled = bool(near_field_floor_enabled)
   if directional_fragmentation and str(case["warhead_family"]) == "blast_fragmentation":
@@ -193,7 +215,9 @@ def _event_row(
       projection_curve_floor_effect_scale
     )
   point = [float(value) for value in case["local_point_m"]]
-  velocity = [float(value) for value in case["missile_velocity_body_mps"]]
+  velocity = _target_body_velocity_to_world_enu(
+    case["missile_velocity_body_mps"], target_heading_deg=target_heading_deg
+  )
   attitude = [float(value) for value in case["detonation_attitude_deg"]]
   ok = sim.debug_apply_profiled_local_proximity_hit_with_velocity_and_attitude(
     attacker_id,
