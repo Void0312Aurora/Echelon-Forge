@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from tools.diagnostics.kces import envelope_audit
 
 
@@ -24,6 +26,7 @@ def _row(
   return {
     "identity": {
       "profile_id": "aim120_anchor",
+      "expectation_baseline_id": "P11-TEST-BASELINE",
       "case_id": case_id,
       "grid_tier": "anchor",
     },
@@ -179,6 +182,7 @@ def test_missing_effect_metadata_is_not_judged() -> None:
 def test_generate_envelope_audit_writes_review_artifacts(tmp_path) -> None:
   report = {
     "schema_version": "a2.kill_chain_expectation_before_report.v1",
+    "expectation_baseline_id": "P11-TEST-BASELINE",
     "heatmap_rows": [
       _row(
         case_id="outer_trace",
@@ -235,3 +239,30 @@ def test_generate_envelope_audit_writes_review_artifacts(tmp_path) -> None:
   ).read_text(encoding="utf-8")
   assert "standards-layer air-to-air kill-chain expectation" in summary
   assert "engineering-proxy diagnostics only" in summary
+
+
+def test_envelope_audit_rejects_missing_or_mixed_baseline_identity(tmp_path) -> None:
+  missing = _row(case_id="missing")
+  del missing["identity"]["expectation_baseline_id"]
+  mixed = _row(case_id="mixed")
+  mixed["identity"]["expectation_baseline_id"] = "P11-OTHER-BASELINE"
+
+  for name, rows in (
+    ("missing", [missing]),
+    ("mixed", [_row(case_id="accepted"), mixed]),
+  ):
+    input_path = tmp_path / f"{name}.json"
+    input_path.write_text(
+      json.dumps(
+        {
+          "expectation_baseline_id": "P11-TEST-BASELINE",
+          "heatmap_rows": rows,
+        }
+      ),
+      encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="expectation baseline|expectation_baseline_id"):
+      envelope_audit.generate_envelope_audit(
+        input_path=input_path,
+        output_dir=tmp_path / f"{name}-out",
+      )

@@ -532,6 +532,16 @@ def conclusions_zh(report: dict[str, Any]) -> str:
   tgo_8 = min(
     _finite(cell["mean_time_to_go_at_estimator_convergence_s"]) for cell in gain_8
   )
+  conclusion = (
+    "结论：8 km 不是孤立异常，而是 7.0-8.5 km 低响应带的一部分；纯 PN 基线"
+    "已经落在厘米以下的数值/几何观测底部，9 km 基线离开该底部后 APN 响应恢复。"
+    "CVA 与 APN 均在最近点前生效，因此不是 APN 接线失效或估计器瞬态造成。"
+    "这一解释只覆盖当前 synthetic 固定机动角点，不改变 P10 准入，也不构成真实"
+    " AIM-120 性能或 Pk 权威。"
+    if evaluation["explained"]
+    else "结论：至少一个机制解释门失败；当前扫描不能确认 8 km 低响应带的成因，"
+    "不得输出机制闭合或 P10 支持性结论。"
+  )
   return "\n".join(
     [
       "# P10 APN 8 km 低响应带复核结论",
@@ -551,11 +561,7 @@ def conclusions_zh(report: dict[str, Any]) -> str:
       f"- 扫描中的首个高于 8 km 的非 null 距离为 "
       f"`{evaluation['first_non_null_range_above_8_km']}` km。",
       "",
-      "结论：8 km 不是孤立异常，而是 7.0-8.5 km 低响应带的一部分；纯 PN 基线"
-      "已经落在厘米以下的数值/几何观测底部，9 km 基线离开该底部后 APN 响应恢复。"
-      "CVA 与 APN 均在最近点前生效，因此不是 APN 接线失效或估计器瞬态造成。"
-      "这一解释只覆盖当前 synthetic 固定机动角点，不改变 P10 准入，也不构成真实"
-      " AIM-120 性能或 Pk 权威。",
+      conclusion,
       "",
     ]
   )
@@ -636,7 +642,7 @@ def main(argv: list[str] | None = None) -> int:
   report = build_report()
   paths = write_bundle(report, output_dir=args.output_dir, stem=str(args.stem))
   print(json.dumps({"status": report["status"], "evaluation": report["evaluation"], "artifacts": paths}, ensure_ascii=False))
-  return 1 if args.strict and not report["evaluation"]["explained"] else 0
+  return 0 if report["evaluation"]["explained"] else 1
 
 
 if __name__ == "__main__":

@@ -13,6 +13,12 @@ def test_anchor_grid_counts_and_classification() -> None:
   )
 
   assert len(cases) == 93
+  assert {case["expectation_baseline_id"] for case in cases} == {
+    harness.EXPECTATION_BASELINE_ID
+  }
+  assert {case["schema_version"] for case in cases} == {
+    "a2.kill_chain_expectation_case_grid.v2"
+  }
   assert sum(1 for case in cases if case["runtime_supported"]) == 93
   assert sum(1 for case in cases if not case["runtime_supported"]) == 0
   assert {key: sum(case["launch_class"] == key for case in cases) for key in "NMO"} == {
@@ -32,6 +38,15 @@ def test_anchor_grid_counts_and_classification() -> None:
   assert case_by_id["kces_anchor_grid_cv_16km_p30deg"]["launch_class"] == "N"
   assert case_by_id["kces_anchor_grid_mild_6km_m60deg"]["launch_class"] == "M"
   assert case_by_id["kces_anchor_grid_mild_6km_p60deg"]["launch_class"] == "M"
+  assert case_by_id["kces_anchor_grid_mild_8km_p60deg"][
+    "range_topology_exception"
+  ] == "near_range_entry"
+  assert case_by_id["kces_anchor_grid_cv_6km_p60deg"][
+    "range_topology_exception"
+  ] == "near_range_entry"
+  assert case_by_id["kces_anchor_grid_cv_6km_p45deg"][
+    "range_topology_exception"
+  ] == ""
   mild_left = case_by_id["kces_anchor_grid_mild_8km_m30deg"]
   mild_right = case_by_id["kces_anchor_grid_mild_8km_p30deg"]
   assert mild_left["target_motion_profile_id"] == (
@@ -76,12 +91,16 @@ def test_before_report_smoke_projects_heatmap_rows() -> None:
     seed=20260621,
   )
 
-  assert report["schema_version"] == "a2.kill_chain_expectation_before_report.v1"
+  assert report["schema_version"] == "a2.kill_chain_expectation_before_report.v2"
   assert report["summary"]["case_count"] == 1
   assert report["summary"]["runnable_case_count"] == 1
   assert report["summary"]["heatmap_row_count"] == 2
   rows = report["heatmap_rows"]
   runtime_row = rows[0]
+  assert runtime_row["identity"]["expectation_baseline_id"] == (
+    harness.EXPECTATION_BASELINE_ID
+  )
+  assert runtime_row["schema_version"] == "a2.kill_chain_expectation_heatmap_row.v2"
   assert runtime_row["identity"]["case_id"] == "kces_anchor_grid_cv_8km_p30deg"
   assert runtime_row["launch_window"]["launch_class"] == "N"
   assert runtime_row["guidance_approach"]["entered_R_fuze"] is True

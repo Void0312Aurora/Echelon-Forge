@@ -110,6 +110,8 @@ def test_evaluation_attributes_null_band_to_near_zero_baseline() -> None:
   assert dispositions["acceleration_estimator_transient_timing"].startswith(
     "not_supported"
   )
+  report["evaluation"]["explained"] = False
+  assert "不能确认 8 km 低响应带的成因" in followup.conclusions_zh(report)
 
 
 def test_renderer_writes_nonempty_png(tmp_path) -> None:

@@ -16,6 +16,7 @@ def _stage(name: str, *, present: bool = True, observed: dict | None = None) -> 
 def _fixture(*, triggered: bool) -> tuple[dict, dict, dict]:
   grid = {
     "case_id": "fixture",
+    "expectation_baseline_id": "P11-TEST-BASELINE",
     "target_motion_layer": "mild_maneuver",
     "target_motion_profile_id": "constant_lateral_acceleration_8mps2_v0",
     "maneuver_severity": "mild_engineering_proxy",
@@ -150,6 +151,8 @@ def test_evaluation_separates_structural_admission_from_legacy_envelope() -> Non
         "in_radius_fuze_blocked": False,
       }
     )
+  for row in rows:
+    row["expectation_baseline_id"] = "P11-TEST-BASELINE"
   cells = admission._aggregate_cells(rows)
   evaluation = admission._evaluate(
     rows,
@@ -219,6 +222,8 @@ def test_evaluation_accepts_n_o_baseline_but_retains_terminal_contract_hold() ->
         },
       ]
     )
+  for row in rows:
+    row["expectation_baseline_id"] = "P11-TEST-BASELINE"
   cells = admission._aggregate_cells(rows)
   evaluation = admission._evaluate(
     rows,
@@ -230,6 +235,26 @@ def test_evaluation_accepts_n_o_baseline_but_retains_terminal_contract_hold() ->
   assert evaluation["accepted_n_o_expectation_envelope_passed"] is True
   assert evaluation["terminal_track_contract_passed"] is False
   assert evaluation["p11_complete"] is False
+  conclusion_report = {
+    "status": "integrated_structure_passed_residuals_open",
+    "evaluation": evaluation,
+    "counts": {
+      "run_count": len(rows),
+      "cell_count": len(cells),
+      "structural_violation_run_count": 0,
+      "triggered_run_count": 3,
+      "untriggered_run_count": 3,
+      "legacy_negative_control_alert_cell_count": 0,
+      "nominal_guidance_residual_cell_count": 0,
+      "in_radius_fuze_blocked_cell_count": 1,
+    },
+    "residuals": {
+      "in_radius_fuze_blocked_cause_counts": {
+        "seeker_fov_exit_then_memory_timeout": 1
+      }
+    },
+  }
+  assert "P11 admission 保持 held" in admission.conclusions_zh(conclusion_report)
 
 
 def test_structural_matrix_gate_rejects_duplicate_case_seed_pair() -> None:
@@ -262,6 +287,8 @@ def test_structural_matrix_gate_rejects_duplicate_case_seed_pair() -> None:
       }
     )
   rows[-1] = dict(rows[0])
+  for row in rows:
+    row["expectation_baseline_id"] = "P11-TEST-BASELINE"
   cells = admission._aggregate_cells(rows)
   evaluation = admission._evaluate(
     rows,

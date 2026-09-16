@@ -281,7 +281,7 @@ def build_report(
     "generated_on": GENERATED_ON,
     "generated_at_utc": datetime.now(timezone.utc).isoformat(),
     "source_report": {
-      "path": str(source_report.resolve().relative_to(REPO_ROOT)),
+      "path": _repo_relative(source_report),
       "sha256": _sha256(source_report),
     },
     "authority_boundary": {
@@ -344,12 +344,25 @@ def _git_value(*args: str) -> str:
 
 
 def _repo_relative(path: Path) -> str:
-  return str(path.resolve().relative_to(REPO_ROOT)).replace("/", "\\")
+  resolved = path.resolve()
+  try:
+    rendered = str(resolved.relative_to(REPO_ROOT))
+  except ValueError:
+    rendered = str(resolved)
+  return rendered.replace("/", "\\")
 
 
 def conclusions_zh(report: dict[str, Any]) -> str:
   counts = report["counts"]
   evaluation = report["evaluation"]
+  conclusion = (
+    "结论：该批把 `seeker_fov_exit_then_memory_timeout` 量化为一个可复现的记忆窗口"
+    "边界问题。它没有证明 0.75 s 是错误值，也没有授权放宽 seeker FOV、terminal fuze"
+    "门或生产默认配置；P11 仍保持 incomplete，后续应由独立 runtime contract 决定是否调整。"
+    if evaluation["residual_explanation_ready"]
+    else "结论：至少一个矩阵、稳定性、单调性或转换门失败；当前扫描不能把残差归因"
+    "到记忆窗口，也不得支持默认值调整。"
+  )
   return "\n".join(
     [
       "# P11 terminal-track 记忆窗口敏感性结论",
@@ -362,9 +375,7 @@ def conclusions_zh(report: dict[str, Any]) -> str:
       "若进入 `complete_effect_chain`，只能说明该残差对记忆窗口敏感，不等于默认值应被修改。",
       f"- 所有 cells 的 timeout 响应单调：`{report['evaluation']['gates']['timeout_response_is_monotonic']}`。",
       "",
-      "结论：该批把 `seeker_fov_exit_then_memory_timeout` 量化为一个可复现的记忆窗口"
-      "边界问题。它没有证明 0.75 s 是错误值，也没有授权放宽 seeker FOV、terminal fuze"
-      "门或生产默认配置；P11 仍保持 incomplete，后续应由独立 runtime contract 决定是否调整。",
+      conclusion,
       "",
     ]
   )
@@ -416,7 +427,7 @@ def write_bundle(
         "sha256": _sha256(Path(probe.__file__)),
       },
       "source_report": {
-        "path": str(source_report.resolve().relative_to(REPO_ROOT)),
+        "path": _repo_relative(source_report),
         "sha256": _sha256(source_report),
       },
     },
@@ -487,7 +498,7 @@ def main(argv: list[str] | None = None) -> int:
       ensure_ascii=False,
     )
   )
-  return 0
+  return 0 if report["evaluation"]["residual_explanation_ready"] else 1
 
 
 if __name__ == "__main__":

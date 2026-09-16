@@ -265,6 +265,7 @@ def _case_evidence(
   outcome_state = str(consequence.get("outcome_state", "") or "") or chain_state
   return {
     "case_id": str(grid_case["case_id"]),
+    "expectation_baseline_id": str(grid_case["expectation_baseline_id"]),
     "seed": int(seed),
     "target_motion_layer": str(grid_case["target_motion_layer"]),
     "target_motion_profile_id": str(grid_case["target_motion_profile_id"]),
@@ -273,6 +274,9 @@ def _case_evidence(
     "range_km": _finite(grid_case["range_km"]),
     "bearing_deg": _finite(grid_case["signed_bearing_deg"]),
     "launch_class": launch_class,
+    "range_topology_exception": str(
+      grid_case.get("range_topology_exception", "") or ""
+    ),
     "nearest_distance_m": _finite(guidance.get("nearest_distance_m"), math.inf),
     "entered_R_fuze": entered,
     "fuze_triggered": triggered,
@@ -362,11 +366,15 @@ def _aggregate_cells(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     cells.append(
       {
         "case_id": case_id,
+        "expectation_baseline_id": first["expectation_baseline_id"],
         "target_motion_layer": first["target_motion_layer"],
         "target_acceleration_x_mps2": first["target_acceleration_x_mps2"],
         "range_km": first["range_km"],
         "bearing_deg": first["bearing_deg"],
         "launch_class": first["launch_class"],
+        "range_topology_exception": str(
+          first.get("range_topology_exception", "") or ""
+        ),
         "seed_count": len(group),
         "seeds": sorted({int(row["seed"]) for row in group}),
         "complete_effect_chain_count": sum(
@@ -440,6 +448,9 @@ def _evaluate(
   structural_gates = {
     "anchor_matrix_complete": matrix_complete,
     "unique_case_seed_pairs": len(actual_run_keys) == len(set(actual_run_keys)),
+    "single_expectation_baseline": bool(rows)
+    and len({str(row.get("expectation_baseline_id", "")) for row in rows}) == 1
+    and all(bool(str(row.get("expectation_baseline_id", "")).strip()) for row in rows),
     "each_cell_has_exact_required_seed_set": bool(cells) and all(
       int(cell["seed_count"]) == len(seeds)
       and set(int(seed) for seed in cell["seeds"]) == set(seeds)
@@ -646,6 +657,20 @@ def conclusions_zh(report: dict[str, Any]) -> str:
   cause_summary = ", ".join(
     f"`{cause}`={count}" for cause, count in sorted(cause_counts.items())
   ) or "none"
+  if evaluation["p11_complete"]:
+    conclusion = (
+      "本批通过全部结构与期望门，config-backed guidance→fuze→warhead load→"
+      "component response→platform consequence 的运行时链路准入通过。"
+    )
+  elif evaluation["p11_structural_admission_passed"]:
+    conclusion = (
+      "本批仅证明 config-backed 运行时结构闭合；至少一个期望或 terminal-track 门"
+      "仍失败，因此 P11 admission 保持 held，不得声明完整通过。"
+    )
+  else:
+    conclusion = (
+      "本批至少一个结构门失败；不能声明运行时结构闭合、包络接受或 P11 admission。"
+    )
   return "\n".join(
     [
       "# P11 集成杀伤链准入结论",
@@ -668,9 +693,7 @@ def conclusions_zh(report: dict[str, Any]) -> str:
       " ±90 deg seeker FOV 后进入 Memory，超时后转为 Ballistic；未修改视场或"
       "放宽引信终端跟踪门。",
       "",
-      "本批证明 config-backed guidance→fuze→warhead load→component response→"
-      "platform consequence 的运行时结构闭合，独立审核已接受重基线后的 N/M/O 包络。"
-      "近距 terminal-track runtime contract 仍未裁定，因此不声明完整 P11 通过。",
+      conclusion,
       "",
       "所有数据仍是 synthetic engineering evidence，不构成真实 AIM-120、F-16C、"
       "确定性引信或 Pk 权威。",
@@ -768,9 +791,7 @@ def main(argv: list[str] | None = None) -> int:
     report = build_report(seeds=seeds)
   paths = write_bundle(report, output_dir=args.output_dir, stem=str(args.stem))
   print(json.dumps({"status": report["status"], "artifacts": paths}, indent=2))
-  if args.strict_structural and not report["evaluation"]["p11_structural_admission_passed"]:
-    return 1
-  return 0
+  return 0 if report["evaluation"]["p11_complete"] else 1
 
 
 if __name__ == "__main__":

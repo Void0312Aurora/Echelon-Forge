@@ -55,23 +55,25 @@ def test_timeout_monotonicity_rejects_block_to_miss_reversal() -> None:
   assert sensitivity._monotonic_timeout_cells(cells) is False
 
 
-def _synthetic_report() -> dict:
+def _synthetic_report(tmp_path) -> dict:
   case_ids = [case["case_id"] for case in sensitivity.DEFAULT_CASES]
   runs = []
   for seed in (1, 2):
     for case_id in case_ids:
       runs.append(_run(case_id, 0.75, "in_radius_fuze_blocked", seed))
       runs.append(_run(case_id, 1.5, "complete_effect_chain", seed, fuze_triggered=True))
+  source_report = tmp_path / "integrated.json"
+  source_report.write_text("{}\n", encoding="utf-8")
   return sensitivity.build_report(
     runs,
     seeds=(1, 2),
     memory_timeouts_s=(0.75, 1.5),
-    source_report=sensitivity.DEFAULT_SOURCE_REPORT,
+    source_report=source_report,
   )
 
 
-def test_build_report_keeps_default_residual_and_reports_transition() -> None:
-  report = _synthetic_report()
+def test_build_report_keeps_default_residual_and_reports_transition(tmp_path) -> None:
+  report = _synthetic_report(tmp_path)
   assert report["status"] == "p11_terminal_track_memory_sensitivity_explained"
   assert report["evaluation"]["residual_explanation_ready"] is True
   assert report["evaluation"]["default_timeout_change_authorized"] is False
@@ -83,7 +85,7 @@ def test_renderer_writes_human_readable_png(tmp_path) -> None:
   from tools.diagnostics.render_kill_chain_p11_terminal_track_sensitivity import render
 
   output = tmp_path / "sensitivity.png"
-  render(_synthetic_report(), output)
+  render(_synthetic_report(tmp_path), output)
   assert output.stat().st_size > 1000
 
 
@@ -100,22 +102,23 @@ def test_track_break_timeout_is_an_explicit_probe_override() -> None:
   assert tuning.track_break_time_s == 1.5
 
 
-def test_matrix_gate_rejects_duplicate_run_even_when_count_matches() -> None:
-  report = _synthetic_report()
+def test_matrix_gate_rejects_duplicate_run_even_when_count_matches(tmp_path) -> None:
+  report = _synthetic_report(tmp_path)
   runs = [dict(row) for row in report["runs"]]
   runs[-1] = dict(runs[0])
   audited = sensitivity.build_report(
     runs,
     seeds=(1, 2),
     memory_timeouts_s=(0.75, 1.5),
-    source_report=sensitivity.DEFAULT_SOURCE_REPORT,
+    source_report=tmp_path / "integrated.json",
   )
   assert audited["evaluation"]["gates"]["expected_run_matrix_complete"] is False
   assert audited["evaluation"]["residual_explanation_ready"] is False
+  assert "不能把残差归因" in sensitivity.conclusions_zh(audited)
 
 
-def test_transition_gate_requires_both_mirror_cases_to_restore() -> None:
-  report = _synthetic_report()
+def test_transition_gate_requires_both_mirror_cases_to_restore(tmp_path) -> None:
+  report = _synthetic_report(tmp_path)
   runs = [dict(row) for row in report["runs"]]
   positive_case = sensitivity.DEFAULT_CASES[1]["case_id"]
   for row in runs:
@@ -126,7 +129,7 @@ def test_transition_gate_requires_both_mirror_cases_to_restore() -> None:
     runs,
     seeds=(1, 2),
     memory_timeouts_s=(0.75, 1.5),
-    source_report=sensitivity.DEFAULT_SOURCE_REPORT,
+    source_report=tmp_path / "integrated.json",
   )
   assert audited["evaluation"]["gates"][
     "all_cases_have_a_timeout_that_restores_fuze_trigger"

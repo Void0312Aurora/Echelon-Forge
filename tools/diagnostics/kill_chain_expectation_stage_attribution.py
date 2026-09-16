@@ -31,7 +31,12 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
-from tools.diagnostics.common import add_kces_before_report_args, finite_float_or_none, write_json_output
+from tools.diagnostics.common import (
+  add_kces_before_report_args,
+  finite_float_or_none,
+  require_expectation_baseline_identity,
+  write_json_output,
+)
 SCHEMA_VERSION = "a2.kill_chain_expectation_stage_attribution.v1"
 DEFAULT_VARIANT = "REV-RUNTIME-PROJECTION"
 DEFAULT_TARGET_MOTION_LAYER = "nonmaneuvering_constant_velocity"
@@ -598,6 +603,7 @@ def generate_stage_attribution(
   date_stamp: str | None = None,
 ) -> dict[str, Any]:
   report = _read_report(input_path)
+  expectation_baseline_id = require_expectation_baseline_identity(report)
   selected = _selected_rows(
     report,
     variant=variant,
@@ -635,6 +641,7 @@ def generate_stage_attribution(
   manifest: dict[str, Any] = {
     "schema_version": SCHEMA_VERSION,
     "status": "generated",
+    "expectation_baseline_id": expectation_baseline_id,
     "input_path": str(input_path),
     "manifest_path": str(manifest_path),
     "summary_markdown": str(summary_path),

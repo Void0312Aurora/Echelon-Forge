@@ -17,7 +17,10 @@ def _row(
   effect_band: str,
 ) -> dict[str, object]:
   return {
-    "identity": {"case_id": case_id},
+    "identity": {
+      "case_id": case_id,
+      "expectation_baseline_id": "P11-TEST-BASELINE",
+    },
     "launch_window": {
       "target_motion_layer": "nonmaneuvering_constant_velocity",
       "range_km": range_km,
@@ -41,6 +44,7 @@ def _row(
 def test_visualization_writes_manifest_images_and_matrices(tmp_path) -> None:
   report = {
     "schema_version": "a2.kill_chain_expectation_before_report.v1",
+    "expectation_baseline_id": "P11-TEST-BASELINE",
     "heatmap_rows": [
       _row(
         case_id="case_4_m30",

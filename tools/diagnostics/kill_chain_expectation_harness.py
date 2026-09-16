@@ -21,7 +21,11 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
-from tools.diagnostics.common import finite_float, native_stdout_to_stderr
+from tools.diagnostics.common import (
+  finite_float,
+  native_stdout_to_stderr,
+  require_expectation_baseline_identity,
+)
 from tools.diagnostics import kill_chain_decoupling_probe as decoupling_probe  # noqa: E402
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.component_detail_projection import (  # noqa: E402
   COMPONENT_DETAIL_SCHEMA_VERSION,
@@ -31,9 +35,9 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.componen
   empty_component_detail,
 )
 
-SCHEMA_VERSION = "a2.kill_chain_expectation_before_report.v1"
-CASE_GRID_SCHEMA_VERSION = "a2.kill_chain_expectation_case_grid.v1"
-HEATMAP_ROW_SCHEMA_VERSION = "a2.kill_chain_expectation_heatmap_row.v1"
+SCHEMA_VERSION = "a2.kill_chain_expectation_before_report.v2"
+CASE_GRID_SCHEMA_VERSION = "a2.kill_chain_expectation_case_grid.v2"
+HEATMAP_ROW_SCHEMA_VERSION = "a2.kill_chain_expectation_heatmap_row.v2"
 PROFILE_ID = "KCES-AIM120C-LIKE-FIGHTER-V0"
 EXPECTATION_BASELINE_ID = "P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS"
 DEFAULT_SEED = 20260621
@@ -61,6 +65,12 @@ MILD_MANEUVER_ANCHOR_CLASSES: dict[float, dict[float, str]] = {
   6.0: {0.0: "N", 30.0: "N", 60.0: "M"},
   8.0: {0.0: "N", 30.0: "N", 60.0: "N"},
   10.0: {0.0: "N", 30.0: "N", 60.0: "O"},
+}
+RANGE_TOPOLOGY_EXCEPTIONS_BY_CASE = {
+  "kces_anchor_grid_cv_6km_m60deg": "near_range_entry",
+  "kces_anchor_grid_cv_6km_p60deg": "near_range_entry",
+  "kces_anchor_grid_mild_8km_m60deg": "near_range_entry",
+  "kces_anchor_grid_mild_8km_p60deg": "near_range_entry",
 }
 
 def _finite_or_none(value: Any) -> float | None:
@@ -186,6 +196,7 @@ def generate_case_grid(
           {
             "schema_version": CASE_GRID_SCHEMA_VERSION,
             "profile_id": PROFILE_ID,
+            "expectation_baseline_id": EXPECTATION_BASELINE_ID,
             "case_id": case_id,
             "grid_tier": str(grid_tier),
             "sample_index": sample_index,
@@ -196,6 +207,9 @@ def generate_case_grid(
             "offset_deg": float(offset_deg),
             "signed_bearing_deg": float(bearing_deg),
             "launch_class": str(launch_class),
+            "range_topology_exception": RANGE_TOPOLOGY_EXCEPTIONS_BY_CASE.get(
+              case_id, ""
+            ),
             **motion_profile,
             "runtime_supported": layer in SUPPORTED_RUNTIME_TARGET_MOTION_LAYERS,
             "skip_reason": (
@@ -322,6 +336,7 @@ def _project_heatmap_rows(
         "identity": {
           "schema_version": HEATMAP_ROW_SCHEMA_VERSION,
           "profile_id": PROFILE_ID,
+          "expectation_baseline_id": EXPECTATION_BASELINE_ID,
           "case_id": grid_case["case_id"],
           "grid_tier": grid_case["grid_tier"],
           "sample_index": int(grid_case["sample_index"]),
@@ -388,6 +403,7 @@ def _project_heatmap_rows(
     "identity": {
       "schema_version": HEATMAP_ROW_SCHEMA_VERSION,
       "profile_id": PROFILE_ID,
+      "expectation_baseline_id": EXPECTATION_BASELINE_ID,
       "case_id": grid_case["case_id"],
       "grid_tier": grid_case["grid_tier"],
       "sample_index": int(grid_case["sample_index"]),
@@ -625,6 +641,7 @@ def generate_before_report(
   }
   if include_raw_probe:
     report["raw_probe_report"] = probe_report
+  require_expectation_baseline_identity(report)
   return report
 
 def build_arg_parser() -> argparse.ArgumentParser:

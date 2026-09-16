@@ -36,6 +36,7 @@ DEFAULT_STEM = "kill_chain_p11_expectation_rebaseline_20260915"
 EXPECTED_SEED_COUNT = 3
 EXPECTED_SEEDS = (20260621, 20260622, 20260623)
 CLASS_ORDER = {"O": 0, "M": 1, "N": 2}
+RANGE_TOPOLOGY_EXCEPTIONS = {"near_range_entry"}
 
 
 def _finite(value: Any, default: float = 0.0) -> float:
@@ -93,6 +94,9 @@ def _cell_rows(report: dict[str, Any]) -> list[dict[str, Any]]:
     rows.append(
       {
         "case_id": str(cell.get("case_id", "") or ""),
+        "expectation_baseline_id": str(
+          cell.get("expectation_baseline_id", "") or ""
+        ),
         "target_motion_layer": str(cell.get("target_motion_layer", "") or ""),
         "target_acceleration_x_mps2": _finite(
           cell.get("target_acceleration_x_mps2")
@@ -119,6 +123,9 @@ def _cell_rows(report: dict[str, Any]) -> list[dict[str, Any]]:
         "terminal_track_residual_causes": ",".join(
           str(value)
           for value in list(cell.get("terminal_track_residual_causes", []) or [])
+        ),
+        "range_topology_exception": str(
+          cell.get("range_topology_exception", "") or ""
         ),
       }
     )
@@ -147,6 +154,9 @@ def _source_matrix_audit(
     "complete_case_seed_cartesian_product": set(actual_run_keys) == expected_run_keys,
     "declared_run_count_exact": len(actual_run_keys)
     == int(matrix.get("expected_run_count", 0) or 0),
+    "single_expectation_baseline": bool(rows)
+    and len({str(row["expectation_baseline_id"]) for row in rows}) == 1
+    and all(bool(str(row["expectation_baseline_id"]).strip()) for row in rows),
   }
   return {
     "checks": checks,
@@ -208,6 +218,68 @@ def _angle_topology(rows: list[dict[str, Any]]) -> dict[str, Any]:
   }
 
 
+def _range_topology(rows: list[dict[str, Any]]) -> dict[str, Any]:
+  grouped: dict[tuple[str, float], list[dict[str, Any]]] = defaultdict(list)
+  for row in rows:
+    grouped[(row["target_motion_layer"], row["bearing_deg"])].append(row)
+  violations: list[dict[str, Any]] = []
+  exceptions: list[dict[str, Any]] = []
+  for (layer, bearing_deg), group in sorted(grouped.items()):
+    by_range: dict[float, list[dict[str, Any]]] = defaultdict(list)
+    for row in group:
+      by_range[row["range_km"]].append(row)
+    previous_range: float | None = None
+    previous_class: str | None = None
+    for range_km in sorted(by_range):
+      classes = {row["candidate_launch_class"] for row in by_range[range_km]}
+      if len(classes) != 1:
+        violations.append(
+          {
+            "type": "range_class_mismatch",
+            "target_motion_layer": layer,
+            "bearing_deg": bearing_deg,
+            "range_km": range_km,
+            "classes": sorted(classes),
+          }
+        )
+        continue
+      current_class = next(iter(classes))
+      if (
+        previous_class is not None
+        and CLASS_ORDER.get(current_class, -1) > CLASS_ORDER.get(previous_class, -1)
+      ):
+        exception_names = {
+          str(row.get("range_topology_exception", "") or "")
+          for row in by_range[range_km]
+        }
+        exception = next(
+          (name for name in sorted(exception_names) if name in RANGE_TOPOLOGY_EXCEPTIONS),
+          "",
+        )
+        record = {
+          "target_motion_layer": layer,
+          "bearing_deg": bearing_deg,
+          "previous_range_km": previous_range,
+          "previous_class": previous_class,
+          "range_km": range_km,
+          "class": current_class,
+        }
+        if exception and current_class == "N":
+          exceptions.append({"type": exception, **record})
+        else:
+          violations.append({"type": "range_miss_to_hit_reversal", **record})
+      previous_range = range_km
+      previous_class = current_class
+  return {
+    "range_group_count": len(grouped),
+    "range_violation_count": len(violations),
+    "range_violations": violations,
+    "range_exception_count": len(exceptions),
+    "range_exceptions": exceptions,
+    "continuous_range_topology": not violations,
+  }
+
+
 def build_report(input_report: dict[str, Any], *, input_path: Path) -> dict[str, Any]:
   rows = _cell_rows(input_report)
   transition_counts = dict(
@@ -224,7 +296,7 @@ def build_report(input_report: dict[str, Any], *, input_path: Path) -> dict[str,
   observed_state_counts = dict(
     sorted(Counter(row["observed_chain_state"] for row in rows).items())
   )
-  topology = _angle_topology(rows)
+  topology = {**_angle_topology(rows), **_range_topology(rows)}
   stable = bool(rows) and all(row["stable_across_seeds"] for row in rows)
   candidate_counts = dict(
     sorted(Counter(row["candidate_launch_class"] for row in rows).items())
@@ -245,6 +317,7 @@ def build_report(input_report: dict[str, Any], *, input_path: Path) -> dict[str,
       row["candidate_launch_class"] in CLASS_ORDER for row in rows
     ),
     "candidate_angle_topology_monotonic": topology["monotonic_angle_topology"],
+    "candidate_range_topology_continuous": topology["continuous_range_topology"],
     "terminal_track_residuals_remain_explicit": bool(terminal_rows) and all(
       bool(str(row["terminal_track_residual_causes"]).strip())
       for row in terminal_rows
@@ -261,7 +334,7 @@ def build_report(input_report: dict[str, Any], *, input_path: Path) -> dict[str,
     "generated_on": GENERATED_ON,
     "generated_at_utc": datetime.now(timezone.utc).isoformat(),
     "source_report": {
-      "path": str(input_path.resolve().relative_to(REPO_ROOT)),
+      "path": _display_path(input_path),
       "sha256": _sha256(input_path),
       "status": input_report.get("status", ""),
     },
@@ -320,10 +393,29 @@ def _git_value(*args: str) -> str:
   return result.stdout.strip() if result.returncode == 0 else ""
 
 
+def _display_path(path: Path) -> str:
+  resolved = path.resolve()
+  try:
+    return str(resolved.relative_to(REPO_ROOT))
+  except ValueError:
+    return str(resolved)
+
+
 def conclusions_zh(report: dict[str, Any]) -> str:
   counts = report["counts"]
   evaluation = report["evaluation"]
   transitions = report["old_to_candidate_transition_counts"]
+  ready = bool(evaluation["candidate_ready_for_manual_review"])
+  conclusion = (
+    "结论：P10 默认制导改变了原始 P11 N/M/O 标签，现有报告通过全部候选门，"
+    "足以形成一个待人工审查的候选重基线，但不能自动视为已接受的期望包络。"
+    "需人工审查旧标签语义与 terminal-track 残差后，才能显式修改 harness；"
+    "本审计不改变 P11 complete 状态。"
+    if ready
+    else "结论：至少一个来源完整性、稳定性或拓扑门失败；当前报告不能形成候选"
+    "重基线，也不得支持修改 expectation harness。先修复 evaluation.gates 中的"
+    "失败项并重新生成证据。"
+  )
   return "\n".join(
     [
       "# P11 期望包络候选重基线审计",
@@ -338,12 +430,13 @@ def conclusions_zh(report: dict[str, Any]) -> str:
       f"- 旧→候选转移：`{transitions}`。",
       f"- 候选角度拓扑单调：`{report['topology']['monotonic_angle_topology']}`；"
       f"违规 `{report['topology']['violation_count']}`。",
+      f"- 候选距离拓扑连续：`{report['topology']['continuous_range_topology']}`；"
+      f"违规 `{report['topology']['range_violation_count']}`，"
+      f"显式例外 `{report['topology']['range_exception_count']}`。",
       f"- terminal-track residual cells：`{counts['terminal_track_residual_cell_count']}`；"
       "这些残差仍被保留，不被重基线吞并。",
       "",
-      "结论：P10 默认制导改变了原始 P11 N/M/O 标签，现有报告足以形成一个稳定的"
-      "候选重基线，但不能自动视为已接受的期望包络。需人工审查旧标签语义与"
-      "terminal-track 残差后，才能显式修改 harness；本审计不改变 P11 complete 状态。",
+      conclusion,
       "",
     ]
   )
@@ -389,7 +482,7 @@ def write_bundle(
         "sha256": _sha256(Path(__file__)),
       },
       "source_report": {
-        "path": str(input_path.resolve().relative_to(REPO_ROOT)),
+        "path": _display_path(input_path),
         "sha256": _sha256(input_path),
       },
     },
@@ -438,7 +531,7 @@ def main(argv: list[str] | None = None) -> int:
       ensure_ascii=False,
     )
   )
-  return 0
+  return 0 if report["evaluation"]["candidate_ready_for_manual_review"] else 1
 
 
 if __name__ == "__main__":

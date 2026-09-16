@@ -241,6 +241,46 @@ def add_kces_before_report_args(
     )
 
 
+def require_expectation_baseline_identity(
+    report: Mapping[str, Any],
+    *,
+    rows_key: str = "heatmap_rows",
+) -> str:
+    """Reject KCES reports whose rows omit or mix expectation baselines."""
+
+    report_baseline = str(report.get("expectation_baseline_id", "") or "").strip()
+    if not report_baseline:
+        raise ValueError("expectation_baseline_id is missing from report")
+    raw_rows = list(report.get(rows_key, []) or [])
+    if not raw_rows:
+        raise ValueError(f"{rows_key} is empty")
+    row_baselines: list[str] = []
+    for index, raw in enumerate(raw_rows):
+        if not isinstance(raw, Mapping):
+            raise ValueError(f"{rows_key}[{index}] is not an object")
+        identity = raw.get("identity", {})
+        identity_baseline = (
+            identity.get("expectation_baseline_id", "")
+            if isinstance(identity, Mapping)
+            else ""
+        )
+        row_baseline = str(
+            identity_baseline or raw.get("expectation_baseline_id", "") or ""
+        ).strip()
+        if not row_baseline:
+            raise ValueError(
+                f"{rows_key}[{index}] is missing expectation_baseline_id"
+            )
+        row_baselines.append(row_baseline)
+    distinct = sorted(set(row_baselines))
+    if distinct != [report_baseline]:
+        raise ValueError(
+            "expectation baseline identity is mixed or disagrees with report: "
+            f"report={report_baseline!r}, rows={distinct!r}"
+        )
+    return report_baseline
+
+
 # Several diagnostics entrypoints are thin ``--mode`` routers over a package of
 # single-purpose probe modules. The mode is read out of the raw argv instead of
 # being parsed, because every other argument -- ``--help`` included -- has to
