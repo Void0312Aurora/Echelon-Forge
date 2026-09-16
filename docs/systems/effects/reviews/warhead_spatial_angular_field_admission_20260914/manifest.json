@@ -1,0 +1,31 @@
+{
+  "schema_version": "a2.retained_review_packet_manifest.v1",
+  "packet_id": "warhead_spatial_angular_field_admission_20260914",
+  "created_on": "2026-09-14",
+  "producer": "tools/geometry/warhead_spatial_structural_admission.py",
+  "claim": "The synthetic fragmentation angular field passes bounded structural admission.",
+  "non_claims": ["continuous-rod admission", "real-weapon performance", "pk authority"],
+  "source_report": {
+    "path": "artifacts/kill_chain/20260915/raw_review_packets/warhead_spatial_angular_field_admission_20260914/warhead_spatial_angular_field_admission_20260914.json",
+    "git_blob_oid": "1bd199165b1d7f57b4bf76b671168e4da0f53d59",
+    "bytes": 3257946,
+    "availability": "git_history_only"
+  },
+  "retained_outputs": {
+    "interactive_view": {
+      "path": "docs/systems/effects/reviews/warhead_spatial_angular_field_admission_20260914/warhead-spatial-evidence.html",
+      "sha256": "06ce1096c4afa97ad0921fcddfeceacff61eceb5c1357e74d75bc7b679123758",
+      "bytes": 27043
+    },
+    "figure": {
+      "path": "docs/systems/effects/reviews/warhead_spatial_angular_field_admission_20260914/warhead-spatial-evidence.png",
+      "sha256": "9e608c2f74dd6daaa3b816b81e933cd25706103ad01ca10ddd08cb20fb30929b",
+      "bytes": 425328
+    }
+  },
+  "retention": {
+    "reason": "Preserve selected human-readable angular-field surfaces without raw runs.",
+    "consumer": "warhead spatial angular-field review",
+    "rights_boundary": "Repository-internal synthetic engineering evidence."
+  }
+}

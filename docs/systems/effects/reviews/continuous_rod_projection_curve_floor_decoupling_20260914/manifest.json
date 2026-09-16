@@ -1,0 +1,26 @@
+{
+  "schema_version": "a2.retained_review_packet_manifest.v1",
+  "packet_id": "continuous_rod_projection_curve_floor_decoupling_20260914",
+  "created_on": "2026-09-14",
+  "producer": "tools/geometry/continuous_rod_projection_curve_floor_decoupling.py",
+  "claim": "The projection curve-floor and final-bound controls are independently observable.",
+  "non_claims": ["default promotion", "real-weapon performance", "pk authority"],
+  "source_report": {
+    "path": "artifacts/kill_chain/20260915/raw_review_packets/continuous_rod_projection_curve_floor_decoupling_20260914/continuous_rod_projection_curve_floor_decoupling_20260914.json",
+    "git_blob_oid": "f579c6a3cfcc1abc35d19439fc99aa62eb8fcfbb",
+    "bytes": 614911,
+    "availability": "git_history_only"
+  },
+  "retained_outputs": {
+    "figure": {
+      "path": "docs/systems/effects/reviews/continuous_rod_projection_curve_floor_decoupling_20260914/continuous-rod-projection-curve-floor-decoupling.png",
+      "sha256": "eb76b597225b49eacf5464b5d0d874b49e6ac6a2742203c91d48994e1e67a412",
+      "bytes": 274658
+    }
+  },
+  "retention": {
+    "reason": "Preserve the selected decoupling surface without raw runs.",
+    "consumer": "continuous-rod projection-control review",
+    "rights_boundary": "Repository-internal synthetic engineering evidence."
+  }
+}
