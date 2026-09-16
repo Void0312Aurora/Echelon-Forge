@@ -86,6 +86,7 @@ GUIDANCE_TUNING_OVERRIDE_FIELDS = frozenset(
     "target_tracker_alpha",
     "target_tracker_beta",
     "target_tracker_gamma",
+    "track_break_time_s",
   }
 )
 GUIDANCE_MECHANISM_PROFILE_DEFAULTS = {
@@ -3588,6 +3589,8 @@ def run_guidance_case(
     )
   initial_missile_runtime = dict(sim.debug_get_missile_runtime_state(missile_id))
   missile_runtime_projection = _runtime_projection_profile(initial_missile_runtime)
+  seeker_fov_deg = finite_float(initial_missile_runtime.get("seeker_fov_deg", 0.0), 0.0)
+  seeker_fov_half_angle_deg = max(0.0, 0.5 * seeker_fov_deg)
   resolved_guidance_runtime = {
     key: initial_missile_runtime.get(key)
     for key in (
@@ -3613,6 +3616,13 @@ def run_guidance_case(
   guidance_runtime_missing_acceleration_diagnostics_count = 0
   guidance_saturated_sample_count = 0
   guidance_runtime_trace: list[dict[str, Any]] = []
+  seeker_mode_sample_counts = {"track": 0, "memory": 0, "ballistic": 0}
+  first_memory_time_s: float | None = None
+  first_ballistic_time_s: float | None = None
+  first_detection_outside_fov_time_s: float | None = None
+  max_abs_detection_bearing_deg = 0.0
+  max_abs_filtered_bearing_deg = 0.0
+  last_runtime_observation: dict[str, Any] = {}
   trace_stride = max(1, int(guidance_trace_stride))
   step_idx = 0
   time_s = 0.0
@@ -3657,6 +3667,17 @@ def run_guidance_case(
           held_detection.range + measurement_rng.gauss(0.0, range_noise_std_m),
         )
       last_measurement_time_s = time_s
+    detection_bearing_deg = finite_float(getattr(held_detection, "bearing", 0.0), 0.0)
+    max_abs_detection_bearing_deg = max(
+      max_abs_detection_bearing_deg,
+      abs(detection_bearing_deg),
+    )
+    if (
+      seeker_fov_half_angle_deg > 0.0
+      and abs(detection_bearing_deg) > seeker_fov_half_angle_deg
+      and first_detection_outside_fov_time_s is None
+    ):
+      first_detection_outside_fov_time_s = time_s
     if measurement_period_s > 0.0:
       sim.debug_set_contact_list_preserve_timestamps(missile_id, [held_detection])
     else:
@@ -3664,6 +3685,36 @@ def run_guidance_case(
     sim.step()
     if sim.is_unit_active(missile_id):
       runtime = dict(sim.debug_get_missile_runtime_state(missile_id))
+      observation_time_s = (step_idx + 1) * dt
+      seeker_mode = int(runtime.get("seeker_mode", 0) or 0)
+      seeker_mode_name = {0: "track", 1: "memory", 2: "ballistic"}.get(
+        seeker_mode,
+        "ballistic",
+      )
+      seeker_mode_sample_counts[seeker_mode_name] += 1
+      if seeker_mode == 1 and first_memory_time_s is None:
+        first_memory_time_s = observation_time_s
+      if seeker_mode == 2 and first_ballistic_time_s is None:
+        first_ballistic_time_s = observation_time_s
+      filtered_bearing_deg = finite_float(runtime.get("filtered_bearing_deg", 0.0), 0.0)
+      max_abs_filtered_bearing_deg = max(
+        max_abs_filtered_bearing_deg,
+        abs(filtered_bearing_deg),
+      )
+      last_runtime_observation = {
+        "time_s": observation_time_s,
+        "seeker_mode": seeker_mode,
+        "seeker_mode_name": seeker_mode_name,
+        "seeker_has_valid_track": bool(runtime.get("seeker_has_valid_track")),
+        "terminal_seeker_active": bool(runtime.get("terminal_seeker_active")),
+        "target_kinematics_valid": bool(runtime.get("target_kinematics_valid")),
+        "target_measurement_fresh": bool(runtime.get("target_measurement_fresh")),
+        "target_measurement_age_s": _finite_or_none(
+          runtime.get("target_measurement_age_s")
+        ),
+        "filtered_bearing_deg": filtered_bearing_deg,
+        "filtered_range_m": _finite_or_none(runtime.get("filtered_range_m")),
+      }
       max_achieved_lateral_g = max(
         max_achieved_lateral_g,
         finite_float(runtime.get("achieved_lateral_accel_mps2", 0.0), 0.0) / 9.80665,
@@ -3733,6 +3784,30 @@ def run_guidance_case(
     component_load_factor_rows=component_load_factor_rows,
     runtime_facade=runtime_facade,
   )
+  guidance_runtime_summary = {
+    "schema_version": "a2.guidance_runtime_summary.v1",
+    "observation_count": guidance_runtime_observation_count,
+    "seeker_fov_deg": seeker_fov_deg,
+    "seeker_fov_half_angle_deg": seeker_fov_half_angle_deg,
+    "track_memory_timeout_s": _finite_or_none(
+      initial_missile_runtime.get("track_memory_timeout_s")
+    ),
+    "seeker_mode_sample_counts": seeker_mode_sample_counts,
+    "first_memory_time_s": first_memory_time_s,
+    "first_ballistic_time_s": first_ballistic_time_s,
+    "first_detection_outside_fov_time_s": first_detection_outside_fov_time_s,
+    "max_abs_detection_bearing_deg": max_abs_detection_bearing_deg,
+    "max_detection_fov_excess_deg": max(
+      0.0,
+      max_abs_detection_bearing_deg - seeker_fov_half_angle_deg,
+    ),
+    "max_abs_filtered_bearing_deg": max_abs_filtered_bearing_deg,
+    "max_seeker_fov_excess_deg": max(
+      0.0,
+      max_abs_filtered_bearing_deg - seeker_fov_half_angle_deg,
+    ),
+    "last_runtime_observation": last_runtime_observation,
+  }
   result = {
     "case_id": str(case_id),
     "case_type": "aim120_offset_guidance",
@@ -3776,6 +3851,7 @@ def run_guidance_case(
     "max_preclamp_command_g": max_preclamp_command_g,
     "max_postclamp_command_g": max_postclamp_command_g,
     "guidance_runtime_observation_count": guidance_runtime_observation_count,
+    "guidance_runtime_summary": guidance_runtime_summary,
     "guidance_runtime_missing_acceleration_diagnostics_count": (
       guidance_runtime_missing_acceleration_diagnostics_count
     ),
@@ -3874,7 +3950,7 @@ def generate_report(
   *,
   database_path: Path = DEFAULT_DATABASE_PATH,
   external_evidence_report_path: Path | str | None = DEFAULT_EXTERNAL_EVIDENCE_REPORT_PATH,
-  guidance_cases: tuple[dict[str, float | str], ...] = DEFAULT_GUIDANCE_CASES,
+  guidance_cases: tuple[dict[str, Any], ...] = DEFAULT_GUIDANCE_CASES,
   proximity_distances_m: tuple[float, ...] = DEFAULT_PROXIMITY_DISTANCES_M,
   include_guidance: bool = True,
   include_proximity: bool = True,
@@ -3887,6 +3963,10 @@ def generate_report(
       range_m=float(case["range_m"]),
       bearing_deg=float(case["bearing_deg"]),
       seed=seed,
+      target_acceleration_mps2=tuple(
+        float(value)
+        for value in case.get("target_acceleration_mps2", (0.0, 0.0, 0.0))
+      ),
     )
     for case in tuple(guidance_cases)
   ] if include_guidance else []

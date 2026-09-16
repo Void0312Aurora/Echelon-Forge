@@ -1,6 +1,11 @@
 from __future__ import annotations
 
+from copy import deepcopy
+
+import pytest
+
 from tools.diagnostics import kill_chain_expectation_harness as harness
+from tools.diagnostics.common import require_expectation_baseline_identity
 
 
 def test_anchor_grid_counts_and_classification() -> None:
@@ -13,17 +18,73 @@ def test_anchor_grid_counts_and_classification() -> None:
   )
 
   assert len(cases) == 93
-  assert sum(1 for case in cases if case["runtime_supported"]) == 78
-  assert sum(1 for case in cases if not case["runtime_supported"]) == 15
+  assert {case["expectation_baseline_id"] for case in cases} == {
+    harness.EXPECTATION_BASELINE_ID
+  }
+  assert {case["schema_version"] for case in cases} == {
+    "a2.kill_chain_expectation_case_grid.v2"
+  }
+  assert sum(1 for case in cases if case["runtime_supported"]) == 93
+  assert sum(1 for case in cases if not case["runtime_supported"]) == 0
+  assert {key: sum(case["launch_class"] == key for case in cases) for key in "NMO"} == {
+    "N": 63,
+    "M": 2,
+    "O": 28,
+  }
 
   case_by_id = {str(case["case_id"]): case for case in cases}
   anchor = case_by_id["kces_anchor_grid_cv_8km_p30deg"]
   assert anchor["launch_class"] == "N"
   assert anchor["range_m"] == 8000.0
   assert anchor["signed_bearing_deg"] == 30.0
-  assert case_by_id["kces_anchor_grid_cv_4km_p45deg"]["launch_class"] == "M"
-  assert case_by_id["kces_anchor_grid_cv_6km_m45deg"]["launch_class"] == "M"
-  assert case_by_id["kces_anchor_grid_cv_16km_p30deg"]["launch_class"] == "O"
+  assert anchor["target_acceleration_mps2"] == [0.0, 0.0, 0.0]
+  assert case_by_id["kces_anchor_grid_cv_4km_p45deg"]["launch_class"] == "N"
+  assert case_by_id["kces_anchor_grid_cv_6km_m45deg"]["launch_class"] == "N"
+  assert case_by_id["kces_anchor_grid_cv_16km_p30deg"]["launch_class"] == "N"
+  assert case_by_id["kces_anchor_grid_mild_6km_m60deg"]["launch_class"] == "M"
+  assert case_by_id["kces_anchor_grid_mild_6km_p60deg"]["launch_class"] == "M"
+  assert case_by_id["kces_anchor_grid_mild_8km_p60deg"][
+    "range_topology_exception"
+  ] == "near_range_entry"
+  assert case_by_id["kces_anchor_grid_cv_6km_p60deg"][
+    "range_topology_exception"
+  ] == "near_range_entry"
+  assert case_by_id["kces_anchor_grid_cv_6km_p45deg"][
+    "range_topology_exception"
+  ] == ""
+  mild_left = case_by_id["kces_anchor_grid_mild_8km_m30deg"]
+  mild_right = case_by_id["kces_anchor_grid_mild_8km_p30deg"]
+  assert mild_left["target_motion_profile_id"] == (
+    "constant_lateral_acceleration_8mps2_v0"
+  )
+  assert mild_left["maneuver_severity"] == "mild_engineering_proxy"
+  assert mild_left["target_acceleration_mps2"] == [-8.0, 0.0, 0.0]
+  assert mild_right["target_acceleration_mps2"] == [8.0, 0.0, 0.0]
+
+
+def test_anchor_grid_matches_independently_accepted_rebaseline_anchors() -> None:
+  # The full run-level rebaseline CSV is generated evidence and is retained in
+  # the ignored artifact surface. Keep a compact set of independently accepted
+  # anchors here so this unit test remains hermetic in a clean checkout.
+  accepted = {
+    "kces_anchor_grid_cv_4km_p45deg": "N",
+    "kces_anchor_grid_cv_6km_m45deg": "N",
+    "kces_anchor_grid_cv_8km_p30deg": "N",
+    "kces_anchor_grid_cv_16km_p30deg": "N",
+    "kces_anchor_grid_mild_6km_m60deg": "M",
+    "kces_anchor_grid_mild_6km_p60deg": "M",
+  }
+  generated = {
+    str(row["case_id"]): str(row["launch_class"])
+    for row in harness.generate_case_grid(
+      grid_tier="anchor-grid",
+      target_motion_layers=(
+        "nonmaneuvering_constant_velocity",
+        "mild_maneuver",
+      ),
+    )
+  }
+  assert {case_id: generated[case_id] for case_id in accepted} == accepted
 
 
 def test_before_report_smoke_projects_heatmap_rows() -> None:
@@ -35,12 +96,16 @@ def test_before_report_smoke_projects_heatmap_rows() -> None:
     seed=20260621,
   )
 
-  assert report["schema_version"] == "a2.kill_chain_expectation_before_report.v1"
+  assert report["schema_version"] == "a2.kill_chain_expectation_before_report.v2"
   assert report["summary"]["case_count"] == 1
   assert report["summary"]["runnable_case_count"] == 1
   assert report["summary"]["heatmap_row_count"] == 2
   rows = report["heatmap_rows"]
   runtime_row = rows[0]
+  assert runtime_row["identity"]["expectation_baseline_id"] == (
+    harness.EXPECTATION_BASELINE_ID
+  )
+  assert runtime_row["schema_version"] == "a2.kill_chain_expectation_heatmap_row.v2"
   assert runtime_row["identity"]["case_id"] == "kces_anchor_grid_cv_8km_p30deg"
   assert runtime_row["launch_window"]["launch_class"] == "N"
   assert runtime_row["guidance_approach"]["entered_R_fuze"] is True
@@ -72,3 +137,130 @@ def test_before_report_smoke_projects_heatmap_rows() -> None:
   assert smaller_row["warhead_load_field"]["effect_band"] == "unclassified_missing_R_effect"
   assert smaller_row["component_detail"]["R_effect_m"] is None
   assert smaller_row["component_detail"]["component_rows"][0]["rho_effect_component"] is None
+
+
+def test_case_grid_only_validates_case_grid_baseline_identity() -> None:
+  report = harness.generate_before_report(
+    grid_tier="anchor-grid",
+    target_motion_layers=("nonmaneuvering_constant_velocity",),
+    case_ids=("kces_anchor_grid_cv_8km_p30deg",),
+    effect_variants=("REV-RUNTIME-PROJECTION",),
+    seed=20260621,
+    case_grid_only=True,
+  )
+
+  assert report["expectation_baseline_id"] == harness.EXPECTATION_BASELINE_ID
+  assert report["heatmap_rows"] == []
+  assert report["case_grid"][0]["expectation_baseline_id"] == (
+    harness.EXPECTATION_BASELINE_ID
+  )
+
+
+def test_v2_identity_contract_rejects_old_unknown_or_mixed_rows() -> None:
+  report = harness.generate_before_report(
+    grid_tier="anchor-grid",
+    target_motion_layers=("nonmaneuvering_constant_velocity",),
+    case_ids=("kces_anchor_grid_cv_8km_p30deg",),
+    effect_variants=("REV-RUNTIME-PROJECTION",),
+    seed=20260621,
+  )
+
+  invalid_reports = []
+  old_report = deepcopy(report)
+  old_report["schema_version"] = "a2.kill_chain_expectation_before_report.v1"
+  invalid_reports.append(old_report)
+  unknown = deepcopy(report)
+  unknown["expectation_baseline_id"] = "UNKNOWN-BASELINE"
+  for row in unknown["case_grid"]:
+    row["expectation_baseline_id"] = "UNKNOWN-BASELINE"
+  for row in unknown["heatmap_rows"]:
+    row["identity"]["expectation_baseline_id"] = "UNKNOWN-BASELINE"
+  invalid_reports.append(unknown)
+  stale_grid = deepcopy(report)
+  stale_grid["case_grid"][0]["schema_version"] = (
+    "a2.kill_chain_expectation_case_grid.v1"
+  )
+  invalid_reports.append(stale_grid)
+  mixed_heatmap = deepcopy(report)
+  mixed_heatmap["heatmap_rows"][0]["identity"]["expectation_baseline_id"] = (
+    "UNKNOWN-BASELINE"
+  )
+  invalid_reports.append(mixed_heatmap)
+
+  for invalid in invalid_reports:
+    with pytest.raises(ValueError, match="schema|baseline"):
+      require_expectation_baseline_identity(invalid)
+
+
+def test_v2_identity_contract_validates_every_populated_collection() -> None:
+  report = harness.generate_before_report(
+    grid_tier="anchor-grid",
+    target_motion_layers=("nonmaneuvering_constant_velocity",),
+    case_ids=("kces_anchor_grid_cv_8km_p30deg",),
+    effect_variants=("REV-RUNTIME-PROJECTION",),
+    seed=20260621,
+  )
+
+  invalid_grid_reports = []
+  stale_grid = deepcopy(report)
+  stale_grid["case_grid"][0]["schema_version"] = (
+    "a2.kill_chain_expectation_case_grid.v1"
+  )
+  invalid_grid_reports.append(stale_grid)
+  missing_grid = deepcopy(report)
+  del missing_grid["case_grid"][0]["expectation_baseline_id"]
+  invalid_grid_reports.append(missing_grid)
+  unknown_grid = deepcopy(report)
+  unknown_grid["case_grid"][0]["expectation_baseline_id"] = "UNKNOWN-BASELINE"
+  invalid_grid_reports.append(unknown_grid)
+  mixed_grid = deepcopy(report)
+  mixed_grid["case_grid"].append(deepcopy(mixed_grid["case_grid"][0]))
+  mixed_grid["case_grid"][-1]["expectation_baseline_id"] = "UNKNOWN-BASELINE"
+  invalid_grid_reports.append(mixed_grid)
+
+  for invalid in invalid_grid_reports:
+    with pytest.raises(ValueError, match="schema|expectation_baseline_id"):
+      require_expectation_baseline_identity(invalid, rows_key="heatmap_rows")
+
+  invalid_heatmap_reports = []
+  stale_heatmap = deepcopy(report)
+  stale_heatmap["heatmap_rows"][0]["schema_version"] = (
+    "a2.kill_chain_expectation_heatmap_row.v1"
+  )
+  invalid_heatmap_reports.append(stale_heatmap)
+  missing_heatmap = deepcopy(report)
+  del missing_heatmap["heatmap_rows"][0]["identity"]["expectation_baseline_id"]
+  invalid_heatmap_reports.append(missing_heatmap)
+  unknown_heatmap = deepcopy(report)
+  unknown_heatmap["heatmap_rows"][0]["identity"]["expectation_baseline_id"] = (
+    "UNKNOWN-BASELINE"
+  )
+  invalid_heatmap_reports.append(unknown_heatmap)
+  mixed_heatmap = deepcopy(report)
+  mixed_heatmap["heatmap_rows"].append(deepcopy(mixed_heatmap["heatmap_rows"][0]))
+  mixed_heatmap["heatmap_rows"][-1]["identity"]["expectation_baseline_id"] = (
+    "UNKNOWN-BASELINE"
+  )
+  invalid_heatmap_reports.append(mixed_heatmap)
+
+  for invalid in invalid_heatmap_reports:
+    with pytest.raises(ValueError, match="schema|expectation_baseline_id"):
+      require_expectation_baseline_identity(invalid, rows_key="case_grid")
+
+
+def test_mild_maneuver_smoke_flows_acceleration_into_runtime() -> None:
+  report = harness.generate_before_report(
+    grid_tier="anchor-grid",
+    target_motion_layers=("mild_maneuver",),
+    case_ids=("kces_anchor_grid_mild_8km_p30deg",),
+    effect_variants=("REV-RUNTIME-PROJECTION",),
+    seed=20260621,
+  )
+
+  assert report["summary"]["case_count"] == 1
+  assert report["summary"]["runnable_case_count"] == 1
+  row = report["heatmap_rows"][0]
+  assert row["run_status"] == "generated"
+  assert row["launch_window"]["target_motion_layer"] == "mild_maneuver"
+  assert row["launch_window"]["target_acceleration_mps2"] == [8.0, 0.0, 0.0]
+  assert row["guidance_approach"]["entered_R_fuze"] is True
