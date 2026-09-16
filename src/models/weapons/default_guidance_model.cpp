@@ -612,6 +612,14 @@ bool update_track_from_detection(Missile &missile, const Detection &det, double 
         missile.target_measurement_age_s = std::max(0.0, current_time - missile.last_track_time_s);
         return false;
     }
+    if (uses_world_cv_target_tracker(missile) && std::isfinite(det.timestamp) &&
+        std::isfinite(current_time) &&
+        current_time - det.timestamp > missile.track_memory_timeout_s) {
+        missile.target_measurement_fresh = false;
+        missile.target_measurement_rejected_nonmonotonic = false;
+        missile.target_measurement_age_s = std::max(0.0, current_time - det.timestamp);
+        return false;
+    }
     if (uses_world_cv_target_tracker(missile)) {
         const bool measurement_accepted = update_world_cv_target_track_from_detection(
             missile, det, current_time, dt, transform, velocity);
