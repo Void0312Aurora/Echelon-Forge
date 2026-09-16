@@ -1,0 +1,26 @@
+{
+  "schema_version": "a2.retained_review_packet_manifest.v1",
+  "packet_id": "continuous_rod_projection_floor_ablation_20260914",
+  "created_on": "2026-09-14",
+  "producer": "tools/geometry/continuous_rod_projection_floor_ablation.py",
+  "claim": "The projection-floor ablation isolates the retained floor behavior.",
+  "non_claims": ["default promotion", "real-weapon performance", "pk authority"],
+  "source_report": {
+    "path": "artifacts/kill_chain/20260915/raw_review_packets/continuous_rod_projection_floor_ablation_20260914/continuous_rod_projection_floor_ablation_20260914.json",
+    "git_blob_oid": "602e170db048d4b9cd0745c3e09b6a9e8d237500",
+    "bytes": 650840,
+    "availability": "git_history_only"
+  },
+  "retained_outputs": {
+    "figure": {
+      "path": "docs/systems/effects/reviews/continuous_rod_projection_floor_ablation_20260914/continuous-rod-projection-floor-ablation.png",
+      "sha256": "e6e12fcef329faf1efd2f5f1ff0d0cdb879f001f4b01af070936f602b4be77b8",
+      "bytes": 290210
+    }
+  },
+  "retention": {
+    "reason": "Preserve the selected ablation surface without raw runs.",
+    "consumer": "continuous-rod projection-floor review",
+    "rights_boundary": "Repository-internal synthetic engineering evidence."
+  }
+}
