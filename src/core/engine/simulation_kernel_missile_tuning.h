@@ -23,6 +23,7 @@ struct MissileTuning {
     int capture_guidance_mode = -1;
     double target_tracker_alpha = std::numeric_limits<double>::quiet_NaN();
     double target_tracker_beta = std::numeric_limits<double>::quiet_NaN();
+    double target_tracker_gamma = std::numeric_limits<double>::quiet_NaN();
     double sensor_max_range = std::numeric_limits<double>::quiet_NaN();
     double sensor_fov_deg = std::numeric_limits<double>::quiet_NaN();
     double sensor_scan_period = std::numeric_limits<double>::quiet_NaN();

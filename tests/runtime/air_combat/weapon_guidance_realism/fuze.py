@@ -748,12 +748,18 @@ class FuzeRuntimeMixin:
     tuning.seeker_lock_range = 1.0e6
     tuning.fuse_distance = 15.0
     tuning.max_flight_time_s = 45.0
+    # Keep this fuze-only geometry on the historical miss-distance baseline;
+    # database guidance defaults are calibrated independently.
+    tuning.pn_los_rate_source = 0
+    tuning.target_kinematics_estimator = 0
+    tuning.capture_guidance_mode = 1
+    tuning.apn_target_accel_gain = 0.5
     tuning.fuze_profile = profile
     tuning.has_fuze_profile = True
     sim.set_missile_tuning(tuning)
 
     range_m = 18000.0
-    bearing_rad = math.radians(27.5)
+    bearing_rad = math.radians(27.6)
     initial_x = range_m * math.sin(bearing_rad)
     initial_y = range_m * math.cos(bearing_rad)
     target_vx = 0.0

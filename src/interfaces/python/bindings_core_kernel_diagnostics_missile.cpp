@@ -5,6 +5,7 @@
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"
 #include "components/systems/sensor.h"
+#include "models/weapons/missile_guidance_types.h"
 
 void bind_simulation_kernel_diagnostics_missile_runtime_surface(
     nb::class_<SimulationKernel> &kernel) {
@@ -44,6 +45,28 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                 out["warhead_gurney_constant_mps"] = missile->warhead_profile.gurney_constant_mps;
                 out["warhead_fragment_mass_kg"] = missile->warhead_profile.fragment_mass_kg;
                 out["warhead_fragment_count"] = missile->warhead_profile.fragment_count;
+                out["warhead_fragment_angular_distribution"] =
+                    missile->warhead_profile.fragment_angular_distribution;
+                out["warhead_continuous_rod_spatial_model"] =
+                    missile->warhead_profile.continuous_rod_spatial_model;
+                out["warhead_continuous_rod_band_half_angle_deg"] =
+                    missile->warhead_profile.continuous_rod_band_half_angle_deg;
+                out["warhead_continuous_rod_azimuthal_samples"] =
+                    missile->warhead_profile.continuous_rod_azimuthal_samples;
+                out["warhead_continuous_rod_polar_samples"] =
+                    missile->warhead_profile.continuous_rod_polar_samples;
+                out["warhead_continuous_rod_azimuthal_phase_deg"] =
+                    missile->warhead_profile.continuous_rod_azimuthal_phase_deg;
+                out["warhead_fragment_polar_concentration"] =
+                    missile->warhead_profile.fragment_polar_concentration;
+                out["warhead_fragment_isotropic_fraction"] =
+                    missile->warhead_profile.fragment_isotropic_fraction;
+                out["warhead_fragment_azimuthal_modulation"] =
+                    missile->warhead_profile.fragment_azimuthal_modulation;
+                out["warhead_fragment_azimuthal_lobes"] =
+                    missile->warhead_profile.fragment_azimuthal_lobes;
+                out["warhead_fragment_azimuthal_phase_deg"] =
+                    missile->warhead_profile.fragment_azimuthal_phase_deg;
                 out["warhead_projection_radius_fraction"] =
                     missile->warhead_profile.projection_radius_fraction;
                 out["warhead_projection_min_radius_m"] =
@@ -52,12 +75,16 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                     missile->warhead_profile.projection_max_radius_m;
                 out["warhead_projection_min_effect_scale"] =
                     missile->warhead_profile.projection_min_effect_scale;
+                out["warhead_projection_curve_floor_effect_scale"] =
+                    missile->warhead_profile.projection_curve_floor_effect_scale;
                 out["warhead_projection_max_effect_scale"] =
                     missile->warhead_profile.projection_max_effect_scale;
                 out["warhead_projection_falloff_exponent"] =
                     missile->warhead_profile.projection_falloff_exponent;
                 out["warhead_projection_max_projected_hitboxes"] =
                     missile->warhead_profile.projection_max_projected_hitboxes;
+                out["warhead_projection_near_field_floor_enabled"] =
+                    missile->warhead_profile.projection_near_field_floor_enabled;
                 out["warhead_provenance"] = missile->warhead_profile.provenance;
                 out["fuze_type"] = missile->fuze_profile.type;
                 out["fuze_trigger_radius_m"] = missile->fuze_profile.trigger_radius_m;
@@ -78,6 +105,7 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                 out["capture_guidance_mode"] = missile->capture_guidance_mode;
                 out["target_tracker_alpha"] = missile->target_tracker_alpha;
                 out["target_tracker_beta"] = missile->target_tracker_beta;
+                out["target_tracker_gamma"] = missile->target_tracker_gamma;
                 out["apn_target_accel_gain"] = missile->apn_target_accel_gain;
                 out["autopilot_order"] = missile->autopilot_order;
                 out["autopilot_damping"] = missile->autopilot_damping;
@@ -147,8 +175,12 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                 out["target_track_ax_mps2"] = missile->target_track_ax_mps2;
                 out["target_track_ay_mps2"] = missile->target_track_ay_mps2;
                 out["target_track_az_mps2"] = missile->target_track_az_mps2;
+                const bool uses_world_cva =
+                    missile->target_kinematics_estimator ==
+                    static_cast<int>(MissileTargetKinematicsEstimator::WorldCva);
                 out["target_measurement_timestamp_s"] =
-                    missile->world_cv_target_tracker.last_measurement_time_s;
+                    uses_world_cva ? missile->world_cva_target_tracker.last_measurement_time_s
+                                   : missile->world_cv_target_tracker.last_measurement_time_s;
                 out["target_measurement_age_s"] = missile->target_measurement_age_s;
                 out["target_measurement_fresh"] = missile->target_measurement_fresh;
                 out["target_measurement_rejected_nonmonotonic"] =
@@ -157,8 +189,19 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                     missile->target_duplicate_measurement_count;
                 out["target_estimator_update_dt_s"] = missile->target_estimator_update_dt_s;
                 out["target_estimator_sample_count"] =
-                    missile->world_cv_target_tracker.accepted_measurement_count;
-                out["target_velocity_valid"] = missile->world_cv_target_tracker.velocity_valid;
+                    uses_world_cva ? missile->world_cva_target_tracker.accepted_measurement_count
+                                   : missile->world_cv_target_tracker.accepted_measurement_count;
+                out["target_velocity_valid"] =
+                    uses_world_cva ? missile->world_cva_target_tracker.velocity_valid
+                                   : missile->world_cv_target_tracker.velocity_valid;
+                out["target_acceleration_valid"] =
+                    uses_world_cva && missile->world_cva_target_tracker.acceleration_valid;
+                out["target_acceleration_estimator_sample_count"] =
+                    uses_world_cva ? missile->world_cva_target_tracker.accepted_measurement_count
+                                   : 0;
+                out["target_acceleration_x_mps2"] = missile->target_track_ax_mps2;
+                out["target_acceleration_y_mps2"] = missile->target_track_ay_mps2;
+                out["target_acceleration_z_mps2"] = missile->target_track_az_mps2;
                 out["target_measurement_x_m"] = missile->target_measurement_x_m;
                 out["target_measurement_y_m"] = missile->target_measurement_y_m;
                 out["target_measurement_z_m"] = missile->target_measurement_z_m;

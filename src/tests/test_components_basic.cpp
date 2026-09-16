@@ -26,6 +26,7 @@
 #include <fstream>
 #include <numbers>
 #include <string>
+#include <utility>
 #include <vector>
 
 // ---------------------------------------------------------------------------
@@ -75,6 +76,45 @@ TEST_SUITE("components_basic") {
         REQUIRE(definitions.size() == 1);
         CHECK(definitions.front().name == "preexisting_definition");
         CHECK(error.find("bad_evidence.json") != std::string::npos);
+
+        std::filesystem::remove_all(root);
+    }
+
+    TEST_CASE("unit definition loader rejects unknown warhead model selectors transactionally") {
+        const std::filesystem::path root =
+            std::filesystem::temp_directory_path() / "ef_warhead_selector_transaction_test";
+        std::filesystem::remove_all(root);
+        std::filesystem::create_directories(root);
+
+        for (const auto &[field, value] : std::vector<std::pair<std::string, std::string>>{
+                 {"fragment_angular_distribution", "polar_azimuth_typo"},
+                 {"continuous_rod_spatial_model", "ring_band_typo"},
+             }) {
+            const std::filesystem::path definition_path = root / "missile.json";
+            {
+                std::ofstream definition(definition_path);
+                definition << R"json({
+  "name": "Invalid_Warhead_Selector",
+  "type": "Missile",
+  "esm": {},
+  "warhead": {
+    ")json" << field << R"json(": ")json"
+                           << value << R"json("
+  }
+})json";
+            }
+
+            UnitDefinition sentinel{};
+            sentinel.name = "preexisting_definition";
+            std::vector<UnitDefinition> definitions{sentinel};
+            std::string error;
+
+            CHECK_FALSE(load_unit_definitions_json(root.string(), definitions, &error));
+            REQUIRE(definitions.size() == 1);
+            CHECK(definitions.front().name == "preexisting_definition");
+            CHECK(error.find(field) != std::string::npos);
+            CHECK(error.find(value) != std::string::npos);
+        }
 
         std::filesystem::remove_all(root);
     }
@@ -430,10 +470,11 @@ TEST_SUITE("components_basic") {
   "flight_model": {"max_speed": 1000.0, "max_g": 30.0, "max_turn_rate": 25.0},
   "guidance": {
     "pn_los_rate_source": "world_los_history",
-    "target_kinematics_estimator": "world_cv",
+    "target_kinematics_estimator": "world_cva",
     "capture_guidance_mode": "disabled",
     "target_tracker_alpha": 0.20,
-    "target_tracker_beta": 0.02
+    "target_tracker_beta": 0.02,
+    "target_tracker_gamma": 0.5
   }
 })json";
         }
@@ -445,11 +486,12 @@ TEST_SUITE("components_basic") {
         CHECK(definitions[0].missile_tuning.pn_los_rate_source ==
               static_cast<int>(MissilePnLosRateSource::WorldLosHistory));
         CHECK(definitions[0].missile_tuning.target_kinematics_estimator ==
-              static_cast<int>(MissileTargetKinematicsEstimator::WorldCv));
+              static_cast<int>(MissileTargetKinematicsEstimator::WorldCva));
         CHECK(definitions[0].missile_tuning.capture_guidance_mode ==
               static_cast<int>(MissileCaptureGuidanceMode::Disabled));
         CHECK(definitions[0].missile_tuning.target_tracker_alpha == doctest::Approx(0.20));
         CHECK(definitions[0].missile_tuning.target_tracker_beta == doctest::Approx(0.02));
+        CHECK(definitions[0].missile_tuning.target_tracker_gamma == doctest::Approx(0.5));
         std::filesystem::remove(valid_path);
 
         const std::filesystem::path default_path =

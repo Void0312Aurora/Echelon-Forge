@@ -22,13 +22,26 @@ struct WarheadProfile {
     double gurney_constant_mps = std::numeric_limits<double>::quiet_NaN();
     double fragment_mass_kg = std::numeric_limits<double>::quiet_NaN();
     double fragment_count = std::numeric_limits<double>::quiet_NaN();
+    std::string fragment_angular_distribution = "legacy_scalar";
+    double fragment_polar_concentration = std::numeric_limits<double>::quiet_NaN();
+    double fragment_isotropic_fraction = std::numeric_limits<double>::quiet_NaN();
+    double fragment_azimuthal_modulation = std::numeric_limits<double>::quiet_NaN();
+    std::uint32_t fragment_azimuthal_lobes = 0;
+    double fragment_azimuthal_phase_deg = std::numeric_limits<double>::quiet_NaN();
+    std::string continuous_rod_spatial_model = "legacy_side_sweep";
+    double continuous_rod_band_half_angle_deg = std::numeric_limits<double>::quiet_NaN();
+    std::uint32_t continuous_rod_azimuthal_samples = 0;
+    std::uint32_t continuous_rod_polar_samples = 0;
+    double continuous_rod_azimuthal_phase_deg = std::numeric_limits<double>::quiet_NaN();
     double projection_radius_fraction = std::numeric_limits<double>::quiet_NaN();
     double projection_min_radius_m = std::numeric_limits<double>::quiet_NaN();
     double projection_max_radius_m = std::numeric_limits<double>::quiet_NaN();
     double projection_min_effect_scale = std::numeric_limits<double>::quiet_NaN();
+    double projection_curve_floor_effect_scale = std::numeric_limits<double>::quiet_NaN();
     double projection_max_effect_scale = std::numeric_limits<double>::quiet_NaN();
     double projection_falloff_exponent = std::numeric_limits<double>::quiet_NaN();
     std::uint32_t projection_max_projected_hitboxes = 0;
+    bool projection_near_field_floor_enabled = true;
     bool synthetic = true;
     bool damage_scalar_synthetic = true;
     std::string provenance = "synthetic_legacy_damage";
@@ -127,10 +140,11 @@ struct Missile {
 
     // Selectable production PN law. Legacy remains the default until a weapon profile opts in.
     int pn_los_rate_source = 0;          // 0=legacy body-frame rates, 1=world-frame LOS history
-    int target_kinematics_estimator = 0; // 0=legacy polar difference, 1=world CV tracker
+    int target_kinematics_estimator = 0; // 0=legacy, 1=world CV, 2=world constant-acceleration
     int capture_guidance_mode = 1;       // 0=disabled, 1=legacy pursuit schedule
     double target_tracker_alpha = std::numeric_limits<double>::quiet_NaN();
     double target_tracker_beta = std::numeric_limits<double>::quiet_NaN();
+    double target_tracker_gamma = std::numeric_limits<double>::quiet_NaN();
 
     // Deterministic RNG state for probabilistic hit/kill logic (seeded at launch).
     uint64_t rng_state = 0;
@@ -248,6 +262,7 @@ struct Missile {
     double target_track_ay_mps2 = 0.0;
     double target_track_az_mps2 = 0.0;
     missile_guidance::WorldCvAlphaBetaTrackerState world_cv_target_tracker{};
+    missile_guidance::WorldCvaAlphaBetaGammaTrackerState world_cva_target_tracker{};
     bool target_measurement_fresh = false;
     bool target_measurement_rejected_nonmonotonic = false;
     std::uint32_t target_duplicate_measurement_count = 0;

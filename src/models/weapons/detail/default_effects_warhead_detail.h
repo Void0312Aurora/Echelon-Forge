@@ -18,9 +18,39 @@ struct WarheadSpatialProjectionProfile {
     double min_radius_m = 1.0;
     double max_radius_m = 12.0;
     double min_effect_scale = 0.05;
+    double curve_floor_effect_scale = 0.05;
     double max_effect_scale = 0.80;
     double falloff_exponent = 1.0;
     std::size_t max_projected_hitboxes = 1;
+};
+
+struct WarheadOrientationFrame {
+    Vec3 forward{1.0, 0.0, 0.0};
+    Vec3 right{0.0, 1.0, 0.0};
+    Vec3 up{0.0, 0.0, 1.0};
+};
+
+struct FragmentAngularDensitySample {
+    bool active = false;
+    std::string distribution = "legacy_scalar";
+    double signed_polar_cosine = 0.0;
+    double polar_angle_deg = 0.0;
+    double azimuth_deg = 0.0;
+    double polar_density = 1.0;
+    double azimuth_density = 1.0;
+    double angular_density = 1.0;
+};
+
+struct ContinuousRodRingBandSample {
+    bool active = false;
+    bool geometry_intersection = false;
+    std::string spatial_model = "legacy_side_sweep";
+    double band_half_angle_deg = 0.0;
+    std::uint32_t azimuthal_sample_count = 0;
+    std::uint32_t polar_sample_count = 0;
+    std::uint32_t intersecting_azimuthal_sample_count = 0;
+    double angular_coverage_fraction = 0.0;
+    double nearest_intersection_distance_m = 0.0;
 };
 
 struct SpatialProjectionCandidate {
@@ -28,10 +58,22 @@ struct SpatialProjectionCandidate {
     const DamageComponent *component = nullptr;
     double distance_m = std::numeric_limits<double>::infinity();
     double effect_scale = 0.0;
+    double base_effect_scale = 0.0;
+    double curve_floor_effect_scale = 0.0;
+    double near_field_effect_floor = 0.0;
+    double floor_selected_effect_scale = 0.0;
+    double preclamp_effect_scale = 0.0;
+    double min_effect_scale = 0.0;
+    double max_effect_scale = 0.0;
     double axis_weight = 1.0;
     double orientation_weight = 1.0;
     double armor_scale = 1.0;
     double exposure_scale = 1.0;
+    double sampling_scale = 1.0;
+    bool near_field_floor_applied = false;
+    bool effect_scale_clamped = false;
+    FragmentAngularDensitySample fragment_angular_density;
+    ContinuousRodRingBandSample continuous_rod_ring_band;
     std::uint32_t spatial_sample_count = 0;
     double spatial_hit_estimate = 0.0;
     double spatial_hit_fraction = 0.0;
@@ -206,6 +248,10 @@ make_warhead_spatial_projection_profile(const WarheadProfile &profile) {
     if (std::isfinite(profile.projection_min_effect_scale)) {
         out.min_effect_scale = std::clamp(profile.projection_min_effect_scale, 0.0, 1.0);
     }
+    out.curve_floor_effect_scale =
+        std::isfinite(profile.projection_curve_floor_effect_scale)
+            ? std::clamp(profile.projection_curve_floor_effect_scale, 0.0, 1.5)
+            : out.min_effect_scale;
     if (std::isfinite(profile.projection_max_effect_scale)) {
         out.max_effect_scale =
             std::clamp(profile.projection_max_effect_scale, out.min_effect_scale, 1.5);
@@ -218,7 +264,8 @@ make_warhead_spatial_projection_profile(const WarheadProfile &profile) {
             std::clamp<std::size_t>(profile.projection_max_projected_hitboxes, 1, 12);
     }
     out.max_radius_m = std::max(out.max_radius_m, out.min_radius_m);
-    out.max_effect_scale = std::max(out.max_effect_scale, out.min_effect_scale);
+    out.max_effect_scale =
+        std::max({out.max_effect_scale, out.min_effect_scale, out.curve_floor_effect_scale});
 
     return out;
 }
@@ -239,10 +286,10 @@ double projected_spatial_effect_scale(double distance_m, double radius_m,
     }
     const double quality = std::clamp(1.0 - distance_m / radius_m, 0.0, 1.0);
     const double shaped_quality = std::pow(quality, projection.falloff_exponent);
-    return std::clamp(projection.min_effect_scale +
-                          (projection.max_effect_scale - projection.min_effect_scale) *
+    return std::clamp(projection.curve_floor_effect_scale +
+                          (projection.max_effect_scale - projection.curve_floor_effect_scale) *
                               shaped_quality,
-                      projection.min_effect_scale, projection.max_effect_scale);
+                      projection.curve_floor_effect_scale, projection.max_effect_scale);
 }
 
 bool warhead_uses_broad_spatial_projection(const WarheadProfile &profile) {
@@ -253,7 +300,8 @@ bool warhead_uses_broad_spatial_projection(const WarheadProfile &profile) {
 double broad_warhead_near_field_effect_floor(const WarheadProfile &profile, double distance_m,
                                              double radius_m,
                                              const WarheadSpatialProjectionProfile &projection) {
-    if (!warhead_uses_broad_spatial_projection(profile) || !std::isfinite(distance_m) ||
+    if (!profile.projection_near_field_floor_enabled ||
+        !warhead_uses_broad_spatial_projection(profile) || !std::isfinite(distance_m) ||
         radius_m <= 0.0) {
         return projection.min_effect_scale;
     }
@@ -545,11 +593,151 @@ estimate_warhead_mechanism_load(const Missile &missile, const Hitbox &target_sha
     return evidence;
 }
 
-WarheadSpatialSample sample_warhead_spatial_effect(const Missile &missile,
-                                                   const Hitbox &target_shape, double distance_m,
-                                                   double radius_m, double axis_weight,
-                                                   double orientation_weight, double exposure_scale,
-                                                   bool direct_hit) {
+bool warhead_ray_intersects_hitbox(const Vec3 &origin, const Vec3 &direction, const Hitbox &box,
+                                   double max_distance_m, double *out_distance_m = nullptr) {
+    if (!vec3_is_finite(origin) || !vec3_is_finite(direction) || vec3_norm(direction) <= 1.0e-9 ||
+        !std::isfinite(max_distance_m) || max_distance_m <= 0.0) {
+        return false;
+    }
+    const double minimum[3] = {
+        box.offset_x - box.dim_l * 0.5,
+        box.offset_y - box.dim_w * 0.5,
+        box.offset_z - box.dim_h * 0.5,
+    };
+    const double maximum[3] = {
+        box.offset_x + box.dim_l * 0.5,
+        box.offset_y + box.dim_w * 0.5,
+        box.offset_z + box.dim_h * 0.5,
+    };
+    const double origin_values[3] = {origin.x, origin.y, origin.z};
+    const double direction_values[3] = {direction.x, direction.y, direction.z};
+    double entry_distance_m = 0.0;
+    double exit_distance_m = max_distance_m;
+    for (std::size_t axis = 0; axis < 3; ++axis) {
+        if (std::abs(direction_values[axis]) <= 1.0e-12) {
+            if (origin_values[axis] < minimum[axis] || origin_values[axis] > maximum[axis]) {
+                return false;
+            }
+            continue;
+        }
+        double first = (minimum[axis] - origin_values[axis]) / direction_values[axis];
+        double second = (maximum[axis] - origin_values[axis]) / direction_values[axis];
+        if (first > second) {
+            std::swap(first, second);
+        }
+        entry_distance_m = std::max(entry_distance_m, first);
+        exit_distance_m = std::min(exit_distance_m, second);
+        if (exit_distance_m < entry_distance_m) {
+            return false;
+        }
+    }
+    if (exit_distance_m < 0.0 || entry_distance_m > max_distance_m) {
+        return false;
+    }
+    if (out_distance_m) {
+        *out_distance_m = std::clamp(entry_distance_m, 0.0, max_distance_m);
+    }
+    return true;
+}
+
+ContinuousRodRingBandSample resolve_continuous_rod_ring_band_settings(const Missile &missile) {
+    ContinuousRodRingBandSample sample{};
+    sample.spatial_model = missile.warhead_profile.continuous_rod_spatial_model.empty()
+                               ? "legacy_side_sweep"
+                               : missile.warhead_profile.continuous_rod_spatial_model;
+    if (warhead_effect_family(missile.warhead_profile) != "continuous_rod" ||
+        sample.spatial_model != "expanding_ring_band") {
+        return sample;
+    }
+
+    sample.active = true;
+    sample.band_half_angle_deg =
+        std::clamp(std::isfinite(missile.warhead_profile.continuous_rod_band_half_angle_deg)
+                       ? missile.warhead_profile.continuous_rod_band_half_angle_deg
+                       : 6.0,
+                   0.25, 20.0);
+    sample.azimuthal_sample_count =
+        std::clamp<std::uint32_t>(missile.warhead_profile.continuous_rod_azimuthal_samples > 0
+                                      ? missile.warhead_profile.continuous_rod_azimuthal_samples
+                                      : 720U,
+                                  24U, 720U);
+    sample.polar_sample_count =
+        std::clamp<std::uint32_t>(missile.warhead_profile.continuous_rod_polar_samples > 0
+                                      ? missile.warhead_profile.continuous_rod_polar_samples
+                                      : 5U,
+                                  3U, 15U);
+    if (sample.polar_sample_count % 2U == 0U) {
+        ++sample.polar_sample_count;
+    }
+    return sample;
+}
+
+ContinuousRodRingBandSample sample_continuous_rod_ring_band(
+    const Missile &missile, const Vec3 &local_imp, const Hitbox &target_shape,
+    const WarheadOrientationFrame &orientation_frame, double max_distance_m) {
+    ContinuousRodRingBandSample sample = resolve_continuous_rod_ring_band_settings(missile);
+    if (!sample.active) {
+        return sample;
+    }
+    const double phase_rad =
+        Math::to_radians(std::isfinite(missile.warhead_profile.continuous_rod_azimuthal_phase_deg)
+                             ? missile.warhead_profile.continuous_rod_azimuthal_phase_deg
+                             : 0.0);
+    const double half_angle_rad = Math::to_radians(sample.band_half_angle_deg);
+    double nearest_intersection_distance_m = std::numeric_limits<double>::infinity();
+    for (std::uint32_t azimuth_index = 0; azimuth_index < sample.azimuthal_sample_count;
+         ++azimuth_index) {
+        const double azimuth_rad = phase_rad + 2.0 * std::numbers::pi_v<double> *
+                                                   static_cast<double>(azimuth_index) /
+                                                   sample.azimuthal_sample_count;
+        const Vec3 equatorial_direction{
+            std::cos(azimuth_rad) * orientation_frame.right.x +
+                std::sin(azimuth_rad) * orientation_frame.up.x,
+            std::cos(azimuth_rad) * orientation_frame.right.y +
+                std::sin(azimuth_rad) * orientation_frame.up.y,
+            std::cos(azimuth_rad) * orientation_frame.right.z +
+                std::sin(azimuth_rad) * orientation_frame.up.z,
+        };
+        bool azimuth_intersects = false;
+        for (std::uint32_t polar_index = 0; polar_index < sample.polar_sample_count;
+             ++polar_index) {
+            const double polar_fraction = static_cast<double>(polar_index) /
+                                          static_cast<double>(sample.polar_sample_count - 1U);
+            const double polar_offset_rad = -half_angle_rad + 2.0 * half_angle_rad * polar_fraction;
+            const Vec3 direction = vec3_normalize({
+                std::cos(polar_offset_rad) * equatorial_direction.x +
+                    std::sin(polar_offset_rad) * orientation_frame.forward.x,
+                std::cos(polar_offset_rad) * equatorial_direction.y +
+                    std::sin(polar_offset_rad) * orientation_frame.forward.y,
+                std::cos(polar_offset_rad) * equatorial_direction.z +
+                    std::sin(polar_offset_rad) * orientation_frame.forward.z,
+            });
+            double intersection_distance_m = 0.0;
+            if (warhead_ray_intersects_hitbox(local_imp, direction, target_shape, max_distance_m,
+                                              &intersection_distance_m)) {
+                azimuth_intersects = true;
+                nearest_intersection_distance_m =
+                    std::min(nearest_intersection_distance_m, intersection_distance_m);
+            }
+        }
+        if (azimuth_intersects) {
+            ++sample.intersecting_azimuthal_sample_count;
+        }
+    }
+    sample.geometry_intersection = sample.intersecting_azimuthal_sample_count > 0U;
+    sample.angular_coverage_fraction =
+        static_cast<double>(sample.intersecting_azimuthal_sample_count) /
+        static_cast<double>(sample.azimuthal_sample_count);
+    sample.nearest_intersection_distance_m =
+        sample.geometry_intersection ? nearest_intersection_distance_m : 0.0;
+    return sample;
+}
+
+WarheadSpatialSample
+sample_warhead_spatial_effect(const Missile &missile, const Hitbox &target_shape, double distance_m,
+                              double radius_m, double axis_weight, double orientation_weight,
+                              double exposure_scale, bool direct_hit,
+                              const ContinuousRodRingBandSample *rod_ring_band = nullptr) {
     WarheadSpatialSample sample{};
     const std::string family = warhead_effect_family(missile.warhead_profile);
     const double mass_kg = resolved_warhead_effective_mass_kg(missile);
@@ -567,8 +755,14 @@ WarheadSpatialSample sample_warhead_spatial_effect(const Missile &missile,
         const double fragment_count =
             resolved_warhead_fragment_count(missile.warhead_profile, mass_kg);
         sample.sample_count = static_cast<std::uint32_t>(std::round(fragment_count));
-        const double pattern_scale = std::clamp(
-            (0.70 + 0.30 * axis_weight) * std::clamp(orientation_weight, 0.70, 1.18), 0.50, 1.35);
+        const bool directional_density_active =
+            missile.warhead_profile.fragment_angular_distribution == "polar_azimuthal";
+        const double pattern_scale =
+            directional_density_active
+                ? std::clamp((0.70 + 0.30 * axis_weight) * orientation_weight, 0.05, 8.0)
+                : std::clamp((0.70 + 0.30 * axis_weight) *
+                                 std::clamp(orientation_weight, 0.70, 1.18),
+                             0.50, 1.35);
         sample.areal_density_per_m2 =
             fragment_count / sphere_area_m2 * pattern_scale * (0.35 + 0.65 * radius_quality);
         sample.hit_estimate = fragment_count *
@@ -582,15 +776,20 @@ WarheadSpatialSample sample_warhead_spatial_effect(const Missile &missile,
     } else if (family == "continuous_rod") {
         const double rod_count = std::clamp(3.2 * mass_kg, 24.0, 96.0);
         sample.sample_count = static_cast<std::uint32_t>(std::round(rod_count));
-        const double side_sweep = std::clamp(
-            (axis_weight / 1.25) * std::clamp(orientation_weight, 0.42, 1.30), 0.15, 1.25);
-        const double span_m = std::max(target_shape.dim_w, target_shape.dim_l);
-        const double ring_circumference_m =
-            2.0 * std::numbers::pi_v<double> * std::max(distance_m, 1.0);
-        sample.hit_estimate = rod_count * std::clamp(span_m / ring_circumference_m, 0.0, 0.60) *
-                              side_sweep * (0.45 + 0.55 * radius_quality);
+        if (rod_ring_band && rod_ring_band->active) {
+            sample.hit_estimate = rod_count * rod_ring_band->angular_coverage_fraction;
+            sample.pattern_scale = rod_ring_band->angular_coverage_fraction;
+        } else {
+            const double side_sweep = std::clamp(
+                (axis_weight / 1.25) * std::clamp(orientation_weight, 0.42, 1.30), 0.15, 1.25);
+            const double span_m = std::max(target_shape.dim_w, target_shape.dim_l);
+            const double ring_circumference_m =
+                2.0 * std::numbers::pi_v<double> * std::max(distance_m, 1.0);
+            sample.hit_estimate = rod_count * std::clamp(span_m / ring_circumference_m, 0.0, 0.60) *
+                                  side_sweep * (0.45 + 0.55 * radius_quality);
+            sample.pattern_scale = side_sweep;
+        }
         sample.energy_scale = std::clamp(0.45 + 0.55 * radius_quality, 0.08, 1.15);
-        sample.pattern_scale = side_sweep;
     } else if (family == "blast") {
         sample.sample_count = 1;
         sample.hit_estimate =
@@ -669,12 +868,25 @@ Vec3 missile_velocity_axis_in_target_body(flecs::entity missile_entity,
                                         target_transform.z + missile_velocity->vz));
 }
 
-Vec3 missile_forward_axis_in_target_body(const Transform &missile_transform,
+Vec3 missile_local_axis_in_target_body(const Vec3 &axis, const Transform &missile_transform,
+                                       const Transform &target_transform) {
+    const Math::Vector3 missile_axis_world =
+        Math::body_to_world({axis.x, -axis.y, axis.z}, missile_transform);
+    return vec3_normalize(
+        math_body_to_local_right_frame(Math::world_to_body(missile_axis_world, target_transform)));
+}
+
+WarheadOrientationFrame
+warhead_orientation_frame_in_target_body(const Transform &missile_transform,
                                          const Transform &target_transform) {
-    const Math::Vector3 missile_forward_world =
-        Math::body_to_world({1.0, 0.0, 0.0}, missile_transform);
-    return vec3_normalize(math_body_to_local_right_frame(
-        Math::world_to_body(missile_forward_world, target_transform)));
+    return {
+        .forward =
+            missile_local_axis_in_target_body({1.0, 0.0, 0.0}, missile_transform, target_transform),
+        .right =
+            missile_local_axis_in_target_body({0.0, 1.0, 0.0}, missile_transform, target_transform),
+        .up =
+            missile_local_axis_in_target_body({0.0, 0.0, 1.0}, missile_transform, target_transform),
+    };
 }
 
 double warhead_axis_projection_weight(const WarheadProfile &profile, const Vec3 &local_imp,
@@ -714,9 +926,72 @@ double warhead_axis_projection_weight(const WarheadProfile &profile, const Vec3 
     return 1.0;
 }
 
-double warhead_orientation_pattern_weight(const WarheadProfile &profile, const Vec3 &local_imp,
-                                          const Hitbox &box, const Vec3 &orientation_axis_body) {
-    const double axis_norm = vec3_norm(orientation_axis_body);
+FragmentAngularDensitySample
+sample_fragment_angular_density(const WarheadProfile &profile, const Vec3 &radial,
+                                const WarheadOrientationFrame &orientation_frame) {
+    FragmentAngularDensitySample sample{};
+    sample.distribution = profile.fragment_angular_distribution.empty()
+                              ? "legacy_scalar"
+                              : profile.fragment_angular_distribution;
+    const std::string family = warhead_effect_family(profile);
+    if ((family != "fragmentation" && family != "blast_fragmentation") ||
+        sample.distribution != "polar_azimuthal") {
+        return sample;
+    }
+
+    sample.active = true;
+    if (vec3_norm(radial) <= 1.0e-9) {
+        return sample;
+    }
+    const double signed_polar_cosine =
+        std::clamp(vec3_dot(radial, orientation_frame.forward), -1.0, 1.0);
+    const double side_alignment =
+        std::sqrt(std::max(0.0, 1.0 - signed_polar_cosine * signed_polar_cosine));
+    const double right_component = vec3_dot(radial, orientation_frame.right);
+    const double up_component = vec3_dot(radial, orientation_frame.up);
+    const double azimuth_rad =
+        side_alignment > 1.0e-9 ? std::atan2(up_component, right_component) : 0.0;
+    const double concentration = std::clamp(std::isfinite(profile.fragment_polar_concentration)
+                                                ? profile.fragment_polar_concentration
+                                                : 1.5,
+                                            0.0, 3.0);
+    const double isotropic_fraction = std::clamp(std::isfinite(profile.fragment_isotropic_fraction)
+                                                     ? profile.fragment_isotropic_fraction
+                                                     : 0.35,
+                                                 0.0, 1.0);
+    const double azimuthal_modulation = std::clamp(
+        std::isfinite(profile.fragment_azimuthal_modulation) ? profile.fragment_azimuthal_modulation
+                                                             : 0.0,
+        0.0, 0.95);
+    const std::uint32_t azimuthal_lobes = std::clamp<std::uint32_t>(
+        profile.fragment_azimuthal_lobes > 0 ? profile.fragment_azimuthal_lobes : 1U, 1U, 8U);
+    const double azimuthal_phase_rad = Math::to_radians(
+        std::isfinite(profile.fragment_azimuthal_phase_deg) ? profile.fragment_azimuthal_phase_deg
+                                                            : 0.0);
+    const double polar_density =
+        concentration <= 1.0e-9 ? 1.0
+                                : concentration * std::exp(concentration * signed_polar_cosine) /
+                                      std::sinh(concentration);
+    const double azimuth_density = 1.0 + azimuthal_modulation * side_alignment *
+                                             std::cos(static_cast<double>(azimuthal_lobes) *
+                                                      (azimuth_rad - azimuthal_phase_rad));
+
+    sample.signed_polar_cosine = signed_polar_cosine;
+    sample.polar_angle_deg = Math::to_degrees(std::acos(signed_polar_cosine));
+    sample.azimuth_deg = Math::normalize_heading_deg(Math::to_degrees(azimuth_rad));
+    sample.polar_density = polar_density;
+    sample.azimuth_density = azimuth_density;
+    sample.angular_density = std::clamp(isotropic_fraction + (1.0 - isotropic_fraction) *
+                                                                 polar_density * azimuth_density,
+                                        0.05, 8.0);
+    return sample;
+}
+
+double warhead_orientation_pattern_weight(
+    const WarheadProfile &profile, const Vec3 &local_imp, const Hitbox &box,
+    const WarheadOrientationFrame &orientation_frame,
+    FragmentAngularDensitySample *out_fragment_angular_density = nullptr) {
+    const double axis_norm = vec3_norm(orientation_frame.forward);
     if (axis_norm <= 1.0e-9) {
         return 1.0;
     }
@@ -731,7 +1006,16 @@ double warhead_orientation_pattern_weight(const WarheadProfile &profile, const V
         return 1.0;
     }
 
-    const double axial_alignment = std::abs(vec3_dot(radial, orientation_axis_body));
+    const FragmentAngularDensitySample fragment_angular_density =
+        sample_fragment_angular_density(profile, radial, orientation_frame);
+    if (out_fragment_angular_density) {
+        *out_fragment_angular_density = fragment_angular_density;
+    }
+    if (fragment_angular_density.active) {
+        return fragment_angular_density.angular_density;
+    }
+
+    const double axial_alignment = std::abs(vec3_dot(radial, orientation_frame.forward));
     const double side_alignment = std::sqrt(std::max(0.0, 1.0 - axial_alignment * axial_alignment));
     const std::string family = warhead_effect_family(profile);
 
@@ -752,23 +1036,34 @@ double warhead_orientation_pattern_weight(const WarheadProfile &profile, const V
 
 bool make_default_effects_spatial_projection_candidate(
     const Missile &missile, const WarheadSpatialProjectionProfile &projection,
-    const Vec3 &local_imp, const Vec3 &missile_axis_body, const Vec3 &warhead_orientation_axis_body,
-    const Hitbox &target_shape, const Hitbox *owning_box, const DamageComponent *component,
-    double distance_m, double spatial_radius_m, double exposure_scale, double closure_mps,
+    const Vec3 &local_imp, const Vec3 &missile_axis_body,
+    const WarheadOrientationFrame &warhead_orientation_frame, const Hitbox &target_shape,
+    const Hitbox *owning_box, const DamageComponent *component, double distance_m,
+    double spatial_radius_m, double exposure_scale, double closure_mps,
     SpatialProjectionCandidate *out_candidate) {
     if (!out_candidate || !owning_box) {
         return false;
     }
 
-    const double axis_weight = warhead_axis_projection_weight(missile.warhead_profile, local_imp,
-                                                              target_shape, missile_axis_body);
+    const double legacy_axis_weight = warhead_axis_projection_weight(
+        missile.warhead_profile, local_imp, target_shape, missile_axis_body);
+    FragmentAngularDensitySample fragment_angular_density{};
+    const double legacy_orientation_weight =
+        warhead_orientation_pattern_weight(missile.warhead_profile, local_imp, target_shape,
+                                           warhead_orientation_frame, &fragment_angular_density);
+    const ContinuousRodRingBandSample continuous_rod_ring_band = sample_continuous_rod_ring_band(
+        missile, local_imp, target_shape, warhead_orientation_frame, spatial_radius_m);
+    if (continuous_rod_ring_band.active && !continuous_rod_ring_band.geometry_intersection) {
+        return false;
+    }
+    const double axis_weight = continuous_rod_ring_band.active ? 1.0 : legacy_axis_weight;
+    const double orientation_weight =
+        continuous_rod_ring_band.active ? 1.0 : legacy_orientation_weight;
     const double armor_scale = warhead_mechanism_armor_scale(missile, target_shape, distance_m,
                                                              spatial_radius_m, axis_weight, false);
-    const double orientation_weight = warhead_orientation_pattern_weight(
-        missile.warhead_profile, local_imp, target_shape, warhead_orientation_axis_body);
-    const WarheadSpatialSample spatial_sample =
-        sample_warhead_spatial_effect(missile, target_shape, distance_m, spatial_radius_m,
-                                      axis_weight, orientation_weight, exposure_scale, false);
+    const WarheadSpatialSample spatial_sample = sample_warhead_spatial_effect(
+        missile, target_shape, distance_m, spatial_radius_m, axis_weight, orientation_weight,
+        exposure_scale, false, &continuous_rod_ring_band);
     const double sampling_scale =
         std::clamp(0.55 + 0.35 * std::clamp(spatial_sample.hit_estimate, 0.0, 3.0) / 3.0 +
                        0.10 * spatial_sample.energy_scale,
@@ -777,18 +1072,34 @@ bool make_default_effects_spatial_projection_candidate(
         projected_spatial_effect_scale(distance_m, spatial_radius_m, projection);
     const double near_field_effect_floor = broad_warhead_near_field_effect_floor(
         missile.warhead_profile, distance_m, spatial_radius_m, projection);
+    const double floor_selected_effect_scale =
+        std::max(base_spatial_effect_scale, near_field_effect_floor);
+    const double preclamp_effect_scale = floor_selected_effect_scale * axis_weight *
+                                         orientation_weight * armor_scale * exposure_scale *
+                                         sampling_scale;
+    const double effect_scale =
+        std::clamp(preclamp_effect_scale, projection.min_effect_scale, projection.max_effect_scale);
     *out_candidate = SpatialProjectionCandidate{
         .box = owning_box,
         .component = component,
         .distance_m = distance_m,
-        .effect_scale =
-            std::clamp(std::max(base_spatial_effect_scale, near_field_effect_floor) * axis_weight *
-                           orientation_weight * armor_scale * exposure_scale * sampling_scale,
-                       projection.min_effect_scale, projection.max_effect_scale),
+        .effect_scale = effect_scale,
+        .base_effect_scale = base_spatial_effect_scale,
+        .curve_floor_effect_scale = projection.curve_floor_effect_scale,
+        .near_field_effect_floor = near_field_effect_floor,
+        .floor_selected_effect_scale = floor_selected_effect_scale,
+        .preclamp_effect_scale = preclamp_effect_scale,
+        .min_effect_scale = projection.min_effect_scale,
+        .max_effect_scale = projection.max_effect_scale,
         .axis_weight = axis_weight,
         .orientation_weight = orientation_weight,
         .armor_scale = armor_scale,
         .exposure_scale = exposure_scale,
+        .sampling_scale = sampling_scale,
+        .near_field_floor_applied = near_field_effect_floor > base_spatial_effect_scale,
+        .effect_scale_clamped = effect_scale != preclamp_effect_scale,
+        .fragment_angular_density = fragment_angular_density,
+        .continuous_rod_ring_band = continuous_rod_ring_band,
         .spatial_sample_count = spatial_sample.sample_count,
         .spatial_hit_estimate = spatial_sample.hit_estimate,
         .spatial_hit_fraction = spatial_sample.hit_fraction,

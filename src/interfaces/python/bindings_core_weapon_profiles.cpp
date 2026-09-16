@@ -14,10 +14,29 @@ void bind_core_weapon_profiles(nb::module_ &m) {
         .def_rw("lethal_radius_m", &WarheadProfile::lethal_radius_m)
         .def_rw("damage_scalar", &WarheadProfile::damage_scalar)
         .def_rw("explosive_mass_kg", &WarheadProfile::explosive_mass_kg)
+        .def_rw("fragment_angular_distribution", &WarheadProfile::fragment_angular_distribution)
+        .def_rw("fragment_polar_concentration", &WarheadProfile::fragment_polar_concentration)
+        .def_rw("fragment_isotropic_fraction", &WarheadProfile::fragment_isotropic_fraction)
+        .def_rw("fragment_azimuthal_modulation", &WarheadProfile::fragment_azimuthal_modulation)
+        .def_rw("fragment_azimuthal_lobes", &WarheadProfile::fragment_azimuthal_lobes)
+        .def_rw("fragment_azimuthal_phase_deg", &WarheadProfile::fragment_azimuthal_phase_deg)
+        .def_rw("continuous_rod_spatial_model", &WarheadProfile::continuous_rod_spatial_model)
+        .def_rw("continuous_rod_band_half_angle_deg",
+                &WarheadProfile::continuous_rod_band_half_angle_deg)
+        .def_rw("continuous_rod_azimuthal_samples",
+                &WarheadProfile::continuous_rod_azimuthal_samples)
+        .def_rw("continuous_rod_polar_samples", &WarheadProfile::continuous_rod_polar_samples)
+        .def_rw("continuous_rod_azimuthal_phase_deg",
+                &WarheadProfile::continuous_rod_azimuthal_phase_deg)
         .def_rw("projection_radius_fraction", &WarheadProfile::projection_radius_fraction)
         .def_rw("projection_min_radius_m", &WarheadProfile::projection_min_radius_m)
         .def_rw("projection_max_radius_m", &WarheadProfile::projection_max_radius_m)
         .def_rw("projection_min_effect_scale", &WarheadProfile::projection_min_effect_scale)
+        .def_rw("projection_curve_floor_effect_scale",
+                &WarheadProfile::projection_curve_floor_effect_scale)
+        .def_rw("projection_max_effect_scale", &WarheadProfile::projection_max_effect_scale)
+        .def_rw("projection_near_field_floor_enabled",
+                &WarheadProfile::projection_near_field_floor_enabled)
         .def_rw("synthetic", &WarheadProfile::synthetic)
         .def_rw("damage_scalar_synthetic", &WarheadProfile::damage_scalar_synthetic)
         .def_rw("provenance", &WarheadProfile::provenance);
@@ -50,6 +69,7 @@ void bind_core_weapon_profiles(nb::module_ &m) {
         .def_rw("capture_guidance_mode", &MissileTuning::capture_guidance_mode)
         .def_rw("target_tracker_alpha", &MissileTuning::target_tracker_alpha)
         .def_rw("target_tracker_beta", &MissileTuning::target_tracker_beta)
+        .def_rw("target_tracker_gamma", &MissileTuning::target_tracker_gamma)
         .def_rw("apn_target_accel_gain", &MissileTuning::apn_target_accel_gain)
         .def_rw("autopilot_damping", &MissileTuning::autopilot_damping)
         .def_prop_rw(
