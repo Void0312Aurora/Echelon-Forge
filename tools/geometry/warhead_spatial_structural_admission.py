@@ -128,9 +128,9 @@ def _target_body_velocity_to_world_enu(
 ) -> tuple[float, float, float]:
   """Match Math::body_to_world for a level target and local-right convention."""
   forward_mps, right_mps, up_mps = (float(value) for value in velocity_body_mps)
-  heading_rad = math.radians(float(target_heading_deg))
-  cos_heading = math.cos(heading_rad)
-  sin_heading = math.sin(heading_rad)
+  yaw_rad = math.radians(90.0 - float(target_heading_deg))
+  cos_heading = math.cos(yaw_rad)
+  sin_heading = math.sin(yaw_rad)
   body_left_mps = -right_mps
   return (
     cos_heading * forward_mps - sin_heading * body_left_mps,
