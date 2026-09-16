@@ -29,6 +29,8 @@ from tools.diagnostics import kill_chain_decoupling_probe as probe  # noqa: E402
 
 
 SCHEMA_VERSION = "a2.kill_chain_maneuver_apn_admission.v1"
+MANIFEST_SCHEMA_VERSION = "a2.kill_chain_maneuver_apn_admission_manifest.v2"
+DEFAULT_RETENTION_OWNER = "Echelon-Forge maintainers"
 GENERATED_ON = "2026-09-15"
 DEFAULT_OUTPUT_DIR = (
   REPO_ROOT
@@ -688,7 +690,31 @@ def _write_candidate_csv(path: Path, report: dict[str, Any]) -> None:
     writer.writerows(rows)
 
 
-def conclusions_zh(report: dict[str, Any]) -> str:
+def _bundle_admission(
+  report: dict[str, Any],
+  *,
+  worktree_porcelain: str,
+  artifact_uri: str | None,
+  retention_owner: str,
+) -> dict[str, Any]:
+  blockers = []
+  if not bool(report["admission"]["p10_complete"]):
+    blockers.append("simulation_gates_failed")
+  if worktree_porcelain:
+    blockers.append("generator_worktree_not_clean")
+  if not artifact_uri:
+    blockers.append("raw_packets_not_published")
+  if not retention_owner.strip():
+    blockers.append("retention_owner_missing")
+  return {
+    "promotion_status": "passed" if not blockers else "held",
+    "blockers": blockers,
+  }
+
+
+def conclusions_zh(
+  report: dict[str, Any], *, bundle_admission: dict[str, Any] | None = None
+) -> str:
   stage4 = report["stage4_structural_admission"]
   stage5 = report["stage5_apn_selection"]
   admission = report["admission"]
@@ -701,11 +727,18 @@ def conclusions_zh(report: dict[str, Any]) -> str:
     and stage5["gates"]["noisy_acceleration_rmse_within_limit"]
     and stage5["gates"]["noisy_acceleration_peak_within_limit"]
   )
+  bundle_admission = bundle_admission or {
+    "promotion_status": "held",
+    "blockers": ["provenance_not_evaluated"],
+  }
+  promotion_passed = bundle_admission["promotion_status"] == "passed"
   return "\n".join(
     [
       "# P10 机动目标 / APN 准入结论",
       "",
-      f"- 总状态：`{report['status']}`。",
+      f"- 计算门状态：`{report['status']}`。",
+      f"- 证据准入状态：`{bundle_admission['promotion_status']}`；"
+      f"blockers：`{bundle_admission['blockers']}`。",
       f"- clean stage-4 structural admission：`{stage4['passed']}`；"
       f"CVA 最大稳定加速度 RMSE 为 "
       f"`{observed4['max_clean_acceleration_rmse_mps2']:.3f} m/s²`，末值最大误差 "
@@ -729,8 +762,8 @@ def conclusions_zh(report: dict[str, Any]) -> str:
       f"- config-backed 无 override 复验：`{config_backed['passed']}`；"
       f"共 `{report['counts']['config_backed_run_count']}` runs，最近距最大差 "
       f"`{config_backed['observed']['max_nearest_distance_delta_m']:.3e} m`。",
-      f"- P10 complete：`{admission['p10_complete']}`；"
-      f"APN default promotion：`{admission['apn_default_promotion']}`。",
+      f"- P10 computational gates complete：`{admission['p10_complete']}`；"
+      f"APN default promotion：`{'passed' if promotion_passed else 'held'}`。",
       "",
       "该结果只形成 synthetic engineering evidence。它不构成真实 AIM-120 性能、Pk、"
       "默认武器参数或交战规则权威。",
@@ -739,7 +772,21 @@ def conclusions_zh(report: dict[str, Any]) -> str:
   )
 
 
-def write_bundle(report: dict[str, Any], *, output_dir: Path, stem: str) -> dict[str, str]:
+def write_bundle(
+  report: dict[str, Any],
+  *,
+  output_dir: Path,
+  stem: str,
+  artifact_uri: str | None = None,
+  retention_owner: str = DEFAULT_RETENTION_OWNER,
+) -> dict[str, str]:
+  source_worktree_porcelain = _git_value("status", "--short")
+  bundle_admission = _bundle_admission(
+    report,
+    worktree_porcelain=source_worktree_porcelain,
+    artifact_uri=artifact_uri,
+    retention_owner=retention_owner,
+  )
   output_dir.mkdir(parents=True, exist_ok=True)
   paths = {
     "report_json": output_dir / f"{stem}.json",
@@ -758,9 +805,11 @@ def write_bundle(report: dict[str, Any], *, output_dir: Path, stem: str) -> dict
   _write_csv(paths["noisy_runs_csv"], report["noisy_runs"])
   _write_csv(paths["config_backed_runs_csv"], report["config_backed_runs"])
   _write_candidate_csv(paths["candidate_summary_csv"], report)
-  paths["conclusions_zh_md"].write_text(conclusions_zh(report), encoding="utf-8")
+  paths["conclusions_zh_md"].write_text(
+    conclusions_zh(report, bundle_admission=bundle_admission), encoding="utf-8"
+  )
   manifest = {
-    "schema_version": "a2.kill_chain_maneuver_apn_admission_manifest.v1",
+    "schema_version": MANIFEST_SCHEMA_VERSION,
     "report_schema_version": SCHEMA_VERSION,
     "generated_at_utc": datetime.now(timezone.utc).isoformat(),
     "tool": {
@@ -770,7 +819,14 @@ def write_bundle(report: dict[str, Any], *, output_dir: Path, stem: str) -> dict
     "git": {
       "head": _git_value("rev-parse", "HEAD"),
       "branch": _git_value("branch", "--show-current"),
-      "worktree_porcelain": _git_value("status", "--short"),
+      "worktree_porcelain": source_worktree_porcelain,
+    },
+    "admission": bundle_admission,
+    "retention": {
+      "owner": retention_owner,
+      "raw_packet_root": str(output_dir.resolve().relative_to(REPO_ROOT)),
+      "retrieval_status": "published" if artifact_uri else "local_output_only",
+      "artifact_uri": artifact_uri,
     },
     "runtime": {
       "ef_py_path": str(Path(probe.ef_py.__file__).resolve()),
@@ -810,6 +866,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
   parser.add_argument("--seed", type=int, action="append", default=[])
   parser.add_argument("--skip-noisy", action="store_true")
   parser.add_argument("--skip-config-backed-confirmation", action="store_true")
+  parser.add_argument("--artifact-uri")
+  parser.add_argument("--retention-owner", default=DEFAULT_RETENTION_OWNER)
   parser.add_argument("--strict", action="store_true")
   return parser
 
@@ -830,7 +888,14 @@ def main(argv: list[str] | None = None) -> int:
       not bool(args.skip_noisy) and not bool(args.skip_config_backed_confirmation)
     ),
   )
-  artifacts = write_bundle(report, output_dir=args.output_dir, stem=str(args.stem))
+  artifacts = write_bundle(
+    report,
+    output_dir=args.output_dir,
+    stem=str(args.stem),
+    artifact_uri=args.artifact_uri,
+    retention_owner=str(args.retention_owner),
+  )
+  manifest = json.loads(Path(artifacts["manifest_json"]).read_text(encoding="utf-8"))
   print(
     json.dumps(
       {
@@ -845,7 +910,8 @@ def main(argv: list[str] | None = None) -> int:
       allow_nan=False,
     )
   )
-  return 1 if bool(args.strict) and not bool(report["admission"]["p10_complete"]) else 0
+  promotion_passed = manifest["admission"]["promotion_status"] == "passed"
+  return 1 if bool(args.strict) and not promotion_passed else 0
 
 
 if __name__ == "__main__":

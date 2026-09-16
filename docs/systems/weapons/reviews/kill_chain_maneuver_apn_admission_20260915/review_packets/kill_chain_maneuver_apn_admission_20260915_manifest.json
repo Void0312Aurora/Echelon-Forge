@@ -1,6 +1,28 @@
 {
-  "schema_version": "a2.kill_chain_maneuver_apn_admission_manifest.v1",
+  "schema_version": "a2.kill_chain_maneuver_apn_admission_manifest.v2",
   "report_schema_version": "a2.kill_chain_maneuver_apn_admission.v1",
+  "admission": {
+    "promotion_status": "held",
+    "blockers": [
+      "generator_revision_not_ancestral",
+      "generator_worktree_not_clean",
+      "input_digest_stale",
+      "raw_packets_not_published"
+    ]
+  },
+  "retention": {
+    "owner": "Echelon-Forge maintainers",
+    "retrieval_status": "unavailable",
+    "artifact_uri": null,
+    "reproduction_root": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_maneuver_apn_admission_20260915"
+  },
+  "validation": {
+    "recorded_run_head_ancestral": false,
+    "recorded_run_worktree_clean": false,
+    "recorded_aim120_definition_sha256_matches": false,
+    "current_aim120_definition_sha256": "5e4045fea23773881f80adec28e30789417f8b5f9ccc46ed16116de5bb9cd5eb",
+    "raw_packets_retrievable": false
+  },
   "generated_at_utc": "2026-09-15T02:17:09.344092+00:00",
   "tool": {
     "path": "tools\\diagnostics\\kill_chain_maneuver_apn_admission.py",
@@ -45,11 +67,11 @@
     },
     "conclusions_zh_md": {
       "path": "docs\\systems\\weapons\\reviews\\kill_chain_maneuver_apn_admission_20260915\\review_packets\\kill_chain_maneuver_apn_admission_20260915_conclusions.zh.md",
-      "sha256": "aa04fc8e59fbb2d6873c4f37713dd833bbe35d7b169f0c86732af55fae1a3d3a",
-      "bytes": 1044
+      "sha256": "701ba9aed9ea5daec94188e78c0f39c55cf5f4db3a93cea034c542707d0b227b",
+      "bytes": 1093
     },
     "heatmaps_png": {
-      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_maneuver_apn_admission_20260915/kill_chain_maneuver_apn_admission_20260915_heatmaps.png",
+      "path": "docs/systems/weapons/reviews/kill_chain_maneuver_apn_admission_20260915/review_packets/kill_chain_maneuver_apn_admission_20260915_heatmaps.png",
       "sha256": "ca5bfdae0e21d247647eaa083cc6dc5210969b4a108686d1378663678a1e0ab1",
       "bytes": 480435
     }
