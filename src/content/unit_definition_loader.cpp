@@ -527,8 +527,8 @@ void parse_warhead_json_fields(const nlohmann::json &src, MissileTuningDefinitio
         src.value("fragment_azimuthal_phase_deg", profile.fragment_azimuthal_phase_deg);
     profile.continuous_rod_spatial_model =
         src.value("continuous_rod_spatial_model", profile.continuous_rod_spatial_model);
-    profile.continuous_rod_band_half_angle_deg = src.value(
-        "continuous_rod_band_half_angle_deg", profile.continuous_rod_band_half_angle_deg);
+    profile.continuous_rod_band_half_angle_deg =
+        src.value("continuous_rod_band_half_angle_deg", profile.continuous_rod_band_half_angle_deg);
     if (src.contains("continuous_rod_azimuthal_samples") &&
         src["continuous_rod_azimuthal_samples"].is_number_unsigned()) {
         profile.continuous_rod_azimuthal_samples =
@@ -539,8 +539,8 @@ void parse_warhead_json_fields(const nlohmann::json &src, MissileTuningDefinitio
         profile.continuous_rod_polar_samples =
             src["continuous_rod_polar_samples"].get<std::uint32_t>();
     }
-    profile.continuous_rod_azimuthal_phase_deg = src.value(
-        "continuous_rod_azimuthal_phase_deg", profile.continuous_rod_azimuthal_phase_deg);
+    profile.continuous_rod_azimuthal_phase_deg =
+        src.value("continuous_rod_azimuthal_phase_deg", profile.continuous_rod_azimuthal_phase_deg);
     profile.projection_radius_fraction =
         src.value("projection_radius_fraction", profile.projection_radius_fraction);
     profile.projection_min_radius_m =

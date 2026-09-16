@@ -249,14 +249,15 @@ void record_default_effects_warhead_effect_sample(
     record_default_effects_mechanism_load(scratch, mechanism_load);
 }
 
-void record_default_effects_spatial_projection_trace(
-    DefaultEffectsScratch &scratch, const SpatialProjectionCandidate &candidate) {
+void record_default_effects_spatial_projection_trace(DefaultEffectsScratch &scratch,
+                                                     const SpatialProjectionCandidate &candidate) {
     if (scratch.spatial_projection_trace_valid) {
-        const double effect_delta = candidate.effect_scale - scratch.spatial_projection_effect_scale;
+        const double effect_delta =
+            candidate.effect_scale - scratch.spatial_projection_effect_scale;
         const bool effect_tied = std::abs(effect_delta) <= 1.0e-12;
         if (effect_delta < -1.0e-12 ||
             (effect_tied && candidate.preclamp_effect_scale <=
-                                 scratch.spatial_projection_preclamp_scale + 1.0e-12)) {
+                                scratch.spatial_projection_preclamp_scale + 1.0e-12)) {
             return;
         }
     }
@@ -280,12 +281,10 @@ void record_default_effects_spatial_projection_trace(
     scratch.fragment_angular_distribution = candidate.fragment_angular_density.distribution;
     scratch.fragment_angular_signed_polar_cosine =
         candidate.fragment_angular_density.signed_polar_cosine;
-    scratch.fragment_angular_polar_angle_deg =
-        candidate.fragment_angular_density.polar_angle_deg;
+    scratch.fragment_angular_polar_angle_deg = candidate.fragment_angular_density.polar_angle_deg;
     scratch.fragment_angular_azimuth_deg = candidate.fragment_angular_density.azimuth_deg;
     scratch.fragment_angular_polar_density = candidate.fragment_angular_density.polar_density;
-    scratch.fragment_angular_azimuth_density =
-        candidate.fragment_angular_density.azimuth_density;
+    scratch.fragment_angular_azimuth_density = candidate.fragment_angular_density.azimuth_density;
     scratch.fragment_angular_density = candidate.fragment_angular_density.angular_density;
     scratch.continuous_rod_ring_band_active = candidate.continuous_rod_ring_band.active;
     scratch.continuous_rod_ring_band_intersection =

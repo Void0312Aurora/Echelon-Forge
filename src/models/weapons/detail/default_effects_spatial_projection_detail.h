@@ -6,8 +6,8 @@ void apply_default_effects_spatial_projection(
     DefaultEffectsScratch &scratch, const HitboxConfig &hitboxes, bool structured_air_target,
     const Missile &missile, const WarheadSpatialProjectionProfile &warhead_projection,
     const Vec3 &local_imp, const Vec3 &missile_axis_body,
-    const WarheadOrientationFrame &warhead_orientation_frame,
-    double closure_mps, SystemHealth *sys_health, ResolveSystemSeverity &&resolve_system_severity,
+    const WarheadOrientationFrame &warhead_orientation_frame, double closure_mps,
+    SystemHealth *sys_health, ResolveSystemSeverity &&resolve_system_severity,
     ApplySystemEffect &&apply_system_effect) {
     const bool broad_spatial_projection =
         warhead_uses_broad_spatial_projection(missile.warhead_profile);
@@ -55,8 +55,8 @@ void apply_default_effects_spatial_projection(
                     component_projected_exposure_scale(local_imp, component);
                 return make_default_effects_spatial_projection_candidate(
                     missile, warhead_projection, local_imp, missile_axis_body,
-                    warhead_orientation_frame, component_box, &parent_box, &component,
-                    distance_m, spatial_radius_m, exposure_scale, closure_mps, out_candidate);
+                    warhead_orientation_frame, component_box, &parent_box, &component, distance_m,
+                    spatial_radius_m, exposure_scale, closure_mps, out_candidate);
             };
         const auto make_box_projection_candidate = [&](const Hitbox &box,
                                                        SpatialProjectionCandidate *out_candidate) {

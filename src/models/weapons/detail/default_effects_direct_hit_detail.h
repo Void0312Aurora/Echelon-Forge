@@ -2,12 +2,14 @@
 // Included inside that file's anonymous namespace; not a standalone API.
 
 template <typename ResolveSystemSeverity, typename ApplySystemEffect>
-void apply_default_effects_direct_hitboxes(
-    DefaultEffectsScratch &scratch, const HitboxConfig &hitboxes, bool structured_air_target,
-    const Missile &missile, const Vec3 &local_imp,
-    const WarheadOrientationFrame &warhead_orientation_frame,
-    const Vec3 &missile_axis_body, double closure_mps, SystemHealth *sys_health,
-    ResolveSystemSeverity &&resolve_system_severity, ApplySystemEffect &&apply_system_effect) {
+void apply_default_effects_direct_hitboxes(DefaultEffectsScratch &scratch,
+                                           const HitboxConfig &hitboxes, bool structured_air_target,
+                                           const Missile &missile, const Vec3 &local_imp,
+                                           const WarheadOrientationFrame &warhead_orientation_frame,
+                                           const Vec3 &missile_axis_body, double closure_mps,
+                                           SystemHealth *sys_health,
+                                           ResolveSystemSeverity &&resolve_system_severity,
+                                           ApplySystemEffect &&apply_system_effect) {
     for (const auto &box : hitboxes.hitboxes) {
         if (check_hitbox(local_imp, box)) {
             scratch.structure_hit = true;
