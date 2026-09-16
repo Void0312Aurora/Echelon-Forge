@@ -1103,9 +1103,8 @@ class DefaultUnitFactory : public IUnitFactory {
                                          MissileGuidanceDefaults::kDefaultApnTargetAccelGain)
                                    : MissileGuidanceDefaults::kDefaultApnTargetAccelGain;
         missile_runtime.pn_los_rate_source =
-            def.has_missile_tuning &&
-                    def.missile_tuning.pn_los_rate_source ==
-                        static_cast<int>(MissilePnLosRateSource::WorldLosHistory)
+            def.has_missile_tuning && def.missile_tuning.pn_los_rate_source ==
+                                          static_cast<int>(MissilePnLosRateSource::WorldLosHistory)
                 ? static_cast<int>(MissilePnLosRateSource::WorldLosHistory)
                 : MissileGuidanceDefaults::kDefaultPnLosRateSource;
         missile_runtime.target_kinematics_estimator =
@@ -1115,9 +1114,8 @@ class DefaultUnitFactory : public IUnitFactory {
                 ? static_cast<int>(MissileTargetKinematicsEstimator::WorldCv)
                 : MissileGuidanceDefaults::kDefaultTargetKinematicsEstimator;
         missile_runtime.capture_guidance_mode =
-            def.has_missile_tuning &&
-                    def.missile_tuning.capture_guidance_mode ==
-                        static_cast<int>(MissileCaptureGuidanceMode::Disabled)
+            def.has_missile_tuning && def.missile_tuning.capture_guidance_mode ==
+                                          static_cast<int>(MissileCaptureGuidanceMode::Disabled)
                 ? static_cast<int>(MissileCaptureGuidanceMode::Disabled)
                 : MissileGuidanceDefaults::kDefaultCaptureGuidanceMode;
         missile_runtime.target_tracker_alpha =

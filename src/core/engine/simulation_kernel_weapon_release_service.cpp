@@ -188,11 +188,9 @@ bool has_explicit_global_missile_tuning(const MissileTuning &tuning) {
            std::isfinite(tuning.guidance_update_period_s) ||
            std::isfinite(tuning.max_flight_time_s) || std::isfinite(tuning.nav_gain) ||
            tuning.pn_los_rate_source >= 0 || tuning.target_kinematics_estimator >= 0 ||
-           tuning.capture_guidance_mode >= 0 ||
-           std::isfinite(tuning.target_tracker_alpha) ||
-           std::isfinite(tuning.target_tracker_beta) ||
-           std::isfinite(tuning.sensor_max_range) || std::isfinite(tuning.sensor_fov_deg) ||
-           std::isfinite(tuning.sensor_scan_period) ||
+           tuning.capture_guidance_mode >= 0 || std::isfinite(tuning.target_tracker_alpha) ||
+           std::isfinite(tuning.target_tracker_beta) || std::isfinite(tuning.sensor_max_range) ||
+           std::isfinite(tuning.sensor_fov_deg) || std::isfinite(tuning.sensor_scan_period) ||
            std::isfinite(tuning.sensor_detection_prob) ||
            std::isfinite(tuning.sensor_bearing_noise_std) ||
            std::isfinite(tuning.sensor_range_noise_std) ||
@@ -704,14 +702,14 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
                 static_cast<int>(MissileCaptureGuidanceMode::Disabled)
             ? static_cast<int>(MissileCaptureGuidanceMode::Disabled)
             : MissileGuidanceDefaults::kDefaultCaptureGuidanceMode;
-    const double missile_target_tracker_alpha = std::clamp(
-        finite_or_default(resolved_tuning.target_tracker_alpha,
-                          MissileGuidanceDefaults::kWorldCvTrackerAlpha),
-        0.0, 1.0);
-    const double missile_target_tracker_beta = std::clamp(
-        finite_or_default(resolved_tuning.target_tracker_beta,
-                          MissileGuidanceDefaults::kWorldCvTrackerBeta),
-        0.0, 2.0);
+    const double missile_target_tracker_alpha =
+        std::clamp(finite_or_default(resolved_tuning.target_tracker_alpha,
+                                     MissileGuidanceDefaults::kWorldCvTrackerAlpha),
+                   0.0, 1.0);
+    const double missile_target_tracker_beta =
+        std::clamp(finite_or_default(resolved_tuning.target_tracker_beta,
+                                     MissileGuidanceDefaults::kWorldCvTrackerBeta),
+                   0.0, 2.0);
     const double missile_apn_target_accel_gain = nonnegative_or_default(
         resolved_tuning.apn_target_accel_gain, MissileGuidanceDefaults::kDefaultApnTargetAccelGain);
 
