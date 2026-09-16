@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from tools.geometry import warhead_spatial_structural_admission as admission
 
 
@@ -47,6 +49,29 @@ def test_case_matrix_has_six_directions_and_eight_headings() -> None:
   assert sorted({float(case["detonation_attitude_deg"][0]) for case in cases}) == sorted(
     admission.ATTITUDES_DEG
   )
+
+
+@pytest.mark.parametrize("target_heading_deg", [0.0, 90.0, 180.0, 270.0])
+def test_runtime_closure_is_rotation_invariant_for_all_body_directions(
+  target_heading_deg: float,
+) -> None:
+  cases = [
+    case
+    for case in admission._case_definitions()
+    if case["warhead_family"] == "continuous_rod"
+    and case["standoff_m"] == 0.5
+    and case["detonation_attitude_deg"][0] == 0.0
+  ]
+  assert {case["direction"] for case in cases} == set(admission.DIRECTION_ANCHORS)
+  for index, case in enumerate(cases):
+    event = admission._event_row(
+      case,
+      20260930 + index,
+      target_heading_deg=target_heading_deg,
+    )["event"]
+    assert event["vulnerability_closure_mps"] == pytest.approx(
+      admission.MISSILE_SPEED_MPS, abs=1.0e-6
+    )
 
 
 def test_evaluate_rows_accepts_a_closed_projection_trace() -> None:

@@ -138,3 +138,36 @@ def test_config_backed_parity_keeps_clean_and_noisy_rows_distinct() -> None:
 
   assert parity["max_nearest_distance_delta_m"] == 0.0
   assert parity["max_acceleration_rmse_delta_mps2"] == 0.0
+
+
+def test_bundle_admission_holds_dirty_or_unpublished_evidence() -> None:
+  report = {"admission": {"p10_complete": True}}
+
+  unpublished = admission._bundle_admission(
+    report,
+    worktree_porcelain="",
+    artifact_uri=None,
+    retention_owner="Echelon-Forge maintainers",
+  )
+  dirty = admission._bundle_admission(
+    report,
+    worktree_porcelain=" M tools/diagnostics/example.py",
+    artifact_uri="https://ci.example/artifacts/p10",
+    retention_owner="Echelon-Forge maintainers",
+  )
+  published = admission._bundle_admission(
+    report,
+    worktree_porcelain="",
+    artifact_uri="https://ci.example/artifacts/p10",
+    retention_owner="Echelon-Forge maintainers",
+  )
+
+  assert unpublished == {
+    "promotion_status": "held",
+    "blockers": ["raw_packets_not_published"],
+  }
+  assert dirty == {
+    "promotion_status": "held",
+    "blockers": ["generator_worktree_not_clean"],
+  }
+  assert published == {"promotion_status": "passed", "blockers": []}

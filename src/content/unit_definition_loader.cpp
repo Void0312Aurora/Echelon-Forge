@@ -505,8 +505,9 @@ void parse_fuze_json_fields(const nlohmann::json &src, MissileTuningDefinition *
     }
 }
 
-void parse_warhead_json_fields(const nlohmann::json &src, MissileTuningDefinition *out_tuning) {
-    if (!out_tuning || !src.is_object()) return;
+bool parse_warhead_json_fields(const nlohmann::json &src, MissileTuningDefinition *out_tuning,
+                               std::string *error) {
+    if (!out_tuning || !src.is_object()) return true;
     WarheadProfile profile = out_tuning->warhead_profile;
     profile.family = normalize_warhead_family(src.value("type", profile.family));
     profile.mass_kg = src.value("mass_kg", profile.mass_kg);
@@ -516,8 +517,20 @@ void parse_warhead_json_fields(const nlohmann::json &src, MissileTuningDefinitio
     profile.gurney_constant_mps = src.value("gurney_constant_mps", profile.gurney_constant_mps);
     profile.fragment_mass_kg = src.value("fragment_mass_kg", profile.fragment_mass_kg);
     profile.fragment_count = src.value("fragment_count", profile.fragment_count);
-    profile.fragment_angular_distribution =
-        src.value("fragment_angular_distribution", profile.fragment_angular_distribution);
+    if (src.contains("fragment_angular_distribution")) {
+        if (!src["fragment_angular_distribution"].is_string()) {
+            if (error) *error = "warhead.fragment_angular_distribution must be a string";
+            return false;
+        }
+        const std::string selector = src["fragment_angular_distribution"].get<std::string>();
+        if (selector != "legacy_scalar" && selector != "polar_azimuthal") {
+            if (error) {
+                *error = "Unknown warhead.fragment_angular_distribution: " + selector;
+            }
+            return false;
+        }
+        profile.fragment_angular_distribution = selector;
+    }
     profile.fragment_polar_concentration =
         src.value("fragment_polar_concentration", profile.fragment_polar_concentration);
     profile.fragment_isotropic_fraction =
@@ -530,8 +543,20 @@ void parse_warhead_json_fields(const nlohmann::json &src, MissileTuningDefinitio
     }
     profile.fragment_azimuthal_phase_deg =
         src.value("fragment_azimuthal_phase_deg", profile.fragment_azimuthal_phase_deg);
-    profile.continuous_rod_spatial_model =
-        src.value("continuous_rod_spatial_model", profile.continuous_rod_spatial_model);
+    if (src.contains("continuous_rod_spatial_model")) {
+        if (!src["continuous_rod_spatial_model"].is_string()) {
+            if (error) *error = "warhead.continuous_rod_spatial_model must be a string";
+            return false;
+        }
+        const std::string selector = src["continuous_rod_spatial_model"].get<std::string>();
+        if (selector != "legacy_side_sweep" && selector != "expanding_ring_band") {
+            if (error) {
+                *error = "Unknown warhead.continuous_rod_spatial_model: " + selector;
+            }
+            return false;
+        }
+        profile.continuous_rod_spatial_model = selector;
+    }
     profile.continuous_rod_band_half_angle_deg =
         src.value("continuous_rod_band_half_angle_deg", profile.continuous_rod_band_half_angle_deg);
     if (src.contains("continuous_rod_azimuthal_samples") &&
@@ -593,6 +618,7 @@ void parse_warhead_json_fields(const nlohmann::json &src, MissileTuningDefinitio
                                                                "warhead_lethal_radius_fuze_compat");
         out_tuning->has_fuze_profile = true;
     }
+    return true;
 }
 
 Sonar make_default_sonar_definition() {
@@ -1486,7 +1512,9 @@ bool parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefin
                 guidance.value("lobl_required", missile_tuning.lobl_required);
         }
         if (entry.contains("warhead") && entry["warhead"].is_object()) {
-            parse_warhead_json_fields(entry["warhead"], &missile_tuning);
+            if (!parse_warhead_json_fields(entry["warhead"], &missile_tuning, error)) {
+                return false;
+            }
         }
         if (entry.contains("fuze") && entry["fuze"].is_object()) {
             parse_fuze_json_fields(entry["fuze"], &missile_tuning);
