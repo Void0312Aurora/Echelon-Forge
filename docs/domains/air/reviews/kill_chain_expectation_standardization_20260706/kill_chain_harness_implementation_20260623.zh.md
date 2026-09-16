@@ -26,18 +26,14 @@ python -m pytest tests/tools/test_kces_expectation_envelope_audit.py -q
 
 | Artifact | Schema |
 | --- | --- |
-| before report | `a2.kill_chain_expectation_before_report.v2` |
-| case grid rows | `a2.kill_chain_expectation_case_grid.v2` |
-| heatmap rows | `a2.kill_chain_expectation_heatmap_row.v2` |
+| before report | `a2.kill_chain_expectation_before_report.v1` |
+| case grid rows | `a2.kill_chain_expectation_case_grid.v1` |
+| heatmap rows | `a2.kill_chain_expectation_heatmap_row.v1` |
 | component detail | `a2.kill_chain_expectation_component_detail.v1` |
 | visualization manifest | `a2.kill_chain_expectation_visualization_manifest.v1` |
-| first-review-stage attribution | `a2.kill_chain_expectation_stage_attribution.v2` |
-| response local diagnosis | `a2.kill_chain_expectation_response_diagnosis.v3` |
-| expectation-envelope audit | `a2.kill_chain_expectation_envelope_audit.v2` |
-
-当前维护的 v2 harness 要求 report 根节点以及每个 case-grid / heatmap row 都带有同一
-`expectation_baseline_id`。消费者会拒绝缺失或混用 baseline identity 的输入。已有 v1
-packet 仍作为封存的历史证据保留；不会重写，也不会作为当前 v2 输入接受。
+| first-review-stage attribution | `a2.kill_chain_expectation_stage_attribution.v1` |
+| response local diagnosis | `a2.kill_chain_expectation_response_diagnosis.v2` |
+| expectation-envelope audit | `a2.kill_chain_expectation_envelope_audit.v1` |
 
 ## 已实现内容
 

@@ -41,8 +41,8 @@ DEFAULT_AIM120_DEFINITION = (
 )
 EXPECTATION_REBASELINE_REVIEW = (
   REPO_ROOT
-  / "docs/systems/weapons/reviews/kill_chain_p11_expectation_rebaseline_20260915"
-  / "review_packets/kill_chain_p11_independent_review_acceptance_20260915.zh.md"
+  / "docs/systems/weapons/evidence/kill_chain_p11_expectation_rebaseline_20260915"
+  / "independent_review_acceptance_20260915.md"
 )
 MOTION_LAYERS = ("nonmaneuvering_constant_velocity", "mild_maneuver")
 EXPECTED_CASES_PER_SEED = 93

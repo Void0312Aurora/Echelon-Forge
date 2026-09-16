@@ -8,10 +8,6 @@ AIM-120C/F-16C/Pk authority.
 Chinese companion:
 [kill_chain_scenario_expectation_matrix_20260622.zh.md](kill_chain_scenario_expectation_matrix_20260622.zh.md)
 
-This matrix is sealed v1 historical expectation evidence. Current candidate
-reports use the v2 harness baseline identity and are validated separately; this
-document is intentionally not rewritten in place.
-
 ## Matrix Policy
 
 The P1 contract closed the radius-policy ambiguity as:
