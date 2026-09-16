@@ -19,6 +19,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Iterable
+from urllib.parse import urlparse
+from urllib.request import urlopen
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -30,6 +32,8 @@ from tools.diagnostics import kill_chain_decoupling_probe as probe  # noqa: E402
 
 SCHEMA_VERSION = "a2.kill_chain_maneuver_apn_admission.v1"
 MANIFEST_SCHEMA_VERSION = "a2.kill_chain_maneuver_apn_admission_manifest.v2"
+ARTIFACT_INDEX_SCHEMA_VERSION = "a2.kill_chain_artifact_index.v1"
+RUNTIME_ATTESTATION_SCHEMA_VERSION = "a2.kill_chain_runtime_build_attestation.v1"
 DEFAULT_RETENTION_OWNER = "Echelon-Forge maintainers"
 GENERATED_ON = "2026-09-15"
 DEFAULT_OUTPUT_DIR = (
@@ -51,6 +55,13 @@ NOISY_RANGE_KM = 8.0
 NOISY_BEARINGS_DEG = (-30.0, 30.0)
 NOISY_ACCELERATIONS_X_MPS2 = (-8.0, 8.0)
 ACCELERATION_STABLE_START_TIME_S = 3.5
+PUBLISHED_ARTIFACT_KEYS = (
+  "report_json",
+  "clean_runs_csv",
+  "noisy_runs_csv",
+  "config_backed_runs_csv",
+  "candidate_summary_csv",
+)
 
 PRODUCTION_MECHANISM_TUNING: dict[str, float | int] = {
   "pn_los_rate_source": 1,
@@ -653,11 +664,98 @@ def _sha256(path: Path) -> str:
   return digest.hexdigest()
 
 
+def _git_blob_sha256(path: Path, revision: str = "HEAD") -> str:
+  relative = path.resolve().relative_to(REPO_ROOT).as_posix()
+  result = subprocess.run(
+    ["git", "show", f"{revision}:{relative}"],
+    cwd=REPO_ROOT,
+    capture_output=True,
+    check=False,
+  )
+  return hashlib.sha256(result.stdout).hexdigest() if result.returncode == 0 else ""
+
+
 def _git_value(*args: str) -> str:
   result = subprocess.run(
     ["git", *args], cwd=REPO_ROOT, text=True, capture_output=True, check=False
   )
   return result.stdout.strip() if result.returncode == 0 else ""
+
+
+def _valid_publication_uri(uri: str | None) -> bool:
+  value = str(uri or "").strip()
+  if not value or any(char.isspace() for char in value):
+    return False
+  parsed = urlparse(value)
+  return bool(
+    (parsed.scheme == "https" and parsed.netloc)
+    or (parsed.scheme == "file" and parsed.path)
+  )
+
+
+def _read_uri_bytes(uri: str) -> bytes:
+  if not _valid_publication_uri(uri):
+    raise ValueError(f"unsupported publication URI: {uri!r}")
+  with urlopen(uri, timeout=10.0) as response:  # noqa: S310 - schemes checked above
+    return response.read()
+
+
+def _published_artifact_blocker(
+  artifact_index_uri: str,
+  expected_artifacts: dict[str, dict[str, Any]],
+) -> str | None:
+  try:
+    index = json.loads(_read_uri_bytes(artifact_index_uri).decode("utf-8"))
+  except (OSError, UnicodeDecodeError, ValueError, json.JSONDecodeError):
+    return "artifact_index_unretrievable"
+  if index.get("schema_version") != ARTIFACT_INDEX_SCHEMA_VERSION:
+    return "artifact_index_schema_mismatch"
+  indexed_artifacts = index.get("artifacts")
+  if not isinstance(indexed_artifacts, dict):
+    return "artifact_index_invalid"
+  for key in PUBLISHED_ARTIFACT_KEYS:
+    expected = expected_artifacts.get(key)
+    indexed = indexed_artifacts.get(key)
+    if not isinstance(expected, dict) or not isinstance(indexed, dict):
+      return "artifact_index_incomplete"
+    if (
+      indexed.get("sha256") != expected.get("sha256")
+      or indexed.get("bytes") != expected.get("bytes")
+    ):
+      return "artifact_index_digest_mismatch"
+    artifact_uri = str(indexed.get("uri", "") or "")
+    try:
+      payload = _read_uri_bytes(artifact_uri)
+    except (OSError, ValueError):
+      return "published_artifact_unretrievable"
+    if (
+      len(payload) != expected["bytes"]
+      or hashlib.sha256(payload).hexdigest() != expected["sha256"]
+    ):
+      return "published_artifact_digest_mismatch"
+  return None
+
+
+def _runtime_attestation_blocker(
+  runtime_attestation_uri: str,
+  *,
+  git_head: str,
+  ef_py_sha256: str,
+) -> str | None:
+  try:
+    attestation = json.loads(
+      _read_uri_bytes(runtime_attestation_uri).decode("utf-8")
+    )
+  except (OSError, UnicodeDecodeError, ValueError, json.JSONDecodeError):
+    return "runtime_build_attestation_unretrievable"
+  if attestation.get("schema_version") != RUNTIME_ATTESTATION_SCHEMA_VERSION:
+    return "runtime_build_attestation_schema_mismatch"
+  if (
+    attestation.get("git_head") != git_head
+    or attestation.get("ef_py_sha256") != ef_py_sha256
+  ):
+    return "runtime_build_attestation_mismatch"
+  return None
 
 
 def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
@@ -695,7 +793,12 @@ def _bundle_admission(
   *,
   worktree_porcelain: str,
   artifact_uri: str | None,
+  artifact_index_uri: str | None,
+  runtime_attestation_uri: str | None,
   retention_owner: str,
+  expected_artifacts: dict[str, dict[str, Any]],
+  git_head: str,
+  ef_py_sha256: str,
 ) -> dict[str, Any]:
   blockers = []
   if not bool(report["admission"]["p10_complete"]):
@@ -704,6 +807,27 @@ def _bundle_admission(
     blockers.append("generator_worktree_not_clean")
   if not artifact_uri:
     blockers.append("raw_packets_not_published")
+  elif not _valid_publication_uri(artifact_uri):
+    blockers.append("artifact_uri_invalid")
+  if not artifact_index_uri:
+    blockers.append("artifact_index_missing")
+  else:
+    artifact_blocker = _published_artifact_blocker(
+      artifact_index_uri,
+      expected_artifacts,
+    )
+    if artifact_blocker:
+      blockers.append(artifact_blocker)
+  if not runtime_attestation_uri:
+    blockers.append("runtime_build_attestation_missing")
+  else:
+    runtime_blocker = _runtime_attestation_blocker(
+      runtime_attestation_uri,
+      git_head=git_head,
+      ef_py_sha256=ef_py_sha256,
+    )
+    if runtime_blocker:
+      blockers.append(runtime_blocker)
   if not retention_owner.strip():
     blockers.append("retention_owner_missing")
   return {
@@ -778,15 +902,14 @@ def write_bundle(
   output_dir: Path,
   stem: str,
   artifact_uri: str | None = None,
+  artifact_index_uri: str | None = None,
+  runtime_attestation_uri: str | None = None,
   retention_owner: str = DEFAULT_RETENTION_OWNER,
 ) -> dict[str, str]:
   source_worktree_porcelain = _git_value("status", "--short")
-  bundle_admission = _bundle_admission(
-    report,
-    worktree_porcelain=source_worktree_porcelain,
-    artifact_uri=artifact_uri,
-    retention_owner=retention_owner,
-  )
+  git_head = _git_value("rev-parse", "HEAD")
+  ef_py_path = Path(probe.ef_py.__file__).resolve()
+  ef_py_sha256 = _sha256(ef_py_path)
   output_dir.mkdir(parents=True, exist_ok=True)
   paths = {
     "report_json": output_dir / f"{stem}.json",
@@ -805,6 +928,25 @@ def write_bundle(
   _write_csv(paths["noisy_runs_csv"], report["noisy_runs"])
   _write_csv(paths["config_backed_runs_csv"], report["config_backed_runs"])
   _write_candidate_csv(paths["candidate_summary_csv"], report)
+  expected_artifacts = {
+    key: {
+      "path": str(paths[key].resolve().relative_to(REPO_ROOT)),
+      "sha256": _sha256(paths[key]),
+      "bytes": paths[key].stat().st_size,
+    }
+    for key in PUBLISHED_ARTIFACT_KEYS
+  }
+  bundle_admission = _bundle_admission(
+    report,
+    worktree_porcelain=source_worktree_porcelain,
+    artifact_uri=artifact_uri,
+    artifact_index_uri=artifact_index_uri,
+    runtime_attestation_uri=runtime_attestation_uri,
+    retention_owner=retention_owner,
+    expected_artifacts=expected_artifacts,
+    git_head=git_head,
+    ef_py_sha256=ef_py_sha256,
+  )
   paths["conclusions_zh_md"].write_text(
     conclusions_zh(report, bundle_admission=bundle_admission), encoding="utf-8"
   )
@@ -817,7 +959,7 @@ def write_bundle(
       "sha256": _sha256(Path(__file__)),
     },
     "git": {
-      "head": _git_value("rev-parse", "HEAD"),
+      "head": git_head,
       "branch": _git_value("branch", "--show-current"),
       "worktree_porcelain": source_worktree_porcelain,
     },
@@ -825,14 +967,24 @@ def write_bundle(
     "retention": {
       "owner": retention_owner,
       "raw_packet_root": str(output_dir.resolve().relative_to(REPO_ROOT)),
-      "retrieval_status": "published" if artifact_uri else "local_output_only",
+      "retrieval_status": (
+        "verified"
+        if not any(
+          blocker.startswith(("artifact_", "published_artifact_", "raw_packets_"))
+          for blocker in bundle_admission["blockers"]
+        )
+        else "unverified"
+      ),
       "artifact_uri": artifact_uri,
+      "artifact_index_uri": artifact_index_uri,
+      "runtime_attestation_uri": runtime_attestation_uri,
     },
     "runtime": {
-      "ef_py_path": str(Path(probe.ef_py.__file__).resolve()),
-      "ef_py_sha256": _sha256(Path(probe.ef_py.__file__).resolve()),
+      "ef_py_path": str(ef_py_path),
+      "ef_py_sha256": ef_py_sha256,
       "aim120_definition_path": str(DEFAULT_AIM120_DEFINITION.resolve()),
       "aim120_definition_sha256": _sha256(DEFAULT_AIM120_DEFINITION),
+      "aim120_source_blob_sha256": _git_blob_sha256(DEFAULT_AIM120_DEFINITION),
     },
     "artifacts": {
       key: {
@@ -867,6 +1019,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
   parser.add_argument("--skip-noisy", action="store_true")
   parser.add_argument("--skip-config-backed-confirmation", action="store_true")
   parser.add_argument("--artifact-uri")
+  parser.add_argument("--artifact-index-uri")
+  parser.add_argument("--runtime-attestation-uri")
   parser.add_argument("--retention-owner", default=DEFAULT_RETENTION_OWNER)
   parser.add_argument("--strict", action="store_true")
   return parser
@@ -893,6 +1047,8 @@ def main(argv: list[str] | None = None) -> int:
     output_dir=args.output_dir,
     stem=str(args.stem),
     artifact_uri=args.artifact_uri,
+    artifact_index_uri=args.artifact_index_uri,
+    runtime_attestation_uri=args.runtime_attestation_uri,
     retention_owner=str(args.retention_owner),
   )
   manifest = json.loads(Path(artifacts["manifest_json"]).read_text(encoding="utf-8"))

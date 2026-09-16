@@ -7,7 +7,9 @@
       "generator_revision_not_ancestral",
       "generator_worktree_not_clean",
       "input_digest_stale",
-      "raw_packets_not_published"
+      "raw_packets_not_published",
+      "artifact_index_missing",
+      "runtime_build_attestation_missing"
     ]
   },
   "retention": {
@@ -20,8 +22,11 @@
     "recorded_run_head_ancestral": false,
     "recorded_run_worktree_clean": false,
     "recorded_aim120_definition_sha256_matches": false,
-    "current_aim120_definition_sha256": "5e4045fea23773881f80adec28e30789417f8b5f9ccc46ed16116de5bb9cd5eb",
-    "raw_packets_retrievable": false
+    "current_aim120_definition_sha256": "2ceca4b11d3bc63185730ddbdff0ff5054cea9cf754300d24a1639b5d41449a4",
+    "digest_domain": "git_blob_lf_bytes",
+    "raw_packets_retrievable": false,
+    "artifact_index_verified": false,
+    "runtime_build_attestation_verified": false
   },
   "generated_at_utc": "2026-09-15T02:17:09.344092+00:00",
   "tool": {
@@ -67,8 +72,8 @@
     },
     "conclusions_zh_md": {
       "path": "docs\\systems\\weapons\\reviews\\kill_chain_maneuver_apn_admission_20260915\\review_packets\\kill_chain_maneuver_apn_admission_20260915_conclusions.zh.md",
-      "sha256": "701ba9aed9ea5daec94188e78c0f39c55cf5f4db3a93cea034c542707d0b227b",
-      "bytes": 1093
+      "sha256": "5f60f79a350adb8a5f317400cfe276df3fb9347fe6bb78c59cdad750244febac",
+      "bytes": 1221
     },
     "heatmaps_png": {
       "path": "docs/systems/weapons/reviews/kill_chain_maneuver_apn_admission_20260915/review_packets/kill_chain_maneuver_apn_admission_20260915_heatmaps.png",

@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import hashlib
+import json
+from pathlib import Path
+
 import pytest
 
 from tools.diagnostics import kill_chain_maneuver_apn_admission as admission
@@ -140,34 +144,146 @@ def test_config_backed_parity_keeps_clean_and_noisy_rows_distinct() -> None:
   assert parity["max_acceleration_rmse_delta_mps2"] == 0.0
 
 
-def test_bundle_admission_holds_dirty_or_unpublished_evidence() -> None:
+def _publication_fixture(tmp_path: Path) -> tuple[dict[str, dict[str, object]], str, str]:
+  expected: dict[str, dict[str, object]] = {}
+  indexed: dict[str, dict[str, object]] = {}
+  for key in admission.PUBLISHED_ARTIFACT_KEYS:
+    path = tmp_path / f"{key}.dat"
+    payload = f"payload:{key}\n".encode()
+    path.write_bytes(payload)
+    expected[key] = {
+      "sha256": hashlib.sha256(payload).hexdigest(),
+      "bytes": len(payload),
+    }
+    indexed[key] = {**expected[key], "uri": path.as_uri()}
+  index_path = tmp_path / "artifact-index.json"
+  index_path.write_text(
+    json.dumps(
+      {
+        "schema_version": admission.ARTIFACT_INDEX_SCHEMA_VERSION,
+        "artifacts": indexed,
+      }
+    ),
+    encoding="utf-8",
+  )
+  attestation_path = tmp_path / "runtime-attestation.json"
+  attestation_path.write_text(
+    json.dumps(
+      {
+        "schema_version": admission.RUNTIME_ATTESTATION_SCHEMA_VERSION,
+        "git_head": "reviewed-head",
+        "ef_py_sha256": "ef-py-digest",
+      }
+    ),
+    encoding="utf-8",
+  )
+  return expected, index_path.as_uri(), attestation_path.as_uri()
+
+
+def test_bundle_admission_holds_dirty_or_unpublished_evidence(tmp_path: Path) -> None:
   report = {"admission": {"p10_complete": True}}
+  expected, index_uri, attestation_uri = _publication_fixture(tmp_path)
 
   unpublished = admission._bundle_admission(
     report,
     worktree_porcelain="",
     artifact_uri=None,
+    artifact_index_uri=None,
+    runtime_attestation_uri=None,
     retention_owner="Echelon-Forge maintainers",
+    expected_artifacts=expected,
+    git_head="reviewed-head",
+    ef_py_sha256="ef-py-digest",
   )
   dirty = admission._bundle_admission(
     report,
     worktree_porcelain=" M tools/diagnostics/example.py",
-    artifact_uri="https://ci.example/artifacts/p10",
+    artifact_uri=tmp_path.as_uri(),
+    artifact_index_uri=index_uri,
+    runtime_attestation_uri=attestation_uri,
     retention_owner="Echelon-Forge maintainers",
+    expected_artifacts=expected,
+    git_head="reviewed-head",
+    ef_py_sha256="ef-py-digest",
   )
-  published = admission._bundle_admission(
+  verified = admission._bundle_admission(
     report,
     worktree_porcelain="",
-    artifact_uri="https://ci.example/artifacts/p10",
+    artifact_uri=tmp_path.as_uri(),
+    artifact_index_uri=index_uri,
+    runtime_attestation_uri=attestation_uri,
     retention_owner="Echelon-Forge maintainers",
+    expected_artifacts=expected,
+    git_head="reviewed-head",
+    ef_py_sha256="ef-py-digest",
   )
 
   assert unpublished == {
     "promotion_status": "held",
-    "blockers": ["raw_packets_not_published"],
+    "blockers": [
+      "raw_packets_not_published",
+      "artifact_index_missing",
+      "runtime_build_attestation_missing",
+    ],
   }
   assert dirty == {
     "promotion_status": "held",
     "blockers": ["generator_worktree_not_clean"],
   }
-  assert published == {"promotion_status": "passed", "blockers": []}
+  assert verified == {"promotion_status": "passed", "blockers": []}
+
+
+def test_bundle_admission_rejects_invalid_uri_and_mismatched_attestation(
+  tmp_path: Path,
+) -> None:
+  expected, index_uri, attestation_uri = _publication_fixture(tmp_path)
+  report = {"admission": {"p10_complete": True}}
+
+  invalid_uri = admission._bundle_admission(
+    report,
+    worktree_porcelain="",
+    artifact_uri="not-a-uri",
+    artifact_index_uri=index_uri,
+    runtime_attestation_uri=attestation_uri,
+    retention_owner="Echelon-Forge maintainers",
+    expected_artifacts=expected,
+    git_head="reviewed-head",
+    ef_py_sha256="ef-py-digest",
+  )
+  mismatched_runtime = admission._bundle_admission(
+    report,
+    worktree_porcelain="",
+    artifact_uri=tmp_path.as_uri(),
+    artifact_index_uri=index_uri,
+    runtime_attestation_uri=attestation_uri,
+    retention_owner="Echelon-Forge maintainers",
+    expected_artifacts=expected,
+    git_head="different-head",
+    ef_py_sha256="ef-py-digest",
+  )
+  mismatched_expected = {key: dict(value) for key, value in expected.items()}
+  mismatched_expected[admission.PUBLISHED_ARTIFACT_KEYS[0]]["sha256"] = "0" * 64
+  mismatched_artifact = admission._bundle_admission(
+    report,
+    worktree_porcelain="",
+    artifact_uri=tmp_path.as_uri(),
+    artifact_index_uri=index_uri,
+    runtime_attestation_uri=attestation_uri,
+    retention_owner="Echelon-Forge maintainers",
+    expected_artifacts=mismatched_expected,
+    git_head="reviewed-head",
+    ef_py_sha256="ef-py-digest",
+  )
+
+  assert invalid_uri == {
+    "promotion_status": "held",
+    "blockers": ["artifact_uri_invalid"],
+  }
+  assert mismatched_runtime == {
+    "promotion_status": "held",
+    "blockers": ["runtime_build_attestation_mismatch"],
+  }
+  assert mismatched_artifact == {
+    "promotion_status": "held",
+    "blockers": ["artifact_index_digest_mismatch"],
+  }
