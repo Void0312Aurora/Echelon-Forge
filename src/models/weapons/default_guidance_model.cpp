@@ -601,16 +601,26 @@ void propagate_world_cv_target_track(Missile &missile, double current_time, doub
                                   missile.filtered_closing_speed_mps, output);
 }
 
-void update_track_from_detection(Missile &missile, const Detection &det, double current_time,
+bool update_track_from_detection(Missile &missile, const Detection &det, double current_time,
                                  double dt, const GuidanceResolvedTuning &tuning,
                                  const Transform &transform, const Velocity &velocity) {
+    if (uses_world_cv_target_tracker(missile) && missile.last_track_time_s >= 0.0 &&
+        det.timestamp <= missile.last_track_time_s) {
+        missile.target_measurement_fresh = false;
+        missile.target_measurement_rejected_nonmonotonic = true;
+        ++missile.target_duplicate_measurement_count;
+        missile.target_measurement_age_s = std::max(0.0, current_time - missile.last_track_time_s);
+        return false;
+    }
     if (uses_world_cv_target_tracker(missile)) {
-        update_world_cv_target_track_from_detection(missile, det, current_time, dt, transform,
-                                                    velocity);
+        const bool measurement_accepted = update_world_cv_target_track_from_detection(
+            missile, det, current_time, dt, transform, velocity);
         missile.seeker_has_valid_track = missile.world_cv_target_tracker.position_valid;
-        missile.seeker_has_range = det.range > 1.0e-3;
-        missile.seeker_mode = static_cast<int>(MissileSeekerMode::Track);
-        return;
+        if (measurement_accepted) {
+            missile.seeker_has_range = det.range > 1.0e-3;
+            missile.seeker_mode = static_cast<int>(MissileSeekerMode::Track);
+        }
+        return measurement_accepted;
     }
     // EKF path
     if (missile.use_kalman_seeker) {
@@ -692,6 +702,7 @@ void update_track_from_detection(Missile &missile, const Detection &det, double 
     missile.seeker_has_range = det.range > 1.0e-3;
     missile.last_track_time_s = current_time;
     missile.seeker_mode = static_cast<int>(MissileSeekerMode::Track);
+    return true;
 }
 
 void propagate_track_memory(Missile &missile, double current_time, double dt,
@@ -1334,10 +1345,13 @@ class DefaultGuidanceModel : public IGuidanceModel {
                 }
             }
 
+            bool track_updated = false;
             if (best_det) {
                 missile.target_id = best_det->target_id;
-                update_track_from_detection(missile, *best_det, current_time, guidance_dt, tuning,
-                                            transform, velocity);
+                track_updated = update_track_from_detection(
+                    missile, *best_det, current_time, guidance_dt, tuning, transform, velocity);
+            }
+            if (track_updated) {
                 const bool profiled_kinematics_required =
                     mechanism_profile_active &&
                     (mechanism_profile->lead_mode != MissileGuidanceMechanismProfile::kLeadOff ||

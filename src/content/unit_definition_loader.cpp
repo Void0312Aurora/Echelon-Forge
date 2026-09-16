@@ -431,6 +431,21 @@ void parse_missile_tuning_json_fields(const nlohmann::json &src,
     *out_tuning = tuning;
 }
 
+bool validate_missile_tracker_gains(const MissileTuningDefinition &tuning, std::string *error) {
+    const auto validate = [&](const char *field, double value, double minimum, double maximum) {
+        if (!std::isfinite(value) || (value >= minimum && value <= maximum)) {
+            return true;
+        }
+        if (error) {
+            *error = std::string(field) + " must be in [" + std::to_string(minimum) + ", " +
+                     std::to_string(maximum) + "]";
+        }
+        return false;
+    };
+    return validate("target_tracker_alpha", tuning.target_tracker_alpha, 0.0, 1.0) &&
+           validate("target_tracker_beta", tuning.target_tracker_beta, 0.0, 2.0);
+}
+
 std::string normalize_warhead_family(const std::string &raw_type) {
     if (raw_type == "Frag" || raw_type == "Fragmentation" || raw_type == "blast_fragmentation") {
         return "blast_fragmentation";
@@ -1545,6 +1560,9 @@ bool parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefin
         } else if (missile_tuning.seeker_type >= 0 ||
                    std::isfinite(missile_tuning.sensor_max_range)) {
             def.has_sensor = true;
+        }
+        if (!validate_missile_tracker_gains(missile_tuning, error)) {
+            return false;
         }
     }
     return true;

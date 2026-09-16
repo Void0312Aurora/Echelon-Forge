@@ -564,4 +564,56 @@ TEST_SUITE("components_basic") {
         std::filesystem::remove(invalid_capture_path);
     }
 
+    TEST_CASE("missile tracker gains fail closed at content boundary") {
+        const std::filesystem::path root =
+            std::filesystem::temp_directory_path() / "ef_missile_tracker_gain_validation";
+        std::filesystem::remove_all(root);
+        std::filesystem::create_directories(root);
+
+        UnitDefinition sentinel{};
+        sentinel.name = "preexisting_definition";
+        std::vector<UnitDefinition> definitions{sentinel};
+        std::string error;
+        struct InvalidGainCase {
+            const char *field;
+            double value;
+        };
+        const InvalidGainCase invalid_cases[] = {
+            {"target_tracker_alpha", -0.01},
+            {"target_tracker_alpha", 1.01},
+            {"target_tracker_beta", -0.01},
+            {"target_tracker_beta", 2.01},
+        };
+        for (const auto &test_case : invalid_cases) {
+            {
+                std::ofstream file(root / "missile.json");
+                file << "{\"name\":\"Invalid_Tracker_Gain\",\"type\":\"Missile\","
+                        "\"guidance\":{\""
+                     << test_case.field << "\":" << test_case.value << "}}";
+            }
+            definitions = {sentinel};
+            error.clear();
+            CHECK_FALSE(load_unit_definitions_json(root.string(), definitions, &error));
+            REQUIRE(definitions.size() == 1);
+            CHECK(definitions.front().name == "preexisting_definition");
+            CHECK(error.find(test_case.field) != std::string::npos);
+        }
+
+        {
+            std::ofstream file(root / "missile.json");
+            file << R"json({
+  "name": "Boundary_Tracker_Gains",
+  "type": "Missile",
+  "guidance": {"target_tracker_alpha": 1.0, "target_tracker_beta": 2.0}
+})json";
+        }
+        definitions = {sentinel};
+        error.clear();
+        REQUIRE(load_unit_definitions_json(root.string(), definitions, &error));
+        REQUIRE(definitions.size() == 2);
+        CHECK(definitions.back().missile_tuning.target_tracker_alpha == doctest::Approx(1.0));
+        CHECK(definitions.back().missile_tuning.target_tracker_beta == doctest::Approx(2.0));
+        std::filesystem::remove_all(root);
+    }
+
 } // TEST_SUITE components_basic
