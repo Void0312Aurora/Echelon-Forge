@@ -7,6 +7,7 @@ import argparse
 import json
 import math
 import os
+import random
 import sys
 from pathlib import Path
 from typing import Any
@@ -73,16 +74,26 @@ GUIDANCE_TUNING_OVERRIDE_FIELDS = frozenset(
     "autopilot_order",
     "autopilot_tau_s",
     "bearing_filter_tau_s",
+    "capture_guidance_mode",
     "elevation_filter_tau_s",
     "guidance_update_period_s",
     "max_accel_response_g_per_s",
     "max_lateral_g",
     "nav_gain",
+    "pn_los_rate_source",
     "range_filter_tau_s",
+    "target_kinematics_estimator",
+    "target_tracker_alpha",
+    "target_tracker_beta",
+    "target_tracker_gamma",
+    "track_break_time_s",
   }
 )
 GUIDANCE_MECHANISM_PROFILE_DEFAULTS = {
   "capture_mode": 1,
+  "capture_base_range_mode": 0,
+  "capture_terminal_weight_mode": 0,
+  "capture_lead_blend_mode": 0,
   "pn_mode": 0,
   "lead_mode": 2,
   "kinematics_source": 0,
@@ -90,6 +101,9 @@ GUIDANCE_MECHANISM_PROFILE_DEFAULTS = {
 }
 GUIDANCE_MECHANISM_PROFILE_RANGES = {
   "capture_mode": (0, 1),
+  "capture_base_range_mode": (0, 1),
+  "capture_terminal_weight_mode": (0, 2),
+  "capture_lead_blend_mode": (0, 2),
   "pn_mode": (0, 3),
   "lead_mode": (0, 2),
   "kinematics_source": (0, 1),
@@ -262,7 +276,12 @@ def _apply_guidance_tuning_overrides(
     if not hasattr(tuning, field):
       raise ValueError(f"runtime MissileTuning lacks field: {field}")
     value: float | int
-    if field in {"autopilot_order"}:
+    if field in {
+      "autopilot_order",
+      "capture_guidance_mode",
+      "pn_los_rate_source",
+      "target_kinematics_estimator",
+    }:
       value = int(raw_value)
     else:
       value = float(raw_value)
@@ -300,6 +319,11 @@ def _guidance_runtime_trace_sample(
   truth_distance_m: float,
   transform_heading_deg: float,
   velocity_heading_deg: float,
+  missile_position_m: tuple[float, float, float],
+  missile_velocity_mps: tuple[float, float, float],
+  target_position_m: tuple[float, float, float],
+  target_velocity_mps: tuple[float, float, float],
+  target_acceleration_mps2: tuple[float, float, float],
 ) -> dict[str, Any]:
   target_accel = (
     finite_float(runtime.get("target_track_ax_mps2", 0.0), 0.0),
@@ -340,6 +364,46 @@ def _guidance_runtime_trace_sample(
       for index in range(3)
     )
   )
+  estimated_position = tuple(
+    finite_float(runtime.get(f"target_track_{axis}_m", 0.0), 0.0)
+    for axis in ("x", "y", "z")
+  )
+  estimated_velocity = tuple(
+    finite_float(runtime.get(f"target_track_v{axis}_mps", 0.0), 0.0)
+    for axis in ("x", "y", "z")
+  )
+  position_error = tuple(
+    estimated_position[index] - target_position_m[index] for index in range(3)
+  )
+  velocity_error = tuple(
+    estimated_velocity[index] - target_velocity_mps[index] for index in range(3)
+  )
+
+  def _los_rate(position: tuple[float, float, float],
+                velocity: tuple[float, float, float]) -> tuple[float, float, float]:
+    relative_position = tuple(
+      position[index] - missile_position_m[index] for index in range(3)
+    )
+    relative_velocity = tuple(
+      velocity[index] - missile_velocity_mps[index] for index in range(3)
+    )
+    range_sq = sum(value * value for value in relative_position)
+    if range_sq <= 1.0e-9:
+      return (0.0, 0.0, 0.0)
+    return (
+      (relative_position[1] * relative_velocity[2]
+       - relative_position[2] * relative_velocity[1]) / range_sq,
+      (relative_position[2] * relative_velocity[0]
+       - relative_position[0] * relative_velocity[2]) / range_sq,
+      (relative_position[0] * relative_velocity[1]
+       - relative_position[1] * relative_velocity[0]) / range_sq,
+    )
+
+  estimated_los_rate = _los_rate(estimated_position, estimated_velocity)
+  truth_los_rate = _los_rate(target_position_m, target_velocity_mps)
+  los_rate_error = tuple(
+    estimated_los_rate[index] - truth_los_rate[index] for index in range(3)
+  )
   return {
     "time_s": float(time_s),
     "truth_distance_m": float(truth_distance_m),
@@ -370,13 +434,81 @@ def _guidance_runtime_trace_sample(
       runtime.get("guidance_apn_lateral_accel_mps2")
     ),
     "target_kinematics_valid": bool(runtime.get("target_kinematics_valid")),
+    "target_velocity_valid": bool(runtime.get("target_velocity_valid")),
+    "target_acceleration_valid": bool(runtime.get("target_acceleration_valid")),
+    "target_acceleration_estimator_sample_count": int(
+      runtime.get("target_acceleration_estimator_sample_count", 0) or 0
+    ),
+    "target_estimator_mode": int(runtime.get("target_kinematics_estimator", 0) or 0),
+    "target_measurement_timestamp_s": _finite_or_none(
+      runtime.get("target_measurement_timestamp_s")
+    ),
+    "target_measurement_age_s": _finite_or_none(runtime.get("target_measurement_age_s")),
+    "target_measurement_fresh": bool(runtime.get("target_measurement_fresh")),
+    "target_measurement_rejected_nonmonotonic": bool(
+      runtime.get("target_measurement_rejected_nonmonotonic")
+    ),
+    "target_duplicate_measurement_count": int(
+      runtime.get("target_duplicate_measurement_count", 0) or 0
+    ),
+    "target_estimator_update_dt_s": _finite_or_none(
+      runtime.get("target_estimator_update_dt_s")
+    ),
+    "target_estimator_sample_count": int(
+      runtime.get("target_estimator_sample_count", 0) or 0
+    ),
+    "target_measurement_xyz_m": [
+      _finite_or_none(runtime.get(f"target_measurement_{axis}_m"))
+      for axis in ("x", "y", "z")
+    ],
+    "target_prediction_xyz_m": [
+      _finite_or_none(runtime.get(f"target_prediction_{axis}_m"))
+      for axis in ("x", "y", "z")
+    ],
+    "target_residual_xyz_m": [
+      finite_float(runtime.get(f"target_residual_{axis}_m", 0.0), 0.0)
+      for axis in ("x", "y", "z")
+    ],
+    "target_residual_norm_m": _finite_or_none(runtime.get("target_residual_norm_m")),
+    "target_track_position_xyz_m": list(estimated_position),
+    "target_track_velocity_xyz_mps": list(estimated_velocity),
+    "target_truth_position_xyz_m": list(target_position_m),
+    "target_truth_velocity_xyz_mps": list(target_velocity_mps),
+    "target_position_error_xyz_m": list(position_error),
+    "target_position_error_m": math.sqrt(sum(value * value for value in position_error)),
+    "target_velocity_error_xyz_mps": list(velocity_error),
+    "target_velocity_error_mps": math.sqrt(sum(value * value for value in velocity_error)),
+    "target_estimated_los_rate_xyz_rad_s": list(estimated_los_rate),
+    "target_truth_los_rate_xyz_rad_s": list(truth_los_rate),
+    "target_los_rate_error_xyz_rad_s": list(los_rate_error),
+    "target_los_rate_error_rad_s": math.sqrt(sum(value * value for value in los_rate_error)),
     "target_track_accel_mps2": math.sqrt(sum(value * value for value in target_accel)),
+    "target_track_accel_xyz_mps2": list(target_accel),
+    "target_truth_accel_xyz_mps2": list(target_acceleration_mps2),
+    "target_accel_error_xyz_mps2": [
+      target_accel[index] - target_acceleration_mps2[index] for index in range(3)
+    ],
+    "target_accel_error_mps2": math.sqrt(
+      sum(
+        (target_accel[index] - target_acceleration_mps2[index]) ** 2
+        for index in range(3)
+      )
+    ),
     "seeker_mode": int(runtime.get("seeker_mode", 0) or 0),
     "guidance_mechanism_profile_active": bool(
       runtime.get("guidance_mechanism_profile_active")
     ),
     "guidance_mechanism_capture_mode": int(
       runtime.get("guidance_mechanism_capture_mode", 1) or 0
+    ),
+    "guidance_capture_base_range_mode": int(
+      runtime.get("guidance_capture_base_range_mode", 0) or 0
+    ),
+    "guidance_capture_terminal_weight_mode": int(
+      runtime.get("guidance_capture_terminal_weight_mode", 0) or 0
+    ),
+    "guidance_capture_lead_blend_mode": int(
+      runtime.get("guidance_capture_lead_blend_mode", 0) or 0
     ),
     "guidance_mechanism_pn_mode": int(
       runtime.get("guidance_mechanism_pn_mode", 0) or 0
@@ -397,6 +529,18 @@ def _guidance_runtime_trace_sample(
     "guidance_capture_accel_xyz_mps2": list(capture),
     "guidance_capture_accel_mps2": finite_float(
       runtime.get("guidance_capture_accel_mps2", 0.0), 0.0
+    ),
+    "guidance_capture_lateral_error": finite_float(
+      runtime.get("guidance_capture_lateral_error", 0.0), 0.0
+    ),
+    "guidance_capture_base_range_factor": finite_float(
+      runtime.get("guidance_capture_base_range_factor", 0.0), 0.0
+    ),
+    "guidance_capture_terminal_weight": finite_float(
+      runtime.get("guidance_capture_terminal_weight", 0.0), 0.0
+    ),
+    "guidance_capture_raw_accel_mps2": finite_float(
+      runtime.get("guidance_capture_raw_accel_mps2", 0.0), 0.0
     ),
     "guidance_pn_accel_xyz_mps2": list(pn),
     "guidance_pn_accel_mps2": finite_float(
@@ -682,21 +826,23 @@ def _set_unit_truth_state(
   *,
   x: float,
   y: float,
+  z: float = 5000.0,
   heading: float,
   vx: float,
   vy: float,
+  vz: float = 0.0,
 ) -> None:
   sim.debug_set_unit_truth_state(
     int(entity_id),
     float(x),
     float(y),
-    5000.0,
+    float(z),
     float(heading),
     0.0,
     0.0,
     float(vx),
     float(vy),
-    0.0,
+    float(vz),
   )
 
 def _spawn_structured_f16_pair(sim: ef_py.SimulationKernel) -> tuple[int, int]:
@@ -3382,6 +3528,10 @@ def run_guidance_case(
   guidance_mechanism_profile: dict[str, int] | None = None,
   collect_guidance_runtime_trace: bool = False,
   guidance_trace_stride: int = 1,
+  guidance_measurement_period_s: float = 0.0,
+  guidance_bearing_noise_std_deg: float = 0.0,
+  guidance_range_noise_std_m: float = 0.0,
+  target_acceleration_mps2: tuple[float, float, float] = (0.0, 0.0, 0.0),
 ) -> dict[str, Any]:
   sim = _make_kernel(database_path, seed=seed)
   tuning = ef_py.MissileTuning()
@@ -3408,6 +3558,11 @@ def run_guidance_case(
   initial_y = float(range_m) * math.cos(bearing_rad)
   target_vx = 0.0
   target_vy = -250.0
+  target_ax, target_ay, target_az = (
+    float(value) for value in target_acceleration_mps2
+  )
+  if not all(math.isfinite(value) for value in (target_ax, target_ay, target_az)):
+    raise ValueError("target_acceleration_mps2 must contain finite values")
   blue_id, red_id = _spawn_geometry_pair(
     sim,
     red_x=initial_x,
@@ -3428,49 +3583,165 @@ def run_guidance_case(
       applied_guidance_mechanism_profile["lead_mode"],
       applied_guidance_mechanism_profile["kinematics_source"],
       applied_guidance_mechanism_profile["apn_mode"],
+      applied_guidance_mechanism_profile["capture_base_range_mode"],
+      applied_guidance_mechanism_profile["capture_terminal_weight_mode"],
+      applied_guidance_mechanism_profile["capture_lead_blend_mode"],
     )
-  missile_runtime_projection = _runtime_projection_profile(
-    dict(sim.debug_get_missile_runtime_state(missile_id))
-  )
+  initial_missile_runtime = dict(sim.debug_get_missile_runtime_state(missile_id))
+  missile_runtime_projection = _runtime_projection_profile(initial_missile_runtime)
+  seeker_fov_deg = finite_float(initial_missile_runtime.get("seeker_fov_deg", 0.0), 0.0)
+  seeker_fov_half_angle_deg = max(0.0, 0.5 * seeker_fov_deg)
+  resolved_guidance_runtime = {
+    key: initial_missile_runtime.get(key)
+    for key in (
+      "nav_gain",
+      "pn_los_rate_source",
+      "target_kinematics_estimator",
+      "capture_guidance_mode",
+      "target_tracker_alpha",
+      "target_tracker_beta",
+      "target_tracker_gamma",
+      "apn_target_accel_gain",
+      "guidance_max_lateral_g",
+    )
+  }
 
   dt = float(sim.get_time_step())
   min_truth_distance_m = math.inf
   max_achieved_lateral_g = 0.0
+  max_capture_component_g = 0.0
+  max_preclamp_command_g = 0.0
+  max_postclamp_command_g = 0.0
+  guidance_runtime_observation_count = 0
+  guidance_runtime_missing_acceleration_diagnostics_count = 0
+  guidance_saturated_sample_count = 0
   guidance_runtime_trace: list[dict[str, Any]] = []
+  seeker_mode_sample_counts = {"track": 0, "memory": 0, "ballistic": 0}
+  first_memory_time_s: float | None = None
+  first_ballistic_time_s: float | None = None
+  first_detection_outside_fov_time_s: float | None = None
+  max_abs_detection_bearing_deg = 0.0
+  max_abs_filtered_bearing_deg = 0.0
+  last_runtime_observation: dict[str, Any] = {}
   trace_stride = max(1, int(guidance_trace_stride))
   step_idx = 0
   time_s = 0.0
+  measurement_period_s = max(0.0, float(guidance_measurement_period_s))
+  bearing_noise_std_deg = max(0.0, float(guidance_bearing_noise_std_deg))
+  range_noise_std_m = max(0.0, float(guidance_range_noise_std_m))
+  measurement_rng = random.Random(int(seed) ^ 0x5A17C0DE)
+  held_detection: Any | None = None
+  last_measurement_time_s = -math.inf
   for step_idx in range(int(max_steps)):
     time_s = step_idx * dt
     _set_unit_truth_state(
       sim,
       red_id,
-      x=initial_x + target_vx * time_s,
-      y=initial_y + target_vy * time_s,
+      x=initial_x + target_vx * time_s + 0.5 * target_ax * time_s * time_s,
+      y=initial_y + target_vy * time_s + 0.5 * target_ay * time_s * time_s,
+      z=5000.0 + 0.5 * target_az * time_s * time_s,
       heading=180.0,
-      vx=target_vx,
-      vy=target_vy,
+      vz=target_az * time_s,
+      vx=target_vx + target_ax * time_s,
+      vy=target_vy + target_ay * time_s,
     )
     if not sim.is_unit_active(missile_id):
       break
     missile_pos = tuple(float(value) for value in sim.get_unit_position(missile_id))
     target_pos = tuple(float(value) for value in sim.get_unit_position(red_id))
     min_truth_distance_m = min(min_truth_distance_m, math.dist(missile_pos, target_pos))
-    sim.set_contact_list(
-      missile_id,
-      [_relative_detection_from_truth(sim, missile_id, red_id, timestamp=time_s)],
+    measurement_due = (
+      held_detection is None
+      or measurement_period_s <= 0.0
+      or time_s - last_measurement_time_s >= measurement_period_s - 1.0e-9
     )
+    if measurement_due:
+      held_detection = _relative_detection_from_truth(
+        sim, missile_id, red_id, timestamp=time_s
+      )
+      if bearing_noise_std_deg > 0.0:
+        held_detection.bearing += measurement_rng.gauss(0.0, bearing_noise_std_deg)
+      if range_noise_std_m > 0.0:
+        held_detection.range = max(
+          0.0,
+          held_detection.range + measurement_rng.gauss(0.0, range_noise_std_m),
+        )
+      last_measurement_time_s = time_s
+    detection_bearing_deg = finite_float(getattr(held_detection, "bearing", 0.0), 0.0)
+    max_abs_detection_bearing_deg = max(
+      max_abs_detection_bearing_deg,
+      abs(detection_bearing_deg),
+    )
+    if (
+      seeker_fov_half_angle_deg > 0.0
+      and abs(detection_bearing_deg) > seeker_fov_half_angle_deg
+      and first_detection_outside_fov_time_s is None
+    ):
+      first_detection_outside_fov_time_s = time_s
+    if measurement_period_s > 0.0:
+      sim.debug_set_contact_list_preserve_timestamps(missile_id, [held_detection])
+    else:
+      sim.set_contact_list(missile_id, [held_detection])
     sim.step()
     if sim.is_unit_active(missile_id):
       runtime = dict(sim.debug_get_missile_runtime_state(missile_id))
+      observation_time_s = (step_idx + 1) * dt
+      seeker_mode = int(runtime.get("seeker_mode", 0) or 0)
+      seeker_mode_name = {0: "track", 1: "memory", 2: "ballistic"}.get(
+        seeker_mode,
+        "ballistic",
+      )
+      seeker_mode_sample_counts[seeker_mode_name] += 1
+      if seeker_mode == 1 and first_memory_time_s is None:
+        first_memory_time_s = observation_time_s
+      if seeker_mode == 2 and first_ballistic_time_s is None:
+        first_ballistic_time_s = observation_time_s
+      filtered_bearing_deg = finite_float(runtime.get("filtered_bearing_deg", 0.0), 0.0)
+      max_abs_filtered_bearing_deg = max(
+        max_abs_filtered_bearing_deg,
+        abs(filtered_bearing_deg),
+      )
+      last_runtime_observation = {
+        "time_s": observation_time_s,
+        "seeker_mode": seeker_mode,
+        "seeker_mode_name": seeker_mode_name,
+        "seeker_has_valid_track": bool(runtime.get("seeker_has_valid_track")),
+        "terminal_seeker_active": bool(runtime.get("terminal_seeker_active")),
+        "target_kinematics_valid": bool(runtime.get("target_kinematics_valid")),
+        "target_measurement_fresh": bool(runtime.get("target_measurement_fresh")),
+        "target_measurement_age_s": _finite_or_none(
+          runtime.get("target_measurement_age_s")
+        ),
+        "filtered_bearing_deg": filtered_bearing_deg,
+        "filtered_range_m": _finite_or_none(runtime.get("filtered_range_m")),
+      }
       max_achieved_lateral_g = max(
         max_achieved_lateral_g,
         finite_float(runtime.get("achieved_lateral_accel_mps2", 0.0), 0.0) / 9.80665,
       )
+      guidance_runtime_observation_count += 1
+      acceleration_diagnostic_fields = (
+        "guidance_capture_accel_mps2",
+        "guidance_preclamp_accel_mps2",
+        "guidance_postclamp_accel_mps2",
+      )
+      if all(field in runtime for field in acceleration_diagnostic_fields):
+        capture_g = finite_float(runtime["guidance_capture_accel_mps2"], 0.0) / 9.80665
+        preclamp_g = finite_float(runtime["guidance_preclamp_accel_mps2"], 0.0) / 9.80665
+        postclamp_g = finite_float(runtime["guidance_postclamp_accel_mps2"], 0.0) / 9.80665
+        max_capture_component_g = max(max_capture_component_g, capture_g)
+        max_preclamp_command_g = max(max_preclamp_command_g, preclamp_g)
+        max_postclamp_command_g = max(max_postclamp_command_g, postclamp_g)
+        resolved_limit_g = finite_float(runtime.get("guidance_max_lateral_g", 0.0), 0.0)
+        if resolved_limit_g > 0.0 and preclamp_g > resolved_limit_g + 1.0e-9:
+          guidance_saturated_sample_count += 1
+      else:
+        guidance_runtime_missing_acceleration_diagnostics_count += 1
       if collect_guidance_runtime_trace and step_idx % trace_stride == 0:
         missile_pos = tuple(float(value) for value in sim.get_unit_position(missile_id))
         target_pos = tuple(float(value) for value in sim.get_unit_position(red_id))
         missile_velocity = tuple(float(value) for value in sim.get_unit_velocity(missile_id))
+        target_velocity = tuple(float(value) for value in sim.get_unit_velocity(red_id))
         velocity_heading_deg = math.degrees(
           math.atan2(missile_velocity[0], missile_velocity[1])
         )
@@ -3481,6 +3752,11 @@ def run_guidance_case(
             truth_distance_m=math.dist(missile_pos, target_pos),
             transform_heading_deg=float(sim.get_unit_heading(missile_id)),
             velocity_heading_deg=velocity_heading_deg,
+            missile_position_m=missile_pos,
+            missile_velocity_mps=missile_velocity,
+            target_position_m=target_pos,
+            target_velocity_mps=target_velocity,
+            target_acceleration_mps2=(target_ax, target_ay, target_az),
           )
         )
 
@@ -3508,6 +3784,30 @@ def run_guidance_case(
     component_load_factor_rows=component_load_factor_rows,
     runtime_facade=runtime_facade,
   )
+  guidance_runtime_summary = {
+    "schema_version": "a2.guidance_runtime_summary.v1",
+    "observation_count": guidance_runtime_observation_count,
+    "seeker_fov_deg": seeker_fov_deg,
+    "seeker_fov_half_angle_deg": seeker_fov_half_angle_deg,
+    "track_memory_timeout_s": _finite_or_none(
+      initial_missile_runtime.get("track_memory_timeout_s")
+    ),
+    "seeker_mode_sample_counts": seeker_mode_sample_counts,
+    "first_memory_time_s": first_memory_time_s,
+    "first_ballistic_time_s": first_ballistic_time_s,
+    "first_detection_outside_fov_time_s": first_detection_outside_fov_time_s,
+    "max_abs_detection_bearing_deg": max_abs_detection_bearing_deg,
+    "max_detection_fov_excess_deg": max(
+      0.0,
+      max_abs_detection_bearing_deg - seeker_fov_half_angle_deg,
+    ),
+    "max_abs_filtered_bearing_deg": max_abs_filtered_bearing_deg,
+    "max_seeker_fov_excess_deg": max(
+      0.0,
+      max_abs_filtered_bearing_deg - seeker_fov_half_angle_deg,
+    ),
+    "last_runtime_observation": last_runtime_observation,
+  }
   result = {
     "case_id": str(case_id),
     "case_type": "aim120_offset_guidance",
@@ -3516,8 +3816,22 @@ def run_guidance_case(
     "seed": int(seed),
     "guidance_tuning_overrides": applied_guidance_tuning_overrides,
     "guidance_mechanism_profile": applied_guidance_mechanism_profile,
+    "guidance_measurement_model": {
+      "period_s": measurement_period_s,
+      "bearing_noise_std_deg": bearing_noise_std_deg,
+      "range_noise_std_m": range_noise_std_m,
+    },
+    "target_motion": {
+      "model": "constant_acceleration",
+      "initial_velocity_mps": [target_vx, target_vy, 0.0],
+      "acceleration_mps2": [target_ax, target_ay, target_az],
+      "acceleration_magnitude_mps2": math.sqrt(
+        target_ax * target_ax + target_ay * target_ay + target_az * target_az
+      ),
+    },
     "missile_id": int(missile_id),
     "missile_runtime_projection": missile_runtime_projection,
+    "resolved_guidance_runtime": resolved_guidance_runtime,
     "target_id": int(red_id),
     "target_active": bool(sim.is_unit_active(red_id)),
     "missile_active": bool(sim.is_unit_active(missile_id)),
@@ -3533,6 +3847,20 @@ def run_guidance_case(
       "expected_detonation_probability",
     ),
     "max_achieved_lateral_g": max_achieved_lateral_g,
+    "max_capture_component_g": max_capture_component_g,
+    "max_preclamp_command_g": max_preclamp_command_g,
+    "max_postclamp_command_g": max_postclamp_command_g,
+    "guidance_runtime_observation_count": guidance_runtime_observation_count,
+    "guidance_runtime_summary": guidance_runtime_summary,
+    "guidance_runtime_missing_acceleration_diagnostics_count": (
+      guidance_runtime_missing_acceleration_diagnostics_count
+    ),
+    "guidance_saturated_sample_count": guidance_saturated_sample_count,
+    "guidance_saturation_fraction": (
+      guidance_saturated_sample_count / guidance_runtime_observation_count
+      if guidance_runtime_observation_count > 0
+      else 0.0
+    ),
     "effect": effect_summary,
     "runtime_facade": runtime_facade,
     "component_load_factor_rows": component_load_factor_rows,
@@ -3622,7 +3950,7 @@ def generate_report(
   *,
   database_path: Path = DEFAULT_DATABASE_PATH,
   external_evidence_report_path: Path | str | None = DEFAULT_EXTERNAL_EVIDENCE_REPORT_PATH,
-  guidance_cases: tuple[dict[str, float | str], ...] = DEFAULT_GUIDANCE_CASES,
+  guidance_cases: tuple[dict[str, Any], ...] = DEFAULT_GUIDANCE_CASES,
   proximity_distances_m: tuple[float, ...] = DEFAULT_PROXIMITY_DISTANCES_M,
   include_guidance: bool = True,
   include_proximity: bool = True,
@@ -3635,6 +3963,10 @@ def generate_report(
       range_m=float(case["range_m"]),
       bearing_deg=float(case["bearing_deg"]),
       seed=seed,
+      target_acceleration_mps2=tuple(
+        float(value)
+        for value in case.get("target_acceleration_mps2", (0.0, 0.0, 0.0))
+      ),
     )
     for case in tuple(guidance_cases)
   ] if include_guidance else []

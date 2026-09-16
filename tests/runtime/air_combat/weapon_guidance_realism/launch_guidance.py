@@ -15,8 +15,14 @@ class LaunchGuidanceRuntimeMixin:
     self.assertAlmostEqual(float(aim120["max_speed_mps"]), 1372.0, delta=1.0e-6)
     self.assertAlmostEqual(float(aim120["turn_rate_deg_s"]), 30.0, delta=1.0e-6)
     self.assertAlmostEqual(float(aim120["guidance_max_lateral_g"]), 35.0, delta=1.0e-6)
+    self.assertEqual(int(aim120["pn_los_rate_source"]), 1)
+    self.assertEqual(int(aim120["target_kinematics_estimator"]), 2)
+    self.assertEqual(int(aim120["capture_guidance_mode"]), 0)
+    self.assertAlmostEqual(float(aim120["target_tracker_alpha"]), 0.2, delta=1.0e-12)
+    self.assertAlmostEqual(float(aim120["target_tracker_beta"]), 0.02, delta=1.0e-12)
+    self.assertAlmostEqual(float(aim120["target_tracker_gamma"]), 0.5, delta=1.0e-12)
     self.assertAlmostEqual(float(aim120["nav_gain"]), 4.0, delta=1.0e-6)
-    self.assertAlmostEqual(float(aim120["apn_target_accel_gain"]), 0.5, delta=1.0e-6)
+    self.assertAlmostEqual(float(aim120["apn_target_accel_gain"]), 0.125, delta=1.0e-6)
     self.assertAlmostEqual(float(aim120["guidance_autopilot_tau_s"]), 0.04, delta=1.0e-6)
     self.assertAlmostEqual(
       float(aim120["guidance_max_accel_response_g_per_s"]),

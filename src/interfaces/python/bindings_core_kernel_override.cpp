@@ -13,6 +13,21 @@ void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKe
              "Override the ContactList for a unit or missile", nb::arg("entity_id"),
              nb::arg("detections"))
         .def(
+            "debug_set_contact_list_preserve_timestamps",
+            [](SimulationKernel &self, uint64_t entity_id,
+               const std::vector<Detection> &detections) {
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
+                if (!e.is_valid()) {
+                    throw std::invalid_argument(
+                        "Invalid entity ID for debug_set_contact_list_preserve_timestamps");
+                }
+                e.set<ContactList>({detections});
+            },
+            "Diagnostics-only ContactList override that preserves authored timestamps",
+            nb::arg("entity_id"), nb::arg("detections"))
+        .def(
             "debug_set_unit_truth_state",
             [](SimulationKernel &self, uint64_t entity_id, double x_m, double y_m, double z_m,
                double heading_deg, double pitch_deg, double roll_deg, double vx_mps, double vy_mps,
@@ -36,7 +51,8 @@ void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKe
         .def(
             "set_missile_guidance_mechanism_profile",
             [](SimulationKernel &self, uint64_t entity_id, int capture_mode, int pn_mode,
-               int lead_mode, int kinematics_source, int apn_mode) {
+               int lead_mode, int kinematics_source, int apn_mode, int capture_base_range_mode,
+               int capture_terminal_weight_mode, int capture_lead_blend_mode) {
                 auto entity_lease =
                     diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
                 auto e = entity_lease.entity;
@@ -70,9 +86,29 @@ void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKe
                     apn_mode > MissileGuidanceMechanismProfile::kApnOn) {
                     throw std::invalid_argument("apn_mode must be 0 or 1");
                 }
+                if (capture_base_range_mode <
+                        MissileGuidanceMechanismProfile::kCaptureBaseInverseRange ||
+                    capture_base_range_mode >
+                        MissileGuidanceMechanismProfile::kCaptureBaseReferenceRange) {
+                    throw std::invalid_argument("capture_base_range_mode must be 0 or 1");
+                }
+                if (capture_terminal_weight_mode <
+                        MissileGuidanceMechanismProfile::kCaptureTerminalCurrentClamped ||
+                    capture_terminal_weight_mode >
+                        MissileGuidanceMechanismProfile::kCaptureTerminalReciprocalUnclamped) {
+                    throw std::invalid_argument("capture_terminal_weight_mode must be in [0, 2]");
+                }
+                if (capture_lead_blend_mode <
+                        MissileGuidanceMechanismProfile::kCaptureLeadCurrentSchedule ||
+                    capture_lead_blend_mode > MissileGuidanceMechanismProfile::kCaptureLeadOff) {
+                    throw std::invalid_argument("capture_lead_blend_mode must be in [0, 2]");
+                }
                 MissileGuidanceMechanismProfile profile;
                 profile.active = true;
                 profile.capture_mode = capture_mode;
+                profile.capture_base_range_mode = capture_base_range_mode;
+                profile.capture_terminal_weight_mode = capture_terminal_weight_mode;
+                profile.capture_lead_blend_mode = capture_lead_blend_mode;
                 profile.pn_mode = pn_mode;
                 profile.lead_mode = lead_mode;
                 profile.kinematics_source = kinematics_source;
@@ -81,7 +117,9 @@ void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKe
             },
             "Attach a diagnostics-only exact guidance mechanism profile before first update",
             nb::arg("entity_id"), nb::arg("capture_mode"), nb::arg("pn_mode"), nb::arg("lead_mode"),
-            nb::arg("kinematics_source"), nb::arg("apn_mode"))
+            nb::arg("kinematics_source"), nb::arg("apn_mode"),
+            nb::arg("capture_base_range_mode") = 0, nb::arg("capture_terminal_weight_mode") = 0,
+            nb::arg("capture_lead_blend_mode") = 0)
         .def("set_missile_tuning", &SimulationKernel::set_missile_tuning,
              "Override missile parameters for diagnostics", nb::arg("tuning"))
         .def("get_missile_tuning", &SimulationKernel::get_missile_tuning, nb::rv_policy::copy,

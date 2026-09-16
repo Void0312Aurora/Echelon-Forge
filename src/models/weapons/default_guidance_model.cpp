@@ -19,6 +19,7 @@
 #include "models/weapons/kalman_seeker.h"
 #include "models/weapons/missile_guidance_math.h"
 #include "models/weapons/missile_guidance_types.h"
+#include "models/weapons/world_cv_alpha_beta_tracker.h"
 
 namespace {
 
@@ -27,6 +28,12 @@ using missile_guidance::operator+;
 using missile_guidance::operator-;
 using missile_guidance::operator*;
 using missile_guidance::operator/;
+
+MissileGuidanceAccelerationVectorDiagnostics
+make_missile_guidance_acceleration_diagnostics(const Vec3 &value) {
+    return {value.x, value.y, value.z,
+            std::sqrt(value.x * value.x + value.y * value.y + value.z * value.z)};
+}
 
 constexpr double kGravity = 9.80665;
 constexpr double kBoostMinDurationS = 0.5;
@@ -475,9 +482,216 @@ void initialize_runtime_state(flecs::entity missile_entity, Missile &missile,
     ensure_mass_state_initialized(missile_entity, MissileGuidanceDefaults::kReferenceAreaM2);
 }
 
-void update_track_from_detection(Missile &missile, const Detection &det, double current_time,
+bool uses_world_cv_target_tracker(const Missile &missile) {
+    return missile.target_kinematics_estimator ==
+           static_cast<int>(MissileTargetKinematicsEstimator::WorldCv);
+}
+
+bool uses_world_cva_target_tracker(const Missile &missile) {
+    return missile.target_kinematics_estimator ==
+           static_cast<int>(MissileTargetKinematicsEstimator::WorldCva);
+}
+
+bool uses_world_target_tracker(const Missile &missile) {
+    return uses_world_cv_target_tracker(missile) || uses_world_cva_target_tracker(missile);
+}
+
+Vec3 raw_detection_target_position_world(const Detection &det, const Transform &transform) {
+    const Vec3 los_world =
+        missile_guidance::world_los_from_relative_angles(det.bearing, det.elevation, transform);
+    const double range_m = std::max(0.0, det.range);
+    return {transform.x + los_world.x * range_m, transform.y + los_world.y * range_m,
+            transform.z + los_world.z * range_m};
+}
+
+template <typename TrackerOutput>
+void publish_world_target_track(Missile &missile, const Transform &transform,
+                                const Velocity &velocity, double current_time, double dt,
+                                double fallback_closing_speed_mps, const TrackerOutput &output) {
+    missile.target_measurement_fresh = output.measurement_accepted;
+    missile.target_measurement_rejected_nonmonotonic = output.measurement_rejected_nonmonotonic;
+    if (output.measurement_rejected_nonmonotonic) {
+        ++missile.target_duplicate_measurement_count;
+    }
+    missile.target_estimator_update_dt_s = output.update_dt_s;
+    missile.target_measurement_age_s =
+        std::isfinite(output.last_measurement_time_s)
+            ? std::max(0.0, current_time - output.last_measurement_time_s)
+            : std::numeric_limits<double>::infinity();
+    missile.target_measurement_x_m = output.measurement_position_world_m.x;
+    missile.target_measurement_y_m = output.measurement_position_world_m.y;
+    missile.target_measurement_z_m = output.measurement_position_world_m.z;
+    missile.target_prediction_x_m = output.prediction_position_world_m.x;
+    missile.target_prediction_y_m = output.prediction_position_world_m.y;
+    missile.target_prediction_z_m = output.prediction_position_world_m.z;
+    missile.target_residual_x_m = output.residual_world_m.x;
+    missile.target_residual_y_m = output.residual_world_m.y;
+    missile.target_residual_z_m = output.residual_world_m.z;
+    missile.target_residual_norm_m = missile_guidance::norm(output.residual_world_m);
+
+    if (!output.position_valid) {
+        missile.target_kinematics_valid = false;
+        return;
+    }
+
+    const Vec3 missile_position = {transform.x, transform.y, transform.z};
+    const Vec3 relative_position = output.position_world_m - missile_position;
+    const double range_m = missile_guidance::norm(relative_position);
+    const Vec3 los_world = missile_guidance::normalize(relative_position);
+    const double horizontal_m = std::hypot(relative_position.x, relative_position.y);
+    const double nav_bearing_deg =
+        std::atan2(relative_position.x, relative_position.y) * 180.0 / std::numbers::pi_v<double>;
+    const double bearing_deg =
+        missile_guidance::normalize_angle_deg(nav_bearing_deg - transform.heading);
+    const double elevation_deg = std::atan2(relative_position.z, std::max(1.0e-9, horizontal_m)) *
+                                 180.0 / std::numbers::pi_v<double>;
+    const double previous_bearing_deg = missile.filtered_bearing_deg;
+    const double previous_elevation_deg = missile.filtered_elevation_deg;
+
+    missile.filtered_bearing_deg = bearing_deg;
+    missile.filtered_elevation_deg = elevation_deg;
+    missile.filtered_range_m = range_m;
+    if (output.velocity_valid && missile_guidance::norm(los_world) > 1.0e-6) {
+        const Vec3 missile_velocity = missile_guidance::velocity_to_vec3(velocity);
+        missile.filtered_closing_speed_mps = std::max(
+            0.0, -missile_guidance::dot(output.velocity_world_mps - missile_velocity, los_world));
+    } else {
+        missile.filtered_closing_speed_mps = std::max(0.0, fallback_closing_speed_mps);
+    }
+    if (missile.seeker_has_valid_track && dt > 1.0e-6) {
+        missile.bearing_rate_deg_s =
+            missile_guidance::shortest_angle_delta_deg(previous_bearing_deg, bearing_deg) / dt;
+        missile.elevation_rate_deg_s = (elevation_deg - previous_elevation_deg) / dt;
+    } else {
+        missile.bearing_rate_deg_s = 0.0;
+        missile.elevation_rate_deg_s = 0.0;
+    }
+
+    missile.target_track_x_m = output.position_world_m.x;
+    missile.target_track_y_m = output.position_world_m.y;
+    missile.target_track_z_m = output.position_world_m.z;
+    missile.target_track_vx_mps = output.velocity_world_mps.x;
+    missile.target_track_vy_mps = output.velocity_world_mps.y;
+    missile.target_track_vz_mps = output.velocity_world_mps.z;
+    missile.target_track_ax_mps2 = output.acceleration_world_mps2.x;
+    missile.target_track_ay_mps2 = output.acceleration_world_mps2.y;
+    missile.target_track_az_mps2 = output.acceleration_world_mps2.z;
+    missile.target_kinematics_time_s = current_time;
+    missile.target_kinematics_valid = output.velocity_valid;
+}
+
+void publish_world_cv_target_track(Missile &missile, const Transform &transform,
+                                   const Velocity &velocity, double current_time, double dt,
+                                   double fallback_closing_speed_mps,
+                                   const missile_guidance::WorldCvAlphaBetaTrackerOutput &output) {
+    publish_world_target_track(missile, transform, velocity, current_time, dt,
+                               fallback_closing_speed_mps, output);
+}
+
+bool update_world_cv_target_track_from_detection(Missile &missile, const Detection &det,
+                                                 double current_time, double dt,
+                                                 const Transform &transform,
+                                                 const Velocity &velocity) {
+    const Vec3 measurement_world = raw_detection_target_position_world(det, transform);
+    const missile_guidance::WorldCvAlphaBetaTrackerParams params{
+        std::isfinite(missile.target_tracker_alpha) ? missile.target_tracker_alpha
+                                                    : MissileGuidanceDefaults::kWorldCvTrackerAlpha,
+        std::isfinite(missile.target_tracker_beta) ? missile.target_tracker_beta
+                                                   : MissileGuidanceDefaults::kWorldCvTrackerBeta,
+    };
+    const auto output = missile_guidance::update_world_cv_alpha_beta_tracker(
+        missile.world_cv_target_tracker, params,
+        {current_time, true, measurement_world, det.timestamp});
+    publish_world_cv_target_track(missile, transform, velocity, current_time, dt, det.closing_speed,
+                                  output);
+    if (output.measurement_accepted) {
+        missile.last_track_time_s = det.timestamp;
+    }
+    return output.measurement_accepted;
+}
+
+void propagate_world_cv_target_track(Missile &missile, double current_time, double dt,
+                                     const Transform &transform, const Velocity &velocity) {
+    const auto output = missile_guidance::propagate_world_cv_alpha_beta_tracker(
+        missile.world_cv_target_tracker, current_time);
+    publish_world_cv_target_track(missile, transform, velocity, current_time, dt,
+                                  missile.filtered_closing_speed_mps, output);
+}
+
+bool update_world_cva_target_track_from_detection(Missile &missile, const Detection &det,
+                                                  double current_time, double dt,
+                                                  const Transform &transform,
+                                                  const Velocity &velocity) {
+    const Vec3 measurement_world = raw_detection_target_position_world(det, transform);
+    const missile_guidance::WorldCvaAlphaBetaGammaTrackerParams params{
+        std::isfinite(missile.target_tracker_alpha) ? missile.target_tracker_alpha
+                                                    : MissileGuidanceDefaults::kWorldCvTrackerAlpha,
+        std::isfinite(missile.target_tracker_beta) ? missile.target_tracker_beta
+                                                   : MissileGuidanceDefaults::kWorldCvTrackerBeta,
+        std::isfinite(missile.target_tracker_gamma)
+            ? missile.target_tracker_gamma
+            : MissileGuidanceDefaults::kWorldCvaTrackerGamma,
+        0.5,
+        MissileGuidanceDefaults::kWorldCvaTrackerMinimumAccelerationBaselineS,
+    };
+    const auto output = missile_guidance::update_world_cva_alpha_beta_gamma_tracker(
+        missile.world_cva_target_tracker, params,
+        {current_time, true, measurement_world, det.timestamp});
+    publish_world_target_track(missile, transform, velocity, current_time, dt, det.closing_speed,
+                               output);
+    if (output.measurement_accepted) {
+        missile.last_track_time_s = det.timestamp;
+    }
+    return output.measurement_accepted;
+}
+
+void propagate_world_cva_target_track(Missile &missile, double current_time, double dt,
+                                      const Transform &transform, const Velocity &velocity) {
+    const auto output = missile_guidance::propagate_world_cva_alpha_beta_gamma_tracker(
+        missile.world_cva_target_tracker, current_time);
+    publish_world_target_track(missile, transform, velocity, current_time, dt,
+                               missile.filtered_closing_speed_mps, output);
+}
+
+bool update_track_from_detection(Missile &missile, const Detection &det, double current_time,
                                  double dt, const GuidanceResolvedTuning &tuning,
                                  const Transform &transform, const Velocity &velocity) {
+    if (uses_world_target_tracker(missile) && missile.last_track_time_s >= 0.0 &&
+        det.timestamp <= missile.last_track_time_s) {
+        missile.target_measurement_fresh = false;
+        missile.target_measurement_rejected_nonmonotonic = true;
+        ++missile.target_duplicate_measurement_count;
+        missile.target_measurement_age_s = std::max(0.0, current_time - missile.last_track_time_s);
+        return false;
+    }
+    if (uses_world_target_tracker(missile) && std::isfinite(det.timestamp) &&
+        std::isfinite(current_time) &&
+        current_time - det.timestamp > missile.track_memory_timeout_s) {
+        missile.target_measurement_fresh = false;
+        missile.target_measurement_rejected_nonmonotonic = false;
+        missile.target_measurement_age_s = std::max(0.0, current_time - det.timestamp);
+        return false;
+    }
+    if (uses_world_cva_target_tracker(missile)) {
+        const bool measurement_accepted = update_world_cva_target_track_from_detection(
+            missile, det, current_time, dt, transform, velocity);
+        missile.seeker_has_valid_track = missile.world_cva_target_tracker.position_valid;
+        if (measurement_accepted) {
+            missile.seeker_has_range = det.range > 1.0e-3;
+            missile.seeker_mode = static_cast<int>(MissileSeekerMode::Track);
+        }
+        return measurement_accepted;
+    }
+    if (uses_world_cv_target_tracker(missile)) {
+        const bool measurement_accepted = update_world_cv_target_track_from_detection(
+            missile, det, current_time, dt, transform, velocity);
+        missile.seeker_has_valid_track = missile.world_cv_target_tracker.position_valid;
+        if (measurement_accepted) {
+            missile.seeker_has_range = det.range > 1.0e-3;
+            missile.seeker_mode = static_cast<int>(MissileSeekerMode::Track);
+        }
+        return measurement_accepted;
+    }
     // EKF path
     if (missile.use_kalman_seeker) {
         const double missile_world[3] = {transform.x, transform.y, transform.z};
@@ -558,10 +772,21 @@ void update_track_from_detection(Missile &missile, const Detection &det, double 
     missile.seeker_has_range = det.range > 1.0e-3;
     missile.last_track_time_s = current_time;
     missile.seeker_mode = static_cast<int>(MissileSeekerMode::Track);
+    return true;
 }
 
-void propagate_track_memory(Missile &missile, double dt, const Transform &transform,
-                            const Velocity &velocity) {
+void propagate_track_memory(Missile &missile, double current_time, double dt,
+                            const Transform &transform, const Velocity &velocity) {
+    if (uses_world_cva_target_tracker(missile)) {
+        propagate_world_cva_target_track(missile, current_time, dt, transform, velocity);
+        missile.seeker_mode = static_cast<int>(MissileSeekerMode::Memory);
+        return;
+    }
+    if (uses_world_cv_target_tracker(missile)) {
+        propagate_world_cv_target_track(missile, current_time, dt, transform, velocity);
+        missile.seeker_mode = static_cast<int>(MissileSeekerMode::Memory);
+        return;
+    }
     if (missile.use_kalman_seeker && missile.ekf_state.initialized) {
         const double prev_bearing = missile.filtered_bearing_deg;
         const double prev_elevation = missile.filtered_elevation_deg;
@@ -645,6 +870,10 @@ void reset_guidance_mechanism_profile_diagnostics(MissileGuidanceMechanismProfil
     profile.capture_accel_y_mps2 = 0.0;
     profile.capture_accel_z_mps2 = 0.0;
     profile.capture_accel_mps2 = 0.0;
+    profile.capture_lateral_error = 0.0;
+    profile.capture_base_range_factor = 0.0;
+    profile.capture_terminal_weight = 0.0;
+    profile.capture_raw_accel_mps2 = 0.0;
     profile.pn_accel_x_mps2 = 0.0;
     profile.pn_accel_y_mps2 = 0.0;
     profile.pn_accel_z_mps2 = 0.0;
@@ -689,6 +918,31 @@ Vec3 world_los_rate_from_history(MissileGuidanceMechanismProfile &profile, const
     profile.previous_world_los_z = los_world.z;
     profile.previous_world_los_time_s = current_time;
     profile.previous_world_los_valid = true;
+    return los_rate;
+}
+
+Vec3 world_los_rate_from_history(Missile &missile, const Vec3 &los_world, double current_time) {
+    Vec3 los_rate = {0.0, 0.0, 0.0};
+    const Vec3 previous_los = {missile.guidance_previous_world_los_x,
+                               missile.guidance_previous_world_los_y,
+                               missile.guidance_previous_world_los_z};
+    const double elapsed_s = current_time - missile.guidance_previous_world_los_time_s;
+    if (missile.guidance_previous_world_los_valid && elapsed_s > 1.0e-6 &&
+        missile_guidance::norm(previous_los) > 1.0e-6) {
+        const Vec3 cross_los = missile_guidance::cross(previous_los, los_world);
+        const double sin_angle = missile_guidance::norm(cross_los);
+        const double cos_angle =
+            std::clamp(missile_guidance::dot(previous_los, los_world), -1.0, 1.0);
+        if (sin_angle > 1.0e-12) {
+            const double angle_rad = std::atan2(sin_angle, cos_angle);
+            los_rate = cross_los * (angle_rad / (sin_angle * elapsed_s));
+        }
+    }
+    missile.guidance_previous_world_los_x = los_world.x;
+    missile.guidance_previous_world_los_y = los_world.y;
+    missile.guidance_previous_world_los_z = los_world.z;
+    missile.guidance_previous_world_los_time_s = current_time;
+    missile.guidance_previous_world_los_valid = true;
     return los_rate;
 }
 
@@ -813,7 +1067,10 @@ Vec3 profiled_guidance_acceleration(flecs::world world, const Transform &transfo
     const double filtered_closing_speed_mps = std::max(0.0, missile.filtered_closing_speed_mps);
     const double nav_gain = missile.nav_gain > 0.0 ? missile.nav_gain : 3.0;
     const double apn_gain = std::clamp(missile.apn_target_accel_gain, 0.0, 2.0);
-    const double lead_terminal_fraction =
+    const double lead_terminal_fraction = missile_guidance::lead_blend_range_fraction(
+        range_m, MissileGuidanceDefaults::kLeadBlendTerminalRangeM, 0.20,
+        profile.capture_lead_blend_mode);
+    const double apn_terminal_fraction =
         std::clamp(MissileGuidanceDefaults::kLeadBlendTerminalRangeM / range_m, 0.20, 1.0);
 
     Vec3 target_pos = {0.0, 0.0, 0.0};
@@ -872,11 +1129,19 @@ Vec3 profiled_guidance_acceleration(flecs::world world, const Transform &transfo
             missile_guidance::project_lateral(guidance_los_world, velocity_dir);
         const Vec3 los_lateral_dir = missile_guidance::normalize(los_lateral);
         const double lateral_error = std::clamp(missile_guidance::norm(los_lateral), 0.0, 1.0);
-        const double terminal_weight =
-            std::clamp(MissileGuidanceDefaults::kTerminalCaptureRangeM / range_m, 0.25, 2.5);
+        const double base_range_factor = missile_guidance::capture_base_range_factor(
+            speed_mps, range_m, MissileGuidanceDefaults::kTerminalCaptureRangeM,
+            profile.capture_base_range_mode);
+        const double terminal_weight = missile_guidance::capture_terminal_weight(
+            range_m, MissileGuidanceDefaults::kTerminalCaptureRangeM, 0.25, 2.5,
+            profile.capture_terminal_weight_mode);
         const double capture_mag = MissileGuidanceDefaults::kCaptureGain * terminal_weight *
-                                   (speed_mps * speed_mps / range_m) * lateral_error;
+                                   base_range_factor * lateral_error;
         capture_world = los_lateral_dir * capture_mag;
+        profile.capture_lateral_error = lateral_error;
+        profile.capture_base_range_factor = base_range_factor;
+        profile.capture_terminal_weight = terminal_weight;
+        profile.capture_raw_accel_mps2 = capture_mag;
     }
 
     Vec3 pn_world = {0.0, 0.0, 0.0};
@@ -927,9 +1192,11 @@ Vec3 profiled_guidance_acceleration(flecs::world world, const Transform &transfo
     Vec3 apn_world = {0.0, 0.0, 0.0};
     if (profile.apn_mode == MissileGuidanceMechanismProfile::kApnOn) {
         if (target_kinematics_available) {
-            apn_world = missile_guidance::project_lateral(target_accel, velocity_dir) *
-                        (apn_gain * lead_terminal_fraction);
-        } else if (apn_gain > 0.0 && missile.apn_rate_history_valid && dt > 1.0e-6) {
+            apn_world = missile_guidance::transverse_apn_target_acceleration(
+                            target_accel, los_world, velocity_dir) *
+                        (apn_gain * apn_terminal_fraction);
+        } else if (!uses_world_target_tracker(missile) && apn_gain > 0.0 &&
+                   missile.apn_rate_history_valid && dt > 1.0e-6) {
             const double raw_bearing_accel_rad_s2 =
                 (missile.bearing_rate_deg_s - missile.prev_bearing_rate_deg_s) / dt *
                 std::numbers::pi_v<double> / 180.0;
@@ -941,8 +1208,8 @@ Vec3 profiled_guidance_acceleration(flecs::world world, const Transform &transfo
                 missile.filtered_bearing_accel_rad_s2, raw_bearing_accel_rad_s2, tau_s, dt);
             missile.filtered_elevation_accel_rad_s2 = missile_guidance::exp_smooth(
                 missile.filtered_elevation_accel_rad_s2, raw_elevation_accel_rad_s2, tau_s, dt);
-            const double apn_scale = MissileGuidanceDefaults::kPnGainScale * nav_gain * apn_gain *
-                                     lead_terminal_fraction;
+            const double apn_scale =
+                MissileGuidanceDefaults::kPnGainScale * nav_gain * apn_gain * apn_terminal_fraction;
             const Math::Vector3 apn_body_world = Math::body_to_world(
                 {0.0, -apn_scale * range_m * missile.filtered_bearing_accel_rad_s2,
                  apn_scale * range_m * missile.filtered_elevation_accel_rad_s2},
@@ -964,6 +1231,15 @@ Vec3 profiled_guidance_acceleration(flecs::world world, const Transform &transfo
     apn_world = missile_guidance::project_lateral(apn_world, velocity_dir);
     const Vec3 commanded_accel =
         missile_guidance::project_lateral(capture_world + pn_world + apn_world, velocity_dir);
+
+    missile.guidance_acceleration_diagnostics.capture =
+        make_missile_guidance_acceleration_diagnostics(capture_world);
+    missile.guidance_acceleration_diagnostics.pn =
+        make_missile_guidance_acceleration_diagnostics(pn_world);
+    missile.guidance_acceleration_diagnostics.apn =
+        make_missile_guidance_acceleration_diagnostics(apn_world);
+    missile.guidance_acceleration_diagnostics.preclamp =
+        make_missile_guidance_acceleration_diagnostics(commanded_accel);
 
     profile.capture_accel_x_mps2 = capture_world.x;
     profile.capture_accel_y_mps2 = capture_world.y;
@@ -1062,7 +1338,10 @@ class DefaultGuidanceModel : public IGuidanceModel {
   public:
     void update(flecs::world world, flecs::entity missile_entity, Velocity &velocity,
                 const Transform &transform, Missile &missile, double dt) override {
-        if (!missile.active) return;
+        if (!missile.active) {
+            missile.guidance_acceleration_diagnostics = {};
+            return;
+        }
 
         const ecs_world_info_t *info = ecs_get_world_info(world.c_ptr());
         double current_time = info ? (double)info->world_time_total : 0.0;
@@ -1084,6 +1363,7 @@ class DefaultGuidanceModel : public IGuidanceModel {
         const bool mechanism_profile_active = mechanism_profile && mechanism_profile->active;
         missile.track_memory_timeout_s = tuning.track_memory_timeout_s;
         missile.terminal_seeker_active = terminal_seeker_is_active(missile);
+        missile.guidance_acceleration_diagnostics = {};
 
         const double time_since_launch_s = current_time - missile.launch_time;
         const bool guidance_started = time_since_launch_s >= missile.guidance_delay_s;
@@ -1142,17 +1422,22 @@ class DefaultGuidanceModel : public IGuidanceModel {
                 }
             }
 
+            bool track_updated = false;
             if (best_det) {
                 missile.target_id = best_det->target_id;
-                update_track_from_detection(missile, *best_det, current_time, guidance_dt, tuning,
-                                            transform, velocity);
+                track_updated = update_track_from_detection(
+                    missile, *best_det, current_time, guidance_dt, tuning, transform, velocity);
+            }
+            if (track_updated) {
                 const bool profiled_kinematics_required =
                     mechanism_profile_active &&
                     (mechanism_profile->lead_mode != MissileGuidanceMechanismProfile::kLeadOff ||
                      mechanism_profile->pn_mode ==
                          MissileGuidanceMechanismProfile::kPnWorldTrackAnalytic ||
                      mechanism_profile->apn_mode == MissileGuidanceMechanismProfile::kApnOn);
-                if (missile.apn_target_accel_gain > 0.0 || profiled_kinematics_required) {
+                if (uses_world_target_tracker(missile)) {
+                    // The world-frame tracker has already published its gated CV state.
+                } else if (missile.apn_target_accel_gain > 0.0 || profiled_kinematics_required) {
                     update_target_kinematics_from_track(missile, transform, current_time,
                                                         guidance_dt);
                 } else {
@@ -1162,9 +1447,14 @@ class DefaultGuidanceModel : public IGuidanceModel {
             } else if (missile.seeker_has_valid_track && missile.last_track_time_s >= 0.0 &&
                        (current_time - missile.last_track_time_s) <=
                            tuning.track_memory_timeout_s) {
-                propagate_track_memory(missile, guidance_dt, transform, velocity);
+                const bool rejected_nonmonotonic = missile.target_measurement_rejected_nonmonotonic;
+                propagate_track_memory(missile, current_time, guidance_dt, transform, velocity);
+                missile.target_measurement_rejected_nonmonotonic =
+                    rejected_nonmonotonic || missile.target_measurement_rejected_nonmonotonic;
                 missile.terminal_seeker_active = terminal_seeker_is_active(missile);
-                missile.target_kinematics_valid = false;
+                if (!uses_world_target_tracker(missile)) {
+                    missile.target_kinematics_valid = false;
+                }
                 missile.guidance_lead_time_s = 0.0;
                 missile.guidance_lead_blend = 0.0;
                 missile.guidance_apn_lateral_accel_mps2 = 0.0;
@@ -1172,11 +1462,18 @@ class DefaultGuidanceModel : public IGuidanceModel {
                 missile.seeker_mode = static_cast<int>(MissileSeekerMode::Ballistic);
                 missile.seeker_has_valid_track = false;
                 missile.target_kinematics_valid = false;
+                missile.target_measurement_fresh = false;
+                missile.target_measurement_rejected_nonmonotonic = false;
+                missile.target_measurement_age_s = std::numeric_limits<double>::infinity();
+                missile.world_cv_target_tracker = {};
+                missile.world_cva_target_tracker = {};
                 missile.commanded_lateral_accel_mps2 = 0.0;
                 missile.guidance_lead_time_s = 0.0;
                 missile.guidance_lead_blend = 0.0;
                 missile.guidance_apn_lateral_accel_mps2 = 0.0;
                 missile.terminal_seeker_active = terminal_seeker_is_active(missile);
+                missile.guidance_previous_world_los_valid = false;
+                missile.guidance_previous_world_los_time_s = -1.0;
                 if (mechanism_profile_active) {
                     reset_guidance_mechanism_profile_diagnostics(*mechanism_profile);
                     mechanism_profile->previous_world_los_valid = false;
@@ -1254,51 +1551,67 @@ class DefaultGuidanceModel : public IGuidanceModel {
                     }
                 }
 
-                const Vec3 los_lateral =
-                    missile_guidance::project_lateral(guidance_los_world, velocity_dir);
-                const Vec3 los_lateral_dir = missile_guidance::normalize(los_lateral);
-                const double lateral_error =
-                    std::clamp(missile_guidance::norm(los_lateral), 0.0, 1.0);
-                const double terminal_weight = std::clamp(
-                    MissileGuidanceDefaults::kTerminalCaptureRangeM / range_m, 0.25, 2.5);
+                Vec3 capture_world = {0.0, 0.0, 0.0};
+                if (missile.capture_guidance_mode ==
+                    static_cast<int>(MissileCaptureGuidanceMode::LegacyPursuit)) {
+                    const Vec3 los_lateral =
+                        missile_guidance::project_lateral(guidance_los_world, velocity_dir);
+                    const Vec3 los_lateral_dir = missile_guidance::normalize(los_lateral);
+                    const double lateral_error =
+                        std::clamp(missile_guidance::norm(los_lateral), 0.0, 1.0);
+                    const double terminal_weight = std::clamp(
+                        MissileGuidanceDefaults::kTerminalCaptureRangeM / range_m, 0.25, 2.5);
+                    const double capture_mag = MissileGuidanceDefaults::kCaptureGain *
+                                               terminal_weight * (speed_mps * speed_mps / range_m) *
+                                               lateral_error;
+                    capture_world = los_lateral_dir * capture_mag;
+                }
 
-                const double capture_mag = MissileGuidanceDefaults::kCaptureGain * terminal_weight *
-                                           (speed_mps * speed_mps / range_m) * lateral_error;
+                Vec3 pn_world = {0.0, 0.0, 0.0};
+                if (missile.pn_los_rate_source ==
+                    static_cast<int>(MissilePnLosRateSource::WorldLosHistory)) {
+                    const Vec3 los_rate_world =
+                        world_los_rate_from_history(missile, los_world, current_time);
+                    pn_world = missile_guidance::transverse_pn_acceleration(
+                        los_rate_world, velocity_dir, closing_speed_mps, nav_gain,
+                        MissileGuidanceDefaults::kPnGainScale);
+                } else {
+                    missile.guidance_previous_world_los_valid = false;
+                    missile.guidance_previous_world_los_time_s = -1.0;
+                    const Math::Vector3 pn_body_world = Math::body_to_world(
+                        {
+                            0.0,
+                            -MissileGuidanceDefaults::kPnGainScale * nav_gain * closing_speed_mps *
+                                Math::to_radians(missile.bearing_rate_deg_s),
+                            MissileGuidanceDefaults::kPnGainScale * nav_gain * closing_speed_mps *
+                                Math::to_radians(missile.elevation_rate_deg_s),
+                        },
+                        transform);
+                    pn_world = {pn_body_world.x, pn_body_world.y, pn_body_world.z};
+                }
 
-                const Math::Vector3 pn_body_world = Math::body_to_world(
-                    {
-                        0.0,
-                        -MissileGuidanceDefaults::kPnGainScale * nav_gain * closing_speed_mps *
-                            Math::to_radians(missile.bearing_rate_deg_s),
-                        MissileGuidanceDefaults::kPnGainScale * nav_gain * closing_speed_mps *
-                            Math::to_radians(missile.elevation_rate_deg_s),
-                    },
-                    transform);
-                const Vec3 pn_world = {
-                    pn_body_world.x,
-                    pn_body_world.y,
-                    pn_body_world.z,
-                };
-
-                commanded_accel = (los_lateral_dir * capture_mag) + pn_world;
+                commanded_accel = capture_world + pn_world;
 
                 const double apn_limit = tuning.max_lateral_g * kGravity *
                                          MissileGuidanceDefaults::kApnAccelLimitFraction *
                                          std::min(1.0, std::max(0.25, apn_gain));
+                Vec3 apn_diagnostic = {0.0, 0.0, 0.0};
                 if (target_kinematics_available) {
                     const Vec3 target_accel = {missile.target_track_ax_mps2,
                                                missile.target_track_ay_mps2,
                                                missile.target_track_az_mps2};
-                    Vec3 apn_world = missile_guidance::project_lateral(target_accel, velocity_dir) *
+                    Vec3 apn_world = missile_guidance::transverse_apn_target_acceleration(
+                                         target_accel, los_world, velocity_dir) *
                                      (apn_gain * lead_terminal_fraction);
                     const double apn_mag = missile_guidance::norm(apn_world);
                     if (apn_mag > apn_limit && apn_mag > 1.0e-6) {
                         apn_world = missile_guidance::normalize(apn_world) * apn_limit;
                     }
+                    apn_diagnostic = missile_guidance::project_lateral(apn_world, velocity_dir);
                     missile.guidance_apn_lateral_accel_mps2 = missile_guidance::norm(apn_world);
                     commanded_accel = commanded_accel + apn_world;
-                } else if (apn_gain > 0.0 && missile.apn_rate_history_valid &&
-                           guidance_dt > 1.0e-6) {
+                } else if (!uses_world_target_tracker(missile) && apn_gain > 0.0 &&
+                           missile.apn_rate_history_valid && guidance_dt > 1.0e-6) {
                     const double raw_bearing_accel_rad_s2 =
                         (missile.bearing_rate_deg_s - missile.prev_bearing_rate_deg_s) /
                         guidance_dt * std::numbers::pi_v<double> / 180.0;
@@ -1326,6 +1639,7 @@ class DefaultGuidanceModel : public IGuidanceModel {
                     if (apn_mag > apn_limit && apn_mag > 1.0e-6) {
                         apn_world = missile_guidance::normalize(apn_world) * apn_limit;
                     }
+                    apn_diagnostic = missile_guidance::project_lateral(apn_world, velocity_dir);
                     missile.guidance_apn_lateral_accel_mps2 = missile_guidance::norm(apn_world);
                     commanded_accel = commanded_accel + apn_world;
                 }
@@ -1334,6 +1648,16 @@ class DefaultGuidanceModel : public IGuidanceModel {
                 missile.apn_rate_history_valid = true;
 
                 commanded_accel = missile_guidance::project_lateral(commanded_accel, velocity_dir);
+                missile.guidance_acceleration_diagnostics.capture =
+                    make_missile_guidance_acceleration_diagnostics(
+                        missile_guidance::project_lateral(capture_world, velocity_dir));
+                missile.guidance_acceleration_diagnostics.pn =
+                    make_missile_guidance_acceleration_diagnostics(
+                        missile_guidance::project_lateral(pn_world, velocity_dir));
+                missile.guidance_acceleration_diagnostics.apn =
+                    make_missile_guidance_acceleration_diagnostics(apn_diagnostic);
+                missile.guidance_acceleration_diagnostics.preclamp =
+                    make_missile_guidance_acceleration_diagnostics(commanded_accel);
             }
 
             missile.commanded_lateral_accel_mps2 = missile_guidance::norm(commanded_accel);
@@ -1342,6 +1666,8 @@ class DefaultGuidanceModel : public IGuidanceModel {
                 commanded_accel = missile_guidance::normalize(commanded_accel) * max_lateral_accel;
                 missile.commanded_lateral_accel_mps2 = max_lateral_accel;
             }
+            missile.guidance_acceleration_diagnostics.postclamp =
+                make_missile_guidance_acceleration_diagnostics(commanded_accel);
             if (mechanism_profile_active) {
                 mechanism_profile->postclamp_accel_x_mps2 = commanded_accel.x;
                 mechanism_profile->postclamp_accel_y_mps2 = commanded_accel.y;

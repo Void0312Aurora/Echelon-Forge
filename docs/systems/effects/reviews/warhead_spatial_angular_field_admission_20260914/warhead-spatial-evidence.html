@@ -1,0 +1,161 @@
+<div id="warhead-spatial-evidence-20260914" class="warhead-spatial-evidence" role="region" aria-labelledby="warhead-spatial-evidence-title">
+  <h1 id="warhead-spatial-evidence-title">Warhead spatial evidence</h1>
+  <p class="warhead-spatial-caption">384 rows · six directions · four standoffs · eight headings · shared scales within each section</p>
+  <div class="warhead-spatial-legend" aria-label="Heatmap legend">
+    <span><i class="legend-swatch legend-effect" aria-hidden="true"></i>effect scale</span>
+    <span><i class="legend-swatch legend-angular" aria-hidden="true"></i>fragment angular density</span>
+    <span><i class="legend-swatch legend-residual" aria-hidden="true"></i>reported residual</span>
+  </div>
+  <h2>Projected effect scale</h2>
+  <div id="warhead-effect-grid" class="warhead-heatmap-grid" aria-label="Effect scale heatmaps"></div>
+  <h2>Fragment angular density</h2>
+  <div id="warhead-angular-grid" class="warhead-heatmap-grid" aria-label="Fragment angular density heatmaps"></div>
+  <h2>Admission and residuals</h2>
+  <svg id="warhead-diagnostic-strip" class="warhead-diagnostic-strip" role="img" aria-label="Admission and residual counts"></svg>
+  <p class="warhead-spatial-footnote">Axial sign collapse is the front/back check; non-axial equatorial symmetry remains visible in the residual count. Overall spatial-field admission is held by the continuous-rod geometry boundary.</p>
+  <noscript>Enable JavaScript to view the evidence heatmaps.</noscript>
+  <style>
+    #warhead-spatial-evidence-20260914 { color: var(--foreground); font-size: var(--font-size-base); width: 100%; }
+    #warhead-spatial-evidence-20260914 h1 { margin: 0 0 0.35rem; }
+    #warhead-spatial-evidence-20260914 h2 { margin: 1.2rem 0 0.35rem; }
+    #warhead-spatial-evidence-20260914 .warhead-spatial-caption,
+    #warhead-spatial-evidence-20260914 .warhead-spatial-footnote { color: var(--muted-foreground); margin: 0.2rem 0 0.6rem; }
+    #warhead-spatial-evidence-20260914 .warhead-spatial-caption { font-size: var(--font-size-small); }
+    #warhead-spatial-evidence-20260914 .warhead-spatial-footnote { font-size: var(--font-size-small); }
+    #warhead-spatial-evidence-20260914 .warhead-spatial-legend { display: flex; flex-wrap: wrap; gap: 0.8rem 1.2rem; margin: 0.5rem 0 0.3rem; color: var(--muted-foreground); font-size: var(--font-size-small); }
+    #warhead-spatial-evidence-20260914 .legend-swatch { display: inline-block; width: 0.75rem; height: 0.75rem; margin-right: 0.3rem; vertical-align: -0.08rem; }
+    #warhead-spatial-evidence-20260914 .legend-effect { background: var(--viz-series-1); }
+    #warhead-spatial-evidence-20260914 .legend-angular { background: var(--viz-series-3); }
+    #warhead-spatial-evidence-20260914 .legend-residual { background: var(--destructive); }
+    #warhead-spatial-evidence-20260914 .warhead-heatmap-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 0.45rem 0.8rem; }
+    #warhead-spatial-evidence-20260914 .warhead-heatmap { min-width: 0; }
+    #warhead-spatial-evidence-20260914 .warhead-heatmap-title { margin: 0.15rem 0 0; color: var(--foreground); font-size: var(--font-size-small); font-weight: 500; }
+    #warhead-spatial-evidence-20260914 svg { display: block; width: 100%; overflow: visible; }
+    #warhead-spatial-evidence-20260914 .warhead-heatmap-svg { aspect-ratio: 1.48; }
+    #warhead-spatial-evidence-20260914 .warhead-diagnostic-strip { height: 10rem; }
+    #warhead-spatial-evidence-20260914 .chart-frame { fill: none; stroke: var(--border); stroke-width: 1; }
+    #warhead-spatial-evidence-20260914 .grid-line { stroke: var(--border); stroke-width: 1; opacity: 0.7; }
+    #warhead-spatial-evidence-20260914 .axis-label,
+    #warhead-spatial-evidence-20260914 .axis-title,
+    #warhead-spatial-evidence-20260914 .cell-label,
+    #warhead-spatial-evidence-20260914 .bar-label,
+    #warhead-spatial-evidence-20260914 .bar-value { fill: var(--foreground); font-size: var(--font-size-small); }
+    #warhead-spatial-evidence-20260914 .axis-title { font-weight: 500; }
+    #warhead-spatial-evidence-20260914 .bar-track { fill: var(--muted); }
+    #warhead-spatial-evidence-20260914 .bar { fill: var(--viz-series-3); }
+    #warhead-spatial-evidence-20260914 .bar.residual { fill: var(--destructive); }
+    #warhead-spatial-evidence-20260914 .bar.held { fill: var(--viz-series-2); }
+    @media (max-width: 420px) {
+      #warhead-spatial-evidence-20260914 .warhead-heatmap-svg { aspect-ratio: 1.35; }
+      #warhead-spatial-evidence-20260914 .warhead-spatial-legend { gap: 0.45rem 0.8rem; }
+    }
+  </style>
+  <script>
+    (() => {
+      const DATA = {"directions":["front","back","right","left","up","down"],"headings":[0.0,45.0,90.0,135.0,180.0,225.0,270.0,315.0],"effect_heatmaps":[{"family":"blast_fragmentation","standoff_m":0.5,"values":[[0.5843226341123123,0.5595498707913377,0.4746120494596509,0.4050015577655726,0.37594846063610676,0.4050015577655726,0.4746120494596509,0.5595498707913377],[0.5175336069271793,0.5989931193974267,0.6819615713359107,0.7081368544963904,0.7320819413219436,0.7081368544963904,0.6819615713359107,0.5989931193974267],[0.5180277063464508,0.5849042788889801,0.5863787414130082,0.5229642471502848,0.4381645013197237,0.3872969373011582,0.3856935594658044,0.43424468380486075],[0.518027706346451,0.43424468380486086,0.3856935594658046,0.38729693730115833,0.4381645013197236,0.5229642471502849,0.5863787414130083,0.5849042788889802],[0.5048553485285906,0.5262873949571432,0.5771095543919308,0.6270923226400629,0.6442791278640927,0.6270923226400629,0.5771095543919308,0.5262873949571432],[0.480706836121336,0.495305051643722,0.5300889072032179,0.5638403025017253,0.5764541604662771,0.5638403025017253,0.5300889072032179,0.495305051643722]]},{"family":"blast_fragmentation","standoff_m":2.0,"values":[[0.44599913470601915,0.42709069207446426,0.3622597363554608,0.30912775540937953,0.28695223896724026,0.30912775540937953,0.3622597363554608,0.42709069207446426],[0.4082860872350008,0.4398382189526771,0.5154363348119393,0.607680177680994,0.6345837978985256,0.607680177680994,0.5154363348119393,0.4398382189526771],[0.3547609134160846,0.4182498600484081,0.4367668954957699,0.4182498600484081,0.3547609134160846,0.3027287712805247,0.2810122908688916,0.3027287712805247],[0.3547609134160846,0.3027287712805247,0.2810122908688916,0.3027287712805247,0.3547609134160846,0.4182498600484081,0.4367668954957699,0.4182498600484081],[0.38210282967488157,0.3917556729117814,0.4151724568610872,0.43432312323764677,0.44107449739301496,0.43432312323764677,0.4151724568610872,0.3917556729117814],[0.36314692265556653,0.36314692265556653,0.3909629840619945,0.44168360702223125,0.4578754985244842,0.44168360702223125,0.3909629840619945,0.36314692265556653]]},{"family":"blast_fragmentation","standoff_m":6.0,"values":[[0.2427300345836882,0.23030734053777616,0.1891471723416299,0.15706916662230397,0.14412175712954953,0.15706916662230397,0.1891471723416299,0.23030734053777616],[0.2490729961692494,0.26832122487003557,0.31443949784214076,0.37071241783595055,0.38712484408530085,0.37071241783595055,0.31443949784214076,0.26832122487003557],[0.2173216314932135,0.25621408255571126,0.2675573624990646,0.25621408255571126,0.2173216314932135,0.18544746049139202,0.17214424479070614,0.18544746049139202],[0.2173216314932135,0.18544746049139202,0.17214424479070614,0.18544746049139202,0.2173216314932135,0.25621408255571126,0.2675573624990646,0.25621408255571126],[0.23702367875731958,0.23702367875731958,0.23702367875731958,0.23702367875731958,0.23702367875731958,0.23702367875731958,0.23702367875731958,0.23702367875731958],[0.23702367875731958,0.23702367875731958,0.23702367875731958,0.23702367875731958,0.23702367875731958,0.23702367875731958,0.23702367875731958,0.23702367875731958]]},{"family":"blast_fragmentation","standoff_m":10.0,"values":[[0.11569257007209036,0.11044195324965127,0.09267171388144455,0.07837651852415319,0.07248167958691475,0.07837651852415319,0.09267171388144455,0.11044195324965127],[0.10527210823408387,0.11469646107920321,0.13802933931578024,0.1679378275395354,0.17695859452020313,0.1679378275395354,0.13802933931578024,0.11469646107920321],[0.10141042260167266,0.1244144789189254,0.13140144289045982,0.1244144789189254,0.10141042260167266,0.0836565917053199,0.07653957646459641,0.0836565917053199],[0.10141042260167266,0.0836565917053199,0.07653957646459641,0.0836565917053199,0.10141042260167266,0.1244144789189254,0.13140144289045982,0.1244144789189254],[0.11206179161205758,0.11206179161205758,0.11206179161205758,0.11206179161205758,0.11206179161205758,0.11206179161205758,0.11206179161205758,0.11206179161205758],[0.11206179161205758,0.11206179161205758,0.11206179161205758,0.11206179161205758,0.11206179161205758,0.11206179161205758,0.11206179161205758,0.11206179161205758]]},{"family":"continuous_rod","standoff_m":0.5,"values":[[0.1964694754032903,0.5682392750184915,0.7087630084397977,0.5682392750184915,0.1964694754032903,0.5682392750184915,0.7087630084397977,0.5682392750184915],[0.5051481270572562,0.7969231520815259,0.85,0.7969231520815259,0.5051481270572562,0.7969231520815259,0.85,0.7969231520815259],[0.7129633831858949,0.4452039490830002,0.4248197632479305,0.7045199769550756,0.712963383185895,0.4452039490830002,0.4248197632479305,0.7045199769550756],[0.712963383185895,0.704519976955076,0.42481976324793097,0.4452039490829999,0.712963383185895,0.704519976955076,0.42481976324793097,0.4452039490829998],[0.690051773797796,0.7423816142900233,0.7896125262901245,0.7423816142900233,0.690051773797796,0.7423816142900233,0.7896125262901245,0.7423816142900233],[0.3047717551038184,0.3047717551038184,0.3047717551038184,0.3047717551038184,0.3047717551038184,0.3047717551038184,0.3047717551038184,0.3047717551038184]]},{"family":"continuous_rod","standoff_m":2.0,"values":[[0.13638882276453335,0.4099349787913114,0.5324598362969516,0.4099349787913114,0.13638882276453335,0.4099349787913114,0.5324598362969516,0.4099349787913114],[0.21419089272297376,0.49390088055965514,0.6440269580124848,0.49390088055965514,0.21419089272297376,0.49390088055965514,0.6440269580124848,0.4939008805596552],[0.5605759857771996,0.3795363806310389,0.19573459410320715,0.47357436216145576,0.5605759857771996,0.37953638063103906,0.19573459410320715,0.47357436216145554],[0.5605759857771996,0.47357436216145576,0.19573459410320715,0.37953638063103873,0.5605759857771996,0.47357436216145576,0.19573459410320715,0.37953638063103873],[0.37327906290969637,0.37999309640595036,0.3866070351218292,0.37999309640595036,0.37327906290969637,0.37999309640595036,0.3866070351218292,0.37999309640595036],[0.23589295938337226,0.23589295938337226,0.23589295938337226,0.23589295938337226,0.23589295938337226,0.23589295938337226,0.23589295938337226,0.23589295938337226]]},{"family":"continuous_rod","standoff_m":6.0,"values":[[0.05656980285949747,0.1493501476170912,0.190018835585179,0.1493501476170912,0.05656980285949747,0.1493501476170912,0.190018835585179,0.1493501476170912],[0.07481403617737335,0.1797743798663478,0.2282346567359819,0.1797743798663478,0.07481403617737335,0.1797743798663478,0.2282346567359819,0.1797743798663478],[0.20387987018666998,0.1544289565910917,0.06791889477804942,0.16595722562316384,0.20387987018666998,0.15442895659109176,0.06791889477804942,0.1659572256231638],[0.20387987018667,0.16595722562316387,0.06791889477804944,0.15442895659109174,0.20387987018667,0.16595722562316392,0.06791889477804944,0.1544289565910917],[0.1049268561357755,0.10517673113931213,0.1054258724784285,0.10517673113931213,0.1049268561357755,0.10517673113931213,0.1054258724784285,0.10517673113931213],[0.08330673884766095,0.08330673884766095,0.08330673884766095,0.08330673884766095,0.08330673884766095,0.08330673884766095,0.08330673884766095,0.08330673884766095]]},{"family":"continuous_rod","standoff_m":10.0,"values":[[0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05],[0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05],[0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05],[0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05],[0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05],[0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05]]}],"angular_heatmaps":[{"family":"blast_fragmentation","standoff_m":0.5,"values":[[1.2618895180911969,1.2083908368080696,1.0249611009553985,0.8746319083315718,0.8118895180911969,0.8746319083315718,1.0249611009553985,1.2083908368080696],[0.8833926219883962,1.0224381474263486,1.1640593239436228,1.186062003674434,1.2261677508589544,1.186062003674434,1.1640593239436228,1.0224381474263486],[1.1158083751809034,1.259857503889941,1.2630334298356871,1.1264414619943266,0.9437866243249469,0.8342201797861548,0.8307665760592711,0.9353435137370748],[1.1158083751809036,0.9353435137370749,0.8307665760592712,0.8342201797861548,0.9437866243249466,1.1264414619943266,1.2630334298356871,1.259857503889941],[0.8466129642987329,0.8825532557322056,0.9677790519460129,1.0515972381130776,1.080418507730105,1.0515972381130776,0.9677790519460129,0.8825532557322056],[0.8660227119676263,0.8923222884383746,0.9549875277500975,1.0157927268709335,1.0385173620581023,1.0157927268709335,0.9549875277500975,0.8923222884383746]],"signed_polar_cosine":[[1.0,0.7071067811865476,-6.123233995736766e-17,-0.7071067811865476,-1.0,-0.7071067811865476,-6.123233995736766e-17,0.7071067811865475],[-0.5744928244513892,0.07016661514853845,0.6737234032202658,0.67624268108881,0.9563515710513388,0.67624268108881,0.6737234032202658,0.07016661514853861],[0.3624462611549482,0.9153150324227655,0.9320046715412961,0.40273861426601715,-0.3624462611549481,-0.9153150324227655,-0.9320046715412961,-0.4027386142660173],[0.3624462611549486,-0.40273861426601665,-0.9320046715412958,-0.9153150324227658,-0.3624462611549487,0.40273861426601654,0.9320046715412958,0.9153150324227659],[-0.5812381937189631,-0.410997468263299,3.559057467400587e-17,0.410997468263299,0.5812381937189631,0.410997468263299,3.559057467400587e-17,-0.41099746826329897],[-0.43556092810419783,-0.3079880858823846,2.6670414821822816e-17,0.3079880858823846,0.43556092810419783,0.3079880858823846,2.6670414821822816e-17,-0.3079880858823845]]},{"family":"blast_fragmentation","standoff_m":2.0,"values":[[1.2618895180911969,1.2083908368080696,1.0249611009553985,0.8746319083315718,0.8118895180911969,0.8746319083315718,1.0249611009553985,1.2083908368080696],[0.8118895180911969,0.8746319083315718,1.0249611009553985,1.2083908368080696,1.2618895180911969,1.2083908368080696,1.0249611009553985,0.8746319083315718],[1.0249611009553985,1.2083908368080696,1.2618895180911969,1.2083908368080696,1.0249611009553985,0.8746319083315718,0.8118895180911969,0.8746319083315718],[1.0249611009553985,0.8746319083315718,0.8118895180911969,0.8746319083315718,1.0249611009553985,1.2083908368080696,1.2618895180911969,1.2083908368080696],[0.8889944830238043,0.905668963766003,0.9454800597416677,0.9842073314676967,0.9995064292722571,0.9842073314676967,0.9454800597416677,0.905668963766003],[0.9386045371453262,0.9386045371453262,0.9807004092826648,1.0855915762923356,1.118347509604852,1.0855915762923356,0.9807004092826648,0.9386045371453262]],"signed_polar_cosine":[[1.0,0.7071067811865476,-6.123233995736766e-17,-0.7071067811865476,-1.0,-0.7071067811865476,-6.123233995736766e-17,0.7071067811865475],[-1.0,-0.7071067811865476,6.123233995736766e-17,0.7071067811865476,1.0,0.7071067811865476,6.123233995736766e-17,-0.7071067811865475],[1.2246467991473532e-16,0.7071067811865476,1.0,0.7071067811865476,0.0,-0.7071067811865475,-1.0,-0.7071067811865477],[-1.2246467991473532e-16,-0.7071067811865476,-1.0,-0.7071067811865476,0.0,0.7071067811865475,1.0,0.7071067811865477],[-0.2821663239915131,-0.19952172111687932,1.7277704275169077e-17,0.19952172111687932,0.2821663239915131,0.19952172111687932,1.7277704275169077e-17,-0.1995217211168793],[0.0,0.0,4.275165534735521e-17,0.4936931272610567,0.6981875162229727,0.4936931272610567,4.275165534735521e-17,0.0]]},{"family":"blast_fragmentation","standoff_m":6.0,"values":[[1.2618895180911969,1.2083908368080696,1.0249611009553985,0.8746319083315718,0.8118895180911969,0.8746319083315718,1.0249611009553985,1.2083908368080696],[0.8118895180911969,0.8746319083315718,1.0249611009553985,1.2083908368080696,1.2618895180911969,1.2083908368080696,1.0249611009553985,0.8746319083315718],[1.0249611009553985,1.2083908368080696,1.2618895180911969,1.2083908368080696,1.0249611009553985,0.8746319083315718,0.8118895180911969,0.8746319083315718],[1.0249611009553985,0.8746319083315718,0.8118895180911969,0.8746319083315718,1.0249611009553985,1.2083908368080696,1.2618895180911969,1.2083908368080696],[0.9386045371453262,0.9386045371453262,0.9386045371453262,0.9386045371453262,0.9386045371453262,0.9386045371453262,0.9386045371453262,0.9386045371453262],[0.9386045371453262,0.9386045371453262,0.9386045371453262,0.9386045371453262,0.9386045371453262,0.9386045371453262,0.9386045371453262,0.9386045371453262]],"signed_polar_cosine":[[1.0,0.7071067811865476,-6.123233995736766e-17,-0.7071067811865476,-1.0,-0.7071067811865476,-6.123233995736766e-17,0.7071067811865475],[-1.0,-0.7071067811865476,6.123233995736766e-17,0.7071067811865476,1.0,0.7071067811865476,6.123233995736766e-17,-0.7071067811865475],[1.2246467991473532e-16,0.7071067811865476,1.0,0.7071067811865476,0.0,-0.7071067811865475,-1.0,-0.7071067811865477],[-1.2246467991473532e-16,-0.7071067811865476,-1.0,-0.7071067811865476,0.0,0.7071067811865475,1.0,0.7071067811865477],[-0.0,-0.0,0.0,0.0,0.0,0.0,0.0,0.0],[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]]},{"family":"blast_fragmentation","standoff_m":10.0,"values":[[1.2618895180911969,1.2083908368080696,1.0249611009553985,0.8746319083315718,0.8118895180911969,0.8746319083315718,1.0249611009553985,1.2083908368080696],[0.8118895180911969,0.8746319083315718,1.0249611009553985,1.2083908368080696,1.2618895180911969,1.2083908368080696,1.0249611009553985,0.8746319083315718],[1.0249611009553985,1.2083908368080696,1.2618895180911969,1.2083908368080696,1.0249611009553985,0.8746319083315718,0.8118895180911969,0.8746319083315718],[1.0249611009553985,0.8746319083315718,0.8118895180911969,0.8746319083315718,1.0249611009553985,1.2083908368080696,1.2618895180911969,1.2083908368080696],[0.9386045371453262,0.9386045371453262,0.9386045371453262,0.9386045371453262,0.9386045371453262,0.9386045371453262,0.9386045371453262,0.9386045371453262],[0.9386045371453262,0.9386045371453262,0.9386045371453262,0.9386045371453262,0.9386045371453262,0.9386045371453262,0.9386045371453262,0.9386045371453262]],"signed_polar_cosine":[[1.0,0.7071067811865476,-6.123233995736766e-17,-0.7071067811865476,-1.0,-0.7071067811865476,-6.123233995736766e-17,0.7071067811865475],[-1.0,-0.7071067811865476,6.123233995736766e-17,0.7071067811865476,1.0,0.7071067811865476,6.123233995736766e-17,-0.7071067811865475],[1.2246467991473532e-16,0.7071067811865476,1.0,0.7071067811865476,0.0,-0.7071067811865475,-1.0,-0.7071067811865477],[-1.2246467991473532e-16,-0.7071067811865476,-1.0,-0.7071067811865476,0.0,0.7071067811865475,1.0,0.7071067811865477],[-0.0,-0.0,0.0,0.0,0.0,0.0,0.0,0.0],[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]]}],"summary":{"row_count":384,"trace_valid_count":384,"trace_closure_failures":0,"floor_applied_count":72,"clamped_count":50,"sign_collapse_count":34,"axial_sign_collapse_count":8,"rod_baseline_mismatch_count":0,"fragmentation_admission":"passed","overall_admission":"held"}};
+      const ROOT = document.getElementById("warhead-spatial-evidence-20260914");
+      const SVG_NS = "http://www.w3.org/2000/svg";
+      const DIRECTIONS = DATA.directions;
+      const HEADINGS = DATA.headings;
+      const createSvg = (tag, attrs = {}) => {
+        const node = document.createElementNS(SVG_NS, tag);
+        Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, String(value)));
+        return node;
+      };
+      const appendText = (parent, text, attrs = {}) => {
+        const node = createSvg("text", attrs);
+        node.textContent = text;
+        parent.appendChild(node);
+        return node;
+      };
+      const flatten = (values) => values.flatMap((row) => row);
+      const extent = (values) => {
+        const flat = flatten(values);
+        return [Math.min(...flat), Math.max(...flat)];
+      };
+      const colorMix = (value, domain, token) => {
+        const span = domain[1] - domain[0] || 1;
+        const ratio = Math.max(0, Math.min(1, (value - domain[0]) / span));
+        const percentage = Math.round(12 + ratio * 78);
+        return `color-mix(in srgb, var(${token}) ${percentage}%, var(--background))`;
+      };
+      const appendHeatmap = (host, item, domain, token, valueLabel) => {
+        const panel = document.createElement("div");
+        panel.className = "warhead-heatmap";
+        const title = document.createElement("p");
+        title.className = "warhead-heatmap-title";
+        title.textContent = `${item.family === "blast_fragmentation" ? "blast fragmentation" : "continuous rod"} · ${item.standoff_m} m`;
+        panel.appendChild(title);
+        const svg = createSvg("svg", { class: "warhead-heatmap-svg", role: "img", "aria-label": title.textContent });
+        panel.appendChild(svg);
+        host.appendChild(panel);
+        const draw = () => {
+          const width = Math.max(240, Math.floor(svg.getBoundingClientRect().width || 240));
+          const height = Math.max(170, Math.round(width / 1.48));
+          const margin = { top: 28, right: 6, bottom: 42, left: 62 };
+          const plotWidth = width - margin.left - margin.right;
+          const plotHeight = height - margin.top - margin.bottom;
+          const cellWidth = plotWidth / HEADINGS.length;
+          const cellHeight = plotHeight / DIRECTIONS.length;
+          svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+          svg.replaceChildren();
+          svg.appendChild(createSvg("title")).textContent = title.textContent;
+          svg.appendChild(createSvg("rect", { class: "chart-frame", "data-chart-frame": "true", x: margin.left, y: margin.top, width: plotWidth, height: plotHeight }));
+          HEADINGS.forEach((heading, column) => appendText(svg, `${heading}°`, { class: "axis-label", x: margin.left + cellWidth * (column + 0.5), y: margin.top - 9, "text-anchor": "middle" }));
+          DIRECTIONS.forEach((direction, rowIndex) => appendText(svg, direction, { class: "axis-label", x: margin.left - 8, y: margin.top + cellHeight * (rowIndex + 0.5) + 4, "text-anchor": "end" }));
+          appendText(svg, "heading (deg)", { class: "axis-title", "data-axis": "x", x: margin.left + plotWidth / 2, y: height - 5, "text-anchor": "middle" });
+          const yTitle = appendText(svg, "direction", { class: "axis-title", "data-axis": "y", x: 12, y: margin.top + plotHeight / 2, "text-anchor": "middle" });
+          yTitle.setAttribute("transform", `rotate(-90 12 ${margin.top + plotHeight / 2})`);
+          item.values.forEach((row, rowIndex) => row.forEach((value, column) => {
+            const rect = createSvg("rect", { x: margin.left + column * cellWidth + 0.5, y: margin.top + rowIndex * cellHeight + 0.5, width: Math.max(0, cellWidth - 1), height: Math.max(0, cellHeight - 1), fill: colorMix(value, domain, token), "data-chart-hit": "true", "data-tooltip": `${item.family}, ${item.standoff_m} m, ${DIRECTIONS[rowIndex]}, ${HEADINGS[column]}°: ${valueLabel(value)}` });
+            const tooltip = createSvg("title");
+            tooltip.textContent = `${DIRECTIONS[rowIndex]} ${HEADINGS[column]}° · ${valueLabel(value)}`;
+            rect.appendChild(tooltip);
+            svg.appendChild(rect);
+            appendText(svg, valueLabel(value), { class: "cell-label", x: margin.left + column * cellWidth + cellWidth / 2, y: margin.top + rowIndex * cellHeight + cellHeight / 2 + 4, "text-anchor": "middle" });
+          }));
+        };
+        draw();
+        if (typeof ResizeObserver !== "undefined") new ResizeObserver(draw).observe(svg);
+      };
+      const effectValues = DATA.effect_heatmaps.map((item) => item.values);
+      const angularValues = DATA.angular_heatmaps.map((item) => item.values);
+      const effectDomain = extent(effectValues);
+      const angularDomain = extent(angularValues);
+      DATA.effect_heatmaps.forEach((item) => appendHeatmap(document.getElementById("warhead-effect-grid"), item, effectDomain, item.family === "blast_fragmentation" ? "--viz-series-1" : "--viz-series-2", (value) => value.toFixed(2)));
+      DATA.angular_heatmaps.forEach((item) => appendHeatmap(document.getElementById("warhead-angular-grid"), item, angularDomain, "--viz-series-3", (value) => value.toFixed(2)));
+      const drawDiagnostics = () => {
+        const svg = document.getElementById("warhead-diagnostic-strip");
+        const width = Math.max(320, Math.floor(svg.getBoundingClientRect().width || 320));
+        const height = 160;
+        const margin = { top: 12, right: 8, bottom: 34, left: 12 };
+        const values = [
+          ["trace valid", DATA.summary.trace_valid_count, DATA.summary.row_count, "bar"],
+          ["closure failures", DATA.summary.trace_closure_failures, DATA.summary.row_count, "bar"],
+          ["rod baseline Δ", DATA.summary.rod_baseline_mismatch_count, DATA.summary.row_count, "bar"],
+          ["sign residuals", DATA.summary.sign_collapse_count, DATA.summary.row_count, "bar residual"],
+          ["axial residuals", DATA.summary.axial_sign_collapse_count, DATA.summary.row_count, "bar residual"],
+        ];
+        const maxValue = Math.max(DATA.summary.row_count, ...values.map((entry) => entry[1]), 1);
+        const plotWidth = width - margin.left - margin.right;
+        const slot = plotWidth / values.length;
+        const barWidth = Math.min(74, slot * 0.62);
+        svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        svg.replaceChildren();
+        svg.appendChild(createSvg("title")).textContent = "Admission and residual counts";
+        values.forEach(([label, value, , className], index) => {
+          const x = margin.left + slot * index + (slot - barWidth) / 2;
+          const trackHeight = height - margin.top - margin.bottom;
+          const barHeight = trackHeight * (value / maxValue);
+          const y = height - margin.bottom - barHeight;
+          svg.appendChild(createSvg("rect", { class: "bar-track", x, y: margin.top, width: barWidth, height: trackHeight }));
+          svg.appendChild(createSvg("rect", { class: className, x, y, width: barWidth, height: barHeight, "data-chart-hit": "true", "data-tooltip": `${label}: ${value}` }));
+          appendText(svg, String(value), { class: "bar-value", x: x + barWidth / 2, y: Math.max(margin.top + 12, y - 5), "text-anchor": "middle" });
+          appendText(svg, label, { class: "bar-label", x: x + barWidth / 2, y: height - 13, "text-anchor": "middle" });
+        });
+      };
+      drawDiagnostics();
+      if (typeof ResizeObserver !== "undefined") new ResizeObserver(drawDiagnostics).observe(document.getElementById("warhead-diagnostic-strip"));
+    })();
+  </script>
+</div>

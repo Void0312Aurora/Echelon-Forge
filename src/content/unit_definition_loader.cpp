@@ -12,6 +12,8 @@
 #include <filesystem>
 #include <unordered_map>
 
+#include "components/combat/common/missile_guidance_types.h"
+
 namespace fs = std::filesystem;
 
 namespace {
@@ -185,6 +187,85 @@ int parse_sensor_environment_domain_code(const std::string &domain_str) {
     return static_cast<int>(SensorEnvironmentDomain::Air);
 }
 
+bool parse_pn_los_rate_source(const nlohmann::json &src, int *out_source, std::string *error) {
+    if (!out_source || !src.is_object() || !src.contains("pn_los_rate_source")) {
+        return true;
+    }
+    const auto &value = src["pn_los_rate_source"];
+    if (!value.is_string()) {
+        if (error) *error = "pn_los_rate_source must be a string";
+        return false;
+    }
+    const std::string name = value.get<std::string>();
+    if (name == "legacy_body_rates") {
+        *out_source = static_cast<int>(MissilePnLosRateSource::LegacyBodyRates);
+        return true;
+    }
+    if (name == "world_los_history") {
+        *out_source = static_cast<int>(MissilePnLosRateSource::WorldLosHistory);
+        return true;
+    }
+    if (error) {
+        *error = "Unknown pn_los_rate_source: " + name +
+                 "; expected legacy_body_rates or world_los_history";
+    }
+    return false;
+}
+
+bool parse_target_kinematics_estimator(const nlohmann::json &src, int *out_estimator,
+                                       std::string *error) {
+    if (!out_estimator || !src.is_object() || !src.contains("target_kinematics_estimator")) {
+        return true;
+    }
+    const auto &value = src["target_kinematics_estimator"];
+    if (!value.is_string()) {
+        if (error) *error = "target_kinematics_estimator must be a string";
+        return false;
+    }
+    const std::string name = value.get<std::string>();
+    if (name == "legacy_polar_difference") {
+        *out_estimator = static_cast<int>(MissileTargetKinematicsEstimator::LegacyPolarDifference);
+        return true;
+    }
+    if (name == "world_cv") {
+        *out_estimator = static_cast<int>(MissileTargetKinematicsEstimator::WorldCv);
+        return true;
+    }
+    if (name == "world_cva") {
+        *out_estimator = static_cast<int>(MissileTargetKinematicsEstimator::WorldCva);
+        return true;
+    }
+    if (error) {
+        *error = "Unknown target_kinematics_estimator: " + name +
+                 "; expected legacy_polar_difference, world_cv, or world_cva";
+    }
+    return false;
+}
+
+bool parse_capture_guidance_mode(const nlohmann::json &src, int *out_mode, std::string *error) {
+    if (!out_mode || !src.is_object() || !src.contains("capture_guidance_mode")) {
+        return true;
+    }
+    const auto &value = src["capture_guidance_mode"];
+    if (!value.is_string()) {
+        if (error) *error = "capture_guidance_mode must be a string";
+        return false;
+    }
+    const std::string name = value.get<std::string>();
+    if (name == "disabled") {
+        *out_mode = static_cast<int>(MissileCaptureGuidanceMode::Disabled);
+        return true;
+    }
+    if (name == "legacy_pursuit") {
+        *out_mode = static_cast<int>(MissileCaptureGuidanceMode::LegacyPursuit);
+        return true;
+    }
+    if (error) {
+        *error = "Unknown capture_guidance_mode: " + name + "; expected disabled or legacy_pursuit";
+    }
+    return false;
+}
+
 NavalWeaponType parse_naval_weapon_type(const std::string &type_str) {
     if (type_str == "vls_sam") return NavalWeaponType::VlsSam;
     if (type_str == "gun_5in") return NavalWeaponType::DeckGun;
@@ -346,8 +427,28 @@ void parse_missile_tuning_json_fields(const nlohmann::json &src,
 #define EF_MISSILE_TUNING_VECTOR_FIELD(cpp_type, name, default_value)                              \
     parse_vector(#name, &tuning.name);
 #include "content/detail/missile_tuning_fields.inc"
+    // These tracker gains were added after the X-macro list was frozen; keep
+    // them explicit so the established field-list contract remains stable.
+    tuning.target_tracker_alpha = src.value("target_tracker_alpha", tuning.target_tracker_alpha);
+    tuning.target_tracker_beta = src.value("target_tracker_beta", tuning.target_tracker_beta);
+    tuning.target_tracker_gamma = src.value("target_tracker_gamma", tuning.target_tracker_gamma);
 
     *out_tuning = tuning;
+}
+
+bool validate_missile_tracker_gains(const MissileTuningDefinition &tuning, std::string *error) {
+    const auto validate = [&](const char *field, double value, double minimum, double maximum) {
+        if (!std::isfinite(value) || (value >= minimum && value <= maximum)) {
+            return true;
+        }
+        if (error) {
+            *error = std::string(field) + " must be in [" + std::to_string(minimum) + ", " +
+                     std::to_string(maximum) + "]";
+        }
+        return false;
+    };
+    return validate("target_tracker_alpha", tuning.target_tracker_alpha, 0.0, 1.0) &&
+           validate("target_tracker_beta", tuning.target_tracker_beta, 0.0, 2.0);
 }
 
 std::string normalize_warhead_family(const std::string &raw_type) {
@@ -419,8 +520,9 @@ void parse_fuze_json_fields(const nlohmann::json &src, MissileTuningDefinition *
     }
 }
 
-void parse_warhead_json_fields(const nlohmann::json &src, MissileTuningDefinition *out_tuning) {
-    if (!out_tuning || !src.is_object()) return;
+bool parse_warhead_json_fields(const nlohmann::json &src, MissileTuningDefinition *out_tuning,
+                               std::string *error) {
+    if (!out_tuning || !src.is_object()) return true;
     WarheadProfile profile = out_tuning->warhead_profile;
     profile.family = normalize_warhead_family(src.value("type", profile.family));
     profile.mass_kg = src.value("mass_kg", profile.mass_kg);
@@ -430,6 +532,60 @@ void parse_warhead_json_fields(const nlohmann::json &src, MissileTuningDefinitio
     profile.gurney_constant_mps = src.value("gurney_constant_mps", profile.gurney_constant_mps);
     profile.fragment_mass_kg = src.value("fragment_mass_kg", profile.fragment_mass_kg);
     profile.fragment_count = src.value("fragment_count", profile.fragment_count);
+    if (src.contains("fragment_angular_distribution")) {
+        if (!src["fragment_angular_distribution"].is_string()) {
+            if (error) *error = "warhead.fragment_angular_distribution must be a string";
+            return false;
+        }
+        const std::string selector = src["fragment_angular_distribution"].get<std::string>();
+        if (selector != "legacy_scalar" && selector != "polar_azimuthal") {
+            if (error) {
+                *error = "Unknown warhead.fragment_angular_distribution: " + selector;
+            }
+            return false;
+        }
+        profile.fragment_angular_distribution = selector;
+    }
+    profile.fragment_polar_concentration =
+        src.value("fragment_polar_concentration", profile.fragment_polar_concentration);
+    profile.fragment_isotropic_fraction =
+        src.value("fragment_isotropic_fraction", profile.fragment_isotropic_fraction);
+    profile.fragment_azimuthal_modulation =
+        src.value("fragment_azimuthal_modulation", profile.fragment_azimuthal_modulation);
+    if (src.contains("fragment_azimuthal_lobes") &&
+        src["fragment_azimuthal_lobes"].is_number_unsigned()) {
+        profile.fragment_azimuthal_lobes = src["fragment_azimuthal_lobes"].get<std::uint32_t>();
+    }
+    profile.fragment_azimuthal_phase_deg =
+        src.value("fragment_azimuthal_phase_deg", profile.fragment_azimuthal_phase_deg);
+    if (src.contains("continuous_rod_spatial_model")) {
+        if (!src["continuous_rod_spatial_model"].is_string()) {
+            if (error) *error = "warhead.continuous_rod_spatial_model must be a string";
+            return false;
+        }
+        const std::string selector = src["continuous_rod_spatial_model"].get<std::string>();
+        if (selector != "legacy_side_sweep" && selector != "expanding_ring_band") {
+            if (error) {
+                *error = "Unknown warhead.continuous_rod_spatial_model: " + selector;
+            }
+            return false;
+        }
+        profile.continuous_rod_spatial_model = selector;
+    }
+    profile.continuous_rod_band_half_angle_deg =
+        src.value("continuous_rod_band_half_angle_deg", profile.continuous_rod_band_half_angle_deg);
+    if (src.contains("continuous_rod_azimuthal_samples") &&
+        src["continuous_rod_azimuthal_samples"].is_number_unsigned()) {
+        profile.continuous_rod_azimuthal_samples =
+            src["continuous_rod_azimuthal_samples"].get<std::uint32_t>();
+    }
+    if (src.contains("continuous_rod_polar_samples") &&
+        src["continuous_rod_polar_samples"].is_number_unsigned()) {
+        profile.continuous_rod_polar_samples =
+            src["continuous_rod_polar_samples"].get<std::uint32_t>();
+    }
+    profile.continuous_rod_azimuthal_phase_deg =
+        src.value("continuous_rod_azimuthal_phase_deg", profile.continuous_rod_azimuthal_phase_deg);
     profile.projection_radius_fraction =
         src.value("projection_radius_fraction", profile.projection_radius_fraction);
     profile.projection_min_radius_m =
@@ -438,6 +594,8 @@ void parse_warhead_json_fields(const nlohmann::json &src, MissileTuningDefinitio
         src.value("projection_max_radius_m", profile.projection_max_radius_m);
     profile.projection_min_effect_scale =
         src.value("projection_min_effect_scale", profile.projection_min_effect_scale);
+    profile.projection_curve_floor_effect_scale = src.value(
+        "projection_curve_floor_effect_scale", profile.projection_curve_floor_effect_scale);
     profile.projection_max_effect_scale =
         src.value("projection_max_effect_scale", profile.projection_max_effect_scale);
     profile.projection_falloff_exponent =
@@ -447,6 +605,8 @@ void parse_warhead_json_fields(const nlohmann::json &src, MissileTuningDefinitio
         profile.projection_max_projected_hitboxes =
             src["projection_max_projected_hitboxes"].get<std::uint32_t>();
     }
+    profile.projection_near_field_floor_enabled = src.value(
+        "projection_near_field_floor_enabled", profile.projection_near_field_floor_enabled);
     if (src.contains("damage") && src["damage"].is_number()) {
         profile.damage_scalar = src["damage"].get<double>();
         profile.damage_scalar_synthetic = false;
@@ -473,6 +633,7 @@ void parse_warhead_json_fields(const nlohmann::json &src, MissileTuningDefinitio
                                                                "warhead_lethal_radius_fuze_compat");
         out_tuning->has_fuze_profile = true;
     }
+    return true;
 }
 
 Sonar make_default_sonar_definition() {
@@ -1293,20 +1454,54 @@ void parse_ammo_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
     }
 }
 
-void parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
+bool parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefinition &def,
+                                          std::string *error) {
     if (def.type == UnitType::Missile) {
         def.has_missile_tuning = true;
         auto &missile_tuning = def.missile_tuning;
         missile_tuning.max_speed = def.flight_model.max_speed;
         missile_tuning.turn_rate = def.flight_model.max_turn_rate;
         missile_tuning.max_lateral_g = def.flight_model.max_g;
+        if (!parse_pn_los_rate_source(entry, &missile_tuning.pn_los_rate_source, error)) {
+            return false;
+        }
+        if (!parse_target_kinematics_estimator(entry, &missile_tuning.target_kinematics_estimator,
+                                               error)) {
+            return false;
+        }
+        if (!parse_capture_guidance_mode(entry, &missile_tuning.capture_guidance_mode, error)) {
+            return false;
+        }
         parse_missile_tuning_json_fields(entry, &missile_tuning);
 
         if (entry.contains("missile_tuning") && entry["missile_tuning"].is_object()) {
+            if (!parse_pn_los_rate_source(entry["missile_tuning"],
+                                          &missile_tuning.pn_los_rate_source, error)) {
+                return false;
+            }
+            if (!parse_target_kinematics_estimator(
+                    entry["missile_tuning"], &missile_tuning.target_kinematics_estimator, error)) {
+                return false;
+            }
+            if (!parse_capture_guidance_mode(entry["missile_tuning"],
+                                             &missile_tuning.capture_guidance_mode, error)) {
+                return false;
+            }
             parse_missile_tuning_json_fields(entry["missile_tuning"], &missile_tuning);
         }
         if (entry.contains("guidance") && entry["guidance"].is_object()) {
             const auto &guidance = entry["guidance"];
+            if (!parse_pn_los_rate_source(guidance, &missile_tuning.pn_los_rate_source, error)) {
+                return false;
+            }
+            if (!parse_target_kinematics_estimator(
+                    guidance, &missile_tuning.target_kinematics_estimator, error)) {
+                return false;
+            }
+            if (!parse_capture_guidance_mode(guidance, &missile_tuning.capture_guidance_mode,
+                                             error)) {
+                return false;
+            }
             parse_missile_tuning_json_fields(guidance, &missile_tuning);
 
             const std::string guidance_type = guidance.value("type", "");
@@ -1332,7 +1527,9 @@ void parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefin
                 guidance.value("lobl_required", missile_tuning.lobl_required);
         }
         if (entry.contains("warhead") && entry["warhead"].is_object()) {
-            parse_warhead_json_fields(entry["warhead"], &missile_tuning);
+            if (!parse_warhead_json_fields(entry["warhead"], &missile_tuning, error)) {
+                return false;
+            }
         }
         if (entry.contains("fuze") && entry["fuze"].is_object()) {
             parse_fuze_json_fields(entry["fuze"], &missile_tuning);
@@ -1369,7 +1566,11 @@ void parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefin
                    std::isfinite(missile_tuning.sensor_max_range)) {
             def.has_sensor = true;
         }
+        if (!validate_missile_tracker_gains(missile_tuning, error)) {
+            return false;
+        }
     }
+    return true;
 }
 
 void parse_command_link_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
@@ -1532,7 +1733,9 @@ bool parse_unit_json(
 
     def.has_ammo = entry.value("has_ammo", false);
     parse_ammo_json_fields(entry, def);
-    parse_missile_definition_json_fields(entry, def);
+    if (!parse_missile_definition_json_fields(entry, def, error)) {
+        return false;
+    }
 
     def.has_command_link = entry.value("has_command_link", false);
     parse_command_link_json_fields(entry, def);
