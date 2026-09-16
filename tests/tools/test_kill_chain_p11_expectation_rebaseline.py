@@ -8,7 +8,7 @@ from tools.diagnostics import kill_chain_p11_expectation_rebaseline as rebaselin
 def _cell(case_id: str, old: str, state: str, *, blocked: bool = False) -> dict:
   return {
     "case_id": case_id,
-    "expectation_baseline_id": "P11-TEST-BASELINE",
+    "expectation_baseline_id": "P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS",
     "target_motion_layer": "nonmaneuvering_constant_velocity",
     "target_acceleration_x_mps2": 0.0,
     "range_km": 8.0,
@@ -35,6 +35,9 @@ def _report(cells: list[dict]) -> dict:
   ]
   return {
     "status": "integrated_structure_passed_residuals_open",
+    "expectation_baseline": {
+      "id": "P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS"
+    },
     "matrix": {
       "case_count_per_seed": len(cells),
       "expected_run_count": len(runs),
@@ -100,8 +103,69 @@ def test_range_topology_requires_explicit_near_range_entry_exception() -> None:
 
   rows[1]["range_topology_exception"] = "near_range_entry"
   excepted = rebaseline._range_topology(rows)
-  assert excepted["continuous_range_topology"] is True
-  assert excepted["range_exception_count"] == 1
+  assert excepted["continuous_range_topology"] is False
+  assert excepted["range_exception_count"] == 0
+
+
+def test_range_topology_accepts_only_four_approved_near_range_transitions() -> None:
+  cells = []
+  for bearing in (-60.0, 60.0):
+    cells.extend(
+      [
+        {
+          **_cell(f"cv_near_{bearing:g}", "O", "outside_no_load"),
+          "range_km": 4.0,
+          "bearing_deg": bearing,
+        },
+        {
+          **_cell(f"cv_entry_{bearing:g}", "N", "complete_effect_chain"),
+          "range_km": 6.0,
+          "bearing_deg": bearing,
+          "range_topology_exception": "near_range_entry",
+        },
+        {
+          **_cell(f"mild_near_{bearing:g}", "M", "in_radius_fuze_blocked", blocked=True),
+          "target_motion_layer": "mild_maneuver",
+          "range_km": 6.0,
+          "bearing_deg": bearing,
+        },
+        {
+          **_cell(f"mild_entry_{bearing:g}", "N", "complete_effect_chain"),
+          "target_motion_layer": "mild_maneuver",
+          "range_km": 8.0,
+          "bearing_deg": bearing,
+          "range_topology_exception": "near_range_entry",
+        },
+      ]
+    )
+
+  topology = rebaseline._range_topology(rebaseline._cell_rows(_report(cells)))
+  assert topology["continuous_range_topology"] is True
+  assert topology["range_exception_count"] == 4
+
+
+def test_range_topology_rejects_exception_token_on_12_to_16km_reversal() -> None:
+  rows = rebaseline._cell_rows(
+    _report(
+      [
+        {
+          **_cell("unapproved_12km", "O", "outside_no_load"),
+          "range_km": 12.0,
+          "bearing_deg": 60.0,
+        },
+        {
+          **_cell("unapproved_16km", "N", "complete_effect_chain"),
+          "range_km": 16.0,
+          "bearing_deg": 60.0,
+          "range_topology_exception": "near_range_entry",
+        },
+      ]
+    )
+  )
+
+  topology = rebaseline._range_topology(rows)
+  assert topology["continuous_range_topology"] is False
+  assert topology["range_violation_count"] == 1
 
 
 def test_build_report_is_candidate_only_and_keeps_p11_incomplete(tmp_path) -> None:
@@ -128,6 +192,18 @@ def test_source_matrix_gate_rejects_duplicate_case_seed_pair(tmp_path) -> None:
   assert report["source_matrix_audit"]["checks"]["unique_case_seed_pairs"] is False
   assert report["evaluation"]["candidate_ready_for_manual_review"] is False
   assert "不能形成候选重基线" in rebaseline.conclusions_zh(report)
+
+
+def test_source_matrix_gate_rejects_unknown_cell_baseline(tmp_path) -> None:
+  source = _report([_cell("a", "N", "complete_effect_chain")])
+  source["cells"][0]["expectation_baseline_id"] = "UNKNOWN-BASELINE"
+
+  report = rebaseline.build_report(source, input_path=_input_path(tmp_path))
+
+  assert report["source_matrix_audit"]["checks"][
+    "accepted_expectation_baseline"
+  ] is False
+  assert report["evaluation"]["candidate_ready_for_manual_review"] is False
 
 
 def test_terminal_residual_gate_requires_nonempty_cause(tmp_path) -> None:

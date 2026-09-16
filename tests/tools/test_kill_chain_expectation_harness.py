@@ -1,6 +1,11 @@
 from __future__ import annotations
 
+from copy import deepcopy
+
+import pytest
+
 from tools.diagnostics import kill_chain_expectation_harness as harness
+from tools.diagnostics.common import require_expectation_baseline_identity
 
 
 def test_anchor_grid_counts_and_classification() -> None:
@@ -149,6 +154,42 @@ def test_case_grid_only_validates_case_grid_baseline_identity() -> None:
   assert report["case_grid"][0]["expectation_baseline_id"] == (
     harness.EXPECTATION_BASELINE_ID
   )
+
+
+def test_v2_identity_contract_rejects_old_unknown_or_mixed_rows() -> None:
+  report = harness.generate_before_report(
+    grid_tier="anchor-grid",
+    target_motion_layers=("nonmaneuvering_constant_velocity",),
+    case_ids=("kces_anchor_grid_cv_8km_p30deg",),
+    effect_variants=("REV-RUNTIME-PROJECTION",),
+    seed=20260621,
+  )
+
+  invalid_reports = []
+  old_report = deepcopy(report)
+  old_report["schema_version"] = "a2.kill_chain_expectation_before_report.v1"
+  invalid_reports.append(old_report)
+  unknown = deepcopy(report)
+  unknown["expectation_baseline_id"] = "UNKNOWN-BASELINE"
+  for row in unknown["case_grid"]:
+    row["expectation_baseline_id"] = "UNKNOWN-BASELINE"
+  for row in unknown["heatmap_rows"]:
+    row["identity"]["expectation_baseline_id"] = "UNKNOWN-BASELINE"
+  invalid_reports.append(unknown)
+  stale_grid = deepcopy(report)
+  stale_grid["case_grid"][0]["schema_version"] = (
+    "a2.kill_chain_expectation_case_grid.v1"
+  )
+  invalid_reports.append(stale_grid)
+  mixed_heatmap = deepcopy(report)
+  mixed_heatmap["heatmap_rows"][0]["identity"]["expectation_baseline_id"] = (
+    "UNKNOWN-BASELINE"
+  )
+  invalid_reports.append(mixed_heatmap)
+
+  for invalid in invalid_reports:
+    with pytest.raises(ValueError, match="schema|baseline"):
+      require_expectation_baseline_identity(invalid)
 
 
 def test_mild_maneuver_smoke_flows_acceleration_into_runtime() -> None:

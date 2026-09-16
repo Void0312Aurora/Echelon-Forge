@@ -16,7 +16,7 @@ def _stage(name: str, *, present: bool = True, observed: dict | None = None) -> 
 def _fixture(*, triggered: bool) -> tuple[dict, dict, dict]:
   grid = {
     "case_id": "fixture",
-    "expectation_baseline_id": "P11-TEST-BASELINE",
+    "expectation_baseline_id": "P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS",
     "target_motion_layer": "mild_maneuver",
     "target_motion_profile_id": "constant_lateral_acceleration_8mps2_v0",
     "maneuver_severity": "mild_engineering_proxy",
@@ -152,7 +152,7 @@ def test_evaluation_separates_structural_admission_from_legacy_envelope() -> Non
       }
     )
   for row in rows:
-    row["expectation_baseline_id"] = "P11-TEST-BASELINE"
+    row["expectation_baseline_id"] = "P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS"
   cells = admission._aggregate_cells(rows)
   evaluation = admission._evaluate(
     rows,
@@ -223,7 +223,7 @@ def test_evaluation_accepts_n_o_baseline_but_retains_terminal_contract_hold() ->
       ]
     )
   for row in rows:
-    row["expectation_baseline_id"] = "P11-TEST-BASELINE"
+    row["expectation_baseline_id"] = "P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS"
   cells = admission._aggregate_cells(rows)
   evaluation = admission._evaluate(
     rows,
@@ -288,7 +288,7 @@ def test_structural_matrix_gate_rejects_duplicate_case_seed_pair() -> None:
     )
   rows[-1] = dict(rows[0])
   for row in rows:
-    row["expectation_baseline_id"] = "P11-TEST-BASELINE"
+    row["expectation_baseline_id"] = "P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS"
   cells = admission._aggregate_cells(rows)
   evaluation = admission._evaluate(
     rows,

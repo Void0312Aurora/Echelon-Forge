@@ -35,7 +35,8 @@ from tools.diagnostics.common import (
   require_expectation_baseline_identity,
   write_json_output,
 )
-SCHEMA_VERSION = "a2.kill_chain_expectation_response_diagnosis.v2"
+SCHEMA_VERSION = "a2.kill_chain_expectation_response_diagnosis.v3"
+ROW_SCHEMA_VERSION = "a2.kill_chain_expectation_response_diagnosis_row.v1"
 DEFAULT_VARIANT = "REV-RUNTIME-PROJECTION"
 DEFAULT_TARGET_MOTION_LAYER = "nonmaneuvering_constant_velocity"
 LOW_RESPONSE_PROBABILITY_THRESHOLD = 0.05
@@ -136,6 +137,9 @@ def _row_view(row: dict[str, Any]) -> dict[str, Any]:
     detail_summary.get("max_probability_component", {}) or {}
   )
   return {
+    "expectation_baseline_id": str(
+      _nested_get(row, "identity", "expectation_baseline_id") or ""
+    ),
     "case_id": str(_nested_get(row, "identity", "case_id") or ""),
     "range_km": finite_float_or_none(_nested_get(row, "launch_window", "range_km")),
     "signed_bearing_deg": finite_float_or_none(
@@ -386,6 +390,7 @@ def _diagnose_candidate(
     abs(baseline_view.get("min_integrity_delta") or 0.0),
   )
   return {
+    "schema_version": ROW_SCHEMA_VERSION,
     **candidate,
     "diagnosis_bucket": bucket,
     "diagnosis_reason": reason,
@@ -408,6 +413,8 @@ def _diagnose_candidate(
 def _write_detail_csv(path: Path, *, rows: list[dict[str, Any]]) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
   fields = [
+    "schema_version",
+    "expectation_baseline_id",
     "case_id",
     "range_km",
     "signed_bearing_deg",
@@ -474,13 +481,24 @@ def _write_matrix_csv(path: Path, *, rows: list[dict[str, Any]]) -> None:
   }
   with path.open("w", newline="", encoding="utf-8") as handle:
     writer = csv.writer(handle, lineterminator="\n")
-    writer.writerow(["range_km"] + [f"{bearing:g}" for bearing in bearings])
+    writer.writerow(
+      ["schema_version", "expectation_baseline_id", "range_km"]
+      + [f"{bearing:g}" for bearing in bearings]
+    )
     for range_km in ranges:
       values = []
       for bearing in bearings:
         row = by_cell.get((range_km, bearing))
         values.append("" if row is None else row["diagnosis_bucket"])
-      writer.writerow([f"{range_km:g}", *values])
+      baseline_id = next(
+        (
+          str(row["expectation_baseline_id"])
+          for row in rows
+          if row.get("expectation_baseline_id")
+        ),
+        "",
+      )
+      writer.writerow([ROW_SCHEMA_VERSION, baseline_id, f"{range_km:g}", *values])
 
 def _plot_probability_scatter(
   path_base: Path,
@@ -678,6 +696,7 @@ def generate_response_diagnosis(
   )
   manifest: dict[str, Any] = {
     "schema_version": SCHEMA_VERSION,
+    "row_schema_version": ROW_SCHEMA_VERSION,
     "status": "generated",
     "expectation_baseline_id": expectation_baseline_id,
     "input_path": str(input_path),

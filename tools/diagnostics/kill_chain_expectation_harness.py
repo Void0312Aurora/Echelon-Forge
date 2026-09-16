@@ -22,6 +22,9 @@ ensure_repo_imports()
 REPO_ROOT = Path(repo_root())
 
 from tools.diagnostics.common import (
+  KCES_EXPECTATION_BASELINE_ID,
+  KCES_EXPECTATION_REPORT_SCHEMA_VERSION,
+  KCES_EXPECTATION_ROW_SCHEMA_VERSIONS,
   finite_float,
   native_stdout_to_stderr,
   require_expectation_baseline_identity,
@@ -35,11 +38,11 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.componen
   empty_component_detail,
 )
 
-SCHEMA_VERSION = "a2.kill_chain_expectation_before_report.v2"
-CASE_GRID_SCHEMA_VERSION = "a2.kill_chain_expectation_case_grid.v2"
-HEATMAP_ROW_SCHEMA_VERSION = "a2.kill_chain_expectation_heatmap_row.v2"
+SCHEMA_VERSION = KCES_EXPECTATION_REPORT_SCHEMA_VERSION
+CASE_GRID_SCHEMA_VERSION = KCES_EXPECTATION_ROW_SCHEMA_VERSIONS["case_grid"]
+HEATMAP_ROW_SCHEMA_VERSION = KCES_EXPECTATION_ROW_SCHEMA_VERSIONS["heatmap_rows"]
 PROFILE_ID = "KCES-AIM120C-LIKE-FIGHTER-V0"
-EXPECTATION_BASELINE_ID = "P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS"
+EXPECTATION_BASELINE_ID = KCES_EXPECTATION_BASELINE_ID
 DEFAULT_SEED = 20260621
 DEFAULT_R_FUZE_M = 15.0
 SUPPORTED_RUNTIME_TARGET_MOTION_LAYERS = {

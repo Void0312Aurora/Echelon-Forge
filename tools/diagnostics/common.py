@@ -16,6 +16,12 @@ from typing import Any
 PROBE_RUN_ARG_NAMES: tuple[str, ...] = ("scenario", "episodes", "seed", "max_steps")
 MODEL_LOAD_ARG_NAMES: tuple[str, ...] = ("train_config", "model", "algo", "device")
 _DUAL_OPTION_DESTS: frozenset[str] = frozenset({"max_steps", "train_config", "json_out"})
+KCES_EXPECTATION_BASELINE_ID = "P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS"
+KCES_EXPECTATION_REPORT_SCHEMA_VERSION = "a2.kill_chain_expectation_before_report.v2"
+KCES_EXPECTATION_ROW_SCHEMA_VERSIONS = {
+    "case_grid": "a2.kill_chain_expectation_case_grid.v2",
+    "heatmap_rows": "a2.kill_chain_expectation_heatmap_row.v2",
+}
 
 
 def _option_strings(dest: str, *, primary: str = "underscore") -> tuple[str, str]:
@@ -244,41 +250,60 @@ def add_kces_before_report_args(
 def require_expectation_baseline_identity(
     report: Mapping[str, Any],
     *,
-    rows_key: str = "heatmap_rows",
+    rows_key: str | None = None,
 ) -> str:
-    """Reject KCES reports whose rows omit or mix expectation baselines."""
+    """Require the accepted v2 KCES baseline on every populated row collection."""
 
-    report_baseline = str(report.get("expectation_baseline_id", "") or "").strip()
-    if not report_baseline:
-        raise ValueError("expectation_baseline_id is missing from report")
-    raw_rows = list(report.get(rows_key, []) or [])
-    if not raw_rows:
-        raise ValueError(f"{rows_key} is empty")
-    row_baselines: list[str] = []
-    for index, raw in enumerate(raw_rows):
-        if not isinstance(raw, Mapping):
-            raise ValueError(f"{rows_key}[{index}] is not an object")
-        identity = raw.get("identity", {})
-        identity_baseline = (
-            identity.get("expectation_baseline_id", "")
-            if isinstance(identity, Mapping)
-            else ""
-        )
-        row_baseline = str(
-            identity_baseline or raw.get("expectation_baseline_id", "") or ""
-        ).strip()
-        if not row_baseline:
-            raise ValueError(
-                f"{rows_key}[{index}] is missing expectation_baseline_id"
-            )
-        row_baselines.append(row_baseline)
-    distinct = sorted(set(row_baselines))
-    if distinct != [report_baseline]:
+    report_schema = str(report.get("schema_version", "") or "").strip()
+    if report_schema != KCES_EXPECTATION_REPORT_SCHEMA_VERSION:
         raise ValueError(
-            "expectation baseline identity is mixed or disagrees with report: "
-            f"report={report_baseline!r}, rows={distinct!r}"
+            "expectation report schema is not current v2: "
+            f"{report_schema!r}"
         )
-    return report_baseline
+    report_baseline = str(report.get("expectation_baseline_id", "") or "").strip()
+    if report_baseline != KCES_EXPECTATION_BASELINE_ID:
+        raise ValueError(
+            "expectation_baseline_id is not the accepted v2 baseline: "
+            f"{report_baseline!r}"
+        )
+    keys = (rows_key,) if rows_key else tuple(KCES_EXPECTATION_ROW_SCHEMA_VERSIONS)
+    populated = False
+    for key in keys:
+        if key not in KCES_EXPECTATION_ROW_SCHEMA_VERSIONS:
+            raise ValueError(f"unsupported expectation row collection: {key!r}")
+        raw_rows = list(report.get(key, []) or [])
+        if not raw_rows:
+            continue
+        populated = True
+        expected_schema = KCES_EXPECTATION_ROW_SCHEMA_VERSIONS[key]
+        for index, raw in enumerate(raw_rows):
+            if not isinstance(raw, Mapping):
+                raise ValueError(f"{key}[{index}] is not an object")
+            row_schema = str(raw.get("schema_version", "") or "").strip()
+            if row_schema != expected_schema:
+                raise ValueError(
+                    f"{key}[{index}] schema is not current v2: {row_schema!r}"
+                )
+            identity = raw.get("identity", {})
+            identity_baseline = (
+                identity.get("expectation_baseline_id", "")
+                if isinstance(identity, Mapping)
+                else ""
+            )
+            row_baseline = str(
+                raw.get("expectation_baseline_id", "")
+                if key == "case_grid"
+                else identity_baseline
+            ).strip()
+            if row_baseline != KCES_EXPECTATION_BASELINE_ID:
+                raise ValueError(
+                    f"{key}[{index}] has unaccepted expectation_baseline_id: "
+                    f"{row_baseline!r}"
+                )
+    if not populated:
+        requested = rows_key or "case_grid/heatmap_rows"
+        raise ValueError(f"{requested} is empty")
+    return KCES_EXPECTATION_BASELINE_ID
 
 
 # Several diagnostics entrypoints are thin ``--mode`` routers over a package of

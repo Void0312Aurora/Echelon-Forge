@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from tools.diagnostics import kill_chain_expectation_response_diagnosis as diagnosis
 
@@ -15,9 +16,10 @@ def _row(
   component_response_band: str,
 ) -> dict[str, object]:
   return {
+    "schema_version": "a2.kill_chain_expectation_heatmap_row.v2",
     "identity": {
       "case_id": case_id,
-      "expectation_baseline_id": "P11-TEST-BASELINE",
+      "expectation_baseline_id": "P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS",
     },
     "launch_window": {
       "target_motion_layer": "nonmaneuvering_constant_velocity",
@@ -86,8 +88,8 @@ def _row(
 
 def test_response_diagnosis_writes_probability_cliff_artifacts(tmp_path) -> None:
   report = {
-    "schema_version": "a2.kill_chain_expectation_before_report.v1",
-    "expectation_baseline_id": "P11-TEST-BASELINE",
+    "schema_version": "a2.kill_chain_expectation_before_report.v2",
+    "expectation_baseline_id": "P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS",
     "heatmap_rows": [
       _row(
         case_id="baseline",
@@ -121,6 +123,10 @@ def test_response_diagnosis_writes_probability_cliff_artifacts(tmp_path) -> None
   assert manifest["candidate_row_count"] == 1
   assert manifest["baseline_row_count"] == 1
   row = manifest["rows"][0]
+  assert row["schema_version"] == diagnosis.ROW_SCHEMA_VERSION
+  assert row["expectation_baseline_id"] == (
+    "P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS"
+  )
   assert row["case_id"] == "candidate"
   assert row["diagnosis_bucket"] == "outer_effect_low_component_load_probability_cliff"
   assert row["detail_projection_signal"] == "all_component_rows_weak_load_low_response"
@@ -130,6 +136,10 @@ def test_response_diagnosis_writes_probability_cliff_artifacts(tmp_path) -> None
   assert (tmp_path / "out" / "sample_response_diagnosis_manifest_20260628.json").exists()
   assert (tmp_path / "out" / "sample_response_diagnosis_detail_20260628.csv").exists()
   assert (tmp_path / "out" / "sample_response_diagnosis_matrix_20260628.csv").exists()
+  for csv_key in ("detail_csv", "matrix_csv"):
+    assert "P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS" in Path(
+      manifest[csv_key]
+    ).read_text(encoding="utf-8")
   assert open(manifest["scatter_png"], "rb").read(8).startswith(b"\x89PNG")
   assert "<svg" in open(manifest["scatter_svg"], encoding="utf-8").read()
   assert "engineering-proxy diagnostics only" in (
@@ -139,8 +149,8 @@ def test_response_diagnosis_writes_probability_cliff_artifacts(tmp_path) -> None
 
 def test_response_diagnosis_summary_handles_empty_candidate_set(tmp_path) -> None:
   report = {
-    "schema_version": "a2.kill_chain_expectation_before_report.v1",
-    "expectation_baseline_id": "P11-TEST-BASELINE",
+    "schema_version": "a2.kill_chain_expectation_before_report.v2",
+    "expectation_baseline_id": "P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS",
     "heatmap_rows": [
       _row(
         case_id="baseline",

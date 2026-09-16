@@ -31,9 +31,9 @@ Current schemas:
 | heatmap rows | `a2.kill_chain_expectation_heatmap_row.v2` |
 | component detail | `a2.kill_chain_expectation_component_detail.v1` |
 | visualization manifest | `a2.kill_chain_expectation_visualization_manifest.v1` |
-| first-review-stage attribution | `a2.kill_chain_expectation_stage_attribution.v1` |
-| response local diagnosis | `a2.kill_chain_expectation_response_diagnosis.v2` |
-| expectation-envelope audit | `a2.kill_chain_expectation_envelope_audit.v1` |
+| first-review-stage attribution | `a2.kill_chain_expectation_stage_attribution.v2` |
+| response local diagnosis | `a2.kill_chain_expectation_response_diagnosis.v3` |
+| expectation-envelope audit | `a2.kill_chain_expectation_envelope_audit.v2` |
 
 The maintained v2 harness requires one `expectation_baseline_id` at report root
 and on every case-grid/heatmap row. Consumers reject missing or mixed baseline

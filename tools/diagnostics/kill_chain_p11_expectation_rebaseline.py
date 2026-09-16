@@ -20,6 +20,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
   sys.path.insert(0, str(REPO_ROOT))
 
+from tools.diagnostics.common import KCES_EXPECTATION_BASELINE_ID  # noqa: E402
+
 
 SCHEMA_VERSION = "a2.kill_chain_p11_expectation_rebaseline.v1"
 GENERATED_ON = "2026-09-15"
@@ -36,7 +38,29 @@ DEFAULT_STEM = "kill_chain_p11_expectation_rebaseline_20260915"
 EXPECTED_SEED_COUNT = 3
 EXPECTED_SEEDS = (20260621, 20260622, 20260623)
 CLASS_ORDER = {"O": 0, "M": 1, "N": 2}
-RANGE_TOPOLOGY_EXCEPTIONS = {"near_range_entry"}
+APPROVED_RANGE_TOPOLOGY_EXCEPTIONS = {
+  (
+    "nonmaneuvering_constant_velocity",
+    bearing_deg,
+    4.0,
+    "O",
+    6.0,
+    "N",
+    "near_range_entry",
+  )
+  for bearing_deg in (-60.0, 60.0)
+} | {
+  (
+    "mild_maneuver",
+    bearing_deg,
+    6.0,
+    "M",
+    8.0,
+    "N",
+    "near_range_entry",
+  )
+  for bearing_deg in (-60.0, 60.0)
+}
 
 
 def _finite(value: Any, default: float = 0.0) -> float:
@@ -144,6 +168,9 @@ def _source_matrix_audit(
     (case_id, seed) for case_id in set(case_ids) for seed in EXPECTED_SEEDS
   }
   matrix = dict(report.get("matrix", {}) or {})
+  source_baseline = str(
+    dict(report.get("expectation_baseline", {}) or {}).get("id", "") or ""
+  )
   checks = {
     "unique_cell_ids": len(case_ids) == len(set(case_ids)),
     "expected_cell_count": len(rows)
@@ -154,9 +181,14 @@ def _source_matrix_audit(
     "complete_case_seed_cartesian_product": set(actual_run_keys) == expected_run_keys,
     "declared_run_count_exact": len(actual_run_keys)
     == int(matrix.get("expected_run_count", 0) or 0),
-    "single_expectation_baseline": bool(rows)
-    and len({str(row["expectation_baseline_id"]) for row in rows}) == 1
-    and all(bool(str(row["expectation_baseline_id"]).strip()) for row in rows),
+    "accepted_expectation_baseline": (
+      source_baseline == KCES_EXPECTATION_BASELINE_ID
+      and bool(rows)
+      and all(
+        str(row["expectation_baseline_id"]) == KCES_EXPECTATION_BASELINE_ID
+        for row in rows
+      )
+    ),
   }
   return {
     "checks": checks,
@@ -244,30 +276,50 @@ def _range_topology(rows: list[dict[str, Any]]) -> dict[str, Any]:
         )
         continue
       current_class = next(iter(classes))
-      if (
+      exception_names = {
+        str(row.get("range_topology_exception", "") or "")
+        for row in by_range[range_km]
+        if str(row.get("range_topology_exception", "") or "")
+      }
+      improving = (
         previous_class is not None
         and CLASS_ORDER.get(current_class, -1) > CLASS_ORDER.get(previous_class, -1)
-      ):
-        exception_names = {
-          str(row.get("range_topology_exception", "") or "")
-          for row in by_range[range_km]
-        }
-        exception = next(
-          (name for name in sorted(exception_names) if name in RANGE_TOPOLOGY_EXCEPTIONS),
-          "",
+      )
+      record = {
+        "target_motion_layer": layer,
+        "bearing_deg": bearing_deg,
+        "previous_range_km": previous_range,
+        "previous_class": previous_class,
+        "range_km": range_km,
+        "class": current_class,
+      }
+      exception_name = next(iter(exception_names), "")
+      approved_exception = (
+        len(exception_names) == 1
+        and (
+          layer,
+          bearing_deg,
+          previous_range,
+          previous_class,
+          range_km,
+          current_class,
+          exception_name,
         )
-        record = {
-          "target_motion_layer": layer,
-          "bearing_deg": bearing_deg,
-          "previous_range_km": previous_range,
-          "previous_class": previous_class,
-          "range_km": range_km,
-          "class": current_class,
-        }
-        if exception and current_class == "N":
-          exceptions.append({"type": exception, **record})
+        in APPROVED_RANGE_TOPOLOGY_EXCEPTIONS
+      )
+      if improving:
+        if approved_exception:
+          exceptions.append({"type": exception_name, **record})
         else:
           violations.append({"type": "range_miss_to_hit_reversal", **record})
+      elif exception_names:
+        violations.append(
+          {
+            "type": "unapproved_range_topology_exception",
+            "exception_names": sorted(exception_names),
+            **record,
+          }
+        )
       previous_range = range_km
       previous_class = current_class
   return {

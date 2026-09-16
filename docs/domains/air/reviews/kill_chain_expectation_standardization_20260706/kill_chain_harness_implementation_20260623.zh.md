@@ -31,9 +31,9 @@ python -m pytest tests/tools/test_kces_expectation_envelope_audit.py -q
 | heatmap rows | `a2.kill_chain_expectation_heatmap_row.v2` |
 | component detail | `a2.kill_chain_expectation_component_detail.v1` |
 | visualization manifest | `a2.kill_chain_expectation_visualization_manifest.v1` |
-| first-review-stage attribution | `a2.kill_chain_expectation_stage_attribution.v1` |
-| response local diagnosis | `a2.kill_chain_expectation_response_diagnosis.v2` |
-| expectation-envelope audit | `a2.kill_chain_expectation_envelope_audit.v1` |
+| first-review-stage attribution | `a2.kill_chain_expectation_stage_attribution.v2` |
+| response local diagnosis | `a2.kill_chain_expectation_response_diagnosis.v3` |
+| expectation-envelope audit | `a2.kill_chain_expectation_envelope_audit.v2` |
 
 当前维护的 v2 harness 要求 report 根节点以及每个 case-grid / heatmap row 都带有同一
 `expectation_baseline_id`。消费者会拒绝缺失或混用 baseline identity 的输入。已有 v1
