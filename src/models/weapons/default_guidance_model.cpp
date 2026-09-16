@@ -1370,7 +1370,11 @@ class DefaultGuidanceModel : public IGuidanceModel {
             } else if (missile.seeker_has_valid_track && missile.last_track_time_s >= 0.0 &&
                        (current_time - missile.last_track_time_s) <=
                            tuning.track_memory_timeout_s) {
+                const bool rejected_nonmonotonic =
+                    missile.target_measurement_rejected_nonmonotonic;
                 propagate_track_memory(missile, current_time, guidance_dt, transform, velocity);
+                missile.target_measurement_rejected_nonmonotonic =
+                    rejected_nonmonotonic || missile.target_measurement_rejected_nonmonotonic;
                 missile.terminal_seeker_active = terminal_seeker_is_active(missile);
                 if (!uses_world_cv_target_tracker(missile)) {
                     missile.target_kinematics_valid = false;

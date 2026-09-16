@@ -1034,7 +1034,14 @@ class MissileDynamicsRuntimeMixin:
     missile_id = int(sim.fire_missile(blue_id, red_id))
     self.assertGreater(missile_id, 0)
 
-    for _ in range(30):
+    sim.debug_set_contact_list_preserve_timestamps(missile_id, [stale_detection])
+    sim.step()
+    memory_runtime = sim.debug_get_missile_runtime_state(missile_id)
+    self.assertEqual(int(memory_runtime["seeker_mode"]), 1)
+    self.assertTrue(bool(memory_runtime["target_measurement_rejected_nonmonotonic"]))
+    self.assertGreaterEqual(int(memory_runtime["target_duplicate_measurement_count"]), 1)
+
+    for _ in range(29):
       sim.debug_set_contact_list_preserve_timestamps(missile_id, [stale_detection])
       sim.step()
 
