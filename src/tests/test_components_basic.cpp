@@ -470,10 +470,11 @@ TEST_SUITE("components_basic") {
   "flight_model": {"max_speed": 1000.0, "max_g": 30.0, "max_turn_rate": 25.0},
   "guidance": {
     "pn_los_rate_source": "world_los_history",
-    "target_kinematics_estimator": "world_cv",
+    "target_kinematics_estimator": "world_cva",
     "capture_guidance_mode": "disabled",
     "target_tracker_alpha": 0.20,
-    "target_tracker_beta": 0.02
+    "target_tracker_beta": 0.02,
+    "target_tracker_gamma": 0.5
   }
 })json";
         }
@@ -485,11 +486,12 @@ TEST_SUITE("components_basic") {
         CHECK(definitions[0].missile_tuning.pn_los_rate_source ==
               static_cast<int>(MissilePnLosRateSource::WorldLosHistory));
         CHECK(definitions[0].missile_tuning.target_kinematics_estimator ==
-              static_cast<int>(MissileTargetKinematicsEstimator::WorldCv));
+              static_cast<int>(MissileTargetKinematicsEstimator::WorldCva));
         CHECK(definitions[0].missile_tuning.capture_guidance_mode ==
               static_cast<int>(MissileCaptureGuidanceMode::Disabled));
         CHECK(definitions[0].missile_tuning.target_tracker_alpha == doctest::Approx(0.20));
         CHECK(definitions[0].missile_tuning.target_tracker_beta == doctest::Approx(0.02));
+        CHECK(definitions[0].missile_tuning.target_tracker_gamma == doctest::Approx(0.5));
         std::filesystem::remove(valid_path);
 
         const std::filesystem::path default_path =

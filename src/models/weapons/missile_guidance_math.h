@@ -131,6 +131,17 @@ inline Vec3 project_lateral(const Vec3 &acceleration, const Vec3 &velocity_dir) 
     return acceleration - velocity_dir * dot(acceleration, velocity_dir);
 }
 
+inline Vec3 transverse_apn_target_acceleration(const Vec3 &target_acceleration, const Vec3 &los_dir,
+                                               const Vec3 &missile_velocity_dir) {
+    const Vec3 los_axis = normalize(los_dir);
+    const Vec3 velocity_axis = normalize(missile_velocity_dir);
+    if (norm(los_axis) <= 1.0e-6 || norm(velocity_axis) <= 1.0e-6) {
+        return {0.0, 0.0, 0.0};
+    }
+    const Vec3 target_acceleration_normal_to_los = project_lateral(target_acceleration, los_axis);
+    return project_lateral(target_acceleration_normal_to_los, velocity_axis);
+}
+
 inline Vec3 world_los_angular_rate(const Vec3 &previous_los, const Vec3 &current_los,
                                    double elapsed_s) {
     const Vec3 previous = normalize(previous_los);

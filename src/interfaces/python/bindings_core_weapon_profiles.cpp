@@ -69,6 +69,7 @@ void bind_core_weapon_profiles(nb::module_ &m) {
         .def_rw("capture_guidance_mode", &MissileTuning::capture_guidance_mode)
         .def_rw("target_tracker_alpha", &MissileTuning::target_tracker_alpha)
         .def_rw("target_tracker_beta", &MissileTuning::target_tracker_beta)
+        .def_rw("target_tracker_gamma", &MissileTuning::target_tracker_gamma)
         .def_rw("apn_target_accel_gain", &MissileTuning::apn_target_accel_gain)
         .def_rw("autopilot_damping", &MissileTuning::autopilot_damping)
         .def_prop_rw(

@@ -11,6 +11,8 @@ struct MissileGuidanceDefaults {
         static_cast<int>(MissileCaptureGuidanceMode::LegacyPursuit);
     static constexpr double kWorldCvTrackerAlpha = 0.20;
     static constexpr double kWorldCvTrackerBeta = 0.02;
+    static constexpr double kWorldCvaTrackerGamma = 0.5;
+    static constexpr double kWorldCvaTrackerMinimumAccelerationBaselineS = 3.0;
     static constexpr double kTrackFilterTauS = 0.12;
     static constexpr double kTrackMemoryTimeoutS = 0.75;
     static constexpr double kBoostTimeS = 3.0;

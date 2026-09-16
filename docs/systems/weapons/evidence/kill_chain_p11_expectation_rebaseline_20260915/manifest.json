@@ -1,0 +1,40 @@
+{
+  "schema_version": "a2.evidence_package_manifest.v1",
+  "created_at_utc": "2026-09-16T13:38:37Z",
+  "producer": {
+    "kind": "independent_agent_review",
+    "review_date": "2026-09-15",
+    "owner_equivalence": "manual_review"
+  },
+  "claim": "The reviewed 93-cell synthetic expectation mapping was accepted with residuals.",
+  "non_claims": [
+    "current_revision_admission",
+    "p11_completion",
+    "terminal_track_timeout_authority",
+    "real_weapon_performance_or_pk_authority"
+  ],
+  "inputs": {
+    "reviewed_revision": "5ae8e06ae5a8a0cfcaac34f157800b42b90c2eda",
+    "source_report": {
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_p11_expectation_rebaseline_20260915/kill_chain_p11_expectation_rebaseline_20260915.json",
+      "sha256": "14a125c0d7230bb9d051b1d4e8642ceef28af1a538da901568c4057001ac8f73",
+      "bytes": 66341,
+      "availability": "not_retained_in_git"
+    }
+  },
+  "outputs": {
+    "independent_review_record": {
+      "path": "docs/systems/weapons/evidence/kill_chain_p11_expectation_rebaseline_20260915/independent_review_acceptance_20260915.md",
+      "sha256": "cb878dac82c144ec284e8e44b59dc522185b57fe9ec7b24b8d82a581ac4ad163",
+      "bytes": 2494
+    }
+  },
+  "retention": {
+    "reason": "Preserve the bounded independent mapping decision without generated experiment directories.",
+    "consumer": [
+      "tools/diagnostics/kill_chain_integrated_admission.py",
+      "docs/domains/air/work/issues/kill_chain_expectation_envelope.md"
+    ],
+    "rights_boundary": "Repository-internal engineering evidence; no third-party assets."
+  }
+}

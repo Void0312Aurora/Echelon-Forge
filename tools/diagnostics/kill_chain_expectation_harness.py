@@ -21,7 +21,14 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
-from tools.diagnostics.common import finite_float, native_stdout_to_stderr
+from tools.diagnostics.common import (
+  KCES_EXPECTATION_BASELINE_ID,
+  KCES_EXPECTATION_REPORT_SCHEMA_VERSION,
+  KCES_EXPECTATION_ROW_SCHEMA_VERSIONS,
+  finite_float,
+  native_stdout_to_stderr,
+  require_expectation_baseline_identity,
+)
 from tools.diagnostics import kill_chain_decoupling_probe as decoupling_probe  # noqa: E402
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.component_detail_projection import (  # noqa: E402
   COMPONENT_DETAIL_SCHEMA_VERSION,
@@ -31,13 +38,18 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.componen
   empty_component_detail,
 )
 
-SCHEMA_VERSION = "a2.kill_chain_expectation_before_report.v1"
-CASE_GRID_SCHEMA_VERSION = "a2.kill_chain_expectation_case_grid.v1"
-HEATMAP_ROW_SCHEMA_VERSION = "a2.kill_chain_expectation_heatmap_row.v1"
+SCHEMA_VERSION = KCES_EXPECTATION_REPORT_SCHEMA_VERSION
+CASE_GRID_SCHEMA_VERSION = KCES_EXPECTATION_ROW_SCHEMA_VERSIONS["case_grid"]
+HEATMAP_ROW_SCHEMA_VERSION = KCES_EXPECTATION_ROW_SCHEMA_VERSIONS["heatmap_rows"]
 PROFILE_ID = "KCES-AIM120C-LIKE-FIGHTER-V0"
+EXPECTATION_BASELINE_ID = KCES_EXPECTATION_BASELINE_ID
 DEFAULT_SEED = 20260621
 DEFAULT_R_FUZE_M = 15.0
-SUPPORTED_RUNTIME_TARGET_MOTION_LAYERS = {"nonmaneuvering_constant_velocity"}
+SUPPORTED_RUNTIME_TARGET_MOTION_LAYERS = {
+  "nonmaneuvering_constant_velocity",
+  "mild_maneuver",
+}
+MILD_MANEUVER_ACCELERATION_MPS2 = 8.0
 DEFAULT_EFFECT_VARIANTS = (
   "REV-RUNTIME-PROJECTION",
   "REV-EQ-FUZE",
@@ -45,17 +57,23 @@ DEFAULT_EFFECT_VARIANTS = (
 )
 
 CV_ANCHOR_CLASSES: dict[float, dict[float, str]] = {
-  4.0: {0.0: "N", 15.0: "N", 30.0: "N", 45.0: "M", 60.0: "M", 75.0: "M", 90.0: "O"},
-  6.0: {0.0: "N", 15.0: "N", 30.0: "N", 45.0: "M", 60.0: "M", 75.0: "O", 90.0: "O"},
-  8.0: {0.0: "N", 15.0: "N", 30.0: "N", 45.0: "M", 60.0: "M", 75.0: "O", 90.0: "O"},
-  10.0: {0.0: "N", 15.0: "N", 30.0: "M", 45.0: "M", 60.0: "O", 75.0: "O", 90.0: "O"},
-  12.0: {0.0: "N", 15.0: "M", 30.0: "M", 45.0: "O", 60.0: "O", 75.0: "O", 90.0: "O"},
-  16.0: {0.0: "M", 15.0: "M", 30.0: "O", 45.0: "O", 60.0: "O", 75.0: "O", 90.0: "O"},
+  4.0: {0.0: "N", 15.0: "N", 30.0: "N", 45.0: "N", 60.0: "O", 75.0: "O", 90.0: "O"},
+  6.0: {0.0: "N", 15.0: "N", 30.0: "N", 45.0: "N", 60.0: "N", 75.0: "O", 90.0: "O"},
+  8.0: {0.0: "N", 15.0: "N", 30.0: "N", 45.0: "N", 60.0: "N", 75.0: "O", 90.0: "O"},
+  10.0: {0.0: "N", 15.0: "N", 30.0: "N", 45.0: "N", 60.0: "N", 75.0: "O", 90.0: "O"},
+  12.0: {0.0: "N", 15.0: "N", 30.0: "N", 45.0: "N", 60.0: "N", 75.0: "O", 90.0: "O"},
+  16.0: {0.0: "N", 15.0: "N", 30.0: "N", 45.0: "N", 60.0: "N", 75.0: "O", 90.0: "O"},
 }
 MILD_MANEUVER_ANCHOR_CLASSES: dict[float, dict[float, str]] = {
-  6.0: {0.0: "N", 30.0: "M", 60.0: "O"},
-  8.0: {0.0: "M", 30.0: "M", 60.0: "O"},
-  10.0: {0.0: "M", 30.0: "O", 60.0: "O"},
+  6.0: {0.0: "N", 30.0: "N", 60.0: "M"},
+  8.0: {0.0: "N", 30.0: "N", 60.0: "N"},
+  10.0: {0.0: "N", 30.0: "N", 60.0: "O"},
+}
+RANGE_TOPOLOGY_EXCEPTIONS_BY_CASE = {
+  "kces_anchor_grid_cv_6km_m60deg": "near_range_entry",
+  "kces_anchor_grid_cv_6km_p60deg": "near_range_entry",
+  "kces_anchor_grid_mild_8km_m60deg": "near_range_entry",
+  "kces_anchor_grid_mild_8km_p60deg": "near_range_entry",
 }
 
 def _finite_or_none(value: Any) -> float | None:
@@ -85,6 +103,39 @@ def _motion_short_name(target_motion_layer: str) -> str:
   if target_motion_layer == "mild_maneuver":
     return "mild"
   return str(target_motion_layer).replace("_", "-")
+
+def _target_motion_profile(
+  target_motion_layer: str,
+  signed_bearing_deg: float,
+) -> dict[str, Any]:
+  if target_motion_layer == "nonmaneuvering_constant_velocity":
+    acceleration = (0.0, 0.0, 0.0)
+    return {
+      "target_motion_profile_id": "constant_velocity_v0",
+      "maneuver_severity": "none",
+      "target_acceleration_mps2": list(acceleration),
+      "target_acceleration_magnitude_mps2": 0.0,
+      "target_acceleration_policy": "zero_acceleration",
+    }
+  if target_motion_layer == "mild_maneuver":
+    sign = -1.0 if float(signed_bearing_deg) < 0.0 else 1.0
+    acceleration = (sign * MILD_MANEUVER_ACCELERATION_MPS2, 0.0, 0.0)
+    return {
+      "target_motion_profile_id": "constant_lateral_acceleration_8mps2_v0",
+      "maneuver_severity": "mild_engineering_proxy",
+      "target_acceleration_mps2": list(acceleration),
+      "target_acceleration_magnitude_mps2": MILD_MANEUVER_ACCELERATION_MPS2,
+      "target_acceleration_policy": (
+        "world_x_sign_follows_signed_bearing_positive_at_zero"
+      ),
+    }
+  return {
+    "target_motion_profile_id": "unsupported",
+    "maneuver_severity": "unclassified",
+    "target_acceleration_mps2": [0.0, 0.0, 0.0],
+    "target_acceleration_magnitude_mps2": 0.0,
+    "target_acceleration_policy": "unsupported",
+  }
 
 def _case_id(
   *,
@@ -143,10 +194,12 @@ def generate_case_grid(
         )
         if requested_ids and case_id not in requested_ids:
           continue
+        motion_profile = _target_motion_profile(layer, bearing_deg)
         rows.append(
           {
             "schema_version": CASE_GRID_SCHEMA_VERSION,
             "profile_id": PROFILE_ID,
+            "expectation_baseline_id": EXPECTATION_BASELINE_ID,
             "case_id": case_id,
             "grid_tier": str(grid_tier),
             "sample_index": sample_index,
@@ -157,6 +210,10 @@ def generate_case_grid(
             "offset_deg": float(offset_deg),
             "signed_bearing_deg": float(bearing_deg),
             "launch_class": str(launch_class),
+            "range_topology_exception": RANGE_TOPOLOGY_EXCEPTIONS_BY_CASE.get(
+              case_id, ""
+            ),
+            **motion_profile,
             "runtime_supported": layer in SUPPORTED_RUNTIME_TARGET_MOTION_LAYERS,
             "skip_reason": (
               ""
@@ -282,6 +339,7 @@ def _project_heatmap_rows(
         "identity": {
           "schema_version": HEATMAP_ROW_SCHEMA_VERSION,
           "profile_id": PROFILE_ID,
+          "expectation_baseline_id": EXPECTATION_BASELINE_ID,
           "case_id": grid_case["case_id"],
           "grid_tier": grid_case["grid_tier"],
           "sample_index": int(grid_case["sample_index"]),
@@ -289,6 +347,12 @@ def _project_heatmap_rows(
         },
         "launch_window": {
           "target_motion_layer": grid_case["target_motion_layer"],
+          "target_motion_profile_id": grid_case["target_motion_profile_id"],
+          "maneuver_severity": grid_case["maneuver_severity"],
+          "target_acceleration_mps2": grid_case["target_acceleration_mps2"],
+          "target_acceleration_magnitude_mps2": grid_case[
+            "target_acceleration_magnitude_mps2"
+          ],
           "range_km": grid_case["range_km"],
           "offset_deg": grid_case["offset_deg"],
           "signed_bearing_deg": grid_case["signed_bearing_deg"],
@@ -342,6 +406,7 @@ def _project_heatmap_rows(
     "identity": {
       "schema_version": HEATMAP_ROW_SCHEMA_VERSION,
       "profile_id": PROFILE_ID,
+      "expectation_baseline_id": EXPECTATION_BASELINE_ID,
       "case_id": grid_case["case_id"],
       "grid_tier": grid_case["grid_tier"],
       "sample_index": int(grid_case["sample_index"]),
@@ -349,6 +414,12 @@ def _project_heatmap_rows(
     },
     "launch_window": {
       "target_motion_layer": grid_case["target_motion_layer"],
+      "target_motion_profile_id": grid_case["target_motion_profile_id"],
+      "maneuver_severity": grid_case["maneuver_severity"],
+      "target_acceleration_mps2": grid_case["target_acceleration_mps2"],
+      "target_acceleration_magnitude_mps2": grid_case[
+        "target_acceleration_magnitude_mps2"
+      ],
       "range_km": grid_case["range_km"],
       "offset_deg": grid_case["offset_deg"],
       "signed_bearing_deg": grid_case["signed_bearing_deg"],
@@ -505,6 +576,9 @@ def generate_before_report(
           "case_id": str(case["case_id"]),
           "range_m": float(case["range_m"]),
           "bearing_deg": float(case["signed_bearing_deg"]),
+          "target_acceleration_mps2": tuple(
+            float(value) for value in case["target_acceleration_mps2"]
+          ),
         }
         for case in runnable_cases
       ),
@@ -538,6 +612,7 @@ def generate_before_report(
       else "before_report_generated"
     ),
     "profile_id": PROFILE_ID,
+    "expectation_baseline_id": EXPECTATION_BASELINE_ID,
     "grid_tier": str(grid_tier),
     "seed": int(seed),
     "effect_variants": list(effect_variants),
@@ -569,6 +644,10 @@ def generate_before_report(
   }
   if include_raw_probe:
     report["raw_probe_report"] = probe_report
+  require_expectation_baseline_identity(
+    report,
+    rows_key="case_grid" if case_grid_only else "heatmap_rows",
+  )
   return report
 
 def build_arg_parser() -> argparse.ArgumentParser:

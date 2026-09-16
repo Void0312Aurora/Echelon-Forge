@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from tools.diagnostics import kill_chain_expectation_stage_attribution as attribution
 
@@ -20,7 +21,11 @@ def _row(
   component_response_band: str,
 ) -> dict[str, object]:
   return {
-    "identity": {"case_id": case_id},
+    "schema_version": "a2.kill_chain_expectation_heatmap_row.v2",
+    "identity": {
+      "case_id": case_id,
+      "expectation_baseline_id": "P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS",
+    },
     "launch_window": {
       "target_motion_layer": "nonmaneuvering_constant_velocity",
       "range_km": range_km,
@@ -51,7 +56,8 @@ def _row(
 
 def test_stage_attribution_writes_review_artifacts(tmp_path) -> None:
   report = {
-    "schema_version": "a2.kill_chain_expectation_before_report.v1",
+    "schema_version": "a2.kill_chain_expectation_before_report.v2",
+    "expectation_baseline_id": "P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS",
     "heatmap_rows": [
       _row(
         case_id="n_guidance",
@@ -138,6 +144,12 @@ def test_stage_attribution_writes_review_artifacts(tmp_path) -> None:
     "no_review_pressure": 2,
   }
   rows_by_id = {row["case_id"]: row for row in manifest["rows"]}
+  assert {row["schema_version"] for row in manifest["rows"]} == {
+    attribution.ROW_SCHEMA_VERSION
+  }
+  assert {row["expectation_baseline_id"] for row in manifest["rows"]} == {
+    "P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS"
+  }
   assert rows_by_id["n_guidance"]["first_review_stage"] == "guidance_approach"
   assert rows_by_id["n_response"]["first_review_stage"] == "component_response"
   assert rows_by_id["n_outside_effect"]["first_review_stage"] == "no_review_pressure"
@@ -146,6 +158,10 @@ def test_stage_attribution_writes_review_artifacts(tmp_path) -> None:
   assert (tmp_path / "out" / "sample_first_review_stage_manifest_20260623.json").exists()
   assert (tmp_path / "out" / "sample_first_review_stage_matrix_20260623.csv").exists()
   assert (tmp_path / "out" / "sample_first_review_stage_detail_20260623.csv").exists()
+  for csv_key in ("stage_matrix_csv", "detail_csv"):
+    assert "P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS" in Path(
+      manifest[csv_key]
+    ).read_text(encoding="utf-8")
   assert open(manifest["stage_heatmap_png"], "rb").read(8).startswith(b"\x89PNG")
   assert "<svg" in open(manifest["stage_heatmap_svg"], encoding="utf-8").read()
   assert "engineering-proxy diagnostics only" in (

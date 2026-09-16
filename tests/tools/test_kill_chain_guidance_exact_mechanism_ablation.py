@@ -50,6 +50,9 @@ def test_exact_matrix_has_mirrors_controls_and_no_epsilon_gates() -> None:
     "nav_gain": 4.0,
     "max_lateral_g": 35.0,
     "apn_target_accel_gain": 0.5,
+    "pn_los_rate_source": 0,
+    "target_kinematics_estimator": 0,
+    "capture_guidance_mode": 1,
   }
 
 

@@ -189,7 +189,8 @@ bool has_explicit_global_missile_tuning(const MissileTuning &tuning) {
            std::isfinite(tuning.max_flight_time_s) || std::isfinite(tuning.nav_gain) ||
            tuning.pn_los_rate_source >= 0 || tuning.target_kinematics_estimator >= 0 ||
            tuning.capture_guidance_mode >= 0 || std::isfinite(tuning.target_tracker_alpha) ||
-           std::isfinite(tuning.target_tracker_beta) || std::isfinite(tuning.sensor_max_range) ||
+           std::isfinite(tuning.target_tracker_beta) ||
+           std::isfinite(tuning.target_tracker_gamma) || std::isfinite(tuning.sensor_max_range) ||
            std::isfinite(tuning.sensor_fov_deg) || std::isfinite(tuning.sensor_scan_period) ||
            std::isfinite(tuning.sensor_detection_prob) ||
            std::isfinite(tuning.sensor_bearing_noise_std) ||
@@ -251,6 +252,7 @@ MissileTuning to_runtime_missile_tuning(const MissileTuningDefinition &src) {
     out.capture_guidance_mode = src.capture_guidance_mode;
     out.target_tracker_alpha = src.target_tracker_alpha;
     out.target_tracker_beta = src.target_tracker_beta;
+    out.target_tracker_gamma = src.target_tracker_gamma;
     out.apn_target_accel_gain = src.apn_target_accel_gain;
     out.sensor_max_range = src.sensor_max_range;
     out.sensor_fov_deg = src.sensor_fov_deg;
@@ -326,6 +328,8 @@ void overlay_missile_tuning(MissileTuning *base, const MissileTuning &overlay) {
         base->target_tracker_alpha = overlay.target_tracker_alpha;
     if (std::isfinite(overlay.target_tracker_beta))
         base->target_tracker_beta = overlay.target_tracker_beta;
+    if (std::isfinite(overlay.target_tracker_gamma))
+        base->target_tracker_gamma = overlay.target_tracker_gamma;
     if (std::isfinite(overlay.apn_target_accel_gain))
         base->apn_target_accel_gain = overlay.apn_target_accel_gain;
     if (std::isfinite(overlay.sensor_max_range)) base->sensor_max_range = overlay.sensor_max_range;
@@ -694,8 +698,10 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
             : MissileGuidanceDefaults::kDefaultPnLosRateSource;
     const int missile_target_kinematics_estimator =
         resolved_tuning.target_kinematics_estimator ==
-                static_cast<int>(MissileTargetKinematicsEstimator::WorldCv)
-            ? static_cast<int>(MissileTargetKinematicsEstimator::WorldCv)
+                    static_cast<int>(MissileTargetKinematicsEstimator::WorldCv) ||
+                resolved_tuning.target_kinematics_estimator ==
+                    static_cast<int>(MissileTargetKinematicsEstimator::WorldCva)
+            ? resolved_tuning.target_kinematics_estimator
             : MissileGuidanceDefaults::kDefaultTargetKinematicsEstimator;
     const int missile_capture_guidance_mode =
         resolved_tuning.capture_guidance_mode ==
@@ -710,6 +716,10 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
         std::clamp(finite_or_default(resolved_tuning.target_tracker_beta,
                                      MissileGuidanceDefaults::kWorldCvTrackerBeta),
                    0.0, 2.0);
+    const double missile_target_tracker_gamma =
+        std::clamp(finite_or_default(resolved_tuning.target_tracker_gamma,
+                                     MissileGuidanceDefaults::kWorldCvaTrackerGamma),
+                   0.0, 1.0);
     const double missile_apn_target_accel_gain = nonnegative_or_default(
         resolved_tuning.apn_target_accel_gain, MissileGuidanceDefaults::kDefaultApnTargetAccelGain);
 
@@ -825,6 +835,7 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     missile.capture_guidance_mode = missile_capture_guidance_mode;
     missile.target_tracker_alpha = missile_target_tracker_alpha;
     missile.target_tracker_beta = missile_target_tracker_beta;
+    missile.target_tracker_gamma = missile_target_tracker_gamma;
     missile.apn_target_accel_gain = missile_apn_target_accel_gain;
     missile.autopilot_order = nonnegative_or_default(resolved_tuning.autopilot_order, 1);
     missile.autopilot_damping = positive_or_default(resolved_tuning.autopilot_damping, 1.0);

@@ -237,6 +237,20 @@ def test_guidance_case_generates_decoupled_stage_abstractions(tmp_path) -> None:
     is True
   )
   assert float(case["nearest_miss_distance_m"]) < 15.0
+  runtime_summary = case["guidance_runtime_summary"]
+  assert runtime_summary["schema_version"] == "a2.guidance_runtime_summary.v1"
+  assert runtime_summary["observation_count"] > 0
+  assert sum(runtime_summary["seeker_mode_sample_counts"].values()) == (
+    runtime_summary["observation_count"]
+  )
+  assert runtime_summary["seeker_fov_half_angle_deg"] == 90.0
+  assert runtime_summary["max_abs_detection_bearing_deg"] >= 0.0
+  assert runtime_summary["max_detection_fov_excess_deg"] >= 0.0
+  assert runtime_summary["last_runtime_observation"]["seeker_mode_name"] in {
+    "track",
+    "memory",
+    "ballistic",
+  }
   assert case["fuze_triggered"] is True
   assert case["effect"]["outcome_state"] in {"damage_applied", "detonated_no_effect"}
   assert case["effect"]["mechanism_armor_scale"] is not None

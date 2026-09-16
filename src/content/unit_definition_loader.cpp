@@ -231,9 +231,13 @@ bool parse_target_kinematics_estimator(const nlohmann::json &src, int *out_estim
         *out_estimator = static_cast<int>(MissileTargetKinematicsEstimator::WorldCv);
         return true;
     }
+    if (name == "world_cva") {
+        *out_estimator = static_cast<int>(MissileTargetKinematicsEstimator::WorldCva);
+        return true;
+    }
     if (error) {
         *error = "Unknown target_kinematics_estimator: " + name +
-                 "; expected legacy_polar_difference or world_cv";
+                 "; expected legacy_polar_difference, world_cv, or world_cva";
     }
     return false;
 }
@@ -427,6 +431,7 @@ void parse_missile_tuning_json_fields(const nlohmann::json &src,
     // them explicit so the established field-list contract remains stable.
     tuning.target_tracker_alpha = src.value("target_tracker_alpha", tuning.target_tracker_alpha);
     tuning.target_tracker_beta = src.value("target_tracker_beta", tuning.target_tracker_beta);
+    tuning.target_tracker_gamma = src.value("target_tracker_gamma", tuning.target_tracker_gamma);
 
     *out_tuning = tuning;
 }

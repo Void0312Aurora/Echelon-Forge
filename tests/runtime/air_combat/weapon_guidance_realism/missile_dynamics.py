@@ -1019,6 +1019,37 @@ class MissileDynamicsRuntimeMixin:
   def test_replayed_world_tracker_timestamp_expires_to_ballistic(self) -> None:
     sim = _make_kernel()
     tuning = sim.get_missile_tuning()
+    tuning.target_kinematics_estimator = 2
+    tuning.apn_target_accel_gain = 0.125
+    tuning.track_break_time_s = 0.2
+    sim.set_missile_tuning(tuning)
+
+    blue_id, red_id = _spawn_pair(sim)
+    stale_detection = _make_detection(
+      red_id,
+      range_m=22000.0,
+      bearing_deg=5.0,
+      timestamp=0.0,
+    )
+    _set_contacts(sim, blue_id, [stale_detection])
+    missile_id = int(sim.fire_missile(blue_id, red_id))
+    self.assertGreater(missile_id, 0)
+
+    for _ in range(30):
+      sim.debug_set_contact_list_preserve_timestamps(missile_id, [stale_detection])
+      sim.step()
+
+    runtime = sim.debug_get_missile_runtime_state(missile_id)
+    self.assertEqual(int(runtime["target_kinematics_estimator"]), 2)
+    self.assertEqual(int(runtime["seeker_mode"]), 2)
+    self.assertFalse(bool(runtime["seeker_has_valid_track"]))
+    self.assertFalse(bool(runtime["target_kinematics_valid"]))
+    self.assertEqual(float(runtime["guidance_apn_lateral_accel_mps2"]), 0.0)
+    self.assertTrue(math.isinf(float(runtime["target_measurement_age_s"])))
+
+  def test_replayed_world_cv_tracker_timestamp_expires_to_ballistic(self) -> None:
+    sim = _make_kernel()
+    tuning = sim.get_missile_tuning()
     tuning.target_kinematics_estimator = 1
     tuning.track_break_time_s = 0.2
     sim.set_missile_tuning(tuning)
@@ -1053,12 +1084,12 @@ class MissileDynamicsRuntimeMixin:
     self.assertEqual(float(runtime["guidance_apn_lateral_accel_mps2"]), 0.0)
     self.assertTrue(math.isinf(float(runtime["target_measurement_age_s"])))
 
-  def _assert_monotonic_stale_world_cv_tracker_expires(self) -> None:
+  def _assert_monotonic_stale_world_tracker_expires(self, estimator: int) -> None:
     sim = _make_kernel()
     sim.set_time_step(1.0)
     tuning = sim.get_missile_tuning()
-    tuning.target_kinematics_estimator = 1
-    tuning.apn_target_accel_gain = 0.0
+    tuning.target_kinematics_estimator = estimator
+    tuning.apn_target_accel_gain = 0.125 if estimator == 2 else 0.0
     tuning.track_break_time_s = 0.75
     sim.set_missile_tuning(tuning)
 
@@ -1084,13 +1115,16 @@ class MissileDynamicsRuntimeMixin:
       sim.step()
 
     runtime = sim.debug_get_missile_runtime_state(missile_id)
-    self.assertEqual(int(runtime["target_kinematics_estimator"]), 1)
+    self.assertEqual(int(runtime["target_kinematics_estimator"]), estimator)
     self.assertEqual(int(runtime["seeker_mode"]), 2)
     self.assertFalse(bool(runtime["seeker_has_valid_track"]))
     self.assertFalse(bool(runtime["target_kinematics_valid"]))
     self.assertEqual(float(runtime["guidance_apn_lateral_accel_mps2"]), 0.0)
 
   def test_increasing_but_expired_world_cv_measurements_do_not_reactivate_track(self) -> None:
-    self._assert_monotonic_stale_world_cv_tracker_expires()
+    self._assert_monotonic_stale_world_tracker_expires(estimator=1)
+
+  def test_increasing_but_expired_world_cva_measurements_do_not_reactivate_track(self) -> None:
+    self._assert_monotonic_stale_world_tracker_expires(estimator=2)
 
   # ── boundary / edge-case tests ──────────────────────────────────────

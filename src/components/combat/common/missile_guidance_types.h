@@ -17,6 +17,7 @@ enum class MissilePnLosRateSource {
 enum class MissileTargetKinematicsEstimator {
     LegacyPolarDifference = 0,
     WorldCv = 1,
+    WorldCva = 2,
 };
 
 enum class MissileCaptureGuidanceMode {
