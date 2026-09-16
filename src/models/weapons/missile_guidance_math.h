@@ -9,27 +9,27 @@ namespace missile_guidance {
 
 using Vec3 = Math::Vector3;
 
-inline Vec3 operator+(const Vec3& a, const Vec3& b) {
+inline Vec3 operator+(const Vec3 &a, const Vec3 &b) {
     return {a.x + b.x, a.y + b.y, a.z + b.z};
 }
 
-inline Vec3 operator-(const Vec3& a, const Vec3& b) {
+inline Vec3 operator-(const Vec3 &a, const Vec3 &b) {
     return {a.x - b.x, a.y - b.y, a.z - b.z};
 }
 
-inline Vec3 operator*(const Vec3& v, double s) {
+inline Vec3 operator*(const Vec3 &v, double s) {
     return {v.x * s, v.y * s, v.z * s};
 }
 
-inline Vec3 operator/(const Vec3& v, double s) {
+inline Vec3 operator/(const Vec3 &v, double s) {
     return s == 0.0 ? Vec3{0.0, 0.0, 0.0} : Vec3{v.x / s, v.y / s, v.z / s};
 }
 
-inline double dot(const Vec3& a, const Vec3& b) {
+inline double dot(const Vec3 &a, const Vec3 &b) {
     return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
-inline Vec3 cross(const Vec3& a, const Vec3& b) {
+inline Vec3 cross(const Vec3 &a, const Vec3 &b) {
     return {
         a.y * b.z - a.z * b.y,
         a.z * b.x - a.x * b.z,
@@ -37,11 +37,11 @@ inline Vec3 cross(const Vec3& a, const Vec3& b) {
     };
 }
 
-inline double norm(const Vec3& v) {
+inline double norm(const Vec3 &v) {
     return std::sqrt(dot(v, v));
 }
 
-inline Vec3 normalize(const Vec3& v) {
+inline Vec3 normalize(const Vec3 &v) {
     const double n = norm(v);
     if (n <= 1.0e-9) {
         return {0.0, 0.0, 0.0};
@@ -58,8 +58,10 @@ inline double lerp(double a, double b, double t) {
 }
 
 inline double normalize_angle_deg(double angle) {
-    while (angle > 180.0) angle -= 360.0;
-    while (angle < -180.0) angle += 360.0;
+    while (angle > 180.0)
+        angle -= 360.0;
+    while (angle < -180.0)
+        angle += 360.0;
     return angle;
 }
 
@@ -75,19 +77,21 @@ inline double exp_smooth(double previous, double measurement, double tau_s, doub
     return previous + alpha * (measurement - previous);
 }
 
-inline double exp_smooth_angle_deg(double previous_deg, double measurement_deg, double tau_s, double dt) {
+inline double exp_smooth_angle_deg(double previous_deg, double measurement_deg, double tau_s,
+                                   double dt) {
     if (tau_s <= 1.0e-6 || dt <= 0.0) {
         return measurement_deg;
     }
     const double alpha = std::clamp(dt / (tau_s + dt), 0.0, 1.0);
-    return normalize_angle_deg(previous_deg + alpha * shortest_angle_delta_deg(previous_deg, measurement_deg));
+    return normalize_angle_deg(previous_deg +
+                               alpha * shortest_angle_delta_deg(previous_deg, measurement_deg));
 }
 
-inline Vec3 velocity_to_vec3(const Velocity& velocity) {
+inline Vec3 velocity_to_vec3(const Velocity &velocity) {
     return {velocity.vx, velocity.vy, velocity.vz};
 }
 
-inline void write_velocity(Velocity& velocity, const Vec3& v) {
+inline void write_velocity(Velocity &velocity, const Vec3 &v) {
     velocity.vx = v.x;
     velocity.vy = v.y;
     velocity.vz = v.z;
@@ -111,41 +115,34 @@ inline Vec3 right_from_heading_deg(double heading_deg) {
     };
 }
 
-inline Vec3 world_los_from_relative_angles(
-    double bearing_deg,
-    double elevation_deg,
-    const Transform& transform
-) {
+inline Vec3 world_los_from_relative_angles(double bearing_deg, double elevation_deg,
+                                           const Transform &transform) {
     const double az = Math::to_radians(bearing_deg);
     const double el = Math::to_radians(elevation_deg);
     const double cos_el = std::cos(el);
     const Vec3 forward = forward_from_heading_deg(transform.heading);
     const Vec3 right = right_from_heading_deg(transform.heading);
     const Vec3 up = {0.0, 0.0, 1.0};
-    return normalize(
-        (forward * (cos_el * std::cos(az))) +
-        (right * (cos_el * std::sin(az))) +
-        (up * std::sin(el)));
+    return normalize((forward * (cos_el * std::cos(az))) + (right * (cos_el * std::sin(az))) +
+                     (up * std::sin(el)));
 }
 
-inline Vec3 project_lateral(const Vec3& acceleration, const Vec3& velocity_dir) {
+inline Vec3 project_lateral(const Vec3 &acceleration, const Vec3 &velocity_dir) {
     return acceleration - velocity_dir * dot(acceleration, velocity_dir);
 }
 
-inline Vec3 transverse_apn_target_acceleration(const Vec3& target_acceleration,
-                                               const Vec3& los_dir,
-                                               const Vec3& missile_velocity_dir) {
+inline Vec3 transverse_apn_target_acceleration(const Vec3 &target_acceleration, const Vec3 &los_dir,
+                                               const Vec3 &missile_velocity_dir) {
     const Vec3 los_axis = normalize(los_dir);
     const Vec3 velocity_axis = normalize(missile_velocity_dir);
     if (norm(los_axis) <= 1.0e-6 || norm(velocity_axis) <= 1.0e-6) {
         return {0.0, 0.0, 0.0};
     }
-    const Vec3 target_acceleration_normal_to_los =
-        project_lateral(target_acceleration, los_axis);
+    const Vec3 target_acceleration_normal_to_los = project_lateral(target_acceleration, los_axis);
     return project_lateral(target_acceleration_normal_to_los, velocity_axis);
 }
 
-inline Vec3 world_los_angular_rate(const Vec3& previous_los, const Vec3& current_los,
+inline Vec3 world_los_angular_rate(const Vec3 &previous_los, const Vec3 &current_los,
                                    double elapsed_s) {
     const Vec3 previous = normalize(previous_los);
     const Vec3 current = normalize(current_los);
@@ -164,9 +161,9 @@ inline Vec3 world_los_angular_rate(const Vec3& previous_los, const Vec3& current
     return rotation_axis * (angle_rad / (sin_angle * elapsed_s));
 }
 
-inline Vec3 transverse_pn_acceleration(const Vec3& los_angular_rate,
-                                       const Vec3& velocity_dir, double closing_speed_mps,
-                                       double nav_gain, double gain_scale) {
+inline Vec3 transverse_pn_acceleration(const Vec3 &los_angular_rate, const Vec3 &velocity_dir,
+                                       double closing_speed_mps, double nav_gain,
+                                       double gain_scale) {
     if (closing_speed_mps <= 0.0 || nav_gain <= 0.0 || gain_scale <= 0.0) {
         return {0.0, 0.0, 0.0};
     }
@@ -178,8 +175,8 @@ inline Vec3 transverse_pn_acceleration(const Vec3& los_angular_rate,
            (gain_scale * nav_gain * closing_speed_mps);
 }
 
-inline double capture_base_range_factor(double speed_mps, double range_m,
-                                        double reference_range_m, int mode) {
+inline double capture_base_range_factor(double speed_mps, double range_m, double reference_range_m,
+                                        int mode) {
     const double safe_range_m = std::max(1.0, range_m);
     const double safe_reference_range_m = std::max(1.0, reference_range_m);
     const double denominator_m = mode == 1 ? safe_reference_range_m : safe_range_m;
@@ -206,8 +203,8 @@ inline double lead_blend_range_fraction(double range_m, double reference_range_m
     if (mode == 2) {
         return 0.0;
     }
-    return std::clamp(std::max(1.0, reference_range_m) / std::max(1.0, range_m),
-                      minimum_fraction, 1.0);
+    return std::clamp(std::max(1.0, reference_range_m) / std::max(1.0, range_m), minimum_fraction,
+                      1.0);
 }
 
-}  // namespace missile_guidance
+} // namespace missile_guidance

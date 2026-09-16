@@ -1,26 +1,6 @@
 #pragma once
 
-enum class MissileSeekerMode {
-    Track = 0,
-    Memory = 1,
-    Ballistic = 2,
-};
-
-enum class MissilePnLosRateSource {
-    LegacyBodyRates = 0,
-    WorldLosHistory = 1,
-};
-
-enum class MissileTargetKinematicsEstimator {
-    LegacyPolarDifference = 0,
-    WorldCv = 1,
-    WorldCva = 2,
-};
-
-enum class MissileCaptureGuidanceMode {
-    Disabled = 0,
-    LegacyPursuit = 1,
-};
+#include "components/combat/common/missile_guidance_types.h"
 
 struct MissileGuidanceDefaults {
     static constexpr int kDefaultPnLosRateSource =

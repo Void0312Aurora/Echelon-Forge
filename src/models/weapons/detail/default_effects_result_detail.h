@@ -78,8 +78,7 @@ void populate_default_effects_result(EffectsResult &result, const DefaultEffects
     result.spatial_projection_min_bound = scratch.spatial_projection_min_bound;
     result.spatial_projection_max_bound = scratch.spatial_projection_max_bound;
     result.spatial_projection_axis_weight = scratch.spatial_projection_axis_weight;
-    result.spatial_projection_orientation_weight =
-        scratch.spatial_projection_orientation_weight;
+    result.spatial_projection_orientation_weight = scratch.spatial_projection_orientation_weight;
     result.spatial_projection_armor_scale = scratch.spatial_projection_armor_scale;
     result.spatial_projection_exposure_scale = scratch.spatial_projection_exposure_scale;
     result.spatial_projection_sampling_scale = scratch.spatial_projection_sampling_scale;
@@ -89,20 +88,17 @@ void populate_default_effects_result(EffectsResult &result, const DefaultEffects
         scratch.spatial_projection_effect_scale_clamped;
     result.fragment_angular_distribution_active = scratch.fragment_angular_distribution_active;
     result.fragment_angular_distribution = scratch.fragment_angular_distribution;
-    result.fragment_angular_signed_polar_cosine =
-        scratch.fragment_angular_signed_polar_cosine;
+    result.fragment_angular_signed_polar_cosine = scratch.fragment_angular_signed_polar_cosine;
     result.fragment_angular_polar_angle_deg = scratch.fragment_angular_polar_angle_deg;
     result.fragment_angular_azimuth_deg = scratch.fragment_angular_azimuth_deg;
     result.fragment_angular_polar_density = scratch.fragment_angular_polar_density;
     result.fragment_angular_azimuth_density = scratch.fragment_angular_azimuth_density;
     result.fragment_angular_density = scratch.fragment_angular_density;
     result.continuous_rod_ring_band_active = scratch.continuous_rod_ring_band_active;
-    result.continuous_rod_ring_band_intersection =
-        scratch.continuous_rod_ring_band_intersection;
+    result.continuous_rod_ring_band_intersection = scratch.continuous_rod_ring_band_intersection;
     result.continuous_rod_spatial_model = scratch.continuous_rod_spatial_model;
     result.continuous_rod_band_half_angle_deg = scratch.continuous_rod_band_half_angle_deg;
-    result.continuous_rod_azimuthal_sample_count =
-        scratch.continuous_rod_azimuthal_sample_count;
+    result.continuous_rod_azimuthal_sample_count = scratch.continuous_rod_azimuthal_sample_count;
     result.continuous_rod_polar_sample_count = scratch.continuous_rod_polar_sample_count;
     result.continuous_rod_intersecting_azimuthal_sample_count =
         scratch.continuous_rod_intersecting_azimuthal_sample_count;

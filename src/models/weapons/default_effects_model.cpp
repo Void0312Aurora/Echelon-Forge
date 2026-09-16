@@ -119,8 +119,7 @@ class DefaultEffectsModel : public IEffectsModel {
             };
             DefaultEffectsSystemEffectApplicator apply_system_effect{system_effect_context};
             const auto populate_result = [&]() {
-                populate_default_effects_result(result, scratch,
-                                                warhead_orientation_frame.forward);
+                populate_default_effects_result(result, scratch, warhead_orientation_frame.forward);
             };
             apply_default_effects_direct_hitboxes(scratch, *hitboxes, structured_air_target,
                                                   missile, local_imp, warhead_orientation_frame,
