@@ -266,15 +266,14 @@ def require_expectation_baseline_identity(
             "expectation_baseline_id is not the accepted v2 baseline: "
             f"{report_baseline!r}"
         )
-    keys = (rows_key,) if rows_key else tuple(KCES_EXPECTATION_ROW_SCHEMA_VERSIONS)
-    populated = False
-    for key in keys:
-        if key not in KCES_EXPECTATION_ROW_SCHEMA_VERSIONS:
-            raise ValueError(f"unsupported expectation row collection: {key!r}")
+    if rows_key and rows_key not in KCES_EXPECTATION_ROW_SCHEMA_VERSIONS:
+        raise ValueError(f"unsupported expectation row collection: {rows_key!r}")
+    populated_keys: set[str] = set()
+    for key in KCES_EXPECTATION_ROW_SCHEMA_VERSIONS:
         raw_rows = list(report.get(key, []) or [])
         if not raw_rows:
             continue
-        populated = True
+        populated_keys.add(key)
         expected_schema = KCES_EXPECTATION_ROW_SCHEMA_VERSIONS[key]
         for index, raw in enumerate(raw_rows):
             if not isinstance(raw, Mapping):
@@ -300,7 +299,9 @@ def require_expectation_baseline_identity(
                     f"{key}[{index}] has unaccepted expectation_baseline_id: "
                     f"{row_baseline!r}"
                 )
-    if not populated:
+    if rows_key and rows_key not in populated_keys:
+        raise ValueError(f"{rows_key} is empty")
+    if not populated_keys:
         requested = rows_key or "case_grid/heatmap_rows"
         raise ValueError(f"{requested} is empty")
     return KCES_EXPECTATION_BASELINE_ID

@@ -192,6 +192,62 @@ def test_v2_identity_contract_rejects_old_unknown_or_mixed_rows() -> None:
       require_expectation_baseline_identity(invalid)
 
 
+def test_v2_identity_contract_validates_every_populated_collection() -> None:
+  report = harness.generate_before_report(
+    grid_tier="anchor-grid",
+    target_motion_layers=("nonmaneuvering_constant_velocity",),
+    case_ids=("kces_anchor_grid_cv_8km_p30deg",),
+    effect_variants=("REV-RUNTIME-PROJECTION",),
+    seed=20260621,
+  )
+
+  invalid_grid_reports = []
+  stale_grid = deepcopy(report)
+  stale_grid["case_grid"][0]["schema_version"] = (
+    "a2.kill_chain_expectation_case_grid.v1"
+  )
+  invalid_grid_reports.append(stale_grid)
+  missing_grid = deepcopy(report)
+  del missing_grid["case_grid"][0]["expectation_baseline_id"]
+  invalid_grid_reports.append(missing_grid)
+  unknown_grid = deepcopy(report)
+  unknown_grid["case_grid"][0]["expectation_baseline_id"] = "UNKNOWN-BASELINE"
+  invalid_grid_reports.append(unknown_grid)
+  mixed_grid = deepcopy(report)
+  mixed_grid["case_grid"].append(deepcopy(mixed_grid["case_grid"][0]))
+  mixed_grid["case_grid"][-1]["expectation_baseline_id"] = "UNKNOWN-BASELINE"
+  invalid_grid_reports.append(mixed_grid)
+
+  for invalid in invalid_grid_reports:
+    with pytest.raises(ValueError, match="schema|expectation_baseline_id"):
+      require_expectation_baseline_identity(invalid, rows_key="heatmap_rows")
+
+  invalid_heatmap_reports = []
+  stale_heatmap = deepcopy(report)
+  stale_heatmap["heatmap_rows"][0]["schema_version"] = (
+    "a2.kill_chain_expectation_heatmap_row.v1"
+  )
+  invalid_heatmap_reports.append(stale_heatmap)
+  missing_heatmap = deepcopy(report)
+  del missing_heatmap["heatmap_rows"][0]["identity"]["expectation_baseline_id"]
+  invalid_heatmap_reports.append(missing_heatmap)
+  unknown_heatmap = deepcopy(report)
+  unknown_heatmap["heatmap_rows"][0]["identity"]["expectation_baseline_id"] = (
+    "UNKNOWN-BASELINE"
+  )
+  invalid_heatmap_reports.append(unknown_heatmap)
+  mixed_heatmap = deepcopy(report)
+  mixed_heatmap["heatmap_rows"].append(deepcopy(mixed_heatmap["heatmap_rows"][0]))
+  mixed_heatmap["heatmap_rows"][-1]["identity"]["expectation_baseline_id"] = (
+    "UNKNOWN-BASELINE"
+  )
+  invalid_heatmap_reports.append(mixed_heatmap)
+
+  for invalid in invalid_heatmap_reports:
+    with pytest.raises(ValueError, match="schema|expectation_baseline_id"):
+      require_expectation_baseline_identity(invalid, rows_key="case_grid")
+
+
 def test_mild_maneuver_smoke_flows_acceleration_into_runtime() -> None:
   report = harness.generate_before_report(
     grid_tier="anchor-grid",
