@@ -8,10 +8,9 @@
 #include <vector>
 
 #include "components/combat/common/missile_seeker_state.h"
+#include "components/combat/common/missile_world_tracker_state.h"
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"
-#include "models/weapons/kalman_seeker.h"
-#include "models/weapons/world_cv_alpha_beta_tracker.h"
 
 struct WarheadProfile {
     std::string family = "blast_fragmentation";
@@ -140,9 +139,9 @@ struct Missile {
     bool active;                     // If false, missile is dead/inert
 
     // Selectable production PN law. Legacy remains the default until a weapon profile opts in.
-    int pn_los_rate_source = 0; // 0=legacy body-frame rates, 1=world-frame LOS history
+    int pn_los_rate_source = 0;          // 0=legacy body-frame rates, 1=world-frame LOS history
     int target_kinematics_estimator = 0; // 0=legacy polar difference, 1=world CV tracker
-    int capture_guidance_mode = 1; // 0=disabled, 1=legacy pursuit schedule
+    int capture_guidance_mode = 1;       // 0=disabled, 1=legacy pursuit schedule
     double target_tracker_alpha = std::numeric_limits<double>::quiet_NaN();
     double target_tracker_beta = std::numeric_limits<double>::quiet_NaN();
 
