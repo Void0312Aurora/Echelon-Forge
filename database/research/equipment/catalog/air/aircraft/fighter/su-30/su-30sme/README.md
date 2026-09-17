@@ -7,6 +7,7 @@ Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/fighter/su-30/su-30sme/README.md`
 Owner: `database/equipment-data`
 Last verified: `not established`
+Equipment ID: `eq-ru-air-su30sme`
 Content status: Export-variant record; not merged with Russian service Su-30SM.
 
 ## Parameters

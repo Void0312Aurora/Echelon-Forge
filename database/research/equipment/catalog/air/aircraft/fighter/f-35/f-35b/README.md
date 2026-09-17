@@ -7,6 +7,7 @@ Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/fighter/f-35/f-35b/README.md`
 Owner: `database/equipment-data`
 Last verified: `not established`
+Equipment ID: `eq-uk-air-f35b`
 
 ## Operators
 

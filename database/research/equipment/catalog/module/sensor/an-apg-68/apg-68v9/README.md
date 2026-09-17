@@ -7,6 +7,7 @@ Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/module/sensor/an-apg-68/apg-68v9/README.md`
 Owner: `database/equipment-data`
 Last verified: `2026-09-14`
+Equipment ID: `module-air-apg68v9`
 Content status: parameter-complete research draft; public values are separated from bounded engineering estimates.
 
 ## Identity

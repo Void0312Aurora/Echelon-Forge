@@ -40,7 +40,7 @@ Command: `python database/_work/check_equipment_tree.py`
 | Condition | Result |
 | --- | --- |
 | `C1` every referenced source id resolves | PASS, 0 dangling, 0 manifest/path mismatch |
-| `C2` backlog leaf binding (`Equipment ID`) | FAIL, 63 of 118 queue rows point at a leaf with no `Equipment ID` |
+| `C2` backlog leaf binding (`Equipment ID`) | PASS after the `E2` backfill |
 | `C3` backlog vs coverage status | PASS, 47 of 47 coverage rows agree |
 | `C4` source admission floor | FAIL, 0 D-tier but 43 packages lack a retention note |
 
@@ -50,11 +50,25 @@ Measured counts:
 | --- | --- |
 | Source packages (manifests) | 193 |
 | Catalog leaves (carry `## Parameters`) | 85 |
-| Distinct source ids referenced by leaves | 169 |
-| Leaves without `Equipment ID` | 30 |
+| Distinct source ids referenced by leaves | 170 |
+| Leaves without `Equipment ID` | 0 |
 | Backlog rows | 118 |
 | Coverage rows | 47 |
 | Status: `cataloged` / `parameter_complete` / `held` | 62 / 47 / 9 |
+
+## Leaf Completeness Against The Queue
+
+The queue calls 62 rows `cataloged`. That word covers two very different leaves:
+
+| Leaf form | Rows | Meaning |
+| --- | --- | --- |
+| Parameter table present | 42 | Extracted parameters exist; `Equipment ID` now bound |
+| Headings only, no `## Parameters` | 23 | A 500-to-900-byte stub, typically a title plus an operator bullet |
+
+All 23 stubs are air-domain. `cataloged` is accurate for both, because a draft leaf
+does exist, but the two are not comparable as evidence. A stub is not a record of
+anything extracted, so it is excluded from the binding requirement rather than
+counted as a defect.
 
 ## Coverage Semantics
 
@@ -73,12 +87,22 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | --- | --- | --- | --- |
 | `D1` | 43 source packages carry no `Retention:` note | `C4` `missing_retention_note`; all 43 are air-domain packages | open |
 | `D2` | No source package records a rights field | `C4` `missing_rights_field_advisory`, 193 of 193 | open; the admission standard requires it of a ledger row |
-| `D3` | 63 backlog rows bind to a leaf with no `Equipment ID` | `C2` `leaf_missing_equipment_id` | open |
+| `D3` | 23 air queue rows are bound to stub leaves with no parameter table | `stub_rows_excluded` in `C2`; all air-domain | open; `cataloged` is technically satisfied but carries no extracted evidence |
 | `D4` | Parameter table shape split | 57 leaves use `Field \| Value \| Source \| Tier \| Configuration/uncertainty`; 28 use `Parameter \| Value \| Source \| Confidence` | open |
 | `D5` | Disjoint naval namespaces | `catalog/naval/ships/surface-combatant/` (tracked, 3 leaves) and the empty untracked `catalog/naval/surface-combatants/` coexist | open |
 | `D6` | Ledger not materialized | `sources/ledger/` holds a README only; `common.schema.json` has no source `$defs` while `FIELDS.md` describes 12 ledger fields | open |
 | `D7` | `coverage.csv` role and status vocabulary contradict its own README | 47 of 47 rows are `parameter_complete`, not `queued` | open |
-| `D8` | Four single-source-domain leaves carry one reference only | M1A2 SEP v3 cites one source from five of nine rows | open |
+| `D8` | Country rows share a variant leaf without a stated rule | `eq-us-air-c17a` and `eq-uk-air-c17a` both point at `c-17/c-17a`, which is now correct by the `tornado-ids` precedent but is not documented anywhere | open |
+| `D9` | `Equipment ID` scheme is not declared | `eq-<country>-<domain>-<variant>`, country-less `module-*`, and country-less variant names such as `tornado-ids` all coexist with no stated rule | open |
+
+## Repaired In This Pass
+
+| Repair | What changed |
+| --- | --- |
+| `C2` binding | 32 leaves received an `Equipment ID` line derived from their queue row, inserted as additive metadata after `Last verified` rather than as a new `## Identity` section, so the change stays independent of the `D4` shape question |
+| `C2` predicate | The check no longer demands a binding from a stub leaf or a `held` row, and no longer treats a shared variant leaf as a defect |
+| C-17A operator gap | The leaf listed only the United States Air Force while a Royal Air Force queue row pointed at it. Added the RAF operator row citing `p5-uk-air-c17a-raf`, which was an acquired but unreferenced package. The UK queue row keeps its own id and now carries a note explaining the share |
+| Leaf identity | The C-17A leaf had been given `eq-uk-air-c17a` by the backfill. Its parameters and operator table are United States; corrected to `eq-us-air-c17a` |
 
 ## Retracted Findings
 

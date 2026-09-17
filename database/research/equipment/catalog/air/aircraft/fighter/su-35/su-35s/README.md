@@ -7,6 +7,7 @@ Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/fighter/su-35/su-35s/README.md`
 Owner: `database/equipment-data`
 Last verified: `not established`
+Equipment ID: `eq-ru-air-su35s`
 Content status: Model-level draft based on first-party export specifications and Russian service statements.
 
 ## Identity

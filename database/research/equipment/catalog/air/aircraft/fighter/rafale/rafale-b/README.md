@@ -7,6 +7,7 @@ Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/fighter/rafale/rafale-b/README.md`
 Owner: `database/equipment-data`
 Last verified: `not established`
+Equipment ID: `eq-fr-air-rafale-b`
 
 ## Operators
 

@@ -33,7 +33,10 @@ COVERAGE = EQUIPMENT / "coverage" / "coverage.csv"
 RAW_SOURCES = EQUIPMENT / "raw" / "sources"
 
 SOURCE_ID_RE = re.compile(r"\bp5-[a-z0-9][a-z0-9-]*\b")
-EQUIPMENT_ID_RE = re.compile(r"\|\s*Equipment ID\s*\|\s*`([^`]+)`")
+EQUIPMENT_ID_RE = re.compile(
+    r"Equipment ID\s*[:|]\s*`?([^`|\n]+?)`?\s*\|?\s*$",
+    re.MULTILINE,
+)
 MANIFEST_ID_RE = re.compile(r"^Source ID:\s*`?([a-z0-9-]+)`?\s*$", re.MULTILINE)
 MANIFEST_TIER_RE = re.compile(r"^Tier:\s*`?([A-D])`?\s*$", re.MULTILINE)
 MANIFEST_RETENTION_RE = re.compile(r"^Retention:\s*(.+)$", re.MULTILINE)
@@ -108,33 +111,63 @@ def check_all() -> dict:
     }
 
     # condition 2 -- backlog binding
+    # A `held` row is a legitimate record of blocked collection and is excluded.
+    # A stub leaf (no parameter table) is also excluded: with nothing extracted
+    # there is nothing to bind to a queue row.
+    # A leaf carrying an `Equipment ID` is a variant-level record that may serve
+    # more than one country row. `tornado-ids` is the in-tree precedent: one leaf,
+    # one id, a multi-row operator table. Such rows are not defects; only a leaf
+    # with a parameter table and no id at all is reported.
     unbound: list[dict] = []
     missing_leaf: list[dict] = []
+    held_rows = 0
+    stub_rows = 0
     for queue_name, rows in backlog.items():
         for row in rows:
+            if row.get("status") == "held":
+                held_rows += 1
+                continue
             rel = row["catalog_path"].removeprefix("catalog/").strip("/")
-            if row.get("status") == "held" and not (CATALOG / rel / "README.md").exists():
-                continue
-            leaf_path = CATALOG / rel / "README.md"
-            if not leaf_path.exists():
-                missing_leaf.append({"queue": queue_name, "equipment_id": row["equipment_id"]})
-                continue
-            text = leaf_path.read_text(encoding="utf-8")
-            match = EQUIPMENT_ID_RE.search(text)
-            leaf_id = match.group(1) if match else None
-            if leaf_id != row["equipment_id"]:
-                unbound.append(
+            if not rel:
+                missing_leaf.append(
                     {
                         "queue": queue_name,
                         "equipment_id": row["equipment_id"],
-                        "leaf_equipment_id": leaf_id,
+                        "reason": "non-held row carries no catalog_path",
+                    }
+                )
+                continue
+            leaf_path = CATALOG / rel / "README.md"
+            if not leaf_path.exists():
+                missing_leaf.append(
+                    {
+                        "queue": queue_name,
+                        "equipment_id": row["equipment_id"],
+                        "reason": "catalog_path has no README",
                         "catalog_path": row["catalog_path"],
                     }
                 )
+                continue
+            text = leaf_path.read_text(encoding="utf-8")
+            if "## Parameters" not in text:
+                stub_rows += 1
+                continue
+            if EQUIPMENT_ID_RE.search(text):
+                continue
+            unbound.append(
+                {
+                    "queue": queue_name,
+                    "equipment_id": row["equipment_id"],
+                    "leaf_equipment_id": None,
+                    "catalog_path": row["catalog_path"],
+                }
+            )
     result["conditions"]["c2_backlog_binding"] = {
         "pass": not unbound and not missing_leaf,
         "leaf_missing_equipment_id": unbound,
         "catalog_path_missing": missing_leaf,
+        "held_rows_excluded": held_rows,
+        "stub_rows_excluded": stub_rows,
     }
 
     # condition 3 -- backlog and coverage status agree

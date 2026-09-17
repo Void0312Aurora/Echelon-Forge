@@ -7,6 +7,7 @@ Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/bomber/b-2/b-2a/README.md`
 Owner: `database/equipment-data`
 Last verified: `not established`
+Equipment ID: `eq-us-air-b2a`
 
 ## Operators
 

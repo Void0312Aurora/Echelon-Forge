@@ -7,6 +7,7 @@ Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/fighter/typhoon/typhoon-fgr4/README.md`
 Owner: `database/equipment-data`
 Last verified: `not established`
+Equipment ID: `eq-uk-air-typhoon-fgr4`
 Content status: Model-level draft. Several official parameters remain unextracted.
 
 ## Identity

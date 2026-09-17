@@ -7,6 +7,7 @@ Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/fighter/rafale/rafale-c/README.md`
 Owner: `database/equipment-data`
 Last verified: `not established`
+Equipment ID: `eq-fr-air-rafale-c`
 Content status: Model-level draft with first-party geometry and payload data.
 
 ## Identity

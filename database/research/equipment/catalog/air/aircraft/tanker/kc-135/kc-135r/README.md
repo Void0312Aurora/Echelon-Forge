@@ -7,6 +7,7 @@ Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/tanker/kc-135/kc-135r/README.md`
 Owner: `database/equipment-data`
 Last verified: `not established`
+Equipment ID: `eq-us-air-kc135r`
 
 ## Operators
 

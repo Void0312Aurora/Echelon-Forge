@@ -7,6 +7,7 @@ Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/transport/strategic/y-20/y-20/README.md`
 Owner: `database/equipment-data`
 Last verified: `not established`
+Equipment ID: `eq-cn-air-y20`
 
 ## Operators
 

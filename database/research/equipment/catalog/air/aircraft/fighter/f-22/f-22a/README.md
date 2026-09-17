@@ -7,6 +7,7 @@ Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/fighter/f-22/f-22a/README.md`
 Owner: `database/equipment-data`
 Last verified: `not established`
+Equipment ID: `eq-us-air-f22a`
 
 ## Operators
 

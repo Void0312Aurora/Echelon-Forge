@@ -7,6 +7,7 @@ Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/fighter/f-16/f-16c/README.md`
 Owner: `database/equipment-data`
 Last verified: `not established`
+Equipment ID: `eq-us-air-f16c-block50`
 Content status: Official source covers the C/D family; a later split may create separate F-16C and F-16D leaves.
 
 ## Operators

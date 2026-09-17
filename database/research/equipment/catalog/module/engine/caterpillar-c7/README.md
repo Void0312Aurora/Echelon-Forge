@@ -7,6 +7,7 @@ Canonical: `database/research/equipment/catalog/module/engine/caterpillar-c7/REA
 Record type: `module / engine`
 Owner: `database/equipment-data`
 Last verified: `2026-09-14`
+Equipment ID: `module-stryker-caterpillar-c7`
 Content status: parameter-first research record; not runtime authority.
 
 ## Identity and configuration boundary

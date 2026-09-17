@@ -7,6 +7,7 @@ Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/fighter/j-16/j-16/README.md`
 Owner: `database/equipment-data`
 Last verified: `not established`
+Equipment ID: `eq-cn-air-j16`
 
 ## Operators
 

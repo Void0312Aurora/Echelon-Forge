@@ -7,6 +7,7 @@ Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/module/mobility/central-tire-inflation-system/README.md`
 Owner: `database/equipment-data`
 Content status: bounded cross-vehicle mobility-module baseline; not a runtime record.
+Equipment ID: `module-ground-ctis`
 
 ## Scope and configuration boundary
 

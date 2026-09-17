@@ -7,6 +7,7 @@ Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/special_mission/maritime_patrol/p-8/p-8a/README.md`
 Owner: `database/equipment-data`
 Last verified: `not established`
+Equipment ID: `eq-uk-air-p8a`
 
 ## Operators
 

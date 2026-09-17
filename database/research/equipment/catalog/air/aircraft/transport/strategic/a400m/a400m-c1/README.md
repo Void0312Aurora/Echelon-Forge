@@ -7,6 +7,7 @@ Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/transport/strategic/a400m/a400m-c1/README.md`
 Owner: `database/equipment-data`
 Last verified: `not established`
+Equipment ID: `eq-uk-air-a400m-c1`
 
 ## Operators
 

@@ -7,12 +7,14 @@ Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/transport/strategic/c-17/c-17a/README.md`
 Owner: `database/equipment-data`
 Last verified: `not established`
+Equipment ID: `eq-us-air-c17a`
 
 ## Operators
 
 | Operator | Status | Source |
 | --- | --- | --- |
 | United States Air Force | In service | `p5-us-air-c17a-usaf` |
+| Royal Air Force | In service | `p5-uk-air-c17a-raf` |
 
 ## Parameters
 
