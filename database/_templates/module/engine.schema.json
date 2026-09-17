@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:echelon-forge:equipment-template:engine:v1",
+  "title": "Echelon Forge engine Template",
+  "description": "Engine template.",
+  "type": "object",
+  "properties": {
+    "_comment": {
+      "type": "string",
+      "description": "Inline hint."
+    },
+    "name": {
+      "type": "string",
+      "description": "Stable module name."
+    },
+    "type": {
+      "type": "string",
+      "const": "Engine",
+      "description": "Unit discriminator."
+    },
+    "engine": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Engine",
+      "description": "Engine inputs."
+    }
+  },
+  "required": [
+    "name",
+    "type",
+    "engine"
+  ],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": {}
+  }
+}
+

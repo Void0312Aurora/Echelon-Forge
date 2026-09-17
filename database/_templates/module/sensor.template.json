@@ -1,0 +1,19 @@
+{
+  "_comment": "Template only. Derived from examples/config/database/aircraft/modules/sensors/an_apg_68.json. This is not a runtime contract.",
+  "name": "",
+  "type": "Sensor",
+  "sensor": {
+    "_comment": "Sensor performance placeholders.",
+    "max_range": 0,
+    "fov_deg": 0,
+    "scan_period": 0,
+    "detection_prob": 0,
+    "bearing_noise_std": 0,
+    "range_noise_std": 0,
+    "track_memory_s": 0,
+    "range_power": 0,
+    "aspect_influence": 0,
+    "doppler_notch_width": 0
+  }
+}
+

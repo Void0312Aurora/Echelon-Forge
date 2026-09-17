@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:echelon-forge:equipment-template:ground:v1",
+  "title": "Echelon Forge ground Template",
+  "description": "Ground template.",
+  "type": "object",
+  "properties": {
+    "_comment": {
+      "type": "string",
+      "description": "Inline hint."
+    },
+    "name": {
+      "type": "string",
+      "description": "Stable lookup name."
+    },
+    "type": {
+      "type": "string",
+      "const": "Ground",
+      "description": "Unit discriminator."
+    },
+    "mass_kg": {
+      "type": "number",
+      "description": "Mass."
+    },
+    "health": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Health",
+      "description": "Health."
+    },
+    "has_score": {
+      "type": "boolean",
+      "description": "Score flag."
+    },
+    "has_command_link": {
+      "type": "boolean",
+      "description": "Command-link flag."
+    },
+    "command_link": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/CommandLink",
+      "description": "Command-link behavior."
+    },
+    "has_data_link": {
+      "type": "boolean",
+      "description": "Data-link flag."
+    },
+    "_ground_schema": {
+      "type": "object",
+      "properties": {
+        "specialization": {
+          "type": "string",
+          "description": "Specialization."
+        },
+        "service_profile": {
+          "type": "string",
+          "description": "Service profile."
+        },
+        "tasking_profile": {
+          "type": "string",
+          "description": "Tasking profile."
+        },
+        "tactical_unit_type": {
+          "type": "string",
+          "description": "Tactical unit type."
+        },
+        "echelon": {
+          "type": "string",
+          "description": "Echelon."
+        },
+        "platform_family": {
+          "type": "string",
+          "description": "Platform family."
+        },
+        "doctrine_family": {
+          "type": "string",
+          "description": "Doctrine family."
+        },
+        "mobility_declaration": {
+          "type": "string",
+          "description": "Mobility declaration."
+        },
+        "movement_behavior": {
+          "type": "string",
+          "description": "Movement behavior."
+        }
+      },
+      "required": [
+        "specialization",
+        "service_profile",
+        "tasking_profile",
+        "tactical_unit_type",
+        "echelon",
+        "platform_family",
+        "doctrine_family",
+        "mobility_declaration",
+        "movement_behavior"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Ground metadata."
+    },
+    "_deferred_runtime_claims": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "Deferred claim."
+      },
+      "description": "Deferred claims."
+    }
+  },
+  "required": [
+    "name",
+    "type",
+    "mass_kg",
+    "health",
+    "has_score",
+    "has_command_link",
+    "command_link",
+    "has_data_link",
+    "_ground_schema",
+    "_deferred_runtime_claims"
+  ],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": {}
+  }
+}
+

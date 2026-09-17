@@ -1,0 +1,291 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:echelon-forge:equipment-template:aircraft:v1",
+  "title": "Echelon Forge aircraft Template",
+  "description": "Aircraft template.",
+  "type": "object",
+  "properties": {
+    "_comment": {
+      "type": "string",
+      "description": "Inline hint."
+    },
+    "name": {
+      "type": "string",
+      "description": "Stable lookup name."
+    },
+    "type": {
+      "type": "string",
+      "const": "Aircraft",
+      "description": "Unit discriminator."
+    },
+    "airframe": {
+      "type": "object",
+      "properties": {
+        "empty_mass_kg": {
+          "type": "number",
+          "description": "Empty mass."
+        },
+        "max_fuel_kg": {
+          "type": "number",
+          "description": "Internal fuel."
+        },
+        "drag_coefficient": {
+          "type": "number",
+          "description": "Reference drag coefficient."
+        },
+        "reference_area": {
+          "type": "number",
+          "description": "Reference area."
+        },
+        "length_m": {
+          "type": "number",
+          "description": "Length."
+        },
+        "wingspan_m": {
+          "type": "number",
+          "description": "Wing span."
+        },
+        "height_m": {
+          "type": "number",
+          "description": "Height."
+        },
+        "configuration": {
+          "type": "string",
+          "description": "Configuration label."
+        }
+      },
+      "required": [
+        "empty_mass_kg",
+        "max_fuel_kg",
+        "drag_coefficient",
+        "reference_area",
+        "length_m",
+        "wingspan_m",
+        "height_m",
+        "configuration"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Airframe inputs."
+    },
+    "health": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Health",
+      "description": "Health."
+    },
+    "damage_model": {
+      "type": "object",
+      "properties": {
+        "vulnerability": {
+          "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Vulnerability",
+          "description": "Vulnerability declarations."
+        },
+        "hitboxes": {
+          "type": "array",
+          "items": {
+            "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Hitbox",
+            "description": "Damage hitbox."
+          },
+          "description": "Damage hitboxes."
+        }
+      },
+      "required": [
+        "vulnerability",
+        "hitboxes"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Damage configuration."
+    },
+    "flight_model": {
+      "type": "object",
+      "properties": {
+        "max_speed": {
+          "type": "number",
+          "description": "Maximum speed."
+        },
+        "min_speed": {
+          "type": "number",
+          "description": "Minimum speed."
+        },
+        "max_turn_rate": {
+          "type": "number",
+          "description": "Maximum turn rate."
+        },
+        "max_climb_rate": {
+          "type": "number",
+          "description": "Maximum climb rate."
+        },
+        "max_accel": {
+          "type": "number",
+          "description": "Maximum acceleration."
+        },
+        "max_g": {
+          "type": "number",
+          "description": "Positive load limit."
+        },
+        "min_g": {
+          "type": "number",
+          "description": "Negative load limit."
+        }
+      },
+      "required": [
+        "max_speed",
+        "min_speed",
+        "max_turn_rate",
+        "max_climb_rate",
+        "max_accel",
+        "max_g",
+        "min_g"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Flight envelope."
+    },
+    "landing_gear": {
+      "type": "object",
+      "properties": {
+        "can_use_unpaved": {
+          "type": "boolean",
+          "description": "Unpaved-surface flag."
+        },
+        "rolling_friction_coeff": {
+          "type": "number",
+          "description": "Rolling friction."
+        },
+        "max_load_factor": {
+          "type": "number",
+          "description": "Load limit."
+        },
+        "contact_height_m": {
+          "type": "number",
+          "description": "Contact height."
+        }
+      },
+      "required": [
+        "can_use_unpaved",
+        "rolling_friction_coeff",
+        "max_load_factor",
+        "contact_height_m"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Landing-gear inputs."
+    },
+    "engine_ref": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/DefinitionRef",
+      "description": "Engine reference."
+    },
+    "sensor_ref": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/DefinitionRef",
+      "description": "Sensor reference."
+    },
+    "sensor_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/DefinitionRef",
+        "description": "Sensor reference."
+      },
+      "description": "Sensor references."
+    },
+    "ew_suite_ref": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/DefinitionRef",
+      "description": "EW reference; not populated by current loader."
+    },
+    "rcs_profile_ref": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/DefinitionRef",
+      "description": "RCS reference; not populated by current loader."
+    },
+    "has_data_link": {
+      "type": "boolean",
+      "description": "Data-link flag."
+    },
+    "data_link_network_id": {
+      "type": "integer",
+      "description": "Network identifier; materialization may override it."
+    },
+    "hardpoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "station_id": {
+            "type": "integer",
+            "description": "Station identifier."
+          },
+          "type": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Station class."
+            },
+            "description": "Station classes."
+          },
+          "capacity_kg": {
+            "type": "number",
+            "description": "Station capacity."
+          }
+        },
+        "required": [
+          "station_id",
+          "type",
+          "capacity_kg"
+        ],
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": {}
+        },
+        "description": "Hardpoint."
+      },
+      "description": "Hardpoints."
+    },
+    "default_loadout": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "description": "Weapon name."
+      },
+      "description": "Station-to-weapon mapping."
+    },
+    "has_ammo": {
+      "type": "boolean",
+      "description": "Ammo flag."
+    },
+    "_provenance": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Provenance",
+      "description": "Provenance."
+    }
+  },
+  "required": [
+    "name",
+    "type",
+    "airframe",
+    "health",
+    "damage_model",
+    "flight_model",
+    "landing_gear",
+    "engine_ref",
+    "sensor_ref",
+    "sensor_refs",
+    "ew_suite_ref",
+    "rcs_profile_ref",
+    "has_data_link",
+    "data_link_network_id",
+    "hardpoints",
+    "default_loadout",
+    "has_ammo",
+    "_provenance"
+  ],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": {}
+  }
+}
+

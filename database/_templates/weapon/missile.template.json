@@ -1,0 +1,44 @@
+{
+  "_comment": "Template only. Derived from examples/config/database/weapons/air_to_air/aim_120c.json. This is not a runtime contract.",
+  "name": "",
+  "type": "Missile",
+  "mass_kg": 0,
+  "max_flight_time_s": 0,
+  "flight_model": {
+    "_comment": "Missile flight-performance placeholders.",
+    "max_speed": 0,
+    "max_g": 0,
+    "max_turn_rate": 0
+  },
+  "guidance": {
+    "_comment": "Guidance and seeker placeholders.",
+    "type": "",
+    "active_seek_range": 0,
+    "nav_gain": 0,
+    "apn_target_accel_gain": 0,
+    "autopilot_tau_s": 0,
+    "max_accel_response_g_per_s": 0
+  },
+  "warhead": {
+    "_comment": "Warhead placeholders. Values require evidence before authority claims.",
+    "type": "",
+    "mass_kg": 0,
+    "lethal_radius": 0,
+    "damage": 0,
+    "explosive_mass_kg": 0,
+    "case_mass_kg": 0,
+    "projection_radius_fraction": 0,
+    "projection_max_radius_m": 0,
+    "projection_max_projected_hitboxes": 0,
+    "provenance": ""
+  },
+  "fuze": {
+    "_comment": "Fuze placeholders. Values require evidence before authority claims.",
+    "type": "",
+    "trigger_radius_m": 0,
+    "delay_s": 0,
+    "reliability": 0,
+    "provenance": ""
+  }
+}
+

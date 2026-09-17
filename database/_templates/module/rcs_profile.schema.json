@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:echelon-forge:equipment-template:rcs_profile:v1",
+  "title": "Echelon Forge rcs_profile Template",
+  "description": "RCS template.",
+  "type": "object",
+  "properties": {
+    "_comment": {
+      "type": "string",
+      "description": "Inline hint."
+    },
+    "name": {
+      "type": "string",
+      "description": "Stable module name."
+    },
+    "type": {
+      "type": "string",
+      "const": "RCSProfile",
+      "description": "Unit discriminator."
+    },
+    "rcs": {
+      "type": "object",
+      "properties": {
+        "frontal_rcs": {
+          "type": "number",
+          "description": "Frontal RCS."
+        },
+        "side_rcs": {
+          "type": "number",
+          "description": "Side RCS."
+        },
+        "rear_rcs": {
+          "type": "number",
+          "description": "Rear RCS."
+        },
+        "top_rcs": {
+          "type": "number",
+          "description": "Top RCS."
+        },
+        "bottom_rcs": {
+          "type": "number",
+          "description": "Bottom RCS."
+        }
+      },
+      "required": [
+        "frontal_rcs",
+        "side_rcs",
+        "rear_rcs",
+        "top_rcs",
+        "bottom_rcs"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "RCS inputs."
+    }
+  },
+  "required": [
+    "name",
+    "type",
+    "rcs"
+  ],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": {}
+  }
+}
+

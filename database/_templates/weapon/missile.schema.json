@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:echelon-forge:equipment-template:missile:v1",
+  "title": "Echelon Forge missile Template",
+  "description": "Missile template.",
+  "type": "object",
+  "properties": {
+    "_comment": {
+      "type": "string",
+      "description": "Inline hint."
+    },
+    "name": {
+      "type": "string",
+      "description": "Stable weapon name."
+    },
+    "type": {
+      "type": "string",
+      "const": "Missile",
+      "description": "Unit discriminator."
+    },
+    "mass_kg": {
+      "type": "number",
+      "description": "Mass."
+    },
+    "max_flight_time_s": {
+      "type": "number",
+      "description": "Maximum flight time."
+    },
+    "flight_model": {
+      "type": "object",
+      "properties": {
+        "max_speed": {
+          "type": "number",
+          "description": "Maximum speed."
+        },
+        "max_g": {
+          "type": "number",
+          "description": "Load limit."
+        },
+        "max_turn_rate": {
+          "type": "number",
+          "description": "Maximum turn rate."
+        }
+      },
+      "required": [
+        "max_speed",
+        "max_g",
+        "max_turn_rate"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Flight envelope."
+    },
+    "guidance": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Guidance",
+      "description": "Guidance inputs."
+    },
+    "warhead": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Warhead",
+      "description": "Warhead inputs."
+    },
+    "fuze": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Fuze",
+      "description": "Fuze inputs."
+    }
+  },
+  "required": [
+    "name",
+    "type",
+    "mass_kg",
+    "max_flight_time_s",
+    "flight_model",
+    "guidance",
+    "warhead",
+    "fuze"
+  ],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": {}
+  }
+}
+

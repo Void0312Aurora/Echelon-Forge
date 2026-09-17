@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:echelon-forge:equipment-template:submarine:v1",
+  "title": "Echelon Forge submarine Template",
+  "description": "Submarine template.",
+  "type": "object",
+  "properties": {
+    "_comment": {
+      "type": "string",
+      "description": "Inline hint."
+    },
+    "name": {
+      "type": "string",
+      "description": "Stable lookup name."
+    },
+    "type": {
+      "type": "string",
+      "const": "Submarine",
+      "description": "Unit discriminator."
+    },
+    "submarine_platform": {
+      "type": "object",
+      "properties": {
+        "submerged_displacement_kg": {
+          "type": "number",
+          "description": "Submerged displacement."
+        },
+        "length_m": {
+          "type": "number",
+          "description": "Length."
+        },
+        "beam_m": {
+          "type": "number",
+          "description": "Beam."
+        },
+        "draft_m": {
+          "type": "number",
+          "description": "Draft."
+        },
+        "max_speed_submerged_mps": {
+          "type": "number",
+          "description": "Maximum submerged speed."
+        },
+        "quiet_speed_mps": {
+          "type": "number",
+          "description": "Quiet speed."
+        },
+        "max_accel_mps2": {
+          "type": "number",
+          "description": "Maximum acceleration."
+        },
+        "max_decel_mps2": {
+          "type": "number",
+          "description": "Maximum deceleration."
+        },
+        "max_turn_rate_deg_s": {
+          "type": "number",
+          "description": "Maximum turn rate."
+        },
+        "max_depth_rate_mps": {
+          "type": "number",
+          "description": "Maximum depth rate."
+        },
+        "nominal_patrol_depth_m": {
+          "type": "number",
+          "description": "Nominal patrol depth."
+        },
+        "max_operating_depth_m": {
+          "type": "number",
+          "description": "Maximum operating depth."
+        },
+        "acoustic_stealth_bias_db": {
+          "type": "number",
+          "description": "Acoustic stealth bias."
+        },
+        "self_noise_per_speed_db": {
+          "type": "number",
+          "description": "Speed-dependent self-noise."
+        },
+        "crew": {
+          "type": "integer",
+          "description": "Crew count."
+        }
+      },
+      "required": [
+        "submerged_displacement_kg",
+        "length_m",
+        "beam_m",
+        "draft_m",
+        "max_speed_submerged_mps",
+        "quiet_speed_mps",
+        "max_accel_mps2",
+        "max_decel_mps2",
+        "max_turn_rate_deg_s",
+        "max_depth_rate_mps",
+        "nominal_patrol_depth_m",
+        "max_operating_depth_m",
+        "acoustic_stealth_bias_db",
+        "self_noise_per_speed_db",
+        "crew"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Submarine platform inputs."
+    },
+    "health": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Health",
+      "description": "Health."
+    },
+    "mounted_sonars": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Mount label."
+          },
+          "sonar": {
+            "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Sonar",
+            "description": "Sonar inputs."
+          }
+        },
+        "required": [
+          "label",
+          "sonar"
+        ],
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": {}
+        },
+        "description": "Mounted sonar."
+      },
+      "description": "Mounted sonars."
+    },
+    "has_command_link": {
+      "type": "boolean",
+      "description": "Command-link flag."
+    },
+    "command_link": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/CommandLink",
+      "description": "Command-link behavior."
+    },
+    "_provenance": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Provenance",
+      "description": "Provenance."
+    }
+  },
+  "required": [
+    "name",
+    "type",
+    "submarine_platform",
+    "health",
+    "mounted_sonars",
+    "has_command_link",
+    "command_link",
+    "_provenance"
+  ],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": {}
+  }
+}
+

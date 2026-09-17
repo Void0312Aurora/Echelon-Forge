@@ -1,0 +1,562 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:echelon-forge:equipment-common:v1",
+  "title": "Echelon Forge Common Equipment Definitions",
+  "description": "Shared draft definitions for equipment templates. Not a runtime contract.",
+  "$defs": {
+    "DefinitionRef": {
+      "type": "string",
+        "description": "Stable name of another content definition. An empty string means the template placeholder is not populated."
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "current_hp": {
+          "type": "number",
+          "description": "Current health points."
+        },
+        "max_hp": {
+          "type": "number",
+          "description": "Maximum health points."
+        }
+      },
+      "required": [
+        "current_hp",
+        "max_hp"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Current and maximum health."
+    },
+    "Provenance": {
+      "type": "object",
+      "properties": {
+        "unit_conversions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "Unit conversion or rounding note."
+          },
+          "description": "Unit conversions."
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "Source reference."
+          },
+          "description": "Source references."
+        },
+        "modeling_notes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "Modeling assumption or boundary."
+          },
+          "description": "Modeling notes."
+        }
+      },
+      "required": [],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Provenance and modeling boundaries."
+    },
+    "Sensor": {
+      "type": "object",
+      "properties": {
+        "max_range": {
+          "type": "number",
+          "description": "Maximum detection range."
+        },
+        "fov_deg": {
+          "type": "number",
+          "description": "Field of view."
+        },
+        "scan_period": {
+          "type": "number",
+          "description": "Scan period."
+        },
+        "detection_prob": {
+          "type": "number",
+          "description": "Detection probability."
+        },
+        "bearing_noise_std": {
+          "type": "number",
+          "description": "Bearing-noise standard deviation."
+        },
+        "range_noise_std": {
+          "type": "number",
+          "description": "Range-noise standard deviation."
+        },
+        "track_memory_s": {
+          "type": "number",
+          "description": "Track-retention duration."
+        },
+        "range_power": {
+          "type": "number",
+          "description": "Range power term."
+        },
+        "aspect_influence": {
+          "type": "number",
+          "description": "Aspect-influence term."
+        },
+        "doppler_notch_width": {
+          "type": "number",
+          "description": "Doppler notch width."
+        }
+      },
+      "required": [],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Sensor performance inputs."
+    },
+    "Sonar": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "description": "Passive or active mode."
+        },
+        "max_range_m": {
+          "type": "number",
+          "description": "Maximum range."
+        },
+        "scan_period_s": {
+          "type": "number",
+          "description": "Scan period."
+        },
+        "detection_threshold_db": {
+          "type": "number",
+          "description": "Detection threshold."
+        },
+        "track_memory_s": {
+          "type": "number",
+          "description": "Track-retention duration."
+        },
+        "bearing_noise_std_deg": {
+          "type": "number",
+          "description": "Bearing noise."
+        },
+        "range_noise_std_m": {
+          "type": "number",
+          "description": "Range noise."
+        },
+        "directivity_gain_db": {
+          "type": "number",
+          "description": "Directivity gain."
+        },
+        "self_noise_per_speed_db": {
+          "type": "number",
+          "description": "Speed-dependent self-noise."
+        },
+        "ambient_noise_db": {
+          "type": "number",
+          "description": "Ambient noise."
+        },
+        "source_level_reference_db": {
+          "type": "number",
+          "description": "Reference source level."
+        },
+        "source_level_speed_factor_db": {
+          "type": "number",
+          "description": "Speed-dependent source-level factor."
+        },
+        "transmission_loss_alpha_db_per_km": {
+          "type": "number",
+          "description": "Transmission-loss coefficient."
+        },
+        "layer_break_penalty_db": {
+          "type": "number",
+          "description": "Layer-break penalty."
+        },
+        "baffle_exclusion_deg": {
+          "type": "number",
+          "description": "Baffle exclusion."
+        },
+        "ownship_quieting_speed_mps": {
+          "type": "number",
+          "description": "Own-ship quieting speed."
+        },
+        "confirm_hits_m": {
+          "type": "integer",
+          "description": "Confirmation-hit threshold."
+        },
+        "confirm_window_n": {
+          "type": "integer",
+          "description": "Confirmation-window length."
+        },
+        "passive_only": {
+          "type": "boolean",
+          "description": "Passive-only flag."
+        },
+        "bearing_only": {
+          "type": "boolean",
+          "description": "Bearing-only flag."
+        }
+      },
+      "required": [],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Sonar performance inputs."
+    },
+    "Engine": {
+      "type": "object",
+      "properties": {
+        "mil_thrust_n": {
+          "type": "number",
+          "description": "Military thrust."
+        },
+        "ab_thrust_n": {
+          "type": "number",
+          "description": "Afterburner thrust."
+        },
+        "sfc_mil": {
+          "type": "number",
+          "description": "Military specific fuel consumption."
+        },
+        "sfc_ab": {
+          "type": "number",
+          "description": "Afterburner specific fuel consumption."
+        },
+        "bypass_ratio": {
+          "type": "number",
+          "description": "Bypass ratio."
+        }
+      },
+      "required": [],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Engine performance inputs."
+    },
+    "Rwr": {
+      "type": "object",
+      "properties": {
+        "sensitivity_dbm": {
+          "type": "number",
+          "description": "Receiver sensitivity."
+        },
+        "detect_band": {
+          "type": "string",
+          "description": "Detected band."
+        },
+        "library_generation": {
+          "type": "integer",
+          "description": "Emitter-library generation."
+        },
+        "is_active": {
+          "type": "boolean",
+          "description": "Active flag."
+        }
+      },
+      "required": [],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "RWR inputs."
+    },
+    "Jammer": {
+      "type": "object",
+      "properties": {
+        "power_watts": {
+          "type": "number",
+          "description": "Jammer power."
+        },
+        "bandwidth_mhz": {
+          "type": "number",
+          "description": "Bandwidth."
+        },
+        "type": {
+          "type": "string",
+          "description": "Jamming mode."
+        },
+        "effective_angle": {
+          "type": "number",
+          "description": "Effective angular coverage."
+        },
+        "is_active": {
+          "type": "boolean",
+          "description": "Active flag."
+        }
+      },
+      "required": [],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Jammer inputs."
+    },
+    "Countermeasures": {
+      "type": "object",
+      "properties": {
+        "chaff_count": {
+          "type": "integer",
+          "description": "Chaff inventory."
+        },
+        "flare_count": {
+          "type": "integer",
+          "description": "Flare inventory."
+        },
+        "release_interval": {
+          "type": "number",
+          "description": "Release interval."
+        },
+        "auto_mode": {
+          "type": "boolean",
+          "description": "Automatic release flag."
+        }
+      },
+      "required": [],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Countermeasure inputs."
+    },
+    "Vulnerability": {
+      "type": "object",
+      "properties": {
+        "synthetic": {
+          "type": "boolean",
+          "description": "Synthetic-values flag."
+        },
+        "calibrated": {
+          "type": "boolean",
+          "description": "Calibration flag."
+        },
+        "pk_authority": {
+          "type": "boolean",
+          "description": "Pk-authority flag."
+        },
+        "deterministic_fuze_authority": {
+          "type": "boolean",
+          "description": "Deterministic-fuze authority flag."
+        },
+        "provenance": {
+          "type": "string",
+          "description": "Provenance note."
+        },
+        "evidence_dataset_ref": {
+          "type": "string",
+          "description": "Evidence dataset reference."
+        },
+        "calibration_status": {
+          "type": "string",
+          "description": "Calibration state."
+        },
+        "blast_scale": {
+          "type": "number",
+          "description": "Blast scale."
+        },
+        "fragmentation_scale": {
+          "type": "number",
+          "description": "Fragmentation scale."
+        },
+        "continuous_rod_scale": {
+          "type": "number",
+          "description": "Continuous-rod scale."
+        },
+        "hit_to_kill_scale": {
+          "type": "number",
+          "description": "Hit-to-kill scale."
+        },
+        "nose_aspect_scale": {
+          "type": "number",
+          "description": "Nose-aspect scale."
+        },
+        "beam_aspect_scale": {
+          "type": "number",
+          "description": "Beam-aspect scale."
+        },
+        "tail_aspect_scale": {
+          "type": "number",
+          "description": "Tail-aspect scale."
+        },
+        "high_closure_scale": {
+          "type": "number",
+          "description": "High-closure scale."
+        },
+        "low_closure_scale": {
+          "type": "number",
+          "description": "Low-closure scale."
+        },
+        "near_miss_scale": {
+          "type": "number",
+          "description": "Near-miss scale."
+        },
+        "direct_hit_scale": {
+          "type": "number",
+          "description": "Direct-hit scale."
+        }
+      },
+      "required": [
+        "synthetic",
+        "calibrated",
+        "pk_authority",
+        "deterministic_fuze_authority",
+        "provenance",
+        "evidence_dataset_ref",
+        "calibration_status"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Vulnerability declarations. They do not grant authority by themselves."
+    },
+    "Hitbox": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Hitbox or component geometry; populate from an accepted damage definition."
+    },
+    "CommandLink": {
+      "type": "object",
+      "properties": {
+        "latency_s": {
+          "type": "number",
+          "description": "Command latency."
+        },
+        "drop_prob": {
+          "type": "number",
+          "description": "Drop probability."
+        }
+      },
+      "required": [
+        "latency_s",
+        "drop_prob"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Command-link behavior."
+    },
+    "Guidance": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Guidance type."
+        },
+        "active_seek_range": {
+          "type": "number",
+          "description": "Active-seeker range."
+        },
+        "nav_gain": {
+          "type": "number",
+          "description": "Navigation gain."
+        },
+        "apn_target_accel_gain": {
+          "type": "number",
+          "description": "Target-acceleration gain."
+        },
+        "autopilot_tau_s": {
+          "type": "number",
+          "description": "Autopilot time constant."
+        },
+        "max_accel_response_g_per_s": {
+          "type": "number",
+          "description": "Maximum acceleration response."
+        }
+      },
+      "required": [],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Missile guidance inputs."
+    },
+    "Warhead": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Warhead type."
+        },
+        "mass_kg": {
+          "type": "number",
+          "description": "Warhead mass."
+        },
+        "lethal_radius": {
+          "type": "number",
+          "description": "Lethal radius."
+        },
+        "damage": {
+          "type": "number",
+          "description": "Damage scalar."
+        },
+        "explosive_mass_kg": {
+          "type": "number",
+          "description": "Explosive mass."
+        },
+        "case_mass_kg": {
+          "type": "number",
+          "description": "Case mass."
+        },
+        "projection_radius_fraction": {
+          "type": "number",
+          "description": "Projection-radius fraction."
+        },
+        "projection_max_radius_m": {
+          "type": "number",
+          "description": "Projection maximum radius."
+        },
+        "projection_max_projected_hitboxes": {
+          "type": "integer",
+          "description": "Projection hitbox limit."
+        },
+        "provenance": {
+          "type": "string",
+          "description": "Provenance and authority boundary."
+        }
+      },
+      "required": [],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Missile warhead inputs."
+    },
+    "Fuze": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Fuze type."
+        },
+        "trigger_radius_m": {
+          "type": "number",
+          "description": "Trigger radius."
+        },
+        "delay_s": {
+          "type": "number",
+          "description": "Delay."
+        },
+        "reliability": {
+          "type": "number",
+          "description": "Reliability."
+        },
+        "provenance": {
+          "type": "string",
+          "description": "Provenance and authority boundary."
+        }
+      },
+      "required": [],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Missile fuze inputs."
+    }
+  }
+}

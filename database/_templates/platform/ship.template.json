@@ -1,0 +1,75 @@
+{
+  "_comment": "Template only. Derived from red_surface_combatant_minimal.json and ddg51_flight_i_uss_arleigh_burke.json. This is not a runtime contract.",
+  "name": "",
+  "type": "Ship",
+  "ship_platform": {
+    "_comment": "Ship geometry, propulsion-response, and seakeeping placeholders.",
+    "displacement_light_kg": 0,
+    "displacement_full_load_kg": 0,
+    "length_m": 0,
+    "beam_m": 0,
+    "draft_m": 0,
+    "height_above_waterline_m": 0,
+    "max_speed_mps": 0,
+    "economical_speed_mps": 0,
+    "range_nm": 0,
+    "range_speed_mps": 0,
+    "max_accel_mps2": 0,
+    "max_decel_mps2": 0,
+    "max_turn_rate_deg_s": 0,
+    "low_speed_turn_factor": 0,
+    "steerageway_speed_mps": 0,
+    "sea_state": 0,
+    "wave_heading_deg": 0,
+    "wave_period_s": 0,
+    "max_roll_deg_sea_state_6": 0,
+    "max_pitch_deg_sea_state_6": 0,
+    "added_resistance_fraction_sea_state_6": 0,
+    "crew": 0
+  },
+  "health": {
+    "current_hp": 0,
+    "max_hp": 0
+  },
+  "sensor_ref": "",
+  "sensor_refs": [],
+  "esm": {
+    "sensitivity_dbm": 0,
+    "max_detection_range_m": 0,
+    "classify_emitters": false
+  },
+  "has_command_link": false,
+  "command_link": {
+    "latency_s": 0,
+    "drop_prob": 0
+  },
+  "has_data_link": false,
+  "data_link_network_id": 0,
+  "naval_stores": {
+    "_comment": "Abstract stores are runtime calibration units, not physical tank or magazine counts.",
+    "fuel_units_current": 0,
+    "fuel_units_max": 0,
+    "missile_units_current": 0,
+    "missile_units_max": 0,
+    "dry_cargo_units_current": 0,
+    "dry_cargo_units_max": 0,
+    "can_receive_underway": false,
+    "can_provide_underway": false
+  },
+  "naval_weapon_system": {
+    "_comment": "Mount entries must reference the source example shape when populated.",
+    "mounts": []
+  },
+  "damage_model": {
+    "_comment": "Ship hitbox placeholders; they do not define damage authority.",
+    "hitboxes": []
+  },
+  "_real_world": {},
+  "_provenance": {
+    "_comment": "Record unit conversions, source IDs, and modeling assumptions.",
+    "unit_conversions": [],
+    "sources": [],
+    "modeling_notes": []
+  }
+}
+

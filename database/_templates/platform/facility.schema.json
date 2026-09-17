@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:echelon-forge:equipment-template:facility:v1",
+  "title": "Echelon Forge facility Template",
+  "description": "Facility template.",
+  "type": "object",
+  "properties": {
+    "_comment": {
+      "type": "string",
+      "description": "Inline hint."
+    },
+    "name": {
+      "type": "string",
+      "description": "Stable lookup name."
+    },
+    "type": {
+      "type": "string",
+      "const": "Facility",
+      "description": "Unit discriminator."
+    },
+    "health": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Health",
+      "description": "Health."
+    },
+    "sensor": {
+      "type": "object",
+      "properties": {
+        "max_range": {
+          "type": "number",
+          "description": "Sensor range."
+        },
+        "fov_deg": {
+          "type": "number",
+          "description": "Field of view."
+        }
+      },
+      "required": [
+        "max_range",
+        "fov_deg"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Sensor inputs."
+    },
+    "has_data_link": {
+      "type": "boolean",
+      "description": "Data-link flag."
+    },
+    "damage_model": {
+      "type": "object",
+      "properties": {
+        "hitboxes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "description": "Hitbox identifier."
+              },
+              "size": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "description": "Dimension."
+                },
+                "description": "Dimensions."
+              },
+              "armor": {
+                "type": "number",
+                "description": "Armor."
+              },
+              "systems": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "System."
+                },
+                "description": "Systems."
+              }
+            },
+            "required": [
+              "id",
+              "size",
+              "armor",
+              "systems"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": {}
+            },
+            "description": "Facility hitbox."
+          },
+          "description": "Hitboxes."
+        }
+      },
+      "required": [
+        "hitboxes"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Damage configuration."
+    }
+  },
+  "required": [
+    "name",
+    "type",
+    "health",
+    "sensor",
+    "has_data_link",
+    "damage_model"
+  ],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": {}
+  }
+}
+

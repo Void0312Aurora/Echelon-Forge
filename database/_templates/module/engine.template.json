@@ -1,0 +1,14 @@
+{
+  "_comment": "Template only. Derived from examples/config/database/aircraft/modules/engines/f110_ge_129.json. This is not a runtime contract.",
+  "name": "",
+  "type": "Engine",
+  "engine": {
+    "_comment": "Engine performance placeholders.",
+    "mil_thrust_n": 0,
+    "ab_thrust_n": 0,
+    "sfc_mil": 0,
+    "sfc_ab": 0,
+    "bypass_ratio": 0
+  }
+}
+

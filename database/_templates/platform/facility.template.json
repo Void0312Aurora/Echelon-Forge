@@ -1,0 +1,31 @@
+{
+  "_comment": "Template only. Derived from examples/config/database/facilities/generic_airbase.json. This is not a runtime contract.",
+  "name": "",
+  "type": "Facility",
+  "health": {
+    "current_hp": 0,
+    "max_hp": 0
+  },
+  "sensor": {
+    "_comment": "Facility sensor placeholders.",
+    "max_range": 0,
+    "fov_deg": 0
+  },
+  "has_data_link": false,
+  "damage_model": {
+    "_comment": "Facility hitbox placeholders.",
+    "hitboxes": [
+      {
+        "id": 0,
+        "size": [
+          0,
+          0,
+          0
+        ],
+        "armor": 0,
+        "systems": []
+      }
+    ]
+  }
+}
+

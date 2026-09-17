@@ -1,0 +1,14 @@
+{
+  "_comment": "Template only. Derived from examples/config/database/aircraft/modules/rcs_profiles/fighter_standard.json. This is not a runtime contract.",
+  "name": "",
+  "type": "RCSProfile",
+  "rcs": {
+    "_comment": "RCS aspect placeholders.",
+    "frontal_rcs": 0,
+    "side_rcs": 0,
+    "rear_rcs": 0,
+    "top_rcs": 0,
+    "bottom_rcs": 0
+  }
+}
+

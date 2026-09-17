@@ -1,0 +1,31 @@
+{
+  "_comment": "Template only. Derived from examples/config/database/ground/units/ground_platoon_mvp.json. This is not a complete ground runtime contract.",
+  "name": "",
+  "type": "Ground",
+  "mass_kg": 0,
+  "health": {
+    "current_hp": 0,
+    "max_hp": 0
+  },
+  "has_score": false,
+  "has_command_link": false,
+  "command_link": {
+    "latency_s": 0,
+    "drop_prob": 0
+  },
+  "has_data_link": false,
+  "_ground_schema": {
+    "_comment": "Ground specialization and service-profile placeholders.",
+    "specialization": "",
+    "service_profile": "",
+    "tasking_profile": "",
+    "tactical_unit_type": "",
+    "echelon": "",
+    "platform_family": "",
+    "doctrine_family": "",
+    "mobility_declaration": "",
+    "movement_behavior": ""
+  },
+  "_deferred_runtime_claims": []
+}
+

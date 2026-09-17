@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:echelon-forge:equipment-template:source:v1",
+  "title": "Echelon Forge source Template",
+  "description": "Source template.",
+  "type": "object",
+  "properties": {
+    "_comment": {
+      "type": "string",
+      "description": "Inline hint."
+    },
+    "_template": {
+      "type": "boolean",
+      "description": "Template flag."
+    },
+    "_status": {
+      "type": "string",
+      "description": "Status marker."
+    },
+    "source_id": {
+      "type": "string",
+      "description": "Source identifier."
+    },
+    "source_tier": {
+      "type": "string",
+      "description": "Admission tier."
+    },
+    "source_category": {
+      "type": "string",
+      "description": "Source category."
+    },
+    "source_ref": {
+      "type": "string",
+      "description": "Stable locator."
+    },
+    "publisher_or_holder": {
+      "type": "string",
+      "description": "Publisher or holder."
+    },
+    "rights_or_redistribution": {
+      "type": "string",
+      "description": "Rights boundary."
+    },
+    "provenance_summary": {
+      "type": "string",
+      "description": "Provenance summary."
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Example-defined nested object."
+    },
+    "cross_validation": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "Cross-validation note."
+      },
+      "description": "Cross-validation."
+    },
+    "reasonableness_assessment": {
+      "type": "string",
+      "description": "Assessment."
+    },
+    "ingest_status": {
+      "type": "string",
+      "description": "Ingest status."
+    },
+    "authority_status": {
+      "type": "string",
+      "description": "Authority status."
+    },
+    "residuals": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "Residual."
+      },
+      "description": "Residuals."
+    }
+  },
+  "required": [
+    "source_id",
+    "source_tier",
+    "source_category",
+    "source_ref",
+    "publisher_or_holder",
+    "rights_or_redistribution",
+    "provenance_summary",
+    "scope",
+    "cross_validation",
+    "reasonableness_assessment",
+    "ingest_status",
+    "authority_status",
+    "residuals"
+  ],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": {}
+  }
+}
+

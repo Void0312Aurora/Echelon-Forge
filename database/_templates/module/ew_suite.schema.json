@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:echelon-forge:equipment-template:ew_suite:v1",
+  "title": "Echelon Forge ew_suite Template",
+  "description": "EW-suite template.",
+  "type": "object",
+  "properties": {
+    "_comment": {
+      "type": "string",
+      "description": "Inline hint."
+    },
+    "name": {
+      "type": "string",
+      "description": "Stable module name."
+    },
+    "type": {
+      "type": "string",
+      "const": "EWSuite",
+      "description": "Unit discriminator."
+    },
+    "rwr": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Rwr",
+      "description": "RWR inputs."
+    },
+    "jammer": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Jammer",
+      "description": "Jammer inputs."
+    },
+    "countermeasures": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Countermeasures",
+      "description": "Countermeasure inputs."
+    }
+  },
+  "required": [
+    "name",
+    "type",
+    "rwr",
+    "jammer",
+    "countermeasures"
+  ],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": {}
+  }
+}
+

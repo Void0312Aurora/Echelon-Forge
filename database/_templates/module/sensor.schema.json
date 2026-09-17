@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:echelon-forge:equipment-template:sensor:v1",
+  "title": "Echelon Forge sensor Template",
+  "description": "Sensor template.",
+  "type": "object",
+  "properties": {
+    "_comment": {
+      "type": "string",
+      "description": "Inline hint."
+    },
+    "name": {
+      "type": "string",
+      "description": "Stable module name."
+    },
+    "type": {
+      "type": "string",
+      "const": "Sensor",
+      "description": "Unit discriminator."
+    },
+    "sensor": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Sensor",
+      "description": "Sensor inputs."
+    }
+  },
+  "required": [
+    "name",
+    "type",
+    "sensor"
+  ],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": {}
+  }
+}
+

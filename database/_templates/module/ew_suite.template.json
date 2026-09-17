@@ -1,0 +1,28 @@
+{
+  "_comment": "Template only. Derived from examples/config/database/aircraft/modules/ew_suites/gen4_standard.json. This is not a runtime contract.",
+  "name": "",
+  "type": "EWSuite",
+  "rwr": {
+    "_comment": "RWR placeholders.",
+    "sensitivity_dbm": 0,
+    "detect_band": "",
+    "library_generation": 0,
+    "is_active": false
+  },
+  "jammer": {
+    "_comment": "Jammer placeholders.",
+    "power_watts": 0,
+    "bandwidth_mhz": 0,
+    "type": "",
+    "effective_angle": 0,
+    "is_active": false
+  },
+  "countermeasures": {
+    "_comment": "Countermeasure placeholders.",
+    "chaff_count": 0,
+    "flare_count": 0,
+    "release_interval": 0,
+    "auto_mode": false
+  }
+}
+

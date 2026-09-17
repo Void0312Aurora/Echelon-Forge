@@ -1,0 +1,83 @@
+{
+  "_comment": "Template only. Derived from examples/config/database/aircraft/units/mq9_reaper.json plus the aircraft reference fields used by f16c_block50.json. This is not a runtime contract.",
+  "name": "",
+  "type": "Aircraft",
+  "airframe": {
+    "_comment": "Platform geometry and mass placeholders.",
+    "empty_mass_kg": 0,
+    "max_fuel_kg": 0,
+    "drag_coefficient": 0,
+    "reference_area": 0,
+    "length_m": 0,
+    "wingspan_m": 0,
+    "height_m": 0,
+    "configuration": ""
+  },
+  "health": {
+    "current_hp": 0,
+    "max_hp": 0
+  },
+  "damage_model": {
+    "_comment": "Damage placeholders. They do not grant vulnerability, Pk, or fuze authority.",
+    "vulnerability": {
+      "synthetic": false,
+      "calibrated": false,
+      "pk_authority": false,
+      "deterministic_fuze_authority": false,
+      "provenance": "",
+      "evidence_dataset_ref": "",
+      "calibration_status": "",
+      "blast_scale": 0,
+      "fragmentation_scale": 0,
+      "continuous_rod_scale": 0,
+      "hit_to_kill_scale": 0,
+      "nose_aspect_scale": 0,
+      "beam_aspect_scale": 0,
+      "tail_aspect_scale": 0,
+      "high_closure_scale": 0,
+      "low_closure_scale": 0,
+      "near_miss_scale": 0,
+      "direct_hit_scale": 0
+    },
+    "hitboxes": []
+  },
+  "flight_model": {
+    "_comment": "Flight-performance placeholders.",
+    "max_speed": 0,
+    "min_speed": 0,
+    "max_turn_rate": 0,
+    "max_climb_rate": 0,
+    "max_accel": 0,
+    "max_g": 0,
+    "min_g": 0
+  },
+  "landing_gear": {
+    "can_use_unpaved": false,
+    "rolling_friction_coeff": 0,
+    "max_load_factor": 0,
+    "contact_height_m": 0
+  },
+  "engine_ref": "",
+  "sensor_ref": "",
+  "sensor_refs": [],
+  "ew_suite_ref": "",
+  "rcs_profile_ref": "",
+  "has_data_link": false,
+  "data_link_network_id": 0,
+  "hardpoints": [
+    {
+      "_comment": "One hardpoint placeholder. Add or remove entries to match the platform.",
+      "station_id": 0,
+      "type": [],
+      "capacity_kg": 0
+    }
+  ],
+  "default_loadout": {},
+  "has_ammo": false,
+  "_provenance": {
+    "_comment": "Record source IDs and modeling boundaries before treating values as usable data.",
+    "sources": [],
+    "modeling_notes": []
+  }
+}
+

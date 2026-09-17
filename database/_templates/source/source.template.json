@@ -1,0 +1,19 @@
+{
+  "_comment": "Template only. Field set follows docs/research/standards/public_data_source_admission.md. This is not an approved source record or runtime authority.",
+  "_template": true,
+  "_status": "provisional_not_contract",
+  "source_id": "",
+  "source_tier": "",
+  "source_category": "",
+  "source_ref": "",
+  "publisher_or_holder": "",
+  "rights_or_redistribution": "",
+  "provenance_summary": "",
+  "scope": {},
+  "cross_validation": [],
+  "reasonableness_assessment": "",
+  "ingest_status": "pending",
+  "authority_status": "non-authoritative",
+  "residuals": []
+}
+
