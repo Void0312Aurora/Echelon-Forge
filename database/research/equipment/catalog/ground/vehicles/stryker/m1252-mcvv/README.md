@@ -1,0 +1,45 @@
+# M1252 Mortar Carrier Vehicle, Variant (MCVV)
+
+Language: English canonical. Chinese companion: not established.
+
+Document kind: `reference`
+Lifecycle: `draft`
+Canonical: `database/research/equipment/catalog/ground/vehicles/stryker/m1252-mcvv/README.md`
+Owner: `database/equipment-data`
+Content status: extracted DVH simulation-parameter draft; not a runtime record.
+
+## Identity
+
+| Field | Value |
+| --- | --- |
+| Equipment ID | `eq-us-ground-stryker-m1252-mcvv` |
+| Family / variant | Stryker / M1252 MCVV |
+| Hull context | Double-V Hull (DVH); do not merge with M1129 or M1252A1 |
+| Role | 120 mm mounted mortar carrier |
+
+## Parameters
+
+| Field | Value | Source | Tier | Configuration / uncertainty |
+| --- | --- | --- | --- | --- |
+| Operational configuration mass | 53,602 lb (≈24,313 kg) | `p5-us-ground-stryker-army-tb55-2023` | A | TB 55-46-1 operational configuration; not GVW/GVWR and not reduced transport mass |
+| Operational dimensions | 288 × 146 × 125 in (≈7.315 × 3.708 × 3.175 m) | `p5-us-ground-stryker-army-tb55-2023` | A | Operational configuration; width/height include the cited configuration |
+| Reduced transport configuration mass | 52,015 lb (≈23,594 kg) | `p5-us-ground-stryker-army-tb55-2023` | A | Reduced transport configuration; do not label as operational mass |
+| Reduced transport dimensions | 286 × 122 × 108 in (≈7.264 × 3.099 × 2.743 m) | `p5-us-ground-stryker-army-tb55-2023` | A | Reduced transport configuration |
+| GVW | 48,591 lb (≈22,041 kg) | `p5-us-ground-stryker-tradoc-gta09-14-002` | A | TRADOC GTA configuration field; not the 53,602 lb operational configuration |
+| GVWR | 58,401 lb (≈26,490 kg) | `p5-us-ground-stryker-tradoc-gta09-14-002` | A | TRADOC GTA rated limit; not an observed operating mass |
+| Crew | 5 | `p5-us-ground-mortar-atp-3-21-90` | A | Mortar-carrier configuration |
+| Mortar system | RMS6-L 120 mm mortar | `p5-us-ground-mortar-atp-3-21-90` | A | Exact ammunition load and fire-control fit unknown |
+| Propulsion / mobility | Unknown for this M1252 configuration | — | — | Do not copy M1126 350 hp, speed or range baseline |
+| Public protection | DVH Stryker hull; exact armor/protection rating unknown | `p5-us-ground-stryker-mdex-2026` | A | Configuration family only |
+
+Field confidence follows the evidence tier and context column: TB 55-46-1 measurements are high confidence for their named configurations; family-level protection context is medium confidence; unknown fields remain unestimated.
+
+## Configuration Boundary
+
+The TB 55-46-1 values above are intentionally kept as separate fields. In particular, `53,602 lb / 288 × 146 × 125 in` is the operational configuration, while `52,015 lb / 286 × 122 × 108 in` is the reduced transport configuration. Neither value is silently substituted for GVW or GVWR.
+
+## Source References
+
+- `p5-us-ground-stryker-army-tb55-2023`
+- `p5-us-ground-mortar-atp-3-21-90`
+- `p5-us-ground-stryker-mdex-2026`

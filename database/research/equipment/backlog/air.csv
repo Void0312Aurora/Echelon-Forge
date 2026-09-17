@@ -1,0 +1,71 @@
+equipment_id,country,operator,domain,class,family,variant,status,catalog_path,source_ids,notes
+eq-us-air-f35a,United States,USAF,air,fighter,F-35,F-35A,cataloged,catalog/air/aircraft/fighter/f-35/f-35a,p5-us-air-f35a-usaf,
+eq-us-air-f22a,United States,USAF,air,fighter,F-22,F-22A,cataloged,catalog/air/aircraft/fighter/f-22/f-22a,p5-us-air-f22-usaf,
+eq-us-air-b52h,United States,USAF,air,bomber,B-52,B-52H,cataloged,catalog/air/aircraft/bomber/b-52/b-52h,p5-us-air-b52h-usaf,
+eq-us-air-fa18e,United States,US Navy,air,fighter,F/A-18,F/A-18E,cataloged,catalog/air/aircraft/fighter/f-a-18/fa-18e,p5-us-air-fa18e-navair,
+eq-us-air-ea18g,United States,US Navy,air,electronic_attack,EA-18G,EA-18G,cataloged,catalog/air/aircraft/special_mission/electronic_attack/ea-18g,p5-us-air-ea18g-navair,
+eq-us-air-c17a,United States,USAF,air,strategic_transport,C-17,C-17A,cataloged,catalog/air/aircraft/transport/strategic/c-17/c-17a,p5-us-air-c17a-usaf,
+eq-uk-air-typhoon-fgr4,United Kingdom,RAF,air,fighter,Typhoon,FGR4,cataloged,catalog/air/aircraft/fighter/typhoon/typhoon-fgr4,p5-uk-air-typhoon-fgr4-raf,
+eq-uk-air-f35b,United Kingdom,RAF,air,fighter,F-35,F-35B,cataloged,catalog/air/aircraft/fighter/f-35/f-35b,p5-uk-air-f35b-raf,
+eq-uk-air-p8a,United Kingdom,RAF,air,maritime_patrol,P-8,P-8A,cataloged,catalog/air/aircraft/special_mission/maritime_patrol/p-8/p-8a,p5-uk-air-p8a-raf,
+eq-uk-air-a400m-c1,United Kingdom,RAF,air,strategic_transport,A400M,Atlas C1,cataloged,catalog/air/aircraft/transport/strategic/a400m/a400m-c1,p5-uk-air-a400m-c1-raf,
+eq-fr-air-rafale-c,France,Air and Space Force,air,fighter,Rafale,C,cataloged,catalog/air/aircraft/fighter/rafale/rafale-c,p5-fr-air-rafale-dassault,
+eq-fr-air-rafale-b,France,Air and Space Force,air,fighter,Rafale,B,cataloged,catalog/air/aircraft/fighter/rafale/rafale-b,p5-fr-air-rafale-b-dassault,
+eq-fr-air-rafale-m,France,Navy,air,fighter,Rafale,M,cataloged,catalog/air/aircraft/fighter/rafale/rafale-m,p5-fr-air-rafale-m-dassault,
+eq-ru-air-su35s,Russia,Aerospace Forces,air,fighter,Su-35,Su-35S,cataloged,catalog/air/aircraft/fighter/su-35/su-35s,p5-ru-air-su35-roe,
+eq-ru-air-su34e,Russia,export variant,air,fighter_bomber,Su-34,Su-34E,cataloged,catalog/air/aircraft/fighter-bomber/su-34/su-34e,p5-ru-air-su34e-roe,
+eq-ru-air-su30sme,Russia,export variant,air,fighter,Su-30,Su-30SME,cataloged,catalog/air/aircraft/fighter/su-30/su-30sme,p5-ru-air-su30sme-roe,
+eq-cn-air-j20,China,PLA Air Force,air,fighter,J-20,J-20,parameter_complete,catalog/air/aircraft/fighter/j-20/j-20,p5-cn-air-j20-mnd;p5-cn-air-j20-armyrecognition,all target fields filled; official source confirms service presence and Tier C source supplies bounded parameters for cross-check
+eq-cn-air-j16,China,PLA Air Force,air,fighter,J-16,J-16,cataloged,catalog/air/aircraft/fighter/j-16/j-16,p5-cn-air-j16-mnd,
+eq-cn-air-j10c,China,PLA Air Force,air,fighter,J-10,J-10C,parameter_complete,catalog/air/aircraft/fighter/j-10/j-10c,p5-cn-air-j10c-mnd;p5-cn-air-j10c-armyrecognition,all target fields filled; official source confirms service presence and Tier C source supplies bounded parameters for cross-check
+eq-cn-air-y20,China,PLA Air Force,air,strategic_transport,Y-20,Y-20,cataloged,catalog/air/aircraft/transport/strategic/y-20/y-20,p5-cn-air-y20-mnd,
+eq-us-air-f15e,United States,USAF,air,fighter,F-15,F-15E,cataloged,catalog/air/aircraft/fighter/f-15/f-15e,p5-us-air-f15e-usaf,
+eq-us-air-f15ex,United States,USAF,air,fighter,F-15,F-15EX,cataloged,catalog/air/aircraft/fighter/f-15/f-15ex,p5-us-air-f15ex-usaf,
+eq-us-air-f16c-block50,United States,USAF,air,fighter,F-16,F-16C Block 50,cataloged,catalog/air/aircraft/fighter/f-16/f-16c,p5-us-air-f16cd-usaf,
+eq-us-air-a10c,United States,USAF,air,attack,A-10,A-10C,cataloged,catalog/air/aircraft/attack/a-10/a-10c,p5-us-air-a10c-usaf,
+eq-us-air-f35c,United States,US Navy,air,fighter,F-35,F-35C,cataloged,catalog/air/aircraft/fighter/f-35/f-35c,p5-us-air-f35c-navair,
+eq-us-air-b1b,United States,USAF,air,bomber,B-1,B-1B,cataloged,catalog/air/aircraft/bomber/b-1/b-1b,p5-us-air-b1b-usaf,
+eq-us-air-b2a,United States,USAF,air,bomber,B-2,B-2A,cataloged,catalog/air/aircraft/bomber/b-2/b-2a,p5-us-air-b2a-usaf,
+eq-us-air-kc135r,United States,USAF,air,tanker,KC-135,KC-135R,cataloged,catalog/air/aircraft/tanker/kc-135/kc-135r,p5-us-air-kc135r-usaf,
+eq-us-air-kc46a,United States,USAF,air,tanker,KC-46,KC-46A,cataloged,catalog/air/aircraft/tanker/kc-46/kc-46a,p5-us-air-kc46a-usaf,
+eq-us-air-e3g,United States,USAF,air,aewc,E-3,E-3G,cataloged,catalog/air/aircraft/aewc/e-3/e-3g,p5-us-air-e3g-usaf,Cataloged from acquired source package.
+eq-us-air-mq9a,United States,USAF,air,uas,MQ-9,MQ-9A,cataloged,catalog/air/aircraft/uas/mq-9/mq-9a,p5-us-air-mq9a-usaf,Cataloged from acquired source package.
+eq-us-air-c130j,United States,USAF,air,tactical_transport,C-130,C-130J,cataloged,catalog/air/aircraft/tactical_transport/c-130/c-130j,p5-us-air-c130j-usaf,Cataloged from acquired source package.
+eq-uk-air-c17a,United Kingdom,RAF,air,strategic_transport,C-17,C-17A,cataloged,catalog/air/aircraft/transport/strategic/c-17/c-17a,p5-uk-air-c17a-raf,Cataloged from acquired source package.
+eq-uk-air-voyager-kc2,United Kingdom,RAF,air,tanker,Voyager,KC2,cataloged,catalog/air/aircraft/tanker/voyager/voyager-kc2,p5-uk-air-voyager-kc2-raf,Cataloged from acquired source package.
+eq-uk-air-chinook-hc6a,United Kingdom,RAF,air,rotary_transport,Chinook,HC6A,cataloged,catalog/air/aircraft/rotary_transport/chinook/chinook-hc6a,p5-uk-air-chinook-hc6a-raf,Cataloged from acquired source package.
+eq-uk-air-apache-ah64e,United Kingdom,Army Air Corps,air,attack_helicopter,Apache,AH-64E,held,,,No first-party variant-level source captured in this tranche.
+eq-uk-air-wildcat-hma2,United Kingdom,Royal Navy,air,maritime_helicopter,Wildcat,HMA2,cataloged,catalog/air/aircraft/maritime_helicopter/wildcat/wildcat-hma2,p5-uk-air-wildcat-hma2-raf,Cataloged from acquired source package.
+eq-uk-air-merlin-hm2,United Kingdom,Royal Navy,air,maritime_helicopter,Merlin,HM2,cataloged,catalog/air/aircraft/maritime_helicopter/merlin/merlin-hm2,p5-uk-air-merlin-hm2-raf,Cataloged from acquired source package.
+eq-uk-air-protector-rg1,United Kingdom,RAF,air,uas,Protector,RG1,cataloged,catalog/air/aircraft/uas/protector/protector-rg1,p5-uk-air-protector-rg1-raf,Cataloged from acquired source package.
+eq-fr-air-mirage2000d-rmv,France,Air and Space Force,air,attack,Mirage 2000,2000D RMV,cataloged,catalog/air/aircraft/attack/mirage-2000/mirage-2000d-rmv,p5-fr-air-mirage2000d-rmv,Cataloged from acquired source package.
+eq-fr-air-mirage2000-5f,France,Air and Space Force,air,fighter,Mirage 2000,2000-5F,cataloged,catalog/air/aircraft/fighter/mirage-2000/mirage-2000-5f,p5-fr-air-mirage2000-5f,Cataloged from acquired source package.
+eq-fr-air-a330-mrtt,France,Air and Space Force,air,tanker,A330 MRTT,Phénix,cataloged,catalog/air/aircraft/tanker/a330-mrtt/a330-phenix,p5-fr-air-a330-mrtt,Cataloged from acquired source package.
+eq-fr-air-c130j30,France,Air and Space Force,air,tactical_transport,C-130,C-130J-30,cataloged,catalog/air/aircraft/tactical_transport/c-130/c-130j-30,p5-fr-air-c130j30,Cataloged from acquired source package.
+eq-fr-air-kc130j,France,Air and Space Force,air,tanker_transport,KC-130,KC-130J,held,,,No independent first-party KC-130J source captured in this tranche.
+eq-fr-air-e3f,France,Air and Space Force,air,aewc,E-3,E-3F,cataloged,catalog/air/aircraft/aewc/e-3/e-3f,p5-fr-air-e3f,Cataloged from acquired source package.
+eq-fr-air-atl2,France,Navy,air,maritime_patrol,Atlantique 2,Atlantique 2,cataloged,catalog/air/aircraft/maritime_patrol/atlantique-2/atlantique-2,p5-fr-air-atl2,Cataloged from acquired source package.
+eq-fr-air-nh90-nfh,France,Navy,air,maritime_helicopter,NH90,NFH,cataloged,catalog/air/aircraft/maritime_helicopter/nh90/nh90-nfh,p5-fr-air-nh90-nfh,Cataloged from acquired source package.
+eq-fr-air-tiger-had,France,Army,air,attack_helicopter,Tiger,HAD,held,,,No first-party Tiger HAD source captured in this tranche.
+eq-ru-air-mig31bm,Russia,Aerospace Forces,air,interceptor,MiG-31,MiG-31BM,held,,,No first-party MiG-31BM source captured in this tranche.
+eq-ru-air-su57,Russia,Aerospace Forces,air,fighter,Su-57,Su-57,held,,,Only export-designated Su-57E source captured; service Su-57 must not be merged with it.
+eq-ru-air-tu95ms,Russia,Aerospace Forces,air,bomber,Tu-95,Tu-95MS,held,,,No first-party Tu-95MS source captured in this tranche.
+eq-ru-air-tu160m,Russia,Aerospace Forces,air,bomber,Tu-160,Tu-160M,cataloged,catalog/air/aircraft/bomber/tu-160/tu-160m,p5-ru-air-tu160m-mod,Cataloged from acquired source package.
+eq-ru-air-a50u,Russia,Aerospace Forces,air,aewc,A-50,A-50U,held,,,No first-party A-50U source captured in this tranche.
+eq-ru-air-il76md90a,Russia,Aerospace Forces,air,strategic_transport,Il-76,Il-76MD-90A,cataloged,catalog/air/aircraft/transport/strategic/il-76/il-76md-90a,p5-ru-air-il76md90a-roe,Cataloged from acquired source package.
+eq-ru-air-ka52,Russia,Aerospace Forces,air,attack_helicopter,Ka-52,Ka-52,held,,,No first-party Ka-52 source captured in this tranche.
+eq-ru-air-mi28nm,Russia,Aerospace Forces,air,attack_helicopter,Mi-28,Mi-28NM,held,,,No first-party Mi-28NM source captured in this tranche.
+eq-cn-air-j11b-bs,China,PLA Air Force,air,fighter,J-11,J-11B/BS,cataloged,catalog/air/aircraft/fighter/j-11/j-11b-bs,p5-cn-air-j11b-mnd,Cataloged from acquired source package.
+eq-cn-air-j15,China,PLA Navy,air,fighter,J-15,J-15,cataloged,catalog/air/aircraft/fighter/j-15/j-15,p5-cn-air-j15-mnd,Cataloged from acquired source package.
+eq-cn-air-h6k,China,PLA Air Force,air,bomber,H-6,H-6K,cataloged,catalog/air/aircraft/bomber/h-6/h-6k,p5-cn-air-h6k-mnd,Cataloged from acquired source package.
+eq-cn-air-kj500,China,PLA Air Force,air,aewc,KJ-500,KJ-500,cataloged,catalog/air/aircraft/aewc/kj-500/kj-500,p5-cn-air-kj500-mnd,Cataloged from acquired source package.
+eq-cn-air-yy20a,China,PLA Air Force,air,tanker,YY-20,YY-20A,cataloged,catalog/air/aircraft/tanker/yy-20/yy-20a,p5-cn-air-yy20a-mnd,Cataloged from acquired source package.
+eq-cn-air-z20,China,PLA,air,rotary_transport,Z-20,Z-20,cataloged,catalog/air/aircraft/rotary_transport/z-20/z-20,p5-cn-air-z20-mnd,Cataloged from acquired source package.
+eq-ru-air-su27s,Russia,Russian Aerospace Forces,air,fighter,Su-27,Su-27S,parameter_complete,catalog/air/aircraft/fighter/su-27/su-27s,p5-ru-air-su27s-armyrecognition,all target fields filled; Tier C specialist values require cross-check
+eq-ru-air-mig29a,Russia,Russian Aerospace Forces,air,fighter,MiG-29,MiG-29A,parameter_complete,catalog/air/aircraft/fighter/mig-29/mig-29a,p5-ru-air-mig29a-armyrecognition,all target fields filled; Tier C specialist values require cross-check
+eq-ru-air-mig31b,Russia,Russian Aerospace Forces,air,interceptor,MiG-31,MiG-31B,parameter_complete,catalog/air/aircraft/fighter/mig-31/mig-31b,p5-ru-air-mig31b-armyrecognition,all target fields filled; radar and cannon-load bounds require cross-check
+eq-us-air-f15c,United States,USAF,air,fighter,F-15,F-15C,parameter_complete,catalog/air/aircraft/fighter/f-15/f-15c,p5-us-air-f15c-usaf;p5-us-air-f15c-wikipedia,all target fields filled; bounded community values remain for cross-check
+eq-us-air-f4e,United States,USAF,air,fighter,F-4,F-4E,parameter_complete,catalog/air/aircraft/fighter/f-4/f-4e,p5-us-air-f4e-usaf;p5-us-air-f4e-wikipedia,all target fields filled; bounded community values remain for cross-check
+eq-fr-air-miragef1,France,French Air Force,air,fighter,Mirage F1,F1C,parameter_complete,catalog/air/aircraft/fighter/mirage-f1/mirage-f1c,p5-fr-air-miragef1-mindef;p5-fr-air-miragef1-dassault;p5-fr-air-miragef1-wikipedia,all target fields filled; historical configuration and bounded community values remain for cross-check
+eq-eu-air-tornadoids,Multinational,RAF/German Air Force/Italian Air Force,air,ground_attack,Tornado,IDS,parameter_complete,catalog/air/aircraft/ground-attack/tornado/tornado-ids,p5-uk-air-tornadoids-raf;p5-de-air-tornadoids-bundeswehr;p5-it-air-tornadoids-ami;p5-eu-air-tornadoids-wikipedia,all target fields filled; national IDS fits remain separated and require cross-check
+eq-se-air-gripenc,Sweden,Swedish Air Force,air,fighter,Gripen,Gripen C,parameter_complete,catalog/air/aircraft/fighter/gripen/gripen-c,p5-se-air-gripenc-saab;p5-se-air-gripenc-fm;p5-se-air-gripenc-wikipedia,all target fields filled; software and signature values include bounded community estimates
