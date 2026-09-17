@@ -17,8 +17,12 @@ Retention: manifest and extracted parameter notes only
 
 Also known as Zhi-20. First flight 23 December 2013. Initial operational capability November 2018. Origin China; corporations AVICOPTER and Harbin Aviation Industry. Rotor diameter 16.2 to 16.5 m. Overall helicopter length 19.5 m. Roles listed: ground attack, close air support, anti-submarine warfare, anti-ship, transport, VIP transport, medical evacuation, search and rescue, reconnaissance.
 
-## Cross-check
+## Scope of this package
 
-A Tier C encyclopedic source gives length 20 m, height 5.3 m, empty weight 5,000 kg, maximum takeoff weight 10,000 kg, internal cargo capacity and 4,000 kg external cargo. A second such source repeats the 20 m, 5.3 m, 5,000 kg and 10,000 kg figures. A third gives top speed 360 km/h, range 560 km, ceiling 6,000 m and maximum takeoff weight 10,000 kg.
+This package carries the programme dates, the overall length and the rotor diameter only. Those are the fields the page states.
 
-The overall length differs between this page's 19.5 m and the 20 m given by the encyclopedic sources. Both readings are retained in the leaf.
+## Correction history for this package
+
+An earlier revision of this manifest attributed a height of 5.3 m, an empty weight of 5,000 kg, a maximum takeoff weight of 10,000 kg, a 4,000 kg external cargo capacity, a 360 km/h maximum speed, a 560 km range and a 6,000 m service ceiling to this package as a cross-check against an encyclopedic entry. None of those figures is on this page. The cross-check named no artifact for any of them and none could be re-located, so the figures are withdrawn from both this manifest and the leaf, and the rows that rested on them are removed rather than re-pointed.
+
+The overall length conflict recorded on the leaf at 19.5 m against 20 m was the same withdrawn comparison and is withdrawn with it. The length on the leaf is this page's 19.5 m reading alone.

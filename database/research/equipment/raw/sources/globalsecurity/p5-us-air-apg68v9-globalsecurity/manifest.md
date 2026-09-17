@@ -21,5 +21,5 @@ The page reports a 30% detection-range increase, improved false-alarm and mutual
 ## Estimation / uncertainty metadata
 
 - `track`: four is retained only for Situation Awareness-style mode context; the independent 10-target TWS value is not replaced.
-- `interfaces`: MoRE/CoRP and F-16 radar-system integration are corroborating context, not a pin-level bus specification.
+- `interfaces`: MoRE/CoRP and F-16 radar-system integration are recorded by this page as system context. They are not a pin-level bus specification and no such specification is claimed here.
 - `status`: page age means it cannot prove current production or fleet counts; the leaf uses it only to corroborate V9 fielding and capability claims.

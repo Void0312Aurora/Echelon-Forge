@@ -27,4 +27,6 @@ The two-seat length of 14.55 m is the value applicable to the Mirage 2000D. The 
 
 The performance block is written for the single-seat 2000C with combat load. The page states that two-seat and strike variants share fundamental performance characteristics, so the rows are recorded on the 2000D leaf as family performance values with the two-seat airframe noted, not as measured 2000D figures.
 
-An encyclopedic source gives the same M53-P2 engine with the same two thrust figures for the Mirage 2000 family, and the same Mach 2.2, 1,550 km range, 17,060 m ceiling and 285 m/s climb rate, which corroborates the performance block.
+## Correction history for this package
+
+An earlier revision of this manifest stated that an encyclopedic source gave the same M53-P2 engine, the same two thrust figures, and the same Mach 2.2, 1,550 km range, 17,060 m ceiling and 285 m/s climb rate, and treated that as corroboration of the performance block. The encyclopedic entry was never named and could not be re-located, so the corroboration claim is withdrawn. The performance block rests on this page alone, which is why every performance row on the 2000D leaf is labelled Tier C and carries the single-seat 2000C caveat.

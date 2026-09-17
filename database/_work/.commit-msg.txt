@@ -1,0 +1,75 @@
+fix(database): make every source claim resolve to one named artifact
+
+Audit of a56070d found four ways a claim could reach a leaf without a
+traceable artifact, and one source-precedence regression. This commit
+closes all five.
+
+Source precedence (Typhoon FGR4)
+- The RAF Typhoon page was previously treated as carrying powerplant,
+  thrust and length only, on the strength of a truncated 2026-09-11
+  capture. A re-read of 2026-09-18 returns the full technical block plus
+  defensive aids, weapons and sensors. Those rows are now Tier A and the
+  Tier C readings are retained as recorded alternatives rather than
+  deleted: wingspan 11.09 vs 11.0/10.95, height 5.29 vs 5.3/5.28, wing
+  area 50 vs 51.2, maximum speed Mach 1.6 vs Mach 2.0. The 19.4 m length
+  reading is withdrawn because its artifact was never named.
+
+C5 upgraded from keyword detection to source-artifact consistency
+- 5a matches unnamed-source claims on word boundaries and a wider phrase
+  set. The first version was bypassable by writing "two further secondary
+  sources" instead of "a further source"; it now catches "further
+  sources", "encyclopedic record", "compiled record", "three sources",
+  "database entry" and the rest.
+- 5b treats more than one URL line as an aggregate package. One source id
+  must resolve to one locatable artifact; corroboration belongs in its own
+  package with its own id.
+- A correction-history sentence that quotes withdrawn vocabulary while
+  also carrying withdrawal vocabulary is exempt, so the record of a
+  withdrawal does not itself fail the gate. A sentence that merely
+  mentions an earlier revision and then makes a live unnamed claim still
+  fails.
+
+Aggregate packages split or reduced to one artifact
+- p5-uk-air-f35b-bae-compiled: second URL line removed; the maximum
+  weight row moves to the prime contractor.
+- p5-uk-air-typhoon-fgr4-compiled: second URL line removed; reduced to the
+  GlobalMilitary FGR.4 block. Forces News and the general-type block move
+  to p5-uk-air-typhoon-fgr4-forcesnews and
+  p5-uk-air-typhoon-fgr4-encyclopedic.
+- p5-us-ground-stryker-family-armor2002: Mirror line removed and recorded
+  as a retrieval note in prose.
+- p5-us-ground-stryker-family-gdlsbrochure: Alternate path line removed
+  and recorded as a single-artifact note.
+- p5-cn-air-y20-compiled: publisher and title no longer describe an
+  aggregate of entries beside a single URL.
+
+Unnamed secondary sources either named or withdrawn
+- F-15EX: the dimensions, masses, powerplant, speed and range rows were
+  attributed to a page that states none of them. They move to
+  p5-us-air-f15ex-lincs (31,700 lb), p5-us-air-f15ex-f16net (same block),
+  p5-us-air-f15ex-globalmilitary (35,501 lb, dimensions, MTOW, thrust)
+  and p5-us-air-f15ex-airvectors (lineage). The empty weight is now three
+  rows rather than one merged claim. Programme facts stay on
+  p5-us-air-f15ex-afsf.
+- F-35B: maximum weight now rests on the prime contractor document
+  p5-us-air-f35b-lockheed and keeps the "60,000 lb class" qualifier
+  rather than converting it to 27,200 kg. p5-uk-air-f35b-migflug holds the
+  Tier C reading as the recorded alternative. Manufacturer dimensions are
+  added from p5-uk-air-f35b-bae-compiled.
+- Su-35S, Z-20, YY-20A, F/A-18E, Rafale C, Su-30SME, Mirage 2000D,
+  F-35C and the Stryker M1128 gun row: the unnamed comparisons are
+  withdrawn and the affected rows are removed rather than re-pointed. An
+  unrecorded field is preferred to a value that no locatable artifact
+  carries.
+
+Rows removed with the claims that carried them: Z-20 height, empty
+weight, maximum takeoff weight, external cargo, speed, range and ceiling;
+YY-20A internal fuel, landing gear and the WS-20 contrast; the
+encyclopedic F-35C empty-weight comparison; the Su-35S four-source
+agreement sentence; the F/A-18E two-source corroboration sentence; the
+Rafale 1,912 km/h maximum speed.
+
+Verification: python database/_work/check_equipment_tree.py exits 0 on
+this working tree. That is this repository's own gate run, not an
+independent CI check. Counts: manifests 249, catalog leaves 103, sources
+referenced 244, backlog rows 118, coverage rows 47.

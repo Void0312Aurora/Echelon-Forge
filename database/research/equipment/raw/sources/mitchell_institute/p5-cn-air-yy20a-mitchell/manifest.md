@@ -17,8 +17,12 @@ Retention: manifest and extracted parameter notes only
 
 Status active. Type aerial refuelling tanker. Contractor Xi'an Aircraft Industrial Corporation. Initial operating capability 2022. Operator PLAAF. Active variant YY-20A, also designated Y-20U. Length 154.2 ft; wingspan 164.0 ft; height 49.2 ft. Empty weight 220,462 lb. Maximum takeoff weight 485,017 lb. Power plant four D-30KP-2. Cruise speed 430 kt. Range 2,000 nm. Ceiling 42,660 ft.
 
-## Cross-check and a powerplant divergence held open
+## Scope of this package
 
-The dimensions and both weight figures convert to approximately 47 m by 50 m by 15 m, 100,000 kg empty and 220,000 kg maximum takeoff. An encyclopedic source gives exactly those metric values for the Y-20B, together with four Shenyang WS-20 turbofans, which is a later power plant than this page's D-30KP-2. The geometry and masses agree between the two sources; the engines do not.
+This package carries the tanker's status, type, contractor, initial operating capability, operator, active variant, dimensions, empty weight, maximum takeoff weight, power plant, cruise speed, range and ceiling. Those are the fields the page states.
 
-A further secondary source specific to the YY-20A gives empty weight 100,000 kg and an internal fuel load of 18,500 kg with up to 75,000 kg of transportable fuel. That fuel pair is recorded in the leaf as the tanker-specific figure this page does not provide.
+## Correction history for this package
+
+An earlier revision of this manifest carried two further claims, both of which are withdrawn. The earlier revision stated that a general-interest entry gave the same metric values for the Y-20B together with four Shenyang WS-20 turbofans, and that the geometry and masses agreed between it and this page while the engines did not. The earlier revision also stated that a page specific to the YY-20A gave an internal fuel load of 18,500 kg and up to 75,000 kg of transportable fuel. Neither artifact was named and neither could be re-located, so both claims are withdrawn.
+
+The power plant that this page states is the four D-30KP-2 entry, and it is now recorded as this page's reading alone rather than as one side of a divergence. The tanker-specific fuel pair is withdrawn from the leaf, because the only package that carried it is this one and this page does not state it.

@@ -22,5 +22,5 @@ Gross weight 47,070 lb (21,351 kg). Height 130.44 in (331.32 cm); length 300.53 
 
 The source prints the minimum turning diameter as `52 ft / 17 m`. That SI value is not a correct rounding of 52 ft, which is 15.85 m and rounds to 16 m. The leaf records 52 ft with a corrected 16 m conversion; the imperial figure is the source value and the SI figure is this package's own correction.
 
-The source gives the main gun as `105mm Gun M68A1E8`. That designation is not corroborated elsewhere and conflicts with higher-tier citations giving M68A1E4, and with at least one further source giving M68A2. The leaf records the conflict rather than the source value alone, and marks the field unresolved. Do not treat `E8` as settled.
+The source gives the main gun as `105mm Gun M68A1E8`. That designation is not corroborated by any other package in this tree, and it conflicts with three official Army citations that give M68A1E4: `p5-us-ground-stryker-family-odin`, `p5-us-ground-stryker-family-fortcarson-ea2014` and `p5-us-ground-stryker-family-infantry2014`. The `M68A2` reading that an earlier revision of this manifest recorded is withdrawn, because no package in this tree states it and it could not be re-located. The leaf records the conflict rather than the source value alone, and marks the field unresolved. Do not treat `E8` as settled.
 

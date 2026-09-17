@@ -17,6 +17,10 @@ Retention: manifest and extracted parameter notes only
 
 Designation Su-35S, NATO reporting Flanker-E or Flanker-F derivative. Role multirole air superiority and precision strike fighter. Manufacturer United Aircraft Corporation, Irkut and KNAAZ. Crew one pilot. First flight 2008 in the prototype lineage; introduced 2014. Length 21.9 m; wingspan 15.3 m; height 5.9 m; wing area 62 m². Empty weight approximately 18,400 kg. Maximum takeoff weight approximately 34,500 kg. Powerplant two Saturn AL-41F1S thrust-vectoring turbofans.
 
-## Cross-check
+## Scope of this package
 
-Three further secondary sources give the same length, wingspan and height, and the same maximum takeoff weight of 34,500 kg, and add a high-altitude range of 3,600 km on internal fuel and a maximum speed of Mach 2.25. The dimensions and the maximum takeoff weight agree across all four, so those rows carry the strongest agreement in this leaf; the empty weight is given only by this page and is labelled approximate by it.
+This package is the only one in this tree that states Su-35S dimensions, and it is the source of record for every dimension and mass row on the leaf. The empty weight is given by this page alone and the page labels it approximate.
+
+## Correction history for this package
+
+An earlier revision of this manifest stated that three further secondary sources gave the same length, wingspan and height, the same maximum takeoff weight, a 3,600 km high-altitude internal-fuel range and a Mach 2.25 maximum speed. None of the three was named and none could be re-located, so the claim is withdrawn and those figures are not attributed to this package or to the leaf. The `p5-ru-air-su35-roe` package held for this leaf covers roles only and does not carry them.

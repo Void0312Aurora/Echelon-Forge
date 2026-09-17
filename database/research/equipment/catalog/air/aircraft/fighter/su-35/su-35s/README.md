@@ -43,7 +43,7 @@ Content status: Model-level draft based on first-party export specifications and
 
 The export specification held here supplies maximum takeoff weight, maximum speed, payload, ceiling and hardpoints at Tier A. The airframe dimensions, empty weight, range and powerplant sub-type come from a Tier C secondary source and are labelled accordingly; the Russian Ministry of Defence material in this tree declares roles and discloses neither.
 
-The dimensions and maximum takeoff weight agree across four independent secondary sources, which is the strongest agreement in this leaf. The empty weight is given by one source only and is itself labelled approximate.
+The dimensions and the maximum takeoff weight do not share a source. The dimensions rest on one secondary page, and an earlier revision of this leaf claimed that four independent sources agreed on them; that claim named none of the other three and is withdrawn.
 
 The Su-35S is the Russian service variant of the Su-35 export designation. No value is carried between the two, and the export leaf is a separate record.
 

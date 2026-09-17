@@ -17,9 +17,15 @@ Retention: manifest and extracted parameter notes only
 
 The combat load of the Su-30SME with a total weight of up to 8,000 kg is carried by 12 external points. Dimensions given as length by wingspan by height, in metres: 21.9 by 14.7 by 6.36.
 
-## Corroboration
+## Scope of this package
 
-Three further secondary sources repeat the 8,000 kg combat load and the 12 hardpoint count, and two of them give the same 21.9 m length and 14.7 m wingspan. The payload figure is therefore corroborated beyond this page even though the page's own table did not render in the capture.
+This package carries the payload of up to 8,000 kg, the 12 external points that carry it, and the 21.9 by 14.7 by 6.36 m dimensions.
+
+## Correction history for this package
+
+An earlier revision of this manifest carried a corroboration section stating that three further secondary sources repeated the 8,000 kg combat load and the 12 hardpoint count and that two of them gave the 21.9 m length and 14.7 m wingspan. None of the three was named and none could be re-located, so the corroboration claim is withdrawn and the payload is recorded as this page's statement alone.
+
+The limitation in the uncertainty line stands: the table is rendered by script and did not resolve in the text capture. With the corroboration claim withdrawn, that limitation is now the only qualification on these three values, and the leaf states it.
 
 ## Why this package was added
 

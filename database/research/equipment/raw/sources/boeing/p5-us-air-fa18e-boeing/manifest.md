@@ -17,8 +17,12 @@ Retention: manifest and extracted parameter notes only
 
 Width 44.9 ft (13.7 m); length 60.2 ft (18.3 m); height 16 ft (4.9 m); maximum takeoff weight 66,000 lb (29,937 kg).
 
-## Cross-check
+## Scope of this package
 
-An encyclopedic source gives the same maximum takeoff weight of 66,000 lb (29,937 kg), length 60 ft 1.25 in, wingspan 44 ft 8.5 in, height 16 ft 0 in, wing area 500 sq ft, empty weight 32,081 lb, gross weight 47,000 lb equipped for fighter escort, and internal fuel of 14,700 lb for the E and 13,760 lb for the F. A defence news source repeats the same dimensions and maximum takeoff weight.
+The specification block gives width, length, height and maximum takeoff weight for the Super Hornet family rather than separating the E and F marks. It states a family width of 44.9 ft and does not state a wingspan for the E mark, and the leaf therefore carries the Navy wingspan rather than this width.
 
-The dimensions and maximum takeoff weight agree across three sources.
+The maximum takeoff weight of 66,000 lb is stated by this manufacturer page and by no other package in this tree. It is recorded as a single-source figure with its tier attached rather than as an agreed value.
+
+## Correction history for this package
+
+An earlier revision of this manifest carried a cross-check stating that an encyclopedic source and a defence news source repeated the same dimensions and maximum takeoff weight and giving a wing area, an empty weight, a gross weight and per-mark internal fuel figures from the former. Neither artifact was named and neither could be re-located. The cross-check is withdrawn, none of the figures it carried is attributed to this package, and the leaf keeps only the four values this page states.

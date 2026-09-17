@@ -46,4 +46,15 @@ Content status: Model-level draft with first-party geometry and payload data.
 
 ## Source References
 
-- `p5-fr-air-rafale-dassault`: `raw/sources/dassault_aviation/p5-fr-air-rafale-dassault/manifest.md`
+- `p5-fr-air-rafale-dassault`: `raw/sources/dassault_aviation/p5-fr-air-rafale-dassault/manifest.md` — manufacturer geometry, masses and payload
+- `p5-fr-air-rafale-aviationist`: `raw/sources/the_aviationist/p5-fr-air-rafale-aviationist/manifest.md` — variant table, per-mark empty weight, fuel and armament
+
+## Configuration Boundary
+
+The manufacturer page gives rounded corporate figures: 10.9 m, 15.3 m, 5.3 m, approximately 10 t, 24.5 t and 9.5 t. The variant table gives two decimal places on the same dimensions and a per-mark empty weight, so the two sets are recorded side by side rather than reconciled. Neither is preferred and the leaf does not average them.
+
+The empty weight is the row where the two readings differ most: the manufacturer rounds to 10 t and the variant table separates the three marks and gives 9,850 kg for the C. The C value is recorded from the table because it is variant-specific, and the manufacturer's rounded figure is retained as the type-level reading.
+
+A maximum speed of 1,912 km/h that an earlier revision of this leaf carried is withdrawn, because the figure came from a comparison that named no artifact and none could be re-located. No package held for this leaf states a maximum speed.
+
+The Rafale B and Rafale M are separate marks with their own leaves. The B and M empty weights in the variant table are not carried here.

@@ -6,7 +6,6 @@ Publisher: U.S. Army Armor Center, Fort Knox, Kentucky
 Author / maintainer: ARMOR editorial staff; Editor in Chief LTC David R. Manning
 Title: ARMOR, September-October 2002, Vol. CXI No. 5 — back-page item "Army Accepts First Stryker MGS"
 URL: https://www.benning.army.mil/armor/eARMOR/content/issues/2002/SEP_OCT/ArmorSeptemberOctober2002web.pdf
-Mirror: https://archive.org/details/2002-may-june (item "ARMOR MAGAZINE 2002", Public Domain Mark 1.0, uploaded 2025-03-27)
 Accessed: 2026-09-18
 Domain: ground
 Equipment: Stryker / M1128 MGS
@@ -16,7 +15,9 @@ Retention: manifest and citation record only
 
 ## Verification status
 
-The Benning direct URL no longer resolves. The Internet Archive mirror resolves and the item table of contents confirms this issue carries a back-page item titled `Army Accepts First Stryker MGS`.
+The Benning direct URL no longer resolves. An Internet Archive item at `archive.org/details/2002-may-june` holds a digitised ARMOR 2002 run under a Public Domain Mark 1.0 statement, and that item's table of contents confirms this issue carries a back-page item titled `Army Accepts First Stryker MGS`. The archive locator is recorded here as a retrieval note rather than as a second URL line on this package, because this package names one artifact: the September-October 2002 issue.
+
+An earlier revision of this manifest carried that archive locator as a `Mirror:` line. That made one source id resolve to two locators and is why the line is now prose under this heading. The archive item belongs in its own package if it is ever cited as evidence in its own right.
 
 The M68A1E4 gun designation attributed to this item during the 2026-09-18 audit was **not independently re-read from the article text**. The archived full text is about 323 KB and the extract pipeline returned only the first 200 KB, while the item sits at the end of the issue. This package therefore records the citation and the auditor's attribution, and explicitly does not claim a first-hand re-read of the passage.
 

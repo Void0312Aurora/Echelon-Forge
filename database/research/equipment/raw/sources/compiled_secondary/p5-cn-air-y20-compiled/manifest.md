@@ -2,15 +2,19 @@
 
 Source ID: `p5-cn-air-y20-compiled`
 Tier: `C`
-Publisher: Compiled open-source record, with the encyclopedic entry for the Xi'an Y-20 as the primary carrier
-Author / maintainer: compiled secondary record
-Title: Xi'an Y-20 — specifications, with corroborating secondary entries
+Publisher: English-language encyclopedic aviation entry, Xi'an Y-20 article
+Author / maintainer: article editors
+Title: Xi'an Y-20 — specifications
 URL: https://en.wikipedia.org/wiki/Xi%27an_Y-20
 Accessed: 2026-09-18
 Domain: air
 Equipment: Y-20
 Configuration: The Y-20 transport family. The YY-20A tanker and YY-20B are separate configurations recorded on their own leaf.
 Estimation / uncertainty: Tier C. The Chinese Ministry of National Defense material held in this tree confirms programme status and discloses no dimensions, mass or performance. No manufacturer page for the Y-20 was located in this pass, so this is the best available source class and the leaf labels it accordingly.
+
+## Correction history for this package
+
+An earlier revision of this manifest described the publisher as a compiled open-source record with an unspecified entry as its primary carrier, and gave the title as specifications with corroborating secondary entries. That wording described an aggregate of artifacts while the package named exactly one URL. The description now names the artifact the URL resolves to, and this package is the only source of record for the dimensions, masses, payload, powerplant split and inventory figures on the Y-20 leaf.
 Retention: manifest and extracted parameter notes only
 
 ## Extracted parameter notes

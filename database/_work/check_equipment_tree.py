@@ -218,46 +218,78 @@ def check_all() -> dict:
         "missing_rights_field_advisory": no_rights,
     }
 
-    # condition 5 -- no claim attributed to an unnamed source
-    # A manifest may describe what another source says, but only if that source
-    # carries its own Source ID. Otherwise the leaf ends up citing one id for
-    # claims that came from somewhere else, which breaks the
-    # claim -> source id -> admission chain. A sentence that uses one of the
-    # unnamed-source phrases must also name a p5-* id.
+    # condition 5 -- source-artifact consistency
+    #
+    # Two failure modes are covered, both of which produce a provenance graph that
+    # cannot be walked from a claim back to an artifact:
+    #
+    #   5a  a manifest describes a claim as coming from a source it does not name
+    #   5b  a manifest is an aggregate of several artifacts rather than one
+    #
+    # 5a matches on word boundaries and a wider phrase set than the first version
+    # did, because the first version was demonstrably bypassable by writing
+    # "two further secondary sources" instead of "a further source".
+    #
+    # 5b treats more than one URL line as an aggregate. A manifest should describe
+    # one locatable artifact; corroboration belongs in its own package with its own
+    # id, so a claim can be traced to each source separately.
     #
     # Pre-existing baseline: one package that landed before this rule existed is
-    # exempted by name below. It is listed so the exemption is visible and so a
-    # second one cannot be added silently. Anything not on this list fails.
-    unnamed_phrases = (
-        "second source",
-        "third source",
-        "another source",
-        "other source",
-        "other sources",
-        "reference works",
-        "a second specialist compilation",
-        "a further source",
-        "unnamed source",
-    )
+    # exempted by name. It is listed so the exemption is visible and so a second
+    # one cannot be added silently. Anything not on this list fails.
     c5_baseline_exemptions = {
-        # Landed in f9e2e4ed, before C5 existed. Its sentence records that two
-        # leaf bounds are estimates rather than an official Mk IV specification
-        # and names no specific package, so the fix belongs with a CV90 leaf
-        # repair rather than with a source-admission tranche.
+        # Landed in f9e2e4ed, before this rule existed. Its sentence records that
+        # two leaf bounds are estimates rather than an official Mk IV
+        # specification and names no specific package, so the fix belongs with a
+        # CV90 leaf repair rather than with a source-admission tranche.
         "p5-eu-ground-cv90mk4-cv90cz",
     }
+
+    unnamed_pattern = re.compile(
+        r"\b("
+        r"further source|further sources|further secondary source|further secondary sources|"
+        r"second source|second sources|third source|third sources|"
+        r"another source|another sources|other source|other sources|"
+        r"reference works|a second specialist compilation|unnamed source|"
+        r"encyclopedic record|encyclopedic source|compiled record|compiled source|"
+        r"compiled secondary source|database entry|corroborating record|"
+        r"corroborating source|supporting source|additional source|additional sources|"
+        r"two sources|three sources|four sources|several sources|multiple sources|"
+        r"further compilation|other compilations"
+        r")\b",
+        re.IGNORECASE,
+    )
+    aggregate_markers = re.compile(
+        r"^(Corroborating URL|Alternate path|Mirror|Second URL|Additional URL):",
+        re.IGNORECASE | re.MULTILINE,
+    )
+
+    # A correction history describes a claim that was withdrawn. The sentence
+    # quotes the vocabulary of the withdrawn claim in order to say what it was,
+    # so it matches 5a without making an unnamed-source claim itself. Such a
+    # sentence is exempt only when it also carries withdrawal vocabulary; a
+    # sentence that merely mentions an earlier revision and then makes a live
+    # unnamed claim still fails.
+    correction_marker = re.compile(
+        r"earlier revision|withdrawn|was withdrawn|is withdrawn|were withdrawn",
+        re.IGNORECASE,
+    )
+
     unattributed: list[dict] = []
+    aggregates: list[dict] = []
     for key, value in manifests.items():
         if key in c5_baseline_exemptions:
             continue
         text = value["path"].read_text(encoding="utf-8")
+
         for sentence in re.split(r"(?<=[.;])\s+|\n", text):
-            lowered = sentence.lower()
-            if not any(phrase in lowered for phrase in unnamed_phrases):
+            if not unnamed_pattern.search(sentence):
                 continue
             if SOURCE_ID_RE.search(sentence):
                 continue
             if len(sentence.strip()) < 20:
+                continue
+            if correction_marker.search(sentence):
                 continue
             unattributed.append(
                 {
@@ -265,9 +297,20 @@ def check_all() -> dict:
                     "sentence": " ".join(sentence.split())[:220],
                 }
             )
-    result["conditions"]["c5_no_unnamed_source_claims"] = {
-        "pass": not unattributed,
-        "unattributed_claims": unattributed,
+
+        extra_urls = aggregate_markers.findall(text)
+        if extra_urls:
+            aggregates.append(
+                {
+                    "package": key,
+                    "extra_locators": sorted(set(extra_urls)),
+                }
+            )
+
+    result["conditions"]["c5_source_artifact_consistency"] = {
+        "pass": not unattributed and not aggregates,
+        "unnamed_source_claims": unattributed,
+        "aggregate_packages": aggregates,
         "baseline_exemptions": sorted(c5_baseline_exemptions),
     }
 
@@ -308,7 +351,7 @@ def main() -> int:
         "c2_backlog_binding": "C2 backlog leaf binding (Equipment ID)",
         "c3_status_agreement": "C3 backlog vs coverage status",
         "c4_source_admission_floor": "C4 source admission floor (no D tier, retention present)",
-        "c5_no_unnamed_source_claims": "C5 no claim attributed to an unnamed source",
+        "c5_source_artifact_consistency": "C5 source-artifact consistency (no unnamed source, no aggregate package)",
     }
     for key, label in labels.items():
         condition = result["conditions"][key]
