@@ -7,6 +7,7 @@ Author / maintainer: BAE Systems, F-35 product page
 Title: F-35B Lightning II — short take-off and vertical landing fighter-bomber
 URL: https://www.baesystems.com/dam/jcr:47fbc276-ac6f-43f9-92c2-3652530d4dd4
 Accessed: 2026-09-18
+Retrieval status: not retrieved in the 2026-09-19 verification pass. The F-35B dimension and speed rows below were not confirmed against a retrieved copy of the document, because the URL is a JCR content path that the retrieval proxy did not return. They are carried on the leaf as the manufacturer's dimension readings with their tier attached, and they are single-source.
 Domain: air
 Equipment: F-35 / F-35B
 Configuration: The page is specific to the F-35B short take-off and vertical landing variant, which is the variant this package covers. The A and C marks are not tabulated on it and no value is carried between the marks.

@@ -7,6 +7,7 @@ Author / maintainer: Air and Space Forces Magazine weapons database
 Title: F-15EX Eagle II — weapons and platforms entry
 URL: https://www.airandspaceforces.com/weapons/f-15ex
 Accessed: 2026-09-18
+Retrieved: 2026-09-19, page text via the Tavily extract proxy; the programme-facts block was returned verbatim
 Domain: air
 Equipment: F-15 / F-15EX
 Configuration: The entry states it is based on the F-15QA developed for Qatar and is the planned replacement for the F-15C/D, so it is specific to the F-15EX and does not describe the F-15E.
@@ -21,7 +22,7 @@ Contractors Boeing, with BAE Systems for EPAWSS and Raytheon for the AESA radar.
 
 This package carries the programme facts only: first flight, delivery, initial operational capability, planned production, inventory, operators and basing.
 
-It states no dimensions, wing area, empty weight, maximum takeoff weight, powerplant, speed or range, and no such row is attributed to it. Those rows rest on `p5-us-air-f15ex-lincs`, `p5-us-air-f15ex-f16net`, `p5-us-air-f15ex-globalmilitary` and `p5-us-air-f15ex-airvectors`, each of which names its own locatable artifact.
+It states no dimensions, wing area, empty weight, maximum takeoff weight, powerplant, speed or range, and no such row is attributed to it. Those rows rest on `p5-us-air-f15ex-boeing`, `p5-us-air-f15ex-lincs`, `p5-us-air-f15ex-f16net` and `p5-us-air-f15ex-globalmilitary`, each of which names its own locatable artifact.
 
 ## Correction history for this package
 

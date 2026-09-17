@@ -7,6 +7,7 @@ Author / maintainer: MiGFlug editorial staff
 Title: F-35 Lightning II — aircraft profile
 URL: https://migflug.com/aircraft/f-35-lightning-ii
 Accessed: 2026-09-18
+Retrieved: 2026-09-19, the variant figures via search indexing of this URL by the Tavily proxy, which returned the empty weight, internal fuel and maximum take-off weight rows per mark
 Domain: air
 Equipment: F-35 / F-35A, F-35B, F-35C
 Configuration: The page tabulates the A, B and C marks separately, so the B column is directly available and is not inferred from a sibling mark.
@@ -15,10 +16,20 @@ Retention: manifest and extracted parameter notes only
 
 ## Extracted parameter notes
 
-Maximum take-off weight, F-35B, 27,200 kg (60,000 lb), against 29,900 kg (65,900 lb) for the F-35A.
+Returned verbatim by the retrieval of 2026-09-19:
 
-Length: A 51.4 ft, B 51.2 ft, C 51.5 ft. Wingspan: 35 ft for A and B against 43 ft for C. Height: 14.4 ft, 14.3 ft and 14.7 ft respectively. Empty weight: 29,300 lb, 32,472 lb and 34,581 lb. Internal fuel: 18,250 lb, 13,500 lb and 19,750 lb.
+- Height 4.38 m (14 ft 4 in) for the A, and 4.48 m (14 ft 8 in) for the C.
+- Wing area 42.7 m² (460 sq ft) for the A, and 62.1 m² (668 sq ft) for the C.
+- Empty weight 13,290 kg (29,300 lb) for the A; 14,650 kg (32,300 lb) for the B; 15,790 kg (34,800 lb) for the C.
+- Internal fuel approximately 8,280 kg (approximately 18,250 lb) for the A; approximately 6,125 kg (approximately 13,500 lb) for the B, with the page's own note that the lift fan reduces tankage; approximately 8,960 kg (approximately 19,750 lb) for the C.
+- Maximum take-off weight 29,900 kg (65,900 lb) for the A; 27,200 kg (60,000 lb) for the B; 31,800 kg (70,000 lb) for the C.
+
+The page's B mark empty weight of 32,300 lb (14,650 kg) agrees with the United States Marine Corps page held as `p5-us-air-f35b-1stmaw`, which gives 32,300 lb (14,651 kg). The two are independent publishers of the same value.
+
+The page's C mark empty weight of 15,790 kg (34,800 lb) agrees with the prime contractor sheet held as `p5-us-air-f35c-lockheed`, which also gives 34,800 lb.
+
+Lengths and heights for the A and B in feet, and the A and B wingspans, were not returned by this retrieval and are not attributed to this package. An earlier revision of this manifest listed them; they are withdrawn and no row on any leaf rests on them.
 
 ## Relationship to the other F-35B packages
 
-The B mark weight this page gives agrees with `p5-us-air-f35b-lockheed`, which is the manufacturer document and the source of record for that row. This page is retained so the agreement is visible and so the family separation is traceable to a locator.
+The B mark maximum take-off weight this page gives, 27,200 kg (60,000 lb), agrees with the class figure on `p5-us-air-f35b-lockheed` and with the United States Marine Corps page held as `p5-us-air-f35b-1stmaw`. This page is retained so the agreement is visible and so the mark-by-mark separation is traceable to a locator. It is not the source of record for any row on the leaf.

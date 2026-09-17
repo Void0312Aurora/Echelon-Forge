@@ -2,24 +2,33 @@
 
 Source ID: `p5-uk-air-typhoon-fgr4-encyclopedic`
 Tier: `C`
-Publisher: English-language encyclopedic aviation entry, Typhoon article
-Author / maintainer: entry editors
-Title: Eurofighter Typhoon — general characteristics
+Publisher: English-language encyclopedic aviation entry, Eurofighter Typhoon article
+Author / maintainer: article editors
+Title: Eurofighter Typhoon — specifications
 URL: https://en.wikipedia.org/wiki/Eurofighter_Typhoon
 Accessed: 2026-09-18
+Retrieved: 2026-09-19, specifications block returned through search indexing of this URL by the Tavily proxy; the plain page fetch returned the article structure only, because the page exceeds the extractor's content budget
 Domain: air
 Equipment: Typhoon / FGR4
-Configuration: The general-characteristics block describes the Eurofighter Typhoon type, not the FGR Mk 4. It is admitted as a cross-check only and no value from it is the source of record on the leaf.
-Estimation / uncertainty: Tier C. The block is a community-maintained compilation of figures already published elsewhere, so it is one step removed from any measurement. It is explicitly a type-level block, and the leaf records the FGR4; the type-versus-variant gap is stated here rather than closed.
+Configuration: The general-characteristics block describes the Eurofighter Typhoon type, not the FGR Mk 4. It is admitted as a cross-check only and no value from it is the source of record on the leaf for any row the service page states.
+Estimation / uncertainty: Tier C. The block is a community-maintained compilation of figures already published elsewhere, so it is one step removed from any measurement. It is explicitly a type-level block while the leaf records the FGR4, and that gap is stated rather than closed.
 Retention: manifest and extracted parameter notes only
 
 ## Extracted parameter notes
 
-General type block: wingspan 10.95 m; height 5.28 m; wing area 51.2 m²; empty weight 11,000 kg; gross weight 16,000 kg; maximum takeoff weight 23,500 kg; internal fuel 4,500 kg, or 7,600 kg including external stores; two Eurojet EJ200 afterburning turbofans at 60 kN dry and 90 kN with afterburner; one Martin-Baker Mk 16A ejection seat.
+General characteristics block as returned: wingspan 10.95 m (35 ft 11 in); height 5.28 m (17 ft 4 in); wing area 51.2 m² (551 sq ft); empty weight 11,000 kg (24,251 lb); gross weight 16,000 kg (35,274 lb); maximum takeoff weight 23,500 kg (51,809 lb); fuel capacity internal 4,500 kg (9,900 lb) approximately, including external stores 7,600 kg (16,800 lb).
+
+Powerplant block as returned: two Eurojet EJ200 afterburning turbofan engines, 60 kN (13,500 lbf) thrust each dry and 90 kN (20,200 lbf) with afterburner.
+
+## What this retrieval did and did not return
+
+The dimensions, the three masses, the fuel pair and the dry and afterburner thrust pair above were returned verbatim by the retrieval of 2026-09-19 and are the basis for the mass and fuel rows on the leaf.
+
+No ejection seat designation was returned. An earlier revision of this manifest listed a Martin-Baker Mk 16A seat as part of this block. That entry is withdrawn, because the retrieval did not return it and no other package held here states a seat for the general type. The seat row on the leaf rests on the GlobalMilitary FGR.4 block and on nothing else.
 
 ## Relationship to the other Typhoon packages
 
-The Royal Air Force page gives the FGR4 wingspan as 11.09 m and the height as 5.29 m, against this block's 10.95 m and 5.28 m, and the FGR4 wing area as 50 m² against 51.2 m². The service figure is the source of record for those rows; the block's readings are the retained alternatives.
+The Royal Air Force page gives the FGR4 wingspan as 11.09 m and the height as 5.29 m, against this block's 10.95 m and 5.28 m, and the FGR4 wing area as 50 m² against 51.2 m². The service figure is the source of record for those rows and the block's readings are the retained alternatives.
 
 The empty weight, maximum takeoff weight and internal fuel on this block are the readings the leaf carries as Tier C, because the Royal Air Force page states no mass figure.
 
