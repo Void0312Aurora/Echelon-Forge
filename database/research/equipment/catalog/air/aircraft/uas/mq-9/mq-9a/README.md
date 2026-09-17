@@ -41,12 +41,15 @@ Content status: model-level draft with first-party parameter coverage; extended-
 | Armament | Combination of AGM-114 Hellfire, GBU-12 Paveway II, GBU-38 JDAM, GBU-49 Enhanced Paveway II and GBU-54 Laser JDAM | `p5-us-air-mq9a-usaf` | A |
 | Sensors | Multi-Spectral Targeting System MTS-B: infrared, colour and monochrome daylight TV, shortwave infrared, laser designator and laser illuminator; synthetic aperture radar | `p5-us-air-mq9a-usaf` | A |
 | Crew (remote) | Two (rated pilot and sensor operator) | `p5-us-air-mq9a-usaf` | A |
+| Service ceiling | Up to 50,000 ft (15,240 m) | `p5-us-air-mq9a-creech` | A |
+| Cruise speed | Around 230 mph (200 kt) | `p5-us-air-mq9a-creech` | A |
 | Initial operating capability | October 2007 | `p5-us-air-mq9a-usaf` | A |
 
 ## Configuration Boundary
 
-The fact sheet states the extended-range modification separately: external fuel tanks holding 1,300 lb of fuel, an additional propeller blade, and an alcohol-water injection system for takeoff. Those modified figures are recorded on their own rows and are not merged with the baseline values. The source does not state a service ceiling for the MQ-9A, so no ceiling figure is recorded.
+The fact sheet states the extended-range modification separately: external fuel tanks holding 1,300 lb of fuel, an additional propeller blade, and an alcohol-water injection system for takeoff. Those modified figures are recorded on their own rows and are not merged with the baseline values. The service ceiling of 50,000 ft comes from the Creech Air Force Base MQ-9 fact sheet, which is the same service and supplies the field the main fact sheet omits.
 
 ## Source References
 
 - `p5-us-air-mq9a-usaf`: `raw/sources/us_air_force/p5-us-air-mq9a-usaf/manifest.md`
+- `p5-us-air-mq9a-creech`: `raw/sources/us_air_force/p5-us-air-mq9a-creech/manifest.md`
