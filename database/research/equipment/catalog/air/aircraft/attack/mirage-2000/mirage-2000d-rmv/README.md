@@ -36,8 +36,14 @@ Content status: parameter table present with per-field source and confidence. St
 | External stores capacity | 5.7 t per the manufacturer; 6,300 kg per the Tier C compilation | `p5-fr-air-mirage2000d-rmv-dassault`; `p5-fr-air-mirage2000-gs` | B/C | Two readings retained; the difference is not resolved |
 | Length (two-seat airframe) | 14.55 m against 14.36 m for the single-seat airframe | `p5-fr-air-mirage2000-gs` | C | The applicable value for the 2000D. The compilation states that two-seat and strike variants differ marginally in dimensions |
 | Internal fuel capacity (single-seat baseline) | 3,080 kg (6,790 lb) | `p5-fr-air-mirage2000-gs` | C | Stated for the single-seat 2000C baseline; the compilation warns that the two-seat and strike variants differ in fuel capacity, so this is not asserted as a 2000D value |
-| Powerplant | Not established for the 2000D from the held sources. The Tier C compilation gives one SNECMA M53-P2 for the single-seat baseline, which is not transferable without a variant-level source | — | — |
-| Performance (speed, ceiling, range) | Not established for the 2000D. The compilation's performance table is written for the single-seat 2000C with combat load | — | — |
+| Powerplant | One SNECMA M53-P2 single-spool afterburning turbofan; 54 kN (12,000 lbf) dry and 95 kN (21,400 lbf) with afterburner | `p5-fr-air-mirage2000-gs` | C | The M53-P2 is fitted across the single-seat and two-seat Mirage 2000 family, and the compiling source lists the B, D and N variants together as the two-seat airframes. No 2000D-specific engine variant is claimed |
+| Maximum speed | Mach 2.2 (2,340 km/h) at altitude; 1,350 km/h at sea level | `p5-fr-air-mirage2000-gs` | C | Family performance value stated for the single-seat 2000C with combat load |
+| Service ceiling | 17,060 m (56,000 ft) | `p5-fr-air-mirage2000-gs` | C | Family performance value |
+| Combat radius | 1,550 km (960 mi) | `p5-fr-air-mirage2000-gs` | C | Family performance value |
+| Ferry range | 3,335 km (2,070 mi) with auxiliary fuel | `p5-fr-air-mirage2000-gs` | C | Family performance value |
+| Rate of climb | 285 m/s at sea level | `p5-fr-air-mirage2000-gs` | C | Family performance value |
+| Load limits | +9.0 / −4.5 g | `p5-fr-air-mirage2000-gs` | C | Family performance value; represents the airframe limit rather than a mission profile |
+| Hardpoints | 9, five fuselage and four wing | `p5-fr-air-mirage2000-gs` | C | Family structural value, applicable to the two-seat airframe |
 
 For every row where two sources are named, both are recorded and neither is treated as a more precise version of the other, because the manufacturer's rounding and the compilation's weight definitions may not describe the same quantity.
 
