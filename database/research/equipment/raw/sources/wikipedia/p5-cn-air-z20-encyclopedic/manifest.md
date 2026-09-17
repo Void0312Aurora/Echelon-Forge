@@ -24,10 +24,16 @@ Cargo: internal cargo capacity stated, and external cargo 4,000 kg (8,800 lb).
 
 General: length 20 m (65 ft 7 in); height 5.3 m (17 ft 5 in); empty weight 5,000 kg (11,023 lb); maximum takeoff weight 10,000 kg (22,046 lb); powerplant 2 × WZ-10 turboshaft at 1,600 to 2,000 kW each; main rotor diameter 16 m (52 ft 6 in).
 
-Performance: maximum speed 360 km/h; cruise speed 290 km/h; combat range 560 km; service ceiling 6,000 m.
+Performance: maximum speed 360 km/h; cruise speed 290 km/h; combat range 560 km; service ceiling 6,000 m; rate of climb 7.1 m/s.
+
+## The whole figure set is confirmed by a second page
+
+The retrieval pass of 2026-09-17 also returned a mirror page at `machtres.com/lang1/z20.html` carrying the identical figure set, row for row and unit for unit, including the 1,500 kg internal and 4,000 kg external cargo split, the 5,000 kg empty weight, the 10,000 kg maximum takeoff weight, the 1,600 to 2,000 kW power band, the 16 m rotor diameter and the 7.1 m/s climb rate. The General characteristics block on this page and that page are the same text.
+
+That makes this package's figure set a two-locator set rather than a single one, while still one upstream text. It does not make the figures independent measurements, and the manifest does not present them as such.
 
 ## What this package supplies
 
 The external cargo capacity of 4,000 kg, which is the one field of the seven that `p5-cn-air-z20-globalmilitary` does not state, plus a cruise speed and an independent reading for the other six.
 
-Its agreement with the compilation page on six measured values and one derived rotor figure is why the Z-20 leaf's geometry, mass and performance rows now carry two Tier C publishers rather than one.
+Its agreement with the compilation page on length, height, both masses, rotor diameter, maximum speed, combat range and service ceiling is why the Z-20 leaf's geometry, mass and performance rows now carry more than one Tier C publisher. The `p5-cn-air-z20-gs` specification table disagrees with both of them on height, external payload, maximum speed, ceiling and range, and those disagreements are recorded on the leaf.

@@ -44,7 +44,7 @@ Content status: parameter table present with per-field source and confidence. Re
 | Maximum takeoff weight | 10,000 kg (22,046 lb) | `p5-cn-air-z20-globalmilitary` | C |
 | Maximum takeoff weight (alternative reading) | 9,800 to 10,000 kg (20,000 to 22,000 lb) | `p5-cn-air-z20-gs` | C |
 | Internal payload | 1,500 kg (3,300 lb) | `p5-cn-air-z20-gs` | C |
-| External cargo capacity | 4,000 kg (8,800 lb) | `p5-cn-air-z20-encyclopedic` | C |
+| External cargo capacity | 4,000 kg (8,800 lb as published) | `p5-cn-air-z20-encyclopedic` | C | The source prints 4,000 kg (8,800 lb). 4,000 kg is 8,818.5 lb, so its imperial value is rounded to the nearest hundred and the manifest records it as published rather than as a conversion |
 | External cargo capacity (alternative reading) | 5,000 kg | `p5-cn-air-z20-gs` | C |
 | Powerplant | Two WZ-10 turboshafts, Zhuzhou Aeroengine Factory | `p5-cn-air-z20-globalmilitary` | C |
 | Powerplant (power band) | 1,600 to 2,000 kW each | `p5-cn-air-z20-encyclopedic` | C |
