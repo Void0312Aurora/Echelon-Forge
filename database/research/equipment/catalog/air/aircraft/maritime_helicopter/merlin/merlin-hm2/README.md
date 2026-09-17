@@ -36,16 +36,22 @@ Content status: model-level draft with parameter coverage from two sources; an e
 | Maximum cruise speed | 277 km/h (150 kt) at ISA, maximum gross weight, sea level, maximum continuous power | `p5-uk-air-merlin-aw101-leonardo` | B |
 | Rate of climb | 9.5 m/s (1,880 ft/min) | `p5-uk-air-merlin-aw101-leonardo` | B |
 | Hover in ground effect | 3,307 m (10,850 ft) at ISA, maximum gross weight | `p5-uk-air-merlin-aw101-leonardo` | B |
-| Maximum range | 1,500 km (810 nm) at 5,000 ft, ISA, maximum gross weight, twin-engine cruise, no reserves, standard fuel tanks | `p5-uk-air-merlin-aw101-leonardo` | B |
-| Maximum endurance | 7 h 40 min under the same reference condition | `p5-uk-air-merlin-aw101-leonardo` | B |
+| Maximum range | 1,500 km (810 nm) at 5,000 ft per the section heading, or 6,000 ft per the footnote; ISA, maximum gross weight, twin-engine cruise, no reserves, standard fuel tanks | `p5-uk-air-merlin-aw101-leonardo` | B | The source states two different altitudes for the same figure; both are retained and the field is not settled |
+| Maximum endurance | 7 h 40 min under the same conflicting reference condition | `p5-uk-air-merlin-aw101-leonardo` | B | Twin-engine cruise, no reserves, standard tanks; not an operational endurance and not a three-engine figure |
 | Capacity | Two pilots, one air crewman and 25-plus troops on crashworthy seating, stated for the platform; up to 38 lightly equipped troops or 16 stretcher casualties in the battlefield and personnel-recovery fits | `p5-uk-air-merlin-aw101-leonardo` | B |
 | Role in air defence | Airborne surveillance platform detecting and tracking maritime and air contacts and feeding them into RAF and allied command networks | `p5-uk-air-merlin-hm2-raf` | A |
 
 ## Configuration Boundary
 
-The technical data above comes from the manufacturer AW101 page, which publishes platform-level figures and does not separate marks or customers. Two boundaries follow. First, the page states the powerplant as the GE CT7-8E, while the UK Merlin fleet is associated with the Rolls-Royce Turbomeca RTM322; that divergence is recorded rather than resolved, and no engine is asserted as the HM2 fit. Second, the range and endurance values are quoted for twin-engine cruise with no reserves and standard tanks, which is a defined reference condition and not an operational radius.
+The technical data above comes from the manufacturer AW101 page, which publishes platform-level figures and does not separate marks or customers. Three boundaries follow.
 
-The Royal Air Force source already held for this leaf is a news article about air-defence integration; it states the role and the sensor-network contribution but no dimensions, mass or performance figures.
+First, the page states the powerplant as the GE CT7-8E, while the UK Merlin fleet is associated with the Rolls-Royce Turbomeca RTM322; that divergence is recorded rather than resolved, and no engine is asserted as the HM2 fit. Every performance row above is therefore a generic AW101 figure whose applicability to the RTM322-powered HM2 is not established by any source held here.
+
+Second, the page contradicts itself on the reference altitude for range and endurance: the section heading says 5,000 ft and the footnote says 6,000 ft cruise. Both are retained and the field is not settled.
+
+Third, the range and endurance values are quoted for twin-engine cruise with no reserves and standard tanks, which is a defined reference condition and not an operational radius.
+
+The Royal Air Force source already held for this leaf is a news article about air-defence integration; it states the role and the sensor-network contribution but no dimensions, mass or performance figures, and it is cited only for the role row.
 
 ## Source References
 

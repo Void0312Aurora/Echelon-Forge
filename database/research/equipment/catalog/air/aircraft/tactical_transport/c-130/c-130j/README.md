@@ -34,9 +34,9 @@ Content status: model-level draft with first-party parameter coverage; C-130E/H 
 | Length | 97 ft 9 in (29.3 m) | `p5-us-air-c130j-usaf` | A |
 | Height | 38 ft 10 in (11.9 m) | `p5-us-air-c130j-usaf` | A |
 | Wingspan | 132 ft 7 in (39.7 m) | `p5-us-air-c130j-usaf` | A |
-| Cargo compartment | Length 41 ft (12.5 m), width 123 in (3.12 m), height 9 ft (2.74 m); rear ramp length 119 in (3.02 m), width 118.9 in (3.02 m) | `p5-us-air-c130j-usaf` | A |
+| Cargo compartment | Length 41 ft (12.5 m), width 123 in (3.12 m), height 9 ft (2.74 m); rear ramp length 119 in (3.02 m), width 118.9 in (3.02 m) | `p5-us-air-c130j-usaf` | A | Source arithmetic in this block is unreliable and was corrected on transcription: the fact sheet prints the rear ramp as 119 inches (36.27 meters) and the ramp width as 118.9 inches (36.24 meters), both wrong by a factor of about twelve, and prints the compartment width as 123 inches (meters) with no metric value. The metric values recorded here are computed from the imperial figures and are not the source printed values. |
 | Cruise speed | 417 mph / 362 ktas (Mach 0.59) at 22,000 ft (6,706 m) | `p5-us-air-c130j-usaf` | A |
-| Ceiling | 28,000 ft (8,615 m) with 42,000 lb (19,090 kg) payload | `p5-us-air-c130j-usaf` | A |
+| Ceiling | 28,000 ft (8,534 m) with 42,000 lb (19,050 kg) payload | `p5-us-air-c130j-usaf` | A | The fact sheet prints 28,000 ft as 8,615 m and 42,000 lb as 19,090 kg; both printed conversions are arithmetically wrong. The metric values here are computed (8,534 m and 19,050 kg). The imperial figures are the source values. |
 | Maximum takeoff weight | 164,000 lb (74,393 kg) | `p5-us-air-c130j-usaf` | A |
 | Maximum allowable payload | 42,000 lb (19,090 kg) | `p5-us-air-c130j-usaf` | A |
 | Maximum normal payload | 34,000 lb (15,422 kg) | `p5-us-air-c130j-usaf` | A |

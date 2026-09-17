@@ -36,7 +36,7 @@ Content status: model-level draft with first-party parameter coverage; KC2 and K
 | Maximum speed | 330 kt | `p5-uk-air-voyager-kc2-raf` | A |
 | Maximum altitude | 41,000 ft | `p5-uk-air-voyager-kc2-raf` | A |
 | Refuelling fit (KC2) | Two underwing pods, for fast jets | `p5-uk-air-voyager-kc2-raf` | A |
-| Fuel offload capacity | Up to 109 tonnes | `p5-uk-air-voyager-kc2-raf` | A |
+| Fuel carried | Up to 109 tonnes | `p5-uk-air-voyager-kc2-raf` | A | The source states the aircraft can carry up to 109 tonnes of fuel. This is a carried-fuel load, not an offload rate, a transferable quantity or an internal tank capacity; the source does not state how much of it is transferable per sortie |
 | Passenger capacity | Up to 291 passengers, with the cargo hold available for freight | `p5-uk-air-voyager-kc2-raf` | A |
 | Aeromedical fit | Up to 40 stretchers and three critical care patients | `p5-uk-air-voyager-kc2-raf` | A |
 | Sensors | Weather radar | `p5-uk-air-voyager-kc2-raf` | A |

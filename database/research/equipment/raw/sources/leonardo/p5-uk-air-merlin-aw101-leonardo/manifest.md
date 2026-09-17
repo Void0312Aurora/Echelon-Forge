@@ -16,7 +16,14 @@ Retention: manifest and extracted parameter notes only
 
 ## Extracted parameter notes
 
-Maximum gross weight 15,600 kg (34,390 lb). Powerplant GE CT7-8E turboshafts with FADEC. Overall length 22.83 m (74 ft 11 in); overall height 6.66 m (21 ft 10 in); rotor diameter 18.60 m (61 ft 0 in). Capacity two pilots, one air crewman and 25-plus troops on crashworthy seating; the page also states up to 38 lightly equipped troops on crashworthy seating and 16 stretcher casualties for battlefield and personnel-recovery fits. Maximum cruise speed at ISA, maximum gross weight, sea level and maximum continuous power 277 km/h (150 kt). Rate of climb 9.5 m/s (1,880 ft/min). Hover in ground effect at ISA and maximum gross weight 3,307 m (10,850 ft). Maximum range 1,500 km (810 nm); maximum endurance 7 h 40 min, both at 5,000 ft, ISA, maximum gross weight, twin-engine cruise, no reserves, standard fuel tanks.
+Maximum gross weight 15,600 kg (34,390 lb). Powerplant GE CT7-8E turboshafts with FADEC. Overall length 22.83 m (74 ft 11 in); overall height 6.66 m (21 ft 10 in); rotor diameter 18.60 m (61 ft 0 in). Capacity two pilots, one air crewman and 25-plus troops on crashworthy seating; the page also states up to 38 lightly equipped troops on crashworthy seating and 16 stretcher casualties for battlefield and personnel-recovery fits. Maximum cruise speed at ISA, maximum gross weight, sea level and maximum continuous power 277 km/h (150 kt). Rate of climb 9.5 m/s (1,880 ft/min). Hover in ground effect at ISA and maximum gross weight 3,307 m (10,850 ft).
+
+## Internal conflict on the range and endurance reference condition
+
+The page states maximum range 1,500 km (810 nm) and maximum endurance 7 h 40 min. Its own section heading gives the reference condition as `@5,000 FT, ISA, MGW`, while the footnote directly beneath gives the condition as `Twin Engine Cruise, No reserves, standard fuel tanks, 6,000 ft cruise`. The two statements disagree on the cruise altitude, 5,000 ft against 6,000 ft. Both are retained verbatim rather than reconciled, because the printed pair cannot both be right and neither is marked as superseding the other.
+
+This matters for use: range and endurance are quoted for twin-engine cruise with no reserves and standard tanks, which is not an operational radius and not a three-engine figure.
+
 
 ## Configuration note
 

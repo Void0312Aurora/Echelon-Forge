@@ -30,7 +30,7 @@ Content status: model-level draft with first-party parameter coverage. The Frenc
 | Parameter | Value | Source | Confidence |
 | --- | --- | --- | --- |
 | Engines | Two Rolls-Royce Trent 772B | `p5-fr-air-a330-mrtt` | A |
-| Engine power | 316 kN | `p5-fr-air-a330-mrtt` | A |
+| Engine thrust | 316 kN per engine | `p5-fr-air-a330-mrtt` | A | The source labels this figure under engine performance and gives the unit as kN, which is thrust, not power. Recorded as thrust; no shaft or equivalent power figure is published |
 | Wingspan | 60.3 m | `p5-fr-air-a330-mrtt` | A |
 | Length | 58.8 m | `p5-fr-air-a330-mrtt` | A |
 | Height | 17.4 m | `p5-fr-air-a330-mrtt` | A |

@@ -39,13 +39,17 @@ Content status: model-level draft with parameter coverage from two sources; the 
 | Hover out of ground effect | 1,307 m (4,290 ft) at ISA, maximum gross weight | `p5-uk-air-wildcat-aw159-leonardo` | B |
 | Maximum range | 518 km (280 nm) at 5,000 ft, ISA, maximum gross weight | `p5-uk-air-wildcat-aw159-leonardo` | B |
 | Maximum endurance | 3 hours at 5,000 ft, ISA, maximum gross weight | `p5-uk-air-wildcat-aw159-leonardo` | B |
-| Defensive aids | Scalable Defensive Aids Suite, radar warning and electronic surveillance measures, missile and laser warning, integrated through the tactical processor | `p5-uk-air-wildcat-aw159-leonardo` | B |
-| Deck interface | Deck Lock (harpoon) system and negative thrust capability, certified for deck operations to Sea State 6 | `p5-uk-air-wildcat-aw159-leonardo` | B |
-| Roles | ISTAR, maritime interdiction, anti-surface warfare, anti-submarine warfare, logistics support, search and rescue | `p5-uk-air-wildcat-hma2-raf` | A |
+| Roles | ISTAR, maritime interdiction, anti-surface warfare, anti-submarine warfare, logistics support, search and rescue | `p5-uk-air-wildcat-aw159-leonardo` | B |
+| Integration role | Air-defence sensor-network contributor: identifies activity with radar and electro-optical sensors and relays it into RAF and allied command networks, including to Typhoon and F-35B | `p5-uk-air-wildcat-hma2-raf` | A |
+| Deck operations | Certified for embarked operations from single-spot combatants; deck lock (harpoon) system and negative thrust capability, sea state up to 6 | `p5-uk-air-wildcat-aw159-leonardo` | B |
+
+## Source Attribution Boundary
+
+Field-level attribution matters on this leaf because the two sources do not cover the same ground. Every dimension, mass, performance, sensor and defensive-aid row rests on the Leonardo platform page and is Tier B. The Royal Air Force source is a news article about Merlin and Wildcat air-defence integration; the only rows it supports are the operator status and the integration-role row, and those are the only rows citing it. An earlier revision of this leaf attributed the generic platform role list to the RAF article, which was wrong and is corrected.
 
 ## Configuration Boundary
 
-The technical data above comes from the manufacturer page, which publishes platform-level AW159 figures and does not separate the Royal Navy HMA2 from the Army AH1. The Royal Air Force source already held for this leaf is a news article about air-defence integration; it carries no dimensions, mass or performance figures and is used here only for role and operator context. No mass empty, length or height, ceiling or weapon-load figure is recorded, because neither source states one for this variant.
+The technical data above comes from the manufacturer page, which publishes platform-level AW159 figures and does not separate the Royal Navy HMA2 from the Army AH1. No mass empty, length or height, ceiling or weapon-load figure is recorded, because neither source states one for this variant.
 
 ## Source References
 
