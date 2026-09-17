@@ -15,7 +15,7 @@ Retention: manifest and extracted parameter notes only
 
 ## Extracted parameter notes
 
-Length 45.1 m (148 ft 0 in); wingspan 42.4 m (139 ft 1 in); height 14.7 m (48 ft 3 in); wing area 225.1 m². Capacity 37,000 kg (81,600 lb), 116 fully equipped troops or paratroopers, up to 66 stretchers with 25 medical personnel. Cargo compartment 4.00 m wide by 3.85 m high by 17.71 m long, with a further 5.40 m without the ramp. Empty weight 76,500 kg as an operating weight in this version, against 78,600 kg in the versions other sources reproduce. Gross weight 120,000 kg. Maximum takeoff weight 141,000 kg. Maximum landing weight 123,000 kg. Fuel capacity 50,500 kg internal.
+Length 45.1 m (148 ft 0 in); wingspan 42.4 m (139 ft 1 in); height 14.7 m (48 ft 3 in); wing area 225.1 m². Capacity 37,000 kg (81,600 lb), 116 fully equipped troops or paratroopers, up to 66 stretchers with 25 medical personnel. Cargo compartment 4.00 m wide by 3.85 m high by 17.71 m long, with a further 5.40 m without the ramp. Empty weight 76,500 kg as an operating weight in this version, against 78,600 kg which is the figure reproduced under the entry cited as p5-uk-air-a400m-c1-raf in this tree. Gross weight 120,000 kg. Maximum takeoff weight 141,000 kg. Maximum landing weight 123,000 kg. Fuel capacity 50,500 kg internal.
 
 ## A weight conflict held open
 
