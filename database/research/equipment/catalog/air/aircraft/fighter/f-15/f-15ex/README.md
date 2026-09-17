@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/fighter/f-15/f-15ex/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-18`
+Last verified: `2026-09-17`
 Equipment ID: `eq-us-air-f15ex`
-Content status: parameter table present with per-field source and confidence. Every source package on this leaf was retrieved and every manifest records what the retrieval returned. The empty weight is carried as three rows rather than one merged claim.
+Content status: parameter table present with per-field source and confidence. Retrieval status is recorded per package in each manifest's `Retrieval:` block rather than asserted here. The empty weight is carried as three rows rather than one merged claim.
 
 ## Identity
 
@@ -37,7 +37,8 @@ Content status: parameter table present with per-field source and confidence. Ev
 | Empty weight (reading two) | 35,501 lb (16,103 kg) | `p5-us-air-f15ex-globalmilitary` | C |
 | Empty weight (third page, same value as reading one) | 31,700 lb (14,400 kg) | `p5-us-air-f15ex-f16net` | C |
 | Maximum takeoff weight | 81,000 lb (36,741 kg) | `p5-us-air-f15ex-boeing` | B |
-| Powerplant | Two General Electric F110-GE-129 afterburning turbofans | `p5-us-air-f15ex-boeing` | B |
+| Powerplant | Two General Electric F110-GE-129 afterburning turbofans | `p5-us-air-f15ex-f16net` | C |
+| Powerplant (second page naming the same engine) | Two General Electric F110-GE-129 at 129 kN each | `p5-us-air-f15ex-globalmilitary` | C |
 | Powerplant thrust | 29,500 lbf (131 kN) each with afterburner; 17,155 lbf (76.31 kN) dry | `p5-us-air-f15ex-f16net` | C |
 | Payload | 29,500 lb (13,381 kg); 13,300 kg on the same page's capability text | `p5-us-air-f15ex-boeing` | B |
 | Maximum speed | Mach 2.5 | `p5-us-air-f15ex-boeing` | B |
@@ -56,17 +57,15 @@ Content status: parameter table present with per-field source and confidence. Ev
 
 ## Configuration Boundary
 
-The manufacturer page is the source of record for the dimensions, maximum takeoff weight, payload, maximum speed, ceiling, service life and powerplant type. Those rows are Tier B. The Tier C pages agree with the manufacturer on the 81,000 lb maximum takeoff weight and on the 19.4 m length, which is where the agreement between the packages lies.
+The manufacturer page is the source of record for the dimensions, maximum takeoff weight, payload, maximum speed, ceiling and service life. Those rows are Tier B. It states no engine, no thrust, no empty weight, no crew and no ejection seat, and no such row is attributed to it.
 
-The dimensions are not identical across the packages. The manufacturer gives a width of 42.8 ft, a length of 63.8 ft and a height of 18.5 ft. The Tier C block gives 42 ft 9.6 in, 63 ft 9.6 in and 18 ft 6 in, which is the same three airframe measurements to within a tenth of a foot at each point, and the compilation page gives the same values rounded metric-first as 13.1 m, 19.4 m and 5.7 m. The manufacturer's readings are the rows of record and the Tier C readings are recorded as agreeing to within their stated precision rather than presented as identical.
+The powerplant and thrust rows rest on the Tier C pages. This is a correction: the powerplant row previously pointed at the manufacturer page, which does not name an engine at all. The engine designation, 2 × General Electric F110-GE-129, and the dry and afterburner thrust pair come from `p5-us-air-f15ex-f16net`, which states them explicitly, and the same engine model is named by `p5-us-air-f15ex-globalmilitary`. Those two pages are the only packages in this tree that state an engine for this aircraft.
 
-The empty weight is carried as three rows rather than one. Two pages carry the same specification block and give 31,700 lb (14,400 kg); a third gives 35,501 lb (16,103 kg). The spread is 3,801 lb, which is far larger than rounding error. The two 31,700 lb rows are not two independent measurements: the F-16.net post states that it reproduces the Wikipedia specification block, and the Lincs group page carries the same block, so both trace to one origin. The 35,501 lb reading is from a different compilation. The three are recorded side by side, none is averaged, and no reading is discarded.
+The empty weight is carried as three rows rather than one. Two pages carry the same specification block and give 31,700 lb (14,400 kg); a third gives 35,501 lb (16,103 kg). The spread is 3,801 lb, which is far larger than rounding error. The two 31,700 lb rows are not two independent measurements: the F-16.net post states that it reproduces the Wikipedia specification block, and the Lincs page carries the same block, so both trace to one origin. The 35,501 lb reading is from a different compilation. The three are recorded side by side, none is averaged, and no reading is discarded.
 
 The maximum speed is recorded as the manufacturer's Mach 2.5. The Tier C pages give 2,655 km/h, about Mach 2.65, which is a different reading rather than a rounding of the same one. Both are recorded and the manufacturer's is the row of record.
 
 A maximum altitude of 60,000 ft is given by the two Tier C pages, against the manufacturer's 50,000 ft ceiling. The manufacturer's figure is the row of record and the higher reading is recorded as an alternative rather than adopted.
-
-The powerplant thrust is recorded from the Tier C block, which is the only package here that states the dry and afterburner pair. The manufacturer page states the powerplant type and the payload, and gives the thrust only as the engine's own rated figure in the armament narrative.
 
 The payload is stated twice on the manufacturer page, as 29,500 lb (13,381 kg) and as 29,500 lb (13,300 kg). The imperial value is identical on both and only the metric rounding differs. Both roundings are recorded rather than one being selected as the page's own conversion.
 
@@ -76,9 +75,9 @@ The worldwide operator counts published by the Tier C compilation page are not c
 
 ## Source References
 
-- `p5-us-air-f15ex-usaf`: `raw/sources/us_air_force/p5-us-air-f15ex-usaf/manifest.md` — operator and variant identity only
+- `p5-us-air-f15ex-usaf`: `raw/sources/us_air_force/p5-us-air-f15ex-usaf/manifest.md` — locator and variant identity only; no retrieval record
 - `p5-us-air-f15ex-boeing`: `raw/sources/boeing/p5-us-air-f15ex-boeing/manifest.md` — manufacturer dimensions, masses, payload, speed, ceiling, service life
 - `p5-us-air-f15ex-lincs`: `raw/sources/lincs_military_aviation/p5-us-air-f15ex-lincs/manifest.md` — wing area, airfoil, empty weight reading one, performance block, production and squadron history
-- `p5-us-air-f15ex-f16net`: `raw/sources/f16net/p5-us-air-f15ex-f16net/manifest.md` — carrier of the specification block, thrust pair, empty weight reading one repeated
-- `p5-us-air-f15ex-globalmilitary`: `raw/sources/globalmilitary/p5-us-air-f15ex-globalmilitary/manifest.md` — empty weight reading two, crew, ejection seat, altitude reading
+- `p5-us-air-f15ex-f16net`: `raw/sources/f16net/p5-us-air-f15ex-f16net/manifest.md` — powerplant and thrust, carrier of the specification block, empty weight reading one repeated
+- `p5-us-air-f15ex-globalmilitary`: `raw/sources/globalmilitary/p5-us-air-f15ex-globalmilitary/manifest.md` — empty weight reading two, second page naming the engine, crew, ejection seat, altitude reading
 - `p5-us-air-f15ex-afsf`: `raw/sources/air_and_space_forces/p5-us-air-f15ex-afsf/manifest.md` — programme facts

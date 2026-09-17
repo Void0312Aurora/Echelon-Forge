@@ -6,7 +6,13 @@ Publisher: China Military Online, the official English-language site of the Peop
 Author / maintainer: China Military Online editorial staff
 Title: PLA Navy KJ-500 trains day and night
 URL: http://eng.chinamil.com.cn/2025xb/M_251449/P_251468/16454971.html
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: air
 Equipment: KJ-500
 Configuration: The report covers a KJ-500 airborne early warning aircraft attached to an aviation unit during an early warning and reconnaissance training exercise, and places the unit under PLA Navy aviation.

@@ -6,7 +6,13 @@ Publisher: U.S. Army (ODIN, odin.t2com.army.mil, World Equipment Guide)
 Author / maintainer: U.S. Army ODIN program
 Title: ODIN World Equipment Guide — Stryker family and M1128 MGS asset pages
 URL: https://odin.t2com.army.mil/WEG/Asset/M1128_(Stryker_MGS)_American_Mobile_Gun_System
-Accessed: 2026-09-18 (attempted)
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: ground
 Equipment: Stryker family / M1128 MGS / M1132 ESV
 Configuration: The ODIN Stryker family page is cited for stating the M1128 main gun as a 105 mm M68A1E4, not M68A1E8.

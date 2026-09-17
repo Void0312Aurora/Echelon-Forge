@@ -6,7 +6,13 @@ Publisher: GlobalSecurity.org
 Author / maintainer: John Pike, site maintainer; page last modified 2025-12-16
 Title: Mirage 2000 — Specifications
 URL: https://www.globalsecurity.org/military/world/europe/mirage-2000-specs.htm
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: air
 Equipment: Mirage 2000 family / 2000D
 Configuration: The page states that its tables present the Mirage 2000C interceptor baseline and that two-seat and strike variants differ marginally. It gives a separate two-seat length, which is the value applicable to the 2000D.

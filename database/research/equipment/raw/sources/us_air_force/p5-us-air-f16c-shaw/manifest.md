@@ -7,7 +7,13 @@ Author / maintainer: Shaw AFB public affairs; the fact sheet draws on Lockheed-M
 Title: F-16C Fighting Falcon — Shaw Air Force Base fact sheet display
 URL: https://www.shaw.af.mil/About-Us/Fact-Sheets/Display/Article/663884/f-16c-fighting-falcon
 Published: September 2015
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: air
 Equipment: F-16 / F-16C Block 50
 Configuration: The page is written about the F-16C Block 50 model in United States Air Force service, which is the variant the leaf records. It states its general characteristics block as F-16C.

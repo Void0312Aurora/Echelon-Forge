@@ -6,12 +6,17 @@ Publisher: Lincs Military Aviation Enthusiast Group
 Author / maintainer: group site editors
 Title: F-15EX Eagle II "Super Eagle"
 URL: https://sites.google.com/site/lincsmilitaryaviationgroup/home/aircraft/f-15a-bc-d-e-s-sa-eagle/f-15ex-eagle-ii
-Accessed: 2026-09-18
-Retrieved: 2026-09-19, page text via the Tavily extract proxy
 Domain: air
 Equipment: F-15 / F-15EX
 Configuration: The page carries an F-15EX specification block and a production and squadron history for the variant. It is a variant page and not a general F-15 page.
 Estimation / uncertainty: Tier C. The publisher is an enthusiast group rather than a manufacturer, a service or a specialist defence publication, which is the weakest class admitted by the tier table. The page reproduces a specification block that is also carried by the F-16.net forum post, including the 31,700 lb empty weight, so the value is traceable to two locators that share one origin rather than to two independent measurements. The thrust entry is stated three ways on the page: 129 kN in the block, against 76.31 kN dry and 131 kN with afterburner for the same engine.
+Retrieval:
+  attempted_at: 2026-09-17T16:05:00Z
+  method: tavily_proxy
+  status: success
+  returned: the specification block, the performance block, the armament block and the production and squadron history
+  did_not_return: anything establishing where the block originated
+  note: The block matches the one posted on the F-16.net thread, so the two are one origin rather than two measurements.
 Retention: manifest and extracted parameter notes only
 
 ## Extracted parameter notes

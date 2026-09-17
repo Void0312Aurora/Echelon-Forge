@@ -6,7 +6,7 @@ eq-us-air-fa18e,United States,US Navy,air,fighter,F/A-18,F/A-18E,cataloged,catal
 eq-us-air-ea18g,United States,US Navy,air,electronic_attack,EA-18G,EA-18G,cataloged,catalog/air/aircraft/special_mission/electronic_attack/ea-18g,p5-us-air-ea18g-navair,
 eq-us-air-c17a,United States,USAF,air,strategic_transport,C-17,C-17A,cataloged,catalog/air/aircraft/transport/strategic/c-17/c-17a,p5-us-air-c17a-usaf,
 eq-uk-air-typhoon-fgr4,United Kingdom,RAF,air,fighter,Typhoon,FGR4,cataloged,catalog/air/aircraft/fighter/typhoon/typhoon-fgr4,p5-uk-air-typhoon-fgr4-raf;p5-uk-air-typhoon-fgr4-compiled,
-eq-uk-air-f35b,United Kingdom,RAF,air,fighter,F-35,F-35B,cataloged,catalog/air/aircraft/fighter/f-35/f-35b,p5-uk-air-f35b-raf;p5-uk-air-f35b-bae-compiled,
+eq-uk-air-f35b,United Kingdom,RAF,air,fighter,F-35,F-35B,cataloged,catalog/air/aircraft/fighter/f-35/f-35b,p5-uk-air-f35b-raf-aircraft;p5-uk-air-f35b-raf-comparison;p5-uk-air-f35b-lockheed;p5-uk-air-f35b-1stmaw;p5-uk-air-f35b-bae-compiled,
 eq-uk-air-p8a,United Kingdom,RAF,air,maritime_patrol,P-8,P-8A,cataloged,catalog/air/aircraft/special_mission/maritime_patrol/p-8/p-8a,p5-uk-air-p8a-raf,
 eq-uk-air-a400m-c1,United Kingdom,RAF,air,strategic_transport,A400M,Atlas C1,cataloged,catalog/air/aircraft/transport/strategic/a400m/a400m-c1,p5-uk-air-a400m-c1-raf;p5-uk-air-a400m-airbus-ukdefenceforum,
 eq-fr-air-rafale-c,France,Air and Space Force,air,fighter,Rafale,C,cataloged,catalog/air/aircraft/fighter/rafale/rafale-c,p5-fr-air-rafale-dassault;p5-fr-air-rafale-aviationist,

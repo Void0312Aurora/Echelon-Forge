@@ -6,7 +6,13 @@ Publisher: The Aviationist
 Author / maintainer: The Aviationist editorial staff
 Title: Shenyang J-16 Qianlong: specifications
 URL: https://theaviationist.com/2025/01/16/shenyang-j-16
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: air
 Equipment: J-16
 Configuration: Twin-seat multirole fighter and strike aircraft. The page states the type is in service only with the PLAAF.

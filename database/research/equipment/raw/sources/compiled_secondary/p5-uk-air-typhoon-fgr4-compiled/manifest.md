@@ -6,12 +6,17 @@ Publisher: GlobalMilitary.net
 Author / maintainer: GlobalMilitary.net open-source compilation
 Title: Typhoon — combat aircraft specs, top speed and range
 URL: https://www.globalmilitary.net/aircraft/typhoon/
-Accessed: 2026-09-18
-Retrieved: 2026-09-19, full page text via the Tavily extract proxy
 Domain: air
 Equipment: Typhoon / FGR4
 Configuration: The page carries an explicit Typhoon FGR.4 version block for both technical specifications and performance, which is the variant the leaf records. The general Typhoon headline figures on the same page are not the FGR.4 block.
 Estimation / uncertainty: Tier C open-source compilation, not a Eurofighter consortium, Ministry of Defence or Royal Air Force document. The page contradicts itself on this aircraft: its headline figures and its FGR.4 performance block disagree, and its operator table mixes Typhoon totals across nine air forces with the United Kingdom figure. Only the version blocks are admitted.
+Retrieval:
+  attempted_at: 2026-09-17T16:05:00Z
+  method: tavily_proxy
+  status: success
+  returned: the Typhoon FGR.4 technical specification block and performance block in full
+  did_not_return: any Mach 2.0 reading for the FGR.4
+  note: The FGR.4 performance block gives Mach 2.5 and 2,495 km/h. The Mach 2.0 reading that this package previously carried was not returned and is withdrawn from the tree.
 Retention: manifest and extracted parameter notes only
 
 ## Extracted parameter notes

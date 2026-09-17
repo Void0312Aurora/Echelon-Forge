@@ -7,7 +7,13 @@ Author / maintainer: Chris Conners, site compiler and copyright holder 2000-2025
 Title: Stryker vehicle data index, United States section
 URL: https://afvdatabase.com/usa/index.html
 Page last updated: 2025-01-05
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: ground
 Equipment: Stryker / M1252 MCVV
 Configuration: Index-level attribution only. The page confirms the Stryker family is covered by this compilation and links the M1129 mortar-carrier and M1200 Armored Knight entries. No separate M1252 MCVV specification page exists under this source, so this package records family-level context and does not supply M1252 parameter values.

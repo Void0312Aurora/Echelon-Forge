@@ -6,12 +6,17 @@ Publisher: MiGFlug GmbH, flight experience operator
 Author / maintainer: MiGFlug editorial staff
 Title: F-35 Lightning II — aircraft profile
 URL: https://migflug.com/aircraft/f-35-lightning-ii
-Accessed: 2026-09-18
-Retrieved: 2026-09-19, the variant figures via search indexing of this URL by the Tavily proxy, which returned the empty weight, internal fuel and maximum take-off weight rows per mark
 Domain: air
 Equipment: F-35 / F-35A, F-35B, F-35C
 Configuration: The page tabulates the A, B and C marks separately, so the B column is directly available and is not inferred from a sibling mark.
 Estimation / uncertainty: Tier C secondary source published by a commercial flight-experience operator rather than a manufacturer or a government body. It is admitted only as a cross-check on the B mark's maximum take-off weight and on the mark-by-mark separation of the F-35 family; it is not the source of record for any row.
+Retrieval:
+  attempted_at: 2026-09-17T16:05:00Z
+  method: tavily_proxy
+  status: partial
+  returned: per-mark empty weight, internal fuel and maximum take-off weight rows through the search index of this URL
+  did_not_return: A and B mark heights and wingspans, and A and B mark lengths in feet; the plain page fetch
+  note: The values returned are the ones recorded in the extracted notes. Anything listed under did_not_return was written into an earlier revision of this manifest and is withdrawn.
 Retention: manifest and extracted parameter notes only
 
 ## Extracted parameter notes

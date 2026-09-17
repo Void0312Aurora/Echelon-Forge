@@ -6,12 +6,17 @@ Publisher: Forces News, Services Sound and Vision Corporation
 Author / maintainer: Forces News editorial staff
 Title: Typhoon: the RAF's primary multi-role fighter jet that packs a mighty punch
 URL: https://www.forcesnews.com/news/what-typhoon-aircraft
-Accessed: 2026-09-18
-Retrieved: 2026-09-19, page text via the Tavily extract proxy, at basic and advanced depth
 Domain: air
 Equipment: Typhoon / FGR4
 Configuration: The article describes the RAF Typhoon FGR Mk 4 and its operations. It is a narrative service article and not a specification sheet.
 Estimation / uncertainty: Tier C secondary source published by the British Forces Broadcasting Service charity rather than by the Ministry of Defence or the Royal Air Force.
+Retrieval:
+  attempted_at: 2026-09-17T16:05:00Z
+  method: tavily_proxy
+  status: failed
+  returned: nothing numeric: the article prose and navigation, across two retrievals at basic and advanced depth
+  did_not_return: any specification table, length, span, thrust, speed or altitude
+  note: The Mach 2.0, 90 kN, 15.96 m and 10.95 m values written into an earlier revision of this manifest were not returned and are withdrawn from the tree.
 Retention: manifest and extracted parameter notes only
 
 ## What retrieval actually returned

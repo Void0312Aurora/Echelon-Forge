@@ -7,7 +7,13 @@ Author / maintainer: Chris Conners, site compiler and copyright holder 2000-2025
 Title: Mortar Carrier-B M1129 Stryker
 URL: https://afvdatabase.com/usa/m1129mc.html
 Page last updated: 2024-01-17
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: ground
 Equipment: Stryker / M1129 MC
 Configuration: The page distinguishes two vehicles that share the M1129 designation. MC-A, the ICV-like carrier that could not fire mounted, weighed 39,990 lb (18,140 kg) loaded. MC-B, fielded late 2005 with the recoiling RMS6-L 120 mm mortar, is the configuration those figures describe and is the one recorded below. The double-V hull from 2010 and the separate Stryker A1 upgrade are not merged into this record.

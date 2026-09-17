@@ -6,7 +6,13 @@ Publisher: migflug.com
 Author / maintainer: migflug.com editorial; site publishes aircraft history and technical data pages
 Title: Xian H-6 — History, Specs and Stories
 URL: https://migflug.com/aircraft/xian-h-6
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: air
 Equipment: H-6 / H-6K
 Configuration: The page separates the baseline H-6 from the H-6K rebuild, which is the variant this leaf records. The H-6K differs from earlier marks in engine type, structure, crew size and maximum weight.

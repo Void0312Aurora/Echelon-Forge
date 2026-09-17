@@ -6,7 +6,13 @@ Publisher: U.S. Army Infantry School, Fort Moore (formerly Fort Benning), Georgi
 Author / maintainer: article by Scott; U.S. Army Infantry Magazine editorial staff
 Title: U.S. Army Infantry Magazine, July-September 2014 — Scott article
 URL: https://www.moore.army.mil/infantry/magazine/issues/2014/Jul-Sep/pdfs/Scott.pdf
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: ground
 Equipment: Stryker / M1128 MGS
 Configuration: The article is cited for stating that the Mobile Gun System mounts an M68A1E4 105 mm cannon.

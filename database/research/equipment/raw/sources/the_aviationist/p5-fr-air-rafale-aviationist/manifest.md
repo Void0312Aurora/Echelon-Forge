@@ -6,7 +6,13 @@ Publisher: The Aviationist
 Author / maintainer: The Aviationist editorial staff
 Title: Dassault Rafale — general characteristics and variants
 URL: https://theaviationist.com/2024/11/28/dassault-rafale
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: air
 Equipment: Rafale / Rafale C
 Configuration: The page tabulates the Rafale B, C and M variants separately, so the C column is directly available and is not inferred from a sibling mark.

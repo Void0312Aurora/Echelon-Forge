@@ -6,7 +6,13 @@ Publisher: 19FortyFive
 Author / maintainer: 19FortyFive editorial staff
 Title: Russia's New Tu-160M Supersonic Bomber Has a Message for the U.S. Air Force
 URL: https://www.19fortyfive.com/2025/05/russias-new-tu-160m-supersonic-bomber-has-a-message-for-the-u-s-air-force
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: air
 Equipment: Tu-160 / Tu-160M
 Configuration: The article covers the Tu-160M modernization, including the NK-32-02 engine fit reported by the United Aircraft Corporation press office.

@@ -6,7 +6,13 @@ Publisher: Royal Air Force
 Author / maintainer: Royal Air Force, aircraft pages
 Title: Typhoon FGR4
 URL: https://www.raf.mod.uk/aircraft/current-aircraft/typhoon-fgr41
-Accessed: 2026-09-18 (re-read; first captured 2026-09-11)
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: air
 Equipment: Typhoon FGR4
 Configuration: The page is specific to the Typhoon FGR Mk4 as operated by the Royal Air Force, which is the variant the leaf records.

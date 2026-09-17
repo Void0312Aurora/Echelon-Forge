@@ -6,7 +6,13 @@ Publisher: The National Interest
 Author / maintainer: The National Interest editorial staff; article by Brandon J. Weichert
 Title: The J-15 Flying Shark Fighter Is Just What China's Aircraft Carriers Need
 URL: https://nationalinterest.org/blog/buzz/j-15-flying-shark-fighter-just-what-chinas-aircraft-carriers-need-211360
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: air
 Equipment: J-15
 Configuration: Carrier-based multirole fighter derived from the Su-27 family. The baseline J-15 is a single-seat aircraft; the twin-seat derivative is the separate J-15S.

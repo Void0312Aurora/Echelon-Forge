@@ -40,6 +40,8 @@ EQUIPMENT_ID_RE = re.compile(
 MANIFEST_ID_RE = re.compile(r"^Source ID:\s*`?([a-z0-9-]+)`?\s*$", re.MULTILINE)
 MANIFEST_TIER_RE = re.compile(r"^Tier:\s*`?([A-D])`?\s*$", re.MULTILINE)
 MANIFEST_RETENTION_RE = re.compile(r"^Retention:\s*(.+)$", re.MULTILINE)
+MANIFEST_TITLE_RE = re.compile(r"^Title:\s*(.+)$", re.MULTILINE)
+MANIFEST_URL_RE = re.compile(r"^URL:\s*(\S+)\s*$", re.MULTILINE)
 
 
 def load_manifests() -> dict[str, dict]:
@@ -314,6 +316,85 @@ def check_all() -> dict:
         "baseline_exemptions": sorted(c5_baseline_exemptions),
     }
 
+    # condition 6 -- a cited package has to carry a retrieval record
+    #
+    # C1 checks that a source id resolves to a manifest. It does not check that
+    # anything was ever retrieved from the URL that manifest names. Two distinct
+    # defects sit in that gap:
+    #
+    #   6a  a leaf cites a package whose Retrieval block reports failed,
+    #       not_attempted or no_record, so the cited row has no retrieved
+    #       artifact behind it
+    #   6b  a manifest names more than one artifact in its Title while carrying
+    #       one URL, which is how a single id silently covers two sources
+    #
+    # 6a is advisory, not gating: a package predating the Retrieval convention
+    # has no block to read, and failing the tree for that would be a report about
+    # age rather than about provenance. 6b is gating, because a title that names
+    # two artifacts is a live claim of coverage that the manifest does not have.
+    retrieval_status_re = re.compile(
+        r"^Retrieval:\s*\n((?:^[ \t]+\S.*\n?)+)", re.MULTILINE
+    )
+    status_field_re = re.compile(r"^\s+status:\s*(\S+)\s*$", re.MULTILINE)
+    clean_statuses = {"success", "partial"}
+
+    package_status: dict[str, str | None] = {}
+    for key, value in manifests.items():
+        text = value["path"].read_text(encoding="utf-8")
+        block = retrieval_status_re.search(text)
+        if not block:
+            package_status[key] = None
+            continue
+        status = status_field_re.search(block.group(1))
+        package_status[key] = status.group(1) if status else "malformed"
+
+    unretrieved_citations: list[dict] = []
+    for rel, ids in referenced.items():
+        for source_id in sorted(ids):
+            state = package_status.get(source_id)
+            if state is None or state in clean_statuses:
+                continue
+            unretrieved_citations.append(
+                {"leaf": rel, "source_id": source_id, "retrieval_status": state}
+            )
+
+    # 6b: a Title naming a second artifact. The tell is an "and" or "with"
+    # joining two kinds of document in the title line while the manifest carries
+    # exactly one URL line.
+    multi_artifact: list[dict] = []
+    title_joiner = re.compile(r"\b(and|with|plus|corroborat\w+)\b", re.IGNORECASE)
+    artifact_nouns = re.compile(
+        r"\b(page|article|sheet|brochure|block|record|entry|table|section|document|report|database)\b",
+        re.IGNORECASE,
+    )
+    for key, value in manifests.items():
+        text = value["path"].read_text(encoding="utf-8")
+        title = MANIFEST_TITLE_RE.search(text)
+        urls = MANIFEST_URL_RE.findall(text)
+        if not title or len(urls) != 1:
+            continue
+        nouns = {m.group(1).lower() for m in artifact_nouns.finditer(title.group(1))}
+        if len(nouns) < 2:
+            continue
+        if not title_joiner.search(title.group(1)):
+            continue
+        multi_artifact.append(
+            {
+                "package": key,
+                "title": title.group(1).strip()[:160],
+                "url_lines": len(urls),
+            }
+        )
+
+    result["conditions"]["c6_retrieval_record"] = {
+        "pass": not multi_artifact,
+        "unretrieved_citations_advisory": unretrieved_citations,
+        "multi_artifact_titles": multi_artifact,
+        "packages_without_retrieval_block": sum(
+            1 for state in package_status.values() if state is None
+        ),
+    }
+
     status_counts: dict[str, int] = {}
     for rows in backlog.values():
         for row in rows:
@@ -352,10 +433,20 @@ def main() -> int:
         "c3_status_agreement": "C3 backlog vs coverage status",
         "c4_source_admission_floor": "C4 source admission floor (no D tier, retention present)",
         "c5_source_artifact_consistency": "C5 source-artifact consistency (no unnamed source, no aggregate package)",
+        "c6_retrieval_record": "C6 retrieval record (no title naming two artifacts; unretrieved citations advisory)",
     }
     for key, label in labels.items():
         condition = result["conditions"][key]
         print(f"[{'PASS' if condition['pass'] else 'FAIL'}] {label}")
+
+    advisory = result["conditions"]["c6_retrieval_record"]["unretrieved_citations_advisory"]
+    if advisory:
+        print(
+            f"       advisory: {len(advisory)} leaf citation(s) point at a package whose "
+            "Retrieval block is failed, not_attempted or no_record"
+        )
+    no_block = result["conditions"]["c6_retrieval_record"]["packages_without_retrieval_block"]
+    print(f"       {no_block} package(s) predate the Retrieval convention and carry no block")
 
     counts = result["counts"]
     print()

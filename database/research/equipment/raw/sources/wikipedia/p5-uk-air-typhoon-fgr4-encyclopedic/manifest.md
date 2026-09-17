@@ -6,12 +6,17 @@ Publisher: English-language encyclopedic aviation entry, Eurofighter Typhoon art
 Author / maintainer: article editors
 Title: Eurofighter Typhoon — specifications
 URL: https://en.wikipedia.org/wiki/Eurofighter_Typhoon
-Accessed: 2026-09-18
-Retrieved: 2026-09-19, specifications block returned through search indexing of this URL by the Tavily proxy; the plain page fetch returned the article structure only, because the page exceeds the extractor's content budget
 Domain: air
 Equipment: Typhoon / FGR4
 Configuration: The general-characteristics block describes the Eurofighter Typhoon type, not the FGR Mk 4. It is admitted as a cross-check only and no value from it is the source of record on the leaf for any row the service page states.
 Estimation / uncertainty: Tier C. The block is a community-maintained compilation of figures already published elsewhere, so it is one step removed from any measurement. It is explicitly a type-level block while the leaf records the FGR4, and that gap is stated rather than closed.
+Retrieval:
+  attempted_at: 2026-09-17T16:05:00Z
+  method: tavily_proxy
+  status: partial
+  returned: the general characteristics block and the powerplant block through the search index of this URL: 10.95 m, 5.28 m, 51.2 m2, 11,000 kg, 16,000 kg, 23,500 kg, the 4,500/7,600 kg fuel pair, 60 kN dry and 90 kN afterburner
+  did_not_return: the ejection seat designation; the plain page fetch, which returned the article navigation only because the page exceeds the extractor content budget
+  note: The mass and fuel rows rest on the search-index return. The seat row that this package previously carried is withdrawn because no retrieval returned it.
 Retention: manifest and extracted parameter notes only
 
 ## Extracted parameter notes

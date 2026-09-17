@@ -7,7 +7,13 @@ Author / maintainer: Creech AFB public affairs
 Title: MQ-9 Reaper Fact Sheet
 URL: https://www.creech.af.mil/About-Us/Fact-Sheets/Display/Article/669890/mq-9-reaper-fact-sheet
 Current as of: September 2020
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: air
 Equipment: MQ-9 / MQ-9A
 Configuration: MQ-9 Reaper as flown by the United States Air Force. This page is the operating base's own fact sheet and duplicates most of the main Air Force fact sheet figures while adding the ones the main sheet omits.

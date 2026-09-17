@@ -6,12 +6,17 @@ Publisher: Lockheed Martin Aeronautics
 Author / maintainer: Lockheed Martin F-35 program office
 Title: F-35 Lightning II Program Status and Fast Facts — maximum weight by variant
 URL: https://www.lockheedmartin.com/content/dam/lockheed-martin/aero/documents/F-35/FG19-24749_004%20F35FastFacts4_2020.pdf
-Accessed: 2026-09-18
-Retrieved: 2026-09-19, the specification table via the Tavily extract proxy, which returned the sheet's own variant table including the maximum weight row
 Domain: air
 Equipment: F-35 / F-35B
 Configuration: The Fast Facts sheet tabulates the A, B and C variants side by side, so the B column is directly available and is not inferred from a sibling mark.
 Estimation / uncertainty: Tier B prime-contractor documentation, authoritative for the limits of the aircraft it builds. The sheet states the B mark maximum weight as a class figure rather than as an exact limit, and the word `class` is part of the value: it is recorded as published and is not converted to a precise number. The figures were published in 2020 and later block changes are not reflected.
+Retrieval:
+  attempted_at: 2026-09-17T16:05:00Z
+  method: tavily_proxy
+  status: success
+  returned: the variant table row by row, including the maximum weight row: B 60,000 lb class, A and C 70,000 lb class, plus length, height, wingspan, wing area and horizontal tail span for all three marks
+  did_not_return: empty weight of the B as a metric value
+  note: The PDF was returned by the extract proxy at basic depth. A direct URL read through the other retrieval tools was blocked, so the proxy was the only successful path.
 Retention: manifest and extracted parameter notes only
 
 ## Extracted parameter notes

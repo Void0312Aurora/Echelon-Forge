@@ -6,7 +6,13 @@ Publisher: United Aircraft Corporation (UAC), Russia
 Author / maintainer: UAC, the manufacturer group holding Sukhoi and Irkut
 Title: Su-30SME — model range, military aircraft
 URL: https://uacrussia.ru/en/aircraft/lineup/military/su-30sme
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: air
 Equipment: Su-30SME
 Configuration: The Su-30SME is the export designation of the Su-30SM family.

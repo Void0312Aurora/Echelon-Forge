@@ -8,7 +8,13 @@ Title: NH90 Helicopter Platform Overview
 URL: https://www.nhindustries.com/nh90-helicopter
 NFH page: https://www.nhindustries.com/nh90-helicopter/nh90-nfh-nato-frigate-helicopter/ (mission and sensor content only, no specification table)
 Brochure: https://www.nhindustries.com/wp-content/uploads/2025/06/NH90_Brochure_NHI_2024.pdf
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: air
 Equipment: NH90 / NFH
 Configuration: All technical data sits on this platform page. The performance block is labelled `NH90 General Performance (basic aircraft)` and footnoted `(*) at 10000 kg`, which is below the NFH maximum gross weight of 11,000 kg. Weight, dimension, capacity and fuel rows are not footnoted.

@@ -6,7 +6,13 @@ Publisher: English-language encyclopedic aviation entry, Xi'an Y-20 article
 Author / maintainer: article editors
 Title: Xi'an Y-20 — specifications
 URL: https://en.wikipedia.org/wiki/Xi%27an_Y-20
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: air
 Equipment: Y-20
 Configuration: The Y-20 transport family. The YY-20A tanker and YY-20B are separate configurations recorded on their own leaf.

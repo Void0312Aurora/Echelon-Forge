@@ -6,7 +6,13 @@ Publisher: UK Defence Forum, reproducing Airbus A400M manufacturer figures
 Author / maintainer: UK Defence Forum, forum compilation of published A400M data
 Title: Airbus A400M Atlas (RAF)
 URL: https://ukdefenceforum.net/viewtopic.php?t=176
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: air
 Equipment: A400M / Atlas C1
 Configuration: A400M as operated by the Royal Air Force as Atlas C.1. Airframe and performance figures are the common A400M values.

@@ -7,7 +7,13 @@ Author / maintainer: Chris Conners, site compiler and copyright holder 2000-2025
 Title: Infantry Carrier Vehicle M1126 Stryker
 URL: https://afvdatabase.com/usa/m1126icv.html
 Page last updated: 2023-12-09
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: ground
 Equipment: Stryker / M1126 ICV
 Configuration: Baseline flat-bottom ICV. The page notes the double-V hull from 2010 and the separate Stryker A1 upgrade (450 hp, 60,000 lb suspension, 910 A alternator, in-vehicle network); neither is merged into this record.

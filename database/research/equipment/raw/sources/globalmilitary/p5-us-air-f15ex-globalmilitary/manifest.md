@@ -6,12 +6,17 @@ Publisher: GlobalMilitary.net
 Author / maintainer: GlobalMilitary.net open-source compilation
 Title: F-15EX Eagle II — combat aircraft specs, top speed and range
 URL: https://www.globalmilitary.net/aircraft/f15ex-eagle-ii/
-Accessed: 2026-09-18
-Retrieved: 2026-09-19, full page text via the Tavily extract proxy
 Domain: air
 Equipment: F-15 / F-15EX
 Configuration: The page carries an explicit F-15EX Eagle II version block for both technical specifications and performance.
 Estimation / uncertainty: Tier C open-source compilation, not a Boeing or Air Force document. The page states no method. Its operator table is not reliable on this variant and is not used: it credits Saudi Arabia with 84 aircraft and Qatar with 48, which are F-15SA and F-15QA figures rather than F-15EX, and it gives a worldwide total that does not reconcile with the page's own United States figure. Only the version-block values are admitted.
+Retrieval:
+  attempted_at: 2026-09-17T16:05:00Z
+  method: tavily_proxy
+  status: success
+  returned: the F-15EX Eagle II technical specification block and performance block, and the operator table
+  did_not_return: source method for any figure
+  note: The operator table credits Saudi Arabia and Qatar with F-15EX aircraft that are F-15SA and F-15QA airframes and is not admitted.
 Retention: manifest and extracted parameter notes only
 
 ## Extracted parameter notes

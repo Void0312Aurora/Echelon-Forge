@@ -6,7 +6,13 @@ Publisher: Mitchell Institute for Aerospace Studies
 Author / maintainer: Mitchell Institute, China Airpower Tracker series
 Title: YY-20 (Tanker) technical data
 URL: https://www.mitchellaerospacepower.org/weapons/yy-20
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: air
 Equipment: YY-20 / YY-20A
 Configuration: Aerial refuelling tanker built by Xi'an Aircraft Industrial Corporation on the Y-20 airframe. Active variant listed as YY-20A (Y-20U).

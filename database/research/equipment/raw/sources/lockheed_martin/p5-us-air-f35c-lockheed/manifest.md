@@ -6,7 +6,13 @@ Publisher: Lockheed Martin Aeronautics
 Author / maintainer: Lockheed Martin F-35 program office
 Title: F-35 Lightning II Program Status and Fast Facts
 URL: https://www.lockheedmartin.com/content/dam/lockheed-martin/aero/documents/F-35/FG19-24749_004%20F35FastFacts4_2020.pdf
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: air
 Equipment: F-35 / F-35C
 Configuration: The document tabulates the A, B and C variants side by side, so the C column is directly available and is not inferred from a sibling mark.

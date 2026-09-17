@@ -7,7 +7,13 @@ Author / maintainer: Chris Conners, site compiler and copyright holder 2000-2025
 Title: NBC Reconnaissance Vehicle M1135 Stryker
 URL: https://afvdatabase.com/usa/m1135nbcrv.html
 Page last updated: 2023-12-09
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: ground
 Equipment: Stryker / M1135 NBCRV
 Configuration: Nuclear, biological, and chemical reconnaissance variant of the ICV. The page states the M1135 was not modified with the double-V hull, but received Stryker A1 upgrades from 2018 (450 hp engine, 60,000 lb suspension, 910 A alternator, in-vehicle network); the A1 configuration is not merged into this record.

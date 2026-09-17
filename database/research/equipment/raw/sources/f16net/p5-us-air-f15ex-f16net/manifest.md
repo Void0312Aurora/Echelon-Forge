@@ -6,12 +6,17 @@ Publisher: F-16.net, the F-16 reference and military aviation forum
 Author / maintainer: forum thread 59389, "Boeing F-15EX Eagle II"; the specification post is by member jetblast16, 6 September 2023
 Title: Boeing F-15EX Eagle II — post reproducing the F-15EX specification block
 URL: https://www.f-16.net/forum/viewtopic.php?f=36&t=59389
-Accessed: 2026-09-18
-Retrieved: 2026-09-19, page text via the Tavily extract proxy, thread page 1
 Domain: air
 Equipment: F-15 / F-15EX
 Configuration: The thread is specific to the F-15EX. The post carrying the specification block is on page 1 of 76 and is a forum post, not an article.
 Estimation / uncertainty: Tier C community forum post. The post states its own route to the block: it reproduces the specifications section of the Wikipedia article on the Boeing F-15EX Eagle II, listed on the post as source 32, and that article in turn cites Air and Space Forces Magazine for the performance data. This is a third-hand carrier of a compilation, which is the weakest provenance in the leaf.
+Retrieval:
+  attempted_at: 2026-09-17T16:05:00Z
+  method: tavily_proxy
+  status: success
+  returned: thread page 1, including the specification post that carries the block, the post date 6 September 2023, the poster name and the post's own statement of its route to the block
+  did_not_return: later pages of the 76-page thread
+  note: The post states it reproduces the Wikipedia specification section, which cites Air and Space Forces Magazine. This package is a third-hand carrier of the block.
 Retention: manifest and extracted parameter notes only
 
 ## Extracted parameter notes

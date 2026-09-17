@@ -6,7 +6,13 @@ Publisher: Tinker Air Force Base, U.S. Air Force
 Author / maintainer: Tinker AFB public affairs
 Title: E-3 Sentry (AWACS) — Fact Sheet Display, Tinker Air Force Base
 URL: https://www.tinker.af.mil/About-Tinker/Fact-Sheets/Display/Article/384781/e-3-sentry-awacs
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: air
 Equipment: E-3 / E-3G
 Configuration: E-3 Sentry family figures as published by the base that supports the fleet.

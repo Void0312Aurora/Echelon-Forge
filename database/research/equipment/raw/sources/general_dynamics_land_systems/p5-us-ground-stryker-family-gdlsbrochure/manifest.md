@@ -7,7 +7,13 @@ Author / maintainer: General Dynamics Land Systems (manufacturer publication, no
 Title: Stryker Combat Vehicles — Mobility Features and Specifications
 URL: https://international.gdls.com/english/files/StrykerCombatVehicles.pdf
 Document type: manufacturer product brochure covering all ten Stryker variants
-Accessed: 2026-09-18
+Retrieval:
+  attempted_at: 2026-09-17T17:05:00Z
+  method: none
+  status: no_record
+  returned: nothing
+  did_not_return: not established
+  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
 Domain: ground
 Equipment: Stryker family / all ten variants
 Configuration: The brochure states a Combat figure and a Shipping figure for height, width and length of each of the ten variants. Both columns are retained per variant. This is the manufacturer's own publication, so it is treated as higher-grade than the third-party compilation in `p5-us-ground-stryker-*-afvdatabase`.
