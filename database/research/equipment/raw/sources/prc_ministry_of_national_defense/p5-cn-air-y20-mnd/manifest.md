@@ -8,3 +8,4 @@ URL: http://eng.mod.gov.cn/2025xb/D/P_251753/16478358.html
 Accessed: 2026-09-12
 Domain: air
 Equipment: Y-20
+Retention: manifest and extracted parameter notes only

@@ -7,3 +7,4 @@ URL: https://www.raf.mod.uk/aircraft/current-aircraft/protector-rg-mk-1-mq-9b11
 Accessed: 2026-09-12
 Domain: air
 Equipment: Protector / RG1
+Retention: manifest and extracted parameter notes only

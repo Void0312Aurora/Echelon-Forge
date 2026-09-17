@@ -8,3 +8,4 @@ URL: https://www.af.mil/News/Photos/igphoto/2002616093/mediaid/4989458
 Accessed: 2026-09-12
 Domain: air
 Equipment: F-15EX
+Retention: manifest and extracted parameter notes only

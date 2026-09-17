@@ -7,3 +7,4 @@ URL: https://eng.mil.ru/print?print=1&id=41f87688-44a0-48ed-a5cc-c21cc98c7b06&fi
 Accessed: 2026-09-12
 Domain: air
 Equipment: Tu-160 / Tu-160M
+Retention: manifest and extracted parameter notes only

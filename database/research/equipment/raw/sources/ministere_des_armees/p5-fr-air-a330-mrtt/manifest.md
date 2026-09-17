@@ -7,3 +7,4 @@ URL: https://www.defense.gouv.fr/air/nos-aeronefs/nos-avions/airbus-a330-phenix
 Accessed: 2026-09-12
 Domain: air
 Equipment: A330 MRTT / Phénix
+Retention: manifest and extracted parameter notes only

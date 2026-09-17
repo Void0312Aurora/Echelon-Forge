@@ -8,3 +8,4 @@ URL: https://www.dassault-aviation.com/en/group/about-us/civil-and-military-airc
 Accessed: 2026-09-12
 Domain: air
 Equipment: Rafale B
+Retention: manifest and extracted parameter notes only

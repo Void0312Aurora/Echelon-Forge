@@ -7,3 +7,4 @@ URL: https://www.raf.mod.uk/news/articles/how-the-raf-is-integrating-and-strengt
 Accessed: 2026-09-12
 Domain: air
 Equipment: Merlin / HM2
+Retention: manifest and extracted parameter notes only

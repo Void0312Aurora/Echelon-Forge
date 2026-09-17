@@ -7,3 +7,4 @@ URL: http://eng.mod.gov.cn/xb/Home/Focus/16410757.html
 Accessed: 2026-09-12
 Domain: air
 Equipment: YY-20 / YY-20A
+Retention: manifest and extracted parameter notes only

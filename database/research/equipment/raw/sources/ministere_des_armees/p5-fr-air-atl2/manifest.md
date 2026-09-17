@@ -7,3 +7,4 @@ URL: http://www.defense.gouv.fr/marine/force-laeronautique-navale/atlantique-2-a
 Accessed: 2026-09-12
 Domain: air
 Equipment: Atlantique 2 / Atlantique 2
+Retention: manifest and extracted parameter notes only

@@ -8,3 +8,4 @@ URL: https://www.af.mil/about-us/fact-sheets/display/article/104500/b-1b-lancer
 Accessed: 2026-09-12
 Domain: air
 Equipment: B-1B
+Retention: manifest and extracted parameter notes only

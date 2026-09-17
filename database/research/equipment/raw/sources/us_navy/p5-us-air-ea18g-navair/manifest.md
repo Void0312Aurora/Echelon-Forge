@@ -8,3 +8,4 @@ URL: https://www.navair.navy.mil/product/EA-18G-Growler
 Accessed: 2026-09-12
 Domain: air
 Equipment: EA-18G
+Retention: manifest and extracted parameter notes only

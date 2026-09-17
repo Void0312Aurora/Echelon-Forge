@@ -7,3 +7,4 @@ URL: http://www.defense.gouv.fr/dga/lhelicoptere-nh90
 Accessed: 2026-09-12
 Domain: air
 Equipment: NH90 / NFH
+Retention: manifest and extracted parameter notes only

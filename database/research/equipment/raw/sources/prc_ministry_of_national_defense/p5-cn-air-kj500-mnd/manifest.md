@@ -7,3 +7,4 @@ URL: http://eng.mod.gov.cn/2025xb/D/P_251753/16454973.html
 Accessed: 2026-09-12
 Domain: air
 Equipment: KJ-500 / KJ-500
+Retention: manifest and extracted parameter notes only

@@ -8,3 +8,4 @@ URL: https://www.raf.mod.uk/aircraft/current-aircraft/atlas-c1-a400m
 Accessed: 2026-09-12
 Domain: air
 Equipment: A400M Atlas C1
+Retention: manifest and extracted parameter notes only

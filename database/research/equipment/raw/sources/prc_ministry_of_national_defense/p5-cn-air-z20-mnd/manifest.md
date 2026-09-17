@@ -7,3 +7,4 @@ URL: http://eng.mod.gov.cn/news/2019-10/01/content_4851983.htm
 Accessed: 2026-09-12
 Domain: air
 Equipment: Z-20 / Z-20
+Retention: manifest and extracted parameter notes only

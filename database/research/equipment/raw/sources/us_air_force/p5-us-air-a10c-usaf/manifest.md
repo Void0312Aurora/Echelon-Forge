@@ -8,3 +8,4 @@ URL: https://www.af.mil/about-us/fact-sheets/display/article/104490/a-10c-thunde
 Accessed: 2026-09-12
 Domain: air
 Equipment: A-10C
+Retention: manifest and extracted parameter notes only

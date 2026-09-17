@@ -8,3 +8,4 @@ URL: https://www.af.mil/about-us/fact-sheets/display/article/104482/b-2-spirit
 Accessed: 2026-09-12
 Domain: air
 Equipment: B-2A
+Retention: manifest and extracted parameter notes only

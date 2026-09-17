@@ -7,3 +7,4 @@ URL: http://www.defense.gouv.fr/air/nos-aeronefs/nos-avions/lockheed-c-130j-supe
 Accessed: 2026-09-12
 Domain: air
 Equipment: C-130 / C-130J-30
+Retention: manifest and extracted parameter notes only

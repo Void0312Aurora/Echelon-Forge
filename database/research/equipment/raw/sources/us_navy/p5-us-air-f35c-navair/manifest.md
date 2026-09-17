@@ -8,3 +8,4 @@ URL: https://www.navair.navy.mil/node/19506
 Accessed: 2026-09-12
 Domain: air
 Equipment: F-35C
+Retention: manifest and extracted parameter notes only

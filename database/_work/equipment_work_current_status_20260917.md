@@ -42,7 +42,7 @@ Command: `python database/_work/check_equipment_tree.py`
 | `C1` every referenced source id resolves | PASS, 0 dangling, 0 manifest/path mismatch |
 | `C2` backlog leaf binding (`Equipment ID`) | PASS after the `E2` backfill |
 | `C3` backlog vs coverage status | PASS, 47 of 47 coverage rows agree |
-| `C4` source admission floor | FAIL, 0 D-tier but 43 packages lack a retention note |
+| `C4` source admission floor | PASS after the `E3` retention backfill |
 
 Measured counts:
 
@@ -85,7 +85,6 @@ vocabulary are not. This is a documentation drift, not a data defect.
 
 | Id | Finding | Evidence | State |
 | --- | --- | --- | --- |
-| `D1` | 43 source packages carry no `Retention:` note | `C4` `missing_retention_note`; all 43 are air-domain packages | open |
 | `D2` | No source package records a rights field | `C4` `missing_rights_field_advisory`, 193 of 193 | open; the admission standard requires it of a ledger row |
 | `D3` | 23 air queue rows are bound to stub leaves with no parameter table | `stub_rows_excluded` in `C2`; all air-domain | open; `cataloged` is technically satisfied but carries no extracted evidence |
 | `D4` | Parameter table shape split | 57 leaves use `Field \| Value \| Source \| Tier \| Configuration/uncertainty`; 28 use `Parameter \| Value \| Source \| Confidence` | open |
@@ -103,6 +102,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | `C2` predicate | The check no longer demands a binding from a stub leaf or a `held` row, and no longer treats a shared variant leaf as a defect |
 | C-17A operator gap | The leaf listed only the United States Air Force while a Royal Air Force queue row pointed at it. Added the RAF operator row citing `p5-uk-air-c17a-raf`, which was an acquired but unreferenced package. The UK queue row keeps its own id and now carries a note explaining the share |
 | Leaf identity | The C-17A leaf had been given `eq-uk-air-c17a` by the backfill. Its parameters and operator table are United States; corrected to `eq-us-air-c17a` |
+| `C4` retention | 43 manifests, all air-domain, received the `Retention:` line the raw-source rule requires. The wording follows the 146 packages that already carried it |
 
 ## Retracted Findings
 
@@ -132,10 +132,12 @@ amend that standard.
 
 ## Next Action Order
 
-1. `D3` backfill — the binding must exist before any further leaf verification can be mechanical.
-2. `D1` retention notes — a documented source-package requirement that 43 packages miss.
-3. `D4` shape convergence — required before new leaves are added, otherwise the split widens.
-4. `D7` and `D6` — reconcile the coverage documentation and materialize the ledger.
-5. `D2` source admission fields.
-6. `D5` cleanup, `D8` evidence depth.
-7. Domain expansion.
+All four machine-checkable conditions pass. What remains is not a defect the check
+can see:
+
+1. `D4` shape convergence — required before new leaves are added, otherwise the split widens.
+2. `D7` and `D6` — reconcile the coverage documentation and materialize the ledger.
+3. `D2` source admission fields — 193 packages need a rights field before any ledger row is honest.
+4. `D8` and `D9` — write down the id and shared-leaf rules, in the form the tornado-ids and module precedents already imply.
+5. `D5` cleanup, `D3` stub depth.
+6. Domain expansion.

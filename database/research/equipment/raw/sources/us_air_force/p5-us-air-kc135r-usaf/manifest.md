@@ -8,3 +8,4 @@ URL: https://www.af.mil/About-Us/Fact-Sheets/Display/Article/1529736/kc-135-stra
 Accessed: 2026-09-12
 Domain: air
 Equipment: KC-135R
+Retention: manifest and extracted parameter notes only

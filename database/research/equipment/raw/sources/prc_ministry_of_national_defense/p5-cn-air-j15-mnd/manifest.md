@@ -7,3 +7,4 @@ URL: http://eng.mod.gov.cn/2025xb/D/P_251753/16443256.html
 Accessed: 2026-09-12
 Domain: air
 Equipment: J-15 / J-15
+Retention: manifest and extracted parameter notes only
