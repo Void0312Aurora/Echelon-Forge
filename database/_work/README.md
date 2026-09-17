@@ -64,13 +64,19 @@ These files are single-writer at any time. Do not split any of them across concu
 
 ## Closure Gate
 
-A collection or repair cluster is done only when all five hold:
+Run `python database/_work/check_equipment_tree.py`. Five conditions:
 
-1. Every `p5-*` source id named in a catalog leaf resolves to a `Source ID:` line in a `raw/sources/**/manifest.md`.
-2. Every backlog `catalog_path` exists, and the leaf carries an `Equipment ID` equal to the CSV `equipment_id`.
-3. Backlog `status` and `coverage.csv` `status` agree for every shared candidate.
-4. No `D`-tier source and no source package without a retention note is present.
-5. `git status --porcelain -- database` shows only files inside the write set.
+| Id | Condition | Automated |
+| --- | --- | --- |
+| `C1` | Every `p5-*` source id referenced by a catalog leaf resolves to a `Source ID:` line in a `raw/sources/**/manifest.md`, and every manifest path matches its declared id. | yes |
+| `C2` | Every backlog `catalog_path` exists and its leaf carries an `Equipment ID` equal to the CSV `equipment_id`. | yes |
+| `C3` | Backlog `status` and `coverage.csv` `status` agree for every shared candidate. | yes |
+| `C4` | No `D`-tier source, and no source package missing a retention note. | yes |
+| `C5` | `git status --porcelain -- database` resolves to files inside the write set only. | no, needs the index |
+
+A cluster is done only when its own condition is green and no other condition has
+regressed. `C4` also reports a rights-field count as an advisory, because the
+admission standard requires that field of a ledger row rather than of a raw package.
 
 ## Current State
 
