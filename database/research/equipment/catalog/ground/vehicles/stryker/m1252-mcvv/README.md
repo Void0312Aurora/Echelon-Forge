@@ -30,6 +30,7 @@ Content status: extracted DVH simulation-parameter draft; not a runtime record.
 | Crew | 5 | `p5-us-ground-mortar-atp-3-21-90` | A | Mortar-carrier configuration |
 | Mortar system | RMS6-L 120 mm mortar | `p5-us-ground-mortar-atp-3-21-90` | A | Exact ammunition load and fire-control fit unknown |
 | Propulsion / mobility | Unknown for this M1252 configuration | — | — | Do not copy M1126 350 hp, speed or range baseline |
+| Source coverage (propulsion) | Searched and not found at M1252 evidence level | `p5-us-ground-stryker-m1252mcvv-afvdatabase` | C | AFV Database covers the Stryker family and links the M1129 mortar carrier and M1200 Armored Knight but carries no M1252 MCVV specification page. The field stays `Unknown` rather than taking the M1129 MC-B 350 hp figure, because the M1252 is 20 percent heavier than the 41,367 lb MC-B and the source does not assert that the powerpack is unchanged |
 | Public protection | DVH Stryker hull; exact armor/protection rating unknown | `p5-us-ground-stryker-mdex-2026` | A | Configuration family only |
 
 Field confidence follows the evidence tier and context column: TB 55-46-1 measurements are high confidence for their named configurations; family-level protection context is medium confidence; unknown fields remain unestimated.
@@ -38,8 +39,13 @@ Field confidence follows the evidence tier and context column: TB 55-46-1 measur
 
 The TB 55-46-1 values above are intentionally kept as separate fields. In particular, `53,602 lb / 288 × 146 × 125 in` is the operational configuration, while `52,015 lb / 286 × 122 × 108 in` is the reduced transport configuration. Neither value is silently substituted for GVW or GVWR.
 
+## Open Gap
+
+This leaf has the most unresolved target fields of the eleven Stryker variant records. A variant-level M1252 or MCVV propulsion, speed and range source was searched for and not located; the AFV Database family coverage stops short of this variant. Closing this gap needs a source that names the M1252 or MCVV configuration directly, not a family baseline substitution.
+
 ## Source References
 
 - `p5-us-ground-stryker-army-tb55-2023`
 - `p5-us-ground-mortar-atp-3-21-90`
 - `p5-us-ground-stryker-mdex-2026`
+- `p5-us-ground-stryker-m1252mcvv-afvdatabase`

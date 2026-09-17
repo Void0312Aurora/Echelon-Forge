@@ -1,0 +1,19 @@
+# AFV Database — M1134 Stryker ATGM
+
+Source ID: `p5-us-ground-stryker-m1134atgm-afvdatabase`
+Tier: `C`
+Publisher: AFV Database (afvdatabase.com)
+Author / maintainer: Chris Conners, site compiler and copyright holder 2000-2025
+Title: Antitank Guided Missile M1134 Stryker
+URL: https://afvdatabase.com/usa/m1134atgm.html
+Page last updated: 2024-01-07
+Accessed: 2026-09-18
+Domain: ground
+Equipment: Stryker / M1134 ATGM
+Configuration: Antitank variant of the ICV carrying the Elevated TOW System with MITAS. The double-V hull from 2010 and the separate Stryker A1 upgrade are not merged into this record.
+Estimation / uncertainty: AFV Database is a specialist secondary compilation, not an official United States Army publication. Its stated sources are the Zwilling, Grummitt and Rottman references, GDLS product pages, GlobalSecurity and Army Technology. Values below are transcribed variant-level figures; they are not official specifications.
+Retention: manifest and extracted parameter notes only
+
+## Extracted parameter notes
+
+Combat weight 40,904 lb (18,554 kg). Height 119.3 in (303.1 cm); length 287.0 in (728.9 cm); width 149.8 in (380.5 cm); wheel clearance 21 in (53 cm). Maximum level road speed 60 mph (96 km/h); cruising range approximately 330 mi (530 km) on roads; minimum turning diameter 52 ft (16 m); maximum trench 78 in (200 cm); maximum vertical obstacle 23 in (58 cm); maximum fording depth 51 in (130 cm); maximum grade 60 percent; maximum sideslope 30 percent. Engine Caterpillar 3126, six-cylinder four-cycle inline turbocharged diesel, 350 hp at 2,500 rpm; fuel capacity 53 gal (200 L); transmission Allison MD 3066P, six forward and one reverse. Armor welded high-hard steel structure, maximum 0.5 in (1.3 cm). Armament twin TOW launcher on the Elevated TOW System with 12 missiles (two loaded, ten stowed), 360 deg electric traverse at 40 deg/s, elevation +29 to -20 deg, plus a 7.62 mm M240B on the commander's cupola with 2,000 rounds. Crew 4 (commander, driver, gunner, loader). Manufacturer GM GDLS Defense Group, L.L.C.

@@ -1,0 +1,19 @@
+# AFV Database — M1128 Stryker MGS
+
+Source ID: `p5-us-ground-stryker-m1128mgs-afvdatabase`
+Tier: `C`
+Publisher: AFV Database (afvdatabase.com)
+Author / maintainer: Chris Conners, site compiler and copyright holder 2000-2025
+Title: Mobile Gun System M1128 Stryker
+URL: https://afvdatabase.com/usa/m1128mgs.html
+Page last updated: 2024-09-10
+Accessed: 2026-09-18
+Domain: ground
+Equipment: Stryker / M1128 MGS
+Configuration: Mobile Gun System with the low-profile 105 mm turret. The page notes the M1128 was not given the double-V hull; the Stryker A1 upgrade is separate and is not merged into this record.
+Estimation / uncertainty: AFV Database is a specialist secondary compilation, not an official United States Army publication. Its stated sources include Zwilling's MGS and IAV volumes, Rottman, Grummitt, GlobalSecurity, GDLS product pages and Army Technology. Values below are transcribed variant-level figures; they are not official specifications.
+Retention: manifest and extracted parameter notes only
+
+## Extracted parameter notes
+
+Gross weight 47,070 lb (21,351 kg). Height 130.44 in (331.32 cm); length 300.53 in (763.35 cm); width 116.34 in (295.50 cm); wheel clearance 21 in (53 cm). Maximum level road speed 60 mph (96 km/h); cruising range approximately 300 mi (480 km) on roads; minimum turning diameter 52 ft (17 m); maximum trench 78 in (200 cm); maximum vertical obstacle 23 in (58 cm); maximum fording depth 66.9 in (170 cm); maximum grade 60 percent; maximum sideslope 30 percent. Engine Caterpillar 3126, six-cylinder four-cycle inline turbocharged diesel, 350 hp at 2,500 rpm; fuel capacity 53 gal (200 L); transmission Allison MD 3066P, six forward and one reverse. Armor welded high-hard steel structure, maximum 0.5 in (1.3 cm). Armament 105 mm M68A1E8 gun with 18 rounds and a 45 deg/s electric traverse, 7.62 mm M240C coaxial with 3,400 rounds, and a .50 cal M2HB with 400 rounds on a turret skate mount. Crew 3 (commander, gunner, driver); 142 accepted from July 2006; manufacturer GM GDLS Defense Group, L.L.C.
