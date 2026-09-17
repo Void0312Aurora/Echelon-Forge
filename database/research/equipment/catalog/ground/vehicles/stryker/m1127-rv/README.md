@@ -57,3 +57,4 @@ Rows carried from `p5-us-ground-stryker-m1127rv-afvdatabase` describe the legacy
 - `p5-us-ground-stryker-usace-dims`
 - `p5-us-ground-stryker-m1127rv-afvdatabase`
 - `p5-us-ground-stryker-family-gdlsbrochure`
+- `p5-us-ground-stryker-family-gao03671`

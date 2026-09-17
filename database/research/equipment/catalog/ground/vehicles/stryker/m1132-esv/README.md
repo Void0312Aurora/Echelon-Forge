@@ -40,10 +40,10 @@ Content status: extracted simulation-parameter draft; not a runtime record.
 | Fording depth | 51 in (130 cm) | `p5-us-ground-stryker-m1132esv-afvdatabase` | C | Fording, not swimming; preparation requirements not stated |
 | Grade / sideslope | 60% / 30% | `p5-us-ground-stryker-m1132esv-afvdatabase` | C | Slope limits as published; load-dependent in practice |
 | Minimum turning diameter | 52 ft (16 m) | `p5-us-ground-stryker-m1132esv-afvdatabase` | C | Four-wheel steering geometry; measurement convention not stated |
-| Crew (conflicting sources) | 11 total per the retained programme page; 8-10 (commander, driver, six to eight engineers) per the Tier C compilation | `p5-us-ground-stryker-pm-atlss`; `p5-us-ground-stryker-m1132esv-afvdatabase` | A/C | Source conflict, unresolved. The two totals cannot both be right, and the 11-person figure is not a split of the 8-10 figure. Both are recorded; neither is treated as settled. An A-level source that names the M1132 crew directly is needed to close this |
+| Crew (conflicting sources) | 11 total per the retained Army programme page; 8-10 (commander, driver, six to eight engineers) per the Tier C compilation | `p5-us-ground-stryker-pm-atlss`; `p5-us-ground-stryker-m1132esv-afvdatabase` | A/C | Source conflict, unresolved. The two totals cannot both be right, and the 11-person figure is not a split of the 8-10 figure. Per `evidence_precedence_stryker.md` the rank-1 Army programme page carries the higher weight, but neither figure is treated as settled. An Army source naming the M1132 crew explicitly, such as the ODIN asset page, would close this |
 | Mission systems (detailed) | Jettison Fitting Kit forward for mine rollers, plows and obstacle blades controlled by the MECU; side-mounted Lane Marking System with two dispensers of 50 poles each at 100 psi | `p5-us-ground-stryker-m1132esv-afvdatabase` | C | Names the engineer attachments the row above describes generically |
 | Public protection | Armored Stryker hull; exact thickness/level unknown | `p5-us-ground-stryker-army-wsh-2020` | A | Qualitative only |
-| Hull armor maximum | welded high-hard steel structure, maximum 0.5 in (1.3 cm) | `p5-us-ground-stryker-m1132esv-afvdatabase` | C | Single maximum plate figure from a secondary source. It is not a protection rating, not an all-round value, and not an RHAe equivalence |
+| Hull armor maximum | welded high-hard steel structure, maximum 0.5 in (1.3 cm) | `p5-us-ground-stryker-m1132esv-afvdatabase`; `p5-us-ground-stryker-family-gao03671` | C | Single maximum plate figure from a secondary source. It is not a protection rating, not an all-round value, and not an RHAe equivalence. GAO describes Stryker protection as capability against defined threats across defined arcs, which is a different kind of claim from a plate thickness |
 
 Field confidence follows the evidence tier and context column: direct variant statements are high confidence; attachment-sensitive statements are medium confidence; `unknown` fields remain unestimated.
 
@@ -60,3 +60,4 @@ Rows carried from `p5-us-ground-stryker-m1132esv-afvdatabase` describe the engin
 - `p5-us-ground-stryker-army-wsh-2020`
 - `p5-us-ground-stryker-m1132esv-afvdatabase`
 - `p5-us-ground-stryker-family-gdlsbrochure`
+- `p5-us-ground-stryker-family-odin`

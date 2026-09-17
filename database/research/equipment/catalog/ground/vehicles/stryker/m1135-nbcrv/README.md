@@ -55,3 +55,4 @@ The source states the M1135 was not modified with the double-V hull, but receive
 - `p5-us-ground-stryker-pm-atlss`
 - `p5-us-ground-stryker-m1135nbcrv-afvdatabase`
 - `p5-us-ground-stryker-family-gdlsbrochure`
+- `p5-us-ground-stryker-family-gao03671`

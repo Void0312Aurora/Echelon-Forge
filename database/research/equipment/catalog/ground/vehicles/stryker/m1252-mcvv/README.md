@@ -31,6 +31,7 @@ Content status: extracted DVH simulation-parameter draft; not a runtime record.
 | Mortar system | RMS6-L 120 mm mortar | `p5-us-ground-mortar-atp-3-21-90` | A | Exact ammunition load and fire-control fit unknown |
 | Propulsion / mobility | Unknown for this M1252 configuration | — | — | Do not copy M1126 350 hp, speed or range baseline |
 | Source coverage (propulsion) | Searched and not found at M1252 evidence level | `p5-us-ground-stryker-m1252mcvv-afvdatabase` | C | AFV Database covers the Stryker family and links the M1129 mortar carrier and M1200 Armored Knight but carries no M1252 MCVV specification page. The field stays `Unknown` rather than taking the M1129 MC-B 350 hp figure, because the M1252 is 20 percent heavier than the 41,367 lb MC-B and the source does not assert that the powerpack is unchanged |
+| Source coverage (brochure) | Also absent from the GDLS brochure | `p5-us-ground-stryker-family-gdlsbrochure` | B | The manufacturer brochure states combat and shipping envelopes for ten Stryker variants and does not include the M1252 MCVV. Two independent sources were therefore searched without locating this variant, which is recorded so the gap is not mistaken for an unexamined field |
 | Public protection | DVH Stryker hull; exact armor/protection rating unknown | `p5-us-ground-stryker-mdex-2026` | A | Configuration family only |
 
 Field confidence follows the evidence tier and context column: TB 55-46-1 measurements are high confidence for their named configurations; family-level protection context is medium confidence; unknown fields remain unestimated.
@@ -49,3 +50,4 @@ This leaf has the most unresolved target fields of the eleven Stryker variant re
 - `p5-us-ground-mortar-atp-3-21-90`
 - `p5-us-ground-stryker-mdex-2026`
 - `p5-us-ground-stryker-m1252mcvv-afvdatabase`
+- `p5-us-ground-stryker-family-gdlsbrochure`

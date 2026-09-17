@@ -5,7 +5,8 @@ Tier: `B`
 Publisher: General Dynamics Land Systems
 Author / maintainer: General Dynamics Land Systems (manufacturer publication, no individual author named)
 Title: Stryker Combat Vehicles — Mobility Features and Specifications
-URL: https://international.gdls.com/spanish/files/StrykerCombatVehicles.pdf
+URL: https://international.gdls.com/english/files/StrykerCombatVehicles.pdf
+Alternate path: https://international.gdls.com/spanish/files/StrykerCombatVehicles.pdf (same document, served under the Spanish path)
 Document type: manufacturer product brochure covering all ten Stryker variants
 Accessed: 2026-09-18
 Domain: ground

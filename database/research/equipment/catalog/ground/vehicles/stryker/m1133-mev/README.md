@@ -57,3 +57,4 @@ Rows carried from `p5-us-ground-stryker-m1133mev-afvdatabase` describe the medic
 - `p5-us-ground-stryker-army-wsh-2020`
 - `p5-us-ground-stryker-m1133mev-afvdatabase`
 - `p5-us-ground-stryker-family-gdlsbrochure`
+- `p5-us-ground-stryker-family-gao03671`

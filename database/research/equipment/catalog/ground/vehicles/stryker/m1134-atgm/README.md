@@ -33,6 +33,7 @@ Content status: extracted simulation-parameter draft; not a runtime record.
 | Combat weight | 40,904 lb (18,554 kg) | `p5-us-ground-stryker-m1134atgm-afvdatabase` | C | Secondary combat-mass figure. Distinct from the 17.7 t listed configuration mass above |
 | Dimensions (combat) | 287 × 153 × 137 in (7.290 × 3.886 × 3.480 m) | `p5-us-ground-stryker-family-gdlsbrochure` | B | GDLS manufacturer combat envelope. The 137 in height includes the elevated TOW launcher and differs from the Tier C compilation's 119.3 in, which is retained as a separate row below |
 | Dimensions (shipping) | 287 × 113 × 106 in (7.290 × 2.870 × 2.692 m) | `p5-us-ground-stryker-family-gdlsbrochure` | B | GDLS shipping envelope; the length is unchanged between the two configurations on this variant |
+| Combat envelope conflict | GDLS combat is 287 × 153 × 137 in; the Tier C compilation gives 287.0 × 149.8 × 119.3 in | `p5-us-ground-stryker-family-gdlsbrochure`; `p5-us-ground-stryker-m1134atgm-afvdatabase` | B/C | Configuration and measurement boundary do not align between the two. Per `evidence_precedence_stryker.md` the manufacturer envelope carries the higher weight and the Tier C value is kept as a recorded claim; the field is flagged for configuration-level cross-check rather than reconciled |
 | Secondary dimensions (Tier C) | 287.0 × 149.8 × 119.3 in | `p5-us-ground-stryker-m1134atgm-afvdatabase` | C | Source conflict, retained rather than deleted. Length agrees with GDLS; width and height do not, and the launcher-erected geometry is the likely cause. Needs configuration-level cross-check before either height is used |
 | Maximum level road speed | 60 mph (96 km/h) | `p5-us-ground-stryker-m1134atgm-afvdatabase` | C | Variant-level road figure; off-road speed not published |
 | Road range | approximately 330 mi (530 km) on roads | `p5-us-ground-stryker-m1134atgm-afvdatabase` | C | Explicitly a road figure; cross-country range not published |
@@ -43,7 +44,7 @@ Content status: extracted simulation-parameter draft; not a runtime record.
 | Secondary armament | 7.62 mm M240B on the commander's cupola with 2,000 rounds; must be folded down before the launcher fires | `p5-us-ground-stryker-m1134atgm-afvdatabase` | C | Supply load and the firing interlock the rows above do not state |
 | Crew (detailed) | 4 (commander, driver, gunner, loader) | `p5-us-ground-stryker-m1134atgm-afvdatabase` | C | Names the seats behind the draft crew figure above |
 | Public protection | Armored Stryker hull; exact thickness/level unknown | `p5-us-ground-stryker-army-wsh-2020` | A | Qualitative only |
-| Hull armor maximum | welded high-hard steel structure, maximum 0.5 in (1.3 cm) | `p5-us-ground-stryker-m1134atgm-afvdatabase` | C | Single maximum plate figure from a secondary source. It is not a protection rating, not an all-round value, and not an RHAe equivalence |
+| Hull armor maximum | welded high-hard steel structure, maximum 0.5 in (1.3 cm) | `p5-us-ground-stryker-m1134atgm-afvdatabase`; `p5-us-ground-stryker-family-gao03671` | C | Single maximum plate figure from a secondary source. It is not a protection rating, not an all-round value, and not an RHAe equivalence. GAO describes Stryker protection as capability against defined threats across defined arcs, which is a different kind of claim from a plate thickness |
 
 Field confidence follows the evidence tier and context column: direct variant statements are high confidence; launcher/loadout context is medium confidence; `unknown` fields remain unestimated.
 
@@ -58,3 +59,4 @@ Rows carried from `p5-us-ground-stryker-m1134atgm-afvdatabase` describe the lega
 - `p5-us-ground-stryker-army-wsh-2020`
 - `p5-us-ground-stryker-m1134atgm-afvdatabase`
 - `p5-us-ground-stryker-family-gdlsbrochure`
+- `p5-us-ground-stryker-family-gao03671`

@@ -58,3 +58,4 @@ The page distinguishes MC-A, the ICV-like carrier that could not fire mounted, f
 - `p5-us-ground-stryker-army-wsh-2020`
 - `p5-us-ground-stryker-m1129mc-afvdatabase`
 - `p5-us-ground-stryker-family-gdlsbrochure`
+- `p5-us-ground-stryker-family-gao03671`
