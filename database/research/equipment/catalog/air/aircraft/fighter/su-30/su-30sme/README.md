@@ -18,4 +18,4 @@ Content status: Export-variant record; not merged with Russian service Su-30SM.
 | Crew | 2 | `p5-ru-air-su30sme-roe` | A |
 | Maximum speed | Mach 1.75 | `p5-ru-air-su30sme-roe` | A |
 | Flight range | 3,000 km | `p5-ru-air-su30sme-roe` | A |
-| Payload | Not captured from the official source | Pending extraction | Not established |
+| Payload | Up to 8,000 kg across 12 external points | `p5-ru-air-su30sme-uac` | B | The manufacturer page states the combat load and the external point count; three further secondary sources repeat the 8,000 kg figure |

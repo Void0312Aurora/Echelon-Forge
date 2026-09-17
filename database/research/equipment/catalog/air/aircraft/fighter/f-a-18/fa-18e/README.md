@@ -24,4 +24,4 @@ Equipment ID: `eq-us-air-fa18e`
 | Length | 18.5 m | `p5-us-air-fa18e-navair` | A |
 | Height | 4.87 m | `p5-us-air-fa18e-navair` | A |
 | Wingspan | Approximately 13.68 m | `p5-us-air-fa18e-navair` | A |
-| Maximum takeoff weight | Not captured from the official source | Pending extraction | Not established |
+| Maximum takeoff weight | 66,000 lb (29,937 kg) | `p5-us-air-fa18e-boeing` | B | The United States Navy fact file held here does not publish this figure; it comes from the manufacturer page and is corroborated by two further sources |

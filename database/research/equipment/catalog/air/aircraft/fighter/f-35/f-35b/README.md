@@ -27,4 +27,4 @@ Equipment ID: `eq-uk-air-f35b`
 | Range on internal fuel | More than 1,667 km | `p5-uk-air-f35b-raf` | A |
 | Internal fuel | 5,942 kg | `p5-uk-air-f35b-raf` | A |
 | Max G rating | 7.0 | `p5-uk-air-f35b-raf` | A |
-| Maximum takeoff weight | Not captured from the RAF source | Pending extraction | Not established |
+| Maximum takeoff weight | 60,000 lb (27,200 kg) | `p5-uk-air-f35b-bae-compiled` | C | The B variant figure. The A variant is 65,900 lb in the same record, and the leaf does not carry it |
