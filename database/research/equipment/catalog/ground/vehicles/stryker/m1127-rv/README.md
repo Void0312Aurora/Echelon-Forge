@@ -35,7 +35,7 @@ Content status: extracted simulation-parameter draft; not a runtime record.
 | Trench / vertical obstacle | 78 in (200 cm) / 23 in (58 cm) | `p5-us-ground-stryker-m1127rv-afvdatabase` | C | Cross-country obstacle envelope; configuration-dependent |
 | Fording depth | 51 in (130 cm) | `p5-us-ground-stryker-m1127rv-afvdatabase` | C | Fording, not swimming; preparation requirements not stated |
 | Grade / sideslope | 60% / 30% | `p5-us-ground-stryker-m1127rv-afvdatabase` | C | Slope limits as published; load-dependent in practice |
-| Minimum turning diameter | 52 ft (17 m) | `p5-us-ground-stryker-m1127rv-afvdatabase` | C | Four-wheel steering geometry; measurement convention not stated |
+| Minimum turning diameter | 52 ft (≈16 m) | `p5-us-ground-stryker-m1127rv-afvdatabase` | C | Four-wheel steering geometry; measurement convention not stated. The source prints 17 m, which is not a correct rounding of 52 ft (15.85 m); the SI value here is a corrected conversion and the source figure is 52 ft |
 | Crew / reconnaissance load | 2 vehicle crew + 4 scouts + 1 augmentee | `p5-us-ground-m1127-armor-army` | A | Seven-person stated configuration |
 | Crew (total) | 7 (commander, driver, five passengers) | `p5-us-ground-stryker-m1127rv-afvdatabase` | C | Same seating arrangement as the row above, stated as a total |
 | Armament | M2 .50 cal or Mk 19 automatic grenade launcher; M6 countermeasure grenade launcher | `p5-us-ground-m1127-armor-army` | A | Weapon fit is configuration-dependent |
@@ -56,3 +56,4 @@ Rows carried from `p5-us-ground-stryker-m1127rv-afvdatabase` describe the legacy
 - `p5-us-ground-m1127-armor-army`
 - `p5-us-ground-stryker-usace-dims`
 - `p5-us-ground-stryker-m1127rv-afvdatabase`
+- `p5-us-ground-stryker-family-gdlsbrochure`

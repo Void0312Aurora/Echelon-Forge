@@ -32,6 +32,8 @@ Content status: extracted simulation-parameter draft; not a runtime record.
 | Transmission | Allison MD 3066P, six forward and one reverse | `p5-us-ground-stryker-m1135nbcrv-afvdatabase` | C | Secondary source; shift schedule and torque curve not public |
 | Fuel capacity | 53 gal (200 L) | `p5-us-ground-stryker-m1135nbcrv-afvdatabase` | C | Secondary source; usable reserve fraction not stated |
 | Mobility | 60 mph (96 km/h) maximum level road speed; approximately 330 mi (530 km) road range | `p5-us-ground-stryker-m1135nbcrv-afvdatabase` | C | Replaces the earlier unestablished mobility state with variant-level road figures; off-road performance still not published |
+| Combat dimensions | 290.6 × 134.1 × 126.4 in (7.381 × 3.406 × 3.211 m) | `p5-us-ground-stryker-family-gdlsbrochure` | B | GDLS manufacturer combat envelope, which agrees with the Tier C compilation on all three axes for this variant |
+| Shipping dimensions | 289 × 109 × 103.62 in (7.341 × 2.769 × 2.632 m) | `p5-us-ground-stryker-family-gdlsbrochure` | B | GDLS shipping envelope; retained separately so the shorter transport length is not read as a combat value |
 | Combat weight | 42,665 lb (19,353 kg) | `p5-us-ground-stryker-m1135nbcrv-afvdatabase` | C | Heaviest of the family set, reflecting the CBRN mission fit; distinct from the 17.3 t listed configuration mass above |
 | Trench / vertical obstacle | 78 in (200 cm) / 23 in (58 cm) | `p5-us-ground-stryker-m1135nbcrv-afvdatabase` | C | Cross-country obstacle envelope; configuration-dependent |
 | Fording depth | 51 in (130 cm) | `p5-us-ground-stryker-m1135nbcrv-afvdatabase` | C | Fording, not swimming; preparation requirements not stated |
@@ -52,3 +54,4 @@ The source states the M1135 was not modified with the double-V hull, but receive
 - `p5-us-ground-stryker-army-nbcrv-2006`
 - `p5-us-ground-stryker-pm-atlss`
 - `p5-us-ground-stryker-m1135nbcrv-afvdatabase`
+- `p5-us-ground-stryker-family-gdlsbrochure`

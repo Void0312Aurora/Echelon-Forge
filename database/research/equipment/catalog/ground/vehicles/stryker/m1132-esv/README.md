@@ -31,14 +31,16 @@ Content status: extracted simulation-parameter draft; not a runtime record.
 | Transmission | Allison MD 3066P, six forward and one reverse | `p5-us-ground-stryker-m1132esv-afvdatabase` | C | Secondary source; shift schedule and torque curve not public |
 | Fuel capacity | 53 gal (200 L) | `p5-us-ground-stryker-m1132esv-afvdatabase` | C | Secondary source; usable reserve fraction not stated |
 | Combat weight | 41,790 lb (18,956 kg) | `p5-us-ground-stryker-m1132esv-afvdatabase` | C | Secondary combat-mass figure. Distinct from the 16.5 t listed configuration mass above, which excludes engineer attachments |
-| Dimensions (combat) | 287.9 × 153.6 × 125.1 in (7.313 × 3.901 × 3.178 m) | `p5-us-ground-stryker-m1132esv-afvdatabase` | C | Differs from the USACE row above; the two are different configurations and both are retained |
+| Combat dimensions | 298.5 × 153.6 × 125.1 in (7.582 × 3.901 × 3.178 m) | `p5-us-ground-stryker-family-gdlsbrochure` | B | GDLS manufacturer combat envelope for the Engineer Squad Vehicle. This supersedes the earlier `287.9 in` length, which is the shipping length, not the combat length |
+| Shipping dimensions | 287.9 × 112.0 × 105.7 in (7.313 × 2.845 × 2.685 m) | `p5-us-ground-stryker-family-gdlsbrochure` | B | GDLS shipping envelope. The 287.9 in length belongs to this configuration only; do not combine it with the combat width or height above |
+| Secondary dimensions (Tier C) | 287.9 × 153.6 × 125.1 in | `p5-us-ground-stryker-m1132esv-afvdatabase` | C | Source conflict, retained rather than deleted. The Tier C compilation gives 287.9 in as a combat length, which reproduces GDLS's shipping length. GDLS is the manufacturer and takes precedence for the combat envelope |
 | Maximum level road speed | 60 mph (96 km/h) | `p5-us-ground-stryker-m1132esv-afvdatabase` | C | Variant-level road figure; off-road speed not published |
 | Road range | approximately 330 mi (530 km) on roads | `p5-us-ground-stryker-m1132esv-afvdatabase` | C | Explicitly a road figure; cross-country range not published |
 | Trench / vertical obstacle | 76 in (190 cm) / 23 in (58 cm) | `p5-us-ground-stryker-m1132esv-afvdatabase` | C | Trench figure is below the ICV value and is retained as variant-specific |
 | Fording depth | 51 in (130 cm) | `p5-us-ground-stryker-m1132esv-afvdatabase` | C | Fording, not swimming; preparation requirements not stated |
 | Grade / sideslope | 60% / 30% | `p5-us-ground-stryker-m1132esv-afvdatabase` | C | Slope limits as published; load-dependent in practice |
 | Minimum turning diameter | 52 ft (16 m) | `p5-us-ground-stryker-m1132esv-afvdatabase` | C | Four-wheel steering geometry; measurement convention not stated |
-| Crew (split) | 8-10 (commander, driver, six to eight engineers) | `p5-us-ground-stryker-m1132esv-afvdatabase` | C | Splits the 11-person programme total above into crew and squad |
+| Crew (conflicting sources) | 11 total per the retained programme page; 8-10 (commander, driver, six to eight engineers) per the Tier C compilation | `p5-us-ground-stryker-pm-atlss`; `p5-us-ground-stryker-m1132esv-afvdatabase` | A/C | Source conflict, unresolved. The two totals cannot both be right, and the 11-person figure is not a split of the 8-10 figure. Both are recorded; neither is treated as settled. An A-level source that names the M1132 crew directly is needed to close this |
 | Mission systems (detailed) | Jettison Fitting Kit forward for mine rollers, plows and obstacle blades controlled by the MECU; side-mounted Lane Marking System with two dispensers of 50 poles each at 100 psi | `p5-us-ground-stryker-m1132esv-afvdatabase` | C | Names the engineer attachments the row above describes generically |
 | Public protection | Armored Stryker hull; exact thickness/level unknown | `p5-us-ground-stryker-army-wsh-2020` | A | Qualitative only |
 | Hull armor maximum | welded high-hard steel structure, maximum 0.5 in (1.3 cm) | `p5-us-ground-stryker-m1132esv-afvdatabase` | C | Single maximum plate figure from a secondary source. It is not a protection rating, not an all-round value, and not an RHAe equivalence |
@@ -46,6 +48,8 @@ Content status: extracted simulation-parameter draft; not a runtime record.
 Field confidence follows the evidence tier and context column: direct variant statements are high confidence; attachment-sensitive statements are medium confidence; `unknown` fields remain unestimated.
 
 ## Configuration Boundary
+
+The GDLS brochure gives this variant two distinct envelopes and both are retained above: combat is `298.5 × 153.6 × 125.1 in`, shipping is `287.9 × 112.0 × 105.7 in`. No value is carried across the two columns.
 
 Rows carried from `p5-us-ground-stryker-m1132esv-afvdatabase` describe the engineer squad configuration. The source records the 2010 double-V hull and the separate Stryker A1 upgrade (450 hp, 60,000 lb suspension, 910 A alternator, in-vehicle network) as distinct configurations; neither is merged into this record.
 
@@ -55,3 +59,4 @@ Rows carried from `p5-us-ground-stryker-m1132esv-afvdatabase` describe the engin
 - `p5-us-ground-stryker-pm-atlss`
 - `p5-us-ground-stryker-army-wsh-2020`
 - `p5-us-ground-stryker-m1132esv-afvdatabase`
+- `p5-us-ground-stryker-family-gdlsbrochure`

@@ -38,8 +38,9 @@ Content status: extracted simulation-parameter draft; not a runtime record.
 | Trench / vertical obstacle | 78 in (200 cm) / 23 in (58 cm) | `p5-us-ground-stryker-m1128mgs-afvdatabase` | C | Cross-country obstacle envelope; configuration-dependent |
 | Fording depth | 66.9 in (170 cm) | `p5-us-ground-stryker-m1128mgs-afvdatabase` | C | Deeper than the ICV figure and therefore retained separately |
 | Grade / sideslope | 60% / 30% | `p5-us-ground-stryker-m1128mgs-afvdatabase` | C | Slope limits as published; load-dependent in practice |
-| Minimum turning diameter | 52 ft (17 m) | `p5-us-ground-stryker-m1128mgs-afvdatabase` | C | Four-wheel steering geometry; measurement convention not stated |
-| Main gun designation | 105 mm M68A1E8, low-profile turret, electric traverse at 45 deg/s, elevation +15 to -5 deg | `p5-us-ground-stryker-m1128mgs-afvdatabase` | C | Resolves the 105 mm designation left open above; gun is mounted inverted in the low-profile turret |
+| Minimum turning diameter | 52 ft (≈16 m) | `p5-us-ground-stryker-m1128mgs-afvdatabase` | C | Four-wheel steering geometry; measurement convention not stated. The source prints 17 m, which is not a correct rounding of 52 ft (15.85 m); the SI value here is a corrected conversion and the source figure is 52 ft |
+| Main gun designation | 105 mm M68A1E8 per the retained Tier C compilation; higher-tier sources give M68A1E4 or M68A2 | `p5-us-ground-stryker-m1128mgs-afvdatabase` | C | Source conflict, unresolved. The Tier C compilation prints M68A1E8, while U.S. Army ODIN and Army publication citations give M68A1E4 and at least one other source gives M68A2. The `E8` designation is not corroborated. Do not treat any one of the three as settled; resolve against ODIN before this field supports anything. Tier C values are non-authoritative per the admission standard |
+| Main gun configuration | low-profile turret, electric traverse at 45 deg/s, elevation +15 to -5 deg | `p5-us-ground-stryker-m1128mgs-afvdatabase` | C | Traverse and elevation limits as published; gun is mounted inverted in the low-profile turret |
 | Autoloader layout | 18 rounds total: eight in the turret ready carousel, ten in a hull-rear replenisher | `p5-us-ground-stryker-m1128mgs-afvdatabase` | C | Clarifies the 18-round load above; emergency manual loading hatch also described |
 | Coaxial / flex store loads | 3,400 × 7.62 mm (500 ready); 400 × .50 cal | `p5-us-ground-stryker-m1128mgs-afvdatabase` | C | Matches the Army load figures above and adds the ready-round split |
 | Public protection | Three-person crew protected from small arms, mortar and artillery fragments | `p5-us-ground-m1128-army` | A | Public qualitative statement; thickness/level unknown |
@@ -56,3 +57,4 @@ Rows carried from `p5-us-ground-stryker-m1128mgs-afvdatabase` describe the flat-
 - `p5-us-ground-m1128-army`
 - `p5-us-ground-m1128-armor-army`
 - `p5-us-ground-stryker-m1128mgs-afvdatabase`
+- `p5-us-ground-stryker-family-gdlsbrochure`

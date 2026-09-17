@@ -29,6 +29,8 @@ Content status: extracted simulation-parameter draft; not a runtime record.
 | Engine designation | Caterpillar 3126, six-cylinder four-cycle inline turbocharged diesel, 350 hp at 2,500 rpm | `p5-us-ground-stryker-m1130cv-afvdatabase` | C | Secondary-sourced designation; the A1 450 hp rating is not merged |
 | Transmission | Allison MD 3066P, six forward and one reverse | `p5-us-ground-stryker-m1130cv-afvdatabase` | C | Secondary source; shift schedule and torque curve not public |
 | Fuel capacity | 53 gal (200 L) | `p5-us-ground-stryker-m1130cv-afvdatabase` | C | Secondary source; usable reserve fraction not stated |
+| Combat dimensions | 290 × 116.43 × 122.88 in (7.366 × 2.957 × 3.121 m) | `p5-us-ground-stryker-family-gdlsbrochure` | B | GDLS manufacturer combat envelope, which agrees with the Tier C compilation on all three axes for this variant |
+| Shipping dimensions | 290 × 112.8 × 103.65 in (7.366 × 2.865 × 2.633 m) | `p5-us-ground-stryker-family-gdlsbrochure` | B | GDLS shipping envelope; length is unchanged between configurations on this variant while width and height are not |
 | Combat weight | 42,000 lb (19,051 kg) | `p5-us-ground-stryker-m1130cv-afvdatabase` | C | Secondary combat-mass figure. Distinct from the 16.6 t listed configuration mass above, which excludes the communications fit |
 | Dimensions (combat) | 290 × 116.43 × 122.88 in (7.40 × 2.957 × 3.121 m) | `p5-us-ground-stryker-m1130cv-afvdatabase` | C | Differs from the USACE row above; the two are different configurations and both are retained |
 | Maximum level road speed | 60 mph (96 km/h) | `p5-us-ground-stryker-m1130cv-afvdatabase` | C | Variant-level road figure; off-road speed not published |
@@ -54,3 +56,4 @@ Rows carried from `p5-us-ground-stryker-m1130cv-afvdatabase` describe the comman
 - `p5-us-ground-stryker-pm-atlss`
 - `p5-us-ground-stryker-army-wsh-2020`
 - `p5-us-ground-stryker-m1130cv-afvdatabase`
+- `p5-us-ground-stryker-family-gdlsbrochure`

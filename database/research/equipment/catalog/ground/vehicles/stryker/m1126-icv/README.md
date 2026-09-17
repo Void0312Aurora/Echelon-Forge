@@ -31,6 +31,8 @@ Content status: extracted simulation-parameter draft; not a runtime record.
 | Maximum level road speed | 60 mph (96 km/h) | `p5-us-ground-stryker-m1126icv-afvdatabase` | C | Corroborates the handbook figure; off-road speed not published |
 | Cruising range | 330 mi | `p5-us-ground-stryker-army-wsh-2020` | A | Explicit public baseline figure; fuel-load context not established |
 | Road range | approximately 330 mi (530 km) on roads | `p5-us-ground-stryker-m1126icv-afvdatabase` | C | Explicitly a road figure; cross-country range not published |
+| Combat dimensions | 286.3 × 116.43 × 122.88 in (7.272 × 2.957 × 3.121 m) | `p5-us-ground-stryker-family-gdlsbrochure` | B | GDLS manufacturer combat envelope, which agrees with the Tier C compilation on all three axes for this variant |
+| Shipping dimensions | 286.5 × 112.8 × 103.6 in (7.277 × 2.865 × 2.631 m) | `p5-us-ground-stryker-family-gdlsbrochure` | B | GDLS shipping envelope; note the shipping length is marginally longer than the combat length on this variant, so the two columns must not be interchanged |
 | Combat weight | approximately 38,000 lb (17,200 kg) | `p5-us-ground-stryker-m1126icv-afvdatabase` | C | Secondary combat-mass figure. Distinct from the 16.1 t listed configuration mass above; neither is a GVW or GVWR value |
 | Trench / vertical obstacle | 78 in (200 cm) / 23 in (58 cm) | `p5-us-ground-stryker-m1126icv-afvdatabase` | C | Cross-country obstacle envelope; configuration-dependent |
 | Fording depth | 51 in (130 cm) | `p5-us-ground-stryker-m1126icv-afvdatabase` | C | Fording, not swimming; preparation requirements not stated |
@@ -56,3 +58,4 @@ Rows carried from `p5-us-ground-stryker-m1126icv-afvdatabase` describe the basel
 - `p5-us-ground-stryker-usace-dims`
 - `p5-us-ground-stryker-pm-atlss`
 - `p5-us-ground-stryker-m1126icv-afvdatabase`
+- `p5-us-ground-stryker-family-gdlsbrochure`

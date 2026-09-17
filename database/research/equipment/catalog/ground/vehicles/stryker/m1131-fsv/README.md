@@ -36,7 +36,7 @@ Content status: extracted simulation-parameter draft; not a runtime record.
 | Trench / vertical obstacle | 78 in (200 cm) / 23 in (58 cm) | `p5-us-ground-stryker-m1131fsv-afvdatabase` | C | Cross-country obstacle envelope; configuration-dependent |
 | Fording depth | 51 in (130 cm) | `p5-us-ground-stryker-m1131fsv-afvdatabase` | C | Fording, not swimming; preparation requirements not stated |
 | Grade / sideslope | 60% / 30% | `p5-us-ground-stryker-m1131fsv-afvdatabase` | C | Slope limits as published; load-dependent in practice |
-| Minimum turning diameter | 52 ft (17 m) | `p5-us-ground-stryker-m1131fsv-afvdatabase` | C | Four-wheel steering geometry; measurement convention not stated |
+| Minimum turning diameter | 52 ft (≈16 m) | `p5-us-ground-stryker-m1131fsv-afvdatabase` | C | Four-wheel steering geometry; measurement convention not stated. The source prints 17 m, which is not a correct rounding of 52 ft (15.85 m); the SI value here is a corrected conversion and the source figure is 52 ft |
 | Crew (detailed) | 4 (commander, driver, fire support officer, radio telephone operator) | `p5-us-ground-stryker-m1131fsv-afvdatabase` | C | Names the seats behind the draft crew figure above |
 | Public protection | Armored Stryker hull; exact thickness/level unknown | `p5-us-ground-stryker-army-wsh-2020` | A | Qualitative only |
 | Hull armor maximum | welded high-hard steel structure, maximum 0.5 in (1.3 cm) | `p5-us-ground-stryker-m1131fsv-afvdatabase` | C | Single maximum plate figure from a secondary source. It is not a protection rating, not an all-round value, and not an RHAe equivalence |
@@ -53,3 +53,4 @@ Rows carried from `p5-us-ground-stryker-m1131fsv-afvdatabase` describe the fire-
 - `p5-us-ground-stryker-pm-atlss`
 - `p5-us-ground-stryker-army-wsh-2020`
 - `p5-us-ground-stryker-m1131fsv-afvdatabase`
+- `p5-us-ground-stryker-family-gdlsbrochure`

@@ -31,13 +31,14 @@ Content status: extracted simulation-parameter draft; not a runtime record.
 | Transmission | Allison MD 3066P, six forward and one reverse | `p5-us-ground-stryker-m1129mc-afvdatabase` | C | Secondary source; shift schedule and torque curve not public |
 | Fuel capacity | 53 gal (200 L) | `p5-us-ground-stryker-m1129mc-afvdatabase` | C | Secondary source; usable reserve fraction not stated |
 | Combat weight | 41,367 lb (18,764 kg) for MC-B; 39,990 lb (18,140 kg) loaded for MC-A | `p5-us-ground-stryker-m1129mc-afvdatabase` | C | Both sub-variants retained separately. Neither is the 16.9 t listed configuration mass above |
-| Dimensions (combat, MC-B) | 297 × 153 × 125 in (7.54 × 3.89 × 3.18 m) | `p5-us-ground-stryker-m1129mc-afvdatabase` | C | Differs from the USACE row above; the two are different configurations and both are retained |
+| Dimensions (combat, MC-B) | 297 × 153 × 125 in (7.54 × 3.89 × 3.18 m) | `p5-us-ground-stryker-family-gdlsbrochure` | B | GDLS manufacturer combat envelope for the mortar carrier, which agrees with the Tier C compilation on all three axes. The brochure does not separate MC-A from MC-B |
+| Dimensions (shipping, MC-B) | 287 × 107 × 106 in (7.29 × 2.72 × 2.69 m) | `p5-us-ground-stryker-family-gdlsbrochure` | B | GDLS shipping envelope. The length coincides with the USACE listed-configuration length above, which is a configuration coincidence and not the same measurement |
 | Maximum level road speed | 60 mph (96 km/h) | `p5-us-ground-stryker-m1129mc-afvdatabase` | C | Variant-level road figure; off-road speed not published |
 | Road range | approximately 330 mi (530 km) on roads | `p5-us-ground-stryker-m1129mc-afvdatabase` | C | Explicitly a road figure; cross-country range not published |
 | Trench / vertical obstacle | 78 in (200 cm) / 23 in (58 cm) | `p5-us-ground-stryker-m1129mc-afvdatabase` | C | Cross-country obstacle envelope; configuration-dependent |
 | Fording depth | 51 in (130 cm) | `p5-us-ground-stryker-m1129mc-afvdatabase` | C | Fording, not swimming; preparation requirements not stated |
 | Grade / sideslope | 60% / 30% | `p5-us-ground-stryker-m1129mc-afvdatabase` | C | Slope limits as published; load-dependent in practice |
-| Minimum turning diameter | 52 ft (16 m) | `p5-us-ground-stryker-m1129mc-afvdatabase` | C | Four-wheel steering geometry; measurement convention not stated |
+| Minimum turning diameter | 52 ft (16 m) | `p5-us-ground-stryker-m1129mc-afvdatabase` | C | Four-wheel steering geometry; measurement convention not stated. 16 m is the correct rounding of 52 ft (15.85 m) |
 | Secondary armament | 7.62 mm M240B on the commander's cupola with 2,000 rounds | `p5-us-ground-stryker-m1129mc-afvdatabase` | C | MC-B fit; the source notes the MC-B lacked the remote weapon system and used a skate mount |
 | Mission systems | Mortar fire-control and communications context | `p5-us-ground-mortar-atp-3-21-90` | A | Sensor, FCS and network performance unknown |
 | Mission systems (M95 FCS) | M95 mortar fire-control system connected to digital battlefield networks, computing fire missions on the move | `p5-us-ground-stryker-m1129mc-afvdatabase` | C | Names the fire-control system; computation latency not published |
@@ -56,3 +57,4 @@ The page distinguishes MC-A, the ICV-like carrier that could not fire mounted, f
 - `p5-us-ground-mortar-atp-3-21-90`
 - `p5-us-ground-stryker-army-wsh-2020`
 - `p5-us-ground-stryker-m1129mc-afvdatabase`
+- `p5-us-ground-stryker-family-gdlsbrochure`

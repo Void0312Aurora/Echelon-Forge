@@ -31,7 +31,9 @@ Content status: extracted simulation-parameter draft; not a runtime record.
 | Transmission | Allison MD 3066P, six forward and one reverse | `p5-us-ground-stryker-m1134atgm-afvdatabase` | C | Secondary source; shift schedule and torque curve not public |
 | Fuel capacity | 53 gal (200 L) | `p5-us-ground-stryker-m1134atgm-afvdatabase` | C | Secondary source; usable reserve fraction not stated |
 | Combat weight | 40,904 lb (18,554 kg) | `p5-us-ground-stryker-m1134atgm-afvdatabase` | C | Secondary combat-mass figure. Distinct from the 17.7 t listed configuration mass above |
-| Dimensions (combat) | 287.0 × 149.8 × 119.3 in (7.289 × 3.805 × 3.031 m) | `p5-us-ground-stryker-m1134atgm-afvdatabase` | C | Differs from the USACE row above; the two are different configurations and both are retained |
+| Dimensions (combat) | 287 × 153 × 137 in (7.290 × 3.886 × 3.480 m) | `p5-us-ground-stryker-family-gdlsbrochure` | B | GDLS manufacturer combat envelope. The 137 in height includes the elevated TOW launcher and differs from the Tier C compilation's 119.3 in, which is retained as a separate row below |
+| Dimensions (shipping) | 287 × 113 × 106 in (7.290 × 2.870 × 2.692 m) | `p5-us-ground-stryker-family-gdlsbrochure` | B | GDLS shipping envelope; the length is unchanged between the two configurations on this variant |
+| Secondary dimensions (Tier C) | 287.0 × 149.8 × 119.3 in | `p5-us-ground-stryker-m1134atgm-afvdatabase` | C | Source conflict, retained rather than deleted. Length agrees with GDLS; width and height do not, and the launcher-erected geometry is the likely cause. Needs configuration-level cross-check before either height is used |
 | Maximum level road speed | 60 mph (96 km/h) | `p5-us-ground-stryker-m1134atgm-afvdatabase` | C | Variant-level road figure; off-road speed not published |
 | Road range | approximately 330 mi (530 km) on roads | `p5-us-ground-stryker-m1134atgm-afvdatabase` | C | Explicitly a road figure; cross-country range not published |
 | Trench / vertical obstacle | 78 in (200 cm) / 23 in (58 cm) | `p5-us-ground-stryker-m1134atgm-afvdatabase` | C | Cross-country obstacle envelope; configuration-dependent |
@@ -55,3 +57,4 @@ Rows carried from `p5-us-ground-stryker-m1134atgm-afvdatabase` describe the lega
 - `p5-us-ground-stryker-pm-atlss`
 - `p5-us-ground-stryker-army-wsh-2020`
 - `p5-us-ground-stryker-m1134atgm-afvdatabase`
+- `p5-us-ground-stryker-family-gdlsbrochure`
