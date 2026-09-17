@@ -218,6 +218,59 @@ def check_all() -> dict:
         "missing_rights_field_advisory": no_rights,
     }
 
+    # condition 5 -- no claim attributed to an unnamed source
+    # A manifest may describe what another source says, but only if that source
+    # carries its own Source ID. Otherwise the leaf ends up citing one id for
+    # claims that came from somewhere else, which breaks the
+    # claim -> source id -> admission chain. A sentence that uses one of the
+    # unnamed-source phrases must also name a p5-* id.
+    #
+    # Pre-existing baseline: one package that landed before this rule existed is
+    # exempted by name below. It is listed so the exemption is visible and so a
+    # second one cannot be added silently. Anything not on this list fails.
+    unnamed_phrases = (
+        "second source",
+        "third source",
+        "another source",
+        "other source",
+        "other sources",
+        "reference works",
+        "a second specialist compilation",
+        "a further source",
+        "unnamed source",
+    )
+    c5_baseline_exemptions = {
+        # Landed in f9e2e4ed, before C5 existed. Its sentence records that two
+        # leaf bounds are estimates rather than an official Mk IV specification
+        # and names no specific package, so the fix belongs with a CV90 leaf
+        # repair rather than with a source-admission tranche.
+        "p5-eu-ground-cv90mk4-cv90cz",
+    }
+    unattributed: list[dict] = []
+    for key, value in manifests.items():
+        if key in c5_baseline_exemptions:
+            continue
+        text = value["path"].read_text(encoding="utf-8")
+        for sentence in re.split(r"(?<=[.;])\s+|\n", text):
+            lowered = sentence.lower()
+            if not any(phrase in lowered for phrase in unnamed_phrases):
+                continue
+            if SOURCE_ID_RE.search(sentence):
+                continue
+            if len(sentence.strip()) < 20:
+                continue
+            unattributed.append(
+                {
+                    "package": key,
+                    "sentence": " ".join(sentence.split())[:220],
+                }
+            )
+    result["conditions"]["c5_no_unnamed_source_claims"] = {
+        "pass": not unattributed,
+        "unattributed_claims": unattributed,
+        "baseline_exemptions": sorted(c5_baseline_exemptions),
+    }
+
     status_counts: dict[str, int] = {}
     for rows in backlog.values():
         for row in rows:
@@ -255,6 +308,7 @@ def main() -> int:
         "c2_backlog_binding": "C2 backlog leaf binding (Equipment ID)",
         "c3_status_agreement": "C3 backlog vs coverage status",
         "c4_source_admission_floor": "C4 source admission floor (no D tier, retention present)",
+        "c5_no_unnamed_source_claims": "C5 no claim attributed to an unnamed source",
     }
     for key, label in labels.items():
         condition = result["conditions"][key]

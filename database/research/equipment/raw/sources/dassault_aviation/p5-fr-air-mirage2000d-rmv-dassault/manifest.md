@@ -17,9 +17,9 @@ Retention: manifest and extracted parameter notes only
 
 Mirage 2000D twin-seat: wingspan 9.1 m, length 14.3 m, height 5.4 m, empty weight 8 t, maximum takeoff weight 16.5 t, external stores capacity 5.7 t.
 
-## Cross-check against reference works
+## Cross-check against a named Tier C compilation
 
-Reference works give the two-seat Mirage 2000 family a length of 14.55 m against 14.36 m for the single-seat airframe, and a maximum takeoff weight of 17,000 kg against Dassault's 16.5 t. Both readings are retained in the leaf; the manufacturer figure is not treated as a more precise version of the reference figure, because the two may describe different weight definitions.
+`p5-fr-air-mirage2000-gs` gives the two-seat Mirage 2000 family a length of 14.55 m against 14.36 m for the single-seat airframe, and a maximum takeoff weight of 17,000 kg against Dassault's 16.5 t. Both readings are retained in the leaf; the manufacturer figure is not treated as a more precise version of the reference figure, because the two may describe different weight definitions.
 
 ## Why this package was added
 

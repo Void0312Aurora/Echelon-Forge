@@ -19,6 +19,6 @@ Status active; type airborne early warning and control aircraft; contractor Shaa
 
 ## A dimensions conflict held open
 
-A second source states the aircraft measures 34 m in length and spans 38 m on the Y-9 airframe, with a range of 5,700 km and an endurance of 12 hours. The Mitchell figures of 118.1 ft and 131.2 ft convert to approximately 36.0 m and 40.0 m, which is close to the figures a third source gives for the Y-9 airframe itself, 36.1 m and 38.0 m.
+`p5-cn-air-kj500-armyrecognition` states the aircraft measures 34 m in length and spans 38 m on the Y-9 airframe, with a range of 5,700 km and an endurance of 12 hours. The Mitchell figures of 118.1 ft and 131.2 ft convert to approximately 36.0 m and 40.0 m, which is close to the Y-9 airframe figures of 36.1 m and 38.0 m recorded in the Deagel Y-9 package.
 
 The two length readings differ by about 2 m and the two span readings by about 2 m. Both are retained in the leaf. The range figures also differ, 3,078 nm against 5,700 km, which is approximately 5,700 km against 5,700 km once converted, so the range pair is broadly consistent while the dimensions pair is not.
