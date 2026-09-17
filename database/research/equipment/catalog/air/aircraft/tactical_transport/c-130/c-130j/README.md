@@ -38,7 +38,7 @@ Content status: model-level draft with first-party parameter coverage; C-130E/H 
 | Cruise speed | 417 mph / 362 ktas (Mach 0.59) at 22,000 ft (6,706 m) | `p5-us-air-c130j-usaf` | A |
 | Ceiling | 28,000 ft (8,534 m) with 42,000 lb (19,050 kg) payload | `p5-us-air-c130j-usaf` | A | The fact sheet prints 28,000 ft as 8,615 m and 42,000 lb as 19,090 kg; both printed conversions are arithmetically wrong. The metric values here are computed (8,534 m and 19,050 kg). The imperial figures are the source values. |
 | Maximum takeoff weight | 164,000 lb (74,393 kg) | `p5-us-air-c130j-usaf` | A |
-| Maximum allowable payload | 42,000 lb (19,090 kg) | `p5-us-air-c130j-usaf` | A |
+| Maximum allowable payload | 42,000 lb (19,050 kg) | `p5-us-air-c130j-usaf` | A | The fact sheet prints this same 42,000 lb as 19,090 kg in three places. That conversion is arithmetically wrong (42,000 lb = 19,050 kg); the metric value is corrected here so the leaf does not carry one mass under two different metric figures |
 | Maximum normal payload | 34,000 lb (15,422 kg) | `p5-us-air-c130j-usaf` | A |
 | Range at maximum normal payload | 2,071 mi (1,800 nmi) | `p5-us-air-c130j-usaf` | A |
 | Range with 35,000 lb payload | 1,841 mi (1,600 nmi) | `p5-us-air-c130j-usaf` | A |

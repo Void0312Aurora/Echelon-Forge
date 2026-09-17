@@ -32,21 +32,27 @@ Content status: parameter table present with per-field source and confidence. St
 | Length | 14.3 m | `p5-fr-air-mirage2000d-rmv-dassault` | B |
 | Height | 5.4 m | `p5-fr-air-mirage2000d-rmv-dassault` | B |
 | Empty weight | 8 t | `p5-fr-air-mirage2000d-rmv-dassault` | B |
-| Maximum takeoff weight | 16.5 t per the manufacturer; 17,000 kg per reference works | `p5-fr-air-mirage2000d-rmv-dassault` | B/C |
-| External stores capacity | 5.7 t | `p5-fr-air-mirage2000d-rmv-dassault` | B |
-| Length (two-seat airframe, reference-works value) | 14.55 m against 14.36 m for the single-seat airframe | `p5-fr-air-mirage2000d-rmv-dassault` | C |
-| Powerplant | Not established from the held sources | — | — |
-| Performance (speed, ceiling, range) | Not established from the held sources | — | — |
+| Maximum takeoff weight | 16.5 t per the manufacturer; 17,000 kg (37,500 lb) per the Tier C specification compilation | `p5-fr-air-mirage2000d-rmv-dassault`; `p5-fr-air-mirage2000-gs` | B/C | Two readings retained, not reconciled: the manufacturer states a rounded 16.5 t while the compilation states 17,000 kg against the single-seat baseline. The two may use different weight definitions |
+| External stores capacity | 5.7 t per the manufacturer; 6,300 kg per the Tier C compilation | `p5-fr-air-mirage2000d-rmv-dassault`; `p5-fr-air-mirage2000-gs` | B/C | Two readings retained; the difference is not resolved |
+| Length (two-seat airframe) | 14.55 m against 14.36 m for the single-seat airframe | `p5-fr-air-mirage2000-gs` | C | The applicable value for the 2000D. The compilation states that two-seat and strike variants differ marginally in dimensions |
+| Internal fuel capacity (single-seat baseline) | 3,080 kg (6,790 lb) | `p5-fr-air-mirage2000-gs` | C | Stated for the single-seat 2000C baseline; the compilation warns that the two-seat and strike variants differ in fuel capacity, so this is not asserted as a 2000D value |
+| Powerplant | Not established for the 2000D from the held sources. The Tier C compilation gives one SNECMA M53-P2 for the single-seat baseline, which is not transferable without a variant-level source | — | — |
+| Performance (speed, ceiling, range) | Not established for the 2000D. The compilation's performance table is written for the single-seat 2000C with combat load | — | — |
+
+For every row where two sources are named, both are recorded and neither is treated as a more precise version of the other, because the manufacturer's rounding and the compilation's weight definitions may not describe the same quantity.
 
 ## Configuration Boundary
 
-The manufacturer states rounded figures in a corporate report: 9.1 m, 14.3 m, 8 t, 16.5 t. Reference works give a two-seat length of 14.55 m and a maximum takeoff weight of 17,000 kg. The two sets are recorded side by side rather than reconciled, because the manufacturer's rounding and the reference works' weight definition may not describe the same quantity. The manufacturer values are not treated as a more precise version of the reference values.
+The manufacturer states rounded figures in a corporate report: 9.1 m, 14.3 m, 8 t, 16.5 t, 5.7 t. The Tier C specification compilation gives a two-seat length of 14.55 m, a maximum takeoff weight of 17,000 kg and an external stores capacity of 6,300 kg. The two sets are recorded side by side rather than reconciled.
 
-A configuration note carried from the Tiger leaf experience: the 2000D is a two-seat airframe and its length differs from the single-seat 2000C and 2000-5F. Values must not be carried between those leaves.
+The compilation is written for the single-seat 2000C baseline and states its own caveat that two-seat and strike variants differ marginally in dimensions and fuel capacity. Its performance and armament blocks are therefore not transferable to the 2000D, and no powerplant or performance row is recorded for this leaf.
+
+The Mirage 2000D is a two-seat airframe whose length differs from the single-seat 2000C and 2000-5F. Values must not be carried between those leaves.
 
 The French Ministry of the Armed Forces source held for this leaf is a news article about a Djibouti deployment and carries no specification table. It is retained for operator context only.
 
 ## Source References
 
 - `p5-fr-air-mirage2000d-rmv-dassault`: `raw/sources/dassault_aviation/p5-fr-air-mirage2000d-rmv-dassault/manifest.md`
+- `p5-fr-air-mirage2000-gs`: `raw/sources/globalsecurity/p5-fr-air-mirage2000-gs/manifest.md`
 - `p5-fr-air-mirage2000d-rmv`: `raw/sources/ministere_des_armees/p5-fr-air-mirage2000d-rmv/manifest.md` — operator context only, no parameter rows
