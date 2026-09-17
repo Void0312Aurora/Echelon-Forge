@@ -32,7 +32,8 @@ Content status: model-level draft with parameter coverage from two sources; an e
 | Overall length | 22.83 m (74 ft 11 in) | `p5-uk-air-merlin-aw101-leonardo` | B |
 | Overall height | 6.66 m (21 ft 10 in) | `p5-uk-air-merlin-aw101-leonardo` | B |
 | Rotor diameter | 18.60 m (61 ft 0 in) | `p5-uk-air-merlin-aw101-leonardo` | B |
-| Powerplant | GE CT7-8E turboshafts with FADEC per the manufacturer page; the UK Merlin fleet is associated with the Rolls-Royce Turbomeca RTM322, which that page does not list | `p5-uk-air-merlin-aw101-leonardo` | B |
+| Powerplant | GE CT7-8E turboshafts with FADEC per the manufacturer page; three Rolls-Royce Turbomeca RTM322-01 turboshafts per the naval reference for the Royal Navy Merlin, at 1,566 kW (2,100 hp) each take-off power | `p5-uk-air-merlin-aw101-leonardo`; `p5-uk-air-merlin-hm2-seaforces` | B/C | The divergence is now directional rather than open: the manufacturer page publishes the platform-level GE option and does not list the RTM322, while the Royal Navy Merlin is documented with three RTM322-01. The RTM322 reading rests on a specification block the page itself heads `Specifications (Merlin HM1)`, so the engine type is attested for the Royal Navy Merlin while the power figure is an HM1 reading carried on an HM2 page |
+| Engine power (Royal Navy reading) | 1,566 kW (2,100 hp) each take-off power, three engines | `p5-uk-air-merlin-hm2-seaforces` | C | From the HM1-headed block on the Royal Navy Merlin page. This is the first HM-specific power figure on the leaf and it is not a manufacturer rating |
 | Maximum cruise speed | 277 km/h (150 kt) at ISA, maximum gross weight, sea level, maximum continuous power | `p5-uk-air-merlin-aw101-leonardo` | B |
 | Rate of climb | 9.5 m/s (1,880 ft/min) | `p5-uk-air-merlin-aw101-leonardo` | B |
 | Hover in ground effect | 3,307 m (10,850 ft) at ISA, maximum gross weight | `p5-uk-air-merlin-aw101-leonardo` | B |

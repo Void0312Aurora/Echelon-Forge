@@ -30,7 +30,7 @@ Content status: model-level draft with parameter coverage from two sources; stre
 | --- | --- | --- | --- |
 | Powerplant | Four Rolls-Royce AE 2100D3 turboprops | `p5-us-air-c130j-usaf` | A |
 | Shaft power | 4,700 hp each | `p5-us-air-c130j-usaf` | A |
-| Length | 112 ft 9 in (34.69 m) | `p5-us-air-c130j-usaf` | A |
+| Length | 112 ft 9 in (34.69 m); calculated 34.37 m | `p5-us-air-c130j-usaf` | A | The imperial value is the source value. The fact sheet prints 34.69 m and the Air National Guard fact sheet prints 34.37 m for the same 112 ft 9 in, and 112 ft 9 in is 34.37 m at 0.3048 m per foot. The discrepancy is 0.32 m, so the printed metric values are both recorded and the calculated metric value is stated beside them. The leaf does not select one as the conversion |
 | Height | 38 ft 10 in (11.9 m) | `p5-us-air-c130j-usaf` | A |
 | Wingspan | 132 ft 7 in (39.7 m) | `p5-us-air-c130j-usaf` | A |
 | Cargo compartment | Length 56 ft (16.9 m), width 123 in (3.12 m), height 9 ft (2.74 m); rear ramp length 119.9 in (3.05 m), width 118.9 in (3.02 m) | `p5-us-air-c130j-usaf` | A | Source arithmetic in this block is unreliable and was corrected on transcription: the fact sheet prints the rear ramp as 119.9 inches (3.12 meters) and the ramp width as 118.9 inches (36.24 meters), and prints the compartment width as 123 inches (meters) with no metric value. The metric values here are computed from the imperial figures. |
@@ -50,10 +50,10 @@ Content status: model-level draft with parameter coverage from two sources; stre
 
 The stretch is not cosmetic: the 15 ft fuselage extension increases length to 112 ft 9 in against 97 ft 9 in for the standard C-130J, raises the cargo compartment from 41 ft to 56 ft, and changes the ceiling, both payload figures and both range figures. None of these are shared with the `eq-us-air-c130j` leaf.
 
-The cited fact sheet does not publish a maximum takeoff weight for the J-30 column; it states 164,000 lb for the C-130J and 155,000 lb for the C-130E/H. That value is therefore left unrecorded rather than inferred. The French source held for this leaf states approximately 8 hours endurance, which is a French operational figure and is not merged with the US performance table.
+The main Air Force fact sheet publishes the maximum take-off weight for the C-130J and C-130E/H columns only. It was therefore left unrecorded in an earlier revision of this leaf. The Air National Guard fact sheet held as `p5-us-air-c130j30-ang-factsheet`, from a wing that flies the J-30, states the figure directly for the J-30 column and states that the 164,000 lb limit is a structural limit identical to the standard C-130J. The value is now recorded and the row cites that artifact. The French source held for this leaf states approximately 8 hours endurance, which is a French operational figure and is not merged with the US performance table.
 
 ## Source References
 
 - `p5-fr-air-c130j30`: `raw/sources/ministere_des_armees/p5-fr-air-c130j30/manifest.md`
 - `p5-us-air-c130j-usaf`: `raw/sources/us_air_force/p5-us-air-c130j-usaf/manifest.md`
-- `p5-us-air-c130j30-ang-factsheet`: `raw/sources/us_air_force/p5-us-air-c130j30-ang-factsheet/manifest.md`
+- `p5-us-air-c130j30-ang-factsheet`: `raw/sources/us_air_force/p5-us-air-c130j30-ang-factsheet/manifest.md` — J-30 maximum take-off weight and payload column

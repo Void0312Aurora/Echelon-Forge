@@ -37,6 +37,11 @@ Content status: model-level draft with first-party parameter coverage; KC2 and K
 | Maximum altitude | 41,000 ft | `p5-uk-air-voyager-kc2-raf` | A |
 | Refuelling fit (KC2) | Two underwing pods, for fast jets | `p5-uk-air-voyager-kc2-raf` | A |
 | Fuel carried | Up to 109 tonnes | `p5-uk-air-voyager-kc2-raf` | A | The source states the aircraft can carry up to 109 tonnes of fuel. This is a carried-fuel load, not an offload rate, a transferable quantity or an internal tank capacity; the source does not state how much of it is transferable per sortie |
+| Fuel capacity (alternative reading) | Up to 111,000 kg (245,000 lb) | `p5-uk-air-voyager-kc2-ukdf` | C | Recorded alternative to the 109-tonne row. The two readings differ by 2,000 kg and both are retained; neither is preferred and neither is averaged |
+| Fuel offload | 65,000 kg (143,000 lb) at 1,000 nautical miles (1,852 km) with two hours on station | `p5-uk-air-voyager-kc2-ukdf` | C | An offload quantity under a stated mission profile, which is a different quantity from the carried-fuel rows above and is not derived from either |
+| Maximum fuel offload (type figure) | Up to 70 tonnes (154,000 lb) during a one-hour loitering mission at 1,250 nautical miles (2,315 km) from take-off | `p5-eu-air-a330mrtt-airbus` | B | The manufacturer's own offload figure for the A330 MRTT family, of which the Voyager is the British fit. It is a family value under a stated profile and is not asserted as Voyager-specific |
+| Payload (type figure) | Up to 45 tonnes (99,000 lb), of which 37 tonnes (82,000 lb) of cargo | `p5-eu-air-a330mrtt-airbus` | B | Family-level manufacturer figure, recorded as such |
+| Maximum speed (alternative reading) | 880 km/h | `p5-uk-air-voyager-kc2-ukdf` | C | The Royal Air Force page states 330 kt, which is about 611 km/h. The two readings are not reconciled; both are retained |
 | Passenger capacity | Up to 291 passengers, with the cargo hold available for freight | `p5-uk-air-voyager-kc2-raf` | A |
 | Aeromedical fit | Up to 40 stretchers and three critical care patients | `p5-uk-air-voyager-kc2-raf` | A |
 | Sensors | Weather radar | `p5-uk-air-voyager-kc2-raf` | A |
@@ -46,8 +51,17 @@ Content status: model-level draft with first-party parameter coverage; KC2 and K
 
 ## Configuration Boundary
 
-The page describes the Voyager as a whole and distinguishes KC2 from KC3 only by refuelling fit: the KC2 has two underwing pods, the KC3 adds a centreline hose for large aircraft. All other figures above are common to both marks and are not asserted as KC2-unique. The 109-tonne figure is a total offload capacity, not an internal tank capacity, and the source notes that fuel is stored in existing tanks with the cabin left available. Structural masses and range are not published on the page and are not recorded.
+The page describes the Voyager as a whole and distinguishes KC2 from KC3 only by refuelling fit: the KC2 has two underwing pods, the KC3 adds a centreline hose for large aircraft. All other figures above are common to both marks and are not asserted as KC2-unique. The 109-tonne figure is a carried-fuel load, not an internal tank capacity, and the source notes that fuel is stored in existing tanks with the cabin left available. Structural masses and range are not published on the page and are not recorded.
+
+Three packages now supply fuel and payload quantities and they are not the same quantity:
+- The Royal Air Force page gives up to 109 tonnes of fuel carried.
+- The UK Defence Forum thread gives up to 111,000 kg (245,000 lb) of fuel capability, a 2,000 kg higher reading, and an offload of 65,000 kg at 1,000 nautical miles with two hours on station.
+- The Airbus A330 MRTT page gives up to 70 tonnes (154,000 lb) of maximum fuel offload under a one-hour loiter at 1,250 nautical miles, and up to 45 tonnes of payload of which 37 tonnes is cargo.
+
+A carried load, a capacity and an offload under a stated profile are three different quantities. None of the three is derived from another, none is averaged, and the 111,000 kg capacity reading is not attributed to the manufacturer because the page fetch did not confirm the capacity figure that the search return showed. The 330 kt maximum speed on the Royal Air Force page and the 880 km/h reading on the forum thread are likewise both retained and unreconciled.
 
 ## Source References
 
-- `p5-uk-air-voyager-kc2-raf`: `raw/sources/royal_air_force/p5-uk-air-voyager-kc2-raf/manifest.md`
+- `p5-uk-air-voyager-kc2-raf`: `raw/sources/royal_air_force/p5-uk-air-voyager-kc2-raf/manifest.md` — Royal Air Force platform page
+- `p5-uk-air-voyager-kc2-ukdf`: `raw/sources/uk_defence_forum/p5-uk-air-voyager-kc2-ukdf/manifest.md` — fuel capability and offload readings
+- `p5-eu-air-a330mrtt-airbus`: `raw/sources/airbus/p5-eu-air-a330mrtt-airbus/manifest.md` — manufacturer family offload and payload figures
