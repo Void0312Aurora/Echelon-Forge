@@ -22,7 +22,7 @@ VECTOR_NAMES = (
 
 def test_authority_schema_selector_and_python_required_fields_are_one_surface() -> None:
   schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
-  assert len(schema["oneOf"]) == 4
+  assert len(schema["oneOf"]) == 5
   for kind, spec in AUTHORITY_SPECS.items():
     definition = schema["$defs"][kind]
     assert set(definition["required"]) == set(spec.required_fields)

@@ -137,7 +137,9 @@ def test_native_conformance_seam_revalidates_projection_and_ingests_low_level_ar
   assert "validate_runtime_composition_projection_json" in source
   assert "parse_simulation_composition_manifest_json" in source
   assert "parse_resolved_composition_json" in source
-  assert "SimulationKernel kernel(resolved_manifest)" in source
+  assert "validate_resolved_execution_plan_json" in source
+  assert "resolved_execution_plan" in source
+  assert "SimulationKernel kernel(execution_plan.empty() ? resolved_manifest : execution_plan)" in source
   assert "requested.value() == resolved.value().manifest" in source
   assert "profile_projection_matches_artifacts" in source
   assert "canonical_sha256_hex" in source
@@ -164,6 +166,7 @@ def test_cordis_producer_matches_frozen_request_lock_and_manifest() -> None:
     "admitted_catalog_lock.v1.json": "default_admitted_catalog_lock.v1.json",
     "default_compatibility_manifest.requested.json": "default_compatibility_manifest.requested.json",
     "default_compatibility_manifest.resolved.json": "default_compatibility_manifest.resolved.json",
+    "default_resolved_execution_plan.v1.json": "default_resolved_execution_plan.v1.json",
     "runtime_profile_projection.v1.json": "default_runtime_profile_projection.v1.json",
     "runtime_package_provenance.v1.json": "default_runtime_package_provenance.v1.json",
     "runtime_package_diagnostics.v1.json": "default_runtime_package_diagnostics.v1.json",
@@ -257,6 +260,7 @@ def test_cordis_producer_matches_frozen_request_lock_and_manifest() -> None:
       str(output / "default_compatibility_manifest.requested.json"),
       str(output / "default_compatibility_manifest.resolved.json"),
       str(output / "runtime_profile_projection.v1.json"),
+      str(output / "default_resolved_execution_plan.v1.json"),
     ],
     cwd=REPO_ROOT,
     check=False,

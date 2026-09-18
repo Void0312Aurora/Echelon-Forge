@@ -14,6 +14,7 @@ import {
   resolveRuntimePackage,
   sha256Bytes,
   sha256Hex,
+  buildResolvedExecutionPlan,
 } from './index.mjs';
 
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -112,6 +113,24 @@ async function main() {
   if (JSON.stringify(profileProjection) !== JSON.stringify(profileProjectionFixture)) {
     throw new Error('profile projection does not match the owner-derived fixture');
   }
+  const backendManifest = resolvedManifest.manifest?.backend_request ?? resolvedManifest.backend_request;
+  const backendEntry = lock.entries.find((entry) => entry.category === 'backend');
+  if (!backendManifest || !backendEntry) throw new Error('resolved plan backend owner input is absent');
+  const backendRequest = {
+    backend_profile_id: backendManifest.backend_profile_id,
+    provider_id: backendManifest.provider_id,
+    provider_implementation_version: backendEntry.implementation_version,
+    required_capabilities: [...backendManifest.required_capabilities].sort(),
+    schema_version: 'echelon_forge.runtime_backend_provider_request.v1',
+  };
+  const resolvedExecutionPlan = buildResolvedExecutionPlan({
+    request,
+    catalogLock: lock,
+    profileProjection,
+    backendRequest,
+    requestedManifest: lowLevelManifest,
+    resolvedManifest,
+  });
   const packageProvenance = buildRuntimePackageProvenance(resolvedPackage, {
     request,
     catalogLock: lock,
@@ -130,6 +149,7 @@ async function main() {
     writeFile(resolve(output, 'runtime_profile_projection.v1.json'), `${JSON.stringify(profileProjection, null, 2)}\n`),
     writeFile(resolve(output, 'default_compatibility_manifest.requested.json'), `${JSON.stringify(lowLevelManifest, null, 2)}\n`),
     writeFile(resolve(output, 'default_compatibility_manifest.resolved.json'), `${JSON.stringify(resolvedManifest, null, 2)}\n`),
+    writeFile(resolve(output, 'default_resolved_execution_plan.v1.json'), JSON.stringify(resolvedExecutionPlan)),
     writeFile(resolve(output, 'runtime_package_provenance.v1.json'), `${JSON.stringify(packageProvenance, null, 2)}\n`),
     writeFile(resolve(output, 'runtime_package_diagnostics.v1.json'), `${JSON.stringify(packageDiagnostics, null, 2)}\n`),
     writeFile(resolve(output, 'producer_metadata.json'), `${JSON.stringify({
