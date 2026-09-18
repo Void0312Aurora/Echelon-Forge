@@ -37,10 +37,11 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
   active program for immutable admitted kernels, host-owned replacement,
   consolidated composition authority, physical facade boundaries, lifecycle-
   governed controls, and sustainable CI/evidence evolution. P0 authority and
-  baseline, P1 target decisions, and the complete P3-A/P3-B/P3-C public
-  contract, authority-envelope, ledger, and compatibility foundations are
-  accepted; P2 control-lifecycle and P4-P8 remain open, while no runtime
-  migration or production cutover is accepted.
+  baseline, P1 target decisions, the complete P3-A/P3-B/P3-C public contract,
+  authority-envelope, ledger, and compatibility foundations, and the P4-A
+  dark/shadow host lifecycle and the P4-B/P4-C internal candidate tasks are
+  accepted; P2 control-lifecycle and P5-P8 remain open, while no production
+  truth publication, runtime migration or production cutover is accepted.
 
 ## Completed Work
 
@@ -89,6 +90,12 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
   kill/backout, ACL and snapshot gates. The final repaired snapshot passed with
   no unresolved Critical/High/Medium finding; P5-B/P5-D production authority
   remains held.
+- [Long-horizon architecture governance P4-A review — 2026-08-27](reviews/long_horizon_architecture_governance_p4a_review_20260827.md):
+  independent `gpt-5.6-sol` max confirmation of the dark/shadow host lifecycle,
+  bounded candidate settlement, lease/result linearization, mutex-external CAS
+  fault injection, timeout retry behavior and physical boundary. It passed with
+  no unresolved Critical/High/Medium finding; P4-B/P4-C and production authority
+  remain open.
 - [Cordis simulation composition program architecture review — 2026-08-17](reviews/cordis_simulation_composition_program_review_20260817.md):
   advisory macro review that retains the native composition direction while
   requiring authority and program-boundary revision before later

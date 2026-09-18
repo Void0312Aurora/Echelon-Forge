@@ -1,7 +1,7 @@
 # P4-C Internal Candidate Seam
 
-Status: `2026-09-19` implementation candidate; focused repair pass and
-candidate-scope independent review complete.
+Status: `2026-09-19` P4-C candidate-scope implementation and acceptance
+complete; production gates remain open.
 This packet records the first P4-C integration slice after the independently
 passed P4-B dark/shadow handoff. It is evidence for an internal candidate only,
 not production acceptance.
@@ -81,13 +81,18 @@ Observed results:
 
 - MSVC/Ninja build: `ef_runtime_host_candidate_test` and
   `ef_runtime_kernel_candidate_test` linked successfully.
-- focused CTest: `3/3` passed (`runtime_host_candidate`,
-  `runtime_kernel_candidate`, and host boundary).
-- native P4-C candidate: `3` test cases, `44/44` assertions passed, including
+- focused CTest: `4/4` passed (`runtime_host_candidate`,
+  `runtime_kernel_candidate`, candidate common-surface parity, and host
+  boundary).
+- native P4-C candidate: `5` test cases, `2,611/2,611` assertions passed, including
   shadow-mode batch setup, episode step, terminal-to-reset receipt flow,
   terminal write rejection, post-reset step, plan/composition binding, stale
   incarnation/generation rejection and teardown.
-- focused Python host/state-transfer/composition/P4-C gates: `42 passed`,
+- candidate caller inventory: `0` maintained violations, `0` unclassified
+  callers.
+- candidate stress: `256` epochs x `4` entities, `2,611/2,611` assertions.
+- candidate/maintained common-surface parity: `1` case, `26/26` assertions.
+- focused Python host/state-transfer/composition/P4-C gates: `35 passed`,
   including strict receipt canonicalization/replay, receipt-only generation
   updates, the explicitly inventoried
   build-tree-only manifest caller, and production-boundary checks.
@@ -98,9 +103,8 @@ Observed results:
   contained at least twelve durable `aborted` owner records.
 - independent review (`gpt-5.6-sol`, `max`): `PASS` for the P4-C
   build-tree/internal candidate scope, with no remaining Critical/High/Medium
-  or Low finding. The final main-thread rerun reproduced the native `44/44`,
-  CTest `3/3`, and Python `42 passed` results after the receipt-acknowledge
-  increment.
+  or Low finding. The final main-thread rerun reproduced the candidate,
+  parity, rollback, CTest and Python results recorded above.
 
 ## Explicit Non-Claims
 
@@ -113,13 +117,16 @@ This packet does not claim:
   retirement;
 - cross-process WAL locking, released-version N-1 fixtures, or production
   ArtifactLedger qualification;
-- complete recovery transfer, stress/resource qualification, process restart,
-  or a P5-D package/cutover rollback drill. The replacement failure path above
-  is candidate-owned test evidence only.
+- complete recovery transfer, production/maintained stress-resource
+  qualification, process restart,
+  or a P5-D package/cutover rollback drill. The candidate stress and
+  common-surface parity evidence above do not claim full maintained facade
+  surface parity; the replacement failure path above is candidate-owned test
+  evidence only.
 - source-level `wheel.packages = ["python", ...]` remains broad, but the
   candidate module is explicitly excluded by `tool.scikit-build.wheel.exclude`;
   it is not imported by maintained runtime code.
 
-Those remain P4-C review residuals or later P5 gates. The current candidate is
-therefore `implementation-ready-for-independent-review`, not an accepted
-cluster and not a production truth path.
+Those remain later P5-P8 gates. The P4-C candidate-scope task and its specified
+candidate verification are complete; this remains an internal candidate and
+not a production truth path.

@@ -35,8 +35,9 @@ packet 只作为归档 provenance。
   authority、物理 facade boundary、具备生命周期的 control，以及可持续 CI/evidence
   演进的 active program。P0 authority/baseline、P1 target decision，以及完整的
   P3-A/P3-B/P3-C public contract、authority-envelope、ledger 与 compatibility
-  foundation 已接受；P2 control-lifecycle 与 P4-P8 仍开放，尚无 runtime 迁移或
-  production cutover 被接受。
+  foundation，以及 P4-A dark/shadow host lifecycle 与 P4-B/P4-C internal
+  candidate task 已接受；P2 control-lifecycle 与 P5-P8 仍开放，尚无 production
+  truth 发布、runtime 迁移或 production cutover 被接受。
 
 ## 已完成工作
 
@@ -80,6 +81,11 @@ packet 只作为归档 provenance。
   compatibility、fencing、recovery、kill/backout、ACL 与 snapshot gate 进行对抗及
   修复审查；最终快照无未解决 Critical/High/Medium finding，P5-B/P5-D 的
   production authority 仍被保留。
+- [长期架构治理 P4-A 审查 — 2026-08-27（英文）](reviews/long_horizon_architecture_governance_p4a_review_20260827.md)：
+  独立 `gpt-5.6-sol` max reviewer 确认 dark/shadow host lifecycle、有界 candidate
+  settlement、lease/result 线性化、mutex 外 CAS fault injection、timeout retry
+  行为与物理边界；无未解决 Critical/High/Medium finding，P4-B/P4-C 与
+  production authority 仍开放。
 - [Cordis 仿真组合计划架构审阅 — 2026-08-17](reviews/cordis_simulation_composition_program_review_20260817.zh.md)：
   总体咨询性审阅；保留原生 composition 方向，但要求在后续 system/plugin/host
   阶段前修订权威与计划边界。
