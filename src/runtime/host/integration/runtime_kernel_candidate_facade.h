@@ -26,6 +26,7 @@ class RuntimeKernelCandidateFacadeAdapter final {
     // rejected; this candidate seam does not claim atomic batch rollback.
     apply_spawn_batch(const std::vector<WorldSpawnRequest> &requests);
     [[nodiscard]] bool step_batch(std::size_t world_count = 1);
+    [[nodiscard]] bool set_time_step(double dt);
     [[nodiscard]] bool try_get_entity_kinematics(const RuntimeEntityRef &entity,
                                                  WorldEntityKinematics *state);
     [[nodiscard]] bool try_set_entity_kinematics(const RuntimeEntityRef &entity,

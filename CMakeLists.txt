@@ -875,6 +875,23 @@ target_include_directories(ef_runtime_kernel_candidate_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
+add_executable(ef_runtime_kernel_candidate_parity_test
+    src/tests/test_main.cpp
+    src/tests/test_runtime_kernel_candidate_parity.cpp
+)
+target_link_libraries(ef_runtime_kernel_candidate_parity_test PRIVATE
+    ef_runtime_kernel_candidate
+    ef_facade
+    ef_runtime_state_owner_adapters_candidate
+    ef_gpu_experiments
+    doctest::doctest
+)
+target_include_directories(ef_runtime_kernel_candidate_parity_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/host
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
 FetchContent_Declare(
     doctest
     GIT_REPOSITORY https://github.com/doctest/doctest.git
@@ -1110,6 +1127,9 @@ set_tests_properties(runtime_host_candidate PROPERTIES
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 add_test(NAME runtime_kernel_candidate COMMAND ef_runtime_kernel_candidate_test)
 set_tests_properties(runtime_kernel_candidate PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+add_test(NAME runtime_kernel_candidate_parity COMMAND ef_runtime_kernel_candidate_parity_test)
+set_tests_properties(runtime_kernel_candidate_parity PROPERTIES
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 add_test(
     NAME runtime_host_candidate_boundary

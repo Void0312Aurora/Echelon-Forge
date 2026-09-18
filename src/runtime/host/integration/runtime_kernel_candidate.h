@@ -68,6 +68,7 @@ class RuntimeKernelCandidate final {
     [[nodiscard]] std::optional<RuntimeEntityRef>
     spawn_unit(const RuntimeWorldRef &world, const WorldSpawnRequest &request);
     [[nodiscard]] bool step(const RuntimeWorldRef &world);
+    [[nodiscard]] bool set_time_step(const RuntimeWorldRef &world, double dt);
     [[nodiscard]] bool submit_episode(
         const RuntimeEpisodeRef &expected_episode, RuntimeEpisodeIntentKind kind,
         RuntimeIdentity128 idempotency_key, std::string payload_sha256,
@@ -92,11 +93,13 @@ class RuntimeKernelCandidate final {
     std::shared_ptr<RuntimeStateTransferOwnerRegistry> registry_;
     RuntimeHostCandidate host_;
     RuntimeCandidateCompositionSnapshot sealed_composition_;
+    std::string journal_path_;
     RuntimeIncarnationRef incarnation_;
     std::uint64_t world_generation_ = 1;
     std::uint64_t episode_step_sequence_ = 0;
     std::uint64_t next_action_idempotency_sequence_ = 1;
     std::uint64_t next_entity_generation_ = 1;
+    bool owns_journal_path_ = false;
     bool started_ = false;
     bool stopped_ = false;
 };

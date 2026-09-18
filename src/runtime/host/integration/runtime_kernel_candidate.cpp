@@ -167,11 +167,13 @@ RuntimeKernelCandidate::RuntimeKernelCandidate(RuntimeKernelCandidateConfig conf
     const RuntimeIdentity128 resource = mint_candidate_resource();
     control_ = std::make_shared<Control>(resource, kernel_);
     std::string journal_path = config_.journal_path;
+    owns_journal_path_ = journal_path.empty();
     if (journal_path.empty()) {
         journal_path = (std::filesystem::temp_directory_path() /
                         ("echelon_forge_p4c_candidate_" + std::to_string(resource.low) + ".wal"))
                            .string();
     }
+    journal_path_ = journal_path;
     journal_ = std::make_shared<FileJournal>(journal_path);
     registry_ = SimulationKernelStateOwnerBridge::create_registry({
         .kernel = kernel_.get(),
@@ -203,8 +205,17 @@ RuntimeKernelCandidate::RuntimeKernelCandidate(RuntimeKernelCandidateConfig conf
 }
 
 RuntimeKernelCandidate::~RuntimeKernelCandidate() {
+    bool shutdown_completed = stopped_;
     if (!stopped_) {
-        (void)shutdown(0, 0);
+        shutdown_completed = static_cast<bool>(shutdown(0, 0).status);
+    }
+    registry_.reset();
+    control_.reset();
+    kernel_.reset();
+    journal_.reset();
+    if (shutdown_completed && owns_journal_path_ && !journal_path_.empty()) {
+        std::error_code error;
+        (void)std::filesystem::remove(journal_path_, error);
     }
 }
 
@@ -436,6 +447,18 @@ bool RuntimeKernelCandidate::step(const RuntimeWorldRef &world) {
                           {.high = 0x4550432D53544550ULL, .low = idempotency_sequence},
                           valid_digest('c'),
                           &receipt);
+}
+
+bool RuntimeKernelCandidate::set_time_step(const RuntimeWorldRef &world, double dt) {
+    if (!validate_world(world) || kernel_ == nullptr) {
+        return false;
+    }
+    try {
+        kernel_->set_time_step(dt);
+        return true;
+    } catch (...) {
+        return false;
+    }
 }
 
 bool RuntimeKernelCandidate::try_get_entity_kinematics(

@@ -9,6 +9,7 @@ from python.rl.runtime.world_batch.candidate_adapter import EpochEntityRef
 from python.rl.runtime.world_batch.candidate_adapter import EpochReferenceFence
 from python.rl.runtime.world_batch.candidate_adapter import EpochWorldRef
 from python.rl.runtime.world_batch.candidate_adapter import episode_receipt_sha256
+from tools.maintenance import runtime_kernel_candidate_caller_inventory as caller_inventory
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -201,3 +202,32 @@ def test_p4c_candidate_is_build_tree_only_and_not_a_production_authority() -> No
     ]
     for source in production_sources:
         assert "runtime_kernel_candidate" not in source.read_text(encoding="utf-8")
+
+
+def test_p4c_caller_inventory_is_fresh_and_has_no_maintained_callers() -> None:
+    fixture = caller_inventory.load_fixture()
+    caller_inventory.validate_inventory(fixture)
+    assert fixture["classified_callers"]["build_tree_candidate"] == [
+        "src/runtime/host/integration/runtime_kernel_candidate.cpp",
+        "src/runtime/host/integration/runtime_kernel_candidate.h",
+        "src/runtime/host/integration/runtime_kernel_candidate_facade.cpp",
+        "src/runtime/host/integration/runtime_kernel_candidate_facade.h",
+    ]
+    assert fixture["classified_callers"]["test_only"] == [
+        "src/tests/test_runtime_kernel_candidate.cpp",
+        "src/tests/test_runtime_kernel_candidate_parity.cpp",
+        "tests/architecture/runtime_host/test_runtime_kernel_candidate_contract.py",
+    ]
+    assert fixture["classified_callers"]["shadow_only"] == [
+        "python/rl/runtime/world_batch/candidate_adapter.py",
+    ]
+    assert fixture["maintained_surface_violations"] == []
+    assert fixture["classified_callers"]["unclassified"] == []
+
+
+def test_p4c_caller_inventory_rejects_tampered_reference_sets() -> None:
+    fixture = caller_inventory.load_fixture()
+    forged = copy.deepcopy(fixture)
+    forged["classified_callers"]["build_tree_candidate"].append("src/main.cpp")
+    with pytest.raises(caller_inventory.InventoryError, match="stale"):
+        caller_inventory.validate_inventory(forged)
