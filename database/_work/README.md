@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/_work/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-17`
+Last verified: `2026-09-19`
 Content status: reduced write set for the equipment work while the branch lags `origin/main`. This file is a work-scope declaration, not a data contract and not a maturity claim.
 
 ## Responsibility
@@ -23,7 +23,7 @@ promote any equipment record above its current backlog status. It does not repla
 
 ## Why This Scope Is Reduced
 
-The branch was cut at `d1ebb5d3` and carries exactly one own commit, `3fc57c7e`. `origin/main` has
+The branch was cut at `d1ebb5d3` and carries 32 database-only commits after that base. `origin/main` has
 advanced 218 commits since that base. The divergence is real but the conflict surface is empty:
 `origin/main` contains zero files under `database/`, so the whole tree this work touches is
 branch-exclusive. Anything written outside `database/` would land in the 218-commit moving surface
@@ -64,7 +64,7 @@ These files are single-writer at any time. Do not split any of them across concu
 
 ## Closure Gate
 
-Run `python database/_work/check_equipment_tree.py`. Five conditions:
+Run `python database/_work/check_equipment_tree.py`. Six conditions:
 
 | Id | Condition | Automated |
 | --- | --- | --- |
@@ -72,11 +72,14 @@ Run `python database/_work/check_equipment_tree.py`. Five conditions:
 | `C2` | Every backlog `catalog_path` exists and its leaf carries an `Equipment ID` equal to the CSV `equipment_id`. | yes |
 | `C3` | Backlog `status` and `coverage.csv` `status` agree for every shared candidate. | yes |
 | `C4` | No `D`-tier source, and no source package missing a retention note. | yes |
-| `C5` | `git status --porcelain -- database` resolves to files inside the write set only. | no, needs the index |
+| `C5` | A source package names one locatable artifact rather than an unnamed or aggregate source claim. | yes |
+| `C6` | Retrieval records do not name multiple artifacts; unretrieved citations remain advisory. | yes |
 
 A cluster is done only when its own condition is green and no other condition has
 regressed. `C4` also reports a rights-field count as an advisory, because the
 admission standard requires that field of a ledger row rather than of a raw package.
+`git status --porcelain -- database` remains a separate write-set check because it
+needs the index rather than the data-tree checker.
 
 ## Current State
 

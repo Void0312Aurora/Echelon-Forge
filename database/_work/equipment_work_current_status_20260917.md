@@ -1,6 +1,6 @@
 # Equipment Work Current Status
 
-Status: `2026-09-17` measured state of the equipment tree under the reduced write set.
+Status: `2026-09-19` measured state of the equipment tree under the reduced write set.
 
 Parent: [README.md](README.md)
 
@@ -8,7 +8,7 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/_work/equipment_work_current_status_20260917.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-17`
+Last verified: `2026-09-19`
 
 This revision replaces the first measurement pass, which was produced by a
 hand-written audit and reported three deviations that do not survive the runnable
@@ -21,11 +21,11 @@ check in [check_equipment_tree.py](check_equipment_tree.py). See
 | --- | --- |
 | Branch | `codex/database-scaffold` |
 | Base | `d1ebb5d3` |
-| Off-base commits | 4 |
+| Off-base commits | 32 |
 | Behind `origin/main` | 218 commits |
-| Ahead of `origin/main` | 4 commits |
+| Ahead of `origin/main` | 32 commits |
 | `origin/main` files under `database/` | 0 |
-| Tracked files under `database/` | 511 |
+| Tracked files under `database/` | 601 |
 | Merge dry-run conflicts (`HEAD` vs `origin/main`) | 0 |
 
 `origin/main` carries no files under `database/`, so the tree this work touches is
@@ -43,32 +43,28 @@ Command: `python database/_work/check_equipment_tree.py`
 | `C2` backlog leaf binding (`Equipment ID`) | PASS after the `E2` backfill |
 | `C3` backlog vs coverage status | PASS, 47 of 47 coverage rows agree |
 | `C4` source admission floor | PASS after the `E3` retention backfill |
+| `C5` source-artifact consistency | PASS, no unnamed or aggregate package claims |
+| `C6` retrieval record | PASS, 74 unretrieved citations remain advisory; 186 packages lack a retrieval block |
 
 Measured counts:
 
 | Metric | Value |
 | --- | --- |
-| Source packages (manifests) | 193 |
-| Catalog leaves (carry `## Parameters`) | 85 |
-| Distinct source ids referenced by leaves | 170 |
+| Source packages (manifests) | 273 |
+| Catalog leaves (carry `## Parameters`) | 109 |
+| Distinct source ids referenced by leaves | 273 |
 | Leaves without `Equipment ID` | 0 |
 | Backlog rows | 118 |
 | Coverage rows | 47 |
-| Status: `cataloged` / `parameter_complete` / `held` | 62 / 47 / 9 |
+| Status: `cataloged` / `parameter_complete` / `held` | 52 / 58 / 8 |
 
 ## Leaf Completeness Against The Queue
 
-The queue calls 62 rows `cataloged`. That word covers two very different leaves:
-
-| Leaf form | Rows | Meaning |
-| --- | --- | --- |
-| Parameter table present | 42 | Extracted parameters exist; `Equipment ID` now bound |
-| Headings only, no `## Parameters` | 23 | A 500-to-900-byte stub, typically a title plus an operator bullet |
-
-All 23 stubs are air-domain. `cataloged` is accurate for both, because a draft leaf
-does exist, but the two are not comparable as evidence. A stub is not a record of
-anything extracted, so it is excluded from the binding requirement rather than
-counted as a defect.
+The queue calls 52 rows `cataloged`, and all 52 now point at leaves carrying a
+`## Parameters` table. The checker therefore reports `stub_rows_excluded: 0` for
+the non-held queue rows. A separate catalog scan still finds 82 README leaves
+without a parameter table; those are outside the current queue-binding defect and
+remain a depth follow-up rather than evidence of completed extraction.
 
 ## Coverage Semantics
 
@@ -85,9 +81,9 @@ vocabulary are not. This is a documentation drift, not a data defect.
 
 | Id | Finding | Evidence | State |
 | --- | --- | --- | --- |
-| `D2` | No source package records a rights field | `C4` `missing_rights_field_advisory`, 193 of 193 | open; the admission standard requires it of a ledger row |
-| `D3` | 23 air queue rows are bound to stub leaves with no parameter table | `stub_rows_excluded` in `C2`; all air-domain | open; `cataloged` is technically satisfied but carries no extracted evidence |
-| `D4` | Parameter table shape split | 57 leaves use `Field \| Value \| Source \| Tier \| Configuration/uncertainty`; 28 use `Parameter \| Value \| Source \| Confidence` | open |
+| `D2` | No source package records a rights field | `C4` `missing_rights_field_advisory`, 273 of 273 | open; the admission standard requires it of a ledger row |
+| `D3` | 82 catalog leaves outside the non-held queue have no parameter table | catalog scan: 191 README leaves, 109 with `## Parameters`, 82 without | open; scope and depth for these leaves still need a decision |
+| `D4` | Parameter table shape split | 57 leaves use a `Field`-based table; 52 use `Parameter \| Value \| Source \| Confidence`; 82 have no parameter table | open |
 | `D5` | Disjoint naval namespaces | `catalog/naval/ships/surface-combatant/` (tracked, 3 leaves) and the empty untracked `catalog/naval/surface-combatants/` coexist | open |
 | `D6` | Ledger not materialized | `sources/ledger/` holds a README only; `common.schema.json` has no source `$defs` while `FIELDS.md` describes 12 ledger fields | open |
 | `D7` | `coverage.csv` role and status vocabulary contradict its own README | 47 of 47 rows are `parameter_complete`, not `queued` | open |
@@ -110,7 +106,7 @@ The first pass reported these. All three are withdrawn.
 
 | Withdrawn | Why it was reported | Why it is withdrawn |
 | --- | --- | --- |
-| Dangling citation `p5-us-ground-m1a2sepv3-armytechnology` on the M1A2 SEP v3 leaf | An audit script that resolved source packages by declared `Source ID` under only part of the `raw/sources/` tree | The package exists at `raw/sources/army_technology/p5-us-ground-m1a2sepv3-armytechnology/manifest.md`, its `Source ID` line matches, and its own text names the geometry, crew, AGT1500, M256, FLIR, data-link and APU statements the leaf cites it for. `C1` confirms 0 dangling ids across 193 manifests |
+| Dangling citation `p5-us-ground-m1a2sepv3-armytechnology` on the M1A2 SEP v3 leaf | An audit script that resolved source packages by declared `Source ID` under only part of the `raw/sources/` tree | The package exists at `raw/sources/army_technology/p5-us-ground-m1a2sepv3-armytechnology/manifest.md`, its `Source ID` line matches, and its own text names the geometry, crew, AGT1500, M256, FLIR, data-link and APU statements the leaf cites it for. The then-current C1 run confirmed 0 dangling ids; the present tree also resolves all 273 manifests |
 | `coverage.csv` status not trustworthy | The file marked all 47 rows `parameter_complete` and held only 10 air rows against 70 in `air.csv` | The `air.csv` comparison was the observation, the conclusion was wrong. Both directions of the coverage-to-backlog comparison agree, so `C3` passes. The real defect is documentary and is now `D7` |
 | Source-reference count 169 against 193 on disk | The same partial-scan audit | The comparison mixed two denominators: 169 is the count of *distinct* ids leaves cite, against 193 *packages* on disk. Both are correct; the implied gap was not |
 
@@ -132,12 +128,12 @@ amend that standard.
 
 ## Next Action Order
 
-All four machine-checkable conditions pass. What remains is not a defect the check
+All six machine-checkable conditions pass. What remains is not a defect the check
 can see:
 
 1. `D4` shape convergence — required before new leaves are added, otherwise the split widens.
 2. `D7` and `D6` — reconcile the coverage documentation and materialize the ledger.
-3. `D2` source admission fields — 193 packages need a rights field before any ledger row is honest.
+3. `D2` source admission fields — 273 packages need a rights field before any ledger row is honest.
 4. `D8` and `D9` — write down the id and shared-leaf rules, in the form the tornado-ids and module precedents already imply.
 5. `D5` cleanup, `D3` stub depth.
 6. Domain expansion.

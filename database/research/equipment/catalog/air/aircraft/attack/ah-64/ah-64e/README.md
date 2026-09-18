@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/attack/ah-64/ah-64e/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-17`
+Last verified: `2026-09-19`
 Equipment ID: `eq-uk-air-apache-ah64e`
-Content status: parameter table present with per-field source and confidence. Retrieval status is recorded per package in each manifest's `Retrieval:` block. This leaf previously carried no parameter table; the table below was built on 2026-09-17, and every row is a family or E-variant reading rather than a separate UK measurement.
+Content status: parameter table present with per-field source and confidence. Retrieval status is recorded per package in each manifest's `Retrieval:` block. This is the UK queue-owned shared AH-64E variant record; it includes United States and United Kingdom operator context, and every row is a family or E-variant reading rather than a separate UK measurement.
 
 ## Identity
 
@@ -46,7 +46,7 @@ Content status: parameter table present with per-field source and confidence. Re
 
 ## Configuration Boundary
 
-This leaf carried no parameter table before 2026-09-17, and every row is a family or E-variant reading rather than a measurement of the United Kingdom aircraft.
+This leaf carried no parameter table before 2026-09-17. Its queue identity is the United Kingdom row, but the record is shared at the AH-64E variant level and is not a measurement of the United Kingdom aircraft alone.
 
 The Boeing page is the source of record for the crew, the fuselage length, the height, the rotor diameter, both mission weights, the climb rate and the fleet totals. Its stated length of 48.2 ft is a fuselage figure, and it is recorded as such beside the overall length of 17.73 m with rotors turning that the encyclopedic block gives. The two are not alternative readings of one quantity and the leaf does not treat them as such.
 
