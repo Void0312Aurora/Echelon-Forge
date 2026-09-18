@@ -1,10 +1,13 @@
 # Long-Horizon Architecture Governance Acceptance Contract
 
-Status: `2026-08-27` acceptance contract established; P0 authority/baseline,
+Status: `2026-09-19` acceptance contract established; P0 authority/baseline,
 P1 target decisions, P3-A/P3-B/P3-C contract, authority, ledger and
 compatibility foundations, and the P4-A dark/shadow host lifecycle are
 accepted, while the overall program remains `not accepted` because P2-A/P2-B,
-P4-B/P4-C and P5-P8 are not complete. The subordinate [P4-B remediation route](p4b_remediation_route_20260830.md)
+maintained caller parity/stress/rollback and P5-P8 are not complete. The P4-B
+dark/shadow candidate passed its independent review; the first P4-C
+build-tree/internal candidate seam passed candidate-scope independent review
+and is not production acceptance. The subordinate [P4-B remediation route](p4b_remediation_route_20260830.md)
 is implementation guidance only; this acceptance contract remains the release
 authority and cannot be replaced by that route.
 
@@ -14,7 +17,7 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/long_horizon_architecture_governance_acceptance_20260825.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-08-27`
+Last verified: `2026-09-13`
 
 ## Acceptance Decision
 
@@ -227,8 +230,9 @@ contract is `3 passed`, and adjacent authority/ledger contracts are `31 passed`.
 
 P4-A has no production mode and does not accept state-complete transfer, a
 versioned native episode handshake, an immutable candidate kernel seam,
-production packaging, caller migration or production cutover. Those remain
-P4-B/P4-C and P5 obligations.
+production packaging, caller migration or production cutover. P4-B now has a
+dark/shadow candidate that passed its independent review; P4-C and P5 remain
+open obligations.
 
 - the host state machine constructs, validates, quiesces the old truth,
   proves final transfer commit, boots from absent, recovers only from admitted
@@ -243,8 +247,14 @@ P4-B/P4-C and P5 obligations.
   pending state, Python mirrors, backend/device leases, and in-flight requests;
 - P4-A runs dark/shadow; P4-B state/episode semantics are a hard predecessor of
   the P4-C internal candidate seam;
-- P4-C migrates only test/shadow adapters and proves the candidate path
-  immutable, state-complete, fenced, and rollback-capable;
+- P4-C currently has a build-tree-only `RuntimeKernelCandidate`, a non-owning
+  world-batch/facade adapter, native/Python epoch-reference fences, and focused
+  teardown/stale-reference evidence. Its independent review, maintained-facade
+  parity, stress, state-complete rollback and caller-inventory gates remain
+  open;
+- P4-C must migrate only test/shadow adapters and prove the candidate path
+  immutable, state-complete, fenced, and rollback-capable before the cluster can
+  be accepted;
 - P4 cannot publish production truth, migrate maintained production callers,
   or retire production in-kernel rebuild.
 
