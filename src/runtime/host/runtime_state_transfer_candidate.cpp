@@ -4,6 +4,7 @@
 #include <array>
 #include <atomic>
 #include <bit>
+#include <chrono>
 #include <cstdio>
 #include <fcntl.h>
 #include <fstream>
@@ -12,6 +13,7 @@
 #include <mutex>
 #include <random>
 #include <sstream>
+#include <thread>
 #include <utility>
 
 #ifdef _WIN32
@@ -44,6 +46,44 @@ bool is_lower_hex_sha256(std::string_view value) {
 }
 
 std::string sha256_hex(std::string_view input);
+
+std::string hex_encode(const std::vector<std::uint8_t> &bytes) {
+    static constexpr char digits[] = "0123456789abcdef";
+    std::string encoded;
+    encoded.reserve(bytes.size() * 2);
+    for (const std::uint8_t byte : bytes) {
+        encoded.push_back(digits[byte >> 4]);
+        encoded.push_back(digits[byte & 0x0fU]);
+    }
+    return encoded;
+}
+
+bool hex_decode(std::string_view encoded, std::vector<std::uint8_t> *bytes) {
+    if (bytes == nullptr || encoded.size() % 2 != 0) {
+        return false;
+    }
+    const auto nibble = [](char value) -> int {
+        if (value >= '0' && value <= '9') {
+            return value - '0';
+        }
+        if (value >= 'a' && value <= 'f') {
+            return value - 'a' + 10;
+        }
+        return -1;
+    };
+    std::vector<std::uint8_t> decoded;
+    decoded.reserve(encoded.size() / 2);
+    for (std::size_t index = 0; index < encoded.size(); index += 2) {
+        const int high = nibble(encoded[index]);
+        const int low = nibble(encoded[index + 1]);
+        if (high < 0 || low < 0) {
+            return false;
+        }
+        decoded.push_back(static_cast<std::uint8_t>((high << 4) | low));
+    }
+    *bytes = std::move(decoded);
+    return true;
+}
 
 std::string_view journal_phase_name(RuntimeStateOwnerImportTransactionPhase phase) noexcept {
     switch (phase) {
@@ -84,7 +124,9 @@ parse_journal_phase(std::string_view value) noexcept {
 
 std::string journal_record_body(std::uint64_t sequence, std::string_view transaction_id,
                                 RuntimeStateOwnerImportTransactionPhase phase,
-                                std::string_view payload_sha256) {
+                                std::string_view payload_sha256,
+                                std::string_view pre_mutation_sha256 = {},
+                                const std::vector<std::uint8_t> &pre_mutation_payload = {}) {
     std::string body;
     body.reserve(64 + transaction_id.size() + payload_sha256.size());
     body.append(std::to_string(sequence));
@@ -94,6 +136,10 @@ std::string journal_record_body(std::uint64_t sequence, std::string_view transac
     body.append(journal_phase_name(phase));
     body.push_back('\t');
     body.append(payload_sha256);
+    body.push_back('\t');
+    body.append(pre_mutation_sha256);
+    body.push_back('\t');
+    body.append(hex_encode(pre_mutation_payload));
     return body;
 }
 
@@ -102,7 +148,7 @@ bool valid_journal_component(std::string_view value) noexcept {
 }
 
 bool parse_journal_record_line(std::string_view line, RuntimeStateTransferJournalRecord &record) {
-    std::array<std::string_view, 5> fields{};
+    std::array<std::string_view, 7> fields{};
     std::size_t field_count = 0;
     std::size_t start = 0;
     while (start <= line.size() && field_count < fields.size()) {
@@ -117,9 +163,11 @@ bool parse_journal_record_line(std::string_view line, RuntimeStateTransferJourna
         }
         start = delimiter + 1;
     }
-    if (field_count != fields.size() || fields[0].empty() || fields[1].empty() ||
-        fields[2].empty() || !is_lower_hex_sha256(fields[3]) ||
-        !is_lower_hex_sha256(fields[4])) {
+    if ((field_count != 5 && field_count != 7) || fields[0].empty() ||
+        fields[1].empty() || fields[2].empty() || !is_lower_hex_sha256(fields[3]) ||
+        (field_count == 7 && !fields[4].empty() &&
+         !is_lower_hex_sha256(fields[4])) ||
+        !is_lower_hex_sha256(fields[field_count == 7 ? 6 : 4])) {
         return false;
     }
     std::uint64_t sequence = 0;
@@ -137,25 +185,62 @@ bool parse_journal_record_line(std::string_view line, RuntimeStateTransferJourna
     if (!phase || !valid_journal_component(fields[1])) {
         return false;
     }
-    const std::string body = journal_record_body(sequence, fields[1], *phase, fields[3]);
-    if (sha256_hex(body) != fields[4]) {
+    std::vector<std::uint8_t> pre_mutation_payload;
+    if (field_count == 7 &&
+        !hex_decode(fields[5], &pre_mutation_payload)) {
+        return false;
+    }
+    if (field_count == 7 &&
+        ((fields[4].empty() && !pre_mutation_payload.empty()) ||
+         (!fields[4].empty() &&
+          sha256_hex(std::string_view(
+              reinterpret_cast<const char *>(pre_mutation_payload.data()),
+              pre_mutation_payload.size())) != fields[4]))) {
+        return false;
+    }
+    const std::string body = field_count == 7
+                                 ? journal_record_body(sequence, fields[1], *phase,
+                                                       fields[3], fields[4],
+                                                       pre_mutation_payload)
+                                 : [&] {
+                                       std::string legacy;
+                                       legacy.reserve(64 + fields[1].size() +
+                                                      fields[3].size());
+                                       legacy.append(fields[0]);
+                                       legacy.push_back('\t');
+                                       legacy.append(fields[1]);
+                                       legacy.push_back('\t');
+                                       legacy.append(fields[2]);
+                                       legacy.push_back('\t');
+                                       legacy.append(fields[3]);
+                                       return legacy;
+                                   }();
+    if (sha256_hex(body) != fields[field_count == 7 ? 6 : 4]) {
         return false;
     }
     record = {.sequence = sequence,
               .transaction_id = std::string(fields[1]),
               .phase = *phase,
-              .payload_sha256 = std::string(fields[3])};
+              .payload_sha256 = std::string(fields[3]),
+              .pre_mutation_sha256 = field_count == 7
+                                         ? std::string(fields[4])
+                                         : std::string{},
+              .pre_mutation_payload = std::move(pre_mutation_payload)};
     return true;
 }
 
 bool valid_journal_transition(
     const std::optional<RuntimeStateTransferJournalRecord> &previous,
     RuntimeStateOwnerImportTransactionPhase next,
-    std::string_view payload_sha256) noexcept {
+    std::string_view payload_sha256,
+    std::string_view pre_mutation_sha256 = {},
+    const std::vector<std::uint8_t> &pre_mutation_payload = {}) noexcept {
     if (!previous) {
         return next == RuntimeStateOwnerImportTransactionPhase::Prepared;
     }
-    if (previous->payload_sha256 != payload_sha256) {
+    if (previous->payload_sha256 != payload_sha256 ||
+        previous->pre_mutation_sha256 != pre_mutation_sha256 ||
+        previous->pre_mutation_payload != pre_mutation_payload) {
         return false;
     }
     switch (previous->phase) {
@@ -212,10 +297,10 @@ JournalScanResult scan_journal_file(const std::string &path) {
     }
     const std::size_t complete_end = bytes.rfind('\n');
     if (complete_end == std::string::npos) {
-        if (!bytes.empty()) {
-            result.status = failure(RuntimeStateTransferError::ImportJournalCorrupt,
-                                    "state-transfer journal has no complete frame");
-        }
+        // No newline means no frame ever reached the durable framing
+        // boundary. Treat the entire file as a torn first append and let the
+        // caller truncate it to zero; a newline-terminated malformed frame is
+        // still rejected below as corruption.
         return result;
     }
     result.valid_size = static_cast<std::uint64_t>(complete_end + 1);
@@ -249,7 +334,9 @@ JournalScanResult scan_journal_file(const std::string &path) {
                 ? std::nullopt
                 : std::optional<RuntimeStateTransferJournalRecord>(*previous);
         if (!valid_journal_transition(previous_record, record.phase,
-                                      record.payload_sha256)) {
+                                      record.payload_sha256,
+                                      record.pre_mutation_sha256,
+                                      record.pre_mutation_payload)) {
             result.status = failure(RuntimeStateTransferError::ImportJournalCorrupt,
                                     "state-transfer journal phase transition is invalid");
             return result;
@@ -267,14 +354,23 @@ JournalScanResult scan_journal_file(const std::string &path) {
     return result;
 }
 
-bool append_journal_bytes_and_sync(const std::string &path, std::string_view bytes) noexcept {
+bool append_journal_record_with_lock(
+    const std::string &path, std::string_view transaction_id,
+    RuntimeStateOwnerImportTransactionPhase phase, std::string_view payload_sha256,
+    std::string_view pre_mutation_sha256,
+    const std::vector<std::uint8_t> &pre_mutation_payload,
+    std::uint64_t *sequence_out) noexcept {
     std::FILE *file = nullptr;
     int descriptor = -1;
 #ifdef _WIN32
-    if (_sopen_s(&descriptor, path.c_str(),
-                 _O_WRONLY | _O_APPEND | _O_CREAT | _O_BINARY,
-                 _SH_DENYWR, _S_IREAD | _S_IWRITE) != 0 || descriptor < 0) {
+    for (int attempt = 0; attempt < 1000 && descriptor < 0; ++attempt) {
+        if (_sopen_s(&descriptor, path.c_str(),
+                     _O_WRONLY | _O_APPEND | _O_CREAT | _O_BINARY,
+                     _SH_DENYWR, _S_IREAD | _S_IWRITE) == 0 && descriptor >= 0) {
+            break;
+        }
         descriptor = -1;
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     if (descriptor >= 0) {
         file = _fdopen(descriptor, "ab");
@@ -295,8 +391,40 @@ bool append_journal_bytes_and_sync(const std::string &path, std::string_view byt
     if (file == nullptr) {
         return false;
     }
-    const bool wrote =
-        std::fwrite(bytes.data(), 1, bytes.size(), file) == bytes.size();
+    // The advisory lock is acquired before rescanning and assigning the
+    // sequence.  This closes the cross-process duplicate-sequence race: a
+    // second writer must observe the first writer's durable tail before it can
+    // construct its own frame (Windows' share-deny open provides the same
+    // exclusion).
+    const JournalScanResult scan = scan_journal_file(path);
+    if (!scan.status || scan.valid_size != scan.file_size) {
+        std::fclose(file);
+        return false;
+    }
+    const auto previous = std::find_if(
+        scan.records.rbegin(), scan.records.rend(),
+        [&](const RuntimeStateTransferJournalRecord &candidate) {
+            return candidate.transaction_id == transaction_id;
+        });
+    const std::optional<RuntimeStateTransferJournalRecord> previous_record =
+        previous == scan.records.rend()
+            ? std::nullopt
+            : std::optional<RuntimeStateTransferJournalRecord>(*previous);
+    if (!valid_journal_transition(previous_record, phase, payload_sha256,
+                                  pre_mutation_sha256, pre_mutation_payload) ||
+        scan.next_sequence == 0) {
+        std::fclose(file);
+        return false;
+    }
+    const std::uint64_t sequence = scan.next_sequence;
+    const std::string body = journal_record_body(
+        sequence, transaction_id, phase, payload_sha256, pre_mutation_sha256,
+        pre_mutation_payload);
+    std::string line = body;
+    line.push_back('\t');
+    line.append(sha256_hex(body));
+    line.push_back('\n');
+    const bool wrote = std::fwrite(line.data(), 1, line.size(), file) == line.size();
     const bool flushed = wrote && std::fflush(file) == 0;
 #ifdef _WIN32
     const bool synced = flushed && _commit(_fileno(file)) == 0;
@@ -304,6 +432,9 @@ bool append_journal_bytes_and_sync(const std::string &path, std::string_view byt
     const bool synced = flushed && ::fsync(fileno(file)) == 0;
 #endif
     const bool closed = std::fclose(file) == 0;
+    if (wrote && flushed && synced && closed && sequence_out != nullptr) {
+        *sequence_out = sequence;
+    }
     return wrote && flushed && synced && closed;
 }
 
@@ -1218,7 +1349,7 @@ class CompositeOwnerImportTransaction final : public RuntimeStateOwnerImportTran
                            .error = RuntimeStateTransferError::ImportTransactionStateInvalid};
                 return status_;
             }
-            const auto child = transaction->commit_with_deadline(now_tick, deadline_tick);
+            auto child = transaction->commit_with_deadline(now_tick, deadline_tick);
             if (child.phase == RuntimeStateOwnerImportTransactionPhase::Committed &&
                 child.error == RuntimeStateTransferError::None && child.durable &&
                 child.journal_sequence != 0) {
@@ -1227,6 +1358,43 @@ class CompositeOwnerImportTransaction final : public RuntimeStateOwnerImportTran
                 last_journal_sequence =
                     std::max(last_journal_sequence, child.journal_sequence);
                 continue;
+            }
+            // The failing child may have crossed its deadline after applying
+            // owner state, so its returned Ambiguous/Committing status is not
+            // evidence that it remained untouched. Reconcile that child first
+            // and compensate it if recovery proves it committed.
+            bool current_child_compensated =
+                child.phase == RuntimeStateOwnerImportTransactionPhase::Aborted &&
+                child.error == RuntimeStateTransferError::None && child.durable &&
+                child.journal_sequence != 0;
+            if (child.phase == RuntimeStateOwnerImportTransactionPhase::Ambiguous ||
+                child.phase == RuntimeStateOwnerImportTransactionPhase::Committing) {
+                child = transaction->recover_with_deadline(now_tick, deadline_tick);
+                last_journal_sequence =
+                    std::max(last_journal_sequence, child.journal_sequence);
+                if (child.phase == RuntimeStateOwnerImportTransactionPhase::Committed &&
+                    child.error == RuntimeStateTransferError::None && child.durable &&
+                    child.journal_sequence != 0) {
+                    current_child_compensated = transaction->rollback_committed();
+                    if (current_child_compensated) {
+                        child = transaction->status();
+                        last_journal_sequence =
+                            std::max(last_journal_sequence, child.journal_sequence);
+                    }
+                } else if (child.phase == RuntimeStateOwnerImportTransactionPhase::Aborted &&
+                           child.error == RuntimeStateTransferError::None && child.durable &&
+                           child.journal_sequence != 0) {
+                    current_child_compensated = true;
+                }
+            } else if (child.phase ==
+                           RuntimeStateOwnerImportTransactionPhase::Committed &&
+                       child.durable && child.journal_sequence != 0) {
+                current_child_compensated = transaction->rollback_committed();
+                if (current_child_compensated) {
+                    child = transaction->status();
+                    last_journal_sequence =
+                        std::max(last_journal_sequence, child.journal_sequence);
+                }
             }
             // A later child can fail after earlier children have committed.
             // Compensate in reverse order before exposing a terminal result;
@@ -1241,17 +1409,20 @@ class CompositeOwnerImportTransaction final : public RuntimeStateOwnerImportTran
             }
             status_ = {
                 .phase = committed_any
-                             ? (compensated
+                             ? (compensated && current_child_compensated
                                     ? RuntimeStateOwnerImportTransactionPhase::Aborted
                                     : RuntimeStateOwnerImportTransactionPhase::Ambiguous)
-                             : child.phase,
-                .error = committed_any && compensated
+                             : (current_child_compensated
+                                    ? RuntimeStateOwnerImportTransactionPhase::Aborted
+                                    : RuntimeStateOwnerImportTransactionPhase::Ambiguous),
+                .error = (((!committed_any || compensated) && current_child_compensated))
                              ? RuntimeStateTransferError::None
                              : (child.error == RuntimeStateTransferError::None
                                     ? RuntimeStateTransferError::ImportTransactionAmbiguous
                                     : child.error),
                 .journal_sequence = last_journal_sequence,
-                .durable = committed_any && compensated && last_journal_sequence != 0,
+                .durable = ((!committed_any || compensated) && current_child_compensated &&
+                            last_journal_sequence != 0),
             };
             return status_;
         }
@@ -1285,9 +1456,46 @@ class CompositeOwnerImportTransaction final : public RuntimeStateOwnerImportTran
                            .journal_sequence = last_journal_sequence};
                 return status_;
             }
-            const auto child = (*position)->abort_with_deadline(now_tick, deadline_tick);
+            auto child = (*position)->abort_with_deadline(now_tick, deadline_tick);
             last_journal_sequence =
                 std::max(last_journal_sequence, child.journal_sequence);
+            // A prefix child may already have committed before the parent was
+            // asked to abort.  Its normal abort path is intentionally
+            // state-invalid; compensate the durable commit instead of
+            // converting a safely reversible prefix into a false ambiguity.
+            if (child.phase == RuntimeStateOwnerImportTransactionPhase::Committed &&
+                child.durable && child.journal_sequence != 0) {
+                const bool compensated = (*position)->rollback_committed();
+                child = (*position)->status();
+                last_journal_sequence =
+                    std::max(last_journal_sequence, child.journal_sequence);
+                if (compensated &&
+                    child.phase == RuntimeStateOwnerImportTransactionPhase::Aborted &&
+                    child.error == RuntimeStateTransferError::None && child.durable &&
+                    child.journal_sequence != 0) {
+                    continue;
+                }
+            }
+            if (child.phase == RuntimeStateOwnerImportTransactionPhase::Ambiguous ||
+                child.phase == RuntimeStateOwnerImportTransactionPhase::Committing ||
+                child.phase == RuntimeStateOwnerImportTransactionPhase::Aborting) {
+                child = (*position)->recover_with_deadline(now_tick, deadline_tick);
+                last_journal_sequence =
+                    std::max(last_journal_sequence, child.journal_sequence);
+                if (child.phase == RuntimeStateOwnerImportTransactionPhase::Committed &&
+                    child.durable && child.journal_sequence != 0) {
+                    const bool compensated = (*position)->rollback_committed();
+                    child = (*position)->status();
+                    last_journal_sequence =
+                        std::max(last_journal_sequence, child.journal_sequence);
+                    if (compensated &&
+                        child.phase == RuntimeStateOwnerImportTransactionPhase::Aborted &&
+                        child.error == RuntimeStateTransferError::None && child.durable &&
+                        child.journal_sequence != 0) {
+                        continue;
+                    }
+                }
+            }
             if (child.phase != RuntimeStateOwnerImportTransactionPhase::Aborted ||
                 child.error != RuntimeStateTransferError::None || !child.durable ||
                 child.journal_sequence == 0) {
@@ -1322,6 +1530,12 @@ class CompositeOwnerImportTransaction final : public RuntimeStateOwnerImportTran
         }
         bool saw_committed = false;
         bool saw_aborted = false;
+        std::vector<std::shared_ptr<RuntimeStateOwnerImportTransaction>>
+            committed_children;
+        bool unresolved = false;
+        bool committed_needs_compensation = false;
+        RuntimeStateTransferError unresolved_error =
+            RuntimeStateTransferError::ImportTransactionAmbiguous;
         std::uint64_t last_journal_sequence = status_.journal_sequence;
         for (const auto &transaction : transactions_) {
             if (transaction == nullptr) {
@@ -1337,21 +1551,61 @@ class CompositeOwnerImportTransaction final : public RuntimeStateOwnerImportTran
             }
             last_journal_sequence =
                 std::max(last_journal_sequence, child.journal_sequence);
-            if (child.error != RuntimeStateTransferError::None || !child.durable ||
-                child.journal_sequence == 0) {
-                status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
-                           .error = child.error == RuntimeStateTransferError::None
-                                        ? RuntimeStateTransferError::ImportTransactionAmbiguous
-                                        : child.error,
-                           .journal_sequence = last_journal_sequence};
+            if (child.phase == RuntimeStateOwnerImportTransactionPhase::Committed &&
+                child.durable && child.journal_sequence != 0) {
+                saw_committed = true;
+                committed_children.push_back(transaction);
+                // A durable Committed marker with a non-zero error is still
+                // applied owner truth; force the safe abort direction instead
+                // of losing it before compensation.
+                committed_needs_compensation =
+                    committed_needs_compensation ||
+                    child.error != RuntimeStateTransferError::None;
+                continue;
+            }
+            if (child.phase == RuntimeStateOwnerImportTransactionPhase::Aborted &&
+                child.error == RuntimeStateTransferError::None && child.durable &&
+                child.journal_sequence != 0) {
+                saw_aborted = true;
+                continue;
+            }
+            {
+                unresolved = true;
+                if (child.error != RuntimeStateTransferError::None) {
+                    unresolved_error = child.error;
+                }
+                continue;
+            }
+        }
+        // Recovery after a process restart has no in-memory parent marker.  A
+        // mixed child outcome therefore follows the same deterministic
+        // fail-safe policy as an interrupted commit: preserve an all-committed
+        // result, otherwise compensate every committed child in reverse order
+        // and converge to a durable all-aborted outcome.  This prevents a
+        // committed prefix from becoming an unrecoverable mixed world.
+        if (unresolved || (saw_committed && saw_aborted) ||
+            committed_needs_compensation) {
+            bool compensated = true;
+            for (auto position = committed_children.rbegin();
+                 position != committed_children.rend(); ++position) {
+                if (!(*position)->rollback_committed()) {
+                    compensated = false;
+                }
+            }
+            if (compensated && !unresolved) {
+                status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Aborted,
+                           .error = RuntimeStateTransferError::None,
+                           .journal_sequence = last_journal_sequence,
+                           .durable = last_journal_sequence != 0};
                 return status_;
             }
-            saw_committed = saw_committed ||
-                            child.phase == RuntimeStateOwnerImportTransactionPhase::Committed;
-            saw_aborted = saw_aborted ||
-                          child.phase == RuntimeStateOwnerImportTransactionPhase::Aborted;
+            status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
+                       .error = unresolved ? unresolved_error
+                                           : RuntimeStateTransferError::ImportTransactionAmbiguous,
+                       .journal_sequence = last_journal_sequence};
+            return status_;
         }
-        if (saw_committed == saw_aborted) {
+        if (!saw_committed && !saw_aborted) {
             status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
                        .error = RuntimeStateTransferError::ImportTransactionAmbiguous,
                        .journal_sequence = last_journal_sequence};
@@ -1433,7 +1687,9 @@ RuntimeStateTransferJournalAppendResult
 RuntimeStateTransferFileJournal::append_and_sync(
     std::string_view transaction_id,
     RuntimeStateOwnerImportTransactionPhase phase,
-    std::string_view payload_sha256) noexcept {
+    std::string_view payload_sha256,
+    std::string_view pre_mutation_sha256,
+    const std::vector<std::uint8_t> &pre_mutation_payload) noexcept {
     RuntimeStateTransferJournalAppendResult result;
     if (state_ == nullptr) {
         result.status = failure(RuntimeStateTransferError::ImportJournalUnavailable,
@@ -1448,48 +1704,25 @@ RuntimeStateTransferFileJournal::append_and_sync(
         }
         if (!valid_journal_component(transaction_id) ||
             !is_lower_hex_sha256(payload_sha256) ||
+            (!pre_mutation_sha256.empty() &&
+             !is_lower_hex_sha256(pre_mutation_sha256)) ||
+            (pre_mutation_sha256.empty() && !pre_mutation_payload.empty()) ||
+            (!pre_mutation_sha256.empty() &&
+             sha256_hex(std::string_view(
+                 reinterpret_cast<const char *>(pre_mutation_payload.data()),
+                 pre_mutation_payload.size())) != pre_mutation_sha256) ||
             state_->next_sequence == 0) {
             result.status = failure(RuntimeStateTransferError::InvalidArgument,
                                     "state-transfer journal append is invalid");
             return result;
         }
-        JournalScanResult scan = scan_journal_file(state_->path);
-        if (!scan.status) {
-            state_->initialization_status = scan.status;
-            result.status = scan.status;
-            return result;
-        }
-        state_->next_sequence = scan.next_sequence;
-        if (scan.valid_size != scan.file_size &&
-            !truncate_journal_file(state_->path, scan.valid_size)) {
-            result.status = failure(RuntimeStateTransferError::ImportJournalUnavailable,
-                                    "state-transfer journal torn tail cannot be truncated");
-            return result;
-        }
-        const auto previous = std::find_if(
-            scan.records.rbegin(), scan.records.rend(),
-            [&](const RuntimeStateTransferJournalRecord &candidate) {
-                return candidate.transaction_id == transaction_id;
-            });
-        const std::optional<RuntimeStateTransferJournalRecord> previous_record =
-            previous == scan.records.rend()
-                ? std::nullopt
-                : std::optional<RuntimeStateTransferJournalRecord>(*previous);
-        if (!valid_journal_transition(previous_record, phase, payload_sha256)) {
-            result.status = failure(RuntimeStateTransferError::ImportTransactionStateInvalid,
-                                    "state-transfer journal transition is invalid");
-            return result;
-        }
-        const std::uint64_t sequence = state_->next_sequence;
-        const std::string body =
-            journal_record_body(sequence, transaction_id, phase, payload_sha256);
-        std::string line = body;
-        line.push_back('\t');
-        line.append(sha256_hex(body));
-        line.push_back('\n');
-        if (!append_journal_bytes_and_sync(state_->path, line)) {
-            result.status = failure(RuntimeStateTransferError::ImportJournalUnavailable,
-                                    "state-transfer journal append did not sync");
+        std::uint64_t sequence = 0;
+        if (!append_journal_record_with_lock(
+                state_->path, transaction_id, phase, payload_sha256,
+                pre_mutation_sha256, pre_mutation_payload, &sequence)) {
+            result.status = failure(
+                RuntimeStateTransferError::ImportTransactionStateInvalid,
+                "state-transfer journal append failed or transition changed");
             return result;
         }
         state_->next_sequence = sequence + 1;
@@ -1525,6 +1758,19 @@ RuntimeStateTransferJournalReadResult RuntimeStateTransferFileJournal::latest(
             state_->initialization_status = scan.status;
             result.status = scan.status;
             return result;
+        }
+        if (scan.valid_size != scan.file_size) {
+            // A torn tail can be observed by an already-live journal object
+            // after an interrupted append.  Truncate the incomplete frame
+            // before recovery appends its terminal decision; otherwise the
+            // append path would reject the same instance forever.
+            if (!truncate_journal_file(state_->path, scan.valid_size)) {
+                result.status = failure(
+                    RuntimeStateTransferError::ImportJournalUnavailable,
+                    "state-transfer journal torn tail cannot be truncated");
+                return result;
+            }
+            scan.file_size = scan.valid_size;
         }
         state_->next_sequence = scan.next_sequence;
         const auto position = std::find_if(
@@ -1604,10 +1850,14 @@ RuntimeStateOwnerImportTransaction::status() const noexcept {
 RuntimeDurableOwnerImportTransaction::RuntimeDurableOwnerImportTransaction(
     std::string transaction_id, std::string payload_sha256,
     std::shared_ptr<RuntimeStateTransferJournal> journal,
-    RuntimeStateOwnerImportRecoveryCallbacks callbacks) noexcept
+    RuntimeStateOwnerImportRecoveryCallbacks callbacks,
+    std::string pre_mutation_sha256,
+    std::vector<std::uint8_t> pre_mutation_payload) noexcept
     : transaction_id_(std::move(transaction_id)),
-      payload_sha256_(std::move(payload_sha256)), journal_(std::move(journal)),
-      callbacks_(std::move(callbacks)) {
+      payload_sha256_(std::move(payload_sha256)),
+      pre_mutation_sha256_(std::move(pre_mutation_sha256)),
+      pre_mutation_payload_(std::move(pre_mutation_payload)),
+      journal_(std::move(journal)), callbacks_(std::move(callbacks)) {
     if (!valid_journal_component(transaction_id_) ||
         !is_lower_hex_sha256(payload_sha256_) || journal_ == nullptr ||
         !callbacks_.commit || !callbacks_.abort || !callbacks_.recover) {
@@ -1623,7 +1873,9 @@ RuntimeDurableOwnerImportTransaction::RuntimeDurableOwnerImportTransaction(
         return;
     }
     if (existing.record) {
-        if (existing.record->payload_sha256 != payload_sha256_) {
+        if (existing.record->payload_sha256 != payload_sha256_ ||
+            existing.record->pre_mutation_sha256 != pre_mutation_sha256_ ||
+            existing.record->pre_mutation_payload != pre_mutation_payload_) {
             status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
                        .error = RuntimeStateTransferError::ImportJournalCorrupt,
                        .journal_sequence = existing.record->sequence};
@@ -1644,7 +1896,7 @@ RuntimeDurableOwnerImportTransaction::RuntimeDurableOwnerImportTransaction(
             status_.phase == RuntimeStateOwnerImportTransactionPhase::Aborted) {
             bool verified = false;
             try {
-                verified = callbacks_.verify && callbacks_.verify();
+                verified = callbacks_.verify && callbacks_.verify(status_.phase);
             } catch (...) {
                 verified = false;
             }
@@ -1658,7 +1910,8 @@ RuntimeDurableOwnerImportTransaction::RuntimeDurableOwnerImportTransaction(
     const RuntimeStateTransferJournalAppendResult prepared =
         journal_->append_and_sync(transaction_id_,
                                   RuntimeStateOwnerImportTransactionPhase::Prepared,
-                                  payload_sha256_);
+                                  payload_sha256_, pre_mutation_sha256_,
+                                  pre_mutation_payload_);
     status_ = {.phase = prepared.status
                             ? RuntimeStateOwnerImportTransactionPhase::Prepared
                             : RuntimeStateOwnerImportTransactionPhase::Ambiguous,
@@ -1671,7 +1924,8 @@ RuntimeStateOwnerImportTransactionStatus
 RuntimeDurableOwnerImportTransaction::append_terminal(
     RuntimeStateOwnerImportTransactionPhase phase) noexcept {
     const RuntimeStateTransferJournalAppendResult appended =
-        journal_->append_and_sync(transaction_id_, phase, payload_sha256_);
+        journal_->append_and_sync(transaction_id_, phase, payload_sha256_,
+                                  pre_mutation_sha256_, pre_mutation_payload_);
     status_ = {.phase = appended.status ? phase
                                         : RuntimeStateOwnerImportTransactionPhase::Ambiguous,
                .error = appended.status.error,
@@ -1695,6 +1949,21 @@ RuntimeDurableOwnerImportTransaction::commit_with_deadline(
         status_.error = RuntimeStateTransferError::ImportTransactionStateInvalid;
         return status_;
     }
+    bool clock_valid = true;
+    if (callbacks_.sample_tick) {
+        try {
+            now_tick = std::max(now_tick, callbacks_.sample_tick());
+        } catch (...) {
+            clock_valid = false;
+        }
+    }
+    if (!clock_valid) {
+        auto ambiguous = append_terminal(
+            RuntimeStateOwnerImportTransactionPhase::Ambiguous);
+        ambiguous.error = RuntimeStateTransferError::ImportTransactionAmbiguous;
+        status_.error = ambiguous.error;
+        return ambiguous;
+    }
     if (deadline_tick != 0 && now_tick >= deadline_tick) {
         status_.error = RuntimeStateTransferError::ImportTransactionDeadlineExceeded;
         return status_;
@@ -1702,7 +1971,8 @@ RuntimeDurableOwnerImportTransaction::commit_with_deadline(
     const RuntimeStateTransferJournalAppendResult committing =
         journal_->append_and_sync(transaction_id_,
                                   RuntimeStateOwnerImportTransactionPhase::Committing,
-                                  payload_sha256_);
+                                  payload_sha256_, pre_mutation_sha256_,
+                                  pre_mutation_payload_);
     if (!committing.status) {
         status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
                    .error = committing.status.error,
@@ -1720,21 +1990,25 @@ RuntimeDurableOwnerImportTransaction::commit_with_deadline(
         applied = false;
     }
     bool deadline_crossed = false;
-    if (applied && deadline_tick != 0 && callbacks_.sample_tick) {
+    clock_valid = true;
+    if (callbacks_.sample_tick) {
         try {
-            if (callbacks_.sample_tick() >= deadline_tick) {
-                applied = false;
-                deadline_crossed = true;
-            }
+            now_tick = std::max(now_tick, callbacks_.sample_tick());
         } catch (...) {
-            applied = false;
+            clock_valid = false;
         }
+    }
+    deadline_crossed = deadline_tick != 0 && now_tick >= deadline_tick;
+    if (!clock_valid || deadline_crossed) {
+        applied = false;
     }
     auto terminal = append_terminal(applied
                                ? RuntimeStateOwnerImportTransactionPhase::Committed
                                : RuntimeStateOwnerImportTransactionPhase::Ambiguous);
-    if (deadline_crossed) {
-        terminal.error = RuntimeStateTransferError::ImportTransactionDeadlineExceeded;
+    if (!clock_valid || deadline_crossed) {
+        terminal.error = deadline_crossed
+                             ? RuntimeStateTransferError::ImportTransactionDeadlineExceeded
+                             : RuntimeStateTransferError::ImportTransactionAmbiguous;
         status_.error = terminal.error;
     }
     return terminal;
@@ -1751,10 +2025,6 @@ RuntimeDurableOwnerImportTransaction::abort_with_deadline(
         status_.error = RuntimeStateTransferError::ImportTransactionStateInvalid;
         return status_;
     }
-    if (deadline_tick != 0 && now_tick >= deadline_tick) {
-        status_.error = RuntimeStateTransferError::ImportTransactionDeadlineExceeded;
-        return status_;
-    }
     if (status_.phase != RuntimeStateOwnerImportTransactionPhase::Prepared) {
         lock.unlock();
         return recover_with_deadline(now_tick, deadline_tick);
@@ -1762,7 +2032,8 @@ RuntimeDurableOwnerImportTransaction::abort_with_deadline(
     const RuntimeStateTransferJournalAppendResult aborting =
         journal_->append_and_sync(transaction_id_,
                                   RuntimeStateOwnerImportTransactionPhase::Aborting,
-                                  payload_sha256_);
+                                  payload_sha256_, pre_mutation_sha256_,
+                                  pre_mutation_payload_);
     if (!aborting.status) {
         status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
                    .error = aborting.status.error,
@@ -1779,22 +2050,25 @@ RuntimeDurableOwnerImportTransaction::abort_with_deadline(
     } catch (...) {
         rolled_back = false;
     }
-    bool deadline_crossed = false;
-    if (rolled_back && deadline_tick != 0 && callbacks_.sample_tick) {
+    bool clock_valid = true;
+    if (callbacks_.sample_tick) {
         try {
-            if (callbacks_.sample_tick() >= deadline_tick) {
-                rolled_back = false;
-                deadline_crossed = true;
-            }
+            now_tick = std::max(now_tick, callbacks_.sample_tick());
         } catch (...) {
-            rolled_back = false;
+            clock_valid = false;
         }
+    }
+    const bool deadline_crossed = deadline_tick != 0 && now_tick >= deadline_tick;
+    if (!clock_valid) {
+        rolled_back = false;
     }
     auto terminal = append_terminal(rolled_back
                                ? RuntimeStateOwnerImportTransactionPhase::Aborted
                                : RuntimeStateOwnerImportTransactionPhase::Ambiguous);
-    if (deadline_crossed) {
-        terminal.error = RuntimeStateTransferError::ImportTransactionDeadlineExceeded;
+    if (!clock_valid || (deadline_crossed && !rolled_back)) {
+        terminal.error = deadline_crossed
+                             ? RuntimeStateTransferError::ImportTransactionDeadlineExceeded
+                             : RuntimeStateTransferError::ImportTransactionAmbiguous;
         status_.error = terminal.error;
     }
     return terminal;
@@ -1804,14 +2078,22 @@ RuntimeStateOwnerImportTransactionStatus
 RuntimeDurableOwnerImportTransaction::recover_with_deadline(
     std::uint64_t now_tick, std::uint64_t deadline_tick) noexcept {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (deadline_tick != 0 && now_tick >= deadline_tick) {
-        status_.error = RuntimeStateTransferError::ImportTransactionDeadlineExceeded;
-        return status_;
+    bool clock_valid = true;
+    if (callbacks_.sample_tick) {
+        try {
+            now_tick = std::max(now_tick, callbacks_.sample_tick());
+        } catch (...) {
+            clock_valid = false;
+        }
     }
+    bool deadline_crossed = deadline_tick != 0 && now_tick >= deadline_tick;
     const RuntimeStateTransferJournalReadResult latest =
         journal_->latest(transaction_id_);
     if (!latest.status || !latest.record ||
-        latest.record->payload_sha256 != payload_sha256_) {
+        latest.record->payload_sha256 != payload_sha256_ ||
+        (!pre_mutation_sha256_.empty() &&
+         latest.record->pre_mutation_sha256 != pre_mutation_sha256_) ||
+        latest.record->pre_mutation_payload != pre_mutation_payload_) {
         status_ = {.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous,
                    .error = latest.status
                                 ? RuntimeStateTransferError::ImportJournalCorrupt
@@ -1822,16 +2104,22 @@ RuntimeDurableOwnerImportTransaction::recover_with_deadline(
                .error = RuntimeStateTransferError::None,
                .journal_sequence = latest.record->sequence,
                .durable = true};
+    const RuntimeStateOwnerImportTransactionPhase journal_phase = status_.phase;
     if (status_.phase == RuntimeStateOwnerImportTransactionPhase::Committed ||
         status_.phase == RuntimeStateOwnerImportTransactionPhase::Aborted) {
         bool verified = false;
         try {
-            verified = callbacks_.verify && callbacks_.verify();
+            verified = callbacks_.verify && callbacks_.verify(status_.phase);
         } catch (...) {
             verified = false;
         }
         if (verified) {
-            return status_;
+            if (status_.phase == RuntimeStateOwnerImportTransactionPhase::Aborted) {
+                return status_;
+            }
+            if (clock_valid && !deadline_crossed) {
+                return status_;
+            }
         }
         status_.phase = RuntimeStateOwnerImportTransactionPhase::Ambiguous;
         status_.error = RuntimeStateTransferError::ImportTransactionAmbiguous;
@@ -1845,6 +2133,37 @@ RuntimeDurableOwnerImportTransaction::recover_with_deadline(
     }
     if (outcome != RuntimeStateOwnerImportTransactionPhase::Committed &&
         outcome != RuntimeStateOwnerImportTransactionPhase::Aborted) {
+        outcome = RuntimeStateOwnerImportTransactionPhase::Ambiguous;
+    }
+    if (callbacks_.sample_tick) {
+        try {
+            now_tick = std::max(now_tick, callbacks_.sample_tick());
+        } catch (...) {
+            clock_valid = false;
+        }
+    }
+    deadline_crossed = deadline_tick != 0 && now_tick >= deadline_tick;
+    if (outcome == RuntimeStateOwnerImportTransactionPhase::Committed &&
+        (journal_phase == RuntimeStateOwnerImportTransactionPhase::Aborted ||
+         !clock_valid || deadline_crossed)) {
+        bool compensated = false;
+        try {
+            compensated = callbacks_.compensate && callbacks_.compensate();
+        } catch (...) {
+            compensated = false;
+        }
+        if (compensated) {
+            return append_terminal(RuntimeStateOwnerImportTransactionPhase::Aborted);
+        }
+        auto ambiguous = append_terminal(
+            RuntimeStateOwnerImportTransactionPhase::Ambiguous);
+        ambiguous.error = deadline_crossed
+                              ? RuntimeStateTransferError::ImportTransactionDeadlineExceeded
+                              : RuntimeStateTransferError::ImportTransactionAmbiguous;
+        status_.error = ambiguous.error;
+        return ambiguous;
+    }
+    if (!clock_valid) {
         outcome = RuntimeStateOwnerImportTransactionPhase::Ambiguous;
     }
     return append_terminal(outcome);
@@ -2130,9 +2449,15 @@ RuntimeStateOwnerImportReceipt RuntimeStateOwnerAdapterRegistry::import_and_obse
             std::make_shared<CompositeOwnerImportTransaction>(transactions);
         transactions_abort.disarm();
         receipt_failure.disarm();
+    } catch (const std::exception &exception) {
+        receipt.status = failure(RuntimeStateTransferError::SemanticEvidenceMissing,
+                                 std::string("owner adapter import failed: ") +
+                                     exception.what());
+        receipt.observations.clear();
+        receipt.transaction.reset();
     } catch (...) {
         receipt.status = failure(RuntimeStateTransferError::SemanticEvidenceMissing,
-                                 "owner adapter import failed");
+                                 "owner adapter import failed: unknown exception");
         receipt.observations.clear();
         receipt.transaction.reset();
     }
@@ -2769,7 +3094,12 @@ RuntimeEpisodeCoordinatorCandidate::open_replacement_barrier(
 RuntimeNativeEpisodeAdmission
 RuntimeEpisodeCoordinatorCandidate::issue_episode_capability() {
     std::lock_guard<std::mutex> lock(state_->mutex);
-    if (state_->phase != RuntimeEpisodePhase::Running ||
+    // A terminal episode still needs a host-bound capability so the native
+    // coordinator can accept the explicit Reset intent. The submit path keeps
+    // Action admission closed in Terminal; capability issuance alone does not
+    // authorize a second truth mutation.
+    if ((state_->phase != RuntimeEpisodePhase::Running &&
+         state_->phase != RuntimeEpisodePhase::Terminal) ||
         state_->mutation_in_progress) {
         return {.status = failure(RuntimeStateTransferError::AdmissionClosed,
                                   "native episode is not admitting shadow work"),
@@ -2863,7 +3193,8 @@ bool RuntimeNativeEpisodeCapability::valid() const noexcept {
         }
         std::lock_guard<std::mutex> coordinator_lock(coordinator->mutex);
         return coordinator->coordinator_nonce == token_->coordinator_nonce &&
-               coordinator->phase == RuntimeEpisodePhase::Running &&
+               (coordinator->phase == RuntimeEpisodePhase::Running ||
+                coordinator->phase == RuntimeEpisodePhase::Terminal) &&
                coordinator->episode == token_->episode &&
                coordinator->step_sequence == token_->step_sequence;
     } catch (...) {
@@ -2906,7 +3237,8 @@ RuntimeStateTransferStatus RuntimeNativeEpisodeCapability::consume_for_host(
     }
     if (token_->episode.world.incarnation != expected_source ||
         coordinator->coordinator_nonce != token_->coordinator_nonce ||
-        coordinator->phase != RuntimeEpisodePhase::Running ||
+        (coordinator->phase != RuntimeEpisodePhase::Running &&
+         coordinator->phase != RuntimeEpisodePhase::Terminal) ||
         coordinator->episode != token_->episode ||
         coordinator->step_sequence != token_->step_sequence) {
         return failure(RuntimeStateTransferError::StaleIntent,
@@ -2942,7 +3274,8 @@ RuntimeStateTransferStatus RuntimeNativeEpisodeCapability::validate_for_host(
     }
     if (token_->episode.world.incarnation != expected_source ||
         coordinator->coordinator_nonce != token_->coordinator_nonce ||
-        coordinator->phase != RuntimeEpisodePhase::Running ||
+        (coordinator->phase != RuntimeEpisodePhase::Running &&
+         coordinator->phase != RuntimeEpisodePhase::Terminal) ||
         coordinator->episode != token_->episode ||
         coordinator->step_sequence != token_->step_sequence) {
         return failure(RuntimeStateTransferError::StaleIntent,
@@ -3610,7 +3943,6 @@ RuntimeStateTransferStatus RuntimeValidatedStateTransfer::commit_for_host(
                        "validated state transfer is empty");
     }
     try {
-        std::function<void()> end_transfer;
         std::shared_ptr<RuntimeStateOwnerImportTransaction> import_transaction;
         {
             std::lock_guard<std::mutex> state_lock(state_->mutex);
@@ -3692,10 +4024,6 @@ RuntimeStateTransferStatus RuntimeValidatedStateTransfer::commit_for_host(
             state_->quiescence_token->host_rollback = {};
         }
         state_->coordinator_owner.reset();
-        end_transfer = std::move(state_->host_end_transfer);
-        }
-        if (end_transfer) {
-            end_transfer();
         }
         return success();
     } catch (...) {
@@ -3749,7 +4077,6 @@ RuntimeStateTransferStatus RuntimeValidatedStateTransfer::recover_for_host(
         }
 
         std::function<void()> rollback;
-        std::function<void()> end_transfer;
         {
             std::lock_guard<std::mutex> state_lock(state_->mutex);
             state_->import_transaction.reset();
@@ -3786,18 +4113,32 @@ RuntimeStateTransferStatus RuntimeValidatedStateTransfer::recover_for_host(
                 }
             }
             state_->coordinator_owner.reset();
-            end_transfer = std::move(state_->host_end_transfer);
         }
         if (rollback) {
             rollback();
-        }
-        if (end_transfer) {
-            end_transfer();
         }
         return success();
     } catch (...) {
         return failure(RuntimeStateTransferError::ImportTransactionAmbiguous,
                        "exception while recovering owner import transaction");
+    }
+}
+
+void RuntimeValidatedStateTransfer::release_host_transfer_fence() noexcept {
+    if (state_ == nullptr) {
+        return;
+    }
+    try {
+        std::function<void()> end_transfer;
+        {
+            std::lock_guard<std::mutex> state_lock(state_->mutex);
+            end_transfer = std::move(state_->host_end_transfer);
+        }
+        if (end_transfer) {
+            end_transfer();
+        }
+    } catch (...) {
+        std::terminate();
     }
 }
 
@@ -3810,20 +4151,29 @@ void RuntimeValidatedStateTransfer::abort_for_host() noexcept {
         std::function<void()> end_transfer;
         std::shared_ptr<RuntimeStateOwnerImportTransaction> import_transaction;
         bool needs_recovery = false;
+        bool already_terminal = false;
         {
             std::lock_guard<std::mutex> state_lock(state_->mutex);
             if (state_->lifecycle == RuntimeValidatedTransferLifecycle::Committed ||
                 state_->lifecycle == RuntimeValidatedTransferLifecycle::Aborted) {
-                return;
+                end_transfer = std::move(state_->host_end_transfer);
+                already_terminal = true;
+            } else {
+                needs_recovery =
+                    state_->lifecycle == RuntimeValidatedTransferLifecycle::Ambiguous ||
+                    state_->lifecycle == RuntimeValidatedTransferLifecycle::Committing ||
+                    state_->lifecycle == RuntimeValidatedTransferLifecycle::Aborting;
+                if (!needs_recovery) {
+                    state_->lifecycle = RuntimeValidatedTransferLifecycle::Aborting;
+                    import_transaction = std::move(state_->import_transaction);
+                }
             }
-            needs_recovery =
-                state_->lifecycle == RuntimeValidatedTransferLifecycle::Ambiguous ||
-                state_->lifecycle == RuntimeValidatedTransferLifecycle::Committing ||
-                state_->lifecycle == RuntimeValidatedTransferLifecycle::Aborting;
-            if (!needs_recovery) {
-                state_->lifecycle = RuntimeValidatedTransferLifecycle::Aborting;
-                import_transaction = std::move(state_->import_transaction);
+        }
+        if (already_terminal) {
+            if (end_transfer) {
+                end_transfer();
             }
+            return;
         }
         if (needs_recovery) {
             // Never discard an ambiguous transaction silently.  Recovery is

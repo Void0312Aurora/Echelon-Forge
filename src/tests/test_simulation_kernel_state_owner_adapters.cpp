@@ -1,8 +1,10 @@
 #include "runtime/host/integration/simulation_kernel_state_owner_adapters.h"
 #include "runtime/host/runtime_host_candidate.h"
 
+#include "components/command/common/comm_message.h"
 #include "components/combat/health.h"
 #include "components/combat/scoring.h"
+#include "components/systems/track_management.h"
 #include "core/engine/simulation_kernel.h"
 #include "systems/system_contribution_registry.h"
 
@@ -12,6 +14,7 @@
 
 #include <array>
 #include <algorithm>
+#include <atomic>
 #include <filesystem>
 #include <memory>
 #include <random>
@@ -162,6 +165,7 @@ TEST_CASE("real SimulationKernel owner registry exports and imports all twelve r
     source.reset(123);
     target.reset(456);
     source.step();
+    const auto target_python_applied = std::make_shared<std::atomic<bool>>(false);
 
     const auto journal_path = std::filesystem::temp_directory_path() /
                               "echelon_forge_p4b_simulation_owner_test.wal";
@@ -185,6 +189,24 @@ TEST_CASE("real SimulationKernel owner registry exports and imports all twelve r
                 host::RuntimeStateTransferFileJournal>(
                 target_journal_path.string()),
             .transaction_namespace = "target-kernel",
+            .rederive_python_caches = [target_python_applied] {
+                target_python_applied->store(true);
+                return true;
+            },
+            .snapshot_python_caches = [target_python_applied] {
+                return std::vector<std::uint8_t>{
+                    target_python_applied->load() ? 1U : 0U};
+            },
+            .rollback_python_caches = [target_python_applied](const auto &before) {
+                if (before.size() != 1) return false;
+                target_python_applied->store(before.front() != 0);
+                return true;
+            },
+            .recover_python_caches = [target_python_applied](const auto &) {
+                return target_python_applied->load()
+                           ? host::RuntimeStateOwnerImportTransactionPhase::Committed
+                           : host::RuntimeStateOwnerImportTransactionPhase::Aborted;
+            },
             });
     REQUIRE(target_registry != nullptr);
 
@@ -211,6 +233,7 @@ TEST_CASE("real SimulationKernel owner registry exports and imports all twelve r
     CHECK(in_flight->settled_item_count == 3);
     auto imported = target_registry->import_and_observe(
         profile, exported, {.high = 420, .low = 421});
+    INFO(imported.status.detail);
     REQUIRE(imported.status);
     REQUIRE(imported.observations.size() == host::kRuntimeStateCategoryCount);
     REQUIRE(imported.transaction != nullptr);
@@ -227,6 +250,24 @@ TEST_CASE("real SimulationKernel owner registry exports and imports all twelve r
                 host::RuntimeStateTransferFileJournal>(
                 target_journal_path.string()),
             .transaction_namespace = "target-kernel",
+            .rederive_python_caches = [target_python_applied] {
+                target_python_applied->store(true);
+                return true;
+            },
+            .snapshot_python_caches = [target_python_applied] {
+                return std::vector<std::uint8_t>{
+                    target_python_applied->load() ? 1U : 0U};
+            },
+            .rollback_python_caches = [target_python_applied](const auto &before) {
+                if (before.size() != 1) return false;
+                target_python_applied->store(before.front() != 0);
+                return true;
+            },
+            .recover_python_caches = [target_python_applied](const auto &) {
+                return target_python_applied->load()
+                           ? host::RuntimeStateOwnerImportTransactionPhase::Committed
+                           : host::RuntimeStateOwnerImportTransactionPhase::Aborted;
+            },
         });
     REQUIRE(target_registry != nullptr);
     auto reopened = target_registry->import_and_observe(
@@ -241,6 +282,82 @@ TEST_CASE("real SimulationKernel owner registry exports and imports all twelve r
     target_registry.reset();
     std::filesystem::remove(journal_path, remove_error);
     std::filesystem::remove(target_journal_path, remove_error);
+}
+
+TEST_CASE("Python cache owner durably recovers failed rederive and compensates commit") {
+    SimulationKernel kernel;
+    kernel.reset(903);
+    const auto journal_path = std::filesystem::temp_directory_path() /
+                              "echelon_forge_p4b_python_owner_recovery.wal";
+    std::error_code remove_error;
+    std::filesystem::remove(journal_path, remove_error);
+    const auto applied = std::make_shared<std::atomic<bool>>(false);
+    const auto fail_rederive = std::make_shared<std::atomic<bool>>(true);
+    auto registry = integration::SimulationKernelStateOwnerBridge::create_registry({
+        .kernel = &kernel,
+        .journal = std::make_shared<host::RuntimeStateTransferFileJournal>(
+            journal_path.string()),
+        .transaction_namespace = "python-owner-recovery",
+        .rederive_python_caches = [applied, fail_rederive] {
+            if (fail_rederive->load()) {
+                return false;
+            }
+            applied->store(true);
+            return true;
+        },
+        .snapshot_python_caches = [applied] {
+            return std::vector<std::uint8_t>{applied->load() ? 1U : 0U};
+        },
+        .rollback_python_caches = [applied](const auto &before) {
+            if (before.size() != 1) return false;
+            applied->store(before.front() != 0);
+            return true;
+        },
+        .recover_python_caches = [applied](const auto &) {
+            return applied->load()
+                       ? host::RuntimeStateOwnerImportTransactionPhase::Committed
+                       : host::RuntimeStateOwnerImportTransactionPhase::Aborted;
+        },
+    });
+    REQUIRE(registry != nullptr);
+    const auto adapter = std::dynamic_pointer_cast<
+        host::RuntimeStateOwnerAdapterRegistry>(registry);
+    REQUIRE(adapter != nullptr);
+    const auto *owner = adapter->registration(
+        host::RuntimeStateCategory::PythonLoaderControllerCaches);
+    REQUIRE(owner != nullptr);
+    const auto barrier = integration_barrier();
+    const auto plan_sha256 = kernel.resolved_composition_sha256();
+    const auto profile = host::runtime_state_transfer_profile_from_decoder_matrix(
+        "simulation-kernel-python-owner.v2", 1, plan_sha256, plan_sha256);
+    const auto exported = owner->export_state(
+        profile, integration_slot(), integration_export_context(barrier));
+    const RuntimeIdentity128 failed_candidate{.high = 460, .low = 461};
+    auto failed = owner->import_state(
+        profile, integration_slot(), exported.census_entry, exported.artifact,
+        exported.artifact, failed_candidate);
+    REQUIRE(failed.transaction != nullptr);
+    CHECK(failed.transaction->commit_with_deadline(20, 100).phase ==
+          host::RuntimeStateOwnerImportTransactionPhase::Ambiguous);
+    const auto failed_recovery = failed.transaction->recover_with_deadline(21, 100);
+    REQUIRE(failed_recovery.phase ==
+            host::RuntimeStateOwnerImportTransactionPhase::Aborted);
+    CHECK_FALSE(applied->load());
+
+    fail_rederive->store(false);
+    const RuntimeIdentity128 committed_candidate{.high = 462, .low = 463};
+    auto committed = owner->import_state(
+        profile, integration_slot(), exported.census_entry, exported.artifact,
+        exported.artifact, committed_candidate);
+    REQUIRE(committed.transaction != nullptr);
+    REQUIRE(committed.transaction->commit_with_deadline(22, 100).phase ==
+            host::RuntimeStateOwnerImportTransactionPhase::Committed);
+    REQUIRE(applied->load());
+    REQUIRE(committed.transaction->rollback_committed());
+    CHECK_FALSE(applied->load());
+    CHECK(committed.transaction->status().phase ==
+          host::RuntimeStateOwnerImportTransactionPhase::Aborted);
+    std::filesystem::remove(journal_path, remove_error);
 }
 
 TEST_CASE("host replacement commits all twelve real SimulationKernel owner rows") {
@@ -273,6 +390,9 @@ TEST_CASE("host replacement commits all twelve real SimulationKernel owner rows"
     }
     source.step();
 
+    const auto source_python_applied = std::make_shared<std::atomic<bool>>(false);
+    const auto target_python_applied = std::make_shared<std::atomic<bool>>(false);
+
     const auto source_journal_path = std::filesystem::temp_directory_path() /
                                      "echelon_forge_p4b_host_source.wal";
     const auto target_journal_path = std::filesystem::temp_directory_path() /
@@ -289,7 +409,24 @@ TEST_CASE("host replacement commits all twelve real SimulationKernel owner rows"
             .transaction_namespace = "host-source",
             .bound_resource_identity = {.high = 452, .low = 453},
             .sample_tick = [] { return std::uint64_t{0}; },
-            .rederive_python_caches = [] { return true; },
+            .rederive_python_caches = [source_python_applied] {
+                source_python_applied->store(true);
+                return true;
+            },
+            .snapshot_python_caches = [source_python_applied] {
+                return std::vector<std::uint8_t>{
+                    source_python_applied->load() ? 1U : 0U};
+            },
+            .rollback_python_caches = [source_python_applied](const auto &before) {
+                if (before.size() != 1) return false;
+                source_python_applied->store(before.front() != 0);
+                return true;
+            },
+            .recover_python_caches = [source_python_applied](const auto &) {
+                return source_python_applied->load()
+                           ? host::RuntimeStateOwnerImportTransactionPhase::Committed
+                           : host::RuntimeStateOwnerImportTransactionPhase::Aborted;
+            },
         });
     auto target_registry =
         integration::SimulationKernelStateOwnerBridge::create_registry({
@@ -300,7 +437,24 @@ TEST_CASE("host replacement commits all twelve real SimulationKernel owner rows"
             .transaction_namespace = "host-target",
             .bound_resource_identity = {.high = 454, .low = 455},
             .sample_tick = [] { return std::uint64_t{0}; },
-            .rederive_python_caches = [] { return true; },
+            .rederive_python_caches = [target_python_applied] {
+                target_python_applied->store(true);
+                return true;
+            },
+            .snapshot_python_caches = [target_python_applied] {
+                return std::vector<std::uint8_t>{
+                    target_python_applied->load() ? 1U : 0U};
+            },
+            .rollback_python_caches = [target_python_applied](const auto &before) {
+                if (before.size() != 1) return false;
+                target_python_applied->store(before.front() != 0);
+                return true;
+            },
+            .recover_python_caches = [target_python_applied](const auto &) {
+                return target_python_applied->load()
+                           ? host::RuntimeStateOwnerImportTransactionPhase::Committed
+                           : host::RuntimeStateOwnerImportTransactionPhase::Aborted;
+            },
         });
     REQUIRE(source_registry != nullptr);
     REQUIRE(target_registry != nullptr);
@@ -467,9 +621,17 @@ TEST_CASE("real SimulationKernel ECS truth round trips and rolls back") {
     detection.range = 5000.0;
     detection.local_sensor_hit = true;
     source.set_contact_list(source_lead.id(), {detection});
+    {
+        auto lease = source.acquire_world_lease();
+        SystemTrack track{};
+        track.track_id = 6101;
+        track.entity_id = source_target.id();
+        lease.world().entity(source_lead.id()).set<SystemTrack>(track);
+    }
     MissionCommand command{};
     command.active = true;
     command.assigned_target_id = source_target.id();
+    command.assigned_target_track_id = 88001;
     command.engagement_authority_holder_id = source_lead.id();
     source.set_command_link(source_lead.id(), 0.0, 0.0);
     source.set_mission_command(source_lead.id(), command);
@@ -483,6 +645,7 @@ TEST_CASE("real SimulationKernel ECS truth round trips and rolls back") {
     intent.active = true;
     intent.tactical_unit_id = source_lead.id();
     intent.assigned_target_id = source_target.id();
+    intent.assigned_target_track_id = 88002;
     source.set_leader_intent(source_lead.id(), intent);
     PilotReport report{};
     report.active = true;
@@ -490,6 +653,19 @@ TEST_CASE("real SimulationKernel ECS truth round trips and rolls back") {
     report.entity_ref = source_target.id();
     report.element_id = source_lead.id();
     source.set_pilot_report(source_lead.id(), report);
+    {
+        auto lease = source.acquire_world_lease();
+        auto status_message = make_action_command();
+        status_message.send_msg = true;
+        status_message.msg_type = static_cast<int>(CommMsgType::STATUS_FUEL);
+        status_message.msg_arg = 99;
+        lease.world().entity(source_lead.id()).set<ActionCommand>(status_message);
+        auto target_message = make_action_command();
+        target_message.send_msg = true;
+        target_message.msg_type = static_cast<int>(CommMsgType::ReportContact);
+        target_message.msg_arg = source_lead.id();
+        lease.world().entity(source_target.id()).set<ActionCommand>(target_message);
+    }
 
     // Consume target-local ids so a correct transfer cannot accidentally pass
     // by retaining source Flecs ids.
@@ -553,6 +729,10 @@ TEST_CASE("real SimulationKernel ECS truth round trips and rolls back") {
         REQUIRE(target_target.is_valid());
         target_lead_id = target_lead.id();
         target_target_id = target_target.id();
+        const auto *restored_track = target_lead.get<SystemTrack>();
+        REQUIRE(restored_track != nullptr);
+        CHECK(restored_track->track_id == 6101);
+        CHECK(restored_track->entity_id == target_target.id());
     }
     CHECK(target_lead_id != source_lead.id());
     CHECK(target_target_id != source_target.id());
@@ -561,6 +741,7 @@ TEST_CASE("real SimulationKernel ECS truth round trips and rolls back") {
     CHECK(restored_detections.front().target_id == target_target_id);
     const auto restored_command = target.get_mission_command(target_lead_id);
     CHECK(restored_command.assigned_target_id == target_target_id);
+    CHECK(restored_command.assigned_target_track_id == 88001);
     CHECK(restored_command.engagement_authority_holder_id == target_lead_id);
     const auto restored_order = target.get_task_order(target_lead_id);
     CHECK(restored_order.issuer_id == target_lead_id);
@@ -569,6 +750,16 @@ TEST_CASE("real SimulationKernel ECS truth round trips and rolls back") {
     const auto restored_intent = target.get_leader_intent(target_lead_id);
     CHECK(restored_intent.tactical_unit_id == target_lead_id);
     CHECK(restored_intent.assigned_target_id == target_target_id);
+    CHECK(restored_intent.assigned_target_track_id == 88002);
+    {
+        auto lease = target.acquire_world_lease();
+        const auto *status_message = lease.world().entity(target_lead_id).get<ActionCommand>();
+        REQUIRE(status_message != nullptr);
+        CHECK(status_message->msg_arg == 99);
+        const auto *target_message = lease.world().entity(target_target_id).get<ActionCommand>();
+        REQUIRE(target_message != nullptr);
+        CHECK(target_message->msg_arg == target_lead_id);
+    }
     const auto restored_report = target.get_pilot_report(target_lead_id);
     CHECK(restored_report.sender_id == target_lead_id);
     CHECK(restored_report.entity_ref == target_target_id);
@@ -737,12 +928,40 @@ TEST_CASE("ECS owner covers maintained database platform definitions") {
     target.reset(62);
     REQUIRE(source.load_database("examples/config/database"));
     REQUIRE(target.load_database("examples/config/database"));
-    REQUIRE(source.spawn_unit(Side::Blue, "F-16C_Block50", 0.0, 0.0,
-                              5000.0, 0.0, 0.0, 0.0,
-                              250.0, 0.0, 0.0).is_valid());
-    REQUIRE(source.spawn_unit(Side::Blue, "DDG-51_Flight_I_ASW_Helo_MVP",
-                              10000.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                              12.0, 0.0, 0.0).is_valid());
+    const auto source_aircraft = source.spawn_unit(
+        Side::Blue, "F-16C_Block50", 0.0, 0.0, 5000.0, 0.0, 0.0, 0.0,
+        250.0, 0.0, 0.0);
+    REQUIRE(source_aircraft.is_valid());
+    ecs_entity_t source_munition = 0;
+    {
+        auto lease = source.acquire_world_lease();
+        lease.world().entity(source_aircraft.id()).children([&](flecs::entity child) {
+            const auto *candidate = child.get<Munition>();
+            if (candidate != nullptr && candidate->station_id == 1 &&
+                source_munition == 0) {
+                source_munition = child.id();
+            }
+        });
+        REQUIRE(source_munition != 0);
+        REQUIRE(lease.world().entity(source_munition).has<SimObject>());
+        auto *munition = lease.world().entity(source_munition).get_mut<Munition>();
+        REQUIRE(munition != nullptr);
+        munition->is_fired = true;
+        lease.world().entity(source_munition).modified<Munition>();
+        CHECK(lease.world().entity(source_munition).get<Munition>()->is_fired);
+    }
+    const auto source_destroyer = source.spawn_unit(
+        Side::Blue, "DDG-51_Flight_I_ASW_Helo_MVP",
+        10000.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        12.0, 0.0, 0.0);
+    REQUIRE(source_destroyer.is_valid());
+    const auto source_helo = source.debug_get_embarked_helo(source_destroyer.id());
+    REQUIRE(source_helo != 0);
+    {
+        auto lease = source.acquire_world_lease();
+        REQUIRE(lease.world().entity(source_helo).has<SimObject>());
+        lease.world().entity(source_helo).set<Health>({37.0, 100.0});
+    }
     REQUIRE(source.spawn_unit(Side::Blue, "Kilo_Class_MVP", 20000.0, 0.0,
                               -100.0, 0.0, 0.0, 0.0,
                               8.0, 0.0, 0.0).is_valid());
@@ -755,11 +974,122 @@ TEST_CASE("ECS owner covers maintained database platform definitions") {
 
     const auto source_world =
         integration::SimulationKernelStateOwnerBridge::serialize_world(source);
+    const auto source_document = nlohmann::json::parse(source_world);
+    bool source_munition_fired = false;
+    for (const auto &result : source_document.at("results")) {
+        if (result.at("components").contains("Munition") &&
+            result.at("components").at("Munition").at("station_id").get<int>() == 1) {
+            source_munition_fired = result.at("components")
+                                        .at("Munition")
+                                        .at("is_fired")
+                                        .get<bool>();
+            break;
+        }
+    }
+    REQUIRE(source_munition_fired);
+    const auto target_before =
+        integration::SimulationKernelStateOwnerBridge::serialize_world(target);
+    auto missing_sim_object_tag = nlohmann::json::parse(source_world);
+    missing_sim_object_tag.at("results").front().erase("tags");
+    const auto missing_sim_object_tag_json = missing_sim_object_tag.dump();
+    CHECK_FALSE(integration::SimulationKernelStateOwnerBridge::restore_world(
+        target, std::vector<std::uint8_t>(missing_sim_object_tag_json.begin(),
+                                          missing_sim_object_tag_json.end())));
+    CHECK(integration::SimulationKernelStateOwnerBridge::serialize_world(target) ==
+          target_before);
+    auto missing_child_of = nlohmann::json::parse(source_world);
+    missing_child_of.erase("child_of");
+    const auto missing_child_of_json = missing_child_of.dump();
+    CHECK_FALSE(integration::SimulationKernelStateOwnerBridge::restore_world(
+        target, std::vector<std::uint8_t>(missing_child_of_json.begin(),
+                                          missing_child_of_json.end())));
+    CHECK(integration::SimulationKernelStateOwnerBridge::serialize_world(target) ==
+          target_before);
+    auto duplicate_parent = nlohmann::json::parse(source_world);
+    REQUIRE_FALSE(duplicate_parent.at("child_of").empty());
+    duplicate_parent["child_of"].push_back(duplicate_parent.at("child_of").front());
+    const auto duplicate_parent_json = duplicate_parent.dump();
+    CHECK_FALSE(integration::SimulationKernelStateOwnerBridge::restore_world(
+        target, std::vector<std::uint8_t>(duplicate_parent_json.begin(),
+                                          duplicate_parent_json.end())));
+    CHECK(integration::SimulationKernelStateOwnerBridge::serialize_world(target) ==
+          target_before);
+
+    auto cyclic_parent = nlohmann::json::parse(source_world);
+    const auto first_relation = cyclic_parent.at("child_of").front();
+    cyclic_parent["child_of"].push_back(
+        {{"child", first_relation.at("parent")},
+         {"parent", first_relation.at("child")}});
+    const auto cyclic_parent_json = cyclic_parent.dump();
+    CHECK_FALSE(integration::SimulationKernelStateOwnerBridge::restore_world(
+        target, std::vector<std::uint8_t>(cyclic_parent_json.begin(),
+                                          cyclic_parent_json.end())));
+    CHECK(integration::SimulationKernelStateOwnerBridge::serialize_world(target) ==
+          target_before);
+
+    auto hidden_pair = nlohmann::json::parse(source_world);
+    hidden_pair.at("results").front()["pairs"] = {"(Unsupported,Pair)"};
+    const auto hidden_pair_json = hidden_pair.dump();
+    CHECK_FALSE(integration::SimulationKernelStateOwnerBridge::restore_world(
+        target, std::vector<std::uint8_t>(hidden_pair_json.begin(),
+                                          hidden_pair_json.end())));
+    CHECK(integration::SimulationKernelStateOwnerBridge::serialize_world(target) ==
+          target_before);
     const std::vector<std::uint8_t> payload(source_world.begin(), source_world.end());
     REQUIRE(integration::SimulationKernelStateOwnerBridge::restore_world(target,
                                                                           payload));
     CHECK(integration::SimulationKernelStateOwnerBridge::serialize_world(target) ==
           source_world);
+    {
+        auto lease = target.acquire_world_lease();
+        flecs::entity target_munition;
+        lease.world().query<Munition>().each(
+            [&](flecs::entity child, Munition &munition) {
+                if (!target_munition.is_valid() && child.has<SimObject>() &&
+                    munition.station_id == 1) {
+                    target_munition = child;
+                }
+            });
+        REQUIRE(target_munition.is_valid());
+        const auto *restored_munition = target_munition.get<Munition>();
+        REQUIRE(restored_munition != nullptr);
+        CHECK(restored_munition->station_id == 1);
+        CHECK(restored_munition->is_fired);
+        const auto target_destroyer = lease.world().lookup(
+            ("p4b-simobject-" + std::to_string(source_destroyer.id())).c_str());
+        REQUIRE(target_destroyer.is_valid());
+        const auto target_helo = target.debug_get_embarked_helo(target_destroyer.id());
+        REQUIRE(target_helo != 0);
+        CHECK(lease.world().entity(target_helo).is_alive());
+        const auto *target_helo_health =
+            lease.world().entity(target_helo).get<Health>();
+        REQUIRE(target_helo_health != nullptr);
+        CHECK(target_helo_health->current_hp == doctest::Approx(37.0));
+        CHECK(ecs_get_target(lease.world().c_ptr(), target_helo, EcsChildOf, 0) ==
+              target_destroyer.id());
+    }
+
+    // Destroyed is distinct from stowed: transfer must not resurrect a child
+    // merely because both states carry a target-local id of zero.
+    {
+        auto lease = source.acquire_world_lease();
+        lease.world().entity(source_helo).destruct();
+    }
+    source.step();
+    CHECK(source.debug_get_embarked_helo(source_destroyer.id()) == 0);
+    const auto empty_bay_world =
+        integration::SimulationKernelStateOwnerBridge::serialize_world(source);
+    const std::vector<std::uint8_t> empty_bay_payload(
+        empty_bay_world.begin(), empty_bay_world.end());
+    REQUIRE(integration::SimulationKernelStateOwnerBridge::restore_world(
+        target, empty_bay_payload));
+    {
+        auto lease = target.acquire_world_lease();
+        const auto target_destroyer = lease.world().lookup(
+            ("p4b-simobject-" + std::to_string(source_destroyer.id())).c_str());
+        REQUIRE(target_destroyer.is_valid());
+        CHECK(target.debug_get_embarked_helo(target_destroyer.id()) == 0);
+    }
 }
 
 TEST_CASE("every registered component has transfer or explicit rederive policy") {
@@ -1191,6 +1521,39 @@ TEST_CASE("delayed and command owners import N-1 through separate WAL rows") {
         REQUIRE(target_owner != nullptr);
         auto exported = source_owner->export_state(
             profile, integration_slot(), integration_export_context(barrier));
+        if (category == host::RuntimeStateCategory::DelayedEventsQueues) {
+            const auto collision_document = nlohmann::json::parse(
+                std::string(exported.artifact.payload.begin(),
+                            exported.artifact.payload.end()));
+            REQUIRE_FALSE(collision_document.at("results").empty());
+            const auto collision_name = collision_document.at("results")
+                                            .front()
+                                            .at("name")
+                                            .get<std::string>();
+            flecs::entity collision_entity;
+            {
+                auto lease = target.acquire_world_lease();
+                collision_entity = lease.world().lookup(collision_name.c_str());
+                REQUIRE(collision_entity.is_valid());
+                collision_entity.remove<SimObject>();
+                CHECK_FALSE(collision_entity.has<SimObject>());
+            }
+            auto collision_import = target_owner->import_state(
+                profile, integration_slot(), exported.census_entry,
+                exported.artifact, exported.artifact, {.high = 459, .low = 461});
+            REQUIRE(collision_import.transaction != nullptr);
+            const auto collision_status =
+                collision_import.transaction->commit_with_deadline(20, 100);
+            CHECK(collision_status.phase ==
+                  host::RuntimeStateOwnerImportTransactionPhase::Ambiguous);
+            {
+                auto lease = target.acquire_world_lease();
+                const auto retained = lease.world().lookup(collision_name.c_str());
+                REQUIRE(retained.is_valid());
+                CHECK_FALSE(retained.has<SimObject>());
+                retained.add<SimObject>();
+            }
+        }
         if (category == host::RuntimeStateCategory::DelayedEventsQueues) {
             auto unknown_document = nlohmann::json::parse(
                 std::string(exported.artifact.payload.begin(),

@@ -1547,6 +1547,11 @@ class DefaultUnitFactory : public IUnitFactory {
                 helo_params.vz = 0.0;
                 auto helo = spawn(ecs, def.embarked_air_ops.helo_unit_name, helo_params);
                 if (helo.is_valid()) {
+                    // The embarked child is part of the SimObject transfer
+                    // closure.  Tagging it here preserves its complete native
+                    // truth (health, fuel, stores, and identity references)
+                    // instead of reconstructing a lossy factory default.
+                    helo.add<SimObject>();
                     helo.child_of(e);
                     MissionCommand helo_cmd{};
                     helo.set<MissionCommand>(helo_cmd);

@@ -469,6 +469,11 @@ struct RuntimeStateTransferJournalRecord {
     RuntimeStateOwnerImportTransactionPhase phase =
         RuntimeStateOwnerImportTransactionPhase::Prepared;
     std::string payload_sha256;
+    // Digest of the owner pre-image captured before the first mutation.  An
+    // empty value is retained only for legacy host-neutral fixtures; a
+    // maintained owner transaction must persist this binding.
+    std::string pre_mutation_sha256;
+    std::vector<std::uint8_t> pre_mutation_payload;
 };
 
 struct RuntimeStateTransferJournalAppendResult {
@@ -487,7 +492,9 @@ class RuntimeStateTransferJournal {
     [[nodiscard]] virtual RuntimeStateTransferJournalAppendResult append_and_sync(
         std::string_view transaction_id,
         RuntimeStateOwnerImportTransactionPhase phase,
-        std::string_view payload_sha256) noexcept = 0;
+        std::string_view payload_sha256,
+        std::string_view pre_mutation_sha256 = {},
+        const std::vector<std::uint8_t> &pre_mutation_payload = {}) noexcept = 0;
     [[nodiscard]] virtual RuntimeStateTransferJournalReadResult latest(
         std::string_view transaction_id) noexcept = 0;
 };
@@ -506,7 +513,9 @@ class RuntimeStateTransferFileJournal final : public RuntimeStateTransferJournal
     [[nodiscard]] RuntimeStateTransferJournalAppendResult append_and_sync(
         std::string_view transaction_id,
         RuntimeStateOwnerImportTransactionPhase phase,
-        std::string_view payload_sha256) noexcept override;
+        std::string_view payload_sha256,
+        std::string_view pre_mutation_sha256 = {},
+        const std::vector<std::uint8_t> &pre_mutation_payload = {}) noexcept override;
     [[nodiscard]] RuntimeStateTransferJournalReadResult latest(
         std::string_view transaction_id) noexcept override;
 
@@ -525,9 +534,10 @@ struct RuntimeStateOwnerImportRecoveryCallbacks {
     // Optional compensation for a child that already reached Committed while
     // a composite transaction is still being assembled.
     std::function<bool()> compensate;
-    // Optional terminal-state verification used when reopening a journal.
-    // Returning false forces recovery instead of trusting a terminal WAL row.
-    std::function<bool()> verify;
+    // Optional phase-sensitive terminal-state verification used when reopening
+    // a journal. Returning false forces recovery instead of trusting a stale
+    // terminal WAL row; the owner must verify the exact expected phase.
+    std::function<bool(RuntimeStateOwnerImportTransactionPhase)> verify;
     // Optional owner clock sampled after a callback returns.  If it crosses
     // the caller's deadline, the transaction remains ambiguous and requires
     // explicit recovery before publication.
@@ -540,7 +550,9 @@ class RuntimeDurableOwnerImportTransaction final
     RuntimeDurableOwnerImportTransaction(
         std::string transaction_id, std::string payload_sha256,
         std::shared_ptr<RuntimeStateTransferJournal> journal,
-        RuntimeStateOwnerImportRecoveryCallbacks callbacks) noexcept;
+        RuntimeStateOwnerImportRecoveryCallbacks callbacks,
+        std::string pre_mutation_sha256 = {},
+        std::vector<std::uint8_t> pre_mutation_payload = {}) noexcept;
 
     [[nodiscard]] RuntimeStateOwnerImportTransactionStatus
     commit_with_deadline(std::uint64_t now_tick,
@@ -562,6 +574,8 @@ class RuntimeDurableOwnerImportTransaction final
     mutable std::mutex mutex_;
     std::string transaction_id_;
     std::string payload_sha256_;
+    std::string pre_mutation_sha256_;
+    std::vector<std::uint8_t> pre_mutation_payload_;
     std::shared_ptr<RuntimeStateTransferJournal> journal_;
     RuntimeStateOwnerImportRecoveryCallbacks callbacks_;
     RuntimeStateOwnerImportTransactionStatus status_{};
@@ -796,6 +810,11 @@ class RuntimeValidatedStateTransfer {
     [[nodiscard]] bool committed() const noexcept;
     [[nodiscard]] bool aborted() const noexcept;
     [[nodiscard]] bool ambiguous() const noexcept;
+
+    // Release the host publication fence only after the host has finalized
+    // its authority/state transition.  Commit/recover deliberately keep this
+    // callback armed so no mutator can observe a partially published target.
+    void release_host_transfer_fence() noexcept;
 
     std::shared_ptr<RuntimeValidatedStateTransferState> state_;
 };

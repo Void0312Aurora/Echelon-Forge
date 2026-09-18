@@ -1,10 +1,12 @@
 #include "simulation_kernel_state_owner_adapters.h"
 
 #include "components/basic/tags.h"
+#include "components/command/common/comm_message.h"
 #include "components/combat/common/damage_common.h"
 #include "components/combat/common/weapon_common.h"
 #include "components/domains/air/combat/damage_air.h"
 #include "core/engine/simulation_kernel.h"
+#include "core/interfaces/unit_factory.h"
 #include "runtime/contracts/backend_profile_contracts.h"
 
 #include <flecs/addons/json.h>
@@ -1031,7 +1033,6 @@ bool scalar_entity_reference_field(std::string_view field) {
         "issuer_id",
         "lead_aircraft_id",
         "msg_recipient",
-        "msg_arg",
         "partner_entity_id",
         "receiver_id",
         "recovery_base_id",
@@ -1048,6 +1049,26 @@ bool scalar_entity_reference_field(std::string_view field) {
     return fields.contains(field);
 }
 
+bool action_message_arg_is_entity_reference(const nlohmann::json &value) {
+    if (!value.is_object() || !value.contains("msg_type") ||
+        !value.at("msg_type").is_number_integer()) {
+        return false;
+    }
+    const auto message_type =
+        static_cast<CommMsgType>(value.at("msg_type").get<int>());
+    switch (message_type) {
+    case CommMsgType::REP_TALLY:
+    case CommMsgType::REP_VISUAL:
+    case CommMsgType::REP_BLIND:
+    case CommMsgType::REP_ENGAGED:
+    case CommMsgType::REP_SPLASH:
+    case CommMsgType::ReportContact:
+        return true;
+    default:
+        return false;
+    }
+}
+
 bool vector_entity_reference_field(std::string_view field) {
     return field == "detected_radar_ids" || field == "locking_radar_ids";
 }
@@ -1057,9 +1078,10 @@ bool encode_entity_references(
     const std::unordered_map<std::uint64_t, std::string> &entity_keys,
     std::string_view field = {},
     std::string *unresolved_detail = nullptr) {
-    const auto encode_scalar = [&entity_keys, field, unresolved_detail](
+    const auto encode_scalar = [&entity_keys, unresolved_detail](
                                    nlohmann::json &candidate,
-                                   bool require_remap) {
+                                   bool require_remap,
+                                   std::string_view reference_field) {
         if (!candidate.is_number_unsigned() && !candidate.is_number_integer()) {
             return true;
         }
@@ -1076,16 +1098,17 @@ bool encode_entity_references(
             // Name the offending field and raw id.  A fail-closed reference
             // guard is only actionable if it says which owner surface holds
             // the reference that escaped the logical-identity table.
-            *unresolved_detail = std::string(field) + "=" + std::to_string(raw);
+            *unresolved_detail = std::string(reference_field) + "=" +
+                                 std::to_string(raw);
         }
-        return !require_remap;
+        return false;
     };
     if (scalar_entity_reference_field(field)) {
-        // Every declared scalar reference must be remapped through the
-        // logical-identity table.  Preserving an unknown source-local ECS id
+        // Every declared entity-bearing scalar must be remapped through the
+        // logical-identity table. Preserving an unknown source-local ECS id
         // would let a target resolve it to an unrelated entity (or silently
         // retain a dangling reference), violating generation/logical binding.
-        return encode_scalar(value, true);
+        return encode_scalar(value, true, field);
     }
     if (vector_entity_reference_field(field)) {
         if (!value.is_array()) {
@@ -1093,7 +1116,7 @@ bool encode_entity_references(
                 "entity-reference vector is not an array in the ECS snapshot");
         }
         for (auto &element : value) {
-            if (!encode_scalar(element, true)) {
+            if (!encode_scalar(element, true, field)) {
                 return false;
             }
         }
@@ -1107,7 +1130,22 @@ bool encode_entity_references(
             }
         }
     } else if (value.is_object()) {
+        const bool remap_action_message_arg =
+            action_message_arg_is_entity_reference(value);
         for (auto &[key, element] : value.items()) {
+            // ActionCommand.msg_arg is a typed compatibility payload: only
+            // target-bearing message kinds carry an ECS entity reference.
+            // Status, azimuth, threat and other message kinds retain their
+            // numeric argument as a logical scalar.
+            if (key == "msg_arg" && !remap_action_message_arg) {
+                continue;
+            }
+            if (key == "msg_arg" && remap_action_message_arg) {
+                if (!encode_scalar(element, true, key)) {
+                    return false;
+                }
+                continue;
+            }
             if (!encode_entity_references(element, entity_keys, key,
                                           unresolved_detail)) {
                 return false;
@@ -1264,6 +1302,13 @@ struct StagedImport {
     bool episode_barrier_validated = false;
     RuntimeEpisodeCoordinatorSnapshot episode_barrier;
     std::function<bool()> rederive_python_caches;
+    std::function<std::vector<std::uint8_t>()> snapshot_python_caches;
+    std::function<bool(const std::vector<std::uint8_t> &)>
+        rollback_python_caches;
+    std::function<RuntimeStateOwnerImportTransactionPhase(
+        const std::vector<std::uint8_t> &)>
+        recover_python_caches;
+    bool python_caches_applied = false;
 };
 
 struct DecodedRngState {
@@ -1449,10 +1494,37 @@ bool decode_episode_barrier(std::string_view encoded,
 std::string SimulationKernelStateOwnerBridge::serialize_world(SimulationKernel &kernel) {
     auto lock = kernel.acquire_composition_operation();
     kernel.ensure_active("state_transfer_export_world");
+    // Flecs' table JSON writer on this pinned version emits raw ChildOf pair
+    // expressions that are not valid JSON.  Detach mutable hierarchy edges
+    // while serializing, then restore them before returning; the transfer ABI
+    // carries the validated logical edges in `child_of` below.
+    std::vector<std::pair<ecs_entity_t, ecs_entity_t>> detached_child_of;
+    kernel.ecs.query<SimObject>().each([&](flecs::entity entity, const SimObject &) {
+        const ecs_entity_t parent =
+            ecs_get_target(kernel.ecs.c_ptr(), entity.id(), EcsChildOf, 0);
+        if (parent != 0) {
+            detached_child_of.emplace_back(entity.id(), parent);
+        }
+    });
+    // Query callbacks execute with table storage locked. Apply the temporary
+    // relation changes only after enumeration has completed.
+    for (const auto &[child, parent] : detached_child_of) {
+        ecs_remove_id(kernel.ecs.c_ptr(), child, ecs_pair(EcsChildOf, parent));
+    }
+    const auto restore_detached_child_of = [&]() {
+        for (const auto &[child, parent] : detached_child_of) {
+            if (ecs_is_alive(kernel.ecs.c_ptr(), child) &&
+                ecs_is_alive(kernel.ecs.c_ptr(), parent)) {
+                ecs_add_id(kernel.ecs.c_ptr(), child,
+                           ecs_pair(EcsChildOf, parent));
+            }
+        }
+    };
     ecs_query_desc_t query_descriptor{};
     query_descriptor.terms[0].id = kernel.ecs.id<SimObject>();
     ecs_query_t *query = ecs_query_init(kernel.ecs.c_ptr(), &query_descriptor);
     if (query == nullptr) {
+        restore_detached_child_of();
         throw std::runtime_error("Flecs SimObject query creation failed");
     }
     ecs_iter_t iterator = ecs_query_iter(kernel.ecs.c_ptr(), query);
@@ -1462,6 +1534,7 @@ std::string SimulationKernelStateOwnerBridge::serialize_world(SimulationKernel &
     descriptor.serialize_table = true;
     char *json = ecs_iter_to_json(&iterator, &descriptor);
     ecs_query_fini(query);
+    restore_detached_child_of();
     if (json == nullptr) {
         throw std::runtime_error("Flecs world serialization failed");
     }
@@ -1473,9 +1546,13 @@ std::string SimulationKernelStateOwnerBridge::serialize_world(SimulationKernel &
         auto &results = document.at("results");
         std::unordered_map<std::uint64_t, std::string> entity_keys;
         entity_keys.reserve(results.size());
+        nlohmann::json child_of = nlohmann::json::array();
         for (auto &result : results) {
-            const std::uint64_t local_entity_id =
-                result.value("id", std::uint64_t{0});
+            // Flecs JSON emits the entity index, not its generation. Resolve
+            // the live generation before querying components/relations or
+            // matching native references after a compensated delete/recreate.
+            const std::uint64_t local_entity_id = ecs_get_alive(
+                kernel.ecs.c_ptr(), result.value("id", std::uint64_t{0}));
             if (local_entity_id == 0) {
                 throw std::runtime_error(
                     "Flecs SimObject snapshot has no stable identity seed");
@@ -1489,7 +1566,46 @@ std::string SimulationKernelStateOwnerBridge::serialize_world(SimulationKernel &
                 throw std::runtime_error(
                     "Flecs SimObject snapshot contains a duplicate entity id");
             }
+            result["id"] = local_entity_id;
             result["name"] = std::move(logical_name);
+        }
+        // Flecs includes relation pairs in table serialization.  Keep the
+        // transfer format strict and explicit by carrying only ChildOf edges
+        // between transferred SimObjects in a dedicated logical-identity map;
+        // non-hierarchical pairs remain unsupported rather than being silently
+        // dropped.
+        for (auto &result : results) {
+            const auto local_entity_id = result.at("id").get<std::uint64_t>();
+            const auto parent_id = ecs_get_target(kernel.ecs.c_ptr(), local_entity_id,
+                                                  EcsChildOf, 0);
+            const ecs_type_t *type = ecs_get_type(kernel.ecs.c_ptr(), local_entity_id);
+            for (int32_t index = 0; type != nullptr && index < type->count; ++index) {
+                const ecs_id_t id = type->array[index];
+                if (ecs_id_is_pair(id) && ECS_PAIR_FIRST(id) != EcsChildOf &&
+                    id != ecs_pair(ecs_id(EcsIdentifier), EcsName)) {
+                    throw std::runtime_error(
+                        "ECS snapshot contains an unsupported non-hierarchical pair");
+                }
+            }
+            if (parent_id != 0) {
+                const auto parent = entity_keys.find(parent_id);
+                if (parent == entity_keys.end()) {
+                    throw std::runtime_error(
+                        "ECS snapshot ChildOf parent is outside transfer closure");
+                }
+                child_of.push_back({{"child", result.at("name")},
+                                    {"parent", parent->second}});
+            }
+            if (result.contains("pairs") && result.at("pairs").is_array() &&
+                !result.at("pairs").empty() && parent_id == 0) {
+                throw std::runtime_error(
+                    "ECS snapshot contains an unsupported pair on " +
+                    std::to_string(local_entity_id) + ": " + result.at("pairs").dump());
+            }
+            // Restore applies the validated logical relation after all entity
+            // components exist, so Flecs pair spellings never become part of
+            // the public snapshot ABI.
+            result.erase("pairs");
         }
         for (auto &result : results) {
             if (!result.contains("components") ||
@@ -1584,6 +1700,13 @@ std::string SimulationKernelStateOwnerBridge::serialize_world(SimulationKernel &
             }
             return lhs.dump() < rhs.dump();
         });
+        std::sort(child_of.begin(), child_of.end(), [](const auto &lhs, const auto &rhs) {
+            if (lhs.at("parent") != rhs.at("parent")) {
+                return lhs.at("parent") < rhs.at("parent");
+            }
+            return lhs.at("child") < rhs.at("child");
+        });
+        document["child_of"] = std::move(child_of);
     }
     if (!unreflected_components.empty()) {
         std::sort(unreflected_components.begin(), unreflected_components.end());
@@ -1681,9 +1804,10 @@ bool SimulationKernelStateOwnerBridge::restore_world(
     } catch (const nlohmann::json::exception &) {
         return false;
     }
-    if (!only_object_keys(document, {"results"}) || document.size() != 1 ||
+    if (!only_object_keys(document, {"results", "child_of"}) ||
         !document.contains("results") ||
-        !document.at("results").is_array()) {
+        !document.at("results").is_array() ||
+        !document.contains("child_of") || !document.at("child_of").is_array()) {
         return false;
     }
     std::unordered_map<std::string, std::uint64_t> logical_entities;
@@ -1695,8 +1819,15 @@ bool SimulationKernelStateOwnerBridge::restore_world(
             result.at("name").get_ref<const std::string &>().empty() ||
             !result.contains("components") ||
             !result.at("components").is_object() ||
-            (result.contains("tags") && !result.at("tags").is_array()) ||
-            (result.contains("pairs") && !result.at("pairs").empty())) {
+            !result.contains("tags") || !result.at("tags").is_array() ||
+            (result.contains("pairs") &&
+             (!result.at("pairs").is_array() || !result.at("pairs").empty()))) {
+            return false;
+        }
+        const bool sim_object_tagged = std::any_of(
+            result.at("tags").begin(), result.at("tags").end(),
+            [](const auto &tag) { return tag.is_string() && tag == "SimObject"; });
+        if (!sim_object_tagged) {
             return false;
         }
         if (!logical_entities
@@ -1714,6 +1845,38 @@ bool SimulationKernelStateOwnerBridge::restore_world(
         if (existing != 0 &&
             !kernel.ecs.entity(existing).has<SimObject>()) {
             return false;
+        }
+    }
+    std::unordered_map<std::string, std::string> child_parents;
+    if (document.contains("child_of")) {
+        for (const auto &relation : document.at("child_of")) {
+            if (!only_object_keys(relation, {"child", "parent"}) ||
+                !relation.contains("child") || !relation.contains("parent") ||
+                !relation.at("child").is_string() || !relation.at("parent").is_string() ||
+                !logical_entities.contains(relation.at("child").get<std::string>()) ||
+                !logical_entities.contains(relation.at("parent").get<std::string>())) {
+                return false;
+            }
+            const auto child = relation.at("child").get<std::string>();
+            const auto parent = relation.at("parent").get<std::string>();
+            if (child == parent || !child_parents.emplace(child, parent).second) {
+                return false;
+            }
+        }
+        for (const auto &[start, unused] : child_parents) {
+            static_cast<void>(unused);
+            std::set<std::string> seen;
+            std::string current = start;
+            for (;;) {
+                const auto found = child_parents.find(current);
+                if (found == child_parents.end()) {
+                    break;
+                }
+                if (!seen.insert(current).second) {
+                    return false;
+                }
+                current = found->second;
+            }
         }
     }
     for (const auto &result : document.at("results")) {
@@ -1748,11 +1911,6 @@ bool SimulationKernelStateOwnerBridge::restore_world(
     for (auto &result : document.at("results")) {
         if (!result.contains("name") || !result.at("name").is_string() ||
             result.at("name").get_ref<const std::string &>().empty()) {
-            return false;
-        }
-        if (result.contains("pairs") && !result.at("pairs").empty()) {
-            // Pair targets need the same logical-identity remap as component
-            // entity references. Reject until that mapping is complete.
             return false;
         }
         const auto &name = result.at("name").get_ref<const std::string &>();
@@ -1867,6 +2025,15 @@ bool SimulationKernelStateOwnerBridge::restore_world(
                 return false;
             }
             ecs_modified_id(kernel.ecs.c_ptr(), entity.id(), component_id);
+        }
+    }
+    if (document.contains("child_of")) {
+        for (const auto &relation : document.at("child_of")) {
+            const auto child = entities.at(logical_entities.at(
+                relation.at("child").get<std::string>()) - 1);
+            const auto parent = entities.at(logical_entities.at(
+                relation.at("parent").get<std::string>()) - 1);
+            child.child_of(parent);
         }
     }
     kernel.world_state_mutated_ = true;
@@ -2046,6 +2213,9 @@ std::string serialize_component_subset(
         }
         result.erase("tags");
     }
+    // Component-subset owners intentionally carry only their selected
+    // components; hierarchy closure belongs to the ECS truth owner.
+    document.erase("child_of");
     document["owner_schema"] = component_subset_schema(category);
     document["step_sequence"] = step_sequence;
     document["barrier_sequence"] = barrier_sequence;
@@ -2170,7 +2340,8 @@ bool restore_component_subset(
         }
         const auto &name = result.at("name").get_ref<const std::string &>();
         const auto entity = ecs.lookup(name.c_str());
-        if (!entity.is_valid() || !target_entities.emplace(name, entity.id()).second) {
+        if (!entity.is_valid() || !entity.has<SimObject>() ||
+            !target_entities.emplace(name, entity.id()).second) {
             return false;
         }
     }
@@ -2296,7 +2467,12 @@ bool apply_staged(StagedImport &staged) {
             *staged.kernel, staged.category, staged.source_payload,
             staged.step_sequence, staged.barrier_sequence);
     case RuntimeStateCategory::PythonLoaderControllerCaches:
-        return !staged.rederive_python_caches || staged.rederive_python_caches();
+        if (!staged.rederive_python_caches) {
+            staged.python_caches_applied = true;
+            return true;
+        }
+        staged.python_caches_applied = staged.rederive_python_caches();
+        return staged.python_caches_applied;
     default:
         return true;
     }
@@ -2322,6 +2498,13 @@ bool abort_staged(StagedImport &staged) {
         return staged.episode_barrier_validated && restore_component_subset(
             *staged.kernel, staged.category, staged.before_payload,
             staged.step_sequence, staged.barrier_sequence);
+    case RuntimeStateCategory::PythonLoaderControllerCaches:
+        if (staged.rollback_python_caches &&
+            !staged.rollback_python_caches(staged.before_payload)) {
+            return false;
+        }
+        staged.python_caches_applied = false;
+        return true;
     default:
         return true;
     }
@@ -2350,6 +2533,13 @@ RuntimeStateOwnerImportTransactionPhase recover_staged(StagedImport &staged) {
         current = bytes(serialize_episode_owner(
             *staged.kernel, staged.episode_barrier));
         break;
+    case RuntimeStateCategory::PythonLoaderControllerCaches:
+        if (staged.recover_python_caches) {
+            return staged.recover_python_caches(staged.before_payload);
+        }
+        return staged.python_caches_applied
+                   ? RuntimeStateOwnerImportTransactionPhase::Committed
+                   : RuntimeStateOwnerImportTransactionPhase::Aborted;
     default:
         return RuntimeStateOwnerImportTransactionPhase::Committed;
     }
@@ -2373,7 +2563,8 @@ SimulationKernelStateOwnerBridge::create_registry(
         config.bound_resource_identity.well_formed() !=
             static_cast<bool>(config.sample_tick) ||
         (config.bound_resource_identity.well_formed() &&
-         !config.rederive_python_caches)) {
+         (!config.rederive_python_caches || !config.snapshot_python_caches ||
+          !config.rollback_python_caches || !config.recover_python_caches))) {
         return {};
     }
     std::array<RuntimeStateOwnerAdapterRegistration, kRuntimeStateCategoryCount>
@@ -2464,6 +2655,9 @@ SimulationKernelStateOwnerBridge::create_registry(
             [kernel = config.kernel, journal = config.journal,
              transaction_namespace = config.transaction_namespace,
              rederive_python_caches = config.rederive_python_caches,
+             snapshot_python_caches = config.snapshot_python_caches,
+             rollback_python_caches = config.rollback_python_caches,
+             recover_python_caches = config.recover_python_caches,
              sample_tick = config.sample_tick,
              category = rule.category](
                 const RuntimeStateTransferProfile &profile,
@@ -2482,6 +2676,9 @@ SimulationKernelStateOwnerBridge::create_registry(
                 staged->kernel = kernel;
                 staged->category = category;
                 staged->rederive_python_caches = rederive_python_caches;
+                staged->snapshot_python_caches = snapshot_python_caches;
+                staged->rollback_python_caches = rollback_python_caches;
+                staged->recover_python_caches = recover_python_caches;
                 staged->source_payload = admitted_artifact.payload;
                 staged->step_sequence = entry.step_sequence;
                 staged->barrier_sequence = entry.barrier_sequence;
@@ -2509,8 +2706,16 @@ SimulationKernelStateOwnerBridge::create_registry(
                            !decode_component_subset_metadata(
                                text(admitted_artifact.payload), category,
                                entry.step_sequence, entry.barrier_sequence)) {
+                    const auto diagnostic = nlohmann::json::parse(
+                        text(admitted_artifact.payload));
                     throw std::runtime_error(
-                        "component subset owner payload does not match its native barrier");
+                        "component subset owner payload does not match its native barrier: " +
+                        std::string(runtime_state_category_name(category)) +
+                        " schema=" + diagnostic.value("owner_schema", "<missing>") +
+                        " step=" + std::to_string(diagnostic.value("step_sequence", 0ULL)) +
+                        " barrier=" + std::to_string(diagnostic.value("barrier_sequence", 0ULL)) +
+                        " expected=" + std::to_string(entry.step_sequence) + "/" +
+                        std::to_string(entry.barrier_sequence));
                 } else if (category ==
                            RuntimeStateCategory::EpisodeRewardTermination) {
                     RuntimeEpisodeCoordinatorSnapshot decoded;
@@ -2601,7 +2806,32 @@ SimulationKernelStateOwnerBridge::create_registry(
                     staged->before_payload = bytes(serialize_episode_owner(
                         *kernel, staged->episode_barrier));
                     break;
+                case RuntimeStateCategory::PythonLoaderControllerCaches:
+                    if (staged->snapshot_python_caches) {
+                        staged->before_payload = staged->snapshot_python_caches();
+                    } else {
+                        staged->before_payload = export_category_payload(
+                            *kernel, category,
+                            {.barrier_snapshot = {
+                                 .step_sequence = entry.step_sequence,
+                                 .barrier_sequence = entry.barrier_sequence,
+                             }});
+                    }
+                    break;
                 default:
+                    // These rows are target-side no-op/rederive/drain policy
+                    // owners in the current CPU candidate. Persist their
+                    // explicit target policy as a non-empty pre-image so a
+                    // reopen never fabricates an empty rollback identity.
+                    staged->before_payload = export_category_payload(
+                        *kernel, category,
+                        {.barrier_snapshot = {
+                             .step_sequence = entry.step_sequence,
+                             .barrier_sequence = entry.barrier_sequence,
+                         },
+                         .source_read_only_result_leases = entry.item_count,
+                         .cooperative_cancellation_acknowledged =
+                             staged->cooperative_cancellation_acknowledged});
                     break;
                 }
                 std::string candidate_payload_sha256 =
@@ -2645,6 +2875,22 @@ SimulationKernelStateOwnerBridge::create_registry(
                 const std::string id = transaction_id(
                     transaction_namespace, profile, source_slot, entry, candidate_identity,
                     admitted_artifact.payload_sha256);
+                // On reopen, recover the original pre-image from the durable
+                // WAL record instead of treating the process's current target
+                // bytes as a new pre-image.  A third state must remain
+                // Ambiguous unless the owner callback can independently prove
+                // the outcome.
+                if (const auto existing = journal->latest(id);
+                    existing.status && existing.record &&
+                    !existing.record->pre_mutation_payload.empty()) {
+                    staged->before_payload = existing.record->pre_mutation_payload;
+                }
+                if (staged->before_payload.empty()) {
+                    throw std::runtime_error(
+                        "owner import has no durable target pre-mutation image");
+                }
+                const std::string pre_mutation_sha256 =
+                    runtime_state_payload_sha256(staged->before_payload);
                 auto transaction =
                     std::make_shared<RuntimeDurableOwnerImportTransaction>(
                         id, admitted_artifact.payload_sha256, journal,
@@ -2653,12 +2899,12 @@ SimulationKernelStateOwnerBridge::create_registry(
                             .abort = [staged] { return abort_staged(*staged); },
                             .recover = [staged] { return recover_staged(*staged); },
                             .compensate = [staged] { return abort_staged(*staged); },
-                            .verify = [staged] {
-                                return recover_staged(*staged) ==
-                                       RuntimeStateOwnerImportTransactionPhase::Committed;
+                            .verify = [staged](RuntimeStateOwnerImportTransactionPhase expected) {
+                                return recover_staged(*staged) == expected;
                             },
                             .sample_tick = sample_tick,
-                        });
+                        },
+                        pre_mutation_sha256, staged->before_payload);
                 return RuntimeStateOwnerAdapterImport{
                     .observation = std::move(observation),
                     .transaction = std::move(transaction),

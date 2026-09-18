@@ -197,6 +197,7 @@ struct RuntimeHostSlot {
     // retain the source slot so an explicit owner-transaction recovery can
     // restore the pre-publication authority without guessing.
     std::shared_ptr<RuntimeHostSlot> rollback_target;
+    bool owner_publication_recovery_pending = false;
     bool resources_released = false;
     bool cancellation_in_progress = false;
     bool cancellation_acknowledged = false;
@@ -2109,6 +2110,9 @@ RuntimePublicationResult RuntimeHostCandidate::commit_prepared_candidate(
                         committed.detail.empty()
                             ? "owner import recovered as aborted"
                             : committed.detail);
+                    lock.unlock();
+                    candidate->validated_transfer.release_host_transfer_fence();
+                    lock.lock();
                     return {.status = fail_candidate(*state_, lock, import_failure),
                             .published_slot = {}};
                 }
@@ -2124,6 +2128,7 @@ RuntimePublicationResult RuntimeHostCandidate::commit_prepared_candidate(
                     state_->rollback_world_authority = previous_authority;
                     state_->rollback_world_coordinators = previous_coordinators;
                     candidate->state = RuntimeSlotState::Quarantined;
+                    candidate->owner_publication_recovery_pending = true;
                     candidate->admission_open = false;
                     candidate->result_publication_open = false;
                     retain_quarantine(*state_, candidate);
@@ -2138,6 +2143,7 @@ RuntimePublicationResult RuntimeHostCandidate::commit_prepared_candidate(
                     // retained so a later explicit recovery/reclamation pass
                     // cannot lose the owner transaction.
                     candidate->state = RuntimeSlotState::Quarantined;
+                    candidate->owner_publication_recovery_pending = true;
                     candidate->admission_open = false;
                     candidate->result_publication_open = false;
                     retain_quarantine(*state_, candidate);
@@ -2168,9 +2174,15 @@ RuntimePublicationResult RuntimeHostCandidate::commit_prepared_candidate(
     state_->draining = old;
     state_->candidate.reset();
     state_->host_state = RuntimeHostState::Active;
+    const auto publication_ticket = state_->last_publication_ticket;
+    // Owner commit keeps the target fence live until routing, slot state and
+    // the source draining transition are all finalized. Never call owner
+    // control code while holding the host mutex.
+    lock.unlock();
+    candidate->validated_transfer.release_host_transfer_fence();
     return {.status = success(),
             .published_slot = candidate->incarnation,
-            .publication_ticket = state_->last_publication_ticket};
+            .publication_ticket = publication_ticket};
 }
 
 RuntimeHostStatus RuntimeHostCandidate::abort_candidate(const RuntimeCandidateHandle &handle) {
@@ -2637,6 +2649,22 @@ RuntimeLeaseAdmission RuntimeHostCandidate::acquire_lease(
                     .lease = {},
                     .request_ref = {}};
         }
+    const auto coordinator =
+        state_->world_coordinators.find(episode.episode_.world.world_slot);
+    if (coordinator == state_->world_coordinators.end() || coordinator->second == nullptr) {
+        return {.status = failure(RuntimeHostError::StaleReference,
+                                  "episode world slot has no host-owned coordinator"),
+                .lease = {},
+                .request_ref = {}};
+    }
+    const RuntimeEpisodeCoordinatorSnapshot episode_snapshot =
+        coordinator->second->snapshot();
+    if (kind == RuntimeLeaseKind::TruthMutating &&
+        episode_snapshot.phase == RuntimeEpisodePhase::Terminal) {
+        return {.status = failure(RuntimeHostError::AdmissionClosed,
+                                  "truth-mutating lease is closed at terminal episode; use reset intent"),
+                .lease = {},
+                .request_ref = {}};
     }
     if (!increment_nonzero(state_->last_request_sequence)) {
         return {.status = failure(RuntimeHostError::RequestSequenceExhausted,
@@ -2858,8 +2886,11 @@ RuntimeHostStatus RuntimeHostCandidate::retry_quarantined_reclamation() {
     // rollback target before the durable transaction is settled.
     for (const std::shared_ptr<RuntimeHostSlot> &quarantined : retained) {
         if (quarantined == nullptr || quarantined->rollback_target == nullptr ||
+            !quarantined->owner_publication_recovery_pending ||
             quarantined->state != RuntimeSlotState::Quarantined ||
-            !quarantined->validated_transfer.ambiguous()) {
+            (!quarantined->validated_transfer.ambiguous() &&
+             !quarantined->validated_transfer.committed() &&
+             !quarantined->validated_transfer.aborted())) {
             continue;
         }
         const std::shared_ptr<RuntimeHostSlot> rollback_target =
@@ -2882,6 +2913,7 @@ RuntimeHostStatus RuntimeHostCandidate::retry_quarantined_reclamation() {
                 continue;
             }
             quarantined->state = RuntimeSlotState::Active;
+            quarantined->owner_publication_recovery_pending = false;
             quarantined->admission_open = true;
             quarantined->result_publication_open = true;
             rollback_target->state = RuntimeSlotState::Draining;
@@ -2896,6 +2928,9 @@ RuntimeHostStatus RuntimeHostCandidate::retry_quarantined_reclamation() {
                 std::remove(state_->quarantined.begin(), state_->quarantined.end(),
                             quarantined),
                 state_->quarantined.end());
+            lock.unlock();
+            quarantined->validated_transfer.release_host_transfer_fence();
+            lock.lock();
             continue;
         }
         if (quarantined->validated_transfer.aborted()) {
@@ -2919,6 +2954,7 @@ RuntimeHostStatus RuntimeHostCandidate::retry_quarantined_reclamation() {
                 false, std::memory_order_release);
             state_->host_state = RuntimeHostState::Active;
             quarantined->state = RuntimeSlotState::CandidateFailed;
+            quarantined->owner_publication_recovery_pending = false;
             quarantined->admission_open = false;
             quarantined->result_publication_open = false;
             state_->quarantined.erase(
@@ -2929,6 +2965,9 @@ RuntimeHostStatus RuntimeHostCandidate::retry_quarantined_reclamation() {
                 std::remove(state_->quarantined.begin(), state_->quarantined.end(),
                             rollback_target),
                 state_->quarantined.end());
+            lock.unlock();
+            quarantined->validated_transfer.release_host_transfer_fence();
+            lock.lock();
             if (!reclaim_slot(*state_, lock, quarantined)) {
                 unresolved = true;
             }
@@ -2942,6 +2981,7 @@ RuntimeHostStatus RuntimeHostCandidate::retry_quarantined_reclamation() {
         const bool waits_for_replacement = std::any_of(
             retained.begin(), retained.end(), [&](const auto &candidate) {
                 return candidate != nullptr && candidate->state == RuntimeSlotState::Quarantined &&
+                       candidate->owner_publication_recovery_pending &&
                        candidate->rollback_target == quarantined;
             });
         if (waits_for_replacement) {

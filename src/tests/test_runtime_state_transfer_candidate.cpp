@@ -13,6 +13,7 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -142,6 +143,10 @@ class NoopImportTransaction final : public host::RuntimeStateOwnerImportTransact
 class DurableStatusImportTransaction final
     : public host::RuntimeStateOwnerImportTransaction {
   public:
+    explicit DurableStatusImportTransaction(
+        std::shared_ptr<std::atomic<int>> rollback_count = {})
+        : rollback_count_(std::move(rollback_count)) {}
+
     [[nodiscard]] host::RuntimeStateOwnerImportTransactionStatus
     commit_with_deadline(std::uint64_t now_tick,
                          std::uint64_t deadline_tick) noexcept override {
@@ -166,6 +171,10 @@ class DurableStatusImportTransaction final
     [[nodiscard]] host::RuntimeStateOwnerImportTransactionStatus
     abort_with_deadline(std::uint64_t now_tick,
                         std::uint64_t deadline_tick) noexcept override {
+        if (phase_.phase == host::RuntimeStateOwnerImportTransactionPhase::Committed) {
+            phase_.error = host::RuntimeStateTransferError::ImportTransactionStateInvalid;
+            return phase_;
+        }
         if (deadline_tick != 0 && now_tick >= deadline_tick) {
             phase_ = {.phase = host::RuntimeStateOwnerImportTransactionPhase::Ambiguous,
                        .error = host::RuntimeStateTransferError::ImportTransactionDeadlineExceeded,
@@ -196,7 +205,22 @@ class DurableStatusImportTransaction final
         return phase_;
     }
 
+    [[nodiscard]] bool rollback_committed() noexcept override {
+        if (phase_.phase != host::RuntimeStateOwnerImportTransactionPhase::Committed) {
+            return false;
+        }
+        if (rollback_count_ != nullptr) {
+            ++*rollback_count_;
+        }
+        phase_ = {.phase = host::RuntimeStateOwnerImportTransactionPhase::Aborted,
+                  .error = host::RuntimeStateTransferError::None,
+                  .journal_sequence = 12,
+                  .durable = true};
+        return true;
+    }
+
   private:
+    std::shared_ptr<std::atomic<int>> rollback_count_;
     host::RuntimeStateOwnerImportTransactionStatus phase_{};
 };
 
@@ -1016,7 +1040,9 @@ TEST_CASE("canonical profile factory binds all rows to the decoder matrix") {
 TEST_CASE("fixed twelve-owner adapter registry executes current and N-1 generations") {
     bool emit_previous_generation = false;
     bool corrupt_last_import = false;
+    bool precommit_first_child = false;
     const auto cleanup_abort_count = std::make_shared<std::atomic<int>>(0);
+    const auto committed_rollback_count = std::make_shared<std::atomic<int>>(0);
     std::array<host::RuntimeStateOwnerAdapterRegistration,
                 host::kRuntimeStateCategoryCount>
         registrations{};
@@ -1085,7 +1111,9 @@ TEST_CASE("fixed twelve-owner adapter registry executes current and N-1 generati
             return migrated;
         };
     registrations[index].import_state = [category, &corrupt_last_import,
-                                              cleanup_abort_count](
+                                              &precommit_first_child,
+                                              cleanup_abort_count,
+                                              committed_rollback_count](
                                                 const host::RuntimeStateTransferProfile &,
                                                 const RuntimeIncarnationRef &,
                                                 const host::RuntimeStateCensusEntry &entry,
@@ -1125,16 +1153,22 @@ TEST_CASE("fixed twelve-owner adapter registry executes current and N-1 generati
                 category == host::RuntimeStateCategory::DiagnosticsTelemetry) {
                 observation.owner_id = "invalid-owner";
             }
+            std::shared_ptr<host::RuntimeStateOwnerImportTransaction> transaction;
+            if (corrupt_last_import) {
+                transaction = std::make_shared<CountingAbortImportTransaction>(
+                    cleanup_abort_count);
+            } else {
+                auto durable = std::make_shared<DurableStatusImportTransaction>(
+                    committed_rollback_count);
+                if (precommit_first_child &&
+                    category == host::RuntimeStateCategory::CompositionProviderSystemGraph) {
+                    (void)durable->commit_with_deadline(2, 100);
+                }
+                transaction = std::move(durable);
+            }
             return host::RuntimeStateOwnerAdapterImport{
                 .observation = std::move(observation),
-                .transaction = corrupt_last_import
-                                   ? std::static_pointer_cast<
-                                         host::RuntimeStateOwnerImportTransaction>(
-                                         std::make_shared<CountingAbortImportTransaction>(
-                                             cleanup_abort_count))
-                                   : std::static_pointer_cast<
-                                         host::RuntimeStateOwnerImportTransaction>(
-                                         std::make_shared<DurableStatusImportTransaction>()),
+                .transaction = std::move(transaction),
             };
         };
     }
@@ -1177,6 +1211,20 @@ TEST_CASE("fixed twelve-owner adapter registry executes current and N-1 generati
     }
     REQUIRE(previous_import.transaction->abort_with_deadline(2, 100));
 
+    precommit_first_child = true;
+    const auto partial_commit_import = registry->import_and_observe(
+        profile, previous_export, RuntimeIdentity128{.high = 138, .low = 139});
+    REQUIRE(partial_commit_import.status);
+    REQUIRE(partial_commit_import.transaction != nullptr);
+    const auto compensated_abort =
+        partial_commit_import.transaction->abort_with_deadline(3, 100);
+    CHECK(compensated_abort.phase ==
+          host::RuntimeStateOwnerImportTransactionPhase::Aborted);
+    CHECK(compensated_abort.error == host::RuntimeStateTransferError::None);
+    CHECK(compensated_abort.durable);
+    CHECK(committed_rollback_count->load() == 1);
+    precommit_first_child = false;
+
     corrupt_last_import = true;
     const auto rejected_import = registry->import_and_observe(
         profile, previous_export, RuntimeIdentity128{.high = 136, .low = 137});
@@ -1208,7 +1256,9 @@ TEST_CASE("file WAL persists terminal owner transaction across journal reopen") 
         .recover = [] {
             return host::RuntimeStateOwnerImportTransactionPhase::Aborted;
         },
-        .verify = [] { return true; },
+        .verify = [](host::RuntimeStateOwnerImportTransactionPhase expected) {
+            return expected == host::RuntimeStateOwnerImportTransactionPhase::Committed;
+        },
     };
     {
         auto journal = std::make_shared<host::RuntimeStateTransferFileJournal>(
@@ -1243,6 +1293,77 @@ TEST_CASE("file WAL persists terminal owner transaction across journal reopen") 
               host::RuntimeStateOwnerImportTransactionPhase::Committed);
         CHECK(commit_calls == 1);
     }
+    {
+        auto reopened = std::make_shared<host::RuntimeStateTransferFileJournal>(
+            journal_path.string());
+        auto throwing_callbacks = callbacks;
+        throwing_callbacks.verify = [](host::RuntimeStateOwnerImportTransactionPhase) -> bool {
+            throw std::runtime_error("owner verification probe failed");
+        };
+        host::RuntimeDurableOwnerImportTransaction recovered(
+            transaction_id, kHash2, reopened, throwing_callbacks);
+        CHECK(recovered.status().phase ==
+              host::RuntimeStateOwnerImportTransactionPhase::Ambiguous);
+        const auto classified = recovered.recover_with_deadline(2, 20);
+        REQUIRE(classified);
+        CHECK(classified.phase ==
+              host::RuntimeStateOwnerImportTransactionPhase::Aborted);
+    }
+    std::filesystem::remove(journal_path, remove_error);
+}
+
+TEST_CASE("file WAL serializes concurrent independent writers before sequence allocation") {
+    const auto journal_path = std::filesystem::temp_directory_path() /
+                              "echelon_forge_p4b_owner_multiwriter_test.wal";
+    std::error_code remove_error;
+    std::filesystem::remove(journal_path, remove_error);
+    host::RuntimeStateTransferJournalAppendResult first;
+    host::RuntimeStateTransferJournalAppendResult second;
+    {
+        auto first_journal = std::make_shared<host::RuntimeStateTransferFileJournal>(
+            journal_path.string());
+        auto second_journal = std::make_shared<host::RuntimeStateTransferFileJournal>(
+            journal_path.string());
+        std::atomic<int> ready{0};
+        std::atomic<bool> start{false};
+        const auto append = [&](const auto &journal, std::string_view transaction_id,
+                                std::string_view payload_sha256,
+                                host::RuntimeStateTransferJournalAppendResult *result) {
+            ready.fetch_add(1, std::memory_order_release);
+            while (!start.load(std::memory_order_acquire)) {
+                std::this_thread::yield();
+            }
+            *result = journal->append_and_sync(
+                transaction_id,
+                host::RuntimeStateOwnerImportTransactionPhase::Prepared,
+                payload_sha256);
+        };
+        std::thread first_writer(append, first_journal, std::string_view{kHash},
+                                 std::string_view{kHash2}, &first);
+        std::thread second_writer(append, second_journal, std::string_view{kHash2},
+                                  std::string_view{kHash}, &second);
+        while (ready.load(std::memory_order_acquire) != 2) {
+            std::this_thread::yield();
+        }
+        start.store(true, std::memory_order_release);
+        first_writer.join();
+        second_writer.join();
+    }
+    REQUIRE(first.status);
+    REQUIRE(second.status);
+    CHECK(first.sequence != 0);
+    CHECK(second.sequence != 0);
+    CHECK(first.sequence != second.sequence);
+    auto reopened = std::make_shared<host::RuntimeStateTransferFileJournal>(
+        journal_path.string());
+    const auto first_record = reopened->latest(kHash);
+    const auto second_record = reopened->latest(kHash2);
+    REQUIRE(first_record.status);
+    REQUIRE(second_record.status);
+    REQUIRE(first_record.record.has_value());
+    REQUIRE(second_record.record.has_value());
+    CHECK(first_record.record->sequence == first.sequence);
+    CHECK(second_record.record->sequence == second.sequence);
     std::filesystem::remove(journal_path, remove_error);
 }
 
@@ -1314,6 +1435,70 @@ TEST_CASE("file WAL reconciles interrupted commit and rejects complete corruptio
     std::filesystem::remove(journal_path, remove_error);
 }
 
+TEST_CASE("file WAL truncates a torn first frame before preparing") {
+    const auto journal_path =
+        std::filesystem::temp_directory_path() /
+        "echelon_forge_p4b_owner_first_frame_torn_test.wal";
+    std::error_code remove_error;
+    std::filesystem::remove(journal_path, remove_error);
+    {
+        std::ofstream torn(journal_path, std::ios::binary);
+        torn << "1\tpartial-first-frame";
+    }
+    auto journal = std::make_shared<host::RuntimeStateTransferFileJournal>(
+        journal_path.string());
+    host::RuntimeDurableOwnerImportTransaction transaction(
+        kHash, kHash2, journal,
+        {.commit = [] { return true; },
+         .abort = [] { return true; },
+         .recover = [] {
+             return host::RuntimeStateOwnerImportTransactionPhase::Aborted;
+         }});
+    const auto prepared = transaction.status();
+    REQUIRE(prepared.phase ==
+            host::RuntimeStateOwnerImportTransactionPhase::Prepared);
+    CHECK(prepared.journal_sequence == 1);
+    CHECK(prepared.durable);
+    std::filesystem::remove(journal_path, remove_error);
+}
+
+TEST_CASE("live file WAL truncates a torn tail before same-instance recovery") {
+    const auto journal_path = std::filesystem::temp_directory_path() /
+                              "echelon_forge_p4b_owner_live_torn_tail_test.wal";
+    std::error_code remove_error;
+    std::filesystem::remove(journal_path, remove_error);
+    auto journal = std::make_shared<host::RuntimeStateTransferFileJournal>(
+        journal_path.string());
+    const std::string transaction_id = kHash;
+    REQUIRE(journal->append_and_sync(
+        transaction_id, host::RuntimeStateOwnerImportTransactionPhase::Prepared,
+        kHash2)
+                .status);
+    REQUIRE(journal->append_and_sync(
+        transaction_id, host::RuntimeStateOwnerImportTransactionPhase::Committing,
+        kHash2)
+                .status);
+    {
+        std::ofstream torn(journal_path, std::ios::binary | std::ios::app);
+        torn << "torn-live-tail-without-newline";
+    }
+    host::RuntimeDurableOwnerImportTransaction transaction(
+        transaction_id, kHash2, journal,
+        {.commit = [] { return false; },
+         .abort = [] { return true; },
+         .recover = [] {
+             return host::RuntimeStateOwnerImportTransactionPhase::Aborted;
+         }});
+    REQUIRE(transaction.status().phase ==
+            host::RuntimeStateOwnerImportTransactionPhase::Committing);
+    const auto recovered = transaction.recover_with_deadline(5, 20);
+    REQUIRE(recovered.phase ==
+            host::RuntimeStateOwnerImportTransactionPhase::Aborted);
+    CHECK(recovered.journal_sequence == 3);
+    CHECK(recovered.durable);
+    std::filesystem::remove(journal_path, remove_error);
+}
+
 TEST_CASE("file WAL reopens a compensated terminal abort") {
     const auto journal_path =
         std::filesystem::temp_directory_path() /
@@ -1330,7 +1515,7 @@ TEST_CASE("file WAL reopens a compensated terminal abort") {
         .compensate = [] { return true; },
         // Reopen must not trust the terminal marker without owner evidence;
         // recovery below reaffirms the compensated target state.
-        .verify = [] { return false; },
+        .verify = [](host::RuntimeStateOwnerImportTransactionPhase) { return false; },
     };
     {
         auto journal = std::make_shared<host::RuntimeStateTransferFileJournal>(
@@ -1356,6 +1541,107 @@ TEST_CASE("file WAL reopens a compensated terminal abort") {
               host::RuntimeStateOwnerImportTransactionPhase::Aborted);
         CHECK(reconciled.durable);
     }
+    std::filesystem::remove(journal_path, remove_error);
+}
+
+TEST_CASE("deadline crossing after owner commit is compensated before recovery publishes") {
+    const auto journal_path =
+        std::filesystem::temp_directory_path() /
+        "echelon_forge_p4b_owner_deadline_recovery_test.wal";
+    std::error_code remove_error;
+    std::filesystem::remove(journal_path, remove_error);
+    std::uint64_t owner_tick = 1;
+    bool applied = false;
+    const std::string transaction_id = kHash;
+    auto callbacks = host::RuntimeStateOwnerImportRecoveryCallbacks{
+        .commit = [&] {
+            applied = true;
+            owner_tick = 25;
+            return true;
+        },
+        .abort = [&] {
+            applied = false;
+            return true;
+        },
+        .recover = [&] {
+            return applied
+                       ? host::RuntimeStateOwnerImportTransactionPhase::Committed
+                       : host::RuntimeStateOwnerImportTransactionPhase::Aborted;
+        },
+        .compensate = [&] {
+            applied = false;
+            return true;
+        },
+        .sample_tick = [&] { return owner_tick; },
+    };
+    auto journal = std::make_shared<host::RuntimeStateTransferFileJournal>(
+        journal_path.string());
+    host::RuntimeDurableOwnerImportTransaction transaction(
+        transaction_id, kHash2, journal, callbacks);
+    const auto late_commit = transaction.commit_with_deadline(1, 20);
+    REQUIRE(late_commit.phase ==
+            host::RuntimeStateOwnerImportTransactionPhase::Ambiguous);
+    CHECK(late_commit.error ==
+          host::RuntimeStateTransferError::ImportTransactionDeadlineExceeded);
+    CHECK(applied);
+
+    const auto recovered = transaction.recover_with_deadline(1, 20);
+    REQUIRE(recovered.phase ==
+            host::RuntimeStateOwnerImportTransactionPhase::Aborted);
+    CHECK(recovered.error == host::RuntimeStateTransferError::None);
+    CHECK(recovered.durable);
+    CHECK_FALSE(applied);
+    CHECK(recovered.journal_sequence == 4);
+    std::filesystem::remove(journal_path, remove_error);
+}
+
+TEST_CASE("terminal WAL verification is phase-sensitive and compensates stale abort") {
+    const auto journal_path =
+        std::filesystem::temp_directory_path() /
+        "echelon_forge_p4b_owner_terminal_phase_test.wal";
+    std::error_code remove_error;
+    std::filesystem::remove(journal_path, remove_error);
+    bool applied = true;
+    auto journal = std::make_shared<host::RuntimeStateTransferFileJournal>(
+        journal_path.string());
+    REQUIRE(journal->append_and_sync(
+        kHash, host::RuntimeStateOwnerImportTransactionPhase::Prepared, kHash2).status);
+    REQUIRE(journal->append_and_sync(
+        kHash, host::RuntimeStateOwnerImportTransactionPhase::Aborting, kHash2).status);
+    REQUIRE(journal->append_and_sync(
+        kHash, host::RuntimeStateOwnerImportTransactionPhase::Aborted, kHash2).status);
+    host::RuntimeDurableOwnerImportTransaction transaction(
+        kHash, kHash2, journal,
+        {.commit = [&] {
+             applied = true;
+             return true;
+         },
+         .abort = [&] {
+             applied = false;
+             return true;
+         },
+         .recover = [&] {
+             return applied
+                        ? host::RuntimeStateOwnerImportTransactionPhase::Committed
+                        : host::RuntimeStateOwnerImportTransactionPhase::Aborted;
+         },
+         .compensate = [&] {
+             applied = false;
+             return true;
+         },
+         .verify = [&] (host::RuntimeStateOwnerImportTransactionPhase expected) {
+             const auto actual =
+                 applied ? host::RuntimeStateOwnerImportTransactionPhase::Committed
+                         : host::RuntimeStateOwnerImportTransactionPhase::Aborted;
+             return actual == expected;
+         }});
+    CHECK(transaction.status().phase ==
+          host::RuntimeStateOwnerImportTransactionPhase::Ambiguous);
+    const auto recovered = transaction.recover_with_deadline(1, 20);
+    REQUIRE(recovered.phase ==
+            host::RuntimeStateOwnerImportTransactionPhase::Aborted);
+    CHECK(recovered.durable);
+    CHECK_FALSE(applied);
     std::filesystem::remove(journal_path, remove_error);
 }
 

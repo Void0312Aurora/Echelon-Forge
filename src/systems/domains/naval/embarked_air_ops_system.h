@@ -48,7 +48,7 @@ inline void register_embarked_air_ops_system(flecs::world &ecs) {
                     }
 
                     flecs::entity helo = it.world().entity(state.active_helo_entity_id);
-                    if (!helo.is_valid()) {
+                    if (!helo.is_alive()) {
                         state.active_helo_entity_id = 0;
                         state.helo_airborne = false;
                         continue;

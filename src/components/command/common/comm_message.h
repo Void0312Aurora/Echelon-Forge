@@ -41,18 +41,20 @@ enum class CommMsgType {
     ACK_UNABLE = REP_UNABLE,
     ACK_CANT_DO = REP_CANT_DO,
 
-    // 6. Python Binding Compatibility
-    ReportContact,
+    // 6. Python Binding Compatibility. Keep these values explicit: the
+    // original implicit sequence collided with the maintained status/tactical
+    // values above, making typed message arguments impossible to decode.
+    ReportContact = 100,
     ReportTrack = ReportContact,
-    AssignTask,
-    StatusUpdate,
-    RequestSupport,
+    AssignTask = 101,
+    StatusUpdate = 102,
+    RequestSupport = 103,
 
     // 7. Two-ship / formation status extensions
-    REP_JOINED,      // Joined assigned formation slot
-    REP_REJOINING,   // Rejoin maneuver in progress
-    REP_FORM_LOST,   // Lost formation reference
-    REP_UNABLE_FORM, // Unable to establish/maintain formation
-    REP_SUPPORTING,  // Supporting lead / assigned element
-    WARN_SEPARATION  // Unsafe closure / separation alert
+    REP_JOINED = 104,      // Joined assigned formation slot
+    REP_REJOINING = 105,   // Rejoin maneuver in progress
+    REP_FORM_LOST = 106,   // Lost formation reference
+    REP_UNABLE_FORM = 107, // Unable to establish/maintain formation
+    REP_SUPPORTING = 108,  // Supporting lead / assigned element
+    WARN_SEPARATION = 109  // Unsafe closure / separation alert
 };

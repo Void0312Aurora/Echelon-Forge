@@ -103,8 +103,11 @@ class FakeControl final : public host::RuntimeInstanceControl {
         return owner_registry_;
     }
 
-    [[nodiscard]] bool begin_state_transfer() noexcept override { return true; }
-    void end_state_transfer() noexcept override {}
+    [[nodiscard]] bool begin_state_transfer() noexcept override {
+        ++begin_transfer_calls;
+        return true;
+    }
+    void end_state_transfer() noexcept override { ++end_transfer_calls; }
 
     [[nodiscard]] bool request_cooperative_cancel() noexcept override {
         ++cancel_calls;
@@ -126,6 +129,8 @@ class FakeControl final : public host::RuntimeInstanceControl {
 
     int cancel_calls = 0;
     int release_calls = 0;
+    int begin_transfer_calls = 0;
+    int end_transfer_calls = 0;
     bool released = false;
     bool cancel_acknowledged = true;
 
@@ -721,11 +726,12 @@ TEST_CASE("replacement closes admission, fences truth leases, and retires a tomb
     REQUIRE(truth.status);
     REQUIRE(read.status);
 
+    const auto replacement_control = make_control();
     const auto begun = runtime.begin_candidate({
         .transaction_kind = host::RuntimeHostTransactionKind::Replacement,
         .expected_slot = old_slot,
         .plan = plan("plan.v2", kHash2),
-        .control = make_control(),
+        .control = replacement_control,
         .lifecycle_deadline_tick = 20,
     });
     REQUIRE(begun.status);
@@ -739,8 +745,11 @@ TEST_CASE("replacement closes admission, fences truth leases, and retires a tomb
     truth.lease = {};
     REQUIRE(runtime.prepare_replacement(
         begun.handle, transfer_proof(runtime, begun.handle, old_slot)));
+    CHECK(replacement_control->begin_transfer_calls == 1);
+    CHECK(replacement_control->end_transfer_calls == 0);
     const auto published = runtime.commit_prepared_candidate(begun.handle, 1);
     REQUIRE(published.status);
+    CHECK(replacement_control->end_transfer_calls == 1);
     CHECK(published.published_slot.incarnation_epoch == 2);
     REQUIRE(runtime.validate_result(read.lease, RuntimeResultRef{.request = read.request_ref}));
     CHECK_FALSE(runtime.validate_result(read.lease, RuntimeResultRef{.request = truth.request_ref}));

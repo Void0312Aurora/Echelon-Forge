@@ -14,11 +14,13 @@
 
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 SimulationKernel::SimulationKernel()
     : SimulationKernel(runtime::providers::default_compatibility_resolved_manifest_json()) {}
@@ -211,6 +213,22 @@ flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_na
     auto e = factory->spawn(ecs, unit_name, params);
     if (e.is_valid()) {
         e.add<SimObject>(); // Tag for cleanup
+        // Factory-owned ChildOf descendants (for example an embarked helo)
+        // are part of the native ECS truth closure.  Tag them after the
+        // factory returns so the same world/type registration is used as the
+        // parent and the transfer query cannot lose their state.
+        std::vector<ecs_entity_t> descendants;
+        e.children([&](flecs::entity child) { descendants.push_back(child.id()); });
+        for (std::size_t index = 0; index < descendants.size(); ++index) {
+            auto descendant = ecs.entity(descendants[index]);
+            descendant.children([&](flecs::entity child) {
+                if (std::find(descendants.begin(), descendants.end(), child.id()) ==
+                    descendants.end()) {
+                    descendants.push_back(child.id());
+                }
+            });
+            descendant.add<SimObject>();
+        }
     }
     return e;
 }

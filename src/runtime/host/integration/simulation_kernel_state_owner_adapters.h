@@ -28,6 +28,19 @@ struct SimulationKernelStateOwnerRegistryConfig {
     // rederive hook with the target native state; it is never given source
     // Python objects as authority.
     std::function<bool()> rederive_python_caches;
+    // Capture an opaque target-side rollback image before rederive.  The bytes
+    // are persisted in the owner WAL; they are not source authority and must
+    // be sufficient for the matching rollback/recovery callbacks after reopen.
+    std::function<std::vector<std::uint8_t>()> snapshot_python_caches;
+    // Matching rollback and recovery probes make the Python mirror owner a
+    // real participant in the durable composite transaction. Host-bound
+    // registries must provide all three callbacks; fixture registries may use
+    // the in-memory staged fallback.
+    std::function<bool(const std::vector<std::uint8_t> &)>
+        rollback_python_caches;
+    std::function<RuntimeStateOwnerImportTransactionPhase(
+        const std::vector<std::uint8_t> &)>
+        recover_python_caches;
 };
 
 class SimulationKernelStateOwnerBridge {

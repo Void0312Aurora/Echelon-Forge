@@ -190,7 +190,10 @@ def test_p4b_fixed_owner_registry_and_local_wal_are_executable_candidates() -> N
     assert "RuntimeStateOwnerAdapterRegistration" in header
     assert "RuntimeStateTransferFileJournal final" in header
     assert "RuntimeDurableOwnerImportTransaction final" in header
-    assert "append_journal_bytes_and_sync" in source
+    # The durable WAL API is exposed as append_and_sync; the locked record
+    # helper is the implementation seam that provides append+flush semantics.
+    assert "append_and_sync" in source
+    assert "append_journal_record_with_lock" in source
     assert "truncate_journal_file" in source
     assert "valid_journal_transition" in source
     assert "CompositeOwnerImportTransaction" in source
