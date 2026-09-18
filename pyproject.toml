@@ -52,6 +52,13 @@ dev = [
 
 [tool.scikit-build]
 wheel.packages = ["python", "gym_envs"]
+# The P4-C epoch fence is a build-tree/shadow probe, not a maintained package
+# surface. Keep it out of wheels even though the broad Python package mapping
+# includes the `rl` namespace.
+wheel.exclude = [
+  "rl/runtime/world_batch/candidate_adapter.py",
+  "python/rl/runtime/world_batch/candidate_adapter.py",
+]
 
 [tool.scikit-build.cmake.define]
 BUILD_TESTING = "OFF"
