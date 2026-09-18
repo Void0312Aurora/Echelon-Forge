@@ -46,9 +46,11 @@ finding. The following controls were specifically rechecked:
 ## Evidence
 
 ```text
-native candidate: 3 cases, 44/44 assertions
-P4-C CTest lanes: 3/3 passed
-focused Python host/state-transfer/composition/P4-C gates: 42 passed
+native candidate: 5 cases, 2,611/2,611 assertions
+P4-C CTest lanes: 4/4 passed
+candidate caller inventory: 0 maintained violations, 0 unclassified callers
+candidate/maintained common-surface parity: 1 case, 26/26 assertions
+focused Python host/state-transfer/composition/P4-C gates: 35 passed
 real SimulationKernel replacement rollback: 1 case, 40/40 assertions passed;
 durable owner compensation restored native ECS/RNG pre-images and the old
 active epoch, with at least twelve target-WAL aborted records and no orphan
@@ -60,7 +62,8 @@ git diff --check: passed (LF/CRLF conversion warnings only)
 ## Residuals Outside This Verdict
 
 These are later gates, not candidate-scope findings: maintained
-`RuntimeFacade`/binding/example/diagnostic migration and full parity;
+`RuntimeFacade`/binding/example/diagnostic migration and full maintained
+facade parity;
 production caller cutover and package publication; complete recovery,
 process/package rollback, restart, stress, resource and concurrency
 qualification;

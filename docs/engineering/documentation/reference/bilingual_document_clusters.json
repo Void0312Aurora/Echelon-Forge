@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-30",
+  "generated_at": "2026-09-19",
   "root": "docs",
   "pairs": [
     {
@@ -16,9 +16,9 @@
       "english": "docs/architecture/README.md",
       "chinese": "docs/architecture/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-09-30",
-      "english_hash": "8d5b11aadd1cf23933a6adcb5b6ce7424c50b5d0f91a0353303c25ff2d2117fc",
-      "chinese_hash": "2ca43ded4f6468bbbf4a7aff17150f64bec28feda95a086f842ac68b1b50bcec"
+      "last_verified": "2026-09-19",
+      "english_hash": "30ca30cf116040504f8fda74673b76c54d169f124a96d5f9badf889fe7b979a7",
+      "chinese_hash": "3f445a34971097ff3ef8bcfa168455ffc9a30e49bc46108d7e2840c76f4ff6de"
     },
     {
       "pair_id": "architecture/reference/t8_g4_truth_leak_inventory",
