@@ -40,6 +40,9 @@ RETIRED_SETTERS = (
 
 CALLER_SUFFIXES = {".py", ".yml", ".yaml"}
 CPP_CALLER_SUFFIXES = {".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".hxx", ".inl", ".ipp"}
+BUILD_TREE_ONLY_EXPLICIT_KERNEL_CALLERS = {
+    "src/runtime/host/integration/runtime_kernel_candidate.cpp",
+}
 SKIPPED_CALLER_DIRECTORIES = {
     ".git",
     ".mypy_cache",
@@ -488,6 +491,7 @@ def scan_cpp_default_kernel_callers() -> list[str]:
         if (
             "tests" in relative_path.parts
             or "experimental" in relative_path.parts
+            or relative_path.as_posix() in BUILD_TREE_ONLY_EXPLICIT_KERNEL_CALLERS
             or relative_path.as_posix()
             in {"src/core/engine/simulation_kernel.cpp", "src/core/engine/simulation_kernel.h"}
         ):
@@ -1000,11 +1004,18 @@ def verify_source_truth() -> None:
     if not scan_cpp_default_kernel_callers():
         raise ClosureError("native default-kernel callers disappeared from the retained inventory")
     explicit_kernel_callers = scan_cpp_explicit_kernel_callers()
-    if explicit_kernel_callers:
+    unadmitted_explicit_kernel_callers = sorted(
+        set(explicit_kernel_callers) - BUILD_TREE_ONLY_EXPLICIT_KERNEL_CALLERS
+    )
+    if unadmitted_explicit_kernel_callers:
         raise ClosureError(
             "unadmitted production explicit-manifest callers appeared: "
-            + ", ".join(explicit_kernel_callers)
+            + ", ".join(unadmitted_explicit_kernel_callers)
         )
+    if sorted(set(explicit_kernel_callers) & BUILD_TREE_ONLY_EXPLICIT_KERNEL_CALLERS) != sorted(
+        BUILD_TREE_ONLY_EXPLICIT_KERNEL_CALLERS
+    ):
+        raise ClosureError("build-tree-only explicit candidate caller inventory is stale")
     fault_injection_callers = scan_cpp_symbol_callers(
         "build_default_simulation_composition_for_testing",
         excluded_paths={
@@ -1142,6 +1153,16 @@ def build_record() -> dict[str, Any]:
                 "owner": "architecture/runtime-composition",
                 "callers": ["src/tests/test_cordis_runtime_conformance.cpp"],
                 "disposition": "maintained conformance bridge; validates before native realization",
+            },
+            {
+                "surface_id": "simulation_kernel.build_tree_candidate",
+                "classification": "build_tree_only_candidate",
+                "owner": "architecture/runtime-composition",
+                "callers": sorted(BUILD_TREE_ONLY_EXPLICIT_KERNEL_CALLERS),
+                "disposition": (
+                    "explicit manifest is admitted only for the P4-C build-tree candidate; "
+                    "not installed, exported, or production-authorized"
+                ),
             },
             {
                 "surface_id": "simulation_kernel.test_fault_injection",
