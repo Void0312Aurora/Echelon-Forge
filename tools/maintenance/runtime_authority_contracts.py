@@ -50,6 +50,19 @@ class AuthoritySpec:
 
 
 AUTHORITY_SPECS: dict[str, AuthoritySpec] = {
+  "resolved_execution_plan": AuthoritySpec(
+    "resolved_execution_plan",
+    "composition.execution-plan",
+    "application/vnd.echelon-forge.resolved-execution-plan.v1+json",
+    "plan_compiler",
+    frozenset({
+      "authority_kind", "schema_version", "contract_version", "writer_role", "plan_id",
+      "writer_generation", "reader_generation_min", "reader_generation_max", "request_sha256",
+      "catalog_lock_sha256", "profile_projection_sha256", "backend_request_sha256",
+      "requested_manifest_sha256", "resolved_manifest_sha256", "composition_id",
+      "requested_profile", "backend", "provider_versions", "resolved_manifest",
+    }),
+  ),
   "resolved_composition_plan": AuthoritySpec(
     "resolved_composition_plan",
     "composition.resolved-plan",
@@ -352,7 +365,51 @@ def validate_authority_payload(kind: str, payload: Mapping[str, Any]) -> dict[st
   if normalized["writer_role"] != spec.writer_role:
     raise AuthorityContractError(f"{kind} writer_role must be {spec.writer_role!r}")
   _require_generation_window(normalized)
-  if kind == "resolved_composition_plan":
+  if kind == "resolved_execution_plan":
+    for field in (
+      "plan_id", "composition_id", "request_sha256", "catalog_lock_sha256",
+      "profile_projection_sha256", "backend_request_sha256", "requested_manifest_sha256",
+      "resolved_manifest_sha256",
+    ):
+      _require_string(normalized[field], field, identifier=field in {"plan_id", "composition_id"})
+      if field.endswith("sha256"):
+        _require_sha256(normalized[field], field)
+    _require_string(normalized["requested_profile"]["profile_id"], "requested_profile.profile_id", identifier=True)
+    _require_string(normalized["requested_profile"]["profile_version"], "requested_profile.profile_version")
+    if set(normalized["requested_profile"]) != {"profile_id", "profile_version"}:
+      raise AuthorityContractError("requested_profile fields are not exact")
+    backend = normalized["backend"]
+    if set(backend) != {"provider_id", "profile_id", "implementation_version", "required_capabilities"}:
+      raise AuthorityContractError("execution-plan backend fields are not exact")
+    _require_string(backend["provider_id"], "backend.provider_id", identifier=True)
+    _require_string(backend["profile_id"], "backend.profile_id", identifier=True)
+    _require_string(backend["implementation_version"], "backend.implementation_version")
+    _require_set_array(backend["required_capabilities"], "backend.required_capabilities")
+    if not isinstance(normalized["provider_versions"], list) or not normalized["provider_versions"]:
+      raise AuthorityContractError("provider_versions must be non-empty")
+    for row in normalized["provider_versions"]:
+      if set(row) != {"provider_id", "implementation_version"}:
+        raise AuthorityContractError("provider_versions row fields are not exact")
+      _require_string(row["provider_id"], "provider_versions.provider_id", identifier=True)
+      _require_string(row["implementation_version"], "provider_versions.implementation_version")
+    resolved = normalized["resolved_manifest"]
+    if not isinstance(resolved, dict) or not resolved.get("manifest"):
+      raise AuthorityContractError("resolved_manifest is not a resolved composition artifact")
+    try:
+      _validate_resolved_plan(resolved)
+      manifest = resolved["manifest"]
+      if manifest["composition_id"] != normalized["composition_id"] or manifest["requested_profile"] != normalized["requested_profile"]:
+        raise AuthorityContractError("execution-plan composition/profile binding mismatch")
+      if manifest["backend_request"]["provider_id"] != backend["provider_id"] or manifest["backend_request"]["backend_profile_id"] != backend["profile_id"]:
+        raise AuthorityContractError("execution-plan backend binding mismatch")
+      provider_rows = [row for row in manifest["providers"] if row["provider_id"] == backend["provider_id"]]
+      if len(provider_rows) != 1 or provider_rows[0]["implementation_version"] != backend["implementation_version"]:
+        raise AuthorityContractError("execution-plan backend implementation mismatch")
+    except (KeyError, TypeError, ValueError) as error:
+      raise AuthorityContractError(f"resolved_manifest rejected: {error}") from error
+    if normalized["requested_manifest_sha256"] != resolved["requested_manifest_sha256"] or normalized["resolved_manifest_sha256"] != resolved["resolved_manifest_sha256"]:
+      raise AuthorityContractError("execution-plan manifest digest binding mismatch")
+  elif kind == "resolved_composition_plan":
     _require_string(normalized["adapter_role"], "adapter_role")
     if normalized["adapter_role"] != "legacy_resolved_manifest_reader":
       raise AuthorityContractError("resolved plan adapter_role is not the one-way legacy reader")
@@ -532,6 +589,16 @@ def adapt_current_resolved_manifest(
       ).hexdigest(),
       "resolved_plan": candidate,
   })
+
+
+def build_resolved_execution_plan_authority(payload: Mapping[str, Any]) -> dict[str, Any]:
+  """Build the P5-A authority from a closed plan payload.
+
+  The legacy manifest adapter remains available for the P3/P4 reader window;
+  production plan admission uses this owner-complete authority instead.
+  """
+
+  return _build_authority_envelope("resolved_execution_plan", payload)
 
 
 def build_release_manifest_shell(payload: Mapping[str, Any]) -> dict[str, Any]:

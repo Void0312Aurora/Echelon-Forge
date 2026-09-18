@@ -242,6 +242,11 @@ set_property(
     "${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/contracts/composition/default_compatibility_manifest.v1.generated.h"
 )
 set_property(
+    SOURCE src/core/engine/simulation_kernel.cpp
+    APPEND PROPERTY OBJECT_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/contracts/composition/resolved_execution_plan.v1.generated.h"
+)
+set_property(
     SOURCE
         src/core/engine/simulation_kernel_systems.cpp
         src/runtime/facade/runtime_facade_composition_evidence.cpp
@@ -517,6 +522,7 @@ target_include_directories(ef_core PUBLIC
 target_link_libraries(ef_core PUBLIC
     ef_composition
     ef_content
+    ef_runtime_authority_contracts
     flecs::flecs
     spdlog::spdlog
     nlohmann_json::nlohmann_json
@@ -981,6 +987,7 @@ add_executable(ef_cordis_runtime_conformance_test
 target_link_libraries(ef_cordis_runtime_conformance_test PRIVATE
     ef_core
     ef_composition
+    ef_runtime_authority_contracts
     nlohmann_json::nlohmann_json
 )
 target_include_directories(ef_cordis_runtime_conformance_test PRIVATE
@@ -1163,6 +1170,7 @@ add_test(
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/default_compatibility_manifest.requested.json
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/default_compatibility_manifest.resolved.json
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/default_runtime_profile_projection.v1.json
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/default_resolved_execution_plan.v1.json
 )
 endif()
 
