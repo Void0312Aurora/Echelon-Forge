@@ -3,6 +3,10 @@
 
 #include <doctest/doctest.h>
 
+#include <cstdint>
+#include <string>
+#include <vector>
+
 using runtime::host::RuntimeHostState;
 using runtime::host::integration::RuntimeKernelCandidate;
 
@@ -132,6 +136,88 @@ TEST_CASE("P4-C facade adapter keeps batch operations on epoch-bearing refs") {
     CHECK_FALSE(facade.try_get_entity_kinematics(stale, &state));
     REQUIRE(candidate.shutdown(10, 100).status);
     CHECK_FALSE(facade.step_batch());
+}
+
+TEST_CASE("P4-C candidate sustains repeated epochs and fences retired references") {
+    RuntimeKernelCandidate candidate({
+        .host_id = {.high = 0x5044432D53545253ULL, .low = 5},
+        .mode = runtime::host::RuntimeHostMode::Shadow,
+        .lifecycle_deadline_tick = 1000,
+    });
+
+    REQUIRE(candidate.start());
+    runtime::host::integration::RuntimeKernelCandidateFacadeAdapter facade(candidate);
+    const auto sealed = candidate.composition_snapshot();
+    const auto orphaned_before = runtime::host::RuntimeHostCandidate::orphaned_host_count();
+
+    for (std::uint64_t cycle = 1; cycle <= 256; ++cycle) {
+        const auto world = candidate.world_ref();
+        WorldSpawnRequest request{};
+        request.world_index = 0;
+        request.side = cycle % 2 == 0 ? Side::Red : Side::Blue;
+        request.type_name = "Aircraft";
+        request.x = static_cast<double>(cycle);
+        request.y = static_cast<double>(cycle * 2);
+        request.z = 3000.0 + static_cast<double>(cycle);
+        std::vector<WorldSpawnRequest> batch = {request, request, request, request};
+        batch[1].side = Side::Red;
+        batch[2].x += 10.0;
+        batch[3].y += 10.0;
+        const auto entities = facade.apply_spawn_batch(batch);
+        REQUIRE(entities.size() == batch.size());
+        REQUIRE(facade.step_batch());
+
+        const auto running_episode = candidate.episode_ref();
+        candidate.arm_terminal_receipt_for_test();
+        runtime::host::RuntimeEpisodeTransitionReceipt terminal_receipt{};
+        REQUIRE(candidate.submit_episode(
+            running_episode, runtime::host::RuntimeEpisodeIntentKind::Action,
+            {.high = 0x4550432D53545253ULL, .low = cycle}, std::string(64, 'd'),
+            &terminal_receipt));
+        REQUIRE(terminal_receipt.terminal);
+
+        const auto retired_entity = entities.front();
+        runtime::host::RuntimeEpisodeTransitionReceipt reset_receipt{};
+        REQUIRE(candidate.submit_episode(
+            terminal_receipt.episode_after,
+            runtime::host::RuntimeEpisodeIntentKind::Reset,
+            {.high = 0x4550432D53545252ULL, .low = cycle}, std::string(64, 'e'),
+            &reset_receipt));
+        REQUIRE(reset_receipt.reset_applied);
+
+        WorldEntityKinematics state{};
+        CHECK_FALSE(facade.try_get_entity_kinematics(retired_entity, &state));
+        CHECK_FALSE(facade.try_set_entity_kinematics(retired_entity, state));
+        CHECK(candidate.composition_snapshot() == sealed);
+        CHECK(candidate.composition_immutable());
+    }
+
+    const auto shutdown = candidate.shutdown(10, 1000);
+    REQUIRE(shutdown.status);
+    CHECK(shutdown.state == runtime::host::RuntimeHostState::Stopped);
+    CHECK(runtime::host::RuntimeHostCandidate::orphaned_host_count() <= orphaned_before);
+}
+
+TEST_CASE("P4-C candidate implicit teardown releases generated WAL ownership") {
+    const auto orphaned_before = runtime::host::RuntimeHostCandidate::orphaned_host_count();
+    {
+        RuntimeKernelCandidate candidate({
+            .host_id = {.high = 0x5044432D54454152ULL, .low = 6},
+            .mode = runtime::host::RuntimeHostMode::Dark,
+            .lifecycle_deadline_tick = 100,
+        });
+        REQUIRE(candidate.start());
+        const auto entity = candidate.spawn_unit(candidate.world_ref(), WorldSpawnRequest{
+            .world_index = 0,
+            .side = Side::Blue,
+            .type_name = "Aircraft",
+            .x = 1.0,
+            .y = 2.0,
+            .z = 3000.0,
+        });
+        REQUIRE(entity.has_value());
+    }
+    CHECK(runtime::host::RuntimeHostCandidate::orphaned_host_count() <= orphaned_before);
 }
 
 } // TEST_SUITE("runtime_kernel_candidate")

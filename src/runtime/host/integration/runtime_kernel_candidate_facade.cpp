@@ -43,6 +43,10 @@ bool RuntimeKernelCandidateFacadeAdapter::step_batch(std::size_t world_count) {
     return candidate_->step(world_ref());
 }
 
+bool RuntimeKernelCandidateFacadeAdapter::set_time_step(double dt) {
+    return candidate_ != nullptr && candidate_->set_time_step(world_ref(), dt);
+}
+
 bool RuntimeKernelCandidateFacadeAdapter::try_get_entity_kinematics(
     const RuntimeEntityRef &entity, WorldEntityKinematics *state) {
     return candidate_ != nullptr && candidate_->try_get_entity_kinematics(entity, state);
