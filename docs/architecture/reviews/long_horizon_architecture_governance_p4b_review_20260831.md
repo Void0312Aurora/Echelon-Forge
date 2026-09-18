@@ -4,16 +4,17 @@ Document kind: `review`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/reviews/long_horizon_architecture_governance_p4b_review_20260831.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-09-01`
+Last verified: `2026-09-13`
 
-Status: `repair-required` (first round closed by repairs; re-review pending)
+Status: `pass` for the P4-B dark/shadow candidate; production acceptance remains gated by P5
 
 Review target: `codex/long-horizon-governance-architecture` in the isolated
 worktree created from `origin/main` at
 `82d5b6e893c442950e334eb3e9ec92f8174eeb35`.
 
-Reviewer: independent `gpt-5.6-sol`, reasoning `max`, first integrated audit of
-the P4-B state-transfer and episode-authority candidate.
+Reviewer: independent `gpt-5.6-sol`, reasoning `max`; first integrated audit
+and post-repair re-review of the P4-B state-transfer and episode-authority
+candidate.
 
 ## Retention Note
 
@@ -93,9 +94,10 @@ and the base control fails closed until that fence exists.
 
 `P4B-H6` — ECS export accepted unresolved `msg_arg` references, and
 `SystemHealth` decoding accepted missing required keys.
-**Disposition: repaired.** `msg_arg` is mapped through logical entity identities
-and unresolved references are rejected; `SystemHealth` decoding rejects missing
-required keys.
+**Disposition: repaired.** Entity-bearing `msg_arg` variants are mapped through
+logical entity identities and unresolved references are rejected, while generic
+message arguments and tactical track identities retain their scalar domain;
+`SystemHealth` decoding rejects missing required keys.
 
 `P4B-H7` — The Python cache rederive path did not rebuild all mirror surfaces,
 leaving poisoned caches after a transfer.
@@ -121,7 +123,12 @@ git diff --check: passed (LF/CRLF conversion warnings only)
 The `1609 assertions` figure previously recorded in the candidate document
 predates this repair pass and no longer reproduces.
 
-## Open Defect Carried Into Re-Review
+## Open Defect Carried Into Re-Review (first-round snapshot)
+
+The following records the first-round audit state before the child-entity
+closure repair. It remains in the review history so the finding disposition is
+traceable; the current implementation evidence is recorded in the follow-up
+note below.
 
 `ECS owner covers maintained database platform definitions` fails closed with an
 unresolved `active_helo_entity_id` reference. This is a child-entity transfer
@@ -138,11 +145,58 @@ route's open-defect section.
 The re-review must disposition this explicitly rather than accept a widened tag
 as an incidental fix.
 
+## Post-repair verification note (2026-09-13)
+
+The implementation now admits the transitive factory-owned `ChildOf` closure
+into the `SimObject` transfer set, carries hierarchy edges as logical-name
+pairs, and keeps unresolved non-zero entity-bearing references fail-closed.
+Tactical track identities and generic message arguments retain their typed
+scalar meaning, while target-bearing compatibility messages map `msg_arg`
+through entity identities. World restore requires the explicit `SimObject` tag,
+component-subset restore rejects non-`SimObject` name collisions, and live WAL
+objects truncate a torn tail before same-instance recovery. The maintained
+database-platform round-trip covers a mutated embarked-helo child, loadout
+munition state, hierarchy restoration, malformed relation rejection, and
+destroyed-child non-resurrection. The fresh Windows/MSVC candidate executable
+reports:
+
+```text
+test cases: 66 | 66 passed | 0 failed | 0 skipped
+assertions: 1717 | 1717 passed | 0 failed
+```
+
+The independent post-repair review re-ran the integrated audit against the
+current shared tree and found no residual Critical, High, Medium, or Low finding
+within the declared P4-B dark/shadow candidate scope.
+
 ## Verdict
 
-- critical/high findings: 2 critical, 7 high — all repaired, none independently
-  re-verified.
+- first-round findings: 2 critical, 7 high — repaired and independently
+  re-verified; current candidate-scope findings: 0 critical, 0 high, 0 medium,
+  0 low.
 - short-term substitution detected: no.
-- verdict: `repair-required`. The same reviewer must re-run the integrated audit
-  against the committed tree. Any residual Critical/High, or safety-relevant
-  Medium, remains a P4-B acceptance blocker.
+- verdict: `pass` for the P4-B dark/shadow candidate only.
+
+Production-boundary residuals remain outside this verdict: cross-process WAL
+reader/truncate locking, real released-version N-1 fixtures, and ChildOf
+ownership outside the `SimulationKernel::spawn_unit` factory-owned closure.
+These remain P5 qualification work and must not be represented as production
+acceptance.
+
+## Post-repair independent review record (2026-09-13)
+
+The independent reviewer verified the current source, diff, native candidate,
+focused Python contract/execution/bootstrap tests, CTest candidate lanes, and
+maintained documentation audits. Evidence:
+
+```text
+candidate native: 66/66 test cases, 1717/1717 assertions
+P4-B CTest lanes: 2/2 passed
+focused Python P4-B plus message/track regressions: 54 passed, 2 subtests passed
+document links: 206 documents, 1754 links, 0 issues
+bilingual audit: 74 pairs, 74 synced, 0 diverged
+```
+
+The full CTest invocation is intentionally not treated as green because the
+build directory does not contain 17 unrelated legacy executables; those tests
+are `Not Run`, not P4-B failures.

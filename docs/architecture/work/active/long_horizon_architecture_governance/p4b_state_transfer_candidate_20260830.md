@@ -1,7 +1,7 @@
 # P4-B State Transfer And Episode Candidate
 
-Status: `2026-08-31` implementation snapshot; **candidate implementation
-complete, independent review pending, and not accepted for production**. This document records the dark/shadow contract work on the isolated
+Status: `2026-09-13` implementation snapshot; **candidate implementation
+complete and independently reviewed within the dark/shadow scope; not accepted for production**. This document records the dark/shadow contract work on the isolated
 `codex/long-horizon-governance-architecture` branch. It does not authorize
 production truth publication, caller migration, or retirement of the existing
 runtime path.
@@ -10,7 +10,7 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/p4b_state_transfer_candidate_20260830.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-08-31`
+Last verified: `2026-09-13`
 
 ## Purpose
 
@@ -104,33 +104,32 @@ recovery. A green fixture or mirror test is not sufficient for acceptance.
   source/target pairing. `RuntimeInstanceControl` has a fail-closed transfer
   fence default, so a control that has not implemented real target exclusivity
   cannot authorize import.
+- ECS reference encoding now rejects every unknown source-local entity-bearing
+  scalar or vector ID. Tactical track identities and generic message arguments
+  remain typed logical scalars; only target-bearing compatibility messages map
+  `msg_arg` through entity identities. Factory-owned `ChildOf` descendants are
+  tagged into the transitive `SimObject` transfer closure, and `ChildOf` edges
+  are carried as logical-name pairs. `EmbarkedAirOps.active_helo_entity_id` is
+  therefore remapped as transferred truth when its child is admitted; an
+  unresolved non-zero value fails closed and raw entity IDs are never carried
+  into the candidate. World restore requires the explicit `SimObject` tag and
+  component-subset restore rejects non-`SimObject` name collisions.
 
 ## Verification evidence
 
-The isolated Windows/MSVC target currently reports:
+The isolated Windows/MSVC target reports on `2026-09-13`:
 
 ```text
-targeted native candidate tests: 60 test cases, 59 passed / 1 failed;
-                                 1607 assertions, 1607 passed
-focused Python architecture/mirror tests: 16 passed
-configured CTest lane: 20/21 passed; ef_test_all retains two pre-existing
-fixed-air CPU-reference identity assertions (entity ids 1469/expected 581)
+targeted native candidate tests: 66 test cases, 1717 assertions, all passed
+P4-B CTest lane: runtime_host_candidate and runtime_host_candidate_boundary, 2/2 passed
+focused Python P4-B contract/execution/bootstrap tests: 24 passed
+maintained document-link audit: 206 documents, 1754 links, 0 issues
+maintained bilingual audit: 74 pairs, 74 synced, 0 diverged
 ```
 
-Remeasured `2026-09-01` on the committed tree. The earlier `1609 assertions`
-figure was recorded before the final repair pass and no longer reproduces; the
-single failing case throws before reaching its remaining assertions, which is
-why the assertion count is both lower and fully green.
-
-The failing case is `ECS owner covers maintained database platform definitions`.
-It is an unresolved child-entity transfer-scope decision, not a codec defect —
-see the open-defect section of the
-[P4-B remediation route](p4b_remediation_route_20260830.md). It must be
-dispositioned by the independent reviewer before P4-B acceptance.
-
-The other P4-B-specific CTest lanes remain green; the fixed-air failures are
-outside this transfer slice and are recorded rather than reclassified as transfer
-evidence.
+The broader `ef_test_all` lane was not rebuilt in this checkpoint; its historical
+fixed-air CPU-reference identity assertions remain outside this transfer slice
+and must not be reclassified as P4-B evidence.
 
 The host-neutral CMake target remains static and links only
 `ef_runtime_contracts`. The separate owner-integration probe links `ef_core`, is
@@ -164,14 +163,12 @@ wave.
 
 ## Long-horizon completion route
 
-P4-B implementation is complete on this branch. It can move to accepted only
-after the mandatory independent integrated review confirms the twelve-row
-owner evidence and no unresolved Critical/High (or safety-relevant Medium)
-finding. P4-C may then integrate the candidate kernel seam while remaining
-dark/shadow. P5-B/P5-D must still qualify durable RunReceipt,
+P4-B implementation and its mandatory independent integrated review are
+complete for the dark/shadow candidate scope. P4-C may now integrate the
+candidate kernel seam while remaining dark/shadow. P5-B/P5-D must still qualify durable RunReceipt,
 ArtifactLedger, authenticity, canary/backout, supported topology, and the
 single production cutover before any maintained caller changes authority.
 
-The independent review gate is mandatory after this iteration. A reviewer may
-replace a mechanism, but may not close P4-B by deleting the typed transfer,
-provenance, durability, compatibility, or recovery obligations.
+The independent review passed this iteration. A later reviewer may replace a
+mechanism, but may not close P4-B by deleting the typed transfer, provenance,
+durability, compatibility, or recovery obligations.
