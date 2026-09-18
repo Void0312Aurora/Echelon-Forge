@@ -91,6 +91,11 @@ Observed results:
   including strict receipt canonicalization/replay, receipt-only generation
   updates, the explicitly inventoried
   build-tree-only manifest caller, and production-boundary checks.
+- real `SimulationKernel` replacement rollback: `1` case, `40/40` assertions
+  passed; the final owner-row deadline drove durable owner compensation,
+  restored the old active epoch and native ECS/RNG pre-images, retained the
+  old result lease, and left no candidate/quarantine/orphan. The target WAL
+  contained at least twelve durable `aborted` owner records.
 - independent review (`gpt-5.6-sol`, `max`): `PASS` for the P4-C
   build-tree/internal candidate scope, with no remaining Critical/High/Medium
   or Low finding. The final main-thread rerun reproduced the native `44/44`,
@@ -108,8 +113,9 @@ This packet does not claim:
   retirement;
 - cross-process WAL locking, released-version N-1 fixtures, or production
   ArtifactLedger qualification;
-- replacement/recovery transfer through this new adapter, stress/resource
-  qualification, process restart, or a P5-D rollback drill.
+- complete recovery transfer, stress/resource qualification, process restart,
+  or a P5-D package/cutover rollback drill. The replacement failure path above
+  is candidate-owned test evidence only.
 - source-level `wheel.packages = ["python", ...]` remains broad, but the
   candidate module is explicitly excluded by `tool.scikit-build.wheel.exclude`;
   it is not imported by maintained runtime code.
