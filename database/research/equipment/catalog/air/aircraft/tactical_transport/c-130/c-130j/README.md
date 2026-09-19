@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/tactical_transport/c-130/c-130j/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-18`
+Last verified: `2026-09-19`
 Equipment ID: `eq-us-air-c130j`
-Content status: model-level draft with first-party parameter coverage; C-130E/H values from the same fact sheet are excluded rather than merged.
+Content status: parameter table complete with first-party C-130J coverage; C-130E/H and C-130J-30 values from the same fact sheet are excluded rather than merged.
 
 ## Identity
 

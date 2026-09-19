@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/uas/mq-9/mq-9a/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-18`
+Last verified: `2026-09-19`
 Equipment ID: `eq-us-air-mq9a`
-Content status: model-level draft with first-party parameter coverage; extended-range figures are a distinct configuration and are labelled as such.
+Content status: parameter table complete with first-party USAF coverage; extended-range figures are a distinct configuration and are labelled as such.
 
 ## Identity
 

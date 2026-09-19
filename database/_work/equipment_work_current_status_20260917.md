@@ -41,10 +41,10 @@ Command: `python database/_work/check_equipment_tree.py`
 | --- | --- |
 | `C1` every referenced source id resolves | PASS, 0 dangling, 0 manifest/path mismatch |
 | `C2` backlog leaf binding (`Equipment ID`) | PASS after the `E2` backfill |
-| `C3` backlog vs coverage status | PASS, 58 of 58 coverage rows agree |
+| `C3` backlog vs coverage status | PASS, 60 of 60 coverage rows agree |
 | `C4` source admission floor | PASS after the `E3` retention backfill |
 | `C5` source-artifact consistency | PASS, no unnamed or aggregate package claims |
-| `C6` retrieval record | PASS, 72 unretrieved citations remain advisory; 176 packages lack a retrieval block |
+| `C6` retrieval record | PASS, 71 unretrieved citations remain advisory; 174 packages lack a retrieval block |
 
 Measured counts:
 
@@ -55,12 +55,12 @@ Measured counts:
 | Distinct source ids referenced by leaves | 274 |
 | Leaves without `Equipment ID` | 0 |
 | Backlog rows | 118 |
-| Coverage rows | 58 |
-| Status: `cataloged` / `parameter_complete` / `held` | 41 / 69 / 8 |
+| Coverage rows | 60 |
+| Status: `cataloged` / `parameter_complete` / `held` | 39 / 71 / 8 |
 
 ## Leaf Completeness Against The Queue
 
-The queue calls 41 rows `cataloged`, and all 41 now point at leaves carrying a
+The queue calls 39 rows `cataloged`, and all 39 now point at leaves carrying a
 `## Parameters` table. The checker therefore reports `stub_rows_excluded: 0` for
 the non-held queue rows. A separate catalog scan still finds 82 README leaves
 without a parameter table; those are outside the current queue-binding defect and
@@ -70,7 +70,7 @@ remain a depth follow-up rather than evidence of completed extraction.
 
 `coverage/README.md` describes `coverage.csv` as a discovery queue that feeds the
 backlog, and defines its `status` column as starting at `queued`. The file does not
-behave that way: its 58 rows are exactly the 58 `parameter_complete` rows of the
+behave that way: its 60 rows are exactly the 60 `parameter_complete` rows of the
 backlog, verified in both directions. It is an extract of the completed set, not a
 pre-backlog discovery surface.
 
@@ -86,7 +86,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | `D4` | Parameter table shape split | 57 leaves use a `Field`-based table; 52 use `Parameter \| Value \| Source \| Confidence`; 82 have no parameter table | open |
 | `D5` | Disjoint naval namespaces | `catalog/naval/ships/surface-combatant/` (tracked, 3 leaves) and the empty untracked `catalog/naval/surface-combatants/` coexist | open |
 | `D6` | Ledger not materialized | `sources/ledger/` holds a README only; `common.schema.json` has no source `$defs` while `FIELDS.md` describes 12 ledger fields | open |
-| `D7` | `coverage.csv` role and status vocabulary contradict its own README | 58 of 58 rows are `parameter_complete`, not `queued` | open |
+| `D7` | `coverage.csv` role and status vocabulary contradict its own README | 60 of 60 rows are `parameter_complete`, not `queued` | open |
 | `D8` | Country rows share a variant leaf without a stated rule | `eq-us-air-c17a` and `eq-uk-air-c17a` both point at `c-17/c-17a`, which is now correct by the `tornado-ids` precedent but is not documented anywhere | open |
 | `D9` | `Equipment ID` scheme is not declared | `eq-<country>-<domain>-<variant>`, country-less `module-*`, and country-less variant names such as `tornado-ids` all coexist with no stated rule | open |
 
@@ -103,6 +103,8 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | KC-46A completion | Added propulsion, thrust, speed, ceiling, range, aircrew-seat semantics and refueling-system fields from the AMC fact sheet |
 | C-17A completion | Added height, cargo compartment, ceiling, crew, troop/medical load and mission-conditioned range semantics from the Dover fact sheet |
 | Retrieval records | Added or refreshed retrieval blocks for the three USAF/Navy packages and the F-35C manufacturer package; added one traceable HiWars secondary package for the remaining public F-35C crew/ceiling fields |
+| MQ-9A completion | Promoted the existing baseline/extended-range parameter table after retrieving both USAF fact-sheet packages; ER readings remain configuration-labelled |
+| C-130J completion | Promoted the standard-length C-130J table after retrieving the USAF fact sheet; retained explicit arithmetic corrections and excluded the stretched J-30 values |
 
 ## Retracted Findings
 
