@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/fighter/f-35/f-35a/README.md`
 Owner: `database/equipment-data`
-Last verified: `not established`
+Last verified: `2026-09-19`
 Equipment ID: `eq-us-air-f35a`
 Content status: Model-level draft with first-party parameter coverage.
 
@@ -39,6 +39,7 @@ Content status: Model-level draft with first-party parameter coverage.
 | Range | More than 1,350 mi / 1,200+ nmi with internal fuel | `p5-us-air-f35a-usaf` | A |
 | Service ceiling | Above 50,000 ft / 15 km | `p5-us-air-f35a-usaf` | A |
 | Crew | One | `p5-us-air-f35a-usaf` | A |
+| Armament | Internal and external capability; munitions vary with mission | `p5-us-air-f35a-usaf` | A |
 
 ## Source References
 
