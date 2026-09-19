@@ -1,33 +1,32 @@
-# Lockheed Martin — F-35 Lightning II program status and fast facts
+# Lockheed Martin — F-35 Lightning II Fast Facts (March 2021)
 
 Source ID: `p5-us-air-f35c-lockheed`
 Tier: `B`
 Publisher: Lockheed Martin Aeronautics
 Author / maintainer: Lockheed Martin F-35 program office
-Title: F-35 Lightning II Program Status and Fast Facts
-URL: https://www.lockheedmartin.com/content/dam/lockheed-martin/aero/documents/F-35/FG19-24749_004%20F35FastFacts4_2020.pdf
+Title: F-35 Lightning II Fast Facts (March 2021)
+URL: https://www.lockheedmartin.com/content/dam/lockheed-martin/aero/f35/documents/F-35%20Fast%20Facts%20-%20March%202021.pdf
 Retrieval:
-  attempted_at: 2026-09-17T17:05:00Z
-  method: none
-  status: no_record
-  returned: nothing
-  did_not_return: not established
-  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
+  attempted_at: 2026-09-19T08:19:20Z
+  method: tavily_proxy
+  status: success
+  returned: through Tavily search-indexed page content, the F-35C specification column: dimensions, wing area, tail span, empty and maximum weight classes, internal fuel, weapons payload, F135-PW-100 propulsion and thrust, standard internal load, speed, combat radius, range and maximum g-rating
+  did_not_return: a variant-specific service ceiling and an explicit crew count; those are not inferred here
 Domain: air
 Equipment: F-35 / F-35C
 Configuration: The document tabulates the A, B and C variants side by side, so the C column is directly available and is not inferred from a sibling mark.
-Estimation / uncertainty: Tier B manufacturer documentation, authoritative for its own product. The figures were published in 2020 and later block changes are not reflected. No other package in this tree states the C column, so every row here is a single-source figure with its tier attached.
+Estimation / uncertainty: Tier B manufacturer documentation, authoritative for its own product. The figures were published in 2021 and later block changes are not reflected. The F-35C column is variant-specific; no A/B value is copied into this package.
 Retention: manifest and extracted parameter notes only
 
 ## Extracted parameter notes
 
-F-35C column: length 51.5 ft (15.7 m); height 14.7 ft (4.48 m); wingspan 43 ft (13.1 m); wing area 668 sq ft (62.1 m²); horizontal tail span 26.3 ft (8.02 m); empty weight 34,800 lb; internal fuel capacity 19,750 lb (8,960 kg); weapons payload 18,000 lb (8,160 kg).
+F-35C column: length 51.5 ft (15.7 m); height 14.7 ft (4.48 m); wingspan 43 ft (13.1 m); wing area 668 sq ft (62.1 m²); horizontal tail span 26.3 ft (8.02 m); empty weight 34,800 lb; maximum weight 70,000 lb class; internal fuel capacity 19,750 lb (8,960 kg); weapons payload 18,000 lb (8,160 kg); propulsion one F135-PW-100 with 40,000 lb maximum and 25,000 lb military thrust; maximum speed Mach 1.6; combat radius greater than 600 nmi (1,100 km); range greater than 1,200 nmi (2,200 km) on internal fuel; maximum g-rating 7.5; standard internal load two AIM-120C/D and two 2,000-pound GBU-31 JDAMs.
 
 For contrast and not recorded on the C leaf: F-35A length 51.4 ft, wingspan 35 ft, height 14.4 ft, wing area 460 sq ft, empty weight 29,300 lb, internal fuel 18,250 lb, payload 18,000 lb. F-35B length 51.2 ft, wingspan 35 ft, height 14.3 ft, empty weight 32,300 lb, internal fuel 13,500 lb, payload 15,000 lb.
 
 ## Scope of this package
 
-This package carries the F-35C column of the Fast Facts sheet: length, height, wingspan, wing area, horizontal tail span, empty weight, internal fuel capacity and weapons payload.
+This package carries the F-35C column of the Fast Facts sheet: dimensions, wing area, horizontal tail span, empty and maximum weight classes, internal fuel, weapons payload, propulsion, thrust, standard internal load and public performance readings.
 
 ## Correction history for this package
 
