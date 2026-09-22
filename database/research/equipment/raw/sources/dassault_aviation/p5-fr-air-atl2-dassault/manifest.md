@@ -10,20 +10,20 @@ Domain: air
 Equipment: Atlantique 2 / ATL2
 Configuration: The page is specific to the Atlantique 2, the maritime patrol variant operated by the French Navy. The ATL1 and the proposed ATL3 are separate configurations.
 Retrieval:
-  attempted_at: 2026-09-17T18:40:12Z
+  attempted_at: 2026-09-22T16:13:00Z
   method: tavily_proxy
-  status: partial
-  returned: the page in the index, establishing that Dassault publishes an Atlantique 2 characteristics page under this URL
-  did_not_return: the specification values themselves; the fetched text returned navigation and a fraud-prevention notice only
-Estimation / uncertainty: Tier B manufacturer documentation. The page title states that it carries origins, characteristics and performance data, but this pass did not retrieve the values. No figure is attributed to this package until the page text is read.
+  status: success
+  returned: official ATL2 dimensions, empty and maximum takeoff mass, maximum speed, patrol profile, maximum flight time and maximum range
+  did_not_return: engine, crew and detailed weapon or sensor fit
+Estimation / uncertainty: Tier B manufacturer documentation. The page publishes a platform-level ATL2 data sheet; its empty-weight figure and range conditions are not defined further, so they remain separate readings rather than reconciled with the secondary packages.
 Retention: manifest and extracted parameter notes only
+
+## Extracted parameter notes
+
+Dimensions: wingspan 37.5 m; length 31.7 m; height 10.8 m.
+
+Mass and performance: empty weight 25.4 t; maximum takeoff weight 46.2 t; maximum speed 350 kt; patrol profile 8 hours at 600 nmi; maximum flight time 18 hours; maximum range 4,200 nmi.
 
 ## What this package does and does not carry
 
-It locates the manufacturer's own Atlantique 2 page, which is the correct artifact for the ATL2 leaf's geometry and performance rows.
-
-It carries no figure. Every value on the ATL2 leaf rests on `p5-fr-air-atl2-seaforces`, `p5-fr-air-atl2-militaryfactory` and `p5-fr-air-atl2-encyclopedic`, all three of which were retrieved, plus `p5-fr-air-atl2` for the role text.
-
-## Next action for this package
-
-Retrieve the page at full depth and transcribe its characteristics block. Until then this package is a locator and is not cited as the source of any row.
+It is the source of record for the manufacturer's ATL2 geometry and performance block. Its empty-weight reading of 25.4 t differs from the 25.7 t reading on the secondary packages; both are retained on the leaf. It states no engine, crew or detailed weapon fit.

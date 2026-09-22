@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/maritime_patrol/atlantique-2/atlantique-2/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-17`
+Last verified: `2026-09-23`
 Equipment ID: `eq-fr-air-atl2`
-Content status: parameter table present with per-field source and confidence. Retrieval status is recorded per package in each manifest's `Retrieval:` block. This leaf previously carried no parameter table at all; the table below was built on 2026-09-17.
+Content status: parameter table complete for the French Navy Atlantique 2 research record. Manufacturer and government Standard 6 data are separated from secondary geometry, mass and performance readings.
 
 ## Identity
 
@@ -44,22 +44,33 @@ Content status: parameter table present with per-field source and confidence. Re
 | Service ceiling | 9,145 m (30,003 ft) | `p5-fr-air-atl2-seaforces` | C |
 | Armament | Up to 3,500 kg (7,700 lb), including torpedoes, depth charges, mines, anti-ship missiles and bombs | `p5-fr-air-atl2-seaforces` | C |
 | Crew | Twelve, including two pilots, a flight engineer, forward observer, communications specialist, ECM systems specialist, radar and IFF operator, and tactical coordinator | `p5-fr-air-atl2-militaryfactory` | C |
+| Manufacturer empty weight | 25.4 t | `p5-fr-air-atl2-dassault` | B |
+| Manufacturer patrol profile | 8 h at 600 nmi | `p5-fr-air-atl2-dassault` | B |
+| Manufacturer maximum flight time | 18 h | `p5-fr-air-atl2-dassault` | B |
+| Manufacturer maximum range | 4,200 nmi | `p5-fr-air-atl2-dassault` | B |
+| Standard 6 radar | Thales Search Master active-array radar | `p5-fr-air-atl2-dga-standard6-2026` | A |
+| Standard 6 acoustic and display system | Updated acoustic/sonobuoy processing, WESCAM optronic ball, new navigation console and tactical display consoles | `p5-fr-air-atl2-dga-standard6-2026` | A |
+| Mission and weapon integration | Maritime patrol and armed anti-submarine platform; anti-ship missiles, torpedoes and laser-guided weapons remain in the documented mission set | `p5-fr-air-atl2-dga-standard6-2026` | A |
+| Government current operating block | Approximately 37 m span, 32 m length, 11 m height, 46 t MTOW, nearly 600 km/h, 30,000 ft ceiling, 12 h endurance and nearly 5,500 km range | `p5-fr-air-atl2-dga-standard6-2026` | A |
 
 ## Configuration Boundary
 
-This leaf carried no parameter table before 2026-09-17. The official French source held for it states the operator and the mission set and no dimension, mass or performance figure, which is why every technical row is Tier C.
+The manufacturer data sheet and the French DGA Standard 6 record now supply variant-specific geometry, mass, performance and mission-system evidence. The older secondary rows remain because they expose definitions and alternative readings rather than because the official values are being hidden.
 
-Four packages carry the rows and each was retrieved on 2026-09-17:
+The packages carry the rows as follows:
+
+- `p5-fr-air-atl2-dassault` is the manufacturer data sheet for geometry and performance.
+- `p5-fr-air-atl2-dga-standard6-2026` is the government source for the current Standard 6 combat-system and operating block.
 - `p5-fr-air-atl2-seaforces` is the source of record for the masses, the engine, the performance figures, the endurance and the armament.
 - `p5-fr-air-atl2-encyclopedic` supplies the metric geometry readings, from a block the article itself heads `Specifications (Atlantique 2)`.
 - `p5-fr-air-atl2-militaryfactory` supplies the length and the crew, and states the wingspan, height and wing area in imperial units that agree with the metric readings.
-- `p5-fr-air-atl2-dassault` locates the manufacturer's own Atlantique 2 characteristics page, which is the correct artifact for these rows. It carries no value yet because the page fetch returned navigation only, and no row cites it.
+- `p5-fr-air-atl2-dassault` is the manufacturer's own Atlantique 2 characteristics page and now supplies the rows listed above.
 
-The length is the one row with a single source. Military Factory gives 103 ft 9 in and no other package gives a length, so the metric value of 31.62 m beside it is this tree's arithmetic from the imperial figure rather than a published reading. It is labelled as calculated.
+The length is the one secondary row with a single source. Military Factory gives 103 ft 9 in and no other secondary package gives a length, so the metric value of 31.62 m beside it is this tree's arithmetic from the imperial figure rather than a published reading. It is labelled as calculated. The manufacturer publishes 31.7 m separately.
 
 The empty weight carries two imperial readings, 56,659 lb on two packages and 56,660 lb on the third, which is a one-pound rounding difference on the same metric value of 25,700 kg. The row records the metric value and one imperial reading.
 
-The ATL2 is not the ATL1 and not the proposed ATL3. The ATL3 figures published by a separate source, 46.5 t maximum take-off weight and a 10,000 m ceiling, are not carried here.
+The manufacturer empty-weight value (25.4 t) and the secondary 25.7 t value are both retained. The manufacturer maximum range (4,200 nmi), government range (nearly 5,500 km) and patrol profile (8 h at 600 nmi) are not collapsed because the source conditions are not identical. The ATL2 is not the ATL1 and not the proposed ATL3; no ATL3 figures are carried here.
 
 ## Source References
 
@@ -67,4 +78,5 @@ The ATL2 is not the ATL1 and not the proposed ATL3. The ATL3 figures published b
 - `p5-fr-air-atl2-seaforces`: `raw/sources/seaforces/p5-fr-air-atl2-seaforces/manifest.md` — masses, engine, performance, endurance, armament
 - `p5-fr-air-atl2-encyclopedic`: `raw/sources/wikipedia/p5-fr-air-atl2-encyclopedic/manifest.md` — metric geometry
 - `p5-fr-air-atl2-militaryfactory`: `raw/sources/military_factory/p5-fr-air-atl2-militaryfactory/manifest.md` — length and crew
-- `p5-fr-air-atl2-dassault`: `raw/sources/dassault_aviation/p5-fr-air-atl2-dassault/manifest.md` — manufacturer locator, no value yet
+- `p5-fr-air-atl2-dassault`: `raw/sources/dassault_aviation/p5-fr-air-atl2-dassault/manifest.md` — manufacturer geometry and performance data sheet
+- `p5-fr-air-atl2-dga-standard6-2026`: `raw/sources/defense_gouv_fr/p5-fr-air-atl2-dga-standard6-2026/manifest.md` — current government Standard 6 mission-system and operating block

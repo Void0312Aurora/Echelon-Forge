@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/aewc/e-3/e-3f/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-17`
+Last verified: `2026-09-23`
 Equipment ID: `eq-fr-air-e3f`
-Content status: parameter table present with per-field source and confidence. Retrieval status is recorded per package in each manifest's `Retrieval:` block. This leaf previously carried no parameter table at all; the table below was built on 2026-09-17, and every technical row is a family reading rather than an E-3F measurement.
+Content status: parameter table complete for the French E-3F research record. Official French technical-card values are separated from family cross-check readings, and mission-system scope remains explicit.
 
 ## Identity
 
@@ -52,24 +52,35 @@ Content status: parameter table present with per-field source and confidence. Re
 | Ceiling (programme-page reading) | Over 10,670 m (35,000 ft) | `p5-fr-air-e3f-airforcetechnology` | C |
 | Endurance | More than eight hours unrefuelled | `p5-us-air-e3sentry-usaf-factsheet` | A |
 | Crew | Flight crew of four, plus a mission crew of 13 to 19 specialists | `p5-us-air-e3sentry-usaf-factsheet` | A |
+| E-3F wingspan (official technical card) | 44.4 m | `p5-fr-air-e3f` | A |
+| E-3F length (official technical card) | 46.6 m | `p5-fr-air-e3f` | A |
+| E-3F height (official technical card) | 12.6 m | `p5-fr-air-e3f` | A |
+| E-3F empty mass (official technical card) | 85.6 t | `p5-fr-air-e3f` | A |
+| E-3F maximum takeoff mass (official technical card) | 152 t | `p5-fr-air-e3f` | A |
+| E-3F powerplant (official technical card) | Four CFM 56-2-A3 turbofans | `p5-fr-air-e3f` | A |
+| E-3F maximum speed (official technical card) | Mach 0.78 | `p5-fr-air-e3f` | A |
+| E-3F operational speed | 360 +/- 50 kt | `p5-fr-air-e3f` | A |
+| E-3F operational ceiling | 10,000 m | `p5-fr-air-e3f` | A |
+| E-3F endurance | 10 h without refuelling; 18 h with refuelling | `p5-fr-air-e3f` | A |
+| E-3F crew (official technical card) | Two pilots, one navigator, one flight engineer; 14 mission controllers, operators and technicians | `p5-fr-air-e3f` | A |
+| Primary radar | AN/APY-2 multimode radar; air-mode detection over 400 km | `p5-fr-air-e3f-awacs-systems` | A |
+| IFF | AN/UPX-40 interrogator with Mode S and Mode 5 support | `p5-fr-air-e3f-awacs-systems` | A |
+| Mission system | Active/passive detection, communications and data transmission; ESM and mission-system modernization context recorded by the French Ministry | `p5-fr-air-e3f-awacs-systems` | A |
 
 ## Configuration Boundary
 
-This leaf carried no parameter table before 2026-09-17. The official French source held for it states the operator and the role and no dimension, mass or performance figure.
+The official French technical card closes the variant-level core fields: dimensions, fitted CFM56-2-A3 engines, empty and maximum takeoff mass, speed, ceiling, endurance and crew. The older family rows remain in the table as cross-check readings and are not silently reconciled with the French values.
 
-Every technical row on this leaf is a family reading, not an E-3F measurement. No package held here states a fitted weight, an engine fit or a performance figure for the French aircraft specifically, so the rows are labelled as family values and the leaf does not present them as the E-3F's own. Three consequences follow.
+The engine fit is therefore no longer unresolved for the French record. The programme page's CFM-56-2 split and the technical card agree in substance. One HTML extraction renders the engine as `CFM 55-2-A3`; the technical card and the extracted specification block render `CFM 56-2-A3`, which is the value used for the E-3F row.
 
-First, the engine fit is unresolved rather than chosen. The United States Air Force fact sheet and the encyclopedic block both describe the TF33-powered airframe, while the programme page states that the non-United States and non-NATO aircraft are CFM-56-2 powered at 24,000 lb thrust and the United States and NATO aircraft are TF33-powered. The leaf records the TF33 family reading and the CFM-56-2 reading side by side with their sources and does not assert which is fitted to the E-3F.
-
-Second, the three thrust readings for the TF33 fit are 20,500 lb, 21,000 lb and 21,500 lb. They are different roundings of one rating from three publishers and are all retained.
-
-Third, the maximum take-off weight carries two family readings that differ by more than 10 percent: 325,000 lb from the fact sheet and 347,000 lb from the encyclopedic block. Both are retained and the leaf does not select one. The fact sheet's 205,000 lb zero fuel weight and the encyclopedic 344,000 lb gross weight are recorded as separate rows rather than reconciled into a single mass.
+The family TF33 thrust and mass readings remain useful comparison values but are not substituted for the French fitted values. A separate official AWACS page supplies the AN/APY-2 radar, AN/UPX-40 IFF, ESM and communications/mission-system context; neither official package publishes an armament loadout, so none is inferred.
 
 The E-3F is not the E-3G. The E-3G leaf carries the Block 40/45 mission-system modernization and none of its values are carried here.
 
 ## Source References
 
-- `p5-fr-air-e3f`: `raw/sources/ministere_des_armees/p5-fr-air-e3f/manifest.md` — operator and role only, no technical rows
+- `p5-fr-air-e3f`: `raw/sources/ministere_des_armees/p5-fr-air-e3f/manifest.md` — official French dimensions, fitted engine, mass, performance, crew and mission-system rows
+- `p5-fr-air-e3f-awacs-systems`: `raw/sources/ministere_des_armees/p5-fr-air-e3f-awacs-systems/manifest.md` — official radar, IFF and mission-system rows
 - `p5-us-air-e3sentry-usaf-factsheet`: `raw/sources/us_air_force/p5-us-air-e3sentry-usaf-factsheet/manifest.md` — family masses, powerplant, cruise, ceiling, endurance, crew, rotodome
 - `p5-fr-air-e3f-encyclopedic`: `raw/sources/wikipedia/p5-fr-air-e3f-encyclopedic/manifest.md` — variant identification, masses, dimensions, second thrust reading
 - `p5-fr-air-e3f-airforcetechnology`: `raw/sources/airforce_technology/p5-fr-air-e3f-airforcetechnology/manifest.md` — engine-fit split by operator group
