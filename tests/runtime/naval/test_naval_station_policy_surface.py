@@ -670,6 +670,43 @@ class NavalStationPolicySurfaceTests(unittest.TestCase):
     finally:
       env.close()
 
+  def test_declared_naval_reward_terms_survive_an_exactly_zero_value(self) -> None:
+    """A declared naval reward term is reported even when its value is zero.
+
+    The naval reward surface is observed as a *key set*: `tools/eval/
+    naval_station_policy_eval.py` fails its gate on `required_reward_terms_missing`,
+    and this file asserts the terms are present. `_add_term` drops exact zeros to
+    keep shared breakdowns sparse, so a declared term vanished exactly when the ship
+    sat on station — zero station error and exactly zero separation error — which
+    reads as "the term is missing" instead of "the term is zero". This node keeps
+    the declared terms reported, and pins the module's declared set against the eval
+    gate's required set so the two hand-maintained lists cannot drift apart.
+    """
+    from gym_envs.scenario_loader.reward_runtime.naval import DECLARED_NAVAL_TERMS
+    from tools.eval.naval_station_policy_eval import REQUIRED_REWARD_TERMS
+
+    self.assertTrue(
+      DECLARED_NAVAL_TERMS <= REQUIRED_REWARD_TERMS,
+      "every always-computed naval term must be one the eval gate requires: "
+      f"{sorted(DECLARED_NAVAL_TERMS - REQUIRED_REWARD_TERMS)} is not",
+    )
+
+    env = self._make_env()
+    try:
+      env.reset()
+      action = np.array([[0.0, 0.0, 0.0]], dtype=np.float32)
+      _obs, _rewards, _dones, infos = env.step(action)
+      terms = dict(dict(infos[0]).get("reward_terms", {}) or {})
+      missing = sorted(name for name in DECLARED_NAVAL_TERMS if name not in terms)
+      self.assertEqual(
+        missing,
+        [],
+        "a declared naval reward term is absent from the breakdown; a zero value "
+        f"must still be reported: {missing}",
+      )
+    finally:
+      env.close()
+
 
 if __name__ == "__main__":
   unittest.main()

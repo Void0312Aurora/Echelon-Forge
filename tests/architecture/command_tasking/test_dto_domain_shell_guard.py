@@ -58,10 +58,26 @@ EXECUTION_EPISODE_STATE_CPP = (
   REPO_ROOT / "src" / "core" / "mission" / "episode" / "execution_episode_state.cpp"
 )
 SHIP_MOTION_SYSTEM_HEADER = REPO_ROOT / "src" / "systems" / "domains" / "naval" / "ship_motion_system.h"
+SUBMARINE_MOTION_SYSTEM_HEADER = (
+  REPO_ROOT / "src" / "systems" / "domains" / "naval" / "submarine_motion_system.h"
+)
 EMBARKED_AIR_OPS_SYSTEM_HEADER = (
   REPO_ROOT / "src" / "systems" / "domains" / "naval" / "embarked_air_ops_system.h"
 )
 BINDINGS_COMMAND_CPP = REPO_ROOT / "src" / "interfaces" / "python" / "bindings_command.cpp"
+
+_MAINTAINED_SOURCE_SUFFIXES = {".c", ".cc", ".cpp", ".h", ".hpp", ".inc"}
+
+
+def _maintained_sources() -> list[Path]:
+  """Maintained C++ sources whose text a source-boundary guard may inspect."""
+
+  root = REPO_ROOT / "src"
+  return sorted(
+    path
+    for path in root.rglob("*")
+    if path.is_file() and path.suffix in _MAINTAINED_SOURCE_SUFFIXES
+  )
 
 
 # A closing quote, a line break, and the next literal's opening quote. C++
@@ -580,11 +596,16 @@ def test_wp22_maintained_naval_consumers_use_owner_slice_directive_helpers() -> 
     re.S,
   )
   assert ship_station_body is not None
-  assert "mission_command_naval_stationing_directive(mission_cmd)" in ship_station_body.group("body")
+  assert "mission_command_naval_stationing_directive(naval_intent)" in ship_station_body.group(
+    "body"
+  )
   for forbidden in (
     "mission_cmd.reference_entity_id",
     "mission_cmd.station_radius_m",
     "mission_cmd.station_bearing_deg",
+    "naval_intent.reference_entity_id",
+    "naval_intent.station_radius_m",
+    "naval_intent.station_bearing_deg",
   ):
     assert forbidden not in ship_station_body.group("body")
 
@@ -596,6 +617,81 @@ def test_wp22_maintained_naval_consumers_use_owner_slice_directive_helpers() -> 
     "host_mission->relay_oth_targeting",
   ):
     assert forbidden not in embarked_air_ops_text
+
+
+def test_wp22_naval_runtime_consumers_read_the_naval_command_intent_projection() -> None:
+  """Naval systems consume the naval-owned projection, not the flat transport.
+
+  P2-B moved naval runtime command truth onto `NavalCommandIntent`. A naval
+  system that still reads `MissionCommand` would silently fall out of the
+  projection whenever the compatibility shell is refreshed without the intent,
+  so the maintained naval consumers must name the projected component.
+  """
+
+  for path, required in (
+    (SHIP_MOTION_SYSTEM_HEADER, "const NavalCommandIntent *naval_intent"),
+    (SUBMARINE_MOTION_SYSTEM_HEADER, "const NavalCommandIntent *naval_intent"),
+    (EMBARKED_AIR_OPS_SYSTEM_HEADER, "NavalCommandIntent *helo_mission"),
+    (EMBARKED_AIR_OPS_SYSTEM_HEADER, "const NavalCommandIntent *host_mission"),
+  ):
+    assert required in _text(path), f"{path.name} must consume {required}"
+
+  for path in (
+    SHIP_MOTION_SYSTEM_HEADER,
+    SUBMARINE_MOTION_SYSTEM_HEADER,
+    EMBARKED_AIR_OPS_SYSTEM_HEADER,
+  ):
+    text = _text(path)
+    assert "components/domains/naval/command/mission_command_naval.h" in text
+    assert "get_mut<MissionCommand>" not in text
+    assert "get<MissionCommand>" not in text
+
+
+def test_wp22_naval_command_intent_projection_has_one_authority() -> None:
+  """The naval projection lives once, in the naval owner header.
+
+  Duplicating the field-by-field projection at a call site would let the
+  projection and the naval owner slice drift apart without any test noticing.
+  """
+
+  naval_header = _text(MISSION_COMMAND_NAVAL_HEADER)
+  shell_header = _text(MISSION_COMMAND_HEADER)
+  naval_signature = " ".join(naval_header.split())
+
+  # The definition names every projected field exactly once in the naval header.
+  assert "mission_command_naval_intent(" in naval_signature
+  assert "const MissionCommandNavalOwnerSlice &naval," in naval_signature
+  assert "const MissionCommandCore &core) noexcept" in naval_signature
+  for field in (
+    "cmd_heading_deg",
+    "cmd_speed_mps",
+    "cmd_depth_m",
+    "roe_state",
+    "assigned_target_id",
+    "authorization_to_fire",
+    "station_radius_m",
+    "embarked_helo_entity_id",
+    "relay_oth_targeting",
+  ):
+    assert f"intent.{field} = " in naval_header
+
+  # The compatibility shell keeps only the thin forwarding overloads.
+  assert "mission_command_naval_intent(mission_command_naval_owner_slice(command)," in shell_header
+  assert "intent.cmd_heading_deg = " not in shell_header
+  assert "intent.station_radius_m = " not in shell_header
+
+  # No other maintained source re-implements the projection.
+  offenders = [
+    path.relative_to(REPO_ROOT).as_posix()
+    for path in _maintained_sources()
+    if "intent.station_radius_m = naval.station_radius_m"
+    in path.read_text(encoding="utf-8")
+    and path != MISSION_COMMAND_NAVAL_HEADER
+  ]
+  assert offenders == [], (
+    "the naval command intent projection must stay owned by "
+    f"{MISSION_COMMAND_NAVAL_HEADER.name}; duplicate projections found in {offenders}"
+  )
 
 
 def test_wp22_dto_domain_shell_guard_helpers_compile_without_changing_transport_shapes() -> None:
