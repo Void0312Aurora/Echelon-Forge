@@ -79,11 +79,15 @@ class RuntimeFacadeAdapterCapabilities:
     has_observation_batch_request: bool
     has_export_observation_packet: bool
     has_get_task_orders_maintained_batch: bool
+    has_get_leader_intents_maintained_batch: bool
+    has_get_pilot_reports_maintained_batch: bool
+    has_get_unit_messages_batch: bool
     has_apply_launch_requests_batch: bool
     has_set_mission_commands_maintained_batch: bool
     has_set_task_orders_maintained_batch: bool
     has_set_leader_intents_maintained_batch: bool
     has_set_pilot_reports_maintained_batch: bool
+    has_set_command_links_batch: bool
 
 
 def _resolve_runtime_facade_adapter_capabilities(facade: Any) -> RuntimeFacadeAdapterCapabilities:
@@ -100,6 +104,13 @@ def _resolve_runtime_facade_adapter_capabilities(facade: Any) -> RuntimeFacadeAd
         has_get_task_orders_maintained_batch=bool(
             hasattr(facade, "get_task_orders_maintained_batch")
         ),
+        has_get_leader_intents_maintained_batch=bool(
+            hasattr(facade, "get_leader_intents_maintained_batch")
+        ),
+        has_get_pilot_reports_maintained_batch=bool(
+            hasattr(facade, "get_pilot_reports_maintained_batch")
+        ),
+        has_get_unit_messages_batch=bool(hasattr(facade, "get_unit_messages_batch")),
         has_apply_launch_requests_batch=bool(
             hasattr(facade, "apply_launch_requests_batch")
         ),
@@ -115,6 +126,7 @@ def _resolve_runtime_facade_adapter_capabilities(facade: Any) -> RuntimeFacadeAd
         has_set_pilot_reports_maintained_batch=bool(
             hasattr(facade, "set_pilot_reports_maintained_batch")
         ),
+        has_set_command_links_batch=bool(hasattr(facade, "set_command_links_batch")),
     )
 
 
@@ -147,6 +159,9 @@ class _ScenarioLoaderRuntimeProxy:
     def get_time_step(self) -> float:
         return self._adapter.get_time_step(self._world_index)
 
+    def apply_world_layout(self, layout: Any) -> AppliedScenarioWorld:
+        return self._adapter.apply_world_layout(self._world_index, layout)
+
     def is_unit_active(self, entity_id: int) -> bool:
         observation = self.get_agent_observation(int(entity_id))
         return float(getattr(observation, "health", 0.0) or 0.0) > 0.0
@@ -166,6 +181,16 @@ class _ScenarioLoaderRuntimeProxy:
             float(getattr(observation, "y", 0.0) or 0.0),
             float(getattr(observation, "z", 0.0) or 0.0),
         )
+
+    def set_pilot_action(self, entity_id: int, action: Any) -> None:
+        assignment = ef_py.WorldPilotActionAssignment()
+        assignment.world_index = int(self._world_index)
+        assignment.entity_id = int(entity_id)
+        assignment.action = action
+        self._adapter.set_pilot_actions_batch([assignment])
+
+    def step(self) -> None:
+        self._adapter.step_batch()
 
     def set_command(
         self,
@@ -867,9 +892,46 @@ class RuntimeFacadeAdapter:
             return list(batch_target.get_task_orders_maintained_batch(list(refs)))
         return []
 
+    def get_leader_intents_maintained_batch(self, refs: Sequence[Any]) -> list[Any]:
+        """Read maintained leader-intent contracts through the facade batch seam."""
+
+        if not self.capabilities.has_get_leader_intents_maintained_batch:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter.get_leader_intents_maintained_batch requires maintained facade bindings"
+            )
+        return list(self._batch_target().get_leader_intents_maintained_batch(list(refs)))
+
+    def get_pilot_reports_maintained_batch(self, refs: Sequence[Any]) -> list[Any]:
+        """Read maintained pilot-report contracts through the facade batch seam."""
+
+        if not self.capabilities.has_get_pilot_reports_maintained_batch:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter.get_pilot_reports_maintained_batch requires maintained facade bindings"
+            )
+        return list(self._batch_target().get_pilot_reports_maintained_batch(list(refs)))
+
+    def get_unit_messages_batch(self, refs: Sequence[Any]) -> list[list[Any]]:
+        """Read communication packets through the maintained facade batch seam."""
+
+        if not self.capabilities.has_get_unit_messages_batch:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter.get_unit_messages_batch requires maintained facade bindings"
+            )
+        return [list(messages) for messages in self._batch_target().get_unit_messages_batch(list(refs))]
+
     def set_pilot_actions_batch(self, assignments: Sequence[Any]) -> None:
         self._last_window_evidence = None
         self._batch_target().set_pilot_actions_batch(list(assignments))
+
+    def set_command_links_batch(self, assignments: Sequence[Any]) -> None:
+        """Configure command-link latency/drop semantics through the facade."""
+
+        self._last_window_evidence = None
+        if not self.capabilities.has_set_command_links_batch:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter.set_command_links_batch requires maintained facade bindings"
+            )
+        self._batch_target().set_command_links_batch(list(assignments))
 
     def next_launch_request_id(self) -> int:
         request_id = int(self._next_launch_request_id)

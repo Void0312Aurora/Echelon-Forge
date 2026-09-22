@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "components/physics/instruments.h"
+#include "components/systems/comm.h"
 #include "core/interfaces/observation.h"
 #include "runtime/contracts/engagement_contracts.h"
 #include "runtime/contracts/policy_contracts.h"

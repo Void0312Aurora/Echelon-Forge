@@ -510,7 +510,7 @@ std::vector<double> SimulationKernel::debug_get_ground_contact_state(uint64_t en
     };
 }
 
-std::vector<CommPacket> SimulationKernel::get_unit_messages(uint64_t entity_id) {
+std::vector<CommPacket> SimulationKernel::get_unit_messages(uint64_t entity_id) const {
     auto composition_lock = acquire_composition_operation();
     ensure_active("get_unit_messages");
     auto e = ecs.entity(entity_id);

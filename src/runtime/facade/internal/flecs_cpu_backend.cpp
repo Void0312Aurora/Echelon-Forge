@@ -134,6 +134,9 @@ runtime::backend::InputResult FlecsCpuBackend::inject(const runtime::backend::In
     if (!input.pilot_actions.empty()) {
         runtime_.set_pilot_actions_batch(input.pilot_actions.get());
     }
+    if (!input.command_links.empty()) {
+        runtime_.set_command_links_batch(input.command_links.get());
+    }
     if (!input.launch_requests.empty()) {
         result.launch_events = runtime_.apply_launch_requests_batch(input.launch_requests.get());
     }
@@ -209,6 +212,9 @@ FlecsCpuBackend::export_state(const runtime::backend::ExportRequest &request) co
     }
     if (request.include_pilot_reports) {
         result.pilot_reports = runtime_.get_pilot_reports_maintained_batch(refs);
+    }
+    if (request.include_unit_messages) {
+        result.unit_messages = runtime_.get_unit_messages_batch(refs);
     }
     return result;
 }

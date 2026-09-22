@@ -264,7 +264,7 @@ CudaResidentBackend::setup(const runtime::backend::SetupRequest &request) {
 runtime::backend::InputResult
 CudaResidentBackend::inject(const runtime::backend::InputBatch &input) {
     if (input.kinematics_write.has_value() || !input.launch_requests.empty() ||
-        !input.mission_commands.empty() || !input.task_orders.empty() ||
+        !input.command_links.empty() || !input.mission_commands.empty() || !input.task_orders.empty() ||
         !input.leader_intents.empty() || !input.pilot_reports.empty()) {
         throw std::logic_error(
             "CUDA fixed-air resident input injection supports only selected pilot flight controls");
@@ -319,7 +319,7 @@ runtime::backend::ExportResult
 CudaResidentBackend::export_state(const runtime::backend::ExportRequest &request) const {
     if (request.include_recent_engagement_events || request.include_mission_commands ||
         request.include_task_orders || request.include_leader_intents ||
-        request.include_pilot_reports) {
+        request.include_pilot_reports || request.include_unit_messages) {
         throw std::logic_error(
             "CUDA resident export supports only fixed-air kinematics/instruments/observation");
     }

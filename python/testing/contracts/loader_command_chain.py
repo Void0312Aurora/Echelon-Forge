@@ -8,7 +8,7 @@ def run_loader_command_chain_contract(spec_path: str) -> tuple[bool, str]:
     repo_root = ensure_repo_imports()
 
     import ef_py
-    from gym_envs.scenario_loader import ScenarioLoader
+    from python.rl.runtime.world_batch.adapter import RuntimeFacadeAdapter
 
     spec = _load_spec(spec_path)
     scenario_path = resolve_repo_path(str(spec["scenario"]))
@@ -17,10 +17,11 @@ def run_loader_command_chain_contract(spec_path: str) -> tuple[bool, str]:
     expected_intent_command_code = int(spec.get("expected_intent_command_code", 1))
     expected_kernel_command_code = int(spec.get("expected_kernel_command_code", expected_intent_command_code))
 
-    sim = ef_py.SimulationKernel()
-    sim.load_database("examples/config/database")
-
-    loader = ScenarioLoader(sim)
+    adapter = RuntimeFacadeAdapter(1)
+    if not adapter.load_database(resolve_repo_path("examples", "config", "database")):
+        return False, "failed to load runtime database"
+    loader = adapter.make_scenario_loader(0)
+    sim = loader.sim
     agent_id = loader.load_scenario(scenario_path, seed=seed)
     if agent_id is None:
         return False, "expected agent in scenario"
@@ -36,32 +37,35 @@ def run_loader_command_chain_contract(spec_path: str) -> tuple[bool, str]:
     if expected_phase_names and phase_name not in expected_phase_names:
         return False, f"unexpected initial mission phase {loader.mission_phase_name!r}"
 
-    kernel_order = sim.get_task_order(agent_id)
-    kernel_intent = sim.get_leader_intent(agent_id)
-    kernel_report = sim.get_pilot_report(agent_id)
-    kernel_mission = sim.get_mission_command(agent_id)
+    ref = ef_py.WorldEntityRef()
+    ref.world_index = 0
+    ref.entity_id = int(agent_id)
+    kernel_order = adapter.get_task_orders_maintained_batch([ref])[0]
+    kernel_intent = adapter.get_leader_intents_maintained_batch([ref])[0]
+    kernel_report = adapter.get_pilot_reports_maintained_batch([ref])[0]
+    kernel_mission = adapter.get_mission_commands_maintained_batch([ref])[0]
 
-    if not bool(kernel_order.active):
+    if not bool(kernel_order.shared_core.active):
         return False, "task order did not reach kernel"
-    if not bool(kernel_intent.active):
+    if not bool(kernel_intent.shared_core.active):
         return False, "leader intent did not reach kernel"
-    if not bool(kernel_report.active):
+    if not bool(kernel_report.shared_core.active):
         return False, "pilot report did not reach kernel"
-    if int(kernel_intent.command_code) != expected_intent_command_code:
+    if int(kernel_intent.shared_core.command_code) != expected_intent_command_code:
         return False, (
             "unexpected leader intent command_code "
-            f"{kernel_intent.command_code} != {expected_intent_command_code}"
+            f"{kernel_intent.shared_core.command_code} != {expected_intent_command_code}"
         )
-    if not bool(kernel_mission.active):
+    if not bool(kernel_mission.shared_core.active):
         return False, "kernel mission command was not initialized"
-    if int(kernel_mission.command_code) != expected_kernel_command_code:
+    if int(kernel_mission.shared_core.command_code) != expected_kernel_command_code:
         return False, (
             "unexpected kernel mission command "
-            f"{kernel_mission.command_code} != {expected_kernel_command_code}"
+            f"{kernel_mission.shared_core.command_code} != {expected_kernel_command_code}"
         )
-    if int(kernel_mission.command_code) != int(kernel_intent.command_code):
+    if int(kernel_mission.shared_core.command_code) != int(kernel_intent.shared_core.command_code):
         return False, (
             "kernel mission command is not aligned with leader intent "
-            f"({kernel_mission.command_code} vs {kernel_intent.command_code})"
-    )
+            f"({kernel_mission.shared_core.command_code} vs {kernel_intent.shared_core.command_code})"
+        )
     return True, "loader command chain contract passed"

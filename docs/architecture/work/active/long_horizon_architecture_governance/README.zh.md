@@ -1,11 +1,12 @@
 # 长期架构治理
 
-状态：`2026-09-19`，长期架构治理计划处于 active；P0 authority/baseline、P1
+状态：`2026-09-23`，长期架构治理计划处于 active；P0 authority/baseline、P1
 target-architecture 决策、完整的 P3-A/P3-B/P3-C contract、authority-envelope、
 ledger 与 compatibility foundation，以及 P4-A dark/shadow host lifecycle 已在
 独立复核后接受。P4-B dark/shadow candidate implementation 与独立综合复核已完成；P4-C 首个 build-tree/internal candidate 任务已通过 candidate-scope 独立复核并被接受，尚未获得 production acceptance。
 P2-A/P2-B、完整 maintained facade parity、production rollback 与 P5-P8 仍开放；尚无 production truth
-发布、runtime caller 迁移或 production cutover 被接受。
+发布、production runtime caller cutover 或 production cutover 被接受。首个 maintained 合同调用方迁移切片见
+[P5-D caller migration evidence](evidence/p5d_facade_caller_migration_20260923.md)。
 
 语言：
 
@@ -16,7 +17,7 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/README.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-08-31`
+Last verified: `2026-09-23`
 
 相关权威：
 

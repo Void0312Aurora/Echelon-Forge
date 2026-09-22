@@ -7,6 +7,11 @@ void RuntimeFacade::set_pilot_actions_batch(
     (void)runtime_->inject(runtime::backend::InputBatch{.pilot_actions = assignments});
 }
 
+void RuntimeFacade::set_command_links_batch(
+    const std::vector<WorldCommandLinkAssignment> &assignments) {
+    (void)runtime_->inject(runtime::backend::InputBatch{.command_links = assignments});
+}
+
 std::vector<LaunchEvent>
 RuntimeFacade::apply_launch_requests_batch(const std::vector<LaunchRequest> &requests) {
     return runtime_->inject(runtime::backend::InputBatch{.launch_requests = requests})
@@ -76,4 +81,14 @@ RuntimeFacade::get_pilot_reports_maintained_batch(const std::vector<WorldEntityR
             .include_pilot_reports = true,
         })
         .pilot_reports;
+}
+
+std::vector<std::vector<CommPacket>>
+RuntimeFacade::get_unit_messages_batch(const std::vector<WorldEntityRef> &refs) const {
+    return runtime_
+        ->export_state(runtime::backend::ExportRequest{
+            .refs = refs,
+            .include_unit_messages = true,
+        })
+        .unit_messages;
 }

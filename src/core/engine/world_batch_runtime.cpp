@@ -545,6 +545,18 @@ void WorldBatchRuntime::set_pilot_actions_batch(
     });
 }
 
+void WorldBatchRuntime::set_command_links_batch(
+    const std::vector<WorldCommandLinkAssignment> &assignments) {
+    const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
+    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
+        auto &world = checked_world(world_index);
+        for (const size_t item_index : grouped[world_index]) {
+            const auto &item = assignments[item_index];
+            world.set_command_link(item.entity_id, item.latency_s, item.drop_probability);
+        }
+    });
+}
+
 std::vector<LaunchEvent>
 WorldBatchRuntime::apply_launch_requests_batch(const std::vector<LaunchRequest> &requests) {
     std::vector<LaunchEvent> events(requests.size());
@@ -745,6 +757,16 @@ WorldBatchRuntime::get_instrument_states_batch(const std::vector<WorldEntityRef>
         const auto &ref = refs[i];
         out[i] = safe_get_instrument_state(checked_world(static_cast<size_t>(ref.world_index)),
                                            ref.entity_id);
+    });
+    return out;
+}
+
+std::vector<std::vector<CommPacket>>
+WorldBatchRuntime::get_unit_messages_batch(const std::vector<WorldEntityRef> &refs) const {
+    std::vector<std::vector<CommPacket>> out(refs.size());
+    parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
+        const auto &ref = refs[i];
+        out[i] = checked_world(static_cast<size_t>(ref.world_index)).get_unit_messages(ref.entity_id);
     });
     return out;
 }

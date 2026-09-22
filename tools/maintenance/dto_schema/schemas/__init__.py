@@ -28,6 +28,7 @@ SCHEMA_MODULES = (
   "tools.maintenance.dto_schema.schemas.platform.world_zone_definition_fields",
   "tools.maintenance.dto_schema.schemas.platform.world_spawn_request_fields",
   "tools.maintenance.dto_schema.schemas.tasking.world_pilot_action_assignment_fields",
+  "tools.maintenance.dto_schema.schemas.tasking.world_command_link_assignment_fields",
   "tools.maintenance.dto_schema.schemas.batch.batch_world_setup_request_fields",
   "tools.maintenance.dto_schema.schemas.batch.batch_world_setup_result_fields",
   "tools.maintenance.dto_schema.schemas.platform.typed_platform_spawn_result_fields",
