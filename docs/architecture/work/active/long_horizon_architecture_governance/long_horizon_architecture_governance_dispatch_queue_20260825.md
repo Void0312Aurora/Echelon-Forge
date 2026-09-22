@@ -53,6 +53,7 @@ Authoritative cluster definitions:
 | 18 | `P4-A` | accepted | main thread + independent `gpt-5.6-sol` max reviewer | P3 foundation accepted | dark/shadow one-CAS host lifecycle with quiescence, leases, fences, termination, quarantine, timeout retry and no production publication |
 | 19 | `P4-B` | dark/shadow candidate independently passed; no production publication | main thread + independent `gpt-5.6-sol` max reviewer | P4-A accepted | twelve-row versioned native episode/state-transfer candidate, strict decoding, N/N-1 WAL evidence and host replacement; no production publication |
 | 20 | `P4-C` | candidate-scope task accepted; no production publication | main thread + independent `gpt-5.6-sol` max reviewer | P4-B handoff ready | build-tree-only kernel/world-batch seam, caller inventory, common-surface parity, candidate stress/teardown/rollback evidence, and explicit production residuals; no maintained caller cutover |
+| 21 | `P5-B` | accepted for supported local single-process topology | main thread + independent `gpt-5.6-sol` max reviewer | P5-A and P3-C accepted | durable pre-admission journal, native checkpoint, RunReceipt/provenance binding, restart/recovery, audit-chain recovery, and native/Python qualification; P5-C/P5-D/P8 production residuals remain explicit |
 
 ## Later Dependency Queue
 
