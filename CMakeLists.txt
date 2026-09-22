@@ -368,6 +368,27 @@ target_include_directories(ef_runtime_host_candidate
 )
 target_compile_features(ef_runtime_host_candidate PUBLIC cxx_std_20)
 target_link_libraries(ef_runtime_host_candidate PUBLIC ef_runtime_contracts)
+
+# P5-B native RunRecorder boundary.  The recorder owns the admission ordering
+# but depends only on a durable ledger interface; it cannot link the engine,
+# facade, bindings, or Python/Cordis runtime.
+add_library(ef_runtime_run_recorder STATIC
+    src/runtime/host/runtime_run_recorder.h
+    src/runtime/host/runtime_run_recorder.cpp
+    src/runtime/host/runtime_file_artifact_ledger_store.h
+    src/runtime/host/runtime_file_artifact_ledger_store.cpp
+)
+target_include_directories(ef_runtime_run_recorder PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/host>
+)
+target_include_directories(ef_runtime_run_recorder PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_compile_features(ef_runtime_run_recorder PUBLIC cxx_std_20)
+target_link_libraries(ef_runtime_run_recorder PRIVATE nlohmann_json::nlohmann_json)
+if(WIN32)
+    target_link_libraries(ef_runtime_run_recorder PRIVATE Advapi32)
+endif()
 file(GENERATE
     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/ef_runtime_host_candidate_boundary_manifest.txt"
     CONTENT
@@ -416,6 +437,7 @@ target_include_directories(ef_runtime_kernel_candidate PRIVATE
 target_compile_features(ef_runtime_kernel_candidate PUBLIC cxx_std_20)
 target_link_libraries(ef_runtime_kernel_candidate PRIVATE
     ef_runtime_state_owner_adapters_candidate
+    ef_runtime_run_recorder
     ef_core
 )
 
@@ -435,6 +457,17 @@ target_compile_features(ef_runtime_authority_contracts PUBLIC cxx_std_20)
 target_link_libraries(ef_runtime_authority_contracts PRIVATE
     ef_composition
     nlohmann_json::nlohmann_json
+)
+target_link_libraries(ef_runtime_run_recorder PRIVATE ef_runtime_authority_contracts)
+file(GENERATE
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/ef_runtime_run_recorder_boundary_manifest.txt"
+    CONTENT
+"type=$<TARGET_PROPERTY:ef_runtime_run_recorder,TYPE>\n
+links=$<JOIN:$<TARGET_PROPERTY:ef_runtime_run_recorder,LINK_LIBRARIES>,|>\n
+interface_links=$<JOIN:$<TARGET_PROPERTY:ef_runtime_run_recorder,INTERFACE_LINK_LIBRARIES>,|>\n
+includes=$<JOIN:$<TARGET_PROPERTY:ef_runtime_run_recorder,INCLUDE_DIRECTORIES>,|>\n
+interface_includes=$<JOIN:$<TARGET_PROPERTY:ef_runtime_run_recorder,INTERFACE_INCLUDE_DIRECTORIES>,|>\n
+sources=$<JOIN:$<TARGET_PROPERTY:ef_runtime_run_recorder,SOURCES>,|>\n"
 )
 file(GENERATE
     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/ef_runtime_authority_boundary_manifest.txt"
@@ -844,6 +877,29 @@ target_include_directories(ef_runtime_authority_contract_test PRIVATE
 target_compile_definitions(ef_runtime_authority_contract_test PRIVATE
     EF_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
 )
+
+add_executable(ef_runtime_run_recorder_test
+    src/tests/test_main.cpp
+    src/tests/test_runtime_run_recorder.cpp
+)
+target_link_libraries(ef_runtime_run_recorder_test PRIVATE
+    ef_runtime_run_recorder
+    ef_runtime_authority_contracts
+    nlohmann_json::nlohmann_json
+    doctest::doctest
+)
+target_include_directories(ef_runtime_run_recorder_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/host
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_compile_definitions(ef_runtime_run_recorder_test PRIVATE
+    EF_RUN_RECEIPT_VECTOR_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/run_receipt.v1.json"
+    EF_RELEASE_AUTHORITY_VECTOR_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/authority_cross_language_vector.v1.json"
+    EF_ROLLOUT_AUTHORITY_VECTOR_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/authority_rollout_decision.v1.json"
+    EF_RESOLVED_EXECUTION_PLAN_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/default_resolved_execution_plan.v1.json"
+    EF_RUNTIME_COMPOSITION_REQUEST_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/default_runtime_composition_request.v1.json"
+    EF_CANDIDATE_RELEASE_PACKAGE_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/candidate_release_package.v1.bin"
+)
 target_link_libraries(ef_runtime_contracts_compile_test PRIVATE
     ef_runtime_contracts
 )
@@ -879,6 +935,15 @@ target_include_directories(ef_runtime_kernel_candidate_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/host
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+target_compile_definitions(ef_runtime_kernel_candidate_test PRIVATE
+    EF_STATE_CHECKPOINT_VECTOR_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/authority_state_checkpoint.v1.json"
+    EF_RUN_RECEIPT_VECTOR_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/run_receipt.v1.json"
+    EF_RELEASE_AUTHORITY_VECTOR_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/authority_cross_language_vector.v1.json"
+    EF_ROLLOUT_AUTHORITY_VECTOR_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/authority_rollout_decision.v1.json"
+    EF_RESOLVED_EXECUTION_PLAN_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/default_resolved_execution_plan.v1.json"
+    EF_RUNTIME_COMPOSITION_REQUEST_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/default_runtime_composition_request.v1.json"
+    EF_CANDIDATE_RELEASE_PACKAGE_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/candidate_release_package.v1.bin"
 )
 
 add_executable(ef_runtime_kernel_candidate_parity_test
@@ -1147,6 +1212,13 @@ add_test(
         -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/verify_runtime_host_candidate_boundary.cmake
 )
 add_test(NAME runtime_authority_contract COMMAND ef_runtime_authority_contract_test)
+add_test(NAME runtime_run_recorder COMMAND ef_runtime_run_recorder_test)
+add_test(
+    NAME runtime_run_recorder_boundary
+    COMMAND ${CMAKE_COMMAND}
+        -DMANIFEST=${CMAKE_CURRENT_BINARY_DIR}/ef_runtime_run_recorder_boundary_manifest.txt
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/verify_runtime_run_recorder_boundary.cmake
+)
 add_test(
     NAME runtime_authority_boundary
     COMMAND ${CMAKE_COMMAND}
@@ -1177,6 +1249,7 @@ endif()
 set(EF_PROJECT_WARNING_TARGETS
     ef_runtime_contracts
     ef_runtime_host_candidate
+    ef_runtime_run_recorder
     ef_composition
     ef_core
     ef_content
@@ -1196,6 +1269,7 @@ set(EF_PROJECT_WARNING_TARGETS
     ef_test
     ef_runtime_contracts_compile_test
     ef_runtime_host_candidate_test
+    ef_runtime_run_recorder_test
     ef_composition_lifecycle_test
     ef_backend_provider_migration_test
     ef_composition_evidence_test

@@ -9,6 +9,45 @@ on:
   workflow_dispatch:
 
 jobs:
+  p5b-windows-qualification:
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install P5-B Python test dependencies
+        run: python -m pip install pytest jsonschema
+
+      - name: Configure P5-B Windows qualification
+        run: >-
+          cmake -S . -B build-p5b-windows -A x64
+          -DBUILD_TESTING=ON
+          -DEF_FETCHCONTENT_REVALIDATE_PINS=OFF
+
+      - name: Build P5-B native qualification targets
+        run: >-
+          cmake --build build-p5b-windows --config Release --parallel 2
+          --target ef_runtime_run_recorder_test ef_runtime_kernel_candidate_test
+          ef_runtime_kernel_candidate_parity_test
+
+      - name: Run P5-B native qualification gates
+        run: >-
+          ctest --test-dir build-p5b-windows -C Release
+          -R "^(runtime_run_recorder|runtime_run_recorder_boundary|runtime_kernel_candidate|runtime_kernel_candidate_parity)$"
+          --output-on-failure
+
+      - name: Run P5-B receipt and recovery gates
+        run: >-
+          python -m pytest -q --confcutdir=tests/architecture
+          tests/architecture/composition/test_runtime_run_receipt.py
+
   build-and-test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -83,11 +122,11 @@ jobs:
 
       - name: Build ef_core, ef_py, host lifecycle candidate, and C++ tests
         run: |
-          cmake --build build-workshop --target ef_core ef_py ef_runtime_host_candidate_test ef_test ef_composition_lifecycle_test ef_backend_provider_migration_test ef_composition_evidence_test ef_cordis_runtime_conformance_test -j2
+          cmake --build build-workshop --target ef_core ef_py ef_runtime_host_candidate_test ef_runtime_run_recorder_test ef_runtime_kernel_candidate_test ef_runtime_kernel_candidate_parity_test ef_test ef_composition_lifecycle_test ef_backend_provider_migration_test ef_composition_evidence_test ef_cordis_runtime_conformance_test -j2
 
       - name: Run C++ smoke tests
         run: |
-          ctest --test-dir build-workshop -R '^(ef_test_all|runtime_host_candidate|runtime_host_candidate_boundary|composition_lifecycle|backend_provider_migration|composition_evidence|cordis_runtime_conformance)$' --output-on-failure
+          ctest --test-dir build-workshop -R '^(ef_test_all|runtime_host_candidate|runtime_host_candidate_boundary|runtime_run_recorder|runtime_run_recorder_boundary|runtime_kernel_candidate|runtime_kernel_candidate_parity|composition_lifecycle|backend_provider_migration|composition_evidence|cordis_runtime_conformance)$' --output-on-failure
 
       - name: Run state-transfer and Python mirror contract gates
         run: |
