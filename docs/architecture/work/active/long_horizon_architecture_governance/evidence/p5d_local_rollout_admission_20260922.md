@@ -52,6 +52,16 @@ The real local CPU-canonical VecEnv was then started with a temporary signed
 facade-only build. It completed reset and one step with visual tensors shaped
 `(1, 24, 48, 10)` on both paths; the returned step tuple length was `4`.
 
+A fresh wheel was rebuilt after the gate landed:
+`artifacts/p5d-wheel-canary/cmo-0.2.0-cp312-cp312-win_amd64.whl`, SHA-256
+`13d3e0a623ebdcbe18a176fba01b7676a597ca9a675934e5d545771d612d3591`. Its
+contents included `python/rl/runtime/rollout_gate.py`, `ef_py.pyd`, and the
+private `ef_facade_backend.dll`; no diagnostics extension or candidate adapter
+was included. A fresh CPython 3.12 venv installed that wheel from a temporary
+working directory, loaded a signed `production-canary` slot, and completed the
+same facade VecEnv reset/step with `(1, 24, 48, 10)` visual tensors and a
+four-item step result.
+
 ## Scope and remaining P5-D work
 
 This is not a production cutover. The slot currently proves the local
