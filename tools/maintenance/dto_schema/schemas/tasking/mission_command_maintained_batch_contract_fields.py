@@ -11,11 +11,6 @@ FILE_HEADER = (
     '// Consumers define EF_MISSION_COMMAND_MAINTAINED_BATCH_CONTRACT_FIELD(\n'
     '// type, name, default_value) before including this file; the macro is\n'
     "// #undef'd here after expansion.\n"
-    '//\n'
-    '// NOTE(I35): the trailing ground_static_task field has never been\n'
-    '// bound to Python (pre-existing binding-surface omission). I35\n'
-    '// preserves that omission as-is instead of newly exposing the field;\n'
-    '// see bindings_runtime.cpp for the held hand-written binding.\n'
     '\n'
 )
 FILE_FOOTER = (
@@ -35,7 +30,7 @@ SCHEMA = DtoSchema(
         Field(name='air_formation', cpp_type='air_formation_type', default='{}', group='EF_MISSION_COMMAND_MAINTAINED_BATCH_CONTRACT_FIELD'),
         Field(name='naval_stationing', cpp_type='naval_stationing_type', default='{}', group='EF_MISSION_COMMAND_MAINTAINED_BATCH_CONTRACT_FIELD'),
         Field(name='naval_embarked_helo', cpp_type='naval_embarked_helo_type', default='{}', group='EF_MISSION_COMMAND_MAINTAINED_BATCH_CONTRACT_FIELD'),
-        Field(name='ground_static_task', cpp_type='ground_static_task_type', default='{}', group='EF_MISSION_COMMAND_MAINTAINED_BATCH_CONTRACT_FIELD', hidden=True),
+        Field(name='ground_static_task', cpp_type='ground_static_task_type', default='{}', group='EF_MISSION_COMMAND_MAINTAINED_BATCH_CONTRACT_FIELD'),
     ),
     file_footer=FILE_FOOTER,
 )

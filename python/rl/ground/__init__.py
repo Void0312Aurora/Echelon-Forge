@@ -17,6 +17,10 @@ from .infantry_proxy import (
     build_ground_infantry_command,
     normalize_ground_infantry_action,
 )
+from .command import (
+    build_ground_infantry_maintained_assignment,
+    build_ground_infantry_mission_command,
+)
 from .proxy_env import GroundInfantryProxyEnv
 
 __all__ = [
@@ -29,5 +33,7 @@ __all__ = [
     "GroundInfantryTransition",
     "GroundInfantryProxyEnv",
     "build_ground_infantry_command",
+    "build_ground_infantry_maintained_assignment",
+    "build_ground_infantry_mission_command",
     "normalize_ground_infantry_action",
 ]

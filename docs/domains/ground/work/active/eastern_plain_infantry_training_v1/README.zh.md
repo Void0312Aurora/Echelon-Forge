@@ -38,6 +38,9 @@ Owner：`domains/ground`，环境输入由 `systems/environment` 负责
 - Gymnasium 契约 harness：`python/rl/ground/proxy_env.py`
   （`GroundInfantryProxyEnv`）。它只验证 RL 的 reset/step/观测/奖励/终止/轨迹边界，
   权威级别仍是 `engineering_proxy_only`。
+- maintained 命令投影：`python/rl/ground/command.py`。它把当前命令结构能够表达的
+  heading/speed 和已有 Ground static-task 片段送入批量契约；对于当前原生命令结构
+  无法表达的 stance/route 字段会直接拒绝，而不是静默丢弃。
 
 本次已经用固定 Arnis v3.0.0 CMO patch 实际生成并验证 `expected/` bundle，且
 保留了预览和 `field_acceptance.json`。高程与地表覆盖仍来自网络/缓存 provider，

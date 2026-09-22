@@ -41,6 +41,17 @@ runtime authority and must not be wired into the production WorldBatch path.
 termination/trace boundary can be tested without pretending that a learned
 policy is already connected to native Ground truth.
 
+The existing C++ maintained command contract already carries
+`ground_static_task`; the Python binding now exposes that slice as well.  This
+removes a transport omission, but it does not create a movement consumer: a
+command can reach the native batch boundary while a Ground soldier still keeps
+zero velocity until a Ground movement system is admitted.
+
+`python/rl/ground/command.py` therefore projects only the representable
+heading/speed plus static-task fields.  It rejects crouch/prone stance and
+non-direct route intents because the current native command shape has no such
+fields; silently dropping them would make the training trace dishonest.
+
 The proxy fails closed on unknown raster cells, out-of-bounds transitions, and
 river crossings without the explicit bridge intent.  The bridge rule is a
 temporary test policy, not a released crossing model.
@@ -60,3 +71,14 @@ Before promoting this scaffold, a separate reviewed Ground owner package must:
 
 Until those gates pass, the training contract remains `contract_only`; the
 current proxy is intentionally not a `train.py` entry point.
+
+## Verification residual outside this slice
+
+The stale runtime-composition evidence artifacts were refreshed in a separate
+maintenance commit (`3ea5c184`), and the composition-evidence C++ gate is now
+green.  The broad `ef_test_all` gate still has two pre-existing CUDA resident
+fixture identity failures: the fixture contract expects entity base `581`,
+while the current registry (after the already-landed Ground damage component
+admission) produces `582`.  This is an identity-contract residual, not proof
+of Ground movement or a failure of the command/proxy tests; it remains held
+and is not silently relabelled as a Ground success.
