@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/attack/ah-64/ah-64e/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-19`
+Last verified: `2026-09-23`
 Equipment ID: `eq-uk-air-apache-ah64e`
-Content status: parameter table present with per-field source and confidence. Retrieval status is recorded per package in each manifest's `Retrieval:` block. This is the UK queue-owned shared AH-64E variant record; it includes United States and United Kingdom operator context, and every row is a family or E-variant reading rather than a separate UK measurement.
+Content status: parameter table complete for the shared AH-64E research record. British Army E-variant capability, Boeing family/E values and a versioned community empty-weight cross-check remain separately labelled.
 
 ## Identity
 
@@ -43,10 +43,16 @@ Content status: parameter table present with per-field source and confidence. Re
 | Combat radius | Approximately 476 km | `p5-us-air-ah64e-armyrecognition` | C |
 | Empty weight (A and D reading) | 5,165 kg (11,387 lb) | `p5-us-air-ah64e-migflug` | C |
 | Internal fuel | Approximately 1,420 litres in two crashworthy self-sealing cells | `p5-us-air-ah64e-migflug` | C |
+| UK Army maximum speed | 330 km/h | `p5-uk-air-apache-ah64e-army` | A |
+| UK Army engine | Two General Electric T700-GE-701D turboshafts | `p5-uk-air-apache-ah64e-army` | A |
+| UK Army maximum-weight reading | 7,746 kg | `p5-uk-air-apache-ah64e-army` | A |
+| UK Army armament | 30 mm chain gun, 70 mm rockets and Hellfire missiles | `p5-uk-air-apache-ah64e-army` | A |
+| UK Army mission sensors | Longbow radar; optical and thermal imaging sights; integrated defensive-aid suite | `p5-uk-air-apache-ah64e-army` | A |
+| E-variant empty-weight community reading | 5,360 kg (2024/V6 database record) | `p5-us-air-ah64e-cmano` | C |
 
 ## Configuration Boundary
 
-This leaf carried no parameter table before 2026-09-17. Its queue identity is the United Kingdom row, but the record is shared at the AH-64E variant level and is not a measurement of the United Kingdom aircraft alone.
+Its queue identity is the United Kingdom row, but the record is shared at the AH-64E variant level and is not a measurement of every UK aircraft configuration. The British Army page now supplies direct UK E-variant capability and headline values; the Boeing and specialist packages retain family/E readings.
 
 The Boeing page is the source of record for the crew, the fuselage length, the height, the rotor diameter, both mission weights, the climb rate and the fleet totals. Its stated length of 48.2 ft is a fuselage figure, and it is recorded as such beside the overall length of 17.73 m with rotors turning that the encyclopedic block gives. The two are not alternative readings of one quantity and the leaf does not treat them as such.
 
@@ -54,9 +60,9 @@ The height carries two readings: 4.7 m from the manufacturer and 4.95 m from a d
 
 The maximum operating weight and the maximum take-off weight are the same quantity under two names and both publishers give 23,000 lb, so the row is not a single-source figure.
 
-The empty weight is the A and D reading of 5,165 kg. A Tier C page notes that the E runs several hundred kilogrammes heavier once the -701D engines, the uprated transmission and the Guardian avionics are fitted, but publishes no figure for it, so no E empty weight is recorded.
+The empty-weight block now carries three boundaries: 5,165 kg explicitly for the A/D marks from MiGFlug, the Army Recognition page's unqualified approximate figure, and a 5,360 kg E-variant reading from the versioned CMANO database. The latter is Tier C and community-derived, so it is a cross-check rather than an official certification value.
 
-The powerplant, speed and combat radius rest on the Army Recognition page alone. It is the only package held here that names the T700-GE-701D, which is the E mark's engine, rather than the T700-GE-701 and -701C of the earlier marks.
+The British Army page independently names the T700-GE-701D, 330 km/h speed, 7,746 kg maximum-weight reading, weapon set and sensor suite. Army Recognition remains the source of the approximately 300 km/h and 476 km combat-radius readings; both are retained rather than averaged.
 
 ## Source References
 
@@ -64,3 +70,5 @@ The powerplant, speed and combat radius rest on the Army Recognition page alone.
 - `p5-us-air-ah64e-encyclopedic`: `raw/sources/wikipedia/p5-us-air-ah64e-encyclopedic/manifest.md` — overall length reading
 - `p5-us-air-ah64e-armyrecognition`: `raw/sources/army_recognition/p5-us-air-ah64e-armyrecognition/manifest.md` — engine, speed, combat radius
 - `p5-us-air-ah64e-migflug`: `raw/sources/migflug/p5-us-air-ah64e-migflug/manifest.md` — empty weight, internal fuel
+- `p5-uk-air-apache-ah64e-army`: `raw/sources/british_army/p5-uk-air-apache-ah64e-army/manifest.md` — UK E-variant capability, speed, engine, weight, weapons and sensors
+- `p5-us-air-ah64e-cmano`: `raw/sources/cmano_db/p5-us-air-ah64e-cmano/manifest.md` — versioned community E-variant empty-weight cross-check

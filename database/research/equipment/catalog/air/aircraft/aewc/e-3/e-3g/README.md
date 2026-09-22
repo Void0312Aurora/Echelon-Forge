@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/aewc/e-3/e-3g/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-18`
+Last verified: `2026-09-23`
 Equipment ID: `eq-us-air-e3g`
-Content status: model-level draft; the airframe figures below are the E-3 family values the cited source publishes, and the E-3G mission-system content is not separately quantified.
+Content status: parameter table complete for the U.S. E-3G research record. Family airframe values are separated from official Block 40/45 mission-system and crew context.
 
 ## Identity
 
@@ -41,10 +41,13 @@ Content status: model-level draft; the airframe figures below are the E-3 family
 | Endurance | More than 8 hours unrefuelled | `p5-us-air-e3sentry-usaf-factsheet` | A |
 | Crew | Flight crew of four plus 13 to 19 mission specialists, varying with mission | `p5-us-air-e3sentry-usaf-factsheet` | A |
 | Date deployed | March 1977 | `p5-us-air-e3sentry-usaf-factsheet` | A |
+| E-3G mission crew context | Up to 24 weapons officers, surveillance officers, radar/communications technicians and flight-deck crew on a mission | `p5-us-air-e3g-block4045-af` | A |
+| Block 40/45 mission system | Upgraded computer platform for weapons and surveillance scopes; faster tracking, configurable airspaces and improved command-and-control workflow | `p5-us-air-e3g-block4045-af` | A |
+| E-3G operational surveillance context | Exercise surveillance of aircraft in a 300-mile radius; command-and-control and air-battle-management role | `p5-us-air-e3g-block4045-af` | A |
 
 ## Configuration Boundary
 
-The parameter rows rest on the Air Force E-3 Sentry (AWACS) fact sheet, which describes the E-3 family rather than the E-3G block. The airframe, powerplant and performance figures above are therefore family-level and are not asserted as E-3G-unique values. The Block 40/45 mission-system modernization that distinguishes the E-3G is not quantified in that source: no radar range, tracking capacity, console count or datalink throughput figure is recorded.
+The airframe, powerplant and performance rows rest on the Air Force E-3 Sentry fact sheet and remain family-level. The separate official E-3G Block 40/45 package supplies the variant-specific mission-system, crew-context and operational-surveillance rows. No universal radar range, datalink throughput or weapon loadout is inferred from the exercise context.
 
 Maximum takeoff weight is stated differently by two official Air Force publications: 325,000 lb on the fact sheet and 347,000 lb on the Tinker Air Force Base page. Both are recorded and the divergence is left open rather than averaged.
 
@@ -54,4 +57,5 @@ The `p5-us-air-e3g-usaf` source is a news tag page for the E-3. It carries no sp
 
 - `p5-us-air-e3sentry-usaf-factsheet`: `raw/sources/us_air_force/p5-us-air-e3sentry-usaf-factsheet/manifest.md`
 - `p5-us-air-e3sentry-tinker`: `raw/sources/tinker_air_force_base/p5-us-air-e3sentry-tinker/manifest.md`
+- `p5-us-air-e3g-block4045-af`: `raw/sources/us_air_force/p5-us-air-e3g-block4045-af/manifest.md` — official Block 40/45 mission-system and E-3G operational context
 - `p5-us-air-e3g-usaf`: `raw/sources/us_air_force/p5-us-air-e3g-usaf/manifest.md` — context only, no parameter rows

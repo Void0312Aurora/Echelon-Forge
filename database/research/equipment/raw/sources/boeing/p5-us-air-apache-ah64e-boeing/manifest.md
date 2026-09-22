@@ -10,12 +10,11 @@ Domain: air
 Equipment: AH-64 / AH-64E
 Configuration: The manufacturer specification block covers the Apache family and does not split every figure by mark. The leaf therefore labels these readings as family or E-variant context rather than as a United Kingdom-specific measurement.
 Retrieval:
-  attempted_at: not established
-  method: no retained retrieval record
-  status: no_record
-  returned: nothing in this correction pass
-  did_not_return: not established
-  note: The AH-64E collection commit recorded the URL and transcribed values but omitted this manifest. This repair restores the source package without inventing a successful fetch or timestamp; the values remain usable as declared source-backed research data but are not audit-grade retrieval evidence.
+  attempted_at: 2026-09-22T17:45:00Z
+  method: tavily_proxy
+  status: success
+  returned: Boeing AH-64E crew, dimensions, primary mission gross weight, maximum operating weight and climb-rate specification block
+  did_not_return: E-specific empty weight, UK customer configuration and complete weapon/sensor details
 Estimation / uncertainty: Tier B manufacturer documentation, authoritative for the figures it states about the Apache product. The page is a product specification rather than a flight manual or type certificate, and its family-level figures must not be promoted to a country-specific or E-only measurement.
 Retention: manifest and extracted parameter notes only
 
