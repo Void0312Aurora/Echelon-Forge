@@ -7,16 +7,15 @@ Author / maintainer: The Aviationist editorial staff
 Title: Shenyang J-16 Qianlong: specifications
 URL: https://theaviationist.com/2025/01/16/shenyang-j-16
 Retrieval:
-  attempted_at: 2026-09-17T17:05:00Z
-  method: none
-  status: no_record
-  returned: nothing
-  did_not_return: not established
-  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
+  attempted_at: 2026-09-22T18:50:00Z
+  method: tavily_proxy
+  status: success
+  returned: article profile and specification table with J-16 role/service scope, crew, dimensions, empty/max mass, WS-10B propulsion and thrust, speed, range, ceiling, gun, hardpoints and named weapon examples; article also describes AESA radar, glass cockpit, IRST and electronic-warfare changes
+  did_not_return: official Chinese certification, radar detection range, fuel quantity and a weapon-by-weapon station allocation
 Domain: air
 Equipment: J-16
 Configuration: Twin-seat multirole fighter and strike aircraft. The page states the type is in service only with the PLAAF.
-Estimation / uncertainty: Tier C specialist secondary source. It is a defence aviation publication, not an official Chinese source. The Chinese Ministry of National Defense material held in this tree confirms role and service presence only.
+Estimation / uncertainty: Tier C specialist secondary source. It is a defence aviation publication, not an official Chinese source. The Chinese Ministry of National Defense material held in this tree confirms role and service presence only; all numeric values remain secondary.
 Retention: manifest and extracted parameter notes only
 
 ## Extracted parameter notes

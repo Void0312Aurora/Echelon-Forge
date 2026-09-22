@@ -7,16 +7,15 @@ Author / maintainer: 19FortyFive editorial staff
 Title: Russia's New Tu-160M Supersonic Bomber Has a Message for the U.S. Air Force
 URL: https://www.19fortyfive.com/2025/05/russias-new-tu-160m-supersonic-bomber-has-a-message-for-the-u-s-air-force
 Retrieval:
-  attempted_at: 2026-09-17T17:05:00Z
-  method: none
-  status: no_record
-  returned: nothing
-  did_not_return: not established
-  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
+  attempted_at: 2026-09-22T18:50:00Z
+  method: tavily_proxy
+  status: success
+  returned: article text with Tu-160M dimensions, maximum takeoff mass, four-person crew, NK-32 engine block, Mach 2.05 speed, 12,300 km range, 16,000 m ceiling, 88,185 lb payload capacity and NK-32-02 modernization context
+  did_not_return: empty mass, normal takeoff mass, fuel quantity and a detailed weapon-station allocation
 Domain: air
 Equipment: Tu-160 / Tu-160M
 Configuration: The article covers the Tu-160M modernization, including the NK-32-02 engine fit reported by the United Aircraft Corporation press office.
-Estimation / uncertainty: Tier C secondary source. It is a defence commentary publication, not an official Russian source and not a Tupolev document. The Russian Ministry of Defence print URL held in this tree is a news statement and discloses no parameters.
+Estimation / uncertainty: Tier C secondary source. It is a defence commentary publication, not an official Russian source or Tupolev technical manual. Numeric platform readings remain secondary and the Rostec package is used for the variant-specific NK-32-02 modernization claim.
 Retention: manifest and extracted parameter notes only
 
 ## Extracted parameter notes

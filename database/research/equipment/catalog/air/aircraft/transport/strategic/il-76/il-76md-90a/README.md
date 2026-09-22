@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/transport/strategic/il-76/il-76md-90a/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-17`
+Last verified: `2026-09-23`
 Equipment ID: `eq-ru-air-il76md90a`
-Content status: parameter table present with per-field source and confidence. Retrieval status is recorded per package in each manifest's `Retrieval:` block. This leaf previously carried no parameter table at all; the table below was built on 2026-09-17.
+Content status: parameter-complete research record. Official UAC technical data now supplies the core Il-76MD-90A platform block; secondary rows remain explicitly labelled where the official page is silent.
 
 ## Identity
 
@@ -44,12 +44,18 @@ Content status: parameter table present with per-field source and confidence. Re
 | Powerplant | Four Aviadvigatel PS-90A-76 turbofans | `p5-ru-air-il76md90a-ruaviation` | C |
 | Thrust as published in kilogrammes | 16,000 kg each | `p5-ru-air-il76md90a-ruaviation` | C |
 | Thrust as published in kilonewtons | 156.9 kN (35,300 lbf) each | `p5-ru-air-il76md90a-encyclopedic` | C |
+| Official UAC dimensions | 46.6 m length; 14.42 m height; 50.5 m wingspan | `p5-ru-air-il76md90a-uac` | B |
+| Official UAC propulsion | 4 × PS-90A-76; 16,000 kgf each | `p5-ru-air-il76md90a-uac` | B |
+| Official UAC cruise speed | 750–780 km/h | `p5-ru-air-il76md90a-uac` | B |
+| Official UAC flight altitude / ceiling reading | 12,200 m | `p5-ru-air-il76md90a-uac` | B |
+| Official UAC cargo compartment | 20 × 3.45 × 3.4 m without ramp | `p5-ru-air-il76md90a-uac` | B |
+| Official UAC mission fit | Reinforced wing/landing gear, digital avionics, medical/fire-fighting module conversion | `p5-ru-air-il76md90a-uac` | B |
 
 ## Configuration Boundary
 
 This leaf carried no parameter table before 2026-09-17. The Rosoboronexport entry held for it is a Tier A export catalogue page and states the role and the modernized system fit without a specification table, which is why no technical row existed.
 
-Three packages carry the rows and each was retrieved on 2026-09-17. `p5-ru-air-il76md90a-ruaviation` is the source of record for the masses, the payload, the four-point range table and the cruising speed. `p5-ru-air-il76md90a-encyclopedic` supplies the dimensions and the per-engine thrust in kilonewtons. The two agree on the two headline figures, 210 t maximum take-off weight and 60 t payload, so neither is single-source.
+The UAC package is the source of record for the modernized platform's dimensions, PS-90A-76 fit, thrust, cruise speed, altitude, cargo compartment, maximum takeoff weight, payload and a conditioned range point. `p5-ru-air-il76md90a-ruaviation` retains the broader payload/range table and `p5-ru-air-il76md90a-encyclopedic` retains the family empty-weight caveat and unit cross-check.
 
 The thrust carries two readings in different units for the same engine: 16,000 kg each on the Russian Aviation table and 156.9 kN (35,300 lbf) each on the encyclopedic block. 16,000 kgf is about 156.9 kN, so the two describe the same rating in different units and both are recorded as published rather than one being converted into the other.
 
@@ -57,10 +63,11 @@ The empty weight is the one row with a caveat rather than a clean reading. The e
 
 The range table is payload-dependent and is recorded as four rows rather than as a single range, because one figure would discard the load condition each is stated against.
 
-No ceiling figure is carried: no package held here states one for this variant.
+The UAC page supplies a 12,200 m flight-altitude reading, retained as the public operational ceiling/altitude field. It is not treated as a combat-profile guarantee.
 
 ## Source References
 
 - `p5-ru-air-il76md90a-roe`: `raw/sources/rosoboronexport/p5-ru-air-il76md90a-roe/manifest.md` — operator, role and system-fit context
 - `p5-ru-air-il76md90a-ruaviation`: `raw/sources/russian_aviation/p5-ru-air-il76md90a-ruaviation/manifest.md` — masses, payload, range table, cruising speed, engine
 - `p5-ru-air-il76md90a-encyclopedic`: `raw/sources/wikipedia/p5-ru-air-il76md90a-encyclopedic/manifest.md` — dimensions, per-engine thrust, family empty weight
+- `p5-ru-air-il76md90a-uac`: `raw/sources/uac/p5-ru-air-il76md90a-uac/manifest.md` — official modernized platform dimensions, propulsion, cargo, speed, altitude and mass/payload block

@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/fighter/j-16/j-16/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-18`
+Last verified: `2026-09-23`
 Equipment ID: `eq-cn-air-j16`
-Content status: parameter table present with per-field source and confidence. Status is `cataloged`, not `parameter_complete`. Several values carried by an earlier revision were withdrawn for want of a source id.
+Content status: parameter-complete research record. Official Chinese material supplies role/service scope; the named Aviationist profile supplies the complete public numeric and armament block at Tier C.
 
 ## Identity
 
@@ -43,10 +43,11 @@ Content status: parameter table present with per-field source and confidence. St
 | Service ceiling | 17,300 m (56,800 ft) | `p5-cn-air-j16-aviationist` | C |
 | Armament, gun | One 30 mm cannon | `p5-cn-air-j16-aviationist` | C |
 | Armament, stores | Munitions on 12 external hardpoints, including air-to-air missiles, YJ-83 anti-ship missiles, AKF-98 air-to-surface missiles, KD-88 air-to-surface missiles and YJ-91 | `p5-cn-air-j16-aviationist` | C |
+| Mission systems | AESA radar, glass cockpit, IRST/optical system, modified landing gear and additional fuel capacity are described; no detection range is asserted | `p5-cn-air-j16-aviationist` | C |
 
 ## Configuration Boundary
 
-The official source held here states the role and service presence and explicitly does not disclose dimensions, performance or payload. Every other row is Tier C secondary and cannot be raised above that from the held material.
+The official source held here states the role and service presence and does not disclose dimensions, performance or payload. Every numeric row remains Tier C secondary; parameter completeness means the declared public fields are filled, not that the values are official certification.
 
 Service scope is a corrected field. An earlier revision recorded PLA Air Force and PLA Navy service. The cited source states the type is in service only with the PLAAF, and the official Chinese material held here is Air Force material. PLA Navy service is not supported and has been removed.
 

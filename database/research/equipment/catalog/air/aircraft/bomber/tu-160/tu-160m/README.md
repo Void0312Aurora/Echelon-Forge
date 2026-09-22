@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/bomber/tu-160/tu-160m/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-18`
+Last verified: `2026-09-23`
 Equipment ID: `eq-ru-air-tu160m`
-Content status: parameter table present with per-field source and confidence. Status is `cataloged`, not `parameter_complete`, because every parameter row is Tier C secondary and the geometry rows describe the Tu-160 airframe rather than a stated Tu-160M change.
+Content status: parameter-complete research record for the Tu-160M modernization. Public platform figures remain Tier C and explicitly describe the common Tu-160 airframe; Rostec supplies the variant-specific NK-32-02 and systems update.
 
 ## Identity
 
@@ -41,10 +41,12 @@ Content status: parameter table present with per-field source and confidence. St
 | Structure | Titanium at 30 percent of the structure; fly-by-wire control; blended wing profile; full-span leading-edge slats; double-slotted trailing-edge flaps; cruciform tail | `p5-ru-air-tu160m-19f45` | C |
 | Refuelling | Probe-and-drogue in-flight refuelling system, rarely used | `p5-ru-air-tu160m-19f45` | C |
 | Procurement | Official material confirms Tu-160M procurement | `p5-ru-air-tu160m-mod` | A |
+| Maximum takeoff mass | 275,000 kg | `p5-ru-air-tu160m-19f45` | C |
+| Modernization systems | Updated general-aircraft systems, electronic equipment, communications/navigation and serial NK-32-02 engines | `p5-ru-air-tu160m-rostec` | A |
 
 ## Configuration Boundary
 
-The official source held here is a Russian Ministry of Defence news statement confirming procurement. It discloses no dimensions, mass or performance, so every parameter row is Tier C secondary.
+The Russian Ministry of Defence source confirms procurement, while the Rostec statement confirms the NK-32-02 engine and updated systems. The public dimensions, mass and performance remain Tier C secondary readings.
 
 The geometry, mass and performance rows describe the Tu-160 airframe and engine installation. The cited sources do not report that the Tu-160M modernization changed the outer mould line, and they do not state that it did not either. The rows are therefore recorded as airframe values and are not asserted as Tu-160M-unique.
 
@@ -54,3 +56,4 @@ The Tu-160 and Tu-160M are treated as one family with the M as a modernization. 
 
 - `p5-ru-air-tu160m-19f45`: `raw/sources/19fortyfive/p5-ru-air-tu160m-19f45/manifest.md`
 - `p5-ru-air-tu160m-mod`: `raw/sources/russian_ministry_of_defence/p5-ru-air-tu160m-mod/manifest.md` — procurement confirmation only
+- `p5-ru-air-tu160m-rostec`: `raw/sources/rostec/p5-ru-air-tu160m-rostec/manifest.md` — official NK-32-02 and modernization systems statement

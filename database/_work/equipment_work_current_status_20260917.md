@@ -21,11 +21,11 @@ check in [check_equipment_tree.py](check_equipment_tree.py). See
 | --- | --- |
 | Branch | `codex/database-scaffold` |
 | Base | `d1ebb5d3` |
-| Off-base commits | 52 |
+| Off-base commits | 53 |
 | Behind `origin/main` | 218 commits |
-| Ahead of `origin/main` | 52 commits |
+| Ahead of `origin/main` | 53 commits |
 | `origin/main` files under `database/` | 0 |
-| Tracked files under `database/` | 633 |
+| Tracked files under `database/` | 635 |
 | Merge dry-run conflicts (`HEAD` vs `origin/main`) | 0 |
 
 `origin/main` carries no files under `database/`, so the tree this work touches is
@@ -41,22 +41,22 @@ Command: `python database/_work/check_equipment_tree.py`
 | --- | --- |
 | `C1` every referenced source id resolves | PASS, 0 dangling, 0 manifest/path mismatch |
 | `C2` backlog leaf binding (`Equipment ID`) | PASS after the `E2` backfill |
-| `C3` backlog vs coverage status | PASS, 93 of 93 coverage rows agree |
+| `C3` backlog vs coverage status | PASS, 96 of 96 coverage rows agree |
 | `C4` source admission floor | PASS after the `E3` retention backfill |
 | `C5` source-artifact consistency | PASS, no unnamed or aggregate package claims |
-| `C6` retrieval record | PASS, 59 unretrieved citations remain advisory; 158 packages lack a retrieval block |
+| `C6` retrieval record | PASS, 57 unretrieved citations remain advisory; 158 packages lack a retrieval block |
 
 Measured counts:
 
 | Metric | Value |
 | --- | --- |
-| Source packages (manifests) | 299 |
+| Source packages (manifests) | 301 |
 | Catalog leaves (carry `## Parameters`) | 114 |
-| Distinct source ids referenced by leaves | 299 |
+| Distinct source ids referenced by leaves | 301 |
 | Leaves without `Equipment ID` | 0 |
 | Backlog rows | 123 |
-| Coverage rows | 93 |
-| Status: `cataloged` / `parameter_complete` / `held` | 11 / 104 / 8 |
+| Coverage rows | 96 |
+| Status: `cataloged` / `parameter_complete` / `held` | 8 / 107 / 8 |
 
 ## Leaf Completeness Against The Queue
 
@@ -70,7 +70,7 @@ remain a depth follow-up rather than evidence of completed extraction.
 
 `coverage/README.md` describes `coverage.csv` as a discovery queue that feeds the
 backlog, and defines its `status` column as starting at `queued`. The file does not
-behave that way: its 93 rows are exactly the 93 in-scope `parameter_complete` rows of the
+behave that way: its 96 rows are exactly the 96 in-scope `parameter_complete` rows of the
 backlog, verified in both directions. It is an extract of the completed set, not a
 pre-backlog discovery surface.
 
@@ -81,12 +81,12 @@ vocabulary are not. This is a documentation drift, not a data defect.
 
 | Id | Finding | Evidence | State |
 | --- | --- | --- | --- |
-| `D2` | No source package records a rights field | `C4` `missing_rights_field_advisory`, 299 of 299 | open; the admission standard requires it of a ledger row |
+| `D2` | No source package records a rights field | `C4` `missing_rights_field_advisory`, 301 of 301 | open; the admission standard requires it of a ledger row |
 | `D3` | 82 catalog leaves outside the non-held queue have no parameter table | catalog scan: 191 README leaves, 109 with `## Parameters`, 82 without | open; scope and depth for these leaves still need a decision |
 | `D4` | Parameter table shape split | 57 leaves use a `Field`-based table; 52 use `Parameter \| Value \| Source \| Confidence`; 82 have no parameter table | open |
 | `D5` | Disjoint naval namespaces | `catalog/naval/ships/surface-combatant/` (tracked, 3 leaves) and the empty untracked `catalog/naval/surface-combatants/` coexist | open |
 | `D6` | Ledger not materialized | `sources/ledger/` holds a README only; `common.schema.json` has no source `$defs` while `FIELDS.md` describes 12 ledger fields | open |
-| `D7` | `coverage.csv` role and status vocabulary contradict its own README | 93 of 93 rows are `parameter_complete`, not `queued` | open |
+| `D7` | `coverage.csv` role and status vocabulary contradict its own README | 96 of 96 rows are `parameter_complete`, not `queued` | open |
 | `D8` | Country rows share a variant leaf without a stated rule | `eq-us-air-c17a` and `eq-uk-air-c17a` both point at `c-17/c-17a`, which is now correct by the `tornado-ids` precedent but is not documented anywhere | open |
 | `D9` | `Equipment ID` scheme is not declared | `eq-<country>-<domain>-<variant>`, country-less `module-*`, and country-less variant names such as `tornado-ids` all coexist with no stated rule | open |
 
@@ -141,6 +141,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | Expansion run setup | Added the unattended 150-record target, blocker/skip policy and per-batch commit gate in `equipment_expansion_20260923.md` |
 | U.S. transport/mission-aircraft expansion batch | Added C-5M, AC-130J, CV-22B, HC-130J and E-2D leaves with official USAF/Navy source packages; common-family readings remain explicitly bounded |
 | Russian export fighter completion batch | Promoted Su-35S, Su-34E and Su-30SME after refreshing ROSOBORONEXPORT/UAC retrievals; export/family boundaries and the Su-35S Tier C empty-mass reading remain explicit |
+| Chinese/Russian transport and fighter completion batch | Promoted J-16, Tu-160M and Il-76MD-90A after live retrieval; official modernization/role blocks remain separate from public Tier C platform readings |
 
 ## Retracted Findings
 
@@ -162,7 +163,7 @@ amend that standard.
 
 ## Explicit Overclaim Refusals
 
-- The 104 `parameter_complete` rows are research drafts. They are not calibrated, not
+- The 107 `parameter_complete` rows are research drafts. They are not calibrated, not
   cross-checked, and not runtime-eligible.
 - No file in this tree is consumed by the runtime loader.
 - Family names remain grouping nodes; only concrete variant leaves count as records.

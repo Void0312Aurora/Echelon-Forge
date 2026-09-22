@@ -45,13 +45,15 @@ calibration package, inventory claim, or final simulation configuration.
 | --- | --- | --- | --- |
 | R-1 | Mirage 2000D RMV completion and run setup | complete | `cc4628c9` |
 | R-2 | C-5M, AC-130J, CV-22B, HC-130J and E-2D expansion | complete | `fb401b7c` |
-| R-3 | Su-35S, Su-34E and Su-30SME completion | ready to commit | — |
+| R-3 | Su-35S, Su-34E and Su-30SME completion | complete | `96d44c72` |
+| R-4 | J-16, Tu-160M and Il-76MD-90A completion | ready to commit | — |
 
 ## Blocker / skip ledger
 
 | Candidate | Blocker | Alternative tried | Decision |
 | --- | --- | --- | --- |
-| — | — | — | — |
+| `eq-cn-air-y20` | Official Chinese material confirms role/family status but does not publish variant-level dimensions, mass, speed, range or crew; public figures mix Y-20A/Y-20B and tanker configurations | Official MND family page plus current secondary Y-20A references checked; no single base-Y-20 variant package found | Keep `cataloged`; defer until a variant-named technical package is found |
+| `eq-us-ground-stryker-m1252-mcvv` | Variant-level propulsion/mobility remains unknown; family M1129/M1252 values would be cross-model substitution | Army TB/TRADOC, mortar ATP, GDLS brochure, AFV Database and MDEX family pages checked | Keep cataloged and skip this pass; do not copy family powerpack or speed |
 
 ## Acceptance gate
 
