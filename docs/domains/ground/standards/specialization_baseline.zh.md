@@ -6,7 +6,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/domains/ground/standards/specialization_baseline.md`
 Owner: `domains/ground`
-Last verified: `2026-08-08`
+Last verified: `2026-09-22`
 
 ## 范围
 
@@ -41,13 +41,33 @@ held 的执行行为。
   `platform_family=dismounted_unit` 和 `doctrine_family=land_tactics`。
 - `src/components/domains/ground/` 拥有 Ground component slice。当前 command/tasking
   slice 仅是静态 G0/G1 元数据，不是执行动力学。
-- `src/models/domains/ground/` 拥有显式 effects placeholder route，用于保留旧有的
-  finalize-only 行为；它不是已释放的 Ground effects model。
 - 原生与 compatibility-shell Ground 场景使用共享 loader 和 tasking bridge，
   不建立私有 Ground runtime 路径。
 
-当前不存在已接受的 `src/systems/domains/ground/` owner。该目录不存在表示 Ground
-runtime-system ownership 仍保持 held，并不把 Ground 执行语义授权给其他领域。
+## 已注册且可达，但不构成能力
+
+`src/models/domains/ground/` 拥有结构化的 ground effects 路由。只有在 ground 自有的
+`GroundPlatformDamageState` 与共享的 hitbox、system-health、platform-damage 界面同时
+存在时它才选中目标；它把战斗部机制负载写进 ground state，把该 state 投影到共享
+capability 字段，然后调用共享 finalize。组件 id 在组合路径里按 world 解析一次并传给该
+路由——effects 侧不再靠解析组件类型去找它——因此该路由会选中，机制会运行。`2026-09-22`
+实测：一次结构命中后共享 capability 向量为 `[0.8167, 1.0000, 0.9010, 0.8680]`，而不是
+placeholder 兜底的"全零并被摧毁"；在多 world 进程里每个 world 都给出同一后果。修复与
+测量记录见
+[Ground Damage Effects Route Repair](../../../domains/ground/work/active/ground_damage_effects_route_repair/README.md)。
+
+机制可达仍不等于能力。这不是已释放的 Ground effects model：任何 Ground 任务、场景或
+observation 声明都不得以它为依据。其中还有一条期望开放且无 owner——既不带 blast 也不带
+mobility scale 的命中会让 mobility 停在 `1.0`，因此在 owner 决定"给投影补上该项"还是
+"撤回该期望"之前，有一个运行时测试保持 `xfail(strict=True)`。定位该缺陷的**修复前**测量见
+[DM-G1 可达性诊断](../../../systems/combat/reviews/ground_damage_reachability_20260921.md)。
+
+`src/systems/domains/ground/` 拥有 Ground 的 per-tick systems 面。地面损伤响应由
+`src/systems/domains/ground/damage_system_ground.h` 注册为默认组合 stage 30 的
+`builtin.system.ground_damage`，并且是该目录唯一拥有的系统。Ground 的 movement、
+terrain、sensing、fires、logistics 与 observation export 仍无 owner，准入**进一步**的
+Ground system owner 需要先立一个写明其声明的包。本次准入并不把 Ground 执行语义
+授权给其他领域。
 
 ## 内容与 Capability 规则
 
@@ -75,7 +95,10 @@ runtime-system ownership 仍保持 held，并不把 Ground 执行语义授权给
 - logistics、sustainment、recovery 或 learned Ground policy；
 - 正式 Ground `CommandPacket`、`ObservationPacket` 或 `TrackPacket` 特化。
 
-这些领域必须先具备独立标准与验收证据，任务或场景才能把它们声明为维护中能力。
+这些领域必须先具备独立标准与验收证据，任务或场景才能把它们声明为维护中能力。机制可达
+不是这种证据：ground damage 机制现在会运行，并对运行时套件所测的那一次命中给出上面的
+实测后果，但这仍不使 effects、damage、suppression 或 attrition 成为 Ground 能力、场景
+声明或本域可以依赖的模型。
 
 ## 验证
 
@@ -83,9 +106,10 @@ runtime-system ownership 仍保持 held，并不把 Ground 执行语义授权给
 
 - [Ground component 边界](../../../../src/components/domains/ground/README.zh.md)
 - [Ground tasking component 边界](../../../../src/components/domains/ground/tasking/README.zh.md)
-- [Ground model placeholder 边界](../../../../src/models/domains/ground/README.zh.md)
+- [Ground model 边界](../../../../src/models/domains/ground/README.zh.md)
 - [Ground 原生平台 schema 测试](../../../../tests/runtime/ground/test_ground_native_platform_schema.py)
 - [Ground 原生静态场景测试](../../../../tests/runtime/ground/test_ground_native_static_scenario.py)
+- [Ground 损伤响应测试](../../../../tests/runtime/ground/test_ground_damage_response.py)
 - [Ground realism-gradient 护栏](../../../../tests/architecture/ground/test_realism_gradient_guardrails.py)
 
 ## 非目标

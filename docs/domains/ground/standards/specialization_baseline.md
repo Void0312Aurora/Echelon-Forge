@@ -6,7 +6,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/domains/ground/standards/specialization_baseline.md`
 Owner: `domains/ground`
-Last verified: `2026-08-08`
+Last verified: `2026-09-22`
 
 ## Scope
 
@@ -44,15 +44,43 @@ The following surfaces are implemented and test-backed:
   `platform_family=dismounted_unit`, and `doctrine_family=land_tactics`.
 - `src/components/domains/ground/` owns Ground component slices. The current
   command/tasking slices are static G0/G1 metadata, not execution dynamics.
-- `src/models/domains/ground/` owns an explicit effects placeholder route that
-  preserves legacy finalize-only behavior. It is not a released Ground effects
-  model.
 - Native and compatibility-shell Ground scenarios use the shared loader and
   tasking bridge; they do not create a private Ground runtime path.
 
-There is no accepted `src/systems/domains/ground/` owner. Absence of that
-directory means Ground runtime-system ownership remains held; it does not grant
-another domain authority over Ground execution semantics.
+## Registered And Reachable, But Not A Capability
+
+`src/models/domains/ground/` owns a structured ground effects route. It selects a
+target only when the ground-owned `GroundPlatformDamageState` and the shared
+hitbox, system-health, and platform-damage surfaces are all present, applies
+warhead mechanism load into the ground state, projects that state onto the shared
+capability fields, and then calls the shared finalize. The component id is resolved
+once per world in the composition path and passed to the route — the effects unit no
+longer resolves a component type to find it — so the route selects and the mechanism
+runs. Measured `2026-09-22`: one structural hit against a spawned ground element
+leaves the shared capability vector at `[0.8167, 1.0000, 0.9010, 0.8680]` rather than
+the placeholder fallback's all-zero destroyed result, and every world of a
+many-world process produces that same consequence. The repair and its measurements
+are recorded in
+[Ground Damage Effects Route Repair](../../../domains/ground/work/active/ground_damage_effects_route_repair/README.md).
+
+A reachable mechanism is still not a capability. This is not a released Ground effects
+model: no Ground task, scenario, or observation claim may rest on it. One expectation
+inside it stays open and unowned — a hit carrying neither a blast nor a mobility scale
+leaves mobility at `1.0`, so one runtime test stays at `xfail(strict=True)` until an
+owner decides whether the projection gains that term or the expectation is withdrawn.
+See the
+[DM-G1 reachability diagnosis](../../../systems/combat/reviews/ground_damage_reachability_20260921.md)
+for the pre-repair measurement that located the cause.
+
+`src/systems/domains/ground/` owns the Ground per-tick systems surface. The
+ground damage response is registered from
+`src/systems/domains/ground/damage_system_ground.h` as
+`builtin.system.ground_damage` at stage 30 of the default composition, and it is
+the only system that directory owns. Ground movement, terrain, sensing, fires,
+logistics, and observation export remain unowned, and admitting a further Ground
+system owner requires a work package that names its declarations first. The
+admission does not grant another domain authority over Ground execution
+semantics.
 
 ## Content And Capability Rules
 
@@ -84,7 +112,11 @@ The current maintained surface does not establish:
   specializations.
 
 These areas require separate standards and acceptance evidence before a task or
-scenario can claim them as maintained capabilities.
+scenario can claim them as maintained capabilities. A reachable mechanism is not that
+evidence: the ground damage mechanism now runs and produces the measured consequence
+above for the hit the runtime suite exercises, and that still does not make effects,
+damage, suppression, or attrition a Ground capability, a scenario claim, or a model the
+domain may rely on.
 
 ## Verification
 
@@ -92,9 +124,10 @@ Current evidence anchors:
 
 - [Ground component boundary](../../../../src/components/domains/ground/README.md)
 - [Ground tasking component boundary](../../../../src/components/domains/ground/tasking/README.md)
-- [Ground model placeholder boundary](../../../../src/models/domains/ground/README.md)
+- [Ground model boundary](../../../../src/models/domains/ground/README.md)
 - [Ground native platform schema tests](../../../../tests/runtime/ground/test_ground_native_platform_schema.py)
 - [Ground native static scenario tests](../../../../tests/runtime/ground/test_ground_native_static_scenario.py)
+- [Ground damage response tests](../../../../tests/runtime/ground/test_ground_damage_response.py)
 - [Ground realism-gradient guardrails](../../../../tests/architecture/ground/test_realism_gradient_guardrails.py)
 
 ## Non-goals
