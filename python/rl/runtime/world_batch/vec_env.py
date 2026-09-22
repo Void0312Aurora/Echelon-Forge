@@ -144,6 +144,13 @@ class WorldBatchVecEnv(
         execution_step_batch_prepare: bool = False,
         policy_observation_torch_bridge: bool = True,
         observation_return_mode: str = "copy",
+        production_rollout_path: str | None = None,
+        production_rollout_key: bytes | None = None,
+        production_rollout_key_path: str | None = None,
+        require_production_admission: bool = False,
+        production_release_id: str | None = None,
+        production_manifest_sha256: str | None = None,
+        production_plan_sha256: str | None = None,
         action_wrapper_kwargs: dict[str, Any] | None = None,
         air_combat_post_launch_assessment_enabled: bool = False,
         air_combat_post_launch_assessment_stages: Sequence[str] | str | None = None,
@@ -232,6 +239,13 @@ class WorldBatchVecEnv(
         self._runtime_adapter = _RuntimeFacadeAdapter(
             self.n_envs,
             use_typed_observation_view=bool(use_typed_observation_view),
+            production_rollout_path=production_rollout_path,
+            production_rollout_key=production_rollout_key,
+            production_rollout_key_path=production_rollout_key_path,
+            require_production_admission=bool(require_production_admission),
+            production_release_id=production_release_id,
+            production_manifest_sha256=production_manifest_sha256,
+            production_plan_sha256=production_plan_sha256,
         )
         self._batch_apply_buffer = BatchWorldApplyBuffer(self.n_envs)
         self._worker_threads = None if worker_threads is None else max(0, int(worker_threads))

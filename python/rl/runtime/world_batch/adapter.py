@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import ef_py
@@ -20,6 +21,8 @@ from python.scenario.runtime.world_setup import extract_batch_world_setup_entity
 from python.rl.runtime.agent_shim import MAINTAINED
 from python.rl.runtime.agent_shim import OBS_DECISION_BELIEF_PACKET
 from python.rl.runtime.agent_shim import OBS_FACADE_OBSERVATION_PACKET
+from python.rl.runtime.rollout_gate import RolloutAdmission
+from python.rl.runtime.rollout_gate import RolloutAdmissionError
 from .command_chain_cache import project_world_leader_intent_maintained_assignment
 from .command_chain_cache import project_world_mission_command_maintained_assignment
 from .command_chain_cache import project_world_pilot_report_maintained_assignment
@@ -290,10 +293,47 @@ class RuntimeFacadeAdapter:
         world_count: int,
         *,
         use_typed_observation_view: bool = False,
+        production_rollout_path: str | None = None,
+        production_rollout_key: bytes | None = None,
+        production_rollout_key_path: str | None = None,
+        require_production_admission: bool = False,
+        production_release_id: str | None = None,
+        production_manifest_sha256: str | None = None,
+        production_plan_sha256: str | None = None,
     ):
         self._world_count = int(world_count)
         if not hasattr(ef_py, "RuntimeFacade"):
             raise RuntimeError("RuntimeFacadeAdapter requires ef_py.RuntimeFacade bindings")
+        self.rollout_admission: RolloutAdmission | None = None
+        if production_rollout_path is not None:
+            verification_key = production_rollout_key
+            if verification_key is None and production_rollout_key_path is not None:
+                try:
+                    verification_key = Path(production_rollout_key_path).read_bytes()
+                except OSError as error:
+                    raise RuntimeError(
+                        "RuntimeFacadeAdapter could not read the production rollout verification key"
+                    ) from error
+            if verification_key is None:
+                raise RuntimeError(
+                    "RuntimeFacadeAdapter production rollout admission requires a verification key"
+                )
+            try:
+                self.rollout_admission = RolloutAdmission.from_slot(
+                    production_rollout_path,
+                    verification_key=verification_key,
+                    expected_release_id=production_release_id,
+                    expected_manifest_sha256=production_manifest_sha256,
+                    expected_plan_sha256=production_plan_sha256,
+                )
+                if require_production_admission:
+                    self.rollout_admission.assert_production_authorized()
+            except RolloutAdmissionError as error:
+                raise RuntimeError(f"production rollout admission rejected: {error}") from error
+        elif require_production_admission:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter production mode requires an admitted RolloutDecision slot"
+            )
         self.facade = ef_py.RuntimeFacade(self._world_count)
         self._capabilities_facade_id: int | None = None
         self._capabilities: RuntimeFacadeAdapterCapabilities | None = None
