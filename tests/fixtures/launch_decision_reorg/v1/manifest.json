@@ -1,0 +1,207 @@
+{
+  "active_hybrid_configs": [
+    {
+      "event_head_enabled": false,
+      "explicit_mode": false,
+      "mode": "legacy_composed_v0",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_shaped_world_batch_probe_v1.json",
+      "sha256": "81df9120f1180b1799397f8af5c5ee7890f1b9ea346e69c348c74ad0b0e6a009"
+    },
+    {
+      "event_head_enabled": true,
+      "explicit_mode": false,
+      "mode": "legacy_composed_v0",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_launch_window_shaped_world_batch_probe_v1.json",
+      "sha256": "be910d230025c32a31d67f1db1689a0b51772daa113f3f2002d1eb0b6ce38872"
+    },
+    {
+      "event_head_enabled": true,
+      "explicit_mode": false,
+      "mode": "legacy_composed_v0",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_shaped_world_batch_probe_v1.json",
+      "sha256": "50cc0d5d08efd498887751c7fb4360e69050108129473746a7e4c5a0b8a042f9"
+    },
+    {
+      "event_head_enabled": false,
+      "explicit_mode": false,
+      "mode": "legacy_composed_v0",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_shaped_world_batch_probe_v1.json",
+      "sha256": "42992484d3877d57976edc68103ddb957dd36cb5b940042a38a5730f3dccf41b"
+    },
+    {
+      "event_head_enabled": true,
+      "explicit_mode": false,
+      "mode": "legacy_composed_v0",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_credit_launch_window_shaped_world_batch_probe_v1.json",
+      "sha256": "4f27959e360d8a41f9ce91c72a3b925aecb90eec997dff6fcc31b6357503e2b8"
+    },
+    {
+      "event_head_enabled": true,
+      "explicit_mode": false,
+      "mode": "legacy_composed_v0",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_credit_launch_window_state_completed_world_batch_probe_v1.json",
+      "sha256": "4437c959a06df067d354271c24006ab2ac1852594a214ec98f78e4d3a9fd2b98"
+    },
+    {
+      "event_head_enabled": true,
+      "explicit_mode": false,
+      "mode": "legacy_composed_v0",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_window_state_completed_world_batch_probe_v1.json",
+      "sha256": "b6da2e3035d96428df5baf7d87a3ff446a81d64a9c07b488d7129c8c231a7cef"
+    },
+    {
+      "event_head_enabled": true,
+      "explicit_mode": false,
+      "mode": "legacy_composed_v0",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_grouped_stopping_state_completed_world_batch_probe_v1.json",
+      "sha256": "3eff7a7317af8826d1eda37db71b8787b313614cd8cd3921d0ffa33d29a20e10"
+    },
+    {
+      "event_head_enabled": false,
+      "explicit_mode": false,
+      "mode": "legacy_composed_v0",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_shaped_world_batch_probe_v1.json",
+      "sha256": "f719869ef7133240306cfb7d811cc218411b954b18dbf823aab9799f33fb4600"
+    },
+    {
+      "event_head_enabled": false,
+      "explicit_mode": false,
+      "mode": "legacy_composed_v0",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_shaped_world_batch_probe_v1.json",
+      "sha256": "18ae51b10935d716c68f5da5dbd920f007b6773a2e8d6723144807a69e4fb79e"
+    },
+    {
+      "event_head_enabled": false,
+      "explicit_mode": false,
+      "mode": "legacy_composed_v0",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json",
+      "sha256": "897ee24510d1d4dc98cb2e983a98ceb89d219565be3fd1d8aa07f7e78fa50b60"
+    },
+    {
+      "event_head_enabled": false,
+      "explicit_mode": false,
+      "mode": "legacy_composed_v0",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_world_batch_probe_v1.json",
+      "sha256": "e64d249ee8409655a2c421aa520fdca3a08e6c4172cece9e7992d6a801b1889d"
+    },
+    {
+      "event_head_enabled": false,
+      "explicit_mode": false,
+      "mode": "legacy_composed_v0",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_world_batch_probe_v1.json",
+      "sha256": "84ca37bececf22b14b58cd6bf8badde94d9c79d1f747db4df50458b5f12a8abd"
+    },
+    {
+      "event_head_enabled": true,
+      "explicit_mode": false,
+      "mode": "legacy_composed_v0",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage2_evasive_fighter_c2_roe_hybrid_temporal_event_window_state_completed_world_batch_probe_v1.json",
+      "sha256": "30ac4c2a309a2ff577e3fa47e0c6d1fc17e2721ed9a1a5d9f5158a00437891a0"
+    }
+  ],
+  "device": "cpu",
+  "dtype": "float32",
+  "episodes_per_seed": 3,
+  "fixture_root": "D:\\workshop\\Research\\Echelon-Forge-fixtures\\launch_decision_reorg\\v1",
+  "generator": "tools/maintenance/generate_launch_decision_fixtures.py",
+  "generator_sha256": "6171d60a1f83ca4b62978da451a5d0be579a16170779285d00d2c3aa3b0e8746",
+  "profiles": {
+    "direct_boundary_v1_strict": {
+      "dtype": "float32",
+      "files": {
+        "observations": "direct_boundary_v1_strict/observations.pt",
+        "optimizer_state": "direct_boundary_v1_strict/optimizer_state.pt",
+        "replay": "direct_boundary_v1_strict/replay.jsonl",
+        "state_dict": "direct_boundary_v1_strict/policy_state.pt"
+      },
+      "observation_shape": [
+        3,
+        8
+      ],
+      "optimizer_parameter_roles": [
+        "hybrid_event_head"
+      ],
+      "replay_rows": 9,
+      "seed": 7001,
+      "sha256": {
+        "observations": "ed36c37a83b9cad417ab155848ca8cc0c7791db46942ec0b85fd5d5a154a21d5",
+        "optimizer_state": "d3353ca00f23976a2f6e34f869dad7f4ab83c80c39fe06e30b0fb130d5c30065",
+        "replay": "f263b977edee56d04142cfedd91d6e1044fc19ab60a287aae4c17117b8959333",
+        "state_dict": "594e3892c708716e4f06c5712e976c1a3e088eb195ca7fe823aaebb4756e34d3"
+      },
+      "state_dict_keys": [
+        "event_parameter_snapshot",
+        "owner_contract"
+      ]
+    },
+    "governed_composed_v1": {
+      "dtype": "float32",
+      "files": {
+        "observations": "governed_composed_v1/observations.pt",
+        "optimizer_state": "governed_composed_v1/optimizer_state.pt",
+        "replay": "governed_composed_v1/replay.jsonl",
+        "state_dict": "governed_composed_v1/policy_state.pt"
+      },
+      "observation_shape": [
+        3,
+        8
+      ],
+      "optimizer_parameter_roles": [
+        "action_net",
+        "hmoe_event_slice",
+        "hybrid_event_head"
+      ],
+      "replay_rows": 9,
+      "seed": 7002,
+      "sha256": {
+        "observations": "ed36c37a83b9cad417ab155848ca8cc0c7791db46942ec0b85fd5d5a154a21d5",
+        "optimizer_state": "2f27bd908c0e60854c07f13ffae20ca4062c9aba65ced5c385db06baca0c0342",
+        "replay": "2f1119f1ee1bce68ac3f6a52241021ad8babe3a294c048c0cca8dc48430f5cfd",
+        "state_dict": "8df24fba64a1f3f963329d5d50bf94e7c6e5eda9a35f20e0b0c48cc9e5950fa5"
+      },
+      "state_dict_keys": [
+        "event_parameter_snapshot",
+        "owner_contract"
+      ]
+    },
+    "legacy_composed_v0": {
+      "dtype": "float32",
+      "files": {
+        "observations": "legacy_composed_v0/observations.pt",
+        "optimizer_state": "legacy_composed_v0/optimizer_state.pt",
+        "replay": "legacy_composed_v0/replay.jsonl",
+        "state_dict": "legacy_composed_v0/policy_state.pt"
+      },
+      "observation_shape": [
+        3,
+        8
+      ],
+      "optimizer_parameter_roles": [
+        "action_net",
+        "hmoe_event_slice",
+        "hybrid_event_head"
+      ],
+      "replay_rows": 9,
+      "seed": 7000,
+      "sha256": {
+        "observations": "ed36c37a83b9cad417ab155848ca8cc0c7791db46942ec0b85fd5d5a154a21d5",
+        "optimizer_state": "2f27bd908c0e60854c07f13ffae20ca4062c9aba65ced5c385db06baca0c0342",
+        "replay": "fe1fbbae3c648ce6ca579c164e98727e300c76853ceca4a43bc0ce38b2665443",
+        "state_dict": "4efd28ba403af9c590038dfaace45903235eb748e07d406c7ba40a6a859170dc"
+      },
+      "state_dict_keys": [
+        "event_parameter_snapshot",
+        "owner_contract"
+      ]
+    }
+  },
+  "python_version": "3.12.4",
+  "schema_version": "launch_decision_fixture_v1",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "source_revision": "c1c0254a",
+  "torch_version": "2.2.0+cpu"
+}
