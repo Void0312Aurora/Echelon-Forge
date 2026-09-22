@@ -1369,6 +1369,11 @@ class DefaultUnitFactory : public IUnitFactory {
         if (def.has_submarine_platform) {
             e.set<SubmarinePlatform>(def.submarine_platform);
         }
+        if (def.type == UnitType::Ship || def.type == UnitType::Submarine) {
+            MissionCommand naval_seed{};
+            e.set<MissionCommand>(naval_seed);
+            set_mission_command_naval_projection(e, naval_seed, naval_seed);
+        }
         if (def.has_embarked_air_ops) {
             e.set<EmbarkedAirOps>(def.embarked_air_ops);
         }
@@ -1581,6 +1586,7 @@ class DefaultUnitFactory : public IUnitFactory {
                     helo.child_of(e);
                     MissionCommand helo_cmd{};
                     helo.set<MissionCommand>(helo_cmd);
+                    set_mission_command_naval_projection(helo, helo_cmd, helo_cmd);
                     if (EmbarkedAirOps *ops = e.get_mut<EmbarkedAirOps>()) {
                         ops->active_helo_entity_id = helo.id();
                         ops->helo_airborne = false;

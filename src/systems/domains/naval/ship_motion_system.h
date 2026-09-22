@@ -8,7 +8,7 @@
 
 #include "components/basic/common.h"
 #include "components/basic/stable_identity.h"
-#include "components/command/mission_command.h"
+#include "components/domains/naval/command/mission_command_naval.h"
 #include "components/command/pilot_action.h"
 #include "components/domains/naval/platform/ship_platform.h"
 #include "core/interfaces/environment_model.h"
@@ -62,14 +62,14 @@ inline double ship_station_target_bearing_deg(double reference_x_m, double refer
 }
 
 inline bool resolve_ship_station_command(flecs::world world, const Transform &own_transform,
-                                         const MissionCommand &mission_cmd,
+                                         const NavalCommandIntent &naval_intent,
                                          double fallback_heading_deg,
                                          double *commanded_heading_deg_out,
                                          double *commanded_speed_mps_out) {
     if (commanded_heading_deg_out == nullptr || commanded_speed_mps_out == nullptr) {
         return false;
     }
-    const auto stationing = mission_command_naval_stationing_directive(mission_cmd);
+    const auto stationing = mission_command_naval_stationing_directive(naval_intent);
     const std::uint64_t reference_entity_id = stationing.reference_entity_id;
     const double station_radius_m = std::max(0.0, stationing.station_radius_m);
     if (reference_entity_id == 0 || station_radius_m <= 0.0) {
@@ -127,7 +127,7 @@ inline void register_ship_motion_system(flecs::world &ecs) {
 
                 for (auto i : it) {
                     const PilotAction *pilot = it.entity(i).get<PilotAction>();
-                    const MissionCommand *mission_cmd = it.entity(i).get<MissionCommand>();
+                    const NavalCommandIntent *naval_intent = it.entity(i).get<NavalCommandIntent>();
 
                     double commanded_heading_deg = transform[i].heading;
                     double commanded_speed_mps = std::hypot(velocity[i].vx, velocity[i].vy);
@@ -147,11 +147,11 @@ inline void register_ship_motion_system(flecs::world &ecs) {
                         commanded_speed_mps =
                             std::clamp(pilot->throttle, 0.0, 1.0) * std::max(0.0, speed_ceiling);
                         command_active = true;
-                    } else if (mission_cmd && bool(mission_cmd->active)) {
+                    } else if (naval_intent && naval_intent->active) {
                         commanded_heading_deg =
-                            Math::normalize_heading_deg(mission_cmd->cmd_heading_deg);
-                        commanded_speed_mps = std::max(0.0, mission_cmd->cmd_speed_mps);
-                        resolve_ship_station_command(it.world(), transform[i], *mission_cmd,
+                            Math::normalize_heading_deg(naval_intent->cmd_heading_deg);
+                        commanded_speed_mps = std::max(0.0, naval_intent->cmd_speed_mps);
+                        resolve_ship_station_command(it.world(), transform[i], *naval_intent,
                                                      commanded_heading_deg, &commanded_heading_deg,
                                                      &commanded_speed_mps);
                         command_active = true;

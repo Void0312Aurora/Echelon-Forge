@@ -83,6 +83,29 @@ mission_command_ground_owner_slice(MissionCommandCompatibilityTransportShell &co
     return command;
 }
 
+[[nodiscard]] inline NavalCommandIntent mission_command_naval_intent(
+    const MissionCommandCompatibilityTransportShell &command) noexcept {
+    return mission_command_naval_intent(mission_command_naval_owner_slice(command),
+                                        mission_command_shared_core(command));
+}
+
+[[nodiscard]] inline NavalCommandIntent mission_command_naval_intent(
+    const NavalCommandIntent &intent) noexcept {
+    return intent;
+}
+
+// Compatibility-shell write seam for the naval command projection. Callers hold
+// a flat `MissionCommand`; this splits it into the maintained owner slices and
+// publishes the naval-owned runtime component, so no caller re-implements the
+// projection or reaches into the owner slices by hand.
+template <typename EntityT>
+inline void set_mission_command_naval_projection(
+    EntityT entity, const MissionCommandCompatibilityTransportShell &command) {
+    set_mission_command_naval_projection(
+        entity, static_cast<const MissionCommandSharedCoreOwnerSlice &>(command),
+        mission_command_naval_owner_slice(command));
+}
+
 [[nodiscard]] inline MissionCommandAir::RecoveryDirective mission_command_air_recovery_directive(
     const MissionCommandCompatibilityTransportShell &command) noexcept {
     return mission_command_air_recovery_directive(mission_command_air_owner_slice(command));
