@@ -1,7 +1,6 @@
 # Launch-Decision Architecture Reorganization
 
-Status: 2026-09-22 held proposal; blocked pending an executable-owner and
-compatibility-contract decision. No implementation package is authorized.
+Status: 2026-09-23 finalized implementation plan; active work authorized.
 
 Language:
 
@@ -11,8 +10,8 @@ Language:
 Inputs:
 
 - [Policy execution architecture baseline](../../../standards/policy_execution_architecture.md)
-- [HMoE computation-gap issue](../hmoe_hierarchical_computation_gap/README.md)
-- [Launch-window label-imbalance issue](../launch_window_label_imbalance/README.md)
+- [HMoE computation-gap issue](../../issues/hmoe_hierarchical_computation_gap/README.md)
+- [Launch-window label-imbalance issue](../../issues/launch_window_label_imbalance/README.md)
 - [Subproject creation standard](../../../../engineering/automation/rules/subproject_creation_standard.md)
 - [Bilingual documentation policy](../../../../engineering/documentation/standards/bilingual_documentation_policy.md)
 - [Worktree and path policy](../../../../engineering/workspace/worktree_and_path_policy.md)
@@ -23,29 +22,31 @@ Inputs:
   [the task-cluster plan](launch_decision_reorg_task_clusters_20260922.md)
 
 Document kind: plan
-Lifecycle: draft
-Canonical: docs/learning/work/issues/launch_decision_reorg/README.md
+Lifecycle: active
+Canonical: docs/learning/work/active/launch_decision_reorg/README.md
 Owner: learning/policy-architecture
-Last verified: 2026-09-22
-Content status: revised after blocked independent review; still held.
+Last verified: 2026-09-23
+Content status: owner-finalized after the blocked review findings were resolved
+in the plan. No further independent review gate is required for this stream.
 
-Documentation budget: three files are justified for this draft—this canonical
-README, the required finite task-cluster document, and a short Chinese
-navigation companion permitted for an existing work README. No dispatch queue,
-acceptance packet, or current-status sidecar is created until an active package
-is authorized.
+Documentation budget: three files are justified for this active package—this
+canonical README, the finite task-cluster document, and a short Chinese
+navigation companion permitted for an existing work README. No extra dispatch
+queue, review packet, or current-status sidecar is created unless a later
+implementation fact makes one necessary.
 
 ## Purpose
 
-This issue defines a bounded reorganization of the model-side launch-decision
+This active package defines a bounded reorganization of the model-side launch-decision
 surface. It is intended to make executable event ownership, auxiliary evidence,
 policy-visible support, runtime A5 legality, optimizer ownership, and migration
 behavior inspectable from one contract.
 
-This is an issue/roadmap under work/issues/, not an active work package. It
-does not authorize moving code, changing model parameters, changing rollout
-semantics, changing runtime legality, changing active configurations, rewriting
-checkpoints, or publishing a learned-firing acceptance result.
+The package authorizes the implementation sequence below. It does not
+authorize changing model parameters, rollout semantics, runtime legality,
+active configurations, or checkpoint contents outside the named compatibility
+and migration surfaces. A learned-firing result remains valid only when its
+declared mode and owner trace satisfy the acceptance gate.
 
 The plan is based on revision cfb9924e (the branch's origin/main baseline).
 The governance reference worktree
@@ -77,12 +78,13 @@ hybrid_event_use_stopping_head and hybrid_event_use_window_classifier_head.
 This is a compatibility baseline, not evidence that other configurations have
 the same owner.
 
-### Blocked review decision
+### Prior review findings and final owner decision
 
 The packet reviewed commit 67db9558, the previous revision of this issue.
 
-The independent review of the previous revision returned blocked. The blocking
-findings were:
+The previous independent review returned blocked. Its findings are retained as
+historical evidence, and the owner decisions below close the planning questions
+without creating another review gate:
 
 1. the proposed sole hybrid_event_head owner did not match the current
    composed event path or headless configurations;
@@ -94,8 +96,44 @@ findings were:
 6. the new substantive Chinese companion did not match the Tier B work-surface
    rule.
 
-This revision addresses those findings at the plan level only. It does not
-claim that the proposed contract has been implemented.
+The implementation branch must now follow these decisions. The plan does not
+claim that the contract has already been implemented.
+
+### Final architecture decision
+
+The long-term default is a governed composition owner. The owner is the typed
+event-delta composition contract, not a particular neural module. The strict
+direct-boundary profile remains an intentionally narrower acceptance and causal
+attribution lane.
+
+The profiles are fixed as follows:
+
+- `legacy_composed_v0` preserves existing checkpoint/config behavior for load
+  and comparison. When an old configuration enables both adapters, the legacy
+  window-classifier-before-stopping precedence is preserved and recorded as
+  `legacy_window_precedence` in the trace. New configurations must reject that
+  conflict instead of inheriting the precedence silently.
+- `direct_boundary_v1_strict` permits no executable adapter contribution. The
+  base action pair is recorded for comparison, but the HMoE event slice is
+  excluded from the direct learned delta and is detached in the dedicated
+  direct-boundary update. Only `hybrid_event_head` parameters may receive that
+  update. `action_net`, the policy trunk, and HMoE event parameters are frozen
+  for the dedicated strict update. A run that trains those shared parameters
+  must use a coupled profile and is not eligible for strict learned-firing
+  acceptance.
+- `governed_composed_v1` is the long-term default. Base action, HMoE event
+  residual, and `hybrid_event_head` may contribute only when listed in the
+  resolved contract. Ordinary PPO and event-policy-margin updates may write
+  only the parameter roles declared by that contract and must emit the same
+  owner trace.
+- `auxiliary_only_v1` never changes sampled event logits.
+- `adapter_coupled_v1` admits exactly one named adapter with an explicit
+  coefficient, detach policy, optimizer ownership, and acceptance probe. Window
+  and stopping adapters may not compete in a new configuration.
+
+This makes the strict profile a safe experiment rather than the permanent
+architecture, while keeping the long-term composition surface extensible and
+fail-closed.
 
 ## Scope
 
@@ -149,16 +187,23 @@ The contract must provide at least these modes:
 
 | Mode | Purpose | Event contributors | Acceptance meaning |
 | --- | --- | --- | --- |
-| legacy_composed_v0 | Load and compare existing checkpoints/configurations. | Existing base action pair + HMoE event slice + whichever declared head/adapter is enabled. | Compatibility evidence only; not automatically a learned-firing claim. |
-| direct_boundary_v1 | Target direct-boundary behavior. | Base contribution is recorded; HMoE event slice is either excluded/frozen by contract, or explicitly retained as a named compatibility adapter; trainable direct event delta is hybrid_event_head. | Learned-firing evidence is valid only when the contract and optimizer trace show the declared owner. |
+| legacy_composed_v0 | Load and compare existing checkpoints/configurations. | Existing base action pair + HMoE event slice + the legacy declared head/adapter. If both legacy adapters are enabled, window-classifier precedence is preserved only for compatibility and recorded in the trace. | Compatibility evidence only; never automatically a learned-firing claim. |
+| direct_boundary_v1_strict | Controlled direct-boundary training and learned-firing acceptance. | Base pair is recorded; HMoE event slice and all adapters are excluded from the direct delta. Only hybrid_event_head is trainable in the dedicated direct-boundary update; shared action/trunk/HMoE parameters are detached and frozen for that update. | Learned-firing evidence is valid only when the strict owner and parameter trace are present. Shared-parameter training requires another profile. |
+| governed_composed_v1 | Long-term default composition profile. | Any base, HMoE, or event-head contributor explicitly admitted by the resolved contract; every trainable role is listed in the owner trace. | Learned behavior is attributable to the resolved composition, not to an assumed module name. |
 | auxiliary_only_v1 | Train evidence without changing sampled event logits. | Credit, stopping, or window evidence is side-objective only. | Signal/capacity evidence; never learned-firing acceptance. |
 | adapter_coupled_v1 | Future explicitly admitted coupling. | Exactly one adapter contribution, with coefficient, detach, optimizer, and acceptance probes declared. | Requires a separate contract review; stopping and window adapters cannot silently compete. |
 
-Headless configurations must resolve explicitly to legacy_composed_v0 or to
-another named mode. They may not inherit a hidden direct-head owner from a
-zero/default learning-rate flag. C1 must record the seven headless and seven
-enabled baseline configurations in a manifest and state which modes are
-eligible for behavioral acceptance.
+Headless configurations must resolve explicitly to legacy_composed_v0,
+governed_composed_v1, or another named mode. They may not inherit a hidden
+direct-head owner from a zero/default learning-rate flag. C1 must record the
+seven headless and seven enabled baseline configurations in a manifest and
+state which modes are eligible for behavioral acceptance.
+
+The owner contract also fixes the training scopes. A strict direct-boundary
+update may write only hybrid_event_head.*; an ordinary PPO update that writes
+shared action/trunk/HMoE parameters must resolve governed_composed_v1 (or an
+explicit future coupled profile). event-policy-margin is not allowed to
+silently widen the strict write set.
 
 ## Composer, mask, and distribution boundary
 
@@ -205,12 +250,12 @@ The trace must include:
 
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
-| P0 Boundary | Freeze owner vocabulary, headless inventory, source revision, and no-goals. | This held issue exists. | Baseline manifest and owner decision record are complete. | held |
-| P1 Evidence | Establish build preflight, fixtures, contributor traces, and current test coverage. | P0 complete. | All required artifacts or explicit blocked residuals are recorded. | blocked |
-| P2 Contract | Implement only typed owner/mode validation and serialization tests. | P1 accepted by owner. | Conflicts reject; legacy modes round-trip without changed outputs. | not authorized |
-| P3 Forward path | Introduce Composer boundary and preserve compatibility mode. | P2 accepted. | Owner trace, unmasked pair, mask handoff, and state-dict behavior are tested. | not authorized |
-| P4 Training/config integration | Align objectives, sidecars, replay, optimizer groups, and config/checkpoint migration. | P3 accepted. | All declared write sets and migration gates pass. | not authorized |
-| P5 Acceptance/closure | Run focused tests, runtime probes, target-scoped worktree checks, independent review, and closure documentation. | P4 mergeable or explicitly blocked. | Owner verdict is Mergeable, Blocked, or Closed with residual owners. | not authorized |
+| P0 Boundary | Freeze owner vocabulary, headless inventory, source revision, and no-goals. | The final owner decision in this README. | Baseline manifest and owner decision record are complete. | accepted |
+| P1 Evidence | Establish build preflight, deterministic fixtures, contributor traces, and current test coverage. | P0 accepted. | Required artifacts or explicit infrastructure residuals are recorded. | active |
+| P2 Contract | Implement typed owner/mode validation and serialization tests. | P1 complete. | Conflicts reject; legacy modes round-trip without changed outputs. | planned |
+| P3 Forward path | Introduce Composer boundary and preserve compatibility mode. | P2 accepted. | Owner trace, unmasked pair, mask handoff, and state-dict behavior are tested. | planned |
+| P4 Training/config integration | Align objectives, sidecars, replay, optimizer groups, and config/checkpoint migration. | P3 accepted. | All declared write sets and migration gates pass. | planned |
+| P5 Acceptance/closure | Run focused tests, runtime probes, target-scoped worktree checks, and owner closure documentation. | P4 mergeable or explicitly blocked. | Main-thread owner verdict is Mergeable, Blocked, or Closed with residual owners. | planned |
 
 ## Task clusters
 
@@ -250,11 +295,33 @@ be completed, the test lane is Blocked, not green-by-omission.
 
 ### Compatibility fixtures and objective gates
 
+Fixture identity is fixed rather than conceptual:
+
+- The tracked manifest is
+  `tests/fixtures/launch_decision_reorg/v1/manifest.json`.
+- The deterministic generator is
+  `tools/maintenance/generate_launch_decision_fixtures.py`.
+- Generated artifacts live outside the checkout under
+  `D:\workshop\Research\Echelon-Forge-fixtures\launch_decision_reorg\v1` by
+  default. `EF_LAUNCH_DECISION_FIXTURE_ROOT` may override that root, but the
+  manifest must record the resolved root-relative paths.
+- The manifest is UTF-8 JSON and records the source commit, generator SHA-256,
+  Python/Torch versions, profile/config IDs, seeds, episode counts, tensor
+  dtypes, and a SHA-256 for every artifact. State dictionaries and optimizer
+  state use `torch.save` `.pt` files; fixed observations use a separate
+  `observations.pt`; replay rows use UTF-8 JSONL; no opaque unversioned binary
+  is accepted.
+- If a representative checkpoint or replay artifact does not exist, the
+  generator creates it from the fixed tiny policy/config specification and
+  seeds in the manifest. It must refuse to overwrite a different manifest and
+  must emit the same bytes for the same source/generator identity.
+
 C0 must freeze a manifest containing:
 
 - all active air_combat_hybrid_v1 configurations, including the baseline seven
   headless and seven event-head-enabled entries;
-- one representative checkpoint/state-dict for each available owner mode;
+- one representative checkpoint/state-dict for each owner mode that actually
+  exists;
 - optimizer state and parameter-group metadata for each representative mode;
 - window-classifier replay state, including storage type, capacity, keys, and
   positive/negative rows where available;
@@ -290,10 +357,19 @@ python -m pytest tests/runtime/air_combat/test_fire_action_release_gate.py
 python -m pytest tests/runtime/air_combat/test_diagnostics_process_probe_summary.py
 ~~~
 
-New tests must cover owner-mode construction, conflict rejection, contributor
-traces, HMoE event-slice isolation/compatibility, mask handoff, gradients,
-optimizer ownership, legacy config translation, checkpoint/optimizer/replay
-round trips, and deterministic/stochastic distribution invariants.
+The named new tests are:
+
+- `tests/policy/test_launch_decision_model_contracts.py` for owner-mode
+  construction, conflict rejection, headless resolution, and serialization;
+- `tests/policy/test_launch_decision_composer.py` for contributor traces, HMoE
+  strict isolation, unmasked output, mask handoff, and distribution invariants;
+- `tests/policy/test_launch_decision_optimizer_ownership.py` for gradient and
+  dedicated-update write-set checks;
+- `tests/training/test_launch_decision_migration.py` for legacy config,
+  checkpoint, optimizer, and replay round trips.
+
+Existing focused tests remain required. No open-ended “related tests” write set
+is permitted.
 
 The closure lane also runs git diff --check, the path-length ratchet, and the
 architecture governance tests. Worktree acceptance is target-scoped:
@@ -311,8 +387,8 @@ package.
 
 ## Acceptance gate
 
-This issue may be promoted to an implementation package only when an owner
-review accepts all of the following:
+This active package is accepted incrementally by the main-thread owner when
+all of the following are true:
 
 - the event-delta composition contract, not a convenient module name, is the
   declared unique learned executable owner;
@@ -328,8 +404,9 @@ review accepts all of the following:
 - Tier B documentation remains English-canonical with only a navigation
   companion, unless the owner explicitly promotes and registers a bilingual
   pair;
-- an independent reviewer returns pass or an explicitly accepted partial with
-  no unresolved P1.
+- every residual has an owner, replacement condition, and next step. No
+  independent reviewer is required for this stream; focused tests, fixture
+  hashes, and the owner trace are the acceptance evidence.
 
 Acceptance still reports requested, accepted, released, authorized-release,
 rejection, and repeat-suppression counters separately. Kill, damage, Pk, and
@@ -337,18 +414,19 @@ effects results are not substitutes.
 
 ## Residuals and next steps
 
-The following residuals remain intentionally open:
+The following residuals remain intentionally open until their phase closes:
 
 | Residual | Owner/gate | Replacement condition |
 | --- | --- | --- |
-| Whether direct-boundary mode excludes or freezes HMoE event dimensions without state-dict drift | C0/C2 | A measured fixture comparison and explicit migration decision |
-| Which active configurations qualify for learned-firing acceptance | C0/C4 | Mode manifest and owner-approved eligibility table |
-| Whether old optimizer/replay states can be restored | C4 | Exact round-trip or named migration error |
+| Strict direct-boundary freeze and write set | P1/P2 | Fixture comparison and explicit optimizer trace |
+| Which active configurations qualify for learned-firing acceptance | P1/P4 | Mode manifest and eligibility table |
+| Whether old optimizer/replay states can be restored | P4 | Exact round-trip or named migration error |
 | Local ef_py artifact availability | P1 | Build preflight succeeds with external CMO_BUILD_DIR |
-| Independent review availability | C5 | Read-only reviewer returns a packet against the revised commit |
 
-Until these are resolved, the issue remains held and no implementation package
-should be opened.
+These are implementation residuals, not reasons to reopen the plan or request
+another review. A phase may be marked blocked when its declared infrastructure
+or migration condition is unavailable; the next phase must not silently bypass
+that block.
 
 ## Archive
 
