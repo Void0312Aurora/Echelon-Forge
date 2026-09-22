@@ -151,6 +151,11 @@ class WorldBatchVecEnv(
         production_release_id: str | None = None,
         production_manifest_sha256: str | None = None,
         production_plan_sha256: str | None = None,
+        production_release_manifest_path: str | None = None,
+        production_run_receipt_path: str | None = None,
+        production_package_digest: str | None = None,
+        production_wheel_digest: str | None = None,
+        require_production_evidence_binding: bool = False,
         action_wrapper_kwargs: dict[str, Any] | None = None,
         air_combat_post_launch_assessment_enabled: bool = False,
         air_combat_post_launch_assessment_stages: Sequence[str] | str | None = None,
@@ -246,6 +251,11 @@ class WorldBatchVecEnv(
             production_release_id=production_release_id,
             production_manifest_sha256=production_manifest_sha256,
             production_plan_sha256=production_plan_sha256,
+            production_release_manifest_path=production_release_manifest_path,
+            production_run_receipt_path=production_run_receipt_path,
+            production_package_digest=production_package_digest,
+            production_wheel_digest=production_wheel_digest,
+            require_production_evidence_binding=bool(require_production_evidence_binding),
         )
         self._batch_apply_buffer = BatchWorldApplyBuffer(self.n_envs)
         self._worker_threads = None if worker_threads is None else max(0, int(worker_threads))

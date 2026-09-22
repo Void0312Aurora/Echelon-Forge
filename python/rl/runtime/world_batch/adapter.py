@@ -23,6 +23,9 @@ from python.rl.runtime.agent_shim import OBS_DECISION_BELIEF_PACKET
 from python.rl.runtime.agent_shim import OBS_FACADE_OBSERVATION_PACKET
 from python.rl.runtime.rollout_gate import RolloutAdmission
 from python.rl.runtime.rollout_gate import RolloutAdmissionError
+from python.rl.runtime.rollout_evidence import RolloutEvidenceError
+from python.rl.runtime.rollout_evidence import assert_rollout_evidence_binding
+from python.rl.runtime.rollout_evidence import load_rollout_evidence
 from .command_chain_cache import project_world_leader_intent_maintained_assignment
 from .command_chain_cache import project_world_mission_command_maintained_assignment
 from .command_chain_cache import project_world_pilot_report_maintained_assignment
@@ -325,6 +328,11 @@ class RuntimeFacadeAdapter:
         production_release_id: str | None = None,
         production_manifest_sha256: str | None = None,
         production_plan_sha256: str | None = None,
+        production_release_manifest_path: str | None = None,
+        production_run_receipt_path: str | None = None,
+        production_package_digest: str | None = None,
+        production_wheel_digest: str | None = None,
+        require_production_evidence_binding: bool = False,
     ):
         self._world_count = int(world_count)
         if not hasattr(ef_py, "RuntimeFacade"):
@@ -336,6 +344,12 @@ class RuntimeFacadeAdapter:
         self._production_rollout_expected_manifest_sha256 = production_manifest_sha256
         self._production_rollout_expected_plan_sha256 = production_plan_sha256
         self._require_production_admission = bool(require_production_admission)
+        self._production_release_manifest_path = production_release_manifest_path
+        self._production_run_receipt_path = production_run_receipt_path
+        self._production_package_digest = production_package_digest
+        self._production_wheel_digest = production_wheel_digest
+        self._require_production_evidence_binding = bool(require_production_evidence_binding)
+        self.rollout_evidence_binding = None
         if production_rollout_path is not None:
             verification_key = production_rollout_key
             if verification_key is None and production_rollout_key_path is not None:
@@ -360,11 +374,18 @@ class RuntimeFacadeAdapter:
                 )
                 if require_production_admission:
                     self.rollout_admission.assert_production_authorized()
+                self._refresh_rollout_evidence_binding()
             except RolloutAdmissionError as error:
                 raise RuntimeError(f"production rollout admission rejected: {error}") from error
         elif require_production_admission:
             raise RuntimeError(
                 "RuntimeFacadeAdapter production mode requires an admitted RolloutDecision slot"
+            )
+        elif self._require_production_evidence_binding or (
+            production_release_manifest_path is not None or production_run_receipt_path is not None
+        ):
+            raise RuntimeError(
+                "RuntimeFacadeAdapter production evidence binding requires an admitted RolloutDecision slot"
             )
         self.facade = ef_py.RuntimeFacade(self._world_count)
         self._capabilities_facade_id: int | None = None
@@ -409,7 +430,36 @@ class RuntimeFacadeAdapter:
         except RolloutAdmissionError as error:
             raise RuntimeError(f"production rollout admission rejected: {error}") from error
         self.rollout_admission = admission
+        self._refresh_rollout_evidence_binding()
         return admission
+
+    def _refresh_rollout_evidence_binding(self) -> None:
+        paths_supplied = (
+            self._production_release_manifest_path is not None
+            or self._production_run_receipt_path is not None
+        )
+        if not self._require_production_evidence_binding and not paths_supplied:
+            return
+        if self._production_release_manifest_path is None or self._production_run_receipt_path is None:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter production evidence binding requires release manifest and RunReceipt paths"
+            )
+        if self.rollout_admission is None:
+            raise RuntimeError("RuntimeFacadeAdapter production evidence binding requires rollout admission")
+        try:
+            binding = load_rollout_evidence(
+                self._production_release_manifest_path,
+                self._production_run_receipt_path,
+            )
+            assert_rollout_evidence_binding(
+                self.rollout_admission,
+                binding,
+                expected_package_digest=self._production_package_digest,
+                expected_wheel_digest=self._production_wheel_digest,
+            )
+        except RolloutEvidenceError as error:
+            raise RuntimeError(f"production rollout evidence binding rejected: {error}") from error
+        self.rollout_evidence_binding = binding
 
     def _require_current_production_admission(self) -> None:
         if self._require_production_admission:
