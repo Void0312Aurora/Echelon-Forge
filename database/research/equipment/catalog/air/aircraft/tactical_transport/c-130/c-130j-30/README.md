@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/tactical_transport/c-130/c-130j-30/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-18`
+Last verified: `2026-09-22`
 Equipment ID: `eq-fr-air-c130j30`
-Content status: model-level draft with parameter coverage from two sources; stretch-specific figures come from the United States Air Force fact sheet, which publishes the C-130J-30 column separately.
+Content status: parameter table complete for the French C-130J-30; U.S. stretch-column values and French operator-specific technical values remain separately attributed.
 
 ## Identity
 
@@ -45,12 +45,20 @@ Content status: model-level draft with parameter coverage from two sources; stre
 | Maximum load | 8 pallets, 97 litters, 24 CDS bundles, 128 combat troops or 92 paratroopers, or a combination up to compartment capacity or maximum allowable weight | `p5-us-air-c130j-usaf` | A |
 | Crew | Three (two pilots and a loadmaster) | `p5-us-air-c130j-usaf` | A |
 | Aeromedical role | Basic crew of five added (two flight nurses, three medical technicians) | `p5-us-air-c130j-usaf` | A |
+| French endurance | Approximately 8 hours | `p5-fr-air-c130j30` | A |
+| French operating empty mass | 39.8 t | `p5-fr-air-c130j30` | A |
+| French maximum cruise speed | 355 kt | `p5-fr-air-c130j30` | A |
+| French cruise ceiling | FL360 (approximately 36,000 ft) | `p5-fr-air-c130j30` | A |
+| French offered load | 18.7 t maximum; 15 t average at six hours | `p5-fr-air-c130j30` | A (conditioned) |
+| French load configurations | Up to 128 passengers, 92 paratroopers, 97 stretchers or 7+1 pallets | `p5-fr-air-c130j30` | A |
 
 ## Configuration Boundary
 
 The stretch is not cosmetic: the 15 ft fuselage extension increases length to 112 ft 9 in against 97 ft 9 in for the standard C-130J, raises the cargo compartment from 41 ft to 56 ft, and changes the ceiling, both payload figures and both range figures. None of these are shared with the `eq-us-air-c130j` leaf.
 
 The main Air Force fact sheet publishes the maximum take-off weight for the C-130J and C-130E/H columns only. It was therefore left unrecorded in an earlier revision of this leaf. The Air National Guard fact sheet held as `p5-us-air-c130j30-ang-factsheet`, from a wing that flies the J-30, states the figure directly for the J-30 column and states that the 164,000 lb limit is a structural limit identical to the standard C-130J. The value is now recorded and the row cites that artifact. The French source held for this leaf states approximately 8 hours endurance, which is a French operational figure and is not merged with the US performance table.
+
+The French Ministry technical page now supplies a direct C-130J-30 operating block: French empty mass, cruise profile, endurance, offered-load conditions, crew and load configurations. These rows describe the French aircraft and are not used to overwrite the separate U.S. fact-sheet rows whose definitions differ.
 
 ## Source References
 
