@@ -21,9 +21,9 @@ check in [check_equipment_tree.py](check_equipment_tree.py). See
 | --- | --- |
 | Branch | `codex/database-scaffold` |
 | Base | `d1ebb5d3` |
-| Off-base commits | 43 |
+| Off-base commits | 44 |
 | Behind `origin/main` | 218 commits |
-| Ahead of `origin/main` | 43 commits |
+| Ahead of `origin/main` | 44 commits |
 | `origin/main` files under `database/` | 0 |
 | Tracked files under `database/` | 607 |
 | Merge dry-run conflicts (`HEAD` vs `origin/main`) | 0 |
