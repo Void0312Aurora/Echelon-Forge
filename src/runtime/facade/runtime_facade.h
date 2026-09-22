@@ -13,7 +13,21 @@ struct RuntimeFacadeIdentity;
 struct WorldBatchVisualBindingCompatibilityScene;
 struct RecentEngagementEvents;
 
-class RuntimeFacade {
+#if defined(_WIN32)
+#if defined(EF_FACADE_BACKEND_BUILD)
+#define EF_RUNTIME_FACADE_API __declspec(dllexport)
+#elif defined(EF_FACADE_BACKEND_CONSUMER)
+#define EF_RUNTIME_FACADE_API __declspec(dllimport)
+#else
+#define EF_RUNTIME_FACADE_API
+#endif
+#elif defined(__GNUC__) || defined(__clang__)
+#define EF_RUNTIME_FACADE_API __attribute__((visibility("default")))
+#else
+#define EF_RUNTIME_FACADE_API
+#endif
+
+class EF_RUNTIME_FACADE_API RuntimeFacade {
   public:
     explicit RuntimeFacade(std::size_t world_count = 0);
     explicit RuntimeFacade(const RuntimeBatchConfig &config);

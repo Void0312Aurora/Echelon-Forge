@@ -255,12 +255,21 @@ jobs:
           facade = ef_py.RuntimeFacade(ef_py.RuntimeBatchConfig())
           assert facade.world_count() == 0
 
-          env = WorldBatchVecEnv(scenario_path=str(scenario), n_envs=1, step_info_mode="off")
+          env = WorldBatchVecEnv(
+              scenario_path=str(scenario),
+              n_envs=1,
+              include_visual=True,
+              include_proprio=False,
+              visual_downsample=2,
+              step_info_mode="off",
+          )
           observation = env.reset()
           assert observation is not None
+          assert observation["visual"].shape == (1, 24, 48, 10)
           step_result = env.step([env.action_space.sample()])
           assert step_result is not None
           assert len(step_result) == 4
+          assert step_result[0]["visual"].shape == (1, 24, 48, 10)
           env.close()
           PY
           )

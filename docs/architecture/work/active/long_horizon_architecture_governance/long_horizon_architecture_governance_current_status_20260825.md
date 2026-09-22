@@ -1,6 +1,6 @@
 # Long-Horizon Architecture Governance Current Status
 
-Status: `2026-09-19` P0 authority and baseline accepted against `origin/main`
+Status: `2026-09-22` P0 authority and baseline accepted against `origin/main`
 at `82d5b6e893c442950e334eb3e9ec92f8174eeb35` and plan commit
 `c668bae91900df4b5488099384c95d9820209de2`. P1 target-architecture decisions
 are accepted after independent initial, repair and final-confirmation reviews.
@@ -14,9 +14,10 @@ specified candidate verification are accepted after independent review.
 P5-A now has an independently reviewed closed execution-plan contract accepted
 for the current in-process default CPU-exact supported topology. P5-B now has
 an independently reviewed durable ArtifactLedger/RunReceipt qualification
-accepted for the same bounded local single-process topology. P2-A/P2-B, full
-maintained-facade parity, production publication, P5-C/P5-D and P6-P8 remain
-open. No production
+accepted for the same bounded local single-process topology. P5-C facade-only
+package qualification is accepted for the tested Windows/MSVC CPython 3.12
+row. P2-A/P2-B, full maintained-facade parity, production publication, P5-D
+and P6-P8 remain open. No production
 truth publication, runtime caller migration or production cutover is accepted.
 
 Parent subproject: [Long-Horizon Architecture Governance](README.md)
@@ -146,8 +147,9 @@ They must be remeasured before an implementation or acceptance claim.
   plan before extracting its compatibility manifest. Evidence and residuals
   are recorded in [P5-A resolved execution-plan evidence]
   (p5a_resolved_execution_plan_20260919.md). P5-B durable ledger/RunReceipt is
-  accepted for the bounded local single-process topology; P5-C facade
-  packaging, P5-D cutover, and P6-P8 remain open.
+  accepted for the bounded local single-process topology; P5-C facade-only
+  packaging is accepted for the tested Windows/MSVC row, while P5-D cutover
+  and P6-P8 remain open.
 
 ## Observed Baseline
 
@@ -178,11 +180,11 @@ They must be remeasured before an implementation or acceptance claim.
 | Immutable-kernel/host decision | accepted; P4-C candidate-scope task accepted | P1-A freezes one-CAS bootstrap/replacement/checkpoint recovery, terminal shutdown, final-state fence, active-fault drain, all generations and exact P0 caller crosswalk; P4-A/P4-B implement the bounded dark/shadow host and transfer candidates; [P4-C seam packet](p4c_internal_candidate_seam_20260915.md) adds the build-tree-only kernel/world-batch adapter and candidate verification | full maintained-facade parity, production truth and P5 qualification |
 | Host replacement | dark/shadow candidate implemented; P4-B independently passed; P4-C candidate task accepted | `RuntimeHostCandidate`, host replacement integration test, P4-B twelve-owner review and evidence routes, P4-C native/Python candidate, stress, parity and rollback gates | full maintained-facade parity and P5 production qualification |
 | Contract consolidation decision | accepted | P1-B classifies artifacts and adds singular plan/release/rollout/checkpoint-fragment/aggregate/receipt authorities, canonical envelope and ledger journal | P4 candidate evidence and P5-A/P5-B production closure |
-| Executable plan authority | accepted for current in-process default CPU-exact topology | P5-A closed plan fixture/schema/generated header, Python/Cordis byte parity, native owner-join admission and negative tests; [P5-A evidence](p5a_resolved_execution_plan_20260919.md) | P5-C facade-only package, P5-D production canary and broader topology |
-| Production run evidence | accepted for current local single-process topology | [P5-B ledger qualification](evidence/p5b_production_ledger_qualification_20260919.md), [independent P5-B review](../../../reviews/long_horizon_architecture_governance_p5b_review_20260922.md), native/Python qualification and restart/recovery gates | P5-C release/facade package, P5-D caller cutover and ledger-only rollback, P8 provider/topology expansion |
+| Executable plan authority | accepted for current in-process default CPU-exact topology | P5-A closed plan fixture/schema/generated header, Python/Cordis byte parity, native owner-join admission and negative tests; [P5-A evidence](p5a_resolved_execution_plan_20260919.md) | P5-D production canary and broader topology |
+| Production run evidence | accepted for current local single-process topology | [P5-B ledger qualification](evidence/p5b_production_ledger_qualification_20260919.md), [independent P5-B review](../../../reviews/long_horizon_architecture_governance_p5b_review_20260922.md), native/Python qualification and restart/recovery gates | P5-D caller cutover and ledger-only rollback, P8 provider/topology expansion |
 | Rollout/operations decision | accepted | P1-C defines one production-canary decision, support rows, checkpoint-recovery/package-restart rollback, SLO/runbook and security gates | P2 measurements, P4 candidate evidence and P5 production qualification |
-| Public/runtime foundation | accepted P3-A/P3-B/P3-C/P4-A; P4-B passed; P4-C candidate task accepted; P5-B accepted for bounded topology | `ef_runtime_contracts`, authority/ledger schemas, exact vectors, qualified durable ledger/recovery, `RuntimeHostCandidate`, twelve-row P4-B state-transfer candidate, `RuntimeKernelCandidate`/world-batch adapter, fresh Windows/MSVC native checks and independent reviews | P5-C facade-only package/P5-D cutover and full maintained caller parity |
-| Physical facade boundary | planned | current facade direction and source guards | CMake/package topology and diagnostics migration design |
+| Public/runtime foundation | accepted P3-A/P3-B/P3-C/P4-A; P4-B passed; P4-C candidate task accepted; P5-B accepted for bounded topology; P5-C accepted for tested Windows/MSVC row | `ef_runtime_contracts`, authority/ledger schemas, exact vectors, qualified durable ledger/recovery, `RuntimeHostCandidate`, twelve-row P4-B state-transfer candidate, `RuntimeKernelCandidate`/world-batch adapter, facade-only production wheel, fresh Windows/MSVC native checks and independent reviews | P5-D cutover and full maintained caller parity |
+| Physical facade boundary | accepted for tested Windows/MSVC local CPU-canonical topology | private shared facade backend with explicit RuntimeFacade exports, facade-only production wheel, diagnostics opt-in build/import, fresh wheel/link-map evidence and [P5-C independent review](../../../reviews/long_horizon_architecture_governance_p5c_review_20260922.md) | P5-D caller cutover, broader platform/topology matrix, and P8 final acceptance |
 | Control lifecycle | planned | completed ratchet examples identified | accepted lifecycle vocabulary, owner model, and renewal/retirement process |
 | Test/CI architecture | planned | suite and timing baseline | failure-audience model and replacement evidence for retired scans |
 | Evidence/document lifecycle | baseline conflict | policy, gate, suite, and current archive inspected | reconcile retention authority, gate behavior, suite placement, retrieval, and migration |

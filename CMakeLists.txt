@@ -606,31 +606,31 @@ target_link_libraries(ef_facade PUBLIC
     Threads::Threads
 )
 
-# Production Python uses a private static backend so its extension link map
-# contains one facade-owned link unit instead of publishing ef_core or the
+# Production Python uses a private shared backend so its extension link map
+# contains one facade-owned import unit instead of publishing ef_core or the
 # mixed experimental GPU archive. Diagnostics keeps the raw targets separate.
-add_library(ef_facade_backend STATIC
+add_library(ef_facade_backend SHARED
     ${EF_CORE_SOURCES}
     ${EF_RUNTIME_FACADE_SOURCES}
-    src/runtime/compatibility/runtime_facade_visual_observation.cpp
-    src/gpu/gpu_visual_runtime.cpp
-    src/gpu/gpu_execution_observation_runtime.cpp
     src/gpu/gpu_flight_shaping_runtime.cpp
     src/gpu/gpu_interaction_broadphase_runtime.cpp
 )
-target_include_directories(ef_facade_backend PUBLIC
+target_include_directories(ef_facade_backend PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
+target_compile_definitions(ef_facade_backend PRIVATE EF_FACADE_BACKEND_BUILD=1)
 target_link_libraries(ef_facade_backend PRIVATE
     ef_composition
     ef_content
     ef_runtime_authority_contracts
-)
-target_link_libraries(ef_facade_backend PUBLIC
     flecs::flecs
     spdlog::spdlog
     nlohmann_json::nlohmann_json
     Threads::Threads
+)
+install(TARGETS ef_facade_backend
+    RUNTIME DESTINATION .
+    LIBRARY DESTINATION .
 )
 # --- Standalone App ---
 # We keep src/main.cpp for local C++ testing, but now it needs to include/use SimulationKernel
@@ -718,12 +718,23 @@ if (EF_PRODUCTION_FACADE_ONLY)
         src/interfaces/python/bindings_core_unit_data.cpp
         src/interfaces/python/bindings_core_observation.cpp
         src/interfaces/python/bindings_gpu_facade_only.cpp
+        # These are maintained contract helpers, not engine owners. Compile
+        # them into the extension so the private backend DLL exports only the
+        # RuntimeFacade class and never becomes a catch-all symbol provider.
+        ${EF_CORE_MISSION_SOURCES}
+        ${EF_CORE_GEOMETRY_SOURCES}
+        src/runtime/compatibility/runtime_facade_visual_observation.cpp
+        src/gpu/gpu_visual_runtime.cpp
+        src/gpu/gpu_execution_observation_runtime.cpp
     )
 endif()
 
 # --- Python Module ---
 nanobind_add_module(ef_py
     ${EF_PYTHON_BINDING_SOURCES}
+)
+target_include_directories(ef_py PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 # bindings_runtime.cpp/bindings_gpu.cpp reference RuntimeFacade symbols, so the
 # bindings link the facade unit ahead of ef_core.  ef_core stays a *direct*
@@ -734,8 +745,17 @@ nanobind_add_module(ef_py
 # single-pass MinGW link line.  Dropping it in favour of the transitive edge
 # through ef_facade could reorder that repetition away.
 if (EF_PRODUCTION_FACADE_ONLY)
-    target_compile_definitions(ef_py PRIVATE EF_PRODUCTION_FACADE_ONLY=1)
-    target_link_libraries(ef_py PRIVATE ef_facade_backend)
+    target_compile_definitions(ef_py PRIVATE
+        EF_PRODUCTION_FACADE_ONLY=1
+        EF_FACADE_BACKEND_CONSUMER=1
+    )
+    target_link_libraries(ef_py PRIVATE
+        ef_facade_backend
+        flecs::flecs
+        spdlog::spdlog
+        nlohmann_json::nlohmann_json
+        Threads::Threads
+    )
 else()
     target_link_libraries(ef_py PRIVATE ef_facade ef_core)
 endif()

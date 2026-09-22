@@ -52,15 +52,18 @@ def test_production_binding_options_fail_closed_to_facade_only() -> None:
   assert "nb::class_<WorldBatchRuntime" not in facade_bindings
   assert "nb::class_<SimulationKernel" not in facade_bindings
   assert "bind_runtime_engine" not in facade_bindings
-  assert "add_library(ef_facade_backend STATIC" in cmake
+  assert "add_library(ef_facade_backend SHARED" in cmake
   assert "src/runtime/compatibility/runtime_facade_visual_observation.cpp" in cmake
+  assert "EF_FACADE_BACKEND_BUILD=1" in cmake
+  assert "EF_FACADE_BACKEND_CONSUMER=1" in cmake
   production_link_block = cmake.split(
     "if (EF_PRODUCTION_FACADE_ONLY)\n    target_compile_definitions", 1
   )[1].split(
     "else()", 1
   )[0]
   production_link_block = "target_compile_definitions" + production_link_block
-  assert "target_link_libraries(ef_py PRIVATE ef_facade_backend)" in production_link_block
+  assert "target_link_libraries(ef_py PRIVATE" in production_link_block
+  assert "ef_facade_backend" in production_link_block
   assert "ef_gpu_experiments" not in production_link_block
 
 
