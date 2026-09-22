@@ -47,6 +47,11 @@ accepted.
   `python/rl/ground/proxy_env.py` (`GroundInfantryProxyEnv`). It exercises the
   RL reset/step/observation/reward/termination/trace boundary only; its
   authority remains `engineering_proxy_only`.
+- Maintained command projection:
+  `python/rl/ground/command.py`. It carries the representable heading/speed
+  and existing Ground static-task slice through the batch contract, while
+  rejecting stance/route fields that the current native command shape cannot
+  represent.
 
 The `expected/` bundle has now been generated and verified with the pinned Arnis
 v3.0.0 CMO patch, and the preview plus `field_acceptance.json` are retained. The

@@ -108,16 +108,12 @@ void bind_runtime_tasking(nb::module_ &m) {
         .def_rw("officer_in_tactical_command",
                 &PilotReportNaval::CommandAuthorityDirective::officer_in_tactical_command);
 
-    // Binding-coverage note: MissionCommandMaintainedBatchContract/
-    // TaskOrderMaintainedBatchContract/
-    // LeaderIntentMaintainedBatchContract/PilotReportMaintainedBatchContract header
-    // field blocks are schema-owned (tools/maintenance/dto_schema), but each of these
-    // four bindings has long registered every field except its own trailing
-    // ground_static_task/ground_static_status field (a pre-existing binding-surface
-    // omission; TaskOrder's omitted field stays reachable through the
-    // task_order_maintained_ground_static_task free function). That never-bound
-    // field is preserved here as-is (parity baseline) instead of being
-    // macro-expanded from the same X-macro as the header block.
+    // Binding-coverage note: the maintained contract field blocks are
+    // schema-owned (tools/maintenance/dto_schema).  Ground command work needs
+    // the already-existing MissionCommandGround static-task slice to survive
+    // the Python batch boundary, so MissionCommand exposes that field here.
+    // The analogous trailing Ground fields on the other command-chain
+    // contracts remain intentionally held until their owners are admitted.
     nb::class_<MissionCommandMaintainedBatchContract>(m, "MissionCommandMaintainedBatchContract")
         .def(nb::init<>())
         .def_rw("shared_core", &MissionCommandMaintainedBatchContract::shared_core)
@@ -125,7 +121,8 @@ void bind_runtime_tasking(nb::module_ &m) {
         .def_rw("air_takeoff", &MissionCommandMaintainedBatchContract::air_takeoff)
         .def_rw("air_formation", &MissionCommandMaintainedBatchContract::air_formation)
         .def_rw("naval_stationing", &MissionCommandMaintainedBatchContract::naval_stationing)
-        .def_rw("naval_embarked_helo", &MissionCommandMaintainedBatchContract::naval_embarked_helo);
+        .def_rw("naval_embarked_helo", &MissionCommandMaintainedBatchContract::naval_embarked_helo)
+        .def_rw("ground_static_task", &MissionCommandMaintainedBatchContract::ground_static_task);
 
     nb::class_<TaskOrderMaintainedBatchContract>(m, "TaskOrderMaintainedBatchContract")
         .def(nb::init<>())

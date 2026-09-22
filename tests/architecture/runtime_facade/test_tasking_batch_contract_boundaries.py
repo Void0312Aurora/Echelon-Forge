@@ -180,6 +180,7 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
   assert '"export_tasking_packet"' in bindings_runtime
   assert 'nb::class_<TaskOrderMaintainedBatchContract>(m, "TaskOrderMaintainedBatchContract")' in bindings_runtime
   assert 'nb::class_<MissionCommandMaintainedBatchContract>(' in bindings_runtime
+  assert '.def_rw("ground_static_task", &MissionCommandMaintainedBatchContract::ground_static_task)' in bindings_runtime
   assert 'nb::class_<LeaderIntentMaintainedBatchContract>(' in bindings_runtime
   assert 'nb::class_<PilotReportMaintainedBatchContract>(' in bindings_runtime
   # NOTE(I35): the four World*MaintainedAssignment classes are schema-owned

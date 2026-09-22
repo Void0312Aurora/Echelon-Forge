@@ -272,6 +272,8 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
     command_contract.air_formation.formation_id = 17
     command_contract.naval_stationing.reference_entity_id = 9101
     command_contract.naval_embarked_helo.launch_helo = True
+    command_contract.ground_static_task.ground_task_mode = ef_py.GroundTaskMode.MoveStatic
+    command_contract.ground_static_task.objective_node_id = 9301
     leader_contract.shared_core.task_group_id = 8001
     leader_contract.air_formation.formation_id = 34
     leader_contract.naval_command_authority.warfare_role_code = 35
@@ -313,6 +315,14 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
       9101,
     )
     self.assertTrue(bool(packet.mission_command_contracts[0].naval_embarked_helo.launch_helo))
+    self.assertEqual(
+      packet.mission_command_contracts[0].ground_static_task.ground_task_mode,
+      ef_py.GroundTaskMode.MoveStatic,
+    )
+    self.assertEqual(
+      int(packet.mission_command_contracts[0].ground_static_task.objective_node_id),
+      9301,
+    )
     self.assertIsInstance(
       packet.leader_intent_contracts[0],
       ef_py.LeaderIntentMaintainedBatchContract,

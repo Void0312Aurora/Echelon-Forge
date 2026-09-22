@@ -5,11 +5,19 @@ from pathlib import Path
 
 import pytest
 
+from python.runtime_bootstrap import ensure_repo_imports
+
+ensure_repo_imports()
+
+import ef_py  # noqa: E402
+
 from python.rl.ground import (
     GroundFieldProxy,
     GroundInfantryProxyEnv,
     GroundInfantryProxyError,
     build_ground_infantry_command,
+    build_ground_infantry_maintained_assignment,
+    build_ground_infantry_mission_command,
     normalize_ground_infantry_action,
 )
 
@@ -56,6 +64,43 @@ def test_ground_action_vector_is_normalized_without_hidden_air_fields() -> None:
 def test_ground_action_rejects_wrong_shape() -> None:
     with pytest.raises(GroundInfantryProxyError, match="expects four values"):
         normalize_ground_infantry_action([0.0, 1.0])
+
+
+def test_representable_ground_action_projects_to_native_command_and_batch_slice() -> None:
+    command = build_ground_infantry_mission_command(
+        [90.0, 0.5, 0.0, 0.0],
+        max_speed_mps=2.0,
+        objective_area_id=41,
+        objective_node_id=42,
+        ground_commander_id=43,
+    )
+
+    assert bool(command.active) is True
+    assert float(command.cmd_heading_deg) == 90.0
+    assert float(command.cmd_speed_mps) == 1.0
+    assert command.ground_task_mode == ef_py.GroundTaskMode.MoveStatic
+    assert int(command.objective_node_id) == 42
+
+    assignment = build_ground_infantry_maintained_assignment(
+        [90.0, 0.5, 0.0, 0.0],
+        world_index=3,
+        entity_id=17,
+        objective_node_id=42,
+    )
+    assert int(assignment.world_index) == 3
+    assert int(assignment.entity_id) == 17
+    assert (
+        assignment.mission_command.ground_static_task.ground_task_mode
+        == ef_py.GroundTaskMode.MoveStatic
+    )
+    assert int(assignment.mission_command.ground_static_task.objective_node_id) == 42
+
+
+def test_native_command_projection_rejects_unrepresentable_tactical_fields() -> None:
+    with pytest.raises(GroundInfantryProxyError, match="cannot represent stance"):
+        build_ground_infantry_mission_command([0.0, 1.0, 1.0, 0.0])
+    with pytest.raises(GroundInfantryProxyError, match="cannot represent route_intent"):
+        build_ground_infantry_mission_command([0.0, 1.0, 0.0, 3.0])
 
 
 def test_proxy_loads_frozen_lineage_and_exposes_explicit_terrain_provenance() -> None:
