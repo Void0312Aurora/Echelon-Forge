@@ -59,6 +59,8 @@
   },
   "observation_space": {
     "status": "planned",
+    "proxy_status": "implemented_in_engineering_proxy_only",
+    "proxy_entrypoint": "python.rl.ground.proxy_env:GroundInfantryProxyEnv",
     "fields": [
       "position_local_enu_m",
       "velocity_local_enu_mps",

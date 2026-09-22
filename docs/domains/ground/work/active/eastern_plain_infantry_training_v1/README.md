@@ -53,6 +53,10 @@ accepted.
   rejecting stance/route fields that the current native command shape cannot
   represent.
 
+The proxy observation now includes explicit tree-line and settlement distance/
+bearing values plus river/bridge flags. These are replayable engineering
+products; the native observation export remains held.
+
 The `expected/` bundle has now been generated and verified with the pinned Arnis
 v3.0.0 CMO patch, and the preview plus `field_acceptance.json` are retained. The
 elevation and landcover providers remain network/cache backed, so this is a verified

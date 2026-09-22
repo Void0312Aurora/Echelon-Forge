@@ -85,6 +85,9 @@ else:
                     "terrain": spaces.Box(
                         low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32
                     ),
+                    "semantic_context": spaces.Box(
+                        low=-np.inf, high=np.inf, shape=(6,), dtype=np.float32
+                    ),
                     "semantic_flags": spaces.MultiBinary(5),
                     "state": spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32),
                 }
@@ -117,6 +120,19 @@ else:
                     ],
                     dtype=np.float32,
                 ),
+                "semantic_context": np.asarray(
+                    [
+                        *payload["semantic_context"][
+                            "nearest_tree_line_distance_and_bearing"
+                        ],
+                        *payload["semantic_context"][
+                            "nearest_settlement_distance_and_bearing"
+                        ],
+                        float(payload["semantic_context"]["river_active"]),
+                        float(payload["semantic_context"]["bridge_active"]),
+                    ],
+                    dtype=np.float32,
+                ),
                 "semantic_flags": np.asarray(
                     [
                         "farmland_area" in semantic_kinds,
@@ -132,7 +148,7 @@ else:
                     [
                         float(payload["heading_deg"]),
                         float(STANCE_NAMES.index(payload["stance"])),
-                        0.0,
+                        float(ROUTE_INTENT_NAMES.index(payload["route_intent"])),
                         float(payload["route_progress_m"]),
                     ],
                     dtype=np.float32,
@@ -187,6 +203,7 @@ else:
                 y_m=self._state.y_m,
                 heading_deg=self._state.heading_deg,
                 stance=self._state.stance,
+                route_intent=self._state.route_intent,
             )
             reset_transition = GroundInfantryTransition(
                 state=self._state,

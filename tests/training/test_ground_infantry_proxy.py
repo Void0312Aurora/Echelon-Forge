@@ -115,6 +115,22 @@ def test_proxy_loads_frozen_lineage_and_exposes_explicit_terrain_provenance() ->
     assert sample.slope_deg is not None
     assert sample.provenance == "arnis_bundle_plus_field_overlay"
 
+    context = proxy.semantic_context(400.0, 100.0)
+    assert context["authority"] == "engineering_proxy_only"
+    assert context["nearest_tree_line_distance_and_bearing"][0] >= 0.0
+    assert context["nearest_settlement_distance_and_bearing"][0] >= 0.0
+    assert context["river_active"] is False
+
+
+def test_proxy_observation_keeps_last_route_intent_and_bridge_semantics() -> None:
+    proxy = _proxy()
+    state = proxy.reset(x_m=820.0, y_m=667.0)
+
+    transition = proxy.step(state, [90.0, 1.0, 0.0, 3.0], dt_s=1.0)
+
+    assert transition.observation["route_intent"] == "cross_bridge"
+    assert transition.observation["semantic_context"]["bridge_active"] is True
+
 
 def test_proxy_step_is_deterministic_and_replayable() -> None:
     actions = [
