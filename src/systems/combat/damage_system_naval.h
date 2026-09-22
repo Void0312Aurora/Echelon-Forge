@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 #include <flecs.h>
 #include <algorithm>
 
@@ -7,46 +9,171 @@
 
 #include "components/combat/health.h"
 #include "components/domains/naval/combat/damage_naval.h"
+#include "components/domains/naval/combat/weapon_naval.h"
 #include "components/domains/naval/platform/ship_platform.h"
 #include "components/physics/dynamics.h"
+
+// Naval damage-response tick (DM-N1).
+//
+// This system owns *no* coefficients. It resolves one declared
+// NavalDamageResponseProfile per platform and drives fire / flooding / hull
+// breach evolution plus the capability projection from that profile. All
+// numerical response values live in
+// `components/domains/naval/combat/damage_naval.h` with documented units and a
+// provenance note.
+//
+// Maturity: mechanism only. Consumes the naval platform state it is given and
+// produces no launch authority (N5) and no kill authority (N6).
+
+namespace naval_damage_detail {
+
+struct NavalDamageResponseSelection {
+    const NavalDamageResponseProfile *profile = nullptr;
+    const ShipPlatform *ship_platform = nullptr;
+    bool structured_platform = false;
+};
+
+// Resolve the declared profile plus the platform attributes used by derived
+// state. This branch admits ship platforms only; submarine damage response is
+// not selected until it has a compatible speed/propulsion projection and an
+// executable acceptance test.
+inline NavalDamageResponseSelection select_naval_damage_response(flecs::entity e) {
+    NavalDamageResponseSelection selection{};
+    selection.ship_platform = e.get<ShipPlatform>();
+    selection.structured_platform = selection.ship_platform != nullptr;
+    if (!selection.structured_platform) {
+        return selection;
+    }
+
+    // Profiles are address-stable for the process lifetime because the registry
+    // is a function-local static.
+    selection.profile = resolve_naval_damage_response_profile(
+        kNavalDamageResponseProfileDefaultIndex);
+    return selection;
+}
+
+// Mean ready/max mount fraction, the mount-state input to the response. A
+// platform with no mount record is neutral (1.0), not degraded.
+inline double resolve_naval_mount_ready_fraction(flecs::entity e) {
+    const NavalWeaponSystem *weapon_system = e.get<NavalWeaponSystem>();
+    if (weapon_system == nullptr) {
+        return 1.0;
+    }
+    return naval_damage_mount_ready_fraction(weapon_system->mounts);
+}
+
+// Project the damage response onto propulsion. The projection shape remains the
+// pre-DM-N1 ship behavior; the declared profile supplies the coefficients and
+// the tick above supplies the elapsed-time evolution.
+inline void apply_naval_damage_response_to_engine(
+    flecs::entity e, const NavalDamageResponseSelection &selection,
+    const NavalDamageResponseProfile &profile, const PlatformDamageState &damage) {
+    Propulsion *propulsion = e.get_mut<Propulsion>();
+    if (propulsion == nullptr) {
+        return;
+    }
+
+    const double mobility_scale =
+        std::clamp(damage.mobility_capability, profile.mobility_propulsion_floor,
+                   profile.mobility_propulsion_ceiling);
+    // Only a declared hull speed limit can bound thrust; a platform without a
+    // ship record leaves the propulsion envelope untouched.
+    if (selection.ship_platform == nullptr) {
+        return;
+    }
+    const double max_speed_mps = selection.ship_platform->max_speed_mps;
+
+    propulsion->mil_thrust_n =
+        std::min(propulsion->mil_thrust_n,
+                 max_speed_mps * profile.mil_thrust_n_per_mps * mobility_scale);
+    propulsion->ab_thrust_n =
+        std::min(propulsion->ab_thrust_n,
+                 max_speed_mps * profile.ab_thrust_n_per_mps * mobility_scale);
+}
+
+} // namespace naval_damage_detail
 
 inline void register_naval_damage_system(flecs::world &ecs) {
     ecs.system<Health, PlatformDamageState, const ShipPlatform>("NavalDamageStateUpdate")
         .kind(flecs::OnUpdate)
-        .each([](flecs::entity e, Health &health, PlatformDamageState &damage,
-                 const ShipPlatform &ship) {
-            const double fire_decay = 0.0008;
-            const double flooding_decay = 0.0002;
-            const double breach_decay = 0.0001;
+        .run([](flecs::iter &it) {
+            // DM-N1 is currently a ship-only response surface. Resolving once
+            // per iteration keeps the response independent of stage ordering
+            // against the motion systems.
+            const double dt_s = it.delta_time() > 0.0 ? it.delta_time() : 1.0 / 60.0;
+            while (it.next()) {
+                auto health = it.field<Health>(0);
+                auto damage_field = it.field<PlatformDamageState>(1);
+                for (auto i : it) {
+                    flecs::entity e = it.entity(i);
+                    Health &health_state = health[i];
+                    PlatformDamageState &damage = damage_field[i];
 
-            const double fire_progress = damage.fire_severity;
-            const double flooding_progress = damage.flooding_severity;
-            const double breach_progress = damage.ongoing_hull_breach;
+                    const naval_damage_detail::NavalDamageResponseSelection selection =
+                        naval_damage_detail::select_naval_damage_response(e);
+                    if (!selection.structured_platform || selection.profile == nullptr) {
+                        continue;
+                    }
+                    const NavalDamageResponseProfile &profile = *selection.profile;
 
-            damage.fire_severity = std::clamp(damage.fire_severity - fire_decay, 0.0, 1.0);
-            damage.flooding_severity = std::clamp(
-                damage.flooding_severity + 0.003 * breach_progress - flooding_decay, 0.0, 1.0);
-            damage.ongoing_hull_breach =
-                std::clamp(damage.ongoing_hull_breach - breach_decay, 0.0, 1.0);
+                    const double mount_ready_fraction =
+                        naval_damage_detail::resolve_naval_mount_ready_fraction(e);
+                    const double mount_response_scale =
+                        naval_damage_mount_response_scale(profile, mount_ready_fraction);
+                    const double loss_response_scale =
+                        naval_damage_mount_response_scale(profile, mount_ready_fraction);
 
-            damage.mission_capability -= 0.0015 * fire_progress;
-            damage.sensor_capability -= 0.0012 * fire_progress;
-            damage.mobility_capability -= 0.0018 * flooding_progress;
-            damage.survivability_margin -= 0.0022 * flooding_progress + 0.0010 * fire_progress;
+                    const double fire_progress = damage.fire_severity;
+                    const double flooding_progress = damage.flooding_severity;
+                    const double breach_progress = damage.ongoing_hull_breach;
 
-            sync_platform_damage_loss_state(health, damage);
+                    damage.fire_severity = std::clamp(
+                        damage.fire_severity -
+                            naval_damage_fire_decay_per_s(profile, mount_response_scale) * dt_s,
+                        0.0, 1.0);
+                    damage.flooding_severity = std::clamp(
+                        damage.flooding_severity +
+                            (naval_damage_breach_flooding_gain_per_s(profile, breach_progress) -
+                             naval_damage_flooding_decay_per_s(profile, mount_response_scale)) *
+                                dt_s,
+                        0.0, 1.0);
+                    damage.ongoing_hull_breach = std::clamp(
+                        damage.ongoing_hull_breach -
+                            naval_damage_breach_decay_per_s(profile, mount_response_scale) * dt_s,
+                        0.0, 1.0);
 
-            if (Propulsion *propulsion = e.get_mut<Propulsion>()) {
-                const double mobility_scale = std::clamp(damage.mobility_capability, 0.2, 1.0);
-                propulsion->mil_thrust_n = std::min(propulsion->mil_thrust_n,
-                                                    ship.max_speed_mps * 100000.0 * mobility_scale);
-                propulsion->ab_thrust_n = std::min(propulsion->ab_thrust_n,
-                                                   ship.max_speed_mps * 120000.0 * mobility_scale);
-            }
+                    damage.mission_capability -=
+                        naval_damage_capability_loss_per_s(profile.mission_loss_per_s_at_fire,
+                                                           fire_progress, loss_response_scale) *
+                        dt_s;
+                    damage.sensor_capability -=
+                        naval_damage_capability_loss_per_s(profile.sensor_loss_per_s_at_fire,
+                                                           fire_progress, loss_response_scale) *
+                        dt_s;
+                    damage.mobility_capability -= naval_damage_capability_loss_per_s(
+                        profile.mobility_loss_per_s_at_flooding, flooding_progress,
+                        loss_response_scale) *
+                        dt_s;
+                    damage.survivability_margin -= naval_damage_capability_loss_per_s(
+                        profile.survivability_loss_per_s_at_flooding, flooding_progress,
+                        loss_response_scale) *
+                        dt_s;
+                    damage.survivability_margin -= naval_damage_capability_loss_per_s(
+                        profile.survivability_loss_per_s_at_fire, fire_progress,
+                        loss_response_scale) *
+                        dt_s;
 
-            if (damage.loss_state == PlatformLossState::Lost) {
-                health.current_hp = 0.0;
-                e.destruct();
+                    // Loss semantics stay owned by the shared helper.
+                    sync_platform_damage_loss_state(health_state, damage);
+
+                    naval_damage_detail::apply_naval_damage_response_to_engine(
+                        e, selection, profile, damage);
+
+                    if (damage.loss_state == PlatformLossState::Lost) {
+                        health_state.current_hp = 0.0;
+                        e.destruct();
+                    }
+                }
             }
         });
 }
