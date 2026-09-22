@@ -7,12 +7,11 @@ Author / maintainer: Boeing Defense, Space and Security
 Title: F/A-18 Super Hornet and EA-18 Growler — specifications
 URL: https://www.boeing.com/defense/fighters-and-bombers/fa-18-super-hornet-and-ea-18-growler
 Retrieval:
-  attempted_at: 2026-09-17T17:05:00Z
-  method: none
-  status: no_record
-  returned: nothing
-  did_not_return: not established
-  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
+  attempted_at: 2026-09-19T09:05:19Z
+  method: tavily_proxy
+  status: success
+  returned: through Tavily search-indexed page content, the Boeing family specification block for width, length, height and maximum takeoff weight; the current page also distinguishes Super Hornet and Growler specification blocks
+  did_not_return: an E-mark-specific wingspan or internal-fuel figure; family width is not substituted for the Navy wingspan
 Domain: air
 Equipment: F/A-18 / F/A-18E
 Configuration: The page covers the Super Hornet family. Its specification block gives width, length, height and maximum takeoff weight for the type rather than separating the E and F marks.

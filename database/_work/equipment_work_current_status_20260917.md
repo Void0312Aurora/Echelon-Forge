@@ -1,6 +1,6 @@
 # Equipment Work Current Status
 
-Status: `2026-09-19` measured state of the equipment tree under the reduced write set.
+Status: `2026-09-22` measured state of the equipment tree under the reduced write set.
 
 Parent: [README.md](README.md)
 
@@ -8,7 +8,7 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/_work/equipment_work_current_status_20260917.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-19`
+Last verified: `2026-09-22`
 
 This revision replaces the first measurement pass, which was produced by a
 hand-written audit and reported three deviations that do not survive the runnable
@@ -21,9 +21,9 @@ check in [check_equipment_tree.py](check_equipment_tree.py). See
 | --- | --- |
 | Branch | `codex/database-scaffold` |
 | Base | `d1ebb5d3` |
-| Off-base commits | 35 |
+| Off-base commits | 36 |
 | Behind `origin/main` | 218 commits |
-| Ahead of `origin/main` | 35 commits |
+| Ahead of `origin/main` | 36 commits |
 | `origin/main` files under `database/` | 0 |
 | Tracked files under `database/` | 602 |
 | Merge dry-run conflicts (`HEAD` vs `origin/main`) | 0 |
@@ -41,10 +41,10 @@ Command: `python database/_work/check_equipment_tree.py`
 | --- | --- |
 | `C1` every referenced source id resolves | PASS, 0 dangling, 0 manifest/path mismatch |
 | `C2` backlog leaf binding (`Equipment ID`) | PASS after the `E2` backfill |
-| `C3` backlog vs coverage status | PASS, 60 of 60 coverage rows agree |
+| `C3` backlog vs coverage status | PASS, 63 of 63 coverage rows agree |
 | `C4` source admission floor | PASS after the `E3` retention backfill |
 | `C5` source-artifact consistency | PASS, no unnamed or aggregate package claims |
-| `C6` retrieval record | PASS, 71 unretrieved citations remain advisory; 174 packages lack a retrieval block |
+| `C6` retrieval record | PASS, 69 unretrieved citations remain advisory; 171 packages lack a retrieval block |
 
 Measured counts:
 
@@ -55,12 +55,12 @@ Measured counts:
 | Distinct source ids referenced by leaves | 274 |
 | Leaves without `Equipment ID` | 0 |
 | Backlog rows | 118 |
-| Coverage rows | 60 |
-| Status: `cataloged` / `parameter_complete` / `held` | 39 / 71 / 8 |
+| Coverage rows | 63 |
+| Status: `cataloged` / `parameter_complete` / `held` | 36 / 74 / 8 |
 
 ## Leaf Completeness Against The Queue
 
-The queue calls 39 rows `cataloged`, and all 39 now point at leaves carrying a
+The queue calls 36 rows `cataloged`, and all 36 now point at leaves carrying a
 `## Parameters` table. The checker therefore reports `stub_rows_excluded: 0` for
 the non-held queue rows. A separate catalog scan still finds 82 README leaves
 without a parameter table; those are outside the current queue-binding defect and
@@ -70,7 +70,7 @@ remain a depth follow-up rather than evidence of completed extraction.
 
 `coverage/README.md` describes `coverage.csv` as a discovery queue that feeds the
 backlog, and defines its `status` column as starting at `queued`. The file does not
-behave that way: its 60 rows are exactly the 60 `parameter_complete` rows of the
+behave that way: its 63 rows are exactly the 63 in-scope `parameter_complete` rows of the
 backlog, verified in both directions. It is an extract of the completed set, not a
 pre-backlog discovery surface.
 
@@ -86,7 +86,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | `D4` | Parameter table shape split | 57 leaves use a `Field`-based table; 52 use `Parameter \| Value \| Source \| Confidence`; 82 have no parameter table | open |
 | `D5` | Disjoint naval namespaces | `catalog/naval/ships/surface-combatant/` (tracked, 3 leaves) and the empty untracked `catalog/naval/surface-combatants/` coexist | open |
 | `D6` | Ledger not materialized | `sources/ledger/` holds a README only; `common.schema.json` has no source `$defs` while `FIELDS.md` describes 12 ledger fields | open |
-| `D7` | `coverage.csv` role and status vocabulary contradict its own README | 60 of 60 rows are `parameter_complete`, not `queued` | open |
+| `D7` | `coverage.csv` role and status vocabulary contradict its own README | 63 of 63 rows are `parameter_complete`, not `queued` | open |
 | `D8` | Country rows share a variant leaf without a stated rule | `eq-us-air-c17a` and `eq-uk-air-c17a` both point at `c-17/c-17a`, which is now correct by the `tornado-ids` precedent but is not documented anywhere | open |
 | `D9` | `Equipment ID` scheme is not declared | `eq-<country>-<domain>-<variant>`, country-less `module-*`, and country-less variant names such as `tornado-ids` all coexist with no stated rule | open |
 
@@ -105,6 +105,10 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | Retrieval records | Added or refreshed retrieval blocks for the three USAF/Navy packages and the F-35C manufacturer package; added one traceable HiWars secondary package for the remaining public F-35C crew/ceiling fields |
 | MQ-9A completion | Promoted the existing baseline/extended-range parameter table after retrieving both USAF fact-sheet packages; ER readings remain configuration-labelled |
 | C-130J completion | Promoted the standard-length C-130J table after retrieving the USAF fact sheet; retained explicit arithmetic corrections and excluded the stretched J-30 values |
+| F/A-18E completion | Added E-mark propulsion, speed, ceiling, conditioned combat/ferry range, crew and armament fields from NAVAIR; Boeing is used only for the family maximum-takeoff-weight block, not as an E-specific wingspan substitute |
+| EA-18G completion | Added variant-specific propulsion, geometry, mass, ceiling, conditioned combat range, crew and electronic-attack stores from NAVAIR |
+| F-16C Block 50 completion | Replaced generic-family engine and geometry readings with the Shaw Block 50/52 fact sheet, removed the unsupported 42,300 lb reading, and bounded APG-68(V)9 applicability to the FMS context the source actually states |
+| Retrieval records (third batch) | Added successful Tavily-proxy retrieval records for the two NAVAIR pages, the Boeing family page and both USAF F-16 pages; recorded fields not returned instead of inferring them |
 
 ## Retracted Findings
 
@@ -126,7 +130,7 @@ amend that standard.
 
 ## Explicit Overclaim Refusals
 
-- The 58 `parameter_complete` rows are research drafts. They are not calibrated, not
+- The 74 `parameter_complete` rows are research drafts. They are not calibrated, not
   cross-checked, and not runtime-eligible.
 - No file in this tree is consumed by the runtime loader.
 - Family names remain grouping nodes; only concrete variant leaves count as records.
