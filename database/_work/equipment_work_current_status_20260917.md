@@ -50,19 +50,19 @@ Measured counts:
 
 | Metric | Value |
 | --- | --- |
-| Source packages (manifests) | 304 |
-| Catalog leaves (carry `## Parameters`) | 117 |
-| Distinct source ids referenced by leaves | 304 |
+| Source packages (manifests) | 308 |
+| Catalog leaves (carry `## Parameters`) | 120 |
+| Distinct source ids referenced by leaves | 308 |
 | Leaves without `Equipment ID` | 0 |
-| Backlog rows | 126 |
-| Coverage rows | 99 |
-| Status: `cataloged` / `parameter_complete` / `held` | 8 / 110 / 8 |
+| Backlog rows | 129 |
+| Coverage rows | 102 |
+| Status: `cataloged` / `parameter_complete` / `held` | 8 / 113 / 8 |
 
 ## Leaf Completeness Against The Queue
 
-The queue calls 14 rows `cataloged`, and all 14 now point at leaves carrying a
-`## Parameters` table. The checker therefore reports `stub_rows_excluded: 0` for
-the non-held queue rows. A separate catalog scan still finds 82 README leaves
+The queue calls 8 rows `cataloged`, and all 8 now point at leaves carrying a
+`## Parameters` table. The checker therefore reports no stub leaf binding defect
+for the non-held queue rows. A separate catalog scan still finds 82 README leaves
 without a parameter table; those are outside the current queue-binding defect and
 remain a depth follow-up rather than evidence of completed extraction.
 
@@ -143,6 +143,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | Russian export fighter completion batch | Promoted Su-35S, Su-34E and Su-30SME after refreshing ROSOBORONEXPORT/UAC retrievals; export/family boundaries and the Su-35S Tier C empty-mass reading remain explicit |
 | Chinese/Russian transport and fighter completion batch | Promoted J-16, Tu-160M and Il-76MD-90A after live retrieval; official modernization/role blocks remain separate from public Tier C platform readings |
 | Weapon expansion batch | Added AIM-9X Block II, AIM-120D and GBU-39A/B with official NAVAIR/Boeing geometry, mass, propulsion/guidance, warhead and fuze fields; classified performance remains unestimated |
+| U.S. naval-aircraft expansion batch | Added P-3C, F/A-18C and UH-1Y with official Navy/NAVAIR/Marine Corps geometry, mass, propulsion, flight, crew, payload, armament and mission-system fields; common A-D and conditioned HOGE/radius boundaries remain explicit |
 
 ## Retracted Findings
 

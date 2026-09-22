@@ -47,7 +47,8 @@ calibration package, inventory claim, or final simulation configuration.
 | R-2 | C-5M, AC-130J, CV-22B, HC-130J and E-2D expansion | complete | `fb401b7c` |
 | R-3 | Su-35S, Su-34E and Su-30SME completion | complete | `96d44c72` |
 | R-4 | J-16, Tu-160M and Il-76MD-90A completion | complete | `d4be0b69` |
-| R-5 | AIM-9X Block II, AIM-120D and GBU-39A/B weapon expansion | ready to commit | — |
+| R-5 | AIM-9X Block II, AIM-120D and GBU-39A/B weapon expansion | complete | `5d960a4a` |
+| R-6 | P-3C, F/A-18C and UH-1Y official U.S. naval-aircraft expansion | ready to commit | — |
 
 ## Blocker / skip ledger
 
