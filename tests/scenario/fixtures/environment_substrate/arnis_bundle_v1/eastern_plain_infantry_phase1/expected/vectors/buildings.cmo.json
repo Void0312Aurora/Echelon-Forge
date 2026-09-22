@@ -1,0 +1,392 @@
+{
+  "schema": "arnis_cmo_features",
+  "schema_version": 1,
+  "coordinate_frame": "local_enu_m",
+  "feature_class": "building",
+  "features": [
+    {
+      "feature_id": "openstreetmap:way:4101:building",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -772.2066505224508,
+              -555.9546373324537
+            ],
+            [
+              -643.5055421014325,
+              -555.9546373324537
+            ],
+            [
+              -643.5055421014325,
+              -333.5775811718474
+            ],
+            [
+              -772.2066505224508,
+              -333.5775811718474
+            ],
+            [
+              -772.2066505224508,
+              -555.9546373324537
+            ]
+          ]
+        ]
+      },
+      "attributes": {
+        "base_offset_m": 0.0,
+        "base_offset_source": "implicit_terrain_base_zero_m",
+        "building_type": "yes",
+        "footprint": "polygon",
+        "height_m": 3.0,
+        "height_semantics": "physical_vertical_extent_m",
+        "height_source": "osm_building_levels_times_3m",
+        "material": "unspecified",
+        "vertical_anchor_mode": "terrain_rigid",
+        "vertical_anchor_source": "implicit_terrain_base_zero_m",
+        "vertical_placement_resolved": true
+      },
+      "provenance": {
+        "source_feature_id": "4101",
+        "source_feature_type": "way",
+        "source_provider": "openstreetmap",
+        "source_tags": {
+          "building": "yes",
+          "building:levels": "1",
+          "name": "West Hamlet House 1"
+        },
+        "tags_filtered_by_arnis": true
+      },
+      "lineage": {
+        "block_projection_applied": false,
+        "geometry_source_stage": "projected_from_wgs84_f64",
+        "measurements": {
+          "base_offset_m": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "metric_semantics_pre_block_conversion",
+            "source_semantics": "implicit_terrain_base_zero_m"
+          },
+          "base_offset_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_terrain_base_zero_m"
+          },
+          "height_m": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "metric_semantics_pre_block_conversion",
+            "source_semantics": "osm_building_levels_times_3m"
+          },
+          "vertical_anchor_mode": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_terrain_base_zero_m"
+          },
+          "vertical_anchor_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_terrain_base_zero_m"
+          },
+          "vertical_placement_resolved": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_terrain_base_zero_m"
+          }
+        }
+      }
+    },
+    {
+      "feature_id": "openstreetmap:way:4102:building",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -600.6051726289792,
+              -444.7669089954696
+            ],
+            [
+              -471.9040642079611,
+              -444.7669089954696
+            ],
+            [
+              -471.9040642079611,
+              -222.38665378613078
+            ],
+            [
+              -600.6051726289792,
+              -222.38665378613078
+            ],
+            [
+              -600.6051726289792,
+              -444.7669089954696
+            ]
+          ]
+        ]
+      },
+      "attributes": {
+        "base_offset_m": 0.0,
+        "base_offset_source": "implicit_terrain_base_zero_m",
+        "building_type": "house",
+        "footprint": "polygon",
+        "height_m": 3.0,
+        "height_semantics": "physical_vertical_extent_m",
+        "height_source": "osm_building_levels_times_3m",
+        "material": "unspecified",
+        "vertical_anchor_mode": "terrain_rigid",
+        "vertical_anchor_source": "implicit_terrain_base_zero_m",
+        "vertical_placement_resolved": true
+      },
+      "provenance": {
+        "source_feature_id": "4102",
+        "source_feature_type": "way",
+        "source_provider": "openstreetmap",
+        "source_tags": {
+          "building": "house",
+          "building:levels": "1",
+          "name": "West Hamlet House 2"
+        },
+        "tags_filtered_by_arnis": true
+      },
+      "lineage": {
+        "block_projection_applied": false,
+        "geometry_source_stage": "projected_from_wgs84_f64",
+        "measurements": {
+          "base_offset_m": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "metric_semantics_pre_block_conversion",
+            "source_semantics": "implicit_terrain_base_zero_m"
+          },
+          "base_offset_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_terrain_base_zero_m"
+          },
+          "height_m": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "metric_semantics_pre_block_conversion",
+            "source_semantics": "osm_building_levels_times_3m"
+          },
+          "vertical_anchor_mode": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_terrain_base_zero_m"
+          },
+          "vertical_anchor_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_terrain_base_zero_m"
+          },
+          "vertical_placement_resolved": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_terrain_base_zero_m"
+          }
+        }
+      }
+    },
+    {
+      "feature_id": "openstreetmap:way:4103:building",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              600.6051726289792,
+              333.59197941318024
+            ],
+            [
+              729.306281048778,
+              333.59197941318024
+            ],
+            [
+              729.306281048778,
+              555.9946324435942
+            ],
+            [
+              600.6051726289792,
+              555.9946324435942
+            ],
+            [
+              600.6051726289792,
+              333.59197941318024
+            ]
+          ]
+        ]
+      },
+      "attributes": {
+        "base_offset_m": 0.0,
+        "base_offset_source": "implicit_terrain_base_zero_m",
+        "building_type": "yes",
+        "footprint": "polygon",
+        "height_m": 3.0,
+        "height_semantics": "physical_vertical_extent_m",
+        "height_source": "osm_building_levels_times_3m",
+        "material": "unspecified",
+        "vertical_anchor_mode": "terrain_rigid",
+        "vertical_anchor_source": "implicit_terrain_base_zero_m",
+        "vertical_placement_resolved": true
+      },
+      "provenance": {
+        "source_feature_id": "4103",
+        "source_feature_type": "way",
+        "source_provider": "openstreetmap",
+        "source_tags": {
+          "building": "yes",
+          "building:levels": "1",
+          "name": "East Hamlet House 1"
+        },
+        "tags_filtered_by_arnis": true
+      },
+      "lineage": {
+        "block_projection_applied": false,
+        "geometry_source_stage": "projected_from_wgs84_f64",
+        "measurements": {
+          "base_offset_m": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "metric_semantics_pre_block_conversion",
+            "source_semantics": "implicit_terrain_base_zero_m"
+          },
+          "base_offset_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_terrain_base_zero_m"
+          },
+          "height_m": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "metric_semantics_pre_block_conversion",
+            "source_semantics": "osm_building_levels_times_3m"
+          },
+          "vertical_anchor_mode": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_terrain_base_zero_m"
+          },
+          "vertical_anchor_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_terrain_base_zero_m"
+          },
+          "vertical_placement_resolved": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_terrain_base_zero_m"
+          }
+        }
+      }
+    },
+    {
+      "feature_id": "openstreetmap:way:4104:building",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              429.00369473428844,
+              444.79250586527723
+            ],
+            [
+              557.7048031553065,
+              444.79250586527723
+            ],
+            [
+              557.7048031553065,
+              667.1983592199944
+            ],
+            [
+              429.00369473428844,
+              667.1983592199944
+            ],
+            [
+              429.00369473428844,
+              444.79250586527723
+            ]
+          ]
+        ]
+      },
+      "attributes": {
+        "base_offset_m": 0.0,
+        "base_offset_source": "implicit_terrain_base_zero_m",
+        "building_type": "farm",
+        "footprint": "polygon",
+        "height_m": 3.0,
+        "height_semantics": "physical_vertical_extent_m",
+        "height_source": "osm_building_levels_times_3m",
+        "material": "unspecified",
+        "vertical_anchor_mode": "terrain_rigid",
+        "vertical_anchor_source": "implicit_terrain_base_zero_m",
+        "vertical_placement_resolved": true
+      },
+      "provenance": {
+        "source_feature_id": "4104",
+        "source_feature_type": "way",
+        "source_provider": "openstreetmap",
+        "source_tags": {
+          "building": "farm",
+          "building:levels": "1",
+          "name": "East Farm Shed"
+        },
+        "tags_filtered_by_arnis": true
+      },
+      "lineage": {
+        "block_projection_applied": false,
+        "geometry_source_stage": "projected_from_wgs84_f64",
+        "measurements": {
+          "base_offset_m": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "metric_semantics_pre_block_conversion",
+            "source_semantics": "implicit_terrain_base_zero_m"
+          },
+          "base_offset_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_terrain_base_zero_m"
+          },
+          "height_m": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "metric_semantics_pre_block_conversion",
+            "source_semantics": "osm_building_levels_times_3m"
+          },
+          "vertical_anchor_mode": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_terrain_base_zero_m"
+          },
+          "vertical_anchor_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_terrain_base_zero_m"
+          },
+          "vertical_placement_resolved": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_terrain_base_zero_m"
+          }
+        }
+      }
+    }
+  ]
+}

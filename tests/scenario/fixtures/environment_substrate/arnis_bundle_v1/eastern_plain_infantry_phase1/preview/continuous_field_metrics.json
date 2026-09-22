@@ -1,0 +1,137 @@
+{
+  "bundle_id": "arnis-cmo-bundle:ff526c9d89edfb62ae454e6c",
+  "contract_version": "cmo.continuous_bundle_preview_metrics.v1",
+  "coordinate_frame": "local_enu_m",
+  "coordinate_metrics": {
+    "building": {
+      "feature_count": 4,
+      "integer_x_ratio": 0.0,
+      "integer_y_ratio": 0.0,
+      "nearest_1m_grid_rmse_m": 0.41624324053493167,
+      "path_count": 4,
+      "vertex_count": 20
+    },
+    "hydrology": {
+      "feature_count": 2,
+      "integer_x_ratio": 0.5,
+      "integer_y_ratio": 0.1,
+      "nearest_1m_grid_rmse_m": 0.3914178015066829,
+      "path_count": 2,
+      "vertex_count": 10
+    },
+    "road": {
+      "feature_count": 5,
+      "integer_x_ratio": 0.0,
+      "integer_y_ratio": 0.3333333333333333,
+      "nearest_1m_grid_rmse_m": 0.3646474845253454,
+      "path_count": 5,
+      "vertex_count": 15
+    }
+  },
+  "dem": {
+    "finite_count": 2292195,
+    "finite_ratio": 1.0,
+    "max_m": 453.78753662109375,
+    "mean_m": 448.10773959878946,
+    "min_m": 443.9601135253906,
+    "non_integer_ratio": 0.9999725154273524,
+    "sample_count": 2292195,
+    "shape": [
+      1335,
+      1717
+    ],
+    "standard_deviation_m": 2.059733551380746
+  },
+  "landcover": {
+    "class_counts": {
+      "10": 268991,
+      "30": 1160542,
+      "40": 772775,
+      "50": 6676,
+      "60": 1125,
+      "80": 82086
+    },
+    "numeric_interpolation_applied": false,
+    "render_interpolation": "nearest_categorical",
+    "shape": [
+      1335,
+      1717
+    ]
+  },
+  "lineage_flags": {
+    "accepted": true,
+    "anvil_region_read": false,
+    "contract": "arnis_continuous_metric.v1",
+    "elevation": {
+      "minecraft_y_roundtrip": false,
+      "minecraft_y_transform_applied": false,
+      "source_stage": "postprocessed_metric_dem",
+      "storage": "float32_le",
+      "vertical_quantization_step_m": null
+    },
+    "export_stage": "post_semantic_processing_pre_render_quantization",
+    "geometry": {
+      "block_projection_applied": false,
+      "quantization_step_m": null,
+      "source_stage": "projected_from_wgs84_f64",
+      "storage": "json_float64"
+    },
+    "landcover": {
+      "block_palette_roundtrip": false,
+      "source_stage": "source_classification_metric_grid"
+    },
+    "minecraft_world_read": false,
+    "representation": "continuous_metric_2_5d",
+    "voxelization_applied": false
+  },
+  "static_scene": {
+    "contract_version": "cmo.static_scene_geometry.v1",
+    "geometry_path": "static_scene_geometry.json",
+    "methods": {
+      "bridge": "abutment_dem_anchor_deck_with_linear_arc_length_interpolation_no_measured_deck_elevation",
+      "building": "rigid_prism_with_median_vertex_and_centroid_dem_foundation",
+      "hydrology": "source_geometry_with_bilinear_dem_preview_z_only",
+      "road": "per_segment_width_corridor_with_deterministic_dem_extent_clipping_and_bilinear_dem_drape",
+      "xy_geometry_policy": "source_xy_preserved_without_interpolation"
+    },
+    "preview_drawn": {
+      "bridge_deck_quads": 3,
+      "building_prisms": 4,
+      "hydrology_paths": 1,
+      "road_corridor_quads": 7
+    },
+    "preview_path": "static_scene_preview.png",
+    "preview_title": "CMO STATIC SCENE GEOMETRY PREVIEW \u2014 NOT RUNTIME",
+    "release_state": "no_runtime_consumer_release",
+    "runtime_authority": false,
+    "summary": {
+      "by_feature_class": {
+        "building": {
+          "held": 0,
+          "resolved": 4,
+          "total": 4
+        },
+        "hydrology": {
+          "held": 1,
+          "resolved": 1,
+          "total": 2
+        },
+        "road": {
+          "held": 0,
+          "resolved": 5,
+          "total": 5
+        }
+      },
+      "held": 1,
+      "resolved": 10,
+      "total": 11
+    }
+  },
+  "visualization": {
+    "draped_vector_path_count": 11,
+    "runtime_authority": false,
+    "title": "CMO CONTINUOUS BUNDLE PREVIEW \u2014 NOT RUNTIME",
+    "vertical_exaggeration": 8.0,
+    "vertical_exaggeration_scope": "3d_panel_only"
+  }
+}

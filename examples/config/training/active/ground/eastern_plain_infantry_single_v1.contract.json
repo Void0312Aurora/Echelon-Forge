@@ -1,0 +1,120 @@
+{
+  "contract_version": "ground_infantry_training.v1",
+  "status": "contract_only",
+  "purpose": "Deterministic single-soldier navigation and environment-observation curriculum on a fictional agricultural plain.",
+  "safety_boundary": {
+    "fictionalized_map": true,
+    "no_real_battlefield_coordinates": true,
+    "weapon_employment": false,
+    "targeting_or_fire_control": false
+  },
+  "map_profile": {
+    "id": "eastern_plain_infantry_phase1",
+    "arnis_request": "tests/scenario/fixtures/environment_substrate/arnis_bundle_v1/eastern_plain_infantry_phase1/request.json",
+    "arnis_bundle_status": "request_and_source_frozen_export_pending",
+    "companion_overlay": "field_overlay.v1",
+    "required_semantics": [
+      "farmland_area",
+      "tree_line",
+      "settlement_area",
+      "river_corridor",
+      "bridge_crossing",
+      "road_and_track_network",
+      "elevation_and_landcover"
+    ],
+    "runtime_consumption": "held_until_passability_and_observation_owners_exist"
+  },
+  "agent": {
+    "unit_definition": "examples/config/database/ground/units/ground_infantry_soldier_mvp.json",
+    "count": 1,
+    "spawn_policy": "fixed_seed_named_spawn",
+    "initial_role": "dismounted_infantry_navigator"
+  },
+  "action_space": {
+    "status": "planned",
+    "fields": [
+      {"name":"desired_heading_deg","type":"continuous","range":[-180.0,180.0]},
+      {"name":"desired_speed_fraction","type":"continuous","range":[0.0,1.0]},
+      {"name":"stance","type":"categorical","values":["stand","crouch","prone"]},
+      {"name":"route_intent","type":"categorical","values":["direct","follow_track","seek_cover","cross_bridge"]}
+    ],
+    "release_gate": "movement_step_and_blocked_transition_are_deterministic"
+  },
+  "observation_space": {
+    "status": "planned",
+    "fields": [
+      "position_local_enu_m",
+      "velocity_local_enu_mps",
+      "heading_and_stance",
+      "elevation_and_slope",
+      "landcover_class",
+      "nearest_tree_line_distance_and_bearing",
+      "nearest_settlement_distance_and_bearing",
+      "river_and_bridge_state",
+      "route_progress_and_blocked_reason",
+      "health_and_command_link_state"
+    ],
+    "unknown_value_policy": "explicit_unknown_with_provenance",
+    "release_gate": "every_field_has_a_single_owner_and_replayable_source"
+  },
+  "reward": {
+    "status": "planned",
+    "terms": {
+      "progress_to_waypoint": {"sign":"positive","owner":"mission_progress"},
+      "route_adherence": {"sign":"positive","owner":"route_contract"},
+      "unsafe_terrain_or_blocked_attempt": {"sign":"negative","owner":"passability"},
+      "unmasked_exposure": {"sign":"negative","owner":"los_cover_future"},
+      "survival_and_health": {"sign":"positive","owner":"agent_state"}
+    },
+    "anti_shortcut_rules": [
+      "no reward for teleporting or leaving the map extent",
+      "blocked transitions must not advance mission progress",
+      "unknown terrain semantics cannot silently become passable"
+    ]
+  },
+  "termination": {
+    "conditions": [
+      "waypoint_reached",
+      "timeout",
+      "invalid_or_blocked_transition_limit",
+      "agent_incapacitated",
+      "environment_contract_failure"
+    ],
+    "fail_closed_on_missing_semantics": true
+  },
+  "curriculum": [
+    {
+      "stage": "S0_contract_and_reset",
+      "goal": "spawn one soldier, reset with a fixed seed, and reproduce the same initial observation",
+      "depends_on": []
+    },
+    {
+      "stage": "S1_flat_waypoint",
+      "goal": "follow a short route without crossing a river or entering held semantics",
+      "depends_on": ["S0_contract_and_reset"]
+    },
+    {
+      "stage": "S2_terrain_cost",
+      "goal": "consume elevation, slope, farmland, track, and river/bridge passability",
+      "depends_on": ["S1_flat_waypoint"]
+    },
+    {
+      "stage": "S3_tree_line_and_settlement_observation",
+      "goal": "observe, report, and route around semantic overlays without releasing fire behavior",
+      "depends_on": ["S2_terrain_cost"]
+    },
+    {
+      "stage": "S4_team_transition",
+      "goal": "only after single-agent replay and observation gates pass, add squad/command relationships",
+      "depends_on": ["S3_tree_line_and_settlement_observation"]
+    }
+  ],
+  "acceptance_gates": [
+    "same seed produces byte-equivalent reset observation",
+    "one action produces one authoritative transition",
+    "blocked movement is observable and does not move the agent",
+    "river crossing is only possible through an explicitly admitted crossing",
+    "tree-line and settlement semantics carry provenance and remain metadata-only until released",
+    "episode trace can be replayed without a live network provider"
+  ]
+}

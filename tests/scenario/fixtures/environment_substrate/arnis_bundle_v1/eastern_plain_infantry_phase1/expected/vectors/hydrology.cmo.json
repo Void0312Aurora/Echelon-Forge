@@ -1,0 +1,160 @@
+{
+  "schema": "arnis_cmo_features",
+  "schema_version": 1,
+  "coordinate_frame": "local_enu_m",
+  "feature_class": "hydrology",
+  "features": [
+    {
+      "feature_id": "openstreetmap:way:2001:hydrology:part:0000",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            0.0,
+            -667.1407662675982
+          ],
+          [
+            0.0,
+            -333.5775811718474
+          ],
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            333.59197941318024
+          ],
+          [
+            0.0,
+            667.1983592199944
+          ]
+        ]
+      },
+      "attributes": {
+        "geometry_role": "centerline",
+        "state": "static_source_geometry",
+        "vertical_anchor_mode": "water_surface_from_dem",
+        "vertical_anchor_source": "continuous_dem_water_surface_sampling",
+        "vertical_placement_resolved": true,
+        "water_kind": "river",
+        "width_m": 28.0,
+        "width_source": "osm_width_m"
+      },
+      "provenance": {
+        "source_feature_id": "2001",
+        "source_feature_type": "way",
+        "source_provider": "openstreetmap",
+        "source_tags": {
+          "name": "Training River",
+          "waterway": "river",
+          "width": "28"
+        },
+        "tags_filtered_by_arnis": true
+      },
+      "lineage": {
+        "block_projection_applied": false,
+        "geometry_source_stage": "projected_from_wgs84_f64",
+        "measurements": {
+          "vertical_anchor_mode": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "vertical_anchor_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "vertical_placement_resolved": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "width_m": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "metric_semantics_pre_block_conversion",
+            "source_semantics": "osm_width_m"
+          }
+        }
+      }
+    },
+    {
+      "feature_id": "openstreetmap:way:2002:hydrology:part:0000",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -171.6014778934715,
+              -277.9823174288322
+            ],
+            [
+              171.6014778934715,
+              -277.9823174288322
+            ],
+            [
+              171.6014778934715,
+              333.59197941318024
+            ],
+            [
+              -171.6014778934715,
+              333.59197941318024
+            ],
+            [
+              -171.6014778934715,
+              -277.9823174288322
+            ]
+          ]
+        ]
+      },
+      "attributes": {
+        "geometry_role": "area",
+        "state": "static_source_geometry",
+        "vertical_anchor_mode": "water_surface_from_dem",
+        "vertical_anchor_source": "continuous_dem_water_surface_sampling",
+        "vertical_placement_resolved": true,
+        "water_kind": "river"
+      },
+      "provenance": {
+        "source_feature_id": "2002",
+        "source_feature_type": "way",
+        "source_provider": "openstreetmap",
+        "source_tags": {
+          "name": "Training River Floodplain",
+          "natural": "water",
+          "water": "river"
+        },
+        "tags_filtered_by_arnis": true
+      },
+      "lineage": {
+        "block_projection_applied": false,
+        "geometry_source_stage": "projected_from_wgs84_f64",
+        "measurements": {
+          "vertical_anchor_mode": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "vertical_anchor_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "vertical_placement_resolved": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          }
+        }
+      }
+    }
+  ]
+}
