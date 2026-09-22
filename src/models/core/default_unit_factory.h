@@ -24,6 +24,7 @@
 #include "components/physics/dynamics.h"
 #include "components/physics/forces.h"
 #include "components/domains/air/combat/damage_air.h"
+#include "components/domains/ground/combat/damage_ground.h"
 #include "components/combat/common/damage_common.h"
 #include "components/combat/common/weapon_common.h"
 #include "components/domains/naval/combat/weapon_naval.h"
@@ -1457,6 +1458,22 @@ class DefaultUnitFactory : public IUnitFactory {
         }
     }
 
+    // Attaches the typed per-domain damage component that a structured damage
+    // target needs. Domain damage systems and the effects router both select on
+    // the domain-owned component, so this is the spawn-side half of that
+    // contract: a domain whose damage state is missing here cannot be reached by
+    // its own effects mechanism even when the shared HitboxConfig/SystemHealth/
+    // PlatformDamageState triple is present.
+    static void initialize_spawn_structured_domain_damage_state(flecs::entity &e, UnitType type) {
+        if (type == UnitType::Aircraft || type == UnitType::C2Node) {
+            e.set<AircraftDamageState>({});
+            return;
+        }
+        if (type == UnitType::Ground) {
+            e.set<GroundPlatformDamageState>({});
+        }
+    }
+
     void initialize_spawn_damage_model(flecs::entity &e, const UnitDefinition &def) {
         // Damage Model Initialization
         if (!def.damage_model.hitboxes.empty()) {
@@ -1507,9 +1524,7 @@ class DefaultUnitFactory : public IUnitFactory {
                 e.set<ComponentDamageState>(component_damage);
             }
             e.set<PlatformDamageState>({});
-            if (def.type == UnitType::Aircraft || def.type == UnitType::C2Node) {
-                e.set<AircraftDamageState>({});
-            }
+            initialize_spawn_structured_domain_damage_state(e, def.type);
         } else if (def.airframe.length_m > 0.0) {
             // Procedural Generation
             HitboxConfig generated = generate_default_hitboxes(def.airframe);
@@ -1526,9 +1541,43 @@ class DefaultUnitFactory : public IUnitFactory {
             }
             e.set<SystemHealth>(initial_health);
             e.set<PlatformDamageState>({});
-            if (def.type == UnitType::Aircraft || def.type == UnitType::C2Node) {
-                e.set<AircraftDamageState>({});
-            }
+            initialize_spawn_structured_domain_damage_state(e, def.type);
+        } else if (def.type == UnitType::Ground) {
+            // Ground bootstrap: reach the shared structured damage path.
+            //
+            // Ground definitions carry `health.current_hp` but none of them
+            // declare a `damage_model` or an `airframe`, so without this branch
+            // a ground unit has no HitboxConfig/SystemHealth/PlatformDamageState
+            // at all and every hit falls through to the legacy HP path, which
+            // destroys the unit on the first hit before any ground mechanism can
+            // run. One whole-body hitbox is synthesized from the declared unit
+            // dimensions so the shared structured pipeline has something to
+            // resolve against. This declares no ground-specific geometry and
+            // claims no ground damage fidelity: a real ground damage model, when
+            // one is authored, takes the branch above and supersedes this.
+            HitboxConfig whole_body;
+            Hitbox whole_body_hitbox{};
+            whole_body_hitbox.id = 0;
+            whole_body_hitbox.offset_x = 0.0;
+            whole_body_hitbox.offset_y = 0.0;
+            whole_body_hitbox.offset_z = 0.0;
+            // Neutral vehicle-scale extent. `UnitDefinition` declares no ground
+            // dimensions today, and inventing ground-specific geometry here
+            // would be a ground mechanism claim this bootstrap does not make, so
+            // the synthesized extent is deliberately generic and documented as
+            // provisional rather than derived from a ground content field.
+            whole_body_hitbox.dim_l = 2.0;
+            whole_body_hitbox.dim_w = 2.0;
+            whole_body_hitbox.dim_h = 2.0;
+            whole_body_hitbox.armor_mm = 0.0;
+            whole_body.hitboxes.push_back(whole_body_hitbox);
+            e.set<HitboxConfig>(whole_body);
+
+            SystemHealth initial_health;
+            initial_health.systems["structure"] = 1.0;
+            e.set<SystemHealth>(initial_health);
+            e.set<PlatformDamageState>({});
+            initialize_spawn_structured_domain_damage_state(e, def.type);
         }
     }
 

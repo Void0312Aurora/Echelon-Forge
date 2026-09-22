@@ -31,7 +31,6 @@
 
 #include "systems/combat/damage_system_air.h"
 #include "systems/combat/damage_system_common.h"
-#include "systems/combat/damage_system_ground.h"
 #include "systems/combat/damage_system_naval.h"
 #include "systems/combat/guidance_system.h"
 #include "systems/combat/pilot_weapon_release_system.h"
@@ -43,6 +42,7 @@
 #include "systems/domains/air/aerodynamics_system.h"
 #include "systems/domains/air/control_system.h"
 #include "systems/domains/air/propulsion_system.h"
+#include "systems/domains/ground/damage_system_ground.h"
 #include "systems/domains/naval/embarked_air_ops_system.h"
 #include "systems/domains/naval/naval_logistics_system.h"
 #include "systems/domains/naval/naval_mission_weapon_release_system.h"
@@ -265,6 +265,8 @@ void register_esm_reset_system(flecs::world &ecs) {
     X(AircraftDamageState, "AircraftDamageState", "flecs.component.aircraft_damage_state")         \
     X(AircraftDamageBaseline, "AircraftDamageBaseline",                                            \
       "flecs.component.aircraft_damage_baseline")                                                  \
+    X(GroundPlatformDamageState, "GroundPlatformDamageState",                                      \
+      "flecs.component.ground_platform_damage_state")                                              \
     X(EffectsModelRef, "EffectsModelRef", "flecs.component.effects_model_ref")                     \
     X(EngagementEventRecorderRef, "EngagementEventRecorderRef",                                    \
       "flecs.component.engagement_event_recorder_ref")                                             \
@@ -379,7 +381,7 @@ struct ValidationResult {
 };
 
 ValidationResult validate_registry() {
-    if (std::size(kDefaultComponents) != 85) {
+    if (std::size(kDefaultComponents) != 86) {
         return {false, "component contribution count is not the admitted default count"};
     }
     std::unordered_set<std::string_view> component_ids;

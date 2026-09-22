@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/domains/ground/README.md`
 Owner: `domains/ground`
-Last verified: `2026-08-08`
+Last verified: `2026-09-22`
 
 The Ground owner defines land-domain specialization semantics without turning
 Army service doctrine into a private runtime stack. It owns Ground-specific
@@ -33,9 +33,21 @@ remain with their respective owners.
   `TaskOrder`, `LeaderIntent`, `PilotReport`, and `MissionCommand` compatibility
   shells.
 - The maintained tasking cadence baseline is `1 Hz`.
-- There is no `src/systems/domains/ground/` runtime-system owner. Route
-  movement, terrain interaction, sensing, fires, effects, damage, suppression,
-  logistics, and Ground observation export remain held.
+- `src/systems/domains/ground/damage_system_ground.h` registers `GroundDamageStateUpdate`
+  as a `domain = ground` system at stage 30 of the default composition. It matches
+  the spawned ground entity and advances the ground-owned
+  `GroundPlatformDamageState`, and the effects route into that state is reachable: the
+  component id is resolved once per world in the composition path, so a structural hit
+  produces the ground consequence instead of the placeholder fallback's all-zero
+  destruction. Measured `2026-09-22` and recorded in the
+  [DM-G1 repair package](work/active/ground_damage_effects_route_repair/README.md). The
+  [Ground Systems Owner Admission](reviews/ground_systems_owner_admission_20260921/README.md)
+  package reconciled that placement and is accepted.
+- `src/systems/domains/ground/` owns only the damage response; there is no complete
+  Ground runtime-system owner. Route movement, terrain interaction, sensing, fires,
+  effects, damage, suppression, logistics, and Ground observation export remain held as
+  capabilities: reaching a consequence is not a domain runtime, and the package that
+  repaired the route claims no capability from it.
 
 Directory placement does not broaden those claims. The current evidence proves
 native identity and a static task/status chain, not a complete land-combat
@@ -48,8 +60,21 @@ runtime.
 - [Ground defect inventory](reviews/ground_domain_defect_inventory_20260522.md):
   dated review snapshot; open items require current reverification.
 
-There is no currently authorized Ground `work/active/` package. Archive records
+The authorized Ground work surface was
+[Ground Systems Owner Admission](reviews/ground_systems_owner_admission_20260921/README.md),
+now an accepted review record: it admitted `src/systems/domains/ground/` as the Ground
+per-tick systems owner. Its declaration cluster reconciled this page and the specialization
+baseline, so the reachability status of the effects route is stated here
+rather than described as a placeholder. Every reading inside that record is the
+pre-repair measurement that located the cause; the route is reachable now. Archive records
 may provide provenance but do not redefine the standards above.
+
+Open work that outlived the admission record, restated here rather than left inside it: the
+`DM-G1` repair has landed with its own package, and what it leaves open is the mobility
+projection expectation that still carries one `xfail(strict=True)` and needs an owner
+decision; a `ground_p2_stage_node` package, because the only Ground-claimed stage has no
+registered node; and an archive-ledger registration for the retired `docs/task/ground/`
+records, which belongs to documentation governance.
 
 ## Related Owners
 

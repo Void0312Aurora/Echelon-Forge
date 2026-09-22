@@ -1409,6 +1409,7 @@ DEFAULT_COMPONENTS = (
   "PlatformDamageState",
   "AircraftDamageState",
   "AircraftDamageBaseline",
+  "GroundPlatformDamageState",
   "EffectsModelRef",
   "EngagementEventRecorderRef",
   "SensorModelRef",

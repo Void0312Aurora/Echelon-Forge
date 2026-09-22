@@ -146,4 +146,9 @@ struct EffectsModelRef {
     IEffectsModel *model;
 };
 
-std::unique_ptr<IEffectsModel> make_default_effects_model();
+// The ground damage component id is resolved by the caller and passed in, rather than
+// resolved here from the type. Component identity is minted by the composition path from
+// the admitted registry, and a model translation unit that resolves the type itself can
+// reach a different component id than the spawn path wrote - which is exactly the
+// duplicate-id defect this parameter exists to remove.
+std::unique_ptr<IEffectsModel> make_default_effects_model(flecs::id_t ground_damage_component);

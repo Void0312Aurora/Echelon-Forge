@@ -54,6 +54,7 @@ bool finalize_default_effects_platform_damage(flecs::entity target_entity,
 enum class DefaultEffectsTargetDomain {
     CommonLegacy,
     Air,
+    Ground,
     NavalPlaceholder,
     GroundPlaceholder,
 };
@@ -61,20 +62,54 @@ enum class DefaultEffectsTargetDomain {
 struct DefaultEffectsDomainTargetSelection {
     DefaultEffectsTargetDomain domain = DefaultEffectsTargetDomain::CommonLegacy;
     bool structured_damage_target = false;
+    bool is_air_target = false;
     AircraftDamageState *aircraft_damage = nullptr;
     const AircraftVulnerabilityProfile *aircraft_vulnerability = nullptr;
+    GroundPlatformDamageState *ground_damage = nullptr;
 };
 
 DefaultEffectsDomainTargetSelection
-route_default_effects_target_domain(flecs::entity target_entity) {
+route_default_effects_target_domain(flecs::entity target_entity,
+                                    flecs::id_t ground_damage_component) {
     const DefaultEffectsAirDomainTargetSelection air_target =
         select_default_effects_air_domain_target(target_entity);
     if (air_target.structured_damage_target) {
         return DefaultEffectsDomainTargetSelection{
             .domain = DefaultEffectsTargetDomain::Air,
             .structured_damage_target = true,
+            .is_air_target = true,
             .aircraft_damage = air_target.aircraft_damage,
             .aircraft_vulnerability = air_target.aircraft_vulnerability,
+        };
+    }
+    // Structured ground selection is the maintained ground route, and it gets its
+    // own domain value so it is distinguishable from the placeholder fallback
+    // below. The GroundPlaceholder domain stays only as the
+    // unsatisfied-selection fallback: it is reached when a ground-keyed target is
+    // missing the ground-owned damage state or the shared hitbox/health/platform
+    // damage surface.
+    const ground::effects::DefaultEffectsGroundDomainTargetSelection ground_target =
+        ground::effects::select_default_effects_ground_domain_target(target_entity,
+                                                                     ground_damage_component);
+    if (ground_target.structured_damage_target) {
+        // Reachability discriminator, kept at debug level because it is a
+        // diagnostic rather than maintained behavior: two distinct defects
+        // produce the same observable for a ground hit -- "unit destroyed,
+        // all-zero capability vector". Either (a) the structured route ran and
+        // the shared platform pipeline destructed at the observed severity, or
+        // (b) the ground damage state was absent at routing time and the
+        // GroundPlaceholder fallback ran instead. `has_ground_state` separates
+        // them, and `state_id` now reports the id this route actually resolved
+        // rather than resolving the type a second time to print it. Set
+        // `CMO_SIM_LOG_LEVEL=debug` to see it.
+        spdlog::debug("GROUND ROUTE entity={} has_ground_state={} state_id={}",
+                      static_cast<uint64_t>(target_entity.id()),
+                      target_entity.has(ground_damage_component) ? 1 : 0,
+                      static_cast<uint64_t>(ground_damage_component));
+        return DefaultEffectsDomainTargetSelection{
+            .domain = DefaultEffectsTargetDomain::Ground,
+            .structured_damage_target = true,
+            .ground_damage = ground_target.ground_damage,
         };
     }
     if (naval::effects::is_default_effects_naval_placeholder_target(target_entity)) {
@@ -92,9 +127,10 @@ route_default_effects_target_domain(flecs::entity target_entity) {
 
 bool resolve_default_effects_domain_platform_consequences(
     const DefaultEffectsDomainTargetSelection &domain_target, DefaultEffectsScratch &scratch,
-    flecs::entity target_entity, const Missile &missile, const Vec3 &local_imp, double closure_mps,
-    double severity, const WarheadEffectProfile &warhead_effects,
-    PlatformDamageState *platform_damage, ComponentDamageState *component_damage, Health *hp) {
+    flecs::entity target_entity, const Missile &missile, const HitboxConfig *hitboxes,
+    const Vec3 &local_imp, double closure_mps, double severity,
+    const WarheadEffectProfile &warhead_effects, PlatformDamageState *platform_damage,
+    GroundPlatformDamageState *ground_damage, ComponentDamageState *component_damage, Health *hp) {
     switch (domain_target.domain) {
     case DefaultEffectsTargetDomain::Air:
         return resolve_default_effects_air_domain_consequences(
@@ -104,6 +140,15 @@ bool resolve_default_effects_domain_platform_consequences(
     case DefaultEffectsTargetDomain::NavalPlaceholder:
         return naval::effects::resolve_default_effects_naval_placeholder_consequences(
             target_entity, platform_damage, hp);
+    case DefaultEffectsTargetDomain::Ground:
+        // The model passes the selection-derived ground state, and the router
+        // falls back to the domain target's own selection when the caller only
+        // has the domain selection. Both resolve to the same component; the
+        // ground consequence path is a no-op when neither is present.
+        return ground::effects::resolve_default_effects_ground_domain_consequences(
+            scratch, target_entity, missile, true, hitboxes, local_imp, severity, warhead_effects,
+            platform_damage,
+            ground_damage != nullptr ? ground_damage : domain_target.ground_damage, hp);
     case DefaultEffectsTargetDomain::GroundPlaceholder:
         return ground::effects::resolve_default_effects_ground_placeholder_consequences(
             target_entity, platform_damage, hp);
