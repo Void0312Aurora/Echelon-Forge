@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/uas/protector/protector-rg1/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-18`
+Last verified: `2026-09-22`
 Equipment ID: `eq-uk-air-protector-rg1`
-Content status: model-level draft with first-party parameter coverage; endurance is stated inconsistently within the cited source and both readings are recorded.
+Content status: parameter table complete for the UK Protector RG Mk1 research record; RAF-specific weapon/sensor/crew rows and common MQ-9B mass/payload data remain separated.
 
 ## Identity
 
@@ -42,11 +42,17 @@ Content status: model-level draft with first-party parameter coverage; endurance
 | Electro-optics | AN/DAS-4 multi-spectral targeting system | `p5-uk-air-protector-rg1-raf` | A |
 | Aircrew (remote) | One pilot, one sensor operator and one mission intelligence coordinator | `p5-uk-air-protector-rg1-raf` | A |
 | Main operating base | RAF Waddington, with deployments to up to two additional global locations | `p5-uk-air-protector-rg1-raf` | A |
+| Maximum gross takeoff weight | 12,500 lb (5,670 kg) | `p5-uk-air-protector-rg1-gaasi` | B (common MQ-9B) |
+| Internal fuel | 6,000 lb (2,721 kg) | `p5-uk-air-protector-rg1-gaasi` | B (common MQ-9B) |
+| Payload capacity | 4,750 lb (2,155 kg) across nine hardpoints, including 800 lb internal | `p5-uk-air-protector-rg1-gaasi` | B (common MQ-9B) |
+| Range | 6,000+ nmi, configuration-dependent | `p5-uk-air-protector-rg1-gaasi` | B (common MQ-9B) |
+| Data links / airworthiness | C-band LOS; X/Ku/Ka-band BLOS; STANAG 4671 and civil-airspace compliant design context | `p5-uk-air-protector-rg1-gaasi`; `p5-uk-air-protector-rg1-raf` | A/B |
 
 ## Configuration Boundary
 
-The cited page states endurance twice with different values: the capability section gives over 40 hours, while the linked video description gives over 30 hours at altitudes up to 40,000 ft. Both are recorded rather than reconciled; the difference may reflect a load or profile the page does not state. No mass, payload weight or fuel capacity is published on the page, so none is recorded. Brimstone 3A and Paveway IV are the UK-specific store integrations and are not generic MQ-9B capability.
+The RAF page states endurance twice with different values: the capability section gives over 40 hours, while the linked video description gives over 30 hours at altitudes up to 40,000 ft. Both are recorded rather than reconciled; the difference may reflect a load or profile the page does not state. GA-ASI supplies common MQ-9B mass, fuel, payload, range and link figures; those are not presented as UK-specific certification values. Brimstone 3A and Paveway IV are the UK-specific store integrations and are not generic MQ-9B capability.
 
 ## Source References
 
 - `p5-uk-air-protector-rg1-raf`: `raw/sources/royal_air_force/p5-uk-air-protector-rg1-raf/manifest.md`
+- `p5-uk-air-protector-rg1-gaasi`: `raw/sources/general_atomics/p5-uk-air-protector-rg1-gaasi/manifest.md` — common MQ-9B structural, payload, performance and link data
