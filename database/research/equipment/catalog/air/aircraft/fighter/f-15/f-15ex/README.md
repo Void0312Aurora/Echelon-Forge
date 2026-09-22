@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/fighter/f-15/f-15ex/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-17`
+Last verified: `2026-09-22`
 Equipment ID: `eq-us-air-f15ex`
-Content status: parameter table present with per-field source and confidence. Retrieval status is recorded per package in each manifest's `Retrieval:` block rather than asserted here. The empty weight is carried as three rows rather than one merged claim.
+Content status: parameter table complete for the USAF F-15EX Eagle II; the empty-weight conflict remains explicit and no F-15QA/F-15SA values are merged.
 
 ## Identity
 
@@ -41,6 +41,8 @@ Content status: parameter table present with per-field source and confidence. Re
 | Powerplant (second page naming the same engine) | Two General Electric F110-GE-129 at 129 kN each | `p5-us-air-f15ex-globalmilitary` | C |
 | Powerplant thrust | 29,500 lbf (131 kN) each with afterburner; 17,155 lbf (76.31 kN) dry | `p5-us-air-f15ex-f16net` | C |
 | Payload | 29,500 lb (13,381 kg); 13,300 kg on the same page's capability text | `p5-us-air-f15ex-boeing` | B |
+| Armament / carriage | Up to 12 AIM-120 AMRAAMs, or an equivalent mix of large ordnance | `p5-us-air-f15ex-boeing` | B |
+| Mission system | Advanced AESA radar, EPAWSS electronic-warfare suite, digital fly-by-wire, all-glass cockpit and open mission-systems architecture | `p5-us-air-f15ex-boeing` | B |
 | Maximum speed | Mach 2.5 | `p5-us-air-f15ex-boeing` | B |
 | Service ceiling | 50,000 ft (15,240 m) | `p5-us-air-f15ex-boeing` | B |
 | Service life | 20,000+ hours | `p5-us-air-f15ex-boeing` | B |
@@ -58,6 +60,8 @@ Content status: parameter table present with per-field source and confidence. Re
 ## Configuration Boundary
 
 The manufacturer page is the source of record for the dimensions, maximum takeoff weight, payload, maximum speed, ceiling and service life. Those rows are Tier B. It states no engine, no thrust, no empty weight, no crew and no ejection seat, and no such row is attributed to it.
+
+It does state the representative carriage and mission-system context recorded above: up to 12 AMRAAMs or an equivalent large-ordnance mix, plus the AESA radar, EPAWSS, digital flight controls, all-glass cockpit and open mission-systems architecture. These are capability descriptions, not a universal combat load or a claim that every software or weapon configuration is identical.
 
 The powerplant and thrust rows rest on the Tier C pages. This is a correction: the powerplant row previously pointed at the manufacturer page, which does not name an engine at all. The engine designation, 2 × General Electric F110-GE-129, and the dry and afterburner thrust pair come from `p5-us-air-f15ex-f16net`, which states them explicitly, and the same engine model is named by `p5-us-air-f15ex-globalmilitary`. Those two pages are the only packages in this tree that state an engine for this aircraft.
 

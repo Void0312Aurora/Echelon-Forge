@@ -41,7 +41,7 @@ Command: `python database/_work/check_equipment_tree.py`
 | --- | --- |
 | `C1` every referenced source id resolves | PASS, 0 dangling, 0 manifest/path mismatch |
 | `C2` backlog leaf binding (`Equipment ID`) | PASS after the `E2` backfill |
-| `C3` backlog vs coverage status | PASS, 63 of 63 coverage rows agree |
+| `C3` backlog vs coverage status | PASS, 65 of 65 coverage rows agree |
 | `C4` source admission floor | PASS after the `E3` retention backfill |
 | `C5` source-artifact consistency | PASS, no unnamed or aggregate package claims |
 | `C6` retrieval record | PASS, 69 unretrieved citations remain advisory; 171 packages lack a retrieval block |
@@ -55,12 +55,12 @@ Measured counts:
 | Distinct source ids referenced by leaves | 274 |
 | Leaves without `Equipment ID` | 0 |
 | Backlog rows | 118 |
-| Coverage rows | 63 |
-| Status: `cataloged` / `parameter_complete` / `held` | 36 / 74 / 8 |
+| Coverage rows | 65 |
+| Status: `cataloged` / `parameter_complete` / `held` | 34 / 76 / 8 |
 
 ## Leaf Completeness Against The Queue
 
-The queue calls 36 rows `cataloged`, and all 36 now point at leaves carrying a
+The queue calls 34 rows `cataloged`, and all 34 now point at leaves carrying a
 `## Parameters` table. The checker therefore reports `stub_rows_excluded: 0` for
 the non-held queue rows. A separate catalog scan still finds 82 README leaves
 without a parameter table; those are outside the current queue-binding defect and
@@ -70,7 +70,7 @@ remain a depth follow-up rather than evidence of completed extraction.
 
 `coverage/README.md` describes `coverage.csv` as a discovery queue that feeds the
 backlog, and defines its `status` column as starting at `queued`. The file does not
-behave that way: its 63 rows are exactly the 63 in-scope `parameter_complete` rows of the
+behave that way: its 65 rows are exactly the 65 in-scope `parameter_complete` rows of the
 backlog, verified in both directions. It is an extract of the completed set, not a
 pre-backlog discovery surface.
 
@@ -86,7 +86,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | `D4` | Parameter table shape split | 57 leaves use a `Field`-based table; 52 use `Parameter \| Value \| Source \| Confidence`; 82 have no parameter table | open |
 | `D5` | Disjoint naval namespaces | `catalog/naval/ships/surface-combatant/` (tracked, 3 leaves) and the empty untracked `catalog/naval/surface-combatants/` coexist | open |
 | `D6` | Ledger not materialized | `sources/ledger/` holds a README only; `common.schema.json` has no source `$defs` while `FIELDS.md` describes 12 ledger fields | open |
-| `D7` | `coverage.csv` role and status vocabulary contradict its own README | 63 of 63 rows are `parameter_complete`, not `queued` | open |
+| `D7` | `coverage.csv` role and status vocabulary contradict its own README | 65 of 65 rows are `parameter_complete`, not `queued` | open |
 | `D8` | Country rows share a variant leaf without a stated rule | `eq-us-air-c17a` and `eq-uk-air-c17a` both point at `c-17/c-17a`, which is now correct by the `tornado-ids` precedent but is not documented anywhere | open |
 | `D9` | `Equipment ID` scheme is not declared | `eq-<country>-<domain>-<variant>`, country-less `module-*`, and country-less variant names such as `tornado-ids` all coexist with no stated rule | open |
 
@@ -109,6 +109,8 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | EA-18G completion | Added variant-specific propulsion, geometry, mass, ceiling, conditioned combat range, crew and electronic-attack stores from NAVAIR |
 | F-16C Block 50 completion | Replaced generic-family engine and geometry readings with the Shaw Block 50/52 fact sheet, removed the unsupported 42,300 lb reading, and bounded APG-68(V)9 applicability to the FMS context the source actually states |
 | Retrieval records (third batch) | Added successful Tavily-proxy retrieval records for the two NAVAIR pages, the Boeing family page and both USAF F-16 pages; recorded fields not returned instead of inferring them |
+| F-15EX completion | Added the Boeing capability fields for representative AMRAAM/large-ordnance carriage and AESA/EPAWSS/open mission-system context; engine and empty-weight conflicts remain source-bounded |
+| RAF C-17A queue promotion | Promoted the UK row against the already complete shared C-17A leaf after verifying the RAF operator/source row is explicit |
 
 ## Retracted Findings
 
@@ -130,7 +132,7 @@ amend that standard.
 
 ## Explicit Overclaim Refusals
 
-- The 74 `parameter_complete` rows are research drafts. They are not calibrated, not
+- The 76 `parameter_complete` rows are research drafts. They are not calibrated, not
   cross-checked, and not runtime-eligible.
 - No file in this tree is consumed by the runtime loader.
 - Family names remain grouping nodes; only concrete variant leaves count as records.
