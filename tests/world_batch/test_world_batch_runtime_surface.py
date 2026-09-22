@@ -1395,6 +1395,59 @@ class WorldBatchRuntimeTests(unittest.TestCase):
       places=6,
     )
 
+  def test_world_batch_runtime_ground_mission_command_roundtrip_preserves_static_task_slice(self) -> None:
+    batch = ef_py.WorldBatchRuntime(1)
+    self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
+    batch.reset_batch([37])
+
+    soldier = batch.world_raw_quarantine(0).spawn_unit(
+      ef_py.Side.Blue,
+      "Ground_Infantry_Soldier_MVP",
+      400.0,
+      100.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+    )
+    batch.world_raw_quarantine(0).set_command_link(int(soldier), 0.0, 0.0)
+
+    assignment = ef_py.WorldMissionCommandMaintainedAssignment()
+    assignment.world_index = 0
+    assignment.entity_id = int(soldier)
+    assignment.mission_command.shared_core.cmd_heading_deg = 90.0
+    assignment.mission_command.shared_core.cmd_speed_mps = 1.25
+    assignment.mission_command.shared_core.active = True
+    assignment.mission_command.ground_static_task.ground_task_mode = (
+      ef_py.GroundTaskMode.MoveStatic
+    )
+    assignment.mission_command.ground_static_task.objective_area_id = 4101
+    assignment.mission_command.ground_static_task.objective_node_id = 4102
+    assignment.mission_command.ground_static_task.ground_commander_id = 4103
+    assignment.mission_command.ground_static_task.tactical_cadence_hz = 2.0
+
+    batch.set_mission_commands_maintained_batch([assignment])
+
+    maintained = batch.get_mission_commands_maintained_batch(
+      [_entity_ref(0, int(soldier))]
+    )
+
+    self.assertEqual(len(maintained), 1)
+    ground = maintained[0].ground_static_task
+    self.assertEqual(ground.ground_task_mode, ef_py.GroundTaskMode.MoveStatic)
+    self.assertEqual(int(ground.objective_area_id), 4101)
+    self.assertEqual(int(ground.objective_node_id), 4102)
+    self.assertEqual(int(ground.ground_commander_id), 4103)
+    self.assertAlmostEqual(float(ground.tactical_cadence_hz), 2.0, places=6)
+    self.assertAlmostEqual(
+      float(maintained[0].shared_core.cmd_speed_mps),
+      1.25,
+      places=6,
+    )
+
   def test_world_batch_runtime_mission_command_roundtrip_preserves_formation_offsets(self) -> None:
     batch = ef_py.WorldBatchRuntime(1)
     self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
