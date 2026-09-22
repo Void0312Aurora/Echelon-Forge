@@ -10,7 +10,7 @@ accepted after candidate-scope independent review; production acceptance is
 not granted.
 P2-A/P2-B, full maintained-facade parity, production rollback and P5-P8 remain open; no production truth
 publication, production runtime caller cutover, or production cutover is accepted yet. A first maintained
-contract-caller migration slice is recorded in [P5-D caller migration evidence](evidence/p5d_facade_caller_migration_20260923.md).
+contract-caller migration slice and [process-resync evidence](evidence/p5d_process_restart_admission_resync_20260923.md) are recorded.
 
 Language:
 
