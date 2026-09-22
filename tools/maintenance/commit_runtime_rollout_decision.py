@@ -21,8 +21,12 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from python.rl.runtime.rollout_gate import FileRolloutDecisionStore
+from python.rl.runtime.rollout_gate import PRODUCTION_STATES
 from python.rl.runtime.rollout_gate import RolloutAdmissionError
 from python.rl.runtime.rollout_gate import build_rollout_decision_envelope
+from python.rl.runtime.rollout_evidence import RolloutEvidenceError
+from python.rl.runtime.rollout_evidence import assert_rollout_evidence_decision_binding
+from python.rl.runtime.rollout_evidence import load_rollout_evidence
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -35,6 +39,10 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--expected-decision-sha256")
     parser.add_argument("--admissions-open", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--writer-advancement-frozen", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--release-manifest", type=Path)
+    parser.add_argument("--run-receipt", type=Path)
+    parser.add_argument("--package-digest")
+    parser.add_argument("--wheel-digest")
     return parser
 
 
@@ -50,6 +58,28 @@ def main(argv: list[str] | None = None) -> int:
             key_id=args.key_id,
             signing_key=signing_key,
         )
+        production_state = payload["state"] in PRODUCTION_STATES
+        evidence_paths_supplied = args.release_manifest is not None or args.run_receipt is not None
+        if production_state and (args.release_manifest is None or args.run_receipt is None):
+            raise RolloutEvidenceError(
+                "production rollout decisions require --release-manifest and --run-receipt"
+            )
+        if evidence_paths_supplied and (args.release_manifest is None or args.run_receipt is None):
+            raise RolloutEvidenceError(
+                "--release-manifest and --run-receipt must be supplied together"
+            )
+        if args.package_digest is not None and args.release_manifest is None:
+            raise RolloutEvidenceError("--package-digest requires release/receipt evidence")
+        if args.wheel_digest is not None and args.release_manifest is None:
+            raise RolloutEvidenceError("--wheel-digest requires release/receipt evidence")
+        if args.release_manifest is not None and args.run_receipt is not None:
+            binding = load_rollout_evidence(args.release_manifest, args.run_receipt)
+            assert_rollout_evidence_decision_binding(
+                envelope,
+                binding,
+                expected_package_digest=args.package_digest,
+                expected_wheel_digest=args.wheel_digest,
+            )
         admission = FileRolloutDecisionStore(
             args.slot,
             writer_id=args.writer_id,
@@ -61,7 +91,7 @@ def main(argv: list[str] | None = None) -> int:
             writer_advancement_frozen=bool(args.writer_advancement_frozen),
             expected_decision_sha256=args.expected_decision_sha256,
         )
-    except (OSError, json.JSONDecodeError, RolloutAdmissionError) as error:
+    except (OSError, json.JSONDecodeError, RolloutAdmissionError, RolloutEvidenceError) as error:
         print(f"rollout decision commit rejected: {error}", file=sys.stderr)
         return 1
     print(json.dumps({

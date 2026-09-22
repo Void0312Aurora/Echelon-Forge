@@ -1,16 +1,18 @@
 # P5-D Release and RunReceipt Binding Evidence
 
-Status: 2026-09-23 — explicit release-evidence binding slice; not a
-production cutover or P5-D acceptance.
+Status: 2026-09-23 — initial release-evidence binding slice; superseded for
+the production-state commit boundary by [P5-D production binding and
+operations evidence](p5d_production_binding_operations_20260923.md). This is
+not a production cutover or P5-D acceptance.
 
-The maintained runtime now has an opt-in, package-compatible projection that
-binds a local RolloutDecision to an actual release-manifest envelope and a
-durably acknowledged RunReceipt. The projection checks canonical envelope
+The maintained runtime first gained an opt-in, package-compatible projection
+that binds a local RolloutDecision to an actual release-manifest envelope and
+a durably acknowledged RunReceipt. The projection checks canonical envelope
 bytes, release identity and manifest digest, plan digest, rollout decision
 identity and payload digest, receipt terminal/completion state, and package
-and wheel digests. RuntimeFacadeAdapter and WorldBatchVecEnv expose the
-explicit paths and expected package digests; development and shadow callers
-remain unchanged unless the evidence-binding option is enabled.
+and wheel digests. The release-controller production states and
+`RuntimeFacadeAdapter(require_production_admission=True)` now require this
+binding; development and shadow callers remain unchanged.
 
 ## Verification
 
@@ -33,8 +35,9 @@ constructs an adapter with evidence binding required.
 
 ## Remaining boundary
 
-This projection does not itself publish a release, write an ArtifactLedger
-record, or perform a package restart. P5-D still requires the durable ledger
-controller and actual supported-row same-release checkpoint and
-stop/restart-package rollback drills, telemetry/SLO evidence, and rebuild
-retirement before any production cutover.
+This projection does not itself publish an ArtifactLedger record or perform a
+package restart. The follow-up operations packet records the strict
+pre-commit boundary and drill prerequisites. P5-D still requires the durable
+ledger controller and actual supported-row same-release checkpoint and
+stop/restart-package rollback drills, measured telemetry/SLO evidence, and
+rebuild retirement before any production cutover.

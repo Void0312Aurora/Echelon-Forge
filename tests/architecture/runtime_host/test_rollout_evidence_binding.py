@@ -14,6 +14,7 @@ from python.rl.runtime.rollout_gate import build_rollout_decision_envelope
 from python.rl.runtime.rollout_gate import canonical_json_bytes
 from python.rl.runtime.rollout_evidence import RolloutEvidenceError
 from python.rl.runtime.rollout_evidence import load_rollout_evidence
+from python.rl.runtime.rollout_evidence import assert_rollout_evidence_decision_binding
 from python.rl.runtime.world_batch import adapter as adapter_module
 
 
@@ -178,6 +179,20 @@ def test_rollout_evidence_projection_binds_release_receipt_and_package(tmp_path:
     assert binding.plan_sha256 == PLAN
     assert binding.package_digest == PACKAGE
     assert binding.wheel_digest == WHEEL
+
+
+def test_rollout_evidence_projection_can_validate_before_slot_commit(tmp_path: Path) -> None:
+    release_path, receipt_path, store = _write_admitted_records(tmp_path)
+    binding = load_rollout_evidence(release_path, receipt_path)
+    admission = store.read()
+    assert admission is not None
+    assert_rollout_evidence_decision_binding(admission.envelope, binding)
+    forged = dict(admission.envelope)
+    forged_payload = dict(forged["payload"])
+    forged_payload["decision_id"] = "decision-forged"
+    forged["payload"] = forged_payload
+    with pytest.raises(RolloutEvidenceError, match="release/plan/decision"):
+        assert_rollout_evidence_decision_binding(forged, binding)
 
 
 def test_rollout_evidence_projection_rejects_receipt_decision_drift(tmp_path: Path) -> None:

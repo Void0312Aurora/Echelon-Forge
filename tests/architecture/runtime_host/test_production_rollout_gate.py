@@ -148,28 +148,40 @@ def test_maintained_adapter_requires_explicit_production_admission(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from python.rl.runtime.world_batch import adapter as adapter_module
+    from tests.architecture.runtime_host.test_rollout_evidence_binding import _write_admitted_records
 
-    path = tmp_path / "rollout.json"
-    store = FileRolloutDecisionStore(path, writer_id="release-controller", signing_key=KEY, key_id=KEY_ID)
-    prepared = store.commit(_envelope(state="prepared", sequence=0, decision_id="decision-0"))
-    shadow = store.commit(_envelope(state="shadow", sequence=1, decision_id="decision-1", predecessor="decision-0"), expected_decision_sha256=prepared.decision_sha256)
-    canary_ready = store.commit(_envelope(state="canary-ready", sequence=2, decision_id="decision-2", predecessor="decision-1"), expected_decision_sha256=shadow.decision_sha256)
-    store.commit(_envelope(state="production-canary", sequence=3, decision_id="decision-3", predecessor="decision-2"), expected_decision_sha256=canary_ready.decision_sha256)
+    release_path, receipt_path, store = _write_admitted_records(tmp_path)
 
     monkeypatch.setattr(adapter_module.ef_py, "RuntimeFacade", lambda _world_count: object())
     with pytest.raises(RuntimeError, match="requires an admitted RolloutDecision"):
         adapter_module.RuntimeFacadeAdapter(1, require_production_admission=True)
+    admission = store.read()
+    assert admission is not None
     admitted = adapter_module.RuntimeFacadeAdapter(
         1,
-        production_rollout_path=str(path),
-        production_rollout_key=KEY,
+        production_rollout_path=str(store.path),
+        production_rollout_key=b"p5d-evidence-test-key-0123456789abcdef",
         require_production_admission=True,
-        production_release_id="release-p5d-local",
-        production_manifest_sha256=MANIFEST,
-        production_plan_sha256=PLAN,
+        production_release_id="release-evidence-test",
+        production_manifest_sha256=admission.envelope["payload"]["manifest_sha256"],
+        production_plan_sha256="e" * 64,
+        production_release_manifest_path=str(release_path),
+        production_run_receipt_path=str(receipt_path),
+        production_package_digest="a" * 64,
+        production_wheel_digest="b" * 64,
     )
     assert admitted.rollout_admission is not None
     assert admitted.rollout_admission.production_authorized
+    with pytest.raises(RuntimeError, match="release manifest and RunReceipt paths"):
+        adapter_module.RuntimeFacadeAdapter(
+            1,
+            production_rollout_path=str(store.path),
+            production_rollout_key=b"p5d-evidence-test-key-0123456789abcdef",
+            require_production_admission=True,
+            production_release_id="release-evidence-test",
+            production_manifest_sha256=admission.envelope["payload"]["manifest_sha256"],
+            production_plan_sha256="e" * 64,
+        )
 
 
 def test_long_lived_production_adapter_rechecks_kill_switch_before_mutation(
@@ -177,22 +189,13 @@ def test_long_lived_production_adapter_rechecks_kill_switch_before_mutation(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from python.rl.runtime.world_batch import adapter as adapter_module
+    from tests.architecture.runtime_host.test_rollout_evidence_binding import _write_admitted_records
 
-    path = tmp_path / "rollout.json"
-    store = FileRolloutDecisionStore(path, writer_id="release-controller", signing_key=KEY, key_id=KEY_ID)
-    prepared = store.commit(_envelope(state="prepared", sequence=0, decision_id="decision-0"))
-    shadow = store.commit(
-        _envelope(state="shadow", sequence=1, decision_id="decision-1", predecessor="decision-0"),
-        expected_decision_sha256=prepared.decision_sha256,
-    )
-    canary_ready = store.commit(
-        _envelope(state="canary-ready", sequence=2, decision_id="decision-2", predecessor="decision-1"),
-        expected_decision_sha256=shadow.decision_sha256,
-    )
-    canary = store.commit(
-        _envelope(state="production-canary", sequence=3, decision_id="decision-3", predecessor="decision-2"),
-        expected_decision_sha256=canary_ready.decision_sha256,
-    )
+    release_path, receipt_path, store = _write_admitted_records(tmp_path)
+    evidence_key = b"p5d-evidence-test-key-0123456789abcdef"
+    admission = store.read()
+    assert admission is not None
+    canary = admission
 
     class _Facade:
         def set_pilot_actions_batch(self, _assignments):
@@ -201,12 +204,16 @@ def test_long_lived_production_adapter_rechecks_kill_switch_before_mutation(
     monkeypatch.setattr(adapter_module.ef_py, "RuntimeFacade", lambda _world_count: _Facade())
     adapter = adapter_module.RuntimeFacadeAdapter(
         1,
-        production_rollout_path=str(path),
-        production_rollout_key=KEY,
+        production_rollout_path=str(store.path),
+        production_rollout_key=evidence_key,
         require_production_admission=True,
-        production_release_id="release-p5d-local",
-        production_manifest_sha256=MANIFEST,
-        production_plan_sha256=PLAN,
+        production_release_id="release-evidence-test",
+        production_manifest_sha256=admission.envelope["payload"]["manifest_sha256"],
+        production_plan_sha256="e" * 64,
+        production_release_manifest_path=str(release_path),
+        production_run_receipt_path=str(receipt_path),
+        production_package_digest="a" * 64,
+        production_wheel_digest="b" * 64,
     )
     assert adapter.rollout_admission is not None
     assert adapter.rollout_admission.decision_sha256 == canary.decision_sha256
@@ -221,12 +228,16 @@ def test_long_lived_production_adapter_rechecks_kill_switch_before_mutation(
     with pytest.raises(RuntimeError, match="production rollout admission rejected"):
         adapter_module.RuntimeFacadeAdapter(
             1,
-            production_rollout_path=str(path),
-            production_rollout_key=KEY,
+            production_rollout_path=str(store.path),
+            production_rollout_key=evidence_key,
             require_production_admission=True,
-            production_release_id="release-p5d-local",
-            production_manifest_sha256=MANIFEST,
-            production_plan_sha256=PLAN,
+            production_release_id="release-evidence-test",
+            production_manifest_sha256=admission.envelope["payload"]["manifest_sha256"],
+            production_plan_sha256="e" * 64,
+            production_release_manifest_path=str(release_path),
+            production_run_receipt_path=str(receipt_path),
+            production_package_digest="a" * 64,
+            production_wheel_digest="b" * 64,
         )
 
 
@@ -257,3 +268,35 @@ def test_release_controller_cli_commits_signed_slot(tmp_path: Path) -> None:
     )
     assert result.returncode == 0, result.stderr
     assert json.loads(result.stdout)["state"] == "prepared"
+
+
+def test_release_controller_cli_rejects_production_state_without_evidence(tmp_path: Path) -> None:
+    payload_path = tmp_path / "payload.json"
+    key_path = tmp_path / "rollout.key"
+    slot_path = tmp_path / "rollout.json"
+    payload_path.write_bytes(
+        canonical_json_bytes(_payload(state="production-canary", sequence=0, decision_id="decision-0"))
+    )
+    key_path.write_bytes(KEY)
+    result = subprocess.run(
+        [
+            sys.executable,
+            "tools/maintenance/commit_runtime_rollout_decision.py",
+            "--slot",
+            str(slot_path),
+            "--payload",
+            str(payload_path),
+            "--key-file",
+            str(key_path),
+            "--key-id",
+            KEY_ID,
+            "--writer-id",
+            "release-controller-cli",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1
+    assert "require --release-manifest and --run-receipt" in result.stderr
+    assert not slot_path.exists()

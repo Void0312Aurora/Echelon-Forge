@@ -245,13 +245,44 @@ def assert_rollout_evidence_binding(
 ) -> None:
     """Fail closed unless evidence names the exact admitted rollout identity."""
 
-    payload = admission.envelope["payload"]
+    assert_rollout_evidence_decision_binding(
+        admission.envelope,
+        binding,
+        expected_package_digest=expected_package_digest,
+        expected_wheel_digest=expected_wheel_digest,
+    )
+
+
+def assert_rollout_evidence_decision_binding(
+    decision_envelope: Mapping[str, Any],
+    binding: RolloutEvidenceBinding,
+    *,
+    expected_package_digest: str | None = None,
+    expected_wheel_digest: str | None = None,
+) -> None:
+    """Validate evidence against a not-yet-persisted rollout envelope.
+
+    The release-controller CLI uses this pre-commit form so a production
+    decision cannot be written first and checked only after the slot has
+    already become authoritative.  ``RuntimeFacadeAdapter`` continues to use
+    :func:`assert_rollout_evidence_binding` for the persisted-slot path.
+    """
+
+    if not isinstance(decision_envelope, Mapping):
+        raise RolloutEvidenceError("rollout decision envelope is not an object")
+    payload = decision_envelope.get("payload")
+    if not isinstance(payload, Mapping):
+        raise RolloutEvidenceError("rollout decision payload is not an object")
+    decision_sha256 = _require_sha(
+        decision_envelope.get("payload_sha256"),
+        "rollout decision payload_sha256",
+    )
     if (
         binding.release_id != payload["release_id"]
         or binding.manifest_sha256 != payload["manifest_sha256"]
         or binding.plan_sha256 != payload["plan_sha256"]
         or binding.decision_id != payload["decision_id"]
-        or binding.decision_sha256 != admission.envelope["payload_sha256"]
+        or binding.decision_sha256 != decision_sha256
     ):
         raise RolloutEvidenceError("release/plan/decision evidence differs from rollout admission")
     if expected_package_digest is not None and binding.package_digest != _require_sha(
@@ -270,5 +301,6 @@ __all__ = [
     "RolloutEvidenceBinding",
     "RolloutEvidenceError",
     "assert_rollout_evidence_binding",
+    "assert_rollout_evidence_decision_binding",
     "load_rollout_evidence",
 ]

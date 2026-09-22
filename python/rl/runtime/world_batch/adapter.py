@@ -348,7 +348,14 @@ class RuntimeFacadeAdapter:
         self._production_run_receipt_path = production_run_receipt_path
         self._production_package_digest = production_package_digest
         self._production_wheel_digest = production_wheel_digest
-        self._require_production_evidence_binding = bool(require_production_evidence_binding)
+        # A caller that asks for production admission is selecting the
+        # production row, not merely the local slot.  That row must carry the
+        # release/RunReceipt projection as well; development and shadow
+        # callers remain unchanged unless either explicit production option is
+        # supplied.
+        self._require_production_evidence_binding = bool(
+            require_production_evidence_binding or require_production_admission
+        )
         self.rollout_evidence_binding = None
         if production_rollout_path is not None:
             verification_key = production_rollout_key
