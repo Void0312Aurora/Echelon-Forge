@@ -16,9 +16,16 @@
 namespace nb = nanobind;
 
 void bind_core(nb::module_& m);
+void bind_core_enums(nb::module_& m);
+void bind_core_instruments(nb::module_& m);
+void bind_core_unit_data(nb::module_& m);
+void bind_core_observation(nb::module_& m);
 void bind_command(nb::module_& m);
 void bind_episode(nb::module_& m);
+void bind_episode_mission_nav(nb::module_& m);
 void bind_runtime(nb::module_& m);
+void bind_runtime_facade_only(nb::module_& m);
+void bind_gpu_facade_only(nb::module_& m);
 void bind_gpu(nb::module_& m);
 
 template <typename Shape>

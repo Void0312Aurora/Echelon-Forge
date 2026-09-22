@@ -62,6 +62,8 @@ wheel.exclude = [
 
 [tool.scikit-build.cmake.define]
 BUILD_TESTING = "OFF"
+EF_PRODUCTION_FACADE_ONLY = "ON"
+EF_BUILD_DIAGNOSTICS_BINDINGS = "OFF"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
