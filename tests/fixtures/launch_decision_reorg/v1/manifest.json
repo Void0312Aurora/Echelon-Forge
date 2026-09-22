@@ -149,15 +149,16 @@
       "optimizer_parameter_roles": [
         "action_net",
         "hmoe_event_slice",
-        "hybrid_event_head"
+        "hybrid_event_head",
+        "policy_trunk"
       ],
       "replay_rows": 9,
       "seed": 7002,
       "sha256": {
         "observations": "ed36c37a83b9cad417ab155848ca8cc0c7791db46942ec0b85fd5d5a154a21d5",
-        "optimizer_state": "2f27bd908c0e60854c07f13ffae20ca4062c9aba65ced5c385db06baca0c0342",
+        "optimizer_state": "d6cf5ce73b1b70cd6e809cd7ba63707c3df86f536935cd192679914e4767e407",
         "replay": "2f1119f1ee1bce68ac3f6a52241021ad8babe3a294c048c0cca8dc48430f5cfd",
-        "state_dict": "8df24fba64a1f3f963329d5d50bf94e7c6e5eda9a35f20e0b0c48cc9e5950fa5"
+        "state_dict": "54cad5d817b8fb3274165f5ed4a69dcd83c126ea620ff306823d65f2fff4b827"
       },
       "state_dict_keys": [
         "event_parameter_snapshot",
@@ -179,15 +180,16 @@
       "optimizer_parameter_roles": [
         "action_net",
         "hmoe_event_slice",
-        "hybrid_event_head"
+        "hybrid_event_head",
+        "policy_trunk"
       ],
       "replay_rows": 9,
       "seed": 7000,
       "sha256": {
         "observations": "ed36c37a83b9cad417ab155848ca8cc0c7791db46942ec0b85fd5d5a154a21d5",
-        "optimizer_state": "2f27bd908c0e60854c07f13ffae20ca4062c9aba65ced5c385db06baca0c0342",
+        "optimizer_state": "d6cf5ce73b1b70cd6e809cd7ba63707c3df86f536935cd192679914e4767e407",
         "replay": "fe1fbbae3c648ce6ca579c164e98727e300c76853ceca4a43bc0ce38b2665443",
-        "state_dict": "4efd28ba403af9c590038dfaace45903235eb748e07d406c7ba40a6a859170dc"
+        "state_dict": "a21cbd96c3e6b9655cdc3899aa365763d6e903172295e8135943b21818473797"
       },
       "state_dict_keys": [
         "event_parameter_snapshot",
@@ -202,6 +204,6 @@
     1,
     2
   ],
-  "source_revision": "c1c0254a",
+  "source_revision": "d1cd7a1c",
   "torch_version": "2.2.0+cpu"
 }
