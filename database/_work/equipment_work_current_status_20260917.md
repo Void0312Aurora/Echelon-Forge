@@ -21,11 +21,11 @@ check in [check_equipment_tree.py](check_equipment_tree.py). See
 | --- | --- |
 | Branch | `codex/database-scaffold` |
 | Base | `d1ebb5d3` |
-| Off-base commits | 36 |
+| Off-base commits | 38 |
 | Behind `origin/main` | 218 commits |
-| Ahead of `origin/main` | 36 commits |
+| Ahead of `origin/main` | 38 commits |
 | `origin/main` files under `database/` | 0 |
-| Tracked files under `database/` | 602 |
+| Tracked files under `database/` | 603 |
 | Merge dry-run conflicts (`HEAD` vs `origin/main`) | 0 |
 
 `origin/main` carries no files under `database/`, so the tree this work touches is
@@ -41,26 +41,26 @@ Command: `python database/_work/check_equipment_tree.py`
 | --- | --- |
 | `C1` every referenced source id resolves | PASS, 0 dangling, 0 manifest/path mismatch |
 | `C2` backlog leaf binding (`Equipment ID`) | PASS after the `E2` backfill |
-| `C3` backlog vs coverage status | PASS, 65 of 65 coverage rows agree |
+| `C3` backlog vs coverage status | PASS, 68 of 68 coverage rows agree |
 | `C4` source admission floor | PASS after the `E3` retention backfill |
 | `C5` source-artifact consistency | PASS, no unnamed or aggregate package claims |
-| `C6` retrieval record | PASS, 69 unretrieved citations remain advisory; 171 packages lack a retrieval block |
+| `C6` retrieval record | PASS, 68 unretrieved citations remain advisory; 168 packages lack a retrieval block |
 
 Measured counts:
 
 | Metric | Value |
 | --- | --- |
-| Source packages (manifests) | 274 |
+| Source packages (manifests) | 275 |
 | Catalog leaves (carry `## Parameters`) | 109 |
-| Distinct source ids referenced by leaves | 274 |
+| Distinct source ids referenced by leaves | 275 |
 | Leaves without `Equipment ID` | 0 |
 | Backlog rows | 118 |
-| Coverage rows | 65 |
-| Status: `cataloged` / `parameter_complete` / `held` | 34 / 76 / 8 |
+| Coverage rows | 68 |
+| Status: `cataloged` / `parameter_complete` / `held` | 31 / 79 / 8 |
 
 ## Leaf Completeness Against The Queue
 
-The queue calls 34 rows `cataloged`, and all 34 now point at leaves carrying a
+The queue calls 31 rows `cataloged`, and all 31 now point at leaves carrying a
 `## Parameters` table. The checker therefore reports `stub_rows_excluded: 0` for
 the non-held queue rows. A separate catalog scan still finds 82 README leaves
 without a parameter table; those are outside the current queue-binding defect and
@@ -70,7 +70,7 @@ remain a depth follow-up rather than evidence of completed extraction.
 
 `coverage/README.md` describes `coverage.csv` as a discovery queue that feeds the
 backlog, and defines its `status` column as starting at `queued`. The file does not
-behave that way: its 65 rows are exactly the 65 in-scope `parameter_complete` rows of the
+behave that way: its 68 rows are exactly the 68 in-scope `parameter_complete` rows of the
 backlog, verified in both directions. It is an extract of the completed set, not a
 pre-backlog discovery surface.
 
@@ -81,12 +81,12 @@ vocabulary are not. This is a documentation drift, not a data defect.
 
 | Id | Finding | Evidence | State |
 | --- | --- | --- | --- |
-| `D2` | No source package records a rights field | `C4` `missing_rights_field_advisory`, 274 of 274 | open; the admission standard requires it of a ledger row |
+| `D2` | No source package records a rights field | `C4` `missing_rights_field_advisory`, 275 of 275 | open; the admission standard requires it of a ledger row |
 | `D3` | 82 catalog leaves outside the non-held queue have no parameter table | catalog scan: 191 README leaves, 109 with `## Parameters`, 82 without | open; scope and depth for these leaves still need a decision |
 | `D4` | Parameter table shape split | 57 leaves use a `Field`-based table; 52 use `Parameter \| Value \| Source \| Confidence`; 82 have no parameter table | open |
 | `D5` | Disjoint naval namespaces | `catalog/naval/ships/surface-combatant/` (tracked, 3 leaves) and the empty untracked `catalog/naval/surface-combatants/` coexist | open |
 | `D6` | Ledger not materialized | `sources/ledger/` holds a README only; `common.schema.json` has no source `$defs` while `FIELDS.md` describes 12 ledger fields | open |
-| `D7` | `coverage.csv` role and status vocabulary contradict its own README | 65 of 65 rows are `parameter_complete`, not `queued` | open |
+| `D7` | `coverage.csv` role and status vocabulary contradict its own README | 68 of 68 rows are `parameter_complete`, not `queued` | open |
 | `D8` | Country rows share a variant leaf without a stated rule | `eq-us-air-c17a` and `eq-uk-air-c17a` both point at `c-17/c-17a`, which is now correct by the `tornado-ids` precedent but is not documented anywhere | open |
 | `D9` | `Equipment ID` scheme is not declared | `eq-<country>-<domain>-<variant>`, country-less `module-*`, and country-less variant names such as `tornado-ids` all coexist with no stated rule | open |
 
@@ -111,6 +111,8 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | Retrieval records (third batch) | Added successful Tavily-proxy retrieval records for the two NAVAIR pages, the Boeing family page and both USAF F-16 pages; recorded fields not returned instead of inferring them |
 | F-15EX completion | Added the Boeing capability fields for representative AMRAAM/large-ordnance carriage and AESA/EPAWSS/open mission-system context; engine and empty-weight conflicts remain source-bounded |
 | RAF C-17A queue promotion | Promoted the UK row against the already complete shared C-17A leaf after verifying the RAF operator/source row is explicit |
+| Rafale C/B/M completion | Added official Dassault common performance blocks, named C/B/M variant readings, and an official armament/stores package; family-level values and the M 13-station boundary remain explicit |
+| Rafale retrieval records | Replaced stale hand-entered access dates with successful Tavily-proxy retrieval records for the Dassault and Aviationist pages, recording fields not returned |
 
 ## Retracted Findings
 
@@ -118,7 +120,7 @@ The first pass reported these. All three are withdrawn.
 
 | Withdrawn | Why it was reported | Why it is withdrawn |
 | --- | --- | --- |
-| Dangling citation `p5-us-ground-m1a2sepv3-armytechnology` on the M1A2 SEP v3 leaf | An audit script that resolved source packages by declared `Source ID` under only part of the `raw/sources/` tree | The package exists at `raw/sources/army_technology/p5-us-ground-m1a2sepv3-armytechnology/manifest.md`, its `Source ID` line matches, and its own text names the geometry, crew, AGT1500, M256, FLIR, data-link and APU statements the leaf cites it for. The then-current C1 run confirmed 0 dangling ids; the present tree also resolves all 274 manifests |
+| Dangling citation `p5-us-ground-m1a2sepv3-armytechnology` on the M1A2 SEP v3 leaf | An audit script that resolved source packages by declared `Source ID` under only part of the `raw/sources/` tree | The package exists at `raw/sources/army_technology/p5-us-ground-m1a2sepv3-armytechnology/manifest.md`, its `Source ID` line matches, and its own text names the geometry, crew, AGT1500, M256, FLIR, data-link and APU statements the leaf cites it for. The then-current C1 run confirmed 0 dangling ids; the present tree also resolves all 275 manifests |
 | `coverage.csv` status not trustworthy | The file marked all 55 rows `parameter_complete` and held only 18 air rows against 70 in `air.csv` | The `air.csv` comparison was the observation, the conclusion was wrong. Both directions of the coverage-to-backlog comparison agree, so `C3` passes. The real defect is documentary and is now `D7` |
 | Source-reference count 169 against 193 on disk | The same partial-scan audit | The comparison mixed two denominators: 169 is the count of *distinct* ids leaves cite, against 193 *packages* on disk. Both are correct; the implied gap was not |
 
@@ -132,7 +134,7 @@ amend that standard.
 
 ## Explicit Overclaim Refusals
 
-- The 76 `parameter_complete` rows are research drafts. They are not calibrated, not
+- The 79 `parameter_complete` rows are research drafts. They are not calibrated, not
   cross-checked, and not runtime-eligible.
 - No file in this tree is consumed by the runtime loader.
 - Family names remain grouping nodes; only concrete variant leaves count as records.

@@ -7,14 +7,13 @@ Author / maintainer: The Aviationist editorial staff
 Title: Dassault Rafale — general characteristics and variants
 URL: https://theaviationist.com/2024/11/28/dassault-rafale
 Retrieval:
-  attempted_at: 2026-09-17T17:05:00Z
-  method: none
-  status: no_record
-  returned: nothing
-  did_not_return: not established
-  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
+  attempted_at: 2026-09-22T14:18:14Z
+  method: tavily_proxy
+  status: success
+  returned: the variant table for Rafale B, C and M, including per-mark crew, empty weight, internal fuel, common engine and armament rows
+  did_not_return: a maximum-speed or range figure; neither is inferred from another page
 Domain: air
-Equipment: Rafale / Rafale C
+Equipment: Rafale B / C / M
 Configuration: The page tabulates the Rafale B, C and M variants separately, so the C column is directly available and is not inferred from a sibling mark.
 Estimation / uncertainty: Tier C specialist secondary source. It is a defence aviation publication, not a Dassault or French government document. The Dassault and Ministère des Armées pages held in this tree cover the Rafale family at programme level and do not carry this variant table.
 Retention: manifest and extracted parameter notes only
