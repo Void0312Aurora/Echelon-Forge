@@ -37,13 +37,14 @@ calibration package, inventory claim, or final simulation configuration.
 | `parameter_complete` rows | 95 | 150 |
 | `cataloged` rows | 15 | 0 |
 | `held` rows | 8 | 0 where evidence can be obtained; otherwise retained with a blocker |
-| New records required | 0 | 32 |
+| New records required | 5 | 32 |
 
 ## Current iteration ledger
 
 | Batch | Scope | State | Commit |
 | --- | --- | --- | --- |
-| R-1 | Mirage 2000D RMV completion and run setup | in progress | — |
+| R-1 | Mirage 2000D RMV completion and run setup | complete | `cc4628c9` |
+| R-2 | C-5M, AC-130J, CV-22B, HC-130J and E-2D expansion | ready to commit | — |
 
 ## Blocker / skip ledger
 
