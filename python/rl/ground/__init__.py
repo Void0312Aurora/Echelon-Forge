@@ -17,6 +17,7 @@ from .infantry_proxy import (
     build_ground_infantry_command,
     normalize_ground_infantry_action,
 )
+from .proxy_env import GroundInfantryProxyEnv
 
 __all__ = [
     "GROUND_INFANTRY_ACTION_MODE",
@@ -26,6 +27,7 @@ __all__ = [
     "GroundInfantryProxyError",
     "GroundInfantryState",
     "GroundInfantryTransition",
+    "GroundInfantryProxyEnv",
     "build_ground_infantry_command",
     "normalize_ground_infantry_action",
 ]

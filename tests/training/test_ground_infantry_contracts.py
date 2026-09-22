@@ -41,6 +41,8 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
     assert contract["map_profile"]["arnis_bundle_status"] == "verified_export_snapshot"
     assert contract["map_profile"]["companion_overlay"] == "field_overlay.v1"
     assert contract["map_profile"]["runtime_consumption"].startswith("held_until_")
+    assert contract["rl_harness"]["status"] == "proxy_only"
+    assert contract["rl_harness"]["authority"] == "engineering_proxy_only"
     assert [stage["stage"] for stage in contract["curriculum"]] == [
         "S0_contract_and_reset",
         "S1_flat_waypoint",

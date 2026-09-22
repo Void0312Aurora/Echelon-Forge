@@ -7,6 +7,7 @@ import pytest
 
 from python.rl.ground import (
     GroundFieldProxy,
+    GroundInfantryProxyEnv,
     GroundInfantryProxyError,
     build_ground_infantry_command,
     normalize_ground_infantry_action,
@@ -142,3 +143,41 @@ def test_unknown_or_outside_terrain_fails_closed() -> None:
     assert transition.blocked_reason == "outside_map_extent"
     assert transition.moved_distance_m == 0.0
     assert transition.observation["unknown_value_policy"] == "explicit_unknown_with_provenance"
+
+
+def test_proxy_gym_reset_is_seed_stable_and_emits_fixed_observation_contract() -> None:
+    first_env = GroundInfantryProxyEnv(_proxy(), max_steps=4)
+    second_env = GroundInfantryProxyEnv(_proxy(), max_steps=4)
+
+    first_obs, first_info = first_env.reset(seed=42)
+    second_obs, second_info = second_env.reset(seed=42)
+
+    assert first_env.action_space.shape == (4,)
+    assert first_env.observation_space.contains(first_obs)
+    assert first_info["authority"] == "engineering_proxy_only"
+    assert second_info["authority"] == "engineering_proxy_only"
+    for key in first_obs:
+        assert (first_obs[key] == second_obs[key]).all()
+
+
+def test_proxy_gym_step_exposes_blocking_and_replay_trace_without_native_claim() -> None:
+    env = GroundInfantryProxyEnv(
+        _proxy(),
+        start_xy_m=(820.0, 667.0),
+        goal_xy_m=(1000.0, 667.0),
+        blocked_step_limit=2,
+    )
+    observation, _info = env.reset(seed=7)
+    assert env.observation_space.contains(observation)
+
+    _observation, reward, terminated, truncated, info = env.step(
+        [90.0, 1.0, 0.0, 0.0]
+    )
+
+    assert reward < 0.0
+    assert terminated is False
+    assert truncated is False
+    assert info["blocked"] is True
+    assert info["blocked_reason"] == "river_crossing_requires_bridge_intent"
+    assert info["authority"] == "engineering_proxy_only"
+    assert len(env.trace) == 1

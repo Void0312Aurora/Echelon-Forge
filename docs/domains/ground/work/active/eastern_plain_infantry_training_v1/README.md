@@ -43,6 +43,10 @@ accepted.
 - Deterministic contract/proxy scaffold:
   `python/rl/ground/infantry_proxy.py`. It is explicitly engineering-proxy-only
   and is not a native Ground runtime or RL training entry point.
+- Gymnasium contract harness:
+  `python/rl/ground/proxy_env.py` (`GroundInfantryProxyEnv`). It exercises the
+  RL reset/step/observation/reward/termination/trace boundary only; its
+  authority remains `engineering_proxy_only`.
 
 The `expected/` bundle has now been generated and verified with the pinned Arnis
 v3.0.0 CMO patch, and the preview plus `field_acceptance.json` are retained. The

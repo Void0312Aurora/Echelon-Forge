@@ -607,6 +607,25 @@ class GroundFieldProxy:
             "unknown_value_policy": "explicit_unknown_with_provenance",
         }
 
+    def observation_for_state(
+        self,
+        state: GroundInfantryState,
+        *,
+        velocity_x_mps: float = 0.0,
+        velocity_y_mps: float = 0.0,
+        blocked_reason: str | None = None,
+    ) -> dict[str, Any]:
+        """Build the proxy observation without advancing the episode."""
+
+        terrain = self.sample(state.x_m, state.y_m)
+        return self._observation(
+            state,
+            terrain,
+            velocity_x_mps=velocity_x_mps,
+            velocity_y_mps=velocity_y_mps,
+            blocked_reason=blocked_reason,
+        )
+
     def step(
         self,
         state: GroundInfantryState,

@@ -40,6 +40,12 @@
     ],
     "release_gate": "movement_step_and_blocked_transition_are_deterministic"
   },
+  "rl_harness": {
+    "status": "proxy_only",
+    "entrypoint": "python.rl.ground.proxy_env:GroundInfantryProxyEnv",
+    "authority": "engineering_proxy_only",
+    "promotion_gate": "native_ground_reset_step_replay_and_terrain_owner"
+  },
   "observation_space": {
     "status": "planned",
     "fields": [
