@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/tanker/voyager/voyager-kc2/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-18`
+Last verified: `2026-09-22`
 Equipment ID: `eq-uk-air-voyager-kc2`
-Content status: model-level draft with first-party parameter coverage; KC2 and KC3 figures are separated where the source distinguishes them.
+Content status: parameter table complete for UK Voyager KC2 research use; RAF KC2 fit and Airbus common MRTT structural/performance data remain separately scoped.
 
 ## Identity
 
@@ -48,10 +48,18 @@ Content status: model-level draft with first-party parameter coverage; KC2 and K
 | Defensive aids | Enhanced Defensive Aids Suite | `p5-uk-air-voyager-kc2-raf` | A |
 | Aircrew | Two pilots, one mission systems operator for air-to-air refuelling, eight cabin crew for air transport | `p5-uk-air-voyager-kc2-raf` | A |
 | Platform basis | Airbus A330-200 | `p5-uk-air-voyager-kc2-raf` | A |
+| Structural MTOW (MRTT common block) | 233,000 kg | `p5-eu-air-a330mrtt-specs` | B |
+| Structural MLW (MRTT common block) | 182,000 kg | `p5-eu-air-a330mrtt-specs` | B |
+| Maximum fuel weight (MRTT common block) | 111,000 kg | `p5-eu-air-a330mrtt-specs` | B |
+| Payload (MRTT common block) | 45,000 kg | `p5-eu-air-a330mrtt-specs` | B |
+| Maximum cruise speed (MRTT common block) | Mach 0.86 | `p5-eu-air-a330mrtt-specs` | B |
+| Range with maximum payload | 7,000 km (3,800 nmi), ISA+15 | `p5-eu-air-a330mrtt-specs` | B (conditioned) |
+| Ferry / maximum-fuel range | 16,100 km (8,700 nmi), ISA+15 | `p5-eu-air-a330mrtt-specs` | B (conditioned) |
+| Mission system / refuelling envelope | Boom and underwing hose-and-drogue family systems; KC2 uses two underwing pods, while KC3 adds the centreline hose | `p5-uk-air-voyager-kc2-raf`; `p5-eu-air-a330mrtt-specs` | A/B |
 
 ## Configuration Boundary
 
-The page describes the Voyager as a whole and distinguishes KC2 from KC3 only by refuelling fit: the KC2 has two underwing pods, the KC3 adds a centreline hose for large aircraft. All other figures above are common to both marks and are not asserted as KC2-unique. The 109-tonne figure is a carried-fuel load, not an internal tank capacity, and the source notes that fuel is stored in existing tanks with the cabin left available. Structural masses and range are not published on the page and are not recorded.
+The page describes the Voyager as a whole and distinguishes KC2 from KC3 only by refuelling fit: the KC2 has two underwing pods, the KC3 adds a centreline hose for large aircraft. All other RAF figures above are common to both marks and are not asserted as KC2-unique. The 109-tonne figure is a carried-fuel load, not an internal tank capacity, and the source notes that fuel is stored in existing tanks with the cabin left available. Structural masses and range are supplied as common A330 MRTT readings by the Airbus brochure and are not asserted as UK-only measurements.
 
 Three packages now supply fuel and payload quantities and they are not the same quantity:
 - The Royal Air Force page gives up to 109 tonnes of fuel carried.
@@ -63,5 +71,6 @@ A carried load, a capacity and an offload under a stated profile are three diffe
 ## Source References
 
 - `p5-uk-air-voyager-kc2-raf`: `raw/sources/royal_air_force/p5-uk-air-voyager-kc2-raf/manifest.md` — Royal Air Force platform page
+- `p5-eu-air-a330mrtt-specs`: `raw/sources/airbus/p5-eu-air-a330mrtt-specs/manifest.md` — manufacturer structural, propulsion and performance block
 - `p5-uk-air-voyager-kc2-ukdf`: `raw/sources/uk_defence_forum/p5-uk-air-voyager-kc2-ukdf/manifest.md` — fuel capability and offload readings
 - `p5-eu-air-a330mrtt-airbus`: `raw/sources/airbus/p5-eu-air-a330mrtt-airbus/manifest.md` — manufacturer family offload and payload figures
