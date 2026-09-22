@@ -52,6 +52,11 @@ heading/speed plus static-task fields.  It rejects crouch/prone stance and
 non-direct route intents because the current native command shape has no such
 fields; silently dropping them would make the training trace dishonest.
 
+The proxy observation additionally exposes tree-line/settlement distance and
+bearing plus river/bridge flags.  These fields are deliberately labelled
+engineering products; they do not satisfy the held native observation/track
+export gate.
+
 The proxy fails closed on unknown raster cells, out-of-bounds transitions, and
 river crossings without the explicit bridge intent.  The bridge rule is a
 temporary test policy, not a released crossing model.

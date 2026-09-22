@@ -42,6 +42,9 @@ Owner：`domains/ground`，环境输入由 `systems/environment` 负责
   heading/speed 和已有 Ground static-task 片段送入批量契约；对于当前原生命令结构
   无法表达的 stance/route 字段会直接拒绝，而不是静默丢弃。
 
+代理观测现在包含树带/聚落距离与方位，以及河流/桥面标志；这些是可重放的
+engineering products，原生 observation export 仍保持 held。
+
 本次已经用固定 Arnis v3.0.0 CMO patch 实际生成并验证 `expected/` bundle，且
 保留了预览和 `field_acceptance.json`。高程与地表覆盖仍来自网络/缓存 provider，
 所以这份签入 bundle 是当前证据快照，不等于未来任意时间都能从网络逐字节重建。

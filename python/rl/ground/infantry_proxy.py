@@ -190,6 +190,7 @@ class GroundInfantryState:
     y_m: float
     heading_deg: float = 0.0
     stance: str = "stand"
+    route_intent: str = "direct"
     sim_time_s: float = 0.0
     step_index: int = 0
     route_progress_m: float = 0.0
@@ -207,6 +208,8 @@ class GroundInfantryState:
             raise GroundInfantryProxyError("step_index must be non-negative")
         if self.stance not in STANCE_NAMES:
             raise GroundInfantryProxyError(f"stance must be one of {STANCE_NAMES}")
+        if self.route_intent not in ROUTE_INTENT_NAMES:
+            raise GroundInfantryProxyError(f"route_intent must be one of {ROUTE_INTENT_NAMES}")
 
 
 @dataclass(frozen=True)
@@ -317,6 +320,38 @@ def _segment_near_geometry(
         if _point_near_geometry(point, geometry, radius_m):
             return True
     return False
+
+
+def _closest_point_on_segment(
+    point: tuple[float, float], start: tuple[float, float], end: tuple[float, float]
+) -> tuple[float, float]:
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    length_sq = dx * dx + dy * dy
+    if length_sq <= 1.0e-12:
+        return start
+    fraction = max(
+        0.0,
+        min(1.0, ((point[0] - start[0]) * dx + (point[1] - start[1]) * dy) / length_sq),
+    )
+    return (start[0] + fraction * dx, start[1] + fraction * dy)
+
+
+def _closest_point_on_geometry(
+    point: tuple[float, float], geometry: Mapping[str, Any]
+) -> tuple[float, float] | None:
+    points = _geometry_points(geometry)
+    if not points:
+        return None
+    if geometry.get("geometry_type") == "point":
+        return points[0]
+    if geometry.get("geometry_type") == "polygon" and _point_in_polygon(point, points):
+        return point
+    candidates = [
+        _closest_point_on_segment(point, points[index - 1], current)
+        for index, current in enumerate(points)
+    ]
+    return min(candidates, key=lambda candidate: _distance(point, candidate))
 
 
 class GroundFieldProxy:
@@ -477,6 +512,55 @@ class GroundFieldProxy:
                 kinds.add(kind)
         return tuple(sorted(kinds))
 
+    def _nearest_semantic(
+        self, point: tuple[float, float], kind: str
+    ) -> tuple[float | None, float | None]:
+        nearest: tuple[float, float] | None = None
+        for entry in self._entries:
+            if not isinstance(entry, Mapping) or entry.get("overlay_kind") != kind:
+                continue
+            geometry = entry.get("geometry")
+            if not isinstance(geometry, Mapping):
+                continue
+            candidate = _closest_point_on_geometry(point, geometry)
+            if candidate is None:
+                continue
+            distance = _distance(point, candidate)
+            if nearest is None or distance < nearest[0]:
+                nearest = (
+                    distance,
+                    math.degrees(
+                        math.atan2(candidate[0] - point[0], candidate[1] - point[1])
+                    ),
+                )
+        if nearest is None:
+            return None, None
+        return nearest
+
+    def semantic_context(self, x_m: float, y_m: float) -> dict[str, Any]:
+        """Return explicit proxy-only proximity products for observation tests."""
+
+        point = (_finite(x_m, "x_m"), _finite(y_m, "y_m"))
+        tree_distance, tree_bearing = self._nearest_semantic(point, "tree_line")
+        settlement_distance, settlement_bearing = self._nearest_semantic(
+            point, "settlement_anchor"
+        )
+        terrain = self.sample(*point)
+        return {
+            "nearest_tree_line_distance_and_bearing": [
+                -1.0 if tree_distance is None else tree_distance,
+                0.0 if tree_bearing is None else tree_bearing,
+            ],
+            "nearest_settlement_distance_and_bearing": [
+                -1.0 if settlement_distance is None else settlement_distance,
+                0.0 if settlement_bearing is None else settlement_bearing,
+            ],
+            "river_active": "river_corridor" in terrain.semantic_kinds
+            or terrain.landcover_code == 80,
+            "bridge_active": "bridge_crossing" in terrain.semantic_kinds,
+            "authority": "engineering_proxy_only",
+        }
+
     def sample(self, x_m: float, y_m: float) -> GroundTerrainSample:
         x = _finite(x_m, "x_m")
         y = _finite(y_m, "y_m")
@@ -547,6 +631,7 @@ class GroundFieldProxy:
             y_m=float(y_m),
             heading_deg=action.desired_heading_deg,
             stance=action.stance,
+            route_intent=action.route_intent,
         )
 
     def _water_hit(
@@ -599,10 +684,12 @@ class GroundFieldProxy:
             "velocity_local_enu_mps": [velocity_x_mps, velocity_y_mps, 0.0],
             "heading_deg": state.heading_deg,
             "stance": state.stance,
+            "route_intent": state.route_intent,
             "sim_time_s": state.sim_time_s,
             "step_index": state.step_index,
             "route_progress_m": state.route_progress_m,
             "terrain": terrain.as_dict(),
+            "semantic_context": self.semantic_context(state.x_m, state.y_m),
             "blocked_reason": blocked_reason,
             "unknown_value_policy": "explicit_unknown_with_provenance",
         }
@@ -669,6 +756,7 @@ class GroundFieldProxy:
             y_m=end[1],
             heading_deg=normalized.desired_heading_deg,
             stance=normalized.stance,
+            route_intent=normalized.route_intent,
             sim_time_s=state.sim_time_s + dt,
             step_index=state.step_index + 1,
             route_progress_m=state.route_progress_m + distance,
