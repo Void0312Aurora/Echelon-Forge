@@ -36,6 +36,11 @@ and river/bridge rules are deliberately labelled `engineering_proxy_only`.
 They are useful for contract, trace, and curriculum development but are not
 runtime authority and must not be wired into the production WorldBatch path.
 
+`python/rl/ground/proxy_env.py` wraps the same scaffold in a Gymnasium
+`GroundInfantryProxyEnv`, so the RL-side reset/step/observation/reward/
+termination/trace boundary can be tested without pretending that a learned
+policy is already connected to native Ground truth.
+
 The proxy fails closed on unknown raster cells, out-of-bounds transitions, and
 river crossings without the explicit bridge intent.  The bridge rule is a
 temporary test policy, not a released crossing model.

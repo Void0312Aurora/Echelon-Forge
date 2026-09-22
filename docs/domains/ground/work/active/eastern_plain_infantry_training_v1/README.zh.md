@@ -35,6 +35,9 @@ Owner：`domains/ground`，环境输入由 `systems/environment` 负责
   派生工作。
 - 确定性的契约/代理脚手架：`python/rl/ground/infantry_proxy.py`。它明确标记为
   engineering-proxy-only，不是原生陆战 runtime，也不是 RL 训练入口。
+- Gymnasium 契约 harness：`python/rl/ground/proxy_env.py`
+  （`GroundInfantryProxyEnv`）。它只验证 RL 的 reset/step/观测/奖励/终止/轨迹边界，
+  权威级别仍是 `engineering_proxy_only`。
 
 本次已经用固定 Arnis v3.0.0 CMO patch 实际生成并验证 `expected/` bundle，且
 保留了预览和 `field_acceptance.json`。高程与地表覆盖仍来自网络/缓存 provider，
