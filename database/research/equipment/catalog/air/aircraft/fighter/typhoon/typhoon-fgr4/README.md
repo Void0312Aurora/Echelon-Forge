@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/fighter/typhoon/typhoon-fgr4/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-18`
+Last verified: `2026-09-22`
 Equipment ID: `eq-uk-air-typhoon-fgr4`
-Content status: parameter table present with per-field source and confidence. The RAF page supplies the full technical specification block and is the authoritative source for every dimension, mass and performance row.
+Content status: parameter table complete for the RAF Typhoon FGR4; the three type-level mass/fuel rows remain explicitly bounded rather than presented as RAF-specific measurements.
 
 ## Identity
 

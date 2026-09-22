@@ -7,12 +7,11 @@ Author / maintainer: Royal Air Force, aircraft pages
 Title: Typhoon FGR4
 URL: https://www.raf.mod.uk/aircraft/current-aircraft/typhoon-fgr41
 Retrieval:
-  attempted_at: 2026-09-17T17:05:00Z
-  method: none
-  status: no_record
-  returned: nothing
-  did_not_return: not established
-  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
+  attempted_at: 2026-09-22T14:45:51Z
+  method: tavily_proxy
+  status: success
+  returned: the official RAF FGR4 role, complete technical-specification block, defensive aids, weapon systems and sensor groups
+  did_not_return: empty weight, maximum takeoff weight or internal-fuel capacity; those rows remain explicitly type-level secondary readings on the leaf
 Domain: air
 Equipment: Typhoon FGR4
 Configuration: The page is specific to the Typhoon FGR Mk4 as operated by the Royal Air Force, which is the variant the leaf records.

@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/fighter/f-35/f-35b/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-17`
+Last verified: `2026-09-22`
 Equipment ID: `eq-uk-air-f35b`
-Content status: parameter table present with per-field source and confidence. Retrieval status is recorded per package in each manifest's `Retrieval:` block rather than asserted here. The maximum weight row carries the `class` qualifier its sources publish, and the internal fuel conflict is retained.
+Content status: parameter table complete for the F-35B STOVL mark; the class-qualified maximum weight and internal-fuel band remain explicit.
 
 ## Identity
 
@@ -58,10 +58,15 @@ Content status: parameter table present with per-field source and confidence. Re
 | Maximum gross weight (Marine Corps reading) | 60,000 lb class (27,216 kg) | `p5-us-air-f35b-1stmaw` | A |
 | Maximum thrust | 38,000 lb with afterburner | `p5-us-air-f35b-1stmaw` | A |
 | Vertical lift thrust | 40,500 lb | `p5-us-air-f35b-1stmaw` | A |
+| Powerplant | Pratt & Whitney F135 turbofan | `p5-uk-air-f35b-raf-aircraft` | A |
+| Weapons | Meteor, AMRAAM and ASRAAM air-to-air missiles; Paveway IV air-to-surface weapon | `p5-uk-air-f35b-raf-aircraft` | A |
+| Sensors / mission system | AN/APG-81 AESA radar, infrared search and track, and full-coverage electronic warfare suite | `p5-uk-air-f35b-raf-aircraft` | A |
 
 ## Configuration Boundary
 
 Two Royal Air Force artifacts are held for this leaf and they are separate packages with separate ids: `p5-uk-air-f35b-raf-aircraft` is the F-35B aircraft page, and `p5-uk-air-f35b-raf-comparison` is a news article whose two-column table compares the F-35A and the F-35B. The aircraft page states length, height, wingspan, speed, altitude, powerplant, thrust, refuelling method, aircrew, weapons and sensors; it states no wing area, no combat radius, no range, no internal fuel and no g limit. The comparison article states the wing area, the combat radius, the range, the internal fuel and the g limit. An earlier revision of this leaf drew from both under one id; that is why the packages were split.
+
+The weapons and sensor rows above are copied from the RAF F-35B page's named groups. They describe cleared or installed system context, not a universal mission loadout; the Marine Corps package separately states that carried munitions vary by mission.
 
 The maximum weight row states 60,000 lb as a class figure, which is how both the prime contractor sheet and the Marine Corps fact page publish it. It is not recorded as a precise limit. The Marine Corps page adds its own 27,216 kg conversion, recorded on that page's row as a separate reading rather than as the leaf's conversion of the class figure.
 
