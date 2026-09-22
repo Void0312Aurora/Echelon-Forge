@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/rotary_transport/chinook/chinook-hc6a/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-18`
+Last verified: `2026-09-23`
 Equipment ID: `eq-uk-air-chinook-hc6a`
-Content status: model-level draft with first-party parameter coverage; the cited page gives fleet-wide figures across the HC5/HC6/HC6A family, so the values below are not asserted as HC6A-unique.
+Content status: parameter table complete for the RAF Chinook HC6A research record. RAF fleet values and CH-47F family mass references are explicitly separated from HC6A-only certification.
 
 ## Identity
 
@@ -33,6 +33,8 @@ Content status: model-level draft with first-party parameter coverage; the cited
 | Length | 30.14 m | `p5-uk-air-chinook-hc6a-raf` | A |
 | Height | 5.77 m | `p5-uk-air-chinook-hc6a-raf` | A |
 | Rotor diameter | 18.29 m | `p5-uk-air-chinook-hc6a-raf` | A |
+| CH-47F family empty weight reference | 24,578 lb (11,149 kg) | `p5-us-air-ch47f-army-facts` | A (family reference) |
+| CH-47F family maximum gross weight reference | 50,000 lb (22,680 kg) | `p5-us-air-ch47f-army-facts` | A (family reference) |
 | Maximum speed | 160 kt | `p5-uk-air-chinook-hc6a-raf` | A |
 | Maximum altitude | 15,000 ft | `p5-uk-air-chinook-hc6a-raf` | A |
 | Troop capacity | Up to 55 troops | `p5-uk-air-chinook-hc6a-raf` | A |
@@ -46,8 +48,9 @@ Content status: model-level draft with first-party parameter coverage; the cited
 
 ## Configuration Boundary
 
-The cited page presents these figures for the current operational fleet of Mk5/Mk6/Mk6A helicopters rather than for the HC6A alone, and it states a maximum speed of 160 kt without specifying a configuration or altitude. No mass, fuel capacity, range or endurance figure is published on the page, so none is recorded. The HC6 is described as based on the CH-47F with more powerful engines and DAFCS; that engine change is not separately quantified on this page.
+The cited RAF page presents its figures for the current operational fleet of Mk5/Mk6/Mk6A helicopters rather than for the HC6A alone, and it states a maximum speed of 160 kt without specifying a configuration or altitude. The U.S. Army CH-47F package supplies family-level empty and maximum gross weights; those values are not asserted as UK HC6A certification figures. Fuel, range and endurance remain unrecorded because no held source publishes them for the RAF HC6A fleet block. The HC6 is described as based on the CH-47F with more powerful engines and DAFCS; that engine change is not separately quantified on the RAF page.
 
 ## Source References
 
 - `p5-uk-air-chinook-hc6a-raf`: `raw/sources/royal_air_force/p5-uk-air-chinook-hc6a-raf/manifest.md`
+- `p5-us-air-ch47f-army-facts`: `raw/sources/us_army/p5-us-air-ch47f-army-facts/manifest.md` — CH-47F family mass and capability reference, not a UK-specific certification

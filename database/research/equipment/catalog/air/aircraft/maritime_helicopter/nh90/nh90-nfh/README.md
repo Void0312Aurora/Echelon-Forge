@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/maritime_helicopter/nh90/nh90-nfh/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-18`
+Last verified: `2026-09-23`
 Equipment ID: `eq-fr-air-nh90-nfh`
-Content status: parameter table present with per-field source and confidence. Status is `cataloged`, not `parameter_complete`, because the manufacturer publishes its performance figures against a reference weight that is not the NFH's own, so the performance rows are not variant-level claims.
+Content status: parameter table complete for the French Navy NH90 NFH research record. NFH-specific Airbus headline values are separated from common NH90 geometry, fuel and 10,000 kg reference-condition performance.
 
 ## Identity
 
@@ -29,12 +29,15 @@ Content status: parameter table present with per-field source and confidence. St
 | Parameter | Value | Source | Confidence |
 | --- | --- | --- | --- |
 | Maximum gross weight (NFH) | 11,000 kg (24,250 lb) | `p5-fr-air-nh90-nhindustries` | B |
+| NFH maximum weight (technical card) | 11,000 kg (24,250 lb) | `p5-fr-air-nh90-nfh-airbus` | B |
+| NFH useful load | 4,500 kg (9,920 lb) | `p5-fr-air-nh90-nfh-airbus` | B |
 | Maximum gross weight (TTH, for contrast) | 10,600 kg (23,369 lb) | `p5-fr-air-nh90-nhindustries` | B |
 | Alternate gross weight (TTH) | 11,000 kg (24,250 lb) | `p5-fr-air-nh90-nhindustries` | B |
 | Empty weight | 6,400 kg (14,109 lb) | `p5-fr-air-nh90-nhindustries` | B |
 | Useful load | 4,200 kg (9,260 lb) | `p5-fr-air-nh90-nhindustries` | B |
 | Overall dimensions, rotors turning | Length 19.56 m (64.18 ft); width 16.30 m (53.48 ft); height 5.31 m (17.42 ft) | `p5-fr-air-nh90-nhindustries` | B |
 | Powerplant | Two Turbomeca RTM 322-01/9 or RTM 322-01/9A, or two General Electric T700/T6E1 or CT7-8F5; both options listed for NFH and TTH | `p5-fr-air-nh90-nhindustries` | B |
+| NFH engine emergency power | Two RTM 322-01/09 or GE T700/T6E1; maximum emergency power 2,095 kW | `p5-fr-air-nh90-nfh-airbus` | B |
 | Cargo hook | 4,000 kg (8,818 lb) | `p5-fr-air-nh90-nhindustries` | B |
 | Rescue hoist | 270 kg (595 lb) single or dual; 400 kg (880 lb) on ground | `p5-fr-air-nh90-nhindustries` | B |
 | Fuel capacity, internal cell system | 2,035 kg (4,486 lb) | `p5-fr-air-nh90-nhindustries` | B |
@@ -48,22 +51,27 @@ Content status: parameter table present with per-field source and confidence. St
 | Hover ceiling in ground effect | 3,200 m (10,500 ft), reference condition below | `p5-fr-air-nh90-nhindustries` | B |
 | Hover ceiling out of ground effect | 2,600 m (8,530 ft), reference condition below | `p5-fr-air-nh90-nhindustries` | B |
 | Maximum range | 982 km (530 nm) | `p5-fr-air-nh90-nhindustries` | B |
+| NFH fast cruise speed | 274 km/h (148 kt) | `p5-fr-air-nh90-nfh-airbus` | B |
+| NFH maximum range | 900+ km (486+ nm) | `p5-fr-air-nh90-nfh-airbus` | B |
 | Maximum range with 2,500 kg payload | 900 km (486 nm) | `p5-fr-air-nh90-nhindustries` | B |
 | Maximum endurance | 5 hours | `p5-fr-air-nh90-nhindustries` | B |
 | Ferry range, with internal auxiliary tanks | 1,600 km (864 nm) | `p5-fr-air-nh90-nhindustries` | B |
 | Flight envelope | Sea level to 6,000 m (20,000 ft); temperature −40 °C to +50 °C; operation in continuous icing conditions | `p5-fr-air-nh90-nhindustries` | B |
 | Weapons | Two anti-ship missiles (Marte Mk2/S) and two torpedoes (MU90, Mk46 or Stingray), or a mixed configuration | `p5-fr-air-nh90-nhindustries` | B |
+| NFH mission set | Anti-submarine and anti-surface warfare, search and rescue, logistics/vertical replenishment, casualty evacuation, maritime surveillance and special operations | `p5-fr-air-nh90-nfh-airbus` | B |
+| NFH weapon capacity | Two torpedoes, two anti-ship missiles or a mixed configuration | `p5-fr-air-nh90-nfh-airbus` | B |
 | Sensors | 360-degree tactical radar with multiple track-while-scan, auto initialisation and ISAR; tactical FLIR; low-frequency continuous-wave and frequency-modulation dipping sonar; sonobuoy storage, launch and processing; electronic warfare system with ESM and countermeasures; IFF interrogator; Data Link 11 | `p5-fr-air-nh90-nhindustries` | B |
 | Crew | Three, or four with a second mission console role-fitted | `p5-fr-air-nh90-nhindustries` | B |
+| NFH crew | Two plus one or two mission crew | `p5-fr-air-nh90-nfh-airbus` | B |
 | Ship operation | From a frigate up to sea state 5; automatic blade and tail folding for shipboard stowage | `p5-fr-air-nh90-nhindustries` | B |
 
 ## Configuration Boundary
 
-The manufacturer publishes all NH90 technical data on a single platform page and labels the performance block `NH90 General Performance (basic aircraft)`. That block carries a footnote, `(*) at 10000 kg`, which is below both the TTH maximum gross weight of 10,600 kg and the NFH maximum gross weight of 11,000 kg.
+The NHIndustries platform page labels its performance block `NH90 General Performance (basic aircraft)` and footnotes it `(*) at 10000 kg`, below both the TTH maximum gross weight of 10,600 kg and the NFH maximum gross weight of 11,000 kg. A separate Airbus NFH technical card now supplies NFH-specific headline speed, range, crew, useful load, engine-power and weapon-mission values.
 
-Every row marked "reference condition below" is therefore a basic-aircraft figure quoted at 10,000 kg, not an NFH-at-maximum-gross-weight figure. Those rows are not variant-level claims and no correction has been applied to them. The weight, dimension, capacity and fuel rows are not footnoted and apply to the platform, with the NFH's own maximum gross weight stated separately.
+Every row marked "reference condition below" remains a basic-aircraft figure quoted at 10,000 kg, not an NFH-at-maximum-gross-weight figure. Those rows are retained as common-platform reference data rather than relabelled as French NFH test results. The Airbus card closes the missing NFH applicability for the separate headline rows.
 
-The NFH-specific page on the same site carries mission, sensor, weapon and ship-operation content but no specification table; it is not a source of parameters. The dimensions and weights above come from the platform page.
+The NFH-specific page on the same site carries mission, sensor, weapon and ship-operation content but no full specification table. The Airbus NFH card is therefore the source for the variant-level headline block, while the NHIndustries page remains the source for common geometry, fuel, avionics and reference-condition performance.
 
 Empty weight, powerplant, dimensions and fuel capacity are recorded here because the manufacturer page does publish them. An earlier revision of this leaf stated they were missing, which was wrong.
 
@@ -72,4 +80,5 @@ The French Ministry of the Armed Forces page held for this leaf returns a site-u
 ## Source References
 
 - `p5-fr-air-nh90-nhindustries`: `raw/sources/nhindustries/p5-fr-air-nh90-nhindustries/manifest.md`
+- `p5-fr-air-nh90-nfh-airbus`: `raw/sources/airbus/p5-fr-air-nh90-nfh-airbus/manifest.md` — NFH-specific headline performance, crew, useful load, missions and weapon capacity
 - `p5-fr-air-nh90-nfh`: `raw/sources/ministere_des_armees/p5-fr-air-nh90-nfh/manifest.md` — operator context only; unreachable at 2026-09-18
