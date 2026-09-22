@@ -8,7 +8,7 @@
 
 #include "components/basic/common.h"
 #include "components/command/legacy_command_bridge.h"
-#include "components/command/mission_command.h"
+#include "components/domains/naval/command/mission_command_naval.h"
 #include "components/domains/naval/platform/embarked_air_ops.h"
 #include "components/systems/data_link.h"
 #include "components/systems/track_management.h"
@@ -56,8 +56,8 @@ inline void register_embarked_air_ops_system(flecs::world &ecs) {
 
                     Transform *helo_transform = helo.get_mut<Transform>();
                     Velocity *helo_velocity = helo.get_mut<Velocity>();
-                    MissionCommand *helo_mission = helo.get_mut<MissionCommand>();
-                    const MissionCommand *host_mission = host.get<MissionCommand>();
+                    NavalCommandIntent *helo_mission = helo.get_mut<NavalCommandIntent>();
+                    const NavalCommandIntent *host_mission = host.get<NavalCommandIntent>();
                     if (!helo_transform || !helo_velocity || !helo_mission) {
                         continue;
                     }
@@ -124,7 +124,7 @@ inline void register_embarked_air_ops_system(flecs::world &ecs) {
                     } else if ((embarked_helo.relay_oth_targeting ||
                                 host_mission->command_code == 33) &&
                                state.relay_oth_targeting) {
-                        if ((current_time - helo_mission->takeoff_interval_s) <
+                        if ((current_time - helo_mission->last_relay_refresh_time_s) <
                             state.relay_refresh_s) {
                             continue;
                         }
@@ -159,7 +159,7 @@ inline void register_embarked_air_ops_system(flecs::world &ecs) {
                             } else {
                                 *existing = relayed;
                             }
-                            helo_mission->takeoff_interval_s = current_time;
+                            helo_mission->last_relay_refresh_time_s = current_time;
                             break;
                         }
                     }

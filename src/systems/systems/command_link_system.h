@@ -5,6 +5,7 @@
 #include "components/command/command_link_qos.h"
 #include "components/command/common/mission_command_control_state.h"
 #include "components/command/legacy_command_bridge.h"
+#include "components/command/mission_command.h"
 #include "components/basic/common.h"
 
 namespace {
@@ -137,6 +138,10 @@ inline void register_command_link_system(flecs::world& ecs) {
 
                     cmd[i] = pending[i].command;
                     cmd[i].active = true;
+                    const KeyEntity *key = it.entity(i).get<KeyEntity>();
+                    if (key && (key->type == UnitType::Ship || key->type == UnitType::Submarine)) {
+                        set_mission_command_naval_projection(it.entity(i), cmd[i], cmd[i]);
+                    }
 
                     if (!promote_next_pending_mission_command(pending[i], queue[i])) {
                         pending[i].active = false;

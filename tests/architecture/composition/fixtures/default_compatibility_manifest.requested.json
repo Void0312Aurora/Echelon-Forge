@@ -303,6 +303,11 @@
       "registration_id": "flecs.component.munition"
     },
     {
+      "component_id": "NavalCommandIntent",
+      "plugin_id": "builtin.core_runtime",
+      "registration_id": "flecs.component.naval_command_intent"
+    },
+    {
       "component_id": "NavalStores",
       "plugin_id": "builtin.core_runtime",
       "registration_id": "flecs.component.naval_stores"

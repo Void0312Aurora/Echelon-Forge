@@ -65,7 +65,7 @@ The minimal execution vocabulary owned by the naval specialization is:
 
 - `task_family = Escort`
 - `coordination_mode = Support`
-- `warfare_role_code = SupportCoordinator`
+- `warfare_role_code = LogisticsCoordinator`
 - `naval_station_type = Support`
 - `officer_in_tactical_command` is the supporting task group or unit.
 

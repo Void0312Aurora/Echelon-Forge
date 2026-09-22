@@ -191,6 +191,7 @@ void SimulationKernel::set_unit_command(uint64_t entity_id, double heading_deg, 
                 }
             } else {
                 e.set<MissionCommand>(mission);
+                set_mission_command_naval_projection(e, mission, mission);
             }
             return;
         }
@@ -378,7 +379,12 @@ void SimulationKernel::set_mission_command(uint64_t entity_id, const MissionComm
             return;
         }
 
-        set_active_component(e, cmd);
+        MissionCommand next = cmd;
+        next.active = true;
+        e.set<MissionCommand>(next);
+        if (entity_is_ship(e)) {
+            set_mission_command_naval_projection(e, next);
+        }
     }
 }
 
