@@ -896,6 +896,77 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
 
         return dict(self._last_launch_decision_trace)
 
+    def get_launch_decision_parameters(
+        self,
+        roles: tuple[str, ...] | list[str] | None = None,
+    ) -> list[nn.Parameter]:
+        """Return the unique trainable parameters owned by the requested roles.
+
+        The role map is intentionally centralized here so auxiliary update lanes
+        cannot silently reconstruct a broader write set from module names.
+        ``hmoe_event_slice`` currently maps to the routed bank as a whole: its
+        heads emit a full action residual, so a tensor-level event-slice split is
+        not a valid optimizer boundary yet.
+        """
+
+        role_map: dict[str, list[nn.Parameter]] = {
+            "action_net": list(self.action_net.parameters()) if hasattr(self, "action_net") else [],
+            "hmoe_event_slice": list(self.hmoe_head_bank.parameters())
+            if hasattr(self, "hmoe_head_bank")
+            else [],
+            "hybrid_event_head": list(self.hybrid_event_head.parameters())
+            if self.hybrid_event_head is not None
+            else [],
+            "window_classifier_adapter": [],
+            "stopping_adapter": [],
+            "policy_trunk": [],
+        }
+        if self.window_classifier_norm is not None:
+            role_map["window_classifier_adapter"].extend(self.window_classifier_norm.parameters())
+        if self.window_classifier_head is not None:
+            role_map["window_classifier_adapter"].extend(self.window_classifier_head.parameters())
+        if self.stopping_norm is not None:
+            role_map["stopping_adapter"].extend(self.stopping_norm.parameters())
+        if self.stopping_head is not None:
+            role_map["stopping_adapter"].extend(self.stopping_head.parameters())
+        mlp_extractor = getattr(self, "mlp_extractor", None)
+        policy_net = getattr(mlp_extractor, "policy_net", None)
+        if policy_net is not None:
+            role_map["policy_trunk"].extend(policy_net.parameters())
+
+        requested = tuple(roles) if roles is not None else tuple(role_map)
+        selected: list[nn.Parameter] = []
+        seen: set[int] = set()
+        for role in requested:
+            if role not in role_map:
+                raise ValueError(f"unknown launch-decision parameter role: {role!r}")
+            for parameter in role_map[role]:
+                if not parameter.requires_grad or id(parameter) in seen:
+                    continue
+                selected.append(parameter)
+                seen.add(id(parameter))
+        return selected
+
+    def record_launch_decision_update(
+        self,
+        scope: str,
+        parameters: list[nn.Parameter] | tuple[nn.Parameter, ...],
+    ) -> None:
+        """Attach the last dedicated-update write set to the owner trace."""
+
+        ids = tuple(sorted(id(parameter) for parameter in parameters))
+        role_ids = self._launch_decision_parameter_ids()
+        roles = tuple(
+            role
+            for role, candidates in role_ids.items()
+            if any(parameter_id in ids for parameter_id in candidates)
+        )
+        self._last_launch_decision_trace["last_update"] = {
+            "scope": str(scope),
+            "parameter_ids": ids,
+            "parameter_roles": roles,
+        }
+
     def _launch_decision_parameter_ids(self) -> dict[str, tuple[int, ...]]:
         role_prefixes = {
             "action_net": ("action_net.",),
@@ -1581,6 +1652,15 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         if hold_index is None or fire_index is None or layout.event_action_index is None:
             return None
         if self._hybrid_event_use_stopping_head or self._hybrid_event_use_window_classifier_head:
+            return None
+        if self._launch_decision_owner_contract.mode.value in {
+            "governed_composed_v1",
+            "adapter_coupled_v1",
+            "auxiliary_only_v1",
+        }:
+            # Those profiles must differentiate through the Composer output so
+            # their declared contributor write set is not silently reduced to
+            # the legacy direct-head lane.
             return None
 
         with th.no_grad():
