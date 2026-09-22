@@ -8,12 +8,11 @@ Title: AW101 — Military Helicopters, technical data
 URL: https://helicopters.leonardo.com/en/products/aw101
 Brochure: https://helicopters.leonardo.com/documents/16114711/0/AW101_LDO_UK24_00857_0624.pdf
 Retrieval:
-  attempted_at: 2026-09-17T17:05:00Z
-  method: none
-  status: no_record
-  returned: nothing
-  did_not_return: not established
-  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
+  attempted_at: 2026-09-22T16:40:00Z
+  method: tavily_proxy
+  status: success
+  returned: AW101 maximum gross weight, GE CT7-8E option, dimensions, rotor diameter, seating, speed, climb, hover ceiling, range and endurance reference condition
+  did_not_return: UK Merlin HM2 customer engine fit, exact HM2 empty weight and a complete Royal Navy weapon/sensor configuration
 Domain: air
 Equipment: AW101 / Merlin HM2
 Configuration: The page presents the AW101 as a multi-role platform covering maritime, battlefield and search-and-rescue configurations. Its technical data is platform-level and is not separated by customer or mark, so these figures are not asserted as Merlin HM2-unique.

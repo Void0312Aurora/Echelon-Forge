@@ -8,12 +8,11 @@ Title: AW159 — Military Helicopters, technical data
 URL: https://helicopters.leonardo.com/en/products/aw159
 Brochure: https://helicopters.leonardo.com/documents/16114711/0/AW159_LDO_UK24_00856_1024.pdf
 Retrieval:
-  attempted_at: 2026-09-17T17:05:00Z
-  method: none
-  status: no_record
-  returned: nothing
-  did_not_return: not established
-  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
+  attempted_at: 2026-09-22T16:40:00Z
+  method: tavily_proxy
+  status: success
+  returned: AW159 MTOW, engine ratings, internal fuel, seating, dimensions, rotor diameter, ISA/maximum-gross-weight performance, range and endurance
+  did_not_return: Royal Navy HMA2-specific weapon station count and customer-specific empty weight
 Domain: air
 Equipment: AW159 / Wildcat HMA2
 Configuration: The AW159 is presented as a single platform covering maritime and battlefield roles. The page does not separate the Royal Navy HMA2 from the Army AH1 in its technical data, so the figures below are platform-level rather than HMA2-unique.
