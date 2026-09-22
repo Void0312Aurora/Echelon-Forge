@@ -11,7 +11,7 @@
   "map_profile": {
     "id": "eastern_plain_infantry_phase1",
     "arnis_request": "tests/scenario/fixtures/environment_substrate/arnis_bundle_v1/eastern_plain_infantry_phase1/request.json",
-    "arnis_bundle_status": "request_and_source_frozen_export_pending",
+    "arnis_bundle_status": "verified_export_snapshot",
     "companion_overlay": "field_overlay.v1",
     "required_semantics": [
       "farmland_area",

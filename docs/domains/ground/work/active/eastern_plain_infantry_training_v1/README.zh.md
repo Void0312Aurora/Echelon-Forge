@@ -33,6 +33,8 @@ Owner：`domains/ground`，环境输入由 `systems/environment` 负责
 - 地形组成验收器：`tools/environment/arnis/field_acceptance.py`；当前样本必须先
   通过坡度、开放地表、树覆盖和关键语义数量门槛，才允许进入后续 passability
   派生工作。
+- 确定性的契约/代理脚手架：`python/rl/ground/infantry_proxy.py`。它明确标记为
+  engineering-proxy-only，不是原生陆战 runtime，也不是 RL 训练入口。
 
 本次已经用固定 Arnis v3.0.0 CMO patch 实际生成并验证 `expected/` bundle，且
 保留了预览和 `field_acceptance.json`。高程与地表覆盖仍来自网络/缓存 provider，
@@ -51,6 +53,10 @@ Owner：`domains/ground`，环境输入由 `systems/environment` 负责
 首个 runtime 应是脚本控制器加确定性 step/replay harness。强化学习必须排在
 reset、action、observation、reward、termination、replay 契约之后，不能用训练曲线
 掩盖缺失的地形语义。
+
+当前原生 runtime 的测量结果和临时替代方案记录在
+[`native_runtime_blockers.md`](native_runtime_blockers.md)。替代方案只用于继续推进
+契约、轨迹和训练阶梯，不释放虚假的移动或通行性能力。
 
 ## 明确保持 held 的内容
 

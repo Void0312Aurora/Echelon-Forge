@@ -40,6 +40,9 @@ accepted.
   `tools/environment/arnis/field_acceptance.py`. The sample must pass slope,
   open-landcover, tree-cover, and semantic-count thresholds before passability
   derivation is considered.
+- Deterministic contract/proxy scaffold:
+  `python/rl/ground/infantry_proxy.py`. It is explicitly engineering-proxy-only
+  and is not a native Ground runtime or RL training entry point.
 
 The `expected/` bundle has now been generated and verified with the pinned Arnis
 v3.0.0 CMO patch, and the preview plus `field_acceptance.json` are retained. The
@@ -64,6 +67,10 @@ The first runtime implementation should be a scripted controller and a determini
 step/replay harness. Reinforcement learning is downstream of reset, action,
 observation, reward, termination, and replay contracts; it must not be used to hide
 missing terrain semantics.
+
+The current native-runtime measurement and the temporary substitute are recorded in
+[`native_runtime_blockers.md`](native_runtime_blockers.md). The substitute keeps the
+work moving without releasing a false movement or passability claim.
 
 ## Explicit held items
 
