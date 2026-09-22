@@ -1,6 +1,7 @@
 # Launch-Decision Architecture Reorganization
 
-Status: 2026-09-23 finalized implementation plan; active work authorized.
+Status: 2026-09-23 implementation complete; owner verdict `Mergeable` on the
+target branch `codex/launch-decision-reorg`.
 
 Language:
 
@@ -26,8 +27,9 @@ Lifecycle: active
 Canonical: docs/learning/work/active/launch_decision_reorg/README.md
 Owner: learning/policy-architecture
 Last verified: 2026-09-23
-Content status: owner-finalized after the blocked review findings were resolved
-in the plan. No further independent review gate is required for this stream.
+Content status: owner-finalized and implemented through C0-C5 after the blocked
+review findings were resolved in the plan. No further independent review gate is
+required for this stream.
 
 Documentation budget: three files are justified for this active package—this
 canonical README, the finite task-cluster document, and a short Chinese
@@ -96,8 +98,9 @@ without creating another review gate:
 6. the new substantive Chinese companion did not match the Tier B work-surface
    rule.
 
-The implementation branch must now follow these decisions. The plan does not
-claim that the contract has already been implemented.
+The implementation branch followed these decisions. The owner evidence and
+residuals for the completed C0-C5 stream are recorded below; this document does
+not claim runtime quality, kill, damage, Pk, or effects acceptance.
 
 ### Final architecture decision
 
@@ -253,9 +256,9 @@ The trace must include:
 | P0 Boundary | Freeze owner vocabulary, headless inventory, source revision, and no-goals. | The final owner decision in this README. | Baseline manifest and owner decision record are complete. | accepted |
 | P1 Evidence | Establish build preflight, deterministic fixtures, contributor traces, and current test coverage. | P0 accepted. | Manifest, external artifacts, and build/import preflight are reproducible. | accepted |
 | P2 Contract | Implement typed owner/mode validation and serialization tests. | P1 complete. | Conflicts reject; legacy modes round-trip without changed outputs. | accepted |
-| P3 Forward path | Introduce Composer boundary and preserve compatibility mode. | P2 accepted. | Owner trace, unmasked pair, mask handoff, and state-dict behavior are tested. | active |
-| P4 Training/config integration | Align objectives, sidecars, replay, optimizer groups, and config/checkpoint migration. | P3 accepted. | All declared write sets and migration gates pass. | planned |
-| P5 Acceptance/closure | Run focused tests, runtime probes, target-scoped worktree checks, and owner closure documentation. | P4 mergeable or explicitly blocked. | Main-thread owner verdict is Mergeable, Blocked, or Closed with residual owners. | planned |
+| P3 Forward path | Introduce Composer boundary and preserve compatibility mode. | P2 accepted. | Owner trace, unmasked pair, mask handoff, and state-dict behavior are tested. | accepted |
+| P4 Training/config integration | Align objectives, sidecars, replay, optimizer groups, and config/checkpoint migration. | P3 accepted. | All declared write sets and migration gates pass. | accepted |
+| P5 Acceptance/closure | Run focused tests, runtime probes, target-scoped worktree checks, and owner closure documentation. | P4 mergeable or explicitly blocked. | Main-thread owner verdict is Mergeable, Blocked, or Closed with residual owners. | mergeable |
 
 ## Task clusters
 
@@ -413,16 +416,49 @@ Acceptance still reports requested, accepted, released, authorized-release,
 rejection, and repeat-suppression counters separately. Kill, damage, Pk, and
 effects results are not substitutes.
 
+## C5 owner verdict and evidence
+
+Verdict: `Mergeable` for the target worktree and branch. The implementation
+stream completed C0-C5 in serial batches; it is not published or merged by this
+record.
+
+Evidence recorded on 2026-09-23:
+
+- External Debug preflight succeeded for `ef_core`, `ef_py`, and `ef_test`, and
+  `ensure_repo_imports()` resolved the local `ef_py` artifact from
+  `D:\workshop\Research\Echelon-Forge-build\ld-reorg`.
+- The deterministic fixture generator passed twice with the tracked manifest,
+  current ownership roles, fixed CPU float32 observations, seeds `0/1/2`, and
+  three episodes per seed.
+- Policy/ownership focused matrix: `79 passed, 24 subtests passed`; the
+  migration/config matrix: `33 passed, 42 subtests passed`; runtime release and
+  diagnostics gates: `26 passed`.
+- The target worktree is clean, reachable under `.worktrees\ld-reorg`, and has
+  no untracked entries. `git diff --check` and the path-length budget pass.
+- The owner trace shows an unmasked Composer result, distribution-owned mask,
+  explicit mode, contributor roles, and dedicated update parameter IDs.
+
+One broad governance invocation retained an inherited, out-of-scope failure:
+`docs/systems/effects/reviews/continuous_rod_component_load_admission_20260914/README.md`
+lacks the repository-wide metadata fields. It belongs to another subproject and
+was not edited; the targeted worktree and all launch-decision gates pass. This
+is a residual for the documentation-governance owner, not a launch-decision P1.
+
+The stream makes no claim about kill, damage, Pk, timing optimality, or effects
+quality. Those remain outside this package's acceptance boundary.
+
 ## Residuals and next steps
 
-The following residuals remain intentionally open until their phase closes:
+The following register records resolved implementation residuals and the one
+inherited documentation residual that remains outside this stream:
 
 | Residual | Owner/gate | Replacement condition |
 | --- | --- | --- |
-| Strict direct-boundary freeze and write set | P1/P2 | Fixture comparison and explicit optimizer trace |
-| Which active configurations qualify for learned-firing acceptance | P1/P4 | Mode manifest and eligibility table |
-| Whether old optimizer/replay states can be restored | P4 | Exact round-trip or named migration error |
-| Local ef_py artifact availability | P1 | Build preflight succeeds with external CMO_BUILD_DIR |
+| Strict direct-boundary freeze and write set | resolved in C2/C3 | Keep the strict trace and dedicated-head write-set tests with future changes |
+| Which active configurations qualify for learned-firing acceptance | resolved in C0/C4 | Use the tracked mode manifest; do not infer eligibility from a head name |
+| Whether old optimizer/replay states can be restored | resolved in C4 | Require the envelope manifest or emit the named migration error |
+| Local ef_py artifact availability | resolved in C5 for this target | Re-run external build preflight after native/runtime changes |
+| Inherited effects-review metadata gap | documentation-governance owner | Add required metadata in that separate worktree; do not alter this stream |
 
 These are implementation residuals, not reasons to reopen the plan or request
 another review. A phase may be marked blocked when its declared infrastructure
