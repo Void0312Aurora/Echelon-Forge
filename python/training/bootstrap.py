@@ -18,6 +18,10 @@ except ModuleNotFoundError:  # pragma: no cover - Windows smoke paths do not exp
     fcntl = None
 
 from python.env_config import resolve_env_settings
+from python.training.deps import (
+    LaunchDecisionConfigMigrationError,
+    translate_launch_decision_config,
+)
 
 
 SUPPORTED_AGENT_LAYERS = frozenset({"execution", "leader", "cooperative_execution"})
@@ -417,6 +421,15 @@ def prepare_training_bootstrap(args: argparse.Namespace) -> TrainingBootstrap | 
 
     with open(train_cfg_path, "r", encoding="utf-8") as f:
         train_config = json.load(f)
+
+    try:
+        # Resolve the legacy flat surface in memory. The checked-in JSON remains
+        # untouched; explicit target-mode changes are handled by callers with a
+        # named migration id.
+        train_config = translate_launch_decision_config(train_config)
+    except LaunchDecisionConfigMigrationError as exc:
+        print(f"Error: launch-decision config migration failed: {exc}")
+        return None
 
     entry_error = validate_declared_training_entry_paths(
         scenario_path=scenario_path,

@@ -47,6 +47,10 @@ from python.training.vec_env_factory import (
     print_test_only_preflight_runtime_summary,
     resolve_vec_env_spec,
 )
+from python.rl.policy_checkpoint import (
+    LaunchDecisionMigrationError,
+    validate_sb3_checkpoint_against_config,
+)
 
 __all__ = [
     "apply_global_seed",
@@ -73,6 +77,24 @@ def _resolve_test_only_load_path(args: argparse.Namespace, exp_dir: str) -> str 
     if os.path.exists(possible_path):
         return possible_path
     return None
+
+
+def _validate_launch_decision_checkpoint_for_config(
+    checkpoint_path: str,
+    train_config: dict,
+) -> bool:
+    policy_kwargs = train_config.get("hyperparameters", {}).get("policy_kwargs", {})
+    policy_name = str(train_config.get("policy", ""))
+    if policy_name != "HierarchicalMoEExecutionPolicy" and not isinstance(policy_kwargs, dict):
+        return True
+    if policy_name != "HierarchicalMoEExecutionPolicy" and "hybrid_action_spec" not in policy_kwargs:
+        return True
+    try:
+        validate_sb3_checkpoint_against_config(checkpoint_path, train_config)
+    except LaunchDecisionMigrationError as exc:
+        print(f"Error: launch-decision checkpoint migration required: {exc}")
+        return False
+    return True
 
 
 def main():
@@ -141,6 +163,8 @@ def main():
     if args.test_only:
         load_path = test_only_load_path
         assert load_path is not None
+        if not _validate_launch_decision_checkpoint_for_config(load_path, train_config):
+            return
         print(f"Loading model for testing: {load_path}")
         model = algo_cls.load(load_path, env=vec_env)
         
@@ -171,6 +195,8 @@ def main():
     apply_policy_kwargs_feature_extractor_classes(hyperparams)
 
     if args.resume_path:
+        if not _validate_launch_decision_checkpoint_for_config(args.resume_path, train_config):
+            return
         print(f"Loading Checkpoint: {args.resume_path}")
         model = algo_cls.load(args.resume_path, env=vec_env, tensorboard_log=log_dir)
     else:
