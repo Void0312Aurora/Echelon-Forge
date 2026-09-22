@@ -21,11 +21,11 @@ check in [check_equipment_tree.py](check_equipment_tree.py). See
 | --- | --- |
 | Branch | `codex/database-scaffold` |
 | Base | `d1ebb5d3` |
-| Off-base commits | 54 |
+| Off-base commits | 56 |
 | Behind `origin/main` | 218 commits |
-| Ahead of `origin/main` | 54 commits |
+| Ahead of `origin/main` | 56 commits |
 | `origin/main` files under `database/` | 0 |
-| Tracked files under `database/` | 641 |
+| Tracked files under `database/` | 648 |
 | Merge dry-run conflicts (`HEAD` vs `origin/main`) | 0 |
 
 `origin/main` carries no files under `database/`, so the tree this work touches is
@@ -41,7 +41,7 @@ Command: `python database/_work/check_equipment_tree.py`
 | --- | --- |
 | `C1` every referenced source id resolves | PASS, 0 dangling, 0 manifest/path mismatch |
 | `C2` backlog leaf binding (`Equipment ID`) | PASS after the `E2` backfill |
-| `C3` backlog vs coverage status | PASS, 99 of 99 coverage rows agree |
+| `C3` backlog vs coverage status | PASS, 105 of 105 coverage rows agree |
 | `C4` source admission floor | PASS after the `E3` retention backfill |
 | `C5` source-artifact consistency | PASS, no unnamed or aggregate package claims |
 | `C6` retrieval record | PASS, 57 unretrieved citations remain advisory; 158 packages lack a retrieval block |
@@ -50,17 +50,17 @@ Measured counts:
 
 | Metric | Value |
 | --- | --- |
-| Source packages (manifests) | 308 |
+| Source packages (manifests) | 310 |
 | Catalog leaves (carry `## Parameters`) | 120 |
-| Distinct source ids referenced by leaves | 308 |
+| Distinct source ids referenced by leaves | 310 |
 | Leaves without `Equipment ID` | 0 |
 | Backlog rows | 129 |
-| Coverage rows | 102 |
-| Status: `cataloged` / `parameter_complete` / `held` | 8 / 113 / 8 |
+| Coverage rows | 105 |
+| Status: `cataloged` / `parameter_complete` / `held` | 5 / 116 / 8 |
 
 ## Leaf Completeness Against The Queue
 
-The queue calls 8 rows `cataloged`, and all 8 now point at leaves carrying a
+The queue calls 5 rows `cataloged`, and all 5 now point at leaves carrying a
 `## Parameters` table. The checker therefore reports no stub leaf binding defect
 for the non-held queue rows. A separate catalog scan still finds 82 README leaves
 without a parameter table; those are outside the current queue-binding defect and
@@ -70,7 +70,7 @@ remain a depth follow-up rather than evidence of completed extraction.
 
 `coverage/README.md` describes `coverage.csv` as a discovery queue that feeds the
 backlog, and defines its `status` column as starting at `queued`. The file does not
-behave that way: its 99 rows are exactly the 99 in-scope `parameter_complete` rows of the
+behave that way: its 105 rows are exactly the 105 in-scope `parameter_complete` rows of the
 backlog, verified in both directions. It is an extract of the completed set, not a
 pre-backlog discovery surface.
 
@@ -81,12 +81,12 @@ vocabulary are not. This is a documentation drift, not a data defect.
 
 | Id | Finding | Evidence | State |
 | --- | --- | --- | --- |
-| `D2` | No source package records a rights field | `C4` `missing_rights_field_advisory`, 304 of 304 | open; the admission standard requires it of a ledger row |
-| `D3` | 82 catalog leaves outside the non-held queue have no parameter table | catalog scan: 191 README leaves, 109 with `## Parameters`, 82 without | open; scope and depth for these leaves still need a decision |
-| `D4` | Parameter table shape split | 57 leaves use a `Field`-based table; 52 use `Parameter \| Value \| Source \| Confidence`; 82 have no parameter table | open |
+| `D2` | No source package records a rights field | `C4` `missing_rights_field_advisory`, 310 of 310 | open; the admission standard requires it of a ledger row |
+| `D3` | 82 catalog leaves outside the non-held queue have no parameter table | catalog scan: 202 README leaves, 120 with `## Parameters`, 82 without (one module table uses a distinct header) | open; scope and depth for these leaves still need a decision |
+| `D4` | Parameter table shape split | 60 leaves use a `Field`-based table; 59 use `Parameter \| Value \| Source \| Confidence`; 82 have no parameter table; one module table uses a distinct header | open |
 | `D5` | Disjoint naval namespaces | `catalog/naval/ships/surface-combatant/` (tracked, 3 leaves) and the empty untracked `catalog/naval/surface-combatants/` coexist | open |
 | `D6` | Ledger not materialized | `sources/ledger/` holds a README only; `common.schema.json` has no source `$defs` while `FIELDS.md` describes 12 ledger fields | open |
-| `D7` | `coverage.csv` role and status vocabulary contradict its own README | 99 of 99 rows are `parameter_complete`, not `queued` | open |
+| `D7` | `coverage.csv` role and status vocabulary contradict its own README | 105 of 105 rows are `parameter_complete`, not `queued` | open |
 | `D8` | Country rows share a variant leaf without a stated rule | `eq-us-air-c17a` and `eq-uk-air-c17a` both point at `c-17/c-17a`, which is now correct by the `tornado-ids` precedent but is not documented anywhere | open |
 | `D9` | `Equipment ID` scheme is not declared | `eq-<country>-<domain>-<variant>`, country-less `module-*`, and country-less variant names such as `tornado-ids` all coexist with no stated rule | open |
 
@@ -144,6 +144,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | Chinese/Russian transport and fighter completion batch | Promoted J-16, Tu-160M and Il-76MD-90A after live retrieval; official modernization/role blocks remain separate from public Tier C platform readings |
 | Weapon expansion batch | Added AIM-9X Block II, AIM-120D and GBU-39A/B with official NAVAIR/Boeing geometry, mass, propulsion/guidance, warhead and fuze fields; classified performance remains unestimated |
 | U.S. naval-aircraft expansion batch | Added P-3C, F/A-18C and UH-1Y with official Navy/NAVAIR/Marine Corps geometry, mass, propulsion, flight, crew, payload, armament and mission-system fields; common A-D and conditioned HOGE/radius boundaries remain explicit |
+| Chinese fighter/bomber completion batch | Promoted J-11B/BS, J-15 and H-6K after adding named armament, crew, avionics/mission-system and empty-mass blocks; B/BS, baseline/STOBAR, engine-batch and 79/95 t mass boundaries remain explicit |
 
 ## Retracted Findings
 
@@ -165,7 +166,7 @@ amend that standard.
 
 ## Explicit Overclaim Refusals
 
-- The 110 `parameter_complete` rows are research drafts. They are not calibrated, not
+- The 116 `parameter_complete` rows are research drafts. They are not calibrated, not
   cross-checked, and not runtime-eligible.
 - No file in this tree is consumed by the runtime loader.
 - Family names remain grouping nodes; only concrete variant leaves count as records.

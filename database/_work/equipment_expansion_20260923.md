@@ -48,7 +48,8 @@ calibration package, inventory claim, or final simulation configuration.
 | R-3 | Su-35S, Su-34E and Su-30SME completion | complete | `96d44c72` |
 | R-4 | J-16, Tu-160M and Il-76MD-90A completion | complete | `d4be0b69` |
 | R-5 | AIM-9X Block II, AIM-120D and GBU-39A/B weapon expansion | complete | `5d960a4a` |
-| R-6 | P-3C, F/A-18C and UH-1Y official U.S. naval-aircraft expansion | ready to commit | — |
+| R-6 | P-3C, F/A-18C and UH-1Y official U.S. naval-aircraft expansion | complete | `c7220e60` |
+| R-7 | J-11B/BS, J-15 and H-6K parameter completion from named secondary packages | ready to commit | — |
 
 ## Blocker / skip ledger
 

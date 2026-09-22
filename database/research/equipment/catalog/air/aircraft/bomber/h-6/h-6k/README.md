@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/bomber/h-6/h-6k/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-18`
+Last verified: `2026-09-23`
 Equipment ID: `eq-cn-air-h6k`
-Content status: parameter table present with per-field source and confidence. Status is `cataloged`, not `parameter_complete`, because all parameter rows rest on Tier C secondary sources and the baseline H-6 geometry is carried with a caveat.
+Content status: parameter-complete research record with per-field source and confidence. All public technical rows remain Tier C secondary and conflicting mass conventions remain explicit.
 
 ## Identity
 
@@ -50,10 +50,12 @@ Content status: parameter table present with per-field source and confidence. St
 | Engines, detail | Two Soloviev D-30KP-2 turbofans, 12,000 kgf (117.7 kN) each; earlier H-6 marks used two Xian WP-8 turbojets | `p5-cn-air-h6k-migflug` | C |
 | Cruise missiles | Six, sometimes a seventh on a centreline station; KD-20/CJ-10 family for land attack, anti-ship weapons including the YJ-12 on naval marks | `p5-cn-air-h6k-migflug` | C |
 | Armament | Carriage of anti-ship and land-attack cruise missiles, stated in official material | `p5-cn-air-h6k-mnd` | A |
+| Empty mass | 37,230 kg | `p5-cn-air-h6k-redstar` | C |
+| Mission system | Dielectric nose radome with radar, upgraded cockpit and external weapon platforms | `p5-cn-air-h6k-redstar` | C |
 
 ## Configuration Boundary
 
-The H-6K is a rebuild whose structure, engines, crew complement and maximum weight all differ from the baseline H-6. Maximum takeoff weight rose from 79 t to 95 t, crew fell from six to four, and the tail gun was deleted.
+The H-6K is a rebuild whose structure, engines, crew complement and maximum weight all differ from the baseline H-6. Public maximum takeoff readings of 79 t and 95 t are both retained; the new RedStar table supplies the former while the existing specialist page supplies the latter. Crew fell from six to four, and the tail gun was deleted.
 
 The dimension rows are now recorded as H-6K values rather than as labelled baseline values. The cited page states directly that the length of 34.80 m is unchanged from the Tu-16 despite the entirely new nose, and gives the wingspan and height as the H-6K figures. The earlier caveat, that the source neither affirmed nor denied a change to the outer mould line, no longer matches the page and has been withdrawn.
 
@@ -64,4 +66,5 @@ Every row except the armament row is Tier C secondary. The Chinese Ministry of N
 ## Source References
 
 - `p5-cn-air-h6k-migflug`: `raw/sources/migflug/p5-cn-air-h6k-migflug/manifest.md`
+- `p5-cn-air-h6k-redstar`: `raw/sources/redstar/p5-cn-air-h6k-redstar/manifest.md` — secondary empty-mass, mission-system and armament cross-check
 - `p5-cn-air-h6k-mnd`: `raw/sources/prc_ministry_of_national_defense/p5-cn-air-h6k-mnd/manifest.md` — armament and service presence only
