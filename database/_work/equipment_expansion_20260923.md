@@ -37,7 +37,7 @@ calibration package, inventory claim, or final simulation configuration.
 | `parameter_complete` rows | 95 | 150 |
 | `cataloged` rows | 15 | 0 |
 | `held` rows | 8 | 0 where evidence can be obtained; otherwise retained with a blocker |
-| New records required | 5 | 32 |
+| New records required | 8 | 32 |
 
 ## Current iteration ledger
 
@@ -46,7 +46,8 @@ calibration package, inventory claim, or final simulation configuration.
 | R-1 | Mirage 2000D RMV completion and run setup | complete | `cc4628c9` |
 | R-2 | C-5M, AC-130J, CV-22B, HC-130J and E-2D expansion | complete | `fb401b7c` |
 | R-3 | Su-35S, Su-34E and Su-30SME completion | complete | `96d44c72` |
-| R-4 | J-16, Tu-160M and Il-76MD-90A completion | ready to commit | — |
+| R-4 | J-16, Tu-160M and Il-76MD-90A completion | complete | `d4be0b69` |
+| R-5 | AIM-9X Block II, AIM-120D and GBU-39A/B weapon expansion | ready to commit | — |
 
 ## Blocker / skip ledger
 
