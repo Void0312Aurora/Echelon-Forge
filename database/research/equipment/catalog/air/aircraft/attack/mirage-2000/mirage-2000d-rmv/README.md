@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/attack/mirage-2000/mirage-2000d-rmv/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-18`
+Last verified: `2026-09-23`
 Equipment ID: `eq-fr-air-mirage2000d-rmv`
-Content status: parameter table present with per-field source and confidence. Status is `cataloged`, not `parameter_complete`, because powerplant and performance figures are not established from the held sources.
+Content status: parameter table complete for the French Mirage 2000D RMV research record. Government technical-card values are separated from family and secondary cross-checks; no single-seat reading is promoted as a 2000D measurement.
 
 ## Identity
 
@@ -34,6 +34,17 @@ Content status: parameter table present with per-field source and confidence. St
 | Empty weight | 8 t | `p5-fr-air-mirage2000d-rmv-dassault` | B |
 | Maximum takeoff weight | 16.5 t per the manufacturer; 17,000 kg (37,500 lb) per the Tier C specification compilation | `p5-fr-air-mirage2000d-rmv-dassault`; `p5-fr-air-mirage2000-gs` | B/C | Two readings retained, not reconciled: the manufacturer states a rounded 16.5 t while the compilation states 17,000 kg against the single-seat baseline. The two may use different weight definitions |
 | External stores capacity | 5.7 t per the manufacturer; 6,300 kg per the Tier C compilation | `p5-fr-air-mirage2000d-rmv-dassault`; `p5-fr-air-mirage2000-gs` | B/C | Two readings retained; the difference is not resolved |
+| Crew | 2 | `p5-fr-air-mirage2000d-rmv-official` | A | Official French technical card |
+| Government technical-card wingspan | 9.13 m | `p5-fr-air-mirage2000d-rmv-official` | A | Variant-level 2000D reading |
+| Government technical-card length | 14.55 m | `p5-fr-air-mirage2000d-rmv-official` | A | Variant-level 2000D reading |
+| Government technical-card height | 5.15 m | `p5-fr-air-mirage2000d-rmv-official` | A | Variant-level 2000D reading |
+| Afterburning thrust | 9.7 t (approximately 95 kN) | `p5-fr-air-mirage2000d-rmv-official` | A | The source reports tonnes-force; conversion is shown only as an approximate SI equivalent |
+| Maximum speed | Mach 1.4 | `p5-fr-air-mirage2000d-rmv-official` | A | Official 2000D technical-card value; this supersedes the family-only speed rows for the variant-level target |
+| Operational ceiling | 15,000 m | `p5-fr-air-mirage2000d-rmv-official` | A | Official 2000D technical-card value |
+| Carried-fuel capacity | 6.2 t | `p5-fr-air-mirage2000d-rmv-official` | A | Recorded as the source's carried-fuel capacity, not silently relabelled as internal fuel |
+| In-flight refuelling | Yes | `p5-fr-air-mirage2000d-rmv-official` | A | Capability flag |
+| RMV armament | 30 mm cannon pod; MICA IR; GBU-48 and GBU-50 | `p5-fr-air-mirage2000d-rmv-official`; `p5-fr-air-mirage2000d-rmv` | A | RMV-specific integration; no station-by-station loadout inferred |
+| RMV mission systems | ATLIS, PDL-CTS and Damocles designation pods; L16; SCARABEE; VHF-FM; ROVER; ASTAC | `p5-fr-air-mirage2000d-rmv-official`; `p5-fr-air-mirage2000d-rmv` | A | Capability list, not a sensor-detection-performance claim |
 | Length (two-seat airframe) | 14.55 m against 14.36 m for the single-seat airframe | `p5-fr-air-mirage2000-gs` | C | The applicable value for the 2000D. The compilation states that two-seat and strike variants differ marginally in dimensions |
 | Internal fuel capacity (single-seat baseline) | 3,080 kg (6,790 lb) | `p5-fr-air-mirage2000-gs` | C | Stated for the single-seat 2000C baseline; the compilation warns that the two-seat and strike variants differ in fuel capacity, so this is not asserted as a 2000D value |
 | Powerplant | One SNECMA M53-P2 single-spool afterburning turbofan; 54 kN (12,000 lbf) dry and 95 kN (21,400 lbf) with afterburner | `p5-fr-air-mirage2000-gs` | C | The M53-P2 is fitted across the single-seat and two-seat Mirage 2000 family, and the compiling source lists the B, D and N variants together as the two-seat airframes. No 2000D-specific engine variant is claimed |
@@ -62,11 +73,12 @@ The performance rows remain single-seat-baseline readings from both packages: on
 
 The Mirage 2000D is a two-seat airframe whose length differs from the single-seat 2000C and 2000-5F. Values must not be carried between those leaves.
 
-The French Ministry of the Armed Forces source held for this leaf is a news article about a Djibouti deployment and carries no specification table. It is retained for operator context only.
+The earlier French Ministry of the Armed Forces package is a news article about a Djibouti deployment and is retained for RMV operator and armament context. The newly retrieved government technical card supplies the variant-level geometry, mass, thrust, fuel-carrying, speed and ceiling rows. It does not publish empty mass, range, a complete station loadout or radar detection range; those remain bounded rather than inferred.
 
 ## Source References
 
 - `p5-fr-air-mirage2000d-rmv-dassault`: `raw/sources/dassault_aviation/p5-fr-air-mirage2000d-rmv-dassault/manifest.md`
+- `p5-fr-air-mirage2000d-rmv-official`: `raw/sources/ministere_des_armees/p5-fr-air-mirage2000d-rmv-official/manifest.md` — official 2000D technical card
 - `p5-fr-air-mirage2000-gs`: `raw/sources/globalsecurity/p5-fr-air-mirage2000-gs/manifest.md`
 - `p5-fr-air-mirage2000d-flugzeuginfo`: `raw/sources/flugzeuginfo/p5-fr-air-mirage2000d-flugzeuginfo/manifest.md` — independent powerplant and performance readings
 - `p5-fr-air-mirage2000d-rmv`: `raw/sources/ministere_des_armees/p5-fr-air-mirage2000d-rmv/manifest.md` — operator context only, no parameter rows
