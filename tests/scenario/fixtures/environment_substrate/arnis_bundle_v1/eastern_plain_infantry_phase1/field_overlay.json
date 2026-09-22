@@ -1,0 +1,739 @@
+{
+  "contract_version": "field_overlay.v1",
+  "entries": [
+    {
+      "attributes": {
+        "source_element_id": 2101,
+        "source_element_type": "way",
+        "source_tags": {
+          "bridge": "yes",
+          "highway": "primary",
+          "layer": "1",
+          "name": "East-West Route",
+          "width": "8"
+        }
+      },
+      "evidence": {
+        "metadata_only": true,
+        "no_fire_control_release": true,
+        "no_los_cover_release": true,
+        "no_movement_release": true,
+        "no_passability_release": true,
+        "no_runtime_setup_application": true
+      },
+      "geometry": {
+        "geometry_type": "line",
+        "points": [
+          [
+            85.896856,
+            667.916945
+          ],
+          [
+            601.27799,
+            667.916945
+          ],
+          [
+            1116.659124,
+            667.916945
+          ],
+          [
+            1632.040258,
+            667.916945
+          ]
+        ]
+      },
+      "overlay_id": "field:way:2101:bridge_crossing",
+      "overlay_kind": "bridge_crossing"
+    },
+    {
+      "attributes": {
+        "source_element_id": 3101,
+        "source_element_type": "way",
+        "source_tags": {
+          "crop": "cereal",
+          "landuse": "farmland",
+          "name": "West Field South"
+        }
+      },
+      "evidence": {
+        "metadata_only": true,
+        "no_fire_control_release": true,
+        "no_los_cover_release": true,
+        "no_movement_release": true,
+        "no_passability_release": true,
+        "no_runtime_setup_application": true
+      },
+      "geometry": {
+        "geometry_type": "polygon",
+        "points": [
+          [
+            85.896856,
+            55.659745
+          ],
+          [
+            515.381134,
+            55.659745
+          ],
+          [
+            515.381134,
+            556.597454
+          ],
+          [
+            85.896856,
+            556.597454
+          ],
+          [
+            85.896856,
+            55.659745
+          ]
+        ]
+      },
+      "overlay_id": "field:way:3101:farmland_area",
+      "overlay_kind": "farmland_area"
+    },
+    {
+      "attributes": {
+        "source_element_id": 3102,
+        "source_element_type": "way",
+        "source_tags": {
+          "crop": "cereal",
+          "landuse": "farmland",
+          "name": "West Field North"
+        }
+      },
+      "evidence": {
+        "metadata_only": true,
+        "no_fire_control_release": true,
+        "no_los_cover_release": true,
+        "no_movement_release": true,
+        "no_passability_release": true,
+        "no_runtime_setup_application": true
+      },
+      "geometry": {
+        "geometry_type": "polygon",
+        "points": [
+          [
+            85.896856,
+            779.236436
+          ],
+          [
+            515.381134,
+            779.236436
+          ],
+          [
+            515.381134,
+            1280.174144
+          ],
+          [
+            85.896856,
+            1280.174144
+          ],
+          [
+            85.896856,
+            779.236436
+          ]
+        ]
+      },
+      "overlay_id": "field:way:3102:farmland_area",
+      "overlay_kind": "farmland_area"
+    },
+    {
+      "attributes": {
+        "source_element_id": 3103,
+        "source_element_type": "way",
+        "source_tags": {
+          "crop": "cereal",
+          "landuse": "farmland",
+          "name": "East Field South"
+        }
+      },
+      "evidence": {
+        "metadata_only": true,
+        "no_fire_control_release": true,
+        "no_los_cover_release": true,
+        "no_movement_release": true,
+        "no_passability_release": true,
+        "no_runtime_setup_application": true
+      },
+      "geometry": {
+        "geometry_type": "polygon",
+        "points": [
+          [
+            1202.55598,
+            55.659745
+          ],
+          [
+            1632.040258,
+            55.659745
+          ],
+          [
+            1632.040258,
+            556.597454
+          ],
+          [
+            1202.55598,
+            556.597454
+          ],
+          [
+            1202.55598,
+            55.659745
+          ]
+        ]
+      },
+      "overlay_id": "field:way:3103:farmland_area",
+      "overlay_kind": "farmland_area"
+    },
+    {
+      "attributes": {
+        "source_element_id": 3104,
+        "source_element_type": "way",
+        "source_tags": {
+          "crop": "cereal",
+          "landuse": "farmland",
+          "name": "East Field North"
+        }
+      },
+      "evidence": {
+        "metadata_only": true,
+        "no_fire_control_release": true,
+        "no_los_cover_release": true,
+        "no_movement_release": true,
+        "no_passability_release": true,
+        "no_runtime_setup_application": true
+      },
+      "geometry": {
+        "geometry_type": "polygon",
+        "points": [
+          [
+            1202.55598,
+            779.236436
+          ],
+          [
+            1632.040258,
+            779.236436
+          ],
+          [
+            1632.040258,
+            1280.174144
+          ],
+          [
+            1202.55598,
+            1280.174144
+          ],
+          [
+            1202.55598,
+            779.236436
+          ]
+        ]
+      },
+      "overlay_id": "field:way:3104:farmland_area",
+      "overlay_kind": "farmland_area"
+    },
+    {
+      "attributes": {
+        "source_element_id": 2001,
+        "source_element_type": "way",
+        "source_tags": {
+          "name": "Training River",
+          "waterway": "river",
+          "width": "28"
+        }
+      },
+      "evidence": {
+        "metadata_only": true,
+        "no_fire_control_release": true,
+        "no_los_cover_release": true,
+        "no_movement_release": true,
+        "no_passability_release": true,
+        "no_runtime_setup_application": true
+      },
+      "geometry": {
+        "geometry_type": "line",
+        "points": [
+          [
+            858.968557,
+            0.0
+          ],
+          [
+            858.968557,
+            333.958472
+          ],
+          [
+            858.968557,
+            667.916945
+          ],
+          [
+            858.968557,
+            1001.875417
+          ],
+          [
+            858.968557,
+            1335.83389
+          ]
+        ]
+      },
+      "overlay_id": "field:way:2001:river_corridor",
+      "overlay_kind": "river_corridor"
+    },
+    {
+      "attributes": {
+        "source_element_id": 2002,
+        "source_element_type": "way",
+        "source_tags": {
+          "name": "Training River Floodplain",
+          "natural": "water",
+          "water": "river"
+        }
+      },
+      "evidence": {
+        "metadata_only": true,
+        "no_fire_control_release": true,
+        "no_los_cover_release": true,
+        "no_movement_release": true,
+        "no_passability_release": true,
+        "no_runtime_setup_application": true
+      },
+      "geometry": {
+        "geometry_type": "polygon",
+        "points": [
+          [
+            687.174846,
+            389.618218
+          ],
+          [
+            1030.762268,
+            389.618218
+          ],
+          [
+            1030.762268,
+            1001.875417
+          ],
+          [
+            687.174846,
+            1001.875417
+          ],
+          [
+            687.174846,
+            389.618218
+          ]
+        ]
+      },
+      "overlay_id": "field:way:2002:river_corridor",
+      "overlay_kind": "river_corridor"
+    },
+    {
+      "attributes": {
+        "source_element_id": 1201,
+        "source_element_type": "node",
+        "source_tags": {
+          "name": "West Hamlet",
+          "place": "village"
+        }
+      },
+      "evidence": {
+        "metadata_only": true,
+        "no_fire_control_release": true,
+        "no_los_cover_release": true,
+        "no_movement_release": true,
+        "no_passability_release": true,
+        "no_runtime_setup_application": true
+      },
+      "geometry": {
+        "geometry_type": "point",
+        "point": [
+          171.793711,
+          222.638982
+        ]
+      },
+      "overlay_id": "field:node:1201:settlement_anchor",
+      "overlay_kind": "settlement_anchor"
+    },
+    {
+      "attributes": {
+        "source_element_id": 1202,
+        "source_element_type": "node",
+        "source_tags": {
+          "name": "East Hamlet",
+          "place": "village"
+        }
+      },
+      "evidence": {
+        "metadata_only": true,
+        "no_fire_control_release": true,
+        "no_los_cover_release": true,
+        "no_movement_release": true,
+        "no_passability_release": true,
+        "no_runtime_setup_application": true
+      },
+      "geometry": {
+        "geometry_type": "point",
+        "point": [
+          1546.143403,
+          1113.194908
+        ]
+      },
+      "overlay_id": "field:node:1202:settlement_anchor",
+      "overlay_kind": "settlement_anchor"
+    },
+    {
+      "attributes": {
+        "source_element_id": 4101,
+        "source_element_type": "way",
+        "source_tags": {
+          "building": "yes",
+          "building:levels": "1",
+          "name": "West Hamlet House 1"
+        }
+      },
+      "evidence": {
+        "metadata_only": true,
+        "no_fire_control_release": true,
+        "no_los_cover_release": true,
+        "no_movement_release": true,
+        "no_passability_release": true,
+        "no_runtime_setup_application": true
+      },
+      "geometry": {
+        "geometry_type": "polygon",
+        "points": [
+          [
+            85.896856,
+            111.319491
+          ],
+          [
+            214.742139,
+            111.319491
+          ],
+          [
+            214.742139,
+            333.958472
+          ],
+          [
+            85.896856,
+            333.958472
+          ],
+          [
+            85.896856,
+            111.319491
+          ]
+        ]
+      },
+      "overlay_id": "field:way:4101:settlement_structure",
+      "overlay_kind": "settlement_structure"
+    },
+    {
+      "attributes": {
+        "source_element_id": 4102,
+        "source_element_type": "way",
+        "source_tags": {
+          "building": "house",
+          "building:levels": "1",
+          "name": "West Hamlet House 2"
+        }
+      },
+      "evidence": {
+        "metadata_only": true,
+        "no_fire_control_release": true,
+        "no_los_cover_release": true,
+        "no_movement_release": true,
+        "no_passability_release": true,
+        "no_runtime_setup_application": true
+      },
+      "geometry": {
+        "geometry_type": "polygon",
+        "points": [
+          [
+            257.690567,
+            222.638982
+          ],
+          [
+            386.535851,
+            222.638982
+          ],
+          [
+            386.535851,
+            445.277963
+          ],
+          [
+            257.690567,
+            445.277963
+          ],
+          [
+            257.690567,
+            222.638982
+          ]
+        ]
+      },
+      "overlay_id": "field:way:4102:settlement_structure",
+      "overlay_kind": "settlement_structure"
+    },
+    {
+      "attributes": {
+        "source_element_id": 4103,
+        "source_element_type": "way",
+        "source_tags": {
+          "building": "yes",
+          "building:levels": "1",
+          "name": "East Hamlet House 1"
+        }
+      },
+      "evidence": {
+        "metadata_only": true,
+        "no_fire_control_release": true,
+        "no_los_cover_release": true,
+        "no_movement_release": true,
+        "no_passability_release": true,
+        "no_runtime_setup_application": true
+      },
+      "geometry": {
+        "geometry_type": "polygon",
+        "points": [
+          [
+            1460.246547,
+            1001.875417
+          ],
+          [
+            1589.091831,
+            1001.875417
+          ],
+          [
+            1589.091831,
+            1224.514399
+          ],
+          [
+            1460.246547,
+            1224.514399
+          ],
+          [
+            1460.246547,
+            1001.875417
+          ]
+        ]
+      },
+      "overlay_id": "field:way:4103:settlement_structure",
+      "overlay_kind": "settlement_structure"
+    },
+    {
+      "attributes": {
+        "source_element_id": 4104,
+        "source_element_type": "way",
+        "source_tags": {
+          "building": "farm",
+          "building:levels": "1",
+          "name": "East Farm Shed"
+        }
+      },
+      "evidence": {
+        "metadata_only": true,
+        "no_fire_control_release": true,
+        "no_los_cover_release": true,
+        "no_movement_release": true,
+        "no_passability_release": true,
+        "no_runtime_setup_application": true
+      },
+      "geometry": {
+        "geometry_type": "polygon",
+        "points": [
+          [
+            1288.452836,
+            1113.194908
+          ],
+          [
+            1417.298119,
+            1113.194908
+          ],
+          [
+            1417.298119,
+            1335.83389
+          ],
+          [
+            1288.452836,
+            1335.83389
+          ],
+          [
+            1288.452836,
+            1113.194908
+          ]
+        ]
+      },
+      "overlay_id": "field:way:4104:settlement_structure",
+      "overlay_kind": "settlement_structure"
+    },
+    {
+      "attributes": {
+        "source_element_id": 3205,
+        "source_element_type": "way",
+        "source_tags": {
+          "landuse": "forest",
+          "name": "West Tree Belt",
+          "natural": "wood",
+          "tree_line": "west_river_belt"
+        }
+      },
+      "evidence": {
+        "metadata_only": true,
+        "no_fire_control_release": true,
+        "no_los_cover_release": true,
+        "no_movement_release": true,
+        "no_passability_release": true,
+        "no_runtime_setup_application": true
+      },
+      "geometry": {
+        "geometry_type": "polygon",
+        "points": [
+          [
+            601.27799,
+            55.659745
+          ],
+          [
+            687.174846,
+            55.659745
+          ],
+          [
+            687.174846,
+            1280.174144
+          ],
+          [
+            601.27799,
+            1280.174144
+          ],
+          [
+            601.27799,
+            55.659745
+          ]
+        ]
+      },
+      "overlay_id": "field:way:3205:tree_line",
+      "overlay_kind": "tree_line"
+    },
+    {
+      "attributes": {
+        "source_element_id": 3215,
+        "source_element_type": "way",
+        "source_tags": {
+          "landuse": "forest",
+          "name": "East Tree Belt",
+          "natural": "wood",
+          "tree_line": "east_river_belt"
+        }
+      },
+      "evidence": {
+        "metadata_only": true,
+        "no_fire_control_release": true,
+        "no_los_cover_release": true,
+        "no_movement_release": true,
+        "no_passability_release": true,
+        "no_runtime_setup_application": true
+      },
+      "geometry": {
+        "geometry_type": "polygon",
+        "points": [
+          [
+            1030.762268,
+            55.659745
+          ],
+          [
+            1116.659124,
+            55.659745
+          ],
+          [
+            1116.659124,
+            1280.174144
+          ],
+          [
+            1030.762268,
+            1280.174144
+          ],
+          [
+            1030.762268,
+            55.659745
+          ]
+        ]
+      },
+      "overlay_id": "field:way:3215:tree_line",
+      "overlay_kind": "tree_line"
+    },
+    {
+      "attributes": {
+        "source_element_id": 3225,
+        "source_element_type": "way",
+        "source_tags": {
+          "landuse": "forest",
+          "name": "Central Shelterbelt",
+          "natural": "wood",
+          "tree_line": "central_shelterbelt"
+        }
+      },
+      "evidence": {
+        "metadata_only": true,
+        "no_fire_control_release": true,
+        "no_los_cover_release": true,
+        "no_movement_release": true,
+        "no_passability_release": true,
+        "no_runtime_setup_application": true
+      },
+      "geometry": {
+        "geometry_type": "polygon",
+        "points": [
+          [
+            85.896856,
+            612.257199
+          ],
+          [
+            85.896856,
+            723.57669
+          ],
+          [
+            1632.040258,
+            723.57669
+          ],
+          [
+            1632.040258,
+            612.257199
+          ],
+          [
+            85.896856,
+            612.257199
+          ]
+        ]
+      },
+      "overlay_id": "field:way:3225:tree_line",
+      "overlay_kind": "tree_line"
+    }
+  ],
+  "evidence": {
+    "metadata_only": true,
+    "no_fire_control_release": true,
+    "no_los_cover_release": true,
+    "no_movement_release": true,
+    "no_passability_release": true,
+    "no_runtime_setup_application": true
+  },
+  "profile_id": "eastern_plain_infantry_phase1",
+  "projection": {
+    "kind": "local_enu_equirectangular",
+    "meters_per_radian": 6378137.0,
+    "origin": {
+      "lat": 39.494,
+      "lon": -98.51
+    },
+    "x_cosine_reference_lat": 39.5
+  },
+  "source": {
+    "byte_length": 7114,
+    "path": "osm_extract_synthetic.json",
+    "sha256": "d3360d901c5d45bc98ddcefd65b3f2ddf1d00cf13e6d3af252773a17aaaaec60",
+    "synthetic": true
+  },
+  "summary": {
+    "counts_by_kind": {
+      "bridge_crossing": 1,
+      "farmland_area": 4,
+      "river_corridor": 2,
+      "settlement_anchor": 2,
+      "settlement_structure": 4,
+      "tree_line": 3
+    },
+    "entry_count": 16
+  }
+}

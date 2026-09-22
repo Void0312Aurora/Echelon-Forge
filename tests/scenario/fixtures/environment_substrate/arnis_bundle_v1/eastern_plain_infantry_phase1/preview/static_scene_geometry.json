@@ -1,0 +1,1335 @@
+{
+  "contract_version": "cmo.static_scene_geometry.v1",
+  "coordinate_frame": "local_enu_m",
+  "methods": {
+    "bridge": "abutment_dem_anchor_deck_with_linear_arc_length_interpolation_no_measured_deck_elevation",
+    "building": "rigid_prism_with_median_vertex_and_centroid_dem_foundation",
+    "hydrology": "source_geometry_with_bilinear_dem_preview_z_only",
+    "road": "per_segment_width_corridor_with_deterministic_dem_extent_clipping_and_bilinear_dem_drape",
+    "xy_geometry_policy": "source_xy_preserved_without_interpolation"
+  },
+  "objects": [
+    {
+      "anchor": {
+        "base_offset_m": 0.0,
+        "base_offset_source": "implicit_terrain_base_zero_m",
+        "mode": "terrain_rigid",
+        "placement_resolved": true,
+        "source": "implicit_terrain_base_zero_m"
+      },
+      "coordinate_frame": "local_enu_m",
+      "feature_class": "building",
+      "lineage": {
+        "runtime_authority": false,
+        "source_elevation_artifact_id": "artifact:elevation",
+        "source_elevation_sha256": "bdf039fb46ddba2b4df33d859d2bfd4defbcfd550ee60638f3720aee6b93f287",
+        "source_vector_artifact_id": "artifact:building",
+        "source_vector_sha256": "c901c969032a8795ea97b999fd1fc15a2def5eb2b2f220b06f178db31f98d753",
+        "xy_source_geometry_unchanged": true
+      },
+      "object_id": "static:openstreetmap:way:4101:building",
+      "source_feature_id": "openstreetmap:way:4101:building",
+      "source_geometry_xy": {
+        "coordinates": [
+          [
+            [
+              -772.2066505224508,
+              -555.9546373324537
+            ],
+            [
+              -643.5055421014325,
+              -555.9546373324537
+            ],
+            [
+              -643.5055421014325,
+              -333.5775811718474
+            ],
+            [
+              -772.2066505224508,
+              -333.5775811718474
+            ],
+            [
+              -772.2066505224508,
+              -555.9546373324537
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "static_geometry": {
+        "base_elevation_m": 448.47857173267613,
+        "footprint_geometry_xy": {
+          "coordinates": [
+            [
+              [
+                -772.2066505224508,
+                -555.9546373324537
+              ],
+              [
+                -643.5055421014325,
+                -555.9546373324537
+              ],
+              [
+                -643.5055421014325,
+                -333.5775811718474
+              ],
+              [
+                -772.2066505224508,
+                -333.5775811718474
+              ],
+              [
+                -772.2066505224508,
+                -555.9546373324537
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "foundation": {
+          "method": "median_of_footprint_vertices_and_outer_centroids_bilinear_dem",
+          "relief_m": 4.280093284360532,
+          "sample_count": 5,
+          "terrain_sample_max_m": 449.65606014154343,
+          "terrain_sample_median_m": 448.47857173267613,
+          "terrain_sample_min_m": 445.3759668571829
+        },
+        "height_m": 3.0,
+        "kind": "rigid_prism",
+        "top_elevation_m": 451.47857173267613,
+        "xy_interpolation_applied": false
+      },
+      "status": "resolved"
+    },
+    {
+      "anchor": {
+        "base_offset_m": 0.0,
+        "base_offset_source": "implicit_terrain_base_zero_m",
+        "mode": "terrain_rigid",
+        "placement_resolved": true,
+        "source": "implicit_terrain_base_zero_m"
+      },
+      "coordinate_frame": "local_enu_m",
+      "feature_class": "building",
+      "lineage": {
+        "runtime_authority": false,
+        "source_elevation_artifact_id": "artifact:elevation",
+        "source_elevation_sha256": "bdf039fb46ddba2b4df33d859d2bfd4defbcfd550ee60638f3720aee6b93f287",
+        "source_vector_artifact_id": "artifact:building",
+        "source_vector_sha256": "c901c969032a8795ea97b999fd1fc15a2def5eb2b2f220b06f178db31f98d753",
+        "xy_source_geometry_unchanged": true
+      },
+      "object_id": "static:openstreetmap:way:4102:building",
+      "source_feature_id": "openstreetmap:way:4102:building",
+      "source_geometry_xy": {
+        "coordinates": [
+          [
+            [
+              -600.6051726289792,
+              -444.7669089954696
+            ],
+            [
+              -471.9040642079611,
+              -444.7669089954696
+            ],
+            [
+              -471.9040642079611,
+              -222.38665378613078
+            ],
+            [
+              -600.6051726289792,
+              -222.38665378613078
+            ],
+            [
+              -600.6051726289792,
+              -444.7669089954696
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "static_geometry": {
+        "base_elevation_m": 446.3908288238568,
+        "footprint_geometry_xy": {
+          "coordinates": [
+            [
+              [
+                -600.6051726289792,
+                -444.7669089954696
+              ],
+              [
+                -471.9040642079611,
+                -444.7669089954696
+              ],
+              [
+                -471.9040642079611,
+                -222.38665378613078
+              ],
+              [
+                -600.6051726289792,
+                -222.38665378613078
+              ],
+              [
+                -600.6051726289792,
+                -444.7669089954696
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "foundation": {
+          "method": "median_of_footprint_vertices_and_outer_centroids_bilinear_dem",
+          "relief_m": 3.2987619414387837,
+          "sample_count": 5,
+          "terrain_sample_max_m": 448.2525018723625,
+          "terrain_sample_median_m": 446.3908288238568,
+          "terrain_sample_min_m": 444.9537399309237
+        },
+        "height_m": 3.0,
+        "kind": "rigid_prism",
+        "top_elevation_m": 449.3908288238568,
+        "xy_interpolation_applied": false
+      },
+      "status": "resolved"
+    },
+    {
+      "anchor": {
+        "base_offset_m": 0.0,
+        "base_offset_source": "implicit_terrain_base_zero_m",
+        "mode": "terrain_rigid",
+        "placement_resolved": true,
+        "source": "implicit_terrain_base_zero_m"
+      },
+      "coordinate_frame": "local_enu_m",
+      "feature_class": "building",
+      "lineage": {
+        "runtime_authority": false,
+        "source_elevation_artifact_id": "artifact:elevation",
+        "source_elevation_sha256": "bdf039fb46ddba2b4df33d859d2bfd4defbcfd550ee60638f3720aee6b93f287",
+        "source_vector_artifact_id": "artifact:building",
+        "source_vector_sha256": "c901c969032a8795ea97b999fd1fc15a2def5eb2b2f220b06f178db31f98d753",
+        "xy_source_geometry_unchanged": true
+      },
+      "object_id": "static:openstreetmap:way:4103:building",
+      "source_feature_id": "openstreetmap:way:4103:building",
+      "source_geometry_xy": {
+        "coordinates": [
+          [
+            [
+              600.6051726289792,
+              333.59197941318024
+            ],
+            [
+              729.306281048778,
+              333.59197941318024
+            ],
+            [
+              729.306281048778,
+              555.9946324435942
+            ],
+            [
+              600.6051726289792,
+              555.9946324435942
+            ],
+            [
+              600.6051726289792,
+              333.59197941318024
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "static_geometry": {
+        "base_elevation_m": 451.6614897442314,
+        "footprint_geometry_xy": {
+          "coordinates": [
+            [
+              [
+                600.6051726289792,
+                333.59197941318024
+              ],
+              [
+                729.306281048778,
+                333.59197941318024
+              ],
+              [
+                729.306281048778,
+                555.9946324435942
+              ],
+              [
+                600.6051726289792,
+                555.9946324435942
+              ],
+              [
+                600.6051726289792,
+                333.59197941318024
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "foundation": {
+          "method": "median_of_footprint_vertices_and_outer_centroids_bilinear_dem",
+          "relief_m": 1.7995752442806747,
+          "sample_count": 5,
+          "terrain_sample_max_m": 452.6023776198593,
+          "terrain_sample_median_m": 451.6614897442314,
+          "terrain_sample_min_m": 450.8028023755786
+        },
+        "height_m": 3.0,
+        "kind": "rigid_prism",
+        "top_elevation_m": 454.6614897442314,
+        "xy_interpolation_applied": false
+      },
+      "status": "resolved"
+    },
+    {
+      "anchor": {
+        "base_offset_m": 0.0,
+        "base_offset_source": "implicit_terrain_base_zero_m",
+        "mode": "terrain_rigid",
+        "placement_resolved": true,
+        "source": "implicit_terrain_base_zero_m"
+      },
+      "coordinate_frame": "local_enu_m",
+      "feature_class": "building",
+      "lineage": {
+        "runtime_authority": false,
+        "source_elevation_artifact_id": "artifact:elevation",
+        "source_elevation_sha256": "bdf039fb46ddba2b4df33d859d2bfd4defbcfd550ee60638f3720aee6b93f287",
+        "source_vector_artifact_id": "artifact:building",
+        "source_vector_sha256": "c901c969032a8795ea97b999fd1fc15a2def5eb2b2f220b06f178db31f98d753",
+        "xy_source_geometry_unchanged": true
+      },
+      "object_id": "static:openstreetmap:way:4104:building",
+      "source_feature_id": "openstreetmap:way:4104:building",
+      "source_geometry_xy": {
+        "coordinates": [
+          [
+            [
+              429.00369473428844,
+              444.79250586527723
+            ],
+            [
+              557.7048031553065,
+              444.79250586527723
+            ],
+            [
+              557.7048031553065,
+              667.1983592199944
+            ],
+            [
+              429.00369473428844,
+              667.1983592199944
+            ],
+            [
+              429.00369473428844,
+              444.79250586527723
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "static_geometry": {
+        "base_elevation_m": 450.7344837626563,
+        "footprint_geometry_xy": {
+          "coordinates": [
+            [
+              [
+                429.00369473428844,
+                444.79250586527723
+              ],
+              [
+                557.7048031553065,
+                444.79250586527723
+              ],
+              [
+                557.7048031553065,
+                667.1983592199944
+              ],
+              [
+                429.00369473428844,
+                667.1983592199944
+              ],
+              [
+                429.00369473428844,
+                444.79250586527723
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "foundation": {
+          "method": "median_of_footprint_vertices_and_outer_centroids_bilinear_dem",
+          "relief_m": 3.684710693359591,
+          "sample_count": 5,
+          "terrain_sample_max_m": 452.55751342773453,
+          "terrain_sample_median_m": 450.7344837626563,
+          "terrain_sample_min_m": 448.87280273437494
+        },
+        "height_m": 3.0,
+        "kind": "rigid_prism",
+        "top_elevation_m": 453.7344837626563,
+        "xy_interpolation_applied": false
+      },
+      "status": "resolved"
+    },
+    {
+      "anchor": {
+        "bridge": true,
+        "covered": false,
+        "layer": 1.0,
+        "mode": "elevated_profile",
+        "placement_resolved": false,
+        "source": "osm_bridge_or_positive_layer_requires_metric_elevated_profile",
+        "tunnel": false
+      },
+      "coordinate_frame": "local_enu_m",
+      "feature_class": "road",
+      "lineage": {
+        "runtime_authority": false,
+        "source_elevation_artifact_id": "artifact:elevation",
+        "source_elevation_sha256": "bdf039fb46ddba2b4df33d859d2bfd4defbcfd550ee60638f3720aee6b93f287",
+        "source_vector_artifact_id": "artifact:road",
+        "source_vector_sha256": "2d8d525d6d3f778f142b57de96ab817de2589dbf4ef8977236d51592f3731157",
+        "xy_source_geometry_unchanged": true
+      },
+      "object_id": "static:openstreetmap:way:2101:road:part:0000",
+      "source_feature_id": "openstreetmap:way:2101:road:part:0000",
+      "source_geometry_xy": {
+        "coordinates": [
+          [
+            -772.2066505224508,
+            0.0
+          ],
+          [
+            -257.4022168408169,
+            0.0
+          ],
+          [
+            257.4022168408169,
+            0.0
+          ],
+          [
+            772.2066505224508,
+            0.0
+          ]
+        ],
+        "type": "LineString"
+      },
+      "static_geometry": {
+        "centerline_geometry_xy": {
+          "coordinates": [
+            [
+              -772.2066505224508,
+              0.0
+            ],
+            [
+              -257.4022168408169,
+              0.0
+            ],
+            [
+              257.4022168408169,
+              0.0
+            ],
+            [
+              772.2066505224508,
+              0.0
+            ]
+          ],
+          "type": "LineString"
+        },
+        "centerline_parts_xyz": [
+          [
+            [
+              -772.2066505224508,
+              0.0,
+              450.3263298273324
+            ],
+            [
+              -257.4022168408169,
+              0.0,
+              449.31641376614346
+            ],
+            [
+              257.4022168408169,
+              0.0,
+              448.30649770495455
+            ],
+            [
+              772.2066505224508,
+              0.0,
+              447.2965816437656
+            ]
+          ]
+        ],
+        "centerline_xy_interpolation_applied": false,
+        "clipped_segment_count": 0,
+        "corridor_clipped_to_dem_extent": false,
+        "corridor_segments": [
+          {
+            "clipped_to_dem_extent": false,
+            "polygon_xyz": [
+              [
+                -772.2066505224508,
+                4.0,
+                450.3263298273324
+              ],
+              [
+                -772.2066505224508,
+                -4.0,
+                450.3263298273324
+              ],
+              [
+                -257.4022168408169,
+                -4.0,
+                449.31641376614346
+              ],
+              [
+                -257.4022168408169,
+                4.0,
+                449.31641376614346
+              ]
+            ],
+            "source_part_index": 0,
+            "source_segment_index": 0
+          },
+          {
+            "clipped_to_dem_extent": false,
+            "polygon_xyz": [
+              [
+                -257.4022168408169,
+                4.0,
+                449.31641376614346
+              ],
+              [
+                -257.4022168408169,
+                -4.0,
+                449.31641376614346
+              ],
+              [
+                257.4022168408169,
+                -4.0,
+                448.30649770495455
+              ],
+              [
+                257.4022168408169,
+                4.0,
+                448.30649770495455
+              ]
+            ],
+            "source_part_index": 0,
+            "source_segment_index": 1
+          },
+          {
+            "clipped_to_dem_extent": false,
+            "polygon_xyz": [
+              [
+                257.4022168408169,
+                4.0,
+                448.30649770495455
+              ],
+              [
+                257.4022168408169,
+                -4.0,
+                448.30649770495455
+              ],
+              [
+                772.2066505224508,
+                -4.0,
+                447.2965816437656
+              ],
+              [
+                772.2066505224508,
+                4.0,
+                447.2965816437656
+              ]
+            ],
+            "source_part_index": 0,
+            "source_segment_index": 2
+          }
+        ],
+        "deck_profile": {
+          "abutments": [
+            {
+              "end_elevation_m": 447.2965816437656,
+              "part_index": 0,
+              "span_length_m": 1544.4133010449013,
+              "start_elevation_m": 450.3263298273324
+            }
+          ],
+          "deck_elevation_measured": false,
+          "method": "linear_interpolation_between_abutment_dem_anchors"
+        },
+        "drape_method": "abutment_dem_anchors_with_linear_arc_length_deck_interpolation",
+        "kind": "abutment_interpolated_deck",
+        "skipped_segment_count": 0,
+        "width_m": 8.0
+      },
+      "status": "resolved"
+    },
+    {
+      "anchor": {
+        "bridge": false,
+        "covered": false,
+        "layer": 0.0,
+        "mode": "terrain_draped",
+        "placement_resolved": true,
+        "source": "continuous_dem_draped_road_geometry",
+        "tunnel": false
+      },
+      "coordinate_frame": "local_enu_m",
+      "feature_class": "road",
+      "lineage": {
+        "runtime_authority": false,
+        "source_elevation_artifact_id": "artifact:elevation",
+        "source_elevation_sha256": "bdf039fb46ddba2b4df33d859d2bfd4defbcfd550ee60638f3720aee6b93f287",
+        "source_vector_artifact_id": "artifact:road",
+        "source_vector_sha256": "2d8d525d6d3f778f142b57de96ab817de2589dbf4ef8977236d51592f3731157",
+        "xy_source_geometry_unchanged": true
+      },
+      "object_id": "static:openstreetmap:way:2102:road:part:0000",
+      "source_feature_id": "openstreetmap:way:2102:road:part:0000",
+      "source_geometry_xy": {
+        "coordinates": [
+          [
+            -514.8044336816338,
+            -611.5479017214831
+          ],
+          [
+            -514.8044336816338,
+            -277.9823174288322
+          ],
+          [
+            -514.8044336816338,
+            0.0
+          ],
+          [
+            -514.8044336816338,
+            333.59197941318024
+          ],
+          [
+            -514.8044336816338,
+            611.5962958003865
+          ]
+        ],
+        "type": "LineString"
+      },
+      "static_geometry": {
+        "centerline_geometry_xy": {
+          "coordinates": [
+            [
+              -514.8044336816338,
+              -611.5479017214831
+            ],
+            [
+              -514.8044336816338,
+              -277.9823174288322
+            ],
+            [
+              -514.8044336816338,
+              0.0
+            ],
+            [
+              -514.8044336816338,
+              333.59197941318024
+            ],
+            [
+              -514.8044336816338,
+              611.5962958003865
+            ]
+          ],
+          "type": "LineString"
+        },
+        "centerline_parts_xyz": [
+          [
+            [
+              -514.8044336816338,
+              -611.5479017214831,
+              444.89380930922954
+            ],
+            [
+              -514.8044336816338,
+              -277.9823174288322,
+              446.0212544270237
+            ],
+            [
+              -514.8044336816338,
+              0.0,
+              450.0389319850274
+            ],
+            [
+              -514.8044336816338,
+              333.59197941318024,
+              448.3692482090917
+            ],
+            [
+              -514.8044336816338,
+              611.5962958003865,
+              449.1366316703015
+            ]
+          ]
+        ],
+        "centerline_xy_interpolation_applied": false,
+        "clipped_segment_count": 0,
+        "corridor_clipped_to_dem_extent": false,
+        "corridor_segments": [
+          {
+            "clipped_to_dem_extent": false,
+            "polygon_xyz": [
+              [
+                -517.8044336816338,
+                -611.5479017214831,
+                444.8210632855291
+              ],
+              [
+                -511.8044336816338,
+                -611.5479017214831,
+                444.9103868220634
+              ],
+              [
+                -511.8044336816338,
+                -277.9823174288322,
+                445.97896940157574
+              ],
+              [
+                -517.8044336816338,
+                -277.9823174288322,
+                445.99357671873713
+              ]
+            ],
+            "source_part_index": 0,
+            "source_segment_index": 0
+          },
+          {
+            "clipped_to_dem_extent": false,
+            "polygon_xyz": [
+              [
+                -517.8044336816338,
+                -277.9823174288322,
+                445.99357671873713
+              ],
+              [
+                -511.8044336816338,
+                -277.9823174288322,
+                445.97896940157574
+              ],
+              [
+                -511.8044336816338,
+                0.0,
+                449.98733769459767
+              ],
+              [
+                -517.8044336816338,
+                0.0,
+                450.11761399371926
+              ]
+            ],
+            "source_part_index": 0,
+            "source_segment_index": 1
+          },
+          {
+            "clipped_to_dem_extent": false,
+            "polygon_xyz": [
+              [
+                -517.8044336816338,
+                0.0,
+                450.11761399371926
+              ],
+              [
+                -511.8044336816338,
+                0.0,
+                449.98733769459767
+              ],
+              [
+                -511.8044336816338,
+                333.59197941318024,
+                448.70763658176816
+              ],
+              [
+                -517.8044336816338,
+                333.59197941318024,
+                447.3673390804444
+              ]
+            ],
+            "source_part_index": 0,
+            "source_segment_index": 2
+          },
+          {
+            "clipped_to_dem_extent": false,
+            "polygon_xyz": [
+              [
+                -517.8044336816338,
+                333.59197941318024,
+                447.3673390804444
+              ],
+              [
+                -511.8044336816338,
+                333.59197941318024,
+                448.70763658176816
+              ],
+              [
+                -511.8044336816338,
+                611.5962958003865,
+                449.12700663624264
+              ],
+              [
+                -517.8044336816338,
+                611.5962958003865,
+                449.16567628006953
+              ]
+            ],
+            "source_part_index": 0,
+            "source_segment_index": 3
+          }
+        ],
+        "dem_clip_extent_xy_m": [
+          -858.0073894697963,
+          858.0073894697963,
+          -667.1407662675982,
+          667.1983592199944
+        ],
+        "drape_method": "deterministic_dem_extent_clipping_then_bilinear_dem_at_corridor_polygon_vertices",
+        "kind": "terrain_draped_corridor",
+        "skipped_segment_count": 0,
+        "width_m": 6.0
+      },
+      "status": "resolved"
+    },
+    {
+      "anchor": {
+        "bridge": false,
+        "covered": false,
+        "layer": 0.0,
+        "mode": "terrain_draped",
+        "placement_resolved": true,
+        "source": "continuous_dem_draped_road_geometry",
+        "tunnel": false
+      },
+      "coordinate_frame": "local_enu_m",
+      "feature_class": "road",
+      "lineage": {
+        "runtime_authority": false,
+        "source_elevation_artifact_id": "artifact:elevation",
+        "source_elevation_sha256": "bdf039fb46ddba2b4df33d859d2bfd4defbcfd550ee60638f3720aee6b93f287",
+        "source_vector_artifact_id": "artifact:road",
+        "source_vector_sha256": "2d8d525d6d3f778f142b57de96ab817de2589dbf4ef8977236d51592f3731157",
+        "xy_source_geometry_unchanged": true
+      },
+      "object_id": "static:openstreetmap:way:2103:road:part:0000",
+      "source_feature_id": "openstreetmap:way:2103:road:part:0000",
+      "source_geometry_xy": {
+        "coordinates": [
+          [
+            -772.2066505224508,
+            -444.7669089954696
+          ],
+          [
+            -514.8044336816338,
+            -444.7669089954696
+          ]
+        ],
+        "type": "LineString"
+      },
+      "static_geometry": {
+        "centerline_geometry_xy": {
+          "coordinates": [
+            [
+              -772.2066505224508,
+              -444.7669089954696
+            ],
+            [
+              -514.8044336816338,
+              -444.7669089954696
+            ]
+          ],
+          "type": "LineString"
+        },
+        "centerline_parts_xyz": [
+          [
+            [
+              -772.2066505224508,
+              -444.7669089954696,
+              448.2320354457539
+            ],
+            [
+              -514.8044336816338,
+              -444.7669089954696,
+              446.27683174363966
+            ]
+          ]
+        ],
+        "centerline_xy_interpolation_applied": false,
+        "clipped_segment_count": 0,
+        "corridor_clipped_to_dem_extent": false,
+        "corridor_segments": [
+          {
+            "clipped_to_dem_extent": false,
+            "polygon_xyz": [
+              [
+                -772.2066505224508,
+                -443.7669089954696,
+                448.26649709752735
+              ],
+              [
+                -772.2066505224508,
+                -445.7669089954696,
+                448.1974561309429
+              ],
+              [
+                -514.8044336816338,
+                -445.7669089954696,
+                446.2871690923045
+              ],
+              [
+                -514.8044336816338,
+                -443.7669089954696,
+                446.26303824648505
+              ]
+            ],
+            "source_part_index": 0,
+            "source_segment_index": 0
+          }
+        ],
+        "dem_clip_extent_xy_m": [
+          -858.0073894697963,
+          858.0073894697963,
+          -667.1407662675982,
+          667.1983592199944
+        ],
+        "drape_method": "deterministic_dem_extent_clipping_then_bilinear_dem_at_corridor_polygon_vertices",
+        "kind": "terrain_draped_corridor",
+        "skipped_segment_count": 0,
+        "width_m": 2.0
+      },
+      "status": "resolved"
+    },
+    {
+      "anchor": {
+        "bridge": false,
+        "covered": false,
+        "layer": 0.0,
+        "mode": "terrain_draped",
+        "placement_resolved": true,
+        "source": "continuous_dem_draped_road_geometry",
+        "tunnel": false
+      },
+      "coordinate_frame": "local_enu_m",
+      "feature_class": "road",
+      "lineage": {
+        "runtime_authority": false,
+        "source_elevation_artifact_id": "artifact:elevation",
+        "source_elevation_sha256": "bdf039fb46ddba2b4df33d859d2bfd4defbcfd550ee60638f3720aee6b93f287",
+        "source_vector_artifact_id": "artifact:road",
+        "source_vector_sha256": "2d8d525d6d3f778f142b57de96ab817de2589dbf4ef8977236d51592f3731157",
+        "xy_source_geometry_unchanged": true
+      },
+      "object_id": "static:openstreetmap:way:2104:road:part:0000",
+      "source_feature_id": "openstreetmap:way:2104:road:part:0000",
+      "source_geometry_xy": {
+        "coordinates": [
+          [
+            772.2066505224508,
+            444.79250586527723
+          ],
+          [
+            -514.8044336816337,
+            444.79250586527723
+          ]
+        ],
+        "type": "LineString"
+      },
+      "static_geometry": {
+        "centerline_geometry_xy": {
+          "coordinates": [
+            [
+              772.2066505224508,
+              444.79250586527723
+            ],
+            [
+              -514.8044336816337,
+              444.79250586527723
+            ]
+          ],
+          "type": "LineString"
+        },
+        "centerline_parts_xyz": [
+          [
+            [
+              772.2066505224508,
+              444.79250586527723,
+              451.19041297705485
+            ],
+            [
+              -514.8044336816337,
+              444.79250586527723,
+              449.34760795919203
+            ]
+          ]
+        ],
+        "centerline_xy_interpolation_applied": false,
+        "clipped_segment_count": 0,
+        "corridor_clipped_to_dem_extent": false,
+        "corridor_segments": [
+          {
+            "clipped_to_dem_extent": false,
+            "polygon_xyz": [
+              [
+                772.2066505224508,
+                443.79250586527723,
+                451.1643940256846
+              ],
+              [
+                772.2066505224508,
+                445.79250586527723,
+                451.22240046030464
+              ],
+              [
+                -514.8044336816337,
+                445.79250586527723,
+                449.36091910758626
+              ],
+              [
+                -514.8044336816337,
+                443.79250586527723,
+                449.33974469724603
+              ]
+            ],
+            "source_part_index": 0,
+            "source_segment_index": 0
+          }
+        ],
+        "dem_clip_extent_xy_m": [
+          -858.0073894697963,
+          858.0073894697963,
+          -667.1407662675982,
+          667.1983592199944
+        ],
+        "drape_method": "deterministic_dem_extent_clipping_then_bilinear_dem_at_corridor_polygon_vertices",
+        "kind": "terrain_draped_corridor",
+        "skipped_segment_count": 0,
+        "width_m": 2.0
+      },
+      "status": "resolved"
+    },
+    {
+      "anchor": {
+        "bridge": false,
+        "covered": false,
+        "layer": 0.0,
+        "mode": "terrain_draped",
+        "placement_resolved": true,
+        "source": "continuous_dem_draped_road_geometry",
+        "tunnel": false
+      },
+      "coordinate_frame": "local_enu_m",
+      "feature_class": "road",
+      "lineage": {
+        "runtime_authority": false,
+        "source_elevation_artifact_id": "artifact:elevation",
+        "source_elevation_sha256": "bdf039fb46ddba2b4df33d859d2bfd4defbcfd550ee60638f3720aee6b93f287",
+        "source_vector_artifact_id": "artifact:road",
+        "source_vector_sha256": "2d8d525d6d3f778f142b57de96ab817de2589dbf4ef8977236d51592f3731157",
+        "xy_source_geometry_unchanged": true
+      },
+      "object_id": "static:openstreetmap:way:2105:road:part:0000",
+      "source_feature_id": "openstreetmap:way:2105:road:part:0000",
+      "source_geometry_xy": {
+        "coordinates": [
+          [
+            257.4022168408169,
+            -222.38665378613078
+          ],
+          [
+            772.2066505224508,
+            -222.38665378613078
+          ]
+        ],
+        "type": "LineString"
+      },
+      "static_geometry": {
+        "centerline_geometry_xy": {
+          "coordinates": [
+            [
+              257.4022168408169,
+              -222.38665378613078
+            ],
+            [
+              772.2066505224508,
+              -222.38665378613078
+            ]
+          ],
+          "type": "LineString"
+        },
+        "centerline_parts_xyz": [
+          [
+            [
+              257.4022168408169,
+              -222.38665378613078,
+              444.1599731445313
+            ],
+            [
+              772.2066505224508,
+              -222.38665378613078,
+              448.15438372989104
+            ]
+          ]
+        ],
+        "centerline_xy_interpolation_applied": false,
+        "clipped_segment_count": 0,
+        "corridor_clipped_to_dem_extent": false,
+        "corridor_segments": [
+          {
+            "clipped_to_dem_extent": false,
+            "polygon_xyz": [
+              [
+                257.4022168408169,
+                -221.38665378613078,
+                444.15997314453125
+              ],
+              [
+                257.4022168408169,
+                -223.38665378613078,
+                444.1599731445313
+              ],
+              [
+                772.2066505224508,
+                -223.38665378613078,
+                448.1541956530363
+              ],
+              [
+                772.2066505224508,
+                -221.38665378613078,
+                448.14431595275414
+              ]
+            ],
+            "source_part_index": 0,
+            "source_segment_index": 0
+          }
+        ],
+        "dem_clip_extent_xy_m": [
+          -858.0073894697963,
+          858.0073894697963,
+          -667.1407662675982,
+          667.1983592199944
+        ],
+        "drape_method": "deterministic_dem_extent_clipping_then_bilinear_dem_at_corridor_polygon_vertices",
+        "kind": "terrain_draped_corridor",
+        "skipped_segment_count": 0,
+        "width_m": 2.0
+      },
+      "status": "resolved"
+    },
+    {
+      "anchor": {
+        "mode": "water_surface_from_dem",
+        "placement_resolved": true,
+        "source": "continuous_dem_water_surface_sampling"
+      },
+      "coordinate_frame": "local_enu_m",
+      "feature_class": "hydrology",
+      "hold_reason": "hydrology_geometry_outside_finite_dem",
+      "lineage": {
+        "runtime_authority": false,
+        "source_elevation_artifact_id": "artifact:elevation",
+        "source_elevation_sha256": "bdf039fb46ddba2b4df33d859d2bfd4defbcfd550ee60638f3720aee6b93f287",
+        "source_vector_artifact_id": "artifact:hydrology",
+        "source_vector_sha256": "945b5517e2665f6a899aa3bff5131e80be17ff0ea9d1bbd4c7161ede483489e3",
+        "xy_source_geometry_unchanged": true
+      },
+      "object_id": "static:openstreetmap:way:2001:hydrology:part:0000",
+      "source_feature_id": "openstreetmap:way:2001:hydrology:part:0000",
+      "source_geometry_xy": {
+        "coordinates": [
+          [
+            0.0,
+            -667.1407662675982
+          ],
+          [
+            0.0,
+            -333.5775811718474
+          ],
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            333.59197941318024
+          ],
+          [
+            0.0,
+            667.1983592199944
+          ]
+        ],
+        "type": "LineString"
+      },
+      "static_geometry": null,
+      "status": "held"
+    },
+    {
+      "anchor": {
+        "mode": "water_surface_from_dem",
+        "placement_resolved": true,
+        "source": "continuous_dem_water_surface_sampling"
+      },
+      "coordinate_frame": "local_enu_m",
+      "feature_class": "hydrology",
+      "lineage": {
+        "runtime_authority": false,
+        "source_elevation_artifact_id": "artifact:elevation",
+        "source_elevation_sha256": "bdf039fb46ddba2b4df33d859d2bfd4defbcfd550ee60638f3720aee6b93f287",
+        "source_vector_artifact_id": "artifact:hydrology",
+        "source_vector_sha256": "945b5517e2665f6a899aa3bff5131e80be17ff0ea9d1bbd4c7161ede483489e3",
+        "xy_source_geometry_unchanged": true
+      },
+      "object_id": "static:openstreetmap:way:2002:hydrology:part:0000",
+      "source_feature_id": "openstreetmap:way:2002:hydrology:part:0000",
+      "source_geometry_xy": {
+        "coordinates": [
+          [
+            [
+              -171.6014778934715,
+              -277.9823174288322
+            ],
+            [
+              171.6014778934715,
+              -277.9823174288322
+            ],
+            [
+              171.6014778934715,
+              333.59197941318024
+            ],
+            [
+              -171.6014778934715,
+              333.59197941318024
+            ],
+            [
+              -171.6014778934715,
+              -277.9823174288322
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "static_geometry": {
+        "display_paths_xyz": [
+          {
+            "coordinates_xyz": [
+              [
+                -171.6014778934715,
+                -277.9823174288322,
+                448.78607177734375
+              ],
+              [
+                171.6014778934715,
+                -277.9823174288322,
+                446.0718302823035
+              ],
+              [
+                171.6014778934715,
+                333.59197941318024,
+                448.38784290184617
+              ],
+              [
+                -171.6014778934715,
+                333.59197941318024,
+                448.8348099817456
+              ],
+              [
+                -171.6014778934715,
+                -277.9823174288322,
+                448.78607177734375
+              ]
+            ],
+            "role": "polygon_outer"
+          }
+        ],
+        "drape_method": "bilinear_dem_for_preview_z_only",
+        "geometry_xy": {
+          "coordinates": [
+            [
+              [
+                -171.6014778934715,
+                -277.9823174288322
+              ],
+              [
+                171.6014778934715,
+                -277.9823174288322
+              ],
+              [
+                171.6014778934715,
+                333.59197941318024
+              ],
+              [
+                -171.6014778934715,
+                333.59197941318024
+              ],
+              [
+                -171.6014778934715,
+                -277.9823174288322
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "kind": "source_geometry_dem_display_drape",
+        "runtime_authority": false,
+        "water_surface_elevation_resolved": false,
+        "xy_interpolation_applied": false
+      },
+      "status": "resolved"
+    }
+  ],
+  "release": {
+    "runtime_authority": false,
+    "runtime_consumers_enabled": [],
+    "scope": "offline_static_geometry_derivation_and_preview_only",
+    "state": "no_runtime_consumer_release"
+  },
+  "source_bundle": {
+    "bundle_id": "arnis-cmo-bundle:ff526c9d89edfb62ae454e6c",
+    "elevation_artifact": {
+      "artifact_id": "artifact:elevation",
+      "sha256": "bdf039fb46ddba2b4df33d859d2bfd4defbcfd550ee60638f3720aee6b93f287"
+    },
+    "vector_artifacts": {
+      "building": {
+        "artifact_id": "artifact:building",
+        "feature_class": "building",
+        "sha256": "c901c969032a8795ea97b999fd1fc15a2def5eb2b2f220b06f178db31f98d753"
+      },
+      "hydrology": {
+        "artifact_id": "artifact:hydrology",
+        "feature_class": "hydrology",
+        "sha256": "945b5517e2665f6a899aa3bff5131e80be17ff0ea9d1bbd4c7161ede483489e3"
+      },
+      "road": {
+        "artifact_id": "artifact:road",
+        "feature_class": "road",
+        "sha256": "2d8d525d6d3f778f142b57de96ab817de2589dbf4ef8977236d51592f3731157"
+      }
+    }
+  },
+  "summary": {
+    "by_feature_class": {
+      "building": {
+        "held": 0,
+        "resolved": 4,
+        "total": 4
+      },
+      "hydrology": {
+        "held": 1,
+        "resolved": 1,
+        "total": 2
+      },
+      "road": {
+        "held": 0,
+        "resolved": 5,
+        "total": 5
+      }
+    },
+    "held": 1,
+    "resolved": 10,
+    "total": 11
+  }
+}

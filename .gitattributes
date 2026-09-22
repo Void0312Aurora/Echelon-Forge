@@ -1,6 +1,8 @@
 # Preserve byte-addressed Arnis artifacts exactly across platforms.
 tools/environment/arnis/patches/*.patch -text
 tests/scenario/fixtures/environment_substrate/arnis_bundle_v1/** -text
+tests/scenario/fixtures/environment_substrate/**/*.f32le binary
+tests/scenario/fixtures/environment_substrate/**/*.u8 binary
 
 # Historical A2 governance dependencies are manifest-pinned exact bytes.
 docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/retained_dependencies/** -text

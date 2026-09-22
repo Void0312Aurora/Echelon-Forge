@@ -1,0 +1,505 @@
+{
+  "schema": "arnis_cmo_features",
+  "schema_version": 1,
+  "coordinate_frame": "local_enu_m",
+  "feature_class": "road",
+  "features": [
+    {
+      "feature_id": "openstreetmap:way:2101:road:part:0000",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -772.2066505224508,
+            0.0
+          ],
+          [
+            -257.4022168408169,
+            0.0
+          ],
+          [
+            257.4022168408169,
+            0.0
+          ],
+          [
+            772.2066505224508,
+            0.0
+          ]
+        ]
+      },
+      "attributes": {
+        "bridge": true,
+        "connectivity": "source_geometry",
+        "covered": false,
+        "highway_type": "primary",
+        "layer": 1.0,
+        "surface_class": "unspecified",
+        "tunnel": false,
+        "vertical_anchor_mode": "elevated_profile",
+        "vertical_anchor_source": "osm_bridge_or_positive_layer_requires_metric_elevated_profile",
+        "vertical_placement_resolved": false,
+        "width_m": 8.0,
+        "width_source": "osm_width_m"
+      },
+      "provenance": {
+        "source_feature_id": "2101",
+        "source_feature_type": "way",
+        "source_provider": "openstreetmap",
+        "source_tags": {
+          "bridge": "yes",
+          "highway": "primary",
+          "layer": "1",
+          "name": "East-West Route",
+          "width": "8"
+        },
+        "tags_filtered_by_arnis": true
+      },
+      "lineage": {
+        "block_projection_applied": false,
+        "geometry_source_stage": "projected_from_wgs84_f64",
+        "measurements": {
+          "bridge": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "osm_bridge_semantic"
+          },
+          "covered": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_osm_covered_false"
+          },
+          "layer": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "osm_layer_semantic"
+          },
+          "tunnel": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_osm_tunnel_false"
+          },
+          "vertical_anchor_mode": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "osm_bridge_or_positive_layer_requires_metric_elevated_profile"
+          },
+          "vertical_anchor_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "osm_bridge_or_positive_layer_requires_metric_elevated_profile"
+          },
+          "vertical_placement_resolved": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "osm_bridge_or_positive_layer_requires_metric_elevated_profile"
+          },
+          "width_m": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "metric_semantics_pre_block_conversion",
+            "source_semantics": "osm_width_m"
+          }
+        }
+      }
+    },
+    {
+      "feature_id": "openstreetmap:way:2102:road:part:0000",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -514.8044336816338,
+            -611.5479017214831
+          ],
+          [
+            -514.8044336816338,
+            -277.9823174288322
+          ],
+          [
+            -514.8044336816338,
+            0.0
+          ],
+          [
+            -514.8044336816338,
+            333.59197941318024
+          ],
+          [
+            -514.8044336816338,
+            611.5962958003865
+          ]
+        ]
+      },
+      "attributes": {
+        "bridge": false,
+        "connectivity": "source_geometry",
+        "covered": false,
+        "highway_type": "secondary",
+        "layer": 0.0,
+        "surface_class": "unspecified",
+        "tunnel": false,
+        "vertical_anchor_mode": "terrain_draped",
+        "vertical_anchor_source": "continuous_dem_draped_road_geometry",
+        "vertical_placement_resolved": true,
+        "width_m": 6.0,
+        "width_source": "osm_width_m"
+      },
+      "provenance": {
+        "source_feature_id": "2102",
+        "source_feature_type": "way",
+        "source_provider": "openstreetmap",
+        "source_tags": {
+          "highway": "secondary",
+          "name": "West Spine Road",
+          "width": "6"
+        },
+        "tags_filtered_by_arnis": true
+      },
+      "lineage": {
+        "block_projection_applied": false,
+        "geometry_source_stage": "projected_from_wgs84_f64",
+        "measurements": {
+          "bridge": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_osm_bridge_false"
+          },
+          "covered": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_osm_covered_false"
+          },
+          "layer": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_osm_layer_zero"
+          },
+          "tunnel": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_osm_tunnel_false"
+          },
+          "vertical_anchor_mode": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_draped_road_geometry"
+          },
+          "vertical_anchor_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_draped_road_geometry"
+          },
+          "vertical_placement_resolved": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_draped_road_geometry"
+          },
+          "width_m": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "metric_semantics_pre_block_conversion",
+            "source_semantics": "osm_width_m"
+          }
+        }
+      }
+    },
+    {
+      "feature_id": "openstreetmap:way:2103:road:part:0000",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -772.2066505224508,
+            -444.7669089954696
+          ],
+          [
+            -514.8044336816338,
+            -444.7669089954696
+          ]
+        ]
+      },
+      "attributes": {
+        "bridge": false,
+        "connectivity": "source_geometry",
+        "covered": false,
+        "highway_type": "track",
+        "layer": 0.0,
+        "surface_class": "unpaved",
+        "tunnel": false,
+        "vertical_anchor_mode": "terrain_draped",
+        "vertical_anchor_source": "continuous_dem_draped_road_geometry",
+        "vertical_placement_resolved": true,
+        "width_m": 2.0,
+        "width_source": "cmo_metric_default_by_highway_class"
+      },
+      "provenance": {
+        "source_feature_id": "2103",
+        "source_feature_type": "way",
+        "source_provider": "openstreetmap",
+        "source_tags": {
+          "highway": "track",
+          "name": "West Farm Track",
+          "surface": "unpaved"
+        },
+        "tags_filtered_by_arnis": true
+      },
+      "lineage": {
+        "block_projection_applied": false,
+        "geometry_source_stage": "projected_from_wgs84_f64",
+        "measurements": {
+          "bridge": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_osm_bridge_false"
+          },
+          "covered": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_osm_covered_false"
+          },
+          "layer": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_osm_layer_zero"
+          },
+          "tunnel": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_osm_tunnel_false"
+          },
+          "vertical_anchor_mode": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_draped_road_geometry"
+          },
+          "vertical_anchor_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_draped_road_geometry"
+          },
+          "vertical_placement_resolved": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_draped_road_geometry"
+          },
+          "width_m": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "metric_semantics_pre_block_conversion",
+            "source_semantics": "cmo_metric_default_by_highway_class"
+          }
+        }
+      }
+    },
+    {
+      "feature_id": "openstreetmap:way:2104:road:part:0000",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            772.2066505224508,
+            444.79250586527723
+          ],
+          [
+            -514.8044336816337,
+            444.79250586527723
+          ]
+        ]
+      },
+      "attributes": {
+        "bridge": false,
+        "connectivity": "source_geometry",
+        "covered": false,
+        "highway_type": "track",
+        "layer": 0.0,
+        "surface_class": "unpaved",
+        "tunnel": false,
+        "vertical_anchor_mode": "terrain_draped",
+        "vertical_anchor_source": "continuous_dem_draped_road_geometry",
+        "vertical_placement_resolved": true,
+        "width_m": 2.0,
+        "width_source": "cmo_metric_default_by_highway_class"
+      },
+      "provenance": {
+        "source_feature_id": "2104",
+        "source_feature_type": "way",
+        "source_provider": "openstreetmap",
+        "source_tags": {
+          "highway": "track",
+          "name": "North Farm Track",
+          "surface": "unpaved"
+        },
+        "tags_filtered_by_arnis": true
+      },
+      "lineage": {
+        "block_projection_applied": false,
+        "geometry_source_stage": "projected_from_wgs84_f64",
+        "measurements": {
+          "bridge": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_osm_bridge_false"
+          },
+          "covered": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_osm_covered_false"
+          },
+          "layer": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_osm_layer_zero"
+          },
+          "tunnel": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_osm_tunnel_false"
+          },
+          "vertical_anchor_mode": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_draped_road_geometry"
+          },
+          "vertical_anchor_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_draped_road_geometry"
+          },
+          "vertical_placement_resolved": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_draped_road_geometry"
+          },
+          "width_m": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "metric_semantics_pre_block_conversion",
+            "source_semantics": "cmo_metric_default_by_highway_class"
+          }
+        }
+      }
+    },
+    {
+      "feature_id": "openstreetmap:way:2105:road:part:0000",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            257.4022168408169,
+            -222.38665378613078
+          ],
+          [
+            772.2066505224508,
+            -222.38665378613078
+          ]
+        ]
+      },
+      "attributes": {
+        "bridge": false,
+        "connectivity": "source_geometry",
+        "covered": false,
+        "highway_type": "track",
+        "layer": 0.0,
+        "surface_class": "unpaved",
+        "tunnel": false,
+        "vertical_anchor_mode": "terrain_draped",
+        "vertical_anchor_source": "continuous_dem_draped_road_geometry",
+        "vertical_placement_resolved": true,
+        "width_m": 2.0,
+        "width_source": "cmo_metric_default_by_highway_class"
+      },
+      "provenance": {
+        "source_feature_id": "2105",
+        "source_feature_type": "way",
+        "source_provider": "openstreetmap",
+        "source_tags": {
+          "highway": "track",
+          "name": "East Field Track",
+          "surface": "unpaved"
+        },
+        "tags_filtered_by_arnis": true
+      },
+      "lineage": {
+        "block_projection_applied": false,
+        "geometry_source_stage": "projected_from_wgs84_f64",
+        "measurements": {
+          "bridge": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_osm_bridge_false"
+          },
+          "covered": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_osm_covered_false"
+          },
+          "layer": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_osm_layer_zero"
+          },
+          "tunnel": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "implicit_osm_tunnel_false"
+          },
+          "vertical_anchor_mode": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_draped_road_geometry"
+          },
+          "vertical_anchor_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_draped_road_geometry"
+          },
+          "vertical_placement_resolved": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_draped_road_geometry"
+          },
+          "width_m": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "metric_semantics_pre_block_conversion",
+            "source_semantics": "cmo_metric_default_by_highway_class"
+          }
+        }
+      }
+    }
+  ]
+}
