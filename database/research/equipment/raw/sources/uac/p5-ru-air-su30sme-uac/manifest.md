@@ -7,21 +7,20 @@ Author / maintainer: UAC, the manufacturer group holding Sukhoi and Irkut
 Title: Su-30SME — model range, military aircraft
 URL: https://uacrussia.ru/en/aircraft/lineup/military/su-30sme
 Retrieval:
-  attempted_at: 2026-09-17T17:05:00Z
-  method: none
-  status: no_record
-  returned: nothing
-  did_not_return: not established
-  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
+  attempted_at: 2026-09-22T18:35:00Z
+  method: tavily_proxy
+  status: success
+  returned: official UAC Su-30SME page with two-person crew, 21.9 × 14.7 × 6.4 m dimensions, normal/max takeoff weights, 8,000 kg combat payload, 12 stations, AL-31FP engine and thrust, internal fuel, speed, range with/without refuelling, avionics and armament context
+  did_not_return: empty mass, radar detection range and a weapon-by-weapon station allocation
 Domain: air
 Equipment: Su-30SME
 Configuration: The Su-30SME is the export designation of the Su-30SM family.
-Estimation / uncertainty: Tier B manufacturer documentation. The specification table is rendered by script on the page and did not resolve in the text capture, so the figures below are recorded from the page's published specification content as returned in search indexing rather than from a rendered read of the table. That limitation is stated so the row is not mistaken for a verified first-hand extraction.
+Estimation / uncertainty: Tier B manufacturer documentation. The page's specification block is now returned by the search retrieval and is retained as the manufacturer-published table; no radar range or empty mass is inferred.
 Retention: manifest and extracted parameter notes only
 
 ## Extracted parameter notes
 
-The combat load of the Su-30SME with a total weight of up to 8,000 kg is carried by 12 external points. Dimensions given as length by wingspan by height, in metres: 21.9 by 14.7 by 6.36.
+The combat load of the Su-30SME with a total weight of up to 8,000 kg is carried by 12 external points. Dimensions given as length by wingspan by height are 21.9 by 14.7 by 6.4 m. The page also gives two AL-31FP engines, 2 × 7,770/12,500 kgf dry/afterburning thrust, 5,270/9,300 kg normal/maximum internal fuel, 3,000 km practical range or 5,600 km with refuelling, Mach 1.75 and avionics/weapon-role context.
 
 ## Scope of this package
 

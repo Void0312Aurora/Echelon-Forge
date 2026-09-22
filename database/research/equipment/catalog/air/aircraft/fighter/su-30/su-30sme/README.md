@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/fighter/su-30/su-30sme/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-18`
+Last verified: `2026-09-23`
 Equipment ID: `eq-ru-air-su30sme`
-Content status: Export-variant record; not merged with Russian service Su-30SM. The payload and dimensions rest on a manufacturer table that did not render in the text capture, which is stated on the rows themselves.
+Content status: parameter-complete export-variant record; not merged with Russian service Su-30SM. Official ROSOBORONEXPORT and UAC readings are retained with their definitions.
 
 ## Identity
 
@@ -29,13 +29,23 @@ Content status: Export-variant record; not merged with Russian service Su-30SM. 
 | Payload | Up to 8,000 kg across 12 external points | `p5-ru-air-su30sme-uac` | B |
 | Length | 21.9 m | `p5-ru-air-su30sme-uac` | B |
 | Wingspan | 14.7 m | `p5-ru-air-su30sme-uac` | B |
-| Height | 6.36 m | `p5-ru-air-su30sme-uac` | B |
+| Height | 6.36 m in the earlier package; 6.4 m in the current UAC table | `p5-ru-air-su30sme-uac` | B |
+| Normal takeoff mass | 26,090 kg | `p5-ru-air-su30sme-uac` | B |
+| Maximum takeoff mass | 34,000 kg | `p5-ru-air-su30sme-roe`; `p5-ru-air-su30sme-uac` | A/B |
+| Powerplant | 2 × AL-31FP afterburning turbofans | `p5-ru-air-su30sme-uac` | B |
+| Engine thrust | 7,770 kgf dry / 12,500 kgf afterburning per engine | `p5-ru-air-su30sme-uac` | B |
+| Internal fuel | 5,270 kg normal / 9,300 kg maximum | `p5-ru-air-su30sme-uac` | B |
+| Service ceiling | 16,100 m | `p5-ru-air-su30sme-roe`; `p5-ru-air-su30sme-uac` | A/B |
+| Combat load | Up to 8,000 kg on 12 external points | `p5-ru-air-su30sme-roe`; `p5-ru-air-su30sme-uac` | A/B |
+| Range | 3,000 km practical; 5,600 km with refuelling | `p5-ru-air-su30sme-uac` | B |
+| In-flight refuelling | Yes | `p5-ru-air-su30sme-uac` | B |
+| Mission system / armament | Radar, optical-electronic sight/navigation, helmet-mounted cueing, satellite navigation, electronic suppression and guided/unguided air-to-air/air-to-surface/anti-ship/anti-radar stores | `p5-ru-air-su30sme-uac` | B |
 
 ## Configuration Boundary
 
-The export specification held here supplies weight, crew, maximum speed and flight range at Tier A. It states no payload, no hardpoint count and no dimensions, which is why the manufacturer page is used for those rows.
+The ROSOBORONEXPORT sheet supplies maximum takeoff weight, crew, speed, ceiling, payload and hardpoint count at Tier A. The UAC page supplies the detailed dimensions, engine, fuel, range, refuelling and mission-system block.
 
-The manufacturer table is rendered by script on the page and did not resolve in the text capture. The payload, hardpoint count and dimensions are therefore recorded from the page's published specification content as returned in search indexing rather than from a rendered read of the table, and they are labelled Tier B rather than presented as first-hand extractions. The two secondary sources that an earlier revision of this leaf cited as repeating the 8,000 kg payload are withdrawn, because neither was named and neither could be re-located; the payload now stands on this page alone with that limitation stated.
+The UAC specification block is now returned by the retrieval and supplies the dimensions, engine, fuel, range, refuelling and mission-system rows. The earlier 6.36 m height is retained as the prior UAC reading alongside the current 6.4 m table value; the difference is not reconciled.
 
 The Su-30SME is the export designation and the Su-30SM is a separate Russian service configuration. The two are separate records and no value is carried between them.
 

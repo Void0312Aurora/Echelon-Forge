@@ -44,7 +44,8 @@ calibration package, inventory claim, or final simulation configuration.
 | Batch | Scope | State | Commit |
 | --- | --- | --- | --- |
 | R-1 | Mirage 2000D RMV completion and run setup | complete | `cc4628c9` |
-| R-2 | C-5M, AC-130J, CV-22B, HC-130J and E-2D expansion | ready to commit | — |
+| R-2 | C-5M, AC-130J, CV-22B, HC-130J and E-2D expansion | complete | `fb401b7c` |
+| R-3 | Su-35S, Su-34E and Su-30SME completion | ready to commit | — |
 
 ## Blocker / skip ledger
 

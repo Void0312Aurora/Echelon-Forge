@@ -7,12 +7,11 @@ Author / maintainer: Defence Security Asia editorial staff
 Title: Russia Defies Sanctions as UAC Delivers Seventh Su-35S Batch to VKS in Record-Breaking 2025 Fighter Production Surge
 URL: https://defencesecurityasia.com/en/russia-su-35s-seventh-batch-delivery-record-2025-fighter-production
 Retrieval:
-  attempted_at: 2026-09-17T17:05:00Z
-  method: none
-  status: no_record
-  returned: nothing
-  did_not_return: not established
-  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
+  attempted_at: 2026-09-22T18:35:00Z
+  method: tavily_proxy
+  status: success
+  returned: explicit Su-35S designation block with dimensions, approximate empty mass, maximum takeoff mass, powerplant and crew
+  did_not_return: official certification or a complete weapon/performance table
 Domain: air
 Equipment: Su-35 / Su-35S
 Configuration: The article carries an explicit Su-35S designation block, which is the variant the leaf records.
