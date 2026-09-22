@@ -711,6 +711,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         hmoe_residual_start_factor: float = 0.0,
         hybrid_action_spec: Any | None = None,
         launch_decision_mode: str | None = None,
+        launch_decision_owner_mode: str | None = None,
         hybrid_event_head_lr_scale: float = 0.0,
         hybrid_event_credit_head_lr_scale: float = 0.0,
         hybrid_event_use_stopping_head: bool = False,
@@ -755,6 +756,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         self._hybrid_log_std_init = float(kwargs.get("log_std_init", 0.0))
         self._hybrid_action_spec_config = hybrid_action_spec
         self._launch_decision_mode_config = launch_decision_mode
+        self._launch_decision_owner_mode_config = launch_decision_owner_mode
         launch_decision_policy_kwargs = {
             "hybrid_action_spec": hybrid_action_spec,
             "hmoe_residual_scale": self._hmoe_residual_scale,
@@ -765,6 +767,8 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         }
         if launch_decision_mode is not None:
             launch_decision_policy_kwargs["launch_decision_mode"] = launch_decision_mode
+        if launch_decision_owner_mode is not None:
+            launch_decision_policy_kwargs["launch_decision_owner_mode"] = launch_decision_owner_mode
         self._launch_decision_config = {
             "hyperparameters": {"policy_kwargs": launch_decision_policy_kwargs}
         }
@@ -862,6 +866,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         data["hmoe_residual_start_factor"] = float(self._hmoe_residual_start_factor)
         data["hybrid_action_spec"] = self._hybrid_action_spec_config
         data["launch_decision_mode"] = self._launch_decision_mode_config
+        data["launch_decision_owner_mode"] = self._launch_decision_owner_mode_config
         data["hybrid_event_head_lr_scale"] = float(self._hybrid_event_head_lr_scale)
         data["hybrid_event_credit_head_lr_scale"] = float(self._hybrid_event_credit_head_lr_scale)
         data["hybrid_event_use_stopping_head"] = bool(self._hybrid_event_use_stopping_head)

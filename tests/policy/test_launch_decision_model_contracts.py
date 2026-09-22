@@ -130,6 +130,15 @@ class LaunchDecisionModelContractTests(unittest.TestCase):
     self.assertEqual(restored, contract)
     self.assertEqual(restored.as_dict(), contract.as_dict())
 
+  def test_governed_contract_declares_policy_trunk_with_latent_contributors(self) -> None:
+    contract = resolve_launch_decision_contract(
+      _config(
+        launch_decision_mode="governed_composed_v1",
+        hybrid_event_head_lr_scale=10.0,
+      )
+    )
+    self.assertIn("policy_trunk", contract.trainable_parameter_roles)
+
   def test_current_hybrid_inventory_defaults_to_legacy_and_has_seven_headless_entries(self) -> None:
     modes = []
     head_enabled = 0

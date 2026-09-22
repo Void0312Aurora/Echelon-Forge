@@ -378,9 +378,11 @@ def _launch_decision_mode_violation(
 
 
 def _launch_decision_active_flags(config: Mapping[str, Any]) -> dict[str, bool]:
+    action_spec = _launch_decision_value(config, "hybrid_action_spec")
+    if isinstance(action_spec, Mapping):
+        action_spec = action_spec.get("name", action_spec.get("mode", ""))
     return {
-        "base_action": _launch_decision_value(config, "hybrid_action_spec")
-        == "air_combat_hybrid_v1",
+        "base_action": action_spec == "air_combat_hybrid_v1",
         "hmoe_event_slice": any(
             _launch_decision_positive(_launch_decision_value(config, key))
             for key in ("hmoe_residual_scale", "hmoe_head_lr_scale")
@@ -560,6 +562,11 @@ def resolve_launch_decision_contract(
             _launch_decision_parameter_role(contributor)
             for contributor in active
         )
+        if active:
+            # Every executable contributor consumes actor-latent features. The
+            # trunk is therefore part of the governed write set even though it
+            # is not itself an event-logit module.
+            trainable_roles = (*trainable_roles, "policy_trunk")
         detached_roles: tuple[str, ...] = ()
         scopes = (LaunchDecisionTrainingScope.COMPATIBILITY,)
         acceptance_eligible = False
@@ -582,6 +589,8 @@ def resolve_launch_decision_contract(
             _launch_decision_parameter_role(contributor)
             for contributor in active
         )
+        if active:
+            trainable_roles = (*trainable_roles, "policy_trunk")
         detached_roles = ()
         scopes = (
             LaunchDecisionTrainingScope.ORDINARY_PPO,
@@ -599,6 +608,8 @@ def resolve_launch_decision_contract(
             _launch_decision_parameter_role(contributor)
             for contributor in active
         )
+        if active:
+            trainable_roles = (*trainable_roles, "policy_trunk")
         detached_roles = ()
         scopes = (
             LaunchDecisionTrainingScope.ORDINARY_PPO,
