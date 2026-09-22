@@ -1,0 +1,144 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pytest
+
+from python.rl.ground import (
+    GroundFieldProxy,
+    GroundInfantryProxyError,
+    build_ground_infantry_command,
+    normalize_ground_infantry_action,
+)
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+FIXTURE = (
+    REPO_ROOT
+    / "tests"
+    / "scenario"
+    / "fixtures"
+    / "environment_substrate"
+    / "arnis_bundle_v1"
+    / "eastern_plain_infantry_phase1"
+)
+
+
+def _proxy() -> GroundFieldProxy:
+    return GroundFieldProxy.from_fixture(FIXTURE)
+
+
+def test_ground_action_vector_is_normalized_without_hidden_air_fields() -> None:
+    action = normalize_ground_infantry_action([450.0, 2.0, 1.8, 3.2])
+
+    assert action.desired_heading_deg == 90.0
+    assert action.desired_speed_fraction == 1.0
+    assert action.stance == "prone"
+    assert action.route_intent == "cross_bridge"
+    assert action.vector() == (90.0, 1.0, 2.0, 3.0)
+
+    command = build_ground_infantry_command(action, entity_id=17)
+    assert command == {
+        "contract_version": "ground_infantry_proxy.v1",
+        "command_kind": "ground_infantry_step_v1",
+        "entity_id": 17,
+        "active": True,
+        "desired_heading_deg": 90.0,
+        "desired_speed_fraction": 1.0,
+        "stance": "prone",
+        "route_intent": "cross_bridge",
+        "authority": "engineering_proxy_only",
+    }
+
+
+def test_ground_action_rejects_wrong_shape() -> None:
+    with pytest.raises(GroundInfantryProxyError, match="expects four values"):
+        normalize_ground_infantry_action([0.0, 1.0])
+
+
+def test_proxy_loads_frozen_lineage_and_exposes_explicit_terrain_provenance() -> None:
+    proxy = _proxy()
+
+    sample = proxy.sample(400.0, 100.0)
+
+    assert proxy.acceptance["valid"] is True
+    assert sample.known is True
+    assert sample.landcover_label in {"grassland", "cropland"}
+    assert sample.elevation_m is not None
+    assert sample.slope_deg is not None
+    assert sample.provenance == "arnis_bundle_plus_field_overlay"
+
+
+def test_proxy_step_is_deterministic_and_replayable() -> None:
+    actions = [
+        [0.0, 0.5, 0.0, 0.0],
+        [90.0, 0.75, 1.0, 1.0],
+        [-90.0, 0.25, 2.0, 2.0],
+    ]
+
+    def run() -> list[dict]:
+        proxy = _proxy()
+        state = proxy.reset(x_m=400.0, y_m=100.0)
+        traces = []
+        for action in actions:
+            transition = proxy.step(state, action)
+            traces.append(transition.trace)
+            state = transition.state
+        return traces
+
+    first = run()
+    second = run()
+    assert json.dumps(first, sort_keys=True) == json.dumps(second, sort_keys=True)
+
+
+def test_direct_river_crossing_is_blocked_without_advancing_position() -> None:
+    proxy = _proxy()
+    state = proxy.reset(x_m=820.0, y_m=667.0)
+
+    transition = proxy.step(
+        state,
+        {
+            "desired_heading_deg": 90.0,
+            "desired_speed_fraction": 1.0,
+            "stance": "stand",
+            "route_intent": "direct",
+        },
+        dt_s=30.0,
+    )
+
+    assert transition.blocked is True
+    assert transition.blocked_reason == "river_crossing_requires_bridge_intent"
+    assert transition.moved_distance_m == 0.0
+    assert (transition.state.x_m, transition.state.y_m) == (state.x_m, state.y_m)
+    assert transition.state.step_index == state.step_index + 1
+    assert transition.state.sim_time_s == state.sim_time_s + 30.0
+
+
+def test_bridge_intent_is_the_only_proxy_admission_for_crossing() -> None:
+    proxy = _proxy()
+    state = proxy.reset(x_m=820.0, y_m=667.0)
+
+    transition = proxy.step(
+        state,
+        [90.0, 1.0, 0.0, 3.0],
+        dt_s=30.0,
+    )
+
+    assert transition.blocked is False
+    assert transition.blocked_reason is None
+    assert transition.moved_distance_m > 0.0
+    assert transition.state.x_m > state.x_m
+    assert "bridge_crossing" in transition.terrain.semantic_kinds
+
+
+def test_unknown_or_outside_terrain_fails_closed() -> None:
+    proxy = _proxy()
+    state = proxy.reset(x_m=400.0, y_m=100.0)
+
+    transition = proxy.step(state, [0.0, 1.0, 0.0, 0.0], dt_s=2000.0)
+
+    assert transition.blocked is True
+    assert transition.blocked_reason == "outside_map_extent"
+    assert transition.moved_distance_m == 0.0
+    assert transition.observation["unknown_value_policy"] == "explicit_unknown_with_provenance"
