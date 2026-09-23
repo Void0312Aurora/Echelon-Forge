@@ -28,6 +28,8 @@ def test_p2b_baseline_records_repeatable_control_and_runtime_observations() -> N
   assert report["control_yield"]["observed_pass_rate"] == 1.0
   assert report["supported_row"]["total_cycles"] == 1
   assert report["supported_row"]["caller_adoption_rate"] == 1.0
+  assert report["supported_row"]["resource_observations"]["sample_count"] == 2
+  assert report["supported_row"]["resource_observations"]["budget_status"] == "observed_only"
   assert report["supported_row"]["safety_events"] == {
     "stale_reference_rejections": 0,
     "wrong_epoch_results": 0,

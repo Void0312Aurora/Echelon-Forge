@@ -10,6 +10,7 @@ runtime publication authority.
 from __future__ import annotations
 
 import argparse
+import ctypes
 import hashlib
 import json
 import os
@@ -44,6 +45,83 @@ def _sha256(path: Path) -> str:
   return digest.hexdigest()
 
 
+def _process_resource_snapshot() -> dict[str, int | bool]:
+  """Read the child process working-set and handle counters when supported."""
+
+  if os.name != "nt":
+    return {
+      "available": False,
+      "working_set_bytes": 0,
+      "peak_working_set_bytes": 0,
+      "handle_count": 0,
+    }
+
+  class _ProcessMemoryCountersEx(ctypes.Structure):
+    _fields_ = [
+      ("cb", ctypes.c_ulong),
+      ("PageFaultCount", ctypes.c_ulong),
+      ("PeakWorkingSetSize", ctypes.c_size_t),
+      ("WorkingSetSize", ctypes.c_size_t),
+      ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+      ("QuotaPagedPoolUsage", ctypes.c_size_t),
+      ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+      ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+      ("PagefileUsage", ctypes.c_size_t),
+      ("PeakPagefileUsage", ctypes.c_size_t),
+      ("PrivateUsage", ctypes.c_size_t),
+    ]
+
+  counters = _ProcessMemoryCountersEx()
+  counters.cb = ctypes.sizeof(counters)
+  try:
+    get_current_process = ctypes.windll.kernel32.GetCurrentProcess
+    get_current_process.restype = ctypes.c_void_p
+    get_process_memory_info = ctypes.windll.psapi.GetProcessMemoryInfo
+    get_process_memory_info.argtypes = [
+      ctypes.c_void_p,
+      ctypes.POINTER(_ProcessMemoryCountersEx),
+      ctypes.c_ulong,
+    ]
+    get_process_memory_info.restype = ctypes.c_int
+    handle_count = ctypes.c_ulong(0)
+    get_process_handle_count = ctypes.windll.kernel32.GetProcessHandleCount
+    get_process_handle_count.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_ulong)]
+    get_process_handle_count.restype = ctypes.c_int
+    process_handle = get_current_process()
+    memory_ok = bool(
+      get_process_memory_info(process_handle, ctypes.byref(counters), ctypes.sizeof(counters))
+    )
+    handles_ok = bool(get_process_handle_count(process_handle, ctypes.byref(handle_count)))
+  except (AttributeError, OSError):
+    return {
+      "available": False,
+      "working_set_bytes": 0,
+      "peak_working_set_bytes": 0,
+      "handle_count": 0,
+    }
+  if not memory_ok or not handles_ok:
+    return {
+      "available": False,
+      "working_set_bytes": 0,
+      "peak_working_set_bytes": 0,
+      "handle_count": 0,
+    }
+  return {
+    "available": True,
+    "working_set_bytes": int(counters.WorkingSetSize),
+    "peak_working_set_bytes": int(counters.PeakWorkingSetSize),
+    "handle_count": int(handle_count.value),
+  }
+
+
+def _write_ready(path: Path, payload: dict[str, object]) -> None:
+  """Publish readiness/resource state atomically so readers never see a partial JSON file."""
+
+  temporary = path.with_name(path.name + ".tmp")
+  temporary.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+  temporary.replace(path)
+
+
 @dataclass(slots=True)
 class RuntimeProcess:
   """A real local runtime process and its observed package identity."""
@@ -63,6 +141,12 @@ class RuntimeProcess:
       raise RuntimeError("runtime process did not stop after the rollback signal")
     if self.process.returncode != 0:
       raise RuntimeError(f"runtime process exited with code {self.process.returncode}")
+    try:
+      final_observation = json.loads(self.ready_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+      final_observation = None
+    if isinstance(final_observation, dict):
+      self.observation.update(final_observation)
 
 
 def launch_runtime_process(
@@ -247,12 +331,54 @@ def _run_worker(args: argparse.Namespace) -> int:
     })
   ready_path = Path(args.ready)
   ready_path.parent.mkdir(parents=True, exist_ok=True)
-  ready_path.write_text(json.dumps(ready, sort_keys=True), encoding="utf-8")
+  resource = _process_resource_snapshot()
+  resource_peak = {
+    "available": bool(resource["available"]),
+    "working_set_bytes": int(resource["working_set_bytes"]),
+    "peak_working_set_bytes": int(resource["peak_working_set_bytes"]),
+    "handle_count": int(resource["handle_count"]),
+    "peak_handle_count": int(resource["handle_count"]),
+  }
+  ready["resource"] = resource_peak
+  _write_ready(ready_path, ready)
   stop_path = Path(args.stop)
+  last_resource_write = time.monotonic()
   try:
     while not stop_path.exists():
+      resource = _process_resource_snapshot()
+      if bool(resource["available"]):
+        resource_peak["available"] = True
+        resource_peak["working_set_bytes"] = int(resource["working_set_bytes"])
+        resource_peak["peak_working_set_bytes"] = max(
+          int(resource_peak["peak_working_set_bytes"]),
+          int(resource["peak_working_set_bytes"]),
+        )
+        resource_peak["handle_count"] = int(resource["handle_count"])
+        resource_peak["peak_handle_count"] = max(
+          int(resource_peak["peak_handle_count"]),
+          int(resource["handle_count"]),
+        )
+      if time.monotonic() - last_resource_write >= 0.1:
+        ready["resource"] = dict(resource_peak)
+        _write_ready(ready_path, ready)
+        last_resource_write = time.monotonic()
       time.sleep(0.02)
   finally:
+    resource = _process_resource_snapshot()
+    if bool(resource["available"]):
+      resource_peak["available"] = True
+      resource_peak["working_set_bytes"] = int(resource["working_set_bytes"])
+      resource_peak["peak_working_set_bytes"] = max(
+        int(resource_peak["peak_working_set_bytes"]),
+        int(resource["peak_working_set_bytes"]),
+      )
+      resource_peak["handle_count"] = int(resource["handle_count"])
+      resource_peak["peak_handle_count"] = max(
+        int(resource_peak["peak_handle_count"]),
+        int(resource["handle_count"]),
+      )
+    ready["resource"] = dict(resource_peak)
+    _write_ready(ready_path, ready)
     del adapter
     del facade
     if ledger is not None:

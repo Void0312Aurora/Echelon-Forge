@@ -44,6 +44,7 @@ the CLI helper uses the same implementation.
 | Crash receipt deadline breaches | 0/3 | 0 | pass |
 | Artifact availability | 3/3 (1.0) | >= 0.999 | pass |
 | Caller adoption | 3/3 (1.0) | measured and owned | recorded |
+| Child-process resource observation | 6/6 samples available; peak working set 46,186,496 bytes; peak handles 128 | observation only; no approved long-term budget | recorded |
 | Safety events | 0 stale refs, 0 wrong epochs, 0 duplicate publications, 0 security denials | zero tolerance | pass |
 
 The report snapshot contains three admission attempts, three replacement
@@ -56,6 +57,13 @@ cycles:
 - rollback `ef_py`: `46ef11afe9687a865bd3e0a02e51ba7fa03b0c2d42215b8aff7e70f2e8db96cf`.
 
 The SLO evaluator returned `passed: true` with an empty reason list.
+
+The same three-cycle process sample now records a Windows working-set and
+handle snapshot for each current/rollback child. Current and rollback samples
+were all available; peak working-set observations ranged from 46,018,560 to
+46,186,496 bytes and the peak handle count was 128. These are operational
+observations only. P2-B still needs an owner-approved long-term resource
+budget over representative release changes.
 
 ## Verification
 

@@ -45,6 +45,7 @@ three-cycle packet.
 | Maximum backout recovery | 0.8832237 s | release/runtime integration | initial target <= 300 s |
 | Caller adoption | 1.0 | release/runtime integration | drill caller path, not full maintained parity |
 | Artifact availability | 1.0 | release/runtime integration | three local package reads |
+| Child-process resource observation | 6/6 working-set/handle samples available; max peak working set 46,186,496 bytes; max peak handles 128 | release/runtime integration | three-cycle supported-row sample; observation only |
 | Safety counters | 0 stale refs, 0 wrong epochs, 0 duplicate publications, 0 security denials | runtime composition/security | healthy path observation |
 | Evidence retrieval | 3/3 packets, 10,729 bytes, 1.0 availability | documentation lifecycle | three checked-in evidence packets |
 
@@ -73,10 +74,13 @@ counters into a claim that stale references or skew never occur.
 
 Resource teardown and state-transfer behavior are sampled by the candidate
 teardown/state-transfer guard group; a long-term memory/handle budget across
-representative workloads remains open. Linux, remote, multi-process, and
+representative workloads remains open. The supported-row process sample now
+also records six available Windows working-set/handle observations, with a
+maximum peak working set of 46,186,496 bytes and 128 handles; those values are
+not an approved budget or a leak verdict. Linux, remote, multi-process, and
 production traffic are outside this local baseline. P2-B still requires a
-release cadence, broader representative samples, resource-budget evidence,
-and an owner review before its exit condition can be marked accepted.
+release cadence, broader representative samples, an owner-approved resource
+budget, and an owner review before its exit condition can be marked accepted.
 
 ## Verification
 

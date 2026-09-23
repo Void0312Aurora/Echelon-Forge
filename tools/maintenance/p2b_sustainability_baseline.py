@@ -179,6 +179,18 @@ def _measure_supported_row(
   passed = sum(1 for report in reports if report["slo"]["passed"])
   samples = [sample for report in reports for sample in report["samples"]]
   snapshots = [report["snapshot"] for report in reports]
+  resource_samples = [
+    resource
+    for sample in samples
+    for resource in (
+      sample.get("current_resource", {}),
+      sample.get("rollback_resource", {}),
+    )
+    if isinstance(resource, dict)
+  ]
+  available_resource_samples = [
+    resource for resource in resource_samples if bool(resource.get("available"))
+  ]
   return {
     "runs": runs,
     "cycles_per_run": process_cycles,
@@ -203,6 +215,28 @@ def _measure_supported_row(
       snapshots, "caller_adoptions", "caller_total"
     ),
     "artifact_availability_rate": _ratio_available(snapshots),
+    "resource_observations": {
+      "sample_count": len(resource_samples),
+      "available_count": len(available_resource_samples),
+      "availability_ratio": (
+        len(available_resource_samples) / len(resource_samples)
+        if resource_samples
+        else 0.0
+      ),
+      "max_peak_working_set_bytes": max(
+        (int(resource.get("peak_working_set_bytes", 0)) for resource in available_resource_samples),
+        default=0,
+      ),
+      "max_peak_handle_count": max(
+        (int(resource.get("peak_handle_count", 0)) for resource in available_resource_samples),
+        default=0,
+      ),
+      "max_observed_handle_count": max(
+        (int(resource.get("handle_count", 0)) for resource in available_resource_samples),
+        default=0,
+      ),
+      "budget_status": "observed_only",
+    },
     "safety_events": {
       key: sum(int(snapshot["counters"][key]) for snapshot in snapshots)
       for key in (

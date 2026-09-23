@@ -58,8 +58,10 @@ group passed **24 tests**; Ruff and the diff check passed.
 The child process reports the actual `RuntimeFacade` type and SHA-256 of the
 loaded `ef_py` binding, plus the production-canary state, release/plan
 identities, decision digest, and evidence-binding result. The parent asserts a
-new boot identity and epoch after the rollback process starts. No test-only
-facade stub is used for this drill.
+new boot identity and epoch after the rollback process starts. The same child
+readiness record now carries Windows working-set and handle observations for
+the process lifetime; these are operational samples, not an approved resource
+budget. No test-only facade stub is used for this drill.
 
 ## Boundary
 

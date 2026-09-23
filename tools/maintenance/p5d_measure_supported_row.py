@@ -62,6 +62,7 @@ def measure_supported_row(
     recorder.record_caller_adoption(adopted=True)
     stop_started = time.perf_counter()
     current.stop()
+    current_resource = dict(current.observation.get("resource", {}))
     drain_duration = time.perf_counter() - stop_started
     recorder.record_drain(completed=True)
     recorder.record_crash_receipt(reconciled=True, delay_s=drain_duration)
@@ -73,6 +74,7 @@ def measure_supported_row(
     )
     rollback_launch_duration = time.perf_counter() - rollback_started
     rollback.stop()
+    rollback_resource = dict(rollback.observation.get("resource", {}))
     recorder.record_backout(recovered=True, duration_s=rollback_launch_duration)
     recorder.record_artifact_retrieval(
       available=current_binding.is_file() and rollback_binding.is_file()
@@ -85,6 +87,8 @@ def measure_supported_row(
       "current_pyd_sha256": _sha256(current_binding),
       "rollback_pyd_sha256": _sha256(rollback_binding),
       "caller_adopted": True,
+      "current_resource": current_resource,
+      "rollback_resource": rollback_resource,
     })
   snapshot = recorder.snapshot().to_document()
   slo_report = recorder.evaluate_slo(RolloutSLOTargets())
