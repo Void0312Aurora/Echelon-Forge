@@ -1,5 +1,46 @@
 {
   "name": "architecture_guard",
+  "control_lifecycle": {
+    "schema_version": 1,
+    "controls": [
+      {
+        "id": "architecture_guard_suite",
+        "owner": "architecture-maintainers",
+        "invariant": "maintained architecture boundaries and contract invariants fail before merge",
+        "kind": "permanent",
+        "created": "2026-08-25",
+        "expiry": null,
+        "successor": null,
+        "renewal_count": 0,
+        "removal_proof": "an accepted replacement suite covers the same failure audience with structural or behavioral evidence",
+        "coverage": ["manifest"]
+      },
+      {
+        "id": "runtime_facade_compatibility_migration",
+        "owner": "runtime-facade",
+        "invariant": "maintained callers cannot add raw runtime or world ownership while facade migration is incomplete",
+        "kind": "migratory",
+        "created": "2026-08-25",
+        "expiry": "2027-03-31",
+        "successor": "physical-facade-target-and-package-boundary",
+        "renewal_count": 0,
+        "removal_proof": "the maintained caller inventory is empty and physical facade boundary tests replace the migration scan",
+        "coverage": ["tests/architecture/runtime_facade/test_runtime_escape_hatches.py"]
+      },
+      {
+        "id": "universal_env_compatibility_inventory",
+        "owner": "runtime-facade",
+        "invariant": "the compatibility caller inventory remains explicit until the supported facade contract owns every caller",
+        "kind": "migratory",
+        "created": "2026-08-25",
+        "expiry": "2027-03-31",
+        "successor": "maintained-facade-caller-parity",
+        "renewal_count": 0,
+        "removal_proof": "the inventory is zero on a representative maintained-caller sample and the successor parity gate passes",
+        "coverage": ["tests/architecture/runtime_facade/test_universal_env_compatibility_caller_inventory.py"]
+      }
+    ]
+  },
   "paths": [
     "tests/architecture/agency/test_authority_default_single_source.py",
     "tests/architecture/agency/test_authority_registry_gate.py",
@@ -13,6 +54,9 @@
     "tests/architecture/command_tasking/test_tasking_bridge_guardrails.py",
     "tests/architecture/composition/test_cordis_runtime_vertical_slice.py",
     "tests/architecture/composition/test_native_composition_lifecycle_contract.py",
+    "tests/architecture/composition/test_runtime_artifact_ledger.py",
+    "tests/architecture/composition/test_runtime_authority_contracts.py",
+    "tests/architecture/composition/test_runtime_authority_schema_surface.py",
     "tests/architecture/composition/test_runtime_composition_evidence_contract.py",
     "tests/architecture/composition/test_runtime_composition_migration_closure.py",
     "tests/architecture/composition/test_runtime_composition_projection_contract.py",
@@ -23,6 +67,8 @@
     "tests/architecture/composition/test_runtime_host_candidate_contract.py",
     "tests/architecture/runtime_host/test_runtime_kernel_candidate_contract.py",
     "tests/architecture/composition/test_runtime_profile_projection_contract.py",
+    "tests/architecture/composition/test_runtime_resolved_plan_contract.py",
+    "tests/architecture/composition/test_runtime_run_receipt.py",
     "tests/architecture/composition/test_runtime_state_transfer_candidate_contract.py",
     "tests/architecture/composition/test_runtime_resolved_plan_contract.py",
     "tests/architecture/composition/test_runtime_run_receipt.py",
@@ -90,6 +136,13 @@
     "tests/architecture/runtime_profiles/test_cuda_resident_replay.py",
     "tests/architecture/runtime_profiles/test_runtime_profile_contracts.py",
     "tests/architecture/runtime_contracts/test_public_runtime_contract_foundation.py",
+    "tests/architecture/runtime_host/test_p5d_real_process_package_rollback.py",
+    "tests/architecture/runtime_host/test_p5d_rollout_operations.py",
+    "tests/architecture/runtime_host/test_p5d_supported_row_measurement.py",
+    "tests/architecture/runtime_host/test_production_rollout_gate.py",
+    "tests/architecture/runtime_host/test_rollout_evidence_binding.py",
+    "tests/architecture/runtime_host/test_runtime_kernel_candidate_contract.py",
+    "tests/architecture/runtime_host/test_sqlite_rollout_admission.py",
     "tests/architecture/runtime_spine/test_clock_domain_enforcement.py",
     "tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py",
     "tests/architecture/runtime_spine/test_web_viz_facade_caller.py",

@@ -1,5 +1,22 @@
 {
   "name": "ci_smoke",
+  "control_lifecycle": {
+    "schema_version": 1,
+    "controls": [
+      {
+        "id": "ci_smoke_gate",
+        "owner": "release-engineering",
+        "invariant": "merge candidates preserve the maintained high-signal native, facade, contract, and governance smoke behavior",
+        "kind": "permanent",
+        "created": "2026-08-25",
+        "expiry": null,
+        "successor": null,
+        "renewal_count": 0,
+        "removal_proof": "an accepted lane replacement preserves the same failure audience and required branch protection",
+        "coverage": ["manifest"]
+      }
+    ]
+  },
   "paths": [
     "tests/architecture/composition/test_simulation_composition_contract.py",
     "tests/architecture/composition/test_native_composition_lifecycle_contract.py",
