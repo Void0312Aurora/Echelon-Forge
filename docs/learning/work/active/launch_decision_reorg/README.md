@@ -251,9 +251,9 @@ The trace must include:
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
 | P0 Boundary | Freeze owner vocabulary, headless inventory, source revision, and no-goals. | The final owner decision in this README. | Baseline manifest and owner decision record are complete. | accepted |
-| P1 Evidence | Establish build preflight, deterministic fixtures, contributor traces, and current test coverage. | P0 accepted. | Required artifacts or explicit infrastructure residuals are recorded. | active |
-| P2 Contract | Implement typed owner/mode validation and serialization tests. | P1 complete. | Conflicts reject; legacy modes round-trip without changed outputs. | planned |
-| P3 Forward path | Introduce Composer boundary and preserve compatibility mode. | P2 accepted. | Owner trace, unmasked pair, mask handoff, and state-dict behavior are tested. | planned |
+| P1 Evidence | Establish build preflight, deterministic fixtures, contributor traces, and current test coverage. | P0 accepted. | Manifest, external artifacts, and build/import preflight are reproducible. | accepted |
+| P2 Contract | Implement typed owner/mode validation and serialization tests. | P1 complete. | Conflicts reject; legacy modes round-trip without changed outputs. | accepted |
+| P3 Forward path | Introduce Composer boundary and preserve compatibility mode. | P2 accepted. | Owner trace, unmasked pair, mask handoff, and state-dict behavior are tested. | active |
 | P4 Training/config integration | Align objectives, sidecars, replay, optimizer groups, and config/checkpoint migration. | P3 accepted. | All declared write sets and migration gates pass. | planned |
 | P5 Acceptance/closure | Run focused tests, runtime probes, target-scoped worktree checks, and owner closure documentation. | P4 mergeable or explicitly blocked. | Main-thread owner verdict is Mergeable, Blocked, or Closed with residual owners. | planned |
 
@@ -283,7 +283,7 @@ Before running policy or runtime tests, a Windows implementation lane must run
 from the worktree root:
 
 ~~~powershell
-$build = 'D:\workshop\Research\Echelon-Forge-build\ld-arch-plan'
+$build = 'D:\workshop\Research\Echelon-Forge-build\ld-reorg'
 cmake -S . -B $build -DCMAKE_BUILD_TYPE=Debug
 cmake --build $build --target ef_core ef_py ef_test --parallel 4
 $env:CMO_BUILD_DIR = $build
@@ -379,7 +379,8 @@ git -C <repo>\.worktrees\ld-arch-plan status --porcelain=v1 -uall
 git -C <repo> worktree list --porcelain
 ~~~
 
-The target must have zero untracked entries, be under <repo>\.worktrees, and
+The target is `.worktrees\ld-reorg`; it must have zero untracked entries, be
+under <repo>\.worktrees, and
 remain reachable. The global audit_worktrees.py report may be recorded as
 informational context, but findings from unrelated pre-existing worktrees are
 not acceptance failures for this plan and must not be repaired by this work
