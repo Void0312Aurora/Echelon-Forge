@@ -421,8 +421,8 @@ RuntimeHostStatus RuntimeKernelCandidate::initialize_candidate() {
         (admitted_execution_plan_sha256_.empty() &&
          config_.plan.plan_sha256 != sealed_composition_.resolved_manifest_sha256)) {
         return {.error = RuntimeHostError::InvalidArgument,
-                .detail = "candidate is not bound to its admitted execution plan and sealed "
-                          "resolved composition"};
+                .detail = "P4-C candidate plan is not bound to the sealed resolved composition; "
+                          "the admitted execution plan or release binding differs"};
     }
     const auto owner = host_.issue_owner_handle(
         control_, {
