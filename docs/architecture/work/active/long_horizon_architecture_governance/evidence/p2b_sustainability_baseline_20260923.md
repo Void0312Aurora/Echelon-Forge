@@ -39,6 +39,7 @@ three-cycle packet.
 | Healthy control check runs | 12/12 passed; 0 healthy-sample failures | cross-domain architecture | current checkout, four groups × three runs |
 | Check execution cost | 81.2526470 s total; 6.7710539 s mean per group run | release engineering | local Windows CPython 3.12 process |
 | Supported-row SLO runs | 3/3 passed; 3 total cycles | release/runtime integration | current and rollback local builds |
+| Release cadence identity | 3 logical release IDs, 1 plan digest, 1 current/rollback package pair; `local_repeat_only` | release/runtime integration | three repetitions of the same local builds, not representative release changes |
 | Replacement success | 1.0 | release/runtime integration | three observed starts |
 | Drain completion | 1.0 | release/runtime integration | three observed stops |
 | Maximum replacement startup | 0.9332587 s | release/runtime integration | observation, target remains 300 s backout only |
@@ -62,6 +63,24 @@ The static audit in the same report observed 519 active test files, 306
 `test_*.py` files, 2,733 static test items, 124 smoke entries, 61 contract
 JSON files, and 208 risk-flagged Python files. These are size and cost
 baselines, not quality scores.
+
+The report now preserves each run's release ID, plan digest, observed package
+digests, cycle count, and SLO outcome. In this three-run sample the IDs were
+`p2b-baseline-1`, `p2b-baseline-2`, and `p2b-baseline-3`, but the plan digest
+was `b` repeated 64 times and every cycle used the same package pair:
+
+| Package | SHA-256 |
+| --- | --- |
+| Current Windows binding | `d699fbccfebc8d51ab22bbb4e50504f744a4836c8b99c707482dfaca24909e37` |
+| Rollback Windows binding | `46ef11afe9687a865bd3e0a02e51ba7fa03b0c2d42215b8aff7e70f2e8db96cf` |
+
+The classifier counts observed per-cycle pairs rather than combining
+unrelated current and rollback digests. A changed pair across internally
+consistent batches is reported as `distinct_package_batches_observed`; a
+changed pair within one batch or an incomplete digest needs disposition.
+Even a distinct-batch observation leaves `representative_release_cadence`
+open until actual release changes, cadence, and owners are qualified. This
+sample cannot close that gate.
 
 ## Interpretation and boundary
 
@@ -87,14 +106,18 @@ budget, and an owner review before its exit condition can be marked accepted.
 ```powershell
 $env:CMO_BUILD_DIR='build-long-horizon-p5d-wheel'
 python -m pytest -q tests/architecture/governance/test_p2b_sustainability_baseline.py
+python -m pytest -q tests/architecture/runtime_host/test_p5d_supported_row_measurement.py
 python -m ruff check `
   tools/maintenance/p2b_sustainability_baseline.py `
+  tools/maintenance/p5d_measure_supported_row.py `
   tests/architecture/governance/test_p2b_sustainability_baseline.py
 ```
 
-Result: **1 integration test passed** and Ruff passed. The integration test
-executes the same baseline builder with one repetition and one process cycle;
-the dated values above come from the three-repetition command.
+Result: **1 integration test passed**, the cadence classifier and
+supported-row identity tests passed, and Ruff passed. The
+integration test executes the same baseline builder with one repetition and
+one process cycle; the dated values above come from the three-repetition
+command.
 
 Document kind: `evidence`
 Lifecycle: `maintained`

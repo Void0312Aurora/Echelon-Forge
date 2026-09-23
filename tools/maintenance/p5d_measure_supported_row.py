@@ -99,6 +99,8 @@ def measure_supported_row(
   }
   return {
     "schema_version": "echelon_forge.p5d_supported_row_measurement.v1",
+    "release_id": release_id,
+    "plan_sha256": plan_sha256,
     "cycles": cycles,
     "snapshot": snapshot,
     "slo": slo,

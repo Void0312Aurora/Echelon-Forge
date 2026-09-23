@@ -15,6 +15,8 @@ def test_supported_row_measurement_collects_repeated_process_slo_and_adoption(tm
     plan_sha256="1" * 64,
   )
   assert report["cycles"] == 3
+  assert report["release_id"] == "local-supported-row"
+  assert report["plan_sha256"] == "1" * 64
   assert report["slo"]["passed"]
   assert report["slo"]["reasons"] == []
   assert report["snapshot"]["ratios"]["caller_adoption"] == 1.0

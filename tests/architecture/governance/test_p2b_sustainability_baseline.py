@@ -12,6 +12,67 @@ pytestmark = pytest.mark.governance_audit
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
+def test_p2b_cadence_counts_observed_package_pairs_without_cross_products() -> None:
+  from tools.maintenance.p2b_sustainability_baseline import _summarize_release_cadence
+
+  report = _summarize_release_cadence([
+    {
+      "release_id": "release-one",
+      "plan_sha256": "a" * 64,
+      "cycles": 2,
+      "slo": {"passed": True},
+      "samples": [
+        {"current_pyd_sha256": "1" * 64, "rollback_pyd_sha256": "2" * 64},
+        {"current_pyd_sha256": "1" * 64, "rollback_pyd_sha256": "2" * 64},
+      ],
+    },
+    {
+      "release_id": "release-two",
+      "plan_sha256": "a" * 64,
+      "cycles": 1,
+      "slo": {"passed": True},
+      "samples": [
+        {"current_pyd_sha256": "3" * 64, "rollback_pyd_sha256": "4" * 64},
+      ],
+    },
+  ])
+
+  assert report["status"] == "distinct_package_batches_observed"
+  assert report["representative_release_cadence"] == "open"
+  assert report["distinct_release_id_count"] == 2
+  assert report["distinct_plan_sha256_count"] == 1
+  assert report["distinct_package_pair_count"] == 2
+  assert report["batches"][0]["package_pair_consistent"] is True
+  assert report["batches"][1]["package_pair_consistent"] is True
+
+
+def test_p2b_cadence_rejects_incomplete_and_changed_pairs_within_one_batch() -> None:
+  from tools.maintenance.p2b_sustainability_baseline import _summarize_release_cadence
+
+  incomplete = _summarize_release_cadence([{
+    "release_id": "release-one",
+    "plan_sha256": "a" * 64,
+    "cycles": 1,
+    "slo": {"passed": True},
+    "samples": [{"current_pyd_sha256": "", "rollback_pyd_sha256": "2" * 64}],
+  }])
+  assert incomplete["status"] == "incomplete_package_observation"
+
+  inconsistent = _summarize_release_cadence([{
+    "release_id": "release-one",
+    "plan_sha256": "a" * 64,
+    "cycles": 2,
+    "slo": {"passed": True},
+    "samples": [
+      {"current_pyd_sha256": "1" * 64, "rollback_pyd_sha256": "2" * 64},
+      {"current_pyd_sha256": "3" * 64, "rollback_pyd_sha256": "4" * 64},
+    ],
+  }])
+  assert inconsistent["status"] == "inconsistent_package_batch"
+  assert inconsistent["distinct_package_pair_count"] == 2
+  assert inconsistent["batches"][0]["package_pair_consistent"] is False
+
+
 def test_p2b_baseline_records_repeatable_control_and_runtime_observations() -> None:
   from tools.maintenance.p2b_sustainability_baseline import build_baseline
 
@@ -30,6 +91,12 @@ def test_p2b_baseline_records_repeatable_control_and_runtime_observations() -> N
   assert report["supported_row"]["caller_adoption_rate"] == 1.0
   assert report["supported_row"]["resource_observations"]["sample_count"] == 2
   assert report["supported_row"]["resource_observations"]["budget_status"] == "observed_only"
+  assert report["supported_row"]["cadence"]["status"] == "local_repeat_only"
+  assert report["supported_row"]["cadence"]["representative_release_cadence"] == "open"
+  assert report["supported_row"]["cadence"]["release_batch_count"] == 1
+  assert report["supported_row"]["cadence"]["distinct_release_id_count"] == 1
+  assert report["supported_row"]["cadence"]["distinct_package_pair_count"] == 1
+  assert report["supported_row"]["cadence"]["batches"][0]["package_pair_consistent"] is True
   assert report["supported_row"]["safety_events"] == {
     "stale_reference_rejections": 0,
     "wrong_epoch_results": 0,

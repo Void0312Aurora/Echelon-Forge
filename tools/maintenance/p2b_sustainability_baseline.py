@@ -158,6 +158,74 @@ def _measure_evidence_retrieval() -> dict[str, Any]:
   }
 
 
+def _summarize_release_cadence(reports: Sequence[dict[str, Any]]) -> dict[str, Any]:
+  release_batches: list[dict[str, Any]] = []
+  package_pairs: set[tuple[str, str]] = set()
+  release_ids: set[str] = set()
+  plan_digests: set[str] = set()
+  complete_observations = bool(reports)
+  consistent_batches = True
+  for report in reports:
+    report_samples = report.get("samples", [])
+    batch_pairs = {
+      (
+        str(sample.get("current_pyd_sha256", "")),
+        str(sample.get("rollback_pyd_sha256", "")),
+      )
+      for sample in report_samples
+    }
+    current_packages = {
+      current_package for current_package, _ in batch_pairs
+    }
+    rollback_packages = {
+      rollback_package for _, rollback_package in batch_pairs
+    }
+    release_id = str(report.get("release_id", ""))
+    plan_sha256 = str(report.get("plan_sha256", ""))
+    release_ids.add(release_id)
+    plan_digests.add(plan_sha256)
+    package_pairs.update(batch_pairs)
+    complete_observations = (
+      complete_observations
+      and bool(release_id)
+      and re.fullmatch(r"[0-9a-f]{64}", plan_sha256) is not None
+      and len(report_samples) == int(report.get("cycles", 0))
+      and bool(batch_pairs)
+      and all(
+        re.fullmatch(r"[0-9a-f]{64}", digest) is not None
+        for pair in batch_pairs
+        for digest in pair
+      )
+    )
+    consistent_batches = consistent_batches and len(batch_pairs) == 1
+    release_batches.append({
+      "release_id": release_id,
+      "plan_sha256": plan_sha256,
+      "cycles": int(report.get("cycles", 0)),
+      "slo_passed": bool(report["slo"]["passed"]),
+      "current_package_sha256": sorted(current_packages),
+      "rollback_package_sha256": sorted(rollback_packages),
+      "package_pair_consistent": len(batch_pairs) == 1,
+    })
+  if not complete_observations:
+    cadence_status = "incomplete_package_observation"
+  elif not consistent_batches:
+    cadence_status = "inconsistent_package_batch"
+  elif len(package_pairs) > 1:
+    cadence_status = "distinct_package_batches_observed"
+  else:
+    cadence_status = "local_repeat_only"
+  return {
+    "status": cadence_status,
+    "representative_release_cadence": "open",
+    "release_batch_count": len(release_batches),
+    "distinct_release_id_count": len(release_ids),
+    "distinct_plan_sha256_count": len(plan_digests),
+    "distinct_package_pair_count": len(package_pairs),
+    "batches": release_batches,
+  }
+
+
 def _measure_supported_row(
   *,
   current_build: Path,
@@ -237,6 +305,7 @@ def _measure_supported_row(
       ),
       "budget_status": "observed_only",
     },
+    "cadence": _summarize_release_cadence(reports),
     "safety_events": {
       key: sum(int(snapshot["counters"][key]) for snapshot in snapshots)
       for key in (
@@ -325,7 +394,15 @@ def build_baseline(
       "stale_reference_and_plan_skew": "runtime-composition",
       "evidence_retrieval": "documentation-lifecycle",
     },
-    "status": "passed" if passing_checks == total_check_runs and supported_row["slo_pass_rate"] == 1.0 and evidence["availability_ratio"] == 1.0 else "needs-disposition",
+    "status": "passed" if (
+      passing_checks == total_check_runs
+      and supported_row["slo_pass_rate"] == 1.0
+      and supported_row["cadence"]["status"] in {
+        "local_repeat_only",
+        "distinct_package_batches_observed",
+      }
+      and evidence["availability_ratio"] == 1.0
+    ) else "needs-disposition",
   }
 
 
