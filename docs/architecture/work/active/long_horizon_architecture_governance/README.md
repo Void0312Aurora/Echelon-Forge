@@ -13,7 +13,9 @@ publication, production runtime caller cutover, or production cutover is accepte
 caller migration, process-resync, mandatory production-state release/receipt binding, the durable
 ArtifactLedger rollout controller, and initial operations drill evidence are recorded in [P5-D evidence]
 (evidence/p5d_production_binding_operations_20260923.md) and [the SQLite controller packet]
-(evidence/p5d_sqlite_rollout_controller_20260923.md).
+(evidence/p5d_sqlite_rollout_controller_20260923.md), with the real process/package
+rollback drill recorded in [the rollback packet]
+(evidence/p5d_real_process_package_rollback_20260923.md).
 
 Language:
 

@@ -12,7 +12,8 @@ mandatory production-state release/receipt binding、ArtifactLedger durable roll
 [process-resync evidence](evidence/p5d_process_restart_admission_resync_20260923.md)、
 [release/receipt binding evidence](evidence/p5d_release_receipt_binding_20260923.md) 和
 [production binding and operations evidence](evidence/p5d_production_binding_operations_20260923.md) 与
-[SQLite rollout controller evidence](evidence/p5d_sqlite_rollout_controller_20260923.md)。
+[SQLite rollout controller evidence](evidence/p5d_sqlite_rollout_controller_20260923.md)，
+以及 [real process/package rollback evidence](evidence/p5d_real_process_package_rollback_20260923.md)。
 
 语言：
 
