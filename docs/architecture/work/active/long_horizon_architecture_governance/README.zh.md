@@ -4,8 +4,8 @@
 target-architecture 决策、完整的 P3-A/P3-B/P3-C contract、authority-envelope、
 ledger 与 compatibility foundation，以及 P4-A dark/shadow host lifecycle 已在
 独立复核后接受。P4-B dark/shadow candidate implementation 与独立综合复核已完成；P4-C 首个 build-tree/internal candidate 任务已通过 candidate-scope 独立复核并被接受，尚未获得 production acceptance。
-P2-A/P2-B、完整 maintained facade parity、production rollback 与 P5-P8 仍开放；尚无 production truth
-发布、production runtime caller cutover 或 production cutover 被接受。maintained 合同调用方迁移、process-resync、
+P2-A/P2-B、完整 maintained facade parity、production caller cutover、rollback-window retention、rebuild
+retirement 与 P6-P8 仍开放；尚无 production truth 发布或 production cutover 被接受。maintained 合同调用方迁移、process-resync、
 mandatory production-state release/receipt binding、ArtifactLedger durable rollout controller
 以及首个 operations drill 证据见
 [P5-D caller migration evidence](evidence/p5d_facade_caller_migration_20260923.md) 与
@@ -14,6 +14,8 @@ mandatory production-state release/receipt binding、ArtifactLedger durable roll
 [production binding and operations evidence](evidence/p5d_production_binding_operations_20260923.md) 与
 [SQLite rollout controller evidence](evidence/p5d_sqlite_rollout_controller_20260923.md)，
 以及 [real process/package rollback evidence](evidence/p5d_real_process_package_rollback_20260923.md)。
+三轮 supported-row SLO/adoption 测量见
+[measurement evidence](evidence/p5d_supported_row_measurement_20260923.md)。
 
 语言：
 
