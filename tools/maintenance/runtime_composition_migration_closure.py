@@ -51,6 +51,10 @@ SKIPPED_CALLER_DIRECTORIES = {
     ".venv",
     "__pycache__",
     "archive",
+    # Wheel/venv outputs are copied runtime artifacts, not maintained callers.
+    # Including them would make the closure depend on whichever local build
+    # products happen to be present in the workspace.
+    "artifacts",
     "node_modules",
     "tests",
 }
