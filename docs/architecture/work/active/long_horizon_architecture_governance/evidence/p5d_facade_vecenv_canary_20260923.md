@@ -7,19 +7,21 @@ acceptance.
 
 ## Exercised path
 
-The focused test creates the existing signed `production-canary` rollout slot,
-release manifest, and RunReceipt fixture, then constructs the real
-`WorldBatchVecEnv` with `require_production_admission=True`. The adapter must
-validate the signed slot and evidence binding before constructing the native
-`RuntimeFacade`. It then executes one real `reset()` and one real `step()` on
-the inline supported-row scenario, and confirms the admission remains
-production-authorized after the mutation path.
+The focused tests create the existing signed `production-canary` rollout slot,
+release manifest, and RunReceipt fixture, then construct the real
+`WorldBatchVecEnv` with `require_production_admission=True`. One case reads the
+file-backed local slot; the second reads the durable `SQLiteArtifactLedger`
+snapshot. In both cases the adapter must validate the signed slot and evidence
+binding before constructing the native `RuntimeFacade`. Each case then
+executes one real `reset()` and one real `step()` on the inline supported-row
+scenario, and confirms the admission remains production-authorized after the
+mutation path.
 
-This test uses the file-backed local admission fixture to isolate the VecEnv
-path. The durable SQLite controller and real child-process binding are covered
-separately by [the process/package rollback packet]
-(p5d_real_process_package_rollback_20260923.md); this packet does not replace
-that durable evidence.
+The file-backed case isolates the VecEnv path, while the SQLite case verifies
+the same path through the durable snapshot reader. The real child-process
+binding and rollback chain are covered separately by [the process/package
+rollback packet](p5d_real_process_package_rollback_20260923.md); this packet
+does not replace that process evidence.
 
 ## Verification
 
@@ -35,7 +37,7 @@ python -m ruff check `
 git diff --check
 ```
 
-Result: **1 test passed** in 25.71 seconds; Ruff and the diff check passed.
+Result: **2 tests passed** in 15.72 seconds; Ruff and the diff check passed.
 
 ## Boundary
 
