@@ -357,11 +357,42 @@ class RolloutAdmission:
         try:
             raw_bytes = slot_path.read_bytes()
             raw = json.loads(raw_bytes.decode("utf-8"))
-        except (OSError, json.JSONDecodeError) as error:
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
             raise RolloutAdmissionError(f"cannot read rollout slot: {slot_path}") from error
-        if not isinstance(raw, Mapping) or set(raw) != SLOT_FIELDS or raw["schema_version"] != SCHEMA_VERSION:
+        if not isinstance(raw, Mapping):
             raise RolloutAdmissionError("rollout slot schema is invalid")
-        if canonical_json_bytes(raw) != raw_bytes:
+        return cls.from_document(
+            raw,
+            source_path=slot_path,
+            expected_release_id=expected_release_id,
+            expected_manifest_sha256=expected_manifest_sha256,
+            expected_plan_sha256=expected_plan_sha256,
+            topology=topology,
+            verification_key=verification_key,
+            expected_key_id=expected_key_id,
+            require_canonical_bytes=raw_bytes,
+        )
+
+    @classmethod
+    def from_document(
+        cls,
+        raw: Mapping[str, Any],
+        *,
+        source_path: str | os.PathLike[str] = "<rollout-reader>",
+        expected_release_id: str | None = None,
+        expected_manifest_sha256: str | None = None,
+        expected_plan_sha256: str | None = None,
+        topology: str = "in-process",
+        verification_key: bytes,
+        expected_key_id: str | None = None,
+        require_canonical_bytes: bytes | None = None,
+    ) -> "RolloutAdmission":
+        slot_path = Path(source_path)
+        if not isinstance(raw, Mapping):
+            raise RolloutAdmissionError("rollout slot schema is invalid")
+        if set(raw) != SLOT_FIELDS or raw.get("schema_version") != SCHEMA_VERSION:
+            raise RolloutAdmissionError("rollout slot schema is invalid")
+        if require_canonical_bytes is not None and canonical_json_bytes(raw) != require_canonical_bytes:
             raise RolloutAdmissionError("rollout slot is not canonical JSON")
         envelope = validate_rollout_envelope(
             raw["decision"],

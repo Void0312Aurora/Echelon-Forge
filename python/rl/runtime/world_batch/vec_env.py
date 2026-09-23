@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
-from collections.abc import Sequence
+from collections.abc import Callable, Mapping, Sequence
 from copy import deepcopy
 from typing import Any
 import os
@@ -147,6 +147,7 @@ class WorldBatchVecEnv(
         production_rollout_path: str | None = None,
         production_rollout_key: bytes | None = None,
         production_rollout_key_path: str | None = None,
+        production_rollout_snapshot_reader: Callable[[], Mapping[str, Any]] | None = None,
         require_production_admission: bool = False,
         production_release_id: str | None = None,
         production_manifest_sha256: str | None = None,
@@ -247,6 +248,7 @@ class WorldBatchVecEnv(
             production_rollout_path=production_rollout_path,
             production_rollout_key=production_rollout_key,
             production_rollout_key_path=production_rollout_key_path,
+            production_rollout_snapshot_reader=production_rollout_snapshot_reader,
             require_production_admission=bool(require_production_admission),
             production_release_id=production_release_id,
             production_manifest_sha256=production_manifest_sha256,

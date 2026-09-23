@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -26,6 +26,7 @@ from python.rl.runtime.rollout_gate import RolloutAdmissionError
 from python.rl.runtime.rollout_evidence import RolloutEvidenceError
 from python.rl.runtime.rollout_evidence import assert_rollout_evidence_binding
 from python.rl.runtime.rollout_evidence import load_rollout_evidence
+from python.rl.runtime.rollout_evidence import project_rollout_evidence
 from .command_chain_cache import project_world_leader_intent_maintained_assignment
 from .command_chain_cache import project_world_mission_command_maintained_assignment
 from .command_chain_cache import project_world_pilot_report_maintained_assignment
@@ -324,6 +325,7 @@ class RuntimeFacadeAdapter:
         production_rollout_path: str | None = None,
         production_rollout_key: bytes | None = None,
         production_rollout_key_path: str | None = None,
+        production_rollout_snapshot_reader: Callable[[], Mapping[str, Any]] | None = None,
         require_production_admission: bool = False,
         production_release_id: str | None = None,
         production_manifest_sha256: str | None = None,
@@ -340,6 +342,8 @@ class RuntimeFacadeAdapter:
         self.rollout_admission: RolloutAdmission | None = None
         self._production_rollout_path: str | None = production_rollout_path
         self._production_rollout_key: bytes | None = production_rollout_key
+        self._production_rollout_snapshot_reader = production_rollout_snapshot_reader
+        self._production_rollout_snapshot: Mapping[str, Any] | None = None
         self._production_rollout_expected_release_id = production_release_id
         self._production_rollout_expected_manifest_sha256 = production_manifest_sha256
         self._production_rollout_expected_plan_sha256 = production_plan_sha256
@@ -357,7 +361,11 @@ class RuntimeFacadeAdapter:
             require_production_evidence_binding or require_production_admission
         )
         self.rollout_evidence_binding = None
-        if production_rollout_path is not None:
+        if production_rollout_path is not None and production_rollout_snapshot_reader is not None:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter production admission accepts either a rollout path or a snapshot reader, not both"
+            )
+        if production_rollout_path is not None or production_rollout_snapshot_reader is not None:
             verification_key = production_rollout_key
             if verification_key is None and production_rollout_key_path is not None:
                 try:
@@ -372,13 +380,28 @@ class RuntimeFacadeAdapter:
                 )
             self._production_rollout_key = verification_key
             try:
-                self.rollout_admission = RolloutAdmission.from_slot(
-                    production_rollout_path,
-                    verification_key=verification_key,
-                    expected_release_id=production_release_id,
-                    expected_manifest_sha256=production_manifest_sha256,
-                    expected_plan_sha256=production_plan_sha256,
-                )
+                if production_rollout_snapshot_reader is not None:
+                    self._production_rollout_snapshot = production_rollout_snapshot_reader()
+                    if not isinstance(self._production_rollout_snapshot, Mapping):
+                        raise RolloutAdmissionError("production rollout snapshot is not an object")
+                    slot_document = self._production_rollout_snapshot.get("slot")
+                    if not isinstance(slot_document, Mapping):
+                        raise RolloutAdmissionError("production rollout snapshot lacks a slot document")
+                    self.rollout_admission = RolloutAdmission.from_document(
+                        slot_document,
+                        verification_key=verification_key,
+                        expected_release_id=production_release_id,
+                        expected_manifest_sha256=production_manifest_sha256,
+                        expected_plan_sha256=production_plan_sha256,
+                    )
+                else:
+                    self.rollout_admission = RolloutAdmission.from_slot(
+                        production_rollout_path,
+                        verification_key=verification_key,
+                        expected_release_id=production_release_id,
+                        expected_manifest_sha256=production_manifest_sha256,
+                        expected_plan_sha256=production_plan_sha256,
+                    )
                 if require_production_admission:
                     self.rollout_admission.assert_production_authorized()
                 self._refresh_rollout_evidence_binding()
@@ -414,7 +437,7 @@ class RuntimeFacadeAdapter:
         startup check rather than an operational gate.
         """
 
-        if self._production_rollout_path is None:
+        if self._production_rollout_path is None and self._production_rollout_snapshot_reader is None:
             if self._require_production_admission:
                 raise RuntimeError(
                     "RuntimeFacadeAdapter production mode requires an admitted RolloutDecision slot"
@@ -425,13 +448,26 @@ class RuntimeFacadeAdapter:
                 "RuntimeFacadeAdapter production rollout admission requires a verification key"
             )
         try:
-            admission = RolloutAdmission.from_slot(
-                self._production_rollout_path,
-                verification_key=self._production_rollout_key,
-                expected_release_id=self._production_rollout_expected_release_id,
-                expected_manifest_sha256=self._production_rollout_expected_manifest_sha256,
-                expected_plan_sha256=self._production_rollout_expected_plan_sha256,
-            )
+            if self._production_rollout_snapshot_reader is not None:
+                snapshot = self._production_rollout_snapshot_reader()
+                if not isinstance(snapshot, Mapping) or not isinstance(snapshot.get("slot"), Mapping):
+                    raise RolloutAdmissionError("production rollout snapshot lacks a slot document")
+                self._production_rollout_snapshot = snapshot
+                admission = RolloutAdmission.from_document(
+                    snapshot["slot"],
+                    verification_key=self._production_rollout_key,
+                    expected_release_id=self._production_rollout_expected_release_id,
+                    expected_manifest_sha256=self._production_rollout_expected_manifest_sha256,
+                    expected_plan_sha256=self._production_rollout_expected_plan_sha256,
+                )
+            else:
+                admission = RolloutAdmission.from_slot(
+                    self._production_rollout_path,
+                    verification_key=self._production_rollout_key,
+                    expected_release_id=self._production_rollout_expected_release_id,
+                    expected_manifest_sha256=self._production_rollout_expected_manifest_sha256,
+                    expected_plan_sha256=self._production_rollout_expected_plan_sha256,
+                )
             if self._require_production_admission:
                 admission.assert_production_authorized()
         except RolloutAdmissionError as error:
@@ -445,19 +481,33 @@ class RuntimeFacadeAdapter:
             self._production_release_manifest_path is not None
             or self._production_run_receipt_path is not None
         )
-        if not self._require_production_evidence_binding and not paths_supplied:
+        snapshot_supplied = self._production_rollout_snapshot_reader is not None
+        if not self._require_production_evidence_binding and not paths_supplied and not snapshot_supplied:
             return
-        if self._production_release_manifest_path is None or self._production_run_receipt_path is None:
+        if snapshot_supplied:
+            snapshot = self._production_rollout_snapshot
+            if not isinstance(snapshot, Mapping):
+                raise RuntimeError("RuntimeFacadeAdapter production rollout snapshot is absent")
+            release_manifest = snapshot.get("release_manifest")
+            run_receipt = snapshot.get("run_receipt")
+            if not isinstance(release_manifest, Mapping) or not isinstance(run_receipt, Mapping):
+                raise RuntimeError(
+                    "RuntimeFacadeAdapter production rollout snapshot requires release manifest and RunReceipt"
+                )
+        elif self._production_release_manifest_path is None or self._production_run_receipt_path is None:
             raise RuntimeError(
                 "RuntimeFacadeAdapter production evidence binding requires release manifest and RunReceipt paths"
             )
         if self.rollout_admission is None:
             raise RuntimeError("RuntimeFacadeAdapter production evidence binding requires rollout admission")
         try:
-            binding = load_rollout_evidence(
-                self._production_release_manifest_path,
-                self._production_run_receipt_path,
-            )
+            if snapshot_supplied:
+                binding = project_rollout_evidence(release_manifest, run_receipt)
+            else:
+                binding = load_rollout_evidence(
+                    self._production_release_manifest_path,
+                    self._production_run_receipt_path,
+                )
             assert_rollout_evidence_binding(
                 self.rollout_admission,
                 binding,

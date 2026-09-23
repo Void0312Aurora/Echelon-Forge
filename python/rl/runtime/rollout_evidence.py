@@ -95,6 +95,33 @@ def _authority_digest(domain: str, media_type: str, payload: Mapping[str, Any]) 
     return hashlib.sha256(material).hexdigest()
 
 
+def _validate_envelope_document(
+    value: Mapping[str, Any],
+    *,
+    source_label: str,
+    domain: str,
+    media_type: str,
+) -> dict[str, Any]:
+    if not isinstance(value, Mapping) or set(value) != _ENVELOPE_FIELDS:
+        raise RolloutEvidenceError(f"{source_label} has an invalid authority envelope shape")
+    if (
+        value["canonicalization"] != _CANONICALIZATION
+        or value["envelope_version"] != _ENVELOPE_VERSION
+        or value["domain"] != domain
+        or value["media_type"] != media_type
+    ):
+        raise RolloutEvidenceError(f"{source_label} authority identity differs")
+    payload = value["payload"]
+    if not isinstance(payload, Mapping):
+        raise RolloutEvidenceError(f"{source_label} payload is not an object")
+    payload_digest = _require_sha(value["payload_sha256"], f"{source_label}.payload_sha256")
+    if payload_digest != _authority_digest(domain, media_type, payload):
+        raise RolloutEvidenceError(f"{source_label} payload digest does not match its bytes")
+    if not isinstance(value["signatures"], list):
+        raise RolloutEvidenceError(f"{source_label}.signatures is not an array")
+    return dict(value)
+
+
 def _read_envelope(path: str | Path, *, domain: str, media_type: str) -> dict[str, Any]:
     source = Path(path)
     try:
@@ -102,26 +129,14 @@ def _read_envelope(path: str | Path, *, domain: str, media_type: str) -> dict[st
         value = json.loads(raw_bytes.decode("utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
         raise RolloutEvidenceError(f"{source} is not readable canonical JSON") from error
-    if not isinstance(value, Mapping) or set(value) != _ENVELOPE_FIELDS:
-        raise RolloutEvidenceError(f"{source} has an invalid authority envelope shape")
     if canonical_json_bytes(value) != raw_bytes:
         raise RolloutEvidenceError(f"{source} is not canonical JSON")
-    if (
-        value["canonicalization"] != _CANONICALIZATION
-        or value["envelope_version"] != _ENVELOPE_VERSION
-        or value["domain"] != domain
-        or value["media_type"] != media_type
-    ):
-        raise RolloutEvidenceError(f"{source} authority identity differs")
-    payload = value["payload"]
-    if not isinstance(payload, Mapping):
-        raise RolloutEvidenceError(f"{source} payload is not an object")
-    payload_digest = _require_sha(value["payload_sha256"], f"{source}.payload_sha256")
-    if payload_digest != _authority_digest(domain, media_type, payload):
-        raise RolloutEvidenceError(f"{source} payload digest does not match its bytes")
-    if not isinstance(value["signatures"], list):
-        raise RolloutEvidenceError(f"{source}.signatures is not an array")
-    return dict(value)
+    return _validate_envelope_document(
+        value,
+        source_label=str(source),
+        domain=domain,
+        media_type=media_type,
+    )
 
 
 def _validate_release_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
@@ -173,13 +188,39 @@ def load_rollout_evidence(
         domain=_RELEASE_DOMAIN,
         media_type=_RELEASE_MEDIA_TYPE,
     )
-    release = _validate_release_payload(release_envelope["payload"])
     receipt_envelope = _read_envelope(
         run_receipt_path,
         domain=_RECEIPT_DOMAIN,
         media_type=_RECEIPT_MEDIA_TYPE,
     )
-    receipt = receipt_envelope["payload"]
+    return project_rollout_evidence(release_envelope, receipt_envelope)
+
+
+def project_rollout_evidence(
+    release_envelope: Mapping[str, Any],
+    receipt_envelope: Mapping[str, Any],
+) -> RolloutEvidenceBinding:
+    """Project already-loaded canonical documents into the binding record.
+
+    Release-controller backends use this mapping form while they hold their
+    durable transaction; file callers should use :func:`load_rollout_evidence`
+    so canonical bytes are checked at the filesystem boundary first.
+    """
+
+    release_document = _validate_envelope_document(
+        release_envelope,
+        source_label="release manifest",
+        domain=_RELEASE_DOMAIN,
+        media_type=_RELEASE_MEDIA_TYPE,
+    )
+    receipt_document = _validate_envelope_document(
+        receipt_envelope,
+        source_label="RunReceipt",
+        domain=_RECEIPT_DOMAIN,
+        media_type=_RECEIPT_MEDIA_TYPE,
+    )
+    release = _validate_release_payload(release_document["payload"])
+    receipt = receipt_document["payload"]
     if not isinstance(receipt, Mapping):
         raise RolloutEvidenceError("RunReceipt payload is not an object")
     release_binding = receipt.get("release_binding")
@@ -222,7 +263,7 @@ def load_rollout_evidence(
         "incomplete",
     }:
         raise RolloutEvidenceError("RunReceipt terminal state is not admitted")
-    if release_id != release["release_id"] or manifest_sha256 != release_envelope["payload_sha256"]:
+    if release_id != release["release_id"] or manifest_sha256 != release_document["payload_sha256"]:
         raise RolloutEvidenceError("RunReceipt release binding differs from release manifest")
     return RolloutEvidenceBinding(
         release_id=release_id,
@@ -303,4 +344,5 @@ __all__ = [
     "assert_rollout_evidence_binding",
     "assert_rollout_evidence_decision_binding",
     "load_rollout_evidence",
+    "project_rollout_evidence",
 ]

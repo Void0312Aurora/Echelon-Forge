@@ -10,8 +10,10 @@ accepted after candidate-scope independent review; production acceptance is
 not granted.
 P2-A/P2-B, full maintained-facade parity, production rollback and P5-P8 remain open; no production truth
 publication, production runtime caller cutover, or production cutover is accepted yet. The maintained
-caller migration, process-resync, mandatory production-state release/receipt binding, and initial operations
-drill evidence are recorded in [P5-D evidence](evidence/p5d_production_binding_operations_20260923.md).
+caller migration, process-resync, mandatory production-state release/receipt binding, the durable
+ArtifactLedger rollout controller, and initial operations drill evidence are recorded in [P5-D evidence]
+(evidence/p5d_production_binding_operations_20260923.md) and [the SQLite controller packet]
+(evidence/p5d_sqlite_rollout_controller_20260923.md).
 
 Language:
 
