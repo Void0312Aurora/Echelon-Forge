@@ -4,8 +4,8 @@
 target-architecture 决策、完整的 P3-A/P3-B/P3-C contract、authority-envelope、
 ledger 与 compatibility foundation，以及 P4-A dark/shadow host lifecycle 已在
 独立复核后接受。P4-B dark/shadow candidate implementation 与独立综合复核已完成；P4-C 首个 build-tree/internal candidate 任务已通过 candidate-scope 独立复核并被接受，尚未获得 production acceptance。
-P2-A/P2-B、完整 maintained facade parity、production caller cutover、rollback-window retention、rebuild
-retirement 与 P6-P8 仍开放；尚无 production truth 发布或 production cutover 被接受。maintained 合同调用方迁移、process-resync、
+P2-A 已有 manifest-level lifecycle baseline 实现，P2-B 也已有首个可重复的本地 sustainability baseline；代表性 release cadence、完整 maintained facade parity、production caller
+cutover、rollback-window retention、rebuild retirement 与 P6-P8 仍开放；尚无 production truth 发布或 production cutover 被接受。maintained 合同调用方迁移、process-resync、
 mandatory production-state release/receipt binding、ArtifactLedger durable rollout controller
 以及首个 operations drill 证据见
 [P5-D caller migration evidence](evidence/p5d_facade_caller_migration_20260923.md) 与
@@ -16,6 +16,11 @@ mandatory production-state release/receipt binding、ArtifactLedger durable roll
 以及 [real process/package rollback evidence](evidence/p5d_real_process_package_rollback_20260923.md)。
 三轮 supported-row SLO/adoption 测量见
 [measurement evidence](evidence/p5d_supported_row_measurement_20260923.md)。
+cutover 前的 rebuild-unreachability inventory（维护生产调用方与 Python
+binding 均为零，但尚未退役 rebuild）见
+[rebuild evidence](evidence/p5d_rebuild_unreachability_20260923.md)。
+首个 P2-B control/cost/retrieval baseline 见
+[sustainability evidence](evidence/p2b_sustainability_baseline_20260923.md)。
 
 语言：
 
@@ -147,7 +152,7 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 | --- | --- | --- | --- | --- |
 | `P0 Authority And Baseline` | 建立已核验 source、control、CI、evidence、ownership 基线及独立审查。 | 用户授权与最新 `origin/main` | 项目包、度量、审查 finding 与 owner index 保持当前 | accepted |
 | `P1 Target Architecture` | 固定 lifecycle、episode authority、versioning/rollout、platform/process topology、contract chain、boundary 与 control lifecycle 决策。 | P0 evidence accepted | 决策包含 compatibility、rollback、operations、storage 与 security activation 路径并通过独立审查 | accepted |
-| `P2 Control Lifecycle` | 将每个架构控制分类为 permanent、renewable、migratory 或 evidentiary，并明确 owner 与退役。 | P1 术语固定 | 既有控制完成分类，migration control 具备可执行退出条件 | P2-A/P2-B ready |
+| `P2 Control Lifecycle` | 将每个架构控制分类为 permanent、renewable、migratory 或 evidentiary，并明确 owner 与退役。 | P1 术语固定 | 既有控制完成分类，migration control 具备可执行退出条件 | P2-A 基线；P2-B 首个基线；代表性 cadence 开放 |
 | `P3 Contract And Public Boundary Foundation` | 在 host cutover 前落地 canonical authority envelope、plan/release/rollout/checkpoint shell、engine-independent DTO target、ledger foundation 与初始 visibility。 | P1 accepted | transitional adapter 单一 owner，host 可使用最终 public type/storage 且不发布第二 truth | P3-A/P3-B/P3-C accepted |
 | `P4 Host Lifecycle And Immutable Kernel Candidate` | 实现 fenced host replacement、唯一 episode authority、完整 state transfer 与 dark/shadow immutable candidate path。 | P3 contract/boundary foundation 稳定 | candidate path 已 state-complete 且 fenced，但不得成为 production truth 或退役 production rebuild | P4-A accepted；P4-B 已通过独立复核；P4-C candidate-scope 任务已接受；完整 maintained facade parity 与 P5 仍开放 |
 | `P5 Plan, Evidence, Binding, And Production Cutover` | 闭合 executable plan，引入完整 RunReceipt，完成 facade/diagnostics packaging，再执行唯一 production cutover/backout 并退役 rebuild。 | P4 candidate 通过 dark/shadow | Cordis/native/facade/wheel 使用同一 plan；supported caller 只切换一次且有 rollback evidence，rebuild 失去 production authority | planned |
@@ -180,6 +185,8 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 - [P4-B owner adapter 清单（英文）](p4b_owner_adapter_inventory_20260830.md)
 - [P4-C internal candidate seam（英文）](p4c_internal_candidate_seam_20260915.md)
 - [P4-C 独立复核（英文）](../../../reviews/long_horizon_architecture_governance_p4c_review_20260919.md)
+- [P2-A control lifecycle 清单（英文）](evidence/p2_control_lifecycle_inventory_20260923.md)
+- [P2-B sustainability baseline（英文）](evidence/p2b_sustainability_baseline_20260923.md)
 
 ## Outputs And Evidence
 

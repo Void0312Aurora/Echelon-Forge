@@ -1,0 +1,75 @@
+{
+  "schema_version": "echelon_forge.runtime_rebuild_unreachability.v1",
+  "scope": "P5-D in-kernel rebuild reachability before production cutover",
+  "symbol": "SimulationKernel::rebuild_world_composition",
+  "references": {
+    "src/core/engine/simulation_kernel.cpp": [
+      352,
+      354
+    ],
+    "src/core/engine/simulation_kernel.h": [
+      187
+    ],
+    "src/tests/test_simulation_kernel_smoke.cpp": [
+      79,
+      86,
+      97,
+      103,
+      140,
+      191,
+      201,
+      243
+    ]
+  },
+  "implementation_references": {
+    "src/core/engine/simulation_kernel.cpp": [
+      352,
+      354
+    ],
+    "src/core/engine/simulation_kernel.h": [
+      187
+    ]
+  },
+  "callable_references": {
+    "src/core/engine/simulation_kernel.h": [
+      187
+    ],
+    "src/tests/test_simulation_kernel_smoke.cpp": [
+      79,
+      86,
+      97,
+      103,
+      140,
+      191,
+      201,
+      243
+    ]
+  },
+  "test_only_references": {
+    "src/tests/test_simulation_kernel_smoke.cpp": [
+      79,
+      86,
+      97,
+      103,
+      140,
+      191,
+      201,
+      243
+    ]
+  },
+  "production_callable_references": {},
+  "python_binding_references": {},
+  "production_package_guard": {
+    "pyproject_production_facade_only": true,
+    "pyproject_diagnostics_disabled": true,
+    "cmake_production_filter_excludes_raw_bindings": true,
+    "cmake_diagnostics_is_opt_in": true,
+    "production_module_selects_facade_only": true,
+    "production_module_does_not_select_raw_core": true,
+    "facade_binding_does_not_export_simulation_kernel": true
+  },
+  "reachability_state": "quarantined_before_production_cutover",
+  "retired": false,
+  "retirement_gate": "single production cutover plus rollback-window retention and rebuild gate",
+  "inventory_sha256": "6474dbcd144b2769ce81fa74df8bff05990d0581db027b3c49a094db63557022"
+}

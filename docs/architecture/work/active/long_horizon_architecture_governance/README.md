@@ -8,8 +8,10 @@ review. P4-B dark/shadow candidate implementation and independent integrated
 review are complete; the first P4-C build-tree/internal candidate task is
 accepted after candidate-scope independent review; production acceptance is
 not granted.
-P2-A/P2-B, full maintained-facade parity, production caller cutover, rollback-window retention, rebuild
-retirement and P6-P8 remain open; no production truth publication or production cutover is accepted yet.
+P2-A now has an implemented manifest-level lifecycle baseline, and P2-B has a first repeatable local
+sustainability baseline; representative release cadence, full maintained-facade parity, production caller
+cutover, rollback-window retention, rebuild retirement and P6-P8 remain open; no
+production truth publication or production cutover is accepted yet.
 The maintained caller migration, process-resync, mandatory production-state release/receipt binding, the durable
 ArtifactLedger rollout controller, and initial operations drill evidence are recorded in [P5-D evidence]
 (evidence/p5d_production_binding_operations_20260923.md) and [the SQLite controller packet]
@@ -18,6 +20,11 @@ rollback drill recorded in [the rollback packet]
 (evidence/p5d_real_process_package_rollback_20260923.md). The follow-up
 three-cycle supported-row SLO/adoption measurement is recorded in [the
 measurement packet](evidence/p5d_supported_row_measurement_20260923.md).
+The pre-cutover rebuild-unreachability inventory, which records zero
+maintained callers and keeps rebuild unretired, is recorded in [the rebuild
+packet](evidence/p5d_rebuild_unreachability_20260923.md).
+The initial P2-B control/cost/retrieval baseline is recorded in [the
+sustainability packet](evidence/p2b_sustainability_baseline_20260923.md).
 
 Language:
 
@@ -146,7 +153,7 @@ the same long-term authority, compatibility, and lifecycle result.
 | --- | --- | --- | --- | --- |
 | `P0 Authority And Baseline` | Establish verified source, control, CI, evidence, and ownership baselines plus independent review. | user authorization and latest `origin/main` | project packet, measurements, review findings, and owner index are current | accepted |
 | `P1 Target Architecture` | Freeze lifecycle, episode authority, versioning/rollout, platform/process topology, contract-chain, boundary, and control-lifecycle decisions. | P0 evidence accepted | decisions include compatibility, rollback, operations, storage and security activation paths and pass independent architecture review | accepted |
-| `P2 Control Lifecycle` | Make every architecture control permanent, renewable, migratory, or evidentiary with explicit ownership and retirement. | P1 terminology frozen | existing controls are classified and migration controls have enforced exit criteria | P2-A/P2-B ready |
+| `P2 Control Lifecycle` | Make every architecture control permanent, renewable, migratory, or evidentiary with explicit ownership and retirement. | P1 terminology frozen | existing controls are classified and migration controls have enforced exit criteria | P2-A baseline; P2-B initial baseline; representative cadence open |
 | `P3 Contract And Public Boundary Foundation` | Land canonical authority envelopes, resolved-plan/release/rollout/checkpoint shells, engine-independent public DTO target, ledger foundation and target visibility before host cutover. | P1 accepted | transitional adapters are single-owner and host work can use final public types/storage without publishing a second truth | P3-A/P3-B/P3-C accepted |
 | `P4 Host Lifecycle And Immutable Kernel Candidate` | Implement fenced host replacement, unique episode authority, complete state-transfer semantics, and an immutable candidate path in dark/shadow mode. | P3 contract/boundary foundation stable | the candidate path is state-complete and fenced but cannot become production truth or retire production rebuild | P4-A accepted; P4-B independently passed; P4-C candidate-scope task accepted; full maintained-facade parity and P5 remain open |
 | `P5 Plan, Evidence, Binding, And Production Cutover` | Close the executable plan, introduce complete RunReceipt, finish physical facade/diagnostics packaging, then execute the only production cutover/backout and retire rebuild. | P4 candidate proven in dark/shadow mode | Cordis/native/facade/wheel use one plan; supported callers cut over once with rollback evidence and rebuild loses production authority | planned |
@@ -175,6 +182,8 @@ the same long-term authority, compatibility, and lifecycle result.
 - [P4-B owner adapter inventory](p4b_owner_adapter_inventory_20260830.md)
 - [P4-C internal candidate seam](p4c_internal_candidate_seam_20260915.md)
 - [P4-C independent review](../../../reviews/long_horizon_architecture_governance_p4c_review_20260919.md)
+- [P2-A control lifecycle inventory](evidence/p2_control_lifecycle_inventory_20260923.md)
+- [P2-B sustainability baseline](evidence/p2b_sustainability_baseline_20260923.md)
 
 ## Outputs And Evidence
 
