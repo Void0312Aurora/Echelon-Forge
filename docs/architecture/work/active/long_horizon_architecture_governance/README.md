@@ -20,6 +20,8 @@ rollback drill recorded in [the rollback packet]
 (evidence/p5d_real_process_package_rollback_20260923.md). The follow-up
 three-cycle supported-row SLO/adoption measurement is recorded in [the
 measurement packet](evidence/p5d_supported_row_measurement_20260923.md).
+The real admission-bound facade VecEnv reset/step check is recorded in [the
+VecEnv canary packet](evidence/p5d_facade_vecenv_canary_20260923.md).
 The pre-cutover rebuild-unreachability inventory, which records zero
 maintained callers and keeps rebuild unretired, is recorded in [the rebuild
 packet](evidence/p5d_rebuild_unreachability_20260923.md).

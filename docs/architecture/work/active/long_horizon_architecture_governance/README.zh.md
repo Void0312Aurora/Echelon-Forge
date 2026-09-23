@@ -16,6 +16,8 @@ mandatory production-state release/receipt binding、ArtifactLedger durable roll
 以及 [real process/package rollback evidence](evidence/p5d_real_process_package_rollback_20260923.md)。
 三轮 supported-row SLO/adoption 测量见
 [measurement evidence](evidence/p5d_supported_row_measurement_20260923.md)。
+真实 admission-bound facade VecEnv 的 reset/step 检查见
+[VecEnv canary evidence](evidence/p5d_facade_vecenv_canary_20260923.md)。
 cutover 前的 rebuild-unreachability inventory（维护生产调用方与 Python
 binding 均为零，但尚未退役 rebuild）见
 [rebuild evidence](evidence/p5d_rebuild_unreachability_20260923.md)。
