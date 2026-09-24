@@ -1,6 +1,6 @@
 # P5-D Rebuild Retirement Gate Evidence
 
-Status: `2026-09-24` — the post-rollback-window gate is implemented and
+Status: `2026-09-25` — the post-rollback-window gate is implemented and
 fail-closed, but it has not been activated for production authority.
 
 ## Gate boundary
@@ -41,7 +41,9 @@ python -m ruff check `
 git diff --check
 ```
 
-Results: **14 tests passed**, Ruff passed, and the diff check passed. The
+Results: **16 tests passed**, Ruff passed, and the diff check passed. The
+positive gate test now consumes an actual durable SQLite `stable` admission
+and retention projection, in addition to the contract-fixture checks. The
 tests reject pre-stable admissions, missing or mismatched attestation, and
 inventory drift; the positive case only produces a production-authority-only
 proof and retains the native test capability.
@@ -58,4 +60,4 @@ Document kind: `evidence`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5d_rebuild_retirement_gate_20260924.md`
 Owner: `release/runtime integration`
-Last verified: `2026-09-24`
+Last verified: `2026-09-25`
