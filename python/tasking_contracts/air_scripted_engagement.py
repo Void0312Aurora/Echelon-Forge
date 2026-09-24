@@ -24,6 +24,8 @@ from .air_scripted_execution import AirScriptedExecutionModel
 AIR_SCRIPTED_ENGAGEMENT_MODEL_ID = "air.engagement.c2_roe_scripted"
 AIR_COMBAT_C2_ROE_V2 = "air_combat_c2_roe_v2"
 AIR_FULL_ACTION_DIM = 17
+AIR_COMBAT_HYBRID_ACTION_DIM = 12
+_SUPPORTED_ACTION_DIMS = frozenset({AIR_FULL_ACTION_DIM, AIR_COMBAT_HYBRID_ACTION_DIM})
 
 
 class AirScriptedEngagementModel:
@@ -45,10 +47,10 @@ class AirScriptedEngagementModel:
         transition_alt_agl_m: float = 140.0,
         runway_length_m: float = 0.0,
     ) -> None:
-        if int(action_dim) != AIR_FULL_ACTION_DIM:
+        if int(action_dim) not in _SUPPORTED_ACTION_DIMS:
             raise ValueError(
-                "Air scripted engagement currently requires the maintained "
-                f"full action dimension ({AIR_FULL_ACTION_DIM})"
+                "Air scripted engagement requires a maintained Air combat action "
+                f"dimension ({AIR_FULL_ACTION_DIM} full or {AIR_COMBAT_HYBRID_ACTION_DIM} hybrid)"
             )
         self.action_dim = int(action_dim)
         self.dt = float(dt) if float(dt) > 1.0e-6 else 0.05
@@ -110,17 +112,31 @@ class AirScriptedEngagementModel:
         pending_assessment = bool(values["pending_assessment"] > 0.5)
         budget_available = bool(values["shot_budget_remaining"] > 0.5)
 
-        # Existing full-action transport owns the field positions.  Tactical
-        # bits are derived only from the declared mission packet.
-        action[9] = 1.0  # radar active
-        action[10] = 0.0  # centered scan azimuth
-        action[11] = 0.0  # centered scan elevation
-        action[12] = 1.0 if target_contact and not self._last_target_contact else 0.0  # TMS-up pulse
-        action[13] = 1.0 if authorized and target_contact and budget_available else 0.0
+        # Existing action transports own the field positions. Tactical bits are
+        # derived only from the declared mission packet and mapped to the
+        # selected maintained layout; no new mega-action schema is introduced.
+        tms_pulse = 1.0 if target_contact and not self._last_target_contact else 0.0
+        master_arm = 1.0 if authorized and target_contact and budget_available else 0.0
         request_fire = bool(fire_window and authorized and target_contact and budget_available and not pending_assessment)
-        action[14] = 1.0 if request_fire and not self._fire_latched else 0.0
-        action[15] = 0.0
-        action[16] = 0.0  # maintained first weapon slot; database/adapter owns mapping
+        fire_pulse = 1.0 if request_fire and not self._fire_latched else 0.0
+        if self.action_dim == AIR_FULL_ACTION_DIM:
+            action[9] = 1.0  # radar active
+            action[10] = 0.0  # centered scan azimuth
+            action[11] = 0.0  # centered scan elevation
+            action[12] = tms_pulse
+            action[13] = master_arm
+            action[14] = fire_pulse
+            action[15] = 0.0
+            action[16] = 0.0  # maintained first weapon slot; database/adapter owns mapping
+        else:
+            action[4] = 0.0  # centered scan azimuth
+            action[5] = 0.0  # centered scan elevation
+            action[6] = 1.0  # radar active
+            action[7] = tms_pulse
+            action[8] = master_arm
+            action[9] = fire_pulse
+            action[10] = 0.0
+            action[11] = 0.0  # maintained first weapon slot; database/adapter owns mapping
 
         if not fire_window or pending_assessment or not budget_available:
             self._fire_latched = False
@@ -137,7 +153,7 @@ class AirScriptedEngagementModel:
             "authorization_to_fire": authorized,
             "pending_assessment": pending_assessment,
             "shot_budget_remaining": float(values["shot_budget_remaining"]),
-            "fire_requested": bool(action[14] > 0.5),
+            "fire_requested": bool(fire_pulse > 0.5),
         }
         return action
 
@@ -172,6 +188,7 @@ def make_air_scripted_engagement_model(**kwargs: Any) -> AirScriptedEngagementMo
 
 __all__ = [
     "AIR_COMBAT_C2_ROE_V2",
+    "AIR_COMBAT_HYBRID_ACTION_DIM",
     "AIR_FULL_ACTION_DIM",
     "AIR_SCRIPTED_ENGAGEMENT_MODEL_ID",
     "AirScriptedEngagementModel",
