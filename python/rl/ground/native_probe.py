@@ -316,6 +316,23 @@ class GroundInfantryNativeProbe:
             trace=trace,
         )
 
+    def replay(
+        self,
+        actions: Sequence[Mapping[str, Any] | Sequence[float]],
+        *,
+        seed: int = 42,
+    ) -> tuple[dict[str, Any], ...]:
+        """Reset and replay a bounded direct-action sequence without live providers."""
+
+        _observation, info = self.reset(seed=seed)
+        records: list[dict[str, Any]] = [info["trace"]]
+        for action in actions:
+            transition = self.step(action)
+            records.append(transition.trace)
+            if transition.terminated or transition.truncated:
+                break
+        return tuple(records)
+
     def reset(self, *, seed: int = 42) -> tuple[dict[str, tuple[float, ...]], dict[str, Any]]:
         sim = ef_py.SimulationKernel()
         if not sim.load_database(str(self.database_dir)):

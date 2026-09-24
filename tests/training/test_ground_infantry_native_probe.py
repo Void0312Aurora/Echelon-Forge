@@ -354,12 +354,30 @@ def test_native_ground_probe_fires_once_through_authorized_fixed_contact() -> No
 def test_native_ground_probe_replay_is_seed_stable() -> None:
     actions = ([90.0, 0.5, 0.0, 0.0], [-90.0, 0.75, 2.0, 0.0])
 
-    def run() -> list[dict]:
+    def run() -> tuple[dict, ...]:
         probe = GroundInfantryNativeProbe.from_fixture(max_steps=4)
-        probe.reset(seed=7)
-        return [probe.step(action).trace for action in actions]
+        return probe.replay(actions, seed=7)
 
     assert json.dumps(run(), sort_keys=True) == json.dumps(run(), sort_keys=True)
+
+
+def test_native_ground_probe_replay_stops_at_terminal_transition() -> None:
+    probe = GroundInfantryNativeProbe.from_fixture(
+        start_xy_m=(400.0, 100.0),
+        goal_xy_m=(410.0, 100.0),
+        max_speed_mps=10.0,
+        time_step_s=1.0,
+        max_steps=8,
+    )
+
+    records = probe.replay(
+        ([90.0, 1.0, 0.0, 0.0], [90.0, 1.0, 0.0, 0.0]),
+        seed=31,
+    )
+
+    assert records[-1]["terminated"] is True
+    assert records[-1]["termination_reason"] == "waypoint_reached"
+    assert len(records) == 2  # reset plus the first terminal step
 
 
 def test_native_ground_probe_rejects_held_route_intent() -> None:

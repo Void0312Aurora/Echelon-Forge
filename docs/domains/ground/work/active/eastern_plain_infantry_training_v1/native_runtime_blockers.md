@@ -146,6 +146,10 @@ waypoint index/count observation and sequence advancement are bounded tooling
 bookkeeping, not a route graph, path planner, or production training release.
 The wrapper also exposes explicit `max_steps` and `blocked_step_limit`
 truncation reasons instead of requiring a caller to infer them from the trace.
+The probe now exposes `replay(actions, seed=...)`, which resets the same native
+fixture and returns the reset plus bounded step traces until termination or
+truncation. This is an offline deterministic replay helper, not a live-provider
+or production WorldBatch entrypoint.
 
 The Gymnasium checker is green and now reports two non-blocking space-design
 warnings: the native action's route-intent dimension is a fixed direct-only Box
