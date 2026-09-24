@@ -31,6 +31,25 @@ def test_native_ground_gym_adapter_preserves_probe_authority_and_observation() -
     assert len(env.trace) == 2
 
 
+def test_native_ground_gym_adapter_reaches_fixed_waypoint() -> None:
+    env = GroundInfantryNativeEnv(
+        GroundInfantryNativeProbe.from_fixture(
+            start_xy_m=(400.0, 100.0),
+            goal_xy_m=(410.0, 100.0),
+            max_speed_mps=10.0,
+            time_step_s=1.0,
+            max_steps=4,
+        )
+    )
+    env.reset(seed=7)
+    observation, _reward, terminated, truncated, info = env.step([90.0, 1.0, 0.0, 0.0])
+
+    assert terminated is True
+    assert truncated is False
+    assert info["blocked"] is False
+    assert float(observation["mission_state"][2]) <= 5.0
+
+
 def test_native_ground_probe_reset_and_step_use_compiled_observation_surfaces() -> None:
     probe = GroundInfantryNativeProbe.from_fixture(max_steps=4)
     observation, info = probe.reset(seed=42)
