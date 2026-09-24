@@ -4,7 +4,11 @@ import numpy as np
 
 from .common import ef_py
 from .naval_actions import build_naval_station_action_transport, is_naval_station_action_mode
-from .spaces import AIR_COMBAT_HYBRID_V1_ACTION_MODE, expected_action_dim
+from .spaces import (
+    AIR_COMBAT_HYBRID_V1_ACTION_MODE,
+    AIR_EW_HYBRID_V1_ACTION_MODE,
+    expected_action_dim,
+)
 
 
 def half_to_unit(x: float) -> float:
@@ -35,6 +39,10 @@ def normalize_action(action, *, action_space, action_mode: str) -> np.ndarray:
 
 def is_air_combat_hybrid_action_mode(action_mode: str) -> bool:
     return str(action_mode) == AIR_COMBAT_HYBRID_V1_ACTION_MODE
+
+
+def is_air_ew_hybrid_action_mode(action_mode: str) -> bool:
+    return str(action_mode) == AIR_EW_HYBRID_V1_ACTION_MODE
 
 
 def air_combat_hybrid_effective_action(action: np.ndarray, *, previous_intent=None) -> np.ndarray:
@@ -114,6 +122,30 @@ def build_pilot_action(action: np.ndarray, *, action_mode: str, inst_now=None):
         pilot_act.jettison_emergency = False
         return pilot_act
 
+    if action_mode == AIR_EW_HYBRID_V1_ACTION_MODE:
+        pilot_act.stick_pitch = float(action[0])
+        pilot_act.stick_roll = float(action[1])
+        pilot_act.rudder = float(action[2])
+        pilot_act.throttle = float(action[3])
+        pilot_act.gear_handle = 0.0
+        pilot_act.flaps = 0.0
+        pilot_act.speedbrake = 0.0
+        pilot_act.brake_left = False
+        pilot_act.brake_right = False
+        pilot_act.brake = 0.0
+        pilot_act.radar_active = bool(action[6] > 0.5)
+        pilot_act.radar_scan_az = float(action[4]) * 60.0
+        pilot_act.radar_scan_el = float(action[5]) * 30.0
+        pilot_act.tms_up = bool(action[7] > 0.5)
+        pilot_act.master_arm = bool(action[8] > 0.5)
+        pilot_act.fire_weapon = bool(action[9] > 0.5)
+        pilot_act.fire_gun = bool(action[10] > 0.5)
+        pilot_act.weapon_select_id = int(np.clip(round(float(action[11])), 0, 7))
+        pilot_act.program_chaff = bool(action[12] > 0.5)
+        pilot_act.program_flare = bool(action[13] > 0.5)
+        pilot_act.jettison_emergency = False
+        return pilot_act
+
     pilot_act.stick_roll = 0.0
     pilot_act.rudder = 0.0
     pilot_act.flaps = 0.0
@@ -154,5 +186,6 @@ __all__ = [
     "build_pilot_action",
     "half_to_unit",
     "is_air_combat_hybrid_action_mode",
+    "is_air_ew_hybrid_action_mode",
     "normalize_action",
 ]

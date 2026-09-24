@@ -13,9 +13,11 @@ from typing import Any, Mapping
 
 import numpy as np
 
-
+from .air_scripted_execution import AirScriptedExecutionModel
 
 AIR_SCRIPTED_EW_MODEL_ID = "air.ew.rwr_response_scripted"
+AIR_SCRIPTED_EW_ACTION_MODEL_ID = "air.ew.rwr_action_scripted"
+AIR_EW_HYBRID_ACTION_DIM = 14
 
 
 @dataclass(frozen=True)
@@ -92,13 +94,61 @@ class AirScriptedEWModel:
         self._closed = True
 
 
+class AirScriptedEWActionModel:
+    """Compose flight control with the versioned 14-element EW action mode."""
+
+    def __init__(self, *, dt: float = 0.05, max_rwr: int = 4) -> None:
+        self.dt = float(dt) if float(dt) > 1.0e-6 else 0.05
+        self.flight_model = AirScriptedExecutionModel(action_dim=AIR_EW_HYBRID_ACTION_DIM, dt=self.dt)
+        self.ew_model = AirScriptedEWModel(max_rwr=max_rwr)
+        self._closed = False
+
+    def reset(self, *, context: Any) -> None:
+        if not isinstance(context, Mapping):
+            raise TypeError("Air scripted EW action reset requires a mapping context")
+        observation = context.get("observation")
+        if not isinstance(observation, Mapping):
+            raise TypeError("Air scripted EW action reset requires context['observation']")
+        self.flight_model.reset(context={"observation": observation, "phase_name": context.get("phase_name", "")})
+        self.ew_model.reset(context=context)
+        self._closed = False
+
+    def decide(self, *, observation: Any, context: Any, dt: float) -> np.ndarray:
+        if self._closed:
+            raise RuntimeError("Air scripted EW action model is closed")
+        if not isinstance(observation, Mapping):
+            raise TypeError("Air scripted EW action observation must be a mapping")
+        model_context = context if isinstance(context, Mapping) else {}
+        action = np.asarray(
+            self.flight_model.decide(observation=observation, context=model_context, dt=dt),
+            dtype=np.float32,
+        ).reshape(-1)
+        intent = self.ew_model.decide(observation=observation, context=model_context, dt=dt)
+        action[12] = 1.0 if intent.countermeasure_plan == "request_chaff_and_flare" else 0.0
+        action[13] = 1.0 if intent.countermeasure_plan == "request_chaff_and_flare" else 0.0
+        return action
+
+    def close(self) -> None:
+        self.flight_model.close()
+        self.ew_model.close()
+        self._closed = True
+
+
 def make_air_scripted_ew_model(**kwargs: Any) -> AirScriptedEWModel:
     return AirScriptedEWModel(**kwargs)
 
 
+def make_air_scripted_ew_action_model(**kwargs: Any) -> AirScriptedEWActionModel:
+    return AirScriptedEWActionModel(**kwargs)
+
+
 __all__ = [
+    "AIR_EW_HYBRID_ACTION_DIM",
+    "AIR_SCRIPTED_EW_ACTION_MODEL_ID",
     "AIR_SCRIPTED_EW_MODEL_ID",
+    "AirScriptedEWActionModel",
     "AirScriptedEWIntent",
     "AirScriptedEWModel",
+    "make_air_scripted_ew_action_model",
     "make_air_scripted_ew_model",
 ]
