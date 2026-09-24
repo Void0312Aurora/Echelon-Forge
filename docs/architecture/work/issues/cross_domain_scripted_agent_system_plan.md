@@ -622,3 +622,17 @@ to a dedicated owner-local evidence document.
 - Evidence boundary: this establishes declaration parity between the Air CLI
   and viz wrapper route; it is not a full visualization process, render, replay,
   or complete playable acceptance result.
+
+### 2026-09-25 — Air full single-world mission probe
+
+- Starting commit: `f4a30e7c`.
+- Direct command used the manifest-bearing Air scenario with the local
+  compiled `ef_py`, the standalone neutral scripted model, and zero
+  randomization without a short step cap.
+- Result: the process exited 0 after `16416` steps, but the mission terminated
+  with `off_runway_terminate`; the final command was landing (`command_code: 4`),
+  `final_on_runway_geom` was `0.0`, and `mission_status[3]` was `-1.0`.
+- Acceptance boundary: process success is not task success. Air remains
+  `playable_candidate`; the failure is now a concrete landing-geometry blocker
+  for complete mission/playable promotion. The generated plot and summary stay
+  in the ignored build directory while the landing path is analyzed.
