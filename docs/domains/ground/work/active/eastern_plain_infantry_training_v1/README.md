@@ -57,11 +57,13 @@ accepted.
   `python/rl/ground/native_env.py` (`GroundInfantryNativeEnv`). It preserves
   the probe's reset/step/replay authority and is also explicitly
   `native_probe_only`; it is a tooling surface, not a WorldBatch promotion.
-  The native observation includes a fixed single-waypoint relative state
-  (goal delta and distance) so a policy can learn the S1 task without hidden
-  access to the probe internals; it also carries native health and command
-  state for traceability, and terminates explicitly on waypoint reach or
-  incapacitation. This is not route planning or a new fire authority.
+  The native observation includes the active waypoint relative state (goal
+  delta and distance) plus a waypoint index/count for a fixed direct sequence,
+  so a policy can learn the S1 task without hidden access to probe internals;
+  it also carries native health and command state for traceability, and
+  terminates explicitly on final-waypoint reach or incapacitation. Advancing to
+  the next configured point is sequence bookkeeping, not route planning or a
+  new fire authority.
   Its native Gym action space fixes `route_intent=direct`; held route intents
   remain available only through the engineering proxy until a native route
   owner exists.
@@ -106,7 +108,7 @@ The current native-runtime measurement and residuals are recorded in
 [`native_runtime_blockers.md`](native_runtime_blockers.md). The native slice now
 covers one deterministic `MoveStatic` step with surface/slope/vegetation cost,
 explicit Arnis raster loading, bounded river/bridge surfaces, terrain
-observation, and a fixed-waypoint native Gym adapter; the substitute still
+observation, and a fixed-direct-waypoint-sequence native Gym adapter; the substitute still
 keeps route/cover semantics moving without releasing a general passability
 claim.
 

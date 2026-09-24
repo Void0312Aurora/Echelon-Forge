@@ -79,6 +79,9 @@ else:
                     "mission_state": spaces.Box(
                         low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32
                     ),
+                    "waypoint_state": spaces.Box(
+                        low=-np.inf, high=np.inf, shape=(2,), dtype=np.float32
+                    ),
                     "state": spaces.Box(
                         low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32
                     ),

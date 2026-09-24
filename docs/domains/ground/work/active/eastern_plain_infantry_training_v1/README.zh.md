@@ -72,8 +72,8 @@ reset、action、observation、reward、termination、replay 契约之后，不�
 当前原生 runtime 的测量结果和剩余问题记录在
 [`native_runtime_blockers.md`](native_runtime_blockers.md)。原生切片现在覆盖一个带
 地表/坡度/植被代价的确定性 `MoveStatic` 步、显式 Arnis 栅格加载、有限河流/桥面过渡、
-地形观测和固定航路点 native Gym 适配；替代方案继续推进路线/掩体语义，但不释放一般
-通行性能力。
+地形观测和固定直接航路点序列 native Gym 适配；航点递进只是预先配置序列的进度记录，
+不是路线图或路径规划。替代方案继续推进路线/掩体语义，但不释放一般通行性能力。
 
 ## 明确保持 held 的内容
 

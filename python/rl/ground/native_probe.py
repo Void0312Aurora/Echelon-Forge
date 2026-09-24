@@ -3,7 +3,8 @@
 This adapter deliberately stops at the maintained single-soldier kernel
 surface.  It is useful for reset/step/trace/replay checks, but it is not a
 production ``WorldBatch`` environment and it exposes no learned or automatic
-weapon-employment action.
+weapon-employment action.  Its waypoint sequence is a fixed list of direct
+targets, not a route graph or path planner.
 """
 
 from __future__ import annotations
@@ -52,6 +53,7 @@ class GroundInfantryNativeProbe:
         overlay_path: str | Path | None = None,
         start_xy_m: tuple[float, float] = (400.0, 100.0),
         goal_xy_m: tuple[float, float] = (600.0, 100.0),
+        waypoints_xy_m: Sequence[Sequence[float]] | None = None,
         goal_radius_m: float = 5.0,
         max_speed_mps: float = 1.5,
         max_steps: int = 256,
@@ -62,7 +64,20 @@ class GroundInfantryNativeProbe:
         self.bundle_dir = Path(bundle_dir)
         self.overlay_path = Path(overlay_path) if overlay_path is not None else None
         self.start_xy_m = (float(start_xy_m[0]), float(start_xy_m[1]))
-        self.goal_xy_m = (float(goal_xy_m[0]), float(goal_xy_m[1]))
+        raw_waypoints = (goal_xy_m,) if waypoints_xy_m is None else tuple(waypoints_xy_m)
+        if not raw_waypoints:
+            raise ValueError("waypoints_xy_m must contain at least one waypoint")
+        normalized_waypoints: list[tuple[float, float]] = []
+        for waypoint in raw_waypoints:
+            if len(waypoint) != 2:
+                raise ValueError("each waypoint must contain exactly two coordinates")
+            x, y = float(waypoint[0]), float(waypoint[1])
+            if not math.isfinite(x) or not math.isfinite(y):
+                raise ValueError("waypoint coordinates must be finite")
+            normalized_waypoints.append((x, y))
+        self.waypoints_xy_m = tuple(normalized_waypoints)
+        self._waypoint_index = 0
+        self.goal_xy_m = self.waypoints_xy_m[0]
         self.goal_radius_m = float(goal_radius_m)
         self.max_speed_mps = float(max_speed_mps)
         self.max_steps = int(max_steps)
@@ -139,6 +154,10 @@ class GroundInfantryNativeProbe:
                 float(command.objective_node_id),
             ),
             "mission_state": (goal_dx, goal_dy, goal_distance),
+            "waypoint_state": (
+                float(self._waypoint_index),
+                float(len(self.waypoints_xy_m)),
+            ),
             "state": (
                 float(sim.get_unit_heading(entity_id)),
                 float(("stand", "crouch", "prone").index(self._stance)),
@@ -173,6 +192,8 @@ class GroundInfantryNativeProbe:
         self._step_index = 0
         self._blocked_steps = 0
         self._stance = "stand"
+        self._waypoint_index = 0
+        self.goal_xy_m = self.waypoints_xy_m[0]
         observation = self._observation()
         return observation, {
             "contract_version": NATIVE_GROUND_PROBE_CONTRACT_VERSION,
@@ -181,7 +202,15 @@ class GroundInfantryNativeProbe:
             "seed": int(seed),
             "entity_id": entity_id,
             "goal_xy_m": self.goal_xy_m,
-            "trace": {"event": "reset", "seed": int(seed), "observation": observation},
+            "waypoint_index": self._waypoint_index,
+            "waypoint_count": len(self.waypoints_xy_m),
+            "trace": {
+                "event": "reset",
+                "seed": int(seed),
+                "observation": observation,
+                "waypoint_index": self._waypoint_index,
+                "waypoint_count": len(self.waypoints_xy_m),
+            },
         }
 
     def step(
@@ -196,6 +225,7 @@ class GroundInfantryNativeProbe:
         except (GroundInfantryProxyError, ValueError, TypeError) as exc:
             raise GroundInfantryNativeProbeError(str(exc)) from exc
         before = self._observation()
+        waypoint_index_before = self._waypoint_index
         previous_distance = math.hypot(
             self.goal_xy_m[0] - before["position_local_enu_m"][0],
             self.goal_xy_m[1] - before["position_local_enu_m"][1],
@@ -246,12 +276,23 @@ class GroundInfantryNativeProbe:
         reward = float(previous_distance - current_distance) - (0.1 if blocked else 0.0)
         waypoint_reached = current_distance <= self.goal_radius_m
         incapacitated = after["health_state"][0] <= 0.0
-        terminated = waypoint_reached or incapacitated
+        waypoint_advanced = False
+        if (
+            waypoint_reached
+            and not incapacitated
+            and self._waypoint_index + 1 < len(self.waypoints_xy_m)
+        ):
+            self._waypoint_index += 1
+            self.goal_xy_m = self.waypoints_xy_m[self._waypoint_index]
+            waypoint_advanced = True
+            after = self._observation()
+        final_waypoint_reached = waypoint_reached and not waypoint_advanced
+        terminated = final_waypoint_reached or incapacitated
         termination_reason = (
             "agent_incapacitated"
             if incapacitated
             else "waypoint_reached"
-            if waypoint_reached
+            if final_waypoint_reached
             else None
         )
         truncated = (
@@ -268,6 +309,9 @@ class GroundInfantryNativeProbe:
             "moved_distance_m": moved_distance,
             "blocked": blocked,
             "blocked_reason": blocked_reason,
+            "waypoint_index_before": waypoint_index_before,
+            "waypoint_index_after": self._waypoint_index,
+            "waypoint_advanced": waypoint_advanced,
             "terminated": terminated,
             "termination_reason": termination_reason,
         }

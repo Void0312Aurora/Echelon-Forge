@@ -52,6 +52,42 @@ def test_native_ground_gym_adapter_reaches_fixed_waypoint() -> None:
     assert info["termination_reason"] == "waypoint_reached"
 
 
+def test_native_ground_gym_adapter_advances_fixed_direct_waypoint_sequence() -> None:
+    env = GroundInfantryNativeEnv(
+        GroundInfantryNativeProbe.from_fixture(
+            start_xy_m=(400.0, 100.0),
+            waypoints_xy_m=((406.0, 100.0), (412.0, 100.0)),
+            max_speed_mps=10.0,
+            time_step_s=1.0,
+            max_steps=4,
+        )
+    )
+    observation, info = env.reset(seed=7)
+
+    assert info["waypoint_index"] == 0
+    assert info["waypoint_count"] == 2
+    assert tuple(observation["waypoint_state"]) == pytest.approx((0.0, 2.0))
+
+    observation, _reward, terminated, truncated, info = env.step(
+        [90.0, 1.0, 0.0, 0.0]
+    )
+    assert terminated is False
+    assert truncated is False
+    assert info["trace"]["waypoint_advanced"] is True
+    assert info["trace"]["waypoint_index_before"] == 0
+    assert info["trace"]["waypoint_index_after"] == 1
+    assert float(observation["waypoint_state"][0]) == pytest.approx(1.0)
+
+    observation, _reward, terminated, truncated, info = env.step(
+        [90.0, 1.0, 0.0, 0.0]
+    )
+    assert terminated is True
+    assert truncated is False
+    assert info["termination_reason"] == "waypoint_reached"
+    assert info["trace"]["waypoint_advanced"] is False
+    assert float(observation["waypoint_state"][0]) == pytest.approx(1.0)
+
+
 def test_native_ground_gym_adapter_accepts_sb3_cpu_smoke_rollout() -> None:
     pytest.importorskip("stable_baselines3")
     from stable_baselines3 import PPO
@@ -122,6 +158,7 @@ def test_native_ground_probe_reset_and_step_use_compiled_observation_surfaces() 
         "health_state",
         "command_state",
         "mission_state",
+        "waypoint_state",
         "state",
     }
     assert len(observation["terrain"]) == 5
@@ -135,6 +172,8 @@ def test_native_ground_probe_reset_and_step_use_compiled_observation_surfaces() 
     assert observation["command_state"][0] == pytest.approx(0.0)
     assert len(observation["mission_state"]) == 3
     assert observation["mission_state"][2] > 0.0
+    assert len(observation["waypoint_state"]) == 2
+    assert tuple(observation["waypoint_state"]) == pytest.approx((0.0, 1.0))
 
     transition = probe.step([90.0, 0.5, 1.0, 0.0])
     assert transition.trace["authority"] == "native_probe_only"
