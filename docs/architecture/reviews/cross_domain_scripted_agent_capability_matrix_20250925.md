@@ -15,7 +15,7 @@ reset/replay, authority, and report evidence named in the plan.
 
 | Domain | Registration | Current label | Evidence retained | Accepted claims | Deferred claims |
 | --- | --- | --- | --- | --- | --- |
-| Air | `air.execution.phase_scripted` (`maintained`, `autopilot_controller`) | `playable_candidate` | `python/tasking_contracts/air_scripted_execution.py`; neutral lifecycle and manifest-resolution tests; runway-geometry correction tests; leader adapter; task-eval and manifest-driven viz route tests; direct static and randomized full single-world successes plus bounded reset/replay recorded in the plan ledger | takeoff, stable-flight, and landing controller composition through a neutral lifecycle; no-RL model construction path; manifest-driven compiled single-world route; complete single-world mission success under one static and one randomized seed; bounded deterministic reset/replay | accepted seed coverage, full command/report roundtrip, full mission replay across accepted conditions, visualization process/render acceptance, multi-unit roster parity |
+| Air | `air.execution.phase_scripted` (`maintained`, `autopilot_controller`) | `playable_candidate` | `python/tasking_contracts/air_scripted_execution.py`; neutral lifecycle and manifest-resolution tests; runway-geometry correction tests; leader adapter; task-eval and manifest-driven viz route tests; direct static and randomized full single-world successes plus full same-process randomized reset/replay recorded in the plan ledger | takeoff, stable-flight, and landing controller composition through a neutral lifecycle; no-RL model construction path; manifest-driven compiled single-world route; complete single-world mission success under one static and one randomized seed; exact full reset/replay for the tested randomized seed | accepted seed coverage, full command/report roundtrip, visualization process/render acceptance, multi-unit roster parity |
 | Naval | `naval.station.screen_hold` (`adapter`, `naval_warfare_commander`) | `bounded_adapter` | `python/tasking_contracts/naval_scripted_execution.py`; scoped `naval_station_policy_eval.py`; N4 station surface and manifest-resolution tests; direct eight-step report recorded in the plan ledger | zero station-order baseline can enter the common scripted lifecycle while the naval scenario runtime owns contact, station geometry, reporting, recovery, and reward; manifest-driven route; required terms and forbidden-term checks passed in the bounded report | fleet combat, weapon employment, general naval maneuver policy, reset/replay, full naval playable label |
 | Ground | no scripted model registration | `held` | `scenarios/ground/*`; native G1 static schema and realism-gradient guardrails | static task/status shell and explicit deferred claims | movement, terrain interaction, sensing/track export, fires, effects, damage, and playable runtime |
 
@@ -77,10 +77,10 @@ not grant runtime admission and is not yet wired into the scenario loader.
 
 ## Open acceptance gates
 
-1. Air: the static single-world complete mission gate is satisfied for the
-   tested condition; extend it through the neutral command/report chain, full
-   replay across accepted conditions, visualization process/render, and
-   multi-unit roster before any final `playable` promotion.
+1. Air: static single-world completion and one full randomized reset/replay
+   gate are satisfied; extend the evidence through the neutral command/report
+   chain, accepted seed coverage, visualization process/render, and multi-unit
+   roster before any final `playable` promotion.
 2. Air multi-unit: route two or more active-roster members through the existing
    world-batch runtime and preserve authority/provenance boundaries.
 3. Naval: keep the N4 station adapter scoped; the direct runtime report gate is

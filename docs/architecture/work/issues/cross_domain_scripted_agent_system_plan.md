@@ -670,3 +670,16 @@ to a dedicated owner-local evidence document.
   randomized direct success record. This still does not establish accepted
   seed coverage, full command/report roundtrip, full replay, visualization
   process/render, multi-unit parity, or final `playable` promotion.
+
+### 2026-09-25 — Air full randomized reset/replay probe
+
+- Starting commit: `256ecf2a`.
+- Direct verification reused one compiled single-world environment and ran the
+  complete manifest-bearing Air mission twice with seed 0 and randomization
+  enabled. Position, altitude, command, and waypoint arrays were exactly equal;
+  summary tuples were equal; both runs terminated with `success_objective` in
+  `16942` steps.
+- Evidence boundary: same-process full reset/replay is now directly evidenced
+  for this seed and condition. Command/report closure, visualization
+  process/render, multi-unit roster parity, broader accepted-seed coverage, and
+  final `playable` promotion remain open.

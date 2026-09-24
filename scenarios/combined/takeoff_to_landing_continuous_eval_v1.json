@@ -16,7 +16,6 @@
         ],
         "deferred_claims": [
             "full command/report roundtrip",
-            "full reset/replay acceptance",
             "visualization runtime acceptance",
             "multi-unit roster parity"
         ]
