@@ -9,7 +9,38 @@ on:
   workflow_dispatch:
 
 jobs:
+  fast:
+    name: fast / native labels and runner metadata
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Configure fast native lane
+        run: cmake -S . -B build-fast -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build fast native targets
+        run: >-
+          cmake --build build-fast --target ef_test
+          ef_runtime_contracts_compile_test ef_runtime_authority_contract_test -j2
+
+      - name: Run fast native lane
+        run: ctest --test-dir build-fast -L fast --output-on-failure
+
+      - name: Run fast runner metadata audits
+        run: |
+          python tools/runners/audit_ci_lanes.py --format markdown
+          python tools/runners/audit_test_authority.py --format markdown --limit 1
+
   p5b-windows-qualification:
+    name: qualification / Windows native
     runs-on: windows-latest
     timeout-minutes: 30
 
@@ -63,8 +94,7 @@ jobs:
 
       - name: Run P5-B native qualification gates
         run: >-
-          ctest --test-dir build-p5b-windows -C Release
-          -R "^(runtime_run_recorder|runtime_run_recorder_boundary|runtime_kernel_candidate|runtime_kernel_candidate_parity)$"
+          ctest --test-dir build-p5b-windows -C Release -L p5b
           --output-on-failure
 
       - name: Run P5-B receipt and recovery gates
@@ -73,6 +103,7 @@ jobs:
           tests/architecture/composition/test_runtime_run_receipt.py
 
   build-and-test:
+    name: release / Linux facade and wheel
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -146,11 +177,12 @@ jobs:
 
       - name: Build ef_core, ef_py, host lifecycle candidate, and C++ tests
         run: |
-          cmake --build build-workshop --target ef_core ef_py ef_runtime_host_candidate_test ef_runtime_run_recorder_test ef_runtime_kernel_candidate_test ef_runtime_kernel_candidate_parity_test ef_test ef_composition_lifecycle_test ef_backend_provider_migration_test ef_composition_evidence_test ef_cordis_runtime_conformance_test -j2
+          cmake --build build-workshop --target ef_core ef_py ef_runtime_host_candidate_test ef_runtime_run_recorder_test ef_runtime_kernel_candidate_test ef_runtime_kernel_candidate_parity_test ef_runtime_contracts_compile_test ef_runtime_authority_contract_test ef_test ef_composition_lifecycle_test ef_backend_provider_migration_test ef_composition_evidence_test ef_cordis_runtime_conformance_test -j2
 
       - name: Run C++ smoke tests
         run: |
-          ctest --test-dir build-workshop -R '^(ef_test_all|runtime_host_candidate|runtime_host_candidate_boundary|runtime_run_recorder|runtime_run_recorder_boundary|runtime_kernel_candidate|runtime_kernel_candidate_parity|composition_lifecycle|backend_provider_migration|composition_evidence|cordis_runtime_conformance)$' --output-on-failure
+          ctest --test-dir build-workshop -L release --output-on-failure
+          ctest --test-dir build-workshop -R '^ef_test_all$' --output-on-failure
 
       - name: Run state-transfer and Python mirror contract gates
         run: |

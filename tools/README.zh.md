@@ -75,6 +75,10 @@
   - 从 architecture tier manifest 派生非权威的 owner、failure audience、
     execution strategy、orphan 与 source-scan residual 报告；不创建第二个
     suite registry，也不改变 archive retention policy。
+- [audit_ci_lanes.py](runners/audit_ci_lanes.py)
+  - 根据 workflow job、触发器、预算、构建/测试并行度、Python/contract 入口和
+    native CTest selector 校验维护中的五类 lane 声明；它报告 lane authority，
+    但不代替 CI 执行。
 - [run_contract_batches.py](runners/run_contract_batches.py)
   - 按 `--group`（`chain`、`unit`、`route_generator`、`same_process`、`sim_kernel`）批量运行 `tests/contracts/` 下的 JSON 契约，默认运行全部已维护分组。`--default-group sim_kernel` 便捷地只选 `sim_kernel` 分组而无需拼写 `--group`。
 - [measure_test_coverage.py](runners/measure_test_coverage.py)

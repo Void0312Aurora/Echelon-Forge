@@ -37,6 +37,7 @@ on:
 
 jobs:
   cuda-compile:
+    name: research / CUDA compile
     runs-on: ubuntu-latest
     timeout-minutes: 45
 

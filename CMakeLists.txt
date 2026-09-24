@@ -1336,11 +1336,11 @@ set_tests_properties(
     structural_failure_break_modes
     structural_consequence
     aircraft_damage_lifecycle
+    world_batch_runtime
+    default_effects_model
     PROPERTIES LABELS "nightly;native"
 )
 set_tests_properties(
-    world_batch_runtime
-    default_effects_model
     runtime_contracts_compile
     runtime_authority_contract
     PROPERTIES LABELS "fast;native"
@@ -1356,18 +1356,24 @@ set_tests_properties(
     backend_provider_migration
     composition_evidence
     runtime_host_candidate
-    runtime_kernel_candidate
-    runtime_kernel_candidate_parity
-    runtime_run_recorder
     cordis_runtime_conformance
     PROPERTIES LABELS "qualification;native;release"
 )
 set_tests_properties(
+    runtime_kernel_candidate
+    runtime_kernel_candidate_parity
+    runtime_run_recorder
+    PROPERTIES LABELS "qualification;native;release;p5b"
+)
+set_tests_properties(
     runtime_host_candidate_boundary
-    runtime_run_recorder_boundary
     runtime_authority_boundary
     runtime_contracts_boundary
     PROPERTIES LABELS "qualification;native;boundary;release"
+)
+set_tests_properties(
+    runtime_run_recorder_boundary
+    PROPERTIES LABELS "qualification;native;boundary;release;p5b"
 )
 endif()
 

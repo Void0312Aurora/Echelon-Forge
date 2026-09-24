@@ -91,6 +91,10 @@
     orphan, and source-scan residual report from the architecture tier
     manifests; it does not create a second suite registry or alter archive
     retention policy.
+- [audit_ci_lanes.py](runners/audit_ci_lanes.py)
+  - Validates the maintained five-lane declaration against workflow jobs,
+    triggers, budgets, build/test parallelism, Python/contract entrypoints, and
+    native CTest selectors; it reports lane authority but does not execute CI.
 - [run_contract_batches.py](runners/run_contract_batches.py)
   - Runs grouped JSON contract batches from `tests/contracts/` by `--group` (`chain`, `unit`, `route_generator`, `same_process`, `sim_kernel`), or all maintained groups by default. The `--default-group sim_kernel` convenience selects the `sim_kernel` group without spelling `--group`.
 - [measure_test_coverage.py](runners/measure_test_coverage.py)

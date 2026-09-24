@@ -7,9 +7,12 @@ on:
       - master
   pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: "17 2 * * *"
 
 jobs:
   coverage-baseline:
+    name: nightly / coverage baseline
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -50,7 +53,7 @@ jobs:
 
       - name: Run C++ tests for gcov data
         run: |
-          ctest --test-dir build-coverage -R ef_test_all --output-on-failure
+          ctest --test-dir build-coverage -L nightly --output-on-failure
 
       - name: Generate retained coverage reports
         run: |

@@ -85,3 +85,17 @@ def test_native_lane_labels_cover_the_declared_lane_audiences() -> None:
     labels.update(_labels(row))
   assert PRIMARY_LANES <= labels
   assert "native" in labels
+
+
+def test_p5b_qualification_selector_preserves_the_existing_native_gates() -> None:
+  selected = {
+    str(row["name"])
+    for row in _ctest_inventory()
+    if "p5b" in _labels(row)
+  }
+  assert selected == {
+    "runtime_run_recorder",
+    "runtime_run_recorder_boundary",
+    "runtime_kernel_candidate",
+    "runtime_kernel_candidate_parity",
+  }

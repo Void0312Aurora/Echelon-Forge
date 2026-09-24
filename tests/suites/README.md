@@ -16,6 +16,25 @@ CI runs three test surfaces, all gated through `tools/runners/`:
 
 These live under `tests/smoke/`, not `tests/suites/`.
 
+The five CI lane authorities are declared in
+`tests/suites/ci_lane_manifest.json` and checked by
+`tools/runners/audit_ci_lanes.py`. The manifest maps each lane to an existing
+workflow job, runner, timeout, build/test parallelism, and native CTest label;
+it does not duplicate test names or change branch protection. The current
+mapping is:
+
+| Lane | Workflow job | Primary audience |
+| --- | --- | --- |
+| `fast` | `ci-smoke.yml / fast` | low-cost native and runner metadata feedback |
+| `qualification` | `ci-smoke.yml / p5b-windows-qualification` | supported Windows native qualification |
+| `nightly` | `coverage-baseline.yml / coverage-baseline` | scheduled broad coverage and retained artifacts |
+| `release` | `ci-smoke.yml / build-and-test` | facade-only wheel, composition, native, and contract release checks |
+| `research` | `ci-cuda-compile.yml / cuda-compile` | CUDA compile/link surface; GPU runtime remains separate |
+
+The lane audit verifies the referenced workflow/job, trigger, budget, declared
+parallelism, and CTest selector. Repeated-run feedback, resource, and flake
+budgets remain evidence obligations rather than assumptions in this manifest.
+
 ## Architecture Tier Manifests
 
 This directory hosts the two checked-in tier manifests for
