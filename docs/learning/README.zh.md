@@ -42,6 +42,7 @@ Last verified: `2026-08-08`
 
 ## 活跃工作
 
+- [发射决策架构整理与重构](work/active/launch_decision_reorg/README.zh.md)
 - [空战 1v1 realism gradient](work/active/air_combat_1v1_realism_gradient/README.zh.md)
 - [Damage-consequence reward surface](work/active/air_combat_damage_consequence_reward/README.zh.md)
 - [Temporal-window HMoE](work/active/temporal_window_hmoe/README.zh.md)

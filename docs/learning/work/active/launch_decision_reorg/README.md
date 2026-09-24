@@ -1,6 +1,6 @@
 # Launch-Decision Architecture Reorganization
 
-Status: 2026-09-23 finalized implementation plan; active work authorized.
+Status: 2026-09-24 finalized implementation plan; active work authorized.
 
 Language:
 
@@ -21,13 +21,19 @@ Inputs:
 - Current source and test surfaces listed in
   [the task-cluster plan](launch_decision_reorg_task_clusters_20260922.md)
 
-Document kind: plan
-Lifecycle: active
+Document kind: task
+Lifecycle: maintained
 Canonical: docs/learning/work/active/launch_decision_reorg/README.md
 Owner: learning/policy-architecture
 Last verified: 2026-09-23
 Content status: owner-finalized after the blocked review findings were resolved
 in the plan. No further independent review gate is required for this stream.
+
+Size exception: this maintained README is intentionally above 300 lines because
+it is the single canonical architecture and acceptance boundary for a serial
+C0-C5 package. Splitting the mode table, compatibility rules, and residual map
+would duplicate the owner contract and make the stacked PR review scope
+ambiguous; volatile fixture details remain in the task-cluster document.
 
 Documentation budget: three files are justified for this active package—this
 canonical README, the finite task-cluster document, and a short Chinese
@@ -126,7 +132,10 @@ The profiles are fixed as follows:
   resolved contract. Ordinary PPO and event-policy-margin updates may write
   only the parameter roles declared by that contract and must emit the same
   owner trace.
-- `auxiliary_only_v1` never changes sampled event logits.
+- `auxiliary_only_v1` never changes sampled event logits. Its executable path
+  (`action_net`, policy trunk, HMoE event slice, and `hybrid_event_head`) is
+  detached, excluded from the optimizer write set, and checked for zero
+  gradients and unchanged event logits before and after an auxiliary update.
 - `adapter_coupled_v1` admits exactly one named adapter with an explicit
   coefficient, detach policy, optimizer ownership, and acceptance probe. Window
   and stopping adapters may not compete in a new configuration.
@@ -193,11 +202,16 @@ The contract must provide at least these modes:
 | auxiliary_only_v1 | Train evidence without changing sampled event logits. | Credit, stopping, or window evidence is side-objective only. | Signal/capacity evidence; never learned-firing acceptance. |
 | adapter_coupled_v1 | Future explicitly admitted coupling. | Exactly one adapter contribution, with coefficient, detach, optimizer, and acceptance probes declared. | Requires a separate contract review; stopping and window adapters cannot silently compete. |
 
-Headless configurations must resolve explicitly to legacy_composed_v0,
-governed_composed_v1, or another named mode. They may not inherit a hidden
-direct-head owner from a zero/default learning-rate flag. C1 must record the
-seven headless and seven enabled baseline configurations in a manifest and
-state which modes are eligible for behavioral acceptance.
+Mode resolution is persisted by the pair
+`hyperparameters.policy_kwargs.launch_decision_contract_version` and exactly
+one of `launch_decision_mode` or `launch_decision_owner_mode`. The version must
+be `launch_decision_owner_v1`; duplicate locations are allowed only when they
+agree. An old configuration with neither the version nor a mode is resolved to
+`legacy_composed_v0` for compatibility. Any explicit mode, owner-mode alias, or
+version marker without its matching pair is rejected as ambiguous. A strict
+mode additionally requires `hybrid_event_head_lr_scale > 0` and is never
+eligible for a headless configuration. C1 records all 14 active configurations
+in the resolver manifest, mapping each to one mode and acceptance eligibility.
 
 The owner contract also fixes the training scopes. A strict direct-boundary
 update may write only hybrid_event_head.*; an ordinary PPO update that writes
@@ -250,8 +264,8 @@ The trace must include:
 
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
-| P0 Boundary | Freeze owner vocabulary, headless inventory, source revision, and no-goals. | The final owner decision in this README. | Baseline manifest and owner decision record are complete. | accepted |
-| P1 Evidence | Establish build preflight, deterministic fixtures, contributor traces, and current test coverage. | P0 accepted. | Required artifacts or explicit infrastructure residuals are recorded. | active |
+| P0 Boundary | Freeze owner vocabulary, headless inventory, source revision, and no-goals. | The final owner decision in this README. | Owner decision, source revision, and no-goals are complete; C0 owns the immutable baseline manifest. | accepted |
+| P1 Evidence | Establish build preflight, deterministic fixtures, contributor traces, and current test coverage. | P0 accepted. | Required artifacts or explicit infrastructure residuals are recorded. | planned |
 | P2 Contract | Implement typed owner/mode validation and serialization tests. | P1 complete. | Conflicts reject; legacy modes round-trip without changed outputs. | planned |
 | P3 Forward path | Introduce Composer boundary and preserve compatibility mode. | P2 accepted. | Owner trace, unmasked pair, mask handoff, and state-dict behavior are tested. | planned |
 | P4 Training/config integration | Align objectives, sidecars, replay, optimizer groups, and config/checkpoint migration. | P3 accepted. | All declared write sets and migration gates pass. | planned |
@@ -316,7 +330,7 @@ Fixture identity is fixed rather than conceptual:
   seeds in the manifest. It must refuse to overwrite a different manifest and
   must emit the same bytes for the same source/generator identity.
 
-C0 must freeze a manifest containing:
+C0 must freeze one immutable v1 manifest containing:
 
 - all active air_combat_hybrid_v1 configurations, including the baseline seven
   headless and seven event-head-enabled entries;
@@ -326,6 +340,10 @@ C0 must freeze a manifest containing:
 - window-classifier replay state, including storage type, capacity, keys, and
   positive/negative rows where available;
 - a fixed observation fixture set and CPU float32 execution environment.
+
+After C0 closes, no later cluster may rewrite this manifest. C4 may create a
+separately versioned migration manifest that references the C0 SHA-256; it must
+not add target artifacts to the C0 file.
 
 The compatibility probe uses seeds 0, 1, 2 and three declared episodes per
 seed for runtime behavior. For fixed observation fixtures, the legacy mode must
@@ -408,9 +426,14 @@ all of the following are true:
   independent reviewer is required for this stream; focused tests, fixture
   hashes, and the owner trace are the acceptance evidence.
 
-Acceptance still reports requested, accepted, released, authorized-release,
-rejection, and repeat-suppression counters separately. Kill, damage, Pk, and
-effects results are not substitutes.
+The strict learned-firing gate is executable rather than reporting-only. A
+non-forced learned-policy probe must record at least one requested, accepted,
+released, and authorized release across the declared seed/episode matrix;
+repeat-before-assessment and authority violations must be zero, the learned
+policy flag must be true, and stochastic rejections must remain within the
+declared bound. A missing probe marker or any threshold failure blocks the
+strict acceptance lane. Kill, damage, Pk, and effects results are not
+substitutes.
 
 ## Residuals and next steps
 
