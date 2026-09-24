@@ -81,6 +81,20 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
         "cover",
         "line_of_sight",
     ]
+    assert contract["native_runtime_surfaces"]["transition_effects"]["status"] == "bounded_native_segment_movement_observation"
+    assert contract["native_runtime_surfaces"]["transition_effects"]["entrypoint"] == "SimulationKernel.get_ground_transition_movement_observation"
+    assert contract["native_runtime_surfaces"]["transition_effects"]["fields"] == [
+        "configured",
+        "passable",
+        "destination_surface",
+        "water_blocked",
+        "obstacle_blocked",
+        "bridge_admitted",
+        "distance_m",
+        "minimum_combined_multiplier",
+        "average_combined_multiplier",
+        "sample_count",
+    ]
     assert contract["native_runtime_surfaces"]["terrain_effects"]["status"] == "bounded_native_observation"
     assert contract["native_runtime_surfaces"]["terrain_effects"]["entrypoint"] == "SimulationKernel.get_ground_movement_effect_observation"
     assert contract["native_runtime_surfaces"]["terrain_effects"]["fields"] == [

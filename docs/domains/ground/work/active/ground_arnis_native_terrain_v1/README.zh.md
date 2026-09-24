@@ -26,6 +26,9 @@ fixture 元数据悄悄冒充成运行时真值。
   原生采样，字段为 `(elevation, surface_type, friction, roughness, vegetation_density)`。
 - 原生 provider 消费 Arnis 水文和桥梁道路矢量，提供有界点采样：河流走廊是水面，声明的
   桥面线段覆盖水面并成为硬压实通行面。
+- `SimulationKernel.get_ground_transition_movement_observation(...)` 复用同一组线段采样，
+  按指定姿态返回最小/平均综合移动倍率。移动系统在局部过渡准入后消费平均倍率；这仍是
+  线段代价观察，不是路线代价栅格或一般通行性产品。
 - 加载具有事务性：候选包无效时返回 `false`，不替换当前 provider 栅格。
 
 ## 明确的非目标

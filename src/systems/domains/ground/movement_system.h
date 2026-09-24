@@ -70,12 +70,13 @@ inline void register_ground_infantry_movement_system(flecs::world &ecs) {
                     const double stance_multiplier =
                         ground_infantry_movement_detail::stance_speed_multiplier(
                             ground_task.stance);
-                    const double effective_speed =
+                    const double requested_speed =
                         ground_infantry_movement_detail::finite_nonnegative(
-                            command[i].cmd_speed_mps) *
-                        surface_multiplier * slope_multiplier * vegetation_multiplier *
-                        stance_multiplier;
-                    if (effective_speed <= 0.0) {
+                            command[i].cmd_speed_mps);
+                    const double current_effective_speed =
+                        requested_speed * surface_multiplier * slope_multiplier *
+                        vegetation_multiplier * stance_multiplier;
+                    if (current_effective_speed <= 0.0) {
                         ground_infantry_movement_detail::stop(velocity[i]);
                         continue;
                     }
@@ -86,17 +87,35 @@ inline void register_ground_infantry_movement_system(flecs::world &ecs) {
                     // ForceAccumulator/Mass integration path. Advance only the
                     // horizontal kinematic slice owned by this stage.
                     const double dt = std::max(0.0, static_cast<double>(it.delta_time()));
-                    const double next_vx = std::sin(heading_rad) * effective_speed;
-                    const double next_vy = std::cos(heading_rad) * effective_speed;
+                    double effective_speed = current_effective_speed;
                     if (dt > 0.0) {
+                        const double probe_vx = std::sin(heading_rad) * current_effective_speed;
+                        const double probe_vy = std::cos(heading_rad) * current_effective_speed;
                         const auto transition = environment->get_ground_transition_observation(
-                            transform[i].x, transform[i].y, transform[i].x + next_vx * dt,
-                            transform[i].y + next_vy * dt);
+                            transform[i].x, transform[i].y, transform[i].x + probe_vx * dt,
+                            transform[i].y + probe_vy * dt);
                         if (!transition.passable) {
                             ground_infantry_movement_detail::stop(velocity[i]);
                             continue;
                         }
+                        const auto transition_effects =
+                            environment->get_ground_transition_movement_observation(
+                                transform[i].x, transform[i].y,
+                                transform[i].x + probe_vx * dt,
+                                transform[i].y + probe_vy * dt, ground_task.stance);
+                        if (transition_effects.sample_count > 0 &&
+                            std::isfinite(transition_effects.average_combined_multiplier)) {
+                            effective_speed = requested_speed *
+                                              ground_infantry_movement_detail::finite_nonnegative(
+                                                  transition_effects.average_combined_multiplier);
+                        }
                     }
+                    if (effective_speed <= 0.0) {
+                        ground_infantry_movement_detail::stop(velocity[i]);
+                        continue;
+                    }
+                    const double next_vx = std::sin(heading_rad) * effective_speed;
+                    const double next_vy = std::cos(heading_rad) * effective_speed;
                     velocity[i].vx = next_vx;
                     velocity[i].vy = next_vy;
                     velocity[i].vz = 0.0;

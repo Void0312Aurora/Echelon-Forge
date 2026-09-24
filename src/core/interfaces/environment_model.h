@@ -7,6 +7,8 @@
 #include <numbers>
 #include <string>
 
+#include "components/domains/ground/tasking/ground_tasking_enums.h"
+
 class IEnvironmentModel {
   public:
     // Merge/fallback rule:
@@ -99,6 +101,13 @@ class IEnvironmentModel {
         double distance_m = 0.0;
     };
 
+    struct GroundTransitionMovementObservation {
+        GroundTransitionObservation transition;
+        double minimum_combined_multiplier = 0.0;
+        double average_combined_multiplier = 0.0;
+        std::uint32_t sample_count = 0;
+    };
+
     virtual TerrainCell get_terrain_at(double x, double y) = 0;
 
     // Dynamic Configuration
@@ -141,6 +150,12 @@ class IEnvironmentModel {
 
     virtual GroundTransitionObservation
     get_ground_transition_observation(double /*from_x*/, double /*from_y*/, double /*to_x*/, double /*to_y*/) {
+        return {};
+    }
+
+    virtual GroundTransitionMovementObservation get_ground_transition_movement_observation(
+        double /*from_x*/, double /*from_y*/, double /*to_x*/, double /*to_y*/,
+        GroundStance /*stance*/) {
         return {};
     }
 

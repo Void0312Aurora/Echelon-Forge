@@ -55,6 +55,13 @@
       "sampling_interval_m": 5.0,
       "does_not_claim": ["route_graph", "waypoint_planning", "cover", "line_of_sight"]
     },
+    "transition_effects": {
+      "status": "bounded_native_segment_movement_observation",
+      "entrypoint": "SimulationKernel.get_ground_transition_movement_observation",
+      "fields": ["configured", "passable", "destination_surface", "water_blocked", "obstacle_blocked", "bridge_admitted", "distance_m", "minimum_combined_multiplier", "average_combined_multiplier", "sample_count"],
+      "sampling_interval_m": 5.0,
+      "does_not_claim": ["route_graph", "waypoint_planning", "climbability", "fatigue", "full_physics"]
+    },
     "terrain_effects": {
       "status": "bounded_native_observation",
       "entrypoint": "SimulationKernel.get_ground_movement_effect_observation",
