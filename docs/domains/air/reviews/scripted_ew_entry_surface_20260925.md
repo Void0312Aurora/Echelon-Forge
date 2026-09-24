@@ -16,13 +16,15 @@
 | Observation | `gym_envs/universal_env_parts/observations.py` exports `rwr` rows as bearing, signal strength, lock, and launch-warning fields; instruments also expose `rwr_active`. | A scripted agent can consume declared RWR evidence without World Truth. ESM/jammer state is not part of the maintained observation payload shown here. |
 | Command transport | `PilotAction` exposes `program_chaff` and `program_flare`; `legacy_command_bridge.h` resolves those fields into countermeasure commands. | The low-level transport exists, but it is not exposed by the maintained `full` or `air_combat_hybrid_v1` action vectors. |
 | Current action mapping | `gym_envs/universal_env_parts/actions.py` sets `program_chaff` and `program_flare` to `False` for the maintained action modes. | A scripted EW model cannot currently perform countermeasure actions through the normal Air action path. There is no maintained jammer action field. |
+| Scripted producer | `python/tasking_contracts/air_scripted_ew.py` is registered in the aggregate Air registry as `air.ew.rwr_response_scripted` (`adapter`, `air_ew_controller`). It emits a typed RWR-derived intent and marks `native_action_owner_required`. | The producer is a contract/decision slice only. It is not an accepted countermeasure or jammer action, and it does not change the EW capability label. |
 
 ## Boundary
 
-The current evidence supports an EW **observation** role and a database-backed
-EW **state** vocabulary. It does not support a playable EW decision claim. A
-Python model that merely emits an unconsumed dictionary would be a design
-probe, not runtime capability evidence.
+The current evidence supports an EW **observation** role, a database-backed
+EW **state** vocabulary, and a typed RWR-derived scripted producer. It does
+not support a playable EW decision claim. The producer output is not consumed
+by the maintained Air action path, so it remains adapter/probe evidence rather
+than native EW runtime evidence.
 
 ## Direct observation probe
 
@@ -35,9 +37,10 @@ scripted unit can receive the existing RWR observation product. It does not
 show a launch-warning-driven countermeasure action, jammer state transition, or
 terminal EW objective.
 
-The probe therefore closes only the observation side of the EW boundary. The
-action and native-owner slices below remain required before an EW role can be
-admitted as an adapter or playable unit.
+The probe and producer therefore close only the observation and decision
+contract sides of the EW boundary. The action and native-owner slices below
+remain required before an EW role can be admitted as a consumed adapter or a
+playable unit.
 
 The EW path must remain Air-owned for jammer modes, RWR/ESM interpretation,
 countermeasure resources, release cadence, and threat-response doctrine. Only
