@@ -99,7 +99,11 @@ void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel> &ker
              "'gaussian_hill', 'mountain')",
              nb::arg("terrain_type"))
         .def("load_arnis_terrain_bundle", &SimulationKernel::load_arnis_terrain_bundle,
-             "Load a verified Arnis continuous raster bundle directory", nb::arg("bundle_root"))
+             "Load a verified Arnis continuous raster bundle directory",
+             nb::arg("bundle_root"))
+         .def("load_arnis_field_overlay", &SimulationKernel::load_arnis_field_overlay,
+              "Load a metadata-only Arnis field overlay",
+              nb::arg("overlay_path"))
         .def(
             "get_ground_terrain_observation",
             [](SimulationKernel &self, double x, double y) {
@@ -108,6 +112,17 @@ void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel> &ker
             },
             "Get native Ground terrain observation as (elevation, surface_type, friction, "
             "roughness, vegetation_density)",
+            nb::arg("x"), nb::arg("y"))
+        .def(
+            "get_ground_field_semantic_observation",
+            [](SimulationKernel &self, double x, double y) {
+                const auto sample = self.get_ground_field_semantic_observation(x, y);
+                return std::make_tuple(sample[0], sample[1], sample[2], sample[3], sample[4],
+                                       sample[5], sample[6]);
+            },
+            "Get metadata-only Ground field semantics as (configured, tree_distance, "
+            "tree_bearing, settlement_distance, settlement_bearing, in_tree_line, "
+            "in_settlement)",
             nb::arg("x"), nb::arg("y"))
         .def(
             "spawn_unit",

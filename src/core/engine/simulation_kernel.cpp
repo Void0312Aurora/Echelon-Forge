@@ -353,6 +353,19 @@ bool SimulationKernel::load_arnis_terrain_bundle(const std::string &bundle_root)
     return false;
 }
 
+bool SimulationKernel::load_arnis_field_overlay(const std::string &overlay_path) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("load_arnis_field_overlay");
+    if (IEnvironmentModel *model = environment_model()) {
+        const bool loaded = model->load_arnis_field_overlay(overlay_path);
+        if (loaded) {
+            world_state_mutated_ = true;
+        }
+        return loaded;
+    }
+    return false;
+}
+
 std::array<double, 5> SimulationKernel::get_ground_terrain_observation(double x, double y) {
     auto composition_lock = acquire_composition_operation();
     ensure_active("get_ground_terrain_observation");
@@ -363,6 +376,22 @@ std::array<double, 5> SimulationKernel::get_ground_terrain_observation(double x,
     }
     return {std::numeric_limits<double>::quiet_NaN(),
             static_cast<double>(IEnvironmentModel::SurfaceType::Obstacle), 0.0, 1.0, 1.0};
+}
+
+std::array<double, 7> SimulationKernel::get_ground_field_semantic_observation(double x, double y) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_ground_field_semantic_observation");
+    if (IEnvironmentModel *model = environment_model()) {
+        const auto observation = model->get_ground_field_semantic_observation(x, y);
+        return {observation.configured ? 1.0 : 0.0,
+                observation.nearest_tree_line_distance_m,
+                observation.nearest_tree_line_bearing_deg,
+                observation.nearest_settlement_distance_m,
+                observation.nearest_settlement_bearing_deg,
+                observation.in_tree_line ? 1.0 : 0.0,
+                observation.in_settlement ? 1.0 : 0.0};
+    }
+    return {0.0, -1.0, 0.0, -1.0, 0.0, 0.0, 0.0};
 }
 
 void SimulationKernel::set_maritime_state(double sea_state, double wave_heading_deg,

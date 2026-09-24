@@ -9,6 +9,7 @@
 #include <iostream>
 #include <algorithm>
 #include <cctype>
+#include <limits>
 #include <stdexcept>
 #include <numbers>
 
@@ -59,6 +60,9 @@ struct RasterGrid {
     std::vector<std::uint8_t> landcover;
     std::vector<ArnisFeatureGeometry> river_features;
     std::vector<ArnisFeatureGeometry> bridge_features;
+    std::vector<ArnisFeatureGeometry> tree_line_features;
+    std::vector<ArnisFeatureGeometry> settlement_features;
+    bool field_overlay_loaded = false;
     bool arnis_metric_bundle = false;
 
     static double distance_squared_to_segment(double x, double y, double x1, double y1, double x2,
@@ -231,6 +235,137 @@ bool read_feature_geometries(const std::filesystem::path &path, bool bridges,
         out.push_back(std::move(parsed));
     }
     return true;
+}
+
+bool field_overlay_evidence_is_held(const Json &evidence) {
+    if (!evidence.is_object()) return false;
+    for (const char *key : {"metadata_only", "no_runtime_setup_application",
+                            "no_movement_release", "no_passability_release",
+                            "no_los_cover_release", "no_fire_control_release"}) {
+        if (!evidence.value(key, false)) return false;
+    }
+    return true;
+}
+
+bool read_field_overlay(const std::filesystem::path &path, const RasterGrid &base,
+                        std::vector<ArnisFeatureGeometry> &tree_lines,
+                        std::vector<ArnisFeatureGeometry> &settlements) {
+    std::ifstream file(path);
+    if (!file) return false;
+    Json root;
+    try {
+        file >> root;
+    } catch (const std::exception &) {
+        return false;
+    }
+    if (root.value("contract_version", "") != "field_overlay.v1" ||
+        !field_overlay_evidence_is_held(root.value("evidence", Json{}))) {
+        return false;
+    }
+    const auto &entries = root.value("entries", Json{});
+    if (!entries.is_array()) return false;
+
+    const double min_x = std::min(base.origin.x,
+                                  base.origin.x + (base.width - 1) * base.step_x);
+    const double min_y = std::min(base.origin.y,
+                                  base.origin.y + (base.height - 1) * base.step_y);
+    const double extent_x = std::abs(base.step_x) * static_cast<double>(base.width - 1);
+    const double extent_y = std::abs(base.step_y) * static_cast<double>(base.height - 1);
+    constexpr double kOverlayExtentToleranceM = 2.0;
+    auto translated_point = [&](const Json &value, std::pair<double, double> &out) {
+        double logical_x = 0.0;
+        double logical_y = 0.0;
+        if (!json_finite_pair(value, logical_x, logical_y) ||
+            logical_x < -kOverlayExtentToleranceM || logical_y < -kOverlayExtentToleranceM ||
+            logical_x > extent_x + kOverlayExtentToleranceM ||
+            logical_y > extent_y + kOverlayExtentToleranceM) {
+            return false;
+        }
+        out = {min_x + logical_x, min_y + logical_y};
+        return true;
+    };
+
+    for (const auto &entry : entries) {
+        if (!entry.is_object()) return false;
+        const std::string kind = entry.value("overlay_kind", "");
+        if (kind != "tree_line" && kind != "settlement_anchor" &&
+            kind != "settlement_structure") {
+            continue;
+        }
+        if (!field_overlay_evidence_is_held(entry.value("evidence", Json{}))) return false;
+        const auto &geometry = entry.value("geometry", Json{});
+        if (!geometry.is_object()) return false;
+        const std::string geometry_type = geometry.value("geometry_type", "");
+        ArnisFeatureGeometry parsed;
+        parsed.polygon = geometry_type == "polygon";
+        if (geometry_type == "point") {
+            std::pair<double, double> point;
+            if (!translated_point(geometry.value("point", Json{}), point)) return false;
+            parsed.points.push_back(point);
+        } else if (geometry_type == "line" || parsed.polygon) {
+            const auto &raw_points = geometry.value("points", Json{});
+            if (!raw_points.is_array() || raw_points.size() < 2) return false;
+            for (const auto &raw_point : raw_points) {
+                std::pair<double, double> point;
+                if (!translated_point(raw_point, point)) return false;
+                parsed.points.push_back(point);
+            }
+            if (parsed.polygon && parsed.points.front() != parsed.points.back()) {
+                parsed.points.push_back(parsed.points.front());
+            }
+        } else {
+            return false;
+        }
+        if (kind == "tree_line") {
+            tree_lines.push_back(std::move(parsed));
+        } else {
+            settlements.push_back(std::move(parsed));
+        }
+    }
+    return !tree_lines.empty() || !settlements.empty();
+}
+
+double distance_squared_to_field_feature(const ArnisFeatureGeometry &feature, double x, double y,
+                                         bool &inside, double &nearest_x, double &nearest_y) {
+    inside = false;
+    if (feature.points.empty()) return std::numeric_limits<double>::infinity();
+    if (feature.points.size() == 1) {
+        nearest_x = feature.points.front().first;
+        nearest_y = feature.points.front().second;
+        return RasterGrid::distance_squared_to_segment(x, y, nearest_x, nearest_y, nearest_x,
+                                                       nearest_y);
+    }
+    if (feature.polygon && RasterGrid::point_in_polygon(x, y, feature.points)) {
+        inside = true;
+        nearest_x = x;
+        nearest_y = y;
+        return 0.0;
+    }
+    double best = std::numeric_limits<double>::infinity();
+    for (std::size_t i = 1; i < feature.points.size(); ++i) {
+        const double x1 = feature.points[i - 1].first;
+        const double y1 = feature.points[i - 1].second;
+        const double x2 = feature.points[i].first;
+        const double y2 = feature.points[i].second;
+        const double dx = x2 - x1;
+        const double dy = y2 - y1;
+        const double length_squared = dx * dx + dy * dy;
+        const double projection = length_squared > 0.0
+                                      ? std::clamp(((x - x1) * dx + (y - y1) * dy) /
+                                                       length_squared,
+                                                   0.0, 1.0)
+                                      : 0.0;
+        const double candidate_x = x1 + projection * dx;
+        const double candidate_y = y1 + projection * dy;
+        const double candidate = RasterGrid::distance_squared_to_segment(
+            x, y, x1, y1, x2, y2);
+        if (candidate < best) {
+            best = candidate;
+            nearest_x = candidate_x;
+            nearest_y = candidate_y;
+        }
+    }
+    return best;
 }
 
 IEnvironmentModel::SurfaceType surface_for_landcover(std::uint8_t code) {
@@ -532,6 +667,56 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
         return cell; // Fallback to Initial Default (SoftDirt)
     }
 
+    GroundFieldSemanticObservation get_ground_field_semantic_observation(double x,
+                                                                          double y) override {
+        GroundFieldSemanticObservation observation;
+        observation.configured = raster_layer_.field_overlay_loaded;
+        if (!observation.configured) return observation;
+
+        auto inspect = [x, y](const std::vector<ArnisFeatureGeometry> &features,
+                              double &distance, double &bearing, bool &inside) {
+            double best = std::numeric_limits<double>::infinity();
+            double best_x = x;
+            double best_y = y;
+            inside = false;
+            for (const auto &feature : features) {
+                bool feature_inside = false;
+                double candidate_x = x;
+                double candidate_y = y;
+                const double candidate = distance_squared_to_field_feature(
+                    feature, x, y, feature_inside, candidate_x, candidate_y);
+                if (feature_inside) inside = true;
+                if (candidate < best) {
+                    best = candidate;
+                    best_x = candidate_x;
+                    best_y = candidate_y;
+                }
+            }
+            if (!std::isfinite(best)) {
+                distance = -1.0;
+                bearing = 0.0;
+                return;
+            }
+            distance = std::sqrt(std::max(0.0, best));
+            if (distance > 0.0) {
+                bearing = std::fmod(std::atan2(best_x - x, best_y - y) *
+                                        180.0 / std::numbers::pi_v<double> +
+                                        360.0,
+                                    360.0);
+            } else {
+                bearing = 0.0;
+            }
+        };
+
+        inspect(raster_layer_.tree_line_features,
+                observation.nearest_tree_line_distance_m,
+                observation.nearest_tree_line_bearing_deg, observation.in_tree_line);
+        inspect(raster_layer_.settlement_features,
+                observation.nearest_settlement_distance_m,
+                observation.nearest_settlement_bearing_deg, observation.in_settlement);
+        return observation;
+    }
+
     void clear_zones() override { zones_.clear(); }
 
     void add_zone(const std::string &name, double x, double y, double width, double length,
@@ -736,6 +921,20 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
         } catch (const std::exception &) {
             return false;
         }
+    }
+
+    bool load_arnis_field_overlay(const std::string &overlay_path) override {
+        if (!raster_layer_.arnis_metric_bundle) return false;
+        std::vector<ArnisFeatureGeometry> tree_lines;
+        std::vector<ArnisFeatureGeometry> settlements;
+        if (!read_field_overlay(std::filesystem::path(overlay_path), raster_layer_, tree_lines,
+                                settlements)) {
+            return false;
+        }
+        raster_layer_.tree_line_features = std::move(tree_lines);
+        raster_layer_.settlement_features = std::move(settlements);
+        raster_layer_.field_overlay_loaded = true;
+        return true;
     }
 
     void set_terrain_type(const std::string &terrain_type) override {

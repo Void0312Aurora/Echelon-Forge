@@ -81,9 +81,10 @@ the current native command shape has no route field; silently dropping it would
 make the training trace dishonest.
 
 The proxy observation additionally exposes tree-line/settlement distance and
-bearing plus river/bridge flags.  These fields are deliberately labelled
-engineering products; they do not satisfy the held native observation/track
-export gate.
+bearing plus river/bridge flags. The native provider now admits a bounded
+metadata-only field observation with the same distance/bearing and in-feature
+flags after an explicit overlay load. These fields do not satisfy a cover,
+concealment, route, or track-observation gate.
 
 The native movement slice now applies a bounded vegetation-density speed cost
 to Arnis landcover classes while retaining the existing surface and slope
