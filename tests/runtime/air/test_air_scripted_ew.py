@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from python.tasking_contracts.air_scripted_ew import (
     AIR_EW_HYBRID_ACTION_DIM,
@@ -12,12 +13,18 @@ from python.tasking_contracts.air_scripted_ew import (
 )
 from python.tasking_contracts.air_scripted_registry import AIR_SCRIPTED_MODEL_REGISTRY
 from python.tasking_contracts.scripted_registry import ScriptedDecisionModel
-from gym_envs.universal_env_parts import (
-    AIR_EW_HYBRID_V1_ACTION_MODE,
-    build_pilot_action,
-    expected_action_dim,
-    make_action_space,
-)
+try:
+    from gym_envs.universal_env_parts import (
+        AIR_EW_HYBRID_V1_ACTION_MODE,
+        build_pilot_action,
+        expected_action_dim,
+        make_action_space,
+    )
+except ModuleNotFoundError:
+    AIR_EW_HYBRID_V1_ACTION_MODE = None
+    build_pilot_action = None
+    expected_action_dim = None
+    make_action_space = None
 
 
 def _observation(*rows: list[float]) -> dict[str, np.ndarray]:
@@ -66,6 +73,7 @@ def test_ew_model_is_registered_in_the_aggregate_air_registry_as_adapter() -> No
     assert entries[0].status == "adapter"
 
 
+@pytest.mark.skipif(AIR_EW_HYBRID_V1_ACTION_MODE is None, reason="compiled ef_py action surface is unavailable")
 def test_ew_action_extension_maps_countermeasure_bits_without_changing_full_indices() -> None:
     assert expected_action_dim(AIR_EW_HYBRID_V1_ACTION_MODE) == AIR_EW_HYBRID_ACTION_DIM
     action_space = make_action_space(AIR_EW_HYBRID_V1_ACTION_MODE)
