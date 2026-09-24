@@ -75,6 +75,7 @@ calibration package, inventory claim, or final simulation configuration.
 | R-30 | M1252 bounded mobility estimate completion with explicit Tier C boundary | complete | `1483cc4d` |
 | R-31 | Evidence-role semantics, materialized source ledger, and field-level provenance checks | complete | `30b3565f` |
 | R-32 | Shared-leaf, Equipment ID, and coverage role rules | complete | `98dafc49` |
+| R-33 | Explicit source-ledger provenance status | complete | `f09a5862` |
 
 ## Blocker / skip ledger
 

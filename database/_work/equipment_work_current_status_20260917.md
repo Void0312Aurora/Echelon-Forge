@@ -46,7 +46,7 @@ Command: `python database/_work/check_equipment_tree.py`
 | `C5` source-artifact consistency | PASS, no unnamed or aggregate package claims |
 | `C6` retrieval record | PASS, 55 unretrieved citations remain advisory; 157 packages lack a retrieval block |
 | `C7` field-level provenance | PASS, 2,275 parameter rows checked; 0 missing value/source/tier/uncertainty metadata findings |
-| `C8` materialized source ledger | PASS, 365 ledger rows match 365 manifests |
+| `C8` materialized source ledger | PASS, 365 ledger rows match 365 manifests; 208 include retrieval+retention provenance and 157 include manifest+retention only |
 
 Measured counts:
 
@@ -126,6 +126,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | R-31 source ledger | Materialized `sources/ledger/ledger.csv` from the 365 source manifests; missing rights, retrieval and scope fields are preserved as visible findings rather than inferred |
 | R-31 field provenance check | Added C7 metadata validation for 2,275 parameter rows and C8 exact manifest-to-ledger coverage; both pass |
 | R-32 identity and queue rules | Documented Equipment ID syntax, shared-leaf/operator-row binding, module identity, and the actual discovery/index role of `coverage.csv` |
+| R-33 ledger provenance status | Added explicit `provenance_status` to the source ledger; rights remain `not_recorded` for all 365 rows rather than being inferred |
 | French C-130J-30 completion | Added the French Ministry's J-30 operating block for endurance, operating mass, cruise profile, crew and load configurations without overwriting the separate U.S. stretch-column definitions |
 | French C-130J-30 retrieval record | Replaced the stale access-only manifest with a successful Tavily-proxy retrieval record and a single-artifact title |
 | Voyager KC2 completion | Added the RAF KC2/KC3 fit and Airbus A330 MRTT structural, fuel, payload and conditioned-range block; carried fuel, offload and capacity remain distinct quantities |
