@@ -22,6 +22,10 @@ from python.runtime_bootstrap import ensure_repo_imports
 ensure_repo_imports()
 
 from python.env_config import resolve_env_settings
+from python.tasking_contracts.naval_scripted_execution import (
+    NAVAL_SCRIPTED_MODEL_REGISTRY,
+    NAVAL_STATION_HOLD_MODEL_ID,
+)
 from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
 from python.training.bootstrap import validate_declared_training_entry_env_surface, validate_declared_training_entry_paths
 from python.experiment.report_envelope import add_report_envelope_arg, apply_report_envelope
@@ -323,14 +327,18 @@ def run_baseline_eval(
         worker_threads=max(1, int(worker_threads)),
         **env_settings,
     )
+    scripted_model = None
     try:
         env.seed(int(seed))
         obs = env.reset()
-        del obs
+        scripted_model = NAVAL_SCRIPTED_MODEL_REGISTRY.create(
+            NAVAL_STATION_HOLD_MODEL_ID,
+            action_dim=int(env.action_space.shape[0]),
+        )
+        scripted_model.reset(context={"scenario": os.path.abspath(scenario_path)})
 
         slot_control = _slot_control_summary(env)
         active_roster = _active_roster_summary(env)
-        action = np.zeros((env.num_envs, int(env.action_space.shape[0])), dtype=np.float32)
         reward_total = 0.0
         reward_terms_sum: dict[str, float] = defaultdict(float)
         reward_terms_last: dict[str, float] = {}
@@ -341,7 +349,9 @@ def run_baseline_eval(
         executed_steps = 0
 
         for _step in range(max(1, int(steps))):
-            _obs, rewards, dones, infos = env.step(action)
+            action = scripted_model.decide(observation=obs, context={}, dt=0.05)
+            action = np.asarray(action, dtype=np.float32).reshape(1, int(env.action_space.shape[0]))
+            obs, rewards, dones, infos = env.step(action)
             reward = _finite_float(rewards[0], default=float("nan"))
             if not np.isfinite(reward):
                 finite_reward = False
@@ -404,6 +414,8 @@ def run_baseline_eval(
             "final_mission_status": _mission_status_list(final_info),
         }
     finally:
+        if scripted_model is not None:
+            scripted_model.close()
         env.close()
 
 
