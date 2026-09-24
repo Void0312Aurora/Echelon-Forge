@@ -1,0 +1,58 @@
+# Scripted Air EW Entry Surface Review — 2026-09-25
+
+- Document kind: review
+- Lifecycle: maintained
+- Owner: air/scripted-agent
+- Scope: entry surface for an RL-independent scripted electronic-warfare role
+- Verdict: `entry_surface_incomplete`
+
+## Verified current surfaces
+
+| Surface | Current evidence | Consequence |
+| --- | --- | --- |
+| EW data | `examples/config/database/aircraft/modules/ew_suites/gen4_standard.json` declares an RWR, a 1000 W noise-barrage jammer, chaff/flare counts, a release interval, and auto mode. | Database data is sufficient to describe a candidate EW suite, but does not create an agent action path. |
+| Native components | `src/components/systems/ew.h` defines `Jammer`, `Countermeasures`, `RWR`, `EmitterDetection`, and `ESMReceiver`. | The component vocabulary can carry EW state, ESM detections, and resource/cooldown data. |
+| Native EW systems | `src/systems/systems/ew_system.h` runs chaff release, flare release, and lifetime management. | Countermeasure effects have a system owner; jammer activation and ESM decision effects do not have a comparable command system in this header. |
+| Observation | `gym_envs/universal_env_parts/observations.py` exports `rwr` rows as bearing, signal strength, lock, and launch-warning fields; instruments also expose `rwr_active`. | A scripted agent can consume declared RWR evidence without World Truth. ESM/jammer state is not part of the maintained observation payload shown here. |
+| Command transport | `PilotAction` exposes `program_chaff` and `program_flare`; `legacy_command_bridge.h` resolves those fields into countermeasure commands. | The low-level transport exists, but it is not exposed by the maintained `full` or `air_combat_hybrid_v1` action vectors. |
+| Current action mapping | `gym_envs/universal_env_parts/actions.py` sets `program_chaff` and `program_flare` to `False` for the maintained action modes. | A scripted EW model cannot currently perform countermeasure actions through the normal Air action path. There is no maintained jammer action field. |
+
+## Boundary
+
+The current evidence supports an EW **observation** role and a database-backed
+EW **state** vocabulary. It does not support a playable EW decision claim. A
+Python model that merely emits an unconsumed dictionary would be a design
+probe, not runtime capability evidence.
+
+The EW path must remain Air-owned for jammer modes, RWR/ESM interpretation,
+countermeasure resources, release cadence, and threat-response doctrine. Only
+the identity, authority, clock, provenance, communication, and lifecycle
+envelope may be shared with other domains.
+
+## Required closure slices
+
+1. **Observation contract:** declare RWR and ESM fields, freshness, source,
+   confidence, lock/launch semantics, and negative controls for hidden target
+   truth.
+2. **Countermeasure action contract:** expose chaff/flare request fields in a
+   versioned Air-owned action extension or a new maintained action mode; map
+   those fields to `PilotAction` without changing the existing full-action
+   indices silently.
+3. **Jammer command contract:** decide whether jammer activation is a direct
+   Air intent or a command-layer product, then add a native owner for
+   activation, bandwidth/angle/type, power/resource limits, and shutdown.
+4. **Direct scenario gate:** build a lock/launch-warning scenario with finite
+   inventory, release interval, communication state, and a report that proves
+   the scripted action was accepted and changed native EW state.
+5. **Replay and multi-aircraft gate:** repeat the EW scenario under reset/replay
+   and route distinct EW roles through the existing cooperative roster before
+   any `playable` label.
+
+## Non-goals for this review
+
+- No generic cross-domain `ElectronicWarfare` mega-schema.
+- No direct writes to `Countermeasures`, `Jammer`, or RWR state from a Python
+  scripted model.
+- No capability promotion based on database presence, an observation row, or a
+  model output that the runtime does not consume.
+
