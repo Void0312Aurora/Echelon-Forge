@@ -79,8 +79,9 @@ operation.
 The two additional checks build and validate a provider-neutral evidence
 manifest from the actual local SQLite `stable` admission/retention projection,
 including its digest, restore owner, access, backup, provider, and migration
-policy fields. The manifest is local evidence only and does not claim an
-external provider drill.
+policy fields; the same digest is revalidated after restoring the SQLite
+backup into a distinct local ledger root. The manifest is local evidence only
+and does not claim an external provider drill.
 
 ## Boundary and next work
 

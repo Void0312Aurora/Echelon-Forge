@@ -10,6 +10,7 @@ from tools.maintenance.p7b_evidence_manifest import EvidenceManifestError
 from tools.maintenance.p7b_evidence_manifest import build_evidence_manifest
 from tools.maintenance.p7b_evidence_manifest import validate_evidence_manifest
 from tools.maintenance.runtime_authority_contracts import canonical_json_bytes
+from tools.maintenance.runtime_durable_artifact_ledger import SQLiteArtifactLedger
 from tests.architecture.runtime_host import test_rollout_evidence_binding as evidence_fixtures
 from tests.architecture.runtime_host.test_sqlite_rollout_admission import (
   _advance_to_stable,
@@ -156,6 +157,25 @@ def test_p7b_local_ledger_projection_emits_provider_neutral_manifest(tmp_path: P
     assert validate_evidence_manifest(manifest, payload=payload) == manifest
     assert manifest["sha256"]
     assert manifest["provider"] == "SQLiteArtifactLedger-local"
+
+    backup = tmp_path / "evidence-manifest.sqlite3"
+    ledger.backup_to(backup)
+    restored = SQLiteArtifactLedger.restore_from(backup, tmp_path / "restored-ledger")
+    try:
+      restored_payload = canonical_json_bytes(json.loads(json.dumps({
+        "admission": restored.read_rollout_admission(
+          "release-evidence-test",
+          verification_key=evidence_fixtures.KEY,
+        ),
+        "retention": restored.read_rollout_retention(
+          "release-evidence-test",
+          verification_key=evidence_fixtures.KEY,
+        ),
+      })))
+      assert restored_payload == payload
+      assert validate_evidence_manifest(manifest, payload=restored_payload) == manifest
+    finally:
+      restored.close()
   finally:
     ledger.close()
 

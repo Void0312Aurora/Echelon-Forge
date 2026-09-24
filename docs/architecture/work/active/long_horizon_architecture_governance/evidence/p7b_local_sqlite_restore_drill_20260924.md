@@ -36,7 +36,8 @@ The same SQLite admission/restore file was rerun in the current checkout on
 `2026-09-25` and passed **8 tests**; the additional cases cover the current
 durable admission and rollback-window bindings. The P7-A governance checks
 also bind the resulting local stable projection to a provider-neutral evidence
-manifest. This remains local provider evidence only.
+manifest and revalidate its digest after a distinct-root restore. This remains
+local provider evidence only.
 
 ## Boundary
 
