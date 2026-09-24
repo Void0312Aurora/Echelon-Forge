@@ -49,12 +49,30 @@ the local native binaries were not rebuilt to completion because that existing
 MSVC build is a large dependency graph, so this packet does not claim a full
 native lane run.
 
+## Local repeat probe
+
+While hosted CI is unstable, the maintained lane declaration and selector
+checks were repeated locally three times. Each repetition ran
+`audit_ci_lanes.py --format json` followed by the 15-test lane/CTest/manifest
+subset:
+
+| Repeat | Audit exit | Test exit | Elapsed |
+| ---: | ---: | ---: | ---: |
+| 1 | 0 | 0 | 29.480 s |
+| 2 | 0 | 0 | 28.661 s |
+| 3 | 0 | 0 | 24.386 s |
+
+This establishes repeatable local declaration and selector behavior only. It
+does not claim hosted-runner resource/flake evidence, branch-protection
+enforcement, or a completed native build.
+
 ## Boundary
 
-This is a P6-B implementation baseline, not P6 acceptance. Repeated CI runs,
-duration/resource/flake measurements, failure-routing drills, and branch
-protection confirmation remain open. P6-A source-scan replacement/retirement
-evidence and P7 archive-specific policy work are also unchanged.
+This is a P6-B implementation baseline, not P6 acceptance. Hosted repeated
+CI runs, duration/resource/flake measurements, failure-routing drills, and
+branch protection confirmation remain open; the local repeat probe above is
+not a substitute. P6-A source-scan replacement/retirement evidence and P7
+archive-specific policy work are also unchanged.
 
 Document kind: `evidence`
 Lifecycle: `maintained`
