@@ -7,8 +7,8 @@ Status: `contract-and-source-fixture`
 
 This work package introduces a fictionalized agricultural-plain map profile and a
 single dismounted infantry schema. It is deliberately a movement and environment
-observation slice; it does not introduce weapon employment, targeting, or a combat
-runtime.
+observation slice; its RL action contract does not introduce weapon employment or
+targeting. A separate native runtime probe now covers bounded direct fire.
 
 ## Scope
 
@@ -74,7 +74,8 @@ byte-identical.
 3. **S2 terrain cost** — slope, landcover, farm track, river, and bridge passability
    become explicit products with owners and provenance.
 4. **S3 observation** — tree-line and settlement observations are reported with
-   unknown values preserved; no weapon behavior is introduced.
+   unknown values preserved; the RL contract does not expose the separate native
+   direct-fire probe.
 5. **S4 team transition** — only after the single-agent gates pass, add squad/command
    relationships and then revisit the existing ground damage slice.
 
@@ -97,4 +98,4 @@ without releasing a general passability claim.
 - slope/wet-ground/river crossing policy;
 - line-of-sight, cover, concealment, and exposure model;
 - ground track/sensor observation export (terrain sampling is admitted separately);
-- fatigue, medical, logistics, fires, suppression, and combat integration.
+- fatigue, medical, logistics, indirect fires, suppression, and full combat integration.

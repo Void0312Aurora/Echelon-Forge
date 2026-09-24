@@ -9,6 +9,7 @@
 #include "components/combat/scoring.h"
 #include "components/combat/common/weapon_common.h"
 #include "components/domains/naval/combat/weapon_naval.h"
+#include "components/domains/ground/combat/weapon_ground.h"
 #include "components/command/mission_command.h"
 #include "components/command/pilot_action.h"
 #include "components/physics/dynamics.h"
@@ -73,6 +74,15 @@ bool entity_is_surface_target(flecs::world &world, uint64_t entity_id) {
     }
     const KeyEntity *key = entity.get<KeyEntity>();
     return key && (key->type == UnitType::Ship || key->type == UnitType::Submarine);
+}
+
+bool entity_is_ground(flecs::world &world, uint64_t entity_id) {
+    const auto entity = world.entity(entity_id);
+    if (!entity.is_valid()) {
+        return false;
+    }
+    const KeyEntity *key = entity.get<KeyEntity>();
+    return key && key->type == UnitType::Ground;
 }
 
 bool mission_authority_matches_shooter(const MissionCommand *mission, uint64_t shooter_id) {
@@ -1132,6 +1142,86 @@ bool SimulationKernelWeaponReleaseService::fire_naval_weapon(uint64_t attacker_i
     launch_recorder_.set_pending_effects_launch_event_id(launch_event_id);
     (void)damage_bridge_.apply_proximity_hit(attacker_id, target_id, applied_damage, fuse_distance);
     return true;
+}
+
+bool SimulationKernelWeaponReleaseService::fire_ground_weapon(uint64_t attacker_id,
+                                                              uint64_t target_id,
+                                                              int weapon_type_code) {
+    auto attacker = ecs_.entity(attacker_id);
+    auto target = ecs_.entity(target_id);
+    if (!attacker.is_valid() || !target.is_valid() || !entity_is_ground(ecs_, attacker_id) ||
+        !entity_is_ground(ecs_, target_id) || attacker_id == target_id) {
+        return false;
+    }
+
+    const Transform *attacker_transform = attacker.get<Transform>();
+    const Transform *target_transform = target.get<Transform>();
+    const ContactList *contacts = attacker.get<ContactList>();
+    GroundWeaponState *weapon_state = attacker.get_mut<GroundWeaponState>();
+    const Alliance *attacker_alliance = attacker.get<Alliance>();
+    const Alliance *target_alliance = target.get<Alliance>();
+    if (!attacker_transform || !target_transform || !contacts || !weapon_state ||
+        weapon_state->weapons.empty()) {
+        return false;
+    }
+    if (attacker_alliance && target_alliance && attacker_alliance->side != Side::Neutral &&
+        attacker_alliance->side == target_alliance->side) {
+        return false;
+    }
+
+    const Detection *track = find_contact_by_target_id(contacts, target_id);
+    if (!track || !std::isfinite(track->range) || track->range < 0.0) {
+        return false;
+    }
+
+    const int selected_index = weapon_state->selected_weapon_index;
+    if (selected_index < 0 ||
+        static_cast<std::size_t>(selected_index) >= weapon_state->weapons.size()) {
+        return false;
+    }
+    GroundWeapon &weapon = weapon_state->weapons[static_cast<std::size_t>(selected_index)];
+    if (static_cast<int>(weapon.weapon_type) != weapon_type_code ||
+        weapon.weapon_type == GroundWeaponType::Unknown || weapon.ammunition <= 0 ||
+        !std::isfinite(weapon.damage_per_hit) || weapon.damage_per_hit <= 0.0 ||
+        !std::isfinite(weapon.engagement_range_m) || weapon.engagement_range_m <= 0.0) {
+        return false;
+    }
+
+    const double dx = target_transform->x - attacker_transform->x;
+    const double dy = target_transform->y - attacker_transform->y;
+    const double dz = target_transform->z - attacker_transform->z;
+    const double actual_range = std::sqrt(dx * dx + dy * dy + dz * dz);
+    if (!std::isfinite(actual_range) || actual_range > weapon.engagement_range_m ||
+        track->range > weapon.engagement_range_m) {
+        return false;
+    }
+
+    const ecs_world_info_t *info = ecs_get_world_info(ecs_.c_ptr());
+    const double current_time = info ? static_cast<double>(info->world_time_total) : 0.0;
+    const double cooldown = std::max(0.0, weapon.cooldown_s);
+    if (std::isfinite(weapon.last_fire_time_s) &&
+        current_time - weapon.last_fire_time_s < cooldown) {
+        return false;
+    }
+
+    weapon.ammunition -= 1;
+    weapon.last_fire_time_s = current_time;
+    const std::uint64_t launch_event_id = launch_recorder_.record_legacy_launch_event(
+        attacker_id, target_id, 0, "ground:rifle", "ground:rifle", -1, cooldown, current_time);
+
+    const double hit_probability = std::clamp(
+        std::isfinite(weapon.hit_probability) ? weapon.hit_probability : 0.0, 0.0, 1.0);
+    const std::uint64_t seed = splitmix64(
+        static_cast<std::uint64_t>(current_time * 1000.0) ^
+        (attacker_id * 0x9e3779b97f4a7c15ULL) ^ (target_id * 0xbf58476d1ce4e5b9ULL) ^
+        (static_cast<std::uint64_t>(weapon_type_code) << 32));
+    const double sample = (splitmix64(seed) >> 11) * (1.0 / 9007199254740992.0);
+    if (sample > hit_probability) {
+        return true;
+    }
+
+    launch_recorder_.set_pending_effects_launch_event_id(launch_event_id);
+    return damage_bridge_.apply_direct_hit(attacker_id, target_id, weapon.damage_per_hit);
 }
 
 bool SimulationKernelWeaponReleaseService::fire_naval_weapon_from_mission_command(

@@ -183,6 +183,11 @@
       "registration_id": "flecs.component.ground_state"
     },
     {
+      "component_id": "GroundWeaponState",
+      "plugin_id": "builtin.core_runtime",
+      "registration_id": "flecs.component.ground_weapon_state"
+    },
+    {
       "component_id": "GuidanceModelRef",
       "plugin_id": "builtin.core_runtime",
       "registration_id": "flecs.component.guidance_model_ref"

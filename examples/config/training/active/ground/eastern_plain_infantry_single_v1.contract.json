@@ -30,6 +30,15 @@
     "spawn_policy": "fixed_seed_named_spawn",
     "initial_role": "dismounted_infantry_navigator"
   },
+  "native_runtime_surfaces": {
+    "direct_fire": {
+      "status": "bounded_native_probe",
+      "entrypoint": "SimulationKernel.fire_ground_weapon",
+      "weapon": "rifle",
+      "requires": ["hostile_ground_contact", "range", "ammunition", "cooldown"],
+      "does_not_claim": ["line_of_sight", "cover", "suppression", "ballistics", "indirect_fire"]
+    }
+  },
   "action_space": {
     "status": "planned",
     "fields": [

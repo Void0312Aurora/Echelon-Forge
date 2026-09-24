@@ -51,12 +51,21 @@ provider raster. Landcover plus the declared hydrology/bridge road vectors now
 supply bounded river and bridge surface classes; tree-line, settlement, route,
 and general passability semantics remain unconsumed.
 
+The native release service now admits one bounded Ground direct-fire path. A
+Ground attacker must carry the default rifle state, an explicit hostile Ground
+contact, and a valid range/ammunition/cooldown state. A successful shot records
+the legacy launch seam and enters the shared effects/damage bridge at the
+current body-center hitbox bootstrap. This is a deterministic close-range
+training proxy: it does not provide line of sight, cover, suppression,
+ballistics, indirect fire, or target-selection automation.
+
 The existing C++ maintained command contract already carries
 `ground_static_task`; the Python binding now exposes that slice as well.  This
 removes a transport omission. The new movement system now consumes the admitted
 `MoveStatic` subset. The native command now carries `GroundStance` and the
 movement system applies bounded stand/crouch/prone speed costs; this does not
-release cover, concealment, exposure, or weapons.
+release cover, concealment, exposure, or the broader fire-control surface beyond
+the separate bounded rifle path.
 
 `python/rl/ground/command.py` therefore projects representable heading/speed,
 stance, and static-task fields. It still rejects non-direct route intents because
@@ -74,7 +83,8 @@ temporary test policy, not a released crossing model.
 
 ## Remaining unblock package
 
-Before promoting this scaffold beyond the bounded movement slice, a separate
+Before promoting this scaffold beyond the bounded movement and direct-fire
+slices, a separate
 reviewed Ground owner package must:
 
 1. define the native action/command component and its relationship to the
@@ -83,11 +93,14 @@ reviewed Ground owner package must:
    provenance as runtime contracts rather than fixture-local assumptions;
 3. add native reset/step/replay acceptance tests over the Arnis-derived map,
    then connect the RL adapter;
-4. retain the proxy tests as diagnostics until native behavior supersedes them.
+4. retain the proxy tests as diagnostics until native behavior supersedes them;
+5. replace the rifle's synthetic body-center hit with authored infantry
+   hitboxes and a reviewed line-of-sight/cover owner before widening weapon
+   employment.
 
 The training contract remains `contract_only`; the current proxy is
-intentionally not a `train.py` entry point. The admitted native system is not a
-passability or map-provider integration.
+intentionally not a `train.py` entry point. The admitted native surfaces are
+not a passability, line-of-sight, or map-provider integration.
 
 ## Verification residual outside this slice
 

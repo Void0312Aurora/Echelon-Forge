@@ -1,6 +1,7 @@
 #include "interfaces/python/bindings_core_detail.h"
 
 #include "components/basic/common.h"
+#include "components/domains/ground/combat/weapon_ground.h"
 #include "components/systems/sensor.h"
 #include "core/interfaces/observation.h"
 
@@ -37,4 +38,8 @@ void bind_core_enums(nb::module_ &m) {
         .value("MIDS", SensorType::MIDS)
         .value("ESM", SensorType::ESM)
         .value("Sonar", SensorType::Sonar);
+
+    nb::enum_<GroundWeaponType>(m, "GroundWeaponType")
+        .value("Unknown", GroundWeaponType::Unknown)
+        .value("Rifle", GroundWeaponType::Rifle);
 }

@@ -45,6 +45,12 @@ remain with their respective owners.
   a bounded terrain observation tuple for training adapters. Tree-line/settlement
   semantics, general passability, and track/sensor observation export remain
   held; bounded river/bridge surface sampling is admitted.
+- `GroundWeaponState` and `SimulationKernel.fire_ground_weapon` now admit a
+  bounded native direct-fire slice for the individual infantry fixture: a
+  tracked hostile Ground target, finite rifle range, ammunition, cooldown, and
+  the shared effects/damage bridge are required. This is a deterministic
+  close-range proxy; it does not claim line of sight, cover, suppression,
+  ballistics, indirect fire, or a complete fire-control model.
 - `src/systems/domains/ground/damage_system_ground.h` registers `GroundDamageStateUpdate`
   as a `domain = ground` system at stage 30 of the default composition. It matches
   the spawned ground entity and advances the ground-owned
@@ -56,10 +62,10 @@ remain with their respective owners.
   [Ground Systems Owner Admission](reviews/ground_systems_owner_admission_20260921/README.md)
   package reconciled that placement and is accepted.
 - `src/systems/domains/ground/` owns the bounded infantry movement and damage
-  responses; it is not a complete Ground runtime-system owner. Route movement,
-  passability, sensing, fires, effects, suppression, logistics, and Ground
-  observation export remain held as capabilities. Reaching a bounded movement
-  consequence does not release those broader capabilities.
+  responses; weapon release remains an explicit core-service seam. It is not a
+  complete Ground runtime-system owner. Route movement, passability, sensing,
+  indirect fires, effects beyond the shared damage bridge, suppression,
+  logistics, and Ground observation export remain held as capabilities.
 
 Directory placement does not broaden those claims. The current evidence proves
 native identity and a static task/status chain, not a complete land-combat

@@ -186,9 +186,9 @@ def test_default_compatibility_fixture_is_valid_and_resolves() -> None:
   assert resolved == _read_json(RESOLVED)
   assert len(requested["providers"]) == 11
   assert len(requested["component_contributions"]) == 86
-  assert len(requested["system_contributions"]) == 34
+  assert len(requested["system_contributions"]) == 35
   assert len(resolved["provider_construction_order"]) == 11
-  assert len(resolved["system_registration_order"]) == 34
+  assert len(resolved["system_registration_order"]) == 35
 
 
 def test_default_fixture_tracks_current_component_and_system_registration() -> None:

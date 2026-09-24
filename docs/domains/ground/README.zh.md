@@ -37,6 +37,10 @@ service-profile 解释以及跨域 runtime 架构仍由各自 owner 负责。
 - 默认环境 provider 可以显式加载已验证的 Arnis 连续高程/地表覆盖栅格对，维护中的
   kernel 也向训练 adapter 暴露有界地形观测 tuple。树线/聚落语义、一般通行性以及
   track/sensor observation export 仍保持 held；河流/桥面地表采样已有限准入。
+- `GroundWeaponState` 与 `SimulationKernel.fire_ground_weapon` 已为单兵 fixture
+  准入一个有界原生直射切片：必须有敌方 Ground 目标的接触记录，并满足步枪射程、弹药、
+  冷却与共享 effects/damage bridge 条件。这是确定性的近距离代理，不宣称视线、掩体、
+  压制、弹道、间接火力或完整火控模型。
 - `src/systems/domains/ground/damage_system_ground.h` 注册 `GroundDamageStateUpdate` 为默认
   组合 stage 30 的 `domain = ground` 系统。它**能匹配到**已生成的 ground 实体并推进
   ground 自有的 `GroundPlatformDamageState`，而且通往该 state 的 effects 路由可达：组件 id
@@ -46,9 +50,10 @@ service-profile 解释以及跨域 runtime 架构仍由各自 owner 负责。
   [地面域系统归属准入](reviews/ground_systems_owner_admission_20260921/README.zh.md)
   包已收口该放置位置并被接受。
 - `src/systems/domains/ground/` 拥有受限的单兵 movement 与 damage response，
-  但仍不是完整的 Ground runtime-system owner。Route movement、passability、
-  sensing、fires、effects、suppression、logistics 和 Ground observation export
-  仍作为**能力**保持 held。到达受限的 movement 后果不等于释放这些更宽的能力。
+  weapon release 则通过显式 core service seam；但这里仍不是完整的 Ground
+  runtime-system owner。Route movement、passability、sensing、间接火力、共享
+  damage bridge 之外的 effects、suppression、logistics 和 Ground observation
+  export 仍作为**能力**保持 held。
 
 目录位置不会扩大上述声明。当前证据证明的是原生身份和静态 task/status 链，
 而不是完整 land-combat runtime。

@@ -145,7 +145,7 @@ This subproject can be marked accepted only when:
   exercises, demonstrated by the four previously-`xfail` nodes passing without their
   markers;
 - no component or system contribution count changed: the executable graph census stays
-  `84 components, 2 kernel systems, 34 resolved systems`, and the four gates that assert it
+  `85 components, 2 kernel systems, 35 resolved systems`, and the four gates that assert it
   are untouched;
 - the effects translation unit no longer contains an `id<T>()` call, verified by search
   rather than by reading;

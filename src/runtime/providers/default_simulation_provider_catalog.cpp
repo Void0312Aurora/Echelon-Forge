@@ -200,6 +200,16 @@ class SimulationKernelWeaponReleaseDamageBridge final : public IWeaponReleaseDam
         return kernel_.debug_apply_proximity_hit(attacker_id, target_id, damage, fuse_distance);
     }
 
+    bool apply_direct_hit(std::uint64_t attacker_id, std::uint64_t target_id,
+                          double damage) override {
+        // Keep ground direct fire on the shared effects/damage route. The
+        // local origin is the bounded body-center impact used by the current
+        // ground hitbox bootstrap; no separate ground damage shortcut is
+        // introduced here.
+        return kernel_.debug_apply_local_proximity_hit(
+            attacker_id, target_id, 0.0, 0.0, 0.0, damage, 1.0);
+    }
+
   private:
     SimulationKernel &kernel_;
 };

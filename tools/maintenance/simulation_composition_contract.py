@@ -1378,6 +1378,7 @@ DEFAULT_COMPONENTS = (
   "WeaponCooldown",
   "PilotWeaponReleaseState",
   "NavalWeaponSystem",
+  "GroundWeaponState",
   "Jammer",
   "Countermeasures",
   "RWR",

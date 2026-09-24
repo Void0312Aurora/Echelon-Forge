@@ -183,6 +183,9 @@ void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel> &ker
         .def("fire_naval_weapon", &SimulationKernel::fire_naval_weapon,
              "Fire a naval weapon mount type at target", nb::arg("attacker_id"),
              nb::arg("target_id"), nb::arg("weapon_type_code"))
+        .def("fire_ground_weapon", &SimulationKernel::fire_ground_weapon,
+             "Fire a bounded ground direct-fire weapon at a tracked ground target",
+             nb::arg("attacker_id"), nb::arg("target_id"), nb::arg("weapon_type_code"))
         .def("export_recent_engagement_events", &SimulationKernel::export_recent_engagement_events,
              "Export recently captured engagement events")
         .def(

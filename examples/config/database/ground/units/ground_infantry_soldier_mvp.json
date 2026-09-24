@@ -27,7 +27,7 @@
   },
   "_training_boundary": {
     "role": "single_agent_navigation_and_environment_observation",
-    "weapon_employment": "not_in_this_slice",
+    "weapon_employment": "bounded_native_direct_fire_v1",
     "map_profile": "eastern_plain_infantry_phase1",
     "runtime_status": "native_single_step_contract"
   },
@@ -36,7 +36,7 @@
     "slope, wet-ground, river, bridge, and obstacle passability",
     "tree-line masking, cover, and line-of-sight",
     "ground sensing, track fusion, and entity observation export",
-    "direct fires, indirect fires, effects, damage, or suppression",
+    "indirect fires, line-of-sight, cover, effects beyond the shared damage bridge, or suppression",
     "logistics, fatigue, medical state, or sustainment behavior"
   ]
 }
