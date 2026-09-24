@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/domains/ground/README.md`
 Owner: `domains/ground`
-Last verified: `2026-09-22`
+Last verified: `2026-09-24`
 
 The Ground owner defines land-domain specialization semantics without turning
 Army service doctrine into a private runtime stack. It owns Ground-specific
@@ -33,6 +33,13 @@ remain with their respective owners.
   `TaskOrder`, `LeaderIntent`, `PilotReport`, and `MissionCommand` compatibility
   shells.
 - The maintained tasking cadence baseline is `1 Hz`.
+- `Ground_Infantry_Soldier_MVP` is a native individual Ground fixture. The
+  `GroundInfantryMovement` system consumes an admitted `MoveStatic` command,
+  applies deterministic surface and slope speed costs through the shared
+  `IEnvironmentModel`, and advances a bounded horizontal kinematic step. This
+  is a single-agent movement primitive, not route following, passability,
+  formation, or full land-combat dynamics. The admission record is
+  [Ground Infantry Movement v1](work/active/ground_infantry_movement_v1/README.md).
 - `src/systems/domains/ground/damage_system_ground.h` registers `GroundDamageStateUpdate`
   as a `domain = ground` system at stage 30 of the default composition. It matches
   the spawned ground entity and advances the ground-owned
@@ -43,11 +50,11 @@ remain with their respective owners.
   [DM-G1 repair package](work/active/ground_damage_effects_route_repair/README.md). The
   [Ground Systems Owner Admission](reviews/ground_systems_owner_admission_20260921/README.md)
   package reconciled that placement and is accepted.
-- `src/systems/domains/ground/` owns only the damage response; there is no complete
-  Ground runtime-system owner. Route movement, terrain interaction, sensing, fires,
-  effects, damage, suppression, logistics, and Ground observation export remain held as
-  capabilities: reaching a consequence is not a domain runtime, and the package that
-  repaired the route claims no capability from it.
+- `src/systems/domains/ground/` owns the bounded infantry movement and damage
+  responses; it is not a complete Ground runtime-system owner. Route movement,
+  passability, sensing, fires, effects, suppression, logistics, and Ground
+  observation export remain held as capabilities. Reaching a bounded movement
+  consequence does not release those broader capabilities.
 
 Directory placement does not broaden those claims. The current evidence proves
 native identity and a static task/status chain, not a complete land-combat

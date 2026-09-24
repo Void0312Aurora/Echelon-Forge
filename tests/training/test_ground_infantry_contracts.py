@@ -27,7 +27,7 @@ def test_ground_infantry_unit_is_an_individual_native_ground_schema() -> None:
     assert schema["echelon"] == "individual"
     assert schema["platform_family"] == "dismounted_infantry"
     assert unit["_training_boundary"]["weapon_employment"] == "not_in_this_slice"
-    assert unit["_training_boundary"]["runtime_status"] == "schema_and_contract_only"
+    assert unit["_training_boundary"]["runtime_status"] == "native_single_step_contract"
     assert any("passability" in claim for claim in unit["_deferred_runtime_claims"])
 
 

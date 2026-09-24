@@ -34,8 +34,9 @@ unsatisfied-selection fallback only.
 
 - ECS system registration.
 - Defining ground components (those live in `components/domains/ground`).
-- Claiming ground movement dynamics, ground sensing, ground fires, terrain
-  interaction, or ground damage-model fidelity.
+- Claiming route movement, ground sensing, ground fires, terrain-model fidelity,
+  or a full ground damage model. The bounded infantry movement primitive is a
+  system-layer consumer of `IEnvironmentModel`, not a model owned here.
 
 ## Current Files
 

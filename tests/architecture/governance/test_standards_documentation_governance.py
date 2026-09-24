@@ -212,7 +212,7 @@ def test_modularization_issue_tracks_landed_interfaces_and_residuals() -> None:
     assert REPO_ROOT.joinpath("src", "core", "interfaces", interface).is_file()
     assert interface in plan
 
-  assert not REPO_ROOT.joinpath("src", "systems", "domains", "ground").exists()
+  assert REPO_ROOT.joinpath("src", "systems", "domains", "ground").is_dir()
 
   for required in (
     "Verified Current Domain Roots",
@@ -221,7 +221,7 @@ def test_modularization_issue_tracks_landed_interfaces_and_residuals() -> None:
     "`src/systems/domains/`",
     "`src/models/domains/`",
     "does not authorize code moves",
-    "There is no `src/systems/domains/ground/` owner",
+    "bounded Ground system owner admission",
     "consumer -> provider",
   ):
     assert required in plan

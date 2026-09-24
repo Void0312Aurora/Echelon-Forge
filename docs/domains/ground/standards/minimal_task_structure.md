@@ -15,8 +15,9 @@ It covers profile routing, three admitted starter task names, their common-core
 defaults, Ground-owned static fields, and the projection into
 `MissionCommandGround`.
 
-It does not release movement, terrain, sensing, fires, damage, logistics, or a
-Ground execution system.
+It does not define route following, terrain traversal, sensing, fires, damage,
+logistics, or a complete Ground execution system. A separate bounded infantry
+movement consumer is documented and tested outside this static task contract.
 
 ## Profile And Common Defaults
 
@@ -52,8 +53,9 @@ These mappings describe the current code. In particular, the current common
 `CommandRelationship.Support`, `CoordinationMode.Support`, support IDs, and
 `GroundTaskMode.SupportStatic`.
 
-`MoveStatic` is a static task/status code. It MUST NOT be cited as route
-traversal or movement-dynamics evidence.
+`MoveStatic` is a static task/status code. The admitted infantry movement
+primitive may consume it for one deterministic surface/slope step, but the code
+MUST NOT be cited as route traversal or full movement-dynamics evidence.
 
 Other candidate names, including `TASK_SCREEN`, `TASK_SECURE`, `TASK_PATROL`,
 `TASK_DIRECT_FIRE`, `TASK_INDIRECT_FIRE`, and `TASK_SUSTAIN`, are not admitted

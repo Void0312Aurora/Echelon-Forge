@@ -22,16 +22,16 @@
     "platform_family": "dismounted_infantry",
     "doctrine_family": "land_tactics",
     "mobility_declaration": "foot_mobility_field_training_v1",
-    "movement_behavior": "caller_driven_step_contract_only"
+    "movement_behavior": "native_static_step_with_surface_and_slope_cost_v1"
   },
   "_training_boundary": {
     "role": "single_agent_navigation_and_environment_observation",
     "weapon_employment": "not_in_this_slice",
     "map_profile": "eastern_plain_infantry_phase1",
-    "runtime_status": "schema_and_contract_only"
+    "runtime_status": "native_single_step_contract"
   },
   "_deferred_runtime_claims": [
-    "ground movement dynamics and terrain-cost consumption",
+    "route following, acceleration, fatigue, formation, and passability",
     "slope, wet-ground, river, bridge, and obstacle passability",
     "tree-line masking, cover, and line-of-sight",
     "ground sensing, track fusion, and observation export",

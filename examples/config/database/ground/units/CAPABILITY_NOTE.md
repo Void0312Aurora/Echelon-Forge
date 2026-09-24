@@ -17,8 +17,10 @@ unit definitions, while this file is not yet a maintained runtime unit schema.
 Keeping JSON-shaped content in a non-auto-loaded seed file prevents spurious
 runtime loader warnings without weakening the G2 content-root evidence.
 
-It does not claim maintained runtime behavior for movement, terrain, sensing,
-fires, weapons, damage, or combat.
+This starter seed itself does not claim maintained runtime behavior for route
+movement, terrain traversal, sensing, fires, weapons, damage, or combat. The
+separate `Ground_Infantry_Soldier_MVP` JSON fixture now admits only a bounded
+single-step movement contract; that admission does not promote this platoon seed.
 
 Canonical construction direction:
 

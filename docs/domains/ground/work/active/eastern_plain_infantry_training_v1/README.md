@@ -81,13 +81,15 @@ step/replay harness. Reinforcement learning is downstream of reset, action,
 observation, reward, termination, and replay contracts; it must not be used to hide
 missing terrain semantics.
 
-The current native-runtime measurement and the temporary substitute are recorded in
-[`native_runtime_blockers.md`](native_runtime_blockers.md). The substitute keeps the
-work moving without releasing a false movement or passability claim.
+The current native-runtime measurement and residuals are recorded in
+[`native_runtime_blockers.md`](native_runtime_blockers.md). The native slice now
+covers one deterministic `MoveStatic` step with surface/slope cost; the substitute
+still keeps map, observation, and curriculum work moving without releasing a
+passability claim.
 
 ## Explicit held items
 
-- Arnis runtime setup and movement consumer;
+- Arnis runtime setup and native map-provider movement consumption;
 - route graph and passability mask;
 - slope/wet-ground/river crossing policy;
 - line-of-sight, cover, concealment, and exposure model;

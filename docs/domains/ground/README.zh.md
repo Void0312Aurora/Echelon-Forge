@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/domains/ground/README.md`
 Owner: `domains/ground`
-Last verified: `2026-09-22`
+Last verified: `2026-09-24`
 
 Ground owner 定义陆上领域特化语义，但不把 Army 军种条令变成一条私有 runtime
 栈。它拥有 Ground 专属平台身份和静态 task/status 词汇。Joint 关系、Army
@@ -28,6 +28,12 @@ service-profile 解释以及跨域 runtime 架构仍由各自 owner 负责。
 - Ground 自有 component slice 通过 `TaskOrder`、`LeaderIntent`、`PilotReport`
   和 `MissionCommand` 兼容 shell 传递静态 command/task/status 字段。
 - 维护中的 tasking cadence 基线是 `1 Hz`。
+- `Ground_Infantry_Soldier_MVP` 是原生的单兵 Ground fixture。
+  `GroundInfantryMovement` 系统消费已准入的 `MoveStatic` 命令，通过共享
+  `IEnvironmentModel` 应用确定性的地表与坡度速度代价，并推进一个受限的水平
+  运动学步。这是单兵移动原语，不是 route following、passability、formation
+  或完整陆战动力学。准入记录见
+  [Ground Infantry Movement v1](work/active/ground_infantry_movement_v1/README.zh.md)。
 - `src/systems/domains/ground/damage_system_ground.h` 注册 `GroundDamageStateUpdate` 为默认
   组合 stage 30 的 `domain = ground` 系统。它**能匹配到**已生成的 ground 实体并推进
   ground 自有的 `GroundPlatformDamageState`，而且通往该 state 的 effects 路由可达：组件 id
@@ -36,10 +42,10 @@ service-profile 解释以及跨域 runtime 架构仍由各自 owner 负责。
   [DM-G1 修复包](work/active/ground_damage_effects_route_repair/README.md)。
   [地面域系统归属准入](reviews/ground_systems_owner_admission_20260921/README.zh.md)
   包已收口该放置位置并被接受。
-- `src/systems/domains/ground/` 只拥有 damage response，不存在完整的 Ground
-  runtime-system owner。Route movement、terrain interaction、sensing、fires、
-  effects、damage、suppression、logistics 和 Ground observation export 仍作为**能力**保持
-  held：到达某个后果不等于拥有域级 runtime，修复该路由的包也不据此声明任何能力。
+- `src/systems/domains/ground/` 拥有受限的单兵 movement 与 damage response，
+  但仍不是完整的 Ground runtime-system owner。Route movement、passability、
+  sensing、fires、effects、suppression、logistics 和 Ground observation export
+  仍作为**能力**保持 held。到达受限的 movement 后果不等于释放这些更宽的能力。
 
 目录位置不会扩大上述声明。当前证据证明的是原生身份和静态 task/status 链，
 而不是完整 land-combat runtime。
