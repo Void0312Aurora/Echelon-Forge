@@ -44,6 +44,8 @@ Owner：`domains/ground`，环境输入由 `systems/environment` 负责
   权威级别是 `native_probe_only`，仍不属于生产 `WorldBatch`；观测包含 native owner 的
   movement-effect 倍率，trace 会区分航点/失能
   终止与 `max_steps`、`blocked_step_limit` 截断。
+  固定航点预检现在为每段同时保留通行性和 native 采样移动效果十元组，作为地形代价证据；
+  这仍不是路线图或路径规划器。
 
   Gym observation space 现在使用来自已验证 bundle manifest 和有限 episode horizon 的
   有限边界；自定义 bundle 无法读取 manifest 时使用明确标注的有限 horizon fallback。

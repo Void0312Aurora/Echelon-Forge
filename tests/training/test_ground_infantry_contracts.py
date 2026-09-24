@@ -118,6 +118,18 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
         "blocked_reason",
         "segment_observations",
     ]
+    assert contract["native_runtime_surfaces"]["direct_sequence_validation"]["segment_movement_observation_fields"] == [
+        "configured",
+        "passable",
+        "destination_surface",
+        "water_blocked",
+        "obstacle_blocked",
+        "bridge_admitted",
+        "distance_m",
+        "minimum_combined_multiplier",
+        "average_combined_multiplier",
+        "sample_count",
+    ]
     assert contract["native_runtime_surfaces"]["direct_sequence_validation"]["does_not_claim"] == [
         "route_graph",
         "path_planning",
