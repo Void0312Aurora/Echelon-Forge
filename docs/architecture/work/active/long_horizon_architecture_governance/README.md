@@ -39,8 +39,8 @@ The P6-A test-authority baseline is recorded in [the derived audit packet]
 (evidence/p6a_test_authority_audit_20260924.md): architecture tier manifests
 now carry owner/failure-audience/execution-strategy metadata, and the derived
 report preserves source-scan residuals while rejecting orphan and duplicate
-assignments. P6-A replacement/retirement evidence and P6-B lane work remain
-open.
+assignments. Native CTest now exposes primary lane labels for all 25 entries.
+P6-A replacement/retirement evidence and P6-B workflow lane work remain open.
 
 Language:
 

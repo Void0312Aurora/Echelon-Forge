@@ -29,7 +29,9 @@ The report is intentionally not a second registry. It does not rewrite suite
 membership, change pytest marker semantics, alter CTest definitions, or touch
 the P7-A archive-retention policy, gate, or suite node. The newly discovered
 `test_p5d_rebuild_retirement_gate.py` orphan was assigned to the existing
-architecture guard manifest; no test was dropped.
+architecture guard manifest; no test was dropped. Native CTest entries now
+carry primary lane labels in `CMakeLists.txt`, and a configured CTest
+inventory check verifies the labels rather than repeating a name regex.
 
 ## Derived inventory
 
@@ -37,14 +39,15 @@ The checked-out tree currently derives:
 
 | Measure | Result |
 | --- | ---: |
-| Architecture test files | 112 |
-| Manifest entries | 112 |
+| Architecture test files | 113 |
+| Manifest entries | 113 |
 | Tier manifests | 2 |
 | Runner manifests with owner/lane metadata | 4 |
 | Owners / execution strategies | 2 / 2 |
 | Files with source-scan references | 110 |
 | Files retaining the `source_scan_guard` residual flag | 88 |
 | Files selected by the pytest smoke manifest | 34 |
+| Native CTest entries with a primary lane label | 25 |
 
 The source-scan counts are diagnostics, not an acceptance claim. P6-A still
 needs replacement evidence before any individual migration guard can be
@@ -69,6 +72,16 @@ lockstep check, tier partition/orphan detection, root metadata validation,
 derived inventory assignment, and cross-tier overlap rejection.
 
 ```powershell
+$env:CMO_BUILD_DIR='build-long-horizon-p5c-shared'
+python -m pytest -q tests/architecture/build_system/test_ctest_lane_labels.py
+```
+
+Result: **2 passed**. The configured Release CTest inventory reports 25 native
+entries; every entry has at least one primary lane label and the declared
+`fast`, `qualification`, `nightly`, `release`, and `research` audiences are
+all represented.
+
+```powershell
 python tools/runners/audit_test_authority.py --format markdown --limit 10
 python -m ruff check `
   tools/runners/audit_test_authority.py `
@@ -78,8 +91,8 @@ git diff --check
 ```
 
 The audit command, Ruff, and diff check passed. This is an implementation
-baseline only: P6-A replacement/retirement decisions and P6-B CI lane work
-remain open.
+baseline only: P6-A replacement/retirement decisions and P6-B workflow
+parallelism, repeated CI evidence, and failure-routing work remain open.
 
 Document kind: `evidence`
 Lifecycle: `maintained`

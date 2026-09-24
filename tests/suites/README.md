@@ -48,8 +48,11 @@ commands.
 - `nightly`
   - Candidate long-running or broad regression coverage for scheduled automation after stabilization.
 
-These tiers are advisory labels for discussing suite intent; no runner currently
-selects a tier automatically. Promotion into CI happens by editing
+These Python tiers remain advisory labels for discussing suite intent. Native
+CTest entries additionally carry checked-in `fast`, `qualification`,
+`nightly`, `release`, or `research` labels in `CMakeLists.txt`; those labels
+are the native lane declaration and are selected with `ctest -L`. Promotion
+of Python tests into CI happens by editing
 `tests/smoke/ci_smoke_suite.json` or `tests/smoke/ci_contract_suite.json`
 directly.
 

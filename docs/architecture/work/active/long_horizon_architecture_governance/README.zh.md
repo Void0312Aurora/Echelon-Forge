@@ -35,7 +35,8 @@ P6-A 测试 authority baseline 记录于[派生审计包]
 (evidence/p6a_test_authority_audit_20260924.md)：architecture tier manifest
 现在声明 owner、failure audience 与 execution strategy，派生报告保留
 source-scan residual，并拒绝 orphan、stale、duplicate 与跨 tier assignment。
-P6-A 的替换/退役证据与 P6-B lane 工作仍开放。
+Native CTest 的 25 个条目现在均暴露 primary lane label。P6-A 的替换/退役证据
+与 P6-B workflow lane 工作仍开放。
 
 语言：
 
