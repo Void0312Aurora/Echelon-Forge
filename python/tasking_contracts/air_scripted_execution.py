@@ -39,10 +39,18 @@ class AirScriptedExecutionModel:
     keys. The model never reads a world kernel directly.
     """
 
-    def __init__(self, *, action_dim: int, dt: float = 0.05, transition_alt_agl_m: float = 140.0) -> None:
+    def __init__(
+        self,
+        *,
+        action_dim: int,
+        dt: float = 0.05,
+        transition_alt_agl_m: float = 140.0,
+        runway_length_m: float = 0.0,
+    ) -> None:
         self.action_dim = int(action_dim)
         self.dt = float(dt) if float(dt) > 1.0e-6 else 0.05
         self.transition_alt_agl_m = float(transition_alt_agl_m)
+        self.runway_length_m = max(0.0, float(runway_length_m))
         self.takeoff_ctrl: ScriptedTakeoffController | None = None
         self.stable_ctrl: ScriptedStableFlightController | None = None
         self.landing_ctrl: ScriptedLandingController | None = None
@@ -52,7 +60,11 @@ class AirScriptedExecutionModel:
     def reset_observation(self, obs: dict[str, Any], *, phase_name: str = "") -> None:
         self.takeoff_ctrl = ScriptedTakeoffController(action_dim=self.action_dim, dt=self.dt)
         self.stable_ctrl = ScriptedStableFlightController(action_dim=self.action_dim, dt=self.dt)
-        self.landing_ctrl = ScriptedLandingController(action_dim=self.action_dim, dt=self.dt)
+        self.landing_ctrl = ScriptedLandingController(
+            action_dim=self.action_dim,
+            dt=self.dt,
+            runway_length_m=self.runway_length_m,
+        )
         self.active_mode = "takeoff"
         self._closed = False
         self.takeoff_ctrl.reset(obs)

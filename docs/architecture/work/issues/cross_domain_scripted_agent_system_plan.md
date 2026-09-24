@@ -636,3 +636,23 @@ to a dedicated owner-local evidence document.
   `playable_candidate`; the failure is now a concrete landing-geometry blocker
   for complete mission/playable promotion. The generated plot and summary stay
   in the ignored build directory while the landing path is analyzed.
+
+### 2026-09-25 — Air landing geometry correction and full mission success
+
+- Starting commit: `c3221535`.
+- Change batch: the neutral landing controller now accepts the declared runway
+  length from the scenario adapter. Its localizer cross-track estimate adds
+  that length to threshold DME because the compiled localizer cue is referenced
+  from the far runway end. CLI, world-batch wrappers, and the leader adapter
+  pass the same geometry input; no kernel or RL dependency was added.
+- Focused proxy verification: Air lifecycle, wrapper, visualization, manifest,
+  and registry tests passed `15 passed`; Python compilation and
+  `git diff --check` passed.
+- Direct verification: the same manifest-bearing Air scenario completed a full
+  zero-randomization single-world run in `16638` steps with exit 0,
+  `termination_reason: success_objective`, `mission_status: [4, 1, 1, 1]`,
+  final runway geometry true, and final runway cross-track `6.45 m`.
+- Evidence boundary: this closes the complete single-world Air mission gate
+  for the tested seed and static-randomization condition. Full command/report
+  roundtrip, full replay, visualization process/render, multi-unit parity, and
+  promotion to final `playable` remain open.

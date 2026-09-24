@@ -24,8 +24,9 @@ class ScriptedLandingController(BaseScriptedController):
     geometry and landing configuration from scratch in the 17D full-action space.
     """
 
-    def __init__(self, *, action_dim: int, dt: float = 0.05):
+    def __init__(self, *, action_dim: int, dt: float = 0.05, runway_length_m: float = 0.0):
         super().__init__(action_dim=action_dim, dt=dt)
+        self._runway_length_m = max(0.0, float(runway_length_m))
         self._thr = 0.45
         self._ias_ref = 82.0
         self._course_ref_deg = 0.0
@@ -37,7 +38,11 @@ class ScriptedLandingController(BaseScriptedController):
         loc = float(np.clip(float(loc_dev), -1.0, 1.0))
         if np.isfinite(float(dme_m)) and float(dme_m) > 1.0:
             ang_rad = np.deg2rad(loc * float(self._loc_full_scale_deg))
-            cross_m = float(dme_m) * float(np.tan(ang_rad))
+            # The compiled localizer cue is referenced from the far runway end,
+            # while DME is measured to the landing threshold. Add the declared
+            # runway length so the cue and range share the same origin.
+            localizer_range_m = float(dme_m) + float(self._runway_length_m)
+            cross_m = localizer_range_m * float(np.tan(ang_rad))
         else:
             cross_m = 35.0 * loc
         return float(np.clip(cross_m, -120.0, 120.0))

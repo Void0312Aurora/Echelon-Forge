@@ -8,6 +8,7 @@ from python.tasking_contracts.air_scripted_execution import (
     AirScriptedExecutionModel,
 )
 from python.tasking_contracts.scripted_registry import ScriptedDecisionModel
+from python.tasking_contracts.scripted_landing import ScriptedLandingController
 
 
 def _observation(*, altitude_agl_m: float = 50.0, command_code: int = 1) -> dict:
@@ -55,3 +56,9 @@ def test_air_model_is_registered_as_a_maintained_autopilot_model() -> None:
     assert [entry.model_id for entry in entries] == [AIR_SCRIPTED_EXECUTION_MODEL_ID]
     model = AIR_SCRIPTED_MODEL_REGISTRY.create(AIR_SCRIPTED_EXECUTION_MODEL_ID, action_dim=2, dt=0.05)
     assert isinstance(model, AirScriptedExecutionModel)
+
+
+def test_landing_controller_aligns_localizer_range_with_runway_geometry() -> None:
+    controller = ScriptedLandingController(action_dim=17, runway_length_m=3000.0)
+    cross = controller._estimate_cross_track_m(0.334, 274.0)
+    assert 45.0 < cross < 52.0
