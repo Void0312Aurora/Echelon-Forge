@@ -99,7 +99,8 @@
       "support": "partial",
       "fail_closed": true,
       "verification": [
-        "python/rl/runtime/rollout_gate.py::from_document"
+        "python/rl/runtime/rollout_gate.py::from_document",
+        "tests/architecture/governance/test_p8_acceptance_matrix.py::test_unsupported_topology_admission_is_executable_fail_closed"
       ],
       "evidence": [
         "docs/architecture/work/active/long_horizon_architecture_governance/decisions/p1c_rollout_operations_and_security_decision_20260825.md"
@@ -113,7 +114,8 @@
       "support": "unsupported",
       "fail_closed": true,
       "verification": [
-        "python/rl/runtime/rollout_gate.py::from_document"
+        "python/rl/runtime/rollout_gate.py::from_document",
+        "tests/architecture/governance/test_p8_acceptance_matrix.py::test_unsupported_topology_admission_is_executable_fail_closed"
       ],
       "evidence": [
         "docs/architecture/work/active/long_horizon_architecture_governance/decisions/p1c_rollout_operations_and_security_decision_20260825.md"
@@ -127,7 +129,8 @@
       "support": "unsupported",
       "fail_closed": true,
       "verification": [
-        "python/rl/runtime/rollout_gate.py::from_document"
+        "python/rl/runtime/rollout_gate.py::from_document",
+        "tests/architecture/governance/test_p8_acceptance_matrix.py::test_unsupported_topology_admission_is_executable_fail_closed"
       ],
       "evidence": [
         "docs/architecture/work/active/long_horizon_architecture_governance/decisions/p1c_rollout_operations_and_security_decision_20260825.md"
@@ -141,7 +144,8 @@
       "support": "unsupported",
       "fail_closed": true,
       "verification": [
-        "python/rl/runtime/rollout_gate.py::from_document"
+        "python/rl/runtime/rollout_gate.py::from_document",
+        "tests/architecture/governance/test_p8_acceptance_matrix.py::test_unsupported_topology_admission_is_executable_fail_closed"
       ],
       "evidence": [
         "docs/architecture/work/active/long_horizon_architecture_governance/decisions/p1c_rollout_operations_and_security_decision_20260825.md"

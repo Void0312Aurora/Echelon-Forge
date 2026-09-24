@@ -5,6 +5,10 @@ from pathlib import Path
 
 import pytest
 
+from python.rl.runtime.rollout_gate import FileRolloutDecisionStore
+from python.rl.runtime.rollout_gate import RolloutAdmissionError
+from python.rl.runtime.rollout_gate import build_rollout_decision_envelope
+
 
 pytestmark = pytest.mark.governance_audit
 
@@ -85,6 +89,44 @@ def test_topology_matrix_verification_points_to_executable_gates() -> None:
       path = REPO_ROOT / relative
       assert path.is_file(), reference
       assert symbol in path.read_text(encoding="utf-8"), reference
+
+
+def test_unsupported_topology_admission_is_executable_fail_closed(tmp_path: Path) -> None:
+  key = b"p8-topology-test-key-0123456789abcdef"
+  payload = {
+    "authority_kind": "rollout_decision",
+    "schema_version": "echelon_forge.rollout_decision.v1",
+    "contract_version": "echelon_forge.rollout_decision_contract.v1",
+    "writer_role": "release_controller",
+    "decision_id": "p8-topology-decision-0",
+    "release_id": "p8-topology-release",
+    "manifest_sha256": "a" * 64,
+    "plan_sha256": "b" * 64,
+    "plan_reader_generation_min": "1",
+    "plan_reader_generation_max": "1",
+    "predecessor_decision_id": "",
+    "state": "prepared",
+    "writer_generation": "1",
+    "decision_sequence": "0",
+    "cohort": "local-in-process",
+    "rollback_deadline": "2026-12-31T00:00:00Z",
+    "checkpoint_id": "",
+    "irreversible_write_boundary": "none",
+  }
+  store = FileRolloutDecisionStore(
+    tmp_path / "rollout.json",
+    writer_id="p8-topology-test-writer",
+    signing_key=key,
+    key_id="p8-topology-test-key",
+  )
+  store.commit(build_rollout_decision_envelope(
+    payload,
+    key_id="p8-topology-test-key",
+    signing_key=key,
+  ))
+  for topology in ("multi-process", "external-host", "cuda"):
+    with pytest.raises(RolloutAdmissionError, match="only the admitted local in-process topology"):
+      store.read(topology=topology)
 
 
 def test_matrix_evidence_paths_are_tracked_or_are_the_authority_file() -> None:
