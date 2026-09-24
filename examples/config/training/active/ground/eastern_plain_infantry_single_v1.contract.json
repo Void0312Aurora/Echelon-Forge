@@ -74,6 +74,7 @@
       "entrypoint": "GroundInfantryNativeProbe.validate_waypoint_sequence",
       "fields": ["passable", "segment_count", "total_distance_m", "blocked_segment_index", "blocked_reason", "segment_observations"],
       "segment_observation_fields": ["configured", "passable", "destination_surface", "water_blocked", "obstacle_blocked", "bridge_admitted", "distance_m"],
+      "segment_movement_observation_fields": ["configured", "passable", "destination_surface", "water_blocked", "obstacle_blocked", "bridge_admitted", "distance_m", "minimum_combined_multiplier", "average_combined_multiplier", "sample_count"],
       "does_not_claim": ["route_graph", "path_planning", "cover", "line_of_sight"]
     }
   },

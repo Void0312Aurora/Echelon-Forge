@@ -431,6 +431,8 @@ def test_native_ground_probe_preflights_direct_sequence_and_reports_water_segmen
     assert validation["blocked_reason"] == "water_transition_blocked"
     assert validation["total_distance_m"] == pytest.approx(400.0)
     assert validation["segment_observations"][0][3] == pytest.approx(1.0)
+    assert len(validation["segment_movement_observations"]) == 1
+    assert validation["segment_movement_observations"][0][3] == pytest.approx(1.0)
 
     replayed = probe.validate_waypoint_sequence().as_dict()
     assert replayed == validation
@@ -449,3 +451,4 @@ def test_native_ground_probe_preflights_declared_bridge_sequence_as_passable() -
     assert validation["blocked_segment_index"] is None
     assert validation["blocked_reason"] is None
     assert validation["segment_observations"][0][5] == pytest.approx(1.0)
+    assert validation["segment_movement_observations"][0][5] == pytest.approx(1.0)

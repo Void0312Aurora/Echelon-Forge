@@ -78,6 +78,9 @@ accepted.
   speed, and stance; `route_intent=direct` is fixed metadata rather than a fake
   action dimension. Held route intents remain available only through the
   engineering proxy until a native route owner exists.
+  Fixed-waypoint preflight also retains native sampled movement-effect tuples
+  for every segment; this is terrain-cost evidence, not a route graph or
+  planner.
 - Maintained command projection:
   `python/rl/ground/command.py`. It carries heading/speed, native stance, and
   the existing Ground static-task slice through the batch contract, while

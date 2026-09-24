@@ -69,6 +69,7 @@ class NativeGroundRouteValidation:
     blocked_segment_index: int | None
     blocked_reason: str | None
     segment_observations: tuple[tuple[float, ...], ...]
+    segment_movement_observations: tuple[tuple[float, ...], ...]
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -78,6 +79,9 @@ class NativeGroundRouteValidation:
             "blocked_segment_index": self.blocked_segment_index,
             "blocked_reason": self.blocked_reason,
             "segment_observations": [list(observation) for observation in self.segment_observations],
+            "segment_movement_observations": [
+                list(observation) for observation in self.segment_movement_observations
+            ],
             "authority": "native_probe_only",
             "route_boundary": "fixed_direct_sequence_validation",
         }
@@ -233,6 +237,7 @@ class GroundInfantryNativeProbe:
         sim, _entity_id = self._require_ready()
         points = (self.start_xy_m,) + self.waypoints_xy_m
         observations: list[tuple[float, ...]] = []
+        movement_observations: list[tuple[float, ...]] = []
         total_distance = 0.0
         blocked_segment_index: int | None = None
         blocked_reason: str | None = None
@@ -246,7 +251,21 @@ class GroundInfantryNativeProbe:
                 raise GroundInfantryNativeProbeError(
                     "native route validation expected seven transition fields"
                 )
+            movement = self._tuple(
+                sim.get_ground_transition_movement_observation(
+                    start[0],
+                    start[1],
+                    end[0],
+                    end[1],
+                    ("stand", "crouch", "prone").index(self._stance),
+                )
+            )
+            if len(movement) != 10:
+                raise GroundInfantryNativeProbeError(
+                    "native route validation expected ten movement fields"
+                )
             observations.append(transition)
+            movement_observations.append(movement)
             total_distance += math.hypot(end[0] - start[0], end[1] - start[1])
             if transition[1] > 0.5 or blocked_segment_index is not None:
                 continue
@@ -266,6 +285,7 @@ class GroundInfantryNativeProbe:
             blocked_segment_index=blocked_segment_index,
             blocked_reason=blocked_reason,
             segment_observations=tuple(observations),
+            segment_movement_observations=tuple(movement_observations),
         )
 
     def fire_from_mission_command(self) -> NativeGroundFireResult:
