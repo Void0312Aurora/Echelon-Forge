@@ -120,6 +120,7 @@ else:
                 "blocked": transition.blocked,
                 "blocked_reason": transition.blocked_reason,
                 "termination_reason": transition.trace.get("termination_reason"),
+                "truncation_reason": transition.truncation_reason,
                 "trace": transition.trace,
             }
             return (

@@ -142,6 +142,42 @@ def test_native_ground_gym_adapter_replay_is_seed_stable() -> None:
     assert run() == run()
 
 
+def test_native_ground_gym_adapter_reports_max_step_truncation() -> None:
+    env = GroundInfantryNativeEnv(
+        GroundInfantryNativeProbe.from_fixture(max_steps=1)
+    )
+    env.reset(seed=13)
+    _observation, _reward, terminated, truncated, info = env.step(
+        [90.0, 0.0, 0.0, 0.0]
+    )
+
+    assert terminated is False
+    assert truncated is True
+    assert info["termination_reason"] is None
+    assert info["truncation_reason"] == "max_steps"
+    assert info["trace"]["truncation_reason"] == "max_steps"
+
+
+def test_native_ground_gym_adapter_reports_blocked_step_truncation() -> None:
+    env = GroundInfantryNativeEnv(
+        GroundInfantryNativeProbe.from_fixture(
+            start_xy_m=(0.0, 100.0),
+            goal_xy_m=(100.0, 100.0),
+            blocked_step_limit=1,
+            max_steps=8,
+        )
+    )
+    env.reset(seed=17)
+    _observation, _reward, terminated, truncated, info = env.step(
+        [90.0, 1.0, 0.0, 0.0]
+    )
+
+    assert terminated is False
+    assert truncated is True
+    assert info["blocked_reason"] == "water_transition_blocked"
+    assert info["truncation_reason"] == "blocked_step_limit"
+
+
 def test_native_ground_probe_reset_and_step_use_compiled_observation_surfaces() -> None:
     probe = GroundInfantryNativeProbe.from_fixture(max_steps=4)
     observation, info = probe.reset(seed=42)
