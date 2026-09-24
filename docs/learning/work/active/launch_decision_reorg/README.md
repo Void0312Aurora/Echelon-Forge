@@ -453,11 +453,12 @@ substitutes.
 
 ## C5 owner verdict and evidence
 
-Verdict: `Mergeable` for the target worktree and branch. The implementation
-stream completed C0-C5 in serial batches; it is not published or merged by this
-record.
+Verdict: `Mergeable` for the target worktree and implementation branch. The
+implementation stream completed the C0-C5 code/documentation batches; the
+strict learned-firing result itself remains unclaimed until a real compatible
+SB3 model produces the retained non-forced probe record.
 
-Evidence recorded on 2026-09-23:
+Evidence recorded on 2026-09-25:
 
 - External Debug preflight succeeded for `ef_core`, `ef_py`, and `ef_test`, and
   `ensure_repo_imports()` resolved the local `ef_py` artifact from
@@ -465,9 +466,12 @@ Evidence recorded on 2026-09-23:
 - The deterministic fixture generator passed twice with the tracked manifest,
   current ownership roles, fixed CPU float32 observations, seeds `0/1/2`, and
   three episodes per seed.
-- Policy/ownership focused matrix: `79 passed, 24 subtests passed`; the
-  migration/config matrix: `33 passed, 42 subtests passed`; runtime release and
-  diagnostics gates: `26 passed`.
+- The focused policy/training/runtime matrix passed with `144 passed, 66
+  subtests passed`; compileall, blocked-heavy-import smoke, CLI help, and the
+  deterministic v2 fixture generator also passed.
+- The learned-firing validator and its CLI wiring are covered by unit tests.
+  No real `--mode model --validate_learned_firing_gate` run is claimed here
+  because no compatible SB3 model artifact is part of this change.
 - The target worktree is clean, reachable under `.worktrees\ld-reorg`, and has
   no untracked entries. `git diff --check` and the path-length budget pass.
 - The owner trace shows an unmasked Composer result, distribution-owned mask,
@@ -493,6 +497,7 @@ inherited documentation residual that remains outside this stream:
 | Which active configurations qualify for learned-firing acceptance | resolved in C0/C4 | Use the tracked mode manifest; do not infer eligibility from a head name |
 | Whether old optimizer/replay states can be restored | resolved in C4 | Require the envelope manifest or emit the named migration error |
 | Local ef_py artifact availability | resolved in C5 for this target | Re-run external build preflight after native/runtime changes |
+| Real learned-policy firing acceptance record | implementation gate exists; runtime evidence pending | Run `--mode model --validate_learned_firing_gate` with a compatible model and retain the passing JSON record before claiming strict learned-firing acceptance |
 | Inherited effects-review metadata gap | documentation-governance owner | Add required metadata in that separate worktree; do not alter this stream |
 
 These are implementation residuals, not reasons to reopen the plan or request
