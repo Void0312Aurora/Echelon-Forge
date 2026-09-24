@@ -683,3 +683,15 @@ to a dedicated owner-local evidence document.
   for this seed and condition. Command/report closure, visualization
   process/render, multi-unit roster parity, broader accepted-seed coverage, and
   final `playable` promotion remain open.
+
+### 2026-09-25 — Air command-chain contract probe
+
+- Starting commit: `fe1355eb`.
+- Direct command: the maintained `loader_command_chain` scenario contract was
+  run against the local compiled binding with seed 7.
+- Result: exit 0; `TaskOrder -> LeaderIntent -> PilotReport -> MissionCommand`
+  initialized, each active object reached the kernel, and the intent and
+  mission command codes remained aligned.
+- Evidence boundary: this closes the command-chain initialization/kernel-sync
+  contract. It is not yet a full scripted episode report roundtrip with
+  command updates and final report ownership; that gate remains open.
