@@ -40,6 +40,12 @@ struct Zone {
     int z_order;           // Higher = Top (Overlays others)
 };
 
+struct ArnisFeatureGeometry {
+    std::vector<std::pair<double, double>> points;
+    double width_m = 0.0;
+    bool polygon = false;
+};
+
 struct RasterGrid {
     Vec3 origin;       // Bottom-Left Corner (Min X, Min Y)
     double resolution; // Meters per cell
@@ -51,7 +57,63 @@ struct RasterGrid {
         data; // Row-major (y * width + x) (Or standard image layout)
     std::vector<double> elevation;
     std::vector<std::uint8_t> landcover;
+    std::vector<ArnisFeatureGeometry> river_features;
+    std::vector<ArnisFeatureGeometry> bridge_features;
     bool arnis_metric_bundle = false;
+
+    static double distance_squared_to_segment(double x, double y, double x1, double y1,
+                                              double x2, double y2) {
+        const double dx = x2 - x1;
+        const double dy = y2 - y1;
+        const double length_squared = dx * dx + dy * dy;
+        const double projection = length_squared > 0.0
+                                      ? std::clamp(((x - x1) * dx + (y - y1) * dy) / length_squared,
+                                                   0.0, 1.0)
+                                      : 0.0;
+        const double nearest_x = x1 + projection * dx;
+        const double nearest_y = y1 + projection * dy;
+        const double offset_x = x - nearest_x;
+        const double offset_y = y - nearest_y;
+        return offset_x * offset_x + offset_y * offset_y;
+    }
+
+    static bool point_in_polygon(double x, double y,
+                                 const std::vector<std::pair<double, double>> &points) {
+        bool inside = false;
+        if (points.size() < 3) return false;
+        for (std::size_t i = 0, j = points.size() - 1; i < points.size(); j = i++) {
+            const auto &[xi, yi] = points[i];
+            const auto &[xj, yj] = points[j];
+            const bool crosses = ((yi > y) != (yj > y)) &&
+                                 (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+            if (crosses) inside = !inside;
+        }
+        return inside;
+    }
+
+    static bool contains(const ArnisFeatureGeometry &feature, double x, double y) {
+        if (feature.polygon && point_in_polygon(x, y, feature.points)) return true;
+        const double radius = std::max(0.0, feature.width_m * 0.5);
+        const double threshold = radius * radius;
+        for (std::size_t i = 1; i < feature.points.size(); ++i) {
+            if (distance_squared_to_segment(x, y, feature.points[i - 1].first,
+                                            feature.points[i - 1].second, feature.points[i].first,
+                                            feature.points[i].second) <= threshold) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool bridge_at(double x, double y) const {
+        return std::any_of(bridge_features.begin(), bridge_features.end(),
+                           [x, y](const auto &feature) { return contains(feature, x, y); });
+    }
+
+    bool river_at(double x, double y) const {
+        return std::any_of(river_features.begin(), river_features.end(),
+                           [x, y](const auto &feature) { return contains(feature, x, y); });
+    }
 
     bool index_for(double x, double y, std::size_t &index) const {
         const double sx = step_x != 0.0 ? step_x : resolution;
@@ -127,6 +189,50 @@ bool json_finite_pair(const Json &value, double &first, double &second) {
     first = value[0].get<double>();
     second = value[1].get<double>();
     return std::isfinite(first) && std::isfinite(second);
+}
+
+bool read_feature_geometries(const std::filesystem::path &path, bool bridges,
+                             std::vector<ArnisFeatureGeometry> &out) {
+    std::ifstream file(path);
+    if (!file) return false;
+    Json root;
+    file >> root;
+    if (root.value("schema", "") != "arnis_cmo_features" ||
+        root.value("coordinate_frame", "") != "local_enu_m") {
+        return false;
+    }
+    const auto &features = root.at("features");
+    if (!features.is_array()) return false;
+    for (const auto &feature : features) {
+        if (!feature.is_object()) return false;
+        const auto &attributes = feature.at("attributes");
+        const bool is_bridge = attributes.value("bridge", false);
+        if (bridges != is_bridge) continue;
+        const auto &geometry = feature.at("geometry");
+        const std::string geometry_type = geometry.value("type", "");
+        if (geometry_type != "LineString" && geometry_type != "Polygon") return false;
+        const auto &raw_coordinates = geometry.at("coordinates");
+        const auto &coordinates = geometry_type == "LineString"
+                                      ? raw_coordinates
+                                      : raw_coordinates.at(0);
+        if (!coordinates.is_array() || coordinates.size() < 2) return false;
+        ArnisFeatureGeometry parsed;
+        parsed.polygon = geometry_type == "Polygon";
+        parsed.width_m = attributes.value("width_m", 0.0);
+        if (!std::isfinite(parsed.width_m) || parsed.width_m < 0.0) return false;
+        for (const auto &point : coordinates) {
+            double x = 0.0;
+            double y = 0.0;
+            if (!json_finite_pair(point, x, y)) return false;
+            parsed.points.emplace_back(x, y);
+        }
+        if (parsed.polygon && parsed.points.front() != parsed.points.back()) {
+            parsed.points.push_back(parsed.points.front());
+        }
+        if (!parsed.polygon && parsed.width_m <= 0.0) return false;
+        out.push_back(std::move(parsed));
+    }
+    return true;
 }
 
 IEnvironmentModel::SurfaceType surface_for_landcover(std::uint8_t code) {
@@ -336,7 +442,16 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
         if (raster_layer_.arnis_metric_bundle) {
             std::uint8_t landcover = 0;
             if (raster_layer_.get_landcover(x, y, landcover)) {
-                cell.type = surface_for_landcover(landcover);
+                // Vector semantics take precedence over the source landcover:
+                // a declared bridge is traversable, while a declared river
+                // corridor remains water even where the raster class is coarse.
+                if (raster_layer_.bridge_at(x, y)) {
+                    cell.type = SurfaceType::HardPacked;
+                } else if (raster_layer_.river_at(x, y)) {
+                    cell.type = SurfaceType::Water;
+                } else {
+                    cell.type = surface_for_landcover(landcover);
+                }
                 switch (cell.type) {
                 case SurfaceType::HardPacked:
                     cell.friction_mult = 0.04;
@@ -462,6 +577,8 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
 
             const Json *elevation_artifact = nullptr;
             const Json *landcover_artifact = nullptr;
+            const Json *hydrology_artifact = nullptr;
+            const Json *road_artifact = nullptr;
             const auto &artifacts = bundle.at("artifacts");
             if (!artifacts.is_array()) return false;
             for (const auto &artifact : artifacts) {
@@ -469,6 +586,12 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
                 const std::string kind = artifact.value("kind", "");
                 if (kind == "elevation_raster") elevation_artifact = &artifact;
                 if (kind == "landcover_raster") landcover_artifact = &artifact;
+                if (kind == "vector_features" && artifact.value("feature_class", "") == "hydrology") {
+                    hydrology_artifact = &artifact;
+                }
+                if (kind == "vector_features" && artifact.value("feature_class", "") == "road") {
+                    road_artifact = &artifact;
+                }
             }
             if (elevation_artifact == nullptr || landcover_artifact == nullptr) return false;
 
@@ -535,6 +658,22 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
             const fs::path landcover_path = resolve_child(*landcover_artifact);
             if (elevation_path.empty() || landcover_path.empty()) return false;
 
+            std::vector<ArnisFeatureGeometry> river_features;
+            std::vector<ArnisFeatureGeometry> bridge_features;
+            if (hydrology_artifact != nullptr) {
+                const fs::path hydrology_path = resolve_child(*hydrology_artifact);
+                if (hydrology_path.empty() ||
+                    !read_feature_geometries(hydrology_path, false, river_features)) {
+                    return false;
+                }
+            }
+            if (road_artifact != nullptr) {
+                const fs::path road_path = resolve_child(*road_artifact);
+                if (road_path.empty() || !read_feature_geometries(road_path, true, bridge_features)) {
+                    return false;
+                }
+            }
+
             const std::size_t cell_count = static_cast<std::size_t>(elevation_height) *
                                            static_cast<std::size_t>(elevation_width);
             const std::size_t elevation_bytes = cell_count * sizeof(float);
@@ -559,6 +698,8 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
             candidate.width = elevation_width;
             candidate.height = elevation_height;
             candidate.arnis_metric_bundle = true;
+            candidate.river_features = std::move(river_features);
+            candidate.bridge_features = std::move(bridge_features);
             candidate.elevation.resize(cell_count);
             candidate.landcover = std::move(landcover_raw);
             candidate.data.resize(cell_count);

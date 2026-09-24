@@ -179,6 +179,8 @@ def test_native_infantry_consumes_arnis_raster_and_stops_on_water() -> None:
     )
     assert int(water_sample[1]) == 4  # IEnvironmentModel::SurfaceType::Water
     assert int(crop_sample[1]) == 3  # IEnvironmentModel::SurfaceType::SoftDirt
+    assert int(sim.get_ground_terrain_observation(0.0, 100.0)[1]) == 4
+    assert int(sim.get_ground_terrain_observation(0.0, 0.0)[1]) == 2
     assert math.isfinite(float(water_sample[0]))
     assert math.isfinite(float(crop_sample[0]))
     assert 0.0 <= float(crop_sample[3]) <= 1.0
@@ -201,7 +203,16 @@ def test_native_infantry_consumes_arnis_raster_and_stops_on_water() -> None:
             0.0,
         )
     )
-    for entity_id in (water_id, cropland_id):
+    bridge_id = int(
+        sim.spawn_unit(
+            ef_py.Side.Blue,
+            "Ground_Infantry_Soldier_MVP",
+            0.0,
+            0.0,
+            0.0,
+        )
+    )
+    for entity_id in (water_id, cropland_id, bridge_id):
         command = ef_py.MissionCommand()
         command.active = True
         command.cmd_heading_deg = 90.0
@@ -213,3 +224,4 @@ def test_native_infantry_consumes_arnis_raster_and_stops_on_water() -> None:
     sim.step()
     assert tuple(sim.get_unit_velocity(water_id)) == (0.0, 0.0, 0.0)
     assert float(sim.get_unit_velocity(cropland_id)[0]) > 0.0
+    assert float(sim.get_unit_velocity(bridge_id)[0]) > 0.0

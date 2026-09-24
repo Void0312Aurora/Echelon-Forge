@@ -52,6 +52,7 @@
     "representable_fields": [
       "desired_heading_deg",
       "desired_speed_fraction",
+      "stance",
       "ground_static_task"
     ],
     "held_fields": ["route_intent"],

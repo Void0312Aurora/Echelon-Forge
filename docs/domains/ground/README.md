@@ -42,9 +42,9 @@ remain with their respective owners.
   [Ground Infantry Movement v1](work/active/ground_infantry_movement_v1/README.md).
 - The default environment provider can explicitly load the verified Arnis
   continuous elevation/landcover raster pair, and the maintained kernel exposes
-  a bounded terrain observation tuple for training adapters. Arnis vector
-  semantics, native passability/bridge rules, and track/sensor observation
-  export remain held.
+  a bounded terrain observation tuple for training adapters. Tree-line/settlement
+  semantics, general passability, and track/sensor observation export remain
+  held; bounded river/bridge surface sampling is admitted.
 - `src/systems/domains/ground/damage_system_ground.h` registers `GroundDamageStateUpdate`
   as a `domain = ground` system at stage 30 of the default composition. It matches
   the spawned ground entity and advances the ground-owned

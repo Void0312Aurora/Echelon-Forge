@@ -24,12 +24,14 @@ fixture 元数据悄悄冒充成运行时真值。
   有界单兵移动停下；农地/草地/树覆盖目前共用软土移动代价。
 - `SimulationKernel.get_ground_terrain_observation(x, y)` 向训练侧 adapter 和诊断暴露
   原生采样，字段为 `(elevation, surface_type, friction, roughness, vegetation_density)`。
+- 原生 provider 消费 Arnis 水文和桥梁道路矢量，提供有界点采样：河流走廊是水面，声明的
+  桥面线段覆盖水面并成为硬压实通行面。
 - 加载具有事务性：候选包无效时返回 `false`，不替换当前 provider 栅格。
 
 ## 明确的非目标
 
-本包不消费 Arnis 矢量要素，不从水文要素推断桥梁，不提供路线/通行性或视线查询，
-也不把 RL 训练接到原生 reset/step/replay；同样不宣称自动 runtime setup 或完整地形物理。
+本包不提供路线图、一般通行性或视线查询，不消费树线/聚落掩体语义，也不把 RL 训练接到
+原生 reset/step/replay；同样不宣称自动 runtime setup 或完整地形物理。
 
 ## 证据
 
@@ -39,4 +41,4 @@ fixture 元数据悄悄冒充成运行时真值。
 - `src/core/engine/simulation_kernel.cpp`
 
 2026-09-24 批次使用固定的 Windows 依赖完成构建。Arnis 移动测试和陆战训练契约测试
-通过（`5 passed`）。矢量语义、通行性、桥梁、观测和 RL 门仍明确开放。
+通过（`5 passed`）。路线/通行性、掩体/观测和 RL 门仍明确开放。

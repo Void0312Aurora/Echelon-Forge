@@ -33,8 +33,8 @@ Ground fixture 准入第一条维护中的原生移动切片。
 ## 明确的非目标
 
 本包不准入 route following、waypoint 规划、队形、加速度、疲劳、掩体/隐蔽、视线、
-河流或桥梁通行性、武器、火力、压制、后勤或 RL policy training。Arnis 包中的树线、
-聚落、道路、水文、结构物和桥梁等矢量语义尚未由原生 provider 消费，属于后续工作包。
+河流或桥梁通行性、武器、火力、压制、后勤或 RL policy training。原生 provider 已有界
+消费 Arnis 水文与桥梁道路矢量；树线、聚落、结构物、路线图和一般通行性属于后续工作包。
 
 ## 证据
 

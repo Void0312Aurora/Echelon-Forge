@@ -29,15 +29,18 @@ truth.
 - `SimulationKernel.get_ground_terrain_observation(x, y)` exposes the native
   sample as `(elevation, surface_type, friction, roughness,
   vegetation_density)` for training-side adapters and diagnostics.
+- The native provider consumes the Arnis hydrology and bridge road vectors for
+  bounded point sampling: river corridors are water and declared bridge
+  segments override them as hard-packed crossing surfaces.
 - Loading is transactional: an invalid candidate returns `false` without
   replacing the current provider raster.
 
 ## Explicit non-goals
 
-This package does not consume Arnis vector features, infer bridges from
-hydrology, provide route/passability or line-of-sight queries, or connect RL
-training to native reset/step/replay. It also does not claim automatic runtime
-setup or full terrain physics.
+This package does not provide route graphs, general passability or line-of-sight
+queries, tree-line/settlement cover semantics, or connect RL training to native
+reset/step/replay. It also does not claim automatic runtime setup or full
+terrain physics.
 
 ## Evidence
 
@@ -48,5 +51,5 @@ setup or full terrain physics.
 
 The 2026-09-24 batch was built with the pinned Windows dependencies. The
 Arnis movement test and Ground training contract tests passed (`5 passed`).
-The remaining vector semantic, passability, bridge, observation, and RL gates
-remain explicitly open.
+The remaining route/passability, cover/observation, and RL gates remain
+explicitly open.
