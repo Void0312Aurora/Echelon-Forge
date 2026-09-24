@@ -72,7 +72,8 @@ calibration package, inventory claim, or final simulation configuration.
 | R-27 | M1252 operator-manual volume search and retrieval-boundary update | complete | `7428ea28` |
 | R-28 | M1252 community PMCS mirror coverage exclusion | complete | `3279edf1` |
 | R-29 | M1252 low-tier family mobility baseline recorded without variant substitution | complete | `32805e32` |
-| R-30 | M1252 bounded mobility estimate completion with explicit Tier C boundary | complete | pending |
+| R-30 | M1252 bounded mobility estimate completion with explicit Tier C boundary | complete | `1483cc4d` |
+| R-31 | Evidence-role semantics, materialized source ledger, and field-level provenance checks | complete | `30b3565f` |
 
 ## Blocker / skip ledger
 
@@ -83,6 +84,7 @@ calibration package, inventory claim, or final simulation configuration.
 
 ## Acceptance gate
 
-The run is not considered complete until the backlog reaches 150 rows, all 150
-rows are `parameter_complete`, every new leaf has a source-backed parameter table,
-and C1–C6 pass after the final pushed batch.
+The expansion run reached its 150-row research target in R-30. Subsequent
+iterations are infrastructure hardening: every new data batch must still keep
+the backlog and C1–C6 closure gates green, while C7 checks field-level
+provenance metadata and C8 checks the materialized source index.

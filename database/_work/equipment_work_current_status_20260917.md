@@ -21,11 +21,11 @@ check in [check_equipment_tree.py](check_equipment_tree.py). See
 | --- | --- |
 | Branch | `codex/database-scaffold` |
 | Base | `d1ebb5d3` |
-| Off-base commits | 87 |
+| Off-base commits | 103 |
 | Behind `origin/main` | 218 commits |
-| Ahead of `origin/main` | 56 commits |
+| Ahead of `origin/main` | 103 commits |
 | `origin/main` files under `database/` | 0 |
-| Tracked files under `database/` | 648 |
+| Tracked files under `database/` | 736 |
 | Merge dry-run conflicts (`HEAD` vs `origin/main`) | 0 |
 
 `origin/main` carries no files under `database/`, so the tree this work touches is
@@ -45,12 +45,15 @@ Command: `python database/_work/check_equipment_tree.py`
 | `C4` source admission floor | PASS after the `E3` retention backfill |
 | `C5` source-artifact consistency | PASS, no unnamed or aggregate package claims |
 | `C6` retrieval record | PASS, 55 unretrieved citations remain advisory; 157 packages lack a retrieval block |
+| `C7` field-level provenance | PASS, 2,275 parameter rows checked; 0 missing value/source/tier/uncertainty metadata findings |
+| `C8` materialized source ledger | PASS, 365 ledger rows match 365 manifests |
 
 Measured counts:
 
 | Metric | Value |
 | --- | --- |
 | Source packages (manifests) | 365 |
+| Materialized source-ledger rows | 365 |
 | Catalog leaves (carry `## Parameters`) | 149 |
 | Distinct source ids referenced by leaves | 365 |
 | Leaves without `Equipment ID` | 0 |
@@ -63,9 +66,9 @@ Measured counts:
 The queue now calls all 150 rows `parameter_complete`, and the former M1252
 `cataloged` leaf carries a complete research parameter table with an explicitly
 bounded Tier C mobility estimate. The checker therefore reports no stub leaf binding defect
-for the non-held queue rows. A separate catalog scan still finds 82 README leaves
-without a parameter table; those are outside the current queue-binding defect and
-remain a depth follow-up rather than evidence of completed extraction.
+for the non-held queue rows. A separate catalog scan finds 231 README leaves: 149
+with a parameter table and 82 without one. The 82 are outside the current queue-
+binding defect and remain a depth follow-up rather than evidence of completed extraction.
 
 ## Coverage Semantics
 
@@ -83,10 +86,10 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | Id | Finding | Evidence | State |
 | --- | --- | --- | --- |
 | `D2` | No source package records a rights field | `C4` `missing_rights_field_advisory`, 310 of 310 | open; the admission standard requires it of a ledger row |
-| `D3` | 82 catalog leaves outside the non-held queue have no parameter table | catalog scan: 202 README leaves, 120 with `## Parameters`, 82 without (one module table uses a distinct header) | open; scope and depth for these leaves still need a decision |
-| `D4` | Parameter table shape split | 60 leaves use a `Field`-based table; 59 use `Parameter \| Value \| Source \| Confidence`; 82 have no parameter table; one module table uses a distinct header | open |
+| `D3` | 82 catalog leaves outside the non-held queue have no parameter table | catalog scan: 231 README leaves, 149 with `## Parameters`, 82 without | open; scope and depth for these leaves still need a decision |
+| `D4` | Parameter table shape split | 88 leaves use `Parameter \| Value \| Source \| Confidence`; 58 use the common `Field` form; 3 module/extended leaves use the other supported forms | open; C7 covers all five forms while new leaves default to the common `Field` form |
 | `D5` | Disjoint naval namespaces | `catalog/naval/ships/surface-combatant/` (tracked, 3 leaves) and the empty untracked `catalog/naval/surface-combatants/` coexist | open |
-| `D6` | Ledger not materialized | `sources/ledger/` holds a README only; `common.schema.json` has no source `$defs` while `FIELDS.md` describes 12 ledger fields | open |
+| `D6` | Ledger not materialized | `sources/ledger/ledger.csv` now indexes all 365 manifests; missing rights/scope/retrieval values remain explicit in the index | closed in R-31; source-admission debt remains visible |
 | `D7` | `coverage.csv` role and status vocabulary contradict its own README | 105 of 105 rows are `parameter_complete`, not `queued` | open |
 | `D8` | Country rows share a variant leaf without a stated rule | `eq-us-air-c17a` and `eq-uk-air-c17a` both point at `c-17/c-17a`, which is now correct by the `tornado-ids` precedent but is not documented anywhere | open |
 | `D9` | `Equipment ID` scheme is not declared | `eq-<country>-<domain>-<variant>`, country-less `module-*`, and country-less variant names such as `tornado-ids` all coexist with no stated rule | open |
@@ -119,6 +122,9 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | P-8A/Poseidon MRA1 completion | Added RAF sensor, weapon, defensive-aids and crew fields plus Boeing common mass, propulsion and conditioned range; UK mission-loadout scope remains explicit |
 | A400M Atlas C.1 completion | Added RAF Atlas-specific fields and the Airbus 2025 manufacturer specification block; retained empty-weight and length differences rather than reconciling them |
 | Retrieval records (P-8/A400M) | Added successful Tavily-proxy retrieval records for the RAF pages and retained separate official Boeing/Airbus packages for the common data blocks |
+| R-31 evidence roles | Added explicit `direct_variant`, `family_context`, `bounded_estimate`, and `open` semantics; community/Tier C values remain non-authoritative and raw HTML is not retained |
+| R-31 source ledger | Materialized `sources/ledger/ledger.csv` from the 365 source manifests; missing rights, retrieval and scope fields are preserved as visible findings rather than inferred |
+| R-31 field provenance check | Added C7 metadata validation for 2,275 parameter rows and C8 exact manifest-to-ledger coverage; both pass |
 | French C-130J-30 completion | Added the French Ministry's J-30 operating block for endurance, operating mass, cruise profile, crew and load configurations without overwriting the separate U.S. stretch-column definitions |
 | French C-130J-30 retrieval record | Replaced the stale access-only manifest with a successful Tavily-proxy retrieval record and a single-artifact title |
 | Voyager KC2 completion | Added the RAF KC2/KC3 fit and Airbus A330 MRTT structural, fuel, payload and conditioned-range block; carried fuel, offload and capacity remain distinct quantities |
@@ -190,7 +196,7 @@ amend that standard.
 
 ## Explicit Overclaim Refusals
 
-- The 116 `parameter_complete` rows are research drafts. They are not calibrated, not
+- The 150 `parameter_complete` rows are research drafts. They are not calibrated, not
   cross-checked, and not runtime-eligible.
 - No file in this tree is consumed by the runtime loader.
 - Family names remain grouping nodes; only concrete variant leaves count as records.
@@ -198,12 +204,11 @@ amend that standard.
 
 ## Next Action Order
 
-All six machine-checkable conditions pass. What remains is not a defect the check
+All eight machine-checkable conditions pass. What remains is not a defect the check
 can see:
 
-1. `D4` shape convergence — required before new leaves are added, otherwise the split widens.
-2. `D7` and `D6` — reconcile the coverage documentation and materialize the ledger.
-3. `D2` source admission fields — 291 packages need a rights field before any ledger row is honest.
-4. `D8` and `D9` — write down the id and shared-leaf rules, in the form the tornado-ids and module precedents already imply.
-5. `D5` cleanup, `D3` stub depth.
-6. Continue the unattended expansion run recorded in `equipment_expansion_20260923.md` until 150 complete rows are present.
+1. `D2` source-admission fields — backfill rights/redistribution and residual details where the source permits it; retain `not_recorded` when it does not.
+2. `D4` shape convergence — use the five supported forms only for migration, and make the `Field | Value | Source | Tier | Configuration / uncertainty` form the default for new leaves.
+3. `D7`, `D8`, and `D9` — reconcile coverage semantics and document shared-leaf and Equipment ID rules.
+4. `D5` namespace cleanup and `D3` stub-depth decision.
+5. Resume new research in small batches only after the above rules are stable; run C1–C8 and commit each batch.
