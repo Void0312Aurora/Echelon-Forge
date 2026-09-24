@@ -34,7 +34,7 @@ three-cycle packet.
 
 | Measurement | Observed result | Owner | Boundary |
 | --- | ---: | --- | --- |
-| Declared controls | 8 total: 5 permanent, 3 migratory | cross-domain architecture | manifest-level declarations |
+| Declared controls | 8 total at the 2026-09-23 measurement: 5 permanent, 3 migratory | cross-domain architecture | manifest-level declarations; one zero-entry migratory control was retired by P7-B on 2026-09-24 |
 | Migratory rows due at simulated `2027-04-01` | 3 | cross-domain architecture | disposition simulation, not a renewal |
 | Healthy control check runs | 12/12 passed; 0 healthy-sample failures | cross-domain architecture | current checkout, four groups × three runs |
 | Check execution cost | 81.2526470 s total; 6.7710539 s mean per group run | release engineering | local Windows CPython 3.12 process |

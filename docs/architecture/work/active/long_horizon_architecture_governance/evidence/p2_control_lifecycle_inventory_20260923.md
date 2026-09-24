@@ -20,7 +20,7 @@ membership, or become a runtime authority.
 | Kind | Count | Controls |
 | --- | ---: | --- |
 | `permanent` | 5 | architecture guard, governance audit, document-link retrieval, CI smoke, CI contract smoke |
-| `migratory` | 3 | runtime-facade compatibility migration, UniversalEnv compatibility inventory, archive-retirement transition |
+| `migratory` | 2 | runtime-facade compatibility migration, archive-retirement transition |
 | `renewable` | 0 | none currently admitted |
 | `evidentiary` | 0 | evidence remains attached to the owning gate or P2-B measurement packet |
 
@@ -56,9 +56,12 @@ lifecycle validator.
 
 ## Expiry and removal boundary
 
-The three migratory rows are intentionally still active because their physical
-successors are not all complete: full maintained-facade parity, the P7-A
-retention decision, and the corresponding replacement evidence remain open.
+The two remaining migratory rows are intentionally still active because their
+physical successors are not all complete: full maintained-facade parity, the
+P7-A retention decision, and the corresponding replacement evidence remain
+open. The UniversalEnv compatibility row was retired in the first P7-B cleanup
+slice after its zero-entry inventory and successor facade/VecEnv gates were
+verified.
 At the simulated date `2027-04-01`, each row is due for disposition; it cannot
 be silently renewed. The next allowed action is removal after successor proof,
 one bounded sponsored renewal with a forced removal date, or permanent

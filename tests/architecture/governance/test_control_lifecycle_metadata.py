@@ -142,6 +142,5 @@ def test_expiry_simulation_requires_disposition_without_silent_renewal() -> None
       due_ids.append(control["id"])
   assert due_ids == [
     "runtime_facade_compatibility_migration",
-    "universal_env_compatibility_inventory",
     "archive_retirement_transition",
   ]

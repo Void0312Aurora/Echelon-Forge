@@ -29,18 +29,6 @@
         "renewal_count": 0,
         "removal_proof": "the maintained caller inventory is empty and physical facade boundary tests replace the migration scan",
         "coverage": ["tests/architecture/runtime_facade/test_runtime_escape_hatches.py"]
-      },
-      {
-        "id": "universal_env_compatibility_inventory",
-        "owner": "runtime-facade",
-        "invariant": "the compatibility caller inventory remains explicit until the supported facade contract owns every caller",
-        "kind": "migratory",
-        "created": "2026-08-25",
-        "expiry": "2027-03-31",
-        "successor": "maintained-facade-caller-parity",
-        "renewal_count": 0,
-        "removal_proof": "the inventory is zero on a representative maintained-caller sample and the successor parity gate passes",
-        "coverage": ["tests/architecture/runtime_facade/test_universal_env_compatibility_caller_inventory.py"]
       }
     ]
   },
@@ -121,7 +109,6 @@
     "tests/architecture/runtime_facade/test_runtime_facade_contract_boundaries.py",
     "tests/architecture/runtime_facade/test_scenario_setup_facade_boundary.py",
     "tests/architecture/runtime_facade/test_tasking_batch_contract_boundaries.py",
-    "tests/architecture/runtime_facade/test_universal_env_compatibility_caller_inventory.py",
     "tests/architecture/runtime_facade/test_world_batch_owner_imports.py",
     "tests/architecture/runtime_host/test_p5d_real_process_package_rollback.py",
     "tests/architecture/runtime_host/test_p5d_rollout_operations.py",

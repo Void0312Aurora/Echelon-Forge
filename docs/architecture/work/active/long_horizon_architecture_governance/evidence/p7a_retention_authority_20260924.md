@@ -57,7 +57,7 @@ git diff --check
 ```
 
 The derived authority audit and diff check passed. The current derived
-inventory is 114 architecture tests and 114 manifest entries; the remaining
+inventory is 113 architecture tests and 113 manifest entries; the remaining
 source-scan residuals are diagnostic and are not silently retired by P7-A.
 
 The complete local governance suite was also exercised. It produced **65

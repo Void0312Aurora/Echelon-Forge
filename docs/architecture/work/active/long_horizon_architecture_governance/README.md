@@ -260,4 +260,6 @@ P7-A reconciles the owner-archive policy through
 owner-local archive, while every other archive path remains forbidden. Retired
 material outside that route uses the owner ledger and Git history. The active
 directory remains a current execution surface, not an append-only evidence
-store.
+store. The first P7-B zero-inventory retirement is recorded in [the P7-B
+evidence packet](evidence/p7b_zero_inventory_retirement_20260924.md); further
+cleanup and provider/restore drills remain open.

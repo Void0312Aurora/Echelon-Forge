@@ -6,7 +6,7 @@ Canonical: `docs/architecture/reviews/universal_env_runtime_compatibility_caller
 Owner: `architecture/reviews`
 Last verified: `2026-06-12`
 
-状态：`2026-06-12` 活跃治理切片。
+状态：`2026-09-24` 历史迁移记录；P7-B 已撤下零项 active ratchet。
 范围：活跃 Python 路径中把 `runtime_compatibility_enabled` 设为布尔 `True` 的调用点，不包含 `tests/archive/` 与 `tools/archive/`。
 
 ## 1. 结论
@@ -19,12 +19,11 @@ Last verified: `2026-06-12`
 - `_RuntimeFacadeAdapter` 内部 compatibility flag 测试已删除；active world-batch 测试不再构造 direct `UniversalEnv` baseline。
 - fail-closed rejection guards 不再使用布尔 `runtime_compatibility_enabled=True` 形状登记；single-world maintained runtime 与 training env config 均不再暴露该参数。
 
-机器可读清单位于：
-
-- `tests/architecture/fixtures/universal_env_runtime_compatibility_callers_20260612.json`
-- `tests/architecture/runtime_facade/test_universal_env_compatibility_caller_inventory.py`
-
-AST 口径统计结果：0 个活跃 direct `UniversalEnv(...)` 构造；0 个活跃布尔 `runtime_compatibility_enabled=True` opt-in 调用。
+此前机器可读清单与专用测试记录了 AST 口径的零结果；它们在 P7-B
+完成替代门槛后从 active suite 撤下，历史内容仍可从 Git 历史恢复。
+当前边界由 maintained facade/VecEnv 结构性检查继续负责：不允许活跃
+direct `UniversalEnv(...)` 构造或布尔 `runtime_compatibility_enabled=True`
+opt-in 调用。
 
 ## 2. 分类表
 
@@ -49,4 +48,6 @@ AST 口径统计结果：0 个活跃 direct `UniversalEnv(...)` 构造；0 个�
 
 后续任何新增 `runtime_compatibility_enabled=True` 布尔调用都会被 architecture guard 拦截；正常路线不是登记新生存项，而是迁到 maintained runtime/facade 或归档。
 
-这张表现在作为闭合门槛：active Python 路径不再允许 raw `UniversalEnv` 构造生存。
+这张表现在作为历史闭合记录；active Python 路径不再允许 raw
+`UniversalEnv` 构造生存，新增调用由 successor facade/VecEnv boundary
+checks 拦截。

@@ -261,4 +261,6 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 architecture standard 或 review。P7-A 通过 `retention_authority.json` 解决
 owner-archive policy：已接受的 Cordis 历史是唯一登记的 owner-local archive，其他
 archive 路径仍禁止；该路由之外的退役材料使用 owner ledger 和 Git 历史。active
-目录仍是当前执行面，不得变成 append-only evidence store。
+目录仍是当前执行面，不得变成 append-only evidence store。首条 P7-B 零项
+inventory 退役记录在 [P7-B 证据包](evidence/p7b_zero_inventory_retirement_20260924.md)；
+其余清理与 provider/restore drill 仍开放。

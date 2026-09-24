@@ -39,24 +39,27 @@ The checked-out tree currently derives:
 
 | Measure | Result |
 | --- | ---: |
-| Architecture test files | 114 |
-| Manifest entries | 114 |
+| Architecture test files | 113 |
+| Manifest entries | 113 |
 | Tier manifests | 2 |
 | Runner manifests with owner/lane metadata | 4 |
 | Owners / execution strategies | 2 / 2 |
-| Files with source-scan references | 112 |
-| Files retaining the `source_scan_guard` residual flag | 87 |
+| Files with source-scan references | 111 |
+| Files retaining the `source_scan_guard` residual flag | 86 |
 | Files selected by the pytest smoke manifest | 34 |
 | Native CTest entries with a primary lane label | 25 |
 
-The source-scan counts are diagnostics, not an acceptance claim. One
-Two replacement slices are now complete. `test_stage_node_manifest_registry.py`
+The source-scan counts are diagnostics, not an acceptance claim. Two
+replacement slices are now complete. `test_stage_node_manifest_registry.py`
 removed its header-text field scan and moved maintained-node field completeness
 into a compiled native registry probe. `test_platform_capability_contracts.py`
 similarly moved exact capability vocabulary assertions into its native
 validator probe while retaining the static implementation-boundary check. The
 existing validators and fail-closed negative tests remain in place. These
-changes reduce the residual count from 88 to 86; they do not justify retiring
+changes reduced the replacement residual count from 88 to 86; the later P7-B
+zero-entry inventory retirement removed one already-completed ratchet but did
+not retire any remaining source scan. The counts above are the current
+post-P7-B derived inventory; they do not justify retiring
 the other source scans, because source-text boundary checks are not physically
 equivalent to target, package, type, or behavior boundaries by themselves.
 The P7-A retention-authority test is a deliberate governance evidence reader;
