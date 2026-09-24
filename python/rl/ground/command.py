@@ -1,9 +1,10 @@
 """Ground infantry command projections onto the maintained batch boundary.
 
-The existing command contract can transport heading/speed and the Ground
-static-task slice.  It cannot yet represent stance or route intent, so this
-module rejects those values instead of silently dropping them.  Transport
-success is not movement execution; the native Ground consumer remains held.
+The maintained command contract transports heading/speed, bounded stance, and
+the Ground static-task slice.  It still cannot represent route intent, so this
+module rejects non-direct values instead of silently dropping them.  Transport
+success is not movement execution; the native consumer remains limited to the
+admitted ``MoveStatic`` slice outside production ``WorldBatch``.
 """
 
 from __future__ import annotations
