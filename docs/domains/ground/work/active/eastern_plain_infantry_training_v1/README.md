@@ -56,6 +56,9 @@ accepted.
   `python/rl/ground/native_env.py` (`GroundInfantryNativeEnv`). It preserves
   the probe's reset/step/replay authority and is also explicitly
   `native_probe_only`; it is a tooling surface, not a WorldBatch promotion.
+  The native observation includes a fixed single-waypoint relative state
+  (goal delta and distance) so a policy can learn the S1 task without hidden
+  access to the probe internals; this is not route planning.
 - Maintained command projection:
   `python/rl/ground/command.py`. It carries heading/speed, native stance, and
   the existing Ground static-task slice through the batch contract, while

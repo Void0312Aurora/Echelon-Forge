@@ -116,6 +116,9 @@ class GroundInfantryNativeProbe:
             sim.get_ground_field_semantic_observation(position[0], position[1])
         )
         weapon = self._tuple(sim.get_ground_weapon_state(entity_id))
+        goal_dx = self.goal_xy_m[0] - position[0]
+        goal_dy = self.goal_xy_m[1] - position[1]
+        goal_distance = math.hypot(goal_dx, goal_dy)
         return {
             "position_local_enu_m": position,
             "velocity_local_enu_mps": velocity,
@@ -123,6 +126,7 @@ class GroundInfantryNativeProbe:
             "terrain_effects": (slope_deg,),
             "field_semantics": semantic,
             "weapon_state": weapon,
+            "mission_state": (goal_dx, goal_dy, goal_distance),
             "state": (
                 float(sim.get_unit_heading(entity_id)),
                 float(("stand", "crouch", "prone").index(self._stance)),
