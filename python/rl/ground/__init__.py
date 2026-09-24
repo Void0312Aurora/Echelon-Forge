@@ -28,6 +28,7 @@ from .native_probe import (
     NATIVE_GROUND_PROBE_CONTRACT_VERSION,
     NativeGroundInfantryTransition,
 )
+from .native_env import GroundInfantryNativeEnv
 
 __all__ = [
     "GROUND_INFANTRY_ACTION_MODE",
@@ -42,6 +43,7 @@ __all__ = [
     "GroundInfantryNativeProbeError",
     "NATIVE_GROUND_PROBE_CONTRACT_VERSION",
     "NativeGroundInfantryTransition",
+    "GroundInfantryNativeEnv",
     "build_ground_infantry_command",
     "build_ground_infantry_maintained_assignment",
     "build_ground_infantry_mission_command",

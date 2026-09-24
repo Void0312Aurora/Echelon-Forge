@@ -108,6 +108,9 @@ reason now comes from the native sampled transition evidence when available
 current terrain cell. It is explicitly `native_probe_only` and remains outside
 production WorldBatch; route intent, learned policy training, and automatic
 weapon employment remain held.
+`python/rl/ground/native_env.py` wraps that probe in a Gymnasium-compatible
+reset/step surface for training tooling. The wrapper does not add authority or
+alter the native trace; it remains outside production `WorldBatch`.
 
 The proxy fails closed on unknown raster cells, out-of-bounds transitions, and
 river crossings without the explicit bridge intent.  The bridge rule is a
