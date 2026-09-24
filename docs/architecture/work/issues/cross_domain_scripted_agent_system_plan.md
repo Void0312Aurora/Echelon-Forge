@@ -1097,3 +1097,28 @@ to a dedicated owner-local evidence document.
   and next select a maintained scenario/command-link consumer. Do not infer
   execution closure from DTO authorization alone; Air C2/landing, EW, and
   tactical assessment remain parallel residuals.
+
+### 2026-09-25 — Air scripted EW producer contract slice
+
+- Starting commit: `588ea7bd`.
+- Change batch: add `AirScriptedEWModel` and register
+  `air.ew.rwr_response_scripted` in the aggregate Air registry as an
+  `adapter`. The model interprets only declared RWR rows (bearing, signal,
+  lock, launch warning) and emits a typed EW intent with a response-doctrine
+  decision, while explicitly reporting `native_action_owner_required`.
+- Focused verification: EW, Air tactical, Air execution, neutral runtime, and
+  tasking-boundary tests passed `28 passed`; Python compilation and
+  `git diff --check` passed.
+- Direct result: the producer detected a declared launch warning and lock,
+  selected `request_chaff_and_flare` only when the explicit
+  `countermeasure_ready` doctrine was supplied, and otherwise held or deferred
+  without reading World Truth or writing native EW components.
+- Evidence boundary: no maintained action mode consumes this intent; no
+  chaff/flare release, jammer transition, resource decrement, or EW terminal
+  objective was claimed. Air remains `playable_candidate`, and EW remains an
+  incomplete entry surface pending a versioned action extension and native
+  command owner.
+- Continuation choice: keep this producer independent of the C2/landing and
+  tactical post-launch residuals, then design the smallest Air-owned
+  countermeasure action extension with negative and replay tests before any
+  EW runtime promotion.
