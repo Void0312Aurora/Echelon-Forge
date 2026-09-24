@@ -246,6 +246,22 @@ def test_native_infantry_consumes_arnis_raster_and_stops_on_water() -> None:
     assert int(crop_sample[1]) == 3  # IEnvironmentModel::SurfaceType::SoftDirt
     assert int(sim.get_ground_terrain_observation(0.0, 100.0)[1]) == 4
     assert int(sim.get_ground_terrain_observation(0.0, 0.0)[1]) == 2
+    river_transition = sim.get_ground_transition_observation(-200.0, 100.0, 200.0, 100.0)
+    assert float(river_transition[0]) == 1.0
+    assert float(river_transition[1]) == 0.0
+    assert int(river_transition[2]) == 4
+    assert float(river_transition[3]) == 1.0
+    assert float(river_transition[4]) == 0.0
+    assert float(river_transition[5]) == 0.0
+    assert float(river_transition[6]) == pytest.approx(400.0)
+    bridge_transition = sim.get_ground_transition_observation(-200.0, 0.0, 200.0, 0.0)
+    assert float(bridge_transition[0]) == 1.0
+    assert float(bridge_transition[1]) == 1.0
+    assert int(bridge_transition[2]) == 2
+    assert float(bridge_transition[3]) == 0.0
+    assert float(bridge_transition[4]) == 0.0
+    assert float(bridge_transition[5]) == 1.0
+    assert float(bridge_transition[6]) == pytest.approx(400.0)
     assert math.isfinite(float(water_sample[0]))
     assert math.isfinite(float(crop_sample[0]))
     assert 0.0 <= float(crop_sample[3]) <= 1.0

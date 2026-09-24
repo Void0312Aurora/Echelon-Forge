@@ -64,6 +64,23 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
         "in_tree_line",
         "in_settlement",
     ]
+    assert contract["native_runtime_surfaces"]["transition"]["status"] == "bounded_native_transition_probe"
+    assert contract["native_runtime_surfaces"]["transition"]["entrypoint"] == "SimulationKernel.get_ground_transition_observation"
+    assert contract["native_runtime_surfaces"]["transition"]["fields"] == [
+        "configured",
+        "passable",
+        "destination_surface",
+        "water_blocked",
+        "obstacle_blocked",
+        "bridge_admitted",
+        "distance_m",
+    ]
+    assert contract["native_runtime_surfaces"]["transition"]["does_not_claim"] == [
+        "route_graph",
+        "waypoint_planning",
+        "cover",
+        "line_of_sight",
+    ]
     assert contract["map_profile"]["arnis_bundle_status"] == "verified_export_snapshot"
     assert contract["map_profile"]["companion_overlay"] == "field_overlay.v1"
     assert contract["map_profile"]["runtime_consumption"].startswith("held_until_")

@@ -91,7 +91,10 @@ to Arnis landcover classes while retaining the existing surface and slope
 costs. It also checks the one-tick destination cell and blocks transitions into
 water or unknown/obstacle terrain without advancing the transform. These are
 movement effects only; they are not a tree-line cover, concealment, collision,
-route graph, or line-of-sight model.
+route graph, or line-of-sight model. The shared native transition query samples
+the one-tick segment at 5 m intervals, reports water/obstacle blockers, and
+marks a declared bridge segment as admitted. It remains a local passability
+probe, not route planning or waypoint selection.
 
 `python/rl/ground/native_probe.py` now supplies a deterministic native
 reset/step/trace/replay adapter over these admitted surfaces. It is explicitly
