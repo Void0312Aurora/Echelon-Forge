@@ -97,6 +97,12 @@ the one-tick segment at 5 m intervals, reports water/obstacle blockers, and
 marks a declared bridge segment as admitted. It remains a local passability
 probe, not route planning; the native training probe may only advance through a
 preconfigured direct waypoint sequence after a point is reached.
+The companion `get_ground_transition_movement_observation` owner uses the same
+sample points to report minimum/average combined movement multipliers and sample
+count for a selected stance. Ground movement consumes the segment average after
+the transition is admitted, so a step crossing a surface boundary no longer
+uses only the start-cell multiplier. This remains local segment movement cost,
+not a route-level cost grid or general passability product.
 The same local terrain owner now exposes `SimulationKernel.get_ground_slope_deg`
 to the native probe, so the training trace can attribute movement cost to a
 replayable slope observation rather than recomputing it in Python. This remains

@@ -329,6 +329,15 @@ class GroundInfantryNativeProbe:
                 before["position_local_enu_m"][1] + math.cos(heading_rad) * commanded_distance,
             )
         )
+        transition_effects = self._tuple(
+            sim.get_ground_transition_movement_observation(
+                before["position_local_enu_m"][0],
+                before["position_local_enu_m"][1],
+                before["position_local_enu_m"][0] + math.sin(heading_rad) * commanded_distance,
+                before["position_local_enu_m"][1] + math.cos(heading_rad) * commanded_distance,
+                ("stand", "crouch", "prone").index(normalized.stance),
+            )
+        )
         moved_distance = math.hypot(
             after["position_local_enu_m"][0] - before["position_local_enu_m"][0],
             after["position_local_enu_m"][1] - before["position_local_enu_m"][1],
@@ -391,6 +400,7 @@ class GroundInfantryNativeProbe:
             "before": before,
             "after": after,
             "transition_observation": transition_observation,
+            "transition_effects": transition_effects,
             "moved_distance_m": moved_distance,
             "blocked": blocked,
             "blocked_reason": blocked_reason,

@@ -169,6 +169,43 @@ def test_native_infantry_stance_changes_movement_cost() -> None:
     assert prone_speed == pytest.approx(stand_speed * 0.35, rel=1.0e-6)
 
 
+def test_native_infantry_transition_samples_movement_cost_across_surface_boundary() -> None:
+    sim = ef_py.SimulationKernel()
+    assert sim.load_database(_DATABASE)
+    sim.set_terrain_type("flat")
+    sim.set_time_step(1.0)
+    # Asphalt occupies x=[0, 1]. The soldier starts on soft dirt and the
+    # first one-second step crosses into the faster surface.
+    sim.add_zone("road_edge", 0.5, 0.0, 1.0, 4.0, 0.0, 1)
+
+    transition = list(
+        sim.get_ground_transition_movement_observation(-0.5, 0.0, 0.5, 0.0, 0)
+    )
+    assert len(transition) == 10
+    assert transition[0] == pytest.approx(0.0)
+    assert transition[1] == pytest.approx(1.0)
+    assert transition[9] >= 2.0
+    assert 0.0 < transition[7] <= transition[8] <= 1.0
+
+    entity_id = int(
+        sim.spawn_unit(ef_py.Side.Blue, "Ground_Infantry_Soldier_MVP", -0.5, 0.0, 0.0)
+    )
+    command = ef_py.MissionCommand()
+    command.active = True
+    command.cmd_heading_deg = 90.0
+    command.cmd_speed_mps = 1.5
+    command.ground_task_mode = ef_py.GroundTaskMode.MoveStatic
+    sim.set_command_link(entity_id, 0.0, 0.0)
+    sim.set_mission_command(entity_id, command)
+    sim.step()
+
+    speed = float(sim.get_unit_velocity(entity_id)[0])
+    # A start-cell-only implementation would stay at 1.5 * 0.75 * 0.875;
+    # the sampled boundary must produce a larger but still bounded speed.
+    assert speed > (1.5 * 0.75 * 0.875) + 1.0e-6
+    assert speed < 1.5
+
+
 def test_native_infantry_consumes_arnis_raster_and_stops_on_water() -> None:
     bundle = Path(_ARNIS_BUNDLE)
     manifest = json.loads((bundle / "bundle.json").read_text(encoding="utf-8"))

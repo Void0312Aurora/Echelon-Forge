@@ -1,5 +1,6 @@
 #include "core/interfaces/environment_model.h"
 #include "models/environment/default_environment_snapshot.h"
+#include "systems/domains/ground/movement_effects.h"
 
 #include <cmath>
 #include <cstring>
@@ -738,6 +739,39 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
                                              : (observation.obstacle_blocked ? SurfaceType::Obstacle
                                                                               : endpoint_surface);
         observation.passable = !observation.water_blocked && !observation.obstacle_blocked;
+        return observation;
+    }
+
+    GroundTransitionMovementObservation get_ground_transition_movement_observation(
+        double from_x, double from_y, double to_x, double to_y,
+        GroundStance stance) override {
+        GroundTransitionMovementObservation observation;
+        observation.transition = get_ground_transition_observation(from_x, from_y, to_x, to_y);
+        const double distance = observation.transition.distance_m;
+        const std::size_t sample_count = std::max<std::size_t>(
+            1, static_cast<std::size_t>(std::ceil(distance / 5.0)));
+        double multiplier_sum = 0.0;
+        double multiplier_min = std::numeric_limits<double>::infinity();
+        for (std::size_t index = 0; index <= sample_count; ++index) {
+            const double fraction = static_cast<double>(index) /
+                                    static_cast<double>(sample_count);
+            const double x = from_x + (to_x - from_x) * fraction;
+            const double y = from_y + (to_y - from_y) * fraction;
+            const auto terrain = get_terrain_at(x, y);
+            const auto effects = ground_infantry_movement_detail::evaluate_movement_effects(
+                terrain, get_ground_slope_deg(x, y), stance);
+            const double multiplier =
+                ground_infantry_movement_detail::finite_nonnegative(effects.combined_multiplier);
+            multiplier_sum += multiplier;
+            multiplier_min = std::min(multiplier_min, multiplier);
+        }
+        observation.sample_count = static_cast<std::uint32_t>(sample_count + 1);
+        observation.minimum_combined_multiplier =
+            std::isfinite(multiplier_min) ? multiplier_min : 0.0;
+        observation.average_combined_multiplier =
+            observation.sample_count > 0
+                ? multiplier_sum / static_cast<double>(observation.sample_count)
+                : 0.0;
         return observation;
     }
 

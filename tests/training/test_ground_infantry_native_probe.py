@@ -302,6 +302,10 @@ def test_native_ground_probe_reset_and_step_use_compiled_observation_surfaces() 
     assert transition.trace["authority"] == "native_probe_only"
     assert len(transition.trace["transition_observation"]) == 7
     assert transition.trace["transition_observation"][0] == pytest.approx(1.0)
+    assert len(transition.trace["transition_effects"]) == 10
+    assert transition.trace["transition_effects"][1] == pytest.approx(1.0)
+    assert transition.trace["transition_effects"][7] <= transition.trace["transition_effects"][8]
+    assert transition.trace["transition_effects"][9] >= 1.0
     assert transition.observation["state"][1] == pytest.approx(1.0)
     assert transition.observation["movement_effects"][6] == pytest.approx(0.65)
     assert transition.observation["position_local_enu_m"] != observation[

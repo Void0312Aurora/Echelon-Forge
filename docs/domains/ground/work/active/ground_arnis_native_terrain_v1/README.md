@@ -43,6 +43,11 @@ truth.
   to_y)` samples a local segment at 5 m intervals and returns passability plus
   water/obstacle/bridge evidence. This is a bounded transition probe only; it
   does not provide a route graph, waypoint planner, cover, or line of sight.
+- `SimulationKernel.get_ground_transition_movement_observation(...)` reuses the
+  same segment samples to return minimum/average combined movement multipliers
+  for a selected stance. Ground movement consumes the average after the local
+  transition is admitted; this remains a segment-cost observation, not a route
+  cost grid or general passability product.
 - Loading is transactional: an invalid candidate returns `false` without
   replacing the current provider raster.
 

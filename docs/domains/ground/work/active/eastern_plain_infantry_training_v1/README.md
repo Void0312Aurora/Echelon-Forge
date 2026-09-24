@@ -57,6 +57,9 @@ accepted.
   polyline. That validator reuses the native sampled transition evidence and
   reports the first blocked segment; it is sequence validation only, not a
   route graph or path planner.
+  Each native step trace also records the sampled segment movement effects
+  (minimum/average combined multiplier and sample count), so a policy trace can
+  distinguish start-cell cost from the terrain crossed during the step.
 - Gymnasium adapter over the native probe:
   `python/rl/ground/native_env.py` (`GroundInfantryNativeEnv`). It preserves
   the probe's reset/step/replay authority and is also explicitly
