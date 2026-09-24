@@ -353,6 +353,24 @@ bool SimulationKernel::load_arnis_terrain_bundle(const std::string &bundle_root)
     return false;
 }
 
+std::array<double, 5> SimulationKernel::get_ground_terrain_observation(double x, double y) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_ground_terrain_observation");
+    if (IEnvironmentModel *model = environment_model()) {
+        const IEnvironmentModel::TerrainCell cell = model->get_terrain_at(x, y);
+        return {cell.elevation,
+                static_cast<double>(cell.type),
+                cell.friction_mult,
+                cell.roughness,
+                cell.vegetation_density};
+    }
+    return {std::numeric_limits<double>::quiet_NaN(),
+            static_cast<double>(IEnvironmentModel::SurfaceType::Obstacle),
+            0.0,
+            1.0,
+            1.0};
+}
+
 void SimulationKernel::set_maritime_state(double sea_state, double wave_heading_deg,
                                           double wave_period_s) {
     auto composition_lock = acquire_composition_operation();

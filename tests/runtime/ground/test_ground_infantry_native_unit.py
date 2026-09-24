@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 import numpy as np
@@ -139,6 +140,18 @@ def test_native_infantry_consumes_arnis_raster_and_stops_on_water() -> None:
     assert sim.load_arnis_terrain_bundle(str(bundle))
     # A failed candidate must not clear the already admitted provider raster.
     assert not sim.load_arnis_terrain_bundle(str(bundle / "missing_candidate"))
+    water_sample = sim.get_ground_terrain_observation(
+        origin_x + water_col * step_x, origin_y + water_row * step_y
+    )
+    crop_sample = sim.get_ground_terrain_observation(
+        origin_x + cropland_col * step_x, origin_y + cropland_row * step_y
+    )
+    assert int(water_sample[1]) == 4  # IEnvironmentModel::SurfaceType::Water
+    assert int(crop_sample[1]) == 3  # IEnvironmentModel::SurfaceType::SoftDirt
+    assert math.isfinite(float(water_sample[0]))
+    assert math.isfinite(float(crop_sample[0]))
+    assert 0.0 <= float(crop_sample[3]) <= 1.0
+    assert 0.0 <= float(crop_sample[4]) <= 1.0
     water_id = int(
         sim.spawn_unit(
             ef_py.Side.Blue,

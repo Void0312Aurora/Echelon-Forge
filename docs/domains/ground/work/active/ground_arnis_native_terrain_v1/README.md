@@ -26,6 +26,9 @@ truth.
 - The native environment samples the signed metric grid directly. Permanent
   water and unknown/nodata cells stop the bounded infantry movement slice;
   crop/grass/tree-like classes currently share the soft-dirt movement cost.
+- `SimulationKernel.get_ground_terrain_observation(x, y)` exposes the native
+  sample as `(elevation, surface_type, friction, roughness,
+  vegetation_density)` for training-side adapters and diagnostics.
 - Loading is transactional: an invalid candidate returns `false` without
   replacing the current provider raster.
 

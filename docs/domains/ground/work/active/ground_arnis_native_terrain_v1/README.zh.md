@@ -22,6 +22,8 @@ fixture 元数据悄悄冒充成运行时真值。
   安全的子路径、精确字节长度以及有限的小端 float 高程。
 - 原生 environment 直接按带符号米制网格采样。永久水面和未知/nodata 单元会让当前
   有界单兵移动停下；农地/草地/树覆盖目前共用软土移动代价。
+- `SimulationKernel.get_ground_terrain_observation(x, y)` 向训练侧 adapter 和诊断暴露
+  原生采样，字段为 `(elevation, surface_type, friction, roughness, vegetation_density)`。
 - 加载具有事务性：候选包无效时返回 `false`，不替换当前 provider 栅格。
 
 ## 明确的非目标
