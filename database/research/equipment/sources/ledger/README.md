@@ -28,7 +28,8 @@ runtime authority.
 `domain`, `equipment`, `configuration`, `provenance_status`, `rights_status`, `retrieval_status`,
 `authority_status`, `scope_status`, `residual_status`, and `manifest_path`.
 
-All current rows default to `authority_status=non-authoritative`. Tier C
+All current manifests carry explicit rights, provenance, scope, retrieval and
+residual status fields. All rows default to `authority_status=non-authoritative`. Tier C
 community rows remain valid research candidates when their URL, scope and
 uncertainty are retained, but they are not calibration or runtime authority.
 

@@ -80,6 +80,7 @@ calibration package, inventory claim, or final simulation configuration.
 | R-35 | Verify and document canonical naval namespace | complete | `9a74b107` |
 | R-36 | Explicit manifest rights, provenance, and residual fields | complete | `f370ae1b` |
 | R-37 | Explicit Retrieval blocks for legacy source packages | complete | `c0c8134b` |
+| R-38 | Explicit manifest scope status | complete | `a6f1f9e0` |
 
 ## Blocker / skip ledger
 
