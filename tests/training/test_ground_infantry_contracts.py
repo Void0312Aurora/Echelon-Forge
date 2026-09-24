@@ -92,10 +92,13 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
     assert contract["rl_harness"]["native_probe"]["status"] == "native_probe_only"
     assert contract["rl_harness"]["native_probe"]["entrypoint"] == "python.rl.ground.native_probe:GroundInfantryNativeProbe"
     assert contract["rl_harness"]["native_probe"]["production_boundary"] == "not_world_batch"
+    assert contract["rl_harness"]["native_probe"]["waypoint_boundary"] == "fixed_direct_sequence_only"
     assert contract["rl_harness"]["native_env"]["status"] == "native_probe_only"
     assert contract["rl_harness"]["native_env"]["entrypoint"] == "python.rl.ground.native_env:GroundInfantryNativeEnv"
     assert contract["rl_harness"]["native_env"]["production_boundary"] == "not_world_batch"
     assert "mission_state" in contract["rl_harness"]["native_env"]["observation_fields"]
+    assert "waypoint_state" in contract["rl_harness"]["native_env"]["observation_fields"]
+    assert contract["rl_harness"]["native_env"]["waypoint_boundary"] == "fixed_direct_sequence_only"
     assert "command_state" in contract["rl_harness"]["native_env"]["observation_fields"]
     assert "health_state" in contract["rl_harness"]["native_env"]["observation_fields"]
     assert contract["command_projection"]["status"] == "partial_transport_only"
