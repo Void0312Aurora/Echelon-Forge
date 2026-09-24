@@ -114,6 +114,12 @@ reason now comes from the native sampled transition evidence when available
 current terrain cell. It is explicitly `native_probe_only` and remains outside
 production WorldBatch; route intent, learned policy training, and automatic
 weapon employment remain held.
+The probe also exposes `validate_waypoint_sequence()`, a read-only preflight of
+the configured direct polyline. It returns each native seven-field transition
+observation and the first blocked segment/reason, allowing a training reset to
+fail closed on an impossible fixture route without pretending to plan around
+it. This is sequence validation only; it does not create a route graph or a
+path-planning authority.
 `python/rl/ground/native_env.py` wraps that probe in a Gymnasium-compatible
 reset/step surface for training tooling. The wrapper does not add authority or
 alter the native trace; it remains outside production `WorldBatch`. Its

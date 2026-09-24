@@ -93,6 +93,22 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
         "stance_speed_multiplier",
         "combined_speed_multiplier",
     ]
+    assert contract["native_runtime_surfaces"]["direct_sequence_validation"]["status"] == "bounded_native_read_only_validation"
+    assert contract["native_runtime_surfaces"]["direct_sequence_validation"]["entrypoint"] == "GroundInfantryNativeProbe.validate_waypoint_sequence"
+    assert contract["native_runtime_surfaces"]["direct_sequence_validation"]["fields"] == [
+        "passable",
+        "segment_count",
+        "total_distance_m",
+        "blocked_segment_index",
+        "blocked_reason",
+        "segment_observations",
+    ]
+    assert contract["native_runtime_surfaces"]["direct_sequence_validation"]["does_not_claim"] == [
+        "route_graph",
+        "path_planning",
+        "cover",
+        "line_of_sight",
+    ]
     assert contract["map_profile"]["arnis_bundle_status"] == "verified_export_snapshot"
     assert contract["map_profile"]["companion_overlay"] == "field_overlay.v1"
     assert contract["map_profile"]["runtime_consumption"].startswith("held_until_")

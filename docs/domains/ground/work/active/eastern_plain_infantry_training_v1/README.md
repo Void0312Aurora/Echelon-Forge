@@ -53,6 +53,10 @@ accepted.
   the compiled kernel through reset/step/trace/replay and exposes the admitted
   terrain, owner-derived movement-effect, field-semantic, and weapon-state observations. Its authority is
   `native_probe_only`; it is not a production WorldBatch environment.
+  It also exposes a read-only validation of the configured direct waypoint
+  polyline. That validator reuses the native sampled transition evidence and
+  reports the first blocked segment; it is sequence validation only, not a
+  route graph or path planner.
 - Gymnasium adapter over the native probe:
   `python/rl/ground/native_env.py` (`GroundInfantryNativeEnv`). It preserves
   the probe's reset/step/replay authority and is also explicitly
