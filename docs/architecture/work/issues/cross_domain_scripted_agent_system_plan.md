@@ -555,3 +555,17 @@ to a dedicated owner-local evidence document.
   not establish fleet combat, weapon employment, general maneuver, reset/replay,
   or full Naval playable coverage. Probe JSON remains under the ignored build
   directory.
+
+### 2026-09-25 — Air same-process reset/replay probe
+
+- Starting commit: `8ca6184b`.
+- Scope: the compiled single-world Air runtime and the neutral
+  `air.execution.phase_scripted` lifecycle, with zero randomization and a
+  bounded four-step episode.
+- Direct verification: one environment was reset twice with the same seed and
+  the scripted model was rebuilt and closed for each run. Position, command,
+  waypoint, and baseline-mode arrays were exactly equal; the two summaries
+  matched and the probe exited 0.
+- Evidence boundary: this closes only the bounded same-process reset/replay
+  smoke gate. Full mission replay, command/report roundtrip, visualization,
+  multi-unit roster parity, and complete playable acceptance remain open.
