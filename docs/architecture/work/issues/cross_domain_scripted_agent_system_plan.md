@@ -1149,3 +1149,25 @@ to a dedicated owner-local evidence document.
   observe native chaff/flare acceptance and inventory/resource change, or log
   the first concrete scenario mismatch and use a bounded proxy. Jammer
   activation remains a separate owner decision.
+
+### 2026-09-25 — Air EW action-mode negative runtime probe
+
+- Starting commit: `27be956c`.
+- Direct command: the local compiled `WorldBatchVecEnv` ran the Stage 3
+  limited-weapons scenario for `2400` steps with
+  `air_ew_hybrid_v1`, `AirScriptedEWActionModel`, seed `0`, and the explicit
+  `countermeasure_ready` doctrine.
+- Direct result: the process remained finite and running with mission status
+  `[1, 0, 0, 0]`, but produced no RWR launch-warning rows and therefore no
+  natural chaff/flare requests. A separate one-step forced action probe did
+  carry transport tail `[1.0, 1.0]` through the environment with finite
+  reward, but exposed no maintained inventory/report state.
+- Residual: this entry point is not a valid EW acceptance scenario for the
+  new action mode under the tested seed/horizon. The exact 2400-step command
+  will not be repeated unchanged; a future gate must choose a scenario or
+  threat schedule that emits a declared launch warning and exposes a native
+  resource/report owner.
+- Evidence boundary: the result is a negative scenario-selection/runtime
+  finding, not an EW failure diagnosis and not playable evidence. EW remains
+  `entry_surface_incomplete`; jammer ownership and replay/multi-aircraft gates
+  remain open.
