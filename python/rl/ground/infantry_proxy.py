@@ -4,8 +4,9 @@ This module is an engineering scaffold for the eastern-plain training package.
 It consumes the frozen Arnis bundle and the metadata-only field overlay, but it
 does not install a runtime system, mutate ``SimulationKernel`` state, or claim
 passability/cover/fire authority.  The water and speed rules below are an
-explicit proxy policy so reset/step/replay work can progress while the native
-Ground movement and terrain owners are still held.
+explicit proxy policy so reset/step/replay and vector-semantic work can
+progress while native passability, cover, and track/sensor observation owners
+are still held.
 """
 
 from __future__ import annotations

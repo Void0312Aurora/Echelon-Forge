@@ -40,6 +40,11 @@ remain with their respective owners.
   is a single-agent movement primitive, not route following, passability,
   formation, or full land-combat dynamics. The admission record is
   [Ground Infantry Movement v1](work/active/ground_infantry_movement_v1/README.md).
+- The default environment provider can explicitly load the verified Arnis
+  continuous elevation/landcover raster pair, and the maintained kernel exposes
+  a bounded terrain observation tuple for training adapters. Arnis vector
+  semantics, native passability/bridge rules, and track/sensor observation
+  export remain held.
 - `src/systems/domains/ground/damage_system_ground.h` registers `GroundDamageStateUpdate`
   as a `domain = ground` system at stage 30 of the default composition. It matches
   the spawned ground entity and advances the ground-owned

@@ -34,7 +34,7 @@
     "route following, acceleration, fatigue, formation, and passability",
     "slope, wet-ground, river, bridge, and obstacle passability",
     "tree-line masking, cover, and line-of-sight",
-    "ground sensing, track fusion, and observation export",
+    "ground sensing, track fusion, and entity observation export",
     "direct fires, indirect fires, effects, damage, or suppression",
     "logistics, fatigue, medical state, or sustainment behavior"
   ]
