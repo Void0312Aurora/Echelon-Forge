@@ -16,6 +16,7 @@
 | Observation | `gym_envs/universal_env_parts/observations.py` exports `rwr` rows as bearing, signal strength, lock, and launch-warning fields; instruments also expose `rwr_active`. | A scripted agent can consume declared RWR evidence without World Truth. ESM/jammer state is not part of the maintained observation payload shown here. |
 | Command transport | `PilotAction` exposes `program_chaff` and `program_flare`; `legacy_command_bridge.h` resolves those fields into countermeasure commands. | The low-level transport exists, but it is not exposed by the maintained `full` or `air_combat_hybrid_v1` action vectors. |
 | Current action mapping | `gym_envs/universal_env_parts/actions.py` sets `program_chaff` and `program_flare` to `False` for the maintained action modes. | A scripted EW model cannot currently perform countermeasure actions through the normal Air action path. There is no maintained jammer action field. |
+| Versioned action extension | `air_ew_hybrid_v1` adds two explicit tail fields for chaff and flare and maps them to `PilotAction`; it remains outside the canonical `python.env_config.ACTION_MODES` list until a scenario/config owner and acceptance gate are admitted. | The transport shape is testable without changing existing full/hybrid indices, but no maintained scenario, CLI, or native inventory/report gate consumes it yet. |
 | Scripted producer | `python/tasking_contracts/air_scripted_ew.py` is registered in the aggregate Air registry as `air.ew.rwr_response_scripted` (`adapter`, `air_ew_controller`). It emits a typed RWR-derived intent and marks `native_action_owner_required`. | The producer is a contract/decision slice only. It is not an accepted countermeasure or jammer action, and it does not change the EW capability label. |
 
 ## Boundary
@@ -52,10 +53,11 @@ envelope may be shared with other domains.
 1. **Observation contract:** declare RWR and ESM fields, freshness, source,
    confidence, lock/launch semantics, and negative controls for hidden target
    truth.
-2. **Countermeasure action contract:** expose chaff/flare request fields in a
-   versioned Air-owned action extension or a new maintained action mode; map
-   those fields to `PilotAction` without changing the existing full-action
-   indices silently.
+2. **Countermeasure action contract:** the versioned `air_ew_hybrid_v1`
+   extension now exposes chaff/flare request fields and maps them to
+   `PilotAction` without changing existing full/hybrid indices. A maintained
+   scenario/config owner, resource/report evidence, and canonical action-mode
+   admission remain open.
 3. **Jammer command contract:** decide whether jammer activation is a direct
    Air intent or a command-layer product, then add a native owner for
    activation, bandwidth/angle/type, power/resource limits, and shutdown.
