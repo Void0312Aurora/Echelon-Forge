@@ -81,6 +81,7 @@ calibration package, inventory claim, or final simulation configuration.
 | R-36 | Explicit manifest rights, provenance, and residual fields | complete | `f370ae1b` |
 | R-37 | Explicit Retrieval blocks for legacy source packages | complete | `c0c8134b` |
 | R-38 | Explicit manifest scope status | complete | `a6f1f9e0` |
+| R-39 | AH-1Z Viper small research batch with A/B/C source boundaries | complete | `9be1a01f` |
 
 ## Blocker / skip ledger
 

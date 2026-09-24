@@ -41,32 +41,32 @@ Command: `python database/_work/check_equipment_tree.py`
 | --- | --- |
 | `C1` every referenced source id resolves | PASS, 0 dangling, 0 manifest/path mismatch |
 | `C2` backlog leaf binding (`Equipment ID`) | PASS after the `E2` backfill |
-| `C3` backlog vs coverage status | PASS, 105 of 105 coverage rows agree |
-| `C4` source admission floor | PASS; all 365 manifests now carry explicit rights/provenance/residual fields, with rights values still `not_recorded` |
+| `C3` backlog vs coverage status | PASS, 106 of 106 coverage rows agree |
+| `C4` source admission floor | PASS; all 368 manifests now carry explicit rights/provenance/residual fields, with rights values still `not_recorded` |
 | `C5` source-artifact consistency | PASS, no unnamed or aggregate package claims |
-| `C6` retrieval record | PASS, 233 citations remain advisory with failed/not_attempted/no_record status; all 365 packages now carry an explicit Retrieval block, including 157 `not_recorded` blocks |
-| `C7` field-level provenance | PASS, 2,275 parameter rows checked; 0 missing value/source/tier/uncertainty metadata findings |
-| `C8` materialized source ledger | PASS, 365 ledger rows match 365 manifests; 208 include retrieval+retention provenance and 157 include manifest+retention only; scope is explicit as complete/partial |
+| `C6` retrieval record | PASS, 233 citations remain advisory with failed/not_attempted/no_record status; all 368 packages now carry an explicit Retrieval block, including 157 `not_recorded` blocks |
+| `C7` field-level provenance | PASS, 2,298 parameter rows checked; 0 missing value/source/tier/uncertainty metadata findings |
+| `C8` materialized source ledger | PASS, 368 ledger rows match 368 manifests; 211 include retrieval+retention provenance and 157 include manifest+retention only; scope is explicit as complete/partial |
 
 Measured counts:
 
 | Metric | Value |
 | --- | --- |
-| Source packages (manifests) | 365 |
-| Materialized source-ledger rows | 365 |
-| Catalog leaves (carry `## Parameters`) | 149 |
-| Distinct source ids referenced by leaves | 365 |
+| Source packages (manifests) | 368 |
+| Materialized source-ledger rows | 368 |
+| Catalog leaves (carry `## Parameters`) | 150 |
+| Distinct source ids referenced by leaves | 368 |
 | Leaves without `Equipment ID` | 0 |
-| Backlog rows | 150 |
-| Coverage rows | 105 |
-| Status: `cataloged` / `parameter_complete` / `held` | 0 / 150 / 0 |
+| Backlog rows | 151 |
+| Coverage rows | 106 |
+| Status: `cataloged` / `parameter_complete` / `held` | 0 / 151 / 0 |
 
 ## Leaf Completeness Against The Queue
 
-The queue now calls all 150 rows `parameter_complete`, and the former M1252
+The queue now calls all 151 rows `parameter_complete`, and the former M1252
 `cataloged` leaf carries a complete research parameter table with an explicitly
 bounded Tier C mobility estimate. The checker therefore reports no stub leaf binding defect
-for the non-held queue rows. A separate catalog scan finds 231 README leaves: 149
+for the non-held queue rows. A separate catalog scan finds 232 README leaves: 150
 with a parameter table and 82 without one. The 82 are outside the current queue-
 binding defect and remain a depth follow-up rather than evidence of completed extraction.
 
@@ -74,23 +74,24 @@ binding defect and remain a depth follow-up rather than evidence of completed ex
 
 `coverage/README.md` describes `coverage.csv` as a discovery queue that feeds the
 backlog, and defines its `status` column as starting at `queued`. The file does not
-behave that way: its 105 rows are exactly the 105 in-scope `parameter_complete` rows of the
+behave that way: its 106 rows are exactly the 106 in-scope `parameter_complete` rows of the
 backlog, verified in both directions. It is an extract of the completed set, not a
 pre-backlog discovery surface.
 
 The content is therefore consistent; the documented role and the documented status
-vocabulary are not. This is a documentation drift, not a data defect.
+vocabulary are not. This is a documentation drift, not a data defect. The current
+extract contains 106 rows.
 
 ## Open Findings
 
 | Id | Finding | Evidence | State |
 | --- | --- | --- | --- |
-| `D2` | Source rights/redistribution are unresolved | C4 finds no missing rights field; the ledger records `rights_status=not_recorded` for all 365 packages | open; metadata shape is closed, but legal status still needs source-specific confirmation |
-| `D3` | 82 catalog leaves outside the non-held queue have no parameter table | catalog scan: 231 README leaves, 149 with `## Parameters`, 82 without; all 82 are recorded in [`catalog_scope_decisions_20260925.csv`](catalog_scope_decisions_20260925.csv) as hierarchy indexes or family parents with no `Equipment ID` | closed in R-34; excluded from the parameter queue rather than treated as incomplete equipment leaves |
+| `D2` | Source rights/redistribution are unresolved | C4 finds no missing rights field; the ledger records `rights_status=not_recorded` for all 368 packages | open; metadata shape is closed, but legal status still needs source-specific confirmation |
+| `D3` | 82 catalog leaves outside the non-held queue have no parameter table | catalog scan: 232 README leaves, 150 with `## Parameters`, 82 without; all 82 are recorded in [`catalog_scope_decisions_20260925.csv`](catalog_scope_decisions_20260925.csv) as hierarchy indexes or family parents with no `Equipment ID` | closed in R-34; excluded from the parameter queue rather than treated as incomplete equipment leaves |
 | `D4` | Parameter table shape split | 88 leaves use `Parameter \| Value \| Source \| Confidence`; 58 use the common `Field` form; 3 module/extended leaves use the other supported forms | open; C7 covers all five forms while new leaves default to the common `Field` form |
 | `D5` | Disjoint naval namespaces | Live tree check finds the canonical `catalog/naval/ships/surface-combatant/` path and no alternate `surface-combatants/` directory; the canonical rule is now documented | closed in R-35 |
-| `D6` | Ledger not materialized | `sources/ledger/ledger.csv` now indexes all 365 manifests; missing rights/scope/retrieval values remain explicit in the index | closed in R-31; source-admission debt remains visible |
-| `D7` | `coverage.csv` role and status vocabulary contradicted its own README | README now defines it as a discovery/index surface whose admitted rows mirror backlog status; 105 of 105 current rows are `parameter_complete` | closed in R-32 |
+| `D6` | Ledger not materialized | `sources/ledger/ledger.csv` now indexes all 368 manifests; missing rights/scope/retrieval values remain explicit in the index | closed in R-31; source-admission debt remains visible |
+| `D7` | `coverage.csv` role and status vocabulary contradicted its own README | README now defines it as a discovery/index surface whose admitted rows mirror backlog status; 106 of 106 current rows are `parameter_complete` | closed in R-32 |
 | `D8` | Country rows share a variant leaf without a stated rule | README and backlog docs now define operator-row versus shared-variant-leaf binding and prohibit silent operator-scope merging | closed in R-32 |
 | `D9` | `Equipment ID` scheme was not declared | README now defines country-owned `eq-*`, reusable `module-*`, and explicitly scoped country-less shared identities | closed in R-32 |
 
@@ -123,15 +124,16 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | A400M Atlas C.1 completion | Added RAF Atlas-specific fields and the Airbus 2025 manufacturer specification block; retained empty-weight and length differences rather than reconciling them |
 | Retrieval records (P-8/A400M) | Added successful Tavily-proxy retrieval records for the RAF pages and retained separate official Boeing/Airbus packages for the common data blocks |
 | R-31 evidence roles | Added explicit `direct_variant`, `family_context`, `bounded_estimate`, and `open` semantics; community/Tier C values remain non-authoritative and raw HTML is not retained |
-| R-31 source ledger | Materialized `sources/ledger/ledger.csv` from the 365 source manifests; missing rights, retrieval and scope fields are preserved as visible findings rather than inferred |
-| R-31 field provenance check | Added C7 metadata validation for 2,275 parameter rows and C8 exact manifest-to-ledger coverage; both pass |
+| R-31 source ledger | Materialized `sources/ledger/ledger.csv` from the 368 source manifests; missing rights, retrieval and scope fields are preserved as visible findings rather than inferred |
+| R-31 field provenance check | Added C7 metadata validation for 2,298 parameter rows and C8 exact manifest-to-ledger coverage; both pass |
 | R-32 identity and queue rules | Documented Equipment ID syntax, shared-leaf/operator-row binding, module identity, and the actual discovery/index role of `coverage.csv` |
-| R-33 ledger provenance status | Added explicit `provenance_status` to the source ledger; rights remain `not_recorded` for all 365 rows rather than being inferred |
+| R-33 ledger provenance status | Added explicit `provenance_status` to the source ledger; rights remain `not_recorded` for all 368 rows rather than being inferred |
 | R-34 catalog scope decisions | Classified all 82 no-parameter README nodes as hierarchy indexes or family parents, with path/title/evidence recorded in `catalog_scope_decisions_20260925.csv` |
 | R-35 naval namespace | Verified the alternate namespace is absent and documented `surface-combatant/` as the sole canonical path |
-| R-36 manifest admission fields | Added explicit rights, provenance, and residual status to all 365 manifests; unknown rights remain `not_recorded` and retrieval failures remain visible |
+| R-36 manifest admission fields | Added explicit rights, provenance, and residual status to all 368 manifests; unknown rights remain `not_recorded` and retrieval failures remain visible |
 | R-37 retrieval gap materialization | Added explicit `not_recorded` Retrieval blocks to the 157 legacy manifests that lacked one; no retrieval success is inferred |
-| R-38 manifest scope status | Added explicit `Scope status: complete/partial` to all 365 manifests; the 53 partial scopes remain visible in the ledger |
+| R-38 manifest scope status | Added explicit `Scope status: complete/partial` to all 368 manifests; the 53 partial scopes remain visible in the ledger |
+| R-39 AH-1Z small research batch | Added a named AH-1Z leaf plus NAVAIR, Bell and GlobalSecurity manifests; official/product/secondary boundaries remain explicit |
 | French C-130J-30 completion | Added the French Ministry's J-30 operating block for endurance, operating mass, cruise profile, crew and load configurations without overwriting the separate U.S. stretch-column definitions |
 | French C-130J-30 retrieval record | Replaced the stale access-only manifest with a successful Tavily-proxy retrieval record and a single-artifact title |
 | Voyager KC2 completion | Added the RAF KC2/KC3 fit and Airbus A330 MRTT structural, fuel, payload and conditioned-range block; carried fuel, offload and capacity remain distinct quantities |
@@ -189,7 +191,7 @@ The first pass reported these. All three are withdrawn.
 
 | Withdrawn | Why it was reported | Why it is withdrawn |
 | --- | --- | --- |
-| Dangling citation `p5-us-ground-m1a2sepv3-armytechnology` on the M1A2 SEP v3 leaf | An audit script that resolved source packages by declared `Source ID` under only part of the `raw/sources/` tree | The package exists at `raw/sources/army_technology/p5-us-ground-m1a2sepv3-armytechnology/manifest.md`, its `Source ID` line matches, and its own text names the geometry, crew, AGT1500, M256, FLIR, data-link and APU statements the leaf cites it for. The then-current C1 run confirmed 0 dangling ids; the present tree also resolves all 291 manifests |
+| Dangling citation `p5-us-ground-m1a2sepv3-armytechnology` on the M1A2 SEP v3 leaf | An audit script that resolved source packages by declared `Source ID` under only part of the `raw/sources/` tree | The package exists at `raw/sources/army_technology/p5-us-ground-m1a2sepv3-armytechnology/manifest.md`, its `Source ID` line matches, and its own text names the geometry, crew, AGT1500, M256, FLIR, data-link and APU statements the leaf cites it for. The then-current C1 run confirmed 0 dangling ids; the present tree also resolves all 368 manifests |
 | `coverage.csv` status not trustworthy | The file marked all 55 rows `parameter_complete` and held only 18 air rows against 70 in `air.csv` | The `air.csv` comparison was the observation, the conclusion was wrong. Both directions of the coverage-to-backlog comparison agree, so `C3` passes. The real defect is documentary and is now `D7` |
 | Source-reference count 169 against 193 on disk | The same partial-scan audit | The comparison mixed two denominators: 169 is the count of *distinct* ids leaves cite, against 193 *packages* on disk. Both are correct; the implied gap was not |
 
@@ -203,7 +205,7 @@ amend that standard.
 
 ## Explicit Overclaim Refusals
 
-- The 150 `parameter_complete` rows are research drafts. They are not calibrated, not
+- The 151 `parameter_complete` rows are research drafts. They are not calibrated, not
   cross-checked, and not runtime-eligible.
 - No file in this tree is consumed by the runtime loader.
 - Family names remain grouping nodes; only concrete variant leaves count as records.
