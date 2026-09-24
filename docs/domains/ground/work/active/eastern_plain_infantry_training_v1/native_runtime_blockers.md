@@ -3,7 +3,7 @@
 Document kind: `work-package evidence`
 Lifecycle: `active`
 Owner: `domains/ground`
-Last verified: `2026-09-24`
+Last verified: `2026-09-25`
 
 ## What was blocked and is now admitted
 
@@ -103,6 +103,11 @@ count for a selected stance. Ground movement consumes the segment average after
 the transition is admitted, so a step crossing a surface boundary no longer
 uses only the start-cell multiplier. This remains local segment movement cost,
 not a route-level cost grid or general passability product.
+The native acceptance suite also drives a soldier from one side of the fixture
+river to the other along the declared bridge segment in one bounded step. The
+position crosses the river and the sampled transition retains
+`bridge_admitted=1`; this is evidence for the admitted local bridge transition,
+not automatic bridge finding or route-level river-crossing planning.
 The same local terrain owner now exposes `SimulationKernel.get_ground_slope_deg`
 to the native probe, so the training trace can attribute movement cost to a
 replayable slope observation rather than recomputing it in Python. This remains

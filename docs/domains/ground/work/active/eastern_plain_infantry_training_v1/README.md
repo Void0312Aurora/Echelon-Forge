@@ -122,6 +122,12 @@ observation, and a fixed-direct-waypoint-sequence native Gym adapter; the substi
 keeps route/cover semantics moving without releasing a general passability
 claim.
 
+The acceptance suite also drives a soldier across the fixture river through the
+declared bridge segment in one bounded step. The native position crosses the
+river while retaining sampled movement effects and `bridge_admitted` evidence;
+this proves only the admitted local bridge transition, not bridge finding or
+route-level crossing planning.
+
 ## Explicit held items
 
 - automatic Arnis runtime setup and tree-line/settlement map-provider consumption;
