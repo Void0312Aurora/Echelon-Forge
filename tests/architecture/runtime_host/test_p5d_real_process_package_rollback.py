@@ -4,6 +4,8 @@ from copy import deepcopy
 import hashlib
 from pathlib import Path
 
+import pytest
+
 from tools.maintenance.p5d_process_rollback_drill import launch_runtime_process
 from tools.maintenance.p5d_rollout_operations import rehearse_package_restart
 from tools.maintenance.runtime_authority_contracts import authority_digest_sha256
@@ -146,6 +148,7 @@ def test_real_process_and_package_restart_are_bound_to_durable_backout(tmp_path:
       production_key_path=key_path,
       production_manifest_sha256=str(release["payload_sha256"]),
       production_plan_sha256=evidence_fixtures.PLAN,
+      production_package_digest=current_package,
     )
     assert process.observation["pid"] > 0
     assert process.observation["boot_identity"]
@@ -198,13 +201,37 @@ def test_real_process_and_package_restart_are_bound_to_durable_backout(tmp_path:
     )
     assert backed_out_retention["state"] == "backed-out"
     assert backed_out_retention["blobs"]["rollout_decision"]["retention_class"] == "rollback-window"
+    with pytest.raises(RuntimeError, match="runtime process exited before readiness"):
+      launch_runtime_process(
+        current_build,
+        epoch="epoch-package-rollback-wrong-build",
+        state_dir=tmp_path / "processes",
+        production_ledger_root=tmp_path / "ledger",
+        production_release_id=str(release["payload"]["release_id"]),
+        production_key_path=key_path,
+        production_manifest_sha256=str(release["payload_sha256"]),
+        production_plan_sha256="f" * 64,
+        production_package_digest=rollback_package,
+        production_authorization_required=False,
+      )
     rollback_process = launch_runtime_process(
       rollback_build,
       epoch="epoch-package-rollback",
       state_dir=tmp_path / "processes",
+      production_ledger_root=tmp_path / "ledger",
+      production_release_id=str(release["payload"]["release_id"]),
+      production_key_path=key_path,
+      production_manifest_sha256=str(release["payload_sha256"]),
+      production_plan_sha256="f" * 64,
+      production_package_digest=rollback_package,
+      production_authorization_required=False,
     )
     assert rollback_process.observation["epoch"] == "epoch-package-rollback"
     assert rollback_process.observation["boot_identity"] != source_boot_identity
+    assert rollback_process.observation["rollout_state"] == "backed-out"
+    assert rollback_process.observation["production_authorized"] is False
+    assert rollback_process.observation["rollout_package_digest"] == rollback_package
+    assert rollback_process.observation["rollout_wheel_digest"] == _sha256(rollback_binding)
     result = rehearse_package_restart(
       current_generation=1,
       target_generation=0,

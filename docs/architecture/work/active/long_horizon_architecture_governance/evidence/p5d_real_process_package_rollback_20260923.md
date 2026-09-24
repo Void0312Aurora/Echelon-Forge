@@ -1,6 +1,6 @@
 # P5-D Real Process And Package Rollback Evidence
 
-Status: `2026-09-23` — local supported-row rollback drill; production canary
+Status: `2026-09-24` — local supported-row rollback drill; production canary
 publication and P5-D acceptance remain open.
 
 This packet records the first executable process and package rollback drill
@@ -33,6 +33,11 @@ manifest, and RunReceipt binding.
    remains retained for the rollback window after backout.
 5. Start the rollback build in a new child process with a new epoch and verify
    the new boot identity, build path, native binding digest, and facade type.
+   The child now also checks that the imported `ef_py` module is the selected
+   build's binding and that the RunReceipt package and wheel digests match the
+   selected rollback build. Starting the current build against the backout
+   receipt is rejected before readiness; the backout process is admitted only
+   as a non-authoritative, evidence-bound process.
 6. Run the package restart drill contract with closed admission, finalized
    journals, source stop, caller resynchronization, and finalized receipt
    prerequisites.
@@ -56,11 +61,12 @@ P5-D durable admission, binding, gate, operations, rollback, and supported-row
 group passed **24 tests**; Ruff and the diff check passed.
 
 The child process reports the actual `RuntimeFacade` type and SHA-256 of the
-loaded `ef_py` binding, plus the production-canary state, release/plan
-identities, decision digest, and evidence-binding result. The parent asserts a
-new boot identity and epoch after the rollback process starts. The same child
-readiness record now carries Windows working-set and handle observations for
-the process lifetime; these are operational samples, not an approved resource
+loaded `ef_py` binding, plus the production-canary/backout state, release/plan
+identities, decision digest, package digest, wheel digest, and evidence-binding
+result. The parent asserts a new boot identity and epoch after the rollback
+process starts and rejects a mismatched current build. The same child
+readiness record carries Windows working-set and handle observations for the
+process lifetime; these are operational samples, not an approved resource
 budget. No test-only facade stub is used for this drill.
 
 ## Boundary
@@ -75,4 +81,4 @@ Document kind: `evidence`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5d_real_process_package_rollback_20260923.md`
 Owner: `release/runtime integration`
-Last verified: `2026-09-23`
+Last verified: `2026-09-24`

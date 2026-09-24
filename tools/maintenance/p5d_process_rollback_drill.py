@@ -159,6 +159,8 @@ def launch_runtime_process(
   production_key_path: str | Path | None = None,
   production_manifest_sha256: str | None = None,
   production_plan_sha256: str | None = None,
+  production_package_digest: str | None = None,
+  production_authorization_required: bool = True,
   timeout_s: float = 30.0,
 ) -> RuntimeProcess:
   """Start and observe one actual local ``RuntimeFacade`` process.
@@ -175,12 +177,13 @@ def launch_runtime_process(
     production_key_path,
     production_manifest_sha256,
     production_plan_sha256,
+    production_package_digest,
   )
   if any(value is not None for value in admission_values) and not all(
     value is not None for value in admission_values
   ):
     raise ValueError(
-      "production process admission requires ledger root, release, key, manifest, and plan"
+      "production process admission requires ledger root, release, key, manifest, plan, and package"
     )
 
   resolved_build = Path(build_dir).resolve()
@@ -211,7 +214,10 @@ def launch_runtime_process(
       "--production-key-path", str(Path(production_key_path).resolve()),
       "--production-manifest-sha256", str(production_manifest_sha256),
       "--production-plan-sha256", str(production_plan_sha256),
+      "--production-package-digest", str(production_package_digest),
     ])
+    if not production_authorization_required:
+      command.append("--production-skip-authorization")
   process = subprocess.Popen(
     command,
     cwd=root,
@@ -257,14 +263,23 @@ def launch_runtime_process(
           process.kill()
           process.wait(timeout=timeout_s)
           raise RuntimeError("runtime process rollout plan differs")
-        if observation.get("production_authorized") is not True:
+        expected_authorized = bool(production_authorization_required)
+        if observation.get("production_authorized") is not expected_authorized:
           process.kill()
           process.wait(timeout=timeout_s)
-          raise RuntimeError("runtime process did not prove production authorization")
+          raise RuntimeError("runtime process production-authorized state differs")
         if observation.get("evidence_bound") is not True:
           process.kill()
           process.wait(timeout=timeout_s)
           raise RuntimeError("runtime process did not prove release/receipt binding")
+        if observation.get("rollout_package_digest") != production_package_digest:
+          process.kill()
+          process.wait(timeout=timeout_s)
+          raise RuntimeError("runtime process rollout package digest differs")
+        if observation.get("rollout_wheel_digest") != _sha256(binding):
+          process.kill()
+          process.wait(timeout=timeout_s)
+          raise RuntimeError("runtime process rollout wheel digest differs")
       return RuntimeProcess(process, ready_path, stop_path, observation)
     if process.poll() is not None:
       stdout, stderr = process.communicate()
@@ -286,6 +301,12 @@ def _run_worker(args: argparse.Namespace) -> int:
 
   build_dir = Path(args.build_dir).resolve()
   binding = _find_native_binding(build_dir)
+  loaded_binding = Path(str(getattr(ef_py, "__file__", ""))).resolve()
+  if os.path.normcase(str(loaded_binding)) != os.path.normcase(str(binding.resolve())):
+    raise RuntimeError(
+      "selected local ef_py binding differs from the imported module: "
+      f"selected={binding.resolve()} imported={loaded_binding}"
+    )
   ledger = None
   adapter = None
   if args.production_ledger_root:
@@ -301,10 +322,12 @@ def _run_worker(args: argparse.Namespace) -> int:
         args.production_release_id,
         verification_key=verification_key,
       ),
-      require_production_admission=True,
+      require_production_admission=not args.production_skip_authorization,
       production_release_id=args.production_release_id,
       production_manifest_sha256=args.production_manifest_sha256,
       production_plan_sha256=args.production_plan_sha256,
+      production_package_digest=args.production_package_digest,
+      production_wheel_digest=_sha256(binding),
     )
     facade = adapter.facade
     admission = adapter.rollout_admission
@@ -328,6 +351,8 @@ def _run_worker(args: argparse.Namespace) -> int:
       "rollout_decision_sha256": admission.decision_sha256,
       "production_authorized": admission.production_authorized,
       "evidence_bound": adapter.rollout_evidence_binding is not None,
+      "rollout_package_digest": adapter.rollout_evidence_binding.package_digest,
+      "rollout_wheel_digest": adapter.rollout_evidence_binding.wheel_digest,
     })
   ready_path = Path(args.ready)
   ready_path.parent.mkdir(parents=True, exist_ok=True)
@@ -398,6 +423,8 @@ def main(argv: list[str] | None = None) -> int:
   parser.add_argument("--production-key-path")
   parser.add_argument("--production-manifest-sha256")
   parser.add_argument("--production-plan-sha256")
+  parser.add_argument("--production-package-digest")
+  parser.add_argument("--production-skip-authorization", action="store_true")
   args = parser.parse_args(argv)
   if not args.p5d_runtime_worker:
     parser.error("the worker entry point is internal; call launch_runtime_process from a drill")
