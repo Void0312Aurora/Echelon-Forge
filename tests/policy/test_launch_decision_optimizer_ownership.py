@@ -13,6 +13,10 @@ ensure_repo_imports()
 from gym_envs.universal_env_parts import make_action_space
 from python.rl.policy_algo._event_credit_mixin import _EventCreditMixin
 from python.rl.policy_algo._event_window_mixin import _EventWindowMixin
+from python.rl.policy_algo.model_contracts import (
+  LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,
+  LAUNCH_DECISION_CONTRACT_VERSION_KEY,
+)
 from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy
 
 
@@ -38,6 +42,7 @@ def _make_policy(mode: str | None) -> HierarchicalMoEExecutionPolicy:
   }
   if mode is not None:
     kwargs["launch_decision_mode"] = mode
+    kwargs[LAUNCH_DECISION_CONTRACT_VERSION_KEY] = LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION
   return HierarchicalMoEExecutionPolicy(
     _observation_space(),
     make_action_space("air_combat_hybrid_v1"),

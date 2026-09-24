@@ -8,12 +8,18 @@ from pathlib import Path
 
 import torch as th
 
-from python.rl.policy_algo.model_contracts import LaunchDecisionMode, resolve_launch_decision_contract
+from python.rl.policy_algo.model_contracts import (
+  LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,
+  LAUNCH_DECISION_CONTRACT_VERSION_KEY,
+  LaunchDecisionMode,
+  resolve_launch_decision_contract,
+)
 from python.rl.policy_checkpoint import (
   LaunchDecisionMigrationError,
   build_launch_decision_checkpoint_envelope,
   migrate_launch_decision_checkpoint_envelope,
   validate_launch_decision_checkpoint_envelope,
+  write_sb3_launch_decision_sidecar,
 )
 from python.training.deps import (
   LaunchDecisionConfigMigrationError,
@@ -22,6 +28,8 @@ from python.training.deps import (
 
 
 def _config(**kwargs):
+  if "launch_decision_mode" in kwargs or "launch_decision_owner_mode" in kwargs:
+    kwargs.setdefault(LAUNCH_DECISION_CONTRACT_VERSION_KEY, LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION)
   return {
     "policy": "HierarchicalMoEExecutionPolicy",
     "hyperparameters": {
@@ -43,6 +51,28 @@ def _replay_state():
     "positive_rows": [[1.0, 2.0]],
     "negative_rows": [[-1.0, -2.0]],
   }
+
+
+class _FakePolicy:
+  def state_dict(self):
+    return {"action_net.weight": th.zeros((2, 3))}
+
+  class _Optimizer:
+    def state_dict(self):
+      return {
+        "state": {"0": {"step": th.tensor(1)}},
+        "param_groups": [
+          {"name": "action", "params": [0], "parameter_roles": ["action_net"]},
+        ],
+      }
+
+  optimizer = _Optimizer()
+
+
+class _FakeModel:
+  policy = _FakePolicy()
+
+  replay_buffer = None
 
 
 class LaunchDecisionMigrationTests(unittest.TestCase):
@@ -122,20 +152,35 @@ class LaunchDecisionMigrationTests(unittest.TestCase):
         hybrid_event_head_lr_scale=10.0,
       )
     )
-    migrated = migrate_launch_decision_checkpoint_envelope(
-      envelope,
-      target_contract=target_contract,
-      migration_id="legacy_to_governed_v1",
-    )
-    self.assertTrue(migrated["migration"]["state_artifacts_preserved"])
-    self.assertEqual(
-      validate_launch_decision_checkpoint_envelope(migrated).mode,
-      LaunchDecisionMode.GOVERNED_COMPOSED_V1,
-    )
-    self.assertEqual(
-      migrated["state_dict_manifest"],
-      envelope["state_dict_manifest"],
-    )
+    with self.assertRaisesRegex(LaunchDecisionMigrationError, "no maintained checkpoint conversion"):
+      migrate_launch_decision_checkpoint_envelope(
+        envelope,
+        target_contract=target_contract,
+        migration_id="legacy_to_governed_v1",
+      )
+
+  def test_translation_rejects_conflicting_flat_and_nested_modes(self) -> None:
+    source = _config(hybrid_event_head_lr_scale=10.0)
+    source["launch_decision_mode"] = "governed_composed_v1"
+    source["hyperparameters"]["policy_kwargs"]["launch_decision_mode"] = "legacy_composed_v0"
+    with self.assertRaises(LaunchDecisionConfigMigrationError):
+      translate_launch_decision_config(source)
+
+  def test_sb3_sidecar_persists_contract_and_artifact_manifests(self) -> None:
+    config = _config(hybrid_event_head_lr_scale=10.0)
+    contract = resolve_launch_decision_contract(config)
+    with tempfile.TemporaryDirectory() as tmpdir:
+      sidecar = write_sb3_launch_decision_sidecar(
+        str(Path(tmpdir) / "model"),
+        model=_FakeModel(),
+        owner_contract=contract,
+        source_config_fingerprint="sha256:test-config",
+      )
+      payload = json.loads(Path(sidecar).read_text(encoding="utf-8"))
+      self.assertEqual(payload["owner_contract"], contract.as_dict())
+      self.assertIn("state_dict_manifest", payload)
+      self.assertIn("optimizer_manifest", payload)
+      self.assertIn("replay_manifest", payload)
 
   def test_missing_optimizer_or_replay_identity_fails_actionably(self) -> None:
     contract = resolve_launch_decision_contract(_config())
