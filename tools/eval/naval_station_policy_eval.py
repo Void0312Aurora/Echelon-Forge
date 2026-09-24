@@ -30,6 +30,10 @@ from python.tasking_contracts.scripted_capability import (
     parse_scripted_capability,
     resolve_scripted_model_id,
 )
+from python.tasking_contracts.scripted_runtime import (
+    ScriptedRuntimeAgent,
+    ScriptedRuntimeAgentSpec,
+)
 from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
 from python.training.bootstrap import validate_declared_training_entry_env_surface, validate_declared_training_entry_paths
 from python.experiment.report_envelope import add_report_envelope_arg, apply_report_envelope
@@ -346,19 +350,46 @@ def run_baseline_eval(
         **env_settings,
     )
     scripted_model = None
+    scripted_runtime_agent = None
+    scripted_runtime_decisions = 0
+    scripted_runtime_holds = 0
     try:
         env.seed(int(seed))
         obs = env.reset()
+        active_roster = _active_roster_summary(env)
         scripted_model = NAVAL_SCRIPTED_MODEL_REGISTRY.create_for(
             domain="naval",
             role_id="naval_warfare_commander",
             model_id=_scripted_model_id_for_scenario(scenario_path),
             action_dim=int(env.action_space.shape[0]),
         )
-        scripted_model.reset(context={"scenario": os.path.abspath(scenario_path)})
+        agent_id = next(
+            (
+                str(member.get("entity_name", "")).strip()
+                for member in active_roster
+                if bool(member.get("is_agent", False)) and str(member.get("entity_name", "")).strip()
+            ),
+            "naval.primary",
+        )
+        scripted_runtime_agent = ScriptedRuntimeAgent(
+            ScriptedRuntimeAgentSpec(
+                agent_id=agent_id,
+                model_id=_scripted_model_id_for_scenario(scenario_path),
+                domain="naval",
+                role_id="naval_warfare_commander",
+                decision_period_s=0.0,
+                action_hold_s=0.0,
+                communication_state="available",
+                authority_scope="naval_station_command",
+            ),
+            scripted_model,
+        )
+        scripted_runtime_agent.reset(
+            context={"scenario": os.path.abspath(scenario_path)},
+            episode_seed=int(seed),
+        )
 
         slot_control = _slot_control_summary(env)
-        active_roster = _active_roster_summary(env)
         reward_total = 0.0
         reward_terms_sum: dict[str, float] = defaultdict(float)
         reward_terms_last: dict[str, float] = {}
@@ -369,7 +400,18 @@ def run_baseline_eval(
         executed_steps = 0
 
         for _step in range(max(1, int(steps))):
-            action = scripted_model.decide(observation=obs, context={}, dt=0.05)
+            assert scripted_runtime_agent is not None
+            runtime_step = scripted_runtime_agent.step(
+                observation=obs,
+                clock_s=float(_step) * 0.05,
+                observation_version=f"obs:{_step}",
+                context={"scenario": os.path.abspath(scenario_path)},
+            )
+            action = runtime_step.action
+            if runtime_step.report.action_source == "decided":
+                scripted_runtime_decisions += 1
+            elif runtime_step.report.action_source == "held":
+                scripted_runtime_holds += 1
             action = np.asarray(action, dtype=np.float32).reshape(1, int(env.action_space.shape[0]))
             obs, rewards, dones, infos = env.step(action)
             reward = _finite_float(rewards[0], default=float("nan"))
@@ -432,9 +474,16 @@ def run_baseline_eval(
             "finite_reward": bool(finite_reward),
             "termination_counts": dict(termination_counts),
             "final_mission_status": _mission_status_list(final_info),
+            "scripted_runtime_decisions": int(scripted_runtime_decisions),
+            "scripted_runtime_holds": int(scripted_runtime_holds),
+            "scripted_runtime_identity": (
+                scripted_runtime_agent.replay_identity if scripted_runtime_agent is not None else ""
+            ),
         }
     finally:
-        if scripted_model is not None:
+        if scripted_runtime_agent is not None:
+            scripted_runtime_agent.close()
+        elif scripted_model is not None:
             scripted_model.close()
         env.close()
 
