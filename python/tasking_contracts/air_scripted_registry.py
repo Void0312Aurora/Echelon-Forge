@@ -6,6 +6,7 @@ from .air_scripted_engagement import (
     AIR_SCRIPTED_ENGAGEMENT_MODEL_ID,
     make_air_scripted_engagement_model,
 )
+from .air_scripted_ew import AIR_SCRIPTED_EW_MODEL_ID, make_air_scripted_ew_model
 from .air_scripted_execution import (
     AIR_SCRIPTED_EXECUTION_MODEL_ID,
     make_air_scripted_execution_model,
@@ -32,6 +33,17 @@ AIR_SCRIPTED_MODEL_REGISTRY = ScriptedModelRegistry(
             note=(
                 "C2/ROE-derived tactical event overlay composed with the neutral "
                 "Air phase execution model; direct scenario admission remains open."
+            ),
+        ),
+        ScriptedModelRegistration(
+            model_id=AIR_SCRIPTED_EW_MODEL_ID,
+            domain="air",
+            role_ids=("air_ew_controller",),
+            factory=make_air_scripted_ew_model,
+            status="adapter",
+            note=(
+                "RWR-derived EW response intent; countermeasure and jammer "
+                "native action ownership remains open."
             ),
         ),
     )
