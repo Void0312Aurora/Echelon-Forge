@@ -39,13 +39,13 @@ The checked-out tree currently derives:
 
 | Measure | Result |
 | --- | ---: |
-| Architecture test files | 113 |
-| Manifest entries | 113 |
+| Architecture test files | 114 |
+| Manifest entries | 114 |
 | Tier manifests | 2 |
 | Runner manifests with owner/lane metadata | 4 |
 | Owners / execution strategies | 2 / 2 |
-| Files with source-scan references | 111 |
-| Files retaining the `source_scan_guard` residual flag | 86 |
+| Files with source-scan references | 112 |
+| Files retaining the `source_scan_guard` residual flag | 87 |
 | Files selected by the pytest smoke manifest | 34 |
 | Native CTest entries with a primary lane label | 25 |
 
