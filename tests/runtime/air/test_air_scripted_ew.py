@@ -3,12 +3,21 @@ from __future__ import annotations
 import numpy as np
 
 from python.tasking_contracts.air_scripted_ew import (
+    AIR_EW_HYBRID_ACTION_DIM,
+    AIR_SCRIPTED_EW_ACTION_MODEL_ID,
     AIR_SCRIPTED_EW_MODEL_ID,
+    AirScriptedEWActionModel,
     AirScriptedEWIntent,
     AirScriptedEWModel,
 )
 from python.tasking_contracts.air_scripted_registry import AIR_SCRIPTED_MODEL_REGISTRY
 from python.tasking_contracts.scripted_registry import ScriptedDecisionModel
+from gym_envs.universal_env_parts import (
+    AIR_EW_HYBRID_V1_ACTION_MODE,
+    build_pilot_action,
+    expected_action_dim,
+    make_action_space,
+)
 
 
 def _observation(*rows: list[float]) -> dict[str, np.ndarray]:
@@ -54,4 +63,37 @@ def test_ew_model_defers_without_declared_response_doctrine_and_handles_empty_rw
 def test_ew_model_is_registered_in_the_aggregate_air_registry_as_adapter() -> None:
     entries = AIR_SCRIPTED_MODEL_REGISTRY.resolve(domain="air", role_id="air_ew_controller")
     assert [entry.model_id for entry in entries] == [AIR_SCRIPTED_EW_MODEL_ID]
+    assert entries[0].status == "adapter"
+
+
+def test_ew_action_extension_maps_countermeasure_bits_without_changing_full_indices() -> None:
+    assert expected_action_dim(AIR_EW_HYBRID_V1_ACTION_MODE) == AIR_EW_HYBRID_ACTION_DIM
+    action_space = make_action_space(AIR_EW_HYBRID_V1_ACTION_MODE)
+    action = np.zeros((AIR_EW_HYBRID_ACTION_DIM,), dtype=np.float32)
+    action[12] = 1.0
+    action[13] = 1.0
+    pilot = build_pilot_action(action, action_mode=AIR_EW_HYBRID_V1_ACTION_MODE)
+    assert pilot.program_chaff is True
+    assert pilot.program_flare is True
+
+
+def test_ew_action_model_emits_versioned_extension_and_is_registered_as_adapter() -> None:
+    model = AirScriptedEWActionModel()
+    obs = {
+        "instruments": np.zeros((31,), dtype=np.float32),
+        "mission": np.asarray([1.0, 90.0, 1000.0, 120.0], dtype=np.float32),
+        "rwr": np.asarray([[0.0, 0.8, 1.0, 1.0]], dtype=np.float32),
+    }
+    model.reset(context={"observation": obs, "phase_name": "stable_flight"})
+    action = model.decide(
+        observation=obs,
+        context={"response_doctrine": "countermeasure_ready", "observation_version": "rwr:1"},
+        dt=0.05,
+    )
+    assert action.shape == (AIR_EW_HYBRID_ACTION_DIM,)
+    assert action[12] == 1.0
+    assert action[13] == 1.0
+    model.close()
+    entries = AIR_SCRIPTED_MODEL_REGISTRY.resolve(domain="air", role_id="air_ew_action_controller")
+    assert [entry.model_id for entry in entries] == [AIR_SCRIPTED_EW_ACTION_MODEL_ID]
     assert entries[0].status == "adapter"

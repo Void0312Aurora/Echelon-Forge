@@ -9,12 +9,15 @@ from .common import spaces
 NAVAL_STATION3_ACTION_MODE = "naval_station3"
 AIR_COMBAT_HYBRID_V1_ACTION_MODE = "air_combat_hybrid_v1"
 AIR_COMBAT_HYBRID_V1_ACTION_DIM = 12
+AIR_EW_HYBRID_V1_ACTION_MODE = "air_ew_hybrid_v1"
+AIR_EW_HYBRID_V1_ACTION_DIM = 14
 _ACTION_DIMS = {
     "full": 17,
     "takeoff2": 2,
     "takeoff4": 4,
     NAVAL_STATION3_ACTION_MODE: 3,
     AIR_COMBAT_HYBRID_V1_ACTION_MODE: AIR_COMBAT_HYBRID_V1_ACTION_DIM,
+    AIR_EW_HYBRID_V1_ACTION_MODE: AIR_EW_HYBRID_V1_ACTION_DIM,
 }
 _FULL_ACTION_LOW = np.array(
     [-1.0, -1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
@@ -32,6 +35,12 @@ _AIR_COMBAT_HYBRID_V1_ACTION_HIGH = np.array(
     [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 7.0],
     dtype=np.float32,
 )
+_AIR_EW_HYBRID_V1_ACTION_LOW = np.concatenate(
+    [_AIR_COMBAT_HYBRID_V1_ACTION_LOW, np.array([0.0, 0.0], dtype=np.float32)]
+).astype(np.float32, copy=False)
+_AIR_EW_HYBRID_V1_ACTION_HIGH = np.concatenate(
+    [_AIR_COMBAT_HYBRID_V1_ACTION_HIGH, np.array([1.0, 1.0], dtype=np.float32)]
+).astype(np.float32, copy=False)
 
 
 def expected_action_dim(action_mode: str) -> int:
@@ -54,6 +63,12 @@ def make_action_space(action_mode: str):
         return spaces.Box(
             low=_AIR_COMBAT_HYBRID_V1_ACTION_LOW,
             high=_AIR_COMBAT_HYBRID_V1_ACTION_HIGH,
+            dtype=np.float32,
+        )
+    if action_mode == AIR_EW_HYBRID_V1_ACTION_MODE:
+        return spaces.Box(
+            low=_AIR_EW_HYBRID_V1_ACTION_LOW,
+            high=_AIR_EW_HYBRID_V1_ACTION_HIGH,
             dtype=np.float32,
         )
     if action_mode == "takeoff2":
