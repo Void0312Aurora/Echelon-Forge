@@ -1252,3 +1252,25 @@ to a dedicated owner-local evidence document.
 - Continuation choice: use the roster slice as the Air multi-role seam while
   the next runtime batch selects a native engagement or EW acceptance owner;
   do not infer playable promotion from pure model outputs.
+
+### 2026-09-25 — Air database staging inventory probe
+
+- Source boundary: read-only inspection of the separate
+  `codex/database-scaffold` worktree at commit `505318b9`; its worktree was
+  clean and no files were copied or modified from this task.
+- Direct result: the runtime-facing database layer currently exposes staged
+  aircraft unit records for `F-16C_Block50`, `Su-35S_Flanker-E`,
+  `MQ-9_Reaper`, `E-3_Sentry_AWACS`, and `MH-60R_MVP`. The research catalog
+  also contains a draft AH-1Z leaf (`eq-us-air-ah1z`) with explicit
+  `parameter_complete` research status but no runtime-authority claim.
+- Admission rule: the database worktree can supply candidate platform/module
+  inputs for the Air large-scale demonstration only after a source commit,
+  dirty-state snapshot, schema validation, and scenario-loader admission are
+  recorded. A research leaf alone cannot promote an Air unit or scripted role.
+- Evidence boundary: this is a candidate inventory and provenance record;
+  no new unit was admitted, no scenario was changed, and no capability label
+  moved. Large-scale composition remains open alongside multi-aircraft
+  mission parity and tactical/EW terminal closure.
+- Continuation choice: use the existing runtime-facing F-16/Su-35/MQ-9/E-3
+  records for a future bounded roster scenario first; treat AH-1Z and other
+  research leaves as staged inputs pending loader compatibility evidence.
