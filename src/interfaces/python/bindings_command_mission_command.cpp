@@ -34,6 +34,7 @@ void bind_command_mission_command(nb::module_ &m) {
         .def_rw("objective_node_id", &MissionCommand::objective_node_id)
         .def_rw("ground_commander_id", &MissionCommand::ground_commander_id)
         .def_rw("tactical_cadence_hz", &MissionCommand::tactical_cadence_hz)
+        .def_rw("ground_stance", &MissionCommand::stance)
         .def_rw("recovery_base_id", &MissionCommand::recovery_base_id)
         .def_rw("recovery_runway_id", &MissionCommand::recovery_runway_id)
         .def_rw("recovery_approach_type", &MissionCommand::recovery_approach_type)
@@ -65,7 +66,8 @@ void bind_command_mission_command(nb::module_ &m) {
         .def_rw("ground_commander_id",
                 &MissionCommandGround::StaticTaskDirective::ground_commander_id)
         .def_rw("tactical_cadence_hz",
-                &MissionCommandGround::StaticTaskDirective::tactical_cadence_hz);
+                &MissionCommandGround::StaticTaskDirective::tactical_cadence_hz)
+        .def_rw("ground_stance", &MissionCommandGround::StaticTaskDirective::stance);
 
     nb::class_<MissionCommandGround>(m, "MissionCommandGround")
         .def(nb::init<>())
@@ -73,7 +75,8 @@ void bind_command_mission_command(nb::module_ &m) {
         .def_rw("objective_area_id", &MissionCommandGround::objective_area_id)
         .def_rw("objective_node_id", &MissionCommandGround::objective_node_id)
         .def_rw("ground_commander_id", &MissionCommandGround::ground_commander_id)
-        .def_rw("tactical_cadence_hz", &MissionCommandGround::tactical_cadence_hz);
+        .def_rw("tactical_cadence_hz", &MissionCommandGround::tactical_cadence_hz)
+        .def_rw("ground_stance", &MissionCommandGround::stance);
 
     m.def(
         "mission_command_ground_owner_slice",

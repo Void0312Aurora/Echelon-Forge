@@ -54,7 +54,7 @@
       "desired_speed_fraction",
       "ground_static_task"
     ],
-    "held_fields": ["stance", "route_intent"],
+    "held_fields": ["route_intent"],
     "execution_gate": "native_ground_movement_consumer"
   },
   "observation_space": {

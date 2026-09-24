@@ -22,7 +22,7 @@
     "platform_family": "dismounted_infantry",
     "doctrine_family": "land_tactics",
     "mobility_declaration": "foot_mobility_field_training_v1",
-    "movement_behavior": "native_static_step_with_surface_and_slope_cost_v1"
+    "movement_behavior": "native_static_step_with_surface_slope_and_stance_cost_v1"
   },
   "_training_boundary": {
     "role": "single_agent_navigation_and_environment_observation",

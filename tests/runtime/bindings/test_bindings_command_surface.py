@@ -390,6 +390,7 @@ class BindingsCommandSurfaceTests(unittest.TestCase):
         "form_offset_z",
         "formation_id",
         "ground_commander_id",
+        "ground_stance",
         "ground_task_mode",
         "launch_helo",
         "objective_area_id",

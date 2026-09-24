@@ -48,9 +48,9 @@ accepted.
   RL reset/step/observation/reward/termination/trace boundary only; its
   authority remains `engineering_proxy_only`.
 - Maintained command projection:
-  `python/rl/ground/command.py`. It carries the representable heading/speed
-  and existing Ground static-task slice through the batch contract, while
-  rejecting stance/route fields that the current native command shape cannot
+  `python/rl/ground/command.py`. It carries heading/speed, native stance, and
+  the existing Ground static-task slice through the batch contract, while
+  rejecting route fields that the current native command shape cannot
   represent.
 
 The proxy observation now includes explicit tree-line and settlement distance/

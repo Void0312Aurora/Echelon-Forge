@@ -79,6 +79,7 @@ def test_representable_ground_action_projects_to_native_command_and_batch_slice(
     assert float(command.cmd_heading_deg) == 90.0
     assert float(command.cmd_speed_mps) == 1.0
     assert command.ground_task_mode == ef_py.GroundTaskMode.MoveStatic
+    assert command.ground_stance == ef_py.GroundStance.Stand
     assert int(command.objective_node_id) == 42
 
     assignment = build_ground_infantry_maintained_assignment(
@@ -93,12 +94,13 @@ def test_representable_ground_action_projects_to_native_command_and_batch_slice(
         assignment.mission_command.ground_static_task.ground_task_mode
         == ef_py.GroundTaskMode.MoveStatic
     )
+    assert assignment.mission_command.ground_static_task.ground_stance == ef_py.GroundStance.Stand
     assert int(assignment.mission_command.ground_static_task.objective_node_id) == 42
 
 
 def test_native_command_projection_rejects_unrepresentable_tactical_fields() -> None:
-    with pytest.raises(GroundInfantryProxyError, match="cannot represent stance"):
-        build_ground_infantry_mission_command([0.0, 1.0, 1.0, 0.0])
+    crouched = build_ground_infantry_mission_command([0.0, 1.0, 1.0, 0.0])
+    assert crouched.ground_stance == ef_py.GroundStance.Crouch
     with pytest.raises(GroundInfantryProxyError, match="cannot represent route_intent"):
         build_ground_infantry_mission_command([0.0, 1.0, 0.0, 3.0])
 

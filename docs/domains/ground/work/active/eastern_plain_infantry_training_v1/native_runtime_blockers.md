@@ -51,12 +51,14 @@ classes; the native provider does not yet consume the bundle's vector features.
 The existing C++ maintained command contract already carries
 `ground_static_task`; the Python binding now exposes that slice as well.  This
 removes a transport omission. The new movement system now consumes the admitted
-`MoveStatic` subset while leaving richer action fields held.
+`MoveStatic` subset. The native command now carries `GroundStance` and the
+movement system applies bounded stand/crouch/prone speed costs; this does not
+release cover, concealment, exposure, or weapons.
 
-`python/rl/ground/command.py` therefore projects only the representable
-heading/speed plus static-task fields.  It rejects crouch/prone stance and
-non-direct route intents because the current native command shape has no such
-fields; silently dropping them would make the training trace dishonest.
+`python/rl/ground/command.py` therefore projects representable heading/speed,
+stance, and static-task fields. It still rejects non-direct route intents because
+the current native command shape has no route field; silently dropping it would
+make the training trace dishonest.
 
 The proxy observation additionally exposes tree-line/settlement distance and
 bearing plus river/bridge flags.  These fields are deliberately labelled

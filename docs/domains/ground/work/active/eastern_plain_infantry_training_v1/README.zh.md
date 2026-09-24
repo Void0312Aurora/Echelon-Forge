@@ -38,9 +38,9 @@ Owner：`domains/ground`，环境输入由 `systems/environment` 负责
 - Gymnasium 契约 harness：`python/rl/ground/proxy_env.py`
   （`GroundInfantryProxyEnv`）。它只验证 RL 的 reset/step/观测/奖励/终止/轨迹边界，
   权威级别仍是 `engineering_proxy_only`。
-- maintained 命令投影：`python/rl/ground/command.py`。它把当前命令结构能够表达的
-  heading/speed 和已有 Ground static-task 片段送入批量契约；对于当前原生命令结构
-  无法表达的 stance/route 字段会直接拒绝，而不是静默丢弃。
+- maintained 命令投影：`python/rl/ground/command.py`。它把 heading/speed、原生 stance
+  和已有 Ground static-task 片段送入批量契约；对于当前原生命令结构无法表达的 route
+  字段会直接拒绝，而不是静默丢弃。
 
 代理观测现在包含树带/聚落距离与方位，以及河流/桥面标志；这些仍是可重放的
 engineering products。原生 provider 现在准入连续 Arnis 高程/地表覆盖采样，并暴露有界

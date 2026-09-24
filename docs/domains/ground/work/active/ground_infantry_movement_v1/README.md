@@ -32,6 +32,9 @@ formations, or full physics.
   load operation, not automatic runtime setup.
 - Command transport remains the maintained command path; the focused test sets
   zero link latency only to isolate the movement stage.
+- `GroundStance` accepts `Stand`, `Crouch`, and `Prone` through the maintained
+  command shell. It changes movement cost only (1.0, 0.65, and 0.35); it does
+  not imply cover, concealment, exposure, or weapon behavior.
 
 ## Explicit non-goals
 

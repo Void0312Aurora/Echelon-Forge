@@ -123,6 +123,11 @@ void bind_command_enums(nb::module_ &m) {
         .value("OccupyStatic", GroundTaskMode::OccupyStatic)
         .value("SupportStatic", GroundTaskMode::SupportStatic);
 
+    nb::enum_<GroundStance>(m, "GroundStance")
+        .value("Stand", GroundStance::Stand)
+        .value("Crouch", GroundStance::Crouch)
+        .value("Prone", GroundStance::Prone);
+
     nb::enum_<GroundStatusPhase>(m, "GroundStatusPhase")
         .value("Unspecified", GroundStatusPhase::Unspecified)
         .value("Assigned", GroundStatusPhase::Assigned)
