@@ -6,6 +6,7 @@ import pytest
 from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index
 from python.tasking_contracts.air_scripted_engagement import (
     AIR_COMBAT_C2_ROE_V2,
+    AIR_COMBAT_HYBRID_ACTION_DIM,
     AIR_SCRIPTED_ENGAGEMENT_MODEL_ID,
     AirScriptedEngagementModel,
 )
@@ -67,6 +68,23 @@ def test_engagement_model_emits_one_fire_pulse_and_respects_assessment() -> None
     blocked = model.decide(observation=pending, context={"phase_name": "stable_flight"}, dt=0.05)
     assert blocked[14] == 0.0
     assert model.last_decision_info["pending_assessment"] is True
+    model.close()
+
+
+def test_engagement_model_maps_the_maintained_hybrid_action_layout() -> None:
+    model = AirScriptedEngagementModel(action_dim=AIR_COMBAT_HYBRID_ACTION_DIM)
+    hold = _observation(contact=True, fire_window=False)
+    open_window = _observation(contact=True, fire_window=True)
+    model.reset(context={"observation": hold, "phase_name": "stable_flight"})
+    first = model.decide(observation=open_window, context={"phase_name": "stable_flight"}, dt=0.05)
+    second = model.decide(observation=open_window, context={"phase_name": "stable_flight"}, dt=0.05)
+    assert first.shape == (AIR_COMBAT_HYBRID_ACTION_DIM,)
+    assert np.isfinite(first).all()
+    assert first[6] == 1.0
+    assert first[7] == 1.0
+    assert first[8] == 1.0
+    assert first[9] == 1.0
+    assert second[9] == 0.0
     model.close()
 
 
