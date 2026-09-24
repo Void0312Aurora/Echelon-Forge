@@ -50,13 +50,13 @@ Measured counts:
 
 | Metric | Value |
 | --- | --- |
-| Source packages (manifests) | 319 |
-| Catalog leaves (carry `## Parameters`) | 124 |
-| Distinct source ids referenced by leaves | 319 |
+| Source packages (manifests) | 326 |
+| Catalog leaves (carry `## Parameters`) | 128 |
+| Distinct source ids referenced by leaves | 326 |
 | Leaves without `Equipment ID` | 0 |
-| Backlog rows | 133 |
+| Backlog rows | 137 |
 | Coverage rows | 105 |
-| Status: `cataloged` / `parameter_complete` / `held` | 2 / 123 / 8 |
+| Status: `cataloged` / `parameter_complete` / `held` | 2 / 127 / 8 |
 
 ## Leaf Completeness Against The Queue
 
@@ -147,6 +147,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | Chinese fighter/bomber completion batch | Promoted J-11B/BS, J-15 and H-6K after adding named armament, crew, avionics/mission-system and empty-mass blocks; B/BS, baseline/STOBAR, engine-batch and 79/95 t mass boundaries remain explicit |
 | Chinese AEW/tanker/utility-aircraft completion batch | Promoted KJ-500, YY-20A and Z-20 after adding named radar/refuelling/flight-control and crew/fuel rows; dimensional and fuel conflicts remain source-bounded |
 | Small-arms expansion batch | Added M4A1, AK-74M, FN SCAR-L Mk2 STD and HK416 A5 14.5-inch with variant-specific geometry, mass, operation, feed and rate fields; AK-74M government/community conventions remain separate |
+| Machine-gun expansion batch | Added M249, PKM, MG3 and MG4 with sourced caliber, feed, geometry, mass, rate and employment fields; differing range and bolt-rate conventions remain explicit |
 
 ## Retracted Findings
 
