@@ -6,11 +6,11 @@ damage surface, but does not own mission/tasking orchestration or facades.
 
 This directory owns two bounded systems: the ground damage response and the
 single-agent infantry movement primitive. It is not a complete ground runtime:
-route following, passability, sensing, fires, logistics, and observation export
-remain outside this admission. The damage system matches spawned ground entities
-and advances the ground-owned state, while `GroundInfantryMovement` consumes the
-maintained `MissionCommand` ground slice and applies deterministic surface/slope
-costs through the shared environment model.
+route following, general passability, sensing, fires, logistics, and observation
+export remain outside this admission. The damage system matches spawned ground
+entities and advances the ground-owned state, while `GroundInfantryMovement`
+consumes the maintained `MissionCommand` ground slice and applies deterministic
+surface/slope costs plus the environment's local sampled transition check.
 
 ## Allowed
 
@@ -29,8 +29,8 @@ costs through the shared environment model.
 - Defining ground platform components or command/tasking DTOs.
 - Mission rewards, termination, scenario compilation, or episode transitions.
 - Python bindings, facades, training scripts, or multi-world owners.
-- Ground route following, terrain passability, formations, sensing, or fires,
-  none of which this slice implements or claims.
+- Ground route following, general passability planning, formations, sensing, or
+  fires, none of which this slice implements or claims.
 - A ground-only scheduler, packet family, or command/status pipeline.
 
 ## Current Files

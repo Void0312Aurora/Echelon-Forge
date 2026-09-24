@@ -45,13 +45,13 @@ formations, or full physics.
 ## Explicit non-goals
 
 This package does not admit route following, waypoint planning, formation
-behavior, acceleration, fatigue, cover/concealment, line of sight, river or
-bridge passability, indirect fires, suppression, logistics, or RL policy
-training. The native provider now consumes bounded Arnis hydrology and bridge
-road vectors; tree lines, settlements, structures, route graphs, and general
-passability remain later packages. The movement consumer blocks any sampled
-one-tick segment that intersects water or an unknown/obstacle cell without
-advancing the transform; this is not a route graph or general path planner.
+behavior, acceleration, fatigue, cover/concealment, line of sight, indirect
+fires, suppression, logistics, or RL policy training. The native provider now
+consumes bounded Arnis hydrology and bridge road vectors; tree lines,
+settlements, structures, route graphs, and general passability remain later
+packages. The movement consumer blocks any sampled one-tick segment that
+intersects water or an unknown/obstacle cell without advancing the transform;
+this is a local transition check, not a route graph or general path planner.
 
 ## Evidence
 
