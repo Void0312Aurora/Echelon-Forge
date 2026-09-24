@@ -1043,3 +1043,29 @@ to a dedicated owner-local evidence document.
 - Continuation choice: select the smallest maintained joint task-graph
   producer/consumer slice next, without coupling it to the Air C2 landing,
   EW action-surface, or tactical assessment residuals.
+
+### 2026-09-25 — Joint task-graph producer contract slice
+
+- Starting commit: `8dcb8af1`.
+- Change batch: add the dependency-terminal
+  `ScriptedJointTaskGraph`/`ScriptedJointCoordinationModel` contract. The
+  versioned graph declares node identity, domain, role, service profile,
+  task-group, coordination mode, authority scope, payload reference, and
+  authority/support edges. The producer emits only a graph-scoped
+  `ScriptedJointCoordinationIntent`; it does not read geometry or write any
+  domain component.
+- Focused verification: joint graph/producer, cross-domain roster, neutral
+  runtime, and tasking-boundary tests passed `20 passed`; Python compilation
+  and `git diff --check` passed.
+- Direct result: the producer ran through `ScriptedRuntimeAgent` with seed
+  `11`, emitted the declared Air and Naval target node IDs, preserved the
+  graph/task-group/coordination metadata, and retained communication,
+  authority, clock, and observation-version provenance.
+- Evidence boundary: this is a producer and declaration contract only. It is
+  not a compiled `CoordinationIntentPacket` roundtrip, command-link delivery,
+  domain execution episode, replay acceptance, or Joint/Air/Naval playable
+  promotion.
+- Continuation choice: keep the producer at `adapter` status and add a
+  read-only consumer projection or compiled DTO bridge only after the exact
+  command-link owner and scenario entry are selected. Existing Air, Naval,
+  EW, and landing residuals remain independent.
