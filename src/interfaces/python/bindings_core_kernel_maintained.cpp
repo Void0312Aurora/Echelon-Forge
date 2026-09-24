@@ -98,6 +98,9 @@ void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel> &ker
              "Set terrain profile ('flat' or explicit compatibility profiles: 'legacy', 'hill', "
              "'gaussian_hill', 'mountain')",
              nb::arg("terrain_type"))
+        .def("load_arnis_terrain_bundle", &SimulationKernel::load_arnis_terrain_bundle,
+             "Load a verified Arnis continuous raster bundle directory",
+             nb::arg("bundle_root"))
         .def(
             "spawn_unit",
             [](SimulationKernel &self, Side side, const std::string &type, double x, double y,

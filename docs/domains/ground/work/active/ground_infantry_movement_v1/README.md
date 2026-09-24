@@ -25,6 +25,11 @@ formations, or full physics.
   applies surface multipliers (paved 1.0, hard-packed 0.90, soft dirt 0.75,
   water/obstacle 0.0) and a bounded slope multiplier, then advances a horizontal
   kinematic step. Invalid or inactive commands stop the unit.
+- The default provider can explicitly load a verified Arnis `arnis_cmo_bundle.v1`
+  continuous elevation and landcover raster pair. Sampling preserves the
+  bundle's local metric origin and signed grid steps; permanent water and
+  unknown cells are fail-closed for movement. This is an explicit provider
+  load operation, not automatic runtime setup.
 - Command transport remains the maintained command path; the focused test sets
   zero link latency only to isolate the movement stage.
 
@@ -33,8 +38,9 @@ formations, or full physics.
 This package does not admit route following, waypoint planning, formation
 behavior, acceleration, fatigue, cover/concealment, line of sight, river or
 bridge passability, weapons, fires, suppression, logistics, or RL policy
-training. The Arnis eastern-plain bundle remains a test-map asset; wiring that
-bundle into the native environment provider is a later package.
+training. Vector semantics from the Arnis bundle (tree lines, settlements,
+roads, hydrology, structures, and bridges) are not yet consumed by the native
+provider and remain a later package.
 
 ## Evidence
 
@@ -46,7 +52,8 @@ bundle into the native environment provider is a later package.
 - `src/runtime/contracts/composition/runtime_composition_evidence.v1.generated.h`
 
 The 2026-09-24 batch was built with the repository's pinned Windows
-dependencies. The focused Python suite passed `36 passed, 1 skipped`; the
+dependencies. The focused movement/training Python suite passed `5 passed`;
+the previous native movement regression suite passed `36 passed, 1 skipped`; the
 composition lifecycle, composition evidence, and backend-provider migration
 doctest binaries passed. The Cordis conformance binary requires its documented
 request/lock/manifest arguments and was not treated as a no-argument smoke test.

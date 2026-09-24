@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
+
 from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 
@@ -19,6 +21,15 @@ _UNIT = resolve_repo_path(
     "ground",
     "units",
     "ground_infantry_soldier_mvp.json",
+)
+_ARNIS_BUNDLE = resolve_repo_path(
+    "tests",
+    "scenario",
+    "fixtures",
+    "environment_substrate",
+    "arnis_bundle_v1",
+    "eastern_plain_infantry_phase1",
+    "expected",
 )
 
 
@@ -93,3 +104,68 @@ def test_native_infantry_movement_consumes_ground_command_and_terrain_cost() -> 
     sim.step()
     position_after_drift = sim.get_unit_position(entity_id)
     assert float(position_after_drift[0]) > float(position_before_drift[0])
+
+
+def test_native_infantry_consumes_arnis_raster_and_stops_on_water() -> None:
+    bundle = Path(_ARNIS_BUNDLE)
+    manifest = json.loads((bundle / "bundle.json").read_text(encoding="utf-8"))
+    elevation_artifact = next(
+        artifact for artifact in manifest["artifacts"] if artifact["kind"] == "elevation_raster"
+    )
+    landcover_artifact = next(
+        artifact for artifact in manifest["artifacts"] if artifact["kind"] == "landcover_raster"
+    )
+    shape = tuple(int(value) for value in elevation_artifact["shape"])
+    landcover = np.memmap(
+        bundle / landcover_artifact["path"], dtype="u1", mode="r", shape=shape
+    )
+    water_row, water_col = next(
+        (row, col)
+        for row in range(shape[0])
+        for col in range(shape[1])
+        if int(landcover[row, col]) == 80
+    )
+    cropland_row, cropland_col = next(
+        (row, col)
+        for row in range(shape[0])
+        for col in range(shape[1])
+        if int(landcover[row, col]) == 40
+    )
+    origin_x, origin_y = elevation_artifact["metadata"]["origin_xy_m"]
+    step_x, step_y = elevation_artifact["metadata"]["step_xy_m"]
+
+    sim = ef_py.SimulationKernel()
+    assert sim.load_database(_DATABASE)
+    assert sim.load_arnis_terrain_bundle(str(bundle))
+    # A failed candidate must not clear the already admitted provider raster.
+    assert not sim.load_arnis_terrain_bundle(str(bundle / "missing_candidate"))
+    water_id = int(
+        sim.spawn_unit(
+            ef_py.Side.Blue,
+            "Ground_Infantry_Soldier_MVP",
+            origin_x + water_col * step_x,
+            origin_y + water_row * step_y,
+            0.0,
+        )
+    )
+    cropland_id = int(
+        sim.spawn_unit(
+            ef_py.Side.Blue,
+            "Ground_Infantry_Soldier_MVP",
+            origin_x + cropland_col * step_x,
+            origin_y + cropland_row * step_y,
+            0.0,
+        )
+    )
+    for entity_id in (water_id, cropland_id):
+        command = ef_py.MissionCommand()
+        command.active = True
+        command.cmd_heading_deg = 90.0
+        command.cmd_speed_mps = 1.5
+        command.ground_task_mode = ef_py.GroundTaskMode.MoveStatic
+        sim.set_command_link(entity_id, 0.0, 0.0)
+        sim.set_mission_command(entity_id, command)
+
+    sim.step()
+    assert tuple(sim.get_unit_velocity(water_id)) == (0.0, 0.0, 0.0)
+    assert float(sim.get_unit_velocity(cropland_id)[0]) > 0.0

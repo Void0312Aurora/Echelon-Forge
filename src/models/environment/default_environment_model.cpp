@@ -2,12 +2,17 @@
 #include "models/environment/default_environment_snapshot.h"
 
 #include <cmath>
+#include <cstring>
+#include <filesystem>
+#include <fstream>
 #include <vector>
 #include <iostream>
 #include <algorithm>
 #include <cctype>
 #include <stdexcept>
 #include <numbers>
+
+#include <nlohmann/json.hpp>
 
 namespace {
 
@@ -38,34 +43,104 @@ struct Zone {
 struct RasterGrid {
     Vec3 origin;       // Bottom-Left Corner (Min X, Min Y)
     double resolution; // Meters per cell
+    double step_x = 0.0;
+    double step_y = 0.0;
     int width;         // Number of columns (X)
     int height;        // Number of rows (Y)
     std::vector<IEnvironmentModel::SurfaceType>
         data; // Row-major (y * width + x) (Or standard image layout)
+    std::vector<double> elevation;
+    std::vector<std::uint8_t> landcover;
+    bool arnis_metric_bundle = false;
+
+    bool index_for(double x, double y, std::size_t &index) const {
+        const double sx = step_x != 0.0 ? step_x : resolution;
+        const double sy = step_y != 0.0 ? step_y : resolution;
+        if (!std::isfinite(sx) || !std::isfinite(sy) || sx == 0.0 || sy == 0.0 || width <= 0 ||
+            height <= 0) {
+            return false;
+        }
+        const double col_f = (x - origin.x) / sx;
+        const double row_f = (y - origin.y) / sy;
+        const auto col = static_cast<long long>(std::llround(col_f));
+        const auto row = static_cast<long long>(std::llround(row_f));
+        if (col < 0 || row < 0 || col >= width || row >= height ||
+            std::abs(col_f - static_cast<double>(col)) > 0.51 ||
+            std::abs(row_f - static_cast<double>(row)) > 0.51) {
+            return false;
+        }
+        index = static_cast<std::size_t>(row) * static_cast<std::size_t>(width) +
+                static_cast<std::size_t>(col);
+        return index < static_cast<std::size_t>(width) * static_cast<std::size_t>(height);
+    }
 
     // Helper: World (x,y) -> Grid Index
     bool get_surface(double x, double y, IEnvironmentModel::SurfaceType &out_type) const {
-        // Local coords
-        double lx = x - origin.x;
-        double ly = y - origin.y;
-
-        // Check bounds
-        if (lx < 0 || ly < 0) return false;
-
-        int col = static_cast<int>(lx / resolution);
-        int row = static_cast<int>(ly / resolution);
-
-        if (col >= width || row >= height) return false;
-
-        // Index
-        size_t idx = static_cast<size_t>(row * width + col);
-        if (idx < data.size()) {
+        std::size_t idx = 0;
+        if (index_for(x, y, idx) && idx < data.size()) {
             out_type = data[idx];
             return true;
         }
         return false;
     }
+
+    bool get_elevation(double x, double y, double &out_elevation) const {
+        std::size_t idx = 0;
+        if (index_for(x, y, idx) && idx < elevation.size()) {
+            out_elevation = elevation[idx];
+            return std::isfinite(out_elevation);
+        }
+        return false;
+    }
+
+    bool get_landcover(double x, double y, std::uint8_t &out_code) const {
+        std::size_t idx = 0;
+        if (index_for(x, y, idx) && idx < landcover.size()) {
+            out_code = landcover[idx];
+            return true;
+        }
+        return false;
+    }
 };
+
+using Json = nlohmann::json;
+
+bool read_binary_bytes(const std::filesystem::path &path, std::size_t expected_bytes,
+                       std::vector<std::uint8_t> &out) {
+    std::error_code ec;
+    if (!std::filesystem::is_regular_file(path, ec) ||
+        std::filesystem::file_size(path, ec) != expected_bytes) {
+        return false;
+    }
+    std::ifstream file(path, std::ios::binary);
+    if (!file) return false;
+    out.resize(expected_bytes);
+    file.read(reinterpret_cast<char *>(out.data()), static_cast<std::streamsize>(expected_bytes));
+    return file.good() || file.gcount() == static_cast<std::streamsize>(expected_bytes);
+}
+
+bool json_finite_pair(const Json &value, double &first, double &second) {
+    if (!value.is_array() || value.size() != 2 || !value[0].is_number() ||
+        !value[1].is_number()) {
+        return false;
+    }
+    first = value[0].get<double>();
+    second = value[1].get<double>();
+    return std::isfinite(first) && std::isfinite(second);
+}
+
+IEnvironmentModel::SurfaceType surface_for_landcover(std::uint8_t code) {
+    switch (code) {
+    case 80: // permanent water
+        return IEnvironmentModel::SurfaceType::Water;
+    case 0: // unknown/nodata must not become silently traversable
+        return IEnvironmentModel::SurfaceType::Obstacle;
+    case 50: // built-up
+        return IEnvironmentModel::SurfaceType::HardPacked;
+    default:
+        return IEnvironmentModel::SurfaceType::SoftDirt;
+    }
+}
 
 class DefaultEnvironmentModel : public IEnvironmentModel {
     std::vector<WeatherZoneImpl> weather_zones_;
@@ -88,6 +163,8 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
         // Initialize Raster Base Layer (20km x 20km centered at Origin)
         raster_layer_.origin = {-10000.0, -10000.0, 0.0};
         raster_layer_.resolution = 100.0; // 100m per cell
+        raster_layer_.step_x = raster_layer_.resolution;
+        raster_layer_.step_y = raster_layer_.resolution;
         raster_layer_.width = 200;
         raster_layer_.height = 200;
         raster_layer_.data.resize(raster_layer_.width * raster_layer_.height);
@@ -141,6 +218,10 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
     double get_terrain_elevation(double x, double y) override {
         if (flat_terrain_) {
             return 0.0;
+        }
+        double raster_elevation = 0.0;
+        if (raster_layer_.arnis_metric_bundle && raster_layer_.get_elevation(x, y, raster_elevation)) {
+            return raster_elevation;
         }
         constexpr double kPeakX = 25000.0, kPeakY = 25000.0, kPeakH = 2000.0, kSigmaSq = 25000000.0;
         double d2 = (x - kPeakX) * (x - kPeakX) + (y - kPeakY) * (y - kPeakY);
@@ -252,6 +333,42 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
         }
 
         // 2. Check Raster Base Layer (Grid)
+        if (raster_layer_.arnis_metric_bundle) {
+            std::uint8_t landcover = 0;
+            if (raster_layer_.get_landcover(x, y, landcover)) {
+                cell.type = surface_for_landcover(landcover);
+                switch (cell.type) {
+                case SurfaceType::HardPacked:
+                    cell.friction_mult = 0.04;
+                    cell.roughness = 0.2;
+                    cell.vegetation_density = 0.1;
+                    break;
+                case SurfaceType::Water:
+                    cell.friction_mult = 0.1;
+                    cell.roughness = 0.0;
+                    cell.vegetation_density = 0.0;
+                    break;
+                case SurfaceType::Obstacle:
+                    cell.friction_mult = 0.0;
+                    cell.roughness = 1.0;
+                    cell.vegetation_density = 1.0;
+                    break;
+                default:
+                    cell.friction_mult = 0.1;
+                    cell.roughness = 0.5;
+                    cell.vegetation_density = 0.5;
+                    break;
+                }
+                return cell;
+            }
+            // Outside the admitted raster, fail closed rather than falling
+            // back to the procedural checkerboard.
+            cell.type = SurfaceType::Obstacle;
+            cell.friction_mult = 0.0;
+            cell.roughness = 1.0;
+            cell.vegetation_density = 1.0;
+            return cell;
+        }
         IEnvironmentModel::SurfaceType grid_type;
         if (raster_layer_.get_surface(x, y, grid_type)) {
             cell.type = grid_type;
@@ -326,6 +443,139 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
         base_wind_dir_from_deg_ = std::fmod(dir_from_deg, 360.0);
         if (base_wind_dir_from_deg_ < 0.0) base_wind_dir_from_deg_ += 360.0;
         wind_shear_mps_per_km_ = shear_mps_per_km;
+    }
+
+    bool load_arnis_terrain_bundle(const std::string &bundle_root) override {
+        namespace fs = std::filesystem;
+        try {
+            const fs::path root = fs::weakly_canonical(fs::path(bundle_root));
+            const fs::path bundle_path = root / "bundle.json";
+            std::ifstream bundle_file(bundle_path);
+            if (!bundle_file) return false;
+
+            Json bundle;
+            bundle_file >> bundle;
+            if (bundle.value("contract_version", "") != "arnis_cmo_bundle.v1" ||
+                !bundle.value("no_held_capability_release", false)) {
+                return false;
+            }
+
+            const Json *elevation_artifact = nullptr;
+            const Json *landcover_artifact = nullptr;
+            const auto &artifacts = bundle.at("artifacts");
+            if (!artifacts.is_array()) return false;
+            for (const auto &artifact : artifacts) {
+                if (!artifact.is_object()) continue;
+                const std::string kind = artifact.value("kind", "");
+                if (kind == "elevation_raster") elevation_artifact = &artifact;
+                if (kind == "landcover_raster") landcover_artifact = &artifact;
+            }
+            if (elevation_artifact == nullptr || landcover_artifact == nullptr) return false;
+
+            auto read_shape = [](const Json &artifact, int &height, int &width) {
+                const auto &shape = artifact["shape"];
+                if (!shape.is_array() || shape.size() != 2 || !shape[0].is_number_integer() ||
+                    !shape[1].is_number_integer()) {
+                    return false;
+                }
+                height = shape[0].get<int>();
+                width = shape[1].get<int>();
+                return height > 0 && width > 0;
+            };
+
+            int elevation_height = 0;
+            int elevation_width = 0;
+            int landcover_height = 0;
+            int landcover_width = 0;
+            if (!read_shape(*elevation_artifact, elevation_height, elevation_width) ||
+                !read_shape(*landcover_artifact, landcover_height, landcover_width) ||
+                elevation_height != landcover_height || elevation_width != landcover_width) {
+                return false;
+            }
+
+            const Json &elevation_metadata = elevation_artifact->at("metadata");
+            const Json &landcover_metadata = landcover_artifact->at("metadata");
+            double origin_x = 0.0;
+            double origin_y = 0.0;
+            double step_x = 0.0;
+            double step_y = 0.0;
+            double landcover_origin_x = 0.0;
+            double landcover_origin_y = 0.0;
+            double landcover_step_x = 0.0;
+            double landcover_step_y = 0.0;
+            if (!json_finite_pair(elevation_metadata.at("origin_xy_m"), origin_x, origin_y) ||
+                !json_finite_pair(elevation_metadata.at("step_xy_m"), step_x, step_y) ||
+                !json_finite_pair(landcover_metadata.at("origin_xy_m"), landcover_origin_x,
+                                  landcover_origin_y) ||
+                !json_finite_pair(landcover_metadata.at("step_xy_m"), landcover_step_x,
+                                  landcover_step_y) ||
+                std::abs(step_x - landcover_step_x) > 1.0e-9 ||
+                std::abs(step_y - landcover_step_y) > 1.0e-9 ||
+                std::abs(origin_x - landcover_origin_x) > 1.0e-6 ||
+                std::abs(origin_y - landcover_origin_y) > 1.0e-6 || step_x == 0.0 ||
+                step_y == 0.0) {
+                return false;
+            }
+
+            auto resolve_child = [&root](const Json &artifact) -> fs::path {
+                const std::string relative = artifact.value("path", "");
+                if (relative.empty()) return {};
+                const fs::path candidate = fs::weakly_canonical(root / fs::path(relative));
+                const auto root_text = root.generic_string();
+                const auto candidate_text = candidate.generic_string();
+                if (candidate_text.size() <= root_text.size() ||
+                    candidate_text.compare(0, root_text.size(), root_text) != 0 ||
+                    candidate_text[root_text.size()] != '/') {
+                    return {};
+                }
+                return candidate;
+            };
+
+            const fs::path elevation_path = resolve_child(*elevation_artifact);
+            const fs::path landcover_path = resolve_child(*landcover_artifact);
+            if (elevation_path.empty() || landcover_path.empty()) return false;
+
+            const std::size_t cell_count = static_cast<std::size_t>(elevation_height) *
+                                           static_cast<std::size_t>(elevation_width);
+            const std::size_t elevation_bytes = cell_count * sizeof(float);
+            const std::size_t landcover_bytes = cell_count * sizeof(std::uint8_t);
+            if (elevation_artifact->value("byte_length", 0u) != elevation_bytes ||
+                landcover_artifact->value("byte_length", 0u) != landcover_bytes) {
+                return false;
+            }
+
+            std::vector<std::uint8_t> elevation_raw;
+            std::vector<std::uint8_t> landcover_raw;
+            if (!read_binary_bytes(elevation_path, elevation_bytes, elevation_raw) ||
+                !read_binary_bytes(landcover_path, landcover_bytes, landcover_raw)) {
+                return false;
+            }
+
+            RasterGrid candidate;
+            candidate.origin = {origin_x, origin_y, 0.0};
+            candidate.resolution = std::abs(step_x);
+            candidate.step_x = step_x;
+            candidate.step_y = step_y;
+            candidate.width = elevation_width;
+            candidate.height = elevation_height;
+            candidate.arnis_metric_bundle = true;
+            candidate.elevation.resize(cell_count);
+            candidate.landcover = std::move(landcover_raw);
+            candidate.data.resize(cell_count);
+            for (std::size_t index = 0; index < cell_count; ++index) {
+                float value = 0.0F;
+                std::memcpy(&value, elevation_raw.data() + index * sizeof(float), sizeof(float));
+                if (!std::isfinite(value)) return false;
+                candidate.elevation[index] = static_cast<double>(value);
+                candidate.data[index] = surface_for_landcover(candidate.landcover[index]);
+            }
+
+            raster_layer_ = std::move(candidate);
+            flat_terrain_ = false;
+            return true;
+        } catch (const std::exception &) {
+            return false;
+        }
     }
 
     void set_terrain_type(const std::string &terrain_type) override {
