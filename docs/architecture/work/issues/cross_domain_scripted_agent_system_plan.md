@@ -1230,3 +1230,25 @@ to a dedicated owner-local evidence document.
 - Continuation choice: select a maintained C2 route/landing entry that can
   expose the route-to-landing command transition, or use a bounded proxy with
   a recorded blocker; keep EW and Joint residuals independent.
+
+### 2026-09-25 — Air multi-role roster contract slice
+
+- Starting commit: `50266dca`.
+- Change batch: extend the neutral roster contract with three Air roles in
+  one deterministic route: maintained phase execution, C2/ROE tactical
+  engagement, and versioned EW action. Each role retains its own observation
+  and action payload, role id, authority scope, and registry model id while
+  sharing only the runtime lifecycle envelope.
+- Focused verification: cross-domain roster, Air execution, and EW tests
+  passed `11 passed, 1 skipped` without requiring a native transport binding;
+  Python compilation and `git diff --check` passed. The pure route produced a
+  17-element tactical action with a one-shot fire pulse and a 14-element EW
+  action with chaff/flare tails, and both held at `0.1 s` under the common
+  cadence.
+- Evidence boundary: this is a role-routing and payload-isolation contract.
+  It does not authorize weapon release, decrement EW inventory, prove native
+  jammer/countermeasure state, or provide multi-aircraft simulation parity.
+  Tactical and EW registrations remain `adapter`.
+- Continuation choice: use the roster slice as the Air multi-role seam while
+  the next runtime batch selects a native engagement or EW acceptance owner;
+  do not infer playable promotion from pure model outputs.
