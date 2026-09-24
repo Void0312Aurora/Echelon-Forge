@@ -88,7 +88,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | `D2` | No source package records a rights field | `C4` `missing_rights_field_advisory`, 310 of 310 | open; the admission standard requires it of a ledger row |
 | `D3` | 82 catalog leaves outside the non-held queue have no parameter table | catalog scan: 231 README leaves, 149 with `## Parameters`, 82 without; all 82 are recorded in [`catalog_scope_decisions_20260925.csv`](catalog_scope_decisions_20260925.csv) as hierarchy indexes or family parents with no `Equipment ID` | closed in R-34; excluded from the parameter queue rather than treated as incomplete equipment leaves |
 | `D4` | Parameter table shape split | 88 leaves use `Parameter \| Value \| Source \| Confidence`; 58 use the common `Field` form; 3 module/extended leaves use the other supported forms | open; C7 covers all five forms while new leaves default to the common `Field` form |
-| `D5` | Disjoint naval namespaces | `catalog/naval/ships/surface-combatant/` (tracked, 3 leaves) and the empty untracked `catalog/naval/surface-combatants/` coexist | open |
+| `D5` | Disjoint naval namespaces | Live tree check finds the canonical `catalog/naval/ships/surface-combatant/` path and no alternate `surface-combatants/` directory; the canonical rule is now documented | closed in R-35 |
 | `D6` | Ledger not materialized | `sources/ledger/ledger.csv` now indexes all 365 manifests; missing rights/scope/retrieval values remain explicit in the index | closed in R-31; source-admission debt remains visible |
 | `D7` | `coverage.csv` role and status vocabulary contradicted its own README | README now defines it as a discovery/index surface whose admitted rows mirror backlog status; 105 of 105 current rows are `parameter_complete` | closed in R-32 |
 | `D8` | Country rows share a variant leaf without a stated rule | README and backlog docs now define operator-row versus shared-variant-leaf binding and prohibit silent operator-scope merging | closed in R-32 |
@@ -128,6 +128,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | R-32 identity and queue rules | Documented Equipment ID syntax, shared-leaf/operator-row binding, module identity, and the actual discovery/index role of `coverage.csv` |
 | R-33 ledger provenance status | Added explicit `provenance_status` to the source ledger; rights remain `not_recorded` for all 365 rows rather than being inferred |
 | R-34 catalog scope decisions | Classified all 82 no-parameter README nodes as hierarchy indexes or family parents, with path/title/evidence recorded in `catalog_scope_decisions_20260925.csv` |
+| R-35 naval namespace | Verified the alternate namespace is absent and documented `surface-combatant/` as the sole canonical path |
 | French C-130J-30 completion | Added the French Ministry's J-30 operating block for endurance, operating mass, cruise profile, crew and load configurations without overwriting the separate U.S. stretch-column definitions |
 | French C-130J-30 retrieval record | Replaced the stale access-only manifest with a successful Tavily-proxy retrieval record and a single-artifact title |
 | Voyager KC2 completion | Added the RAF KC2/KC3 fit and Airbus A330 MRTT structural, fuel, payload and conditioned-range block; carried fuel, offload and capacity remain distinct quantities |
@@ -212,6 +213,5 @@ can see:
 
 1. `D2` source-admission fields — backfill rights/redistribution and residual details where the source permits it; retain `not_recorded` when it does not.
 2. `D4` shape convergence — use the five supported forms only for migration, and make the `Field | Value | Source | Tier | Configuration / uncertainty` form the default for new leaves.
-3. `D5` namespace cleanup.
-4. Backfill source rights/provenance details where evidence permits; keep unknowns explicit.
-5. Resume new research in small batches only after the above rules are stable; run C1–C8 and commit each batch.
+3. Backfill source rights/provenance details where evidence permits; keep unknowns explicit.
+4. Resume new research in small batches only after the above rules are stable; run C1–C8 and commit each batch.
