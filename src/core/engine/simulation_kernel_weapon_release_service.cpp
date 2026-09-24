@@ -1224,6 +1224,24 @@ bool SimulationKernelWeaponReleaseService::fire_ground_weapon(uint64_t attacker_
     return damage_bridge_.apply_direct_hit(attacker_id, target_id, weapon.damage_per_hit);
 }
 
+bool SimulationKernelWeaponReleaseService::fire_ground_weapon_from_mission_command(
+    uint64_t attacker_id) {
+    auto attacker = ecs_.entity(attacker_id);
+    if (!attacker.is_valid() || !entity_is_ground(ecs_, attacker_id)) {
+        return false;
+    }
+
+    const MissionCommand *mission = attacker.get<MissionCommand>();
+    const ContactList *contacts = attacker.get<ContactList>();
+    if (!mission_explicit_release_target_available(mission, contacts, attacker_id) ||
+        !entity_is_ground(ecs_, mission->assigned_target_id)) {
+        return false;
+    }
+
+    return fire_ground_weapon(attacker_id, mission->assigned_target_id,
+                              static_cast<int>(GroundWeaponType::Rifle));
+}
+
 bool SimulationKernelWeaponReleaseService::fire_naval_weapon_from_mission_command(
     uint64_t attacker_id) {
     auto attacker = ecs_.entity(attacker_id);
