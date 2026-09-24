@@ -853,3 +853,26 @@ to a dedicated owner-local evidence document.
 - Continuation choice: keep EW interface work independent of the C2 landing
   residual and continue with the next Air coordination/joint-tasking design
   slice. No unrelated domain task is blocked.
+
+### 2026-09-25 — Joint scripted tasking entry-surface review
+
+- Starting commit: `b9746db4`.
+- Read-only evidence: the maintained Joint command/modeling and command-link
+  standards, compiled `AgentRole`/intent contracts and bindings, Air/Navy/Army
+  tasking projection tests, and the cooperative roster director were inspected.
+- Focused verification: with `CMO_BUILD_DIR=build-scripted-agent`,
+  `tests/leader/test_tasking_profile_contracts.py`,
+  `tests/leader/test_command_field_projection_contracts.py`, and
+  `tests/world_batch/test_world_batch_runtime_surface.py` passed `48` tests.
+- Capability boundary: common DTOs, authority checks, and roster transport are
+  contract-ready, but no maintained cross-domain scenario, independent joint
+  scripted producer, joint CLI, or joint visualization route exists. Joint
+  remains an open expansion stage and does not promote Naval or Ground.
+- Change batch: add
+  `docs/domains/joint/reviews/scripted_joint_tasking_entry_surface_20260925.md`
+  with the owner boundary and six closure slices. No runtime or domain payload
+  files were changed.
+- Continuation choice: implement the smallest task-graph/coordination producer
+  only after an admitted second-domain execution consumer is selected; keep
+  this work independent of the Air C2 landing residual and EW action-surface
+  gap. No unrelated domain task is blocked.
