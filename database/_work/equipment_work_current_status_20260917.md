@@ -50,13 +50,13 @@ Measured counts:
 
 | Metric | Value |
 | --- | --- |
-| Source packages (manifests) | 331 |
-| Catalog leaves (carry `## Parameters`) | 132 |
-| Distinct source ids referenced by leaves | 331 |
+| Source packages (manifests) | 338 |
+| Catalog leaves (carry `## Parameters`) | 135 |
+| Distinct source ids referenced by leaves | 338 |
 | Leaves without `Equipment ID` | 0 |
-| Backlog rows | 141 |
+| Backlog rows | 144 |
 | Coverage rows | 105 |
-| Status: `cataloged` / `parameter_complete` / `held` | 2 / 131 / 8 |
+| Status: `cataloged` / `parameter_complete` / `held` | 2 / 134 / 8 |
 
 ## Leaf Completeness Against The Queue
 
@@ -149,6 +149,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | Small-arms expansion batch | Added M4A1, AK-74M, FN SCAR-L Mk2 STD and HK416 A5 14.5-inch with variant-specific geometry, mass, operation, feed and rate fields; AK-74M government/community conventions remain separate |
 | Machine-gun expansion batch | Added M249, PKM, MG3 and MG4 with sourced caliber, feed, geometry, mass, rate and employment fields; differing range and bolt-rate conventions remain explicit |
 | Crew-served weapon expansion batch | Added M2A1, M240B, Mk 19 Mod 3 and AGS-17 with variant-bounded mass, geometry, range, crew and employment fields; mount and weapon mass remain distinct |
+| Artillery expansion batch | Added M777A2, CAESAR 6x6 and BM-21 Grad with sourced calibre, mass, range, mobility and fire-control fields; baseline and rocket-envelope limits remain explicit |
 
 ## Retracted Findings
 

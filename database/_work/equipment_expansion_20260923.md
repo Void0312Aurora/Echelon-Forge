@@ -54,6 +54,7 @@ calibration package, inventory claim, or final simulation configuration.
 | R-9 | M4A1, AK-74M, FN SCAR-L Mk2 STD and HK416 A5 small-arms expansion | complete | `198118b4` |
 | R-10 | M249, PKM, MG3 and MG4 machine-gun expansion | complete | `318368e2` |
 | R-11 | M2A1, M240B, Mk 19 Mod 3 and AGS-17 crew-served weapon expansion | complete | `76368bee` |
+| R-12 | M777A2, CAESAR 6x6 and BM-21 Grad artillery expansion | ready to commit | — |
 
 ## Blocker / skip ledger
 
