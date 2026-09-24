@@ -57,7 +57,7 @@ calibration package, inventory claim, or final simulation configuration.
 | R-12 | M777A2, CAESAR 6x6 and BM-21 Grad artillery expansion | complete | `1523e990` |
 | R-13 | Carl-Gustaf M4, AT4CS HP and M72A5-C1 anti-armour expansion | complete | `2065de21` |
 | R-14 | Panzerfaust 3, RPG-7 and SPIKE LR II anti-armour expansion | complete | `3f69c480` |
-| R-15 | MiG-31BM held-record completion from a named variant profile | ready to commit | pending |
+| R-15 | MiG-31BM held-record completion from a named variant profile | complete | `aa9d0135` |
 
 ## Blocker / skip ledger
 
