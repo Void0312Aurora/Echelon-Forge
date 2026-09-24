@@ -183,6 +183,11 @@ replay contracts. Keep domain fields in domain-owned extensions.
 Promotion condition: a repository-wide consumer map, dependency direction, and
 rollback plan exist before changing a maintained contract.
 
+Initial WP1 slice: `python/tasking_contracts/scripted_registry.py` now provides
+a dependency-terminal scripted model-factory registry and a minimal structural
+`reset -> decide -> close` lifecycle. It does not duplicate observation,
+action, or AgentRole DTOs, and it does not wire a runtime or import RL.
+
 ### WP2 — Independent scripted runtime and registry
 
 Provide a runtime registry that can instantiate scripted, learned, human, and
@@ -328,7 +333,26 @@ the following protocol:
    batch commit. Do not mix unrelated cleanup, generated artifacts, or
    speculative refactors into that commit.
 
-The first planning iteration has no known blocker. Future blockers and proxy
-evidence should be appended to the active task record or to a dedicated
-owner-local evidence document when the first implementation package is
-promoted.
+The initial planning iteration had no blocker. Subsequent blockers and proxy
+evidence are appended below until the first implementation package is promoted
+to a dedicated owner-local evidence document.
+
+## Current Execution Ledger
+
+### 2026-09-24 — WP1 neutral registry slice
+
+- Starting commit: `5560c900`.
+- Change batch: neutral scripted model registry, lifecycle contract test, and
+  this ledger update.
+- Direct repository pytest was attempted with the maintained root `.venv`, but
+  the worktree test bootstrap stopped before collection because no local
+  `ef_py` build artifact exists in the worktree. The command and residual are
+  retained as an environment boundary, not a code failure.
+- Proxy verification used the same root `.venv` with `--noconftest`: the new
+  registry test passed `4 passed`; an independent AST/import and lifecycle
+  probe also passed.
+- Proxy evidence is limited to the pure-Python registry slice. It does not
+  establish C++ binding, full repository, or scenario acceptance.
+- Residual: run the repository-managed architecture and runtime tests after a
+  compatible local `ef_py` build artifact is available. This does not block
+  independent WP1/WP3 design work.
