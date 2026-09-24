@@ -15,38 +15,6 @@ def test_stage_node_manifest_registry_header_exists_in_runtime_contracts() -> No
   assert HEADER.is_file()
 
 
-def test_registry_seed_spells_out_required_fields_for_each_maintained_node() -> None:
-  header_text = HEADER.read_text(encoding="utf-8")
-  required_fields = [
-    ".semantic_stage =",
-    ".owner_module =",
-    ".input_packets =",
-    ".output_packets =",
-    ".read_state_shards =",
-    ".write_state_shards =",
-    ".read_snapshot_policy =",
-    ".write_commit_policy =",
-    ".clock_domain =",
-    ".latency_policy =",
-    ".sync_policy =",
-    ".required_barriers =",
-    ".event_families_emitted =",
-    ".diagnostic_trace_obligations =",
-    ".facade_visibility =",
-    ".adapter_projection_allowed =",
-  ]
-  for node_id in (
-    "fire_control_launch.v1",
-    "effects_damage.v1",
-    "observation_export.v1",
-  ):
-    marker = f'.node_id = "{node_id}"'
-    assert marker in header_text, f"missing registry seed for {node_id}"
-    block = header_text.split(marker, 1)[1].split("StageNodeManifest{", 1)[0]
-    for field in required_fields:
-      assert field in block, f"{node_id} missing {field}"
-
-
 def test_registry_seed_enumerates_required_maintained_node_ids() -> None:
   source = textwrap.dedent(
     r"""
@@ -76,6 +44,22 @@ def test_registry_seed_enumerates_required_maintained_node_ids() -> None:
       if (manifests.size() != 3) {
         std::cerr << "unexpected maintained node count: " << manifests.size() << "\n";
         return 1;
+      }
+
+      for (const auto* manifest : manifests) {
+        if (manifest == nullptr || manifest->node_id.empty() ||
+            manifest->semantic_stage.empty() || manifest->owner_module.empty() ||
+            manifest->input_packets.empty() || manifest->output_packets.empty() ||
+            manifest->read_state_shards.empty() || manifest->write_state_shards.empty() ||
+            manifest->read_snapshot_policy.empty() || manifest->write_commit_policy.empty() ||
+            manifest->clock_domain.empty() || manifest->latency_policy.empty() ||
+            manifest->sync_policy.empty() || manifest->required_barriers.empty() ||
+            manifest->event_families_emitted.empty() ||
+            manifest->diagnostic_trace_obligations.empty() ||
+            manifest->facade_visibility.empty()) {
+          std::cerr << "maintained node has an incomplete runtime manifest\n";
+          return 1;
+        }
       }
 
       return 0;

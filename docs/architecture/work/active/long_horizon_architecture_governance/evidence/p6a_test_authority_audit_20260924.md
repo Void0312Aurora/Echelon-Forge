@@ -44,15 +44,19 @@ The checked-out tree currently derives:
 | Tier manifests | 2 |
 | Runner manifests with owner/lane metadata | 4 |
 | Owners / execution strategies | 2 / 2 |
-| Files with source-scan references | 110 |
-| Files retaining the `source_scan_guard` residual flag | 88 |
+| Files with source-scan references | 111 |
+| Files retaining the `source_scan_guard` residual flag | 87 |
 | Files selected by the pytest smoke manifest | 34 |
 | Native CTest entries with a primary lane label | 25 |
 
-The source-scan counts are diagnostics, not an acceptance claim. P6-A still
-needs replacement evidence before any individual migration guard can be
-retired; source-text boundary checks are not physically equivalent to target,
-package, type, or behavior boundaries by themselves.
+The source-scan counts are diagnostics, not an acceptance claim. One
+replacement slice is now complete: `test_stage_node_manifest_registry.py`
+removed its header-text field scan and moved the maintained-node field
+completeness assertion into a compiled native registry probe. The existing
+validator and fail-closed negative tests remain in place. This reduces the
+residual count from 88 to 87; it does not justify retiring the other source
+scans, because source-text boundary checks are not physically equivalent to
+target, package, type, or behavior boundaries by themselves.
 
 ## Verification
 
@@ -62,12 +66,14 @@ Executed in the isolated worktree:
 $env:CMO_BUILD_DIR='build-long-horizon-p5c-shared'
 $env:PYTHONPATH="$PWD\build-long-horizon-p5c-shared\Debug;$PWD"
 python -m pytest -q `
+  tests/architecture/causal_runtime/test_stage_node_manifest_registry.py `
   tests/architecture/governance/test_test_authority_audit.py `
   tests/runners/test_pytest_suite_manifests.py `
   tests/architecture/governance/test_control_lifecycle_metadata.py
 ```
 
-Result: **15 passed**. The test set includes the real collection/marker
+Result: **23 passed**. The test set includes the native registry replacement,
+real collection/marker
 lockstep check, tier partition/orphan detection, root metadata validation,
 derived inventory assignment, and cross-tier overlap rejection.
 
@@ -91,8 +97,9 @@ git diff --check
 ```
 
 The audit command, Ruff, and diff check passed. This is an implementation
-baseline only: P6-A replacement/retirement decisions and P6-B workflow
-parallelism, repeated CI evidence, and failure-routing work remain open.
+baseline with one replacement slice; the remaining P6-A replacement/retirement
+decisions and P6-B workflow parallelism, repeated CI evidence, and
+failure-routing work remain open.
 
 Document kind: `evidence`
 Lifecycle: `maintained`
