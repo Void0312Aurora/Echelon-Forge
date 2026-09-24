@@ -6,6 +6,12 @@ Maintained configs, tools, and tests should continue to reference canonical scen
 
 `scenarios/` is part of the maintained repository input surface and is expected to stay versioned in git. This differs from `experiments/`, `datasets/`, and `output/`, which remain runtime/artifact workspaces and are ignored by default.
 
+Maintained scripted entry points may carry an additive `scripted_capability.v1`
+object. Its label is an evidence boundary: the representative Air fixture is
+`playable_candidate`, the bounded Naval station fixture is `bounded_adapter`,
+and the Ground native static fixture is `held`. Scenario metadata alone cannot
+raise any label to final `playable` acceptance.
+
 ## Layout
 
 - `scenarios/takeoff/`

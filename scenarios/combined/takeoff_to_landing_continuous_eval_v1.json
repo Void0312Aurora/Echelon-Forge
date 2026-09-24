@@ -1,6 +1,26 @@
 {
     "scenario_name": "F-16 Takeoff Cruise Landing Continuous Eval V1",
     "description": "Evaluation continuous mission with stronger winds and a longer, smoother return arc than training: takeoff, cruise route completion, then landing transition on the same airfield.",
+    "scripted_capability": {
+        "version": "scripted_capability.v1",
+        "domain": "air",
+        "label": "playable_candidate",
+        "model_id": "air.execution.phase_scripted",
+        "role_id": "autopilot_controller",
+        "lifecycle": "reset_decide_close",
+        "evidence_refs": [
+            "source:python/tasking_contracts/air_scripted_execution.py",
+            "test:tests/runtime/air/test_air_scripted_execution.py",
+            "test:tests/viz/test_scripted_entrypoint_contract.py"
+        ],
+        "deferred_claims": [
+            "compiled facade execution",
+            "full command/report roundtrip",
+            "reset/replay acceptance",
+            "visualization runtime acceptance",
+            "multi-unit roster parity"
+        ]
+    },
     "imports": [
         {
             "file": "examples/config/prefabs/airbase_large_runway45.json"
