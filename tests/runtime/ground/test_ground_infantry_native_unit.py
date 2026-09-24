@@ -268,6 +268,13 @@ def test_native_infantry_ground_rifle_requires_track_and_applies_damage() -> Non
     )
     sim.set_command_link(attacker_id, 0.0, 0.0)
 
+    initial_weapon = list(sim.get_ground_weapon_state(attacker_id))
+    assert initial_weapon[:4] == [1.0, float(int(ef_py.GroundWeaponType.Rifle)), 30.0, 30.0]
+    assert initial_weapon[4] == pytest.approx(8.0)
+    assert initial_weapon[5] == pytest.approx(300.0)
+    assert initial_weapon[6] == pytest.approx(1.0)
+    assert initial_weapon[7] == pytest.approx(0.0)
+
     # A ground rifle cannot release without an explicit local track.
     assert not sim.fire_ground_weapon(
         attacker_id, target_id, int(ef_py.GroundWeaponType.Rifle)
@@ -295,6 +302,9 @@ def test_native_infantry_ground_rifle_requires_track_and_applies_damage() -> Non
     after_fire = list(sim.get_unit_damage_state(target_id))
     assert after_fire[0] < initial[0]
     assert after_fire[3] < initial[3]
+    after_weapon = list(sim.get_ground_weapon_state(attacker_id))
+    assert after_weapon[2] == pytest.approx(29.0)
+    assert after_weapon[7] == pytest.approx(0.5)
 
     # The native weapon owns a cooldown; an immediate second trigger is rejected.
     assert not sim.fire_ground_weapon(

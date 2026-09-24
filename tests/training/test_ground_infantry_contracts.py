@@ -41,6 +41,17 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
     assert contract["native_runtime_surfaces"]["direct_fire"]["status"] == "bounded_native_probe"
     assert contract["native_runtime_surfaces"]["direct_fire"]["entrypoint"] == "SimulationKernel.fire_ground_weapon"
     assert contract["native_runtime_surfaces"]["direct_fire"]["command_entrypoint"] == "SimulationKernel.fire_ground_weapon_from_mission_command"
+    assert contract["native_runtime_surfaces"]["direct_fire"]["observation_entrypoint"] == "SimulationKernel.get_ground_weapon_state"
+    assert contract["native_runtime_surfaces"]["direct_fire"]["observation_fields"] == [
+        "present",
+        "selected_type",
+        "ammunition",
+        "maximum_ammunition",
+        "damage_per_hit",
+        "engagement_range_m",
+        "hit_probability",
+        "cooldown_remaining",
+    ]
     assert contract["map_profile"]["arnis_bundle_status"] == "verified_export_snapshot"
     assert contract["map_profile"]["companion_overlay"] == "field_overlay.v1"
     assert contract["map_profile"]["runtime_consumption"].startswith("held_until_")

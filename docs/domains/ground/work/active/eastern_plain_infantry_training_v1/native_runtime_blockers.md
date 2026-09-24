@@ -61,6 +61,11 @@ ballistics, indirect fire, or target-selection automation.
 The explicit `fire_ground_weapon_from_mission_command` entrypoint additionally
 requires an active assigned target and matching fire authority; it is a single
 command-triggered release, not an automatic per-tick weapon system.
+The bounded `SimulationKernel.get_ground_weapon_state` observation returns the
+selected weapon type, ammunition, damage/range tuning, hit probability, and
+remaining cooldown for diagnostics and future training observations. It does
+not promote the training contract: the RL harness remains proxy-only and no
+learned target-selection or fire policy is released.
 
 The existing C++ maintained command contract already carries
 `ground_static_task`; the Python binding now exposes that slice as well.  This
