@@ -1202,3 +1202,31 @@ to a dedicated owner-local evidence document.
   cooperative slot route. It does not prove EW observation delivery,
   countermeasure state change, inventory/report closure, or multi-aircraft EW
   behavior; those gates remain open.
+
+### 2026-09-25 — Leader Air execution neutral-runtime integration slice
+
+- Starting commit: `8a0eb0ec`.
+- Change batch: route the Leader environment's maintained Air scripted
+  execution entry through `ScriptedRuntimeAgent`. The adapter now carries the
+  common lifecycle, clock, decision index, communication/authority metadata,
+  seed/replay identity, and runtime report while leaving the Air observation
+  and action payloads domain-owned. Leader info exposes the report as
+  `leader_scripted_runtime`; frozen-model and existing action-repeat paths
+  remain unchanged.
+- Focused verification: Air execution, cross-domain roster, and Air CLI tests
+  passed `8 passed`; Python compilation and `git diff --check` passed. A direct
+  compiled Leader step also returned a finite running result with runtime
+  identity `581:air.execution.phase_scripted:seed=7:reset=1`, 20 low-level
+  decisions, and observation version `scramble`.
+- Direct C2 follow-up: the fasttrain C2 scenario still traversed
+  `TASK_SCRAMBLE -> TASK_CAP -> TASK_RTB -> TASK_RECOVER_LAND` under the
+  scripted path, but the tested command schedule remained at waypoint index 2
+  and did not reach terminal landing within the 320-window probe. This is a
+  remaining command/route/landing closure failure; it is not promoted to
+  playable evidence and the exact long probe will not be repeated unchanged.
+- Evidence boundary: this closes the Leader-to-neutral-runtime adapter and
+  provenance surface only. It does not close the Air C2 terminal episode,
+  native EW acceptance, multi-aircraft parity, or Joint execution.
+- Continuation choice: select a maintained C2 route/landing entry that can
+  expose the route-to-landing command transition, or use a bounded proxy with
+  a recorded blocker; keep EW and Joint residuals independent.
