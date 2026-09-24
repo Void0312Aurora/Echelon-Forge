@@ -42,8 +42,9 @@ Owner：`domains/ground`，环境输入由 `systems/environment` 负责
   heading/speed 和已有 Ground static-task 片段送入批量契约；对于当前原生命令结构
   无法表达的 stance/route 字段会直接拒绝，而不是静默丢弃。
 
-代理观测现在包含树带/聚落距离与方位，以及河流/桥面标志；这些是可重放的
-engineering products，原生 observation export 仍保持 held。
+代理观测现在包含树带/聚落距离与方位，以及河流/桥面标志；这些仍是可重放的
+engineering products。原生 provider 现在准入连续 Arnis 高程/地表覆盖采样，并暴露有界
+地形观测 tuple；矢量语义和 track observation export 仍保持 held。
 
 本次已经用固定 Arnis v3.0.0 CMO patch 实际生成并验证 `expected/` bundle，且
 保留了预览和 `field_acceptance.json`。高程与地表覆盖仍来自网络/缓存 provider，
@@ -65,14 +66,14 @@ reset、action、observation、reward、termination、replay 契约之后，不�
 
 当前原生 runtime 的测量结果和剩余问题记录在
 [`native_runtime_blockers.md`](native_runtime_blockers.md)。原生切片现在覆盖一个带
-地表/坡度代价的确定性 `MoveStatic` 步；替代方案继续推进地图、观察和训练阶梯，
-但不释放通行性能力。
+地表/坡度代价的确定性 `MoveStatic` 步，以及显式 Arnis 栅格加载和地形观测；替代方案继续
+推进矢量语义和训练阶梯，但不释放通行性能力。
 
 ## 明确保持 held 的内容
 
-- Arnis runtime setup 与原生地图 provider 的移动消费；
+- 自动 Arnis runtime setup 与矢量语义地图 provider 消费；
 - 路网与通行性 mask；
 - 坡度、湿地、河流渡越策略；
 - 视线、掩体、隐蔽和暴露模型；
-- 地面观察/track 导出；
+- Ground track/sensor observation export（地形采样已单独准入）；
 - 疲劳、医疗、后勤、火力、压制和战斗接入。
