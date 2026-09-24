@@ -7,12 +7,11 @@ Author / maintainer: Mitchell Institute, China Airpower Tracker series
 Title: YY-20 (Tanker) technical data
 URL: https://www.mitchellaerospacepower.org/weapons/yy-20
 Retrieval:
-  attempted_at: 2026-09-17T17:05:00Z
-  method: none
-  status: no_record
-  returned: nothing
-  did_not_return: not established
-  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
+  attempted_at: 2026-09-23T08:05:00Z
+  method: web_search
+  status: success
+  returned: YY-20A tanker configuration, dimensions, masses, four D-30KP-2 engines, cruise speed, range and ceiling
+  did_not_return: crew complement, internal or transferable fuel quantity, certified transfer rate and pod model
 Domain: air
 Equipment: YY-20 / YY-20A
 Configuration: Aerial refuelling tanker built by Xi'an Aircraft Industrial Corporation on the Y-20 airframe. Active variant listed as YY-20A (Y-20U).

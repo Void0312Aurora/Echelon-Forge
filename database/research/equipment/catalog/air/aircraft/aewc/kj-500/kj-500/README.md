@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/aewc/kj-500/kj-500/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-18`
+Last verified: `2026-09-24`
 Equipment ID: `eq-cn-air-kj500`
-Content status: parameter table present with per-field source and confidence. Status is `cataloged`, not `parameter_complete`, because every parameter row is Tier C secondary and the dimensions conflict between sources.
+Content status: parameter table present with per-field source and confidence. Status is `parameter_complete`; all declared simulation fields are populated, while the dimension conflict and unreported radar detection range remain explicit limitations.
 
 ## Identity
 
@@ -38,6 +38,9 @@ Content status: parameter table present with per-field source and confidence. St
 | Maximum speed | 297 kt | `p5-cn-air-kj500-mitchell` | C |
 | Maximum range | 3,078 nm per one source; 5,700 km per another, which is the same distance | `p5-cn-air-kj500-mitchell`; `p5-cn-air-kj500-armyrecognition` | C |
 | Endurance | 12 hours | `p5-cn-air-kj500-armyrecognition` | C |
+| Service ceiling | 34,449 ft | `p5-cn-air-kj500-mitchell` | C |
+| Crew / accommodation | 24 personnel | `p5-cn-air-kj500-mitchell`; `p5-cn-air-kj500-odin` | B/C |
+| Radar / mission system | Fixed dorsal radome with three AESA arrays, each described as covering 120 degrees for 360-degree coverage; airborne early warning and control node | `p5-cn-air-kj500-odin` | B |
 
 ## Configuration Boundary
 
@@ -51,9 +54,12 @@ The operator table previously listed only the PLA Air Force while the parameter 
 
 The KJ-500H is a separate active variant and is not merged into this record.
 
+The ODIN assessment supplies the mission-system description and accommodation count but does not supply radar detection range, certified maximum takeoff mass, endurance or hardpoint data. Those values remain unavailable rather than inferred.
+
 ## Source References
 
 - `p5-cn-air-kj500-mitchell`: `raw/sources/mitchell_institute/p5-cn-air-kj500-mitchell/manifest.md`
 - `p5-cn-air-kj500-armyrecognition`: `raw/sources/army_recognition/p5-cn-air-kj500-armyrecognition/manifest.md`
+- `p5-cn-air-kj500-odin`: `raw/sources/odin/p5-cn-air-kj500-odin/manifest.md` — three-array AESA radome and 24-person accommodation assessment
 - `p5-cn-air-kj500-pla-navy`: `raw/sources/china_military_online/p5-cn-air-kj500-pla-navy/manifest.md` — operator row only, no parameter rows
 - `p5-cn-air-kj500-mnd`: `raw/sources/prc_ministry_of_national_defense/p5-cn-air-kj500-mnd/manifest.md` — service presence only

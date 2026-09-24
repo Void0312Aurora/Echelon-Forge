@@ -7,12 +7,11 @@ Author / maintainer: Mitchell Institute, China Airpower Tracker series
 Title: KJ-500 (Y-9W) technical data
 URL: https://www.mitchellaerospacepower.org/weapons/kj-500
 Retrieval:
-  attempted_at: 2026-09-17T17:05:00Z
-  method: none
-  status: no_record
-  returned: nothing
-  did_not_return: not established
-  note: This package carried a hand-written Accessed date of 2026-09-18 or 2026-09-19, which is later than the machine clock at the time of this correction pass. No retrieval record exists for this URL, so the date is removed and no machine timestamp is substituted for it. The values in this manifest are transcribed values with no audit-grade retrieval behind them.
+  attempted_at: 2026-09-23T08:05:00Z
+  method: web_search
+  status: success
+  returned: KJ-500 configuration, dimensions, weights, four FWJ-6C turboprops, speed, range, service ceiling and 24-person accommodation
+  did_not_return: radar detection range, certified MTOW, endurance and hardpoint data
 Domain: air
 Equipment: KJ-500
 Configuration: Airborne early warning and control aircraft built by Shaanxi Aircraft Corporation on the Y-9 airframe. Variants KJ-500 and KJ-500H.
@@ -21,7 +20,7 @@ Retention: manifest and extracted parameter notes only
 
 ## Extracted parameter notes
 
-Status active; type airborne early warning and control aircraft; contractor Shaanxi Aircraft Corporation; initial operating capability 2015; operators PLAAF and PLANAF; active variants KJ-500 and KJ-500H. Length 118.1 ft; wingspan 131.2 ft; height 37.7 ft. Empty weight 88,185 lb. Powerplant four Zhushou Wojiang-6C (FWJ-6C) turboprops. Maximum speed 297 kt. Maximum range 3,078 nm.
+Status active; type airborne early warning and control aircraft; contractor Shaanxi Aircraft Corporation; initial operating capability 2015; operators PLAAF and PLANAF; active variants KJ-500 and KJ-500H. Length 118.1 ft; wingspan 131.2 ft; height 37.7 ft. Empty weight 88,185 lb. Powerplant four Zhushou Wojiang-6C (FWJ-6C) turboprops. Maximum speed 297 kt. Maximum range 3,078 nm. Service ceiling 34,449 ft and accommodation 24 personnel.
 
 ## A dimensions conflict held open
 

@@ -6,9 +6,9 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/research/equipment/catalog/air/aircraft/rotary_transport/z-20/z-20/README.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-17`
+Last verified: `2026-09-24`
 Equipment ID: `eq-cn-air-z20`
-Content status: parameter table present with per-field source and confidence. Retrieval status is recorded per package in each manifest's `Retrieval:` block rather than asserted here. The seven fields withdrawn in the previous revision now rest on two named packages, and the length and rotor readings carry recorded conflicts.
+Content status: parameter table present with per-field source and confidence. Status is `parameter_complete`; all declared simulation fields are populated, while conflicting secondary readings remain explicit. Retrieval status is recorded per package in each manifest's `Retrieval:` block rather than asserted here.
 
 ## Identity
 
@@ -62,6 +62,8 @@ Content status: parameter table present with per-field source and confidence. Re
 | Climb rate | 7.1 m/s (1,400 ft/min) | `p5-cn-air-z20-globalmilitary` | C |
 | Main rotor blades | 5 | `p5-cn-air-z20-gs` | C |
 | Tail rotor blades | 4 | `p5-cn-air-z20-gs` | C |
+| Crew | 2 | `p5-cn-air-z20-globalmilitary` | C |
+| Mission / flight-control system | Twin-engine multipurpose transport/utility helicopter with fly-by-wire flight control and rotor anti-icing technology; refittable for other operations | `p5-cn-air-z20-scio` | A |
 | Engine development | The official source notes high-altitude engine and rotor anti-icing development | `p5-cn-air-z20-mnd` | A |
 
 ## Configuration Boundary
@@ -88,3 +90,4 @@ Z-20, Z-20T, Z-20F, Z-20J, Z-20S and Z-20K are separate configurations serving d
 - `p5-cn-air-z20-encyclopedic`: `raw/sources/wikipedia/p5-cn-air-z20-encyclopedic/manifest.md` — external cargo, rotor diameter, cruise speed, power band
 - `p5-cn-air-z20-gs`: `raw/sources/globalsecurity/p5-cn-air-z20-gs/manifest.md` — programme dates, alternative length and rotor readings
 - `p5-cn-air-z20-mnd`: `raw/sources/prc_ministry_of_national_defense/p5-cn-air-z20-mnd/manifest.md` — programme context only
+- `p5-cn-air-z20-scio`: `raw/sources/prc_scio/p5-cn-air-z20-scio/manifest.md` — multipurpose transport role, fly-by-wire and anti-icing system description

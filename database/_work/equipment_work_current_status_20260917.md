@@ -1,6 +1,6 @@
 # Equipment Work Current Status
 
-Status: `2026-09-23` measured state of the equipment tree under the reduced write set.
+Status: `2026-09-24` measured state of the equipment tree under the reduced write set.
 
 Parent: [README.md](README.md)
 
@@ -8,7 +8,7 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/_work/equipment_work_current_status_20260917.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-23`
+Last verified: `2026-09-24`
 
 This revision replaces the first measurement pass, which was produced by a
 hand-written audit and reported three deviations that do not survive the runnable
@@ -50,17 +50,17 @@ Measured counts:
 
 | Metric | Value |
 | --- | --- |
-| Source packages (manifests) | 310 |
+| Source packages (manifests) | 314 |
 | Catalog leaves (carry `## Parameters`) | 120 |
 | Distinct source ids referenced by leaves | 310 |
 | Leaves without `Equipment ID` | 0 |
 | Backlog rows | 129 |
 | Coverage rows | 105 |
-| Status: `cataloged` / `parameter_complete` / `held` | 5 / 116 / 8 |
+| Status: `cataloged` / `parameter_complete` / `held` | 2 / 119 / 8 |
 
 ## Leaf Completeness Against The Queue
 
-The queue calls 5 rows `cataloged`, and all 5 now point at leaves carrying a
+The queue calls 2 rows `cataloged`, and all 2 now point at leaves carrying a
 `## Parameters` table. The checker therefore reports no stub leaf binding defect
 for the non-held queue rows. A separate catalog scan still finds 82 README leaves
 without a parameter table; those are outside the current queue-binding defect and
@@ -145,6 +145,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | Weapon expansion batch | Added AIM-9X Block II, AIM-120D and GBU-39A/B with official NAVAIR/Boeing geometry, mass, propulsion/guidance, warhead and fuze fields; classified performance remains unestimated |
 | U.S. naval-aircraft expansion batch | Added P-3C, F/A-18C and UH-1Y with official Navy/NAVAIR/Marine Corps geometry, mass, propulsion, flight, crew, payload, armament and mission-system fields; common A-D and conditioned HOGE/radius boundaries remain explicit |
 | Chinese fighter/bomber completion batch | Promoted J-11B/BS, J-15 and H-6K after adding named armament, crew, avionics/mission-system and empty-mass blocks; B/BS, baseline/STOBAR, engine-batch and 79/95 t mass boundaries remain explicit |
+| Chinese AEW/tanker/utility-aircraft completion batch | Promoted KJ-500, YY-20A and Z-20 after adding named radar/refuelling/flight-control and crew/fuel rows; dimensional and fuel conflicts remain source-bounded |
 
 ## Retracted Findings
 
