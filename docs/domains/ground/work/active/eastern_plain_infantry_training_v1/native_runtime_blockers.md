@@ -147,13 +147,14 @@ bookkeeping, not a route graph, path planner, or production training release.
 The wrapper also exposes explicit `max_steps` and `blocked_step_limit`
 truncation reasons instead of requiring a caller to infer them from the trace.
 
-The Gymnasium checker is green but reports four non-blocking space-design
+The Gymnasium checker is green and now reports two non-blocking space-design
 warnings: the native action's route-intent dimension is a fixed direct-only Box
-dimension, the action vector is not normalized, and the generic observation
-boxes still use open numeric bounds. These warnings are recorded rather than
-silently promoted to a production RL claim; a later owner may replace the
-fixed dimension or publish finite, source-backed bounds without changing the
-native probe authority.
+dimension, and the action vector is not normalized. Observation spaces now use
+finite bounds derived from the verified bundle manifest plus the probe's finite
+episode horizon; when a custom bundle manifest cannot be read, the adapter uses
+an explicitly finite probe-horizon fallback. These bounds do not promote the
+adapter to production RL authority; a later owner may replace the fixed action
+dimension and normalize the action contract.
 
 The proxy fails closed on unknown raster cells, out-of-bounds transitions, and
 river crossings without the explicit bridge intent.  The bridge rule is a

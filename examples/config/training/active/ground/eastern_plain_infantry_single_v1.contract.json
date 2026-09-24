@@ -105,6 +105,7 @@
       "entrypoint": "python.rl.ground.native_env:GroundInfantryNativeEnv",
       "production_boundary": "not_world_batch",
       "observation_owner": "GroundInfantryNativeProbe",
+      "observation_bounds": "finite_source_backed_fixture_or_probe_horizon",
       "termination_reasons": ["waypoint_reached", "agent_incapacitated"],
       "truncation_reasons": ["max_steps", "blocked_step_limit"],
       "observation_fields": ["position_local_enu_m", "velocity_local_enu_mps", "terrain", "terrain_effects", "movement_effects", "field_semantics", "weapon_state", "health_state", "command_state", "mission_state", "waypoint_state", "state"],

@@ -73,6 +73,19 @@ def test_native_ground_gym_adapter_preserves_probe_authority_and_observation() -
     assert len(env.trace) == 2
 
 
+def test_native_ground_gym_adapter_publishes_finite_observation_bounds() -> None:
+    env = GroundInfantryNativeEnv(
+        GroundInfantryNativeProbe.from_fixture(max_steps=4)
+    )
+
+    for space in env.observation_space.spaces.values():
+        assert np.isfinite(space.low).all()
+        assert np.isfinite(space.high).all()
+    assert float(env.observation_space["terrain"].high[0]) > float(
+        env.observation_space["terrain"].low[0]
+    )
+
+
 def test_native_ground_gym_adapter_passes_gymnasium_checker() -> None:
     from gymnasium.utils.env_checker import check_env
 
