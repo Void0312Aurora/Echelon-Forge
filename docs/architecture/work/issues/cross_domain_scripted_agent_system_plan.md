@@ -1171,3 +1171,16 @@ to a dedicated owner-local evidence document.
   finding, not an EW failure diagnosis and not playable evidence. EW remains
   `entry_surface_incomplete`; jammer ownership and replay/multi-aircraft gates
   remain open.
+
+### 2026-09-25 — Air EW optional-binding test isolation slice
+
+- Starting commit: `ffb68380`.
+- Change batch: keep the pure EW producer/action-model tests runnable without a
+  local compiled `ef_py`; the two transport-shape assertions now skip only
+  when the binding action surface is unavailable.
+- Focused verification: without `CMO_BUILD_DIR`, the EW and joint contract
+  tests passed `8 passed, 1 skipped`; with
+  `CMO_BUILD_DIR=build-scripted-agent`, the full EW file passed `5 passed`.
+  Python compilation and `git diff --check` passed.
+- Evidence boundary: this is test-environment isolation only. It does not
+  expand EW runtime ownership or change the native acceptance residual.
