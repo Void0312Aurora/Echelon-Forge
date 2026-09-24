@@ -1184,3 +1184,21 @@ to a dedicated owner-local evidence document.
   Python compilation and `git diff --check` passed.
 - Evidence boundary: this is test-environment isolation only. It does not
   expand EW runtime ownership or change the native acceptance residual.
+
+### 2026-09-25 — Air EW cooperative action-mode routing probe
+
+- Starting commit: `b32881d1`.
+- First probe used the standalone Stage 3 combat scenario with
+  `CooperativeWorldBatchVecEnv`; it failed closed because the scenario has no
+  controllable cooperative roster member. This exact scenario/entry pairing
+  will not be retried.
+- Second probe used the maintained cooperative Air scenario but supplied one
+  action row for a two-slot world; the cooperative runtime raised the expected
+  slot-shape `IndexError`. The malformed action shape will not be retried.
+- Alternative result: the same cooperative scenario with an action array
+  sized to `slots_per_world=2` accepted `air_ew_hybrid_v1` for one compiled
+  step, returned finite rewards, and remained running.
+- Evidence boundary: this proves only action-mode transport through the
+  cooperative slot route. It does not prove EW observation delivery,
+  countermeasure state change, inventory/report closure, or multi-aircraft EW
+  behavior; those gates remain open.
