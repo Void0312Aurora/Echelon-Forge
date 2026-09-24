@@ -475,3 +475,19 @@ to a dedicated owner-local evidence document.
   scenario checks, registry checks, and the Naval adapter checks passed
   `13 passed`; Python compilation and `git diff --check` passed. The parser is
   not a runtime admission gate and does not alter domain behavior.
+
+### 2026-09-25 — WP3 standalone Air scripted CLI slice
+
+- Starting commit: `5d6168a5`.
+- Affected owners: Air execution, diagnostics CLI, and neutral tasking
+  contracts.
+- Expected evidence: `flight_trajectory_diagnostics --scripted` constructs and
+  steps `air.execution.phase_scripted` directly, while learned-policy mode
+  keeps its existing wrapper path.
+- Known residual: the CLI still requires a compatible local `ef_py` artifact
+  for scenario stepping; the existing import blocker remains proxy-only and is
+  not retried in this iteration.
+- Focused proxy verification: Air CLI source-boundary and neutral lifecycle
+  tests, capability-manifest tests, and registry tests passed `15 passed`;
+  Python compilation and `git diff --check` passed. A real scenario rollout was
+  not claimed because the local binding artifact is still unavailable.
