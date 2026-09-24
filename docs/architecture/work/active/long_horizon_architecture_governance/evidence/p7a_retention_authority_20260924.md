@@ -70,11 +70,17 @@ green claim.
 ## Current revalidation
 
 On `2026-09-25`, the focused retention/archive set was rerun in the current
-checkout and passed **39 tests**. The SQLite-backed restore/admission file also
-passed **8 tests**. The complete governance suite now passes **76 tests** after
+checkout and passed **41 tests**. The SQLite-backed restore/admission file also
+passed **8 tests**. The complete governance suite now passes **78 tests** after
 the refreshed P2-B local baseline; these results refresh local evidence only
 and do not establish an external provider restore or production rollback-window
 operation.
+
+The two additional checks build and validate a provider-neutral evidence
+manifest from the actual local SQLite `stable` admission/retention projection,
+including its digest, restore owner, access, backup, provider, and migration
+policy fields. The manifest is local evidence only and does not claim an
+external provider drill.
 
 ## Boundary and next work
 

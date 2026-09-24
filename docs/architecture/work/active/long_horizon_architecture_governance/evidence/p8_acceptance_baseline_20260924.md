@@ -37,7 +37,7 @@ $env:PYTHONPATH="$PWD\build-long-horizon-p5c-shared\Debug;$PWD"
 python -m pytest -q $paths
 ```
 
-Result: **76 passed**. This includes the P2-B sustainability baseline,
+Result: **78 passed**. This includes the P2-B sustainability baseline,
 candidate teardown/state-transfer guards, archive/lifecycle checks, P6
 authority checks, P7 retention checks, and the P8 matrix validator.
 

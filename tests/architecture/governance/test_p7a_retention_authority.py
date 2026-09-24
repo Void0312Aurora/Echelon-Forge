@@ -6,6 +6,15 @@ from pathlib import Path
 
 import pytest
 
+from tools.maintenance.p7b_evidence_manifest import EvidenceManifestError
+from tools.maintenance.p7b_evidence_manifest import build_evidence_manifest
+from tools.maintenance.p7b_evidence_manifest import validate_evidence_manifest
+from tools.maintenance.runtime_authority_contracts import canonical_json_bytes
+from tests.architecture.runtime_host import test_rollout_evidence_binding as evidence_fixtures
+from tests.architecture.runtime_host.test_sqlite_rollout_admission import (
+  _advance_to_stable,
+  _open_ledger,
+)
 
 pytestmark = pytest.mark.governance_audit
 
@@ -112,3 +121,61 @@ def test_p7a_git_history_route_restores_one_entry_per_ledger() -> None:
       capture_output=True,
     )
     assert result.returncode == 0, f"unrestorable retained document: {commit}:{path}"
+
+
+def test_p7b_local_ledger_projection_emits_provider_neutral_manifest(tmp_path: Path) -> None:
+  ledger, token, release = _open_ledger(tmp_path)
+  try:
+    _advance_to_stable(ledger, token, release)
+    admission = ledger.read_rollout_admission(
+      "release-evidence-test",
+      verification_key=evidence_fixtures.KEY,
+    )
+    retention = ledger.read_rollout_retention(
+      "release-evidence-test",
+      verification_key=evidence_fixtures.KEY,
+    )
+    payload = canonical_json_bytes(json.loads(json.dumps({
+      "admission": admission,
+      "retention": retention,
+    })))
+    manifest = build_evidence_manifest(
+      artifact_id="release-evidence-test:stable:7",
+      claim="durable stable rollout admission and rollback retention projection",
+      payload=payload,
+      producer="release/runtime integration",
+      created_at="2026-09-25T00:00:00Z",
+      retention_until="2026-12-31T00:00:00Z",
+      restore_owner="release-engineering",
+      access_policy="runtime-evidence-reader",
+      backup_policy="SQLite backup before provider migration",
+      provider="SQLiteArtifactLedger-local",
+      provider_migration_policy="restore into a distinct ledger root and revalidate digests",
+    )
+
+    assert validate_evidence_manifest(manifest, payload=payload) == manifest
+    assert manifest["sha256"]
+    assert manifest["provider"] == "SQLiteArtifactLedger-local"
+  finally:
+    ledger.close()
+
+
+def test_p7b_manifest_rejects_tampered_or_incomplete_shape() -> None:
+  manifest = build_evidence_manifest(
+    artifact_id="manifest-test",
+    claim="test evidence",
+    payload=b"stable-evidence",
+    producer="test",
+    created_at="2026-09-25T00:00:00Z",
+    retention_until="2026-12-31T00:00:00Z",
+    restore_owner="release-engineering",
+    access_policy="read-only",
+    backup_policy="copy-before-migration",
+    provider="local-test",
+    provider_migration_policy="distinct-root-restore",
+  )
+  tampered = {**manifest, "sha256": "0" * 64}
+  with pytest.raises(EvidenceManifestError, match="fields are not exact"):
+    validate_evidence_manifest({**manifest, "unexpected": True})
+  with pytest.raises(EvidenceManifestError, match="payload digest differs"):
+    validate_evidence_manifest(tampered, payload=b"stable-evidence")
