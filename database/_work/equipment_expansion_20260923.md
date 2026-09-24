@@ -69,7 +69,7 @@ calibration package, inventory claim, or final simulation configuration.
 | R-24 | M1252 DVH-family powerpack boundary refresh and direct-manual search | complete | `d57af6d0` |
 | R-25 | M1252 community configuration corroboration package from WarWheels | complete | `96b2d34f` |
 | R-26 | M1252 RMS6-L direct range completion from MCTP 3-01D | complete | `13577a49` |
-| R-27 | M1252 operator-manual volume search and retrieval-boundary update | complete | pending |
+| R-27 | M1252 operator-manual volume search and retrieval-boundary update | complete | `7428ea28` |
 
 ## Blocker / skip ledger
 
