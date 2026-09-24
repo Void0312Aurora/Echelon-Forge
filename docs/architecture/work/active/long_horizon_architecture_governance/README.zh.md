@@ -27,6 +27,9 @@ binding 均为零，但尚未退役 rebuild）见
 [rebuild evidence](evidence/p5d_rebuild_unreachability_20260923.md)。
 首个 P2-B control/cost/retrieval baseline 见
 [sustainability evidence](evidence/p2b_sustainability_baseline_20260923.md)。
+distinct-package cadence follow-up 见
+[cadence evidence](evidence/p2b_release_cadence_followup_20260924.md)，代表性
+cadence 仍开放。
 
 语言：
 
@@ -37,7 +40,7 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/README.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-09-23`
+Last verified: `2026-09-24`
 
 相关权威：
 
@@ -158,7 +161,7 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 | --- | --- | --- | --- | --- |
 | `P0 Authority And Baseline` | 建立已核验 source、control、CI、evidence、ownership 基线及独立审查。 | 用户授权与最新 `origin/main` | 项目包、度量、审查 finding 与 owner index 保持当前 | accepted |
 | `P1 Target Architecture` | 固定 lifecycle、episode authority、versioning/rollout、platform/process topology、contract chain、boundary 与 control lifecycle 决策。 | P0 evidence accepted | 决策包含 compatibility、rollback、operations、storage 与 security activation 路径并通过独立审查 | accepted |
-| `P2 Control Lifecycle` | 将每个架构控制分类为 permanent、renewable、migratory 或 evidentiary，并明确 owner 与退役。 | P1 术语固定 | 既有控制完成分类，migration control 具备可执行退出条件 | P2-A 基线；P2-B 首个基线；代表性 cadence 开放 |
+| `P2 Control Lifecycle` | 将每个架构控制分类为 permanent、renewable、migratory 或 evidentiary，并明确 owner 与退役。 | P1 术语固定 | 既有控制完成分类，migration control 具备可执行退出条件 | P2-A 基线；P2-B 首个基线与 distinct-package follow-up；代表性 cadence 开放 |
 | `P3 Contract And Public Boundary Foundation` | 在 host cutover 前落地 canonical authority envelope、plan/release/rollout/checkpoint shell、engine-independent DTO target、ledger foundation 与初始 visibility。 | P1 accepted | transitional adapter 单一 owner，host 可使用最终 public type/storage 且不发布第二 truth | P3-A/P3-B/P3-C accepted |
 | `P4 Host Lifecycle And Immutable Kernel Candidate` | 实现 fenced host replacement、唯一 episode authority、完整 state transfer 与 dark/shadow immutable candidate path。 | P3 contract/boundary foundation 稳定 | candidate path 已 state-complete 且 fenced，但不得成为 production truth 或退役 production rebuild | P4-A accepted；P4-B 已通过独立复核；P4-C candidate-scope 任务已接受；完整 maintained facade parity 与 P5 仍开放 |
 | `P5 Plan, Evidence, Binding, And Production Cutover` | 闭合 executable plan，引入完整 RunReceipt，完成 facade/diagnostics packaging，再执行唯一 production cutover/backout 并退役 rebuild。 | P4 candidate 通过 dark/shadow | Cordis/native/facade/wheel 使用同一 plan；supported caller 只切换一次且有 rollback evidence，rebuild 失去 production authority | planned |
@@ -193,6 +196,7 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 - [P4-C 独立复核（英文）](../../../reviews/long_horizon_architecture_governance_p4c_review_20260919.md)
 - [P2-A control lifecycle 清单（英文）](evidence/p2_control_lifecycle_inventory_20260923.md)
 - [P2-B sustainability baseline（英文）](evidence/p2b_sustainability_baseline_20260923.md)
+- [P2-B release cadence follow-up（英文）](evidence/p2b_release_cadence_followup_20260924.md)
 
 ## Outputs And Evidence
 
