@@ -79,6 +79,7 @@ calibration package, inventory claim, or final simulation configuration.
 | R-34 | Evidence-backed decisions for 82 no-parameter catalog nodes | complete | `d991b3cd` |
 | R-35 | Verify and document canonical naval namespace | complete | `9a74b107` |
 | R-36 | Explicit manifest rights, provenance, and residual fields | complete | `f370ae1b` |
+| R-37 | Explicit Retrieval blocks for legacy source packages | complete | `c0c8134b` |
 
 ## Blocker / skip ledger
 

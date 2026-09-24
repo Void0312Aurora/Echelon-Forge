@@ -44,7 +44,7 @@ Command: `python database/_work/check_equipment_tree.py`
 | `C3` backlog vs coverage status | PASS, 105 of 105 coverage rows agree |
 | `C4` source admission floor | PASS; all 365 manifests now carry explicit rights/provenance/residual fields, with rights values still `not_recorded` |
 | `C5` source-artifact consistency | PASS, no unnamed or aggregate package claims |
-| `C6` retrieval record | PASS, 55 unretrieved citations remain advisory; 157 packages lack a retrieval block |
+| `C6` retrieval record | PASS, 233 citations remain advisory with failed/not_attempted/no_record status; all 365 packages now carry an explicit Retrieval block, including 157 `not_recorded` blocks |
 | `C7` field-level provenance | PASS, 2,275 parameter rows checked; 0 missing value/source/tier/uncertainty metadata findings |
 | `C8` materialized source ledger | PASS, 365 ledger rows match 365 manifests; 208 include retrieval+retention provenance and 157 include manifest+retention only |
 
@@ -130,6 +130,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | R-34 catalog scope decisions | Classified all 82 no-parameter README nodes as hierarchy indexes or family parents, with path/title/evidence recorded in `catalog_scope_decisions_20260925.csv` |
 | R-35 naval namespace | Verified the alternate namespace is absent and documented `surface-combatant/` as the sole canonical path |
 | R-36 manifest admission fields | Added explicit rights, provenance, and residual status to all 365 manifests; unknown rights remain `not_recorded` and retrieval failures remain visible |
+| R-37 retrieval gap materialization | Added explicit `not_recorded` Retrieval blocks to the 157 legacy manifests that lacked one; no retrieval success is inferred |
 | French C-130J-30 completion | Added the French Ministry's J-30 operating block for endurance, operating mass, cruise profile, crew and load configurations without overwriting the separate U.S. stretch-column definitions |
 | French C-130J-30 retrieval record | Replaced the stale access-only manifest with a successful Tavily-proxy retrieval record and a single-artifact title |
 | Voyager KC2 completion | Added the RAF KC2/KC3 fit and Airbus A330 MRTT structural, fuel, payload and conditioned-range block; carried fuel, offload and capacity remain distinct quantities |
