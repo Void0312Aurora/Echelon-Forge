@@ -42,7 +42,10 @@ def run_route_generator_contract(spec_path: str) -> tuple[bool, str]:
         for seed in seeds:
             loader.load_scenario(scenario_path, seed=seed)
             route = list(loader.waypoints)
-            legs = _leg_lengths(route)
+            origin = loader.get_policy_agent_observation(loader.agent_id)
+            origin_x = float(getattr(origin, "x", 0.0)) if origin is not None else 0.0
+            origin_y = float(getattr(origin, "y", 0.0)) if origin is not None else 0.0
+            legs = _leg_lengths(route, origin_x=origin_x, origin_y=origin_y)
 
             count_range = checks.get("waypoint_count_range", None)
             if isinstance(count_range, (list, tuple)) and len(count_range) >= 2:
@@ -119,7 +122,11 @@ def run_route_generator_contract(spec_path: str) -> tuple[bool, str]:
                 )
                 mission_cfg = base_scenario.get("mission_command", {})
                 env_cfg = base_scenario.get("environment", {})
-                legs_geom, turns = _turn_geometry(route)
+                legs_geom, turns = _turn_geometry(
+                    route,
+                    origin_x=origin_x,
+                    origin_y=origin_y,
+                )
                 route_total = float(sum(legs_geom))
                 time_budget_s = float(env_cfg.get("time_step", 0.05)) * float(env_cfg.get("max_steps", loader.get_max_steps()))
                 base_speed_mps = float(mission_cfg.get("target_speed", 0.0))
@@ -198,7 +205,11 @@ def run_route_generator_contract(spec_path: str) -> tuple[bool, str]:
                 if bool(route_cfg.get("turn_feasibility_enabled", False)):
                     mission_cfg = base_scenario.get("mission_command", {})
                     bank_limit_deg = float(mission_cfg.get("lnav_bank_limit_deg", 30.0))
-                    legs_geom, turns = _turn_geometry(route)
+                    legs_geom, turns = _turn_geometry(
+                        route,
+                        origin_x=origin_x,
+                        origin_y=origin_y,
+                    )
                     frac_limit = float(route_cfg.get("turn_leg_usage_fraction_limit", 0.30))
                     clearance_m = float(route_cfg.get("turn_clearance_m", 0.0))
                     speed_lo = float(route_cfg.get("speed_mps_range", [mission_cfg.get("target_speed", 0.0), mission_cfg.get("target_speed", 0.0)])[0])

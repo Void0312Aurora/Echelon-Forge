@@ -1,6 +1,6 @@
 # P5-D Facade Caller Migration Evidence
 
-Status: `2026-09-23` — maintained contract-caller migration slice; not a
+Status: `2026-09-24` — maintained contract-caller migration slice; not a
 production cutover or P5-D acceptance.
 
 This packet records the first P5-D caller migration slice after the local
@@ -56,11 +56,30 @@ Focused maintained contracts passed:
 - migrated naval/common-core and screen contracts: **10 passed**;
 - route-generator contracts: **2 passed**.
 
-The full unit batch remains non-green on existing rows outside this migration
-slice: `leader_phase_manager_approach_arm` reports an expected transition count
-of `1` but observes `0`; the route distribution row reports seed `5` first leg
-`17084.4 m` outside `[18000.0, 24000.0]`. These residual contracts remain
-explicitly open and are not reclassified as P5-D acceptance evidence.
+## Follow-up parity verification
+
+The two residuals above were reproduced and corrected without changing the
+production route or leader implementation:
+
+- route geometry now measures the first leg and turn from the scenario's
+  actual randomized policy-agent origin rather than an implicit `(0, 0)`;
+  all **7** route-generator contracts pass;
+- the leader fixture now exposes the loader-level runway-frame query and the
+  keyword-compatible post-waypoint transition hook; the approach-arm contract
+  passes.
+
+The unit batch was rerun after these repairs. The unavailable historical
+`frozen_model` row now reports an explicit `SKIP` because neither its declared
+path nor the registered archive alias exists in this checkout; no replacement
+model is substituted. The batch still exposes unrelated legacy flight-model
+rows (`pitch_hold_speed_scan` and `pitch_hold_throttle_scan`) and is therefore
+not claimed as a full-unit green result. Those rows remain outside this
+facade-caller migration slice and are not reclassified as P5-D acceptance
+evidence.
+
+The manual-takeoff contract's test controller also gained bounded roll-rate
+feedback, preserving its original altitude/speed thresholds; the contract now
+passes in **519** steps under the randomized takeoff scenario.
 
 ## Remaining P5-D work
 
