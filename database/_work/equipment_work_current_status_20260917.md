@@ -44,19 +44,19 @@ Command: `python database/_work/check_equipment_tree.py`
 | `C3` backlog vs coverage status | PASS, 105 of 105 coverage rows agree |
 | `C4` source admission floor | PASS after the `E3` retention backfill |
 | `C5` source-artifact consistency | PASS, no unnamed or aggregate package claims |
-| `C6` retrieval record | PASS, 57 unretrieved citations remain advisory; 158 packages lack a retrieval block |
+| `C6` retrieval record | PASS, 55 unretrieved citations remain advisory; 158 packages lack a retrieval block |
 
 Measured counts:
 
 | Metric | Value |
 | --- | --- |
-| Source packages (manifests) | 338 |
-| Catalog leaves (carry `## Parameters`) | 135 |
-| Distinct source ids referenced by leaves | 338 |
+| Source packages (manifests) | 341 |
+| Catalog leaves (carry `## Parameters`) | 138 |
+| Distinct source ids referenced by leaves | 341 |
 | Leaves without `Equipment ID` | 0 |
-| Backlog rows | 144 |
+| Backlog rows | 147 |
 | Coverage rows | 105 |
-| Status: `cataloged` / `parameter_complete` / `held` | 2 / 134 / 8 |
+| Status: `cataloged` / `parameter_complete` / `held` | 2 / 137 / 8 |
 
 ## Leaf Completeness Against The Queue
 
@@ -150,6 +150,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | Machine-gun expansion batch | Added M249, PKM, MG3 and MG4 with sourced caliber, feed, geometry, mass, rate and employment fields; differing range and bolt-rate conventions remain explicit |
 | Crew-served weapon expansion batch | Added M2A1, M240B, Mk 19 Mod 3 and AGS-17 with variant-bounded mass, geometry, range, crew and employment fields; mount and weapon mass remain distinct |
 | Artillery expansion batch | Added M777A2, CAESAR 6x6 and BM-21 Grad with sourced calibre, mass, range, mobility and fire-control fields; baseline and rocket-envelope limits remain explicit |
+| Anti-armour launcher expansion batch | Added Carl-Gustaf M4, AT4CS HP and M72A5-C1 with variant-bounded calibre, dimensions, mass, range/effect and employment fields; ammunition-independent range claims remain excluded |
 
 ## Retracted Findings
 

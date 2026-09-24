@@ -55,6 +55,7 @@ calibration package, inventory claim, or final simulation configuration.
 | R-10 | M249, PKM, MG3 and MG4 machine-gun expansion | complete | `318368e2` |
 | R-11 | M2A1, M240B, Mk 19 Mod 3 and AGS-17 crew-served weapon expansion | complete | `76368bee` |
 | R-12 | M777A2, CAESAR 6x6 and BM-21 Grad artillery expansion | complete | `1523e990` |
+| R-13 | Carl-Gustaf M4, AT4CS HP and M72A5-C1 anti-armour expansion | ready to commit | pending |
 
 ## Blocker / skip ledger
 
