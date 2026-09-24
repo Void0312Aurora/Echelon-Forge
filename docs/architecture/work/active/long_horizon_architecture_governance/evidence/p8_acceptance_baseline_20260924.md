@@ -24,7 +24,11 @@ python -m pytest -q `
   tests/runners/test_pytest_suite_manifests.py
 ```
 
-Result: **15 passed**.
+Result: **16 passed**.
+
+The matrix now binds each topology row to an executable admission gate, and
+the unsupported rows are checked against the actual fail-closed implementation
+rather than only carrying a documentation assertion.
 
 ```powershell
 $paths=(Get-Content -Raw tests/suites/governance_audit_suite.json | ConvertFrom-Json).paths
@@ -33,7 +37,7 @@ $env:PYTHONPATH="$PWD\build-long-horizon-p5c-shared\Debug;$PWD"
 python -m pytest -q $paths
 ```
 
-Result: **74 passed**. This includes the P2-B sustainability baseline,
+Result: **75 passed**. This includes the P2-B sustainability baseline,
 candidate teardown/state-transfer guards, archive/lifecycle checks, P6
 authority checks, P7 retention checks, and the P8 matrix validator.
 

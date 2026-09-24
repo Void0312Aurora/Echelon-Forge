@@ -72,8 +72,19 @@ def test_topology_matrix_fails_closed_for_every_unsupported_row() -> None:
     assert row["platform"] and row["process_topology"]
     assert row["support"] in {"pass", "partial", "unsupported"}
     assert isinstance(row["fail_closed"], bool)
+    assert row["verification"]
     if row["support"] == "unsupported":
       assert row["fail_closed"] is True
+
+
+def test_topology_matrix_verification_points_to_executable_gates() -> None:
+  matrix = _load()
+  for row in matrix["topology_matrix"]:
+    for reference in row["verification"]:
+      relative, symbol = reference.split("::", 1)
+      path = REPO_ROOT / relative
+      assert path.is_file(), reference
+      assert symbol in path.read_text(encoding="utf-8"), reference
 
 
 def test_matrix_evidence_paths_are_tracked_or_are_the_authority_file() -> None:

@@ -82,6 +82,10 @@
       "process_topology": "in-process",
       "support": "partial",
       "fail_closed": true,
+      "verification": [
+        "python/rl/runtime/rollout_gate.py::from_document",
+        "tests/architecture/composition/test_runtime_artifact_ledger.py::test_n_and_n_minus_one_readers_fail_closed_for_skew_features_state_and_topology"
+      ],
       "evidence": [
         "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5c_facade_only_package_qualification_20260922.md",
         "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5d_real_process_package_rollback_20260923.md"
@@ -94,6 +98,9 @@
       "process_topology": "in-process",
       "support": "partial",
       "fail_closed": true,
+      "verification": [
+        "python/rl/runtime/rollout_gate.py::from_document"
+      ],
       "evidence": [
         "docs/architecture/work/active/long_horizon_architecture_governance/decisions/p1c_rollout_operations_and_security_decision_20260825.md"
       ]
@@ -105,6 +112,9 @@
       "process_topology": "multi-process",
       "support": "unsupported",
       "fail_closed": true,
+      "verification": [
+        "python/rl/runtime/rollout_gate.py::from_document"
+      ],
       "evidence": [
         "docs/architecture/work/active/long_horizon_architecture_governance/decisions/p1c_rollout_operations_and_security_decision_20260825.md"
       ]
@@ -116,6 +126,9 @@
       "process_topology": "external-host",
       "support": "unsupported",
       "fail_closed": true,
+      "verification": [
+        "python/rl/runtime/rollout_gate.py::from_document"
+      ],
       "evidence": [
         "docs/architecture/work/active/long_horizon_architecture_governance/decisions/p1c_rollout_operations_and_security_decision_20260825.md"
       ]
@@ -127,6 +140,9 @@
       "process_topology": "in-process",
       "support": "unsupported",
       "fail_closed": true,
+      "verification": [
+        "python/rl/runtime/rollout_gate.py::from_document"
+      ],
       "evidence": [
         "docs/architecture/work/active/long_horizon_architecture_governance/decisions/p1c_rollout_operations_and_security_decision_20260825.md"
       ]
