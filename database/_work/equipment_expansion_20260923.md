@@ -66,7 +66,7 @@ calibration package, inventory claim, or final simulation configuration.
 | R-21 | A-50U held-record completion from Xinhua, Airforce Technology and RedStar profiles | complete | `c79fd30c` |
 | R-22 | Residual Y-20 / M1252 variant-boundary audit and blocker refresh | complete | `aeb650ed` |
 | R-23 | Y-20 generic public performance and crew completion from named secondary packages | complete | `221c4489` |
-| R-24 | M1252 DVH-family powerpack boundary refresh and direct-manual search | complete | pending |
+| R-24 | M1252 DVH-family powerpack boundary refresh and direct-manual search | complete | `d57af6d0` |
 
 ## Blocker / skip ledger
 
