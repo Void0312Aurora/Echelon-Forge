@@ -3,7 +3,7 @@
 文档类型：`work-package`  
 生命周期：`active`  
 Owner：`domains/ground`，环境输入由 `systems/environment` 负责  
-状态：`contract-and-source-fixture`
+状态：`native-probe-tooling-and-source-fixture`；生产 `WorldBatch` 仍保持 held
 
 本包先建立一个虚构的农业平原训练场和一个单兵原生 schema，范围限定为
 “移动与环境观察”切片；其 RL action contract 不引入武器使用或目标选择。
