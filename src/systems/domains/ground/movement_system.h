@@ -19,6 +19,10 @@ inline void stop(Velocity &velocity) {
     velocity.vz = 0.0;
 }
 
+inline bool is_static_hold_task(GroundTaskMode mode) {
+    return mode == GroundTaskMode::OccupyStatic || mode == GroundTaskMode::SupportStatic;
+}
+
 } // namespace ground_infantry_movement_detail
 
 // Ground movement is intentionally a narrow native consumer of the maintained
@@ -51,8 +55,19 @@ inline void register_ground_infantry_movement_system(flecs::world &ecs) {
 
                     const MissionCommandGround::StaticTaskDirective ground_task =
                         mission_command_ground_static_task_directive(command[i]);
-                    if (!command[i].active ||
-                        ground_task.ground_task_mode != GroundTaskMode::MoveStatic) {
+                    const bool move_task =
+                        ground_task.ground_task_mode == GroundTaskMode::MoveStatic;
+                    const bool static_hold_task =
+                        ground_infantry_movement_detail::is_static_hold_task(
+                            ground_task.ground_task_mode);
+                    if (!command[i].active || (!move_task && !static_hold_task)) {
+                        ground_infantry_movement_detail::stop(velocity[i]);
+                        continue;
+                    }
+                    // Occupy/Support are admitted as bounded position-hold
+                    // commands. They deliberately do not imply cover,
+                    // concealment, sensing, or fire-control semantics.
+                    if (static_hold_task) {
                         ground_infantry_movement_detail::stop(velocity[i]);
                         continue;
                     }

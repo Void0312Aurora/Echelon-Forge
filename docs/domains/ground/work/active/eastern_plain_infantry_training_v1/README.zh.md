@@ -46,7 +46,9 @@ Owner：`domains/ground`，环境输入由 `systems/environment` 负责
   终止与 `max_steps`、`blocked_step_limit` 截断。
 - maintained 命令投影：`python/rl/ground/command.py`。它把 heading/speed、原生 stance
   和已有 Ground static-task 片段送入批量契约；对于当前原生命令结构无法表达的 route
-  字段会直接拒绝，而不是静默丢弃。
+  字段会直接拒绝，而不是静默丢弃。`OccupyStatic` 和 `SupportStatic` 作为有界的
+  原生位置保持命令被明确消费，会保持单兵位置和零速度；这不等同于掩体、隐蔽、感知
+  或火控语义。
 
 代理观测现在包含树带/聚落距离与方位，以及河流/桥面标志；这些仍是可重放的
 engineering products。原生 provider 现在准入连续 Arnis 高程/地表覆盖采样、有界河流/桥面

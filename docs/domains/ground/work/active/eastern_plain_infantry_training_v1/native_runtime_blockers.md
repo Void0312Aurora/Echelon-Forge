@@ -70,11 +70,13 @@ learned target-selection or fire policy is released.
 
 The existing C++ maintained command contract already carries
 `ground_static_task`; the Python binding now exposes that slice as well.  This
-removes a transport omission. The new movement system now consumes the admitted
-`MoveStatic` subset. The native command now carries `GroundStance` and the
-movement system applies bounded stand/crouch/prone speed costs; this does not
-release cover, concealment, exposure, or the broader fire-control surface beyond
-the separate bounded rifle path.
+removes a transport omission. The movement system consumes the admitted
+`MoveStatic` subset and now explicitly accepts `OccupyStatic` and
+`SupportStatic` as zero-velocity position-hold commands. The native command now
+carries `GroundStance` and the movement system applies bounded
+stand/crouch/prone speed costs; these task modes do not release cover,
+concealment, exposure, or the broader fire-control surface beyond the separate
+bounded rifle path.
 
 `python/rl/ground/command.py` therefore projects representable heading/speed,
 stance, and static-task fields. It still rejects non-direct route intents because

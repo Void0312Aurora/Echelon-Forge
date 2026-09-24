@@ -169,6 +169,40 @@ def test_native_infantry_stance_changes_movement_cost() -> None:
     assert prone_speed == pytest.approx(stand_speed * 0.35, rel=1.0e-6)
 
 
+def test_native_infantry_static_hold_tasks_stop_without_displacing() -> None:
+    sim = ef_py.SimulationKernel()
+    assert sim.load_database(_DATABASE)
+    sim.set_terrain_type("flat")
+    occupants = []
+    for y, mode in (
+        (100.0, ef_py.GroundTaskMode.OccupyStatic),
+        (200.0, ef_py.GroundTaskMode.SupportStatic),
+    ):
+        entity_id = int(
+            sim.spawn_unit(
+                ef_py.Side.Blue,
+                "Ground_Infantry_Soldier_MVP",
+                400.0,
+                y,
+                0.0,
+            )
+        )
+        command = ef_py.MissionCommand()
+        command.active = True
+        command.cmd_heading_deg = 90.0
+        command.cmd_speed_mps = 1.5
+        command.ground_task_mode = mode
+        sim.set_command_link(entity_id, 0.0, 0.0)
+        sim.set_mission_command(entity_id, command)
+        occupants.append((entity_id, tuple(sim.get_unit_position(entity_id))))
+
+    sim.step()
+
+    for entity_id, before in occupants:
+        assert tuple(sim.get_unit_position(entity_id)) == before
+        assert tuple(sim.get_unit_velocity(entity_id)) == (0.0, 0.0, 0.0)
+
+
 def test_native_infantry_transition_samples_movement_cost_across_surface_boundary() -> None:
     sim = ef_py.SimulationKernel()
     assert sim.load_database(_DATABASE)
