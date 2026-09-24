@@ -491,3 +491,20 @@ to a dedicated owner-local evidence document.
   tests, capability-manifest tests, and registry tests passed `15 passed`;
   Python compilation and `git diff --check` passed. A real scenario rollout was
   not claimed because the local binding artifact is still unavailable.
+
+### 2026-09-25 — WP7 RL-wrapper consumer slice
+
+- Starting commit: `1f8f89ee`.
+- Affected owners: Air neutral execution, RL/world-batch adapter, and wrapper
+  compatibility tests.
+- Expected evidence: the combined `takeoff_cruise_landing` baseline in both
+  wrapper consumers is instantiated through the neutral Air registry; residual
+  blending, hold cadence, and fixed single-phase compatibility remain owned by
+  the adapter.
+- Known residual: the wrapper module remains an RL adapter and still carries
+  residual/hold policy logic; it is not the owner of the neutral Air phase
+  controller after this slice.
+- Focused proxy verification: the wrapper neutral-route test, Air CLI test,
+  Air lifecycle test, and registry tests passed `13 passed`; an isolated
+  `MultiTimescaleActionController` probe produced a 17-element baseline action
+  with active mode `takeoff`. Python compilation and `git diff --check` passed.
