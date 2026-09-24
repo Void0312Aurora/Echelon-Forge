@@ -98,16 +98,18 @@ missing terrain semantics.
 
 The current native-runtime measurement and residuals are recorded in
 [`native_runtime_blockers.md`](native_runtime_blockers.md). The native slice now
-covers one deterministic `MoveStatic` step with surface/slope cost plus explicit
-Arnis raster loading, bounded river/bridge surfaces, and terrain observation;
-the substitute still keeps route/cover semantics and curriculum work moving
-without releasing a general passability claim.
+covers one deterministic `MoveStatic` step with surface/slope/vegetation cost,
+explicit Arnis raster loading, bounded river/bridge surfaces, terrain
+observation, and a fixed-waypoint native Gym adapter; the substitute still
+keeps route/cover semantics moving without releasing a general passability
+claim.
 
 ## Explicit held items
 
 - automatic Arnis runtime setup and tree-line/settlement map-provider consumption;
 - route graph and passability mask;
-- slope/wet-ground/river crossing policy;
+- general slope/wet-ground policy and route-level river-crossing planning
+  (local slope cost and sampled river/bridge transitions are admitted);
 - line-of-sight, cover, concealment, and exposure model;
 - ground track/sensor observation export (terrain sampling is admitted separately);
 - fatigue, medical, logistics, indirect fires, suppression, and full combat integration.

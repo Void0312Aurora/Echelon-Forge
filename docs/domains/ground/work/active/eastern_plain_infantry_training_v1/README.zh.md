@@ -68,14 +68,15 @@ reset、action、observation、reward、termination、replay 契约之后，不�
 
 当前原生 runtime 的测量结果和剩余问题记录在
 [`native_runtime_blockers.md`](native_runtime_blockers.md)。原生切片现在覆盖一个带
-地表/坡度代价的确定性 `MoveStatic` 步，以及显式 Arnis 栅格加载和地形观测；替代方案继续
-推进路线/掩体语义和训练阶梯，但不释放一般通行性能力。
+地表/坡度/植被代价的确定性 `MoveStatic` 步、显式 Arnis 栅格加载、有限河流/桥面过渡、
+地形观测和固定航路点 native Gym 适配；替代方案继续推进路线/掩体语义，但不释放一般
+通行性能力。
 
 ## 明确保持 held 的内容
 
 - 自动 Arnis runtime setup 与树线/聚落地图 provider 消费；
 - 路网与通行性 mask；
-- 坡度、湿地、河流渡越策略；
+- 一般化坡度/湿地策略和路线级河流渡越规划（局部坡度代价与采样河流/桥面过渡已准入）；
 - 视线、掩体、隐蔽和暴露模型；
 - Ground track/sensor observation export（地形采样已单独准入）；
 - 疲劳、医疗、后勤、间接火力、压制和完整战斗接入。
