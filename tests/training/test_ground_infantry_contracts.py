@@ -87,6 +87,9 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
     assert contract["map_profile"]["arnis_bundle_status"] == "verified_export_snapshot"
     assert contract["map_profile"]["companion_overlay"] == "field_overlay.v1"
     assert contract["map_profile"]["runtime_consumption"].startswith("held_until_")
+    assert contract["action_space"]["status"] == "bounded_native_probe_and_proxy"
+    assert contract["action_space"]["native_status"] == "implemented_in_native_probe_only"
+    assert contract["action_space"]["native_route_intent"] == "direct_only"
     assert contract["rl_harness"]["status"] == "non_production_proxy_and_native_probe"
     assert contract["rl_harness"]["authority"] == "native_probe_only_for_native_entrypoint"
     assert contract["rl_harness"]["native_probe"]["status"] == "native_probe_only"
