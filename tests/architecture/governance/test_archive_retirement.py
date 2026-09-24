@@ -1,4 +1,4 @@
-"""Keep the Tier C retention surface at zero after the 2026-08-13 retirement.
+"""Keep documentation history on the one admitted retention route.
 
 422 Markdown files and two figures sat under an `archive/`, `Archive/`, or
 `temp/` path component: a parallel documentation tree with no owner, no SLA,
@@ -6,6 +6,10 @@ and 78 live pages pointing into it. They were deleted, and git history became
 the archive. `docs/engineering/documentation/reference/retired_documents.json`
 records the last commit that modified each one, so `git show <commit>:<path>`
 still prints the retired content.
+
+P7-A admits one explicitly registered owner-local archive for the already
+accepted Cordis composition history. It has an owner, archived README metadata,
+and bilingual index routes. Every other archive path remains forbidden.
 
 Two ways the retirement could quietly undo itself, one guarded by each test
 below: a new document lands under a resurrected archive path, or a live page
@@ -29,6 +33,9 @@ pytestmark = pytest.mark.governance_audit
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DOCS_ROOT = REPO_ROOT / "docs"
 REGISTRY_PATH = DOCS_ROOT / "engineering/documentation/reference/retired_documents.json"
+RETENTION_AUTHORITY_PATH = (
+  DOCS_ROOT / "engineering/documentation/reference/retention_authority.json"
+)
 RETIRED_DIR_NAMES = frozenset({"archive", "Archive", "temp"})
 
 
@@ -56,6 +63,28 @@ def _tracked_present_docs() -> list[str]:
 
 
 @pytest.fixture(scope="module")
+def retention_authority() -> dict:
+  payload = json.loads(RETENTION_AUTHORITY_PATH.read_text(encoding="utf-8"))
+  assert payload["schema_version"] == 1
+  assert payload["policy_id"] == "documentation_retention.v1"
+  return payload
+
+
+def _governed_archive_roots(retention_authority: dict) -> tuple[str, ...]:
+  routes = retention_authority["history_routes"]
+  owner_local = routes["owner_local_archive"]
+  return tuple(item["path"] for item in owner_local["allowed_roots"])
+
+
+def _governed_archive_files(retention_authority: dict) -> tuple[str, ...]:
+  return tuple(retention_authority["history_routes"]["owner_local_archive"]["allowed_files"])
+
+
+def _is_under(relative: str, root: str) -> bool:
+  return relative == root or relative.startswith(root.rstrip("/") + "/")
+
+
+@pytest.fixture(scope="module")
 def registry() -> dict[str, dict[str, str]]:
   payload = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
   assert payload["schema_version"] == 1
@@ -65,20 +94,50 @@ def registry() -> dict[str, dict[str, str]]:
   return documents
 
 
-def test_no_tracked_document_lives_under_a_retired_archive_path() -> None:
+def test_no_tracked_document_lives_under_an_ungoverned_archive_path(
+  retention_authority: dict,
+) -> None:
+  governed_roots = _governed_archive_roots(retention_authority)
+  governed_files = _governed_archive_files(retention_authority)
   offenders = sorted(
     relative
     for relative in _tracked_present_docs()
     if RETIRED_DIR_NAMES.intersection(Path(relative).parts[1:-1])
+    and relative not in governed_files
+    and not any(_is_under(relative, root) for root in governed_roots)
   )
 
   assert offenders == [], (
-    f"{len(offenders)} tracked file(s) reintroduce a retired "
+    f"{len(offenders)} tracked file(s) use an ungoverned "
     f"{sorted(RETIRED_DIR_NAMES)} path component under docs/. Retire a "
-    "superseded document by deleting it and adding a row to the owner's "
-    "archive ledger; do not rebuild the archive tree:\n  "
+    "superseded document through the retention authority or add an explicitly "
+    "reviewed owner-local route:\n  "
     + "\n  ".join(offenders)
   )
+
+
+def test_governed_owner_archive_is_indexed_and_metadata_bearing(
+  retention_authority: dict,
+) -> None:
+  owner_local = retention_authority["history_routes"]["owner_local_archive"]
+  assert owner_local["default"] == "forbidden"
+  assert owner_local["required_readme_lifecycle"] == "archived"
+  roots = owner_local["allowed_roots"]
+  assert roots
+  for path in owner_local["allowed_files"]:
+    assert (REPO_ROOT / path).is_file(), path
+
+  for entry in roots:
+    root = REPO_ROOT / entry["path"]
+    readme = REPO_ROOT / entry["readme"]
+    assert root.is_dir(), entry["path"]
+    assert readme.is_file(), entry["readme"]
+    text = readme.read_text(encoding="utf-8")
+    assert "Document kind:" in text
+    assert "Lifecycle: `archived`" in text
+    assert f"Owner: `{entry['owner']}`" in text
+    for index in entry["indexes"]:
+      assert (REPO_ROOT / index).is_file(), index
 
 
 def test_the_retired_containers_are_gone_from_the_tracked_tree() -> None:

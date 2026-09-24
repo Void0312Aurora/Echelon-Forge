@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "policy_id": "documentation_retention.v1",
+  "owner": "engineering/documentation-governance",
+  "last_verified": "2026-09-24",
+  "active_surfaces": [
+    "docs/architecture/standards",
+    "docs/architecture/reference",
+    "docs/architecture/work/active",
+    "docs/architecture/work/issues",
+    "docs/architecture/reviews",
+    "docs/engineering/documentation/reference"
+  ],
+  "history_routes": {
+    "git_history_owner_ledger": {
+      "kind": "retired_document",
+      "retrieval": "git show <last_commit>:<path>",
+      "registry": "docs/engineering/documentation/reference/retired_documents.json",
+      "ledgers": [
+        "docs/archive_ledger.md",
+        "docs/systems/archive_ledger.md"
+      ],
+      "owner": "project documentation"
+    },
+    "owner_local_archive": {
+      "kind": "accepted_bounded_history",
+      "allowed_roots": [
+        {
+          "path": "docs/architecture/work/archive/cordis_simulation_composition_kernel",
+          "owner": "architecture/runtime-composition",
+          "readme": "docs/architecture/work/archive/cordis_simulation_composition_kernel/README.md",
+          "indexes": [
+            "docs/architecture/README.md",
+            "docs/architecture/README.zh.md",
+            "docs/architecture/work/active/long_horizon_architecture_governance/README.md",
+            "docs/architecture/work/active/long_horizon_architecture_governance/README.zh.md"
+          ],
+          "retention_reason": "accepted bounded Cordis composition history remains retrievable with owner and bilingual entry points",
+          "restore": "checkout the retained path at the recorded revision or use git history when a file is superseded"
+        }
+      ],
+      "allowed_files": [
+        "docs/architecture/work/archive/README.md",
+        "docs/architecture/work/archive/README.zh.md"
+      ],
+      "default": "forbidden",
+      "required_readme_lifecycle": "archived"
+    }
+  },
+  "evidence_retention": {
+    "authority": "ArtifactLedger-backed evidence manifest",
+    "manifest_required_fields": [
+      "artifact_id",
+      "claim",
+      "sha256",
+      "producer",
+      "created_at",
+      "retention_until",
+      "restore_owner",
+      "access_policy",
+      "backup_policy",
+      "provider",
+      "provider_migration_policy"
+    ],
+    "restore_drill": {
+      "cadence": "quarterly",
+      "owner": "release-engineering",
+      "minimum_scope": "one accepted RunReceipt, one checkpoint, and one release/rollout decision chain",
+      "result": "recorded as a new immutable evidence packet"
+    }
+  },
+  "governance_bindings": {
+    "lifecycle_policy": "docs/engineering/documentation/standards/document_lifecycle_policy.md",
+    "lifecycle_policy_zh": "docs/engineering/documentation/standards/document_lifecycle_policy.zh.md",
+    "retirement_gate": "tests/architecture/governance/test_archive_retirement.py",
+    "governance_suite": "tests/suites/governance_audit_suite.json"
+  }
+}

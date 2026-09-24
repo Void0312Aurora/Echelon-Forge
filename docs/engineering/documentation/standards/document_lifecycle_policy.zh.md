@@ -116,8 +116,8 @@ Last verified: `<YYYY-MM-DD>` 或 `not established`
 4. 开放残余或明确 held 的工作；
 5. 指向 review、evidence 和 archive 索引的链接。
 
-已完成工作包的叙述应进入局部 `archive/README.md` 或有界验收记录。新建或实质
-重写的维护 README 应不超过 200 行；超过 300 行时必须提供 `Size exception`，
+已完成工作包的叙述应进入有界验收记录，或进入已明确登记的 owner-local archive
+路由。新建或实质重写的维护 README 应不超过 200 行；超过 300 行时必须提供 `Size exception`，
 说明拆分索引为何会造成实际损害。
 
 不要在根 README、`docs/README`、领域 README 和任务包中重复复制同一状态叙述。
@@ -134,9 +134,13 @@ authority。具体任务状态仍由当前任务 owner 的维护文档所有。
 - Evidence 包使用 `evidence/<topic>_<YYYYMMDD>/`，包含 `README.md` 和
   `manifest.json`。
 - `README.md` 只用于目录导航。
-- 新归档目录统一使用小写 `archive/`。
-- 禁止新增 `Archive/`、`archive/archive/` 或重复生命周期目录。既有遗留路径只在
-  经过独立审阅且链接安全的迭代中迁移。
+- 仓库内 archive 目录不是默认路由。只有在
+  `docs/engineering/documentation/reference/retention_authority.json` 中登记、
+  具有 owner 和 archived README 元数据、并从声明的索引入口可达的 tracked
+  archive 路径才可保留。
+- 禁止新增 `Archive/`、`archive/archive/`、重复生命周期目录或未登记的
+  owner-local archive。已退役且不属于获准 owner-local 路由的材料应从工作树删除，
+  通过 owner ledger 和 Git 历史恢复。
 
 ## 双语规则
 
@@ -229,13 +233,16 @@ Review 必须标识它检查的准确 revision 或 diff，在该迭代中与实�
 行为风险而非文风偏好分类问题。行动项被转移或关闭后，review 变为 `accepted` 或
 `archived`，不得继续表现为 active 实现队列。
 
-文档只有满足以下条件才能进入 `archive/`：
+文档只有满足以下条件才能进入已登记的 owner-local `archive/`：
 
 1. 已存在维护中的替代文档或父 README；
 2. 维护者仍需要的当前事实已提升到替代文档；
 3. 维护入口链接已更新；
 4. provenance 和 evidence 消费者已核查；
-5. archive 索引记录了理由和日期。
+5. retention authority 和 archive 索引记录了 owner、理由和日期。
+
+未登记的 archive 路径不是 retention 路由；维护 gate 会拒绝它，不得建立第二个
+仓库内历史权威。
 
 Archived 文件除链接修复、许可/权利修正或显式 erratum 外不可变。不得向 archived
 任务包追加新工作。

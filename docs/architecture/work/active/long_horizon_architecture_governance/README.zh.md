@@ -84,8 +84,8 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 | Runtime 边界 | facade 方向已接受；compatibility surface 仍存在 | [runtime facade guards](../../../../../tests/architecture/runtime_facade/test_runtime_escape_hatches.py) | source scan 能描述边界，但不能让越界在物理上不可表示 |
 | Contract 与证据链 | 已覆盖 accepted 默认 profile | request、catalog lock、projection、requested/resolved manifest、provenance、parity 与 closure artifact | 中间迁移 artifact 仍是永久治理输入 |
 | Public/runtime authority boundary | P3-A/P3-B/P3-C 与 P4-A accepted；P4-B 已通过独立复核；P4-C candidate-scope 任务已接受 | [`ef_runtime_contracts`](../../../../../include/echelon_forge/runtime_contracts/runtime_identity.h)、[`RuntimeHostCandidate`](../../../../../src/runtime/host/runtime_host_candidate.h)、[P4-B candidate](p4b_state_transfer_candidate_20260830.md)、[P4-C candidate seam](p4c_internal_candidate_seam_20260915.md)、12-row owner adapters、authority/ledger schema、exact vector、non-production ArtifactLedger simulator、fresh Windows/MSVC native gate 与 [P4-B 独立审查](../../../reviews/long_horizon_architecture_governance_p4b_review_20260831.md) | P4-A/B/C 仍仅 dark/shadow；完整 maintained facade parity 与 P5-B/P5-D production durability、authenticity、activation、cutover 仍受 gate 约束 |
-| 测试与 CI 治理 | CI smoke 已验证为绿；P6-A authority baseline 的聚焦检查已通过；完整 governance audit 非绿 | [CI smoke suite](../../../../../tests/smoke/ci_smoke_suite.json)、[governance audit suite](../../../../../tests/suites/governance_audit_suite.json) 与 [P6-A 派生审计](evidence/p6a_test_authority_audit_20260924.md) | source-scan residual 与 archive-retention 冲突仍明确保留；archive-specific policy 由 P7 负责 |
-| 文档生命周期 | policy、gate 与仓库路由冲突 | [文档生命周期规范](../../../../engineering/documentation/standards/document_lifecycle_policy.zh.md)、子项目规范与当前 architecture archive | standard 接受 owner-local archive，但 maintained gate 禁止所有 `docs/**/archive/**` 路径 |
+| 测试与 CI 治理 | CI smoke 已验证为绿；P6-A authority baseline 与 P7-A retention 检查已有聚焦证据；完整 hosted governance/CI 验收未完成 | [CI smoke suite](../../../../../tests/smoke/ci_smoke_suite.json)、[governance audit suite](../../../../../tests/suites/governance_audit_suite.json)、[P6-A 派生审计](evidence/p6a_test_authority_audit_20260924.md) 与 [retention authority](../../../../engineering/documentation/reference/retention_authority.json) | source-scan residual 与 hosted CI/branch-protection 证据仍开放；archive 路由受 P7-A authority 约束 |
+| 文档生命周期 | P7-A retention authority baseline 已实现 | [P7-A retention 证据](evidence/p7a_retention_authority_20260924.md)、[文档生命周期规范](../../../../engineering/documentation/standards/document_lifecycle_policy.zh.md)、[retention authority](../../../../engineering/documentation/reference/retention_authority.json)、archive gate 与当前 architecture archive | 仅登记的 Cordis owner-local archive 可保留；其他 archive 路径禁止，退役材料使用 owner ledger/Git 历史 |
 
 ## Scope
 
@@ -258,6 +258,7 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 ## Archive
 
 计划开放期间，active README 与 current-status 文件保持为入口。Accepted 决策提升到
-architecture standard 或 review。P7 必须先解决当前 owner-archive policy 与禁止所有
-`docs/**/archive/**` 路径的 gate 之间的冲突，再选择退役路由。在此之前，新 archive
-tree 不是已接受的 closure mechanism，active 目录也不得成为 append-only evidence store。
+architecture standard 或 review。P7-A 通过 `retention_authority.json` 解决
+owner-archive policy：已接受的 Cordis 历史是唯一登记的 owner-local archive，其他
+archive 路径仍禁止；该路由之外的退役材料使用 owner ledger 和 Git 历史。active
+目录仍是当前执行面，不得变成 append-only evidence store。
