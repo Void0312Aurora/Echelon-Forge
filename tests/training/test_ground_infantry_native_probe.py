@@ -313,6 +313,31 @@ def test_native_ground_probe_reset_and_step_use_compiled_observation_surfaces() 
     ]
 
 
+def test_native_ground_probe_fires_once_through_authorized_fixed_contact() -> None:
+    probe = GroundInfantryNativeProbe.from_fixture(
+        start_xy_m=(400.0, 100.0),
+        goal_xy_m=(410.0, 100.0),
+        target_xy_m=(450.0, 100.0),
+    )
+    _observation, _info = probe.reset(seed=29)
+
+    result = probe.fire_from_mission_command()
+
+    assert result.success is True
+    assert result.target_entity_id > 0
+    assert result.target_damage_after[0] < result.target_damage_before[0]
+    assert result.trace["authority"] == "native_probe_only"
+    assert result.trace["event"] == "fire_from_mission_command"
+    assert result.trace["weapon_after"][2] == pytest.approx(
+        result.trace["weapon_before"][2] - 1.0
+    )
+    assert "line_of_sight" in result.trace["does_not_claim"]
+
+    rejected = probe.fire_from_mission_command()
+    assert rejected.success is False
+    assert rejected.target_damage_after == result.target_damage_after
+
+
 def test_native_ground_probe_replay_is_seed_stable() -> None:
     actions = ([90.0, 0.5, 0.0, 0.0], [-90.0, 0.75, 2.0, 0.0])
 

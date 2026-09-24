@@ -35,6 +35,7 @@
       "status": "bounded_native_probe",
       "entrypoint": "SimulationKernel.fire_ground_weapon",
       "command_entrypoint": "SimulationKernel.fire_ground_weapon_from_mission_command",
+      "probe_entrypoint": "GroundInfantryNativeProbe.fire_from_mission_command",
       "observation_entrypoint": "SimulationKernel.get_ground_weapon_state",
       "observation_fields": ["present", "selected_type", "ammunition", "maximum_ammunition", "damage_per_hit", "engagement_range_m", "hit_probability", "cooldown_remaining"],
       "weapon": "rifle",

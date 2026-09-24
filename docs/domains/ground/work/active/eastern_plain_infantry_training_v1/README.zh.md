@@ -50,6 +50,10 @@ Owner：`domains/ground`，环境输入由 `systems/environment` 负责
   原生位置保持命令被明确消费，会保持单兵位置和零速度；这不等同于掩体、隐蔽、感知
   或火控语义。
 
+  原生 probe 还可以选择生成一个固定敌方接触，并通过带授权的任务命令触发一次步枪
+  射击，记录伤害状态、弹药和冷却变化。该入口仍是 `native_probe_only` 的命令/武器验收，
+  不提供目标选择、视线、掩体、压制、弹道或学习型火力策略。
+
 代理观测现在包含树带/聚落距离与方位，以及河流/桥面标志；这些仍是可重放的
 engineering products。原生 provider 现在准入连续 Arnis 高程/地表覆盖采样、有界河流/桥面
 地表以及地形观测 tuple；树线/聚落和 track observation export 仍保持 held。
