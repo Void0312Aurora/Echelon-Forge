@@ -86,7 +86,8 @@
       "status": "native_probe_only",
       "entrypoint": "python.rl.ground.native_env:GroundInfantryNativeEnv",
       "production_boundary": "not_world_batch",
-      "observation_owner": "GroundInfantryNativeProbe"
+      "observation_owner": "GroundInfantryNativeProbe",
+      "observation_fields": ["position_local_enu_m", "velocity_local_enu_mps", "terrain", "terrain_effects", "field_semantics", "weapon_state", "mission_state", "state"]
     },
     "promotion_gate": "native_ground_reset_step_replay_and_terrain_owner"
   },
@@ -115,6 +116,7 @@
       "nearest_tree_line_distance_and_bearing",
       "nearest_settlement_distance_and_bearing",
       "river_and_bridge_state",
+      "mission_goal_relative_state",
       "route_progress_and_blocked_reason",
       "health_and_command_link_state"
     ],

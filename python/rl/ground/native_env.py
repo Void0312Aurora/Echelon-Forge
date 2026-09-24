@@ -68,6 +68,9 @@ else:
                     "weapon_state": spaces.Box(
                         low=-np.inf, high=np.inf, shape=(8,), dtype=np.float32
                     ),
+                    "mission_state": spaces.Box(
+                        low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32
+                    ),
                     "state": spaces.Box(
                         low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32
                     ),
