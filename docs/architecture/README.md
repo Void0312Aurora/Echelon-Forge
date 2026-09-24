@@ -61,6 +61,9 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
 
 - [System modularization issue](work/issues/modularization_plan.md): draft
   residual analysis; directory placement does not authorize implementation.
+- [Cross-domain scripted agent system](work/issues/cross_domain_scripted_agent_system_plan.md):
+  draft plan for an independent, fully playable scripted-agent line across
+  Air, Naval, Ground, and future domain profiles.
 - [System layering and engine encapsulation](work/issues/system_layering_and_engine_encapsulation_plan.md)
 - [Architecture and performance research follow-up](work/issues/architecture_and_performance_research_followup.md)
 - [Runtime facade contract](work/issues/runtime_facade_contract_plan.md)
