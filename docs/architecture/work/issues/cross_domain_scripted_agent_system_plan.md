@@ -770,3 +770,27 @@ to a dedicated owner-local evidence document.
   multi-aircraft parity, joint tasking, and large-scale demonstration still
   require dedicated implementation and evidence batches. This planning batch
   does not change runtime behavior or database admission.
+
+### 2026-09-25 — Air scripted C2 command/report runtime probe
+
+- Starting commit: `f1b1c56a`.
+- Direct command: `LeaderTrainingEnv` with `execution_backend=scripted`, local
+  `build-scripted-agent/ef_py`, seed `7`, and
+  `scenarios/combined/takeoff_to_landing_c2_task_only_demo_v1.json`.
+- First probe residual: the retained JSON summary attempted to serialize a
+  NumPy `float32` mission-status value and failed before emitting a report. The
+  probe was corrected by converting the four mission-status fields to Python
+  floats; the same failing serialization path was not retried unchanged.
+- Direct result after the correction: `104` leader decision windows ran;
+  report types `1` and `20` were observed; `report_valid` was true for all
+  windows; `TASK_RECOVER_LAND` was entered at window `18` with
+  `recovery_window_open` and `rtb_report`; the terminal result was
+  `off_runway_terminate` with mission success flag `-1`.
+- Evidence boundary: command/report objects are being produced and synced,
+  but this scenario does not yet provide a successful scripted C2 episode
+  closure. The residual is a concrete task-only route/landing geometry or
+  entry-contract mismatch, not evidence to promote Air beyond
+  `playable_candidate`.
+- Continuation choice: retain the exact residual for a later C2 geometry/entry
+  batch and proceed independently with the planned tactical engagement and EW
+  contract work. No unrelated domain task is blocked by this residual.
