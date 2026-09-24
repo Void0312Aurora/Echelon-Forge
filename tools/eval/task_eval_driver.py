@@ -88,13 +88,13 @@ class ScriptedPolicyAdapter(PolicyAdapter):
 
 
 def _build_scripted_stable_controller(env):
-    from python.rl.control.scripted_stable_flight import ScriptedStableFlightController
+    from python.tasking_contracts.scripted_stable_flight import ScriptedStableFlightController
 
     return ScriptedStableFlightController(action_dim=int(env.action_space.shape[0]), dt=_env_time_step(env))
 
 
 def _build_scripted_takeoff_controller(env):
-    from python.rl.control.scripted_takeoff import ScriptedTakeoffController
+    from python.tasking_contracts.scripted_takeoff import ScriptedTakeoffController
 
     return ScriptedTakeoffController(action_dim=int(env.action_space.shape[0]), dt=_env_time_step(env))
 
