@@ -1,5 +1,8 @@
 {
   "name": "ci_contract_smoke",
+  "owner": "release-engineering",
+  "failure_audience": "pull-request canonical contract fixture regression",
+  "execution_strategy": "json-contract-suite",
   "control_lifecycle": {
     "schema_version": 1,
     "controls": [

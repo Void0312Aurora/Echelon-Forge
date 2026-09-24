@@ -22,6 +22,11 @@ DEFAULT_MANIFESTS = (
   Path("tests/suites/architecture_guard_suite.json"),
   Path("tests/suites/governance_audit_suite.json"),
 )
+DEFAULT_RUNNER_MANIFESTS = (
+  Path("tests/smoke/ci_smoke_suite.json"),
+  Path("tests/smoke/ci_contract_suite.json"),
+  *DEFAULT_MANIFESTS,
+)
 REQUIRED_METADATA = ("owner", "failure_audience", "execution_strategy")
 
 
@@ -178,6 +183,42 @@ def _source_scan_row(stats: dict[str, Any]) -> dict[str, Any]:
   }
 
 
+def _runner_manifest_rows(
+  root: Path,
+  manifest_paths: Sequence[Path],
+) -> list[dict[str, Any]]:
+  rows: list[dict[str, Any]] = []
+  for manifest_path in manifest_paths:
+    resolved = manifest_path if manifest_path.is_absolute() else root / manifest_path
+    payload = _load_json(resolved)
+    metadata = _metadata(payload, resolved)
+    if isinstance(payload.get("paths"), list):
+      entry_kind = "pytest"
+      entry_count = len(payload["paths"])
+    elif isinstance(payload.get("specs"), list):
+      entry_kind = "contract"
+      entry_count = len(payload["specs"])
+    else:
+      raise AuthorityAuditError(
+        f"{resolved} must contain a non-empty paths or specs list"
+      )
+    if entry_count == 0:
+      raise AuthorityAuditError(f"{resolved} must contain a non-empty execution list")
+    name = payload.get("name", resolved.stem)
+    if not isinstance(name, str) or not name.strip():
+      raise AuthorityAuditError(f"{resolved} must declare a non-empty name")
+    rows.append(
+      {
+        "name": name.strip(),
+        "manifest": _repo_relative(resolved, root),
+        "kind": entry_kind,
+        "entry_count": entry_count,
+        **metadata,
+      }
+    )
+  return sorted(rows, key=lambda row: row["manifest"])
+
+
 def build_inventory(
   *,
   root: Path = REPO_ROOT,
@@ -186,6 +227,10 @@ def build_inventory(
 ) -> dict[str, Any]:
   root = root.resolve()
   manifests = tuple(manifest_paths or DEFAULT_MANIFESTS)
+  runner_manifests = _runner_manifest_rows(
+    root,
+    tuple(manifest_paths) if manifest_paths is not None else DEFAULT_RUNNER_MANIFESTS,
+  )
   live_files = {
     Path(path).as_posix()
     for path in (live_test_files if live_test_files is not None else _live_architecture_test_files(root))
@@ -239,6 +284,7 @@ def build_inventory(
     "schema_version": SCHEMA_VERSION,
     "report_authority": REPORT_AUTHORITY,
     "source_of_truth": [row["manifest"] for row in suite_rows],
+    "runner_manifests": runner_manifests,
     "scope": {
       "root": str(root),
       "architecture_test_files_only": True,
@@ -249,6 +295,7 @@ def build_inventory(
       "architecture_test_files": len(report_rows),
       "manifest_entries": len(rows),
       "suite_count": len(suite_rows),
+      "runner_manifest_count": len(runner_manifests),
       "owner_count": len(owner_counts),
       "execution_strategy_count": len(strategy_counts),
       "source_scan_reference_files": source_scan_reference_files,
@@ -277,6 +324,7 @@ def format_markdown(report: dict[str, Any], *, limit: int = 200) -> str:
     "",
     f"- Architecture test files: `{summary['architecture_test_files']}`",
     f"- Manifest entries: `{summary['manifest_entries']}`",
+    f"- Runner manifests with owner/lane metadata: `{summary['runner_manifest_count']}`",
     f"- Owners / execution strategies: `{summary['owner_count']}` / `{summary['execution_strategy_count']}`",
     f"- Files with source-scan references: `{summary['source_scan_reference_files']}`",
     f"- Files retaining a source-scan residual flag: `{summary['source_scan_residual_files']}`",
@@ -298,6 +346,29 @@ def format_markdown(report: dict[str, Any], *, limit: int = 200) -> str:
           _escape(suite["failure_audience"]),
           _escape(suite["execution_strategy"]),
           str(suite["file_count"]),
+        ]
+      ) + " |"
+    )
+  lines.extend(
+    [
+      "",
+      "## Runner Manifests",
+      "",
+      "| Name | Manifest | Kind | Owner | Failure audience | Execution strategy | Entries |",
+      "| --- | --- | --- | --- | --- | --- | ---: |",
+    ]
+  )
+  for manifest in report["runner_manifests"]:
+    lines.append(
+      "| " + " | ".join(
+        [
+          _escape(manifest["name"]),
+          f"`{manifest['manifest']}`",
+          manifest["kind"],
+          _escape(manifest["owner"]),
+          _escape(manifest["failure_audience"]),
+          _escape(manifest["execution_strategy"]),
+          str(manifest["entry_count"]),
         ]
       ) + " |"
     )

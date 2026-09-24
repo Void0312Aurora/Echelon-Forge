@@ -35,6 +35,13 @@ def test_derived_inventory_assigns_every_architecture_test_once() -> None:
     "tests/suites/architecture_guard_suite.json",
     "tests/suites/governance_audit_suite.json",
   ]
+  assert report["summary"]["runner_manifest_count"] == 4
+  assert {row["name"] for row in report["runner_manifests"]} == {
+    "ci_smoke",
+    "ci_contract_smoke",
+    "architecture_guard",
+    "governance_audit",
+  }
   assert report["summary"]["architecture_test_files"] == report["summary"]["manifest_entries"]
   assert report["summary"]["architecture_test_files"] == len(report["tests"])
   assert {row["path"] for row in report["tests"]} == audit_test_authority._live_architecture_test_files(

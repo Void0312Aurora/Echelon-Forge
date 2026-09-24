@@ -1,5 +1,8 @@
 {
   "name": "ci_smoke",
+  "owner": "release-engineering",
+  "failure_audience": "pull-request high-signal native, facade, contract, and governance regression",
+  "execution_strategy": "pytest-smoke-suite",
   "control_lifecycle": {
     "schema_version": 1,
     "controls": [

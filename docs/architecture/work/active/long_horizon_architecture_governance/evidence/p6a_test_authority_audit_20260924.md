@@ -19,6 +19,12 @@ metadata, and cross-tier overlap. It also joins the existing static audit's
 source-scan signal so residual migration guards remain visible rather than
 being silently treated as retired.
 
+The two CI runner manifests (`tests/smoke/ci_smoke_suite.json` and
+`tests/smoke/ci_contract_suite.json`) now carry the same root owner,
+failure-audience, and execution-strategy metadata. The report lists all four
+runner manifests while keeping architecture-tier file assignment as its
+validated orphan/overlap scope.
+
 The report is intentionally not a second registry. It does not rewrite suite
 membership, change pytest marker semantics, alter CTest definitions, or touch
 the P7-A archive-retention policy, gate, or suite node. The newly discovered
@@ -34,6 +40,7 @@ The checked-out tree currently derives:
 | Architecture test files | 112 |
 | Manifest entries | 112 |
 | Tier manifests | 2 |
+| Runner manifests with owner/lane metadata | 4 |
 | Owners / execution strategies | 2 / 2 |
 | Files with source-scan references | 110 |
 | Files retaining the `source_scan_guard` residual flag | 88 |
