@@ -6,7 +6,12 @@ from .air_scripted_engagement import (
     AIR_SCRIPTED_ENGAGEMENT_MODEL_ID,
     make_air_scripted_engagement_model,
 )
-from .air_scripted_ew import AIR_SCRIPTED_EW_MODEL_ID, make_air_scripted_ew_model
+from .air_scripted_ew import (
+    AIR_SCRIPTED_EW_ACTION_MODEL_ID,
+    AIR_SCRIPTED_EW_MODEL_ID,
+    make_air_scripted_ew_action_model,
+    make_air_scripted_ew_model,
+)
 from .air_scripted_execution import (
     AIR_SCRIPTED_EXECUTION_MODEL_ID,
     make_air_scripted_execution_model,
@@ -44,6 +49,17 @@ AIR_SCRIPTED_MODEL_REGISTRY = ScriptedModelRegistry(
             note=(
                 "RWR-derived EW response intent; countermeasure and jammer "
                 "native action ownership remains open."
+            ),
+        ),
+        ScriptedModelRegistration(
+            model_id=AIR_SCRIPTED_EW_ACTION_MODEL_ID,
+            domain="air",
+            role_ids=("air_ew_action_controller",),
+            factory=make_air_scripted_ew_action_model,
+            status="adapter",
+            note=(
+                "Versioned 14-element EW action extension; native acceptance "
+                "and replay/roster gates remain open."
             ),
         ),
     )

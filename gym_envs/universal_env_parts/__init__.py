@@ -13,6 +13,8 @@ from typing import Any
 __all__ = [
     "AIR_COMBAT_HYBRID_V1_ACTION_DIM",
     "AIR_COMBAT_HYBRID_V1_ACTION_MODE",
+    "AIR_EW_HYBRID_V1_ACTION_DIM",
+    "AIR_EW_HYBRID_V1_ACTION_MODE",
     "add_air_combat_event_action_info",
     "air_combat_event_action_contract_present",
     "air_combat_hybrid_effective_action",
@@ -32,6 +34,7 @@ __all__ = [
     "build_neutral_ship_pilot_action",
     "half_to_unit",
     "is_air_combat_hybrid_action_mode",
+    "is_air_ew_hybrid_action_mode",
     "is_naval_station_action_mode",
     "make_action_space",
     "make_observation_space",
@@ -61,6 +64,8 @@ __all__ = [
 _EXPORTS: dict[str, tuple[str, str]] = {
     "AIR_COMBAT_HYBRID_V1_ACTION_DIM": (".spaces", "AIR_COMBAT_HYBRID_V1_ACTION_DIM"),
     "AIR_COMBAT_HYBRID_V1_ACTION_MODE": (".spaces", "AIR_COMBAT_HYBRID_V1_ACTION_MODE"),
+    "AIR_EW_HYBRID_V1_ACTION_DIM": (".spaces", "AIR_EW_HYBRID_V1_ACTION_DIM"),
+    "AIR_EW_HYBRID_V1_ACTION_MODE": (".spaces", "AIR_EW_HYBRID_V1_ACTION_MODE"),
     "add_air_combat_event_action_info": (".air_combat_event_action", "add_air_combat_event_action_info"),
     "air_combat_event_action_contract_present": (
         ".air_combat_event_action",
@@ -86,6 +91,7 @@ _EXPORTS: dict[str, tuple[str, str]] = {
     "build_neutral_ship_pilot_action": (".naval_actions", "build_neutral_ship_pilot_action"),
     "half_to_unit": (".actions", "half_to_unit"),
     "is_air_combat_hybrid_action_mode": (".actions", "is_air_combat_hybrid_action_mode"),
+    "is_air_ew_hybrid_action_mode": (".actions", "is_air_ew_hybrid_action_mode"),
     "is_naval_station_action_mode": (".naval_actions", "is_naval_station_action_mode"),
     "make_action_space": (".spaces", "make_action_space"),
     "make_observation_space": (".spaces", "make_observation_space"),
