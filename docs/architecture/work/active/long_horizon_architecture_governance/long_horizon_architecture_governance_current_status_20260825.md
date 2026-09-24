@@ -276,19 +276,20 @@ They must be remeasured before an implementation or acceptance claim.
   This is the implementation baseline; P2-B representative measurements and
   the paused independent review remain open.
 
-- Added the first repeatable P2-B sustainability baseline. Four check groups
-  ran three times (12/12 passed, 0 healthy-sample failures) and the supported
-  row ran three additional process replacement/backout cycles. The report
-  records control counts, check cost, SLO/adoption, safety counters, static
-  audit size, and evidence retrieval with named owners. See [P2-B
-  sustainability baseline evidence](evidence/p2b_sustainability_baseline_20260923.md).
-  This is a local Windows baseline; representative release cadence, long-term
+- Re-ran the P2-B sustainability baseline on 2026-09-25. Four check groups ran
+  three times (12/12 passed, 0 healthy-sample failures) and the supported row
+  completed three replacement/backout cycles with 3/3 SLO runs passing. The
+  latest sample observed a 1.4249537 s maximum replacement startup, 1.4229253
+  s maximum backout recovery, 6/6 resource snapshots, 47,042,560-byte maximum
+  peak working set, and 135 maximum handles. See [P2-B sustainability
+  baseline evidence](evidence/p2b_sustainability_baseline_20260923.md). This
+  is a local Windows baseline; representative release cadence, long-term
   resource budgets, and independent review remain open.
 
 - Extended the supported-row process measurement with real child-process
-  working-set and handle observations. The three-cycle sample had 6/6
-  available resource snapshots, a maximum peak working set of 46,186,496
-  bytes, and a maximum peak handle count of 128. These are observation-only
+  working-set and handle observations. The latest three-cycle sample had 6/6
+  available resource snapshots, a maximum peak working set of 47,042,560
+  bytes, and a maximum peak handle count of 135. These are observation-only
   values; no long-term resource budget or leak verdict has been accepted.
 
 - Made the P2-B release cadence sample explicit: each supported-row report
