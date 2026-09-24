@@ -243,6 +243,8 @@ They must be remeasured before an implementation or acceptance claim.
   selector subset passed three fresh consecutive repeats (30.445 s, 30.742 s,
   30.774 s). This is repeatable local declaration behavior, not hosted CI
   resource/flake or branch-protection evidence.
+  A read-only GitHub check on 2026-09-25 found `main` unprotected and no
+  repository rulesets; hosted control-plane evidence therefore remains open.
   See [P6-A test-authority audit evidence]
   (evidence/p6a_test_authority_audit_20260924.md). P6-A replacement and
   retirement decisions, repeated P6-B CI evidence, and P7 archive-specific

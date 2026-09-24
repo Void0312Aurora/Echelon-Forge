@@ -68,6 +68,14 @@ enforcement, or a completed native build. The refreshed run used the current
 `codex/long-horizon-governance-architecture` checkout after the P5-D explicit
 generated-plan migration commit.
 
+## Hosted control-plane check
+
+A read-only GitHub API check on `2026-09-25` found no protected `main` branch
+(`GET /branches/main/protection` returned `404 Branch not protected`) and no
+repository rulesets (`GET /rulesets` returned an empty list). The repository's
+recent workflow runs therefore cannot be treated as branch-protection evidence;
+hosted resource/flake and failure-routing evidence remain open.
+
 ## Boundary
 
 This is a P6-B implementation baseline, not P6 acceptance. Hosted repeated
