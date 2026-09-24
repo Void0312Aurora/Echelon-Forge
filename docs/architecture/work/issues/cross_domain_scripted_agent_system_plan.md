@@ -605,3 +605,20 @@ to a dedicated owner-local evidence document.
 - Evidence boundary: manifest resolution is an admission/routing check, not a
   playable promotion. Ground remains held; Air full mission/cooperative
   acceptance and Naval full combat/fleet acceptance remain open.
+
+### 2026-09-25 — visualization manifest route slice
+
+- Starting commit: `ac5d90c6`.
+- Change batch: the combined scripted Air visualization path now resolves the
+  scenario manifest before passing `scripted_model_id` into the neutral wrapper
+  consumer. The wrapper keeps the explicit legacy model ID only as its default
+  when no override is supplied.
+- Focused proxy verification: visualization route, wrapper route, manifest, and
+  registry tests passed `17 passed`; Python compilation and `git diff --check`
+  passed.
+- Direct verification: importing the maintained viz session against the local
+  binding and resolving the manifest-bearing Air scenario returned
+  `air.execution.phase_scripted`.
+- Evidence boundary: this establishes declaration parity between the Air CLI
+  and viz wrapper route; it is not a full visualization process, render, replay,
+  or complete playable acceptance result.
