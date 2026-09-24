@@ -26,6 +26,7 @@
 #include "components/domains/air/combat/damage_air.h"
 #include "components/domains/ground/combat/damage_ground.h"
 #include "components/domains/ground/ground_capabilities.h"
+#include "components/domains/ground/combat/weapon_ground.h"
 #include "components/combat/common/damage_common.h"
 #include "components/combat/common/weapon_common.h"
 #include "components/domains/naval/combat/weapon_naval.h"
@@ -1475,6 +1476,11 @@ class DefaultUnitFactory : public IUnitFactory {
         }
         if (type == UnitType::Ground) {
             e.set<GroundPlatformDamageState>({});
+            // The first native infantry fire slice uses one deterministic
+            // rifle contract. It is a representative direct-fire capability,
+            // not a claim that every ground aggregate has individual weapon
+            // inventory modeled.
+            e.set<GroundWeaponState>(make_default_ground_infantry_weapon_state());
         }
     }
 

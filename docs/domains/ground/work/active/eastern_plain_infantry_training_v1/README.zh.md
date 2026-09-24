@@ -6,7 +6,8 @@ Owner：`domains/ground`，环境输入由 `systems/environment` 负责
 状态：`contract-and-source-fixture`
 
 本包先建立一个虚构的农业平原训练场和一个单兵原生 schema，范围限定为
-“移动与环境观察”切片，不引入武器使用、目标选择或战斗 runtime。
+“移动与环境观察”切片；其 RL action contract 不引入武器使用或目标选择。
+单独的原生 runtime probe 已覆盖有界直射。
 
 ## 地图范围
 
@@ -56,7 +57,8 @@ engineering products。原生 provider 现在准入连续 Arnis 高程/地表覆
 2. **S1 平面航路点**：在简单地表上实现确定性 step 和路线进度，不能偷偷穿越河流或
    把 held 语义当作可通行；
 3. **S2 地形代价**：坡度、地表类别、农道、河流和桥面通行性成为有 owner/来源的显式产品；
-4. **S3 环境观察**：带来源报告树带和聚落，未知值必须显式保留，不引入武器行为；
+4. **S3 环境观察**：带来源报告树带和聚落，未知值必须显式保留；RL contract 不暴露
+   单独的原生直射 probe；
 5. **S4 小组扩展**：单兵重置、step、观察和重放门槛通过后，才加入班组/指挥关系，
    再考虑接入已有陆战损伤切片。
 
@@ -76,4 +78,4 @@ reset、action、observation、reward、termination、replay 契约之后，不�
 - 坡度、湿地、河流渡越策略；
 - 视线、掩体、隐蔽和暴露模型；
 - Ground track/sensor observation export（地形采样已单独准入）；
-- 疲劳、医疗、后勤、火力、压制和战斗接入。
+- 疲劳、医疗、后勤、间接火力、压制和完整战斗接入。

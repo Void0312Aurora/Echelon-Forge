@@ -8,6 +8,7 @@
 
 #include <flecs.h>
 
+#include "components/domains/ground/combat/weapon_ground.h"
 #include "core/interfaces/weapon_release_damage_bridge.h"
 #include "core/interfaces/weapon_release_service.h"
 
@@ -31,6 +32,8 @@ class SimulationKernelWeaponReleaseService final : public IWeaponReleaseService 
     flecs::entity fire_missile(std::uint64_t attacker_id, std::uint64_t target_id) override;
     bool fire_naval_weapon(std::uint64_t attacker_id, std::uint64_t target_id,
                            int weapon_type_code) override;
+    bool fire_ground_weapon(std::uint64_t attacker_id, std::uint64_t target_id,
+                            int weapon_type_code) override;
     flecs::entity fire_weapon_from_pilot_action(std::uint64_t attacker_id) override;
     bool fire_naval_weapon_from_mission_command(std::uint64_t attacker_id) override;
 

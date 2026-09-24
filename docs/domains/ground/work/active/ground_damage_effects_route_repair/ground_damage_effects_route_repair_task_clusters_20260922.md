@@ -84,7 +84,7 @@ pre-existing node ids; "no new failures" means that same set, not a green suite.
   fourth is amended: it passes its reachability assertions and keeps a `strict=True`
   marker for the mobility projection it also asserts, which is recorded in the residual
   map rather than claimed closed.
-- The component census still reads `84 components, 2 kernel systems, 34 resolved systems`
+- The current component census reads `85 components, 2 kernel systems, 35 resolved systems`
   and none of the gates asserting it changed.
 - No `id<T>()` call remains under `src/models/`, verified by search.
 - The composition-path resolution is demonstrated to follow component registration and to

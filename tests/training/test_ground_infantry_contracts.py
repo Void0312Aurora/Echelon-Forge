@@ -26,7 +26,7 @@ def test_ground_infantry_unit_is_an_individual_native_ground_schema() -> None:
     assert schema["tasking_profile"] == "ground"
     assert schema["echelon"] == "individual"
     assert schema["platform_family"] == "dismounted_infantry"
-    assert unit["_training_boundary"]["weapon_employment"] == "not_in_this_slice"
+    assert unit["_training_boundary"]["weapon_employment"] == "bounded_native_direct_fire_v1"
     assert unit["_training_boundary"]["runtime_status"] == "native_single_step_contract"
     assert any("passability" in claim for claim in unit["_deferred_runtime_claims"])
 
@@ -38,6 +38,8 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
     assert contract["status"] == "contract_only"
     assert contract["safety_boundary"]["weapon_employment"] is False
     assert contract["agent"]["count"] == 1
+    assert contract["native_runtime_surfaces"]["direct_fire"]["status"] == "bounded_native_probe"
+    assert contract["native_runtime_surfaces"]["direct_fire"]["entrypoint"] == "SimulationKernel.fire_ground_weapon"
     assert contract["map_profile"]["arnis_bundle_status"] == "verified_export_snapshot"
     assert contract["map_profile"]["companion_overlay"] == "field_overlay.v1"
     assert contract["map_profile"]["runtime_consumption"].startswith("held_until_")

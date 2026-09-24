@@ -29,11 +29,12 @@ Ground fixture 准入第一条维护中的原生移动切片。
   movement stage。
 - `GroundStance` 通过维护中的 command shell 接受 `Stand`、`Crouch`、`Prone`。它只改变
   移动代价（1.0、0.65、0.35），不代表掩体、隐蔽、暴露度或武器行为。
+  单独的有界直射切片已为单兵 fixture 准入，但不属于本 movement 包。
 
 ## 明确的非目标
 
 本包不准入 route following、waypoint 规划、队形、加速度、疲劳、掩体/隐蔽、视线、
-河流或桥梁通行性、武器、火力、压制、后勤或 RL policy training。原生 provider 已有界
+河流或桥梁通行性、间接火力、压制、后勤或 RL policy training。原生 provider 已有界
 消费 Arnis 水文与桥梁道路矢量；树线、聚落、结构物、路线图和一般通行性属于后续工作包。
 
 ## 证据

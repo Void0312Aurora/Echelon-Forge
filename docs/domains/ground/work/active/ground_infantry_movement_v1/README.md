@@ -34,13 +34,15 @@ formations, or full physics.
   zero link latency only to isolate the movement stage.
 - `GroundStance` accepts `Stand`, `Crouch`, and `Prone` through the maintained
   command shell. It changes movement cost only (1.0, 0.65, and 0.35); it does
-  not imply cover, concealment, exposure, or weapon behavior.
+  not imply cover, concealment, exposure, or weapon behavior. A separate
+  bounded direct-fire slice is admitted for the infantry fixture; it is not
+  part of this movement package.
 
 ## Explicit non-goals
 
 This package does not admit route following, waypoint planning, formation
 behavior, acceleration, fatigue, cover/concealment, line of sight, river or
-bridge passability, weapons, fires, suppression, logistics, or RL policy
+bridge passability, indirect fires, suppression, logistics, or RL policy
 training. The native provider now consumes bounded Arnis hydrology and bridge
 road vectors; tree lines, settlements, structures, route graphs, and general
 passability remain later packages.
