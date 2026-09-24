@@ -74,7 +74,7 @@ calibration package, inventory claim, or final simulation configuration.
 | R-29 | M1252 low-tier family mobility baseline recorded without variant substitution | complete | `32805e32` |
 | R-30 | M1252 bounded mobility estimate completion with explicit Tier C boundary | complete | `1483cc4d` |
 | R-31 | Evidence-role semantics, materialized source ledger, and field-level provenance checks | complete | `30b3565f` |
-| R-32 | Shared-leaf, Equipment ID, and coverage role rules | complete | pending |
+| R-32 | Shared-leaf, Equipment ID, and coverage role rules | complete | `98dafc49` |
 
 ## Blocker / skip ledger
 
