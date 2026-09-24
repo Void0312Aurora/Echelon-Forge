@@ -39,6 +39,9 @@ Owner：`domains/ground`，环境输入由 `systems/environment` 负责
 - Gymnasium 契约 harness：`python/rl/ground/proxy_env.py`
   （`GroundInfantryProxyEnv`）。它只验证 RL 的 reset/step/观测/奖励/终止/轨迹边界，
   权威级别仍是 `engineering_proxy_only`。
+- 原生单兵 probe：`python/rl/ground/native_probe.py`，以及其 Gymnasium 适配层
+  `python/rl/ground/native_env.py`。它们使用编译后的 kernel 做 reset/step/replay，
+  权威级别是 `native_probe_only`，仍不属于生产 `WorldBatch`。
 - maintained 命令投影：`python/rl/ground/command.py`。它把 heading/speed、原生 stance
   和已有 Ground static-task 片段送入批量契约；对于当前原生命令结构无法表达的 route
   字段会直接拒绝，而不是静默丢弃。

@@ -1,9 +1,9 @@
-"""Ground-domain training contracts and explicitly bounded engineering proxies.
+"""Ground-domain training contracts and explicitly bounded adapters.
 
 The package is intentionally separate from the maintained WorldBatch air
-action path.  Nothing in this package claims to be a native Ground runtime
-system; the proxy module is a deterministic scaffold until a reviewed Ground
-movement/terrain owner is admitted to the C++ composition.
+action path.  It contains both a deterministic engineering proxy and a
+single-soldier native probe/Gym adapter; the latter remains ``native_probe_only``
+until a reviewed production Ground training owner is admitted.
 """
 
 from .infantry_proxy import (

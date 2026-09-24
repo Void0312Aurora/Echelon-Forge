@@ -1,8 +1,9 @@
 """Gymnasium harness for the explicitly non-authoritative infantry proxy.
 
-The class exists to exercise reset/step/observation/reward/termination and
-trace contracts before a native Ground runtime owner is admitted.  It must not
-be registered as the maintained ``WorldBatchVecEnv`` production environment.
+The class remains a deterministic diagnostic substitute alongside the admitted
+native probe. It exercises reset/step/observation/reward/termination and trace
+contracts, but must not be registered as the maintained ``WorldBatchVecEnv``
+production environment.
 """
 
 from __future__ import annotations
