@@ -432,3 +432,15 @@ to a dedicated owner-local evidence document.
   visualization contract tests passed `15 passed`; Python compilation and
   `git diff --check` passed. No compiled-runtime or scenario-playability claim
   is made from this pure-Python slice.
+
+### 2026-09-25 — WP8 capability evidence matrix slice
+
+- Starting commit: `84f75f23`.
+- Affected owners: architecture evidence, Air, Naval, Ground, and scenario
+  reporting.
+- Expected evidence: one maintained review records the current capability
+  labels, exact model registrations, accepted claims, deferred claims, and
+  promotion gates for each domain.
+- Known residual: the matrix is an evidence boundary and does not retrofit
+  scenario JSON or promote any domain; a later scenario-manifest slice must
+  attach machine-readable labels to maintained playable entry points.
