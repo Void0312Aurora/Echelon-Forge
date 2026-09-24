@@ -193,6 +193,12 @@ def test_native_infantry_consumes_arnis_raster_and_stops_on_water() -> None:
         for col in range(shape[1])
         if int(landcover[row, col]) == 40
     )
+    tree_row, tree_col = next(
+        (row, col)
+        for row in range(shape[0])
+        for col in range(shape[1])
+        if int(landcover[row, col]) == 10
+    )
     origin_x, origin_y = elevation_artifact["metadata"]["origin_xy_m"]
     step_x, step_y = elevation_artifact["metadata"]["step_xy_m"]
 
@@ -207,6 +213,9 @@ def test_native_infantry_consumes_arnis_raster_and_stops_on_water() -> None:
     crop_sample = sim.get_ground_terrain_observation(
         origin_x + cropland_col * step_x, origin_y + cropland_row * step_y
     )
+    tree_sample = sim.get_ground_terrain_observation(
+        origin_x + tree_col * step_x, origin_y + tree_row * step_y
+    )
     assert int(water_sample[1]) == 4  # IEnvironmentModel::SurfaceType::Water
     assert int(crop_sample[1]) == 3  # IEnvironmentModel::SurfaceType::SoftDirt
     assert int(sim.get_ground_terrain_observation(0.0, 100.0)[1]) == 4
@@ -215,6 +224,7 @@ def test_native_infantry_consumes_arnis_raster_and_stops_on_water() -> None:
     assert math.isfinite(float(crop_sample[0]))
     assert 0.0 <= float(crop_sample[3]) <= 1.0
     assert 0.0 <= float(crop_sample[4]) <= 1.0
+    assert float(tree_sample[4]) > float(crop_sample[4])
     water_id = int(
         sim.spawn_unit(
             ef_py.Side.Blue,
@@ -233,6 +243,15 @@ def test_native_infantry_consumes_arnis_raster_and_stops_on_water() -> None:
             0.0,
         )
     )
+    tree_id = int(
+        sim.spawn_unit(
+            ef_py.Side.Blue,
+            "Ground_Infantry_Soldier_MVP",
+            origin_x + tree_col * step_x,
+            origin_y + tree_row * step_y,
+            0.0,
+        )
+    )
     bridge_id = int(
         sim.spawn_unit(
             ef_py.Side.Blue,
@@ -242,7 +261,7 @@ def test_native_infantry_consumes_arnis_raster_and_stops_on_water() -> None:
             0.0,
         )
     )
-    for entity_id in (water_id, cropland_id, bridge_id):
+    for entity_id in (water_id, cropland_id, tree_id, bridge_id):
         command = ef_py.MissionCommand()
         command.active = True
         command.cmd_heading_deg = 90.0
@@ -254,6 +273,9 @@ def test_native_infantry_consumes_arnis_raster_and_stops_on_water() -> None:
     sim.step()
     assert tuple(sim.get_unit_velocity(water_id)) == (0.0, 0.0, 0.0)
     assert float(sim.get_unit_velocity(cropland_id)[0]) > 0.0
+    assert 0.0 < float(sim.get_unit_velocity(tree_id)[0]) < float(
+        sim.get_unit_velocity(cropland_id)[0]
+    )
     assert float(sim.get_unit_velocity(bridge_id)[0]) > 0.0
 
 

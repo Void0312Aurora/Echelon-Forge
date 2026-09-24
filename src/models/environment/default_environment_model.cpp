@@ -246,6 +246,24 @@ IEnvironmentModel::SurfaceType surface_for_landcover(std::uint8_t code) {
     }
 }
 
+double vegetation_density_for_landcover(std::uint8_t code) {
+    switch (code) {
+    case 10: // tree cover
+        return 0.90;
+    case 20: // shrubland
+        return 0.70;
+    case 30: // grassland
+        return 0.35;
+    case 40: // cropland
+        return 0.45;
+    case 90: // herbaceous wetland
+    case 95: // mangroves
+        return 0.80;
+    default:
+        return 0.50;
+    }
+}
+
 class DefaultEnvironmentModel : public IEnvironmentModel {
     std::vector<WeatherZoneImpl> weather_zones_;
     std::vector<Zone> zones_;
@@ -470,7 +488,7 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
                 default:
                     cell.friction_mult = 0.1;
                     cell.roughness = 0.5;
-                    cell.vegetation_density = 0.5;
+                    cell.vegetation_density = vegetation_density_for_landcover(landcover);
                     break;
                 }
                 return cell;
