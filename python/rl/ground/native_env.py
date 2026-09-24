@@ -45,7 +45,9 @@ else:
             self.probe = probe
             self.action_space = spaces.Box(
                 low=np.asarray([-180.0, 0.0, 0.0, 0.0], dtype=np.float32),
-                high=np.asarray([180.0, 1.0, 2.0, 3.0], dtype=np.float32),
+                # The native command projection currently admits only the
+                # direct route intent; held route intents stay on the proxy.
+                high=np.asarray([180.0, 1.0, 2.0, 0.0], dtype=np.float32),
                 dtype=np.float32,
             )
             self.observation_space = spaces.Dict(

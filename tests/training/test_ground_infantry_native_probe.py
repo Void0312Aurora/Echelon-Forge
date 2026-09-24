@@ -18,6 +18,7 @@ def test_native_ground_gym_adapter_preserves_probe_authority_and_observation() -
 
     assert info["authority"] == "native_probe_only"
     assert info["production_boundary"] == "not_world_batch"
+    assert float(env.action_space.high[3]) == pytest.approx(0.0)
     assert env.observation_space.contains(observation)
 
     next_observation, reward, terminated, truncated, step_info = env.step(
@@ -49,6 +50,28 @@ def test_native_ground_gym_adapter_reaches_fixed_waypoint() -> None:
     assert info["blocked"] is False
     assert float(observation["mission_state"][2]) <= 5.0
     assert info["termination_reason"] == "waypoint_reached"
+
+
+def test_native_ground_gym_adapter_accepts_sb3_cpu_smoke_rollout() -> None:
+    pytest.importorskip("stable_baselines3")
+    from stable_baselines3 import PPO
+
+    env = GroundInfantryNativeEnv(
+        GroundInfantryNativeProbe.from_fixture(max_steps=4)
+    )
+    model = PPO(
+        "MultiInputPolicy",
+        env,
+        n_steps=4,
+        batch_size=4,
+        learning_rate=1.0e-3,
+        seed=42,
+        device="cpu",
+        verbose=0,
+    )
+    model.learn(total_timesteps=4)
+
+    assert int(model.num_timesteps) == 4
 
 
 def test_native_ground_probe_reset_and_step_use_compiled_observation_surfaces() -> None:
