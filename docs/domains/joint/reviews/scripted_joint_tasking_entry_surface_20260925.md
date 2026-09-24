@@ -4,7 +4,7 @@
 - Lifecycle: maintained
 - Owner: joint/scripted-agent
 - Scope: cross-domain tasking entry surface for the independent scripted-agent line
-- Verdict: `contract_ready_runtime_missing`
+- Verdict: `projection_ready_runtime_missing`
 
 ## Verified current surfaces
 
@@ -15,7 +15,7 @@
 | Compiled role and intent contracts | `src/runtime/contracts/policy_contracts.h` and `src/interfaces/python/bindings_runtime_policy.cpp` expose `AgentRole`, `ActionIntentPacket`, `CoordinationIntentPacket`, and `DecisionBelief`, including authority and action-interface compatibility checks. | A joint producer can use the compiled coordination packet and common authority checks instead of inventing a Python-only authority model. |
 | Domain field transport | The Air/Navy/Army tasking and command projection tests exercise `service_profile`, `task_group_id`, `supported_node_id`, `supporting_node_id`, `coordination_mode`, role, and relative-slot fields through common DTOs. | Common metadata can cross the contract boundary, while service-owned payloads remain separate. |
 | Cooperative routing | `python/rl/runtime/world_batch/cooperative_director.py` and the cooperative world-batch runtime route active roster members, role metadata, formation data, command objects, intents, and reports. | This is reusable substrate for joint roster routing, but it remains an RL-adjacent runtime adapter and does not instantiate a complete independent joint scripted loop. |
-| Scenario and operator entry | Repository search found no maintained scenario with Air plus Naval/Ground active nodes, no independent joint scripted model registration, and no joint scripted CLI or visualization route. | Joint tasking remains a design and contract slice; no playable or large-scale cross-domain claim is admitted. |
+| Scenario and operator entry | A dependency-terminal `joint.coordination.task_graph_scripted` adapter and versioned task-graph contract now exist, but repository search still finds no maintained scenario with Air plus Naval/Ground active nodes and no joint scripted CLI or visualization route. | Joint tasking has a bounded producer/projection slice; no playable or large-scale cross-domain claim is admitted. |
 
 ## Focused verification
 
@@ -33,15 +33,26 @@ These tests prove contract and projection behavior. They do not prove a
 cross-domain episode, service-owned execution, command-link loss handling, or
 operator-level replay.
 
+The joint producer and roster contract tests add `20 passed` under
+`tests/runtime/tasking/`. A direct compiled projection probe using the local
+`ef_py` build produced `CoordinationIntentPacket` with source `joint:director`,
+graph roster `joint.air_naval_screen_demo_v1`, Air/Naval task references, and
+`authorize_maintained_coordination_intent(...).authorized == true`. The current
+DTO has no fields for task group, coordination mode, clock, observation
+version, communication state, or authority scope; the projection returns these
+as explicit residuals rather than hiding them in unrelated fields.
+
 ## Joint closure slices
 
-1. **Task graph declaration:** add a versioned scenario manifest that names
-   cross-domain nodes, `service_profile`, `task_group_id`, authority edges,
-   support relationships, coordination mode, and the domain-owned payload
-   reference for each node.
-2. **Independent coordination producer:** add a neutral scripted coordination
-   role that emits `CoordinationIntentPacket` or the common tasking objects,
-   with information provenance, clock, hold/expiry, and termination ownership.
+1. **Task graph declaration:** the dependency-terminal graph contract now
+   names cross-domain nodes, `service_profile`, `task_group_id`, authority
+   edges, support relationships, coordination mode, and the domain-owned
+   payload reference for each node. A maintained scenario manifest consumer is
+   still open.
+2. **Independent coordination producer:** a bounded scripted role now emits
+   graph-scoped common intent data and an optional compiled DTO projection,
+   with runtime clock/hold/provenance supplied by the neutral scheduler. Full
+   command-link ownership and DTO field closure remain open.
 3. **Roster routing:** route at least one Air node and one admitted Naval or
    Ground node through the existing active-roster path. Preserve each domain's
    action/observation owner and record communication state and delivery order.
@@ -66,4 +77,3 @@ operator-level replay.
   cooperative trace that ends before task completion.
 - No RL checkpoint or training configuration as the required source of the
   independent scripted loop.
-

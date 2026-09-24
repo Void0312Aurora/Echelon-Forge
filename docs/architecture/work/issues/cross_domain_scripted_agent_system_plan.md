@@ -1069,3 +1069,31 @@ to a dedicated owner-local evidence document.
   read-only consumer projection or compiled DTO bridge only after the exact
   command-link owner and scenario entry are selected. Existing Air, Naval,
   EW, and landing residuals remain independent.
+
+### 2026-09-25 — Joint coordination DTO projection slice
+
+- Starting commit: `9e1dce6e`.
+- Change batch: add a dependency-terminal projection helper that accepts the
+  compiled binding module explicitly and maps a neutral joint coordination
+  intent to `CoordinationIntentPacket` plus `ProducedIntentRef` task-node
+  references. The helper reports every common field absent from the current
+  compiled DTO instead of encoding those fields into unrelated payload slots.
+- Focused verification: joint producer/projection, cross-domain roster,
+  neutral runtime, and tasking-boundary tests passed `16 passed`; Python
+  compilation and `git diff --check` passed.
+- First direct command failed immediately because the inline probe imported
+  `ef_py` before repository bootstrap and the module was not on `sys.path`.
+  Alternative path used the maintained `ensure_repo_imports()` bootstrap with
+  `CMO_BUILD_DIR=build-scripted-agent`; the compiled projection then produced
+  source `joint:director`, graph roster
+  `joint.air_naval_screen_demo_v1`, Air/Naval refs, and
+  `authorize_maintained_coordination_intent(...).authorized == true`.
+- Evidence boundary: the DTO projection is an adapter proof, not command-link
+  delivery or a joint episode. The explicit residual fields are
+  `task_group_id`, `coordination_mode`, `clock_s`, `observation_version`,
+  `communication_state`, and `authority_scope`; Joint remains
+  `bounded_adapter` and has no playable promotion.
+- Continuation choice: retain the compiled projection as a read-only bridge
+  and next select a maintained scenario/command-link consumer. Do not infer
+  execution closure from DTO authorization alone; Air C2/landing, EW, and
+  tactical assessment remain parallel residuals.
