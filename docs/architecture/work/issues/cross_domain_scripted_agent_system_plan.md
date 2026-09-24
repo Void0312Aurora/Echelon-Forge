@@ -508,3 +508,31 @@ to a dedicated owner-local evidence document.
   Air lifecycle test, and registry tests passed `13 passed`; an isolated
   `MultiTimescaleActionController` probe produced a 17-element baseline action
   with active mode `takeoff`. Python compilation and `git diff --check` passed.
+
+### 2026-09-25 — runtime binding build probe
+
+- Starting commit: `75e34f4d`.
+- Scope: isolated worktree build only; no tracked source change is planned in
+  this probe.
+- Expected evidence: configure and build a local `ef_py` artifact so the Air
+  CLI and bounded Naval runtime gates can move from proxy evidence to direct
+  execution evidence.
+- Blocker protocol: if configure/build fails, retain the exact command and
+  first failure, do not repeat the same command, and continue with the static
+  evidence path. Generated build output remains untracked and is not part of a
+  thematic commit.
+- Result: CMake configure completed after supplying the installed Windows SDK
+  resource compiler/manifest tool and SDK/MSVC library paths. The first build
+  invocation exposed an incomplete MSVC include environment; the bounded
+  follow-up under `VsDevCmd.bat` completed with exit code 0 and produced
+  `build-scripted-agent/ef_py.cp312-win_amd64.pyd`.
+- Direct verification: importing that local artifact succeeded. The standalone
+  Air scripted CLI then ran the maintained combined scenario for five steps
+  with zero randomization and wrote a plot plus summary; exit code was 0,
+  `mode` was `scripted`, `steps` was `5`, and the final baseline mode was
+  `takeoff`.
+- Evidence boundary: this promotes the Air CLI slice from proxy-only to a
+  bounded direct runtime smoke result. It does not establish a complete
+  mission, reset/replay, multi-unit, cooperative, Naval, Ground, or full
+  playable acceptance claim. The generated build directory and probe outputs
+  remain untracked.
