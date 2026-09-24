@@ -119,7 +119,8 @@
       "desired_heading_deg",
       "desired_speed_fraction",
       "stance",
-      "ground_static_task"
+      "ground_static_task",
+      "ground_static_task_mode"
     ],
     "held_fields": ["route_intent"],
     "execution_gate": "native_ground_movement_consumer"

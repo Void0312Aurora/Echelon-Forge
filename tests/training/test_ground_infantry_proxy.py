@@ -98,6 +98,19 @@ def test_representable_ground_action_projects_to_native_command_and_batch_slice(
     assert int(assignment.mission_command.ground_static_task.objective_node_id) == 42
 
 
+def test_native_command_projection_supports_bounded_static_hold_tasks() -> None:
+    for mode, expected in (
+        ("occupy_static", ef_py.GroundTaskMode.OccupyStatic),
+        ("support_static", ef_py.GroundTaskMode.SupportStatic),
+    ):
+        command = build_ground_infantry_mission_command(
+            [90.0, 1.0, 2.0, 0.0], ground_task_mode=mode
+        )
+        assert command.ground_task_mode == expected
+        assert float(command.cmd_speed_mps) == 0.0
+        assert command.ground_stance == ef_py.GroundStance.Prone
+
+
 def test_native_command_projection_rejects_unrepresentable_tactical_fields() -> None:
     crouched = build_ground_infantry_mission_command([0.0, 1.0, 1.0, 0.0])
     assert crouched.ground_stance == ef_py.GroundStance.Crouch

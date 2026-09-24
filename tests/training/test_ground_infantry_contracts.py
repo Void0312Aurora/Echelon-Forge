@@ -148,6 +148,7 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
     assert "command_state" in contract["rl_harness"]["native_env"]["observation_fields"]
     assert "health_state" in contract["rl_harness"]["native_env"]["observation_fields"]
     assert contract["command_projection"]["status"] == "partial_transport_only"
+    assert contract["command_projection"]["representable_fields"][-1] == "ground_static_task_mode"
     assert contract["command_projection"]["held_fields"] == ["route_intent"]
     assert contract["observation_space"]["status"] == "bounded_native_probe_and_proxy"
     assert contract["observation_space"]["proxy_status"] == "implemented_in_engineering_proxy_only"

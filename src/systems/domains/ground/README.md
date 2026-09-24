@@ -11,8 +11,11 @@ export remain outside this admission. The damage system matches spawned ground
 entities and advances the ground-owned state, while `GroundInfantryMovement`
 consumes the maintained `MissionCommand` ground slice and applies deterministic
 surface/slope/vegetation costs plus the environment's local sampled transition
-check. The shared `movement_effects.h` helper also owns the reported movement
-multipliers, so training observations do not reimplement the movement formula.
+check. `OccupyStatic` and `SupportStatic` are explicit position-hold commands;
+they stop the bounded infantry primitive without claiming cover, concealment,
+sensing, or fire-control behavior. The shared `movement_effects.h` helper also
+owns the reported movement multipliers, so training observations do not
+reimplement the movement formula.
 
 ## Allowed
 
@@ -21,6 +24,9 @@ multipliers, so training observations do not reimplement the movement formula.
 - Deterministic horizontal movement for individual Ground fixtures with an active
   `MissionCommandGround::MoveStatic` directive, using shared terrain surface,
   slope, and vegetation queries.
+- Deterministic zero-velocity position hold for active `OccupyStatic` and
+  `SupportStatic` directives; these are tasking actions, not cover or fire
+  semantics.
 - Damage-control sequencing for ground elements: fire load, ignition sources,
   structural loss, and casualties.
 - Calls into the shared `systems/combat/damage_system_common.h` helpers, so
