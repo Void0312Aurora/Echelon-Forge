@@ -56,8 +56,8 @@ accepted.
 The proxy observation now includes explicit tree-line and settlement distance/
 bearing values plus river/bridge flags. These remain replayable engineering
 products. The native provider now admits continuous Arnis elevation/landcover
-sampling and exposes a bounded terrain observation tuple; vector semantic and
-track observation export remain held.
+sampling, bounded river/bridge vector surfaces, and a terrain observation
+tuple; tree-line/settlement and track observation export remain held.
 
 The `expected/` bundle has now been generated and verified with the pinned Arnis
 v3.0.0 CMO patch, and the preview plus `field_acceptance.json` are retained. The
@@ -86,12 +86,13 @@ missing terrain semantics.
 The current native-runtime measurement and residuals are recorded in
 [`native_runtime_blockers.md`](native_runtime_blockers.md). The native slice now
 covers one deterministic `MoveStatic` step with surface/slope cost plus explicit
-Arnis raster loading and terrain observation; the substitute still keeps vector
-semantic and curriculum work moving without releasing a passability claim.
+Arnis raster loading, bounded river/bridge surfaces, and terrain observation;
+the substitute still keeps route/cover semantics and curriculum work moving
+without releasing a general passability claim.
 
 ## Explicit held items
 
-- automatic Arnis runtime setup and vector semantic map-provider consumption;
+- automatic Arnis runtime setup and tree-line/settlement map-provider consumption;
 - route graph and passability mask;
 - slope/wet-ground/river crossing policy;
 - line-of-sight, cover, concealment, and exposure model;

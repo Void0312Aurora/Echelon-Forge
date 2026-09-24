@@ -41,9 +41,9 @@ formations, or full physics.
 This package does not admit route following, waypoint planning, formation
 behavior, acceleration, fatigue, cover/concealment, line of sight, river or
 bridge passability, weapons, fires, suppression, logistics, or RL policy
-training. Vector semantics from the Arnis bundle (tree lines, settlements,
-roads, hydrology, structures, and bridges) are not yet consumed by the native
-provider and remain a later package.
+training. The native provider now consumes bounded Arnis hydrology and bridge
+road vectors; tree lines, settlements, structures, route graphs, and general
+passability remain later packages.
 
 ## Evidence
 

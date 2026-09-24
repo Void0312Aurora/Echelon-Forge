@@ -35,8 +35,8 @@ service-profile 解释以及跨域 runtime 架构仍由各自 owner 负责。
   或完整陆战动力学。准入记录见
   [Ground Infantry Movement v1](work/active/ground_infantry_movement_v1/README.zh.md)。
 - 默认环境 provider 可以显式加载已验证的 Arnis 连续高程/地表覆盖栅格对，维护中的
-  kernel 也向训练 adapter 暴露有界地形观测 tuple。Arnis 矢量语义、原生通行性/桥梁
-  规则以及 track/sensor observation export 仍保持 held。
+  kernel 也向训练 adapter 暴露有界地形观测 tuple。树线/聚落语义、一般通行性以及
+  track/sensor observation export 仍保持 held；河流/桥面地表采样已有限准入。
 - `src/systems/domains/ground/damage_system_ground.h` 注册 `GroundDamageStateUpdate` 为默认
   组合 stage 30 的 `domain = ground` 系统。它**能匹配到**已生成的 ground 实体并推进
   ground 自有的 `GroundPlatformDamageState`，而且通往该 state 的 effects 路由可达：组件 id

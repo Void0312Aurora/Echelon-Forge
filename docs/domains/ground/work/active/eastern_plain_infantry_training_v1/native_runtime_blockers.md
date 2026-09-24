@@ -32,10 +32,12 @@ The source boundary explains the result:
 `python/rl/ground/infantry_proxy.py` provides a deterministic, read-only
 `ground_infantry_proxy.v1` scaffold.  It consumes the verified Arnis raster and
 metadata overlay, normalizes a four-field infantry action, emits a
-transport-neutral command shell, and supports reset/step/replay.  Its speed
-and river/bridge rules are deliberately labelled `engineering_proxy_only`.
-They are useful for contract, trace, and curriculum development but are not
-runtime authority and must not be wired into the production WorldBatch path.
+transport-neutral command shell, and supports reset/step/replay. Its route
+transition and semantic bridge-intent rules remain deliberately labelled
+`engineering_proxy_only`; the native provider now owns only bounded point
+surface classification. The proxy remains useful for contract, trace, and
+curriculum development but is not runtime authority and must not be wired into
+the production WorldBatch path.
 
 `python/rl/ground/proxy_env.py` wraps the same scaffold in a Gymnasium
 `GroundInfantryProxyEnv`, so the RL-side reset/step/observation/reward/
@@ -45,8 +47,9 @@ policy is already connected to native Ground truth.
 The default environment provider now admits an explicit Arnis continuous
 bundle load. It validates the bundle contract, shape, signed metric steps,
 exact raster byte lengths, and finite elevation values before replacing the
-provider raster. Landcover currently supplies only bounded movement surface
-classes; the native provider does not yet consume the bundle's vector features.
+provider raster. Landcover plus the declared hydrology/bridge road vectors now
+supply bounded river and bridge surface classes; tree-line, settlement, route,
+and general passability semantics remain unconsumed.
 
 The existing C++ maintained command contract already carries
 `ground_static_task`; the Python binding now exposes that slice as well.  This
@@ -76,9 +79,8 @@ reviewed Ground owner package must:
 
 1. define the native action/command component and its relationship to the
    maintained command-chain batch bindings;
-2. extend terrain sampling from continuous rasters into vector-backed
-   passability, bridge admission, and observation provenance as runtime
-   contracts rather than fixture-local assumptions;
+2. extend the bounded vector sampling into route/passability and observation
+   provenance as runtime contracts rather than fixture-local assumptions;
 3. add native reset/step/replay acceptance tests over the Arnis-derived map,
    then connect the RL adapter;
 4. retain the proxy tests as diagnostics until native behavior supersedes them.
