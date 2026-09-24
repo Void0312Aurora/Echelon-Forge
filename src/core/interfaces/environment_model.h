@@ -1,7 +1,10 @@
 #pragma once
 
 #include "components/basic/environment_data.h"
+#include <cmath>
 #include <cstdint>
+#include <limits>
+#include <numbers>
 #include <string>
 
 class IEnvironmentModel {
@@ -26,6 +29,26 @@ class IEnvironmentModel {
 
     // Terrain Query
     virtual double get_terrain_elevation(double x, double y) = 0;
+
+    // Bounded local slope observation shared by Ground movement and training
+    // adapters. This is a terrain gradient, not a climbability or physics
+    // decision.
+    virtual double get_ground_slope_deg(double x, double y) {
+        constexpr double kSampleHalfSpanM = 5.0;
+        const double east_gradient =
+            (get_terrain_elevation(x + kSampleHalfSpanM, y) -
+             get_terrain_elevation(x - kSampleHalfSpanM, y)) /
+            (2.0 * kSampleHalfSpanM);
+        const double north_gradient =
+            (get_terrain_elevation(x, y + kSampleHalfSpanM) -
+             get_terrain_elevation(x, y - kSampleHalfSpanM)) /
+            (2.0 * kSampleHalfSpanM);
+        if (!std::isfinite(east_gradient) || !std::isfinite(north_gradient)) {
+            return std::numeric_limits<double>::quiet_NaN();
+        }
+        return std::atan(std::hypot(east_gradient, north_gradient)) * 180.0 /
+               std::numbers::pi_v<double>;
+    }
 
     // Line of Sight Check (true if clear, false if blocked)
     virtual bool check_line_of_sight(double x1, double y1, double z1, double x2, double y2,

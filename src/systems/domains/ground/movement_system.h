@@ -34,21 +34,6 @@ inline double surface_speed_multiplier(IEnvironmentModel::SurfaceType surface) {
     return 0.0;
 }
 
-inline double slope_deg(IEnvironmentModel &environment, double x, double y) {
-    constexpr double kSampleHalfSpanM = 5.0;
-    const double east_gradient = (environment.get_terrain_elevation(x + kSampleHalfSpanM, y) -
-                                  environment.get_terrain_elevation(x - kSampleHalfSpanM, y)) /
-                                 (2.0 * kSampleHalfSpanM);
-    const double north_gradient = (environment.get_terrain_elevation(x, y + kSampleHalfSpanM) -
-                                   environment.get_terrain_elevation(x, y - kSampleHalfSpanM)) /
-                                  (2.0 * kSampleHalfSpanM);
-    if (!std::isfinite(east_gradient) || !std::isfinite(north_gradient)) {
-        return std::numeric_limits<double>::quiet_NaN();
-    }
-    return std::atan(std::hypot(east_gradient, north_gradient)) * 180.0 /
-           std::numbers::pi_v<double>;
-}
-
 inline double slope_speed_multiplier(double slope) {
     if (!std::isfinite(slope) || slope < 0.0) {
         return 0.0;
@@ -125,8 +110,7 @@ inline void register_ground_infantry_movement_system(flecs::world &ecs) {
                         ground_infantry_movement_detail::surface_speed_multiplier(terrain.type);
                     const double slope_multiplier =
                         ground_infantry_movement_detail::slope_speed_multiplier(
-                            ground_infantry_movement_detail::slope_deg(*environment, transform[i].x,
-                                                                       transform[i].y));
+                            environment->get_ground_slope_deg(transform[i].x, transform[i].y));
                     const double vegetation_multiplier =
                         ground_infantry_movement_detail::vegetation_speed_multiplier(
                             terrain.vegetation_density);

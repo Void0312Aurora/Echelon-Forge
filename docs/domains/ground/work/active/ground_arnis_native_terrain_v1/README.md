@@ -30,6 +30,9 @@ truth.
 - `SimulationKernel.get_ground_terrain_observation(x, y)` exposes the native
   sample as `(elevation, surface_type, friction, roughness,
   vegetation_density)` for training-side adapters and diagnostics.
+- `SimulationKernel.get_ground_slope_deg(x, y)` exposes the same bounded local
+  5 m terrain-gradient sample used by Ground movement. It is an observation of
+  slope only; it does not claim climbability, fatigue, or full terrain physics.
 - `SimulationKernel.load_arnis_field_overlay(path)` plus
   `get_ground_field_semantic_observation(x, y)` admits metadata-only tree-line
   and settlement distance/bearing flags after the continuous bundle is loaded.

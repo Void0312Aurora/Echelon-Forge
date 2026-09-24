@@ -100,6 +100,7 @@ def test_native_infantry_movement_consumes_ground_command_and_terrain_cost() -> 
     sim = ef_py.SimulationKernel()
     assert sim.load_database(_DATABASE)
     sim.set_terrain_type("flat")
+    assert float(sim.get_ground_slope_deg(400.0, 100.0)) == pytest.approx(0.0)
     entity_id = int(
         sim.spawn_unit(
             ef_py.Side.Blue,
@@ -246,6 +247,9 @@ def test_native_infantry_consumes_arnis_raster_and_stops_on_water() -> None:
     assert int(crop_sample[1]) == 3  # IEnvironmentModel::SurfaceType::SoftDirt
     assert int(sim.get_ground_terrain_observation(0.0, 100.0)[1]) == 4
     assert int(sim.get_ground_terrain_observation(0.0, 0.0)[1]) == 2
+    arnis_slope = float(sim.get_ground_slope_deg(0.0, 0.0))
+    assert math.isfinite(arnis_slope)
+    assert arnis_slope >= 0.0
     river_transition = sim.get_ground_transition_observation(-200.0, 100.0, 200.0, 100.0)
     assert float(river_transition[0]) == 1.0
     assert float(river_transition[1]) == 0.0

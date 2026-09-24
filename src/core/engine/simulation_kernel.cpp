@@ -378,6 +378,15 @@ std::array<double, 5> SimulationKernel::get_ground_terrain_observation(double x,
             static_cast<double>(IEnvironmentModel::SurfaceType::Obstacle), 0.0, 1.0, 1.0};
 }
 
+double SimulationKernel::get_ground_slope_deg(double x, double y) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_ground_slope_deg");
+    if (IEnvironmentModel *model = environment_model()) {
+        return model->get_ground_slope_deg(x, y);
+    }
+    return std::numeric_limits<double>::quiet_NaN();
+}
+
 std::array<double, 7> SimulationKernel::get_ground_field_semantic_observation(double x, double y) {
     auto composition_lock = acquire_composition_operation();
     ensure_active("get_ground_field_semantic_observation");
