@@ -44,6 +44,10 @@ from python.runtime_bootstrap import ensure_repo_imports
 BASE_DIR = ensure_repo_imports()
 
 from python.env_config import resolve_env_settings
+from python.tasking_contracts.air_scripted_execution import (
+    AIR_SCRIPTED_EXECUTION_MODEL_ID,
+    AIR_SCRIPTED_MODEL_REGISTRY,
+)
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
 from python.rl.control.wrappers import get_action_wrapper_spec
@@ -136,15 +140,14 @@ def _make_env(
         # Scripted diagnostics do not consume pixel observations; disabling them
         # keeps the diagnostic fast while preserving task geometry and mission logic.
         env_settings["include_visual"] = False
-    wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config or {})
     if scripted:
-        if wrapper_class is None:
-            raise ValueError("scripted mode requires a train config that enables the action wrapper")
-        wrapper_kwargs = dict(wrapper_kwargs or {})
-        wrapper_kwargs["scripted_residual_scale"] = 0.0
-        wrapper_kwargs["scripted_residual_alt_breakpoints_m"] = []
-        wrapper_kwargs["scripted_residual_alt_scales"] = []
-        wrapper_kwargs["action_rate_penalty_coef"] = 0.0
+        # The standalone scripted CLI owns its neutral model lifecycle.  The
+        # action wrapper remains a learned-policy adapter and is not needed to
+        # express a zero-residual training baseline here.
+        wrapper_class = None
+        wrapper_kwargs = None
+    else:
+        wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config or {})
 
     env = build_single_world_batch_execution_runtime(
         scenario_path=os.path.abspath(scenario_path),
@@ -240,12 +243,32 @@ def _collect_episode(
     sim_env = env.unwrapped
     loader = sim_env.loader
 
+    scripted_model = None
+    scripted_dt = 0.05
+    if scripted:
+        try:
+            scripted_dt = float(sim_env.sim.get_time_step())
+        except Exception:
+            scripted_dt = 0.05
+        scripted_model = AIR_SCRIPTED_MODEL_REGISTRY.create_for(
+            domain="air",
+            role_id="autopilot_controller",
+            model_id=AIR_SCRIPTED_EXECUTION_MODEL_ID,
+            action_dim=int(_action_space(env).shape[0]),
+            dt=scripted_dt,
+        )
+        scripted_model.reset(
+            context={
+                "observation": obs,
+                "phase_name": str(getattr(loader, "mission_phase_name", "") or ""),
+            }
+        )
+
     start_pos = np.asarray(sim_env.sim.get_unit_position(sim_env.agent_id), dtype=np.float64)
     runway_beacon = _pick_runway_beacon(loader, float(start_pos[0]), float(start_pos[1]))
     waypoints = [dict(wp) for wp in list(getattr(loader, "waypoints", []) or [])]
     waypoint_template_idx = int(loader.mission_cmd.get("_waypoint_template_idx", -2))
 
-    action = np.zeros(_action_space(env).shape, dtype=np.float32)
     limit = int(max_steps) if max_steps is not None else _env_max_steps(env)
     if limit <= 0:
         limit = 20000
@@ -269,7 +292,12 @@ def _collect_episode(
 
     for step in range(1, limit + 1):
         if scripted:
-            act = action
+            assert scripted_model is not None
+            act = scripted_model.decide(
+                observation=obs,
+                context={"phase_name": str(getattr(loader, "mission_phase_name", "") or "")},
+                dt=scripted_dt,
+            )
         else:
             act, _ = model.predict(obs, deterministic=True)
         obs, reward, terminated, truncated, info = env.step(act)
@@ -286,7 +314,11 @@ def _collect_episode(
 
         cmd_code = int(loader.mission_cmd.get("command_code", 0))
         wp_idx = int(getattr(loader, "waypoint_idx", 0))
-        mode_active = str(final_info.get("scripted_baseline_mode_active", ""))
+        mode_active = (
+            str(scripted_model.active_mode)
+            if scripted_model is not None
+            else str(final_info.get("scripted_baseline_mode_active", ""))
+        )
 
         if landing_transition_step is None and cmd_code >= 4:
             landing_transition_step = int(step)
@@ -309,6 +341,9 @@ def _collect_episode(
             except Exception:
                 mission_status = []
             break
+
+    if scripted_model is not None:
+        scripted_model.close()
 
     final_pos = [float(xs[-1]), float(ys[-1]), float(zs[-1])]
     final_ias = None
@@ -510,7 +545,7 @@ def _main() -> int:
             "algo": "auto / AdaptiveKLPPO / PPO",
         },
     )
-    p.add_argument("--scripted", action="store_true", help="Run the pure scripted baseline (wrapper residual scale forced to zero).")
+    p.add_argument("--scripted", action="store_true", help="Run the standalone neutral scripted Air model.")
     add_probe_run_args(p, include=["seed", "max_steps"], defaults={"seed": 0, "max_steps": None})
     p.add_argument("--zero_randomization", action="store_true")
     p.add_argument("--output", type=str, required=True, help="PNG output path")
