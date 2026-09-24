@@ -16,6 +16,9 @@ def test_air_scripted_cli_uses_neutral_registry_model() -> None:
     assert "python.tasking_contracts.air_scripted_execution" in source
     assert "AIR_SCRIPTED_MODEL_REGISTRY.create_for" in source
     assert "AIR_SCRIPTED_EXECUTION_MODEL_ID" in source
+    assert "ScriptedRuntimeAgent" in source
+    assert "ScriptedRuntimeAgentSpec" in source
+    assert "scripted_runtime_agent.step" in source
     assert "parse_scripted_capability" in source
     assert "resolve_scripted_model_id" in source
     assert "wrapper residual scale forced to zero" not in source
@@ -28,6 +31,7 @@ def test_air_scripted_cli_keeps_learned_wrapper_path_separate() -> None:
     assert "wrapper_class = None" in source
     assert "get_action_wrapper_spec(train_config or {})" in source
     assert "scripted_model.decide" in source
+    assert "scripted_runtime_agent.close" in source
 
 
 def test_air_scripted_cli_manifest_route_fails_closed_for_held_capability(tmp_path: Path) -> None:
