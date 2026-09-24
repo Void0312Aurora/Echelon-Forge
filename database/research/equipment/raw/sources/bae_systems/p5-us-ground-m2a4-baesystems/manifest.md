@@ -12,6 +12,9 @@ Equipment: M2A4 Bradley
 Era: Current
 Configuration: Current Bradley A4 manufacturer product context; M2A4E1 Iron Fist and block-specific kits are excluded.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Estimate status: Yes; approximate 36.3 t figure is a manufacturer/industry nominal estimate, not a measured Army configuration
 Estimation / uncertainty: The approximately 36.3 t combat-mass figure is a direct manufacturer/industry nominal claim, but remains an estimate rather than a measured Army configuration. No other numeric values are taken from this page; it is not an official Army technical specification.
 

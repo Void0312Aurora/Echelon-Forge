@@ -12,6 +12,9 @@ Domain: ground
 Equipment: M109A2/M109A3/M109A4/M109A5
 Configuration: Maintenance data for M109A2 EIC 3EZ and related A2-A5 models; A2-specific table rows are kept separate from later A5 values.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

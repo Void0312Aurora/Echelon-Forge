@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: the plain page fetch, and any fuel, armament or avionics row
 Estimation / uncertainty: Tier C secondary source. It is the only package held here that names the T700-GE-701D, which is the engine of the E mark, and it is the source of record for that row. Its 476 km is described as a combat radius and not as a range, and the leaf records it as a radius.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

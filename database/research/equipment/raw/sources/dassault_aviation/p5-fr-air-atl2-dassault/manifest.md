@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: engine, crew and detailed weapon or sensor fit
 Estimation / uncertainty: Tier B manufacturer documentation. The page publishes a platform-level ATL2 data sheet; its empty-weight figure and range conditions are not defined further, so they remain separate readings rather than reconciled with the secondary packages.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

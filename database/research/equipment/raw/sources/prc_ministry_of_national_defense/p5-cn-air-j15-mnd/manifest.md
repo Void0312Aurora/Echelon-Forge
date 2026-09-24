@@ -8,3 +8,6 @@ Accessed: 2026-09-12
 Domain: air
 Equipment: J-15 / J-15
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open

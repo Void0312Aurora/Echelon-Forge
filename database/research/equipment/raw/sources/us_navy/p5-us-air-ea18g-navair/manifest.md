@@ -16,6 +16,9 @@ Equipment: EA-18G
 Configuration: EA-18G Growler electronic-attack configuration derived from the F/A-18F platform. The page's combat load is retained as a mission condition rather than a universal payload.
 Estimation / uncertainty: Tier A Navy programme source. The page identifies the U.S. Navy as the DoD sole operator and notes cooperative Australian operation; no inventory count is used.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

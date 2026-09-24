@@ -10,6 +10,9 @@ Domain: ground
 Equipment: M109A7 Paladin
 Era: Current
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

@@ -11,6 +11,9 @@ Publication date: 2021-07-15 (page metadata)
 Domain: ground
 Equipment: Panzerhaubitze 2000
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Availability: URL returned HTTP 200 when checked on 2026-09-13.
 Configuration: German Bundeswehr PzH 2000 baseline; A1/A2 and export retrofit configurations are not merged.
 

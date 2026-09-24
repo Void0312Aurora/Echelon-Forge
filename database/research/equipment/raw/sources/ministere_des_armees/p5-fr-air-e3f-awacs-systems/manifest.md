@@ -17,6 +17,9 @@ Equipment: E-3 / E-3F
 Configuration: French E-3F SDCA airborne early-warning and command system. The page is used only for mission-system and sensor claims; the technical-card package remains the source for aircraft mass, geometry and performance.
 Estimation / uncertainty: Tier A official French Ministry source. Radar range is published as greater than 400 km in air mode and is not converted into a simulator detection model here.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

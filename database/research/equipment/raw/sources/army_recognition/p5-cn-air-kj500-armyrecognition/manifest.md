@@ -18,6 +18,9 @@ Equipment: KJ-500
 Configuration: The article discusses the KJ-500 on the Y-9 airframe and its detection upgrade.
 Estimation / uncertainty: Tier C specialist secondary source. Army Recognition is a defence news and equipment publication, not an official Chinese source.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

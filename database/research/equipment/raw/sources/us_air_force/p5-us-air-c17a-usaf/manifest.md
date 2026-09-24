@@ -17,6 +17,9 @@ Equipment: C-17
 Configuration: U.S. Air Force C-17A production transport configuration. Cargo, troop and aeromedical figures retain the source's stated mission conditions.
 Estimation / uncertainty: Tier A service fact sheet. The 2,400 nmi range is tied to the source's payload and initial-cruise-altitude condition; it is not presented as a universal range.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

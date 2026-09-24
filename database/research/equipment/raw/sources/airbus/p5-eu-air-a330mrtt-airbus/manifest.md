@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: a maximum fuel capacity figure; the plain-text search return also showed a fuel-capacity line of 111 tonnes, which the page fetch did not confirm
 Estimation / uncertainty: Tier B manufacturer documentation, authoritative for the capability of its own product. It publishes offload and payload, which are mission quantities, not a tank capacity. The distinction matters: an offload figure and a capacity figure are not the same quantity and are not converted into each other here.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

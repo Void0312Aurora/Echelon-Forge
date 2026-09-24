@@ -14,6 +14,9 @@ Retrieval:
   returned: official AIM-9X description and specifications: ATK MK-139 motor, length, launch mass, diameter, wingspan, imaging-infrared guidance and annular blast-fragmentation warhead; range and speed are classified
   did_not_return: public range, speed, fuze detail, explosive filling and lot-specific motor performance
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: AIM-9X Sidewinder, with Block II datalink/thrust-vectoring context retained where the page states it.
 Estimation / uncertainty: Tier A government product page. Classified fields are recorded as classified rather than estimated.
 

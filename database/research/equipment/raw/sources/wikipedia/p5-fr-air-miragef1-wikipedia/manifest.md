@@ -13,6 +13,9 @@ Era: Cold-War French and export variants
 Configuration: F1C single-seat interceptor geometry, mass, fuel, Atar 9K-50, Cyrano IV and DEFA values; F1CR/F1CT/F1B and export fits excluded
 Estimation / uncertainty: Community-compiled fuel, range, radar detection, RCS and countermeasure values are bounded estimates; national retrofit details vary.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

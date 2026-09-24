@@ -14,6 +14,9 @@ Retrieval:
   returned: official utility/escort mission, contractor, IOC, two T-700-GE-401C engines and power, dimensions, empty and maximum takeoff mass, stated crew/mission complement and programme context
   did_not_return: numeric payload, fuel quantity, speed, range, ceiling and a full weapon-station table
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: UH-1Y Venom. The AH-1Z and other H-1 configurations are not merged.
 Estimation / uncertainty: Tier A NAVAIR product page. The page's “crew” figure includes the stated combat-equipped Marines; it is retained as mission complement and not relabelled as cockpit crew.
 

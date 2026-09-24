@@ -14,6 +14,9 @@ Retrieval:
   returned: infantry role, caliber, standard and short-barrel weights/lengths and point/area/suppressive ranges
   did_not_return: cyclic rate and belt-box capacity
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Standard M249 with collapsible-stock and short-barrel alternatives kept separate from the standard row.
 Estimation / uncertainty: Tier A government equipment page. The standard value is not replaced by the short-barrel configuration.
 

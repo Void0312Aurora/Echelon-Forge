@@ -17,6 +17,9 @@ Equipment: Typhoon FGR4
 Configuration: The page is specific to the Typhoon FGR Mk4 as operated by the Royal Air Force, which is the variant the leaf records.
 Estimation / uncertainty: Tier A official service publication, authoritative for the figures it states about the aircraft it operates. No exception is taken to any value on this page.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

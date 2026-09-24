@@ -17,6 +17,9 @@ Equipment: Su-35 / Su-35S
 Configuration: The article carries an explicit Su-35S designation block, which is the variant the leaf records.
 Estimation / uncertainty: Tier C secondary source. It is a defence news publication, not a Russian state or United Aircraft Corporation document. The Russian Ministry of Defence material held in this tree declares roles and discloses no dimensions or performance.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

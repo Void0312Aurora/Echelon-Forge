@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: the plain page fetch, and the performance sub-block
 Estimation / uncertainty: Tier C community compilation. Its block is headed for the Atlantique 2 and its masses and powerplant agree with the Seaforces readings exactly. It is admitted for the metric geometry readings and as a second publisher for the masses.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

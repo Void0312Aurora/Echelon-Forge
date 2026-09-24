@@ -11,6 +11,9 @@ Domain: ground
 Equipment: BMP-1
 Configuration: Generic amphibious BMP-1 entry (3 crew, 6-8 passengers, 13,500 kg, 6.7 x 2.9 x 2.2 m, 80 km/h and 550-600 km); not a replacement for the Valka Object 765 subseries data.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

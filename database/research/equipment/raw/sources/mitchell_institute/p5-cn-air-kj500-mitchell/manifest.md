@@ -17,6 +17,9 @@ Equipment: KJ-500
 Configuration: Airborne early warning and control aircraft built by Shaanxi Aircraft Corporation on the Y-9 airframe. Variants KJ-500 and KJ-500H.
 Estimation / uncertainty: Tier C specialist secondary source. The Mitchell Institute is a recognised aerospace research organisation, which places it at the stronger end of Tier C, but it is not an official Chinese publication and its figures are not first-party. The Chinese Ministry of National Defense release held here confirms service presence only.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

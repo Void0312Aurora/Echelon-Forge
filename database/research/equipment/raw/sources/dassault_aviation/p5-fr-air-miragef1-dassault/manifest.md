@@ -12,6 +12,9 @@ Equipment: Mirage F1C
 Era: Cold-War production baseline
 Configuration: F1C single-seat air-defence aircraft; reconnaissance pods and two-seat F1B equipment excluded
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

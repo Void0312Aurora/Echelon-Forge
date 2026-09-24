@@ -14,6 +14,9 @@ Retrieval:
   returned: official P-3C Update III role, four T-56-A-14 engines and power, dimensions, maximum takeoff mass, airspeed, ceiling, two range conditions, crew, armament and anti-submarine/anti-surface mission context
   did_not_return: empty mass, fuel quantity, payload mass and a single range independent of mission condition
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: P-3C Orion, with the page's P-3C Update III baseline and its stated reserve-squadron context. The EP-3E and other derivatives are not merged.
 Estimation / uncertainty: Tier A Navy fact file. The range entries retain the source's radius/on-station conditions; no empty mass or fuel quantity is inferred.
 

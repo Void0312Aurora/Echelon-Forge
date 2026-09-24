@@ -14,6 +14,9 @@ Retrieval:
   returned: official combat radius condition, weapons stations, empty/max gross mass, use payload, cruise speed, weapons and defensive systems
   did_not_return: full geometry table, fuel quantity and engine model
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: UH-1Y Venom Marine Corps aircraft. The combat-radius row retains the source's eight-troop/HOGE/on-station/reserve condition.
 Estimation / uncertainty: Tier A Marine Corps programme document. The source uses “use payload (HOGE)” and a mission-specific combat radius; neither is converted into an unrestricted payload or ferry range.
 

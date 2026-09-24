@@ -13,6 +13,9 @@ Era: 1976-1996 commissioning run; Flight I, Improved Los Angeles, and 688i varia
 Configuration: Class dimensions, surfaced/submerged displacement, S6G reactor, speed, crew, sonar and weapons summary. VLS is retained only for Flight II/III boats; individual refit states are excluded.
 Estimation / uncertainty: Community-compiled values cross-check the Navy fact file and provide bounds for the 6,900-7,200 LT Improved/688i submerged range, approximately 90-day stores endurance and 25-60 mm HY-80 pressure-hull plating estimate. The plating bound is engineering inference, not a published measurement.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

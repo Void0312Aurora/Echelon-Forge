@@ -17,6 +17,9 @@ Equipment: Stryker / M1252 MCVV
 Configuration: Community index covering the M1129 MC-A/MC-B lineage and the DVH M1252 MCVV designation; the page explicitly separates the later M1252 MCVV-A1 ECP configuration.
 Estimate status: Yes; low-tier community compilation. The page is retained for configuration corroboration only and does not supply unresolved mobility values.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

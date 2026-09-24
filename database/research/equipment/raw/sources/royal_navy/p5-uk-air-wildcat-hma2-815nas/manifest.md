@@ -17,6 +17,9 @@ Equipment: Wildcat HMA2
 Configuration: Royal Navy HMA2 operational role and weapon integration, distinct from the platform-level Leonardo data.
 Estimation / uncertainty: Tier A operator source. It establishes the HMA2 role and integration boundary but does not publish a complete loadout or station count.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

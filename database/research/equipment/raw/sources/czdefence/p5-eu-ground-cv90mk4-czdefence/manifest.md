@@ -11,6 +11,9 @@ Domain: ground
 Equipment: CV9035 export turret (representative Mk IV 35 mm fit)
 Configuration: Comparative article describes CV9035 35 mm ammunition arrangement, not a certified Mk IV D35 load.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Estimation / uncertainty: The article's 203-round total and 35-round-per-feed/70-round ready-use counts are direct page values for a representative CV9035 fit; applying them to Mk IV is a bounded estimate. They are not a certified or official Mk IV specification.
 
 ## Use and estimate basis

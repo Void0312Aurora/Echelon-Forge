@@ -14,6 +14,9 @@ Retrieval:
   returned: role, caliber, M2 and M2A1 receiver/barrel mass, length, range and rate of fire
   did_not_return: ammunition-box capacity and mount mass
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: M2A1 receiver and barrel with flash hider and carrying handle; legacy M2 values are retained as a named alternate.
 Estimation / uncertainty: Tier A government equipment page; mass excludes mount and ammunition.
 

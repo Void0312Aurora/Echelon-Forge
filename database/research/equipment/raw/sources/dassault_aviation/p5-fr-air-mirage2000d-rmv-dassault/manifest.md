@@ -18,6 +18,9 @@ Equipment: Mirage 2000D
 Configuration: The report states Mirage 2000D (twin-seat) figures. The Rmv upgrade changes mission systems and weapons integration, not the airframe, so these are airframe values.
 Estimation / uncertainty: Tier B manufacturer documentation published in a corporate report. Dassault states rounded figures in this table, which is why they differ in precision from the reference-work values. It is the manufacturer's own statement about its own product but is not a technical manual.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

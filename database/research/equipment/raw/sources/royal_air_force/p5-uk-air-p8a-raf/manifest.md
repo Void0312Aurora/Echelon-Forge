@@ -16,6 +16,9 @@ Equipment: P-8A / Poseidon MRA1
 Configuration: UK Poseidon MRA1, the RAF designation for the P-8A. RAF-specific sensors and weapon context are separated from Boeing's common airframe block.
 Estimation / uncertainty: Tier A official RAF aircraft page; it publishes no mass figure and no unconstrained range figure.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

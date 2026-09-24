@@ -14,6 +14,9 @@ Retrieval:
   returned: ground/helicopter range, round and launcher mass, dimensions, seeker, data link, warhead and platforms
   did_not_return: missile motor burn time and launch rate
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: SPIKE LR II ground-launch and helicopter-launch data; other SPIKE family members are excluded.
 Estimation / uncertainty: Tier B manufacturer brochure. Ground launcher mass and round mass are not combined.
 

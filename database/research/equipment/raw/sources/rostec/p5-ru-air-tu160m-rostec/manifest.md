@@ -14,6 +14,9 @@ Retrieval:
   returned: official statement that the modernized Tu-160M made its first flight with serially produced NK-32-02 engines, updated aircraft systems and onboard electronic equipment, and a speed statement up to 2,000 km/h
   did_not_return: dimensions, empty/max mass, payload, crew or detailed radar/electronic-warfare parameters
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Tu-160M modernization context. It is used for the variant-specific engine and systems boundary, while the named secondary package supplies the public platform figures.
 Estimation / uncertainty: Tier A state-corporation statement. It confirms the modernization and engine fit but is not a complete technical manual.
 

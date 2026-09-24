@@ -18,6 +18,9 @@ Equipment: H-6 / H-6K
 Configuration: The page separates the baseline H-6 from the H-6K rebuild, which is the variant this leaf records. The H-6K differs from earlier marks in engine type, structure, crew size and maximum weight.
 Estimation / uncertainty: Tier C specialist secondary source with an identifiable publisher. It is not an official Chinese publication. Its H-6K figures are presented as the rebuild's characteristics and are used here as the best available values, labelled secondary.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

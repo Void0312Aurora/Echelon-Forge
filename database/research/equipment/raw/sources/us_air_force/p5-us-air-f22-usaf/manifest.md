@@ -14,6 +14,9 @@ Retrieval:
   returned: the official general-characteristics block: speed, ferry range, ceiling, loadout-based payload, crew and armament, alongside the existing geometry, mass, engine and fuel values
   did_not_return: a single scalar payload mass; the source defines payload by air-to-air or air-to-ground loadout
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

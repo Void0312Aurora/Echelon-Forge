@@ -17,6 +17,9 @@ Equipment: AH-64E Apache / UK Army
 Configuration: British Army AH-64E operational record. The page is used for UK operator capability and direct UK headline values, not for an empty-weight certification.
 Estimation / uncertainty: Tier A official British Army source. Its maximum-weight figure is retained as a UK-page reading alongside Boeing's higher AH-64E maximum operating-weight figure; no value is silently reconciled.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

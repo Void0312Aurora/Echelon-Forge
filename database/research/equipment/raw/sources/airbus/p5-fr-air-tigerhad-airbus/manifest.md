@@ -15,6 +15,9 @@ Retrieval:
   returned: Tiger HAD dimensions, MTOW, MTR390 Step 1-5 power, fuel, speed, endurance, range and service-envelope table
   did_not_return: country-specific weapon integration and French fleet inventory
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Estimation / uncertainty: Tier B manufacturer brochure. Values are authoritative for the brochure's stated Tiger HAD configuration and test conditions; it is not a French service calibration record.
 
 ## Extracted parameter notes

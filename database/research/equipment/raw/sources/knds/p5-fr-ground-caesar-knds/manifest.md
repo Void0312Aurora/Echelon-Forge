@@ -14,6 +14,9 @@ Retrieval:
   returned: 155 mm/52-calibre system, under-18-ton combat-weight statement and 6-round/min fire rate
   did_not_return: exact length, engine, crew and speed for every customer fit
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: CAESAR 6x6 brochure; Mk II and 8x8 variants are not merged.
 Estimation / uncertainty: Tier B manufacturer brochure. Combat weight is explicitly an upper bound.
 

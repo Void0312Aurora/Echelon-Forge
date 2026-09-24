@@ -14,6 +14,9 @@ Retrieval:
   returned: the official general-characteristics block: engine thrust; geometry; empty and maximum takeoff weights; fuel; payload; speed; range; ceiling; crew
   did_not_return: a successful plain-page fetch; the direct page returned 403 during this pass
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

@@ -18,6 +18,9 @@ Retrieval:
   did_not_return: source method for any figure
   note: The operator table credits Saudi Arabia and Qatar with F-15EX aircraft that are F-15SA and F-15QA airframes and is not admitted.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

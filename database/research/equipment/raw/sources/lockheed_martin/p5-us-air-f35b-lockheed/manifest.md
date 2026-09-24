@@ -18,6 +18,9 @@ Retrieval:
   did_not_return: empty weight of the B as a metric value
   note: The PDF was returned by the extract proxy at basic depth. A direct URL read through the other retrieval tools was blocked, so the proxy was the only successful path.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

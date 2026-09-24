@@ -11,6 +11,9 @@ Domain: ground
 Equipment: M142 HIMARS
 Configuration: M142 on the FMTV 5-ton chassis; GMLRS, PrSM and ATACMS launcher loadouts are retained as mutually exclusive variants.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Estimate status: No for stated launcher loadouts/chassis; no numeric geometry, mass or mobility estimate made here
 Estimation / uncertainty: FMTV-chassis and mutually exclusive GMLRS/PrSM/ATACMS statements are direct manufacturer-page claims; no numeric geometry, mass or mobility estimate is made here. As Tier C product information, this is not an official government technical specification.
 

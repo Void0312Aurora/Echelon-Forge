@@ -14,6 +14,9 @@ Retrieval:
   returned: official B-1B mission and feature description, F101-GE-102 propulsion and thrust, variable-geometry dimensions, mass, fuel, payload, speed, range, ceiling, crew, weapon examples and defensive/Link-16 systems
   did_not_return: empty mass, a single unconditioned range number and detailed weapon-bay station geometry
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Conventional B-1B. The page documents a conventional-only mission after nuclear-role removal; no nuclear loadout is inferred.
 Estimation / uncertainty: Tier A service fact sheet. Wingspan is configuration-dependent and is retained as forward/aft sweep values; range is recorded as the source's intercontinental descriptor.
 

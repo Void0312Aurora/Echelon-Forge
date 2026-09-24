@@ -12,6 +12,9 @@ Equipment: F-4E Phantom II
 Era: Cold War / USAF configuration
 Configuration: Fixed-gun F-4E with two-person crew; Navy F-4B/J and export retrofit packages excluded
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Availability: URL returned HTTP 403 to the current command-line probe on 2026-09-13; page identity retained and community cross-check is active for fields not exposed.
 
 ## Use

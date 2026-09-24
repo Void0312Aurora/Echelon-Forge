@@ -15,6 +15,9 @@ Retrieval:
   returned: explicit Mi-28NM designation, crew, VK-2500P engines, geometry, mass, fuel, speed, range, ceilings, warload and weapon carriage
   did_not_return: Russian certification, lot-specific avionics and a complete sensor performance table
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Estimation / uncertainty: Tier C specialist reference. Public technical-profile values are retained as published; the source's printed rate-of-climb value is omitted because it is not internally plausible and is not needed to close the declared profile.
 
 ## Extracted parameter notes

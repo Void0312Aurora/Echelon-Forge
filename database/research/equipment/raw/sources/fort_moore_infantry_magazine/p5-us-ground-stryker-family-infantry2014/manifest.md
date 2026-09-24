@@ -18,6 +18,9 @@ Equipment: Stryker / M1128 MGS
 Configuration: The article is cited for stating that the Mobile Gun System mounts an M68A1E4 105 mm cannon.
 Estimation / uncertainty: Tier A official Army branch publication. The document was not fetchable on 2026-09-18, so the content is recorded from the auditing citation rather than from a first-hand read.
 Retention: manifest and citation record only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Verification status
 

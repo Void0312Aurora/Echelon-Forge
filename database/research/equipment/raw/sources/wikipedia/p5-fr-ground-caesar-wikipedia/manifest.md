@@ -14,6 +14,9 @@ Retrieval:
   returned: 155 mm/52-calibre family, autonomous inertial/ballistic fire-control description and extended-range ammunition context
   did_not_return: a single customer-specific dimensional/mass table
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Baseline CAESAR 6x6 public summary; Mk II and 8x8 values excluded.
 Estimation / uncertainty: Tier C community summary; used for system description only, not to invent a complete customer fit.
 

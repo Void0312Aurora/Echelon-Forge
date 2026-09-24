@@ -14,6 +14,9 @@ Retrieval:
   returned: 9K51 identity, 122 mm rockets, 20,380 m M-21OF range and chassis dimensions
   did_not_return: current crew or engine certification
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Standard 9K51/BM-21 context; later rockets and derivative launchers are not merged.
 Estimation / uncertainty: Tier B archived technical reference; its rocket-specific range is kept distinct from the broader community envelope.
 

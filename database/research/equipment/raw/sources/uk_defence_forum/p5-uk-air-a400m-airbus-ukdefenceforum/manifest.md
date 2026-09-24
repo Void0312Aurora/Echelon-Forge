@@ -18,6 +18,9 @@ Equipment: A400M / Atlas C1
 Configuration: A400M as operated by the Royal Air Force as Atlas C.1. Airframe and performance figures are the common A400M values.
 Estimation / uncertainty: Tier C compilation. This is a forum compilation rather than a manufacturer page, and a manufacturer page for the A400M was not located during this pass. The figures it carries are the widely reproduced A400M values and agree across several secondary sources, which is why it is admitted, but it is not first-party and the leaf labels it accordingly.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

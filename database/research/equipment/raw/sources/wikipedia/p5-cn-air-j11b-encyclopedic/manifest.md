@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: the plain page fetch and any J-11BS-specific dimension, mass or crew row
 Estimation / uncertainty: Tier C community compilation. Its maximum takeoff weight of 33,000 kg is 72,753 lb, which is the same value the Mitchell entry prints, so the row has two locators. Its crew field is 1, which is the single-seat B, not the twin-seat BS that this leaf is named for.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

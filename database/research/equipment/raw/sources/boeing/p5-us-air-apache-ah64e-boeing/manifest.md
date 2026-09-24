@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: E-specific empty weight, UK customer configuration and complete weapon/sensor details
 Estimation / uncertainty: Tier B manufacturer documentation, authoritative for the figures it states about the Apache product. The page is a product specification rather than a flight manual or type certificate, and its family-level figures must not be promoted to a country-specific or E-only measurement.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

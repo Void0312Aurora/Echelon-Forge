@@ -18,6 +18,9 @@ Retrieval:
   note: The URL is a JCR content path. The retrieval proxy did not return it, and no alternative URL for the same document was located. This package therefore has no audit-grade retrieval record, and the four values below are unconfirmed.
 Estimation / uncertainty: Tier B partner-manufacturer documentation for the variant, authoritative for the figures it states about the aircraft BAE Systems builds the aft fuselage and empennage for. It is one of the three F-35 airframe partners rather than the prime contractor, and it states no maximum take-off weight.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Unconfirmed values carried in this manifest
 

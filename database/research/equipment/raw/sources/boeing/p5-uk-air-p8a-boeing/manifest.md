@@ -17,6 +17,9 @@ Equipment: P-8A / Poseidon MRA1
 Configuration: Boeing P-8 family specification block. It is used for common P-8A airframe and performance values, not for UK-specific mission-system software.
 Estimation / uncertainty: Tier B manufacturer source; published range is conditioned on more than four hours on station and weapon stores are compatibility context.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

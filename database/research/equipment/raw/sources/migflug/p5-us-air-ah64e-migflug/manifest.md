@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: the plain page fetch, and any E-specific weight figure
 Estimation &mdash; uncertainty: Tier C secondary source published by a commercial flight-experience operator rather than by Boeing or a service. It is admitted for the internal fuel figure, which no other package held here states, and for its explicit warning that the published empty weight is the A and D figure rather than the E's.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

@@ -16,6 +16,9 @@ Equipment: Rafale C / B / Marine
 Configuration: The page publishes a common Rafale specification block. It is used for family-level values only; C, B and M-specific rows are not inferred from one another.
 Estimation / uncertainty: Tier A manufacturer source. Rounded family values are retained as published and are not silently converted into mark-specific precision.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

@@ -12,6 +12,9 @@ Equipment: AIM-9M Sidewinder
 Era: Cold War / legacy U.S. Navy and U.S. Air Force configuration
 Configuration: AIM-9M production family; AIM-9X and other post-M variants are excluded
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Availability: URL returned HTTP 403 to the current command-line probe on 2026-09-13; Wikipedia specialist cross-check remains retrievable for numeric gaps.
 
 ## Use

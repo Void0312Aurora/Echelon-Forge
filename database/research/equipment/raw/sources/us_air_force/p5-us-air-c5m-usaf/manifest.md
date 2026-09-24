@@ -14,6 +14,9 @@ Retrieval:
   returned: official C-5M transport mission, F-138-GE100 engine block and thrust, dimensions, cargo compartment, pallet positions, maximum cargo, maximum takeoff mass, speed, conditioned unrefuelled range and crew
   did_not_return: empty mass, defensive armament and a single range independent of cargo/refuelling condition
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: C-5M Super Galaxy. The range values are retained with their cargo conditions and are not collapsed into one generic range.
 Estimation / uncertainty: Tier A service fact sheet. The fact sheet uses the F-138-GE100 designation for the CF6-80C2-L1F engine family; both names are retained as stated.
 

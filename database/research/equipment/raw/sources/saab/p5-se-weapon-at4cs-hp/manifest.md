@@ -14,6 +14,9 @@ Retrieval:
   returned: length, mass, armoured-target role and effective range
   did_not_return: crew or launch-cycle rate
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: AT4CS HP confined-space anti-armour configuration; other AT4 variants are not merged.
 Estimation / uncertainty: Tier B manufacturer handbook. It is a disposable single-shot system; no cyclic rate is applicable.
 

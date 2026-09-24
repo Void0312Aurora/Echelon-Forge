@@ -17,6 +17,9 @@ Equipment: Merlin / HM2
 Configuration: Royal Navy Merlin Mk2 operational armament and mission role.
 Estimation / uncertainty: Tier A official operator source. The article names weapon families and mission roles but not a complete loadout, so no quantity is inferred.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

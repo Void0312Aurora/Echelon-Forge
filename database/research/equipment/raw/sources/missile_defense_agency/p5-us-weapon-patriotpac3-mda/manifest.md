@@ -13,6 +13,9 @@ Era: Current U.S. Army fielded interceptor
 Configuration: PAC-3 MSE hit-to-kill interceptor integrated with Patriot; PAC-2 GEM-T, PAC-3 CRI and PAC-3 ACE excluded
 Estimation / uncertainty: MDA directly confirms operational Patriot PAC-3, lower-tier ballistic/cruise-missile defense and hit-to-kill architecture. Missile dimensions, mass and exact engagement envelope are not published on the page; those fields use the Lockheed Martin technical deck and bounded professional estimates.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

@@ -14,6 +14,9 @@ Retrieval:
   returned: M777A2 designation, lightweight 155 mm family, optical/digital fire-control and traverse boundary
   did_not_return: a complete numeric mass, range, crew or propulsion table
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: M777A2 fire-control configuration; base M777 values are retained from the Canadian page and not relabelled as A2 certification.
 Estimation / uncertainty: Tier A U.S. Army product page. It is used for configuration context only.
 

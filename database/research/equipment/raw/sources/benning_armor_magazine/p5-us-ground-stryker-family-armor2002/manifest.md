@@ -18,6 +18,9 @@ Equipment: Stryker / M1128 MGS
 Configuration: The item reports the U.S. Army's acceptance of the first Stryker Mobile Gun System.
 Estimation / uncertainty: This is a Tier A official Army professional publication of the U.S. Army Armor Center. It carries the publisher's own disclaimer that articles are professional opinion and do not supersede official Army publications, so it is authoritative for equipment reporting attributed to the Armor Center but is not a technical manual.
 Retention: manifest and citation record only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Verification status
 

@@ -13,6 +13,9 @@ Era: Cold-War multinational configurations
 Configuration: IDS/GR1 geometry, RB199 Mk103 thrust, mass, performance, radar, gun and station values; ADV/F3, ECR and GR4 upgrades excluded
 Estimation / uncertainty: Community-compiled fuel, combat-radius, radar-range, terrain-following, RCS and countermeasure values are bounded estimates; RAF, Luftwaffe and AMI fits differ.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

@@ -15,4 +15,7 @@ Retrieval:
   did_not_return: not established
   note: This package is a locator only. No retrieval of this URL has been performed, so it carries no audit-grade retrieval record and no parameter value rests on it beyond the text quoted in this manifest. Its former bare line-only form was replaced during the 2026-09-17 gap-filling pass so that its status is machine-readable.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: The page states the role as a modernized military transport and describes the new-generation integrated flight, sighting and navigation system, and carries no specification table. It is admitted on the Il-76MD-90A leaf for the operator row and the role row only.

@@ -17,6 +17,9 @@ Equipment: Mirage 2000 family / 2000D
 Configuration: The page describes the family and separates the marks in prose, then presents a single technical table. The table is explicitly labelled by the page itself, in a `Data for (Version)` field at the foot, as `Dassault Mirage 2000c`, and its crew field is 1.
 Estimation / uncertainty: Tier C specialist technical-data compilation. The table is a Mirage 2000C table, not a family table and not a 2000D table. Every numeric value it carries is therefore a 2000C reading. That is stricter than the GlobalSecurity compilation held for this leaf, which presents its block as a single-seat baseline with a caveat that two-seat and strike variants differ marginally.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

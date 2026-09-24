@@ -13,6 +13,9 @@ Equipment: M1A1 Abrams
 Era: Cold War / baseline M1A1 (not AIM/SA or M1A2 conversion)
 Configuration: Cold War baseline M1A1 as compiled by WeaponSpecs; AIM/SA, M1A2 conversions and later upgrade states are excluded.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Estimate status: Yes; editorial compilation of public figures, not a direct measurement
 Estimation / uncertainty: The dimensions, 63,100 kg, AGT1500, speed, range, crew, ammunition, M256 and qualitative armour entries are direct page values in an editorial compilation; range, fuel and protection wording remain configuration-sensitive estimates. They are not official U.S. Army technical specifications.
 

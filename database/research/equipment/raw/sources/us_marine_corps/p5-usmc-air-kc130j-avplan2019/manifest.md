@@ -15,6 +15,9 @@ Retrieval:
   returned: KC-130J range with payload, empty weight, fuel capacity, maximum normal takeoff weight, cruise speed, ceiling, offload, troop/paratroop/litter capacities and defensive systems
   did_not_return: French customer-specific fit or a complete dimensional table
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Estimation / uncertainty: Tier A official service planning document. Values are retained with the stated 20,000 lb payload, 2.0g, altitude and offload conditions; they are not inventory counts or French configuration certification.
 
 ## Extracted parameter notes

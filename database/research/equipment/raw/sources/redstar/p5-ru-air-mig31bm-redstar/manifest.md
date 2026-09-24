@@ -15,6 +15,9 @@ Retrieval:
   returned: explicit MiG-31BM designation, two-seat crew, D-30F-6M powerplant, geometry, mass, speed, range conditions, ceiling, aerial-refuelling, radar and weapon block
   did_not_return: Russian certification, lot-specific upgrade dates and an independent source for every performance condition
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Estimation / uncertainty: Tier C specialist reference. Values are public technical-profile readings, not Russian service-manual certification. Range and speed values retain the conditions stated by the page; no universal combat-radius claim is inferred.
 
 ## Extracted parameter notes

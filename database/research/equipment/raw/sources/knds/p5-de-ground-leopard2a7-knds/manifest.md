@@ -12,6 +12,9 @@ Equipment: Leopard 2A7
 Era: Current
 Configuration: Leopard 2A7 manufacturer product context; A7V and customer-specific gun/kit variants are excluded.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Estimate status: Yes; maximum mass/range values are brochure/compiled figures, not direct measurement
 Estimation / uncertainty: The page directly states the 1,500 hp powerpack, HSWL 354, road speed and L55-family armament context; maximum mass and range are brochure/compiled estimates, while width, height and customer-kit details are absent or uncertain. These Tier C product claims are not official technical specifications.
 

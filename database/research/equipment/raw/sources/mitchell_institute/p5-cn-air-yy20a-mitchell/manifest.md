@@ -17,6 +17,9 @@ Equipment: YY-20 / YY-20A
 Configuration: Aerial refuelling tanker built by Xi'an Aircraft Industrial Corporation on the Y-20 airframe. Active variant listed as YY-20A (Y-20U).
 Estimation / uncertainty: Tier C specialist secondary source from a recognised aerospace research organisation, at the stronger end of Tier C. Not an official Chinese publication. Its power plant entry names four D-30KP-2 engines, which is the earlier Y-20 power plant; the Y-20B is associated with the Shenyang WS-20. That divergence is retained rather than resolved.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

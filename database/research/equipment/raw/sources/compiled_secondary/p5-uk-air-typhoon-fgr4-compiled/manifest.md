@@ -18,6 +18,9 @@ Retrieval:
   did_not_return: any Mach 2.0 reading for the FGR.4
   note: The FGR.4 performance block gives Mach 2.5 and 2,495 km/h. The Mach 2.0 reading that this package previously carried was not returned and is withdrawn from the tree.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

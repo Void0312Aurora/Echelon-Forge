@@ -12,6 +12,9 @@ Equipment: T-72B3
 Configuration: T-72B3 modernization described on the page; Model 2016 and T-72B3M are not merged into this leaf.
 Estimation / uncertainty: Mass, dimensions, engine, transmission, speed/range, crew, main-gun rounds and fording preparation are direct page values; secondary ammunition, thermal envelope and protection treatment are bounded simulation estimates or categorical representations. Army Recognition is a non-official Tier C specialist source, not an official Russian service manual.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use and estimate basis
 

@@ -15,6 +15,9 @@ Equipment: Protector / RG1
 Configuration: UK Protector RG Mk1 based on MQ-9B SkyGuardian. Brimstone 3A, Paveway IV and the RAF remote-crew organization are UK-specific rows.
 Estimation / uncertainty: Tier A official RAF aircraft page; its two endurance readings are retained as published rather than reconciled.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

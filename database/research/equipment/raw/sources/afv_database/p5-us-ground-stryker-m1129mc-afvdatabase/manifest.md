@@ -19,6 +19,9 @@ Equipment: Stryker / M1129 MC
 Configuration: The page distinguishes two vehicles that share the M1129 designation. MC-A, the ICV-like carrier that could not fire mounted, weighed 39,990 lb (18,140 kg) loaded. MC-B, fielded late 2005 with the recoiling RMS6-L 120 mm mortar, is the configuration those figures describe and is the one recorded below. The double-V hull from 2010 and the separate Stryker A1 upgrade are not merged into this record.
 Estimation / uncertainty: AFV Database is a specialist secondary compilation, not an official United States Army publication. Its stated sources are the Rottman, Zwilling and Grummitt references, GlobalSecurity, GDLS product pages and Army Technology. Values below are transcribed MC-B variant-level figures; they are not official specifications.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

@@ -14,6 +14,9 @@ Retrieval:
   returned: KJ-500 role, Shaanxi manufacturer, four-engine configuration, 24-person accommodation and fixed dorsal radome with three AESA arrays providing 360-degree coverage
   did_not_return: certified dimensions, mass, speed, range, endurance, radar detection range and hardpoint data
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: KJ-500 base airborne early warning and control aircraft on the Y-9 family. KJ-500H and later refuelling variants are not merged.
 Estimation / uncertainty: Tier B government assessment. The radar-array and accommodation descriptions are retained as system/context readings; no detection range or combat effect is inferred.
 

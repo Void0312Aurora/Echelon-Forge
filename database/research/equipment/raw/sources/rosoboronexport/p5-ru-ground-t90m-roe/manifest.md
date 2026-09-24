@@ -10,6 +10,9 @@ Accessed: 2026-09-13
 Domain: ground
 Equipment: T-90M Proryv
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Availability: URL returned HTTP 404 when checked on 2026-09-13; treat as an acquisition pointer pending replacement with a retrievable technical document.
 Configuration: Historical T-90M Proryv exporter/product pointer; not merged with T-90A, T-90AM or T-90MS.
 Estimation / uncertainty: The unavailable exporter URL provides no retrievable direct numeric evidence; retained description is a product claim and missing fields are not estimated or family-substituted. This non-retrievable Tier C pointer is not a technical manual; Army Recognition is the active cross-check.

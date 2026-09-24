@@ -17,6 +17,9 @@ Equipment: F/A-18 / F/A-18E
 Configuration: The page covers the Super Hornet family. Its specification block gives width, length, height and maximum takeoff weight for the type rather than separating the E and F marks.
 Estimation / uncertainty: Tier B manufacturer documentation, authoritative for the figures it states about its own product. It is not an official United States Navy publication, and the Navy fact file held in this tree does not publish a maximum takeoff weight, which is why this page is used for that field.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

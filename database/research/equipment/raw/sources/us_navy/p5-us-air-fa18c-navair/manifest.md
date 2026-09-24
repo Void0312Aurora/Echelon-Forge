@@ -14,6 +14,9 @@ Retrieval:
   returned: official A-D Hornet role, C/D operational dates, F404-GE-402 propulsion and thrust, common dimensions and maximum takeoff mass, speed, ceiling, conditioned combat/ferry ranges, seat-count split, cannon and listed stores
   did_not_return: C-only empty mass, C-only fuel quantity, C-only station loading and a C-only performance table
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: F/A-18C single-seat Hornet. The numerical geometry, propulsion and performance block is explicitly the NAVAIR A-D common block; C-specific service/crew statements are not presented as a separate C-only test card.
 Estimation / uncertainty: Tier A NAVAIR product page. Combat and ferry ranges retain their stated stores/condition assumptions; no C-only value is inferred from the common A-D block.
 

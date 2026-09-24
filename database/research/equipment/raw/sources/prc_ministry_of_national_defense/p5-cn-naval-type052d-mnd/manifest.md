@@ -11,6 +11,9 @@ Domain: naval
 Equipment: Type 052D guided-missile destroyer Cangzhou (hull 125)
 Publication date: 2025-08-14
 Retention: manifest and service-presence note only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Configuration: Official image/caption identifies a Type 052D hull in PLAN Northern Theater Command training; it does not publish class dimensions, loading, propulsion or combat-system specifications.
 Availability: Page returned HTTP 200 when checked on 2026-09-13.
 

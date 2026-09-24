@@ -17,6 +17,9 @@ Equipment: E-3 / E-3G
 Configuration: U.S. Air Force E-3G Block 40/45 mission-system and operational context. Airframe values remain on the separate family fact-sheet package.
 Estimation / uncertainty: Tier A official U.S. Air Force source. The 300-mile figure is an exercise surveillance context, not a universal radar range or a simulator detection model.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

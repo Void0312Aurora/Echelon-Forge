@@ -18,6 +18,9 @@ Equipment: Stryker family / M1128 MGS / M1132 ESV
 Configuration: The ODIN Stryker family page is cited for stating the M1128 main gun as a 105 mm M68A1E4, not M68A1E8.
 Estimation / uncertainty: Tier A official U.S. Army reference. The host was not reachable on 2026-09-18 from either the local network or the extraction tool, and the Wayback Machine holds no capture of the URL or of any page under the same path. The designation is therefore recorded as attributed by the 2026-09-18 audit and not as independently read.
 Retention: manifest and citation record only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Reachability
 

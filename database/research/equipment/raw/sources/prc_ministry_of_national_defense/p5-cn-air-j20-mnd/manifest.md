@@ -12,3 +12,6 @@ Equipment: J-20
 Configuration: J-20 combat-service status only; technical performance is supplemented by the Tier C Army Recognition source.
 Use basis: Official service-status statement; no dimensional or performance values are inferred from this notice.
 Retention: manifest and extracted service-status notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open

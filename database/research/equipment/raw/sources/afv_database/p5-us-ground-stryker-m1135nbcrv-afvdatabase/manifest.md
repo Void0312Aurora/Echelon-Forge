@@ -19,6 +19,9 @@ Equipment: Stryker / M1135 NBCRV
 Configuration: Nuclear, biological, and chemical reconnaissance variant of the ICV. The page states the M1135 was not modified with the double-V hull, but received Stryker A1 upgrades from 2018 (450 hp engine, 60,000 lb suspension, 910 A alternator, in-vehicle network); the A1 configuration is not merged into this record.
 Estimation / uncertainty: AFV Database is a specialist secondary compilation, not an official United States Army publication. Its stated sources are the Zwilling and Grummitt references, a GDLS NBCRV product page and Army Technology. Values below are transcribed variant-level figures; they are not official specifications.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

@@ -17,6 +17,9 @@ Equipment: Su-30SME
 Configuration: The Su-30SME is the export designation of the Su-30SM family.
 Estimation / uncertainty: Tier B manufacturer documentation. The page's specification block is now returned by the search retrieval and is retained as the manufacturer-published table; no radar range or empty mass is inferred.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

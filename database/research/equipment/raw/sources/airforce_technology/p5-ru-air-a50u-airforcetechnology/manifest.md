@@ -15,6 +15,9 @@ Retrieval:
   returned: A-50U upgrade/service history, 15-person crew context, Vega airborne radar-warning/guidance system, target tracking/fighter guidance and defensive electronic countermeasures
   did_not_return: a clean A-50U-only geometry or certification table; structured numeric fields are treated as A-50 family context only
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Estimation / uncertainty: Tier C defence reference. The page mixes A-50 family data and A-50U upgrade text; the leaf keeps family baseline values explicitly labelled and uses this package for mission-system/upgrade context.
 
 ## Extracted parameter notes

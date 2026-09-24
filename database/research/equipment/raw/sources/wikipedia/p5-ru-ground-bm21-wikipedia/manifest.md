@@ -14,6 +14,9 @@ Retrieval:
   returned: launcher dimensions, mass, crew, calibre, 40-tube armament, rate, range, chassis engine, road speed and road range
   did_not_return: a current subvariant-specific Russian service table
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Standard BM-21 on the ZiL-375 6x6 chassis; BM-21U, Grad-1 and Tornado-G are excluded.
 Estimation / uncertainty: Tier C community summary; the standard configuration is kept distinct from later chassis and rocket families.
 

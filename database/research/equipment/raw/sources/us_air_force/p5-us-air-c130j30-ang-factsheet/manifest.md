@@ -18,6 +18,9 @@ Equipment: C-130J-30
 Configuration: The page is written as a direct comparison between the stretched C-130J-30 and the standard C-130J, which makes it the source that supplies the J-30 columns the main Air Force fact sheet does not publish.
 Estimation / uncertainty: Tier A official United States Air Force publication. The page states the maximum take-off weight as an identical structural limit for both bodies rather than as a J-30-specific reduction.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

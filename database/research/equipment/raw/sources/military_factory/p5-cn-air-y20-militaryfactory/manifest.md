@@ -16,6 +16,9 @@ Domain: air
 Equipment: Y-20
 Configuration: Generic Xian Y-20 entry. The page mentions later WS-20 and earlier D-30/WS-18 fits; its engine text is not used to collapse the separate Y-20/Y-20B powerplant rows.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Estimation / uncertainty: Tier C specialist secondary reference. The page provides a public baseline, not a manufacturer or operator technical order; its 4,500 km range is retained only as a cross-check against the more explicitly conditioned SNL range rows.
 
 ## Extracted parameter notes

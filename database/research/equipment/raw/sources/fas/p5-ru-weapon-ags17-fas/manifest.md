@@ -14,6 +14,9 @@ Retrieval:
   returned: belt/drum feed, blowback operation, 30 mm ammunition, approximate muzzle velocity, effective/direct/maximum range bands and rate context
   did_not_return: current service status
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Soviet-era AGS-17 table; no AGS-30 or helicopter fit is merged.
 Estimation / uncertainty: Tier B archived technical reference reproduced by FAS; the table uses a different loaded-mass convention and is not substituted for the Rosgvardia page.
 

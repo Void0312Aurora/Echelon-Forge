@@ -18,6 +18,9 @@ Equipment: E-3 / E-3G
 Configuration: E-3 Sentry family figures as published by the base that supports the fleet.
 Estimation / uncertainty: Tier A official service publication. It is a second Air Force page and disagrees with the Air Force fact sheet on maximum takeoff weight, which is recorded as a conflict rather than averaged.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

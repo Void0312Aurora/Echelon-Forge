@@ -18,6 +18,9 @@ Equipment: Mirage 2000 family / 2000D
 Configuration: The page states that its tables present the Mirage 2000C interceptor baseline and that two-seat and strike variants differ marginally. It gives a separate two-seat length, which is the value applicable to the 2000D.
 Estimation / uncertainty: Tier C specialist secondary compilation. It is not an official Dassault or government publication. Its powerplant and performance blocks are written for the single-seat 2000C, and the page states its own caveat that two-seat and strike variants differ marginally in dimensions and fuel capacity.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

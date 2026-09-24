@@ -14,6 +14,9 @@ Retrieval:
   returned: the official general-characteristics block: engines, thrust, dimensions, empty weight, maximum takeoff weight, fuel, mission-dependent payload, speed, ferry range, ceiling, crew and armament
   did_not_return: a single fixed payload mass; the source states that payload depends upon mission
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

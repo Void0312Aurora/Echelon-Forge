@@ -13,6 +13,9 @@ Era: Current French Navy surface-launched configuration
 Configuration: French MM40 Block 3 family; Block 3C is retained only as a direct continuity cross-check, while AM39/SM39 and MM38/Block 2 excluded
 Estimation / uncertainty: The Ministry page gives a 780 kg launch mass and length under 6 m for the MM40 family, while the DGA programme notice states Block 3C exceeds 200 km and adds a digital radio-altimeter/new seeker. Missile-body dimensions and warhead details use the MBDA datasheet and specialist family references.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

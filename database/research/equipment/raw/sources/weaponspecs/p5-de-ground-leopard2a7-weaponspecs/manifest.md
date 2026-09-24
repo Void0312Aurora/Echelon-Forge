@@ -13,6 +13,9 @@ Equipment: Leopard 2A7
 Era: Current A7 production standard; A7V/customer kits not merged
 Configuration: Leopard 2A7 production standard as compiled by WeaponSpecs; A7V and customer-specific kits are excluded.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Estimate status: Yes; editorial compilation, with maximum mass/range configuration estimates
 Estimation / uncertainty: The listed dimensions, 67,500 kg, 1,500 hp, speed, crew, ammunition, L/55 and sight entries are direct page values; maximum mass, range and modular-armour/kit interpretation are configuration estimates. They are not official technical specifications.
 

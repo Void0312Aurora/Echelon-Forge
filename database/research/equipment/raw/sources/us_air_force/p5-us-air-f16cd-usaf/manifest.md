@@ -17,3 +17,6 @@ Equipment: F-16C/D
 Configuration: Family context only. This package is retained because the backlog candidate includes the USAF F-16C/D family source; exact Block 50 values are taken from the Shaw package.
 Estimation / uncertainty: Tier A official USAF source, but its family-level scope is not used to fill a Block 50 field where the Shaw page gives a more specific value.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open

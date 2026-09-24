@@ -13,6 +13,9 @@ Configuration boundary: V9 retrofit/new-build radar physical-statistics and mode
 Availability/status: Historical manufacturer brochure for a fielded radar/retrofit kit; the capture demonstrates product documentation, not current procurement availability.
 Publication/archival date: Wayback capture 2011-05-26; original PDF is attributed to Northrop Grumman.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Evidence used
 

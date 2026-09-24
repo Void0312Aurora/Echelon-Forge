@@ -14,6 +14,9 @@ Retrieval:
   returned: twin-engine multipurpose role, transport mission, refittable operations, high-altitude operation, anti-icing technology and fly-by-wire flight control
   did_not_return: numeric geometry, mass, payload, speed, range, ceiling or crew values
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Base Z-20 multipurpose transport/utility configuration. Naval, armed and other service variants are separate.
 Estimation / uncertainty: Tier A government publication. It is used only for role and system descriptions; no numeric value is inferred.
 

@@ -18,6 +18,9 @@ Retrieval:
   did_not_return: the ejection seat designation; the plain page fetch, which returned the article navigation only because the page exceeds the extractor content budget
   note: The mass and fuel rows rest on the search-index return. The seat row that this package previously carried is withdrawn because no retrieval returned it.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

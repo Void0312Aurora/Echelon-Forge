@@ -17,6 +17,9 @@ Equipment: Stryker PMCS coverage index
 Configuration: Community maintenance mirror covers the flat-bottom M1126/M1127 Stryker checklist, not the DVH M1252 MCVV variant.
 Estimate status: No M1252 estimate. This package records source coverage absence only.
 Retention: manifest and source-coverage note only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

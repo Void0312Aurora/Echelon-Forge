@@ -18,6 +18,9 @@ Equipment: F-16 / F-16C Block 50
 Configuration: The page is written about the F-16C Block 50 model in United States Air Force service, which is the variant the leaf records. It states its general characteristics block as F-16C.
 Estimation / uncertainty: Tier A official United States Air Force publication. Its general characteristics figures are drawn from Lockheed-Martin material cited on the page, so they are manufacturer figures published by the Air Force. The page states 39,000 lb in the Block 50/52 narrative and in the F-16C characteristics block; no unsupported secondary 42,300-lb reading is retained.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

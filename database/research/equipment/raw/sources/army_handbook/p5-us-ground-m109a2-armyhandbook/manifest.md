@@ -11,6 +11,9 @@ Domain: ground
 Equipment: M109A2 155 mm self-propelled howitzer
 Configuration: 2008 Jordan handbook recognition entry for M109A2; foreign-operator data is an assessment and not a US technical-manual replacement.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

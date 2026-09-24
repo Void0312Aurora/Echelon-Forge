@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: the plain page fetch, and any dimension, empty weight or ceiling
 Estimation / uncertainty: Tier C secondary source. The publisher is a Russian aviation reference site rather than Ilyushin, United Aircraft Corporation or the Ministry of Defence. Its 210 t maximum take-off weight matches the encyclopedic reading exactly, and its 60 t payload matches the encyclopedic capacity figure.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

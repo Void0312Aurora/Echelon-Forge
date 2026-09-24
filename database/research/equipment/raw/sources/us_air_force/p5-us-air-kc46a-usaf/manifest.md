@@ -17,6 +17,9 @@ Equipment: KC-46A
 Configuration: U.S. Air Force KC-46A Pegasus tanker/airlift configuration. Cargo, passenger and aeromedical figures are retained with their stated load condition.
 Estimation / uncertainty: Tier A service fact sheet. The 15-seat figure is recorded as permanent aircrew seating rather than silently converted to a flight-crew count; the 5-person aeromedical team is mission-specific.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

@@ -13,6 +13,9 @@ Configuration boundary: Secondary system summary covering V9 capabilities and th
 Availability/status: Public technical summary last modified 2011-07-07; it supports fielded/upgrade status but is not a current operator inventory or sustainment record.
 Publication date: Page last modified 2011-07-07
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Evidence used
 

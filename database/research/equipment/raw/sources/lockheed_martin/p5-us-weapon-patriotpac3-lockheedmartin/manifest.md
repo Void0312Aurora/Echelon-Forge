@@ -13,6 +13,9 @@ Era: Current production MSE configuration
 Configuration: PAC-3 MSE with two-pulse solid motor, active Ka-band seeker, RF data link, attitude-control motors and lethality enhancer; PAC-3 CRI and ACE excluded
 Estimation / uncertainty: Public deck directly identifies the dual-pulse motor, active Ka seeker, RF data link, guidance processor, attitude-control motors and hit-to-kill lethality enhancer. The deck omits exact mass/length/range; leaf uses 5.2-5.3 m, 312 kg and 35-70 km bounds from public acquisition and specialist sources. Exact fin span and fuze model remain unresolved.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

@@ -17,6 +17,9 @@ Equipment: Tu-160 / Tu-160M
 Configuration: The article covers the Tu-160M modernization, including the NK-32-02 engine fit reported by the United Aircraft Corporation press office.
 Estimation / uncertainty: Tier C secondary source. It is a defence commentary publication, not an official Russian source or Tupolev technical manual. Numeric platform readings remain secondary and the Rostec package is used for the variant-specific NK-32-02 modernization claim.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

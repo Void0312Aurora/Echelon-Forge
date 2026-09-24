@@ -19,6 +19,9 @@ Equipment: Stryker family / all ten variants
 Configuration: The brochure states a Combat figure and a Shipping figure for height, width and length of each of the ten variants. Both columns are retained per variant. This is the manufacturer's own publication, so it is treated as higher-grade than the third-party compilation in `p5-us-ground-stryker-*-afvdatabase`.
 Estimation / uncertainty: A manufacturer brochure is a Tier B public-engineering source. It is authoritative for the figures it states about its own product, but it is not an official government publication and it is not a calibration dataset. Values are quoted as published with no unit conversion applied on the source side. The same document is also served under a Spanish path on the same host; that path is a second locator for this one artifact and is not a separate source, so it is not carried as a URL line.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

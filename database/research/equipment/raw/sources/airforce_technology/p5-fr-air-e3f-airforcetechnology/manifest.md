@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: the plain page fetch, and any E-3F-specific mass
 Estimation / uncertainty: Tier C secondary source. Its engine split is the substantive content it contributes and its thrust figures are rounded to the nearest thousand pounds against the 20,500 lb and 21,500 lb readings elsewhere, so all three are recorded as separate readings.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

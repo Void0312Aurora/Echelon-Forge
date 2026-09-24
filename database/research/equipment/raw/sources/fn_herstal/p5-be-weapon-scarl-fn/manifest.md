@@ -14,6 +14,9 @@ Retrieval:
   returned: caliber, operating principle, firing modes, length, barrel length, magazine, mass and cyclic rate
   did_not_return: certified effective range
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: FN SCAR-L Mk2 standard 14.5-inch barrel configuration; CQC is retained only as a source-listed alternative, not merged into the STD record.
 Estimation / uncertainty: Tier B manufacturer technical data; figures are indicative and non-contractual as stated by FN Herstal.
 

@@ -15,6 +15,9 @@ Equipment: Voyager / KC2
 Configuration: RAF Voyager KC2 has two underwing pods; KC3 adds a centreline hose. This package records the RAF fit and does not merge KC3-only hardware into the KC2 leaf.
 Estimation / uncertainty: Tier A official RAF aircraft page; carried fuel is not treated as an offload, tank capacity or transferable quantity.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

@@ -18,6 +18,9 @@ Retrieval:
   did_not_return: thrust, engine designation, dimensions
   note: The programme-facts block was returned by the first proxy call, not by a search-index fallback.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

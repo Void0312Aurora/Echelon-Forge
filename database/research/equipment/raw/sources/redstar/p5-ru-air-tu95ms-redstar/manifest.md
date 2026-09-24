@@ -15,6 +15,9 @@ Retrieval:
   returned: explicit Tu-95MS designation, crew, NK-12M(MV) powerplant, geometry, mass, fuel, speed, range, combat radius, ceiling and Kh-55 carriage conditions
   did_not_return: current fleet inventory, lot-specific MS/MSM avionics and Russian certification
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Estimation / uncertainty: Tier C specialist reference. Public technical-profile values are retained with their MS-6/MS-16 armament conditions and are not treated as a complete current-lot configuration.
 
 ## Extracted parameter notes

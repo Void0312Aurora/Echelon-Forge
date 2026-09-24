@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: engine designation, engine model, thrust, empty weight, crew, ejection seat, ammunition
 Estimation / uncertainty: Tier B manufacturer documentation, authoritative for the limits of the aircraft it builds. It is a marketing product page rather than a flight manual or a type certificate.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

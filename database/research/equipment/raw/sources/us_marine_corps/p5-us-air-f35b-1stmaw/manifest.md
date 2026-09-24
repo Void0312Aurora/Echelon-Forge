@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: empty weight as a metric value (the page gives the imperial value and this package computes the conversion), F-35B maximum altitude
 Estimation / uncertainty: Tier A official service publication. It is authoritative for the operating limits of the aircraft the Marine Corps flies. The maximum weight is published as a class figure rather than as an exact limit, and the word `class` is part of the value.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

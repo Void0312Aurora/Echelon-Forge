@@ -14,6 +14,9 @@ Retrieval:
   returned: lightweight 155 mm role, mass, length, sustained and maximum rates, minimum/maximum range, digitized fire control and ammunition classes
   did_not_return: crew size and towing vehicle specification
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: M777 lightweight towed howitzer; M777ER and national fire-control kits are not merged.
 Estimation / uncertainty: Tier A government equipment page. Conventional and Excalibur ranges are retained as separate ammunition conditions.
 

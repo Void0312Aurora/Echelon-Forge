@@ -14,6 +14,9 @@ Retrieval:
   returned: rate of fire, barrel length, magazine capacity, sighting range, direct-fire range, firing modes and loaded mass
   did_not_return: overall length and unloaded mass
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Russian AK-74M service rifle. AK-74, AKS-74 and RPK-74 are separate configurations.
 Estimation / uncertainty: Tier A government service page. The mass is published with a loaded magazine.
 

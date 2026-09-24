@@ -18,6 +18,9 @@ Equipment: Y-20
 Configuration: The Y-20 transport family. The YY-20A tanker and YY-20B are separate configurations recorded on their own leaf.
 Estimation / uncertainty: Tier C. The Chinese Ministry of National Defense material held in this tree confirms programme status and discloses no dimensions, mass or performance. No manufacturer page for the Y-20 was located in this pass, so this is the best available source class and the leaf labels it accordingly.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Correction history for this package
 

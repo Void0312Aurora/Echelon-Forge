@@ -18,6 +18,9 @@ Equipment: KJ-500
 Configuration: The report covers a KJ-500 airborne early warning aircraft attached to an aviation unit during an early warning and reconnaissance training exercise, and places the unit under PLA Navy aviation.
 Estimation / uncertainty: Tier A official Chinese military publication. It is authoritative for the fact of PLA Navy operation. It carries no dimensions, mass or performance and therefore contributes no parameter rows.
 Retention: manifest and citation record only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Reference basis
 

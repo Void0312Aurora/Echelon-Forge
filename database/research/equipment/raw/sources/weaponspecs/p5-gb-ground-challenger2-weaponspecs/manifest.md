@@ -13,6 +13,9 @@ Equipment: Challenger 2
 Era: Current Challenger 2 baseline; Challenger 3 excluded
 Configuration: Challenger 2 current baseline as compiled by WeaponSpecs; Challenger 3, theatre-specific armour kits and refit-specific states are excluded.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Estimate status: Yes; editorial compilation of public figures, not a direct measurement
 Estimation / uncertainty: The dimensions, 62,500 kg, engine, speed, range, crew, ammunition and L30A1 entries are direct page values in an editorial compilation; range, ammunition and armour wording are public-data estimates/qualitative. They are not official RBSL or UK Ministry of Defence technical specifications.
 

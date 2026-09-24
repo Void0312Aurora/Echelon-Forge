@@ -12,6 +12,9 @@ Domain: ground
 Equipment: M2A2 ODS / ODS-E Bradley
 Configuration: M2A2 ODS and ODS-E table columns; values are not copied to M2A3, M3A2 ODS, or M2A4.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

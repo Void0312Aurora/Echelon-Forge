@@ -12,6 +12,9 @@ Equipment: Los Angeles-class fast attack submarine
 Configuration: Public compilation covering early and Improved/688i variants; VLS, sonar processing and crew differ by flight and modernization.
 Estimation / uncertainty: Independent cross-check for S6G 35,000-shp rating, 26-weapon torpedo-room capacity, sensor names and survivability architecture. The 25-60 mm pressure-hull bound in the leaf is an engineering estimate, not a GlobalSecurity measurement.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

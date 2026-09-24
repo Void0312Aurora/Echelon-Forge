@@ -14,6 +14,9 @@ Retrieval:
   returned: official E-3F dimensions, crew, CFM56-2-A3 engine fit, empty and maximum takeoff mass, maximum and operational speed, operational ceiling and unrefuelled/refuelled endurance
   did_not_return: detailed sensor/mission-system parameters and weapon loadout; those are recorded in the separate AWACS mission-systems package
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: French E-3F SDCA. The technical card and the page's characteristics block are used for variant-level values; family E-3 readings from other packages remain separate cross-checks.
 Estimation / uncertainty: Tier A official French Ministry source. The HTML extraction contains one `CFM 55-2-A3` rendering, while the linked technical card and the extracted specification block read `CFM 56-2-A3`; the latter is retained as the engine value and the discrepancy is recorded rather than silently normalized.
 

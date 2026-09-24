@@ -13,6 +13,9 @@ Era: Current production / F-model multipurpose-warhead configuration
 Configuration: FGM-148F missile and current lightweight-CLU employment; older B/C/E/G variants, export software, and vehicle integration kits are excluded
 Estimation / uncertainty: The manufacturer page confirms lightweight, man-portable, shoulder-fired, fire-and-forget, and fire-from-enclosure employment. Missile mass, dimensions, motor staging, and range are bounded from the public Javelin specification cross-check and are not represented as proprietary production limits.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

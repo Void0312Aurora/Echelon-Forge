@@ -18,6 +18,9 @@ Retrieval:
   did_not_return: any specification table, length, span, thrust, speed or altitude
   note: The Mach 2.0, 90 kN, 15.96 m and 10.95 m values written into an earlier revision of this manifest were not returned and are withdrawn from the tree.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## What retrieval actually returned
 

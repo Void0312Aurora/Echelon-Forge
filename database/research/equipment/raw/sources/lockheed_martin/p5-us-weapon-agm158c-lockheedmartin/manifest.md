@@ -13,6 +13,9 @@ Era: Current production and C-3 development
 Configuration: Fielded LRASM C-1 baseline values; C-3 extended-range software/hardware changes excluded from this leaf
 Estimation / uncertainty: Manufacturer directly states multimodal sensor, weapons data link, dynamic routing/signature control, 1,000 lb blast-fragmentation warhead and >200 nmi range. The public fast-facts sheet omits mass, length, motor and fuze; leaf bounds these from JASSM-ER outer mold line and technical references without claiming official precision.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

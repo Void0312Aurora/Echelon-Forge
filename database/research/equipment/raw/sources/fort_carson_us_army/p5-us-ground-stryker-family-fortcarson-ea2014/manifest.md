@@ -18,6 +18,9 @@ Equipment: Stryker / M1128 MGS
 Configuration: The document is cited for stating the M1128 as an M68A1E4 105 mm cannon with 18 rounds of 105 mm, 400 rounds of .50 cal and 3,400 rounds of 7.62 mm. Those load figures agree with the Tier C compilation used in this tree.
 Estimation / uncertainty: Tier A U.S. Army document. The URL returned `BlobNotFound` from the host's storage layer on 2026-09-18, meaning the path is structurally valid but the file has been removed from storage. Content is recorded from the auditing citation, not from a first-hand read.
 Retention: manifest and citation record only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Verification status
 

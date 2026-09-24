@@ -14,6 +14,9 @@ Retrieval:
   returned: official Mirage 2000 D technical card and characteristics: two-person crew, 9.13 m wingspan, 14.55 m length, 5.15 m height, 9.7 t afterburning thrust, 16.5 t maximum takeoff mass, 6.2 t carried-fuel capacity, Mach 1.4 maximum speed, 15,000 m operational ceiling, and air-to-air refuelling capability; the page also identifies the aircraft's ground-attack role and listed weapons and mission systems
   did_not_return: empty mass, a standalone range or combat-radius figure, engine model in the characteristics block, station-by-station load limits, or radar detection range
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Official French technical card for the two-seat Mirage 2000 D. The separate 2025 RMV article supplies the mid-life-renovation weapons and mission-system changes; the numeric card is retained as the platform-level 2000 D reading.
 Estimation / uncertainty: Tier A government source. The page reports rounded values and uses "carried-fuel capacity" rather than an explicitly labelled internal-fuel tank capacity. It is recorded as stated and is not converted into an internal-fuel claim.
 

@@ -14,6 +14,9 @@ Retrieval:
   returned: overall length, folded-stock length, barrel length, ammunition, action and rate bands
   did_not_return: current Bundeswehr procurement status beyond the cited service context
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Standard MG3 geometry; MG3A1 and national derivatives are excluded.
 Estimation / uncertainty: Tier C community summary used only for the missing overall-length field and rate-band cross-check.
 

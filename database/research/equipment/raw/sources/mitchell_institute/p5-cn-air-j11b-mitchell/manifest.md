@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: the plain page fetch, and performance figures
 Estimation / uncertainty: Tier C specialist secondary source from a recognised aerospace research organisation, at the stronger end of Tier C. Its values are family-level and imperial. It lists J-11BS among the active variants, which is the twin-seat mark this leaf covers, but it does not state separate dimensions for the B and the BS.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

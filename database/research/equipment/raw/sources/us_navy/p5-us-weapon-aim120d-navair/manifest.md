@@ -14,6 +14,9 @@ Retrieval:
   returned: official AMRAAM description and variant specification: solid-fuel motor, 12 ft length, 7 in diameter, AIM-120C/D 19 in wingspan, AIM-120D 358 lb weight, active-radar/inertial/datalink/home-on-jam guidance and blast-fragmentation warhead; speed and range are classified
   did_not_return: public range, speed, exact motor model, fuze model and explosive filling
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: AIM-120D reading within the AMRAAM family page. C/D wingspan and D mass are retained as the variant-specific fields the page publishes.
 Estimation / uncertainty: Tier A government product page. Classified performance is not replaced with a community estimate.
 

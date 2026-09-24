@@ -14,6 +14,9 @@ Retrieval:
   returned: three hose-and-drogue refuelling pods, two under the outer wings and one on the rear fuselage
   did_not_return: pod model, certified fuel-transfer rate and internal fuel quantity
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Y-20U / YY-20A tanker configuration. Transport and Y-20B configurations are not merged.
 Estimation / uncertainty: Tier C specialist secondary reporting. Janes says the pods are possibly based on UPAZ-1A; that possibility is not promoted to a confirmed equipment identity.
 

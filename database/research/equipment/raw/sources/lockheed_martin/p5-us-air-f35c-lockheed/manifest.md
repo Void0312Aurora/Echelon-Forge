@@ -17,6 +17,9 @@ Equipment: F-35 / F-35C
 Configuration: The document tabulates the A, B and C variants side by side, so the C column is directly available and is not inferred from a sibling mark.
 Estimation / uncertainty: Tier B manufacturer documentation, authoritative for its own product. The figures were published in 2021 and later block changes are not reflected. The F-35C column is variant-specific; no A/B value is copied into this package.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

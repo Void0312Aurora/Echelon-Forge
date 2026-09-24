@@ -14,6 +14,9 @@ Retrieval:
   returned: official E-2D role, length, empty weight, speed, ceiling, T56-A-427A engines and power, five-person crew, open-architecture sensors and program context
   did_not_return: maximum takeoff mass, wingspan, fuel quantity, range/endurance and weapon stations
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: E-2D Advanced Hawkeye. The source is variant-specific; dimensions not published on this page are supplied only by the separate official AirPAC technical brief.
 Estimation / uncertainty: Tier A government product page. “Fully integrated open architecture system” is retained as a mission-system description, not converted into a radar range or track-count claim.
 

@@ -12,3 +12,6 @@ Equipment: J-10C
 Configuration: J-10C combat-duty status only; technical performance is supplemented by the Tier C Army Recognition source.
 Use basis: Official service-status statement; no dimensional or performance values are inferred from this notice.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open

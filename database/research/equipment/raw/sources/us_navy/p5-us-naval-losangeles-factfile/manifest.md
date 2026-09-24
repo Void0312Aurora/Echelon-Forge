@@ -12,6 +12,9 @@ Domain: naval
 Equipment: Los Angeles-class SSN-688
 Configuration: U.S. Navy class baseline across Flight I, Improved Los Angeles, and 688i boats. Public dimensions, surfaced/submerged displacement, S6G plant, speed, crew, sonar and torpedo-room fit are retained; 12-cell VLS is a Flight II/III branch only.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

@@ -14,6 +14,9 @@ Retrieval:
   returned: length, weapon and mounted mass, calibre, rate, box capacity, sighting range and crew
   did_not_return: muzzle velocity and a separated direct/effective range
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: AGS-17 infantry-mounted configuration; AG-17A helicopter and AGS-30 derivatives are excluded.
 Estimation / uncertainty: Tier A government service page; 18 kg weapon mass and 31 kg mounted mass are retained as distinct quantities.
 

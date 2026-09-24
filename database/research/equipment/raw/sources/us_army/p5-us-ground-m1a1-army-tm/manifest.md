@@ -10,6 +10,9 @@ Domain: ground
 Equipment: M1A1 Abrams
 Era: Cold War / legacy configuration
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

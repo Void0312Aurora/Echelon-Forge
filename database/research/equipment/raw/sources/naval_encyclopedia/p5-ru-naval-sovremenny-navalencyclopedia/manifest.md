@@ -11,6 +11,9 @@ Domain: naval
 Equipment: Project 956 Sovremenny-class destroyer
 Publication history: First published 2017-03-22; page updated 2024-06-04
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Configuration: Soviet/Russian Project 956 baseline. Export Project 956E/EM, Chinese modernization and later Project 956U variants are excluded from the extracted baseline.
 Estimation / uncertainty: Hull, machinery, displacement, speed, range, crew, power and named systems are article cross-check values; armour thickness is not published and any survivability envelope remains a bounded simulation estimate, not an official Russian measurement.
 Availability: Page returned HTTP 200 when checked on 2026-09-13.

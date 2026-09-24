@@ -18,6 +18,9 @@ Equipment: AW159 / Wildcat HMA2
 Configuration: The AW159 is presented as a single platform covering maritime and battlefield roles. The page does not separate the Royal Navy HMA2 from the Army AH1 in its technical data, so the figures below are platform-level rather than HMA2-unique.
 Estimation / uncertainty: Tier B manufacturer documentation. It is authoritative for the figures it states about its own product but is not a government publication, and the platform-level values are not a substitute for a customer-specific configuration sheet. Several values are quoted against maximum gross weight at sea level, which is a defined reference condition rather than a general performance claim.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

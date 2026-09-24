@@ -17,6 +17,9 @@ Equipment: Stryker / IAV family and DVH variant context
 Configuration: The paper's family-level Stryker discussion names the C7 engine and generic mobility values, then separately lists M1252 MCVV among DVH variants. The values are therefore retained as a low-tier family baseline only.
 Estimate status: Yes; bounded family reference, not a M1252-specific parameter or runtime default.
 Retention: manifest and extracted family-context note only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

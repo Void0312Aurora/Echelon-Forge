@@ -11,6 +11,9 @@ Domain: naval
 Equipment: Project 956 Sovremenny-class destroyer
 Publication date: November 2016
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Configuration: Russian Project 956 baseline technical-data table. Project 956A, 956E/EM export ships, Chinese refits and Project 956U are excluded.
 Estimation / uncertainty: The archived table directly supports dimensions, displacements, speeds, ranges, endurance, crew and system fit; it has no complete armour/damage-control schedule, so any survival envelope in the leaf is a bounded estimate, not official Russian service data.
 Availability: PDF returned HTTP 200 when checked on 2026-09-13.

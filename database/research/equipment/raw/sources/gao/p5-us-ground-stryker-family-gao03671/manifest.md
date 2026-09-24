@@ -18,6 +18,9 @@ Equipment: Stryker family
 Configuration: Cited for how Stryker protection is described as a set of requirements and capabilities — such as all-around 7.62 mm AP resistance and 14.5 mm resistance in specific arcs — rather than as a single plate thickness.
 Estimation / uncertainty: Tier B government assessment. A GAO report is authoritative as an assessment of a program, not as a first-party engineering specification. The product page did not resolve on 2026-09-18, so the content is recorded from the auditing citation.
 Retention: manifest and citation record only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Why this source matters
 

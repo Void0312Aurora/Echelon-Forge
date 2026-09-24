@@ -14,6 +14,9 @@ Retrieval:
   returned: official personnel-recovery mission, AE2100D3 propulsion and power, dimensions, operating and maximum mass, fuel, payload, speed, range, ceiling, crew, countermeasures and refuelling features
   did_not_return: empty mass, detailed airdrop station geometry and a complete receiver/boom envelope
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: HC-130J Combat King II. The aircraft is an extended-range C-130J-derived personnel-recovery platform; the page's stated operating block is not generalized to every C-130J.
 Estimation / uncertainty: Tier A service fact sheet. The source reports speed as indicated airspeed and range as beyond 4,000 miles; both qualifiers are retained.
 

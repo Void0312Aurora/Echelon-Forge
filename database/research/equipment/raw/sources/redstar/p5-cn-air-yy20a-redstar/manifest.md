@@ -14,6 +14,9 @@ Retrieval:
   returned: YY-20A tanker role, four-person crew, D-30KP-2/WS-18 naming, dimensions, mass, internal fuel, transportable fuel, speed, range, ceiling and no defensive armament
   did_not_return: certified transfer rate, hose-and-drogue pod model, official Chinese test report and variant-specific fuel-system drawings
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: YY-20A / Y-20U tanker based on the earlier Y-20A powerplant family. YY-20B with WS-20 engines is a separate configuration.
 Estimation / uncertainty: Tier C specialist reference. The page's 18,500 kg internal-fuel and up-to-75,000 kg transportable-fuel values are retained as published secondary readings; they do not establish a certified offload profile.
 

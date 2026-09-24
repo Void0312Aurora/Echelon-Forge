@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: the plain page fetch, the performance sub-block, and an empty weight labelled for the MD-90A specifically
 Estimation / uncertainty: Tier C community compilation. Its 210,000 kg maximum takeoff weight equals the 210 t on the Russian Aviation page and its 60,000 kg capacity equals that page's 60 t payload, so both rows have two locators. Its empty weight of 92,500 kg is labelled against the Il-76TD-90 rather than the MD-90A, and is recorded as a family reading rather than as this variant's.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

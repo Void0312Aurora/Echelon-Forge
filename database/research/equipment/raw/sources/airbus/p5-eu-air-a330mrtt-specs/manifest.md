@@ -17,6 +17,9 @@ Equipment: A330 MRTT / Voyager KC2
 Configuration: Airbus common A330 MRTT specification block based on the A330-200-derived tanker. The RAF Voyager KC2 is a national configuration and is not treated as identical to every MRTT customer fit.
 Estimation / uncertainty: Tier B manufacturer brochure. Range values carry ISA+15 and payload conditions; engine options are alternatives, not a claim that both are installed on one aircraft.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

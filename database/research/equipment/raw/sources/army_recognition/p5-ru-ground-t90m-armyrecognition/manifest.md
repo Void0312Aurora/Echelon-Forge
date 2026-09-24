@@ -12,6 +12,9 @@ Equipment: T-90M Model 2017 Proryv-3
 Configuration: Russian Army T-90M Model 2017/Proryv-3 description; export T-90MS and T-90AM claims are kept separate.
 Estimation / uncertainty: Mass, hull dimensions, mobility, range, crew and ammunition counts are direct page claims; the 1,130 hp value, fording depth, armor equivalence and APS performance are alternate/bounded estimates or categorical placeholders where the page omits measured data. Army Recognition is a non-official Tier C specialist reference, not an official Russian service manual.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use and estimate basis
 

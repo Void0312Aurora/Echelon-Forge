@@ -18,6 +18,9 @@ Equipment: J-15
 Configuration: Carrier-based multirole fighter derived from the Su-27 family. The baseline J-15 is a single-seat aircraft; the twin-seat derivative is the separate J-15S.
 Estimation / uncertainty: Tier C specialist secondary source. It is a defence commentary publication, not an official Chinese source and not a manufacturer document. The Chinese Ministry of National Defense releases held in this tree confirm service presence only and disclose no dimensions, so these values are the best available and are labelled as secondary.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

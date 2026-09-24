@@ -10,6 +10,9 @@ Domain: ground
 Equipment: Leopard 2A4
 Era: Cold War / legacy configuration
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

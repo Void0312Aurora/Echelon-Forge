@@ -17,6 +17,9 @@ Equipment: Rafale C / B / Marine
 Configuration: Common Rafale armament and stores-integration page. It explicitly distinguishes 14 hard points for the Air marks and 13 for Rafale M.
 Estimation / uncertainty: Tier A manufacturer capability page. Weapon clearance is capability context, not a universal operational loadout.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

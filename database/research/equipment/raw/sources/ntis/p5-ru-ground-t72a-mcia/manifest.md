@@ -11,6 +11,9 @@ Domain: ground
 Equipment: T-72 family (T-72 entry; used as historical cross-check for T-72A)
 Configuration: Generic T-72 entry in the Georgia handbook and associated MCIA technical-study material; not a substitute for T-72A-specific serial data.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

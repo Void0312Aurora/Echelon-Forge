@@ -16,6 +16,9 @@ Equipment: A400M Atlas C1
 Configuration: RAF Atlas C.1. The page's 42.2 m length and 30-tonne/2,400 nmi capability are retained as RAF-specific readings beside Airbus common-type values where they differ.
 Estimation / uncertainty: Tier A official RAF aircraft page; the source is authoritative for the Atlas C.1 rows it states and does not publish an empty-weight figure.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

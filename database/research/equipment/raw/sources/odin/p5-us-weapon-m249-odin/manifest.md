@@ -14,6 +14,9 @@ Retrieval:
   returned: M249 squad role, cyclic-rate band, sustained and rapid rates, bipod and mount context
   did_not_return: a separate standard length/mass table
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Standard M249/SAW context; Mk 46/Mk 48 variant blocks are not merged.
 Estimation / uncertainty: Tier B government assessment. The source notes product-improvement differences in cyclic rate.
 

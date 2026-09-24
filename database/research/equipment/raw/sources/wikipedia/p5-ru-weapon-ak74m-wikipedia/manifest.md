@@ -14,6 +14,9 @@ Retrieval:
   returned: AK-74M overall length, folded length, unloaded mass, barrel length, cyclic rate, magazine and range table values
   did_not_return: service-document authority for the AK-74M-specific mass convention
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: AK-74M row only; AK-74 and AKS-74 values are not silently substituted.
 Estimation / uncertainty: Tier C community summary used for geometry cross-check; the government Rosgvardia page remains the source of record for service-page values.
 

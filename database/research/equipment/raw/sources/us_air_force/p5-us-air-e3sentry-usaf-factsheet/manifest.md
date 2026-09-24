@@ -18,6 +18,9 @@ Equipment: E-3 / E-3G
 Configuration: The fact sheet describes the E-3 Sentry (AWACS) as a family, not the E-3G block specifically. Airframe, powerplant and performance figures are therefore family-level.
 Estimation / uncertainty: Tier A official service publication, authoritative for the facts it states. It is a family fact sheet and does not quantify the Block 40/45 mission-system modernization that distinguishes the E-3G.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

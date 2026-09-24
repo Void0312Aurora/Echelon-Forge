@@ -17,6 +17,9 @@ Equipment: A-10 / A-10C
 Configuration: The fact sheet is specific to the A-10C and gives an A-10C general characteristics block.
 Estimation / uncertainty: Tier A official service publication, authoritative for the facts it states. The page does not state a ceiling or range in its general characteristics block, and the leaf leaves those unrecorded rather than estimating them.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

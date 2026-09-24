@@ -17,6 +17,9 @@ Equipment: Rafale B / C / M
 Configuration: The page tabulates the Rafale B, C and M variants separately, so the C column is directly available and is not inferred from a sibling mark.
 Estimation / uncertainty: Tier C specialist secondary source. It is a defence aviation publication, not a Dassault or French government document. The Dassault and Ministère des Armées pages held in this tree cover the Rafale family at programme level and do not carry this variant table.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

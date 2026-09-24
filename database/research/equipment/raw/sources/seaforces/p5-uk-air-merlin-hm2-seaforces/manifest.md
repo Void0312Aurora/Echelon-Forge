@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: the plain page fetch; and the page does not publish an HM2-specific specification block separate from the HM1 one it labels
 Estimation / uncertainty: Tier C specialist secondary source. It is a naval reference site, not a Royal Navy or Leonardo publication. Its specification block is headed `Specifications (Merlin HM1)`, so the figures are HM1 readings carried on an HM2 page, and that is how they are recorded rather than being asserted as HM2 values.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

@@ -13,6 +13,9 @@ Equipment: M2A4 Bradley
 Era: Current M2A4 fielded upgrade; M2A4E1 Iron Fist fit excluded
 Configuration: Current M2A4 fielded upgrade as compiled by WeaponSpecs; M2A4E1 Iron Fist and block-specific kits are excluded.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Estimate status: Yes; editorial compilation, with configuration values not independently measured
 Estimation / uncertainty: The dimensions, 36,287 kg, 675 hp, speed, range, crew, troop seats, ammunition and qualitative protection entries are direct page values in an editorial compilation; configuration values are not independently measured and are not official Army technical specifications.
 

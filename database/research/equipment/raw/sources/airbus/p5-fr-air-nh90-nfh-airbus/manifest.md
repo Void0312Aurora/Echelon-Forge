@@ -17,6 +17,9 @@ Equipment: NH90 / NFH
 Configuration: NATO Frigate Helicopter (NFH) technical data, used for the French Navy NFH variant record. It is distinct from the TTH transport configuration.
 Estimation / uncertainty: Tier B manufacturer data card. The card gives NFH-specific headline values; the existing NHIndustries platform page remains the source for common geometry, fuel and reference-condition performance.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

@@ -18,6 +18,9 @@ Retrieval:
   did_not_return: anything establishing where the block originated
   note: The block matches the one posted on the F-16.net thread, so the two are one origin rather than two measurements.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

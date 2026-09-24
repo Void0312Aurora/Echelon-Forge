@@ -17,6 +17,9 @@ Equipment: MQ-9 / MQ-9A
 Configuration: Baseline U.S. Air Force MQ-9 Reaper with the source's extended-range modification recorded separately. No MQ-1 or later export variant values are merged.
 Estimation / uncertainty: Tier A service fact sheet. Inventory and unit-cost figures are contextual and are not used as simulation parameters.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

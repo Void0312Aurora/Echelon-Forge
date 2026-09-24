@@ -12,6 +12,9 @@ Equipment: Mirage F1C
 Era: Cold-War French Air Force configuration
 Configuration: Single-seat F1C interceptor; F1CR/F1CT reconnaissance/strike conversions and export variants excluded
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Availability: URL returned HTTP 404 to the current command-line probe on 2026-09-13; Dassault and specialist historical references remain the active retrievable sources for numeric gaps.
 
 ## Use

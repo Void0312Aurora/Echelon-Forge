@@ -15,6 +15,9 @@ Retrieval:
   returned: first French Army Aviation retrofit delivery, enhanced MTR 390 E engines, increased MTOW and STRIX roof sight / Hellfire II integration context
   did_not_return: fleet inventory and a full French customer specification table
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Estimation / uncertainty: Tier B manufacturer press release. It is used for French operator and retrofit scope, not as a substitute for the technical brochure's numeric table.
 
 ## Extracted parameter notes

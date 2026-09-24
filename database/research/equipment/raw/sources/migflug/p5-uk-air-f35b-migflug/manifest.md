@@ -18,6 +18,9 @@ Retrieval:
   did_not_return: A and B mark heights and wingspans, and A and B mark lengths in feet; the plain page fetch
   note: The values returned are the ones recorded in the extracted notes. Anything listed under did_not_return was written into an earlier revision of this manifest and is withdrawn.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

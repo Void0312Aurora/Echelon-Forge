@@ -12,6 +12,9 @@ Domain: ground
 Equipment: M109A2
 Configuration: Historical US M109A2 baseline; later A5/A6/A7 upgrades excluded.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Estimate status: Yes; specialist historical summary cross-checked against Army manuals.
 
 ## Use and estimate basis

@@ -15,6 +15,9 @@ Retrieval:
   returned: official role, design bureau, first-flight and serial-production programme context
   did_not_return: public numeric geometry, mass, speed or weapon table
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Estimation / uncertainty: Tier A manufacturer programme page. It is used for role and programme status only; all numeric rows on the leaf retain the separate RedStar Tier C attribution.
 
 ## Extracted parameter notes

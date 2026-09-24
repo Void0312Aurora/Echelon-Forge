@@ -17,6 +17,9 @@ Equipment: C-130 / C-130J-30
 Configuration: French Air and Space Force C-130J-30. The source page distinguishes the stretched J-30 from the KC-130J tanker role; the linked technical table is retained for the J-30 columns.
 Estimation / uncertainty: Tier A official French Ministry source. The page's 19-tonne capacity is a rounded operational figure; the technical table's 18.7-tonne maximum offered load is retained separately.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

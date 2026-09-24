@@ -8,3 +8,6 @@ Accessed: 2026-09-12
 Domain: air
 Equipment: A330 MRTT / Phénix
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open

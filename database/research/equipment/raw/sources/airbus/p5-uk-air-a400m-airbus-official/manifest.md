@@ -17,6 +17,9 @@ Equipment: A400M / Atlas C1
 Configuration: Airbus common A400M specification block. It is used for common airframe and performance values; RAF-specific crew, radar and Atlas C.1 role context remain on the RAF package.
 Estimation / uncertainty: Tier B manufacturer brochure, reference TMMA0026/01/2025. Payload and range are condition-specific and are retained with those conditions.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

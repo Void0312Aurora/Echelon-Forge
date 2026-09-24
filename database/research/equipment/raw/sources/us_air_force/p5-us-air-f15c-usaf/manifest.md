@@ -12,6 +12,9 @@ Equipment: F-15C/D Eagle baseline
 Era: post-Cold-War / legacy USAF configuration
 Configuration: Single-seat C dimensions, F100 engine family, M61 gun and air-superiority role; F-15E/EX and foreign F-15J fits excluded
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Availability: URL returned HTTP 403 to the current command-line probe on 2026-09-13; page identity retained and community cross-check is active for fields not exposed.
 
 ## Use

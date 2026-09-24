@@ -18,6 +18,9 @@ Equipment: MQ-9 / MQ-9A
 Configuration: MQ-9 Reaper as flown by the United States Air Force. This page is the operating base's own fact sheet and duplicates most of the main Air Force fact sheet figures while adding the ones the main sheet omits.
 Estimation / uncertainty: Tier A official United States Air Force publication. It is dated September 2020, so its inventory and cost figures are historical; the airframe figures match the undated main fact sheet except where noted.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

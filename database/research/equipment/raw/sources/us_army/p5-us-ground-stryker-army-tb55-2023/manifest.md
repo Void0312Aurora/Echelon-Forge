@@ -9,6 +9,9 @@ Accessed: 2026-09-13
 Domain: ground
 Equipment: Stryker M1252 MCVV and related transport configurations
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

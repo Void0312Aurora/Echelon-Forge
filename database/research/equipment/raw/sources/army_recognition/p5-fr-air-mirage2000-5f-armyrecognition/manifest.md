@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: the plain page fetch; dimensions were present as a section heading but their values were not returned
 Estimation / uncertainty: Tier C secondary source. Its masses are the same as the GlobalSecurity family readings, 7,500 kg empty and 17,000 kg maximum, and its thrust pair is the rounded form of the 64.3 kN and 95.1 kN readings elsewhere. It is admitted for the variant-specific avionics list, which no other package held for this leaf states, and as a second publisher for the masses and the engine.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

@@ -18,6 +18,9 @@ Equipment: J-15
 Configuration: Carrier-based fighter of the Su-27 family in Chinese service.
 Estimation / uncertainty: Tier C equipment database. Deagel is a commercial defence reference database, not an official Chinese source. Its field definitions do not always distinguish crew from seat count on family-derived airframes, so its crew value is treated with caution below.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

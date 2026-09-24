@@ -15,6 +15,9 @@ Retrieval:
   returned: A-50U upgrade context, maximum takeoff mass, maximum level speed, ceiling, detection range, continuous reconnaissance endurance, operational range and aerial-refuelling capability
   did_not_return: complete geometry, engine, crew or weapon table
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Estimation / uncertainty: Tier A state-media report, authoritative for the quoted public performance claims but not a Russian service manual. Numeric values retain the article's wording and conditions.
 
 ## Extracted parameter notes

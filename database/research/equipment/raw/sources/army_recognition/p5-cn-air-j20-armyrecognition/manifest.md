@@ -12,6 +12,9 @@ Equipment: J-20
 Configuration: Single-seat early operational J-20 with WS-10B context and PL-10/PL-12/PL-15 internal weapon carriage; WS-15/J-20S and later A/B variants excluded.
 Estimation / uncertainty: Geometry, mass, speed, range, crew and named equipment are page values; AESA/EW/internal-bay details plus RCS and countermeasure quantities are bounded professional estimates, not official Chinese figures.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use and estimate basis
 

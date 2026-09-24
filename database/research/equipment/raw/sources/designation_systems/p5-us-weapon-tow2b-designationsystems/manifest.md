@@ -13,6 +13,9 @@ Era: 1992-2004 production and extended-range update
 Configuration: BGM-71F dual-EFP TOW 2B; Aero 4.5 km wire-range bound; direct TOW 2A and wireless derivatives excluded
 Estimation / uncertainty: Dimensions (1.17 m, 152 mm, 450 mm wings), 22.6 kg mass, Hercules M114 motor, 3.75-4.5 km range and optical/magnetic fuze are drawn from the page. Individual EFP fill is rounded to the public 6.1 kg family figure; exact Aero designation and timing remain uncertain.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

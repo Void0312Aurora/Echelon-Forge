@@ -14,6 +14,9 @@ Retrieval:
   returned: official Su-35 technical sheet with maximum takeoff weights, 117S engine block, 8,000 kg combat load, 18 km ceiling, conditioned range, speed, 12 stations and one-person crew
   did_not_return: empty mass, exact Su-35S production-batch distinction and a complete weapon-by-weapon station allocation
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Su-35 export technical sheet used for the Su-35S leaf's common official performance and propulsion fields; the separate secondary package supplies the approximate Su-35S empty mass.
 Estimation / uncertainty: Tier A manufacturer/export catalogue. The sheet labels range by altitude and speed condition; those conditions are retained.
 

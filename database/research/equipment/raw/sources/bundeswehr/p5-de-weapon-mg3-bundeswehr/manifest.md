@@ -14,6 +14,9 @@ Retrieval:
   returned: caliber, combat and sighting range, rate, mass, barrel length, feed-box capacity and employment on bipod/tripod/vehicles
   did_not_return: overall length
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Bundeswehr MG3 standard machine-gun configuration; MG3A1 vehicle variant is noted but not merged.
 Estimation / uncertainty: Tier A service page. The page distinguishes bipod combat range from sight adjustment range.
 

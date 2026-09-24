@@ -15,6 +15,9 @@ Retrieval:
   returned: HAD turret-gun ammunition/rate, rocket capacities, Hellfire/Spike ER range and Mistral air-to-air carriage
   did_not_return: a complete simultaneous loadout or French squadron inventory
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Estimation / uncertainty: Tier B manufacturer mission page. It states qualified or compatible weapon options, not a simultaneous loadout for every aircraft.
 
 ## Extracted parameter notes

@@ -17,6 +17,9 @@ Equipment: C-130 / C-130J
 Configuration: Standard-length C-130J column in the mixed C-130 fact sheet. C-130E/H and stretched C-130J-30 readings are excluded from this package's C-130J rows.
 Estimation / uncertainty: Tier A service fact sheet. The source prints several erroneous SI conversions in the cargo and performance blocks; the leaf retains the imperial readings and records transparent arithmetic corrections for the SI values.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

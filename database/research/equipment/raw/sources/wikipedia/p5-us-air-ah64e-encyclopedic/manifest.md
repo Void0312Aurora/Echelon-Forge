@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: the plain page fetch, the performance sub-block, and any E-specific row
 Estimation / uncertainty: Tier C community compilation. Its main rotor diameter of 14.63 m agrees with the manufacturer's 14.6 m, and its maximum take-off weight of 23,000 lb agrees with the manufacturer's maximum operating weight. Its engine note names the -701 and -701C, not the -701D fitted to the E, so the leaf does not use it for the powerplant row.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

@@ -17,6 +17,9 @@ Equipment: F-35C
 Configuration: U.S. Navy carrier variant; the page describes the developmental carrier-integration configuration and is used only for role/operator context.
 Estimation / uncertainty: Tier A service source for the carrier role and shipboard integration statements. It is not used as a numerical specification source.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

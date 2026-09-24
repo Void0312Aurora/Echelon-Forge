@@ -14,6 +14,9 @@ Retrieval:
   returned: official fact-sheet mission, two TF34-GE-100 engines and thrust, dimensions, speed, ceiling, maximum takeoff mass, range, crew, survivability features and armament/pylon description
   did_not_return: empty mass, internal-fuel quantity and a station-by-station store table
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: A-10C Thunderbolt II. The fact sheet is an aircraft-level capability and characteristic source; the listed weapons are an employment set, not a claim that every load is simultaneous.
 Estimation / uncertainty: Tier A service fact sheet. The page reports rounded U.S. customary values with metric conversions; no unsupported conversion or empty-weight estimate is added.
 

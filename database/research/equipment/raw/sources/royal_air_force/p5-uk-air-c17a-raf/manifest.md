@@ -8,3 +8,6 @@ Accessed: 2026-09-12
 Domain: air
 Equipment: C-17 / C-17A
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open

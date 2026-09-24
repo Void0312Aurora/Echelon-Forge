@@ -9,6 +9,9 @@ Accessed: 2026-09-13
 Domain: ground
 Equipment: M1127 RV
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

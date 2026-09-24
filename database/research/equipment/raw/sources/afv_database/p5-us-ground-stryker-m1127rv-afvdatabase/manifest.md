@@ -19,6 +19,9 @@ Equipment: Stryker / M1127 RV
 Configuration: Legacy reconnaissance variant based on the ICV, carrying the LRAS3 pod. The page notes the M1127 was not given the double-V hull; the Stryker A1 upgrade is separate and is not merged into this record.
 Estimation / uncertainty: AFV Database is a specialist secondary compilation, not an official United States Army publication. Its stated sources are the Rottman, Zwilling and Grummitt references, GlobalSecurity, GDLS product pages and Army Technology. Values below are transcribed variant-level figures; they are not official specifications.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

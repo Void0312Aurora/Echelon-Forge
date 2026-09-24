@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: later pages of the 22-page thread
 Estimation / uncertainty: Tier C community forum post. The publisher is a discussion forum rather than the Ministry of Defence, the Royal Air Force or Airbus. Admitted for the fuel-capability pair only, which is the figure the Royal Air Force page held for this leaf does not state.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

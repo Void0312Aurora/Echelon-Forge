@@ -19,6 +19,9 @@ Equipment: Stryker / M1126 ICV
 Configuration: Baseline flat-bottom ICV. The page notes the double-V hull from 2010 and the separate Stryker A1 upgrade (450 hp, 60,000 lb suspension, 910 A alternator, in-vehicle network); neither is merged into this record.
 Estimation / uncertainty: AFV Database is a specialist secondary compilation, not an official United States Army publication. Its stated sources are the Rottman, Zwilling and Grummitt references, GlobalSecurity, GDLS product pages, Army Technology and a US Army Center of Military History study. Values below are transcribed variant-level figures; they are not official specifications.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

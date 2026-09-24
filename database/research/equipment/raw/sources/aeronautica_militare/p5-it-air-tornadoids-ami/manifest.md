@@ -12,6 +12,9 @@ Equipment: Panavia Tornado IDS
 Era: Cold-War / Italian strike configuration
 Configuration: Italian IDS two-seat strike baseline; ADV and ECR variants excluded
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

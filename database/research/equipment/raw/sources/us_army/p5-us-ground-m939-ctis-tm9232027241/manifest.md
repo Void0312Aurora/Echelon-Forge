@@ -13,6 +13,9 @@ Configuration boundary: M939A2 maintenance description of the CTIS pneumatic con
 Availability/status: Public NSN Depot mirror; page 88 (manual page 1-78) returned the CTIS operation text at access. It is a mirror of an Army technical manual, not a live vehicle-support or parts-availability statement.
 Estimation / uncertainty: The named components and six-wheel/three-quick-exhaust topology are direct for the M939A2 6x6 description. The source's printed metric conversion beside the 85-psi protection threshold is internally inconsistent; the module retains the source's psi value and does not reuse the suspect conversion. Connector pinouts, seal dimensions, flow coefficients, and variant-specific valve counts remain unknown.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

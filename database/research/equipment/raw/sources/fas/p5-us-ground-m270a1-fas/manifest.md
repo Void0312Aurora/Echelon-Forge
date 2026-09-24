@@ -11,6 +11,9 @@ Domain: ground
 Equipment: M270/M270A1 MLRS
 Configuration: Program-level M270A1 upgrade description; carrier specifications are inherited from the M270 family where the page does not split A1.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

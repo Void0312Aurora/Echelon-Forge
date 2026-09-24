@@ -16,6 +16,9 @@ Equipment: Rafale B
 Configuration: Rafale Air B, twin-seat land-based mark. The source's common performance block is not presented as a B-only measurement.
 Estimation / uncertainty: Tier A manufacturer source; rounded common values remain rounded and variant-specific secondary readings stay separately attributed.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

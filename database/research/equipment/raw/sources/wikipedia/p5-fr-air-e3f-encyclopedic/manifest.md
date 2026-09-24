@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: the plain page fetch, the performance sub-block, and any E-3F-specific fitted weight or engine difference
 Estimation / uncertainty: Tier C community compilation. Its variant line establishes that the E-3F is the French production aircraft. Its mass and dimension figures are family figures on the TF33 airframe, and the French aircraft are documented elsewhere as CFM56-powered, so the powerplant row on the leaf records both fits rather than one.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

@@ -17,6 +17,9 @@ Equipment: CH-47F / Chinook family reference for RAF HC6A
 Configuration: U.S. Army CH-47F family values used only as a clearly labelled mass and family-capability reference for the RAF HC6A leaf.
 Estimation / uncertainty: Tier A official operator source for the CH-47F family. It is not a UK HC6A measurement and is not used to overwrite the RAF page's HC5/HC6/HC6A fleet values.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

@@ -13,6 +13,9 @@ Equipment: Leopard 2A4
 Era: Cold War production standard; national upgrades excluded
 Configuration: Leopard 2A4 Cold War production standard; national upgrades and later A5-A8 variants are excluded.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Estimate status: Yes; editorial compilation of public manufacturer/government data
 Estimation / uncertainty: Dimensions, 55,150 kg, 1,500 hp, speed, range, crew, ammunition and L/44 entries are direct page values in an editorial compilation; range, ammunition and armour wording remain estimates/qualitative. They are not official technical specifications or Bundeswehr calibration data.
 

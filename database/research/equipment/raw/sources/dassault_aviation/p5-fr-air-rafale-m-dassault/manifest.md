@@ -16,6 +16,9 @@ Equipment: Rafale M
 Configuration: Rafale Marine, single-seat carrier-capable mark. The source's common performance block is not presented as an M-only measurement.
 Estimation / uncertainty: Tier A manufacturer source; the Marine block's rounded empty-weight value is retained separately from the specialist table's 10,600 kg reading.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

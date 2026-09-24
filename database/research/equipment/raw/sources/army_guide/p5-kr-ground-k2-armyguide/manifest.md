@@ -12,6 +12,9 @@ Equipment: K2 Black Panther
 Configuration: Production-ready K2 baseline and development-era technical narrative; early prototype and batch-specific claims are retained as alternates, not silently merged.
 Estimation / uncertainty: Dimensions, the 55 t early reference, 48 km/h test value, 4.1 m snorkel crossing and named systems are direct Army Guide claims; secondary ammunition bounds and batch/export differences are estimates or alternate bounds. This Tier C compilation is non-official and not a Korean technical specification.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use and estimate basis
 

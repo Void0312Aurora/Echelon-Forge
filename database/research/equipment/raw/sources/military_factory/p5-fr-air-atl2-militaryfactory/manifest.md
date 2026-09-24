@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: the plain page fetch, and any performance figure
 Estimation / uncertainty: Tier C specialist secondary source. Its masses agree with `p5-fr-air-atl2-seaforces` to within a pound and its dimensions agree with the encyclopedic reading converted to feet, so the geometry and mass rows now rest on more than one publisher.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

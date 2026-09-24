@@ -17,6 +17,9 @@ Equipment: J-16
 Configuration: Twin-seat multirole fighter and strike aircraft. The page states the type is in service only with the PLAAF.
 Estimation / uncertainty: Tier C specialist secondary source. It is a defence aviation publication, not an official Chinese source. The Chinese Ministry of National Defense material held in this tree confirms role and service presence only; all numeric values remain secondary.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

@@ -19,6 +19,9 @@ Equipment: NH90 / NFH
 Configuration: This package carries common NH90 platform data. Its performance block is labelled `NH90 General Performance (basic aircraft)` and footnoted `(*) at 10000 kg`, which is below the NFH maximum gross weight of 11,000 kg. Weight, dimension, capacity and fuel rows are not footnoted; the separate Airbus NFH card carries the variant-specific headline block.
 Estimation / uncertainty: Tier B manufacturer documentation, authoritative for its own product. The reference condition of the performance block is a basic-aircraft figure at 10,000 kg and is not an NFH-at-maximum-weight figure.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

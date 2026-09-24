@@ -11,6 +11,9 @@ Domain: ground
 Equipment: Panzerhaubitze 2000
 Configuration: German/KMW baseline PzH 2000; Italian PzH 2000M and later A4 retrofit claims are excluded.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Estimation / uncertainty: The 55,330 kg, dimensions, engine/transmission, speed, range, crew, magazine and sighting values are direct page values. The 60-360 individual-module bound and 500-2,000-round secondary-MG bound are simulation estimates, not official specifications; charge count, armour detail and retrofit applicability remain uncertain.
 
 ## Use and estimate basis

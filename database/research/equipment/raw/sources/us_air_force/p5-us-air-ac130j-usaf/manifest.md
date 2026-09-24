@@ -14,6 +14,9 @@ Retrieval:
   returned: official AC-130J mission, Precision Strike Package, propulsion and thrust, dimensions, maximum takeoff mass, range, crew and weapons
   did_not_return: empty mass, fuel quantity, gun ammunition quantities and a full fire-control/sensor performance table
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: AC-130J Ghostrider. The weapon list is the published Precision Strike Package capability set; it is not a simultaneous-load assertion.
 Estimation / uncertainty: Tier A service fact sheet. Range is explicitly limited by crew duty day when aerial refuelling is available; that condition is retained.
 

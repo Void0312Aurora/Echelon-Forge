@@ -13,6 +13,9 @@ Equipment: M1A2 Abrams SEP v3
 Era: Current M1A2C/SEPv3; SEPv2, SEPv4 and M1E3 excluded
 Configuration: Current M1A2C/SEPv3 trade-publication profile; SEPv2, SEPv4 and M1E3 are excluded.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Estimate status: Yes; trade-publication compilation, with geometry as published and no classified values inferred
 Estimation / uncertainty: Geometry, crew, AGT1500, M256, CROWS/M240, FLIR, data-link, APU and countermeasure statements are direct article values; the article lacks a complete mass, range and ammunition table, so those fields remain estimates from separate sources. The trade-publication values are not official U.S. Army technical specifications.
 

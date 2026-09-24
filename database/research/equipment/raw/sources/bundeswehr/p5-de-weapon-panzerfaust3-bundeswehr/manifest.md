@@ -14,6 +14,9 @@ Retrieval:
   returned: 110 mm warhead, 60 mm tube, mass, sighted range, crew and tandem/ bunker ammunition roles
   did_not_return: overall deployed length and launch rate
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Bundeswehr Panzerfaust 3 with DM72 tandem ammunition context; Bunkerfaust DM32 is retained as a separate ammunition role.
 Estimation / uncertainty: Tier A service page. Mass varies with ammunition and is recorded as approximately 13 kg rather than a fixed empty mass.
 

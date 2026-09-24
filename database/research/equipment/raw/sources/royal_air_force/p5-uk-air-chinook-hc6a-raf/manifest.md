@@ -16,6 +16,9 @@ Equipment: Chinook / HC6A
 Configuration: Current RAF fleet page covering Mk5/Mk6/Mk6A together. Fleet-wide values are not asserted as HC6A-only measurements.
 Estimation / uncertainty: Tier A official RAF source. The HC6 is described as based on the CH-47F with more powerful engines and DAFCS; U.S. CH-47F family mass values are held in a separate package.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

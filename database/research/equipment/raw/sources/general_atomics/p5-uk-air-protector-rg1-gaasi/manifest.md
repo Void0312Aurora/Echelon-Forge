@@ -17,6 +17,9 @@ Equipment: MQ-9B SkyGuardian / Protector RG Mk1
 Configuration: Common MQ-9B SkyGuardian air vehicle data. It is not used to replace the RAF-specific Brimstone, Paveway, sensor or crew rows.
 Estimation / uncertainty: Tier B manufacturer source. Endurance and range are configuration-dependent common-family figures; the RAF page's UK values remain separately recorded.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

@@ -11,6 +11,9 @@ Domain: ground
 Equipment: M270A1 MLRS
 Configuration: M270A1 IFCS/ILMS public product entry; European EFCS and M270A2 are excluded.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Estimate status: Yes; professional secondary compilation.
 
 ## Use and estimate basis

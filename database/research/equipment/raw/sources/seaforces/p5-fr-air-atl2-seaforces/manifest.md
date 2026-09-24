@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: the plain page fetch, and any length, wingspan, height or wing area
 Estimation / uncertainty: Tier C specialist secondary source. It is a naval reference site, not a Dassault, French Navy or Ministry of the Armed Forces publication. The same figure set appears on `p5-fr-air-atl2-militaryfactory` for the dimensions and masses, and on `p5-fr-air-atl2-encyclopedic`, which are recorded separately.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

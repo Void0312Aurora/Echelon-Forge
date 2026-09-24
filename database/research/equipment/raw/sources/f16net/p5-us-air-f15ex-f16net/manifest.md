@@ -18,6 +18,9 @@ Retrieval:
   did_not_return: later pages of the 76-page thread
   note: The post states it reproduces the Wikipedia specification section, which cites Air and Space Forces Magazine. This package is a third-hand carrier of the block.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

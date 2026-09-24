@@ -14,6 +14,9 @@ Retrieval:
   returned: baseline single-seat J-15 scope, dimensions, mass, fuel, external stores, performance, AL-31F/WS-10 engine transition, Type 1493 radar, digital flight controls, carrier equipment, sensors, weapons and payload caveats
   did_not_return: official Chinese clearance list, certified test data, exact production-batch engine split and a variant-independent weapons table
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Baseline single-seat J-15 delivered for STOBAR operations from Liaoning and Shandong. J-15S, J-15T and J-15D deltas are not merged.
 Estimation / uncertainty: Tier C specialist secondary profile. The article explicitly separates published values from analyst estimates and warns that Chinese weapons clearance data are not public; the leaf retains those boundaries.
 

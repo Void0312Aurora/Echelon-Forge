@@ -13,6 +13,9 @@ Equipment: M142 HIMARS
 Era: Current M142 launcher; MLRS-family loadouts kept mutually exclusive
 Configuration: Current M142 launcher profile; MLRS-family rocket and missile loadouts are kept mutually exclusive.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Estimate status: Yes; trade-publication compilation; vehicle-only mass is explicitly not a loaded combat mass
 Estimation / uncertainty: The dimensions, 10,886 kg vehicle mass, crew, range, speed, loadout and transportability values are direct article values; the vehicle-only mass is not a loaded combat mass, and any loaded-mass interpretation is an estimate. The trade-publication values are not official Army technical specifications.
 

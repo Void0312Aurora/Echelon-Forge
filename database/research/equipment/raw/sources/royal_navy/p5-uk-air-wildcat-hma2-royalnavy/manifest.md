@@ -17,6 +17,9 @@ Equipment: Wildcat / HMA2
 Configuration: Royal Navy Wildcat maritime helicopter page. It describes the naval aircraft and its common operating statistics; the 815 NAS package supplies the HMA2-specific combat-role wording.
 Estimation / uncertainty: Tier A official operator source. The page's headline figures are retained as Royal Navy operating values and are not merged with Leonardo's defined ISA/maximum-gross-weight performance conditions.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

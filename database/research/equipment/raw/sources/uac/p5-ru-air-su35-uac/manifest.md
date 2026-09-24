@@ -14,6 +14,9 @@ Retrieval:
   returned: official UAC Su-35 dimensions, fuel, maximum/normal takeoff masses, 8,000 kg payload on 12 points, 117S engine and thrust, conditioned speed/range/ceiling, crew and radar/optical-system context
   did_not_return: empty mass and a Su-35S production-batch identifier distinct from the family/export sheet
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: UAC Su-35 family data used for the Russian Su-35S research record's common airframe and performance fields. The separate Tier C package remains the source for approximate Su-35S empty mass.
 Estimation / uncertainty: Tier B manufacturer-group page. The page publishes family/type data and does not certify every Russian service batch separately.
 

@@ -14,6 +14,9 @@ Retrieval:
   returned: Boeing product-card specification for GBU-39A/B: 71 in length, 285 lb mass, 7.75 in height, 7.5 in width, 63.3 in wingspan open and 7.5 in stowed, penetrating blast-fragmentation warhead, integrated ESAF impact/delay fuze, and greater-than-40 nmi standoff factor
   did_not_return: exact motor model, detailed GPS/INS software block, terminal seeker range and a universal release-envelope distance
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Air-launched GBU-39A/B Small Diameter Bomb. The same card also describes the ground-launched GLSDB system; launcher and rocket-stage parameters are excluded from this air-launched leaf.
 Estimation / uncertainty: Tier A manufacturer product card. Standoff distance is retained as the card's factor, not as a guaranteed single-shot range.
 

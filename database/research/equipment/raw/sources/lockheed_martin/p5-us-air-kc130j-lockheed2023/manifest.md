@@ -15,6 +15,9 @@ Retrieval:
   returned: standard-length geometry, AE2100D3/R391 propulsion, maximum takeoff weight, operating empty weight, maximum payload and conditioned range/speed
   did_not_return: French customer-specific tanker equipment or offload profile
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Estimation / uncertainty: Tier B manufacturer fast-facts sheet. The common standard-length figures are retained as manufacturer data; the USMC-specific tanker and defensive rows remain separately attributed.
 
 ## Extracted parameter notes

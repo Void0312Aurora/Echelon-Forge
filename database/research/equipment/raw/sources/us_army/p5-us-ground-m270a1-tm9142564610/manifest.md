@@ -12,6 +12,9 @@ Domain: ground
 Equipment: M270 carrier / M270A1 family
 Configuration: Legacy carrier manual used only for engine 500 hp, 483 km-class mobility and 1.02 m fording bound; A1 IFCS/ILMS data are not inferred from this source.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

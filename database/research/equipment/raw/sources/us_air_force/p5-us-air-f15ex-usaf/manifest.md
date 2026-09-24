@@ -17,6 +17,9 @@ Retrieval:
 Configuration: A photographic news item on af.mil about the F-15EX. It is a news photograph page, not a fact sheet.
 Estimation / uncertainty: Tier A as a United States Air Force publication, but tier describes the publisher and not the content. This item carries no specification table and no technical data block. It is admitted on the F-15EX leaf for operator and variant identity only, and no measured value rests on it.
 Retention: manifest and citation record only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## What this package does and does not carry
 

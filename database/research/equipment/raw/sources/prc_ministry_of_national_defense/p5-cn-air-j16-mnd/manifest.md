@@ -9,3 +9,6 @@ Accessed: 2026-09-12
 Domain: air
 Equipment: J-16
 Retention: manifest and extracted service-status notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open

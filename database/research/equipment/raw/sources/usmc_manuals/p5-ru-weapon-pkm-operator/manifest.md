@@ -14,6 +14,9 @@ Retrieval:
   returned: operator-manual table with caliber, empty mass, overall length, barrel length, effective range, muzzle velocity and sustained/cyclic rates
   did_not_return: issuing authority’s current service status
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Baseline PKM operator-manual data; PKP and export refits excluded.
 Estimation / uncertainty: Tier C reproduced manual. Values are retained as an independent technical reading and not treated as current procurement evidence.
 

@@ -13,6 +13,9 @@ Era: Current sustainment of 1998 fielded configuration
 Configuration: Longbow AGM-114L MMW-guided missile; SAL HELLFIRE II, JAGM and other warheads excluded
 Estimation / uncertainty: Army handbook directly states MMW guidance, fire-and-forget, adverse-weather operation, 7-inch diameter, 99.8-107 lb family mass and 64-69 inch family length. L-model 50 kg/1.78 m and 0.5-8 km values are bounded with the specialist technical reference because the handbook does not publish a complete L-only table.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

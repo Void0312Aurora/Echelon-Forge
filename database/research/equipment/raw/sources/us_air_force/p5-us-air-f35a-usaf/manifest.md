@@ -14,6 +14,9 @@ Retrieval:
   returned: the official general-characteristics block: engine, thrust, dimensions, maximum takeoff weight, fuel, payload, speed, range, ceiling, armament context and crew
   did_not_return: a block-specific empty-weight figure; the source does not state one in this block
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

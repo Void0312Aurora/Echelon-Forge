@@ -14,6 +14,9 @@ Retrieval:
   returned: official special-operations mission, tiltrotor configuration, AE1107C propulsion and power, dimensions, gross-weight bands, combat radius, crew, payload and ramp machine-gun armament
   did_not_return: empty mass, cruise speed in the current fact-sheet block, fuel quantity and a station-by-station defensive-store table
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Air Force CV-22B/SOF configuration. Gross-weight bands are retained separately for self-deployment, STOL and VTOL conditions.
 Estimation / uncertainty: Tier A service fact sheet. The source uses shaft horsepower and a combat-radius condition; no generic range is substituted.
 

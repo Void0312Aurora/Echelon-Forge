@@ -17,6 +17,9 @@ Equipment: Merlin / HM2
 Configuration: Royal Navy Merlin page covering Mk2 and Mk4; the Mk2 role, crew and mission-system rows are separated from platform-level Leonardo AW101 figures and from Mk4 troop-lift context.
 Estimation / uncertainty: Tier A official operator source. Headline statistics are retained as Royal Navy Merlin operating values; the page does not state that every headline number is a clean HM2-only test condition.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: the plain page fetch, and any per-mark dimension or mass
 Estimation / uncertainty: Tier C. DVIDS is a Department of Defense distribution service, but the specification text attached to an imagery record is contributor-supplied reference material rather than an official technical publication, so it is admitted at Tier C. Its engine thrust of 132 kN agrees with the encyclopedic reading; its 29,700 lbf parenthetical is 132 kN converted.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

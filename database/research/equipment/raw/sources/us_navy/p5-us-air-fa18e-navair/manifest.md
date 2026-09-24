@@ -16,6 +16,9 @@ Equipment: F/A-18E/F
 Configuration: F/A-18E single-seat Super Hornet. Family rows are retained only where the page explicitly identifies the E and F models together.
 Estimation / uncertainty: Tier A Navy programme source. The page's combat and ferry ranges retain their stated store/tank conditions; no unconditioned range is inferred.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

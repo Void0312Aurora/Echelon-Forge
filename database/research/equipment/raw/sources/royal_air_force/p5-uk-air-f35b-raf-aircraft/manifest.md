@@ -18,6 +18,9 @@ Retrieval:
   note: Recorded from the machine clock at the time of this correction pass, not from a model-written date.
 Estimation / uncertainty: Tier A official service publication, authoritative for the figures it states about the aircraft it operates. It is a service web page rather than a technical manual, and it publishes no mass figure, no fuel figure and no g limit for this aircraft.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

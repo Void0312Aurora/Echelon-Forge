@@ -13,6 +13,9 @@ Configuration boundary: M1078/M1081 2-1/2-ton 4x4 LMTV operator configuration an
 Availability/status: Public tpub mirror; CTIS control, normal-operation, pressure/restriction, emergency, run-flat, reset, and troubleshooting pages were reachable at access. The mirror is not an Army-hosted publication portal.
 Estimation / uncertainty: Direct table values are 55 psi highway, 33 psi cross-country, 20 psi sand, and 14 psi emergency; speed limits are 55/40/12/5 mph and emergency/run-flat operation is ten minutes. The 74-psi automatic shutoff, two-minute overspeed upshift, 15-second run-flat check, and five-light reset behavior are direct for this manual. ECU protocol, pressure tolerance, compressor flow, axle split, and wheel-end seal topology remain unknown; use only as cross-vehicle bounds outside M1078/M1081.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

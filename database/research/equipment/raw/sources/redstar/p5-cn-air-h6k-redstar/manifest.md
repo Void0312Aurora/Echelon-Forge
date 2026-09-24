@@ -14,6 +14,9 @@ Retrieval:
   returned: H-6K crew, D-30KP-2 engine and thrust, geometry, empty mass, maximum takeoff mass, warload, speed, cruise, combat range, range, ceiling, radar/radome and six-missile armament context
   did_not_return: Chinese certification data, fuel quantity and a source-resolved explanation for the 79,000 kg versus 95,000 kg maximum-mass readings
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: H-6K strategic bomber. Values for earlier H-6 marks and the H-6J/H-6N derivatives are not merged.
 Estimation / uncertainty: Tier C specialist reference. The 79,000 kg maximum takeoff value conflicts with the 95,000 kg reading in `p5-cn-air-h6k-migflug`; both remain labelled rather than reconciled. Empty mass and warload are public secondary readings, not certification values.
 

@@ -18,6 +18,9 @@ Equipment: Z-20
 Configuration: Medium-lift utility helicopter developed by AVICOPTER and Harbin Aviation Industry. The page lists a wide role set including transport, assault, anti-submarine warfare, anti-ship, medical evacuation, search and rescue and reconnaissance.
 Estimation / uncertainty: Tier C specialist secondary source. GlobalSecurity is a long-running open-source defence compilation, not an official Chinese publication. Its masses, ceiling and range are printed as bands rather than single values, and its maximum flight speed of 320 km/h is 40 km/h below the 360 km/h that two other packages give for the same quantity. Both readings are recorded.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

@@ -17,6 +17,9 @@ Equipment: AH-64E Apache Guardian
 Configuration: Community versioned E-variant data record, used only as a secondary empty-weight and cross-check source.
 Estimation / uncertainty: Tier C community database. The 5,360 kg empty-weight value is not official and is retained alongside the A/D 5,165 kg reading and the unqualified Army Recognition figure; it is not treated as a calibrated UK weight.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

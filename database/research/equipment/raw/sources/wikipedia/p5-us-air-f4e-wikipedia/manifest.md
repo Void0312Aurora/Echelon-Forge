@@ -13,6 +13,9 @@ Era: Cold-War USAF configuration
 Configuration: Fixed-gun F-4E dimensions, mass, J79-17A, APQ-120, M61A1 and station values; Navy, Wild Weasel and export fits excluded
 Estimation / uncertainty: Community-compiled fuel, range, radar detection, RCS and dispenser values are bounded estimates; block-specific avionics and ECM loads vary.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

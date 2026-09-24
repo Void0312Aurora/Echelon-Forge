@@ -14,6 +14,9 @@ Retrieval:
   returned: approximately 7 kg mass, less-than-1 m length, sight options, 84 mm ammunition family, multi-role ammunition and fire-control-device compatibility
   did_not_return: a single universal weapon range or crew-table value
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Carl-Gustaf M4 weapon system excluding sight/stand mass; M1/M2/M3 and ammunition-specific performance are not merged.
 Estimation / uncertainty: Tier B manufacturer page. The absence of a universal range is recorded rather than filled from one ammunition type.
 

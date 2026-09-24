@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: internal cargo capacity, an official or manufacturer source, any method note
 Estimation / uncertainty: Tier C open-source compilation. The page states no method. Its operator figure and its production figure differ from each other (205 active against 230 produced), and it is not a Chinese official or manufacturer publication.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

@@ -14,6 +14,9 @@ Retrieval:
   returned: truck-mounted 155 mm/52-calibre gun and approximately 40 km range
   did_not_return: complete dimensions, combat mass, crew and road-mobility table
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: French CAESAR Mk I/Mk IR family context; CAESAR Mk II and CAESAR 8x8 are separate configurations.
 Estimation / uncertainty: Tier A official role and calibre/range page; no missing numeric field is inferred from it.
 

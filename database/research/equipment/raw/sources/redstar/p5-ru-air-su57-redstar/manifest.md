@@ -15,6 +15,9 @@ Retrieval:
   returned: named Su-57 profile with crew, engine, geometry, mass, fuel, speed, ceiling, range, overload, gun and internal-bay weapon context
   did_not_return: current Russian lot-specific certification, production-batch engine fit and an official public numeric specification table
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Estimation / uncertainty: Tier C specialist reference. Numeric rows are public baseline readings and may not describe every production lot. The official UAC package is used separately for the programme and serial-production status.
 
 ## Extracted parameter notes

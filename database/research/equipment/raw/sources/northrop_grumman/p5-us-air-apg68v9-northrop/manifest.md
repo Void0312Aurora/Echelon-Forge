@@ -13,6 +13,9 @@ Configuration boundary: Manufacturer page for the V9 radar and its F-16 retrofit
 Availability/status: Fielded product and upgrade kit. The archived page reports more than 250 delivered and seven foreign customers; it is historical evidence and does not establish a current production order book.
 Publication/archival date: Wayback capture 2009-11-21; original page copyright is Northrop Grumman.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Evidence used
 

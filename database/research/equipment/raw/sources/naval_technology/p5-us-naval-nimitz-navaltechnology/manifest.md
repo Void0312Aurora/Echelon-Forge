@@ -12,6 +12,9 @@ Equipment: Nimitz-class CVN-68-CVN-77
 Configuration: Open-source carrier engineering profile covering flight-deck geometry, displacement, A4W plant, speed, crew, air-wing capacity and defensive systems. Sensor and CIWS counts are treated as representative late-service fit.
 Estimation / uncertainty: Used to bound standard displacement at 88,000-90,000 LT, full-load growth to 100,000 LT, air-wing complement at 60-90 aircraft and stores endurance at about 90 days. These bounds preserve class/refit variation and are not Navy-certified figures.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

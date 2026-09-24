@@ -18,6 +18,9 @@ Retrieval:
   note: Recorded from the machine clock at the time of this correction pass, not from a model-written date.
 Estimation / uncertainty: Tier A official service publication. The table is an official service comparison of two marks rather than a type certificate, and it is the only package held here that states a wing area, an internal fuel figure and a g limit for the B mark.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

@@ -18,6 +18,9 @@ Equipment: AW101 / Merlin HM2
 Configuration: The page presents the AW101 as a multi-role platform covering maritime, battlefield and search-and-rescue configurations. Its technical data is platform-level and is not separated by customer or mark, so these figures are not asserted as Merlin HM2-unique.
 Estimation / uncertainty: Tier B manufacturer documentation, authoritative for its own product figures but not a government publication. The maximum range and endurance values are quoted for twin-engine cruise with no reserves and standard fuel tanks, which is a defined reference condition; the three-engine configuration and naval mission fits change those figures and the page does not state them.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

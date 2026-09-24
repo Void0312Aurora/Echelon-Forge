@@ -14,6 +14,9 @@ Retrieval:
   returned: French air-defence role, 1999 service entry, five cockpit displays, RDY radar replacing RDI and MICA missiles replacing Magic and Super 530 with Fox 3 capability
   did_not_return: exact weapon station count, dimensions, masses or flight-performance figures
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: French Mirage 2000-5F single-seat air-defence configuration. The page is used for variant role, service entry, cockpit, radar and missile-family rows; numeric geometry, mass and performance remain attributed to the separate technical packages.
 Estimation / uncertainty: Tier A official French Ministry source. It names the MICA family and Fox 3 capability but does not publish a station count or a complete loadout, so no quantity is inferred.
 

@@ -11,6 +11,9 @@ Domain: ground
 Equipment: Chieftain FV4201 family, Mk11-relevant Mk5-derived configuration
 Configuration: Historical family table; Mk1-5 values are not all Mk11-specific. Mk11 leaf uses only family values consistent with Mk5-derived late standard and marks them bounded.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Estimate status: Yes; secondary historical synthesis, not a British Army technical-manual measurement.
 
 ## Use and estimate basis

@@ -17,6 +17,9 @@ Equipment: F-35C
 Configuration: F-35C carrier strike-fighter specification page; the page's values are used only for the explicitly listed variant.
 Estimation / uncertainty: Tier C specialist secondary source. Crew of one and a 50,000 ft service ceiling are recorded as published readings, not as official U.S. Navy specifications. No value is copied from F-35A or F-35B.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

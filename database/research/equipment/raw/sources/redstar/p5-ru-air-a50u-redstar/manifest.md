@@ -15,6 +15,9 @@ Retrieval:
   returned: common A-50/Il-76-derived geometry, wing area, antenna diameter, PS-90A powerplant, cruise speed, family range/ceiling and crew context
   did_not_return: A-50U-only certification and modernised mission-system table
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Estimation / uncertainty: Tier C specialist reference. The rows sourced here are carried as family baseline readings and are never labelled as A-50U-exclusive certification.
 
 ## Extracted parameter notes

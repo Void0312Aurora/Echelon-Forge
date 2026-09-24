@@ -17,6 +17,9 @@ Equipment: Stryker / M1252 MCVV RMS6-L weapon fit
 Configuration: The table identifies the RMS6-L as the 120 mm carrier system for both Stryker M1129A1 MCV and Stryker M1252 MCVV; the 6570 m maximum is an approximate HE mortar-system range, not vehicle mobility.
 Estimate status: No vehicle estimate. Mortar range is explicitly bounded by round nomenclature, altitude difference and meteorological conditions in the source note.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

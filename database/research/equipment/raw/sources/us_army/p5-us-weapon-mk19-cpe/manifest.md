@@ -14,6 +14,9 @@ Retrieval:
   returned: role, 40 mm calibre, weapon mass without mount, length and point/area range
   did_not_return: cyclic rate and ammunition-box capacity
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Mk 19 weapon without mount or tripod; mounting systems are not folded into weapon mass.
 Estimation / uncertainty: Tier A government equipment page; point and area range are separate published quantities.
 

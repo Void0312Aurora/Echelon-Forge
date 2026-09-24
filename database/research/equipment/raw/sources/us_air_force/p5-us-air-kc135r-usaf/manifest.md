@@ -14,6 +14,9 @@ Retrieval:
   returned: the official general-characteristics block: range, maximum takeoff weight, transfer fuel, cargo, pallet positions and crew, alongside the existing geometry, engine, speed and ceiling values
   did_not_return: a KC-135R-specific empty weight; the source gives maximum takeoff weight and operating loads instead
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

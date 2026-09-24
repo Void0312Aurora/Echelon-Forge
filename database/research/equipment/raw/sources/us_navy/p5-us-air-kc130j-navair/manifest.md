@@ -15,6 +15,9 @@ Retrieval:
   returned: KC-130J role, length, wingspan and maximum gross takeoff weight
   did_not_return: complete tanker offload, fuel, crew and defensive-system table
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Estimation / uncertainty: Tier A official Navy product page. It is authoritative for the fields it states; the separate USMC and manufacturer packages supply the remaining public platform fields.
 
 ## Extracted parameter notes

@@ -17,6 +17,9 @@ Retrieval:
   did_not_return: the plain page fetch, which returned the article structure only
 Estimation / uncertainty: Tier C community compilation. Its figures agree with `p5-cn-air-z20-globalmilitary` on length, height, both masses, rotor diameter, maximum speed, combat range and service ceiling, so those are no longer single-source. It gives the WZ-10 as a power band of 1,600 to 2,000 kW where the compilation page gives a single 1,600 kW.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 
 ## Extracted parameter notes
 

@@ -16,6 +16,9 @@ Domain: air
 Equipment: Y-20
 Configuration: Generic Y-20 entry. It does not describe Y-20A, Y-20B or YY-20A as separate configurations.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Estimation / uncertainty: Tier C expert-edited reference. The page is a public secondary reading and is not treated as an official certification table. Its 45 m wingspan conflicts with the 50 m reading carried by the separate encyclopedic package; both are retained rather than silently reconciled.
 
 ## Extracted parameter notes

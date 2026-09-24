@@ -13,6 +13,9 @@ Equipment: M2A4 Bradley
 Era: Current M2A4; M2A4E1 Iron Fist configuration excluded
 Configuration: Current M2A4 production/contract summary; M2A4E1 Iron Fist and unresolved serial/block variants are excluded.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Estimate status: Yes; secondary report of a production configuration, not an official measurement
 Estimation / uncertainty: The 675 hp Cummins VTA903E-T675 and HMPT-800-3ECB statements are direct article claims; exact serial/block applicability is unresolved and no dimensions, mass or performance estimates are made here. This Tier C report is not an official Army technical specification.
 

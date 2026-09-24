@@ -12,6 +12,9 @@ Domain: ground
 Equipment: M270A1 MLRS
 Configuration: M270A1 IFCS/ILMS launcher; not M270A0 and not M270A2.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 
 ## Use
 

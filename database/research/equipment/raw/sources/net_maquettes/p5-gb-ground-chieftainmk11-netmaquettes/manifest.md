@@ -11,6 +11,9 @@ Domain: ground
 Equipment: Chieftain Mk11
 Configuration: Mk11 walk-around page; dimensions and combat mass refer to a Stillbrew-equipped late vehicle, while historical engine/weapon values are summarized from public references.
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
 Estimate status: Yes; specialist community compilation.
 
 ## Use and estimate basis

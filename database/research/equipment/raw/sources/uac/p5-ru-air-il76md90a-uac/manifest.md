@@ -14,6 +14,9 @@ Retrieval:
   returned: official UAC Il-76MD-90A dimensions, PS-90A-76 propulsion and thrust, cruise speed, flight altitude, payload-conditioned range, maximum takeoff mass, payload and cargo-compartment dimensions
   did_not_return: empty mass, crew complement, defensive armament and a full sensor/electronic-warfare table
 Retention: manifest and extracted parameter notes only
+Rights status: not_recorded
+Provenance status: manifest+retrieval+retention
+Residual status: open
 Configuration: Il-76MD-90A modernized military transport. The adjacent Il-78M-90A tanker block on the same page is not merged into this leaf.
 Estimation / uncertainty: Tier B manufacturer-group technical page. Weight and range values retain the page's units and load conditions.
 
