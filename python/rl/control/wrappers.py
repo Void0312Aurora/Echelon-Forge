@@ -55,6 +55,7 @@ class MultiTimescaleActionController:
         center_deadband_center: float = 0.5,
         center_deadband_half_width: float = 0.0,
         scripted_baseline_mode: str | None = None,
+        scripted_model_id: str | None = None,
         scripted_residual_scale: float = 1.0,
         scripted_residual_alt_breakpoints_m: Optional[Iterable[float]] = None,
         scripted_residual_alt_scales: Optional[Iterable[float]] = None,
@@ -88,6 +89,7 @@ class MultiTimescaleActionController:
         self.center_deadband_center = float(center_deadband_center)
         self.center_deadband_half_width = max(0.0, float(center_deadband_half_width))
         self.scripted_baseline_mode = str(scripted_baseline_mode).strip().lower() if scripted_baseline_mode else None
+        self.scripted_model_id = str(scripted_model_id).strip() if scripted_model_id else None
         self.scripted_residual_scale = float(np.clip(float(scripted_residual_scale), 0.0, 1.0))
         bp = [float(x) for x in (scripted_residual_alt_breakpoints_m or ())]
         sv = [float(np.clip(float(x), 0.0, 1.0)) for x in (scripted_residual_alt_scales or ())]
@@ -188,7 +190,7 @@ class MultiTimescaleActionController:
                 self._scripted_model = AIR_SCRIPTED_MODEL_REGISTRY.create_for(
                     domain="air",
                     role_id="autopilot_controller",
-                    model_id=AIR_SCRIPTED_EXECUTION_MODEL_ID,
+                    model_id=self.scripted_model_id or AIR_SCRIPTED_EXECUTION_MODEL_ID,
                     action_dim=action_dim,
                     dt=dt,
                     transition_alt_agl_m=self.scripted_transition_alt_agl_m,
@@ -538,6 +540,7 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
         center_deadband_center: float = 0.5,
         center_deadband_half_width: float = 0.0,
         scripted_baseline_mode: str | None = None,
+        scripted_model_id: str | None = None,
         scripted_residual_scale: float = 1.0,
         scripted_residual_alt_breakpoints_m: Optional[Iterable[float]] = None,
         scripted_residual_alt_scales: Optional[Iterable[float]] = None,
@@ -569,6 +572,7 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
         self.center_deadband_center = float(center_deadband_center)
         self.center_deadband_half_width = max(0.0, float(center_deadband_half_width))
         self.scripted_baseline_mode = str(scripted_baseline_mode).strip().lower() if scripted_baseline_mode else None
+        self.scripted_model_id = str(scripted_model_id).strip() if scripted_model_id else None
         self.scripted_residual_scale = float(np.clip(float(scripted_residual_scale), 0.0, 1.0))
         bp = [float(x) for x in (scripted_residual_alt_breakpoints_m or ())]
         sv = [float(np.clip(float(x), 0.0, 1.0)) for x in (scripted_residual_alt_scales or ())]
@@ -661,7 +665,7 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
                 self._scripted_model = AIR_SCRIPTED_MODEL_REGISTRY.create_for(
                     domain="air",
                     role_id="autopilot_controller",
-                    model_id=AIR_SCRIPTED_EXECUTION_MODEL_ID,
+                    model_id=self.scripted_model_id or AIR_SCRIPTED_EXECUTION_MODEL_ID,
                     action_dim=int(self.action_space.shape[0]),
                     dt=dt,
                     transition_alt_agl_m=self.scripted_transition_alt_agl_m,
