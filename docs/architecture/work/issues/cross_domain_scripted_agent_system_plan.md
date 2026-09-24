@@ -794,3 +794,22 @@ to a dedicated owner-local evidence document.
 - Continuation choice: retain the exact residual for a later C2 geometry/entry
   batch and proceed independently with the planned tactical engagement and EW
   contract work. No unrelated domain task is blocked by this residual.
+
+### 2026-09-25 — Air tactical engagement scripted adapter slice
+
+- Starting commit: `cb830cc2`.
+- Change batch: add `AirScriptedEngagementModel` and the aggregate Air scripted
+  model registry. The model composes the neutral phase-flight controller and
+  derives radar, TMS, master-arm, and one-shot fire requests only from the
+  declared `air_combat_c2_roe_v2` mission observation fields.
+- Boundary: the model has no RL import, kernel access, World Truth read, or
+  privileged target geometry. The existing environment fire gate remains the
+  authority for release acceptance. The tactical registration is deliberately
+  `adapter`, not `playable`.
+- Focused verification: the neutral Air execution tests and tactical adapter
+  tests passed `8 passed` with `pytest --noconftest`; the model emits a finite
+  17-element full Air action, produces one fire pulse, suppresses fire during
+  `pending_assessment`, and fails closed on a non-C2/ROE mission shape.
+- Known residual: no maintained Air combat scenario or operator CLI consumes
+  this adapter yet; runtime weapon employment, post-launch assessment, EW, and
+  full engagement evidence remain open.
