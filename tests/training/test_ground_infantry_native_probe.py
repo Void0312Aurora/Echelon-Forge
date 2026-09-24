@@ -32,6 +32,15 @@ def test_native_ground_gym_adapter_preserves_probe_authority_and_observation() -
     assert len(env.trace) == 2
 
 
+def test_native_ground_gym_adapter_passes_gymnasium_checker() -> None:
+    from gymnasium.utils.env_checker import check_env
+
+    env = GroundInfantryNativeEnv(
+        GroundInfantryNativeProbe.from_fixture(max_steps=2)
+    )
+    check_env(env, skip_render_check=True)
+
+
 def test_native_ground_gym_adapter_reaches_fixed_waypoint() -> None:
     env = GroundInfantryNativeEnv(
         GroundInfantryNativeProbe.from_fixture(
