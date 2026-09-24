@@ -195,6 +195,7 @@ class SimulationKernel {
     void set_sun_direction(double azimuth_deg, double elevation_deg);
     Vec3 get_sun_direction() const;
     void set_terrain_type(const std::string &terrain_type);
+    bool load_arnis_terrain_bundle(const std::string &bundle_root);
     void set_maritime_state(double sea_state, double wave_heading_deg = 0.0,
                             double wave_period_s = 8.0);
     void clear_maritime_state();

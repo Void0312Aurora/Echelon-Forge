@@ -81,6 +81,11 @@ class IEnvironmentModel {
     // Unknown terrain profiles must fail closed instead of falling back to that profile.
     virtual void set_terrain_type(const std::string & /*terrain_type*/) {}
 
+    // Load a verified Arnis continuous raster bundle into the environment
+    // provider. Providers that do not support this repository-native bundle
+    // remain fail-closed by returning false.
+    virtual bool load_arnis_terrain_bundle(const std::string & /*bundle_root*/) { return false; }
+
     // Maritime-state configuration used by surface-ship runtime proxies.
     // set_maritime_state() activates a full environment override; clear_maritime_state() returns
     // control to per-platform fallback values. Partial field merge is intentionally not supported

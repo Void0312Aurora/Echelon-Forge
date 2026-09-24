@@ -340,6 +340,19 @@ void SimulationKernel::set_terrain_type(const std::string &terrain_type) {
     }
 }
 
+bool SimulationKernel::load_arnis_terrain_bundle(const std::string &bundle_root) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("load_arnis_terrain_bundle");
+    if (IEnvironmentModel *model = environment_model()) {
+        const bool loaded = model->load_arnis_terrain_bundle(bundle_root);
+        if (loaded) {
+            world_state_mutated_ = true;
+        }
+        return loaded;
+    }
+    return false;
+}
+
 void SimulationKernel::set_maritime_state(double sea_state, double wave_heading_deg,
                                           double wave_period_s) {
     auto composition_lock = acquire_composition_operation();

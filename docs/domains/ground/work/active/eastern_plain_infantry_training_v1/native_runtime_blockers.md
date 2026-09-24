@@ -42,6 +42,12 @@ runtime authority and must not be wired into the production WorldBatch path.
 termination/trace boundary can be tested without pretending that a learned
 policy is already connected to native Ground truth.
 
+The default environment provider now admits an explicit Arnis continuous
+bundle load. It validates the bundle contract, shape, signed metric steps,
+exact raster byte lengths, and finite elevation values before replacing the
+provider raster. Landcover currently supplies only bounded movement surface
+classes; the native provider does not yet consume the bundle's vector features.
+
 The existing C++ maintained command contract already carries
 `ground_static_task`; the Python binding now exposes that slice as well.  This
 removes a transport omission. The new movement system now consumes the admitted
@@ -68,8 +74,9 @@ reviewed Ground owner package must:
 
 1. define the native action/command component and its relationship to the
    maintained command-chain batch bindings;
-2. extend terrain sampling into passability, bridge admission, and observation
-   provenance as runtime contracts rather than fixture-local assumptions;
+2. extend terrain sampling from continuous rasters into vector-backed
+   passability, bridge admission, and observation provenance as runtime
+   contracts rather than fixture-local assumptions;
 3. add native reset/step/replay acceptance tests over the Arnis-derived map,
    then connect the RL adapter;
 4. retain the proxy tests as diagnostics until native behavior supersedes them.
