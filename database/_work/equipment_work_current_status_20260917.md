@@ -50,13 +50,13 @@ Measured counts:
 
 | Metric | Value |
 | --- | --- |
-| Source packages (manifests) | 347 |
-| Catalog leaves (carry `## Parameters`) | 143 |
-| Distinct source ids referenced by leaves | 347 |
+| Source packages (manifests) | 348 |
+| Catalog leaves (carry `## Parameters`) | 144 |
+| Distinct source ids referenced by leaves | 348 |
 | Leaves without `Equipment ID` | 0 |
 | Backlog rows | 150 |
 | Coverage rows | 105 |
-| Status: `cataloged` / `parameter_complete` / `held` | 2 / 142 / 6 |
+| Status: `cataloged` / `parameter_complete` / `held` | 2 / 143 / 5 |
 
 ## Leaf Completeness Against The Queue
 
@@ -154,6 +154,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | Anti-armour missile/launcher expansion batch | Added Panzerfaust 3, RPG-7 and SPIKE LR II with variant-bounded launcher, round, range/effect, guidance and employment fields; launcher/round quantities remain separate |
 | MiG-31BM held-record completion | Added a named MiG-31BM technical profile with variant-specific geometry, mass, propulsion, conditioned range, crew, radar and weapon rows; no MiG-31B or MiG-31K values were substituted |
 | Su-57 held-record completion | Added separate UAC programme and RedStar baseline profiles for the Russian Su-57; Su-57E export and prototype-only values remain excluded and the alternate engine-thrust reading is retained |
+| Tu-95MS held-record completion | Added a named Tu-95MS profile with geometry, mass, fuel, powerplant, conditioned performance, warload and MS-6/MS-16 missile-carriage rows |
 
 ## Retracted Findings
 
