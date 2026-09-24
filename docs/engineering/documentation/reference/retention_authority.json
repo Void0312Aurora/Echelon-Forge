@@ -2,7 +2,7 @@
   "schema_version": 1,
   "policy_id": "documentation_retention.v1",
   "owner": "engineering/documentation-governance",
-  "last_verified": "2026-09-24",
+  "last_verified": "2026-09-25",
   "active_surfaces": [
     "docs/architecture/standards",
     "docs/architecture/reference",
