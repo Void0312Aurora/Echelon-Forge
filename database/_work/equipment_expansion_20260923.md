@@ -65,12 +65,13 @@ calibration package, inventory claim, or final simulation configuration.
 | R-20 | Tiger HAD held-record completion from Airbus technical and French retrofit profiles | complete | `27cd8fd0` |
 | R-21 | A-50U held-record completion from Xinhua, Airforce Technology and RedStar profiles | complete | `c79fd30c` |
 | R-22 | Residual Y-20 / M1252 variant-boundary audit and blocker refresh | complete | `aeb650ed` |
+| R-23 | Y-20 generic public performance and crew completion from named secondary packages | complete | `221c4489` |
 
 ## Blocker / skip ledger
 
 | Candidate | Blocker | Alternative tried | Decision |
 | --- | --- | --- | --- |
-| `eq-cn-air-y20` | Official Chinese material confirms role/family status but does not publish variant-level dimensions, mass, speed, range or crew; public figures mix Y-20A/Y-20B and tanker configurations | Official MND family page, Xinhua/Jane's payload reporting, USCC summary, Ruslet Y-20A table and current secondary Y-20A references checked; no single base-Y-20 variant package found | Keep `cataloged`; defer until a variant-named technical package is found |
+| `eq-cn-air-y20` | Official Chinese material confirms role/family status but does not publish a complete technical table; public geometry still has a 45 m versus 50 m wingspan conflict | Generic Y-20 entries from Store norske leksikon and Military Factory now supply crew, speed, ceiling and conditioned range; Y-20A/Y-20B/YY-20A values remain separate and the wingspan conflict is retained | Resolved in R-23; promote to `parameter_complete` with Tier C boundaries |
 | `eq-us-ground-stryker-m1252-mcvv` | Variant-level propulsion/mobility remains unknown; family M1129/M1252 values would be cross-model substitution | Army TB/TRADOC, mortar ATP, GDLS brochure, AFV Database, MDEX, WarWheels, ArmyProperty and current M1252A1 community data checked; only M1252A1/other-family powerpack claims surfaced | Keep `cataloged` and skip this pass; do not copy family or A1 powerpack, speed or range |
 
 ## Acceptance gate

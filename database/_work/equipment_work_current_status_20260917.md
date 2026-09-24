@@ -1,6 +1,6 @@
 # Equipment Work Current Status
 
-Status: `2026-09-24` measured state of the equipment tree under the reduced write set.
+Status: `2026-09-25` measured state of the equipment tree under the reduced write set.
 
 Parent: [README.md](README.md)
 
@@ -8,7 +8,7 @@ Document kind: `reference`
 Lifecycle: `draft`
 Canonical: `database/_work/equipment_work_current_status_20260917.md`
 Owner: `database/equipment-data`
-Last verified: `2026-09-24`
+Last verified: `2026-09-25`
 
 This revision replaces the first measurement pass, which was produced by a
 hand-written audit and reported three deviations that do not survive the runnable
@@ -21,7 +21,7 @@ check in [check_equipment_tree.py](check_equipment_tree.py). See
 | --- | --- |
 | Branch | `codex/database-scaffold` |
 | Base | `d1ebb5d3` |
-| Off-base commits | 56 |
+| Off-base commits | 87 |
 | Behind `origin/main` | 218 commits |
 | Ahead of `origin/main` | 56 commits |
 | `origin/main` files under `database/` | 0 |
@@ -50,17 +50,17 @@ Measured counts:
 
 | Metric | Value |
 | --- | --- |
-| Source packages (manifests) | 359 |
+| Source packages (manifests) | 361 |
 | Catalog leaves (carry `## Parameters`) | 149 |
-| Distinct source ids referenced by leaves | 359 |
+| Distinct source ids referenced by leaves | 361 |
 | Leaves without `Equipment ID` | 0 |
 | Backlog rows | 150 |
 | Coverage rows | 105 |
-| Status: `cataloged` / `parameter_complete` / `held` | 2 / 148 / 0 |
+| Status: `cataloged` / `parameter_complete` / `held` | 1 / 149 / 0 |
 
 ## Leaf Completeness Against The Queue
 
-The queue calls 2 rows `cataloged`, and all 2 now point at leaves carrying a
+The queue calls 1 row `cataloged`, and it points at a leaf carrying a
 `## Parameters` table. The checker therefore reports no stub leaf binding defect
 for the non-held queue rows. A separate catalog scan still finds 82 README leaves
 without a parameter table; those are outside the current queue-binding defect and
@@ -159,7 +159,8 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | KC-130J held-record completion | Added NAVAIR, USMC and Lockheed Martin platform/tanker blocks with source-labelled dimensional, mass, propulsion, range, offload and transport capacities; C-130J-30 and HC-130J values remain excluded |
 | Tiger HAD held-record completion | Added Airbus HAD geometry, engine, fuel, conditioned performance, mission-system and weapon-capacity rows plus a separate French retrofit/operator package; HAP/UHT/MkIII values remain excluded |
 | A-50U held-record completion | Added Xinhua A-50U performance and separate Airforce Technology/RedStar upgrade, crew, mission-system and family-baseline packages; 190/210 t and 800/850 km/h source readings remain separate |
-| Residual variant-boundary audit | Rechecked Y-20 and M1252 with current official, specialist and community alternatives; no base-variant package closes the remaining gaps, so both stay `cataloged` rather than receiving cross-variant values |
+| Residual variant-boundary audit | Rechecked Y-20 and M1252 with current official, specialist and community alternatives; M1252 still lacks a direct propulsion/mobility package and remains `cataloged` rather than receiving cross-variant values |
+| Y-20 public-parameter completion | Added generic Y-20 Store norske leksikon and Military Factory packages for crew, speed, ceiling and payload-conditioned range; retained Y-20A/Y-20B/YY-20A boundaries and the 45 m versus 50 m wingspan conflict |
 
 ## Retracted Findings
 
