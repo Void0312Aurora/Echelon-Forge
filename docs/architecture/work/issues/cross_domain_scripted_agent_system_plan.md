@@ -1274,3 +1274,27 @@ to a dedicated owner-local evidence document.
 - Continuation choice: use the existing runtime-facing F-16/Su-35/MQ-9/E-3
   records for a future bounded roster scenario first; treat AH-1Z and other
   research leaves as staged inputs pending loader compatibility evidence.
+
+### 2026-09-25 — Air scripted combat demo CLI slice
+
+- Starting commit: `5f3d1aa4`.
+- Change batch: add `tools/diagnostics/air_combat_scripted_demo.py`, a
+  reusable no-RL Stage 1 C2/ROE demonstration entry. It resolves the
+  maintained Air engagement registry model, routes decisions through
+  `ScriptedRuntimeAgent`, drives the compiled `WorldBatchVecEnv`, and emits a
+  compact JSON record of fire acceptance, native release, post-launch status,
+  termination, and runtime replay identity.
+- Focused verification: Python compilation and `git diff --check` passed. The
+  direct command with `--post_launch_assessment --max_steps 400` exited `0`;
+  it made `282` scripted decisions, recorded
+  `fire_once_accepted=true` and `release_executed=true` at step `282`, then
+  terminated at `post_launch_assessment_timeout` after four consequence steps.
+- Evidence boundary: this is a reusable operator/demo entry and a native
+  release acceptance record. It does not claim target destruction, terminal
+  combat success, multi-aircraft engagement, EW resource closure, or
+  `playable` promotion. The generated probe artifact is ignored and remains
+  local evidence only.
+- Continuation choice: retain this CLI as the tactical demo seam and next
+  either close the existing post-launch terminal objective or record a bounded
+  consequence proxy; keep the Air landing, EW, roster, Joint, and database
+  lines independently schedulable.
