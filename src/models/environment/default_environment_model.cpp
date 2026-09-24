@@ -709,6 +709,38 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
         return observation;
     }
 
+    GroundTransitionObservation get_ground_transition_observation(double from_x, double from_y,
+                                                                   double to_x, double to_y) override {
+        GroundTransitionObservation observation;
+        observation.configured = raster_layer_.arnis_metric_bundle;
+        observation.distance_m = std::hypot(to_x - from_x, to_y - from_y);
+        const std::size_t sample_count = std::max<std::size_t>(
+            1, static_cast<std::size_t>(std::ceil(observation.distance_m / 5.0)));
+        SurfaceType endpoint_surface = SurfaceType::Obstacle;
+        for (std::size_t index = 0; index <= sample_count; ++index) {
+            const double fraction = static_cast<double>(index) /
+                                    static_cast<double>(sample_count);
+            const double x = from_x + (to_x - from_x) * fraction;
+            const double y = from_y + (to_y - from_y) * fraction;
+            const auto terrain = get_terrain_at(x, y);
+            endpoint_surface = terrain.type;
+            if (raster_layer_.arnis_metric_bundle && raster_layer_.bridge_at(x, y)) {
+                observation.bridge_admitted = true;
+            }
+            if (terrain.type == SurfaceType::Water) {
+                observation.water_blocked = true;
+            } else if (terrain.type == SurfaceType::Obstacle) {
+                observation.obstacle_blocked = true;
+            }
+        }
+        observation.destination_surface = observation.water_blocked
+                                             ? SurfaceType::Water
+                                             : (observation.obstacle_blocked ? SurfaceType::Obstacle
+                                                                              : endpoint_surface);
+        observation.passable = !observation.water_blocked && !observation.obstacle_blocked;
+        return observation;
+    }
+
     void clear_zones() override { zones_.clear(); }
 
     void add_zone(const std::string &name, double x, double y, double width, double length,

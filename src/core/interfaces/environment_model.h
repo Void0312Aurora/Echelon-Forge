@@ -66,6 +66,16 @@ class IEnvironmentModel {
         bool in_settlement = false;
     };
 
+    struct GroundTransitionObservation {
+        bool configured = false;
+        bool passable = false;
+        SurfaceType destination_surface = SurfaceType::Obstacle;
+        bool water_blocked = false;
+        bool obstacle_blocked = false;
+        bool bridge_admitted = false;
+        double distance_m = 0.0;
+    };
+
     virtual TerrainCell get_terrain_at(double x, double y) = 0;
 
     // Dynamic Configuration
@@ -103,6 +113,11 @@ class IEnvironmentModel {
 
     virtual GroundFieldSemanticObservation get_ground_field_semantic_observation(double /*x*/,
                                                                                  double /*y*/) {
+        return {};
+    }
+
+    virtual GroundTransitionObservation
+    get_ground_transition_observation(double /*from_x*/, double /*from_y*/, double /*to_x*/, double /*to_y*/) {
         return {};
     }
 

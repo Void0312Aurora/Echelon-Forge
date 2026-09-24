@@ -36,6 +36,10 @@ truth.
 - The native provider consumes the Arnis hydrology and bridge road vectors for
   bounded point sampling: river corridors are water and declared bridge
   segments override them as hard-packed crossing surfaces.
+- `SimulationKernel.get_ground_transition_observation(from_x, from_y, to_x,
+  to_y)` samples a local segment at 5 m intervals and returns passability plus
+  water/obstacle/bridge evidence. This is a bounded transition probe only; it
+  does not provide a route graph, waypoint planner, cover, or line of sight.
 - Loading is transactional: an invalid candidate returns `false` without
   replacing the current provider raster.
 

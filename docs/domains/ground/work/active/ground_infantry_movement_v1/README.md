@@ -37,6 +37,10 @@ formations, or full physics.
   not imply cover, concealment, exposure, or weapon behavior. A separate
   bounded direct-fire slice is admitted for the infantry fixture; it is not
   part of this movement package.
+- The native movement system asks the environment owner for a sampled transition
+  observation over the one-tick segment. The default Arnis provider samples at
+  most 5 m intervals, reports water/obstacle blockers, and admits a declared
+  bridge segment as a bounded crossing surface.
 
 ## Explicit non-goals
 
@@ -45,9 +49,9 @@ behavior, acceleration, fatigue, cover/concealment, line of sight, river or
 bridge passability, indirect fires, suppression, logistics, or RL policy
 training. The native provider now consumes bounded Arnis hydrology and bridge
 road vectors; tree lines, settlements, structures, route graphs, and general
-passability remain later packages. The movement consumer also checks the
-one-tick destination cell and blocks a transition into water or an unknown /
-obstacle cell without advancing the transform.
+passability remain later packages. The movement consumer blocks any sampled
+one-tick segment that intersects water or an unknown/obstacle cell without
+advancing the transform; this is not a route graph or general path planner.
 
 ## Evidence
 

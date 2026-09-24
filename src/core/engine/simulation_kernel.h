@@ -199,6 +199,8 @@ class SimulationKernel {
     bool load_arnis_field_overlay(const std::string &overlay_path);
     std::array<double, 5> get_ground_terrain_observation(double x, double y);
     std::array<double, 7> get_ground_field_semantic_observation(double x, double y);
+    std::array<double, 7> get_ground_transition_observation(double from_x, double from_y,
+                                                             double to_x, double to_y);
     void set_maritime_state(double sea_state, double wave_heading_deg = 0.0,
                             double wave_period_s = 8.0);
     void clear_maritime_state();

@@ -151,10 +151,10 @@ inline void register_ground_infantry_movement_system(flecs::world &ecs) {
                     const double next_vx = std::sin(heading_rad) * effective_speed;
                     const double next_vy = std::cos(heading_rad) * effective_speed;
                     if (dt > 0.0) {
-                        const auto destination = environment->get_terrain_at(
-                            transform[i].x + next_vx * dt, transform[i].y + next_vy * dt);
-                        if (ground_infantry_movement_detail::surface_speed_multiplier(
-                                destination.type) <= 0.0) {
+                        const auto transition = environment->get_ground_transition_observation(
+                            transform[i].x, transform[i].y, transform[i].x + next_vx * dt,
+                            transform[i].y + next_vy * dt);
+                        if (!transition.passable) {
                             ground_infantry_movement_detail::stop(velocity[i]);
                             continue;
                         }

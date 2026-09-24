@@ -187,6 +187,18 @@ class GroundInfantryNativeProbe:
         sim.step()
         self._step_index += 1
         after = self._observation()
+        heading_rad = math.radians(normalized.desired_heading_deg)
+        commanded_distance = (
+            normalized.desired_speed_fraction * self.max_speed_mps * self.time_step_s
+        )
+        transition_observation = self._tuple(
+            sim.get_ground_transition_observation(
+                before["position_local_enu_m"][0],
+                before["position_local_enu_m"][1],
+                before["position_local_enu_m"][0] + math.sin(heading_rad) * commanded_distance,
+                before["position_local_enu_m"][1] + math.cos(heading_rad) * commanded_distance,
+            )
+        )
         moved_distance = math.hypot(
             after["position_local_enu_m"][0] - before["position_local_enu_m"][0],
             after["position_local_enu_m"][1] - before["position_local_enu_m"][1],
@@ -220,6 +232,7 @@ class GroundInfantryNativeProbe:
             "action": list(normalized.vector()),
             "before": before,
             "after": after,
+            "transition_observation": transition_observation,
             "moved_distance_m": moved_distance,
             "blocked": blocked,
             "blocked_reason": blocked_reason,

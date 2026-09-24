@@ -392,6 +392,27 @@ std::array<double, 7> SimulationKernel::get_ground_field_semantic_observation(do
     return {0.0, -1.0, 0.0, -1.0, 0.0, 0.0, 0.0};
 }
 
+std::array<double, 7> SimulationKernel::get_ground_transition_observation(double from_x,
+                                                                            double from_y,
+                                                                            double to_x,
+                                                                            double to_y) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_ground_transition_observation");
+    if (IEnvironmentModel *model = environment_model()) {
+        const auto observation =
+            model->get_ground_transition_observation(from_x, from_y, to_x, to_y);
+        return {observation.configured ? 1.0 : 0.0,
+                observation.passable ? 1.0 : 0.0,
+                static_cast<double>(observation.destination_surface),
+                observation.water_blocked ? 1.0 : 0.0,
+                observation.obstacle_blocked ? 1.0 : 0.0,
+                observation.bridge_admitted ? 1.0 : 0.0,
+                observation.distance_m};
+    }
+    return {0.0, 0.0, static_cast<double>(IEnvironmentModel::SurfaceType::Obstacle), 0.0, 1.0,
+            0.0, 0.0};
+}
+
 void SimulationKernel::set_maritime_state(double sea_state, double wave_heading_deg,
                                           double wave_period_s) {
     auto composition_lock = acquire_composition_operation();

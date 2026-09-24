@@ -123,6 +123,17 @@ void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel> &ker
             "in_settlement)",
             nb::arg("x"), nb::arg("y"))
         .def(
+            "get_ground_transition_observation",
+            [](SimulationKernel &self, double from_x, double from_y, double to_x, double to_y) {
+                const auto sample = self.get_ground_transition_observation(from_x, from_y, to_x,
+                                                                             to_y);
+                return std::make_tuple(sample[0], sample[1], sample[2], sample[3], sample[4],
+                                       sample[5], sample[6]);
+            },
+            "Get native Ground transition as (configured, passable, destination_surface, "
+            "water_blocked, obstacle_blocked, bridge_admitted, distance_m)",
+            nb::arg("from_x"), nb::arg("from_y"), nb::arg("to_x"), nb::arg("to_y"))
+        .def(
             "spawn_unit",
             [](SimulationKernel &self, Side side, const std::string &type, double x, double y,
                double z, double heading, double pitch, double roll, double vx, double vy,
