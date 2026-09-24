@@ -30,6 +30,9 @@ truth.
 - `SimulationKernel.get_ground_terrain_observation(x, y)` exposes the native
   sample as `(elevation, surface_type, friction, roughness,
   vegetation_density)` for training-side adapters and diagnostics.
+- `SimulationKernel.load_arnis_field_overlay(path)` plus
+  `get_ground_field_semantic_observation(x, y)` admits metadata-only tree-line
+  and settlement distance/bearing flags after the continuous bundle is loaded.
 - The native provider consumes the Arnis hydrology and bridge road vectors for
   bounded point sampling: river corridors are water and declared bridge
   segments override them as hard-packed crossing surfaces.
@@ -40,8 +43,9 @@ truth.
 
 This package does not provide route graphs, general passability or line-of-sight
 queries, tree-line/settlement cover semantics, or connect RL training to native
-reset/step/replay. It also does not claim automatic runtime setup or full
-terrain physics.
+reset/step/replay. The field overlay observation is metadata-only and does not
+change movement, passability, concealment, cover, or fire-control authority.
+It also does not claim automatic runtime setup or full terrain physics.
 
 ## Evidence
 

@@ -205,6 +205,32 @@ def test_native_infantry_consumes_arnis_raster_and_stops_on_water() -> None:
     sim = ef_py.SimulationKernel()
     assert sim.load_database(_DATABASE)
     assert sim.load_arnis_terrain_bundle(str(bundle))
+    overlay_path = bundle.parent / "field_overlay.json"
+    assert sim.load_arnis_field_overlay(str(overlay_path))
+    assert not sim.load_arnis_field_overlay(str(overlay_path / "missing"))
+    overlay = json.loads(overlay_path.read_text(encoding="utf-8"))
+    tree_entry = next(entry for entry in overlay["entries"] if entry["overlay_kind"] == "tree_line")
+    settlement_entry = next(
+        entry for entry in overlay["entries"] if entry["overlay_kind"] == "settlement_anchor"
+    )
+    min_x = min(origin_x, origin_x + (shape[1] - 1) * step_x)
+    min_y = min(origin_y, origin_y + (shape[0] - 1) * step_y)
+    tree_points = tree_entry["geometry"]["points"]
+    tree_x = sum(point[0] for point in tree_points[:4]) / min(4, len(tree_points))
+    tree_y = sum(point[1] for point in tree_points[:4]) / min(4, len(tree_points))
+    tree_semantics = sim.get_ground_field_semantic_observation(
+        min_x + tree_x, min_y + tree_y
+    )
+    assert float(tree_semantics[0]) == 1.0
+    assert float(tree_semantics[1]) == pytest.approx(0.0)
+    assert float(tree_semantics[5]) == 1.0
+    settlement_point = settlement_entry["geometry"]["point"]
+    settlement_semantics = sim.get_ground_field_semantic_observation(
+        min_x + settlement_point[0], min_y + settlement_point[1]
+    )
+    assert float(settlement_semantics[0]) == 1.0
+    assert float(settlement_semantics[3]) == pytest.approx(0.0)
+    assert float(settlement_semantics[6]) == 1.0
     # A failed candidate must not clear the already admitted provider raster.
     assert not sim.load_arnis_terrain_bundle(str(bundle / "missing_candidate"))
     water_sample = sim.get_ground_terrain_observation(

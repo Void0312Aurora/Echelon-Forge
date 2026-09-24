@@ -56,6 +56,16 @@ class IEnvironmentModel {
         double runway_heading;     // Degrees (NAV), only valid if type == Concrete
     };
 
+    struct GroundFieldSemanticObservation {
+        bool configured = false;
+        double nearest_tree_line_distance_m = -1.0;
+        double nearest_tree_line_bearing_deg = 0.0;
+        double nearest_settlement_distance_m = -1.0;
+        double nearest_settlement_bearing_deg = 0.0;
+        bool in_tree_line = false;
+        bool in_settlement = false;
+    };
+
     virtual TerrainCell get_terrain_at(double x, double y) = 0;
 
     // Dynamic Configuration
@@ -85,6 +95,16 @@ class IEnvironmentModel {
     // provider. Providers that do not support this repository-native bundle
     // remain fail-closed by returning false.
     virtual bool load_arnis_terrain_bundle(const std::string & /*bundle_root*/) { return false; }
+
+    // Load the companion metadata-only overlay. Providers must keep its
+    // tree-line/settlement semantics separate from movement, passability,
+    // cover, and fire-control authority.
+    virtual bool load_arnis_field_overlay(const std::string & /*overlay_path*/) { return false; }
+
+    virtual GroundFieldSemanticObservation
+    get_ground_field_semantic_observation(double /*x*/, double /*y*/) {
+        return {};
+    }
 
     // Maritime-state configuration used by surface-ship runtime proxies.
     // set_maritime_state() activates a full environment override; clear_maritime_state() returns

@@ -40,6 +40,13 @@
       "weapon": "rifle",
       "requires": ["hostile_ground_contact", "range", "ammunition", "cooldown", "fire_authority"],
       "does_not_claim": ["line_of_sight", "cover", "suppression", "ballistics", "indirect_fire"]
+    },
+    "field_semantics": {
+      "status": "bounded_metadata_observation",
+      "load_entrypoint": "SimulationKernel.load_arnis_field_overlay",
+      "entrypoint": "SimulationKernel.get_ground_field_semantic_observation",
+      "fields": ["configured", "tree_distance_m", "tree_bearing_deg", "settlement_distance_m", "settlement_bearing_deg", "in_tree_line", "in_settlement"],
+      "does_not_claim": ["movement", "passability", "cover", "concealment", "line_of_sight", "fire_control"]
     }
   },
   "action_space": {

@@ -52,6 +52,18 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
         "hit_probability",
         "cooldown_remaining",
     ]
+    assert contract["native_runtime_surfaces"]["field_semantics"]["status"] == "bounded_metadata_observation"
+    assert contract["native_runtime_surfaces"]["field_semantics"]["load_entrypoint"] == "SimulationKernel.load_arnis_field_overlay"
+    assert contract["native_runtime_surfaces"]["field_semantics"]["entrypoint"] == "SimulationKernel.get_ground_field_semantic_observation"
+    assert contract["native_runtime_surfaces"]["field_semantics"]["fields"] == [
+        "configured",
+        "tree_distance_m",
+        "tree_bearing_deg",
+        "settlement_distance_m",
+        "settlement_bearing_deg",
+        "in_tree_line",
+        "in_settlement",
+    ]
     assert contract["map_profile"]["arnis_bundle_status"] == "verified_export_snapshot"
     assert contract["map_profile"]["companion_overlay"] == "field_overlay.v1"
     assert contract["map_profile"]["runtime_consumption"].startswith("held_until_")
