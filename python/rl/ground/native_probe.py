@@ -39,6 +39,7 @@ class NativeGroundInfantryTransition:
     truncated: bool
     blocked: bool
     blocked_reason: str | None
+    truncation_reason: str | None
     trace: dict[str, Any]
 
 
@@ -295,9 +296,12 @@ class GroundInfantryNativeProbe:
             if final_waypoint_reached
             else None
         )
-        truncated = (
-            not terminated and self._step_index >= self.max_steps
-        ) or self._blocked_steps >= self.blocked_step_limit
+        truncation_reason = None
+        if not terminated and self._blocked_steps >= self.blocked_step_limit:
+            truncation_reason = "blocked_step_limit"
+        elif not terminated and self._step_index >= self.max_steps:
+            truncation_reason = "max_steps"
+        truncated = truncation_reason is not None
         trace = {
             "contract_version": NATIVE_GROUND_PROBE_CONTRACT_VERSION,
             "authority": "native_probe_only",
@@ -314,6 +318,8 @@ class GroundInfantryNativeProbe:
             "waypoint_advanced": waypoint_advanced,
             "terminated": terminated,
             "termination_reason": termination_reason,
+            "truncated": truncated,
+            "truncation_reason": truncation_reason,
         }
         return NativeGroundInfantryTransition(
             observation=after,
@@ -322,6 +328,7 @@ class GroundInfantryNativeProbe:
             truncated=truncated,
             blocked=blocked,
             blocked_reason=blocked_reason,
+            truncation_reason=truncation_reason,
             trace=trace,
         )
 

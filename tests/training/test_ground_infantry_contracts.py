@@ -98,6 +98,10 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
     assert contract["rl_harness"]["native_env"]["production_boundary"] == "not_world_batch"
     assert "mission_state" in contract["rl_harness"]["native_env"]["observation_fields"]
     assert "waypoint_state" in contract["rl_harness"]["native_env"]["observation_fields"]
+    assert contract["rl_harness"]["native_env"]["truncation_reasons"] == [
+        "max_steps",
+        "blocked_step_limit",
+    ]
     assert contract["rl_harness"]["native_env"]["waypoint_boundary"] == "fixed_direct_sequence_only"
     assert "command_state" in contract["rl_harness"]["native_env"]["observation_fields"]
     assert "health_state" in contract["rl_harness"]["native_env"]["observation_fields"]

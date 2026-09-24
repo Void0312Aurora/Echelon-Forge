@@ -64,6 +64,9 @@ accepted.
   terminates explicitly on final-waypoint reach or incapacitation. Advancing to
   the next configured point is sequence bookkeeping, not route planning or a
   new fire authority.
+  Its trace also distinguishes terminal reasons from `max_steps` and
+  `blocked_step_limit` truncation, so a training loop can fail closed without
+  inferring why an episode stopped.
   Its native Gym action space fixes `route_intent=direct`; held route intents
   remain available only through the engineering proxy until a native route
   owner exists.

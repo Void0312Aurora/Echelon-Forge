@@ -115,6 +115,8 @@ reset/step surface for training tooling. The wrapper does not add authority or
 alter the native trace; it remains outside production `WorldBatch`. Its
 waypoint index/count observation and sequence advancement are bounded tooling
 bookkeeping, not a route graph, path planner, or production training release.
+The wrapper also exposes explicit `max_steps` and `blocked_step_limit`
+truncation reasons instead of requiring a caller to infer them from the trace.
 
 The proxy fails closed on unknown raster cells, out-of-bounds transitions, and
 river crossings without the explicit bridge intent.  The bridge rule is a
