@@ -7,6 +7,7 @@ from typing import Mapping
 import pytest
 
 from tools.maintenance.runtime_authority_contracts import authority_digest_sha256
+from tools.maintenance.runtime_authority_contracts import build_state_checkpoint_shell
 from tools.maintenance.runtime_authority_contracts import canonical_json_bytes as authority_json_bytes
 from tools.maintenance.runtime_durable_artifact_ledger import LedgerContractError
 from tools.maintenance.runtime_durable_artifact_ledger import SQLiteArtifactLedger
@@ -180,6 +181,42 @@ def test_sqlite_rollout_retention_survives_backup_and_restore(tmp_path: Path) ->
             "run_receipt": "run-retained",
             "rollout_evidence": "rollback-window",
         }
+        checkpoint_token = ledger.acquire_fence(
+            "checkpoint:p7b-restore-checkpoint",
+            "release-controller",
+            audit_identity="release-controller-test",
+        )
+        checkpoint = build_state_checkpoint_shell({
+            "authority_kind": "state_checkpoint",
+            "schema_version": "echelon_forge.state_checkpoint.v1",
+            "contract_version": "echelon_forge.state_checkpoint_contract.v1",
+            "writer_role": "runtime_host",
+            "writer_generation": str(checkpoint_token.generation),
+            "checkpoint_id": "p7b-restore-checkpoint",
+            "plan_sha256": "c" * 64,
+            "release_id": "release-evidence-test",
+            "decision_id": "decision-evidence-3",
+            "run_id": "p7b-restore-run",
+            "host_boot_id": "p7b-restore-boot",
+            "incarnation_epoch": "1",
+            "transfer_fence_sequence": "1",
+            "world_fragments": [{
+                "world_id": "world-p7b",
+                "episode_ids": ["episode-p7b"],
+                "fragment_sequence": "0",
+                "state_sha256": "d" * 64,
+            }],
+            "aggregate_state_sha256": "e" * 64,
+            "state_schema_generation": "1",
+            "target_reader_generation_min": "1",
+            "target_reader_generation_max": "1",
+        })
+        ledger.persist_checkpoint(
+            checkpoint_token,
+            authority_json_bytes(checkpoint),
+            expected_slot_version=0,
+            audit_identity="release-controller-test",
+        )
         backup = tmp_path / "ledger-backup.sqlite3"
         ledger.backup_to(backup)
     finally:
@@ -192,6 +229,9 @@ def test_sqlite_rollout_retention_survives_backup_and_restore(tmp_path: Path) ->
             verification_key=evidence_fixtures.KEY,
         )
         assert restored_retention["blobs"] == retention["blobs"]
+        restored_checkpoint = restored.read_checkpoint("p7b-restore-checkpoint")
+        assert restored_checkpoint["payload"]["release_id"] == "release-evidence-test"
+        assert restored_checkpoint["payload"]["decision_id"] == "decision-evidence-3"
     finally:
         restored.close()
 

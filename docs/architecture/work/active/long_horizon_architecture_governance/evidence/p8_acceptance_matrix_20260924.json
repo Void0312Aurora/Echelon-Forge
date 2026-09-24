@@ -39,9 +39,10 @@
       "owner": "release engineering",
       "evidence": [
         "docs/architecture/work/active/long_horizon_architecture_governance/decisions/p1c_rollout_operations_and_security_decision_20260825.md",
-        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p7a_retention_authority_20260924.md"
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p7a_retention_authority_20260924.md",
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p7b_local_sqlite_restore_drill_20260924.md"
       ],
-      "residual": "No admitted external provider restore drill or production rollback-window operation is recorded."
+      "residual": "The local SQLite restore drill is bounded to the supported row; no admitted external provider restore drill or production rollback-window operation is recorded."
     },
     {
       "id": "P8-04-sustainability",

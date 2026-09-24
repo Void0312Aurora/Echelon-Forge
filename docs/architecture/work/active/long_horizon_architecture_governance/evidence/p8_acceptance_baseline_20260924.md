@@ -53,7 +53,8 @@ This evidence does not establish:
 - production truth publication or maintained caller cutover;
 - Linux/package qualification beyond the recorded partial row;
 - production rollback-window operation or rebuild retirement;
-- an admitted external evidence provider or completed restore drill; or
+- an admitted external evidence provider or production rollback-window restore
+  drill; the bounded local SQLite restore drill is recorded separately; or
 - independent P8-B review.
 
 Document kind: `evidence`
