@@ -18,31 +18,6 @@ def test_wp14_platform_capability_contract_header_exists() -> None:
   assert HEADER.is_file()
 
 
-def test_wp14_platform_capability_header_declares_platform_vocabulary_and_not_backend_runtime_capabilities() -> None:
-  header = HEADER.read_text(encoding="utf-8")
-
-  for token in (
-    "mobility",
-    "sensing",
-    "communication",
-    "launching",
-    "survivability",
-    "command",
-    "doctrine",
-    "type_name_projection",
-    "typed_platform_request",
-    "factory_projection_materialization",
-    "resolved_spawn_plan_bridge",
-    "platform_capability_family_not_maintained",
-    "resolved_spawn_plan_contains_unsupported_required_capability",
-  ):
-    assert token in header
-
-  assert "namespace runtime::platform_capabilities" in header
-  assert "RuntimeCapabilities" not in header
-  assert "supports_batch_runtime" not in header
-
-
 def test_wp14_platform_capability_contract_stays_header_only_and_outside_runtime_implementation_paths() -> None:
   header = HEADER.read_text(encoding="utf-8")
 
@@ -122,8 +97,30 @@ def test_wp14_platform_capability_valid_bundle_and_resolved_plan_validate_cleanl
       }
 
       const auto families = platform_capability_family_vocabulary();
-      if (families.size() != 7) {
-        std::cerr << "unexpected family count: " << families.size() << "\n";
+      const std::vector<std::string_view> expected_families = {
+        kCapabilityFamilyMobility,
+        kCapabilityFamilySensing,
+        kCapabilityFamilyCommunication,
+        kCapabilityFamilyLaunching,
+        kCapabilityFamilySurvivability,
+        kCapabilityFamilyCommand,
+        kCapabilityFamilyDoctrine,
+      };
+      if (families != expected_families) {
+        std::cerr << "platform capability vocabulary drifted\n";
+        return 1;
+      }
+      if (kPlatformSpawnRequestKindTypeNameProjection != "type_name_projection" ||
+          kPlatformSpawnRequestKindTypedPlatformRequest != "typed_platform_request" ||
+          kPlatformMaterializationStrategyFactoryProjection !=
+            "factory_projection_materialization" ||
+          kPlatformMaterializationStrategyResolvedSpawnBridge !=
+            "resolved_spawn_plan_bridge" ||
+          kPlatformCapabilityUnsupportedFamilyNotMaintained !=
+            "platform_capability_family_not_maintained" ||
+          kResolvedPlatformSpawnPlanRejectionUnsupportedRequiredCapability !=
+            "resolved_spawn_plan_contains_unsupported_required_capability") {
+        std::cerr << "platform capability contract vocabulary drifted\n";
         return 1;
       }
 
@@ -297,24 +294,6 @@ def test_wp14_resolved_spawn_plan_rejects_unsupported_required_capabilities_and_
 
   result = _compile_and_run(source)
   assert result.returncode == 0, result.stderr + result.stdout
-
-
-def test_wp14_effects_materialization_uses_wp14_a_family_vocabulary_only() -> None:
-  header = HEADER.read_text(encoding="utf-8")
-
-  for token in (
-    "kCapabilityFamilyMobility",
-    "kCapabilityFamilySensing",
-    "kCapabilityFamilyCommunication",
-    "kCapabilityFamilyLaunching",
-    "kCapabilityFamilySurvivability",
-    "kCapabilityFamilyCommand",
-    "kCapabilityFamilyDoctrine",
-    "kPlatformCapabilityUnsupportedEffectNotMaterialized",
-    "kPlatformCapabilityUnsupportedTypeNameProjectionRequired",
-    "kResolvedPlatformSpawnPlanRejectionUnsupportedRequiredCapability",
-  ):
-    assert token in header
 
 
 def test_wp14_effects_materialization_contract_does_not_reuse_backend_runtime_capabilities_or_runtime_behavior_tokens() -> None:
