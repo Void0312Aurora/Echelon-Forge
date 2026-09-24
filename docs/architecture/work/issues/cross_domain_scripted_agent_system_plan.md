@@ -569,3 +569,19 @@ to a dedicated owner-local evidence document.
 - Evidence boundary: this closes only the bounded same-process reset/replay
   smoke gate. Full mission replay, command/report roundtrip, visualization,
   multi-unit roster parity, and complete playable acceptance remain open.
+
+### 2026-09-25 — cooperative Air diagnostic boundary probe
+
+- Starting commit: `575a69c6`.
+- The first direct diagnostic used the representative standalone Air scenario;
+  the cooperative runtime failed closed before stepping because that scenario
+  has no controllable roster member. This was an input/entry mismatch, not a
+  scripted-model failure.
+- The alternative used the maintained cooperative scenario, which has a valid
+  roster. A four-step cap then failed because the diagnostic contract requires
+  the episode to terminate before returning a report. The same short-horizon
+  command will not be retried.
+- Proxy/direct alternatives retained: the standalone compiled Air CLI smoke and
+  same-process reset/replay smoke already provide bounded direct execution;
+  cooperative full-episode and multi-unit acceptance remain open until a
+  bounded scenario/report contract can terminate or a full budget is authorized.
