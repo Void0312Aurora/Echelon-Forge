@@ -30,12 +30,13 @@ service-profile 解释以及跨域 runtime 架构仍由各自 owner 负责。
 - 维护中的 tasking cadence 基线是 `1 Hz`。
 - `Ground_Infantry_Soldier_MVP` 是原生的单兵 Ground fixture。
   `GroundInfantryMovement` 系统消费已准入的 `MoveStatic` 命令，通过共享
-  `IEnvironmentModel` 应用确定性的地表与坡度速度代价，并推进一个受限的水平
-  运动学步。这是单兵移动原语，不是 route following、passability、formation
-  或完整陆战动力学。准入记录见
+  `IEnvironmentModel` 应用确定性的地表、坡度与植被速度代价，并推进一个受限的水平
+  运动学步；kernel 还向 native training probe 暴露同一 owner 计算出的 movement-effect
+  倍率。这是单兵移动原语，不是 route following、passability、formation 或完整陆战动力学。
+  准入记录见
   [Ground Infantry Movement v1](work/active/ground_infantry_movement_v1/README.zh.md)。
 - 默认环境 provider 可以显式加载已验证的 Arnis 连续高程/地表覆盖栅格对，维护中的
-  kernel 也向训练 adapter 暴露有界地形观测 tuple。树线/聚落语义、一般通行性以及
+  kernel 也向训练 adapter 暴露有界地形和 movement-effect 观测 tuple。树线/聚落语义、一般通行性以及
   track/sensor observation export 仍保持 held；河流/桥面地表采样已有限准入。
 - `GroundWeaponState` 与 `SimulationKernel.fire_ground_weapon` 已为单兵 fixture
   准入一个有界原生直射切片：必须有敌方 Ground 目标的接触记录，并满足步枪射程、弹药、

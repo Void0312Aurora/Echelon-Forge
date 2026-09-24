@@ -41,7 +41,8 @@ Owner：`domains/ground`，环境输入由 `systems/environment` 负责
   权威级别仍是 `engineering_proxy_only`。
 - 原生单兵 probe：`python/rl/ground/native_probe.py`，以及其 Gymnasium 适配层
   `python/rl/ground/native_env.py`。它们使用编译后的 kernel 做 reset/step/replay，
-  权威级别是 `native_probe_only`，仍不属于生产 `WorldBatch`；trace 会区分航点/失能
+  权威级别是 `native_probe_only`，仍不属于生产 `WorldBatch`；观测包含 native owner 的
+  movement-effect 倍率，trace 会区分航点/失能
   终止与 `max_steps`、`blocked_step_limit` 截断。
 - maintained 命令投影：`python/rl/ground/command.py`。它把 heading/speed、原生 stance
   和已有 Ground static-task 片段送入批量契约；对于当前原生命令结构无法表达的 route
