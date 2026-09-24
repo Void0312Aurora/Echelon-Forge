@@ -6,9 +6,29 @@ import math
 import pytest
 
 from python.rl.ground import (
+    GroundInfantryNativeEnv,
     GroundInfantryNativeProbe,
     GroundInfantryNativeProbeError,
 )
+
+
+def test_native_ground_gym_adapter_preserves_probe_authority_and_observation() -> None:
+    env = GroundInfantryNativeEnv(GroundInfantryNativeProbe.from_fixture(max_steps=2))
+    observation, info = env.reset(seed=42)
+
+    assert info["authority"] == "native_probe_only"
+    assert info["production_boundary"] == "not_world_batch"
+    assert env.observation_space.contains(observation)
+
+    next_observation, reward, terminated, truncated, step_info = env.step(
+        [90.0, 0.5, 1.0, 0.0]
+    )
+    assert env.observation_space.contains(next_observation)
+    assert isinstance(reward, float)
+    assert isinstance(terminated, bool)
+    assert isinstance(truncated, bool)
+    assert step_info["authority"] == "native_probe_only"
+    assert len(env.trace) == 2
 
 
 def test_native_ground_probe_reset_and_step_use_compiled_observation_surfaces() -> None:

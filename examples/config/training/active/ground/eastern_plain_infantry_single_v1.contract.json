@@ -82,6 +82,12 @@
       "authority": "native_probe_only",
       "production_boundary": "not_world_batch"
     },
+    "native_env": {
+      "status": "native_probe_only",
+      "entrypoint": "python.rl.ground.native_env:GroundInfantryNativeEnv",
+      "production_boundary": "not_world_batch",
+      "observation_owner": "GroundInfantryNativeProbe"
+    },
     "promotion_gate": "native_ground_reset_step_replay_and_terrain_owner"
   },
   "command_projection": {

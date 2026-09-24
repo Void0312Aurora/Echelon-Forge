@@ -52,6 +52,10 @@ accepted.
   the compiled kernel through reset/step/trace/replay and exposes the admitted
   terrain, field-semantic, and weapon-state observations. Its authority is
   `native_probe_only`; it is not a production WorldBatch environment.
+- Gymnasium adapter over the native probe:
+  `python/rl/ground/native_env.py` (`GroundInfantryNativeEnv`). It preserves
+  the probe's reset/step/replay authority and is also explicitly
+  `native_probe_only`; it is a tooling surface, not a WorldBatch promotion.
 - Maintained command projection:
   `python/rl/ground/command.py`. It carries heading/speed, native stance, and
   the existing Ground static-task slice through the batch contract, while
