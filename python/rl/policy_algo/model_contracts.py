@@ -70,6 +70,7 @@ class LaunchDecisionTrainingScope(str, Enum):
 
 
 LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION = "launch_decision_owner_v1"
+LAUNCH_DECISION_CONTRACT_VERSION_KEY = "launch_decision_contract_version"
 LAUNCH_DECISION_MODE_PATH = ("hyperparameters", "policy_kwargs", "launch_decision_mode")
 LAUNCH_DECISION_OWNER_MODE_PATH = (
     "hyperparameters",
@@ -323,6 +324,39 @@ def _launch_decision_value(config: Mapping[str, Any], key: str) -> Any:
     return _MISSING
 
 
+def _launch_decision_declared_values(
+    config: Mapping[str, Any],
+    key: str,
+) -> tuple[tuple[str, Any], ...]:
+    """Return every supported declaration location for a contract key.
+
+    Translation and runtime resolution must not silently choose one of several
+    contradictory copies.  Keeping the location in the result makes the
+    resulting contract violation actionable for flat and nested configs alike.
+    """
+
+    locations = (
+        (key, config.get(key, _MISSING)),
+        (f"hyperparameters.{key}", config.get("hyperparameters", {}).get(key, _MISSING)
+         if isinstance(config.get("hyperparameters", {}), Mapping) else _MISSING),
+        (
+            f"hyperparameters.policy_kwargs.{key}",
+            _launch_decision_policy_kwargs(config).get(key, _MISSING),
+        ),
+    )
+    return tuple(
+        (path, value)
+        for path, value in locations
+        if value is not _MISSING and value is not None and str(value).strip() != ""
+    )
+
+
+def _distinct_declared_values(
+    declarations: tuple[tuple[str, Any], ...],
+) -> tuple[str, ...]:
+    return tuple(dict.fromkeys(str(value) for _path, value in declarations))
+
+
 def _launch_decision_bool(value: Any) -> bool:
     return _activation_value(value)
 
@@ -411,6 +445,36 @@ def validate_launch_decision_contract(
     """
 
     violations: list[ContractViolation] = []
+    mode_declarations = _launch_decision_declared_values(config, "launch_decision_mode")
+    owner_declarations = _launch_decision_declared_values(config, "launch_decision_owner_mode")
+    version_declarations = _launch_decision_declared_values(
+        config,
+        LAUNCH_DECISION_CONTRACT_VERSION_KEY,
+    )
+    for key, declarations in (
+        ("launch_decision_mode", mode_declarations),
+        ("launch_decision_owner_mode", owner_declarations),
+        (LAUNCH_DECISION_CONTRACT_VERSION_KEY, version_declarations),
+    ):
+        if len(_distinct_declared_values(declarations)) > 1:
+            violations.append(
+                _launch_decision_mode_violation(
+                    path=declarations[-1][0],
+                    expected=f"one consistent {key} declaration",
+                    actual=[value for _path, value in declarations],
+                    reason="Repeated launch-decision declarations must agree.",
+                )
+            )
+    combined_mode_declarations = mode_declarations + owner_declarations
+    if len(_distinct_declared_values(combined_mode_declarations)) > 1:
+        violations.append(
+            _launch_decision_mode_violation(
+                path=combined_mode_declarations[-1][0],
+                expected="launch_decision_mode and launch_decision_owner_mode to agree",
+                actual=[value for _path, value in combined_mode_declarations],
+                reason="Mode and owner-mode aliases must not disagree.",
+            )
+        )
     mode, explicit, mode_path, raw_mode = _launch_decision_mode_value(config)
     owner_raw = _launch_decision_value(config, "launch_decision_owner_mode")
     mode_raw = _launch_decision_value(config, "launch_decision_mode")
@@ -437,6 +501,35 @@ def validate_launch_decision_contract(
             )
         )
         return violations
+
+    version_values = _distinct_declared_values(version_declarations)
+    if explicit or version_values:
+        if version_values != (LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,):
+            violations.append(
+                _launch_decision_mode_violation(
+                    path=(
+                        version_declarations[-1][0]
+                        if version_declarations
+                        else "hyperparameters.policy_kwargs."
+                        + LAUNCH_DECISION_CONTRACT_VERSION_KEY
+                    ),
+                    expected=LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,
+                    actual=version_values[0] if version_values else _MISSING,
+                    reason=(
+                        "Explicit owner modes require the persisted contract version; "
+                        "missing or unsupported markers are ambiguous."
+                    ),
+                )
+            )
+        if not explicit:
+            violations.append(
+                _launch_decision_mode_violation(
+                    path=version_declarations[-1][0],
+                    expected="an explicit launch_decision_mode or owner-mode alias",
+                    actual=version_values[0],
+                    reason="A contract version marker requires an explicit owner mode.",
+                )
+            )
 
     flags = _launch_decision_active_flags(config)
     window_enabled = flags["window_classifier_adapter"]
