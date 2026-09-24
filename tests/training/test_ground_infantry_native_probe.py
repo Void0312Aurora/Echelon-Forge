@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 
 import pytest
 
@@ -20,11 +21,15 @@ def test_native_ground_probe_reset_and_step_use_compiled_observation_surfaces() 
         "position_local_enu_m",
         "velocity_local_enu_mps",
         "terrain",
+        "terrain_effects",
         "field_semantics",
         "weapon_state",
         "state",
     }
     assert len(observation["terrain"]) == 5
+    assert len(observation["terrain_effects"]) == 1
+    assert math.isfinite(observation["terrain_effects"][0])
+    assert observation["terrain_effects"][0] >= 0.0
     assert len(observation["field_semantics"]) == 7
     assert len(observation["weapon_state"]) == 8
 

@@ -54,6 +54,12 @@
       "fields": ["configured", "passable", "destination_surface", "water_blocked", "obstacle_blocked", "bridge_admitted", "distance_m"],
       "sampling_interval_m": 5.0,
       "does_not_claim": ["route_graph", "waypoint_planning", "cover", "line_of_sight"]
+    },
+    "terrain_effects": {
+      "status": "bounded_native_observation",
+      "entrypoint": "SimulationKernel.get_ground_slope_deg",
+      "fields": ["slope_deg"],
+      "does_not_claim": ["climbability", "fatigue", "full_physics"]
     }
   },
   "action_space": {

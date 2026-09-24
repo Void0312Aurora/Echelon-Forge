@@ -81,6 +81,9 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
         "cover",
         "line_of_sight",
     ]
+    assert contract["native_runtime_surfaces"]["terrain_effects"]["status"] == "bounded_native_observation"
+    assert contract["native_runtime_surfaces"]["terrain_effects"]["entrypoint"] == "SimulationKernel.get_ground_slope_deg"
+    assert contract["native_runtime_surfaces"]["terrain_effects"]["fields"] == ["slope_deg"]
     assert contract["map_profile"]["arnis_bundle_status"] == "verified_export_snapshot"
     assert contract["map_profile"]["companion_overlay"] == "field_overlay.v1"
     assert contract["map_profile"]["runtime_consumption"].startswith("held_until_")

@@ -111,6 +111,7 @@ class GroundInfantryNativeProbe:
         position = self._tuple(sim.get_unit_position(entity_id))
         velocity = self._tuple(sim.get_unit_velocity(entity_id))
         terrain = self._tuple(sim.get_ground_terrain_observation(position[0], position[1]))
+        slope_deg = float(sim.get_ground_slope_deg(position[0], position[1]))
         semantic = self._tuple(
             sim.get_ground_field_semantic_observation(position[0], position[1])
         )
@@ -119,6 +120,7 @@ class GroundInfantryNativeProbe:
             "position_local_enu_m": position,
             "velocity_local_enu_mps": velocity,
             "terrain": terrain,
+            "terrain_effects": (slope_deg,),
             "field_semantics": semantic,
             "weapon_state": weapon,
             "state": (

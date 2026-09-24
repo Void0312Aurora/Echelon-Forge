@@ -95,6 +95,11 @@ route graph, or line-of-sight model. The shared native transition query samples
 the one-tick segment at 5 m intervals, reports water/obstacle blockers, and
 marks a declared bridge segment as admitted. It remains a local passability
 probe, not route planning or waypoint selection.
+The same local terrain owner now exposes `SimulationKernel.get_ground_slope_deg`
+to the native probe, so the training trace can attribute movement cost to a
+replayable slope observation rather than recomputing it in Python. This remains
+a slope observation only; climbability, fatigue, and full terrain physics stay
+held.
 
 `python/rl/ground/native_probe.py` now supplies a deterministic native
 reset/step/trace/replay adapter over these admitted surfaces. Its blocked-step

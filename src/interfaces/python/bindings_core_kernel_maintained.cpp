@@ -111,6 +111,8 @@ void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel> &ker
             "Get native Ground terrain observation as (elevation, surface_type, friction, "
             "roughness, vegetation_density)",
             nb::arg("x"), nb::arg("y"))
+        .def("get_ground_slope_deg", &SimulationKernel::get_ground_slope_deg,
+             "Get bounded native Ground terrain slope in degrees", nb::arg("x"), nb::arg("y"))
         .def(
             "get_ground_field_semantic_observation",
             [](SimulationKernel &self, double x, double y) {
