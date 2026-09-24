@@ -166,6 +166,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | M1252 RMS6-L range completion | Added the MCTP 3-01D M1252-specific approximate HE mortar range (200–6,570 m); vehicle propulsion, speed and operational range remain unknown and the queue row stays `cataloged` |
 | M1252 operator-manual search boundary | Confirmed the public four-volume TM 9-2355-364-10-1 through -4 set and date, but did not obtain parameter-bearing manual text; propulsion, speed and vehicle range remain unknown and the queue row stays `cataloged` |
 | M1252 PMCS mirror exclusion | ArmyADP's public Stryker checklist is for M1126/M1127 and TM 9-2355-311-10; it does not expose M1252/TM 9-2355-364-10 parameters, so no mobility value was imported |
+| M1252 low-tier family baseline | Added IJEAT's generic C7/approximately 100 km/h/approximately 500 km IAV reference as an explicit Tier C family context row; it is not promoted to the M1252 mobility field and the queue row stays `cataloged` |
 
 ## Retracted Findings
 
