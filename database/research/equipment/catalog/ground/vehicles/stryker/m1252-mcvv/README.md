@@ -47,7 +47,7 @@ The DOT&E package records the common DVH-to-DVH-A1 power boundary: the legacy fa
 
 ## Open Gap
 
-This leaf has the most unresolved target fields of the eleven Stryker variant records. A variant-level M1252 or MCVV propulsion, speed and range source was searched for and not located; the AFV Database family coverage stops short of this variant. The DOT&E family power boundary is retained as context, but closing this gap still needs a source that names the M1252 or MCVV configuration directly, not a family baseline substitution.
+This leaf has the most unresolved target fields of the eleven Stryker variant records. A variant-level M1252 or MCVV propulsion, speed and range source was searched for and not located; the AFV Database family coverage stops short of this variant. The four-volume operator manual set (TM 9-2355-364-10-1 through -4, dated 2016-09-30) is identified in public catalogue/search results, but its parameter-bearing text was not returned in this pass. The DOT&E family power boundary is retained as context, but closing this gap still needs a source that names the M1252 or MCVV configuration directly, not a family baseline substitution.
 
 ## Source References
 

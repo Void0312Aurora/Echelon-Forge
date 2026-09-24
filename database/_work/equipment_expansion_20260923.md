@@ -69,13 +69,14 @@ calibration package, inventory claim, or final simulation configuration.
 | R-24 | M1252 DVH-family powerpack boundary refresh and direct-manual search | complete | `d57af6d0` |
 | R-25 | M1252 community configuration corroboration package from WarWheels | complete | `96b2d34f` |
 | R-26 | M1252 RMS6-L direct range completion from MCTP 3-01D | complete | `13577a49` |
+| R-27 | M1252 operator-manual volume search and retrieval-boundary update | complete | pending |
 
 ## Blocker / skip ledger
 
 | Candidate | Blocker | Alternative tried | Decision |
 | --- | --- | --- | --- |
 | `eq-cn-air-y20` | Official Chinese material confirms role/family status but does not publish a complete technical table; public geometry still has a 45 m versus 50 m wingspan conflict | Generic Y-20 entries from Store norske leksikon and Military Factory now supply crew, speed, ceiling and conditioned range; Y-20A/Y-20B/YY-20A values remain separate and the wingspan conflict is retained | Resolved in R-23; promote to `parameter_complete` with Tier C boundaries |
-| `eq-us-ground-stryker-m1252-mcvv` | Variant-level propulsion/mobility remains unknown; family M1129/M1252 values would be cross-model substitution | Army TB/TRADOC, mortar ATP, GDLS brochure, AFV Database, MDEX, WarWheels, ArmyProperty/TM catalog, ATP 3-21.90, DOT&E FY2017 DVH-A1 report and FY2027 Stryker family listing checked; only the family 350 hp C7 → 450 hp C9 boundary and M1252A1/other-family performance claims surfaced | Keep `cataloged`; retain the family power boundary as context but do not copy family or A1 powerpack, speed or range |
+| `eq-us-ground-stryker-m1252-mcvv` | Variant-level propulsion/mobility remains unknown; family M1129/M1252 values would be cross-model substitution | Army TB/TRADOC, mortar ATP, MCTP 3-01D, GDLS brochure, AFV Database, MDEX, WarWheels, ArmyProperty/TM catalog, the four-volume TM 9-2355-364-10-1 through -4 catalogue references, DOT&E FY2017 DVH-A1 report and FY2027 Stryker family listing checked; manual volume identities are confirmed but parameter-bearing text was not returned, while only the family 350 hp C7 → 450 hp C9 boundary and M1252A1/other-family performance claims surfaced | Keep `cataloged`; retain the family power boundary as context but do not copy family or A1 powerpack, speed or range |
 
 ## Acceptance gate
 

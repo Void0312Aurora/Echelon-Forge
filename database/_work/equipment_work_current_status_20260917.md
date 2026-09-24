@@ -164,6 +164,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | M1252 family-power boundary refresh | Added the DOT&E legacy DVH 350 hp C7 versus DVH-A1 450 hp C9 boundary as a named family reference; M1252-specific engine, speed and range remain unknown and the queue row stays `cataloged` |
 | M1252 community corroboration | Added a Tier C WarWheels package for crew/configuration and the DVH-to-M1252/M1252-A1 boundary; no unresolved mobility field was filled and the queue row stays `cataloged` |
 | M1252 RMS6-L range completion | Added the MCTP 3-01D M1252-specific approximate HE mortar range (200–6,570 m); vehicle propulsion, speed and operational range remain unknown and the queue row stays `cataloged` |
+| M1252 operator-manual search boundary | Confirmed the public four-volume TM 9-2355-364-10-1 through -4 set and date, but did not obtain parameter-bearing manual text; propulsion, speed and vehicle range remain unknown and the queue row stays `cataloged` |
 
 ## Retracted Findings
 
