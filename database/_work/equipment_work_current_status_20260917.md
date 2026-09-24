@@ -50,13 +50,13 @@ Measured counts:
 
 | Metric | Value |
 | --- | --- |
-| Source packages (manifests) | 341 |
-| Catalog leaves (carry `## Parameters`) | 138 |
-| Distinct source ids referenced by leaves | 341 |
+| Source packages (manifests) | 344 |
+| Catalog leaves (carry `## Parameters`) | 141 |
+| Distinct source ids referenced by leaves | 344 |
 | Leaves without `Equipment ID` | 0 |
-| Backlog rows | 147 |
+| Backlog rows | 150 |
 | Coverage rows | 105 |
-| Status: `cataloged` / `parameter_complete` / `held` | 2 / 137 / 8 |
+| Status: `cataloged` / `parameter_complete` / `held` | 2 / 140 / 8 |
 
 ## Leaf Completeness Against The Queue
 
@@ -151,6 +151,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | Crew-served weapon expansion batch | Added M2A1, M240B, Mk 19 Mod 3 and AGS-17 with variant-bounded mass, geometry, range, crew and employment fields; mount and weapon mass remain distinct |
 | Artillery expansion batch | Added M777A2, CAESAR 6x6 and BM-21 Grad with sourced calibre, mass, range, mobility and fire-control fields; baseline and rocket-envelope limits remain explicit |
 | Anti-armour launcher expansion batch | Added Carl-Gustaf M4, AT4CS HP and M72A5-C1 with variant-bounded calibre, dimensions, mass, range/effect and employment fields; ammunition-independent range claims remain excluded |
+| Anti-armour missile/launcher expansion batch | Added Panzerfaust 3, RPG-7 and SPIKE LR II with variant-bounded launcher, round, range/effect, guidance and employment fields; launcher/round quantities remain separate |
 
 ## Retracted Findings
 
