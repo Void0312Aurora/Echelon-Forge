@@ -166,6 +166,14 @@ They must be remeasured before an implementation or acceptance claim.
   migration evidence](evidence/p5d_facade_caller_migration_20260923.md). This
   is not production cutover or P5-D acceptance.
 
+- Migrated the standalone native `src/main.cpp` caller to `RuntimeFacade`.
+  `ef_app` now loads the example scenario, applies facade-owned batch setup,
+  steps, and queries observations without constructing the raw
+  `SimulationKernel`; its Debug build and 60-tick runtime smoke returned exit
+  code `0`. The P8-A closure inventory consequently removes `src/main.cpp`
+  from native default-kernel callers. This is a local maintained smoke path,
+  not production caller cutover.
+
 - Added the P5-D process-lifetime admission recheck. A maintained production
   adapter now reloads the durable rollout slot before setup, command/launch
   mutation, stepping, and runtime-window execution; a kill switch or typed

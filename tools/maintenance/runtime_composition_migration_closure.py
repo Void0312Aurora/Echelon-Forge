@@ -1121,7 +1121,7 @@ def build_record() -> dict[str, Any]:
                 "classification": "standalone_and_batch_compatibility",
                 "owner": "core/engine",
                 "callers": scan_cpp_default_kernel_callers(),
-                "disposition": "retained; both enter the explicit generated-manifest alias",
+                "disposition": "retained; enters the explicit generated-manifest alias",
             },
             {
                 "surface_id": "simulation_kernel.python_binding_exposure",

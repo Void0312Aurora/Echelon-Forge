@@ -633,11 +633,11 @@ install(TARGETS ef_facade_backend
     LIBRARY DESTINATION lib
 )
 # --- Standalone App ---
-# We keep src/main.cpp for local C++ testing, but now it needs to include/use SimulationKernel
-# (main.cpp consumes SimulationKernel directly and references no facade symbol,
-# so it keeps linking ef_core only.)
+# The standalone caller is a maintained facade smoke path.  Raw
+# SimulationKernel construction remains in the explicitly quarantined
+# compatibility/diagnostics targets and is not the app's execution owner.
 add_executable(ef_app src/main.cpp)
-target_link_libraries(ef_app PRIVATE ef_core)
+target_link_libraries(ef_app PRIVATE ef_facade ef_gpu_experiments)
 
 set(EF_PYTHON_BINDING_SOURCES
     src/interfaces/python/python_module.cpp

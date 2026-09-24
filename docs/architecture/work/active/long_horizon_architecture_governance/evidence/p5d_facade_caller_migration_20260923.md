@@ -1,6 +1,6 @@
 # P5-D Facade Caller Migration Evidence
 
-Status: `2026-09-24` — maintained contract-caller migration slice; not a
+Status: `2026-09-25` — maintained contract-caller migration slice; not a
 production cutover or P5-D acceptance.
 
 This packet records the first P5-D caller migration slice after the local
@@ -18,6 +18,14 @@ compatibility surface.
 - `python/testing/contracts/unit/kernel.py`
 - `python/tasking_contracts/bridge_views.py`
 - `python/rl/runtime/world_batch/adapter.py`
+- `src/main.cpp` (standalone native smoke caller)
+
+The standalone native caller now constructs `RuntimeFacade`, loads the
+scenario through the facade, applies a `BatchWorldSetupRequest`, steps through
+the facade, and reads observations through the facade query surface. The
+`ef_app` target links `ef_facade` plus the explicitly required CPU GPU-helper
+archive for the existing world-batch compatibility path; it no longer
+constructs the raw `SimulationKernel`.
 
 The native facade now exposes the bounded command-link configuration DTO and
 the batch communication-packet query used by the migrated contracts. The DTO
@@ -55,6 +63,21 @@ Focused maintained contracts passed:
 - same-process comm set: **4 passed**;
 - migrated naval/common-core and screen contracts: **10 passed**;
 - route-generator contracts: **2 passed**.
+
+The native migration was rebuilt and exercised separately:
+
+```powershell
+cmake --build build-long-horizon-p5c-shared --config Debug --target ef_app --parallel 4
+$env:PATH="$PWD\build-long-horizon-p5c-shared\Debug;$env:PATH"
+& "$PWD\build-long-horizon-p5c-shared\Debug\ef_app.exe"
+```
+
+The build completed and the executable returned exit code `0`; it loaded the
+example database, spawned one facade-owned aircraft, stepped 60 ticks, and
+reported observations at ticks 0, 10, 20, 30, 40, and 50. The P8-A closure
+inventory now lists only `src/core/engine/world_batch_runtime.cpp` under native
+default-kernel callers; `src/main.cpp` is no longer a raw default constructor.
+This remains a local standalone smoke path, not production caller cutover.
 
 ## Follow-up parity verification
 

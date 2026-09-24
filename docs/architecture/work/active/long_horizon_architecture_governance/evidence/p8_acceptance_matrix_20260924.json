@@ -3,7 +3,7 @@
   "kind": "derived_acceptance_matrix",
   "authority": "docs/architecture/work/active/long_horizon_architecture_governance/long_horizon_architecture_governance_acceptance_20260825.md",
   "phase": "P8-A",
-  "last_verified": "2026-09-24",
+  "last_verified": "2026-09-25",
   "decision": "not_eligible",
   "decision_reason": "P5-D production cutover, representative cadence, rollback-window operation, provider restore drills, and independent P8-B review remain open.",
   "requirements": [
