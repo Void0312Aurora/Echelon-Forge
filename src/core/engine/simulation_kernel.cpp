@@ -15,6 +15,7 @@
 #include "runtime/providers/default_simulation_provider_catalog.h"
 #include "runtime/contracts/authority/runtime_authority_contract.h"
 #include "runtime/contracts/composition/resolved_execution_plan.v1.generated.h"
+#include "systems/domains/ground/movement_effects.h"
 
 #include <spdlog/spdlog.h>
 
@@ -385,6 +386,34 @@ double SimulationKernel::get_ground_slope_deg(double x, double y) {
         return model->get_ground_slope_deg(x, y);
     }
     return std::numeric_limits<double>::quiet_NaN();
+}
+
+std::array<double, 8> SimulationKernel::get_ground_movement_effect_observation(double x,
+                                                                                 double y,
+                                                                                 int stance_code) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_ground_movement_effect_observation");
+    if (IEnvironmentModel *model = environment_model()) {
+        const auto terrain = model->get_terrain_at(x, y);
+        const auto observation = ground_infantry_movement_detail::evaluate_movement_effects(
+            terrain, model->get_ground_slope_deg(x, y), static_cast<GroundStance>(stance_code));
+        return {static_cast<double>(observation.surface),
+                observation.slope_deg,
+                observation.vegetation_density,
+                observation.surface_multiplier,
+                observation.slope_multiplier,
+                observation.vegetation_multiplier,
+                observation.stance_multiplier,
+                observation.combined_multiplier};
+    }
+    return {static_cast<double>(IEnvironmentModel::SurfaceType::Obstacle),
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0};
 }
 
 std::array<double, 7> SimulationKernel::get_ground_field_semantic_observation(double x, double y) {

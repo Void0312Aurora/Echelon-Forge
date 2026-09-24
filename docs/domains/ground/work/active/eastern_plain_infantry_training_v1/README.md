@@ -51,7 +51,7 @@ accepted.
 - Native single-soldier training probe:
   `python/rl/ground/native_probe.py` (`GroundInfantryNativeProbe`). It drives
   the compiled kernel through reset/step/trace/replay and exposes the admitted
-  terrain, field-semantic, and weapon-state observations. Its authority is
+  terrain, owner-derived movement-effect, field-semantic, and weapon-state observations. Its authority is
   `native_probe_only`; it is not a production WorldBatch environment.
 - Gymnasium adapter over the native probe:
   `python/rl/ground/native_env.py` (`GroundInfantryNativeEnv`). It preserves

@@ -114,6 +114,18 @@ void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel> &ker
         .def("get_ground_slope_deg", &SimulationKernel::get_ground_slope_deg,
              "Get bounded native Ground terrain slope in degrees", nb::arg("x"), nb::arg("y"))
         .def(
+            "get_ground_movement_effect_observation",
+            [](SimulationKernel &self, double x, double y, int stance_code) {
+                const auto sample =
+                    self.get_ground_movement_effect_observation(x, y, stance_code);
+                return std::make_tuple(sample[0], sample[1], sample[2], sample[3], sample[4],
+                                       sample[5], sample[6], sample[7]);
+            },
+            "Get native Ground movement effects as (surface, slope_deg, vegetation_density, "
+            "surface_multiplier, slope_multiplier, vegetation_multiplier, stance_multiplier, "
+            "combined_multiplier)",
+            nb::arg("x"), nb::arg("y"), nb::arg("stance_code"))
+        .def(
             "get_ground_field_semantic_observation",
             [](SimulationKernel &self, double x, double y) {
                 const auto sample = self.get_ground_field_semantic_observation(x, y);

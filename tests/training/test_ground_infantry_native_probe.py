@@ -104,6 +104,9 @@ def test_native_ground_probe_map_matrix_exposes_vegetation_cost() -> None:
     assert int(crop_observation["terrain"][1]) == 3  # SoftDirt
     assert int(tree_observation["terrain"][1]) == 3  # SoftDirt
     assert tree_observation["terrain"][4] > crop_observation["terrain"][4]
+    assert tree_observation["movement_effects"][2] > crop_observation["movement_effects"][2]
+    assert tree_observation["movement_effects"][5] < crop_observation["movement_effects"][5]
+    assert tree_observation["movement_effects"][7] < crop_observation["movement_effects"][7]
     assert crop_transition.blocked is False
     assert tree_transition.blocked is False
     assert 0.0 < tree_transition.trace["moved_distance_m"] < crop_transition.trace[
@@ -268,6 +271,7 @@ def test_native_ground_probe_reset_and_step_use_compiled_observation_surfaces() 
         "velocity_local_enu_mps",
         "terrain",
         "terrain_effects",
+        "movement_effects",
         "field_semantics",
         "weapon_state",
         "health_state",
@@ -280,6 +284,10 @@ def test_native_ground_probe_reset_and_step_use_compiled_observation_surfaces() 
     assert len(observation["terrain_effects"]) == 1
     assert math.isfinite(observation["terrain_effects"][0])
     assert observation["terrain_effects"][0] >= 0.0
+    assert len(observation["movement_effects"]) == 8
+    assert observation["movement_effects"][0] == pytest.approx(observation["terrain"][1])
+    assert observation["movement_effects"][3] >= 0.0
+    assert observation["movement_effects"][7] >= 0.0
     assert len(observation["field_semantics"]) == 7
     assert len(observation["weapon_state"]) == 8
     assert tuple(observation["health_state"]) == (100.0, 100.0)
@@ -295,6 +303,7 @@ def test_native_ground_probe_reset_and_step_use_compiled_observation_surfaces() 
     assert len(transition.trace["transition_observation"]) == 7
     assert transition.trace["transition_observation"][0] == pytest.approx(1.0)
     assert transition.observation["state"][1] == pytest.approx(1.0)
+    assert transition.observation["movement_effects"][6] == pytest.approx(0.65)
     assert transition.observation["position_local_enu_m"] != observation[
         "position_local_enu_m"
     ]

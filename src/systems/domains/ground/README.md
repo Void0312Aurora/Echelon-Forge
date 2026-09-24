@@ -10,15 +10,17 @@ route following, general passability, sensing, fires, logistics, and observation
 export remain outside this admission. The damage system matches spawned ground
 entities and advances the ground-owned state, while `GroundInfantryMovement`
 consumes the maintained `MissionCommand` ground slice and applies deterministic
-surface/slope costs plus the environment's local sampled transition check.
+surface/slope/vegetation costs plus the environment's local sampled transition
+check. The shared `movement_effects.h` helper also owns the reported movement
+multipliers, so training observations do not reimplement the movement formula.
 
 ## Allowed
 
 - Per-tick progression of the ground-owned damage state and its projection into
   the shared platform capability fields.
 - Deterministic horizontal movement for individual Ground fixtures with an active
-  `MissionCommandGround::MoveStatic` directive, using shared terrain surface and
-  slope queries.
+  `MissionCommandGround::MoveStatic` directive, using shared terrain surface,
+  slope, and vegetation queries.
 - Damage-control sequencing for ground elements: fire load, ignition sources,
   structural loss, and casualties.
 - Calls into the shared `systems/combat/damage_system_common.h` helpers, so
@@ -41,6 +43,9 @@ surface/slope costs plus the environment's local sampled transition check.
 - [movement_system.h](movement_system.h)
   - Registers `GroundInfantryMovement`, the bounded `MoveStatic` consumer and
     kinematic step for the individual infantry fixture.
+- [movement_effects.h](movement_effects.h)
+  - Owns the shared surface, slope, vegetation, and stance speed multipliers
+    used by movement and the bounded native observation API.
 
 ## Dependency Direction
 

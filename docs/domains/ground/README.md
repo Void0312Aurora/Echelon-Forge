@@ -35,14 +35,16 @@ remain with their respective owners.
 - The maintained tasking cadence baseline is `1 Hz`.
 - `Ground_Infantry_Soldier_MVP` is a native individual Ground fixture. The
   `GroundInfantryMovement` system consumes an admitted `MoveStatic` command,
-  applies deterministic surface and slope speed costs through the shared
-  `IEnvironmentModel`, and advances a bounded horizontal kinematic step. This
+  applies deterministic surface, slope, and vegetation speed costs through the
+  shared `IEnvironmentModel`, and advances a bounded horizontal kinematic step.
+  The kernel also exposes the owner-derived movement-effect multipliers to the
+  native training probe. This
   is a single-agent movement primitive, not route following, passability,
   formation, or full land-combat dynamics. The admission record is
   [Ground Infantry Movement v1](work/active/ground_infantry_movement_v1/README.md).
 - The default environment provider can explicitly load the verified Arnis
   continuous elevation/landcover raster pair, and the maintained kernel exposes
-  a bounded terrain observation tuple for training adapters. Tree-line/settlement
+  bounded terrain and movement-effect observation tuples for training adapters. Tree-line/settlement
   semantics, general passability, and track/sensor observation export remain
   held; bounded river/bridge surface sampling is admitted.
 - `GroundWeaponState` and `SimulationKernel.fire_ground_weapon` now admit a

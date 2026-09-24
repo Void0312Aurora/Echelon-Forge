@@ -64,6 +64,9 @@ else:
                     "terrain_effects": spaces.Box(
                         low=-np.inf, high=np.inf, shape=(1,), dtype=np.float32
                     ),
+                    "movement_effects": spaces.Box(
+                        low=-np.inf, high=np.inf, shape=(8,), dtype=np.float32
+                    ),
                     "field_semantics": spaces.Box(
                         low=-np.inf, high=np.inf, shape=(7,), dtype=np.float32
                     ),

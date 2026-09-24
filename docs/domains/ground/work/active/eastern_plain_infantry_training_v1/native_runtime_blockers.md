@@ -101,7 +101,11 @@ The same local terrain owner now exposes `SimulationKernel.get_ground_slope_deg`
 to the native probe, so the training trace can attribute movement cost to a
 replayable slope observation rather than recomputing it in Python. This remains
 a slope observation only; climbability, fatigue, and full terrain physics stay
-held.
+held. The shared `movement_effects.h` owner now also exposes the surface,
+vegetation, stance, and combined speed multipliers through
+`SimulationKernel.get_ground_movement_effect_observation`; the movement system
+and native probe consume the same calculation rather than maintaining two
+independent Python formulas.
 
 `python/rl/ground/native_probe.py` now supplies a deterministic native
 reset/step/trace/replay adapter over these admitted surfaces. Its blocked-step

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <algorithm>
 #include <cmath>
 #include <flecs.h>
 #include <limits>
@@ -10,55 +9,9 @@
 #include "components/command/mission_command.h"
 #include "components/domains/ground/ground_capabilities.h"
 #include "core/interfaces/environment_model.h"
+#include "systems/domains/ground/movement_effects.h"
 
 namespace ground_infantry_movement_detail {
-
-inline double finite_nonnegative(double value) {
-    return std::isfinite(value) ? std::max(0.0, value) : 0.0;
-}
-
-inline double surface_speed_multiplier(IEnvironmentModel::SurfaceType surface) {
-    using Surface = IEnvironmentModel::SurfaceType;
-    switch (surface) {
-    case Surface::Concrete:
-    case Surface::Asphalt:
-        return 1.0;
-    case Surface::HardPacked:
-        return 0.90;
-    case Surface::SoftDirt:
-        return 0.75;
-    case Surface::Water:
-    case Surface::Obstacle:
-        return 0.0;
-    }
-    return 0.0;
-}
-
-inline double slope_speed_multiplier(double slope) {
-    if (!std::isfinite(slope) || slope < 0.0) {
-        return 0.0;
-    }
-    return std::clamp(1.0 - slope / 60.0, 0.20, 1.0);
-}
-
-inline double vegetation_speed_multiplier(double density) {
-    if (!std::isfinite(density) || density < 0.0) {
-        return 0.0;
-    }
-    return std::clamp(1.0 - 0.25 * std::clamp(density, 0.0, 1.0), 0.50, 1.0);
-}
-
-inline double stance_speed_multiplier(GroundStance stance) {
-    switch (stance) {
-    case GroundStance::Stand:
-        return 1.0;
-    case GroundStance::Crouch:
-        return 0.65;
-    case GroundStance::Prone:
-        return 0.35;
-    }
-    return 0.0;
-}
 
 inline void stop(Velocity &velocity) {
     velocity.vx = 0.0;

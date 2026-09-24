@@ -57,8 +57,8 @@
     },
     "terrain_effects": {
       "status": "bounded_native_observation",
-      "entrypoint": "SimulationKernel.get_ground_slope_deg",
-      "fields": ["slope_deg"],
+      "entrypoint": "SimulationKernel.get_ground_movement_effect_observation",
+      "fields": ["surface_type", "slope_deg", "vegetation_density", "surface_speed_multiplier", "slope_speed_multiplier", "vegetation_speed_multiplier", "stance_speed_multiplier", "combined_speed_multiplier"],
       "does_not_claim": ["climbability", "fatigue", "full_physics"]
     }
   },
@@ -92,7 +92,7 @@
       "observation_owner": "GroundInfantryNativeProbe",
       "termination_reasons": ["waypoint_reached", "agent_incapacitated"],
       "truncation_reasons": ["max_steps", "blocked_step_limit"],
-      "observation_fields": ["position_local_enu_m", "velocity_local_enu_mps", "terrain", "terrain_effects", "field_semantics", "weapon_state", "health_state", "command_state", "mission_state", "waypoint_state", "state"],
+      "observation_fields": ["position_local_enu_m", "velocity_local_enu_mps", "terrain", "terrain_effects", "movement_effects", "field_semantics", "weapon_state", "health_state", "command_state", "mission_state", "waypoint_state", "state"],
       "action_boundary": "direct_route_intent_only",
       "waypoint_boundary": "fixed_direct_sequence_only"
     },
@@ -120,6 +120,7 @@
       "velocity_local_enu_mps",
       "heading_and_stance",
       "elevation_and_slope",
+      "terrain_movement_effects",
       "landcover_class",
       "nearest_tree_line_distance_and_bearing",
       "nearest_settlement_distance_and_bearing",
