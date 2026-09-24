@@ -159,6 +159,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | KC-130J held-record completion | Added NAVAIR, USMC and Lockheed Martin platform/tanker blocks with source-labelled dimensional, mass, propulsion, range, offload and transport capacities; C-130J-30 and HC-130J values remain excluded |
 | Tiger HAD held-record completion | Added Airbus HAD geometry, engine, fuel, conditioned performance, mission-system and weapon-capacity rows plus a separate French retrofit/operator package; HAP/UHT/MkIII values remain excluded |
 | A-50U held-record completion | Added Xinhua A-50U performance and separate Airforce Technology/RedStar upgrade, crew, mission-system and family-baseline packages; 190/210 t and 800/850 km/h source readings remain separate |
+| Residual variant-boundary audit | Rechecked Y-20 and M1252 with current official, specialist and community alternatives; no base-variant package closes the remaining gaps, so both stay `cataloged` rather than receiving cross-variant values |
 
 ## Retracted Findings
 
