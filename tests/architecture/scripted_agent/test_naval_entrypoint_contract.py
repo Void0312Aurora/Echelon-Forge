@@ -13,3 +13,6 @@ def test_naval_station_entrypoint_resolves_declared_scripted_capability() -> Non
     assert "_scripted_model_id_for_scenario" in source
     assert "parse_scripted_capability" in source
     assert "resolve_scripted_model_id" in source
+    assert "ScriptedRuntimeAgent" in source
+    assert "ScriptedRuntimeAgentSpec" in source
+    assert "scripted_runtime_agent.step" in source

@@ -100,6 +100,9 @@ class NavalStationPolicyEvalTests(unittest.TestCase):
     self.assertGreater(float(payload.get("reward_total")), 0.0)
     self.assertEqual(payload.get("forbidden_reward_terms_present"), [])
     self.assertEqual(payload.get("required_reward_terms_missing"), [])
+    self.assertEqual(int(payload.get("scripted_runtime_decisions")), 32)
+    self.assertEqual(int(payload.get("scripted_runtime_holds")), 0)
+    self.assertIn("naval.station.screen_hold:seed=20260525:reset=1", str(payload.get("scripted_runtime_identity")))
 
     reward_terms = dict(payload.get("reward_terms_sum", {}) or {})
     self.assertIn("naval_station_error_penalty", reward_terms)
