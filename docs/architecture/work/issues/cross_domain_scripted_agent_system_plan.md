@@ -903,3 +903,23 @@ to a dedicated owner-local evidence document.
   then investigate post-launch/terminal assessment independently of the Air C2
   landing residual and EW action-surface gap. No unrelated domain task is
   blocked.
+
+### 2026-09-25 — Air post-launch assessment alternative probe
+
+- Starting commit: `de418726`.
+- Alternative command: the same Stage 1 C2/ROE hybrid scenario was run through
+  `WorldBatchVecEnv` with the existing post-launch assessment path enabled for
+  `240` steps, then repeated with an `800`-step assessment budget.
+- Direct result: both runs accepted the scripted release at step `282`; the
+  assessment path then terminated at its own budget with
+  `post_launch_assessment_timeout`, mission status `[1, 0, 0, 0]`, and no
+  objective success. Increasing the budget from `240` to `800` did not change
+  the terminal class.
+- Blocker record: the residual is not explained by a short assessment window;
+  the target/weapon consequence or terminal-objective path remains unresolved.
+  The existing assessment adapter is retained as an alternative and no
+  unreviewed direct world-state write is introduced.
+- Continuation choice: preserve the release evidence as a bounded tactical
+  adapter gate, defer tactical `playable` promotion, and continue with the
+  independent EW and roster/interface lines. No unrelated domain task is
+  blocked.
