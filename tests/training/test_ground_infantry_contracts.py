@@ -129,7 +129,12 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
     assert contract["map_profile"]["runtime_consumption"].startswith("held_until_")
     assert contract["action_space"]["status"] == "bounded_native_probe_and_proxy"
     assert contract["action_space"]["native_status"] == "implemented_in_native_probe_only"
-    assert contract["action_space"]["native_route_intent"] == "direct_only"
+    assert contract["action_space"]["native_action_fields"] == [
+        "heading_normalized",
+        "speed_fraction",
+        "stance_normalized",
+    ]
+    assert contract["action_space"]["native_route_intent"] == "direct_only_metadata"
     assert contract["action_space"]["replay_entrypoint"] == "GroundInfantryNativeProbe.replay"
     assert contract["rl_harness"]["status"] == "non_production_proxy_and_native_probe"
     assert contract["rl_harness"]["authority"] == "native_probe_only_for_native_entrypoint"
@@ -141,6 +146,7 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
     assert contract["rl_harness"]["native_env"]["entrypoint"] == "python.rl.ground.native_env:GroundInfantryNativeEnv"
     assert contract["rl_harness"]["native_env"]["production_boundary"] == "not_world_batch"
     assert contract["rl_harness"]["native_env"]["observation_bounds"] == "finite_source_backed_fixture_or_probe_horizon"
+    assert contract["rl_harness"]["native_env"]["action_boundary"] == "normalized_heading_speed_stance_with_direct_route_metadata"
     assert "mission_state" in contract["rl_harness"]["native_env"]["observation_fields"]
     assert "waypoint_state" in contract["rl_harness"]["native_env"]["observation_fields"]
     assert contract["rl_harness"]["native_env"]["truncation_reasons"] == [

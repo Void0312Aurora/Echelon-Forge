@@ -59,7 +59,9 @@ def test_native_ground_gym_adapter_preserves_probe_authority_and_observation() -
 
     assert info["authority"] == "native_probe_only"
     assert info["production_boundary"] == "not_world_batch"
-    assert float(env.action_space.high[3]) == pytest.approx(0.0)
+    assert env.action_space.shape == (3,)
+    assert tuple(env.action_space.low) == pytest.approx((-1.0, 0.0, 0.0))
+    assert tuple(env.action_space.high) == pytest.approx((1.0, 1.0, 1.0))
     assert env.observation_space.contains(observation)
 
     next_observation, reward, terminated, truncated, step_info = env.step(
@@ -71,6 +73,18 @@ def test_native_ground_gym_adapter_preserves_probe_authority_and_observation() -
     assert isinstance(truncated, bool)
     assert step_info["authority"] == "native_probe_only"
     assert len(env.trace) == 2
+
+
+def test_native_ground_gym_adapter_maps_normalized_action_to_probe_fields() -> None:
+    env = GroundInfantryNativeEnv(
+        GroundInfantryNativeProbe.from_fixture(max_steps=2)
+    )
+    env.reset(seed=42)
+    _observation, _reward, _terminated, _truncated, info = env.step(
+        [0.5, 0.5, 1.0]
+    )
+
+    assert info["trace"]["action"] == pytest.approx([90.0, 0.5, 2.0, 0.0])
 
 
 def test_native_ground_gym_adapter_publishes_finite_observation_bounds() -> None:
