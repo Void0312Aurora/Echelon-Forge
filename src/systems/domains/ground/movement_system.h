@@ -87,8 +87,9 @@ inline void stop(Velocity &velocity) {
 // MissionCommand ground slice.  It supplies deterministic heading/speed and
 // surface/slope cost for a Ground entity. Ground units do not yet participate
 // in the aircraft rigid-body integrator, so this stage also owns the small
-// kinematic drift for the admitted move contract. Route intent, bridge
-// admission, stance, cover, and observation export remain separate owners.
+// kinematic drift for the admitted move contract. Route intent, cover, and
+// observation export remain separate owners; local bridge/passability evidence
+// is supplied by the shared environment transition query.
 inline void register_ground_infantry_movement_system(flecs::world &ecs) {
     ecs.system<Transform, Velocity, const KeyEntity, const MissionCommand,
                const GroundInfantryCapability>("GroundInfantryMovement")
