@@ -656,3 +656,17 @@ to a dedicated owner-local evidence document.
   for the tested seed and static-randomization condition. Full command/report
   roundtrip, full replay, visualization process/render, multi-unit parity, and
   promotion to final `playable` remain open.
+
+### 2026-09-25 — Air randomized full mission probe
+
+- Starting commit: `da0a3096`.
+- Direct command repeated the complete Air scripted scenario without
+  `--zero_randomization`, using seed 0 and the local compiled binding.
+- Result: the run exited 0 after `16942` steps with
+  `termination_reason: success_objective`, `mission_status: [4, 1, 1, 1]`,
+  `world_yaw_deg: 197.5728614138369`, final runway geometry true, and final
+  runway cross-track `0.916 m`.
+- Evidence boundary: the Air single-world mission now has one static and one
+  randomized direct success record. This still does not establish accepted
+  seed coverage, full command/report roundtrip, full replay, visualization
+  process/render, multi-unit parity, or final `playable` promotion.
