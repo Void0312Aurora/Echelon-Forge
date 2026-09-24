@@ -398,3 +398,21 @@ to a dedicated owner-local evidence document.
   worktree has no local `ef_py` build artifact. The static and pure-Python
   proxies above are retained; no repeated import retry is warranted until the
   compatible artifact is available.
+
+### 2026-09-24 — WP4 naval station baseline adapter slice
+
+- Starting commit: `11996665`.
+- Affected owners: Naval domain, cooperative runtime/evaluation, and
+  architecture contract tests.
+- Expected evidence: the maintained N4 station baseline obtains its neutral
+  scripted action producer from the shared registry, while station geometry,
+  contact/reporting, recovery, and reward ownership remain in the existing
+  naval scenario runtime.
+- Capability boundary: this is an `adapter` registration for the scoped
+  station-hold baseline, not a claim of full naval combat or fleet-playable
+  coverage.
+- Focused proxy verification: the naval registry lifecycle/route tests plus
+  the air registry and lifecycle tests passed `10 passed`; Python compilation
+  and `git diff --check` passed. Full cooperative N4 execution remains subject
+  to the already recorded missing local `ef_py` artifact and is not promoted
+  from this proxy evidence.
