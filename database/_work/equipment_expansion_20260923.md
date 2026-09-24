@@ -64,7 +64,7 @@ calibration package, inventory claim, or final simulation configuration.
 | R-19 | KC-130J held-record completion from NAVAIR, USMC and manufacturer profiles | complete | `3c125677` |
 | R-20 | Tiger HAD held-record completion from Airbus technical and French retrofit profiles | complete | `27cd8fd0` |
 | R-21 | A-50U held-record completion from Xinhua, Airforce Technology and RedStar profiles | complete | `c79fd30c` |
-| R-22 | Residual Y-20 / M1252 variant-boundary audit and blocker refresh | ready to commit | pending |
+| R-22 | Residual Y-20 / M1252 variant-boundary audit and blocker refresh | complete | `aeb650ed` |
 
 ## Blocker / skip ledger
 
