@@ -45,7 +45,9 @@ behavior, acceleration, fatigue, cover/concealment, line of sight, river or
 bridge passability, indirect fires, suppression, logistics, or RL policy
 training. The native provider now consumes bounded Arnis hydrology and bridge
 road vectors; tree lines, settlements, structures, route graphs, and general
-passability remain later packages.
+passability remain later packages. The movement consumer also checks the
+one-tick destination cell and blocks a transition into water or an unknown /
+obstacle cell without advancing the transform.
 
 ## Evidence
 

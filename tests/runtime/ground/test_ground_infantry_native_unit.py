@@ -278,6 +278,27 @@ def test_native_infantry_consumes_arnis_raster_and_stops_on_water() -> None:
     )
     assert float(sim.get_unit_velocity(bridge_id)[0]) > 0.0
 
+    boundary_id = int(
+        sim.spawn_unit(
+            ef_py.Side.Blue,
+            "Ground_Infantry_Soldier_MVP",
+            -180.0,
+            100.0,
+            0.0,
+        )
+    )
+    boundary_command = ef_py.MissionCommand()
+    boundary_command.active = True
+    boundary_command.cmd_heading_deg = 90.0
+    boundary_command.cmd_speed_mps = 2000.0
+    boundary_command.ground_task_mode = ef_py.GroundTaskMode.MoveStatic
+    sim.set_command_link(boundary_id, 0.0, 0.0)
+    sim.set_mission_command(boundary_id, boundary_command)
+    boundary_before = tuple(sim.get_unit_position(boundary_id))
+    sim.step()
+    assert tuple(sim.get_unit_velocity(boundary_id)) == (0.0, 0.0, 0.0)
+    assert tuple(sim.get_unit_position(boundary_id)) == boundary_before
+
 
 def test_native_infantry_ground_rifle_requires_track_and_applies_damage() -> None:
     sim = ef_py.SimulationKernel()
