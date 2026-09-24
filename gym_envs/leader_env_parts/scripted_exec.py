@@ -2,14 +2,24 @@ from __future__ import annotations
 
 from typing import Any
 
-from python.tasking_contracts.air_scripted_execution import AirScriptedExecutionModel
+from python.tasking_contracts.air_scripted_execution import (
+    AIR_SCRIPTED_EXECUTION_MODEL_ID,
+    AIR_SCRIPTED_MODEL_REGISTRY,
+)
 
 
 class ScriptedExecutiveController:
-    def __init__(self, env: Any, *, transition_alt_agl_m: float = 140.0):
+    def __init__(
+        self,
+        env: Any,
+        *,
+        transition_alt_agl_m: float = 140.0,
+        model_id: str = AIR_SCRIPTED_EXECUTION_MODEL_ID,
+    ):
         self.env = env
         self.transition_alt_agl_m = float(transition_alt_agl_m)
-        self._model: AirScriptedExecutionModel | None = None
+        self.model_id = str(model_id).strip() or AIR_SCRIPTED_EXECUTION_MODEL_ID
+        self._model = None
 
     @property
     def active_mode(self) -> str:
@@ -37,7 +47,8 @@ class ScriptedExecutiveController:
             dt = float(getattr(self.env.unwrapped.sim, "get_time_step", lambda: 0.05)())
         except Exception:
             dt = 0.05
-        self._model = AirScriptedExecutionModel(
+        self._model = AIR_SCRIPTED_MODEL_REGISTRY.create(
+            self.model_id,
             action_dim=self.action_dim,
             dt=dt,
             transition_alt_agl_m=self.transition_alt_agl_m,
