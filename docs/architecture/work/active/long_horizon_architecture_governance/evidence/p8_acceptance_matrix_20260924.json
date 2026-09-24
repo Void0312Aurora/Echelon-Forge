@@ -40,9 +40,10 @@
       "evidence": [
         "docs/architecture/work/active/long_horizon_architecture_governance/decisions/p1c_rollout_operations_and_security_decision_20260825.md",
         "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p7a_retention_authority_20260924.md",
-        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p7b_local_sqlite_restore_drill_20260924.md"
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p7b_local_sqlite_restore_drill_20260924.md",
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5d_real_process_package_rollback_20260923.md"
       ],
-      "residual": "The local SQLite restore drill is bounded to the supported row; no admitted external provider restore drill or production rollback-window operation is recorded."
+      "residual": "The SQLite restore and long-lived rollback-window recheck are bounded to the supported local row; no admitted external provider restore drill or production rollback-window operation is recorded."
     },
     {
       "id": "P8-04-sustainability",

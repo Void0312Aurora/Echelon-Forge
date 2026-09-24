@@ -465,3 +465,78 @@ def test_runtime_facade_adapter_can_read_sqlite_rollout_snapshot(tmp_path: Path,
             adapter.refresh_rollout_admission()
     finally:
         ledger.close()
+
+
+def test_runtime_facade_adapter_rechecks_rollback_window_and_stable_before_backout(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A long-lived local adapter follows the durable window before backout.
+
+    The startup admission check alone is insufficient: the release controller
+    may advance the same admitted package through adoption and the bounded
+    rollback window while a process is alive.  The adapter must observe those
+    signed snapshots, and a later kill switch must still fail closed before a
+    mutation reaches the facade.
+    """
+
+    from python.rl.runtime.world_batch import adapter as adapter_module
+
+    ledger, token, release = _open_ledger(tmp_path)
+    try:
+        _advance_to_production(ledger, token, release)
+        reader = lambda: ledger.read_rollout_snapshot(
+            "release-evidence-test",
+            verification_key=evidence_fixtures.KEY,
+        )
+
+        class _Facade:
+            pass
+
+        monkeypatch.setattr(adapter_module.ef_py, "RuntimeFacade", lambda _world_count: _Facade())
+        adapter = adapter_module.RuntimeFacadeAdapter(
+            1,
+            production_rollout_key=evidence_fixtures.KEY,
+            production_rollout_snapshot_reader=reader,
+            require_production_admission=True,
+            production_release_id="release-evidence-test",
+            production_manifest_sha256=str(release["payload_sha256"]),
+            production_plan_sha256=evidence_fixtures.PLAN,
+            production_package_digest=evidence_fixtures.PACKAGE,
+            production_wheel_digest=evidence_fixtures.WHEEL,
+        )
+
+        predecessor = "decision-evidence-3"
+        for sequence, state in enumerate(("adoption-expanding", "rollback-window", "stable"), start=4):
+            decision_id = f"decision-evidence-{sequence}"
+            decision = _decision(
+                state=state,
+                sequence=sequence,
+                decision_id=decision_id,
+                predecessor=predecessor,
+            )
+            ledger.commit_rollout_admission(
+                token,
+                decision,
+                release_manifest=release,
+                run_receipt=_receipt_for(decision, release),
+                verification_key=evidence_fixtures.KEY,
+                audit_identity="release-controller-test",
+                expected_slot_version=sequence,
+            )
+            refreshed = adapter.refresh_rollout_admission()
+            assert refreshed is not None
+            assert refreshed.state == state
+            assert refreshed.production_authorized
+            predecessor = decision_id
+
+        ledger.trip_rollout_kill_switch(
+            token,
+            ["operator_backout"],
+            verification_key=evidence_fixtures.KEY,
+            audit_identity="release-controller-test",
+        )
+        with pytest.raises(RuntimeError, match="production rollout admission rejected"):
+            adapter.refresh_rollout_admission()
+    finally:
+        ledger.close()

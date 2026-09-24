@@ -1,7 +1,7 @@
 # P5-D Real Process And Package Rollback Evidence
 
-Status: `2026-09-24` — local supported-row rollback drill; production canary
-publication and P5-D acceptance remain open.
+Status: `2026-09-25` — local supported-row rollback and rollback-window
+recheck drill; production canary publication and P5-D acceptance remain open.
 
 This packet records the first executable process and package rollback drill
 behind the durable SQLite rollout controller. It uses two existing Windows
@@ -42,6 +42,16 @@ manifest, and RunReceipt binding.
    journals, source stop, caller resynchronization, and finalized receipt
    prerequisites.
 
+## Long-lived rollback-window recheck
+
+The durable snapshot reader was also exercised while a maintained adapter
+remained alive. The release controller advanced the same signed release
+through `adoption-expanding → rollback-window → stable`; after each commit the
+adapter reloaded the snapshot and remained production-authorized. A subsequent
+kill switch caused the same adapter to reject its next admission refresh before
+any facade mutation. This is a local single-process rollback-window operation,
+not a production cutover or an external-provider drill.
+
 ## Verification
 
 Executed in the isolated
@@ -56,9 +66,11 @@ python -m ruff check tools/maintenance/p5d_process_rollback_drill.py tests/archi
 git diff --check
 ```
 
-Results: the real process/package drill passed **1 test**; the combined
-P5-D durable admission, binding, gate, operations, rollback, and supported-row
-group passed **24 tests**; Ruff and the diff check passed.
+Results: the real process/package drill passed **1 test**; the durable SQLite
+admission file now passes **8 tests**, including the long-lived rollback-window
+recheck; the combined P5-D durable admission, binding, gate, operations,
+rollback, and supported-row group passes **27 tests**; Ruff and the diff check
+pass.
 
 The child process reports the actual `RuntimeFacade` type and SHA-256 of the
 loaded `ef_py` binding, plus the production-canary/backout state, release/plan
@@ -71,14 +83,15 @@ budget. No test-only facade stub is used for this drill.
 
 ## Boundary
 
-The drill proves the supported local Windows row and its durable backout
-chain. It does not admit remote or multi-process execution, and it does not
-claim the sole production-canary decision has been published. Measured
-multi-run SLO/adoption data, complete maintained caller parity, rollback-window
-retention, and rebuild retirement remain P5-D work.
+The drill proves the supported local Windows row, its durable backout chain,
+and the in-process rollback-window recheck. It does not admit remote or
+multi-process execution, and it does not claim the sole production-canary
+decision has been published. Representative release cadence, complete
+maintained caller parity, production rollback-window operation, and rebuild
+retirement remain P5-D work.
 
 Document kind: `evidence`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5d_real_process_package_rollback_20260923.md`
 Owner: `release/runtime integration`
-Last verified: `2026-09-24`
+Last verified: `2026-09-25`
