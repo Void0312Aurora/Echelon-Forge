@@ -211,6 +211,11 @@ authority handling, reset/replay, CLI execution, and visualization. It should
 then extend to two or more air units using the existing active-roster and
 world-batch facilities.
 
+Initial implementation slice: `AirScriptedExecutionModel` composes the
+maintained takeoff, stable-flight, and landing controllers behind the neutral
+scripted lifecycle. `gym_envs/leader_env_parts/scripted_exec.py` remains an
+environment adapter and no longer owns phase-controller composition.
+
 ### WP4 — Naval bounded playable slice
 
 Use the existing N4 tasking, contact/reporting, screen/station, and recovery
@@ -356,3 +361,17 @@ to a dedicated owner-local evidence document.
 - Residual: run the repository-managed architecture and runtime tests after a
   compatible local `ef_py` build artifact is available. This does not block
   independent WP1/WP3 design work.
+
+### 2026-09-24 — WP3 air execution composition slice
+
+- Starting commit: `d8b021ae`.
+- Change batch: `AirScriptedExecutionModel`, air model registration, leader
+  execution adapter delegation, and focused air lifecycle tests.
+- Proxy verification: neutral registry plus air lifecycle tests passed `7
+  passed` with `pytest --noconftest`; an isolated adapter probe passed for
+  takeoff and phase transition to stable flight.
+- Repository-managed compatibility collection remains deferred because its
+  import path requires the missing local `ef_py` artifact. This is the same
+  environment condition recorded above, not a second code blocker.
+- Residual: scenario-level command/report roundtrip, CLI, visualization, and
+  facade-backed acceptance are still open for the next slice.
