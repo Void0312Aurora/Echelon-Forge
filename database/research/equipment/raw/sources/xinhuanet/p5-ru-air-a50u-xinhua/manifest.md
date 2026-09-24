@@ -18,6 +18,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Estimation / uncertainty: Tier A state-media report, authoritative for the quoted public performance claims but not a Russian service manual. Numeric values retain the article's wording and conditions.
 
 ## Extracted parameter notes

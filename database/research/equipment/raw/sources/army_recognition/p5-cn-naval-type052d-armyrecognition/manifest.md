@@ -18,6 +18,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Configuration: Baseline Type 052D/Kunming class. Type 052C, stretched Type 052DL, export Type 052DE and batch-specific CIWS/diesel changes are not merged.
 Estimation / uncertainty: Geometry, full-load displacement, speed, range and systems are a secondary page cross-check; no normal-displacement or armour measurement is published, so the leaf's 6,000-6,500 t standard-displacement and survivability bounds remain non-official estimates.
 Availability: Page returned HTTP 200 when checked on 2026-09-13.

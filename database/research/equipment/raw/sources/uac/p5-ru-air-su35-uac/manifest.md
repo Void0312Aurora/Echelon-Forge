@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: UAC Su-35 family data used for the Russian Su-35S research record's common airframe and performance fields. The separate Tier C package remains the source for approximate Su-35S empty mass.
 Estimation / uncertainty: Tier B manufacturer-group page. The page publishes family/type data and does not certify every Russian service batch separately.
 

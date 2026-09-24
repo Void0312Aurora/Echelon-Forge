@@ -20,6 +20,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimate status: Yes; approximate 36.3 t figure is a manufacturer/industry nominal estimate, not a measured Army configuration
 Estimation / uncertainty: The approximately 36.3 t combat-mass figure is a direct manufacturer/industry nominal claim, but remains an estimate rather than a measured Army configuration. No other numeric values are taken from this page; it is not an official Army technical specification.
 

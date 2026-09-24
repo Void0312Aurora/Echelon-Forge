@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: AIM-9X Sidewinder, with Block II datalink/thrust-vectoring context retained where the page states it.
 Estimation / uncertainty: Tier A government product page. Classified fields are recorded as classified rather than estimated.
 

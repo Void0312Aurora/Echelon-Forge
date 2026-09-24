@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: HC-130J Combat King II. The aircraft is an extended-range C-130J-derived personnel-recovery platform; the page's stated operating block is not generalized to every C-130J.
 Estimation / uncertainty: Tier A service fact sheet. The source reports speed as indicated airspeed and range as beyond 4,000 miles; both qualifiers are retained.
 

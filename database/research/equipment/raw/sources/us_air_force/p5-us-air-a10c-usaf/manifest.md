@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: A-10C Thunderbolt II. The fact sheet is an aircraft-level capability and characteristic source; the listed weapons are an employment set, not a claim that every load is simultaneous.
 Estimation / uncertainty: Tier A service fact sheet. The page reports rounded U.S. customary values with metric conversions; no unsupported conversion or empty-weight estimate is added.
 

@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: P-3C Orion, with the page's P-3C Update III baseline and its stated reserve-squadron context. The EP-3E and other derivatives are not merged.
 Estimation / uncertainty: Tier A Navy fact file. The range entries retain the source's radius/on-station conditions; no empty mass or fuel quantity is inferred.
 

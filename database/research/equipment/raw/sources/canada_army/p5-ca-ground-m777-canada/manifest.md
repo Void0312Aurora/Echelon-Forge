@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: M777 lightweight towed howitzer; M777ER and national fire-control kits are not merged.
 Estimation / uncertainty: Tier A government equipment page. Conventional and Excalibur ranges are retained as separate ammunition conditions.
 

@@ -19,6 +19,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimation / uncertainty: The 55,330 kg, dimensions, engine/transmission, speed, range, crew, magazine and sighting values are direct page values. The 60-360 individual-module bound and 500-2,000-round secondary-MG bound are simulation estimates, not official specifications; charge count, armour detail and retrofit applicability remain uncertain.
 
 ## Use and estimate basis

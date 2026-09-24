@@ -21,6 +21,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimate status: Yes; trade-publication compilation; vehicle-only mass is explicitly not a loaded combat mass
 Estimation / uncertainty: The dimensions, 10,886 kg vehicle mass, crew, range, speed, loadout and transportability values are direct article values; the vehicle-only mass is not a loaded combat mass, and any loaded-mass interpretation is an estimate. The trade-publication values are not official Army technical specifications.
 

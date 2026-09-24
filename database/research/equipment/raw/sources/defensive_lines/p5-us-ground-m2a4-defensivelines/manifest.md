@@ -21,6 +21,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimate status: Yes; secondary report of a production configuration, not an official measurement
 Estimation / uncertainty: The 675 hp Cummins VTA903E-T675 and HMPT-800-3ECB statements are direct article claims; exact serial/block applicability is unresolved and no dimensions, mass or performance estimates are made here. This Tier C report is not an official Army technical specification.
 

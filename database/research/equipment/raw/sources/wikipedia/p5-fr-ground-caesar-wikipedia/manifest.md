@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Baseline CAESAR 6x6 public summary; Mk II and 8x8 values excluded.
 Estimation / uncertainty: Tier C community summary; used for system description only, not to invent a complete customer fit.
 

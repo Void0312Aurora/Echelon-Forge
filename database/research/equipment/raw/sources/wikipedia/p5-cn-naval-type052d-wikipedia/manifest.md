@@ -18,6 +18,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Configuration: Community-compiled class page; baseline Type 052D and stretched Type 052DL are listed separately. The leaf uses it only for public displacement context and does not copy later-batch values.
 Estimation / uncertainty: Public class dimensions, full-load displacement, speed, range and fit are community-compiled cross-check values; the 6,000-6,500 t normal-displacement interval is an estimate because no PLAN normal-displacement table is published, and this is not first-party confirmation.
 Availability: Page returned HTTP 200 when checked on 2026-09-13.

@@ -19,6 +19,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimate status: Yes; secondary historical synthesis, not a British Army technical-manual measurement.
 
 ## Use and estimate basis

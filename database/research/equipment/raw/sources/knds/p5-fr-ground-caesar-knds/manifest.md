@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: CAESAR 6x6 brochure; Mk II and 8x8 variants are not merged.
 Estimation / uncertainty: Tier B manufacturer brochure. Combat weight is explicitly an upper bound.
 

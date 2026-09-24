@@ -20,6 +20,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Availability: URL returned HTTP 404 to the current command-line probe on 2026-09-13; Dassault and specialist historical references remain the active retrievable sources for numeric gaps.
 
 ## Use

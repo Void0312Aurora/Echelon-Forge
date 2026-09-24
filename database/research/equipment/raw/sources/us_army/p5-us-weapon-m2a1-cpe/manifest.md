@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: M2A1 receiver and barrel with flash hider and carrying handle; legacy M2 values are retained as a named alternate.
 Estimation / uncertainty: Tier A government equipment page; mass excludes mount and ammunition.
 

@@ -21,6 +21,7 @@ Retention: manifest and citation record only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 
 ## Reference basis
 

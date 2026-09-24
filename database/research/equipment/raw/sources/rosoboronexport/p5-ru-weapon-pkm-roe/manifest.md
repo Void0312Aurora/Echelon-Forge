@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: PKM general-purpose machine gun; PKP and PK variants are separate.
 Estimation / uncertainty: Tier B manufacturer/export product profile; source is a product brochure rather than a service manual.
 

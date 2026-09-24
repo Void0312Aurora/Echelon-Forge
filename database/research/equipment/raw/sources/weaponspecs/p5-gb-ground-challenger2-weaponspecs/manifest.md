@@ -21,6 +21,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimate status: Yes; editorial compilation of public figures, not a direct measurement
 Estimation / uncertainty: The dimensions, 62,500 kg, engine, speed, range, crew, ammunition and L30A1 entries are direct page values in an editorial compilation; range, ammunition and armour wording are public-data estimates/qualitative. They are not official RBSL or UK Ministry of Defence technical specifications.
 

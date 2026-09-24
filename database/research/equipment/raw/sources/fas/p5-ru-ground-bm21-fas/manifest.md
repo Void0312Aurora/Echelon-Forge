@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Standard 9K51/BM-21 context; later rockets and derivative launchers are not merged.
 Estimation / uncertainty: Tier B archived technical reference; its rocket-specific range is kept distinct from the broader community envelope.
 

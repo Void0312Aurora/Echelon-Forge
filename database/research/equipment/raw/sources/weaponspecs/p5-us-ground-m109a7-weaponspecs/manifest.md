@@ -21,6 +21,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimate status: Yes; editorial compilation; engine rating conflict retained rather than inferred
 Estimation / uncertainty: The 40,590 kg, speed, range, crew, ammunition, gun, engine-family and fire-control/protection entries are direct page values in an editorial compilation; 675 hp versus 600 hp remains an unresolved page conflict, and combat mass/range/ammunition are configuration estimates. They are not official technical specifications.
 

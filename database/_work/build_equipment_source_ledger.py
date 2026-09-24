@@ -54,7 +54,9 @@ def build_row(manifest: Path) -> dict[str, str]:
     source_id = value(text, "Source ID") or manifest.parent.name
     configuration = value(text, "Configuration") or value(text, "Configuration boundary")
     rights_status = value(text, "Rights status") or "not_recorded"
-    scope_status = "complete" if value(text, "Domain") and value(text, "Equipment") and configuration else "partial"
+    scope_status = value(text, "Scope status") or (
+        "complete" if value(text, "Domain") and value(text, "Equipment") and configuration else "partial"
+    )
     retrieval = retrieval_status(text)
     provenance_status = value(text, "Provenance status") or (
         "manifest+retrieval+retention"

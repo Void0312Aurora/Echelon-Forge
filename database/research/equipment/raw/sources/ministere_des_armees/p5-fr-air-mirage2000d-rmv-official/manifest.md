@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Official French technical card for the two-seat Mirage 2000 D. The separate 2025 RMV article supplies the mid-life-renovation weapons and mission-system changes; the numeric card is retained as the platform-level 2000 D reading.
 Estimation / uncertainty: Tier A government source. The page reports rounded values and uses "carried-fuel capacity" rather than an explicitly labelled internal-fuel tank capacity. It is recorded as stated and is not converted into an internal-fuel claim.
 

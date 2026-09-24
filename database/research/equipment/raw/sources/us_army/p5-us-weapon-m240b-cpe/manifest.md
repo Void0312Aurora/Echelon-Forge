@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Ground M240B with collapsible stock, bipod and rails; M240H aviation and M240L lightweight variants are excluded.
 Estimation / uncertainty: Tier A government equipment page. The page identifies M240B as a ground configuration and does not provide a mount-inclusive mass.
 

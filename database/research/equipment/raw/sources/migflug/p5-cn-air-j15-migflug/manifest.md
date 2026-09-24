@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Baseline single-seat J-15 delivered for STOBAR operations from Liaoning and Shandong. J-15S, J-15T and J-15D deltas are not merged.
 Estimation / uncertainty: Tier C specialist secondary profile. The article explicitly separates published values from analyst estimates and warns that Chinese weapons clearance data are not public; the leaf retains those boundaries.
 

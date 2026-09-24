@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Baseline PKM operator-manual data; PKP and export refits excluded.
 Estimation / uncertainty: Tier C reproduced manual. Values are retained as an independent technical reading and not treated as current procurement evidence.
 

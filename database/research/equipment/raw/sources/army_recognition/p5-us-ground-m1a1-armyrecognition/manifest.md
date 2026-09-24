@@ -20,6 +20,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimate status: Yes; secondary reference compilation, with alternate public table conventions noted
 Estimation / uncertainty: The dimensions, 62,000 kg listed weight, transmission, speed, range, crew, ammunition and systems/armour context are direct page values, but alternate public table conventions remain unresolved. These secondary values are not official U.S. Army technical specifications.
 

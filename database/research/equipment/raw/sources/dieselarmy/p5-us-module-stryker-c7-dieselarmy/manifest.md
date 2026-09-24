@@ -20,6 +20,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimation/uncertainty metadata: The article directly reports 350 hp and 1,028 lb-ft for the C7 in its Stryker profile, but gives no test conditions, torque rpm, serial number or primary citation. Treat torque as Tier C and retain the Cat 860 lb-ft application value as a separate lower bound.
 
 ## Use

@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Su-35 export technical sheet used for the Su-35S leaf's common official performance and propulsion fields; the separate secondary package supplies the approximate Su-35S empty mass.
 Estimation / uncertainty: Tier A manufacturer/export catalogue. The sheet labels range by altitude and speed condition; those conditions are retained.
 

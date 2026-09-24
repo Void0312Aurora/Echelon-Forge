@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: French E-3F SDCA. The technical card and the page's characteristics block are used for variant-level values; family E-3 readings from other packages remain separate cross-checks.
 Estimation / uncertainty: Tier A official French Ministry source. The HTML extraction contains one `CFM 55-2-A3` rendering, while the linked technical card and the extracted specification block read `CFM 56-2-A3`; the latter is retained as the engine value and the discrepancy is recorded rather than silently normalized.
 

@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: The brief labels the aircraft family as E-2 Hawkeye and presents the common carrier-based E-2 block; it is used only for the geometry and mass fields that the NAVAIR E-2D page does not publish.
 Estimation / uncertainty: Tier A official Navy brief. Common-family values are kept explicitly separate from the E-2D-specific sensor and software claims.
 

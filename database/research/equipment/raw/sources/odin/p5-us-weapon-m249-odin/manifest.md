@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Standard M249/SAW context; Mk 46/Mk 48 variant blocks are not merged.
 Estimation / uncertainty: Tier B government assessment. The source notes product-improvement differences in cyclic rate.
 

@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Soviet-era AGS-17 table; no AGS-30 or helicopter fit is merged.
 Estimation / uncertainty: Tier B archived technical reference reproduced by FAS; the table uses a different loaded-mass convention and is not substituted for the Rosgvardia page.
 

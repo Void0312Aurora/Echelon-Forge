@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: E-2D Advanced Hawkeye. The source is variant-specific; dimensions not published on this page are supplied only by the separate official AirPAC technical brief.
 Estimation / uncertainty: Tier A government product page. “Fully integrated open architecture system” is retained as a mission-system description, not converted into a radar range or track-count claim.
 

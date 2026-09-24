@@ -18,6 +18,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Estimation / uncertainty: Tier B manufacturer fast-facts sheet. The common standard-length figures are retained as manufacturer data; the USMC-specific tanker and defensive rows remain separately attributed.
 
 ## Extracted parameter notes

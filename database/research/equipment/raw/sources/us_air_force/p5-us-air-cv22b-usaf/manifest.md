@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Air Force CV-22B/SOF configuration. Gross-weight bands are retained separately for self-deployment, STOL and VTOL conditions.
 Estimation / uncertainty: Tier A service fact sheet. The source uses shaft horsepower and a combat-radius condition; no generic range is substituted.
 

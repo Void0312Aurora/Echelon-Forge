@@ -18,6 +18,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Estimation / uncertainty: Tier A official Navy product page. It is authoritative for the fields it states; the separate USMC and manufacturer packages supply the remaining public platform fields.
 
 ## Extracted parameter notes

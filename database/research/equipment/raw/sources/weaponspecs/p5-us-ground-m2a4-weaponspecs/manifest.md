@@ -21,6 +21,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimate status: Yes; editorial compilation, with configuration values not independently measured
 Estimation / uncertainty: The dimensions, 36,287 kg, 675 hp, speed, range, crew, troop seats, ammunition and qualitative protection entries are direct page values in an editorial compilation; configuration values are not independently measured and are not official Army technical specifications.
 

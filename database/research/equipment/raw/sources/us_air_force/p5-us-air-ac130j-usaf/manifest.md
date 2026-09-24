@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: AC-130J Ghostrider. The weapon list is the published Precision Strike Package capability set; it is not a simultaneous-load assertion.
 Estimation / uncertainty: Tier A service fact sheet. Range is explicitly limited by crew duty day when aerial refuelling is available; that condition is retained.
 

@@ -20,6 +20,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimate status: Yes; secondary reference compilation, not an official data-sheet measurement
 Estimation / uncertainty: The C7, transmission, speed, range, loadout, crew and cab-protection entries are direct page values, but the page has conflicting chassis-only weight/dimension values. Leaf cross-source dimensions and combat/vehicle mass semantics are bounded estimates, not official technical specifications.
 

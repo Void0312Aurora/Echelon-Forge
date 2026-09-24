@@ -21,6 +21,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimate status: Yes; editorial compilation; no engine horsepower or armour rating inferred
 Estimation / uncertainty: The dimensions, 16,257 kg, crew, chassis, speed, range and mutually exclusive loadout entries are direct page values in an editorial compilation; combat mass and loadout applicability remain configuration estimates, while engine horsepower and armour are absent. They are not official technical specifications.
 

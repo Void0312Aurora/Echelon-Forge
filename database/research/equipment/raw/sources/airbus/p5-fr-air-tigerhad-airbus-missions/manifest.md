@@ -18,6 +18,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Estimation / uncertainty: Tier B manufacturer mission page. It states qualified or compatible weapon options, not a simultaneous loadout for every aircraft.
 
 ## Extracted parameter notes

@@ -20,6 +20,7 @@ Retention: manifest and extracted family-context note only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 
 ## Extracted parameter notes
 

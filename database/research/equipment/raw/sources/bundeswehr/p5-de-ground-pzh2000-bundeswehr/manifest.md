@@ -19,6 +19,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Availability: URL returned HTTP 200 when checked on 2026-09-13.
 Configuration: German Bundeswehr PzH 2000 baseline; A1/A2 and export retrofit configurations are not merged.
 

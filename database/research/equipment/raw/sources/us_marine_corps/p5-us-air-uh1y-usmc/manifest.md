@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: UH-1Y Venom Marine Corps aircraft. The combat-radius row retains the source's eight-troop/HOGE/on-station/reserve condition.
 Estimation / uncertainty: Tier A Marine Corps programme document. The source uses “use payload (HOGE)” and a mission-specific combat radius; neither is converted into an unrestricted payload or ferry range.
 

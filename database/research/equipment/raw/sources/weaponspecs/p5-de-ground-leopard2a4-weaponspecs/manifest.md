@@ -21,6 +21,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimate status: Yes; editorial compilation of public manufacturer/government data
 Estimation / uncertainty: Dimensions, 55,150 kg, 1,500 hp, speed, range, crew, ammunition and L/44 entries are direct page values in an editorial compilation; range, ammunition and armour wording remain estimates/qualitative. They are not official technical specifications or Bundeswehr calibration data.
 

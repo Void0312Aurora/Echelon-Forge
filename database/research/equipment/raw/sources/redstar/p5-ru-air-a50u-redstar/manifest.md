@@ -18,6 +18,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Estimation / uncertainty: Tier C specialist reference. The rows sourced here are carried as family baseline readings and are never labelled as A-50U-exclusive certification.
 
 ## Extracted parameter notes

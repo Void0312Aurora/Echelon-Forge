@@ -18,6 +18,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Estimation / uncertainty: Tier B manufacturer press release. It is used for French operator and retrofit scope, not as a substitute for the technical brochure's numeric table.
 
 ## Extracted parameter notes

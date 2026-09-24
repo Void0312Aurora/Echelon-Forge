@@ -18,6 +18,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Estimation / uncertainty: Tier C specialist reference. Values are public technical-profile readings, not Russian service-manual certification. Range and speed values retain the conditions stated by the page; no universal combat-radius claim is inferred.
 
 ## Extracted parameter notes

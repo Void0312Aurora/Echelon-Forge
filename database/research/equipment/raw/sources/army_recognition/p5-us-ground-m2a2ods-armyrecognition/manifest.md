@@ -19,6 +19,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimate status: Yes; professional secondary compilation used for qualitative protection and ODS upgrade context.
 
 ## Use and estimate basis

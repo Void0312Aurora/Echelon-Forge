@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: H-6K strategic bomber. Values for earlier H-6 marks and the H-6J/H-6N derivatives are not merged.
 Estimation / uncertainty: Tier C specialist reference. The 79,000 kg maximum takeoff value conflicts with the 95,000 kg reading in `p5-cn-air-h6k-migflug`; both remain labelled rather than reconciled. Empty mass and warload are public secondary readings, not certification values.
 

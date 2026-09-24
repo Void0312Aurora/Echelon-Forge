@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Standard M249 with collapsible-stock and short-barrel alternatives kept separate from the standard row.
 Estimation / uncertainty: Tier A government equipment page. The standard value is not replaced by the short-barrel configuration.
 

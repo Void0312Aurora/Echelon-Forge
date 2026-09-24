@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Bundeswehr MG3 standard machine-gun configuration; MG3A1 vehicle variant is noted but not merged.
 Estimation / uncertainty: Tier A service page. The page distinguishes bipod combat range from sight adjustment range.
 

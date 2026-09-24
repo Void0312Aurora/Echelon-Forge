@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Su-34E export variant. Russian service Su-34 is a separate record.
 Estimation / uncertainty: Tier A export catalogue. The sheet gives the headline performance values but does not publish every geometry or systems field.
 

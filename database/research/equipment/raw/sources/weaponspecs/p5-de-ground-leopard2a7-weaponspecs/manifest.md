@@ -21,6 +21,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimate status: Yes; editorial compilation, with maximum mass/range configuration estimates
 Estimation / uncertainty: The listed dimensions, 67,500 kg, 1,500 hp, speed, crew, ammunition, L/55 and sight entries are direct page values; maximum mass, range and modular-armour/kit interpretation are configuration estimates. They are not official technical specifications.
 

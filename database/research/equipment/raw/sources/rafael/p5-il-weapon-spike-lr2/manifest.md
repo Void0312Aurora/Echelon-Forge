@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: SPIKE LR II ground-launch and helicopter-launch data; other SPIKE family members are excluded.
 Estimation / uncertainty: Tier B manufacturer brochure. Ground launcher mass and round mass are not combined.
 

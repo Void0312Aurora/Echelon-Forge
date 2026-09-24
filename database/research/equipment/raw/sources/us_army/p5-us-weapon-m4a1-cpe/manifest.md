@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: U.S. Army M4A1 carbine; M4 burst-fire and M16 rifle values are not merged.
 Estimation / uncertainty: Tier A government equipment page. The page's weight is with sling and loaded magazine and is not recast as empty mass.
 

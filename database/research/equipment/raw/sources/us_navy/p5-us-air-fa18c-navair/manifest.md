@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: F/A-18C single-seat Hornet. The numerical geometry, propulsion and performance block is explicitly the NAVAIR A-D common block; C-specific service/crew statements are not presented as a separate C-only test card.
 Estimation / uncertainty: Tier A NAVAIR product page. Combat and ferry ranges retain their stated stores/condition assumptions; no C-only value is inferred from the common A-D block.
 

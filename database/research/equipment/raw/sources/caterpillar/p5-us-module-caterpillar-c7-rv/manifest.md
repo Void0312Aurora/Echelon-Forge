@@ -20,6 +20,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimation/uncertainty metadata: 350 hp, 860 lb-ft at 1,440 rpm, 588 kg net dry including flywheel, 13.2 L engine-only cooling capacity, HEUI/J1939/SAE No. 1 or No. 2 interfaces are direct sheet values. The mirror is not an official Cat host, and application-rating differences explain the torque discrepancy with the Stryker secondary source.
 
 ## Use

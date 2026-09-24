@@ -18,6 +18,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Availability: URL returned HTTP 404 when checked on 2026-09-13; treat as an acquisition pointer pending replacement with a retrievable technical document.
 Configuration: Historical baseline BMP-2 exporter/product pointer; BMP-2D, BMP-2K, BMP-2M and retrofit packages excluded.
 Estimation / uncertainty: No direct numeric value from this unavailable page is retained; product statements remain exporter claims, and no estimate or family substitution is promoted to the leaf. This non-retrievable Tier C pointer is not a technical manual; the superseding Tier C references carry active values.

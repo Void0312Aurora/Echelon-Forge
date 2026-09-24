@@ -18,4 +18,5 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: The page confirms J-11B service use and states that variant-level dimensions and performance are not officially disclosed. It is admitted on the J-11B / J-11BS leaf for the service-use row only.

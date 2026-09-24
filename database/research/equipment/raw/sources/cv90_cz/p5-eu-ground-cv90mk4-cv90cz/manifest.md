@@ -19,6 +19,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimation / uncertainty: Sensor, crew-ergonomics, ammunition-stowage and qualitative protection/APS statements are direct portal claims; no exact array or round count is published here. The leaf's 35-37 t and 35 mm ammunition bounds are estimates from other sources, not an official Mk IV specification.
 
 ## Use and estimate basis

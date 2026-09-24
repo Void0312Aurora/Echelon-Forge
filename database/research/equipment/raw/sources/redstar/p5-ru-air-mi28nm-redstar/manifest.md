@@ -18,6 +18,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Estimation / uncertainty: Tier C specialist reference. Public technical-profile values are retained as published; the source's printed rate-of-climb value is omitted because it is not internally plausible and is not needed to close the declared profile.
 
 ## Extracted parameter notes

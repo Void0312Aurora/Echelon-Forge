@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Tu-160M modernization context. It is used for the variant-specific engine and systems boundary, while the named secondary package supplies the public platform figures.
 Estimation / uncertainty: Tier A state-corporation statement. It confirms the modernization and engine fit but is not a complete technical manual.
 

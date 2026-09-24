@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: M777A2 fire-control configuration; base M777 values are retained from the Canadian page and not relabelled as A2 certification.
 Estimation / uncertainty: Tier A U.S. Army product page. It is used for configuration context only.
 

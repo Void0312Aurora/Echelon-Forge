@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Il-76MD-90A modernized military transport. The adjacent Il-78M-90A tanker block on the same page is not merged into this leaf.
 Estimation / uncertainty: Tier B manufacturer-group technical page. Weight and range values retain the page's units and load conditions.
 

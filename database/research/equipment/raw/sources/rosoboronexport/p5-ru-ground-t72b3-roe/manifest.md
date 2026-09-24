@@ -18,6 +18,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Availability: URL returned HTTP 404 when checked on 2026-09-13; treat as an acquisition pointer pending replacement with a retrievable technical document.
 Configuration: Historical T-72B3 modernization exporter/product pointer; not merged with T-72B, T-72B3M or Model 2016.
 Estimation / uncertainty: The unavailable URL supplies no retrievable direct numeric evidence; retained wording is an exporter product claim only, with no missing fields estimated or borrowed from T-72 family sources. Although the publisher is an exporter, this non-retrievable Tier C pointer is not a technical manual; Army Recognition is the active cross-check.

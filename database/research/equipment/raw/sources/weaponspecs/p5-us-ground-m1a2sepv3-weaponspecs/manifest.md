@@ -21,6 +21,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimate status: Yes; editorial compilation of public figures, classified armour not estimated
 Estimation / uncertainty: The dimensions, 66,800 kg, AGT1500, speed, range, crew, ammunition, M256A1, FLIR/viewer and Trophy-context entries are direct page values in an editorial compilation; public-data mass/range/ammunition and kit applicability remain estimates, while classified armour is not estimated. They are not official technical specifications.
 

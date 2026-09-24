@@ -18,6 +18,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Estimation / uncertainty: Tier C defence reference. The page mixes A-50 family data and A-50U upgrade text; the leaf keeps family baseline values explicitly labelled and uses this package for mission-system/upgrade context.
 
 ## Extracted parameter notes

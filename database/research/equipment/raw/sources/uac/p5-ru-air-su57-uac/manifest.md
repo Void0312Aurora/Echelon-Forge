@@ -18,6 +18,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Estimation / uncertainty: Tier A manufacturer programme page. It is used for role and programme status only; all numeric rows on the leaf retain the separate RedStar Tier C attribution.
 
 ## Extracted parameter notes

@@ -18,6 +18,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Estimation / uncertainty: Tier C specialist reference. Public technical-profile values are retained for the named baseline Ka-52; naval Ka-52K and modernised Ka-52M are separate configurations.
 
 ## Extracted parameter notes

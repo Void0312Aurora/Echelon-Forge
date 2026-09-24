@@ -20,6 +20,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimate status: Yes; maximum mass/range values are brochure/compiled figures, not direct measurement
 Estimation / uncertainty: The page directly states the 1,500 hp powerpack, HSWL 354, road speed and L55-family armament context; maximum mass and range are brochure/compiled estimates, while width, height and customer-kit details are absent or uncertain. These Tier C product claims are not official technical specifications.
 

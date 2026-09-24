@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: RPG-7 launcher reference for Pakistan Army inventory; RPG-7V2 and ammunition variants are not merged.
 Estimation / uncertainty: Tier A government R&D page. Launcher values and grenade values are kept as separate quantities.
 

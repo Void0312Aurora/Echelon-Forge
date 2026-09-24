@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: KJ-500 base airborne early warning and control aircraft on the Y-9 family. KJ-500H and later refuelling variants are not merged.
 Estimation / uncertainty: Tier B government assessment. The radar-array and accommodation descriptions are retained as system/context readings; no detection range or combat effect is inferred.
 

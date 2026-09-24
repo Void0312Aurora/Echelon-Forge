@@ -20,6 +20,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimate status: Yes; nominal mass/speed are brochure figures and require technical-data cross-checking
 Estimation / uncertainty: The 35.4 t, 675 hp and up-to-38 mph values are direct manufacturer product-page claims; nominal mass and speed remain configuration-sensitive estimates, not measured Army values or official government technical specifications.
 

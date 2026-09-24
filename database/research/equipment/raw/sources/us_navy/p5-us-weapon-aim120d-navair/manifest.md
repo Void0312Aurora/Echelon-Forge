@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: AIM-120D reading within the AMRAAM family page. C/D wingspan and D mass are retained as the variant-specific fields the page publishes.
 Estimation / uncertainty: Tier A government product page. Classified performance is not replaced with a community estimate.
 

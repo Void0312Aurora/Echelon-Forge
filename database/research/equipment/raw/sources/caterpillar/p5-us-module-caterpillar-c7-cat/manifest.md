@@ -20,6 +20,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimation/uncertainty metadata: Manufacturer product data are direct for the listed industrial configuration, but the page does not publish Stryker-specific governor calibration, torque curve, fuel grade, installed mass or vehicle interfaces. Tier C is retained for an industry product claim rather than promoting it to a government technical-manual tier.
 
 ## Use

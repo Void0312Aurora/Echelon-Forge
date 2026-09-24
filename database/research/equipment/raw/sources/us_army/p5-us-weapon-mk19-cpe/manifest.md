@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Mk 19 weapon without mount or tripod; mounting systems are not folded into weapon mass.
 Estimation / uncertainty: Tier A government equipment page; point and area range are separate published quantities.
 

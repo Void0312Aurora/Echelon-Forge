@@ -20,6 +20,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Estimation/uncertainty metadata: The 350 hp C7 → 450 hp C9 replacement statement is direct Tier A program evidence. No engine-level performance curve or installation drawing is inferred from the report; the source is used only to bound the legacy-versus-A1 configuration split.
 
 ## Use

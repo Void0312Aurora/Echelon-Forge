@@ -18,4 +18,5 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: The page states the role as a modernized military transport and describes the new-generation integrated flight, sighting and navigation system, and carries no specification table. It is admitted on the Il-76MD-90A leaf for the operator row and the role row only.

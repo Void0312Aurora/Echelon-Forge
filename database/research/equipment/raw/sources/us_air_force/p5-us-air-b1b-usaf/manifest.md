@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Conventional B-1B. The page documents a conventional-only mission after nuclear-role removal; no nuclear loadout is inferred.
 Estimation / uncertainty: Tier A service fact sheet. Wingspan is configuration-dependent and is retained as forward/aft sweep values; range is recorded as the source's intercontinental descriptor.
 

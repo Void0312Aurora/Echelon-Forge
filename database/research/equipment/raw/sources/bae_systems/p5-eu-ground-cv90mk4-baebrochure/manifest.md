@@ -19,6 +19,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimation / uncertainty: The 1.5 m fording, 3+7 operators, 70 km/h, 900 km, payload, engine and turret-option values are direct brochure values; only the 1.5 m figure is retained as a Mk IV comparison bound. The 900 km and 16 t figures are older-family bounds, not official Mk IV specifications, and Mk IV sealing, armour, engine and range remain uncertain.
 
 ## Use and estimate basis

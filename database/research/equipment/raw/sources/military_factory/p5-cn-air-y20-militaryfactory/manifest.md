@@ -19,6 +19,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Estimation / uncertainty: Tier C specialist secondary reference. The page provides a public baseline, not a manufacturer or operator technical order; its 4,500 km range is retained only as a cross-check against the more explicitly conditioned SNL range rows.
 
 ## Extracted parameter notes

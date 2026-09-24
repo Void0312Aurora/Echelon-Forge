@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Standard BM-21 on the ZiL-375 6x6 chassis; BM-21U, Grad-1 and Tornado-G are excluded.
 Estimation / uncertainty: Tier C community summary; the standard configuration is kept distinct from later chassis and rocket families.
 

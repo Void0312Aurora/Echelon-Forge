@@ -19,6 +19,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Configuration: Official image/caption identifies a Type 052D hull in PLAN Northern Theater Command training; it does not publish class dimensions, loading, propulsion or combat-system specifications.
 Availability: Page returned HTTP 200 when checked on 2026-09-13.
 

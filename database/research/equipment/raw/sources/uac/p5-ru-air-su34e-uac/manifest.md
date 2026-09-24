@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: The UAC page labels the table Su-34E and marks it export; it is used together with the ROSOBORONEXPORT Su-34E sheet. Russian service Su-34 is not merged.
 Estimation / uncertainty: Tier B manufacturer-group page. Values are manufacturer-published export-analogue readings and remain distinct from the Russian service configuration.
 

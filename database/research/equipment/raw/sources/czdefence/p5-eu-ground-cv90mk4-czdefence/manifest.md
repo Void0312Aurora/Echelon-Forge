@@ -19,6 +19,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimation / uncertainty: The article's 203-round total and 35-round-per-feed/70-round ready-use counts are direct page values for a representative CV9035 fit; applying them to Mk IV is a bounded estimate. They are not a certified or official Mk IV specification.
 
 ## Use and estimate basis

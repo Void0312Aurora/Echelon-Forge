@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: AT4CS HP confined-space anti-armour configuration; other AT4 variants are not merged.
 Estimation / uncertainty: Tier B manufacturer handbook. It is a disposable single-shot system; no cyclic rate is applicable.
 

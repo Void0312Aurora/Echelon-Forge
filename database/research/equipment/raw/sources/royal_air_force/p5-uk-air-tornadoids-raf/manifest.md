@@ -20,6 +20,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Availability: URL returned HTTP 403 to the current command-line probe on 2026-09-13; German, Italian, and specialist historical references remain active cross-check sources.
 
 ## Use

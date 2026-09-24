@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Standard MG3 geometry; MG3A1 and national derivatives are excluded.
 Estimation / uncertainty: Tier C community summary used only for the missing overall-length field and rate-band cross-check.
 

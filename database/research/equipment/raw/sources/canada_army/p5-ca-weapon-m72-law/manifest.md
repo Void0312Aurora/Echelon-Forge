@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: M72A5-C1 HEAT self-contained throwaway weapon; earlier M72A1-A3 and M72A7 differences are not merged.
 Estimation / uncertainty: Tier A government equipment page. Mass and length follow the page’s model designation.
 

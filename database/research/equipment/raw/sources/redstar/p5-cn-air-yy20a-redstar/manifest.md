@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: YY-20A / Y-20U tanker based on the earlier Y-20A powerplant family. YY-20B with WS-20 engines is a separate configuration.
 Estimation / uncertainty: Tier C specialist reference. The page's 18,500 kg internal-fuel and up-to-75,000 kg transportable-fuel values are retained as published secondary readings; they do not establish a certified offload profile.
 

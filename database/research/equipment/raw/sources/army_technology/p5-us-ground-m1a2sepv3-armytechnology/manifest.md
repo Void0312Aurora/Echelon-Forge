@@ -21,6 +21,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimate status: Yes; trade-publication compilation, with geometry as published and no classified values inferred
 Estimation / uncertainty: Geometry, crew, AGT1500, M256, CROWS/M240, FLIR, data-link, APU and countermeasure statements are direct article values; the article lacks a complete mass, range and ammunition table, so those fields remain estimates from separate sources. The trade-publication values are not official U.S. Army technical specifications.
 

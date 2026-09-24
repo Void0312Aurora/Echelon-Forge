@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: AK-74M row only; AK-74 and AKS-74 values are not silently substituted.
 Estimation / uncertainty: Tier C community summary used for geometry cross-check; the government Rosgvardia page remains the source of record for service-page values.
 

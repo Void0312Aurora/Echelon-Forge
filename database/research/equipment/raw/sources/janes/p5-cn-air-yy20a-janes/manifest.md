@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Y-20U / YY-20A tanker configuration. Transport and Y-20B configurations are not merged.
 Estimation / uncertainty: Tier C specialist secondary reporting. Janes says the pods are possibly based on UPAZ-1A; that possibility is not promoted to a confirmed equipment identity.
 

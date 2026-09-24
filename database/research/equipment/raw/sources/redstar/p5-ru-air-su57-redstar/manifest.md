@@ -18,6 +18,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Estimation / uncertainty: Tier C specialist reference. Numeric rows are public baseline readings and may not describe every production lot. The official UAC package is used separately for the programme and serial-production status.
 
 ## Extracted parameter notes

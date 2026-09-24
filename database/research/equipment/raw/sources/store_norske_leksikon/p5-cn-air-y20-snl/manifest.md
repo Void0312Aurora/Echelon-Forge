@@ -19,6 +19,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Estimation / uncertainty: Tier C expert-edited reference. The page is a public secondary reading and is not treated as an official certification table. Its 45 m wingspan conflicts with the 50 m reading carried by the separate encyclopedic package; both are retained rather than silently reconciled.
 
 ## Extracted parameter notes

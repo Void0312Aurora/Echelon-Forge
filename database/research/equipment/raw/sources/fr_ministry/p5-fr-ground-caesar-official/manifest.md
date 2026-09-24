@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: French CAESAR Mk I/Mk IR family context; CAESAR Mk II and CAESAR 8x8 are separate configurations.
 Estimation / uncertainty: Tier A official role and calibre/range page; no missing numeric field is inferred from it.
 

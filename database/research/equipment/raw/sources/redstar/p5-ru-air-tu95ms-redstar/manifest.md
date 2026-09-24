@@ -18,6 +18,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Estimation / uncertainty: Tier C specialist reference. Public technical-profile values are retained with their MS-6/MS-16 armament conditions and are not treated as a complete current-lot configuration.
 
 ## Extracted parameter notes

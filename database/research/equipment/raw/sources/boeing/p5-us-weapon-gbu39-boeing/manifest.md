@@ -17,6 +17,7 @@ Retention: manifest and extracted parameter notes only
 Rights status: not_recorded
 Provenance status: manifest+retrieval+retention
 Residual status: open
+Scope status: complete
 Configuration: Air-launched GBU-39A/B Small Diameter Bomb. The same card also describes the ground-launched GLSDB system; launcher and rocket-stage parameters are excluded from this air-launched leaf.
 Estimation / uncertainty: Tier A manufacturer product card. Standoff distance is retained as the card's factor, not as a guaranteed single-shot range.
 

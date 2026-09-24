@@ -19,6 +19,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Configuration: Baseline Type 052D hull and published PLAN fit (not stretched Type 052DL, export Type 052DE or ship-specific later upgrades). The page describes the class, not one named hull.
 Estimation / uncertainty: Dimensions, full-load displacement, crew, speed, range and named systems are directly stated; the 68 MW total is an arithmetic sum, while the 6,000-6,500 t standard-displacement band and survivability envelope are bounded estimates, not official PLAN specifications.
 Availability: Page returned HTTP 200 when checked on 2026-09-13.

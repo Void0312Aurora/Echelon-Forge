@@ -21,6 +21,7 @@ Retrieval:
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
+Scope status: complete
 Estimate status: Yes; trade-publication transcription of public specifications, not direct testing
 Estimation / uncertainty: The dimensions, 35,380 kg maximum gross weight, 675 hp, transmission, speed, range, fuel, projectile ranges, gun, crew and protection-context values are direct article transcriptions; projectile-range and protection interpretations remain trade-publication estimates. These are not official Army technical specifications or direct test measurements.
 
