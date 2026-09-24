@@ -55,6 +55,10 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
 
 ## Reviews
 
+- [Cross-domain scripted agent system consumer census — 2026-09-24](reviews/cross_domain_scripted_agent_system_consumer_census_20260924.md):
+  advisory WP0 review; confirms the existing neutral tasking seam, compiled
+  AgentRole/intent authority, RL-adjacent entanglements, and domain capability
+  limits before implementation.
 - [Cordis simulation composition program architecture review — 2026-08-17](reviews/cordis_simulation_composition_program_review_20260817.md):
   advisory macro review that retains the native composition direction while
   requiring authority and program-boundary revision before later

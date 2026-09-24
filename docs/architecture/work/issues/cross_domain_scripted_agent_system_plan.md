@@ -168,6 +168,11 @@ The census must include Python, C++, scenario JSON, CLI, visualization, tests,
 and documentation references. It must record import direction and identify any
 existing contract that would be duplicated by a new abstraction.
 
+The initial read-only census is recorded in the [WP0 consumer census review](../../reviews/cross_domain_scripted_agent_system_consumer_census_20260924.md).
+It confirms that `python/tasking_contracts` and the compiled policy contracts
+are the reuse anchors, while the remaining `python.rl` surfaces are bounded
+adapter entanglements rather than permission to create a parallel runtime.
+
 ### WP1 — Cross-domain contract placement
 
 Select the neutral home for the common agent contracts and define their
