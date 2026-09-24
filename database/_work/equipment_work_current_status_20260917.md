@@ -163,6 +163,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | Y-20 public-parameter completion | Added generic Y-20 Store norske leksikon and Military Factory packages for crew, speed, ceiling and payload-conditioned range; retained Y-20A/Y-20B/YY-20A boundaries and the 45 m versus 50 m wingspan conflict |
 | M1252 family-power boundary refresh | Added the DOT&E legacy DVH 350 hp C7 versus DVH-A1 450 hp C9 boundary as a named family reference; M1252-specific engine, speed and range remain unknown and the queue row stays `cataloged` |
 | M1252 community corroboration | Added a Tier C WarWheels package for crew/configuration and the DVH-to-M1252/M1252-A1 boundary; no unresolved mobility field was filled and the queue row stays `cataloged` |
+| M1252 RMS6-L range completion | Added the MCTP 3-01D M1252-specific approximate HE mortar range (200–6,570 m); vehicle propulsion, speed and operational range remain unknown and the queue row stays `cataloged` |
 
 ## Retracted Findings
 

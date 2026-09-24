@@ -29,6 +29,7 @@ Content status: extracted DVH simulation-parameter draft; not a runtime record.
 | GVWR | 58,401 lb (≈26,490 kg) | `p5-us-ground-stryker-tradoc-gta09-14-002` | A | TRADOC GTA rated limit; not an observed operating mass |
 | Crew | 5 | `p5-us-ground-mortar-atp-3-21-90` | A | Mortar-carrier configuration |
 | Mortar system | RMS6-L 120 mm mortar | `p5-us-ground-mortar-atp-3-21-90` | A | Exact ammunition load and fire-control fit unknown |
+| Mortar system HE range | Approximately 200–6,570 m | `p5-usmc-ground-m1252-rms6l-mctp301d` | A | MCTP table explicitly names the M1252 MCVV RMS6-L; range varies by round, altitude difference and meteorological conditions and is not vehicle operational range |
 | Community configuration corroboration | Crew 2+3; WarWheels identifies the DVH vehicle as M1252 MCVV and separates the later M1252 MCVV-A1 ECP | `p5-us-ground-stryker-m1252mcvv-warwheels` | C | Corroboration only; no propulsion, speed, range, mass or dimensional value is taken from this page |
 | Legacy DVH family powerpack baseline | 350 hp Caterpillar C7; the DVH A1 ECP replaces this legacy baseline with a 450 hp Caterpillar C9 | `p5-us-module-stryker-c7-dote` | A | Family upgrade boundary only; not a M1252-specific engine certification and not used to fill the M1252 propulsion field |
 | Propulsion / mobility | Unknown for this M1252 configuration | — | — | Do not copy M1126 350 hp, speed or range baseline |
@@ -52,6 +53,7 @@ This leaf has the most unresolved target fields of the eleven Stryker variant re
 
 - `p5-us-ground-stryker-army-tb55-2023`
 - `p5-us-ground-mortar-atp-3-21-90`
+- `p5-usmc-ground-m1252-rms6l-mctp301d`
 - `p5-us-ground-stryker-mdex-2026`
 - `p5-us-ground-stryker-m1252mcvv-afvdatabase`
 - `p5-us-ground-stryker-family-gdlsbrochure`
