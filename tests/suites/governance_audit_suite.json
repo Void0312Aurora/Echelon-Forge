@@ -1,5 +1,8 @@
 {
   "name": "governance_audit",
+  "owner": "cross-domain-architecture",
+  "failure_audience": "on-demand governance and evidence audit",
+  "execution_strategy": "pytest-manifest-file",
   "control_lifecycle": {
     "schema_version": 1,
     "controls": [
@@ -50,6 +53,7 @@
     "tests/architecture/governance/test_document_link_audit.py",
     "tests/architecture/governance/test_document_tier_census.py",
     "tests/architecture/governance/test_runtime_infrastructure_documentation.py",
-    "tests/architecture/governance/test_standards_documentation_governance.py"
+    "tests/architecture/governance/test_standards_documentation_governance.py",
+    "tests/architecture/governance/test_test_authority_audit.py"
   ]
 }

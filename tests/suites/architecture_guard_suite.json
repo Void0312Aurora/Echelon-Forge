@@ -1,5 +1,8 @@
 {
   "name": "architecture_guard",
+  "owner": "architecture-maintainers",
+  "failure_audience": "pre-merge architecture boundary regression",
+  "execution_strategy": "pytest-manifest-file-or-nodeid",
   "control_lifecycle": {
     "schema_version": 1,
     "controls": [
@@ -145,6 +148,7 @@
     "tests/architecture/runtime_host/test_runtime_kernel_candidate_contract.py",
     "tests/architecture/runtime_host/test_runtime_rebuild_unreachability.py",
     "tests/architecture/runtime_host/test_sqlite_rollout_admission.py",
+    "tests/architecture/runtime_host/test_p5d_rebuild_retirement_gate.py",
     "tests/architecture/runtime_spine/test_clock_domain_enforcement.py",
     "tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py",
     "tests/architecture/runtime_spine/test_web_viz_facade_caller.py",

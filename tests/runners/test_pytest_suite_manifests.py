@@ -43,6 +43,16 @@ def test_pytest_suite_manifest_entries_resolve_to_existing_base_paths() -> None:
       )
 
 
+def test_architecture_tier_manifests_declare_owner_failure_audience_and_execution_strategy() -> None:
+  for manifest_path in (ARCHITECTURE_GUARD_SUITE, GOVERNANCE_AUDIT_SUITE):
+    suite = _load_json(manifest_path)
+    for key in ("owner", "failure_audience", "execution_strategy"):
+      value = suite.get(key)
+      assert isinstance(value, str) and value.strip(), (
+        f"{manifest_path} must declare a non-empty {key}"
+      )
+
+
 def test_contract_suite_manifest_entries_resolve_to_existing_specs() -> None:
   for manifest_path in CONTRACT_SUITE_MANIFESTS:
     specs = run_scenario_contract._load_suite_specs(

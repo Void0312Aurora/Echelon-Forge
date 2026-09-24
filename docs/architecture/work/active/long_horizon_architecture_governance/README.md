@@ -35,6 +35,13 @@ The distinct-package cadence follow-up is recorded in [the cadence packet]
 (evidence/p2b_release_cadence_followup_20260924.md); representative cadence
 remains open.
 
+The P6-A test-authority baseline is recorded in [the derived audit packet]
+(evidence/p6a_test_authority_audit_20260924.md): architecture tier manifests
+now carry owner/failure-audience/execution-strategy metadata, and the derived
+report preserves source-scan residuals while rejecting orphan and duplicate
+assignments. P6-A replacement/retirement evidence and P6-B lane work remain
+open.
+
 Language:
 
 - English canonical: `README.md`
@@ -83,7 +90,7 @@ controls that expire or renew instead of accumulating after every migration.
 | Runtime boundary | facade direction accepted; compatibility surfaces remain | [runtime facade guards](../../../../../tests/architecture/runtime_facade/test_runtime_escape_hatches.py) | source scans describe the boundary but do not make it physically unrepresentable |
 | Contract and evidence chain | complete for the accepted default profile | request, catalog lock, projection, requested/resolved manifests, provenance, parity, and closure artifacts | intermediate migration artifacts remain permanent governance inputs |
 | Public/runtime authority boundary | P3-A/P3-B/P3-C and P4-A accepted; P4-B independently passed; P4-C candidate task accepted | [`ef_runtime_contracts`](../../../../../include/echelon_forge/runtime_contracts/runtime_identity.h), [`RuntimeHostCandidate`](../../../../../src/runtime/host/runtime_host_candidate.h), [P4-B candidate](p4b_state_transfer_candidate_20260830.md), [P4-C candidate seam](p4c_internal_candidate_seam_20260915.md), twelve-row owner adapters, exact vectors, non-production ArtifactLedger simulator, fresh Windows/MSVC native gates and [P4-B independent review](../../../reviews/long_horizon_architecture_governance_p4b_review_20260831.md) | P4-A/B/C remain dark/shadow only; full maintained-facade parity plus P5-B/P5-D production durability, authenticity, activation and cutover remain gated |
-| Test and CI governance | verified CI smoke was green; full governance audit is not | [CI smoke suite](../../../../../tests/smoke/ci_smoke_suite.json), [governance audit suite](../../../../../tests/suites/governance_audit_suite.json), and `test_archive_retirement.py` | the remote baseline tracks 20 owner-archive documents that fail the retirement gate |
+| Test and CI governance | verified CI smoke was green; P6-A authority baseline now passes its focused checks; full governance audit is not | [CI smoke suite](../../../../../tests/smoke/ci_smoke_suite.json), [governance audit suite](../../../../../tests/suites/governance_audit_suite.json), and [P6-A derived audit](evidence/p6a_test_authority_audit_20260924.md) | source-scan residuals and archive-retention conflict remain explicit; P7 owns archive-specific policy |
 | Documentation lifecycle | policy, gate, and repository route conflict | [document lifecycle policy](../../../../engineering/documentation/standards/document_lifecycle_policy.md), subproject standard, and current architecture archive | standards admit owner-local archives while the maintained gate prohibits every `docs/**/archive/**` path |
 
 ## Scope
@@ -166,7 +173,7 @@ the same long-term authority, compatibility, and lifecycle result.
 | `P3 Contract And Public Boundary Foundation` | Land canonical authority envelopes, resolved-plan/release/rollout/checkpoint shells, engine-independent public DTO target, ledger foundation and target visibility before host cutover. | P1 accepted | transitional adapters are single-owner and host work can use final public types/storage without publishing a second truth | P3-A/P3-B/P3-C accepted |
 | `P4 Host Lifecycle And Immutable Kernel Candidate` | Implement fenced host replacement, unique episode authority, complete state-transfer semantics, and an immutable candidate path in dark/shadow mode. | P3 contract/boundary foundation stable | the candidate path is state-complete and fenced but cannot become production truth or retire production rebuild | P4-A accepted; P4-B independently passed; P4-C candidate-scope task accepted; full maintained-facade parity and P5 remain open |
 | `P5 Plan, Evidence, Binding, And Production Cutover` | Close the executable plan, introduce complete RunReceipt, finish physical facade/diagnostics packaging, then execute the only production cutover/backout and retire rebuild. | P4 candidate proven in dark/shadow mode | Cordis/native/facade/wheel use one plan; supported callers cut over once with rollback evidence and rebuild loses production authority | planned |
-| `P6 Test And CI Architecture` | Align fast, qualification, nightly, release, and research lanes with unique failure audiences. | P2 control classes and P5 boundaries available | permanent gates have named detection value and migration scans are absent or expiring | planned |
+| `P6 Test And CI Architecture` | Align fast, qualification, nightly, release, and research lanes with unique failure audiences. | P2 control classes and P5 boundaries available | permanent gates have named detection value and migration scans are absent or expiring | P6-A authority baseline; replacement/retirement evidence and P6-B lanes remain |
 | `P7 Evidence And Documentation Lifecycle` | Retain reproducible proof without keeping closed work packages in permanent authority. | P2 classes and P5 evidence ownership stable | standards, current references, historical records, and generated evidence have singular owners and routes | planned |
 | `P8 Long-Horizon Acceptance` | Prove migration compatibility, operational sustainability, and absence of duplicate truth. | P3-P7 complete | full acceptance contract and independent review pass; lasting rules are promoted and task history follows the admitted retirement route | planned |
 
