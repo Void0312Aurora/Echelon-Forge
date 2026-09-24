@@ -8,7 +8,8 @@ Status: `contract-and-source-fixture`
 This work package introduces a fictionalized agricultural-plain map profile and a
 single dismounted infantry schema. It is deliberately a movement and environment
 observation slice; its RL action contract does not introduce weapon employment or
-targeting. A separate native runtime probe now covers bounded direct fire.
+targeting. A separate native runtime probe covers bounded direct fire, while the
+native Gym adapter remains outside production `WorldBatch`.
 
 ## Scope
 

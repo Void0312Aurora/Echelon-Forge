@@ -87,8 +87,8 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
     assert contract["map_profile"]["arnis_bundle_status"] == "verified_export_snapshot"
     assert contract["map_profile"]["companion_overlay"] == "field_overlay.v1"
     assert contract["map_profile"]["runtime_consumption"].startswith("held_until_")
-    assert contract["rl_harness"]["status"] == "proxy_only"
-    assert contract["rl_harness"]["authority"] == "engineering_proxy_only"
+    assert contract["rl_harness"]["status"] == "non_production_proxy_and_native_probe"
+    assert contract["rl_harness"]["authority"] == "native_probe_only_for_native_entrypoint"
     assert contract["rl_harness"]["native_probe"]["status"] == "native_probe_only"
     assert contract["rl_harness"]["native_probe"]["entrypoint"] == "python.rl.ground.native_probe:GroundInfantryNativeProbe"
     assert contract["rl_harness"]["native_probe"]["production_boundary"] == "not_world_batch"
@@ -100,7 +100,9 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
     assert "health_state" in contract["rl_harness"]["native_env"]["observation_fields"]
     assert contract["command_projection"]["status"] == "partial_transport_only"
     assert contract["command_projection"]["held_fields"] == ["route_intent"]
+    assert contract["observation_space"]["status"] == "bounded_native_probe_and_proxy"
     assert contract["observation_space"]["proxy_status"] == "implemented_in_engineering_proxy_only"
+    assert contract["observation_space"]["native_status"] == "implemented_in_native_probe_only"
     assert [stage["stage"] for stage in contract["curriculum"]] == [
         "S0_contract_and_reset",
         "S1_flat_waypoint",
@@ -109,4 +111,6 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
         "S4_team_transition",
     ]
     assert contract["termination"]["fail_closed_on_missing_semantics"] is True
+    assert contract["reward"]["status"] == "bounded_native_probe_and_proxy"
+    assert contract["reward"]["native_terms"] == ["distance_delta_to_waypoint", "blocked_attempt_penalty"]
     assert "same seed produces byte-equivalent reset observation" in contract["acceptance_gates"]
