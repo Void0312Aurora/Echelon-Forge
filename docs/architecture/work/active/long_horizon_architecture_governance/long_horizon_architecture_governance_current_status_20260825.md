@@ -151,6 +151,169 @@ They must be remeasured before an implementation or acceptance claim.
   packaging is accepted for the tested Windows/MSVC row, while P5-D cutover
   and P6-P8 remain open.
 
+<<<<<<< HEAD
+=======
+- Implemented the first P5-D maintained contract-caller migration slice. The
+  loader command-chain, route-generator, comm, and kernel contract callers now
+  use the facade-owned batch adapter and scenario-loader proxy. The native
+  facade exposes the bounded command-link and communication-query surfaces
+  required by the migrated contracts, with generated DTO schema coverage and
+  explicit CUDA unsupported-path rejection. Focused architecture and
+  migrated-contract gates pass. The randomized route-origin and leader-fixture
+  parity residuals were repaired and their focused contracts pass; the full
+  unit batch still reports unrelated legacy flight-model rows and an explicit
+  skip for an unavailable historical frozen-model artifact. See [P5-D caller
+  migration evidence](evidence/p5d_facade_caller_migration_20260923.md). This
+  is not production cutover or P5-D acceptance.
+
+- Added the P5-D process-lifetime admission recheck. A maintained production
+  adapter now reloads the durable rollout slot before setup, command/launch
+  mutation, stepping, and runtime-window execution; a kill switch or typed
+  backout therefore closes an already-running process before its next
+  truth-changing action. The focused gate and adapter tests pass. See
+  [P5-D process-resync evidence]
+  (evidence/p5d_process_restart_admission_resync_20260923.md). This remains a
+  local admission safeguard, not package rollback or production cutover.
+
+- Made release/RunReceipt binding mandatory for production-state commits and
+  for `RuntimeFacadeAdapter(require_production_admission=True)`. Canonical
+  release-manifest and receipt bytes are checked against the admitted release,
+  plan, decision, package, and wheel identities before the slot or production
+  caller is accepted; receipt completion must be durably acknowledged. Added a
+  secret-free telemetry/SLO projection and explicit prerequisite checks for
+  same-release checkpoint recovery and stop/restart package rollback. The
+  focused binding, admission, facade, caller, and operations gates pass. See
+  [P5-D production binding and operations evidence]
+  (evidence/p5d_production_binding_operations_20260923.md). This initial
+  operations slice precedes the SQLite controller integration recorded below;
+  the real process/package drill and measured multi-run SLO/adoption evidence
+  are recorded in the follow-up packets below. Rollback-window retention and
+  rebuild retirement remain open.
+
+- Added the first ArtifactLedger-backed rollout controller on the qualified
+  local SQLite backend. Release, decision, receipt, and evidence blobs now
+  enter one durable transaction with decision/evidence CAS slots; restart
+  reads revalidate the complete authority graph, and a kill switch closes the
+  evidence slot without rewriting the signed decision. The maintained facade
+  can consume the durable snapshot and recheck it before mutation. The
+  durable test now covers the complete local state graph through `stable` and
+  verifies the storage-side rollback retention classes at that point. See
+  [P5-D SQLite rollout controller evidence]
+  (evidence/p5d_sqlite_rollout_controller_20260923.md). This remains a local
+  controller integration, not a production cutover.
+
+- Added the separate P5-D rebuild-retirement gate. It requires a fresh
+  zero-caller inventory, a matching durable `stable` admission and retention
+  check, and an exact production cutover/adoption/rollback attestation before
+  producing a production-authority-only retirement proof. The gate is
+  read-only and retains the native test capability; it does not claim that
+  production authority has been retired. See [P5-D rebuild retirement gate
+  evidence](evidence/p5d_rebuild_retirement_gate_20260924.md).
+
+- Started P6-A's test-authority migration baseline. The two architecture tier
+  manifests and the two CI runner manifests now declare owner, failure
+  audience, and execution strategy; a
+  derived non-authoritative audit rejects stale, missing, duplicate, and
+  cross-tier assignments while preserving the existing source-scan residual
+  signal. It also caught and restored the previously unlisted P5-D retirement
+  gate test. Native CTest now exposes primary lane labels for all 25 entries;
+  native registry and platform-capability source-scan replacements move exact
+  field/vocabulary checks into compiled probes, reducing the residual
+  source-scan count from 88 to 86. The focused P6-A
+  authority/manifest/lifecycle/replacement set passes 31 tests and the CTest
+  label check passes 2 tests. The five-lane P6-B declaration maps fast,
+  qualification, nightly, release, and research to existing workflow jobs with
+  explicit runner, timeout, build/test parallelism, failure audience, and CTest
+  selectors; its focused lane/CTest checks pass 6 tests, and the 15-test local
+  selector subset passed three consecutive repeats (29.480 s, 28.661 s,
+  24.386 s). This is repeatable local declaration behavior, not hosted CI
+  resource/flake or branch-protection evidence.
+  See [P6-A test-authority audit evidence]
+  (evidence/p6a_test_authority_audit_20260924.md). P6-A replacement and
+  retirement decisions, repeated P6-B CI evidence, and P7 archive-specific
+  work remain open. See [P6-B CI lane evidence]
+  (evidence/p6b_ci_lane_manifest_20260924.md).
+
+- Executed the first real local process/package rollback drill. Two existing
+  Windows CPython 3.12 `ef_py` build outputs were loaded by separate child
+  processes; the current process read the SQLite production-canary snapshot
+  through `RuntimeFacadeAdapter`, verified the signed release/RunReceipt
+  binding, and constructed `RuntimeFacade` only after admission. The durable
+  kill switch stopped it, and a typed backout restarted the rollback build with
+  a new boot identity and epoch. See [P5-D real process/package rollback
+  evidence](evidence/p5d_real_process_package_rollback_20260923.md). The
+  child now verifies the imported binding path plus RunReceipt package/wheel
+  digests and rejects a mismatched build before readiness; the backout process
+  remains evidence-bound but non-authoritative. This closes the local
+  admitted-process drill prerequisite; production-canary
+  publication, rollback-window retention, and rebuild retirement remain open.
+
+- Repeated the supported-row process path for three cycles using the current
+  and rollback Windows CPython 3.12 builds. All three replacements, drains,
+  crash receipts, backouts, artifact reads, and caller-adoption observations
+  passed the initial P1-C targets; maximum replacement startup was 1.0988426 s
+  and maximum backout recovery was 1.1253792 s. See [P5-D supported-row
+  measurement evidence](evidence/p5d_supported_row_measurement_20260923.md).
+  This is a local measurement baseline; P2-B still owns representative
+  cadence/sample-size sustainability and P5-D still requires production
+  caller cutover, rollback-window retention, and rebuild retirement.
+
+- Attached lifecycle metadata to the four existing smoke and architecture
+  suite manifests. The metadata covers eight controls: five permanent and
+  three migratory, with owners, invariants, expiry, successors, bounded
+  renewal fields, removal proof, and coverage paths. The architecture tier
+  partition now lists every current architecture test file exactly once; the
+  P2-A validator and manifest checks pass 11 tests. See [P2-A control lifecycle
+  inventory evidence](evidence/p2_control_lifecycle_inventory_20260923.md).
+  This is the implementation baseline; P2-B representative measurements and
+  the paused independent review remain open.
+
+- Added the first repeatable P2-B sustainability baseline. Four check groups
+  ran three times (12/12 passed, 0 healthy-sample failures) and the supported
+  row ran three additional process replacement/backout cycles. The report
+  records control counts, check cost, SLO/adoption, safety counters, static
+  audit size, and evidence retrieval with named owners. See [P2-B
+  sustainability baseline evidence](evidence/p2b_sustainability_baseline_20260923.md).
+  This is a local Windows baseline; representative release cadence, long-term
+  resource budgets, and independent review remain open.
+
+- Extended the supported-row process measurement with real child-process
+  working-set and handle observations. The three-cycle sample had 6/6
+  available resource snapshots, a maximum peak working set of 46,186,496
+  bytes, and a maximum peak handle count of 128. These are observation-only
+  values; no long-term resource budget or leak verdict has been accepted.
+
+- Made the P2-B release cadence sample explicit: each supported-row report
+  carries release ID and plan digest, and the aggregate records observed
+  current/rollback package pairs. Three logical release IDs in the dated
+  baseline all used one plan digest and one package pair, so its status is
+  `local_repeat_only`. Representative release cadence is still open; this
+  does not turn local repetitions into production release evidence.
+
+- Added a real cadence follow-up using the accepted P5-A plan digest and two
+  separate two-cycle child-process batches. Both batches passed the initial
+  SLOs and each kept a consistent package pair; the second rollback binding
+  differed, so the classifier now reports
+  `distinct_package_batches_observed` (two release IDs, one plan digest, two
+  package pairs). This improves the local evidence without closing the
+  representative cadence gate. See [P2-B release cadence follow-up evidence]
+  (evidence/p2b_release_cadence_followup_20260924.md).
+
+- Added the P5-D rebuild-unreachability inventory and guard. The live tree has
+  only the native declaration/implementation and test-only smoke calls for
+  `SimulationKernel::rebuild_world_composition`; maintained production callers
+  and Python binding references are zero. The production package guard remains
+  facade-only, and the inventory explicitly refuses to assert retirement before
+  the unique cutover and rollback-window gate. See [P5-D rebuild
+  unreachability evidence](evidence/p5d_rebuild_unreachability_20260923.md).
+- Added the real admission-bound facade VecEnv canary check. File-backed and
+  durable SQLite-snapshot cases validate `WorldBatchVecEnv` reset/step with
+  signed rollout admission, release/RunReceipt/package binding, and the native
+  `RuntimeFacade` mutation path; this remains a canary-path result rather than
+  production publication.
+  See [P5-D facade VecEnv canary evidence](evidence/p5d_facade_vecenv_canary_20260923.md).
+
+>>>>>>> c8bff8956 (test(p6a): replace capability vocabulary source scan)
 ## Observed Baseline
 
 | Surface | Observed fact | Evidence boundary | Long-horizon implication |
