@@ -60,7 +60,7 @@ calibration package, inventory claim, or final simulation configuration.
 | R-15 | MiG-31BM held-record completion from a named variant profile | complete | `aa9d0135` |
 | R-16 | Su-57 held-record completion from official programme and bounded baseline profiles | complete | `466ffb4e` |
 | R-17 | Tu-95MS held-record completion from a named variant profile | complete | `b1fc0c1e` |
-| R-18 | Ka-52 and Mi-28NM held-record completion from named variant profiles | ready to commit | pending |
+| R-18 | Ka-52 and Mi-28NM held-record completion from named variant profiles | complete | `c3d7de6c` |
 
 ## Blocker / skip ledger
 
