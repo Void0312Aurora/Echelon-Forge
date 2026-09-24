@@ -218,6 +218,10 @@ void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel> &ker
              "Get unit health [current, max]")
         .def("get_unit_damage_state", &SimulationKernel::get_unit_damage_state,
              "Get unit damage state [mission, mobility, sensor, survivability]")
+        .def("get_ground_weapon_state", &SimulationKernel::get_ground_weapon_state,
+             "Get bounded ground weapon state [present, selected_type, ammo, max_ammo, damage, "
+             "range, hit_probability, cooldown_remaining]",
+             nb::arg("entity_id"))
         .def("get_unit_fuel", &SimulationKernel::get_unit_fuel, nb::arg("entity_id"),
              "Returns [internal, max_internal, external, max_external]")
         .def("get_task_order", &SimulationKernel::get_task_order, "Get the latest task order",

@@ -265,6 +265,8 @@ class SimulationKernel {
                              // deterministic_fuze_authority, evidence_dataset_valid]
     std::vector<double> debug_get_naval_weapon_counts(
         uint64_t entity_id); // [mounts, total_ready_vls, total_ready_gun, total_ready_ciws]
+    std::vector<double> get_ground_weapon_state(
+        uint64_t entity_id); // [present, selected_type, ammo, max_ammo, damage, range, hit_prob, cooldown_remaining]
     std::vector<double>
     get_unit_fuel(uint64_t entity_id); // Returns [internal, max_internal, external, max_external]
     std::vector<double> debug_get_naval_stores(
