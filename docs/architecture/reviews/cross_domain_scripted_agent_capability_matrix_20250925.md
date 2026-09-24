@@ -41,8 +41,9 @@ RL participation is orthogonal to these labels. A learned or RL adapter may
 
 ## Required machine-readable manifest shape
 
-The next scenario-manifest slice should attach an additive object to each
-maintained scripted entry point. The keys below are the minimum review shape;
+The scenario-manifest slice now attaches an additive object to three
+representative maintained entry points. The keys below are the minimum review
+shape;
 the object must preserve domain-owned payloads rather than flattening them into
 a mega-schema:
 
@@ -70,6 +71,9 @@ a mega-schema:
 
 `evidence_refs` are references, not proof by themselves. The evidence bundle
 must still be inspected, and proxy evidence must remain marked as proxy.
+The dependency-light parser in
+`python/tasking_contracts/scripted_capability.py` validates this shape; it does
+not grant runtime admission and is not yet wired into the scenario loader.
 
 ## Open acceptance gates
 
