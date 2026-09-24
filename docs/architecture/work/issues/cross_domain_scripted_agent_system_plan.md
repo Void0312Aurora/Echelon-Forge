@@ -1122,3 +1122,30 @@ to a dedicated owner-local evidence document.
   tactical post-launch residuals, then design the smallest Air-owned
   countermeasure action extension with negative and replay tests before any
   EW runtime promotion.
+
+### 2026-09-25 — Air EW versioned action-extension slice
+
+- Starting commit: `fb211da2`.
+- Change batch: add the opt-in `air_ew_hybrid_v1` action shape with two
+  explicit tail fields for `program_chaff` and `program_flare`; map the fields
+  to `PilotAction` without changing the existing 17-element `full` or
+  12-element `air_combat_hybrid_v1` layouts. Add a scripted EW action model
+  that composes the neutral Air flight controller and emits the extension.
+- Focused verification: EW transport/model, existing Air hybrid action, C2/ROE
+  observation, and tasking-boundary tests passed `25 passed`; Python
+  compilation and `git diff --check` passed.
+- Direct verification: the local compiled `WorldBatchVecEnv` accepted
+  `air_ew_hybrid_v1` with action dimension `14`; one zero-randomization Stage 3
+  step carried transport tail `[1.0, 1.0]` for chaff/flare and returned a
+  finite reward without termination. A 79-step scripted run also stepped the
+  new mode without runtime errors, but no RWR launch warning occurred in that
+  short horizon.
+- Evidence boundary: the extension is deliberately outside the canonical
+  `python.env_config.ACTION_MODES` list, has no maintained scenario/config or
+  CLI admission, and has no native countermeasure inventory decrement/report
+  proof. This is transport and model evidence only; EW remains
+  `entry_surface_incomplete`.
+- Continuation choice: add the smallest direct scenario/report gate that can
+  observe native chaff/flare acceptance and inventory/resource change, or log
+  the first concrete scenario mismatch and use a bounded proxy. Jammer
+  activation remains a separate owner decision.
