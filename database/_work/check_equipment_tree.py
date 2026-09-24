@@ -172,6 +172,7 @@ def check_source_ledger(manifests: dict[str, dict]) -> dict:
         "domain",
         "equipment",
         "configuration",
+        "provenance_status",
         "rights_status",
         "retrieval_status",
         "authority_status",

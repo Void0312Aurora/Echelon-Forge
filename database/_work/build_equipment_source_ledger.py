@@ -26,6 +26,7 @@ FIELDS = [
     "domain",
     "equipment",
     "configuration",
+    "provenance_status",
     "rights_status",
     "retrieval_status",
     "authority_status",
@@ -55,6 +56,13 @@ def build_row(manifest: Path) -> dict[str, str]:
     rights_status = "recorded" if re.search(r"rights|redistribution", text, re.IGNORECASE) else "not_recorded"
     scope_status = "complete" if value(text, "Domain") and value(text, "Equipment") and configuration else "partial"
     retrieval = retrieval_status(text)
+    provenance_status = (
+        "manifest+retrieval+retention"
+        if retrieval not in {"not_recorded", "malformed"} and value(text, "Retention")
+        else "manifest+retention"
+        if value(text, "Retention")
+        else "manifest_locator_only"
+    )
     residual_status = "open" if (
         rights_status == "not_recorded"
         or retrieval in {"not_recorded", "malformed", "failed", "not_attempted", "no_record"}
@@ -71,6 +79,7 @@ def build_row(manifest: Path) -> dict[str, str]:
         "domain": value(text, "Domain"),
         "equipment": value(text, "Equipment"),
         "configuration": configuration,
+        "provenance_status": provenance_status,
         "rights_status": rights_status,
         "retrieval_status": retrieval,
         "authority_status": "non-authoritative",

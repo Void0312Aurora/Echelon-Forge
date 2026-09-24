@@ -25,7 +25,7 @@ runtime authority.
 ## Columns
 
 `source_id`, `tier`, `publisher`, `author_or_maintainer`, `title`, `url`,
-`domain`, `equipment`, `configuration`, `rights_status`, `retrieval_status`,
+`domain`, `equipment`, `configuration`, `provenance_status`, `rights_status`, `retrieval_status`,
 `authority_status`, `scope_status`, `residual_status`, and `manifest_path`.
 
 All current rows default to `authority_status=non-authoritative`. Tier C
