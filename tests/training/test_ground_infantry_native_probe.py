@@ -48,6 +48,7 @@ def test_native_ground_gym_adapter_reaches_fixed_waypoint() -> None:
     assert truncated is False
     assert info["blocked"] is False
     assert float(observation["mission_state"][2]) <= 5.0
+    assert info["termination_reason"] == "waypoint_reached"
 
 
 def test_native_ground_probe_reset_and_step_use_compiled_observation_surfaces() -> None:

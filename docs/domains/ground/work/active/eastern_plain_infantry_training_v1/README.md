@@ -59,7 +59,8 @@ accepted.
   The native observation includes a fixed single-waypoint relative state
   (goal delta and distance) so a policy can learn the S1 task without hidden
   access to the probe internals; it also carries native health and command
-  state for traceability. This is not route planning or a new fire authority.
+  state for traceability, and terminates explicitly on waypoint reach or
+  incapacitation. This is not route planning or a new fire authority.
 - Maintained command projection:
   `python/rl/ground/command.py`. It carries heading/speed, native stance, and
   the existing Ground static-task slice through the batch contract, while

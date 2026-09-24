@@ -114,6 +114,7 @@ else:
                 "production_boundary": "not_world_batch",
                 "blocked": transition.blocked,
                 "blocked_reason": transition.blocked_reason,
+                "termination_reason": transition.trace.get("termination_reason"),
                 "trace": transition.trace,
             }
             return (

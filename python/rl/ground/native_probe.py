@@ -244,7 +244,16 @@ class GroundInfantryNativeProbe:
             self.goal_xy_m[1] - after["position_local_enu_m"][1],
         )
         reward = float(previous_distance - current_distance) - (0.1 if blocked else 0.0)
-        terminated = current_distance <= self.goal_radius_m
+        waypoint_reached = current_distance <= self.goal_radius_m
+        incapacitated = after["health_state"][0] <= 0.0
+        terminated = waypoint_reached or incapacitated
+        termination_reason = (
+            "agent_incapacitated"
+            if incapacitated
+            else "waypoint_reached"
+            if waypoint_reached
+            else None
+        )
         truncated = (
             not terminated and self._step_index >= self.max_steps
         ) or self._blocked_steps >= self.blocked_step_limit
@@ -259,6 +268,8 @@ class GroundInfantryNativeProbe:
             "moved_distance_m": moved_distance,
             "blocked": blocked,
             "blocked_reason": blocked_reason,
+            "terminated": terminated,
+            "termination_reason": termination_reason,
         }
         return NativeGroundInfantryTransition(
             observation=after,
