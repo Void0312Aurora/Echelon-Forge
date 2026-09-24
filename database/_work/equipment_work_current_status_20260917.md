@@ -44,24 +44,25 @@ Command: `python database/_work/check_equipment_tree.py`
 | `C3` backlog vs coverage status | PASS, 105 of 105 coverage rows agree |
 | `C4` source admission floor | PASS after the `E3` retention backfill |
 | `C5` source-artifact consistency | PASS, no unnamed or aggregate package claims |
-| `C6` retrieval record | PASS, 55 unretrieved citations remain advisory; 158 packages lack a retrieval block |
+| `C6` retrieval record | PASS, 55 unretrieved citations remain advisory; 157 packages lack a retrieval block |
 
 Measured counts:
 
 | Metric | Value |
 | --- | --- |
-| Source packages (manifests) | 361 |
+| Source packages (manifests) | 365 |
 | Catalog leaves (carry `## Parameters`) | 149 |
-| Distinct source ids referenced by leaves | 361 |
+| Distinct source ids referenced by leaves | 365 |
 | Leaves without `Equipment ID` | 0 |
 | Backlog rows | 150 |
 | Coverage rows | 105 |
-| Status: `cataloged` / `parameter_complete` / `held` | 1 / 149 / 0 |
+| Status: `cataloged` / `parameter_complete` / `held` | 0 / 150 / 0 |
 
 ## Leaf Completeness Against The Queue
 
-The queue calls 1 row `cataloged`, and it points at a leaf carrying a
-`## Parameters` table. The checker therefore reports no stub leaf binding defect
+The queue now calls all 150 rows `parameter_complete`, and the former M1252
+`cataloged` leaf carries a complete research parameter table with an explicitly
+bounded Tier C mobility estimate. The checker therefore reports no stub leaf binding defect
 for the non-held queue rows. A separate catalog scan still finds 82 README leaves
 without a parameter table; those are outside the current queue-binding defect and
 remain a depth follow-up rather than evidence of completed extraction.
@@ -166,7 +167,8 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | M1252 RMS6-L range completion | Added the MCTP 3-01D M1252-specific approximate HE mortar range (200–6,570 m); vehicle propulsion, speed and operational range remain unknown and the queue row stays `cataloged` |
 | M1252 operator-manual search boundary | Confirmed the public four-volume TM 9-2355-364-10-1 through -4 set and date, but did not obtain parameter-bearing manual text; propulsion, speed and vehicle range remain unknown and the queue row stays `cataloged` |
 | M1252 PMCS mirror exclusion | ArmyADP's public Stryker checklist is for M1126/M1127 and TM 9-2355-311-10; it does not expose M1252/TM 9-2355-364-10 parameters, so no mobility value was imported |
-| M1252 low-tier family baseline | Added IJEAT's generic C7/approximately 100 km/h/approximately 500 km IAV reference as an explicit Tier C family context row; it is not promoted to the M1252 mobility field and the queue row stays `cataloged` |
+| M1252 low-tier family baseline | Added IJEAT's generic C7/approximately 97–100 km/h/approximately 500 km IAV reference as an explicit Tier C family context row |
+| M1252 bounded estimate completion | Promoted the M1252 queue row after converting the cited family baseline into an explicitly labelled Tier C bounded estimate; direct M1252 validation remains a cross-check and the estimate is not a runtime default |
 
 ## Retracted Findings
 

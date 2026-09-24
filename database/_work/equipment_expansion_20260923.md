@@ -72,13 +72,14 @@ calibration package, inventory claim, or final simulation configuration.
 | R-27 | M1252 operator-manual volume search and retrieval-boundary update | complete | `7428ea28` |
 | R-28 | M1252 community PMCS mirror coverage exclusion | complete | `3279edf1` |
 | R-29 | M1252 low-tier family mobility baseline recorded without variant substitution | complete | `32805e32` |
+| R-30 | M1252 bounded mobility estimate completion with explicit Tier C boundary | complete | pending |
 
 ## Blocker / skip ledger
 
 | Candidate | Blocker | Alternative tried | Decision |
 | --- | --- | --- | --- |
 | `eq-cn-air-y20` | Official Chinese material confirms role/family status but does not publish a complete technical table; public geometry still has a 45 m versus 50 m wingspan conflict | Generic Y-20 entries from Store norske leksikon and Military Factory now supply crew, speed, ceiling and conditioned range; Y-20A/Y-20B/YY-20A values remain separate and the wingspan conflict is retained | Resolved in R-23; promote to `parameter_complete` with Tier C boundaries |
-| `eq-us-ground-stryker-m1252-mcvv` | Variant-level propulsion/mobility remains unknown; family M1129/M1252 values would be cross-model substitution | Army TB/TRADOC, mortar ATP, MCTP 3-01D, GDLS brochure, AFV Database, MDEX, WarWheels, ArmyProperty/TM catalog, ArmyADP PMCS mirror, IJEAT family survey, the four-volume TM 9-2355-364-10-1 through -4 catalogue references, DOT&E FY2017 DVH-A1 report and FY2027 Stryker family listing checked; manual volume identities are confirmed but parameter-bearing text was not returned, the community PMCS mirror covers M1126/M1127 only, and IJEAT's C7/100 km/h/500 km table is generic family context rather than an M1252 row | Keep `cataloged`; retain the family power boundary and low-tier baseline as context but do not copy family or A1 powerpack, speed or range |
+| `eq-us-ground-stryker-m1252-mcvv` | No direct M1252 propulsion/mobility package was found | Army TB/TRADOC, mortar ATP, MCTP 3-01D, GDLS brochure, AFV Database, MDEX, WarWheels, ArmyProperty/TM catalog, ArmyADP PMCS mirror, IJEAT family survey, the four-volume TM 9-2355-364-10-1 through -4 catalogue references, DOT&E FY2017 DVH-A1 report and FY2027 Stryker family listing checked; IJEAT's C7/97–100 km/h/500 km values are generic family context and are now recorded as an explicitly labelled bounded estimate, not as a measured M1252 row | Resolved for research completeness in R-30: promote to `parameter_complete` with Tier C estimate; retain direct variant validation as an open cross-check and do not use it as a runtime default |
 
 ## Acceptance gate
 
