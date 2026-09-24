@@ -47,8 +47,10 @@ class ScriptedExecutiveController:
             dt = float(getattr(self.env.unwrapped.sim, "get_time_step", lambda: 0.05)())
         except Exception:
             dt = 0.05
-        self._model = AIR_SCRIPTED_MODEL_REGISTRY.create(
-            self.model_id,
+        self._model = AIR_SCRIPTED_MODEL_REGISTRY.create_for(
+            domain="air",
+            role_id="autopilot_controller",
+            model_id=self.model_id,
             action_dim=self.action_dim,
             dt=dt,
             transition_alt_agl_m=self.transition_alt_agl_m,

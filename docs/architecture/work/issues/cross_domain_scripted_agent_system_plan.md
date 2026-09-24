@@ -416,3 +416,19 @@ to a dedicated owner-local evidence document.
   and `git diff --check` passed. Full cooperative N4 execution remains subject
   to the already recorded missing local `ef_py` artifact and is not promoted
   from this proxy evidence.
+
+### 2026-09-25 — WP2 role-aware registry resolution slice
+
+- Starting commit: `88496f88`.
+- Affected owners: cross-domain tasking contracts, Air execution, Naval
+  bounded evaluation, and registry contract tests.
+- Expected evidence: consumers can resolve a scripted model by domain and
+  declared role through one registry API; explicit model IDs remain supported
+  for deterministic scenario selection and fail closed on domain/role/status
+  mismatch.
+- Known residual: scenario manifests and active-roster routing do not yet
+  select these registrations directly; that remains WP2/WP6 work.
+- Focused proxy verification: registry, Air adapter, Naval adapter, and
+  visualization contract tests passed `15 passed`; Python compilation and
+  `git diff --check` passed. No compiled-runtime or scenario-playability claim
+  is made from this pure-Python slice.

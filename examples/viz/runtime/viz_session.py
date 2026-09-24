@@ -615,8 +615,10 @@ class _ScriptedPolicy:
             self.stable_ctrl = None
             self.landing_ctrl = None
         elif mode == "takeoff_cruise_landing":
-            self._air_model = AIR_SCRIPTED_MODEL_REGISTRY.create(
-                AIR_SCRIPTED_EXECUTION_MODEL_ID,
+            self._air_model = AIR_SCRIPTED_MODEL_REGISTRY.create_for(
+                domain="air",
+                role_id="autopilot_controller",
+                model_id=AIR_SCRIPTED_EXECUTION_MODEL_ID,
                 action_dim=action_dim,
                 dt=dt,
                 transition_alt_agl_m=self._transition_alt_agl_m,

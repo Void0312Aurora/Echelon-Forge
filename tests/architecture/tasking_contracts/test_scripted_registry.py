@@ -104,3 +104,42 @@ def test_registry_rejects_a_factory_that_does_not_implement_the_lifecycle() -> N
     registry = ScriptedModelRegistry((registration,))
     with pytest.raises(TypeError, match="without reset/decide/close"):
         registry.create("air.invalid")
+
+
+def test_registry_create_for_resolves_one_role_and_validates_explicit_id() -> None:
+    registry = ScriptedModelRegistry((_registration(),))
+    inferred = registry.create_for(domain="air", role_id="autopilot_controller", marker="inferred")
+    assert isinstance(inferred, _StubScriptedModel)
+    assert inferred.marker == "inferred"
+
+    explicit = registry.create_for(
+        domain="air",
+        role_id="autopilot_controller",
+        model_id="air.execution.scripted",
+        marker="explicit",
+    )
+    assert isinstance(explicit, _StubScriptedModel)
+    assert explicit.marker == "explicit"
+
+    with pytest.raises(ValueError, match="belongs to domain"):
+        registry.create_for(
+            domain="naval",
+            role_id="autopilot_controller",
+            model_id="air.execution.scripted",
+        )
+    with pytest.raises(ValueError, match="does not declare role"):
+        registry.create_for(
+            domain="air",
+            role_id="flight_lead",
+            model_id="air.execution.scripted",
+        )
+
+
+def test_registry_create_for_fails_closed_on_missing_or_ambiguous_role() -> None:
+    registry = ScriptedModelRegistry((_registration(),))
+    with pytest.raises(LookupError, match="no scripted model"):
+        registry.create_for(domain="naval", role_id="naval_warfare_commander")
+
+    registry.register(_registration("air.execution.scripted.v2"))
+    with pytest.raises(ValueError, match="ambiguous scripted models"):
+        registry.create_for(domain="air", role_id="autopilot_controller")

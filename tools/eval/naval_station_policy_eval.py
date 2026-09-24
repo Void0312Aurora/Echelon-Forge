@@ -331,8 +331,10 @@ def run_baseline_eval(
     try:
         env.seed(int(seed))
         obs = env.reset()
-        scripted_model = NAVAL_SCRIPTED_MODEL_REGISTRY.create(
-            NAVAL_STATION_HOLD_MODEL_ID,
+        scripted_model = NAVAL_SCRIPTED_MODEL_REGISTRY.create_for(
+            domain="naval",
+            role_id="naval_warfare_commander",
+            model_id=NAVAL_STATION_HOLD_MODEL_ID,
             action_dim=int(env.action_space.shape[0]),
         )
         scripted_model.reset(context={"scenario": os.path.abspath(scenario_path)})
