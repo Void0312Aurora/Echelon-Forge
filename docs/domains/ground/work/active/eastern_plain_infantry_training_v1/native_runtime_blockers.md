@@ -87,8 +87,10 @@ export gate.
 
 The native movement slice now applies a bounded vegetation-density speed cost
 to Arnis landcover classes while retaining the existing surface and slope
-costs. This is a movement effect only; it is not a tree-line cover, concealment,
-collision, or line-of-sight model.
+costs. It also checks the one-tick destination cell and blocks transitions into
+water or unknown/obstacle terrain without advancing the transform. These are
+movement effects only; they are not a tree-line cover, concealment, collision,
+route graph, or line-of-sight model.
 
 The proxy fails closed on unknown raster cells, out-of-bounds transitions, and
 river crossings without the explicit bridge intent.  The bridge rule is a

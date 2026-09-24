@@ -143,14 +143,24 @@ inline void register_ground_infantry_movement_system(flecs::world &ecs) {
 
                     const double heading_rad =
                         Math::to_radians(Math::normalize_heading_deg(command[i].cmd_heading_deg));
-                    velocity[i].vx = std::sin(heading_rad) * effective_speed;
-                    velocity[i].vy = std::cos(heading_rad) * effective_speed;
-                    velocity[i].vz = 0.0;
-
                     // Ground entities are not currently admitted to the shared
                     // ForceAccumulator/Mass integration path. Advance only the
                     // horizontal kinematic slice owned by this stage.
                     const double dt = std::max(0.0, static_cast<double>(it.delta_time()));
+                    const double next_vx = std::sin(heading_rad) * effective_speed;
+                    const double next_vy = std::cos(heading_rad) * effective_speed;
+                    if (dt > 0.0) {
+                        const auto destination = environment->get_terrain_at(
+                            transform[i].x + next_vx * dt, transform[i].y + next_vy * dt);
+                        if (ground_infantry_movement_detail::surface_speed_multiplier(
+                                destination.type) <= 0.0) {
+                            ground_infantry_movement_detail::stop(velocity[i]);
+                            continue;
+                        }
+                    }
+                    velocity[i].vx = next_vx;
+                    velocity[i].vy = next_vy;
+                    velocity[i].vz = 0.0;
                     transform[i].x += velocity[i].vx * dt;
                     transform[i].y += velocity[i].vy * dt;
                 }
