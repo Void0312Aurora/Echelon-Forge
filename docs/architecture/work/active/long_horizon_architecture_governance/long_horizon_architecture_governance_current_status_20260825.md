@@ -190,6 +190,12 @@ They must be remeasured before an implementation or acceptance claim.
   (evidence/p5d_process_restart_admission_resync_20260923.md). This remains a
   local admission safeguard, not package rollback or production cutover.
 
+- Revalidated the admission-bound P5-D canary against the current local Release
+  binding on 2026-09-25: the two real facade VecEnv canary tests passed in
+  16.99 seconds, and the real process/package rollback drill passed in 13.87
+  seconds. These are refreshed local supported-row checks, not production
+  publication or production rollback-window evidence.
+
 - Made release/RunReceipt binding mandatory for production-state commits and
   for `RuntimeFacadeAdapter(require_production_admission=True)`. Canonical
   release-manifest and receipt bytes are checked against the admitted release,
