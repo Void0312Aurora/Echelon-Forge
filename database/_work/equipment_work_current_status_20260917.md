@@ -50,13 +50,13 @@ Measured counts:
 
 | Metric | Value |
 | --- | --- |
-| Source packages (manifests) | 314 |
-| Catalog leaves (carry `## Parameters`) | 120 |
-| Distinct source ids referenced by leaves | 310 |
+| Source packages (manifests) | 319 |
+| Catalog leaves (carry `## Parameters`) | 124 |
+| Distinct source ids referenced by leaves | 319 |
 | Leaves without `Equipment ID` | 0 |
-| Backlog rows | 129 |
+| Backlog rows | 133 |
 | Coverage rows | 105 |
-| Status: `cataloged` / `parameter_complete` / `held` | 2 / 119 / 8 |
+| Status: `cataloged` / `parameter_complete` / `held` | 2 / 123 / 8 |
 
 ## Leaf Completeness Against The Queue
 
@@ -146,6 +146,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | U.S. naval-aircraft expansion batch | Added P-3C, F/A-18C and UH-1Y with official Navy/NAVAIR/Marine Corps geometry, mass, propulsion, flight, crew, payload, armament and mission-system fields; common A-D and conditioned HOGE/radius boundaries remain explicit |
 | Chinese fighter/bomber completion batch | Promoted J-11B/BS, J-15 and H-6K after adding named armament, crew, avionics/mission-system and empty-mass blocks; B/BS, baseline/STOBAR, engine-batch and 79/95 t mass boundaries remain explicit |
 | Chinese AEW/tanker/utility-aircraft completion batch | Promoted KJ-500, YY-20A and Z-20 after adding named radar/refuelling/flight-control and crew/fuel rows; dimensional and fuel conflicts remain source-bounded |
+| Small-arms expansion batch | Added M4A1, AK-74M, FN SCAR-L Mk2 STD and HK416 A5 14.5-inch with variant-specific geometry, mass, operation, feed and rate fields; AK-74M government/community conventions remain separate |
 
 ## Retracted Findings
 
