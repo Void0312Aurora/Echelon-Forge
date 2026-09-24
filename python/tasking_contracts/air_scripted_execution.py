@@ -20,8 +20,6 @@ from .mission_defs import (
 from .scripted_landing import ScriptedLandingController
 from .scripted_registry import (
     ScriptedDecisionModel,
-    ScriptedModelRegistration,
-    ScriptedModelRegistry,
 )
 from .scripted_stable_flight import ScriptedStableFlightController
 from .scripted_takeoff import ScriptedTakeoffController
@@ -158,18 +156,20 @@ def make_air_scripted_execution_model(**kwargs: Any) -> AirScriptedExecutionMode
     return AirScriptedExecutionModel(**kwargs)
 
 
-AIR_SCRIPTED_MODEL_REGISTRY = ScriptedModelRegistry(
-    (
-        ScriptedModelRegistration(
-            model_id=AIR_SCRIPTED_EXECUTION_MODEL_ID,
-            domain="air",
-            role_ids=("autopilot_controller",),
-            factory=make_air_scripted_execution_model,
-            status="maintained",
-            note="Composed takeoff, stable-flight, and landing execution model.",
-        ),
-    )
-)
+def __getattr__(name: str) -> Any:
+    """Preserve the historical registry import without a second registry.
+
+    The aggregate registry lives in ``air_scripted_registry`` so Air models
+    can be registered together without import-time mutation.  A module-level
+    lazy attribute keeps existing callers of
+    ``air_scripted_execution.AIR_SCRIPTED_MODEL_REGISTRY`` source-compatible.
+    """
+
+    if name == "AIR_SCRIPTED_MODEL_REGISTRY":
+        from .air_scripted_registry import AIR_SCRIPTED_MODEL_REGISTRY
+
+        return AIR_SCRIPTED_MODEL_REGISTRY
+    raise AttributeError(name)
 
 __all__ = [
     "AIR_SCRIPTED_EXECUTION_MODEL_ID",
