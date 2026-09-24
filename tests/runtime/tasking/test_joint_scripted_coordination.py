@@ -9,6 +9,9 @@ from python.tasking_contracts.joint_scripted_coordination import (
     ScriptedJointCoordinationIntent,
     ScriptedJointTaskGraph,
 )
+from python.tasking_contracts.joint_coordination_projection import (
+    project_joint_intent_to_compiled_packet,
+)
 from python.tasking_contracts.scripted_runtime import (
     SCRIPTED_RUNTIME_ACTION_DECIDED,
     ScriptedRuntimeAgent,
@@ -132,3 +135,58 @@ def test_joint_task_graph_rejects_mismatched_node_group_and_unknown_edge() -> No
     unknown_edge["authority_edges"][0]["child_node_id"] = "missing:node"
     with pytest.raises(ValueError, match="unknown node"):
         ScriptedJointTaskGraph.from_mapping(unknown_edge)
+
+
+def test_joint_intent_projection_keeps_unrepresented_common_fields_explicit() -> None:
+    class _Roster:
+        def __init__(self) -> None:
+            self.roster_id = ""
+
+    class _Packet:
+        def __init__(self) -> None:
+            self.source_type = "policy"
+            self.source_id = ""
+            self.update_clock = "adapter_step"
+            self.merge_policy = "last_write_wins"
+            self.target_roster = _Roster()
+            self.produced_tasking_refs = []
+
+    class _Ref:
+        def __init__(self) -> None:
+            self.kind = "unspecified"
+            self.reference_id = ""
+
+    class _Binding:
+        CoordinationIntentPacket = _Packet
+        ProducedIntentRef = _Ref
+
+    model = JOINT_SCRIPTED_MODEL_REGISTRY.create_for(
+        domain="joint",
+        role_id="joint_coordination_director",
+        model_id=JOINT_SCRIPTED_COORDINATION_MODEL_ID,
+    )
+    agent = ScriptedRuntimeAgent(
+        ScriptedRuntimeAgentSpec(
+            agent_id="joint:director",
+            model_id=JOINT_SCRIPTED_COORDINATION_MODEL_ID,
+            domain="joint",
+            role_id="joint_coordination_director",
+        ),
+        model,
+    )
+    try:
+        agent.reset(context={"task_graph": _graph()}, episode_seed=3)
+        intent = agent.step(observation={}, clock_s=1.25, observation_version="joint:5").action
+        projection = project_joint_intent_to_compiled_packet(intent, binding_module=_Binding)
+        assert projection.packet.source_type == "scripted"
+        assert projection.packet.source_id == "joint:director"
+        assert projection.packet.target_roster.roster_id == "joint.air_naval_screen_demo_v1"
+        assert [ref.reference_id for ref in projection.packet.produced_tasking_refs] == [
+            "air:lead",
+            "naval:screen",
+            "joint:director",
+        ]
+        assert "task_group_id" in projection.omitted_fields
+        assert "clock_s" in projection.omitted_fields
+    finally:
+        agent.close()
