@@ -206,6 +206,45 @@ def test_native_infantry_transition_samples_movement_cost_across_surface_boundar
     assert speed < 1.5
 
 
+def test_native_infantry_moves_across_declared_bridge_transition() -> None:
+    """The bridge admission must affect the actual native step, not only a query."""
+
+    sim = ef_py.SimulationKernel()
+    assert sim.load_database(_DATABASE)
+    assert sim.load_arnis_terrain_bundle(str(_ARNIS_BUNDLE))
+    sim.set_time_step(1.0)
+    entity_id = int(
+        sim.spawn_unit(
+            ef_py.Side.Blue,
+            "Ground_Infantry_Soldier_MVP",
+            -200.0,
+            0.0,
+            0.0,
+        )
+    )
+    command = ef_py.MissionCommand()
+    command.active = True
+    command.cmd_heading_deg = 90.0
+    command.cmd_speed_mps = 400.0
+    command.ground_task_mode = ef_py.GroundTaskMode.MoveStatic
+    sim.set_command_link(entity_id, 0.0, 0.0)
+    sim.set_mission_command(entity_id, command)
+
+    before = tuple(sim.get_unit_position(entity_id))
+    transition = list(
+        sim.get_ground_transition_movement_observation(-200.0, 0.0, 200.0, 0.0, 0)
+    )
+    sim.step()
+    after = tuple(sim.get_unit_position(entity_id))
+
+    assert transition[1] == pytest.approx(1.0)
+    assert transition[5] == pytest.approx(1.0)
+    assert transition[9] >= 2.0
+    assert after[0] > 0.0  # the soldier crossed the river through the bridge
+    assert after[0] < before[0] + 400.0
+    assert float(sim.get_unit_velocity(entity_id)[0]) > 0.0
+
+
 def test_native_infantry_consumes_arnis_raster_and_stops_on_water() -> None:
     bundle = Path(_ARNIS_BUNDLE)
     manifest = json.loads((bundle / "bundle.json").read_text(encoding="utf-8"))
