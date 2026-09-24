@@ -876,3 +876,30 @@ to a dedicated owner-local evidence document.
   only after an admitted second-domain execution consumer is selected; keep
   this work independent of the Air C2 landing residual and EW action-surface
   gap. No unrelated domain task is blocked.
+
+### 2026-09-25 — Air tactical adapter hybrid-entry slice
+
+- Starting commit: `c8711fd2`.
+- Change batch: extend `AirScriptedEngagementModel` to map both the maintained
+  17-element `full` action and the existing 12-element
+  `air_combat_hybrid_v1` action. The model still reads only the declared
+  `air_combat_c2_roe_v2` mission fields; no RL, kernel, or World Truth import
+  was added.
+- Focused verification: Air execution and engagement tests passed `9` tests;
+  Python compilation and `git diff --check` passed.
+- Direct command: a single-world Stage 1 BVR C2/ROE scenario was run with
+  `AirScriptedEngagementModel(action_dim=12)` and the compiled runtime for
+  `2400` steps.
+- Direct result: the maintained hybrid transport reported
+  `fire_once_requested=true`, `fire_once_accepted=true`, and
+  `release_executed=true` for one scripted shot. The episode ended at the
+  `combat_timeout` trace boundary with mission success flag `0`; this is a
+  real scenario-consumption and native-release record, not complete engagement
+  or playable evidence.
+- Capability boundary: tactical engagement remains `adapter`; post-launch
+  assessment, terminal objective closure, broader seed/replay coverage, and
+  visualization/operator admission remain open.
+- Continuation choice: keep the hybrid mapping as the maintained entry path,
+  then investigate post-launch/terminal assessment independently of the Air C2
+  landing residual and EW action-surface gap. No unrelated domain task is
+  blocked.
