@@ -240,8 +240,8 @@ They must be remeasured before an implementation or acceptance claim.
   qualification, nightly, release, and research to existing workflow jobs with
   explicit runner, timeout, build/test parallelism, failure audience, and CTest
   selectors; its focused lane/CTest checks pass 6 tests, and the 15-test local
-  selector subset passed three consecutive repeats (29.480 s, 28.661 s,
-  24.386 s). This is repeatable local declaration behavior, not hosted CI
+  selector subset passed three fresh consecutive repeats (30.445 s, 30.742 s,
+  30.774 s). This is repeatable local declaration behavior, not hosted CI
   resource/flake or branch-protection evidence.
   See [P6-A test-authority audit evidence]
   (evidence/p6a_test_authority_audit_20260924.md). P6-A replacement and

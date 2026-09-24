@@ -1,6 +1,6 @@
 # P6-B CI Lane Manifest Baseline
 
-Date: `2026-09-24`
+Date: `2026-09-25`
 
 This packet records the first executable P6-B slice. The maintained source is
 `tests/suites/ci_lane_manifest.json`; the checker is
@@ -58,13 +58,15 @@ subset:
 
 | Repeat | Audit exit | Test exit | Elapsed |
 | ---: | ---: | ---: | ---: |
-| 1 | 0 | 0 | 29.480 s |
-| 2 | 0 | 0 | 28.661 s |
-| 3 | 0 | 0 | 24.386 s |
+| 1 | 0 | 0 | 30.445 s |
+| 2 | 0 | 0 | 30.742 s |
+| 3 | 0 | 0 | 30.774 s |
 
 This establishes repeatable local declaration and selector behavior only. It
 does not claim hosted-runner resource/flake evidence, branch-protection
-enforcement, or a completed native build.
+enforcement, or a completed native build. The refreshed run used the current
+`codex/long-horizon-governance-architecture` checkout after the P5-D explicit
+generated-plan migration commit.
 
 ## Boundary
 
