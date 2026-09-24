@@ -892,6 +892,39 @@ class DiagnosticsProcessProbeSummaryTests(unittest.TestCase):
     self.assertEqual(summary["policy_event_mode_fire_once_count"], 1)
     self.assertEqual(summary["policy_event_mask_fire_once_open_count"], 1)
 
+  def test_learned_firing_gate_requires_non_forced_valid_release(self) -> None:
+    summary = {
+      "fire_once_requested_count": 1,
+      "fire_once_accepted_count": 1,
+      "release_executed_count": 1,
+      "authorized_release_count": 1,
+      "valid_authorized_release_count": 1,
+      "fire_once_rejected_count": 1,
+      "repeat_release_before_assessment_count": 0,
+      "pending_assessment_release_count": 0,
+      "unauthorized_release_count": 0,
+      "violation_release_count": 0,
+      "fire_under_hold_count": 0,
+      "shot_budget_violation_count": 0,
+    }
+
+    gate = probe.validate_learned_firing_gate(
+      summary,
+      learned_policy=True,
+      non_forced=True,
+      max_stochastic_rejections=1,
+    )
+
+    self.assertEqual(gate["status"], "pass")
+    self.assertEqual(gate["counters"]["valid_authorized_release_count"], 1)
+
+    with self.assertRaisesRegex(ValueError, "learned_firing_gate_failed"):
+      probe.validate_learned_firing_gate(
+        {**summary, "unauthorized_release_count": 1},
+        learned_policy=True,
+        non_forced=True,
+      )
+
   def test_c2_roe_event_columns_split_authorized_salvo_and_budget_violation(self) -> None:
     state = {
       "contract_present": True,
