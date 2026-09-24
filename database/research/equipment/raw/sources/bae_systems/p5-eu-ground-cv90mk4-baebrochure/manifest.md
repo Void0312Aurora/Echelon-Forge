@@ -11,6 +11,11 @@ Domain: ground
 Equipment: CV90 family, used for Mk IV environmental/fording cross-check
 Configuration: 2011-era family brochure, not a Mk IV-specific card; family-level 1.5 m fording, 3+7 operators, 70 km/h and 900 km range are retained only as comparison bounds.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

@@ -8,6 +8,11 @@ Accessed: 2026-09-12
 Domain: air
 Equipment: H-6 / H-6K
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

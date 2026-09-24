@@ -11,6 +11,11 @@ Domain: ground
 Equipment: FV4201 Chieftain Mark 11C
 Configuration: Museum Mk11C, a Mk5-built hull upgraded with IFCS, TOGS and Stillbrew armor; museum vehicle condition is not a complete British Army issue state.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

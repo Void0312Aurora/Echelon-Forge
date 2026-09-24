@@ -12,6 +12,11 @@ Equipment: BMP-1 (Object 765 Sp2-Sp4)
 Configuration: Soviet baseline BMP-1 with 2A28 Grom turret; Sp1-Sp4 production, Czech/Polish BVP-1 licensing, BMP-1P Fagot/Konkurs and 30/40 mm retrofit turrets are not merged.
 Estimation / uncertainty: Mass, geometry, engine, speed/range, payload, armor thickness and water-speed figures are direct page values; the cross-country planning bound, system naming and subseries interpretations are bounded estimates. Valka.cz is a non-official specialist/community reference, not a Soviet/Russian technical manual.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

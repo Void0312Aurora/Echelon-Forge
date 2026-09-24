@@ -11,6 +11,11 @@ Domain: naval
 Equipment: Project 956 Sovremenny-class destroyer
 Publication history: First published 2017-03-22; page updated 2024-06-04
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

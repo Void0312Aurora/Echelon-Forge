@@ -11,6 +11,11 @@ Domain: ground
 Equipment: M270/M270A1 MLRS
 Configuration: Program history for the 1989-2000 improved launcher development; not a complete technical data sheet.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

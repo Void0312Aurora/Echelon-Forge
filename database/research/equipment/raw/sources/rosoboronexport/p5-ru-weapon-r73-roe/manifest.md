@@ -13,6 +13,11 @@ Era: 1984-present baseline family
 Configuration: R-73A/E geometry and all-aspect IR seeker; R-73M/R-74M upgrades and R-73EL laser-fuze subvariant excluded
 Estimation / uncertainty: Export catalogue availability is intermittent. Public R-73E catalogue values are cross-checked with specialist references for 105 kg, 2.9 m, 170 mm, 510 mm span, 30 km front-hemisphere range, 8 kg rod warhead and solid motor. Exact domestic seeker block is not claimed.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

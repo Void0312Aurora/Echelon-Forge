@@ -11,6 +11,11 @@ Domain: ground
 Equipment: M1A2 Abrams SEP v3
 Configuration: M1A2 Abrams SEPv3 manufacturer capability context; SEPv2/SEPv4, M1E3 and customer-specific kit states are excluded.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

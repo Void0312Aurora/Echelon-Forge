@@ -12,6 +12,11 @@ Equipment: Caterpillar C7 ACERT RV diesel engine
 Configuration boundary: Caterpillar LEHT4483-02 RV application sheet, 300/330/350 hp ratings at 2,400 rpm; engine-only data and optional accessories, not a Stryker-specific military installation.
 Availability/status: Public PDF mirror remains retrievable on the access date; original issue is dated 10-04 and may be superseded by later Cat application data.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

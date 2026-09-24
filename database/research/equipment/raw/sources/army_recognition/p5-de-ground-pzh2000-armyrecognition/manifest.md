@@ -11,6 +11,11 @@ Domain: ground
 Equipment: Panzerhaubitze 2000
 Configuration: German/KMW baseline PzH 2000; Italian PzH 2000M and later A4 retrofit claims are excluded.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

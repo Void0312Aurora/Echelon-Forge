@@ -11,6 +11,11 @@ Domain: ground
 Equipment: CV90 Mk IV
 Configuration: ODIN standard Mk IV card, introduced 2017; dimensions, 1,000 hp, 70 km/h, 350 km, 3 crew and 8 passengers are scoped to this card. Weapon section is not populated by ODIN.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

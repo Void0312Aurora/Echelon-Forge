@@ -12,6 +12,11 @@ Equipment: Panavia Tornado IDS
 Era: Cold-War through late service configuration
 Configuration: German IDS dimensions, crew, navigation and terrain-following systems; ECR and national retrofit pods excluded
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

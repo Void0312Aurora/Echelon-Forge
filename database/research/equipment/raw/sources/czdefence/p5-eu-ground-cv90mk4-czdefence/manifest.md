@@ -11,6 +11,11 @@ Domain: ground
 Equipment: CV9035 export turret (representative Mk IV 35 mm fit)
 Configuration: Comparative article describes CV9035 35 mm ammunition arrangement, not a certified Mk IV D35 load.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

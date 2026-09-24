@@ -12,6 +12,11 @@ Equipment: Su-27S (Flanker-B)
 Configuration: Initial-production single-seat Su-27S with AL-31F, N001 radar and OLS-27; Su-27P, UB, SK and Su-35 derivatives excluded.
 Estimation / uncertainty: Geometry, mass, speed, range, crew, radar/IRST, gun and hardpoints are page values; 122-125 kN AL-31F thrust and RCS/countermeasure quantities are engineering or specialist estimates, not Russian service-manual values.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

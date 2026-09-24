@@ -11,6 +11,11 @@ Domain: ground
 Equipment: K2 Black Panther
 Configuration: Republic of Korea baseline product page; export K2GF/K2PL and batch-specific supplier/armor options are not merged.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

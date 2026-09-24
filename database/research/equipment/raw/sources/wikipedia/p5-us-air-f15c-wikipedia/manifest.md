@@ -13,6 +13,11 @@ Era: Cold-War through post-Cold-War variants
 Configuration: F-15C/D single-seat dimensions, F100-PW-220 option, fuel and payload values; F-15E/EX and F-15J values are excluded from the leaf
 Estimation / uncertainty: Community-compiled values support bounded mass, fuel, range, radar detection, hardpoint, RCS and countermeasure estimates; exact MSIP block, radar software and cartridge load remain uncertain.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

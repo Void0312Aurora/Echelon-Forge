@@ -12,6 +12,11 @@ Equipment: MiG-31B
 Configuration: MiG-31B with upgraded Zaslon-M/digital datalink context; MiG-31BM, D, E and later missile refits excluded.
 Estimation / uncertainty: Geometry, mass, speed, range, crew, sensor/datalink, engines and weapons are page values; 152-155 kN thrust, the 260-round baseline versus the page's 800-round upper bound, RCS and countermeasure quantities are bounded estimates or reconciliations, not official service-manual values.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

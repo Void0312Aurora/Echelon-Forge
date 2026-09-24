@@ -13,6 +13,11 @@ Configuration boundary: 2002 development/early-production V9 for F-16 Block 50/5
 Availability/status: Flight testing was underway and the first production V9 had been delivered in April 2002 for a Greek Block 52 aircraft; this establishes fielding chronology, not present-day production status.
 Publication date: 2002-06-25
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

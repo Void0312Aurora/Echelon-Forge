@@ -13,6 +13,11 @@ Era: Current surface-launched block 3-family configuration
 Configuration: Surface-launched MM40 B3C technical baseline used to bound B3 missile body; later seeker/ECCM improvements are not silently back-projected
 Estimation / uncertainty: Datasheet directly gives 530 kg, 4.7 m, 350 mm, 250 km class, high-subsonic speed, booster + turbojet propulsion, INS/GNSS/radar-altimeter navigation, J-band active RF seeker and impact/proximity fuze. Leaf adds 780 kg/5.86 m all-up booster values and 160-165 kg warhead from French/CSIS family references.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

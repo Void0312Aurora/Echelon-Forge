@@ -12,6 +12,11 @@ Equipment: BMP-2
 Configuration: Kurganmashzavod baseline BMP-2 product entry; Improved, BMP-2D, BMP-2K and other retrofit variants are excluded.
 Estimation / uncertainty: Transmission, ammunition counts, troop seats, crew, engine power and amphibious capability are direct page claims; any bounded tactical ranges or values carried from related technical references are estimates. Army Guide is a non-official Tier C product reference, and its publication/update date is unavailable.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

@@ -12,6 +12,11 @@ Domain: naval
 Equipment: Nimitz-class CVN-68-CVN-77
 Configuration: U.S. Navy class baseline for ten nuclear carriers; 333 m length, 76.8 m flight-deck beam, approximately 97,000 LT full load, A4W reactors, 260,000 shp, 30+ knots, crew/air-wing and defensive weapon summary. Individual refits are not merged.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

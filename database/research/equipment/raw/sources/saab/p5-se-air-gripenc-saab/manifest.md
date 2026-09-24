@@ -12,6 +12,11 @@ Equipment: JAS 39 Gripen C
 Era: Current / C-series configuration
 Configuration: Single-seat Gripen C dimensions, RM12 engine, payload and road-base operating concept; D and E/F variants excluded
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

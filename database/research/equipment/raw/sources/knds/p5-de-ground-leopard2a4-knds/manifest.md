@@ -12,6 +12,11 @@ Equipment: Leopard 2A4
 Era: Cold War / legacy configuration
 Configuration: Leopard 2A4 baseline/product context; customer or national upgrade packages, exact fuel/stowage state and later A5-A8 variants are excluded.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

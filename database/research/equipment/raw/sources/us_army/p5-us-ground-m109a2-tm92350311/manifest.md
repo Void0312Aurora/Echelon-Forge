@@ -12,6 +12,11 @@ Domain: ground
 Equipment: M109A2
 Configuration: M109A2 EIC 3EZ; shared pages with A3-A5 are used only where the table explicitly identifies the A2/A3/A4 configuration.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

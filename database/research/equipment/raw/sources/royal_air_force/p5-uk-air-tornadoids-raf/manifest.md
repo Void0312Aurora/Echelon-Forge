@@ -12,6 +12,11 @@ Equipment: Panavia Tornado IDS / GR1 family
 Era: Cold-War strike configuration
 Configuration: Baseline IDS/GR1 dimensions, two-person crew, variable-sweep wing and strike mission; GR4 avionics upgrades are excluded
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

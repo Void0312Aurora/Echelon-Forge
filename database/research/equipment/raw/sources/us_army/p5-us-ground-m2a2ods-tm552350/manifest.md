@@ -12,6 +12,11 @@ Domain: ground
 Equipment: M2A2 Bradley
 Configuration: M2A2 operating and reduced transport configurations; reactive armor and later ODS-SA changes are outside this manual.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

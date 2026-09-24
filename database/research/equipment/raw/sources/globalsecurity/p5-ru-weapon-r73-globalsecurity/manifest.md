@@ -13,6 +13,11 @@ Era: Soviet/Russian baseline and R-73M context
 Configuration: Baseline R-73 canard airframe with gas-dynamic thrust vectoring, passive IR seeker, active proximity/impact fuze and continuous-rod warhead; R-74 upgrades excluded
 Estimation / uncertainty: Page provides seeker lock-before-launch, proportional navigation, radar/laser proximity and impact fuzes, gas-dynamic control and 20 m-20 km target envelope. Numeric 7.7 kN thrust and exact 30 km range are specialist bounds; no classified performance is inferred.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

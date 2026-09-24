@@ -13,6 +13,11 @@ Configuration boundary: Professional handbook summary of the APG-68 family; the 
 Availability/status: Public professional reference PDF (Issue 1, 2022); it is a technical summary rather than a procurement or service-status notice.
 Publication date: 2022-05-03 handbook announcement; handbook issue 1
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

@@ -12,6 +12,11 @@ Domain: naval
 Equipment: Ticonderoga-class (CG-47-CG-73)
 Configuration: U.S. Navy class baseline; dimensions, full-load displacement, LM2500 propulsion, 30+ knot speed, Aegis/SPY-1 systems, VLS/gun/CIWS/torpedo fit. CG-47-CG-51 Mk 26 launcher ships are not represented by the 122-cell leaf baseline.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

@@ -12,6 +12,11 @@ Equipment: MiG-29A (9.12A baseline)
 Configuration: Single-seat baseline MiG-29A/9.12A; MiG-29B, SE, SMT and M/M2 upgrades excluded.
 Estimation / uncertainty: Geometry, mass, speed, range, engines, crew, radar/IRST and hardpoints are page values; clean frontal RCS and 60-120 chaff/flare cartridges are bounded specialist estimates, not Russian service-manual values.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

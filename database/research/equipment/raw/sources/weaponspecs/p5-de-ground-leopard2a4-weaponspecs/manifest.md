@@ -13,6 +13,11 @@ Equipment: Leopard 2A4
 Era: Cold War production standard; national upgrades excluded
 Configuration: Leopard 2A4 Cold War production standard; national upgrades and later A5-A8 variants are excluded.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

@@ -13,6 +13,11 @@ Configuration boundary: Community-maintained family page; family-level X-band, s
 Availability/status: Public secondary reference; page records APG-68 family replacement by APG-83 in parts of the USAF fleet, but does not provide a current fleet inventory.
 Publication date: Revision history varies; page accessed 2026-09-14
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

@@ -13,6 +13,11 @@ Era: 2018-present fielded U.S. Navy/Air Force configuration
 Configuration: AGM-158C/C-1 air-launched LRASM; C-3 forward-fit development, JASSM-A/B and surface-launch concepts excluded
 Estimation / uncertainty: Navy budget documents confirm C-1 fielding, EOC on F/A-18E/F and B-1B, multimodal maritime sensor/data-link architecture and ongoing C-3 transition. Exact mass, dimensions, engine and fuze details are not published; leaf uses JASSM-ER-derived specialist bounds.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

@@ -13,6 +13,11 @@ Equipment: M1A1 Abrams
 Era: Cold War / baseline M1A1 (not AIM/SA or M1A2 conversion)
 Configuration: Cold War baseline M1A1 as compiled by WeaponSpecs; AIM/SA, M1A2 conversions and later upgrade states are excluded.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

@@ -13,6 +13,11 @@ Equipment: M142 HIMARS
 Era: Current M142 launcher; MLRS-family loadouts kept mutually exclusive
 Configuration: Current M142 launcher profile; MLRS-family rocket and missile loadouts are kept mutually exclusive.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

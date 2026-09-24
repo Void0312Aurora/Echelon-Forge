@@ -12,6 +12,11 @@ Equipment: M2A4 Bradley
 Era: Current
 Configuration: Current Bradley A4 manufacturer product context; M2A4E1 Iron Fist and block-specific kits are excluded.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

@@ -11,6 +11,11 @@ Domain: ground
 Equipment: M2A2 ODS Bradley
 Configuration: M2A2 ODS/Operation Desert Storm; M2A3, ODS-E and M2A4 excluded.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

@@ -13,6 +13,11 @@ Era: Current F-model multi-purpose-warhead configuration
 Configuration: U.S. FGM-148F missile in launch tube with original or lightweight CLU; vehicle range is recorded separately, and older warhead variants are excluded
 Estimation / uncertainty: Public specifications provide 15.9 kg missile-in-tube mass, 1.1 m missile length, 1.2 m launch-tube length, 127 mm diameter, 2.5 km original-CLU range, 4.0 km lightweight-CLU range, and top/direct-attack flight bounds. The F-model MPWH and ESAF statements are retained as functional values; exact explosive fill and electronic component settings are not inferred.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

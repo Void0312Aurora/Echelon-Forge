@@ -12,6 +12,11 @@ Equipment: J-10C
 Configuration: J-10C single-seat AESA/PL-15-era modernization; base J-10A and two-seat J-10S data are not merged. The page is a J-10 family reference and J-10C-specific fields are identified as estimates.
 Estimation / uncertainty: Geometry, mass, speed, range, crew and family fit are transcribed from the page; J-10C AESA/PL-15/EW details, the 117-129 kN thrust bound, RCS and countermeasure quantities are professional or specialist estimates, not official Chinese figures.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

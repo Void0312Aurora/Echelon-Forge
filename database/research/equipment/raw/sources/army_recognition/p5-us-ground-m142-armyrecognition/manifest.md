@@ -12,6 +12,11 @@ Equipment: M142 HIMARS
 Era: Current M142 launcher; loadout-specific munition states are not merged
 Configuration: Current M142 HIMARS launcher; rocket and missile pod loadouts are mutually exclusive and are not merged.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

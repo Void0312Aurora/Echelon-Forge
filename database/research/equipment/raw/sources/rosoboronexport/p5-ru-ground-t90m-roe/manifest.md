@@ -10,6 +10,11 @@ Accessed: 2026-09-13
 Domain: ground
 Equipment: T-90M Proryv
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

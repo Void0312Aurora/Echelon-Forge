@@ -12,6 +12,11 @@ Equipment: AGM-65D Maverick
 Era: Cold War / 1980s electro-optical infrared configuration
 Configuration: AGM-65D only; contrast-seeker A/B/H and laser-guided E/F/G/H/J/K variants are excluded
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

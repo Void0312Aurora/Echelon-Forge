@@ -13,6 +13,11 @@ Equipment: Challenger 2
 Era: Current Challenger 2 baseline; Challenger 3 excluded
 Configuration: Challenger 2 current baseline as compiled by WeaponSpecs; Challenger 3, theatre-specific armour kits and refit-specific states are excluded.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

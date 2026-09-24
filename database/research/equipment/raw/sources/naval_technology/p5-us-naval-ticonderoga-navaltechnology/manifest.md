@@ -12,6 +12,11 @@ Equipment: Ticonderoga-class (CG-47-CG-73)
 Configuration: Open-source engineering profile of the class, including dimensions, LM2500/COGAG plant, range, crew and hangar, Aegis sensors, Mk 41 and gun/torpedo armament. Values are class-level and may combine early and late sub-blocks.
 Estimation / uncertainty: Used to bound the standard-displacement proxy (7,900-8,300 LT), stores endurance (30-45 days), and draft variation where the Navy fact file reports only full-load or threshold values. These are labelled estimates in the leaf and are not official Navy specifications.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

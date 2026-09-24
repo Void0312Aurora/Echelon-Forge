@@ -11,6 +11,11 @@ Domain: ground
 Equipment: CV9035NL (operator cross-check for representative Mk IV D35/CV9035 fit)
 Configuration: Dutch CV9035NL operator page, primarily Mk III hull/MLU context; not a generic Mk IV hull specification.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

@@ -12,6 +12,11 @@ Equipment: Ticonderoga-class guided-missile cruiser
 Configuration: Public class compilation spanning CG-47 through later CG-73 upgrades; exact SPY-1 baseline, Harpoon retention and CIWS fit are ship/refit dependent.
 Estimation / uncertainty: Used only as an independent cross-check and to bound the standard-displacement proxy and local splinter-protection estimate (25-75 mm steel-equivalent). The protection bound is an engineering estimate based on contemporary U.S. surface-combatant structural practice; it is not an armour thickness claim.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

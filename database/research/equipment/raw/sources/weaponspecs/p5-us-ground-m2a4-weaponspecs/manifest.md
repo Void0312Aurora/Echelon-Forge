@@ -13,6 +13,11 @@ Equipment: M2A4 Bradley
 Era: Current M2A4 fielded upgrade; M2A4E1 Iron Fist fit excluded
 Configuration: Current M2A4 fielded upgrade as compiled by WeaponSpecs; M2A4E1 Iron Fist and block-specific kits are excluded.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

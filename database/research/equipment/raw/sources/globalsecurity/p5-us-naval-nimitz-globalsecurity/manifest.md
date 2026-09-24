@@ -12,6 +12,11 @@ Equipment: Nimitz-class nuclear-powered aircraft carrier
 Configuration: Public compilation spanning early and refitted CVN-68-CVN-77 ships; defensive weapon counts, SSDS/CEC availability and air-wing composition vary by ship and deployment.
 Estimation / uncertainty: Independent cross-check for 260,000-shp plant, sensor/defensive-system names and survivability architecture. The 88,000-90,000 LT standard proxy, 10,000+ nmi per-deployment range floor, and 25-75 mm local protection bound are explicit engineering estimates, not measurements from this page.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

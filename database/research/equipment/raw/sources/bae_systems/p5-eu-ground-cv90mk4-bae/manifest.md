@@ -11,6 +11,11 @@ Domain: ground
 Equipment: CV90 Mk IV
 Configuration: Manufacturer MkIV family page; D-series turrets, ATGM, APS and customer options are presented as modular capability rather than one fixed vehicle.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

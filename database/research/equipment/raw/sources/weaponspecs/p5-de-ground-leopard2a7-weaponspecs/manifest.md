@@ -13,6 +13,11 @@ Equipment: Leopard 2A7
 Era: Current A7 production standard; A7V/customer kits not merged
 Configuration: Leopard 2A7 production standard as compiled by WeaponSpecs; A7V and customer-specific kits are excluded.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

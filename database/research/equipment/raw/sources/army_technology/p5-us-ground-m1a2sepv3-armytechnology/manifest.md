@@ -13,6 +13,11 @@ Equipment: M1A2 Abrams SEP v3
 Era: Current M1A2C/SEPv3; SEPv2, SEPv4 and M1E3 excluded
 Configuration: Current M1A2C/SEPv3 trade-publication profile; SEPv2, SEPv4 and M1E3 are excluded.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

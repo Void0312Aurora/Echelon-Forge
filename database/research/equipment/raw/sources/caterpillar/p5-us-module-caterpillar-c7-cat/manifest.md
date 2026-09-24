@@ -12,6 +12,11 @@ Equipment: Caterpillar C7 industrial diesel engine family
 Configuration boundary: Current public industrial C7 listing, 225–300 bhp at 1,800–2,200 rpm; generic industrial configuration, not a Stryker military installation and not the 450 hp C9 used by Stryker A1/DVH-A1.
 Availability/status: Live Cat.com product page, publicly retrievable on the access date; displayed ratings and options are region/application dependent.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

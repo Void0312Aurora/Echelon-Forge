@@ -13,6 +13,11 @@ Configuration boundary: M939A2 CTIS-equipped configurations covered by the opera
 Availability/status: Public mirror; the CTIS architecture (page 1-72), operating modes (page 2-202), and CTIS indications/malfunctions (page 3-21) HTML extracts were reachable at access. The mirror is not an Army-hosted publication portal.
 Estimation / uncertainty: The M939A2 preset values (60 psi highway, 35 psi cross-country, 25 psi mud/sand/snow, 12 psi emergency) and mode/speed behavior are direct for the named configuration. Inflation rate, sensor tolerance, leak threshold, ECU electrical protocol, and wheel-end seal details are not published in these extracts. Any interval in the module README is an explicit cross-vehicle simulation bound, not a value for all M939 variants.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

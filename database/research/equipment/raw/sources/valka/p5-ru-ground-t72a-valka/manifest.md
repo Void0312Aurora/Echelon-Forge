@@ -12,6 +12,11 @@ Equipment: T-72A (Object 172A)
 Configuration: Base serial-production T-72A, 1979-1985; page notes that later modernization after 1980 is not part of the base data. Gun-forward/rear, side-skirt, deep-fording and V-84 overhaul alternates are retained as separate bounds.
 Estimation / uncertainty: Mass, geometry, powerpack, mobility, range, crew, ammunition and fording values are direct page claims; the ready-round split, night-sensor envelope and refit mass delta are explicit simulation estimates/bounds. Valka.cz is a non-official specialist/community reference, not an official Soviet/Russian technical manual; serial-subseries and overhaul variation remain unresolved.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

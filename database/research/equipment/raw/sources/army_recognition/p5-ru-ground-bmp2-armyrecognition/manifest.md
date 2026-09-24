@@ -12,6 +12,11 @@ Equipment: BMP-2
 Configuration: Baseline BMP-2; BMP-2D, BMP-2K, BMP-2M and product-improved variants are not merged.
 Estimation / uncertainty: Mass, dimensions, engine, speeds, range, crew/load and ammunition counts are direct page values; the ATGM carried load and detection/identification envelope are bounded estimates where the page omits a count or performance. Army Recognition is a non-official Tier C specialist reference, not a service manual.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

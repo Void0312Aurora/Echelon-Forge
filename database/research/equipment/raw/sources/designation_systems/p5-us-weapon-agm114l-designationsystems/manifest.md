@@ -13,6 +13,11 @@ Era: 1990s-2000s production baseline
 Configuration: AGM-114L active MMW seeker, M120E1/TX-657 motor, tandem anti-armor warhead and 8 km class envelope; other AGM-114 variants excluded
 Estimation / uncertainty: Page identifies the L-model MMW lock-before/after-launch modes, 1.78 m length, 178 mm diameter, 50 kg mass, Mach 1.3, 8 km range, common motor and tandem warhead. Exact L fuze and explosive split are not published; 9 kg tandem fill and impact/safe-arm behavior in the leaf are bounded functional estimates.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open

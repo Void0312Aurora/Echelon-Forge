@@ -12,6 +12,11 @@ Equipment: Legacy/core Stryker family (M1126-centered description)
 Configuration boundary: November 2017 professional feature describing the then-current general Stryker powerplant as a 7.2 L Caterpillar C7, paired with an Allison 3200SP six-speed automatic; variant, serial block and C7 governor calibration are not enumerated, and Stryker A1/C9 is outside scope.
 Availability/status: Public article remains retrievable on the access date; editorial secondary source, not an Army or Caterpillar technical manual.
 Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
 Rights status: not_recorded
 Provenance status: manifest+retention
 Residual status: open
