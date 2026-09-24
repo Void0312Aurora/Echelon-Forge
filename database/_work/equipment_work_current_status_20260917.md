@@ -42,7 +42,7 @@ Command: `python database/_work/check_equipment_tree.py`
 | `C1` every referenced source id resolves | PASS, 0 dangling, 0 manifest/path mismatch |
 | `C2` backlog leaf binding (`Equipment ID`) | PASS after the `E2` backfill |
 | `C3` backlog vs coverage status | PASS, 105 of 105 coverage rows agree |
-| `C4` source admission floor | PASS after the `E3` retention backfill |
+| `C4` source admission floor | PASS; all 365 manifests now carry explicit rights/provenance/residual fields, with rights values still `not_recorded` |
 | `C5` source-artifact consistency | PASS, no unnamed or aggregate package claims |
 | `C6` retrieval record | PASS, 55 unretrieved citations remain advisory; 157 packages lack a retrieval block |
 | `C7` field-level provenance | PASS, 2,275 parameter rows checked; 0 missing value/source/tier/uncertainty metadata findings |
@@ -85,7 +85,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 
 | Id | Finding | Evidence | State |
 | --- | --- | --- | --- |
-| `D2` | No source package records a rights field | `C4` `missing_rights_field_advisory`, 310 of 310 | open; the admission standard requires it of a ledger row |
+| `D2` | Source rights/redistribution are unresolved | C4 finds no missing rights field; the ledger records `rights_status=not_recorded` for all 365 packages | open; metadata shape is closed, but legal status still needs source-specific confirmation |
 | `D3` | 82 catalog leaves outside the non-held queue have no parameter table | catalog scan: 231 README leaves, 149 with `## Parameters`, 82 without; all 82 are recorded in [`catalog_scope_decisions_20260925.csv`](catalog_scope_decisions_20260925.csv) as hierarchy indexes or family parents with no `Equipment ID` | closed in R-34; excluded from the parameter queue rather than treated as incomplete equipment leaves |
 | `D4` | Parameter table shape split | 88 leaves use `Parameter \| Value \| Source \| Confidence`; 58 use the common `Field` form; 3 module/extended leaves use the other supported forms | open; C7 covers all five forms while new leaves default to the common `Field` form |
 | `D5` | Disjoint naval namespaces | Live tree check finds the canonical `catalog/naval/ships/surface-combatant/` path and no alternate `surface-combatants/` directory; the canonical rule is now documented | closed in R-35 |
@@ -129,6 +129,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | R-33 ledger provenance status | Added explicit `provenance_status` to the source ledger; rights remain `not_recorded` for all 365 rows rather than being inferred |
 | R-34 catalog scope decisions | Classified all 82 no-parameter README nodes as hierarchy indexes or family parents, with path/title/evidence recorded in `catalog_scope_decisions_20260925.csv` |
 | R-35 naval namespace | Verified the alternate namespace is absent and documented `surface-combatant/` as the sole canonical path |
+| R-36 manifest admission fields | Added explicit rights, provenance, and residual status to all 365 manifests; unknown rights remain `not_recorded` and retrieval failures remain visible |
 | French C-130J-30 completion | Added the French Ministry's J-30 operating block for endurance, operating mass, cruise profile, crew and load configurations without overwriting the separate U.S. stretch-column definitions |
 | French C-130J-30 retrieval record | Replaced the stale access-only manifest with a successful Tavily-proxy retrieval record and a single-artifact title |
 | Voyager KC2 completion | Added the RAF KC2/KC3 fit and Airbus A330 MRTT structural, fuel, payload and conditioned-range block; carried fuel, offload and capacity remain distinct quantities |
