@@ -20,7 +20,8 @@ The queue is intentionally representative rather than an assertion that every hi
 - Eras: `current`, `post_cold_war`, and `cold_war`.
 - Domains: `ground`, `air`, `naval`, `weapon`, and `module`.
 - Priority: `P1` for common simulation actors and shared systems; `P2` for important supporting actors; `P3` for later breadth expansion.
-- Collection state: `queued` means no parameter extraction has been accepted yet; later states follow [backlog/README.md](../backlog/README.md).
+- Collection state: a newly discovered candidate may start as `queued`; once it
+  is admitted to a domain backlog, its status must mirror that backlog row.
 
 ## Parameter gate
 
@@ -34,4 +35,9 @@ Each candidate must be collected as a concrete variant/configuration. The minimu
 4. Air-to-air, air-to-surface, surface-to-air, anti-ship, and anti-armor weapons.
 5. Engines, sensors, datalinks, electronic warfare, and other shared modules.
 
-The candidate rows are recorded in [coverage.csv](coverage.csv). This file does not replace the equipment backlog; it feeds concrete candidates into the existing source-first workflow.
+The candidate rows are recorded in [coverage.csv](coverage.csv). This file does
+not replace the equipment backlog or become an inventory claim. In the current
+tree it is a cross-domain index of 105 already admitted rows, so its statuses
+are `parameter_complete` and must agree with the domain backlog. Future
+discovery candidates may be added as `queued`, but promotion into a domain
+backlog must be accompanied by a matching status update in both files.

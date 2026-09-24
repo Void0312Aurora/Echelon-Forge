@@ -17,4 +17,8 @@ Owns reusable engine, mobility-subsystem, and sensor research records. Module le
 - Parent: `../`
 - Children: `engine/`, `mobility/`, `sensor/`
 
-These documents are research inputs. They do not define runtime composition, inheritance, or final interface contracts.
+These documents are research inputs. They do not define runtime composition,
+inheritance, or final interface contracts. A module `Equipment ID` is a stable
+research identity for the reusable subsystem; a vehicle or weapon leaf must
+cite the module explicitly when it uses the module's values, and may not inherit
+them silently.

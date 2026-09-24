@@ -80,6 +80,22 @@ migrated in bounded batches rather than rewritten only for formatting.
 - Candidate coverage and processing state are tracked in [backlog/](backlog/README.md).
 - Broad current and Cold-War discovery candidates are tracked in the [coverage plan](coverage/README.md) before they enter a domain backlog.
 
+## Identity and Shared-Leaf Rules
+
+- Country-owned equipment leaves use `eq-<country>-<domain>-<variant>`.
+- Reusable modules use `module-<domain>-<module>` and are referenced as shared
+  research inputs; they are not implicit runtime inheritance.
+- A concrete variant leaf may serve multiple operator rows when the evidence
+  supports the same variant boundary. Each backlog row keeps its own
+  country/operator `equipment_id`, while the leaf carries an explicit operator
+  table or scope note. Sharing a leaf does not merge operator-specific
+  loadouts, certification, or service-state claims.
+- A country-less `eq-*` ID is allowed only for an explicitly multinational or
+  family-level research record, and its scope must be stated in the leaf. It
+  must not be used to hide an unresolved country or variant boundary.
+- Parent family/index pages and module pages are not equipment leaves unless
+  they carry a concrete `Equipment ID` and a parameter table.
+
 ## Coverage Matrix
 
 ### United States
