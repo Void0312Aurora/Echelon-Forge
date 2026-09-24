@@ -31,6 +31,10 @@ from python.tasking_contracts.air_scripted_execution import (
     AIR_SCRIPTED_EXECUTION_MODEL_ID,
     AIR_SCRIPTED_MODEL_REGISTRY,
 )
+from python.tasking_contracts.scripted_capability import (
+    parse_scripted_capability,
+    resolve_scripted_model_id,
+)
 from python.tasking_contracts.scripted_landing import ScriptedLandingController
 from python.tasking_contracts.scripted_stable_flight import ScriptedStableFlightController
 from python.tasking_contracts.scripted_takeoff import ScriptedTakeoffController
@@ -82,6 +86,22 @@ def _downsample_visual(visual: np.ndarray, factor: int) -> np.ndarray:
         raise ValueError(f"visual shape {visual.shape} not divisible by downsample factor {factor}")
     nh, nw = h // factor, w // factor
     return visual.reshape(nh, factor, nw, factor, c).mean(axis=(1, 3))
+
+
+def _scripted_model_id_for_scenario(path: str) -> str:
+    """Resolve the Air scripted model declared by a viz scenario when present."""
+
+    scenario_path = os.path.abspath(path)
+    with open(scenario_path, "r", encoding="utf-8") as handle:
+        scenario = json.load(handle)
+    if not isinstance(scenario, dict) or "scripted_capability" not in scenario:
+        return AIR_SCRIPTED_EXECUTION_MODEL_ID
+    manifest = parse_scripted_capability(scenario)
+    return resolve_scripted_model_id(
+        manifest,
+        expected_domain="air",
+        expected_role_id="autopilot_controller",
+    )
 
 
 def _unnormalize_action(action: np.ndarray, low: np.ndarray, high: np.ndarray) -> np.ndarray:
@@ -1008,6 +1028,7 @@ class VizSession:
                     "pass --train_config examples/config/training/frozen/execution/p5_continuous_retrain_v1.json"
                 )
             wrapper_kwargs["scripted_baseline_mode"] = "takeoff_cruise_landing"
+            wrapper_kwargs["scripted_model_id"] = _scripted_model_id_for_scenario(args.scenario)
             wrapper_kwargs["scripted_residual_scale"] = 0.0
             wrapper_kwargs["action_rate_penalty_coef"] = 0.0
         elif cooperative_mode and scripted_mode:

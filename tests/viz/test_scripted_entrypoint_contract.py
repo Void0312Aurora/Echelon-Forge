@@ -22,6 +22,7 @@ def test_viz_scripted_entrypoint_uses_neutral_air_registry() -> None:
     assert "python.tasking_contracts.scripted_landing" in imported_modules
     assert "python.tasking_contracts.scripted_stable_flight" in imported_modules
     assert "python.tasking_contracts.scripted_takeoff" in imported_modules
+    assert "python.tasking_contracts.scripted_capability" in imported_modules
     assert not any(module.startswith("python.rl.control.scripted_") for module in imported_modules)
 
 
@@ -38,6 +39,7 @@ def test_viz_combined_scripted_mode_is_registry_backed() -> None:
     assert "AIR_SCRIPTED_MODEL_REGISTRY.create" in class_source
     assert "AIR_SCRIPTED_EXECUTION_MODEL_ID" in class_source
     assert "self._air_model.step(obs)" in class_source
+    assert "scripted_model_id" in source
 
 
 def test_task_eval_scripted_builders_use_neutral_controllers() -> None:
