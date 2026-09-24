@@ -68,7 +68,7 @@ calibration package, inventory claim, or final simulation configuration.
 | R-23 | Y-20 generic public performance and crew completion from named secondary packages | complete | `221c4489` |
 | R-24 | M1252 DVH-family powerpack boundary refresh and direct-manual search | complete | `d57af6d0` |
 | R-25 | M1252 community configuration corroboration package from WarWheels | complete | `96b2d34f` |
-| R-26 | M1252 RMS6-L direct range completion from MCTP 3-01D | complete | pending |
+| R-26 | M1252 RMS6-L direct range completion from MCTP 3-01D | complete | `13577a49` |
 
 ## Blocker / skip ledger
 
