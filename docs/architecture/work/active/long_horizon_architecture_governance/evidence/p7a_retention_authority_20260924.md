@@ -39,7 +39,7 @@ python -m pytest -q `
   tests/architecture/governance/test_control_lifecycle_metadata.py
 ```
 
-Result: **39 passed**.
+Result: **41 passed**.
 
 ```powershell
 python tools/maintenance/translate_docs_batch.py audit `
