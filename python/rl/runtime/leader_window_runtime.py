@@ -423,6 +423,24 @@ class LocalLeaderWindowRuntime(LeaderWindowRuntimeAdapter):
         info_out["leader_mode"] = services.last_leader_mode()
         info_out["leader_decision_interval_steps"] = services.decision_interval_steps()
         info_out["leader_execution_action_repeat"] = services.effective_execution_action_repeat()
+        scripted_report = getattr(getattr(self.env, "_exec_policy", None), "runtime_report", None)
+        if scripted_report is not None:
+            info_out["leader_scripted_runtime"] = {
+                "agent_id": str(scripted_report.agent_id),
+                "model_id": str(scripted_report.model_id),
+                "domain": str(scripted_report.domain),
+                "role_id": str(scripted_report.role_id),
+                "clock_s": float(scripted_report.clock_s),
+                "dt_s": float(scripted_report.dt_s),
+                "decision_index": int(scripted_report.decision_index),
+                "observation_version": str(scripted_report.observation_version),
+                "action_source": str(scripted_report.action_source),
+                "communication_state": str(scripted_report.communication_state),
+                "runtime_status": str(scripted_report.runtime_status),
+                "replay_identity": str(
+                    getattr(getattr(self.env, "_exec_policy", None), "replay_identity", "") or ""
+                ),
+            }
         info_out["leader_effective_command"] = np.asarray(services.last_leader_command(), dtype=np.float32)
         report = getattr(loader, "pilot_report", None)
         info_out["leader_effective_report"] = np.asarray(
