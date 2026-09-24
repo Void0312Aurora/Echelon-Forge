@@ -100,11 +100,15 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
   no unresolved Critical/High/Medium finding; P5-B/P5-D production authority
   remains held.
 - [Long-horizon architecture governance P4-A review — 2026-08-27](reviews/long_horizon_architecture_governance_p4a_review_20260827.md):
-  independent `gpt-5.6-sol` max confirmation of the dark/shadow host lifecycle,
-  bounded candidate settlement, lease/result linearization, mutex-external CAS
-  fault injection, timeout retry behavior and physical boundary. It passed with
-  no unresolved Critical/High/Medium finding; P4-B/P4-C and production authority
-  remain open.
+   independent `gpt-5.6-sol` max confirmation of the dark/shadow host lifecycle,
+   bounded candidate settlement, lease/result linearization, mutex-external CAS
+   fault injection, timeout retry behavior and physical boundary. It passed with
+   no unresolved Critical/High/Medium finding; P4-B/P4-C and production authority
+   remain open.
+- [Cross-domain scripted agent system consumer census — 2026-09-24](reviews/cross_domain_scripted_agent_system_consumer_census_20260924.md):
+   advisory WP0 review; confirms the existing neutral tasking seam, compiled
+   AgentRole/intent authority, RL-adjacent entanglements, and domain capability
+   limits before implementation.
 - [Cordis simulation composition program architecture review — 2026-08-17](reviews/cordis_simulation_composition_program_review_20260817.md):
   advisory macro review that retains the native composition direction while
   requiring authority and program-boundary revision before later
