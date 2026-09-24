@@ -29,6 +29,7 @@ Content status: extracted DVH simulation-parameter draft; not a runtime record.
 | GVWR | 58,401 lb (≈26,490 kg) | `p5-us-ground-stryker-tradoc-gta09-14-002` | A | TRADOC GTA rated limit; not an observed operating mass |
 | Crew | 5 | `p5-us-ground-mortar-atp-3-21-90` | A | Mortar-carrier configuration |
 | Mortar system | RMS6-L 120 mm mortar | `p5-us-ground-mortar-atp-3-21-90` | A | Exact ammunition load and fire-control fit unknown |
+| Community configuration corroboration | Crew 2+3; WarWheels identifies the DVH vehicle as M1252 MCVV and separates the later M1252 MCVV-A1 ECP | `p5-us-ground-stryker-m1252mcvv-warwheels` | C | Corroboration only; no propulsion, speed, range, mass or dimensional value is taken from this page |
 | Legacy DVH family powerpack baseline | 350 hp Caterpillar C7; the DVH A1 ECP replaces this legacy baseline with a 450 hp Caterpillar C9 | `p5-us-module-stryker-c7-dote` | A | Family upgrade boundary only; not a M1252-specific engine certification and not used to fill the M1252 propulsion field |
 | Propulsion / mobility | Unknown for this M1252 configuration | — | — | Do not copy M1126 350 hp, speed or range baseline |
 | Source coverage (propulsion) | Searched and not found at M1252 evidence level | `p5-us-ground-stryker-m1252mcvv-afvdatabase` | C | AFV Database covers the Stryker family and links the M1129 mortar carrier and M1200 Armored Knight but carries no M1252 MCVV specification page. The field stays `Unknown` rather than taking the M1129 MC-B 350 hp figure, because the M1252 is 20 percent heavier than the 41,367 lb MC-B and the source does not assert that the powerpack is unchanged |
@@ -55,3 +56,4 @@ This leaf has the most unresolved target fields of the eleven Stryker variant re
 - `p5-us-ground-stryker-m1252mcvv-afvdatabase`
 - `p5-us-ground-stryker-family-gdlsbrochure`
 - `p5-us-module-stryker-c7-dote`
+- `p5-us-ground-stryker-m1252mcvv-warwheels`
