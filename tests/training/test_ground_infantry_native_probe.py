@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import math
+from pathlib import Path
 
+import numpy as np
 import pytest
 
 from python.rl.ground import (
@@ -10,6 +12,45 @@ from python.rl.ground import (
     GroundInfantryNativeProbe,
     GroundInfantryNativeProbeError,
 )
+
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_GROUND_FIXTURE = (
+    _REPO_ROOT
+    / "tests"
+    / "scenario"
+    / "fixtures"
+    / "environment_substrate"
+    / "arnis_bundle_v1"
+    / "eastern_plain_infantry_phase1"
+)
+
+
+def _interior_landcover_point(code: int, *, radius: int = 2) -> tuple[float, float]:
+    """Return a deterministic world point away from a raster-class edge."""
+
+    bundle_root = _GROUND_FIXTURE / "expected"
+    bundle = json.loads((bundle_root / "bundle.json").read_text(encoding="utf-8"))
+    artifact = next(
+        item for item in bundle["artifacts"] if item["kind"] == "landcover_raster"
+    )
+    shape = tuple(int(value) for value in artifact["shape"])
+    raster = np.memmap(bundle_root / artifact["path"], dtype="u1", mode="r", shape=shape)
+    origin_x, origin_y = artifact["metadata"]["origin_xy_m"]
+    step_x, step_y = artifact["metadata"]["step_xy_m"]
+    for row, column in np.argwhere(raster == code):
+        row = int(row)
+        column = int(column)
+        window = raster[
+            row - radius : row + radius + 1,
+            column - radius : column + radius + 1,
+        ]
+        if window.shape == (2 * radius + 1, 2 * radius + 1) and np.all(window == code):
+            return (
+                float(origin_x + column * step_x),
+                float(origin_y + row * step_y),
+            )
+    raise AssertionError(f"fixture has no interior landcover sample for code {code}")
 
 
 def test_native_ground_gym_adapter_preserves_probe_authority_and_observation() -> None:
@@ -39,6 +80,35 @@ def test_native_ground_gym_adapter_passes_gymnasium_checker() -> None:
         GroundInfantryNativeProbe.from_fixture(max_steps=2)
     )
     check_env(env, skip_render_check=True)
+
+
+def test_native_ground_probe_map_matrix_exposes_vegetation_cost() -> None:
+    cropland = _interior_landcover_point(40)
+    tree_cover = _interior_landcover_point(10)
+
+    def rollout(start_xy_m: tuple[float, float], seed: int):
+        probe = GroundInfantryNativeProbe.from_fixture(
+            start_xy_m=start_xy_m,
+            goal_xy_m=(start_xy_m[0] + 1.0, start_xy_m[1]),
+            max_speed_mps=1.0,
+            time_step_s=1.0,
+            max_steps=2,
+        )
+        observation, _info = probe.reset(seed=seed)
+        transition = probe.step([90.0, 1.0, 0.0, 0.0])
+        return observation, transition
+
+    crop_observation, crop_transition = rollout(cropland, seed=23)
+    tree_observation, tree_transition = rollout(tree_cover, seed=23)
+
+    assert int(crop_observation["terrain"][1]) == 3  # SoftDirt
+    assert int(tree_observation["terrain"][1]) == 3  # SoftDirt
+    assert tree_observation["terrain"][4] > crop_observation["terrain"][4]
+    assert crop_transition.blocked is False
+    assert tree_transition.blocked is False
+    assert 0.0 < tree_transition.trace["moved_distance_m"] < crop_transition.trace[
+        "moved_distance_m"
+    ]
 
 
 def test_native_ground_gym_adapter_reaches_fixed_waypoint() -> None:
