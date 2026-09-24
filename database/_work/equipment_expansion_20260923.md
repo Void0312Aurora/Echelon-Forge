@@ -58,6 +58,7 @@ calibration package, inventory claim, or final simulation configuration.
 | R-13 | Carl-Gustaf M4, AT4CS HP and M72A5-C1 anti-armour expansion | complete | `2065de21` |
 | R-14 | Panzerfaust 3, RPG-7 and SPIKE LR II anti-armour expansion | complete | `3f69c480` |
 | R-15 | MiG-31BM held-record completion from a named variant profile | complete | `aa9d0135` |
+| R-16 | Su-57 held-record completion from official programme and bounded baseline profiles | ready to commit | pending |
 
 ## Blocker / skip ledger
 

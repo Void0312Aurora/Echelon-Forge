@@ -50,13 +50,13 @@ Measured counts:
 
 | Metric | Value |
 | --- | --- |
-| Source packages (manifests) | 345 |
-| Catalog leaves (carry `## Parameters`) | 142 |
-| Distinct source ids referenced by leaves | 345 |
+| Source packages (manifests) | 347 |
+| Catalog leaves (carry `## Parameters`) | 143 |
+| Distinct source ids referenced by leaves | 347 |
 | Leaves without `Equipment ID` | 0 |
 | Backlog rows | 150 |
 | Coverage rows | 105 |
-| Status: `cataloged` / `parameter_complete` / `held` | 2 / 141 / 7 |
+| Status: `cataloged` / `parameter_complete` / `held` | 2 / 142 / 6 |
 
 ## Leaf Completeness Against The Queue
 
@@ -153,6 +153,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | Anti-armour launcher expansion batch | Added Carl-Gustaf M4, AT4CS HP and M72A5-C1 with variant-bounded calibre, dimensions, mass, range/effect and employment fields; ammunition-independent range claims remain excluded |
 | Anti-armour missile/launcher expansion batch | Added Panzerfaust 3, RPG-7 and SPIKE LR II with variant-bounded launcher, round, range/effect, guidance and employment fields; launcher/round quantities remain separate |
 | MiG-31BM held-record completion | Added a named MiG-31BM technical profile with variant-specific geometry, mass, propulsion, conditioned range, crew, radar and weapon rows; no MiG-31B or MiG-31K values were substituted |
+| Su-57 held-record completion | Added separate UAC programme and RedStar baseline profiles for the Russian Su-57; Su-57E export and prototype-only values remain excluded and the alternate engine-thrust reading is retained |
 
 ## Retracted Findings
 
