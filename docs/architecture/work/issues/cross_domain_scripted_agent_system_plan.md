@@ -198,6 +198,13 @@ action hold/expiry behavior, report stream, and deterministic seed handling.
 The registry must route by scenario and active roster without making the legacy
 first-agent compatibility path authoritative for new multi-agent scenarios.
 
+Initial runtime slice: `python/tasking_contracts/scripted_runtime.py` now owns
+the common scheduling envelope for registered scripted models. It provides
+single-agent and active-roster lifecycle entry points, monotonic clock checks,
+decision cadence, action hold/expiry, provenance context, deterministic replay
+identity, and common runtime reports. It deliberately does not define a second
+observation/action DTO or import RL/native simulation code.
+
 ### WP3 — Air complete playable slice
 
 Compose the existing air execution pieces into one complete unit lifecycle:
@@ -941,3 +948,29 @@ to a dedicated owner-local evidence document.
   `entry_surface_incomplete`, and wait for a versioned action extension plus a
   native command owner before adding a scripted EW producer. No unrelated
   domain task is blocked.
+
+### 2026-09-25 — Neutral scripted runtime scheduler slice
+
+- Starting commit: `b90d7209`.
+- Change batch: add the dependency-terminal
+  `ScriptedRuntimeAgent`/`ScriptedRuntimeRoster` scheduler in
+  `python/tasking_contracts/scripted_runtime.py`. It reuses the existing
+  `ScriptedDecisionModel` and `ScriptedModelRegistry`; it does not add a second
+  observation/action DTO or import RL, gym, NumPy, native bindings, or a world
+  runtime.
+- Runtime semantics: explicit reset/close/terminate lifecycle, monotonic clock,
+  decision cadence, action hold and expiry, per-agent observation-version and
+  communication/authority provenance context, deterministic episode seed and
+  replay identity, and sorted active-roster routing. Missing active observations
+  and duplicate agent IDs fail closed.
+- Focused verification: the new runtime tests plus tasking-contract boundary
+  and ScenarioLoader runtime-contract tests passed `28` tests with
+  `CMO_BUILD_DIR=build-scripted-agent`; Python compilation and
+  `git diff --check` passed.
+- Capability boundary: this closes the neutral scheduling substrate only. It
+  does not claim a domain scenario is playable, does not replace the existing
+  cooperative world-batch runtime, and does not bypass domain action/report
+  owners.
+- Continuation choice: route the next Air operator/evaluation entry through
+  this scheduler and record the adapter boundary before extending EW or joint
+  payloads. No unrelated domain task is blocked.
