@@ -460,3 +460,18 @@ to a dedicated owner-local evidence document.
   passed `6 passed`; all three JSON files parsed successfully and referenced
   repository evidence files exist. No scenario compiler or compiled-runtime
   acceptance was claimed.
+
+### 2026-09-25 — WP8 scripted capability manifest validator slice
+
+- Starting commit: `537b9a86`.
+- Affected owners: neutral tasking contracts, scenario metadata, and evidence
+  tests.
+- Expected evidence: a dependency-light parser validates the additive
+  `scripted_capability.v1` shape and allowed label transitions without owning
+  domain runtime behavior.
+- Known residual: no maintained scenario loader/report path consumes the
+  parsed object yet; integration remains a later evidence-tool slice.
+- Focused proxy verification: capability-manifest parsing, representative
+  scenario checks, registry checks, and the Naval adapter checks passed
+  `13 passed`; Python compilation and `git diff --check` passed. The parser is
+  not a runtime admission gate and does not alter domain behavior.
