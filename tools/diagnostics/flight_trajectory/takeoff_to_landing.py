@@ -48,6 +48,10 @@ from python.tasking_contracts.air_scripted_execution import (
     AIR_SCRIPTED_EXECUTION_MODEL_ID,
     AIR_SCRIPTED_MODEL_REGISTRY,
 )
+from python.tasking_contracts.scripted_capability import (
+    parse_scripted_capability,
+    resolve_scripted_model_id,
+)
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
 from python.rl.control.wrappers import get_action_wrapper_spec
@@ -88,6 +92,20 @@ def _load_json(path: str) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise TypeError(f"expected dict JSON at {path!r}")
     return data
+
+
+def _scripted_model_id_for_scenario(path: str) -> str:
+    """Resolve a declared Air scripted model without breaking legacy scenarios."""
+
+    scenario = _load_json(path)
+    if "scripted_capability" not in scenario:
+        return AIR_SCRIPTED_EXECUTION_MODEL_ID
+    manifest = parse_scripted_capability(scenario)
+    return resolve_scripted_model_id(
+        manifest,
+        expected_domain="air",
+        expected_role_id="autopilot_controller",
+    )
 
 
 def _zero_randomization_overrides() -> dict[str, Any]:
@@ -250,10 +268,16 @@ def _collect_episode(
             scripted_dt = float(sim_env.sim.get_time_step())
         except Exception:
             scripted_dt = 0.05
+        scenario_path = str(getattr(sim_env, "scenario_path", "") or "")
+        model_id = (
+            _scripted_model_id_for_scenario(scenario_path)
+            if scenario_path
+            else AIR_SCRIPTED_EXECUTION_MODEL_ID
+        )
         scripted_model = AIR_SCRIPTED_MODEL_REGISTRY.create_for(
             domain="air",
             role_id="autopilot_controller",
-            model_id=AIR_SCRIPTED_EXECUTION_MODEL_ID,
+            model_id=model_id,
             action_dim=int(_action_space(env).shape[0]),
             dt=scripted_dt,
         )

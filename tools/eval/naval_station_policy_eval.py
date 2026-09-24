@@ -26,6 +26,10 @@ from python.tasking_contracts.naval_scripted_execution import (
     NAVAL_SCRIPTED_MODEL_REGISTRY,
     NAVAL_STATION_HOLD_MODEL_ID,
 )
+from python.tasking_contracts.scripted_capability import (
+    parse_scripted_capability,
+    resolve_scripted_model_id,
+)
 from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
 from python.training.bootstrap import validate_declared_training_entry_env_surface, validate_declared_training_entry_paths
 from python.experiment.report_envelope import add_report_envelope_arg, apply_report_envelope
@@ -221,6 +225,20 @@ def _load_train_config_unchecked(train_config_path: str) -> dict[str, Any]:
     return load_json_config(os.path.abspath(train_config_path))
 
 
+def _scripted_model_id_for_scenario(path: str) -> str:
+    """Resolve a declared Naval scripted model while preserving legacy inputs."""
+
+    scenario = load_json_config(os.path.abspath(path))
+    if "scripted_capability" not in scenario:
+        return NAVAL_STATION_HOLD_MODEL_ID
+    manifest = parse_scripted_capability(scenario)
+    return resolve_scripted_model_id(
+        manifest,
+        expected_domain="naval",
+        expected_role_id="naval_warfare_commander",
+    )
+
+
 def _reward_term_sums(last_info: dict[str, Any], accum: dict[str, float]) -> dict[str, float]:
     reward_terms_last = {
         str(key): _finite_float(value)
@@ -334,7 +352,7 @@ def run_baseline_eval(
         scripted_model = NAVAL_SCRIPTED_MODEL_REGISTRY.create_for(
             domain="naval",
             role_id="naval_warfare_commander",
-            model_id=NAVAL_STATION_HOLD_MODEL_ID,
+            model_id=_scripted_model_id_for_scenario(scenario_path),
             action_dim=int(env.action_space.shape[0]),
         )
         scripted_model.reset(context={"scenario": os.path.abspath(scenario_path)})

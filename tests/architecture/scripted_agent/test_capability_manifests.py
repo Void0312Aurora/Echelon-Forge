@@ -5,7 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from python.tasking_contracts.scripted_capability import parse_scripted_capability
+from python.tasking_contracts.scripted_capability import (
+    parse_scripted_capability,
+    resolve_scripted_model_id,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -98,7 +101,6 @@ def test_manifest_parser_fails_closed_on_claim_without_model_or_evidence() -> No
                 }
             }
         )
-
     with pytest.raises(ValueError, match="evidence_refs"):
         parse_scripted_capability(
             {
@@ -113,4 +115,37 @@ def test_manifest_parser_fails_closed_on_claim_without_model_or_evidence() -> No
                     "deferred_claims": ["movement"],
                 }
             }
+        )
+
+
+def test_active_naval_scenario_manifest_resolves_for_station_runtime() -> None:
+    path = REPO_ROOT / "scenarios" / "naval" / "ddg51_take1_screen_threat_roe_v1.json"
+    manifest = parse_scripted_capability(_load(path))
+    assert resolve_scripted_model_id(
+        manifest,
+        expected_domain="naval",
+        expected_role_id="naval_warfare_commander",
+    ) == "naval.station.screen_hold"
+
+
+def test_runtime_manifest_resolution_fails_closed_on_domain_role_or_held() -> None:
+    air = parse_scripted_capability(_load(CASES["air"][0]))
+    with pytest.raises(ValueError, match="domain"):
+        resolve_scripted_model_id(
+            air,
+            expected_domain="naval",
+            expected_role_id="autopilot_controller",
+        )
+    with pytest.raises(ValueError, match="role"):
+        resolve_scripted_model_id(
+            air,
+            expected_domain="air",
+            expected_role_id="wrong_role",
+        )
+    ground = parse_scripted_capability(_load(CASES["ground"][0]))
+    with pytest.raises(ValueError, match="held"):
+        resolve_scripted_model_id(
+            ground,
+            expected_domain="ground",
+            expected_role_id="ground_commander",
         )
