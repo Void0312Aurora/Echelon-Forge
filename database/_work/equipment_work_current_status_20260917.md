@@ -50,13 +50,13 @@ Measured counts:
 
 | Metric | Value |
 | --- | --- |
-| Source packages (manifests) | 356 |
-| Catalog leaves (carry `## Parameters`) | 148 |
-| Distinct source ids referenced by leaves | 356 |
+| Source packages (manifests) | 359 |
+| Catalog leaves (carry `## Parameters`) | 149 |
+| Distinct source ids referenced by leaves | 359 |
 | Leaves without `Equipment ID` | 0 |
 | Backlog rows | 150 |
 | Coverage rows | 105 |
-| Status: `cataloged` / `parameter_complete` / `held` | 2 / 147 / 1 |
+| Status: `cataloged` / `parameter_complete` / `held` | 2 / 148 / 0 |
 
 ## Leaf Completeness Against The Queue
 
@@ -158,6 +158,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | Attack-helicopter held-record completion | Added named Ka-52 and Mi-28NM profiles with variant-bounded geometry, mass, propulsion, performance, weapon and employment rows; naval/modernised and other marks remain separate |
 | KC-130J held-record completion | Added NAVAIR, USMC and Lockheed Martin platform/tanker blocks with source-labelled dimensional, mass, propulsion, range, offload and transport capacities; C-130J-30 and HC-130J values remain excluded |
 | Tiger HAD held-record completion | Added Airbus HAD geometry, engine, fuel, conditioned performance, mission-system and weapon-capacity rows plus a separate French retrofit/operator package; HAP/UHT/MkIII values remain excluded |
+| A-50U held-record completion | Added Xinhua A-50U performance and separate Airforce Technology/RedStar upgrade, crew, mission-system and family-baseline packages; 190/210 t and 800/850 km/h source readings remain separate |
 
 ## Retracted Findings
 
