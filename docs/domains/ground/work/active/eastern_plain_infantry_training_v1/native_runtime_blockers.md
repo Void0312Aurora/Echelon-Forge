@@ -61,6 +61,12 @@ ballistics, indirect fire, or target-selection automation.
 The explicit `fire_ground_weapon_from_mission_command` entrypoint additionally
 requires an active assigned target and matching fire authority; it is a single
 command-triggered release, not an automatic per-tick weapon system.
+The native probe can now optionally spawn one fixed hostile fixture contact and
+call that command entrypoint through `fire_from_mission_command()`. The result
+records the target damage-state delta, ammunition/cooldown change, and the
+second immediate rejection. This is a replayable command/weapon acceptance
+surface only; it still does not provide target selection, line of sight, cover,
+suppression, ballistics, or a learned fire policy.
 The bounded `SimulationKernel.get_ground_weapon_state` observation returns the
 selected weapon type, ammunition, damage/range tuning, hit probability, and
 remaining cooldown for diagnostics and future training observations. It does

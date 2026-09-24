@@ -44,6 +44,17 @@ class NativeGroundInfantryTransition:
 
 
 @dataclass(frozen=True)
+class NativeGroundFireResult:
+    """One explicitly authorized fixed-contact fire attempt."""
+
+    success: bool
+    target_entity_id: int
+    target_damage_before: tuple[float, ...]
+    target_damage_after: tuple[float, ...]
+    trace: dict[str, Any]
+
+
+@dataclass(frozen=True)
 class NativeGroundRouteValidation:
     """Read-only validation of a configured direct waypoint polyline.
 
@@ -89,6 +100,7 @@ class GroundInfantryNativeProbe:
         max_steps: int = 256,
         blocked_step_limit: int = 8,
         time_step_s: float = 1.0 / 60.0,
+        target_xy_m: tuple[float, float] | None = None,
     ) -> None:
         self.database_dir = Path(database_dir)
         self.bundle_dir = Path(bundle_dir)
@@ -113,6 +125,17 @@ class GroundInfantryNativeProbe:
         self.max_steps = int(max_steps)
         self.blocked_step_limit = int(blocked_step_limit)
         self.time_step_s = float(time_step_s)
+        if target_xy_m is not None and len(target_xy_m) != 2:
+            raise ValueError("target_xy_m must contain exactly two coordinates")
+        self.target_xy_m = (
+            None
+            if target_xy_m is None
+            else (float(target_xy_m[0]), float(target_xy_m[1]))
+        )
+        if self.target_xy_m is not None and not all(
+            math.isfinite(value) for value in self.target_xy_m
+        ):
+            raise ValueError("target_xy_m must contain finite coordinates")
         if self.goal_radius_m <= 0.0 or self.max_speed_mps <= 0.0:
             raise ValueError("goal_radius_m and max_speed_mps must be positive")
         if self.max_steps <= 0 or self.blocked_step_limit <= 0 or self.time_step_s <= 0.0:
@@ -122,6 +145,7 @@ class GroundInfantryNativeProbe:
         self._step_index = 0
         self._blocked_steps = 0
         self._stance = "stand"
+        self._target_entity_id: int | None = None
 
     @classmethod
     def from_fixture(cls, fixture_dir: str | Path | None = None, **kwargs: Any) -> "GroundInfantryNativeProbe":
@@ -244,6 +268,54 @@ class GroundInfantryNativeProbe:
             segment_observations=tuple(observations),
         )
 
+    def fire_from_mission_command(self) -> NativeGroundFireResult:
+        """Fire once at the optional fixed contact through the native command gate."""
+
+        sim, entity_id = self._require_ready()
+        if self._target_entity_id is None:
+            raise GroundInfantryNativeProbeError(
+                "native fire probe requires target_xy_m at construction"
+            )
+        target_id = self._target_entity_id
+        before = self._tuple(sim.get_unit_damage_state(target_id))
+        weapon_before = self._tuple(sim.get_ground_weapon_state(entity_id))
+        command = ef_py.MissionCommand()
+        command.active = True
+        command.ground_task_mode = ef_py.GroundTaskMode.OccupyStatic
+        command.assigned_target_id = target_id
+        command.engagement_authority_holder_id = entity_id
+        command.authorization_to_fire = True
+        sim.set_mission_command(entity_id, command)
+        success = bool(sim.fire_ground_weapon_from_mission_command(entity_id))
+        after = self._tuple(sim.get_unit_damage_state(target_id))
+        weapon_after = self._tuple(sim.get_ground_weapon_state(entity_id))
+        trace = {
+            "contract_version": NATIVE_GROUND_PROBE_CONTRACT_VERSION,
+            "authority": "native_probe_only",
+            "event": "fire_from_mission_command",
+            "success": success,
+            "attacker_entity_id": entity_id,
+            "target_entity_id": target_id,
+            "target_damage_before": before,
+            "target_damage_after": after,
+            "weapon_before": weapon_before,
+            "weapon_after": weapon_after,
+            "does_not_claim": [
+                "target_selection",
+                "line_of_sight",
+                "cover",
+                "suppression",
+                "ballistics",
+            ],
+        }
+        return NativeGroundFireResult(
+            success=success,
+            target_entity_id=target_id,
+            target_damage_before=before,
+            target_damage_after=after,
+            trace=trace,
+        )
+
     def reset(self, *, seed: int = 42) -> tuple[dict[str, tuple[float, ...]], dict[str, Any]]:
         sim = ef_py.SimulationKernel()
         if not sim.load_database(str(self.database_dir)):
@@ -265,6 +337,36 @@ class GroundInfantryNativeProbe:
         )
         if entity_id <= 0:
             raise GroundInfantryNativeProbeError("native probe infantry spawn failed")
+        self._target_entity_id = None
+        if self.target_xy_m is not None:
+            target_id = int(
+                sim.spawn_unit(
+                    ef_py.Side.Red,
+                    "Ground_Infantry_Soldier_MVP",
+                    self.target_xy_m[0],
+                    self.target_xy_m[1],
+                    0.0,
+                )
+            )
+            if target_id <= 0:
+                raise GroundInfantryNativeProbeError("native probe target spawn failed")
+            target_dx = self.target_xy_m[0] - self.start_xy_m[0]
+            target_dy = self.target_xy_m[1] - self.start_xy_m[1]
+            track = ef_py.Detection()
+            track.target_id = target_id
+            track.range = math.hypot(target_dx, target_dy)
+            track.bearing = math.degrees(math.atan2(target_dx, target_dy))
+            track.elevation = 0.0
+            track.closing_speed = 0.0
+            track.signal_strength = 1.0
+            track.snr_db = 20.0
+            track.detection_prob_used = 1.0
+            track.measured_vr = 0.0
+            track.sensor_type = int(ef_py.SensorType.Visual)
+            track.local_sensor_hit = True
+            track.timestamp = 0.0
+            sim.set_contact_list(entity_id, [track])
+            self._target_entity_id = target_id
         sim.set_command_link(entity_id, 0.0, 0.0)
         self._sim = sim
         self._entity_id = entity_id
@@ -438,6 +540,7 @@ class GroundInfantryNativeProbe:
 __all__ = [
     "GroundInfantryNativeProbe",
     "GroundInfantryNativeProbeError",
+    "NativeGroundFireResult",
     "NativeGroundRouteValidation",
     "NATIVE_GROUND_PROBE_CONTRACT_VERSION",
     "NativeGroundInfantryTransition",
