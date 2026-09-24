@@ -1298,3 +1298,20 @@ to a dedicated owner-local evidence document.
   either close the existing post-launch terminal objective or record a bounded
   consequence proxy; keep the Air landing, EW, roster, Joint, and database
   lines independently schedulable.
+
+### 2026-09-25 — Air tactical terminal near-range proxy probe
+
+- Proxy setup: an ignored temporary copy of the maintained Stage 1 C2/ROE
+  scenario moved `Red_Target` from `y=35000 m` to `y=10000 m`; no tracked
+  scenario or native state was changed.
+- Direct result: the scripted engagement model accepted a release at step `2`
+  in the proxy, but a `1200`-step run still ended at `combat_timeout` with no
+  target-destruction terminal. The proxy therefore rules out a simple
+  long-range-only explanation for the current consequence gap; it is not a
+  candidate maintained scenario.
+- Evidence boundary: native fire/release acceptance is reproducible, while
+  missile consequence and terminal objective closure remain unresolved. The
+  temporary proxy is discarded from capability accounting.
+- Continuation choice: do not promote tactical engagement to `playable`; next
+  owner work must inspect the post-release effect/target-damage chain or use a
+  sanctioned consequence proxy with explicit provenance.
