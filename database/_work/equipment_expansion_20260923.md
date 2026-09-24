@@ -62,7 +62,7 @@ calibration package, inventory claim, or final simulation configuration.
 | R-17 | Tu-95MS held-record completion from a named variant profile | complete | `b1fc0c1e` |
 | R-18 | Ka-52 and Mi-28NM held-record completion from named variant profiles | complete | `c3d7de6c` |
 | R-19 | KC-130J held-record completion from NAVAIR, USMC and manufacturer profiles | complete | `3c125677` |
-| R-20 | Tiger HAD held-record completion from Airbus technical and French retrofit profiles | ready to commit | pending |
+| R-20 | Tiger HAD held-record completion from Airbus technical and French retrofit profiles | complete | `27cd8fd0` |
 
 ## Blocker / skip ledger
 
