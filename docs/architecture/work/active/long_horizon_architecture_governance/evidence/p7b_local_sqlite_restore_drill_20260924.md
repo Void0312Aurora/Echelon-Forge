@@ -1,6 +1,6 @@
 # P7-B Local SQLite Restore Drill Evidence
 
-Status: `2026-09-24` — local supported-topology restore drill completed;
+Status: `2026-09-25` — local supported-topology restore drill completed;
 external provider restore and production rollback-window operation remain open.
 
 ## Scope
@@ -32,6 +32,11 @@ python -m pytest -q tests/architecture/runtime_host/test_sqlite_rollout_admissio
 Result: **7 passed**. The restore case itself passed, including retention
 classes and restored checkpoint release/decision identity.
 
+The same SQLite admission/restore file was rerun in the current checkout on
+`2026-09-25` and passed **8 tests**; the additional cases cover the current
+durable admission and rollback-window bindings. This remains local provider
+evidence only.
+
 ## Boundary
 
 This is local SQLite provider evidence for the supported Windows single-process
@@ -43,4 +48,4 @@ Document kind: `evidence`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/evidence/p7b_local_sqlite_restore_drill_20260924.md`
 Owner: `release/runtime integration`
-Last verified: `2026-09-24`
+Last verified: `2026-09-25`

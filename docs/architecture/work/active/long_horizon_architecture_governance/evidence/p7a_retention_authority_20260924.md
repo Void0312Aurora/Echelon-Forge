@@ -1,6 +1,6 @@
 # P7-A Retention Authority Evidence
 
-Status: `2026-09-24` — P7-A implementation baseline; P7-B cleanup and
+Status: `2026-09-25` — P7-A implementation baseline; P7-B cleanup and
 provider/restore drills remain open.
 
 ## Scope
@@ -67,6 +67,15 @@ the pre-existing P2-B sustainability baseline returning `needs-disposition` in
 this environment; it is not a P7-A retention failure and prevents a full-suite
 green claim.
 
+## Current revalidation
+
+On `2026-09-25`, the focused retention/archive set was rerun in the current
+checkout and passed **39 tests**. The SQLite-backed restore/admission file also
+passed **8 tests**. The complete governance suite now passes **76 tests** after
+the refreshed P2-B local baseline; these results refresh local evidence only
+and do not establish an external provider restore or production rollback-window
+operation.
+
 ## Boundary and next work
 
 P7-A does not claim:
@@ -85,4 +94,4 @@ Document kind: `evidence`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/evidence/p7a_retention_authority_20260924.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-09-24`
+Last verified: `2026-09-25`
