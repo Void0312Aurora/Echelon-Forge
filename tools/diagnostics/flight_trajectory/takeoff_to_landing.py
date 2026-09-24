@@ -52,6 +52,10 @@ from python.tasking_contracts.scripted_capability import (
     parse_scripted_capability,
     resolve_scripted_model_id,
 )
+from python.tasking_contracts.scripted_runtime import (
+    ScriptedRuntimeAgent,
+    ScriptedRuntimeAgentSpec,
+)
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
 from python.rl.control.wrappers import get_action_wrapper_spec
@@ -84,6 +88,9 @@ class EpisodeSummary:
     final_altitude_agl_m: float | None
     final_on_ground: float | None
     final_on_runway_geom: float | None
+    scripted_runtime_decisions: int
+    scripted_runtime_holds: int
+    scripted_runtime_identity: str
 
 
 def _load_json(path: str) -> dict[str, Any]:
@@ -267,6 +274,9 @@ def _collect_episode(
     runway_beacon = _pick_runway_beacon(loader, float(start_pos[0]), float(start_pos[1]))
 
     scripted_model = None
+    scripted_runtime_agent = None
+    scripted_runtime_decisions = 0
+    scripted_runtime_holds = 0
     scripted_dt = 0.05
     if scripted:
         try:
@@ -287,11 +297,28 @@ def _collect_episode(
             dt=scripted_dt,
             runway_length_m=runway_length_m,
         )
-        scripted_model.reset(
+        scripted_runtime_agent = ScriptedRuntimeAgent(
+            ScriptedRuntimeAgentSpec(
+                agent_id=str(sim_env.agent_id),
+                model_id=model_id,
+                domain="air",
+                role_id="autopilot_controller",
+                decision_period_s=0.0,
+                action_hold_s=0.0,
+                communication_state="available",
+                authority_scope="platform_control",
+            ),
+            scripted_model,
+        )
+        # The common runtime owns model reset so every scripted entry receives
+        # the same replay and provenance context.
+        scripted_runtime_agent.reset(
             context={
                 "observation": obs,
                 "phase_name": str(getattr(loader, "mission_phase_name", "") or ""),
-            }
+                "scenario": scenario_path,
+            },
+            episode_seed=int(seed),
         )
 
     waypoints = [dict(wp) for wp in list(getattr(loader, "waypoints", []) or [])]
@@ -320,12 +347,18 @@ def _collect_episode(
 
     for step in range(1, limit + 1):
         if scripted:
-            assert scripted_model is not None
-            act = scripted_model.decide(
+            assert scripted_runtime_agent is not None
+            runtime_step = scripted_runtime_agent.step(
                 observation=obs,
+                clock_s=float(step - 1) * scripted_dt,
+                observation_version=f"obs:{step - 1}",
                 context={"phase_name": str(getattr(loader, "mission_phase_name", "") or "")},
-                dt=scripted_dt,
             )
+            act = runtime_step.action
+            if runtime_step.report.action_source == "decided":
+                scripted_runtime_decisions += 1
+            elif runtime_step.report.action_source == "held":
+                scripted_runtime_holds += 1
         else:
             act, _ = model.predict(obs, deterministic=True)
         obs, reward, terminated, truncated, info = env.step(act)
@@ -370,7 +403,9 @@ def _collect_episode(
                 mission_status = []
             break
 
-    if scripted_model is not None:
+    if scripted_runtime_agent is not None:
+        scripted_runtime_agent.close()
+    elif scripted_model is not None:
         scripted_model.close()
 
     final_pos = [float(xs[-1]), float(ys[-1]), float(zs[-1])]
@@ -415,6 +450,11 @@ def _collect_episode(
         final_altitude_agl_m=final_alt_agl,
         final_on_ground=float(final_info["on_ground"]) if "on_ground" in final_info and final_info["on_ground"] is not None else None,
         final_on_runway_geom=float(final_info["on_runway_geom"]) if "on_runway_geom" in final_info and final_info["on_runway_geom"] is not None else None,
+        scripted_runtime_decisions=int(scripted_runtime_decisions),
+        scripted_runtime_holds=int(scripted_runtime_holds),
+        scripted_runtime_identity=(
+            scripted_runtime_agent.replay_identity if scripted_runtime_agent is not None else ""
+        ),
     )
     return {
         "summary": summary,
