@@ -126,16 +126,18 @@ reviewed Ground owner package must:
    maintained command-chain batch bindings;
 2. extend the bounded vector sampling into route/passability and observation
    provenance as runtime contracts rather than fixture-local assumptions;
-3. add native reset/step/replay acceptance tests over the Arnis-derived map,
-   then connect the RL adapter;
+3. extend the existing native reset/step/replay acceptance tests over more of
+   the Arnis-derived map before considering any production RL adapter;
 4. retain the proxy tests as diagnostics until native behavior supersedes them;
 5. replace the rifle's synthetic body-center hit with authored infantry
    hitboxes and a reviewed line-of-sight/cover owner before widening weapon
    employment.
 
-The training contract remains `contract_only`; the current proxy is
-intentionally not a `train.py` entry point. The admitted native surfaces are
-not a passability, line-of-sight, or map-provider integration.
+The training contract remains `contract_only`; the current proxy and native Gym
+adapter are intentionally not `train.py` or production `WorldBatch` entries.
+The admitted native surfaces provide only local sampled passability and terrain
+effects; they are not a general route/passability mask, line-of-sight model, or
+automatic map-provider integration.
 
 ## Verification residual outside this slice
 
