@@ -43,6 +43,35 @@ class NativeGroundInfantryTransition:
     trace: dict[str, Any]
 
 
+@dataclass(frozen=True)
+class NativeGroundRouteValidation:
+    """Read-only validation of a configured direct waypoint polyline.
+
+    This is deliberately a sequence validator, not a route graph or planner.
+    Each segment is backed by the native transition owner and retains the raw
+    seven-field transition observation for replay and diagnosis.
+    """
+
+    passable: bool
+    segment_count: int
+    total_distance_m: float
+    blocked_segment_index: int | None
+    blocked_reason: str | None
+    segment_observations: tuple[tuple[float, ...], ...]
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "passable": self.passable,
+            "segment_count": self.segment_count,
+            "total_distance_m": self.total_distance_m,
+            "blocked_segment_index": self.blocked_segment_index,
+            "blocked_reason": self.blocked_reason,
+            "segment_observations": [list(observation) for observation in self.segment_observations],
+            "authority": "native_probe_only",
+            "route_boundary": "fixed_direct_sequence_validation",
+        }
+
+
 class GroundInfantryNativeProbe:
     """Single-soldier reset/step/replay probe backed by ``ef_py.SimulationKernel``."""
 
@@ -174,6 +203,47 @@ class GroundInfantryNativeProbe:
             ),
         }
 
+    def validate_waypoint_sequence(self) -> NativeGroundRouteValidation:
+        """Validate the configured direct waypoint polyline without mutating state."""
+
+        sim, _entity_id = self._require_ready()
+        points = (self.start_xy_m,) + self.waypoints_xy_m
+        observations: list[tuple[float, ...]] = []
+        total_distance = 0.0
+        blocked_segment_index: int | None = None
+        blocked_reason: str | None = None
+        for segment_index, (start, end) in enumerate(zip(points, points[1:])):
+            transition = self._tuple(
+                sim.get_ground_transition_observation(
+                    start[0], start[1], end[0], end[1]
+                )
+            )
+            if len(transition) != 7:
+                raise GroundInfantryNativeProbeError(
+                    "native route validation expected seven transition fields"
+                )
+            observations.append(transition)
+            total_distance += math.hypot(end[0] - start[0], end[1] - start[1])
+            if transition[1] > 0.5 or blocked_segment_index is not None:
+                continue
+            blocked_segment_index = segment_index
+            if transition[3] > 0.5:
+                blocked_reason = "water_transition_blocked"
+            elif transition[4] > 0.5:
+                blocked_reason = "obstacle_transition_blocked"
+            elif transition[0] <= 0.5:
+                blocked_reason = "unconfigured_transition"
+            else:
+                blocked_reason = "destination_terrain_blocked"
+        return NativeGroundRouteValidation(
+            passable=blocked_segment_index is None,
+            segment_count=len(observations),
+            total_distance_m=total_distance,
+            blocked_segment_index=blocked_segment_index,
+            blocked_reason=blocked_reason,
+            segment_observations=tuple(observations),
+        )
+
     def reset(self, *, seed: int = 42) -> tuple[dict[str, tuple[float, ...]], dict[str, Any]]:
         sim = ef_py.SimulationKernel()
         if not sim.load_database(str(self.database_dir)):
@@ -204,6 +274,7 @@ class GroundInfantryNativeProbe:
         self._waypoint_index = 0
         self.goal_xy_m = self.waypoints_xy_m[0]
         observation = self._observation()
+        route_validation = self.validate_waypoint_sequence()
         return observation, {
             "contract_version": NATIVE_GROUND_PROBE_CONTRACT_VERSION,
             "authority": "native_probe_only",
@@ -213,12 +284,14 @@ class GroundInfantryNativeProbe:
             "goal_xy_m": self.goal_xy_m,
             "waypoint_index": self._waypoint_index,
             "waypoint_count": len(self.waypoints_xy_m),
+            "route_validation": route_validation.as_dict(),
             "trace": {
                 "event": "reset",
                 "seed": int(seed),
                 "observation": observation,
                 "waypoint_index": self._waypoint_index,
                 "waypoint_count": len(self.waypoints_xy_m),
+                "route_validation": route_validation.as_dict(),
             },
         }
 
@@ -344,6 +417,7 @@ class GroundInfantryNativeProbe:
 __all__ = [
     "GroundInfantryNativeProbe",
     "GroundInfantryNativeProbeError",
+    "NativeGroundRouteValidation",
     "NATIVE_GROUND_PROBE_CONTRACT_VERSION",
     "NativeGroundInfantryTransition",
 ]

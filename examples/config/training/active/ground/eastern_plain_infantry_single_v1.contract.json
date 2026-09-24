@@ -60,6 +60,13 @@
       "entrypoint": "SimulationKernel.get_ground_movement_effect_observation",
       "fields": ["surface_type", "slope_deg", "vegetation_density", "surface_speed_multiplier", "slope_speed_multiplier", "vegetation_speed_multiplier", "stance_speed_multiplier", "combined_speed_multiplier"],
       "does_not_claim": ["climbability", "fatigue", "full_physics"]
+    },
+    "direct_sequence_validation": {
+      "status": "bounded_native_read_only_validation",
+      "entrypoint": "GroundInfantryNativeProbe.validate_waypoint_sequence",
+      "fields": ["passable", "segment_count", "total_distance_m", "blocked_segment_index", "blocked_reason", "segment_observations"],
+      "segment_observation_fields": ["configured", "passable", "destination_surface", "water_blocked", "obstacle_blocked", "bridge_admitted", "distance_m"],
+      "does_not_claim": ["route_graph", "path_planning", "cover", "line_of_sight"]
     }
   },
   "action_space": {
