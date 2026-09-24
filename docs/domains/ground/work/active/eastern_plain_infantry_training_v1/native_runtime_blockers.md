@@ -151,14 +151,14 @@ fixture and returns the reset plus bounded step traces until termination or
 truncation. This is an offline deterministic replay helper, not a live-provider
 or production WorldBatch entrypoint.
 
-The Gymnasium checker is green and now reports two non-blocking space-design
-warnings: the native action's route-intent dimension is a fixed direct-only Box
-dimension, and the action vector is not normalized. Observation spaces now use
-finite bounds derived from the verified bundle manifest plus the probe's finite
+The Gymnasium checker is green without space-design warnings. The native Gym
+adapter now declares a normalized three-field heading/speed/stance Box and
+keeps `route_intent=direct` as fixed metadata; the probe still accepts the
+legacy four-field raw vector for diagnostics. Observation spaces use finite
+bounds derived from the verified bundle manifest plus the probe's finite
 episode horizon; when a custom bundle manifest cannot be read, the adapter uses
-an explicitly finite probe-horizon fallback. These bounds do not promote the
-adapter to production RL authority; a later owner may replace the fixed action
-dimension and normalize the action contract.
+an explicitly finite probe-horizon fallback. These bounds and the normalized
+adapter do not promote it to production RL authority.
 
 The proxy fails closed on unknown raster cells, out-of-bounds transitions, and
 river crossings without the explicit bridge intent.  The bridge rule is a

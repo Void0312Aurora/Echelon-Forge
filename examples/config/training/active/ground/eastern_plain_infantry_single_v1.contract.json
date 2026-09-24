@@ -80,7 +80,8 @@
   "action_space": {
     "status": "bounded_native_probe_and_proxy",
     "native_status": "implemented_in_native_probe_only",
-    "native_route_intent": "direct_only",
+    "native_action_fields": ["heading_normalized", "speed_fraction", "stance_normalized"],
+    "native_route_intent": "direct_only_metadata",
     "replay_entrypoint": "GroundInfantryNativeProbe.replay",
     "fields": [
       {"name":"desired_heading_deg","type":"continuous","range":[-180.0,180.0]},
@@ -110,7 +111,7 @@
       "termination_reasons": ["waypoint_reached", "agent_incapacitated"],
       "truncation_reasons": ["max_steps", "blocked_step_limit"],
       "observation_fields": ["position_local_enu_m", "velocity_local_enu_mps", "terrain", "terrain_effects", "movement_effects", "field_semantics", "weapon_state", "health_state", "command_state", "mission_state", "waypoint_state", "state"],
-      "action_boundary": "direct_route_intent_only",
+      "action_boundary": "normalized_heading_speed_stance_with_direct_route_metadata",
       "waypoint_boundary": "fixed_direct_sequence_only"
     },
     "promotion_gate": "native_ground_reset_step_replay_and_terrain_owner"

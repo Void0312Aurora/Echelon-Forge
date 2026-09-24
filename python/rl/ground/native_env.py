@@ -175,10 +175,11 @@ else:
             super().__init__()
             self.probe = probe
             self.action_space = spaces.Box(
-                low=np.asarray([-180.0, 0.0, 0.0, 0.0], dtype=np.float32),
-                # The native command projection currently admits only the
-                # direct route intent; held route intents stay on the proxy.
-                high=np.asarray([180.0, 1.0, 2.0, 0.0], dtype=np.float32),
+                # Native Gym actions are normalized continuous fields. Route
+                # intent is fixed to direct in this adapter and is not a
+                # fake fourth action dimension.
+                low=np.asarray([-1.0, 0.0, 0.0], dtype=np.float32),
+                high=np.asarray([1.0, 1.0, 1.0], dtype=np.float32),
                 dtype=np.float32,
             )
             bounds = _finite_observation_bounds(probe)
@@ -212,7 +213,9 @@ else:
         def step(
             self, action: Sequence[float] | Mapping[str, Any]
         ) -> tuple[dict[str, np.ndarray], float, bool, bool, dict[str, Any]]:
-            transition: NativeGroundInfantryTransition = self.probe.step(action)
+            transition: NativeGroundInfantryTransition = self.probe.step(
+                self._probe_action(action)
+            )
             self._trace.append(transition.trace)
             info = {
                 "contract_version": transition.trace["contract_version"],
@@ -235,6 +238,26 @@ else:
         @property
         def trace(self) -> tuple[dict[str, Any], ...]:
             return tuple(self._trace)
+
+        @staticmethod
+        def _probe_action(action: Sequence[float] | Mapping[str, Any]) -> Sequence[float] | Mapping[str, Any]:
+            """Map the declared normalized native action to the probe contract.
+
+            A four-field raw action remains accepted for compatibility with
+            existing diagnostics, but is outside the declared Gym space.
+            """
+
+            if isinstance(action, Mapping):
+                return action
+            values = np.asarray(action, dtype=np.float32).reshape(-1)
+            if values.size != 3:
+                return action
+            return (
+                float(values[0]) * 180.0,
+                float(values[1]),
+                float(values[2]) * 2.0,
+                0.0,
+            )
 
 
 __all__ = ["GroundInfantryNativeEnv"]

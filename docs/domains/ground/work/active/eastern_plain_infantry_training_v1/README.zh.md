@@ -48,6 +48,8 @@ Owner：`domains/ground`，环境输入由 `systems/environment` 负责
   Gym observation space 现在使用来自已验证 bundle manifest 和有限 episode horizon 的
   有限边界；自定义 bundle 无法读取 manifest 时使用明确标注的有限 horizon fallback。
   这只改善空间契约，不改变 `native_probe_only` 权威边界。
+  native Gym action 现在是 heading、speed、stance 三维归一化向量，`route_intent=direct`
+  作为固定元数据，不再占用一个虚假的 action 维度；原生 probe 仍兼容旧四字段输入。
 - maintained 命令投影：`python/rl/ground/command.py`。它把 heading/speed、原生 stance
   和已有 Ground static-task 片段送入批量契约；对于当前原生命令结构无法表达的 route
   字段会直接拒绝，而不是静默丢弃。`OccupyStatic` 和 `SupportStatic` 作为有界的

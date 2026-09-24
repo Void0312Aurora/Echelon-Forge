@@ -74,9 +74,10 @@ accepted.
   Its trace also distinguishes terminal reasons from `max_steps` and
   `blocked_step_limit` truncation, so a training loop can fail closed without
   inferring why an episode stopped.
-  Its native Gym action space fixes `route_intent=direct`; held route intents
-  remain available only through the engineering proxy until a native route
-  owner exists.
+  Its native Gym action space is a normalized three-field vector for heading,
+  speed, and stance; `route_intent=direct` is fixed metadata rather than a fake
+  action dimension. Held route intents remain available only through the
+  engineering proxy until a native route owner exists.
 - Maintained command projection:
   `python/rl/ground/command.py`. It carries heading/speed, native stance, and
   the existing Ground static-task slice through the batch contract, while
