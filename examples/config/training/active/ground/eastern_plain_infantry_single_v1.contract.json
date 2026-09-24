@@ -63,6 +63,12 @@
     "status": "proxy_only",
     "entrypoint": "python.rl.ground.proxy_env:GroundInfantryProxyEnv",
     "authority": "engineering_proxy_only",
+    "native_probe": {
+      "status": "native_probe_only",
+      "entrypoint": "python.rl.ground.native_probe:GroundInfantryNativeProbe",
+      "authority": "native_probe_only",
+      "production_boundary": "not_world_batch"
+    },
     "promotion_gate": "native_ground_reset_step_replay_and_terrain_owner"
   },
   "command_projection": {

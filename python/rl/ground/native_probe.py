@@ -1,0 +1,243 @@
+"""Deterministic native Ground training probe.
+
+This adapter deliberately stops at the maintained single-soldier kernel
+surface.  It is useful for reset/step/trace/replay checks, but it is not a
+production ``WorldBatch`` environment and it exposes no learned or automatic
+weapon-employment action.
+"""
+
+from __future__ import annotations
+
+import math
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Mapping, Sequence
+
+from python.runtime_bootstrap import ensure_repo_imports
+
+ensure_repo_imports()
+
+import ef_py  # noqa: E402
+
+from .command import build_ground_infantry_mission_command
+from .infantry_proxy import GroundInfantryProxyError, normalize_ground_infantry_action
+
+
+NATIVE_GROUND_PROBE_CONTRACT_VERSION = "ground_infantry_native_probe.v1"
+
+
+class GroundInfantryNativeProbeError(ValueError):
+    """Raised when the native probe cannot represent or execute an action."""
+
+
+@dataclass(frozen=True)
+class NativeGroundInfantryTransition:
+    observation: dict[str, tuple[float, ...]]
+    reward: float
+    terminated: bool
+    truncated: bool
+    blocked: bool
+    blocked_reason: str | None
+    trace: dict[str, Any]
+
+
+class GroundInfantryNativeProbe:
+    """Single-soldier reset/step/replay probe backed by ``ef_py.SimulationKernel``."""
+
+    def __init__(
+        self,
+        *,
+        database_dir: str | Path,
+        bundle_dir: str | Path,
+        overlay_path: str | Path | None = None,
+        start_xy_m: tuple[float, float] = (400.0, 100.0),
+        goal_xy_m: tuple[float, float] = (600.0, 100.0),
+        goal_radius_m: float = 5.0,
+        max_speed_mps: float = 1.5,
+        max_steps: int = 256,
+        blocked_step_limit: int = 8,
+        time_step_s: float = 1.0 / 60.0,
+    ) -> None:
+        self.database_dir = Path(database_dir)
+        self.bundle_dir = Path(bundle_dir)
+        self.overlay_path = Path(overlay_path) if overlay_path is not None else None
+        self.start_xy_m = (float(start_xy_m[0]), float(start_xy_m[1]))
+        self.goal_xy_m = (float(goal_xy_m[0]), float(goal_xy_m[1]))
+        self.goal_radius_m = float(goal_radius_m)
+        self.max_speed_mps = float(max_speed_mps)
+        self.max_steps = int(max_steps)
+        self.blocked_step_limit = int(blocked_step_limit)
+        self.time_step_s = float(time_step_s)
+        if self.goal_radius_m <= 0.0 or self.max_speed_mps <= 0.0:
+            raise ValueError("goal_radius_m and max_speed_mps must be positive")
+        if self.max_steps <= 0 or self.blocked_step_limit <= 0 or self.time_step_s <= 0.0:
+            raise ValueError("max_steps, blocked_step_limit, and time_step_s must be positive")
+        self._sim: Any | None = None
+        self._entity_id: int | None = None
+        self._step_index = 0
+        self._blocked_steps = 0
+        self._stance = "stand"
+
+    @classmethod
+    def from_fixture(cls, fixture_dir: str | Path | None = None, **kwargs: Any) -> "GroundInfantryNativeProbe":
+        root = Path(__file__).resolve().parents[3]
+        fixture = Path(fixture_dir) if fixture_dir is not None else (
+            root
+            / "tests"
+            / "scenario"
+            / "fixtures"
+            / "environment_substrate"
+            / "arnis_bundle_v1"
+            / "eastern_plain_infantry_phase1"
+        )
+        return cls(
+            database_dir=root / "examples" / "config" / "database",
+            bundle_dir=fixture / "expected",
+            overlay_path=fixture / "field_overlay.json",
+            **kwargs,
+        )
+
+    def _require_ready(self) -> tuple[Any, int]:
+        if self._sim is None or self._entity_id is None:
+            raise RuntimeError("GroundInfantryNativeProbe.reset must be called first")
+        return self._sim, self._entity_id
+
+    @staticmethod
+    def _tuple(values: Sequence[Any]) -> tuple[float, ...]:
+        return tuple(float(value) for value in values)
+
+    def _observation(self) -> dict[str, tuple[float, ...]]:
+        sim, entity_id = self._require_ready()
+        position = self._tuple(sim.get_unit_position(entity_id))
+        velocity = self._tuple(sim.get_unit_velocity(entity_id))
+        terrain = self._tuple(sim.get_ground_terrain_observation(position[0], position[1]))
+        semantic = self._tuple(
+            sim.get_ground_field_semantic_observation(position[0], position[1])
+        )
+        weapon = self._tuple(sim.get_ground_weapon_state(entity_id))
+        return {
+            "position_local_enu_m": position,
+            "velocity_local_enu_mps": velocity,
+            "terrain": terrain,
+            "field_semantics": semantic,
+            "weapon_state": weapon,
+            "state": (
+                float(sim.get_unit_heading(entity_id)),
+                float(("stand", "crouch", "prone").index(self._stance)),
+                float(self._step_index),
+            ),
+        }
+
+    def reset(self, *, seed: int = 42) -> tuple[dict[str, tuple[float, ...]], dict[str, Any]]:
+        sim = ef_py.SimulationKernel()
+        if not sim.load_database(str(self.database_dir)):
+            raise GroundInfantryNativeProbeError("native probe database load failed")
+        sim.set_time_step(self.time_step_s)
+        if not sim.load_arnis_terrain_bundle(str(self.bundle_dir)):
+            raise GroundInfantryNativeProbeError("native probe Arnis bundle load failed")
+        if self.overlay_path is not None and not sim.load_arnis_field_overlay(str(self.overlay_path)):
+            raise GroundInfantryNativeProbeError("native probe field overlay load failed")
+        sim.reset(int(seed))
+        entity_id = int(
+            sim.spawn_unit(
+                ef_py.Side.Blue,
+                "Ground_Infantry_Soldier_MVP",
+                self.start_xy_m[0],
+                self.start_xy_m[1],
+                0.0,
+            )
+        )
+        if entity_id <= 0:
+            raise GroundInfantryNativeProbeError("native probe infantry spawn failed")
+        sim.set_command_link(entity_id, 0.0, 0.0)
+        self._sim = sim
+        self._entity_id = entity_id
+        self._step_index = 0
+        self._blocked_steps = 0
+        self._stance = "stand"
+        observation = self._observation()
+        return observation, {
+            "contract_version": NATIVE_GROUND_PROBE_CONTRACT_VERSION,
+            "authority": "native_probe_only",
+            "production_boundary": "not_world_batch",
+            "seed": int(seed),
+            "entity_id": entity_id,
+            "goal_xy_m": self.goal_xy_m,
+            "trace": {"event": "reset", "seed": int(seed), "observation": observation},
+        }
+
+    def step(
+        self, action: Mapping[str, Any] | Sequence[float]
+    ) -> NativeGroundInfantryTransition:
+        sim, entity_id = self._require_ready()
+        try:
+            normalized = normalize_ground_infantry_action(action)
+            command = build_ground_infantry_mission_command(
+                normalized, max_speed_mps=self.max_speed_mps
+            )
+        except (GroundInfantryProxyError, ValueError, TypeError) as exc:
+            raise GroundInfantryNativeProbeError(str(exc)) from exc
+        before = self._observation()
+        previous_distance = math.hypot(
+            self.goal_xy_m[0] - before["position_local_enu_m"][0],
+            self.goal_xy_m[1] - before["position_local_enu_m"][1],
+        )
+        self._stance = normalized.stance
+        sim.set_mission_command(entity_id, command)
+        sim.step()
+        self._step_index += 1
+        after = self._observation()
+        moved_distance = math.hypot(
+            after["position_local_enu_m"][0] - before["position_local_enu_m"][0],
+            after["position_local_enu_m"][1] - before["position_local_enu_m"][1],
+        )
+        requested_motion = normalized.desired_speed_fraction > 0.0
+        blocked = requested_motion and moved_distance <= 1.0e-12
+        current_surface = int(round(before["terrain"][1]))
+        blocked_reason = None
+        if blocked:
+            blocked_reason = (
+                "current_terrain_blocked"
+                if current_surface in (4, 5)
+                else "destination_terrain_blocked"
+            )
+            self._blocked_steps += 1
+        else:
+            self._blocked_steps = 0
+        current_distance = math.hypot(
+            self.goal_xy_m[0] - after["position_local_enu_m"][0],
+            self.goal_xy_m[1] - after["position_local_enu_m"][1],
+        )
+        reward = float(previous_distance - current_distance) - (0.1 if blocked else 0.0)
+        terminated = current_distance <= self.goal_radius_m
+        truncated = (
+            not terminated and self._step_index >= self.max_steps
+        ) or self._blocked_steps >= self.blocked_step_limit
+        trace = {
+            "contract_version": NATIVE_GROUND_PROBE_CONTRACT_VERSION,
+            "authority": "native_probe_only",
+            "step_index": self._step_index,
+            "action": list(normalized.vector()),
+            "before": before,
+            "after": after,
+            "moved_distance_m": moved_distance,
+            "blocked": blocked,
+            "blocked_reason": blocked_reason,
+        }
+        return NativeGroundInfantryTransition(
+            observation=after,
+            reward=reward,
+            terminated=terminated,
+            truncated=truncated,
+            blocked=blocked,
+            blocked_reason=blocked_reason,
+            trace=trace,
+        )
+
+
+__all__ = [
+    "GroundInfantryNativeProbe",
+    "GroundInfantryNativeProbeError",
+    "NATIVE_GROUND_PROBE_CONTRACT_VERSION",
+    "NativeGroundInfantryTransition",
+]

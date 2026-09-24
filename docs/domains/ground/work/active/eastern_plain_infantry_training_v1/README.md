@@ -47,6 +47,11 @@ accepted.
   `python/rl/ground/proxy_env.py` (`GroundInfantryProxyEnv`). It exercises the
   RL reset/step/observation/reward/termination/trace boundary only; its
   authority remains `engineering_proxy_only`.
+- Native single-soldier training probe:
+  `python/rl/ground/native_probe.py` (`GroundInfantryNativeProbe`). It drives
+  the compiled kernel through reset/step/trace/replay and exposes the admitted
+  terrain, field-semantic, and weapon-state observations. Its authority is
+  `native_probe_only`; it is not a production WorldBatch environment.
 - Maintained command projection:
   `python/rl/ground/command.py`. It carries heading/speed, native stance, and
   the existing Ground static-task slice through the batch contract, while

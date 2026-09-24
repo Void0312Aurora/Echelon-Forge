@@ -22,6 +22,12 @@ from .command import (
     build_ground_infantry_mission_command,
 )
 from .proxy_env import GroundInfantryProxyEnv
+from .native_probe import (
+    GroundInfantryNativeProbe,
+    GroundInfantryNativeProbeError,
+    NATIVE_GROUND_PROBE_CONTRACT_VERSION,
+    NativeGroundInfantryTransition,
+)
 
 __all__ = [
     "GROUND_INFANTRY_ACTION_MODE",
@@ -32,6 +38,10 @@ __all__ = [
     "GroundInfantryState",
     "GroundInfantryTransition",
     "GroundInfantryProxyEnv",
+    "GroundInfantryNativeProbe",
+    "GroundInfantryNativeProbeError",
+    "NATIVE_GROUND_PROBE_CONTRACT_VERSION",
+    "NativeGroundInfantryTransition",
     "build_ground_infantry_command",
     "build_ground_infantry_maintained_assignment",
     "build_ground_infantry_mission_command",
