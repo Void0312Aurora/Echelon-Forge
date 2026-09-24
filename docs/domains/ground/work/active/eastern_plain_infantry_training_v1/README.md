@@ -61,6 +61,9 @@ accepted.
   access to the probe internals; it also carries native health and command
   state for traceability, and terminates explicitly on waypoint reach or
   incapacitation. This is not route planning or a new fire authority.
+  Its native Gym action space fixes `route_intent=direct`; held route intents
+  remain available only through the engineering proxy until a native route
+  owner exists.
 - Maintained command projection:
   `python/rl/ground/command.py`. It carries heading/speed, native stance, and
   the existing Ground static-task slice through the batch contract, while
