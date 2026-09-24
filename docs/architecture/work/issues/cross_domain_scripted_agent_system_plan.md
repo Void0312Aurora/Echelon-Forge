@@ -585,3 +585,23 @@ to a dedicated owner-local evidence document.
   same-process reset/replay smoke already provide bounded direct execution;
   cooperative full-episode and multi-unit acceptance remain open until a
   bounded scenario/report contract can terminate or a full budget is authorized.
+
+### 2026-09-25 — manifest-driven runtime routing slice
+
+- Starting commit: `442b9742`.
+- Change batch: a neutral `resolve_scripted_model_id` contract now validates
+  domain, role, non-held label, and `reset_decide_close` lifecycle. The Air
+  scripted CLI and Naval N4 evaluator use the declared scenario manifest when
+  present and retain an explicit legacy-ID fallback only when metadata is
+  absent. The active Naval threat/ROE scenario now carries the same additive
+  manifest shape as the representative contact-report scenario.
+- Focused proxy verification: manifest, Air entrypoint, Naval entrypoint, and
+  registry tests passed `15 passed`; Python compilation and `git diff --check`
+  passed.
+- Direct verification: the manifest-bearing Air scenario completed the
+  five-step scripted CLI smoke with exit 0; the manifest-bearing Naval N4
+  scenario completed the eight-step report with `passed: true`, finite rewards,
+  required terms present, and forbidden terms absent.
+- Evidence boundary: manifest resolution is an admission/routing check, not a
+  playable promotion. Ground remains held; Air full mission/cooperative
+  acceptance and Naval full combat/fleet acceptance remain open.

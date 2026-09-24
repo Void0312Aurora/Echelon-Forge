@@ -86,10 +86,48 @@ def parse_scripted_capability(raw_scenario: Mapping[str, Any]) -> ScriptedCapabi
     return ScriptedCapabilityManifest.from_mapping(raw_manifest)
 
 
+def resolve_scripted_model_id(
+    manifest: ScriptedCapabilityManifest,
+    *,
+    expected_domain: str,
+    expected_role_id: str,
+) -> str:
+    """Validate a runtime consumer against a scenario capability declaration.
+
+    The manifest remains evidence metadata; this helper only prevents a
+    consumer from silently selecting a model for the wrong domain, role, or
+    lifecycle. A ``held`` capability is never admissible to a runtime model
+    entry point.
+    """
+
+    if not isinstance(manifest, ScriptedCapabilityManifest):
+        raise TypeError("manifest must be a ScriptedCapabilityManifest")
+    domain = str(expected_domain).strip().lower()
+    role_id = str(expected_role_id).strip()
+    if manifest.domain != domain:
+        raise ValueError(
+            f"scripted capability domain {manifest.domain!r} does not match {domain!r}"
+        )
+    if manifest.role_id != role_id:
+        raise ValueError(
+            f"scripted capability role {manifest.role_id!r} does not match {role_id!r}"
+        )
+    if manifest.label == "held":
+        raise ValueError("held scripted capability cannot be routed to a runtime model")
+    if manifest.lifecycle != "reset_decide_close":
+        raise ValueError(
+            "runtime scripted capability requires reset_decide_close lifecycle"
+        )
+    if not manifest.model_id:
+        raise ValueError("runtime scripted capability requires model_id")
+    return manifest.model_id
+
+
 __all__ = [
     "SCRIPTED_CAPABILITY_LABELS",
     "SCRIPTED_CAPABILITY_LIFECYCLES",
     "SCRIPTED_CAPABILITY_VERSION",
     "ScriptedCapabilityManifest",
     "parse_scripted_capability",
+    "resolve_scripted_model_id",
 ]
