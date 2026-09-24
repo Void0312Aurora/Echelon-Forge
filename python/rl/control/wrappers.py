@@ -6,6 +6,10 @@ from typing import Iterable, Optional
 import numpy as np
 
 import gymnasium as gym
+from python.tasking_contracts.air_scripted_execution import (
+    AIR_SCRIPTED_EXECUTION_MODEL_ID,
+    AIR_SCRIPTED_MODEL_REGISTRY,
+)
 from .mission_defs import (
     is_route_command_code,
     normalize_command_code,
@@ -121,6 +125,7 @@ class MultiTimescaleActionController:
         self._scripted_takeoff_ctrl: Optional[ScriptedTakeoffController] = None
         self._scripted_stable_ctrl: Optional[ScriptedStableFlightController] = None
         self._scripted_landing_ctrl: Optional[ScriptedLandingController] = None
+        self._scripted_model = None
         self._scripted_active_mode: str | None = None
 
     def _get_loader(self):
@@ -158,6 +163,9 @@ class MultiTimescaleActionController:
         self._scripted_takeoff_ctrl = None
         self._scripted_stable_ctrl = None
         self._scripted_landing_ctrl = None
+        if self._scripted_model is not None:
+            self._scripted_model.close()
+        self._scripted_model = None
         self._scripted_active_mode = None
         self._last_obs = obs
         if self.scripted_baseline_mode in ("stable_flight", "takeoff", "takeoff_then_stable_flight", "landing_ils", "takeoff_cruise_landing"):
@@ -177,17 +185,31 @@ class MultiTimescaleActionController:
                 self._scripted_ctrl = self._scripted_landing_ctrl
                 self._scripted_active_mode = "landing_ils"
             elif self.scripted_baseline_mode == "takeoff_cruise_landing":
-                self._scripted_takeoff_ctrl = ScriptedTakeoffController(action_dim=action_dim, dt=dt)
-                self._scripted_stable_ctrl = ScriptedStableFlightController(action_dim=action_dim, dt=dt)
-                self._scripted_landing_ctrl = ScriptedLandingController(action_dim=action_dim, dt=dt)
-                self._scripted_ctrl = self._scripted_takeoff_ctrl
+                self._scripted_model = AIR_SCRIPTED_MODEL_REGISTRY.create_for(
+                    domain="air",
+                    role_id="autopilot_controller",
+                    model_id=AIR_SCRIPTED_EXECUTION_MODEL_ID,
+                    action_dim=action_dim,
+                    dt=dt,
+                    transition_alt_agl_m=self.scripted_transition_alt_agl_m,
+                )
+                self._scripted_ctrl = self._scripted_model
                 self._scripted_active_mode = "takeoff"
             else:
                 self._scripted_stable_ctrl = ScriptedStableFlightController(action_dim=action_dim, dt=dt)
                 self._scripted_ctrl = self._scripted_stable_ctrl
                 self._scripted_active_mode = "stable_flight"
             if isinstance(obs, dict) and self._scripted_ctrl is not None:
-                self._scripted_ctrl.reset(obs)
+                if self._scripted_model is not None:
+                    loader = self._get_loader()
+                    self._scripted_model.reset(
+                        context={
+                            "observation": obs,
+                            "phase_name": str(getattr(loader, "mission_phase_name", "") or ""),
+                        }
+                    )
+                else:
+                    self._scripted_ctrl.reset(obs)
 
     def _scripted_mode_from_command_code(self, command_code, *, alt_agl_m: float | None = None) -> str | None:
         mode = scripted_mode_for_command_code(
@@ -298,6 +320,10 @@ class MultiTimescaleActionController:
         if self.scripted_baseline_mode == "landing_ils":
             return self._scripted_landing_ctrl or self._scripted_ctrl
         if self.scripted_baseline_mode == "takeoff_cruise_landing":
+            if self._scripted_model is not None:
+                self._scripted_ctrl = self._scripted_model
+                self._scripted_active_mode = self._scripted_model.active_mode
+                return self._scripted_model
             desired_mode = self._infer_scripted_mode_from_obs(self._last_obs)
             if desired_mode == "landing_ils":
                 desired_ctrl = self._scripted_landing_ctrl
@@ -565,6 +591,7 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
         self._scripted_takeoff_ctrl: Optional[ScriptedTakeoffController] = None
         self._scripted_stable_ctrl: Optional[ScriptedStableFlightController] = None
         self._scripted_landing_ctrl: Optional[ScriptedLandingController] = None
+        self._scripted_model = None
         self._scripted_active_mode: str | None = None
 
     def _get_reset_dt(self) -> float:
@@ -583,6 +610,9 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
         self._scripted_takeoff_ctrl = None
         self._scripted_stable_ctrl = None
         self._scripted_landing_ctrl = None
+        if self._scripted_model is not None:
+            self._scripted_model.close()
+        self._scripted_model = None
         self._scripted_active_mode = None
         self._last_obs = obs
         if self.scripted_baseline_mode in ("stable_flight", "takeoff", "takeoff_then_stable_flight", "landing_ils", "takeoff_cruise_landing"):
@@ -613,19 +643,15 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
                 self._scripted_ctrl = self._scripted_landing_ctrl
                 self._scripted_active_mode = "landing_ils"
             elif self.scripted_baseline_mode == "takeoff_cruise_landing":
-                self._scripted_takeoff_ctrl = ScriptedTakeoffController(
+                self._scripted_model = AIR_SCRIPTED_MODEL_REGISTRY.create_for(
+                    domain="air",
+                    role_id="autopilot_controller",
+                    model_id=AIR_SCRIPTED_EXECUTION_MODEL_ID,
                     action_dim=int(self.action_space.shape[0]),
                     dt=dt,
+                    transition_alt_agl_m=self.scripted_transition_alt_agl_m,
                 )
-                self._scripted_stable_ctrl = ScriptedStableFlightController(
-                    action_dim=int(self.action_space.shape[0]),
-                    dt=dt,
-                )
-                self._scripted_landing_ctrl = ScriptedLandingController(
-                    action_dim=int(self.action_space.shape[0]),
-                    dt=dt,
-                )
-                self._scripted_ctrl = self._scripted_takeoff_ctrl
+                self._scripted_ctrl = self._scripted_model
                 self._scripted_active_mode = "takeoff"
             else:
                 self._scripted_stable_ctrl = ScriptedStableFlightController(
@@ -635,7 +661,16 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
                 self._scripted_ctrl = self._scripted_stable_ctrl
                 self._scripted_active_mode = "stable_flight"
             if isinstance(obs, dict) and self._scripted_ctrl is not None:
-                self._scripted_ctrl.reset(obs)
+                if self._scripted_model is not None:
+                    loader = self._get_loader()
+                    self._scripted_model.reset(
+                        context={
+                            "observation": obs,
+                            "phase_name": str(getattr(loader, "mission_phase_name", "") or ""),
+                        }
+                    )
+                else:
+                    self._scripted_ctrl.reset(obs)
 
     def reset(self, **kwargs):
         obs, info = self.env.reset(**kwargs)
@@ -772,6 +807,10 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
         if self.scripted_baseline_mode == "landing_ils":
             return self._scripted_landing_ctrl or self._scripted_ctrl
         if self.scripted_baseline_mode == "takeoff_cruise_landing":
+            if self._scripted_model is not None:
+                self._scripted_ctrl = self._scripted_model
+                self._scripted_active_mode = self._scripted_model.active_mode
+                return self._scripted_model
             desired_mode = self._infer_scripted_mode_from_obs(self._last_obs)
             if desired_mode == "landing_ils":
                 desired_ctrl = self._scripted_landing_ctrl
