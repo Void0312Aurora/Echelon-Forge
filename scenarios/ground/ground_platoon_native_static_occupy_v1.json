@@ -1,6 +1,27 @@
 {
   "scenario_name": "Ground Platoon Native Static Occupy V1",
   "description": "G1 native ground schema scenario-loader evidence. The platoon is spawned as Ground_Platoon_MVP and remains static inside the objective zone while Army/ground TASK_OCCUPY tasking state propagates through ScenarioLoader and TaskOrder -> LeaderIntent -> PilotReport. This scenario consumes the accepted native schema evidence only; it does not release route movement, terrain interaction, sensing, fires, effects, damage, or combat behavior.",
+  "scripted_capability": {
+    "version": "scripted_capability.v1",
+    "domain": "ground",
+    "label": "held",
+    "model_id": null,
+    "role_id": "ground_commander",
+    "lifecycle": "task_status_shell",
+    "evidence_refs": [
+      "scenario:scenarios/ground/ground_platoon_native_static_occupy_v1.json",
+      "test:tests/architecture/ground/test_realism_gradient_guardrails.py"
+    ],
+    "deferred_claims": [
+      "movement",
+      "terrain interaction",
+      "sensing and track export",
+      "fires",
+      "effects",
+      "damage",
+      "playable runtime"
+    ]
+  },
   "tasking_profile": "ground",
   "mvp_boundary": {
     "status": "native_static_schema_status_shell",

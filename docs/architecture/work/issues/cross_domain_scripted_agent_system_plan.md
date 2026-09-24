@@ -444,3 +444,19 @@ to a dedicated owner-local evidence document.
 - Known residual: the matrix is an evidence boundary and does not retrofit
   scenario JSON or promote any domain; a later scenario-manifest slice must
   attach machine-readable labels to maintained playable entry points.
+
+### 2026-09-25 — WP8 scenario capability manifest slice
+
+- Starting commit: `94a776c5`.
+- Affected owners: scenario contracts, architecture evidence, Air, Naval, and
+  Ground domain owners.
+- Expected evidence: representative maintained scenarios carry additive
+  `scripted_capability.v1` metadata whose label, model/role, lifecycle, and
+  deferred claims match the maintained evidence matrix.
+- Known residual: this slice covers representative fixtures only; it does not
+  make the Air candidate playable, broaden Naval beyond N4, or admit Ground
+  runtime capabilities.
+- Focused proxy verification: the manifest and existing Ground realism tests
+  passed `6 passed`; all three JSON files parsed successfully and referenced
+  repository evidence files exist. No scenario compiler or compiled-runtime
+  acceptance was claimed.
