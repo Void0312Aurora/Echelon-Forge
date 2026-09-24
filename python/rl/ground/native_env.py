@@ -7,7 +7,10 @@ probe remains the authority for reset, transition, reward, and replay data.
 
 from __future__ import annotations
 
+import json
+import math
 from collections.abc import Mapping, Sequence
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -20,6 +23,134 @@ except ImportError:  # pragma: no cover - exercised only in minimal installs.
     spaces = None
 
 from .native_probe import GroundInfantryNativeProbe, NativeGroundInfantryTransition
+
+
+_FLOAT32_MAX = float(np.finfo(np.float32).max)
+
+
+def _fixture_bounds(probe: GroundInfantryNativeProbe) -> tuple[float, float, float, float, float, float] | None:
+    """Read spatial/elevation bounds from the verified continuous bundle when present."""
+
+    manifest_path = Path(probe.bundle_dir) / "bundle.json"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        artifact = next(
+            item for item in manifest["artifacts"] if item["kind"] == "elevation_raster"
+        )
+        shape = tuple(int(value) for value in artifact["shape"])
+        metadata = artifact["metadata"]
+        origin_x, origin_y = (float(value) for value in metadata["origin_xy_m"])
+        step_x, step_y = (float(value) for value in metadata["step_xy_m"])
+        x_end = origin_x + (shape[1] - 1) * step_x
+        y_end = origin_y + (shape[0] - 1) * step_y
+        raster = np.memmap(
+            Path(probe.bundle_dir) / artifact["path"],
+            dtype=np.dtype(artifact["dtype"]),
+            mode="r",
+            shape=shape,
+        )
+        elevation_low = float(np.min(raster))
+        elevation_high = float(np.max(raster))
+        return (
+            min(origin_x, x_end),
+            max(origin_x, x_end),
+            min(origin_y, y_end),
+            max(origin_y, y_end),
+            elevation_low,
+            elevation_high,
+        )
+    except (OSError, KeyError, StopIteration, TypeError, ValueError):
+        return None
+
+
+def _finite_observation_bounds(probe: GroundInfantryNativeProbe) -> dict[str, tuple[np.ndarray, np.ndarray]]:
+    """Build finite bounds from the probe horizon and source fixture metadata."""
+
+    points = (probe.start_xy_m,) + tuple(probe.waypoints_xy_m)
+    travel_budget_m = probe.max_speed_mps * probe.time_step_s * probe.max_steps
+    position_low_x = min(point[0] for point in points) - travel_budget_m
+    position_high_x = max(point[0] for point in points) + travel_budget_m
+    position_low_y = min(point[1] for point in points) - travel_budget_m
+    position_high_y = max(point[1] for point in points) + travel_budget_m
+
+    fixture = _fixture_bounds(probe)
+    if fixture is None:
+        map_low_x, map_high_x, map_low_y, map_high_y = (
+            position_low_x,
+            position_high_x,
+            position_low_y,
+            position_high_y,
+        )
+        elevation_low, elevation_high = -1.0e6, 1.0e6
+        field_distance_high = 1.0e6
+    else:
+        map_low_x, map_high_x, map_low_y, map_high_y, elevation_low, elevation_high = fixture
+        field_distance_high = math.hypot(
+            map_high_x - map_low_x + 2.0 * travel_budget_m,
+            map_high_y - map_low_y + 2.0 * travel_budget_m,
+        )
+    elevation_low = min(elevation_low, 0.0) - 1.0
+    elevation_high = max(elevation_high, 0.0) + 1.0
+
+    goal_x = [point[0] for point in probe.waypoints_xy_m]
+    goal_y = [point[1] for point in probe.waypoints_xy_m]
+    mission_dx = [goal - position for goal in goal_x for position in (position_low_x, position_high_x)]
+    mission_dy = [goal - position for goal in goal_y for position in (position_low_y, position_high_y)]
+    mission_distance_high = max(
+        math.hypot(abs(dx), abs(dy)) for dx in mission_dx for dy in mission_dy
+    )
+    uint64_as_float = _FLOAT32_MAX
+
+    return {
+        "position_local_enu_m": (
+            np.asarray([position_low_x, position_low_y, -1.0], dtype=np.float32),
+            np.asarray([position_high_x, position_high_y, 1.0], dtype=np.float32),
+        ),
+        "velocity_local_enu_mps": (
+            np.full(3, -probe.max_speed_mps, dtype=np.float32),
+            np.full(3, probe.max_speed_mps, dtype=np.float32),
+        ),
+        "terrain": (
+            np.asarray([elevation_low, 0.0, 0.0, 0.0, 0.0], dtype=np.float32),
+            np.asarray([elevation_high, 5.0, 1.0, 1.0, 1.0], dtype=np.float32),
+        ),
+        "terrain_effects": (
+            np.asarray([0.0], dtype=np.float32),
+            np.asarray([90.0], dtype=np.float32),
+        ),
+        "movement_effects": (
+            np.asarray([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32),
+            np.asarray([5.0, 90.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], dtype=np.float32),
+        ),
+        "field_semantics": (
+            np.asarray([0.0, -1.0, 0.0, -1.0, 0.0, 0.0, 0.0], dtype=np.float32),
+            np.asarray([1.0, field_distance_high, 360.0, field_distance_high, 360.0, 1.0, 1.0], dtype=np.float32),
+        ),
+        "weapon_state": (
+            np.zeros(8, dtype=np.float32),
+            np.asarray([1.0, 1.0, _FLOAT32_MAX, _FLOAT32_MAX, _FLOAT32_MAX, _FLOAT32_MAX, 1.0, _FLOAT32_MAX], dtype=np.float32),
+        ),
+        "health_state": (
+            np.zeros(2, dtype=np.float32),
+            np.full(2, 100.0, dtype=np.float32),
+        ),
+        "command_state": (
+            np.asarray([0.0, -180.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32),
+            np.asarray([1.0, 180.0, probe.max_speed_mps, 3.0, 2.0, uint64_as_float, uint64_as_float], dtype=np.float32),
+        ),
+        "mission_state": (
+            np.asarray([min(mission_dx), min(mission_dy), 0.0], dtype=np.float32),
+            np.asarray([max(mission_dx), max(mission_dy), mission_distance_high], dtype=np.float32),
+        ),
+        "waypoint_state": (
+            np.asarray([0.0, 0.0], dtype=np.float32),
+            np.asarray([float(len(probe.waypoints_xy_m)), float(len(probe.waypoints_xy_m))], dtype=np.float32),
+        ),
+        "state": (
+            np.asarray([0.0, 0.0, 0.0], dtype=np.float32),
+            np.asarray([360.0, 2.0, float(probe.max_steps)], dtype=np.float32),
+        ),
+    }
 
 
 if gym is None:  # pragma: no cover - the fallback is a clear dependency boundary.
@@ -50,44 +181,11 @@ else:
                 high=np.asarray([180.0, 1.0, 2.0, 0.0], dtype=np.float32),
                 dtype=np.float32,
             )
+            bounds = _finite_observation_bounds(probe)
             self.observation_space = spaces.Dict(
                 {
-                    "position_local_enu_m": spaces.Box(
-                        low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32
-                    ),
-                    "velocity_local_enu_mps": spaces.Box(
-                        low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32
-                    ),
-                    "terrain": spaces.Box(
-                        low=-np.inf, high=np.inf, shape=(5,), dtype=np.float32
-                    ),
-                    "terrain_effects": spaces.Box(
-                        low=-np.inf, high=np.inf, shape=(1,), dtype=np.float32
-                    ),
-                    "movement_effects": spaces.Box(
-                        low=-np.inf, high=np.inf, shape=(8,), dtype=np.float32
-                    ),
-                    "field_semantics": spaces.Box(
-                        low=-np.inf, high=np.inf, shape=(7,), dtype=np.float32
-                    ),
-                    "weapon_state": spaces.Box(
-                        low=-np.inf, high=np.inf, shape=(8,), dtype=np.float32
-                    ),
-                    "health_state": spaces.Box(
-                        low=-np.inf, high=np.inf, shape=(2,), dtype=np.float32
-                    ),
-                    "command_state": spaces.Box(
-                        low=-np.inf, high=np.inf, shape=(7,), dtype=np.float32
-                    ),
-                    "mission_state": spaces.Box(
-                        low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32
-                    ),
-                    "waypoint_state": spaces.Box(
-                        low=-np.inf, high=np.inf, shape=(2,), dtype=np.float32
-                    ),
-                    "state": spaces.Box(
-                        low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32
-                    ),
+                    key: spaces.Box(low=low, high=high, dtype=np.float32)
+                    for key, (low, high) in bounds.items()
                 }
             )
             self._trace: list[dict[str, Any]] = []
