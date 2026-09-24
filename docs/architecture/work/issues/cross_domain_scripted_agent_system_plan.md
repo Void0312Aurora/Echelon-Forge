@@ -536,3 +536,22 @@ to a dedicated owner-local evidence document.
   mission, reset/replay, multi-unit, cooperative, Naval, Ground, or full
   playable acceptance claim. The generated build directory and probe outputs
   remain untracked.
+
+### 2026-09-25 — direct Naval N4 station report probe
+
+- Starting commit: `1f551102`.
+- Scope: the maintained Naval station adapter and its existing compiled
+  scenario runtime; no fleet or weapon behavior was added.
+- First probe used the representative contact-report scenario with the active
+  station-hold training entry. The evaluator failed closed because that entry
+  declares `scenarios/naval/ddg51_take1_screen_threat_roe_v1.json`; this exact
+  scenario/config mismatch was recorded and not retried with the same pair.
+- Alternative path: the evaluator was rerun with the scenario declared by the
+  active entry. The eight-step direct report exited 0 with `passed: true`,
+  finite rewards, all required station/contact/report reward terms present, and
+  no forbidden weapon/damage terms.
+- Evidence boundary: this closes the direct-report gate for the scoped N4
+  adapter only. It does not promote Naval beyond `bounded_adapter`, and does
+  not establish fleet combat, weapon employment, general maneuver, reset/replay,
+  or full Naval playable coverage. Probe JSON remains under the ignored build
+  directory.
