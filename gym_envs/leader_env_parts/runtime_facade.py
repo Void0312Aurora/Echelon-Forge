@@ -155,6 +155,7 @@ class LeaderRuntimeFacadeMixin:
 
     def reset(self, *, seed: int | None = None, options: dict | None = None):
         _ = options
+        self._scripted_episode_seed = None if seed is None else int(seed)
         collect_step_timing = bool(getattr(self, "collect_step_timing", False))
         reset_t0 = time.perf_counter() if collect_step_timing else 0.0
         obs, info = self._exec_runtime.reset(seed=seed)

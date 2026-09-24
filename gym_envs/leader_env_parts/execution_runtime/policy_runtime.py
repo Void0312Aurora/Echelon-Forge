@@ -110,6 +110,8 @@ def configure_execution_runtime(env: Any) -> None:
 def exec_policy_reset(env: Any, obs: dict) -> None:
     if hasattr(env._exec_policy, "reset"):
         try:
+            env._exec_policy.reset(obs, episode_seed=getattr(env, "_scripted_episode_seed", None))
+        except TypeError:
             env._exec_policy.reset(obs)
         except Exception:
             pass

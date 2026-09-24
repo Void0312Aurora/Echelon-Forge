@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+from types import SimpleNamespace
 
 from python.tasking_contracts.air_scripted_execution import (
     AIR_SCRIPTED_EXECUTION_MODEL_ID,
@@ -9,6 +10,7 @@ from python.tasking_contracts.air_scripted_execution import (
 )
 from python.tasking_contracts.scripted_registry import ScriptedDecisionModel
 from python.tasking_contracts.scripted_landing import ScriptedLandingController
+from gym_envs.leader_env_parts.scripted_exec import ScriptedExecutiveController
 
 
 def _observation(*, altitude_agl_m: float = 50.0, command_code: int = 1) -> dict:
@@ -62,3 +64,30 @@ def test_landing_controller_aligns_localizer_range_with_runway_geometry() -> Non
     controller = ScriptedLandingController(action_dim=17, runway_length_m=3000.0)
     cross = controller._estimate_cross_track_m(0.334, 274.0)
     assert 45.0 < cross < 52.0
+
+
+def test_leader_scripted_entry_uses_neutral_runtime_envelope() -> None:
+    observation = _observation(altitude_agl_m=80.0, command_code=1)
+    env = SimpleNamespace(
+        action_space=SimpleNamespace(shape=(17,)),
+        unwrapped=SimpleNamespace(
+            agent_id="Blue_F16",
+            steps=0,
+            sim=SimpleNamespace(get_time_step=lambda: 0.05),
+            loader=SimpleNamespace(mission_phase_name="scramble", ils_beacons=[]),
+        ),
+    )
+    controller = ScriptedExecutiveController(env)
+    controller.reset(observation, episode_seed=7)
+    first = controller.predict(observation)
+    env.unwrapped.steps = 1
+    second = controller.predict(observation)
+
+    assert first.shape == (17,)
+    assert second.shape == (17,)
+    assert controller.runtime_report is not None
+    assert controller.runtime_report.domain == "air"
+    assert controller.runtime_report.action_source == "decided"
+    assert controller.runtime_report.decision_index == 2
+    assert controller.replay_identity == "Blue_F16:air.execution.phase_scripted:seed=7:reset=1"
+    controller.close()
