@@ -97,9 +97,12 @@ marks a declared bridge segment as admitted. It remains a local passability
 probe, not route planning or waypoint selection.
 
 `python/rl/ground/native_probe.py` now supplies a deterministic native
-reset/step/trace/replay adapter over these admitted surfaces. It is explicitly
-`native_probe_only` and remains outside production WorldBatch; route intent,
-learned policy training, and automatic weapon employment remain held.
+reset/step/trace/replay adapter over these admitted surfaces. Its blocked-step
+reason now comes from the native sampled transition evidence when available
+(water versus obstacle), rather than silently inferring a cause from the
+current terrain cell. It is explicitly `native_probe_only` and remains outside
+production WorldBatch; route intent, learned policy training, and automatic
+weapon employment remain held.
 
 The proxy fails closed on unknown raster cells, out-of-bounds transitions, and
 river crossings without the explicit bridge intent.  The bridge rule is a

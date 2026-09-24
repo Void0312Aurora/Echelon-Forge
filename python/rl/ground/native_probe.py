@@ -206,13 +206,18 @@ class GroundInfantryNativeProbe:
         requested_motion = normalized.desired_speed_fraction > 0.0
         blocked = requested_motion and moved_distance <= 1.0e-12
         current_surface = int(round(before["terrain"][1]))
+        transition_water_blocked = transition_observation[3] > 0.5
+        transition_obstacle_blocked = transition_observation[4] > 0.5
         blocked_reason = None
         if blocked:
-            blocked_reason = (
-                "current_terrain_blocked"
-                if current_surface in (4, 5)
-                else "destination_terrain_blocked"
-            )
+            if transition_water_blocked:
+                blocked_reason = "water_transition_blocked"
+            elif transition_obstacle_blocked:
+                blocked_reason = "obstacle_transition_blocked"
+            elif current_surface in (4, 5):
+                blocked_reason = "current_terrain_blocked"
+            else:
+                blocked_reason = "destination_terrain_blocked"
             self._blocked_steps += 1
         else:
             self._blocked_steps = 0

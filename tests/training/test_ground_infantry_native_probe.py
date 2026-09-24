@@ -54,3 +54,17 @@ def test_native_ground_probe_rejects_held_route_intent() -> None:
     probe.reset(seed=1)
     with pytest.raises(GroundInfantryNativeProbeError, match="cannot represent route_intent"):
         probe.step([90.0, 1.0, 0.0, 3.0])
+
+
+def test_native_ground_probe_reports_water_block_from_native_transition() -> None:
+    probe = GroundInfantryNativeProbe.from_fixture(
+        start_xy_m=(0.0, 100.0),
+        goal_xy_m=(100.0, 100.0),
+        max_steps=2,
+    )
+    probe.reset(seed=3)
+    transition = probe.step([90.0, 1.0, 0.0, 0.0])
+
+    assert transition.blocked is True
+    assert transition.blocked_reason == "water_transition_blocked"
+    assert transition.trace["transition_observation"][3] == pytest.approx(1.0)
