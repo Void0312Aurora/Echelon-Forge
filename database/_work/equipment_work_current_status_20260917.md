@@ -161,6 +161,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | A-50U held-record completion | Added Xinhua A-50U performance and separate Airforce Technology/RedStar upgrade, crew, mission-system and family-baseline packages; 190/210 t and 800/850 km/h source readings remain separate |
 | Residual variant-boundary audit | Rechecked Y-20 and M1252 with current official, specialist and community alternatives; M1252 still lacks a direct propulsion/mobility package and remains `cataloged` rather than receiving cross-variant values |
 | Y-20 public-parameter completion | Added generic Y-20 Store norske leksikon and Military Factory packages for crew, speed, ceiling and payload-conditioned range; retained Y-20A/Y-20B/YY-20A boundaries and the 45 m versus 50 m wingspan conflict |
+| M1252 family-power boundary refresh | Added the DOT&E legacy DVH 350 hp C7 versus DVH-A1 450 hp C9 boundary as a named family reference; M1252-specific engine, speed and range remain unknown and the queue row stays `cataloged` |
 
 ## Retracted Findings
 

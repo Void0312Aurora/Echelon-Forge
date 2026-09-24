@@ -66,13 +66,14 @@ calibration package, inventory claim, or final simulation configuration.
 | R-21 | A-50U held-record completion from Xinhua, Airforce Technology and RedStar profiles | complete | `c79fd30c` |
 | R-22 | Residual Y-20 / M1252 variant-boundary audit and blocker refresh | complete | `aeb650ed` |
 | R-23 | Y-20 generic public performance and crew completion from named secondary packages | complete | `221c4489` |
+| R-24 | M1252 DVH-family powerpack boundary refresh and direct-manual search | complete | pending |
 
 ## Blocker / skip ledger
 
 | Candidate | Blocker | Alternative tried | Decision |
 | --- | --- | --- | --- |
 | `eq-cn-air-y20` | Official Chinese material confirms role/family status but does not publish a complete technical table; public geometry still has a 45 m versus 50 m wingspan conflict | Generic Y-20 entries from Store norske leksikon and Military Factory now supply crew, speed, ceiling and conditioned range; Y-20A/Y-20B/YY-20A values remain separate and the wingspan conflict is retained | Resolved in R-23; promote to `parameter_complete` with Tier C boundaries |
-| `eq-us-ground-stryker-m1252-mcvv` | Variant-level propulsion/mobility remains unknown; family M1129/M1252 values would be cross-model substitution | Army TB/TRADOC, mortar ATP, GDLS brochure, AFV Database, MDEX, WarWheels, ArmyProperty and current M1252A1 community data checked; only M1252A1/other-family powerpack claims surfaced | Keep `cataloged` and skip this pass; do not copy family or A1 powerpack, speed or range |
+| `eq-us-ground-stryker-m1252-mcvv` | Variant-level propulsion/mobility remains unknown; family M1129/M1252 values would be cross-model substitution | Army TB/TRADOC, mortar ATP, GDLS brochure, AFV Database, MDEX, WarWheels, ArmyProperty/TM catalog, ATP 3-21.90, DOT&E FY2017 DVH-A1 report and FY2027 Stryker family listing checked; only the family 350 hp C7 → 450 hp C9 boundary and M1252A1/other-family performance claims surfaced | Keep `cataloged`; retain the family power boundary as context but do not copy family or A1 powerpack, speed or range |
 
 ## Acceptance gate
 
