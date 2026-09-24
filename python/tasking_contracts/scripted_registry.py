@@ -142,6 +142,61 @@ class ScriptedModelRegistry:
             )
         return model
 
+    def create_for(
+        self,
+        *,
+        domain: str,
+        role_id: str,
+        model_id: str | None = None,
+        statuses: frozenset[str] | None = None,
+        **factory_kwargs: Any,
+    ) -> ScriptedDecisionModel:
+        """Create the model admitted for one domain/role pair.
+
+        A scenario may provide ``model_id`` for deterministic selection.  The
+        registry still validates that the selected declaration belongs to the
+        requested domain, role, and allowed status set.  Without an explicit
+        id exactly one registration must match; ambiguity fails closed rather
+        than silently choosing registration order.
+        """
+
+        if model_id is not None and str(model_id).strip():
+            registration = self.get(model_id)
+            domain_key = str(domain).strip().lower()
+            role_key = str(role_id).strip()
+            allowed_statuses = SCRIPTED_MODEL_STATUSES if statuses is None else frozenset(statuses)
+            unknown_statuses = allowed_statuses - SCRIPTED_MODEL_STATUSES
+            if unknown_statuses:
+                raise ValueError(f"unknown scripted model statuses: {sorted(unknown_statuses)!r}")
+            if registration.domain != domain_key:
+                raise ValueError(
+                    f"scripted model {registration.model_id!r} belongs to domain {registration.domain!r}, "
+                    f"not {domain_key!r}"
+                )
+            if role_key not in registration.role_ids:
+                raise ValueError(
+                    f"scripted model {registration.model_id!r} does not declare role {role_key!r}"
+                )
+            if registration.status not in allowed_statuses:
+                raise ValueError(
+                    f"scripted model {registration.model_id!r} has status {registration.status!r}, "
+                    f"not admitted by {sorted(allowed_statuses)!r}"
+                )
+            return self.create(registration.model_id, **factory_kwargs)
+
+        matches = self.resolve(domain=domain, role_id=role_id, statuses=statuses)
+        if not matches:
+            raise LookupError(
+                f"no scripted model registered for domain={str(domain).strip().lower()!r}, "
+                f"role={str(role_id).strip()!r}"
+            )
+        if len(matches) != 1:
+            raise ValueError(
+                f"ambiguous scripted models for domain={str(domain).strip().lower()!r}, "
+                f"role={str(role_id).strip()!r}: {[entry.model_id for entry in matches]!r}"
+            )
+        return self.create(matches[0].model_id, **factory_kwargs)
+
     def snapshot(self) -> tuple[ScriptedModelRegistration, ...]:
         """Return registrations in deterministic insertion order."""
 
