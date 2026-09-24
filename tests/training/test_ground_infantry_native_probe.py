@@ -74,6 +74,38 @@ def test_native_ground_gym_adapter_accepts_sb3_cpu_smoke_rollout() -> None:
     assert int(model.num_timesteps) == 4
 
 
+def test_native_ground_gym_adapter_replay_is_seed_stable() -> None:
+    actions = ([90.0, 0.5, 0.0, 0.0], [-90.0, 0.75, 2.0, 0.0])
+
+    def run() -> str:
+        env = GroundInfantryNativeEnv(
+            GroundInfantryNativeProbe.from_fixture(max_steps=4)
+        )
+        observation, info = env.reset(seed=11)
+        records: list[dict[str, object]] = [
+            {
+                "observation": {key: value.tolist() for key, value in observation.items()},
+                "trace": info["trace"],
+            }
+        ]
+        for action in actions:
+            observation, reward, terminated, truncated, info = env.step(action)
+            records.append(
+                {
+                    "observation": {
+                        key: value.tolist() for key, value in observation.items()
+                    },
+                    "reward": reward,
+                    "terminated": terminated,
+                    "truncated": truncated,
+                    "trace": info["trace"],
+                }
+            )
+        return json.dumps(records, sort_keys=True)
+
+    assert run() == run()
+
+
 def test_native_ground_probe_reset_and_step_use_compiled_observation_surfaces() -> None:
     probe = GroundInfantryNativeProbe.from_fixture(max_steps=4)
     observation, info = probe.reset(seed=42)
