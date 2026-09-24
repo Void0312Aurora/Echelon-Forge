@@ -64,7 +64,8 @@ command-triggered release, not an automatic per-tick weapon system.
 The bounded `SimulationKernel.get_ground_weapon_state` observation returns the
 selected weapon type, ammunition, damage/range tuning, hit probability, and
 remaining cooldown for diagnostics and future training observations. It does
-not promote the training contract: the RL harness remains proxy-only and no
+not promote the training contract: the production RL harness remains held,
+while the native probe/Gym adapter is explicitly `native_probe_only`; no
 learned target-selection or fire policy is released.
 
 The existing C++ maintained command contract already carries
