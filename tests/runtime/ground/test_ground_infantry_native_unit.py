@@ -266,6 +266,7 @@ def test_native_infantry_ground_rifle_requires_track_and_applies_damage() -> Non
     target_id = int(
         sim.spawn_unit(ef_py.Side.Red, "Ground_Infantry_Soldier_MVP", 100.0, 0.0, 0.0)
     )
+    sim.set_command_link(attacker_id, 0.0, 0.0)
 
     # A ground rifle cannot release without an explicit local track.
     assert not sim.fire_ground_weapon(
@@ -299,3 +300,35 @@ def test_native_infantry_ground_rifle_requires_track_and_applies_damage() -> Non
     assert not sim.fire_ground_weapon(
         attacker_id, target_id, int(ef_py.GroundWeaponType.Rifle)
     )
+
+
+def test_native_infantry_ground_rifle_mission_command_requires_authority() -> None:
+    sim = ef_py.SimulationKernel()
+    assert sim.load_database(_DATABASE)
+    attacker_id = int(
+        sim.spawn_unit(ef_py.Side.Blue, "Ground_Infantry_Soldier_MVP", 0.0, 0.0, 0.0)
+    )
+    target_id = int(
+        sim.spawn_unit(ef_py.Side.Red, "Ground_Infantry_Soldier_MVP", 100.0, 0.0, 0.0)
+    )
+    sim.set_command_link(attacker_id, 0.0, 0.0)
+
+    track = ef_py.Detection()
+    track.target_id = target_id
+    track.range = 100.0
+    track.bearing = 90.0
+    track.detection_prob_used = 1.0
+    track.sensor_type = int(ef_py.SensorType.Visual)
+    sim.set_contact_list(attacker_id, [track])
+
+    command = ef_py.MissionCommand()
+    command.active = True
+    command.assigned_target_id = target_id
+    command.authorization_to_fire = False
+    command.engagement_authority_holder_id = attacker_id
+    sim.set_mission_command(attacker_id, command)
+    assert not sim.fire_ground_weapon_from_mission_command(attacker_id)
+
+    command.authorization_to_fire = True
+    sim.set_mission_command(attacker_id, command)
+    assert sim.fire_ground_weapon_from_mission_command(attacker_id)

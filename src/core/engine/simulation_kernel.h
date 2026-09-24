@@ -302,6 +302,7 @@ class SimulationKernel {
     flecs::entity fire_missile(uint64_t attacker_id, uint64_t target_id);
     bool fire_naval_weapon(uint64_t attacker_id, uint64_t target_id, int weapon_type_code);
     bool fire_ground_weapon(uint64_t attacker_id, uint64_t target_id, int weapon_type_code);
+    bool fire_ground_weapon_from_mission_command(uint64_t attacker_id);
     bool debug_apply_proximity_hit(uint64_t attacker_id, uint64_t target_id, double damage,
                                    double fuse_distance);
     bool debug_apply_local_proximity_hit(uint64_t attacker_id, uint64_t target_id,

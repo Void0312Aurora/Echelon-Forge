@@ -58,6 +58,9 @@ the legacy launch seam and enters the shared effects/damage bridge at the
 current body-center hitbox bootstrap. This is a deterministic close-range
 training proxy: it does not provide line of sight, cover, suppression,
 ballistics, indirect fire, or target-selection automation.
+The explicit `fire_ground_weapon_from_mission_command` entrypoint additionally
+requires an active assigned target and matching fire authority; it is a single
+command-triggered release, not an automatic per-tick weapon system.
 
 The existing C++ maintained command contract already carries
 `ground_static_task`; the Python binding now exposes that slice as well.  This

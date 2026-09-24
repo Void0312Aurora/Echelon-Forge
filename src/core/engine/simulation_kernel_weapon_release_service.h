@@ -34,6 +34,7 @@ class SimulationKernelWeaponReleaseService final : public IWeaponReleaseService 
                            int weapon_type_code) override;
     bool fire_ground_weapon(std::uint64_t attacker_id, std::uint64_t target_id,
                             int weapon_type_code) override;
+    bool fire_ground_weapon_from_mission_command(std::uint64_t attacker_id) override;
     flecs::entity fire_weapon_from_pilot_action(std::uint64_t attacker_id) override;
     bool fire_naval_weapon_from_mission_command(std::uint64_t attacker_id) override;
 

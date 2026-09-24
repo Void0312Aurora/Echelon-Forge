@@ -27,3 +27,10 @@ bool SimulationKernel::fire_ground_weapon(uint64_t attacker_id, uint64_t target_
     return service != nullptr &&
            service->fire_ground_weapon(attacker_id, target_id, weapon_type_code);
 }
+
+bool SimulationKernel::fire_ground_weapon_from_mission_command(uint64_t attacker_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("fire_ground_weapon_from_mission_command");
+    IWeaponReleaseService *service = weapon_release_service();
+    return service != nullptr && service->fire_ground_weapon_from_mission_command(attacker_id);
+}
