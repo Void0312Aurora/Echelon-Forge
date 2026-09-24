@@ -996,3 +996,27 @@ to a dedicated owner-local evidence document.
   Naval scripted evaluation entry, then add roster-level cross-domain routing
   evidence. The Air landing/C2, EW, and tactical residuals remain independent
   work items and do not block that continuation.
+
+### 2026-09-25 — Naval evaluator neutral-runtime routing slice
+
+- Starting commit: `710048b8`.
+- Change batch: route the maintained Naval N4 station evaluator through
+  `ScriptedRuntimeAgent` while preserving the existing station command,
+  contact/report, reward, and compatibility transport owners. The evaluator
+  now reports runtime decision/hold counts and replay identity alongside its
+  existing gate payload.
+- Focused verification: Naval entrypoint, Naval adapter, and neutral runtime
+  tests passed `9 passed`; the direct evaluator contract test passed `1
+  passed`; Python compilation and `git diff --check` passed.
+- Direct verification: with `CMO_BUILD_DIR=build-scripted-agent`, the active
+  manifest-bearing Naval N4 scenario ran for `8` steps and exited `0` with
+  `passed: true`, finite reward, all required station/contact/report terms,
+  no forbidden weapon/damage terms, `8` runtime decisions, `0` holds, and
+  identity `Blue_Screen_DDG51:naval.station.screen_hold:seed=20260525:reset=1`.
+- Evidence boundary: this proves cross-domain operator/evaluator reuse of the
+  neutral scheduler for the scoped Naval station adapter. It does not promote
+  Naval beyond `bounded_adapter`, and it does not establish fleet combat,
+  weapons, general maneuver, reset/replay, or full Naval playable coverage.
+- Continuation choice: use the Air and Naval runtime identities as the basis
+  for a roster-level routing probe, while keeping Air C2/landing, EW, tactical
+  assessment, and Joint task-graph residuals independent.
