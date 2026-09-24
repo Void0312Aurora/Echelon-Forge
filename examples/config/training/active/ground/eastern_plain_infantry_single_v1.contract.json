@@ -80,7 +80,8 @@
       "status": "native_probe_only",
       "entrypoint": "python.rl.ground.native_probe:GroundInfantryNativeProbe",
       "authority": "native_probe_only",
-      "production_boundary": "not_world_batch"
+      "production_boundary": "not_world_batch",
+      "waypoint_boundary": "fixed_direct_sequence_only"
     },
     "native_env": {
       "status": "native_probe_only",
@@ -88,8 +89,9 @@
       "production_boundary": "not_world_batch",
       "observation_owner": "GroundInfantryNativeProbe",
       "termination_reasons": ["waypoint_reached", "agent_incapacitated"],
-      "observation_fields": ["position_local_enu_m", "velocity_local_enu_mps", "terrain", "terrain_effects", "field_semantics", "weapon_state", "health_state", "command_state", "mission_state", "state"],
-      "action_boundary": "direct_route_intent_only"
+      "observation_fields": ["position_local_enu_m", "velocity_local_enu_mps", "terrain", "terrain_effects", "field_semantics", "weapon_state", "health_state", "command_state", "mission_state", "waypoint_state", "state"],
+      "action_boundary": "direct_route_intent_only",
+      "waypoint_boundary": "fixed_direct_sequence_only"
     },
     "promotion_gate": "native_ground_reset_step_replay_and_terrain_owner"
   },
@@ -120,6 +122,7 @@
       "nearest_settlement_distance_and_bearing",
       "river_and_bridge_state",
       "mission_goal_relative_state",
+      "waypoint_index_and_count",
       "health_and_command_state",
       "route_progress_and_blocked_reason",
       "health_and_command_link_state"

@@ -95,7 +95,8 @@ movement effects only; they are not a tree-line cover, concealment, collision,
 route graph, or line-of-sight model. The shared native transition query samples
 the one-tick segment at 5 m intervals, reports water/obstacle blockers, and
 marks a declared bridge segment as admitted. It remains a local passability
-probe, not route planning or waypoint selection.
+probe, not route planning; the native training probe may only advance through a
+preconfigured direct waypoint sequence after a point is reached.
 The same local terrain owner now exposes `SimulationKernel.get_ground_slope_deg`
 to the native probe, so the training trace can attribute movement cost to a
 replayable slope observation rather than recomputing it in Python. This remains
@@ -111,7 +112,9 @@ production WorldBatch; route intent, learned policy training, and automatic
 weapon employment remain held.
 `python/rl/ground/native_env.py` wraps that probe in a Gymnasium-compatible
 reset/step surface for training tooling. The wrapper does not add authority or
-alter the native trace; it remains outside production `WorldBatch`.
+alter the native trace; it remains outside production `WorldBatch`. Its
+waypoint index/count observation and sequence advancement are bounded tooling
+bookkeeping, not a route graph, path planner, or production training release.
 
 The proxy fails closed on unknown raster cells, out-of-bounds transitions, and
 river crossings without the explicit bridge intent.  The bridge rule is a
