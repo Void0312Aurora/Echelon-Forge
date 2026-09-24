@@ -1020,3 +1020,26 @@ to a dedicated owner-local evidence document.
 - Continuation choice: use the Air and Naval runtime identities as the basis
   for a roster-level routing probe, while keeping Air C2/landing, EW, tactical
   assessment, and Joint task-graph residuals independent.
+
+### 2026-09-25 — Cross-domain scripted roster contract slice
+
+- Starting commit: `ed278d05`.
+- Change batch: add a contract test that constructs the maintained Air
+  execution model and the bounded Naval station model under one
+  `ScriptedRuntimeRoster`. The test uses the real domain registries and keeps
+  each domain's action payload and role/authority metadata behind the common
+  runtime envelope.
+- Focused verification: cross-domain roster, neutral runtime, Air lifecycle,
+  and Naval lifecycle tests passed `13 passed`; Python compilation and
+  `git diff --check` passed.
+- Direct result: deterministic sorted routing returned `air:lead` and
+  `naval:screen`, both models reset with seed `7`, both made a first decision,
+  both held that action at `0.1 s`, and their reports preserved `air` versus
+  `naval` domain identity with action shapes `(17,)` versus `(3,)`.
+- Evidence boundary: this closes a pure-Python cross-domain scheduling and
+  provenance contract. It does not constitute a joint simulation episode,
+  command arbitration, communication loss, cross-domain effects, or Naval/
+  Ground playable promotion.
+- Continuation choice: select the smallest maintained joint task-graph
+  producer/consumer slice next, without coupling it to the Air C2 landing,
+  EW action-surface, or tactical assessment residuals.
