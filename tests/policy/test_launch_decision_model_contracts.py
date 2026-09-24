@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Any
 
 from python.rl.policy_algo.model_contracts import (
+  LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,
+  LAUNCH_DECISION_CONTRACT_VERSION_KEY,
   LaunchDecisionContractError,
   LaunchDecisionContributor,
   LaunchDecisionMode,
@@ -22,6 +24,11 @@ ACTIVE_AIR_CONFIGS = REPO_ROOT / "examples" / "config" / "training" / "active" /
 
 
 def _config(**policy_kwargs: Any) -> dict[str, Any]:
+  if "launch_decision_mode" in policy_kwargs or "launch_decision_owner_mode" in policy_kwargs:
+    policy_kwargs.setdefault(
+      LAUNCH_DECISION_CONTRACT_VERSION_KEY,
+      LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,
+    )
   return {
     "policy": "HierarchicalMoEExecutionPolicy",
     "hyperparameters": {
@@ -92,6 +99,24 @@ class LaunchDecisionModelContractTests(unittest.TestCase):
     self.assertIn("hyperparameters.policy_kwargs.hybrid_event_use_window_classifier_head", paths)
     with self.assertRaises(LaunchDecisionContractError):
       resolve_launch_decision_contract(config)
+
+  def test_explicit_mode_requires_persisted_contract_version(self) -> None:
+    config = _config(
+      launch_decision_mode="governed_composed_v1",
+      hybrid_event_head_lr_scale=10.0,
+    )
+    config["hyperparameters"]["policy_kwargs"].pop(LAUNCH_DECISION_CONTRACT_VERSION_KEY)
+    violations = validate_launch_decision_contract(config)
+    self.assertTrue(any("persisted contract version" in item.reason for item in violations))
+
+  def test_flat_and_nested_mode_declarations_must_agree(self) -> None:
+    config = _config(
+      launch_decision_mode="governed_composed_v1",
+      hybrid_event_head_lr_scale=10.0,
+    )
+    config["launch_decision_mode"] = "legacy_composed_v0"
+    violations = validate_launch_decision_contract(config)
+    self.assertTrue(any("Repeated launch-decision declarations" in item.reason for item in violations))
 
   def test_new_governed_mode_rejects_competing_adapters(self) -> None:
     config = _config(
