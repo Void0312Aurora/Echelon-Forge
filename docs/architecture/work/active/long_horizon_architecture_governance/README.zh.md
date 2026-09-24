@@ -1,11 +1,11 @@
 # 长期架构治理
 
-状态：`2026-09-23`，长期架构治理计划处于 active；P0 authority/baseline、P1
+状态：`2026-09-24`，长期架构治理计划处于 active；P0 authority/baseline、P1
 target-architecture 决策、完整的 P3-A/P3-B/P3-C contract、authority-envelope、
 ledger 与 compatibility foundation，以及 P4-A dark/shadow host lifecycle 已在
 独立复核后接受。P4-B dark/shadow candidate implementation 与独立综合复核已完成；P4-C 首个 build-tree/internal candidate 任务已通过 candidate-scope 独立复核并被接受，尚未获得 production acceptance。
 P2-A 已有 manifest-level lifecycle baseline 实现，P2-B 也已有首个可重复的本地 sustainability baseline；代表性 release cadence、完整 maintained facade parity、production caller
-cutover、rollback-window retention、rebuild retirement 与 P6-P8 仍开放；尚无 production truth 发布或 production cutover 被接受。maintained 合同调用方迁移、process-resync、
+cutover、production rollback-window operation、rebuild retirement 与 P6-P8 仍开放；尚无 production truth 发布或 production cutover 被接受。maintained 合同调用方迁移、process-resync、
 mandatory production-state release/receipt binding、ArtifactLedger durable rollout controller
 以及首个 operations drill 证据见
 [P5-D caller migration evidence](evidence/p5d_facade_caller_migration_20260923.md) 与
@@ -18,6 +18,10 @@ mandatory production-state release/receipt binding、ArtifactLedger durable roll
 [measurement evidence](evidence/p5d_supported_row_measurement_20260923.md)。
 真实 admission-bound facade VecEnv 的 reset/step 检查见
 [VecEnv canary evidence](evidence/p5d_facade_vecenv_canary_20260923.md)。
+完整的本地 durable rollout lifecycle/retention 检查以及独立的 fail-closed
+rebuild-retirement gate 见
+[lifecycle controller evidence](evidence/p5d_sqlite_rollout_controller_20260923.md)
+与 [rebuild retirement gate evidence](evidence/p5d_rebuild_retirement_gate_20260924.md)。
 cutover 前的 rebuild-unreachability inventory（维护生产调用方与 Python
 binding 均为零，但尚未退役 rebuild）见
 [rebuild evidence](evidence/p5d_rebuild_unreachability_20260923.md)。

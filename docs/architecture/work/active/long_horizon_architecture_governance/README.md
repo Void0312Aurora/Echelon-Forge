@@ -1,6 +1,6 @@
 # Long-Horizon Architecture Governance
 
-Status: `2026-09-23` active long-horizon architecture-governance program; P0
+Status: `2026-09-24` active long-horizon architecture-governance program; P0
 authority and baseline, P1 target-architecture decisions, the complete
 P3-A/P3-B/P3-C contract, authority-envelope, ledger, and compatibility
 foundations, and P4-A dark/shadow host lifecycle are accepted after independent
@@ -10,7 +10,7 @@ accepted after candidate-scope independent review; production acceptance is
 not granted.
 P2-A now has an implemented manifest-level lifecycle baseline, and P2-B has a first repeatable local
 sustainability baseline; representative release cadence, full maintained-facade parity, production caller
-cutover, rollback-window retention, rebuild retirement and P6-P8 remain open; no
+cutover, production rollback-window operation, rebuild retirement and P6-P8 remain open; no
 production truth publication or production cutover is accepted yet.
 The maintained caller migration, process-resync, mandatory production-state release/receipt binding, the durable
 ArtifactLedger rollout controller, and initial operations drill evidence are recorded in [P5-D evidence]
@@ -22,6 +22,10 @@ three-cycle supported-row SLO/adoption measurement is recorded in [the
 measurement packet](evidence/p5d_supported_row_measurement_20260923.md).
 The real admission-bound facade VecEnv reset/step check is recorded in [the
 VecEnv canary packet](evidence/p5d_facade_vecenv_canary_20260923.md).
+The complete local durable rollout lifecycle/retention check and the separate
+fail-closed rebuild-retirement gate are recorded in [the lifecycle controller
+packet](evidence/p5d_sqlite_rollout_controller_20260923.md) and [the rebuild
+retirement gate packet](evidence/p5d_rebuild_retirement_gate_20260924.md).
 The pre-cutover rebuild-unreachability inventory, which records zero
 maintained callers and keeps rebuild unretired, is recorded in [the rebuild
 packet](evidence/p5d_rebuild_unreachability_20260923.md).
