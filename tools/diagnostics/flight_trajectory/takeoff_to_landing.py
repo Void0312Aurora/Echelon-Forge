@@ -268,6 +268,10 @@ def _collect_episode(
             scripted_dt = float(sim_env.sim.get_time_step())
         except Exception:
             scripted_dt = 0.05
+        runway_length_m = max(
+            (float(beacon.get("length", 0.0)) for beacon in list(getattr(loader, "ils_beacons", []) or [])),
+            default=0.0,
+        )
         scenario_path = str(getattr(sim_env, "scenario_path", "") or "")
         model_id = (
             _scripted_model_id_for_scenario(scenario_path)
@@ -280,6 +284,7 @@ def _collect_episode(
             model_id=model_id,
             action_dim=int(_action_space(env).shape[0]),
             dt=scripted_dt,
+            runway_length_m=runway_length_m,
         )
         scripted_model.reset(
             context={

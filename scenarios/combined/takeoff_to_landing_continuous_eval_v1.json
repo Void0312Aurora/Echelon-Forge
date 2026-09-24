@@ -11,12 +11,12 @@
         "evidence_refs": [
             "source:python/tasking_contracts/air_scripted_execution.py",
             "test:tests/runtime/air/test_air_scripted_execution.py",
-            "test:tests/viz/test_scripted_entrypoint_contract.py"
+            "test:tests/viz/test_scripted_entrypoint_contract.py",
+            "evidence:docs/architecture/work/issues/cross_domain_scripted_agent_system_plan.md"
         ],
         "deferred_claims": [
-            "compiled facade execution",
             "full command/report roundtrip",
-            "reset/replay acceptance",
+            "full reset/replay acceptance",
             "visualization runtime acceptance",
             "multi-unit roster parity"
         ]

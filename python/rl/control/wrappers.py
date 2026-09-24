@@ -187,6 +187,14 @@ class MultiTimescaleActionController:
                 self._scripted_ctrl = self._scripted_landing_ctrl
                 self._scripted_active_mode = "landing_ils"
             elif self.scripted_baseline_mode == "takeoff_cruise_landing":
+                loader = self._get_loader()
+                runway_length_m = max(
+                    (
+                        float(beacon.get("length", 0.0))
+                        for beacon in list(getattr(loader, "ils_beacons", []) or [])
+                    ),
+                    default=0.0,
+                )
                 self._scripted_model = AIR_SCRIPTED_MODEL_REGISTRY.create_for(
                     domain="air",
                     role_id="autopilot_controller",
@@ -194,6 +202,7 @@ class MultiTimescaleActionController:
                     action_dim=action_dim,
                     dt=dt,
                     transition_alt_agl_m=self.scripted_transition_alt_agl_m,
+                    runway_length_m=runway_length_m,
                 )
                 self._scripted_ctrl = self._scripted_model
                 self._scripted_active_mode = "takeoff"
@@ -662,6 +671,14 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
                 self._scripted_ctrl = self._scripted_landing_ctrl
                 self._scripted_active_mode = "landing_ils"
             elif self.scripted_baseline_mode == "takeoff_cruise_landing":
+                loader = self._get_loader()
+                runway_length_m = max(
+                    (
+                        float(beacon.get("length", 0.0))
+                        for beacon in list(getattr(loader, "ils_beacons", []) or [])
+                    ),
+                    default=0.0,
+                )
                 self._scripted_model = AIR_SCRIPTED_MODEL_REGISTRY.create_for(
                     domain="air",
                     role_id="autopilot_controller",
@@ -669,6 +686,7 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
                     action_dim=int(self.action_space.shape[0]),
                     dt=dt,
                     transition_alt_agl_m=self.scripted_transition_alt_agl_m,
+                    runway_length_m=runway_length_m,
                 )
                 self._scripted_ctrl = self._scripted_model
                 self._scripted_active_mode = "takeoff"

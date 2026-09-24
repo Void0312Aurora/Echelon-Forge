@@ -49,6 +49,14 @@ class ScriptedExecutiveController:
             dt = float(getattr(self.env.unwrapped.sim, "get_time_step", lambda: 0.05)())
         except Exception:
             dt = 0.05
+        loader = getattr(self.env.unwrapped, "loader", None)
+        runway_length_m = max(
+            (
+                float(beacon.get("length", 0.0))
+                for beacon in list(getattr(loader, "ils_beacons", []) or [])
+            ),
+            default=0.0,
+        )
         self._model = AIR_SCRIPTED_MODEL_REGISTRY.create_for(
             domain="air",
             role_id="autopilot_controller",
@@ -56,6 +64,7 @@ class ScriptedExecutiveController:
             action_dim=self.action_dim,
             dt=dt,
             transition_alt_agl_m=self.transition_alt_agl_m,
+            runway_length_m=runway_length_m,
         )
         self._model.reset_observation(obs, phase_name=self._phase_name())
 
