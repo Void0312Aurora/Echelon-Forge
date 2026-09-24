@@ -14,8 +14,9 @@ Last verified: `2026-08-08`
 路由、三个已准入起始任务名、对应 common-core 默认值、Ground 自有静态字段，
 以及向 `MissionCommandGround` 的投影。
 
-它不释放 movement、terrain、sensing、fires、damage、logistics 或 Ground
-execution system。
+它不定义 route following、terrain traversal、sensing、fires、damage、logistics
+或完整的 Ground execution system。另有一个受限的单兵 movement consumer，
+其边界在本静态 task 合同之外单独记录和测试。
 
 ## Profile 与 Common 默认值
 
@@ -50,7 +51,8 @@ tasking 路由是 `ground`。
 `CommandRelationship.Support`、`CoordinationMode.Support`、support ID 和
 `GroundTaskMode.SupportStatic` 保留。
 
-`MoveStatic` 是静态 task/status code，不得被引用为 route traversal 或
+`MoveStatic` 是静态 task/status code。已准入的单兵 movement 原语可以消费它完成
+一个确定性的地表/坡度步，但该 code 不得被引用为 route traversal 或完整
 movement-dynamics 证据。
 
 `TASK_SCREEN`、`TASK_SECURE`、`TASK_PATROL`、`TASK_DIRECT_FIRE`、

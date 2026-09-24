@@ -6,7 +6,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/domains/ground/standards/specialization_baseline.md`
 Owner: `domains/ground`
-Last verified: `2026-09-22`
+Last verified: `2026-09-24`
 
 ## Scope
 
@@ -46,6 +46,11 @@ The following surfaces are implemented and test-backed:
   command/tasking slices are static G0/G1 metadata, not execution dynamics.
 - Native and compatibility-shell Ground scenarios use the shared loader and
   tasking bridge; they do not create a private Ground runtime path.
+- `Ground_Infantry_Soldier_MVP` is a native individual fixture whose
+  `MoveStatic` command is consumed by the bounded `GroundInfantryMovement`
+  system. The system applies surface and slope speed costs and advances a
+  horizontal kinematic step; it does not establish route following or a full
+  infantry dynamics model.
 
 ## Registered And Reachable, But Not A Capability
 
@@ -76,11 +81,12 @@ for the pre-repair measurement that located the cause.
 ground damage response is registered from
 `src/systems/domains/ground/damage_system_ground.h` as
 `builtin.system.ground_damage` at stage 30 of the default composition, and it is
-the only system that directory owns. Ground movement, terrain, sensing, fires,
-logistics, and observation export remain unowned, and admitting a further Ground
-system owner requires a work package that names its declarations first. The
-admission does not grant another domain authority over Ground execution
-semantics.
+paired with `GroundInfantryMovement` from
+`src/systems/domains/ground/movement_system.h` as
+`builtin.system.ground_infantry_movement` at stage 34. That second system is a
+bounded single-step consumer for the individual infantry fixture, not a release
+of route movement, passability, sensing, fires, logistics, or observation export.
+The admission is recorded in [Ground Infantry Movement v1](../work/active/ground_infantry_movement_v1/README.md).
 
 ## Content And Capability Rules
 
@@ -91,9 +97,10 @@ semantics.
 - Compatibility-shell scenarios that spawn `Aircraft` MAY remain as regression
   fixtures, but MUST declare that boundary and MUST NOT be cited as native
   Ground platform evidence.
-- The current `ground_mobility_flat_deferred` declaration and
+- The platoon `ground_mobility_flat_deferred` declaration and
   `static_or_caller_initial_velocity_only` behavior MUST NOT be described as
-  route movement or terrain mobility.
+  route movement or terrain mobility. The individual infantry declaration may
+  cite only the bounded `MoveStatic` surface/slope step admitted above.
 - A future Ground system, model, or scenario MUST extend shared runtime stages
   and contracts. It MUST NOT introduce a Ground-only scheduler, packet family,
   or command/status pipeline.
@@ -102,8 +109,8 @@ semantics.
 
 The current maintained surface does not establish:
 
-- route following, movement dynamics, terrain traversal, passability, cover,
-  concealment, obstacles, or breach behavior;
+- route following, acceleration/fatigue/formation dynamics, terrain traversal,
+  passability, cover, concealment, obstacles, or breach behavior;
 - Ground sensing, line-of-sight computation, track fusion, data-link behavior,
   or observation export;
 - direct fire, indirect fire, effects, damage, suppression, attrition, or combat runtime;
@@ -127,6 +134,7 @@ Current evidence anchors:
 - [Ground model boundary](../../../../src/models/domains/ground/README.md)
 - [Ground native platform schema tests](../../../../tests/runtime/ground/test_ground_native_platform_schema.py)
 - [Ground native static scenario tests](../../../../tests/runtime/ground/test_ground_native_static_scenario.py)
+- [Ground native infantry movement test](../../../../tests/runtime/ground/test_ground_infantry_native_unit.py)
 - [Ground damage response tests](../../../../tests/runtime/ground/test_ground_damage_response.py)
 - [Ground realism-gradient guardrails](../../../../tests/architecture/ground/test_realism_gradient_guardrails.py)
 

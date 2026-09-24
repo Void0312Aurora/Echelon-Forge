@@ -43,6 +43,7 @@
 #include "systems/domains/air/control_system.h"
 #include "systems/domains/air/propulsion_system.h"
 #include "systems/domains/ground/damage_system_ground.h"
+#include "systems/domains/ground/movement_system.h"
 #include "systems/domains/naval/embarked_air_ops_system.h"
 #include "systems/domains/naval/naval_logistics_system.h"
 #include "systems/domains/naval/naval_mission_weapon_release_system.h"
@@ -351,7 +352,10 @@ void register_esm_reset_system(flecs::world &ecs) {
     X("builtin.system.logistics", "register_logistics_system", "common", "legacy.stage.32", 32,    \
       "builtin.system.ew", register_logistics_system)                                              \
     X("builtin.system.naval_logistics", "register_naval_logistics_system", "naval",                \
-      "legacy.stage.33", 33, "builtin.system.logistics", register_naval_logistics_system)
+      "legacy.stage.33", 33, "builtin.system.logistics", register_naval_logistics_system)         \
+    X("builtin.system.ground_infantry_movement", "register_ground_infantry_movement_system",      \
+      "ground", "legacy.stage.34", 34, "builtin.system.naval_logistics",                      \
+      register_ground_infantry_movement_system)
 
 #define EF_KERNEL_SYSTEM_CONTRIBUTIONS(X)                                                          \
     X("builtin.kernel.system.rwr_reset", "kernel.pre_update.00", 0, register_rwr_reset_system)     \
@@ -391,7 +395,7 @@ ValidationResult validate_registry() {
             return {false, "component contribution registry is empty or duplicated"};
         }
     }
-    if (std::size(kDefaultSystems) != 34) {
+    if (std::size(kDefaultSystems) != 35) {
         return {false, "system contribution count is not the admitted default count"};
     }
     if (std::size(kKernelSystems) != 3 || kKernelSystems[0].stage_order != 0 ||

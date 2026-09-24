@@ -3,26 +3,27 @@
 Document kind: `work-package evidence`
 Lifecycle: `active`
 Owner: `domains/ground`
-Last verified: `2026-09-23`
+Last verified: `2026-09-24`
 
-## What is blocked
+## What was blocked and is now admitted
 
-The repository can now load a native `UnitType::Ground` infantry definition,
-but the maintained C++ composition still has no Ground movement/terrain
-consumer.  A direct probe in this worktree spawned
-`Ground_Infantry_Soldier_MVP`, called the existing `SimulationKernel.set_command`
-surface with a heading and speed, stepped three times, and observed the same
-position and zero velocity on every step.  The command transport therefore
-does not yet constitute infantry movement.
+The repository can load a native `UnitType::Ground` infantry definition, and
+the 2026-09-24 batch admitted a bounded native movement consumer. A direct
+probe now spawns `Ground_Infantry_Soldier_MVP`, sends a maintained
+`MissionCommandGround::MoveStatic` command, and observes non-zero velocity plus
+horizontal position drift. Surface and slope costs are read from the shared
+`IEnvironmentModel`; the focused test removes command-link latency only to
+isolate that stage.
 
 The source boundary explains the result:
 
-- `src/systems/physics/movement_system.h` only integrates an already-populated
-  `Velocity` into `Transform`;
+- `src/systems/domains/ground/movement_system.h` now owns the admitted bounded
+  Ground movement slice;
 - `src/systems/domains/air/control_system.h` is gated by `FlightModel` and is an
   air control system, not a Ground controller;
-- `src/components/domains/ground/command/mission_command_ground.h` currently
-  owns static task/objective/cadence fields, not a movement/action state;
+- `src/components/domains/ground/command/mission_command_ground.h` still owns
+  static task/objective/cadence fields; `MoveStatic` is intentionally the only
+  movement directive consumed in this slice;
 - the Ground standard explicitly holds route movement, terrain traversal,
   passability, observation export, and learned policy claims.
 
@@ -43,9 +44,8 @@ policy is already connected to native Ground truth.
 
 The existing C++ maintained command contract already carries
 `ground_static_task`; the Python binding now exposes that slice as well.  This
-removes a transport omission, but it does not create a movement consumer: a
-command can reach the native batch boundary while a Ground soldier still keeps
-zero velocity until a Ground movement system is admitted.
+removes a transport omission. The new movement system now consumes the admitted
+`MoveStatic` subset while leaving richer action fields held.
 
 `python/rl/ground/command.py` therefore projects only the representable
 heading/speed plus static-task fields.  It rejects crouch/prone stance and
@@ -61,29 +61,31 @@ The proxy fails closed on unknown raster cells, out-of-bounds transitions, and
 river crossings without the explicit bridge intent.  The bridge rule is a
 temporary test policy, not a released crossing model.
 
-## Required unblock package
+## Remaining unblock package
 
-Before promoting this scaffold, a separate reviewed Ground owner package must:
+Before promoting this scaffold beyond the bounded movement slice, a separate
+reviewed Ground owner package must:
 
 1. define the native action/command component and its relationship to the
    maintained command-chain batch bindings;
-2. register a shared-stage Ground movement system that writes velocity from
-   admitted commands and preserves deterministic ordering;
-3. define terrain sampling, passability, bridge admission, and observation
+2. extend terrain sampling into passability, bridge admission, and observation
    provenance as runtime contracts rather than fixture-local assumptions;
-4. add native reset/step/replay acceptance tests, then connect the RL adapter;
-5. retain the proxy tests as diagnostics until native behavior supersedes them.
+3. add native reset/step/replay acceptance tests over the Arnis-derived map,
+   then connect the RL adapter;
+4. retain the proxy tests as diagnostics until native behavior supersedes them.
 
-Until those gates pass, the training contract remains `contract_only`; the
-current proxy is intentionally not a `train.py` entry point.
+The training contract remains `contract_only`; the current proxy is
+intentionally not a `train.py` entry point. The admitted native system is not a
+passability or map-provider integration.
 
 ## Verification residual outside this slice
 
-The stale runtime-composition evidence artifacts were refreshed in a separate
-maintenance commit (`3ea5c184`), and the composition-evidence C++ gate is now
-green.  The broad `ef_test_all` gate still has two pre-existing CUDA resident
-fixture identity failures: the fixture contract expects entity base `581`,
-while the current registry (after the already-landed Ground damage component
-admission) produces `582`.  This is an identity-contract residual, not proof
-of Ground movement or a failure of the command/proxy tests; it remains held
-and is not silently relabelled as a Ground success.
+The composition-evidence C++ gate is green for this batch. The broad `ef_test`
+gate still has two pre-existing CUDA resident fixture identity failures: the
+fixture contract expects entity base `581`, while the current registry (after
+the already-landed Ground damage component admission) produces `583` in this
+worktree. The composition migration-closure/P7 fixtures also require a separate
+Cordis package-producer refresh; the local checkout has no
+`packages/cordis-runtime/node_modules/cordis`, so that refresh was not safely
+performed here. These are recorded integration residuals, not evidence of
+native infantry movement failure.

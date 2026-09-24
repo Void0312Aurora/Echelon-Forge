@@ -22,7 +22,9 @@
 
 - ECS system registration。
 - 定义 ground component（这些位于 `components/domains/ground`）。
-- 宣称 ground movement dynamics、ground sensing、ground fires、terrain interaction 或 ground damage-model 保真度。
+- 宣称 route movement、ground sensing、ground fires、terrain-model 保真度或完整的
+  ground damage model。受限的单兵 movement 原语属于 system 层的
+  `IEnvironmentModel` consumer，不由此目录拥有。
 
 ## 当前文件
 

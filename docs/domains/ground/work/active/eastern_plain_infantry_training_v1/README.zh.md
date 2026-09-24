@@ -63,13 +63,14 @@ engineering products，原生 observation export 仍保持 held。
 reset、action、observation、reward、termination、replay 契约之后，不能用训练曲线
 掩盖缺失的地形语义。
 
-当前原生 runtime 的测量结果和临时替代方案记录在
-[`native_runtime_blockers.md`](native_runtime_blockers.md)。替代方案只用于继续推进
-契约、轨迹和训练阶梯，不释放虚假的移动或通行性能力。
+当前原生 runtime 的测量结果和剩余问题记录在
+[`native_runtime_blockers.md`](native_runtime_blockers.md)。原生切片现在覆盖一个带
+地表/坡度代价的确定性 `MoveStatic` 步；替代方案继续推进地图、观察和训练阶梯，
+但不释放通行性能力。
 
 ## 明确保持 held 的内容
 
-- Arnis runtime setup 和移动消费；
+- Arnis runtime setup 与原生地图 provider 的移动消费；
 - 路网与通行性 mask；
 - 坡度、湿地、河流渡越策略；
 - 视线、掩体、隐蔽和暴露模型；

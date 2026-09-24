@@ -12,10 +12,13 @@ scenario orchestration.
   propulsion systems.
 - `naval/`: naval ship/submarine motion, embarked-air token runtime, naval
   logistics, and naval weapon-release bridge systems.
+- `ground/`: bounded individual-infantry movement and ground damage response;
+  route following, passability, sensing, fires, logistics, and observation
+  export remain outside the admitted slice.
 
-There is no `ground/` runtime owner yet. Ground-contact primitives remain in
-`systems/physics` until land movement, sensing, fires, damage, and terrain
-runtime ownership is accepted.
+The Ground owner is intentionally partial. Ground-contact primitives remain in
+`systems/physics`; the domain directory owns only the explicitly admitted
+movement and damage slices.
 
 ## Dependency Direction
 

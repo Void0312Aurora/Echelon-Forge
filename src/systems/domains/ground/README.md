@@ -4,18 +4,21 @@
 platforms. It consumes `components/domains/ground/combat` and the shared combat
 damage surface, but does not own mission/tasking orchestration or facades.
 
-This directory owns one system, the ground damage response. It is not a complete
-ground runtime: movement, terrain interaction, sensing, fires, logistics, and
-observation export have no owner here. The system matches spawned ground entities and
-advances the ground-owned state, and the effects route that feeds damage into that
-state is reachable — the component id is resolved once per world in the composition
-path — so a structural hit does apply a ground consequence to the elements this
-system runs on.
+This directory owns two bounded systems: the ground damage response and the
+single-agent infantry movement primitive. It is not a complete ground runtime:
+route following, passability, sensing, fires, logistics, and observation export
+remain outside this admission. The damage system matches spawned ground entities
+and advances the ground-owned state, while `GroundInfantryMovement` consumes the
+maintained `MissionCommand` ground slice and applies deterministic surface/slope
+costs through the shared environment model.
 
 ## Allowed
 
 - Per-tick progression of the ground-owned damage state and its projection into
   the shared platform capability fields.
+- Deterministic horizontal movement for individual Ground fixtures with an active
+  `MissionCommandGround::MoveStatic` directive, using shared terrain surface and
+  slope queries.
 - Damage-control sequencing for ground elements: fire load, ignition sources,
   structural loss, and casualties.
 - Calls into the shared `systems/combat/damage_system_common.h` helpers, so
@@ -26,8 +29,8 @@ system runs on.
 - Defining ground platform components or command/tasking DTOs.
 - Mission rewards, termination, scenario compilation, or episode transitions.
 - Python bindings, facades, training scripts, or multi-world owners.
-- Ground movement, route following, terrain traversal, sensing, or fires, none
-  of which this slice implements or claims.
+- Ground route following, terrain passability, formations, sensing, or fires,
+  none of which this slice implements or claims.
 - A ground-only scheduler, packet family, or command/status pipeline.
 
 ## Current Files
@@ -35,6 +38,9 @@ system runs on.
 - [damage_system_ground.h](damage_system_ground.h)
   - Registers `GroundDamageStateUpdate`, advancing `GroundPlatformDamageState`
     and projecting it through `sync_platform_damage_loss_state`.
+- [movement_system.h](movement_system.h)
+  - Registers `GroundInfantryMovement`, the bounded `MoveStatic` consumer and
+    kinematic step for the individual infantry fixture.
 
 ## Dependency Direction
 

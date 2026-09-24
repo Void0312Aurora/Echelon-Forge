@@ -6,7 +6,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/domains/ground/standards/specialization_baseline.md`
 Owner: `domains/ground`
-Last verified: `2026-09-22`
+Last verified: `2026-09-24`
 
 ## 范围
 
@@ -43,6 +43,9 @@ held 的执行行为。
   slice 仅是静态 G0/G1 元数据，不是执行动力学。
 - 原生与 compatibility-shell Ground 场景使用共享 loader 和 tasking bridge，
   不建立私有 Ground runtime 路径。
+- `Ground_Infantry_Soldier_MVP` 是原生的单兵 fixture，其 `MoveStatic` 命令由受限的
+  `GroundInfantryMovement` 系统消费。该系统应用地表与坡度速度代价并推进一个水平
+  运动学步；它不建立 route following 或完整的单兵动力学模型。
 
 ## 已注册且可达，但不构成能力
 
@@ -64,10 +67,12 @@ mobility scale 的命中会让 mobility 停在 `1.0`，因此在 owner 决定"�
 
 `src/systems/domains/ground/` 拥有 Ground 的 per-tick systems 面。地面损伤响应由
 `src/systems/domains/ground/damage_system_ground.h` 注册为默认组合 stage 30 的
-`builtin.system.ground_damage`，并且是该目录唯一拥有的系统。Ground 的 movement、
-terrain、sensing、fires、logistics 与 observation export 仍无 owner，准入**进一步**的
-Ground system owner 需要先立一个写明其声明的包。本次准入并不把 Ground 执行语义
-授权给其他领域。
+`builtin.system.ground_damage`，另由
+`src/systems/domains/ground/movement_system.h` 注册
+`builtin.system.ground_infantry_movement` 为 stage 34。后者只是单兵 fixture 的受限
+单步消费者，不释放 route movement、passability、sensing、fires、logistics 或
+observation export。准入记录见
+[Ground Infantry Movement v1](../work/active/ground_infantry_movement_v1/README.zh.md)。
 
 ## 内容与 Capability 规则
 
@@ -77,9 +82,9 @@ Ground system owner 需要先立一个写明其声明的包。本次准入并不
   和静态 task/status 链的证据。
 - 生成 `Aircraft` 的 compatibility-shell 场景可以继续作为 regression fixture，
   但必须声明该边界，也不得被引用为原生 Ground 平台证据。
-- 当前 `ground_mobility_flat_deferred` 声明和
+- platoon 的 `ground_mobility_flat_deferred` 声明和
   `static_or_caller_initial_velocity_only` 行为不得被描述为 route movement 或
-  terrain mobility。
+  terrain mobility。单兵声明只能引用上面准入的受限 `MoveStatic` 地表/坡度步。
 - 后续 Ground system、model 或场景必须扩展共享 runtime stage 与合同，不得引入
   Ground 私有 scheduler、packet family 或 command/status pipeline。
 
@@ -87,7 +92,7 @@ Ground system owner 需要先立一个写明其声明的包。本次准入并不
 
 当前维护面尚未建立：
 
-- route following、movement dynamics、terrain traversal、passability、cover、
+- route following、加速度/疲劳/队形 dynamics、terrain traversal、passability、cover、
   concealment、obstacle 或 breach behavior；
 - Ground sensing、line-of-sight 计算、track fusion、data-link behavior 或
   observation export；
@@ -109,6 +114,7 @@ Ground system owner 需要先立一个写明其声明的包。本次准入并不
 - [Ground model 边界](../../../../src/models/domains/ground/README.zh.md)
 - [Ground 原生平台 schema 测试](../../../../tests/runtime/ground/test_ground_native_platform_schema.py)
 - [Ground 原生静态场景测试](../../../../tests/runtime/ground/test_ground_native_static_scenario.py)
+- [Ground 原生单兵移动测试](../../../../tests/runtime/ground/test_ground_infantry_native_unit.py)
 - [Ground 损伤响应测试](../../../../tests/runtime/ground/test_ground_damage_response.py)
 - [Ground realism-gradient 护栏](../../../../tests/architecture/ground/test_realism_gradient_guardrails.py)
 
