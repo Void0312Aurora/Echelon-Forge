@@ -3,7 +3,7 @@
 Document kind: `work-package`
 Lifecycle: `active`
 Owner: `domains/ground` with `systems/environment` input
-Status: `contract-and-source-fixture`
+Status: `native-probe-tooling-and-source-fixture`; production `WorldBatch` remains held
 
 This work package introduces a fictionalized agricultural-plain map profile and a
 single dismounted infantry schema. It is deliberately a movement and environment
