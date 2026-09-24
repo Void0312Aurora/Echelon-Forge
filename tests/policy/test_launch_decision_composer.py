@@ -11,6 +11,8 @@ ensure_repo_imports()
 
 from gym_envs.universal_env_parts import make_action_space
 from python.rl.policy_algo.model_contracts import (
+  LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,
+  LAUNCH_DECISION_CONTRACT_VERSION_KEY,
   LaunchDecisionContractError,
   LaunchDecisionContributor,
   LaunchDecisionMode,
@@ -30,6 +32,11 @@ class _ConstantSchedule:
 
 
 def _config(**policy_kwargs):
+  if "launch_decision_mode" in policy_kwargs or "launch_decision_owner_mode" in policy_kwargs:
+    policy_kwargs.setdefault(
+      LAUNCH_DECISION_CONTRACT_VERSION_KEY,
+      LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,
+    )
   return {
     "hyperparameters": {
       "policy_kwargs": {
@@ -135,6 +142,7 @@ class LaunchDecisionComposerTests(unittest.TestCase):
       net_arch={"pi": [16], "vf": [16]},
       hybrid_action_spec="air_combat_hybrid_v1",
       launch_decision_mode=LaunchDecisionMode.DIRECT_BOUNDARY_V1_STRICT.value,
+      launch_decision_contract_version=LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,
       hybrid_event_head_lr_scale=1.0,
     )
     obs = {

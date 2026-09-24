@@ -99,12 +99,13 @@
       "sha256": "30ac4c2a309a2ff577e3fa47e0c6d1fc17e2721ed9a1a5d9f5158a00437891a0"
     }
   ],
+  "baseline_manifest_sha256": "e0c0bb76fbca54ff936ab4102d40d7ef9f5763dd91efb6dd915bb0454785e340",
   "device": "cpu",
   "dtype": "float32",
   "episodes_per_seed": 3,
-  "fixture_root": "D:\\workshop\\Research\\Echelon-Forge-fixtures\\launch_decision_reorg\\v1",
+  "fixture_root": "D:\\workshop\\Research\\Echelon-Forge-fixtures\\launch_decision_reorg\\v2",
   "generator": "tools/maintenance/generate_launch_decision_fixtures.py",
-  "generator_sha256": "6171d60a1f83ca4b62978da451a5d0be579a16170779285d00d2c3aa3b0e8746",
+  "generator_sha256": "c56f73d84eec3180c1ce11cb8541715f5bd5b92f4f9ac49e6b2e7670e5d6235c",
   "profiles": {
     "direct_boundary_v1_strict": {
       "dtype": "float32",
@@ -198,12 +199,12 @@
     }
   },
   "python_version": "3.12.4",
-  "schema_version": "launch_decision_fixture_v1",
+  "schema_version": "launch_decision_fixture_v2",
   "seeds": [
     0,
     1,
     2
   ],
-  "source_revision": "d1cd7a1c",
+  "source_revision": "4d2f6251",
   "torch_version": "2.2.0+cpu"
 }

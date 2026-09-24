@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from collections import Counter
-from typing import Any
+from typing import Any, Mapping
 
 import numpy as np
 
@@ -15,6 +15,85 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.schema i
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.snapshot import (
     _last_row_before_auto_reset,
 )
+
+
+def validate_learned_firing_gate(
+    summary: Mapping[str, Any],
+    *,
+    learned_policy: bool,
+    non_forced: bool,
+    max_stochastic_rejections: int = 3,
+) -> dict[str, Any]:
+    """Enforce the executable learned-policy firing acceptance gate.
+
+    The process probe has several intentionally permissive modes (for example
+    ``forced_fire`` and ``hold_fire``).  Their counters are useful diagnostics,
+    but they must not be reported as evidence that a learned policy can fire
+    legally.  This gate therefore requires an explicitly learned, non-forced
+    run and checks the minimum evidence and zero-violation conditions that the
+    launch-decision acceptance plan names.
+    """
+
+    counters = {
+        "fire_once_requested_count": int(summary.get("fire_once_requested_count", 0) or 0),
+        "fire_once_accepted_count": int(summary.get("fire_once_accepted_count", 0) or 0),
+        "release_executed_count": int(summary.get("release_executed_count", 0) or 0),
+        "authorized_release_count": int(summary.get("authorized_release_count", 0) or 0),
+        "valid_authorized_release_count": int(
+            summary.get("valid_authorized_release_count", 0) or 0
+        ),
+        "fire_once_rejected_count": int(summary.get("fire_once_rejected_count", 0) or 0),
+        "repeat_release_before_assessment_count": int(
+            summary.get("repeat_release_before_assessment_count", 0) or 0
+        ),
+        "pending_assessment_release_count": int(
+            summary.get("pending_assessment_release_count", 0) or 0
+        ),
+        "unauthorized_release_count": int(summary.get("unauthorized_release_count", 0) or 0),
+        "violation_release_count": int(summary.get("violation_release_count", 0) or 0),
+        "fire_under_hold_count": int(summary.get("fire_under_hold_count", 0) or 0),
+        "shot_budget_violation_count": int(
+            summary.get("shot_budget_violation_count", 0) or 0
+        ),
+    }
+    failures: list[str] = []
+    if not bool(learned_policy):
+        failures.append("learned_policy=false")
+    if not bool(non_forced):
+        failures.append("non_forced=false")
+    for key in (
+        "fire_once_requested_count",
+        "fire_once_accepted_count",
+        "release_executed_count",
+        "authorized_release_count",
+        "valid_authorized_release_count",
+    ):
+        if counters[key] < 1:
+            failures.append(f"{key}<{1}")
+    for key in (
+        "repeat_release_before_assessment_count",
+        "pending_assessment_release_count",
+        "unauthorized_release_count",
+        "violation_release_count",
+        "fire_under_hold_count",
+        "shot_budget_violation_count",
+    ):
+        if counters[key] != 0:
+            failures.append(f"{key}={counters[key]}")
+    if counters["fire_once_rejected_count"] > int(max_stochastic_rejections):
+        failures.append(
+            "fire_once_rejected_count>"
+            f"{int(max_stochastic_rejections)}"
+        )
+    if failures:
+        raise ValueError("learned_firing_gate_failed: " + ", ".join(failures))
+    return {
+        "status": "pass",
+        "learned_policy": bool(learned_policy),
+        "non_forced": bool(non_forced),
+        "max_stochastic_rejections": int(max_stochastic_rejections),
+        "counters": counters,
+    }
 
 
 def _summarize_episode(

@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Any
 
 from python.rl.policy_algo.model_contracts import (
+  LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,
+  LAUNCH_DECISION_CONTRACT_VERSION_KEY,
   LaunchDecisionContractError,
   LaunchDecisionContributor,
   LaunchDecisionMode,
@@ -22,6 +24,11 @@ ACTIVE_AIR_CONFIGS = REPO_ROOT / "examples" / "config" / "training" / "active" /
 
 
 def _config(**policy_kwargs: Any) -> dict[str, Any]:
+  if "launch_decision_mode" in policy_kwargs or "launch_decision_owner_mode" in policy_kwargs:
+    policy_kwargs.setdefault(
+      LAUNCH_DECISION_CONTRACT_VERSION_KEY,
+      LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,
+    )
   return {
     "policy": "HierarchicalMoEExecutionPolicy",
     "hyperparameters": {
@@ -93,6 +100,24 @@ class LaunchDecisionModelContractTests(unittest.TestCase):
     with self.assertRaises(LaunchDecisionContractError):
       resolve_launch_decision_contract(config)
 
+  def test_explicit_mode_requires_persisted_contract_version(self) -> None:
+    config = _config(
+      launch_decision_mode="governed_composed_v1",
+      hybrid_event_head_lr_scale=10.0,
+    )
+    config["hyperparameters"]["policy_kwargs"].pop(LAUNCH_DECISION_CONTRACT_VERSION_KEY)
+    violations = validate_launch_decision_contract(config)
+    self.assertTrue(any("persisted contract version" in item.reason for item in violations))
+
+  def test_flat_and_nested_mode_declarations_must_agree(self) -> None:
+    config = _config(
+      launch_decision_mode="governed_composed_v1",
+      hybrid_event_head_lr_scale=10.0,
+    )
+    config["launch_decision_mode"] = "legacy_composed_v0"
+    violations = validate_launch_decision_contract(config)
+    self.assertTrue(any("Repeated launch-decision declarations" in item.reason for item in violations))
+
   def test_new_governed_mode_rejects_competing_adapters(self) -> None:
     config = _config(
       launch_decision_mode="governed_composed_v1",
@@ -129,6 +154,15 @@ class LaunchDecisionModelContractTests(unittest.TestCase):
     restored = type(contract).from_dict(contract.as_dict())
     self.assertEqual(restored, contract)
     self.assertEqual(restored.as_dict(), contract.as_dict())
+
+  def test_governed_contract_declares_policy_trunk_with_latent_contributors(self) -> None:
+    contract = resolve_launch_decision_contract(
+      _config(
+        launch_decision_mode="governed_composed_v1",
+        hybrid_event_head_lr_scale=10.0,
+      )
+    )
+    self.assertIn("policy_trunk", contract.trainable_parameter_roles)
 
   def test_current_hybrid_inventory_defaults_to_legacy_and_has_seven_headless_entries(self) -> None:
     modes = []

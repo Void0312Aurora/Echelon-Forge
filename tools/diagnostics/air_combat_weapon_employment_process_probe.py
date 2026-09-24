@@ -125,6 +125,7 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.snapshot
 )
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.summarize import (
     _summarize_episode,
+    validate_learned_firing_gate,
 )
 from tools.diagnostics import mlf9_statistical_trends
 
@@ -209,6 +210,7 @@ __all__ = (
     "_snapshot_row",
     "_stable_json",
     "_summarize_episode",
+    "validate_learned_firing_gate",
     "_switch_explore_action",
     "_target_track",
     "_uniform_action",
@@ -482,6 +484,27 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
         except Exception:
             pass
 
+    learned_firing_gate = None
+    if bool(getattr(args, "validate_learned_firing_gate", False)):
+        if str(args.mode) != "model":
+            raise ValueError(
+                "--validate_learned_firing_gate requires --mode model; "
+                "forced and scripted probe modes are not learned-policy evidence"
+            )
+        aggregate: dict[str, int] = {}
+        for summary in episode_summaries:
+            for key, value in summary.items():
+                if key.endswith("_count"):
+                    aggregate[key] = aggregate.get(key, 0) + int(value or 0)
+        learned_firing_gate = validate_learned_firing_gate(
+            aggregate,
+            learned_policy=True,
+            non_forced=True,
+            max_stochastic_rejections=int(
+                getattr(args, "max_stochastic_rejections", 3)
+            ),
+        )
+
     reasons = Counter(str(row.get("termination_reason", "")) for row in episode_summaries)
     lethality_chain_stage_abstractions = _lethality_chain_stage_abstractions(
         lethality_chain_rows,
@@ -516,6 +539,7 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
         ),
         "termination_reasons": dict(sorted(reasons.items())),
         "episode_summaries": episode_summaries,
+        "learned_firing_gate": learned_firing_gate,
         "controlled_consequence_bridge_records": [
             _controlled_consequence_bridge_record(summary) for summary in episode_summaries
         ],
@@ -598,6 +622,20 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--stochastic",
         action="store_true",
         help="Use stochastic policy prediction in --mode model.",
+    )
+    parser.add_argument(
+        "--validate_learned_firing_gate",
+        action="store_true",
+        help=(
+            "For --mode model only, fail unless the retained episode summaries "
+            "show a non-forced learned-policy release with zero authority violations."
+        ),
+    )
+    parser.add_argument(
+        "--max_stochastic_rejections",
+        type=int,
+        default=3,
+        help="Maximum bounded fire-once rejections allowed by the learned firing gate.",
     )
     parser.add_argument(
         "--diagnostic_dcr_bridge",
