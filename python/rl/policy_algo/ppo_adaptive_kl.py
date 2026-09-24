@@ -847,6 +847,20 @@ class AdaptiveKLPPO(
         # Switch to train mode (affects batch norm / dropout)
         self.policy.set_training_mode(True)
 
+        owner_getter = getattr(self.policy, "get_launch_decision_owner_contract", None)
+        if callable(owner_getter):
+            owner = owner_getter()
+            owner_mode = getattr(getattr(owner, "mode", None), "value", "")
+            if (
+                owner_mode == "direct_boundary_v1_strict"
+                and self._event_policy_margin_enabled()
+                and not self.event_policy_separate_update_enabled
+            ):
+                raise ValueError(
+                    "direct_boundary_v1_strict requires event_policy_separate_update_enabled "
+                    "so the margin lane cannot widen the shared write set"
+                )
+
         set_training_progress = getattr(self.policy, "set_hmoe_training_progress", None)
         if callable(set_training_progress):
             set_training_progress(float(self._current_progress_remaining))
