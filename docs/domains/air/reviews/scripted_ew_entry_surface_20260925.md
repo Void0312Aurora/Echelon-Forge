@@ -24,6 +24,21 @@ EW **state** vocabulary. It does not support a playable EW decision claim. A
 Python model that merely emits an unconsumed dictionary would be a design
 probe, not runtime capability evidence.
 
+## Direct observation probe
+
+The Stage 3 limited-weapons Air scenario was run with the maintained
+RL-independent phase execution model, the compiled runtime, `mission_obs_mode=basic`,
+seed `0`, and a `2400`-step trace budget. A non-zero RWR row first appeared at
+step `441` and remained observable through step `2121`; the run itself remained
+active with mission status `[1, 0, 0, 0]`. This is direct evidence that a
+scripted unit can receive the existing RWR observation product. It does not
+show a launch-warning-driven countermeasure action, jammer state transition, or
+terminal EW objective.
+
+The probe therefore closes only the observation side of the EW boundary. The
+action and native-owner slices below remain required before an EW role can be
+admitted as an adapter or playable unit.
+
 The EW path must remain Air-owned for jammer modes, RWR/ESM interpretation,
 countermeasure resources, release cadence, and threat-response doctrine. Only
 the identity, authority, clock, provenance, communication, and lifecycle
@@ -55,4 +70,3 @@ envelope may be shared with other domains.
   scripted model.
 - No capability promotion based on database presence, an observation row, or a
   model output that the runtime does not consume.
-

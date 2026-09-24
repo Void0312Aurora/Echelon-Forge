@@ -923,3 +923,21 @@ to a dedicated owner-local evidence document.
   adapter gate, defer tactical `playable` promotion, and continue with the
   independent EW and roster/interface lines. No unrelated domain task is
   blocked.
+
+### 2026-09-25 — Air scripted EW observation probe
+
+- Starting commit: `f8c2d40a`.
+- Direct command: the Stage 3 limited-weapons Air scenario was run with the
+  maintained `AirScriptedExecutionModel`, compiled runtime, `full` action
+  mode, `mission_obs_mode=basic`, seed `0`, and a `2400`-step trace budget.
+- Direct result: a non-zero RWR observation row first appeared at step `441`
+  and remained present through step `2121`; the trace ended still running with
+  mission status `[1, 0, 0, 0]`. No countermeasure action was available in the
+  maintained action mapping, and no EW terminal objective was claimed.
+- Capability boundary: this is direct RWR observation evidence only. It does
+  not close launch-warning interpretation, chaff/flare transport, jammer
+  activation, resource/cooldown state, or EW replay/multi-aircraft gates.
+- Continuation choice: retain the observation evidence, keep EW at
+  `entry_surface_incomplete`, and wait for a versioned action extension plus a
+  native command owner before adding a scripted EW producer. No unrelated
+  domain task is blocked.
