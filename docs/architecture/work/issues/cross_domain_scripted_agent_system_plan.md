@@ -216,6 +216,63 @@ maintained takeoff, stable-flight, and landing controllers behind the neutral
 scripted lifecycle. `gym_envs/leader_env_parts/scripted_exec.py` remains an
 environment adapter and no longer owns phase-controller composition.
 
+### WP3-AIR-EXP — Air combat, electronic warfare, and joint playable expansion
+
+The Air slice is intentionally deeper than the basic scramble-to-recovery
+loop. These stages extend the same neutral lifecycle and existing world-batch
+runtime; they do not create an Air-only agent runtime or make RL a prerequisite.
+
+1. **Command/report closure.** Complete the `TaskOrder -> LeaderIntent ->
+   PilotReport -> MissionCommand` roundtrip for a scripted Air unit, including
+   task updates, report validity, authority checks, reset/replay, and a direct
+   operator entry point.
+2. **Tactical engagement.** Add a maintained scripted tactical role that
+   consumes declared sensor/track products and emits intent/action through the
+   existing Air combat event and C2/ROE surfaces. Weapon release, post-launch
+   assessment, abort, and recovery must remain owned by their existing runtime
+   contracts. The privileged red opponent remains a demo/diagnostic fixture
+   unless a separate information-boundary review admits it as playable.
+3. **Electronic warfare.** Add an EW decision role over the existing sensor,
+   ESM, jamming, and data-link components. EMCON, detection confidence,
+   communication loss/latency, and countermeasure/resource constraints belong in
+   declared observations and domain payloads; no generic mega-schema may absorb
+   Air EW semantics.
+4. **Multi-aircraft coordination.** Route two or more active-roster members
+   through `cooperative_world_batch_vec_env.py` and `cooperative_director.py`,
+   preserving formation roles, authority/arbitration, communication state,
+   deterministic reset/replay, and single-world/batch parity. Formation,
+   wingman, support, and engagement roles are separate decision roles behind the
+   same lifecycle.
+5. **Joint operations.** Exercise Air C2 and coordination against the common
+   command/authority envelope while Naval and Ground payloads remain owned by
+   their domains. A joint scenario may report a cross-domain task graph, but it
+   must not promote Naval or Ground beyond their admitted capability labels.
+6. **Large-scale demonstration.** Build a scenario family and batch evaluation
+   path for many aircraft only after the two-aircraft contract is closed. The
+   demonstration must report roster routing, communication/resource constraints,
+   deterministic replay identity, termination reasons, and performance; a large
+   entity count alone is not playable evidence.
+
+#### Air database input rule
+
+When an Air scenario needs a type that is absent from the maintained database,
+the unit builder may read the database worktree/branch
+`codex/database-scaffold` (`C:\Users\30483\.codex\worktrees\database-enrichment\Echelon-Forge`)
+as a provisional source. The builder must retain the source commit, dirty-state
+marker, source path, schema/version, and evidence references in its manifest.
+Uncommitted records are staging inputs only: they cannot silently become
+maintained database content or final capability evidence. A later admission
+batch must copy or regenerate the unit through the repository's database owner,
+source ledger, and validation gates.
+
+#### Air expansion promotion order
+
+The required order is command/report closure, one tactical engagement role,
+one EW role, two-aircraft coordination, joint tasking, and then the large-scale
+demonstration. Each stage gets its own scenario, direct/proxy evidence
+boundary, and thematic commit. RL adapters may consume a closed stage but may
+not be used to claim that the independent scripted stage is playable.
+
 ### WP4 — Naval bounded playable slice
 
 Use the existing N4 tasking, contact/reporting, screen/station, and recovery
@@ -695,3 +752,21 @@ to a dedicated owner-local evidence document.
 - Evidence boundary: this closes the command-chain initialization/kernel-sync
   contract. It is not yet a full scripted episode report roundtrip with
   command updates and final report ownership; that gate remains open.
+
+### 2026-09-25 — Air expansion scope and database staging rule
+
+- Starting commit: `9896bcc6`.
+- Change batch: extend the plan and capability matrix with the Air
+  command/report, tactical engagement, EW, multi-aircraft, joint-tasking, and
+  large-scale demonstration stages; record the non-blocking concurrency rule
+  and the provisional database worktree input boundary.
+- Evidence basis: the current direct Air single-world and replay records,
+  existing Air combat/C2/ROE/EW/cooperative runtime surfaces, and the separate
+  `codex/database-scaffold` worktree inventory.
+- Capability boundary: Air remains `playable_candidate`; the new stages are
+  planned work, not promoted capabilities. The database worktree may provide
+  staging inputs only, with source commit and dirty-state provenance retained.
+- Known residual: command/report episode closure, tactical engagement, EW,
+  multi-aircraft parity, joint tasking, and large-scale demonstration still
+  require dedicated implementation and evidence batches. This planning batch
+  does not change runtime behavior or database admission.
