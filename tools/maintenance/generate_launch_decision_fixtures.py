@@ -35,9 +35,11 @@ from python.rl.policy_algo.model_contracts import (
 )
 
 
-SCHEMA_VERSION = "launch_decision_fixture_v1"
-DEFAULT_ROOT = Path(r"D:\workshop\Research\Echelon-Forge-fixtures\launch_decision_reorg\v1")
-MANIFEST_PATH = Path("tests/fixtures/launch_decision_reorg/v1/manifest.json")
+# C0's v1 manifest is immutable.  Contract-marker changes are recorded in a
+# separately versioned C4 manifest rather than rewriting that baseline.
+SCHEMA_VERSION = "launch_decision_fixture_v2"
+DEFAULT_ROOT = Path(r"D:\workshop\Research\Echelon-Forge-fixtures\launch_decision_reorg\v2")
+MANIFEST_PATH = Path("tests/fixtures/launch_decision_reorg/v2/manifest.json")
 SEEDS = (0, 1, 2)
 EPISODES_PER_SEED = 3
 
@@ -204,7 +206,7 @@ def build_manifest(repo_root: Path, output_root: Path, source_revision: str) -> 
         mode.value: _make_profile_artifacts(output_root, mode)
         for mode in profiles
     }
-    return {
+    manifest = {
         "schema_version": SCHEMA_VERSION,
         "source_revision": source_revision,
         "generator": generator_path.relative_to(repo_root).as_posix(),
@@ -219,6 +221,10 @@ def build_manifest(repo_root: Path, output_root: Path, source_revision: str) -> 
         "active_hybrid_configs": _active_hybrid_configs(repo_root),
         "profiles": profile_records,
     }
+    if SCHEMA_VERSION == "launch_decision_fixture_v2":
+        baseline_manifest = repo_root / "tests" / "fixtures" / "launch_decision_reorg" / "v1" / "manifest.json"
+        manifest["baseline_manifest_sha256"] = _sha256(baseline_manifest)
+    return manifest
 
 
 def main() -> int:
