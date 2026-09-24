@@ -50,13 +50,13 @@ Measured counts:
 
 | Metric | Value |
 | --- | --- |
-| Source packages (manifests) | 350 |
-| Catalog leaves (carry `## Parameters`) | 146 |
-| Distinct source ids referenced by leaves | 350 |
+| Source packages (manifests) | 353 |
+| Catalog leaves (carry `## Parameters`) | 147 |
+| Distinct source ids referenced by leaves | 353 |
 | Leaves without `Equipment ID` | 0 |
 | Backlog rows | 150 |
 | Coverage rows | 105 |
-| Status: `cataloged` / `parameter_complete` / `held` | 2 / 145 / 3 |
+| Status: `cataloged` / `parameter_complete` / `held` | 2 / 146 / 2 |
 
 ## Leaf Completeness Against The Queue
 
@@ -156,6 +156,7 @@ vocabulary are not. This is a documentation drift, not a data defect.
 | Su-57 held-record completion | Added separate UAC programme and RedStar baseline profiles for the Russian Su-57; Su-57E export and prototype-only values remain excluded and the alternate engine-thrust reading is retained |
 | Tu-95MS held-record completion | Added a named Tu-95MS profile with geometry, mass, fuel, powerplant, conditioned performance, warload and MS-6/MS-16 missile-carriage rows |
 | Attack-helicopter held-record completion | Added named Ka-52 and Mi-28NM profiles with variant-bounded geometry, mass, propulsion, performance, weapon and employment rows; naval/modernised and other marks remain separate |
+| KC-130J held-record completion | Added NAVAIR, USMC and Lockheed Martin platform/tanker blocks with source-labelled dimensional, mass, propulsion, range, offload and transport capacities; C-130J-30 and HC-130J values remain excluded |
 
 ## Retracted Findings
 
