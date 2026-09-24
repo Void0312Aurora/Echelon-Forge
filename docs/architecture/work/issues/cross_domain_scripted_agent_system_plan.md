@@ -813,3 +813,43 @@ to a dedicated owner-local evidence document.
 - Known residual: no maintained Air combat scenario or operator CLI consumes
   this adapter yet; runtime weapon employment, post-launch assessment, EW, and
   full engagement evidence remain open.
+
+### 2026-09-25 — Cooperative Air roster trace probe
+
+- Starting commit: `89ed1faf`.
+- Direct command: `diagnose_cooperative_trajectory.py --scripted` on
+  `cooperative_takeoff_to_cruise_landing_continuous_eval_v1.json`, seed `0`,
+  with the local compiled binding and a `3000`-world-step trace budget.
+- Direct result: the existing cooperative runtime routed two active roster
+  members, `ElementLead:Lead` and `Wingman:Wing`, through the shared execution
+  route. Lead was cleared/rolling/airborne at steps `0/128/292`; Wing was
+  hold-short/cleared/rolling/airborne at `0/248/547`. Both slots remained
+  represented in the trace and the command/clearance segments were distinct.
+- Evidence boundary: the trace ended with `trace_cutoff` before waypoint
+  capture; `world_success=false`. This closes only a bounded roster-routing
+  and cooperative takeoff trace, not multi-unit mission completion, formation
+  maintenance, single-world/batch parity, or full playable promotion.
+- Continuation choice: retain this as the first direct multi-aircraft evidence
+  record and move to the EW entry-surface review; no cooperative runtime rewrite
+  is justified by this bounded trace.
+
+### 2026-09-25 — EW entry-surface review
+
+- Starting commit: `89ed1faf`.
+- Read-only evidence: the database EW suite, native EW components, RWR
+  observation export, countermeasure command bridge, and maintained Air action
+  mappings were inspected. RWR data and chaff/flare native consumers exist;
+  the maintained `full` and `air_combat_hybrid_v1` action vectors currently set
+  `program_chaff`/`program_flare` false, and no jammer activation field or
+  command system is exposed in the reviewed path.
+- Change batch: add
+  `docs/domains/air/reviews/scripted_ew_entry_surface_20260925.md` with the
+  exact ownership boundary and closure slices. No runtime or database files
+  were changed.
+- Capability boundary: the Air EW line is `entry_surface_incomplete`; a
+  scripted EW model must not be promoted until a versioned action extension,
+  native jammer owner, direct acceptance scenario, and replay/multi-aircraft
+  evidence exist.
+- Continuation choice: keep EW interface work independent of the C2 landing
+  residual and continue with the next Air coordination/joint-tasking design
+  slice. No unrelated domain task is blocked.
