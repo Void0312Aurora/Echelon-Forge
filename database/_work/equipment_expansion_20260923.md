@@ -77,6 +77,7 @@ calibration package, inventory claim, or final simulation configuration.
 | R-32 | Shared-leaf, Equipment ID, and coverage role rules | complete | `98dafc49` |
 | R-33 | Explicit source-ledger provenance status | complete | `f09a5862` |
 | R-34 | Evidence-backed decisions for 82 no-parameter catalog nodes | complete | `d991b3cd` |
+| R-35 | Verify and document canonical naval namespace | complete | `9a74b107` |
 
 ## Blocker / skip ledger
 
