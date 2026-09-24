@@ -14,6 +14,8 @@ from typing import Any, Mapping
 
 from python.rl.policy_algo.model_contracts import (
     LaunchDecisionContractError,
+    LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,
+    LAUNCH_DECISION_CONTRACT_VERSION_KEY,
     LaunchDecisionMode,
     resolve_launch_decision_contract,
 )
@@ -95,6 +97,7 @@ def translate_launch_decision_config(
                 "requires an explicit migration_id"
             )
 
+    policy_kwargs[LAUNCH_DECISION_CONTRACT_VERSION_KEY] = LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION
     policy_kwargs["launch_decision_mode"] = resolved_mode.value
     if "launch_decision_owner_mode" in policy_kwargs:
         policy_kwargs["launch_decision_owner_mode"] = resolved_mode.value

@@ -28,6 +28,8 @@ if str(_SCRIPT_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_REPO_ROOT))
 
 from python.rl.policy_algo.model_contracts import (
+    LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,
+    LAUNCH_DECISION_CONTRACT_VERSION_KEY,
     LaunchDecisionMode,
     resolve_launch_decision_contract,
 )
@@ -91,6 +93,7 @@ def _fixture_config(mode: LaunchDecisionMode) -> dict[str, Any]:
         "hybrid_action_spec": "air_combat_hybrid_v1",
         "hmoe_residual_scale": 0.18,
         "hybrid_event_head_lr_scale": 10.0,
+        LAUNCH_DECISION_CONTRACT_VERSION_KEY: LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,
         "launch_decision_mode": mode.value,
         "hybrid_event_use_window_classifier_head": False,
         "hybrid_event_use_stopping_head": False,
