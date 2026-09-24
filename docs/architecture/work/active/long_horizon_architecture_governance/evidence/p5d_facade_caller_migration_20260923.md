@@ -75,8 +75,10 @@ $env:PATH="$PWD\build-long-horizon-p5c-shared\Debug;$env:PATH"
 The build completed and the executable returned exit code `0`; it loaded the
 example database, spawned one facade-owned aircraft, stepped 60 ticks, and
 reported observations at ticks 0, 10, 20, 30, 40, and 50. The P8-A closure
-inventory now lists only `src/core/engine/world_batch_runtime.cpp` under native
-default-kernel callers; `src/main.cpp` is no longer a raw default constructor.
+inventory now reports zero native default-kernel callers and lists
+`src/core/engine/world_batch_runtime.cpp` as an explicit caller of the generated
+resolved execution plan; `src/main.cpp` is no longer a raw default constructor.
+The closure validator and its 13-test architecture gate pass after regeneration.
 This remains a local standalone smoke path, not production caller cutover.
 
 ## Follow-up parity verification
@@ -106,7 +108,7 @@ passes in **519** steps under the randomized takeoff scenario.
 
 ## Remaining P5-D work
 
-This slice proves caller construction and contract-path routing only. P5-D
+This slice proves caller construction, explicit-plan hygiene, and contract-path routing only. P5-D
 still requires release-manifest/RunReceipt binding, same-release checkpoint
 recovery, stop/restart package rollback, support-row telemetry and SLO
 evidence, a bounded canary/backout drill, and retirement or explicit

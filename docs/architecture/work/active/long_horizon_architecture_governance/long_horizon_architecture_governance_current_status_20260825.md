@@ -174,6 +174,13 @@ They must be remeasured before an implementation or acceptance claim.
   from native default-kernel callers. This is a local maintained smoke path,
   not production caller cutover.
 
+- Retired the last maintained native default `SimulationKernel()` construction
+  in `WorldBatchRuntime`; it now passes the generated
+  `kDefaultResolvedExecutionPlanJson` explicitly. The closure inventory reports
+  zero native default constructors and one explicit generated-plan caller.
+  The Debug build, `ef_app` runtime smoke, closure validator, and 13-test
+  closure gate pass. This is explicit-plan hygiene, not production cutover.
+
 - Added the P5-D process-lifetime admission recheck. A maintained production
   adapter now reloads the durable rollout slot before setup, command/launch
   mutation, stepping, and runtime-window execution; a kill switch or typed

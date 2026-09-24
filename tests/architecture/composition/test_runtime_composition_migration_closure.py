@@ -213,9 +213,10 @@ def test_p8a_inventory_classifies_retained_callers_and_names_residual_owners(
     assert surfaces["simulation_kernel.build_tree_candidate"]["callers"] == [
         "src/runtime/host/integration/runtime_kernel_candidate.cpp"
     ]
-    assert surfaces["simulation_kernel.native_default_callers"]["callers"] == [
+    assert surfaces["simulation_kernel.native_explicit_callers"]["callers"] == [
         "src/core/engine/world_batch_runtime.cpp",
     ]
+    assert "simulation_kernel.native_default_callers" not in surfaces
     assert "runtime_facade.native_internal_callers" not in surfaces
     assert surfaces["simulation_kernel.test_fault_injection"]["callers"] == [
         "src/core/engine/testing/simulation_kernel_composition_test_access.cpp",

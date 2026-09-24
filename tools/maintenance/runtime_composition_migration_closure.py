@@ -43,6 +43,9 @@ CPP_CALLER_SUFFIXES = {".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".hxx",
 BUILD_TREE_ONLY_EXPLICIT_KERNEL_CALLERS = {
     "src/runtime/host/integration/runtime_kernel_candidate.cpp",
 }
+MAINTAINED_EXPLICIT_KERNEL_CALLERS = {
+    "src/core/engine/world_batch_runtime.cpp",
+}
 SKIPPED_CALLER_DIRECTORIES = {
     ".git",
     ".mypy_cache",
@@ -1005,11 +1008,14 @@ def verify_source_truth() -> None:
         raise ClosureError(
             "Cordis/native conformance no longer reaches explicit native realization"
         )
-    if not scan_cpp_default_kernel_callers():
-        raise ClosureError("native default-kernel callers disappeared from the retained inventory")
+    # An empty inventory is now the desired state for maintained native
+    # default construction: every surviving native caller must use an explicit
+    # generated execution plan or the build-tree-only candidate allowlist.
     explicit_kernel_callers = scan_cpp_explicit_kernel_callers()
     unadmitted_explicit_kernel_callers = sorted(
-        set(explicit_kernel_callers) - BUILD_TREE_ONLY_EXPLICIT_KERNEL_CALLERS
+        set(explicit_kernel_callers)
+        - BUILD_TREE_ONLY_EXPLICIT_KERNEL_CALLERS
+        - MAINTAINED_EXPLICIT_KERNEL_CALLERS
     )
     if unadmitted_explicit_kernel_callers:
         raise ClosureError(
@@ -1117,11 +1123,14 @@ def build_record() -> dict[str, Any]:
                 "disposition": "retained; explicit alias of the generated resolved manifest",
             },
             {
-                "surface_id": "simulation_kernel.native_default_callers",
-                "classification": "standalone_and_batch_compatibility",
+                "surface_id": "simulation_kernel.native_explicit_callers",
+                "classification": "maintained_explicit_manifest",
                 "owner": "core/engine",
-                "callers": scan_cpp_default_kernel_callers(),
-                "disposition": "retained; enters the explicit generated-manifest alias",
+                "callers": sorted(MAINTAINED_EXPLICIT_KERNEL_CALLERS),
+                "disposition": (
+                    "retained behind the generated resolved execution plan; "
+                    "production caller cutover and rebuild retirement remain gated"
+                ),
             },
             {
                 "surface_id": "simulation_kernel.python_binding_exposure",
