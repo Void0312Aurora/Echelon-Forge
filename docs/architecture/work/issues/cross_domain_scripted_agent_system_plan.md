@@ -974,3 +974,25 @@ to a dedicated owner-local evidence document.
 - Continuation choice: route the next Air operator/evaluation entry through
   this scheduler and record the adapter boundary before extending EW or joint
   payloads. No unrelated domain task is blocked.
+
+### 2026-09-25 — Air CLI neutral-runtime routing slice
+
+- Starting commit: `b5d79e0d`.
+- Change batch: route the standalone Air takeoff-to-landing diagnostic CLI
+  through `ScriptedRuntimeAgent` while preserving the learned-policy wrapper
+  path. The CLI now reports runtime decision/hold counts and the deterministic
+  replay identity for scripted episodes.
+- Focused verification: Air CLI contract tests and neutral runtime tests
+  passed `7 passed`; Python compilation and `git diff --check` passed.
+- Direct verification: with `CMO_BUILD_DIR=build-scripted-agent`, the
+  manifest-bearing Air scenario was run through the CLI for `80` scripted
+  steps with zero randomization. The process exited `0`, wrote the plot and
+  summary, produced `80` runtime decisions and `0` holds, and reported
+  `581:air.execution.phase_scripted:seed=0:reset=1` as the runtime identity.
+- Evidence boundary: this proves operator-entry integration with the neutral
+  scheduler for a bounded Air rollout. It does not add action/report closure,
+  multi-aircraft parity, EW command ownership, or a new playable promotion.
+- Continuation choice: reuse the same runtime envelope for the maintained
+  Naval scripted evaluation entry, then add roster-level cross-domain routing
+  evidence. The Air landing/C2, EW, and tactical residuals remain independent
+  work items and do not block that continuation.
