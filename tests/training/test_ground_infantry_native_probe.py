@@ -63,6 +63,8 @@ def test_native_ground_probe_reset_and_step_use_compiled_observation_surfaces() 
         "terrain_effects",
         "field_semantics",
         "weapon_state",
+        "health_state",
+        "command_state",
         "mission_state",
         "state",
     }
@@ -72,6 +74,9 @@ def test_native_ground_probe_reset_and_step_use_compiled_observation_surfaces() 
     assert observation["terrain_effects"][0] >= 0.0
     assert len(observation["field_semantics"]) == 7
     assert len(observation["weapon_state"]) == 8
+    assert tuple(observation["health_state"]) == (100.0, 100.0)
+    assert len(observation["command_state"]) == 7
+    assert observation["command_state"][0] == pytest.approx(0.0)
     assert len(observation["mission_state"]) == 3
     assert observation["mission_state"][2] > 0.0
 

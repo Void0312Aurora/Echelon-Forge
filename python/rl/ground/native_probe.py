@@ -116,6 +116,8 @@ class GroundInfantryNativeProbe:
             sim.get_ground_field_semantic_observation(position[0], position[1])
         )
         weapon = self._tuple(sim.get_ground_weapon_state(entity_id))
+        health = self._tuple(sim.get_unit_health(entity_id))
+        command = sim.get_mission_command(entity_id)
         goal_dx = self.goal_xy_m[0] - position[0]
         goal_dy = self.goal_xy_m[1] - position[1]
         goal_distance = math.hypot(goal_dx, goal_dy)
@@ -126,6 +128,16 @@ class GroundInfantryNativeProbe:
             "terrain_effects": (slope_deg,),
             "field_semantics": semantic,
             "weapon_state": weapon,
+            "health_state": health,
+            "command_state": (
+                1.0 if bool(command.active) else 0.0,
+                float(command.cmd_heading_deg),
+                float(command.cmd_speed_mps),
+                float(int(command.ground_task_mode)),
+                float(int(command.ground_stance)),
+                float(command.objective_area_id),
+                float(command.objective_node_id),
+            ),
             "mission_state": (goal_dx, goal_dy, goal_distance),
             "state": (
                 float(sim.get_unit_heading(entity_id)),
