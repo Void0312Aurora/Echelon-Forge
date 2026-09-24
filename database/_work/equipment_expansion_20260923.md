@@ -51,7 +51,7 @@ calibration package, inventory claim, or final simulation configuration.
 | R-6 | P-3C, F/A-18C and UH-1Y official U.S. naval-aircraft expansion | complete | `c7220e60` |
 | R-7 | J-11B/BS, J-15 and H-6K parameter completion from named secondary packages | complete | `cf2baabe` |
 | R-8 | KJ-500, YY-20A and Z-20 parameter completion with named government/specialist packages | complete | `efc7760f` |
-| R-9 | M4A1, AK-74M, FN SCAR-L Mk2 STD and HK416 A5 small-arms expansion | ready to commit | — |
+| R-9 | M4A1, AK-74M, FN SCAR-L Mk2 STD and HK416 A5 small-arms expansion | complete | `198118b4` |
 
 ## Blocker / skip ledger
 
