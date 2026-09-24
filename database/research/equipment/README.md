@@ -44,6 +44,33 @@ This profile is a research and extraction guide for simulation inputs. It is not
 - Exact counts are not inferred from a type-name mention. A row may establish service presence at high confidence while leaving count confidence unestablished.
 - Foreign-government assessments are marked as assessments, not as neutral inventory facts.
 
+## Field-level Evidence Roles
+
+Each populated parameter row must make its evidence role visible; a row-level
+`parameter_complete` status does not turn every value into direct variant truth.
+
+- `direct_variant`: the cited source names the concrete variant or configuration
+  and states the field for that scope.
+- `family_context`: the source supports a family or module boundary only. Keep it
+  as context unless the leaf explicitly says why the scope is applicable.
+- `bounded_estimate`: the value is an explicitly labelled range or estimate whose
+  source scope is narrower than the leaf claim. Preserve the source tier,
+  configuration boundary, uncertainty, and replacement rule in the row note.
+- `open`: a search or cross-check residual. It belongs in the notes or blocker
+  ledger, not as an unqualified value in a `parameter_complete` field.
+
+Community and other Tier C material may supply `family_context` or
+`bounded_estimate` in this research package. It must retain a stable URL or
+other source reference, source tier, configuration scope, reasonableness note,
+and non-authoritative status. It must not be silently promoted to a direct
+variant value or runtime authority. Raw HTML is not retained; manifests keep
+the locator and a short extracted boundary instead.
+
+The canonical parameter-table forms are the existing `Parameter | Value |
+Source | Confidence` and `Field | Value | Source | Tier | Configuration /
+uncertainty` variants. New leaves should use the latter; existing leaves may be
+migrated in bounded batches rather than rewritten only for formatting.
+
 ## Record Granularity
 
 - Series and family names are grouping nodes only. Examples such as F-15, Rafale, Su-35, Type 055, and M1 are not valid final equipment records by themselves.

@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """Equipment tree consistency check for the reduced write set.
 
-Covers the five closure-gate conditions declared in database/_work/README.md:
+Covers the closure-gate conditions declared in database/_work/README.md:
 
   1. every source id referenced by a catalog leaf resolves to a manifest
   2. every backlog catalog_path leaf exists and carries a matching Equipment ID
   3. backlog status agrees with coverage.csv status for shared candidates
   4. no D-tier source, no package without a retention note
   5. no change outside the write set (manual: `git status --porcelain -- database`)
+  6. cited packages have a retrieval record or an explicit advisory state
+  7. parameter rows carry field-level source and evidence metadata
+  8. the materialized source ledger has one row for every manifest
 
 Usage:
     python database/_work/check_equipment_tree.py [--json]
@@ -31,6 +34,7 @@ CATALOG = EQUIPMENT / "catalog"
 BACKLOG = EQUIPMENT / "backlog"
 COVERAGE = EQUIPMENT / "coverage" / "coverage.csv"
 RAW_SOURCES = EQUIPMENT / "raw" / "sources"
+SOURCE_LEDGER = EQUIPMENT / "sources" / "ledger" / "ledger.csv"
 
 SOURCE_ID_RE = re.compile(r"\bp5-[a-z0-9][a-z0-9-]*\b")
 EQUIPMENT_ID_RE = re.compile(
@@ -69,6 +73,140 @@ def iter_leaves():
         if "## Parameters" in text:
             rel = readme.parent.relative_to(CATALOG).as_posix()
             yield rel, text
+
+
+PARAMETER_HEADERS = {
+    "| Parameter | Value | Source | Confidence |": {"source": 2, "tier": 3, "uncertainty": None},
+    "| Field | Value | Source | Tier | Configuration / uncertainty |": {"source": 2, "tier": 3, "uncertainty": 4},
+    "| Field | Value | P5 source ID(s) | Tier | Configuration / uncertainty |": {"source": 2, "tier": 3, "uncertainty": 4},
+    "| Field | Baseline / bounded value | Source | Tier | Configuration / estimation metadata |": {"source": 2, "tier": 3, "uncertainty": 4},
+    "| Parameter | Value / bounded estimate | Source | Confidence | Evidence and uncertainty |": {"source": 2, "tier": 3, "uncertainty": 4},
+}
+
+
+def split_parameter_cells(line: str) -> list[str]:
+    return [cell.strip() for cell in line.strip().strip("|").split("|")]
+
+
+def check_field_provenance(leaves: dict[str, str], manifests: dict[str, dict]) -> dict:
+    """Check the supported parameter-table shapes without inferring values."""
+
+    unsupported_headers: list[str] = []
+    missing_metadata: list[dict] = []
+    dangling: list[dict] = []
+    rows_checked = 0
+
+    for rel, text in leaves.items():
+        section = text.split("## Parameters", 1)[1].split("## ", 1)[0]
+        lines = section.splitlines()
+        header = None
+        start = 0
+        for index, line in enumerate(lines):
+            if line.strip() in PARAMETER_HEADERS:
+                header = line.strip()
+                start = index + 2  # skip the markdown separator row
+                break
+        if header is None:
+            unsupported_headers.append(rel)
+            continue
+
+        positions = PARAMETER_HEADERS[header]
+        for line_number, line in enumerate(lines[start:], start=start + 1):
+            if not line.strip().startswith("|") or "---" in line:
+                continue
+            cells = split_parameter_cells(line)
+            required_position = max(
+                positions["source"],
+                positions["tier"],
+                positions["uncertainty"] or 0,
+            )
+            if len(cells) <= required_position:
+                missing_metadata.append(
+                    {"leaf": rel, "line": line_number, "reason": "short parameter row"}
+                )
+                continue
+            rows_checked += 1
+            value = cells[1].strip() if len(cells) > 1 else ""
+            source = cells[positions["source"]].strip()
+            tier = cells[positions["tier"]].strip().strip("`")
+            uncertainty_position = positions["uncertainty"]
+            uncertainty = cells[uncertainty_position].strip() if uncertainty_position is not None else ""
+            source_ids = sorted(set(SOURCE_ID_RE.findall(source)))
+            if not value or not source_ids or not tier or not tier[0] in {"A", "B", "C"}:
+                missing_metadata.append(
+                    {
+                        "leaf": rel,
+                        "line": line_number,
+                        "reason": "missing value, source id, or evidence tier",
+                    }
+                )
+            if uncertainty_position is not None and not uncertainty:
+                missing_metadata.append(
+                    {"leaf": rel, "line": line_number, "reason": "missing uncertainty/configuration note"}
+                )
+            for source_id in source_ids:
+                if source_id not in manifests:
+                    dangling.append(
+                        {"leaf": rel, "line": line_number, "source_id": source_id}
+                    )
+
+    return {
+        "pass": not unsupported_headers and not missing_metadata and not dangling,
+        "rows_checked": rows_checked,
+        "unsupported_headers": unsupported_headers,
+        "missing_metadata": missing_metadata,
+        "dangling_field_sources": dangling,
+    }
+
+
+def check_source_ledger(manifests: dict[str, dict]) -> dict:
+    """Check that the materialized index covers the manifest set exactly."""
+
+    required = {
+        "source_id",
+        "tier",
+        "publisher",
+        "author_or_maintainer",
+        "title",
+        "url",
+        "domain",
+        "equipment",
+        "configuration",
+        "rights_status",
+        "retrieval_status",
+        "authority_status",
+        "scope_status",
+        "residual_status",
+        "manifest_path",
+    }
+    if not SOURCE_LEDGER.exists():
+        return {
+            "pass": False,
+            "missing_file": str(SOURCE_LEDGER),
+            "missing_columns": sorted(required),
+            "duplicate_ids": [],
+            "missing_manifest_rows": sorted(manifests),
+            "extra_ledger_rows": [],
+        }
+
+    with SOURCE_LEDGER.open(encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+        columns = set(rows[0]) if rows else set()
+    ids = [row.get("source_id", "").strip() for row in rows]
+    ledger_ids = {source_id for source_id in ids if source_id}
+    duplicate_ids = sorted(source_id for source_id in ledger_ids if ids.count(source_id) > 1)
+    return {
+        "pass": (
+            columns >= required
+            and not duplicate_ids
+            and ledger_ids == set(manifests)
+        ),
+        "missing_file": None,
+        "missing_columns": sorted(required - columns),
+        "duplicate_ids": duplicate_ids,
+        "missing_manifest_rows": sorted(set(manifests) - ledger_ids),
+        "extra_ledger_rows": sorted(ledger_ids - set(manifests)),
+    }
 
 
 def load_backlog() -> dict[str, list[dict]]:
@@ -395,6 +533,16 @@ def check_all() -> dict:
         ),
     }
 
+    # condition 7 -- every supported parameter row carries field-level
+    # provenance. This checks metadata shape only; it does not judge whether a
+    # value is physically correct or authoritative.
+    result["conditions"]["c7_field_provenance"] = check_field_provenance(leaves, manifests)
+
+    # condition 8 -- the materialized ledger remains a complete index of the
+    # manifest tree. Missing rights or residual values stay visible in the CSV
+    # and are not inferred here.
+    result["conditions"]["c8_source_ledger"] = check_source_ledger(manifests)
+
     status_counts: dict[str, int] = {}
     for rows in backlog.values():
         for row in rows:
@@ -402,6 +550,12 @@ def check_all() -> dict:
 
     result["counts"] = {
         "manifests": len(manifests),
+        "ledger_rows": sum(
+            1
+            for _ in csv.DictReader(SOURCE_LEDGER.open(encoding="utf-8", newline=""))
+        )
+        if SOURCE_LEDGER.exists()
+        else 0,
         "leaves": len(leaves),
         "distinct_sources_referenced": len({s for ids in referenced.values() for s in ids}),
         "leaves_without_equipment_id": sum(1 for t in leaves.values() if not EQUIPMENT_ID_RE.search(t)),
@@ -434,6 +588,8 @@ def main() -> int:
         "c4_source_admission_floor": "C4 source admission floor (no D tier, retention present)",
         "c5_source_artifact_consistency": "C5 source-artifact consistency (no unnamed source, no aggregate package)",
         "c6_retrieval_record": "C6 retrieval record (no title naming two artifacts; unretrieved citations advisory)",
+        "c7_field_provenance": "C7 field-level provenance (value, source id, tier, uncertainty metadata)",
+        "c8_source_ledger": "C8 materialized source ledger covers every manifest",
     }
     for key, label in labels.items():
         condition = result["conditions"][key]
@@ -453,6 +609,7 @@ def main() -> int:
     print(f"manifests            {counts['manifests']}")
     print(f"catalog leaves       {counts['leaves']}")
     print(f"sources referenced   {counts['distinct_sources_referenced']}")
+    print(f"ledger rows          {counts['ledger_rows']}")
     print(f"leaves w/o Equipment ID {counts['leaves_without_equipment_id']}")
     print(f"backlog rows         {counts['backlog_rows']}")
     print(f"coverage rows        {counts['coverage_rows']}")
