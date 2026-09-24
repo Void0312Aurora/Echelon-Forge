@@ -85,6 +85,11 @@ bearing plus river/bridge flags.  These fields are deliberately labelled
 engineering products; they do not satisfy the held native observation/track
 export gate.
 
+The native movement slice now applies a bounded vegetation-density speed cost
+to Arnis landcover classes while retaining the existing surface and slope
+costs. This is a movement effect only; it is not a tree-line cover, concealment,
+collision, or line-of-sight model.
+
 The proxy fails closed on unknown raster cells, out-of-bounds transitions, and
 river crossings without the explicit bridge intent.  The bridge rule is a
 temporary test policy, not a released crossing model.

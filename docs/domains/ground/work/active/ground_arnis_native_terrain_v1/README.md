@@ -25,7 +25,8 @@ truth.
   and finite little-endian float elevations.
 - The native environment samples the signed metric grid directly. Permanent
   water and unknown/nodata cells stop the bounded infantry movement slice;
-  crop/grass/tree-like classes currently share the soft-dirt movement cost.
+  crop/grass/tree-like classes remain soft dirt but now carry distinct
+  vegetation-density observations and a bounded movement-speed penalty.
 - `SimulationKernel.get_ground_terrain_observation(x, y)` exposes the native
   sample as `(elevation, surface_type, friction, roughness,
   vegetation_density)` for training-side adapters and diagnostics.

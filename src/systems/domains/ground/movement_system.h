@@ -56,6 +56,13 @@ inline double slope_speed_multiplier(double slope) {
     return std::clamp(1.0 - slope / 60.0, 0.20, 1.0);
 }
 
+inline double vegetation_speed_multiplier(double density) {
+    if (!std::isfinite(density) || density < 0.0) {
+        return 0.0;
+    }
+    return std::clamp(1.0 - 0.25 * std::clamp(density, 0.0, 1.0), 0.50, 1.0);
+}
+
 inline double stance_speed_multiplier(GroundStance stance) {
     switch (stance) {
     case GroundStance::Stand:
@@ -119,13 +126,16 @@ inline void register_ground_infantry_movement_system(flecs::world &ecs) {
                         ground_infantry_movement_detail::slope_speed_multiplier(
                             ground_infantry_movement_detail::slope_deg(*environment, transform[i].x,
                                                                        transform[i].y));
+                    const double vegetation_multiplier =
+                        ground_infantry_movement_detail::vegetation_speed_multiplier(
+                            terrain.vegetation_density);
                     const double stance_multiplier =
                         ground_infantry_movement_detail::stance_speed_multiplier(
                             ground_task.stance);
                     const double effective_speed =
                         ground_infantry_movement_detail::finite_nonnegative(
-                            command[i].cmd_speed_mps) *
-                        surface_multiplier * slope_multiplier * stance_multiplier;
+                            command[i].cmd_speed_mps) * surface_multiplier * slope_multiplier *
+                        vegetation_multiplier * stance_multiplier;
                     if (effective_speed <= 0.0) {
                         ground_infantry_movement_detail::stop(velocity[i]);
                         continue;
