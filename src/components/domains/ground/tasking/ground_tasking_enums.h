@@ -7,6 +7,15 @@ enum class GroundTaskMode : int {
     SupportStatic = 3,
 };
 
+// Native tactical posture admitted by the bounded infantry movement slice.
+// These values affect movement cost only; cover, concealment, exposure, and
+// weapon employment remain separate owners.
+enum class GroundStance : int {
+    Stand = 0,
+    Crouch = 1,
+    Prone = 2,
+};
+
 enum class GroundStatusPhase : int {
     Unspecified = 0,
     Assigned = 1,

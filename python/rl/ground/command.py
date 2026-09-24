@@ -44,18 +44,13 @@ def build_ground_infantry_mission_command(
 ) -> ef_py.MissionCommand:
     """Build the representable movement subset of a native MissionCommand.
 
-    Stance and route intent are intentionally checked here because the current
-    maintained C++ command shape has no fields for either.  Callers needing
-    those semantics must stay on the proxy contract until a reviewed Ground
-    action component exists.
+    Route intent is still checked here because the current maintained C++
+    command shape has no route field. Stance is now admitted as a bounded
+    native movement posture; it changes movement cost only and does not claim
+    cover, concealment, or weapon semantics.
     """
 
     normalized = normalize_ground_infantry_action(action)
-    if normalized.stance != "stand":
-        raise GroundInfantryProxyError(
-            "native MissionCommand projection cannot represent stance; keep non-stand actions "
-            "on the proxy contract"
-        )
     if normalized.route_intent != "direct":
         raise GroundInfantryProxyError(
             "native MissionCommand projection cannot represent route_intent; keep non-direct "
@@ -70,6 +65,11 @@ def build_ground_infantry_mission_command(
     command.cmd_speed_mps = float(normalized.desired_speed_fraction) * speed_limit
     command.cmd_altitude_m = 0.0
     command.ground_task_mode = ef_py.GroundTaskMode.MoveStatic
+    command.ground_stance = {
+        "stand": ef_py.GroundStance.Stand,
+        "crouch": ef_py.GroundStance.Crouch,
+        "prone": ef_py.GroundStance.Prone,
+    }[normalized.stance]
     command.objective_area_id = int(objective_area_id)
     command.objective_node_id = int(objective_node_id)
     command.ground_commander_id = int(ground_commander_id)

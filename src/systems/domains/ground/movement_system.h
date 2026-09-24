@@ -57,6 +57,18 @@ inline double slope_speed_multiplier(double slope) {
     return std::clamp(1.0 - slope / 60.0, 0.20, 1.0);
 }
 
+inline double stance_speed_multiplier(GroundStance stance) {
+    switch (stance) {
+    case GroundStance::Stand:
+        return 1.0;
+    case GroundStance::Crouch:
+        return 0.65;
+    case GroundStance::Prone:
+        return 0.35;
+    }
+    return 0.0;
+}
+
 inline void stop(Velocity &velocity) {
     velocity.vx = 0.0;
     velocity.vy = 0.0;
@@ -106,9 +118,12 @@ inline void register_ground_infantry_movement_system(flecs::world &ecs) {
                     const double slope_multiplier = ground_infantry_movement_detail::slope_speed_multiplier(
                         ground_infantry_movement_detail::slope_deg(
                             *environment, transform[i].x, transform[i].y));
+                    const double stance_multiplier =
+                        ground_infantry_movement_detail::stance_speed_multiplier(ground_task.stance);
                     const double effective_speed =
                         ground_infantry_movement_detail::finite_nonnegative(
-                            command[i].cmd_speed_mps) * surface_multiplier * slope_multiplier;
+                            command[i].cmd_speed_mps) * surface_multiplier * slope_multiplier *
+                        stance_multiplier;
                     if (effective_speed <= 0.0) {
                         ground_infantry_movement_detail::stop(velocity[i]);
                         continue;

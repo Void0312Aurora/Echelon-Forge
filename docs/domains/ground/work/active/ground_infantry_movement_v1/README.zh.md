@@ -27,6 +27,8 @@ Ground fixture 准入第一条维护中的原生移动切片。
   对移动采取 fail-closed。这是显式 provider load 操作，不代表运行时自动 setup。
 - 命令传输仍使用维护中的 command path；聚焦测试把 link latency 设为零，只为隔离
   movement stage。
+- `GroundStance` 通过维护中的 command shell 接受 `Stand`、`Crouch`、`Prone`。它只改变
+  移动代价（1.0、0.65、0.35），不代表掩体、隐蔽、暴露度或武器行为。
 
 ## 明确的非目标
 

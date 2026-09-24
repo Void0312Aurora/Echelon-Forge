@@ -44,7 +44,7 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
     assert contract["rl_harness"]["status"] == "proxy_only"
     assert contract["rl_harness"]["authority"] == "engineering_proxy_only"
     assert contract["command_projection"]["status"] == "partial_transport_only"
-    assert contract["command_projection"]["held_fields"] == ["stance", "route_intent"]
+    assert contract["command_projection"]["held_fields"] == ["route_intent"]
     assert contract["observation_space"]["proxy_status"] == "implemented_in_engineering_proxy_only"
     assert [stage["stage"] for stage in contract["curriculum"]] == [
         "S0_contract_and_reset",

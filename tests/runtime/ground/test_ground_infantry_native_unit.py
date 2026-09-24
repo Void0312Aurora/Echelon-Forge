@@ -5,6 +5,7 @@ import math
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
@@ -105,6 +106,36 @@ def test_native_infantry_movement_consumes_ground_command_and_terrain_cost() -> 
     sim.step()
     position_after_drift = sim.get_unit_position(entity_id)
     assert float(position_after_drift[0]) > float(position_before_drift[0])
+
+
+def test_native_infantry_stance_changes_movement_cost() -> None:
+    sim = ef_py.SimulationKernel()
+    assert sim.load_database(_DATABASE)
+    sim.set_terrain_type("flat")
+    stand_id = int(
+        sim.spawn_unit(ef_py.Side.Blue, "Ground_Infantry_Soldier_MVP", 400.0, 100.0, 0.0)
+    )
+    prone_id = int(
+        sim.spawn_unit(ef_py.Side.Blue, "Ground_Infantry_Soldier_MVP", 400.0, 200.0, 0.0)
+    )
+    for entity_id, stance in (
+        (stand_id, ef_py.GroundStance.Stand),
+        (prone_id, ef_py.GroundStance.Prone),
+    ):
+        command = ef_py.MissionCommand()
+        command.active = True
+        command.cmd_heading_deg = 90.0
+        command.cmd_speed_mps = 1.5
+        command.ground_task_mode = ef_py.GroundTaskMode.MoveStatic
+        command.ground_stance = stance
+        sim.set_command_link(entity_id, 0.0, 0.0)
+        sim.set_mission_command(entity_id, command)
+
+    sim.step()
+    stand_speed = float(sim.get_unit_velocity(stand_id)[0])
+    prone_speed = float(sim.get_unit_velocity(prone_id)[0])
+    assert stand_speed > prone_speed > 0.0
+    assert prone_speed == pytest.approx(stand_speed * 0.35, rel=1.0e-6)
 
 
 def test_native_infantry_consumes_arnis_raster_and_stops_on_water() -> None:
