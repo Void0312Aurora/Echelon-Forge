@@ -27,9 +27,13 @@ from python.rl.control.mission_defs import (
     TAKEOFF_PHASE_NAMES,
     normalize_phase_name,
 )
-from python.rl.control.scripted_landing import ScriptedLandingController
-from python.rl.control.scripted_stable_flight import ScriptedStableFlightController
-from python.rl.control.scripted_takeoff import ScriptedTakeoffController
+from python.tasking_contracts.air_scripted_execution import (
+    AIR_SCRIPTED_EXECUTION_MODEL_ID,
+    AIR_SCRIPTED_MODEL_REGISTRY,
+)
+from python.tasking_contracts.scripted_landing import ScriptedLandingController
+from python.tasking_contracts.scripted_stable_flight import ScriptedStableFlightController
+from python.tasking_contracts.scripted_takeoff import ScriptedTakeoffController
 from python.rl.control.wrappers import get_action_wrapper_spec
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
@@ -594,6 +598,7 @@ class _ScriptedPolicy:
         self.mode = mode
         self._transition_alt_agl_m = 140.0
         self._active_mode = None
+        self._air_model = None
         if mode == "takeoff":
             self.ctrl = ScriptedTakeoffController(action_dim=action_dim, dt=dt)
             self.takeoff_ctrl = self.ctrl
@@ -610,50 +615,39 @@ class _ScriptedPolicy:
             self.stable_ctrl = None
             self.landing_ctrl = None
         elif mode == "takeoff_cruise_landing":
-            self.takeoff_ctrl = ScriptedTakeoffController(action_dim=action_dim, dt=dt)
-            self.stable_ctrl = ScriptedStableFlightController(action_dim=action_dim, dt=dt)
-            self.landing_ctrl = ScriptedLandingController(action_dim=action_dim, dt=dt)
-            self.ctrl = self.takeoff_ctrl
+            self._air_model = AIR_SCRIPTED_MODEL_REGISTRY.create(
+                AIR_SCRIPTED_EXECUTION_MODEL_ID,
+                action_dim=action_dim,
+                dt=dt,
+                transition_alt_agl_m=self._transition_alt_agl_m,
+            )
+            self.takeoff_ctrl = None
+            self.stable_ctrl = None
+            self.landing_ctrl = None
+            self.ctrl = None
         else:
             raise ValueError(f"Unknown scripted mode: {mode}")
 
     def reset(self, obs: dict) -> None:
         if self.mode == "takeoff_cruise_landing":
-            self.ctrl = self.takeoff_ctrl
+            if self._air_model is None:
+                raise RuntimeError("combined scripted policy model is not initialized")
+            self._air_model.reset(context={"observation": obs})
+            self.ctrl = self._air_model
             self._active_mode = "takeoff"
+            return
         self.ctrl.reset(obs)
 
-    def _infer_mode(self, obs: dict) -> str:
-        if self.mode != "takeoff_cruise_landing":
-            return self.mode
-        try:
-            mission = np.asarray(obs.get("mission", []), dtype=np.float32).reshape(-1)
-            if mission.size >= 1 and int(round(float(mission[0]))) == 4:
-                return "landing_ils"
-            if self._active_mode in ("stable_flight", "landing_ils"):
-                return "stable_flight"
-        except Exception:
-            pass
-        try:
-            inst = np.asarray(obs.get("instruments", []), dtype=np.float32).reshape(-1)
-            if inst.size >= 4:
-                return "takeoff" if float(inst[3]) < self._transition_alt_agl_m else "stable_flight"
-        except Exception:
-            pass
-        return self._active_mode or "takeoff"
-
     def predict(self, obs: dict, deterministic: bool = True):
+        del deterministic
         if self.mode == "takeoff_cruise_landing":
-            desired_mode = self._infer_mode(obs)
-            desired_ctrl = (
-                self.landing_ctrl if desired_mode == "landing_ils"
-                else self.stable_ctrl if desired_mode == "stable_flight"
-                else self.takeoff_ctrl
-            )
-            if desired_mode != self._active_mode:
-                desired_ctrl.reset(obs)
-            self.ctrl = desired_ctrl
-            self._active_mode = desired_mode
+            if self._air_model is None:
+                self.reset(obs)
+            assert self._air_model is not None
+            action = self._air_model.step(obs)
+            self._active_mode = self._air_model.active_mode
+            self.ctrl = self._air_model
+            return np.asarray(action, dtype=np.float32), None
         return np.asarray(self.ctrl.step(obs), dtype=np.float32), None
 
 

@@ -375,3 +375,26 @@ to a dedicated owner-local evidence document.
   environment condition recorded above, not a second code blocker.
 - Residual: scenario-level command/report roundtrip, CLI, visualization, and
   facade-backed acceptance are still open for the next slice.
+
+### 2026-09-24 — WP3 visualization scripted-entry slice
+
+- Starting commit: `59d6849f`.
+- Affected owners: Air execution, visualization/runtime, and architecture
+  contract tests.
+- Expected evidence: visualization and task-evaluation scripted policy
+  construction uses the neutral air controller modules, with the combined
+  takeoff-to-landing mode resolved through the registry, without importing the
+  RL control shells; fixed scripted modes retain their existing action shape
+  and lifecycle behavior.
+- Known residuals: the visualization process still imports learned-policy and
+  compiled-runtime modules for its learned and environment paths; this slice
+  only removes RL ownership from the scripted controller path. Cooperative
+  scripted visualization and full scenario replay remain open.
+- Focused proxy verification: the neutral registry, air lifecycle, and
+  scripted-entrypoint contract tests passed `10 passed`; Python compilation and
+  `git diff --check` also passed.
+- A direct visualization import probe was attempted once with the maintained
+  root `.venv`, but `runtime_bootstrap` stopped before import because this
+  worktree has no local `ef_py` build artifact. The static and pure-Python
+  proxies above are retained; no repeated import retry is warranted until the
+  compatible artifact is available.
