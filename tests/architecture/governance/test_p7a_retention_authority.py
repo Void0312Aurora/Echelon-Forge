@@ -11,6 +11,7 @@ from tools.maintenance.p7b_evidence_manifest import EvidenceManifestError
 from tools.maintenance.p7b_evidence_manifest import build_evidence_manifest
 from tools.maintenance.p7b_evidence_manifest import validate_evidence_manifest
 from tools.maintenance.runtime_authority_contracts import canonical_json_bytes
+from tools.maintenance.runtime_artifact_ledger import LedgerContractError
 from tools.maintenance.runtime_durable_artifact_ledger import EVIDENCE_MANIFEST_MEDIA_TYPE
 from tools.maintenance.runtime_durable_artifact_ledger import SQLiteArtifactLedger
 from tests.architecture.runtime_host import test_rollout_evidence_binding as evidence_fixtures
@@ -168,6 +169,14 @@ def test_p7b_local_ledger_projection_emits_provider_neutral_manifest(tmp_path: P
       role="release_controller",
     )
     assert manifest_blob_digest == hashlib.sha256(manifest_blob).hexdigest()
+    with pytest.raises(LedgerContractError, match="evidence manifest blob is invalid"):
+      ledger.put_blob(
+        canonical_json_bytes({**manifest, "unexpected": True}),
+        media_type=EVIDENCE_MANIFEST_MEDIA_TYPE,
+        retention_class="evidence-short",
+        audit_identity="p7b-invalid-manifest-test",
+        role="release_controller",
+      )
 
     backup = tmp_path / "evidence-manifest.sqlite3"
     ledger.backup_to(backup)

@@ -20,6 +20,8 @@ from tools.maintenance.runtime_artifact_ledger import (
   FenceToken,
   TerminationProof,
 )
+from tools.maintenance.p7b_evidence_manifest import EvidenceManifestError
+from tools.maintenance.p7b_evidence_manifest import validate_evidence_manifest
 from tools.maintenance.runtime_authority_contracts import (
   canonical_json_bytes,
   parse_canonical_json_bytes,
@@ -394,6 +396,11 @@ class SQLiteArtifactLedger:
     if retention_class not in RETENTION_CLASSES:
       raise LedgerContractError("retention_class is not admitted")
     self._validate_media(role, media_type, write=True)
+    if media_type == EVIDENCE_MANIFEST_MEDIA_TYPE:
+      try:
+        validate_evidence_manifest(json.loads(payload.decode("utf-8")))
+      except (EvidenceManifestError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise LedgerContractError("evidence manifest blob is invalid") from error
     try:
       self._transaction()
       digest = self._put_blob_locked(
