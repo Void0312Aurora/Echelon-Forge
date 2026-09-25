@@ -1638,6 +1638,11 @@ to a dedicated owner-local evidence document.
   `test_online_sensor_delayed_burst_projection.py` and the existing launch,
   fuze, scripted engagement, generic terminal surrogate, and hybrid-action
   tests. `git diff --check` passed before commit `8d143940`.
+- Maintained Stage 1 MQ-9 CLI recheck with seed `20260516` still accepted the
+  database release at step `282` but ended at step `2400` with
+  `combat_timeout`, `pending_assessment=true`, and no terminal kill. This is
+  direct evidence that the geometry fix does not close the named-platform
+  damage/effects or post-launch assessment chain.
 - Evidence boundary: the native delayed online-sensor geometry is now stable
   for the maintained coarse-step regression and remains observable in the
   diagnostic packet. This does not establish named-platform damage authority,
