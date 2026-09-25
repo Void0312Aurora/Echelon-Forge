@@ -29,7 +29,7 @@ $env:CMO_BUILD_DIR='artifacts/p5c-venv-final-20260922/Lib/site-packages'
 python -m pytest -q tests/architecture/runtime_host/test_sqlite_rollout_admission.py
 ```
 
-Result: **7 passed**. The restore case itself passed, including retention
+Initial drill result: **7 passed**. The restore case itself passed, including retention
 classes and restored checkpoint release/decision identity.
 
 The same SQLite admission/restore file was rerun in the current checkout on
