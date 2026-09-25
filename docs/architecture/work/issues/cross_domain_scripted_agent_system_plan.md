@@ -1370,3 +1370,26 @@ to a dedicated owner-local evidence document.
 - Continuation choice: use the native MAWS row as the input for the next
   maintained EW action scenario, while keeping the tactical missile terminal
   residual and the EW command-owner decision independent.
+
+### 2026-09-25 — Air EW maintained action transport demo
+
+- Change batch: add `tools/diagnostics/air_ew_scripted_demo.py`, a compiled
+  `WorldBatchVecEnv` entry point using `air_ew_hybrid_v1`, the registered
+  `air.ew.rwr_action_scripted` model, and the existing red scripted opponent.
+  The CLI reports launch-warning steps, scripted countermeasure-request steps,
+  runtime identity, and its native-state reporting limitation.
+- Focused verification: `python tools/diagnostics/air_ew_scripted_demo.py
+  --max_steps 120` completed with exit `0`; the head-on fixture produced
+  launch-warning steps `[42, 82]` and matching countermeasure request steps
+  `[42, 82]`, with `120` scripted runtime decisions. `py_compile` and
+  `git diff --check` passed before commit.
+- Evidence boundary: this demonstrates a real observation-to-action transport
+  path under the compiled maintained runtime. `RuntimeFacade` does not expose
+  countermeasure inventory/cooldown state, so the demo cannot prove native
+  action acceptance, resource decrement, replay parity, or terminal EW
+  closure. EW remains `entry_surface_incomplete`; Air remains
+  `playable_candidate`.
+- Continuation choice: add a read-only native EW state/report surface or an
+  equivalent maintained event product before admitting this action mode as a
+  consumed adapter; keep the low-level `SimulationKernel` resource gate as the
+  separate native-owner evidence.
