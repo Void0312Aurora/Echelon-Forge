@@ -29,6 +29,11 @@ from python.mission_obs_taxonomy import mission_observation_dim, mission_observa
 from python.tasking_contracts.air_scripted_ew import AirScriptedEWActionModel # noqa: E402
 
 
+_COOPERATIVE_AIR_2V2_SCENARIO_PATH = resolve_repo_path(
+  "scenarios", "air_combat", "cooperative_air_2v2_scripted_ew_response_v1.json"
+)
+
+
 def _cooperative_cruise_scenario() -> dict:
   return {
     "scenario_name": "cooperative_cruise_vec_env_smoke",
@@ -194,62 +199,6 @@ def _cooperative_interval_takeoff_scenario() -> dict:
       ],
     },
   }
-
-
-def _cooperative_air_2v2_scripted_opponent_scenario() -> dict:
-  scenario = _cooperative_cruise_scenario()
-  scenario["scenario_name"] = "cooperative_air_2v2_scripted_ew_smoke"
-  scenario["meta"]["max_steps"] = 240
-  scenario["mission_command"]["assigned_target_name"] = "Red_Lead"
-  scenario["entities"].extend(
-    [
-      {
-        "name": "Red_Lead",
-        "type": "F-16C_Block50",
-        "side": "Red",
-        "is_agent": False,
-        "pos": [0.0, 10000.0, 1400.0],
-        "vel": [0.0, -220.0, 0.0],
-        "heading": 180.0,
-        "scripted_agent": {
-          "name": "red_scripted_agent",
-          "target_name": "Lead",
-          "cruise_speed_mps": 220.0,
-          "attack_speed_mps": 260.0,
-          "defensive_speed_mps": 290.0,
-          "threat_range_m": 9000.0,
-          "merge_range_m": 3500.0,
-          "fire_range_m": 9000.0,
-          "beam_offset_deg": 85.0,
-        },
-        "ammo": {"missiles_remaining": 4, "max_missiles": 4},
-        "weapon_cooldown": {"cooldown_s": 0.75, "last_fire_time": -1.0},
-      },
-      {
-        "name": "Red_Wing",
-        "type": "F-16C_Block50",
-        "side": "Red",
-        "is_agent": False,
-        "pos": [-120.0, 10180.0, 1400.0],
-        "vel": [0.0, -220.0, 0.0],
-        "heading": 180.0,
-        "scripted_agent": {
-          "name": "red_scripted_agent",
-          "target_name": "Wing",
-          "cruise_speed_mps": 220.0,
-          "attack_speed_mps": 260.0,
-          "defensive_speed_mps": 290.0,
-          "threat_range_m": 9000.0,
-          "merge_range_m": 3500.0,
-          "fire_range_m": 9000.0,
-          "beam_offset_deg": 85.0,
-        },
-        "ammo": {"missiles_remaining": 4, "max_missiles": 4},
-        "weapon_cooldown": {"cooldown_s": 0.75, "last_fire_time": -1.0},
-      },
-    ]
-  )
-  return scenario
 
 
 def _cooperative_takeoff_to_cruise_scenario() -> dict:
@@ -1101,13 +1050,8 @@ class CooperativeVecEnvTaskingTests(unittest.TestCase):
   def test_cooperative_world_batch_vec_env_runs_scripted_ew_against_two_opponents(self) -> None:
     if CooperativeWorldBatchVecEnv is None:
       self.skipTest("gymnasium is not available in the active interpreter")
-    with tempfile.TemporaryDirectory() as tmpdir:
-      scenario_path = f"{tmpdir}/cooperative_air_2v2.json"
-      with open(scenario_path, "w", encoding="utf-8") as f:
-        json.dump(_cooperative_air_2v2_scripted_opponent_scenario(), f, ensure_ascii=True)
-
-      vec_env = CooperativeWorldBatchVecEnv(
-        scenario_path=scenario_path,
+    vec_env = CooperativeWorldBatchVecEnv(
+        scenario_path=_COOPERATIVE_AIR_2V2_SCENARIO_PATH,
         n_envs=1,
         include_visual=False,
         include_proprio=False,
@@ -1116,9 +1060,9 @@ class CooperativeVecEnvTaskingTests(unittest.TestCase):
         execution_step_runtime_mode="compiled",
         flight_shaping_backend="compiled",
         worker_threads=1,
-      )
-      models = [AirScriptedEWActionModel(dt=0.05), AirScriptedEWActionModel(dt=0.05)]
-      try:
+    )
+    models = [AirScriptedEWActionModel(dt=0.05), AirScriptedEWActionModel(dt=0.05)]
+    try:
         vec_env.seed(20260516)
         observation_batch = vec_env.reset()
         self.assertGreaterEqual(len(vec_env._slots[0].loader.scripted_opponents), 2)
@@ -1194,10 +1138,10 @@ class CooperativeVecEnvTaskingTests(unittest.TestCase):
         self.assertEqual(resource_snapshot, [58, 59])
         self.assertLess(int(resource_snapshot[0]), 60)
         self.assertLess(int(resource_snapshot[1]), 60)
-      finally:
-        for model in models:
-          model.close()
-        vec_env.close()
+    finally:
+      for model in models:
+        model.close()
+      vec_env.close()
 
 
 
