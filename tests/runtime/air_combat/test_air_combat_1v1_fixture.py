@@ -106,6 +106,34 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
     self.assertEqual(int(getattr(hostile_track, "classification", 0)), 2)
     self.assertIn(int(getattr(hostile_track, "source", 0)), {1, 3})
 
+  def test_native_maws_marks_inbound_missile_as_rwr_launch_warning(self) -> None:
+    sim = ef_py.SimulationKernel()
+    self.assertTrue(sim.load_database(_DB_PATH))
+    sim.set_time_step(0.05)
+    loader = ScenarioLoader(sim)
+    blue_id = int(loader.load_scenario(_SCENARIO_PATH, seed=20260516))
+    red_id = int(loader.entities["Red_Fighter"])
+
+    for _ in range(80):
+      sim.step()
+      red_obs = sim.get_agent_observation(red_id)
+      if any(int(getattr(track, "id", 0)) == blue_id for track in getattr(red_obs, "contacts", [])):
+        break
+    missile_id = int(sim.fire_missile(red_id, blue_id))
+    self.assertGreater(missile_id, 0)
+
+    launch_rows = []
+    for _ in range(5):
+      sim.step()
+      launch_rows = [
+        row for row in getattr(sim.get_agent_observation(blue_id), "rwr_warnings", [])
+        if bool(getattr(row, "is_launch", False))
+      ]
+      if launch_rows:
+        break
+    self.assertTrue(launch_rows)
+    self.assertTrue(any(int(getattr(row, "source_id", 0)) == red_id for row in launch_rows))
+
   def test_world_batch_vec_env_loads_fixture_with_execution_observation_contract(self) -> None:
     env = WorldBatchVecEnv(
       scenario_path=_SCENARIO_PATH,
