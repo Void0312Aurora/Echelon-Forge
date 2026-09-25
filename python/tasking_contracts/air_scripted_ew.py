@@ -74,6 +74,10 @@ class AirScriptedEWModel:
         doctrine = str(context.get("response_doctrine", "observe_only")) if isinstance(context, Mapping) else "observe_only"
         if launch_warning and doctrine == "countermeasure_ready":
             countermeasure_plan = "request_chaff_and_flare"
+        elif launch_warning and doctrine == "chaff_only":
+            countermeasure_plan = "request_chaff"
+        elif launch_warning and doctrine == "flare_only":
+            countermeasure_plan = "request_flare"
         elif launch_warning:
             countermeasure_plan = "countermeasure_deferred"
         else:
@@ -133,8 +137,8 @@ class AirScriptedEWActionModel:
         action = np.zeros((AIR_EW_HYBRID_ACTION_DIM,), dtype=np.float32)
         action[:4] = flight_action[:4]
         intent = self.ew_model.decide(observation=observation, context=model_context, dt=dt)
-        action[12] = 1.0 if intent.countermeasure_plan == "request_chaff_and_flare" else 0.0
-        action[13] = 1.0 if intent.countermeasure_plan == "request_chaff_and_flare" else 0.0
+        action[12] = 1.0 if intent.countermeasure_plan in {"request_chaff", "request_chaff_and_flare"} else 0.0
+        action[13] = 1.0 if intent.countermeasure_plan in {"request_flare", "request_chaff_and_flare"} else 0.0
         return action
 
     def close(self) -> None:

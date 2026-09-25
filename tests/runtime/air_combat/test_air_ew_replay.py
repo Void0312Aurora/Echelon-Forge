@@ -36,3 +36,17 @@ def test_scripted_ew_demo_replays_warning_and_inventory_trace() -> None:
     assert first["countermeasure_request_steps"] == [42, 82]
     assert [sample["chaff_remaining"] for sample in first["countermeasure_state_samples"]] == [60, 59]
     assert [sample["flare_remaining"] for sample in first["countermeasure_state_samples"]] == [30, 30]
+
+
+def test_scripted_ew_demo_can_report_flare_only_consumption() -> None:
+    result = run_demo(
+        scenario_path=_SCENARIO_PATH,
+        seed=20260516,
+        max_steps=120,
+        response_doctrine="flare_only",
+    )
+
+    assert result["launch_warning_steps"] == [42, 82]
+    assert result["countermeasure_request_steps"] == [42, 82]
+    assert [sample["chaff_remaining"] for sample in result["countermeasure_state_samples"]] == [60, 60]
+    assert [sample["flare_remaining"] for sample in result["countermeasure_state_samples"]] == [30, 29]
