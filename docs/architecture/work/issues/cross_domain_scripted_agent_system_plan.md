@@ -1568,3 +1568,31 @@ to a dedicated owner-local evidence document.
 - Continuation choice: retain the three doctrines as opt-in scenario inputs;
   next admission work must supply scenario ownership, complete cadence/report
   semantics, and the cooperative hostile-threat owner decision.
+
+### 2026-09-25 — Air scripted weapon selector and native consequence recheck
+
+- Root-cause finding: the scripted C2/ROE producer had been writing selector
+  `0` for both maintained Air action transports. The existing transport maps
+  that value to no valid station, so the compiled release path accepted a
+  `legacy:missile` fallback even though the database-backed F-16 loadout had
+  generated station-1 `AIM-120C-7` stores. This was an action-contract bug, not
+  a missing `DefaultUnitFactory` loadout materialization.
+- Change batch: encode station 1 as `1/7` in the 17-element `full` transport
+  and as categorical value `1` in `air_combat_hybrid_v1`; add model-level and
+  compiled WorldBatch regression assertions that the accepted launch includes
+  `AIM-120C-7`.
+- Focused verification: the Air engagement, hybrid action, and maintained
+  fire-missile tests passed `18 passed, 2 subtests passed`. A maintained
+  compiled Stage 1 run with seed `20260516` then exported a native packet with
+  nearest approach at `43.1280 s`, miss distance `0.6321 m`, closure
+  `657.4265 m/s`, and a triggered `15.0 m` fuze. The target consequence was
+  `detonated_no_effect` with `destroyed=false` and loss state
+  `combat_capable`.
+- Evidence boundary: the scripted release now reaches the database weapon and
+  native near-approach/fuze path; this does not close target vulnerability,
+  damage-effect, terminal combat, or post-launch assessment acceptance. Air
+  remains `playable_candidate`, and the Stage 1 C2/ROE path remains an accepted
+  release demonstration rather than a playable terminal engagement.
+- Continuation choice: retain the selector fix as the baseline and keep the
+  terminal gate focused on the native effect/damage owner. Do not substitute a
+  Python-side kill or silently widen the target model to claim terminal success.
