@@ -1596,3 +1596,26 @@ to a dedicated owner-local evidence document.
 - Continuation choice: retain the selector fix as the baseline and keep the
   terminal gate focused on the native effect/damage owner. Do not substitute a
   Python-side kill or silently widen the target model to claim terminal success.
+
+### 2026-09-25 — Air C2/ROE native terminal surrogate
+
+- Change batch: add the maintained
+  `air_combat_1v1_c2_roe_terminal_generic_aircraft_surrogate_v1.json` scenario
+  and `test_air_scripted_terminal_surrogate.py`. The scenario uses the
+  built-in generic `Aircraft` factory definition as an explicit terminal-chain
+  surrogate; it does not alter the named-platform database profiles.
+- Focused verification: the compiled no-RL CLI with seed `20260516` accepted
+  the scripted release at step `2`, terminated at step `203` with native
+  `combat_win`, and awarded the existing `combat_win_bonus` of `1500.0`.
+  The regression passed `1 passed` in `15.15s`; Python compilation and
+  `git diff --check` passed.
+- Evidence boundary: this closes an end-to-end playable terminal demo for the
+  declared generic surrogate, including C2/ROE, database weapon selection,
+  native missile/effects/damage, and objective termination. It does not close
+  named-platform vulnerability calibration, MQ-9 terminal consequence,
+  tactical evasion, red weapons, or formation combat. Air remains
+  `playable_candidate`; the surrogate is not a promotion to `playable`.
+- Continuation choice: retain this scenario as the bounded terminal-chain
+  baseline while keeping the Stage 1 MQ-9 target on the native damage-effect
+  investigation path. Any future promotion must name the target model and
+  evidence boundary separately.
