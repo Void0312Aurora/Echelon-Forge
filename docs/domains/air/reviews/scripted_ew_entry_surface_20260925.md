@@ -97,6 +97,12 @@ hostile two-aircraft observation/action/resource routing and owner isolation,
 not complete formation combat, target destruction, jammer/ESM behavior, or
 playable mission closure.
 
+The cooperative CLI was then run twice with the same seed. The paired-run
+regression reproduced the owner counts, opponent reports, warning/request
+steps, native resource samples, and runtime identities exactly. This closes a
+bounded hostile cooperative EW replay gate while leaving full formation mission
+replay and terminal combat outside this review.
+
 The EW path must remain Air-owned for jammer modes, RWR/ESM interpretation,
 countermeasure resources, release cadence, and threat-response doctrine. Only
 the identity, authority, clock, provenance, communication, and lifecycle
@@ -130,8 +136,8 @@ envelope may be shared with other domains.
 6. **Cooperative hostile-threat owner:** scripted opponents are now built and
    updated once by the shared-world routing loader; non-owner slot loaders do
    not duplicate those controllers. The maintained 2v2 scenario proves this
-   owner split and source-driven response, but its terminal combat and broader
-   formation contracts remain open.
+   owner split, source-driven response, and paired-run replay. Its terminal
+   combat and broader formation contracts remain open.
 
 ## Non-goals for this review
 
