@@ -64,6 +64,12 @@ instrument report observed chaff `[60, 59]` at the two request steps and flare
 running; this is maintained action/resource evidence, not terminal or
 playable EW evidence.
 
+The same maintained demo was then run twice in one process with the same seed.
+`tests/runtime/air_combat/test_air_ew_replay.py` passed and compared the full
+warning/request/resource trace, termination fields, decision count, and
+scripted runtime identity. This is a bounded single-agent replay check; it does
+not cover cooperative roster replay or canonical action-mode admission.
+
 The EW path must remain Air-owned for jammer modes, RWR/ESM interpretation,
 countermeasure resources, release cadence, and threat-response doctrine. Only
 the identity, authority, clock, provenance, communication, and lifecycle
