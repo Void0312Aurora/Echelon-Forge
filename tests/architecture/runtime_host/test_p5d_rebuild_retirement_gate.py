@@ -146,15 +146,16 @@ def test_retirement_gate_rejects_boolean_evidence_version() -> None:
             cutover_attestation=_attestation(inventory),
         )
 
-    retention = _stable_retention()
-    retention["slot_version"] = True
-    with pytest.raises(retirement_gate.RetirementGateError, match="retention version"):
-        retirement_gate.build_retirement_proof(
-            admission=_stable_admission(),
-            retention=retention,
-            inventory=inventory,
-            cutover_attestation=_attestation(inventory),
-        )
+    for field in ("slot_version", "evidence_version"):
+        retention = _stable_retention()
+        retention[field] = True
+        with pytest.raises(retirement_gate.RetirementGateError, match="retention version"):
+            retirement_gate.build_retirement_proof(
+                admission=_stable_admission(),
+                retention=retention,
+                inventory=inventory,
+                cutover_attestation=_attestation(inventory),
+            )
 
 
 def test_retirement_gate_returns_production_authority_only_proof() -> None:
