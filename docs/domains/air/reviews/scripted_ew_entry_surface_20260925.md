@@ -13,7 +13,7 @@
 | EW data | `examples/config/database/aircraft/modules/ew_suites/gen4_standard.json` declares an RWR, a 1000 W noise-barrage jammer, chaff/flare counts, a release interval, and auto mode. The loader now preserves `ew_suite_ref` through the deferred materialize boundary. | Database data can now reach native EW component initialization for spawned units, but it still does not admit a maintained scripted EW action path. |
 | Native components | `src/components/systems/ew.h` defines `Jammer`, `Countermeasures`, `RWR`, `EmitterDetection`, and `ESMReceiver`. | The component vocabulary can carry EW state, ESM detections, and resource/cooldown data. |
 | Native EW systems | `src/systems/systems/ew_system.h` runs chaff release, flare release, and lifetime management. | Countermeasure effects have a system owner; jammer activation and ESM decision effects do not have a comparable command system in this header. |
-| Observation | `gym_envs/universal_env_parts/observations.py` exports `rwr` rows as bearing, signal strength, lock, and launch-warning fields; instruments also expose `rwr_active`. | A scripted agent can consume declared RWR evidence without World Truth. ESM/jammer state is not part of the maintained observation payload shown here. |
+| Observation | `gym_envs/universal_env_parts/observations.py` exports `rwr` rows as bearing, signal strength, lock, and launch-warning fields; instruments also expose `rwr_active`. Native MAWS now records active inbound missiles by launch platform and exposes source-specific `is_launch` rows through `SimulationKernel::get_agent_observation`. | A scripted agent can consume declared RWR/MAWS evidence without World Truth. ESM/jammer state is not part of the maintained observation payload shown here. |
 | Command transport | `PilotAction` exposes `program_chaff` and `program_flare`; `legacy_command_bridge.h` resolves those fields into countermeasure commands. | The low-level transport exists, but it is not exposed by the maintained `full` or `air_combat_hybrid_v1` action vectors. |
 | Current action mapping | `gym_envs/universal_env_parts/actions.py` sets `program_chaff` and `program_flare` to `False` for the maintained action modes. | A scripted EW model cannot currently perform countermeasure actions through the normal Air action path. There is no maintained jammer action field. |
 | Versioned action extension | `air_ew_hybrid_v1` adds two explicit tail fields for chaff and flare and maps them to `PilotAction`; it remains outside the canonical `python.env_config.ACTION_MODES` list until a scenario/config owner and acceptance gate are admitted. | The transport shape is testable without changing existing full/hybrid indices. A direct native-kernel gate now proves inventory decrement through the low-level `PilotAction` path, but no maintained scenario or scripted action-mode report consumes it yet. |
@@ -21,11 +21,12 @@
 
 ## Boundary
 
-The current evidence supports an EW **observation** role, a database-backed
-EW **state** vocabulary, a typed RWR-derived scripted producer, and a direct
-native countermeasure resource gate. It does not support a playable EW
-decision claim. The producer output is not consumed by a canonical maintained
-Air action path, and jammer command/state/report ownership remains incomplete.
+The current evidence supports an EW **observation** role, including a native
+MAWS launch-warning fact, a database-backed EW **state** vocabulary, a typed
+RWR-derived scripted producer, and a direct native countermeasure resource
+gate. It does not support a playable EW decision claim. The producer output is
+not consumed by a canonical maintained Air action path, and jammer
+command/state/report ownership remains incomplete.
 
 ## Direct observation probe
 
@@ -37,6 +38,15 @@ active with mission status `[1, 0, 0, 0]`. This is direct evidence that a
 scripted unit can receive the existing RWR observation product. It does not
 show a launch-warning-driven countermeasure action, jammer state transition, or
 terminal EW objective.
+
+The native Air fixture separately fired a real missile from `Red_Fighter` to
+`Blue_Fighter` and observed a source-specific `rwr_warnings` row with
+`is_launch=true` and `source_id=Red_Fighter`. The `ef_py` target was rebuilt in
+the Visual Studio developer environment; the Air fixture and EW contract tests
+passed (`5 passed` each). This closes the native launch-warning observation
+fact and its reset path. It does not prove that a scripted EW action was
+accepted, that inventory changed through a maintained action mode, or that an
+EW episode terminates.
 
 The probe and producer therefore close only the observation and decision
 contract sides of the EW boundary. The action and native-owner slices below
@@ -50,9 +60,10 @@ envelope may be shared with other domains.
 
 ## Required closure slices
 
-1. **Observation contract:** declare RWR and ESM fields, freshness, source,
-   confidence, lock/launch semantics, and negative controls for hidden target
-   truth.
+1. **Observation contract:** RWR/MAWS source-specific launch evidence and its
+   reset path are now native and directly tested. ESM fields, freshness,
+   confidence, lock semantics, and negative controls for hidden target truth
+   remain to be maintained and documented.
 2. **Countermeasure action contract:** the versioned `air_ew_hybrid_v1`
    extension now exposes chaff/flare request fields and maps them to
    `PilotAction` without changing existing full/hybrid indices. A maintained
@@ -63,10 +74,9 @@ envelope may be shared with other domains.
    activation, bandwidth/angle/type, power/resource limits, and shutdown.
 4. **Direct scenario gate:** build a lock/launch-warning scenario with finite
    inventory, release interval, communication state, and a report that proves
-   the scripted action was accepted and changed native EW state. The current
-   low-level gate verifies the native owner and inventory decrement using the
-   database-backed F-16 suite; a maintained scripted-action report remains
-   open.
+   the scripted action was accepted and changed native EW state. Native
+   launch-warning observation and low-level inventory decrement are now
+   verified independently; a maintained scripted-action report remains open.
 5. **Replay and multi-aircraft gate:** repeat the EW scenario under reset/replay
    and route distinct EW roles through the existing cooperative roster before
    any `playable` label.
