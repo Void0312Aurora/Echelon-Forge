@@ -105,7 +105,16 @@ def _validate_retention(
         raise RetirementGateError("rollback retention release identity differs")
     if retention.get("state") != "stable":
         raise RetirementGateError("rollback retention check is not for stable state")
-    if retention.get("slot_version") != slot_version or retention.get("evidence_version") != slot_version:
+    retention_slot_version = retention.get("slot_version")
+    retention_evidence_version = retention.get("evidence_version")
+    if (
+        isinstance(retention_slot_version, bool)
+        or not isinstance(retention_slot_version, int)
+        or isinstance(retention_evidence_version, bool)
+        or not isinstance(retention_evidence_version, int)
+        or retention_slot_version != slot_version
+        or retention_evidence_version != slot_version
+    ):
         raise RetirementGateError("rollback retention version differs from durable admission")
     blobs = retention.get("blobs")
     if not isinstance(blobs, Mapping) or set(blobs) != set(_RETENTION_CLASSES):
