@@ -1342,3 +1342,31 @@ to a dedicated owner-local evidence document.
 - Continuation choice: use this native gate as the owner baseline while adding
   a maintained launch-warning scenario/report and deciding the jammer command
   owner; do not infer playable EW status from the direct low-level test.
+
+### 2026-09-25 — Air EW native MAWS launch-warning fact
+
+- Blocker evidence: a direct raw-kernel probe could fire a red missile at the
+  blue unit, but the blue observation contained only the launch platform's ESM
+  signal and `RWREvent.is_launch` remained false. The existing
+  `RWR::is_missile_launch` field had no native producer, so a scripted EW
+  launch-warning response could not be driven by a real inbound missile.
+- Change batch: add a native MAWS pass to the Air sensor model that records
+  active missiles targeting the owner within `120 km`, preserves their launch
+  platform IDs for the frame, clears the fact in the existing `RWR_Reset`
+  system, and merges source-specific launch rows into the observation API.
+  The scripted side still reads only `rwr_warnings`; it does not inspect
+  missile truth or mutate EW components.
+- Focused verification: rebuild `ef_py` through the Visual Studio developer
+  environment; `tests/runtime/air_combat/test_air_combat_1v1_fixture.py -q`
+  passed `5 passed`; `tests/runtime/air/test_air_scripted_ew.py -q` passed
+  `5 passed`; `git diff --check` passed before commit. The new Air fixture
+  test fires a real native missile and asserts a blue `is_launch` row with the
+  red launcher's `source_id`.
+- Evidence boundary: the native launch-warning observation fact and reset path
+  are now closed. This does not close the canonical EW action mode, scripted
+  countermeasure/report path, jammer command owner, replay, multi-aircraft
+  parity, or EW terminal objective. EW remains `entry_surface_incomplete` and
+  Air remains `playable_candidate`.
+- Continuation choice: use the native MAWS row as the input for the next
+  maintained EW action scenario, while keeping the tactical missile terminal
+  residual and the EW command-owner decision independent.
