@@ -130,6 +130,9 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                 out["fuze_delay_armed"] = missile->fuze_delay_armed;
                 out["fuze_nearest_approach_time_s"] = missile->fuze_nearest_approach_time_s;
                 out["fuze_detonation_time_s"] = missile->fuze_detonation_time_s;
+                out["fuze_detonation_x"] = missile->fuze_detonation_x;
+                out["fuze_detonation_y"] = missile->fuze_detonation_y;
+                out["fuze_detonation_z"] = missile->fuze_detonation_z;
                 out["fuze_detonation_heading_deg"] = missile->fuze_detonation_heading_deg;
                 out["fuze_detonation_pitch_deg"] = missile->fuze_detonation_pitch_deg;
                 out["fuze_detonation_roll_deg"] = missile->fuze_detonation_roll_deg;
