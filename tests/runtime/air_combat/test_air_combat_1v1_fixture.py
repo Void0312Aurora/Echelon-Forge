@@ -31,6 +31,44 @@ _DB_PATH = resolve_repo_path("examples", "config", "database")
 
 
 class AirCombat1v1FixtureTests(unittest.TestCase):
+  def test_native_ew_countermeasure_release_consumes_component_inventory(self) -> None:
+    sim = ef_py.SimulationKernel()
+    self.assertTrue(sim.load_database(_DB_PATH))
+    sim.set_time_step(0.05)
+
+    loader = ScenarioLoader(sim)
+    agent_id = int(loader.load_scenario(_SCENARIO_PATH, seed=20260516))
+
+    before = [float(value) for value in sim.debug_get_countermeasure_state(agent_id)]
+    self.assertEqual(len(before), 5)
+    self.assertGreaterEqual(before[0], 1.0)
+    self.assertGreaterEqual(before[1], 1.0)
+    self.assertGreater(before[2], 0.0)
+
+    chaff = ef_py.PilotAction()
+    chaff.active = True
+    chaff.program_chaff = True
+    sim.set_pilot_action(agent_id, chaff)
+    for _ in range(20):
+      sim.step()
+      current = [float(value) for value in sim.debug_get_countermeasure_state(agent_id)]
+      if current[0] < before[0]:
+        break
+    self.assertEqual(current[0], before[0] - 1.0)
+    self.assertEqual(current[1], before[1])
+
+    flare = ef_py.PilotAction()
+    flare.active = True
+    flare.program_flare = True
+    sim.set_pilot_action(agent_id, flare)
+    for _ in range(20):
+      sim.step()
+      current = [float(value) for value in sim.debug_get_countermeasure_state(agent_id)]
+      if current[1] < before[1]:
+        break
+    self.assertEqual(current[0], before[0] - 1.0)
+    self.assertEqual(current[1], before[1] - 1.0)
+
   def test_loader_fixture_exposes_hostile_contact_and_weapon_state(self) -> None:
     sim = ef_py.SimulationKernel()
     self.assertTrue(sim.load_database(_DB_PATH))

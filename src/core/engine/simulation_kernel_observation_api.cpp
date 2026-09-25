@@ -216,6 +216,28 @@ int SimulationKernel::debug_get_contact_count(uint64_t entity_id) {
     return -1;
 }
 
+std::vector<double> SimulationKernel::debug_get_countermeasure_state(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_get_countermeasure_state");
+    auto e = ecs.entity(entity_id);
+    if (!e.is_alive()) {
+        return {};
+    }
+
+    const Countermeasures *countermeasures = e.get<Countermeasures>();
+    if (!countermeasures) {
+        return {};
+    }
+
+    return {
+        static_cast<double>(countermeasures->chaff_count),
+        static_cast<double>(countermeasures->flare_count),
+        countermeasures->release_interval,
+        countermeasures->last_release_time,
+        countermeasures->auto_mode ? 1.0 : 0.0,
+    };
+}
+
 std::vector<double> SimulationKernel::debug_get_mass_state(uint64_t entity_id) {
     auto composition_lock = acquire_composition_operation();
     ensure_active("debug_get_mass_state");
