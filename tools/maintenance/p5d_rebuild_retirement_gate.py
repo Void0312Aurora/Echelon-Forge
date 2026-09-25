@@ -11,10 +11,12 @@ slot.
 
 from __future__ import annotations
 
+import hashlib
 import re
 from typing import Any, Mapping
 
 from tools.maintenance import runtime_rebuild_unreachability as rebuild_inventory
+from tools.maintenance.runtime_authority_contracts import canonical_json_bytes
 
 
 SCHEMA_VERSION = "echelon_forge.p5d_rebuild_retirement.v1"
@@ -43,7 +45,9 @@ def _require_nonempty(value: Any, name: str) -> str:
     return value
 
 
-def _stable_admission_fields(admission: Mapping[str, Any]) -> tuple[str, str, str, int]:
+def _stable_admission_fields(
+    admission: Mapping[str, Any],
+) -> tuple[str, str, str, int, Mapping[str, Any]]:
     try:
         decision = admission["decision"]
         payload = decision["payload"]
@@ -61,18 +65,24 @@ def _stable_admission_fields(admission: Mapping[str, Any]) -> tuple[str, str, st
     if admission.get("admissions_open") is not True or admission.get("writer_advancement_frozen") is not False:
         raise RetirementGateError("stable rollout admission is not open and unfrozen")
     evidence_version = admission.get("evidence_version")
-    if evidence_version != version:
+    if isinstance(evidence_version, bool) or not isinstance(evidence_version, int) or evidence_version != version:
         raise RetirementGateError("durable rollout evidence version differs from admission")
     if not isinstance(admission.get("evidence"), Mapping):
         raise RetirementGateError("durable rollout evidence projection is absent")
     evidence = admission["evidence"]
     if evidence.get("admissions_open") is not True or evidence.get("writer_advancement_frozen") is not False:
         raise RetirementGateError("stable rollout evidence is not open and unfrozen")
+    for field in (
+        "release_manifest_blob_sha256",
+        "run_receipt_blob_sha256",
+    ):
+        _require_digest(evidence.get(field), f"rollout evidence {field}")
     return (
         _require_nonempty(release_id, "release_id"),
         _require_nonempty(decision_id, "decision_id"),
         _require_digest(decision_digest, "decision payload digest"),
         version,
+        evidence,
     )
 
 
@@ -81,7 +91,10 @@ def _validate_retention(
     *,
     release_id: str,
     slot_version: int,
-) -> set[str]:
+    decision_digest: str,
+    decision_envelope_digest: str,
+    evidence: Mapping[str, Any],
+) -> dict[str, str]:
     if retention.get("release_id") != release_id:
         raise RetirementGateError("rollback retention release identity differs")
     if retention.get("state") != "stable":
@@ -91,14 +104,29 @@ def _validate_retention(
     blobs = retention.get("blobs")
     if not isinstance(blobs, Mapping) or set(blobs) != set(_RETENTION_CLASSES):
         raise RetirementGateError("rollback retention blob projection is incomplete")
-    digests: set[str] = set()
+    try:
+        expected_digests = {
+            "release_manifest": str(evidence["release_manifest_blob_sha256"]),
+            "rollout_decision": decision_envelope_digest,
+            "run_receipt": str(evidence["run_receipt_blob_sha256"]),
+            "rollout_evidence": hashlib.sha256(canonical_json_bytes(evidence)).hexdigest(),
+        }
+    except (KeyError, TypeError, ValueError) as error:
+        raise RetirementGateError("durable rollout evidence projection is not canonical") from error
+    digests: dict[str, str] = {}
     for name, expected_class in _RETENTION_CLASSES.items():
         row = blobs[name]
         if not isinstance(row, Mapping):
             raise RetirementGateError(f"rollback retention row is invalid for {name}")
         if row.get("retention_class") != expected_class:
             raise RetirementGateError(f"rollback retention class differs for {name}")
-        digests.add(_require_digest(row.get("digest"), f"rollback retention digest for {name}"))
+        digest = _require_digest(
+            row.get("digest"),
+            f"rollback retention digest for {name}",
+        )
+        if digest != expected_digests[name]:
+            raise RetirementGateError(f"rollback retention digest differs for {name}")
+        digests[name] = digest
     return digests
 
 
@@ -109,7 +137,7 @@ def _validate_attestation(
     decision_id: str,
     decision_digest: str,
     inventory_digest: str,
-    retained_digests: set[str],
+    retained_digests: Mapping[str, str],
 ) -> dict[str, Any]:
     if not isinstance(attestation, Mapping):
         raise RetirementGateError("explicit production cutover attestation is required")
@@ -145,10 +173,11 @@ def _validate_attestation(
         attestation["rollback_window_evidence_sha256"],
         "rollback-window evidence digest",
     )
-    if adoption_digest not in retained_digests:
-        raise RetirementGateError("adoption evidence digest is not retained")
-    if rollback_digest not in retained_digests:
-        raise RetirementGateError("rollback-window evidence digest is not retained")
+    rollout_evidence_digest = retained_digests["rollout_evidence"]
+    if adoption_digest != rollout_evidence_digest:
+        raise RetirementGateError("adoption evidence digest is not the retained rollout evidence")
+    if rollback_digest != rollout_evidence_digest:
+        raise RetirementGateError("rollback-window evidence digest is not the retained rollout evidence")
     return dict(attestation)
 
 
@@ -167,11 +196,20 @@ def build_retirement_proof(
         raise RetirementGateError("fresh pre-cutover rebuild inventory is not valid") from error
     if inventory.get("production_callable_references") or inventory.get("python_binding_references"):
         raise RetirementGateError("rebuild production or Python callers remain")
-    release_id, decision_id, decision_digest, slot_version = _stable_admission_fields(admission)
+    release_id, decision_id, decision_digest, slot_version, evidence = _stable_admission_fields(admission)
+    try:
+        decision_envelope_digest = hashlib.sha256(
+            canonical_json_bytes(admission["decision"])
+        ).hexdigest()
+    except (KeyError, TypeError, ValueError) as error:
+        raise RetirementGateError("durable rollout decision projection is not canonical") from error
     retained_digests = _validate_retention(
         retention,
         release_id=release_id,
         slot_version=slot_version,
+        decision_digest=decision_digest,
+        decision_envelope_digest=decision_envelope_digest,
+        evidence=evidence,
     )
     attestation = _validate_attestation(
         cutover_attestation,

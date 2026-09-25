@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 
 import pytest
 
 from tools.maintenance import p5d_rebuild_retirement_gate as retirement_gate
 from tools.maintenance import runtime_rebuild_unreachability as rebuild_inventory
+from tools.maintenance.runtime_authority_contracts import canonical_json_bytes
 
 from tests.architecture.runtime_host.test_sqlite_rollout_admission import (
     _advance_to_stable,
@@ -30,6 +32,13 @@ def _stable_admission() -> dict[str, object]:
         "evidence_version": 7,
         "evidence": {
             "admissions_open": True,
+            "decision_id": "decision-evidence-6",
+            "decision_payload_sha256": "a" * 64,
+            "kill_switch_reasons": [],
+            "release_id": "release-evidence-test",
+            "release_manifest_blob_sha256": "b" * 64,
+            "run_receipt_blob_sha256": "d" * 64,
+            "schema_version": "echelon_forge.rollout_evidence_binding.v1",
             "writer_advancement_frozen": False,
         },
     }
@@ -43,14 +52,25 @@ def _stable_retention() -> dict[str, object]:
         "evidence_version": 7,
         "blobs": {
             "release_manifest": {"digest": "b" * 64, "retention_class": "active-release"},
-            "rollout_decision": {"digest": "c" * 64, "retention_class": "rollback-window"},
+        "rollout_decision": {
+            "digest": hashlib.sha256(
+                canonical_json_bytes(_stable_admission()["decision"])
+            ).hexdigest(),
+            "retention_class": "rollback-window",
+        },
             "run_receipt": {"digest": "d" * 64, "retention_class": "run-retained"},
-            "rollout_evidence": {"digest": "e" * 64, "retention_class": "rollback-window"},
+        "rollout_evidence": {
+            "digest": hashlib.sha256(
+                canonical_json_bytes(_stable_admission()["evidence"])
+            ).hexdigest(),
+            "retention_class": "rollback-window",
+        },
         },
     }
 
 
 def _attestation(inventory: dict[str, object]) -> dict[str, object]:
+    rollout_evidence_digest = _stable_retention()["blobs"]["rollout_evidence"]["digest"]
     return {
         "attestation_id": "cutover-attestation-1",
         "release_id": "release-evidence-test",
@@ -59,8 +79,8 @@ def _attestation(inventory: dict[str, object]) -> dict[str, object]:
         "inventory_sha256": inventory["inventory_sha256"],
         "production_caller_cutover": True,
         "rollback_window_verified": True,
-        "adoption_evidence_sha256": "e" * 64,
-        "rollback_window_evidence_sha256": "e" * 64,
+        "adoption_evidence_sha256": rollout_evidence_digest,
+        "rollback_window_evidence_sha256": rollout_evidence_digest,
     }
 
 
@@ -129,7 +149,27 @@ def test_retirement_gate_rejects_unretained_attestation_evidence() -> None:
     attestation = _attestation(inventory)
     attestation["adoption_evidence_sha256"] = "f" * 64
 
-    with pytest.raises(retirement_gate.RetirementGateError, match="not retained"):
+    with pytest.raises(
+        retirement_gate.RetirementGateError,
+        match="retained rollout evidence",
+    ):
+        retirement_gate.build_retirement_proof(
+            admission=_stable_admission(),
+            retention=_stable_retention(),
+            inventory=inventory,
+            cutover_attestation=attestation,
+        )
+
+
+def test_retirement_gate_rejects_non_evidence_retention_digest() -> None:
+    inventory = rebuild_inventory.load_fixture()
+    attestation = _attestation(inventory)
+    attestation["adoption_evidence_sha256"] = "b" * 64
+
+    with pytest.raises(
+        retirement_gate.RetirementGateError,
+        match="retained rollout evidence",
+    ):
         retirement_gate.build_retirement_proof(
             admission=_stable_admission(),
             retention=_stable_retention(),

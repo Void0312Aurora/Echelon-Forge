@@ -229,8 +229,9 @@ They must be remeasured before an implementation or acceptance claim.
   producing a production-authority-only retirement proof. The gate is
   read-only and retains the native test capability; its positive test now also
   consumes the actual durable SQLite `stable` admission/retention projection.
-  The gate also binds attested adoption/rollback digests to retained evidence
-  and checks admission/evidence version equality. It does not claim that
+  The gate also binds attested adoption/rollback digests to the retained
+  rollout-evidence digest, cross-checks the four retention digests against the
+  admission projection, and checks admission/evidence version equality. It does not claim that
   production authority has been retired. See [P5-D
   rebuild retirement gate evidence](evidence/p5d_rebuild_retirement_gate_20260924.md).
 
