@@ -16,7 +16,7 @@
 | Observation | `gym_envs/universal_env_parts/observations.py` exports `rwr` rows as bearing, signal strength, lock, and launch-warning fields; instruments also expose `rwr_active`. Native MAWS now records active inbound missiles by launch platform and exposes source-specific `is_launch` rows through `SimulationKernel::get_agent_observation`. | A scripted agent can consume declared RWR/MAWS evidence without World Truth. ESM/jammer state is not part of the maintained observation payload shown here. |
 | Command transport | `PilotAction` exposes `program_chaff` and `program_flare`; `legacy_command_bridge.h` resolves those fields into countermeasure commands. | The low-level transport exists, but it is not exposed by the maintained `full` or `air_combat_hybrid_v1` action vectors. |
 | Current action mapping | `gym_envs/universal_env_parts/actions.py` sets `program_chaff` and `program_flare` to `False` for the maintained action modes. | A scripted EW model cannot currently perform countermeasure actions through the normal Air action path. There is no maintained jammer action field. |
-| Versioned action extension | `air_ew_hybrid_v1` adds two explicit tail fields for chaff and flare and maps them to `PilotAction`; it remains outside the canonical `python.env_config.ACTION_MODES` list until a scenario/config owner and acceptance gate are admitted. | The transport shape is testable without changing existing full/hybrid indices. A direct native-kernel gate now proves inventory decrement through the low-level `PilotAction` path, but no maintained scenario or scripted action-mode report consumes it yet. |
+| Versioned action extension | `air_ew_hybrid_v1` adds two explicit tail fields for chaff and flare and maps them to `PilotAction`; it remains outside the canonical `python.env_config.ACTION_MODES` list until a scenario/config owner and acceptance gate are admitted. `tools/diagnostics/air_ew_scripted_demo.py` now drives this mode with the registered scripted EW action model. | The transport shape is testable without changing existing full/hybrid indices. The maintained demo observed launch-warning rows at steps 42 and 82 and requested both countermeasures at those steps. RuntimeFacade still exposes no native countermeasure inventory/report, so action acceptance and inventory decrement remain unproven on this path. |
 | Scripted producer | `python/tasking_contracts/air_scripted_ew.py` is registered in the aggregate Air registry as `air.ew.rwr_response_scripted` (`adapter`, `air_ew_controller`). It emits a typed RWR-derived intent and marks `native_action_owner_required`. | The producer is a contract/decision slice only. It is not an accepted countermeasure or jammer action, and it does not change the EW capability label. |
 
 ## Boundary
@@ -48,10 +48,19 @@ fact and its reset path. It does not prove that a scripted EW action was
 accepted, that inventory changed through a maintained action mode, or that an
 EW episode terminates.
 
-The probe and producer therefore close only the observation and decision
-contract sides of the EW boundary. The action and native-owner slices below
+The probe, producer, and maintained demo close the observation and decision
+transport sides of the EW boundary. The action and native-owner slices below
 remain required before an EW role can be admitted as a consumed adapter or a
 playable unit.
+
+The maintained demo command
+`python tools/diagnostics/air_ew_scripted_demo.py --max_steps 120` used the
+head-on fixture, compiled `WorldBatchVecEnv`, `air_ew_hybrid_v1`, and the
+registered `air.ew.rwr_action_scripted` model. It observed launch-warning
+steps `[42, 82]` and emitted countermeasure request steps `[42, 82]`. The
+episode remained running with `native_countermeasure_state` explicitly marked
+`not_exposed_by_runtime_facade`; this is transport/demo evidence, not native
+resource-consumption or playable EW evidence.
 
 The EW path must remain Air-owned for jammer modes, RWR/ESM interpretation,
 countermeasure resources, release cadence, and threat-response doctrine. Only
