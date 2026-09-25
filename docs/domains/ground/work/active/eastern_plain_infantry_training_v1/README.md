@@ -92,6 +92,9 @@ bearing values plus river/bridge flags. The native provider now also admits the
 same tree-line/settlement distance/bearing and in-feature flags from the held
 metadata overlay, without releasing cover or passability. Track observation
 export remains held.
+The engineering proxy can enumerate a declared bridge overlay into a
+replayable waypoint polyline for route-contract tests; this remains explicitly
+proxy-only and is not a native route graph or general passability product.
 
 The `expected/` bundle has now been generated and verified with the pinned Arnis
 v3.0.0 CMO patch, and the preview plus `field_acceptance.json` are retained. The

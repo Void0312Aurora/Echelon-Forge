@@ -136,6 +136,9 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
         "cover",
         "line_of_sight",
     ]
+    assert contract["native_runtime_surfaces"]["proxy_bridge_route"]["status"] == "engineering_proxy_only"
+    assert contract["native_runtime_surfaces"]["proxy_bridge_route"]["entrypoint"] == "GroundFieldProxy.plan_bridge_route"
+    assert contract["native_runtime_surfaces"]["proxy_bridge_route"]["route_boundary"] == "declared_bridge_proxy_only"
     assert contract["map_profile"]["arnis_bundle_status"] == "verified_export_snapshot"
     assert contract["map_profile"]["companion_overlay"] == "field_overlay.v1"
     assert contract["map_profile"]["runtime_consumption"].startswith("held_until_")

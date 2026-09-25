@@ -147,6 +147,34 @@ def test_proxy_observation_keeps_last_route_intent_and_bridge_semantics() -> Non
     assert transition.observation["semantic_context"]["bridge_active"] is True
 
 
+def test_proxy_plans_declared_bridge_route_without_claiming_native_authority() -> None:
+    proxy = _proxy()
+
+    plan = proxy.plan_bridge_route((820.0, 100.0), (820.0, 1200.0))
+
+    assert plan.passable is True
+    assert plan.authority == "engineering_proxy_only"
+    assert plan.bridge_segment_index is not None
+    assert len(plan.waypoints_xy_m) >= 2
+    assert plan.total_distance_m >= 1100.0
+    assert plan.as_dict()["route_boundary"] == "declared_bridge_proxy_only"
+
+
+def test_proxy_bridge_route_fails_closed_without_declared_crossing() -> None:
+    proxy = _proxy()
+    plan = proxy.plan_bridge_route((820.0, 100.0), (820.0, 1200.0))
+    assert plan.blocked_reason is None
+
+    missing = proxy.plan_bridge_route((400.0, 100.0), (400.0, 2000.0))
+    assert missing.passable is False
+    assert missing.waypoints_xy_m == ()
+    assert missing.blocked_reason in {
+        "outside_map_extent",
+        "unknown_terrain",
+        "declared_bridge_route_unavailable",
+    }
+
+
 def test_proxy_step_is_deterministic_and_replayable() -> None:
     actions = [
         [0.0, 0.5, 0.0, 0.0],

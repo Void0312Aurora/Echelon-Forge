@@ -76,6 +76,13 @@
       "segment_observation_fields": ["configured", "passable", "destination_surface", "water_blocked", "obstacle_blocked", "bridge_admitted", "distance_m"],
       "segment_movement_observation_fields": ["configured", "passable", "destination_surface", "water_blocked", "obstacle_blocked", "bridge_admitted", "distance_m", "minimum_combined_multiplier", "average_combined_multiplier", "sample_count"],
       "does_not_claim": ["route_graph", "path_planning", "cover", "line_of_sight"]
+    },
+    "proxy_bridge_route": {
+      "status": "engineering_proxy_only",
+      "entrypoint": "GroundFieldProxy.plan_bridge_route",
+      "fields": ["passable", "waypoints_xy_m", "total_distance_m", "bridge_segment_index", "blocked_reason"],
+      "route_boundary": "declared_bridge_proxy_only",
+      "does_not_claim": ["native_authority", "route_graph", "general_passability", "cover", "line_of_sight"]
     }
   },
   "action_space": {
