@@ -378,12 +378,20 @@ class ScenarioLoader:
     def _apply_compiled_runtime_metadata(self) -> None:
         _apply_compiled_runtime_metadata_impl(self)
 
-    def _finalize_loaded_world(self, *, initial_truth=None, initial_inst=None, sync_to_kernel: bool = True):
+    def _finalize_loaded_world(
+        self,
+        *,
+        initial_truth=None,
+        initial_inst=None,
+        sync_to_kernel: bool = True,
+        build_scripted_opponents: bool = True,
+    ):
         return _finalize_loaded_world_impl(
             self,
             initial_truth=initial_truth,
             initial_inst=initial_inst,
             sync_to_kernel=sync_to_kernel,
+            build_scripted_opponents=build_scripted_opponents,
         )
 
     @staticmethod

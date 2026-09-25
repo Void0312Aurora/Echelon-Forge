@@ -321,7 +321,15 @@ class CooperativeWorldBatchVecEnv(VecEnv):
     def _normalize_seed(self, seed: int | None) -> int:
         return _shared_normalize_seed(seed)
 
-    def _build_slot_loader(self, world_index: int, prepared_world, entity_id: int, seed: int) -> ScenarioLoader:
+    def _build_slot_loader(
+        self,
+        world_index: int,
+        prepared_world,
+        entity_id: int,
+        seed: int,
+        *,
+        build_scripted_opponents: bool,
+    ) -> ScenarioLoader:
         loader = self._runtime_adapter.make_scenario_loader(int(world_index))
         loader._compiled_scenario = self._compiled_scenario
         loader._compiled_runtime_metadata = self._compiled_scenario.runtime_metadata
@@ -346,7 +354,10 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         loader.entities = entities
         loader.active_roster = active_roster
         loader.agent_id = int(entity_id)
-        loader._finalize_loaded_world(sync_to_kernel=True)
+        loader._finalize_loaded_world(
+            sync_to_kernel=True,
+            build_scripted_opponents=bool(build_scripted_opponents),
+        )
         return loader
 
     def _build_slot_state(
@@ -715,6 +726,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 applied_world,
                 int(member.entity_id),
                 normalized_seed,
+                build_scripted_opponents=(local_slot_index == 0),
             )
             validate_naval_action_mode_for_loader(loader, self.action_mode)
             control_slot = MultiAgentControlSlot(
