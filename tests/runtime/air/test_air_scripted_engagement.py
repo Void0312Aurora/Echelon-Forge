@@ -61,6 +61,7 @@ def test_engagement_model_emits_one_fire_pulse_and_respects_assessment() -> None
     second = model.decide(observation=open_window, context={"phase_name": "stable_flight"}, dt=0.05)
     assert first[13] == 1.0
     assert first[14] == 1.0
+    assert first[16] == pytest.approx(1.0 / 7.0)
     assert second[13] == 1.0
     assert second[14] == 0.0
 
@@ -84,6 +85,7 @@ def test_engagement_model_maps_the_maintained_hybrid_action_layout() -> None:
     assert first[7] == 1.0
     assert first[8] == 1.0
     assert first[9] == 1.0
+    assert first[11] == 1.0
     assert second[9] == 0.0
     model.close()
 

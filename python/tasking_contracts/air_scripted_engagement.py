@@ -127,7 +127,10 @@ class AirScriptedEngagementModel:
             action[13] = master_arm
             action[14] = fire_pulse
             action[15] = 0.0
-            action[16] = 0.0  # maintained first weapon slot; database/adapter owns mapping
+            # The full transport encodes the categorical station id in [0, 1]
+            # before ``build_pilot_action`` expands it to the kernel station id
+            # in [0, 7].  Station 1 is therefore represented by 1/7 here.
+            action[16] = (1.0 / 7.0) if target_contact and authorized and budget_available else 0.0
         else:
             action[4] = 0.0  # centered scan azimuth
             action[5] = 0.0  # centered scan elevation
@@ -136,7 +139,8 @@ class AirScriptedEngagementModel:
             action[8] = master_arm
             action[9] = fire_pulse
             action[10] = 0.0
-            action[11] = 0.0  # maintained first weapon slot; database/adapter owns mapping
+            # The hybrid transport carries the categorical station id directly.
+            action[11] = 1.0 if target_contact and authorized and budget_available else 0.0
 
         if not fire_window or pending_assessment or not budget_available:
             self._fire_latched = False
