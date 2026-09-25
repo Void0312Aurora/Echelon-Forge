@@ -1619,3 +1619,31 @@ to a dedicated owner-local evidence document.
   baseline while keeping the Stage 1 MQ-9 target on the native damage-effect
   investigation path. Any future promotion must name the target model and
   evidence boundary separately.
+
+### 2026-09-26 — Air delayed online-sensor burst geometry
+
+- Root-cause finding: an `online_sensor` delayed fuze stored no trigger-frame
+  burst point, so delayed resolution fell back to the missile transform from a
+  later ECS frame. With a `0.015 s` delay and `0.05 s` step this moved the
+  effective burst by tens of metres and made the native effect result depend on
+  frame cadence.
+- Change batch: preserve the sensor-trigger-frame missile point, expose the
+  stored detonation coordinates through the native missile diagnostics surface,
+  and reproject that point from the trigger-frame target-relative geometry when
+  the delayed effect resolves. Add a maintained regression at the coarse step
+  that fails the previous drift and keeps the effect within the bounded
+  trigger-frame envelope.
+- Focused verification: clean `ef_py` rebuild completed `139/139`; the final
+  Air suite passed `85 passed, 8 subtests passed`, including
+  `test_online_sensor_delayed_burst_projection.py` and the existing launch,
+  fuze, scripted engagement, generic terminal surrogate, and hybrid-action
+  tests. `git diff --check` passed before commit `8d143940`.
+- Evidence boundary: the native delayed online-sensor geometry is now stable
+  for the maintained coarse-step regression and remains observable in the
+  diagnostic packet. This does not establish named-platform damage authority,
+  stable MQ-9 terminal kill, post-launch assessment, evasion, red weapons,
+  formation combat, or a promotion beyond `playable_candidate`.
+- Continuation choice: use this fix as the native effects prerequisite for a
+  later named-platform terminal slice; keep the generic-Aircraft surrogate as
+  the only bounded terminal-chain demonstration and do not add a Python-side
+  kill substitute.
