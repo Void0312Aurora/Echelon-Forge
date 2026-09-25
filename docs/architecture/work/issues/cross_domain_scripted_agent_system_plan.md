@@ -1393,3 +1393,29 @@ to a dedicated owner-local evidence document.
   equivalent maintained event product before admitting this action mode as a
   consumed adapter; keep the low-level `SimulationKernel` resource gate as the
   separate native-owner evidence.
+
+### 2026-09-25 — Air EW maintained countermeasure state projection
+
+- Change batch: project Air-owned `Countermeasures` state into the existing
+  read-only `InstrumentState` surface: chaff/flare counts, release interval,
+  last release time, and auto mode. Missing components report `-1` for counts
+  and timing values. The scripted model still only reads the declared
+  observation and emits action fields; it does not write components.
+- Focused verification: because the header dependency scan did not rebuild all
+  consumers after the DTO layout change, the first incremental binding-only
+  build caused a Windows stack-buffer-overrun at scenario load. A clean
+  `build-scripted-agent` rebuild through `VsDevCmd.bat` completed all `139`
+  objects and restored ABI consistency. After the clean build, the full Air
+  fixture passed `11 passed`, the EW contract file passed `5 passed`, and the
+  maintained demo reported launch/request steps `[42, 82]` with chaff
+  `[60, 59]` and flare `[30, 30]`. `py_compile` and `git diff --check` passed.
+- Evidence boundary: the maintained compiled Air action path now has a native
+  read-only resource report and proves chaff consumption after the native
+  release interval. Flare cadence, canonical action-mode admission, jammer
+  ownership, replay/multi-aircraft parity, and terminal EW closure remain
+  open. EW remains `entry_surface_incomplete`; Air remains
+  `playable_candidate`.
+- Continuation choice: retain clean rebuild as a gate for future shared DTO
+  layout changes, add a cadence-complete EW report (including flare), and keep
+  the action extension opt-in until scenario ownership and replay/roster gates
+  are closed.
