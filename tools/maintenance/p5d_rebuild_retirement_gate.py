@@ -60,6 +60,9 @@ def _stable_admission_fields(admission: Mapping[str, Any]) -> tuple[str, str, st
         raise RetirementGateError("durable rollout admission version is invalid")
     if admission.get("admissions_open") is not True or admission.get("writer_advancement_frozen") is not False:
         raise RetirementGateError("stable rollout admission is not open and unfrozen")
+    evidence_version = admission.get("evidence_version")
+    if evidence_version != version:
+        raise RetirementGateError("durable rollout evidence version differs from admission")
     if not isinstance(admission.get("evidence"), Mapping):
         raise RetirementGateError("durable rollout evidence projection is absent")
     evidence = admission["evidence"]
@@ -78,7 +81,7 @@ def _validate_retention(
     *,
     release_id: str,
     slot_version: int,
-) -> None:
+) -> set[str]:
     if retention.get("release_id") != release_id:
         raise RetirementGateError("rollback retention release identity differs")
     if retention.get("state") != "stable":
@@ -88,13 +91,15 @@ def _validate_retention(
     blobs = retention.get("blobs")
     if not isinstance(blobs, Mapping) or set(blobs) != set(_RETENTION_CLASSES):
         raise RetirementGateError("rollback retention blob projection is incomplete")
+    digests: set[str] = set()
     for name, expected_class in _RETENTION_CLASSES.items():
         row = blobs[name]
         if not isinstance(row, Mapping):
             raise RetirementGateError(f"rollback retention row is invalid for {name}")
         if row.get("retention_class") != expected_class:
             raise RetirementGateError(f"rollback retention class differs for {name}")
-        _require_digest(row.get("digest"), f"rollback retention digest for {name}")
+        digests.add(_require_digest(row.get("digest"), f"rollback retention digest for {name}"))
+    return digests
 
 
 def _validate_attestation(
@@ -104,6 +109,7 @@ def _validate_attestation(
     decision_id: str,
     decision_digest: str,
     inventory_digest: str,
+    retained_digests: set[str],
 ) -> dict[str, Any]:
     if not isinstance(attestation, Mapping):
         raise RetirementGateError("explicit production cutover attestation is required")
@@ -131,8 +137,18 @@ def _validate_attestation(
     if attestation["rollback_window_verified"] is not True:
         raise RetirementGateError("rollback window is not attested")
     _require_nonempty(attestation["attestation_id"], "attestation_id")
-    _require_digest(attestation["adoption_evidence_sha256"], "adoption evidence digest")
-    _require_digest(attestation["rollback_window_evidence_sha256"], "rollback-window evidence digest")
+    adoption_digest = _require_digest(
+        attestation["adoption_evidence_sha256"],
+        "adoption evidence digest",
+    )
+    rollback_digest = _require_digest(
+        attestation["rollback_window_evidence_sha256"],
+        "rollback-window evidence digest",
+    )
+    if adoption_digest not in retained_digests:
+        raise RetirementGateError("adoption evidence digest is not retained")
+    if rollback_digest not in retained_digests:
+        raise RetirementGateError("rollback-window evidence digest is not retained")
     return dict(attestation)
 
 
@@ -152,13 +168,18 @@ def build_retirement_proof(
     if inventory.get("production_callable_references") or inventory.get("python_binding_references"):
         raise RetirementGateError("rebuild production or Python callers remain")
     release_id, decision_id, decision_digest, slot_version = _stable_admission_fields(admission)
-    _validate_retention(retention, release_id=release_id, slot_version=slot_version)
+    retained_digests = _validate_retention(
+        retention,
+        release_id=release_id,
+        slot_version=slot_version,
+    )
     attestation = _validate_attestation(
         cutover_attestation,
         release_id=release_id,
         decision_id=decision_id,
         decision_digest=decision_digest,
         inventory_digest=str(inventory["inventory_sha256"]),
+        retained_digests=retained_digests,
     )
     return {
         "schema_version": SCHEMA_VERSION,

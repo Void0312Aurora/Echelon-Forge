@@ -27,6 +27,7 @@ def _stable_admission() -> dict[str, object]:
             },
             "payload_sha256": "a" * 64,
         },
+        "evidence_version": 7,
         "evidence": {
             "admissions_open": True,
             "writer_advancement_frozen": False,
@@ -58,8 +59,8 @@ def _attestation(inventory: dict[str, object]) -> dict[str, object]:
         "inventory_sha256": inventory["inventory_sha256"],
         "production_caller_cutover": True,
         "rollback_window_verified": True,
-        "adoption_evidence_sha256": "f" * 64,
-        "rollback_window_evidence_sha256": "1" * 64,
+        "adoption_evidence_sha256": "e" * 64,
+        "rollback_window_evidence_sha256": "e" * 64,
     }
 
 
@@ -123,6 +124,20 @@ def test_retirement_gate_rejects_inventory_drift() -> None:
         )
 
 
+def test_retirement_gate_rejects_unretained_attestation_evidence() -> None:
+    inventory = rebuild_inventory.load_fixture()
+    attestation = _attestation(inventory)
+    attestation["adoption_evidence_sha256"] = "f" * 64
+
+    with pytest.raises(retirement_gate.RetirementGateError, match="not retained"):
+        retirement_gate.build_retirement_proof(
+            admission=_stable_admission(),
+            retention=_stable_retention(),
+            inventory=inventory,
+            cutover_attestation=attestation,
+        )
+
+
 def test_retirement_gate_accepts_durable_stable_ledger_projection(tmp_path) -> None:
     ledger, token, release = _open_ledger(tmp_path)
     try:
@@ -146,8 +161,8 @@ def test_retirement_gate_accepts_durable_stable_ledger_projection(tmp_path) -> N
             "inventory_sha256": inventory["inventory_sha256"],
             "production_caller_cutover": True,
             "rollback_window_verified": True,
-            "adoption_evidence_sha256": "f" * 64,
-            "rollback_window_evidence_sha256": "1" * 64,
+            "adoption_evidence_sha256": retention["blobs"]["rollout_evidence"]["digest"],
+            "rollback_window_evidence_sha256": retention["blobs"]["rollout_evidence"]["digest"],
         }
 
         proof = retirement_gate.build_retirement_proof(
