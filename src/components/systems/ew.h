@@ -30,6 +30,7 @@ struct RWR {
     double sensitivity_dbm;             // Min detectable signal
     std::vector<uint64_t> detected_radar_ids; // IDs of painting radars
     std::vector<uint64_t> locking_radar_ids;  // IDs of locking (STT) radars
+    std::vector<uint64_t> missile_launch_source_ids; // IDs of launch platforms detected by MAWS
     // bool is_locked; // Removed in favor of locking_radar_ids
     bool is_missile_launch;             // MAWS (Missile Approach) warning
 };
