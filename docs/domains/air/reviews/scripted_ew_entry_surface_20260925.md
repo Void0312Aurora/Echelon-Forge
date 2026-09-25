@@ -13,20 +13,21 @@
 | EW data | `examples/config/database/aircraft/modules/ew_suites/gen4_standard.json` declares an RWR, a 1000 W noise-barrage jammer, chaff/flare counts, a release interval, and auto mode. The loader now preserves `ew_suite_ref` through the deferred materialize boundary. | Database data can now reach native EW component initialization for spawned units, but it still does not admit a maintained scripted EW action path. |
 | Native components | `src/components/systems/ew.h` defines `Jammer`, `Countermeasures`, `RWR`, `EmitterDetection`, and `ESMReceiver`. | The component vocabulary can carry EW state, ESM detections, and resource/cooldown data. |
 | Native EW systems | `src/systems/systems/ew_system.h` runs chaff release, flare release, and lifetime management. | Countermeasure effects have a system owner; jammer activation and ESM decision effects do not have a comparable command system in this header. |
-| Observation | `gym_envs/universal_env_parts/observations.py` exports `rwr` rows as bearing, signal strength, lock, and launch-warning fields; instruments also expose `rwr_active`. Native MAWS now records active inbound missiles by launch platform and exposes source-specific `is_launch` rows through `SimulationKernel::get_agent_observation`. | A scripted agent can consume declared RWR/MAWS evidence without World Truth. ESM/jammer state is not part of the maintained observation payload shown here. |
+| Observation | `gym_envs/universal_env_parts/observations.py` exports `rwr` rows as bearing, signal strength, lock, and launch-warning fields; instruments also expose `rwr_active`. Native MAWS now records active inbound missiles by launch platform and exposes source-specific `is_launch` rows through `SimulationKernel::get_agent_observation`. The maintained `InstrumentState` read surface now projects chaff/flare counts, release interval, last release time, and auto mode, with `-1` for an absent component. | A scripted agent can consume declared RWR/MAWS evidence without World Truth, and a maintained report can read native countermeasure state. ESM/jammer state is not part of the maintained observation payload shown here. |
 | Command transport | `PilotAction` exposes `program_chaff` and `program_flare`; `legacy_command_bridge.h` resolves those fields into countermeasure commands. | The low-level transport exists, but it is not exposed by the maintained `full` or `air_combat_hybrid_v1` action vectors. |
 | Current action mapping | `gym_envs/universal_env_parts/actions.py` sets `program_chaff` and `program_flare` to `False` for the maintained action modes. | A scripted EW model cannot currently perform countermeasure actions through the normal Air action path. There is no maintained jammer action field. |
-| Versioned action extension | `air_ew_hybrid_v1` adds two explicit tail fields for chaff and flare and maps them to `PilotAction`; it remains outside the canonical `python.env_config.ACTION_MODES` list until a scenario/config owner and acceptance gate are admitted. `tools/diagnostics/air_ew_scripted_demo.py` now drives this mode with the registered scripted EW action model. | The transport shape is testable without changing existing full/hybrid indices. The maintained demo observed launch-warning rows at steps 42 and 82 and requested both countermeasures at those steps. RuntimeFacade still exposes no native countermeasure inventory/report, so action acceptance and inventory decrement remain unproven on this path. |
+| Versioned action extension | `air_ew_hybrid_v1` adds two explicit tail fields for chaff and flare and maps them to `PilotAction`; it remains outside the canonical `python.env_config.ACTION_MODES` list until a scenario/config owner and acceptance gate are admitted. `tools/diagnostics/air_ew_scripted_demo.py` drives this mode with the registered scripted EW action model. | The transport shape is testable without changing existing full/hybrid indices. The maintained demo observed launch-warning rows at steps 42 and 82, requested both countermeasures at those steps, and reported native chaff consumption from 60 to 59 after the release interval. Flare remains unconsumed in that trace because both requests share the native release cadence. |
 | Scripted producer | `python/tasking_contracts/air_scripted_ew.py` is registered in the aggregate Air registry as `air.ew.rwr_response_scripted` (`adapter`, `air_ew_controller`). It emits a typed RWR-derived intent and marks `native_action_owner_required`. | The producer is a contract/decision slice only. It is not an accepted countermeasure or jammer action, and it does not change the EW capability label. |
 
 ## Boundary
 
 The current evidence supports an EW **observation** role, including a native
 MAWS launch-warning fact, a database-backed EW **state** vocabulary, a typed
-RWR-derived scripted producer, and a direct native countermeasure resource
-gate. It does not support a playable EW decision claim. The producer output is
-not consumed by a canonical maintained Air action path, and jammer
-command/state/report ownership remains incomplete.
+RWR-derived scripted producer, a maintained compiled countermeasure action
+trace, and native countermeasure state reporting. It does not support a
+playable EW decision claim. The 14-element action extension remains outside
+the canonical action-mode admission, and jammer command/state/report
+ownership remains incomplete.
 
 ## Direct observation probe
 
@@ -58,9 +59,10 @@ The maintained demo command
 head-on fixture, compiled `WorldBatchVecEnv`, `air_ew_hybrid_v1`, and the
 registered `air.ew.rwr_action_scripted` model. It observed launch-warning
 steps `[42, 82]` and emitted countermeasure request steps `[42, 82]`. The
-episode remained running with `native_countermeasure_state` explicitly marked
-`not_exposed_by_runtime_facade`; this is transport/demo evidence, not native
-resource-consumption or playable EW evidence.
+instrument report observed chaff `[60, 59]` at the two request steps and flare
+`30` at both steps, matching the native release interval. The episode remained
+running; this is maintained action/resource evidence, not terminal or
+playable EW evidence.
 
 The EW path must remain Air-owned for jammer modes, RWR/ESM interpretation,
 countermeasure resources, release cadence, and threat-response doctrine. Only
@@ -74,18 +76,21 @@ envelope may be shared with other domains.
    confidence, lock semantics, and negative controls for hidden target truth
    remain to be maintained and documented.
 2. **Countermeasure action contract:** the versioned `air_ew_hybrid_v1`
-   extension now exposes chaff/flare request fields and maps them to
-   `PilotAction` without changing existing full/hybrid indices. A maintained
-   scenario/config owner, resource/report evidence, and canonical action-mode
-   admission remain open.
+   extension exposes chaff/flare request fields and maps them to `PilotAction`
+   without changing existing full/hybrid indices. The compiled head-on demo
+   and Air fixture now show launch-warning-driven requests and native chaff
+   consumption through the maintained WorldBatch path. A scenario/config
+   owner, flare/cadence report, and canonical action-mode admission remain
+   open.
 3. **Jammer command contract:** decide whether jammer activation is a direct
    Air intent or a command-layer product, then add a native owner for
    activation, bandwidth/angle/type, power/resource limits, and shutdown.
 4. **Direct scenario gate:** build a lock/launch-warning scenario with finite
    inventory, release interval, communication state, and a report that proves
    the scripted action was accepted and changed native EW state. Native
-   launch-warning observation and low-level inventory decrement are now
-   verified independently; a maintained scripted-action report remains open.
+   launch-warning observation, low-level inventory decrement, and maintained
+   chaff consumption are now verified independently; a complete cadence,
+   flare, and terminal scripted-action report remains open.
 5. **Replay and multi-aircraft gate:** repeat the EW scenario under reset/replay
    and route distinct EW roles through the existing cooperative roster before
    any `playable` label.
