@@ -89,6 +89,7 @@ def run_demo(
     )
     launch_warning_steps: list[int] = []
     countermeasure_request_steps: list[int] = []
+    countermeasure_state_samples: list[dict[str, Any]] = []
     last_info: dict[str, Any] = {}
     last_runtime_step = None
     terminated = False
@@ -128,6 +129,18 @@ def run_demo(
                 countermeasure_request_steps.append(step)
             observation_batch, _rewards, dones, infos = vec_env.step(action.reshape(1, -1))
             last_info = dict(infos[0]) if infos else {}
+            instrument = vec_env.envs[0].last_inst
+            if action.size >= 14 and bool(np.any(action[12:14] > 0.5)):
+                countermeasure_state_samples.append(
+                    {
+                        "step": step,
+                        "chaff_remaining": int(getattr(instrument, "countermeasure_chaff_remaining", -1)),
+                        "flare_remaining": int(getattr(instrument, "countermeasure_flare_remaining", -1)),
+                        "last_release_time_s": float(
+                            getattr(instrument, "countermeasure_last_release_time_s", -1.0)
+                        ),
+                    }
+                )
             steps_run = step
             terminated = bool(dones[0]) if len(dones) else False
             truncated = bool(last_info.get("truncated", False))
@@ -146,11 +159,12 @@ def run_demo(
                 "termination_reason": str(last_info.get("termination_reason", "")),
                 "launch_warning_steps": launch_warning_steps,
                 "countermeasure_request_steps": countermeasure_request_steps,
+                "countermeasure_state_samples": countermeasure_state_samples,
                 "scripted_runtime_identity": agent.replay_identity,
                 "scripted_runtime_decisions": int(last_runtime_step.report.decision_index)
                 if last_runtime_step is not None
                 else 0,
-                "native_countermeasure_state": "not_exposed_by_runtime_facade",
+                "native_countermeasure_state": "instrument_state_projection",
             }
         )
     finally:

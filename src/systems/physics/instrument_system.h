@@ -236,6 +236,23 @@ inline void register_instrument_system(flecs::world &ecs) {
                     const Ammo *ammo = it.entity(i).get<Ammo>();
                     inst[i].missiles_remaining = ammo ? ammo->missiles_remaining : 0;
 
+                    const Countermeasures *countermeasures = it.entity(i).get<Countermeasures>();
+                    if (countermeasures) {
+                        inst[i].countermeasure_chaff_remaining = countermeasures->chaff_count;
+                        inst[i].countermeasure_flare_remaining = countermeasures->flare_count;
+                        inst[i].countermeasure_release_interval_s =
+                            countermeasures->release_interval;
+                        inst[i].countermeasure_last_release_time_s =
+                            countermeasures->last_release_time;
+                        inst[i].countermeasure_auto_mode = countermeasures->auto_mode;
+                    } else {
+                        inst[i].countermeasure_chaff_remaining = -1;
+                        inst[i].countermeasure_flare_remaining = -1;
+                        inst[i].countermeasure_release_interval_s = -1.0;
+                        inst[i].countermeasure_last_release_time_s = -1.0;
+                        inst[i].countermeasure_auto_mode = false;
+                    }
+
                     // 5. EGI / Navigation
                     const EGI *egi = it.entity(i).get<EGI>();
                     if (egi) {
