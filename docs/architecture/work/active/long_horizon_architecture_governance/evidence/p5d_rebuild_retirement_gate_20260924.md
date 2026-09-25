@@ -41,7 +41,7 @@ python -m ruff check `
 git diff --check
 ```
 
-Results: **18 tests passed**, Ruff passed, and the diff check passed. The
+Results: **20 tests passed**, Ruff passed, and the diff check passed. The
 positive gate test now consumes an actual durable SQLite `stable` admission
 and retention projection, in addition to the contract-fixture checks. The
 tests reject pre-stable admissions, missing or mismatched attestation,

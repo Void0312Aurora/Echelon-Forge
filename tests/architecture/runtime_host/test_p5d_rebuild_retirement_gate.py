@@ -115,6 +115,38 @@ def test_retirement_gate_rejects_pre_stable_rollout() -> None:
         )
 
 
+def test_retirement_gate_rejects_misbound_evidence_identity() -> None:
+    inventory = rebuild_inventory.load_fixture()
+    for field, value, message in (
+        ("release_id", "release-other", "release identity"),
+        ("decision_id", "decision-other", "decision identity"),
+        ("decision_payload_sha256", "c" * 64, "decision digest"),
+    ):
+        admission = _stable_admission()
+        admission["evidence"] = {**admission["evidence"], field: value}
+        with pytest.raises(retirement_gate.RetirementGateError, match=message):
+            retirement_gate.build_retirement_proof(
+                admission=admission,
+                retention=_stable_retention(),
+                inventory=inventory,
+                cutover_attestation=_attestation(inventory),
+            )
+
+
+def test_retirement_gate_rejects_boolean_evidence_version() -> None:
+    inventory = rebuild_inventory.load_fixture()
+    admission = _stable_admission()
+    admission["evidence_version"] = True
+
+    with pytest.raises(retirement_gate.RetirementGateError, match="evidence version"):
+        retirement_gate.build_retirement_proof(
+            admission=admission,
+            retention=_stable_retention(),
+            inventory=inventory,
+            cutover_attestation=_attestation(inventory),
+        )
+
+
 def test_retirement_gate_returns_production_authority_only_proof() -> None:
     inventory = rebuild_inventory.load_fixture()
     proof = retirement_gate.build_retirement_proof(

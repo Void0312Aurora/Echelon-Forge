@@ -70,6 +70,12 @@ def _stable_admission_fields(
     if not isinstance(admission.get("evidence"), Mapping):
         raise RetirementGateError("durable rollout evidence projection is absent")
     evidence = admission["evidence"]
+    if evidence.get("release_id") != release_id:
+        raise RetirementGateError("durable rollout evidence release identity differs")
+    if evidence.get("decision_id") != decision_id:
+        raise RetirementGateError("durable rollout evidence decision identity differs")
+    if evidence.get("decision_payload_sha256") != decision_digest:
+        raise RetirementGateError("durable rollout evidence decision digest differs")
     if evidence.get("admissions_open") is not True or evidence.get("writer_advancement_frozen") is not False:
         raise RetirementGateError("stable rollout evidence is not open and unfrozen")
     for field in (
