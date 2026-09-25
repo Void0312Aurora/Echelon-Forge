@@ -15,9 +15,10 @@
       "evidence": [
         "docs/architecture/work/active/long_horizon_architecture_governance/decisions/p1c_rollout_operations_and_security_decision_20260825.md",
         "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5d_facade_caller_migration_20260923.md",
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5d_maintained_caller_parity_20260925.md",
         "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p7b_zero_inventory_retirement_20260924.md"
       ],
-      "residual": "Windows/MSVC local CPU/in-process is the only locally qualified row; Linux/package and production caller cutover remain partial."
+      "residual": "The bounded maintained-caller parity gate is complete for the local CPU topology; Linux/package qualification and production caller cutover remain partial."
     },
     {
       "id": "P8-02-contract-replay-packaging",
