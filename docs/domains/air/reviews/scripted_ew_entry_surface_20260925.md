@@ -108,6 +108,12 @@ envelope may be shared with other domains.
 5. **Replay and multi-aircraft gate:** repeat the EW scenario under reset/replay
    and route distinct EW roles through the existing cooperative roster before
    any `playable` label.
+6. **Cooperative hostile-threat owner:** before staging a hostile two-aircraft
+   EW scenario, define whether scripted opponents are updated once per shared
+   world or through a slot-safe owner. The current cooperative loop constructs
+   per-slot loaders and calls the behavior hook per slot, so the no-threat
+   Lead/Wing resource-routing test remains a proxy rather than hostile combat
+   evidence.
 
 ## Non-goals for this review
 

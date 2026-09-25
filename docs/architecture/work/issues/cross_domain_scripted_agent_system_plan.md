@@ -1476,3 +1476,25 @@ to a dedicated owner-local evidence document.
 - Continuation choice: retain this as a multi-aircraft transport gate, then
   select or stage a database-backed two-aircraft threat scenario before
   claiming cooperative EW parity or promoting the action extension.
+
+### 2026-09-25 — Cooperative hostile-threat behavior-owner residual
+
+- Read-only finding: `CooperativeWorldBatchVecEnv` builds an isolated
+  `ScenarioLoader` for every controlled roster slot, while each loader builds
+  scripted opponents from the shared world layout. The cooperative post-step
+  loop then invokes the behavior update hook once per slot. A future hostile
+  two-aircraft scenario with scripted red units therefore needs an explicit
+  world-level owner or a slot-safe opponent update contract before its
+  runtime evidence can be trusted.
+- Evidence: the relevant source path is
+  `python/rl/runtime/cooperative_world_batch_vec_env.py` (`_build_slot_loader`
+  and `_step_wait_refresh_state_and_behavior`) plus
+  `gym_envs/scenario_loader/behavior_runtime/scripted_opponents.py`
+  (`build_from_loader`/`update_scripted_opponents`). This is an ownership
+  analysis, not a claim that an unbuilt 2v2 scenario has already failed.
+- Alternative used: keep the no-threat Lead/Wing cooperative scenario as the
+  bounded action-tail/resource-isolation proxy and defer hostile 2v2 staging
+  until the owner decision is made. No capability label is promoted.
+- Gate impact: cooperative hostile-threat EW replay, formation combat, and
+  large-scale Air demonstration remain open; Air stays `playable_candidate`
+  and EW stays `entry_surface_incomplete`.
