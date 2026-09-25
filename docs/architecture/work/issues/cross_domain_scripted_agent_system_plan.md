@@ -1432,3 +1432,25 @@ to a dedicated owner-local evidence document.
   the existing binding DTO surface or missile release behavior. This is a
   compatibility recheck, not replay, flare-cadence, jammer, multi-aircraft,
   or playable promotion evidence.
+
+### 2026-09-25 — Air EW maintained replay trace
+
+- Change batch: add `tests/runtime/air_combat/test_air_ew_replay.py` to run the
+  maintained compiled EW demo twice with the same scenario, seed, and doctrine.
+  The test compares termination/report fields, source-driven warning steps,
+  countermeasure request steps, native InstrumentState samples, runtime
+  decision count, and scripted runtime identity.
+- Focused verification: `CMO_BUILD_DIR=build-scripted-agent python -m pytest
+  tests/runtime/air_combat/test_air_ew_replay.py -q` passed `1 passed` in
+  `12.28s`. The paired runs both produced warning/request steps `[42, 82]`,
+  chaff `[60, 59]`, flare `[30, 30]`, and `120` decisions. `git diff --check`
+  passed before commit.
+- Evidence boundary: this closes a bounded same-process two-run replay check
+  for the opt-in EW demo trace. It does not establish canonical action-mode
+  admission, reset/replay across cooperative roster members, flare cadence
+  under independent requests, jammer state, or terminal EW closure. EW
+  remains `entry_surface_incomplete`; Air remains `playable_candidate`.
+- Continuation choice: preserve the replay test as a regression gate while
+  keeping the action extension opt-in; next EW work should close a
+  cadence-complete report and then exercise distinct roles through the
+  cooperative roster.
