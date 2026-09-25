@@ -27,6 +27,8 @@ The complete local durable rollout lifecycle/retention check and the separate
 fail-closed rebuild-retirement gate are recorded in [the lifecycle controller
 packet](evidence/p5d_sqlite_rollout_controller_20260923.md) and [the rebuild
 retirement gate packet](evidence/p5d_rebuild_retirement_gate_20260924.md).
+The consolidated branch-side P5-D gate matrix is recorded in [the local gate
+matrix](evidence/p5d_local_gate_matrix_20260925.md).
 The pre-cutover rebuild-unreachability inventory, which records zero
 maintained callers and keeps rebuild unretired, is recorded in [the rebuild
 packet](evidence/p5d_rebuild_unreachability_20260923.md).

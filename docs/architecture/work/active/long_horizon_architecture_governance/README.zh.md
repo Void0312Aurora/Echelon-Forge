@@ -23,6 +23,8 @@ mandatory production-state release/receipt binding、ArtifactLedger durable roll
 rebuild-retirement gate 见
 [lifecycle controller evidence](evidence/p5d_sqlite_rollout_controller_20260923.md)
 与 [rebuild retirement gate evidence](evidence/p5d_rebuild_retirement_gate_20260924.md)。
+分支内 P5-D 门禁汇总见
+[local gate matrix](evidence/p5d_local_gate_matrix_20260925.md)。
 cutover 前的 rebuild-unreachability inventory（维护生产调用方与 Python
 binding 均为零，但尚未退役 rebuild）见
 [rebuild evidence](evidence/p5d_rebuild_unreachability_20260923.md)。
