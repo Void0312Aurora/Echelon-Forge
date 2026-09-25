@@ -998,6 +998,49 @@ class CooperativeVecEnvTaskingTests(unittest.TestCase):
       finally:
         vec_env.close()
 
+  def test_cooperative_world_batch_vec_env_routes_ew_resources_per_roster_slot(self) -> None:
+    if CooperativeWorldBatchVecEnv is None:
+      self.skipTest("gymnasium is not available in the active interpreter")
+    with tempfile.TemporaryDirectory() as tmpdir:
+      scenario_path = f"{tmpdir}/cooperative_scenario.json"
+      with open(scenario_path, "w", encoding="utf-8") as f:
+        scenario = _cooperative_cruise_scenario()
+        scenario["meta"]["max_steps"] = 80
+        json.dump(scenario, f, ensure_ascii=True)
+
+      vec_env = CooperativeWorldBatchVecEnv(
+        scenario_path=scenario_path,
+        n_envs=1,
+        include_visual=False,
+        include_proprio=False,
+        action_mode="air_ew_hybrid_v1",
+        mission_obs_mode="basic",
+        execution_step_runtime_mode="compiled",
+        flight_shaping_backend="compiled",
+        worker_threads=1,
+      )
+      try:
+        vec_env.seed(20260516)
+        vec_env.reset()
+        self.assertEqual(tuple(vec_env.action_space.shape), (14,))
+        actions = np.zeros((2, 14), dtype=np.float32)
+        actions[0, 12] = 1.0
+        actions[1, 13] = 1.0
+        for _step in range(42):
+          _obs, _rewards, dones, infos = vec_env.step(actions)
+
+        self.assertEqual([info["entity_name"] for info in infos], ["Lead", "Wing"])
+        self.assertEqual([info["formation_role_id"] for info in infos], ["ElementLead", "Wingman"])
+        self.assertFalse(any(bool(done) for done in dones))
+        lead = vec_env._slots[0].last_inst
+        wing = vec_env._slots[1].last_inst
+        self.assertLess(int(lead.countermeasure_chaff_remaining), 60)
+        self.assertEqual(int(lead.countermeasure_flare_remaining), 30)
+        self.assertEqual(int(wing.countermeasure_chaff_remaining), 60)
+        self.assertLess(int(wing.countermeasure_flare_remaining), 30)
+      finally:
+        vec_env.close()
+
 
 
 if __name__ == "__main__":
