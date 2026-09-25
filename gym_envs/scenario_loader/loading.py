@@ -197,7 +197,14 @@ def mission_cmd_has_valid_runtime_waypoint_cache(mission_cmd) -> bool:
     return bool(mission_cmd.get("_runtime_waypoint_cache_valid", False)) and isinstance(cached_waypoints, list)
 
 
-def finalize_loaded_world(loader, *, initial_truth=None, initial_inst=None, sync_to_kernel: bool = True):
+def finalize_loaded_world(
+    loader,
+    *,
+    initial_truth=None,
+    initial_inst=None,
+    sync_to_kernel: bool = True,
+    build_scripted_opponents: bool = True,
+):
     loader.steps = 0
     loader.captured_time = 0.0
     loader._reset_behavior_phase_owner()
@@ -259,7 +266,8 @@ def finalize_loaded_world(loader, *, initial_truth=None, initial_inst=None, sync
 
     loader._parse_waypoints()
     loader.primary_target_id, loader.primary_target_name = _resolve_primary_target(loader)
-    loader.build_scripted_opponents()
+    if build_scripted_opponents:
+        loader.build_scripted_opponents()
 
     if loader.agent_id is not None:
         truth = initial_truth if initial_truth is not None else get_policy_agent_observation(loader)
