@@ -106,11 +106,16 @@ The manual-takeoff contract's test controller also gained bounded roll-rate
 feedback, preserving its original altitude/speed thresholds; the contract now
 passes in **519** steps under the randomized takeoff scenario.
 
-## Remaining P5-D work
+## Follow-up status
 
-This slice proves caller construction, explicit-plan hygiene, and contract-path routing only. P5-D
-still requires release-manifest/RunReceipt binding, same-release checkpoint
-recovery, stop/restart package rollback, support-row telemetry and SLO
-evidence, a bounded canary/backout drill, and retirement or explicit
-quarantine of the in-kernel rebuild authority. Production cutover remains
-closed until those gates pass.
+The bounded maintained-caller parity claim from this slice is now backed by the
+dedicated executable gate and evidence packet
+([`p5d_maintained_caller_parity_20260925.md`](p5d_maintained_caller_parity_20260925.md)).
+That gate covers the maintained Python/native set and keeps diagnostic,
+compatibility, test-only, and P4-C build-tree surfaces explicitly classified;
+it does not promote those residual surfaces to production truth.
+
+The remaining P5-D work is operational rather than another untracked caller
+migration: authorized production-canary publication and cutover attestation,
+representative release-cadence evidence, production rollback-window operation,
+and activation of the fail-closed rebuild-retirement proof after those inputs.
