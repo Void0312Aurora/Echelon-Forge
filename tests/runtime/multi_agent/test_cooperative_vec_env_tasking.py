@@ -26,6 +26,7 @@ except ModuleNotFoundError: # pragma: no cover
 import python.rl.runtime.cooperative_world_batch_vec_env as cooperative_vec_env_module # noqa: E402
 from python.rl.runtime.multi_agent_runtime import MultiAgentWorldRuntimeView # noqa: E402
 from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index # noqa: E402
+from python.tasking_contracts.air_scripted_ew import AirScriptedEWActionModel # noqa: E402
 
 
 def _cooperative_cruise_scenario() -> dict:
@@ -193,6 +194,62 @@ def _cooperative_interval_takeoff_scenario() -> dict:
       ],
     },
   }
+
+
+def _cooperative_air_2v2_scripted_opponent_scenario() -> dict:
+  scenario = _cooperative_cruise_scenario()
+  scenario["scenario_name"] = "cooperative_air_2v2_scripted_ew_smoke"
+  scenario["meta"]["max_steps"] = 240
+  scenario["mission_command"]["assigned_target_name"] = "Red_Lead"
+  scenario["entities"].extend(
+    [
+      {
+        "name": "Red_Lead",
+        "type": "F-16C_Block50",
+        "side": "Red",
+        "is_agent": False,
+        "pos": [0.0, 10000.0, 1400.0],
+        "vel": [0.0, -220.0, 0.0],
+        "heading": 180.0,
+        "scripted_agent": {
+          "name": "red_scripted_agent",
+          "target_name": "Lead",
+          "cruise_speed_mps": 220.0,
+          "attack_speed_mps": 260.0,
+          "defensive_speed_mps": 290.0,
+          "threat_range_m": 9000.0,
+          "merge_range_m": 3500.0,
+          "fire_range_m": 9000.0,
+          "beam_offset_deg": 85.0,
+        },
+        "ammo": {"missiles_remaining": 4, "max_missiles": 4},
+        "weapon_cooldown": {"cooldown_s": 0.75, "last_fire_time": -1.0},
+      },
+      {
+        "name": "Red_Wing",
+        "type": "F-16C_Block50",
+        "side": "Red",
+        "is_agent": False,
+        "pos": [-120.0, 10180.0, 1400.0],
+        "vel": [0.0, -220.0, 0.0],
+        "heading": 180.0,
+        "scripted_agent": {
+          "name": "red_scripted_agent",
+          "target_name": "Wing",
+          "cruise_speed_mps": 220.0,
+          "attack_speed_mps": 260.0,
+          "defensive_speed_mps": 290.0,
+          "threat_range_m": 9000.0,
+          "merge_range_m": 3500.0,
+          "fire_range_m": 9000.0,
+          "beam_offset_deg": 85.0,
+        },
+        "ammo": {"missiles_remaining": 4, "max_missiles": 4},
+        "weapon_cooldown": {"cooldown_s": 0.75, "last_fire_time": -1.0},
+      },
+    ]
+  )
+  return scenario
 
 
 def _cooperative_takeoff_to_cruise_scenario() -> dict:
@@ -1039,6 +1096,104 @@ class CooperativeVecEnvTaskingTests(unittest.TestCase):
         self.assertEqual(int(wing.countermeasure_chaff_remaining), 60)
         self.assertLess(int(wing.countermeasure_flare_remaining), 30)
       finally:
+        vec_env.close()
+
+  def test_cooperative_world_batch_vec_env_runs_scripted_ew_against_two_opponents(self) -> None:
+    if CooperativeWorldBatchVecEnv is None:
+      self.skipTest("gymnasium is not available in the active interpreter")
+    with tempfile.TemporaryDirectory() as tmpdir:
+      scenario_path = f"{tmpdir}/cooperative_air_2v2.json"
+      with open(scenario_path, "w", encoding="utf-8") as f:
+        json.dump(_cooperative_air_2v2_scripted_opponent_scenario(), f, ensure_ascii=True)
+
+      vec_env = CooperativeWorldBatchVecEnv(
+        scenario_path=scenario_path,
+        n_envs=1,
+        include_visual=False,
+        include_proprio=False,
+        action_mode="air_ew_hybrid_v1",
+        mission_obs_mode="basic",
+        execution_step_runtime_mode="compiled",
+        flight_shaping_backend="compiled",
+        worker_threads=1,
+      )
+      models = [AirScriptedEWActionModel(dt=0.05), AirScriptedEWActionModel(dt=0.05)]
+      try:
+        vec_env.seed(20260516)
+        observation_batch = vec_env.reset()
+        self.assertGreaterEqual(len(vec_env._slots[0].loader.scripted_opponents), 2)
+        self.assertEqual(len(vec_env._slots[1].loader.scripted_opponents), 0)
+        owner_loader = vec_env._slots[0].loader
+        self.assertEqual(
+          {
+            int(report["target_id"])
+            for report in owner_loader.scripted_opponent_reports.values()
+          },
+          {
+            int(owner_loader.entities["Lead"]),
+            int(owner_loader.entities["Wing"]),
+          },
+        )
+        models[0].reset(
+          context={
+            "observation": {key: np.asarray(value)[0] for key, value in observation_batch.items()},
+            "phase_name": "stable_flight",
+            "response_doctrine": "countermeasure_ready",
+          }
+        )
+        models[1].reset(
+          context={
+            "observation": {key: np.asarray(value)[1] for key, value in observation_batch.items()},
+            "phase_name": "stable_flight",
+            "response_doctrine": "countermeasure_ready",
+          }
+        )
+
+        launch_warning_steps = [[], []]
+        request_steps = [[], []]
+        resource_snapshot = None
+        for step in range(1, 241):
+          actions = []
+          for slot_index, model in enumerate(models):
+            observation = {key: np.asarray(value)[slot_index] for key, value in observation_batch.items()}
+            rwr = np.asarray(observation.get("rwr", []), dtype=np.float32).reshape(-1, 4)
+            if rwr.size and bool(np.any(rwr[:, 3] > 0.5)):
+              launch_warning_steps[slot_index].append(step)
+            action = model.decide(
+              observation=observation,
+              context={
+                "phase_name": "stable_flight",
+                "response_doctrine": "countermeasure_ready",
+              },
+              dt=0.05,
+            )
+            if bool(np.any(np.asarray(action[12:14]) > 0.5)):
+              request_steps[slot_index].append(step)
+            actions.append(action)
+          observation_batch, _rewards, dones, _infos = vec_env.step(np.asarray(actions, dtype=np.float32))
+          current_resources = [
+            int(getattr(vec_env._slots[index].last_inst, "countermeasure_chaff_remaining", -1))
+            for index in (0, 1)
+          ]
+          if all(launch_warning_steps) and all(
+            current_resources[index] < 60
+            for index in (0, 1)
+          ):
+            resource_snapshot = list(current_resources)
+            break
+          if any(bool(done) for done in dones):
+            break
+
+        self.assertTrue(launch_warning_steps[0])
+        self.assertTrue(launch_warning_steps[1])
+        self.assertTrue(request_steps[0])
+        self.assertTrue(request_steps[1])
+        self.assertIsNotNone(resource_snapshot)
+        self.assertLess(int(resource_snapshot[0]), 60)
+        self.assertLess(int(resource_snapshot[1]), 60)
+      finally:
+        for model in models:
+          model.close()
         vec_env.close()
 
 
