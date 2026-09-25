@@ -242,6 +242,29 @@ class GroundInfantryTransition:
     trace: dict[str, Any]
 
 
+@dataclass(frozen=True)
+class GroundBridgeRoutePlan:
+    """Deterministic proxy-only route around a river using declared bridge geometry."""
+
+    passable: bool
+    waypoints_xy_m: tuple[tuple[float, float], ...]
+    total_distance_m: float
+    bridge_segment_index: int | None
+    blocked_reason: str | None
+    authority: str = "engineering_proxy_only"
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "passable": self.passable,
+            "waypoints_xy_m": [list(point) for point in self.waypoints_xy_m],
+            "total_distance_m": self.total_distance_m,
+            "bridge_segment_index": self.bridge_segment_index,
+            "blocked_reason": self.blocked_reason,
+            "authority": self.authority,
+            "route_boundary": "declared_bridge_proxy_only",
+        }
+
+
 def _distance(a: tuple[float, float], b: tuple[float, float]) -> float:
     return math.hypot(float(a[0]) - float(b[0]), float(a[1]) - float(b[1]))
 
@@ -668,6 +691,119 @@ class GroundFieldProxy:
             if _segment_near_geometry(start, end, geometry, width * 0.5):
                 return True
         return False
+
+    def _proxy_segment_blocked_reason(
+        self,
+        start: tuple[float, float],
+        end: tuple[float, float],
+        *,
+        bridge_intent: bool,
+    ) -> str | None:
+        length = _distance(start, end)
+        samples = max(1, int(math.ceil(length / 2.0)))
+        water_seen = False
+        for index in range(samples + 1):
+            fraction = index / samples
+            point = (
+                start[0] + (end[0] - start[0]) * fraction,
+                start[1] + (end[1] - start[1]) * fraction,
+            )
+            sample = self.sample(*point)
+            if not sample.known:
+                return "outside_map_extent" if self._grid_index(*point) is None else "unknown_terrain"
+            if sample.landcover_code == 80 or "river_corridor" in sample.semantic_kinds:
+                water_seen = True
+        if water_seen and not (bridge_intent and self._bridge_hit(start, end)):
+            return "river_crossing_requires_bridge_intent"
+        return None
+
+    def plan_bridge_route(
+        self,
+        start_xy_m: tuple[float, float],
+        goal_xy_m: tuple[float, float],
+    ) -> GroundBridgeRoutePlan:
+        """Plan a short proxy polyline through declared bridge metadata only.
+
+        This is intentionally not a route graph or native passability owner. It
+        enumerates declared bridge overlay geometry and returns a replayable
+        engineering proxy plan; callers must keep the returned authority label.
+        """
+
+        start = (_finite(start_xy_m[0], "start_x_m"), _finite(start_xy_m[1], "start_y_m"))
+        goal = (_finite(goal_xy_m[0], "goal_x_m"), _finite(goal_xy_m[1], "goal_y_m"))
+        direct_reason = self._proxy_segment_blocked_reason(start, goal, bridge_intent=False)
+        if direct_reason is None:
+            return GroundBridgeRoutePlan(
+                passable=True,
+                waypoints_xy_m=(goal,),
+                total_distance_m=_distance(start, goal),
+                bridge_segment_index=None,
+                blocked_reason=None,
+            )
+
+        if direct_reason not in {"river_crossing_requires_bridge_intent"}:
+            return GroundBridgeRoutePlan(
+                passable=False,
+                waypoints_xy_m=(),
+                total_distance_m=0.0,
+                bridge_segment_index=None,
+                blocked_reason=direct_reason,
+            )
+
+        candidates: list[GroundBridgeRoutePlan] = []
+        for entry in self._entries:
+            if not isinstance(entry, Mapping) or entry.get("overlay_kind") != "bridge_crossing":
+                continue
+            geometry = entry.get("geometry")
+            if not isinstance(geometry, Mapping):
+                continue
+            start_anchor = _closest_point_on_geometry(start, geometry)
+            goal_anchor = _closest_point_on_geometry(goal, geometry)
+            if start_anchor is None or goal_anchor is None:
+                continue
+            raw_points = (start_anchor, goal_anchor, goal)
+            waypoints: list[tuple[float, float]] = []
+            for point in raw_points:
+                if not waypoints or _distance(waypoints[-1], point) > 1.0e-6:
+                    waypoints.append(point)
+            bridge_segment_index: int | None = None
+            total_distance = 0.0
+            blocked_reason: str | None = None
+            for index, (segment_start, segment_end) in enumerate(
+                zip((start,) + tuple(waypoints), waypoints)
+            ):
+                total_distance += _distance(segment_start, segment_end)
+                segment_reason = self._proxy_segment_blocked_reason(
+                    segment_start,
+                    segment_end,
+                    bridge_intent=True,
+                )
+                if segment_reason is not None:
+                    blocked_reason = segment_reason
+                    break
+                if self._water_hit(segment_start, segment_end) and self._bridge_hit(
+                    segment_start, segment_end
+                ):
+                    bridge_segment_index = index
+            if blocked_reason is None:
+                candidates.append(
+                    GroundBridgeRoutePlan(
+                        passable=True,
+                        waypoints_xy_m=tuple(waypoints),
+                        total_distance_m=total_distance,
+                        bridge_segment_index=bridge_segment_index,
+                        blocked_reason=None,
+                    )
+                )
+        if candidates:
+            return min(candidates, key=lambda plan: plan.total_distance_m)
+        return GroundBridgeRoutePlan(
+            passable=False,
+            waypoints_xy_m=(),
+            total_distance_m=0.0,
+            bridge_segment_index=None,
+            blocked_reason="declared_bridge_route_unavailable",
+        )
 
     def _observation(
         self,

@@ -166,7 +166,12 @@ adapter do not promote it to production RL authority.
 
 The proxy fails closed on unknown raster cells, out-of-bounds transitions, and
 river crossings without the explicit bridge intent.  The bridge rule is a
-temporary test policy, not a released crossing model.
+temporary test policy, not a released crossing model. It now also exposes
+`GroundFieldProxy.plan_bridge_route()`, which enumerates only declared bridge
+overlay geometry and returns a deterministic proxy waypoint polyline. It is
+useful for curriculum/route-contract development, but remains
+`engineering_proxy_only`; it is not a native route graph, general passability
+mask, or production planner.
 
 ## Remaining unblock package
 

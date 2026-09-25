@@ -65,6 +65,8 @@ Owner：`domains/ground`，环境输入由 `systems/environment` 负责
 代理观测现在包含树带/聚落距离与方位，以及河流/桥面标志；这些仍是可重放的
 engineering products。原生 provider 现在准入连续 Arnis 高程/地表覆盖采样、有界河流/桥面
 地表以及地形观测 tuple；树线/聚落和 track observation export 仍保持 held。
+engineering proxy 现在可以仅基于声明的桥面 overlay 生成可重放航点折线，用于路线契约测试；
+它仍是 `engineering_proxy_only`，不是 native 路线图或通用通行性产品。
 
 本次已经用固定 Arnis v3.0.0 CMO patch 实际生成并验证 `expected/` bundle，且
 保留了预览和 `field_acceptance.json`。高程与地表覆盖仍来自网络/缓存 provider，

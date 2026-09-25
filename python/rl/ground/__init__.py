@@ -14,6 +14,7 @@ from .infantry_proxy import (
     GroundInfantryProxyError,
     GroundInfantryState,
     GroundInfantryTransition,
+    GroundBridgeRoutePlan,
     build_ground_infantry_command,
     normalize_ground_infantry_action,
 )
@@ -40,6 +41,7 @@ __all__ = [
     "GroundInfantryProxyError",
     "GroundInfantryState",
     "GroundInfantryTransition",
+    "GroundBridgeRoutePlan",
     "GroundInfantryProxyEnv",
     "GroundInfantryNativeProbe",
     "GroundInfantryNativeProbeError",
