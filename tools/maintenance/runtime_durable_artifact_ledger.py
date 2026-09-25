@@ -64,6 +64,19 @@ REQUIRED_LEDGER_TABLES = frozenset({
   "receipts",
   "audit",
 })
+REQUIRED_LEDGER_COLUMNS = {
+  "metadata": frozenset({"key", "value"}),
+  "blobs": frozenset({"digest", "payload", "media_type", "retention_class", "audit_identity", "size"}),
+  "fences": frozenset({"stream_id", "generation", "writer_id"}),
+  "terminations": frozenset({"stream_id", "generation", "writer_id", "observed_exit_digest"}),
+  "writer_processes": frozenset({"stream_id", "generation", "writer_id", "process_id", "process_start_identity", "os_boot_marker", "host_boot_id"}),
+  "tombstones": frozenset({"stream_id", "generation", "writer_id", "observed_exit_digest"}),
+  "slots": frozenset({"slot_key", "version", "blob_digest", "fence_generation", "audit_identity"}),
+  "journals": frozenset({"journal_id", "stream_id", "generation", "writer_id", "header_digest", "last_sequence", "last_record_digest", "terminal_state", "finalization_digest"}),
+  "frames": frozenset({"journal_id", "sequence", "fence_generation", "payload", "payload_digest", "prior_digest", "frame_digest", "frame_length", "frame_checksum"}),
+  "receipts": frozenset({"receipt_id", "journal_id", "blob_digest", "receipt_digest", "terminal_state"}),
+  "audit": frozenset({"sequence", "operation", "object_id", "digest"}),
+}
 RETENTION_CLASSES = frozenset({"active-release", "rollback-window", "run-retained", "evidence-short"})
 ROLE_PERMISSIONS = {
   "runtime_host": frozenset({"blob.put", "blob.get", "blob.stat", "fence.acquire", "process.register", "journal.write", "checkpoint.read", "checkpoint.write", "slot.write"}),
@@ -303,6 +316,16 @@ class SQLiteArtifactLedger:
     }
     if not REQUIRED_LEDGER_TABLES.issubset(tables):
       raise LedgerContractError(f"{context} is not a complete SQLite ArtifactLedger")
+    for table, required_columns in REQUIRED_LEDGER_COLUMNS.items():
+      columns = {
+        row[1] for row in db.execute(f"PRAGMA table_info({table})")
+      }
+      missing = required_columns - columns
+      if missing:
+        missing_text = ", ".join(sorted(missing))
+        raise LedgerContractError(
+          f"{context} table {table!r} schema is incomplete; missing columns: {missing_text}",
+        )
     schema_row = db.execute(
       "SELECT value FROM metadata WHERE key='schema_version'",
     ).fetchone()
