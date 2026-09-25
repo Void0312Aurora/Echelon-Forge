@@ -70,6 +70,14 @@ warning/request/resource trace, termination fields, decision count, and
 scripted runtime identity. This is a bounded single-agent replay check; it does
 not cover cooperative roster replay or canonical action-mode admission.
 
+The existing two-member cooperative cruise roster also accepts
+`air_ew_hybrid_v1`. A focused runtime test routes chaff only to Lead and flare
+only to Wing for 42 compiled steps; each slot's native inventory changes only
+on its own requested resource and the `ElementLead`/`Wingman` identities remain
+attached to the reports. This scenario has no hostile launcher or launch
+warning, so it is transport/resource isolation evidence rather than
+multi-aircraft EW response evidence.
+
 The EW path must remain Air-owned for jammer modes, RWR/ESM interpretation,
 countermeasure resources, release cadence, and threat-response doctrine. Only
 the identity, authority, clock, provenance, communication, and lifecycle
