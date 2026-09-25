@@ -1498,3 +1498,23 @@ to a dedicated owner-local evidence document.
 - Gate impact: cooperative hostile-threat EW replay, formation combat, and
   large-scale Air demonstration remain open; Air stays `playable_candidate`
   and EW stays `entry_surface_incomplete`.
+
+### 2026-09-25 — Air EW single-countermeasure doctrines
+
+- Change batch: extend the Air-owned scripted EW doctrine vocabulary with
+  `chaff_only` and `flare_only`. The 14-element action producer maps these
+  doctrines to exactly one tail bit; the existing `countermeasure_ready`
+  doctrine continues to request both resources.
+- Focused verification: `tests/runtime/air/test_air_scripted_ew.py -q`
+  passed `7 passed`; `tests/runtime/air_combat/test_air_ew_replay.py -q`
+  passed `2 passed`; Python compilation and `git diff --check` passed. The
+  maintained head-on scenario with `flare_only` produced warning/request steps
+  `[42, 82]`, chaff `[60, 60]`, and flare `[30, 29]`.
+- Evidence boundary: this closes a maintained flare-specific action/resource
+  trace and keeps doctrine selection explicit. It does not admit the action
+  mode into the canonical config, add jammer command ownership, prove hostile
+  cooperative replay, or close a terminal EW objective. EW remains
+  `entry_surface_incomplete`; Air remains `playable_candidate`.
+- Continuation choice: retain the three doctrines as opt-in scenario inputs;
+  next admission work must supply scenario ownership, complete cadence/report
+  semantics, and the cooperative hostile-threat owner decision.

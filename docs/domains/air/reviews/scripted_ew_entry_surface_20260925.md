@@ -16,7 +16,7 @@
 | Observation | `gym_envs/universal_env_parts/observations.py` exports `rwr` rows as bearing, signal strength, lock, and launch-warning fields; instruments also expose `rwr_active`. Native MAWS now records active inbound missiles by launch platform and exposes source-specific `is_launch` rows through `SimulationKernel::get_agent_observation`. The maintained `InstrumentState` read surface now projects chaff/flare counts, release interval, last release time, and auto mode, with `-1` for an absent component. | A scripted agent can consume declared RWR/MAWS evidence without World Truth, and a maintained report can read native countermeasure state. ESM/jammer state is not part of the maintained observation payload shown here. |
 | Command transport | `PilotAction` exposes `program_chaff` and `program_flare`; `legacy_command_bridge.h` resolves those fields into countermeasure commands. | The low-level transport exists, but it is not exposed by the maintained `full` or `air_combat_hybrid_v1` action vectors. |
 | Current action mapping | `gym_envs/universal_env_parts/actions.py` sets `program_chaff` and `program_flare` to `False` for the maintained action modes. | A scripted EW model cannot currently perform countermeasure actions through the normal Air action path. There is no maintained jammer action field. |
-| Versioned action extension | `air_ew_hybrid_v1` adds two explicit tail fields for chaff and flare and maps them to `PilotAction`; it remains outside the canonical `python.env_config.ACTION_MODES` list until a scenario/config owner and acceptance gate are admitted. `tools/diagnostics/air_ew_scripted_demo.py` drives this mode with the registered scripted EW action model. | The transport shape is testable without changing existing full/hybrid indices. The maintained demo observed launch-warning rows at steps 42 and 82, requested both countermeasures at those steps, and reported native chaff consumption from 60 to 59 after the release interval. Flare remains unconsumed in that trace because both requests share the native release cadence. |
+| Versioned action extension | `air_ew_hybrid_v1` adds two explicit tail fields for chaff and flare and maps them to `PilotAction`; it remains outside the canonical `python.env_config.ACTION_MODES` list until a scenario/config owner and acceptance gate are admitted. `tools/diagnostics/air_ew_scripted_demo.py` drives this mode with the registered scripted EW action model. | The transport shape is testable without changing existing full/hybrid indices. The maintained demo observed launch-warning rows at steps 42 and 82, requested both countermeasures at those steps, and reported native chaff consumption from 60 to 59 after the release interval. Explicit `flare_only` doctrine now produces the same warning/request steps with chaff held at 60 and flare consumed from 30 to 29. |
 | Scripted producer | `python/tasking_contracts/air_scripted_ew.py` is registered in the aggregate Air registry as `air.ew.rwr_response_scripted` (`adapter`, `air_ew_controller`). It emits a typed RWR-derived intent and marks `native_action_owner_required`. | The producer is a contract/decision slice only. It is not an accepted countermeasure or jammer action, and it does not change the EW capability label. |
 
 ## Boundary
@@ -63,6 +63,11 @@ instrument report observed chaff `[60, 59]` at the two request steps and flare
 `30` at both steps, matching the native release interval. The episode remained
 running; this is maintained action/resource evidence, not terminal or
 playable EW evidence.
+
+With the explicit `flare_only` doctrine, the same maintained scenario produced
+flare `[30, 29]` while chaff stayed `[60, 60]`. The doctrine split is an
+action/resource trace only; it does not change the canonical action-mode or
+playable verdict.
 
 The same maintained demo was then run twice in one process with the same seed.
 `tests/runtime/air_combat/test_air_ew_replay.py` passed and compared the full
