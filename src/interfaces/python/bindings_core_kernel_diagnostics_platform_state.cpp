@@ -54,6 +54,10 @@ void bind_simulation_kernel_diagnostics_platform_state_surface(
              "Debug: get sensor last_scan_time")
         .def("debug_get_contact_count", &SimulationKernel::debug_get_contact_count,
              "Debug: get ContactList size")
+        .def("debug_get_countermeasure_state", &SimulationKernel::debug_get_countermeasure_state,
+             "Diagnostics-only read-only EW resource snapshot [chaff_count, flare_count, "
+             "release_interval, last_release_time, auto_mode]",
+             nb::arg("entity_id"))
         .def(
             "debug_get_mass_state", &SimulationKernel::debug_get_mass_state,
             "Debug: get [mass_empty, mass_fuel, mass_stores, mass_total, props_empty, props_total]",
