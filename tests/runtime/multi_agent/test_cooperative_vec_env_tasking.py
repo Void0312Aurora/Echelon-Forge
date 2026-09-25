@@ -1188,7 +1188,10 @@ class CooperativeVecEnvTaskingTests(unittest.TestCase):
         self.assertTrue(launch_warning_steps[1])
         self.assertTrue(request_steps[0])
         self.assertTrue(request_steps[1])
+        self.assertEqual(launch_warning_steps, [[162, 202], [202]])
+        self.assertEqual(request_steps, [[162, 202], [202]])
         self.assertIsNotNone(resource_snapshot)
+        self.assertEqual(resource_snapshot, [58, 59])
         self.assertLess(int(resource_snapshot[0]), 60)
         self.assertLess(int(resource_snapshot[1]), 60)
       finally:
