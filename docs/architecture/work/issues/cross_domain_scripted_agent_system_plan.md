@@ -1419,3 +1419,16 @@ to a dedicated owner-local evidence document.
   layout changes, add a cadence-complete EW report (including flare), and keep
   the action extension opt-in until scenario ownership and replay/roster gates
   are closed.
+
+### 2026-09-25 — Air EW projection compatibility recheck
+
+- Focused verification: after the clean rebuild and projection batch,
+  `tests/runtime/bindings/test_bindings_runtime_dto_surface.py -q` passed
+  `28 passed, 32 subtests passed`; the existing Air weapon path
+  `tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py -q` passed
+  `10 passed, 2 subtests passed`. The worktree remained clean and
+  `git diff --check` passed.
+- Evidence boundary: the new read-only InstrumentState fields do not change
+  the existing binding DTO surface or missile release behavior. This is a
+  compatibility recheck, not replay, flare-cadence, jammer, multi-aircraft,
+  or playable promotion evidence.
