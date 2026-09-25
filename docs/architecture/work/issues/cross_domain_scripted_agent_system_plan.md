@@ -1529,6 +1529,26 @@ to a dedicated owner-local evidence document.
   until weapon consequence, command/report, and mission-success contracts are
   separately closed.
 
+### 2026-09-25 — Cooperative Air 2v2 EW replay gate
+
+- Change batch: add a paired-run regression for the maintained hostile 2v2
+  scenario and its cooperative CLI. The test compares world termination state,
+  roster owner counts, source-driven warning/request traces, native resource
+  samples, scripted opponent reports, runtime decision counts, and both
+  scripted runtime identities.
+- Focused verification: `tests/runtime/air_combat/test_air_cooperative_ew_demo.py
+  -q` passed `2 passed`; the replay test reproduced the exact Lead/Wing
+  warning/request traces and owner report values for seed `20260516`.
+  `git diff --check` passed before commit.
+- Evidence boundary: bounded same-process replay/reset parity for the hostile
+  cooperative EW response demo is now verified. This does not close terminal
+  combat, jammer/ESM, communication loss, tactical reassignment, or full
+  formation mission replay. EW remains `entry_surface_incomplete`; Air remains
+  `playable_candidate`.
+- Continuation choice: retain this replay gate and use the same scenario for a
+  later terminal-objective slice only after native weapon consequence and
+  command/report ownership are resolved.
+
 ### 2026-09-25 — Air EW single-countermeasure doctrines
 
 - Change batch: extend the Air-owned scripted EW doctrine vocabulary with
