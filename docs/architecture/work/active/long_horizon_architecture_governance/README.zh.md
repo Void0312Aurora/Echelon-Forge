@@ -4,7 +4,8 @@
 target-architecture 决策、完整的 P3-A/P3-B/P3-C contract、authority-envelope、
 ledger 与 compatibility foundation，以及 P4-A dark/shadow host lifecycle 已在
 独立复核后接受。P4-B dark/shadow candidate implementation 与独立综合复核已完成；P4-C 首个 build-tree/internal candidate 任务已通过 candidate-scope 独立复核并被接受，尚未获得 production acceptance。
-P2-A 已有 manifest-level lifecycle baseline 实现，P2-B 也已有首个可重复的本地 sustainability baseline；代表性 release cadence、完整 maintained facade parity、production caller
+P2-A 已有 manifest-level lifecycle baseline 实现，P2-B 也已有首个可重复的本地 sustainability baseline；P5-D 的有界 maintained caller parity 已完成，并有独立可执行门禁记录于
+[parity evidence](evidence/p5d_maintained_caller_parity_20260925.md)。代表性 release cadence、production caller
 cutover、production rollback-window operation、rebuild retirement 与 P6-P8 仍开放；尚无 production truth 发布或 production cutover 被接受。maintained 合同调用方迁移、process-resync、
 mandatory production-state release/receipt binding、ArtifactLedger durable rollout controller
 以及首个 operations drill 证据见

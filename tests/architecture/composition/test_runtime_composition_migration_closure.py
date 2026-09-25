@@ -112,6 +112,28 @@ def test_p8a_python_ast_inventory_covers_from_import_and_aliases() -> None:
         "from importlib import import_module as load\nload('ef_py').SimulationKernel()\n",
         "SimulationKernel",
     )
+
+
+def test_p8a_python_ast_inventory_covers_second_order_dynamic_aliases() -> None:
+    tool = load_tool()
+    assert tool.python_source_calls_ef_py_symbol(
+        "import importlib\nloader = importlib.import_module\n"
+        "loader('ef_py').SimulationKernel()\n",
+        "SimulationKernel",
+    )
+    assert tool.python_source_calls_ef_py_symbol(
+        "import importlib\nloader = getattr(importlib, 'import_module')\n"
+        "loader('ef_py').SimulationKernel()\n",
+        "SimulationKernel",
+    )
+    assert tool.python_source_calls_ef_py_symbol(
+        "imp = __import__\nimp('ef_py').SimulationKernel()\n",
+        "SimulationKernel",
+    )
+    assert tool.python_source_calls_ef_py_symbol(
+        "import ef_py\ng = getattr\ng(ef_py, 'SimulationKernel')()\n",
+        "SimulationKernel",
+    )
     assert not tool.python_source_calls_ef_py_symbol(
         "# from ef_py import SimulationKernel\n# SimulationKernel()\n", "SimulationKernel"
     )
