@@ -46,6 +46,7 @@ RECEIPT_MEDIA_TYPE = "application/vnd.echelon-forge.run-receipt.v1+json"
 RELEASE_MANIFEST_MEDIA_TYPE = "application/vnd.echelon-forge.release-manifest.v1+json"
 ROLLOUT_DECISION_MEDIA_TYPE = "application/vnd.echelon-forge.rollout-decision.v1+json"
 ROLLOUT_EVIDENCE_MEDIA_TYPE = "application/vnd.echelon-forge.rollout-evidence-binding.v1+json"
+EVIDENCE_MANIFEST_MEDIA_TYPE = "application/vnd.echelon-forge.evidence-manifest.v1+json"
 ROLLOUT_EVIDENCE_SCHEMA_VERSION = "echelon_forge.rollout_evidence_binding.v1"
 CHECKPOINT_MEDIA_TYPE = "application/vnd.echelon-forge.state-checkpoint-envelope.v1+json"
 CHECKPOINT_VALIDATION_MEDIA_TYPE = "application/vnd.echelon-forge.state-checkpoint-validation.v1+json"
@@ -87,7 +88,7 @@ ROLE_PERMISSIONS = {
 ROLE_WRITE_MEDIA_TYPES = {
   "runtime_host": frozenset({JOURNAL_HEADER_MEDIA_TYPE, JOURNAL_RECORD_MEDIA_TYPE, RECEIPT_MEDIA_TYPE, CHECKPOINT_MEDIA_TYPE, CHECKPOINT_VALIDATION_MEDIA_TYPE, OUTPUT_ARTIFACT_MEDIA_TYPE}),
   "crash_reconciler": frozenset({JOURNAL_RECORD_MEDIA_TYPE, RECEIPT_MEDIA_TYPE}),
-  "release_controller": frozenset({RELEASE_MANIFEST_MEDIA_TYPE, ROLLOUT_DECISION_MEDIA_TYPE, RECEIPT_MEDIA_TYPE, ROLLOUT_EVIDENCE_MEDIA_TYPE}),
+  "release_controller": frozenset({RELEASE_MANIFEST_MEDIA_TYPE, ROLLOUT_DECISION_MEDIA_TYPE, RECEIPT_MEDIA_TYPE, ROLLOUT_EVIDENCE_MEDIA_TYPE, EVIDENCE_MANIFEST_MEDIA_TYPE}),
 }
 ROLE_READ_MEDIA_TYPES = {
   "runtime_host": ROLE_WRITE_MEDIA_TYPES["runtime_host"],

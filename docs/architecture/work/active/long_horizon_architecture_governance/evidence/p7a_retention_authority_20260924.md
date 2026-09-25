@@ -81,8 +81,9 @@ evidence-manifest projection from the actual local SQLite `stable`
 admission/retention projection, including its digest, restore owner, access,
 backup, provider, and migration policy fields; the same digest is revalidated
 after restoring the SQLite backup into a distinct local ledger root. The
-manifest is not yet a separate retained `ArtifactLedger` blob, is local
-evidence only, and does not claim an external provider drill.
+manifest is also stored as a separate `evidence-short` ArtifactLedger blob
+and re-read after the distinct-root restore. This is local evidence only and
+does not claim an external provider drill.
 
 ## Boundary and next work
 

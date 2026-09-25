@@ -37,9 +37,9 @@ The same SQLite admission/restore file was rerun in the current checkout on
 durable admission and rollback-window bindings. The P7-A governance checks
 also build and validate an in-memory provider-neutral evidence-manifest
 projection over the resulting local stable projection and revalidate its
-digest after a distinct-root restore. That manifest is not yet persisted as a
-separate retained `ArtifactLedger` blob. This remains local provider evidence
-only.
+digest after a distinct-root restore. The manifest is persisted as a separate
+`evidence-short` `ArtifactLedger` blob and re-read after restore. This remains
+local provider evidence only.
 
 ## Boundary
 

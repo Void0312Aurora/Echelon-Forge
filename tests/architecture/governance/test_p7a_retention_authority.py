@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import subprocess
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from tools.maintenance.p7b_evidence_manifest import EvidenceManifestError
 from tools.maintenance.p7b_evidence_manifest import build_evidence_manifest
 from tools.maintenance.p7b_evidence_manifest import validate_evidence_manifest
 from tools.maintenance.runtime_authority_contracts import canonical_json_bytes
+from tools.maintenance.runtime_durable_artifact_ledger import EVIDENCE_MANIFEST_MEDIA_TYPE
 from tools.maintenance.runtime_durable_artifact_ledger import SQLiteArtifactLedger
 from tests.architecture.runtime_host import test_rollout_evidence_binding as evidence_fixtures
 from tests.architecture.runtime_host.test_sqlite_rollout_admission import (
@@ -157,6 +159,15 @@ def test_p7b_local_ledger_projection_emits_provider_neutral_manifest(tmp_path: P
     assert validate_evidence_manifest(manifest, payload=payload) == manifest
     assert manifest["sha256"]
     assert manifest["provider"] == "SQLiteArtifactLedger-local"
+    manifest_blob = canonical_json_bytes(manifest)
+    manifest_blob_digest = ledger.put_blob(
+      manifest_blob,
+      media_type=EVIDENCE_MANIFEST_MEDIA_TYPE,
+      retention_class="evidence-short",
+      audit_identity="p7b-manifest-test",
+      role="release_controller",
+    )
+    assert manifest_blob_digest == hashlib.sha256(manifest_blob).hexdigest()
 
     backup = tmp_path / "evidence-manifest.sqlite3"
     ledger.backup_to(backup)
@@ -174,6 +185,16 @@ def test_p7b_local_ledger_projection_emits_provider_neutral_manifest(tmp_path: P
       })))
       assert restored_payload == payload
       assert validate_evidence_manifest(manifest, payload=restored_payload) == manifest
+      restored_manifest_blob, media_type, retention_class = restored.get_blob(
+        manifest_blob_digest,
+        role="runtime_evidence",
+      )
+      assert media_type == EVIDENCE_MANIFEST_MEDIA_TYPE
+      assert retention_class == "evidence-short"
+      assert validate_evidence_manifest(
+        json.loads(restored_manifest_blob),
+        payload=restored_payload,
+      ) == manifest
     finally:
       restored.close()
   finally:
