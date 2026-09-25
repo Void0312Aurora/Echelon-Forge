@@ -41,3 +41,33 @@ def test_cooperative_ew_demo_reports_two_slot_warning_and_owner_trace() -> None:
     assert all(report["active"] for report in result["scripted_opponent_reports"].values())
     assert all(int(report["target_id"]) > 0 for report in result["scripted_opponent_reports"].values())
     assert result["playable_boundary"] == "ew_response_demo_without_terminal_objective"
+
+
+def test_cooperative_ew_demo_replays_owner_and_two_slot_trace() -> None:
+    first = run_demo(
+        scenario_path=_SCENARIO_PATH,
+        seed=20260516,
+        max_steps=204,
+        response_doctrine="countermeasure_ready",
+    )
+    second = run_demo(
+        scenario_path=_SCENARIO_PATH,
+        seed=20260516,
+        max_steps=204,
+        response_doctrine="countermeasure_ready",
+    )
+
+    for key in (
+        "steps",
+        "terminated",
+        "truncated",
+        "termination_reasons",
+        "roster",
+        "launch_warning_steps",
+        "countermeasure_request_steps",
+        "countermeasure_state_samples",
+        "scripted_opponent_reports",
+        "scripted_runtime_decisions",
+    ):
+        assert first[key] == second[key]
+    assert first["scripted_runtime_identity"] == second["scripted_runtime_identity"]
