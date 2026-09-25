@@ -1,0 +1,183 @@
+{
+  "scenario_name": "Cooperative Air 2v2 Scripted EW Response V1",
+  "description": "Two-ship Air formation response demonstration. Lead and Wing receive source-specific MAWS launch warnings from two scripted Red opponents and route countermeasure actions through the cooperative runtime. This is an EW/formation response gate and intentionally has no terminal combat objective.",
+  "realism_gradient": {
+    "domain": "air_combat",
+    "workline": "cooperative_2v2_ew",
+    "stage": "A1-EW-C2",
+    "stage_name": "cooperative_source_specific_launch_warning_response",
+    "training_goal": "Prove world-owned scripted opponent updates, source-specific MAWS observations, per-slot scripted EW decisions, and native countermeasure resource isolation.",
+    "engagement_scope": "BVR-like scripted launch-warning response",
+    "deferred_realism": [
+      "terminal target destruction",
+      "full multi-aircraft weapon employment",
+      "jammer and ESM command effects",
+      "communication loss and datalink degradation",
+      "formation tactical reassignment"
+    ]
+  },
+  "environment": {
+    "time_step": 0.05,
+    "max_steps": 240,
+    "terrain_type": "flat",
+    "wind": {
+      "speed_mps": 0.0,
+      "dir_from_deg": 0.0,
+      "shear_mps_per_km": 0.0
+    }
+  },
+  "mission_command": {
+    "command_code": 3,
+    "target_heading": 90.0,
+    "target_altitude": 1400.0,
+    "target_speed": 210.0,
+    "assigned_target_name": "Red_Lead",
+    "formation_id": 17,
+    "form_offset_x": 180.0,
+    "form_offset_y": -90.0,
+    "form_offset_z": 30.0,
+    "waypoint_mode": "flyby",
+    "waypoint_radius_m": 1000.0,
+    "waypoints": [
+      {"x": 15000.0, "y": 2000.0, "z": 1400.0},
+      {"x": 30000.0, "y": -8000.0, "z": 1400.0},
+      {"x": 45000.0, "y": 6000.0, "z": 1400.0}
+    ]
+  },
+  "entities": [
+    {
+      "name": "Lead",
+      "type": "F-16C_Block50",
+      "side": "Blue",
+      "pos": [0.0, 0.0, 1400.0],
+      "vel": [210.0, 0.0, 0.0],
+      "heading": 90.0,
+      "is_agent": true
+    },
+    {
+      "name": "Wing",
+      "type": "F-16C_Block50",
+      "side": "Blue",
+      "pos": [-120.0, -180.0, 1400.0],
+      "vel": [210.0, 0.0, 0.0],
+      "heading": 90.0,
+      "is_agent": true
+    },
+    {
+      "name": "Red_Lead",
+      "type": "F-16C_Block50",
+      "side": "Red",
+      "pos": [0.0, 10000.0, 1400.0],
+      "vel": [0.0, -220.0, 0.0],
+      "heading": 180.0,
+      "scripted_agent": {
+        "name": "red_scripted_agent",
+        "target_name": "Lead",
+        "cruise_speed_mps": 220.0,
+        "attack_speed_mps": 260.0,
+        "defensive_speed_mps": 290.0,
+        "threat_range_m": 9000.0,
+        "merge_range_m": 3500.0,
+        "fire_range_m": 9000.0,
+        "beam_offset_deg": 85.0
+      },
+      "ammo": {
+        "missiles_remaining": 4,
+        "max_missiles": 4
+      },
+      "weapon_cooldown": {
+        "cooldown_s": 0.75,
+        "last_fire_time": -1.0
+      }
+    },
+    {
+      "name": "Red_Wing",
+      "type": "F-16C_Block50",
+      "side": "Red",
+      "pos": [-120.0, 10180.0, 1400.0],
+      "vel": [0.0, -220.0, 0.0],
+      "heading": 180.0,
+      "scripted_agent": {
+        "name": "red_scripted_agent",
+        "target_name": "Wing",
+        "cruise_speed_mps": 220.0,
+        "attack_speed_mps": 260.0,
+        "defensive_speed_mps": 290.0,
+        "threat_range_m": 9000.0,
+        "merge_range_m": 3500.0,
+        "fire_range_m": 9000.0,
+        "beam_offset_deg": 85.0
+      },
+      "ammo": {
+        "missiles_remaining": 4,
+        "max_missiles": 4
+      },
+      "weapon_cooldown": {
+        "cooldown_s": 0.75,
+        "last_fire_time": -1.0
+      }
+    }
+  ],
+  "cooperative_roster": {
+    "team_id": 7001,
+    "element_id": 7001,
+    "policy_route": "shared_execution",
+    "members": [
+      {
+        "entity": "Lead",
+        "role_code": 21,
+        "formation_role_id": "ElementLead",
+        "relative_slot_code": 11,
+        "policy_route": "shared_execution"
+      },
+      {
+        "entity": "Wing",
+        "role_code": 22,
+        "formation_role_id": "Wingman",
+        "relative_slot_code": 12,
+        "policy_route": "shared_execution",
+        "reference_entity": "Lead"
+      }
+    ]
+  },
+  "objectives": [],
+  "rewards": {
+    "survival": 0.05,
+    "crash_penalty": -1000.0,
+    "waypoint_progress_weight": 0.055,
+    "waypoint_distance_weight": -0.00004,
+    "waypoint_distance_clip_m": 6000.0,
+    "waypoint_distance_scale_by_route": true,
+    "waypoint_distance_route_ref_m": 55000.0,
+    "waypoint_distance_route_scale_min": 0.55,
+    "waypoint_distance_route_scale_max": 1.0,
+    "waypoint_cross_track_weight": -0.35,
+    "waypoint_cross_track_deadband_m": 250.0,
+    "waypoint_cross_track_norm_m": 1500.0,
+    "waypoint_cross_track_power": 1.5,
+    "waypoint_cross_track_clip": 2.0,
+    "altitude_error_weight": -0.07,
+    "altitude_error_deadband_m": 50.0,
+    "altitude_error_norm_m": 180.0,
+    "altitude_error_power": 2.0,
+    "altitude_error_clip": 2.0,
+    "speed_error_weight": -0.05,
+    "speed_error_deadband": 12.0,
+    "speed_error_norm": 55.0,
+    "speed_error_power": 2.0,
+    "speed_error_clip": 2.0,
+    "heading_error_weight": -0.003,
+    "heading_hold_deadband_deg": 8.0,
+    "heading_hold_bonus": 0.02,
+    "roll_abs_weight": -0.008,
+    "roll_abs_norm_deg": 20.0,
+    "pitch_abs_weight": -0.004,
+    "pitch_abs_norm_deg": 20.0,
+    "yaw_rate_abs_weight": -0.004,
+    "yaw_rate_abs_norm_deg_s": 10.0,
+    "beta_abs_weight": -0.008,
+    "beta_abs_norm_deg": 10.0,
+    "g_deviation_weight": -0.015,
+    "g_deviation_norm": 0.6
+  }
+}
