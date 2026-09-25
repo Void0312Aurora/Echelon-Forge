@@ -14,6 +14,7 @@ from gym_envs.universal_env import build_universal_observation # noqa: E402
 from python.mission_obs_taxonomy import mission_observation_dim # noqa: E402
 from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv # noqa: E402
 from python.rl.tasking.bridge import LoaderOwnedScriptedOpponentKernelView # noqa: E402
+from python.tasking_contracts.air_scripted_ew import AirScriptedEWActionModel # noqa: E402
 
 
 _SCENARIO_PATH = resolve_repo_path(
@@ -116,9 +117,6 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
 
     for _ in range(80):
       sim.step()
-      red_obs = sim.get_agent_observation(red_id)
-      if any(int(getattr(track, "id", 0)) == blue_id for track in getattr(red_obs, "contacts", [])):
-        break
     missile_id = int(sim.fire_missile(red_id, blue_id))
     self.assertGreater(missile_id, 0)
 
@@ -151,6 +149,76 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
       self.assertEqual(obs["rwr"].shape, (1, env.max_rwr, 4))
       self.assertEqual(obs["mission"].shape, (1, mission_observation_dim("basic")))
     finally:
+      env.close()
+
+  def test_maintained_ew_action_mode_consumes_native_chaff_after_launch_warning(self) -> None:
+    env = WorldBatchVecEnv(
+      scenario_path=_SCENARIO_PATH,
+      n_envs=1,
+      include_visual=False,
+      include_proprio=False,
+      action_mode="air_ew_hybrid_v1",
+      mission_obs_mode="basic",
+      execution_step_runtime_mode="compiled",
+      flight_shaping_backend="compiled",
+      worker_threads=1,
+    )
+    model = AirScriptedEWActionModel(dt=0.05)
+    try:
+      env.seed(20260516)
+      observation_batch = env.reset()
+      observation = {key: np.asarray(value)[0] for key, value in observation_batch.items()}
+      model.reset(
+        context={
+          "observation": observation,
+          "phase_name": "stable_flight",
+          "response_doctrine": "countermeasure_ready",
+        }
+      )
+      initial_chaff = -1
+
+      launch_warning_steps = []
+      request_steps = []
+      consumed_step = None
+      for step in range(1, 121):
+        observation = {key: np.asarray(value)[0] for key, value in observation_batch.items()}
+        rwr = np.asarray(observation.get("rwr", []), dtype=np.float32).reshape(-1, 4)
+        if rwr.size and bool(np.any(rwr[:, 3] > 0.5)):
+          launch_warning_steps.append(step)
+        action = model.decide(
+          observation=observation,
+          context={
+            "phase_name": "stable_flight",
+            "response_doctrine": "countermeasure_ready",
+          },
+          dt=0.05,
+        )
+        if bool(np.any(np.asarray(action[12:14]) > 0.5)):
+          request_steps.append(step)
+        observation_batch, _rewards, dones, _infos = env.step(
+          np.asarray(action, dtype=np.float32).reshape(1, -1)
+        )
+        current = env.envs[0].last_inst
+        current_chaff = int(getattr(current, "countermeasure_chaff_remaining", -1))
+        if initial_chaff < 0 and current_chaff >= 0:
+          initial_chaff = current_chaff
+          self.assertGreater(initial_chaff, 0)
+        if initial_chaff >= 0 and current_chaff < initial_chaff:
+          consumed_step = step
+          break
+        if bool(dones[0]):
+          break
+
+      self.assertTrue(launch_warning_steps)
+      self.assertTrue(request_steps)
+      self.assertIsNotNone(consumed_step)
+      self.assertGreater(initial_chaff, 0)
+      self.assertLess(
+        int(getattr(env.envs[0].last_inst, "countermeasure_chaff_remaining", -1)),
+        initial_chaff,
+      )
+    finally:
+      model.close()
       env.close()
 
   def test_loader_registers_red_scripted_opponent_from_scenario(self) -> None:

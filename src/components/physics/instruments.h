@@ -51,6 +51,13 @@ struct InstrumentState {
     bool rwr_active;        // RWR is detecting threats
     int weapon_selected;    // Ind index of selected weapon
     int missiles_remaining; // Total count? Or per type? Simple count for now.
+    // Air EW read-only projection. -1 means the platform has no exposed
+    // countermeasure component on the active backend.
+    int countermeasure_chaff_remaining = -1;
+    int countermeasure_flare_remaining = -1;
+    double countermeasure_release_interval_s = -1.0;
+    double countermeasure_last_release_time_s = -1.0;
+    bool countermeasure_auto_mode = false;
     
     // 6. EGI / Navigation (What pilot sees on HSD/TSD)
     double lat_deg;         // Latitude (from EGI)
