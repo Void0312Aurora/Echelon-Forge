@@ -758,6 +758,21 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
 
             obs.rwr_warnings.push_back(event);
         }
+
+        for (uint64_t source_id : rwr->missile_launch_source_ids) {
+            auto existing = std::find_if(
+                obs.rwr_warnings.begin(), obs.rwr_warnings.end(),
+                [source_id](const RWREvent &event) { return event.source_id == source_id; });
+            if (existing != obs.rwr_warnings.end()) {
+                existing->is_launch = true;
+                continue;
+            }
+            RWREvent event{};
+            event.source_id = source_id;
+            event.signal_strength = 1.0;
+            event.is_launch = true;
+            obs.rwr_warnings.push_back(event);
+        }
     }
 
     const ESMReceiver *esm = e.get<ESMReceiver>();

@@ -79,6 +79,7 @@ void register_rwr_reset_system(flecs::world &ecs) {
     ecs.system<RWR>("RWR_Reset").kind(flecs::PreUpdate).each([](flecs::entity, RWR &rwr) {
         rwr.detected_radar_ids.clear();
         rwr.locking_radar_ids.clear();
+        rwr.missile_launch_source_ids.clear();
         rwr.is_missile_launch = false;
     });
 }
