@@ -138,3 +138,44 @@ def test_ew_hybrid_routes_combat_prefix_through_both_maintained_consumers() -> N
         assert "air_combat_hybrid_effective_action" in source
         assert "apply_air_combat_event_action_gate" in source
         assert "finalize_air_combat_event_action_info" in source
+def test_ew_model_supports_explicit_single_countermeasure_doctrines() -> None:
+    model = AirScriptedEWModel(max_rwr=4)
+    observation = _observation([45.0, 0.8, 1.0, 1.0])
+    model.reset(context={"observation_version": "rwr:0"})
+
+    chaff = model.decide(
+        observation=observation,
+        context={"observation_version": "rwr:1", "response_doctrine": "chaff_only"},
+        dt=0.05,
+    )
+    flare = model.decide(
+        observation=observation,
+        context={"observation_version": "rwr:2", "response_doctrine": "flare_only"},
+        dt=0.05,
+    )
+    assert chaff.countermeasure_plan == "request_chaff"
+    assert flare.countermeasure_plan == "request_flare"
+    model.close()
+
+
+def test_ew_action_model_maps_single_countermeasure_doctrine_to_one_tail_bit() -> None:
+    model = AirScriptedEWActionModel()
+    obs = {
+        "instruments": np.zeros((31,), dtype=np.float32),
+        "mission": np.asarray([1.0, 90.0, 1000.0, 120.0], dtype=np.float32),
+        "rwr": np.asarray([[0.0, 0.8, 1.0, 1.0]], dtype=np.float32),
+    }
+    model.reset(context={"observation": obs, "phase_name": "stable_flight"})
+    chaff = model.decide(
+        observation=obs,
+        context={"response_doctrine": "chaff_only", "observation_version": "rwr:1"},
+        dt=0.05,
+    )
+    flare = model.decide(
+        observation=obs,
+        context={"response_doctrine": "flare_only", "observation_version": "rwr:2"},
+        dt=0.05,
+    )
+    assert tuple(chaff[12:14]) == (1.0, 0.0)
+    assert tuple(flare[12:14]) == (0.0, 1.0)
+    model.close()

@@ -56,8 +56,10 @@ def run_demo(
     response_doctrine: str,
 ) -> dict[str, Any]:
     doctrine = str(response_doctrine).strip().lower()
-    if doctrine not in {"observe_only", "countermeasure_ready"}:
-        raise ValueError("response_doctrine must be 'observe_only' or 'countermeasure_ready'")
+    if doctrine not in {"observe_only", "countermeasure_ready", "chaff_only", "flare_only"}:
+        raise ValueError(
+            "response_doctrine must be 'observe_only', 'countermeasure_ready', 'chaff_only', or 'flare_only'"
+        )
 
     vec_env = WorldBatchVecEnv(
         scenario_path=os.path.abspath(str(scenario_path)),
@@ -179,7 +181,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max_steps", type=int, default=120)
     parser.add_argument(
         "--response_doctrine",
-        choices=("observe_only", "countermeasure_ready"),
+        choices=("observe_only", "countermeasure_ready", "chaff_only", "flare_only"),
         default="countermeasure_ready",
     )
     parser.add_argument("--json_out", default="")
