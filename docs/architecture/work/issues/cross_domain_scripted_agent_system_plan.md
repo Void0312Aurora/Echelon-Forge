@@ -1454,3 +1454,25 @@ to a dedicated owner-local evidence document.
   keeping the action extension opt-in; next EW work should close a
   cadence-complete report and then exercise distinct roles through the
   cooperative roster.
+
+### 2026-09-25 — Air cooperative EW resource-routing gate
+
+- Change batch: add a cooperative runtime regression using the existing
+  two-member Lead/Wing roster and the opt-in `air_ew_hybrid_v1` action shape.
+  Lead receives only the chaff tail and Wing receives only the flare tail;
+  the test reads each slot's native `InstrumentState` and checks formation
+  metadata after the same-world step loop.
+- Focused verification: `CMO_BUILD_DIR=build-scripted-agent python -m pytest
+  tests/runtime/multi_agent/test_cooperative_vec_env_tasking.py -k
+  routes_ew_resources_per_roster_slot -q` passed `1 passed, 15 deselected`.
+  After 42 compiled steps, Lead chaff was below `60` while Lead flare stayed
+  `30`; Wing flare was below `30` while Wing chaff stayed `60`. The two infos
+  retained `ElementLead` and `Wingman` identities, and neither slot terminated.
+- Evidence boundary: this closes only cooperative action-tail and native
+  resource isolation for the existing no-threat cruise scenario. It is not a
+  two-aircraft threat response, scripted producer replay, formation combat
+  episode, or playable multi-aircraft EW result; the scenario has no hostile
+  launcher, launch-warning objective, jammer path, or terminal EW report.
+- Continuation choice: retain this as a multi-aircraft transport gate, then
+  select or stage a database-backed two-aircraft threat scenario before
+  claiming cooperative EW parity or promoting the action extension.
