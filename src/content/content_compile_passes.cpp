@@ -11,7 +11,7 @@ namespace {
 // JSON is NOT read at build or run time, per the census red lines):
 //   * 54 direct top-level keys read by parse_unit_json
 //   * 52 keys read by parse_missile_tuning_json_fields on the top-level entry
-//   * 3 semantic present-but-unread keys (ew_suite_ref / rcs / rcs_profile_ref)
+//   * 2 semantic present-but-unread keys (rcs / rcs_profile_ref)
 // Underscore-prefixed annotation keys (_provenance, _real_world, _ground_schema,
 // _deferred_runtime_claims, ...) are accepted separately by the '_' rule.
 const std::unordered_set<std::string> &recognized_top_level_keys() {
@@ -124,7 +124,7 @@ const std::unordered_set<std::string> &recognized_top_level_keys() {
         "lobl_required",
         "midcourse_datalink_supported",
         "use_kalman_seeker",
-        // --- 3 semantic present-but-unread top-level keys (survey section 3) ---
+        // --- 2 semantic present-but-unread top-level keys (survey section 3) ---
         "ew_suite_ref",
         "rcs",
         "rcs_profile_ref",

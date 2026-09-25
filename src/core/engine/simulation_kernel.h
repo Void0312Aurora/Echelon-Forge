@@ -290,6 +290,10 @@ class SimulationKernel {
     double debug_get_last_scan_time(uint64_t entity_id);
     int debug_get_contact_count(uint64_t entity_id);
     std::vector<double>
+    debug_get_countermeasure_state(uint64_t entity_id); // [chaff_count, flare_count,
+                                                        //  release_interval, last_release_time,
+                                                        //  auto_mode]
+    std::vector<double>
     debug_get_mass_state(uint64_t entity_id); // [mass_empty, mass_fuel, mass_stores, mass_total,
                                               // props_empty, props_total]
 
