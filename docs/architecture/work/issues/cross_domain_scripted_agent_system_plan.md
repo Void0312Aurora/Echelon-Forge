@@ -1499,6 +1499,36 @@ to a dedicated owner-local evidence document.
   large-scale Air demonstration remain open; Air stays `playable_candidate`
   and EW stays `entry_surface_incomplete`.
 
+### 2026-09-25 — Cooperative Air 2v2 scripted EW demo
+
+- Change batch: make the hostile cooperative slice a maintained scenario and
+  CLI: `scenarios/air_combat/cooperative_air_2v2_scripted_ew_response_v1.json`,
+  `tools/diagnostics/air_cooperative_ew_scripted_demo.py`, and its runtime
+  regression. The scenario contains two Blue roster members and two Red
+  `red_scripted_agent` opponents, with explicit Lead/Wing targets and no
+  terminal combat objective.
+- Behavior owner: cooperative slot loading now accepts
+  `build_scripted_opponents=False`; only the world routing/owner loader builds
+  and updates scripted opponents. Non-owner slot loaders still own their
+  platform guidance and command chain but do not duplicate shared-world
+  opponent updates.
+- Focused verification: the cooperative 2v2 test and CLI regression passed.
+  With seed `20260516`, the CLI ran `204` steps without termination and
+  reported Lead warning/request steps `[162, 202]`, Wing `[202]`, native chaff
+  samples Lead `[60, 59]` and Wing `[60]`, and two active owner reports mapped
+  to the Lead/Wing entity IDs. The owner roster was `[2, 0]` scripted
+  opponents for Lead/Wing. Python compilation and `git diff --check` passed.
+- Evidence boundary: this is the first maintained hostile cooperative EW
+  response demonstration and closes the world-level opponent-owner residual
+  for this path. It is still an EW response demo, not a full multi-aircraft
+  combat episode: there is no terminal objective, no jammer/ESM action, no
+  datalink loss, no tactical reassignment, and no target-destruction claim.
+  EW remains `entry_surface_incomplete`; Air remains `playable_candidate`.
+- Continuation choice: use this scenario as the base for cooperative EW replay
+  and later formation combat. Keep its no-terminal-objective boundary explicit
+  until weapon consequence, command/report, and mission-success contracts are
+  separately closed.
+
 ### 2026-09-25 — Air EW single-countermeasure doctrines
 
 - Change batch: extend the Air-owned scripted EW doctrine vocabulary with

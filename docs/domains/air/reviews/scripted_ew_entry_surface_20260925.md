@@ -83,6 +83,20 @@ attached to the reports. This scenario has no hostile launcher or launch
 warning, so it is transport/resource isolation evidence rather than
 multi-aircraft EW response evidence.
 
+The maintained hostile cooperative scenario
+`scenarios/air_combat/cooperative_air_2v2_scripted_ew_response_v1.json` now
+provides the next bounded slice. Its CLI uses two independent scripted EW
+agents over the Lead/Wing roster and two world-owned Red scripted opponents.
+At seed `20260516`, the compiled 204-step run produced warning/request steps
+Lead `[162, 202]` and Wing `[202]`; native chaff samples were Lead `[60, 59]`
+and Wing `[60]`. The owner loader held two opponent controllers while the
+non-owner loader held none, and both opponent reports remained active.
+
+The scenario intentionally has no terminal combat objective. Its evidence is
+hostile two-aircraft observation/action/resource routing and owner isolation,
+not complete formation combat, target destruction, jammer/ESM behavior, or
+playable mission closure.
+
 The EW path must remain Air-owned for jammer modes, RWR/ESM interpretation,
 countermeasure resources, release cadence, and threat-response doctrine. Only
 the identity, authority, clock, provenance, communication, and lifecycle
@@ -113,12 +127,11 @@ envelope may be shared with other domains.
 5. **Replay and multi-aircraft gate:** repeat the EW scenario under reset/replay
    and route distinct EW roles through the existing cooperative roster before
    any `playable` label.
-6. **Cooperative hostile-threat owner:** before staging a hostile two-aircraft
-   EW scenario, define whether scripted opponents are updated once per shared
-   world or through a slot-safe owner. The current cooperative loop constructs
-   per-slot loaders and calls the behavior hook per slot, so the no-threat
-   Lead/Wing resource-routing test remains a proxy rather than hostile combat
-   evidence.
+6. **Cooperative hostile-threat owner:** scripted opponents are now built and
+   updated once by the shared-world routing loader; non-owner slot loaders do
+   not duplicate those controllers. The maintained 2v2 scenario proves this
+   owner split and source-driven response, but its terminal combat and broader
+   formation contracts remain open.
 
 ## Non-goals for this review
 
