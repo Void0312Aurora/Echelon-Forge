@@ -199,3 +199,27 @@ def test_p7b_manifest_rejects_tampered_or_incomplete_shape() -> None:
     validate_evidence_manifest({**manifest, "unexpected": True})
   with pytest.raises(EvidenceManifestError, match="payload digest differs"):
     validate_evidence_manifest(tampered, payload=b"stable-evidence")
+
+
+def test_p7b_manifest_rejects_ambiguous_or_reversed_time_bounds() -> None:
+  manifest = build_evidence_manifest(
+    artifact_id="manifest-time-test",
+    claim="test evidence",
+    payload=b"stable-evidence",
+    producer="test",
+    created_at="2026-09-25T00:00:00Z",
+    retention_until="2026-12-31T00:00:00Z",
+    restore_owner="release-engineering",
+    access_policy="read-only",
+    backup_policy="copy-before-migration",
+    provider="local-test",
+    provider_migration_policy="distinct-root-restore",
+  )
+  cases = (
+    ({"created_at": "2026-09-25", "retention_until": manifest["retention_until"]}, "created_at"),
+    ({"created_at": "2026-09-25T00:00:00", "retention_until": manifest["retention_until"]}, "created_at"),
+    ({"created_at": "2026-12-31T00:00:00Z", "retention_until": "2026-09-25T00:00:00Z"}, "retention_until"),
+  )
+  for updates, message in cases:
+    with pytest.raises(EvidenceManifestError, match=message):
+      validate_evidence_manifest({**manifest, **updates})

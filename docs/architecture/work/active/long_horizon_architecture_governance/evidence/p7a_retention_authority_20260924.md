@@ -70,18 +70,19 @@ green claim.
 ## Current revalidation
 
 On `2026-09-25`, the focused retention/archive set was rerun in the current
-checkout and passed **41 tests**. The SQLite-backed restore/admission file also
-passed **8 tests**. The complete governance suite now passes **78 tests** after
+checkout and passed **42 tests**. The SQLite-backed restore/admission file also
+passed **8 tests**. The complete governance suite now passes **79 tests** after
 the refreshed P2-B local baseline; these results refresh local evidence only
 and do not establish an external provider restore or production rollback-window
 operation.
 
-The two additional checks build and validate a provider-neutral evidence
-manifest from the actual local SQLite `stable` admission/retention projection,
-including its digest, restore owner, access, backup, provider, and migration
-policy fields; the same digest is revalidated after restoring the SQLite
-backup into a distinct local ledger root. The manifest is local evidence only
-and does not claim an external provider drill.
+The two additional checks build and validate an in-memory, provider-neutral
+evidence-manifest projection from the actual local SQLite `stable`
+admission/retention projection, including its digest, restore owner, access,
+backup, provider, and migration policy fields; the same digest is revalidated
+after restoring the SQLite backup into a distinct local ledger root. The
+manifest is not yet a separate retained `ArtifactLedger` blob, is local
+evidence only, and does not claim an external provider drill.
 
 ## Boundary and next work
 

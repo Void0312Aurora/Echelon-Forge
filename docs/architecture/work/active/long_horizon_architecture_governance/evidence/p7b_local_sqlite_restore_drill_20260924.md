@@ -35,9 +35,11 @@ classes and restored checkpoint release/decision identity.
 The same SQLite admission/restore file was rerun in the current checkout on
 `2026-09-25` and passed **8 tests**; the additional cases cover the current
 durable admission and rollback-window bindings. The P7-A governance checks
-also bind the resulting local stable projection to a provider-neutral evidence
-manifest and revalidate its digest after a distinct-root restore. This remains
-local provider evidence only.
+also build and validate an in-memory provider-neutral evidence-manifest
+projection over the resulting local stable projection and revalidate its
+digest after a distinct-root restore. That manifest is not yet persisted as a
+separate retained `ArtifactLedger` blob. This remains local provider evidence
+only.
 
 ## Boundary
 

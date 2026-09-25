@@ -1,6 +1,6 @@
 # P8-A Acceptance Baseline Evidence
 
-Status: `2026-09-24` — acceptance matrix and local governance baseline; P8 is
+Status: `2026-09-25` — acceptance matrix and local governance baseline; P8 is
 not accepted.
 
 ## Scope
@@ -37,7 +37,7 @@ $env:PYTHONPATH="$PWD\build-long-horizon-p5c-shared\Debug;$PWD"
 python -m pytest -q $paths
 ```
 
-Result: **78 passed**. This includes the P2-B sustainability baseline,
+Result: **79 passed**. This includes the P2-B sustainability baseline,
 candidate teardown/state-transfer guards, archive/lifecycle checks, P6
 authority checks, P7 retention checks, and the P8 matrix validator.
 
@@ -61,4 +61,4 @@ Document kind: `evidence`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/evidence/p8_acceptance_baseline_20260924.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-09-24`
+Last verified: `2026-09-25`

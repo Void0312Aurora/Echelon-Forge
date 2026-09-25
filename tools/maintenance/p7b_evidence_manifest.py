@@ -35,13 +35,20 @@ def _require_text(value: Any, field: str) -> str:
     return value.strip()
 
 
-def _require_timestamp(value: Any, field: str) -> str:
+def _parse_timestamp(value: Any, field: str) -> tuple[str, datetime]:
     text = _require_text(value, field)
     try:
-        datetime.fromisoformat(text.replace("Z", "+00:00"))
+        normalized = text[:-1] + "+00:00" if text.endswith("Z") else text
+        parsed = datetime.fromisoformat(normalized)
     except ValueError as error:
         raise EvidenceManifestError(f"{field} must be an ISO-8601 timestamp") from error
-    return text
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise EvidenceManifestError(f"{field} must include a timezone offset")
+    return text, parsed
+
+
+def _require_timestamp(value: Any, field: str) -> str:
+    return _parse_timestamp(value, field)[0]
 
 
 def _require_digest(value: Any, field: str) -> str:
@@ -105,8 +112,10 @@ def validate_evidence_manifest(
     for field in _REQUIRED_FIELDS - {"sha256", "created_at", "retention_until"}:
         _require_text(manifest[field], field)
     _require_digest(manifest["sha256"], "sha256")
-    _require_timestamp(manifest["created_at"], "created_at")
-    _require_timestamp(manifest["retention_until"], "retention_until")
+    _, created_at = _parse_timestamp(manifest["created_at"], "created_at")
+    _, retention_until = _parse_timestamp(manifest["retention_until"], "retention_until")
+    if retention_until < created_at:
+        raise EvidenceManifestError("retention_until must not precede created_at")
     if payload is not None:
         if not isinstance(payload, bytes):
             raise EvidenceManifestError("payload must be bytes")
