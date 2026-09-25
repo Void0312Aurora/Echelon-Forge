@@ -1315,3 +1315,30 @@ to a dedicated owner-local evidence document.
 - Continuation choice: do not promote tactical engagement to `playable`; next
   owner work must inspect the post-release effect/target-damage chain or use a
   sanctioned consequence proxy with explicit provenance.
+
+### 2026-09-25 — Air EW native countermeasure resource gate
+
+- Change batch: preserve the database unit's `ew_suite_ref` through the content
+  parse pass while keeping suite resolution deferred to the existing factory
+  materialize boundary; expose a diagnostics-only read-only
+  `debug_get_countermeasure_state` snapshot; and add a direct native Air test
+  that drives `PilotAction.program_chaff` and `program_flare` through the
+  existing EW systems.
+- Focused verification: rebuilt `ef_py` under the Visual Studio developer
+  environment; the Air fixture plus EW contract tests passed `14 passed`. The
+  native test observed the database-backed F-16 inventory and verified one
+  chaff decrement followed by one flare decrement after native stepping.
+  `git diff --check` passed. A plain PowerShell `ninja` invocation first lacked
+  the MSVC standard include environment (`assert.h`/`cstdint`); the same build
+  succeeded through `VsDevCmd.bat`, so this is an invocation prerequisite, not
+  a source failure.
+- Evidence boundary: this closes database-to-native EW component
+  initialization and low-level countermeasure resource consumption. The getter
+  is diagnostics-only and the scripted model still cannot write components.
+  The canonical Air action-mode admission, launch-warning-driven scripted
+  scenario/report, jammer command/state owner, replay, and multi-aircraft EW
+  gates remain open; EW stays `entry_surface_incomplete` and Air stays
+  `playable_candidate`.
+- Continuation choice: use this native gate as the owner baseline while adding
+  a maintained launch-warning scenario/report and deciding the jammer command
+  owner; do not infer playable EW status from the direct low-level test.
