@@ -1779,3 +1779,25 @@ to a dedicated owner-local evidence document.
 - Continuation choice: retain the two-target trace as the multi-aircraft
   baseline; next inspect command/report closure and formation behavior before
   moving to 4+ aircraft terminal composition.
+
+### 2026-09-26 — Air cooperative 4v4 terminal scale demonstration
+
+- Change batch: add `cooperative_air_4v4_scripted_c2_roe_terminal_v1.json`
+  with two declared Blue elements, four slot-owned generic-Aircraft targets,
+  and the same native C2/ROE event route used by the 2v2 baseline. Extend the
+  maintained combat regression to four active scripted slots.
+- Focused verification: the maintained cooperative combat test file passed `4
+  passed`. With seed `20260516`, target owners resolved as `Red_A`, `Red_B`,
+  `Red_C`, and `Red_D`; all four slots recorded `fire_once_accepted` and
+  `release_executed`, ended with `combat_win` without truncation, and retained
+  four unique scripted runtime identities. The paired run matched event
+  steps, target owners, terminal reasons, decision reports, decision counts,
+  and identities.
+- Evidence boundary: this is a bounded four-aircraft/two-element terminal
+  surrogate demonstration. The generic targets have no red weapons and do not
+  provide calibrated named-platform vulnerability, formation mission parity,
+  communication loss, tactical reassignment, visualization, or a full
+  command/report presentation claim.
+- Continuation choice: retain 4v4 as the current large-scale scripted combat
+  baseline; inspect formation/report and visualization gates before widening
+  the label or adding joint tasking.
