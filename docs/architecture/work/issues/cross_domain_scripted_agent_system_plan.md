@@ -2174,3 +2174,32 @@ to a dedicated owner-local evidence document.
 - Dependency boundary: the corrected manager still resides under
   `python.rl.tasking`. This change does not establish independent C2
   package ownership or a no-RL full command/report loop.
+
+### 2026-09-26 — Air C2 terminal-vector and ILS readiness correction
+
+- Starting commit: `508936e0`.
+- Diagnostic before the change: the route exhausted around 8.2 km before the
+  runway center with a roughly 35-degree inbound heading error. The C2
+  route-exhaustion branch immediately armed ILS without the existing terminal
+  runway-frame gate. The resulting approach reached the ground about 4.6 km
+  cross-runway and ended with `off_runway_terminate`.
+- Change batch: route exhaustion now retains the pending landing vector until
+  the runway/ILS terminal geometry is ready. The phase manager consults the
+  same loader-owned readiness gate and fails closed if it is unavailable. The
+  C2 demonstration declares the maintained 2600 m intercept and 3500 m
+  terminal window used by the successful continuous Air scenario; no route
+  coordinate or target state is injected into the policy.
+- Focused verification: execution, leader, mission-tasking, and command-bridge
+  regressions passed `86 passed, 17 subtests passed`; Python compilation and
+  `git diff --check` passed. A new regression proves that an exhausted C2
+  route remains pending outside the terminal window and becomes ready inside
+  it, while the leader gate rejects premature arming.
+- Direct native verification on the final code: scripted execution with seed
+  `7` and zero leader adjustments followed `TASK_SCRAMBLE -> TASK_CAP ->
+  TASK_RTB -> TASK_RECOVER_LAND` at windows 0, 19, 351, and 681. It terminated
+  at window 769 with `success_objective`, mission status `[4,1,1,1]`,
+  valid final report, runway geometry true, and 3.63 m cross-runway offset.
+- Boundary decision: this closes one C2 full-episode recovery regression. The
+  tested `LeaderTrainingEnv` still imports Gym/Torch and uses C2 ownership in
+  `python.rl.tasking`. No-RL C2 command/report closure, broader seed coverage,
+  visualization, and the full Air `playable` gate remain open.
