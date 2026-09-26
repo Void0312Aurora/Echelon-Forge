@@ -13,7 +13,7 @@ CLI_PATH = REPO_ROOT / "tools" / "diagnostics" / "flight_trajectory" / "takeoff_
 
 def test_air_scripted_cli_uses_neutral_registry_model() -> None:
     source = CLI_PATH.read_text(encoding="utf-8")
-    assert "python.tasking_contracts.air_scripted_execution" in source
+    assert "python.tasking_contracts.air.execution.model" in source
     assert "AIR_SCRIPTED_MODEL_REGISTRY.create_for" in source
     assert "AIR_SCRIPTED_EXECUTION_MODEL_ID" in source
     assert "ScriptedRuntimeAgent" in source

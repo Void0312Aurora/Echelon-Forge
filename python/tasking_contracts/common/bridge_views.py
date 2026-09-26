@@ -1,0 +1,415 @@
+"""Loader-owned runtime views and command-chain dispatch helpers for gym_envs.
+
+Canonical owner of the parts of ``python.rl.tasking.bridge`` that
+``gym_envs`` consumes and that do not require resolving a service-profile
+implementation (air/ground/naval adapters, which stay ``python.rl``-internal
+under ``python.rl.tasking``/``python.rl.profile``). This module has zero
+dependency on ``python.rl`` or ``gym_envs`` — see
+``python/tasking_contracts/__init__.py``.
+
+``python.rl.tasking.bridge`` re-exports every name below as a compatibility
+shell; its remaining (profile-dispatch) surface stays there because it is a
+genuine entanglement point that still needs the ``python.rl``-internal
+air/ground/naval profile modules.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from importlib import import_module
+import math
+from typing import Any
+
+
+TASKING_TRUTH_READ_BLOCKER = (
+    "Missing maintained tasking observation seam: add a bridge/facade-owned "
+    "`loader.get_policy_agent_observation(agent_id)` replacement for raw "
+    "simulation observation access."
+)
+TASKING_INSTRUMENT_READ_BLOCKER = (
+    "Missing maintained tasking instrument seam: add a bridge/facade-owned "
+    "`loader.get_policy_instrument_state(agent_id)` replacement for raw "
+    "simulation instrument access."
+)
+
+
+def _positive_finite_time_step(value: Any, default: float = 0.05) -> float:
+    try:
+        fallback = float(default)
+    except Exception:
+        fallback = 0.05
+    if not math.isfinite(fallback) or fallback <= 0.0:
+        fallback = 0.05
+    try:
+        candidate = float(value)
+    except Exception:
+        return fallback
+    return candidate if math.isfinite(candidate) and candidate > 0.0 else fallback
+
+
+@dataclass(frozen=True)
+class MissionCommandView:
+    payload: dict[str, Any]
+
+    def get(self, field_name: str, default: Any = None) -> Any:
+        return self.payload.get(field_name, default)
+
+    def int_field(self, field_name: str, default: int = 0) -> int:
+        try:
+            return int(self.payload.get(field_name, default))
+        except Exception:
+            return int(default)
+
+    def float_field(self, field_name: str, default: float = 0.0) -> float:
+        try:
+            return float(self.payload.get(field_name, default))
+        except Exception:
+            return float(default)
+
+    def bool_field(self, field_name: str, default: bool = False) -> bool:
+        raw = self.payload.get(field_name, default)
+        if isinstance(raw, bool):
+            return raw
+        if isinstance(raw, (int, float)):
+            return bool(raw)
+        if isinstance(raw, str):
+            text = raw.strip().lower()
+            if text in {"1", "true", "yes", "on"}:
+                return True
+            if text in {"0", "false", "no", "off", ""}:
+                return False
+        return bool(default)
+
+    def text_field(self, field_name: str, default: str = "") -> str:
+        raw = self.payload.get(field_name, default)
+        return str(default if raw is None else raw)
+
+
+class LoaderOwnedRuntimeView:
+    """Narrow loader-owned runtime view used by facade-backed and explicit raw-kernel loaders."""
+
+    def __init__(self, loader: Any):
+        self._loader = loader
+
+    def _sim(self) -> Any:
+        return getattr(self._loader, "sim", None)
+
+    def require_sim(self, seam_name: str = "loader-owned runtime seam") -> Any:
+        sim = self._sim()
+        if sim is None:
+            raise RuntimeError(f"{seam_name} requires loader.sim")
+        return sim
+
+    def _method(self, method_name: str) -> Any:
+        return getattr(self._sim(), method_name, None)
+
+    def supports(self, method_name: str) -> bool:
+        return callable(self._method(method_name))
+
+    def call_optional(self, method_name: str, *args: Any, default: Any = None) -> Any:
+        method = self._method(method_name)
+        if not callable(method):
+            return default
+        try:
+            return method(*args)
+        except Exception:
+            return default
+
+    def read_time_step_s(self, default: float = 0.05) -> float:
+        return _positive_finite_time_step(
+            self.call_optional("get_time_step", default=float(default)),
+            default,
+        )
+
+    def sync_task_order(self, agent_id: Any, task_order: Any) -> None:
+        if task_order is not None:
+            self.call_optional("set_task_order", agent_id, task_order)
+
+    def sync_leader_intent(self, agent_id: Any, leader_intent: Any) -> None:
+        if leader_intent is not None:
+            self.call_optional("set_leader_intent", agent_id, leader_intent)
+
+    def sync_pilot_report(self, agent_id: Any, pilot_report: Any) -> None:
+        if pilot_report is not None:
+            self.call_optional("set_pilot_report", agent_id, pilot_report)
+
+    def sync_mission_command(self, agent_id: Any, cmd: Any) -> None:
+        if cmd is not None:
+            self.call_optional("set_mission_command", agent_id, cmd)
+
+    def get_unit_position(self, entity_id: int) -> Any:
+        return self.call_optional("get_unit_position", int(entity_id))
+
+    def get_unit_velocity(self, entity_id: int) -> Any:
+        return self.call_optional("get_unit_velocity", int(entity_id))
+
+    def is_unit_active(self, entity_id: int) -> bool:
+        return bool(self.call_optional("is_unit_active", int(entity_id), default=False))
+
+    def get_agent_observation(self, entity_id: int) -> Any:
+        return self.call_optional("get_agent_observation", int(entity_id))
+
+    def get_instrument_state(self, entity_id: int) -> Any:
+        return self.call_optional("get_instrument_state", int(entity_id))
+
+    def set_command(
+        self,
+        entity_id: int,
+        target_heading_deg: float,
+        target_speed_mps: float,
+        target_altitude_m: float,
+    ) -> None:
+        self.call_optional(
+            "set_command",
+            int(entity_id),
+            float(target_heading_deg),
+            float(target_speed_mps),
+            float(target_altitude_m),
+        )
+
+    def fire_missile(self, entity_id: int, target_id: int) -> int:
+        try:
+            return int(self.call_optional("fire_missile", int(entity_id), int(target_id), default=0) or 0)
+        except Exception:
+            return 0
+
+
+class LoaderOwnedScriptedOpponentKernelView:
+    """Loader-owned kernel view for scripted opponents.
+
+    The batch/facade path supplies a maintained facade-backed proxy here; explicitly
+    opted-in raw single-kernel environments can still satisfy the same narrow view.
+    """
+
+    def __init__(self, loader: Any):
+        self._loader = loader
+
+    def _surface(self) -> Any:
+        return getattr(self._loader, "sim", None)
+
+    def _method(self, method_name: str) -> Any:
+        return getattr(self._surface(), method_name, None)
+
+    def _call(self, method_name: str, *args: Any, default: Any = None) -> Any:
+        method = self._method(method_name)
+        if not callable(method):
+            if default is not None:
+                return default
+            raise RuntimeError(f"scripted opponent kernel view requires {method_name}()")
+        return method(*args)
+
+    def is_unit_active(self, entity_id: int) -> bool:
+        return bool(self._call("is_unit_active", int(entity_id), default=False))
+
+    def get_unit_position(self, entity_id: int) -> Any:
+        return self._call("get_unit_position", int(entity_id))
+
+    def get_agent_observation(self, entity_id: int) -> Any:
+        return self._call("get_agent_observation", int(entity_id))
+
+    def set_command(
+        self,
+        entity_id: int,
+        target_heading_deg: float,
+        target_speed_mps: float,
+        target_altitude_m: float,
+    ) -> None:
+        self._call(
+            "set_command",
+            int(entity_id),
+            float(target_heading_deg),
+            float(target_speed_mps),
+            float(target_altitude_m),
+            default=None,
+        )
+
+    def fire_missile(self, entity_id: int, target_id: int) -> int:
+        try:
+            return int(self._call("fire_missile", int(entity_id), int(target_id), default=0) or 0)
+        except Exception:
+            return 0
+
+
+def loader_owned_runtime_view(loader: Any) -> LoaderOwnedRuntimeView:
+    return LoaderOwnedRuntimeView(loader)
+
+
+def loader_owned_scripted_opponent_kernel_view(loader: Any) -> LoaderOwnedScriptedOpponentKernelView:
+    return LoaderOwnedScriptedOpponentKernelView(loader)
+
+
+def apply_loader_owned_world_layout_to_kernel(loader: Any, layout: Any) -> Any:
+    """Compatibility-only quarantine around loader-owned world-layout kernel apply."""
+
+    sim = loader_owned_runtime_view(loader).require_sim("loader-owned world-layout kernel-apply seam")
+    apply_world_layout = getattr(import_module("python.scenario.runtime"), "apply_world_layout_to_kernel", None)
+    if not callable(apply_world_layout):
+        raise RuntimeError("python.scenario.runtime.apply_world_layout_to_kernel is not available")
+    return apply_world_layout(sim, layout)
+
+
+def mission_command_dict(loader: Any) -> dict[str, Any]:
+    mission_cmd = getattr(loader, "mission_cmd", None)
+    return mission_cmd if isinstance(mission_cmd, dict) else {}
+
+
+def has_mission_command_dict(loader: Any) -> bool:
+    return isinstance(getattr(loader, "mission_cmd", None), dict)
+
+
+def mission_command_view(loader: Any) -> MissionCommandView:
+    return MissionCommandView(mission_command_dict(loader))
+
+
+def resolve_loader_time_step(loader: Any, default: float = 0.05) -> float:
+    if loader is None:
+        return _positive_finite_time_step(default, 0.05)
+
+    for candidate in (
+        getattr(loader, "_compiled_runtime_metadata", None),
+        getattr(loader, "_compiled_scenario", None),
+    ):
+        if candidate is None:
+            continue
+        time_step_s = getattr(candidate, "time_step_s", None)
+        if time_step_s is None:
+            time_step_s = getattr(
+                getattr(candidate, "layout_template", None),
+                "time_step_s",
+                None,
+            )
+        try:
+            if time_step_s is not None:
+                return _positive_finite_time_step(time_step_s, default)
+        except Exception:
+            pass
+
+    scenario_data = getattr(loader, "scenario_data", None)
+    if isinstance(scenario_data, dict):
+        env_cfg = scenario_data.get("environment", None)
+        if isinstance(env_cfg, dict) and "time_step" in env_cfg:
+            try:
+                return _positive_finite_time_step(env_cfg["time_step"], default)
+            except Exception:
+                pass
+
+    runtime_view = loader_owned_runtime_view(loader)
+    if runtime_view.supports("get_time_step"):
+        return runtime_view.read_time_step_s(default=float(default))
+
+    return _positive_finite_time_step(default, 0.05)
+
+
+def _sync_loader_command_chain_via_runtime_view(loader: Any) -> None:
+    if getattr(loader, "agent_id", None) is None:
+        return
+    runtime_view = loader_owned_runtime_view(loader)
+    runtime_view.sync_task_order(loader.agent_id, getattr(loader, "task_order", None))
+    runtime_view.sync_leader_intent(loader.agent_id, getattr(loader, "leader_intent", None))
+    runtime_view.sync_pilot_report(loader.agent_id, getattr(loader, "pilot_report", None))
+
+
+def sync_loader_mission_command(loader: Any, cmd: Any) -> None:
+    if getattr(loader, "agent_id", None) is None:
+        return
+    loader_owned_runtime_view(loader).sync_mission_command(loader.agent_id, cmd)
+
+
+def sync_loader_command_chain(loader: Any) -> None:
+    if getattr(loader, "agent_id", None) is None:
+        return
+    if bool(getattr(loader, "_loader_owned_command_chain_sync_in_progress", False)):
+        _sync_loader_command_chain_via_runtime_view(loader)
+        return
+    sync_fn = getattr(loader, "_sync_kernel_command_chain", None)
+    if callable(sync_fn):
+        setattr(loader, "_loader_owned_command_chain_sync_in_progress", True)
+        try:
+            sync_fn()
+            return
+        finally:
+            setattr(loader, "_loader_owned_command_chain_sync_in_progress", False)
+    _sync_loader_command_chain_via_runtime_view(loader)
+
+
+def sync_loader_command_chain_reentrant(loader: Any) -> None:
+    """Use from loader-installed bridge objects to avoid recursing through their own hook."""
+
+    if getattr(loader, "agent_id", None) is None:
+        return
+    _sync_loader_command_chain_via_runtime_view(loader)
+
+
+def _loader_requires_maintained_policy_read_seam(loader: Any) -> bool:
+    return callable(getattr(loader, "_get_cached_step_evaluation", None)) or callable(
+        getattr(loader, "_sync_kernel_command_chain", None)
+    )
+
+
+def _read_loader_policy_state(
+    loader: Any,
+    *,
+    agent_id: Any | None,
+    maintained_method_name: str,
+    raw_method_name: str,
+    blocker: str,
+    caller: str,
+) -> Any:
+    resolved_agent_id = getattr(loader, "agent_id", None) if agent_id is None else agent_id
+    if resolved_agent_id is None:
+        return None
+
+    maintained_reader = getattr(loader, maintained_method_name, None)
+    if callable(maintained_reader):
+        try:
+            return maintained_reader(resolved_agent_id)
+        except Exception:
+            return None
+
+    if caller == "maintained" and _loader_requires_maintained_policy_read_seam(loader):
+        raise RuntimeError(blocker)
+
+    return loader_owned_runtime_view(loader).call_optional(raw_method_name, resolved_agent_id)
+
+
+def get_policy_agent_observation(loader: Any, agent_id: Any | None = None) -> Any:
+    return _read_loader_policy_state(
+        loader,
+        agent_id=agent_id,
+        maintained_method_name="get_policy_agent_observation",
+        raw_method_name="get_agent_observation",
+        blocker=TASKING_TRUTH_READ_BLOCKER,
+        caller="maintained",
+    )
+
+
+def get_policy_instrument_state(loader: Any, agent_id: Any | None = None) -> Any:
+    return _read_loader_policy_state(
+        loader,
+        agent_id=agent_id,
+        maintained_method_name="get_policy_instrument_state",
+        raw_method_name="get_instrument_state",
+        blocker=TASKING_INSTRUMENT_READ_BLOCKER,
+        caller="maintained",
+    )
+
+
+__all__ = [
+    "TASKING_INSTRUMENT_READ_BLOCKER",
+    "TASKING_TRUTH_READ_BLOCKER",
+    "LoaderOwnedRuntimeView",
+    "LoaderOwnedScriptedOpponentKernelView",
+    "MissionCommandView",
+    "apply_loader_owned_world_layout_to_kernel",
+    "get_policy_agent_observation",
+    "get_policy_instrument_state",
+    "has_mission_command_dict",
+    "loader_owned_runtime_view",
+    "loader_owned_scripted_opponent_kernel_view",
+    "mission_command_dict",
+    "mission_command_view",
+    "resolve_loader_time_step",
+    "sync_loader_command_chain",
+    "sync_loader_command_chain_reentrant",
+    "sync_loader_mission_command",
+]

@@ -31,7 +31,9 @@ Verified current facts:
   compatible contracts.
 - `AgentRole` already has a five-part schema: `role`, `authority_scope`,
   `information_state_source`, `decision_model_ref`, and `action_interface`.
-- `python/tasking_contracts/agency_registry.py` is a declarative registry and
+- `python/tasking_contracts/common/agency_registry.py` is the canonical
+  declarative registry; `python/tasking_contracts/agency_registry.py` remains a
+  compatibility shell and
   explicitly avoids wiring behavior. It currently includes autopilot, flight
   lead, scripted C2, cooperative director, naval, and ground command roles.
 - `python/rl/runtime/agent_shim.py` currently carries observation provenance,
@@ -209,7 +211,8 @@ replay contracts. Keep domain fields in domain-owned extensions.
 Promotion condition: a repository-wide consumer map, dependency direction, and
 rollback plan exist before changing a maintained contract.
 
-Initial WP1 slice: `python/tasking_contracts/scripted_registry.py` now provides
+Initial WP1 slice: `python/tasking_contracts/common/scripted_registry.py` now
+provides
 a dependency-terminal scripted model-factory registry and a minimal structural
 `reset -> decide -> close` lifecycle. It does not duplicate observation,
 action, or AgentRole DTOs, and it does not wire a runtime or import RL.
@@ -224,7 +227,8 @@ action hold/expiry behavior, report stream, and deterministic seed handling.
 The registry must route by scenario and active roster without making the legacy
 first-agent compatibility path authoritative for new multi-agent scenarios.
 
-Initial runtime slice: `python/tasking_contracts/scripted_runtime.py` now owns
+Initial runtime slice: `python/tasking_contracts/common/scripted_runtime.py` now
+owns
 the common scheduling envelope for registered scripted models. It provides
 single-agent and active-roster lifecycle entry points, monotonic clock checks,
 decision cadence, action hold/expiry, provenance context, deterministic replay
@@ -1001,7 +1005,7 @@ to a dedicated owner-local evidence document.
 - Starting commit: `b90d7209`.
 - Change batch: add the dependency-terminal
   `ScriptedRuntimeAgent`/`ScriptedRuntimeRoster` scheduler in
-  `python/tasking_contracts/scripted_runtime.py`. It reuses the existing
+  `python/tasking_contracts/common/scripted_runtime.py`. It reuses the existing
   `ScriptedDecisionModel` and `ScriptedModelRegistry`; it does not add a second
   observation/action DTO or import RL, gym, NumPy, native bindings, or a world
   runtime.
@@ -2023,3 +2027,28 @@ to a dedicated owner-local evidence document.
   remaining `python/tasking_contracts` root still contains mixed common and
   domain modules; the next layout batch must partition those into common,
   Air, Naval, and Joint packages without changing runtime ownership claims.
+
+### 2026-09-26 — Tasking contracts physical domain partition
+
+- Starting commit: `8bb307a4`.
+- Change batch: partition the canonical tasking-contract implementation into
+  `python/tasking_contracts/common`, `air`, `naval`, and `joint`. Air is split
+  further into `execution`, `engagement`, `ew`, and `strategy`. The former root
+  module paths remain compatibility shells so existing imports and object
+  identity remain stable.
+- Consumer update: maintained Air, Naval, visualization, evaluation, and
+  diagnostics entry points now import their canonical physical layers. RL
+  control shims remain compatibility consumers and do not regain ownership of
+  the Air implementation.
+- Focused verification: Air/Naval/Joint/runtime regressions passed `67 passed`;
+  physical-layer, compatibility, neutral-boundary, CLI, wrapper, and
+  visualization contract tests passed `31 passed` with the explicit local
+  `ef_py` path; Python compilation and `git diff --check` passed.
+- Environment residual: one initial compatibility test invocation omitted the
+  explicit `PYTHONPATH=build-scripted-agent` binding and stopped at the known
+  missing-`ef_py` collection boundary. Re-running with the maintained local
+  binding passed; no code failure was inferred from the first invocation.
+- Boundary decision: physical placement now distinguishes common contracts
+  from domain policy and adapters. This is a structural refactor only; it does
+  not promote Air, Naval, Joint, or Ground capability labels and does not make
+  RL part of the scripted line.

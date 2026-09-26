@@ -4,11 +4,11 @@ from typing import Any
 
 import numpy as np
 
-from python.tasking_contracts.air_scripted_execution import (
+from python.tasking_contracts.air.execution.model import (
     AIR_SCRIPTED_EXECUTION_MODEL_ID,
     AIR_SCRIPTED_MODEL_REGISTRY,
 )
-from python.tasking_contracts.scripted_runtime import (
+from python.tasking_contracts.common.scripted_runtime import (
     ScriptedRuntimeAgent,
     ScriptedRuntimeAgentSpec,
     ScriptedRuntimeStep,

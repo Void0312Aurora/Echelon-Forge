@@ -44,7 +44,7 @@ from python.runtime_bootstrap import ensure_repo_imports
 BASE_DIR = ensure_repo_imports()
 
 from python.env_config import resolve_env_settings
-from python.tasking_contracts.air_scripted_execution import (
+from python.tasking_contracts.air.execution.model import (
     AIR_SCRIPTED_EXECUTION_MODEL_ID,
     AIR_SCRIPTED_MODEL_REGISTRY,
 )

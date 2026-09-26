@@ -17,11 +17,11 @@ from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 ensure_repo_imports()
 
 from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv  # noqa: E402
-from python.tasking_contracts.air_scripted_ew import (  # noqa: E402
+from python.tasking_contracts.air.ew.model import (  # noqa: E402
     AIR_SCRIPTED_EW_ACTION_MODEL_ID,
 )
-from python.tasking_contracts.air_scripted_registry import AIR_SCRIPTED_MODEL_REGISTRY  # noqa: E402
-from python.tasking_contracts.scripted_runtime import (  # noqa: E402
+from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY  # noqa: E402
+from python.tasking_contracts.common.scripted_runtime import (  # noqa: E402
     ScriptedRuntimeAgent,
     ScriptedRuntimeAgentSpec,
 )
