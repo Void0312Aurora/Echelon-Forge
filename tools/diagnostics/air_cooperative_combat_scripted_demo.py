@@ -98,6 +98,10 @@ def run_demo(*, scenario_path: str, seed: int, max_steps: int) -> dict[str, Any]
     try:
         vec_env.seed(int(seed))
         observation_batch = vec_env.reset()
+        target_owner = [
+            str(getattr(vec_env._slots[index].loader, "primary_target_name", ""))
+            for index in range(len(agents))
+        ]
         for slot_index, agent in enumerate(agents):
             observation = {key: np.asarray(value)[slot_index] for key, value in observation_batch.items()}
             agent.reset(
@@ -157,6 +161,7 @@ def run_demo(*, scenario_path: str, seed: int, max_steps: int) -> dict[str, Any]
                     }
                     for index in range(len(agents))
                 ],
+                "target_owner": target_owner,
                 "fire_once_accepted_steps": accepted_steps,
                 "release_executed_steps": release_steps,
                 "scripted_decision_reports": decision_reports,
