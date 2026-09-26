@@ -20,6 +20,12 @@ reset/replay, authority, and report evidence named in the plan.
 | Joint | `joint.coordination.task_graph_scripted` (`adapter`, `joint_coordination_director`) | `bounded_adapter` | `python/tasking_contracts/joint/coordination.py`; versioned task-graph parser; neutral roster and projection tests; direct compiled `CoordinationIntentPacket` authorization probe | graph-scoped Air/Naval node declaration, authority/support edges, neutral runtime provenance, and compiled coordination DTO projection with explicit omitted-field residuals | maintained joint scenario, command-link delivery, domain execution/report closure, communication loss, reset/replay, joint CLI/viz, and any cross-domain playable label |
 | Ground | no scripted model registration | `held` | `scenarios/ground/*`; native G1 static schema and realism-gradient guardrails | static task/status shell and explicit deferred claims | movement, terrain interaction, sensing/track export, fires, effects, damage, and playable runtime |
 
+The fixed-route Air C2 demonstration now has a successful native seed-7
+`LeaderTrainingEnv` episode with all four task phases, a valid final report,
+and a runway landing. This is one RL-resident command/report execution record;
+the neutral no-RL C2 path, broader seed coverage, and visualization gate remain
+open. The Air label stays `playable_candidate`.
+
 ### Air Algorithm Substitution Status
 
 The Air row above records the current planner, weapon-profile, and conservative

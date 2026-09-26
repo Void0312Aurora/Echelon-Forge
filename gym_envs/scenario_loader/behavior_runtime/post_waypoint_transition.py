@@ -90,8 +90,7 @@ def post_waypoint_transition_ready(loader) -> bool:
         return False
     if c2_task_name != "TASK_RECOVER_LAND":
         return False
-    if loader.waypoints and int(getattr(loader, "waypoint_idx", 0) or 0) >= len(loader.waypoints):
-        return True
+    # Route exhaustion starts recovery vectoring; it does not prove ILS capture geometry.
     return landing_post_transition_terminal_ready(loader)
 
 

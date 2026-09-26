@@ -678,7 +678,8 @@ class RuleBasedLeaderPhaseManager:
         if not is_landing_command_code(post.get("command_code", COMMAND_CODE_LANDING)):
             return False
         if c2_task_name == ScriptedC2TaskManager.TASK_RECOVER_LAND and remaining_waypoints <= 0:
-            return True
+            ready = getattr(loader, "_post_waypoint_transition_ready", None)
+            return bool(ready()) if callable(ready) else False
         if remaining_waypoints > self.terminal_waypoint_count:
             return False
         if alt_agl_m <= self.rollout_alt_agl_m:
