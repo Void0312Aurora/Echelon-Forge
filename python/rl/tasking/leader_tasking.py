@@ -335,6 +335,7 @@ class RuleBasedLeaderPhaseManager:
         landing_final_alt_agl_m: float = 140.0,
         rollout_alt_agl_m: float = 5.0,
         scramble_ground_speed_max_mps: float = 15.0,
+        departure_route_alt_agl_m: float = 140.0,
     ):
         self.terminal_waypoint_count = max(0, int(terminal_waypoint_count))
         self.approach_arm_dme_m = float(approach_arm_dme_m)
@@ -349,6 +350,7 @@ class RuleBasedLeaderPhaseManager:
         self.landing_final_alt_agl_m = float(landing_final_alt_agl_m)
         self.rollout_alt_agl_m = float(rollout_alt_agl_m)
         self.scramble_ground_speed_max_mps = float(scramble_ground_speed_max_mps)
+        self.departure_route_alt_agl_m = max(self.rollout_alt_agl_m, float(departure_route_alt_agl_m))
 
     def reset(
         self,
@@ -629,7 +631,11 @@ class RuleBasedLeaderPhaseManager:
             return "takeoff"
 
         if remaining_waypoints > max(self.terminal_waypoint_count, 2):
-            if total_waypoints > 0 and remaining_waypoints == total_waypoints:
+            if (
+                total_waypoints > 0
+                and remaining_waypoints == total_waypoints
+                and alt_agl_m < self.departure_route_alt_agl_m
+            ):
                 return "departure"
             return "transit_to_station"
         if remaining_waypoints > 0:

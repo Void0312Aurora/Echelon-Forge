@@ -440,6 +440,32 @@ class TaskingPhaseControlTests(unittest.TestCase):
     self.assertAlmostEqual(225.0, float(loader.leader_intent.cmd_heading_deg), places=3)
     self.assertEqual("rtb", str(loader.mission_phase_name))
 
+  def test_phase_manager_enters_route_before_first_waypoint_when_climb_is_safe(self):
+    manager = RuleBasedLeaderPhaseManager(departure_route_alt_agl_m=140.0)
+    loader = _make_phase_loader(
+      c2_task_name=ScriptedC2TaskManager.TASK_CAP,
+      ils_obs=[0.0, 0.0, 0.0, 20000.0],
+      runway_frame=(True, -20000.0, 0.0, 3000.0, 45.0),
+      runway_heading_deg=90.0,
+    )
+    loader.waypoints.extend([{"x": 12000.0, "y": 6000.0}, {"x": -12000.0, "y": 0.0}])
+    loader.mission_cmd["command_code"] = 1
+    truth = loader.sim.get_agent_observation(loader.agent_id)
+    inst = loader.sim.get_instrument_state(loader.agent_id)
+
+    inst.alt_radar = 120.0
+    with _patched_tasking_ef():
+      manager.update(loader, sim_time_s=10.0, truth=truth, inst=inst, sync_to_kernel=False)
+    self.assertEqual("departure", str(loader.mission_phase_name))
+    self.assertEqual(1, int(loader.leader_intent.command_code))
+
+    inst.alt_radar = 160.0
+    with _patched_tasking_ef():
+      manager.update(loader, sim_time_s=11.0, truth=truth, inst=inst, sync_to_kernel=False)
+    self.assertEqual("transit_to_station", str(loader.mission_phase_name))
+    self.assertEqual(3, int(loader.leader_intent.command_code))
+    self.assertEqual(0, int(loader.waypoint_idx))
+
 
 if __name__ == "__main__":
   unittest.main()

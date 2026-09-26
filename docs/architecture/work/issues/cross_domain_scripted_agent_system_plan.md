@@ -2140,3 +2140,37 @@ to a dedicated owner-local evidence document.
   world-batch runtime is still physically under `python.rl.runtime`, and
   the CLI run does not prove command/report episode closure or visualization
   process acceptance. Air remains `playable_candidate`.
+
+### 2026-09-26 — Air C2 departure-to-route deadlock correction
+
+- Starting commit: `0ad1609f`.
+- Diagnostic before the change: a fixed-route C2 scenario with a scripted
+  execution backend, seed `7`, and zero leader adjustments reached
+  `TASK_CAP` but held command code `1` and phase `departure` for all
+  `800` decision windows before timeout. A 121-window trace showed the
+  aircraft above `1700 m` AGL while the first route waypoint and command
+  code remained unchanged. The departure phase inferred from an unadvanced
+  first waypoint emitted a takeoff command; route guidance requires command
+  code `3`, so the original condition could not make progress.
+- Change batch: `RuleBasedLeaderPhaseManager` now enters
+  `transit_to_station` when an aircraft with a route is airborne above the
+  configurable `departure_route_alt_agl_m` threshold (default `140 m`),
+  even before the first waypoint advances. Below that gate it retains the
+  takeoff/departure command. A contract regression covers both sides of the
+  transition without changing waypoint state.
+- Focused verification: leader, leader-tasking, and command-bridge regressions
+  passed `73 passed, 6 subtests passed`; Python compilation and diff checks
+  passed.
+- Direct post-change probe: the same fixed-route C2 scenario entered
+  `TASK_SCRAMBLE -> TASK_CAP -> TASK_RTB -> TASK_RECOVER_LAND`, observed
+  command codes `1`, `3`, and `4`, advanced through waypoint index `9`,
+  and emitted report types `1`, `17`, and `20`. The three C2 transitions
+  occurred at decision windows `19`, `351`, and `681`.
+- Remaining failure: the episode terminated at decision window `776` with
+  `off_runway_terminate` and mission success `-1`, despite a valid final
+  report. This is command/report transition coverage, not successful episode
+  closure. Inspect the terminal recovery geometry and command timing in a
+  separate landing batch; do not promote Air beyond `playable_candidate`.
+- Dependency boundary: the corrected manager still resides under
+  `python.rl.tasking`. This change does not establish independent C2
+  package ownership or a no-RL full command/report loop.
