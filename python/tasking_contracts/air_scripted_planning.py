@@ -17,6 +17,8 @@ from typing import Any, Mapping
 
 import numpy as np
 
+from .air_scripted_weapons import AirWeaponEnvelope
+
 
 def _finite(value: float, *, name: str, default: float = 0.0) -> float:
     try:
@@ -55,6 +57,8 @@ class AirEngagementPlannerConfig:
     max_guidance_roll: float = 0.08
     max_guidance_pitch: float = 0.05
     max_guidance_throttle: float = 0.04
+    guidance_weight: float = 0.10
+    weapon_envelope: AirWeaponEnvelope | None = None
 
     def __post_init__(self) -> None:
         positive = (
@@ -81,6 +85,7 @@ class AirEngagementPlannerConfig:
             float(self.geometry_weight),
             float(self.closure_weight),
             float(self.freshness_weight),
+            float(self.guidance_weight),
         )
         if any(weight < 0.0 for weight in weights) or sum(weights) <= 0.0:
             raise ValueError("planner utility weights must be non-negative and non-zero")
@@ -105,6 +110,8 @@ class AirEngagementPlan:
     geometry_score: float
     closure_score: float
     freshness_score: float
+    guidance_score: float
+    weapon_envelope_id: str | None
     current_utility: float
     selected_utility: float
     guidance_roll: float
@@ -114,7 +121,7 @@ class AirEngagementPlan:
     candidate_utilities: tuple[tuple[str, float], ...]
 
     def as_dict(self) -> dict[str, Any]:
-        return {
+        result = {
             "mode": self.mode,
             "selected_candidate": self.selected_candidate,
             "fire_recommended": self.fire_recommended,
@@ -127,6 +134,8 @@ class AirEngagementPlan:
             "geometry_score": self.geometry_score,
             "closure_score": self.closure_score,
             "freshness_score": self.freshness_score,
+            "guidance_score": self.guidance_score,
+            "weapon_envelope_id": self.weapon_envelope_id,
             "current_utility": self.current_utility,
             "selected_utility": self.selected_utility,
             "guidance_roll": self.guidance_roll,
@@ -135,6 +144,7 @@ class AirEngagementPlan:
             "reason_codes": list(self.reason_codes),
             "candidate_utilities": {name: score for name, score in self.candidate_utilities},
         }
+        return result
 
 
 class AirEngagementPlanner:
@@ -191,7 +201,13 @@ class AirEngagementPlanner:
             if not range_known and abs(closing) <= 1.0e-6
             else _clip(closing / cfg.desired_closing_speed_mps, 0.0, 1.0)
         )
-        current_utility = self._utility(range_score, geometry_score, closure_score, freshness)
+        guidance_score = self._guidance_score(
+            distance,
+            bearing,
+            range_known=range_known,
+            geometry_known=geometry_known,
+        )
+        current_utility = self._utility(range_score, geometry_score, closure_score, freshness, guidance_score)
 
         candidates = self._candidate_states(
             distance=distance,
@@ -208,6 +224,12 @@ class AirEngagementPlanner:
                 self._geometry_score(candidate_bearing, candidate_elevation),
                 _clip(candidate_closing / cfg.desired_closing_speed_mps, 0.0, 1.0),
                 freshness,
+                self._guidance_score(
+                    candidate_range,
+                    candidate_bearing,
+                    range_known=range_known,
+                    geometry_known=geometry_known,
+                ),
             )
             scored.append((name, utility, state))
         scored.sort(key=lambda row: (-row[1], row[0]))
@@ -230,7 +252,9 @@ class AirEngagementPlanner:
             selected_utility = current_utility
             guidance = (0.0, 0.0, 0.0)
             reasons.append("pending_assessment")
-        elif legal and current_utility >= cfg.commit_utility_threshold:
+        elif legal and current_utility >= cfg.commit_utility_threshold and (
+            cfg.weapon_envelope is None or guidance_score > 0.0
+        ):
             mode = "commit"
             selected_name = "hold"
             selected_utility = current_utility
@@ -256,6 +280,11 @@ class AirEngagementPlanner:
         fire_recommended = bool(mode == "commit" and legal)
         if not range_known:
             reasons.append("range_geometry_unavailable")
+        if cfg.weapon_envelope is not None:
+            if guidance_score <= 0.0:
+                reasons.append("weapon_guidance_opportunity_closed")
+            else:
+                reasons.append("weapon_guidance_opportunity_available")
         plan = AirEngagementPlan(
             mode=mode,
             selected_candidate=selected_name,
@@ -269,6 +298,8 @@ class AirEngagementPlanner:
             geometry_score=float(geometry_score),
             closure_score=float(closure_score),
             freshness_score=float(freshness),
+            guidance_score=float(guidance_score),
+            weapon_envelope_id=None if cfg.weapon_envelope is None else cfg.weapon_envelope.weapon_id,
             current_utility=float(current_utility),
             selected_utility=float(selected_utility),
             guidance_roll=float(guidance[0]),
@@ -302,18 +333,55 @@ class AirEngagementPlanner:
         elevation_score = _clip(1.0 - abs(elevation) / cfg.max_elevation_deg, 0.0, 1.0)
         return 0.7 * bearing_score + 0.3 * elevation_score
 
-    def _utility(self, range_score: float, geometry_score: float, closure_score: float, freshness: float) -> float:
+    def _utility(
+        self,
+        range_score: float,
+        geometry_score: float,
+        closure_score: float,
+        freshness: float,
+        guidance_score: float,
+    ) -> float:
         cfg = self.config
-        total = cfg.range_weight + cfg.geometry_weight + cfg.closure_weight + cfg.freshness_weight
+        total = (
+            cfg.range_weight
+            + cfg.geometry_weight
+            + cfg.closure_weight
+            + cfg.freshness_weight
+            + cfg.guidance_weight
+        )
         return float(
             (
                 cfg.range_weight * range_score
                 + cfg.geometry_weight * geometry_score
                 + cfg.closure_weight * closure_score
                 + cfg.freshness_weight * freshness
+                + cfg.guidance_weight * guidance_score
             )
             / total
         )
+
+    def _guidance_score(
+        self,
+        distance: float,
+        bearing: float,
+        *,
+        range_known: bool,
+        geometry_known: bool,
+    ) -> float:
+        envelope = self.config.weapon_envelope
+        if envelope is None:
+            return 0.5
+        score = 0.5
+        if range_known:
+            guidance_range = envelope.guidance_range_m
+            if guidance_range is not None:
+                score = 1.0 if distance <= guidance_range else 0.0
+            if envelope.min_launch_range_m is not None and distance < envelope.min_launch_range_m:
+                score = 0.0
+        if geometry_known and envelope.max_launch_off_boresight_deg is not None:
+            if abs(bearing) > envelope.max_launch_off_boresight_deg:
+                score = 0.0
+        return float(score)
 
     def _candidate_states(
         self,
@@ -370,6 +438,7 @@ class AirEngagementPlanner:
 
 
 __all__ = [
+    "AirWeaponEnvelope",
     "AirEngagementPlan",
     "AirEngagementPlanner",
     "AirEngagementPlannerConfig",
