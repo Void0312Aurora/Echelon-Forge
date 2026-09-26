@@ -73,6 +73,28 @@ def test_engagement_model_emits_one_fire_pulse_and_respects_assessment() -> None
     model.close()
 
 
+def test_engagement_model_reports_conservative_post_launch_assessment() -> None:
+    model = AirScriptedEngagementModel()
+    hold = _observation(contact=True, fire_window=False)
+    open_window = _observation(contact=True, fire_window=True)
+    model.reset(context={"observation": hold, "phase_name": "stable_flight"})
+    model.decide(observation=open_window, context={"phase_name": "stable_flight"}, dt=0.05)
+    model.decide(
+        observation=open_window,
+        context={
+            "phase_name": "stable_flight",
+            "last_event_info": {"release_executed": True},
+        },
+        dt=0.05,
+    )
+
+    report = model.last_decision_info["post_launch_assessment"]
+    assert report["state"] == "reattack_ready"
+    assert report["outcome"] == "inconclusive"
+    assert report["confidence"] == 0.0
+    model.close()
+
+
 def test_engagement_model_maps_the_maintained_hybrid_action_layout() -> None:
     model = AirScriptedEngagementModel(action_dim=AIR_COMBAT_HYBRID_ACTION_DIM, weapon_station_id=1)
     hold = _observation(contact=True, fire_window=False)

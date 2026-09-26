@@ -23,6 +23,7 @@ from python.mission_obs_taxonomy import (
 )
 
 from .air_scripted_execution import AirScriptedExecutionModel
+from .air_scripted_assessment import AirPostLaunchAssessment
 from .air_scripted_planning import AirEngagementPlanner, AirEngagementPlannerConfig
 from .air_scripted_weapons import AirWeaponEnvelope, load_air_weapon_envelope
 
@@ -88,6 +89,9 @@ class AirScriptedEngagementModel:
                 weapon_envelope=weapon_envelope,
             )
         self.planner = AirEngagementPlanner(planner_config)
+        self.assessment = AirPostLaunchAssessment(
+            max_track_age_s=self.planner.config.max_track_age_s,
+        )
         self._closed = False
         self._fire_latched = False
         self._last_target_contact = False
@@ -105,6 +109,7 @@ class AirScriptedEngagementModel:
             self.mission_obs_mode = mode
         self.flight_model.reset(context={"observation": observation, "phase_name": context.get("phase_name", "")})
         self.planner.reset()
+        self.assessment.reset()
         self._closed = False
         self._fire_latched = False
         self._last_target_contact = False
@@ -140,13 +145,23 @@ class AirScriptedEngagementModel:
         budget_available = bool(values["shot_budget_remaining"] > 0.5)
         station_id = self._resolve_weapon_station_id(context)
         station_valid = station_id is not None
+        assessment_report = self.assessment.observe(
+            event_info=context.get("last_event_info") if isinstance(context, dict) else None,
+            pending_assessment=pending_assessment,
+            target_contact_present=target_contact,
+            own_missiles_in_flight_count=values["own_missiles_in_flight_count"],
+            shot_budget_remaining=values["shot_budget_remaining"],
+            target_track_age_s=values["target_track_age_s"],
+            dt_s=dt,
+        )
+        assessment_gate = bool(pending_assessment or assessment_report.blocks_fire)
         plan = self.planner.plan(
             target_contact_present=target_contact,
             authorization_to_fire=authorized,
             fire_mask_open=bool(values["fire_mask_open"] > 0.5),
             launch_window_open=bool(values["launch_window_open"] > 0.5),
             quality_window_ready=bool(values["quality_window_ready"] > 0.5),
-            pending_assessment=pending_assessment,
+            pending_assessment=assessment_gate,
             shot_budget_remaining=values["shot_budget_remaining"],
             target_range_m=values["target_range_m"],
             target_track_age_s=values["target_track_age_s"],
@@ -194,7 +209,7 @@ class AirScriptedEngagementModel:
                 else 0.0
             )
 
-        if not fire_window or pending_assessment or not budget_available:
+        if not fire_window or assessment_gate or not budget_available:
             self._fire_latched = False
         elif request_fire:
             self._fire_latched = True
@@ -208,6 +223,7 @@ class AirScriptedEngagementModel:
             "launch_window_open": bool(values["launch_window_open"] > 0.5),
             "authorization_to_fire": authorized,
             "pending_assessment": pending_assessment,
+            "post_launch_assessment": assessment_report.as_dict(),
             "shot_budget_remaining": float(values["shot_budget_remaining"]),
             "weapon_station_id": int(station_id) if station_valid else None,
             "weapon_station_valid": bool(station_valid),
@@ -259,6 +275,7 @@ class AirScriptedEngagementModel:
             ("quality_window_ready", values["fire_mask_open"] * values["launch_window_open"]),
             ("target_range_m", 0.0),
             ("target_track_age_s", 0.0),
+            ("own_missiles_in_flight_count", 0.0),
         ):
             try:
                 idx = mission_observation_field_index(self.mission_obs_mode, name)

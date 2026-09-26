@@ -1859,3 +1859,30 @@ to a dedicated owner-local evidence document.
 - Continuation choice: add a conservative scripted post-launch assessment
   state machine that consumes declared event facts and mission observation,
   then independently test reattack gating and inconclusive outcomes.
+
+### 2026-09-26 — Air conservative scripted post-launch assessment slice
+
+- Change batch: add `AirPostLaunchAssessment` as an RL-independent state
+  estimator with explicit `idle`, `in_flight`, `terminal_observed`,
+  `reattack_ready`, `track_lost`, and `track_unavailable` states. The
+  engagement model consumes the previous step's declared event info and the
+  C2/ROE mission fields, reports the assessment beside the tactical plan, and
+  uses only the estimator's `blocks_fire` result for scripted reattack gating.
+- Algorithm boundary: `terminal_observed` requires explicit
+  `target_effect_observed`, `target_mission_killed`, or `target_destroyed`
+  evidence. A missing contact, stale track, or missing effect evidence stays
+  `inconclusive`; no state writes rewards, damage, terminal status, or RL
+  buffers. The native environment remains the owner of release acceptance and
+  terminal semantics.
+- Focused verification: Air assessment, planner, and engagement tests passed
+  `17 passed`; the cooperative 4v4 scripted combat regression passed `4
+  passed`; cross-domain roster and tasking-boundary regression passed `13
+  passed`; Python compilation and `git diff --check` passed.
+- Evidence boundary: this closes a conservative scripted post-launch
+  decision layer and reattack gate, not a calibrated hit/miss classifier or
+  complete terminal objective. Midcourse guidance, target-effect authority,
+  dynamic multi-aircraft weapon allocation, and named-platform playable
+  promotion remain open. RL stays on its separate optional adapter line.
+- Continuation choice: use the assessment report in a maintained scenario
+  trace, then address target-effect/event ownership before any claim of
+  complete post-launch combat assessment.
