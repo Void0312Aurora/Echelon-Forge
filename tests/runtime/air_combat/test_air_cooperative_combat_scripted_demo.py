@@ -1,6 +1,18 @@
 from __future__ import annotations
 
 from tools.diagnostics.air_cooperative_combat_scripted_demo import run_demo
+from python.tasking_contracts.air.engagement.model import (
+    AIR_COMBAT_C2_ROE_V2,
+    AIR_COMBAT_HYBRID_ACTION_DIM,
+    AirScriptedEngagementModel,
+)
+from python.tasking_contracts.air.strategy.action import AirActionLayoutAdapter
+from python.tasking_contracts.air.strategy.contracts import (
+    AirActionApplication,
+    AirTacticalActionIntent,
+    AirTacticalObservation,
+)
+from python.tasking_contracts.air.strategy.observation import AirMissionContactObservationAdapter
 
 
 _SCENARIO_PATH = "scenarios/air_combat/cooperative_air_2v1_scripted_c2_roe_engagement_v1.json"
@@ -89,3 +101,66 @@ def test_cooperative_combat_scripted_demo_routes_four_ship_two_element_terminal_
     ):
         assert first[key] == second[key]
     assert first["scripted_runtime_identity"] == second["scripted_runtime_identity"]
+
+
+class _RecordingObservationAdapter:
+    def __init__(self) -> None:
+        self.delegate = AirMissionContactObservationAdapter()
+        self.calls = 0
+
+    def decode(self, *, observation: dict, mission_obs_mode: str) -> AirTacticalObservation:
+        self.calls += 1
+        return self.delegate.decode(observation=observation, mission_obs_mode=mission_obs_mode)
+
+
+class _RecordingActionAdapter:
+    def __init__(self) -> None:
+        self.delegate = AirActionLayoutAdapter(action_dim=AIR_COMBAT_HYBRID_ACTION_DIM)
+        self.calls = 0
+
+    def reset(self) -> None:
+        self.delegate.reset()
+
+    def apply(self, action, *, intent: AirTacticalActionIntent) -> AirActionApplication:
+        self.calls += 1
+        return self.delegate.apply(action, intent=intent)
+
+
+def test_cooperative_combat_default_and_recording_adapter_routes_have_terminal_parity() -> None:
+    recorders: list[tuple[_RecordingObservationAdapter, _RecordingActionAdapter]] = []
+
+    def build_model(_slot_name: str) -> AirScriptedEngagementModel:
+        observation_adapter = _RecordingObservationAdapter()
+        action_adapter = _RecordingActionAdapter()
+        recorders.append((observation_adapter, action_adapter))
+        return AirScriptedEngagementModel(
+            action_dim=AIR_COMBAT_HYBRID_ACTION_DIM,
+            dt=0.05,
+            mission_obs_mode=AIR_COMBAT_C2_ROE_V2,
+            observation_adapter=observation_adapter,
+            action_adapter=action_adapter,
+        )
+
+    baseline = run_demo(scenario_path=_SCENARIO_PATH, seed=20260516, max_steps=600)
+    injected = run_demo(
+        scenario_path=_SCENARIO_PATH,
+        seed=20260516,
+        max_steps=600,
+        _model_factory=build_model,
+    )
+
+    for key in (
+        "steps",
+        "terminated",
+        "truncated",
+        "termination_reasons",
+        "roster",
+        "fire_once_accepted_steps",
+        "release_executed_steps",
+        "scripted_decision_reports",
+        "scripted_runtime_decisions",
+    ):
+        assert injected[key] == baseline[key]
+    assert injected["scripted_runtime_identity"] == baseline["scripted_runtime_identity"]
+    assert len(recorders) == 2
+    assert all(observation.calls > 0 and action.calls > 0 for observation, action in recorders)

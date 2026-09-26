@@ -7,7 +7,7 @@ import argparse
 import json
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 
@@ -47,7 +47,13 @@ def _json_value(value: Any) -> Any:
     return value
 
 
-def run_demo(*, scenario_path: str, seed: int, max_steps: int) -> dict[str, Any]:
+def run_demo(
+    *,
+    scenario_path: str,
+    seed: int,
+    max_steps: int,
+    _model_factory: Callable[[str], Any] | None = None,
+) -> dict[str, Any]:
     slot_metadata = _cooperative_slot_metadata(scenario_path)
     if not slot_metadata:
         raise ValueError("cooperative scenario must declare at least one controllable roster member")
@@ -79,13 +85,17 @@ def run_demo(*, scenario_path: str, seed: int, max_steps: int) -> dict[str, Any]
                 role_id="air_tactical_engagement_controller",
                 authority_scope="air_weapons_c2",
             ),
-            AIR_SCRIPTED_MODEL_REGISTRY.create_for(
-                domain="air",
-                role_id="air_tactical_engagement_controller",
-                model_id=AIR_SCRIPTED_ENGAGEMENT_MODEL_ID,
-                action_dim=AIR_COMBAT_HYBRID_ACTION_DIM,
-                dt=0.05,
-                mission_obs_mode=AIR_COMBAT_C2_ROE_V2,
+            (
+                _model_factory(name)
+                if _model_factory is not None
+                else AIR_SCRIPTED_MODEL_REGISTRY.create_for(
+                    domain="air",
+                    role_id="air_tactical_engagement_controller",
+                    model_id=AIR_SCRIPTED_ENGAGEMENT_MODEL_ID,
+                    action_dim=AIR_COMBAT_HYBRID_ACTION_DIM,
+                    dt=0.05,
+                    mission_obs_mode=AIR_COMBAT_C2_ROE_V2,
+                )
             ),
         )
         for name in slot_names

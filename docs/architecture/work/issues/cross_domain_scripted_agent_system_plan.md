@@ -2097,3 +2097,20 @@ to a dedicated owner-local evidence document.
   only. It preserves the 17/12 action transports and leaves native event/fire
   acceptance, terminal effects, capability labels, and RL participation rules
   unchanged.
+
+### 2026-09-26 — Air ALG-3 adapter substitution parity
+
+- Starting commit: `725103fc`.
+- Change batch: add a private model-factory injection point to the maintained
+  cooperative Air combat diagnostic and a regression that runs the same 2v1
+  compiled scenario through the canonical default route and through recording
+  observation/action adapters delegating to the default implementations.
+- Focused verification: the cooperative combat regression passed `5 passed`.
+  The injected route matched terminal state, event/release steps, roster,
+  decision reports, runtime decision counts, and deterministic replay identity;
+  both per-slot adapters recorded calls.
+- Boundary decision: this proves the adapter layer is substitutable at a
+  scenario terminal boundary without changing fire-gate or native ownership.
+  No second maintained strategy profile or strategy registry was added, and
+  Air remains `playable_candidate` pending command/report, visualization, and
+  named-platform effect gates.
