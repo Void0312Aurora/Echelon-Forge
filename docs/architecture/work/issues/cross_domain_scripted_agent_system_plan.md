@@ -1710,3 +1710,30 @@ to a dedicated owner-local evidence document.
   use the same roster contract for later 8+ slot or joint demonstrations only
   after command/report and native weapon ownership gates are separately
   evidenced.
+
+### 2026-09-26 — Air cooperative multi-aircraft C2/ROE terminal slice
+
+- Change batch: admit the existing Air `air_combat_hybrid_v1` event-action gate
+  and post-step finalizer in `CooperativeWorldBatchVecEnv` at per-slot scope;
+  preserve each slot's previous policy intent and pre-step truth, reset the
+  event state with the slot, and project native event fields into each slot's
+  report. Add the RL-independent
+  `tools/diagnostics/air_cooperative_combat_scripted_demo.py` runner and the
+  maintained `cooperative_air_2v1_scripted_c2_roe_engagement_v1.json` scenario.
+- Focused verification: the maintained cooperative combat test passed `2
+  passed`; seed `20260516` reached `combat_win` at step `202` with both
+  Blue slots reporting `fire_once_accepted` and `release_executed` at step `2`.
+  The paired run reproduced the roster, event steps, decision reports, and
+  scripted identities. The cooperative runtime compatibility regression and
+  existing EW regressions also passed (`7 passed, 17 deselected`).
+- Evidence boundary: this closes a bounded two-aircraft, one-shared-world
+  native weapon-release and terminal-objective route using the generic
+  `Aircraft` target surrogate. It does not establish named-platform
+  vulnerability calibration, multi-target assignment, red weapons, formation
+  mission parity, communication loss, tactical reassignment, visualization,
+  or a large-scale terminal combat claim. Air remains
+  `playable_candidate`.
+- Continuation choice: retain the 2v1 route as the first cooperative weapon
+  baseline; next close per-member target/task override ownership and broaden
+  only after native report/replay evidence is retained. Keep the generic
+  target explicitly marked as a terminal surrogate.
