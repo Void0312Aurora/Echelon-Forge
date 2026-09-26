@@ -11,6 +11,8 @@ final release authority.
 
 from __future__ import annotations
 
+from dataclasses import replace
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -22,6 +24,7 @@ from python.mission_obs_taxonomy import (
 
 from .air_scripted_execution import AirScriptedExecutionModel
 from .air_scripted_planning import AirEngagementPlanner, AirEngagementPlannerConfig
+from .air_scripted_weapons import AirWeaponEnvelope, load_air_weapon_envelope
 
 
 AIR_SCRIPTED_ENGAGEMENT_MODEL_ID = "air.engagement.c2_roe_scripted"
@@ -51,6 +54,8 @@ class AirScriptedEngagementModel:
         runway_length_m: float = 0.0,
         weapon_station_id: int | None = None,
         planner_config: AirEngagementPlannerConfig | None = None,
+        weapon_envelope: AirWeaponEnvelope | None = None,
+        weapon_profile_path: str | Path | None = None,
     ) -> None:
         if int(action_dim) not in _SUPPORTED_ACTION_DIMS:
             raise ValueError(
@@ -71,6 +76,17 @@ class AirScriptedEngagementModel:
         # Station selection belongs to the maintained loadout/capability
         # owner.  An absent or invalid value is deliberately fail-closed.
         self.weapon_station_id = weapon_station_id
+        if weapon_envelope is not None and weapon_profile_path is not None:
+            raise ValueError("provide weapon_envelope or weapon_profile_path, not both")
+        if weapon_profile_path is not None:
+            weapon_envelope = load_air_weapon_envelope(weapon_profile_path)
+        if weapon_envelope is not None:
+            if planner_config is not None and planner_config.weapon_envelope is not None:
+                raise ValueError("planner_config already declares a weapon_envelope")
+            planner_config = replace(
+                planner_config or AirEngagementPlannerConfig(),
+                weapon_envelope=weapon_envelope,
+            )
         self.planner = AirEngagementPlanner(planner_config)
         self._closed = False
         self._fire_latched = False

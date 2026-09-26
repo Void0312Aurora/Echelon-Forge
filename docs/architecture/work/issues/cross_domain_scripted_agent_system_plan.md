@@ -1832,3 +1832,30 @@ to a dedicated owner-local evidence document.
   next add source-backed weapon-envelope inputs and post-launch assessment
   before claiming an optimal firing-position policy. Keep RL on its separate
   adapter line.
+
+### 2026-09-26 — Air source-backed weapon-envelope planning slice
+
+- Change batch: add the pure-Python `AirWeaponEnvelope` loader and expose it
+  as an optional input to `AirEngagementPlannerConfig` and
+  `AirScriptedEngagementModel`. The loader reads only declared database
+  fields: AIM-120C-7 seeker/sensor opportunity range, flight time, speed,
+  lateral-g, and any explicitly supplied launch limits. It retains source
+  fields and labels the profile `runtime_tuning_only` with `pk_authority=false`.
+- Algorithm boundary: the planner adds a guidance-opportunity term to its
+  finite candidate utility. An explicit closed opportunity prevents scripted
+  `commit`, while the native fire gate remains the final release authority.
+  The implementation does not infer effective range from speed, fill missing
+  minimum range/off-boresight values, or claim WEZ/LAR/Pk calibration.
+- Focused verification: Air planner and engagement tests passed `12 passed`;
+  Python compilation and `git diff --check` passed. Direct construction loaded
+  `examples/config/database/weapons/air_to_air/aim_120c.json` as
+  `AIM-120C-7` with `guidance.active_seek_range=16000` and no inferred launch
+  limits.
+- Evidence boundary: this is a source-backed planning constraint, not a
+  weapon-effectiveness model. Post-launch outcome assessment, midcourse
+  guidance, dynamic weapon allocation, and named-platform terminal success
+  remain open. Air remains `playable_candidate`; RL remains a separate
+  optional adapter line.
+- Continuation choice: add a conservative scripted post-launch assessment
+  state machine that consumes declared event facts and mission observation,
+  then independently test reattack gating and inconclusive outcomes.

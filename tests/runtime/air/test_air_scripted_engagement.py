@@ -117,6 +117,17 @@ def test_engagement_model_is_registered_as_an_adapter_until_runtime_gate_closes(
     model.close()
 
 
+def test_engagement_model_can_consume_a_maintained_weapon_profile() -> None:
+    model = AirScriptedEngagementModel(
+        weapon_profile_path="examples/config/database/weapons/air_to_air/aim_120c.json"
+    )
+
+    assert model.planner.config.weapon_envelope is not None
+    assert model.planner.config.weapon_envelope.weapon_id == "AIM-120C-7"
+    assert model.planner.config.weapon_envelope.pk_authority is False
+    model.close()
+
+
 def test_engagement_model_rejects_non_c2_roe_mission_shapes() -> None:
     model = AirScriptedEngagementModel(weapon_station_id=1)
     obs = {"instruments": np.zeros((31,), dtype=np.float32), "mission": np.zeros((4,), dtype=np.float32)}
