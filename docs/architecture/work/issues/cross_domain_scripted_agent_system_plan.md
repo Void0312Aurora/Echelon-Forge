@@ -1652,3 +1652,32 @@ to a dedicated owner-local evidence document.
   later named-platform terminal slice; keep the generic-Aircraft surrogate as
   the only bounded terminal-chain demonstration and do not add a Python-side
   kill substitute.
+
+### 2026-09-26 — Air named-platform live damage after trigger-frame fix
+
+- Evidence recheck: the maintained MQ-9/AIM-120 live consumer path was rerun
+  after the delayed online-sensor geometry fix. At the fixed `8000 m` setup it
+  records `damage_applied`, a `3.28 m` miss, a direct hitbox intersection, three
+  projected hitboxes, four component loads, negative system-health delta, and
+  `mission_kill=true` while the target entity remains active. At the fixed
+  `14000 m` setup it records `damage_applied`, a `3.73 m` miss, three projected
+  hitboxes, four component loads, and a negative system-health delta without a
+  terminal loss state.
+- Change batch: update the two maintained MQ-9 live-chain assertions that still
+  encoded the pre-fix `detonated_no_effect`/zero-component outcome. The tests
+  now require native damage evidence and explicitly retain the synthetic,
+  unvalidated vulnerability boundary through `_assert_mq9_event_is_non_authoritative`.
+- Focused verification: the consumer wrapper passed `14 passed, 7 xfailed,
+  4 subtests passed`; the full `tests/runtime/air_combat/weapon_guidance_realism`
+  package passed `171 passed, 33 xfailed, 217 subtests passed` in the local
+  run. The prior clean native build remains the artifact under test.
+- Evidence boundary: this establishes a reproducible native named-platform
+  damage/effects path for two controlled live geometries, including one
+  mission-kill consequence. It does not establish calibrated MQ-9 Pk or fuze
+  authority, deterministic terminal destruction, post-launch assessment
+  closure, evasion, red weapons, formation combat, or a promotion beyond
+  `playable_candidate`.
+- Continuation choice: keep the generic-Aircraft surrogate as the only bounded
+  terminal `combat_win` demonstration, use the MQ-9 cases as native consequence
+  fixtures, and investigate terminal/post-launch closure separately rather
+  than widening projection radii or substituting a Python kill.
