@@ -1801,3 +1801,34 @@ to a dedicated owner-local evidence document.
 - Continuation choice: retain 4v4 as the current large-scale scripted combat
   baseline; inspect formation/report and visualization gates before widening
   the label or adding joint tasking.
+
+### 2026-09-26 — Air deterministic tactical planning layer
+
+- Change batch: add the RL-independent `AirEngagementPlanner` and
+  `AirEngagementPlannerConfig` under `python/tasking_contracts`. The planner
+  consumes only the declared C2/ROE mission fields and the five-column contact
+  token, evaluates hold/intercept/reposition candidates, filters by target
+  contact, authority, window, assessment, and shot-budget constraints, and
+  selects a weighted range/geometry/closure/freshness utility. It emits an
+  auditable plan with candidate scores and reason codes; bounded guidance is
+  applied through the existing flight action transport, while native fire
+  gates retain final release authority. No RL, simulator truth, or privileged
+  target geometry is imported.
+- Focused verification: the pure planner and engagement model tests passed
+  `9 passed`; the cooperative scripted combat regression passed `4 passed`
+  after the planner was integrated. A clean `b7c63944` baseline reproduced
+  the four-ship terminal trace at step `206`; the first planner attempt waited
+  for the quality-window age and delayed release to step `33`, causing one
+  surrogate miss. Removing that duplicate gate restored release at step `2`
+  and the full 4v4 terminal trace. This is a recorded behavioral correction,
+  not evidence of calibrated weapon optimality.
+- Evidence boundary: this closes the first L3-style bounded tactical-planning
+  seam (finite candidate evaluation plus receding replanning) above the L1
+  flight controllers and L2 event policy. It does not establish global
+  optimality, a calibrated WEZ/LAR/Pk model, adversarial maneuver search,
+  post-launch guidance, dynamic multi-aircraft task allocation, or a
+  named-platform terminal claim. Air remains `playable_candidate`.
+- Continuation choice: retain the planner as an explicit algorithm layer and
+  next add source-backed weapon-envelope inputs and post-launch assessment
+  before claiming an optimal firing-position policy. Keep RL on its separate
+  adapter line.

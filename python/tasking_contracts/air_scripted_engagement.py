@@ -1,10 +1,12 @@
 """RL-independent scripted Air tactical engagement model.
 
 The model composes the maintained phase-flight controller and adds only the
-declared Air combat C2/ROE event fields.  It never reads a kernel, world truth,
-or a privileged target geometry.  The action payload remains the existing
-17-element full Air action so the environment adapter owns transport and the
-existing fire gate owns final release authority.
+declared Air combat C2/ROE event fields.  A deterministic bounded tactical
+planner evaluates the declared track geometry before the event policy emits a
+release request.  It never reads a kernel, world truth, or a privileged target
+geometry.  The action payload remains the existing 17-element full Air action
+so the environment adapter owns transport and the existing fire gate owns
+final release authority.
 """
 
 from __future__ import annotations
@@ -19,6 +21,7 @@ from python.mission_obs_taxonomy import (
 )
 
 from .air_scripted_execution import AirScriptedExecutionModel
+from .air_scripted_planning import AirEngagementPlanner, AirEngagementPlannerConfig
 
 
 AIR_SCRIPTED_ENGAGEMENT_MODEL_ID = "air.engagement.c2_roe_scripted"
@@ -47,6 +50,7 @@ class AirScriptedEngagementModel:
         transition_alt_agl_m: float = 140.0,
         runway_length_m: float = 0.0,
         weapon_station_id: int | None = None,
+        planner_config: AirEngagementPlannerConfig | None = None,
     ) -> None:
         if int(action_dim) not in _SUPPORTED_ACTION_DIMS:
             raise ValueError(
@@ -67,6 +71,7 @@ class AirScriptedEngagementModel:
         # Station selection belongs to the maintained loadout/capability
         # owner.  An absent or invalid value is deliberately fail-closed.
         self.weapon_station_id = weapon_station_id
+        self.planner = AirEngagementPlanner(planner_config)
         self._closed = False
         self._fire_latched = False
         self._last_target_contact = False
@@ -83,6 +88,7 @@ class AirScriptedEngagementModel:
                 raise ValueError(f"unsupported Air tactical mission observation mode: {mode!r}")
             self.mission_obs_mode = mode
         self.flight_model.reset(context={"observation": observation, "phase_name": context.get("phase_name", "")})
+        self.planner.reset()
         self._closed = False
         self._fire_latched = False
         self._last_target_contact = False
@@ -110,6 +116,7 @@ class AirScriptedEngagementModel:
 
         mission = np.asarray(observation.get("mission", []), dtype=np.float32).reshape(-1)
         values = self._mission_values(mission)
+        geometry = self._contact_geometry(observation, target_range_m=values["target_range_m"])
         target_contact = bool(values["target_contact_present"] > 0.5)
         fire_window = bool(values["fire_mask_open"] > 0.5 and values["launch_window_open"] > 0.5)
         authorized = bool(values["authorization_to_fire"] > 0.5)
@@ -117,20 +124,28 @@ class AirScriptedEngagementModel:
         budget_available = bool(values["shot_budget_remaining"] > 0.5)
         station_id = self._resolve_weapon_station_id(context)
         station_valid = station_id is not None
+        plan = self.planner.plan(
+            target_contact_present=target_contact,
+            authorization_to_fire=authorized,
+            fire_mask_open=bool(values["fire_mask_open"] > 0.5),
+            launch_window_open=bool(values["launch_window_open"] > 0.5),
+            quality_window_ready=bool(values["quality_window_ready"] > 0.5),
+            pending_assessment=pending_assessment,
+            shot_budget_remaining=values["shot_budget_remaining"],
+            target_range_m=values["target_range_m"],
+            target_track_age_s=values["target_track_age_s"],
+            contact_bearing_deg=geometry[0],
+            contact_elevation_deg=geometry[1],
+            closing_speed_mps=geometry[2],
+        )
+        action = self.planner.apply_guidance(action, plan)
 
         # Existing action transports own the field positions. Tactical bits are
         # derived only from the declared mission packet and mapped to the
         # selected maintained layout; no new mega-action schema is introduced.
         tms_pulse = 1.0 if target_contact and not self._last_target_contact else 0.0
         master_arm = 1.0 if authorized and target_contact and budget_available and station_valid else 0.0
-        request_fire = bool(
-            fire_window
-            and authorized
-            and target_contact
-            and budget_available
-            and station_valid
-            and not pending_assessment
-        )
+        request_fire = bool(plan.fire_recommended and station_valid)
         fire_pulse = 1.0 if request_fire and not self._fire_latched else 0.0
         if self.action_dim == AIR_FULL_ACTION_DIM:
             action[9] = 1.0  # radar active
@@ -182,6 +197,7 @@ class AirScriptedEngagementModel:
             "weapon_station_valid": bool(station_valid),
             "fire_rejected_reason": "invalid_weapon_station" if not station_valid else "",
             "fire_requested": bool(fire_pulse > 0.5),
+            "tactical_plan": plan.as_dict(),
         }
         return action
 
@@ -222,7 +238,43 @@ class AirScriptedEngagementModel:
                 f"Air tactical mission observation is missing required fields {missing!r} "
                 f"for mode {self.mission_obs_mode!r}"
             )
-        return {name: float(mission[idx]) for name, idx in required.items()}
+        values = {name: float(mission[idx]) for name, idx in required.items()}
+        for name, default in (
+            ("quality_window_ready", values["fire_mask_open"] * values["launch_window_open"]),
+            ("target_range_m", 0.0),
+            ("target_track_age_s", 0.0),
+        ):
+            try:
+                idx = mission_observation_field_index(self.mission_obs_mode, name)
+            except ValueError:
+                values[name] = float(default)
+            else:
+                values[name] = float(mission[idx]) if idx < mission.size else float(default)
+        return values
+
+    @staticmethod
+    def _contact_geometry(observation: dict[str, Any], *, target_range_m: float) -> tuple[float, float, float]:
+        """Return the freshest contact geometry available to the policy.
+
+        The five-column contact token is the maintained execution surface:
+        range, azimuth, elevation, closing speed, and track age.  The mission
+        packet remains authoritative for the assigned target's range; the
+        contact row supplies the directional and closure terms.
+        """
+
+        contacts = np.asarray(observation.get("contacts", []), dtype=np.float32)
+        if contacts.size == 0:
+            return 0.0, 0.0, 0.0
+        rows = contacts.reshape(-1, 5)
+        valid = rows[np.isfinite(rows).all(axis=1) & (rows[:, 0] > 0.0)]
+        if valid.size == 0:
+            return 0.0, 0.0, 0.0
+        if float(target_range_m) > 0.0:
+            index = int(np.argmin(np.abs(valid[:, 0] - float(target_range_m))))
+        else:
+            index = 0
+        row = valid[index]
+        return float(row[1]), float(row[2]), float(row[3])
 
 
 def make_air_scripted_engagement_model(**kwargs: Any) -> AirScriptedEngagementModel:
