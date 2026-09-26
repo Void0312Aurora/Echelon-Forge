@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 import numpy as np
 
@@ -25,6 +25,12 @@ from python.mission_obs_taxonomy import (
 from .air_scripted_execution import AirScriptedExecutionModel
 from .air_scripted_assessment import AirPostLaunchAssessment
 from .air_scripted_planning import AirEngagementPlanner, AirEngagementPlannerConfig
+from .air_scripted_strategy_contracts import (
+    AirAssessmentInput,
+    AirPlanningContext,
+    AirPostLaunchAssessor,
+    AirTacticalPlanner,
+)
 from .air_scripted_weapons import AirWeaponEnvelope, load_air_weapon_envelope
 
 
@@ -57,6 +63,8 @@ class AirScriptedEngagementModel:
         planner_config: AirEngagementPlannerConfig | None = None,
         weapon_envelope: AirWeaponEnvelope | None = None,
         weapon_profile_path: str | Path | None = None,
+        planner: AirTacticalPlanner | None = None,
+        assessor: AirPostLaunchAssessor | None = None,
     ) -> None:
         if int(action_dim) not in _SUPPORTED_ACTION_DIMS:
             raise ValueError(
@@ -88,10 +96,21 @@ class AirScriptedEngagementModel:
                 planner_config or AirEngagementPlannerConfig(),
                 weapon_envelope=weapon_envelope,
             )
-        self.planner = AirEngagementPlanner(planner_config)
-        self.assessment = AirPostLaunchAssessment(
-            max_track_age_s=self.planner.config.max_track_age_s,
-        )
+        if planner is not None:
+            if planner_config is not None or weapon_envelope is not None or weapon_profile_path is not None:
+                raise ValueError("planner injection cannot be combined with planner or weapon configuration")
+            if not isinstance(planner, AirTacticalPlanner):
+                raise TypeError("planner must implement AirTacticalPlanner")
+            self.planner = planner
+        else:
+            self.planner = AirEngagementPlanner(planner_config)
+        if assessor is not None:
+            if not isinstance(assessor, AirPostLaunchAssessor):
+                raise TypeError("assessor must implement AirPostLaunchAssessor")
+            self.assessment = assessor
+        else:
+            max_track_age_s = getattr(getattr(self.planner, "config", None), "max_track_age_s", 5.0)
+            self.assessment = AirPostLaunchAssessment(max_track_age_s=max_track_age_s)
         self._closed = False
         self._fire_latched = False
         self._last_target_contact = False
@@ -145,8 +164,9 @@ class AirScriptedEngagementModel:
         budget_available = bool(values["shot_budget_remaining"] > 0.5)
         station_id = self._resolve_weapon_station_id(context)
         station_valid = station_id is not None
-        assessment_report = self.assessment.observe(
-            event_info=context.get("last_event_info") if isinstance(context, dict) else None,
+        event_info = context.get("last_event_info") if isinstance(context, dict) else None
+        assessment_input = self._assessment_input(
+            event_info=event_info,
             pending_assessment=pending_assessment,
             target_contact_present=target_contact,
             own_missiles_in_flight_count=values["own_missiles_in_flight_count"],
@@ -154,8 +174,9 @@ class AirScriptedEngagementModel:
             target_track_age_s=values["target_track_age_s"],
             dt_s=dt,
         )
+        assessment_report = self.assessment.assess(inputs=assessment_input)
         assessment_gate = bool(pending_assessment or assessment_report.blocks_fire)
-        plan = self.planner.plan(
+        planning_context = AirPlanningContext(
             target_contact_present=target_contact,
             authorization_to_fire=authorized,
             fire_mask_open=bool(values["fire_mask_open"] > 0.5),
@@ -169,14 +190,15 @@ class AirScriptedEngagementModel:
             contact_elevation_deg=geometry[1],
             closing_speed_mps=geometry[2],
         )
-        action = self.planner.apply_guidance(action, plan)
+        decision = self.planner.decide(context=planning_context)
+        action = self.planner.apply_decision_guidance(action, decision)
 
         # Existing action transports own the field positions. Tactical bits are
         # derived only from the declared mission packet and mapped to the
         # selected maintained layout; no new mega-action schema is introduced.
         tms_pulse = 1.0 if target_contact and not self._last_target_contact else 0.0
         master_arm = 1.0 if authorized and target_contact and budget_available and station_valid else 0.0
-        request_fire = bool(plan.fire_recommended and station_valid)
+        request_fire = bool(decision.fire_recommended and station_valid)
         fire_pulse = 1.0 if request_fire and not self._fire_latched else 0.0
         if self.action_dim == AIR_FULL_ACTION_DIM:
             action[9] = 1.0  # radar active
@@ -215,6 +237,10 @@ class AirScriptedEngagementModel:
             self._fire_latched = True
 
         self._last_target_contact = target_contact
+        tactical_plan = dict(decision.diagnostics)
+        if not tactical_plan:
+            tactical_plan = decision.as_dict()
+        tactical_plan["decision_contract"] = decision.as_dict()
         self.last_decision_info = {
             "role": "air_tactical_engagement_controller",
             "mission_obs_mode": self.mission_obs_mode,
@@ -229,7 +255,8 @@ class AirScriptedEngagementModel:
             "weapon_station_valid": bool(station_valid),
             "fire_rejected_reason": "invalid_weapon_station" if not station_valid else "",
             "fire_requested": bool(fire_pulse > 0.5),
-            "tactical_plan": plan.as_dict(),
+            "tactical_plan": tactical_plan,
+            "tactical_decision": decision.as_dict(),
         }
         return action
 
@@ -308,6 +335,31 @@ class AirScriptedEngagementModel:
             index = 0
         row = valid[index]
         return float(row[1]), float(row[2]), float(row[3])
+
+    @staticmethod
+    def _assessment_input(
+        *,
+        event_info: Any,
+        pending_assessment: bool,
+        target_contact_present: bool,
+        own_missiles_in_flight_count: float,
+        shot_budget_remaining: float,
+        target_track_age_s: float,
+        dt_s: float,
+    ) -> AirAssessmentInput:
+        info = event_info if isinstance(event_info, Mapping) else {}
+        return AirAssessmentInput(
+            release_executed=bool(info.get("release_executed", False)),
+            pending_assessment=pending_assessment,
+            target_contact_present=target_contact_present,
+            own_missiles_in_flight_count=own_missiles_in_flight_count,
+            shot_budget_remaining=shot_budget_remaining,
+            target_track_age_s=target_track_age_s,
+            target_effect_observed=bool(info.get("target_effect_observed", False)),
+            target_mission_killed=bool(info.get("target_mission_killed", False)),
+            target_destroyed=bool(info.get("target_destroyed", False)),
+            dt_s=dt_s,
+        )
 
 
 def make_air_scripted_engagement_model(**kwargs: Any) -> AirScriptedEngagementModel:
