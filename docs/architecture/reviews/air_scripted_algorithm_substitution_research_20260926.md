@@ -1,0 +1,189 @@
+# Air Scripted Algorithm Substitution Research — 2026-09-26
+
+Language: English canonical; Chinese companion: not maintained (English-only
+review surface).
+
+Document kind: `review`
+Lifecycle: `maintained`
+Canonical: `docs/architecture/reviews/air_scripted_algorithm_substitution_research_20260926.md`
+Owner: `architecture/cross-domain-agency/air`
+Review basis: `e0dd37a6` on
+`codex/scripted-agent-system-architecture-plan`, plus the current source tree
+and focused Air/cross-domain tests.
+
+## Decision Summary
+
+The Air scripted line has good module separation for independent testing, but
+its internal strategies are not yet dependency-inverted. The current registry
+can replace the complete `AirScriptedEngagementModel`; it cannot replace only
+the planner or only the post-launch assessor without changing the orchestrator.
+
+The next architecture slice is therefore **strategy composition**, not another
+algorithm implementation. It must introduce typed Air-owned strategy seams,
+inject the default planner and assessor through those seams, and preserve the
+existing action/event behavior when the default implementations are selected.
+
+This review does not promote Air from `playable_candidate`, does not authorize
+a second global registry, and does not make RL a dependency. It is a planning
+and research record for the next implementation batches.
+
+## Current Dependency Map
+
+```text
+ScriptedModelRegistry / ScriptedRuntimeAgent
+                |
+                v
+AirScriptedEngagementModel
+  |             |                 |
+  v             v                 v
+AirScriptedExecutionModel   AirEngagementPlanner   AirPostLaunchAssessment
+                                  |
+                                  v
+                         AirWeaponEnvelope
+                |
+                v
+         Air action layout / fire pulse mapping
+```
+
+The neutral lifecycle is correctly located in `python/tasking_contracts` and
+does not import RL. The Air engagement model currently performs four separate
+roles in one class:
+
+1. decode the mission taxonomy and five-column contact token;
+2. coordinate flight, tactical planning, and post-launch assessment;
+3. own fire-latch and target-contact edge state;
+4. map tactical results onto the 17-element or 12-element Air action layout.
+
+The first role and the fourth role are adapters. The planner and assessor are
+algorithms. Keeping these responsibilities in one orchestrator is the main
+replacement barrier.
+
+## Replacement Assessment
+
+| Surface | Current isolation | Replacement today | Required seam |
+| --- | --- | --- | --- |
+| Weapon profile loader | high | replace JSON/profile input directly | typed source/profile contract |
+| `AirEngagementPlanner` | medium-high | replace only if the new class preserves `plan` and `apply_guidance` shape | `AirTacticalPlanner` protocol |
+| `AirPostLaunchAssessment` | high in unit tests, medium in runtime | replace only if it returns the current report fields | `AirPostLaunchAssessor` protocol |
+| Mission/contact decoding | low-medium | requires edits to the engagement model | `AirObservationAdapter` |
+| 17/12 element action mapping | low-medium | requires edits to the engagement model | `AirActionAdapter` |
+| Whole engagement model | high | replace through existing model registry | keep `ScriptedDecisionModel` lifecycle |
+
+## Target Composition
+
+The next Air-owned composition should have this shape:
+
+```text
+AirObservationAdapter
+    ObservationPacket + event packet
+        -> AirPlanningContext
+
+AirTacticalPlanner
+    AirPlanningContext + doctrine/profile
+        -> AirTacticalDecision
+
+AirPostLaunchAssessor
+    AirAssessmentInput
+        -> AirAssessmentReport
+
+AirActionAdapter
+    maintained flight action + AirTacticalDecision
+        -> versioned Air action
+
+AirScriptedEngagementModel
+    owns lifecycle and orchestration only
+```
+
+The context and decision DTOs must stay Air-owned. Only fields with a second
+domain consumer or an existing architecture authority may move into a common
+envelope. This avoids turning the cross-domain layer into a weapon/geometry
+mega-schema.
+
+## Proposed Contract Shape
+
+The exact names may change during implementation, but the responsibilities
+must remain separate:
+
+- `AirPlanningContext`: normalized C2/ROE state, target track geometry,
+  weapon-profile reference, communication state, and observation provenance;
+- `AirTacticalDecision`: mode, candidate identity, fire recommendation,
+  bounded guidance, reason codes, and diagnostics;
+- `AirAssessmentInput`: release/event facts, pending state, in-flight count,
+  target contact/freshness, and shot budget;
+- `AirAssessmentReport`: state, outcome, confidence, reattack gate, reason
+  codes, and provenance;
+- `AirActionAdapter`: the only owner of action-index layout and pulse/latch
+  transport details.
+
+The planner must not receive raw mission arrays. The action adapter must not
+recompute tactical utility. The assessor must not write rewards, damage, or
+terminal state.
+
+## Migration Batches
+
+### ALG-0 — Contract and parity fixture
+
+Record the normalized context/decision fields and freeze a default-policy
+release/replay fixture from `e0dd37a6`. Add contract tests for missing fields,
+unknown strategy outputs, and bounded guidance values.
+
+### ALG-1 — Protocols and default injection
+
+Add Air-owned `Protocol` interfaces for planner, assessor, observation adapter,
+and action adapter. Update `AirScriptedEngagementModel` to accept injected
+implementations while constructing the current implementations by default.
+There must be no behavior change when no overrides are supplied.
+
+### ALG-2 — Adapter extraction
+
+Move `_mission_values` and `_contact_geometry` into the observation adapter,
+and move the 17/12 action index mapping plus fire-latch transport into the
+action adapter. Keep the existing native event/fire gate as the owner of final
+release acceptance.
+
+### ALG-3 — Alternate strategy proof
+
+Add a deterministic no-fire planner and a blocking assessor used only by tests.
+Prove that each can be substituted independently while the flight controller,
+registry, action adapter, and report envelope remain unchanged. Add one
+scenario-level default-policy parity run after the pure contract tests.
+
+### ALG-4 — Strategy selection surface
+
+If two maintained Air consumers require different algorithms, add a versioned
+strategy profile or factory selection under the existing model registry. Do not
+create a second process-wide strategy registry merely to select test doubles.
+Any profile must declare its expected observation mode, action mode, and
+evidence label.
+
+## Acceptance Gates
+
+The strategy-composition slice is complete only when all of the following are
+true:
+
+1. default planner/assessor behavior preserves the current bounded release,
+   replay, and 4v4 terminal traces;
+2. a fake planner can suppress fire without modifying the engagement model;
+3. a fake assessor can block reattack without modifying the planner;
+4. action-layout tests prove planner replacement does not alter transport
+   indices or fire-gate ownership;
+5. adapter and strategy modules remain free of `python.rl`, `gym_envs`,
+   World Truth, reward, and native-kernel imports;
+6. no new common field is added without a named second-domain consumer;
+7. the Air capability label stays `playable_candidate` until the existing
+   command/report, target-effect, visualization, and terminal gates close.
+
+## Open Research Questions
+
+- Should target-effect events be represented by a typed Air event packet or by
+  a common report/event envelope with an Air extension?
+- Does the current five-column contact token need a versioned adapter before
+  close-combat and formation algorithms can share the planner seam?
+- Should action layout adaptation be selected by `action_mode`, by an
+  `ActionInterface` declaration, or by a maintained Air adapter factory?
+- Which two non-Air consumers justify promoting any strategy fields into the
+  cross-domain contract?
+
+Until these questions have an owner and acceptance fixture, the default Air
+planner and assessor remain the maintained implementations, and alternate
+algorithms remain test-only substitutes.

@@ -20,6 +20,22 @@ reset/replay, authority, and report evidence named in the plan.
 | Joint | `joint.coordination.task_graph_scripted` (`adapter`, `joint_coordination_director`) | `bounded_adapter` | `python/tasking_contracts/joint_scripted_coordination.py`; versioned task-graph parser; neutral roster and projection tests; direct compiled `CoordinationIntentPacket` authorization probe | graph-scoped Air/Naval node declaration, authority/support edges, neutral runtime provenance, and compiled coordination DTO projection with explicit omitted-field residuals | maintained joint scenario, command-link delivery, domain execution/report closure, communication loss, reset/replay, joint CLI/viz, and any cross-domain playable label |
 | Ground | no scripted model registration | `held` | `scenarios/ground/*`; native G1 static schema and realism-gradient guardrails | static task/status shell and explicit deferred claims | movement, terrain interaction, sensing/track export, fires, effects, damage, and playable runtime |
 
+### Air Algorithm Substitution Status
+
+The Air row above records the current planner, weapon-profile, and conservative
+assessment evidence. Their pure modules are independently testable and remain
+RL/native independent. The inner strategy seam is still an open residual:
+
+- accepted: complete-model replacement through `ScriptedModelRegistry`,
+  independent unit testing of the default planner/assessor, and explicit
+  provenance for weapon-profile inputs;
+- deferred: planner/assessor/observation/action protocol injection, default
+  behavior parity after injection, independent no-fire/blocking strategy
+  substitution, and versioned strategy selection;
+- promotion rule: do not label strategy composition complete until the
+  ALG-0 through ALG-4 gates in the main plan pass. This residual does not
+  block unrelated Naval, Ground, Joint, or EW work.
+
 ## Label rules
 
 The following labels are intentionally ordered by evidence strength:
