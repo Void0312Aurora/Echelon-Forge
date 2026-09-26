@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
+import subprocess
+import sys
+import textwrap
 
 import pytest
 
@@ -71,3 +75,67 @@ def test_air_scripted_cli_manifest_route_fails_closed_for_held_capability(tmp_pa
             expected_domain="air",
             expected_role_id="autopilot_controller",
         )
+
+def test_air_scripted_cli_import_and_config_selection_without_rl_or_native() -> None:
+    source = textwrap.dedent(
+        """
+        import builtins
+        import contextlib
+        import io
+        import sys
+        from python import runtime_bootstrap
+
+        runtime_bootstrap.ensure_repo_imports = lambda: "."
+        original_import = builtins.__import__
+
+        def reject_training_import(name, *args, **kwargs):
+            if name == "ef_py" or name == "python.rl" or name.startswith("python.rl."):
+                raise AssertionError(f"CLI imported policy/native runtime eagerly: {name}")
+            return original_import(name, *args, **kwargs)
+
+        builtins.__import__ = reject_training_import
+        import tools.diagnostics.flight_trajectory.takeoff_to_landing as cli
+
+        assert cli._optional_finite_float(float("nan")) is None
+        assert cli._optional_finite_float(2.5) == 2.5
+        called = {}
+
+        def stop_before_simulation(**kwargs):
+            called.update(kwargs)
+            raise RuntimeError("stop-before-simulation")
+
+        cli._make_env = stop_before_simulation
+        sys.argv = ["air-cli", "--scenario", "scenario.json", "--scripted", "--output", "out.png"]
+        try:
+            cli.main()
+        except RuntimeError as exc:
+            assert str(exc) == "stop-before-simulation"
+        else:
+            raise AssertionError("scripted CLI did not reach the runtime constructor")
+        assert called["scripted"] is True
+        assert called["train_config"] is None
+
+        sys.argv = ["air-cli", "--scenario", "scenario.json", "--model", "model.zip", "--output", "out.png"]
+        with contextlib.redirect_stderr(io.StringIO()):
+            try:
+                cli.main()
+            except SystemExit as exc:
+                assert exc.code == 2
+            else:
+                raise AssertionError("learned CLI accepted a missing training configuration")
+        print("scripted-cli-import-and-args-ok")
+        """
+    )
+    env = os.environ.copy()
+    env["PYTHONPATH"] = os.pathsep.join(filter(None, (str(REPO_ROOT), env.get("PYTHONPATH", ""))))
+    result = subprocess.run(
+        [sys.executable, "-c", source],
+        cwd=REPO_ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "scripted-cli-import-and-args-ok" in result.stdout

@@ -2114,3 +2114,29 @@ to a dedicated owner-local evidence document.
   No second maintained strategy profile or strategy registry was added, and
   Air remains `playable_candidate` pending command/report, visualization, and
   named-platform effect gates.
+
+### 2026-09-26 — Air scripted CLI without a training configuration
+
+- Starting commit: `b243f1b1`.
+- Change batch: make `--train_config` optional only for `--scripted`;
+  keep it required with `--model`. Defer the CLI's learned-policy and
+  wrapper imports to the learned branch, and defer world-batch runtime import
+  until environment construction. The CLI report now reads the declared
+  scenario name and `InstrumentState.alt_radar`, omits non-finite optional
+  fields, and rejects non-standard JSON constants.
+- Focused verification: the native-free import/argument regression passed
+  `3 passed`; a five-step compiled scripted smoke ran without a training
+  configuration, and a second five-step smoke ran with SB3 and Torch imports
+  blocked. The learned path rejected a missing training configuration before
+  opening a runtime.
+- Direct full-episode verification: the maintained continuous Air scenario
+  ran with `--scripted`, seed `0`, no training configuration or
+  checkpoint, and local compiled binding. It ended after `16942` steps
+  with `success_objective`, `mission_status=[4,1,1,1]`, runway
+  geometry true, and a strictly parseable JSON summary with a non-empty
+  scenario name and finite final radar altitude.
+- Boundary decision: this closes the training-config requirement for the
+  scripted Air CLI, not full package-level RL isolation. The shared
+  world-batch runtime is still physically under `python.rl.runtime`, and
+  the CLI run does not prove command/report episode closure or visualization
+  process acceptance. Air remains `playable_candidate`.

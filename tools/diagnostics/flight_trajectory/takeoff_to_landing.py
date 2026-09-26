@@ -54,9 +54,6 @@ from python.tasking_contracts.common.scripted_runtime import (
     ScriptedRuntimeAgent,
     ScriptedRuntimeAgentSpec,
 )
-from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
-from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
-from python.rl.control.wrappers import get_action_wrapper_spec
 from tools.diagnostics.common import add_model_load_args, add_probe_run_args
 
 
@@ -123,10 +120,20 @@ def _zero_randomization_overrides() -> dict[str, Any]:
     }
 
 
+def _optional_finite_float(value: Any) -> float | None:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) else None
+
+
 def _load_policy(model_path: str, algo: str):
     load_path = model_path[:-4] if model_path.endswith(".zip") else model_path
     algo_name = str(algo).strip()
     if algo_name in ("auto", "AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
+        from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
+
         try:
             return AdaptiveKLPPO.load(load_path, device="cpu")
         except Exception:
@@ -170,7 +177,11 @@ def _make_env(
         wrapper_class = None
         wrapper_kwargs = None
     else:
+        from python.rl.control.wrappers import get_action_wrapper_spec
+
         wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config or {})
+
+    from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
 
     env = build_single_world_batch_execution_runtime(
         scenario_path=os.path.abspath(scenario_path),
@@ -411,20 +422,17 @@ def _collect_episode(
     final_ground_speed = None
     final_alt_agl = None
     if final_inst is not None:
-        try:
-            final_ias = float(getattr(final_inst, "ias", float("nan")))
-        except Exception:
-            final_ias = None
-        try:
-            final_ground_speed = float(getattr(final_inst, "ground_speed", float("nan")))
-        except Exception:
-            final_ground_speed = None
-        try:
-            final_alt_agl = float(getattr(final_inst, "altitude_agl", float("nan")))
-        except Exception:
-            final_alt_agl = None
+        final_ias = _optional_finite_float(getattr(final_inst, "ias", None))
+        final_ground_speed = _optional_finite_float(getattr(final_inst, "ground_speed", None))
+        final_alt_agl = _optional_finite_float(getattr(final_inst, "alt_radar", None))
+    scenario_data = getattr(loader, "scenario_data", None)
+    scenario_name = str(getattr(loader, "scenario_name", "") or "")
+    if not scenario_name and isinstance(scenario_data, dict):
+        scenario_name = str(scenario_data.get("scenario_name", "") or "")
+    if not scenario_name:
+        scenario_name = os.path.basename(str(getattr(loader, "scenario_path", "") or ""))
     summary = EpisodeSummary(
-        scenario=str(getattr(loader, "scenario_name", "")) or os.path.basename(scenario_path),
+        scenario=scenario_name,
         seed=int(seed),
         mode="scripted" if scripted else "model",
         zero_randomization=bool(zero_randomization),
@@ -441,13 +449,13 @@ def _collect_episode(
         final_command_code=int(cmd_codes[-1]),
         final_baseline_mode=str(baseline_modes[-1]),
         final_position_xyz_m=list(final_pos),
-        final_runway_along_m=runway_alongs[-1],
-        final_runway_cross_m=runway_crosses[-1],
+        final_runway_along_m=_optional_finite_float(runway_alongs[-1]),
+        final_runway_cross_m=_optional_finite_float(runway_crosses[-1]),
         final_ias_mps=final_ias,
         final_ground_speed_mps=final_ground_speed,
         final_altitude_agl_m=final_alt_agl,
-        final_on_ground=float(final_info["on_ground"]) if "on_ground" in final_info and final_info["on_ground"] is not None else None,
-        final_on_runway_geom=float(final_info["on_runway_geom"]) if "on_runway_geom" in final_info and final_info["on_runway_geom"] is not None else None,
+        final_on_ground=_optional_finite_float(final_info.get("on_ground")),
+        final_on_runway_geom=_optional_finite_float(final_info.get("on_runway_geom")),
         scripted_runtime_decisions=int(scripted_runtime_decisions),
         scripted_runtime_holds=int(scripted_runtime_holds),
         scripted_runtime_identity=(
@@ -601,7 +609,11 @@ def _save_plot(data: dict[str, Any], output_path: str) -> None:
 def _main() -> int:
     p = argparse.ArgumentParser(description="Export 2D trajectory diagnostics for the continuous takeoff-to-landing task.")
     add_probe_run_args(p, include=["scenario"], required={"scenario": True})
-    add_model_load_args(p, include=["train_config"], required={"train_config": True})
+    add_model_load_args(
+        p,
+        include=["train_config"],
+        helps={"train_config": "Training configuration required with --model; optional with --scripted."},
+    )
     add_model_load_args(
         p,
         include=["model", "algo"],
@@ -619,6 +631,8 @@ def _main() -> int:
 
     if bool(args.scripted) == bool(args.model):
         raise ValueError("choose exactly one of --scripted or --model")
+    if args.model and not args.train_config:
+        p.error("--train_config is required with --model")
 
     train_config = _resolve_train_config(args.train_config)
     env = _make_env(
@@ -644,11 +658,11 @@ def _main() -> int:
     out_json = os.path.splitext(out_png)[0] + ".json"
     _save_plot(data, out_png)
     with open(out_json, "w", encoding="utf-8") as f:
-        json.dump(asdict(summary), f, indent=2)
+        json.dump(asdict(summary), f, indent=2, allow_nan=False)
 
     print(f"saved_plot={out_png}")
     print(f"saved_summary={out_json}")
-    print(json.dumps(asdict(summary), indent=2))
+    print(json.dumps(asdict(summary), indent=2, allow_nan=False))
     return 0
 
 
