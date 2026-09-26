@@ -1,7 +1,6 @@
 """Shared base class for scripted (non-RL) flight controllers used by gym_envs.
 
-``python.rl.control.base_scripted_controller`` re-exports ``BaseScriptedController``
-and ``wrap_deg`` as a compatibility shell.
+The module is the canonical owner of ``BaseScriptedController`` and ``wrap_deg``.
 """
 
 from __future__ import annotations

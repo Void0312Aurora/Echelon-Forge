@@ -1,6 +1,6 @@
 import ef_py
 
-from python.tasking_contracts.bridge_views import (
+from python.tasking_contracts.common.bridge_views import (
     has_mission_command_dict,
     loader_owned_runtime_view,
     mission_command_dict,

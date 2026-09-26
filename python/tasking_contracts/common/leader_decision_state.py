@@ -1,11 +1,7 @@
 """Pure decision-window state record shared with gym_envs.
 
-``LeaderDecisionState`` itself has no dependency on either ``python.rl`` or
-``gym_envs`` — only the runtime classes that build/consume it
-(``python.rl.runtime.leader_window_runtime.LocalLeaderWindowRuntime`` and
-friends) are genuinely entangled with ``gym_envs.leader_env_parts`` and stay
-``python.rl``-internal. ``python.rl.runtime.leader_window_runtime`` re-exports
-this dataclass as a compatibility shell.
+``LeaderDecisionState`` has no dependency on ``python.rl`` or ``gym_envs``;
+runtime adapters import this canonical dataclass directly.
 """
 
 from __future__ import annotations

@@ -1,8 +1,7 @@
 """Scripted stable-flight controller used by gym_envs leader-layer execution.
 
-``python.rl.control.scripted_stable_flight`` re-exports
-``ScriptedStableFlightController`` and ``scripted_stable_flight_action`` as a
-compatibility shell.
+The module is the canonical owner of ``ScriptedStableFlightController`` and
+``scripted_stable_flight_action``.
 """
 
 from __future__ import annotations

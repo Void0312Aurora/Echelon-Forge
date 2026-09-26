@@ -30,7 +30,8 @@ and research record for the next implementation batches.
 Implementation status: ALG-0 and the planner/assessor portion of ALG-1 are now
 implemented in the dedicated worktree. The strategy implementation is now
 physically layered under `python/tasking_contracts/air/strategy`; the former
-flat Air strategy paths are compatibility shells. Observation and action
+flat Air strategy paths were removed and repository consumers use the
+canonical modules directly. Observation and action
 adapter extraction remain ALG-2 work; the current engagement model still owns
 those two mappings until their parity tests are added.
 

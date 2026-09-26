@@ -1,9 +1,7 @@
 """Pure step-timing dict coercion helper shared with gym_envs.
 
-``python.rl.runtime.execution_runtime`` re-exports ``coerce_timing_dict`` as a
-compatibility shell and keeps using it locally for ``scale_timing_dict``/
-``copy_info_with_scaled_timing``, which stay ``python.rl``-internal since
-``gym_envs`` never needed them directly.
+Runtime adapters import ``coerce_timing_dict`` directly; remaining scaling
+helpers stay ``python.rl``-internal because ``gym_envs`` never needs them.
 """
 
 from __future__ import annotations

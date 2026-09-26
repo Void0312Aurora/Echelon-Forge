@@ -11,7 +11,7 @@ from python.mission_obs_taxonomy import (
     mission_observation_field_index,
     mission_observation_has_field,
 )
-from python.rl.control.mission_defs import (
+from python.tasking_contracts.common.mission_defs import (
     COMMAND_CODE_LANDING,
     COMMAND_CODE_ROUTE,
     COMMAND_CODE_TAKEOFF,

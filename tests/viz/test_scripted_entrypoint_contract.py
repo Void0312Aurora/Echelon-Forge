@@ -22,7 +22,7 @@ def test_viz_scripted_entrypoint_uses_neutral_air_registry() -> None:
     assert "python.tasking_contracts.air.execution.landing" in imported_modules
     assert "python.tasking_contracts.air.execution.stable_flight" in imported_modules
     assert "python.tasking_contracts.air.execution.takeoff" in imported_modules
-    assert "python.tasking_contracts.scripted_capability" in imported_modules
+    assert "python.tasking_contracts.common.scripted_capability" in imported_modules
     assert not any(module.startswith("python.rl.control.scripted_") for module in imported_modules)
 
 

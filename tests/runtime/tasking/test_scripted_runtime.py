@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from python.tasking_contracts.scripted_registry import (
+from python.tasking_contracts.common.scripted_registry import (
     ScriptedModelRegistration,
     ScriptedModelRegistry,
 )
-from python.tasking_contracts.scripted_runtime import (
+from python.tasking_contracts.common.scripted_runtime import (
     SCRIPTED_RUNTIME_ACTION_DECIDED,
     SCRIPTED_RUNTIME_ACTION_HELD,
     ScriptedRuntimeAgentSpec,
@@ -46,7 +46,7 @@ def _spec(agent_id: str, *, period: float = 0.0, active: bool = True):
 
 def test_runtime_holds_last_decision_output_between_scheduler_decisions() -> None:
     model = _FakeModel()
-    from python.tasking_contracts.scripted_runtime import ScriptedRuntimeAgent
+    from python.tasking_contracts.common.scripted_runtime import ScriptedRuntimeAgent
 
     agent = ScriptedRuntimeAgent(_spec("air-1", period=2.0), model)
     agent.reset(context={"mission": "demo"}, episode_seed=17)
@@ -68,7 +68,7 @@ def test_runtime_holds_last_decision_output_between_scheduler_decisions() -> Non
 
 
 def test_runtime_rejects_backwards_clock_and_missing_reset() -> None:
-    from python.tasking_contracts.scripted_runtime import ScriptedRuntimeAgent
+    from python.tasking_contracts.common.scripted_runtime import ScriptedRuntimeAgent
 
     agent = ScriptedRuntimeAgent(_spec("air-1"), _FakeModel())
     with pytest.raises(RuntimeError, match="must be reset"):
@@ -80,7 +80,7 @@ def test_runtime_rejects_backwards_clock_and_missing_reset() -> None:
 
 
 def test_roster_routes_active_agents_in_stable_order_and_skips_inactive() -> None:
-    from python.tasking_contracts.scripted_runtime import ScriptedRuntimeAgent
+    from python.tasking_contracts.common.scripted_runtime import ScriptedRuntimeAgent
 
     first = _FakeModel(label="first")
     second = _FakeModel(label="second")
@@ -130,7 +130,7 @@ def test_roster_from_registry_requires_explicit_domain_role_match() -> None:
 
 
 def test_roster_rejects_duplicate_and_missing_active_entries() -> None:
-    from python.tasking_contracts.scripted_runtime import ScriptedRuntimeAgent
+    from python.tasking_contracts.common.scripted_runtime import ScriptedRuntimeAgent
 
     one = ScriptedRuntimeAgent(_spec("air-1"), _FakeModel())
     roster = ScriptedRuntimeRoster([one])

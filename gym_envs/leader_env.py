@@ -25,7 +25,7 @@ from gym_envs.leader_env_parts import (
     LeaderRuntimeFacadeMixin,
 )
 from python.env_config import VALID_EXECUTION_STEP_RUNTIME_MODES
-from python.tasking_contracts.leader_decision_state import LeaderDecisionState
+from python.tasking_contracts.common.leader_decision_state import LeaderDecisionState
 
 if gym is None:
     class LeaderTrainingEnv:  # pragma: no cover

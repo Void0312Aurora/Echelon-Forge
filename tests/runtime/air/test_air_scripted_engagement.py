@@ -4,14 +4,14 @@ import numpy as np
 import pytest
 
 from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index
-from python.tasking_contracts.air_scripted_engagement import (
+from python.tasking_contracts.air.engagement.model import (
     AIR_COMBAT_C2_ROE_V2,
     AIR_COMBAT_HYBRID_ACTION_DIM,
     AIR_SCRIPTED_ENGAGEMENT_MODEL_ID,
     AirScriptedEngagementModel,
 )
-from python.tasking_contracts.air_scripted_execution import AIR_SCRIPTED_MODEL_REGISTRY
-from python.tasking_contracts.scripted_registry import ScriptedDecisionModel
+from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY
+from python.tasking_contracts.common.scripted_registry import ScriptedDecisionModel
 
 
 def _observation(*, contact: bool, fire_window: bool, budget: float = 1.0, pending: bool = False) -> dict:

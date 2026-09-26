@@ -6,10 +6,8 @@ from typing import Iterable, Optional
 import numpy as np
 
 import gymnasium as gym
-from python.tasking_contracts.air.execution.model import (
-    AIR_SCRIPTED_EXECUTION_MODEL_ID,
-    AIR_SCRIPTED_MODEL_REGISTRY,
-)
+from python.tasking_contracts.air.execution.model import AIR_SCRIPTED_EXECUTION_MODEL_ID
+from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY
 from python.tasking_contracts.common.mission_defs import (
     is_route_command_code,
     normalize_command_code,

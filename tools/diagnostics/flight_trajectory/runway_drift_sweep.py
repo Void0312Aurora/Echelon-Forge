@@ -30,7 +30,7 @@ from python.runtime_bootstrap import ensure_repo_imports
 
 BASE_DIR = ensure_repo_imports()
 
-from python.rl.control.scripted_takeoff import ScriptedTakeoffController, scripted_takeoff_action
+from python.tasking_contracts.air.execution.takeoff import ScriptedTakeoffController, scripted_takeoff_action
 from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
 
 

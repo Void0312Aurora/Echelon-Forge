@@ -22,7 +22,7 @@ from __future__ import annotations
 import ef_py
 
 from python.rl.profile import common_core_defaults as a3
-from python.tasking_contracts import agency_registry as registry
+from python.tasking_contracts.common import agency_registry as registry
 
 
 def test_default_names_are_registry_owned_and_mirror_the_compiled_enum_positions():

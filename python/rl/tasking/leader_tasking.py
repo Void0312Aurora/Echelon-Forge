@@ -27,7 +27,7 @@ from .common_core_profile import (
     apply_task_order_common_core_defaults,
     apply_task_order_common_core_spec,
 )
-from python.rl.control.mission_defs import (
+from python.tasking_contracts.common.mission_defs import (
     COMMAND_CODE_LANDING,
     LANDING_PHASE_NAMES,
     TAKEOFF_PHASE_NAMES,

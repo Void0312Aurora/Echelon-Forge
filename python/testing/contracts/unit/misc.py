@@ -68,7 +68,7 @@ def _check_takeoff_safe_action_bias(spec: dict[str, Any]) -> tuple[bool, str]:
 
 def _check_scripted_stable_flight_rudder_sign(spec: dict[str, Any]) -> tuple[bool, str]:
     import numpy as np
-    from python.rl.control.scripted_stable_flight import ScriptedStableFlightController
+    from python.tasking_contracts.air.execution.stable_flight import ScriptedStableFlightController
 
     ctrl = ScriptedStableFlightController(
         action_dim=int(spec.get("action_dim", 17)),
@@ -245,7 +245,7 @@ def _check_landing_entity_spawn_randomization(spec: dict[str, Any]) -> tuple[boo
 
 def _check_scripted_takeoff_takeoff2_throttle(spec: dict[str, Any]) -> tuple[bool, str]:
     import numpy as np
-    from python.rl.control.scripted_takeoff import ScriptedTakeoffController
+    from python.tasking_contracts.air.execution.takeoff import ScriptedTakeoffController
 
     ctrl = ScriptedTakeoffController(action_dim=2, dt=0.05)
     obs = {
@@ -263,7 +263,7 @@ def _check_scripted_takeoff_takeoff2_throttle(spec: dict[str, Any]) -> tuple[boo
 
 def _check_scripted_takeoff_clearance_hold(spec: dict[str, Any]) -> tuple[bool, str]:
     import numpy as np
-    from python.rl.control.scripted_takeoff import ScriptedTakeoffController
+    from python.tasking_contracts.air.execution.takeoff import ScriptedTakeoffController
 
     ctrl = ScriptedTakeoffController(action_dim=4, dt=0.05)
     obs = {
@@ -281,7 +281,7 @@ def _check_scripted_takeoff_clearance_hold(spec: dict[str, Any]) -> tuple[bool, 
 
 def _check_scripted_landing_controller(spec: dict[str, Any]) -> tuple[bool, str]:
     import numpy as np
-    from python.rl.control.scripted_landing import ScriptedLandingController
+    from python.tasking_contracts.air.execution.landing import ScriptedLandingController
 
     for idx, case in enumerate(list(spec.get("cases", []) or []), start=1):
         obs = {
