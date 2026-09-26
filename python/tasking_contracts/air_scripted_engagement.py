@@ -23,15 +23,15 @@ from python.mission_obs_taxonomy import (
 )
 
 from .air_scripted_execution import AirScriptedExecutionModel
-from .air_scripted_assessment import AirPostLaunchAssessment
-from .air_scripted_planning import AirEngagementPlanner, AirEngagementPlannerConfig
-from .air_scripted_strategy_contracts import (
+from .air.strategy.assessment import AirPostLaunchAssessment
+from .air.strategy.planning import AirEngagementPlanner, AirEngagementPlannerConfig
+from .air.strategy.contracts import (
     AirAssessmentInput,
     AirPlanningContext,
     AirPostLaunchAssessor,
     AirTacticalPlanner,
 )
-from .air_scripted_weapons import AirWeaponEnvelope, load_air_weapon_envelope
+from .air.strategy.weapons import AirWeaponEnvelope, load_air_weapon_envelope
 
 
 AIR_SCRIPTED_ENGAGEMENT_MODEL_ID = "air.engagement.c2_roe_scripted"

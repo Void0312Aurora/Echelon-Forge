@@ -28,9 +28,11 @@ a second global registry, and does not make RL a dependency. It is a planning
 and research record for the next implementation batches.
 
 Implementation status: ALG-0 and the planner/assessor portion of ALG-1 are now
-implemented in the dedicated worktree. Observation and action adapter
-extraction remain ALG-2 work; the current engagement model still owns those
-two mappings until their parity tests are added.
+implemented in the dedicated worktree. The strategy implementation is now
+physically layered under `python/tasking_contracts/air/strategy`; the former
+flat Air strategy paths are compatibility shells. Observation and action
+adapter extraction remain ALG-2 work; the current engagement model still owns
+those two mappings until their parity tests are added.
 
 ## Current Dependency Map
 
@@ -50,8 +52,9 @@ AirScriptedExecutionModel   AirEngagementPlanner   AirPostLaunchAssessment
          Air action layout / fire pulse mapping
 ```
 
-The neutral lifecycle is correctly located in `python/tasking_contracts` and
-does not import RL. The Air engagement model currently performs four separate
+The neutral lifecycle is correctly located in `python/tasking_contracts`, with
+Air-owned policy code under `python/tasking_contracts/air`, and does not import
+RL. The Air engagement model currently performs four separate
 roles in one class:
 
 1. decode the mission taxonomy and five-column contact token;

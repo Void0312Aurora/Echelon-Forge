@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from python.tasking_contracts.air_scripted_assessment import (
+from python.tasking_contracts.air.strategy.assessment import (
     AIR_ASSESSMENT_IN_FLIGHT,
     AIR_ASSESSMENT_REATTACK_READY,
     AIR_ASSESSMENT_TERMINAL_OBSERVED,

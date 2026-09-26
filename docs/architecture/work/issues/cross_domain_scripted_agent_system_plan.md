@@ -2001,3 +2001,25 @@ to a dedicated owner-local evidence document.
   until ALG-2. Air remains `playable_candidate`; RL remains optional.
 - Continuation choice: extract observation and action adapters with a default
   parity fixture before adding any second maintained strategy profile.
+
+### 2026-09-26 — Air strategy physical-layer split
+
+- Starting commit: `1ff78ff2`.
+- Change batch: move the canonical Air strategy implementations into
+  `python/tasking_contracts/air/strategy/` (`contracts`, `planning`,
+  `assessment`, and `weapons`). The old flat `air_scripted_*` strategy paths
+  remain compatibility shells that re-export the canonical objects. Strategy
+  tests now live under `tests/runtime/air/strategy/`; a physical-layer test
+  checks the package contents, shell identity, and RL/environment-free imports.
+- Boundary decision: physical location now reflects policy ownership without
+  moving the neutral lifecycle or creating a second registry. The engagement
+  model imports the canonical Air strategy layer; external legacy imports are
+  compatibility-only.
+- Focused verification: canonical strategy, compatibility, engagement, and
+  physical-layer tests passed `28 passed`; explicit-file Python compilation and
+  `git diff --check` passed. The earlier wildcard compile invocation was a
+  PowerShell argument-expansion error and was replaced by an explicit-file run.
+- Evidence boundary: this closes the first physical-layer split only. The
+  remaining `python/tasking_contracts` root still contains mixed common and
+  domain modules; the next layout batch must partition those into common,
+  Air, Naval, and Joint packages without changing runtime ownership claims.
