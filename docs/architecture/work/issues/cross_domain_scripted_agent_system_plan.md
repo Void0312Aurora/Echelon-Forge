@@ -1760,3 +1760,22 @@ to a dedicated owner-local evidence document.
 - Continuation choice: use the owner seam for a paired generic-Aircraft
   two-target scenario, retaining the same native event/replay gates before
   widening the Air scale claim.
+
+### 2026-09-26 — Air cooperative two-target terminal demonstration
+
+- Change batch: add `cooperative_air_2v2_scripted_c2_roe_terminal_v1.json`
+  with two generic `Aircraft` targets and slot-owned `Red_A`/`Red_B`
+  assignments. Extend the RL-independent cooperative combat CLI to report the
+  resolved per-slot target owner.
+- Focused verification: the maintained combat test file passed `3 passed`.
+  With seed `20260516` the two slots resolved to `Red_A` and `Red_B`, each
+  recorded native `fire_once_accepted` and `release_executed`, and both ended
+  with `combat_win`; a paired run matched event steps, target owners, reports,
+  decision counts, and runtime identities.
+- Evidence boundary: this is a bounded two-aircraft/two-target terminal
+  surrogate demonstration. It does not establish target reassignment under
+  communication loss, red weapons, formation mission parity, named-platform
+  calibration, visualization, or large-scale terminal combat.
+- Continuation choice: retain the two-target trace as the multi-aircraft
+  baseline; next inspect command/report closure and formation behavior before
+  moving to 4+ aircraft terminal composition.
