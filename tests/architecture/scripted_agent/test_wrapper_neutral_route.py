@@ -34,7 +34,7 @@ def test_combined_wrapper_baseline_consumes_neutral_air_model() -> None:
     assert prepared.baseline_action.shape == (17,)
     assert prepared.scripted_active_mode == "takeoff"
     assert controller._scripted_model is not None
-    assert type(controller._scripted_model).__module__ == "python.tasking_contracts.air_scripted_execution"
+    assert type(controller._scripted_model).__module__ == "python.tasking_contracts.air.execution.model"
 
 
 def test_wrapper_passes_loader_phase_and_syncs_mode_before_residual_scaling() -> None:

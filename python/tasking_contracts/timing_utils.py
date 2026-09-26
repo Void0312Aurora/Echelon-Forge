@@ -1,26 +1,8 @@
-"""Pure step-timing dict coercion helper shared with gym_envs.
-
-``python.rl.runtime.execution_runtime`` re-exports ``coerce_timing_dict`` as a
-compatibility shell and keeps using it locally for ``scale_timing_dict``/
-``copy_info_with_scaled_timing``, which stay ``python.rl``-internal since
-``gym_envs`` never needed them directly.
-"""
+"""Compatibility shell for common timing helpers."""
 
 from __future__ import annotations
 
-from typing import Any
+from .common import timing_utils as _canonical
+from .common.timing_utils import *
 
-
-def coerce_timing_dict(raw: Any) -> dict[str, float]:
-    if not isinstance(raw, dict):
-        return {}
-    out: dict[str, float] = {}
-    for key, value in raw.items():
-        try:
-            out[str(key)] = float(value)
-        except Exception:
-            pass
-    return out
-
-
-__all__ = ["coerce_timing_dict"]
+__all__ = _canonical.__all__

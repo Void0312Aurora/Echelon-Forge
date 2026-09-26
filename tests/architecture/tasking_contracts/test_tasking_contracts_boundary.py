@@ -64,7 +64,7 @@ TEXT_DYNAMIC_ALLOWLIST: set[str] = {
     # I24-designed compatibility quarantine: import_module("python.scenario.runtime")
     # (an allowed neutral-side seam, not python.rl/gym_envs). The bare `"python.`
     # prefix marker matches its target string.
-    "python/tasking_contracts/bridge_views.py",
+    "python/tasking_contracts/common/bridge_views.py",
 }
 
 
