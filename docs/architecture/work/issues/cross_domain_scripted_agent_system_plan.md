@@ -1681,3 +1681,32 @@ to a dedicated owner-local evidence document.
   terminal `combat_win` demonstration, use the MQ-9 cases as native consequence
   fixtures, and investigate terminal/post-launch closure separately rather
   than widening projection radii or substituting a Python kill.
+
+### 2026-09-26 — Air roster-driven 4v4 EW scale demonstration
+
+- Change batch: generalize `tools/diagnostics/air_cooperative_ew_scripted_demo.py`
+  to resolve controllable slots and formation roles from the scenario-owned
+  roster instead of hard-coding Lead/Wing. The runner now supports any positive
+  roster size, uses the scenario time step for scripted runtime clocks, and
+  preserves the world-owner update path. Add the maintained
+  `cooperative_air_4v4_scripted_ew_response_v1.json` scenario with two Blue
+  elements and four Red scripted opponents.
+- Focused verification: the maintained cooperative EW test passed `3 passed`.
+  With seed `20260516` and `204` steps, all four slots remained running, the
+  owner roster was `[4, 0, 0, 0]`, all four Red opponent reports were active,
+  and the warning/request traces were Lead-A `[42, 82, 122, 162, 202]`,
+  Wing-A `[42, 82, 122, 162, 202]`, Lead-B `[162, 202]`, and Wing-B `[202]`.
+  Chaff samples were `[60,59,58,57,56]`, `[60,59,58,57,56]`, `[60,59]`, and
+  `[60]` respectively, with flare remaining `30` in every sample. The same
+  seed replay matched roster, warning/request, resource, report, and scripted
+  identity traces.
+- Evidence boundary: this establishes a roster-driven four-slot, two-element
+  EW response and resource-isolation demonstration at a larger scale. It does
+  not establish terminal combat, full multi-aircraft weapon employment,
+  jammer/ESM, communication loss, tactical reassignment, formation combat
+  mission parity, or a full visualization/large-scale combat claim. EW remains
+  `entry_surface_incomplete`; Air remains `playable_candidate`.
+- Continuation choice: retain the 4v4 scenario as the bounded scale baseline;
+  use the same roster contract for later 8+ slot or joint demonstrations only
+  after command/report and native weapon ownership gates are separately
+  evidenced.
