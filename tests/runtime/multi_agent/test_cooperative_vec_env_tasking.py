@@ -299,6 +299,61 @@ def _cooperative_takeoff_to_cruise_scenario() -> dict:
 
 
 class CooperativeVecEnvTaskingTests(unittest.TestCase):
+  def test_roster_mission_overrides_refresh_each_slot_target_owner(self) -> None:
+    if CooperativeWorldBatchVecEnv is None:
+      self.skipTest("gymnasium is not available in the active interpreter")
+    with open(_COOPERATIVE_AIR_2V2_SCENARIO_PATH, "r", encoding="utf-8") as f:
+      scenario = json.load(f)
+    members = scenario["cooperative_roster"]["members"]
+    members[0]["mission_command_overrides"] = {
+      "assigned_target_name": "Red_Lead",
+      "authorization_to_fire": True,
+      "engage_order_state": 2,
+      "shot_policy_state": 3,
+      "shot_budget_remaining": 1,
+    }
+    members[1]["mission_command_overrides"] = {
+      "assigned_target_name": "Red_Wing",
+      "authorization_to_fire": True,
+      "engage_order_state": 2,
+      "shot_policy_state": 3,
+      "shot_budget_remaining": 1,
+    }
+    with tempfile.TemporaryDirectory() as tmpdir:
+      scenario_path = f"{tmpdir}/cooperative_target_override_scenario.json"
+      with open(scenario_path, "w", encoding="utf-8") as f:
+        json.dump(scenario, f, ensure_ascii=True)
+      vec_env = CooperativeWorldBatchVecEnv(
+        scenario_path=scenario_path,
+        n_envs=1,
+        include_visual=False,
+        include_proprio=True,
+        action_mode="full",
+        mission_obs_mode="air_combat_c2_roe_v2",
+      )
+      try:
+        vec_env.reset()
+        lead = vec_env._slots[0]
+        wing = vec_env._slots[1]
+        self.assertIsNotNone(lead)
+        self.assertIsNotNone(wing)
+        assert lead is not None
+        assert wing is not None
+        self.assertEqual(lead.loader.primary_target_name, "Red_Lead")
+        self.assertEqual(wing.loader.primary_target_name, "Red_Wing")
+        self.assertEqual(
+          int(lead.loader.mission_cmd["assigned_target_id"]),
+          int(lead.loader.entities["Red_Lead"]),
+        )
+        self.assertEqual(
+          int(wing.loader.mission_cmd["assigned_target_id"]),
+          int(wing.loader.entities["Red_Wing"]),
+        )
+        self.assertTrue(bool(lead.loader.mission_cmd["authorization_to_fire"]))
+        self.assertTrue(bool(wing.loader.mission_cmd["authorization_to_fire"]))
+      finally:
+        vec_env.close()
+
   def test_multi_agent_runtime_view_task_order_export_uses_maintained_contracts_only(self) -> None:
     class _Loader:
       active_roster = []

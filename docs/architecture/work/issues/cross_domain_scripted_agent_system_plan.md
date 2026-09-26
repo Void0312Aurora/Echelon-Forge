@@ -1737,3 +1737,26 @@ to a dedicated owner-local evidence document.
   baseline; next close per-member target/task override ownership and broaden
   only after native report/replay evidence is retained. Keep the generic
   target explicitly marked as a terminal surrogate.
+
+### 2026-09-26 — Air cooperative per-member mission target ownership
+
+- Change batch: make the already-declared roster
+  `mission_command_overrides` an effective director-owned seam. Cooperative
+  slot loaders now receive non-formation/non-takeoff member command fields,
+  including C2/ROE and assigned-target fields; a member's target name is
+  resolved back to the slot-local `assigned_target_id` and `primary_target_id`
+  after the override so the observation, objective, and event gate share one
+  target owner. Formation and takeoff fields remain under their existing
+  director progression logic.
+- Focused verification: the new target-owner regression passed, and the full
+  cooperative tasking and observation files passed `19 passed` each. The test
+  mutates the maintained 2v2 roster so Lead owns `Red_Lead` and Wing owns
+  `Red_Wing`, then verifies the slot-local name, ID, and C2 authorization
+  fields after reset.
+- Evidence boundary: this closes the roster-to-mission target projection
+  contract, not a multi-target terminal engagement. It does not by itself
+  prove target reassignment, data-link loss, formation mission parity, or
+  calibrated named-platform consequences.
+- Continuation choice: use the owner seam for a paired generic-Aircraft
+  two-target scenario, retaining the same native event/replay gates before
+  widening the Air scale claim.
