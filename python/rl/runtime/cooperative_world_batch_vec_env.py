@@ -22,7 +22,11 @@ from gym_envs.scenario_loader import (
     normalize_execution_step_runtime_mode,
 )
 from gym_envs.universal_env import (
+    add_air_combat_event_action_info,
+    air_combat_hybrid_effective_action,
+    apply_air_combat_event_action_gate,
     build_step_info_minimal,
+    finalize_air_combat_event_action_info,
     is_air_combat_hybrid_action_mode,
     make_action_space,
     make_observation_space,
@@ -35,6 +39,7 @@ from gym_envs.universal_env_parts import (
     apply_naval_station_action,
     attach_temporal_history,
     bind_naval_station_eval_reference,
+    reset_air_combat_event_action_state,
     is_naval_station_action_mode,
     make_temporal_history_buffer,
     temporal_history_enabled,
@@ -147,12 +152,6 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         self.include_visual = bool(include_visual)
         self.include_proprio = bool(include_proprio)
         self.action_mode = str(action_mode)
-        if is_air_combat_hybrid_action_mode(self.action_mode):
-            raise ValueError(
-                "CooperativeWorldBatchVecEnv does not implement the air-combat event-action "
-                "gate/finalization contract; action_mode='air_combat_hybrid_v1' is rejected "
-                "instead of silently bypassing C2/ROE and post-launch gating"
-            )
         self.mission_obs_mode = str(mission_obs_mode).strip().lower()
         self.visual_downsample = max(1, int(visual_downsample))
         self.visual_update_interval = max(1, int(visual_update_interval))
@@ -234,7 +233,11 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         self._actions: np.ndarray | None = None
         self._closed = False
 
-        self._mode_plugin: CooperativePlugin = resolve_execution_mode("cooperative")
+        self._mode_plugin: CooperativePlugin = resolve_execution_mode(
+            "cooperative",
+            is_air_combat_hybrid=is_air_combat_hybrid_action_mode(self.action_mode),
+            air_combat_event_finalizer=finalize_air_combat_event_action_info,
+        )
 
         super().__init__(self.num_slots, self.observation_space, self.action_space)
 
@@ -805,6 +808,10 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             slot_state.steps = 0
             slot_state.loader.steps = 0
             slot_state.last_action = None
+            slot_state.last_policy_action_intent = None
+            slot_state.last_truth_before = None
+            if is_air_combat_hybrid_action_mode(self.action_mode):
+                reset_air_combat_event_action_state(slot_state.loader)
             if slot_state.temporal_history is None:
                 slot_state.temporal_history = make_temporal_history_buffer(self.temporal_history_len)
             else:
@@ -948,6 +955,24 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                     slot_state.last_action = np.array(effective_action, dtype=np.float32)
                 else:
                     effective_action, prepared = self._prepare_slot_action(slot_state, self._actions[slot_index])
+                if is_air_combat_hybrid_action_mode(self.action_mode):
+                    policy_intent = np.asarray(effective_action, dtype=np.float32).copy()
+                    slot_state.last_truth_before = slot_state.last_truth
+                    effective_action = air_combat_hybrid_effective_action(
+                        effective_action,
+                        previous_intent=slot_state.last_policy_action_intent,
+                    )
+                    slot_state.last_policy_action_intent = policy_intent
+                    effective_action, _ = apply_air_combat_event_action_gate(
+                        slot_state.loader,
+                        effective_action,
+                        agent_id=int(slot_state.entity_id),
+                        truth_before=slot_state.last_truth,
+                    )
+                    slot_state.loader._last_action_mode = str(self.action_mode)
+                    slot_state.loader._last_effective_action = np.asarray(
+                        effective_action, dtype=np.float32
+                    ).copy()
                 if is_naval_station_action_mode(self.action_mode):
                     if apply_naval_station_action(slot_state.loader, effective_action):
                         naval_action_sync_world_indices.add(int(world.world_index))
@@ -1008,6 +1033,10 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                     continue
                 slot_state.steps += 1
                 slot_state.loader.steps = int(slot_state.steps)
+                if is_air_combat_hybrid_action_mode(self.action_mode):
+                    self._mode_plugin.finalize_post_step_truth(
+                        int(slot_index), slot_state, slot_state.last_truth_before
+                    )
                 sim_time = float(slot_state.steps) * float(
                     resolve_loader_time_step(slot_state.loader)
                 )
@@ -1091,6 +1120,8 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                         inst_now=slot_state.last_inst,
                         truth_now=slot_state.last_truth,
                     )
+                if is_air_combat_hybrid_action_mode(self.action_mode):
+                    add_air_combat_event_action_info(info, slot_state.loader)
             if self.collect_step_timing:
                 timing["reward_info_ms"] += (time.perf_counter() - reward_t0) * 1000.0
 

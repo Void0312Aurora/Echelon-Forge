@@ -100,6 +100,8 @@ class CooperativeSlotState:
     max_steps: int
     steps: int = 0
     last_action: np.ndarray | None = None
+    last_policy_action_intent: np.ndarray | None = None
+    last_truth_before: Any = None
     last_inst: Any = None
     last_truth: Any = None
     last_obs: dict[str, np.ndarray] | None = None

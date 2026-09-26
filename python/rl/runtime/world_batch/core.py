@@ -658,17 +658,44 @@ class CooperativePlugin(ExecutionModePlugin):
     ``update_post_step_behavior`` and gates the post-behavior command-chain sync
     on ``skip_post_behavior_command_sync``.
 
-    All hooks equal the base-class defaults: cooperative semantics require plain
-    ``update_behaviors`` (never ``update_command_chain_only``), always sync the
-    command chain after behavior updates, and have no ``finalize_post_step_truth``
-    decision point (the constructor rejects air-combat hybrid action modes).
+    Cooperative semantics keep the normal behavior/update ordering and can opt
+    into the domain-owned Air combat event finalizer when the cooperative VecEnv
+    is constructed with ``air_combat_hybrid_v1``.
     """
 
     mode_name = "cooperative"
 
+    def __init__(
+        self,
+        *,
+        is_air_combat_hybrid: bool = False,
+        air_combat_event_finalizer: Callable[..., Any] | None = None,
+    ) -> None:
+        self._is_air_combat_hybrid = bool(is_air_combat_hybrid)
+        if self._is_air_combat_hybrid and not callable(air_combat_event_finalizer):
+            raise ValueError(
+                "cooperative air-combat hybrid execution requires an injected "
+                "air_combat_event_finalizer callable"
+            )
+        self._air_combat_event_finalizer = air_combat_event_finalizer
 
-def _cooperative_factory(**_kwargs: Any) -> CooperativePlugin:
-    return CooperativePlugin()
+    def finalize_post_step_truth(
+        self,
+        env_idx: int,
+        handle: Any,
+        truth_before: Any,
+    ) -> None:
+        _ = env_idx
+        if self._is_air_combat_hybrid:
+            self._air_combat_event_finalizer(
+                handle.loader,
+                truth_before=truth_before,
+                truth_after=handle.last_truth,
+            )
+
+
+def _cooperative_factory(**kwargs: Any) -> CooperativePlugin:
+    return CooperativePlugin(**kwargs)
 
 
 register_execution_mode("cooperative", _cooperative_factory)
