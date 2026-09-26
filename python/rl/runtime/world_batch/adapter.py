@@ -119,8 +119,8 @@ class _ScenarioLoaderRuntimeProxy:
     """World-indexed loader runtime shim that prefers facade-owned batch surfaces.
 
     Structurally implements the maintained ``ScenarioLoader.sim`` seam contract
-    ``python.tasking_contracts.runtime_contract.ScenarioLoaderRuntime`` (kept
-    structural — no nominal inheritance); conformance is enforced by
+    ``python.tasking_contracts.common.runtime_contract.ScenarioLoaderRuntime``
+    (kept structural — no nominal inheritance); conformance is enforced by
     ``tests/architecture/tasking_contracts/test_scenario_loader_runtime_contract.py``.
     """
 

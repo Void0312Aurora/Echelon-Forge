@@ -7,9 +7,8 @@ under ``python.rl.tasking``/``python.rl.profile``). This module has zero
 dependency on ``python.rl`` or ``gym_envs`` — see
 ``python/tasking_contracts/__init__.py``.
 
-``python.rl.tasking.bridge`` re-exports every name below as a compatibility
-shell; its remaining (profile-dispatch) surface stays there because it is a
-genuine entanglement point that still needs the ``python.rl``-internal
+The profile-dispatch surface remains in ``python.rl.tasking.bridge`` because it
+is a genuine entanglement point that needs the ``python.rl``-internal
 air/ground/naval profile modules.
 """
 

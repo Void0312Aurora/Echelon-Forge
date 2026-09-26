@@ -6,7 +6,7 @@ from typing import Any
 import numpy as np
 
 from gym_envs import observation_view
-from python.tasking_contracts.bridge_views import mission_command_dict
+from python.tasking_contracts.common.bridge_views import mission_command_dict
 
 
 # G4 information-state declaration (architecture design doc §3/§15; facility in

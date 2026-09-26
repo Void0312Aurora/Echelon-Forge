@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from python.tasking_contracts.scripted_capability import (
+from python.tasking_contracts.common.scripted_capability import (
     parse_scripted_capability,
     resolve_scripted_model_id,
 )

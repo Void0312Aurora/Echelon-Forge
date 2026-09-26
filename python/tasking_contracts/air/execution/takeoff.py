@@ -1,7 +1,6 @@
 """Scripted takeoff controller used by gym_envs leader-layer execution.
 
-``python.rl.control.scripted_takeoff`` re-exports ``ScriptedTakeoffController``
-as a compatibility shell.
+The module is the canonical owner of ``ScriptedTakeoffController``.
 """
 
 from __future__ import annotations

@@ -37,7 +37,7 @@ R2. ``resolve_loader_runtime_sim(loader)`` (= ``getattr(loader, "sim")``),
     ``loader.compute_full_step(obs, sim, ...)`` and
     ``build_step_info(loader, sim, ...)``.
 R3. ``LoaderOwnedRuntimeView`` / ``LoaderOwnedScriptedOpponentKernelView``
-    (``python/tasking_contracts/bridge_views.py``), which resolve
+    (``python/tasking_contracts/common/bridge_views.py``), which resolve
     ``getattr(loader, "sim")`` lazily and duck-call methods via
     ``call_optional``/``supports``.
 R4. ``loader.sim`` re-exposed as ``env.unwrapped.sim``:
@@ -54,7 +54,7 @@ Required methods (the protocol below; the maintained proxy implements all 11)
     gym_envs/scenario_loader/core.py:1010 (R1);
     gym_envs/scenario_loader/execution_runtime/mainline.py:376 (R2);
     gym_envs/universal_env_parts/info.py:62,85 (R2);
-    python/tasking_contracts/bridge_views.py:149-150,207-208 (R3);
+    python/tasking_contracts/common/bridge_views.py:149-150,207-208 (R3);
     gym_envs/observation_view.py:156 ``support_agent_observation`` used by
     gym_envs/scenario_loader/mission_observation.py:490 (R3);
     gym_envs/leader_env_parts/execution_runtime/policy_runtime.py:175 (R4).
@@ -62,41 +62,41 @@ Required methods (the protocol below; the maintained proxy implements all 11)
     gym_envs/scenario_loader/core.py:1019 (R1);
     gym_envs/scenario_loader/execution_runtime/mainline.py:382 (R2);
     gym_envs/universal_env_parts/info.py:60 (R2);
-    python/tasking_contracts/bridge_views.py:152-153 (R3);
+    python/tasking_contracts/common/bridge_views.py:152-153 (R3);
     gym_envs/leader_env_parts/execution_runtime/policy_runtime.py:170 (R4).
 3.  ``get_time_step()`` —
-    python/tasking_contracts/bridge_views.py:118-122 ``read_time_step_s`` and
+    python/tasking_contracts/common/bridge_views.py:118-122 ``read_time_step_s`` and
     :296-298 ``resolve_loader_time_step`` (R3);
     python/rl/control/wrappers.py:573,
     gym_envs/leader_env_parts/runtime_facade.py:194,387,405,
     gym_envs/leader_env_parts/scripted_exec.py:33,
     gym_envs/leader_env_parts/decision_runtime/observations.py:168 (R4).
 4.  ``is_unit_active(entity_id)`` —
-    python/tasking_contracts/bridge_views.py:146-147,201-202 (R3);
+    python/tasking_contracts/common/bridge_views.py:146-147,201-202 (R3);
     gym_envs/scenario_loader/behavior_runtime/naval_screen.py:101 (R3);
     gym_envs/scenario_loader/reward_runtime/air_combat.py:1480-1482
     (hasattr-guarded, via observation_view.unit_active) (R2).
 5.  ``get_unit_position(entity_id)`` —
-    python/tasking_contracts/bridge_views.py:140-141,204-205 (R3);
+    python/tasking_contracts/common/bridge_views.py:140-141,204-205 (R3);
     gym_envs/scenario_loader/behavior_runtime/naval_screen.py:82 (R3);
     gym_envs/observation_view.py:161 ``support_unit_position`` used by
     gym_envs/scenario_loader/mission_observation.py:515 (R3).
 6.  ``set_command(entity_id, heading, speed, altitude)`` —
-    python/tasking_contracts/bridge_views.py:155-168,210-224 (R3; naval-screen
+    python/tasking_contracts/common/bridge_views.py:155-168,210-224 (R3; naval-screen
     station hold and scripted opponents).
 7.  ``fire_missile(entity_id, target_id)`` —
-    python/tasking_contracts/bridge_views.py:170-174,226-230 (R3; scripted
+    python/tasking_contracts/common/bridge_views.py:170-174,226-230 (R3; scripted
     opponents).
 8.  ``set_mission_command(entity_id, command)`` —
-    python/tasking_contracts/bridge_views.py:136-138 (R3);
+    python/tasking_contracts/common/bridge_views.py:136-138 (R3);
     ``supports("set_mission_command")`` probe at
     gym_envs/scenario_loader/behavior_runtime/command_chain.py:70.
 9.  ``set_task_order(entity_id, order)`` —
-    python/tasking_contracts/bridge_views.py:124-126 (R3).
+    python/tasking_contracts/common/bridge_views.py:124-126 (R3).
 10. ``set_leader_intent(entity_id, intent)`` —
-    python/tasking_contracts/bridge_views.py:128-130 (R3).
+    python/tasking_contracts/common/bridge_views.py:128-130 (R3).
 11. ``set_pilot_report(entity_id, report)`` —
-    python/tasking_contracts/bridge_views.py:132-134 (R3).
+    python/tasking_contracts/common/bridge_views.py:132-134 (R3).
 
 Optional, absence-tolerated methods (NOT part of the protocol)
 --------------------------------------------------------------

@@ -24,12 +24,8 @@ def test_tasking_contracts_has_explicit_common_and_domain_packages() -> None:
     assert (CONTRACT_ROOT / "joint" / "__init__.py").is_file()
 
 
-def test_direct_tasking_contract_files_are_compatibility_shells() -> None:
-    direct_files = _py_names(CONTRACT_ROOT) - {"__init__.py"}
-    assert direct_files
-    for filename in sorted(direct_files):
-        source = (CONTRACT_ROOT / filename).read_text(encoding="utf-8")
-        assert "Compatibility shell" in source, filename
+def test_tasking_contract_root_has_no_implementation_or_compatibility_shims() -> None:
+    assert _py_names(CONTRACT_ROOT) == {"__init__.py"}
 
 
 def test_domain_packages_have_role_specific_subdirectories() -> None:

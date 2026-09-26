@@ -44,15 +44,13 @@ from python.runtime_bootstrap import ensure_repo_imports
 BASE_DIR = ensure_repo_imports()
 
 from python.env_config import resolve_env_settings
-from python.tasking_contracts.air.execution.model import (
-    AIR_SCRIPTED_EXECUTION_MODEL_ID,
-    AIR_SCRIPTED_MODEL_REGISTRY,
-)
-from python.tasking_contracts.scripted_capability import (
+from python.tasking_contracts.air.execution.model import AIR_SCRIPTED_EXECUTION_MODEL_ID
+from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY
+from python.tasking_contracts.common.scripted_capability import (
     parse_scripted_capability,
     resolve_scripted_model_id,
 )
-from python.tasking_contracts.scripted_runtime import (
+from python.tasking_contracts.common.scripted_runtime import (
     ScriptedRuntimeAgent,
     ScriptedRuntimeAgentSpec,
 )

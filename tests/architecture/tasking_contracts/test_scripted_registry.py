@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from python.tasking_contracts.scripted_registry import (
+from python.tasking_contracts.common.scripted_registry import (
     ScriptedDecisionModel,
     ScriptedModelRegistration,
     ScriptedModelRegistry,

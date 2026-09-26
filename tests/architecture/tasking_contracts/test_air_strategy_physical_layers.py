@@ -2,10 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from python.tasking_contracts import air_scripted_assessment as legacy_assessment
-from python.tasking_contracts import air_scripted_planning as legacy_planning
-from python.tasking_contracts import air_scripted_strategy_contracts as legacy_contracts
-from python.tasking_contracts import air_scripted_weapons as legacy_weapons
 from python.tasking_contracts.air.strategy import assessment, contracts, planning, weapons
 
 
@@ -24,14 +20,8 @@ def test_air_strategy_has_a_physical_algorithm_layer() -> None:
     }
 
 
-def test_flat_air_strategy_paths_are_compatibility_shells_only() -> None:
-    assert legacy_assessment.AirPostLaunchAssessment is assessment.AirPostLaunchAssessment
-    assert legacy_assessment.AirPostLaunchAssessmentReport is assessment.AirPostLaunchAssessmentReport
-    assert legacy_planning.AirEngagementPlanner is planning.AirEngagementPlanner
-    assert legacy_planning.AirEngagementPlan is planning.AirEngagementPlan
-    assert legacy_contracts.AirPlanningContext is contracts.AirPlanningContext
-    assert legacy_contracts.AirTacticalDecision is contracts.AirTacticalDecision
-    assert legacy_weapons.AirWeaponEnvelope is weapons.AirWeaponEnvelope
+def test_air_strategy_has_no_flat_compatibility_paths() -> None:
+    assert not any(STRATEGY_ROOT.parent.parent.glob("air_scripted_*.py"))
 
 
 def test_air_strategy_modules_do_not_depend_on_rl_or_environment_adapters() -> None:

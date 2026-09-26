@@ -316,7 +316,7 @@ class OwnerReexportSurfaceTests(unittest.TestCase):
     self.assertEqual(_coerce_positive_int("garbage"), 0)
 
   def test_zero_snap_wrap_variants_preserved(self) -> None:
-    from python.rl.control.base_scripted_controller import wrap_deg as scripted_wrap_deg
+    from python.tasking_contracts.air.execution.base_controller import wrap_deg as scripted_wrap_deg
     from tools.eval.eval_utils import wrap_deg as eval_wrap_deg
 
     for variant in (scripted_wrap_deg, eval_wrap_deg):

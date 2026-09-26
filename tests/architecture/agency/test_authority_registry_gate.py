@@ -2,7 +2,7 @@
 
 This gate ties four things together for the maintained authority surface:
 
-1. **Registry consistency.** ``python/tasking_contracts/agency_registry.py``
+1. **Registry consistency.** ``python/tasking_contracts/common/agency_registry.py``
    declares the role/scope/delegation/arbitration/gating/doctrine vocabulary; the
    gate asserts every authority category surfaced by the census has a non-empty
    registered vocabulary, that each census file's adjudicated categories are
@@ -51,7 +51,7 @@ from pathlib import Path
 
 import pytest
 
-from python.tasking_contracts import agency_registry as registry
+from python.tasking_contracts.common import agency_registry as registry
 from tests.support.paths import REPO_ROOT, read_repo_text
 
 CENSUS_FIXTURE = (
@@ -80,7 +80,7 @@ SCAN_ROOTS: tuple[str, ...] = (
 # The registry module is the vocabulary *owner* (and this test + fixture are the
 # gate); they name the tokens definitionally and must not be scanned as scatter.
 EXCLUDED_FILES: frozenset[str] = frozenset(
-    {"python/tasking_contracts/agency_registry.py"}
+    {"python/tasking_contracts/common/agency_registry.py"}
 )
 
 # Compiled authorities the registry vocabulary mirrors.
@@ -656,7 +656,7 @@ def test_no_unregistered_authority_scatter_beyond_the_census_ratchet() -> None:
     assert not new_files, (
         "New authority-check scatter site(s) not registered in the census "
         f"({CENSUS_FIXTURE.relative_to(REPO_ROOT).as_posix()}). Either route the "
-        "authority decision through python/tasking_contracts/agency_registry.py, or "
+        "authority decision through python/tasking_contracts/common/agency_registry.py, or "
         "add an attributed census entry pinning the site: "
         + "; ".join(f"{rel} {scanned[rel]}" for rel in new_files)
     )

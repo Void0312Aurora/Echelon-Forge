@@ -9,7 +9,7 @@
     "role_id": "naval_warfare_commander",
     "lifecycle": "reset_decide_close",
     "evidence_refs": [
-      "source:python/tasking_contracts/naval_scripted_execution.py",
+      "source:python/tasking_contracts/naval/execution.py",
       "source:tools/eval/naval_station_policy_eval.py",
       "scenario:scoped-n4-station-and-contact-reporting"
     ],

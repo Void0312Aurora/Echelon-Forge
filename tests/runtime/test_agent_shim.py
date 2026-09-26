@@ -26,7 +26,7 @@ from python.rl.runtime.agent_shim import (
   roster_slot_role,
   single_agent_role,
 )
-from python.tasking_contracts.agency_registry import MERGE_POLICIES
+from python.tasking_contracts.common.agency_registry import MERGE_POLICIES
 
 
 def test_merge_policy_vocabulary_is_owned_by_the_agency_registry():

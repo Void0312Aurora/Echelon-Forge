@@ -32,9 +32,8 @@ Verified current facts:
 - `AgentRole` already has a five-part schema: `role`, `authority_scope`,
   `information_state_source`, `decision_model_ref`, and `action_interface`.
 - `python/tasking_contracts/common/agency_registry.py` is the canonical
-  declarative registry; `python/tasking_contracts/agency_registry.py` remains a
-  compatibility shell and
-  explicitly avoids wiring behavior. It currently includes autopilot, flight
+  declarative registry; the former root path has been removed. It explicitly
+  avoids wiring behavior. It currently includes autopilot, flight
   lead, scripted C2, cooperative director, naval, and ground command roles.
 - `python/rl/runtime/agent_shim.py` currently carries observation provenance,
   maintained versus diagnostics-only status, action-intent metadata, and policy
@@ -2012,13 +2011,13 @@ to a dedicated owner-local evidence document.
 - Change batch: move the canonical Air strategy implementations into
   `python/tasking_contracts/air/strategy/` (`contracts`, `planning`,
   `assessment`, and `weapons`). The old flat `air_scripted_*` strategy paths
-  remain compatibility shells that re-export the canonical objects. Strategy
-  tests now live under `tests/runtime/air/strategy/`; a physical-layer test
-  checks the package contents, shell identity, and RL/environment-free imports.
+  were removed. Strategy tests now live under `tests/runtime/air/strategy/`;
+  a physical-layer test checks the package contents and RL/environment-free
+  imports.
 - Boundary decision: physical location now reflects policy ownership without
   moving the neutral lifecycle or creating a second registry. The engagement
-  model imports the canonical Air strategy layer; external legacy imports are
-  compatibility-only.
+  model imports the canonical Air strategy layer; repository consumers use
+  canonical imports directly.
 - Focused verification: canonical strategy, compatibility, engagement, and
   physical-layer tests passed `28 passed`; explicit-file Python compilation and
   `git diff --check` passed. The earlier wildcard compile invocation was a
@@ -2034,12 +2033,12 @@ to a dedicated owner-local evidence document.
 - Change batch: partition the canonical tasking-contract implementation into
   `python/tasking_contracts/common`, `air`, `naval`, and `joint`. Air is split
   further into `execution`, `engagement`, `ew`, and `strategy`. The former root
-  module paths remain compatibility shells so existing imports and object
-  identity remain stable.
+  module paths were removed after repository consumers migrated to canonical
+  imports; no second compatibility path is retained.
 - Consumer update: maintained Air, Naval, visualization, evaluation, and
-  diagnostics entry points now import their canonical physical layers. RL
-  control shims remain compatibility consumers and do not regain ownership of
-  the Air implementation.
+  diagnostics entry points now import their canonical physical layers. The RL
+  control package remains a facade for wrapper access, while scripted models
+  are imported from their canonical Air/common modules.
 - Focused verification: Air/Naval/Joint/runtime regressions passed `67 passed`;
   physical-layer, compatibility, neutral-boundary, CLI, wrapper, and
   visualization contract tests passed `31 passed` with the explicit local
@@ -2052,3 +2051,25 @@ to a dedicated owner-local evidence document.
   from domain policy and adapters. This is a structural refactor only; it does
   not promote Air, Naval, Joint, or Ground capability labels and does not make
   RL part of the scripted line.
+
+### 2026-09-26 — Canonical tasking imports and compatibility-shell removal
+
+- Starting commit: `acc19c87`.
+- Change batch: removed the remaining flat `python/tasking_contracts/*.py`
+  forwarding modules and the scripted-controller/mission forwarding modules
+  under `python/rl/control`. Repository production code, tests, scenario
+  manifests, tools, and visualization entry points now import the canonical
+  `common`, `air`, `naval`, or `joint` modules directly.
+- Structural consequence: the tasking-contract root contains only its package
+  initializer; the RL control package retains only real wrapper behavior and
+  direct canonical exports. There is no repository-owned dual-path contract to
+  maintain.
+- Focused verification: canonical physical-layer, boundary, registry,
+  capability-manifest, Air/Naval/Joint runtime, authority-census, and
+  visualization tests passed `274 passed` plus `7` subtests in the final focused run; the first
+  run exposed stale manifest and census paths, which were migrated to the
+  canonical files before the green rerun.
+- Boundary decision: this is an import-topology cleanup only. It does not
+  change scripted capability labels, RL participation rules, or native action
+  ownership. Downstream external consumers of the deleted paths must migrate
+  to the canonical modules.

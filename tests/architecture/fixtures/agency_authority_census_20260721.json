@@ -2,7 +2,7 @@
   "schema": "agency_authority_census/v1",
   "baseline_commit": "8bd21d86",
   "generated_by": "Unified Architecture Program track T9 slice 1 (I47, repair round 2)",
-  "description": "Fingerprint pin of every scattered authority-check ('who-may-command / who-may-fire / who-may-write') site on the maintained tasking surface. Each site is pinned by a per-file token->count fingerprint (a repeated occurrence of an already-present token drifts the fingerprint). Tokens are matched by WORD BOUNDARY (\\bTOKEN\\b) over the code/prose surface, so a token never double-counts inside a longer identifier (commander_id inside ground_commander_id; command_relationship inside _command_relationship_default; the gate name inside _hierarchical_command_chain_active_impl). Categories are per-site adjudications grounded in and covering the pinned tokens' candidate categories in python/tasking_contracts/agency_registry.py:AUTHORITY_TOKEN_CATEGORIES (a token maps to a set of legitimate categories, not one fixed category). The scanner ignores comments, docstrings, and import/__all__ re-export plumbing (code-surface tokens) and matches folklore phrases only in docstrings/comments (prose-surface tokens). Ratchet is shrink-only (I38 precedent): a new authority-bearing file or a per-file token-count drift fails the gate. Key re-adjudicated sites (A5, A7, A8, A9, A14) additionally pin their exact category set in the gate.",
+  "description": "Fingerprint pin of every scattered authority-check ('who-may-command / who-may-fire / who-may-write') site on the maintained tasking surface. Each site is pinned by a per-file token->count fingerprint (a repeated occurrence of an already-present token drifts the fingerprint). Tokens are matched by WORD BOUNDARY (\\bTOKEN\\b) over the code/prose surface, so a token never double-counts inside a longer identifier (commander_id inside ground_commander_id; command_relationship inside _command_relationship_default; the gate name inside _hierarchical_command_chain_active_impl). Categories are per-site adjudications grounded in and covering the pinned tokens' candidate categories in python/tasking_contracts/common/agency_registry.py:AUTHORITY_TOKEN_CATEGORIES (a token maps to a set of legitimate categories, not one fixed category). The scanner ignores comments, docstrings, and import/__all__ re-export plumbing (code-surface tokens) and matches folklore phrases only in docstrings/comments (prose-surface tokens). Ratchet is shrink-only (I38 precedent): a new authority-bearing file or a per-file token-count drift fails the gate. Key re-adjudicated sites (A5, A7, A8, A9, A14) additionally pin their exact category set in the gate.",
   "scan_roots": [
     "python/tasking_contracts",
     "python/rl/tasking",
@@ -11,7 +11,7 @@
     "gym_envs/universal_env_parts"
   ],
   "excluded_files": {
-    "python/tasking_contracts/agency_registry.py": "The registry is the vocabulary owner; it names the tokens definitionally and must not be scanned as scatter."
+    "python/tasking_contracts/common/agency_registry.py": "The registry is the vocabulary owner; it names the tokens definitionally and must not be scanned as scatter."
   },
   "scan_scope_boundary": {
     "python/rl/runtime/world_batch/cooperative_director.py": "runtime/observation face (sibling worktree); is_leader role/leader arbitration + formation-role metadata. Out of the T9 scan roots; cross-referenced (R1), not gated by T9.",
@@ -167,35 +167,35 @@
       "owner": "runtime/observation face (I45) -- write-excluded; read-only census, not converged by T9",
       "note": "Listed for census completeness only; T9 must not modify this file (I45 owns the observation face). Repair round 1: semantic completed to record the fire_mask_open policy gate. Repair round 2 (P1-3): reclassified arbitration -> gating -- the mask is a holder-blind eligibility gate (grounded by the authorization_to_fire gating candidate), not the A13 who-may-fire arbitration; delegation/doctrine retained per the ROE/authorization fields it reads. Category set pinned exactly in the gate."
     },
-      {
-        "file": "python/tasking_contracts/air_scripted_planning.py",
-        "tokens": ["authorization_to_fire"],
-        "token_counts": {"authorization_to_fire": 5},
-        "categories": ["gating"],
-        "form": "scripted-planner-fire-gate",
-        "semantic": "The RL-independent Air engagement planner consumes authorization_to_fire as one of the declared eligibility inputs for a fire recommendation. It does not grant authority, resolve holder conflicts, or write mission-command authority state; the planner's legal predicate remains an eligibility gate.",
-        "owner": "air/scripted-agent planner",
-        "note": "Registered for the Air strategy core slice; the five occurrences are the planner input, context projection, legal predicate, and fail-closed authorization checks."
-      },
-      {
-        "file": "python/tasking_contracts/air_scripted_strategy_contracts.py",
-        "tokens": ["authorization_to_fire"],
-        "token_counts": {"authorization_to_fire": 1},
-        "categories": ["gating"],
-        "form": "scripted-contract-field",
-        "semantic": "The RL-independent Air planning context declares authorization_to_fire as an input field for downstream fire-eligibility evaluation. This DTO declares and transports the field; it does not grant authority, resolve holder conflicts, or write mission-command authority state.",
-        "owner": "air/scripted-agent contract",
-        "note": "Registered for the Air strategy core slice; the single occurrence is the typed planning-context field."
-      },
-      {
-        "file": "python/tasking_contracts/air_scripted_engagement.py",
-        "tokens": ["authorization_to_fire"],
-        "token_counts": {"authorization_to_fire": 4},
+    {
+      "file": "python/tasking_contracts/air/engagement/model.py",
+      "tokens": ["authorization_to_fire"],
+      "token_counts": {"authorization_to_fire": 4},
       "categories": ["gating"],
       "form": "scripted-observation-gate",
       "semantic": "The RL-independent Air tactical adapter consumes the declared authorization_to_fire mission-observation field as an input gate for its fire request. It does not grant authority, resolve holder conflicts, or write mission-command authority state; the existing Air combat event gate remains the release authority.",
       "owner": "air/scripted-agent adapter",
-        "note": "Registered after the Air tactical adapter slice (89ed1faf); the four occurrences are the declared observation read, the boolean gate, the retained decision-info field, and the normalized decision projection."
+      "note": "Updated for the physical Air engagement layer; the four occurrences are the declared observation read, the boolean gate, the retained decision-info field, and the emitted action field."
+    },
+    {
+      "file": "python/tasking_contracts/air/strategy/contracts.py",
+      "tokens": ["authorization_to_fire"],
+      "token_counts": {"authorization_to_fire": 1},
+      "categories": ["gating"],
+      "form": "scripted-strategy-contract",
+      "semantic": "Carries the declared authorization_to_fire field in the RL-independent Air tactical decision contract. The contract preserves an input gate for downstream release authority and does not grant authority or write mission-command state.",
+      "owner": "air/scripted-agent strategy layer",
+      "note": "Registered after physical layering; this is a typed contract field, not an authority decision site."
+    },
+    {
+      "file": "python/tasking_contracts/air/strategy/planning.py",
+      "tokens": ["authorization_to_fire"],
+      "token_counts": {"authorization_to_fire": 5},
+      "categories": ["gating"],
+      "form": "scripted-strategy-planner",
+      "semantic": "The RL-independent Air planner carries authorization_to_fire through candidate evaluation and blocks a release plan when the declared gate is closed. It does not grant authority, resolve holder conflicts, or write mission-command authority state.",
+      "owner": "air/scripted-agent strategy layer",
+      "note": "Registered after physical layering; planner gating remains downstream of the environment-owned release authority."
     }
   ]
 }

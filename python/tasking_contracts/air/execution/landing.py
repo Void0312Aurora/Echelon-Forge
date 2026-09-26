@@ -1,7 +1,6 @@
 """Scripted ILS-final landing controller used by gym_envs leader-layer execution.
 
-``python.rl.control.scripted_landing`` re-exports ``ScriptedLandingController``
-as a compatibility shell.
+The module is the canonical owner of ``ScriptedLandingController``.
 """
 
 from __future__ import annotations

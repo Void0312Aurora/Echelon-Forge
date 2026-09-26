@@ -9,7 +9,7 @@ from python.rl.profile.common_core_base import (
     enum_value,
     is_default_enum,
 )
-from python.tasking_contracts.agency_registry import (
+from python.tasking_contracts.common.agency_registry import (
     DEFAULT_AUTHORITY_SCOPE as _DEFAULT_AUTHORITY_SCOPE,
     DEFAULT_COMMAND_RELATIONSHIP as _DEFAULT_COMMAND_RELATIONSHIP,
 )

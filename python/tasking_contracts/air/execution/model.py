@@ -156,24 +156,8 @@ def make_air_scripted_execution_model(**kwargs: Any) -> AirScriptedExecutionMode
     return AirScriptedExecutionModel(**kwargs)
 
 
-def __getattr__(name: str) -> Any:
-    """Preserve the historical registry import without a second registry.
-
-    The aggregate registry lives in ``air_scripted_registry`` so Air models
-    can be registered together without import-time mutation.  A module-level
-    lazy attribute keeps existing callers of
-    ``air_scripted_execution.AIR_SCRIPTED_MODEL_REGISTRY`` source-compatible.
-    """
-
-    if name == "AIR_SCRIPTED_MODEL_REGISTRY":
-        from ..registry import AIR_SCRIPTED_MODEL_REGISTRY
-
-        return AIR_SCRIPTED_MODEL_REGISTRY
-    raise AttributeError(name)
-
 __all__ = [
     "AIR_SCRIPTED_EXECUTION_MODEL_ID",
-    "AIR_SCRIPTED_MODEL_REGISTRY",
     "AirScriptedExecutionModel",
     "make_air_scripted_execution_model",
 ]

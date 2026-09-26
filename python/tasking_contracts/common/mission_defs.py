@@ -5,8 +5,7 @@ Canonical owner of the task-dispatch vocabulary consumed by ``gym_envs``
 ``python.rl.control`` scripted controllers. Zero dependency on ``python.rl``
 or ``gym_envs`` — see ``python/tasking_contracts/__init__.py``.
 
-``python.rl.control.mission_defs`` re-exports every name below as a
-compatibility shell.
+Consumers import these names directly from this canonical module.
 """
 
 from __future__ import annotations
