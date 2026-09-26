@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from math import isfinite
 from typing import Any, Mapping
 
+from .air_scripted_strategy_contracts import AirAssessmentInput
+
 
 AIR_ASSESSMENT_IDLE = "idle"
 AIR_ASSESSMENT_IN_FLIGHT = "in_flight"
@@ -91,6 +93,30 @@ class AirPostLaunchAssessment:
     @property
     def last_report(self) -> AirPostLaunchAssessmentReport:
         return self._last_report
+
+    def assess(self, *, inputs: AirAssessmentInput) -> AirPostLaunchAssessmentReport:
+        """Assess typed evidence without exposing the legacy event mapping."""
+
+        event_info = {
+            "release_executed": inputs.release_executed,
+            "target_effect_observed": inputs.target_effect_observed,
+            "target_mission_killed": inputs.target_mission_killed,
+            "target_destroyed": inputs.target_destroyed,
+        }
+        return self.observe(
+            event_info=event_info,
+            pending_assessment=inputs.pending_assessment,
+            target_contact_present=inputs.target_contact_present,
+            own_missiles_in_flight_count=inputs.own_missiles_in_flight_count,
+            shot_budget_remaining=inputs.shot_budget_remaining,
+            target_track_age_s=inputs.target_track_age_s,
+            dt_s=inputs.dt_s,
+        )
+
+    def observe_input(self, *, inputs: AirAssessmentInput) -> AirPostLaunchAssessmentReport:
+        """Compatibility alias for assessor protocol implementations."""
+
+        return self.assess(inputs=inputs)
 
     def observe(
         self,

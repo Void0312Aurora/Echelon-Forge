@@ -27,6 +27,11 @@ This review does not promote Air from `playable_candidate`, does not authorize
 a second global registry, and does not make RL a dependency. It is a planning
 and research record for the next implementation batches.
 
+Implementation status: ALG-0 and the planner/assessor portion of ALG-1 are now
+implemented in the dedicated worktree. Observation and action adapter
+extraction remain ALG-2 work; the current engagement model still owns those
+two mappings until their parity tests are added.
+
 ## Current Dependency Map
 
 ```text
@@ -123,16 +128,19 @@ terminal state.
 
 ### ALG-0 — Contract and parity fixture
 
-Record the normalized context/decision fields and freeze a default-policy
-release/replay fixture from `e0dd37a6`. Add contract tests for missing fields,
-unknown strategy outputs, and bounded guidance values.
+Implemented slice: record the normalized context/decision fields and add
+contract tests for invalid values and bounded guidance. The default planner
+projects its rich audit record onto `AirTacticalDecision`; the legacy
+primitive planner entry point remains available for compatibility. A full
+scenario replay fixture remains part of the later parity gate.
 
 ### ALG-1 — Protocols and default injection
 
-Add Air-owned `Protocol` interfaces for planner, assessor, observation adapter,
-and action adapter. Update `AirScriptedEngagementModel` to accept injected
-implementations while constructing the current implementations by default.
-There must be no behavior change when no overrides are supplied.
+Implemented slice: add Air-owned `AirTacticalPlanner` and
+`AirPostLaunchAssessor` protocols and update `AirScriptedEngagementModel` to
+accept injected implementations while constructing the current implementations
+by default. The observation and action adapter protocols remain deferred to
+ALG-2. There is no behavior change when no overrides are supplied.
 
 ### ALG-2 — Adapter extraction
 

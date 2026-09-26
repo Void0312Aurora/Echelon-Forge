@@ -1977,3 +1977,27 @@ to a dedicated owner-local evidence document.
 - Evidence boundary: this freezes the typed substitution boundary but does not
   yet prove that the engagement orchestrator can inject a replacement planner
   or assessor. That is the next ALG-1 batch.
+
+### 2026-09-26 — Air ALG-1 planner and assessor injection slice
+
+- Starting commit: `da806d93`.
+- Change batch: add Air-owned planner/assessor protocol use to
+  `AirScriptedEngagementModel`; the default implementations are constructed
+  only when no override is supplied. The engagement model now passes typed
+  `AirPlanningContext` and `AirAssessmentInput` values and consumes the typed
+  tactical decision. Default rich diagnostics remain available under the
+  tactical-plan report for replay compatibility.
+- Replacement proof: a no-fire planner suppresses only tactical release while
+  preserving flight and radar transport; a blocking assessor suppresses only
+  the fire request while preserving the default planner. Configuration is
+  rejected when it is ambiguously combined with an injected planner.
+- Focused verification: the strategy-contract, assessment, planner, and
+  engagement tests passed `25 passed`; the cooperative terminal and tasking
+  boundary regression passed `19 passed`; Python compilation and
+  `git diff --check` also passed.
+- Evidence boundary: this closes planner/assessor injection, not observation
+  decoding or action-layout extraction. `_mission_values`, contact geometry,
+  17/12 action mapping, and fire-latch transport remain in the orchestrator
+  until ALG-2. Air remains `playable_candidate`; RL remains optional.
+- Continuation choice: extract observation and action adapters with a default
+  parity fixture before adding any second maintained strategy profile.

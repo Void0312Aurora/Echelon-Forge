@@ -1,8 +1,16 @@
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
+from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index
+from python.tasking_contracts.air_scripted_assessment import AirPostLaunchAssessmentReport
+from python.tasking_contracts.air_scripted_engagement import (
+    AIR_COMBAT_C2_ROE_V2,
+    AirScriptedEngagementModel,
+)
 from python.tasking_contracts.air_scripted_planning import AirEngagementPlanner
+from python.tasking_contracts.air_scripted_assessment import AirPostLaunchAssessment
 from python.tasking_contracts.air_scripted_strategy_contracts import (
     AirAssessmentInput,
     AirPlanningContext,
@@ -80,3 +88,99 @@ def test_assessment_input_is_typed_and_rejects_negative_evidence_counts() -> Non
             target_contact_present=False,
             dt_s=-0.1,
         )
+
+
+def test_default_assessor_accepts_typed_input_without_changing_outcome() -> None:
+    report = AirPostLaunchAssessment().assess(
+        inputs=AirAssessmentInput(
+            release_executed=True,
+            pending_assessment=False,
+            target_contact_present=True,
+            shot_budget_remaining=1.0,
+        )
+    )
+    assert report.state == "reattack_ready"
+    assert report.outcome == "inconclusive"
+
+
+def _engagement_observation() -> dict[str, np.ndarray]:
+    instruments = np.zeros((31,), dtype=np.float32)
+    instruments[0] = 120.0
+    mission = np.zeros((mission_observation_dim(AIR_COMBAT_C2_ROE_V2),), dtype=np.float32)
+    for name, value in {
+        "authorization_to_fire": 1.0,
+        "target_contact_present": 1.0,
+        "fire_mask_open": 1.0,
+        "launch_window_open": 1.0,
+        "quality_window_ready": 1.0,
+        "shot_budget_remaining": 1.0,
+        "pending_assessment": 0.0,
+    }.items():
+        mission[mission_observation_field_index(AIR_COMBAT_C2_ROE_V2, name)] = value
+    return {"instruments": instruments, "mission": mission}
+
+
+class _NoFirePlanner:
+    def reset(self) -> None:
+        pass
+
+    def decide(self, *, context: AirPlanningContext) -> AirTacticalDecision:
+        return AirTacticalDecision(
+            mode="hold_authority",
+            selected_candidate="hold",
+            fire_recommended=False,
+            reason_codes=("test_no_fire",),
+        )
+
+    def apply_decision_guidance(self, action: np.ndarray, decision: AirTacticalDecision) -> np.ndarray:
+        return np.asarray(action, dtype=np.float32).copy()
+
+
+class _BlockingAssessor:
+    def reset(self) -> None:
+        pass
+
+    def assess(self, *, inputs: AirAssessmentInput) -> AirPostLaunchAssessmentReport:
+        return AirPostLaunchAssessmentReport(
+            state="in_flight",
+            outcome="pending",
+            confidence=0.0,
+            allow_reattack=False,
+            blocks_fire=True,
+            release_executed=inputs.release_executed,
+            pending_assessment=True,
+            target_contact_present=inputs.target_contact_present,
+            own_missiles_in_flight_count=1.0,
+            target_track_age_s=inputs.target_track_age_s,
+            reason_codes=("test_assessor_block",),
+        )
+
+
+def test_engagement_model_can_replace_planner_without_changing_flight_transport() -> None:
+    observation = _engagement_observation()
+    model = AirScriptedEngagementModel(planner=_NoFirePlanner())
+    model.reset(context={"observation": observation, "phase_name": "stable_flight"})
+    action = model.decide(observation=observation, context={"phase_name": "stable_flight"}, dt=0.05)
+
+    assert action.shape == (17,)
+    assert action[9] == 1.0
+    assert action[13] == 1.0
+    assert action[14] == 0.0
+    assert model.last_decision_info["tactical_decision"]["reason_codes"] == ["test_no_fire"]
+    model.close()
+
+
+def test_engagement_model_can_replace_assessor_as_an_independent_fire_block() -> None:
+    observation = _engagement_observation()
+    model = AirScriptedEngagementModel(assessor=_BlockingAssessor())
+    model.reset(context={"observation": observation, "phase_name": "stable_flight"})
+    action = model.decide(observation=observation, context={"phase_name": "stable_flight"}, dt=0.05)
+
+    assert action[14] == 0.0
+    assert model.last_decision_info["post_launch_assessment"]["reason_codes"] == ["test_assessor_block"]
+    model.close()
+
+
+def test_injected_planner_cannot_silently_combine_with_default_policy_config() -> None:
+    with pytest.raises(ValueError, match="planner injection cannot be combined"):
+        AirScriptedEngagementModel(planner=_NoFirePlanner(), planner_config=AirEngagementPlanner().config)
