@@ -17,27 +17,31 @@ from typing import Any, Mapping
 
 import numpy as np
 
-from python.mission_obs_taxonomy import (
-    mission_observation_field_index,
-    mission_observation_dim,
-)
+from python.mission_obs_taxonomy import mission_observation_dim
 
 from ..execution.model import AirScriptedExecutionModel
 from ..strategy.assessment import AirPostLaunchAssessment
 from ..strategy.planning import AirEngagementPlanner, AirEngagementPlannerConfig
 from ..strategy.contracts import (
+    AirActionAdapter,
+    AirTacticalActionIntent,
     AirAssessmentInput,
     AirPlanningContext,
+    AirObservationAdapter,
     AirPostLaunchAssessor,
     AirTacticalPlanner,
 )
+from ..strategy.action import (
+    AIR_COMBAT_HYBRID_ACTION_DIM,
+    AIR_FULL_ACTION_DIM,
+    AirActionLayoutAdapter,
+)
+from ..strategy.observation import AirMissionContactObservationAdapter
 from ..strategy.weapons import AirWeaponEnvelope, load_air_weapon_envelope
 
 
 AIR_SCRIPTED_ENGAGEMENT_MODEL_ID = "air.engagement.c2_roe_scripted"
 AIR_COMBAT_C2_ROE_V2 = "air_combat_c2_roe_v2"
-AIR_FULL_ACTION_DIM = 17
-AIR_COMBAT_HYBRID_ACTION_DIM = 12
 _SUPPORTED_ACTION_DIMS = frozenset({AIR_FULL_ACTION_DIM, AIR_COMBAT_HYBRID_ACTION_DIM})
 
 
@@ -64,6 +68,8 @@ class AirScriptedEngagementModel:
         weapon_profile_path: str | Path | None = None,
         planner: AirTacticalPlanner | None = None,
         assessor: AirPostLaunchAssessor | None = None,
+        observation_adapter: AirObservationAdapter | None = None,
+        action_adapter: AirActionAdapter | None = None,
     ) -> None:
         if int(action_dim) not in _SUPPORTED_ACTION_DIMS:
             raise ValueError(
@@ -107,9 +113,19 @@ class AirScriptedEngagementModel:
         else:
             max_track_age_s = getattr(getattr(self.planner, "config", None), "max_track_age_s", 5.0)
             self.assessment = AirPostLaunchAssessment(max_track_age_s=max_track_age_s)
+        if observation_adapter is not None:
+            if not isinstance(observation_adapter, AirObservationAdapter):
+                raise TypeError("observation_adapter must implement AirObservationAdapter")
+            self.observation_adapter = observation_adapter
+        else:
+            self.observation_adapter = AirMissionContactObservationAdapter()
+        if action_adapter is not None:
+            if not isinstance(action_adapter, AirActionAdapter):
+                raise TypeError("action_adapter must implement AirActionAdapter")
+            self.action_adapter = action_adapter
+        else:
+            self.action_adapter = AirActionLayoutAdapter(action_dim=self.action_dim)
         self._closed = False
-        self._fire_latched = False
-        self._last_target_contact = False
         self.last_decision_info: dict[str, Any] = {}
 
     def reset(self, *, context: Any) -> None:
@@ -125,9 +141,8 @@ class AirScriptedEngagementModel:
         self.flight_model.reset(context={"observation": observation, "phase_name": context.get("phase_name", "")})
         self.planner.reset()
         self.assessment.reset()
+        self.action_adapter.reset()
         self._closed = False
-        self._fire_latched = False
-        self._last_target_contact = False
         self.last_decision_info = {}
 
     def decide(self, *, observation: Any, context: Any, dt: float) -> np.ndarray:
@@ -150,9 +165,11 @@ class AirScriptedEngagementModel:
         if action.size != self.action_dim:
             raise RuntimeError(f"Air scripted flight model returned {action.size} values, expected {self.action_dim}")
 
-        mission = np.asarray(observation.get("mission", []), dtype=np.float32).reshape(-1)
-        values = self._mission_values(mission)
-        geometry = self._contact_geometry(observation, target_range_m=values["target_range_m"])
+        tactical_observation = self.observation_adapter.decode(
+            observation=observation,
+            mission_obs_mode=self.mission_obs_mode,
+        )
+        values = tactical_observation.mission_values
         target_contact = bool(values["target_contact_present"] > 0.5)
         fire_window = bool(values["fire_mask_open"] > 0.5 and values["launch_window_open"] > 0.5)
         authorized = bool(values["authorization_to_fire"] > 0.5)
@@ -180,49 +197,32 @@ class AirScriptedEngagementModel:
             shot_budget_remaining=values["shot_budget_remaining"],
             target_range_m=values["target_range_m"],
             target_track_age_s=values["target_track_age_s"],
-            contact_bearing_deg=geometry[0],
-            contact_elevation_deg=geometry[1],
-            closing_speed_mps=geometry[2],
+            contact_bearing_deg=tactical_observation.contact_bearing_deg,
+            contact_elevation_deg=tactical_observation.contact_elevation_deg,
+            closing_speed_mps=tactical_observation.closing_speed_mps,
+            observation_version=tactical_observation.mission_obs_mode,
         )
         decision = self.planner.decide(context=planning_context)
         action = self.planner.apply_decision_guidance(action, decision)
 
-        # Existing action transports own the field positions. Tactical bits are
-        # derived only from the declared mission packet and mapped to the
-        # selected maintained layout; no new mega-action schema is introduced.
-        tms_pulse = 1.0 if target_contact and not self._last_target_contact else 0.0
-        master_arm = 1.0 if authorized and target_contact and budget_available else 0.0
         request_fire = bool(decision.fire_recommended)
-        fire_pulse = 1.0 if request_fire and not self._fire_latched else 0.0
-        if self.action_dim == AIR_FULL_ACTION_DIM:
-            action[9] = 1.0  # radar active
-            action[10] = 0.0  # centered scan azimuth
-            action[11] = 0.0  # centered scan elevation
-            action[12] = tms_pulse
-            action[13] = master_arm
-            action[14] = fire_pulse
-            action[15] = 0.0
-            # The full transport encodes the categorical station id in [0, 1]
-            # before ``build_pilot_action`` expands it to the kernel station id
-            # in [0, 7].  Station 1 is therefore represented by 1/7 here.
-            action[16] = (1.0 / 7.0) if target_contact and authorized and budget_available else 0.0
-        else:
-            action[4] = 0.0  # centered scan azimuth
-            action[5] = 0.0  # centered scan elevation
-            action[6] = 1.0  # radar active
-            action[7] = tms_pulse
-            action[8] = master_arm
-            action[9] = fire_pulse
-            action[10] = 0.0
-            # The hybrid transport carries the categorical station id directly.
-            action[11] = 1.0 if target_contact and authorized and budget_available else 0.0
-
-        if not fire_window or assessment_gate or not budget_available:
-            self._fire_latched = False
-        elif request_fire:
-            self._fire_latched = True
-
-        self._last_target_contact = target_contact
+        action_application = self.action_adapter.apply(
+            action,
+            intent=AirTacticalActionIntent(
+                target_contact_present=target_contact,
+                authorization_to_fire=authorized,
+                shot_budget_available=budget_available,
+                fire_window_open=fire_window,
+                assessment_blocked=assessment_gate,
+                request_fire=request_fire,
+                station_id=1,
+            ),
+        )
+        action = np.asarray(action_application.action, dtype=np.float32).reshape(-1)
+        if action.size != self.action_dim:
+            raise RuntimeError(
+                f"Air action adapter returned {action.size} values, expected {self.action_dim}"
+            )
         tactical_plan = dict(decision.diagnostics)
         if not tactical_plan:
             tactical_plan = decision.as_dict()
@@ -237,7 +237,7 @@ class AirScriptedEngagementModel:
             "pending_assessment": pending_assessment,
             "post_launch_assessment": assessment_report.as_dict(),
             "shot_budget_remaining": float(values["shot_budget_remaining"]),
-            "fire_requested": bool(fire_pulse > 0.5),
+            "fire_requested": bool(action_application.fire_pulse > 0.5),
             "tactical_plan": tactical_plan,
             "tactical_decision": decision.as_dict(),
         }
@@ -246,63 +246,6 @@ class AirScriptedEngagementModel:
     def close(self) -> None:
         self.flight_model.close()
         self._closed = True
-
-    def _mission_values(self, mission: np.ndarray) -> dict[str, float]:
-        required = {
-            name: mission_observation_field_index(self.mission_obs_mode, name)
-            for name in (
-                "authorization_to_fire",
-                "target_contact_present",
-                "fire_mask_open",
-                "launch_window_open",
-                "shot_budget_remaining",
-                "pending_assessment",
-            )
-        }
-        missing = [name for name, idx in required.items() if idx >= mission.size]
-        if missing:
-            raise ValueError(
-                f"Air tactical mission observation is missing required fields {missing!r} "
-                f"for mode {self.mission_obs_mode!r}"
-            )
-        values = {name: float(mission[idx]) for name, idx in required.items()}
-        for name, default in (
-            ("quality_window_ready", values["fire_mask_open"] * values["launch_window_open"]),
-            ("target_range_m", 0.0),
-            ("target_track_age_s", 0.0),
-            ("own_missiles_in_flight_count", 0.0),
-        ):
-            try:
-                idx = mission_observation_field_index(self.mission_obs_mode, name)
-            except ValueError:
-                values[name] = float(default)
-            else:
-                values[name] = float(mission[idx]) if idx < mission.size else float(default)
-        return values
-
-    @staticmethod
-    def _contact_geometry(observation: dict[str, Any], *, target_range_m: float) -> tuple[float, float, float]:
-        """Return the freshest contact geometry available to the policy.
-
-        The five-column contact token is the maintained execution surface:
-        range, azimuth, elevation, closing speed, and track age.  The mission
-        packet remains authoritative for the assigned target's range; the
-        contact row supplies the directional and closure terms.
-        """
-
-        contacts = np.asarray(observation.get("contacts", []), dtype=np.float32)
-        if contacts.size == 0:
-            return 0.0, 0.0, 0.0
-        rows = contacts.reshape(-1, 5)
-        valid = rows[np.isfinite(rows).all(axis=1) & (rows[:, 0] > 0.0)]
-        if valid.size == 0:
-            return 0.0, 0.0, 0.0
-        if float(target_range_m) > 0.0:
-            index = int(np.argmin(np.abs(valid[:, 0] - float(target_range_m))))
-        else:
-            index = 0
-        row = valid[index]
-        return float(row[1]), float(row[2]), float(row[3])
 
     @staticmethod
     def _assessment_input(

@@ -13,12 +13,19 @@ from .assessment import (
     AirPostLaunchAssessmentReport,
 )
 from .contracts import (
+    AirActionApplication,
+    AirActionAdapter,
     AirAssessmentInput,
     AirPlanningContext,
+    AirObservationAdapter,
     AirPostLaunchAssessor,
+    AirTacticalActionIntent,
     AirTacticalDecision,
+    AirTacticalObservation,
     AirTacticalPlanner,
 )
+from .action import AIR_COMBAT_HYBRID_ACTION_DIM, AIR_FULL_ACTION_DIM, AirActionLayoutAdapter
+from .observation import AirMissionContactObservationAdapter
 from .planning import (
     AirEngagementPlan,
     AirEngagementPlanner,
@@ -34,14 +41,23 @@ __all__ = [
     "AIR_ASSESSMENT_TRACK_LOST",
     "AIR_ASSESSMENT_TRACK_UNAVAILABLE",
     "AirAssessmentInput",
+    "AirActionApplication",
+    "AirActionAdapter",
+    "AirActionLayoutAdapter",
+    "AIR_COMBAT_HYBRID_ACTION_DIM",
+    "AIR_FULL_ACTION_DIM",
     "AirEngagementPlan",
     "AirEngagementPlanner",
     "AirEngagementPlannerConfig",
     "AirPlanningContext",
+    "AirMissionContactObservationAdapter",
+    "AirObservationAdapter",
     "AirPostLaunchAssessment",
     "AirPostLaunchAssessmentReport",
     "AirPostLaunchAssessor",
+    "AirTacticalActionIntent",
     "AirTacticalDecision",
+    "AirTacticalObservation",
     "AirTacticalPlanner",
     "AirWeaponEnvelope",
     "load_air_weapon_envelope",

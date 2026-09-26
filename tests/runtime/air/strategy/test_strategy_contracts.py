@@ -9,14 +9,21 @@ from python.tasking_contracts.air.engagement.model import (
     AIR_COMBAT_C2_ROE_V2,
     AirScriptedEngagementModel,
 )
+from python.tasking_contracts.air.strategy.action import AirActionLayoutAdapter
 from python.tasking_contracts.air.strategy.assessment import AirPostLaunchAssessment
 from python.tasking_contracts.air.strategy.planning import AirEngagementPlanner
 from python.tasking_contracts.air.strategy.contracts import (
+    AirActionApplication,
+    AirActionAdapter,
     AirAssessmentInput,
+    AirObservationAdapter,
     AirPlanningContext,
+    AirTacticalActionIntent,
     AirTacticalDecision,
+    AirTacticalObservation,
     AirTacticalPlanner,
 )
+from python.tasking_contracts.air.strategy.observation import AirMissionContactObservationAdapter
 
 
 def _context(**overrides: object) -> AirPlanningContext:
@@ -88,6 +95,60 @@ def test_assessment_input_is_typed_and_rejects_negative_evidence_counts() -> Non
             target_contact_present=False,
             dt_s=-0.1,
         )
+
+
+def test_observation_adapter_decodes_declared_mission_and_contact_fields() -> None:
+    mission = np.zeros((mission_observation_dim(AIR_COMBAT_C2_ROE_V2),), dtype=np.float32)
+    for name, value in {
+        "authorization_to_fire": 1.0,
+        "target_contact_present": 1.0,
+        "fire_mask_open": 1.0,
+        "launch_window_open": 1.0,
+        "shot_budget_remaining": 1.0,
+    }.items():
+        mission[mission_observation_field_index(AIR_COMBAT_C2_ROE_V2, name)] = value
+    decoded = AirMissionContactObservationAdapter().decode(
+        observation={
+            "mission": mission,
+            "contacts": np.asarray([[16000.0, 12.0, -3.0, 420.0, 0.2]], dtype=np.float32),
+        },
+        mission_obs_mode=AIR_COMBAT_C2_ROE_V2,
+    )
+
+    assert isinstance(decoded, AirTacticalObservation)
+    assert isinstance(AirMissionContactObservationAdapter(), AirObservationAdapter)
+    assert decoded.mission_values["target_contact_present"] == 1.0
+    assert decoded.contact_bearing_deg == 12.0
+    assert decoded.contact_elevation_deg == -3.0
+    assert decoded.closing_speed_mps == 420.0
+
+
+def test_action_adapter_owns_full_layout_and_fire_latch_transport() -> None:
+    adapter = AirActionLayoutAdapter(action_dim=17)
+    assert isinstance(adapter, AirActionAdapter)
+    intent = AirTacticalActionIntent(
+        target_contact_present=True,
+        authorization_to_fire=True,
+        shot_budget_available=True,
+        fire_window_open=True,
+        assessment_blocked=False,
+        request_fire=True,
+        station_id=1,
+    )
+    first = adapter.apply(np.zeros((17,), dtype=np.float32), intent=intent)
+    second = adapter.apply(np.zeros((17,), dtype=np.float32), intent=intent)
+
+    assert isinstance(first, AirActionApplication)
+    assert first.fire_pulse == 1.0
+    assert first.action[9] == 1.0
+    assert first.action[12] == 1.0
+    assert first.action[13] == 1.0
+    assert first.action[14] == 1.0
+    assert first.action[16] == pytest.approx(1.0 / 7.0)
+    assert second.fire_pulse == 0.0
+    adapter.reset()
+    reset = adapter.apply(np.zeros((17,), dtype=np.float32), intent=intent)
+    assert reset.fire_pulse == 1.0
 
 
 def test_default_assessor_accepts_typed_input_without_changing_outcome() -> None:

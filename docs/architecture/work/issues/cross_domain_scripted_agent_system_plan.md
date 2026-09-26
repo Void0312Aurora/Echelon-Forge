@@ -2073,3 +2073,27 @@ to a dedicated owner-local evidence document.
   change scripted capability labels, RL participation rules, or native action
   ownership. Downstream external consumers of the deleted paths must migrate
   to the canonical modules.
+
+### 2026-09-26 — Air ALG-2 observation and action adapter extraction
+
+- Starting commit: `33e59f36`.
+- Change batch: extract Air mission/contact decoding into
+  `AirMissionContactObservationAdapter` and the maintained full/hybrid action
+  layout, target-contact edge pulse, station encoding, and fire latch into
+  `AirActionLayoutAdapter`. Add typed `AirTacticalObservation`,
+  `AirTacticalActionIntent`, and `AirActionApplication` contracts plus
+  `AirObservationAdapter`/`AirActionAdapter` protocols.
+- Consumer update: `AirScriptedEngagementModel` now coordinates the flight
+  model, observation adapter, planner, assessor, and action adapter. The model
+  no longer owns mission-array indexing, contact-row selection, action indices,
+  or fire-latch state. Default adapters are injected automatically and custom
+  adapters are validated structurally.
+- Focused verification: Air strategy physical-layer, adapter contract,
+  Air engagement/execution, cross-domain roster, and cooperative 4v4 terminal
+  tests passed `43 passed`; compile and `git diff --check` passed. The direct
+  adapter test covers both first-fire and repeated-fire latch behavior, while
+  the engagement test verifies recording adapter injection.
+- Boundary decision: the extraction changes ownership and substitution seams
+  only. It preserves the 17/12 action transports and leaves native event/fire
+  acceptance, terminal effects, capability labels, and RL participation rules
+  unchanged.
