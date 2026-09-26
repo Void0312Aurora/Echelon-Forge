@@ -23,15 +23,16 @@ reset/replay, authority, and report evidence named in the plan.
 ### Air Algorithm Substitution Status
 
 The Air row above records the current planner, weapon-profile, and conservative
-assessment evidence. Their pure modules are independently testable and remain
-RL/native independent. The inner strategy seam is still an open residual:
+assessment evidence. Their pure modules are now physically layered under
+`python/tasking_contracts/air/strategy/`; the former flat paths are compatibility
+shells. They remain independently testable and RL/native independent. The inner
+strategy seam is still an open residual:
 
 - accepted: complete-model replacement through `ScriptedModelRegistry`,
   independent unit testing of the default planner/assessor, and explicit
   provenance for weapon-profile inputs;
-- deferred: planner/assessor/observation/action protocol injection, default
-  behavior parity after injection, independent no-fire/blocking strategy
-  substitution, and versioned strategy selection;
+- deferred: observation/action protocol injection, adapter extraction, and
+  versioned strategy selection;
 - promotion rule: do not label strategy composition complete until the
   ALG-0 through ALG-4 gates in the main plan pass. This residual does not
   block unrelated Naval, Ground, Joint, or EW work.

@@ -4,14 +4,14 @@ import numpy as np
 import pytest
 
 from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index
-from python.tasking_contracts.air_scripted_assessment import AirPostLaunchAssessmentReport
+from python.tasking_contracts.air.strategy.assessment import AirPostLaunchAssessment, AirPostLaunchAssessmentReport
 from python.tasking_contracts.air_scripted_engagement import (
     AIR_COMBAT_C2_ROE_V2,
     AirScriptedEngagementModel,
 )
-from python.tasking_contracts.air_scripted_planning import AirEngagementPlanner
-from python.tasking_contracts.air_scripted_assessment import AirPostLaunchAssessment
-from python.tasking_contracts.air_scripted_strategy_contracts import (
+from python.tasking_contracts.air.strategy.assessment import AirPostLaunchAssessment
+from python.tasking_contracts.air.strategy.planning import AirEngagementPlanner
+from python.tasking_contracts.air.strategy.contracts import (
     AirAssessmentInput,
     AirPlanningContext,
     AirTacticalDecision,

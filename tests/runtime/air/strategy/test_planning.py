@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from python.tasking_contracts.air_scripted_planning import AirEngagementPlanner
-from python.tasking_contracts.air_scripted_planning import AirEngagementPlannerConfig
-from python.tasking_contracts.air_scripted_weapons import load_air_weapon_envelope
+from python.tasking_contracts.air.strategy.planning import AirEngagementPlanner
+from python.tasking_contracts.air.strategy.planning import AirEngagementPlannerConfig
+from python.tasking_contracts.air.strategy.weapons import load_air_weapon_envelope
 
 
 def _planner(**overrides):
