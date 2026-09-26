@@ -27,13 +27,13 @@ This review does not promote Air from `playable_candidate`, does not authorize
 a second global registry, and does not make RL a dependency. It is a planning
 and research record for the next implementation batches.
 
-Implementation status: ALG-0 and the planner/assessor portion of ALG-1 are now
-implemented in the dedicated worktree. The strategy implementation is now
-physically layered under `python/tasking_contracts/air/strategy`; the former
-flat Air strategy paths were removed and repository consumers use the
-canonical modules directly. Observation and action
-adapter extraction remain ALG-2 work; the current engagement model still owns
-those two mappings until their parity tests are added.
+Implementation status: ALG-0, ALG-1, and ALG-2 are now implemented in the
+dedicated worktree. The strategy implementation is physically layered under
+`python/tasking_contracts/air/strategy`; the former flat Air strategy paths were
+removed and repository consumers use the canonical modules directly. The
+engagement model now orchestrates injected observation and action adapters;
+the default adapters preserve the maintained 17/12 layouts and fire-latch
+behavior.
 
 ## Current Dependency Map
 
@@ -42,30 +42,20 @@ ScriptedModelRegistry / ScriptedRuntimeAgent
                 |
                 v
 AirScriptedEngagementModel
-  |             |                 |
-  v             v                 v
-AirScriptedExecutionModel   AirEngagementPlanner   AirPostLaunchAssessment
-                                  |
-                                  v
-                         AirWeaponEnvelope
-                |
-                v
-         Air action layout / fire pulse mapping
+  |             |                 |                 |
+  v             v                 v                 v
+AirScriptedExecutionModel  AirObservationAdapter  AirTacticalPlanner  AirPostLaunchAssessor
+                                |                         |
+                                v                         v
+                         AirActionAdapter         AirWeaponEnvelope
 ```
 
 The neutral lifecycle is correctly located in `python/tasking_contracts`, with
 Air-owned policy code under `python/tasking_contracts/air`, and does not import
-RL. The Air engagement model currently performs four separate
-roles in one class:
-
-1. decode the mission taxonomy and five-column contact token;
-2. coordinate flight, tactical planning, and post-launch assessment;
-3. own fire-latch and target-contact edge state;
-4. map tactical results onto the 17-element or 12-element Air action layout.
-
-The first role and the fourth role are adapters. The planner and assessor are
-algorithms. Keeping these responsibilities in one orchestrator is the main
-replacement barrier.
+RL. The Air engagement model now performs orchestration and lifecycle work;
+mission/contact decoding, target-contact edge state, fire-latch state, and
+17/12 action mapping are owned by the injected Air adapters. The planner and
+assessor remain replaceable algorithms behind their typed protocols.
 
 ## Replacement Assessment
 
@@ -74,8 +64,8 @@ replacement barrier.
 | Weapon profile loader | high | replace JSON/profile input directly | typed source/profile contract |
 | `AirEngagementPlanner` | medium-high | replace only if the new class preserves `plan` and `apply_guidance` shape | `AirTacticalPlanner` protocol |
 | `AirPostLaunchAssessment` | high in unit tests, medium in runtime | replace only if it returns the current report fields | `AirPostLaunchAssessor` protocol |
-| Mission/contact decoding | low-medium | requires edits to the engagement model | `AirObservationAdapter` |
-| 17/12 element action mapping | low-medium | requires edits to the engagement model | `AirActionAdapter` |
+| Mission/contact decoding | high | replace through `AirObservationAdapter` | typed `AirTacticalObservation` |
+| 17/12 element action mapping | high | replace through `AirActionAdapter` | typed `AirActionApplication` |
 | Whole engagement model | high | replace through existing model registry | keep `ScriptedDecisionModel` lifecycle |
 
 ## Target Composition
@@ -143,22 +133,24 @@ scenario replay fixture remains part of the later parity gate.
 Implemented slice: add Air-owned `AirTacticalPlanner` and
 `AirPostLaunchAssessor` protocols and update `AirScriptedEngagementModel` to
 accept injected implementations while constructing the current implementations
-by default. The observation and action adapter protocols remain deferred to
-ALG-2. There is no behavior change when no overrides are supplied.
+by default. The default route remains behavior-compatible.
 
 ### ALG-2 — Adapter extraction
 
-Move `_mission_values` and `_contact_geometry` into the observation adapter,
-and move the 17/12 action index mapping plus fire-latch transport into the
-action adapter. Keep the existing native event/fire gate as the owner of final
-release acceptance.
+Implemented slice: move `_mission_values` and `_contact_geometry` into the
+Air-owned `AirMissionContactObservationAdapter`, and move the 17/12 action
+index mapping, target-contact edge pulse, and fire-latch transport into
+`AirActionLayoutAdapter`. `AirScriptedEngagementModel` now owns orchestration
+and lifecycle only. The default adapters are injected automatically, while
+custom adapters are checked against the typed protocols. The native event/fire
+gate remains the owner of final release acceptance.
 
 ### ALG-3 — Alternate strategy proof
 
-Add a deterministic no-fire planner and a blocking assessor used only by tests.
-Prove that each can be substituted independently while the flight controller,
-registry, action adapter, and report envelope remain unchanged. Add one
-scenario-level default-policy parity run after the pure contract tests.
+Implemented planner/assessor substitution remains covered by the existing
+test doubles. The next proof batch should add a scenario-level default-policy
+parity run that compares the canonical adapter route with a recording adapter
+route after the pure contract tests.
 
 ### ALG-4 — Strategy selection surface
 
