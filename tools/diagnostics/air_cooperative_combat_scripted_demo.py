@@ -130,6 +130,7 @@ def run_demo(*, scenario_path: str, seed: int, max_steps: int) -> dict[str, Any]
                     context={
                         "phase_name": "stable_flight",
                         "mission_obs_mode": AIR_COMBAT_C2_ROE_V2,
+                        "last_event_info": last_infos[slot_index],
                     },
                 )
                 decision_reports[slot_index] = dict(getattr(agent.model, "last_decision_info", {}))
