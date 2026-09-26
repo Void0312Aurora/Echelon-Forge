@@ -62,6 +62,9 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
 - [Cross-domain scripted agent capability evidence matrix — 2026-09-25](reviews/cross_domain_scripted_agent_capability_matrix_20250925.md):
   maintained evidence boundary for Air candidate, Naval bounded adapter, and
   Ground held labels; records the manifest shape and promotion gates.
+- [Air scripted algorithm substitution research — 2026-09-26](reviews/air_scripted_algorithm_substitution_research_20260926.md):
+  maintained research record for planner/assessor/observation/action strategy
+  seams, dependency injection, migration batches, and replacement gates.
 - [Cordis simulation composition program architecture review — 2026-08-17](reviews/cordis_simulation_composition_program_review_20260817.md):
   advisory macro review that retains the native composition direction while
   requiring authority and program-boundary revision before later

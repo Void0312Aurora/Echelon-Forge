@@ -151,6 +151,32 @@ RL adapters may:
 The scripted runtime, scenarios, tests, and playable acceptance must remain
 usable when RL packages and checkpoints are absent.
 
+### 6. Algorithm strategy substitution boundary
+
+The common lifecycle registry selects complete decision models. It must not be
+replaced by a second global registry for inner algorithms. Within a domain,
+observation decoding, tactical planning, post-action assessment, and action
+transport are separate responsibilities and must be independently replaceable
+when a second maintained consumer exists.
+
+For the current Air slice, the next composition seam is documented in the
+[Air algorithm substitution research review](../../reviews/air_scripted_algorithm_substitution_research_20260926.md).
+The required direction is:
+
+```text
+ObservationAdapter -> PlanningContext -> TacticalPlanner
+                                      -> TacticalDecision
+AssessmentAdapter -> AssessmentInput -> PostLaunchAssessor
+TacticalDecision + FlightAction -> ActionAdapter -> domain action
+```
+
+The first implementation must preserve the current default planner and
+assessor behavior, inject them through Air-owned protocols, and extract the
+mission/contact and action-layout adapters from the engagement orchestrator.
+No raw mission arrays, action indices, reward values, or World Truth may cross
+the strategy seam. RL remains an optional consumer of the same neutral
+lifecycle and is not permitted to own these scripted strategy contracts.
+
 ## Proposed Work Packages
 
 ### WP0 — Authority and consumer census
@@ -279,6 +305,27 @@ one EW role, two-aircraft coordination, joint tasking, and then the large-scale
 demonstration. Each stage gets its own scenario, direct/proxy evidence
 boundary, and thematic commit. RL adapters may consume a closed stage but may
 not be used to claim that the independent scripted stage is playable.
+
+### WP3-AIR-ALG — Air algorithm composition and substitution
+
+This work package addresses the internal modularity gap after the first Air
+tactical planner and post-launch assessor exist. It is a strategy-composition
+package, not a new combat-runtime package.
+
+1. Freeze typed Air planning, decision, assessment, and adapter DTOs around the
+   current default behavior.
+2. Add Air-owned planner/assessor/observation/action protocols and inject the
+   current implementations by default.
+3. Extract mission/contact decoding and 17/12 action-layout mapping from
+   `AirScriptedEngagementModel`.
+4. Prove independent replacement with deterministic no-fire and blocking
+   test doubles, then run default-policy release/replay and 4v4 parity.
+5. Add a versioned strategy profile only when a second maintained Air or
+   cross-domain consumer is named; do not create a parallel global registry.
+
+Promotion condition: default behavior is unchanged, each inner strategy can
+be replaced independently, strategy modules remain RL/native independent, and
+the test matrix proves transport/action/fire-gate ownership did not move.
 
 ### WP4 — Naval bounded playable slice
 
@@ -1886,3 +1933,29 @@ to a dedicated owner-local evidence document.
 - Continuation choice: use the assessment report in a maintained scenario
   trace, then address target-effect/event ownership before any claim of
   complete post-launch combat assessment.
+
+### 2026-09-26 — Air algorithm substitution research and planning slice
+
+- Scope: read-only architecture research after the Air planner and conservative
+  post-launch assessor were implemented. No runtime or scenario behavior was
+  changed in this slice.
+- Finding: `ScriptedModelRegistry` can replace the complete scripted model,
+  while `AirScriptedEngagementModel` still directly constructs the planner and
+  assessor and also owns mission decoding, fire-latch state, and 17/12 action
+  mapping. The algorithm modules are independently testable, but the inner
+  strategies are not yet drop-in replaceable.
+- Research record: add
+  `docs/architecture/reviews/air_scripted_algorithm_substitution_research_20260926.md`
+  with the dependency map, replacement assessment, typed Air-owned strategy
+  seams, ALG-0 through ALG-4 migration batches, acceptance gates, and open
+  research questions.
+- Boundary decision: use Air-owned planner/assessor/observation/action
+  protocols and dependency injection; retain the existing model registry as
+  the outer selection surface; do not create a second global strategy
+  registry, common weapon/geometry mega-schema, or RL-owned implementation.
+- Evidence boundary: this is a planning and research record. Air remains
+  `playable_candidate`; no strategy substitution, behavior parity, or
+  complete target-effect closure is claimed until WP3-AIR-ALG is implemented
+  and its acceptance gates pass.
+- Continuation choice: implement ALG-0/ALG-1 as the next code batch, starting
+  with typed context/decision contracts and default-injection parity tests.
