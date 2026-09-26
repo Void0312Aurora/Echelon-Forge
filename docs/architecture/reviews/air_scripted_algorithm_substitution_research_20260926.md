@@ -147,10 +147,16 @@ gate remains the owner of final release acceptance.
 
 ### ALG-3 — Alternate strategy proof
 
-Implemented planner/assessor substitution remains covered by the existing
-test doubles. The next proof batch should add a scenario-level default-policy
-parity run that compares the canonical adapter route with a recording adapter
-route after the pure contract tests.
+Implemented proof slice: the maintained cooperative 2v1 compiled scenario can
+run through the default adapter route or through per-slot recording adapters
+that delegate to the same default behavior. The regression compares terminal
+state, event/release steps, roster, reports, runtime decisions, and replay
+identity, while asserting both injected adapters were exercised. Planner and
+assessor replacement remains covered by the pure contract doubles.
+
+The next strategy work is ALG-4 only if a second maintained Air consumer needs
+a different algorithm profile; test-only doubles do not justify another
+registry or runtime selection surface.
 
 ### ALG-4 — Strategy selection surface
 
