@@ -18,6 +18,7 @@ from typing import Any, Mapping
 import numpy as np
 
 from .air_scripted_weapons import AirWeaponEnvelope
+from .air_scripted_strategy_contracts import AirPlanningContext, AirTacticalDecision
 
 
 def _finite(value: float, *, name: str, default: float = 0.0) -> float:
@@ -120,6 +121,20 @@ class AirEngagementPlan:
     reason_codes: tuple[str, ...]
     candidate_utilities: tuple[tuple[str, float], ...]
 
+    def as_tactical_decision(self) -> AirTacticalDecision:
+        """Project the rich planner record onto the stable strategy contract."""
+
+        return AirTacticalDecision(
+            mode=self.mode,
+            selected_candidate=self.selected_candidate,
+            fire_recommended=self.fire_recommended,
+            guidance_roll=self.guidance_roll,
+            guidance_pitch=self.guidance_pitch,
+            guidance_throttle=self.guidance_throttle,
+            reason_codes=self.reason_codes,
+            diagnostics=self.as_dict(),
+        )
+
     def as_dict(self) -> dict[str, Any]:
         result = {
             "mode": self.mode,
@@ -156,6 +171,27 @@ class AirEngagementPlanner:
 
     def reset(self) -> None:
         self.last_plan = None
+
+    def decide(self, *, context: AirPlanningContext) -> AirTacticalDecision:
+        """Plan from a normalized context and return the stable decision DTO."""
+
+        return self.plan_context(context=context).as_tactical_decision()
+
+    def plan_context(self, *, context: AirPlanningContext) -> AirEngagementPlan:
+        return self.plan(
+            target_contact_present=context.target_contact_present,
+            authorization_to_fire=context.authorization_to_fire,
+            fire_mask_open=context.fire_mask_open,
+            launch_window_open=context.launch_window_open,
+            quality_window_ready=context.quality_window_ready,
+            pending_assessment=context.pending_assessment,
+            shot_budget_remaining=context.shot_budget_remaining,
+            target_range_m=context.target_range_m,
+            target_track_age_s=context.target_track_age_s,
+            contact_bearing_deg=context.contact_bearing_deg,
+            contact_elevation_deg=context.contact_elevation_deg,
+            closing_speed_mps=context.closing_speed_mps,
+        )
 
     def plan(
         self,
@@ -321,6 +357,16 @@ class AirEngagementPlanner:
             result[3] = _clip(result[3] + plan.guidance_throttle, 0.0, 1.0)
         return result
 
+    def apply_decision_guidance(self, action: np.ndarray, decision: AirTacticalDecision) -> np.ndarray:
+        """Apply the bounded guidance carried by the stable decision DTO."""
+
+        result = np.asarray(action, dtype=np.float32).reshape(-1).copy()
+        if result.size >= 4 and decision.mode == "reposition":
+            result[0] = _clip(result[0] + decision.guidance_pitch, -1.0, 1.0)
+            result[1] = _clip(result[1] + decision.guidance_roll, -1.0, 1.0)
+            result[3] = _clip(result[3] + decision.guidance_throttle, 0.0, 1.0)
+        return result
+
     def _range_score(self, distance: float) -> float:
         cfg = self.config
         if distance < cfg.legal_min_range_m or distance > cfg.legal_max_range_m:
@@ -442,4 +488,6 @@ __all__ = [
     "AirEngagementPlan",
     "AirEngagementPlanner",
     "AirEngagementPlannerConfig",
+    "AirPlanningContext",
+    "AirTacticalDecision",
 ]

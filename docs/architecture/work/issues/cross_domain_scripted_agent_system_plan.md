@@ -1959,3 +1959,21 @@ to a dedicated owner-local evidence document.
   and its acceptance gates pass.
 - Continuation choice: implement ALG-0/ALG-1 as the next code batch, starting
   with typed context/decision contracts and default-injection parity tests.
+
+### 2026-09-26 — Air ALG-0 typed strategy contract slice
+
+- Starting commit: `30706c5c`.
+- Change batch: add the Air-owned `AirPlanningContext`, `AirTacticalDecision`,
+  `AirAssessmentInput` and replacement protocols in
+  `air_scripted_strategy_contracts.py`. The existing planner now exposes a
+  context entry point and projects its rich audit record onto the typed
+  decision DTO; legacy primitive `plan(...)` callers remain available.
+- Focused verification: the new strategy-contract tests and existing planner
+  tests passed `10 passed`; Python compilation and `git diff --check` passed.
+- Boundary decision: the contracts validate finite/non-negative declared
+  values and bound guidance outputs, while retaining diagnostics as an
+  immutable mapping. They do not import RL/native runtime, expose raw mission
+  arrays, or grant fire/terminal authority.
+- Evidence boundary: this freezes the typed substitution boundary but does not
+  yet prove that the engagement orchestrator can inject a replacement planner
+  or assessor. That is the next ALG-1 batch.
