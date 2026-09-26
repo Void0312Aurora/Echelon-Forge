@@ -26,6 +26,7 @@ def _observation(*, contact: bool, fire_window: bool, budget: float = 1.0, pendi
         "target_contact_present": 1.0 if contact else 0.0,
         "fire_mask_open": 1.0 if fire_window else 0.0,
         "launch_window_open": 1.0 if fire_window else 0.0,
+        "quality_window_ready": 1.0 if fire_window else 0.0,
         "shot_budget_remaining": budget,
         "pending_assessment": 1.0 if pending else 0.0,
     }
