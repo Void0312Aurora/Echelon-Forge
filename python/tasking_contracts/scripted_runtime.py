@@ -301,13 +301,17 @@ class ScriptedRuntimeRoster:
     ) -> dict[str, ScriptedRuntimeStep]:
         versions = observation_versions or {}
         contexts = context_by_agent or {}
-        results: dict[str, ScriptedRuntimeStep] = {}
-        for agent_id in sorted(self._agents):
-            agent = self._agents[agent_id]
-            if not agent.spec.active:
-                continue
+        active_agent_ids = [
+            agent_id
+            for agent_id in sorted(self._agents)
+            if self._agents[agent_id].spec.active
+        ]
+        for agent_id in active_agent_ids:
             if agent_id not in observations:
                 raise KeyError(f"missing observation for active scripted runtime agent: {agent_id}")
+        results: dict[str, ScriptedRuntimeStep] = {}
+        for agent_id in active_agent_ids:
+            agent = self._agents[agent_id]
             results[agent_id] = agent.step(
                 observation=observations[agent_id],
                 clock_s=clock_s,
