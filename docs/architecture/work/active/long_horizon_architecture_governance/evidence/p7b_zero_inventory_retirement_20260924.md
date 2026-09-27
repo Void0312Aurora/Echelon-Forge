@@ -1,6 +1,6 @@
 # P7-B Zero-Inventory Retirement Evidence
 
-Status: `2026-09-24` — first P7-B cleanup slice; remaining residual cleanup
+Status: `2026-09-27` — second P7-B cleanup slice; remaining residual cleanup
 and provider/restore drills remain open.
 
 ## Retired slice
@@ -25,6 +25,17 @@ facade/VecEnv boundary gates:
 This is a contained retirement, not permission to remove the facade boundary
 or to reintroduce raw `UniversalEnv` compatibility behavior.
 
+## Retired migration registration
+
+The `archive_retirement_transition` lifecycle entry was removed from
+`tests/suites/governance_audit_suite.json`. P7-A's `retention_authority.json`,
+the archive-retirement gate, the governance-suite membership, the repository
+indexes, and the Git-ledger restore route now provide the maintained control.
+The executable `test_archive_retirement.py` remains in the governance suite;
+only the superseded migration-era lifecycle registration was retired. This
+keeps the active archive gate while removing a duplicate, expired migration
+control.
+
 ## Verification
 
 The successor facade/VecEnv checks passed **39 tests**. The lifecycle,
@@ -33,10 +44,10 @@ edit. The derived authority report now records:
 
 | Measure | Result |
 | --- | ---: |
-| Architecture test files | 113 |
-| Architecture manifest entries | 113 |
-| Files with source-scan references | 111 |
-| Files retaining a source-scan residual flag | 86 |
+| Architecture test files | 115 |
+| Architecture manifest entries | 115 |
+| Files with source-scan references | 113 |
+| Files retaining a source-scan residual flag | 88 |
 
 The following checks were also run:
 
@@ -49,11 +60,11 @@ python -m pytest -q `
 git diff --check
 ```
 
-The targeted commands completed successfully. The complete governance audit
-then produced **67 passed and 1 failed**; the sole failure is the pre-existing
-P2-B sustainability baseline reporting `needs-disposition`, not a P7-B
-retirement or document-lifecycle failure. No source-scan residual was silently
-retired by this slice; only the completed zero-entry ratchet was removed.
+The targeted commands completed successfully with **42 passed** across the
+retention, archive, lifecycle, manifest, authority, and link checks. The
+complete governance audit is not re-counted by this slice. This second slice removes only the
+superseded migration registration; the archive gate and retrieval checks
+remain executable. No source-scan residual was silently retired.
 
 ## Boundary
 

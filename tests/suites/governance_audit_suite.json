@@ -19,18 +19,6 @@
         "coverage": ["manifest"]
       },
       {
-        "id": "archive_retirement_transition",
-        "owner": "documentation-lifecycle",
-        "invariant": "closed documentation has one admitted retrieval route without recreating a parallel archive authority",
-        "kind": "migratory",
-        "created": "2026-08-25",
-        "expiry": "2027-03-31",
-        "successor": "p7a-retention-authority",
-        "renewal_count": 0,
-        "removal_proof": "P7-A synchronizes policy, gate, suite, repository route, index, and restore evidence",
-        "coverage": ["tests/architecture/governance/test_archive_retirement.py"]
-      },
-      {
         "id": "document_link_retrieval_audit",
         "owner": "documentation-lifecycle",
         "invariant": "maintained evidence and standards links resolve to the admitted repository or external authority",
