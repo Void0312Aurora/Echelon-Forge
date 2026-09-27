@@ -99,7 +99,9 @@ class AirScriptedEWActionModel:
 
     def __init__(self, *, dt: float = 0.05, max_rwr: int = 4) -> None:
         self.dt = float(dt) if float(dt) > 1.0e-6 else 0.05
-        self.flight_model = AirScriptedExecutionModel(action_dim=AIR_EW_HYBRID_ACTION_DIM, dt=self.dt)
+        # Flight controllers use the maintained 17D full-action layout.  Their
+        # output is projected below before it reaches the 14D EW extension.
+        self.flight_model = AirScriptedExecutionModel(action_dim=17, dt=self.dt)
         self.ew_model = AirScriptedEWModel(max_rwr=max_rwr)
         self._closed = False
 
@@ -119,10 +121,17 @@ class AirScriptedEWActionModel:
         if not isinstance(observation, Mapping):
             raise TypeError("Air scripted EW action observation must be a mapping")
         model_context = context if isinstance(context, Mapping) else {}
-        action = np.asarray(
+        flight_action = np.asarray(
             self.flight_model.decide(observation=observation, context=model_context, dt=dt),
             dtype=np.float32,
         ).reshape(-1)
+        if flight_action.size < 4:
+            raise ValueError("Air scripted flight model must emit at least four shared flight axes")
+        # The EW extension keeps only the shared flight axes.  Indices 4:12
+        # belong to the combat-hybrid prefix and must stay neutral unless a
+        # dedicated C2/ROE model owns them; EW owns only 12/13 here.
+        action = np.zeros((AIR_EW_HYBRID_ACTION_DIM,), dtype=np.float32)
+        action[:4] = flight_action[:4]
         intent = self.ew_model.decide(observation=observation, context=model_context, dt=dt)
         action[12] = 1.0 if intent.countermeasure_plan == "request_chaff_and_flare" else 0.0
         action[13] = 1.0 if intent.countermeasure_plan == "request_chaff_and_flare" else 0.0
