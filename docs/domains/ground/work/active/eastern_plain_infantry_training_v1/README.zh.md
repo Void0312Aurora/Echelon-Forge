@@ -38,7 +38,9 @@ Owner：`domains/ground`，环境输入由 `systems/environment` 负责
   engineering-proxy-only，不是原生陆战 runtime，也不是 RL 训练入口。
 - Gymnasium 契约 harness：`python/rl/ground/proxy_env.py`
   （`GroundInfantryProxyEnv`）。它只验证 RL 的 reset/step/观测/奖励/终止/轨迹边界，
-  权威级别仍是 `engineering_proxy_only`。
+  权威级别仍是 `engineering_proxy_only`。其观测空间现在使用已验证 fixture 范围和
+  episode 上限的有限边界，并显式提供目标相对向量；reset 遇到未知目标地表时会失败关闭，
+  不允许把无界目标偷偷送入训练契约。
 - 原生单兵 probe：`python/rl/ground/native_probe.py`，以及其 Gymnasium 适配层
   `python/rl/ground/native_env.py`。它们使用编译后的 kernel 做 reset/step/replay，
   权威级别是 `native_probe_only`，仍不属于生产 `WorldBatch`；观测包含 native owner 的

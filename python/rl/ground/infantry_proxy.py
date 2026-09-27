@@ -407,6 +407,34 @@ class GroundFieldProxy:
         self._extent_x = abs(self._step_x) * float(self.elevation.shape[1] - 1)
         self._extent_y = abs(self._step_y) * float(self.elevation.shape[0] - 1)
 
+    @property
+    def map_bounds_xy_m(self) -> tuple[float, float, float, float]:
+        """Return the finite public proxy-frame extent as ``min/max x/y``.
+
+        The proxy deliberately exposes the synthetic overlay frame (whose
+        lower-left corner is ``(0, 0)``), not the provider raster's source
+        origin.  This is a finite observation-space aid and is not a native
+        coordinate or georeferencing contract.
+        """
+
+        return (0.0, self._extent_x, 0.0, self._extent_y)
+
+    @property
+    def map_diagonal_m(self) -> float:
+        """Return the finite diagonal of the proxy map extent."""
+
+        return math.hypot(self._extent_x, self._extent_y)
+
+    @property
+    def elevation_bounds_m(self) -> tuple[float, float]:
+        """Return finite elevation bounds from the verified raster snapshot."""
+
+        low = float(np.min(self.elevation))
+        high = float(np.max(self.elevation))
+        if not math.isfinite(low) or not math.isfinite(high):
+            raise GroundInfantryProxyError("proxy elevation bounds must be finite")
+        return low, high
+
     @classmethod
     def from_fixture(
         cls,

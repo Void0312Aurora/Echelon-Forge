@@ -171,6 +171,9 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
     assert contract["rl_harness"]["native_env"]["waypoint_boundary"] == "fixed_direct_sequence_only"
     assert "command_state" in contract["rl_harness"]["native_env"]["observation_fields"]
     assert "health_state" in contract["rl_harness"]["native_env"]["observation_fields"]
+    assert contract["rl_harness"]["proxy_env"]["status"] == "engineering_proxy_only"
+    assert contract["rl_harness"]["proxy_env"]["observation_bounds"] == "finite_fixture_map_and_episode_horizon"
+    assert contract["rl_harness"]["proxy_env"]["goal_boundary"] == "known_proxy_terrain_only"
     assert contract["command_projection"]["status"] == "partial_transport_only"
     assert contract["command_projection"]["representable_fields"][-1] == "ground_static_task_mode"
     assert contract["command_projection"]["held_fields"] == ["route_intent"]

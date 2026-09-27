@@ -70,6 +70,12 @@ else:
             if self.max_steps <= 0 or self.blocked_step_limit <= 0:
                 raise ValueError("max_steps and blocked_step_limit must be positive")
 
+            self._validate_known_point(self.start_xy_m, "start_xy_m")
+            self._validate_known_point(self.goal_xy_m, "goal_xy_m")
+            map_low_x, map_high_x, map_low_y, map_high_y = self.proxy.map_bounds_xy_m
+            elevation_low, elevation_high = self.proxy.elevation_bounds_m
+            map_diagonal = self.proxy.map_diagonal_m
+
             self.action_space = spaces.Box(
                 low=np.asarray([-180.0, 0.0, 0.0, 0.0], dtype=np.float32),
                 high=np.asarray([180.0, 1.0, 2.0, 3.0], dtype=np.float32),
@@ -78,24 +84,58 @@ else:
             self.observation_space = spaces.Dict(
                 {
                     "position_local_enu_m": spaces.Box(
-                        low=-np.inf, high=np.inf, shape=(2,), dtype=np.float32
+                        low=np.asarray([map_low_x, map_low_y], dtype=np.float32),
+                        high=np.asarray([map_high_x, map_high_y], dtype=np.float32),
+                        dtype=np.float32,
                     ),
                     "velocity_local_enu_mps": spaces.Box(
-                        low=-np.inf, high=np.inf, shape=(2,), dtype=np.float32
+                        low=np.full(2, -self.proxy.max_speed_mps, dtype=np.float32),
+                        high=np.full(2, self.proxy.max_speed_mps, dtype=np.float32),
+                        dtype=np.float32,
                     ),
                     "terrain": spaces.Box(
-                        low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32
+                        low=np.asarray([elevation_low, 0.0, 0.0], dtype=np.float32),
+                        high=np.asarray([elevation_high, 90.0, 255.0], dtype=np.float32),
+                        dtype=np.float32,
                     ),
                     "semantic_context": spaces.Box(
-                        low=-np.inf, high=np.inf, shape=(6,), dtype=np.float32
+                        low=np.asarray([-1.0, -180.0, -1.0, -180.0, 0.0, 0.0], dtype=np.float32),
+                        high=np.asarray(
+                            [map_diagonal, 180.0, map_diagonal, 180.0, 1.0, 1.0],
+                            dtype=np.float32,
+                        ),
                     ),
                     "semantic_flags": spaces.MultiBinary(5),
-                    "state": spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32),
+                    "mission_goal_relative_state": spaces.Box(
+                        low=np.asarray([-map_high_x, -map_high_y, 0.0], dtype=np.float32),
+                        high=np.asarray([map_high_x, map_high_y, map_diagonal], dtype=np.float32),
+                        dtype=np.float32,
+                    ),
+                    "state": spaces.Box(
+                        low=np.asarray([-180.0, 0.0, 0.0, 0.0], dtype=np.float32),
+                        high=np.asarray(
+                            [180.0, 2.0, 3.0, self.max_steps * self.proxy.max_speed_mps],
+                            dtype=np.float32,
+                        ),
+                        dtype=np.float32,
+                    ),
                 }
             )
             self._state: GroundInfantryState | None = None
             self._blocked_steps = 0
             self._trace: list[dict[str, Any]] = []
+
+        def _validate_known_point(self, point: Sequence[float], label: str) -> tuple[float, float]:
+            if isinstance(point, (str, bytes)) or len(point) != 2:
+                raise ValueError(f"{label} must contain two coordinates")
+            try:
+                normalized = (float(point[0]), float(point[1]))
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"{label} must contain numeric coordinates") from exc
+            terrain = self.proxy.sample(*normalized)
+            if not terrain.known:
+                raise ValueError(f"{label} must lie on known proxy terrain")
+            return normalized
 
         def _state_or_raise(self) -> GroundInfantryState:
             if self._state is None:
@@ -131,6 +171,19 @@ else:
                         ],
                         float(payload["semantic_context"]["river_active"]),
                         float(payload["semantic_context"]["bridge_active"]),
+                    ],
+                    dtype=np.float32,
+                ),
+                "mission_goal_relative_state": np.asarray(
+                    [
+                        self.goal_xy_m[0] - float(payload["position_local_enu_m"][0]),
+                        self.goal_xy_m[1] - float(payload["position_local_enu_m"][1]),
+                        float(
+                            np.linalg.norm(
+                                np.asarray(self.goal_xy_m, dtype=np.float64)
+                                - np.asarray(payload["position_local_enu_m"][:2], dtype=np.float64)
+                            )
+                        ),
                     ],
                     dtype=np.float32,
                 ),
@@ -190,8 +243,8 @@ else:
                 raise ValueError("options.start_xy_m must contain two coordinates")
             if not isinstance(goal, Sequence) or len(goal) != 2:
                 raise ValueError("options.goal_xy_m must contain two coordinates")
-            self.start_xy_m = (float(start[0]), float(start[1]))
-            self.goal_xy_m = (float(goal[0]), float(goal[1]))
+            self.start_xy_m = self._validate_known_point(start, "options.start_xy_m")
+            self.goal_xy_m = self._validate_known_point(goal, "options.goal_xy_m")
             self._state = self.proxy.reset(x_m=self.start_xy_m[0], y_m=self.start_xy_m[1])
             self._blocked_steps = 0
             self._trace = []
