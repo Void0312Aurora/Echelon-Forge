@@ -96,11 +96,12 @@ void register_maws_update_system(flecs::world &ecs) {
                 for (auto i : it) {
                     rwr[i].missile_launch_source_ids.clear();
                     rwr[i].is_missile_launch = false;
+                    const uint64_t owner_id = it.entity(i).id();
                     missile_query.each(
                         [&](flecs::entity missile_entity,
                             const Missile &missile,
                             const Transform &missile_transform) {
-                            if (!missile.active || missile.target_id != it.entity(i).id()) {
+                            if (!missile.active || missile.target_id != owner_id) {
                                 return;
                             }
                             const double dx = missile_transform.x - owner_transform[i].x;
