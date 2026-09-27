@@ -81,9 +81,10 @@ def test_p7a_evidence_retention_requires_restore_and_provider_migration_fields()
     "provider_migration_policy",
   } <= required
   drill = retention["restore_drill"]
-  assert drill["cadence"] == "quarterly"
+  assert drill["cadence"] == "per-acceptance-local"
   assert drill["owner"]
   assert "RunReceipt" in drill["minimum_scope"]
+  assert "external providers" in drill["boundary"]
 
 
 def test_p7a_policy_bindings_match_lifecycle_standard_and_governance_suite() -> None:

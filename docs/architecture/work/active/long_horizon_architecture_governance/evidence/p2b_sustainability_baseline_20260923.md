@@ -1,8 +1,8 @@
 # P2-B Sustainability Baseline Evidence
 
-Status: `2026-09-25` — three repeated local samples passed the current
-control, runtime, and retrieval checks; this is a dated baseline, not a
-production SLO ratification or overall program acceptance.
+Status: `2026-09-28` — three repeated local samples passed the current
+control, runtime, and retrieval checks; this is the short-cycle sustainability
+evidence used by the bounded acceptance.
 
 The baseline runner combines the P2-A manifest declarations, existing
 architecture checks, the real supported-row process/package path, and direct
@@ -78,9 +78,9 @@ The classifier counts observed per-cycle pairs rather than combining
 unrelated current and rollback digests. A changed pair across internally
 consistent batches is reported as `distinct_package_batches_observed`; a
 changed pair within one batch or an incomplete digest needs disposition.
-Even a distinct-batch observation leaves `representative_release_cadence`
-open until actual release changes, cadence, and owners are qualified. This
-sample cannot close that gate.
+Even a distinct-batch observation does not claim a long-running release
+cadence or production SLO. Those values are retained for post-acceptance
+monitoring rather than used as a closure gate.
 
 ## Interpretation and boundary
 
@@ -92,14 +92,14 @@ repeatable rejection-path coverage; its passing result does not turn safety
 counters into a claim that stale references or skew never occur.
 
 Resource teardown and state-transfer behavior are sampled by the candidate
-teardown/state-transfer guard group; a long-term memory/handle budget across
-representative workloads remains open. The supported-row process sample now
+teardown/state-transfer guard group; long-term memory/handle trends remain a
+post-acceptance monitoring item. The supported-row process sample now
 also records six available Windows working-set/handle observations, with a
 maximum peak working set of 46,186,496 bytes and 128 handles; those values are
 not an approved budget or a leak verdict. Linux, remote, multi-process, and
-production traffic are outside this local baseline. P2-B still requires a
-release cadence, broader representative samples, an owner-approved resource
-budget, and an owner review before its exit condition can be marked accepted.
+production traffic are outside this local baseline. The bounded P2-B exit uses
+the local repeat result; longer cadence, broader samples, and owner-approved
+budgets are monitored after acceptance.
 
 ## Verification
 

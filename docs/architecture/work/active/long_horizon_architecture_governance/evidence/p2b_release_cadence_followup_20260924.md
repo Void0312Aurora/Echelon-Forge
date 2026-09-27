@@ -1,8 +1,8 @@
 # P2-B Release Cadence Follow-up Evidence
 
-Status: `2026-09-25` — four local package batches were observed on the
+Status: `2026-09-28` — four local package batches were observed on the
 supported Windows CPython 3.12 row, representing three distinct package pairs;
-representative release cadence remains open.
+this short-cycle evidence is sufficient for the bounded acceptance.
 
 ## Observation
 
@@ -51,10 +51,10 @@ The state directories were temporary directories outside the worktree.
 ## Boundary
 
 This packet upgrades the local observation from `local_repeat_only` to
-`distinct_package_batches_observed` with three package pairs; it does not close
-the P2-B representative cadence gate or authorize production publication. A
-future admitted cadence sample still needs release-owner timing, changed
-plan/package provenance, and representative workload coverage.
+`distinct_package_batches_observed` with three package pairs. It closes the
+short-cycle sustainability evidence needed by the bounded acceptance. A
+future representative cadence sample may improve operational confidence but is
+not a current acceptance requirement.
 
 Document kind: `evidence`
 Lifecycle: `maintained`

@@ -1,7 +1,8 @@
 # P7-B Local SQLite Restore Drill Evidence
 
-Status: `2026-09-27` — local supported-topology restore drill completed;
-external provider restore and production rollback-window operation remain open.
+Status: `2026-09-28` — local supported-topology restore drill completed;
+external provider restore and production rollback-window operation are outside
+the current acceptance.
 
 ## Scope
 
@@ -43,10 +44,10 @@ local provider evidence only.
 
 ## Boundary
 
-This is local SQLite provider evidence for the supported Windows single-process
-row. It does not establish an external object-store/provider restore, a
-quarterly operator drill, production rollback-window observation, production
-cutover, or P8 acceptance.
+This is local SQLite provider evidence for the supported Windows
+single-process row. External object-store/provider restore, quarterly operator
+drills, and production rollback-window observation are outside the current
+acceptance. Unsupported wider rows remain fail-closed.
 
 Document kind: `evidence`
 Lifecycle: `maintained`

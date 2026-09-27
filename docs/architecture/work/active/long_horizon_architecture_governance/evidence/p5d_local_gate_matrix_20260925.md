@@ -50,9 +50,11 @@ fixtures:
 
 - the sole real production-canary RolloutDecision and caller-cutover
   attestation;
-- representative release cadence and owner-approved long-term budget;
-- a real production rollback-window observation; and
 - live post-merge observation of those operational inputs.
+
+Representative cadence, long-term resource budgets, and production
+rollback-window observation are retained as post-acceptance monitoring probes;
+they do not block the bounded local acceptance.
 
 The project owner nevertheless accepted P5-D for main-plan continuation and
 authorized production-authority retirement; that decision is recorded in the

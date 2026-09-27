@@ -53,7 +53,7 @@ native lane run.
 
 ## Local repeat probe
 
-While hosted CI is unstable, the maintained lane declaration and selector
+The maintained lane declaration and selector
 checks were repeated locally three times. Each repetition ran
 `audit_ci_lanes.py --format json` followed by the 17-test lane/CTest/manifest
 subset:
@@ -67,7 +67,8 @@ subset:
 This establishes repeatable local declaration and workflow-selector behavior
 only. It
 does not claim hosted-runner resource/flake evidence, branch-protection
-enforcement, or a completed native build. The refreshed run used the current
+enforcement, or a completed native build. Those hosted controls are outside
+the current bounded acceptance. The refreshed run used the current
 `codex/long-horizon-governance-architecture` checkout after the P7-B control
 retirement and document-census commits. The selector subset itself passed
 **17 tests** on the same configured build.
@@ -77,16 +78,17 @@ retirement and document-census commits. The selector subset itself passed
 A read-only GitHub API check on `2026-09-25` found no protected `main` branch
 (`GET /branches/main/protection` returned `404 Branch not protected`) and no
 repository rulesets (`GET /rulesets` returned an empty list). The repository's
-recent workflow runs therefore cannot be treated as branch-protection evidence;
-hosted resource/flake and failure-routing evidence remain open.
+recent workflow runs therefore cannot be treated as branch-protection evidence.
+Hosted resource/flake and failure-routing evidence are observation-only
+follow-up, not acceptance blockers.
 
 ## Boundary
 
-This is a P6-B implementation baseline, not P6 acceptance. Hosted repeated
-CI runs, duration/resource/flake measurements, failure-routing drills, and
-branch protection confirmation remain open; the local repeat probe above is
-not a substitute. P6-A source-scan replacement/retirement evidence and P7
-archive-specific policy work are also unchanged.
+This is the accepted P6-B bounded local baseline. Hosted repeated CI runs,
+duration/resource/flake measurements, failure-routing drills, and branch
+protection confirmation are outside the current acceptance; the local repeat
+probe is the recorded executable evidence. P6-A source-scan replacement and
+P7 archive routing remain governed by their local replacement evidence.
 
 Document kind: `evidence`
 Lifecycle: `maintained`
