@@ -250,9 +250,9 @@ They must be remeasured before an implementation or acceptance claim.
   qualification, nightly, release, and research to existing workflow jobs with
   explicit runner, timeout, build/test parallelism, failure audience, declared
   labels, and actual workflow-selected CTest labels; its focused lane/CTest
-  checks pass 7 tests, and the 16-test local
-  selector subset passed three fresh consecutive repeats (35.850 s, 35.592 s,
-  35.561 s) on 2026-09-27. This is repeatable local declaration behavior, not hosted CI
+  checks pass 8 tests, and the 17-test local
+  selector subset passed three fresh consecutive repeats (33.638 s, 32.626 s,
+  33.577 s) on 2026-09-27. This is repeatable local declaration behavior, not hosted CI
   resource/flake or branch-protection evidence.
   A read-only GitHub check on 2026-09-25 found `main` unprotected and no
   repository rulesets; hosted control-plane evidence therefore remains open.

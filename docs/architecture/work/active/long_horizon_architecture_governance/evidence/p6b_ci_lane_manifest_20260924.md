@@ -43,8 +43,8 @@ git diff --check
 ```
 
 Observed result: the lane audit reports five lanes, five workflow jobs, and
-three workflows; the focused lane/CTest subset passed `7` tests and the
-combined lane/authority/manifest set passed `19` tests. Ruff and the diff
+three workflows; the focused lane/CTest subset passed `8` tests and the
+combined lane/authority/manifest set passed `20` tests. Ruff and the diff
 check passed. The configured Windows build
 was re-generated and the CTest inventory exposed the `p5b` and `fast` labels;
 the local native binaries were not rebuilt to completion because that existing
@@ -55,14 +55,14 @@ native lane run.
 
 While hosted CI is unstable, the maintained lane declaration and selector
 checks were repeated locally three times. Each repetition ran
-`audit_ci_lanes.py --format json` followed by the 16-test lane/CTest/manifest
+`audit_ci_lanes.py --format json` followed by the 17-test lane/CTest/manifest
 subset:
 
 | Repeat | Audit exit | Test exit | Elapsed |
 | ---: | ---: | ---: | ---: |
-| 1 | 0 | 0 | 35.850 s |
-| 2 | 0 | 0 | 35.592 s |
-| 3 | 0 | 0 | 35.561 s |
+| 1 | 0 | 0 | 33.638 s |
+| 2 | 0 | 0 | 32.626 s |
+| 3 | 0 | 0 | 33.577 s |
 
 This establishes repeatable local declaration and workflow-selector behavior
 only. It
@@ -70,7 +70,7 @@ does not claim hosted-runner resource/flake evidence, branch-protection
 enforcement, or a completed native build. The refreshed run used the current
 `codex/long-horizon-governance-architecture` checkout after the P7-B control
 retirement and document-census commits. The selector subset itself passed
-**16 tests** on the same configured build.
+**17 tests** on the same configured build.
 
 ## Hosted control-plane check
 
