@@ -19,19 +19,19 @@ Design constraints (Unified Architecture Program, track T9 slice 1):
   source-priority ordering, and the ``DoctrineFamily`` extension family) and the
   compiled contracts: the tasking enums
   (``src/components/tasking/common/core_tasking_enums.h`` and
-  ``src/components/domains/naval/tasking/naval_tasking_enums.h``) and the WP12
-  ``AgentRole`` authority model (``src/runtime/contracts/policy_contracts.h``).
+  ``src/components/domains/naval/tasking/naval_tasking_enums.h``) and the
+  compiled ``AgentRole`` authority model (``src/runtime/contracts/policy_contracts.h``).
   The companion gate parses those headers and fails on any drift between the
   registry mirror and the compiled enum/scope values.
 - **Pure-stdlib frozen declaration / zero C2 behavior change.** This module has
   no import of ``ef_py``, ``python.rl``, or ``gym_envs``; it registers no
-  callback, patches no call site, and wires nothing. Slice 1 (I47) declared and
+  callback, patches no call site, and wires nothing. The first census slice
   gated only. Two later name-ownership moves repointed a locally spelled
   vocabulary item at the constant that owns it, in the census-legal direction
   ``python.rl -> python.tasking_contracts``, each pinned byte-identically by a
-  drift/equivalence test so no behavior changes: I53 pointed
-  ``agent_shim.ALLOWED_MERGE_POLICIES`` at :data:`MERGE_POLICIES`, and I68
-  pointed the A3 command-relationship / authority-scope default *names* at
+  drift/equivalence test so no behavior changes: the ownership correction
+  moved ``agent_shim.ALLOWED_MERGE_POLICIES`` to :data:`MERGE_POLICIES`, and a
+  second moved the A3 command-relationship / authority-scope default *names* to
   :data:`DEFAULT_COMMAND_RELATIONSHIP` / :data:`DEFAULT_AUTHORITY_SCOPE`
   (census EN/ZH §9). Converging the *behavior* of the remaining scattered call
   sites onto this vocabulary (and onto the compiled ``authorize_maintained_*``
@@ -41,7 +41,7 @@ Design constraints (Unified Architecture Program, track T9 slice 1):
 The companion architecture gate
 (``tests/architecture/agency/test_authority_registry_gate.py``) pins the census
 scatter fingerprint against this vocabulary and fails on any new unregistered
-authority-check site (ratchet, I38 allowlist precedent), and asserts the
+authority-check site (ratchet, the established allowlist precedent), and asserts the
 registry mirror matches the compiled enum/scope authorities.
 """
 
@@ -388,7 +388,7 @@ DELEGATION_CARRIERS: tuple[str, ...] = (
 # ``AgentAuthorityScope`` *action-interface* representation
 # (``platform_control`` / ``mission_command`` / ``formation_coordination``
 # strings), not the ``CommandRelationship`` / ``AuthorityScope`` echelon enums.
-# So the value source is already single (Python A3); this change (I68) elevates
+# So the value source is already single (Python A3); this ownership move elevates
 # the *name choice* to the registry declaration layer so A3 resolves
 # ``getattr(ef_py.<enum>, NAME)`` from here rather than a local string literal.
 # The resolved runtime value is byte-identical (same enum member), so the move is
@@ -517,7 +517,7 @@ DOCTRINE_FAMILY: DoctrineFamilyPlaceholder = DoctrineFamilyPlaceholder(
 # that site (grounded by these candidate sets and required to cover every token),
 # rather than being forced into one rigid category by the token alone.
 #
-# Rationale (I47 repair): a fixed token->category map distorts classification.
+# Rationale: a fixed token->category map distorts classification.
 # ``engagement_authority_holder_id`` is *arbitration* when it keys the who-may-fire
 # gate (A13) but a mirrored *role/delegation* identity when merely projected into a
 # state mirror (A8); ``authorization_to_fire`` is a *delegation* field-copy (A10),
