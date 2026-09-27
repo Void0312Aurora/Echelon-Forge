@@ -35,7 +35,7 @@ def _observation(*, contact: bool, fire_window: bool, budget: float = 1.0, pendi
 
 
 def test_engagement_model_uses_neutral_lifecycle_and_declared_observation_only() -> None:
-    model = AirScriptedEngagementModel()
+    model = AirScriptedEngagementModel(weapon_station_id=1)
     assert isinstance(model, ScriptedDecisionModel)
     obs = _observation(contact=False, fire_window=False)
     model.reset(context={"observation": obs, "phase_name": "stable_flight"})
@@ -53,7 +53,7 @@ def test_engagement_model_uses_neutral_lifecycle_and_declared_observation_only()
 
 
 def test_engagement_model_emits_one_fire_pulse_and_respects_assessment() -> None:
-    model = AirScriptedEngagementModel()
+    model = AirScriptedEngagementModel(weapon_station_id=1)
     hold = _observation(contact=True, fire_window=False)
     open_window = _observation(contact=True, fire_window=True)
     model.reset(context={"observation": hold, "phase_name": "stable_flight"})
@@ -73,7 +73,7 @@ def test_engagement_model_emits_one_fire_pulse_and_respects_assessment() -> None
 
 
 def test_engagement_model_maps_the_maintained_hybrid_action_layout() -> None:
-    model = AirScriptedEngagementModel(action_dim=AIR_COMBAT_HYBRID_ACTION_DIM)
+    model = AirScriptedEngagementModel(action_dim=AIR_COMBAT_HYBRID_ACTION_DIM, weapon_station_id=1)
     hold = _observation(contact=True, fire_window=False)
     open_window = _observation(contact=True, fire_window=True)
     model.reset(context={"observation": hold, "phase_name": "stable_flight"})
@@ -90,6 +90,20 @@ def test_engagement_model_maps_the_maintained_hybrid_action_layout() -> None:
     model.close()
 
 
+def test_engagement_model_fails_closed_for_invalid_weapon_station() -> None:
+    model = AirScriptedEngagementModel(weapon_station_id=99)
+    hold = _observation(contact=True, fire_window=False)
+    open_window = _observation(contact=True, fire_window=True)
+    model.reset(context={"observation": hold, "phase_name": "stable_flight"})
+    action = model.decide(observation=open_window, context={"phase_name": "stable_flight"}, dt=0.05)
+    assert action[13] == 0.0
+    assert action[14] == 0.0
+    assert action[16] == 0.0
+    assert model.last_decision_info["weapon_station_valid"] is False
+    assert model.last_decision_info["fire_rejected_reason"] == "invalid_weapon_station"
+    model.close()
+
+
 def test_engagement_model_is_registered_as_an_adapter_until_runtime_gate_closes() -> None:
     entries = AIR_SCRIPTED_MODEL_REGISTRY.resolve(
         domain="air",
@@ -103,7 +117,7 @@ def test_engagement_model_is_registered_as_an_adapter_until_runtime_gate_closes(
 
 
 def test_engagement_model_rejects_non_c2_roe_mission_shapes() -> None:
-    model = AirScriptedEngagementModel()
+    model = AirScriptedEngagementModel(weapon_station_id=1)
     obs = {"instruments": np.zeros((31,), dtype=np.float32), "mission": np.zeros((4,), dtype=np.float32)}
     model.reset(context={"observation": obs})
     with pytest.raises(ValueError, match="missing required fields"):

@@ -539,14 +539,24 @@ class ScriptedCooperativeCoordinationDirector:
         assigned_target_name = str(mission_cmd.get("assigned_target_name", "") or "").strip()
         assigned_target_id = _coerce_optional_int(mission_cmd.get("assigned_target_id", 0), 0)
         if assigned_target_name:
+            resolved_target_id = 0
             try:
                 resolved_target_id = _coerce_optional_int(
                     getattr(loader, "entities", {}).get(assigned_target_name, 0), 0
                 )
-                if resolved_target_id > 0:
-                    assigned_target_id = resolved_target_id
             except Exception:
-                pass
+                resolved_target_id = 0
+            if resolved_target_id > 0:
+                assigned_target_id = resolved_target_id
+            else:
+                # An explicit roster target is an override.  If it cannot be
+                # resolved, clear both the command and derived lookup so a
+                # stale scenario target cannot authorize a release.
+                assigned_target_id = 0
+                mission_cmd["assigned_target_id"] = 0
+                mission_cmd["assigned_target_name"] = ""
+                loader.primary_target_id = 0
+                loader.primary_target_name = ""
         if assigned_target_id > 0:
             mission_cmd["assigned_target_id"] = int(assigned_target_id)
             loader.primary_target_id = int(assigned_target_id)

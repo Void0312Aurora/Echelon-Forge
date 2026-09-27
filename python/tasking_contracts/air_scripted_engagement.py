@@ -46,6 +46,7 @@ class AirScriptedEngagementModel:
         mission_obs_mode: str = AIR_COMBAT_C2_ROE_V2,
         transition_alt_agl_m: float = 140.0,
         runway_length_m: float = 0.0,
+        weapon_station_id: int | None = None,
     ) -> None:
         if int(action_dim) not in _SUPPORTED_ACTION_DIMS:
             raise ValueError(
@@ -63,6 +64,9 @@ class AirScriptedEngagementModel:
             transition_alt_agl_m=transition_alt_agl_m,
             runway_length_m=runway_length_m,
         )
+        # Station selection belongs to the maintained loadout/capability
+        # owner.  An absent or invalid value is deliberately fail-closed.
+        self.weapon_station_id = weapon_station_id
         self._closed = False
         self._fire_latched = False
         self._last_target_contact = False
@@ -111,13 +115,22 @@ class AirScriptedEngagementModel:
         authorized = bool(values["authorization_to_fire"] > 0.5)
         pending_assessment = bool(values["pending_assessment"] > 0.5)
         budget_available = bool(values["shot_budget_remaining"] > 0.5)
+        station_id = self._resolve_weapon_station_id(context)
+        station_valid = station_id is not None
 
         # Existing action transports own the field positions. Tactical bits are
         # derived only from the declared mission packet and mapped to the
         # selected maintained layout; no new mega-action schema is introduced.
         tms_pulse = 1.0 if target_contact and not self._last_target_contact else 0.0
-        master_arm = 1.0 if authorized and target_contact and budget_available else 0.0
-        request_fire = bool(fire_window and authorized and target_contact and budget_available and not pending_assessment)
+        master_arm = 1.0 if authorized and target_contact and budget_available and station_valid else 0.0
+        request_fire = bool(
+            fire_window
+            and authorized
+            and target_contact
+            and budget_available
+            and station_valid
+            and not pending_assessment
+        )
         fire_pulse = 1.0 if request_fire and not self._fire_latched else 0.0
         if self.action_dim == AIR_FULL_ACTION_DIM:
             action[9] = 1.0  # radar active
@@ -130,7 +143,11 @@ class AirScriptedEngagementModel:
             # The full transport encodes the categorical station id in [0, 1]
             # before ``build_pilot_action`` expands it to the kernel station id
             # in [0, 7].  Station 1 is therefore represented by 1/7 here.
-            action[16] = (1.0 / 7.0) if target_contact and authorized and budget_available else 0.0
+            action[16] = (
+                float(station_id) / 7.0
+                if station_valid and target_contact and authorized and budget_available
+                else 0.0
+            )
         else:
             action[4] = 0.0  # centered scan azimuth
             action[5] = 0.0  # centered scan elevation
@@ -140,7 +157,11 @@ class AirScriptedEngagementModel:
             action[9] = fire_pulse
             action[10] = 0.0
             # The hybrid transport carries the categorical station id directly.
-            action[11] = 1.0 if target_contact and authorized and budget_available else 0.0
+            action[11] = (
+                float(station_id)
+                if station_valid and target_contact and authorized and budget_available
+                else 0.0
+            )
 
         if not fire_window or pending_assessment or not budget_available:
             self._fire_latched = False
@@ -157,6 +178,9 @@ class AirScriptedEngagementModel:
             "authorization_to_fire": authorized,
             "pending_assessment": pending_assessment,
             "shot_budget_remaining": float(values["shot_budget_remaining"]),
+            "weapon_station_id": int(station_id) if station_valid else None,
+            "weapon_station_valid": bool(station_valid),
+            "fire_rejected_reason": "invalid_weapon_station" if not station_valid else "",
             "fire_requested": bool(fire_pulse > 0.5),
         }
         return action
@@ -164,6 +188,21 @@ class AirScriptedEngagementModel:
     def close(self) -> None:
         self.flight_model.close()
         self._closed = True
+
+    def _resolve_weapon_station_id(self, context: Any) -> int | None:
+        raw = self.weapon_station_id
+        if isinstance(context, dict) and "weapon_station_id" in context:
+            raw = context.get("weapon_station_id")
+        if isinstance(raw, bool) or raw is None:
+            return None
+        try:
+            numeric = float(raw)
+        except (TypeError, ValueError):
+            return None
+        if not np.isfinite(numeric) or numeric != float(int(numeric)):
+            return None
+        station_id = int(numeric)
+        return station_id if 0 <= station_id <= 7 else None
 
     def _mission_values(self, mission: np.ndarray) -> dict[str, float]:
         required = {
