@@ -422,7 +422,22 @@ class MultiTimescaleActionController:
             and (self.scripted_blend_indices or self.scripted_lock_indices)
         ):
             try:
-                baseline_action = np.asarray(scripted_ctrl.step(self._last_obs), dtype=np.float32).reshape(-1)
+                if self._scripted_model is not None:
+                    baseline_action = np.asarray(
+                        self._scripted_model.step(
+                            self._last_obs,
+                            phase_name=str(
+                                getattr(self._get_loader(), "mission_phase_name", "") or ""
+                            ),
+                        ),
+                        dtype=np.float32,
+                    ).reshape(-1)
+                    self._scripted_active_mode = self._scripted_model.active_mode
+                else:
+                    baseline_action = np.asarray(
+                        scripted_ctrl.step(self._last_obs),
+                        dtype=np.float32,
+                    ).reshape(-1)
             except Exception:
                 baseline_action = None
             if baseline_action is not None and baseline_action.size == a.size:
@@ -909,7 +924,22 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
             and (self.scripted_blend_indices or self.scripted_lock_indices)
         ):
             try:
-                baseline_action = np.asarray(scripted_ctrl.step(self._last_obs), dtype=np.float32).reshape(-1)
+                if self._scripted_model is not None:
+                    baseline_action = np.asarray(
+                        self._scripted_model.step(
+                            self._last_obs,
+                            phase_name=str(
+                                getattr(self._get_loader(), "mission_phase_name", "") or ""
+                            ),
+                        ),
+                        dtype=np.float32,
+                    ).reshape(-1)
+                    self._scripted_active_mode = self._scripted_model.active_mode
+                else:
+                    baseline_action = np.asarray(
+                        scripted_ctrl.step(self._last_obs),
+                        dtype=np.float32,
+                    ).reshape(-1)
             except Exception:
                 baseline_action = None
             if baseline_action is not None and baseline_action.size == a.size:
