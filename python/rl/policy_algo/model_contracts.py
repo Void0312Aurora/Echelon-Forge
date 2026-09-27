@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Mapping
+from typing import Any, Iterable, Mapping
 
 
 class MechanismRole(str, Enum):
@@ -138,6 +138,37 @@ class ContractViolation:
             "actual": self.actual,
             "reason": self.reason,
         }
+
+
+@dataclass(frozen=True)
+class LaunchDecisionConfigProvenance:
+    """Immutable identity used to authorize markerless legacy compatibility."""
+
+    source_revision: str
+    path: str
+    sha256: str
+
+    def as_dict(self) -> dict[str, str]:
+        return {
+            "source_revision": str(self.source_revision),
+            "path": str(self.path),
+            "sha256": str(self.sha256),
+        }
+
+    @classmethod
+    def from_value(
+        cls,
+        value: "LaunchDecisionConfigProvenance | Mapping[str, Any]",
+    ) -> "LaunchDecisionConfigProvenance":
+        if isinstance(value, cls):
+            return value
+        if not isinstance(value, Mapping):
+            raise TypeError("launch-decision provenance must be a mapping")
+        return cls(
+            source_revision=str(value.get("source_revision", "")),
+            path=str(value.get("path", "")),
+            sha256=str(value.get("sha256", "")),
+        )
 
 
 @dataclass(frozen=True)
@@ -328,20 +359,34 @@ def _launch_decision_declared_values(
     config: Mapping[str, Any],
     key: str,
 ) -> tuple[tuple[str, Any], ...]:
-    """Return every supported declaration location for a contract key.
+    """Return every supported declaration location for a contract key."""
 
-    Translation and runtime resolution must not silently choose one of several
-    contradictory copies.  Keeping the location in the result makes the
-    resulting contract violation actionable for flat and nested configs alike.
-    """
-
+    hyperparameters = config.get("hyperparameters", {})
+    nested_policy_kwargs = (
+        hyperparameters.get("policy_kwargs", {})
+        if isinstance(hyperparameters, Mapping)
+        else {}
+    )
+    flat_policy_kwargs = config.get("policy_kwargs", {})
     locations = (
         (key, config.get(key, _MISSING)),
-        (f"hyperparameters.{key}", config.get("hyperparameters", {}).get(key, _MISSING)
-         if isinstance(config.get("hyperparameters", {}), Mapping) else _MISSING),
+        (
+            f"policy_kwargs.{key}",
+            flat_policy_kwargs.get(key, _MISSING)
+            if isinstance(flat_policy_kwargs, Mapping)
+            else _MISSING,
+        ),
+        (
+            f"hyperparameters.{key}",
+            hyperparameters.get(key, _MISSING)
+            if isinstance(hyperparameters, Mapping)
+            else _MISSING,
+        ),
         (
             f"hyperparameters.policy_kwargs.{key}",
-            _launch_decision_policy_kwargs(config).get(key, _MISSING),
+            nested_policy_kwargs.get(key, _MISSING)
+            if isinstance(nested_policy_kwargs, Mapping)
+            else _MISSING,
         ),
     )
     return tuple(
@@ -369,22 +414,46 @@ def _launch_decision_positive(value: Any) -> bool:
     )
 
 
+def _normalize_launch_decision_hybrid_action_spec(value: Any) -> str | None:
+    """Mirror the runtime hybrid-action normalizer for owner-contract parsing."""
+
+    if value is _MISSING or value is None:
+        return None
+    if isinstance(value, str):
+        name = value.strip()
+        if name == "" or name.lower() in {"none", "off", "false", "0"}:
+            return None
+    elif isinstance(value, Mapping):
+        has_name = "name" in value
+        has_mode = "mode" in value
+        if not has_name and not has_mode:
+            raise ValueError("hybrid_action_spec mapping requires 'name' or 'mode'")
+        if has_name and has_mode and str(value["name"]).strip() != str(value["mode"]).strip():
+            raise ValueError("hybrid_action_spec name and mode declarations disagree")
+        name = str(value["name"] if has_name else value["mode"]).strip()
+        if name == "":
+            raise ValueError("hybrid_action_spec mapping has an empty name")
+    else:
+        raise TypeError(
+            "hybrid_action_spec must be a string, mapping or None, "
+            f"got {type(value).__name__}"
+        )
+    if name != "air_combat_hybrid_v1":
+        raise ValueError(f"unknown hybrid_action_spec: {name!r}")
+    return name
+
+
 def _launch_decision_mode_value(
     config: Mapping[str, Any],
 ) -> tuple[LaunchDecisionMode | None, bool, str | None, Any]:
     """Resolve an explicit mode, keeping old configs in compatibility mode."""
 
-    mode_raw = _launch_decision_value(config, "launch_decision_mode")
-    owner_raw = _launch_decision_value(config, "launch_decision_owner_mode")
-    raw = mode_raw if mode_raw is not _MISSING else owner_raw
-    explicit = raw is not _MISSING and raw is not None and str(raw).strip() != ""
-    path = (
-        "hyperparameters.policy_kwargs.launch_decision_mode"
-        if mode_raw is not _MISSING
-        else "hyperparameters.policy_kwargs.launch_decision_owner_mode"
-        if owner_raw is not _MISSING
-        else None
-    )
+    mode_declarations = _launch_decision_declared_values(config, "launch_decision_mode")
+    owner_declarations = _launch_decision_declared_values(config, "launch_decision_owner_mode")
+    declarations = mode_declarations or owner_declarations
+    raw = declarations[0][1] if declarations else _MISSING
+    explicit = bool(declarations)
+    path = declarations[0][0] if declarations else None
     if raw is _MISSING or raw is None or str(raw).strip() == "":
         return LaunchDecisionMode.LEGACY_COMPOSED_V0, False, path, raw
     if isinstance(raw, LaunchDecisionMode):
@@ -411,10 +480,20 @@ def _launch_decision_mode_violation(
     )
 
 
-def _launch_decision_active_flags(config: Mapping[str, Any]) -> dict[str, bool]:
+def _launch_decision_active_flags(
+    config: Mapping[str, Any],
+    *,
+    hybrid_action_name: str | None = None,
+) -> dict[str, bool]:
+    if hybrid_action_name is None:
+        try:
+            hybrid_action_name = _normalize_launch_decision_hybrid_action_spec(
+                _launch_decision_value(config, "hybrid_action_spec")
+            )
+        except (TypeError, ValueError):
+            hybrid_action_name = None
     return {
-        "base_action": _launch_decision_value(config, "hybrid_action_spec")
-        == "air_combat_hybrid_v1",
+        "base_action": hybrid_action_name == "air_combat_hybrid_v1",
         "hmoe_event_slice": any(
             _launch_decision_positive(_launch_decision_value(config, key))
             for key in ("hmoe_residual_scale", "hmoe_head_lr_scale")
@@ -432,15 +511,31 @@ def _launch_decision_active_flags(config: Mapping[str, Any]) -> dict[str, bool]:
     }
 
 
+def _launch_decision_provenance_matches(
+    provenance: LaunchDecisionConfigProvenance | Mapping[str, Any] | None,
+    allowlist: Iterable[LaunchDecisionConfigProvenance | Mapping[str, Any]],
+) -> bool:
+    if provenance is None:
+        return False
+    candidate = LaunchDecisionConfigProvenance.from_value(provenance)
+    if not candidate.source_revision or not candidate.path or not candidate.sha256:
+        return False
+    return any(
+        LaunchDecisionConfigProvenance.from_value(item) == candidate
+        for item in allowlist
+    )
+
+
 def validate_launch_decision_contract(
     config: Mapping[str, Any],
+    *,
+    provenance: LaunchDecisionConfigProvenance | Mapping[str, Any] | None = None,
+    legacy_provenance_allowlist: Iterable[
+        LaunchDecisionConfigProvenance | Mapping[str, Any]
+    ] = (),
+    require_legacy_provenance: bool = False,
 ) -> list[ContractViolation]:
-    """Validate the explicit launch-decision owner and adapter boundaries.
-
-    Configurations without the new mode key are intentionally treated as
-    ``legacy_composed_v0``. This keeps existing checkpoints loadable while
-    making every new configuration opt into a fail-closed mode.
-    """
+    """Validate owner-mode, action-surface, adapter and legacy provenance rules."""
 
     violations: list[ContractViolation] = []
     mode_declarations = _launch_decision_declared_values(config, "launch_decision_mode")
@@ -473,22 +568,8 @@ def validate_launch_decision_contract(
                 reason="Mode and owner-mode aliases must not disagree.",
             )
         )
+
     mode, explicit, mode_path, raw_mode = _launch_decision_mode_value(config)
-    owner_raw = _launch_decision_value(config, "launch_decision_owner_mode")
-    mode_raw = _launch_decision_value(config, "launch_decision_mode")
-    if (
-        mode_raw is not _MISSING
-        and owner_raw is not _MISSING
-        and str(mode_raw) != str(owner_raw)
-    ):
-        violations.append(
-            _launch_decision_mode_violation(
-                path="hyperparameters.policy_kwargs.launch_decision_owner_mode",
-                expected="same value as launch_decision_mode",
-                actual=owner_raw,
-                reason="Two owner-mode keys must not declare different profiles.",
-            )
-        )
     if mode is None:
         violations.append(
             _launch_decision_mode_violation(
@@ -512,7 +593,7 @@ def validate_launch_decision_contract(
                         + LAUNCH_DECISION_CONTRACT_VERSION_KEY
                     ),
                     expected=LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,
-                    actual=version_values[0] if version_values else _MISSING,
+                    actual=version_values[0] if version_values else "<missing>",
                     reason=(
                         "Explicit owner modes require the persisted contract version; "
                         "missing or unsupported markers are ambiguous."
@@ -529,7 +610,57 @@ def validate_launch_decision_contract(
                 )
             )
 
-    flags = _launch_decision_active_flags(config)
+    hybrid_action_raw = _launch_decision_value(config, "hybrid_action_spec")
+    hybrid_action_name: str | None = None
+    hybrid_action_error: Exception | None = None
+    try:
+        hybrid_action_name = _normalize_launch_decision_hybrid_action_spec(hybrid_action_raw)
+    except (TypeError, ValueError) as exc:
+        hybrid_action_error = exc
+        violations.append(
+            _launch_decision_mode_violation(
+                path="hyperparameters.policy_kwargs.hybrid_action_spec",
+                expected="air_combat_hybrid_v1 in string, {name}, or {mode} form",
+                actual=hybrid_action_raw,
+                reason=str(exc),
+            )
+        )
+    if explicit and hybrid_action_name != "air_combat_hybrid_v1" and hybrid_action_error is None:
+        violations.append(
+            _launch_decision_mode_violation(
+                path="hyperparameters.policy_kwargs.hybrid_action_spec",
+                expected="air_combat_hybrid_v1",
+                actual="<missing>" if hybrid_action_raw is _MISSING else hybrid_action_raw,
+                reason="Explicit launch-decision modes require the hybrid event action surface.",
+            )
+        )
+
+    if (
+        mode == LaunchDecisionMode.LEGACY_COMPOSED_V0
+        and not explicit
+        and require_legacy_provenance
+        and not _launch_decision_provenance_matches(
+            provenance,
+            legacy_provenance_allowlist,
+        )
+    ):
+        violations.append(
+            _launch_decision_mode_violation(
+                path="launch_decision_provenance",
+                expected="exact C0 source_revision/path/sha256 allowlist match",
+                actual=(
+                    "<missing>"
+                    if provenance is None
+                    else LaunchDecisionConfigProvenance.from_value(provenance).as_dict()
+                ),
+                reason=(
+                    "unmarked_nonlegacy_config: markerless legacy fallback is reserved "
+                    "for exact immutable C0 provenance."
+                ),
+            )
+        )
+
+    flags = _launch_decision_active_flags(config, hybrid_action_name=hybrid_action_name)
     window_enabled = flags["window_classifier_adapter"]
     stopping_enabled = flags["stopping_adapter"]
     if window_enabled and stopping_enabled and mode != LaunchDecisionMode.LEGACY_COMPOSED_V0:
@@ -622,17 +753,62 @@ def _launch_decision_contributor_tuple(
     return tuple(contributor for key, contributor in ordered if flags.get(key, False))
 
 
+def _launch_decision_parameter_role(
+    contributor: LaunchDecisionContributor,
+) -> str:
+    return {
+        LaunchDecisionContributor.BASE_ACTION: "action_net",
+        LaunchDecisionContributor.HMOE_EVENT_SLICE: "hmoe_event_slice",
+        LaunchDecisionContributor.HYBRID_EVENT_HEAD: "hybrid_event_head",
+        LaunchDecisionContributor.WINDOW_CLASSIFIER_ADAPTER: "window_classifier_adapter",
+        LaunchDecisionContributor.STOPPING_ADAPTER: "stopping_adapter",
+    }[contributor]
+
+
+def _launch_decision_trainable_roles(
+    active: tuple[LaunchDecisionContributor, ...],
+    *,
+    include_policy_trunk: bool,
+) -> tuple[str, ...]:
+    role_set = {_launch_decision_parameter_role(contributor) for contributor in active}
+    if include_policy_trunk and active:
+        role_set.add("policy_trunk")
+    order = (
+        "action_net",
+        "policy_trunk",
+        "hmoe_event_slice",
+        "hybrid_event_head",
+        "window_classifier_adapter",
+        "stopping_adapter",
+    )
+    return tuple(role for role in order if role in role_set)
+
+
 def resolve_launch_decision_contract(
     config: Mapping[str, Any],
+    *,
+    provenance: LaunchDecisionConfigProvenance | Mapping[str, Any] | None = None,
+    legacy_provenance_allowlist: Iterable[
+        LaunchDecisionConfigProvenance | Mapping[str, Any]
+    ] = (),
+    require_legacy_provenance: bool = True,
 ) -> LaunchDecisionOwnerContract:
     """Resolve a configuration into one deterministic owner envelope."""
 
-    violations = validate_launch_decision_contract(config)
+    violations = validate_launch_decision_contract(
+        config,
+        provenance=provenance,
+        legacy_provenance_allowlist=legacy_provenance_allowlist,
+        require_legacy_provenance=require_legacy_provenance,
+    )
     if violations:
         raise LaunchDecisionContractError(tuple(violations))
     mode, explicit, _mode_path, _raw_mode = _launch_decision_mode_value(config)
     assert mode is not None
-    flags = _launch_decision_active_flags(config)
+    hybrid_action_name = _normalize_launch_decision_hybrid_action_spec(
+        _launch_decision_value(config, "hybrid_action_spec")
+    )
+    flags = _launch_decision_active_flags(config, hybrid_action_name=hybrid_action_name)
     active = _launch_decision_contributor_tuple(flags)
     ignored: tuple[LaunchDecisionContributor, ...] = ()
     precedence: str | None = None
@@ -649,9 +825,9 @@ def resolve_launch_decision_contract(
                 for contributor in active
                 if contributor != LaunchDecisionContributor.STOPPING_ADAPTER
             )
-        trainable_roles = tuple(
-            _launch_decision_parameter_role(contributor)
-            for contributor in active
+        trainable_roles = _launch_decision_trainable_roles(
+            active,
+            include_policy_trunk=True,
         )
         detached_roles: tuple[str, ...] = ()
         scopes = (LaunchDecisionTrainingScope.COMPATIBILITY,)
@@ -663,17 +839,23 @@ def resolve_launch_decision_contract(
                 LaunchDecisionContributor.BASE_ACTION,
                 LaunchDecisionContributor.HYBRID_EVENT_HEAD,
             )
-            if contributor == LaunchDecisionContributor.BASE_ACTION
-            or flags["hybrid_event_head"]
+            if (
+                contributor == LaunchDecisionContributor.BASE_ACTION
+                and flags["base_action"]
+            )
+            or (
+                contributor == LaunchDecisionContributor.HYBRID_EVENT_HEAD
+                and flags["hybrid_event_head"]
+            )
         )
         trainable_roles = ("hybrid_event_head",)
         detached_roles = ("action_net", "policy_trunk", "hmoe_event_slice")
         scopes = (LaunchDecisionTrainingScope.DIRECT_BOUNDARY,)
         acceptance_eligible = True
     elif mode == LaunchDecisionMode.GOVERNED_COMPOSED_V1:
-        trainable_roles = tuple(
-            _launch_decision_parameter_role(contributor)
-            for contributor in active
+        trainable_roles = _launch_decision_trainable_roles(
+            active,
+            include_policy_trunk=True,
         )
         detached_roles = ()
         scopes = (
@@ -684,13 +866,18 @@ def resolve_launch_decision_contract(
     elif mode == LaunchDecisionMode.AUXILIARY_ONLY_V1:
         active = ()
         trainable_roles = ("auxiliary_heads",)
-        detached_roles = ("action_net", "policy_trunk", "hmoe_event_slice", "hybrid_event_head")
+        detached_roles = (
+            "action_net",
+            "policy_trunk",
+            "hmoe_event_slice",
+            "hybrid_event_head",
+        )
         scopes = (LaunchDecisionTrainingScope.AUXILIARY,)
         acceptance_eligible = False
     else:
-        trainable_roles = tuple(
-            _launch_decision_parameter_role(contributor)
-            for contributor in active
+        trainable_roles = _launch_decision_trainable_roles(
+            active,
+            include_policy_trunk=True,
         )
         detached_roles = ()
         scopes = (
@@ -702,7 +889,7 @@ def resolve_launch_decision_contract(
     return LaunchDecisionOwnerContract(
         mode=mode,
         contributors=active,
-        trainable_parameter_roles=tuple(dict.fromkeys(trainable_roles)),
+        trainable_parameter_roles=trainable_roles,
         detached_parameter_roles=tuple(dict.fromkeys(detached_roles)),
         allowed_training_scopes=scopes,
         compatibility_mode=compatibility_mode,
@@ -711,18 +898,6 @@ def resolve_launch_decision_contract(
         acceptance_eligible=acceptance_eligible,
         explicit_mode=explicit,
     )
-
-
-def _launch_decision_parameter_role(
-    contributor: LaunchDecisionContributor,
-) -> str:
-    return {
-        LaunchDecisionContributor.BASE_ACTION: "action_net",
-        LaunchDecisionContributor.HMOE_EVENT_SLICE: "hmoe_event_slice",
-        LaunchDecisionContributor.HYBRID_EVENT_HEAD: "hybrid_event_head",
-        LaunchDecisionContributor.WINDOW_CLASSIFIER_ADAPTER: "window_classifier_adapter",
-        LaunchDecisionContributor.STOPPING_ADAPTER: "stopping_adapter",
-    }[contributor]
 
 
 WINDOW_CLASSIFIER_CONTRACT = ModelMechanismContract(
