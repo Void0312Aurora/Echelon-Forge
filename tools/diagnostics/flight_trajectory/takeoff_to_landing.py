@@ -251,6 +251,7 @@ def _runway_outline(beacon: dict[str, Any]) -> np.ndarray:
 def _collect_episode(
     *,
     env,
+    scenario_path: str,
     model,
     scripted: bool,
     seed: int,
@@ -260,6 +261,10 @@ def _collect_episode(
     obs, _info = env.reset(seed=int(seed))
     sim_env = env.unwrapped
     loader = sim_env.loader
+    scenario_path = os.path.abspath(str(scenario_path))
+
+    start_pos = np.asarray(sim_env.sim.get_unit_position(sim_env.agent_id), dtype=np.float64)
+    runway_beacon = _pick_runway_beacon(loader, float(start_pos[0]), float(start_pos[1]))
 
     scripted_model = None
     scripted_dt = 0.05
@@ -268,16 +273,12 @@ def _collect_episode(
             scripted_dt = float(sim_env.sim.get_time_step())
         except Exception:
             scripted_dt = 0.05
-        runway_length_m = max(
-            (float(beacon.get("length", 0.0)) for beacon in list(getattr(loader, "ils_beacons", []) or [])),
-            default=0.0,
+        runway_length_m = (
+            float(runway_beacon.get("length", 0.0))
+            if runway_beacon is not None
+            else 0.0
         )
-        scenario_path = str(getattr(sim_env, "scenario_path", "") or "")
-        model_id = (
-            _scripted_model_id_for_scenario(scenario_path)
-            if scenario_path
-            else AIR_SCRIPTED_EXECUTION_MODEL_ID
-        )
+        model_id = _scripted_model_id_for_scenario(scenario_path)
         scripted_model = AIR_SCRIPTED_MODEL_REGISTRY.create_for(
             domain="air",
             role_id="autopilot_controller",
@@ -293,8 +294,6 @@ def _collect_episode(
             }
         )
 
-    start_pos = np.asarray(sim_env.sim.get_unit_position(sim_env.agent_id), dtype=np.float64)
-    runway_beacon = _pick_runway_beacon(loader, float(start_pos[0]), float(start_pos[1]))
     waypoints = [dict(wp) for wp in list(getattr(loader, "waypoints", []) or [])]
     waypoint_template_idx = int(loader.mission_cmd.get("_waypoint_template_idx", -2))
 
@@ -392,7 +391,7 @@ def _collect_episode(
         except Exception:
             final_alt_agl = None
     summary = EpisodeSummary(
-        scenario=str(getattr(loader, "scenario_name", "")) or os.path.basename(str(getattr(sim_env, "scenario_path", ""))),
+        scenario=str(getattr(loader, "scenario_name", "")) or os.path.basename(scenario_path),
         seed=int(seed),
         mode="scripted" if scripted else "model",
         zero_randomization=bool(zero_randomization),
@@ -594,6 +593,7 @@ def _main() -> int:
 
     data = _collect_episode(
         env=env,
+        scenario_path=os.path.abspath(args.scenario),
         model=model,
         scripted=bool(args.scripted),
         seed=int(args.seed),
