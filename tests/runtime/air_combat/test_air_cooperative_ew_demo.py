@@ -126,11 +126,10 @@ def test_cooperative_ew_4v4_routes_all_roster_slots_and_replays() -> None:
     assert [sample["chaff_remaining"] for sample in first["countermeasure_state_samples"][1]] == [60, 59, 58, 57, 56]
     assert [sample["chaff_remaining"] for sample in first["countermeasure_state_samples"][2]] == [60, 59]
     assert [sample["chaff_remaining"] for sample in first["countermeasure_state_samples"][3]] == [60]
-    assert all(
-        sample["flare_remaining"] == 30
-        for slot_samples in first["countermeasure_state_samples"]
-        for sample in slot_samples
-    )
+    assert [sample["flare_remaining"] for sample in first["countermeasure_state_samples"][0]] == [29, 28, 27, 26, 25]
+    assert [sample["flare_remaining"] for sample in first["countermeasure_state_samples"][1]] == [29, 28, 27, 26, 25]
+    assert [sample["flare_remaining"] for sample in first["countermeasure_state_samples"][2]] == [29, 28]
+    assert [sample["flare_remaining"] for sample in first["countermeasure_state_samples"][3]] == [29]
     assert len(first["scripted_runtime_identity"]) == 4
     assert len(set(first["scripted_runtime_identity"])) == 4
     assert first["scripted_runtime_decisions"] == [204, 204, 204, 204]
