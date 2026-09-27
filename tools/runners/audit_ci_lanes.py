@@ -202,7 +202,7 @@ def build_report(*, root: Path = REPO_ROOT, manifest_path: Path = LANE_MANIFEST)
       if lane_id == "research":
         if re.search(r"(?m)^\s*(?:run:\s*)?ctest\b", job_text):
           raise CiLaneAuditError("research compile-only lane must not run CTest")
-      elif not any(
+      elif not all(
         re.search(
           rf"(?m)^\s*(?:run:\s*)?.*?\bctest\b[^\n]*\s-L\s+{re.escape(label)}(?:\s|$)",
           job_text,

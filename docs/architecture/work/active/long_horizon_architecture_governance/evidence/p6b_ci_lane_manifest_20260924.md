@@ -44,7 +44,7 @@ git diff --check
 
 Observed result: the lane audit reports five lanes, five workflow jobs, and
 three workflows; the focused lane/CTest subset passed `7` tests and the
-combined lane/authority/manifest set passed `18` tests. Ruff and the diff
+combined lane/authority/manifest set passed `19` tests. Ruff and the diff
 check passed. The configured Windows build
 was re-generated and the CTest inventory exposed the `p5b` and `fast` labels;
 the local native binaries were not rebuilt to completion because that existing

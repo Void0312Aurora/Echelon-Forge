@@ -64,3 +64,13 @@ def test_ci_lane_audit_rejects_a_selector_not_used_by_the_workflow(tmp_path: Pat
 
   with pytest.raises(audit_ci_lanes.CiLaneAuditError, match="does not select its CTest label"):
     audit_ci_lanes.build_report(root=REPO_ROOT, manifest_path=manifest)
+
+
+def test_ci_lane_audit_rejects_a_partially_used_selector_set(tmp_path: Path) -> None:
+  payload = json.loads(MANIFEST.read_text(encoding="utf-8"))
+  payload["lanes"][1]["selected_ctest_labels"] = ["p5b", "qualification"]
+  manifest = tmp_path / "ci_lane_manifest.json"
+  manifest.write_text(json.dumps(payload), encoding="utf-8")
+
+  with pytest.raises(audit_ci_lanes.CiLaneAuditError, match="does not select its CTest label"):
+    audit_ci_lanes.build_report(root=REPO_ROOT, manifest_path=manifest)
