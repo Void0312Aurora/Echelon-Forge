@@ -35,7 +35,8 @@ def test_matrix_declares_acceptance_contract_as_authority() -> None:
   assert matrix["kind"] == "derived_acceptance_matrix"
   assert matrix["authority"] == AUTHORITY_PATH.relative_to(REPO_ROOT).as_posix()
   assert AUTHORITY_PATH.is_file()
-  assert matrix["decision"] != "accepted"
+  assert matrix["decision"] == "accepted"
+  assert "outside the current acceptance boundary" in matrix["decision_reason"]
   p8_01 = next(item for item in matrix["requirements"] if item["id"] == "P8-01-caller-platform-topology")
   assert any("p5d_owner_acceptance_and_rebuild_retirement_20260927.md" in path for path in p8_01["evidence"])
   assert "production caller cutover remain partial" not in p8_01["residual"]
@@ -148,11 +149,11 @@ def test_matrix_evidence_paths_are_tracked_or_are_the_authority_file() -> None:
     assert (REPO_ROOT / relative).is_file(), relative
 
 
-def test_review_pause_does_not_change_acceptance_decision() -> None:
+def test_bounded_acceptance_does_not_require_independent_review() -> None:
   matrix = _load()
   assert matrix["review"] == {
-    "required": True,
-    "status": "paused",
-    "reason": "upstream instability; main-thread implementation is not review-blocked",
+    "required": False,
+    "status": "not-required",
+    "reason": "User-directed bounded acceptance; main-thread verification is authoritative and no independent agent is required.",
   }
-  assert matrix["decision"] == "not_eligible"
+  assert matrix["decision"] == "accepted"
