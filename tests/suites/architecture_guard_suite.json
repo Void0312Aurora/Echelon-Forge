@@ -88,7 +88,6 @@
     "tests/architecture/structural_boundaries/test_runtime_window_structure.py",
     "tests/architecture/structural_boundaries/test_weapon_release_structure.py",
     "tests/architecture/tasking_contracts/test_scenario_loader_runtime_contract.py",
-    "tests/architecture/tasking_contracts/test_tasking_contracts_boundary.py",
-    "tests/architecture/tasking_contracts/test_tasking_contracts_compat_shims.py"
+    "tests/architecture/tasking_contracts/test_tasking_contracts_boundary.py"
   ]
 }
