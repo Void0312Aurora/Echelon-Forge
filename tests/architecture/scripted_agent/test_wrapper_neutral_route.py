@@ -37,6 +37,31 @@ def test_combined_wrapper_baseline_consumes_neutral_air_model() -> None:
     assert type(controller._scripted_model).__module__ == "python.tasking_contracts.air_scripted_execution"
 
 
+def test_wrapper_passes_loader_phase_and_syncs_mode_before_residual_scaling() -> None:
+    action_space = SimpleNamespace(shape=(17,))
+    loader = SimpleNamespace(mission_phase_name="approach_armed")
+    controller = MultiTimescaleActionController(
+        action_space=action_space,
+        loader_getter=lambda: loader,
+        dt_getter=lambda: 0.05,
+        scripted_baseline_mode="takeoff_cruise_landing",
+        scripted_residual_mode_scales={"takeoff": 0.1, "landing_ils": 0.2},
+        scripted_blend_indices=(0,),
+    )
+    observation = {
+        "instruments": np.asarray([0.0, 0.0, 0.0, 80.0], dtype=np.float32),
+        "mission": np.asarray([3.0, 0.0, 100.0, 120.0], dtype=np.float32),
+    }
+
+    controller.reset_state(observation)
+    prepared = controller.prepare_action(np.zeros((17,), dtype=np.float32))
+
+    assert prepared.scripted_active_mode == "landing_ils"
+    assert controller._scripted_model is not None
+    assert controller._scripted_model.active_mode == "landing_ils"
+    assert controller._current_scripted_residual_scale() == 0.2
+
+
 def test_both_wrapper_consumers_use_role_aware_registry_creation() -> None:
     source = (REPO_ROOT / "python" / "rl" / "control" / "wrappers.py").read_text(encoding="utf-8")
     assert source.count("AIR_SCRIPTED_MODEL_REGISTRY.create_for") >= 2
