@@ -22,8 +22,10 @@ struct Countermeasures {
     int chaff_count;          // Remaining Chaff
     int flare_count;          // Remaining Flares
     double release_interval;  // Minimum time between releases
-    double last_release_time; // Time of last release
+    double last_release_time; // Shared compatibility/report timestamp
     bool auto_mode;           // Auto-dispense on threat
+    double last_chaff_release_time = 0.0;
+    double last_flare_release_time = 0.0;
 };
 
 struct RWR {

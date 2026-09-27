@@ -58,6 +58,9 @@ struct InstrumentState {
     double countermeasure_release_interval_s = -1.0;
     double countermeasure_last_release_time_s = -1.0;
     bool countermeasure_auto_mode = false;
+    int countermeasure_snapshot_stage = 24;
+    double countermeasure_snapshot_time_s = -1.0;
+    bool countermeasure_snapshot_post_ew = false;
 
     // 6. EGI / Navigation (What pilot sees on HSD/TSD)
     double lat_deg;          // Latitude (from EGI)

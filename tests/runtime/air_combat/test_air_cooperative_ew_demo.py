@@ -35,7 +35,7 @@ def test_cooperative_ew_demo_reports_two_slot_warning_and_owner_trace() -> None:
         },
     ]
     assert [sample["chaff_remaining"] for sample in result["countermeasure_state_samples"][0]] == [60, 59]
-    assert [sample["flare_remaining"] for sample in result["countermeasure_state_samples"][0]] == [30, 30]
+    assert [sample["flare_remaining"] for sample in result["countermeasure_state_samples"][0]] == [29]
     assert [sample["chaff_remaining"] for sample in result["countermeasure_state_samples"][1]] == [60]
     assert [sample["flare_remaining"] for sample in result["countermeasure_state_samples"][1]] == [30]
     assert all(report["active"] for report in result["scripted_opponent_reports"].values())

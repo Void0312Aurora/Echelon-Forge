@@ -35,7 +35,7 @@ def test_scripted_ew_demo_replays_warning_and_inventory_trace() -> None:
     assert first["launch_warning_steps"] == [42, 82]
     assert first["countermeasure_request_steps"] == [42, 82]
     assert [sample["chaff_remaining"] for sample in first["countermeasure_state_samples"]] == [60, 59]
-    assert [sample["flare_remaining"] for sample in first["countermeasure_state_samples"]] == [30, 30]
+    assert [sample["flare_remaining"] for sample in first["countermeasure_state_samples"]] == [29, 29]
 
 
 def test_scripted_ew_demo_can_report_flare_only_consumption() -> None:
