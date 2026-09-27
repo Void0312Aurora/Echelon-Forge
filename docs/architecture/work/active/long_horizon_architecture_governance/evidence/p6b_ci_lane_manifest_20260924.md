@@ -1,6 +1,6 @@
 # P6-B CI Lane Manifest Baseline
 
-Date: `2026-09-25`
+Date: `2026-09-27`
 
 This packet records the first executable P6-B slice. The maintained source is
 `tests/suites/ci_lane_manifest.json`; the checker is
@@ -19,7 +19,7 @@ registry and does not change the P7 archive-retention policy.
 
 The workflow jobs retain their existing build/package boundaries. The new fast
 job exercises the low-cost native labels and lane/authority audits. The
-Windows qualification job selects the three P5-B native tests through the
+Windows qualification job selects the four P5-B native tests through the
 secondary `p5b` label. The release job selects the release-labelled native
 surface and then runs the existing broad `ef_test_all` smoke target. The
 nightly job selects the nightly-labelled native surface while retaining its
@@ -58,15 +58,16 @@ subset:
 
 | Repeat | Audit exit | Test exit | Elapsed |
 | ---: | ---: | ---: | ---: |
-| 1 | 0 | 0 | 30.445 s |
-| 2 | 0 | 0 | 30.742 s |
-| 3 | 0 | 0 | 30.774 s |
+| 1 | 0 | 0 | 33.124 s |
+| 2 | 0 | 0 | 30.166 s |
+| 3 | 0 | 0 | 29.120 s |
 
 This establishes repeatable local declaration and selector behavior only. It
 does not claim hosted-runner resource/flake evidence, branch-protection
 enforcement, or a completed native build. The refreshed run used the current
-`codex/long-horizon-governance-architecture` checkout after the P5-D explicit
-generated-plan migration commit.
+`codex/long-horizon-governance-architecture` checkout after the P7-B control
+retirement and document-census commits. The selector subset itself passed
+**15 tests** on the same configured build.
 
 ## Hosted control-plane check
 
