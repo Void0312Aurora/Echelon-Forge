@@ -56,8 +56,6 @@ class ScriptedCapabilityManifest:
         if not evidence_refs:
             raise ValueError("scripted capability evidence_refs must be non-empty")
         deferred_claims = _string_tuple(raw.get("deferred_claims"), "deferred_claims")
-        if not deferred_claims:
-            raise ValueError("scripted capability deferred_claims must be non-empty")
         return cls(
             version=version,
             domain=domain,
