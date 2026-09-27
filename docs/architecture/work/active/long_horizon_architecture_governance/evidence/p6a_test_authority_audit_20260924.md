@@ -1,6 +1,6 @@
 # P6-A Test Authority Audit Evidence
 
-Status: `2026-09-25` — P6-A implementation baseline; the control-migration
+Status: `2026-09-27` — P6-A implementation baseline; the control-migration
 cluster remains open.
 
 ## Scope
@@ -39,13 +39,13 @@ The checked-out tree currently derives:
 
 | Measure | Result |
 | --- | ---: |
-| Architecture test files | 114 |
-| Manifest entries | 114 |
+| Architecture test files | 115 |
+| Manifest entries | 115 |
 | Tier manifests | 2 |
 | Runner manifests with owner/lane metadata | 4 |
 | Owners / execution strategies | 2 / 2 |
-| Files with source-scan references | 112 |
-| Files retaining the `source_scan_guard` residual flag | 87 |
+| Files with source-scan references | 113 |
+| Files retaining the `source_scan_guard` residual flag | 88 |
 | Files selected by the pytest smoke manifest | 34 |
 | Native CTest entries with a primary lane label | 25 |
 
@@ -106,7 +106,9 @@ git diff --check
 ```
 
 The audit command, Ruff, and diff check passed. This is an implementation
-baseline with two replacement slices; the remaining P6-A replacement/retirement
+baseline with two replacement slices; the refreshed post-P5-D inventory adds
+the maintained rebuild-retirement gate test to the manifest and therefore
+reports 115/115/113/88. The remaining P6-A replacement/retirement
 decisions and P6-B workflow parallelism, repeated CI evidence, and
 failure-routing work remain open.
 
