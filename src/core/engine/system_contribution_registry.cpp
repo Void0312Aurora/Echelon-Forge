@@ -64,6 +64,7 @@
 #include "systems/systems/track_manager_system.h"
 
 #include <algorithm>
+#include <cmath>
 #include <stdexcept>
 #include <string>
 #include <unordered_set>
