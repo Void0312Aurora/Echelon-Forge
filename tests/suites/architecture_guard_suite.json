@@ -76,6 +76,8 @@
     "tests/architecture/runtime_profiles/test_runtime_profile_contracts.py",
     "tests/architecture/runtime_spine/test_clock_domain_enforcement.py",
     "tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py",
+    "tests/architecture/scripted_agent/test_capability_manifests.py",
+    "tests/architecture/tasking_contracts/test_scripted_registry.py",
     "tests/architecture/structural_boundaries/test_binding_quarantine_boundaries.py",
     "tests/architecture/structural_boundaries/test_domain_separation_boundaries.py",
     "tests/architecture/structural_boundaries/test_runtime_window_structure.py",
