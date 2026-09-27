@@ -170,6 +170,25 @@ def build_report(*, root: Path = REPO_ROOT, manifest_path: Path = LANE_MANIFEST)
     if not PRIMARY_LANES.intersection(ctest_labels):
       raise CiLaneAuditError(f"lane {lane_id} must include its primary CTest label")
     primary_seen.update(PRIMARY_LANES.intersection(ctest_labels))
+    selected_ctest_labels = lane.get("selected_ctest_labels")
+    if not isinstance(selected_ctest_labels, list) or not all(
+      isinstance(label, str) and label.strip() for label in selected_ctest_labels
+    ):
+      raise CiLaneAuditError(f"lane {lane_id} must declare selected_ctest_labels")
+    invalid_selected_labels = sorted(set(selected_ctest_labels) - ALLOWED_CTEST_LABELS)
+    if invalid_selected_labels:
+      raise CiLaneAuditError(
+        f"lane {lane_id} selects unsupported CTest labels: {invalid_selected_labels}"
+      )
+    undeclared_selected_labels = sorted(set(selected_ctest_labels) - set(ctest_labels))
+    if undeclared_selected_labels:
+      raise CiLaneAuditError(
+        f"lane {lane_id} selects undeclared CTest labels: {undeclared_selected_labels}"
+      )
+    if lane_id != "research" and not selected_ctest_labels:
+      raise CiLaneAuditError(f"lane {lane_id} must select at least one CTest label")
+    if lane_id == "research" and selected_ctest_labels:
+      raise CiLaneAuditError("research compile-only lane must not select CTest labels")
     for job in jobs:
       job_text = _workflow_job_text(workflow, job)
       if not re.search(rf"(?m)^    runs-on:\s*{re.escape(lane_metadata['runner'])}\s*$", job_text):
@@ -188,7 +207,7 @@ def build_report(*, root: Path = REPO_ROOT, manifest_path: Path = LANE_MANIFEST)
           rf"(?m)^\s*(?:run:\s*)?.*?\bctest\b[^\n]*\s-L\s+{re.escape(label)}(?:\s|$)",
           job_text,
         )
-        for label in ctest_labels
+        for label in selected_ctest_labels
       ):
         raise CiLaneAuditError(
           f"lane {lane_id} workflow job {job} does not select its CTest label"
@@ -219,6 +238,7 @@ def build_report(*, root: Path = REPO_ROOT, manifest_path: Path = LANE_MANIFEST)
         "build_parallelism": build_parallelism,
         "test_parallelism": test_parallelism,
         "ctest_labels": list(ctest_labels),
+        "selected_ctest_labels": list(selected_ctest_labels),
         "pytest_entries": normalized_pytest,
         "contract_suites": normalized_contracts,
       }
@@ -251,11 +271,12 @@ def format_markdown(report: dict[str, Any]) -> str:
     f"- Lanes: `{report['summary']['lane_count']}`",
     f"- Workflow jobs: `{report['summary']['workflow_job_count']}`",
     "",
-    "| Lane | Workflow | Jobs | Runner | Timeout (min) | Build / test parallelism | CTest labels | Failure audience |",
+    "| Lane | Workflow | Jobs | Runner | Timeout (min) | Build / test parallelism | Declared / selected CTest labels | Failure audience |",
     "| --- | --- | --- | --- | ---: | --- | --- | --- |",
   ]
   for row in report["lanes"]:
-    labels = ", ".join(f"`{label}`" for label in row["ctest_labels"])
+    declared_labels = ", ".join(f"`{label}`" for label in row["ctest_labels"])
+    selected_labels = ", ".join(f"`{label}`" for label in row["selected_ctest_labels"]) or "none (compile/link only)"
     jobs = ", ".join(f"`{job}`" for job in row["jobs"])
     lines.append(
       "| " + " | ".join(
@@ -266,7 +287,7 @@ def format_markdown(report: dict[str, Any]) -> str:
           row["runner"],
           str(row["timeout_minutes"]),
           f"{row['build_parallelism']} / {row['test_parallelism']}",
-          labels,
+          f"declared: {declared_labels}; selected: {selected_labels}",
           row["failure_audience"],
         ]
       ) + " |"

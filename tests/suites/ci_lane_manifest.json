@@ -17,6 +17,7 @@
       "build_parallelism": 2,
       "test_parallelism": 1,
       "ctest_labels": ["fast"],
+      "selected_ctest_labels": ["fast"],
       "pytest_entries": [],
       "contract_suites": [],
       "run_mode": "native-and-source-audit"
@@ -33,6 +34,7 @@
       "build_parallelism": 2,
       "test_parallelism": 1,
       "ctest_labels": ["qualification", "p5b"],
+      "selected_ctest_labels": ["p5b"],
       "pytest_entries": ["tests/architecture/composition/test_runtime_run_receipt.py"],
       "contract_suites": [],
       "run_mode": "native-and-python"
@@ -49,6 +51,7 @@
       "build_parallelism": 2,
       "test_parallelism": 1,
       "ctest_labels": ["nightly"],
+      "selected_ctest_labels": ["nightly"],
       "pytest_entries": [],
       "contract_suites": [],
       "run_mode": "coverage-and-artifact"
@@ -65,6 +68,7 @@
       "build_parallelism": 2,
       "test_parallelism": 1,
       "ctest_labels": ["release"],
+      "selected_ctest_labels": ["release"],
       "pytest_entries": [],
       "contract_suites": ["tests/smoke/ci_contract_suite.json"],
       "run_mode": "native-python-contract-and-wheel"
@@ -81,6 +85,7 @@
       "build_parallelism": 2,
       "test_parallelism": 1,
       "ctest_labels": ["research"],
+      "selected_ctest_labels": [],
       "pytest_entries": [],
       "contract_suites": [],
       "run_mode": "compile-and-link-only"
