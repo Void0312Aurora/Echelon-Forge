@@ -91,7 +91,7 @@ $env:CMO_BUILD_DIR='build-long-horizon-p5c-shared'
 python -m pytest -q tests/architecture/build_system/test_ctest_lane_labels.py
 ```
 
-Result: **2 passed**. The configured Release CTest inventory reports 25 native
+Result: **3 passed**. The configured Release CTest inventory reports 25 native
 entries; every entry has at least one primary lane label and the declared
 `fast`, `qualification`, `nightly`, `release`, and `research` audiences are
 all represented.
@@ -116,4 +116,4 @@ Document kind: `evidence`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/evidence/p6a_test_authority_audit_20260924.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-09-25`
+Last verified: `2026-09-27`

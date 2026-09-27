@@ -35,7 +35,7 @@ three-cycle packet.
 | Measurement | Observed result | Owner | Boundary |
 | --- | ---: | --- | --- |
 | Declared controls | 6 total at the 2026-09-27 measurement: 5 permanent, 1 migratory | cross-domain architecture | manifest-level declarations; the zero-entry UniversalEnv control and superseded archive-transition registration were retired by P7-B |
-| Migratory rows due at simulated `2027-04-01` | 2 | cross-domain architecture | disposition simulation, not a renewal |
+| Migratory rows due at simulated `2027-04-01` | 1 | cross-domain architecture | disposition simulation, not a renewal |
 | Healthy control check runs | 12/12 passed; 0 healthy-sample failures | cross-domain architecture | current checkout, four groups × three runs |
 | Check execution cost | 281.8896640 s total; 23.4908053 s mean per group run | release engineering | local Windows CPython 3.12 process |
 | Supported-row SLO runs | 3/3 passed; 3 total cycles | release/runtime integration | current and rollback local builds |
@@ -123,4 +123,4 @@ Document kind: `evidence`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/evidence/p2b_sustainability_baseline_20260923.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-09-25`
+Last verified: `2026-09-27`

@@ -85,6 +85,7 @@ def test_p2b_baseline_records_repeatable_control_and_runtime_observations() -> N
 
   assert report["status"] == "passed"
   assert report["controls"]["declared"] == 6
+  assert report["controls"]["migratory_due_2027_04_01"] == 1
   assert report["control_yield"]["check_runs"] == 4
   assert report["control_yield"]["observed_pass_rate"] == 1.0
   assert report["supported_row"]["total_cycles"] == 1

@@ -33,8 +33,8 @@ the archive-retirement gate, the governance-suite membership, the repository
 indexes, and the Git-ledger restore route now provide the maintained control.
 The executable `test_archive_retirement.py` remains in the governance suite;
 only the superseded migration-era lifecycle registration was retired. This
-keeps the active archive gate while removing a duplicate, expired migration
-control.
+keeps the active archive gate while removing a duplicate, superseded
+migration-era registration after successor proof.
 
 ## Verification
 
@@ -77,4 +77,4 @@ Document kind: `evidence`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/evidence/p7b_zero_inventory_retirement_20260924.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-09-24`
+Last verified: `2026-09-27`

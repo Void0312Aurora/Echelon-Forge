@@ -246,12 +246,13 @@ They must be remeasured before an implementation or acceptance claim.
   field/vocabulary checks into compiled probes, reducing the residual
   source-scan count from 88 to 86. The focused P6-A
   authority/manifest/lifecycle/replacement set passes 31 tests and the CTest
-  label check passes 2 tests. The five-lane P6-B declaration maps fast,
+  label check passes 3 tests. The five-lane P6-B declaration maps fast,
   qualification, nightly, release, and research to existing workflow jobs with
-  explicit runner, timeout, build/test parallelism, failure audience, and CTest
-  selectors; its focused lane/CTest checks pass 6 tests, and the 15-test local
-  selector subset passed three fresh consecutive repeats (33.124 s, 30.166 s,
-  29.120 s) on 2026-09-27. This is repeatable local declaration behavior, not hosted CI
+  explicit runner, timeout, build/test parallelism, failure audience, declared
+  labels, and actual workflow-selected CTest labels; its focused lane/CTest
+  checks pass 7 tests, and the 16-test local
+  selector subset passed three fresh consecutive repeats (35.850 s, 35.592 s,
+  35.561 s) on 2026-09-27. This is repeatable local declaration behavior, not hosted CI
   resource/flake or branch-protection evidence.
   A read-only GitHub check on 2026-09-25 found `main` unprotected and no
   repository rulesets; hosted control-plane evidence therefore remains open.
