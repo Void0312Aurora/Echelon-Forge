@@ -724,26 +724,26 @@ damage_effective_detonation_world_point(const Missile &missile, const Transform 
     };
 }
 
-inline std::array<double, 3> damage_online_sensor_detonation_world_point(
-    const Missile &missile, const Transform &target_transform,
-    const Transform &fallback_missile_transform) {
-    if (!std::isfinite(missile.fuze_detonation_x) ||
-        !std::isfinite(missile.fuze_detonation_y) ||
+inline std::array<double, 3>
+damage_online_sensor_detonation_world_point(const Missile &missile,
+                                            const Transform &target_transform,
+                                            const Transform &fallback_missile_transform) {
+    if (!std::isfinite(missile.fuze_detonation_x) || !std::isfinite(missile.fuze_detonation_y) ||
         !std::isfinite(missile.fuze_detonation_z) ||
         !std::isfinite(missile.proximity_last_target_x_m) ||
         !std::isfinite(missile.proximity_last_target_y_m) ||
         !std::isfinite(missile.proximity_last_target_z_m)) {
-        return damage_effective_detonation_world_point(
-            missile, target_transform, fallback_missile_transform, false, false);
+        return damage_effective_detonation_world_point(missile, target_transform,
+                                                       fallback_missile_transform, false, false);
     }
 
     Transform target_at_trigger = target_transform;
     target_at_trigger.x = missile.proximity_last_target_x_m;
     target_at_trigger.y = missile.proximity_last_target_y_m;
     target_at_trigger.z = missile.proximity_last_target_z_m;
-    const auto local_point = damage_world_point_to_local_body(
-        target_at_trigger, missile.fuze_detonation_x, missile.fuze_detonation_y,
-        missile.fuze_detonation_z);
+    const auto local_point =
+        damage_world_point_to_local_body(target_at_trigger, missile.fuze_detonation_x,
+                                         missile.fuze_detonation_y, missile.fuze_detonation_z);
     return damage_local_body_point_to_world(target_transform, local_point[0], local_point[1],
                                             local_point[2]);
 }
@@ -1039,8 +1039,8 @@ inline void register_damage_system_common(flecs::world &ecs) {
                     const auto detonation_world =
                         online_sensor_trigger
                             ? damage_online_sensor_detonation_world_point(m[i], *t_pos, p[i])
-                            : damage_effective_detonation_world_point(
-                                  m[i], *t_pos, p[i], contact_fuze, timed_fuze);
+                            : damage_effective_detonation_world_point(m[i], *t_pos, p[i],
+                                                                      contact_fuze, timed_fuze);
                     p[i].x = detonation_world[0];
                     p[i].y = detonation_world[1];
                     p[i].z = detonation_world[2];
