@@ -14,7 +14,6 @@ import hashlib
 import json
 import os
 import platform
-import re
 import subprocess
 import sys
 from io import BytesIO
@@ -227,17 +226,11 @@ def _write_bytes(path: Path, payload: bytes) -> None:
 
 
 def _torch_bytes(payload: Any) -> bytes:
+    # The zip serializer is deterministic for the fixed tensor/container graph
+    # used here and avoids process-specific legacy storage identifiers.
     buffer = BytesIO()
-    torch.save(payload, buffer, _use_new_zipfile_serialization=False)
-    raw = buffer.getvalue()
-    # Legacy torch serialization embeds process-specific decimal storage IDs.
-    # Canonicalize only those identifiers; tensor contents and optimizer state
-    # remain genuine torch.save payloads and torch.load stays valid.
-    storage_ids = re.findall(rb"X\x0d\x00\x00\x00([0-9]{13})", raw)
-    unique_ids = sorted(set(storage_ids))
-    for ordinal, storage_id in enumerate(unique_ids, start=1):
-        raw = raw.replace(storage_id, f"{ordinal:013d}".encode("ascii"))
-    return raw
+    torch.save(payload, buffer)
+    return buffer.getvalue()
 
 
 def _load_profile_artifacts(
