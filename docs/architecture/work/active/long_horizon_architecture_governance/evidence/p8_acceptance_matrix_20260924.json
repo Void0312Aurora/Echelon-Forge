@@ -3,9 +3,9 @@
   "kind": "derived_acceptance_matrix",
   "authority": "docs/architecture/work/active/long_horizon_architecture_governance/long_horizon_architecture_governance_acceptance_20260825.md",
   "phase": "P8-A",
-  "last_verified": "2026-09-25",
+  "last_verified": "2026-09-27",
   "decision": "not_eligible",
-  "decision_reason": "P5-D production cutover, representative cadence, rollback-window operation, provider restore drills, and independent P8-B review remain open.",
+  "decision_reason": "Representative cadence, provider restore drills, and independent P8-B review remain open; P5-D owner acceptance and production rebuild-authority retirement are recorded.",
   "requirements": [
     {
       "id": "P8-01-caller-platform-topology",
@@ -16,9 +16,10 @@
         "docs/architecture/work/active/long_horizon_architecture_governance/decisions/p1c_rollout_operations_and_security_decision_20260825.md",
         "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5d_facade_caller_migration_20260923.md",
         "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5d_maintained_caller_parity_20260925.md",
-        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p7b_zero_inventory_retirement_20260924.md"
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p7b_zero_inventory_retirement_20260924.md",
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5d_owner_acceptance_and_rebuild_retirement_20260927.md"
       ],
-      "residual": "The bounded maintained-caller parity gate is complete for the local CPU topology; Linux/package qualification and production caller cutover remain partial."
+      "residual": "The bounded maintained-caller parity gate and owner-accepted production rebuild-authority retirement are complete for the local CPU topology; Linux/package qualification and broader topology remain partial."
     },
     {
       "id": "P8-02-contract-replay-packaging",
@@ -31,7 +32,7 @@
         "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5c_facade_only_package_qualification_20260922.md",
         "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5d_real_process_package_rollback_20260923.md"
       ],
-      "residual": "Evidence is qualified for the bounded local topology; production activation and broader platform/package rows remain open."
+      "residual": "Evidence is qualified for the bounded local topology; broader platform/package rows remain open."
     },
     {
       "id": "P8-03-operations-security-restore",

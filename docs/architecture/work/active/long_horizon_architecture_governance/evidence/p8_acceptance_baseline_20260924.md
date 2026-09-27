@@ -1,6 +1,6 @@
 # P8-A Acceptance Baseline Evidence
 
-Status: `2026-09-25` — acceptance matrix and local governance baseline; P8 is
+Status: `2026-09-27` — acceptance matrix and local governance baseline; P8 is
 not accepted.
 
 ## Scope
@@ -10,9 +10,10 @@ requirements and five platform/process rows defined by the maintained
 acceptance contract. It deliberately records partial/open residuals rather
 than turning existing local evidence into a closure claim.
 
-The current decision is `not_eligible` because production cutover,
-representative release cadence, production rollback-window operation,
-provider restore drills, and independent P8-B review remain open. Unsupported
+The current decision is `not_eligible` because representative release cadence,
+provider restore drills, and independent P8-B review remain open. P5-D owner
+acceptance and production rebuild-authority retirement are recorded separately;
+they do not by themselves close P8. Unsupported
 multi-process, external-host, and CUDA-canonical rows are explicitly
 fail-closed.
 
@@ -50,9 +51,8 @@ the matrix and is not inferred from this one local run.
 
 This evidence does not establish:
 
-- production truth publication or maintained caller cutover;
 - Linux/package qualification beyond the recorded partial row;
-- production rollback-window operation or rebuild retirement;
+- representative release cadence or broader topology qualification;
 - an admitted external evidence provider or production rollback-window restore
   drill; the bounded local SQLite restore drill is recorded separately; or
 - independent P8-B review.
