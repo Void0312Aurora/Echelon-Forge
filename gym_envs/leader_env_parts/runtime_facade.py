@@ -344,6 +344,12 @@ class LeaderRuntimeFacadeMixin:
         return build_execution_policy(self)
 
     def close(self):
+        policy = getattr(self, "_exec_policy", None)
+        self._exec_policy = None
+        if policy is not None:
+            close = getattr(policy, "close", None)
+            if callable(close):
+                close()
         runtime = getattr(self, "_exec_runtime", None)
         self._exec_runtime = None
         close_execution_runtime(runtime)

@@ -38,7 +38,10 @@ def normalize_action(action, *, action_space, action_mode: str) -> np.ndarray:
 
 
 def is_air_combat_hybrid_action_mode(action_mode: str) -> bool:
-    return str(action_mode) == AIR_COMBAT_HYBRID_V1_ACTION_MODE
+    return str(action_mode) in {
+        AIR_COMBAT_HYBRID_V1_ACTION_MODE,
+        AIR_EW_HYBRID_V1_ACTION_MODE,
+    }
 
 
 def is_air_ew_hybrid_action_mode(action_mode: str) -> bool:
@@ -47,24 +50,33 @@ def is_air_ew_hybrid_action_mode(action_mode: str) -> bool:
 
 def air_combat_hybrid_effective_action(action: np.ndarray, *, previous_intent=None) -> np.ndarray:
     raw = np.asarray(action, dtype=np.float32).reshape(-1)
-    if raw.size != expected_action_dim(AIR_COMBAT_HYBRID_V1_ACTION_MODE):
+    combat_dim = expected_action_dim(AIR_COMBAT_HYBRID_V1_ACTION_MODE)
+    ew_dim = expected_action_dim(AIR_EW_HYBRID_V1_ACTION_MODE)
+    if raw.size not in {combat_dim, ew_dim}:
         raise ValueError(
             f"Action shape mismatch for action_mode='{AIR_COMBAT_HYBRID_V1_ACTION_MODE}': "
             f"got {raw.shape}."
         )
-    prev = np.zeros_like(raw)
+
+    prefix = raw[:combat_dim]
+    prev = np.zeros((combat_dim,), dtype=np.float32)
     if previous_intent is not None:
         prev_arr = np.asarray(previous_intent, dtype=np.float32).reshape(-1)
-        if prev_arr.size == raw.size:
-            prev = prev_arr
+        if prev_arr.size >= combat_dim:
+            prev = prev_arr[:combat_dim]
 
-    effective = raw.astype(np.float32, copy=True)
+    effective_prefix = prefix.astype(np.float32, copy=True)
     for idx in (6, 8):
-        effective[idx] = 1.0 if float(raw[idx]) > 0.5 else 0.0
+        effective_prefix[idx] = 1.0 if float(prefix[idx]) > 0.5 else 0.0
     for idx in (7, 9, 10):
-        effective[idx] = 1.0 if float(raw[idx]) > 0.5 and float(prev[idx]) <= 0.5 else 0.0
-    effective[11] = float(np.clip(round(float(raw[11])), 0, 7))
-    return effective.astype(np.float32, copy=False)
+        effective_prefix[idx] = 1.0 if float(prefix[idx]) > 0.5 and float(prev[idx]) <= 0.5 else 0.0
+    effective_prefix[11] = float(np.clip(round(float(prefix[11])), 0, 7))
+    if raw.size == ew_dim:
+        return np.concatenate((effective_prefix, raw[combat_dim:]), axis=0).astype(
+            np.float32,
+            copy=False,
+        )
+    return effective_prefix.astype(np.float32, copy=False)
 
 
 def build_pilot_action(action: np.ndarray, *, action_mode: str, inst_now=None):

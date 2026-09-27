@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 
@@ -99,9 +101,40 @@ def test_ew_action_model_emits_versioned_extension_and_is_registered_as_adapter(
         dt=0.05,
     )
     assert action.shape == (AIR_EW_HYBRID_ACTION_DIM,)
+    assert np.all(action[4:12] == 0.0)
     assert action[12] == 1.0
     assert action[13] == 1.0
     model.close()
     entries = AIR_SCRIPTED_MODEL_REGISTRY.resolve(domain="air", role_id="air_ew_action_controller")
     assert [entry.model_id for entry in entries] == [AIR_SCRIPTED_EW_ACTION_MODEL_ID]
     assert entries[0].status == "adapter"
+
+
+def test_ew_hybrid_routes_combat_prefix_through_both_maintained_consumers() -> None:
+    from gym_envs.universal_env_parts.actions import (
+        air_combat_hybrid_effective_action,
+        is_air_combat_hybrid_action_mode,
+    )
+
+    assert is_air_combat_hybrid_action_mode(AIR_EW_HYBRID_V1_ACTION_MODE) is True
+    raw = np.zeros((AIR_EW_HYBRID_ACTION_DIM,), dtype=np.float32)
+    raw[6] = 1.0
+    raw[9] = 1.0
+    raw[12] = 1.0
+    raw[13] = 1.0
+    effective = air_combat_hybrid_effective_action(raw)
+    assert effective[6] == 1.0
+    assert effective[9] == 1.0
+    assert effective[12] == 1.0
+    assert effective[13] == 1.0
+
+    repo_root = Path(__file__).resolve().parents[3]
+    for relative in (
+        "python/rl/runtime/world_batch/vec_env.py",
+        "python/rl/runtime/single_world_batch_runtime.py",
+    ):
+        source = (repo_root / relative).read_text(encoding="utf-8")
+        assert "is_air_combat_hybrid_action_mode" in source
+        assert "air_combat_hybrid_effective_action" in source
+        assert "apply_air_combat_event_action_gate" in source
+        assert "finalize_air_combat_event_action_info" in source
