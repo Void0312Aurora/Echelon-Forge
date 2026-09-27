@@ -206,12 +206,27 @@ Mode resolution is persisted by the pair
 `hyperparameters.policy_kwargs.launch_decision_contract_version` and exactly
 one of `launch_decision_mode` or `launch_decision_owner_mode`. The version must
 be `launch_decision_owner_v1`; duplicate locations are allowed only when they
-agree. An old configuration with neither the version nor a mode is resolved to
-`legacy_composed_v0` for compatibility. Any explicit mode, owner-mode alias, or
-version marker without its matching pair is rejected as ambiguous. A strict
-mode additionally requires `hybrid_event_head_lr_scale > 0` and is never
-eligible for a headless configuration. C1 records all 14 active configurations
-in the resolver manifest, mapping each to one mode and acceptance eligibility.
+agree. Explicit owner-v1 configurations must provide the complete version/mode
+pair; a partial pair or conflicting duplicate is rejected as ambiguous.
+
+The only unmarked compatibility fallback is an exact C0 legacy-provenance
+match. For every baseline configuration eligible for that fallback, the
+immutable v1 manifest records the frozen source commit, repository-relative
+config path, and SHA-256 of the exact UTF-8 config bytes. Translation/load code
+may resolve an input with neither version nor mode to `legacy_composed_v0` only
+when all three values match one manifest entry. A copied, renamed, edited,
+generated, or otherwise unlisted unmarked configuration is rejected as
+`unmarked_nonlegacy_config`; newly authored configurations therefore cannot
+acquire `legacy_window_precedence` merely by omitting the owner-v1 marker.
+
+A strict mode additionally requires `hybrid_event_head_lr_scale > 0` and is
+never eligible for a headless configuration. C1 records all 14 active
+configurations in the resolver manifest, mapping each to one mode and
+acceptance eligibility. Its contract matrix must enumerate provenance match
+versus mismatch, complete/partial/absent marker state, head present versus
+headless, and both adapter flags; every row must resolve to exactly one owner
+mode or an explicit rejection, including the legacy precedence trace where it
+is allowed.
 
 The owner contract also fixes the training scopes. A strict direct-boundary
 update may write only hybrid_event_head.*; an ordinary PPO update that writes
@@ -334,25 +349,53 @@ C0 must freeze one immutable v1 manifest containing:
 
 - all active air_combat_hybrid_v1 configurations, including the baseline seven
   headless and seven event-head-enabled entries;
+- for every configuration allowed to use the unmarked legacy fallback, its
+  frozen source commit, repository-relative path, and SHA-256 of the exact
+  UTF-8 config bytes; these entries form the complete legacy provenance
+  allowlist and no later cluster may add to it;
 - one representative checkpoint/state-dict for each owner mode that actually
   exists;
 - optimizer state and parameter-group metadata for each representative mode;
 - window-classifier replay state, including storage type, capacity, keys, and
   positive/negative rows where available;
-- a fixed observation fixture set and CPU float32 execution environment.
+- a fixed observation fixture set and CPU float32 execution environment;
+- the strict learned-firing acceptance identity described below, including
+  probe mode, sampling lane, seed/episode coverage, exact counter keys, and all
+  numeric limits.
 
 After C0 closes, no later cluster may rewrite this manifest. C4 may create a
 separately versioned migration manifest that references the C0 SHA-256; it must
-not add target artifacts to the C0 file.
+not add target artifacts, provenance entries, or acceptance thresholds to the
+C0 file.
 
 The compatibility probe uses seeds 0, 1, 2 and three declared episodes per
-seed for runtime behavior. For fixed observation fixtures, the legacy mode must
-preserve tensor shapes, state-dict keys, optimizer-group names/order, and
-masked support exactly. CPU float32 unmasked event pairs, event deltas,
-probabilities, log-probabilities, and entropies use
-torch.testing.assert_close(rtol=1e-5, atol=1e-6). Any intentional drift
-outside that tolerance requires a named migration mode and an updated expected
-fixture; it cannot be hidden under a rename.
+seed for runtime behavior. For strict learned-firing acceptance, C0 pins both a
+`deterministic` and a `stochastic` learned-model lane over every one of those
+nine seed/episode cells; no cell may be omitted and an aggregate-only pass is
+invalid. The probe mode is `model`, forced/manual fire injection is false, and
+the episode-summary counter namespace is the existing process-probe keys
+`fire_once_requested_count`, `fire_once_accepted_count`,
+`fire_once_rejected_count`, `release_count`, `authorized_release_count`,
+`violation_release_count`, and `repeat_release_before_assessment_count`.
+
+Every deterministic and stochastic cell must independently satisfy
+`fire_once_requested_count >= 1`, `fire_once_accepted_count >= 1`,
+`release_count >= 1`, `authorized_release_count >= 1`,
+`violation_release_count == 0`, and
+`repeat_release_before_assessment_count == 0`. The v1 stochastic-rejection
+bound is fixed before execution at `fire_once_rejected_count == 0` per cell and
+`0` across the full stochastic matrix; the deterministic lane uses the same
+zero-rejection requirement. Each cell must also report `first_release_step`.
+Changing the coverage rule, counter keys, or any numeric limit requires a new
+versioned acceptance identity rather than editing the v1 result after the
+probe.
+
+For fixed observation fixtures, the legacy mode must preserve tensor shapes,
+state-dict keys, optimizer-group names/order, and masked support exactly. CPU
+float32 unmasked event pairs, event deltas, probabilities, log-probabilities,
+and entropies use torch.testing.assert_close(rtol=1e-5, atol=1e-6). Any
+intentional drift outside that tolerance requires a named migration mode and
+an updated expected fixture; it cannot be hidden under a rename.
 
 Checkpoint loading must either restore the optimizer and replay state exactly
 or fail with an actionable migration error. A successful policy-only load is
@@ -426,14 +469,16 @@ all of the following are true:
   independent reviewer is required for this stream; focused tests, fixture
   hashes, and the owner trace are the acceptance evidence.
 
-The strict learned-firing gate is executable rather than reporting-only. A
-non-forced learned-policy probe must record at least one requested, accepted,
-released, and authorized release across the declared seed/episode matrix;
-repeat-before-assessment and authority violations must be zero, the learned
-policy flag must be true, and stochastic rejections must remain within the
-declared bound. A missing probe marker or any threshold failure blocks the
-strict acceptance lane. Kill, damage, Pk, and effects results are not
-substitutes.
+The strict learned-firing gate is executable and consumes the immutable C0
+acceptance identity; C5 may not choose coverage or thresholds after seeing
+results. Both deterministic and stochastic learned-model lanes must execute all
+nine seed/episode cells. Every cell must independently meet the pinned
+requested/accepted/released/authorized minima, zero violation and
+repeat-before-assessment counters, zero `fire_once_rejected_count`, and a
+reported `first_release_step`. Probe mode must be `model`, forced/manual fire
+injection must be false, and a missing cell, counter key, probe marker, or
+threshold is Blocked. Aggregate counts cannot compensate for a failing or empty
+cell. Kill, damage, Pk, and effects results are not substitutes.
 
 ## Residuals and next steps
 
