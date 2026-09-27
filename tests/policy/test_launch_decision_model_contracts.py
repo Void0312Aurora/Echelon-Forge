@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 from typing import Any
@@ -17,6 +20,10 @@ from python.rl.policy_algo.model_contracts import (
   resolve_launch_decision_contract,
   validate_launch_decision_contract,
   validate_training_config_contract,
+)
+from tools.maintenance.generate_launch_decision_fixtures import (
+  _active_hybrid_configs,
+  _source_revision,
 )
 
 
@@ -44,6 +51,39 @@ def _config(**policy_kwargs: Any) -> dict[str, Any]:
 
 def _resolve(config: dict[str, Any]):
   return resolve_launch_decision_contract(config, require_legacy_provenance=False)
+
+
+def _init_fixture_repo(root: Path) -> Path:
+  subprocess.run(["git", "init", str(root)], check=True, capture_output=True)
+  subprocess.run(
+    ["git", "-C", str(root), "config", "user.email", "fixture@example.invalid"],
+    check=True,
+  )
+  subprocess.run(
+    ["git", "-C", str(root), "config", "user.name", "Fixture Test"],
+    check=True,
+  )
+  config_path = (
+    root
+    / "examples"
+    / "config"
+    / "training"
+    / "active"
+    / "air_combat"
+    / "fixture.json"
+  )
+  config_path.parent.mkdir(parents=True, exist_ok=True)
+  config_path.write_text(
+    json.dumps(_config(hybrid_event_head_lr_scale=10.0), sort_keys=True) + "\n",
+    encoding="utf-8",
+  )
+  subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+  subprocess.run(
+    ["git", "-C", str(root), "commit", "-m", "fixture baseline"],
+    check=True,
+    capture_output=True,
+  )
+  return config_path
 
 
 class LaunchDecisionModelContractTests(unittest.TestCase):
@@ -100,6 +140,50 @@ class LaunchDecisionModelContractTests(unittest.TestCase):
       require_legacy_provenance=True,
     )
     self.assertTrue(any("unmarked_nonlegacy_config" in item.reason for item in violations))
+
+  def test_fixture_inventory_reads_declared_revision_not_dirty_worktree(self) -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+      root = Path(temp_dir)
+      config_path = _init_fixture_repo(root)
+      frozen_revision = _source_revision(root, "HEAD")
+      committed_bytes = config_path.read_bytes()
+
+      config_path.write_text(
+        json.dumps(_config(hybrid_event_head_lr_scale=0.0), sort_keys=True) + "\n",
+        encoding="utf-8",
+      )
+      self.assertNotEqual(config_path.read_bytes(), committed_bytes)
+
+      records = _active_hybrid_configs(root, frozen_revision)
+
+      self.assertEqual(len(records), 1)
+      self.assertEqual(records[0]["source_revision"], frozen_revision)
+      self.assertEqual(
+        records[0]["sha256"],
+        hashlib.sha256(committed_bytes).hexdigest(),
+      )
+      self.assertNotEqual(
+        records[0]["sha256"],
+        hashlib.sha256(config_path.read_bytes()).hexdigest(),
+      )
+
+  def test_fixture_source_revision_rejects_unknown_and_non_commit(self) -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+      root = Path(temp_dir)
+      _init_fixture_repo(root)
+
+      with self.assertRaises(subprocess.CalledProcessError):
+        _source_revision(root, "definitely-not-a-revision")
+
+      blob = subprocess.run(
+        ["git", "-C", str(root), "hash-object", "-w", "--stdin"],
+        input="not a commit\n",
+        check=True,
+        capture_output=True,
+        text=True,
+      ).stdout.strip()
+      with self.assertRaises(subprocess.CalledProcessError):
+        _source_revision(root, blob)
 
   def test_strict_mode_has_single_direct_write_owner(self) -> None:
     config = _config(
