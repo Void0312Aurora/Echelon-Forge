@@ -115,7 +115,10 @@ class ScriptedExecutiveController:
             dt = 0.05
         clock_s = float(getattr(self.env.unwrapped, "steps", 0)) * max(dt, 1.0e-6)
         phase_name = self._phase_name()
-        observation_version = f"step:{int(getattr(self.env.unwrapped, "steps", 0))}"
+        observation_version = (
+            f"reset:{self._runtime_agent.reset_index}:"
+            f"step:{int(getattr(self.env.unwrapped, "steps", 0))}"
+        )
         self._last_runtime_step = self._runtime_agent.step(
             observation=obs,
             clock_s=clock_s,
