@@ -1,7 +1,7 @@
 """Dependency-terminal runtime for independent scripted decision models.
 
 The runtime owns only the common scheduling envelope: model lifecycle, clock
-monotonicity, decision cadence, action hold/expiry, provenance context, and
+monotonicity, decision cadence, cached decision outputs, provenance context, and
 active-roster routing. Observation, action, intent, and report payloads stay
 opaque and remain owned by domain adapters. This module deliberately does not
 import RL, gym, NumPy, native bindings, or a simulation runtime.
@@ -22,7 +22,6 @@ SCRIPTED_RUNTIME_STATUS_TERMINATED = "terminated"
 SCRIPTED_RUNTIME_STATUS_CLOSED = "closed"
 SCRIPTED_RUNTIME_ACTION_DECIDED = "decided"
 SCRIPTED_RUNTIME_ACTION_HELD = "held"
-SCRIPTED_RUNTIME_ACTION_EXPIRED = "expired"
 
 
 def _finite_nonnegative(value: float, *, name: str) -> float:
@@ -44,8 +43,6 @@ class ScriptedRuntimeAgentSpec:
     domain: str
     role_id: str
     decision_period_s: float = 0.0
-    action_hold_s: float = 0.0
-    action_expiry_s: float | None = None
     communication_state: str = "available"
     authority_scope: str = "unspecified"
     active: bool = True
@@ -73,13 +70,6 @@ class ScriptedRuntimeAgentSpec:
             "decision_period_s",
             _finite_nonnegative(self.decision_period_s, name="decision_period_s"),
         )
-        object.__setattr__(self, "action_hold_s", _finite_nonnegative(self.action_hold_s, name="action_hold_s"))
-        if self.action_expiry_s is not None:
-            object.__setattr__(
-                self,
-                "action_expiry_s",
-                _finite_nonnegative(self.action_expiry_s, name="action_expiry_s"),
-            )
 
 
 @dataclass(frozen=True)
@@ -95,7 +85,6 @@ class ScriptedRuntimeReport:
     decision_index: int
     observation_version: str
     action_source: str
-    action_expiry_s: float | None
     communication_state: str
     runtime_status: str
 
@@ -122,8 +111,8 @@ class ScriptedRuntimeAgent:
         self.episode_seed: int | None = None
         self.reset_index = 0
         self._last_clock_s: float | None = None
+        self._last_decision_clock_s: float | None = None
         self._next_decision_s: float = 0.0
-        self._action_expiry_s: float | None = None
         self._last_action: Any = None
         self._has_action = False
         self._decision_index = 0
@@ -137,8 +126,8 @@ class ScriptedRuntimeAgent:
         self.reset_index += 1
         self.episode_seed = None if episode_seed is None else int(episode_seed)
         self._last_clock_s = None
+        self._last_decision_clock_s = None
         self._next_decision_s = 0.0
-        self._action_expiry_s = None
         self._last_action = None
         self._has_action = False
         self._decision_index = 0
@@ -178,18 +167,22 @@ class ScriptedRuntimeAgent:
                 f"scripted runtime clock moved backwards for {self.spec.agent_id!r}: "
                 f"{now} < {self._last_clock_s}"
             )
-        dt = 0.0 if self._last_clock_s is None else now - self._last_clock_s
         self._last_clock_s = now
         observation_key = str(observation_version)
 
-        expired = self._has_action and self._action_expiry_s is not None and now >= self._action_expiry_s
         due = (
             bool(force_decide)
             or not self._has_action
-            or expired
             or now >= self._next_decision_s
         )
+        decision_dt = 0.0
         if due:
+            decision_dt = (
+                0.0
+                if self._last_decision_clock_s is None
+                else now - self._last_decision_clock_s
+            )
+            self._last_decision_clock_s = now
             model_context = dict(context) if isinstance(context, Mapping) else {}
             model_context.update(
                 {
@@ -198,7 +191,7 @@ class ScriptedRuntimeAgent:
                     "domain": self.spec.domain,
                     "role_id": self.spec.role_id,
                     "clock_s": now,
-                    "dt_s": dt,
+                    "dt_s": decision_dt,
                     "observation_version": observation_key,
                     "communication_state": self.spec.communication_state,
                     "authority_scope": self.spec.authority_scope,
@@ -207,17 +200,13 @@ class ScriptedRuntimeAgent:
                     "replay_identity": self.replay_identity,
                 }
             )
-            self._last_action = self.model.decide(observation=observation, context=model_context, dt=dt)
+            self._last_action = self.model.decide(observation=observation, context=model_context, dt=decision_dt)
             self._has_action = True
             self._decision_index += 1
             self._next_decision_s = now + self.spec.decision_period_s
-            expiry = self.spec.action_expiry_s
-            if expiry is None:
-                expiry = self.spec.action_hold_s
-            self._action_expiry_s = None if expiry <= 0.0 else now + expiry
             source = SCRIPTED_RUNTIME_ACTION_DECIDED
         else:
-            source = SCRIPTED_RUNTIME_ACTION_EXPIRED if expired else SCRIPTED_RUNTIME_ACTION_HELD
+            source = SCRIPTED_RUNTIME_ACTION_HELD
 
         report = ScriptedRuntimeReport(
             agent_id=self.spec.agent_id,
@@ -225,11 +214,10 @@ class ScriptedRuntimeAgent:
             domain=self.spec.domain,
             role_id=self.spec.role_id,
             clock_s=now,
-            dt_s=dt,
+            dt_s=decision_dt,
             decision_index=self._decision_index,
             observation_version=observation_key,
             action_source=source,
-            action_expiry_s=self._action_expiry_s,
             communication_state=self.spec.communication_state,
             runtime_status=self.status,
         )
@@ -343,7 +331,6 @@ class ScriptedRuntimeRoster:
 
 __all__ = [
     "SCRIPTED_RUNTIME_ACTION_DECIDED",
-    "SCRIPTED_RUNTIME_ACTION_EXPIRED",
     "SCRIPTED_RUNTIME_ACTION_HELD",
     "SCRIPTED_RUNTIME_STATUS_CLOSED",
     "SCRIPTED_RUNTIME_STATUS_READY",
