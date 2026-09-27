@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from python.runtime_bootstrap import ensure_repo_imports
@@ -257,11 +258,34 @@ def test_proxy_gym_reset_is_seed_stable_and_emits_fixed_observation_contract() -
     second_obs, second_info = second_env.reset(seed=42)
 
     assert first_env.action_space.shape == (4,)
+    assert "mission_goal_relative_state" in first_obs
+    for space in first_env.observation_space.spaces.values():
+        if hasattr(space, "low"):
+            assert np.isfinite(space.low).all()
+            assert np.isfinite(space.high).all()
     assert first_env.observation_space.contains(first_obs)
     assert first_info["authority"] == "engineering_proxy_only"
     assert second_info["authority"] == "engineering_proxy_only"
     for key in first_obs:
         assert (first_obs[key] == second_obs[key]).all()
+
+
+def test_proxy_gym_publishes_finite_goal_relative_observation() -> None:
+    env = GroundInfantryProxyEnv(
+        _proxy(),
+        start_xy_m=(400.0, 100.0),
+        goal_xy_m=(600.0, 100.0),
+        max_steps=4,
+    )
+    observation, _info = env.reset(seed=11)
+
+    assert observation["mission_goal_relative_state"].tolist() == pytest.approx(
+        [200.0, 0.0, 200.0]
+    )
+    assert env.observation_space.contains(observation)
+
+    with pytest.raises(ValueError, match="known proxy terrain"):
+        env.reset(options={"goal_xy_m": (400.0, 2000.0)})
 
 
 def test_proxy_gym_step_exposes_blocking_and_replay_trace_without_native_claim() -> None:

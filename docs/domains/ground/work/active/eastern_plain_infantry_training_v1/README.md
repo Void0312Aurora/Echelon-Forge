@@ -47,7 +47,10 @@ accepted.
 - Gymnasium contract harness:
   `python/rl/ground/proxy_env.py` (`GroundInfantryProxyEnv`). It exercises the
   RL reset/step/observation/reward/termination/trace boundary only; its
-  authority remains `engineering_proxy_only`.
+  authority remains `engineering_proxy_only`. Its observation space is finite
+  over the verified fixture extent and episode horizon, and it exposes an
+  explicit goal-relative vector; reset rejects unknown goal terrain rather than
+  allowing an unbounded mission target into the contract.
 - Native single-soldier training probe:
   `python/rl/ground/native_probe.py` (`GroundInfantryNativeProbe`). It drives
   the compiled kernel through reset/step/trace/replay and exposes the admitted
