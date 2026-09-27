@@ -1615,6 +1615,10 @@ void parse_electronic_warfare_json_fields(const nlohmann::json &entry, UnitDefin
             cms.value("release_interval", def.cms_data.release_interval);
         def.cms_data.last_release_time =
             cms.value("last_release_time", def.cms_data.last_release_time);
+        def.cms_data.last_chaff_release_time =
+            cms.value("last_chaff_release_time", def.cms_data.last_release_time);
+        def.cms_data.last_flare_release_time =
+            cms.value("last_flare_release_time", def.cms_data.last_release_time);
         def.cms_data.auto_mode = cms.value("auto_mode", def.cms_data.auto_mode);
     }
 
