@@ -1,6 +1,6 @@
 # P7-B Local SQLite Restore Drill Evidence
 
-Status: `2026-09-25` — local supported-topology restore drill completed;
+Status: `2026-09-27` — local supported-topology restore drill completed;
 external provider restore and production rollback-window operation remain open.
 
 ## Scope
@@ -52,4 +52,4 @@ Document kind: `evidence`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/evidence/p7b_local_sqlite_restore_drill_20260924.md`
 Owner: `release/runtime integration`
-Last verified: `2026-09-25`
+Last verified: `2026-09-27`

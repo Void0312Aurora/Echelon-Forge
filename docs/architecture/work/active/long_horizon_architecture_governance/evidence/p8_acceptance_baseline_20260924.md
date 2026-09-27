@@ -61,4 +61,4 @@ Document kind: `evidence`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/evidence/p8_acceptance_baseline_20260924.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-09-25`
+Last verified: `2026-09-27`
