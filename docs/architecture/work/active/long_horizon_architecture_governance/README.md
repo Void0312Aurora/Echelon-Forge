@@ -1,6 +1,6 @@
 # Long-Horizon Architecture Governance
 
-Status: `2026-09-24` active long-horizon architecture-governance program; P0
+Status: `2026-09-27` active long-horizon architecture-governance program; P0
 authority and baseline, P1 target-architecture decisions, the complete
 P3-A/P3-B/P3-C contract, authority-envelope, ledger, and compatibility
 foundations, and P4-A dark/shadow host lifecycle are accepted after independent
@@ -9,10 +9,10 @@ review are complete; the first P4-C build-tree/internal candidate task is
 accepted after candidate-scope independent review; production acceptance is
 not granted.
 P2-A now has an implemented manifest-level lifecycle baseline, and P2-B has a first repeatable local
-sustainability baseline. P5-D's bounded maintained-caller parity is complete and has a dedicated executable
-gate ([parity evidence](evidence/p5d_maintained_caller_parity_20260925.md)); representative release cadence,
-production caller cutover, production rollback-window operation, rebuild retirement and P6-P8 remain open; no
-production truth publication or production cutover is accepted yet.
+sustainability baseline. P5-D is accepted by the project owner for plan continuation; its old production
+rebuild authority is retired while the test/fault-injection seam remains retained. The decision and executable
+retirement evidence are recorded in [the owner acceptance packet](evidence/p5d_owner_acceptance_and_rebuild_retirement_20260927.md).
+Representative cadence and broader P6-P8 work continue independently.
 The maintained caller migration, process-resync, mandatory production-state release/receipt binding, the durable
 ArtifactLedger rollout controller, and initial operations drill evidence are recorded in [P5-D evidence]
 (evidence/p5d_production_binding_operations_20260923.md) and [the SQLite controller packet]
@@ -29,9 +29,9 @@ packet](evidence/p5d_sqlite_rollout_controller_20260923.md) and [the rebuild
 retirement gate packet](evidence/p5d_rebuild_retirement_gate_20260924.md).
 The consolidated branch-side P5-D gate matrix is recorded in [the local gate
 matrix](evidence/p5d_local_gate_matrix_20260925.md).
-The pre-cutover rebuild-unreachability inventory, which records zero
-maintained callers and keeps rebuild unretired, is recorded in [the rebuild
-packet](evidence/p5d_rebuild_unreachability_20260923.md).
+The post-decision rebuild-unreachability inventory, which records zero
+maintained callers and retired production authority with the test seam retained,
+is recorded in [the rebuild packet](evidence/p5d_rebuild_unreachability_20260923.md).
 The initial P2-B control/cost/retrieval baseline is recorded in [the
 sustainability packet](evidence/p2b_sustainability_baseline_20260923.md).
 The distinct-package cadence follow-up is recorded in [the cadence packet]
@@ -175,7 +175,7 @@ the same long-term authority, compatibility, and lifecycle result.
 | `P2 Control Lifecycle` | Make every architecture control permanent, renewable, migratory, or evidentiary with explicit ownership and retirement. | P1 terminology frozen | existing controls are classified and migration controls have enforced exit criteria | P2-A baseline; P2-B initial baseline plus distinct-package follow-up; representative cadence open |
 | `P3 Contract And Public Boundary Foundation` | Land canonical authority envelopes, resolved-plan/release/rollout/checkpoint shells, engine-independent public DTO target, ledger foundation and target visibility before host cutover. | P1 accepted | transitional adapters are single-owner and host work can use final public types/storage without publishing a second truth | P3-A/P3-B/P3-C accepted |
 | `P4 Host Lifecycle And Immutable Kernel Candidate` | Implement fenced host replacement, unique episode authority, complete state-transfer semantics, and an immutable candidate path in dark/shadow mode. | P3 contract/boundary foundation stable | the candidate path is state-complete and fenced but cannot become production truth or retire production rebuild | P4-A accepted; P4-B independently passed; P4-C candidate-scope task accepted; full maintained-facade parity and P5 remain open |
-| `P5 Plan, Evidence, Binding, And Production Cutover` | Close the executable plan, introduce complete RunReceipt, finish physical facade/diagnostics packaging, then execute the only production cutover/backout and retire rebuild. | P4 candidate proven in dark/shadow mode | Cordis/native/facade/wheel use one plan; supported callers cut over once with rollback evidence and rebuild loses production authority | planned |
+| `P5 Plan, Evidence, Binding, And Production Cutover` | Close the executable plan, introduce complete RunReceipt, finish physical facade/diagnostics packaging, then execute the only production cutover/backout and retire rebuild. | P4 candidate proven in dark/shadow mode | Cordis/native/facade/wheel use one plan; supported callers cut over once with rollback evidence and rebuild loses production authority | P5-D owner-accepted; production rebuild authority retired; representative cadence and broader topology follow-ups remain |
 | `P6 Test And CI Architecture` | Align fast, qualification, nightly, release, and research lanes with unique failure audiences. | P2 control classes and P5 boundaries available | permanent gates have named detection value and migration scans are absent or expiring | P6-A authority baseline; replacement/retirement evidence and P6-B lanes remain |
 | `P7 Evidence And Documentation Lifecycle` | Retain reproducible proof without keeping closed work packages in permanent authority. | P2 classes and P5 evidence ownership stable | standards, current references, historical records, and generated evidence have singular owners and routes | P7-A retention authority baseline; P7-B first zero-inventory retirement complete; residual cleanup and restore/provider drills open |
 | `P8 Long-Horizon Acceptance` | Prove migration compatibility, operational sustainability, and absence of duplicate truth. | P3-P7 complete | full acceptance contract and independent review pass; lasting rules are promoted and task history follows the admitted retirement route | [P8-A acceptance baseline](evidence/p8_acceptance_baseline_20260924.md) and matrix/fail-closed topology checks; all acceptance requirements remain open or partial |

@@ -1,6 +1,6 @@
 {
   "schema_version": "echelon_forge.runtime_rebuild_unreachability.v1",
-  "scope": "P5-D in-kernel rebuild reachability before production cutover",
+  "scope": "P5-D in-kernel rebuild reachability after production-authority retirement",
   "symbol": "SimulationKernel::rebuild_world_composition",
   "references": {
     "src/core/engine/simulation_kernel.cpp": [
@@ -8,17 +8,24 @@
       354
     ],
     "src/core/engine/simulation_kernel.h": [
-      187
+      331
+    ],
+    "src/core/engine/testing/simulation_kernel_composition_test_access.cpp": [
+      14,
+      16
+    ],
+    "src/core/engine/testing/simulation_kernel_composition_test_access.h": [
+      17
     ],
     "src/tests/test_simulation_kernel_smoke.cpp": [
       79,
-      86,
-      97,
-      103,
-      140,
-      191,
-      201,
-      243
+      87,
+      99,
+      106,
+      144,
+      196,
+      207,
+      250
     ]
   },
   "implementation_references": {
@@ -27,34 +34,34 @@
       354
     ],
     "src/core/engine/simulation_kernel.h": [
-      187
+      331
     ]
   },
   "callable_references": {
     "src/core/engine/simulation_kernel.h": [
-      187
+      331
     ],
-    "src/tests/test_simulation_kernel_smoke.cpp": [
-      79,
-      86,
-      97,
-      103,
-      140,
-      191,
-      201,
-      243
+    "src/core/engine/testing/simulation_kernel_composition_test_access.cpp": [
+      16
     ]
   },
   "test_only_references": {
+    "src/core/engine/testing/simulation_kernel_composition_test_access.cpp": [
+      14,
+      16
+    ],
+    "src/core/engine/testing/simulation_kernel_composition_test_access.h": [
+      17
+    ],
     "src/tests/test_simulation_kernel_smoke.cpp": [
       79,
-      86,
-      97,
-      103,
-      140,
-      191,
-      201,
-      243
+      87,
+      99,
+      106,
+      144,
+      196,
+      207,
+      250
     ]
   },
   "production_callable_references": {},
@@ -68,8 +75,8 @@
     "production_module_does_not_select_raw_core": true,
     "facade_binding_does_not_export_simulation_kernel": true
   },
-  "reachability_state": "quarantined_before_production_cutover",
-  "retired": false,
+  "reachability_state": "retired_production_authority_test_seam_retained",
+  "retired": true,
   "retirement_gate": "single production cutover plus rollback-window retention and rebuild gate",
-  "inventory_sha256": "6474dbcd144b2769ce81fa74df8bff05990d0581db027b3c49a094db63557022"
+  "inventory_sha256": "c757c10a3e2004acff0276b47887be172e572c2c90603ce434eda61543acdc7e"
 }

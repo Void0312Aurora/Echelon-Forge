@@ -1,12 +1,12 @@
 # 长期架构治理
 
-状态：`2026-09-24`，长期架构治理计划处于 active；P0 authority/baseline、P1
+状态：`2026-09-27`，长期架构治理计划处于 active；P0 authority/baseline、P1
 target-architecture 决策、完整的 P3-A/P3-B/P3-C contract、authority-envelope、
 ledger 与 compatibility foundation，以及 P4-A dark/shadow host lifecycle 已在
 独立复核后接受。P4-B dark/shadow candidate implementation 与独立综合复核已完成；P4-C 首个 build-tree/internal candidate 任务已通过 candidate-scope 独立复核并被接受，尚未获得 production acceptance。
 P2-A 已有 manifest-level lifecycle baseline 实现，P2-B 也已有首个可重复的本地 sustainability baseline；P5-D 的有界 maintained caller parity 已完成，并有独立可执行门禁记录于
-[parity evidence](evidence/p5d_maintained_caller_parity_20260925.md)。代表性 release cadence、production caller
-cutover、production rollback-window operation、rebuild retirement 与 P6-P8 仍开放；尚无 production truth 发布或 production cutover 被接受。maintained 合同调用方迁移、process-resync、
+[parity evidence](evidence/p5d_maintained_caller_parity_20260925.md)。P5-D 已按项目负责人决定接受并继续主计划；旧 production rebuild authority 已退役，但测试/故障注入 seam 仍保留。决定与可执行退役证据见
+[owner acceptance packet](evidence/p5d_owner_acceptance_and_rebuild_retirement_20260927.md)。代表性 cadence 与 P6-P8 后续工作独立推进。maintained 合同调用方迁移、process-resync、
 mandatory production-state release/receipt binding、ArtifactLedger durable rollout controller
 以及首个 operations drill 证据见
 [P5-D caller migration evidence](evidence/p5d_facade_caller_migration_20260923.md) 与
@@ -25,8 +25,8 @@ rebuild-retirement gate 见
 与 [rebuild retirement gate evidence](evidence/p5d_rebuild_retirement_gate_20260924.md)。
 分支内 P5-D 门禁汇总见
 [local gate matrix](evidence/p5d_local_gate_matrix_20260925.md)。
-cutover 前的 rebuild-unreachability inventory（维护生产调用方与 Python
-binding 均为零，但尚未退役 rebuild）见
+决定后的 rebuild-unreachability inventory（维护生产调用方与 Python
+binding 均为零，production authority 已退役但测试 seam 保留）见
 [rebuild evidence](evidence/p5d_rebuild_unreachability_20260923.md)。
 首个 P2-B control/cost/retrieval baseline 见
 [sustainability evidence](evidence/p2b_sustainability_baseline_20260923.md)。
@@ -174,7 +174,7 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 | `P2 Control Lifecycle` | 将每个架构控制分类为 permanent、renewable、migratory 或 evidentiary，并明确 owner 与退役。 | P1 术语固定 | 既有控制完成分类，migration control 具备可执行退出条件 | P2-A 基线；P2-B 首个基线与 distinct-package follow-up；代表性 cadence 开放 |
 | `P3 Contract And Public Boundary Foundation` | 在 host cutover 前落地 canonical authority envelope、plan/release/rollout/checkpoint shell、engine-independent DTO target、ledger foundation 与初始 visibility。 | P1 accepted | transitional adapter 单一 owner，host 可使用最终 public type/storage 且不发布第二 truth | P3-A/P3-B/P3-C accepted |
 | `P4 Host Lifecycle And Immutable Kernel Candidate` | 实现 fenced host replacement、唯一 episode authority、完整 state transfer 与 dark/shadow immutable candidate path。 | P3 contract/boundary foundation 稳定 | candidate path 已 state-complete 且 fenced，但不得成为 production truth 或退役 production rebuild | P4-A accepted；P4-B 已通过独立复核；P4-C candidate-scope 任务已接受；完整 maintained facade parity 与 P5 仍开放 |
-| `P5 Plan, Evidence, Binding, And Production Cutover` | 闭合 executable plan，引入完整 RunReceipt，完成 facade/diagnostics packaging，再执行唯一 production cutover/backout 并退役 rebuild。 | P4 candidate 通过 dark/shadow | Cordis/native/facade/wheel 使用同一 plan；supported caller 只切换一次且有 rollback evidence，rebuild 失去 production authority | planned |
+| `P5 Plan, Evidence, Binding, And Production Cutover` | 闭合 executable plan，引入完整 RunReceipt，完成 facade/diagnostics packaging，再执行唯一 production cutover/backout 并退役 rebuild。 | P4 candidate 通过 dark/shadow | Cordis/native/facade/wheel 使用同一 plan；supported caller 只切换一次且有 rollback evidence，rebuild 失去 production authority | P5-D 已按负责人决定接受；production rebuild authority 已退役；代表性 cadence 与更广拓扑后续推进 |
 | `P6 Test And CI Architecture` | 按独立 failure audience 对齐 fast、qualification、nightly、release 与 research lane。 | P2 control class 与 P5 boundary 可用 | permanent gate 有具名检测价值，migration scan 已消失或带到期约束 | P6-A authority baseline；替换/退役证据与 P6-B lane 仍开放 |
 | `P7 Evidence And Documentation Lifecycle` | 保留可复现 proof，且不让 closed work package 留在永久权威。 | P2 class 与 P5 evidence ownership 稳定 | standard、current reference、历史记录与 generated evidence 有单一 owner 和路由 | P7-A retention authority 基线；P7-B 首条零项 inventory 退役完成；其余清理与 restore/provider drill 开放 |
 | `P8 Long-Horizon Acceptance` | 证明迁移 compatibility、operational sustainability 与不存在 duplicate truth。 | P3-P7 完成 | 完整 acceptance contract 与独立审查通过；长期规则提升且 task history 遵循已准入退役路由 | [P8-A acceptance 基线](evidence/p8_acceptance_baseline_20260924.md) 与 matrix/fail-closed topology 检查；所有验收项仍为 open 或 partial |

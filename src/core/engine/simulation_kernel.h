@@ -184,8 +184,6 @@ class SimulationKernel {
     [[nodiscard]] std::uint64_t world_composition_generation() const noexcept;
     [[nodiscard]] std::array<std::uint64_t, 5> composition_scope_generations() const noexcept;
     [[nodiscard]] std::string executable_composition_graph_sha256() const;
-    [[nodiscard]] bool rebuild_world_composition(std::string_view barrier,
-                                                 std::string *error = nullptr);
     // Configuration
     bool load_database(const std::string &path);
     void clear_zones();
@@ -332,6 +330,12 @@ class SimulationKernel {
     friend class runtime::host::integration::SimulationKernelStateOwnerBridge;
     void ensure_active(const char *operation) const;
     void ensure_state_transfer_component_reflection();
+    // The in-place composition rebuild is retired from the production API.
+    // The test accessor is the only remaining caller so rollback/fault-injection
+    // coverage can exercise the shared realizer without restoring production
+    // authority.
+    [[nodiscard]] bool rebuild_world_composition(std::string_view barrier,
+                                                 std::string *error = nullptr);
     using CompositionOperationLock = std::unique_lock<std::recursive_mutex>;
     [[nodiscard]] CompositionOperationLock acquire_composition_operation() const {
         return CompositionOperationLock(composition_lifecycle_mutex_);

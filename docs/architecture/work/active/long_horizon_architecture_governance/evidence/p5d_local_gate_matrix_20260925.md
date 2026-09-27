@@ -1,7 +1,7 @@
 # P5-D Local Gate Matrix Evidence
 
-Status: `2026-09-25` — branch-side P5-D implementation matrix; this is not a
-production acceptance or cutover attestation.
+Status: `2026-09-27` — branch-side P5-D implementation matrix, superseded for
+acceptance by the explicit owner decision in the [owner acceptance packet](p5d_owner_acceptance_and_rebuild_retirement_20260927.md).
 
 ## Completed local gates
 
@@ -15,7 +15,8 @@ can be exercised in the supported Windows/MSVC CPU/in-process topology:
 - admission-bound facade VecEnv reset/step;
 - three-cycle supported-row telemetry/SLO/adoption measurement;
 - rollback prerequisite drills and long-lived local rollback-window recheck;
-- zero maintained production rebuild callers and the fail-closed retirement gate.
+- zero maintained production rebuild callers and the fail-closed retirement gate;
+- owner-authorized retirement of production rebuild authority with the test seam retained.
 
 ## Verification
 
@@ -43,14 +44,19 @@ The governance audit suite remains **79 passed**.
 
 ## Explicit residuals
 
-The branch does not claim the following because they require an authorized
-post-merge operational environment rather than repository-local fixtures:
+The branch does not claim the following as live telemetry because they require
+an authorized post-merge operational environment rather than repository-local
+fixtures:
 
 - the sole real production-canary RolloutDecision and caller-cutover
   attestation;
 - representative release cadence and owner-approved long-term budget;
 - a real production rollback-window observation; and
-- activation of rebuild retirement after those production inputs.
+- live post-merge observation of those operational inputs.
+
+The project owner nevertheless accepted P5-D for main-plan continuation and
+authorized production-authority retirement; that decision is recorded in the
+owner acceptance packet linked above.
 
 Unsupported Linux/package, multi-process, external-host, and CUDA-canonical
 rows continue to fail closed.

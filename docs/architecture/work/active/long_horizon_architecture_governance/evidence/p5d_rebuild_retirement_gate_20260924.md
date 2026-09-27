@@ -1,7 +1,8 @@
 # P5-D Rebuild Retirement Gate Evidence
 
-Status: `2026-09-25` — the post-rollback-window gate is implemented and
-fail-closed, but it has not been activated for production authority.
+Status: `2026-09-27` — the post-rollback-window gate remains implemented and
+fail-closed; the project owner separately authorized production-authority
+retirement. See the [owner acceptance packet](p5d_owner_acceptance_and_rebuild_retirement_20260927.md).
 
 ## Gate boundary
 
@@ -51,11 +52,10 @@ production-authority-only proof and retains the native test capability.
 
 ## Remaining boundary
 
-No production cutover or retirement is claimed by this packet. The positive
-case uses local contract fixtures to exercise the gate. A real release still
-needs the authorized production-canary decision, representative release
-cadence, actual rollback-window observation, and operator-supplied cutover
-attestation before this gate can be run against production evidence.
+This packet documents the gate mechanics, not live telemetry. The positive case
+uses local contract fixtures to exercise the gate. The owner acceptance packet
+is the governing decision for branch continuation and production-authority
+retirement; the native test/fault-injection capability remains retained.
 
 Document kind: `evidence`
 Lifecycle: `maintained`

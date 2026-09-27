@@ -11,6 +11,11 @@
 #include "core/interfaces/weapon_release_service.h"
 #include "runtime/providers/internal/default_simulation_provider_catalog_test_access.h"
 
+bool SimulationKernelCompositionTestAccess::rebuild_world_composition_for_testing(
+    SimulationKernel &kernel, std::string_view barrier, std::string *error) {
+    return kernel.rebuild_world_composition(barrier, error);
+}
+
 SimulationKernelCompositionFailureProbeResult
 SimulationKernelCompositionTestAccess::probe_default_provider_publication_failure_for_testing(
     SimulationKernel &kernel) {

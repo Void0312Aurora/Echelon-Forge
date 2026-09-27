@@ -76,14 +76,16 @@ TEST_SUITE("simulation_kernel_smoke") {
         const auto requested_before = kernel.requested_composition_sha256();
         const auto resolved_before = kernel.resolved_composition_sha256();
         std::string error;
-        CHECK(kernel.rebuild_world_composition("mid_step", &error) == false);
+        CHECK(SimulationKernelCompositionTestAccess::rebuild_world_composition_for_testing(
+                  kernel, "mid_step", &error) == false);
         CHECK(error.find("runtime.composition.rebuild_barrier_rejected") != std::string::npos);
         CHECK(kernel.world_composition_generation() == 1);
         CHECK(kernel.requested_composition_sha256() == requested_before);
         CHECK(kernel.resolved_composition_sha256() == resolved_before);
 
         error.clear();
-        CHECK(kernel.rebuild_world_composition("world_rebuild", &error));
+        CHECK(SimulationKernelCompositionTestAccess::rebuild_world_composition_for_testing(
+            kernel, "world_rebuild", &error));
         CHECK(error.empty());
         CHECK(kernel.requested_composition_sha256() == requested_before);
         CHECK(kernel.resolved_composition_sha256() == resolved_before);
@@ -94,13 +96,15 @@ TEST_SUITE("simulation_kernel_smoke") {
         CHECK(entity.is_valid());
 
         error.clear();
-        CHECK_FALSE(kernel.rebuild_world_composition("world_rebuild", &error));
+        CHECK_FALSE(SimulationKernelCompositionTestAccess::rebuild_world_composition_for_testing(
+            kernel, "world_rebuild", &error));
         CHECK(error.find("non-quiescent world contains SimObject entities") != std::string::npos);
         CHECK(kernel.world_composition_generation() == 2);
 
         kernel.reset(42);
         error.clear();
-        CHECK_FALSE(kernel.rebuild_world_composition("world_rebuild", &error));
+        CHECK_FALSE(SimulationKernelCompositionTestAccess::rebuild_world_composition_for_testing(
+            kernel, "world_rebuild", &error));
         CHECK(error.find("world state has been mutated") != std::string::npos);
         CHECK(kernel.world_composition_generation() == 2);
         CHECK(kernel.requested_composition_sha256() == requested_before);
@@ -137,7 +141,8 @@ TEST_SUITE("simulation_kernel_smoke") {
         }
 
         std::string error;
-        CHECK_FALSE(kernel.rebuild_world_composition("world_rebuild", &error));
+        CHECK_FALSE(SimulationKernelCompositionTestAccess::rebuild_world_composition_for_testing(
+            kernel, "world_rebuild", &error));
         CHECK(error.find("raw Flecs world access has been exposed") != std::string::npos);
         CHECK(kernel.world_composition_generation() == 1);
     }
@@ -188,7 +193,8 @@ TEST_SUITE("simulation_kernel_smoke") {
         kernel.set_wind(12.0, 225.0, 0.5);
 
         std::string error;
-        CHECK_FALSE(kernel.rebuild_world_composition("world_rebuild", &error));
+        CHECK_FALSE(SimulationKernelCompositionTestAccess::rebuild_world_composition_for_testing(
+            kernel, "world_rebuild", &error));
         CHECK(error.find("world state has been mutated") != std::string::npos);
         CHECK(kernel.world_composition_generation() == 1);
     }
@@ -198,7 +204,8 @@ TEST_SUITE("simulation_kernel_smoke") {
             SimulationKernel kernel;
             mutate(kernel);
             std::string error;
-            CHECK_FALSE(kernel.rebuild_world_composition("world_rebuild", &error));
+            CHECK_FALSE(SimulationKernelCompositionTestAccess::rebuild_world_composition_for_testing(
+                kernel, "world_rebuild", &error));
             CHECK(error.find("world state has been mutated") != std::string::npos);
             CHECK(kernel.world_composition_generation() == 1);
         };
@@ -240,7 +247,8 @@ TEST_SUITE("simulation_kernel_smoke") {
             workers.emplace_back([&kernel, &results, index] {
                 std::string error;
                 results[index] =
-                    kernel.rebuild_world_composition("world_rebuild", &error) && error.empty() ? 1
+                    SimulationKernelCompositionTestAccess::rebuild_world_composition_for_testing(
+                        kernel, "world_rebuild", &error) && error.empty() ? 1
                                                                                                : -1;
             });
         }
