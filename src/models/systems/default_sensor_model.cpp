@@ -225,29 +225,27 @@ class DefaultSensorModel : public ISensorModel {
         // missile truth or mutates EW components.
         if (RWR *owner_rwr = owner.get_mut<RWR>()) {
             auto missile_query = world.query<const Missile, const Transform>();
-            missile_query.each(
-                [&](flecs::entity missile_entity, const Missile &missile,
-                    const Transform &missile_transform) {
-                    if (!missile.active || missile.target_id != owner.id()) {
-                        return;
-                    }
-                    const double dx = missile_transform.x - owner_transform.x;
-                    const double dy = missile_transform.y - owner_transform.y;
-                    const double dz = missile_transform.z - owner_transform.z;
-                    const double distance_m = std::sqrt(dx * dx + dy * dy + dz * dz);
-                    if (!std::isfinite(distance_m) || distance_m > 120000.0) {
-                        return;
-                    }
-                    owner_rwr->is_missile_launch = true;
-                    const uint64_t source_id = missile.attacker_id != 0
-                                                   ? missile.attacker_id
-                                                   : missile_entity.id();
-                    if (std::find(owner_rwr->missile_launch_source_ids.begin(),
-                                  owner_rwr->missile_launch_source_ids.end(),
-                                  source_id) == owner_rwr->missile_launch_source_ids.end()) {
-                        owner_rwr->missile_launch_source_ids.push_back(source_id);
-                    }
-                });
+            missile_query.each([&](flecs::entity missile_entity, const Missile &missile,
+                                   const Transform &missile_transform) {
+                if (!missile.active || missile.target_id != owner.id()) {
+                    return;
+                }
+                const double dx = missile_transform.x - owner_transform.x;
+                const double dy = missile_transform.y - owner_transform.y;
+                const double dz = missile_transform.z - owner_transform.z;
+                const double distance_m = std::sqrt(dx * dx + dy * dy + dz * dz);
+                if (!std::isfinite(distance_m) || distance_m > 120000.0) {
+                    return;
+                }
+                owner_rwr->is_missile_launch = true;
+                const uint64_t source_id =
+                    missile.attacker_id != 0 ? missile.attacker_id : missile_entity.id();
+                if (std::find(owner_rwr->missile_launch_source_ids.begin(),
+                              owner_rwr->missile_launch_source_ids.end(),
+                              source_id) == owner_rwr->missile_launch_source_ids.end()) {
+                    owner_rwr->missile_launch_source_ids.push_back(source_id);
+                }
+            });
         }
 
         auto target_query = world.query<const KeyEntity, const Transform>();
