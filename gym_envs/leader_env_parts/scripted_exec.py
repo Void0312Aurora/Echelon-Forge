@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import numpy as np
+
 from python.tasking_contracts.air_scripted_execution import (
     AIR_SCRIPTED_EXECUTION_MODEL_ID,
     AIR_SCRIPTED_MODEL_REGISTRY,
