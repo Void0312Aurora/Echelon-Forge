@@ -19,7 +19,6 @@ ensure_repo_imports()
 from python.tasking_contracts.air_scripted_engagement import (  # noqa: E402
     AIR_COMBAT_C2_ROE_V2,
     AIR_COMBAT_HYBRID_ACTION_DIM,
-    AIR_FULL_ACTION_DIM,
     AIR_SCRIPTED_ENGAGEMENT_MODEL_ID,
 )
 from python.tasking_contracts.scripted_runtime import (  # noqa: E402
@@ -63,9 +62,9 @@ def run_demo(
     post_launch_assessment: bool,
 ) -> dict[str, Any]:
     action_mode = str(action_mode).strip().lower()
-    if action_mode not in {"air_combat_hybrid_v1", "full"}:
-        raise ValueError("action_mode must be 'air_combat_hybrid_v1' or 'full'")
-    action_dim = AIR_COMBAT_HYBRID_ACTION_DIM if action_mode == "air_combat_hybrid_v1" else AIR_FULL_ACTION_DIM
+    if action_mode != "air_combat_hybrid_v1":
+        raise ValueError("air combat scripted demo only supports action_mode='air_combat_hybrid_v1'")
+    action_dim = AIR_COMBAT_HYBRID_ACTION_DIM
     vec_env = WorldBatchVecEnv(
         scenario_path=os.path.abspath(str(scenario_path)),
         n_envs=1,
@@ -191,7 +190,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--scenario", default=DEFAULT_SCENARIO)
     parser.add_argument("--seed", type=int, default=20260516)
     parser.add_argument("--max_steps", type=int, default=400)
-    parser.add_argument("--action_mode", choices=("air_combat_hybrid_v1", "full"), default="air_combat_hybrid_v1")
+    parser.add_argument("--action_mode", choices=("air_combat_hybrid_v1",), default="air_combat_hybrid_v1")
     parser.add_argument("--post_launch_assessment", action="store_true")
     parser.add_argument("--json_out", default="")
     return parser

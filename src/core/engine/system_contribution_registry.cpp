@@ -83,6 +83,47 @@ void register_rwr_reset_system(flecs::world &ecs) {
     });
 }
 
+void register_maws_update_system(flecs::world &ecs) {
+    ecs.system<RWR, const Transform>("MAWS_Update")
+        .kind(flecs::PreUpdate)
+        .run([](flecs::iter &it) {
+            auto rwr = it.field<RWR>(0);
+            auto owner_transform = it.field<const Transform>(1);
+            auto missile_query = it.world().query<const Missile, const Transform>();
+
+            while (it.next()) {
+                for (auto i : it) {
+                    rwr[i].missile_launch_source_ids.clear();
+                    rwr[i].is_missile_launch = false;
+                    missile_query.each(
+                        [&](flecs::entity missile_entity,
+                            const Missile &missile,
+                            const Transform &missile_transform) {
+                            if (!missile.active || missile.target_id != it.entity(i).id()) {
+                                return;
+                            }
+                            const double dx = missile_transform.x - owner_transform[i].x;
+                            const double dy = missile_transform.y - owner_transform[i].y;
+                            const double dz = missile_transform.z - owner_transform[i].z;
+                            const double distance_m = std::sqrt(dx * dx + dy * dy + dz * dz);
+                            if (!std::isfinite(distance_m) || distance_m > 120000.0) {
+                                return;
+                            }
+                            rwr[i].is_missile_launch = true;
+                            const uint64_t source_id =
+                                missile.attacker_id != 0 ? missile.attacker_id : missile_entity.id();
+                            if (std::find(rwr[i].missile_launch_source_ids.begin(),
+                                          rwr[i].missile_launch_source_ids.end(),
+                                          source_id) ==
+                                rwr[i].missile_launch_source_ids.end()) {
+                                rwr[i].missile_launch_source_ids.push_back(source_id);
+                            }
+                        });
+                }
+            }
+        });
+}
+
 void register_esm_reset_system(flecs::world &ecs) {
     ecs.system<ESMReceiver>("ESM_Reset")
         .kind(flecs::PreUpdate)
@@ -259,7 +300,8 @@ void register_esm_reset_system(flecs::world &ecs) {
 
 #define EF_KERNEL_SYSTEM_CONTRIBUTIONS(X)                                                          \
     X("builtin.kernel.system.rwr_reset", "kernel.pre_update.00", 0, register_rwr_reset_system)     \
-    X("builtin.kernel.system.esm_reset", "kernel.pre_update.01", 1, register_esm_reset_system)
+    X("builtin.kernel.system.esm_reset", "kernel.pre_update.01", 1, register_esm_reset_system)     \
+    X("builtin.kernel.system.maws_update", "kernel.pre_update.02", 2, register_maws_update_system)
 
 #define EF_COMPONENT_ROW(type, id, registration)                                                   \
     ComponentContribution{id, registration, &register_component<type>},
@@ -297,8 +339,8 @@ ValidationResult validate_registry() {
     if (std::size(kDefaultSystems) != 34) {
         return {false, "system contribution count is not the admitted default count"};
     }
-    if (std::size(kKernelSystems) != 2 || kKernelSystems[0].stage_order != 0 ||
-        kKernelSystems[1].stage_order != 1) {
+    if (std::size(kKernelSystems) != 3 || kKernelSystems[0].stage_order != 0 ||
+        kKernelSystems[1].stage_order != 1 || kKernelSystems[2].stage_order != 2) {
         return {false, "kernel-owned pre-update system admission mismatch"};
     }
     std::unordered_set<std::string_view> system_ids;
