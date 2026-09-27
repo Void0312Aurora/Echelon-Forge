@@ -176,7 +176,7 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 | `P4 Host Lifecycle And Immutable Kernel Candidate` | 实现 fenced host replacement、唯一 episode authority、完整 state transfer 与 dark/shadow immutable candidate path。 | P3 contract/boundary foundation 稳定 | candidate path 已 state-complete 且 fenced，但不得成为 production truth 或退役 production rebuild | P4-A accepted；P4-B 已通过独立复核；P4-C candidate-scope 任务已接受；完整 maintained facade parity 与 P5 仍开放 |
 | `P5 Plan, Evidence, Binding, And Production Cutover` | 闭合 executable plan，引入完整 RunReceipt，完成 facade/diagnostics packaging，再执行唯一 production cutover/backout 并退役 rebuild。 | P4 candidate 通过 dark/shadow | Cordis/native/facade/wheel 使用同一 plan；supported caller 只切换一次且有 rollback evidence，rebuild 失去 production authority | P5-D 已按负责人决定接受；production rebuild authority 已退役；代表性 cadence 与更广拓扑后续推进 |
 | `P6 Test And CI Architecture` | 按独立 failure audience 对齐 fast、qualification、nightly、release 与 research lane。 | P2 control class 与 P5 boundary 可用 | permanent gate 有具名检测价值，migration scan 已消失或带到期约束 | P6-A authority baseline；替换/退役证据与 P6-B lane 仍开放 |
-| `P7 Evidence And Documentation Lifecycle` | 保留可复现 proof，且不让 closed work package 留在永久权威。 | P2 class 与 P5 evidence ownership 稳定 | standard、current reference、历史记录与 generated evidence 有单一 owner 和路由 | P7-A retention authority 基线；P7-B 首条零项 inventory 退役完成；其余清理与 restore/provider drill 开放 |
+| `P7 Evidence And Documentation Lifecycle` | 保留可复现 proof，且不让 closed work package 留在永久权威。 | P2 class 与 P5 evidence ownership 稳定 | standard、current reference、历史记录与 generated evidence 有单一 owner 和路由 | P7-A retention authority 基线；P7-B 已完成两条有界清理切片；其余清理与 restore/provider drill 开放 |
 | `P8 Long-Horizon Acceptance` | 证明迁移 compatibility、operational sustainability 与不存在 duplicate truth。 | P3-P7 完成 | 完整 acceptance contract 与独立审查通过；长期规则提升且 task history 遵循已准入退役路由 | [P8-A acceptance 基线](evidence/p8_acceptance_baseline_20260924.md) 与 matrix/fail-closed topology 检查；所有验收项仍为 open 或 partial |
 
 ## Task Clusters
@@ -264,6 +264,6 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 architecture standard 或 review。P7-A 通过 `retention_authority.json` 解决
 owner-archive policy：已接受的 Cordis 历史是唯一登记的 owner-local archive，其他
 archive 路径仍禁止；该路由之外的退役材料使用 owner ledger 和 Git 历史。active
-目录仍是当前执行面，不得变成 append-only evidence store。首条 P7-B 零项
-inventory 退役记录在 [P7-B 证据包](evidence/p7b_zero_inventory_retirement_20260924.md)；
+目录仍是当前执行面，不得变成 append-only evidence store。P7-B 两条有界
+退役记录在 [P7-B 证据包](evidence/p7b_zero_inventory_retirement_20260924.md)；
 其余清理与 provider/restore drill 仍开放。
