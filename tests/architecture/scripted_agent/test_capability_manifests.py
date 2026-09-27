@@ -50,6 +50,25 @@ def test_representative_scenarios_declare_scripted_capability_v1() -> None:
         assert manifest.evidence_refs, path
 
 
+def test_manifest_parser_accepts_empty_deferred_claims() -> None:
+    manifest = parse_scripted_capability(
+        {
+            "scripted_capability": {
+                "version": "scripted_capability.v1",
+                "domain": "air",
+                "label": "playable",
+                "model_id": "air.execution.phase_scripted",
+                "role_id": "autopilot_controller",
+                "lifecycle": "reset_decide_close",
+                "evidence_refs": ["test:acceptance"],
+                "deferred_claims": [],
+            }
+        }
+    )
+
+    assert manifest.deferred_claims == ()
+
+
 def test_current_manifests_do_not_claim_final_playable_acceptance() -> None:
     labels = {parse_scripted_capability(_load(path)).label for path, *_ in CASES.values()}
     assert "playable" not in labels
