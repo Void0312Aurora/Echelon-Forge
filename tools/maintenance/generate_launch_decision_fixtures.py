@@ -69,15 +69,61 @@ def _repo_root() -> Path:
 
 
 def _source_revision(repo_root: Path, requested: str | None) -> str:
-    if requested:
-        return requested
+    revision = requested or "HEAD"
     result = subprocess.run(
-        ["git", "-C", str(repo_root), "rev-parse", "HEAD"],
+        ["git", "-C", str(repo_root), "rev-parse", "--verify", f"{revision}^{{commit}}"],
         check=True,
         capture_output=True,
         text=True,
     )
     return result.stdout.strip()
+
+
+def _git_tree_paths(
+    repo_root: Path,
+    source_revision: str,
+    prefix: str,
+) -> list[str]:
+    result = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repo_root),
+            "ls-tree",
+            "-r",
+            "--name-only",
+            source_revision,
+            "--",
+            prefix,
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return sorted(
+        line.strip()
+        for line in result.stdout.splitlines()
+        if line.strip().endswith(".json")
+    )
+
+
+def _git_file_bytes(
+    repo_root: Path,
+    source_revision: str,
+    relative_path: str,
+) -> bytes:
+    result = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repo_root),
+            "show",
+            f"{source_revision}:{relative_path}",
+        ],
+        check=True,
+        capture_output=True,
+    )
+    return result.stdout
 
 
 def _hybrid_action_name(spec: Any) -> str | None:
@@ -89,10 +135,11 @@ def _hybrid_action_name(spec: Any) -> str | None:
 
 
 def _active_hybrid_configs(repo_root: Path, source_revision: str) -> list[dict[str, Any]]:
-    root = repo_root / "examples" / "config" / "training" / "active" / "air_combat"
+    source_revision = _source_revision(repo_root, source_revision)
+    prefix = "examples/config/training/active/air_combat"
     records: list[dict[str, Any]] = []
-    for path in sorted(root.glob("*.json")):
-        raw = path.read_bytes()
+    for relative_path in _git_tree_paths(repo_root, source_revision, prefix):
+        raw = _git_file_bytes(repo_root, source_revision, relative_path)
         payload = json.loads(raw.decode("utf-8"))
         policy_kwargs = payload.get("hyperparameters", {}).get("policy_kwargs", {})
         if _hybrid_action_name(policy_kwargs.get("hybrid_action_spec")) != "air_combat_hybrid_v1":
@@ -101,12 +148,10 @@ def _active_hybrid_configs(repo_root: Path, source_revision: str) -> list[dict[s
             payload,
             require_legacy_provenance=False,
         )
-        sha256 = _sha256_bytes(raw)
-        relative_path = path.relative_to(repo_root).as_posix()
         records.append(
             {
                 "path": relative_path,
-                "sha256": sha256,
+                "sha256": _sha256_bytes(raw),
                 "source_revision": source_revision,
                 "mode": contract.mode.value,
                 "explicit_mode": bool(contract.explicit_mode),
@@ -323,7 +368,12 @@ def _strict_acceptance_identity() -> dict[str, Any]:
     }
 
 
-def build_manifest(repo_root: Path, output_root: Path, source_revision: str) -> dict[str, Any]:
+def build_manifest(
+    repo_root: Path,
+    output_root: Path,
+    source_revision: str | None,
+) -> dict[str, Any]:
+    source_revision = _source_revision(repo_root, source_revision)
     generator_path = Path(__file__).resolve()
     profiles = [
         LaunchDecisionMode.LEGACY_COMPOSED_V0,
@@ -383,8 +433,7 @@ def main() -> int:
         or Path(os.environ.get("EF_LAUNCH_DECISION_FIXTURE_ROOT", str(DEFAULT_ROOT)))
     ).resolve()
     manifest_path = (args.manifest or (repo_root / MANIFEST_PATH)).resolve()
-    source_revision = _source_revision(repo_root, args.source_revision)
-    manifest = build_manifest(repo_root, output_root, source_revision)
+    manifest = build_manifest(repo_root, output_root, args.source_revision)
 
     if manifest_path.exists():
         existing = json.loads(manifest_path.read_text(encoding="utf-8"))
