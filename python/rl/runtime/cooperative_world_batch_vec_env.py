@@ -976,6 +976,9 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 if is_naval_station_action_mode(self.action_mode):
                     if apply_naval_station_action(slot_state.loader, effective_action):
                         naval_action_sync_world_indices.add(int(world.world_index))
+                # Proprioception must describe the action that survived the
+                # runtime event gate, never the pre-gate policy intent.
+                slot_state.last_action = np.asarray(effective_action, dtype=np.float32).copy()
                 actions_by_entity_id[int(slot_state.entity_id)] = effective_action
                 inst_by_entity_id[int(slot_state.entity_id)] = slot_state.last_inst
                 prepared_by_slot[int(slot_index)] = prepared
