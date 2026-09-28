@@ -6,8 +6,8 @@ Canonical: `docs/domains/naval/work/active/carrier_strike_group_engagement/READM
 Owner: `domains/naval`
 Last verified: `2026-09-28`
 
-状态：`2026-09-28` planning。范围、阶段阶梯与有限任务簇已起草；`P0 Boundary` 为 active，
-尚无实现任务簇开工。
+状态：`2026-09-28` active。`P0 Boundary` 已于 `2026-09-28` 获 owner 接受；`CSG-S0` 已开始，
+首先进行 `S0-A` 兵力编制调研。
 
 语言：
 
@@ -100,8 +100,8 @@ Last verified: `2026-09-28`
 
 | 阶段 | 场景 | 海军自有工作（系统依赖见下方登记） | 宣称上限 | 状态 |
 | --- | --- | --- | --- | --- |
-| `P0 Boundary` | 无 | 包范围、阶段阶梯、宣称上限、参数出处策略 | 仅文档 | active |
-| `CSG-S0` | 双方完整编制静态生成 | 实名单位与挂载及参数出处；编队组成的场景 schema | `G0` | planned |
+| `P0 Boundary` | 无 | 包范围、阶段阶梯、宣称上限、参数出处策略 | 仅文档 | accepted |
+| `CSG-S0` | 双方完整编制静态生成 | 实名单位与挂载及参数出处；编队组成的场景 schema | `G0` | active |
 | `CSG-S1` | 双方编队航渡 | 编队与护航几何；航路跟随；回转与航速响应；毁伤-机动耦合；编队补给调度 | `G1`-`G2` | planned |
 | `CSG-S2` | 甲板周转：出动波次、CAP、回收 | 弹射与拦阻循环；甲板、升降机与机库容量；出动架次；回收航线；舰载直升机作业 | `G3` | planned |
 | `CSG-S3` | 相互搜索与战术态势 | 海军传感器平台适配器与编队航迹上报；海军辐射管制条令 | `G4` | planned |

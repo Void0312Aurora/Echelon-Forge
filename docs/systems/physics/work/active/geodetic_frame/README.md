@@ -6,8 +6,8 @@ Canonical: `docs/systems/physics/work/active/geodetic_frame/README.md`
 Owner: `systems/physics`
 Last verified: `2026-09-28`
 
-Status: `2026-09-28` planning. Scope and task clusters are drafted; `P0 Boundary`
-is active and no implementation cluster has started.
+Status: `2026-09-28` active. `P0 Boundary` accepted by the owner on `2026-09-28`;
+`P1-A` inventory has started.
 
 Language:
 
@@ -79,8 +79,8 @@ Out of scope:
 
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
-| `P0 Boundary` | Freeze scope, earth-model choice, and frame contract. | owner approval | README and task clusters approved | active |
-| `P1 Evidence` | Inventory every place that assumes a flat frame or computes a horizon. | `P0` | inventory classifies each site as must-migrate, may-stay, or out of scope | planned |
+| `P0 Boundary` | Freeze scope, earth-model choice, and frame contract. | owner approval | README and task clusters approved | accepted |
+| `P1 Evidence` | Inventory every place that assumes a flat frame or computes a horizon. | `P0` | inventory classifies each site as must-migrate, may-stay, or out of scope | active |
 | `P2 Implementation` | Earth model, anchor, conversions, geometry queries. | `P1` | native and Python tests pass against reference values | planned |
 | `P3 Integration` | Move sensing horizon and line of sight onto the queries; expose the anchor in scenarios. | `P2` | consumers call the shared queries; proxy flag retired or wrapped | planned |
 | `P4 Validation` | Cross-domain regression and throughput check. | `P3` | air, ground, naval suites pass or change by the documented amount | planned |

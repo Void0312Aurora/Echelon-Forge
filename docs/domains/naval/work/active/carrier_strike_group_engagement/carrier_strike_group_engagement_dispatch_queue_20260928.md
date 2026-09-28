@@ -6,8 +6,8 @@ Canonical: `docs/domains/naval/work/active/carrier_strike_group_engagement/carri
 Owner: `domains/naval`
 Last verified: `2026-09-28`
 
-Status: `2026-09-28`; only `P0-A` is active. No implementation packet is ready
-until `P0-A` is approved.
+Status: `2026-09-28`; `P0-A` accepted. `S0-A` order-of-battle research is dispatched
+as two parallel packets, one per side.
 
 Parent project: [Carrier Strike Group Engagement](README.md)
 
@@ -24,15 +24,15 @@ Parent project: [Carrier Strike Group Engagement](README.md)
 
 | Packet | Cluster | Status | Write set | Validation |
 | --- | --- | --- | --- | --- |
-| `CSG-P0-A-boundary` | `P0-A` | active, main thread | this directory; naval owner README index | doc link and bilingual audits |
-| `CSG-S0-A-oob` | `S0-A` | waiting on `P0-A` | `docs/domains/naval/reference/csg_order_of_battle_*.md` | provenance completeness |
+| `CSG-P0-A-boundary` | `P0-A` | accepted `2026-09-28` | this directory; naval owner README index | doc link and bilingual audits |
+| `CSG-S0-A-oob-blue` | `S0-A` | dispatched `2026-09-28` (Ford CSG) | research scratch; main thread integrates into `docs/domains/naval/reference/csg_order_of_battle_*.md` | provenance completeness |
+| `CSG-S0-A-oob-red` | `S0-A` | dispatched `2026-09-28` (Fujian group) | research scratch; main thread integrates into `docs/domains/naval/reference/csg_order_of_battle_*.md` | provenance completeness |
 | `CSG-S0-B-geodesy-integration` | `S0-B` | waiting on [Geodetic Frame](../../../../../systems/physics/work/active/geodetic_frame/README.md) `P3-B` | `scenarios/naval/csg/`; naval scenario tests | scenario anchor tests |
 
 ## No-Dispatch Conditions
 
 Do not dispatch an implementation worker while:
 
-- `P0-A` is unapproved;
 - the cluster would need to change an Air or Joint owner surface without that
   owner's seam being agreed;
 - the cluster would need a parameter that has neither a source nor a recorded
