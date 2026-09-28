@@ -1161,12 +1161,14 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         if LaunchDecisionTrainingScope.ORDINARY_PPO in set(
             contract.allowed_training_scopes
         ):
-            allowed_ids = {
-                id(parameter)
-                for parameter in self.get_launch_decision_parameters(
-                    contract.trainable_parameter_roles
-                )
-            }
+            ordinary_parameters = self.get_launch_decision_parameters(
+                contract.trainable_parameter_roles
+            )
+            self.prepare_launch_decision_update(
+                LaunchDecisionTrainingScope.ORDINARY_PPO.value,
+                ordinary_parameters,
+            )
+            allowed_ids = {id(parameter) for parameter in ordinary_parameters}
         else:
             allowed_ids = set()
         for parameter in self.parameters():

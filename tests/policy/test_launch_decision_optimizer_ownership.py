@@ -201,6 +201,37 @@ class LaunchDecisionOptimizerOwnershipTests(unittest.TestCase):
     finally:
       env.close()
 
+  def test_real_ppo_minibatch_records_governed_owner_provenance(self) -> None:
+    model, env = _make_ppo("governed_composed_v1")
+    try:
+      model.learn(total_timesteps=2)
+      trace = model.policy.get_launch_decision_trace()
+      update = trace.get("last_update")
+      self.assertIsNotNone(update)
+      assert update is not None
+      self.assertEqual(update["scope"], "ordinary_ppo")
+      self.assertTrue(update["parameter_ids"])
+      self.assertTrue(
+        set(update["parameter_ids"]).issubset(
+          set(
+            id(parameter)
+            for parameter in model.policy.get_launch_decision_parameters(
+              model.policy.get_launch_decision_owner_contract().trainable_parameter_roles
+            )
+          )
+        )
+      )
+      role_ids = model.policy._launch_decision_parameter_ids()
+      expected_roles = tuple(
+        role
+        for role, parameter_ids in role_ids.items()
+        if any(parameter_id in parameter_ids for parameter_id in update["parameter_ids"])
+      )
+      self.assertEqual(tuple(update["parameter_roles"]), expected_roles)
+      self.assertTrue(update["parameter_roles"])
+    finally:
+      env.close()
+
   def test_real_ppo_minibatch_preserves_auxiliary_only_executable_roles(self) -> None:
     model, env = _make_ppo("auxiliary_only_v1")
     try:
