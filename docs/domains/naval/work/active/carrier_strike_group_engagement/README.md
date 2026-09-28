@@ -6,8 +6,8 @@ Canonical: `docs/domains/naval/work/active/carrier_strike_group_engagement/READM
 Owner: `domains/naval`
 Last verified: `2026-09-28`
 
-Status: `2026-09-28` planning. Scope, stage ladder, and finite task clusters are
-drafted; `P0 Boundary` is active and no implementation cluster has started.
+Status: `2026-09-28` active. `P0 Boundary` accepted by the owner on `2026-09-28`;
+`CSG-S0` has started with `S0-A` order-of-battle research.
 
 Language:
 
@@ -122,8 +122,8 @@ in parallel because its write sets are largely disjoint; it must join before
 
 | Phase | Stage scenario | Naval-owned work (system dependencies in the register below) | Claim ceiling | Status |
 | --- | --- | --- | --- | --- |
-| `P0 Boundary` | none | package scope, stage ladder, claim ceilings, parameter-provenance policy | docs only | active |
-| `CSG-S0` | both groups spawn statically with full order of battle | named units and loadouts with parameter provenance; scenario schema for group composition | `G0` | planned |
+| `P0 Boundary` | none | package scope, stage ladder, claim ceilings, parameter-provenance policy | docs only | accepted |
+| `CSG-S0` | both groups spawn statically with full order of battle | named units and loadouts with parameter provenance; scenario schema for group composition | `G0` | active |
 | `CSG-S1` | both groups transit in formation | group formation and screen geometry; route following; ship turning and speed response; damage-to-mobility coupling; group replenishment scheduling | `G1`-`G2` | planned |
 | `CSG-S2` | deck cycle: launch waves, CAP, recovery | catapult and arresting-gear cycle; deck, elevator, and hangar capacity; sortie generation; recovery pattern; embarked helicopter operations | `G3` | planned |
 | `CSG-S3` | mutual search and tactical picture | naval sensor platform adapters and group track reporting; naval emission-control doctrine | `G4` | planned |

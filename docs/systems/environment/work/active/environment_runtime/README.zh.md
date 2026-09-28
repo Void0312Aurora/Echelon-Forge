@@ -6,7 +6,7 @@ Canonical: `docs/systems/environment/work/active/environment_runtime/README.md`
 Owner: `systems/environment`
 Last verified: `2026-09-28`
 
-状态：`2026-09-28` planning。范围与任务簇已起草；`P0 Boundary` 为 active，尚无实现任务簇开工。
+状态：`2026-09-28` active。`P0 Boundary` 已于 `2026-09-28` 获 owner 接受；尚无实现任务簇开工。
 
 语言：
 
@@ -102,7 +102,7 @@ Last verified: `2026-09-28`
 
 | 阶段 | 目标 | 进入条件 | 退出条件 | 状态 |
 | --- | --- | --- | --- | --- |
-| `P0 Boundary` | 冻结范围与分层运行时契约。 | owner 批准 | README 与任务簇获批 | active |
+| `P0 Boundary` | 冻结范围与分层运行时契约。 | owner 批准 | README 与任务簇获批 | accepted |
 | `P1 Evidence` | 清点每处环境读取、`main` 上的运行时，以及陆军分支对共享文件的改动。 | `P0` | 每个读取点与每项陆军新增都归为共享、陆军所有或退役 | planned |
 | `P2 Contract` | 分层状态、垂直基准、水体契约、瓦片模型、与域无关的查询 API。 | `P1` | 契约成文并有原生测试覆盖 | planned |
 | `P3 Implementation` | 多瓦片栅格、水体、海岸线、可变天气与海况、时钟驱动的太阳、声学数据。 | `P2`；太阳位置与瓦片定位需 [大地坐标系](../../../../physics/work/active/geodetic_frame/README.zh.md) `P2-A` 的锚点 | 对照声明输入与参考值的原生与 Python 测试通过 | planned |

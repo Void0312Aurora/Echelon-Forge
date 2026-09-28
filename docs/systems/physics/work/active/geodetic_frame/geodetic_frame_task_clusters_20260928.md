@@ -7,7 +7,7 @@ Owner: `systems/physics`
 Last verified: `2026-09-28`
 
 Status: `2026-09-28` finite task-cluster plan for [Geodetic Frame](README.md).
-No cluster has started.
+`P0-A` accepted `2026-09-28`.
 
 ## Boundary Decision
 
@@ -20,8 +20,8 @@ factor. Every cluster that changes a shared runtime surface runs serially.
 
 | Cluster | Owner | Capability tier / model ID / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `P0-A` | main thread | n/a | Freeze scope, earth-model choice, frame contract. | this directory; `docs/systems/README*` index | code | doc link and bilingual audits | owner approves | first | 1 | active |
-| `P1-A` | read-only worker | n/a | Inventory flat-frame and horizon assumptions across `src/`, `python/`, `gym_envs/`. | inventory note in this directory | code changes | cited file/line evidence | every site classified | after `P0-A` | 1 + 1 repair | planned |
+| `P0-A` | main thread | n/a | Freeze scope, earth-model choice, frame contract. | this directory; `docs/systems/README*` index | code | doc link and bilingual audits | owner approves | first | 1 | accepted |
+| `P1-A` | read-only worker | n/a | Inventory flat-frame and horizon assumptions across `src/`, `python/`, `gym_envs/`. | inventory note in this directory | code changes | cited file/line evidence | every site classified | after `P0-A` | 1 + 1 repair | active |
 | `P2-A` | future worker | n/a | Earth model plus scenario geodetic anchor; ENU-geodetic conversions both ways. | new frame component/header; scenario loader anchor field; tests | motion changes | native tests against reference coordinates | round-trip error within declared bound | after `P1-A`; serial | 2 + 1 repair | planned |
 | `P2-B` | future worker | n/a | Geometry queries: horizon distance (geometric and effective-radius), earth-bulge LOS, great-circle range/bearing. | frame query API; tests | ducting | reference-value tests with sources | all queries match references | after `P2-A` | 2 + 1 repair | planned |
 | `P3-A` | future worker | n/a | Move the sensing radar-horizon proxy and LOS onto the shared queries. | `default_sensor_model.cpp`, `sensor.h`; sensing tests | new sensor physics | sensing and naval sensor tests | proxy flag retired or wrapped; no direct horizon math left | after `P2-B`; serial | 2 + 1 repair | planned |
