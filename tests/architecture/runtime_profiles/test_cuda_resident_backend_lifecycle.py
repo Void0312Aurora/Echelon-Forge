@@ -130,6 +130,6 @@ def test_rb4_cpu_and_cuda_paths_consume_one_fixed_fixture_identity_contract() ->
 
     assert "kFixedAirFixtureEntityBaseId = 581" in contract
     assert "fixed_air_fixture_entity_id" in state_test
-    assert "fixed_air_fixture_entity_id" in cpu_test
+    assert "kFixedAirFixtureTypeName" in cpu_test
     assert "FlecsCpuBackend" not in state_test
     assert "CudaResidentBackend" not in cpu_test

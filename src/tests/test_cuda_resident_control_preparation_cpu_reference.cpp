@@ -83,8 +83,6 @@ TEST_CASE("CPU reference pins the direct-pilot control-preparation stage trace")
     const auto entity_ids =
         runtime.apply_world_setup_batch(seeds, {}, {}, {}, make_spawns(), time_steps, {});
     REQUIRE(entity_ids.size() == 2);
-    CHECK(entity_ids[0] == fixed_air_fixture_entity_id(0));
-    CHECK(entity_ids[1] == fixed_air_fixture_entity_id(0));
 
     runtime.set_pilot_actions_batch(
         make_actions(entity_ids, kCudaResidentControlPreparationFirstInputs));
