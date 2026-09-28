@@ -6,7 +6,8 @@ Canonical: `docs/systems/physics/work/active/geodetic_frame/README.md`
 Owner: `systems/physics`
 Last verified: `2026-09-28`
 
-状态：`2026-09-28` active。`P0 Boundary` 已于 `2026-09-28` 获 owner 接受；`P1-A` 盘点已开始。
+状态：`2026-09-28` active。`P0 Boundary` 已接受；`P1 Evidence` 已通过，见
+[P1-A 盘点](geodetic_frame_p1a_inventory_20260928.md)（12 处必须迁移）。下一步是 `P2` 实现。
 
 语言：
 
@@ -41,8 +42,9 @@ Last verified: `2026-09-28`
 | 领域 | 状态 | 证据 | 边界 |
 | --- | --- | --- | --- |
 | 仿真坐标系 | 平面局部 ENU | `Transform`（`src/components/basic/common.h`） | 无地球模型、无曲率 |
-| 大地坐标字段 | 仅导航用 | `navigation.h`、`instruments.h` 中的 `lat_deg`/`lon_deg` | 不是坐标系权威；没有 ENU 与大地坐标的换算 |
-| 雷达地平线 | 单传感器代理开关 | `sensor.h` 中的 `enforce_radar_horizon`，在 `default_sensor_model.cpp` 中使用 | 仅海面雷达代理；不是共享几何 |
+| 大地坐标字段 | 仅导航用；锚点写死 | `src/systems/systems/navigation_system.h:9-48` 的 EGI 换算使用固定的 Nellis AFB 锚点与等距圆柱近似 | 东向 250 km 处误差 3.7 km；导入器丢弃 Arnis 的 WGS84 原点；没有场景锚点 |
+| 雷达地平线 | 单传感器代理开关；**该门禁从不拒绝** | `sensor.h` 中的 `enforce_radar_horizon`；`default_sensor_model.cpp:256-273` 在已有距离门之后以 `max(max_range, horizon)` 作限 | 使用几何常数 `3570·(√h1+√h2)`，不是 4/3；见 [P1-A 盘点](geodetic_frame_p1a_inventory_20260928.md) |
+| 数据链地平线 | 唯一实际生效的地平线 | `src/systems/systems/data_link_system.h:48-52` | 几何常数 `3.57` km，比 4/3 无线电地平线短 13.4% |
 | 地形视线 | 环境模型 | `IEnvironmentModel::check_line_of_sight` | 只考虑地形，无地球凸起 |
 
 ## 范围
@@ -68,7 +70,7 @@ Last verified: `2026-09-28`
 | 阶段 | 目标 | 进入条件 | 退出条件 | 状态 |
 | --- | --- | --- | --- | --- |
 | `P0 Boundary` | 冻结范围、地球模型选择与坐标契约。 | owner 批准 | README 与任务簇获批 | accepted |
-| `P1 Evidence` | 清点所有假设平面坐标或自行计算地平线的位置。 | `P0` | 每处归为必须迁移、可保留或范围外 | active |
+| `P1 Evidence` | 清点所有假设平面坐标或自行计算地平线的位置。 | `P0` | 每处归为必须迁移、可保留或范围外 | accepted（[盘点](geodetic_frame_p1a_inventory_20260928.md)） |
 | `P2 Implementation` | 地球模型、锚点、换算、几何查询。 | `P1` | 原生与 Python 测试对照参考值通过 | planned |
 | `P3 Integration` | 把探测地平线与视线迁到查询上；在场景中暴露锚点。 | `P2` | 使用方调用共享查询；代理开关退役或被包装 | planned |
 | `P4 Validation` | 跨域回归与吞吐量检查。 | `P3` | 空、陆、海测试通过或按记录的量变化 | planned |
