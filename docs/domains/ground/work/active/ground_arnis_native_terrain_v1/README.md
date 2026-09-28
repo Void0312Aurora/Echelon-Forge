@@ -47,7 +47,9 @@ truth.
   same segment samples to return minimum/average combined movement multipliers
   for a selected stance. Ground movement consumes the average after the local
   transition is admitted; this remains a segment-cost observation, not a route
-  cost grid or general passability product.
+  cost grid or general passability product. The stance-dependent reduction is
+  Ground-owned (`src/systems/domains/ground/movement_effects.h`); the shared
+  environment provider supplies only domain-neutral point and transition queries.
 - Loading is transactional: an invalid candidate returns `false` without
   replacing the current provider raster.
 

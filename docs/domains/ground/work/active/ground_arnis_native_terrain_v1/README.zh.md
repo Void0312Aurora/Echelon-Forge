@@ -28,7 +28,9 @@ fixture 元数据悄悄冒充成运行时真值。
   桥面线段覆盖水面并成为硬压实通行面。
 - `SimulationKernel.get_ground_transition_movement_observation(...)` 复用同一组线段采样，
   按指定姿态返回最小/平均综合移动倍率。移动系统在局部过渡准入后消费平均倍率；这仍是
-  线段代价观察，不是路线代价栅格或一般通行性产品。
+  线段代价观察，不是路线代价栅格或一般通行性产品。按姿态的归约由 Ground 负责
+  （`src/systems/domains/ground/movement_effects.h`）；共享环境 provider 只提供与领域无关的
+  点采样和过渡查询。
 - 加载具有事务性：候选包无效时返回 `false`，不替换当前 provider 栅格。
 
 ## 明确的非目标

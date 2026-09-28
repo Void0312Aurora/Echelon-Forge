@@ -110,7 +110,11 @@ sample points to report minimum/average combined movement multipliers and sample
 count for a selected stance. Ground movement consumes the segment average after
 the transition is admitted, so a step crossing a surface boundary no longer
 uses only the start-cell multiplier. This remains local segment movement cost,
-not a route-level cost grid or general passability product.
+not a route-level cost grid or general passability product. Since 2026-09-28 the
+stance-dependent reduction lives with the Ground owner
+(`evaluate_transition_movement_effects` in `movement_effects.h`); the shared
+`IEnvironmentModel` keeps only domain-neutral terrain, slope, and transition
+queries and no longer carries Ground stance or cost semantics.
 The native acceptance suite also drives a soldier from one side of the fixture
 river to the other along the declared bridge segment in one bounded step. The
 position crosses the river and the sampled transition retains
