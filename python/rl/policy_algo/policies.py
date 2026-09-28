@@ -28,8 +28,11 @@ from .hmoe_routing import (
     subexpert_name,
 )
 from .model_contracts import (
+    LAUNCH_DECISION_CONTRACT_VERSION_KEY,
     LaunchDecisionContributor,
     LaunchDecisionOwnerContract,
+    LaunchDecisionTrainingScope,
+    _launch_decision_parameter_role,
     resolve_launch_decision_contract,
 )
 
@@ -63,10 +66,6 @@ class SquashedMultiInputPolicy(MultiInputActorCriticPolicy):
     """
 
     def __init__(self, *args: Any, squash_output: Optional[bool] = True, **kwargs: Any):
-        # SB3 asserts `squash_output=True` requires gSDE; we intentionally bypass that by:
-        # - building as usual (unbounded DiagGaussian)
-        # - swapping to SquashedDiagGaussianDistribution after init
-        # - enabling the `squash_output` code path for unscale_action()
         super().__init__(*args, squash_output=False, **kwargs)
 
         if squash_output is None:
@@ -104,8 +103,6 @@ class _HMoEHeadBank(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
-        # Start HMoE from the shared-policy baseline and let routed heads learn residuals.
-        # This keeps the initial policy close to the already-stable single-head PPO path.
         for head in self.family_heads:
             nn.init.zeros_(head.weight)
             nn.init.zeros_(head.bias)
@@ -172,7 +169,8 @@ class _HybridActionLayout:
         self.ordinary_binary_indices = tuple(
             action_idx for action_idx in self.binary_indices if action_idx != self.event_action_index
         )
-        self.categorical_logit_count = int(sum(n for _, n in self.categorical_indices))
+        self.categorical_logit_count = int(sum(n for _, n in self.categorical_indices)
+        )
         self.param_dim = int(
             self.continuous_count + self.binary_count + self.event_logit_count + self.categorical_logit_count
         )
@@ -356,7 +354,7 @@ class LaunchDecisionComposer:
             )
         batch = int(base_event_pair.shape[0])
         current = base_event_pair
-        base_role = _parameter_role_for_contributor(LaunchDecisionContributor.BASE_ACTION)
+        base_role = _launch_decision_parameter_role(LaunchDecisionContributor.BASE_ACTION)
         detached_base = base_role in set(self.owner_contract.detached_parameter_roles)
         contributor_trace: list[dict[str, Any]] = [
             {
@@ -371,13 +369,7 @@ class LaunchDecisionComposer:
         admitted = set(self.owner_contract.contributors)
         ignored = set(self.owner_contract.ignored_contributors)
 
-        ordered_contributors = (
-            LaunchDecisionContributor.BASE_ACTION,
-            LaunchDecisionContributor.HMOE_EVENT_SLICE,
-            LaunchDecisionContributor.HYBRID_EVENT_HEAD,
-            LaunchDecisionContributor.WINDOW_CLASSIFIER_ADAPTER,
-            LaunchDecisionContributor.STOPPING_ADAPTER,
-        )
+        ordered_contributors = tuple(LaunchDecisionContributor)
         unknown = set(outputs).difference(ordered_contributors)
         if unknown:
             names = ", ".join(sorted(item.value for item in unknown))
@@ -404,7 +396,7 @@ class LaunchDecisionComposer:
                 )
                 continue
 
-            role = _parameter_role_for_contributor(contributor)
+            role = _launch_decision_parameter_role(contributor)
             detached = role in set(self.owner_contract.detached_parameter_roles)
             if contributor in {
                 LaunchDecisionContributor.WINDOW_CLASSIFIER_ADAPTER,
@@ -456,16 +448,6 @@ class LaunchDecisionComposer:
             "composed_event_delta": event_delta.detach().clone(),
         }
         return LaunchDecisionComposition(event_pair=current, event_delta=event_delta, trace=trace)
-
-
-def _parameter_role_for_contributor(contributor: LaunchDecisionContributor) -> str:
-    return {
-        LaunchDecisionContributor.BASE_ACTION: "action_net",
-        LaunchDecisionContributor.HMOE_EVENT_SLICE: "hmoe_event_slice",
-        LaunchDecisionContributor.HYBRID_EVENT_HEAD: "hybrid_event_head",
-        LaunchDecisionContributor.WINDOW_CLASSIFIER_ADAPTER: "window_classifier_adapter",
-        LaunchDecisionContributor.STOPPING_ADAPTER: "stopping_adapter",
-    }[contributor]
 
 
 class _HybridActionDistribution:
@@ -710,7 +692,9 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         hmoe_residual_warmup_fraction: float = 0.15,
         hmoe_residual_start_factor: float = 0.0,
         hybrid_action_spec: Any | None = None,
+        launch_decision_contract_version: str | None = None,
         launch_decision_mode: str | None = None,
+        launch_decision_owner_mode: str | None = None,
         hybrid_event_head_lr_scale: float = 0.0,
         hybrid_event_credit_head_lr_scale: float = 0.0,
         hybrid_event_use_stopping_head: bool = False,
@@ -725,6 +709,13 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         window_classifier_input_standardization_eps: float = 1.0e-6,
         **kwargs: Any,
     ):
+        if (
+            launch_decision_mode is not None
+            and launch_decision_owner_mode is not None
+            and str(launch_decision_mode) != str(launch_decision_owner_mode)
+        ):
+            raise ValueError("launch_decision_mode and launch_decision_owner_mode must match")
+        resolved_mode = launch_decision_mode if launch_decision_mode is not None else launch_decision_owner_mode
         self._hmoe_family_subexpert_counts = tuple(int(max(1, v)) for v in family_subexpert_counts)
         self._hmoe_residual_scale = float(max(0.0, hmoe_residual_scale))
         self._hmoe_head_lr_scale = float(max(0.0, hmoe_head_lr_scale))
@@ -738,12 +729,8 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         self._stopping_head_norm_enabled = bool(stopping_head_norm_enabled)
         self._window_classifier_head_lr_scale = float(max(0.0, window_classifier_head_lr_scale))
         self._window_classifier_head_norm_enabled = bool(window_classifier_head_norm_enabled)
-        self._window_classifier_event_adapter_detach = bool(
-            window_classifier_event_adapter_detach
-        )
-        self._window_classifier_input_standardization_enabled = bool(
-            window_classifier_input_standardization_enabled
-        )
+        self._window_classifier_event_adapter_detach = bool(window_classifier_event_adapter_detach)
+        self._window_classifier_input_standardization_enabled = bool(window_classifier_input_standardization_enabled)
         self._window_classifier_input_standardization_momentum = float(
             min(1.0, max(0.0, window_classifier_input_standardization_momentum))
         )
@@ -754,7 +741,9 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         self._hmoe_initial_lr = float(lr_schedule(1))
         self._hybrid_log_std_init = float(kwargs.get("log_std_init", 0.0))
         self._hybrid_action_spec_config = hybrid_action_spec
+        self._launch_decision_contract_version_config = launch_decision_contract_version
         self._launch_decision_mode_config = launch_decision_mode
+        self._launch_decision_owner_mode_config = launch_decision_owner_mode
         launch_decision_policy_kwargs = {
             "hybrid_action_spec": hybrid_action_spec,
             "hmoe_residual_scale": self._hmoe_residual_scale,
@@ -763,13 +752,18 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             "hybrid_event_use_stopping_head": self._hybrid_event_use_stopping_head,
             "hybrid_event_use_window_classifier_head": self._hybrid_event_use_window_classifier_head,
         }
+        if launch_decision_contract_version is not None:
+            launch_decision_policy_kwargs[LAUNCH_DECISION_CONTRACT_VERSION_KEY] = launch_decision_contract_version
         if launch_decision_mode is not None:
             launch_decision_policy_kwargs["launch_decision_mode"] = launch_decision_mode
+        if launch_decision_owner_mode is not None:
+            launch_decision_policy_kwargs["launch_decision_owner_mode"] = launch_decision_owner_mode
         self._launch_decision_config = {
             "hyperparameters": {"policy_kwargs": launch_decision_policy_kwargs}
         }
         self._launch_decision_owner_contract = resolve_launch_decision_contract(
-            self._launch_decision_config
+            self._launch_decision_config,
+            require_legacy_provenance=False,
         )
         self._hybrid_action_layout: _HybridActionLayout | None = None
         self.hybrid_event_head: nn.Linear | None = None
@@ -842,15 +836,17 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             action_dim=hmoe_output_dim,
             family_subexpert_counts=self._hmoe_family_subexpert_counts,
         ).to(self.device)
-        # SB3 builds the optimizer inside `super().__init__()`. Rebuild it once the HMoE heads
-        # exist so the expert parameters are actually trainable.
         self.optimizer = self._build_optimizer()
         self.apply_optimizer_learning_rate(self._hmoe_initial_lr, lr_mult=1.0)
         self._last_hmoe_route_stats: dict[str, float] = {}
         self._last_launch_decision_trace: dict[str, Any] = {}
+        self._launch_decision_pending_update: dict[str, Any] | None = None
         self._launch_decision_composer = LaunchDecisionComposer(
             self._launch_decision_owner_contract,
             parameter_ids=self._launch_decision_parameter_ids(),
+        )
+        self._launch_decision_optimizer_pre_hook_handle = self.optimizer.register_step_pre_hook(
+            self._launch_decision_optimizer_step_pre_hook
         )
 
     def _get_constructor_parameters(self) -> dict[str, Any]:
@@ -861,23 +857,19 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         data["hmoe_residual_warmup_fraction"] = float(self._hmoe_residual_warmup_fraction)
         data["hmoe_residual_start_factor"] = float(self._hmoe_residual_start_factor)
         data["hybrid_action_spec"] = self._hybrid_action_spec_config
+        data["launch_decision_contract_version"] = self._launch_decision_contract_version_config
         data["launch_decision_mode"] = self._launch_decision_mode_config
+        data["launch_decision_owner_mode"] = self._launch_decision_owner_mode_config
         data["hybrid_event_head_lr_scale"] = float(self._hybrid_event_head_lr_scale)
         data["hybrid_event_credit_head_lr_scale"] = float(self._hybrid_event_credit_head_lr_scale)
         data["hybrid_event_use_stopping_head"] = bool(self._hybrid_event_use_stopping_head)
-        data["hybrid_event_use_window_classifier_head"] = bool(
-            self._hybrid_event_use_window_classifier_head
-        )
+        data["hybrid_event_use_window_classifier_head"] = bool(self._hybrid_event_use_window_classifier_head)
         data["stopping_head_lr_scale"] = float(self._stopping_head_lr_scale)
         data["stopping_head_norm_enabled"] = bool(self._stopping_head_norm_enabled)
         data["window_classifier_head_lr_scale"] = float(self._window_classifier_head_lr_scale)
         data["window_classifier_head_norm_enabled"] = bool(self._window_classifier_head_norm_enabled)
-        data["window_classifier_event_adapter_detach"] = bool(
-            self._window_classifier_event_adapter_detach
-        )
-        data["window_classifier_input_standardization_enabled"] = bool(
-            self._window_classifier_input_standardization_enabled
-        )
+        data["window_classifier_event_adapter_detach"] = bool(self._window_classifier_event_adapter_detach)
+        data["window_classifier_input_standardization_enabled"] = bool(self._window_classifier_input_standardization_enabled)
         data["window_classifier_input_standardization_momentum"] = float(
             self._window_classifier_input_standardization_momentum
         )
@@ -887,28 +879,15 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         return data
 
     def get_launch_decision_owner_contract(self) -> LaunchDecisionOwnerContract:
-        """Return the resolved owner contract used by forward and update lanes."""
-
         return self._launch_decision_owner_contract
 
     def get_launch_decision_trace(self) -> dict[str, Any]:
-        """Return the most recent unmasked composition and downstream mask trace."""
-
         return dict(self._last_launch_decision_trace)
 
     def get_launch_decision_parameters(
         self,
         roles: tuple[str, ...] | list[str] | None = None,
     ) -> list[nn.Parameter]:
-        """Return the unique trainable parameters owned by the requested roles.
-
-        The role map is intentionally centralized here so auxiliary update lanes
-        cannot silently reconstruct a broader write set from module names.
-        ``hmoe_event_slice`` currently maps to the routed bank as a whole: its
-        heads emit a full action residual, so a tensor-level event-slice split is
-        not a valid optimizer boundary yet.
-        """
-
         role_map: dict[str, list[nn.Parameter]] = {
             "action_net": list(self.action_net.parameters()) if hasattr(self, "action_net") else [],
             "hmoe_event_slice": list(self.hmoe_head_bank.parameters())
@@ -933,6 +912,9 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         policy_net = getattr(mlp_extractor, "policy_net", None)
         if policy_net is not None:
             role_map["policy_trunk"].extend(policy_net.parameters())
+        pi_features_extractor = getattr(self, "pi_features_extractor", None)
+        if pi_features_extractor is not None:
+            role_map["policy_trunk"].extend(pi_features_extractor.parameters())
 
         requested = tuple(roles) if roles is not None else tuple(role_map)
         selected: list[nn.Parameter] = []
@@ -947,30 +929,89 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
                 seen.add(id(parameter))
         return selected
 
+    def prepare_launch_decision_update(
+        self,
+        scope: str,
+        parameters: list[nn.Parameter] | tuple[nn.Parameter, ...],
+    ) -> None:
+        ids = tuple(sorted(id(parameter) for parameter in parameters))
+        snapshots = {
+            id(parameter): parameter.detach().clone()
+            for parameter in parameters
+            if parameter.requires_grad
+        }
+        self._launch_decision_pending_update = {
+            "scope": str(scope),
+            "parameter_ids": ids,
+            "snapshots": snapshots,
+        }
+
     def record_launch_decision_update(
         self,
         scope: str,
         parameters: list[nn.Parameter] | tuple[nn.Parameter, ...],
     ) -> None:
-        """Attach the last dedicated-update write set to the owner trace."""
-
+        pending = self._launch_decision_pending_update
         ids = tuple(sorted(id(parameter) for parameter in parameters))
+        changed_ids: tuple[int, ...] = ()
+        if pending is not None and pending.get("scope") == str(scope) and tuple(pending.get("parameter_ids", ())) == ids:
+            snapshots = pending.get("snapshots", {})
+            changed_ids = tuple(
+                sorted(
+                    id(parameter)
+                    for parameter in parameters
+                    if id(parameter) in snapshots
+                    and not th.equal(parameter.detach(), snapshots[id(parameter)])
+                )
+            )
+        self._launch_decision_pending_update = None
+        if not changed_ids:
+            return
         role_ids = self._launch_decision_parameter_ids()
         roles = tuple(
             role
             for role, candidates in role_ids.items()
-            if any(parameter_id in ids for parameter_id in candidates)
+            if any(parameter_id in changed_ids for parameter_id in candidates)
         )
         self._last_launch_decision_trace["last_update"] = {
             "scope": str(scope),
-            "parameter_ids": ids,
+            "parameter_ids": changed_ids,
             "parameter_roles": roles,
         }
+
+    def _launch_decision_optimizer_step_pre_hook(self, optimizer, args, kwargs):
+        pending = self._launch_decision_pending_update
+        if pending is not None:
+            allowed_ids = set(pending.get("parameter_ids", ()))
+            for parameter in self.parameters():
+                if id(parameter) not in allowed_ids:
+                    parameter.grad = None
+            return None
+
+        contract = self._launch_decision_owner_contract
+        if not bool(contract.explicit_mode):
+            return None
+        launch_ids = {
+            parameter_id
+            for ids in self._launch_decision_parameter_ids().values()
+            for parameter_id in ids
+        }
+        if LaunchDecisionTrainingScope.ORDINARY_PPO in set(contract.allowed_training_scopes):
+            allowed_ids = {
+                id(parameter)
+                for parameter in self.get_launch_decision_parameters(contract.trainable_parameter_roles)
+            }
+        else:
+            allowed_ids = set()
+        for parameter in self.parameters():
+            if id(parameter) in launch_ids and id(parameter) not in allowed_ids:
+                parameter.grad = None
+        return None
 
     def _launch_decision_parameter_ids(self) -> dict[str, tuple[int, ...]]:
         role_prefixes = {
             "action_net": ("action_net.",),
-            "policy_trunk": ("mlp_extractor.", "features_extractor.",),
+            "policy_trunk": ("mlp_extractor.", "features_extractor.", "pi_features_extractor."),
             "hmoe_event_slice": ("hmoe_head_bank.",),
             "hybrid_event_head": ("hybrid_event_head.",),
             "window_classifier_adapter": ("window_classifier_head.", "window_classifier_norm."),
@@ -987,16 +1028,6 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         return parameter_ids
 
     def initialize_hmoe_from_shared_action_head(self) -> None:
-        """
-        Bootstrap routed heads for residual-style startup.
-
-        Why:
-        - The first HMoE line is intentionally a residual/specialization extension of the
-          shared execution policy, not a from-scratch independent expert bank.
-        - The shared action head remains the initial policy mean.
-        - Routed heads should start neutral and only learn residual corrections on top of
-          the shared mean, otherwise bootstrap would amplify the shared action prior.
-        """
         shared_head = getattr(self, "action_net", None)
         if shared_head is None:
             return
@@ -1034,11 +1065,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
                 self.window_classifier_norm.bias.zero_()
             mean = getattr(self, "window_classifier_input_mean", None)
             std = getattr(self, "window_classifier_input_std", None)
-            initialized = getattr(
-                self,
-                "window_classifier_input_standardization_initialized",
-                None,
-            )
+            initialized = getattr(self, "window_classifier_input_standardization_initialized", None)
             if mean is not None:
                 mean.zero_()
             if std is not None:
@@ -1102,9 +1129,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             bias = self.hybrid_event_credit_head.bias.detach()
             stats["a7/ech_params/weight_norm"] = float(weight.norm().item())
             stats["a7/ech_params/bias_norm"] = float(bias.norm().item())
-            stats["a7/ech_params/max_abs"] = float(
-                max(weight.abs().max().item(), bias.abs().max().item())
-            )
+            stats["a7/ech_params/max_abs"] = float(max(weight.abs().max().item(), bias.abs().max().item()))
         if self.stopping_head is None:
             stats["m3s1/stop_params/enabled"] = 0.0
             stats["m3s1/stop_params/lr_scale"] = float(self._stopping_head_lr_scale)
@@ -1117,9 +1142,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             bias = self.stopping_head.bias.detach()
             stats["m3s1/stop_params/weight_norm"] = float(weight.norm().item())
             stats["m3s1/stop_params/bias_norm"] = float(bias.norm().item())
-            stats["m3s1/stop_params/max_abs"] = float(
-                max(weight.abs().max().item(), bias.abs().max().item())
-            )
+            stats["m3s1/stop_params/max_abs"] = float(max(weight.abs().max().item(), bias.abs().max().item()))
             if self.stopping_norm is not None:
                 norm_weight = self.stopping_norm.weight.detach()
                 norm_bias = self.stopping_norm.bias.detach()
@@ -1127,41 +1150,25 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
                 stats["m3s1/stop_params/norm_bias_abs_mean"] = float(norm_bias.abs().mean().item())
         if self.window_classifier_head is None:
             stats["m3s2/wcls_params/enabled"] = 0.0
-            stats["m3s2/wcls_params/lr_scale"] = float(
-                self._window_classifier_head_lr_scale
-            )
+            stats["m3s2/wcls_params/lr_scale"] = float(self._window_classifier_head_lr_scale)
             stats["m3s2/wcls_params/norm_enabled"] = 0.0
         else:
             stats["m3s2/wcls_params/enabled"] = 1.0
-            stats["m3s2/wcls_params/lr_scale"] = float(
-                self._window_classifier_head_lr_scale
-            )
-            stats["m3s2/wcls_params/norm_enabled"] = float(
-                self.window_classifier_norm is not None
-            )
+            stats["m3s2/wcls_params/lr_scale"] = float(self._window_classifier_head_lr_scale)
+            stats["m3s2/wcls_params/norm_enabled"] = float(self.window_classifier_norm is not None)
             weight = self.window_classifier_head.weight.detach()
             bias = self.window_classifier_head.bias.detach()
             stats["m3s2/wcls_params/weight_norm"] = float(weight.norm().item())
             stats["m3s2/wcls_params/bias_norm"] = float(bias.norm().item())
-            stats["m3s2/wcls_params/max_abs"] = float(
-                max(weight.abs().max().item(), bias.abs().max().item())
-            )
+            stats["m3s2/wcls_params/max_abs"] = float(max(weight.abs().max().item(), bias.abs().max().item()))
             if self.window_classifier_norm is not None:
                 norm_weight = self.window_classifier_norm.weight.detach()
                 norm_bias = self.window_classifier_norm.bias.detach()
                 stats["m3s2/wcls_params/norm_weight_mean"] = float(norm_weight.mean().item())
                 stats["m3s2/wcls_params/norm_bias_abs_mean"] = float(norm_bias.abs().mean().item())
-            stats["m3s2/wcls_params/event_adapter_detach"] = float(
-                self._window_classifier_event_adapter_detach
-            )
-            stats["m3s2/wcls_params/input_standardization_enabled"] = float(
-                self._window_classifier_input_standardization_enabled
-            )
-            initialized = getattr(
-                self,
-                "window_classifier_input_standardization_initialized",
-                None,
-            )
+            stats["m3s2/wcls_params/event_adapter_detach"] = float(self._window_classifier_event_adapter_detach)
+            stats["m3s2/wcls_params/input_standardization_enabled"] = float(self._window_classifier_input_standardization_enabled)
+            initialized = getattr(self, "window_classifier_input_standardization_initialized", None)
             stats["m3s2/wcls_params/input_standardization_initialized"] = (
                 float(initialized.detach().cpu().item()) if initialized is not None else 0.0
             )
@@ -1170,11 +1177,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
     def _build_optimizer(self):
         hmoe_params = list(self.hmoe_head_bank.parameters())
         event_params = list(self.hybrid_event_head.parameters()) if self.hybrid_event_head is not None else []
-        credit_params = (
-            list(self.hybrid_event_credit_head.parameters())
-            if self.hybrid_event_credit_head is not None
-            else []
-        )
+        credit_params = list(self.hybrid_event_credit_head.parameters()) if self.hybrid_event_credit_head is not None else []
         stopping_params = []
         if self.stopping_norm is not None:
             stopping_params.extend(self.stopping_norm.parameters())
@@ -1190,62 +1193,20 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         credit_param_ids = {id(param) for param in credit_params}
         stopping_param_ids = {id(param) for param in stopping_params}
         window_classifier_param_ids = {id(param) for param in window_classifier_params}
-        routed_param_ids = (
-            hmoe_param_ids | event_param_ids | credit_param_ids | stopping_param_ids | window_classifier_param_ids
-        )
+        routed_param_ids = hmoe_param_ids | event_param_ids | credit_param_ids | stopping_param_ids | window_classifier_param_ids
         shared_params = [param for param in self.parameters() if id(param) not in routed_param_ids]
-        param_groups: list[dict[str, Any]] = [
-            {
-                "params": shared_params,
-                "lr_scale": 1.0,
-                "name": "shared",
-            }
-        ]
+        param_groups: list[dict[str, Any]] = [{"params": shared_params, "lr_scale": 1.0, "name": "shared"}]
         if event_params:
-            param_groups.append(
-                {
-                    "params": event_params,
-                    "lr_scale": float(self._hybrid_event_head_lr_scale),
-                    "name": "hybrid_event_head",
-                }
-            )
+            param_groups.append({"params": event_params, "lr_scale": float(self._hybrid_event_head_lr_scale), "name": "hybrid_event_head"})
         if credit_params:
-            param_groups.append(
-                {
-                    "params": credit_params,
-                    "lr_scale": float(self._hybrid_event_credit_head_lr_scale),
-                    "name": "hybrid_event_credit_head",
-                }
-            )
+            param_groups.append({"params": credit_params, "lr_scale": float(self._hybrid_event_credit_head_lr_scale), "name": "hybrid_event_credit_head"})
         if stopping_params:
-            param_groups.append(
-                {
-                    "params": stopping_params,
-                    "lr_scale": float(self._stopping_head_lr_scale),
-                    "name": "stopping_head",
-                }
-            )
+            param_groups.append({"params": stopping_params, "lr_scale": float(self._stopping_head_lr_scale), "name": "stopping_head"})
         if window_classifier_params:
-            param_groups.append(
-                {
-                    "params": window_classifier_params,
-                    "lr_scale": float(self._window_classifier_head_lr_scale),
-                    "name": "window_classifier_head",
-                }
-            )
+            param_groups.append({"params": window_classifier_params, "lr_scale": float(self._window_classifier_head_lr_scale), "name": "window_classifier_head"})
         if hmoe_params:
-            param_groups.append(
-                {
-                    "params": hmoe_params,
-                    "lr_scale": float(self._hmoe_head_lr_scale),
-                    "name": "hmoe",
-                }
-            )
-        return self.optimizer_class(
-            param_groups,
-            lr=self._hmoe_initial_lr,
-            **self.optimizer_kwargs,
-        )
+            param_groups.append({"params": hmoe_params, "lr_scale": float(self._hmoe_head_lr_scale), "name": "hmoe"})
+        return self.optimizer_class(param_groups, lr=self._hmoe_initial_lr, **self.optimizer_kwargs)
 
     def apply_optimizer_learning_rate(self, base_lr: float, *, lr_mult: float = 1.0) -> None:
         if self.optimizer is None:
@@ -1360,17 +1321,12 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             hmoe_event_residual = th.zeros_like(mean_actions)
 
         def _event_pair(actions: th.Tensor) -> th.Tensor:
-            return th.stack(
-                (actions[:, int(hold_index)], actions[:, int(fire_index)]),
-                dim=1,
-            )
+            return th.stack((actions[:, int(hold_index)], actions[:, int(fire_index)]), dim=1)
 
         mode = self._launch_decision_owner_contract.mode
         composition_latent = latent_pi.detach() if mode.value == "direct_boundary_v1_strict" else latent_pi
         base_pair = _event_pair(shared_mean_actions)
         if mode.value == "direct_boundary_v1_strict":
-            # The strict lane keeps the shared baseline available for comparison but
-            # removes its event gradient from the direct owner path.
             base_pair = base_pair.detach()
 
         contributor_outputs: dict[LaunchDecisionContributor, th.Tensor] = {}
@@ -1385,27 +1341,17 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
 
             event_delta_detached = event_delta.detach()
             self._last_hmoe_route_stats["a6/event_head_enabled"] = 1.0
-            self._last_hmoe_route_stats["a6/event_head_delta_abs_mean"] = float(
-                event_delta_detached.abs().mean().item()
-            )
-            self._last_hmoe_route_stats["a6/event_head_delta_hold_mean"] = float(
-                event_delta_detached[:, 0].mean().item()
-            )
-            self._last_hmoe_route_stats["a6/event_head_delta_fire_mean"] = float(
-                event_delta_detached[:, 1].mean().item()
-            )
+            self._last_hmoe_route_stats["a6/event_head_delta_abs_mean"] = float(event_delta_detached.abs().mean().item())
+            self._last_hmoe_route_stats["a6/event_head_delta_hold_mean"] = float(event_delta_detached[:, 0].mean().item())
+            self._last_hmoe_route_stats["a6/event_head_delta_fire_mean"] = float(event_delta_detached[:, 1].mean().item())
         else:
             self._last_hmoe_route_stats["a6/event_head_enabled"] = 0.0
         self._last_hmoe_route_stats["a6/event_head_lr_scale"] = float(self._hybrid_event_head_lr_scale)
 
         if self._hybrid_event_use_window_classifier_head and window_classifier_head is not None:
             if self._window_classifier_event_adapter_detach:
-                # The window head is a supervised contract head. It may control the event adapter,
-                # but PPO's action log-probability loss must not self-imitation-train it back toward hold.
                 with th.no_grad():
-                    window_logits = window_classifier_head(
-                        self._window_classifier_latent(latent_pi.detach())
-                    ).reshape(-1)
+                    window_logits = window_classifier_head(self._window_classifier_latent(latent_pi.detach())).reshape(-1)
             else:
                 window_logits = window_classifier_head(self._window_classifier_latent(latent_pi)).reshape(-1)
             if LaunchDecisionContributor.WINDOW_CLASSIFIER_ADAPTER in self._launch_decision_owner_contract.contributors:
@@ -1413,16 +1359,10 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             window_detached = window_logits.detach()
             self._last_hmoe_route_stats["m3s2/event_adapter_enabled"] = 1.0
             self._last_hmoe_route_stats["m3s2/window_classifier_event_adapter_enabled"] = 1.0
-            self._last_hmoe_route_stats["m3s2/window_classifier_event_adapter_detach"] = float(
-                self._window_classifier_event_adapter_detach
-            )
+            self._last_hmoe_route_stats["m3s2/window_classifier_event_adapter_detach"] = float(self._window_classifier_event_adapter_detach)
             self._last_hmoe_route_stats["m3s2/event_adapter_logit_mean"] = float(window_detached.mean().item())
-            self._last_hmoe_route_stats["m3s2/event_adapter_logit_abs_mean"] = float(
-                window_detached.abs().mean().item()
-            )
-            self._last_hmoe_route_stats["m3s2/window_classifier_event_adapter_logit_mean"] = float(
-                window_detached.mean().item()
-            )
+            self._last_hmoe_route_stats["m3s2/event_adapter_logit_abs_mean"] = float(window_detached.abs().mean().item())
+            self._last_hmoe_route_stats["m3s2/window_classifier_event_adapter_logit_mean"] = float(window_detached.mean().item())
         elif self._hybrid_event_use_stopping_head and stopping_head is not None:
             stopping_logits = stopping_head(self._stopping_latent(latent_pi)).reshape(-1)
             if LaunchDecisionContributor.STOPPING_ADAPTER in self._launch_decision_owner_contract.contributors:
@@ -1430,16 +1370,13 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             stopping_detached = stopping_logits.detach()
             self._last_hmoe_route_stats["m3s2/event_adapter_enabled"] = 1.0
             self._last_hmoe_route_stats["m3s2/window_classifier_event_adapter_enabled"] = 0.0
-            self._last_hmoe_route_stats["m3s2/event_adapter_logit_mean"] = float(
-                stopping_detached.mean().item()
-            )
-            self._last_hmoe_route_stats["m3s2/event_adapter_logit_abs_mean"] = float(
-                stopping_detached.abs().mean().item()
-            )
+            self._last_hmoe_route_stats["m3s2/event_adapter_logit_mean"] = float(stopping_detached.mean().item())
+            self._last_hmoe_route_stats["m3s2/event_adapter_logit_abs_mean"] = float(stopping_detached.abs().mean().item())
         else:
             self._last_hmoe_route_stats["m3s2/event_adapter_enabled"] = 0.0
             self._last_hmoe_route_stats["m3s2/window_classifier_event_adapter_enabled"] = 0.0
 
+        previous_update = self._last_launch_decision_trace.get("last_update")
         composition = self._launch_decision_composer.compose(
             base_event_pair=base_pair,
             contributor_outputs=contributor_outputs,
@@ -1448,6 +1385,8 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         adjusted[:, int(hold_index)] = composition.event_pair[:, 0]
         adjusted[:, int(fire_index)] = composition.event_pair[:, 1]
         self._last_launch_decision_trace = composition.trace
+        if previous_update is not None:
+            self._last_launch_decision_trace["last_update"] = previous_update
         return adjusted
 
     def _stopping_latent(self, latent_pi: th.Tensor) -> th.Tensor:
@@ -1466,11 +1405,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             return base
         mean = getattr(self, "window_classifier_input_mean", None)
         std = getattr(self, "window_classifier_input_std", None)
-        initialized = getattr(
-            self,
-            "window_classifier_input_standardization_initialized",
-            None,
-        )
+        initialized = getattr(self, "window_classifier_input_standardization_initialized", None)
         if mean is None or std is None or initialized is None:
             return base
         if float(initialized.detach().cpu().item()) <= 0.5:
@@ -1487,11 +1422,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             return False
         mean_buffer = getattr(self, "window_classifier_input_mean", None)
         std_buffer = getattr(self, "window_classifier_input_std", None)
-        initialized = getattr(
-            self,
-            "window_classifier_input_standardization_initialized",
-            None,
-        )
+        initialized = getattr(self, "window_classifier_input_standardization_initialized", None)
         if mean_buffer is None or std_buffer is None or initialized is None:
             return False
         if not th.is_tensor(latent_pi) or int(latent_pi.numel()) <= 0:
@@ -1502,9 +1433,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
                 return False
             base = self._window_classifier_base_latent(flat).detach()
             batch_mean = base.mean(dim=0).to(device=mean_buffer.device, dtype=mean_buffer.dtype)
-            batch_std = base.std(dim=0, unbiased=False).clamp_min(
-                float(self._window_classifier_input_standardization_eps)
-            )
+            batch_std = base.std(dim=0, unbiased=False).clamp_min(float(self._window_classifier_input_standardization_eps))
             batch_std = batch_std.to(device=std_buffer.device, dtype=std_buffer.dtype)
             momentum = float(self._window_classifier_input_standardization_momentum)
             if float(initialized.detach().cpu().item()) <= 0.5 or momentum >= 1.0:
@@ -1521,24 +1450,15 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         credit_head = self.hybrid_event_credit_head
         if layout is None or credit_head is None or layout.event_action_index is None:
             self._last_hmoe_route_stats["a7/event_credit_head_enabled"] = 0.0
-            self._last_hmoe_route_stats["a7/event_credit_head_lr_scale"] = float(
-                self._hybrid_event_credit_head_lr_scale
-            )
+            self._last_hmoe_route_stats["a7/event_credit_head_lr_scale"] = float(self._hybrid_event_credit_head_lr_scale)
             return None
-
         values = credit_head(latent_pi)
         values_detached = values.detach()
         advantage = values_detached[:, 1] - values_detached[:, 0]
         self._last_hmoe_route_stats["a7/event_credit_head_enabled"] = 1.0
-        self._last_hmoe_route_stats["a7/event_credit_head_lr_scale"] = float(
-            self._hybrid_event_credit_head_lr_scale
-        )
-        self._last_hmoe_route_stats["a7/event_credit_q_hold_mean"] = float(
-            values_detached[:, 0].mean().item()
-        )
-        self._last_hmoe_route_stats["a7/event_credit_q_fire_mean"] = float(
-            values_detached[:, 1].mean().item()
-        )
+        self._last_hmoe_route_stats["a7/event_credit_head_lr_scale"] = float(self._hybrid_event_credit_head_lr_scale)
+        self._last_hmoe_route_stats["a7/event_credit_q_hold_mean"] = float(values_detached[:, 0].mean().item())
+        self._last_hmoe_route_stats["a7/event_credit_q_fire_mean"] = float(values_detached[:, 1].mean().item())
         self._last_hmoe_route_stats["a7/event_credit_advantage_mean"] = float(advantage.mean().item())
         self._last_hmoe_route_stats["a7/event_credit_advantage_abs_mean"] = float(advantage.abs().mean().item())
         return values
@@ -1549,7 +1469,6 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             self._last_hmoe_route_stats["m3s1/stopping_head_enabled"] = 0.0
             self._last_hmoe_route_stats["m3s1/stopping_head_lr_scale"] = float(self._stopping_head_lr_scale)
             return None
-
         logits = stopping_head(self._stopping_latent(latent_pi)).reshape(-1)
         logits_detached = logits.detach()
         hazard_detached = th.sigmoid(logits_detached)
@@ -1564,25 +1483,16 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         classifier_head = self.window_classifier_head
         if classifier_head is None:
             self._last_hmoe_route_stats["m3s2/window_classifier_head_enabled"] = 0.0
-            self._last_hmoe_route_stats["m3s2/window_classifier_head_lr_scale"] = float(
-                self._window_classifier_head_lr_scale
-            )
+            self._last_hmoe_route_stats["m3s2/window_classifier_head_lr_scale"] = float(self._window_classifier_head_lr_scale)
             return None
-
         logits = classifier_head(self._window_classifier_latent(latent_pi)).reshape(-1)
         logits_detached = logits.detach()
         probability_detached = th.sigmoid(logits_detached)
         self._last_hmoe_route_stats["m3s2/window_classifier_head_enabled"] = 1.0
-        self._last_hmoe_route_stats["m3s2/window_classifier_head_lr_scale"] = float(
-            self._window_classifier_head_lr_scale
-        )
+        self._last_hmoe_route_stats["m3s2/window_classifier_head_lr_scale"] = float(self._window_classifier_head_lr_scale)
         self._last_hmoe_route_stats["m3s2/window_classifier_logit_mean"] = float(logits_detached.mean().item())
-        self._last_hmoe_route_stats["m3s2/window_classifier_logit_abs_mean"] = float(
-            logits_detached.abs().mean().item()
-        )
-        self._last_hmoe_route_stats["m3s2/window_classifier_prob_mean"] = float(
-            probability_detached.mean().item()
-        )
+        self._last_hmoe_route_stats["m3s2/window_classifier_logit_abs_mean"] = float(logits_detached.abs().mean().item())
+        self._last_hmoe_route_stats["m3s2/window_classifier_prob_mean"] = float(probability_detached.mean().item())
         return logits
 
     def get_stopping_logits(self, obs: Any, *, detach_latent: bool = False) -> th.Tensor | None:
@@ -1627,9 +1537,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         delta = logits_detached[:, 1] - logits_detached[:, 0]
         self._last_hmoe_route_stats["a6/event_head_enabled"] = 1.0
         self._last_hmoe_route_stats["a6/event_head_lr_scale"] = float(self._hybrid_event_head_lr_scale)
-        self._last_hmoe_route_stats["a6/event_head_delta_abs_mean"] = float(
-            logits_detached.abs().mean().item()
-        )
+        self._last_hmoe_route_stats["a6/event_head_delta_abs_mean"] = float(logits_detached.abs().mean().item())
         self._last_hmoe_route_stats["a6/event_head_direct_delta_mean"] = float(delta.mean().item())
         return logits
 
@@ -1653,24 +1561,21 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             return None
         if self._hybrid_event_use_stopping_head or self._hybrid_event_use_window_classifier_head:
             return None
-        if self._launch_decision_owner_contract.mode.value in {
-            "governed_composed_v1",
-            "adapter_coupled_v1",
-            "auxiliary_only_v1",
-        }:
-            # Those profiles must differentiate through the Composer output so
-            # their declared contributor write set is not silently reduced to
-            # the legacy direct-head lane.
+        mode = self._launch_decision_owner_contract.mode.value
+        if mode in {"governed_composed_v1", "adapter_coupled_v1", "auxiliary_only_v1"}:
             return None
 
         with th.no_grad():
             features = super().extract_features(obs, self.pi_features_extractor)
             latent_pi = self.mlp_extractor.forward_actor(features).detach()
-            family_index, subexpert_index = self._route_indices(obs, latent_pi)
             shared_mean_actions = self.action_net(latent_pi)
-            expert_residual = self.hmoe_head_bank(latent_pi, family_index, subexpert_index)
-            effective_scale = float(self._hmoe_residual_scale) * float(self._hmoe_residual_gate)
-            mean_actions = shared_mean_actions + effective_scale * expert_residual
+            if mode == "direct_boundary_v1_strict":
+                mean_actions = shared_mean_actions
+            else:
+                family_index, subexpert_index = self._route_indices(obs, latent_pi)
+                expert_residual = self.hmoe_head_bank(latent_pi, family_index, subexpert_index)
+                effective_scale = float(self._hmoe_residual_scale) * float(self._hmoe_residual_gate)
+                mean_actions = shared_mean_actions + effective_scale * expert_residual
             executable_baseline_delta = (
                 mean_actions[:, int(fire_index)] - mean_actions[:, int(hold_index)]
             ).detach()
@@ -1699,11 +1604,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         logits = self.get_stopping_logits(obs, detach_latent=detach_latent)
         if logits is None:
             return None
-        return _StoppingOutput(
-            stopping_logit=logits,
-            hazard_logit=logits,
-            hazard=th.sigmoid(logits),
-        )
+        return _StoppingOutput(stopping_logit=logits, hazard_logit=logits, hazard=th.sigmoid(logits))
 
     def get_hybrid_event_credit_values(self, obs: Any, *, detach_latent: bool = False) -> th.Tensor | None:
         if detach_latent:
@@ -1738,12 +1639,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
     def _get_action_dist_from_latent(self, latent_pi: th.Tensor, obs: Any | None = None):
         if obs is None:
             batch_size = int(latent_pi.shape[0])
-            family_index = th.full(
-                (batch_size,),
-                FAMILY_DEPARTURE_NAV,
-                dtype=th.long,
-                device=latent_pi.device,
-            )
+            family_index = th.full((batch_size,), FAMILY_DEPARTURE_NAV, dtype=th.long, device=latent_pi.device)
             subexpert_index = th.zeros((batch_size,), dtype=th.long, device=latent_pi.device)
         else:
             family_index, subexpert_index = self._route_indices(obs, latent_pi)
@@ -1781,9 +1677,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             )
             if self._last_launch_decision_trace:
                 self._last_launch_decision_trace["distribution_mask_source"] = "_HybridActionDistribution"
-                self._last_launch_decision_trace["distribution_mask_applied"] = bool(
-                    distribution.fire_event_mask is not None
-                )
+                self._last_launch_decision_trace["distribution_mask_applied"] = bool(distribution.fire_event_mask is not None)
                 self._last_launch_decision_trace["distribution_applied_support"] = (
                     distribution.fire_event_mask.detach().clone()
                     if distribution.fire_event_mask is not None
