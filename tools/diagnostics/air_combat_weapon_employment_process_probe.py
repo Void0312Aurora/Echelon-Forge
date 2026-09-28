@@ -519,6 +519,13 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
         "train_config": os.path.abspath(args.train_config) if args.train_config else None,
         "action_mode": action_mode,
         "mode": str(args.mode),
+        "lane": (
+            "stochastic"
+            if str(args.mode) == "model" and bool(getattr(args, "stochastic", False))
+            else "deterministic"
+            if str(args.mode) == "model"
+            else None
+        ),
         "fire_delay_steps": int(getattr(args, "fire_delay_steps", 0)),
         "legal_fire_range_m": float(getattr(args, "legal_fire_range_m", 0.0)),
         "diagnostic_dcr_bridge": bool(getattr(args, "diagnostic_dcr_bridge", False)),
@@ -634,8 +641,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--max_stochastic_rejections",
         type=int,
-        default=3,
-        help="Maximum bounded fire-once rejections allowed by the learned firing gate.",
+        default=0,
+        help="Strict learned-firing v1 allows zero fire-once rejections.",
     )
     parser.add_argument(
         "--diagnostic_dcr_bridge",

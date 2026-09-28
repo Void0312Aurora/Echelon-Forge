@@ -23,6 +23,8 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.summariz
 LEARNED_FIRING_GATE_SCHEMA_VERSION = "launch_decision_learned_firing_matrix_v1"
 LEARNED_FIRING_REQUIRED_SEEDS = (0, 1, 2)
 LEARNED_FIRING_EPISODES_PER_SEED = 3
+LEARNED_FIRING_REQUIRED_LANES = ("deterministic", "stochastic")
+LEARNED_FIRING_STOCHASTIC_REJECTION_BOUND = 0
 
 
 def _matrix_cells(payload: Mapping[str, Any]) -> list[tuple[int, int]]:
@@ -63,45 +65,78 @@ def _matrix_cells(payload: Mapping[str, Any]) -> list[tuple[int, int]]:
 def validate_learned_firing_matrix_payloads(
     payloads: Sequence[Mapping[str, Any]],
     *,
-    max_stochastic_rejections: int = 3,
+    max_stochastic_rejections: int = LEARNED_FIRING_STOCHASTIC_REJECTION_BOUND,
 ) -> dict[str, Any]:
-    """Validate exactly the fixed 3x3 seed/episode acceptance matrix."""
+    """Validate both fixed 3x3 seed/episode acceptance matrices."""
+
+    if int(max_stochastic_rejections) != LEARNED_FIRING_STOCHASTIC_REJECTION_BOUND:
+        raise ValueError(
+            "learned_firing_matrix_failed: strict v1 rejection bound is fixed at 0"
+        )
 
     required_cells = {
-        (seed, episode)
+        (lane, seed, episode)
+        for lane in LEARNED_FIRING_REQUIRED_LANES
         for seed in LEARNED_FIRING_REQUIRED_SEEDS
         for episode in range(LEARNED_FIRING_EPISODES_PER_SEED)
     }
-    observed_cells: list[tuple[int, int]] = []
-    aggregate: dict[str, int] = {}
-    observed_seeds: list[int] = []
+    observed_cells: list[tuple[str, int, int]] = []
+    observed_payloads: set[tuple[str, int]] = set()
+    lane_gates: dict[str, list[dict[str, Any]]] = {
+        lane: [] for lane in LEARNED_FIRING_REQUIRED_LANES
+    }
 
     for payload in payloads:
         if str(payload.get("mode", "")) != "model":
             raise ValueError("learned_firing_matrix_failed: every payload must use mode=model")
+        lane = str(payload.get("lane", ""))
+        if lane not in LEARNED_FIRING_REQUIRED_LANES:
+            raise ValueError(
+                "learned_firing_matrix_failed: payload must declare lane as "
+                f"one of {LEARNED_FIRING_REQUIRED_LANES}"
+            )
         seed = int(payload.get("seed", -1))
         if seed not in LEARNED_FIRING_REQUIRED_SEEDS:
             raise ValueError(
                 "learned_firing_matrix_failed: "
                 f"undeclared seed {seed}; required seeds are {LEARNED_FIRING_REQUIRED_SEEDS}"
             )
-        observed_seeds.append(seed)
-        observed_cells.extend(_matrix_cells(payload))
-        for summary in payload["episode_summaries"]:
-            for key, value in summary.items():
-                if str(key).endswith("_count"):
-                    aggregate[str(key)] = aggregate.get(str(key), 0) + int(value or 0)
+        payload_key = (lane, seed)
+        if payload_key in observed_payloads:
+            raise ValueError(f"learned_firing_matrix_failed: duplicate {lane} payload for seed {seed}")
+        observed_payloads.add(payload_key)
+        for cell in _matrix_cells(payload):
+            cell_seed, episode = cell
+            summary = payload["episode_summaries"][episode]
+            if summary.get("first_release_step") is None:
+                raise ValueError(
+                    "learned_firing_matrix_failed: "
+                    f"{lane} seed {cell_seed} episode {episode} has no first_release_step"
+                )
+            try:
+                gate = validate_learned_firing_gate(
+                    summary,
+                    learned_policy=True,
+                    non_forced=True,
+                    max_stochastic_rejections=LEARNED_FIRING_STOCHASTIC_REJECTION_BOUND,
+                )
+            except ValueError as exc:
+                raise ValueError(
+                    "learned_firing_matrix_failed: "
+                    f"{lane} seed {cell_seed} episode {episode}: {exc}"
+                ) from exc
+            observed_cells.append((lane, cell_seed, episode))
+            lane_gates[lane].append(
+                {"seed": cell_seed, "episode": episode, "gate": gate}
+            )
 
-    if len(observed_seeds) != len(LEARNED_FIRING_REQUIRED_SEEDS):
+    if len(observed_payloads) != len(LEARNED_FIRING_REQUIRED_LANES) * len(
+        LEARNED_FIRING_REQUIRED_SEEDS
+    ):
         raise ValueError(
-            "learned_firing_matrix_failed: exactly one retained probe payload is required per seed"
+            "learned_firing_matrix_failed: exactly one retained probe payload is required "
+            "per lane and seed"
         )
-    if set(observed_seeds) != set(LEARNED_FIRING_REQUIRED_SEEDS):
-        raise ValueError(
-            "learned_firing_matrix_failed: retained seed set does not match the declared matrix"
-        )
-    if len(set(observed_seeds)) != len(observed_seeds):
-        raise ValueError("learned_firing_matrix_failed: duplicate seed payload")
     if len(observed_cells) != len(required_cells) or set(observed_cells) != required_cells:
         missing = sorted(required_cells.difference(observed_cells))
         extra = sorted(set(observed_cells).difference(required_cells))
@@ -110,24 +145,20 @@ def validate_learned_firing_matrix_payloads(
             f"missing={missing}, extra={extra}"
         )
 
-    counter_gate = validate_learned_firing_gate(
-        aggregate,
-        learned_policy=True,
-        non_forced=True,
-        max_stochastic_rejections=max_stochastic_rejections,
-    )
     return {
         "schema_version": LEARNED_FIRING_GATE_SCHEMA_VERSION,
         "status": "pass",
         "matrix_complete": True,
         "required_seeds": list(LEARNED_FIRING_REQUIRED_SEEDS),
         "episodes_per_seed": LEARNED_FIRING_EPISODES_PER_SEED,
+        "lanes": list(LEARNED_FIRING_REQUIRED_LANES),
         "cell_count": len(required_cells),
+        "cells_per_lane": len(required_cells) // len(LEARNED_FIRING_REQUIRED_LANES),
         "cells": [
-            {"seed": seed, "episode": episode}
-            for seed, episode in sorted(required_cells)
+            {"lane": lane, "seed": seed, "episode": episode}
+            for lane, seed, episode in sorted(required_cells)
         ],
-        "counter_gate": counter_gate,
+        "lane_gates": lane_gates,
     }
 
 
@@ -151,9 +182,16 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "probe_json",
         nargs="+",
-        help="Retained process-probe JSON payloads; exactly one for each seed 0, 1 and 2.",
+        help=(
+            "Retained model process-probe JSON payloads; exactly one for each "
+            "deterministic/stochastic lane and seed 0, 1 and 2."
+        ),
     )
-    parser.add_argument("--max-stochastic-rejections", type=int, default=3)
+    parser.add_argument(
+        "--max-stochastic-rejections",
+        type=int,
+        default=LEARNED_FIRING_STOCHASTIC_REJECTION_BOUND,
+    )
     parser.add_argument("--json-out", default="")
     return parser
 
