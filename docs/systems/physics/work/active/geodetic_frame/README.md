@@ -6,8 +6,9 @@ Canonical: `docs/systems/physics/work/active/geodetic_frame/README.md`
 Owner: `systems/physics`
 Last verified: `2026-09-28`
 
-Status: `2026-09-28` active. `P0 Boundary` accepted by the owner on `2026-09-28`;
-`P1-A` inventory has started.
+Status: `2026-09-28` active. `P0 Boundary` accepted; `P1 Evidence` passed with the
+[P1-A inventory](geodetic_frame_p1a_inventory_20260928.md) (12 must-migrate sites).
+`P2` implementation is next.
 
 Language:
 
@@ -47,8 +48,9 @@ case, and no domain owns the frame.
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
 | Simulation frame | flat local ENU | `Transform` (`src/components/basic/common.h`) | no earth model, no curvature |
-| Geodetic fields | navigation-only | `lat_deg`/`lon_deg` in `src/components/systems/navigation.h`, `src/components/physics/instruments.h` | not a frame authority; nothing converts ENU to geodetic |
-| Radar horizon | per-sensor proxy flag | `enforce_radar_horizon` (`src/components/systems/sensor.h`), used in `default_sensor_model.cpp` | proxy for surface maritime radars only; not shared geometry |
+| Geodetic fields | navigation-only; hard-coded anchor | EGI conversion in `src/systems/systems/navigation_system.h:9-48` uses a fixed Nellis AFB anchor, equirectangular | 3.7 km error at 250 km east; the Arnis WGS84 origin is dropped by the importer; no scenario anchor exists |
+| Radar horizon | per-sensor proxy flag; **the gate never rejects** | `enforce_radar_horizon` (`src/components/systems/sensor.h`); `default_sensor_model.cpp:256-273` limits at `max(max_range, horizon)` after a range gate already applied | geometric `3570·(√h1+√h2)` constant, not 4/3; see the [P1-A inventory](geodetic_frame_p1a_inventory_20260928.md) |
+| Data-link horizon | the only binding horizon | `src/systems/systems/data_link_system.h:48-52` | geometric `3.57` km constant, 13.4 % short of the 4/3 radio horizon |
 | Terrain line of sight | environment model | `IEnvironmentModel::check_line_of_sight` (`src/core/interfaces/environment_model.h`) | terrain only; no earth bulge |
 
 ## Scope
@@ -80,7 +82,7 @@ Out of scope:
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
 | `P0 Boundary` | Freeze scope, earth-model choice, and frame contract. | owner approval | README and task clusters approved | accepted |
-| `P1 Evidence` | Inventory every place that assumes a flat frame or computes a horizon. | `P0` | inventory classifies each site as must-migrate, may-stay, or out of scope | active |
+| `P1 Evidence` | Inventory every place that assumes a flat frame or computes a horizon. | `P0` | inventory classifies each site as must-migrate, may-stay, or out of scope | accepted ([inventory](geodetic_frame_p1a_inventory_20260928.md)) |
 | `P2 Implementation` | Earth model, anchor, conversions, geometry queries. | `P1` | native and Python tests pass against reference values | planned |
 | `P3 Integration` | Move sensing horizon and line of sight onto the queries; expose the anchor in scenarios. | `P2` | consumers call the shared queries; proxy flag retired or wrapped | planned |
 | `P4 Validation` | Cross-domain regression and throughput check. | `P3` | air, ground, naval suites pass or change by the documented amount | planned |
