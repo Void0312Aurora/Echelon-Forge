@@ -95,5 +95,9 @@ weapon and damage calibration.
   dated review evidence, not the latest status authority. Its `N0`-`N8` ladder
   is historical and is superseded as a forward plan by the carrier strike group
   engagement package.
+- [Carrier strike group order-of-battle research](reviews/csg_order_of_battle_20260928/README.md)
+  (dated, research-grade, non-authoritative): [Ford CSG](reviews/csg_order_of_battle_20260928/csg_order_of_battle_ford_20260928.md),
+  [Fujian group](reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md), and the shared
+  [source ledger](reviews/csg_order_of_battle_20260928/csg_source_ledger_20260928.md).
 - [Joint Command and Modeling Baseline](../joint/standards/command_and_modeling_baseline.md)
 - [Joint Command-Link and Reporting Baseline](../joint/standards/command_link_and_reporting_baseline.md)

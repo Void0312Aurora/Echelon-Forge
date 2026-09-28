@@ -81,8 +81,10 @@ its root filesystem is 91 % full.
 ## Next Action Order
 
 1. `P0-A` accepted here and in both owner packages (`2026-09-28`).
-2. `S0-A` order-of-battle research (dispatched, both sides), in parallel with the
-   Geodetic Frame package's `P1-A` inventory (dispatched).
+2. `S0-A` accepted: [Ford OOB](../../../reviews/csg_order_of_battle_20260928/csg_order_of_battle_ford_20260928.md)
+   (7 ships, 74 aircraft, 312 sourced rows), [Fujian OOB](../../../reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md)
+   (6 ships, about 48 aircraft, 408 sourced rows), and the [source ledger](../../../reviews/csg_order_of_battle_20260928/csg_source_ledger_20260928.md)
+   (305 sources, 22 pending). Geodetic Frame `P1-A` and `P2` are accepted.
 3. `S0-C` unit content and `S0-D` scenarios, then `S0-B` frame integration,
    then `S0-X`.
 
