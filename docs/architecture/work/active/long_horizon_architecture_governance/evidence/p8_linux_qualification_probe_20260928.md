@@ -9,7 +9,7 @@ platform remains partial and is not promoted into the bounded P8 acceptance.
   1.11.1.
 - Source: isolated checkout
   `/tmp/echelon-forge-governance.ga3IQb` at branch
-  `codex/long-horizon-governance-architecture`, commit `1f968aad`.
+  `codex/long-horizon-governance-architecture`, commit `ae9de540`.
 - The checkout has full history (`1154` commits); no maintained project
   checkout or service was modified.
 - Python extension: matching build output
@@ -35,19 +35,19 @@ Results:
 - CMake configure: **passed**.
 - `ef_core`, `ef_py`, and `ef_test` build: **passed**.
 - Matching CPython 3.12 extension import: **passed**.
-- Native `ef_test`: **150 passed, 2 failed** out of 152 test cases (19387
-  assertions; 19383 passed, 4 failed).
+- Native `ef_test`: **152 passed, 0 failed** out of 152 test cases (19388
+  assertions; 19388 passed, 0 failed).
 
-The two failures are:
+The initial probe at `1f968aad` exposed two failures:
 
 1. `CPU reference pins the direct-pilot control-preparation stage trace`;
 2. `RB4 CPU reference independently pins fixed-air identity and reset parity`.
 
-Both failures assert the CUDA fixed-air contract value `581`, while the Linux
-Flecs CPU runtime returns the valid runtime entity value `1470`. The tests use
-the returned IDs for subsequent state access, so this is a cross-platform
-fixture-identity assumption, not a build or process crash. No runtime or test
-semantics were changed during this probe.
+Both failures asserted the CUDA fixed-air contract value `581`, while the
+Linux Flecs CPU runtime returned the valid runtime entity value `1470`. The
+repair at `ae9de540` keeps `581` owned by the CUDA-resident fixture, makes the
+CPU/Flecs reference use its returned runtime IDs, and retains the state and
+reset-parity checks. The rebuilt native suite now passes completely.
 
 The first build attempt hit GCC's default constexpr loop limit while compiling
 the generated plan string. Raising that compiler limit in the isolated build
@@ -58,13 +58,14 @@ temporary flag.
 
 The Linux governance subset remains green (`15 passed`), and the broader
 Linux-applicable governance set passes (`76 passed`; the three omitted cases
-are Windows `.pyd`-specific P2-B measurements). The matching native build and
-import evidence is stronger than the previous reuse of an older HEI artifact,
-but the two native fixture assertions keep the Linux topology at `partial`.
+are Windows `.pyd`-specific P2-B measurements). The matching native build,
+import, and `ef_test` evidence is now green. Linux nevertheless remains
+`partial` because package/CI qualification and a separate support-matrix
+admission have not been performed.
 
 This probe does **not** promote Linux/package qualification into P8 acceptance.
-The current accepted scope remains the Windows CPU in-process lane. Resolve the
-fixture identity contract and rerun the native suite before treating Linux as
+The current accepted scope remains the Windows CPU in-process lane. A separate
+Linux package/CI admission packet is still required before treating Linux as
 an admitted support row.
 
 Document kind: `evidence`

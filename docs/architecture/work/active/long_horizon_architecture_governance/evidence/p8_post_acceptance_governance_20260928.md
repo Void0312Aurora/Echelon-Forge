@@ -19,7 +19,7 @@ acceptance blockers.
 | resource trend probe | each local repeat batch | release engineering | working-set/handle observation | missing samples or monotonic growth opens a leak/resource investigation |
 | SQLite restore probe | each acceptance refresh or retention-schema change | documentation governance | distinct-root restore and manifest digest check | restore mismatch blocks that retention change, not the already accepted runtime scope |
 | CI lane drift probe | workflow, runner, label, or timeout change | release engineering | P6-B lane audit output | owner/selector drift is repaired before the changed lane is reused |
-| Linux qualification probe | when a maintained Linux checkout and matching build artifact exist | release/runtime integration | [Linux qualification packet](p8_linux_qualification_probe_20260928.md) | current probe builds/imports but leaves the row partial after two native fixture assertions; resolve before expanding support |
+| Linux qualification probe | when a maintained Linux checkout and matching build artifact exist | release/runtime integration | [Linux qualification packet](p8_linux_qualification_probe_20260928.md) | current probe builds/imports and native tests pass; package/CI admission is still required before expanding support |
 | external provider readiness probe | only after explicit provider admission | documentation governance | provider-specific restore/migration packet | provider cannot become an authority until restore and retrieval are proven |
 | production rollback probe | only after an authorized production environment exists | release/runtime integration | rollback telemetry and owner decision | never infer production behavior from local fixtures |
 
@@ -42,9 +42,9 @@ acceptance blockers.
   was fetched; this is short-cycle governance/import evidence, not Linux
   package qualification.
 - HEI current-branch Linux configure/build/import: **passed**; native
-  `ef_test`: **150 passed, 2 failed** because two CPU-reference tests assert a
-  CUDA fixed-air ID against a platform-specific Flecs ID. Linux remains
-  `partial` and is not promoted into the accepted matrix.
+  `ef_test`: **152 passed, 0 failed** after separating CUDA-resident fixture
+  identity from CPU/Flecs runtime IDs. Linux remains `partial` and is not
+  promoted into the accepted matrix without a separate package/CI admission.
 - External provider, hosted branch protection, long-running cadence, and
   production rollback probes: `not-run` by design and non-blocking.
 
