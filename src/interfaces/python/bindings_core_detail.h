@@ -133,15 +133,19 @@ void bind_core_simulation_kernel(nb::module_ &m);
 
 // SimulationKernel method-surface slices.
 //
-// bindings_core_simulation_kernel.cpp calls these in the order declared below,
-// which is the order the single pre-split bind_core() used.  The maintained /
-// diagnostics / legacy / override boundary is the explicit quarantine split and
-// the call order is the method-registration order, so neither may be reordered.
+// bindings_core_simulation_kernel.cpp calls these in the order declared below.
+// The first four are the order the single pre-split bind_core() used; the
+// maintained / diagnostics / legacy / override boundary is the explicit quarantine
+// split and the call order is the method-registration order, so neither may be
+// reordered. The Ground native-probe surface was never part of bind_core(); it is
+// appended after the override surface so no earlier slice's registration moves.
 void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel> &kernel);
 void bind_simulation_kernel_diagnostics_introspection_surface(nb::class_<SimulationKernel> &kernel);
 void bind_simulation_kernel_legacy_compatibility_debug_surface(
     nb::class_<SimulationKernel> &kernel);
 void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKernel> &kernel);
+void bind_simulation_kernel_diagnostics_ground_native_probe_surface(
+    nb::class_<SimulationKernel> &kernel);
 
 // Diagnostics-introspection sub-slices.
 //

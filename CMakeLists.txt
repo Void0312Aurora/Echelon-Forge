@@ -669,6 +669,7 @@ set(EF_PYTHON_BINDING_SOURCES
     src/interfaces/python/bindings_core_kernel_diagnostics_missile.cpp
     src/interfaces/python/bindings_core_kernel_legacy.cpp
     src/interfaces/python/bindings_core_kernel_override.cpp
+    src/interfaces/python/bindings_core_kernel_diagnostics_ground.cpp
     src/interfaces/python/bindings_episode.cpp
     # bind_episode() domain slices, listed in nanobind registration order.
     src/interfaces/python/bindings_episode_geometry.cpp

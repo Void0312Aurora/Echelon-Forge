@@ -56,6 +56,11 @@ accepted.
   the compiled kernel through reset/step/trace/replay and exposes the admitted
   terrain, owner-derived movement-effect, field-semantic, and weapon-state observations. Its authority is
   `native_probe_only`; it is not a production WorldBatch environment.
+  The kernel methods it calls are bound on the dedicated Ground native-probe
+  surface (`bindings_core_kernel_diagnostics_ground.cpp`), outside the
+  maintained `SimulationKernel` API. The WP22-E guard requires that surface to be
+  exactly its named allowlist, each name registered once, and rejects any
+  Ground/Arnis-named binding on the maintained surface.
   It also exposes a read-only validation of the configured direct waypoint
   polyline. That validator reuses the native sampled transition evidence and
   reports the first blocked segment; it is sequence validation only, not a

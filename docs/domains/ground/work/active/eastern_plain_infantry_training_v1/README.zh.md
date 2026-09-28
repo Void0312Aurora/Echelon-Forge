@@ -1,7 +1,10 @@
 # 东部平原风格单兵训练 v1
 
+语言：[英文规范页](README.md)；本页为中文配套。
+
 文档类型：`work-package`  
 生命周期：`active`  
+Canonical: `docs/domains/ground/work/active/eastern_plain_infantry_training_v1/README.md`  
 Owner：`domains/ground`，环境输入由 `systems/environment` 负责  
 状态：`native-probe-tooling-and-source-fixture`；生产 `WorldBatch` 仍保持 held
 
@@ -46,6 +49,10 @@ Owner：`domains/ground`，环境输入由 `systems/environment` 负责
   权威级别是 `native_probe_only`，仍不属于生产 `WorldBatch`；观测包含 native owner 的
   movement-effect 倍率，trace 会区分航点/失能
   终止与 `max_steps`、`blocked_step_limit` 截断。
+  它调用的 kernel 方法绑定在独立的 Ground native-probe 面
+  （`bindings_core_kernel_diagnostics_ground.cpp`），不属于维护中的 `SimulationKernel` API。
+  WP22-E 守卫的约束有三条：该面必须恰好等于具名白名单；每个名字只注册一次；维护面上
+  不允许出现任何名称含 Ground/Arnis 的绑定。
   固定航点预检现在为每段同时保留通行性和 native 采样移动效果十元组，作为地形代价证据；
   这仍不是路线图或路径规划器。
 
