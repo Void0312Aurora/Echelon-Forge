@@ -6,8 +6,8 @@ Canonical: `docs/systems/environment/work/active/environment_runtime/README.md`
 Owner: `systems/environment`
 Last verified: `2026-09-28`
 
-Status: `2026-09-28` planning. Scope and task clusters are drafted; `P0 Boundary`
-is active and no implementation cluster has started.
+Status: `2026-09-28` active. `P0 Boundary` accepted by the owner on `2026-09-28`;
+no implementation cluster has started.
 
 Language:
 
@@ -128,7 +128,7 @@ Out of scope:
 
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
-| `P0 Boundary` | Freeze scope and the layered runtime contract. | owner approval | README and task clusters approved | active |
+| `P0 Boundary` | Freeze scope and the layered runtime contract. | owner approval | README and task clusters approved | accepted |
 | `P1 Evidence` | Inventory every environment read, the `main` runtime, and the Ground branch's shared-file changes. | `P0` | each read site and each Ground addition classified as shared, Ground-owned, or retired | planned |
 | `P2 Contract` | Layered state, vertical datum, water-body contract, tile model, domain-neutral query API. | `P1` | contract documented and covered by native tests | planned |
 | `P3 Implementation` | Multi-tile rasters, water bodies, coastline, varying weather/sea state, clock-driven sun, acoustic data. | `P2`; geodetic anchor from [Geodetic Frame](../../../../physics/work/active/geodetic_frame/README.md) `P2-A` for sun position and tile placement | native and Python tests pass against declared inputs and references | planned |

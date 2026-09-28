@@ -80,9 +80,9 @@ its root filesystem is 91 % full.
 
 ## Next Action Order
 
-1. Owner review of the `P0-A` documents here and in both owner packages.
-2. `S0-A` order-of-battle research, in parallel with the Geodetic Frame package's
-   `P1`-`P3`.
+1. `P0-A` accepted here and in both owner packages (`2026-09-28`).
+2. `S0-A` order-of-battle research (dispatched, both sides), in parallel with the
+   Geodetic Frame package's `P1-A` inventory (dispatched).
 3. `S0-C` unit content and `S0-D` scenarios, then `S0-B` frame integration,
    then `S0-X`.
 

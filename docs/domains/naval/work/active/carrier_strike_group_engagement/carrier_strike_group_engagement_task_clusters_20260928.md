@@ -7,7 +7,7 @@ Owner: `domains/naval`
 Last verified: `2026-09-28`
 
 Status: `2026-09-28` finite task-cluster plan for
-[Carrier Strike Group Engagement](README.md). No cluster has started.
+[Carrier Strike Group Engagement](README.md). `P0-A` accepted `2026-09-28`.
 
 ## Boundary Decision
 
@@ -46,8 +46,8 @@ at dispatch; `n/a` means not yet dispatched.
 
 | Cluster | Owner | Capability tier / model ID / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `P0-A` | main thread | n/a | Freeze scope, ladder, claim ceilings, and provenance policy. | this directory; naval owner README index | runtime code | doc link audit; bilingual audit | owner approves README, clusters, acceptance | first | 1 | active |
-| `S0-A` | future worker | n/a | Order-of-battle research: both groups' ship, submarine, aircraft, weapon, and sensor lists with sources. | `docs/domains/naval/reference/csg_order_of_battle_*.md` | runtime content | provenance check: every row has source ID, tier, uncertainty | both sides' OOB tables complete | after `P0-A`; parallel with `S0-B` | 2 | planned |
+| `P0-A` | main thread | n/a | Freeze scope, ladder, claim ceilings, and provenance policy. | this directory; naval owner README index | runtime code | doc link audit; bilingual audit | owner approves README, clusters, acceptance | first | 1 | accepted |
+| `S0-A` | future worker | n/a | Order-of-battle research: both groups' ship, submarine, aircraft, weapon, and sensor lists with sources. | `docs/domains/naval/reference/csg_order_of_battle_*.md` | runtime content | provenance check: every row has source ID, tier, uncertainty | both sides' OOB tables complete | after `P0-A`; parallel with `S0-B` | 2 | active |
 | `S0-B` | main thread | n/a | Integrate [Geodetic Frame](../../../../../systems/physics/work/active/geodetic_frame/README.md): scenarios declare a geodetic anchor; OOB placement and ranges use the shared frame. | `scenarios/naval/csg/`; naval scenario tests | building the frame (owned by `systems/physics`) | scenario anchor tests | CSG scenarios place both groups through the shared frame | after Geodetic Frame `P3-B` accepted | 1 + 1 repair | planned |
 | `S0-C` | future worker | n/a | Named unit content for both groups from `S0-A`. | `examples/config/database/**` (ships, submarines, aircraft, weapons, sensors) | new mechanisms | content-compile tests; unit spawn tests | every OOB row spawns with provenance | after `S0-A` | 2 + 1 repair | planned |
 | `S0-D` | future worker | n/a | Group-composition scenario schema plus `CSG-S0` named and mirror scenarios. | scenario loader schema, `scenarios/naval/csg/`, `tests/contracts/unit/naval/csg/` | motion | scenario contract runner | both variants load and spawn the full OOB | after `S0-C` | 2 | planned |
