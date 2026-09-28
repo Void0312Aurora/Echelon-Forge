@@ -113,6 +113,7 @@ def _write_launch_decision_sidecar(model_path: str, model, train_config: dict) -
         model=model,
         owner_contract=contract,
         source_config_fingerprint=launch_decision_config_fingerprint(train_config),
+        migration=train_config.get("launch_decision_migration"),
     )
 
 

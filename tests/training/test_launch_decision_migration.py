@@ -4,6 +4,7 @@ from copy import deepcopy
 import json
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -187,6 +188,66 @@ class LaunchDecisionMigrationTests(unittest.TestCase):
         target_contract=target_contract,
         migration_id="legacy_to_governed_v1",
       )
+
+  def test_migration_metadata_is_persisted_and_consumed_by_sidecar_validation(self) -> None:
+    config = _config(launch_decision_mode=LaunchDecisionMode.GOVERNED_COMPOSED_V1.value)
+    config["launch_decision_migration"] = {
+      "schema_version": "launch_decision_config_migration_v1",
+      "source_mode": "legacy_composed_v0",
+      "resolved_mode": "governed_composed_v1",
+      "source_explicit": False,
+      "compatibility_mode": "none",
+      "compatibility_precedence": None,
+      "migration_id": "legacy_to_governed_v1",
+    }
+    contract = _resolve(config)
+    replay = SimpleNamespace(
+      storage="latent",
+      capacity=16,
+      positives=th.zeros((1, 2)),
+      negatives=th.ones((1, 2)),
+    )
+    model = SimpleNamespace(
+      policy=_FakePolicy(),
+      window_classifier_replay_enabled=True,
+      window_classifier_replay_storage="latent",
+      _window_classifier_replay=replay,
+      replay_buffer=None,
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+      checkpoint = Path(tmpdir) / "model.zip"
+      with zipfile.ZipFile(checkpoint, "w") as archive:
+        archive.writestr(
+          "data",
+          json.dumps({"policy_kwargs": config["hyperparameters"]["policy_kwargs"]}),
+        )
+      sidecar = write_sb3_launch_decision_sidecar(
+        str(checkpoint),
+        model=model,
+        owner_contract=contract,
+        source_config_fingerprint=launch_decision_config_fingerprint(config),
+        migration=config["launch_decision_migration"],
+      )
+      payload = json.loads(Path(sidecar).read_text(encoding="utf-8"))
+      self.assertEqual(payload["migration"], config["launch_decision_migration"])
+      validate_loaded_sb3_launch_decision_checkpoint(
+        str(checkpoint), model=model, expected_config=config
+      )
+
+      payload["migration"]["migration_id"] = "different_migration"
+      Path(sidecar).write_text(json.dumps(payload), encoding="utf-8")
+      with self.assertRaisesRegex(LaunchDecisionMigrationError, "migration metadata"):
+        validate_loaded_sb3_launch_decision_checkpoint(
+          str(checkpoint), model=model, expected_config=config
+        )
+
+      payload["migration"] = config["launch_decision_migration"]
+      Path(sidecar).write_text(json.dumps(payload), encoding="utf-8")
+      replay.positives = th.full((1, 2), 9.0)
+      with self.assertRaisesRegex(LaunchDecisionMigrationError, "replay_manifest"):
+        validate_loaded_sb3_launch_decision_checkpoint(
+          str(checkpoint), model=model, expected_config=config
+        )
 
   def test_optimizer_manifest_rejects_value_and_hyperparameter_drift(self) -> None:
     contract = _resolve(_config())

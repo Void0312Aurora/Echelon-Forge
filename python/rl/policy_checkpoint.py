@@ -86,6 +86,28 @@ def _manifest_only(envelope: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def _migration_metadata(value: Any) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    if not isinstance(value, Mapping):
+        raise LaunchDecisionMigrationError("checkpoint migration metadata must be a mapping")
+    required = {
+        "schema_version",
+        "source_mode",
+        "resolved_mode",
+        "source_explicit",
+        "compatibility_mode",
+        "compatibility_precedence",
+        "migration_id",
+    }
+    missing = sorted(required.difference(value))
+    if missing:
+        raise LaunchDecisionMigrationError(
+            "checkpoint migration metadata is missing: " + ", ".join(missing)
+        )
+    return {str(key): value[key] for key in sorted(value)}
+
+
 def _tensor_manifest(value: Any) -> dict[str, Any]:
     shape = getattr(value, "shape", None)
     if shape is None:
@@ -278,6 +300,7 @@ def build_launch_decision_checkpoint_envelope(
     replay_state: Mapping[str, Any],
     owner_contract: LaunchDecisionOwnerContract | Mapping[str, Any],
     source_config_fingerprint: str | None = None,
+    migration: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build a serializable envelope with explicit state/optimizer/replay identity."""
 
@@ -299,6 +322,7 @@ def build_launch_decision_checkpoint_envelope(
         "optimizer_manifest": _optimizer_manifest(optimizer_state),
         "replay_state": dict(replay_state),
         "replay_manifest": _replay_manifest(replay_state),
+        "migration": _migration_metadata(migration),
     }
     validate_launch_decision_checkpoint_envelope(envelope)
     return envelope
@@ -494,6 +518,7 @@ def write_sb3_launch_decision_sidecar(
     model: Any,
     owner_contract: LaunchDecisionOwnerContract | Mapping[str, Any],
     source_config_fingerprint: str | None = None,
+    migration: Mapping[str, Any] | None = None,
 ) -> str:
     """Persist the compatibility envelope that SB3's zip does not contain."""
 
@@ -509,6 +534,7 @@ def write_sb3_launch_decision_sidecar(
         replay_state=_replay_state_for_model(model),
         owner_contract=owner_contract,
         source_config_fingerprint=source_config_fingerprint,
+        migration=migration,
     )
     sidecar = _manifest_only(envelope)
     destination = _sidecar_path(model_path)
@@ -602,6 +628,12 @@ def validate_sb3_checkpoint_against_config(
         raise LaunchDecisionMigrationError(
             "checkpoint sidecar source configuration differs from the requested training configuration; "
             "run an explicit configuration migration first"
+        )
+    expected_migration = _migration_metadata(train_config.get("launch_decision_migration"))
+    if sidecar.get("migration") != expected_migration:
+        raise LaunchDecisionMigrationError(
+            "checkpoint migration metadata differs from the requested training configuration; "
+            "run the named configuration migration before loading"
         )
     if metadata["owner_contract"] != sidecar_contract.as_dict():
         raise LaunchDecisionMigrationError("SB3 checkpoint and sidecar owner contracts differ")
