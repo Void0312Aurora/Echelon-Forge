@@ -75,11 +75,15 @@ Naval 可以约束这些形状在海上执行中的使用方式，但不重新�
 
 ## 活跃工作与相关文档
 
+- [航母打击群对抗](work/active/carrier_strike_group_engagement/README.zh.md)：
+  海军作战能力的前向计划，处于 planning。从静态兵力编成到福特级对福建级编队完整对抗的场景阶梯，
+  并有并行的水下轨道；取代历史 `N0`-`N8` 阶梯作为前向计划。
 - [Naval 领域表面拆分](work/active/naval_domain_surface_split/README.zh.md)：
   当前有界工作包。`P2-B` 已落地海军 command projection，拆分分支的原生回归测试
   结清了此前的 projection hold；[`P5-A` 闭合记录](work/active/naval_domain_surface_split/naval_domain_surface_split_p5_closure_20260922.md)
   记录有边界 N4 surface 的接受，同时继续把 N5/N6 排除在范围外。
 - [Naval 进展快照 — 2026-05-27](reviews/naval_progress_snapshot_20260527.zh.md)：
-  带日期 review 证据，不是最新状态权威。
+  带日期 review 证据，不是最新状态权威。其 `N0`-`N8` 阶梯为历史记录，作为前向计划已被
+  航母打击群对抗工作包取代。
 - [Joint 指挥与建模基线](../joint/standards/command_and_modeling_baseline.zh.md)
 - [Joint 指挥链路与汇报基线](../joint/standards/command_link_and_reporting_baseline.zh.md)
