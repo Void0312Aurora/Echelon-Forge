@@ -722,25 +722,14 @@ class _EventCreditMixin:
             contract = owner_getter()
             mode = getattr(getattr(contract, "mode", None), "value", "")
             if mode == "auxiliary_only_v1":
-                # Auxiliary-only mode is explicitly prohibited from changing
-                # sampled event logits; an enabled margin objective is therefore
-                # an actionable configuration error, not a broad fallback.
                 raise ValueError(
                     "event-policy-margin cannot update sampled launch logits in auxiliary_only_v1"
                 )
             if mode == "direct_boundary_v1_strict":
                 return role_getter(("hybrid_event_head",))
             if mode in {"governed_composed_v1", "adapter_coupled_v1"}:
-                roles = tuple(getattr(contract, "trainable_parameter_roles", ()))
-                # The event head consumes actor-latent features.  Governed and
-                # coupled profiles must declare the trunk write explicitly even
-                # though older serialized contracts only listed contributors.
-                if "policy_trunk" not in roles:
-                    roles = (*roles, "policy_trunk")
-                return role_getter(roles)
+                return role_getter(tuple(getattr(contract, "trainable_parameter_roles", ())))
 
-        # Legacy configurations retain the historical action/head/trunk write
-        # set for checkpoint and behavior comparison.
         selected: list[th.nn.Parameter] = []
         action_net = getattr(self.policy, "action_net", None)
         if action_net is not None:
@@ -763,9 +752,6 @@ class _EventCreditMixin:
         selected_params = self._event_policy_margin_parameters()
         if not selected_params:
             return None, 0.0
-        record_update = getattr(self.policy, "record_launch_decision_update", None)
-        if callable(record_update):
-            record_update("event_policy_margin", selected_params)
 
         selected_ids = {id(param) for param in selected_params}
         last_margin_loss: FirstEventPolicyMarginLoss | None = None
@@ -790,6 +776,9 @@ class _EventCreditMixin:
             else:
                 grad_norm = 0.0
             max_grad_norm_seen = max(max_grad_norm_seen, grad_norm)
+            record_update = getattr(self.policy, "record_launch_decision_update", None)
+            if callable(record_update):
+                record_update("event_policy_margin", selected_params)
             self.policy.optimizer.step()
             self.policy.optimizer.zero_grad(set_to_none=True)
             last_margin_loss = margin_loss

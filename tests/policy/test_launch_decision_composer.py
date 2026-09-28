@@ -16,6 +16,7 @@ from python.rl.policy_algo.model_contracts import (
   LaunchDecisionContractError,
   LaunchDecisionContributor,
   LaunchDecisionMode,
+  _launch_decision_parameter_role,
   resolve_launch_decision_contract,
 )
 from python.rl.policy_algo.policies import (
@@ -49,6 +50,13 @@ def _config(**policy_kwargs):
   }
 
 
+def _observation_space() -> spaces.Dict:
+  return spaces.Dict({
+    "mission": spaces.Box(low=-1.0e6, high=1.0e6, shape=(20,), dtype=float),
+    "instruments": spaces.Box(low=-1.0, high=1.0, shape=(42,), dtype=float),
+  })
+
+
 class LaunchDecisionComposerTests(unittest.TestCase):
   def test_legacy_composition_records_window_precedence_without_masking(self) -> None:
     contract = resolve_launch_decision_contract(
@@ -56,7 +64,8 @@ class LaunchDecisionComposerTests(unittest.TestCase):
         hybrid_event_head_lr_scale=1.0,
         hybrid_event_use_window_classifier_head=True,
         hybrid_event_use_stopping_head=True,
-      )
+      ),
+      require_legacy_provenance=False,
     )
     composer = LaunchDecisionComposer(contract)
     result = composer.compose(
@@ -131,18 +140,14 @@ class LaunchDecisionComposerTests(unittest.TestCase):
     self.assertLess(float(distribution._fire_event_logits()[0, 1]), -1.0e7)
 
   def test_policy_trace_and_sampling_keep_deterministic_and_stochastic_paths(self) -> None:
-    observation_space = spaces.Dict({
-      "mission": spaces.Box(low=-1.0e6, high=1.0e6, shape=(20,), dtype=float),
-      "instruments": spaces.Box(low=-1.0, high=1.0, shape=(42,), dtype=float),
-    })
     policy = HierarchicalMoEExecutionPolicy(
-      observation_space,
+      _observation_space(),
       make_action_space("air_combat_hybrid_v1"),
       _ConstantSchedule(),
       net_arch={"pi": [16], "vf": [16]},
       hybrid_action_spec="air_combat_hybrid_v1",
-      launch_decision_mode=LaunchDecisionMode.DIRECT_BOUNDARY_V1_STRICT.value,
       launch_decision_contract_version=LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,
+      launch_decision_mode=LaunchDecisionMode.DIRECT_BOUNDARY_V1_STRICT.value,
       hybrid_event_head_lr_scale=1.0,
     )
     obs = {
@@ -162,6 +167,37 @@ class LaunchDecisionComposerTests(unittest.TestCase):
     self.assertFalse(trace["mask_applied"])
     self.assertEqual(trace["distribution_mask_source"], "_HybridActionDistribution")
     self.assertNotIn("hmoe_event_slice", [item["name"] for item in trace["contributors"]])
+
+  def test_explicit_policy_constructor_round_trips_owner_marker_and_mode(self) -> None:
+    policy = HierarchicalMoEExecutionPolicy(
+      _observation_space(),
+      make_action_space("air_combat_hybrid_v1"),
+      _ConstantSchedule(),
+      net_arch={"pi": [16], "vf": [16]},
+      hybrid_action_spec="air_combat_hybrid_v1",
+      launch_decision_contract_version=LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,
+      launch_decision_owner_mode=LaunchDecisionMode.DIRECT_BOUNDARY_V1_STRICT.value,
+      hybrid_event_head_lr_scale=1.0,
+    )
+    constructor = policy._get_constructor_parameters()
+    self.assertEqual(
+      constructor["launch_decision_contract_version"],
+      LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,
+    )
+    self.assertEqual(
+      constructor["launch_decision_owner_mode"],
+      LaunchDecisionMode.DIRECT_BOUNDARY_V1_STRICT.value,
+    )
+    rebuilt = HierarchicalMoEExecutionPolicy(**constructor)
+    self.assertEqual(
+      rebuilt.get_launch_decision_owner_contract().as_dict(),
+      policy.get_launch_decision_owner_contract().as_dict(),
+    )
+
+  def test_runtime_composer_reuses_contract_contributor_role_mapping(self) -> None:
+    roles = [_launch_decision_parameter_role(contributor) for contributor in LaunchDecisionContributor]
+    self.assertEqual(len(roles), len(LaunchDecisionContributor))
+    self.assertEqual(len(set(roles)), len(roles))
 
 
 if __name__ == "__main__":
