@@ -73,9 +73,10 @@ def _init_fixture_repo(root: Path) -> Path:
     / "fixture.json"
   )
   config_path.parent.mkdir(parents=True, exist_ok=True)
-  config_path.write_text(
-    json.dumps(_config(hybrid_event_head_lr_scale=10.0), sort_keys=True) + "\n",
-    encoding="utf-8",
+  config_path.write_bytes(
+    (json.dumps(_config(hybrid_event_head_lr_scale=10.0), sort_keys=True) + "\n").encode(
+      "utf-8"
+    )
   )
   subprocess.run(["git", "-C", str(root), "add", "."], check=True)
   subprocess.run(
@@ -148,9 +149,10 @@ class LaunchDecisionModelContractTests(unittest.TestCase):
       frozen_revision = _source_revision(root, "HEAD")
       committed_bytes = config_path.read_bytes()
 
-      config_path.write_text(
-        json.dumps(_config(hybrid_event_head_lr_scale=0.0), sort_keys=True) + "\n",
-        encoding="utf-8",
+      config_path.write_bytes(
+        (json.dumps(_config(hybrid_event_head_lr_scale=0.0), sort_keys=True) + "\n").encode(
+          "utf-8"
+        )
       )
       self.assertNotEqual(config_path.read_bytes(), committed_bytes)
 
