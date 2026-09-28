@@ -11,9 +11,115 @@ from unittest.mock import patch
 
 from python.training import build_train_arg_parser, prepare_training_bootstrap
 from python.training import bootstrap as bootstrap_module
+from python.training.deps import (
+  LaunchDecisionConfigMigrationError,
+  translate_launch_decision_config,
+)
 
 
 class TrainingBootstrapContractTests(unittest.TestCase):
+  def test_launch_decision_bootstrap_enforces_frozen_c0_identity(self) -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    manifest_path = repo_root / "tests" / "fixtures" / "launch_decision_reorg" / "v1" / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    entry = manifest["legacy_provenance_allowlist"][0]
+    config_path = repo_root / entry["path"]
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+
+    provenance, allowlist = bootstrap_module._resolve_c0_launch_decision_provenance(
+      str(config_path),
+      config,
+    )
+    self.assertIsNotNone(provenance)
+    assert provenance is not None
+    self.assertEqual(provenance.as_dict(), entry)
+    translated = translate_launch_decision_config(
+      config,
+      provenance=provenance,
+      legacy_provenance_allowlist=allowlist,
+    )
+    self.assertEqual(
+      translated["hyperparameters"]["policy_kwargs"]["launch_decision_mode"],
+      "legacy_composed_v0",
+    )
+
+    with tempfile.TemporaryDirectory(dir=str(repo_root)) as tmpdir:
+      tmp_root = Path(tmpdir)
+      copied_path = tmp_root / "copied.json"
+      copied_path.write_bytes(config_path.read_bytes())
+      copied_provenance, copied_allowlist = bootstrap_module._resolve_c0_launch_decision_provenance(
+        str(copied_path),
+        config,
+      )
+      with self.assertRaises(LaunchDecisionConfigMigrationError):
+        translate_launch_decision_config(
+          config,
+          provenance=copied_provenance,
+          legacy_provenance_allowlist=copied_allowlist,
+        )
+
+      renamed_path = tmp_root / "renamed.json"
+      renamed_path.write_bytes(config_path.read_bytes())
+      renamed_provenance, renamed_allowlist = bootstrap_module._resolve_c0_launch_decision_provenance(
+        str(renamed_path),
+        config,
+      )
+      with self.assertRaises(LaunchDecisionConfigMigrationError):
+        translate_launch_decision_config(
+          config,
+          provenance=renamed_provenance,
+          legacy_provenance_allowlist=renamed_allowlist,
+        )
+
+      modified_path = tmp_root / Path(entry["path"]).name
+      modified_bytes = bytearray(config_path.read_bytes())
+      modified_bytes.extend(b"\n")
+      modified_path.write_bytes(modified_bytes)
+      modified_config = json.loads(modified_path.read_text(encoding="utf-8"))
+      modified_provenance, modified_allowlist = bootstrap_module._resolve_c0_launch_decision_provenance(
+        str(modified_path),
+        modified_config,
+      )
+      with self.assertRaises(LaunchDecisionConfigMigrationError):
+        translate_launch_decision_config(
+          modified_config,
+          provenance=modified_provenance,
+          legacy_provenance_allowlist=modified_allowlist,
+        )
+
+      generated_path = tmp_root / "generated.json"
+      generated_config = dict(config)
+      generated_config["generated_for_test"] = True
+      generated_path.write_text(json.dumps(generated_config), encoding="utf-8")
+      generated_provenance, generated_allowlist = bootstrap_module._resolve_c0_launch_decision_provenance(
+        str(generated_path),
+        generated_config,
+      )
+      with self.assertRaises(LaunchDecisionConfigMigrationError):
+        translate_launch_decision_config(
+          generated_config,
+          provenance=generated_provenance,
+          legacy_provenance_allowlist=generated_allowlist,
+        )
+
+    explicit_config = {
+      "policy": "HierarchicalMoEExecutionPolicy",
+      "hyperparameters": {
+        "policy_kwargs": {
+          "hybrid_action_spec": "air_combat_hybrid_v1",
+          "hmoe_residual_scale": 0.25,
+          "hybrid_event_head_lr_scale": 10.0,
+          "launch_decision_contract_version": "launch_decision_owner_v1",
+          "launch_decision_mode": "governed_composed_v1",
+        },
+      },
+    }
+    translated_explicit = translate_launch_decision_config(explicit_config)
+    self.assertEqual(
+      translated_explicit["hyperparameters"]["policy_kwargs"]["launch_decision_mode"],
+      "governed_composed_v1",
+    )
+
   def test_experiment_layout_rejects_auto_resume_with_init_from(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
       root = Path(tmpdir)

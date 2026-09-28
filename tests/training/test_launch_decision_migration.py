@@ -109,9 +109,15 @@ class _FakeModel:
 
 
 class LaunchDecisionMigrationTests(unittest.TestCase):
-  def test_legacy_config_is_explicit_only_in_memory(self) -> None:
+  def test_markerless_config_requires_c0_provenance_or_named_migration(self) -> None:
     source = _config(hybrid_event_head_lr_scale=10.0)
-    translated = translate_launch_decision_config(source)
+    with self.assertRaises(LaunchDecisionConfigMigrationError):
+      translate_launch_decision_config(source)
+
+    translated = translate_launch_decision_config(
+      source,
+      migration_id="legacy_import_v1",
+    )
 
     self.assertNotIn("launch_decision_mode", source["hyperparameters"]["policy_kwargs"])
     self.assertEqual(

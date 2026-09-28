@@ -10,10 +10,11 @@ checkpoint) stay fast and dependency-free. All heavy imports happen inside
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Any, Mapping
+from typing import Any, Iterable, Mapping
 
 from python.rl.policy_algo.model_contracts import (
     LaunchDecisionContractError,
+    LaunchDecisionConfigProvenance,
     LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,
     LAUNCH_DECISION_CONTRACT_VERSION_KEY,
     LaunchDecisionMode,
@@ -34,11 +35,17 @@ def translate_launch_decision_config(
     *,
     target_mode: str | LaunchDecisionMode | None = None,
     migration_id: str | None = None,
+    provenance: LaunchDecisionConfigProvenance | Mapping[str, Any] | None = None,
+    legacy_provenance_allowlist: Iterable[
+        LaunchDecisionConfigProvenance | Mapping[str, Any]
+    ] = (),
+    require_legacy_provenance: bool = True,
 ) -> dict[str, Any]:
     """Resolve the flat policy surface without rewriting its source JSON.
 
-    Old configurations receive an in-memory explicit
-    ``legacy_composed_v0`` key. Changing an already-resolved mode requires a
+    Markerless legacy configurations receive an in-memory explicit
+    ``legacy_composed_v0`` key only with an exact C0 provenance match or an
+    explicit named migration. Changing an already-resolved mode requires a
     named migration id; this prevents a checkpoint or optimizer state from
     silently changing owner semantics during startup.
     """
@@ -60,21 +67,6 @@ def translate_launch_decision_config(
             )
         return translated
 
-    try:
-        # A flat config is the migration input, not the immutable C0 identity
-        # record. Resolve its historical semantics first, then persist the
-        # explicit owner marker below before any runtime consumer sees it.
-        source_contract = resolve_launch_decision_contract(
-            translated,
-            require_legacy_provenance=False,
-        )
-    except LaunchDecisionContractError as exc:
-        raise LaunchDecisionConfigMigrationError(
-            f"source launch-decision contract is invalid: {exc}"
-        ) from exc
-
-    source_mode = source_contract.mode
-    resolved_mode = source_mode
     existing_migration = translated.get("launch_decision_migration")
     preserved_migration: dict[str, Any] | None = None
     existing_migration_id: str | None = None
@@ -84,17 +76,45 @@ def translate_launch_decision_config(
                 "launch_decision_migration must be a mapping"
             )
         existing_migration_id = str(existing_migration.get("migration_id") or "").strip() or None
-        if existing_migration_id is not None:
-            if str(existing_migration.get("resolved_mode") or "") != source_mode.value:
-                raise LaunchDecisionConfigMigrationError(
-                    "launch_decision_migration resolved_mode does not match the explicit config mode"
-                )
-            preserved_migration = deepcopy(dict(existing_migration))
-            if migration_id is not None and str(migration_id).strip() != existing_migration_id:
+        if migration_id is not None and existing_migration_id is not None:
+            if str(migration_id).strip() != existing_migration_id:
                 raise LaunchDecisionConfigMigrationError(
                     "a new migration_id cannot replace an already named config migration"
                 )
     effective_migration_id = migration_id if migration_id is not None else existing_migration_id
+    # An unprovenanced markerless input is only admissible through an explicit,
+    # named migration. Normal bootstrap always keeps the immutable C0 gate.
+    source_requires_provenance = require_legacy_provenance and not str(
+        effective_migration_id or ""
+    ).strip()
+    try:
+        source_contract = resolve_launch_decision_contract(
+            translated,
+            provenance=provenance,
+            legacy_provenance_allowlist=legacy_provenance_allowlist,
+            require_legacy_provenance=source_requires_provenance,
+        )
+    except LaunchDecisionContractError as exc:
+        raise LaunchDecisionConfigMigrationError(
+            f"source launch-decision contract is invalid: {exc}"
+        ) from exc
+
+    source_mode = source_contract.mode
+    resolved_mode = source_mode
+    if (
+        not require_legacy_provenance
+        and not str(effective_migration_id or "").strip()
+        and not source_contract.explicit_mode
+    ):
+        raise LaunchDecisionConfigMigrationError(
+            "markerless legacy config requires exact C0 provenance or an explicit migration_id"
+        )
+    if existing_migration_id is not None:
+        if str(existing_migration.get("resolved_mode") or "") != source_mode.value:
+            raise LaunchDecisionConfigMigrationError(
+                "launch_decision_migration resolved_mode does not match the explicit config mode"
+            )
+        preserved_migration = deepcopy(dict(existing_migration))
     if target_mode is not None:
         try:
             resolved_mode = (

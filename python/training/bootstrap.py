@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import argparse
 import atexit
+import hashlib
 import json
 import os
 import random
 import shutil
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 from typing import Any, TextIO
 
 import numpy as np
@@ -18,6 +20,10 @@ except ModuleNotFoundError:  # pragma: no cover - Windows smoke paths do not exp
     fcntl = None
 
 from python.env_config import resolve_env_settings
+from python.rl.policy_algo.model_contracts import (
+    LaunchDecisionConfigProvenance,
+    launch_decision_surface_active,
+)
 from python.training.deps import (
     LaunchDecisionConfigMigrationError,
     translate_launch_decision_config,
@@ -25,6 +31,9 @@ from python.training.deps import (
 
 
 SUPPORTED_AGENT_LAYERS = frozenset({"execution", "leader", "cooperative_execution"})
+_C0_LAUNCH_DECISION_MANIFEST = Path(
+    "tests/fixtures/launch_decision_reorg/v1/manifest.json"
+)
 _TORCH: Any | None = None
 _TORCH_IMPORT_ERROR: Exception | None = None
 
@@ -144,6 +153,59 @@ def _resolve_agent_layer(train_config: dict[str, Any]) -> str | None:
 
 def _repo_root() -> str:
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+
+def _resolve_c0_launch_decision_provenance(
+    train_cfg_path: str,
+    train_config: dict[str, Any],
+) -> tuple[
+    LaunchDecisionConfigProvenance | None,
+    tuple[dict[str, Any], ...],
+]:
+    """Resolve the raw config identity against the immutable C0 allowlist."""
+
+    if not launch_decision_surface_active(train_config):
+        return None, ()
+
+    repo_root = Path(_repo_root()).resolve()
+    manifest_path = repo_root / _C0_LAUNCH_DECISION_MANIFEST
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise LaunchDecisionConfigMigrationError(
+            f"cannot load immutable C0 launch-decision manifest: {manifest_path}"
+        ) from exc
+    raw_allowlist = manifest.get("legacy_provenance_allowlist")
+    if not isinstance(raw_allowlist, list) or not raw_allowlist:
+        raise LaunchDecisionConfigMigrationError(
+            "immutable C0 launch-decision manifest has no legacy provenance allowlist"
+        )
+    allowlist: tuple[dict[str, Any], ...] = tuple(
+        dict(item) for item in raw_allowlist if isinstance(item, dict)
+    )
+    if len(allowlist) != len(raw_allowlist):
+        raise LaunchDecisionConfigMigrationError(
+            "immutable C0 launch-decision provenance allowlist is malformed"
+        )
+
+    config_path = Path(train_cfg_path).resolve()
+    try:
+        relative_path = config_path.relative_to(repo_root).as_posix()
+    except ValueError:
+        # Keep the candidate visible in the contract error while ensuring it
+        # cannot equal a repo-relative allowlist entry.
+        relative_path = config_path.as_posix()
+    digest = hashlib.sha256(config_path.read_bytes()).hexdigest()
+    candidate: dict[str, Any] = {
+        "source_revision": "",
+        "path": relative_path,
+        "sha256": digest,
+    }
+    for entry in allowlist:
+        if entry.get("path") == relative_path and entry.get("sha256") == digest:
+            candidate = entry
+            break
+    return LaunchDecisionConfigProvenance.from_value(candidate), allowlist
 
 
 def _realpath(value: str) -> str:
@@ -423,10 +485,18 @@ def prepare_training_bootstrap(args: argparse.Namespace) -> TrainingBootstrap | 
         train_config = json.load(f)
 
     try:
-        # Resolve the legacy flat surface in memory. The checked-in JSON remains
-        # untouched; explicit target-mode changes are handled by callers with a
-        # named migration id.
-        train_config = translate_launch_decision_config(train_config)
+        # Resolve markerless legacy semantics only for an exact C0 config
+        # identity; explicit owner modes remain independently portable.
+        provenance, legacy_allowlist = _resolve_c0_launch_decision_provenance(
+            train_cfg_path,
+            train_config,
+        )
+        train_config = translate_launch_decision_config(
+            train_config,
+            provenance=provenance,
+            legacy_provenance_allowlist=legacy_allowlist,
+            require_legacy_provenance=True,
+        )
     except LaunchDecisionConfigMigrationError as exc:
         print(f"Error: launch-decision config migration failed: {exc}")
         return None
