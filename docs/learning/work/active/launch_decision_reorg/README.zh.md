@@ -9,9 +9,9 @@
 
 - [计划正文与当前状态](README.md)
 - [有限任务簇计划](launch_decision_reorg_task_clusters_20260922.md)
-- [策略执行架构基线](../../../standards/policy_execution_architecture.md)
-- [双语文档规范](../../../../engineering/documentation/standards/bilingual_documentation_policy.md)
-- [子项目创建规范](../../../../engineering/automation/rules/subproject_creation_standard.md)
+- [策略执行架构基线](../../../standards/policy_execution_architecture.zh.md)
+- [双语文档规范](../../../../engineering/documentation/standards/bilingual_documentation_policy.zh.md)
+- [子项目创建规范](../../../../engineering/automation/rules/subproject_creation_standard.zh.md)
 
 ## 已定型的方向
 
