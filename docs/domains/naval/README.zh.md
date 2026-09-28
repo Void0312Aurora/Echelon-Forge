@@ -76,9 +76,9 @@ Naval 可以约束这些形状在海上执行中的使用方式，但不重新�
 ## 活跃工作与相关文档
 
 - [Naval 领域表面拆分](work/active/naval_domain_surface_split/README.zh.md)：
-  当前有界工作包。`P2-B` 已落地海军 command projection，而本包在闭合处因**一项**被置为
-  旧的 projection hold 已由新分支原生回归测试结清；[`P5-A` 闭合记录](work/active/naval_domain_surface_split/naval_domain_surface_split_p5_closure_20260922.md)
-  现在接受有边界的 N4 surface，同时继续明确 N5/N6 不在范围内。
+  当前有界工作包。`P2-B` 已落地海军 command projection，拆分分支的原生回归测试
+  结清了此前的 projection hold；[`P5-A` 闭合记录](work/active/naval_domain_surface_split/naval_domain_surface_split_p5_closure_20260922.md)
+  记录有边界 N4 surface 的接受，同时继续把 N5/N6 排除在范围外。
 - [Naval 进展快照 — 2026-05-27](reviews/naval_progress_snapshot_20260527.zh.md)：
   带日期 review 证据，不是最新状态权威。
 - [Joint 指挥与建模基线](../joint/standards/command_and_modeling_baseline.zh.md)

@@ -1,6 +1,7 @@
 # Naval Domain Surface Split Task Clusters
 
-Status: `2026-06-12`; `P1-A/P1-B/P2-A/P3-A/P3-B/P4-A` accepted; finite
+Status: `2026-09-23`; every cluster is closed and the bounded N4 package is
+accepted (`P2-B` landed `NavalCommandIntent`, `P5-A` recorded the closure); finite
 task-cluster plan for [Naval Domain Surface Split](README.md).
 
 Model IDs on accepted rows preserve the historical dispatch record. They are
@@ -27,11 +28,11 @@ air takeoff, runway, formation, gear, or flight-control fields.
 | `P1-A` | worker `Linnaeus` | `gpt-5.4-mini` / `xhigh` | Inventory every air-first dependency still on the active naval policy/runtime path. | `naval_domain_surface_split_current_status_20260601*.md`, optional diagnostics notes | code changes, refactors | read-only `rg` inventory plus cited file/line evidence | inventory classifies each dependency as accepted shared, compatibility adapter, or blocker | after `P0-A`; read-only can run alone | 1 + 1 repair | accepted |
 | `P1-B` | worker `Locke` | `gpt-5.4` / `high` | Add guard tests that prevent active naval entries from regressing to air action or air mission-observation surfaces. | `tests/training/**`, `tests/eval/**`, active naval config tests only | new packet implementation, N5 behavior | focused pytest for naval active entries and baseline eval | tests fail on `takeoff*`, air formation/takeoff mission modes, weapon/damage reward leakage | after `P1-A` dispatch; can precede implementation | 1 + 1 repair | accepted |
 | `P2-A` | worker `Locke` | `gpt-5.4` / `high` | Design and implement a naval-owned action/intent assignment seam or explicit adapter around the current `PilotAction` carrier. | `src/runtime/contracts/**`, `gym_envs/universal_env_parts/**`, `python/rl/runtime/**`, focused tests | full helm/autopilot doctrine, weapon switches | C++/binding build if touched; focused world-batch naval tests | maintained naval path no longer treats `PilotAction` semantics as policy action truth | after accepted `P1-A/P1-B`; not parallel with `P2-B` | 2 + 1 repair | accepted |
-| `P2-B` | future worker | n/a | Bound `MissionCommand` compatibility use behind shared-core and naval-owner projection tests. | `src/components/command/**`, `src/runtime/contracts/**`, `python/rl/profile/naval_profile.py`, command-chain tests | nested rewrite of all command consumers | command roundtrip tests, world-batch command-chain tests | naval station/ROE/assigned-target fields survive via maintained naval slices | after `P1-A`; not parallel with `P2-A` if same contract files | 2 + 1 repair | planned |
+| `P2-B` | main thread | current | Bound `MissionCommand` compatibility use behind shared-core and naval-owner projection tests. | `src/components/command/**`, `src/runtime/contracts/**`, `python/rl/profile/naval_profile.py`, command-chain tests | nested rewrite of all command consumers | command roundtrip tests, world-batch command-chain tests | naval station/ROE/assigned-target fields survive via maintained naval slices | after `P1-A`; not parallel with `P2-A` if same contract files | 2 + 1 repair | accepted ([closure](naval_domain_surface_split_p2b_command_projection_20260921.md)) |
 | `P3-A` | main thread | current | Promote `naval_screen_station_v1` toward a maintained naval observation packet. | `python/mission_obs_taxonomy.py`, `gym_envs/scenario_loader/mission_observation.py`, observation runtime/batching, tests | weapon/damage observation, fleet C2 schema | mission observation taxonomy and naval reward/observation tests | policy-visible naval vector is not an air takeoff/formation fallback | after `P2-A` boundary accepted | 2 + 1 repair | accepted |
 | `P3-B` | worker `Linnaeus` | `gpt-5.4-mini` / `xhigh` | Add domain-neutral config aliases where air-labeled knobs block naval ownership. | `python/env_config.py`, `train.py`, examples config docs, tests | breaking existing air configs | env-config tests and naval training-entry bootstrap | naval entries can use neutral names while legacy air names remain compatible | after accepted `P1-B`; disjoint from `P2-A` write set | 1 + 1 repair | accepted |
 | `P4-A` | main thread | current | Integrate active naval configs, eval gates, and contracts onto the accepted split surfaces. | `examples/config/training/active/naval/**`, `tools/eval/**`, `tests/runtime/naval/**`, `tests/eval/**` | formal training, N5/N6 release | naval active pytest, eval CLI smoke, scenario contracts | active entries run on new surfaces and still forbid airfield/weapon/damage terms | after `P2/P3` accepted | 1 + 1 repair | accepted |
-| `P5-A` | main thread | current | Close or hold the subproject with acceptance and parent progress updates. | `docs/domains/naval/work/active/naval_domain_surface_split/**`, `docs/domains/naval/README*`, optional current progress update | late implementation | `git diff --check -- docs/domains/naval` plus recorded test outcomes | acceptance doc records pass/held residuals without overclaim | serial final cluster | 1 | planned |
+| `P5-A` | main thread | current | Close or hold the subproject with acceptance and parent progress updates. | `docs/domains/naval/work/active/naval_domain_surface_split/**`, `docs/domains/naval/README*`, optional current progress update | late implementation | `git diff --check -- docs/domains/naval` plus recorded test outcomes | acceptance doc records pass/held residuals without overclaim | serial final cluster | 1 | accepted ([closure](naval_domain_surface_split_p5_closure_20260922.md)) |
 
 ## Dispatch Rules
 
@@ -112,8 +113,8 @@ Immediate:
   adapter with `basic` only as the compiled batch fallback;
 - `P4-A` added active/eval `surface_gate` checks for the action command surface,
   legacy transport adapter, and naval observation adapter;
-- the next dispatch should focus on `P2-B` command projection while still
-  avoiding concurrent `src/runtime/contracts/**` write sets.
+- `P2-B` landed `NavalCommandIntent` behind a single write seam and a native
+  projection test, and `P5-A` accepted the bounded N4 package.
 
 Follow-on:
 
