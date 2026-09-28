@@ -45,6 +45,12 @@ runtime.
 
 - [Environment systems](../../systems/environment/README.md): cross-domain
   substrate contracts and retained G0/Arnis acceptance boundaries.
+- [Environment Runtime](../../systems/environment/work/active/environment_runtime/README.md):
+  shared layered runtime environment (planning). Ground native-terrain work
+  must consume its domain-neutral queries. Its planned migration moves the
+  runtime terrain from `origin/work/army-mechanisms` out of the shared
+  interface and implementation, and keeps Ground stance, passability,
+  transition-cost, and field-semantic logic in the Ground domain.
 - [Ground defect inventory](reviews/ground_domain_defect_inventory_20260522.md):
   dated review snapshot; open items require current reverification.
 
