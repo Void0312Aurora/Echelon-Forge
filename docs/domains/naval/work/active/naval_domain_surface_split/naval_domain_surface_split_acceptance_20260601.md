@@ -1,19 +1,24 @@
 # Naval Domain Surface Split Acceptance Gate
 
-Status: `2026-06-12` gate refresh; `P1-A/P1-B/P2-A/P3-A/P3-B/P4-A`
-accepted as slices, but the full subproject is not accepted.
+Status: `2026-09-23`; the bounded N4 package is accepted. The decision and its
+per-item evidence live in the [`P5-A` closure record](naval_domain_surface_split_p5_closure_20260922.md);
+the `2026-06-12` interim record below is kept for history.
 
 Parent project: [Naval Domain Surface Split](README.md)
 
 ## Acceptance Decision
 
-Current decision: `not accepted`.
+Current decision: `accepted` for the bounded N4 surface (`2026-09-23`).
 
-Reason: the accepted slices now cover inventory, guard tests, action command
-surface, a bounded maintained naval observation adapter, the domain-neutral
-config alias, and active/eval surface gates. The active codebase still contains
-the flat `MissionCommand` compatibility shell and the not-yet-retired global
-`PilotAction` carrier / `WorldPilotActionAssignment` transport path.
+Reason: `P2-B` landed `NavalCommandIntent` with a single maintained write seam
+and a native projection regression test, which discharged the one item that had
+held the package. The `MissionCommand` flat shell, the neutral `PilotAction`
+carrier, and `WorldPilotActionAssignment` remain as bounded compatibility
+transport; they are recorded residuals, not acceptance blockers. N5 weapon
+release and N6 damage/kill authority stay out of scope.
+
+The `2026-06-12` interim decision was `not accepted`: at that point the flat
+`MissionCommand` shell had no maintained naval projection.
 
 ## Interim Evidence Accepted
 
