@@ -17,6 +17,7 @@ from python.rl.policy_algo.model_contracts import (
     LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,
     LAUNCH_DECISION_CONTRACT_VERSION_KEY,
     LaunchDecisionMode,
+    launch_decision_surface_active,
     resolve_launch_decision_contract,
 )
 
@@ -52,19 +53,7 @@ def translate_launch_decision_config(
     if not isinstance(policy_kwargs, dict):
         raise LaunchDecisionConfigMigrationError("hyperparameters.policy_kwargs must be a mapping")
 
-    launch_surface_keys = {
-        "hybrid_action_spec",
-        "launch_decision_mode",
-        "launch_decision_owner_mode",
-        "hybrid_event_head_lr_scale",
-        "hybrid_event_use_stopping_head",
-        "hybrid_event_use_window_classifier_head",
-    }
-    launch_surface_active = (
-        str(translated.get("policy", "")) == "HierarchicalMoEExecutionPolicy"
-        or bool(launch_surface_keys.intersection(policy_kwargs))
-    )
-    if not launch_surface_active:
+    if not launch_decision_surface_active(translated):
         if target_mode is not None or migration_id is not None:
             raise LaunchDecisionConfigMigrationError(
                 "a target launch-decision mode was supplied for a policy without the hybrid launch surface"

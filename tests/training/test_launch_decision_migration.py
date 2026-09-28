@@ -18,9 +18,11 @@ from python.rl.policy_algo.model_contracts import (
 from python.rl.policy_checkpoint import (
   LaunchDecisionMigrationError,
   _optimizer_manifest,
+  _replay_manifest,
   _replay_state_for_model,
   build_launch_decision_checkpoint_envelope,
   launch_decision_config_fingerprint,
+  launch_decision_surface_active,
   migrate_launch_decision_checkpoint_envelope,
   validate_launch_decision_checkpoint_envelope,
   validate_loaded_sb3_launch_decision_checkpoint,
@@ -240,6 +242,60 @@ class LaunchDecisionMigrationTests(unittest.TestCase):
     )
     with self.assertRaisesRegex(LaunchDecisionMigrationError, "replay is enabled"):
       _replay_state_for_model(missing)
+
+    incomplete = SimpleNamespace(
+      window_classifier_replay_enabled=True,
+      window_classifier_replay_storage="latent",
+      _window_classifier_replay=SimpleNamespace(
+        storage="latent",
+        capacity=16,
+        positives=th.zeros((1, 2)),
+      ),
+      replay_buffer=None,
+    )
+    with self.assertRaisesRegex(LaunchDecisionMigrationError, "state surface is incomplete"):
+      _replay_state_for_model(incomplete)
+
+  def test_replay_manifest_records_nested_observation_shapes(self) -> None:
+    replay = SimpleNamespace(
+      storage="observation",
+      capacity=4,
+      positive_observations={"state": th.zeros((2, 3)), "mask": th.ones((2, 1))},
+      negative_observations={"state": th.ones((1, 3)), "mask": th.zeros((1, 1))},
+    )
+    model = SimpleNamespace(
+      window_classifier_replay_enabled=True,
+      window_classifier_replay_storage="observation",
+      _window_classifier_replay=replay,
+      replay_buffer=None,
+    )
+    state = _replay_state_for_model(model)
+    manifest = _replay_manifest(state)
+    self.assertEqual(manifest["row_shapes"]["positive_rows"]["state"], [2, 3])
+    self.assertEqual(manifest["row_shapes"]["negative_rows"]["mask"], [1, 1])
+
+  def test_launch_surface_detection_skips_ordinary_policy(self) -> None:
+    ordinary = {
+      "policy": "MultiInputPolicy",
+      "hyperparameters": {"policy_kwargs": {"features_extractor_class": "TransformerExtractor"}},
+    }
+    self.assertFalse(launch_decision_surface_active(ordinary))
+    self.assertTrue(launch_decision_surface_active(_config()))
+
+    legacy_hmoe = {
+      "policy": "HierarchicalMoEExecutionPolicy",
+      "hyperparameters": {
+        "policy_kwargs": {
+          "features_extractor_class": "TransformerExtractor",
+          "hmoe_residual_scale": 0.18,
+          "hmoe_head_lr_scale": 0.15,
+        },
+      },
+    }
+    self.assertFalse(launch_decision_surface_active(legacy_hmoe))
+    translated = translate_launch_decision_config(legacy_hmoe)
+    self.assertNotIn("launch_decision_migration", translated)
+    self.assertNotIn("launch_decision_mode", translated["hyperparameters"]["policy_kwargs"])
 
   def test_named_extractor_config_fingerprint_is_stable_across_runtime_translation(self) -> None:
     class TemporalTransformerExtractor:

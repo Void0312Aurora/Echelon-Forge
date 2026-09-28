@@ -355,6 +355,43 @@ def _launch_decision_value(config: Mapping[str, Any], key: str) -> Any:
     return _MISSING
 
 
+def launch_decision_surface_active(config: Mapping[str, Any]) -> bool:
+    """Return whether a config declares the launch-decision compatibility surface.
+
+    ``HierarchicalMoEExecutionPolicy`` also serves older non-hybrid training
+    configurations.  The policy class alone therefore cannot require a launch
+    sidecar; an explicit launch/action/contributor field must be present.
+    """
+
+    if not isinstance(config, Mapping):
+        return False
+    hyperparameters = config.get("hyperparameters", {})
+    nested_policy_kwargs = (
+        hyperparameters.get("policy_kwargs", {})
+        if isinstance(hyperparameters, Mapping)
+        else {}
+    )
+    mappings = (
+        config,
+        config.get("policy_kwargs", {}),
+        hyperparameters,
+        nested_policy_kwargs,
+    )
+    surface_keys = {
+        "hybrid_action_spec",
+        "launch_decision_mode",
+        "launch_decision_owner_mode",
+        LAUNCH_DECISION_CONTRACT_VERSION_KEY,
+        "hybrid_event_head_lr_scale",
+        "hybrid_event_use_stopping_head",
+        "hybrid_event_use_window_classifier_head",
+    }
+    return any(
+        isinstance(mapping, Mapping) and bool(surface_keys.intersection(mapping))
+        for mapping in mappings
+    )
+
+
 def _launch_decision_declared_values(
     config: Mapping[str, Any],
     key: str,

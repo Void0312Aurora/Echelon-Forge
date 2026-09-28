@@ -19,6 +19,7 @@ from typing import Any, Mapping
 from python.rl.policy_algo.model_contracts import (
     LaunchDecisionContractError,
     LaunchDecisionOwnerContract,
+    launch_decision_surface_active,
     resolve_launch_decision_contract,
 )
 
@@ -64,27 +65,6 @@ def _canonical_fingerprint(value: Any) -> str:
 
     payload = json.dumps(normalize(value), sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
-
-
-def _launch_decision_surface_active(train_config: Mapping[str, Any]) -> bool:
-    """Return whether launch-decision checkpoint compatibility applies."""
-
-    if not isinstance(train_config, Mapping):
-        return False
-    policy_name = str(train_config.get("policy", ""))
-    hyperparameters = train_config.get("hyperparameters", {})
-    policy_kwargs = (
-        hyperparameters.get("policy_kwargs", {})
-        if isinstance(hyperparameters, Mapping)
-        else {}
-    )
-    return bool(
-        policy_name == "HierarchicalMoEExecutionPolicy"
-        or (
-            isinstance(policy_kwargs, Mapping)
-            and "hybrid_action_spec" in policy_kwargs
-        )
-    )
 
 
 def _sidecar_path(model_path: str) -> Path:
@@ -136,7 +116,12 @@ def _value_manifest(value: Any) -> Any:
     return _tensor_manifest(value)
 
 
-def _value_shape(value: Any) -> list[int] | None:
+def _value_shape(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {
+            str(key): _value_shape(item)
+            for key, item in sorted(value.items(), key=lambda item: str(item[0]))
+        }
     shape = getattr(value, "shape", None)
     if shape is not None:
         try:
@@ -454,13 +439,24 @@ def _window_classifier_replay_state(model: Any) -> dict[str, Any] | None:
         return None
 
     storage = str(getattr(replay, "storage", "latent"))
+    configured_storage = str(getattr(model, "window_classifier_replay_storage", storage))
+    if storage not in {"latent", "observation"} or configured_storage != storage:
+        raise LaunchDecisionMigrationError(
+            "window-classifier replay storage is inconsistent with its state surface"
+        )
     capacity = int(getattr(replay, "capacity", 0))
+    missing = object()
     if storage == "observation":
-        positive_rows = getattr(replay, "positive_observations", None)
-        negative_rows = getattr(replay, "negative_observations", None)
+        positive_rows = getattr(replay, "positive_observations", missing)
+        negative_rows = getattr(replay, "negative_observations", missing)
     else:
-        positive_rows = getattr(replay, "positives", None)
-        negative_rows = getattr(replay, "negatives", None)
+        positive_rows = getattr(replay, "positives", missing)
+        negative_rows = getattr(replay, "negatives", missing)
+    if positive_rows is missing or negative_rows is missing:
+        raise LaunchDecisionMigrationError(
+            "window-classifier replay state surface is incomplete; "
+            "positive and negative rows must both be exposed"
+        )
     return {
         "schema_version": "window_classifier_replay_v1",
         "storage": storage,
@@ -547,7 +543,7 @@ def validate_loaded_sb3_launch_decision_checkpoint(
 ) -> dict[str, Any]:
     """Compare loaded policy/optimizer/replay identities with its sidecar."""
 
-    if not _launch_decision_surface_active(expected_config):
+    if not launch_decision_surface_active(expected_config):
         return {
             "schema_version": LAUNCH_DECISION_CHECKPOINT_SCHEMA_VERSION,
             "skipped": True,
@@ -582,7 +578,7 @@ def validate_sb3_checkpoint_against_config(
 ) -> dict[str, Any]:
     """Fail closed when a checkpoint's owner mode differs from a run config."""
 
-    if not _launch_decision_surface_active(train_config):
+    if not launch_decision_surface_active(train_config):
         return {
             "schema_version": LAUNCH_DECISION_CHECKPOINT_SCHEMA_VERSION,
             "skipped": True,
@@ -669,6 +665,7 @@ __all__ = [
     "LaunchDecisionMigrationError",
     "build_launch_decision_checkpoint_envelope",
     "inspect_sb3_launch_decision_checkpoint",
+    "launch_decision_surface_active",
     "load_sb3_policy",
     "launch_decision_config_fingerprint",
     "migrate_launch_decision_checkpoint_envelope",

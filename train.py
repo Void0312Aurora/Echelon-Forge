@@ -50,6 +50,7 @@ from python.training.vec_env_factory import (
 from python.rl.policy_checkpoint import (
     LaunchDecisionMigrationError,
     launch_decision_config_fingerprint,
+    launch_decision_surface_active,
     validate_loaded_sb3_launch_decision_checkpoint,
     validate_sb3_checkpoint_against_config,
     write_sb3_launch_decision_sidecar,
@@ -87,11 +88,7 @@ def _validate_launch_decision_checkpoint_for_config(
     checkpoint_path: str,
     train_config: dict,
 ) -> bool:
-    policy_kwargs = train_config.get("hyperparameters", {}).get("policy_kwargs", {})
-    policy_name = str(train_config.get("policy", ""))
-    if policy_name != "HierarchicalMoEExecutionPolicy" and not isinstance(policy_kwargs, dict):
-        return True
-    if policy_name != "HierarchicalMoEExecutionPolicy" and "hybrid_action_spec" not in policy_kwargs:
+    if not launch_decision_surface_active(train_config):
         return True
     try:
         validate_sb3_checkpoint_against_config(checkpoint_path, train_config)
@@ -102,11 +99,7 @@ def _validate_launch_decision_checkpoint_for_config(
 
 
 def _launch_decision_contract_for_config(train_config: dict):
-    policy_kwargs = train_config.get("hyperparameters", {}).get("policy_kwargs", {})
-    policy_name = str(train_config.get("policy", ""))
-    if policy_name != "HierarchicalMoEExecutionPolicy" and not (
-        isinstance(policy_kwargs, dict) and "hybrid_action_spec" in policy_kwargs
-    ):
+    if not launch_decision_surface_active(train_config):
         return None
     return resolve_launch_decision_contract(train_config)
 
