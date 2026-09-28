@@ -81,12 +81,19 @@ weapon and damage calibration.
 
 ## Active Work and Related Documents
 
+- [Carrier strike group engagement](work/active/carrier_strike_group_engagement/README.md):
+  forward naval combat program, in planning. A scenario ladder from static
+  order of battle to a full Ford-class versus Fujian-class group engagement,
+  with a parallel undersea track. It replaces the historical `N0`-`N8` ladder
+  as the forward plan.
 - [Naval domain-surface split](work/active/naval_domain_surface_split/README.md):
   current bounded package. `P2-B` landed the naval command projection and the
   split-branch native regression test now discharges the former projection hold;
   the [`P5-A` closure record](work/active/naval_domain_surface_split/naval_domain_surface_split_p5_closure_20260922.md)
   records acceptance for the bounded N4 surface while keeping N5/N6 out of scope.
 - [Naval progress snapshot — 2026-05-27](reviews/naval_progress_snapshot_20260527.md):
-  dated review evidence, not the latest status authority.
+  dated review evidence, not the latest status authority. Its `N0`-`N8` ladder
+  is historical and is superseded as a forward plan by the carrier strike group
+  engagement package.
 - [Joint Command and Modeling Baseline](../joint/standards/command_and_modeling_baseline.md)
 - [Joint Command-Link and Reporting Baseline](../joint/standards/command_link_and_reporting_baseline.md)
