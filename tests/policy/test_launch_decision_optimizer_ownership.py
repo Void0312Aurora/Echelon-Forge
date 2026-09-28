@@ -14,6 +14,9 @@ from python.rl.policy_algo._event_credit_mixin import _EventCreditMixin
 from python.rl.policy_algo._event_window_mixin import _EventWindowMixin
 from python.rl.policy_algo.model_contracts import LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION
 from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy
+from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
+from stable_baselines3.common.vec_env import DummyVecEnv
+from tests.support.auxiliary_policy_updates import _TinyA6HybridAirCombatEnv, _WarmupSchedule
 
 
 class _ConstantSchedule:
@@ -39,12 +42,40 @@ def _make_policy(mode: str | None) -> HierarchicalMoEExecutionPolicy:
   if mode is not None:
     kwargs["launch_decision_contract_version"] = LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION
     kwargs["launch_decision_mode"] = mode
+    if mode == "auxiliary_only_v1":
+      kwargs["hybrid_event_head_lr_scale"] = 0.0
   return HierarchicalMoEExecutionPolicy(
     _observation_space(),
     make_action_space("air_combat_hybrid_v1"),
     _ConstantSchedule(),
     **kwargs,
   )
+
+
+def _make_ppo(mode: str) -> tuple[AdaptiveKLPPO, DummyVecEnv]:
+  env = DummyVecEnv([_TinyA6HybridAirCombatEnv])
+  event_head_scale = 0.0 if mode == "auxiliary_only_v1" else 1.0
+  model = AdaptiveKLPPO(
+    HierarchicalMoEExecutionPolicy,
+    env,
+    learning_rate=_WarmupSchedule(),
+    n_steps=2,
+    batch_size=2,
+    n_epochs=1,
+    gamma=0.99,
+    gae_lambda=0.95,
+    normalize_advantage=False,
+    policy_kwargs={
+      "net_arch": {"pi": [16], "vf": [16]},
+      "hybrid_action_spec": "air_combat_hybrid_v1",
+      "hmoe_residual_scale": 1.0,
+      "hmoe_head_lr_scale": 1.0,
+      "hybrid_event_head_lr_scale": event_head_scale,
+      "launch_decision_contract_version": LAUNCH_DECISION_CONTRACT_SCHEMA_VERSION,
+      "launch_decision_mode": mode,
+    },
+  )
+  return model, env
 
 
 def _obs(batch: int = 2) -> dict[str, th.Tensor]:
@@ -56,6 +87,19 @@ def _obs(batch: int = 2) -> dict[str, th.Tensor]:
 
 def _ids(parameters) -> set[int]:
   return {id(parameter) for parameter in parameters}
+
+
+def _snapshot(parameters) -> dict[int, th.Tensor]:
+  return {id(parameter): parameter.detach().clone() for parameter in parameters}
+
+
+def _assert_snapshot_unchanged(
+  case: unittest.TestCase,
+  parameters,
+  before: dict[int, th.Tensor],
+) -> None:
+  for parameter in parameters:
+    case.assertTrue(th.equal(parameter.detach(), before[id(parameter)]))
 
 
 class LaunchDecisionOptimizerOwnershipTests(unittest.TestCase):
@@ -138,13 +182,36 @@ class LaunchDecisionOptimizerOwnershipTests(unittest.TestCase):
   def test_explicit_strict_ordinary_optimizer_step_cannot_write_launch_roles(self) -> None:
     policy = _make_policy("direct_boundary_v1_strict")
     launch_params = policy.get_launch_decision_parameters()
-    before = {id(parameter): parameter.detach().clone() for parameter in launch_params}
+    before = _snapshot(launch_params)
     policy.optimizer.zero_grad(set_to_none=True)
     for parameter in launch_params:
       parameter.grad = th.ones_like(parameter)
     policy.optimizer.step()
-    for parameter in launch_params:
-      self.assertTrue(th.equal(parameter.detach(), before[id(parameter)]))
+    _assert_snapshot_unchanged(self, launch_params, before)
+
+  def test_real_ppo_minibatch_preserves_strict_shared_launch_roles(self) -> None:
+    model, env = _make_ppo("direct_boundary_v1_strict")
+    try:
+      guarded = model.policy.get_launch_decision_parameters(
+        ("action_net", "policy_trunk", "hmoe_event_slice")
+      )
+      before = _snapshot(guarded)
+      model.learn(total_timesteps=2)
+      _assert_snapshot_unchanged(self, guarded, before)
+    finally:
+      env.close()
+
+  def test_real_ppo_minibatch_preserves_auxiliary_only_executable_roles(self) -> None:
+    model, env = _make_ppo("auxiliary_only_v1")
+    try:
+      guarded = model.policy.get_launch_decision_parameters(
+        ("action_net", "policy_trunk", "hmoe_event_slice")
+      )
+      before = _snapshot(guarded)
+      model.learn(total_timesteps=2)
+      _assert_snapshot_unchanged(self, guarded, before)
+    finally:
+      env.close()
 
   def test_update_trace_requires_observed_parameter_change(self) -> None:
     policy = _make_policy("direct_boundary_v1_strict")
