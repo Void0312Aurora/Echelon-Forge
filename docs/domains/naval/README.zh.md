@@ -85,5 +85,8 @@ Naval 可以约束这些形状在海上执行中的使用方式，但不重新�
 - [Naval 进展快照 — 2026-05-27](reviews/naval_progress_snapshot_20260527.zh.md)：
   带日期 review 证据，不是最新状态权威。其 `N0`-`N8` 阶梯为历史记录，作为前向计划已被
   航母打击群对抗工作包取代。
+- [航母打击群兵力编制调研](reviews/csg_order_of_battle_20260928/README.md)（带日期、研究级、非权威）：[福特级 CSG](reviews/csg_order_of_battle_20260928/csg_order_of_battle_ford_20260928.md)、
+  [福建舰编队](reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md)，以及共用的
+  [来源台账](reviews/csg_order_of_battle_20260928/csg_source_ledger_20260928.md)。
 - [Joint 指挥与建模基线](../joint/standards/command_and_modeling_baseline.zh.md)
 - [Joint 指挥链路与汇报基线](../joint/standards/command_link_and_reporting_baseline.zh.md)
