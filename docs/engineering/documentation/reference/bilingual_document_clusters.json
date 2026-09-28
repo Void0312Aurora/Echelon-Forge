@@ -624,6 +624,15 @@
       "chinese_hash": "755b151f945ccab1695a2543160cf59a4999d430003a37a02465b324fb194bd4"
     },
     {
+      "pair_id": "systems/README",
+      "english": "docs/systems/README.md",
+      "chinese": "docs/systems/README.zh.md",
+      "source_of_truth": "english",
+      "last_verified": "2026-09-28",
+      "english_hash": "0dc8ffd7cbc71b97ffe135a8bf325063ec5981a730259316c72d050c3d2921e9",
+      "chinese_hash": "bb8284b4e0d0d495d56bacb62d6d45e6f46ec80bde47f39e73eb170b59828bf4"
+    },
+    {
       "pair_id": "systems/command-tasking/reference/agency_authority_census_20260721",
       "english": "docs/systems/command-tasking/reference/agency_authority_census_20260721.md",
       "chinese": "docs/systems/command-tasking/reference/agency_authority_census_20260721.zh.md",
@@ -646,9 +655,9 @@
       "english": "docs/systems/environment/README.md",
       "chinese": "docs/systems/environment/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "a298b87f57abeebe64c5f1baba1f408d7952cd5425531b71928134fe7541e214",
-      "chinese_hash": "78984456ef368e2bc81ff2c4ddb5637b25f086cd4377ab35d2dd937d10a2047d"
+      "last_verified": "2026-09-28",
+      "english_hash": "3cf82602e1cfdf55ef5a912f83154d83b9821ae7c9d72167cb98427a5f52deb9",
+      "chinese_hash": "fae405e961192e1a4e5a830f48a75299854c965bd84f202a93be191cca7fcdbf"
     },
     {
       "pair_id": "systems/README",

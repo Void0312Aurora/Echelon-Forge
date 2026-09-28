@@ -26,7 +26,7 @@ Parent project: [Carrier Strike Group Engagement](README.md)
 | --- | --- | --- | --- | --- |
 | `CSG-P0-A-boundary` | `P0-A` | active, main thread | this directory; naval owner README index | doc link and bilingual audits |
 | `CSG-S0-A-oob` | `S0-A` | waiting on `P0-A` | `docs/domains/naval/reference/csg_order_of_battle_*.md` | provenance completeness |
-| `CSG-S0-B-geodesy` | `S0-B` | waiting on `P0-A`; serial | shared frame surfaces | frame tests plus air/naval regression suites |
+| `CSG-S0-B-geodesy-integration` | `S0-B` | waiting on [Geodetic Frame](../../../../../systems/physics/work/active/geodetic_frame/README.md) `P3-B` | `scenarios/naval/csg/`; naval scenario tests | scenario anchor tests |
 
 ## No-Dispatch Conditions
 
@@ -36,4 +36,6 @@ Do not dispatch an implementation worker while:
 - the cluster would need to change an Air or Joint owner surface without that
   owner's seam being agreed;
 - the cluster would need a parameter that has neither a source nor a recorded
-  engineering estimate.
+  engineering estimate;
+- the cluster consumes a system-owner deliverable whose owner package has not
+  reached the named phase.

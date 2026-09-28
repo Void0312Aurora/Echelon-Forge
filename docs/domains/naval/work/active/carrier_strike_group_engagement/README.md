@@ -37,6 +37,11 @@ strike groups — a U.S. Navy `Gerald R. Ford`-class CSG and a PLA Navy
 `Fujian`-class carrier group — and uses that scenario as the organizing target
 for the naval infrastructure the repository still lacks.
 
+The package is the demand side and integrator. Mechanisms other domains also
+need are built by their cross-domain system owners under `docs/systems/`, and
+this package consumes them through the dependency register below. It owns the
+scenario ladder, the naval-specific mechanisms, and stage acceptance.
+
 The work is scenario-driven. It grows one runnable scenario ladder from static
 order-of-battle presence to a full two-sided engagement. Each stage adds only
 the infrastructure that stage needs, runs on its own, and is accepted against
@@ -80,10 +85,12 @@ In scope:
 - named platform units, each with source provenance, for both carrier groups:
   carriers, cruisers and destroyers, attack submarines, replenishment ships,
   carrier aircraft, embarked helicopters, and their weapons and sensors;
-- the naval, carrier-aviation, undersea, and cross-cutting mechanisms each stage
-  names in the phase plan, including command hierarchy, data links, electronic
-  warfare, emission control, logistics, damage control, and outcome
-  adjudication;
+- the naval-owned mechanisms each stage names in the phase plan: group formation
+  and screen geometry, ship and submarine motion, flight-deck and hangar
+  resources, ship fire-control channels, naval platform compartments, and
+  naval sensor and weapon platform adapters;
+- integration of the cross-domain system deliverables listed in the dependency
+  register, and the demand statements those owners build against;
 - one scenario ladder `CSG-S0`..`CSG-S6`, each stage in named and
   symmetric-mirror variants, with scenario contracts and tests;
 - a measured throughput record (entities × fixed step × wall-clock) at every
@@ -102,7 +109,10 @@ Out of scope:
 - classified or non-public performance data; public sources only, with
   uncertainty recorded;
 - changing Joint common-core semantics or Air-domain ownership; carrier aviation
-  consumes Air mechanisms through their maintained owner surfaces.
+  consumes Air mechanisms through their maintained owner surfaces;
+- building cross-domain mechanisms inside the naval tree. Geodesy, environment,
+  generic sensing, data links, electronic warfare, weapon families, generic
+  effects, and shared logistics belong to their `docs/systems/` owners.
 
 ## Phase Plan
 
@@ -110,44 +120,44 @@ The main ladder carries the air, surface, and strike path. An undersea track run
 in parallel because its write sets are largely disjoint; it must join before
 `CSG-S6`. Each stage's claim ceiling uses the shared `G0`-`G7` labels.
 
-| Phase | Stage scenario | Infrastructure added | Claim ceiling | Status |
+| Phase | Stage scenario | Naval-owned work (system dependencies in the register below) | Claim ceiling | Status |
 | --- | --- | --- | --- | --- |
 | `P0 Boundary` | none | package scope, stage ladder, claim ceilings, parameter-provenance policy | docs only | active |
-| `CSG-S0` | both groups spawn statically with full order of battle | named units and loadouts; parameter provenance; geodetic frame and earth curvature; scenario schema for group composition | `G0` | planned |
-| `CSG-S1` | both groups transit in formation | group formation and screen geometry; route following; ship turning and speed response; damage-to-mobility coupling; replenishment scheduling; fuel and endurance | `G1`-`G2` | planned |
-| `CSG-S2` | deck cycle: launch waves, CAP, recovery | catapult and arresting-gear cycle; deck, elevator, and hangar capacity; sortie generation; recovery pattern and carrier landing; aircraft fuel and aerial refuelling; embarked helicopters | `G3` | planned |
-| `CSG-S3` | mutual search and tactical picture | AEW aircraft; data-link track sharing with latency and capacity; ESM and emission control; target identification; removal of truth reads in naval sensing | `G4` | planned |
-| `CSG-S4` | one-way strike against a defending group | anti-ship missiles; layered ship air defense and fire-control channels; soft-kill decoys and jamming; leaker damage through compartments; damage control and capability loss | `G5` | planned |
-| `CSG-S5` | two-sided air-sea battle | fighter escort and intercept; stand-off jamming; strike planning and target assignment across the group; weapon and magazine depletion | `G6` | planned |
-| `CSG-S6` | full engagement, named and mirror | undersea track joined; outcome and termination adjudication; whole-engagement replay; reserved RL boundaries frozen | `G6`, selected `G7` items | planned |
+| `CSG-S0` | both groups spawn statically with full order of battle | named units and loadouts with parameter provenance; scenario schema for group composition | `G0` | planned |
+| `CSG-S1` | both groups transit in formation | group formation and screen geometry; route following; ship turning and speed response; damage-to-mobility coupling; group replenishment scheduling | `G1`-`G2` | planned |
+| `CSG-S2` | deck cycle: launch waves, CAP, recovery | catapult and arresting-gear cycle; deck, elevator, and hangar capacity; sortie generation; recovery pattern; embarked helicopter operations | `G3` | planned |
+| `CSG-S3` | mutual search and tactical picture | naval sensor platform adapters and group track reporting; naval emission-control doctrine | `G4` | planned |
+| `CSG-S4` | one-way strike against a defending group | ship fire-control channels, VLS, and layered air-defense doctrine; ship decoy launchers; ship compartments and flight-deck capacity loss | `G5` | planned |
+| `CSG-S5` | two-sided air-sea battle | group strike planning and target assignment; downed-aircrew recovery by embarked helicopters | `G6` | planned |
+| `CSG-S6` | full engagement, named and mirror | undersea track joined; CSG outcome conditions; reserved RL boundaries frozen | `G6`, selected `G7` items | planned |
 | `CSG-U1` | submarines transit and hold depth | submarine depth, speed, and self-noise coupling; quiet running | `G1`-`G2` | planned |
-| `CSG-U2` | undersea search | propagation model; active sonar; towed array; dipping sonar and sonobuoys; submarine truth-read removal | `G4` | planned |
-| `CSG-U3` | torpedo engagement | heavyweight and lightweight torpedoes; guidance, run, and fuze; torpedo countermeasures; below-waterline damage; submarine-launched anti-ship missiles through the `CSG-S4` path | `G5` | planned |
+| `CSG-U2` | undersea search | sonar platforms: hull, towed, dipping, sonobuoy fields | `G4` | planned |
+| `CSG-U3` | torpedo engagement | torpedo tubes and launch; submarine-launched anti-ship missiles through the `CSG-S4` path; below-waterline compartments | `G5` | planned |
 | `P5 Closure` | none | acceptance, indexes, archive | docs only | planned |
 
 Dependencies: `CSG-S(n)` requires `CSG-S(n-1)` accepted. `CSG-U1` requires
 `CSG-S0`; `CSG-U2` requires `CSG-U1` and `CSG-S3`; `CSG-U3` requires `CSG-U2`
 and `CSG-S4`. `CSG-S6` requires `CSG-S5` and `CSG-U3`.
 
-### Cross-Cutting Mechanism Register
+### System Dependency Register
 
-Mechanisms that span several stages. Each has one introducing stage; later
-stages must keep it in use rather than bypass it.
+Mechanisms that other domains also use are owned by cross-domain system owners.
+This package states the demand and integrates the deliverable; it does not build
+the mechanism. Each owner package opens when the first stage that needs it is
+ready to start.
 
-| Mechanism | Introduced | Consumed by | Notes |
-| --- | --- | --- | --- |
-| Geodetic frame and earth curvature | `CSG-S0` | every later stage | radar horizon, missile range, and data-link reach all depend on it |
-| Environment: sea state, wind, day/night | `CSG-S1` | `S2` deck limits, `S3` sensing, `U2` acoustics | sea state already reduces ship speed |
-| Group command hierarchy and authority | `CSG-S1` | `S3` reporting, `S5` target assignment | uses Joint command relationships; no new common-core fields |
-| Fuel, endurance, and replenishment | `CSG-S1` (ships), `CSG-S2` (aircraft) | `S5` sortie planning | |
-| Magazines, reload, and depletion | `CSG-S4` | `S5`, `S6` | VLS cells do not reload at sea |
-| Data-link latency and capacity | `CSG-S3` | `S4` cueing, `S5` | cooperative engagement is a later `G7` item |
-| Identification and classification | `CSG-S3` | `S4`, `S5`, `U2` | ties ROE to identity confidence |
-| Electronic warfare and emission control | `CSG-S3` (ESM, EMCON) | `S4` soft-kill, `S5` stand-off jamming | |
-| Damage control and capability degradation | `CSG-S4` | `S5`, `S6`, `U3` | includes loss of flight-deck capacity |
-| Search and rescue of downed aircrew | `CSG-S5` | `S6` | scripted recovery only; no ground combat |
-| Outcome adjudication and termination | `CSG-S6` | RL follow-on package | mission-kill and loss thresholds are declared, not tuned |
-| Replay, visualization, throughput record | `CSG-S0` | every stage | |
+| Mechanism | System owner | Owner package | Needed by | Naval-owned part |
+| --- | --- | --- | --- | --- |
+| Geodetic frame and earth curvature | `systems/physics` | [Geodetic Frame](../../../../../systems/physics/work/active/geodetic_frame/README.md) (open) | `CSG-S0`, every later stage | none |
+| Sea state, wind, day/night, ocean acoustic environment | `systems/environment` | [Maritime Environment Runtime](../../../../../systems/environment/work/active/maritime_environment_runtime/README.md) (open) | `CSG-S1`; `S2` deck limits; `S3` sensing; `U2` acoustics | ship seakeeping response |
+| Sensor detection, horizon use, truth-read removal | `systems/sensing` | opens at `CSG-S3` | `S3`, `U2` | naval radar and sonar platform adapters |
+| Data links, group command hierarchy, identification | `systems/command-tasking` (relationships per the Joint baseline) | opens at `CSG-S3` | `S1` hierarchy, `S3`, `S5` | naval formation roles |
+| Electronic warfare: jamming, ESM, EMCON, soft-kill | `systems/sensing` with `systems/weapons` | opens at `CSG-S3` | `S3`, `S4`, `S5` | ship decoy launchers as platform content |
+| Anti-ship missiles, SAMs, torpedoes; guidance, fuze, magazine depletion | `systems/weapons` | opens at `CSG-S4` | `S4`, `S5`, `U3` | ship fire-control channels and VLS |
+| Compartment damage, damage control, capability degradation | `systems/effects` | opens at `CSG-S4` | `S4`, `S5`, `U3` | ship compartments and the `DM-N1` profile |
+| Fuel, endurance, replenishment, aerial refuelling | `systems/physics` (shared logistics components) | opens at `CSG-S1` | `S1` ships, `S2` aircraft | UNREP geometry |
+| Aircraft carrier launch and landing | Air owner | opens at `CSG-S2` | `S2` | deck resources and recovery pattern |
+| Outcome adjudication, termination, replay | `systems/weapons` with architecture | opens at `CSG-S6` | `S6`; throughput and replay from `S0` | CSG outcome conditions |
 
 ## Task Clusters
 
@@ -198,8 +208,10 @@ The package can be marked accepted only when:
 
 - `P0 Boundary` needs owner review of this README, the task clusters, and the
   acceptance gate.
-- `CSG-S0` is the first implementation stage. Its geodetic-frame cluster touches
-  shared runtime surfaces, so it runs serially.
+- `CSG-S0` is the first implementation stage. It needs the
+  [Geodetic Frame](../../../../../systems/physics/work/active/geodetic_frame/README.md)
+  package's anchor and conversions; order-of-battle research can start before
+  them.
 - The throughput record at `CSG-S1`/`CSG-S2` decides whether uniform
   high-fidelity stepping holds for the full order of battle. Mixed step rates
   need a separate decision; this package does not assume them.

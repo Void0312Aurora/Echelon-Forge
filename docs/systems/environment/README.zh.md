@@ -38,6 +38,9 @@ payload、compiler ingestion 与环境派生产品。Ground 场景提供了第�
 这些 review 没有授权 environment-runtime `G1`。后续 runtime 包必须在
 `systems/environment/work/active/` 下单独建立范围与验收证据。
 
+第一个这样的工作包是[海洋环境运行时](work/active/maritime_environment_runtime/README.zh.md)
+（planning，`2026-09-28` 开启）。它只覆盖海洋与大气运行时状态，不含地形与陆地运行时工作。
+
 ## 当前实现入口
 
 - Manifest 与 validators：`python/scenario/environment_substrate/`
