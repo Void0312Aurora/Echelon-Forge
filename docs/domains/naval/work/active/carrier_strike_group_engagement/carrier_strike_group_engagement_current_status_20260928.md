@@ -59,7 +59,7 @@ Cross-domain mechanisms are owned by `docs/systems/` owners. Two owner packages
 opened on `2026-09-28` for the first stages' needs, both in planning:
 
 - [Geodetic Frame](../../../../../systems/physics/work/active/geodetic_frame/README.md) (`systems/physics`) — needed by `CSG-S0`;
-- [Maritime Environment Runtime](../../../../../systems/environment/work/active/maritime_environment_runtime/README.md) (`systems/environment`) — needed by `CSG-S1`.
+- [Environment Runtime](../../../../../systems/environment/work/active/environment_runtime/README.md) (`systems/environment`) — layered land, freshwater, sea, and atmosphere runtime; needed by `CSG-S1`. Its later ocean data line supplies bathymetry, temperature/salinity, and sea state.
 
 The remaining owner packages open at the stage that needs them; see the README's
 System Dependency Register.

@@ -124,7 +124,7 @@ Last verified: `2026-09-28`
 | 机制 | 系统 owner | owner 工作包 | 需要它的阶段 | 海军自有部分 |
 | --- | --- | --- | --- | --- |
 | 大地坐标系与地球曲率 | `systems/physics` | [大地坐标系](../../../../../systems/physics/work/active/geodetic_frame/README.zh.md)（已开） | `CSG-S0` 及此后所有阶段 | 无 |
-| 海况、风、昼夜、海洋声学环境 | `systems/environment` | [海洋环境运行时](../../../../../systems/environment/work/active/maritime_environment_runtime/README.zh.md)（已开） | `CSG-S1`；`S2` 甲板限制；`S3` 探测；`U2` 水声 | 舰艇耐波性响应 |
+| 分层环境：陆地、淡水、海洋、水深、海岸线、海况、风、昼夜、海洋声学数据 | `systems/environment` | [环境运行时](../../../../../systems/environment/work/active/environment_runtime/README.zh.md)（已开）；海洋数据线在其 `P2 Contract` 之后开启 | `CSG-S1`；`S2` 甲板限制；`S3` 探测；`U1` 深度限制；`U2` 水声 | 舰艇耐波性响应 |
 | 传感器探测、地平线使用、去除真值读取 | `systems/sensing` | 于 `CSG-S3` 开启 | `S3`、`U2` | 海军雷达与声呐平台适配器 |
 | 数据链、编队指挥层级、识别 | `systems/command-tasking`（关系沿用 Joint 基线） | 于 `CSG-S3` 开启 | `S1` 层级、`S3`、`S5` | 海军编队角色 |
 | 电子战：干扰、ESM、辐射管制、软杀伤 | `systems/sensing` 与 `systems/weapons` | 于 `CSG-S3` 开启 | `S3`、`S4`、`S5` | 舰载诱饵发射装置（平台内容） |

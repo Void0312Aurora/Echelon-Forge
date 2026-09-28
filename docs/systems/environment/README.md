@@ -42,9 +42,11 @@ runtime package must open under `systems/environment/work/active/` with its own
 scope and acceptance evidence.
 
 The first such package is
-[Maritime Environment Runtime](work/active/maritime_environment_runtime/README.md)
-(planning, opened `2026-09-28`). It covers the maritime and atmospheric runtime
-state only; terrain and ground runtime work is not part of it.
+[Environment Runtime](work/active/environment_runtime/README.md)
+(planning, opened `2026-09-28`). It is the single runtime authority for the
+layered environment — land, freshwater, sea, and atmosphere on one vertical
+datum — and it migrates the Ground native-terrain runtime onto shared,
+domain-neutral queries. Ocean data acquisition is a later line of this owner.
 
 ## Current Implementation Routes
 

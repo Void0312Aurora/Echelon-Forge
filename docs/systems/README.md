@@ -19,7 +19,7 @@ kept with the applicable nested owner. The current cross-domain realism gate is
 
 - Environment owner: [environment systems](environment/README.md), including
   G0 and Arnis acceptance boundaries. Active runtime package:
-  [maritime environment runtime](environment/work/active/maritime_environment_runtime/README.md) (planning).
+  [environment runtime](environment/work/active/environment_runtime/README.md) (planning).
 - Command/tasking issues: [C2 communication](command-tasking/work/issues/c2_communication.md) and [operation layer](command-tasking/work/issues/operation_layer.md).
 - Command/tasking reference: [agency authority census](command-tasking/reference/agency_authority_census_20260721.md) and [authority-representation adjudication](command-tasking/reference/t9_authority_representation_adjudication_20260726.md).
 - Physics issues: [physics engine roadmap](physics/work/issues/physics_engine_roadmap.md).

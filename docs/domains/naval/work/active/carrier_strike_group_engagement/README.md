@@ -149,7 +149,7 @@ ready to start.
 | Mechanism | System owner | Owner package | Needed by | Naval-owned part |
 | --- | --- | --- | --- | --- |
 | Geodetic frame and earth curvature | `systems/physics` | [Geodetic Frame](../../../../../systems/physics/work/active/geodetic_frame/README.md) (open) | `CSG-S0`, every later stage | none |
-| Sea state, wind, day/night, ocean acoustic environment | `systems/environment` | [Maritime Environment Runtime](../../../../../systems/environment/work/active/maritime_environment_runtime/README.md) (open) | `CSG-S1`; `S2` deck limits; `S3` sensing; `U2` acoustics | ship seakeeping response |
+| Layered environment: land, freshwater, sea, bathymetry, coastline, sea state, wind, day/night, ocean acoustic data | `systems/environment` | [Environment Runtime](../../../../../systems/environment/work/active/environment_runtime/README.md) (open); ocean data line opens after its `P2 Contract` | `CSG-S1`; `S2` deck limits; `S3` sensing; `U1` depth limits; `U2` acoustics | ship seakeeping response |
 | Sensor detection, horizon use, truth-read removal | `systems/sensing` | opens at `CSG-S3` | `S3`, `U2` | naval radar and sonar platform adapters |
 | Data links, group command hierarchy, identification | `systems/command-tasking` (relationships per the Joint baseline) | opens at `CSG-S3` | `S1` hierarchy, `S3`, `S5` | naval formation roles |
 | Electronic warfare: jamming, ESM, EMCON, soft-kill | `systems/sensing` with `systems/weapons` | opens at `CSG-S3` | `S3`, `S4`, `S5` | ship decoy launchers as platform content |
