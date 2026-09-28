@@ -33,6 +33,12 @@ class LaunchDecisionMigrationError(ValueError):
 
 def _canonical_fingerprint(value: Any) -> str:
     def normalize(item: Any) -> Any:
+        # Runtime config translation replaces registry strings such as
+        # ``TemporalTransformerExtractor`` with the actual Python class.  Treat
+        # the class name as the canonical serialized identity so pre-load and
+        # post-translation configurations fingerprint identically.
+        if isinstance(item, type):
+            return item.__name__
         if isinstance(item, Mapping):
             return {
                 str(key): normalize(value)
@@ -60,6 +66,27 @@ def _canonical_fingerprint(value: Any) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+def _launch_decision_surface_active(train_config: Mapping[str, Any]) -> bool:
+    """Return whether launch-decision checkpoint compatibility applies."""
+
+    if not isinstance(train_config, Mapping):
+        return False
+    policy_name = str(train_config.get("policy", ""))
+    hyperparameters = train_config.get("hyperparameters", {})
+    policy_kwargs = (
+        hyperparameters.get("policy_kwargs", {})
+        if isinstance(hyperparameters, Mapping)
+        else {}
+    )
+    return bool(
+        policy_name == "HierarchicalMoEExecutionPolicy"
+        or (
+            isinstance(policy_kwargs, Mapping)
+            and "hybrid_action_spec" in policy_kwargs
+        )
+    )
+
+
 def _sidecar_path(model_path: str) -> Path:
     return Path(model_path if model_path.endswith(".zip") else f"{model_path}.zip").with_suffix(
         ".launch_decision.json"
@@ -82,7 +109,11 @@ def _manifest_only(envelope: Mapping[str, Any]) -> dict[str, Any]:
 def _tensor_manifest(value: Any) -> dict[str, Any]:
     shape = getattr(value, "shape", None)
     if shape is None:
-        return {"shape": None, "dtype": type(value).__name__}
+        return {
+            "shape": None,
+            "dtype": type(value).__name__,
+            "content_fingerprint": _canonical_fingerprint(value),
+        }
     try:
         normalized_shape = [int(item) for item in shape]
     except Exception as exc:  # pragma: no cover - defensive serialization boundary
@@ -90,6 +121,7 @@ def _tensor_manifest(value: Any) -> dict[str, Any]:
     return {
         "shape": normalized_shape,
         "dtype": str(getattr(value, "dtype", type(value).__name__)),
+        "content_fingerprint": _canonical_fingerprint(value),
     }
 
 
@@ -146,12 +178,24 @@ def _optimizer_manifest(optimizer_state: Mapping[str, Any]) -> dict[str, Any]:
         roles = group.get("parameter_roles", ())
         if not isinstance(roles, (list, tuple)):
             raise LaunchDecisionMigrationError("optimizer parameter roles must be a list")
+        hyperparameters = {
+            str(key): _value_manifest(value)
+            for key, value in sorted(group.items(), key=lambda item: str(item[0]))
+            if str(key)
+            not in {
+                "params",
+                "parameter_names",
+                "parameter_roles",
+                "name",
+            }
+        }
         normalized_groups.append(
             {
                 "name": str(group.get("name", f"group_{index}")),
                 "parameter_ids": [str(item) for item in params],
                 "parameter_roles": [str(item) for item in roles],
                 "parameter_names": [str(item) for item in group.get("parameter_names", ())],
+                "hyperparameters": hyperparameters,
             }
         )
     if len(normalized_groups) != len(groups):
@@ -168,6 +212,7 @@ def _optimizer_manifest(optimizer_state: Mapping[str, Any]) -> dict[str, Any]:
             str(key): _value_manifest(value)
             for key, value in sorted(state.items(), key=lambda item: str(item[0]))
         },
+        "state_content_fingerprint": _canonical_fingerprint(state),
         "parameter_roles": sorted(
             {
                 role
@@ -398,7 +443,38 @@ def launch_decision_config_fingerprint(train_config: Mapping[str, Any]) -> str:
     return _canonical_fingerprint(train_config)
 
 
+def _window_classifier_replay_state(model: Any) -> dict[str, Any] | None:
+    enabled = bool(getattr(model, "window_classifier_replay_enabled", False))
+    replay = getattr(model, "_window_classifier_replay", None)
+    if replay is None:
+        if enabled:
+            raise LaunchDecisionMigrationError(
+                "window-classifier replay is enabled but its state surface is unavailable"
+            )
+        return None
+
+    storage = str(getattr(replay, "storage", "latent"))
+    capacity = int(getattr(replay, "capacity", 0))
+    if storage == "observation":
+        positive_rows = getattr(replay, "positive_observations", None)
+        negative_rows = getattr(replay, "negative_observations", None)
+    else:
+        positive_rows = getattr(replay, "positives", None)
+        negative_rows = getattr(replay, "negatives", None)
+    return {
+        "schema_version": "window_classifier_replay_v1",
+        "storage": storage,
+        "capacity": capacity,
+        "positive_rows": [] if positive_rows is None else positive_rows,
+        "negative_rows": [] if negative_rows is None else negative_rows,
+    }
+
+
 def _replay_state_for_model(model: Any) -> dict[str, Any]:
+    custom_replay = _window_classifier_replay_state(model)
+    if custom_replay is not None:
+        return custom_replay
+
     replay_buffer = getattr(model, "replay_buffer", None)
     if replay_buffer is None:
         return {
@@ -471,6 +547,13 @@ def validate_loaded_sb3_launch_decision_checkpoint(
 ) -> dict[str, Any]:
     """Compare loaded policy/optimizer/replay identities with its sidecar."""
 
+    if not _launch_decision_surface_active(expected_config):
+        return {
+            "schema_version": LAUNCH_DECISION_CHECKPOINT_SCHEMA_VERSION,
+            "skipped": True,
+            "reason": "non_launch_policy",
+        }
+
     metadata = validate_sb3_checkpoint_against_config(model_path, expected_config)
     sidecar = _read_sb3_launch_decision_sidecar(model_path)
     policy = getattr(model, "policy", None)
@@ -498,6 +581,13 @@ def validate_sb3_checkpoint_against_config(
     train_config: Mapping[str, Any],
 ) -> dict[str, Any]:
     """Fail closed when a checkpoint's owner mode differs from a run config."""
+
+    if not _launch_decision_surface_active(train_config):
+        return {
+            "schema_version": LAUNCH_DECISION_CHECKPOINT_SCHEMA_VERSION,
+            "skipped": True,
+            "reason": "non_launch_policy",
+        }
 
     metadata = inspect_sb3_launch_decision_checkpoint(model_path)
     expected = _contract_from_training_config(train_config)
