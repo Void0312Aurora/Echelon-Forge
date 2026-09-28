@@ -1,8 +1,9 @@
 # Naval Domain Surface Split Current Status
 
-Status: `2026-06-12` P3/P4 maintenance refresh;
-`P1-A/P1-B/P2-A/P3-A/P3-B/P4-A` accepted; inventory snapshot for
-[Naval Domain Surface Split](README.md).
+Status: `2026-09-23`; the bounded N4 package is accepted and `P2-B` landed
+`NavalCommandIntent`. The inventory below is the `2026-06-12` snapshot, with the
+command rows updated for `P2-B`; see [Naval Domain Surface Split](README.md) and
+the [`P5-A` closure](naval_domain_surface_split_p5_closure_20260922.md).
 
 ## Confirmed Implementation Facts
 
@@ -12,7 +13,7 @@ Status: `2026-06-12` P3/P4 maintenance refresh;
 | Naval tasking profile rejects non-naval action modes. | `gym_envs/universal_env_parts/naval_actions.py:28-36`. | accepted first slice |
 | The active naval action exposes `_naval_station3_command_surface` while still flowing through a neutral `PilotAction` carrier for legacy assignment. | `gym_envs/universal_env_parts/actions.py`; `gym_envs/universal_env_parts/naval_actions.py`; `tests/runtime/naval/test_naval_station_policy_surface.py`. | command surface accepted; carrier compatibility adapter |
 | `naval_screen_station_v1` is now formally bounded as a maintained Python adapter. | `python/mission_obs_taxonomy.py`; `gym_envs/scenario_loader/mission_observation.py`; `python/rl/runtime/world_batch/observation_batching.py`; `tests/runtime/mission/test_mission_obs_taxonomy.py`. | accepted maintained adapter |
-| `MissionCommand` remains a flat compatibility shell. | `src/components/command/mission_command.h:11-18`; `src/runtime/contracts/world_batch_contracts.h:549-599`. | compatibility adapter |
+| `MissionCommand` remains a flat compatibility shell, but maintained naval consumers read the projected `NavalCommandIntent`. | `src/components/command/mission_command.h`; `src/components/domains/naval/command/mission_command_naval.h`; `src/tests/test_simulation_kernel_smoke.cpp`. | bounded compatibility transport (`P2-B`) |
 | World-batch still exposes `WorldPilotActionAssignment`. | `src/runtime/contracts/world_batch_contracts.h:543-547`. | blocker |
 | N4 contracts still forbid weapon/damage proof. | `tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json:1-64` and `tests/contracts/unit/naval/naval_screen_threat_roe_offstation_recovery.json:1-64`. | required boundary |
 | `naval_station3` now has a `naval_station_command` action family, a maintained command-surface diagnostic, and a compatibility-only `PilotAction` transport adapter. | `gym_envs/universal_env_parts/naval_actions.py`; `python/rl/runtime/world_batch/adapter.py:341-408`; `tests/runtime/naval/test_naval_station_policy_surface.py`. | accepted second slice; action-side maintenance tightened |
@@ -38,7 +39,7 @@ Accepted shared infrastructure here means generic runtime or reward plumbing tha
 | Surface | Current grade | Next required move |
 | --- | --- | --- |
 | Action | N4 pre-fire station-order command surface with explicit legacy carrier | continue retiring `PilotAction` carrier from the wider maintained path or keep it tested as compatibility-only |
-| Command | shared shell with naval owner slice | add projection guards and narrow the command/action packet boundary |
+| Command | `NavalCommandIntent` projection behind one write seam; flat shell kept as transport | transport-shape cleanup; migrate the N5 weapon-release reader only under an N5 package |
 | Observation | bounded maintained naval adapter | optional later C++ packet promotion; keep adapter diagnostics tested |
 | Config | active naval config uses naval modes and `shaping_backend` alias | keep legacy `flight_shaping_backend` compatible and preserve CLI/canonical override precedence |
 | Eval | zero-action/offstation N4 gates | keep the gates while moving onto the new surface |
@@ -54,6 +55,6 @@ Accepted shared infrastructure here means generic runtime or reward plumbing tha
 
 ## Immediate Next Step
 
-`P3-A` and `P4-A` are now accepted for the bounded observation adapter and
-active/eval integration gates. The next dispatch is `P2-B` command projection;
-keep it serial if it touches `src/runtime/contracts/**`.
+None inside this package. `P2-B` and `P5-A` are closed. Follow-on work is
+separate: `WorldPilotActionAssignment` replacement, `MissionCommand` transport
+cleanup, and the N5/N6 packages, which stay blocked.
