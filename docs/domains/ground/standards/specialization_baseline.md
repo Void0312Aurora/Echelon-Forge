@@ -69,10 +69,13 @@ are recorded in
 [Ground Damage Effects Route Repair](../../../domains/ground/work/active/ground_damage_effects_route_repair/README.md).
 
 A reachable mechanism is still not a capability. This is not a released Ground effects
-model: no Ground task, scenario, or observation claim may rest on it. One expectation
-inside it stays open and unowned — a hit carrying neither a blast nor a mobility scale
-leaves mobility at `1.0`, so one runtime test stays at `xfail(strict=True)` until an
-owner decides whether the projection gains that term or the expectation is withdrawn.
+model: no Ground task, scenario, or observation claim may rest on it. No Ground hit
+degrades mobility today, for any warhead family: the effects model estimates warhead
+mechanism load only for structured air targets, so the chassis mobility and track branches
+cannot be reached on the Ground route. On `2026-09-28` the expectation that a hit degrades
+mobility was withdrawn rather than satisfied with uncalibrated physics. The current contract
+is pinned by a runtime test, and the component-attributed follow-up with its entry
+conditions is recorded in the route-repair package.
 See the
 [DM-G1 reachability diagnosis](../../../systems/combat/reviews/ground_damage_reachability_20260921.md)
 for the pre-repair measurement that located the cause.

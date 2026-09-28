@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import unittest
 
-import pytest
-
 from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 
@@ -25,32 +23,29 @@ _GROUND_UNIT_NAME = "Ground_Platoon_MVP"
 # records the defect; docs/domains/ground/work/active/ground_damage_effects_route_repair/
 # records the repair, its flip set, and its residual.
 #
-# One node below still carries a `strict=True` marker, for a second expectation it
-# bundles with reachability rather than for reachability itself.
+# One node below used to carry a `strict=True` marker for a second expectation it
+# bundled with reachability. That expectation was withdrawn on 2026-09-28 rather
+# than satisfied with a coefficient: the node is split so reachability and the
+# mobility contract are asserted separately.
 
-# The three nodes the reachability marker was applied to now XPASS and are unmarked.
-# The fourth carried it for a second expectation it bundles with reachability, and the
-# marker below names only that one:
+# A ground hit does not degrade mobility, and the cause is a scope gate, not a warhead
+# property. `apply_default_effects_ground_chassis_consequence_blocks` degrades
+# `mobility_integrity` and `track_integrity` only when the ground spatial scales carry a
+# blast or a mobility term. Those terms come from sampled warhead mechanism load, and the
+# effects model estimates mechanism load only for structured *air* targets: the
+# direct-hit and spatial-projection paths are gated on `structured_air_target`, and a
+# ground target receives the default `WarheadEffectProfile{}`. The blast and mobility
+# scales are therefore always zero on the ground route, whatever the warhead family,
+# which makes those chassis branches implemented but unreachable, the same class as
+# DM-G1. Mission and survivability still degrade through `command_integrity` and
+# `structural_integrity`.
 #
-# A pure structural hit does not degrade mobility, and that is the model's design rather
-# than a defect: `apply_default_effects_ground_chassis_consequence_blocks` degrades
-# `mobility_integrity` and `track_integrity` only when the hit carries a blast or a mobility
-# scale, and a structural hit carries neither - so `ground_mobility_availability` stays 1.0
-# while mission and survivability degrade through `command_integrity` and
-# `structural_integrity`. Resolving it means either giving the projection a mobility term
-# for structural hits or withdrawing the expectation, and both are coefficient or contract
-# decisions this repair's scope excludes.
-_MOBILITY_PROJECTION_OPEN = pytest.mark.xfail(
-    strict=True,
-    reason=(
-      "DM-G1 reachability is fixed; this node's remaining failure is a separate expectation. "
-      "A pure structural hit leaves mobility at 1.0 because the ground chassis consequence "
-      "gates mobility_integrity/track_integrity on blast and mobility scales, and a "
-      "structural hit carries neither. Either the projection gains a mobility term for "
-      "structural hits or the expectation is withdrawn; both decisions are outside this "
-      "repair. See docs/domains/ground/work/active/ground_damage_effects_route_repair/README.md."
-    ),
-)
+# The expectation that a hit degrades mobility was withdrawn on 2026-09-28 rather than
+# satisfied: admitting ground mechanism-load estimation without a Ground vulnerability
+# profile would put uncalibrated air warhead physics into Ground consequences. The
+# follow-up and its entry conditions are in
+# docs/domains/ground/work/active/ground_damage_effects_route_repair/README.md; this
+# suite pins the current contract so that work has to change it deliberately.
 
 # `get_unit_damage_state` order: [mission, mobility, sensor, survivability].
 _MISSION = 0
@@ -131,7 +126,6 @@ class GroundDamageResponseTests(unittest.TestCase):
   def _readings(self, sim: ef_py.SimulationKernel, entity_id: int) -> list[float]:
     return [float(value) for value in sim.get_unit_damage_state(entity_id)]
 
-  @_MOBILITY_PROJECTION_OPEN
   def test_structured_ground_hit_applies_ground_response_instead_of_legacy_kill(self) -> None:
     """The structured ground route must win over the placeholder fallback.
 
@@ -174,11 +168,50 @@ class GroundDamageResponseTests(unittest.TestCase):
       initial[_SURVIVABILITY],
       "ground consequence application must degrade the survivability margin",
     )
-    self.assertLess(
-      after_hit[_MOBILITY],
-      initial[_MOBILITY],
-      "ground consequence application must degrade mobility capability",
-    )
+
+  def test_ground_route_does_not_degrade_mobility_for_any_warhead_family(self) -> None:
+    """Pins the current mobility contract instead of asserting an invented one.
+
+    The ground route never estimates warhead mechanism load (that estimation is gated
+    on structured air targets), so the blast/mobility spatial scales stay zero and the
+    chassis mobility branches cannot fire for any warhead family. Mission and
+    survivability degrade; mobility stays at 1.0. This is a recorded scope gap of the
+    uncalibrated bootstrap route, not a claim that ground movement is immune to damage:
+    the registered follow-up must change this node deliberately.
+    """
+    for family in ("blast", "blast_fragmentation", "fragmentation", "continuous_rod"):
+      with self.subTest(family=family):
+        sim, target_id, attacker_id = self._spawn_ground_pair()
+        profile = ef_py.WarheadProfile()
+        profile.family = family
+        profile.mass_kg = 12.0
+        profile.lethal_radius_m = 80.0
+        profile.damage_scalar = 120.0
+        profile.synthetic = False
+        profile.damage_scalar_synthetic = False
+        profile.provenance = f"test_ground_{family}_profile"
+        self.assertTrue(
+          bool(
+            sim.debug_apply_profiled_local_proximity_hit(
+              attacker_id,
+              target_id,
+              _HIT_LOCAL_FORWARD_M,
+              _HIT_LOCAL_RIGHT_M,
+              _HIT_LOCAL_UP_M,
+              profile,
+            )
+          )
+        )
+        after_hit = self._readings(sim, target_id)
+        self.assertLess(after_hit[_MISSION], 1.0)
+        self.assertLess(after_hit[_SURVIVABILITY], 1.0)
+        self.assertEqual(
+          after_hit[_MOBILITY],
+          1.0,
+          "ground mechanism-load estimation is not admitted, so no warhead family "
+          "reaches the chassis mobility branches; changing this requires the "
+          "registered Ground mobility follow-up",
+        )
 
   def test_ground_damage_state_advances_across_ticks(self) -> None:
     """Ground capability keeps degrading per tick after the warhead consequence."""
