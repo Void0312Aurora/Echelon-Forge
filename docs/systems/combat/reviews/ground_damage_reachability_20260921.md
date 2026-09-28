@@ -16,8 +16,10 @@ same component the factory writes and was unaffected. The repair resolves the id
 per world in the composition path and passes it to the route, so the same probe now
 reads `state=1`; it is recorded in
 [Ground Damage Effects Route Repair](../../../domains/ground/work/active/ground_damage_effects_route_repair/README.md).
-One expectation inside the mechanism is still open and is named there: a hit carrying
-neither a blast nor a mobility scale leaves mobility at `1.0`.
+One expectation inside the mechanism was left open and named there: a Ground hit leaves
+mobility at `1.0`. It was decided on `2026-09-28`: the expectation is withdrawn and pinned,
+because the effects model estimates warhead mechanism load only for structured air
+targets, so no warhead family reaches the Ground chassis mobility branches.
 
 Every trace and reading below is the **pre-repair** measurement that located the cause,
 kept as the record of how it was found. `state=0`, "the route never selects", and "the

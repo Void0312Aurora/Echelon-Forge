@@ -90,11 +90,13 @@ pre-repair measurement that located the cause; the route is reachable now. Archi
 may provide provenance but do not redefine the standards above.
 
 Open work that outlived the admission record, restated here rather than left inside it: the
-`DM-G1` repair has landed with its own package, and what it leaves open is the mobility
-projection expectation that still carries one `xfail(strict=True)` and needs an owner
-decision; a `ground_p2_stage_node` package, because the only Ground-claimed stage has no
-registered node; and an archive-ledger registration for the retired `docs/task/ground/`
-records, which belongs to documentation governance.
+`DM-G1` repair has landed with its own package. The mobility expectation it left open was
+decided on `2026-09-28`: withdrawn and pinned, because Ground mechanism-load estimation is
+not admitted, so no warhead family reaches the chassis mobility branches. What remains
+open is the component-attributed mobility follow-up recorded there; a `ground_p2_stage_node`
+package, because the only Ground-claimed stage has no registered node; and an
+archive-ledger registration for the retired `docs/task/ground/` records, which belongs to
+documentation governance.
 
 ## Related Owners
 
