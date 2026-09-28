@@ -44,8 +44,12 @@ TEST_CASE("RB4 CPU reference preserves fixed-air kinematics and reset parity") {
 
     const runtime::backend::SetupResult first = backend.setup(request);
     REQUIRE(first.entity_ids.size() == 2);
+    // CPU/Flecs ids are runtime-issued, so the census moves their value. Pin the
+    // census-independent identity invariants instead: every world allocates the
+    // same way, so both worlds must agree on the handle.
+    CHECK(first.entity_ids[0] != 0);
+    CHECK(first.entity_ids[0] == first.entity_ids[1]);
     for (std::size_t world = 0; world < first.entity_ids.size(); ++world) {
-        CHECK(first.entity_ids[world] != 0);
         WorldEntityRef ref{.world_index = world, .entity_id = first.entity_ids[world]};
         const runtime::backend::ExportResult exported = backend.export_state({
             .kinematics_ref = &ref,
@@ -62,6 +66,11 @@ TEST_CASE("RB4 CPU reference preserves fixed-air kinematics and reset parity") {
 
     const runtime::backend::SetupResult second = backend.setup(request);
     REQUIRE(second.entity_ids.size() == 2);
-    CHECK(second.entity_ids[0] != 0);
-    CHECK(second.entity_ids[1] != 0);
+    // Re-setup recycles the same Flecs index with the next generation, so a stale
+    // first-setup handle can never alias the new entity. Compared relative to the
+    // first setup, never to a literal.
+    constexpr std::uint64_t kIndexMask = 0xffffffffULL;
+    CHECK(second.entity_ids[0] == second.entity_ids[1]);
+    CHECK((second.entity_ids[0] & kIndexMask) == (first.entity_ids[0] & kIndexMask));
+    CHECK((second.entity_ids[0] >> 32U) == (first.entity_ids[0] >> 32U) + 1U);
 }
