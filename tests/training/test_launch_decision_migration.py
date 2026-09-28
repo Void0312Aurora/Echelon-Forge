@@ -144,6 +144,15 @@ class LaunchDecisionMigrationTests(unittest.TestCase):
       migrated["launch_decision_migration"]["migration_id"],
       "legacy_to_governed_v1",
     )
+    round_trip = translate_launch_decision_config(migrated)
+    self.assertEqual(
+      round_trip["launch_decision_migration"]["migration_id"],
+      "legacy_to_governed_v1",
+    )
+    self.assertEqual(
+      round_trip["launch_decision_migration"]["resolved_mode"],
+      LaunchDecisionMode.GOVERNED_COMPOSED_V1.value,
+    )
 
   def test_target_conflict_is_not_hidden_by_translation(self) -> None:
     with self.assertRaises(LaunchDecisionConfigMigrationError):

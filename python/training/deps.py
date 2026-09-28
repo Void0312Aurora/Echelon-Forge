@@ -75,6 +75,26 @@ def translate_launch_decision_config(
 
     source_mode = source_contract.mode
     resolved_mode = source_mode
+    existing_migration = translated.get("launch_decision_migration")
+    preserved_migration: dict[str, Any] | None = None
+    existing_migration_id: str | None = None
+    if existing_migration is not None:
+        if not isinstance(existing_migration, Mapping):
+            raise LaunchDecisionConfigMigrationError(
+                "launch_decision_migration must be a mapping"
+            )
+        existing_migration_id = str(existing_migration.get("migration_id") or "").strip() or None
+        if existing_migration_id is not None:
+            if str(existing_migration.get("resolved_mode") or "") != source_mode.value:
+                raise LaunchDecisionConfigMigrationError(
+                    "launch_decision_migration resolved_mode does not match the explicit config mode"
+                )
+            preserved_migration = deepcopy(dict(existing_migration))
+            if migration_id is not None and str(migration_id).strip() != existing_migration_id:
+                raise LaunchDecisionConfigMigrationError(
+                    "a new migration_id cannot replace an already named config migration"
+                )
+    effective_migration_id = migration_id if migration_id is not None else existing_migration_id
     if target_mode is not None:
         try:
             resolved_mode = (
@@ -86,7 +106,7 @@ def translate_launch_decision_config(
             raise LaunchDecisionConfigMigrationError(
                 f"unknown target launch-decision mode: {target_mode!r}"
             ) from exc
-        if resolved_mode != source_mode and not str(migration_id or "").strip():
+        if resolved_mode != source_mode and not str(effective_migration_id or "").strip():
             raise LaunchDecisionConfigMigrationError(
                 f"mode change {source_mode.value!r} -> {resolved_mode.value!r} "
                 "requires an explicit migration_id"
@@ -105,13 +125,23 @@ def translate_launch_decision_config(
         ) from exc
 
     translated["launch_decision_migration"] = {
-        "schema_version": LAUNCH_DECISION_CONFIG_MIGRATION_SCHEMA,
-        "source_mode": source_mode.value,
-        "resolved_mode": resolved_contract.mode.value,
-        "source_explicit": bool(source_contract.explicit_mode),
-        "compatibility_mode": resolved_contract.compatibility_mode,
-        "compatibility_precedence": resolved_contract.compatibility_precedence,
-        "migration_id": str(migration_id) if migration_id is not None else None,
+        **(
+            preserved_migration
+            if preserved_migration is not None and resolved_contract.mode == source_mode
+            else {
+                "schema_version": LAUNCH_DECISION_CONFIG_MIGRATION_SCHEMA,
+                "source_mode": source_mode.value,
+                "resolved_mode": resolved_contract.mode.value,
+                "source_explicit": bool(source_contract.explicit_mode),
+                "compatibility_mode": resolved_contract.compatibility_mode,
+                "compatibility_precedence": resolved_contract.compatibility_precedence,
+                "migration_id": (
+                    str(effective_migration_id)
+                    if effective_migration_id is not None
+                    else None
+                ),
+            }
+        )
     }
     return translated
 
