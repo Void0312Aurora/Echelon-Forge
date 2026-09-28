@@ -72,7 +72,13 @@ def translate_launch_decision_config(
         return translated
 
     try:
-        source_contract = resolve_launch_decision_contract(translated)
+        # A flat config is the migration input, not the immutable C0 identity
+        # record. Resolve its historical semantics first, then persist the
+        # explicit owner marker below before any runtime consumer sees it.
+        source_contract = resolve_launch_decision_contract(
+            translated,
+            require_legacy_provenance=False,
+        )
     except LaunchDecisionContractError as exc:
         raise LaunchDecisionConfigMigrationError(
             f"source launch-decision contract is invalid: {exc}"

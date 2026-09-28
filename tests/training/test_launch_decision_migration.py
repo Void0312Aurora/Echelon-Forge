@@ -80,6 +80,10 @@ def _optimizer_state():
   }
 
 
+def _resolve(config):
+  return resolve_launch_decision_contract(config, require_legacy_provenance=False)
+
+
 class _FakePolicy:
   def state_dict(self):
     return {"action_net.weight": th.zeros((2, 3))}
@@ -183,7 +187,7 @@ class LaunchDecisionMigrationTests(unittest.TestCase):
       )
 
   def test_optimizer_manifest_rejects_value_and_hyperparameter_drift(self) -> None:
-    contract = resolve_launch_decision_contract(_config())
+    contract = _resolve(_config())
     envelope = build_launch_decision_checkpoint_envelope(
       state_dict={"x": th.zeros((1,))},
       optimizer_state=_optimizer_state(),
@@ -273,7 +277,7 @@ class LaunchDecisionMigrationTests(unittest.TestCase):
 
   def test_sb3_sidecar_persists_contract_and_artifact_manifests(self) -> None:
     config = _config(hybrid_event_head_lr_scale=10.0)
-    contract = resolve_launch_decision_contract(config)
+    contract = _resolve(config)
     with tempfile.TemporaryDirectory() as tmpdir:
       sidecar = write_sb3_launch_decision_sidecar(
         str(Path(tmpdir) / "model"),
@@ -288,7 +292,7 @@ class LaunchDecisionMigrationTests(unittest.TestCase):
       self.assertIn("replay_manifest", payload)
 
   def test_missing_optimizer_or_replay_identity_fails_actionably(self) -> None:
-    contract = resolve_launch_decision_contract(_config())
+    contract = _resolve(_config())
     with self.assertRaises(LaunchDecisionMigrationError):
       build_launch_decision_checkpoint_envelope(
         state_dict={"x": th.zeros((1,))},
