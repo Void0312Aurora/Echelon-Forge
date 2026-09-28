@@ -60,9 +60,11 @@ placeholder 兜底的"全零并被摧毁"；在多 world 进程里每个 world �
 [Ground Damage Effects Route Repair](../../../domains/ground/work/active/ground_damage_effects_route_repair/README.md)。
 
 机制可达仍不等于能力。这不是已释放的 Ground effects model：任何 Ground 任务、场景或
-observation 声明都不得以它为依据。其中还有一条期望开放且无 owner——既不带 blast 也不带
-mobility scale 的命中会让 mobility 停在 `1.0`，因此在 owner 决定"给投影补上该项"还是
-"撤回该期望"之前，有一个运行时测试保持 `xfail(strict=True)`。定位该缺陷的**修复前**测量见
+observation 声明都不得以它为依据。目前任何弹头类型的 Ground 命中都不会降低 mobility：effects
+model 只对结构化空中目标估算弹头机理载荷，因此 Ground 路径永远到不了底盘的 mobility 和履带
+分支。`2026-09-28` 撤回了"命中应降低 mobility"这一期望，没有用未校准的物理去满足它；现行契约
+由一个运行时测试钉住，按部件推导机动损失的后续议题及其进入条件记录在 route-repair 包中。
+定位该缺陷的**修复前**测量见
 [DM-G1 可达性诊断](../../../systems/combat/reviews/ground_damage_reachability_20260921.md)。
 
 `src/systems/domains/ground/` 拥有 Ground 的 per-tick systems 面。地面损伤响应由
