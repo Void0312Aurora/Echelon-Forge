@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from copy import deepcopy
 import json
 import tempfile
 import unittest
-import zipfile
 from pathlib import Path
+from types import SimpleNamespace
 
 import torch as th
 
@@ -16,9 +17,14 @@ from python.rl.policy_algo.model_contracts import (
 )
 from python.rl.policy_checkpoint import (
   LaunchDecisionMigrationError,
+  _optimizer_manifest,
+  _replay_state_for_model,
   build_launch_decision_checkpoint_envelope,
+  launch_decision_config_fingerprint,
   migrate_launch_decision_checkpoint_envelope,
   validate_launch_decision_checkpoint_envelope,
+  validate_loaded_sb3_launch_decision_checkpoint,
+  validate_sb3_checkpoint_against_config,
   write_sb3_launch_decision_sidecar,
 )
 from python.training.deps import (
@@ -53,6 +59,27 @@ def _replay_state():
   }
 
 
+def _optimizer_state():
+  return {
+    "state": {
+      "0": {
+        "step": th.tensor(1.0),
+        "exp_avg": th.tensor([0.25, -0.5]),
+        "exp_avg_sq": th.tensor([0.0625, 0.25]),
+      },
+    },
+    "param_groups": [
+      {
+        "name": "shared",
+        "params": [0],
+        "lr": 1.0e-3,
+        "betas": (0.9, 0.999),
+        "eps": 1.0e-8,
+      },
+    ],
+  }
+
+
 class _FakePolicy:
   def state_dict(self):
     return {"action_net.weight": th.zeros((2, 3))}
@@ -71,7 +98,6 @@ class _FakePolicy:
 
 class _FakeModel:
   policy = _FakePolicy()
-
   replay_buffer = None
 
 
@@ -135,10 +161,7 @@ class LaunchDecisionMigrationTests(unittest.TestCase):
         "action_net.weight": th.zeros((2, 3)),
         "action_net.bias": th.ones((2,)),
       },
-      optimizer_state={
-        "state": {"0": {"step": th.tensor(1)}},
-        "param_groups": [{"name": "shared", "params": [0]}],
-      },
+      optimizer_state=_optimizer_state(),
       replay_state=_replay_state(),
       owner_contract=source_contract,
       source_config_fingerprint="sha256:test",
@@ -158,6 +181,88 @@ class LaunchDecisionMigrationTests(unittest.TestCase):
         target_contract=target_contract,
         migration_id="legacy_to_governed_v1",
       )
+
+  def test_optimizer_manifest_rejects_value_and_hyperparameter_drift(self) -> None:
+    contract = resolve_launch_decision_contract(_config())
+    envelope = build_launch_decision_checkpoint_envelope(
+      state_dict={"x": th.zeros((1,))},
+      optimizer_state=_optimizer_state(),
+      replay_state=_replay_state(),
+      owner_contract=contract,
+    )
+
+    for mutator in (
+      lambda state: state["state"]["0"].__setitem__("step", th.tensor(2.0)),
+      lambda state: state["state"]["0"].__setitem__("exp_avg", th.tensor([0.5, -0.5])),
+      lambda state: state["state"]["0"].__setitem__("exp_avg_sq", th.tensor([0.125, 0.25])),
+      lambda state: state["param_groups"][0].__setitem__("lr", 2.0e-3),
+      lambda state: state["param_groups"][0].__setitem__("betas", (0.8, 0.999)),
+    ):
+      drifted = deepcopy(envelope)
+      mutator(drifted["optimizer_state"])
+      with self.assertRaisesRegex(LaunchDecisionMigrationError, "optimizer groups/state differ"):
+        validate_launch_decision_checkpoint_envelope(drifted)
+
+    manifest = _optimizer_manifest(_optimizer_state())
+    self.assertIn("state_content_fingerprint", manifest)
+    self.assertIn("hyperparameters", manifest["groups"][0])
+
+  def test_window_classifier_replay_is_part_of_compatibility_identity(self) -> None:
+    replay = SimpleNamespace(
+      storage="latent",
+      capacity=16,
+      positives=th.tensor([[1.0, 2.0]]),
+      negatives=th.tensor([[-1.0, -2.0]]),
+    )
+    model = SimpleNamespace(
+      window_classifier_replay_enabled=True,
+      _window_classifier_replay=replay,
+      replay_buffer=None,
+    )
+    first = _replay_state_for_model(model)
+    replay.positives = th.tensor([[9.0, 2.0]])
+    second = _replay_state_for_model(model)
+    self.assertNotEqual(
+      launch_decision_config_fingerprint(first),
+      launch_decision_config_fingerprint(second),
+    )
+    self.assertEqual(first["storage"], "latent")
+    self.assertEqual(first["capacity"], 16)
+
+    missing = SimpleNamespace(
+      window_classifier_replay_enabled=True,
+      _window_classifier_replay=None,
+      replay_buffer=None,
+    )
+    with self.assertRaisesRegex(LaunchDecisionMigrationError, "replay is enabled"):
+      _replay_state_for_model(missing)
+
+  def test_named_extractor_config_fingerprint_is_stable_across_runtime_translation(self) -> None:
+    class TemporalTransformerExtractor:
+      pass
+
+    serialized = _config(features_extractor_class="TemporalTransformerExtractor")
+    runtime = _config(features_extractor_class=TemporalTransformerExtractor)
+    self.assertEqual(
+      launch_decision_config_fingerprint(serialized),
+      launch_decision_config_fingerprint(runtime),
+    )
+
+  def test_non_launch_checkpoint_validation_is_an_explicit_noop(self) -> None:
+    config = {
+      "policy": "MultiInputPolicy",
+      "hyperparameters": {"policy_kwargs": {}},
+    }
+    pre = validate_sb3_checkpoint_against_config("missing-model.zip", config)
+    post = validate_loaded_sb3_launch_decision_checkpoint(
+      "missing-model.zip",
+      model=object(),
+      expected_config=config,
+    )
+    self.assertTrue(pre["skipped"])
+    self.assertTrue(post["skipped"])
+    self.assertEqual(pre["reason"], "non_launch_policy")
+    self.assertEqual(post["reason"], "non_launch_policy")
 
   def test_translation_rejects_conflicting_flat_and_nested_modes(self) -> None:
     source = _config(hybrid_event_head_lr_scale=10.0)
