@@ -53,6 +53,17 @@ Fujian, Type 055, J-35, J-15T, KJ-600, the Chinese anti-ship and ship-air-defens
 missile families, torpedoes, or Chinese replenishment ships. Those need
 public-web research under `S0-A`.
 
+## System Owner Packages
+
+Cross-domain mechanisms are owned by `docs/systems/` owners. Two owner packages
+opened on `2026-09-28` for the first stages' needs, both in planning:
+
+- [Geodetic Frame](../../../../../systems/physics/work/active/geodetic_frame/README.md) (`systems/physics`) — needed by `CSG-S0`;
+- [Maritime Environment Runtime](../../../../../systems/environment/work/active/maritime_environment_runtime/README.md) (`systems/environment`) — needed by `CSG-S1`.
+
+The remaining owner packages open at the stage that needs them; see the README's
+System Dependency Register.
+
 ## Compute
 
 Local host: Windows, MSVC. Offload host: HEI (`ssh HEI-WIRED`), 88 cores, 121 GB,
@@ -69,9 +80,11 @@ its root filesystem is 91 % full.
 
 ## Next Action Order
 
-1. Owner review of the `P0-A` documents.
-2. `S0-A` order-of-battle research and `S0-B` geodetic frame, in parallel.
-3. `S0-C` unit content, then `S0-D` scenarios, then `S0-X`.
+1. Owner review of the `P0-A` documents here and in both owner packages.
+2. `S0-A` order-of-battle research, in parallel with the Geodetic Frame package's
+   `P1`-`P3`.
+3. `S0-C` unit content and `S0-D` scenarios, then `S0-B` frame integration,
+   then `S0-X`.
 
 ## Overclaim Refusals
 

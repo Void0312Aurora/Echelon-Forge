@@ -41,6 +41,11 @@ No environment-runtime `G1` work is authorized by these reviews. A later
 runtime package must open under `systems/environment/work/active/` with its own
 scope and acceptance evidence.
 
+The first such package is
+[Maritime Environment Runtime](work/active/maritime_environment_runtime/README.md)
+(planning, opened `2026-09-28`). It covers the maritime and atmospheric runtime
+state only; terrain and ground runtime work is not part of it.
+
 ## Current Implementation Routes
 
 - Manifest and validators: `python/scenario/environment_substrate/`
