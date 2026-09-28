@@ -23,7 +23,7 @@ existing Ground behavior without changing it.
 
 | Cluster | Owner | Capability tier / model ID / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `P0-A` | main thread | n/a | Freeze scope and the layered runtime contract. | this directory; environment owner and systems indexes | code | doc link and bilingual audits | owner approves | first | 1 | accepted |
+| `P0-A` | main thread | main thread / session model / high | Freeze scope and the layered runtime contract. | this directory; environment owner and systems indexes | code | doc link and bilingual audits | owner approves | first | 1 | accepted |
 | `P1-A` | read-only worker | n/a | Inventory every environment read on `main` and its ad hoc mapping. | inventory note in this directory | code | cited file/line evidence | every read classified | after `P0-A` | 1 + 1 repair | planned |
 | `P1-B` | read-only worker | n/a | Classify each Ground-branch addition to the shared files as shared, Ground-owned, or retired. | inventory note in this directory | code | cited commit/file/line evidence from `origin/work/army-mechanisms` | every addition classified | after `P0-A`; parallel with `P1-A` | 1 + 1 repair | planned |
 | `P2-A` | main thread | n/a | Contract: layer set, vertical datum, tile and resolution model, water-body contract, out-of-tile behavior, domain-neutral query API. | contract doc in this directory; interface header draft | implementation | contract review; header compiles | owner approves the contract | after `P1-A..B` | 1 + 1 repair | planned |
