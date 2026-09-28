@@ -22,6 +22,9 @@ FACADE_CONFIG = REPO_ROOT / "src/runtime/facade/runtime_facade_config.cpp"
 FIXTURE_CONTRACT = REPO_ROOT / "src/runtime/contracts/cuda_resident_fixed_air_fixture_contract.h"
 STATE_TEST = REPO_ROOT / "src/tests/test_cuda_resident_backend_state.cpp"
 CPU_REFERENCE_TEST = REPO_ROOT / "src/tests/test_cuda_resident_fixed_air_cpu_reference.cpp"
+CONTROL_PREPARATION_CPU_REFERENCE_TEST = (
+    REPO_ROOT / "src/tests/test_cuda_resident_control_preparation_cpu_reference.cpp"
+)
 
 
 def _device_source() -> str:
@@ -123,13 +126,26 @@ def test_rb4_state_layout_is_device_owned_soa_with_narrow_barrier_kernel() -> No
     assert "step_batch" not in backend_source
 
 
-def test_rb4_cpu_and_cuda_paths_consume_one_fixed_fixture_identity_contract() -> None:
+def test_rb4_cuda_owns_fixture_identity_and_cpu_references_never_translate_to_it() -> None:
+    """The resident backend owns the device-side fixture identity.
+
+    CPU/Flecs reference paths use runtime-issued ids whose value moves with the
+    component census. They may share the fixture *type* contract, but they must
+    never translate their ids to the CUDA identity. That coupling broke on every
+    census change before the RB4 decoupling.
+    """
     contract = FIXTURE_CONTRACT.read_text(encoding="utf-8")
     state_test = STATE_TEST.read_text(encoding="utf-8")
     cpu_test = CPU_REFERENCE_TEST.read_text(encoding="utf-8")
+    control_preparation_cpu_test = CONTROL_PREPARATION_CPU_REFERENCE_TEST.read_text(
+        encoding="utf-8"
+    )
 
     assert "kFixedAirFixtureEntityBaseId = 581" in contract
     assert "fixed_air_fixture_entity_id" in state_test
-    assert "fixed_air_fixture_entity_id" in cpu_test
+    assert "kFixedAirFixtureTypeName" in cpu_test
+    for cpu_reference in (cpu_test, control_preparation_cpu_test):
+        assert "fixed_air_fixture_entity_id" not in cpu_reference
+        assert "kFixedAirFixtureEntityBaseId" not in cpu_reference
     assert "FlecsCpuBackend" not in state_test
     assert "CudaResidentBackend" not in cpu_test
