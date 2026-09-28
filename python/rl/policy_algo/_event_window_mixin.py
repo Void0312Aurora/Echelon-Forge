@@ -332,9 +332,6 @@ class _EventWindowMixin:
         )
         if not selected_params:
             return None
-        record_update = getattr(self.policy, "record_launch_decision_update", None)
-        if callable(record_update):
-            record_update("event_window", selected_params)
         selected_ids = {id(param) for param in selected_params}
         aux_optimizer = self._event_window_dedicated_optimizer(selected_ids)
         optimizer = aux_optimizer if aux_optimizer is not None else self.policy.optimizer
@@ -357,7 +354,7 @@ class _EventWindowMixin:
             if aux_optimizer is not None:
                 aux_optimizer.zero_grad(set_to_none=True)
             event_window_loss.loss.backward()
-            if self.event_window_separate_update_enabled:
+            if self.event_window_separate_update_enabled or contract_owned_mode:
                 for param in self.policy.parameters():
                     if id(param) not in selected_ids:
                         param.grad = None
@@ -368,6 +365,9 @@ class _EventWindowMixin:
             else:
                 grad_norm = 0.0
             max_grad_norm_seen = max(max_grad_norm_seen, grad_norm)
+            record_update = getattr(self.policy, "record_launch_decision_update", None)
+            if callable(record_update):
+                record_update("event_window", selected_params)
             optimizer.step()
             self.policy.optimizer.zero_grad(set_to_none=True)
             if aux_optimizer is not None:
@@ -590,13 +590,8 @@ class _EventWindowMixin:
             if mode == "direct_boundary_v1_strict":
                 return role_getter(("hybrid_event_head",))
             if mode in {"governed_composed_v1", "adapter_coupled_v1"}:
-                roles = tuple(getattr(contract, "trainable_parameter_roles", ()))
-                if "policy_trunk" not in roles:
-                    roles = (*roles, "policy_trunk")
-                return role_getter(roles)
+                return role_getter(tuple(getattr(contract, "trainable_parameter_roles", ())))
 
-        # Legacy mode intentionally keeps the historical dedicated event-head
-        # lane so old checkpoints and optimizer groups remain comparable.
         event_head = getattr(self.policy, "hybrid_event_head", None)
         if event_head is None:
             return []
@@ -625,9 +620,6 @@ class _EventWindowMixin:
         )
         if not selected_params:
             return None
-        record_update = getattr(self.policy, "record_launch_decision_update", None)
-        if callable(record_update):
-            record_update("fire_boundary", selected_params)
         selected_ids = {id(param) for param in selected_params}
         aux_optimizer = self._fire_boundary_dedicated_optimizer(selected_ids)
         optimizer = aux_optimizer if aux_optimizer is not None else self.policy.optimizer
@@ -650,7 +642,7 @@ class _EventWindowMixin:
             if aux_optimizer is not None:
                 aux_optimizer.zero_grad(set_to_none=True)
             fire_boundary_loss.loss.backward()
-            if self.fire_boundary_separate_update_enabled:
+            if self.fire_boundary_separate_update_enabled or contract_owned_mode:
                 for param in self.policy.parameters():
                     if id(param) not in selected_ids:
                         param.grad = None
@@ -661,6 +653,9 @@ class _EventWindowMixin:
             else:
                 grad_norm = 0.0
             max_grad_norm_seen = max(max_grad_norm_seen, grad_norm)
+            record_update = getattr(self.policy, "record_launch_decision_update", None)
+            if callable(record_update):
+                record_update("fire_boundary", selected_params)
             optimizer.step()
             self.policy.optimizer.zero_grad(set_to_none=True)
             if aux_optimizer is not None:
