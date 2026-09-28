@@ -51,7 +51,9 @@ reimplement the movement formula.
     kinematic step for the individual infantry fixture.
 - [movement_effects.h](movement_effects.h)
   - Owns the shared surface, slope, vegetation, and stance speed multipliers
-    used by movement and the bounded native observation API.
+    used by movement and the bounded native observation API, and the
+    stance-dependent segment reduction (`evaluate_transition_movement_effects`)
+    built on the environment's domain-neutral terrain and transition queries.
 
 ## Dependency Direction
 

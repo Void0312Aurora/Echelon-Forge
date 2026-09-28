@@ -114,8 +114,8 @@ inline void register_ground_infantry_movement_system(flecs::world &ecs) {
                             continue;
                         }
                         const auto transition_effects =
-                            environment->get_ground_transition_movement_observation(
-                                transform[i].x, transform[i].y,
+                            ground_infantry_movement_detail::evaluate_transition_movement_effects(
+                                *environment, transform[i].x, transform[i].y,
                                 transform[i].x + probe_vx * dt,
                                 transform[i].y + probe_vy * dt, ground_task.stance);
                         if (transition_effects.sample_count > 0 &&

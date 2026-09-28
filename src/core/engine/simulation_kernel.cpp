@@ -456,8 +456,9 @@ std::array<double, 10> SimulationKernel::get_ground_transition_movement_observat
     auto composition_lock = acquire_composition_operation();
     ensure_active("get_ground_transition_movement_observation");
     if (IEnvironmentModel *model = environment_model()) {
-        const auto observation = model->get_ground_transition_movement_observation(
-            from_x, from_y, to_x, to_y, static_cast<GroundStance>(stance_code));
+        const auto observation =
+            ground_infantry_movement_detail::evaluate_transition_movement_effects(
+                *model, from_x, from_y, to_x, to_y, static_cast<GroundStance>(stance_code));
         return {observation.transition.configured ? 1.0 : 0.0,
                 observation.transition.passable ? 1.0 : 0.0,
                 static_cast<double>(observation.transition.destination_surface),
