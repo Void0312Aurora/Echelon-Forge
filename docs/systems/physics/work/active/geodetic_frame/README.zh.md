@@ -7,7 +7,7 @@ Owner: `systems/physics`
 Last verified: `2026-09-28`
 
 状态：`2026-09-28` active。`P0 Boundary` 已接受；`P1 Evidence` 已通过，见
-[P1-A 盘点](geodetic_frame_p1a_inventory_20260928.md)（12 处必须迁移）。下一步是 `P2` 实现。
+[P1-A 盘点](geodetic_frame_p1a_inventory_20260928.md)（12 处必须迁移）。`P2` 核心已落在 `src/components/physics/geodesy.h`，附参考值测试；下一步是 `P3` 使用方迁移。
 
 语言：
 
@@ -71,7 +71,7 @@ Last verified: `2026-09-28`
 | --- | --- | --- | --- | --- |
 | `P0 Boundary` | 冻结范围、地球模型选择与坐标契约。 | owner 批准 | README 与任务簇获批 | accepted |
 | `P1 Evidence` | 清点所有假设平面坐标或自行计算地平线的位置。 | `P0` | 每处归为必须迁移、可保留或范围外 | accepted（[盘点](geodetic_frame_p1a_inventory_20260928.md)） |
-| `P2 Implementation` | 地球模型、锚点、换算、几何查询。 | `P1` | 原生与 Python 测试对照参考值通过 | planned |
+| `P2 Implementation` | 地球模型、锚点、换算、几何查询。 | `P1` | 原生与 Python 测试对照参考值通过 | accepted（原生；`src/tests/test_geodesy.cpp`） |
 | `P3 Integration` | 把探测地平线与视线迁到查询上；在场景中暴露锚点。 | `P2` | 使用方调用共享查询；代理开关退役或被包装 | planned |
 | `P4 Validation` | 跨域回归与吞吐量检查。 | `P3` | 空、陆、海测试通过或按记录的量变化 | planned |
 | `P5 Closure` | 验收与索引。 | `P4` | 验收记录；长期契约提升为 physics 标准 | planned |
