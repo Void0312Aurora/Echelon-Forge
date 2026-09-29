@@ -1,4 +1,4 @@
-"""Decision 5 guard for the stable-entity-identity package (SI-P3).
+"""Decision 5 guard for the stable-entity-identity package (SI-P3, extended at P5 review S1).
 
 Scans `src/core`, `src/models`, `src/systems` and `src/components` for private
 copies of the splitmix64/seed machinery and for raw-id arithmetic feeding a
@@ -10,10 +10,30 @@ two named stream steps) instead of reimplementing or index-mixing its own.
 two are out of the guard's layer (P1 CUDA finding, native test fixtures), and
 the header is the one place the constants are allowed to live.
 
-Calibration (P1 E4): a tmp tree with synthetic violations plus negative
-controls -- `.id()` used as a plain event key, `world.entity(x_id)` id
-lookups, and `it.entity(i).id()` passed as a function argument -- which must
-not flag.
+The id-arithmetic rule (S1) is deliberately scoped to identifiers that name an
+entity id, not every `\\w*_id` identifier: `attacker_id`, `target_id`,
+`entity_id`, `owner_id`, any identifier ending `_entity_id` (the repo's own
+naming for a raw Flecs id passed across a boundary -- see
+`active_helo_entity_id`, `embarked_helo_entity_id`, `munition_entity_id`,
+`partner_entity_id`, `reference_entity_id`), and `.id()`. This is narrower than
+"ends with `_id`": it must not flag `grid_id * cell_area`, where `grid_id` is a
+spatial grid cell coordinate, not an entity id (S1 false-positive report). It
+must fire whether the operator sits to the id's right (`target.id() ^ k`,
+`attacker_id + k`) or to its left (`k ^ target.id()`, `k * attacker_id`), on
+`^`, `*`, `<<`, `%` or `+` (an id is never legitimately added, XORed, shifted
+or multiplied), and on a `static_cast<uint64_t>` wrapping either side (for
+example `static_cast<uint64_t>(e.id()) * k`).
+
+The time-quantization rule matches `uint64_t(t * 1000.0)` and
+`static_cast<uint64_t>(...)` (both with or without the `std::` qualifier on
+the cast keyword or the type), including when the multiplied expression is
+itself parenthesised (`static_cast<uint64_t>((t + dt) * 1000.0)`), and matches
+`* 1e3`, `* 1000` and `* 1000.0` as the multiplier, not only `* 1000.0`.
+
+Calibration (P1 E4, extended S1): a tmp tree with synthetic violations plus
+negative controls -- `.id()` used as a plain event key, `world.entity(x_id)`
+id lookups, `it.entity(i).id()` passed as a function argument, and
+`grid_id * cell_area` (a non-entity id) -- which must not flag.
 """
 
 from __future__ import annotations
@@ -40,17 +60,57 @@ _UNIFORM_DIVISOR_PATTERN = re.compile(r"\b9007199254740992\b")
 
 # `static_cast<uint64_t>(<expr> * 1000.0)` or the unqualified `uint64_t(...)` form, with or
 # without the std:: qualifier on either the cast keyword or the type (E4: the acoustic site
-# uses the qualified `std::uint64_t` form).
+# uses the qualified `std::uint64_t` form); the multiplied expression may itself be
+# parenthesised (`static_cast<uint64_t>((t + dt) * 1000.0)`, S1), and the multiplier may be
+# written as `* 1e3`, `* 1000` or `* 1000.0` (S1: not only the literal `* 1000.0` form).
 _TIME_QUANTIZATION_PATTERN = re.compile(
-  r"static_cast\s*<\s*(?:std::)?u?int64_t\s*>\s*\([^()]*\*\s*1000\.0\s*\)"
+  r"(?:static_cast\s*<\s*(?:std::)?u?int64_t\s*>|(?:std::)?u?int64_t)"
+  r"\s*\(\s*\(?[^()]*\)?\s*\*\s*1e3\b|"
+  r"(?:static_cast\s*<\s*(?:std::)?u?int64_t\s*>|(?:std::)?u?int64_t)"
+  r"\s*\(\s*\(?[^()]*\)?\s*\*\s*1000(?:\.0)?\b"
 )
 
-# An operator applied directly to an identifier ending `_id`, or to a `.id()` call result.
-# Deliberately narrow: it must fire on `x_id * k`, `x_id ^ k`, `x_id << k`, `x_id % k`, and the
-# `.id()` forms of the same, but never on `.id()` or `_id` used merely as a lookup key or
-# function argument (E4 negative controls).
+# An identifier that names an entity id, as the repo itself spells one: the fixed names
+# `attacker_id`, `target_id`, `entity_id`, `owner_id`, or any identifier ending `_entity_id`
+# (the repo's own convention for a raw Flecs id crossing a boundary -- `active_helo_entity_id`,
+# `embarked_helo_entity_id`, `munition_entity_id`, `partner_entity_id`,
+# `reference_entity_id`). Deliberately narrower than "ends with `_id`": a spatial grid
+# coordinate like `grid_id` must not match (S1 false-positive report), so a bare `\w*_id` rule
+# is not used.
+_ENTITY_ID_NAME_FRAGMENT = (
+  r"(?:attacker_id|target_id|entity_id|owner_id|\w*_entity_id)\b"
+)
+# The same name, optionally wrapped in a `static_cast<uint64_t>(...)` (or the unqualified
+# `uint64_t(...)` form), so `static_cast<uint64_t>(e.id()) * k` and
+# `static_cast<uint64_t>(attacker_id) ^ k` are covered on either side of the operator.
+# An expression that ends in an `.id()` / `->id()` call: `target.id()`, `e.id()`,
+# `it.entity(i).id()`. On the left of an operator the call suffix alone is enough to anchor a
+# search; on the right the whole receiver has to be spelled out, because the operator comes
+# first (`seed_base ^ target.id()`, S1).
+_ID_CALL_EXPR_FRAGMENT = (
+  r"\w+(?:\s*\([^()]*\))?(?:\s*(?:\.|->)\s*\w+(?:\s*\([^()]*\))?)*\s*(?:\.|->)\s*id\(\)"
+)
+_CAST_OPEN_FRAGMENT = r"(?:static_cast\s*<\s*(?:std::)?u?int64_t\s*>\s*\(\s*)?"
+# Left operand of an operator: an entity-id name or a `.id()` call, optionally inside a cast.
+_ID_OPERAND_FRAGMENT = (
+  rf"(?:{_CAST_OPEN_FRAGMENT}(?:{_ENTITY_ID_NAME_FRAGMENT}|\.id\(\))\s*\)?)"
+)
+# Right operand of an operator: an entity-id name or a full `<expr>.id()`, optionally cast.
+_ID_RIGHT_OPERAND_FRAGMENT = (
+  rf"(?:{_CAST_OPEN_FRAGMENT}(?:{_ENTITY_ID_NAME_FRAGMENT}|{_ID_CALL_EXPR_FRAGMENT}))"
+)
+_OPERATOR_FRAGMENT = r"(?:\^|\*|<<|%|\+)"
+
+# An operator applied directly to an entity id, on either side (S1: `seed_base ^ target.id()`,
+# `attacker_id + k`, `k * attacker_id`, `static_cast<uint64_t>(e.id()) * k`). Deliberately
+# narrow: it must fire on `x_id * k`, `x_id ^ k`, `x_id << k`, `x_id % k`, `x_id + k` and the
+# `.id()` forms of the same in either operand order, but never on `.id()` or an id name used
+# merely as a lookup key or function argument (E4/S1 negative controls), and never on `=`
+# (`(?!=)` excludes `^=`, `*=`, `%=`; `+` has no such combined-assignment collision risk here
+# but the exclusion is harmless for it too).
 _ID_ARITHMETIC_PATTERN = re.compile(
-  r"(?:\b\w*_id\b|\.id\(\))\s*(?:\^|\*|<<|%)(?!=)"
+  rf"{_ID_OPERAND_FRAGMENT}\s*{_OPERATOR_FRAGMENT}(?!=)"
+  rf"|{_OPERATOR_FRAGMENT}(?!=)\s*{_ID_RIGHT_OPERAND_FRAGMENT}"
 )
 
 # The genuine non-draw violation the guard must also catch (P1 E4): the ship-motion phase
@@ -242,6 +302,23 @@ def test_stochastic_draw_guard_calibration_on_synthetic_tree(tmp_path: Path) -> 
     encoding="utf-8",
   )
 
+  # P5 review S1: forms the first guard missed. One file per form, so each is proven alone.
+  s1_forms = {
+    "id_right_of_xor.h": "inline unsigned long long f(unsigned long long seed_base, flecs::entity target) { return seed_base ^ target.id(); }",
+    "cast_id_times_k.h": "inline unsigned long long f(flecs::entity e) { return static_cast<uint64_t>(e.id()) * 31ULL; }",
+    "id_plus_k.h": "inline unsigned long long f(unsigned long long attacker_id) { return attacker_id + 7ULL; }",
+    "k_times_id.h": "inline unsigned long long f(unsigned long long attacker_id) { return 31ULL * attacker_id; }",
+    "xor_iter_entity_id.h": "inline unsigned long long f(flecs::iter &it, int i, unsigned long long x) { return x ^ it.entity(i).id(); }",
+    "functional_cast_time.h": "inline unsigned long long f(double t) { return uint64_t(t * 1000.0); }",
+    "std_functional_cast_time.h": "inline unsigned long long f(double t) { return std::uint64_t(t * 1000.0); }",
+    "parenthesised_time.h": "inline unsigned long long f(double t, double dt) { return static_cast<uint64_t>((t + dt) * 1000.0); }",
+    "time_1e3.h": "inline unsigned long long f(double t) { return static_cast<uint64_t>(t * 1e3); }",
+    "time_1000_int.h": "inline unsigned long long f(double t) { return static_cast<std::uint64_t>(t * 1000); }",
+  }
+  (tmp_path / "src" / "models").mkdir(parents=True)
+  for name, body in s1_forms.items():
+    (tmp_path / "src" / "models" / name).write_text("#pragma once" + chr(10) + body + chr(10), encoding="utf-8")
+
   # Negative controls: patterns that must NOT flag (P1 E4).
   (tmp_path / "src" / "core" / "negative_controls.h").write_text(
     textwrap.dedent(
@@ -261,6 +338,11 @@ def test_stochastic_draw_guard_calibration_on_synthetic_tree(tmp_path: Path) -> 
       inline void record(unsigned long long id) {}
       inline void call_record(flecs::iter &it, int i) {
           record(static_cast<unsigned long long>(it.entity(i).id()));
+      }
+
+      // A non-entity `_id` (a spatial grid cell) in arithmetic: not an entity id (S1).
+      inline double cell_mass(int grid_id, double cell_area) {
+          return grid_id * cell_area;
       }
       """
     ),
@@ -282,10 +364,12 @@ def test_stochastic_draw_guard_calibration_on_synthetic_tree(tmp_path: Path) -> 
     "src/core/time_quantize_copy.h",
     "src/core/id_arithmetic_copy.h",
     "src/systems/ship_motion_copy.h",
-  }, offenders
+  } | {f"src/models/{name}" for name in s1_forms}, offenders
 
   assert "splitmix64/seed constant literal" in offenders["src/core/splitmix_copy.h"]
   assert "2^53 uniform-divisor literal" in offenders["src/core/uniform_copy.h"]
   assert "time quantization outside quantize_time_ms" in offenders["src/core/time_quantize_copy.h"]
   assert "operator applied to a raw entity id" in offenders["src/core/id_arithmetic_copy.h"]
   assert "operator applied to a raw entity id" in offenders["src/systems/ship_motion_copy.h"]
+  for name in s1_forms:
+    assert offenders[f"src/models/{name}"], name
