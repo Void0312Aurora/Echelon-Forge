@@ -1,0 +1,62 @@
+{
+    "name": "CSG_US_SQS-53C_Hull_Sonar",
+    "type": "Sensor",
+    "sonar": {
+        "mode": "Active",
+        "max_range_m": 27000.0,
+        "scan_period_s": 8.0,
+        "detection_threshold_db": 6.0,
+        "track_memory_s": 24.0,
+        "bearing_noise_std_deg": 1.5,
+        "range_noise_std_m": 500.0,
+        "directivity_gain_db": 8.0,
+        "self_noise_per_speed_db": 1.1,
+        "ambient_noise_db": 71.0,
+        "source_level_reference_db": 235.0,
+        "source_level_speed_factor_db": 1.7,
+        "transmission_loss_alpha_db_per_km": 0.08,
+        "layer_break_penalty_db": 4.0,
+        "convergence_zone_bonus_m": 40000.0,
+        "baffle_exclusion_deg": 35.0,
+        "ownship_quieting_speed_mps": 5.0,
+        "active_ping_source_level_db": 235.0,
+        "confirm_hits_m": 2,
+        "confirm_window_n": 3,
+        "passive_only": false,
+        "bearing_only": false
+    },
+    "_real_world": {
+        "class": "AN/SQS-53C(V)1 bow-mounted active/passive hull sonar within AN/SQQ-89(V)",
+        "variant_scope": "Arleigh Burke class (both Flight IIA and Flight II hulls in this OOB).",
+        "hulls": ["DDG-81 Winston S. Churchill", "DDG-96 Bainbridge", "DDG-72 Mahan"],
+        "public_equipment": ["AN/SQS-53C(V)1", "AN/SQQ-89(V) ASW combat system"]
+    },
+    "_provenance": {
+        "modeling_note": "Active/passive bow-mounted hull sonar for Arleigh Burke DDGs. Detection ranges are not public (R18); the repo's existing AN_SQQ-89 MVP module models a passive-only hull sonar, so this CSG-specific record adds an active mode and a source-level field to represent SQS-53C's active capability, kept as a separate mount alongside the towed array per the authoring standard. Values otherwise follow the repo's passive hull-sonar MVP calibration pattern (community-derived approximation / engineering calibration), not authoritative SQS-53C performance.",
+        "sources": ["csg-us-ddg-surflant"],
+        "parameters": {
+            "sonar.mode": {"value_basis": "sourced", "source_ids": ["csg-us-ddg-surflant"], "tier": "A", "note": "SQS-53C is an active/passive system, unlike the existing repo passive-only hull sonar MVP"},
+            "sonar.max_range_m": {"value_basis": "proxy", "note": "not public (R18); carried from the repo's existing passive hull-sonar MVP calibration, unchanged"},
+            "sonar.scan_period_s": {"value_basis": "proxy", "note": "no public figure; engineering estimate reflecting an active-sonar ping cycle, longer than the passive MVP baseline's scan period"},
+            "sonar.detection_threshold_db": {"value_basis": "proxy", "note": "no public figure; carried close to the repo passive hull-sonar MVP baseline"},
+            "sonar.track_memory_s": {"value_basis": "proxy", "note": "no public figure; carried close to the repo passive hull-sonar MVP baseline"},
+            "sonar.bearing_noise_std_deg": {"value_basis": "proxy", "note": "no public figure; carried close to the repo passive hull-sonar MVP baseline"},
+            "sonar.range_noise_std_m": {"value_basis": "proxy", "note": "no public figure; active-mode range accuracy is typically better than passive-only, so set slightly better than the passive MVP baseline (engineering estimate)"},
+            "sonar.directivity_gain_db": {"value_basis": "proxy", "note": "no public figure; carried close to the repo passive hull-sonar MVP baseline"},
+            "sonar.self_noise_per_speed_db": {"value_basis": "proxy", "note": "no public figure; carried close to the repo passive hull-sonar MVP baseline"},
+            "sonar.ambient_noise_db": {"value_basis": "proxy", "note": "no public figure; carried close to the repo passive hull-sonar MVP baseline"},
+            "sonar.source_level_reference_db": {"value_basis": "proxy", "note": "no public SQS-53C source level; 235 dB re 1uPa @ 1m is an engineering-estimate active-sonar source level typical of large bow-mounted hull arrays of this era"},
+            "sonar.source_level_speed_factor_db": {"value_basis": "proxy", "note": "no public figure; engineering estimate paired with source_level_reference_db to model modest speed-dependent self-noise increase on the source level"},
+            "sonar.transmission_loss_alpha_db_per_km": {"value_basis": "proxy", "note": "no public figure; carried close to the repo passive hull-sonar MVP baseline (generic underwater transmission-loss constant)"},
+            "sonar.layer_break_penalty_db": {"value_basis": "proxy", "note": "no public figure; carried close to the repo passive hull-sonar MVP baseline"},
+            "sonar.convergence_zone_bonus_m": {"value_basis": "proxy", "note": "no public figure; engineering estimate scaled with max_range_m"},
+            "sonar.baffle_exclusion_deg": {"value_basis": "proxy", "note": "no public figure; carried close to the repo passive hull-sonar MVP baseline (bow-mounted array's stern baffle exclusion)"},
+            "sonar.ownship_quieting_speed_mps": {"value_basis": "proxy", "note": "no public figure; carried close to the repo passive hull-sonar MVP baseline"},
+            "sonar.active_ping_source_level_db": {"value_basis": "proxy", "note": "set equal to source_level_reference_db per the engine's active-sonar convention; same basis as that field"},
+            "sonar.confirm_hits_m": {"value_basis": "engineering_estimate", "note": "standard engine detection-confirmation default, not sourced per-platform"},
+            "sonar.confirm_window_n": {"value_basis": "engineering_estimate", "note": "standard engine detection-confirmation default, not sourced per-platform"},
+            "sonar.passive_only": {"value_basis": "sourced", "source_ids": ["csg-us-ddg-surflant"], "tier": "A", "note": "false: SQS-53C has an active transmit mode, unlike the repo's passive-only hull sonar MVP"},
+            "sonar.bearing_only": {"value_basis": "engineering_estimate", "note": "false: hull-mounted active/passive sonar provides range as well as bearing"}
+        }
+    }
+}

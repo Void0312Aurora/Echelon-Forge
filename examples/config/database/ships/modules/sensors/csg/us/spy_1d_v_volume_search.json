@@ -1,0 +1,60 @@
+{
+    "name": "CSG_US_SPY-1D_V_Volume_Search",
+    "type": "Sensor",
+    "sensor": {
+        "type": "Radar",
+        "max_range": 324100.0,
+        "fov_deg": 360.0,
+        "scan_period": 1.5,
+        "detection_prob": 0.92,
+        "bearing_noise_std": 0.18,
+        "range_noise_std": 120.0,
+        "track_memory_s": 25.0,
+        "range_power": 2.0,
+        "aspect_influence": 0.0,
+        "doppler_notch_width": 15.0,
+        "reference_snr_db": 16.0,
+        "reference_range_m": 120000.0,
+        "reference_rcs_m2": 5.0,
+        "antenna_height_m": 30.0,
+        "target_height_bias_m": 25.0,
+        "environment_domain": "SurfaceMaritime",
+        "sea_clutter_enabled": false,
+        "enable_ducting": true,
+        "ducting_gain_factor": 1.15,
+        "ducting_max_bonus_m": 18000.0
+    },
+    "_real_world": {
+        "class": "AN/SPY-1D(V) multifunction phased-array radar",
+        "variant_scope": "Arleigh Burke Flight IIA (DDG-91 and later; DDG-81/DDG-96 in this OOB).",
+        "hulls": ["DDG-81 Winston S. Churchill", "DDG-96 Bainbridge"],
+        "public_equipment": ["AN/SPY-1D(V)"]
+    },
+    "_provenance": {
+        "modeling_note": "SPY-1D(V) volume-search radar for Flight IIA DDGs. Kept as a CSG-specific record (distinct from the repo's generic AN/SPY-1D_Volume_Search_MVP) because Flight IIA carries the -1D(V) variant, not the baseline -1D fitted to earlier flights/Flight II in this OOB. No admissible source distinguishes -1D(V)'s instrumented range from -1D's; the value is carried over unchanged from the repo's existing SPY-1D MVP calibration (itself community-derived/engineering calibration), scaled only by the smooth-earth horizon geometry difference from a slightly taller DDG mast estimate.",
+        "sources": ["csg-us-ddg-surflant", "csg-us-ddg-globalsecurity"],
+        "parameters": {
+            "sensor.type": {"value_basis": "sourced", "source_ids": ["csg-us-ddg-surflant"], "tier": "A", "note": "SPY-1D(V) is a radar; Radar is the only matching engine sensor type"},
+            "sensor.max_range": {"value_basis": "proxy", "source_ids": ["csg-us-spy1-wiki", "csg-us-spy1-csis"], "tier": "C-est", "note": "SPY-1 air-search ~175 nmi (C-est, csg-us-spy1-wiki/csis); carried at the repo MVP's existing calibration value unchanged since no -1D vs -1D(V) delta is public"},
+            "sensor.fov_deg": {"value_basis": "sourced", "source_ids": ["csg-us-ddg-surflant"], "tier": "A", "note": "4-face fixed phased array gives full 360-deg coverage; not a per-face FOV number since the engine models one merged radar"},
+            "sensor.scan_period": {"value_basis": "proxy", "note": "no public scan-rate figure; carried unchanged from the repo's existing AN/SPY-1D_Volume_Search_MVP calibration"},
+            "sensor.detection_prob": {"value_basis": "proxy", "note": "no public Pd figure; carried unchanged from repo SPY-1D MVP calibration"},
+            "sensor.bearing_noise_std": {"value_basis": "proxy", "note": "no public bearing-accuracy figure; carried unchanged from repo SPY-1D MVP calibration"},
+            "sensor.range_noise_std": {"value_basis": "proxy", "note": "no public range-accuracy figure; carried unchanged from repo SPY-1D MVP calibration"},
+            "sensor.track_memory_s": {"value_basis": "proxy", "note": "no public track-coast figure; carried unchanged from repo SPY-1D MVP calibration"},
+            "sensor.range_power": {"value_basis": "engineering_estimate", "note": "radar-equation exponent (inverse-4th-power family); standard engine default for a search radar, not sourced per-platform"},
+            "sensor.aspect_influence": {"value_basis": "engineering_estimate", "note": "0.0 disables RCS aspect-angle modeling; carried unchanged from repo SPY-1D MVP, consistent with the MVP's simplified surface-search detection model"},
+            "sensor.doppler_notch_width": {"value_basis": "proxy", "note": "no public MTI/doppler-notch figure; carried unchanged from repo SPY-1D MVP calibration"},
+            "sensor.reference_snr_db": {"value_basis": "proxy", "note": "radar-equation calibration constant; carried unchanged from repo SPY-1D MVP, paired with reference_range_m/reference_rcs_m2 to reproduce the MVP's max_range at a reference target"},
+            "sensor.reference_range_m": {"value_basis": "proxy", "note": "paired radar-equation calibration constant, see reference_snr_db"},
+            "sensor.reference_rcs_m2": {"value_basis": "engineering_estimate", "note": "5 m^2 generic warship/large-aircraft reference RCS, engine convention also used across the repo's other naval radar records"},
+            "sensor.antenna_height_m": {"value_basis": "proxy", "note": "DDG-51 mast height not public; reuses repo SPY-1D MVP mount-height proxy"},
+            "sensor.target_height_bias_m": {"value_basis": "proxy", "note": "no public figure; carried unchanged from repo SPY-1D MVP calibration (horizon-geometry bias term)"},
+            "sensor.environment_domain": {"value_basis": "engineering_estimate", "note": "surface/maritime domain selected for a shipborne air/surface search radar per authoring standard"},
+            "sensor.sea_clutter_enabled": {"value_basis": "engineering_estimate", "note": "disabled, consistent with the MVP's simplified detection model; no sourced clutter-suppression figure exists to calibrate an enabled model"},
+            "sensor.enable_ducting": {"value_basis": "engineering_estimate", "note": "standard engine atmospheric-ducting toggle, enabled consistent with repo SPY-1D MVP convention for a long-range search radar"},
+            "sensor.ducting_gain_factor": {"value_basis": "proxy", "note": "carried unchanged from repo SPY-1D MVP calibration"},
+            "sensor.ducting_max_bonus_m": {"value_basis": "proxy", "note": "carried unchanged from repo SPY-1D MVP calibration"}
+        }
+    }
+}

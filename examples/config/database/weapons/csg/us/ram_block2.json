@@ -1,0 +1,90 @@
+{
+    "name": "CSG_US_RAM_Block_2",
+    "type": "Missile",
+    "mass_kg": 88.2,
+    "max_flight_time_s": 12.0,
+    "flight_model": {
+        "max_speed": 850.0,
+        "max_g": 30.0,
+        "max_turn_rate": 60.0
+    },
+    "guidance": {
+        "type": "PassiveIR",
+        "active_seek_range": 15000.0,
+        "pn_los_rate_source": "world_los_history",
+        "target_kinematics_estimator": "world_cva",
+        "capture_guidance_mode": "disabled",
+        "target_tracker_alpha": 0.2,
+        "target_tracker_beta": 0.02,
+        "target_tracker_gamma": 0.5,
+        "nav_gain": 4.0,
+        "apn_target_accel_gain": 0.125,
+        "autopilot_tau_s": 0.02,
+        "max_accel_response_g_per_s": 600.0
+    },
+    "warhead": {
+        "type": "blast_fragmentation",
+        "mass_kg": 3.58,
+        "lethal_radius": 6.0,
+        "damage": 90.0,
+        "explosive_mass_kg": 3.58,
+        "case_mass_kg": 5.0,
+        "projection_radius_fraction": 0.65,
+        "projection_max_radius_m": 8.0,
+        "projection_max_projected_hitboxes": 2,
+        "provenance": "Explosive weight 7.9 lb = 3.58 kg per OOB (csg-us-ram-navy, A). Lethal radius/damage/case mass are engineering-estimate surrogates for a small fire-and-forget point-defense missile, following the aim_120c.json pattern scaled down."
+    },
+    "fuze": {
+        "type": "proximity",
+        "trigger_radius_m": 6.0,
+        "delay_s": 0.01,
+        "reliability": 0.9,
+        "provenance": "No public fuze timing data; engineering-estimate scaffold consistent with a passive-IR-terminal fire-and-forget missile."
+    },
+    "_real_world": {
+        "designation": "RIM-116 RAM Block 2 (RIM-116C)",
+        "role": "Fire-and-forget close-in point-defense SAM, Mk 49 GMLS (21 rounds)",
+        "range_km": "~9 (Blk 1/1A) to ~15 (Blk 2), C-est; Navy publishes no range",
+        "speed": "Supersonic; Tier C Mach 2-3",
+        "guidance_real": "Passive RF midcourse + IR terminal; fire-and-forget, no illuminator required",
+        "mount_mapping": "ciws (Mk 49 GMLS documented as a CIWS-type mount per authoring standard; can_intercept_missiles: true)"
+    },
+    "_provenance": {
+        "sources": ["csg-us-ram-navy", "csg-us-ram-weaponsystems", "csg-us-ram-seaforces"],
+        "parameters": {
+            "warhead.type": {"value_basis": "sourced", "source_ids": ["csg-us-ram-navy"], "tier": "A", "note": "blast_fragmentation warhead per OOB"},
+            "warhead.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "fuze.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-ram-navy"], "tier": "A", "note": "194.4 lb = 88.2 kg Block 2 (Block 1A: 164 lb)"},
+            "max_flight_time_s": {"value_basis": "proxy", "note": "engineering estimate derived from the ~9-15 km Tier C-est range band at the used Mach 2-3 speed proxy"},
+            "flight_model.max_speed": {"value_basis": "proxy", "source_ids": ["csg-us-ram-navy"], "tier": "C-est", "note": "Navy states supersonic only (A); Tier C Mach 2-3 used as engineering-estimate midpoint ~850 m/s"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "note": "no public maneuver-load figure; high value consistent with a small fire-and-forget point-defense missile's rapid-response intercept role"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "note": "no public figure; engineering estimate consistent with max_g for a small, highly agile point-defense missile"},
+            "guidance.type": {"value_basis": "sourced", "source_ids": ["csg-us-ram-navy"], "tier": "A", "note": "passive RF midcourse + IR terminal per OOB; modeled here as PassiveIR for the terminal phase since the engine's guidance.type is a single enum. This record has a real ciws mount but guidance.type is not consumed by the CIWS engagement-resolution code path (mount->hit_probability/engagement_range_m only), so this remains descriptive metadata"},
+            "guidance.active_seek_range": {"value_basis": "proxy", "note": "no public IR terminal seeker acquisition range; engineering estimate typical of a passive-RF/IR point-defense missile's terminal handoff range"},
+            "guidance.pn_los_rate_source": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, not a sourced weapon characteristic; ciws mount engagement resolution does not consume this field"},
+            "guidance.target_kinematics_estimator": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, same basis as pn_los_rate_source"},
+            "guidance.capture_guidance_mode": {"value_basis": "engineering_estimate", "note": "disabled: no terminal capture-guidance submode is modeled beyond the passive-RF/IR homing already described"},
+            "guidance.target_tracker_alpha": {"value_basis": "engineering_estimate", "note": "standard alpha-beta-gamma tracker filter constant, engine convention shared across missile records, not weapon-specific"},
+            "guidance.target_tracker_beta": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.target_tracker_gamma": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.nav_gain": {"value_basis": "engineering_estimate", "note": "proportional-navigation gain scaffold; high value consistent with RAM's point-defense role against maneuvering anti-ship missiles, no sourced guidance-law constant"},
+            "guidance.apn_target_accel_gain": {"value_basis": "engineering_estimate", "note": "augmented-PN target-acceleration compensation gain scaffold, consistent with intercepting a maneuvering incoming missile; not sourced per-weapon"},
+            "guidance.autopilot_tau_s": {"value_basis": "engineering_estimate", "note": "autopilot response time-constant scaffold; very fast, consistent with a small high-agility point-defense missile"},
+            "guidance.max_accel_response_g_per_s": {"value_basis": "engineering_estimate", "note": "autopilot response-rate scaffold, very high consistent with flight_model.max_g"},
+            "warhead.mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-ram-navy"], "tier": "A", "note": "7.9 lb explosive weight = 3.58 kg"},
+            "warhead.lethal_radius": {"value_basis": "proxy", "note": "engineering-estimate surrogate for a small fire-and-forget point-defense missile, following the aim_120c.json pattern scaled down"},
+            "warhead.damage": {"value_basis": "proxy", "note": "engineering-estimate surrogate, no public damage-effectiveness figure"},
+            "warhead.explosive_mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-ram-navy"], "tier": "A", "note": "7.9 lb = 3.58 kg explosive weight is itself the sourced figure; set equal to warhead.mass_kg since the small warhead is assumed near-entirely explosive fill"},
+            "warhead.case_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate case mass, no public case/explosive split beyond the sourced explosive weight"},
+            "warhead.projection_radius_fraction": {"value_basis": "proxy", "note": "copied from the weapons/air_to_air/aim_120c.json blast-fragmentation projection-geometry template, scaled down for this small warhead"},
+            "warhead.projection_max_radius_m": {"value_basis": "proxy", "note": "copied/scaled from the aim_120c.json template pattern for this warhead's lethal_radius"},
+            "warhead.projection_max_projected_hitboxes": {"value_basis": "proxy", "note": "copied from the aim_120c.json template pattern, reduced for a small point-defense warhead"},
+            "fuze.type": {"value_basis": "engineering_estimate", "note": "no public fuze timing data; proximity is the matching real engine-recognized default fuze type for a passive-IR-terminal fire-and-forget missile, per the loader's fuze.type vocabulary"},
+            "fuze.trigger_radius_m": {"value_basis": "proxy", "note": "no public fuze timing data; engineering-estimate scaffold value matching warhead.lethal_radius"},
+            "fuze.delay_s": {"value_basis": "proxy", "note": "no public fuze timing data; engineering-estimate scaffold value"},
+            "fuze.reliability": {"value_basis": "proxy", "note": "no public reliability figure; engineering-estimate scaffold value"}
+        },
+        "modeling_notes": ["Range conflicts across Tier C sources (9-15 km vs seaforces '10 nmi' for Block 2B); not directly encoded as a JSON field. Placed as a ciws-type mount per the authoring standard's mapping rule for RAM."]
+    }
+}

@@ -1,0 +1,91 @@
+{
+    "name": "CSG_US_Tomahawk_Maritime_Strike_Block_Va",
+    "type": "Missile",
+    "mass_kg": 1510.0,
+    "max_flight_time_s": 3600.0,
+    "flight_model": {
+        "max_speed": 240.0,
+        "max_g": 4.0,
+        "max_turn_rate": 8.0
+    },
+    "guidance": {
+        "type": "ActiveRadar",
+        "active_seek_range": 20000.0,
+        "pn_los_rate_source": "world_los_history",
+        "target_kinematics_estimator": "world_cva",
+        "capture_guidance_mode": "disabled",
+        "target_tracker_alpha": 0.2,
+        "target_tracker_beta": 0.02,
+        "target_tracker_gamma": 0.5,
+        "nav_gain": 3.0,
+        "apn_target_accel_gain": 0.08,
+        "autopilot_tau_s": 0.2,
+        "max_accel_response_g_per_s": 40.0
+    },
+    "warhead": {
+        "type": "blast",
+        "mass_kg": 453.6,
+        "lethal_radius": 25.0,
+        "damage": 500.0,
+        "explosive_mass_kg": 272.2,
+        "case_mass_kg": 181.4,
+        "projection_radius_fraction": 0.5,
+        "projection_max_radius_m": 30.0,
+        "projection_max_projected_hitboxes": 4,
+        "provenance": "Same 1,000-lb class warhead assumed as Block IV/V per OOB (csg-us-tomahawk-navy, A); MST-specific warhead changes are not public."
+    },
+    "fuze": {
+        "type": "contact",
+        "trigger_radius_m": 0.0,
+        "delay_s": 0.05,
+        "reliability": 0.95,
+        "provenance": "No public MST-specific fuzing data; carried from the Block IV/V TLAM fuze scaffold."
+    },
+    "_real_world": {
+        "designation": "Tomahawk Block Va Maritime Strike (MST)",
+        "role": "Anti-ship variant of Tomahawk Block V, adds multi-mode seeker for moving maritime targets",
+        "range_nmi": "n/p; ~1,000 statute miles quoted in trade press is consistent with Block IV/V range",
+        "guidance_real": "Adds multi-mode seeker (active radar + passive RF/IR claimed by Tier C, not confirmed by Tier A) to the Block IV/V INS/TERCOM/DSMAC/GPS baseline",
+        "status": "content_only_no_mechanism / fielding status est",
+        "fielding_status": "Early Operational Capability Q4 FY2025 on DDGs; submarine fielding planned early 2026; up to 1,302 conversions (Tier C-est for EOC date; Navy 2021 fact file calls MST a future capability)",
+        "mount_mapping": "none — no NavalWeaponType exists for anti-ship cruise missiles; placed only in _real_world.weapon_inventory on ship/submarine records, treated as fielded in small numbers per OOB guidance"
+    },
+    "_provenance": {
+        "sources": ["csg-us-tomahawk-navy", "csg-us-tomahawk-navair", "csg-us-mst-gs", "csg-us-mst-nsj"],
+        "parameters": {
+            "warhead.type": {"value_basis": "engineering_estimate", "note": "blast: carried unchanged from the Block IV/V TLAM record; no MST-specific warhead-mechanism detail is public"},
+            "warhead.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "fuze.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-tomahawk-navair"], "tier": "A", "note": "assumed same airframe/booster mass as Block IV/V TLAM (3,330 lb = 1,510 kg); MST-specific mass not separately published"},
+            "max_flight_time_s": {"value_basis": "proxy", "note": "carried unchanged from the Block IV/V TLAM record's loiter-capability estimate; MST-specific endurance not separately published"},
+            "flight_model.max_speed": {"value_basis": "proxy", "source_ids": ["csg-us-tomahawk-navy"], "tier": "C-est", "note": "carried unchanged from the Block IV/V TLAM baseline ('high subsonic' only, A; ~240 m/s Tier C-est); no MST-specific speed delta is public"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "note": "carried unchanged from the Block IV/V TLAM baseline; no MST-specific maneuver-load figure"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "note": "carried unchanged from the Block IV/V TLAM baseline; no MST-specific figure"},
+            "guidance.type": {"value_basis": "proxy", "source_ids": ["csg-us-mst-gs"], "tier": "C", "note": "multi-mode seeker (active radar + passive RF/IR) claimed by Tier C trade press only, not confirmed by Tier A Navy sources; modeled as ActiveRadar as the dominant claimed terminal mode"},
+            "guidance.active_seek_range": {"value_basis": "proxy", "note": "no public seeker acquisition range for MST; engineering estimate consistent with a ship-sized active-radar terminal seeker"},
+            "guidance.pn_los_rate_source": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, not a sourced weapon characteristic; record has no functional mount regardless"},
+            "guidance.target_kinematics_estimator": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, same basis as pn_los_rate_source"},
+            "guidance.capture_guidance_mode": {"value_basis": "engineering_estimate", "note": "disabled: no terminal capture-guidance submode is modeled for this mechanism-gap weapon"},
+            "guidance.target_tracker_alpha": {"value_basis": "engineering_estimate", "note": "standard alpha-beta-gamma tracker filter constant, engine convention shared across missile records, not weapon-specific"},
+            "guidance.target_tracker_beta": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.target_tracker_gamma": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.nav_gain": {"value_basis": "engineering_estimate", "note": "proportional-navigation gain scaffold; higher than the base TLAM record to reflect MST's claimed moving-target terminal homing, no sourced guidance-law constant"},
+            "guidance.apn_target_accel_gain": {"value_basis": "engineering_estimate", "note": "augmented-PN target-acceleration compensation gain scaffold, consistent with engaging a moving maritime target; not sourced per-weapon"},
+            "guidance.autopilot_tau_s": {"value_basis": "engineering_estimate", "note": "autopilot response time-constant scaffold; faster than the base TLAM record to reflect MST's claimed active terminal-homing maneuver, not sourced"},
+            "guidance.max_accel_response_g_per_s": {"value_basis": "engineering_estimate", "note": "autopilot response-rate scaffold; higher than the base TLAM record for the same terminal-homing reasoning"},
+            "warhead.mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-tomahawk-navy"], "tier": "A", "note": "same 1,000-lb class warhead assumed as Block IV/V per OOB; MST-specific warhead changes are not public"},
+            "warhead.lethal_radius": {"value_basis": "proxy", "note": "carried unchanged from the Block IV/V TLAM record's engineering-estimate surrogate; no MST-specific warhead figure"},
+            "warhead.damage": {"value_basis": "proxy", "note": "carried unchanged from the Block IV/V TLAM record's engineering-estimate surrogate"},
+            "warhead.explosive_mass_kg": {"value_basis": "proxy", "note": "carried unchanged from the Block IV/V TLAM record's engineering-estimate HE/case split"},
+            "warhead.case_mass_kg": {"value_basis": "proxy", "note": "carried unchanged from the Block IV/V TLAM record's engineering-estimate HE/case split"},
+            "warhead.projection_radius_fraction": {"value_basis": "proxy", "note": "copied from the weapons/air_to_air/aim_120c.json blast projection-geometry template via the base TLAM record"},
+            "warhead.projection_max_radius_m": {"value_basis": "proxy", "note": "copied/scaled from the aim_120c.json template pattern via the base TLAM record"},
+            "warhead.projection_max_projected_hitboxes": {"value_basis": "proxy", "note": "copied from the aim_120c.json template pattern via the base TLAM record"},
+            "fuze.type": {"value_basis": "engineering_estimate", "note": "no public MST-specific fuzing data; carried from the Block IV/V TLAM fuze scaffold, contact fuze being the nearest real engine-recognized fuze family"},
+            "fuze.trigger_radius_m": {"value_basis": "engineering_estimate", "note": "0.0 consistent with a contact-fuze trigger radius, carried from the base TLAM record"},
+            "fuze.delay_s": {"value_basis": "engineering_estimate", "note": "no public MST-specific fuzing data; carried from the Block IV/V TLAM fuze scaffold"},
+            "fuze.reliability": {"value_basis": "engineering_estimate", "note": "no public reliability figure; carried from the Block IV/V TLAM fuze scaffold"}
+        },
+        "modeling_notes": ["Written as a separate record from the base Block IV/V TLAM per the task's explicit instruction to treat MST as a distinct variant record. No functional mount exists (mechanism gap); this is content-only for _real_world.weapon_inventory. Fielding status should be treated as small-numbers/est per OOB guidance when populating ship weapon_inventory counts."]
+    }
+}
