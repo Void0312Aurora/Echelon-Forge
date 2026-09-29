@@ -60,7 +60,7 @@
     },
     "embarked_air_ops": {
         "enabled": true,
-        "helo_unit_name": "MH-60R_MVP",
+        "helo_unit_name": "CSG_CN_Z-20J",
         "max_sorties_per_cycle": 2,
         "launch_interval_s": 480.0,
         "recovery_interval_s": 420.0,
@@ -143,6 +143,7 @@
             "csg-cn-901-uscc-2020", "csg-cn-901-janes-2019", "csg-cn-901-wiki"
         ],
         "parameters": {
+            "embarked_air_ops.helo_unit_name": {"value_basis": "engineering_estimate", "note": "Z-20J naval utility helicopter for VERTREP; replaced the MH-60R_MVP placeholder once the S0-C helicopter records existed (main thread, 2026-09-29)"},
             "damage_model.hitboxes.components.system": {"value_basis": "engineering_estimate", "note": "component system tags follow the packet-wide convention; 4-zone layout adapted from taoe6_supply.json's cargo/engineering/aviation pattern"},
             "ship_platform.displacement_full_load_kg": {"value_basis": "sourced", "source_ids": ["csg-cn-901-uscc-2020", "csg-cn-901-janes-2019"], "tier": "B", "note": "45,000-48,000t commonly cited range; 48,000t upper-bound value used"},
             "ship_platform.length_m": {"value_basis": "sourced", "source_ids": ["csg-cn-901-janes-2019"], "tier": "B", "note": "~241m (791ft)"},

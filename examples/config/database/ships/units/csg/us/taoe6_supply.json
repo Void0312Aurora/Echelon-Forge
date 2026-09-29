@@ -58,7 +58,7 @@
     "data_link_network_id": 1,
     "embarked_air_ops": {
         "enabled": true,
-        "helo_unit_name": "MH-60R_MVP",
+        "helo_unit_name": "CSG_US_MH-60S_Knighthawk",
         "max_sorties_per_cycle": 2,
         "launch_interval_s": 120.0,
         "recovery_interval_s": 150.0,
@@ -166,7 +166,7 @@
             "command_link.latency_s": {"value_basis": "engineering_estimate", "note": "standard engine command-link scaffold constant, shared convention across the packet's records, not independently sourced per hull"},
             "command_link.drop_prob": {"value_basis": "engineering_estimate", "note": "standard engine command-link scaffold constant, same basis as latency_s"},
             "data_link_network_id": {"value_basis": "engineering_estimate", "note": "scenario-assignment scaffold value (CSG network membership), not a sourced platform characteristic"},
-            "embarked_air_ops.helo_unit_name": {"value_basis": "proxy", "note": "2 x MH-60S embarked per OOB (A); references the repo's existing MH-60R_MVP unit as the nearest available embarked-helo stand-in since no MH-60S unit definition exists in the repo, consistent with the task's instruction to reference MH-60R_MVP with a provenance note where an exact type is unavailable"},
+            "embarked_air_ops.helo_unit_name": {"value_basis": "engineering_estimate", "note": "MH-60S VERTREP detachment (T-AOE hangar); replaced the MH-60R_MVP placeholder once the S0-C helicopter records existed (main thread, 2026-09-29)"},
             "embarked_air_ops.max_sorties_per_cycle": {"value_basis": "engineering_estimate", "note": "no public sortie-generation figure; engineering-estimate scaffold consistent with a 2-helo detachment"},
             "embarked_air_ops.launch_interval_s": {"value_basis": "engineering_estimate", "note": "no public launch-cycle figure; engineering-estimate scaffold matching the repo's other embarked-helo records"},
             "embarked_air_ops.recovery_interval_s": {"value_basis": "engineering_estimate", "note": "no public recovery-cycle figure; engineering-estimate scaffold matching the repo's other embarked-helo records"},

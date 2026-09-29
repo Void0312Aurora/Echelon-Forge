@@ -58,7 +58,7 @@
     "data_link_network_id": 1,
     "embarked_air_ops": {
         "enabled": true,
-        "helo_unit_name": "MH-60R_MVP",
+        "helo_unit_name": "CSG_US_MH-60R_Seahawk",
         "max_sorties_per_cycle": 4,
         "launch_interval_s": 90.0,
         "recovery_interval_s": 120.0,
@@ -329,7 +329,7 @@
             "command_link.latency_s": {"value_basis": "engineering_estimate", "note": "standard engine command-link scaffold constant, set lower than the escort records reflecting the carrier's role as a CSG flagship/C2 node, not independently sourced per hull"},
             "command_link.drop_prob": {"value_basis": "engineering_estimate", "note": "standard engine command-link scaffold constant, same basis as latency_s"},
             "data_link_network_id": {"value_basis": "engineering_estimate", "note": "scenario-assignment scaffold value (CSG network membership), not a sourced platform characteristic"},
-            "embarked_air_ops.helo_unit_name": {"value_basis": "proxy", "note": "references the repo's existing MH-60R_MVP unit as a stand-in for the Ford's embarked helicopter detachment; the carrier's actual air wing (F/A-18E/F, EA-18G, E-2D, C-2A/CMV-22B, MH-60R/S) is not separately modeled as distinct embarked aircraft types since the engine's embarked_air_ops takes a single helo_unit_name string, not an air-wing composition. Documented here per task instruction to reference MH-60R_MVP with a provenance note"},
+            "embarked_air_ops.helo_unit_name": {"value_basis": "engineering_estimate", "note": "HSM-70 carrier element (MH-60R) per the S0-A CVW-8 table; HSC-9 MH-60S also embarked; replaced the MH-60R_MVP placeholder once the S0-C helicopter records existed (main thread, 2026-09-29)"},
             "embarked_air_ops.max_sorties_per_cycle": {"value_basis": "proxy", "source_ids": ["csg-us-cvn78-airlant"], "tier": "C-est", "note": "160 (surge) / 270 (design target) sorties/day is sourced (A) for the whole air wing, but the engine's embarked_air_ops field represents only a single helo unit's sortie cycle, not the full air wing; 4 is an engineering-estimate scaffold for the helo-only abstraction, not a direct encoding of the sourced air-wing sortie rate"},
             "embarked_air_ops.launch_interval_s": {"value_basis": "engineering_estimate", "note": "no public per-cycle launch-interval figure for the helo-only abstraction; engineering-estimate scaffold, faster than the DDG records reflecting the carrier's larger flight deck and multiple catapults/spots"},
             "embarked_air_ops.recovery_interval_s": {"value_basis": "engineering_estimate", "note": "no public per-cycle recovery-interval figure; engineering-estimate scaffold consistent with launch_interval_s"},
