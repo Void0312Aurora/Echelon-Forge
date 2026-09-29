@@ -1,0 +1,91 @@
+{
+    "name": "CSG_US_Harpoon_Ship_Launched",
+    "type": "Missile",
+    "mass_kg": 690.8,
+    "max_flight_time_s": 500.0,
+    "flight_model": {
+        "max_speed": 240.0,
+        "max_g": 6.0,
+        "max_turn_rate": 10.0
+    },
+    "guidance": {
+        "type": "ActiveRadar",
+        "active_seek_range": 18000.0,
+        "pn_los_rate_source": "world_los_history",
+        "target_kinematics_estimator": "world_cva",
+        "capture_guidance_mode": "disabled",
+        "target_tracker_alpha": 0.2,
+        "target_tracker_beta": 0.02,
+        "target_tracker_gamma": 0.5,
+        "nav_gain": 3.5,
+        "apn_target_accel_gain": 0.1,
+        "autopilot_tau_s": 0.15,
+        "max_accel_response_g_per_s": 60.0
+    },
+    "warhead": {
+        "type": "blast_fragmentation",
+        "mass_kg": 221.0,
+        "lethal_radius": 15.0,
+        "damage": 260.0,
+        "explosive_mass_kg": 97.0,
+        "case_mass_kg": 124.0,
+        "projection_radius_fraction": 0.55,
+        "projection_max_radius_m": 20.0,
+        "projection_max_projected_hitboxes": 3,
+        "provenance": "WDU-18/B penetrating blast-fragmentation warhead, 488 lb = 221 kg per OOB (csg-us-harpoon-designation, C-est). Explosive/case split, lethal radius, damage are engineering-estimate surrogates."
+    },
+    "fuze": {
+        "type": "contact",
+        "trigger_radius_m": 0.0,
+        "delay_s": 0.01,
+        "reliability": 0.92,
+        "provenance": "No public fuze timing data; engineering-estimate impact/delay fuze scaffold typical of a penetrating anti-ship warhead."
+    },
+    "_real_world": {
+        "designation": "Harpoon (RGM/AGM-84), ship-launched (RGM-84)",
+        "role": "Anti-ship cruise missile, canister-launched from Mk 141 quad launchers",
+        "range_nmi": "~67 (Blk 1C) to ~120 (Blk II)",
+        "guidance_real": "Sea-skimming, radar-altimeter cruise; active radar terminal; sea-skim or pop-up attack profile; Block II+ adds GPS and datalink",
+        "speed": "High subsonic",
+        "status": "content_only_no_mechanism",
+        "mount_mapping": "none — no NavalWeaponType exists for anti-ship missiles; placed only in _real_world.weapon_inventory. Not fitted to Flight IIA DDGs or CVN-78; DDG-72 Mahan (Flight II) may retain 2x Mk 141 quad launchers (8 RGM-84) if not removed (whether retained is not public)"
+    },
+    "_provenance": {
+        "sources": ["csg-us-harpoon-navair", "csg-us-harpoon-designation", "csg-us-harpoon-ran"],
+        "parameters": {
+            "warhead.type": {"value_basis": "sourced", "source_ids": ["csg-us-harpoon-designation"], "tier": "C-est", "note": "blast_fragmentation warhead per the WDU-18/B penetrating-warhead designation"},
+            "warhead.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "fuze.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-harpoon-navair"], "tier": "A", "note": "1,523 lb with booster = 690.8 kg"},
+            "max_flight_time_s": {"value_basis": "proxy", "note": "engineering estimate derived from the ~67-120 nmi range band at the used ~240 m/s speed proxy"},
+            "flight_model.max_speed": {"value_basis": "proxy", "source_ids": ["csg-us-harpoon-ran"], "tier": "A", "note": "RAN (allied government, A) states 'high subsonic' only; ~0.75 Mach sea-level ~240 m/s used as engineering estimate"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "note": "no public maneuver-load figure; engineering estimate for a sea-skimming anti-ship cruise missile's terminal pop-up/weave maneuver"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "note": "no public figure; engineering estimate consistent with max_g for an anti-ship cruise missile"},
+            "guidance.type": {"value_basis": "sourced", "source_ids": ["csg-us-harpoon-navair"], "tier": "A", "note": "active radar terminal homing per OOB; ActiveRadar is the matching real engine seeker_type"},
+            "guidance.active_seek_range": {"value_basis": "proxy", "note": "no public active-radar seeker acquisition range for Harpoon; engineering estimate typical of a ship-sized anti-ship-missile active-radar seeker"},
+            "guidance.pn_los_rate_source": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, not a sourced weapon characteristic; record has no functional mount regardless"},
+            "guidance.target_kinematics_estimator": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, same basis as pn_los_rate_source"},
+            "guidance.capture_guidance_mode": {"value_basis": "engineering_estimate", "note": "disabled: no terminal capture-guidance submode is modeled for this mechanism-gap weapon"},
+            "guidance.target_tracker_alpha": {"value_basis": "engineering_estimate", "note": "standard alpha-beta-gamma tracker filter constant, engine convention shared across missile records, not weapon-specific"},
+            "guidance.target_tracker_beta": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.target_tracker_gamma": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.nav_gain": {"value_basis": "engineering_estimate", "note": "proportional-navigation gain scaffold; no public guidance-law constant, set for a sea-skimming anti-ship cruise missile's terminal homing"},
+            "guidance.apn_target_accel_gain": {"value_basis": "engineering_estimate", "note": "augmented-PN target-acceleration compensation gain scaffold, consistent with engaging a maneuvering surface target; not sourced per-weapon"},
+            "guidance.autopilot_tau_s": {"value_basis": "engineering_estimate", "note": "autopilot response time-constant scaffold; no public figure"},
+            "guidance.max_accel_response_g_per_s": {"value_basis": "engineering_estimate", "note": "autopilot response-rate scaffold consistent with flight_model.max_g"},
+            "warhead.mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-harpoon-designation"], "tier": "C-est", "note": "488 lb = 221 kg, WDU-18/B; USN does not publish this directly (Tier C-est)"},
+            "warhead.lethal_radius": {"value_basis": "proxy", "note": "engineering-estimate surrogate, no public lethal-radius figure"},
+            "warhead.damage": {"value_basis": "proxy", "note": "engineering-estimate surrogate, no public damage-effectiveness figure"},
+            "warhead.explosive_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split of the sourced 221 kg total warhead mass, no public split figure"},
+            "warhead.case_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split, see explosive_mass_kg; case mass set relatively high consistent with the WDU-18/B's penetrating-warhead design intent"},
+            "warhead.projection_radius_fraction": {"value_basis": "proxy", "note": "copied from the weapons/air_to_air/aim_120c.json blast-fragmentation projection-geometry template"},
+            "warhead.projection_max_radius_m": {"value_basis": "proxy", "note": "copied/scaled from the aim_120c.json template pattern for this warhead's lethal_radius"},
+            "warhead.projection_max_projected_hitboxes": {"value_basis": "proxy", "note": "copied from the aim_120c.json template pattern"},
+            "fuze.type": {"value_basis": "engineering_estimate", "note": "no public fuze timing data; contact fuze is the nearest real engine-recognized fuze family for a penetrating anti-ship warhead's impact/delay exploder, per the loader's 4-value fuze.type vocabulary"},
+            "fuze.trigger_radius_m": {"value_basis": "engineering_estimate", "note": "0.0 consistent with a contact-fuze trigger radius"},
+            "fuze.delay_s": {"value_basis": "engineering_estimate", "note": "no public fuze timing data; engineering-estimate impact/delay fuze scaffold typical of a penetrating anti-ship warhead"},
+            "fuze.reliability": {"value_basis": "engineering_estimate", "note": "no public reliability figure; engineering-estimate scaffold value"}
+        },
+        "modeling_notes": ["No functional mount exists (mechanism gap); content-only for _real_world.weapon_inventory. Per OOB, DDG-51 Flight IIA (DDG-81 Winston S. Churchill) is NOT fitted with Harpoon; only Flight II (DDG-72 Mahan) may retain it, count uncertain."]
+    }
+}

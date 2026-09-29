@@ -1,0 +1,46 @@
+{
+    "name": "CSG_US_Oiler_Navigation_Radar",
+    "type": "Sensor",
+    "sensor": {
+        "type": "Radar",
+        "max_range": 36300.0,
+        "fov_deg": 360.0,
+        "scan_period": 3.0,
+        "detection_prob": 0.85,
+        "bearing_noise_std": 0.5,
+        "range_noise_std": 75.0,
+        "track_memory_s": 15.0,
+        "range_power": 2.0,
+        "aspect_influence": 0.0,
+        "doppler_notch_width": 0.0,
+        "antenna_height_m": 20.0,
+        "target_height_bias_m": 5.0,
+        "environment_domain": "SurfaceMaritime"
+    },
+    "_real_world": {
+        "class": "Civilian-grade navigation / surface-search radar",
+        "variant_scope": "T-AO-205 John Lewis class and T-AOE-6 Supply class fleet logistics ships (MSC civilian-crewed auxiliaries carry commercial-grade navigation radar, not a combat sensor suite).",
+        "hulls": ["T-AO-205 John Lewis (generic)", "T-AOE-6 Supply", "T-AOE-8 Arctic"],
+        "public_equipment": ["commercial navigation/surface-search radar"]
+    },
+    "_provenance": {
+        "modeling_note": "Reuses the repo's existing generic Civil_Navigation_Surface_Radar pattern as a distinct CSG-scoped record (rather than referencing the shared generic module directly) so the two CSG oiler/AOE records have their own sensor_ref under the csg/us subtree per the authoring standard's naming rule. No public sensor fit exists for the T-AO-205 or T-AOE-6 classes; range is the same radar-horizon engineering estimate as the repo's civilian navigation radar template (3.57*(sqrt(h1)+sqrt(h2)) km at 20 m antenna height vs a 5 m target), not a claimed instrumented maximum.",
+        "sources": ["csg-us-tao-navy-factfile", "csg-us-taoe-navy"],
+        "parameters": {
+            "sensor.type": {"value_basis": "engineering_estimate", "note": "commercial navigation set is a radar; Radar is the only matching engine sensor type"},
+            "sensor.max_range": {"value_basis": "proxy", "note": "copied from ships/modules/sensors/civil_navigation_surface_radar.json; radar-horizon engineering estimate (3.57*(sqrt(h1)+sqrt(h2)) km at 20 m antenna height vs a 5 m target), not an instrumented maximum"},
+            "sensor.fov_deg": {"value_basis": "engineering_estimate", "note": "rotating commercial navigation radar gives full 360-deg coverage; copied from civil_navigation_surface_radar.json template"},
+            "sensor.scan_period": {"value_basis": "proxy", "note": "copied unchanged from civil_navigation_surface_radar.json template"},
+            "sensor.detection_prob": {"value_basis": "proxy", "note": "copied unchanged from civil_navigation_surface_radar.json template"},
+            "sensor.bearing_noise_std": {"value_basis": "proxy", "note": "copied unchanged from civil_navigation_surface_radar.json template"},
+            "sensor.range_noise_std": {"value_basis": "proxy", "note": "copied unchanged from civil_navigation_surface_radar.json template"},
+            "sensor.track_memory_s": {"value_basis": "proxy", "note": "copied unchanged from civil_navigation_surface_radar.json template"},
+            "sensor.range_power": {"value_basis": "engineering_estimate", "note": "radar-equation exponent, standard engine default, copied from template"},
+            "sensor.aspect_influence": {"value_basis": "engineering_estimate", "note": "0.0 disables RCS aspect-angle modeling, copied from template"},
+            "sensor.doppler_notch_width": {"value_basis": "engineering_estimate", "note": "0.0: commercial nav radar has no MTI/doppler processing, copied from template"},
+            "sensor.antenna_height_m": {"value_basis": "proxy", "note": "no public mast height for T-AO-205/T-AOE-6; copied unchanged from civil_navigation_surface_radar.json template"},
+            "sensor.target_height_bias_m": {"value_basis": "proxy", "note": "copied unchanged from civil_navigation_surface_radar.json template"},
+            "sensor.environment_domain": {"value_basis": "engineering_estimate", "note": "surface/maritime domain selected for a shipborne navigation radar per authoring standard"}
+        }
+    }
+}

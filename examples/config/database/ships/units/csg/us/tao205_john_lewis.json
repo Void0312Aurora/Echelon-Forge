@@ -1,0 +1,162 @@
+{
+    "name": "CSG_US_T-AO-205_John_Lewis",
+    "type": "Ship",
+    "ship_platform": {
+        "displacement_light_kg": 0.0,
+        "displacement_full_load_kg": 49620000.0,
+        "length_m": 227.3,
+        "beam_m": 32.2,
+        "draft_m": 11.0,
+        "height_above_waterline_m": 28.0,
+        "max_speed_mps": 10.29,
+        "economical_speed_mps": 8.75,
+        "range_nm": 14000.0,
+        "range_speed_mps": 8.75,
+        "max_accel_mps2": 0.07,
+        "max_decel_mps2": 0.1,
+        "max_turn_rate_deg_s": 1.1,
+        "low_speed_turn_factor": 0.25,
+        "steerageway_speed_mps": 0.8,
+        "sea_state": 0.0,
+        "wave_heading_deg": 0.0,
+        "wave_period_s": 9.0,
+        "max_roll_deg_sea_state_6": 6.5,
+        "max_pitch_deg_sea_state_6": 2.5,
+        "added_resistance_fraction_sea_state_6": 0.1,
+        "crew": 127
+    },
+    "health": {
+        "current_hp": 49620.0,
+        "max_hp": 49620.0
+    },
+    "naval_stores": {
+        "fuel_units_current": 300.0,
+        "fuel_units_max": 300.0,
+        "missile_units_current": 0.0,
+        "missile_units_max": 0.0,
+        "dry_cargo_units_current": 40.0,
+        "dry_cargo_units_max": 40.0,
+        "can_receive_underway": false,
+        "can_provide_underway": true
+    },
+    "naval_logistics": {
+        "underway_replenishment_enabled": true,
+        "min_separation_m": 25.0,
+        "max_separation_m": 120.0,
+        "max_relative_speed_mps": 1.5,
+        "transfer_rate_fuel_units_per_s": 0.45,
+        "transfer_rate_missile_units_per_s": 0.0,
+        "transfer_rate_dry_cargo_units_per_s": 0.06
+    },
+    "sensor_ref": "CSG_US_Oiler_Navigation_Radar",
+    "has_command_link": true,
+    "command_link": {
+        "latency_s": 0.4,
+        "drop_prob": 0.0
+    },
+    "has_data_link": true,
+    "data_link_network_id": 1,
+    "damage_model": {
+        "hitboxes": [
+            {
+                "offset": [60.0, 0.0, 5.0],
+                "size": [75.0, 30.0, 16.0],
+                "armor": 0.0,
+                "systems": ["forward_cargo", "fuel_tanks_fwd"],
+                "components": [
+                    {"name": "fuel_cargo_tank_fwd", "system": "cargo_stowage"},
+                    {"name": "vertrep_pad", "system": "aviation_facilities"}
+                ]
+            },
+            {
+                "offset": [0.0, 0.0, 6.0],
+                "size": [76.0, 32.2, 18.0],
+                "armor": 0.0,
+                "systems": ["cargo_holds", "dry_stores", "cargo_transfer_rigs"],
+                "components": [
+                    {"name": "fuel_cargo_tank_mid", "system": "cargo_stowage"},
+                    {"name": "dry_stores_hold", "system": "cargo_stowage"},
+                    {"name": "underway_replenishment_rig_1", "system": "cargo_transfer"},
+                    {"name": "underway_replenishment_rig_2", "system": "cargo_transfer"}
+                ]
+            },
+            {
+                "offset": [-77.0, 0.0, 8.0],
+                "size": [50.0, 30.0, 22.0],
+                "armor": 0.0,
+                "systems": ["engineering", "bridge", "communications"],
+                "components": [
+                    {"name": "main_propulsion_diesel", "system": "propulsion"},
+                    {"name": "bridge_navigation", "system": "command"},
+                    {"name": "nixie_countermeasure_winch", "system": "countermeasures"}
+                ]
+            }
+        ]
+    },
+    "_real_world": {
+        "class": "John Lewis-class fleet oiler",
+        "ship": "USNS John Lewis (T-AO-205)",
+        "primary_role": "underway replenishment fleet oiler (fuel only, no ammunition), civilian-crewed Military Sealift Command auxiliary",
+        "public_equipment": [
+            "fuel underway replenishment capability, 25,782 m^3 fuel capacity",
+            "dry stores capacity 1,589-1,590 m^3",
+            "no ammunition cargo capacity",
+            "Nixie towed torpedo countermeasure",
+            "VERTREP pad, no embarked aircraft"
+        ]
+    },
+    "_provenance": {
+        "unit_conversions": [
+            "1 metric ton = 1000 kg",
+            "full-load displacement 49,620 t -> 49,620,000 kg (csg-us-tao205-navy, A)",
+            "length 227.3 m (csg-us-tao205-navy, A, given directly in meters)",
+            "beam 32.2 m (csg-us-tao205-navy, A, given directly in meters)",
+            "draft n/p; est 10.5-11.5 m band per OOB, 11.0 m midpoint used"
+        ],
+        "sources": [
+            "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_ford_20260928.md#tao205_john_lewis",
+            "csg-us-tao205-navy"
+        ],
+        "parameters": {
+            "ship_platform.displacement_light_kg": {"value_basis": "engineering_estimate", "note": "0.0: light displacement not sourced or estimated separately; only full-load displacement is used by the repo's health-scaling convention, consistent with T-AKE/T-AOE-6"},
+            "ship_platform.displacement_full_load_kg": {"value_basis": "sourced", "source_ids": ["csg-us-tao205-navy"], "tier": "A", "note": "49,620 t full-load displacement per OOB"},
+            "ship_platform.length_m": {"value_basis": "sourced", "source_ids": ["csg-us-tao205-navy"], "tier": "A", "note": "227.3 m given directly in meters per OOB"},
+            "ship_platform.beam_m": {"value_basis": "sourced", "source_ids": ["csg-us-tao205-navy"], "tier": "A", "note": "32.2 m given directly in meters per OOB"},
+            "ship_platform.draft_m": {"value_basis": "proxy", "source_ids": ["csg-us-tao205-navy"], "tier": "est", "note": "draft explicitly not public per OOB; 10.5-11.5 m estimate band given, 11.0 m midpoint used"},
+            "ship_platform.height_above_waterline_m": {"value_basis": "proxy", "note": "no public superstructure-height figure; engineering estimate proportionally scaled from the repo's T-AKE reference example's height for a comparable fleet-oiler hull form"},
+            "ship_platform.max_speed_mps": {"value_basis": "sourced", "source_ids": ["csg-us-tao205-navy"], "tier": "A", "note": "20 kt -> 10.29 m/s"},
+            "ship_platform.economical_speed_mps": {"value_basis": "proxy", "note": "no public economical/cruise speed figure; engineering estimate proportionally scaled below max_speed_mps consistent with the repo's T-AKE reference example's economical-speed ratio"},
+            "ship_platform.range_nm": {"value_basis": "proxy", "note": "no John Lewis-class-specific range figure found (2 targeted web searches returned no usable results); proxy scaled from the repo's T-AKE reference example's sourced 14,000 nm figure, since John Lewis-class oilers are designed for comparable long-endurance carrier-strike-group station-keeping. Corrects an earlier error in this record: a prior provenance note incorrectly claimed the T-AKE example itself uses range_nm=0.0, but the T-AKE reference example actually has a real sourced 14,000 nm figure; that claim is retracted and the value corrected here per repair instruction 3"},
+            "ship_platform.range_speed_mps": {"value_basis": "proxy", "note": "set equal to economical_speed_mps (8.75 m/s), consistent with how the T-AKE reference example pairs its range figure with a cruise/economical speed rather than max speed"},
+            "ship_platform.max_accel_mps2": {"value_basis": "engineering_estimate", "note": "no public acceleration figure; engineering estimate for a large fleet oiler's slow, heavy-hull acceleration response"},
+            "ship_platform.max_decel_mps2": {"value_basis": "engineering_estimate", "note": "no public deceleration figure; engineering estimate consistent with max_accel_mps2 for a large fleet oiler"},
+            "ship_platform.max_turn_rate_deg_s": {"value_basis": "engineering_estimate", "note": "no public turn-rate figure; engineering estimate for a large fleet oiler's limited maneuverability"},
+            "ship_platform.low_speed_turn_factor": {"value_basis": "engineering_estimate", "note": "standard engine maneuvering-model scaffold constant, not a sourced weapon/platform characteristic, shared convention across the packet's ship records"},
+            "ship_platform.steerageway_speed_mps": {"value_basis": "engineering_estimate", "note": "no public minimum-steerage-speed figure; engineering estimate typical of a large single/twin-screw auxiliary hull"},
+            "ship_platform.max_roll_deg_sea_state_6": {"value_basis": "engineering_estimate", "note": "no public seakeeping figure; engineering estimate for a large fleet oiler's roll response in heavy seas, consistent with the packet's other logistics-ship records"},
+            "ship_platform.max_pitch_deg_sea_state_6": {"value_basis": "engineering_estimate", "note": "no public seakeeping figure; engineering estimate consistent with max_roll_deg_sea_state_6"},
+            "ship_platform.added_resistance_fraction_sea_state_6": {"value_basis": "engineering_estimate", "note": "no public seakeeping figure; engineering estimate typical of a large displacement-hull auxiliary in heavy seas"},
+            "ship_platform.crew": {"value_basis": "sourced", "source_ids": ["csg-us-tao205-navy"], "tier": "A", "note": "125-129 civilian crew per OOB; 127 midpoint used"},
+            "naval_stores.fuel_units_current": {"value_basis": "engineering_estimate", "note": "loadout-abstraction scaffold value, not independently sourced beyond the OOB's qualitative full-capacity assumption at mission start"},
+            "naval_stores.fuel_units_max": {"value_basis": "proxy", "note": "25,782 m^3 fuel capacity is sourced (A), but no established units-per-m^3 conversion exists in the repo's naval_stores abstraction; 300 units chosen as an engineering-estimate scaffold consistent with the packet's other oiler/AOE records rather than a calibrated conversion"},
+            "naval_stores.dry_cargo_units_max": {"value_basis": "proxy", "note": "dry stores capacity 1,589-1,590 m^3 sourced (A) but no established units-per-m^3 conversion exists in the repo's naval_stores abstraction; 40 units chosen as a small fraction of the T-AKE's 220 dry_cargo_units_max (41,000t full-load reference), proportional engineering estimate not a calibrated conversion"},
+            "naval_stores.missile_units_max": {"value_basis": "sourced", "source_ids": ["csg-us-tao205-navy"], "tier": "A", "note": "explicitly 0: T-AO-205 carries no ammunition cargo per OOB, unlike the T-AKE/T-AOE classes"},
+            "naval_logistics.min_separation_m": {"value_basis": "engineering_estimate", "note": "standard engine underway-replenishment scaffold constant, shared convention across the packet's logistics-ship records, not independently sourced per hull"},
+            "naval_logistics.max_separation_m": {"value_basis": "engineering_estimate", "note": "standard engine underway-replenishment scaffold constant, same basis as min_separation_m"},
+            "naval_logistics.max_relative_speed_mps": {"value_basis": "engineering_estimate", "note": "standard engine underway-replenishment scaffold constant, same basis as min_separation_m"},
+            "naval_logistics.transfer_rate_fuel_units_per_s": {"value_basis": "engineering_estimate", "note": "no public replenishment-rig transfer-rate figure; engineering-estimate scaffold consistent with the packet's other logistics-ship records"},
+            "naval_logistics.transfer_rate_missile_units_per_s": {"value_basis": "sourced", "source_ids": ["csg-us-tao205-navy"], "tier": "A", "note": "explicitly 0: consistent with missile_units_max=0 since T-AO-205 carries no ammunition cargo"},
+            "naval_logistics.transfer_rate_dry_cargo_units_per_s": {"value_basis": "engineering_estimate", "note": "no public dry-cargo transfer-rate figure; engineering-estimate scaffold proportional to dry_cargo_units_max"},
+            "sensor_ref": {"value_basis": "proxy", "note": "references the newly-written CSG_US_Oiler_Navigation_Radar module (civilian-grade nav radar proxy); no CSG-specific radar model sourced for this hull beyond generic commercial navigation radar"},
+            "command_link.latency_s": {"value_basis": "engineering_estimate", "note": "standard engine command-link scaffold constant, shared convention across the packet's records, not independently sourced per hull"},
+            "command_link.drop_prob": {"value_basis": "engineering_estimate", "note": "standard engine command-link scaffold constant, same basis as latency_s"},
+            "data_link_network_id": {"value_basis": "engineering_estimate", "note": "scenario-assignment scaffold value (CSG network membership), not a sourced platform characteristic"}
+        },
+        "modeling_notes": [
+            "Health scaled as one HP per metric tonne of full-load displacement, consistent with the T-AKE example's convention.",
+            "REPAIR ROUND CORRECTION: an earlier version of this record set range_nm/range_speed_mps to 0.0 with a provenance note claiming this followed the T-AKE reference example's convention. That claim was factually wrong -- the T-AKE example actually has a real sourced range_nm=14000.0/range_speed_mps=10.29 -- so 0.0 was a loader-default left in place, not an intentional match to T-AKE. Corrected to range_nm=14000.0/range_speed_mps=8.75 (proxy, scaled from the T-AKE figure) per repair instruction 3.",
+            "No naval_weapon_system.mounts[] block and no embarked_air_ops: self-defense is Nixie countermeasure + crew-served small arms only (not modeled as mounts per task instruction); VERTREP pad exists but no aircraft are embarked, so no helo_unit_name is set.",
+            "damage_model.hitboxes[].components[] uses the corrected name/system-only DamageComponent schema (no hp field), consistent with the combatant ship records in this packet; the T-AKE reference example predates this correction and uses systems[] only, so components[] here is an addition beyond that pattern to satisfy the task's explicit requirement for named real-system components on every ship/sub record."
+        ]
+    }
+}
