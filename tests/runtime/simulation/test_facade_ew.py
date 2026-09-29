@@ -1,13 +1,48 @@
 from __future__ import annotations
 
 import ef_py
+import numpy as np
+from types import SimpleNamespace
 
 from python.runtime_bootstrap import resolve_repo_path
 from python.simulation.air.ew import AirScriptedEWController
+from python.tasking_contracts.air.ew.model import AirScriptedEWIntent
 from python.simulation.facade_batch import FacadeBatchBackend
 
 
 DATABASE = resolve_repo_path("examples", "config", "database")
+
+
+class _SinglePassEWModel:
+    dt = 0.05
+
+    def __init__(self) -> None:
+        self.calls = 0
+        self.last_intent = None
+
+    def reset(self, *, context) -> None:
+        del context
+        self.calls = 0
+        self.last_intent = None
+
+    def decide(self, *, observation, context, dt):
+        del observation, context, dt
+        self.calls += 1
+        self.last_intent = AirScriptedEWIntent(
+            threat_detected=False,
+            launch_warning=False,
+            track_locked=False,
+            strongest_signal=0.0,
+            strongest_bearing_deg=0.0,
+            countermeasure_plan="hold",
+            jammer_mode="unchanged",
+            action_owner_status="native_action_owner_required",
+            observation_version=f"call-{self.calls}",
+        )
+        return np.zeros((14,), dtype=np.float32)
+
+    def close(self) -> None:
+        pass
 
 
 def _setup(seeds: tuple[int, ...]) -> ef_py.BatchWorldSetupRequest:
@@ -110,3 +145,16 @@ def test_scripted_ew_controller_responds_to_native_launch_warning() -> None:
     finally:
         controller.close()
         backend.close()
+
+
+def test_scripted_ew_controller_reports_intent_from_same_decision_pass() -> None:
+    model = _SinglePassEWModel()
+    controller = AirScriptedEWController(model=model)
+    observation = SimpleNamespace(contacts=[], rwr_warnings=[])
+    instruments = SimpleNamespace()
+    controller.reset(observation=observation, instruments=instruments)
+    decision = controller.decide(observation=observation, instruments=instruments)
+    assert model.calls == 1
+    assert decision.intent is model.last_intent
+    assert decision.intent.observation_version == "call-1"
+    controller.close()

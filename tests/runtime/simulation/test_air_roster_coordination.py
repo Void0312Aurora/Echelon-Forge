@@ -80,6 +80,8 @@ def _run(seed: int) -> tuple[tuple[int | None, ...], tuple[int, ...], tuple[bool
             command.cmd_speed_mps = 180.0
             command.authorization_to_fire = True
             command.assigned_target_id = target_id
+            command.assigned_target_track_id = target_id
+            command.engagement_authority_holder_id = assignment.member_key[1]
             backend.submit_mission_commands({assignment.member_key: command})
             controller = AirScriptedEngagementController()
             controllers.append(controller)
@@ -157,6 +159,30 @@ def test_air_roster_coordinator_fails_closed_for_unauthorized_wing() -> None:
         assert assignments[0].authorization_to_fire is True
         assert assignments[1].authorization_to_fire is False
         assert assignments[0].authority_holder_id == blue_keys[0][1]
-        assert assignments[1].authority_holder_id == blue_keys[0][1]
+        assert assignments[1].authority_holder_id == 0
+
+        unprivileged = coordinator.assign_targets(
+            observations={key: current.observations[index] for index, key in enumerate(current.entity_keys)},
+            members={blue_keys[0]: "Lead", blue_keys[1]: "Wingman"},
+            candidate_target_ids=[key[1] for key in red_keys],
+        )
+        assert all(item.authorization_to_fire is False for item in unprivileged)
+        assert all(item.authority_holder_id == 0 for item in unprivileged)
+
+        wing_command = ef_py.MissionCommand()
+        wing_command.active = True
+        wing_command.command_code = 1
+        wing_command.assigned_target_id = int(assignments[1].target_id)
+        wing_command.authorization_to_fire = False
+        wing_command.engagement_authority_holder_id = 0
+        backend.submit_mission_commands({blue_keys[1]: wing_command})
+        fire = ef_py.PilotAction()
+        fire.active = True
+        fire.master_arm = True
+        fire.fire_weapon = True
+        fire.weapon_select_id = 1
+        backend.step({blue_keys[0]: hold, blue_keys[1]: fire, red_keys[0]: hold, red_keys[1]: hold})
+        packet = backend.export_engagement_events(entity_keys=(blue_keys[1],))
+        assert not any(bool(event.accepted) for event in packet.launch_events)
     finally:
         backend.close()

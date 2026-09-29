@@ -159,3 +159,36 @@ def test_facade_batch_requires_reset_and_rejects_invalid_roster() -> None:
             backend.reset()
     finally:
         backend.close()
+
+
+def test_facade_batch_seed_derives_one_seed_per_world() -> None:
+    backend = create_single_backend(
+        backend_id="facade_batch",
+        database_path=DATABASE,
+        setup_factory=_setup,
+        world_count=3,
+    )
+    try:
+        assert backend.seed(17) == (17, 18, 19)
+    finally:
+        backend.close()
+
+
+def test_facade_batch_multiworld_terminal_requires_world_qualified_ids() -> None:
+    backend = create_single_backend(
+        backend_id="facade_batch",
+        database_path=DATABASE,
+        setup_factory=_setup,
+        world_count=2,
+    )
+    try:
+        backend.seed(17)
+        snapshot = backend.reset()
+        with pytest.raises(ValueError, match="world-qualified"):
+            backend.evaluate_air_combat_terminal(
+                own_entity_ids=(snapshot.entity_keys[0][1],),
+                target_entity_ids=(snapshot.entity_keys[1][1],),
+                entity_keys=snapshot.entity_keys,
+            )
+    finally:
+        backend.close()

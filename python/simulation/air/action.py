@@ -53,6 +53,12 @@ def build_pilot_action(action: Any, *, action_mode: str = "full", instrument_sta
         pilot.fire_gun = bool(values[15] > 0.5)
         pilot.weapon_select_id = int(np.clip(float(values[16]) * 7.0, 0.0, 7.0))
     elif mode == "air_ew_hybrid_v1":
+        # EW hybrid v1 shares the combat-hybrid prefix: scan azimuth, scan
+        # elevation, then radar-active.  Keep the tail slots reserved for the
+        # countermeasure extension.
+        pilot.gear_handle = 0.0
+        pilot.flaps = 0.0
+        pilot.speedbrake = 0.0
         pilot.radar_scan_az = float(values[4]) * 60.0
         pilot.radar_scan_el = float(values[5]) * 30.0
         pilot.radar_active = bool(values[6] > 0.5)

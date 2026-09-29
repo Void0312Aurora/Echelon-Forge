@@ -3,7 +3,7 @@ from __future__ import annotations
 import ef_py
 
 from python.runtime_bootstrap import resolve_repo_path
-from python.simulation.air.engagement import AirEngagementFacts
+from python.simulation.air.engagement import AirEngagementFacts, AirScriptedEngagementController
 from python.simulation.air.runtime import AirEngagementRuntimeInput, AirScriptedEngagementRuntimeModel
 from python.simulation.facade_batch import FacadeBatchBackend
 from python.tasking_contracts.common.decision_runtime import (
@@ -64,7 +64,9 @@ def test_air_scripted_controller_uses_common_runtime_hold_and_replay_identity() 
             action_hold_s=0.5,
             authority_scope="air:engagement",
         ),
-        AirScriptedEngagementRuntimeModel(),
+            AirScriptedEngagementRuntimeModel(
+                controller=AirScriptedEngagementController(weapon_station_id=1)
+            ),
     )
     try:
         backend.seed(17)
@@ -82,6 +84,8 @@ def test_air_scripted_controller_uses_common_runtime_hold_and_replay_identity() 
         command.cmd_speed_mps = 180.0
         command.authorization_to_fire = True
         command.assigned_target_id = red_key[1]
+        command.assigned_target_track_id = red_key[1]
+        command.engagement_authority_holder_id = blue_key[1]
         facts = AirEngagementFacts(
             authorization_to_fire=True,
             target_contact_present=True,

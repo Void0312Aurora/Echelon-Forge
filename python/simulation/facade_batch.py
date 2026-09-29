@@ -157,10 +157,19 @@ class FacadeBatchBackend:
         self.submit_pilot_reports({key: value.pilot_report for key, value in decisions.items()})
         self.submit_mission_commands({key: value.mission_command for key, value in decisions.items()})
 
-    def apply_launch_requests(self, requests: Sequence[Any]) -> tuple[Any, ...]:
-        """Apply maintained engagement launch requests through the facade."""
+    def apply_launch_requests(
+        self,
+        requests: Sequence[Any],
+        *,
+        diagnostic_only: bool = False,
+    ) -> tuple[Any, ...]:
+        """Apply raw launch requests only for explicit diagnostics/tests."""
 
         self._require_ready()
+        if not diagnostic_only:
+            raise PermissionError(
+                "raw launch requests are diagnostic-only; use maintained pilot actions or commands"
+            )
         if not isinstance(requests, Sequence) or isinstance(requests, (str, bytes)):
             raise TypeError("facade batch launch requests require a sequence")
         return tuple(self.facade.apply_launch_requests_batch(list(requests)))
@@ -194,11 +203,23 @@ class FacadeBatchBackend:
     def evaluate_air_combat_terminal(
         self,
         *,
-        own_entity_ids: Sequence[int],
-        target_entity_ids: Sequence[int],
+        own_entity_ids: Sequence[int | EntityKey],
+        target_entity_ids: Sequence[int | EntityKey],
         entity_keys: Sequence[EntityKey] | None = None,
     ) -> Any:
         """Evaluate Air terminal state from the facade-owned event packet."""
+
+        if self.world_count > 1:
+            bare_ids = [
+                value
+                for values in (own_entity_ids, target_entity_ids)
+                for value in values
+                if not isinstance(value, (tuple, list)) or len(value) != 2
+            ]
+            if bare_ids:
+                raise ValueError(
+                    "facade batch multi-world terminal evaluation requires world-qualified entity keys"
+                )
 
         from .air.terminal import AirCombatTerminalEvaluator
 

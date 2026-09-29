@@ -3,8 +3,10 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 
 from python.mission_obs_taxonomy import mission_observation_field_index
+from python.simulation.air.engagement import AirEngagementFacts
 from python.simulation.air.observation import (
     AIR_SCRIPTED_MISSION_MODE,
     build_air_contact_matrix,
@@ -101,10 +103,19 @@ def test_air_observation_projection_pads_native_contacts_and_rwr() -> None:
 
 
 def test_air_observation_projection_accepts_declared_combat_facts() -> None:
+    command = SimpleNamespace(
+        authorization_to_fire=True,
+        assigned_target_id=0,
+        assigned_target_track_id=0,
+        assigned_target_source_id=0,
+        engagement_authority_holder_id=0,
+        engagement_authority_grantor_id=0,
+        roe_state=0,
+    )
     projected = build_air_scripted_observation(
         SimpleNamespace(contacts=[], rwr_warnings=[]),
         _instrument(),
-        None,
+        command,
         mode="air_combat_c2_roe_v2",
         mission_facts={
             "authorization_to_fire": 1.0,
@@ -121,3 +132,31 @@ def test_air_observation_projection_accepts_declared_combat_facts() -> None:
     assert mission[mission_observation_field_index("air_combat_c2_roe_v2", "target_contact_present")] == 1.0
     assert mission[mission_observation_field_index("air_combat_c2_roe_v2", "launch_window_open")] == 1.0
     assert mission[mission_observation_field_index("air_combat_c2_roe_v2", "target_range_m")] == 16000.0
+
+
+def test_air_observation_rejects_conflicting_command_owned_target_fact() -> None:
+    command = SimpleNamespace(assigned_target_id=42)
+    with pytest.raises(ValueError, match="assigned_target_id"):
+        build_air_mission_vector(
+            command,
+            mode="air_combat_c2_roe_v2",
+            mission_facts={"assigned_target_id": 43},
+        )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    (("shot_budget_remaining", -1.0), ("target_range_m", float("inf")), ("assigned_target_id", -2)),
+)
+def test_air_engagement_facts_reject_malformed_provider_values(field: str, value: float) -> None:
+    kwargs = {
+        "authorization_to_fire": False,
+        "target_contact_present": False,
+        "fire_mask_open": False,
+        "launch_window_open": False,
+        "quality_window_ready": False,
+        "shot_budget_remaining": 0.0,
+        field: value,
+    }
+    with pytest.raises(ValueError, match=field):
+        AirEngagementFacts(**kwargs)

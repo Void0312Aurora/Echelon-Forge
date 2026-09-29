@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ef_py
+import pytest
 
 from python.runtime_bootstrap import resolve_repo_path
 from python.simulation.facade_batch import FacadeBatchBackend
@@ -116,6 +117,10 @@ def test_facade_batch_routes_scripted_launch_and_engagement_event_packet() -> No
         packet = backend.export_engagement_events(entity_keys=(blue_key,))
         assert list(packet.launch_events)
         assert bool(packet.launch_events[-1].accepted) is True
+        with pytest.raises(PermissionError, match="diagnostic-only"):
+            backend.apply_launch_requests(
+                (_launch_request(red_key[1], blue_key[1], float(current.observations[0].sim_time)),)
+            )
     finally:
         backend.close()
 
@@ -144,6 +149,8 @@ def test_scripted_engagement_controller_reaches_native_fire_gate() -> None:
         command.cmd_speed_mps = 180.0
         command.authorization_to_fire = True
         command.assigned_target_id = red_key[1]
+        command.assigned_target_track_id = red_key[1]
+        command.engagement_authority_holder_id = blue_key[1]
         backend.submit_mission_commands({blue_key: command})
 
         facts = AirEngagementFacts(
@@ -208,6 +215,8 @@ def test_scripted_pilot_path_resolves_database_munition_and_native_effect() -> N
         command.cmd_speed_mps = 180.0
         command.authorization_to_fire = True
         command.assigned_target_id = red_key[1]
+        command.assigned_target_track_id = red_key[1]
+        command.engagement_authority_holder_id = blue_key[1]
         backend.submit_mission_commands({blue_key: command})
 
         facts = AirEngagementFacts(
@@ -292,6 +301,8 @@ def _run_direct_generic_terminal_episode(seed: int) -> tuple[int, object, object
         command.command_code = 2
         command.authorization_to_fire = True
         command.assigned_target_id = red_key[1]
+        command.assigned_target_track_id = red_key[1]
+        command.engagement_authority_holder_id = blue_key[1]
         backend.submit_mission_commands({blue_key: command})
         facts = AirEngagementFacts(
             authorization_to_fire=True,
@@ -388,6 +399,7 @@ def test_scripted_engagement_controller_blocks_repeat_fire_during_assessment() -
             "cmd_speed_mps": 180.0,
             "authorization_to_fire": True,
             "assigned_target_id": 9,
+            "assigned_target_track_id": 9,
         },
     )()
     facts = AirEngagementFacts(

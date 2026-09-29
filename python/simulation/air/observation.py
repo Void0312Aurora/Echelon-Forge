@@ -22,6 +22,17 @@ from python.mission_obs_taxonomy import (
 AIR_SCRIPTED_MISSION_MODE = MISSION_OBS_NAV_V2_COOPERATIVE_TAKEOFF_V1
 AIR_SCRIPTED_MAX_CONTACTS = 8
 AIR_SCRIPTED_MAX_RWR = 8
+_COMMAND_OWNED_MISSION_FIELDS = frozenset(
+    {
+        "authorization_to_fire",
+        "assigned_target_id",
+        "assigned_target_track_id",
+        "assigned_target_source_id",
+        "engagement_authority_holder_id",
+        "engagement_authority_grantor_id",
+        "roe_state",
+    }
+)
 
 
 def build_air_instrument_vector(
@@ -148,7 +159,27 @@ def build_air_mission_vector(
     set_field("form_offset_y_m", _field(command, "form_offset_y"))
     set_field("form_offset_z_m", _field(command, "form_offset_z"))
     for name, value in (mission_facts or {}).items():
-        set_field(str(name), value)
+        field_name = str(name)
+        if field_name in _COMMAND_OWNED_MISSION_FIELDS and command is not None:
+            command_value = _field(command, field_name)
+            numeric_command = _numeric(command_value)
+            numeric_fact = _numeric(value)
+            # Command fields remain the sole authority owner.  A duplicated
+            # fact is accepted only when it is exactly consistent, including
+            # the command's explicit zero/unset sentinel.
+            if not np.isclose(numeric_command, numeric_fact, rtol=0.0, atol=1.0e-6):
+                raise ValueError(
+                    f"mission fact {field_name!r} conflicts with command-owned value "
+                    f"{numeric_command!r}"
+                )
+            continue
+        if field_name in _COMMAND_OWNED_MISSION_FIELDS:
+            if abs(_numeric(value)) > 1.0e-12:
+                raise ValueError(
+                    f"mission fact {field_name!r} requires a maintained command owner"
+                )
+            continue
+        set_field(field_name, value)
     return vector
 
 
