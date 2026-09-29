@@ -7,6 +7,19 @@ import pytest
 from .helpers import *
 
 
+# Stable-identity package (SI-P4-B): the site-1 component-failure/fuze draw that decides
+# whether the E-3 target survives the 80-step window is now seeded from each participant's
+# `StableEntitySerial` rather than a raw Flecs id, so which draw a fixed seed lands on can
+# change. On most seeds the target is destroyed before or during the 80 steps, leaving
+# `_aircraft_damage_overlay` reading an inactive unit. K = 16 fixed seeds, derived from the
+# test's original seed (20260529).
+_PHASE2_FIRE_SUPPRESSION_SEED_BASE = 20260529
+_PHASE2_FIRE_SUPPRESSION_SEED_COUNT = 16
+_PHASE2_FIRE_SUPPRESSION_SEEDS = tuple(
+  _PHASE2_FIRE_SUPPRESSION_SEED_BASE + 97 * i for i in range(_PHASE2_FIRE_SUPPRESSION_SEED_COUNT)
+)
+
+
 class AircraftDamageRuntimeMixin:
   def test_structured_air_target_uses_damage_state_instead_of_hp_first_kill(self) -> None:
     sim = ef_py.SimulationKernel()
@@ -803,9 +816,23 @@ class AircraftDamageRuntimeMixin:
       )
 
   def test_phase2_fire_suppression_integrity_reduces_fire_cascade_growth(self) -> None:
-    def run_case(*, damage_suppression: bool) -> tuple[dict[str, float], dict[str, float]]:
+    """Fire-suppression integrity reduces fire-cascade growth, on seeds that reach it.
+
+    Stable-identity package (SI-P4-B): the site-1 component-failure/fuze draw is now seeded
+    from each participant's `StableEntitySerial` rather than a raw Flecs id, so which draw a
+    fixed seed lands on can change. On most seeds the E-3 target is destroyed before or during
+    the 80-step window, so `_aircraft_damage_overlay` reads an inactive unit; the test runs
+    the scenario over a fixed list of K = 16 seeds and only asserts the fire-suppression
+    property on seeds whose premise holds (the target survives both the intact and the
+    degraded run long enough for the overlay reads). Seeds whose premise fails are skipped
+    and counted, not silently ignored, and at least one seed must satisfy the premise.
+    """
+
+    def run_case(
+      *, seed: int, damage_suppression: bool
+    ) -> tuple[dict[str, float], dict[str, float]] | None:
       sim = ef_py.SimulationKernel()
-      sim.reset(20260529)
+      sim.reset(int(seed))
       self.assertTrue(sim.load_database(_DB_PATH))
       sim.set_time_step(0.5)
       attacker_id, target_id = _spawn_attacker_and_named_target(sim, "E-3_Sentry_AWACS")
@@ -843,27 +870,75 @@ class AircraftDamageRuntimeMixin:
           )
         )
       )
+      # The target may already be destroyed by the hits above (site-1 draw dependent), so the
+      # premise must gate the initial overlay read as well as the after-steps read.
+      if not bool(sim.is_unit_active(target_id)):
+        return None
       initial = _aircraft_damage_overlay(sim, target_id)
       for _ in range(80):
         sim.step()
-      return initial, _aircraft_damage_overlay(sim, target_id)
+      if not bool(sim.is_unit_active(target_id)):
+        return None
+      after = _aircraft_damage_overlay(sim, target_id)
+      return initial, after
 
-    intact_initial, intact_after = run_case(damage_suppression=False)
-    degraded_initial, degraded_after = run_case(damage_suppression=True)
-    intact_growth = intact_after["fire"] - intact_initial["fire"]
-    degraded_growth = degraded_after["fire"] - degraded_initial["fire"]
+    premise_failures: list[int] = []
+    premise_satisfied = 0
+    for seed in _PHASE2_FIRE_SUPPRESSION_SEEDS:
+      intact_case = run_case(seed=seed, damage_suppression=False)
+      degraded_case = run_case(
+        seed=seed, damage_suppression=True
+      )
+      if intact_case is None or degraded_case is None:
+        premise_failures.append(seed)
+        continue
+      premise_satisfied += 1
+      intact_initial, intact_after = intact_case
+      degraded_initial, degraded_after = degraded_case
 
-    self.assertAlmostEqual(intact_initial["fire_suppression"], 1.0, delta=1.0e-6)
-    self.assertLess(degraded_initial["fire_suppression"], intact_initial["fire_suppression"])
-    self.assertGreater(intact_initial["flammable_fluid"], 0.0)
-    self.assertGreater(degraded_initial["ignition_source"], intact_initial["ignition_source"])
-    self.assertGreater(intact_growth, 0.0)
-    self.assertGreater(degraded_growth, 0.0)
-    self.assertLess(degraded_after["fire"], 1.0)
-    self.assertLess(degraded_after["structure"], degraded_initial["structure"])
-    self.assertTrue(
-      all(0.0 <= value <= 1.0 for value in degraded_after.values()),
-      degraded_after,
+      intact_growth = intact_after["fire"] - intact_initial["fire"]
+      degraded_growth = degraded_after["fire"] - degraded_initial["fire"]
+
+      self.assertAlmostEqual(
+        intact_initial["fire_suppression"],
+        1.0,
+        delta=1.0e-6,
+        msg=f"seed {seed}: intact fire_suppression not 1.0",
+      )
+      self.assertLess(
+        degraded_initial["fire_suppression"],
+        intact_initial["fire_suppression"],
+        f"seed {seed}: degraded fire_suppression not less than intact",
+      )
+      self.assertGreater(
+        intact_initial["flammable_fluid"],
+        0.0,
+        f"seed {seed}: intact flammable_fluid not > 0.0",
+      )
+      self.assertGreater(
+        degraded_initial["ignition_source"],
+        intact_initial["ignition_source"],
+        f"seed {seed}: degraded ignition_source not greater than intact",
+      )
+      self.assertGreater(intact_growth, 0.0, f"seed {seed}: intact fire growth not > 0.0")
+      self.assertGreater(degraded_growth, 0.0, f"seed {seed}: degraded fire growth not > 0.0")
+      self.assertLess(degraded_after["fire"], 1.0, f"seed {seed}: degraded fire not < 1.0")
+      self.assertLess(
+        degraded_after["structure"],
+        degraded_initial["structure"],
+        f"seed {seed}: degraded structure did not decrease",
+      )
+      self.assertTrue(
+        all(0.0 <= value <= 1.0 for value in degraded_after.values()),
+        f"seed {seed}: {degraded_after}",
+      )
+
+    self.assertGreater(
+      premise_satisfied,
+      0,
+      "no seed among "
+      f"{_PHASE2_FIRE_SUPPRESSION_SEEDS} kept the E-3 target active through both the intact "
+      f"and degraded 80-step runs (premise failed on all seeds: {premise_failures})",
     )
 
   def test_phase2_fire_zone_scaffold_localizes_secondary_damage_paths(self) -> None:
