@@ -49,7 +49,7 @@ at dispatch; `n/a` means not yet dispatched.
 | `P0-A` | main thread | main thread / session model / high | Freeze scope, ladder, claim ceilings, and provenance policy. | this directory; naval owner README index | runtime code | doc link audit; bilingual audit | owner approves README, clusters, acceptance | first | 1 | accepted |
 | `S0-A` | future worker | moderate (public-source research) / sonnet for integration; research ran on default / medium | Order-of-battle research: both groups' ship, submarine, aircraft, weapon, and sensor lists with sources. | `docs/domains/naval/reviews/csg_order_of_battle_20260928/` | runtime content | provenance check: every row has source ID, tier, uncertainty | both sides' OOB tables complete | after `P0-A`; parallel with `S0-B` | 2 | accepted |
 | `S0-B` | main thread | moderate / sonnet / medium | Integrate [Geodetic Frame](../../../../../systems/physics/work/active/geodetic_frame/README.md): scenarios declare a geodetic anchor; OOB placement and ranges use the shared frame. | `scenarios/naval/csg/`; naval scenario tests | building the frame (owned by `systems/physics`) | scenario anchor tests | CSG scenarios place both groups through the shared frame | after Geodetic Frame `P3-B` accepted | 1 + 1 repair | planned |
-| `S0-C` | future worker | moderate / sonnet / medium | Named unit content for both groups from `S0-A`. | `examples/config/database/**` (ships, submarines, aircraft, weapons, sensors) | new mechanisms | content-compile tests; unit spawn tests | every OOB row spawns with provenance | after `S0-A` | 2 + 1 repair | planned |
+| `S0-C` | future worker | moderate / sonnet / medium for schema mapping and the four authoring packets (US naval, US air, PLAN naval, PLAN air); main thread integrates and fixes; no independent review (database content, not code) | Named unit content for both groups from `S0-A`, at full fidelity in one pass (owner decision `2026-09-29`): aircraft carry component damage models at the F-16C standard. A parameter without an `S0-A` or web source is a labelled `proxy` value with its reasoning, never a silent default. | `examples/config/database/**` (ships, submarines, aircraft, weapons, sensors) | new mechanisms | content-compile tests; unit spawn tests | every OOB row spawns with provenance | after `S0-A` | 2 + 1 repair | accepted `2026-09-30` (see S0-C Record) |
 | `S0-D` | future worker | moderate / sonnet / medium | Group-composition scenario schema plus `CSG-S0` named and mirror scenarios. | scenario loader schema, `scenarios/naval/csg/`, `tests/contracts/unit/naval/csg/` | motion | scenario contract runner | both variants load and spawn the full OOB | after `S0-C` | 2 | planned |
 | `S0-X` | main thread | high (stage acceptance) / main thread + opus reviewer / high | Accept `CSG-S0`; first throughput record. | stage acceptance record | — | stage validation plan | `G0` gate met | after `S0-B`, `S0-D` | 1 | planned |
 | `S1-A` | future worker | n/a | Group formation and screen geometry; route following. | naval command/formation components and systems | fleet doctrine beyond formation | formation-keeping tests | formation holds under turns | after `S0-X` | 2 + 1 repair | planned |
@@ -87,6 +87,55 @@ at dispatch; `n/a` means not yet dispatched.
 | `S6-B` | future worker | n/a | Freeze reserved RL observation, action, and termination-event boundaries; scripted controller exercises them. | boundary docs; adapter seams | training | boundary tests | boundaries exercised end-to-end | after `S6-A` | 2 | planned |
 | `S6-X` | main thread | n/a | Accept `CSG-S6` named and mirror. | stage acceptance record | — | stage validation plan | `G6` gate met | after `S6-A..B` | 1 | planned |
 | `P5-A` | main thread | n/a | Close the package; sync indexes; archive. | this directory; naval owner README | late implementation | doc audits | acceptance record complete | after `S6-X` | 1 | planned |
+
+## S0-C Record (`2026-09-30`)
+
+Commits `be628032`..`e3e192dd` on `work/naval-mechanisms`: 115 records,
+about 18,500 lines of database JSON under `examples/config/database/**/csg/{us,cn}/`.
+No runtime code changed.
+
+| Family | US (Ford CSG) | PLAN (Fujian group) |
+| --- | --- | --- |
+| Ships and submarines | CVN-78, DDG-51 Flight IIA and II, Virginia Block III/IV, T-AO-205, T-AOE-6 (branch) | Fujian, Type 055, 052D, 054A, 054B (branch), 093B, 093A, 901, 903A (branch) |
+| Aircraft | F/A-18E/F Block III, EA-18G, E-2D, MH-60R, MH-60S, C-2A, F-35C (branch), CMV-22B (branch) | J-35, J-15T, J-15D, KJ-600, Z-20F, Z-20J, GJ-21 (branch) |
+| Weapons | SM-2, SM-6, ESSM, RAM, Tomahawk TLAM and MST, Harpoon (ship and air), Mk 48, Mk 54, VLA, AIM-120D, AIM-9X, LRASM, AARGM, Hellfire | YJ-18A, YJ-20, YJ-83, HHQ-9B, HHQ-16, HHQ-10, Yu-6, Yu-7, Yu-11, CY-5, PL-15, PL-10, PL-17, YJ-12, YJ-83K, YJ-15, light ASM |
+
+Rules the content follows (authoring standard, scratch
+`_csg_research_scratch/s0c/`):
+
+- every scalar runtime field carries a `_provenance.parameters` entry marked
+  `sourced`, `engineering_estimate`, or `proxy` with its source or reasoning;
+- every damage-model component `system` tag routes to a damage axis;
+- aircraft carry component damage models at the F-16C standard; ships and
+  submarines carry explicit compartment hitboxes;
+- `vls_sam` mounts hold SAM rounds only, one mount per SAM type with that
+  missile's own envelope, because the runtime fires the first ready `vls_sam`
+  mount and its envelope overrides the missile record;
+- anti-ship, land-attack, ASW-rocket, and torpedo loads are
+  `content_only_no_mechanism` in `_real_world.weapon_inventory` until `CSG-S4`
+  and `CSG-U3`; carrier deck-cycle data sits in `_real_world.aviation_facilities`
+  until `CSG-S2`;
+- each sensor is listed once (the factory attaches `sensor_refs` and then
+  `sensor_ref` without de-duplication).
+
+Validation: `check_units.py` (load, unique names, resolved refs, full
+provenance coverage, routed components, spawn) 115 passed; naval runtime tests
+73 passed; HEI full regression at `4fb66f35` 1511 passed with the three
+inherited reds. No independent review: the review threshold counts code logic
+only (owner decision `2026-09-30`).
+
+Residuals for later clusters:
+
+- highest-risk proxies: J-35 frontal RCS, GJ-21 engine (reuses WS-10H for a
+  WS-13-class UCAV), the Z-20F light ASM, YJ-15 range, VLS SAM speeds and
+  CIWS ranges on both sides (mostly not public);
+- `select_ready_vls_mount` ignores target range, so layered air defence is not
+  modelled (`CSG-S4`);
+- `vls_sam` `hit_probability` and `damage_per_hit` are not read on the missile
+  path, and a missile-capable CIWS has Pk 1.0 inside 0.75 of its range
+  (engagement adjudication owner, `CSG-S4`);
+- the scratch authoring standard and `check_units.py` are not yet repository
+  tools; promoting the check to a content test belongs to `S0-D`.
 
 ## Dispatch Rules
 

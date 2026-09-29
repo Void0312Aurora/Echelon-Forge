@@ -4,7 +4,7 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/domains/naval/work/active/carrier_strike_group_engagement/carrier_strike_group_engagement_current_status_20260928.md`
 Owner: `domains/naval`
-Last verified: `2026-09-29`
+Last verified: `2026-09-30`
 
 Status: `2026-09-28` planning baseline for
 [Carrier Strike Group Engagement](README.md). This is the first checkpoint; there
@@ -28,9 +28,9 @@ Measured on branch `work/naval-mechanisms` at `5fa7fc9e` (rebased on
 
 | Surface | State | Evidence | Gap against this package |
 | --- | --- | --- | --- |
-| Named naval platforms | partial | 5 ship units in `examples/config/database/ships/units/` | no carrier, cruiser, Type 055/052D, SSN, or Chinese replenishment ship |
-| Carrier aircraft | absent | aircraft units: F-16C, Su-35S, E-3, MQ-9, MH-60R MVP | no F/A-18E/F, F-35C, EA-18G, E-2D, J-15T, J-35, KJ-600, Z-20 |
-| Naval weapons | partial | VLS-SAM, Mk45, Phalanx mounts | no anti-ship missile, named SAM family, or torpedo |
+| Named naval platforms | complete for `CSG-S0` (`S0-C`, `2026-09-30`) | 15 ship and submarine classes under `examples/config/database/ships/units/csg/` | anti-ship, torpedo, and deck-cycle loads are content-only until `CSG-S2`/`S4`/`U3` |
+| Carrier aircraft | complete for `CSG-S0` | 16 types under `examples/config/database/aircraft/units/csg/`, each with a component damage model | no deck cycle (`CSG-S2`) |
+| Naval weapons | records complete; mechanisms partial | 33 weapon records; SAM, gun, and CIWS mounts function | anti-ship, land-attack, ASW-rocket, torpedo mechanisms absent (`CSG-S4`, `CSG-U3`) |
 | World frame | geodetic core, sensing horizon, scenario anchor | `src/components/physics/geodesy.h`; every non-sonar sensor and the data link are gated on the smooth-earth horizon (`P3-A`); scenarios declare `environment.geodetic_anchor` and EGI reads it (`P3-B`, `2026-09-29`) | terrain LOS has no earth bulge; `P4-A` regression pending |
 | Ship motion | kinematic | `src/systems/domains/naval/ship_motion_system.h` | no turning circle, route following, or damage coupling |
 | Group command | single screen station | `NavalCommandIntent` | no formation or group command hierarchy |
@@ -88,8 +88,9 @@ its root filesystem is 91 % full.
    `P3-A` moves surface detection to the curvature horizon (SPY-1D against a
    surface target: 43.9 km + declared ducting, not the configured 185 km), and
    `P3-B` lets CSG scenarios declare their geodetic anchor.
-3. `S0-C` unit content and `S0-D` scenarios, then `S0-B` frame integration,
-   then `S0-X`.
+3. `S0-C` accepted `2026-09-30` (115 records; see the task clusters' S0-C
+   Record). Next: `S0-D` scenarios (design in progress), then `S0-B` frame
+   integration, then `S0-X`.
 
 ## Overclaim Refusals
 
