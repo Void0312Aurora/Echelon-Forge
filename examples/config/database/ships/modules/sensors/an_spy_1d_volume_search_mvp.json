@@ -19,7 +19,6 @@
         "antenna_height_m": 32.0,
         "target_height_bias_m": 25.0,
         "environment_domain": "SurfaceMaritime",
-        "enforce_radar_horizon": true,
         "sea_clutter_enabled": false,
         "enable_ducting": true,
         "ducting_gain_factor": 1.15,

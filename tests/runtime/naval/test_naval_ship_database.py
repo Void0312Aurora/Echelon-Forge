@@ -109,11 +109,13 @@ class NavalShipDatabaseTests(unittest.TestCase):
       vy=10.29,
       vz=0.0,
     )
+    # SLQ-32 (loader-default 10 m mount) against the emitter's 25 m SPS-67
+    # antenna has a 33.6 km smooth-earth radio horizon at 4/3 earth.
     emitter = kernel.spawn_unit(
       ef_py.Side.Red,
       "DDG-51_Flight_I_USS_Arleigh_Burke",
       self._OPEN_WATER_X,
-      self._OPEN_WATER_Y + 80_000.0,
+      self._OPEN_WATER_Y + 30_000.0,
       0.0,
       heading=180.0,
       pitch=0.0,

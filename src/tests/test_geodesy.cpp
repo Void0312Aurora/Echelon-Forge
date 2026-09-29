@@ -4,6 +4,7 @@
 // implementation under test:
 //   * horizon distance sqrt(2 R h + h^2) and the 4/3 effective radius
 //     (ITU-R P.834);
+//   * the optical sea horizon of NGA Pub. No. 9 (Bowditch), Table 12;
 //   * one degree of arc on the IUGG mean sphere = R * pi / 180;
 //   * quarter, third, and half great circles (pi R / 2, pi R / 3, pi R);
 //   * azimuthal-equidistant identity: distance and bearing from the anchor are
@@ -16,6 +17,7 @@
 #include <cmath>
 #include <initializer_list>
 #include <numbers>
+#include <utility>
 
 namespace {
 
@@ -130,6 +132,41 @@ TEST_SUITE("geodesy") {
         CHECK(geodesy::smooth_earth_line_of_sight(re, h_a, h_b, 0.0));
         // Surface to surface is blocked at any positive separation.
         CHECK_FALSE(geodesy::smooth_earth_line_of_sight(re, 0.0, 0.0, 1000.0));
+    }
+
+    TEST_CASE("two-way horizon arc is the exact boundary of smooth-earth line of sight") {
+        const geodesy::EarthModel earth;
+        const double re = geodesy::effective_radius_m(earth, geodesy::kStandardRefractionFactor);
+        for (const auto &h : {std::pair{32.0, 25.0}, std::pair{5.0, 45.0}, std::pair{20.0, 10000.0},
+                              std::pair{0.0, 30.0}}) {
+            const double arc = geodesy::two_way_horizon_arc_m(re, h.first, h.second);
+            // One metre either side of the boundary; a relative step would fall
+            // below double resolution at the tangent point when one height is 0.
+            CHECK(geodesy::smooth_earth_line_of_sight(re, h.first, h.second, arc - 1.0));
+            CHECK_FALSE(geodesy::smooth_earth_line_of_sight(re, h.first, h.second, arc + 1.0));
+            // The arc and the tangent-length sum differ only at second order in h / Re.
+            CHECK(arc == doctest::Approx(geodesy::two_way_horizon_distance_m(re, h.first, h.second))
+                             .epsilon(1e-3));
+        }
+        CHECK(geodesy::two_way_horizon_arc_m(re, 0.0, 0.0) == doctest::Approx(0.0));
+    }
+
+    TEST_CASE("optical refraction factor reproduces Bowditch Table 12 sea-horizon distances") {
+        // NGA Pub. No. 9, Table 12 "Distance of the Horizon": 100 ft -> 11.7 nmi,
+        // 120 ft -> 12.8 nmi, 200 ft -> 16.5 nmi (tabulated to 0.1 nmi).
+        const geodesy::EarthModel earth;
+        const double re =
+            geodesy::effective_radius_m(earth, geodesy::kStandardOpticalRefractionFactor);
+        constexpr double kFootM = 0.3048;
+        constexpr double kNauticalMileM = 1852.0;
+        for (const auto &row :
+             {std::pair{100.0, 11.7}, std::pair{120.0, 12.8}, std::pair{200.0, 16.5}}) {
+            const double d_nmi =
+                geodesy::horizon_distance_m(re, row.first * kFootM) / kNauticalMileM;
+            CHECK(std::abs(d_nmi - row.second) <= 0.05);
+        }
+        // The optical horizon is shorter than the 4/3 radio horizon.
+        CHECK(geodesy::kStandardOpticalRefractionFactor < geodesy::kStandardRefractionFactor);
     }
 
     TEST_CASE("earth bulge at the midpoint equals d^2 / (8 R)") {
