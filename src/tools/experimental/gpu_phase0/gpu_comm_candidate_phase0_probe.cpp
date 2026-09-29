@@ -27,8 +27,8 @@ struct Args {
     int seed = 7;
 };
 
-int parse_int(const char* value, const char* name) {
-    char* end = nullptr;
+int parse_int(const char *value, const char *name) {
+    char *end = nullptr;
     const long parsed = std::strtol(value, &end, 10);
     if (end == value || *end != '\0') {
         throw std::invalid_argument(std::string("invalid integer for ") + name);
@@ -36,8 +36,8 @@ int parse_int(const char* value, const char* name) {
     return static_cast<int>(parsed);
 }
 
-double parse_double(const char* value, const char* name) {
-    char* end = nullptr;
+double parse_double(const char *value, const char *name) {
+    char *end = nullptr;
     const double parsed = std::strtod(value, &end);
     if (end == value || *end != '\0') {
         throw std::invalid_argument(std::string("invalid float for ") + name);
@@ -45,11 +45,11 @@ double parse_double(const char* value, const char* name) {
     return parsed;
 }
 
-Args parse_args(int argc, char** argv) {
+Args parse_args(int argc, char **argv) {
     Args args{};
     for (int i = 1; i < argc; ++i) {
         const std::string flag = argv[i];
-        auto require_value = [&](const char* name) -> const char* {
+        auto require_value = [&](const char *name) -> const char * {
             if (i + 1 >= argc) {
                 throw std::invalid_argument(std::string("missing value for ") + name);
             }
@@ -68,20 +68,21 @@ Args parse_args(int argc, char** argv) {
         } else if (flag == "--bucket-count") {
             args.bucket_count = parse_int(require_value("--bucket-count"), "--bucket-count");
         } else if (flag == "--bucket-capacity") {
-            args.bucket_capacity = parse_int(require_value("--bucket-capacity"), "--bucket-capacity");
+            args.bucket_capacity =
+                parse_int(require_value("--bucket-capacity"), "--bucket-capacity");
         } else if (flag == "--seed") {
             args.seed = parse_int(require_value("--seed"), "--seed");
         } else if (flag == "--help" || flag == "-h") {
-            std::cout
-                << "Usage: ef_gpu_comm_candidate_phase0_probe [options]\n"
-                << "  --worlds N             worlds in batch (default 16)\n"
-                << "  --nodes N              datalink nodes per world (default 1024)\n"
-                << "  --networks N           network partitions per world (default 2)\n"
-                << "  --cell-size X          grid cell size meters (default 10000)\n"
-                << "  --max-range-km X       max link range km (default 250)\n"
-                << "  --bucket-count N       hash bucket count (default 32768)\n"
-                << "  --bucket-capacity N    entries per bucket before overflow fallback (default 64)\n"
-                << "  --seed N               rng seed (default 7)\n";
+            std::cout << "Usage: ef_gpu_comm_candidate_phase0_probe [options]\n"
+                      << "  --worlds N             worlds in batch (default 16)\n"
+                      << "  --nodes N              datalink nodes per world (default 1024)\n"
+                      << "  --networks N           network partitions per world (default 2)\n"
+                      << "  --cell-size X          grid cell size meters (default 10000)\n"
+                      << "  --max-range-km X       max link range km (default 250)\n"
+                      << "  --bucket-count N       hash bucket count (default 32768)\n"
+                      << "  --bucket-capacity N    entries per bucket before overflow fallback "
+                         "(default 64)\n"
+                      << "  --seed N               rng seed (default 7)\n";
             std::exit(0);
         } else {
             throw std::invalid_argument("unknown flag: " + flag);
@@ -113,11 +114,14 @@ struct GeneratedBatch {
     std::vector<gpu::InteractionQueryPacked> queries;
 };
 
-GeneratedBatch make_batch(const Args& args) {
+GeneratedBatch make_batch(const Args &args) {
     GeneratedBatch batch{};
-    batch.nodes.reserve(static_cast<std::size_t>(args.worlds) * static_cast<std::size_t>(args.nodes));
-    batch.entities.reserve(static_cast<std::size_t>(args.worlds) * static_cast<std::size_t>(args.nodes));
-    batch.queries.reserve(static_cast<std::size_t>(args.worlds) * static_cast<std::size_t>(args.nodes));
+    batch.nodes.reserve(static_cast<std::size_t>(args.worlds) *
+                        static_cast<std::size_t>(args.nodes));
+    batch.entities.reserve(static_cast<std::size_t>(args.worlds) *
+                           static_cast<std::size_t>(args.nodes));
+    batch.queries.reserve(static_cast<std::size_t>(args.worlds) *
+                          static_cast<std::size_t>(args.nodes));
 
     std::mt19937 rng(static_cast<std::uint32_t>(args.seed));
     std::uniform_real_distribution<double> pos_xy(-180000.0, 180000.0);
@@ -162,13 +166,14 @@ GeneratedBatch make_batch(const Args& args) {
     return batch;
 }
 
-std::vector<std::uint32_t> compute_comm_exact_reference(const GeneratedBatch& batch, const Args& args) {
+std::vector<std::uint32_t> compute_comm_exact_reference(const GeneratedBatch &batch,
+                                                        const Args &args) {
     const std::size_t words_per_query = gpu::interaction_broadphase_word_count(args.nodes);
     std::vector<std::uint32_t> out(batch.nodes.size() * words_per_query, 0u);
     for (std::size_t sender_idx = 0; sender_idx < batch.nodes.size(); ++sender_idx) {
-        const auto& sender = batch.nodes[sender_idx];
-        auto* dst = out.data() + sender_idx * words_per_query;
-        for (const auto& receiver : batch.nodes) {
+        const auto &sender = batch.nodes[sender_idx];
+        auto *dst = out.data() + sender_idx * words_per_query;
+        for (const auto &receiver : batch.nodes) {
             if (receiver.world_index != sender.world_index) {
                 continue;
             }
@@ -199,7 +204,7 @@ std::vector<std::uint32_t> compute_comm_exact_reference(const GeneratedBatch& ba
     return out;
 }
 
-std::size_t popcount_words(const std::vector<std::uint32_t>& words) {
+std::size_t popcount_words(const std::vector<std::uint32_t> &words) {
     std::size_t total = 0;
     for (const auto word : words) {
         total += static_cast<std::size_t>(__builtin_popcount(word));
@@ -213,10 +218,8 @@ struct CompareSummary {
     std::size_t missing_pairs = 0;
 };
 
-CompareSummary compare_superset(
-    const std::vector<std::uint32_t>& reference_bits,
-    const std::vector<std::uint32_t>& gpu_bits
-) {
+CompareSummary compare_superset(const std::vector<std::uint32_t> &reference_bits,
+                                const std::vector<std::uint32_t> &gpu_bits) {
     CompareSummary summary{};
     if (reference_bits.size() != gpu_bits.size()) {
         throw std::runtime_error("bitset size mismatch");
@@ -230,9 +233,9 @@ CompareSummary compare_superset(
     return summary;
 }
 
-}  // namespace
+} // namespace
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     try {
         const Args args = parse_args(argc, argv);
         const auto device = gpu::probe_device();
@@ -247,32 +250,29 @@ int main(int argc, char** argv) {
         std::cout << "GPU Communication Candidate Phase-0 Probe\n";
         std::cout << "=========================================\n";
         std::cout << "CUDA built: " << (device.cuda_runtime_built ? "yes" : "no") << '\n';
-        std::cout << "CUDA runtime available: " << (device.cuda_runtime_available ? "yes" : "no") << '\n';
-        std::cout << "Worlds: " << args.worlds
-                  << ", nodes/world: " << args.nodes
+        std::cout << "CUDA runtime available: " << (device.cuda_runtime_available ? "yes" : "no")
+                  << '\n';
+        std::cout << "Worlds: " << args.worlds << ", nodes/world: " << args.nodes
                   << ", networks/world: " << args.networks << "\n\n";
 
         const auto cpu_start = std::chrono::steady_clock::now();
         const auto cpu_reference = compute_comm_exact_reference(batch, args);
         const auto cpu_end = std::chrono::steady_clock::now();
-        const double cpu_ms = std::chrono::duration<double, std::milli>(cpu_end - cpu_start).count();
+        const double cpu_ms =
+            std::chrono::duration<double, std::milli>(cpu_end - cpu_start).count();
 
-        (void)gpu::build_interaction_broadphase_experiment_batch(batch.entities, batch.queries, config);
-        (void)gpu::build_interaction_broadphase_experiment_batch_device_resident(batch.entities, batch.queries, config);
+        (void)gpu::build_interaction_broadphase_experiment_batch(batch.entities, batch.queries,
+                                                                 config);
+        (void)gpu::build_interaction_broadphase_experiment_batch_device_resident(
+            batch.entities, batch.queries, config);
 
         const auto gpu_host = gpu::build_interaction_broadphase_experiment_batch(
-            batch.entities,
-            batch.queries,
-            config
-        );
+            batch.entities, batch.queries, config);
         const auto host_stats = gpu::last_interaction_broadphase_stats();
         const auto compare = compare_superset(cpu_reference, gpu_host);
 
         const bool device_ok = gpu::build_interaction_broadphase_experiment_batch_device_resident(
-            batch.entities,
-            batch.queries,
-            config
-        );
+            batch.entities, batch.queries, config);
         const auto device_stats = gpu::last_interaction_broadphase_stats();
 
         std::cout << std::fixed << std::setprecision(4);
@@ -292,18 +292,19 @@ int main(int argc, char** argv) {
         std::cout << "Reference candidate pairs: " << compare.reference_pairs << "\n";
         std::cout << "GPU candidate pairs: " << compare.gpu_pairs << "\n";
         std::cout << "Missing reference pairs: " << compare.missing_pairs << "\n";
-        std::cout << "Overflow buckets / queries: "
-                  << host_stats.overflow_bucket_count << " / " << host_stats.overflow_query_count << "\n";
+        std::cout << "Overflow buckets / queries: " << host_stats.overflow_bucket_count << " / "
+                  << host_stats.overflow_query_count << "\n";
         if (compare.reference_pairs > 0) {
             std::cout << "Expansion factor: "
-                      << (static_cast<double>(compare.gpu_pairs) / static_cast<double>(compare.reference_pairs))
+                      << (static_cast<double>(compare.gpu_pairs) /
+                          static_cast<double>(compare.reference_pairs))
                       << "x\n";
         }
         if (compare.missing_pairs != 0) {
             return 2;
         }
         return 0;
-    } catch (const std::exception& ex) {
+    } catch (const std::exception &ex) {
         std::cerr << "error: " << ex.what() << '\n';
         return 1;
     }
