@@ -22,8 +22,6 @@ import re
 import textwrap
 from pathlib import Path
 
-import pytest
-
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 GUARD_SCAN_ROOTS = ("src/core", "src/models", "src/systems", "src/components")
@@ -153,9 +151,10 @@ def _guard_offending_files(root: Path) -> dict[str, list[str]]:
   return offenders
 
 
-# SI-P3 landed the guard before the sites were converted (Phase Plan order): it is committed
-# first as a strict xfail naming the exact files it flags today, then the xfail is removed once
-# sites 1-7, the ship-motion phase and the five private copies are all converted (P3 exit).
+# SI-P3 landed the guard before the sites were converted (Phase Plan order), first as a strict
+# xfail naming the exact files it flagged then. Sites 1-7, the ship-motion phase and the five
+# private copies are now all converted (P3 exit), so the guard is green for real; this constant
+# is kept as the historical record of what P3 started from.
 _PRE_CONVERSION_KNOWN_OFFENDERS = frozenset(
   {
     "src/core/engine/simulation_kernel_command_api.cpp",
@@ -170,22 +169,8 @@ _PRE_CONVERSION_KNOWN_OFFENDERS = frozenset(
 )
 
 
-@pytest.mark.xfail(
-  strict=True,
-  reason=(
-    "SI-P3 (docs/architecture/work/active/stable_entity_identity): the guard lands before "
-    "the draw sites are converted. It flags exactly the 8 known pre-conversion files "
-    f"{sorted(_PRE_CONVERSION_KNOWN_OFFENDERS)}. Remove this xfail once sites 1-7, the "
-    "ship-motion phase and the five private splitmix/uniform copies are all converted."
-  ),
-)
 def test_stochastic_draw_guard_flags_no_known_site() -> None:
   offenders = _guard_offending_files(REPO_ROOT)
-  assert offenders.keys() == _PRE_CONVERSION_KNOWN_OFFENDERS, (
-    "the pre-conversion offender set drifted from the recorded set; update "
-    "_PRE_CONVERSION_KNOWN_OFFENDERS only if a real new site appeared, and re-check the xfail "
-    f"reason. Offenders now: {sorted(offenders)}"
-  )
   assert offenders == {}, (
     "the stochastic-draw guard (Decision 5) still flags maintained source outside "
     f"stochastic_draw.h: {offenders}. Every draw site must go through "
