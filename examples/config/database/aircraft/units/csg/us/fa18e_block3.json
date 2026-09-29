@@ -1,0 +1,527 @@
+{
+    "name": "CSG_US_FA-18E_Block_III",
+    "type": "Aircraft",
+    "airframe": {
+        "empty_mass_kg": 14552.0,
+        "max_fuel_kg": 6668.0,
+        "drag_coefficient": 0.021,
+        "reference_area": 46.5,
+        "length_m": 18.31,
+        "wingspan_m": 13.62,
+        "height_m": 4.88,
+        "configuration": "Conventional"
+    },
+    "damage_model": {
+        "vulnerability": {
+            "synthetic": true,
+            "calibrated": false,
+            "pk_authority": false,
+            "deterministic_fuze_authority": false,
+            "provenance": "CSG S0-C synthetic carrier-fighter vulnerability scaffold (packet 2, solo worker); geometry scaled from real F/A-18E dimensions, mechanism thresholds proxied from the repo F-16C_Block50 template; requires calibration before deterministic fuze/Pk claims",
+            "evidence_dataset_ref": "",
+            "calibration_status": "unvalidated",
+            "blast_scale": 1.05,
+            "fragmentation_scale": 1.0,
+            "continuous_rod_scale": 1.15,
+            "hit_to_kill_scale": 1.25,
+            "nose_aspect_scale": 1.08,
+            "beam_aspect_scale": 1.15,
+            "tail_aspect_scale": 0.92,
+            "high_closure_scale": 1.08,
+            "low_closure_scale": 0.88,
+            "near_miss_scale": 0.84,
+            "direct_hit_scale": 1.0
+        },
+        "hitboxes": [
+            {
+                "offset": [6.8, 0.0, 0.0],
+                "size": [5.2, 1.2, 1.3],
+                "armor": 5.0,
+                "systems": ["radar", "cockpit", "avionics"],
+                "components": [
+                    {
+                        "name": "apg79_aesa_array",
+                        "system": "radar",
+                        "offset": [8.2, 0.0, 0.0],
+                        "size": [1.0, 0.7, 0.35],
+                        "armor": 3.0,
+                        "threshold_scale": 1.28,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.28, "blast_fragmentation": 1.18, "continuous_rod": 0.90, "hit_to_kill": 1.35},
+                        "redundancy_group_id": "nose_fire_control_radar",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "avionics", "target_system": "avionics", "edge_type": "generic", "scale": 0.70, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"},
+                            {"system": "mission_systems", "target_system": "mission_systems", "edge_type": "data_path", "scale": 0.60, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "forward_cockpit_crew_station",
+                        "system": "cockpit",
+                        "offset": [6.2, 0.0, 0.15],
+                        "size": [1.9, 1.1, 1.0],
+                        "armor": 5.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.25, "blast_fragmentation": 1.15, "continuous_rod": 1.05, "hit_to_kill": 1.35},
+                        "redundancy_group_id": "cockpit_crew_station",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "canopy_surface_component",
+                        "system": "cockpit",
+                        "offset": [4.3, 0.0, -0.30],
+                        "size": [1.8, 0.85, 0.4],
+                        "armor": 2.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 0.85, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "canopy_surface_receiver",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 0.6,
+                        "dependencies": [
+                            {"system": "cockpit", "target_system": "cockpit", "edge_type": "exposure_path", "scale": 0.45, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    },
+                    {
+                        "name": "nose_avionics_bay",
+                        "system": "avionics",
+                        "offset": [5.9, 0.0, -0.25],
+                        "size": [1.3, 0.9, 0.55],
+                        "armor": 4.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.25, "blast_fragmentation": 1.15, "continuous_rod": 0.85, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "fighter_avionics_bus",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "alr67_rwr_antenna",
+                        "system": "avionics",
+                        "offset": [6.9, 0.0, -0.5],
+                        "size": [0.4, 0.4, 0.2],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.25, "blast_fragmentation": 1.12, "continuous_rod": 0.85, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "fighter_ew_suite",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "avionics", "target_system": "avionics", "edge_type": "generic", "scale": 0.50, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [0.0, 0.0, 0.0],
+                "size": [9.0, 1.9, 1.4],
+                "armor": 8.0,
+                "systems": ["fuel", "avionics", "engine"],
+                "components": [
+                    {
+                        "name": "center_fuselage_fuel_cell",
+                        "system": "fuel",
+                        "offset": [-0.8, 0.0, -0.25],
+                        "size": [3.0, 1.3, 0.85],
+                        "armor": 5.0,
+                        "threshold_scale": 1.25,
+                        "mechanism_thresholds": {"blast": 1.45, "fragmentation": 1.20, "blast_fragmentation": 1.32, "continuous_rod": 0.80, "hit_to_kill": 0.95},
+                        "redundancy_group_id": "fuselage_fuel_cells",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "mission_computer",
+                        "system": "avionics",
+                        "offset": [1.7, 0.0, 0.3],
+                        "size": [1.6, 1.1, 0.7],
+                        "armor": 4.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.25, "blast_fragmentation": 1.15, "continuous_rod": 0.85, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "fighter_avionics_bus",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "mission_systems", "target_system": "mission_systems", "edge_type": "generic", "scale": 0.80, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "data_link_terminal",
+                        "system": "data_link",
+                        "offset": [-2.0, 0.0, 0.3],
+                        "size": [1.1, 0.85, 0.55],
+                        "armor": 4.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.25, "blast_fragmentation": 1.15, "continuous_rod": 0.85, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "fighter_datalink",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "avionics", "target_system": "avionics", "edge_type": "data_path", "scale": 0.60, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    },
+                    {
+                        "name": "flight_control_computer",
+                        "system": "flight_control",
+                        "offset": [0.0, 0.5, 0.4],
+                        "size": [1.1, 0.4, 0.55],
+                        "armor": 4.0,
+                        "threshold_scale": 1.25,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.15, "blast_fragmentation": 1.15, "continuous_rod": 1.40, "hit_to_kill": 1.25},
+                        "redundancy_group_id": "flight_control_computers",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "generic", "scale": 1.00, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "arresting_hook_actuator",
+                        "system": "flight_control",
+                        "offset": [-3.8, 0.0, -0.5],
+                        "size": [1.0, 0.5, 0.4],
+                        "armor": 5.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.15, "blast_fragmentation": 1.10, "continuous_rod": 1.30, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "carrier_arresting_gear",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.70, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    },
+                    {
+                        "name": "electrical_power_bus",
+                        "system": "avionics",
+                        "offset": [-3.0, 0.5, 0.05],
+                        "size": [1.0, 0.4, 0.5],
+                        "armor": 5.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 1.10, "fragmentation": 1.10, "blast_fragmentation": 1.15, "continuous_rod": 1.00, "hit_to_kill": 1.35},
+                        "redundancy_group_id": "fighter_primary_power_bus",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "electrical_power", "scale": 0.45, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"},
+                            {"system": "mission_systems", "target_system": "mission_systems", "edge_type": "electrical_power", "scale": 0.55, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    }
+                ]
+            },
+            {
+                "offset": [-6.8, 0.0, 0.0],
+                "size": [3.4, 4.2, 2.3],
+                "armor": 10.0,
+                "systems": ["engine", "flight_control"],
+                "components": [
+                    {
+                        "name": "left_engine_core",
+                        "system": "engine_left",
+                        "offset": [-6.6, -0.75, 0.0],
+                        "size": [1.7, 0.85, 0.85],
+                        "armor": 8.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 1.10, "fragmentation": 1.05, "blast_fragmentation": 1.12, "continuous_rod": 0.95, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "engine_cores",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "right_engine_core",
+                        "system": "engine_right",
+                        "offset": [-6.6, 0.75, 0.0],
+                        "size": [1.7, 0.85, 0.85],
+                        "armor": 8.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 1.10, "fragmentation": 1.05, "blast_fragmentation": 1.12, "continuous_rod": 0.95, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "engine_cores",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "left_engine_fuel_control",
+                        "system": "engine_left",
+                        "offset": [-5.6, -0.75, -0.25],
+                        "size": [0.75, 0.55, 0.35],
+                        "armor": 6.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 1.10, "fragmentation": 1.10, "blast_fragmentation": 1.15, "continuous_rod": 0.95, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "engine_fuel_feeds",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "fuel", "target_system": "fuel", "edge_type": "fuel_feed", "scale": 0.50, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "right_engine_fuel_control",
+                        "system": "engine_right",
+                        "offset": [-5.6, 0.75, -0.25],
+                        "size": [0.75, 0.55, 0.35],
+                        "armor": 6.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 1.10, "fragmentation": 1.10, "blast_fragmentation": 1.15, "continuous_rod": 0.95, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "engine_fuel_feeds",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "fuel", "target_system": "fuel", "edge_type": "fuel_feed", "scale": 0.50, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "tail_hydraulic_pump",
+                        "system": "hydraulic",
+                        "offset": [-5.9, 0.0, 0.35],
+                        "size": [0.85, 0.6, 0.4],
+                        "armor": 5.0,
+                        "threshold_scale": 1.25,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.15, "blast_fragmentation": 1.12, "continuous_rod": 1.35, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "hydraulic_pumps",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "hydraulic_power", "scale": 0.85, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "twin_rudder_actuators",
+                        "system": "flight_control",
+                        "offset": [-7.6, 0.0, 0.55],
+                        "size": [0.9, 1.6, 0.4],
+                        "armor": 4.0,
+                        "threshold_scale": 1.30,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.15, "blast_fragmentation": 1.12, "continuous_rod": 1.45, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "yaw_control_actuators",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.75, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    },
+                    {
+                        "name": "tailhook_assembly",
+                        "system": "flight_control",
+                        "offset": [-8.0, 0.0, -0.6],
+                        "size": [1.2, 0.5, 0.45],
+                        "armor": 6.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.95, "fragmentation": 1.10, "blast_fragmentation": 1.08, "continuous_rod": 1.25, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "carrier_arresting_gear",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [-0.9, 0.0, 0.0],
+                "size": [3.4, 13.6, 0.4],
+                "armor": 3.0,
+                "systems": ["wings", "flight_control", "fuel"],
+                "components": [
+                    {
+                        "name": "left_wing_fuel_cell",
+                        "system": "fuel",
+                        "offset": [-0.9, -3.6, 0.0],
+                        "size": [1.4, 1.4, 0.22],
+                        "armor": 2.0,
+                        "threshold_scale": 1.25,
+                        "mechanism_thresholds": {"blast": 1.45, "fragmentation": 1.20, "blast_fragmentation": 1.32, "continuous_rod": 0.80, "hit_to_kill": 0.95},
+                        "redundancy_group_id": "wing_fuel_cells",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "right_wing_fuel_cell",
+                        "system": "fuel",
+                        "offset": [-0.9, 3.6, 0.0],
+                        "size": [1.4, 1.4, 0.22],
+                        "armor": 2.0,
+                        "threshold_scale": 1.25,
+                        "mechanism_thresholds": {"blast": 1.45, "fragmentation": 1.20, "blast_fragmentation": 1.32, "continuous_rod": 0.80, "hit_to_kill": 0.95},
+                        "redundancy_group_id": "wing_fuel_cells",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "wing_spar_center",
+                        "system": "wings",
+                        "offset": [-0.9, 0.0, 0.0],
+                        "size": [2.8, 9.0, 0.2],
+                        "armor": 4.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 1.10, "fragmentation": 0.95, "blast_fragmentation": 1.05, "continuous_rod": 1.45, "hit_to_kill": 1.25},
+                        "redundancy_group_id": "primary_wing_spar",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "left_folding_wingtip_hinge",
+                        "system": "wings",
+                        "offset": [-0.9, -5.6, 0.0],
+                        "size": [0.7, 0.6, 0.25],
+                        "armor": 3.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 1.00, "fragmentation": 1.10, "blast_fragmentation": 1.08, "continuous_rod": 1.30, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "wing_fold_hinges",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 0.7,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.60, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative — folding wingtip fold/unfold actuation for carrier deck stowage"}
+                        ],
+                        "critical": false
+                    },
+                    {
+                        "name": "right_folding_wingtip_hinge",
+                        "system": "wings",
+                        "offset": [-0.9, 5.6, 0.0],
+                        "size": [0.7, 0.6, 0.25],
+                        "armor": 3.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 1.00, "fragmentation": 1.10, "blast_fragmentation": 1.08, "continuous_rod": 1.30, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "wing_fold_hinges",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 0.7,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.60, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    },
+                    {
+                        "name": "left_aileron_actuator",
+                        "system": "flight_control",
+                        "offset": [-0.9, -5.0, 0.0],
+                        "size": [0.9, 0.8, 0.22],
+                        "armor": 3.0,
+                        "threshold_scale": 1.35,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.15, "blast_fragmentation": 1.15, "continuous_rod": 1.55, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "lateral_flight_control_actuators",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.80, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    },
+                    {
+                        "name": "right_aileron_actuator",
+                        "system": "flight_control",
+                        "offset": [-0.9, 5.0, 0.0],
+                        "size": [0.9, 0.8, 0.22],
+                        "armor": 3.0,
+                        "threshold_scale": 1.35,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.15, "blast_fragmentation": 1.15, "continuous_rod": 1.55, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "lateral_flight_control_actuators",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.80, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    }
+                ]
+            }
+        ]
+    },
+    "flight_model": {
+        "current_hp": 130.0,
+        "max_hp": 130.0,
+        "max_speed": 544.0,
+        "min_speed": 70.0,
+        "max_turn_rate": 22.0,
+        "max_climb_rate": 230.0,
+        "max_accel": 7.5,
+        "max_g": 7.5
+    },
+    "landing_gear": {
+        "can_use_unpaved": false,
+        "rolling_friction_coeff": 0.02,
+        "max_load_factor": 6.0,
+        "contact_height_m": 1.6
+    },
+    "engine_ref": "CSG_US_F414-GE-400",
+    "sensor_ref": "CSG_US_APG-79",
+    "ew_suite_ref": "CSG_US_ALQ-214_ALR-67",
+    "rcs_profile_ref": "CSG_US_FA18EF_RCS",
+    "has_data_link": true,
+    "data_link_network_id": 1,
+    "has_command_link": true,
+    "command_link": {
+        "latency_s": 0.1,
+        "drop_prob": 0.0
+    },
+    "hardpoints": [
+        {"station_id": 1, "type": ["Rail", "Tip"], "capacity_kg": 150.0},
+        {"station_id": 2, "type": ["Pylon", "Light"], "capacity_kg": 450.0},
+        {"station_id": 3, "type": ["Pylon", "Medium"], "capacity_kg": 800.0},
+        {"station_id": 4, "type": ["Pylon", "Heavy"], "capacity_kg": 1600.0},
+        {"station_id": 5, "type": ["Fuselage"], "capacity_kg": 1000.0},
+        {"station_id": 6, "type": ["Fuselage"], "capacity_kg": 1000.0},
+        {"station_id": 7, "type": ["Fuselage"], "capacity_kg": 1000.0},
+        {"station_id": 8, "type": ["Pylon", "Heavy"], "capacity_kg": 1600.0},
+        {"station_id": 9, "type": ["Pylon", "Medium"], "capacity_kg": 800.0},
+        {"station_id": 10, "type": ["Pylon", "Light"], "capacity_kg": 450.0},
+        {"station_id": 11, "type": ["Rail", "Tip"], "capacity_kg": 150.0}
+    ],
+    "default_loadout": {
+        "1": "CSG_US_AIM-9X_Block_II",
+        "3": "CSG_US_AIM-120D",
+        "9": "CSG_US_AIM-120D",
+        "11": "CSG_US_AIM-9X_Block_II"
+    },
+    "has_ammo": false,
+    "_real_world": {
+        "designation": "F/A-18E Super Hornet Block III",
+        "role": "Multi-role carrier-based strike fighter, CVW-8's primary fighter/strike aircraft (VFA squadrons)",
+        "crew": "1 (pilot)",
+        "status": "content_only_full_damage_model",
+        "carrier_features": "folding wingtips (2x hinge components), tailhook/arresting-hook assembly for carrier recovery"
+    },
+    "_provenance": {
+        "sources": ["csg-us-fa18e-wiki", "csg-us-fa18e-navair", "csg-us-fa18e-boeing"],
+        "parameters": {
+            "airframe.empty_mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-fa18e-wiki"], "tier": "B", "note": "32,081 lb = 14,552 kg per Wikipedia (Boeing/NAVAIR-derived figures)"},
+            "airframe.max_fuel_kg": {"value_basis": "sourced", "source_ids": ["csg-us-fa18e-wiki"], "tier": "B", "note": "F/A-18E internal fuel capacity: 14,700 lb = 6,668 kg per Wikipedia"},
+            "airframe.drag_coefficient": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "no public drag-coefficient figure; engineering estimate close to the repo F-16C_Block50 template's 0.02, nudged marginally up for the Super Hornet's larger, less streamlined twin-engine airframe"},
+            "airframe.reference_area": {"value_basis": "sourced", "source_ids": ["csg-us-fa18e-wiki"], "tier": "B", "note": "500 sq ft = 46.5 sq m wing area per Wikipedia/Boeing"},
+            "airframe.length_m": {"value_basis": "sourced", "source_ids": ["csg-us-fa18e-wiki", "csg-us-fa18e-navair"], "tier": "A", "note": "60 ft 1.25 in = 18.31 m per Wikipedia, cross-confirmed by NAVAIR's 60.3 ft / 18.5 m (minor rounding variance between sources, Wikipedia's more precise figure used)"},
+            "airframe.wingspan_m": {"value_basis": "sourced", "source_ids": ["csg-us-fa18e-wiki"], "tier": "A", "note": "44 ft 8.5 in = 13.62 m per Wikipedia, cross-confirmed by NAVAIR/Boeing's 44.9 ft / 13.68 m (wingtip-missile-inclusive variant)"},
+            "airframe.height_m": {"value_basis": "sourced", "source_ids": ["csg-us-fa18e-wiki", "csg-us-fa18e-navair"], "tier": "A", "note": "16 ft 0 in = 4.88 m per Wikipedia, matches NAVAIR's 16 ft / 4.87 m"},
+            "airframe.configuration": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "Conventional: matches the repo F-16C_Block50 template's configuration enum value for a conventional fixed-wing fighter layout"},
+            "flight_model.current_hp": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "130.0: engineering-estimate abstract structural health pool, above the repo F-16C_Block50's baseline reflecting the Super Hornet's larger/twin-engine airframe with more redundant systems; no public component-level Pk/damage data exists for this or any aircraft in this packet, consistent with the vulnerability block's synthetic/uncalibrated status"},
+            "flight_model.max_hp": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "130.0: same basis as flight_model.current_hp (initialized full health)"},
+            "flight_model.max_speed": {"value_basis": "sourced", "source_ids": ["csg-us-fa18e-navair"], "tier": "B", "note": "Mach 1.6 per thedefensepost.com/NAVAIR-derived figures; ~544 m/s at altitude used as the engineering-estimate numeric conversion since Mach varies with altitude/temperature"},
+            "flight_model.min_speed": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public stall/approach speed figure; engineering estimate typical of a carrier-capable heavy fighter's approach speed, below the repo F-16C_Block50's 80.0 reflecting the Super Hornet's larger wing area and carrier-approach flap/slat configuration"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public sustained-turn-rate figure; engineering estimate marginally below the repo F-16C_Block50's 26.0, reflecting the Super Hornet's higher wing loading/heavier airframe relative to the lighter F-16"},
+            "flight_model.max_climb_rate": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public climb-rate figure; engineering estimate below the repo F-16C_Block50's 254.0, consistent with the Super Hornet's lower thrust-to-weight ratio versus the F-16"},
+            "flight_model.max_accel": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate consistent with flight_model.max_g"},
+            "flight_model.max_g": {"value_basis": "sourced", "source_ids": ["csg-us-fa18e-navair"], "tier": "C-est", "note": "7.5g structural limit is the widely-published public figure for the Super Hornet (standard public knowledge, not independently re-verified via a dedicated search this pass; consistent with all public Super Hornet references)"},
+            "landing_gear.can_use_unpaved": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "false: carrier-based fighter, paved-runway/carrier-deck only, matching the repo F-16C_Block50 template convention"},
+            "landing_gear.rolling_friction_coeff": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo F-16C_Block50 template; no public figure"},
+            "landing_gear.max_load_factor": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "engineering estimate above the repo F-16C_Block50's 4.0, reflecting carrier-landing gear's reinforced design for high sink-rate arrested landings; no public figure"},
+            "landing_gear.contact_height_m": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "engineering estimate scaled below the repo F-16C_Block50's 2.1, proportional to this aircraft's lower airframe.height_m; no public figure"},
+            "hardpoints": {"value_basis": "sourced", "source_ids": ["csg-us-fa18e-wiki"], "tier": "B", "note": "11 hardpoints (2x wingtip rail, 6x underwing pylon, 3x underfuselage) per Wikipedia/Boeing; individual station capacity_kg figures are engineering estimates following the repo F-16C_Block50 template's station-type capacity convention (Rail/Tip lightest, Pylon Heavy/Fuselage heaviest), no public per-station capacity breakdown found"},
+            "default_loadout": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "fighter-escort-representative air-to-air loadout (2x AIM-9X wingtip + 2x AIM-120D on heavy pylons) per the OOB page's general CVW-8 role description for the Super Hornet; not a single authoritative published loadout"},
+            "damage_model": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "Full component damage model built at the F-16C_Block50 template's standard (4 hitboxes, 5-7 components each): nose (radar/cockpit/avionics/RWR), center fuselage (fuel/avionics/datalink/flight-control-computer/arresting-hook-actuator/electrical), aft fuselage (twin left/right engine cores+fuel-control sharing redundancy_group_id engine_cores/engine_fuel_feeds per the repo su35s_flanker_e.json twin-engine pattern, hydraulic pump, twin rudder actuators, tailhook assembly), wing (twin fuel cells, spar, twin folding-wingtip hinges, twin aileron actuators). Geometry scaled from this record's sourced length_m/wingspan_m/height_m; mechanism_thresholds/threshold_scale/redundancy weightings are proxied unchanged from the repo F-16C_Block50 template's per-system values, since no public component-level vulnerability data exists for any aircraft in this packet. Folding-wingtip and tailhook/arresting-hook components added specifically for this carrier-based, wing-folding aircraft per the task's carrier-aircraft requirement."}
+        }
+    }
+}

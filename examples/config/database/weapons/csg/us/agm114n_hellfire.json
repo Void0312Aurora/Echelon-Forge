@@ -1,0 +1,87 @@
+{
+    "name": "CSG_US_AGM-114N_Hellfire",
+    "type": "Missile",
+    "mass_kg": 48.0,
+    "max_flight_time_s": 22.0,
+    "flight_model": {
+        "max_speed": 450.0,
+        "max_g": 20.0,
+        "max_turn_rate": 25.0
+    },
+    "guidance": {
+        "type": "ActiveRadar",
+        "active_seek_range": 8000.0,
+        "pn_los_rate_source": "world_los_history",
+        "target_kinematics_estimator": "world_cva",
+        "capture_guidance_mode": "disabled",
+        "target_tracker_alpha": 0.2,
+        "target_tracker_beta": 0.02,
+        "target_tracker_gamma": 0.5,
+        "nav_gain": 4.0,
+        "apn_target_accel_gain": 0.15,
+        "autopilot_tau_s": 0.05,
+        "max_accel_response_g_per_s": 400.0
+    },
+    "warhead": {
+        "type": "blast_fragmentation",
+        "mass_kg": 9.0,
+        "lethal_radius": 6.0,
+        "damage": 90.0,
+        "explosive_mass_kg": 4.0,
+        "case_mass_kg": 5.0,
+        "projection_radius_fraction": 0.5,
+        "projection_max_radius_m": 8.0,
+        "projection_max_projected_hitboxes": 2
+    },
+    "fuze": {
+        "type": "contact",
+        "trigger_radius_m": 0.0,
+        "delay_s": 0.005,
+        "reliability": 0.94
+    },
+    "_real_world": {
+        "designation": "AGM-114N Hellfire II, Metal Augmented Charge (MAC) variant",
+        "role": "Precision air-to-surface/anti-surface-warfare missile, MH-60R/S primary weapon against small boats and light craft",
+        "range_nmi": "~4.3 nmi (8 km per RAN)",
+        "guidance_real": "Semi-active laser homing (RAN specification); some Hellfire family variants add millimeter-wave radar guidance",
+        "speed": "Mach 1.3 (~450 m/s)",
+        "status": "content_only_functional_mount_via_air_launch",
+        "mount_mapping": "referenced by CVW-8 MH-60R/S default_loadout as an air-to-surface weapon; standard air-launched missile mechanism used, though the engine has no semi-active-laser-homing seeker category so ActiveRadar is used as the nearest available proxy"
+    },
+    "_provenance": {
+        "sources": ["csg-us-hellfire-ran", "csg-us-hellfire-designation", "csg-us-hellfire-missilethreat"],
+        "parameters": {
+            "mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-hellfire-ran"], "tier": "A", "note": "48 kg per the Royal Australian Navy's AGM-114N fact page (allied government, A), the specific variant it states is used from the MH-60R Seahawk in the ASuW role"},
+            "max_flight_time_s": {"value_basis": "proxy", "source_ids": ["csg-us-hellfire-ran"], "tier": "proxy", "note": "engineering estimate derived from the sourced 8 km range (RAN, A) at the used 450 m/s speed (~18 s to max range), rounded up slightly for launch/climb transient"},
+            "flight_model.max_speed": {"value_basis": "sourced", "source_ids": ["csg-us-hellfire-ran", "csg-us-hellfire-designation"], "tier": "A", "note": "Mach 1.3 / 1,600 km/h per RAN; ~450 m/s used as the engineering-estimate numeric conversion, cross-confirmed by designation-systems.net and missilethreat.csis.org (both C, both agree on Mach 1.3 / ~450 m/s)"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public maneuver-load figure; engineering estimate for a small laser/radar-guided anti-armor-lineage missile's terminal maneuver against a small maritime target"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate consistent with flight_model.max_g"},
+            "guidance.type": {"value_basis": "sourced", "source_ids": ["csg-us-hellfire-ran"], "tier": "A", "note": "semi-active laser homing per RAN (A); ActiveRadar is used as the nearest matching real engine seeker_type since the engine's guidance.type vocabulary (ActiveRadar/Radar or IR/Infrared) has no semi-active-laser category"},
+            "guidance.active_seek_range": {"value_basis": "sourced", "source_ids": ["csg-us-hellfire-ran"], "tier": "A", "note": "set equal to the sourced 8 km (8000 m) maximum range per RAN, as a proxy for engagement/seeker range since a distinct seeker-acquisition-range figure is not separately published"},
+            "guidance.pn_los_rate_source": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard engine guidance-model wiring default, not a sourced weapon characteristic"},
+            "guidance.target_kinematics_estimator": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard engine guidance-model wiring default, same basis as pn_los_rate_source"},
+            "guidance.capture_guidance_mode": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "disabled: no terminal capture-guidance submode modeled for the laser-homing seeker in this pass"},
+            "guidance.target_tracker_alpha": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard alpha-beta-gamma tracker filter constant, engine convention shared across missile records, not weapon-specific"},
+            "guidance.target_tracker_beta": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.target_tracker_gamma": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.nav_gain": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo AIM-120C-7 template's guidance-law constant pattern; no public figure"},
+            "guidance.apn_target_accel_gain": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering-estimate scaffold, no public figure"},
+            "guidance.autopilot_tau_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering-estimate scaffold, faster than a cruise missile consistent with Hellfire's small, agile airframe; no public figure"},
+            "guidance.max_accel_response_g_per_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering-estimate scaffold consistent with flight_model.max_g"},
+            "warhead.type": {"value_basis": "sourced", "source_ids": ["csg-us-hellfire-designation"], "tier": "C", "note": "AGM-114N's Metal Augmented Charge (MAC) warhead is a thermobaric/blast-focused multi-purpose design per designation-systems.net; blast_fragmentation is the nearest real engine-recognized warhead type"},
+            "warhead.mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-hellfire-missilethreat"], "tier": "C", "note": "8-11 kg payload range per missilethreat.csis.org; 9 kg used as a mid-band engineering estimate for the AGM-114N specifically (exact MAC warhead mass not separately published)"},
+            "warhead.lethal_radius": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "engineering-estimate surrogate scaled well below the repo Harpoon-family anti-ship missiles, consistent with Hellfire's much smaller warhead intended for small-boat/light-craft targets rather than major surface combatants; no public lethal-radius figure"},
+            "warhead.damage": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "engineering-estimate surrogate, no public damage-effectiveness figure"},
+            "warhead.explosive_mass_kg": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering-estimate HE/case split of warhead.mass_kg; no public split figure"},
+            "warhead.case_mass_kg": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering-estimate HE/case split, see explosive_mass_kg"},
+            "warhead.projection_radius_fraction": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering-estimate copied/scaled from the repo AIM-9X template's smaller-warhead projection-geometry pattern"},
+            "warhead.projection_max_radius_m": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "scaled from this warhead's smaller lethal_radius relative to other CSG missile records"},
+            "warhead.projection_max_projected_hitboxes": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering-estimate reduced from the repo AIM-120C-7 template's 3, reflecting this warhead's smaller size/footprint; not a quantified figure"},
+            "fuze.type": {"value_basis": "sourced", "source_ids": ["csg-us-hellfire-designation"], "tier": "C", "note": "designation-systems.net states the legacy AGM-114A uses an impact fuze; contact is the nearest real engine-recognized fuze family, used consistently across the Hellfire family absent a distinct public figure for the -114N specifically"},
+            "fuze.trigger_radius_m": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "0.0 consistent with a contact-fuze trigger radius"},
+            "fuze.delay_s": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public fuze timing data; engineering-estimate scaffold typical of a small shaped-charge/MAC contact-fuzed warhead"},
+            "fuze.reliability": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public reliability figure; engineering-estimate scaffold value consistent with a long-fielded, mature missile family"}
+        },
+        "modeling_notes": ["Functional mount via standard air-launched missile mechanism (though the engine's guidance.type vocabulary has no semi-active-laser-homing category, approximated as ActiveRadar). AGM-114N specifically selected (over the base -114K/-114R variants) because RAN's public MH-60R Seahawk documentation names it directly for the ASuW role with its Metal Augmented Charge warhead, giving the most specific public sourcing available for the exact MH-60R fit."]
+    }
+}

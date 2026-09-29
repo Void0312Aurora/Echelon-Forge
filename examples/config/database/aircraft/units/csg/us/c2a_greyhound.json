@@ -1,0 +1,467 @@
+{
+    "name": "CSG_US_C-2A_Greyhound",
+    "type": "Aircraft",
+    "airframe": {
+        "empty_mass_kg": 15307.0,
+        "max_fuel_kg": 5443.0,
+        "drag_coefficient": 0.045,
+        "reference_area": 65.0,
+        "length_m": 17.3,
+        "wingspan_m": 24.56,
+        "height_m": 5.28,
+        "configuration": "Conventional"
+    },
+    "damage_model": {
+        "vulnerability": {
+            "synthetic": true,
+            "calibrated": false,
+            "pk_authority": false,
+            "deterministic_fuze_authority": false,
+            "provenance": "CSG S0-C synthetic naval-transport vulnerability scaffold (packet 2, solo worker); geometry scaled from real C-2A dimensions (E-2 Hawkeye wing/empennage derivative with a widened cargo fuselage per NAVAIR), mechanism thresholds proxied from the repo f16c_block50.json template and this packet's own CSG_US_E-2D_Advanced_Hawkeye record (shared wing/engine/rotor-free lineage); requires calibration before deterministic fuze/Pk claims",
+            "evidence_dataset_ref": "",
+            "calibration_status": "unvalidated",
+            "blast_scale": 1.15,
+            "fragmentation_scale": 1.10,
+            "continuous_rod_scale": 1.15,
+            "hit_to_kill_scale": 1.10,
+            "nose_aspect_scale": 1.0,
+            "beam_aspect_scale": 1.15,
+            "tail_aspect_scale": 0.95,
+            "high_closure_scale": 1.05,
+            "low_closure_scale": 0.90,
+            "near_miss_scale": 0.88,
+            "direct_hit_scale": 1.0
+        },
+        "hitboxes": [
+            {
+                "offset": [7.0, 0.0, 0.3],
+                "size": [2.5, 2.4, 1.8],
+                "armor": 3.0,
+                "systems": ["cockpit", "avionics"],
+                "components": [
+                    {
+                        "name": "flight_deck_crew_station",
+                        "system": "cockpit",
+                        "offset": [7.3, 0.0, 0.5],
+                        "size": [1.6, 1.9, 1.0],
+                        "armor": 4.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.20, "blast_fragmentation": 1.10, "continuous_rod": 1.00, "hit_to_kill": 1.25},
+                        "redundancy_group_id": "cockpit_crew_stations",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "nose_avionics_bay",
+                        "system": "avionics",
+                        "offset": [8.2, 0.0, 0.2],
+                        "size": [1.0, 0.9, 0.6],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.25, "blast_fragmentation": 1.15, "continuous_rod": 0.85, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "transport_avionics_bus",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "cockpit_flight_control_computer",
+                        "system": "flight_control",
+                        "offset": [6.8, 0.0, -0.1],
+                        "size": [0.7, 0.6, 0.5],
+                        "armor": 3.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.20, "blast_fragmentation": 1.12, "continuous_rod": 0.90, "hit_to_kill": 1.25},
+                        "redundancy_group_id": "transport_flight_control",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    }
+                ]
+            },
+            {
+                "offset": [0.5, 0.0, 0.0],
+                "size": [6.5, 2.4, 2.0],
+                "armor": 3.0,
+                "systems": ["fuel", "avionics", "data_link", "cargo"],
+                "components": [
+                    {
+                        "name": "left_wing_fuel_cell",
+                        "system": "fuel",
+                        "offset": [1.5, -3.5, 0.3],
+                        "size": [2.0, 3.5, 0.4],
+                        "armor": 3.0,
+                        "threshold_scale": 1.25,
+                        "mechanism_thresholds": {"blast": 1.45, "fragmentation": 1.20, "blast_fragmentation": 1.32, "continuous_rod": 0.80, "hit_to_kill": 0.95},
+                        "redundancy_group_id": "wing_fuel_cells",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "right_wing_fuel_cell",
+                        "system": "fuel",
+                        "offset": [1.5, 3.5, 0.3],
+                        "size": [2.0, 3.5, 0.4],
+                        "armor": 3.0,
+                        "threshold_scale": 1.25,
+                        "mechanism_thresholds": {"blast": 1.45, "fragmentation": 1.20, "blast_fragmentation": 1.32, "continuous_rod": 0.80, "hit_to_kill": 0.95},
+                        "redundancy_group_id": "wing_fuel_cells",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "mission_computer",
+                        "system": "avionics",
+                        "offset": [1.0, 0.0, 0.6],
+                        "size": [0.9, 0.8, 0.5],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.25, "blast_fragmentation": 1.15, "continuous_rod": 0.85, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "transport_avionics_bus",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "data_link_terminal",
+                        "system": "data_link",
+                        "offset": [1.4, 0.5, 0.7],
+                        "size": [0.6, 0.6, 0.4],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.25, "blast_fragmentation": 1.15, "continuous_rod": 0.85, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "transport_datalink",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "cargo_bay_deck",
+                        "system": "fuselage_cargo_bay",
+                        "offset": [-0.5, 0.0, -0.4],
+                        "size": [4.0, 2.0, 1.2],
+                        "armor": 2.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 1.05, "fragmentation": 1.10, "blast_fragmentation": 1.08, "continuous_rod": 0.90, "hit_to_kill": 1.05},
+                        "redundancy_group_id": "cargo_structure",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 0.5,
+                        "critical": false
+                    },
+                    {
+                        "name": "primary_electrical_generator_bay",
+                        "system": "avionics",
+                        "offset": [2.2, 0.7, -0.2],
+                        "size": [0.7, 0.5, 0.4],
+                        "armor": 3.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 1.05, "fragmentation": 1.10, "blast_fragmentation": 1.12, "continuous_rod": 1.00, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "transport_primary_power_bus",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "avionics", "target_system": "avionics", "edge_type": "electrical_power", "scale": 0.60, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    }
+                ]
+            },
+            {
+                "offset": [-4.5, 0.0, 0.4],
+                "size": [3.0, 1.8, 1.5],
+                "armor": 3.0,
+                "systems": ["cargo", "hydraulic"],
+                "components": [
+                    {
+                        "name": "aft_cargo_ramp_actuator",
+                        "system": "hydraulic",
+                        "offset": [-5.8, 0.0, 0.0],
+                        "size": [0.8, 1.4, 0.4],
+                        "armor": 3.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 0.95, "fragmentation": 1.15, "blast_fragmentation": 1.10, "continuous_rod": 1.20, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "transport_hydraulic_actuators",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "cargo", "target_system": "cargo", "edge_type": "hydraulic_power", "scale": 0.70, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    },
+                    {
+                        "name": "cargo_winch_mechanism",
+                        "system": "fuselage_cargo_bay",
+                        "offset": [-4.8, 0.0, 0.6],
+                        "size": [0.6, 0.6, 0.4],
+                        "armor": 2.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.95, "fragmentation": 1.10, "blast_fragmentation": 1.05, "continuous_rod": 0.90, "hit_to_kill": 1.10},
+                        "redundancy_group_id": "cargo_structure",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 0.4,
+                        "critical": false
+                    },
+                    {
+                        "name": "tail_hydraulic_pump",
+                        "system": "hydraulic",
+                        "offset": [-3.8, 0.0, 0.9],
+                        "size": [0.5, 0.4, 0.35],
+                        "armor": 3.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.15, "blast_fragmentation": 1.12, "continuous_rod": 1.30, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "transport_hydraulic_pumps",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "hydraulic_power", "scale": 0.85, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "tailhook_assembly",
+                        "system": "flight_control",
+                        "offset": [-6.3, 0.0, -0.3],
+                        "size": [0.5, 0.3, 0.3],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.10, "blast_fragmentation": 1.05, "continuous_rod": 0.90, "hit_to_kill": 1.10},
+                        "redundancy_group_id": "transport_arresting_gear",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.60, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    }
+                ]
+            },
+            {
+                "offset": [1.5, -6.0, 0.6],
+                "size": [1.5, 3.5, 1.2],
+                "armor": 4.0,
+                "systems": ["engine", "fuel"],
+                "components": [
+                    {
+                        "name": "left_engine_core",
+                        "system": "engine",
+                        "offset": [1.6, -6.2, 0.7],
+                        "size": [1.2, 0.7, 0.7],
+                        "armor": 4.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 1.10, "fragmentation": 1.05, "blast_fragmentation": 1.12, "continuous_rod": 0.95, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "engine_cores",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "left_propeller_gearbox",
+                        "system": "engine",
+                        "offset": [2.4, -6.2, 0.7],
+                        "size": [0.6, 0.5, 0.5],
+                        "armor": 4.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 1.00, "fragmentation": 1.05, "blast_fragmentation": 1.08, "continuous_rod": 1.20, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "propeller_gearboxes",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "engine", "target_system": "engine", "edge_type": "generic", "scale": 0.90, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    },
+                    {
+                        "name": "left_engine_fuel_feed",
+                        "system": "fuel",
+                        "offset": [1.2, -6.0, 0.5],
+                        "size": [0.5, 0.4, 0.3],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 1.20, "fragmentation": 1.15, "blast_fragmentation": 1.18, "continuous_rod": 0.85, "hit_to_kill": 1.05},
+                        "redundancy_group_id": "engine_fuel_feeds",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "fuel", "target_system": "engine", "edge_type": "fuel_feed", "scale": 0.80, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [1.5, 6.0, 0.6],
+                "size": [1.5, 3.5, 1.2],
+                "armor": 4.0,
+                "systems": ["engine", "fuel"],
+                "components": [
+                    {
+                        "name": "right_engine_core",
+                        "system": "engine",
+                        "offset": [1.6, 6.2, 0.7],
+                        "size": [1.2, 0.7, 0.7],
+                        "armor": 4.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 1.10, "fragmentation": 1.05, "blast_fragmentation": 1.12, "continuous_rod": 0.95, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "engine_cores",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "right_propeller_gearbox",
+                        "system": "engine",
+                        "offset": [2.4, 6.2, 0.7],
+                        "size": [0.6, 0.5, 0.5],
+                        "armor": 4.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 1.00, "fragmentation": 1.05, "blast_fragmentation": 1.08, "continuous_rod": 1.20, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "propeller_gearboxes",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "engine", "target_system": "engine", "edge_type": "generic", "scale": 0.90, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    },
+                    {
+                        "name": "right_engine_fuel_feed",
+                        "system": "fuel",
+                        "offset": [1.2, 6.0, 0.5],
+                        "size": [0.5, 0.4, 0.3],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 1.20, "fragmentation": 1.15, "blast_fragmentation": 1.18, "continuous_rod": 0.85, "hit_to_kill": 1.05},
+                        "redundancy_group_id": "engine_fuel_feeds",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "fuel", "target_system": "engine", "edge_type": "fuel_feed", "scale": 0.80, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [0.5, 0.0, 0.0],
+                "size": [4.5, 26.0, 0.8],
+                "armor": 2.0,
+                "systems": ["structure"],
+                "components": [
+                    {
+                        "name": "wing_spar_center",
+                        "system": "structure",
+                        "offset": [0.5, 0.0, 0.3],
+                        "size": [1.5, 2.0, 0.5],
+                        "armor": 5.0,
+                        "threshold_scale": 1.30,
+                        "mechanism_thresholds": {"blast": 1.10, "fragmentation": 1.05, "blast_fragmentation": 1.08, "continuous_rod": 1.30, "hit_to_kill": 1.35},
+                        "redundancy_group_id": "wing_primary_structure",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "left_wing_fold_hinge",
+                        "system": "structure",
+                        "offset": [0.8, -4.0, 0.4],
+                        "size": [0.6, 0.5, 0.4],
+                        "armor": 4.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 0.95, "fragmentation": 1.10, "blast_fragmentation": 1.08, "continuous_rod": 1.15, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "wing_fold_hinges",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 0.6,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.50, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative — C-2A shares the E-2 Hawkeye's common wing per NAVAIR, including its shipboard-stowage folding-wing mechanism"}
+                        ],
+                        "critical": false
+                    },
+                    {
+                        "name": "right_wing_fold_hinge",
+                        "system": "structure",
+                        "offset": [0.8, 4.0, 0.4],
+                        "size": [0.6, 0.5, 0.4],
+                        "armor": 4.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 0.95, "fragmentation": 1.10, "blast_fragmentation": 1.08, "continuous_rod": 1.15, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "wing_fold_hinges",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 0.6,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.50, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative — C-2A shares the E-2 Hawkeye's common wing per NAVAIR, including its shipboard-stowage folding-wing mechanism"}
+                        ],
+                        "critical": false
+                    }
+                ]
+            }
+        ]
+    },
+    "flight_model": {
+        "current_hp": 100.0,
+        "max_hp": 100.0,
+        "max_speed": 176.0,
+        "min_speed": 60.0,
+        "max_turn_rate": 6.0,
+        "max_climb_rate": 13.3,
+        "max_accel": 2.0,
+        "max_g": 2.5
+    },
+    "landing_gear": {
+        "can_use_unpaved": false,
+        "rolling_friction_coeff": 0.02,
+        "max_load_factor": 5.0,
+        "contact_height_m": 1.8
+    },
+    "engine_ref": "CSG_US_T56-A-425",
+    "rcs_profile_ref": "CSG_US_LargeProp_RCS",
+    "has_data_link": true,
+    "data_link_network_id": 1,
+    "has_command_link": true,
+    "command_link": {
+        "latency_s": 0.1,
+        "drop_prob": 0.0
+    },
+    "hardpoints": [],
+    "default_loadout": {},
+    "has_ammo": false,
+    "_real_world": {
+        "designation": "C-2A Greyhound (Reprocured, C-2A(R))",
+        "role": "Carrier Onboard Delivery (COD) — unarmed logistics transport for high-priority cargo, mail, passengers and critical spare parts between shore bases and CVN-78; shares the E-2 Hawkeye's wing/empennage/engine lineage per NAVAIR with a widened cargo fuselage and rear loading ramp",
+        "crew": "4 (2 pilots, 2 loadmasters/aircrew)",
+        "status": "content_only_full_damage_model",
+        "carrier_features": "tailhook/arresting-gear for carrier recovery; folding wing (shared with the E-2 Hawkeye, folded wingspan 8.94 m per naval-technology.com) for shipboard hangar stowage; large aft cargo ramp/door with powered winch for cargo handling"
+    },
+    "_provenance": {
+        "sources": ["csg-us-c2a-navair", "csg-us-c2a-navy-factfile", "csg-us-c2a-wiki", "csg-us-c2a-navaltech", "csg-us-c2a-globalmilitary"],
+        "parameters": {
+            "airframe.empty_mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-c2a-wiki"], "tier": "B", "note": "33,746 lb = 15,307 kg per Wikipedia; naval-technology.com gives a close but distinct 35,000 lb/15,875 kg figure (likely a different sub-variant/config baseline) — used Wikipedia's figure as it is independently cross-confirmed by globalmilitary.net's identical 15,307 kg value"},
+            "airframe.max_fuel_kg": {"value_basis": "sourced", "source_ids": ["csg-us-c2a-navaltech"], "tier": "B", "note": "12,000 lb = 5,443 kg internal fuel per naval-technology.com's detailed weight breakdown"},
+            "airframe.drag_coefficient": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "copied unchanged from CSG_US_E-2D_Advanced_Hawkeye; no public figure, and NAVAIR states the C-2A shares the E-2's common wing/aerodynamic lineage with only a widened fuselage/rear ramp differing"},
+            "airframe.reference_area": {"value_basis": "sourced", "source_ids": ["csg-us-c2a-wiki", "csg-us-c2a-globalmilitary"], "tier": "B", "note": "700 sq ft = 65.0 m2 wing area per Wikipedia, cross-confirmed by globalmilitary.net's identical 65 m2 figure — unlike the E-2D's NAVAIR page, this source does not carry the wingspan-duplication data error, so used directly rather than as an engineering_estimate"},
+            "airframe.length_m": {"value_basis": "sourced", "source_ids": ["csg-us-c2a-navair"], "tier": "A", "note": "56 ft 10 in = 17.3 m per NAVAIR's direct C-2 product page, cross-confirmed by Navy.mil fact file, Wikipedia, naval-technology.com and globalmilitary.net (all state the same figure)"},
+            "airframe.wingspan_m": {"value_basis": "sourced", "source_ids": ["csg-us-c2a-navair"], "tier": "A", "note": "80 ft 7 in = 24.56 m per NAVAIR, cross-confirmed by Navy.mil, Wikipedia, and naval-technology.com — identical to the E-2D's sourced wingspan since both share the common Hawkeye wing per NAVAIR's own text"},
+            "airframe.height_m": {"value_basis": "sourced", "source_ids": ["csg-us-c2a-navair"], "tier": "A", "note": "17 ft 2 in = 5.28 m per NAVAIR/Navy.mil/naval-technology.com; noted a minor cross-source discrepancy against Wikipedia's 15 ft 10.5 in/4.839 m figure — used the NAVAIR-direct figure as authoritative since it is corroborated by 3 independent sources vs Wikipedia's 1"},
+            "airframe.configuration": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "Conventional: matches the repo f16c_block50.json template's configuration enum value; fixed-wing hp-placement convention (hp in flight_model, no separate health block) applied per this packet's documented decision"},
+            "flight_model.current_hp": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "100.0: engineering-estimate abstract structural health pool for an unarmored cargo transport, below the fighter-class records' 130.0 reflecting the C-2A's thinner-skinned/lightly-built cargo airframe; no public component-level Pk/damage data exists for this or any aircraft in this packet"},
+            "flight_model.max_hp": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "100.0: same basis as flight_model.current_hp (initialized full health)"},
+            "flight_model.max_speed": {"value_basis": "sourced", "source_ids": ["csg-us-c2a-navair"], "tier": "A", "note": "343 kt max airspeed per NAVAIR/Navy.mil = 176.4 m/s (kt*0.514444), cross-confirmed by Wikipedia's identical 343 kn figure"},
+            "flight_model.min_speed": {"value_basis": "sourced", "source_ids": ["csg-us-c2a-wiki"], "tier": "B", "note": "82 kt stall speed per Wikipedia = 42.2 m/s; rounded down to 60 knot-equivalent (~30.9 m/s->60 kept as an engineering_estimate operational minimum above pure stall) — corrected: kept at 60 as an engineering_estimate approach speed margin above the sourced 42.2 m/s stall speed, not the stall speed itself"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate for a twin-turboprop transport, below the E-2D's proxy value reflecting the C-2A's higher wing loading (77.6 lb/sq ft per Wikipedia) and transport role"},
+            "flight_model.max_climb_rate": {"value_basis": "sourced", "source_ids": ["csg-us-c2a-navaltech"], "tier": "B", "note": "2,610 ft/min per naval-technology.com = 13.3 m/s (Wikipedia's 3,700 ft/min/19 m/s figure is markedly higher and unreconciled; used naval-technology's more conservative figure as the modeled value, noting the discrepancy)"},
+            "flight_model.max_accel": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "copied unchanged from CSG_US_E-2D_Advanced_Hawkeye; no public figure, comparable twin-turboprop class"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "engineering estimate for an unarmed cargo transport, below the E-2D's proxy value reflecting the C-2A's higher wing loading and lack of any maneuvering-related mission role"},
+            "landing_gear.can_use_unpaved": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "false: matches the repo f16c_block50.json template's convention for a carrier-based fixed-wing type; the C-2A's small tricycle gear and land-based/carrier-deck-only operating profile do not support unprepared-surface operation"},
+            "landing_gear.rolling_friction_coeff": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "copied unchanged from CSG_US_E-2D_Advanced_Hawkeye's proxy value; no public figure"},
+            "landing_gear.max_load_factor": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "5.0: engineering estimate for a carrier-arrested-landing-capable transport, below fighter-class values; no public figure"},
+            "landing_gear.contact_height_m": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "derived from airframe.height_m and typical fuselage-to-ground-contact-point ratio; no public figure"},
+            "engine_ref": {"value_basis": "sourced", "source_ids": ["csg-us-c2a-navair"], "tier": "A", "note": "2x Allison T56-A-425, 4,600 shp each, per NAVAIR/Navy.mil directly; reuses the existing CSG_US_T56-A-425 engine record already authored earlier in this packet from the same OOB-page figure, not re-derived"},
+            "rcs_profile_ref": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "reuses CSG_US_LargeProp_RCS (shared E-2D/C-2A/CMV-22B profile per that record's documented scope); the C-2A's widened cargo fuselage vs the E-2D's rotodome is not separately modeled since the shared profile's top_rcs boost was already flagged in the RCS record's own provenance as applied uniformly across all 3 shared types for consistency, even though C-2A lacks a rotodome"},
+            "hardpoints": {"value_basis": "sourced", "source_ids": ["csg-us-c2a-wiki"], "tier": "A", "note": "empty list: the C-2A is explicitly documented across all sources as unarmed, carrying no offensive or defensive weaponry (globalmilitary.net: 'does not carry offensive or defensive weaponry') — pure logistics transport, no weapons stations exist"},
+            "default_loadout": {"value_basis": "sourced", "source_ids": ["csg-us-c2a-wiki"], "tier": "A", "note": "empty: consistent with the unarmed hardpoints=[] finding above"},
+            "damage_model": {"value_basis": "engineering_estimate", "source_ids": ["csg-us-c2a-navaltech"], "tier": "proxy", "note": "Full component damage model built at the f16c_block50.json template's fixed-wing standard, adapted from this packet's own CSG_US_E-2D_Advanced_Hawkeye record given the shared wing/engine/empennage lineage stated by NAVAIR ('common wing with the Hawkeye'). Twin engine+propeller-gearbox+fuel-feed hitboxes and twin wing-fold-hinge components carried over from the E-2D pattern (same folding-wing mechanism, folded wingspan 8.94 m sourced from naval-technology.com). Differences reflecting the C-2A's cargo-transport role instead of AEW mission role: removed the E-2D's rotodome/APY-9 hitbox and mission-systems-operator-station components entirely (no radar, no tactical mission crew), replaced with an aft cargo-bay hitbox containing a cargo_bay_deck structural component, an aft_cargo_ramp_actuator (hydraulic-dependent, reflecting the sourced 'large aft cargo ramp and door and a powered winch' per NAVAIR/Wikipedia), and a cargo_winch_mechanism. Retained tailhook_assembly (carrier-recovery-capable, sourced A) and a 4-person flight-deck crew station (vs the E-2D's 5-person crew, reflecting the C-2A's smaller 2-pilot+2-loadmaster crew per naval-technology.com). mechanism_thresholds/redundancy weightings proxied unchanged from the repo f16c_block50.json template's per-system values; no public component-level vulnerability data exists for this or any aircraft in this packet."}
+        }
+    }
+}

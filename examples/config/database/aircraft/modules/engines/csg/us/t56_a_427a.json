@@ -1,0 +1,28 @@
+{
+    "name": "CSG_US_T56-A-427A",
+    "type": "Engine",
+    "engine": {
+        "mil_thrust_n": 20500.0,
+        "ab_thrust_n": 20500.0,
+        "sfc_mil": 0.47,
+        "sfc_ab": 0.47,
+        "bypass_ratio": 0.0
+    },
+    "_real_world": {
+        "class": "Rolls-Royce (Allison) T56-A-427A turboprop",
+        "variant_scope": "T56-A-427A as fitted to E-2D Advanced Hawkeye (twin-engine installation, 5,100 shp each)",
+        "hulls": [],
+        "public_equipment": ["2 x T56-A-427A, 5,100 shp each (CSG order-of-battle page, csg-us-navy-e2d-navair)"]
+    },
+    "_provenance": {
+        "modeling_note": "T56-A-427A is a free-turbine turboprop, not a thrust-producing jet engine; the Engine record schema (src/content/unit_definition_loader.cpp) only parses mil_thrust_n/ab_thrust_n/sfc_mil/sfc_ab/bypass_ratio (thrust-in-newtons fields), with no shaft-horsepower concept. mil_thrust_n/ab_thrust_n here is an engineering_estimate equivalent static thrust derived from the sourced 5,100 shp rating using a generic propeller static-thrust approximation (T[N] ~= 4.0 x shp, a coarse low-speed conversion factor used only to populate this jet-shaped schema; NOT a real turboprop performance figure). ab_thrust_n is set equal to mil_thrust_n since the T56 has no afterburner. bypass_ratio is set to 0.0 (not applicable to a turboprop; proxy placeholder, not a claim of a real bypass ratio).",
+        "sources": ["csg-us-navy-e2d-navair", "csg-us-t56-wiki"],
+        "parameters": {
+            "engine.mil_thrust_n": {"value_basis": "engineering_estimate", "source_ids": ["csg-us-navy-e2d-navair"], "tier": "est", "note": "5,100 shp sourced (A, OOB page); converted via T[N]=4.0*shp proxy factor since the loader has no shp field. Not a real thrust figure"},
+            "engine.ab_thrust_n": {"value_basis": "engineering_estimate", "source_ids": ["csg-us-navy-e2d-navair"], "tier": "est", "note": "set equal to mil_thrust_n; turboprop has no afterburner stage"},
+            "engine.sfc_mil": {"value_basis": "proxy", "source_ids": ["csg-us-t56-wiki"], "tier": "C-est", "note": "0.4690 lb/(hp.h) generic T56-family max-power SFC (Wikipedia Allison T56 performance table); applied as proxy since no -427A-specific SFC found in 2 searches"},
+            "engine.sfc_ab": {"value_basis": "proxy", "source_ids": ["csg-us-t56-wiki"], "tier": "C-est", "note": "same generic T56-family SFC figure as sfc_mil (no afterburner stage to differentiate)"},
+            "engine.bypass_ratio": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "0.0 placeholder; bypass ratio is not a meaningful concept for a turboprop, field not applicable"}
+        }
+    }
+}

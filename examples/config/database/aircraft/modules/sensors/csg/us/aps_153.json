@@ -1,0 +1,38 @@
+{
+    "name": "CSG_US_APS-153",
+    "type": "Sensor",
+    "sensor": {
+        "max_range": 65000.0,
+        "fov_deg": 300.0,
+        "scan_period": 1.0,
+        "detection_prob": 0.95,
+        "bearing_noise_std": 0.5,
+        "range_noise_std": 40.0,
+        "track_memory_s": 8.0,
+        "range_power": 1.0,
+        "aspect_influence": 0.0,
+        "doppler_notch_width": 0.0
+    },
+    "_real_world": {
+        "class": "Telephonics AN/APS-153 multi-mode maritime surveillance radar",
+        "variant_scope": "AN/APS-153 as fitted to MH-60R Seahawk (ISAR, periscope detection, surface search)",
+        "hulls": [],
+        "public_equipment": ["AN/APS-153 multi-mode radar: ISAR, periscope detection (NAVAIR-confirmed fit, csg-us-mh60r-navair-frp, Tier A)"]
+    },
+    "_provenance": {
+        "modeling_note": "MH-60R primary radar for ASW/ASuW (periscope detection, ISAR imaging, surface search). The CSG order-of-battle page's residual R18 states no public detection range exists for APS-153. All numeric sensor fields are proxy values copied from the existing repo mh60r_mvp.json inline mounted_sensors entry ('helo_surface_search_radar_mvp'), which models the same helicopter-class surface-search radar role at 65 km / 300 deg FOV; this record makes that radar an explicit, separately named Sensor module per the task's requirement rather than leaving it as an inline anonymous block, with detection_prob nudged up slightly to reflect APS-153's dedicated periscope-detection/ISAR design intent (not a quantified figure).",
+        "sources": ["csg-us-mh60r-navair-frp", "csg-us-mh60r-armyrec"],
+        "parameters": {
+            "sensor.max_range": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy from repo mh60r_mvp.json inline mounted_sensors radar block (65000.0 m); no public APS-153 detection range (OOB page residual R18, authority_blocked)"},
+            "sensor.fov_deg": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy from repo mh60r_mvp.json inline radar block (300.0 deg)"},
+            "sensor.scan_period": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy from repo mh60r_mvp.json inline radar block"},
+            "sensor.detection_prob": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate marginally above repo mh60r_mvp.json's 1.0-capped baseline reduced to 0.95 for a synthetic non-calibrated record; reflects APS-153's dedicated periscope/ISAR role qualitatively (NAVAIR A confirms the modes, not a detection probability)"},
+            "sensor.bearing_noise_std": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy from repo mh60r_mvp.json inline radar block"},
+            "sensor.range_noise_std": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy from repo mh60r_mvp.json inline radar block"},
+            "sensor.track_memory_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy from repo mh60r_mvp.json inline radar block"},
+            "sensor.range_power": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy from repo mh60r_mvp.json inline radar block (radar-equation exponent, not platform-specific)"},
+            "sensor.aspect_influence": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy from repo mh60r_mvp.json inline radar block"},
+            "sensor.doppler_notch_width": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy from repo mh60r_mvp.json inline radar block"}
+        }
+    }
+}
