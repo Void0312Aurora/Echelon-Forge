@@ -28,9 +28,10 @@ _GROUND_UNIT_NAME = "Ground_Platoon_MVP"
 # than satisfied with a coefficient: the node is split so reachability and the
 # mobility contract are asserted separately.
 
-# A ground hit does not degrade mobility, and the cause is a scope gate, not a warhead
-# property. `apply_default_effects_ground_chassis_consequence_blocks` degrades
-# `mobility_integrity` and `track_integrity` only when the ground spatial scales carry a
+# A ground hit does not degrade mobility on the synthesized bootstrap surface (the
+# default Ground fixture spawned below, which declares no `damage_model`), and the cause
+# is a scope gate, not a warhead property. `apply_default_effects_ground_chassis_consequence_blocks`
+# degrades `mobility_integrity` and `track_integrity` only when the ground spatial scales carry a
 # blast or a mobility term. Those terms come from sampled warhead mechanism load, and the
 # effects model estimates mechanism load only for structured *air* targets: the
 # direct-hit and spatial-projection paths are gated on `structured_air_target`, and a
@@ -39,6 +40,15 @@ _GROUND_UNIT_NAME = "Ground_Platoon_MVP"
 # which makes those chassis branches implemented but unreachable, the same class as
 # DM-G1. Mission and survivability still degrade through `command_integrity` and
 # `structural_integrity`.
+#
+# This scope gate is specific to the synthesized bootstrap surface. An authored Ground
+# `damage_model` whose hitbox declares an `engine`, `engineering`, or `fuel` system takes a
+# different, already-reachable path: the generic non-air branch in
+# `apply_default_effects_system_effect`
+# (src/models/weapons/detail/default_effects_system_effect_detail.h, the `!context.structured_air_target`
+# case) matches the system name and subtracts directly from `platform_damage->mobility_capability`.
+# That is a pre-existing naval/generic system-name coefficient, not a Ground mechanism, and
+# is not exercised by the fixture this suite spawns.
 #
 # The expectation that a hit degrades mobility was withdrawn on 2026-09-28 rather than
 # satisfied: admitting ground mechanism-load estimation without a Ground vulnerability
@@ -170,14 +180,21 @@ class GroundDamageResponseTests(unittest.TestCase):
     )
 
   def test_ground_route_does_not_degrade_mobility_for_any_warhead_family(self) -> None:
-    """Pins the current mobility contract instead of asserting an invented one.
+    """Pins the current mobility contract on the synthesized bootstrap surface.
 
-    The ground route never estimates warhead mechanism load (that estimation is gated
-    on structured air targets), so the blast/mobility spatial scales stay zero and the
-    chassis mobility branches cannot fire for any warhead family. Mission and
-    survivability degrade; mobility stays at 1.0. This is a recorded scope gap of the
-    uncalibrated bootstrap route, not a claim that ground movement is immune to damage:
-    the registered follow-up must change this node deliberately.
+    This pins the default Ground fixture spawned by `_spawn_ground_pair`, which declares
+    no `damage_model` and so gets the factory's synthesized whole-body hitbox and
+    `SystemHealth` (see `default_unit_factory.h`). The ground route never estimates
+    warhead mechanism load for that surface (that estimation is gated on structured air
+    targets), so the blast/mobility spatial scales stay zero and the chassis mobility
+    branches cannot fire for any warhead family. Mission and survivability degrade;
+    mobility stays at 1.0. This is a recorded scope gap of the uncalibrated bootstrap
+    route, not a claim that ground movement is immune to damage: an authored Ground
+    `damage_model` declaring an `engine`/`fuel` system reaches mobility instead, through
+    the generic non-air system-name path in `apply_default_effects_system_effect`
+    (src/models/weapons/detail/default_effects_system_effect_detail.h) — not pinned here,
+    since pinning that uncalibrated coefficient would entrench it. The registered
+    follow-up must change this node deliberately.
     """
     for family in ("blast", "blast_fragmentation", "fragmentation", "continuous_rod"):
       with self.subTest(family=family):
