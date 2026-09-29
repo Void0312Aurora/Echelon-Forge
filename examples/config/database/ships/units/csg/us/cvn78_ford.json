@@ -202,9 +202,9 @@
                 "armor": 0.0,
                 "systems": ["forward_flight_deck", "catapults_fwd", "hangar_bay_fwd"],
                 "components": [
-                    {"name": "emals_catapult_1", "system": "aviation_facilities"},
-                    {"name": "emals_catapult_2", "system": "aviation_facilities"},
-                    {"name": "bow_deck_edge_elevator", "system": "aviation_facilities"}
+                    {"name": "emals_catapult_1", "system": "aviation_mission_facilities"},
+                    {"name": "emals_catapult_2", "system": "aviation_mission_facilities"},
+                    {"name": "bow_deck_edge_elevator", "system": "aviation_mission_facilities"}
                 ]
             },
             {
@@ -226,13 +226,13 @@
                 "armor": 0.0,
                 "systems": ["aft_flight_deck", "catapults_aft", "arresting_gear"],
                 "components": [
-                    {"name": "emals_catapult_3", "system": "aviation_facilities"},
-                    {"name": "emals_catapult_4", "system": "aviation_facilities"},
-                    {"name": "aag_arresting_engine_1", "system": "aviation_facilities"},
-                    {"name": "aag_arresting_engine_2", "system": "aviation_facilities"},
-                    {"name": "aag_arresting_engine_3", "system": "aviation_facilities"},
-                    {"name": "waist_deck_edge_elevator", "system": "aviation_facilities"},
-                    {"name": "stern_deck_edge_elevator", "system": "aviation_facilities"}
+                    {"name": "emals_catapult_3", "system": "aviation_mission_facilities"},
+                    {"name": "emals_catapult_4", "system": "aviation_mission_facilities"},
+                    {"name": "aag_arresting_engine_1", "system": "aviation_mission_facilities"},
+                    {"name": "aag_arresting_engine_2", "system": "aviation_mission_facilities"},
+                    {"name": "aag_arresting_engine_3", "system": "aviation_mission_facilities"},
+                    {"name": "waist_deck_edge_elevator", "system": "aviation_mission_facilities"},
+                    {"name": "stern_deck_edge_elevator", "system": "aviation_mission_facilities"}
                 ]
             },
             {
@@ -241,12 +241,12 @@
                 "armor": 0.0,
                 "systems": ["reactor_plant", "propulsion", "magazine"],
                 "components": [
-                    {"name": "a1b_reactor_1", "system": "propulsion"},
-                    {"name": "a1b_reactor_2", "system": "propulsion"},
-                    {"name": "main_propulsion_shaft_1", "system": "propulsion"},
-                    {"name": "main_propulsion_shaft_2", "system": "propulsion"},
-                    {"name": "main_propulsion_shaft_3", "system": "propulsion"},
-                    {"name": "main_propulsion_shaft_4", "system": "propulsion"},
+                    {"name": "a1b_reactor_1", "system": "propulsion_engineering"},
+                    {"name": "a1b_reactor_2", "system": "propulsion_engineering"},
+                    {"name": "main_propulsion_shaft_1", "system": "propulsion_engineering"},
+                    {"name": "main_propulsion_shaft_2", "system": "propulsion_engineering"},
+                    {"name": "main_propulsion_shaft_3", "system": "propulsion_engineering"},
+                    {"name": "main_propulsion_shaft_4", "system": "propulsion_engineering"},
                     {"name": "essm_mk29_launcher_aft", "system": "vls"},
                     {"name": "ram_mk49_launcher_fwd", "system": "vls"},
                     {"name": "ram_mk49_launcher_aft", "system": "vls"}
@@ -297,6 +297,7 @@
             "csg-us-cvn78-airlant", "csg-us-cvn78-dote-fy25"
         ],
         "parameters": {
+            "damage_model.hitboxes.components.system": {"value_basis": "engineering_estimate", "note": "S0-C packet-1 follow-up (main thread, 2026-09-29): component system tags renamed so each routes to a platform damage axis (propulsion->propulsion_engineering, sonar->sonar_sensor, aviation facilities->aviation_mission_*, weapons/countermeasures->*_combat, cargo holds by content: fuel, combat ammunition, or hold structure). Geometry, thresholds, and every numeric value unchanged."},
             "ship_platform.displacement_light_kg": {"value_basis": "proxy", "source_ids": ["csg-us-cvn78-airlant"], "tier": "C-est", "note": "no public light-displacement figure; engineering estimate derived as full-load minus a proportional load/air-wing/fuel fraction consistent with Nimitz-class light/full-load ratios"},
             "ship_platform.displacement_full_load_kg": {"value_basis": "sourced", "source_ids": ["csg-us-cvn78-airlant"], "tier": "A", "note": "~100,000 LT -> 101,605,000 kg, rounded to nearest 1000 kg"},
             "ship_platform.length_m": {"value_basis": "sourced", "source_ids": ["csg-us-cvn78-airlant"], "tier": "A", "note": "1,106 ft -> 337.0 m"},

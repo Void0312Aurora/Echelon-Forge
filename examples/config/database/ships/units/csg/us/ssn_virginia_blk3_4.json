@@ -93,9 +93,9 @@
                 "armor": 0.0,
                 "systems": ["torpedo_room", "bow_sonar", "forward_ballast"],
                 "components": [
-                    {"name": "lab_bow_sonar_array", "system": "sonar"},
-                    {"name": "torpedo_room_4_tube_21in", "system": "weapons_stowage"},
-                    {"name": "torpedo_reload_racks", "system": "weapons_stowage"}
+                    {"name": "lab_bow_sonar_array", "system": "sonar_sensor"},
+                    {"name": "torpedo_room_4_tube_21in", "system": "weapons_combat_stowage"},
+                    {"name": "torpedo_reload_racks", "system": "weapons_combat_stowage"}
                 ]
             },
             {
@@ -117,9 +117,9 @@
                 "armor": 0.0,
                 "systems": ["reactor", "propulsion", "aft_ballast"],
                 "components": [
-                    {"name": "s9g_reactor", "system": "propulsion"},
-                    {"name": "steam_turbine_pump_jet", "system": "propulsion"},
-                    {"name": "reduction_gear", "system": "propulsion"}
+                    {"name": "s9g_reactor", "system": "propulsion_engineering"},
+                    {"name": "steam_turbine_pump_jet", "system": "propulsion_engineering"},
+                    {"name": "reduction_gear", "system": "propulsion_engineering"}
                 ]
             },
             {
@@ -128,7 +128,7 @@
                 "armor": 0.0,
                 "systems": ["towed_array_winch", "stern_plane_actuators"],
                 "components": [
-                    {"name": "tb34_towed_array_winch", "system": "sonar"},
+                    {"name": "tb34_towed_array_winch", "system": "sonar_sensor"},
                     {"name": "stern_control_surfaces", "system": "control_surfaces"}
                 ]
             }
@@ -165,6 +165,7 @@
             "csg-us-virginia-navy", "csg-us-virginia-globalsecurity", "csg-us-virginia-wiki"
         ],
         "parameters": {
+            "damage_model.hitboxes.components.system": {"value_basis": "engineering_estimate", "note": "S0-C packet-1 follow-up (main thread, 2026-09-29): component system tags renamed so each routes to a platform damage axis (propulsion->propulsion_engineering, sonar->sonar_sensor, aviation facilities->aviation_mission_*, weapons/countermeasures->*_combat, cargo holds by content: fuel, combat ammunition, or hold structure). Geometry, thresholds, and every numeric value unchanged."},
             "submarine_platform.submerged_displacement_kg": {"value_basis": "sourced", "source_ids": ["csg-us-virginia-navy"], "tier": "A", "note": "~7,800 long tons submerged, converted at approx 1:1 (submerged displacement quoted directly in tons, treated as metric-equivalent per OOB convention)"},
             "submarine_platform.length_m": {"value_basis": "sourced", "source_ids": ["csg-us-virginia-navy"], "tier": "A", "note": "377 ft -> 114.8 m"},
             "submarine_platform.beam_m": {"value_basis": "sourced", "source_ids": ["csg-us-virginia-navy"], "tier": "A", "note": "34 ft -> 10.36 m"},
