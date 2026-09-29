@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <utility>
@@ -529,6 +530,65 @@ TEST_SUITE("stable_entity_identity") {
         const double ghp_a1 = ground_hit_at(606);
         const double ghp_a2 = ground_hit_at(606);
         CHECK(ghp_a1 == ghp_a2);
+    }
+
+    TEST_CASE("site 5 (radar detection) and site 6 (acoustic detection): seed composition "
+             "matches each site's production call shape") {
+        // Sensor and acoustic detection don't expose their roll on a component the way sites
+        // 1-4/7 do, so this exercises `draw_seed` directly with each site's exact production
+        // signature (default_sensor_model.cpp / default_acoustic_model.cpp): two participants,
+        // no extra words for the detection roll itself, and lanes 1-4 for the bearing/range (or
+        // acoustic bearing/range) noise pairs layered on top of it.
+        flecs::world world;
+        install_stable_identity_state(world, 707);
+        auto owner = world.entity();
+        auto target = world.entity();
+        stamp_stable_serial(owner);
+        stamp_stable_serial(target);
+        using stochastic_draw::DrawSite;
+        using stochastic_draw::draw_seed;
+
+        const std::uint64_t radar_seed =
+            draw_seed(world, DrawSite::radar_detection, 12.5, {owner, target});
+        const std::uint64_t acoustic_seed =
+            draw_seed(world, DrawSite::acoustic_detection, 12.5, {owner, target});
+        // Same participants and time, different sites: different seeds (site is absorbed).
+        CHECK(radar_seed != acoustic_seed);
+
+        // Reproducible: an identical call against the same world state redraws the same seed.
+        CHECK(radar_seed == draw_seed(world, DrawSite::radar_detection, 12.5, {owner, target}));
+        CHECK(acoustic_seed ==
+              draw_seed(world, DrawSite::acoustic_detection, 12.5, {owner, target}));
+
+        // A different episode seed changes both detection rolls.
+        world.set<StableIdentityState>({world.get<StableIdentityState>()->next_serial, 708});
+        CHECK(radar_seed != draw_seed(world, DrawSite::radar_detection, 12.5, {owner, target}));
+        CHECK(acoustic_seed !=
+              draw_seed(world, DrawSite::acoustic_detection, 12.5, {owner, target}));
+        world.set<StableIdentityState>({world.get<StableIdentityState>()->next_serial, 707});
+
+        // The four noise lanes each site layers on its detection seed (bearing u1/u2 = tags
+        // 1/2, range u1/u2 = tags 3/4) are pairwise independent draws, not the same value
+        // repeated, for both sites.
+        const std::array<std::uint64_t, 4> radar_lanes = {
+            stochastic_draw::lane(radar_seed, 1), stochastic_draw::lane(radar_seed, 2),
+            stochastic_draw::lane(radar_seed, 3), stochastic_draw::lane(radar_seed, 4)};
+        const std::array<std::uint64_t, 4> acoustic_lanes = {
+            stochastic_draw::lane(acoustic_seed, 1), stochastic_draw::lane(acoustic_seed, 2),
+            stochastic_draw::lane(acoustic_seed, 3), stochastic_draw::lane(acoustic_seed, 4)};
+        for (std::size_t i = 0; i < radar_lanes.size(); ++i) {
+            for (std::size_t j = 0; j < radar_lanes.size(); ++j) {
+                if (i == j) continue;
+                CHECK(radar_lanes[i] != radar_lanes[j]);
+                CHECK(acoustic_lanes[i] != acoustic_lanes[j]);
+            }
+        }
+        // The two sites' lanes are independent of each other too (different site seed feeds in).
+        CHECK(radar_lanes[0] != acoustic_lanes[0]);
+
+        const double u = stochastic_draw::uniform01(stochastic_draw::lane(radar_seed, 1));
+        CHECK(u >= 0.0);
+        CHECK(u < 1.0);
     }
 
     TEST_CASE("helper: stream steps are bit-identical to the pre-existing copies") {
