@@ -95,7 +95,7 @@ FlecsCpuBackend::setup(const runtime::backend::SetupRequest &request) {
         result.entity_ids = runtime_.apply_world_setup_batch(
             request.seeds.get(), request.terrain_assignments.get(), request.wind_assignments.get(),
             request.zones.get(), request.spawn_requests.get(), request.time_steps.get(),
-            request.sun_assignments.get());
+            request.sun_assignments.get(), request.geodetic_anchor_assignments.get());
         return result;
     case runtime::backend::SetupKind::Layout:
         result.entity_ids = runtime_.apply_world_layout(
@@ -104,7 +104,9 @@ FlecsCpuBackend::setup(const runtime::backend::SetupRequest &request) {
             request.wind_dir_from_deg, request.wind_shear_mps_per_km, request.maritime_configured,
             request.sea_state, request.wave_heading_deg, request.wave_period_s, request.zones.get(),
             request.spawn_requests.get(), request.time_steps.get(), request.sun_azimuth_deg,
-            request.sun_elevation_deg);
+            request.sun_elevation_deg,
+            WorldGeodeticAnchorAssignment{request.world_index, request.anchor_latitude_deg,
+                                          request.anchor_longitude_deg, request.anchor_height_m});
         return result;
     case runtime::backend::SetupKind::WorldSpawn:
         if (request.world_spawn_request == nullptr) {

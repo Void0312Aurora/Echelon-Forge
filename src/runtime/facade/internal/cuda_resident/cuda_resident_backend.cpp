@@ -227,7 +227,7 @@ CudaResidentBackend::setup(const runtime::backend::SetupRequest &request) {
     if (seeds.size() != world_count || spawns.size() != world_count ||
         time_steps.size() != world_count || !request.terrain_assignments.empty() ||
         !request.wind_assignments.empty() || !request.zones.empty() ||
-        !request.sun_assignments.empty()) {
+        !request.sun_assignments.empty() || !request.geodetic_anchor_assignments.empty()) {
         throw std::invalid_argument(
             "CUDA fixed-air resident setup requires one seed/spawn/time-step per world and no "
             "dynamic environment assignments");

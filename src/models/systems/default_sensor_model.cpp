@@ -166,11 +166,9 @@ double target_height_above_surface_m(const Sensor &sensor, const flecs::entity &
     // the naval adapter (the sensor's maritime target-height prior applies
     // there). Any other target is a point at its own height, so a sea-skimming
     // missile is seen late rather than lifted to a surface-ship prior.
-    if (target.get<ShipPlatform>() != nullptr) {
-        return z_m +
-               naval::sensor::maritime_radar_target_height_m(sensor, target, target_transform);
-    }
-    return z_m;
+    const double ship_height_m =
+        naval::sensor::ship_target_horizon_height_m(sensor, target, target_transform);
+    return ship_height_m >= 0.0 ? z_m + ship_height_m : z_m;
 }
 
 // Smooth-earth horizon gate shared by every line-of-sight sensor type

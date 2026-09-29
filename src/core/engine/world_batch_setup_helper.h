@@ -84,6 +84,17 @@ inline void apply_setup_sun_assignments(SimulationKernel &world,
     apply_sun_assignments(world, assignments, grouped_indices);
 }
 
+inline void apply_setup_geodetic_anchor_assignments(
+    SimulationKernel &world, const std::vector<WorldGeodeticAnchorAssignment> &assignments,
+    const std::vector<std::size_t> &grouped_indices) {
+    // Reset to the documented default so a re-setup never inherits a stale anchor.
+    WorldGeodeticAnchorAssignment anchor{};
+    for (const std::size_t item_index : grouped_indices) {
+        anchor = assignments[item_index];
+    }
+    world.set_geodetic_anchor(anchor.latitude_deg, anchor.longitude_deg, anchor.height_m);
+}
+
 inline void append_zones(SimulationKernel &world, const std::vector<WorldZoneDefinition> &zones,
                          const std::vector<std::size_t> &grouped_indices) {
     for (const std::size_t item_index : grouped_indices) {
@@ -119,6 +130,8 @@ inline void apply_world_setup(SimulationKernel &world, std::size_t world_index,
                               const std::vector<std::size_t> &wind_grouped_indices,
                               const std::vector<WorldSunAssignment> &sun_assignments,
                               const std::vector<std::size_t> &sun_grouped_indices,
+                              const std::vector<WorldGeodeticAnchorAssignment> &anchor_assignments,
+                              const std::vector<std::size_t> &anchor_grouped_indices,
                               const std::vector<WorldZoneDefinition> &zones,
                               const std::vector<std::size_t> &zone_grouped_indices,
                               const std::vector<WorldSpawnRequest> &requests,
@@ -129,6 +142,7 @@ inline void apply_world_setup(SimulationKernel &world, std::size_t world_index,
     apply_setup_terrain_assignments(world, terrain_assignments, terrain_grouped_indices);
     apply_setup_wind_assignments(world, wind_assignments, wind_grouped_indices);
     apply_setup_sun_assignments(world, sun_assignments, sun_grouped_indices);
+    apply_setup_geodetic_anchor_assignments(world, anchor_assignments, anchor_grouped_indices);
     replace_zones(world, zones, zone_grouped_indices);
     world.reset(resolve_reset_seed(world_index, world_count, seeds));
 

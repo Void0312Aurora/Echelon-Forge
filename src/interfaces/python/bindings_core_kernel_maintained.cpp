@@ -86,6 +86,16 @@ void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel> &ker
              nb::arg("wave_period_s") = 8.0)
         .def("clear_maritime_state", &SimulationKernel::clear_maritime_state,
              "Clear global maritime override so platform defaults can apply again")
+        .def("set_geodetic_anchor", &SimulationKernel::set_geodetic_anchor,
+             "Set the geodetic anchor of the local frame (latitude deg, longitude deg, height m)",
+             nb::arg("latitude_deg"), nb::arg("longitude_deg"), nb::arg("height_m") = 0.0)
+        .def(
+            "get_geodetic_anchor",
+            [](SimulationKernel &self) {
+                const auto anchor = self.get_geodetic_anchor();
+                return std::make_tuple(anchor.latitude_deg, anchor.longitude_deg, anchor.height_m);
+            },
+            "Get the geodetic anchor of the local frame (latitude deg, longitude deg, height m)")
         .def(
             "get_maritime_state",
             [](SimulationKernel &self) {

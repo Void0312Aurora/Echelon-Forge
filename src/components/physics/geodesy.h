@@ -54,6 +54,12 @@ struct EarthModel {
 };
 
 // Geodetic anchor of a scenario's local frame.
+//
+// A scenario that does not declare an anchor inherits `kDefaultGeodeticAnchor`:
+// the Nellis AFB reference (36.24 N, 115.05 W) that the navigation system used
+// as a hard-coded anchor before the geodetic frame existed. Keeping it as the
+// documented default leaves every undeclared scenario at the same latitude and
+// longitude it always had near the origin.
 struct GeodeticAnchor {
     double latitude_deg = 0.0;
     double longitude_deg = 0.0;
@@ -61,6 +67,17 @@ struct GeodeticAnchor {
     // at sea use 0; a land tile may declare its datum offset here.
     double height_m = 0.0;
 };
+
+inline constexpr GeodeticAnchor kDefaultGeodeticAnchor{36.24, -115.05, 0.0};
+
+// An anchor is usable when every field is finite and the latitude lies strictly
+// inside (-90, 90): the azimuthal-equidistant frame is undefined at a pole
+// anchor's own meridian. Longitude may be any finite value; it is wrapped.
+[[nodiscard]] inline bool is_valid_anchor(const GeodeticAnchor &anchor) noexcept {
+    return std::isfinite(anchor.latitude_deg) && std::isfinite(anchor.longitude_deg) &&
+           std::isfinite(anchor.height_m) && anchor.latitude_deg > -90.0 &&
+           anchor.latitude_deg < 90.0;
+}
 
 struct GeodeticPosition {
     double latitude_deg = 0.0;

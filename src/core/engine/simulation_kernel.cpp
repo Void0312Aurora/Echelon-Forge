@@ -346,6 +346,30 @@ void SimulationKernel::clear_maritime_state() {
     }
 }
 
+void SimulationKernel::set_geodetic_anchor(double latitude_deg, double longitude_deg,
+                                           double height_m) {
+    const geodesy::GeodeticAnchor anchor{latitude_deg, longitude_deg, height_m};
+    if (!geodesy::is_valid_anchor(anchor)) {
+        throw std::invalid_argument(
+            "set_geodetic_anchor requires finite values and a latitude inside (-90, 90)");
+    }
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("set_geodetic_anchor");
+    world_state_mutated_ = true;
+    if (IEnvironmentModel *model = environment_model()) {
+        model->set_geodetic_anchor(anchor);
+    }
+}
+
+geodesy::GeodeticAnchor SimulationKernel::get_geodetic_anchor() const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_geodetic_anchor");
+    if (IEnvironmentModel *model = environment_model()) {
+        return model->get_geodetic_anchor();
+    }
+    return geodesy::kDefaultGeodeticAnchor;
+}
+
 IEnvironmentModel::MaritimeState SimulationKernel::get_maritime_state() const {
     auto composition_lock = acquire_composition_operation();
     ensure_active("get_maritime_state");

@@ -5,17 +5,16 @@
 #include "components/basic/common.h"
 #include "components/physics/dynamics.h"
 #include "components/systems/navigation.h"
+#include "core/interfaces/environment_model.h"
 
-// Simple Geo-Reference (Nellis AFB approx)
-constexpr double kRefLat = 36.24;
-constexpr double kRefLon = -115.05;
-constexpr double kMetersPerDegLat = 111132.954;
-constexpr double kMetersPerDegLon = 90000.0; // Approx at 36N
-
-inline void register_navigation_system(flecs::world& ecs) {
+inline void register_navigation_system(flecs::world &ecs) {
     ecs.system<EGI, const Transform, const Velocity>("NavigationSystem")
         .kind(flecs::OnUpdate)
-        .run([](flecs::iter& it) {
+        .run([](flecs::iter &it) {
+            // The world's geodetic anchor (Geodetic Frame P3-B); the documented
+            // default anchor applies when no environment is bound.
+            const EnvironmentModelRef *env_ref = it.world().get<EnvironmentModelRef>();
+            const IEnvironmentModel *env = env_ref ? env_ref->model : nullptr;
             while (it.next()) {
                 auto egi = it.field<EGI>(0);
                 auto trans = it.field<const Transform>(1);
@@ -32,7 +31,8 @@ inline void register_navigation_system(flecs::world& ecs) {
 
                     if (egi[i].gps_available) {
                         egi[i].time_since_last_gps_fix = 0.0;
-                        egi[i].position_uncertainty_m = std::min(egi[i].position_uncertainty_m, 5.0);
+                        egi[i].position_uncertainty_m =
+                            std::min(egi[i].position_uncertainty_m, 5.0);
                     } else {
                         egi[i].time_since_last_gps_fix += dt;
                         egi[i].position_uncertainty_m =
@@ -43,14 +43,16 @@ inline void register_navigation_system(flecs::world& ecs) {
                     double nav_y = trans[i].y;
                     double nav_z = trans[i].z;
 
-                    // Geo Projection (flat-earth reference)
-                    egi[i].lat_deg = kRefLat + (nav_y / kMetersPerDegLat);
-                    egi[i].lon_deg = kRefLon + (nav_x / kMetersPerDegLon);
+                    // Inverse azimuthal-equidistant projection about the anchor.
+                    const geodesy::GeodeticPosition geo =
+                        environment_local_to_geodetic(env, nav_x, nav_y, nav_z);
+                    egi[i].lat_deg = geo.latitude_deg;
+                    egi[i].lon_deg = geo.longitude_deg;
 
                     // Velocities (World ENU -> NED)
-                    egi[i].vn_mps = vel[i].vy;   // Y is North
-                    egi[i].ve_mps = vel[i].vx;   // X is East
-                    egi[i].vd_mps = -vel[i].vz;  // Z Up -> D Down
+                    egi[i].vn_mps = vel[i].vy;  // Y is North
+                    egi[i].ve_mps = vel[i].vx;  // X is East
+                    egi[i].vd_mps = -vel[i].vz; // Z Up -> D Down
 
                     egi[i].alt_baro_m = nav_z;
                     egi[i].alt_radar_m = std::max(0.0, nav_z); // Flat-ground fallback
@@ -61,8 +63,10 @@ inline void register_navigation_system(flecs::world& ecs) {
                     egi[i].roll_deg = trans[i].roll;
 
                     // Wrap Heading [0, 360)
-                    while (egi[i].heading_deg < 0.0) egi[i].heading_deg += 360.0;
-                    while (egi[i].heading_deg >= 360.0) egi[i].heading_deg -= 360.0;
+                    while (egi[i].heading_deg < 0.0)
+                        egi[i].heading_deg += 360.0;
+                    while (egi[i].heading_deg >= 360.0)
+                        egi[i].heading_deg -= 360.0;
                 }
             }
         });

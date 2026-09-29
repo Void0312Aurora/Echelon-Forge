@@ -143,7 +143,13 @@ def test_wp22_bindings_core_still_exposes_broad_surface_as_quarantined_fact() ->
   # which this count guard silently missed until 2026-08-13.
   # 87 -> 86 on 2026-08-13: the dead-binding sweep removed get_egi_state
   # (zero python consumers; the EGI component itself stays alive in C++).
-  assert len(names) == 86, (
+  # +2 on 2026-09-29: Geodetic Frame P3-B added the maintained
+  # set_geodetic_anchor/get_geodetic_anchor pair (scenario anchor of the local
+  # frame, consumed by the scenario kernel-apply path). The count stays pinned to
+  # 86 + 2 = 88; the base already carries one unallowlisted diagnostics binding
+  # (debug_set_contact_list_preserve_timestamps, 87 on origin/main), an
+  # inherited red that this package does not absorb into the pin.
+  assert len(names) == 88, (
     "WP22-E expects the broad SimulationKernel binding count to stay explicit; "
     "update this guard only with a deliberate allowlist reshaping change"
   )

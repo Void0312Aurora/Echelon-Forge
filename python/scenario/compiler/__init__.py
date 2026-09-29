@@ -14,7 +14,11 @@ from .clone import (
     _extract_runtime_agent_spawn_context,
 )
 from .common import (
+    DEFAULT_GEODETIC_ANCHOR,
     DEFAULT_TERRAIN_TYPE,
+    GEODETIC_ANCHOR_SOURCE_DEFAULT,
+    GEODETIC_ANCHOR_SOURCE_EXPLICIT,
+    resolve_environment_geodetic_anchor,
     COMPATIBILITY_TERRAIN_TYPES,
     REPO_ROOT,
     TERRAIN_TYPE_SOURCE_COMPATIBILITY,
@@ -107,7 +111,11 @@ __all__ = [
     "_OBJECTIVE_OP_MAP",
     "_OBJECTIVE_DYNAMIC_TARGET_MAP",
     "_SURFACE_TYPE_MAP",
+    "DEFAULT_GEODETIC_ANCHOR",
     "DEFAULT_TERRAIN_TYPE",
+    "GEODETIC_ANCHOR_SOURCE_DEFAULT",
+    "GEODETIC_ANCHOR_SOURCE_EXPLICIT",
+    "resolve_environment_geodetic_anchor",
     "VALID_TERRAIN_TYPES",
     "COMPATIBILITY_TERRAIN_TYPES",
     "TERRAIN_TYPE_SOURCE_EXPLICIT",
