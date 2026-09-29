@@ -69,21 +69,22 @@ class WorldBatchRuntime {
     void set_time_step(double dt);
     void clear_zones_batch(const std::vector<uint64_t> &world_indices = {});
     std::vector<uint64_t> spawn_units_batch(const std::vector<WorldSpawnRequest> &requests);
-    std::vector<uint64_t>
-    apply_world_setup_batch(const std::vector<uint32_t> &seeds,
-                            const std::vector<WorldTerrainAssignment> &terrain_assignments,
-                            const std::vector<WorldWindAssignment> &wind_assignments,
-                            const std::vector<WorldZoneDefinition> &zones,
-                            const std::vector<WorldSpawnRequest> &requests,
-                            const std::vector<double> &time_steps = {},
-                            const std::vector<WorldSunAssignment> &sun_assignments = {});
+    std::vector<uint64_t> apply_world_setup_batch(
+        const std::vector<uint32_t> &seeds,
+        const std::vector<WorldTerrainAssignment> &terrain_assignments,
+        const std::vector<WorldWindAssignment> &wind_assignments,
+        const std::vector<WorldZoneDefinition> &zones,
+        const std::vector<WorldSpawnRequest> &requests, const std::vector<double> &time_steps = {},
+        const std::vector<WorldSunAssignment> &sun_assignments = {},
+        const std::vector<WorldGeodeticAnchorAssignment> &geodetic_anchor_assignments = {});
     std::vector<uint64_t> apply_world_layout(
         std::size_t world_index, std::uint32_t seed, const std::string &terrain_type,
         double wind_speed_mps, double wind_dir_from_deg, double wind_shear_mps_per_km,
         bool maritime_configured, double sea_state, double wave_heading_deg, double wave_period_s,
         const std::vector<WorldZoneDefinition> &zones,
         const std::vector<WorldSpawnRequest> &requests, const std::vector<double> &time_steps = {},
-        double sun_azimuth_deg = 0.0, double sun_elevation_deg = 45.0);
+        double sun_azimuth_deg = 0.0, double sun_elevation_deg = 45.0,
+        const WorldGeodeticAnchorAssignment &geodetic_anchor = {});
     double world_time_step(std::size_t world_index) const;
 
     void set_pilot_actions_batch(const std::vector<WorldPilotActionAssignment> &assignments);

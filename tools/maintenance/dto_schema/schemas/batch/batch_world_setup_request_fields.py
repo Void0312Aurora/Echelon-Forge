@@ -28,6 +28,7 @@ SCHEMA = DtoSchema(
         Field(name='terrain_assignments', cpp_type='std::vector<WorldTerrainAssignment>', default='{}', group='EF_BATCH_WORLD_SETUP_REQUEST_FIELD'),
         Field(name='wind_assignments', cpp_type='std::vector<WorldWindAssignment>', default='{}', group='EF_BATCH_WORLD_SETUP_REQUEST_FIELD'),
         Field(name='sun_assignments', cpp_type='std::vector<WorldSunAssignment>', default='{}', group='EF_BATCH_WORLD_SETUP_REQUEST_FIELD'),
+        Field(name='geodetic_anchor_assignments', cpp_type='std::vector<WorldGeodeticAnchorAssignment>', default='{}', group='EF_BATCH_WORLD_SETUP_REQUEST_FIELD'),
         Field(name='zones', cpp_type='std::vector<WorldZoneDefinition>', default='{}', group='EF_BATCH_WORLD_SETUP_REQUEST_FIELD'),
         Field(name='spawn_requests', cpp_type='std::vector<WorldSpawnRequest>', default='{}', group='EF_BATCH_WORLD_SETUP_REQUEST_FIELD'),
         Field(name='typed_platform_spawn_requests', cpp_type='std::vector<TypedPlatformSpawnRequest>', default='{}', group='EF_BATCH_WORLD_SETUP_REQUEST_FIELD'),

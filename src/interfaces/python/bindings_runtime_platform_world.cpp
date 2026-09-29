@@ -26,6 +26,13 @@ void bind_runtime_platform_world(nb::module_ &m) {
         .def_rw("azimuth_deg", &WorldSunAssignment::azimuth_deg)
         .def_rw("elevation_deg", &WorldSunAssignment::elevation_deg);
 
+    nb::class_<WorldGeodeticAnchorAssignment>(m, "WorldGeodeticAnchorAssignment")
+        .def(nb::init<>())
+        .def_rw("world_index", &WorldGeodeticAnchorAssignment::world_index)
+        .def_rw("latitude_deg", &WorldGeodeticAnchorAssignment::latitude_deg)
+        .def_rw("longitude_deg", &WorldGeodeticAnchorAssignment::longitude_deg)
+        .def_rw("height_m", &WorldGeodeticAnchorAssignment::height_m);
+
     nb::class_<WorldZoneDefinition> world_zone_definition_class(m, "WorldZoneDefinition");
     world_zone_definition_class.def(nb::init<>());
 #define EF_WORLD_ZONE_DEFINITION_FIELD(type, name, default_value)                                  \

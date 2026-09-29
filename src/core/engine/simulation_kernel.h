@@ -199,6 +199,10 @@ class SimulationKernel {
                             double wave_period_s = 8.0);
     void clear_maritime_state();
     IEnvironmentModel::MaritimeState get_maritime_state() const;
+    // Geodetic anchor of the local frame (Geodetic Frame P3-B). Throws
+    // std::invalid_argument for a non-finite or polar anchor.
+    void set_geodetic_anchor(double latitude_deg, double longitude_deg, double height_m = 0.0);
+    geodesy::GeodeticAnchor get_geodetic_anchor() const;
 
     // Compatibility-only legacy command API retained while typed setup stays blocked.
     void set_unit_command(uint64_t entity_id, double heading_deg, double speed_mps,

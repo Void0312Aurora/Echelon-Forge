@@ -27,6 +27,20 @@ from .roster import _attach_active_roster_to_applied_world
 from .world_setup import apply_world_setup_payload_maintained
 
 
+def _geodetic_anchor_assignments(
+    anchors: list[tuple[float, float, float]],
+) -> list[Any]:
+    items: list[Any] = []
+    for world_index, anchor in enumerate(anchors):
+        item = ef_py.WorldGeodeticAnchorAssignment()
+        item.world_index = int(world_index)
+        item.latitude_deg = float(anchor[0])
+        item.longitude_deg = float(anchor[1])
+        item.height_m = float(anchor[2])
+        items.append(item)
+    return items
+
+
 def _prepare_compiled_batch_world_context(
     compiled_scenario: CompiledScenario,
     *,
@@ -280,6 +294,10 @@ def _load_compiled_scenario_batch_direct(
         zones=zone_items[:zone_cursor],
         spawn_requests=spawn_items[:spawn_cursor],
         time_steps=time_step_items,
+        geodetic_anchor_assignments=_geodetic_anchor_assignments(
+            [tuple(compiled_template.geodetic_anchor)] * world_count
+        ),
+        geodetic_anchor_explicit=str(compiled_template.geodetic_anchor_source) != "default",
         setup_payload_apply=setup_payload_apply,
     )
 
@@ -403,6 +421,12 @@ def _apply_world_layouts_to_setup_target(
         zones=zone_defs,
         spawn_requests=spawn_requests,
         time_steps=time_step_items,
+        geodetic_anchor_assignments=_geodetic_anchor_assignments(
+            [tuple(layout.geodetic_anchor) for layout in layouts]
+        ),
+        geodetic_anchor_explicit=any(
+            str(layout.geodetic_anchor_source) != "default" for layout in layouts
+        ),
         setup_payload_apply=setup_payload_apply,
     )
 
@@ -449,6 +473,8 @@ def _apply_world_setup_request(
     spawn_requests: list[Any],
     time_steps: list[float],
     sun_assignments: list[Any] | None = None,
+    geodetic_anchor_assignments: list[Any] | None = None,
+    geodetic_anchor_explicit: bool = False,
     setup_payload_apply: Callable[..., list[int]] | None = None,
 ) -> list[int]:
     if setup_payload_apply is None:
@@ -461,9 +487,15 @@ def _apply_world_setup_request(
             spawn_requests=spawn_requests,
             time_steps=time_steps,
             sun_assignments=sun_assignments,
+            geodetic_anchor_assignments=geodetic_anchor_assignments,
         )
-    # Injected appliers predate the sun contract; they receive the original
-    # keyword surface and the facade default (no sun override) applies.
+    # Injected appliers predate the sun and anchor contracts; they receive the
+    # original keyword surface and the facade defaults apply. A declared anchor
+    # cannot be dropped silently, so that combination fails closed.
+    if geodetic_anchor_explicit:
+        raise ValueError(
+            "an injected setup_payload_apply cannot carry environment.geodetic_anchor"
+        )
     return setup_payload_apply(
         facade_setup_target,
         seeds=seeds,

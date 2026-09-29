@@ -56,14 +56,14 @@ class EF_RUNTIME_FACADE_API RuntimeFacade {
     bool load_unit_definitions(const std::string &path, std::string *error = nullptr);
 
     void reset_batch(const BatchResetRequest &request = {});
-    std::vector<uint64_t>
-    apply_world_setup_batch(const std::vector<uint32_t> &seeds,
-                            const std::vector<WorldTerrainAssignment> &terrain_assignments,
-                            const std::vector<WorldWindAssignment> &wind_assignments,
-                            const std::vector<WorldZoneDefinition> &zones,
-                            const std::vector<WorldSpawnRequest> &requests,
-                            const std::vector<double> &time_steps = {},
-                            const std::vector<WorldSunAssignment> &sun_assignments = {});
+    std::vector<uint64_t> apply_world_setup_batch(
+        const std::vector<uint32_t> &seeds,
+        const std::vector<WorldTerrainAssignment> &terrain_assignments,
+        const std::vector<WorldWindAssignment> &wind_assignments,
+        const std::vector<WorldZoneDefinition> &zones,
+        const std::vector<WorldSpawnRequest> &requests, const std::vector<double> &time_steps = {},
+        const std::vector<WorldSunAssignment> &sun_assignments = {},
+        const std::vector<WorldGeodeticAnchorAssignment> &geodetic_anchor_assignments = {});
     BatchWorldSetupResult apply_world_setup(const BatchWorldSetupRequest &request);
     RuntimeWorldLayoutResult apply_world_layout(const RuntimeWorldLayoutRequest &request);
     double world_time_step(std::size_t world_index) const;

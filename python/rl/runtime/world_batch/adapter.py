@@ -826,6 +826,7 @@ class RuntimeFacadeAdapter:
             time_steps=[] if layout.time_step_s is None else [float(layout.time_step_s)],
             sun_azimuth_deg=float(getattr(layout, "sun_azimuth_deg", 0.0)),
             sun_elevation_deg=float(getattr(layout, "sun_elevation_deg", 45.0)),
+            geodetic_anchor=tuple(layout.geodetic_anchor),
         )
 
     def _apply_runtime_world_layout_request(self, request: Any) -> Any:
@@ -948,6 +949,7 @@ class RuntimeFacadeAdapter:
         requests: Sequence[Any],
         time_steps: Sequence[float] | None = None,
         sun_assignments: Sequence[Any] | None = None,
+        geodetic_anchor_assignments: Sequence[Any] | None = None,
     ) -> list[int]:
         self._require_current_production_admission()
         normalized_time_steps = [] if time_steps is None else [float(value) for value in time_steps]
@@ -959,6 +961,9 @@ class RuntimeFacadeAdapter:
             spawn_requests=list(requests),
             time_steps=normalized_time_steps,
             sun_assignments=None if sun_assignments is None else list(sun_assignments),
+            geodetic_anchor_assignments=None
+            if geodetic_anchor_assignments is None
+            else list(geodetic_anchor_assignments),
         )
         return extract_batch_world_setup_entity_ids(self.apply_world_setup(request))
 
