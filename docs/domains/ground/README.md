@@ -96,8 +96,12 @@ may provide provenance but do not redefine the standards above.
 
 Open work that outlived the admission record, restated here rather than left inside it: the
 `DM-G1` repair has landed with its own package. The mobility expectation it left open was
-decided on `2026-09-28`: withdrawn and pinned, because Ground mechanism-load estimation is
-not admitted, so no warhead family reaches the chassis mobility branches. What remains
+decided on `2026-09-28`: withdrawn and pinned on the synthesized bootstrap surface every
+shipped Ground unit uses, because Ground mechanism-load estimation is not admitted there, so
+no warhead family reaches the chassis mobility branches on that surface. A `2026-09-29`
+scope correction records a separate, known exposure: an authored Ground `damage_model` with
+an `engine`/`fuel` system reaches mobility through a pre-existing generic system-name
+coefficient instead, not a Ground mechanism. What remains
 open is the component-attributed mobility follow-up recorded there; a `ground_p2_stage_node`
 package, because the only Ground-claimed stage has no registered node; and an
 archive-ledger registration for the retired `docs/task/ground/` records, which belongs to

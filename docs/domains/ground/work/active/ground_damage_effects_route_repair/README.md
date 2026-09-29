@@ -55,7 +55,7 @@ to take on the admission's authority.
 | Effects route | reachable, measured `2026-09-22` | the warn-level probe prints `GROUND SELECT entity=582 key_type=11 state=1 hitbox=1 sys=1 platform=1` where it printed `state=0` before; `test_ground_damage_response.py` reports `4 passed, 1 xfailed` where it reported `1 passed, 4 xfailed` | measured for the hit this test exercises; the duplicate's creation site was never observed, so "only the effects route was affected" holds for the routes measured |
 | Component identity minting | composition-owned | `register_component<T>` is `ecs.component<T>()` from the admitted rows, and it runs before model realization | the repair must not move identity derivation into `src/models/**` |
 | Duplicate-id detection | absent in this build | flecs's `ECS_INCONSISTENT_COMPONENT_ID` assert is compiled out: `Release` plus `NDEBUG` means no `FLECS_DEBUG` and no `FLECS_KEEP_ASSERT` | the 94/105 split is a **silent** failure class here, not a loud one |
-| Ground damage test markers | none held | three reachability markers removed and their nodes pass; the fourth node was split on `2026-09-28` into its reachability assertions and `test_ground_route_does_not_degrade_mobility_for_any_warhead_family` in [`test_ground_damage_response.py`](../../../../../../tests/runtime/ground/test_ground_damage_response.py), `8 passed` | the split node pins the current mobility contract (no warhead family reaches the chassis mobility branches, because Ground mechanism-load estimation is not admitted); it is not a claim that ground movement is immune to damage |
+| Ground damage test markers | none held | three reachability markers removed and their nodes pass; the fourth node was split on `2026-09-28` into its reachability assertions and `test_ground_route_does_not_degrade_mobility_for_any_warhead_family` in [`test_ground_damage_response.py`](../../../../../../tests/runtime/ground/test_ground_damage_response.py), `8 passed` | the split node pins the current mobility contract (no warhead family reaches the chassis mobility branches, on the synthesized bootstrap surface, because Ground mechanism-load estimation is not admitted); it is not a claim that ground movement is immune to damage |
 
 ## Scope
 
@@ -96,8 +96,8 @@ Out of scope, and refused:
 
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
-| `P0 Boundary` | Freeze scope, write set, and the §10 declaration set. | this request plus the diagnosis | README and cluster plan name every write set and validation command | active |
-| `P1 Evidence` | Confirm the resolution point and the id's lifetime before writing code. | `P0` | the composition step is located, its ordering against model realization is demonstrated, and the multi-world stability question is answered by measurement | active |
+| `P0 Boundary` | Freeze scope, write set, and the §10 declaration set. | this request plus the diagnosis | README and cluster plan name every write set and validation command | met `2026-09-22` — `G1-A` froze the write set and the §10 declaration set in this README and the cluster plan |
+| `P1 Evidence` | Confirm the resolution point and the id's lifetime before writing code. | `P0` | the composition step is located, its ordering against model realization is demonstrated, and the multi-world stability question is answered by measurement | met `2026-09-22` — registration precedes model realization, and five sequential kernels in one process gave the identical post-hit vector (see the gate table); pinned by the two multi-world nodes |
 | `P2 Implementation` | Resolve once in composition and consume the id in the effects route. | `P1` | the duplicate-resolving call is gone and the route reads the passed id | accepted |
 | `P3 Integration` | Wire the tests and the declaration surfaces. | `P2` | four `xfail` markers removed, the monotonicity node re-pinned, and the §10 items 1, 2, 4, 6, 9, 10 reconciled | met `2026-09-28` — three markers removed and the route proven; the fourth node was split so its reachability assertions pass unmarked and its withdrawn mobility expectation is pinned as the bootstrap contract. The declaration reconciliation is done: §10 items 1 and 2 in the Ground specialization baseline, item 4 in `src/models/domains/ground/README.md`, item 6 in `src/runtime/facade/README.md`, items 9 and 10 in the same baseline's verification anchors and the unchanged Python-caller surface |
 | `P4 Validation` | Run the gates and record outcomes. | `P3` | named commands show no failures beyond the branch baseline, and the behaviour change is stated with its flip set | met `2026-09-28` — the gates are run and the flip set is recorded below. The smoke suite ran as `ef_test` 174/174 and CTest 14/14. The only failures beyond the base set are the two Air realism nodes recorded as known exposures of the entity-id seed defect |
@@ -236,6 +236,22 @@ visible, and the replacement has to change the node deliberately.
 **What is not claimed.** That Ground movement is immune to damage. The pinned node describes
 the uncalibrated bootstrap route, not the world.
 
+**Scope correction (2026-09-29).** The cause above holds for the synthesized bootstrap
+damage surface: `default_unit_factory.h` gives every Ground unit that declares no
+`damage_model` one whole-body hitbox and a `SystemHealth` containing only `structure`, and
+every Ground unit shipped today is in this case, so `structured_air_target` gates the only
+mechanism-load path such a unit can reach. It does not hold for an authored Ground
+`damage_model`. If one declares a hitbox with an `engine`, `engineering`, or `fuel` system,
+the generic non-air branch in `apply_default_effects_system_effect`
+(`src/models/weapons/detail/default_effects_system_effect_detail.h:298-303`) matches the
+system name and subtracts `0.25 + 0.20 * severity` from `platform_damage->mobility_capability`
+directly, alongside its fire, flooding, and hull-breach terms. That coefficient is a
+pre-existing naval/generic system-name term, not a Ground mechanism, and it is exactly the
+kind of uncalibrated physics this decision refuses to accept as Ground damage fidelity. It
+is recorded here as a known exposure for the follow-up below, not exercised by any Ground
+content today, and the Ground-owned chassis mobility and track branches in
+`default_effects_ground_domain.h` remain unreachable on this path as well.
+
 **Registered follow-up: component-attributed Ground mobility consequence.** Mobility loss
 should come from damage to named mobility components (running gear, drivetrain, crew
 casualties for dismounts), not from a scalar term on the chassis block. Entry conditions,
@@ -247,7 +263,11 @@ all required:
    conditions 2–5 cannot produce any mobility loss.
 2. Authored Ground hitboxes replace the provisional whole-body extent synthesized at spawn.
 3. The Ground route has a vulnerability/evidence profile with provenance, analogous to the
-   air vulnerability evidence gate.
+   air vulnerability evidence gate. Authoring a Ground `damage_model` must not rely on the
+   generic `engine`/`fuel` system-name coefficient in `apply_default_effects_system_effect`
+   (the scope correction above) to reach mobility: this package must either give Ground its
+   own system-effect branch or exclude Ground from that generic branch, decided together
+   with the vulnerability profile.
 4. Something consumes mobility: Ground movement does not read `mobility_capability` today,
    so the package must also define how mobility loss changes movement (speed cap,
    immobilisation) and what the training observation exposes.
@@ -268,8 +288,12 @@ all required:
   Both nodes are left unmarked here on purpose: re-marking them would hide the defect
   instead of fixing it.
 
-- **No Ground hit degrades mobility, by decision.** The cause is that Ground mechanism-load estimation is not admitted. See
-  [Decision: Mobility Expectation](#decision-mobility-expectation-2026-09-28). The pinned node
+- **No Ground hit degrades mobility on the synthesized bootstrap surface, by decision.** The
+  cause is that Ground mechanism-load estimation is not admitted for that surface. See
+  [Decision: Mobility Expectation](#decision-mobility-expectation-2026-09-28) and its
+  2026-09-29 scope correction, which records that an authored Ground `damage_model` with an
+  `engine`/`fuel` system reaches mobility through a pre-existing generic system-name
+  coefficient instead. The pinned node
   is `test_ground_route_does_not_degrade_mobility_for_any_warhead_family`; the component-attributed
   follow-up and its entry conditions replace it.
 - The **creation site of component `105` is still unobserved.** This repair eliminates the

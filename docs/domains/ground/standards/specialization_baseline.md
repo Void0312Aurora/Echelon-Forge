@@ -98,12 +98,16 @@ are recorded in
 
 A reachable mechanism is still not a capability. This is not a released Ground effects
 model: no Ground task, scenario, or observation claim may rest on it. No Ground hit
-degrades mobility today, for any warhead family: the effects model estimates warhead
-mechanism load only for structured air targets, so the chassis mobility and track branches
-cannot be reached on the Ground route. On `2026-09-28` the expectation that a hit degrades
-mobility was withdrawn rather than satisfied with uncalibrated physics. The current contract
-is pinned by a runtime test, and the component-attributed follow-up with its entry
-conditions is recorded in the route-repair package.
+degrades mobility today on the synthesized bootstrap surface every shipped Ground unit uses,
+for any warhead family: the effects model estimates warhead mechanism load only for
+structured air targets, so the chassis mobility and track branches cannot be reached on
+that surface. On `2026-09-28` the expectation that a hit degrades mobility was withdrawn
+rather than satisfied with uncalibrated physics. An authored Ground `damage_model` with an
+`engine`/`fuel` system is a separate, known exposure: it reaches `mobility_capability`
+through a pre-existing generic non-air system-name coefficient, recorded and scoped in the
+route-repair package rather than claimed as Ground damage fidelity. The current contract is
+pinned by a runtime test, and the component-attributed follow-up with its entry conditions
+is recorded in the route-repair package.
 See the
 [DM-G1 reachability diagnosis](../../../systems/combat/reviews/ground_damage_reachability_20260921.md)
 for the pre-repair measurement that located the cause.

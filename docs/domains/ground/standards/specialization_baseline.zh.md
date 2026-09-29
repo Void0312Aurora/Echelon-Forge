@@ -79,9 +79,13 @@ placeholder 兜底的"全零并被摧毁"；在多 world 进程里每个 world �
 [Ground Damage Effects Route Repair](../../../domains/ground/work/active/ground_damage_effects_route_repair/README.md)。
 
 机制可达仍不等于能力。这不是已释放的 Ground effects model：任何 Ground 任务、场景或
-observation 声明都不得以它为依据。目前任何弹头类型的 Ground 命中都不会降低 mobility：effects
-model 只对结构化空中目标估算弹头机理载荷，因此 Ground 路径永远到不了底盘的 mobility 和履带
-分支。`2026-09-28` 撤回了"命中应降低 mobility"这一期望，没有用未校准的物理去满足它；现行契约
+observation 声明都不得以它为依据。在目前所有已上线 Ground 单位使用的合成 bootstrap 表面上，
+任何弹头类型的 Ground 命中都不会降低 mobility：effects
+model 只对结构化空中目标估算弹头机理载荷，因此在该表面上永远到不了底盘的 mobility 和履带
+分支。`2026-09-28` 撤回了"命中应降低 mobility"这一期望，没有用未校准的物理去满足它。若
+authored 的 Ground `damage_model`声明了 `engine`/`fuel` 系统，则是另一处已记录的已知暴露：
+它会经由一个既有的通用非空中系统名系数到达 `mobility_capability`，该系数在 route-repair
+包中被记录并限定范围，而不被当作 Ground 损伤真实度。现行契约
 由一个运行时测试钉住，按部件推导机动损失的后续议题及其进入条件记录在 route-repair 包中。
 定位该缺陷的**修复前**测量见
 [DM-G1 可达性诊断](../../../systems/combat/reviews/ground_damage_reachability_20260921.md)。
