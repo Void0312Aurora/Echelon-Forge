@@ -1,0 +1,117 @@
+{
+    "name": "CSG_CN_PLAN_Naval_ESM",
+    "type": "Sensor",
+    "sensor": {
+        "type": "ESM",
+        "max_range": 280000.0,
+        "fov_deg": 360.0,
+        "scan_period": 1.0,
+        "detection_prob": 0.94,
+        "bearing_noise_std": 1.8,
+        "range_noise_std": 0.0,
+        "track_memory_s": 18.0,
+        "range_power": 2.0,
+        "aspect_influence": 0.0,
+        "doppler_notch_width": 0.0,
+        "reference_snr_db": 11.0,
+        "reference_range_m": 85000.0,
+        "reference_rcs_m2": 5.0,
+        "bearing_only": true,
+        "bearing_only_min_range_m": 1500.0,
+        "environment_domain": "SurfaceMaritime"
+    },
+    "_real_world": {
+        "class": "Generic PLAN shipborne electronic support measures (ESM) suite, designation not public",
+        "variant_scope": "Fujian, Type 055, Type 052D/052DL, Type 054A, Type 054B (all escorts); no PLAN-specific ESM designation or performance figure is public for any of these hulls in the OOB.",
+        "hulls": [
+            "Fujian (CV-18)",
+            "Type 055",
+            "Type 052D / 052DL",
+            "Type 054A",
+            "Type 054B"
+        ],
+        "public_equipment": [
+            "shipborne ESM suite (designation and performance not public for any PLAN surface combatant in this OOB)"
+        ]
+    },
+    "_provenance": {
+        "modeling_note": "Per task instruction, a proxy ESM record is written since the OOB carries no PLAN ESM designation or performance figures for any escort class (the OOB's EW/decoys entries only mention the Type 055's unspecified 'EW suite' and Type 726-4 decoy launchers, both C-only, with no ESM-specific data). This single generic module is shared across all PLAN surface combatants in this packet, following the repo's own convention (SLQ-32_Passive_ESM_MVP reused across multiple US hulls where no ship-specific variant exists), scaled down slightly from the US SLQ-32B(V)6/SEWIP module given the total absence of any PLAN-specific figure.",
+        "sources": [
+            "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md#type-055-renhai-class-cruiser--large-destroyer",
+            "csg-cn-type055-wiki"
+        ],
+        "parameters": {
+            "sensor.type": {
+                "value_basis": "engineering_estimate",
+                "note": "no PLAN ESM designation is public for any hull in this packet; ESM is the matching engine sensor type for the qualitative 'EW suite' mentioned for Type 055 (C-only, csg-cn-type055-wiki)"
+            },
+            "sensor.max_range": {
+                "value_basis": "proxy",
+                "note": "no public detection range for any PLAN shipborne ESM; engineering-estimate proxy scaled slightly below the repo's US SLQ-32B(V)6/SEWIP CSG module, reflecting the complete absence of PLAN-specific sourcing"
+            },
+            "sensor.fov_deg": {
+                "value_basis": "proxy",
+                "note": "copied from the repo's SLQ-32-family ESM module convention"
+            },
+            "sensor.scan_period": {
+                "value_basis": "proxy",
+                "note": "copied from the repo's SLQ-32-family ESM module convention"
+            },
+            "sensor.detection_prob": {
+                "value_basis": "proxy",
+                "note": "copied from the repo's SLQ-32-family ESM module convention"
+            },
+            "sensor.bearing_noise_std": {
+                "value_basis": "proxy",
+                "note": "copied from the repo's SLQ-32-family ESM module convention"
+            },
+            "sensor.range_noise_std": {
+                "value_basis": "engineering_estimate",
+                "note": "0.0: bearing-only ESM has no independent range measurement, copied from the repo's SLQ-32-family convention"
+            },
+            "sensor.track_memory_s": {
+                "value_basis": "proxy",
+                "note": "copied from the repo's SLQ-32-family ESM module convention"
+            },
+            "sensor.range_power": {
+                "value_basis": "engineering_estimate",
+                "note": "radar-equation exponent, standard engine default, copied from template"
+            },
+            "sensor.aspect_influence": {
+                "value_basis": "engineering_estimate",
+                "note": "0.0 disables RCS aspect-angle modeling, copied from template"
+            },
+            "sensor.doppler_notch_width": {
+                "value_basis": "engineering_estimate",
+                "note": "0.0: not applicable to a passive ESM receiver, copied from template"
+            },
+            "sensor.reference_snr_db": {
+                "value_basis": "proxy",
+                "note": "radar-equation calibration constant copied from the SLQ-32-family template, paired with reference_range_m/reference_rcs_m2"
+            },
+            "sensor.reference_range_m": {
+                "value_basis": "proxy",
+                "note": "paired calibration constant, see reference_snr_db; copied from template"
+            },
+            "sensor.reference_rcs_m2": {
+                "value_basis": "engineering_estimate",
+                "note": "5 m^2 generic reference emitter/RCS, engine convention, copied from template"
+            },
+            "sensor.bearing_only": {
+                "value_basis": "engineering_estimate",
+                "note": "true: ESM systems detect and bear emitters passively, no independent ranging; standard convention for this sensor type"
+            },
+            "sensor.bearing_only_min_range_m": {
+                "value_basis": "proxy",
+                "note": "copied from the repo's SLQ-32-family ESM module convention"
+            },
+            "sensor.environment_domain": {
+                "value_basis": "engineering_estimate",
+                "note": "surface/maritime domain selected for a shipborne ESM suite per authoring standard"
+            }
+        },
+        "modeling_notes": [
+            "Single shared proxy record for all 5 hull types in this packet per task instruction ('an ESM set per class, proxy if not public'); no distinguishing PLAN-specific data exists to differentiate a per-hull ESM fit."
+        ]
+    }
+}

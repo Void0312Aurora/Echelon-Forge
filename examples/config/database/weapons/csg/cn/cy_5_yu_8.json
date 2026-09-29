@@ -1,0 +1,103 @@
+{
+    "name": "CSG_CN_CY-5_Yu-8",
+    "type": "Missile",
+    "mass_kg": 500.0,
+    "max_flight_time_s": 90.0,
+    "flight_model": {
+        "max_speed": 510.0,
+        "max_g": 8.0,
+        "max_turn_rate": 5.0
+    },
+    "guidance": {
+        "type": "Infrared",
+        "active_seek_range": 900.0,
+        "pn_los_rate_source": "world_los_history",
+        "target_kinematics_estimator": "world_cva",
+        "capture_guidance_mode": "disabled",
+        "target_tracker_alpha": 0.2,
+        "target_tracker_beta": 0.02,
+        "target_tracker_gamma": 0.5,
+        "nav_gain": 2.0,
+        "apn_target_accel_gain": 0.05,
+        "autopilot_tau_s": 0.3,
+        "max_accel_response_g_per_s": 20.0
+    },
+    "warhead": {
+        "type": "blast",
+        "mass_kg": 45.0,
+        "lethal_radius": 9.0,
+        "damage": 260.0,
+        "explosive_mass_kg": 27.0,
+        "case_mass_kg": 18.0,
+        "projection_radius_fraction": 0.5,
+        "projection_max_radius_m": 12.0,
+        "projection_max_projected_hitboxes": 3,
+        "provenance": "Payload is a Yu-7-class lightweight torpedo with 45 kg shaped-charge warhead per OOB (csg-cn-yu8-gs, C-only); warhead fields carried unchanged from the packet's Yu-7 record since CY-5/Yu-8 is a delivery rocket, not an independent warhead design."
+    },
+    "fuze": {
+        "type": "contact",
+        "trigger_radius_m": 0.0,
+        "delay_s": 0.003,
+        "reliability": 0.88,
+        "provenance": "Fuze belongs to the payload torpedo (Yu-7-class); carried unchanged from the packet's Yu-7 record, engineering-estimate contact fuze scaffold."
+    },
+    "_real_world": {
+        "designation": "DESIGNATION CONFLICT: 'CY-5' (export CY-series lineage, Wikipedia/GlobalMilitary, C-tier) vs 'Yu-8' (PRC-media designation for the Type 054A VLS rocket-assisted torpedo per GlobalSecurity translation, C-tier); AFCEA (B) mentions 'Changying-5'. Probably the same functional weapon per OOB; treated as one sim entity pending resolution",
+        "role": "Stand-off ASW rocket-boosted flight, releases a lightweight torpedo (Yu-7 class) near datum; 'certain anti-ship capability' also claimed (C-only)",
+        "range_nmi": "LARGE CONFLICT per OOB: ~30 km (CY-5, C-tier) / 'about 50 km' design goal for Changying-2 -> Yu-8 (C-only) / AFCEA 5-8 km (B, likely a pre-service 2014-era estimate). Scenario band 20-50 km per OOB; this record models the AFCEA B-tier 5-8 km figure's upper bound as the conservative primary, noting the C-tier 20-50 km scenario band as the alternate",
+        "flight_speed": ">Mach 1.5 max, Mach 0.7 terminal cruise; glide trajectory rather than purely ballistic (C-only, translation of Chinese-language material)",
+        "payload": "Yu-7-class lightweight torpedo, 45 kg warhead (Yu-11 payload for newer rounds not public)",
+        "status": "content_only_no_mechanism",
+        "mount_mapping": "none — ASW stand-off rockets have no matching NavalWeaponType (not a vls_sam per task's mount rules, since it is not an anti-air/anti-missile SAM); placed only in _real_world.weapon_inventory. Launch platforms: Type 054A 32-cell VLS (shared with HHQ-16, compatible launch control); Type 052D/055 universal VLS reported (unconfirmed); Type 056A via YJ-83 boxes (not applicable to this packet's hull list)",
+        "cells_per_missile": "1 per VLS cell (rocket-booster + 324 mm torpedo fits the 054A strike-length cell; no multi-packing reported)"
+    },
+    "_provenance": {
+        "sources": [
+            "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md#cy-5--yu-8-vls-launched-rocket-assisted-asw-torpedo-asroc-type",
+            "csg-cn-cy5-wiki",
+            "csg-cn-yu8-gs",
+            "csg-cn-afcea-052d",
+            "csg-cn-yu8-054b-gs"
+        ],
+        "parameters": {
+            "warhead.type": {"value_basis": "engineering_estimate", "note": "carried unchanged from the packet's Yu-7 record; the delivered payload is a Yu-7-class torpedo, not an independent warhead"},
+            "warhead.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "fuze.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "mass_kg": {"value_basis": "proxy", "note": "no public total-round mass; engineering estimate combining the packet's Yu-7 payload mass (235 kg) with an estimated rocket-booster/canister mass, consistent with a 054A strike-length VLS cell round"},
+            "max_flight_time_s": {"value_basis": "proxy", "note": "engineering estimate derived from the AFCEA B-tier 5-8 km upper-bound range at the sourced Mach 0.7 terminal cruise speed for the rocket-boost/glide phase to datum, before torpedo release/water-entry (torpedo-phase kinematics are the separate Yu-7 record's concern)"},
+            "flight_model.max_speed": {"value_basis": "proxy", "source_ids": ["csg-cn-yu8-gs"], "tier": "C-only", "note": "Mach 0.7 terminal cruise sea-level ~= 238 m/s; Mach 1.5 max boost speed ~= 510 m/s used as the flight_model figure representing the missile's peak boost-phase speed"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "note": "no public maneuver-load figure; engineering estimate for a rocket-boosted glide trajectory with limited maneuverability, per OOB's description as 'glide trajectory rather than purely ballistic'"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "note": "no public figure; low value consistent with a largely ballistic/glide stand-off ASW rocket rather than a maneuvering guided missile"},
+            "guidance.type": {"value_basis": "engineering_estimate", "note": "no independent guidance system for the rocket-boost phase is public (the OOB describes flight profile only, not terminal guidance beyond delivering the torpedo payload to datum); modeled as Infrared as a placeholder matching the payload torpedo's guidance category, since this weapon has no functional mount anyway"},
+            "guidance.active_seek_range": {"value_basis": "proxy", "note": "carried unchanged from the packet's Yu-7 payload torpedo record's seeker range, representing the torpedo's post-release homing rather than the rocket's own guidance"},
+            "guidance.pn_los_rate_source": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, not a sourced weapon characteristic; record has no functional mount regardless"},
+            "guidance.target_kinematics_estimator": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, same basis as pn_los_rate_source"},
+            "guidance.capture_guidance_mode": {"value_basis": "engineering_estimate", "note": "disabled: no terminal capture-guidance submode modeled for this mechanism-gap weapon"},
+            "guidance.target_tracker_alpha": {"value_basis": "engineering_estimate", "note": "standard alpha-beta-gamma tracker filter constant, engine convention shared across missile records, not weapon-specific"},
+            "guidance.target_tracker_beta": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.target_tracker_gamma": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.nav_gain": {"value_basis": "engineering_estimate", "note": "proportional-navigation gain scaffold; low, consistent with a largely unguided rocket-boost delivery flight to a pre-computed datum point rather than active target homing"},
+            "guidance.apn_target_accel_gain": {"value_basis": "engineering_estimate", "note": "augmented-PN target-acceleration compensation gain scaffold, low, consistent with the rocket-boost phase not actively tracking a maneuvering target"},
+            "guidance.autopilot_tau_s": {"value_basis": "engineering_estimate", "note": "autopilot response time-constant scaffold; no public figure"},
+            "guidance.max_accel_response_g_per_s": {"value_basis": "engineering_estimate", "note": "autopilot response-rate scaffold consistent with flight_model.max_g"},
+            "warhead.mass_kg": {"value_basis": "proxy", "note": "carried unchanged from the packet's Yu-7 record (45 kg shaped charge); the delivered payload is a Yu-7-class torpedo"},
+            "warhead.lethal_radius": {"value_basis": "proxy", "note": "carried unchanged from the packet's Yu-7 record"},
+            "warhead.damage": {"value_basis": "proxy", "note": "carried unchanged from the packet's Yu-7 record"},
+            "warhead.explosive_mass_kg": {"value_basis": "proxy", "note": "carried unchanged from the packet's Yu-7 record"},
+            "warhead.case_mass_kg": {"value_basis": "proxy", "note": "carried unchanged from the packet's Yu-7 record"},
+            "warhead.projection_radius_fraction": {"value_basis": "proxy", "note": "carried unchanged from the packet's Yu-7 record"},
+            "warhead.projection_max_radius_m": {"value_basis": "proxy", "note": "carried unchanged from the packet's Yu-7 record"},
+            "warhead.projection_max_projected_hitboxes": {"value_basis": "proxy", "note": "carried unchanged from the packet's Yu-7 record"},
+            "fuze.type": {"value_basis": "engineering_estimate", "note": "carried unchanged from the packet's Yu-7 record; contact fuze is the nearest real engine-recognized fuze family, per the loader's 4-value fuze.type vocabulary"},
+            "fuze.trigger_radius_m": {"value_basis": "engineering_estimate", "note": "carried unchanged from the packet's Yu-7 record"},
+            "fuze.delay_s": {"value_basis": "engineering_estimate", "note": "carried unchanged from the packet's Yu-7 record"},
+            "fuze.reliability": {"value_basis": "engineering_estimate", "note": "carried unchanged from the packet's Yu-7 record"}
+        },
+        "modeling_notes": [
+            "Task instruction: 'document the YJ-18/CY-5 cell split' — for CY-5/Yu-8, the OOB confirms 1 per VLS cell (rocket-booster + 324 mm torpedo fits the 054A strike-length cell; no multi-packing reported), noted in _real_world.cells_per_missile above.",
+            "Range LARGE CONFLICT per OOB (~30 km C-tier vs ~50 km design-goal C-only vs 5-8 km AFCEA B-tier pre-service estimate): this record models the AFCEA B-tier figure as the conservative primary per authoring-standard preference ordering (B > C), while flagging the much larger C-tier 20-50 km scenario band as the noted alternate — this is one of this packet's highest outcome-risk proxies given the ~6x range spread between tiers.",
+            "A separate GlobalSecurity-translated figure claims a Type 054B 'Yu-8' variant with 100 km maximum range (csg-cn-yu8-054b-gs, C-only); per OOB explicit instruction this is implausible for a Yu-8-class round and is flagged, not used, in this record.",
+            "No functional mount exists (mechanism gap, ASW stand-off rocket); content-only for _real_world.weapon_inventory on Type 054A (confirmed) and Type 052D/055 (unconfirmed per OOB, noted as 'reported')."
+        ]
+    }
+}

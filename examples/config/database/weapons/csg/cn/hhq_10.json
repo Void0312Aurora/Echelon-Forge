@@ -1,0 +1,101 @@
+{
+    "name": "CSG_CN_HHQ-10",
+    "type": "Missile",
+    "mass_kg": 20.0,
+    "max_flight_time_s": 15.0,
+    "flight_model": {
+        "max_speed": 680.0,
+        "max_g": 20.0,
+        "max_turn_rate": 35.0
+    },
+    "guidance": {
+        "type": "Infrared",
+        "active_seek_range": 6000.0,
+        "pn_los_rate_source": "world_los_history",
+        "target_kinematics_estimator": "world_cva",
+        "capture_guidance_mode": "disabled",
+        "target_tracker_alpha": 0.25,
+        "target_tracker_beta": 0.03,
+        "target_tracker_gamma": 0.55,
+        "nav_gain": 4.5,
+        "apn_target_accel_gain": 0.15,
+        "autopilot_tau_s": 0.04,
+        "max_accel_response_g_per_s": 400.0
+    },
+    "warhead": {
+        "type": "blast_fragmentation",
+        "mass_kg": 3.0,
+        "lethal_radius": 5.0,
+        "damage": 90.0,
+        "explosive_mass_kg": 1.2,
+        "case_mass_kg": 1.8,
+        "projection_radius_fraction": 0.6,
+        "projection_max_radius_m": 7.0,
+        "projection_max_projected_hitboxes": 2,
+        "provenance": "3 kg HE-frag proximity-fuzed warhead per OOB (csg-cn-hhq10-wsn, C-only). Explosive/case split, damage are engineering-estimate surrogates for a short-range point-defence missile warhead."
+    },
+    "fuze": {
+        "type": "radar_proximity",
+        "trigger_radius_m": 5.0,
+        "delay_s": 0.005,
+        "reliability": 0.9,
+        "provenance": "Proximity fuze per OOB (csg-cn-hhq10-wsn, C-only); exact timing data not public, engineering-estimate scaffold values used."
+    },
+    "_real_world": {
+        "designation": "HHQ-10 (FL-3000N export lineage); newer HQ-10A revealed Sep 2025",
+        "role": "Point-defence missile vs anti-ship cruise missiles and aircraft (RAM-analogue, not a rolling airframe design)",
+        "range_nmi": "9 km vs subsonic / 6 km vs supersonic (AFCEA citing FL-3000N Zhuhai 2008 advertised stats, export-derived, B) / ~5 km practical vs ASCM (C-only) / 0.5 km minimum range (C-only)",
+        "guidance_real": "RF (passive radar) midcourse via two RF horns in nose + passive IR/imaging IR terminal homing",
+        "speed": ">Mach 2 (C-only); altitude envelope 1.5 m - 6 km",
+        "mount_mapping": "ciws",
+        "can_intercept_missiles": true,
+        "launcher_note": "24-cell (trial ship 892, Type 055), 18-cell (Liaoning), 8-cell (Type 056); Type 052D stern 24-cell reported (C); Fujian carries 'multiple HHQ-10 short-range missile launchers' (USNI Pro 2026, B), exact count not public (4x18-cell commonly claimed, C-only)"
+    },
+    "_provenance": {
+        "sources": [
+            "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md#hhq-10-short-range-point-defence-missile-fl-3000n-export",
+            "csg-cn-afcea-3tier",
+            "csg-cn-hhq10-wsn",
+            "csg-cn-hhq10-wiki",
+            "csg-cn-fujian-usnipro-2026"
+        ],
+        "parameters": {
+            "warhead.type": {"value_basis": "engineering_estimate", "note": "blast_fragmentation matches the sourced HE-frag/proximity-fuze description"},
+            "warhead.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "fuze.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "mass_kg": {"value_basis": "sourced", "source_ids": ["csg-cn-hhq10-wiki"], "tier": "C-only", "note": "missile dimensions ~2.0 m x 0.12-0.127 m, ~20 kg mass"},
+            "max_flight_time_s": {"value_basis": "proxy", "note": "engineering estimate derived from the 9 km max range (subsonic-target case, B, export-derived) at the >Mach 2 sourced speed"},
+            "flight_model.max_speed": {"value_basis": "proxy", "source_ids": ["csg-cn-hhq10-wsn"], "tier": "C-only", "note": ">Mach 2 (C-only); Mach 2 sea-level ~680 m/s used as a conservative lower-bound proxy"},
+            "flight_model.max_g": {"value_basis": "sourced", "source_ids": ["csg-cn-hhq10-wsn"], "tier": "C-only", "note": "maneuver limit up to 20 g per OOB (C-only)"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "note": "no public figure; engineering estimate consistent with the sourced 20g maneuver limit for a short-range point-defence missile"},
+            "guidance.type": {"value_basis": "sourced", "source_ids": ["csg-cn-afcea-3tier"], "tier": "B", "note": "passive IR/imaging IR terminal homing per OOB; Infrared is the matching engine seeker_type. RF midcourse (via two RF horns) is not separately modeled since the engine's guidance.type field takes one seeker_type value"},
+            "guidance.active_seek_range": {"value_basis": "proxy", "note": "no public IR seeker acquisition range; engineering estimate typical of a short-range point-defence missile's imaging-IR seeker, consistent with the sourced ~5-9 km engagement envelope"},
+            "guidance.pn_los_rate_source": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, not a sourced weapon characteristic"},
+            "guidance.target_kinematics_estimator": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, same basis as pn_los_rate_source"},
+            "guidance.capture_guidance_mode": {"value_basis": "engineering_estimate", "note": "disabled: no terminal capture-guidance submode modeled beyond the described IR terminal homing"},
+            "guidance.target_tracker_alpha": {"value_basis": "engineering_estimate", "note": "standard alpha-beta-gamma tracker filter constant, tuned slightly faster than the packet's longer-range SAMs consistent with HHQ-10's short-range, high-agility point-defence role"},
+            "guidance.target_tracker_beta": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.target_tracker_gamma": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.nav_gain": {"value_basis": "engineering_estimate", "note": "proportional-navigation gain scaffold; no public guidance-law constant, set high consistent with a point-defence missile's terminal intercept of a maneuvering high-speed ASCM"},
+            "guidance.apn_target_accel_gain": {"value_basis": "engineering_estimate", "note": "augmented-PN target-acceleration compensation gain scaffold, consistent with engaging a sea-skimming/maneuvering ASCM; not sourced per-weapon"},
+            "guidance.autopilot_tau_s": {"value_basis": "engineering_estimate", "note": "autopilot response time-constant scaffold; very fast, consistent with a short-range, high-agility point-defence missile"},
+            "guidance.max_accel_response_g_per_s": {"value_basis": "engineering_estimate", "note": "autopilot response-rate scaffold consistent with flight_model.max_g"},
+            "warhead.mass_kg": {"value_basis": "sourced", "source_ids": ["csg-cn-hhq10-wsn"], "tier": "C-only", "note": "3 kg HE-frag, proximity fuze"},
+            "warhead.lethal_radius": {"value_basis": "proxy", "note": "engineering-estimate surrogate for a small point-defence missile warhead, no public lethal-radius figure"},
+            "warhead.damage": {"value_basis": "proxy", "note": "engineering-estimate surrogate, no public damage-effectiveness figure; set low consistent with the small 3 kg warhead mass, sufficient to disable/deflect an incoming ASCM"},
+            "warhead.explosive_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split of the sourced 3 kg total warhead mass, no public split figure"},
+            "warhead.case_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split, see explosive_mass_kg"},
+            "warhead.projection_radius_fraction": {"value_basis": "proxy", "note": "engineering-estimate scaled from the packet's larger-warhead projection-geometry template, slightly higher fraction reflecting a proximity-fuzed fragmentation pattern's relatively larger lethal-fraction radius for its small size"},
+            "warhead.projection_max_radius_m": {"value_basis": "proxy", "note": "engineering-estimate scaled from the template pattern for this warhead's small lethal_radius"},
+            "warhead.projection_max_projected_hitboxes": {"value_basis": "proxy", "note": "engineering-estimate, low given the small warhead size"},
+            "fuze.type": {"value_basis": "sourced", "source_ids": ["csg-cn-hhq10-wsn"], "tier": "C-only", "note": "proximity fuze per OOB; radar_proximity is the matching real engine-recognized fuze type"},
+            "fuze.trigger_radius_m": {"value_basis": "proxy", "note": "no public standoff distance; engineering-estimate scaffold value matching warhead.lethal_radius"},
+            "fuze.delay_s": {"value_basis": "engineering_estimate", "note": "no public fuze timing data; engineering-estimate scaffold value, fast consistent with a small proximity-fuzed intercept warhead"},
+            "fuze.reliability": {"value_basis": "engineering_estimate", "note": "no public reliability figure; engineering-estimate scaffold value"}
+        },
+        "modeling_notes": [
+            "ciws mount type per task's mount rules, with can_intercept_missiles: true set on the ship record's naval_weapon_system.mounts[] entry (this Missile record documents the round; the mount-level flag is what enables engine anti-missile intercept behavior).",
+            "Range figures are export-brochure-derived (FL-3000N, Zhuhai 2008) for the AFCEA 9 km/6 km figures; PLAN in-service HHQ-10 performance is not independently confirmed to match. HQ-10A (revealed Sep 2025) performance is entirely non-public and not separately modeled; this record represents the baseline/most-documented HHQ-10 round used across the fleet as of 2026."
+        ]
+    }
+}

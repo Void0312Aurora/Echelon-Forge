@@ -1,0 +1,145 @@
+{
+    "name": "CSG_CN_PLAN_Escort_Towed_Array_VDS",
+    "type": "Sensor",
+    "sonar": {
+        "mode": "Passive",
+        "max_range_m": 45000.0,
+        "scan_period_s": 12.0,
+        "detection_threshold_db": 4.0,
+        "track_memory_s": 35.0,
+        "bearing_noise_std_deg": 1.2,
+        "range_noise_std_m": 900.0,
+        "directivity_gain_db": 12.0,
+        "self_noise_per_speed_db": 0.6,
+        "ambient_noise_db": 68.0,
+        "source_level_reference_db": 0.0,
+        "source_level_speed_factor_db": 0.0,
+        "transmission_loss_alpha_db_per_km": 0.06,
+        "layer_break_penalty_db": 2.5,
+        "convergence_zone_bonus_m": 55000.0,
+        "baffle_exclusion_deg": 0.0,
+        "ownship_quieting_speed_mps": 8.0,
+        "active_ping_source_level_db": 0.0,
+        "confirm_hits_m": 2,
+        "confirm_window_n": 4,
+        "passive_only": true,
+        "bearing_only": false
+    },
+    "_real_world": {
+        "class": "Variable-depth / towed-array passive sonar",
+        "variant_scope": "Type 055, Type 052D/052DL (VDS reported), Type 054A (late-production hulls only per OOB), Type 054B (towed array reported).",
+        "hulls": [
+            "Type 055",
+            "Type 052D / 052DL",
+            "Type 054A (late-production hulls)",
+            "Type 054B"
+        ],
+        "public_equipment": [
+            "variable-depth sonar (VDS) / towed-array housing, stern-mounted (fit varies by class and production batch; no model designation public for any hull)"
+        ]
+    },
+    "_provenance": {
+        "modeling_note": "The OOB notes a stern VDS/towed-array fitting for Type 055 (B-tier), a VDS reported for Type 052D (B-tier), a towed array fitted only on late-production Type 054A hulls (B-tier, not the full class), and a towed array reported for Type 054B (B-tier); no PLAN source gives a designation, detection range, or sensitivity figure for any of these fits. Modeled as a generic passive towed-array/VDS sonar following the repo's convention for a stern-deployed passive array (longer range and lower self-noise than the bow hull sonar, no active-ping capability modeled since none is reported for any of these fits).",
+        "sources": [
+            "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md#type-055-renhai-class-cruiser--large-destroyer",
+            "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md#type-054a-jiangkai-ii-frigate",
+            "csg-cn-type055-usni-proc-202303",
+            "csg-cn-052d-navalnews-202303",
+            "csg-cn-054a-usni-proc-202006",
+            "csg-cn-054b-usni-proc-202503"
+        ],
+        "parameters": {
+            "sonar.mode": {
+                "value_basis": "engineering_estimate",
+                "note": "Passive: no active-ping capability is reported for any of these VDS/towed-array fits; modeled as passive-only, distinct from the bow hull sonar module's active/passive mode"
+            },
+            "sonar.max_range_m": {
+                "value_basis": "proxy",
+                "note": "no public detection-range figure for any hull's VDS/towed array; engineering estimate above the bow hull sonar module reflecting a towed array's lower self-noise and deeper deployment"
+            },
+            "sonar.scan_period_s": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate typical of a towed-array processing cycle, longer than the bow sonar's active-ping period"
+            },
+            "sonar.detection_threshold_db": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate slightly better than the bow hull sonar module, consistent with a lower-self-noise towed array"
+            },
+            "sonar.track_memory_s": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate longer than the bow hull sonar module, consistent with slower towed-array bearing updates"
+            },
+            "sonar.bearing_noise_std_deg": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate slightly better than the bow hull sonar module"
+            },
+            "sonar.range_noise_std_m": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate consistent with a passive array's coarser ranging (via triangulation/motion analysis, not direct ranging)"
+            },
+            "sonar.directivity_gain_db": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate higher than the bow hull sonar module, consistent with a long linear towed-array's directivity advantage"
+            },
+            "sonar.self_noise_per_speed_db": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate lower than the bow hull sonar module, reflecting the towed array's isolation from ownship machinery/flow noise"
+            },
+            "sonar.ambient_noise_db": {
+                "value_basis": "engineering_estimate",
+                "note": "standard engine ambient-ocean-noise scaffold constant, matched to the packet's bow hull sonar module"
+            },
+            "sonar.source_level_reference_db": {
+                "value_basis": "engineering_estimate",
+                "note": "0.0: passive-only array has no active source level"
+            },
+            "sonar.source_level_speed_factor_db": {
+                "value_basis": "engineering_estimate",
+                "note": "0.0: not applicable to a passive-only array"
+            },
+            "sonar.transmission_loss_alpha_db_per_km": {
+                "value_basis": "proxy",
+                "note": "no public figure; carried close to the packet's bow hull sonar module (generic underwater transmission-loss constant)"
+            },
+            "sonar.layer_break_penalty_db": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate slightly lower than the bow hull sonar module, reflecting a variable-depth array's ability to work below the thermal layer"
+            },
+            "sonar.convergence_zone_bonus_m": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate scaled with max_range_m, above the bow hull sonar module"
+            },
+            "sonar.baffle_exclusion_deg": {
+                "value_basis": "engineering_estimate",
+                "note": "0.0: a towed array deployed well astern of the ship's wake has a much smaller or negligible baffle-exclusion cone compared to a bow-mounted array"
+            },
+            "sonar.ownship_quieting_speed_mps": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate higher than the bow hull sonar module, reflecting a towed array's reduced sensitivity to ownship speed/flow noise"
+            },
+            "sonar.active_ping_source_level_db": {
+                "value_basis": "engineering_estimate",
+                "note": "0.0: no active-ping capability modeled for this passive-only towed-array/VDS fit"
+            },
+            "sonar.confirm_hits_m": {
+                "value_basis": "engineering_estimate",
+                "note": "standard engine detection-confirmation default, matched to the packet's bow hull sonar module"
+            },
+            "sonar.confirm_window_n": {
+                "value_basis": "engineering_estimate",
+                "note": "standard engine detection-confirmation default, slightly larger window than the bow hull sonar module reflecting slower passive-array confirmation"
+            },
+            "sonar.passive_only": {
+                "value_basis": "engineering_estimate",
+                "note": "true: no active-ping capability is reported for any of these VDS/towed-array fits"
+            },
+            "sonar.bearing_only": {
+                "value_basis": "engineering_estimate",
+                "note": "false: a towed array/VDS with sufficient aperture and processing can provide range estimates via target motion analysis, modeled here as a full passive sonar rather than bearing-only"
+            }
+        },
+        "modeling_notes": [
+            "Shared across 4 classes per the OOB's fragmentary, per-class VDS/towed-array mentions; none carries enough distinguishing performance data to justify separate records. Type 054A's fit is noted as late-production-hulls-only in _real_world, not modeled as a separate per-hull-batch variant."
+        ]
+    }
+}
