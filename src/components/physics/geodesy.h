@@ -42,6 +42,13 @@ inline constexpr double kMeanEarthRadiusM = 6371009.0;
 // pass a different factor for anomalous propagation.
 inline constexpr double kStandardRefractionFactor = 4.0 / 3.0;
 
+// Standard terrestrial refraction for the visible sea horizon: NGA Pub. No. 9
+// (Bowditch), Table 12 "Distance of the Horizon", computes
+// D = sqrt(2 r0 h / beta0) with beta0 = 0.8321, i.e. an effective-radius factor
+// of 1 / 0.8321 (the familiar 1.17 nmi * sqrt(h[ft])). Visual and infrared
+// sensors use this factor; radio-frequency sensors use the 4/3 factor above.
+inline constexpr double kStandardOpticalRefractionFactor = 1.0 / 0.8321;
+
 struct EarthModel {
     double radius_m = kMeanEarthRadiusM;
 };
@@ -193,6 +200,21 @@ struct LocalPosition {
                                                        double height_b_m) noexcept {
     return horizon_distance_m(effective_radius_m, height_a_m) +
            horizon_distance_m(effective_radius_m, height_b_m);
+}
+
+// Largest surface separation (arc length on the effective sphere) at which two
+// points at the given heights still have a clear smooth-earth line of sight:
+// Re * (alpha_a + alpha_b), where alpha is the central angle from each point to
+// its horizon, tan(alpha) = sqrt(2 Re h + h^2) / Re. This is the exact boundary
+// of `smooth_earth_line_of_sight` and is the form sensing and data links compare
+// against a horizontal separation in the local frame.
+[[nodiscard]] inline double two_way_horizon_arc_m(double effective_radius_m, double height_a_m,
+                                                  double height_b_m) noexcept {
+    const double alpha_a =
+        std::atan2(horizon_distance_m(effective_radius_m, height_a_m), effective_radius_m);
+    const double alpha_b =
+        std::atan2(horizon_distance_m(effective_radius_m, height_b_m), effective_radius_m);
+    return effective_radius_m * (alpha_a + alpha_b);
 }
 
 // Whether two points at heights above the surface and a given surface

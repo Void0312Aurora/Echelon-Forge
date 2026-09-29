@@ -950,7 +950,8 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     sensor.velocity_noise_std = 3.0;
     sensor.alpha_beta_alpha = 0.65;
     sensor.alpha_beta_beta = 0.12;
-    sensor.antenna_height_m = 10.0;
+    // The seeker sits at the missile's own position for the horizon check.
+    sensor.antenna_height_m = 0.0;
     sensor.target_height_bias_m = 5.0;
     sensor.sea_clutter_sensitivity = 0.0;
     sensor.sea_state_loss_per_level = 0.0;
@@ -958,7 +959,6 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     sensor.ducting_max_bonus_m = 0.0;
     sensor.bearing_only_min_range_m = 0.0;
     sensor.environment_domain = static_cast<int>(SensorEnvironmentDomain::Air);
-    sensor.enforce_radar_horizon = false;
     sensor.enable_ducting = false;
     sensor.sea_clutter_enabled = false;
     sensor.bearing_only = false;

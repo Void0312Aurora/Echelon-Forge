@@ -15,7 +15,7 @@
         "doppler_notch_width": 0.0
     },
     "_provenance": {
-        "modeling_note": "Generic navigation/surface-search radar for a MSC auxiliary. The 36.3 km range is a radar-horizon runtime value for surface targets, derived from 15 m owner antenna height and 5 m target height using 3.57*(sqrt(h1)+sqrt(h2)) km.",
+        "modeling_note": "Generic navigation/surface-search radar for a MSC auxiliary. The 36.3 km range is a radar-horizon runtime value for surface targets, derived from 15 m owner antenna height and 5 m target height using 3.57*(sqrt(h1)+sqrt(h2)) km. Since 2026-09-29 the runtime also applies the shared 4/3 smooth-earth horizon (Geodetic Frame P3-A) over the loader-default 10 m mount height.",
         "sources": [
             "docs/domains/naval/reference/ship_unit_references.md"
         ]

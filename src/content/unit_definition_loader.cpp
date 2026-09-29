@@ -389,7 +389,6 @@ void parse_sensor_json_fields(const nlohmann::json &s, Sensor *out_sensor,
     sensor.ducting_max_bonus_m = s.value("ducting_max_bonus_m", sensor.ducting_max_bonus_m);
     sensor.bearing_only_min_range_m =
         s.value("bearing_only_min_range_m", sensor.bearing_only_min_range_m);
-    sensor.enforce_radar_horizon = s.value("enforce_radar_horizon", sensor.enforce_radar_horizon);
     sensor.enable_ducting = s.value("enable_ducting", sensor.enable_ducting);
     sensor.sea_clutter_enabled = s.value("sea_clutter_enabled", sensor.sea_clutter_enabled);
     sensor.bearing_only = s.value("bearing_only", sensor.bearing_only);
