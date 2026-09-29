@@ -47,6 +47,15 @@ from python.training.vec_env_factory import (
     print_test_only_preflight_runtime_summary,
     resolve_vec_env_spec,
 )
+from python.rl.policy_checkpoint import (
+    LaunchDecisionMigrationError,
+    launch_decision_config_fingerprint,
+    launch_decision_surface_active,
+    validate_loaded_sb3_launch_decision_checkpoint,
+    validate_sb3_checkpoint_against_config,
+    write_sb3_launch_decision_sidecar,
+)
+from python.rl.policy_algo.model_contracts import resolve_launch_decision_contract
 
 __all__ = [
     "apply_global_seed",
@@ -73,6 +82,60 @@ def _resolve_test_only_load_path(args: argparse.Namespace, exp_dir: str) -> str 
     if os.path.exists(possible_path):
         return possible_path
     return None
+
+
+def _validate_launch_decision_checkpoint_for_config(
+    checkpoint_path: str,
+    train_config: dict,
+) -> bool:
+    if not launch_decision_surface_active(train_config):
+        return True
+    try:
+        validate_sb3_checkpoint_against_config(checkpoint_path, train_config)
+    except LaunchDecisionMigrationError as exc:
+        print(f"Error: launch-decision checkpoint migration required: {exc}")
+        return False
+    return True
+
+
+def _launch_decision_contract_for_config(train_config: dict):
+    if not launch_decision_surface_active(train_config):
+        return None
+    return resolve_launch_decision_contract(train_config)
+
+
+def _write_launch_decision_sidecar(model_path: str, model, train_config: dict) -> None:
+    contract = _launch_decision_contract_for_config(train_config)
+    if contract is None:
+        return
+    write_sb3_launch_decision_sidecar(
+        model_path,
+        model=model,
+        owner_contract=contract,
+        source_config_fingerprint=launch_decision_config_fingerprint(train_config),
+        migration=train_config.get("launch_decision_migration"),
+    )
+
+
+def _build_launch_decision_checkpoint_callback(deps, *, save_freq: int, save_path: str, train_config: dict):
+    """Keep periodic SB3 checkpoints paired with their compatibility sidecar."""
+
+    class _LaunchDecisionCheckpointCallback(deps.CheckpointCallback):
+        def _on_step(self) -> bool:
+            result = super()._on_step()
+            if result and self.n_calls % self.save_freq == 0:
+                checkpoint_path = os.path.join(
+                    self.save_path,
+                    f"{self.name_prefix}_{self.num_timesteps}_steps",
+                )
+                _write_launch_decision_sidecar(checkpoint_path, self.model, train_config)
+            return result
+
+    return _LaunchDecisionCheckpointCallback(
+        save_freq=save_freq,
+        save_path=save_path,
+        name_prefix="model",
+    )
 
 
 def main():
@@ -141,8 +204,19 @@ def main():
     if args.test_only:
         load_path = test_only_load_path
         assert load_path is not None
+        if not _validate_launch_decision_checkpoint_for_config(load_path, train_config):
+            return
         print(f"Loading model for testing: {load_path}")
         model = algo_cls.load(load_path, env=vec_env)
+        try:
+            validate_loaded_sb3_launch_decision_checkpoint(
+                load_path,
+                model=model,
+                expected_config=train_config,
+            )
+        except LaunchDecisionMigrationError as exc:
+            print(f"Error: loaded launch-decision artifacts are incompatible: {exc}")
+            return
         
         obs = vec_env.reset()
         for i in range(1000):
@@ -171,8 +245,19 @@ def main():
     apply_policy_kwargs_feature_extractor_classes(hyperparams)
 
     if args.resume_path:
+        if not _validate_launch_decision_checkpoint_for_config(args.resume_path, train_config):
+            return
         print(f"Loading Checkpoint: {args.resume_path}")
         model = algo_cls.load(args.resume_path, env=vec_env, tensorboard_log=log_dir)
+        try:
+            validate_loaded_sb3_launch_decision_checkpoint(
+                args.resume_path,
+                model=model,
+                expected_config=train_config,
+            )
+        except LaunchDecisionMigrationError as exc:
+            print(f"Error: loaded launch-decision artifacts are incompatible: {exc}")
+            return
     else:
         policy_name = train_config.get("policy", "MultiInputPolicy")
         policy_cls = policy_name
@@ -250,10 +335,11 @@ def main():
         f"(checkpoint every {save_freq} total timesteps -> every {checkpoint_freq} callback steps)"
     )
 
-    checkpoint_callback = deps.CheckpointCallback(
+    checkpoint_callback = _build_launch_decision_checkpoint_callback(
+        deps,
         save_freq=checkpoint_freq,
         save_path=ckpt_dir,
-        name_prefix="model" # naming: model_50000_steps.zip
+        train_config=train_config,
     )
     callbacks = [checkpoint_callback]
     force_hmoe_diagnostics = bool(getattr(model, "policy", None) is not None and hasattr(model.policy, "get_hmoe_route_stats"))
@@ -304,9 +390,11 @@ def main():
             print(f"Saving final model from best EMA checkpoint: {best_ema_ckpt}")
             best_model = algo_cls.load(best_ema_ckpt, env=vec_env, tensorboard_log=log_dir)
             best_model.save(final_path)
+            _write_launch_decision_sidecar(final_path, best_model, train_config)
         else:
             print(f"Saving final model to {final_path}")
             model.save(final_path)
+            _write_launch_decision_sidecar(final_path, model, train_config)
         print("Training Complete.")
         
     except KeyboardInterrupt:
@@ -314,6 +402,7 @@ def main():
         save_path = os.path.join(ckpt_dir, "interrupted_model")
         print(f"Saving emergency checkpoint to {save_path}...")
         model.save(save_path)
+        _write_launch_decision_sidecar(save_path, model, train_config)
         print("Done.")
         sys.exit(0)
     except deps.NonFiniteProbeError as exc:
@@ -324,6 +413,7 @@ def main():
         save_path = os.path.join(ckpt_dir, "nonfinite_probe_abort_model")
         print(f"Saving abort checkpoint to {save_path}...")
         model.save(save_path)
+        _write_launch_decision_sidecar(save_path, model, train_config)
         print("Done.")
         raise
 

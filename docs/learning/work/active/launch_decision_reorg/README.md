@@ -1,6 +1,7 @@
 # Launch-Decision Architecture Reorganization
 
-Status: 2026-09-24 finalized implementation plan; active work authorized.
+Status: 2026-09-24 implementation complete; owner verdict `Mergeable` on the
+target branch `codex/launch-decision-reorg`.
 
 Language:
 
@@ -25,9 +26,10 @@ Document kind: task
 Lifecycle: maintained
 Canonical: docs/learning/work/active/launch_decision_reorg/README.md
 Owner: learning/policy-architecture
-Last verified: 2026-09-23
-Content status: owner-finalized after the blocked review findings were resolved
-in the plan. No further independent review gate is required for this stream.
+Last verified: 2026-09-24
+Content status: owner-finalized and implemented through C0-C5 after the blocked
+review findings were resolved in the plan. No further independent review gate is
+required for this stream.
 
 Size exception: this maintained README is intentionally above 300 lines because
 it is the single canonical architecture and acceptance boundary for a serial
@@ -102,8 +104,9 @@ without creating another review gate:
 6. the new substantive Chinese companion did not match the Tier B work-surface
    rule.
 
-The implementation branch must now follow these decisions. The plan does not
-claim that the contract has already been implemented.
+The implementation branch followed these decisions. The owner evidence and
+residuals for the completed C0-C5 stream are recorded below; this document does
+not claim runtime quality, kill, damage, Pk, or effects acceptance.
 
 ### Final architecture decision
 
@@ -279,12 +282,12 @@ The trace must include:
 
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
-| P0 Boundary | Freeze owner vocabulary, headless inventory, source revision, and no-goals. | The final owner decision in this README. | Owner decision, source revision, and no-goals are complete; C0 owns the immutable baseline manifest. | accepted |
-| P1 Evidence | Establish build preflight, deterministic fixtures, contributor traces, and current test coverage. | P0 accepted. | Required artifacts or explicit infrastructure residuals are recorded. | planned |
-| P2 Contract | Implement typed owner/mode validation and serialization tests. | P1 complete. | Conflicts reject; legacy modes round-trip without changed outputs. | planned |
-| P3 Forward path | Introduce Composer boundary and preserve compatibility mode. | P2 accepted. | Owner trace, unmasked pair, mask handoff, and state-dict behavior are tested. | planned |
-| P4 Training/config integration | Align objectives, sidecars, replay, optimizer groups, and config/checkpoint migration. | P3 accepted. | All declared write sets and migration gates pass. | planned |
-| P5 Acceptance/closure | Run focused tests, runtime probes, target-scoped worktree checks, and owner closure documentation. | P4 mergeable or explicitly blocked. | Main-thread owner verdict is Mergeable, Blocked, or Closed with residual owners. | planned |
+| P0 Boundary | Freeze owner vocabulary, headless inventory, source revision, and no-goals. | The final owner decision in this README. | Baseline manifest and owner decision record are complete. | accepted |
+| P1 Evidence | Establish build preflight, deterministic fixtures, contributor traces, and current test coverage. | P0 accepted. | Manifest, external artifacts, and build/import preflight are reproducible. | accepted |
+| P2 Contract | Implement typed owner/mode validation and serialization tests. | P1 complete. | Conflicts reject; legacy modes round-trip without changed outputs. | accepted |
+| P3 Forward path | Introduce Composer boundary and preserve compatibility mode. | P2 accepted. | Owner trace, unmasked pair, mask handoff, and state-dict behavior are tested. | accepted |
+| P4 Training/config integration | Align objectives, sidecars, replay, optimizer groups, and config/checkpoint migration. | P3 accepted. | All declared write sets and migration gates pass. | accepted |
+| P5 Acceptance/closure | Run focused tests, runtime probes, target-scoped worktree checks, and owner closure documentation. | P4 mergeable or explicitly blocked. | Main-thread owner verdict is Mergeable, Blocked, or Closed with residual owners. | mergeable |
 
 ## Task clusters
 
@@ -312,7 +315,7 @@ Before running policy or runtime tests, a Windows implementation lane must run
 from the worktree root:
 
 ~~~powershell
-$build = 'D:\workshop\Research\Echelon-Forge-build\ld-arch-plan'
+$build = 'D:\workshop\Research\Echelon-Forge-build\ld-reorg'
 cmake -S . -B $build -DCMAKE_BUILD_TYPE=Debug
 cmake --build $build --target ef_core ef_py ef_test --parallel 4
 $env:CMO_BUILD_DIR = $build
@@ -328,10 +331,20 @@ Fixture identity is fixed rather than conceptual:
 
 - The tracked manifest is
   `tests/fixtures/launch_decision_reorg/v1/manifest.json`.
+- That C0 v1 manifest is immutable. C4's marker-aware compatibility refresh is
+  recorded separately in `tests/fixtures/launch_decision_reorg/v2/manifest.json`;
+  it references the same baseline census but has its own generator/schema
+  identity and external artifact root.
+- Runtime legacy provenance uses the corrective
+  `tests/fixtures/launch_decision_reorg/v2/canonical_provenance_v1.json`. It
+  preserves the v1 source revision and paths without rewriting the frozen v1
+  file, and hashes the canonical Git blob representation (UTF-8 with LF line
+  endings). Repository attributes keep those tracked inputs byte-stable on
+  Windows and Linux; a path, line-ending, or content change still fails closed.
 - The deterministic generator is
   `tools/maintenance/generate_launch_decision_fixtures.py`.
-- Generated artifacts live outside the checkout under
-  `D:\workshop\Research\Echelon-Forge-fixtures\launch_decision_reorg\v1` by
+- Generated v2 artifacts live outside the checkout under
+  `D:\workshop\Research\Echelon-Forge-fixtures\launch_decision_reorg\v2` by
   default. `EF_LAUNCH_DECISION_FIXTURE_ROOT` may override that root, but the
   manifest must record the resolved root-relative paths.
 - The manifest is UTF-8 JSON and records the source commit, generator SHA-256,
@@ -350,8 +363,8 @@ C0 must freeze one immutable v1 manifest containing:
 - all active air_combat_hybrid_v1 configurations, including the baseline seven
   headless and seven event-head-enabled entries;
 - for every configuration allowed to use the unmarked legacy fallback, its
-  frozen source commit, repository-relative path, and SHA-256 of the exact
-  UTF-8 config bytes; these entries form the complete legacy provenance
+  frozen source commit, repository-relative path, and SHA-256 of the canonical
+  UTF-8/LF config bytes; these entries form the complete legacy provenance
   allowlist and no later cluster may add to it;
 - one representative checkpoint/state-dict for each owner mode that actually
   exists;
@@ -364,9 +377,9 @@ C0 must freeze one immutable v1 manifest containing:
   numeric limits.
 
 After C0 closes, no later cluster may rewrite this manifest. C4 may create a
-separately versioned migration manifest that references the C0 SHA-256; it must
-not add target artifacts, provenance entries, or acceptance thresholds to the
-C0 file.
+separately versioned migration or canonicalization manifest that references the
+C0 SHA-256; the v2 manifests are append-only handoffs and must not add target
+artifacts or new allowlist paths to the C0 file.
 
 The compatibility probe uses seeds 0, 1, 2 and three declared episodes per
 seed for runtime behavior. For strict learned-firing acceptance, C0 pins both a
@@ -397,9 +410,12 @@ and entropies use torch.testing.assert_close(rtol=1e-5, atol=1e-6). Any
 intentional drift outside that tolerance requires a named migration mode and
 an updated expected fixture; it cannot be hidden under a rename.
 
-Checkpoint loading must either restore the optimizer and replay state exactly
-or fail with an actionable migration error. A successful policy-only load is
-not evidence of optimizer/replay compatibility.
+Checkpoint loading persists a sidecar envelope beside every maintained SB3 zip
+and either restores the optimizer and replay manifests exactly or fails with an
+actionable migration error. Mode-changing checkpoint conversion is currently
+fail-closed: a migration ID is recorded only for a future named converter and
+cannot relabel artifacts without converting their parameter and replay state. A
+successful policy-only load is not evidence of optimizer/replay compatibility.
 
 ### Required tests
 
@@ -440,7 +456,8 @@ git -C <repo>\.worktrees\ld-arch-plan status --porcelain=v1 -uall
 git -C <repo> worktree list --porcelain
 ~~~
 
-The target must have zero untracked entries, be under <repo>\.worktrees, and
+The target is `.worktrees\ld-reorg`; it must have zero untracked entries, be
+under <repo>\.worktrees, and
 remain reachable. The global audit_worktrees.py report may be recorded as
 informational context, but findings from unrelated pre-existing worktrees are
 not acceptance failures for this plan and must not be repaired by this work
@@ -480,16 +497,54 @@ injection must be false, and a missing cell, counter key, probe marker, or
 threshold is Blocked. Aggregate counts cannot compensate for a failing or empty
 cell. Kill, damage, Pk, and effects results are not substitutes.
 
+## C5 owner verdict and evidence
+
+Verdict: `Mergeable` for the target worktree and implementation branch. The
+implementation stream completed the C0-C5 code/documentation batches; the
+strict learned-firing result itself remains unclaimed until a real compatible
+SB3 model produces the retained non-forced probe record.
+
+Evidence recorded on 2026-09-25:
+
+- External Debug preflight succeeded for `ef_core`, `ef_py`, and `ef_test`, and
+  `ensure_repo_imports()` resolved the local `ef_py` artifact from
+  `D:\workshop\Research\Echelon-Forge-build\ld-reorg`.
+- The deterministic fixture generator passed twice with the tracked manifest,
+  current ownership roles, fixed CPU float32 observations, seeds `0/1/2`, and
+  three episodes per seed.
+- The focused policy/training/runtime matrix passed with `144 passed, 66
+  subtests passed`; compileall, blocked-heavy-import smoke, CLI help, and the
+  deterministic v2 fixture generator also passed.
+- The learned-firing validator and its CLI wiring are covered by unit tests.
+  No real `--mode model --validate_learned_firing_gate` run is claimed here
+  because no compatible SB3 model artifact is part of this change.
+- The target worktree is clean, reachable under `.worktrees\ld-reorg`, and has
+  no untracked entries. `git diff --check` and the path-length budget pass.
+- The owner trace shows an unmasked Composer result, distribution-owned mask,
+  explicit mode, contributor roles, and dedicated update parameter IDs.
+
+One broad governance invocation retained an inherited, out-of-scope failure:
+`docs/systems/effects/reviews/continuous_rod_component_load_admission_20260914/README.md`
+lacks the repository-wide metadata fields. It belongs to another subproject and
+was not edited; the targeted worktree and all launch-decision gates pass. This
+is a residual for the documentation-governance owner, not a launch-decision P1.
+
+The stream makes no claim about kill, damage, Pk, timing optimality, or effects
+quality. Those remain outside this package's acceptance boundary.
+
 ## Residuals and next steps
 
-The following residuals remain intentionally open until their phase closes:
+The following register records resolved implementation residuals and the one
+inherited documentation residual that remains outside this stream:
 
 | Residual | Owner/gate | Replacement condition |
 | --- | --- | --- |
-| Strict direct-boundary freeze and write set | P1/P2 | Fixture comparison and explicit optimizer trace |
-| Which active configurations qualify for learned-firing acceptance | P1/P4 | Mode manifest and eligibility table |
-| Whether old optimizer/replay states can be restored | P4 | Exact round-trip or named migration error |
-| Local ef_py artifact availability | P1 | Build preflight succeeds with external CMO_BUILD_DIR |
+| Strict direct-boundary freeze and write set | resolved in C2/C3 | Keep the strict trace and dedicated-head write-set tests with future changes |
+| Which active configurations qualify for learned-firing acceptance | resolved in C0/C4 | Use the tracked mode manifest; do not infer eligibility from a head name |
+| Whether old optimizer/replay states can be restored | resolved in C4 | Require the envelope manifest or emit the named migration error |
+| Local ef_py artifact availability | resolved in C5 for this target | Re-run external build preflight after native/runtime changes |
+| Real learned-policy firing acceptance record | implementation gate exists; runtime evidence pending | Run `--mode model --validate_learned_firing_gate` with a compatible model and retain the passing JSON record before claiming strict learned-firing acceptance |
+| Inherited effects-review metadata gap | documentation-governance owner | Add required metadata in that separate worktree; do not alter this stream |
 
 These are implementation residuals, not reasons to reopen the plan or request
 another review. A phase may be marked blocked when its declared infrastructure

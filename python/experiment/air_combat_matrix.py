@@ -64,6 +64,7 @@ __all__ = [
     "SCALAR_ARRAY_LAYOUTS",
     "build_registry",
     "composed_config",
+    "translated_launch_decision_config",
 ]
 
 MATRIX_DIR = "examples/config/training/active/air_combat"
@@ -846,3 +847,30 @@ def composed_config(entry: MatrixEntry) -> dict[str, Any]:
         entry.experiment.config.delta,
     )
     return normalize_trailing_keys(merged, CANONICAL_TRAILING_KEYS)
+
+
+def translated_launch_decision_config(
+    entry_or_config: MatrixEntry | Mapping[str, Any],
+    *,
+    target_mode: str | None = None,
+    migration_id: str | None = None,
+) -> dict[str, Any]:
+    """Resolve one matrix entry's launch-decision mode without editing JSON.
+
+    Matrix generation remains byte-parity constrained. This helper is the
+    migration/diagnostic projection used at runtime and by compatibility tests;
+    it deliberately does not feed the generated-file writer.
+    """
+
+    from python.training.deps import translate_launch_decision_config
+
+    source = (
+        composed_config(entry_or_config)
+        if isinstance(entry_or_config, MatrixEntry)
+        else dict(entry_or_config)
+    )
+    return translate_launch_decision_config(
+        source,
+        target_mode=target_mode,
+        migration_id=migration_id,
+    )
