@@ -22,18 +22,13 @@
 #include "core/interfaces/engagement_effects_event_builder.h"
 #include "core/interfaces/engagement_event_recorder.h"
 #include "core/interfaces/effects_model.h"
+#include "core/interfaces/stochastic_draw.h"
 
 namespace {
-inline uint64_t damage_splitmix64(uint64_t seed) {
-    uint64_t z = seed + 0x9e3779b97f4a7c15ULL;
-    z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ULL;
-    z = (z ^ (z >> 27)) * 0x94d049bb133111ebULL;
-    return z ^ (z >> 31);
-}
-
 inline double damage_rand_uniform01(uint64_t &state) {
-    state = damage_splitmix64(state);
-    return (state >> 11) * (1.0 / 9007199254740992.0);
+    // 53 random bits / 2^53, from the already-mixed feedback-form stream output.
+    state = stochastic_draw::splitmix64_feedback_next(state);
+    return static_cast<double>(state >> 11) * (1.0 / 9007199254740992.0);
 }
 
 inline bool proximity_fuze_has_terminal_guidance_support(const Missile &missile) {
