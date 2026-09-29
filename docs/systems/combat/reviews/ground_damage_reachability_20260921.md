@@ -17,9 +17,13 @@ per world in the composition path and passes it to the route, so the same probe 
 reads `state=1`; it is recorded in
 [Ground Damage Effects Route Repair](../../../domains/ground/work/active/ground_damage_effects_route_repair/README.md).
 One expectation inside the mechanism was left open and named there: a Ground hit leaves
-mobility at `1.0`. It was decided on `2026-09-28`: the expectation is withdrawn and pinned,
-because the effects model estimates warhead mechanism load only for structured air
-targets, so no warhead family reaches the Ground chassis mobility branches.
+mobility at `1.0`. It was decided on `2026-09-28`: the expectation is withdrawn and pinned
+on the synthesized bootstrap surface every shipped Ground unit uses, because the effects
+model estimates warhead mechanism load only for structured air targets, so no warhead
+family reaches the Ground chassis mobility branches on that surface. A `2026-09-29` scope
+correction records a separate, known exposure on that same page: an authored Ground
+`damage_model` with an `engine`/`fuel` system reaches mobility through a pre-existing
+generic system-name coefficient instead of a Ground mechanism.
 
 Every trace and reading below is the **pre-repair** measurement that located the cause,
 kept as the record of how it was found. `state=0`, "the route never selects", and "the
