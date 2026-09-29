@@ -240,9 +240,9 @@
                 "systems": ["engineering", "aft_vls", "fuel"],
                 "components": [
                     {"name": "mk41_vls_aft_61_cell", "system": "vls"},
-                    {"name": "lm2500_30_gas_turbine_1", "system": "propulsion"},
-                    {"name": "lm2500_30_gas_turbine_2", "system": "propulsion"},
-                    {"name": "harpoon_mk141_launchers", "system": "weapons_stowage"}
+                    {"name": "lm2500_30_gas_turbine_1", "system": "propulsion_engineering"},
+                    {"name": "lm2500_30_gas_turbine_2", "system": "propulsion_engineering"},
+                    {"name": "harpoon_mk141_launchers", "system": "weapons_combat_stowage"}
                 ]
             }
         ]
@@ -290,6 +290,7 @@
             "csg-us-ddg-surflant", "csg-us-ddg-globalsecurity", "csg-us-ddg-wiki-sandbox", "csg-us-ram-navy", "csg-us-mk45-navy"
         ],
         "parameters": {
+            "damage_model.hitboxes.components.system": {"value_basis": "engineering_estimate", "note": "S0-C packet-1 follow-up (main thread, 2026-09-29): component system tags renamed so each routes to a platform damage axis (propulsion->propulsion_engineering, sonar->sonar_sensor, aviation facilities->aviation_mission_*, weapons/countermeasures->*_combat, cargo holds by content: fuel, combat ammunition, or hold structure). Geometry, thresholds, and every numeric value unchanged."},
             "ship_platform.displacement_light_kg": {"value_basis": "engineering_estimate", "note": "not directly sourced; derived as full-load minus a proportional load fraction consistent with the Flight IIA derivation (est), per the unit_conversions note"},
             "ship_platform.displacement_full_load_kg": {"value_basis": "sourced", "source_ids": ["csg-us-ddg-surflant"], "tier": "A", "note": "8,637 LT -> 8,773,000 kg"},
             "ship_platform.length_m": {"value_basis": "sourced", "source_ids": ["csg-us-ddg51-navy-factfile"], "tier": "A", "note": "505 ft -> 153.92 m, matches OOB-quoted meters"},

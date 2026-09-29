@@ -64,8 +64,8 @@
                 "armor": 0.0,
                 "systems": ["forward_cargo", "fuel_tanks_fwd"],
                 "components": [
-                    {"name": "fuel_cargo_tank_fwd", "system": "cargo_stowage"},
-                    {"name": "vertrep_pad", "system": "aviation_facilities"}
+                    {"name": "fuel_cargo_tank_fwd", "system": "cargo_fuel_stowage"},
+                    {"name": "vertrep_pad", "system": "aviation_mission_facilities"}
                 ]
             },
             {
@@ -74,10 +74,10 @@
                 "armor": 0.0,
                 "systems": ["cargo_holds", "dry_stores", "cargo_transfer_rigs"],
                 "components": [
-                    {"name": "fuel_cargo_tank_mid", "system": "cargo_stowage"},
-                    {"name": "dry_stores_hold", "system": "cargo_stowage"},
-                    {"name": "underway_replenishment_rig_1", "system": "cargo_transfer"},
-                    {"name": "underway_replenishment_rig_2", "system": "cargo_transfer"}
+                    {"name": "fuel_cargo_tank_mid", "system": "cargo_fuel_stowage"},
+                    {"name": "dry_stores_hold", "system": "cargo_hold_structure"},
+                    {"name": "underway_replenishment_rig_1", "system": "cargo_transfer_mission"},
+                    {"name": "underway_replenishment_rig_2", "system": "cargo_transfer_mission"}
                 ]
             },
             {
@@ -86,9 +86,9 @@
                 "armor": 0.0,
                 "systems": ["engineering", "bridge", "communications"],
                 "components": [
-                    {"name": "main_propulsion_diesel", "system": "propulsion"},
+                    {"name": "main_propulsion_diesel", "system": "propulsion_engineering"},
                     {"name": "bridge_navigation", "system": "command"},
-                    {"name": "nixie_countermeasure_winch", "system": "countermeasures"}
+                    {"name": "nixie_countermeasure_winch", "system": "countermeasures_combat"}
                 ]
             }
         ]
@@ -118,6 +118,7 @@
             "csg-us-tao205-navy"
         ],
         "parameters": {
+            "damage_model.hitboxes.components.system": {"value_basis": "engineering_estimate", "note": "S0-C packet-1 follow-up (main thread, 2026-09-29): component system tags renamed so each routes to a platform damage axis (propulsion->propulsion_engineering, sonar->sonar_sensor, aviation facilities->aviation_mission_*, weapons/countermeasures->*_combat, cargo holds by content: fuel, combat ammunition, or hold structure). Geometry, thresholds, and every numeric value unchanged."},
             "ship_platform.displacement_light_kg": {"value_basis": "engineering_estimate", "note": "0.0: light displacement not sourced or estimated separately; only full-load displacement is used by the repo's health-scaling convention, consistent with T-AKE/T-AOE-6"},
             "ship_platform.displacement_full_load_kg": {"value_basis": "sourced", "source_ids": ["csg-us-tao205-navy"], "tier": "A", "note": "49,620 t full-load displacement per OOB"},
             "ship_platform.length_m": {"value_basis": "sourced", "source_ids": ["csg-us-tao205-navy"], "tier": "A", "note": "227.3 m given directly in meters per OOB"},

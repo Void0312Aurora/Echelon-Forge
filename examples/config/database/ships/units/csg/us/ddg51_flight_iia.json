@@ -232,8 +232,8 @@
                 "systems": ["engineering", "aft_vls", "fuel"],
                 "components": [
                     {"name": "mk41_vls_aft_64_cell", "system": "vls"},
-                    {"name": "lm2500_30_gas_turbine_1", "system": "propulsion"},
-                    {"name": "lm2500_30_gas_turbine_2", "system": "propulsion"},
+                    {"name": "lm2500_30_gas_turbine_1", "system": "propulsion_engineering"},
+                    {"name": "lm2500_30_gas_turbine_2", "system": "propulsion_engineering"},
                     {"name": "aviation_fuel_jp5_stores", "system": "fuel"}
                 ]
             },
@@ -243,8 +243,8 @@
                 "armor": 0.0,
                 "systems": ["hangar", "flight_deck", "helo_fuel"],
                 "components": [
-                    {"name": "double_hangar_mh60r", "system": "aviation_facility"},
-                    {"name": "rast_recovery_system", "system": "aviation_facility"}
+                    {"name": "double_hangar_mh60r", "system": "aviation_mission_facility"},
+                    {"name": "rast_recovery_system", "system": "aviation_mission_facility"}
                 ]
             }
         ]
@@ -296,6 +296,7 @@
             "csg-us-ddg-surflant", "csg-us-ddg51-navy-factfile", "csg-us-aegis-navy", "csg-us-mk45-navy", "csg-us-ram-navy"
         ],
         "parameters": {
+            "damage_model.hitboxes.components.system": {"value_basis": "engineering_estimate", "note": "S0-C packet-1 follow-up (main thread, 2026-09-29): component system tags renamed so each routes to a platform damage axis (propulsion->propulsion_engineering, sonar->sonar_sensor, aviation facilities->aviation_mission_*, weapons/countermeasures->*_combat, cargo holds by content: fuel, combat ammunition, or hold structure). Geometry, thresholds, and every numeric value unchanged."},
             "ship_platform.displacement_light_kg": {"value_basis": "proxy", "note": "no public light-displacement figure; engineering estimate derived as full-load minus a proportional load fraction, consistent with the Flight II sibling record's derivation method"},
             "ship_platform.displacement_full_load_kg": {"value_basis": "sourced", "source_ids": ["csg-us-ddg-surflant"], "tier": "A", "note": "9,496 LT"},
             "ship_platform.length_m": {"value_basis": "sourced", "source_ids": ["csg-us-ddg51-navy-factfile"], "tier": "A", "note": "509.5 ft -> 155.29 m, matches OOB-quoted meters"},
