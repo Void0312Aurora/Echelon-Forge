@@ -8,9 +8,17 @@ changing anything about the scenario itself. `docs/architecture/work/active/stab
 at the baseline ids but is removed at step 1 (or step 12, for the 2-pre-spawn variation) once
 unrelated pre-spawns or a later episode shift the ids -- with nothing else about the scenario
 changed. Every draw now derives its seed from each participant's `StableEntitySerial`
-(`core/interfaces/stochastic_draw.h`), which is assigned in creation order and is blind to
-unrelated spawns and to id recycling across `reset`, so the outcome must now be exactly equal
-across all of these variations.
+(`core/interfaces/stochastic_draw.h`) and the reset seed.
+
+What that guarantees, precisely (P5 review N2): the outcome is invariant to the component
+census and to raw-id movement, i.e. allocations and recycled generations. It is *not*
+invariant to creation order within an episode. Serials count creation order by design, so a
+unit spawned after `reset` but before the scenario's pair shifts the pair's serials and
+legitimately changes the draw. The review measured this: 4 MQ-9 pre-spawns after `reset`
+changed the outcome. The pre-spawn node therefore spawns the unrelated units in the
+*previous* episode, before `reset`. That moves every raw id the scenario later receives,
+which is what flipped outcomes on main (E6), while leaving within-episode creation order
+unchanged.
 
 This reuses `test_phase2_fire_suppression_integrity_reduces_fire_cascade_growth`'s scenario
 (`tests/runtime/air_combat/weapon_guidance_realism/aircraft_damage.py`): an E-3 Sentry AWACS
@@ -123,21 +131,25 @@ def _run_e3_scenario(sim: "ef_py.SimulationKernel") -> dict[str, object]:
 
 
 class StableEntityIdentityDrawInvarianceTest(unittest.TestCase):
-  """Acceptance Gate / Invariance: the E-3 scenario's final overlay is exactly equal under
-  unrelated pre-spawns and under later episodes of the same reset seed."""
+  """Acceptance Gate / Invariance: the E-3 scenario's final overlay is exactly equal when raw
+  ids move (unrelated units spawned in an earlier episode, and later episodes of the same
+  reset seed)."""
 
-  def test_unrelated_pre_spawns_do_not_change_the_outcome(self) -> None:
+  def test_units_spawned_in_an_earlier_episode_do_not_change_the_outcome(self) -> None:
     def run_with_pre_spawns(pre_spawn_count: int) -> dict[str, object]:
       sim = ef_py.SimulationKernel()
-      sim.reset(20260529)
       self.assertTrue(sim.load_database(_DB_PATH))
       for _ in range(pre_spawn_count):
         _spawn_unrelated_unit(sim)
+      # The fence: reset deletes the pre-spawned units and restarts serials. The scenario's
+      # raw ids still differ from the baseline's (allocations and recycled generations).
+      sim.reset(20260529)
+      self.assertTrue(sim.load_database(_DB_PATH))
       return _run_e3_scenario(sim)
 
     baseline = run_with_pre_spawns(0)
 
-    for count in (1, 2, 3):
+    for count in (1, 2, 3, 4):
       result = run_with_pre_spawns(count)
       self.assertEqual(
         result["alive"], baseline["alive"], f"{count} unrelated pre-spawn(s) changed liveness"
