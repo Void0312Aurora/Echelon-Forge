@@ -30,6 +30,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -442,6 +443,22 @@ TEST_SUITE("stable_entity_identity") {
         // Same reset seed on an otherwise-identical kernel reproduces the same damage outcome.
         CHECK(before_a1 == before_a2);
         CHECK(after_a1 == after_a2);
+
+        // A different reset seed must draw a different seed at this site. The HP outcome is a
+        // thresholded function of the draw and may coincide for two seeds, so the check is on
+        // the drawn seed itself, with the production participants (P5 review S3).
+        auto site1_seed_at = [](std::uint64_t reset_seed) {
+            SimulationKernel kernel;
+            flecs::entity target;
+            kernel.reset(reset_seed);
+            auto shooter = spawn_tracked_pair(kernel, target);
+            auto lease = kernel.acquire_world_lease();
+            return stochastic_draw::draw_seed(lease.world(),
+                                              stochastic_draw::DrawSite::debug_synthetic_missile,
+                                              0.0, {shooter, target}, {0, 0});
+        };
+        CHECK(site1_seed_at(303) == site1_seed_at(303));
+        CHECK(site1_seed_at(303) != site1_seed_at(304));
     }
 
     TEST_CASE("site 7 (command-link drop): reset seed drives the drop roll") {
@@ -464,6 +481,22 @@ TEST_SUITE("stable_entity_identity") {
         const bool delivered_a2 = run_once(404);
         // Same reset seed reproduces the same drop/deliver decision.
         CHECK(delivered_a1 == delivered_a2);
+
+        // A different reset seed must draw a different drop roll (P5 review S3). The boolean
+        // outcome can coincide, so compare the roll itself, with the production call shape.
+        auto site7_roll_at = [](std::uint64_t reset_seed) {
+            SimulationKernel kernel;
+            REQUIRE(kernel.load_database("examples/config/database"));
+            kernel.reset(reset_seed);
+            auto unit = kernel.spawn_unit(Side::Blue, "F-16C_Block50", 0.0, 0.0, 5000.0, 0.0, 0.0,
+                                          0.0, 200.0, 0.0, 0.0);
+            REQUIRE(unit.is_valid());
+            auto lease = kernel.acquire_world_lease();
+            return stochastic_draw::uniform01(stochastic_draw::draw_seed(
+                lease.world(), stochastic_draw::DrawSite::command_link_drop, 0.0, {unit}));
+        };
+        CHECK(site7_roll_at(404) == site7_roll_at(404));
+        CHECK(site7_roll_at(404) != site7_roll_at(405));
     }
 
     TEST_CASE("site 3 (naval gun/CIWS): reset seed drives the hit roll") {
@@ -501,6 +534,140 @@ TEST_SUITE("stable_entity_identity") {
         const double hp_a2 = naval_hit_at(505);
         CHECK(hp_a1 == hp_a2);
 
+        // A different reset seed must draw a different hit roll (P5 review S3). Two misses
+        // leave HP equal, so compare the roll itself, with the production call shape.
+        auto site3_roll_at = [](std::uint64_t reset_seed) {
+            SimulationKernel kernel;
+            REQUIRE(kernel.load_database("examples/config/database"));
+            kernel.reset(reset_seed);
+            auto shooter = kernel.spawn_unit(Side::Blue, "DDG-51_Flight_I_ASW_Helo_MVP", 0.0, 0.0,
+                                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            auto target = kernel.spawn_unit(Side::Red, "DDG-51_Flight_I_ASW_Helo_MVP", 5000.0,
+                                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            REQUIRE(shooter.is_valid());
+            REQUIRE(target.is_valid());
+            auto lease = kernel.acquire_world_lease();
+            return stochastic_draw::uniform01(stochastic_draw::draw_seed(
+                lease.world(), stochastic_draw::DrawSite::naval_gun_ciws, 0.0, {shooter, target},
+                {static_cast<std::uint64_t>(NavalWeaponType::DeckGun)}));
+        };
+        CHECK(site3_roll_at(505) == site3_roll_at(505));
+        CHECK(site3_roll_at(505) != site3_roll_at(506));
+    }
+
+    TEST_CASE("census-change invariance: extra registrations before spawning leave serials and "
+              "draw seeds unchanged") {
+        // Acceptance Gate item 2: registering extra components and allocating extra entities
+        // moves every raw Flecs id but must not move serials, so the same draw seed results
+        // (P5 review S3).
+        // Extra census is modelled as extra *entities* allocated before spawning, which is what
+        // a component or system registration costs in id space (each registers an entity).
+        // Registering new C++ component types here would break the process-wide flecs type-id
+        // cache that later kernel worlds rely on (the defect class fixed in 3dc2b718), so the
+        // test does not do that.
+        auto seeds_for = [](bool extra_census) {
+            SimulationKernel kernel;
+            REQUIRE(kernel.load_database("examples/config/database"));
+            kernel.reset(20260529);
+            std::uint64_t shooter_raw = 0;
+            if (extra_census) {
+                auto lease = kernel.acquire_world_lease();
+                flecs::world &world = lease.world();
+                for (int index = 0; index < 23; ++index) {
+                    world.entity();
+                }
+            }
+            auto shooter = kernel.spawn_unit(Side::Blue, "F-16C_Block50", 0.0, 0.0, 5000.0, 0.0,
+                                             0.0, 0.0, 200.0, 0.0, 0.0);
+            auto target = kernel.spawn_unit(Side::Red, "F-16C_Block50", 0.0, 20000.0, 5000.0,
+                                            180.0, 0.0, 0.0, 200.0, 0.0, 0.0);
+            REQUIRE(shooter.is_valid());
+            REQUIRE(target.is_valid());
+            shooter_raw = shooter.id();
+            auto lease = kernel.acquire_world_lease();
+            const std::uint64_t seed = stochastic_draw::draw_seed(
+                lease.world(), stochastic_draw::DrawSite::naval_gun_ciws, 1.5, {shooter, target},
+                {2});
+            return std::make_tuple(shooter.get<StableEntitySerial>()->value,
+                                   target.get<StableEntitySerial>()->value, seed, shooter_raw);
+        };
+        const auto [serial_a, target_serial_a, seed_a, raw_a] = seeds_for(false);
+        const auto [serial_b, target_serial_b, seed_b, raw_b] = seeds_for(true);
+        CHECK(raw_a != raw_b);
+        CHECK(serial_a == serial_b);
+        CHECK(target_serial_a == target_serial_b);
+        CHECK(seed_a == seed_b);
+    }
+
+    TEST_CASE("kernel: fire_missile at a dead target id is rejected, not aborted (P5 B1)") {
+        // ContactList keeps dead ids for track memory, so firing at a target whose track outlived
+        // it is a normal-play path. It must be rejected at the boundary, before either mt19937
+        // draw, and never reach draw_seed.
+        SimulationKernel kernel;
+        flecs::entity target;
+        kernel.reset(707);
+        auto shooter = spawn_tracked_pair(kernel, target);
+        const std::uint64_t dead_id = target.id();
+        target.destruct();
+        {
+            auto lease = kernel.acquire_world_lease();
+            REQUIRE_FALSE(lease.world().entity(dead_id).is_alive());
+        }
+        CHECK_FALSE(kernel.fire_missile(shooter.id(), dead_id).is_valid());
+
+        // Control: a live target still fires.
+        flecs::entity live_target;
+        SimulationKernel control;
+        control.reset(707);
+        auto control_shooter = spawn_tracked_pair(control, live_target);
+        CHECK(control.fire_missile(control_shooter.id(), live_target.id()).is_valid());
+    }
+
+    TEST_CASE("kernel: fire_naval_weapon at a dead target keeps main's accounting (P5 B1)") {
+        // Main handled a dead naval target after the draw: the shot is consumed and the call
+        // returns true with no effect. The package keeps that visible behaviour and only skips
+        // the draw, since draw_seed aborts on a non-live participant.
+        auto fire_at = [](bool kill_target, int &ready_after) {
+            SimulationKernel kernel;
+            REQUIRE(kernel.load_database("examples/config/database"));
+            kernel.reset(808);
+            auto shooter = kernel.spawn_unit(Side::Blue, "DDG-51_Flight_I_ASW_Helo_MVP", 0.0, 0.0,
+                                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            auto target = kernel.spawn_unit(Side::Red, "DDG-51_Flight_I_ASW_Helo_MVP", 5000.0,
+                                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            REQUIRE(shooter.is_valid());
+            REQUIRE(target.is_valid());
+            NavalWeaponMountDefinition mount{};
+            mount.mount_id = "test_gun";
+            mount.weapon_type = NavalWeaponType::DeckGun;
+            mount.ready_count = 10;
+            mount.max_ready_count = 10;
+            mount.ammo_per_shot = 1;
+            mount.cooldown_s = 0.0;
+            mount.engagement_range_m = 10000.0;
+            mount.hit_probability = 0.5;
+            mount.damage_per_hit = 10.0;
+            shooter.set<NavalWeaponSystem>({{mount}});
+            Detection det{};
+            det.target_id = target.id();
+            det.range = 5000.0;
+            shooter.set<ContactList>({{det}});
+            const std::uint64_t target_id = target.id();
+            if (kill_target) {
+                target.destruct();
+            }
+            const bool fired = kernel.fire_naval_weapon(
+                shooter.id(), target_id, static_cast<int>(NavalWeaponType::DeckGun));
+            ready_after = shooter.get<NavalWeaponSystem>()->mounts.front().ready_count;
+            return fired;
+        };
+        int ready_live = -1;
+        int ready_dead = -1;
+        CHECK(fire_at(false, ready_live));
+        CHECK(fire_at(true, ready_dead));
+        // The dead-target shot is consumed exactly like a live one.
+        CHECK(ready_dead == ready_live);
+        CHECK(ready_dead == 9);
     }
 
     TEST_CASE("site 5 (radar detection) and site 6 (acoustic detection): seed composition "
