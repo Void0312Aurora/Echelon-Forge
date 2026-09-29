@@ -264,6 +264,9 @@ class CompiledAirC2TaskOrderProjection:
         scenario_order_cfg = _scenario_task_order_cfg(loader)
         if created_order or task_name in {TASK_SCRAMBLE, TASK_CAP}:
             _apply_authored_order_fields(order, scenario_order_cfg, assignee_id=order.assignee_id)
+            # Authored metadata may describe the order, but live C2 owns its
+            # current task state and must win over a static task_type field.
+            order.task_type = task_types.get(task_name, ef_py.TaskType.Idle)
             if task_name in {TASK_SCRAMBLE, TASK_CAP} and isinstance(scenario_order_cfg, dict) and scenario_order_cfg:
                 order.issue_time_s = float(sim_time_s)
         if task_name in {TASK_SCRAMBLE, TASK_CAP} and waypoints:
