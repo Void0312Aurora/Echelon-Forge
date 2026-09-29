@@ -8,6 +8,7 @@
 #include "components/systems/track_management.h"
 #include "components/systems/comm.h"
 #include "components/domains/naval/platform/ship_platform.h"
+#include "components/physics/geodesy.h"
 #include "components/command/legacy_command_bridge.h"
 #include <spdlog/spdlog.h>
 #include <cmath>
@@ -45,9 +46,13 @@ data_link_pair_is_eligible(const flecs::entity &sender_entity, const DataLink &s
         return false;
     }
 
-    const double horizon_km =
-        3.57 * (std::sqrt(sender_effective_height_m) + std::sqrt(receiver_effective_height_m));
-    if (dist_km > horizon_km) {
+    // Radio horizon over a smooth 4/3-effective earth (Geodetic Frame P3-A),
+    // compared against the horizontal separation in the local frame.
+    const double re =
+        geodesy::effective_radius_m(geodesy::EarthModel{}, geodesy::kStandardRefractionFactor);
+    const double horizon_m =
+        geodesy::two_way_horizon_arc_m(re, sender_effective_height_m, receiver_effective_height_m);
+    if (std::sqrt(dx * dx + dy * dy) > horizon_m) {
         return false;
     }
 

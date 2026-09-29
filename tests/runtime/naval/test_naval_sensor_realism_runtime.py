@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import tempfile
 import unittest
 
@@ -15,6 +16,22 @@ import ef_py # noqa: E402
 class NavalSensorRealismRuntimeTests(unittest.TestCase):
   _OPEN_WATER_X = 1_000_000.0
   _OPEN_WATER_Y = 1_000_000.0
+  # Smooth-earth horizon for the 25 m test radar against the T-AKE-1 target
+  # (30 m above the waterline, 0.25 radar-significant fraction = 7.5 m) over a
+  # 4/3 effective earth of mean radius 6371009 m: 31.9 km. The ducting test
+  # radar adds min(18 km, 46.3 km * 0.35) = 16.2 km in calm water.
+  _SEA_LEVEL_HORIZON_M = 31_897.0
+
+  def test_horizon_geometry_constant_matches_the_smooth_earth_formula(self) -> None:
+    effective_radius_m = 6_371_009.0 * 4.0 / 3.0
+
+    def horizon_angle(height_m: float) -> float:
+      return math.atan2(math.sqrt(2.0 * effective_radius_m * height_m + height_m * height_m), effective_radius_m)
+
+    horizon_m = effective_radius_m * (horizon_angle(25.0) + horizon_angle(30.0 * 0.25))
+    self.assertAlmostEqual(horizon_m, self._SEA_LEVEL_HORIZON_M, delta=1.0)
+    self.assertLess(horizon_m, 40_000.0)
+    self.assertGreater(horizon_m + min(18_000.0, 46_300.0 * 0.35), 40_000.0)
 
   def _kernel_with_overrides(self, overrides: dict[str, dict]) -> ef_py.SimulationKernel:
     kernel = ef_py.SimulationKernel()
@@ -63,7 +80,6 @@ class NavalSensorRealismRuntimeTests(unittest.TestCase):
           "antenna_height_m": 25.0,
           "target_height_bias_m": 5.0,
           "environment_domain": "SurfaceMaritime",
-          "enforce_radar_horizon": True,
           "enable_ducting": False,
           "sea_clutter_enabled": False
         }
@@ -88,11 +104,13 @@ class NavalSensorRealismRuntimeTests(unittest.TestCase):
       vy=10.29,
       vz=0.0,
     )
+    # 40 km is inside the configured 46.3 km range but beyond the 31.9 km
+    # smooth-earth horizon, so only the horizon can block this contact.
     far_ship = kernel.spawn_unit(
       ef_py.Side.Red,
       "T-AKE-1_USNS_Lewis_and_Clark",
       self._OPEN_WATER_X,
-      self._OPEN_WATER_Y + 70_000.0,
+      self._OPEN_WATER_Y + 40_000.0,
       0.0,
       heading=180.0,
       pitch=0.0,
@@ -140,7 +158,6 @@ class NavalSensorRealismRuntimeTests(unittest.TestCase):
           "antenna_height_m": 25.0,
           "target_height_bias_m": 5.0,
           "environment_domain": "SurfaceMaritime",
-          "enforce_radar_horizon": True,
           "enable_ducting": True,
           "ducting_gain_factor": 1.35,
           "ducting_max_bonus_m": 18000.0,
@@ -166,11 +183,13 @@ class NavalSensorRealismRuntimeTests(unittest.TestCase):
       vy=10.29,
       vz=0.0,
     )
+    # Same 40 km geometry that the horizon blocks without ducting; calm-water
+    # ducting extends the horizon to 48.1 km.
     target_ship = kernel.spawn_unit(
       ef_py.Side.Red,
       "T-AKE-1_USNS_Lewis_and_Clark",
       self._OPEN_WATER_X,
-      self._OPEN_WATER_Y + 50_000.0,
+      self._OPEN_WATER_Y + 40_000.0,
       0.0,
       heading=180.0,
       pitch=0.0,
@@ -215,7 +234,6 @@ class NavalSensorRealismRuntimeTests(unittest.TestCase):
           "antenna_height_m": 25.0,
           "target_height_bias_m": 5.0,
           "environment_domain": "SurfaceMaritime",
-          "enforce_radar_horizon": True,
           "sea_clutter_enabled": True,
           "sea_clutter_sensitivity": 1.0,
           "sea_state_loss_per_level": 0.16,
@@ -240,11 +258,13 @@ class NavalSensorRealismRuntimeTests(unittest.TestCase):
       vy=10.29,
       vz=0.0,
     )
+    # 30 km sits inside the 31.9 km smooth-earth horizon, so sea clutter, not
+    # the horizon, decides this contact.
     target_ship = kernel.spawn_unit(
       ef_py.Side.Red,
       "T-AKE-1_USNS_Lewis_and_Clark",
       self._OPEN_WATER_X,
-      self._OPEN_WATER_Y + 42_000.0,
+      self._OPEN_WATER_Y + 30_000.0,
       0.0,
       heading=180.0,
       pitch=0.0,
@@ -292,7 +312,6 @@ class NavalSensorRealismRuntimeTests(unittest.TestCase):
           "antenna_height_m": 25.0,
           "target_height_bias_m": 5.0,
           "environment_domain": "SurfaceMaritime",
-          "enforce_radar_horizon": True,
           "sea_clutter_enabled": True,
           "sea_clutter_sensitivity": 1.0,
           "sea_state_loss_per_level": 0.16,
@@ -412,7 +431,6 @@ class NavalSensorRealismRuntimeTests(unittest.TestCase):
           "antenna_height_m": 25.0,
           "target_height_bias_m": 5.0,
           "environment_domain": "SurfaceMaritime",
-          "enforce_radar_horizon": True,
           "sea_clutter_enabled": False,
           "enable_ducting": False,
           "doppler_notch_width": 0.001,

@@ -583,7 +583,6 @@
                 "reference_rcs_m2": 25.0,
                 "doppler_notch_width": 0.0,
                 "environment_domain": "SurfaceMaritime",
-                "enforce_radar_horizon": false,
                 "sea_clutter_enabled": false
             }
         }

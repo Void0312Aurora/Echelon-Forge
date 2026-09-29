@@ -1,3 +1,4 @@
+#include "components/physics/geodesy.h"
 #include "components/systems/data_link.h"
 #include "gpu/gpu_interaction_broadphase_runtime.h"
 #include "gpu/gpu_visual_runtime.h"
@@ -193,8 +194,10 @@ std::vector<std::uint32_t> compute_comm_exact_reference(const GeneratedBatch &ba
             }
             const double h1 = std::max(0.0, sender.z);
             const double h2 = std::max(0.0, receiver.z);
-            const double horizon_km = 3.57 * (std::sqrt(h1) + std::sqrt(h2));
-            if (dist_km > horizon_km) {
+            // Same smooth-earth radio horizon as data_link_system.h.
+            const double re = geodesy::effective_radius_m(geodesy::EarthModel{},
+                                                          geodesy::kStandardRefractionFactor);
+            if (std::sqrt(dx * dx + dy * dy) > geodesy::two_way_horizon_arc_m(re, h1, h2)) {
                 continue;
             }
             const std::size_t word_index = static_cast<std::size_t>(receiver.local_index) / 32u;

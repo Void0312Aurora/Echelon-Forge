@@ -52,7 +52,6 @@ inline Sensor make_unit_definition_default_sensor() {
     sensor.ducting_max_bonus_m = 0.0;
     sensor.bearing_only_min_range_m = 0.0;
     sensor.environment_domain = static_cast<int>(SensorEnvironmentDomain::Air);
-    sensor.enforce_radar_horizon = false;
     sensor.enable_ducting = false;
     sensor.sea_clutter_enabled = false;
     sensor.bearing_only = false;
