@@ -10,23 +10,14 @@
 #include "components/tasking/pilot_report.h"
 #include "components/tasking/task_order.h"
 
+#include "core/interfaces/stochastic_draw.h"
+
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cstdint>
 
 namespace {
-uint64_t splitmix64(uint64_t seed) {
-    uint64_t z = seed + 0x9e3779b97f4a7c15ULL;
-    z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ULL;
-    z = (z ^ (z >> 27)) * 0x94d049bb133111ebULL;
-    return z ^ (z >> 31);
-}
-
-double deterministic_uniform01(uint64_t seed) {
-    uint64_t z = splitmix64(seed);
-    return (z >> 11) * (1.0 / 9007199254740992.0);
-}
 
 inline double current_world_time_seconds(const flecs::world &world) {
     const ecs_world_info_t *info = ecs_get_world_info(world.c_ptr());
@@ -46,6 +37,28 @@ flecs::entity resolve_valid_entity_or_warn(WorldT &world, uint64_t entity_id,
         return flecs::entity::null();
     }
     return entity;
+}
+
+// A live entity reachable by caller-supplied raw id but carrying no stable serial is rejected
+// here, on the same path as an invalid id (Decision 4): the command API resolves entities by
+// raw id with no KeyEntity gate, so this is the boundary that must reject before a command-link
+// drop roll could otherwise reach draw_seed's internal abort.
+inline bool command_boundary_rejects_missing_serial(flecs::entity entity, const char *operation,
+                                                     uint64_t entity_id) {
+    if (entity.is_alive() && !entity.has<StableEntitySerial>()) {
+        spdlog::warn("Attempted to {} for entity {}: it carries no stable entity serial",
+                     operation, entity_id);
+        return true;
+    }
+    return false;
+}
+
+// Site 7 (command-link drop roll): participant is the single commanded entity; no extra words.
+inline double command_link_drop_roll(const flecs::world &world, flecs::entity entity,
+                                     double current_time) {
+    const uint64_t seed = stochastic_draw::draw_seed(
+        world, stochastic_draw::DrawSite::command_link_drop, current_time, {entity});
+    return stochastic_draw::uniform01(seed);
 }
 
 template <typename ComponentT>
@@ -158,6 +171,9 @@ void SimulationKernel::set_unit_command(uint64_t entity_id, double heading_deg, 
     ensure_active("set_unit_command");
     auto e = resolve_valid_entity_or_warn(ecs, entity_id, "set command");
     if (e.is_valid()) {
+        if (command_boundary_rejects_missing_serial(e, "set command", entity_id)) {
+            return;
+        }
         if (entity_is_ship(e)) {
             const MissionCommand mission =
                 ship_mission_command_from_unit_command(e, heading_deg, speed_mps, altitude_m);
@@ -167,9 +183,7 @@ void SimulationKernel::set_unit_command(uint64_t entity_id, double heading_deg, 
                 if (!e.has<MissionCommand>()) {
                     e.set<MissionCommand>({});
                 }
-                uint64_t seed = static_cast<uint64_t>(current_time * 1000.0) ^
-                                (entity_id * 0xd6e8feb86659fd93ULL) ^ 0x13579bdfULL;
-                double roll = deterministic_uniform01(seed);
+                const double roll = command_link_drop_roll(ecs, e, current_time);
                 if (roll >= link->drop_prob) {
                     const auto enqueue_result =
                         queue_pending_mission_command(e, mission, current_time, link->latency_s);
@@ -184,9 +198,7 @@ void SimulationKernel::set_unit_command(uint64_t entity_id, double heading_deg, 
         const CommandLink *link = e.get<CommandLink>();
         if (command_link_requires_delivery_queue(link)) {
             const double current_time = current_world_time_seconds(ecs);
-            uint64_t seed = static_cast<uint64_t>(current_time * 1000.0) ^
-                            (entity_id * 0xbf58476d1ce4e5b9ULL) ^ 0x12345678ULL;
-            double roll = deterministic_uniform01(seed);
+            const double roll = command_link_drop_roll(ecs, e, current_time);
             if (roll >= link->drop_prob) {
                 ensure_mission_command_control_state(e);
                 queue_or_refresh_pending_movement_command(
@@ -219,6 +231,9 @@ void SimulationKernel::set_unit_action(uint64_t entity_id, double turn_rate_cmd,
     ensure_active("set_unit_action");
     auto e = resolve_valid_entity_or_warn(ecs, entity_id, "set action");
     if (e.is_valid()) {
+        if (command_boundary_rejects_missing_serial(e, "set action", entity_id)) {
+            return;
+        }
         auto clamp_cmd = [](double v) { return std::clamp(v, -1.0, 1.0); };
         double fire = std::clamp(fire_cmd, 0.0, 1.0);
         const ActionCommand next = make_action_command(
@@ -237,9 +252,7 @@ void SimulationKernel::set_unit_action(uint64_t entity_id, double turn_rate_cmd,
             if (!e.has<ActionCommand>()) {
                 e.set<ActionCommand>(make_action_command());
             }
-            uint64_t seed = static_cast<uint64_t>(current_time * 1000.0) ^
-                            (entity_id * 0x94d049bb133111ebULL) ^ 0x87654321ULL;
-            double roll = deterministic_uniform01(seed);
+            const double roll = command_link_drop_roll(ecs, e, current_time);
             if (roll >= link->drop_prob) {
                 // PendingActionCommand remains a quarantined legacy transport shell in this slice.
                 queue_or_refresh_pending_action_command(e, next, current_time + link->latency_s);
@@ -347,15 +360,16 @@ void SimulationKernel::set_mission_command(uint64_t entity_id, const MissionComm
     ensure_active("set_mission_command");
     auto e = resolve_valid_entity_or_warn(ecs, entity_id, "set mission command");
     if (e.is_valid()) {
+        if (command_boundary_rejects_missing_serial(e, "set mission command", entity_id)) {
+            return;
+        }
         const CommandLink *link = e.get<CommandLink>();
         if (command_link_requires_delivery_queue(link)) {
             const double current_time = current_world_time_seconds(ecs);
             if (!e.has<MissionCommand>()) {
                 e.set<MissionCommand>({});
             }
-            uint64_t seed = static_cast<uint64_t>(current_time * 1000.0) ^
-                            (entity_id * 0xd6e8feb86659fd93ULL) ^ 0x13579bdfULL;
-            double roll = deterministic_uniform01(seed);
+            const double roll = command_link_drop_roll(ecs, e, current_time);
             if (roll >= link->drop_prob) {
                 const auto enqueue_result =
                     queue_pending_mission_command(e, cmd, current_time, link->latency_s);
