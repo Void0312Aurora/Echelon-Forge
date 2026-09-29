@@ -45,6 +45,7 @@ general implementation prefixes.
 
 ## Active Work
 
+- [Launch-decision architecture reorganization](work/active/launch_decision_reorg/README.md)
 - [Air-combat 1v1 realism gradient](work/active/air_combat_1v1_realism_gradient/README.md)
 - [Damage-consequence reward surface](work/active/air_combat_damage_consequence_reward/README.md)
 - [Temporal-window HMoE](work/active/temporal_window_hmoe/README.md)
