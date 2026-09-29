@@ -27,7 +27,7 @@ Parent project: [Carrier Strike Group Engagement](README.md)
 | `CSG-P0-A-boundary` | `P0-A` | accepted `2026-09-28` | this directory; naval owner README index | doc link and bilingual audits |
 | `CSG-S0-A-oob-blue` | `S0-A` | accepted `2026-09-28` ([Ford OOB](../../../reviews/csg_order_of_battle_20260928/csg_order_of_battle_ford_20260928.md)) | research scratch; main thread integrates into `docs/domains/naval/reviews/csg_order_of_battle_20260928/` | provenance completeness |
 | `CSG-S0-A-oob-red` | `S0-A` | accepted `2026-09-28` ([Fujian OOB](../../../reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md)) | research scratch; main thread integrates into `docs/domains/naval/reviews/csg_order_of_battle_20260928/` | provenance completeness |
-| `CSG-S0-B-geodesy-integration` | `S0-B` | unblocked: [Geodetic Frame](../../../../../systems/physics/work/active/geodetic_frame/README.md) `P3-A` and `P3-B` accepted `2026-09-29`; runs after `S0-C`/`S0-D` | `scenarios/naval/csg/`; naval scenario tests | scenario anchor tests |
+| `CSG-S0-B-geodesy-integration` | `S0-B` | ready: `P3-A`/`P3-B` accepted `2026-09-29`, `S0-C`/`S0-D` accepted `2026-09-30`; main thread | `scenarios/naval/csg/`; naval scenario tests | scenario anchor tests |
 
 ## No-Dispatch Conditions
 

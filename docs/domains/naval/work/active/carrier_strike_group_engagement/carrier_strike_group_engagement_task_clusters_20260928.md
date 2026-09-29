@@ -50,7 +50,7 @@ at dispatch; `n/a` means not yet dispatched.
 | `S0-A` | future worker | moderate (public-source research) / sonnet for integration; research ran on default / medium | Order-of-battle research: both groups' ship, submarine, aircraft, weapon, and sensor lists with sources. | `docs/domains/naval/reviews/csg_order_of_battle_20260928/` | runtime content | provenance check: every row has source ID, tier, uncertainty | both sides' OOB tables complete | after `P0-A`; parallel with `S0-B` | 2 | accepted |
 | `S0-B` | main thread | moderate / sonnet / medium | Integrate [Geodetic Frame](../../../../../systems/physics/work/active/geodetic_frame/README.md): scenarios declare a geodetic anchor; OOB placement and ranges use the shared frame. | `scenarios/naval/csg/`; naval scenario tests | building the frame (owned by `systems/physics`) | scenario anchor tests | CSG scenarios place both groups through the shared frame | after Geodetic Frame `P3-B` accepted | 1 + 1 repair | planned |
 | `S0-C` | future worker | moderate / sonnet / medium for schema mapping and the four authoring packets (US naval, US air, PLAN naval, PLAN air); main thread integrates and fixes; no independent review (database content, not code) | Named unit content for both groups from `S0-A`, at full fidelity in one pass (owner decision `2026-09-29`): aircraft carry component damage models at the F-16C standard. A parameter without an `S0-A` or web source is a labelled `proxy` value with its reasoning, never a silent default. | `examples/config/database/**` (ships, submarines, aircraft, weapons, sensors) | new mechanisms | content-compile tests; unit spawn tests | every OOB row spawns with provenance | after `S0-A` | 2 + 1 repair | accepted `2026-09-30` (see S0-C Record) |
-| `S0-D` | future worker | moderate / sonnet / medium | Group-composition scenario schema plus `CSG-S0` named and mirror scenarios. | scenario loader schema, `scenarios/naval/csg/`, `tests/contracts/unit/naval/csg/` | motion | scenario contract runner | both variants load and spawn the full OOB | after `S0-C` | 2 | planned |
+| `S0-D` | main thread | moderate / main thread / medium (a design worker was stopped by owner decision; no subagents from `2026-09-30`) | Group-composition scenario schema plus `CSG-S0` named and mirror scenarios. | scenario compiler (`group_composition.py`), `scenarios/naval/csg/`, `tests/scenario/test_csg_group_composition.py`, `tests/content/test_csg_unit_content.py` | motion | scenario and content tests | both variants load and spawn the full OOB | after `S0-C` | 2 | accepted `2026-09-30` (`48aa6eb4`) |
 | `S0-X` | main thread | high (stage acceptance) / main thread + opus reviewer / high | Accept `CSG-S0`; first throughput record. | stage acceptance record | — | stage validation plan | `G0` gate met | after `S0-B`, `S0-D` | 1 | planned |
 | `S1-A` | future worker | n/a | Group formation and screen geometry; route following. | naval command/formation components and systems | fleet doctrine beyond formation | formation-keeping tests | formation holds under turns | after `S0-X` | 2 + 1 repair | planned |
 | `S1-B` | future worker | n/a | Ship turning-circle and speed response; damage-to-mobility coupling. | `ship_motion_system.h`, platform fields | full hydrodynamics | motion tests against sourced turning data | damaged ship loses speed through the maintained path | after `S0-X`; parallel with `S1-A` if write sets split | 2 + 1 repair | planned |
@@ -136,6 +136,42 @@ Residuals for later clusters:
   (engagement adjudication owner, `CSG-S4`);
 - the scratch authoring standard and `check_units.py` are not yet repository
   tools; promoting the check to a content test belongs to `S0-D`.
+
+## S0-D Record (`2026-09-30`)
+
+Commit `48aa6eb4`: 461 lines of code and tests plus two scenario files.
+
+- Schema: a top-level `groups` list, expanded by the compiler into plain
+  `entities` and popped, so both spawn paths are unchanged and a recompile
+  cannot expand twice. Each group declares `group_id`, `side` (Blue or Red
+  only: the side resolver maps anything else to Neutral), `oob_ref` (an
+  existing page), a `guide` with a threat axis, optional `branches`, and
+  `members`. Members carry `oob_row`, `type`, `count`, `role`, provenance
+  with a count basis, and either a `station` (range and bearing from the
+  axis; `depth_m` for submarines) or `embarked_on`.
+- Embarked aircraft are inventory in `meta.csg.groups[*].embarked_inventory`,
+  not entities: aircraft spawned at zero speed on a deck climb away because the
+  flight models have no parked state. Each hangar ship's own stowed helicopter
+  (`embarked_air_ops`) still spawns and is pinned by `EmbarkedAirOpsSystem`.
+  `CSG-S2` consumes the inventory as the deck cycle's initial condition.
+- Scenarios: `csg_s0_ford_vs_fujian_named_v1.json` (Ford CSG-12, 7 hulls and
+  74 aircraft, against Fujian CV-18, 7 hulls, the 48-aircraft wing and 7
+  organic helicopters) and `csg_s0_ford_mirror_v1.json` (the Ford platform
+  set on both sides). Branches: T-AOE for T-AO, F-35C squadron, CMV-22B;
+  Type 054B, 903A for 901, GJ-21. Both declare a geodetic anchor
+  (21 N, 125 E). Station geometry is a labelled estimate; the S0-A pages
+  give no screen distances. Reserved RL boundary names sit in
+  `meta.csg.reserved`.
+- The S0-C content rules are now a repository test
+  (`tests/content/test_csg_unit_content.py`).
+
+Validation: the two new test files 16 passed; scenario, naval, environment,
+content, and runtime-facade suites 358 passed; governance the three inherited
+reds.
+
+Residuals: the helicopter split moves one MH-60R detachment from the carrier
+to the doctrinal 4th DDG (squadron total unchanged); the 054A and 901 organic
+helicopters are Z-20F/Z-20J proxies for Z-9 and Z-8/Z-18.
 
 ## Dispatch Rules
 
