@@ -90,7 +90,14 @@ def _spawn_unrelated_unit(sim: "ef_py.SimulationKernel") -> int:
 
 
 def _run_e3_scenario(sim: "ef_py.SimulationKernel") -> dict[str, object]:
-  """Runs the E-3 scenario on an already reset+loaded kernel and returns the final outcome."""
+  """Runs the E-3 scenario on an already reset+loaded kernel and returns the final outcome.
+
+  A removed target (README E6: "removed, step 1") has no `AircraftDamageState` left to read --
+  `debug_get_aircraft_damage_state` returns no values once the entity is no longer alive -- so
+  the overlay is only meaningful, and only fetched, while the target is still alive. "Removed"
+  is itself part of the comparable outcome: the invariance is that every variation removes the
+  target at the same step, or none do, not that a dead target's non-existent overlay matches.
+  """
   attacker_id, target_id = _spawn_e3_pair(sim)
   for local_x, local_y, local_z in _HIT_LOCAL_POINTS:
     applied = sim.debug_apply_profiled_local_proximity_hit(
@@ -102,11 +109,16 @@ def _run_e3_scenario(sim: "ef_py.SimulationKernel") -> dict[str, object]:
       _make_warhead_profile("blast_fragmentation", damage=180.0, radius=35.0),
     )
     assert applied, "the scenario's profiled hit must land for the invariance check to be meaningful"
-  for _ in range(_STEP_COUNT):
+  removed_at_step: int | None = None
+  for step in range(_STEP_COUNT):
     sim.step()
+    if removed_at_step is None and not sim.is_unit_active(target_id):
+      removed_at_step = step
+  alive = removed_at_step is None
   return {
-    "alive": bool(sim.is_unit_active(target_id)),
-    "overlay": _aircraft_damage_overlay(sim, target_id),
+    "alive": alive,
+    "removed_at_step": removed_at_step,
+    "overlay": _aircraft_damage_overlay(sim, target_id) if alive else None,
   }
 
 
@@ -124,15 +136,16 @@ class StableEntityIdentityDrawInvarianceTest(unittest.TestCase):
       return _run_e3_scenario(sim)
 
     baseline = run_with_pre_spawns(0)
-    self.assertTrue(
-      baseline["alive"] or baseline["overlay"]["structure"] > 0.0,
-      "the baseline scenario must be meaningful, not already fully destroyed at 0 pre-spawns",
-    )
 
     for count in (1, 2, 3):
       result = run_with_pre_spawns(count)
       self.assertEqual(
         result["alive"], baseline["alive"], f"{count} unrelated pre-spawn(s) changed liveness"
+      )
+      self.assertEqual(
+        result["removed_at_step"],
+        baseline["removed_at_step"],
+        f"{count} unrelated pre-spawn(s) changed the removal step",
       )
       self.assertEqual(
         result["overlay"],
@@ -146,10 +159,6 @@ class StableEntityIdentityDrawInvarianceTest(unittest.TestCase):
     self.assertTrue(sim.load_database(_DB_PATH))
 
     episode_0 = _run_e3_scenario(sim)
-    self.assertTrue(
-      episode_0["alive"] or episode_0["overlay"]["structure"] > 0.0,
-      "the episode-0 scenario must be meaningful, not already fully destroyed",
-    )
 
     for episode in (1, 2, 3):
       sim.reset(20260529)
@@ -157,6 +166,11 @@ class StableEntityIdentityDrawInvarianceTest(unittest.TestCase):
       result = _run_e3_scenario(sim)
       self.assertEqual(
         result["alive"], episode_0["alive"], f"episode {episode} changed liveness vs. episode 0"
+      )
+      self.assertEqual(
+        result["removed_at_step"],
+        episode_0["removed_at_step"],
+        f"episode {episode} changed the removal step vs. episode 0",
       )
       self.assertEqual(
         result["overlay"],
