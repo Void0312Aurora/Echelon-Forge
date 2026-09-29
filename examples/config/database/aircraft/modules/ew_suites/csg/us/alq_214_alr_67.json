@@ -1,0 +1,42 @@
+{
+    "name": "CSG_US_ALQ-214_ALR-67",
+    "type": "EWSuite",
+    "rwr": {
+        "sensitivity_dbm": -90.0
+    },
+    "jammer": {
+        "power_watts": 1000.0,
+        "bandwidth_mhz": 19936.0,
+        "type": "DeceptionDRFM",
+        "effective_angle": 60.0,
+        "is_active": false
+    },
+    "countermeasures": {
+        "chaff_count": 60,
+        "flare_count": 30,
+        "release_interval": 0.5,
+        "auto_mode": true
+    },
+    "_real_world": {
+        "class": "IDECM: AN/ALQ-214(V)4/5 L3Harris On-Board Jammer + AN/ALR-67(V)3 Raytheon radar warning receiver",
+        "variant_scope": "F/A-18E/F Block II/III Super Hornet self-protection EW suite (RWR + internal deception jammer + towed decoy/chaff/flare countermeasures)",
+        "hulls": [],
+        "public_equipment": ["AN/ALR-67(V)3 RWR: 0.5-20 GHz, 99 lb (Wikipedia)", "AN/ALQ-214(V)4/5 IDECM On-Board Jammer, MOSA-compliant (L3Harris, NAVAIR)"]
+    },
+    "_provenance": {
+        "modeling_note": "Super Hornet's own self-protection suite, distinct from the EA-18G's offensive ALQ-99/NGJ-MB jamming pods (modeled separately as CSG_US_ALQ99_NGJ_MB). No public power_watts, precise bandwidth, or jamming effective_angle figures exist for either ALR-67 or ALQ-214 (classified self-protection parameters). rwr.sensitivity_dbm and countermeasures.* are proxy-copied unchanged from the repo's generic Generic_Gen4_EW baseline (aircraft/modules/ew_suites/gen4_standard.json), since no public RWR sensitivity or chaff/flare loadout figures exist either. jammer.bandwidth_mhz is derived from ALR-67's sourced 0.5-20 GHz detection span (19.5 GHz range, expressed here as the coverage span in MHz) as a proxy for the paired jammer's frequency coverage, since ALQ-214 is designed to respond across the same threat band the RWR detects; jammer.type is set to DeceptionDRFM (vs NoiseBarrage) because ALQ-214 is publicly described as a repeater/deception jammer (IDECM Onboard Jammer using digital RF memory techniques), which is the one qualitative, sourced distinction available among the engine's 3-value jammer.type enum.",
+        "sources": ["csg-us-alr67-wiki", "csg-us-alq214-l3harris", "csg-us-alq214-navair"],
+        "parameters": {
+            "rwr.sensitivity_dbm": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from repo Generic_Gen4_EW baseline; no public ALR-67 sensitivity figure"},
+            "jammer.power_watts": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from repo Generic_Gen4_EW baseline; ALQ-214 output power is not publicly disclosed"},
+            "jammer.bandwidth_mhz": {"value_basis": "sourced", "source_ids": ["csg-us-alr67-wiki"], "tier": "C-est", "note": "derived from AN/ALR-67(V)3's sourced 0.5-20 GHz detection frequency range (Wikipedia): (20000-64)~=19936 MHz span, used as an engineering_estimate proxy for the paired jammer's frequency coverage since ALQ-214 responds across the same detected threat band; not a directly-published jammer bandwidth figure"},
+            "jammer.type": {"value_basis": "sourced", "source_ids": ["csg-us-alq214-l3harris", "csg-us-alq214-navair"], "tier": "C-est", "note": "L3Harris/NAVAIR describe ALQ-214 IDECM as an active onboard deception/repeater jammer (vs simple noise jamming); mapped to the DeceptionDRFM enum value as the closest qualitative match among the schema's 3-value jammer.type enum"},
+            "jammer.effective_angle": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from repo Generic_Gen4_EW baseline; no public figure"},
+            "jammer.is_active": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "false: default-off state, activated at runtime by mission logic, matching the repo Generic_Gen4_EW baseline convention"},
+            "countermeasures.chaff_count": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from repo Generic_Gen4_EW baseline; no public per-sortie chaff loadout figure for the Super Hornet's ALE-47 dispenser"},
+            "countermeasures.flare_count": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from repo Generic_Gen4_EW baseline; no public figure"},
+            "countermeasures.release_interval": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from repo Generic_Gen4_EW baseline; no public figure"},
+            "countermeasures.auto_mode": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "true: the ALE-47 dispenser supports programmed automatic release sequences; matches repo Generic_Gen4_EW baseline convention"}
+        }
+    }
+}

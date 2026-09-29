@@ -1,0 +1,28 @@
+{
+    "name": "CSG_US_Helo_RCS",
+    "type": "RCSProfile",
+    "rcs": {
+        "frontal_rcs": 8.0,
+        "side_rcs": 15.0,
+        "rear_rcs": 10.0,
+        "top_rcs": 20.0,
+        "bottom_rcs": 12.0
+    },
+    "_real_world": {
+        "class": "Medium naval helicopter radar cross section (non-low-observable, no RCS reduction design features)",
+        "variant_scope": "Shared proxy class for MH-60R and MH-60S Seahawk: same Sikorsky S-70/H-60 airframe family, differing only in mission fit",
+        "hulls": [],
+        "public_equipment": ["No public per-type RCS figure exists for MH-60R/S; general medium-helicopter RCS class figures (comparable to a small-to-medium fighter, per generic RCS literature) used as an order-of-magnitude anchor"]
+    },
+    "_provenance": {
+        "modeling_note": "No public RCS figure exists for the MH-60R or MH-60S. Both share the same base Sikorsky S-70/H-60 airframe (differing mission equipment, not shape), so a single shared proxy profile is used for both rather than two separately-guessed profiles. Helicopters present a large, slow-moving rotor disc and boxy fuselage with no RCS-reduction shaping; frontal_rcs is set as an engineering_estimate in the same broad order of magnitude as a non-stealth fixed-wing fighter (per the repo Standard_Fighter_RCS baseline, itself a proxy-only record with no cited source), reflecting the H-60's substantial frontal radar-reflective area (engine intakes, sensor turret, flat glass cockpit) without asserting a specific measured figure. side/rear/top/bottom scaled from frontal using the repo Standard_Fighter_RCS's aspect-ratio pattern, with top_rcs scaled up most (rotor disc/mast is a strong reflector when viewed from above) and bottom_rcs scaled up moderately less (retracted landing gear/sensor pod area, less flat reflective surface than top).",
+        "sources": ["csg-us-helo-rcs-general"],
+        "parameters": {
+            "rcs.frontal_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public MH-60R/S RCS figure exists; set in the same broad order of magnitude as the repo's own non-sourced Standard_Fighter_RCS baseline (5.0), scaled up slightly to account for the H-60's boxy fuselage, sensor turret, and exposed rotor hub/mast, none of which are RCS-optimized"},
+            "rcs.side_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:side ratio (~1:1.9, reduced from the fighter's 1:5 since a helicopter's fuselage silhouette is less elongated than a fast jet's); no public figure"},
+            "rcs.rear_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:rear ratio (~1:1.25); no public figure"},
+            "rcs.top_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled above frontal_rcs to reflect the large, slow-rotating main rotor disc and mast as a strong top-aspect radar reflector, a well-known qualitative property of helicopter RCS in general aviation/EW literature though not quantified per-type here"},
+            "rcs.bottom_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs, moderately above top_rcs's ratio pattern but below it in absolute terms, reflecting exposed landing gear/sensor pod/sonar winch area at the bottom aspect; no public figure"}
+        }
+    }
+}

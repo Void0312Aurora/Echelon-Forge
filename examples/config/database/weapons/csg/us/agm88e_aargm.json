@@ -1,0 +1,87 @@
+{
+    "name": "CSG_US_AGM-88E_AARGM",
+    "type": "Missile",
+    "mass_kg": 361.0,
+    "max_flight_time_s": 90.0,
+    "flight_model": {
+        "max_speed": 680.0,
+        "max_g": 25.0,
+        "max_turn_rate": 20.0
+    },
+    "guidance": {
+        "type": "ActiveRadar",
+        "active_seek_range": 15000.0,
+        "pn_los_rate_source": "world_los_history",
+        "target_kinematics_estimator": "world_cva",
+        "capture_guidance_mode": "disabled",
+        "target_tracker_alpha": 0.2,
+        "target_tracker_beta": 0.02,
+        "target_tracker_gamma": 0.5,
+        "nav_gain": 4.0,
+        "apn_target_accel_gain": 0.12,
+        "autopilot_tau_s": 0.06,
+        "max_accel_response_g_per_s": 300.0
+    },
+    "warhead": {
+        "type": "blast_fragmentation",
+        "mass_kg": 66.0,
+        "lethal_radius": 18.0,
+        "damage": 220.0,
+        "explosive_mass_kg": 27.0,
+        "case_mass_kg": 39.0,
+        "projection_radius_fraction": 0.58,
+        "projection_max_radius_m": 22.0,
+        "projection_max_projected_hitboxes": 3
+    },
+    "fuze": {
+        "type": "radar_proximity",
+        "trigger_radius_m": 18.0,
+        "delay_s": 0.014,
+        "reliability": 0.93
+    },
+    "_real_world": {
+        "designation": "AGM-88E AARGM (Advanced Anti-Radiation Guided Missile), fielded variant (AGM-88G AARGM-ER excluded from the 2025-26 baseline, IOC planned 1QFY27)",
+        "role": "Suppression-of-enemy-air-defenses (SEAD) anti-radiation missile, EA-18G primary weapon, also carried by F/A-18E/F",
+        "range_nmi": "~80 (not published by the Navy, C-est)",
+        "guidance_real": "GPS/INS midcourse, passive anti-radiation homing (RF seeker on the emitting threat radar), active millimeter-wave (MMW) terminal seeker for terminal precision/moving or shut-down emitters",
+        "speed": "Mach 2+",
+        "status": "content_only_functional_mount_via_air_launch",
+        "mount_mapping": "referenced by CVW-8 EA-18G/F-18E/F default_loadout as an air-to-ground/anti-radiation weapon; standard air-launched missile mechanism used, though the engine has no distinct anti-radiation-homing seeker category"
+    },
+    "_provenance": {
+        "sources": ["csg-us-aargm-navair-oob", "csg-us-aargm-designation-oob"],
+        "parameters": {
+            "mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-aargm-navair-oob"], "tier": "A", "note": "795 lb = 361 kg per CSG order-of-battle page's NAVAIR-sourced AGM-88E row"},
+            "max_flight_time_s": {"value_basis": "proxy", "source_ids": ["csg-us-aargm-designation-oob"], "tier": "proxy", "note": "engineering estimate derived from the sourced ~80 nmi range (C-est, not published by the Navy, per designation-systems.net via the OOB page) at the used Mach 2+ / 680 m/s speed"},
+            "flight_model.max_speed": {"value_basis": "sourced", "source_ids": ["csg-us-aargm-navair-oob"], "tier": "A", "note": "Mach 2+ per NAVAIR (OOB page); ~680 m/s at altitude used as the engineering-estimate numeric conversion since Mach varies with altitude/temperature"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public maneuver-load figure; engineering estimate for a supersonic anti-radiation missile, below the pure air-to-air AIM-120D/AIM-9X class but above a subsonic anti-ship cruise missile"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate consistent with flight_model.max_g"},
+            "guidance.type": {"value_basis": "sourced", "source_ids": ["csg-us-aargm-navair-oob"], "tier": "A", "note": "GPS/INS midcourse, passive anti-radiation homing, active MMW terminal per NAVAIR (OOB page); ActiveRadar is used as the nearest matching real engine seeker_type since the engine's guidance.type vocabulary has no distinct anti-radiation-homing category"},
+            "guidance.active_seek_range": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public seeker acquisition range (classified); engineering estimate typical of an anti-radiation missile's passive RF detection range against an emitting threat radar"},
+            "guidance.pn_los_rate_source": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard engine guidance-model wiring default, not a sourced weapon characteristic"},
+            "guidance.target_kinematics_estimator": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard engine guidance-model wiring default, same basis as pn_los_rate_source"},
+            "guidance.capture_guidance_mode": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "disabled: no terminal capture-guidance submode modeled for the passive-to-active MMW seeker handover in this pass"},
+            "guidance.target_tracker_alpha": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard alpha-beta-gamma tracker filter constant, engine convention shared across missile records, not weapon-specific"},
+            "guidance.target_tracker_beta": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.target_tracker_gamma": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.nav_gain": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy interpolated between the repo AIM-120C-7 template (4.0) and CSG_US_Harpoon_Ship_Launched (3.5) patterns; no public guidance-law constant"},
+            "guidance.apn_target_accel_gain": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy interpolated between the same two repo templates; no public figure"},
+            "guidance.autopilot_tau_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy interpolated between the same two repo templates; no public figure"},
+            "guidance.max_accel_response_g_per_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy consistent with flight_model.max_g, interpolated between the AIM-120C-7 template and a slower anti-ship cruise missile pattern"},
+            "warhead.type": {"value_basis": "sourced", "source_ids": ["csg-us-aargm-designation-oob"], "tier": "C-est", "note": "blast-fragmentation warhead, standard for the HARM/AARGM WDU-21/B-family lineage; not explicitly re-stated by NAVAIR on the OOB page's AARGM row but consistent with the AGM-88 family's publicly known warhead type"},
+            "warhead.mass_kg": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public AGM-88E-specific warhead mass; engineering estimate derived as ~18% of the sourced 361 kg all-up mass, consistent with the legacy HARM family's publicly reported ~66 kg (145 lb) WDU-21/B warhead"},
+            "warhead.lethal_radius": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "engineering-estimate surrogate, no public lethal-radius figure"},
+            "warhead.damage": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "engineering-estimate surrogate, no public damage-effectiveness figure"},
+            "warhead.explosive_mass_kg": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering-estimate HE/case split of warhead.mass_kg, no public split figure"},
+            "warhead.case_mass_kg": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering-estimate HE/case split, see explosive_mass_kg"},
+            "warhead.projection_radius_fraction": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "copied/interpolated from the repo AIM-120C-7 and CSG_US_Harpoon_Ship_Launched projection-geometry patterns"},
+            "warhead.projection_max_radius_m": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "scaled from this warhead's lethal_radius, same pattern as other CSG missile records"},
+            "warhead.projection_max_projected_hitboxes": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "copied from the repo AIM-120C-7 template pattern"},
+            "fuze.type": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public fuze timing data; radar_proximity is the nearest real engine-recognized fuze family, consistent with the active MMW terminal seeker's proximity-detonation role"},
+            "fuze.trigger_radius_m": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "set equal to warhead.lethal_radius per the repo AIM-120C-7 template's fuze-trigger-radius convention; no public standoff distance"},
+            "fuze.delay_s": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public fuze timing data; engineering-estimate scaffold interpolated between repo templates"},
+            "fuze.reliability": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public reliability figure; engineering-estimate scaffold value consistent with a mature fielded (not developmental) AGM-88E variant"}
+        },
+        "modeling_notes": ["Functional mount via standard air-launched missile mechanism (though the engine's guidance.type vocabulary has no distinct anti-radiation-homing seeker category, approximated as ActiveRadar). AGM-88G AARGM-ER excluded per DOT&E FY25 (OOB page): IOC planned 1QFY27, IT events delayed in FY25, not part of the 2025-26 baseline, and not modeled as a separate record in this packet."]
+    }
+}

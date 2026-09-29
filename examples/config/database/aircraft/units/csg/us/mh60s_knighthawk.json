@@ -1,0 +1,454 @@
+{
+    "name": "CSG_US_MH-60S_Knighthawk",
+    "type": "Aircraft",
+    "airframe": {
+        "empty_mass_kg": 6542.0,
+        "max_fuel_kg": 1800.0,
+        "drag_coefficient": 0.06,
+        "reference_area": 210.17,
+        "length_m": 19.76,
+        "wingspan_m": 16.36,
+        "height_m": 5.18,
+        "configuration": "Helicopter"
+    },
+    "health": {
+        "current_hp": 68.0,
+        "max_hp": 68.0
+    },
+    "damage_model": {
+        "vulnerability": {
+            "synthetic": true,
+            "calibrated": false,
+            "pk_authority": false,
+            "deterministic_fuze_authority": false,
+            "provenance": "CSG S0-C synthetic naval-helicopter vulnerability scaffold (packet 2, solo worker); geometry scaled from real MH-60S dimensions (shares airframe class with MH-60R but hybrid fuselage per Wikipedia), mechanism thresholds proxied from the repo mh60r_mvp.json template; requires calibration before deterministic fuze/Pk claims",
+            "evidence_dataset_ref": "",
+            "calibration_status": "unvalidated",
+            "blast_scale": 1.10,
+            "fragmentation_scale": 1.10,
+            "continuous_rod_scale": 1.20,
+            "hit_to_kill_scale": 1.15,
+            "nose_aspect_scale": 1.05,
+            "beam_aspect_scale": 1.20,
+            "tail_aspect_scale": 0.95,
+            "high_closure_scale": 1.05,
+            "low_closure_scale": 0.90,
+            "near_miss_scale": 0.88,
+            "direct_hit_scale": 1.0
+        },
+        "hitboxes": [
+            {
+                "offset": [3.8, 0.0, 0.0],
+                "size": [2.4, 1.4, 1.3],
+                "armor": 4.0,
+                "systems": ["cockpit", "avionics"],
+                "components": [
+                    {
+                        "name": "cockpit_crew_station",
+                        "system": "cockpit",
+                        "offset": [4.0, 0.0, 0.2],
+                        "size": [1.6, 1.3, 1.0],
+                        "armor": 5.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.20, "blast_fragmentation": 1.10, "continuous_rod": 1.00, "hit_to_kill": 1.25},
+                        "redundancy_group_id": "cockpit_crew_stations",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "forward_avionics_bay",
+                        "system": "avionics",
+                        "offset": [3.5, 0.0, -0.35],
+                        "size": [1.0, 0.9, 0.5],
+                        "armor": 4.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.25, "blast_fragmentation": 1.15, "continuous_rod": 0.85, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "helo_avionics_bus",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "alr66_rwr_antenna",
+                        "system": "avionics",
+                        "offset": [3.9, 0.6, 0.1],
+                        "size": [0.3, 0.3, 0.2],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.25, "blast_fragmentation": 1.12, "continuous_rod": 0.85, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "helo_self_protection",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "nose_ew_antenna",
+                        "system": "avionics",
+                        "offset": [4.8, 0.0, -0.2],
+                        "size": [0.4, 0.4, 0.3],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.20, "blast_fragmentation": 1.10, "continuous_rod": 0.85, "hit_to_kill": 1.25},
+                        "redundancy_group_id": "helo_self_protection",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 0.6,
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [0.5, 0.0, -0.2],
+                "size": [3.2, 1.8, 1.3],
+                "armor": 4.0,
+                "systems": ["fuel", "avionics", "data_link"],
+                "components": [
+                    {
+                        "name": "center_fuselage_fuel_cell",
+                        "system": "fuel",
+                        "offset": [0.5, 0.0, -0.5],
+                        "size": [1.8, 1.5, 0.5],
+                        "armor": 4.0,
+                        "threshold_scale": 1.25,
+                        "mechanism_thresholds": {"blast": 1.45, "fragmentation": 1.20, "blast_fragmentation": 1.32, "continuous_rod": 0.80, "hit_to_kill": 0.95},
+                        "redundancy_group_id": "fuselage_fuel_cells",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "mission_computer",
+                        "system": "avionics",
+                        "offset": [1.2, 0.0, 0.3],
+                        "size": [1.0, 0.9, 0.6],
+                        "armor": 4.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.25, "blast_fragmentation": 1.15, "continuous_rod": 0.85, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "helo_avionics_bus",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "data_link_terminal",
+                        "system": "data_link",
+                        "offset": [-0.3, 0.0, 0.35],
+                        "size": [0.8, 0.7, 0.4],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.25, "blast_fragmentation": 1.15, "continuous_rod": 0.85, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "helo_datalink",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "left_cabin_door_gun_mount",
+                        "system": "weapons_mission",
+                        "offset": [-0.5, -1.0, 0.1],
+                        "size": [0.6, 0.5, 0.4],
+                        "armor": 2.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.10, "blast_fragmentation": 1.05, "continuous_rod": 0.90, "hit_to_kill": 1.10},
+                        "redundancy_group_id": "cabin_door_guns",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 0.6,
+                        "critical": false
+                    },
+                    {
+                        "name": "right_cabin_door_gun_mount",
+                        "system": "weapons_mission",
+                        "offset": [-0.5, 1.0, 0.1],
+                        "size": [0.6, 0.5, 0.4],
+                        "armor": 2.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.10, "blast_fragmentation": 1.05, "continuous_rod": 0.90, "hit_to_kill": 1.10},
+                        "redundancy_group_id": "cabin_door_guns",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 0.6,
+                        "critical": false
+                    },
+                    {
+                        "name": "electrical_power_bus",
+                        "system": "avionics",
+                        "offset": [1.8, 0.5, -0.1],
+                        "size": [0.7, 0.4, 0.4],
+                        "armor": 4.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 1.05, "fragmentation": 1.10, "blast_fragmentation": 1.12, "continuous_rod": 1.00, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "helo_primary_power_bus",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "avionics", "target_system": "avionics", "edge_type": "electrical_power", "scale": 0.60, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    }
+                ]
+            },
+            {
+                "offset": [-1.3, 0.0, 0.9],
+                "size": [2.0, 1.8, 1.4],
+                "armor": 5.0,
+                "systems": ["engine", "transmission"],
+                "components": [
+                    {
+                        "name": "left_engine_module",
+                        "system": "engine",
+                        "offset": [-1.2, -0.7, 1.0],
+                        "size": [1.1, 0.6, 0.6],
+                        "armor": 5.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 1.10, "fragmentation": 1.05, "blast_fragmentation": 1.12, "continuous_rod": 0.95, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "helo_engine_modules",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "right_engine_module",
+                        "system": "engine",
+                        "offset": [-1.2, 0.7, 1.0],
+                        "size": [1.1, 0.6, 0.6],
+                        "armor": 5.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 1.10, "fragmentation": 1.05, "blast_fragmentation": 1.12, "continuous_rod": 0.95, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "helo_engine_modules",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "main_gearbox",
+                        "system": "transmission",
+                        "offset": [-1.3, 0.0, 1.3],
+                        "size": [0.9, 0.8, 0.6],
+                        "armor": 6.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 1.00, "fragmentation": 1.05, "blast_fragmentation": 1.08, "continuous_rod": 1.25, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "helo_transmission",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "engine", "target_system": "engine", "edge_type": "generic", "scale": 0.90, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "tail_drive_shaft",
+                        "system": "transmission",
+                        "offset": [-6.0, 0.0, 0.7],
+                        "size": [3.5, 0.15, 0.15],
+                        "armor": 3.0,
+                        "threshold_scale": 1.30,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.15, "blast_fragmentation": 1.10, "continuous_rod": 1.50, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "helo_transmission",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 0.8,
+                        "dependencies": [
+                            {"system": "transmission", "target_system": "transmission", "edge_type": "generic", "scale": 0.85, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "hydraulic_flight_control_pump",
+                        "system": "hydraulic",
+                        "offset": [-1.6, 0.0, 0.6],
+                        "size": [0.6, 0.5, 0.35],
+                        "armor": 4.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.15, "blast_fragmentation": 1.12, "continuous_rod": 1.30, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "helo_hydraulic_pumps",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "hydraulic_power", "scale": 0.85, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    }
+                ]
+            },
+            {
+                "offset": [-1.3, 0.0, 1.9],
+                "size": [1.0, 16.5, 0.6],
+                "armor": 2.0,
+                "systems": ["rotor"],
+                "components": [
+                    {
+                        "name": "main_rotor_hub",
+                        "system": "rotor",
+                        "offset": [-1.3, 0.0, 2.1],
+                        "size": [0.8, 0.8, 0.5],
+                        "armor": 4.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.95, "fragmentation": 1.10, "blast_fragmentation": 1.10, "continuous_rod": 1.20, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "main_rotor_system",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "transmission", "target_system": "transmission", "edge_type": "generic", "scale": 0.95, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "main_rotor_blades",
+                        "system": "rotor",
+                        "offset": [-1.3, 0.0, 2.15],
+                        "size": [0.3, 16.36, 0.15],
+                        "armor": 1.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 1.05, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "main_rotor_system",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 0.7,
+                        "critical": false
+                    },
+                    {
+                        "name": "main_rotor_swashplate",
+                        "system": "flight_control",
+                        "offset": [-1.3, 0.0, 1.95],
+                        "size": [0.5, 0.5, 0.3],
+                        "armor": 4.0,
+                        "threshold_scale": 1.25,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.10, "blast_fragmentation": 1.10, "continuous_rod": 1.40, "hit_to_kill": 1.25},
+                        "redundancy_group_id": "main_rotor_control",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.90, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    }
+                ]
+            },
+            {
+                "offset": [-8.5, 0.0, 1.5],
+                "size": [1.0, 3.5, 3.6],
+                "armor": 2.0,
+                "systems": ["tail_rotor"],
+                "components": [
+                    {
+                        "name": "tail_rotor_hub",
+                        "system": "tail_rotor",
+                        "offset": [-8.7, 1.6, 1.7],
+                        "size": [0.4, 0.4, 0.4],
+                        "armor": 3.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.15, "blast_fragmentation": 1.10, "continuous_rod": 1.15, "hit_to_kill": 1.25},
+                        "redundancy_group_id": "tail_rotor_system",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "transmission", "target_system": "transmission", "edge_type": "generic", "scale": 0.80, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "tail_rotor_blades",
+                        "system": "tail_rotor",
+                        "offset": [-8.7, 1.6, 1.7],
+                        "size": [0.15, 3.35, 0.1],
+                        "armor": 1.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 1.05, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "tail_rotor_system",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 0.7,
+                        "critical": false
+                    },
+                    {
+                        "name": "tail_pylon_fold_hinge",
+                        "system": "flight_control",
+                        "offset": [-7.5, 0.0, 1.0],
+                        "size": [0.4, 0.4, 0.3],
+                        "armor": 3.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.95, "fragmentation": 1.10, "blast_fragmentation": 1.08, "continuous_rod": 1.20, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "tail_fold_hinge",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 0.6,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.50, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative — MH-60S shares the folding tail pylon, engines, drivetrain and rotors of the SH-60B/MH-60R per Wikipedia's hybrid-airframe description"}
+                        ],
+                        "critical": false
+                    }
+                ]
+            }
+        ]
+    },
+    "flight_model": {
+        "max_speed": 93.0,
+        "min_speed": 0.0,
+        "min_g": 0.5,
+        "max_turn_rate": 15.0,
+        "max_climb_rate": 8.0,
+        "max_accel": 2.5,
+        "max_g": 2.5,
+        "takeoff_speed": 0.0,
+        "landing_speed": 0.0,
+        "taxi_turn_rate": 5.0
+    },
+    "landing_gear": {
+        "can_use_unpaved": true,
+        "rolling_friction_coeff": 0.03,
+        "max_load_factor": 2.5,
+        "contact_height_m": 1.3
+    },
+    "engine_ref": "CSG_US_T700-GE-401C",
+    "ew_suite_ref": "CSG_US_ALQ-214_ALR-67",
+    "rcs_profile_ref": "CSG_US_Helo_RCS",
+    "has_data_link": true,
+    "data_link_network_id": 1,
+    "has_command_link": true,
+    "command_link": {
+        "latency_s": 0.12,
+        "drop_prob": 0.0
+    },
+    "hardpoints": [
+        {"station_id": 1, "type": ["Pylon", "Light"], "capacity_kg": 400.0},
+        {"station_id": 2, "type": ["Pylon", "Light"], "capacity_kg": 400.0}
+    ],
+    "default_loadout": {
+        "1": "CSG_US_AGM-114N_Hellfire",
+        "2": "CSG_US_AGM-114N_Hellfire"
+    },
+    "has_ammo": true,
+    "_real_world": {
+        "designation": "MH-60S Knighthawk (official DoD name: Seahawk)",
+        "role": "Combat support / anti-surface-warfare / vertical replenishment / SAR helicopter, replaced the H-46 Sea Knight; embarked on CVN-78 (HSC squadron) providing plane-guard, logistics, and secondary ASuW support to CSG-8",
+        "crew": "4 (1 pilot, 1 copilot, 2 tactical aircrewmen, mission-dependent)",
+        "status": "content_only_full_damage_model",
+        "carrier_features": "hybrid airframe per Wikipedia (S-70A/UH-60 fuselage with large sliding cabin doors on both sides, single aft-mounted tail wheel) combined with the folding tail pylon, engines, drivetrain, and rotors of the S-70B/SH-60 family; folding tail pylon retained for shipboard hangar stowage"
+    },
+    "_provenance": {
+        "sources": ["csg-us-mh60s-navair", "csg-us-mh60r-navair-2", "csg-us-mh60-wiki", "csg-us-mh60r-aerocorner"],
+        "parameters": {
+            "airframe.empty_mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-mh60s-navair"], "tier": "A", "note": "14,430 lb = 6,542 kg per NAVAIR's direct MH-60S product page, explicitly lower than the MH-60R's 15,170 lb empty weight (also independently confirmed on NAVAIR's separate MH-60R page in this same search pass) since the S-model lacks the R's dedicated ASW sensor suite (dipping sonar, sonobuoy launcher, APS-153 radar)"},
+            "airframe.max_fuel_kg": {"value_basis": "proxy", "source_ids": ["csg-us-mh60r-aerocorner"], "tier": "proxy", "note": "copied unchanged from CSG_US_MH-60R_Seahawk (AeroCorner's 2,200 L/1,800 kg figure); no MH-60S-specific fuel capacity found, and the two variants share the same S-70B fuel-system/drivetrain lineage per Wikipedia's hybrid-airframe description"},
+            "airframe.drag_coefficient": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "copied unchanged from CSG_US_MH-60R_Seahawk; no public figure, and the S-model's external shape (aside from cabin doors) is aerodynamically similar"},
+            "airframe.reference_area": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "copied unchanged from CSG_US_MH-60R_Seahawk; both variants share the same S-70B main rotor system per Wikipedia (rotor diameter/disc area not separately published for the S-model, but stated to be shared hardware)"},
+            "airframe.length_m": {"value_basis": "sourced", "source_ids": ["csg-us-mh60s-navair"], "tier": "A", "note": "64 ft 10 in = 19.76 m per NAVAIR, identical to the MH-60R figure (shared external length)"},
+            "airframe.wingspan_m": {"value_basis": "proxy", "source_ids": ["csg-us-mh60-wiki"], "tier": "proxy", "note": "rotor-diameter-as-wingspan copied unchanged from CSG_US_MH-60R_Seahawk per Wikipedia's statement that the MH-60S shares 'the folding tail pylon, engines, drivetrain and rotors of the S-70B/SH-60' (i.e. the same main rotor system as the MH-60R), no S-model-specific rotor diameter separately published"},
+            "airframe.height_m": {"value_basis": "sourced", "source_ids": ["csg-us-mh60s-navair"], "tier": "A", "note": "17 ft = 5.18 m per NAVAIR, identical to the MH-60R's NAVAIR-stated height"},
+            "airframe.configuration": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "Helicopter: matches the repo mh60r_mvp.json template's configuration enum value, same basis as CSG_US_MH-60R_Seahawk"},
+            "flight_model.max_speed": {"value_basis": "sourced", "source_ids": ["csg-us-mh60s-navair"], "tier": "A", "note": "180 kt = 93.3 m/s max airspeed per NAVAIR's direct MH-60S figure, notably higher than the MH-60R's sourced 267 km/h (74.2 m/s) cruise figure — the S-model's lighter weight (no ASW mission equipment) supporting a higher top speed, both figures used as-sourced without reconciliation since they may reflect different speed categories (max vs cruise) across the two NAVAIR-adjacent source sets"},
+            "flight_model.min_speed": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "0.0: helicopters can hover/fly at zero forward airspeed, matching the repo mh60r_mvp.json template's convention, same basis as CSG_US_MH-60R_Seahawk"},
+            "flight_model.min_g": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "copied unchanged from CSG_US_MH-60R_Seahawk; no public figure"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "copied unchanged from CSG_US_MH-60R_Seahawk; no public figure, shared rotor/drivetrain system"},
+            "flight_model.max_climb_rate": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "engineering estimate marginally below CSG_US_MH-60R_Seahawk's sourced 8.4 m/s; no MH-60S-specific figure found, kept close given the shared engine/drivetrain and lighter empty weight offsetting basis"},
+            "flight_model.max_accel": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "copied unchanged from CSG_US_MH-60R_Seahawk; no public figure"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "copied unchanged from CSG_US_MH-60R_Seahawk; no public structural-limit figure, shared airframe class"},
+            "flight_model.takeoff_speed": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "0.0: helicopters can perform vertical takeoff, matching the repo mh60r_mvp.json template's convention"},
+            "flight_model.landing_speed": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "0.0: helicopters can perform vertical landing, matching the repo mh60r_mvp.json template's convention"},
+            "flight_model.taxi_turn_rate": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "copied unchanged from CSG_US_MH-60R_Seahawk; no public figure"},
+            "landing_gear.can_use_unpaved": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "true: helicopters can land on unprepared surfaces/ship decks, matching the repo mh60r_mvp.json template's convention"},
+            "landing_gear.rolling_friction_coeff": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "copied unchanged from CSG_US_MH-60R_Seahawk; no public figure"},
+            "landing_gear.max_load_factor": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "copied unchanged from CSG_US_MH-60R_Seahawk; no public figure"},
+            "landing_gear.contact_height_m": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "copied unchanged from CSG_US_MH-60R_Seahawk; identical external height"},
+            "engine_ref": {"value_basis": "engineering_estimate", "source_ids": ["csg-us-mh60s-navair"], "tier": "proxy", "note": "NAVAIR's MH-60S page states '2-GE T700-GE-401(C)' (parenthetical variant notation suggesting the base -401 with an optional -401C fit); the existing CSG_US_T700-GE-401C engine record (packet 2, sourced from the R-model's GE datasheet) is reused rather than authoring a near-duplicate -401 (non-C) record, since NAVAIR's own notation treats them as closely related and no distinct public performance figures exist for the base -401 in this context"},
+            "hardpoints": {"value_basis": "sourced", "source_ids": ["csg-us-mh60r-aerocorner"], "tier": "C-est", "note": "2 external stations (reduced from the MH-60R's 4): AeroCorner's MH-60R-vs-MH-60S comparison section describes the S-model's combat-support/ASuW role as lighter-armed than the R's full ASW/ASuW fit; no S-model-specific hardpoint count directly published, so modeled with 2 light pylons for its documented secondary Hellfire/rocket armament role, omitting the R's torpedo-capable stations since the S-model has no ASW mission role"},
+            "default_loadout": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "2x Hellfire, reflecting the S-model's ASuW/combat-support role without ASW torpedo capability; engineering-estimate representative loadout, not a single authoritative published standard"},
+            "damage_model": {"value_basis": "engineering_estimate", "source_ids": ["csg-us-mh60-wiki"], "tier": "proxy", "note": "Full component damage model built at the mh60r_mvp.json template's helicopter standard, derived from CSG_US_MH-60R_Seahawk's damage model with mission-fit differences: no APS-153 radar component in the nose (S-model lacks the R's dedicated surface-search radar per its utility/combat-support role) and no cabin-sensor-operator/AQS-22 sonar components (no ASW mission fit) in the center-fuselage hitbox, added instead a nose EW antenna and twin left/right cabin door-gun-mount components (system='weapons', sharing redundancy_group_id 'cabin_door_guns') reflecting the M240/GAU-16 door-gun fit characteristic of the Knighthawk's combat-support role and its large sliding cabin doors on both sides per Wikipedia's hybrid-airframe description. Engine/transmission bay, main rotor, and tail rotor hitboxes (including the tail-fold-hinge component) are unchanged from the MH-60R's damage model since Wikipedia states the S-model shares 'the folding tail pylon, engines, drivetrain and rotors of the S-70B/SH-60' with the R-model. mechanism_thresholds/redundancy weightings proxied unchanged from the repo mh60r_mvp.json template's per-system values; no public component-level vulnerability data exists for this or any aircraft in this packet."}
+        }
+    }
+}

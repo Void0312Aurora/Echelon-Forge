@@ -1,0 +1,28 @@
+{
+    "name": "CSG_US_T700-GE-401C",
+    "type": "Engine",
+    "engine": {
+        "mil_thrust_n": 7560.0,
+        "ab_thrust_n": 7560.0,
+        "sfc_mil": 0.462,
+        "sfc_ab": 0.462,
+        "bypass_ratio": 0.0
+    },
+    "_real_world": {
+        "class": "General Electric T700-GE-401C turboshaft",
+        "variant_scope": "T700-GE-401C as fitted to MH-60R/MH-60S Seahawk (twin-engine installation)",
+        "hulls": [],
+        "public_equipment": ["2 x T700-GE-401C, 1,890 shp maximum (10-min) rating (GE Aerospace datasheet)"]
+    },
+    "_provenance": {
+        "modeling_note": "T700-GE-401C is a turboshaft (drives a rotor, not a thrust-producing propulsor); the loader's Engine block is thrust-in-newtons shaped with no shaft-horsepower field (src/content/unit_definition_loader.cpp only parses mil_thrust_n/ab_thrust_n/sfc_mil/sfc_ab/bypass_ratio). mil_thrust_n/ab_thrust_n is an engineering_estimate equivalent static thrust from the sourced 1,890 shp maximum rating via the same T[N]~=4.0*shp proxy factor used for the CSG turboprop engine records (CSG_US_T56-A-427A, CSG_US_T56-A-425); not a real thrust figure and not physically meaningful for a helicopter rotor drive. sfc_mil/sfc_ab use the GE datasheet's directly sourced Maximum(10-min) SFC figure, which is a genuine sourced value (unlike the thrust fields).",
+        "sources": ["csg-us-t700-geaerospace"],
+        "parameters": {
+            "engine.mil_thrust_n": {"value_basis": "engineering_estimate", "source_ids": ["csg-us-t700-geaerospace"], "tier": "est", "note": "1,890 shp Maximum(10-min) rating sourced from GE datasheet; converted via T[N]=4.0*shp proxy factor since the loader has no shp field and this is a rotor-drive turboshaft, not a thrust engine"},
+            "engine.ab_thrust_n": {"value_basis": "engineering_estimate", "source_ids": ["csg-us-t700-geaerospace"], "tier": "est", "note": "set equal to mil_thrust_n; turboshaft has no afterburner stage"},
+            "engine.sfc_mil": {"value_basis": "sourced", "source_ids": ["csg-us-t700-geaerospace"], "tier": "B", "note": "0.462 lb/SHP-hr, Maximum(10-min) rating, GE Aerospace T700-401C/-701C datasheet AE-44022A"},
+            "engine.sfc_ab": {"value_basis": "sourced", "source_ids": ["csg-us-t700-geaerospace"], "tier": "B", "note": "same GE datasheet Maximum(10-min) SFC figure; no distinct afterburner stage to differentiate"},
+            "engine.bypass_ratio": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "0.0 placeholder; not a meaningful concept for a turboshaft"}
+        }
+    }
+}
