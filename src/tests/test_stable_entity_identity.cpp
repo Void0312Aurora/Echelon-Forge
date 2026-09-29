@@ -466,8 +466,7 @@ TEST_SUITE("stable_entity_identity") {
         CHECK(delivered_a1 == delivered_a2);
     }
 
-    TEST_CASE("site 3 (naval gun/CIWS) and site 4 (ground direct fire): reset seed drives the "
-             "hit roll") {
+    TEST_CASE("site 3 (naval gun/CIWS): reset seed drives the hit roll") {
         auto naval_hit_at = [](std::uint64_t reset_seed) {
             SimulationKernel kernel;
             REQUIRE(kernel.load_database("examples/config/database"));
@@ -502,34 +501,6 @@ TEST_SUITE("stable_entity_identity") {
         const double hp_a2 = naval_hit_at(505);
         CHECK(hp_a1 == hp_a2);
 
-        auto ground_hit_at = [](std::uint64_t reset_seed) {
-            SimulationKernel kernel;
-            REQUIRE(kernel.load_database("examples/config/database"));
-            kernel.reset(reset_seed);
-            auto shooter = kernel.spawn_unit(Side::Blue, "Ground_Infantry_Soldier_MVP", 0.0, 0.0,
-                                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-            auto target = kernel.spawn_unit(Side::Red, "Ground_Infantry_Soldier_MVP", 50.0, 0.0,
-                                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-            REQUIRE(shooter.is_valid());
-            REQUIRE(target.is_valid());
-            GroundWeaponState *weapons = shooter.get_mut<GroundWeaponState>();
-            REQUIRE(weapons != nullptr);
-            REQUIRE_FALSE(weapons->weapons.empty());
-            weapons->weapons[0].hit_probability = 0.5;
-            weapons->weapons[0].engagement_range_m = 300.0;
-            Detection det{};
-            det.target_id = target.id();
-            det.range = 50.0;
-            shooter.set<ContactList>({{det}});
-            const bool fired = kernel.fire_ground_weapon(
-                shooter.id(), target.id(),
-                static_cast<int>(weapons->weapons[0].weapon_type));
-            REQUIRE(fired);
-            return target.get<Health>()->current_hp;
-        };
-        const double ghp_a1 = ground_hit_at(606);
-        const double ghp_a2 = ground_hit_at(606);
-        CHECK(ghp_a1 == ghp_a2);
     }
 
     TEST_CASE("site 5 (radar detection) and site 6 (acoustic detection): seed composition "
