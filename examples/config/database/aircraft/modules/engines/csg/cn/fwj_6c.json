@@ -1,0 +1,28 @@
+{
+    "name": "CSG_CN_FWJ-6C",
+    "type": "Engine",
+    "engine": {
+        "mil_thrust_n": 3805000.0,
+        "ab_thrust_n": 3805000.0,
+        "sfc_mil": 0.45,
+        "sfc_ab": 0.45,
+        "bypass_ratio": 0.0
+    },
+    "_real_world": {
+        "class": "Zhuzhou WoJiang-6C (FWJ-6C) turboprop",
+        "variant_scope": "FWJ-6C as fitted to the KJ-600 carrier-based AEW&C aircraft (twin-engine installation); same engine family powers the Y-9/KJ-500/KJ-200 land-based transport/AEW aircraft",
+        "hulls": [],
+        "public_equipment": ["FWJ-6C (WoJiang-6C) turboprop, 5,100-5,105 shp (~3,805 kW) takeoff power, 6-blade propeller (militaryfactory.com, redstar.gr, army-technology.com)"]
+    },
+    "_provenance": {
+        "modeling_note": "Powerplant for KJ-600 per the task's requirement. This is a turboprop, not a turbofan/turbojet; per the content_schema_spec's Engine module schema there is no dedicated turboprop shaft-power field, so power is entered through the engine.mil_thrust_n/ab_thrust_n keys following the same substitution convention used for the repo's other rotary/propeller-driven engine records (e.g. T700-GE-401C, T56-A-427A). No PRC official disclosure of FWJ-6C output exists; the 5,100-5,105 shp figure is the consistent public figure carried across every Y-9-family aircraft description (Y-9 transport, KJ-500, KJ-200) since the KJ-600 uses the same base engine as this Y-9-derived engine family, per militaryfactory.com's explicit statement that the KJ-600 uses '2 x Zhuzhou WoJiang-6C turboprop engines developing 5,103-5,105 horsepower each.' mil_thrust_n and ab_thrust_n are set equal since a turboprop has no separate afterburning stage; sfc and bypass_ratio have no public figures and are engineering_estimate proxies typical of this turboprop class.",
+        "sources": ["csg-cn-fwj6c-militaryfactory", "csg-cn-fwj6c-redstar", "csg-cn-fwj6c-armytech"],
+        "parameters": {
+            "engine.mil_thrust_n": {"value_basis": "sourced", "source_ids": ["csg-cn-fwj6c-militaryfactory"], "tier": "B", "note": "5,103-5,105 shp = ~3,805 kW = 3,805,000 W takeoff power per militaryfactory.com's KJ-600 entry, cross-confirmed by redstar.gr's identical 5,100 shp figure for the same engine on the Y-9/KJ-500/KJ-200 family. Field repurposed to hold power in watts (see modeling_note) rather than a jet-thrust value, following the repo's turboprop engine-record precedent"},
+            "engine.ab_thrust_n": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "set equal to mil_thrust_n: a turboprop has no distinct afterburning/emergency stage in public sources for this engine, unlike the WZ-10 turboshaft's separately-rated contingency power"},
+            "engine.sfc_mil": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate typical of a 5,000+ shp-class modern turboprop; no public FWJ-6C fuel-consumption figure"},
+            "engine.sfc_ab": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "set equal to sfc_mil, consistent with ab_thrust_n=mil_thrust_n; no distinct afterburning fuel-consumption regime for a turboprop"},
+            "engine.bypass_ratio": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "0.0: not applicable to a turboprop engine, matching the repo's convention for propeller-driven engine records"}
+        }
+    }
+}

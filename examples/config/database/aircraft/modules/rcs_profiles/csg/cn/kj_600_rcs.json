@@ -1,0 +1,28 @@
+{
+    "name": "CSG_CN_KJ-600_RCS",
+    "type": "RCSProfile",
+    "rcs": {
+        "frontal_rcs": 25.0,
+        "side_rcs": 125.0,
+        "rear_rcs": 40.0,
+        "top_rcs": 100.0,
+        "bottom_rcs": 100.0
+    },
+    "_real_world": {
+        "class": "Large twin-turboprop carrier-based AEW&C aircraft with a large dorsal rotodome, non-stealth airframe",
+        "variant_scope": "KJ-600 carrier AEW&C, clean airframe",
+        "hulls": [],
+        "public_equipment": ["No numeric RCS figure disclosed; large twin-turboprop airframe comparable in general size class to the E-2D Hawkeye (same AEW&C role, similar rotodome configuration)"]
+    },
+    "_provenance": {
+        "modeling_note": "RCS profile for KJ-600 (C2Node) per the task's requirement. No PRC or independent numeric RCS figure exists for KJ-600. As a large twin-turboprop AEW&C aircraft with a prominent dorsal rotodome, it is broadly comparable in airframe size/shape class to the E-2D Hawkeye. The repo's E-2D record (csg/us/e2d_hawkeye.json) does not itself carry a distinct RCS profile in this database; absent any sourced KJ-600 or E-2D figure, frontal_rcs is set as an engineering_estimate proxy well above typical fighter-class RCS values, reflecting the large fuselage, unswept wings, and especially the large rotating dorsal radome (itself a significant flat/curved reflector) characteristic of this aircraft class, roughly 5x the repo Standard_Fighter_RCS generic baseline (5.0 m2) to represent the much larger airframe and rotodome. side/rear/top/bottom_rcs are scaled from frontal_rcs using the repo Standard_Fighter_RCS's own frontal:side:rear:top:bottom ratio (1:5:1.6:4:4) for consistency with the packet's other RCS profiles, though the rotodome's near-continuous circular cross-section likely makes this large aircraft's RCS considerably less aspect-dependent than a fighter's; no sourced alternative ratio exists for this airframe class.",
+        "sources": ["csg-cn-kj600-rcs-generic-aewc"],
+        "parameters": {
+            "rcs.frontal_rcs": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate 25.0 m2, roughly 5x the repo Standard_Fighter_RCS generic baseline (5.0 m2), reflecting the large twin-turboprop fuselage and prominent dorsal rotodome characteristic of this AEW&C aircraft class (broadly comparable to E-2D Hawkeye); no numeric figure is public for KJ-600 or any AEW&C aircraft of this class in the ledger"},
+            "rcs.side_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:side ratio (~1:5); no public figure, and the rotodome likely reduces true aspect-dependence versus this generic fighter-derived ratio"},
+            "rcs.rear_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:rear ratio (~1:1.6); no public figure"},
+            "rcs.top_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:top ratio (~1:4); no public figure"},
+            "rcs.bottom_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:bottom ratio (~1:4); no public figure"}
+        }
+    }
+}

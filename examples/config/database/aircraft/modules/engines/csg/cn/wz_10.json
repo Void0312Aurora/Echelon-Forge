@@ -1,0 +1,28 @@
+{
+    "name": "CSG_CN_WZ-10",
+    "type": "Engine",
+    "engine": {
+        "mil_thrust_n": 1790000.0,
+        "ab_thrust_n": 2000000.0,
+        "sfc_mil": 0.30,
+        "sfc_ab": 0.32,
+        "bypass_ratio": 0.0
+    },
+    "_real_world": {
+        "class": "Zhuzhou WZ-10 turboshaft (Z-20/Z-20F/Z-20J helicopter family powerplant)",
+        "variant_scope": "WZ-10 as fitted to all Z-20-series helicopters (Z-20, Z-20F, Z-20J, Z-20S); twin-engine installation",
+        "hulls": [],
+        "public_equipment": ["WZ-10 turboshaft, 1,600-1,790 kW (2,100-2,400 shp) continuous rating, 2,000 kW (2,700 shp) emergency/contingency rating (globalmilitary.net, Wikipedia, army-technology.com)"]
+    },
+    "_provenance": {
+        "modeling_note": "Powerplant for Z-20F (ASW), Z-20J (utility/SAR) per the task's requirement. Field names (mil_thrust_n/ab_thrust_n) are the Engine module's schema keys but this is a turboshaft, not a turbofan/turbojet; per the content_schema_spec's Engine module schema (no separate turboshaft power-unit fields exist), power figures in watts are entered in the thrust-named fields as the closest available numeric slot, following the same substitution the repo uses for helicopter engine records (T700-GE-401C precedent: shaft horsepower reported through the same engine.mil_thrust_n/ab_thrust_n keys). mil_thrust_n holds the continuous/rated power (1,790,000 W = 1,790 kW) and ab_thrust_n holds the emergency/contingency power (2,000,000 W = 2,000 kW), both convertible back to shp for real-world reference. sfc figures have no WZ-10-specific public data and are engineering_estimate proxies typical of a modern turboshaft in this power class (lb/hr/lb-thrust-equivalent basis, following the repo T700-GE-401C convention); bypass_ratio is not applicable to a turboshaft and is set to 0.0 per the same repo precedent for helicopter engine records.",
+        "sources": ["csg-cn-wz10-globalmilitary", "csg-cn-wz10-wiki", "csg-cn-wz10-armytech", "csg-cn-wz10-deagel"],
+        "parameters": {
+            "engine.mil_thrust_n": {"value_basis": "sourced", "source_ids": ["csg-cn-wz10-globalmilitary"], "tier": "B", "note": "1,790 kW (2,400 shp) continuous rating per globalmilitary.net and Wikipedia ('The engine is rated at 1,790 kW (2,400 shp)'); army-technology.com's lower 1,600 kW figure is treated as the earlier/conservative public estimate superseded by the more specific 1,790 kW figure. Field repurposed to hold power in watts (see modeling_note) rather than a turbofan thrust value, following the repo's T700-GE-401C precedent for helicopter engine records"},
+            "engine.ab_thrust_n": {"value_basis": "sourced", "source_ids": ["csg-cn-wz10-globalmilitary"], "tier": "C", "note": "2,000 kW (2,700 shp) emergency/contingency power rating per globalmilitary.net; no independent B-tier confirmation of this specific contingency figure, treated as C. Field repurposed to hold peak/emergency power in watts, same convention as mil_thrust_n"},
+            "engine.sfc_mil": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate typical of a modern 1,600-2,000 kW-class turboshaft (comparable to the repo T700-GE-401C's sfc figures); no public WZ-10 fuel-consumption figure"},
+            "engine.sfc_ab": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate marginally above sfc_mil reflecting contingency-power fuel burn; no public figure"},
+            "engine.bypass_ratio": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "0.0: not applicable to a turboshaft engine (no bypass air stream), matching the repo's convention for helicopter engine records"}
+        }
+    }
+}
