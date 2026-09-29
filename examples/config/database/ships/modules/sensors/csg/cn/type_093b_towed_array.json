@@ -1,0 +1,141 @@
+{
+    "name": "CSG_CN_Type_093B_Towed_Array",
+    "type": "Sensor",
+    "sonar": {
+        "mode": "Passive",
+        "max_range_m": 55000.0,
+        "scan_period_s": 14.0,
+        "detection_threshold_db": 1.5,
+        "track_memory_s": 40.0,
+        "bearing_noise_std_deg": 0.8,
+        "range_noise_std_m": 1100.0,
+        "directivity_gain_db": 16.0,
+        "self_noise_per_speed_db": 0.5,
+        "ambient_noise_db": 63.0,
+        "source_level_reference_db": 0.0,
+        "source_level_speed_factor_db": 0.0,
+        "transmission_loss_alpha_db_per_km": 0.05,
+        "layer_break_penalty_db": 2.0,
+        "convergence_zone_bonus_m": 70000.0,
+        "baffle_exclusion_deg": 0.0,
+        "ownship_quieting_speed_mps": 6.0,
+        "active_ping_source_level_db": 0.0,
+        "confirm_hits_m": 2,
+        "confirm_window_n": 4,
+        "passive_only": true,
+        "bearing_only": false
+    },
+    "_real_world": {
+        "class": "Passive towed-array sonar",
+        "variant_scope": "Type 093B (Shang-III) SSN; also used for Type 093A per the same reuse rationale as the bow sonar module.",
+        "hulls": [
+            "Type 093B (Shang-III) hull numbers not individually public",
+            "Type 093A (Shang-II), reused per _real_world note"
+        ],
+        "public_equipment": [
+            "towed-array sonar, designation not public"
+        ]
+    },
+    "_provenance": {
+        "modeling_note": "USNI/ONI sourcing (A/B-tier) and general PLAN-submarine literature describe a towed-array fit as standard for modern Chinese SSNs including the Shang-III, but no designation, aperture, or detection-range figure is public. Modeled as a passive-only towed array following the repo's convention (longer range, lower self-noise, and no baffle-exclusion cone relative to the bow sonar module), matching the surface-combatant towed-array/VDS module's design pattern but tuned for a quieter SSN platform.",
+        "sources": [
+            "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md#type-093b-shang-iii-class-nuclear-attack-submarine-ssn",
+            "csg-cn-ssn-usni-oni-20260305",
+            "csg-cn-093-globalsecurity",
+            "csg-cn-093-navaltechnology"
+        ],
+        "parameters": {
+            "sonar.mode": {
+                "value_basis": "engineering_estimate",
+                "note": "Passive: no active-ping capability is reported for any PLAN SSN towed array"
+            },
+            "sonar.max_range_m": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate above the packet's Type 093B bow sonar module, reflecting a towed array's lower self-noise and deeper/quieter deployment, scaled below the repo's US SSN towed-array convention given the absence of PLAN-specific sourcing"
+            },
+            "sonar.scan_period_s": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate typical of a towed-array processing cycle"
+            },
+            "sonar.detection_threshold_db": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate better than the bow sonar module, consistent with a lower-self-noise towed array"
+            },
+            "sonar.track_memory_s": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate longer than the bow sonar module"
+            },
+            "sonar.bearing_noise_std_deg": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate better than the bow sonar module"
+            },
+            "sonar.range_noise_std_m": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate consistent with a passive array's coarser ranging via target motion analysis"
+            },
+            "sonar.directivity_gain_db": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate higher than the bow sonar module, consistent with a long towed array's directivity advantage"
+            },
+            "sonar.self_noise_per_speed_db": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate lower than the bow sonar module, reflecting isolation from ownship machinery/flow noise"
+            },
+            "sonar.ambient_noise_db": {
+                "value_basis": "engineering_estimate",
+                "note": "standard engine ambient-ocean-noise scaffold constant, matched to the packet's bow sonar module"
+            },
+            "sonar.source_level_reference_db": {
+                "value_basis": "engineering_estimate",
+                "note": "0.0: passive-only array has no active source level"
+            },
+            "sonar.source_level_speed_factor_db": {
+                "value_basis": "engineering_estimate",
+                "note": "0.0: not applicable to a passive-only array"
+            },
+            "sonar.transmission_loss_alpha_db_per_km": {
+                "value_basis": "proxy",
+                "note": "no public figure; carried close to the packet's bow sonar module (generic underwater transmission-loss constant)"
+            },
+            "sonar.layer_break_penalty_db": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate slightly lower than the bow sonar module"
+            },
+            "sonar.convergence_zone_bonus_m": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate scaled with max_range_m, above the bow sonar module"
+            },
+            "sonar.baffle_exclusion_deg": {
+                "value_basis": "engineering_estimate",
+                "note": "0.0: a towed array deployed astern of the boat has a negligible baffle-exclusion cone compared to a bow-mounted array"
+            },
+            "sonar.ownship_quieting_speed_mps": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate higher than the bow sonar module, reflecting reduced sensitivity to ownship speed/flow noise"
+            },
+            "sonar.active_ping_source_level_db": {
+                "value_basis": "engineering_estimate",
+                "note": "0.0: no active-ping capability modeled for this passive-only towed array"
+            },
+            "sonar.confirm_hits_m": {
+                "value_basis": "engineering_estimate",
+                "note": "standard engine detection-confirmation default, matched to the packet's bow sonar module"
+            },
+            "sonar.confirm_window_n": {
+                "value_basis": "engineering_estimate",
+                "note": "standard engine detection-confirmation default, slightly larger window reflecting slower passive-array confirmation"
+            },
+            "sonar.passive_only": {
+                "value_basis": "engineering_estimate",
+                "note": "true: no active-ping capability is reported for any PLAN SSN towed array"
+            },
+            "sonar.bearing_only": {
+                "value_basis": "engineering_estimate",
+                "note": "false: modeled with target-motion-analysis-derived range, consistent with the packet's surface-combatant towed-array/VDS module convention"
+            }
+        },
+        "modeling_notes": [
+            "Reused for both Type 093A and Type 093B towed array per this packet's decision to differentiate the two hulls by VLS/weapon loadout rather than by an unsourced towed-array performance delta."
+        ]
+    }
+}

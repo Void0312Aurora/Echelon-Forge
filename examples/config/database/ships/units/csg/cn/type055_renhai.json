@@ -1,0 +1,379 @@
+{
+    "name": "CSG_CN_Type055_Renhai",
+    "type": "Ship",
+    "ship_platform": {
+        "displacement_light_kg": 0.0,
+        "displacement_full_load_kg": 12500000.0,
+        "length_m": 180.0,
+        "beam_m": 20.0,
+        "draft_m": 6.6,
+        "height_above_waterline_m": 38.0,
+        "max_speed_mps": 15.43,
+        "economical_speed_mps": 9.26,
+        "range_nm": 5000.0,
+        "range_speed_mps": 9.26,
+        "max_accel_mps2": 0.13,
+        "max_decel_mps2": 0.18,
+        "max_turn_rate_deg_s": 2.2,
+        "low_speed_turn_factor": 0.3,
+        "steerageway_speed_mps": 1.0,
+        "sea_state": 0.0,
+        "wave_heading_deg": 0.0,
+        "wave_period_s": 8.0,
+        "max_roll_deg_sea_state_6": 8.0,
+        "max_pitch_deg_sea_state_6": 3.0,
+        "added_resistance_fraction_sea_state_6": 0.12,
+        "crew": 320
+    },
+    "health": {
+        "current_hp": 12500.0,
+        "max_hp": 12500.0
+    },
+    "naval_stores": {
+        "fuel_units_current": 100.0,
+        "fuel_units_max": 100.0,
+        "missile_units_current": 112.0,
+        "missile_units_max": 112.0,
+        "dry_cargo_units_current": 32.0,
+        "dry_cargo_units_max": 32.0,
+        "can_receive_underway": true,
+        "can_provide_underway": false
+    },
+    "sensor_ref": "CSG_CN_Type_346B_AESA",
+    "sensor_refs": [
+        "CSG_CN_Type_346B_AESA",
+        "CSG_CN_Type_366_Surface_Search",
+        "CSG_CN_PLAN_Naval_ESM"
+    ],
+    "esm": {
+        "sensitivity_dbm": -90.0,
+        "max_detection_range_m": 280000.0,
+        "classify_emitters": true
+    },
+    "mounted_sonars": [
+        {
+            "label": "plan_escort_hull_sonar",
+            "sonar": {
+                "mode": "Active",
+                "max_range_m": 22000.0,
+                "scan_period_s": 8.0,
+                "detection_threshold_db": 6.0,
+                "track_memory_s": 24.0,
+                "bearing_noise_std_deg": 1.5,
+                "range_noise_std_m": 500.0,
+                "directivity_gain_db": 8.0,
+                "self_noise_per_speed_db": 1.1,
+                "ambient_noise_db": 71.0,
+                "source_level_reference_db": 232.0,
+                "source_level_speed_factor_db": 1.7,
+                "transmission_loss_alpha_db_per_km": 0.08,
+                "layer_break_penalty_db": 4.0,
+                "convergence_zone_bonus_m": 38000.0,
+                "baffle_exclusion_deg": 35.0,
+                "ownship_quieting_speed_mps": 5.0,
+                "active_ping_source_level_db": 232.0,
+                "confirm_hits_m": 2,
+                "confirm_window_n": 3,
+                "passive_only": false,
+                "bearing_only": false
+            }
+        },
+        {
+            "label": "plan_escort_towed_array_vds",
+            "sonar": {
+                "mode": "Passive",
+                "max_range_m": 45000.0,
+                "scan_period_s": 6.0,
+                "detection_threshold_db": 4.0,
+                "track_memory_s": 30.0,
+                "bearing_noise_std_deg": 1.0,
+                "range_noise_std_m": 900.0,
+                "directivity_gain_db": 12.0,
+                "self_noise_per_speed_db": 0.7,
+                "ambient_noise_db": 68.0,
+                "source_level_reference_db": 0.0,
+                "source_level_speed_factor_db": 0.0,
+                "transmission_loss_alpha_db_per_km": 0.06,
+                "layer_break_penalty_db": 3.0,
+                "convergence_zone_bonus_m": 55000.0,
+                "baffle_exclusion_deg": 0.0,
+                "ownship_quieting_speed_mps": 6.0,
+                "active_ping_source_level_db": 0.0,
+                "confirm_hits_m": 2,
+                "confirm_window_n": 3,
+                "passive_only": true,
+                "bearing_only": false
+            }
+        }
+    ],
+    "embarked_air_ops": {
+        "enabled": true,
+        "helo_unit_name": "MH-60R_MVP",
+        "launch_altitude_m": 180.0,
+        "launch_offset_forward_m": -70.0,
+        "launch_offset_starboard_m": 0.0,
+        "recover_range_m": 220.0,
+        "relay_refresh_s": 2.0,
+        "relay_oth_targeting": true
+    },
+    "has_command_link": true,
+    "command_link": {
+        "latency_s": 0.2,
+        "drop_prob": 0.0
+    },
+    "has_data_link": true,
+    "data_link_network_id": 2,
+    "naval_weapon_system": {
+        "mounts": [
+            {
+                "mount_id": "hhq9b_vls_sam",
+                "weapon_type": "vls_sam",
+                "ready_count": 48,
+                "max_ready_count": 48,
+                "ammo_per_shot": 1,
+                "cooldown_s": 2.0,
+                "last_fire_time": -1.0,
+                "engagement_range_m": 166680.0,
+                "projectile_speed_mps": 1430.0,
+                "hit_probability": 0.8,
+                "damage_per_hit": 220.0,
+                "consumes_ready_count": true,
+                "can_intercept_missiles": false,
+                "fire_control_channel": "type346b_sam_mvp",
+                "target_domain": "air",
+                "provenance_note": "REPAIR ROUND (2026-09-29): resized to the SAM-only load and split by SAM type. Runtime fact verified by the coordinator: select_ready_vls_mount fires the first vls_sam mount with rounds and never reads target_domain, so every counted cell is mechanically a SAM at runtime, and only the FIRST-listed vls_sam mount is ever selected while it has rounds -- the prior two-mount fwd(64)/aft(48) split abstracted the FULL mixed load (including YJ-18A/YJ-20/CY-5-Yu-8 cells) into vls_sam mounts, overstating the SAM count and making the second mount's true role ambiguous. This mount now holds exactly the ship's sourced HHQ-9B load (48, matching weapon_inventory's representative_load), listed FIRST since HHQ-9B (long-range area AAW) is the more doctrinally load-bearing SAM for a CSG air-defence commander. engagement_range_m/projectile_speed_mps carry HHQ-9B's own sourced figures (ONI-2015-chart-derived ~80-90nm ceiling; Mach 4.2 HQ-9 baseline, csg-cn-hhq9-mitchell B) -- unchanged numeric values from the prior mixed-load mount, since HHQ-9B was already the fastest/longest-range interceptor used as that mount's proxy. OPEN ISSUE for the final report: because select_ready_vls_mount only ever fires the first vls_sam mount with available rounds, the second-listed hhq16_vls_sam mount below is functionally unreachable in the current engine unless this mount is empty or on cooldown -- this is a known engine limitation, not a modeling error, and is flagged here per the coordinator's own instruction to 'consider one mount per SAM type with its own range and speed' even knowing only the first fires"
+            },
+            {
+                "mount_id": "hhq16_vls_sam",
+                "weapon_type": "vls_sam",
+                "ready_count": 16,
+                "max_ready_count": 16,
+                "ammo_per_shot": 1,
+                "cooldown_s": 2.0,
+                "last_fire_time": -1.0,
+                "engagement_range_m": 74080.0,
+                "projectile_speed_mps": 850.0,
+                "hit_probability": 0.8,
+                "damage_per_hit": 220.0,
+                "consumes_ready_count": true,
+                "can_intercept_missiles": false,
+                "fire_control_channel": "type346b_sam_mvp",
+                "target_domain": "air",
+                "provenance_note": "REPAIR ROUND (2026-09-29): second SAM-type mount, holding the ship's sourced quad-packed HHQ-16 load (16 missiles in 4 cells, per csg-cn-type055-wiki C-only and weapon_inventory's existing representative_load). engagement_range_m/projectile_speed_mps carry HHQ-16's OWN sourced figures rather than the HHQ-9B-derived value used by the prior mixed-load mounts: 74,080m from HHQ-16's DIA-2019 20-40nmi A-tier band upper bound (same basis as the 054A/054B hhq16_vls_sam mounts); 850 m/s from HHQ-16's own engineering-estimate flight_model.max_speed (weapons/csg/cn/hhq_16.json). OPEN ISSUE: per the runtime fact above, this mount is functionally unreachable by select_ready_vls_mount while hhq9b_vls_sam (listed first) still has ready rounds; retained per the coordinator's explicit two-mount instruction and flagged for the final report rather than unilaterally dropped"
+            },
+            {
+                "mount_id": "main_gun",
+                "weapon_type": "gun_5in",
+                "ready_count": 25,
+                "max_ready_count": 25,
+                "ammo_per_shot": 1,
+                "cooldown_s": 3.5,
+                "last_fire_time": -1.0,
+                "engagement_range_m": 22000.0,
+                "projectile_speed_mps": 800.0,
+                "hit_probability": 0.55,
+                "damage_per_hit": 80.0,
+                "consumes_ready_count": true,
+                "can_intercept_missiles": false,
+                "fire_control_channel": "main_gun_local_mvp",
+                "target_domain": "surface",
+                "provenance_note": "1 x 130mm single gun per OOB (csg-cn-type055-usni-proc-202303, B, calibre only; designation conflicts between H/PJ-45 (Wikipedia/Seaforces) and H/PJ-38 (Wikipedia body text), C-only for both -- OOB itself says 'use 130mm single'). No public muzzle velocity or range; engagement_range_m/projectile_speed_mps/damage_per_hit are engineering-estimate proxies scaled from the US Mk-45 5-in/62 MVP calibration for a comparably-sized large-caliber naval gun"
+            },
+            {
+                "mount_id": "hhq10_ciws",
+                "weapon_type": "ciws",
+                "ready_count": 24,
+                "max_ready_count": 24,
+                "ammo_per_shot": 1,
+                "cooldown_s": 3.0,
+                "last_fire_time": -1.0,
+                "engagement_range_m": 9000.0,
+                "projectile_speed_mps": 850.0,
+                "hit_probability": 0.75,
+                "damage_per_hit": 200.0,
+                "consumes_ready_count": true,
+                "can_intercept_missiles": true,
+                "fire_control_channel": "hhq10_local_mvp",
+                "target_domain": "missile",
+                "provenance_note": "1 x 24-cell HHQ-10 per OOB (csg-cn-type055-usni-proc-202303, B, 'USNI says 30-mm CIWS and 24-cell HHQ-10'). Range/speed carried from the packet's CSG_CN_HHQ-10 Missile record"
+            },
+            {
+                "mount_id": "type1130_ciws",
+                "weapon_type": "ciws",
+                "ready_count": 60,
+                "max_ready_count": 60,
+                "ammo_per_shot": 1,
+                "cooldown_s": 0.5,
+                "last_fire_time": -1.0,
+                "engagement_range_m": 3000.0,
+                "projectile_speed_mps": 1050.0,
+                "hit_probability": 0.7,
+                "damage_per_hit": 999.0,
+                "consumes_ready_count": true,
+                "can_intercept_missiles": true,
+                "fire_control_channel": "ciws_local_mvp",
+                "target_domain": "missile",
+                "provenance_note": "1 x 30mm gun CIWS per OOB (csg-cn-type055-usni-proc-202303, B, '30-mm CIWS'; Type 1130/H/PJ-11 designation is Wikipedia C-only, Seaforces gives Type 730 C-only -- mount designation conflicts, count of 1 not disputed). Carried from the repo's Type 1130-family CIWS MVP calibration"
+            }
+        ]
+    },
+    "damage_model": {
+        "hitboxes": [
+            {
+                "offset": [55.0, 0.0, 4.0],
+                "size": [42.0, 20.0, 15.0],
+                "armor": 0.0,
+                "systems": ["forward_vls", "main_gun", "combat_system"],
+                "components": [
+                    {"name": "universal_vls_forward_64_cell", "system": "vls"},
+                    {"name": "130mm_single_gun", "system": "gun"},
+                    {"name": "hull_sonar_bow_array", "system": "sonar_sensor"}
+                ]
+            },
+            {
+                "offset": [10.0, 0.0, 12.0],
+                "size": [55.0, 20.0, 32.0],
+                "armor": 0.0,
+                "systems": ["main_radar", "command", "data_link"],
+                "components": [
+                    {"name": "type346b_aesa_face_forward", "system": "radar"},
+                    {"name": "type346b_aesa_face_port", "system": "radar"},
+                    {"name": "type346b_aesa_face_starboard", "system": "radar"},
+                    {"name": "type346b_aesa_face_aft", "system": "radar"},
+                    {"name": "combat_information_center", "system": "command"},
+                    {"name": "hhq10_ciws_mount", "system": "weapons_combat_stowage"}
+                ]
+            },
+            {
+                "offset": [-40.0, 0.0, 3.0],
+                "size": [50.0, 20.0, 14.0],
+                "armor": 0.0,
+                "systems": ["engineering", "aft_vls", "fuel"],
+                "components": [
+                    {"name": "universal_vls_aft_48_cell", "system": "vls"},
+                    {"name": "gas_turbine_engine_1", "system": "propulsion_engineering"},
+                    {"name": "gas_turbine_engine_2", "system": "propulsion_engineering"},
+                    {"name": "gas_turbine_engine_3", "system": "propulsion_engineering"},
+                    {"name": "gas_turbine_engine_4", "system": "propulsion_engineering"},
+                    {"name": "shipboard_fuel_stores", "system": "cargo_fuel_stowage"}
+                ]
+            },
+            {
+                "offset": [-70.0, 0.0, 5.0],
+                "size": [22.0, 20.0, 16.0],
+                "armor": 0.0,
+                "systems": ["hangar", "flight_deck", "type1130_ciws", "torpedo_tubes"],
+                "components": [
+                    {"name": "helicopter_hangar_2_spot", "system": "aviation_mission_facilities"},
+                    {"name": "type1130_ciws_mount", "system": "weapons_combat_stowage"},
+                    {"name": "triple_324mm_torpedo_tube_1", "system": "weapons_combat_stowage"},
+                    {"name": "triple_324mm_torpedo_tube_2", "system": "weapons_combat_stowage"},
+                    {"name": "towed_array_vds_winch", "system": "sonar_sensor"}
+                ]
+            }
+        ]
+    },
+    "_real_world": {
+        "class": "Renhai-class (Type 055) cruiser/large destroyer",
+        "hull_examples": "106 Yan'an (confirmed Fujian escort, Nov 2025); Southern Theater: 105 Dalian, 107 Zunyi, 108 Xianyang",
+        "primary_role": "Air-defence commander, area AAW/BMD, long-range anti-ship/land strike, flag/C2",
+        "public_equipment": [
+            "112 universal VLS cells (64 fwd 8x8 + 48 aft 6x8), GJB 5860-2006 concentric-canister standard",
+            "1 x 130mm single gun (designation conflict, PJ-45 vs PJ-38)",
+            "1 x 30mm gun CIWS (designation conflict, Type 1130 vs Type 730) + 1 x 24-cell HHQ-10",
+            "2 x triple 324mm torpedo tubes (Yu-7)",
+            "4 x Type 346B AESA faces (S-band) + 4 x X-band multifunction panels on integrated mast",
+            "Bow sonar + variable-depth sonar + towed array",
+            "2 maritime helicopters (Z-9 class or Z-20F), hangar for two",
+            "EW suite, 24-barrel decoy launchers, Type 726-4"
+        ],
+        "weapon_inventory": [
+            {"weapon_ref": "CSG_CN_HHQ-9B", "status": "vls_sam_mount", "representative_load": 48, "note": "long-range area SAM, ER variant, range in excess of 100nmi per USNI (B); sole occupant of the hhq9b_vls_sam mount (listed first per select_ready_vls_mount's first-mount-fires runtime behavior)"},
+            {"weapon_ref": "CSG_CN_HHQ-16", "status": "vls_sam_mount", "representative_load": 16, "note": "quad-packed medium-range SAM per csg-cn-type055-wiki (C-only); sole occupant of the hhq16_vls_sam mount (listed second; functionally reachable only when hhq9b_vls_sam is empty/on cooldown per current engine behavior, see mount provenance_note)"},
+            {"weapon_ref": "CSG_CN_YJ-18A", "status": "content_only_no_mechanism", "representative_load": 16, "note": "subsonic-cruise/supersonic-terminal ASCM, range factor-2.4 conflict (DoD 537km A vs ONI/Carlson/Janes ~220km B, see weapon record)"},
+            {"weapon_ref": "CSG_CN_YJ-20", "status": "content_only_no_mechanism", "representative_load": 8, "note": "hypersonic ASBM; type-approval launch from Wuxi (104), Dec 2025 (csg-cn-type055-usni-20251229, B). Ship anti-ship long-range slot modeled as YJ-20 per arbitrated decision #2; YJ-21 (2022 assessment, air-launched) out of this packet's ship-weapon scope"},
+            {"weapon_ref": "CSG_CN_CY-5_Yu-8", "status": "content_only_no_mechanism", "representative_load": 8, "note": "ASW rocket, VLS cell reported for 055 but unconfirmed per OOB ('reported')"},
+            {"weapon_ref": "CSG_CN_Yu-7", "status": "content_only_no_mechanism", "representative_load": 12, "note": "2 x triple 324mm tubes (6 tubes) + reloads; exact magazine depth not public"}
+        ],
+        "vls_cell_split_note": "REPAIR ROUND (2026-09-29): 112 total universal VLS cells = 64 SAM rounds (48 HHQ-9B + 16 quad-packed HHQ-16 in 4 cells) + 16 YJ-18A + 8 YJ-20 + 8 CY-5/Yu-8 (= 96 cells; the remaining 16 of 112 are unassigned headroom in this engineering-estimate loadout, consistent with the packet's prior representative-loadout convention of not claiming a fully-published PLAN loadout). Only the 64 SAM rounds are now represented as functional vls_sam mounts (hhq9b_vls_sam=48, hhq16_vls_sam=16); the other 48 cells' worth of ASCM/ASBM/ASW-rocket payload remain content-only in weapon_inventory."
+    },
+    "_provenance": {
+        "unit_conversions": [
+            "full-load displacement 12,000-13,000 t (csg-cn-type055-usni-proc-202303, B); 12,500 t midpoint used",
+            "length overall 180 m (591 ft) (csg-cn-type055-usni-proc-202303, B)",
+            "beam 20 m (66 ft) (csg-cn-type055-usni-proc-202303, B)",
+            "draft 6.6 m (22 ft) (csg-cn-type055-usni-proc-202303, B)",
+            "max speed 30 kt -> 15.43 m/s (csg-cn-type055-usni-proc-202303, B, estimate, no PLAN figure)",
+            "range 5,000 nmi at 18 kt (csg-cn-type055-usni-proc-202303, B; Wikipedia gives 5,000 nmi at 12 kt, C, speed basis conflicts)"
+        ],
+        "sources": [
+            "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md#type-055-renhai-class-cruiser--large-destroyer",
+            "csg-cn-type055-usni-proc-202303", "csg-cn-type055-wiki", "csg-cn-type055-janes-2020", "csg-cn-type346-forum",
+            "csg-cn-dia-2019", "csg-cn-type055-seaforces", "csg-cn-type055-usni-20251229", "csg-cn-type055-usni-20260311",
+            "csg-cn-yj21-scmp-2022", "csg-cn-type055-gt-20260308", "csg-cn-proc-202605"
+        ],
+        "parameters": {
+            "damage_model.hitboxes.components.system": {"value_basis": "engineering_estimate", "note": "component system tags follow the packet-wide convention"},
+            "ship_platform.displacement_light_kg": {"value_basis": "engineering_estimate", "note": "not public; left at 0.0 placeholder, consistent with the packet's other ship records"},
+            "ship_platform.displacement_full_load_kg": {"value_basis": "sourced", "source_ids": ["csg-cn-type055-usni-proc-202303"], "tier": "B", "note": "12,000-13,000 t midpoint (Wertheim, Combat Fleets); Wikipedia's Janes-cited ~11,000 t standard displacement not used here (different displacement basis)"},
+            "ship_platform.length_m": {"value_basis": "sourced", "source_ids": ["csg-cn-type055-usni-proc-202303"], "tier": "B", "note": "180 m (591 ft), consistent across all sources"},
+            "ship_platform.beam_m": {"value_basis": "sourced", "source_ids": ["csg-cn-type055-usni-proc-202303"], "tier": "B", "note": "20 m (66 ft)"},
+            "ship_platform.draft_m": {"value_basis": "sourced", "source_ids": ["csg-cn-type055-usni-proc-202303"], "tier": "B", "note": "6.6 m (22 ft); load condition not stated"},
+            "ship_platform.height_above_waterline_m": {"value_basis": "engineering_estimate", "note": "no public mast/superstructure height; engineering estimate typical of a large integrated-mast destroyer hull"},
+            "ship_platform.max_speed_mps": {"value_basis": "sourced", "source_ids": ["csg-cn-type055-usni-proc-202303"], "tier": "B", "note": "30 kt estimate, no PLAN figure"},
+            "ship_platform.economical_speed_mps": {"value_basis": "engineering_estimate", "note": "no public economical speed; engineering estimate below max speed"},
+            "ship_platform.range_nm": {"value_basis": "sourced", "source_ids": ["csg-cn-type055-usni-proc-202303"], "tier": "B", "note": "5,000 nmi at 18 kt; Wikipedia's 5,000 nmi at 12 kt (C) conflicts on speed basis, USNI/Proceedings figure preferred (B > C)"},
+            "ship_platform.range_speed_mps": {"value_basis": "sourced", "source_ids": ["csg-cn-type055-usni-proc-202303"], "tier": "B", "note": "18 kt -> 9.26 m/s, paired with the sourced range figure"},
+            "ship_platform.max_accel_mps2": {"value_basis": "engineering_estimate", "note": "no public figure; COGAG 4-gas-turbine propulsion gives good acceleration for the hull size, engineering estimate accordingly"},
+            "ship_platform.max_decel_mps2": {"value_basis": "engineering_estimate", "note": "consistent with max_accel_mps2"},
+            "ship_platform.max_turn_rate_deg_s": {"value_basis": "engineering_estimate", "note": "no public figure; controllable-pitch propellers aid maneuverability, engineering estimate accordingly"},
+            "ship_platform.low_speed_turn_factor": {"value_basis": "engineering_estimate", "note": "not public; carried from the repo's DDG-51 template proxy convention"},
+            "ship_platform.steerageway_speed_mps": {"value_basis": "engineering_estimate", "note": "not public; carried from the repo's DDG-51 template proxy convention"},
+            "ship_platform.max_roll_deg_sea_state_6": {"value_basis": "engineering_estimate", "note": "not public; carried from the repo's DDG-51 template proxy convention, adjusted for this larger hull's lower roll"},
+            "ship_platform.max_pitch_deg_sea_state_6": {"value_basis": "engineering_estimate", "note": "not public; carried from the repo's DDG-51 template proxy convention"},
+            "ship_platform.added_resistance_fraction_sea_state_6": {"value_basis": "engineering_estimate", "note": "not public; carried from the repo's DDG-51 template proxy convention"},
+            "ship_platform.crew": {"value_basis": "sourced", "source_ids": ["csg-cn-type055-usni-proc-202303"], "tier": "B", "note": "'thought to carry more than 300'; 320 used as a representative figure within the stated floor"},
+            "naval_stores.missile_units_max": {"value_basis": "proxy", "note": "112 cells sourced (A total, csg-cn-dia-2019); missile_units abstraction scaled 1:1 against the sourced VLS cell count as a simplification"},
+            "sensor_ref": {"value_basis": "sourced", "source_ids": ["csg-cn-type055-janes-2020"], "tier": "B", "note": "4 x S-band Type 346B AESA faces, Janes CCTV-derived; references the packet's CSG_CN_Type_346B_AESA sensor module"},
+            "mounted_sonars": {"value_basis": "sourced", "note": "bow (bulbous-bow hull) sonar + variable-depth sonar + towed array per csg-cn-type055-usni-proc-202303 (B); designations/ranges not public, references the packet's shared PLAN_Escort_Hull_Sonar and PLAN_Escort_Towed_Array_VDS modules"},
+            "naval_weapon_system.mounts[hhq9b_vls_sam].ready_count": {"value_basis": "sourced", "source_ids": ["csg-cn-dia-2019", "csg-cn-type055-usni-proc-202303"], "tier": "A/B", "note": "REPAIR ROUND (2026-09-29): resized from the prior fwd(64)/aft(48) mixed-load split to a single 48-round HHQ-9B-only mount, matching weapon_inventory's representative_load. Of the 112 total universal VLS cells (A-tier total, csg-cn-dia-2019), 48 are this SAM mount"},
+            "naval_weapon_system.mounts[hhq9b_vls_sam].engagement_range_m": {"value_basis": "proxy", "note": "HHQ-9B's own sourced ONI-2015-chart-derived ~80-90nm ceiling, the load-bearing runtime field for vls_sam per simulation_kernel_weapon_release_service.cpp; unchanged numeric value from the prior mixed-load mounts since HHQ-9B was already used as that mount's proxy"},
+            "naval_weapon_system.mounts[hhq9b_vls_sam].projectile_speed_mps": {"value_basis": "sourced", "source_ids": ["csg-cn-hhq9-wiki"], "tier": "B", "note": "HHQ-9B Mach 4.2 (HQ-9 baseline); unchanged numeric value from the prior mixed-load mounts"},
+            "naval_weapon_system.mounts[hhq16_vls_sam].ready_count": {"value_basis": "sourced", "source_ids": ["csg-cn-type055-wiki"], "tier": "C-only", "note": "REPAIR ROUND (2026-09-29): new second SAM-type mount, 16 quad-packed HHQ-16 rounds in 4 cells, matching weapon_inventory's existing representative_load. Split from the former mixed-load aft mount"},
+            "naval_weapon_system.mounts[hhq16_vls_sam].engagement_range_m": {"value_basis": "sourced", "source_ids": ["csg-cn-dia-2019"], "tier": "A", "note": "REPAIR ROUND (2026-09-29): HHQ-16's own DIA-2019 20-40nmi A-tier band, upper bound 40nmi = 74,080m used, same basis as the 054A/054B hhq16_vls_sam mounts; previously this mount used HHQ-9B's range as a shared proxy"},
+            "naval_weapon_system.mounts[hhq16_vls_sam].projectile_speed_mps": {"value_basis": "engineering_estimate", "note": "REPAIR ROUND (2026-09-29): HHQ-16's own sourced flight_model.max_speed of 850 m/s (weapons/csg/cn/hhq_16.json), replacing the shared HHQ-9B-derived 1430 m/s previously used"},
+            "naval_weapon_system.mounts[main_gun].ready_count": {"value_basis": "proxy", "note": "no public magazine depth for the 130mm gun; 25 used as a representative ready count, consistent with the packet's ready-vs-magazine convention"},
+            "naval_weapon_system.mounts[main_gun].engagement_range_m": {"value_basis": "proxy", "note": "no public range for the 130mm/PJ-45-or-38 gun; engineering-estimate proxy scaled from the US Mk-45 5-in/62 MVP calibration, adjusted for the larger 130mm calibre"},
+            "naval_weapon_system.mounts[main_gun].projectile_speed_mps": {"value_basis": "proxy", "note": "no public muzzle velocity; engineering-estimate proxy scaled from the Mk-45 MVP calibration"},
+            "naval_weapon_system.mounts[hhq10_ciws].ready_count": {"value_basis": "sourced", "source_ids": ["csg-cn-type055-usni-proc-202303"], "tier": "B", "note": "24-cell HHQ-10 per USNI"},
+            "naval_weapon_system.mounts[type1130_ciws].ready_count": {"value_basis": "proxy", "note": "no public per-mount round count; carried from the repo's Type-1130-family CIWS MVP calibration"},
+            "naval_weapon_system.mounts.mount_id": {"value_basis": "engineering_estimate", "note": "identifier string, not sourced"},
+            "naval_weapon_system.mounts.weapon_type": {"value_basis": "engineering_estimate", "note": "per task's mount-mapping rules"},
+            "naval_weapon_system.mounts.max_ready_count": {"value_basis": "engineering_estimate", "note": "set equal to ready_count"},
+            "naval_weapon_system.mounts.ammo_per_shot": {"value_basis": "engineering_estimate", "note": "standard scaffold value (1)"},
+            "naval_weapon_system.mounts.last_fire_time": {"value_basis": "engineering_estimate", "note": "runtime scaffold value, not a real-world parameter"},
+            "naval_weapon_system.mounts.engagement_range_m": {"value_basis": "proxy", "note": "flat fallback covering the hhq10_ciws/type1130_ciws mounts' engagement_range_m, which have no dedicated bracketed entry above; carried from the repo's CIWS MVP calibration proxies since no PLAN-specific per-mount range figure is public beyond the weapon-level sourcing already documented for forward/aft_vls_sam and main_gun"},
+            "naval_weapon_system.mounts.projectile_speed_mps": {"value_basis": "proxy", "note": "flat fallback covering the hhq10_ciws/type1130_ciws mounts' projectile_speed_mps, which have no dedicated bracketed entry above; carried from the repo's CIWS MVP calibration proxies"},
+            "naval_weapon_system.mounts.consumes_ready_count": {"value_basis": "engineering_estimate", "note": "standard scaffold flag (true)"},
+            "naval_weapon_system.mounts.can_intercept_missiles": {"value_basis": "sourced", "note": "true for hhq10_ciws and type1130_ciws (documented point-defense anti-missile role); false for forward/aft_vls_sam (area SAM, not classified as point-defense in this engine flag) and main_gun (naval gunfire role)"},
+            "naval_weapon_system.mounts.target_domain": {"value_basis": "sourced", "note": "air for vls_sam mounts, surface for main_gun, missile for ciws mounts, per each system's documented role"},
+            "naval_weapon_system.mounts.hit_probability": {"value_basis": "engineering_estimate", "note": "no public effectiveness figure; carried from the packet's per-weapon-type MVP calibrations"},
+            "naval_weapon_system.mounts.cooldown_s": {"value_basis": "proxy", "note": "no public per-mount cycle-rate figure beyond qualitative role descriptions; carried from MVP calibrations"},
+            "naval_weapon_system.mounts.damage_per_hit": {"value_basis": "engineering_estimate", "note": "engineering-estimate abstraction, not any single missile's sourced warhead mass"},
+            "naval_weapon_system.mounts.fire_control_channel": {"value_basis": "engineering_estimate", "note": "internal identifier, not a real-world parameter"},
+            "naval_weapon_system.mounts.provenance_note": {"value_basis": "sourced", "note": "free-text field documenting each mount's own sourcing inline; see each mount's provenance_note string"},
+            "naval_weapon_system.mounts.ready_count": {"value_basis": "sourced", "source_ids": ["csg-cn-dia-2019", "csg-cn-type055-usni-proc-202303"], "tier": "A/B", "note": "flat fallback: hhq9b_vls_sam/hhq16_vls_sam ready_count individually sourced/estimated per their own bracketed entries above (48 HHQ-9B A/B-tier, 16 HHQ-16 C-only); hhq10_ciws sourced B (24-cell); main_gun and type1130_ciws ready_count are engineering-estimate/proxy, no public magazine depth for either"},
+            "embarked_air_ops.helo_unit_name": {"value_basis": "proxy", "note": "2 maritime helicopters (Z-9 class or Z-20F) per OOB (B); references the repo's existing MH-60R_MVP as the nearest available embarked-helo stand-in pending a real Z-9/Z-20F record"},
+            "data_link_network_id": {"value_basis": "engineering_estimate", "note": "2: PLAN CSG network membership scaffold value"}
+        },
+        "modeling_notes": [
+            "Health scaled as one HP per metric tonne of full-load displacement, consistent with the packet's other ship records.",
+            "REPAIR ROUND (2026-09-29): the prior two-mount fwd(64)/aft(48) abstraction (each mixing HHQ-9B/HHQ-16/YJ-18/YJ-20/CY-5-Yu-8) has been replaced with two SAM-type-specific mounts: hhq9b_vls_sam (48, listed first) and hhq16_vls_sam (16 quad-packed, listed second). Runtime fact verified by the coordinator in the engine's weapon-release service: select_ready_vls_mount fires the FIRST vls_sam mount with available rounds and no cooldown, and target_domain is stored but NEVER READ -- so (a) every cell counted in either old mount was mechanically an air-defense interceptor at runtime regardless of the missile it represented, overstating the ship's true SAM inventory by also counting ASCM/ASBM/ASW-rocket cells, and (b) only the first-listed mount is ever reachable while it holds rounds. Per the coordinator's explicit instruction to 'consider one mount per SAM type with its own range and speed,' this record now gives each SAM type its own mount with its own sourced range/speed (HHQ-9B: ~80-90nm/Mach 4.2; HHQ-16: 40nm-upper-bound/850 m/s) rather than sharing one blended value. OPEN ISSUE for the final report: since only the first-listed mount (hhq9b_vls_sam) is ever selected while it has ready rounds, hhq16_vls_sam is functionally unreachable in the current engine unless hhq9b_vls_sam is empty or on cooldown -- this is a known engine limitation flagged per the coordinator's own instruction, not resolved unilaterally by dropping the second mount.",
+            "YJ-18A/YJ-20/CY-5-Yu-8/Yu-7 have no NavalWeaponType mount and are listed only in _real_world.weapon_inventory with status content_only_no_mechanism, per the authoring standard's mechanism-gap rule. HHQ-9B and HHQ-16 ARE modeled as documentation-only Missile records referenced from weapon_inventory even though their VLS behavior is abstracted into the SAM-type-specific vls_sam mounts above (per the task's requirement that mount-mapped weapons still get full Missile records).",
+            "VLS cell split: 112 total cells = 64 SAM rounds (48 HHQ-9B + 16 quad-packed HHQ-16 in 4 cells) + 16 YJ-18A + 8 YJ-20 + 8 CY-5/Yu-8 (content-only, = 96 of 112 cells accounted for; remaining headroom is engineering-estimate per OOB, actual PLAN loadouts are never published). 12 Yu-7 torpedoes are tube-launched, separate from VLS.",
+            "Gun designation conflict (H/PJ-45 vs H/PJ-38) recorded verbatim per the OOB's own instruction to 'use 130mm single' rather than picking a designation; naming used in damage_model.hitboxes.components is generic ('130mm_single_gun').",
+            "CIWS mount designation conflict (Type 1130 vs Type 730) recorded verbatim; count of 1 gun-CIWS mount plus 1 HHQ-10 missile-CIWS mount is not disputed across sources.",
+            "4-hitbox zoning (fwd VLS/gun/bow-sonar, radar/command/HHQ-10, aft VLS/engineering/fuel, hangar/flight-deck/gun-CIWS/torpedo-tubes/towed-array) follows the DDG-51 template's pattern, adapted for the Type 055's fwd+aft VLS split and larger sensor mast."
+        ]
+    }
+}

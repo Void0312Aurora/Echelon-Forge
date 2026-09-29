@@ -1,0 +1,102 @@
+{
+    "name": "CSG_CN_YJ-20",
+    "type": "Missile",
+    "mass_kg": 2200.0,
+    "max_flight_time_s": 500.0,
+    "flight_model": {
+        "max_speed": 3060.0,
+        "max_g": 25.0,
+        "max_turn_rate": 6.0
+    },
+    "guidance": {
+        "type": "ActiveRadar",
+        "active_seek_range": 40000.0,
+        "pn_los_rate_source": "world_los_history",
+        "target_kinematics_estimator": "world_cva",
+        "capture_guidance_mode": "disabled",
+        "target_tracker_alpha": 0.2,
+        "target_tracker_beta": 0.02,
+        "target_tracker_gamma": 0.5,
+        "nav_gain": 4.0,
+        "apn_target_accel_gain": 0.12,
+        "autopilot_tau_s": 0.08,
+        "max_accel_response_g_per_s": 300.0
+    },
+    "warhead": {
+        "type": "blast_fragmentation",
+        "mass_kg": 400.0,
+        "lethal_radius": 22.0,
+        "damage": 450.0,
+        "explosive_mass_kg": 180.0,
+        "case_mass_kg": 220.0,
+        "projection_radius_fraction": 0.55,
+        "projection_max_radius_m": 27.0,
+        "projection_max_projected_hitboxes": 4,
+        "provenance": "No public warhead-mass figure for YJ-20; engineering-estimate surrogate scaled up from YJ-18A given YJ-20's larger overall dimensions/mass and hypersonic kinetic-kill contribution, following the aim_120c.json-derived blast-fragmentation pattern used across this packet."
+    },
+    "fuze": {
+        "type": "contact",
+        "trigger_radius_m": 0.0,
+        "delay_s": 0.005,
+        "reliability": 0.9,
+        "provenance": "No public fuze timing data; engineering-estimate impact fuze scaffold typical of a hypersonic anti-ship glide weapon, where kinetic energy dominates lethality over chemical warhead effect."
+    },
+    "_real_world": {
+        "designation": "YJ-20 (ship-launched hypersonic ASBM; publicly debuted 3 Sep 2025 Victory Day parade alongside YJ-15/YJ-17/YJ-19)",
+        "role": "Ship-launched hypersonic anti-ship ballistic missile (ASBM), carrier-kill mission, VLS-launched from Type 055 and (modified) Type 052D universal VLS",
+        "range_nmi": "1,000-1,500 km scenario band (Janes-derived, B-tier), sensitivity to 2,000 km; conflicting Janes-derived figure of 600-900 miles (~965-1,450 km) also reported",
+        "guidance_real": "Satellite nav + mid-course updates, active radar and/or IR terminal ('believed', speculative per TWZ)",
+        "speed": ">Mach 6 cruise, up to ~Mach 9-10 terminal (boost-glide, biconic glide body, near-vertical terminal attack claimed by named PRC expert)",
+        "mount_mapping": "Documentation-only for VLS-launched use per this packet's mount rules (naval_weapon_system mount types are limited to vls_sam/gun_5in/ciws, none of which represents an ASBM's actual flight profile); modeled here as a Missile record only, referenced from the carrying ships' _real_world.weapon_inventory as content_only_no_mechanism since no ASBM-specific mount type exists in the engine",
+        "status": "content_only_no_mechanism"
+    },
+    "_provenance": {
+        "sources": [
+            "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md#yj-20-ship-launched-hypersonic-asbm-likely-the-type-055052d-round",
+            "csg-cn-yj20-gt-2025",
+            "csg-cn-yj20-usni-2026",
+            "csg-cn-yj20-usni-2026-03",
+            "csg-cn-yj20-scmp",
+            "csg-cn-yj20-twz"
+        ],
+        "parameters": {
+            "warhead.type": {"value_basis": "engineering_estimate", "note": "blast_fragmentation is the standard ASCM/ASBM warhead family assumed following this packet's YJ-18A pattern; no PLAN source describes YJ-20's warhead mechanism"},
+            "warhead.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "fuze.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "mass_kg": {"value_basis": "proxy", "note": "no public launch-mass figure; engineering estimate scaled up from YJ-18A's sourced <1,579 kg given YJ-20's larger <9 m length/<850 mm diameter (SCMP imagery estimate, B) and boost-glide propulsion stack"},
+            "max_flight_time_s": {"value_basis": "proxy", "note": "engineering estimate derived from the 1,000-1,500 km scenario band (OOB-recommended primary figure) at the sourced >Mach 6 cruise speed"},
+            "flight_model.max_speed": {"value_basis": "sourced", "source_ids": ["csg-cn-yj20-twz"], "tier": "B", "note": "terminal speed up to ~Mach 9-10 (TWZ, 'generally considered'); Mach 9 sea-level ~3060 m/s used as the flight_model figure since the engine models one constant max_speed for the missile's most relevant (terminal) phase"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "note": "no public maneuver-load figure; engineering estimate for a boost-glide biconic vehicle's terminal maneuver, higher than YJ-18A given the hypersonic glide-body profile"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "note": "no public figure; engineering estimate lower than YJ-18A, consistent with a biconic glide body's more limited terminal maneuverability compared to an airframe cruise missile despite higher g-capability"},
+            "guidance.type": {"value_basis": "proxy", "source_ids": ["csg-cn-yj20-twz"], "tier": "B", "note": "active radar and/or IR terminal 'believed' per TWZ (speculative); ActiveRadar is the matching engine seeker_type for the dominant claimed mode"},
+            "guidance.active_seek_range": {"value_basis": "proxy", "note": "no public seeker acquisition range; engineering estimate scaled up from YJ-18A given YJ-20's larger seeker aperture implied by its greater overall dimensions"},
+            "guidance.pn_los_rate_source": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, not a sourced weapon characteristic; record has no functional mount regardless"},
+            "guidance.target_kinematics_estimator": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, same basis as pn_los_rate_source"},
+            "guidance.capture_guidance_mode": {"value_basis": "engineering_estimate", "note": "disabled: no terminal capture-guidance submode modeled for this mechanism-gap weapon"},
+            "guidance.target_tracker_alpha": {"value_basis": "engineering_estimate", "note": "standard alpha-beta-gamma tracker filter constant, engine convention shared across missile records, not weapon-specific"},
+            "guidance.target_tracker_beta": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.target_tracker_gamma": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.nav_gain": {"value_basis": "engineering_estimate", "note": "proportional-navigation gain scaffold; no public guidance-law constant, set high consistent with a hypersonic ASBM's terminal homing against a maneuvering high-value surface target"},
+            "guidance.apn_target_accel_gain": {"value_basis": "engineering_estimate", "note": "augmented-PN target-acceleration compensation gain scaffold, consistent with engaging a maneuvering carrier-sized target; not sourced per-weapon"},
+            "guidance.autopilot_tau_s": {"value_basis": "engineering_estimate", "note": "autopilot response time-constant scaffold; fast, consistent with a hypersonic glide vehicle's terminal maneuver"},
+            "guidance.max_accel_response_g_per_s": {"value_basis": "engineering_estimate", "note": "autopilot response-rate scaffold consistent with flight_model.max_g"},
+            "warhead.mass_kg": {"value_basis": "proxy", "note": "no public figure; engineering estimate scaled up from YJ-18A's 150-300 kg (B-tier) band given YJ-20's larger overall size"},
+            "warhead.lethal_radius": {"value_basis": "proxy", "note": "engineering-estimate surrogate, scaled up from YJ-18A reflecting both warhead mass and hypersonic kinetic-impact energy"},
+            "warhead.damage": {"value_basis": "proxy", "note": "engineering-estimate surrogate, scaled up from YJ-18A reflecting hypersonic terminal kinetic energy in addition to chemical warhead effect"},
+            "warhead.explosive_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split of the proxy 400 kg total warhead mass, no public split figure"},
+            "warhead.case_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split, see explosive_mass_kg; case mass set relatively high consistent with a hypersonic penetrator's structural design intent"},
+            "warhead.projection_radius_fraction": {"value_basis": "proxy", "note": "copied from the repo's aim_120c.json-derived blast-fragmentation projection-geometry template used across this packet"},
+            "warhead.projection_max_radius_m": {"value_basis": "proxy", "note": "copied/scaled from the template pattern for this warhead's larger lethal_radius"},
+            "warhead.projection_max_projected_hitboxes": {"value_basis": "proxy", "note": "copied/scaled from the template pattern, one higher than YJ-18A given YJ-20's larger warhead and kinetic-impact radius"},
+            "fuze.type": {"value_basis": "engineering_estimate", "note": "no public fuze timing data; contact fuze is the nearest real engine-recognized fuze family, per the loader's 4-value fuze.type vocabulary"},
+            "fuze.trigger_radius_m": {"value_basis": "engineering_estimate", "note": "0.0 consistent with a contact-fuze trigger radius"},
+            "fuze.delay_s": {"value_basis": "engineering_estimate", "note": "no public fuze timing data; engineering-estimate impact fuze scaffold, faster than YJ-18A consistent with hypersonic terminal closing speed"},
+            "fuze.reliability": {"value_basis": "engineering_estimate", "note": "no public reliability figure; engineering-estimate scaffold value, set slightly lower than YJ-18A reflecting the weapon's earlier maturity stage (finalization test only as of Dec 2025)"}
+        },
+        "modeling_notes": [
+            "Per OOB Arbitrated Corrections: after the Sep 2025 parade revealed YJ-15/17/19/20, the 2022 Type 055 VLS test-fire previously attributed to 'YJ-21' was re-attributed by analysts to YJ-20; this record represents the ship-launched round. YJ-21 (2022 assessment terminology + confirmed air-launched H-6K/N and export YJ-21E) is out of this ship-weapons packet's scope per task instruction (no separate ship-launched YJ-21 record needed).",
+            "IOC/production status not officially confirmed: Type 055 Wuxi (104) 'finalization test' released 28 Dec 2025 is a design-phase close-out, not a production/IOC announcement; Type 052D launch footage released 29 Jul 2026. Treat as a fielding/near-fielding weapon for 2026 OOB purposes per task's carrier-group composition, not as fully operational across the whole escort force.",
+            "No functional mount exists for ASBMs (no NavalWeaponType matches this profile); content-only for _real_world.weapon_inventory on Type 055 and Type 052D/052DL only (052D fit is 'modified' universal VLS per OOB, not the full class)."
+        ]
+    }
+}

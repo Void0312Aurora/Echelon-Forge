@@ -1,0 +1,136 @@
+{
+    "name": "CSG_CN_Type_901_Navigation_Radar",
+    "type": "Sensor",
+    "sensor": {
+        "type": "Radar",
+        "max_range": 40000.0,
+        "fov_deg": 360.0,
+        "scan_period": 2.5,
+        "detection_prob": 0.85,
+        "bearing_noise_std": 0.3,
+        "range_noise_std": 150.0,
+        "track_memory_s": 15.0,
+        "range_power": 2.0,
+        "aspect_influence": 0.0,
+        "doppler_notch_width": 0.0,
+        "reference_snr_db": 12.0,
+        "reference_range_m": 20000.0,
+        "reference_rcs_m2": 5.0,
+        "antenna_height_m": 20.0,
+        "target_height_bias_m": 10.0,
+        "environment_domain": "SurfaceMaritime",
+        "sea_clutter_enabled": false,
+        "enable_ducting": true,
+        "ducting_gain_factor": 1.0,
+        "ducting_max_bonus_m": 5000.0
+    },
+    "_real_world": {
+        "class": "Generic commercial-derivative navigation radar",
+        "variant_scope": "Type 901 (Fuyu) AOE; also used for Type 903A per the repo's convention of reusing a generic navigation-radar module for auxiliary/logistics hulls without a combat sensor suite.",
+        "hulls": [
+            "901 Hulunhu",
+            "905 Chaganhu",
+            "Type 903A hulls (substitute AOR)"
+        ],
+        "public_equipment": [
+            "navigation radar (no combat sensor suite publicly reported for this hull type)"
+        ]
+    },
+    "_provenance": {
+        "modeling_note": "No combat sensor suite is publicly reported for Type 901 or Type 903A; the OOB's Platform Parameters table for both hulls lists only self-defence armament (CIWS) and logistics fields, no radar. This module follows the repo's own convention (CSG_US_Oiler_Navigation_Radar on taoe6_supply.json) of giving an auxiliary/logistics ship a generic navigation-radar sensor_ref rather than a sourced combat radar, since none exists for this hull type in any tier.",
+        "sources": [
+            "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md#type-901-fuyu--hulunhu-class-fast-combat-support-ship-aoe",
+            "csg-cn-901-uscc-2020",
+            "csg-cn-901-janes-2019"
+        ],
+        "parameters": {
+            "sensor.type": {
+                "value_basis": "engineering_estimate",
+                "note": "no combat radar is publicly reported for this hull; Radar is used for a baseline navigation set, following the repo's CSG_US_Oiler_Navigation_Radar convention for auxiliary ships"
+            },
+            "sensor.max_range": {
+                "value_basis": "proxy",
+                "note": "copied/scaled from the repo's existing oiler navigation radar convention; no combat-radar figure exists for this hull type"
+            },
+            "sensor.fov_deg": {
+                "value_basis": "engineering_estimate",
+                "note": "360 deg: standard convention for a rotating navigation radar"
+            },
+            "sensor.scan_period": {
+                "value_basis": "proxy",
+                "note": "no public figure; copied/scaled from the repo's oiler navigation radar convention"
+            },
+            "sensor.detection_prob": {
+                "value_basis": "proxy",
+                "note": "no public figure; copied/scaled from the repo's oiler navigation radar convention"
+            },
+            "sensor.bearing_noise_std": {
+                "value_basis": "proxy",
+                "note": "no public figure; copied/scaled from the repo's oiler navigation radar convention"
+            },
+            "sensor.range_noise_std": {
+                "value_basis": "proxy",
+                "note": "no public figure; copied/scaled from the repo's oiler navigation radar convention"
+            },
+            "sensor.track_memory_s": {
+                "value_basis": "proxy",
+                "note": "no public figure; copied/scaled from the repo's oiler navigation radar convention"
+            },
+            "sensor.range_power": {
+                "value_basis": "engineering_estimate",
+                "note": "radar-equation exponent (inverse-4th-power family); standard engine default, not sourced per-platform"
+            },
+            "sensor.aspect_influence": {
+                "value_basis": "engineering_estimate",
+                "note": "0.0 disables RCS aspect-angle modeling, consistent with a simple navigation radar"
+            },
+            "sensor.doppler_notch_width": {
+                "value_basis": "engineering_estimate",
+                "note": "0.0: not applicable to a simple navigation radar"
+            },
+            "sensor.reference_snr_db": {
+                "value_basis": "proxy",
+                "note": "radar-equation calibration constant paired with reference_range_m/reference_rcs_m2; no public figure"
+            },
+            "sensor.reference_range_m": {
+                "value_basis": "proxy",
+                "note": "paired radar-equation calibration constant, see reference_snr_db"
+            },
+            "sensor.reference_rcs_m2": {
+                "value_basis": "engineering_estimate",
+                "note": "5 m^2 generic reference RCS, engine convention used across this packet's naval radar records"
+            },
+            "sensor.antenna_height_m": {
+                "value_basis": "proxy",
+                "note": "no public mast height; engineering estimate typical of a large auxiliary hull's navigation mast"
+            },
+            "sensor.target_height_bias_m": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate for a short-range navigation radar"
+            },
+            "sensor.environment_domain": {
+                "value_basis": "engineering_estimate",
+                "note": "surface/maritime domain selected for a shipborne navigation radar per authoring standard"
+            },
+            "sensor.sea_clutter_enabled": {
+                "value_basis": "engineering_estimate",
+                "note": "disabled, consistent with this packet's simplified detection model"
+            },
+            "sensor.enable_ducting": {
+                "value_basis": "engineering_estimate",
+                "note": "standard engine atmospheric-ducting toggle, enabled with minimal gain/bonus consistent with a short-range navigation radar"
+            },
+            "sensor.ducting_gain_factor": {
+                "value_basis": "proxy",
+                "note": "engineering estimate, minimal for a short-range navigation radar"
+            },
+            "sensor.ducting_max_bonus_m": {
+                "value_basis": "proxy",
+                "note": "engineering estimate, minimal for a short-range navigation radar"
+            }
+        },
+        "modeling_notes": [
+            "Shared across Type 901 and Type 903A per the repo's own precedent of reusing one generic navigation-radar module across multiple auxiliary hull types (mirrors CSG_US_Oiler_Navigation_Radar being reused on both tao205_john_lewis.json and taoe6_supply.json)."
+        ]
+    }
+}
