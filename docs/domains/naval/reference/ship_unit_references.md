@@ -8,7 +8,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/domains/naval/reference/ship_unit_references.md`
 Owner: `domains/naval`
-Last verified: `2026-08-08`
+Last verified: `2026-09-29`
 
 Status: maintained ship-unit reference baseline for the naval specialization.
 
@@ -137,12 +137,21 @@ The following remain explicit runtime estimates or temporary modeling rules:
   the generic `Ammo` component still exists elsewhere but is not the sole naval
   inventory surface
 
-Current horizon-based runtime examples:
+Horizon-derived configured ranges (historical rationale):
 
-- `DDG-51` surface search:
-  `3.57 * (sqrt(25 m owner antenna) + sqrt(5 m target)) = 25.8 nmi = 46.3 km`
-- `T-AKE-1` navigation/surface search:
-  `3.57 * (sqrt(15 m owner antenna) + sqrt(5 m target)) = 19.6 nmi = 36.3 km`
+- `DDG-51` surface search `max_range` 46.3 km was derived as
+  `3.57 * (sqrt(25 m owner antenna) + sqrt(5 m target)) = 25.8 nmi`
+- `T-AKE-1` navigation/surface search `max_range` 36.3 km was derived as
+  `3.57 * (sqrt(15 m owner antenna) + sqrt(5 m target)) = 19.6 nmi`
+
+Since `2026-09-29` the configured `max_range` is only an instrumented-range
+ceiling. Every line-of-sight sensor is also gated by the shared smooth-earth
+horizon of the [Geodetic Frame](../../../systems/physics/work/active/geodetic_frame/README.md)
+package: the 4/3 effective earth for radio-frequency sensors and the NGA
+Pub. No. 9 optical factor for visual and infrared sensors, over the sensor's
+mount height and the target's radar-significant height. For the 25 m SPS-67
+antenna against a `T-AKE-1` (7.5 m radar-significant height) that horizon is
+31.9 km, so the horizon, not `max_range`, binds surface detection.
 
 These should be read as maintained modeling assumptions, not as doctrine claims.
 
