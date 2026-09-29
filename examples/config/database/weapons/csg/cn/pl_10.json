@@ -1,0 +1,97 @@
+{
+    "name": "CSG_CN_PL-10",
+    "type": "Missile",
+    "mass_kg": 105.0,
+    "max_flight_time_s": 45.0,
+    "flight_model": {
+        "max_speed": 4.0,
+        "max_g": 60.0,
+        "max_turn_rate": 40.0
+    },
+    "guidance": {
+        "type": "Infrared",
+        "active_seek_range": 20000.0,
+        "pn_los_rate_source": "world_los_history",
+        "target_kinematics_estimator": "world_cva",
+        "capture_guidance_mode": "disabled",
+        "target_tracker_alpha": 0.3,
+        "target_tracker_beta": 0.04,
+        "target_tracker_gamma": 0.6,
+        "nav_gain": 4.5,
+        "apn_target_accel_gain": 0.15,
+        "autopilot_tau_s": 0.05,
+        "max_accel_response_g_per_s": 120.0
+    },
+    "warhead": {
+        "type": "blast_fragmentation",
+        "mass_kg": 33.0,
+        "lethal_radius": 8.0,
+        "damage": 130.0,
+        "explosive_mass_kg": 20.0,
+        "case_mass_kg": 13.0,
+        "projection_radius_fraction": 0.5,
+        "projection_max_radius_m": 10.0,
+        "projection_max_projected_hitboxes": 2,
+        "provenance": "33 kg warhead per csg-cn-pl10-gmn (C-only). Explosive/case split and damage are engineering-estimate surrogates following the repo aim_9x.json short-range IR AAM pattern."
+    },
+    "fuze": {
+        "type": "proximity",
+        "trigger_radius_m": 6.0,
+        "delay_s": 0.0,
+        "reliability": 0.9,
+        "provenance": "No public fuze data; engineering-estimate proximity fuze scaffold typical of a modern IIR-seeker short-range AAM."
+    },
+    "_real_world": {
+        "designation": "PL-10 (PLA service variant); export variant PL-10E",
+        "role": "Short-range, high-off-boresight imaging-infrared (IIR) dogfight AAM",
+        "carrier_platforms": "J-35 (internal, per CCTV-model reporting, C), J-15T/J-15 (wingtip rails, B) (csg-cn-j35-19fortyfive C; csg-cn-j35-scmp-cctv B; csg-cn-j15t-aviationist B for PL-10 wingtip rails)",
+        "range_km": "PL-10E export: 20 km, up to ~30 km under favourable launch conditions (csg-cn-pl10-armyrec, B/export, Zhuhai 2016/2018)",
+        "seeker": "Multi-element imaging IR, +/-90 degree off-boresight, helmet-cued (csg-cn-pl10-armyrec, B/export)",
+        "airframe_control": "Thrust-vector control (csg-cn-pl10-armyrec, csg-cn-pl10-gs, B)",
+        "speed": "~Mach 4 (csg-cn-pl10-gmn, C-only)",
+        "dimensions_mass": "3.0 m x 160 mm; ~105 kg, alternative listings up to 110 kg (csg-cn-pl10-wiki C; csg-cn-pl10-armyrec B/export)",
+        "warhead_real": "~33 kg (csg-cn-pl10-gmn, C-only)",
+        "ioc": "~2015 (csg-cn-pl10-wiki, C-only)",
+        "status": "functional weapon, wired to J-35/J-15T/J-15D default_loadout per aircraft records"
+    },
+    "_provenance": {
+        "sources": ["csg-cn-pl10-armyrec", "csg-cn-j35-19fortyfive", "csg-cn-j35-scmp-cctv", "csg-cn-j15t-aviationist", "csg-cn-pl10-gmn", "csg-cn-pl10-wiki", "csg-cn-pl10-gs"],
+        "parameters": {
+            "warhead.type": {"value_basis": "engineering_estimate", "note": "blast_fragmentation is the standard short-range AAM warhead family assumed following the repo's aim_9x.json pattern; no PRC source describes detonation mechanism"},
+            "warhead.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "fuze.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "mass_kg": {"value_basis": "sourced", "source_ids": ["csg-cn-pl10-wiki", "csg-cn-pl10-armyrec"], "tier": "C / B, export", "note": "105 kg (alternative listings up to 110 kg); 105 kg used per Wikipedia, cross-referenced by the B-tier ArmyRecognition export figures for dimensions"},
+            "max_flight_time_s": {"value_basis": "proxy", "source_ids": ["csg-cn-pl10-armyrec"], "tier": "B, export", "note": "engineering estimate derived from the sourced PL-10E export range (20-30 km) at the sourced ~Mach 4 speed, appropriate for a short-range dogfight AAM's short powered flight time"},
+            "flight_model.max_speed": {"value_basis": "sourced", "source_ids": ["csg-cn-pl10-gmn"], "tier": "C-only", "note": "~Mach 4 per Global Military Network"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "source_ids": ["csg-cn-pl10-armyrec"], "tier": "proxy", "note": "no public maneuver-load figure; engineering estimate reflecting the sourced thrust-vector-control airframe (ArmyRecognition, B) typical of a modern high-off-boresight IIR AAM"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "source_ids": ["csg-cn-pl10-armyrec"], "tier": "proxy", "note": "no public figure; engineering estimate reflecting the sourced +/-90 degree off-boresight seeker and thrust-vector control, implying very high agility"},
+            "guidance.type": {"value_basis": "sourced", "source_ids": ["csg-cn-pl10-armyrec"], "tier": "B, export", "note": "Infrared: multi-element imaging IR seeker per ArmyRecognition"},
+            "guidance.active_seek_range": {"value_basis": "sourced", "source_ids": ["csg-cn-pl10-armyrec"], "tier": "B, export", "note": "20 km sourced PL-10E export range (up to ~30 km under favourable conditions) used directly as the seeker's engagement envelope"},
+            "guidance.pn_los_rate_source": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default"},
+            "guidance.target_kinematics_estimator": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default"},
+            "guidance.capture_guidance_mode": {"value_basis": "engineering_estimate", "note": "disabled: no terminal capture-guidance submode sourced or modeled"},
+            "guidance.target_tracker_alpha": {"value_basis": "engineering_estimate", "note": "standard alpha-beta-gamma tracker filter constant, engine convention shared across missile records"},
+            "guidance.target_tracker_beta": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.target_tracker_gamma": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.nav_gain": {"value_basis": "engineering_estimate", "note": "proportional-navigation gain scaffold; no public guidance-law constant, set high reflecting the sourced high-off-boresight helmet-cued engagement envelope"},
+            "guidance.apn_target_accel_gain": {"value_basis": "engineering_estimate", "note": "augmented-PN target-acceleration compensation gain scaffold, not sourced per-weapon"},
+            "guidance.autopilot_tau_s": {"value_basis": "engineering_estimate", "source_ids": ["csg-cn-pl10-armyrec"], "tier": "proxy", "note": "very fast response time-constant reflecting the sourced thrust-vector-control airframe"},
+            "guidance.max_accel_response_g_per_s": {"value_basis": "engineering_estimate", "note": "autopilot response-rate scaffold consistent with flight_model.max_g and the sourced thrust-vector control"},
+            "warhead.mass_kg": {"value_basis": "sourced", "source_ids": ["csg-cn-pl10-gmn"], "tier": "C-only", "note": "~33 kg per Global Military Network"},
+            "warhead.lethal_radius": {"value_basis": "proxy", "note": "engineering-estimate surrogate, no public figure, scaled for a compact short-range dogfight AAM warhead"},
+            "warhead.damage": {"value_basis": "proxy", "note": "engineering-estimate surrogate, no public damage-effectiveness figure"},
+            "warhead.explosive_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split of the sourced 33 kg total warhead mass, no public split figure"},
+            "warhead.case_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split, see explosive_mass_kg"},
+            "warhead.projection_radius_fraction": {"value_basis": "proxy", "note": "copied from the repo's short-range-AAM projection-geometry convention"},
+            "warhead.projection_max_radius_m": {"value_basis": "proxy", "note": "scaled from this warhead's lethal_radius per repo convention"},
+            "warhead.projection_max_projected_hitboxes": {"value_basis": "proxy", "note": "copied from the repo short-range-AAM template pattern"},
+            "fuze.type": {"value_basis": "engineering_estimate", "note": "no public fuze data; proximity fuze is standard convention for a modern IIR-seeker AAM"},
+            "fuze.trigger_radius_m": {"value_basis": "engineering_estimate", "note": "no public figure; engineering-estimate scaffold, smaller than PL-15's given PL-10's smaller warhead/closer engagement envelope"},
+            "fuze.delay_s": {"value_basis": "engineering_estimate", "note": "0.0, consistent with a proximity-triggered fuze"},
+            "fuze.reliability": {"value_basis": "engineering_estimate", "note": "no public reliability figure; engineering-estimate scaffold value"}
+        },
+        "modeling_notes": [
+            "Wired into the default_loadout of J-35 (internal), J-15T, and J-15D (wingtip rails) per this packet's aircraft records."
+        ]
+    }
+}

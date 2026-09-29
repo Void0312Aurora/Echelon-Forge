@@ -1,0 +1,443 @@
+{
+    "name": "CSG_CN_KJ-600",
+    "type": "C2Node",
+    "airframe": {
+        "empty_mass_kg": 15500.0,
+        "max_fuel_kg": 6000.0,
+        "drag_coefficient": 0.032,
+        "reference_area": 55.0,
+        "length_m": 18.1,
+        "wingspan_m": 25.0,
+        "height_m": 5.7,
+        "configuration": "Conventional"
+    },
+    "health": {
+        "current_hp": 110.0,
+        "max_hp": 110.0
+    },
+    "damage_model": {
+        "vulnerability": {
+            "synthetic": true,
+            "calibrated": false,
+            "pk_authority": false,
+            "deterministic_fuze_authority": false,
+            "provenance": "CSG S0-C synthetic carrier-AEW vulnerability scaffold (packet 4, solo worker); geometry scaled from real KJ-600 dimensions (Tier C, close to E-2D analogue), mechanism thresholds proxied from the repo e2d_hawkeye.json C2Node template pattern; requires calibration before deterministic fuze/Pk claims",
+            "evidence_dataset_ref": "",
+            "calibration_status": "unvalidated",
+            "blast_scale": 1.0,
+            "fragmentation_scale": 1.0,
+            "continuous_rod_scale": 1.0,
+            "hit_to_kill_scale": 1.0,
+            "nose_aspect_scale": 1.0,
+            "beam_aspect_scale": 1.0,
+            "tail_aspect_scale": 1.0,
+            "high_closure_scale": 1.0,
+            "low_closure_scale": 1.0,
+            "near_miss_scale": 1.0,
+            "direct_hit_scale": 1.0
+        },
+        "hitboxes": [
+            {
+                "offset": [6.5, 0.0, 0.3],
+                "size": [3.5, 1.8, 1.6],
+                "armor": 2.5,
+                "systems": ["cockpit", "avionics"],
+                "components": [
+                    {
+                        "name": "flight_crew_station",
+                        "system": "cockpit",
+                        "offset": [7.0, 0.0, 0.5],
+                        "size": [1.6, 1.6, 1.2],
+                        "armor": 3.5,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 1.00, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "nose_avionics_bay",
+                        "system": "avionics",
+                        "offset": [6.0, 0.0, 0.0],
+                        "size": [1.2, 1.2, 0.7],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 0.95, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [1.0, 0.0, 1.4],
+                "size": [4.0, 3.0, 1.5],
+                "armor": 2.0,
+                "systems": ["radar", "sensor", "avionics"],
+                "components": [
+                    {
+                        "name": "dorsal_aesa_radome",
+                        "system": "radar_avionics",
+                        "offset": [1.0, 0.0, 2.0],
+                        "size": [3.5, 2.6, 0.8],
+                        "armor": 1.5,
+                        "threshold_scale": 1.30,
+                        "mechanism_thresholds": {"blast": 0.70, "fragmentation": 1.35, "blast_fragmentation": 1.25, "continuous_rod": 0.80, "hit_to_kill": 1.40},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "radar_rotodome_drive_mechanism",
+                        "system": "radar_avionics",
+                        "offset": [1.0, 0.0, 1.3],
+                        "size": [0.6, 0.6, 0.5],
+                        "armor": 2.5,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.20, "blast_fragmentation": 1.10, "continuous_rod": 0.90, "hit_to_kill": 1.25},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.5, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    }
+                ]
+            },
+            {
+                "offset": [0.5, 0.0, 0.0],
+                "size": [4.0, 2.0, 1.4],
+                "armor": 3.0,
+                "systems": ["fuel", "avionics", "data_link", "mission_system"],
+                "components": [
+                    {
+                        "name": "mission_console_bay",
+                        "system": "mission_avionics",
+                        "offset": [1.0, 0.0, -0.1],
+                        "size": [2.4, 1.6, 0.9],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 0.95, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "mission_operator_stations",
+                        "redundancy_group": 6.0,
+                        "redundancy_weight": 0.33,
+                        "critical": false
+                    },
+                    {
+                        "name": "center_fuel_tank",
+                        "system": "fuel",
+                        "offset": [0.3, 0.0, 0.3],
+                        "size": [3.2, 1.6, 0.6],
+                        "armor": 3.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.75, "fragmentation": 1.05, "blast_fragmentation": 0.95, "continuous_rod": 0.85, "hit_to_kill": 1.10},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "data_link_terminal",
+                        "system": "data_link",
+                        "offset": [0.8, -0.6, 0.2],
+                        "size": [0.5, 0.4, 0.35],
+                        "armor": 3.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.20, "blast_fragmentation": 1.10, "continuous_rod": 0.90, "hit_to_kill": 1.25},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "flight_control_computer",
+                        "system": "flight_control",
+                        "offset": [0.2, 0.3, -0.3],
+                        "size": [0.4, 0.4, 0.3],
+                        "armor": 3.5,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 1.00, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    }
+                ]
+            },
+            {
+                "offset": [1.5, 7.5, -0.2],
+                "size": [4.0, 6.0, 0.5],
+                "armor": 2.0,
+                "systems": ["engine", "wing", "structure"],
+                "components": [
+                    {
+                        "name": "left_turboprop_engine",
+                        "system": "engine",
+                        "offset": [2.0, 6.5, 0.0],
+                        "size": [1.8, 0.7, 0.7],
+                        "armor": 2.5,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 0.90, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "engine_cores",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 0.5,
+                        "critical": false
+                    },
+                    {
+                        "name": "left_propeller_gearbox",
+                        "system": "propulsion_transmission",
+                        "offset": [2.9, 6.5, 0.0],
+                        "size": [0.6, 0.5, 0.5],
+                        "armor": 3.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 0.90, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "engine", "target_system": "engine", "edge_type": "structural_support", "scale": 0.8, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    },
+                    {
+                        "name": "wing_fuel_cells",
+                        "system": "wing_fuel",
+                        "offset": [1.2, 8.0, -0.1],
+                        "size": [3.0, 5.0, 0.3],
+                        "armor": 2.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.75, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 0.85, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "wing_fold_hinge",
+                        "system": "wing_structure",
+                        "offset": [1.5, 9.5, 0.0],
+                        "size": [0.5, 0.5, 0.35],
+                        "armor": 3.5,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 1.00, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "wing_fold_hinges",
+                        "redundancy_group": 3.0,
+                        "redundancy_weight": 0.5,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.6, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [1.5, -7.5, -0.2],
+                "size": [4.0, 6.0, 0.5],
+                "armor": 2.0,
+                "systems": ["engine", "wing", "structure"],
+                "components": [
+                    {
+                        "name": "right_turboprop_engine",
+                        "system": "engine",
+                        "offset": [2.0, -6.5, 0.0],
+                        "size": [1.8, 0.7, 0.7],
+                        "armor": 2.5,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 0.90, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "engine_cores",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 0.5,
+                        "critical": false
+                    },
+                    {
+                        "name": "right_propeller_gearbox",
+                        "system": "propulsion_transmission",
+                        "offset": [2.9, -6.5, 0.0],
+                        "size": [0.6, 0.5, 0.5],
+                        "armor": 3.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 0.90, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "engine", "target_system": "engine", "edge_type": "structural_support", "scale": 0.8, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    },
+                    {
+                        "name": "wing_fuel_cells_right",
+                        "system": "wing_fuel",
+                        "offset": [1.2, -8.0, -0.1],
+                        "size": [3.0, 5.0, 0.3],
+                        "armor": 2.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.75, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 0.85, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "wing_fold_hinge_right",
+                        "system": "wing_structure",
+                        "offset": [1.5, -9.5, 0.0],
+                        "size": [0.5, 0.5, 0.35],
+                        "armor": 3.5,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 1.00, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "wing_fold_hinges",
+                        "redundancy_group": 3.0,
+                        "redundancy_weight": 0.5,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.6, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [-4.0, 0.0, 0.8],
+                "size": [2.5, 4.0, 2.2],
+                "armor": 3.0,
+                "systems": ["tail", "structure"],
+                "components": [
+                    {
+                        "name": "tailhook_assembly",
+                        "system": "tail_hook",
+                        "offset": [-4.6, 0.0, -0.4],
+                        "size": [0.6, 0.35, 0.4],
+                        "armor": 5.0,
+                        "threshold_scale": 0.95,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.05, "blast_fragmentation": 0.95, "continuous_rod": 1.05, "hit_to_kill": 1.10},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "quad_fin_tail_structure",
+                        "system": "tail_structure",
+                        "offset": [-4.0, 0.0, 1.6],
+                        "size": [1.6, 3.6, 1.6],
+                        "armor": 3.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 1.05, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "elevator_actuator",
+                        "system": "flight_control_hydraulic",
+                        "offset": [-4.4, 0.0, 0.9],
+                        "size": [0.3, 0.4, 0.3],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 0.95, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    }
+                ]
+            }
+        ]
+    },
+    "flight_model": {
+        "max_speed": 193.0,
+        "min_speed": 55.0,
+        "max_turn_rate": 6.0,
+        "max_climb_rate": 8.0,
+        "max_accel": 2.5,
+        "max_g": 3.0,
+        "min_g": -1.0,
+        "takeoff_speed": 65.0,
+        "landing_speed": 55.0,
+        "taxi_turn_rate": 8.0
+    },
+    "landing_gear": {
+        "can_use_unpaved": false,
+        "rolling_friction_coeff": 0.02,
+        "max_load_factor": 6.0,
+        "contact_height_m": 1.8
+    },
+    "engine_ref": "CSG_CN_FWJ-6C",
+    "sensor_ref": "CSG_CN_KJ-600_AESA",
+    "rcs_profile_ref": "CSG_CN_KJ-600_RCS",
+    "has_data_link": true,
+    "data_link_network_id": 2,
+    "has_command_link": true,
+    "command_link": {
+        "latency_s": 0.12,
+        "drop_prob": 0.015
+    },
+    "hardpoints": [],
+    "default_loadout": {},
+    "has_ammo": false,
+    "_real_world": {
+        "designation": "KJ-600",
+        "role": "China's first carrier-based fixed-wing AEW&C aircraft",
+        "carrier_operation": "EM catapult launch and arrested landing; catapult-only per size/weight class (csg-cn-fujian-dod-cmpr2025, A; csg-cn-kj600-analysis, B)",
+        "configuration": "Twin turboprop, high wing, folding wings, four-fin tail, dorsal radome (csg-cn-kj600-analysis, B)",
+        "crew": "4-6 persons (csg-cn-kj600-analysis, B; Deagel gives 6, C)",
+        "dimensions": "Length/span/height 18.1/25/5.7m (csg-cn-kj600-deagel, C-only, close to E-2D)",
+        "mass": "Gross/MTOW 25,000-30,500kg (CASI 25-30t, B; Deagel 30,500kg, C; GlobalSecurity ~20t, C-only; Deagel's 25,400kg empty vs 30,500kg MTOW combination flagged internally implausible in the OOB doc)",
+        "internal_fuel": "~6,000kg (csg-cn-kj600-deagel, C-only)",
+        "engines": "2x FWJ-6C (WoJiang-6C) turboprops, 6-blade propellers (csg-cn-kj600-analysis, B; 3,805kW each is C-only wiki figure)",
+        "speed": "Max 693km/h as published (C); cruise ~500km/h (C); service ceiling 15,000m as published but flagged implausible for a turboprop AEW vs E-2D's ~10,500m -- engineering_estimate 9,000-11,000m used internally by the OOB doc, this record uses the flight envelope consistent with that engineering_estimate ceiling rather than the implausible published figure",
+        "ferry_range": "2,800km (csg-cn-kj600-deagel, C-only)",
+        "radius_of_operation": "500nmi (csg-cn-kj600-deagel, C-only)",
+        "endurance": "~5h on station per Chinese commentary (C-only); engineering_estimate 4-6h unrefuelled by E-2C/D analogy",
+        "radar": "AESA in dorsal radome, institute attribution unconfirmed, array layout not public; rotating radome two AESA faces per wiki (C) vs three fixed faces per social media (C)",
+        "detection_range": "Not public; Chinese claims >400km vs fighter/~270km vs cruise missile/320km stealth tracking are propaganda-grade per the OOB doc's own words; engineering_estimate radar horizon from 9km altitude to a sea-skimmer target ≈ 4.12×(sqrt(9000)+sqrt(10)) ≈ 400km; practical 300-400km vs a ~5m2 fighter, less vs LO targets",
+        "track_capacity": ">200 tracks (C-only)",
+        "fleet_status": "3+ airframes in Fujian footage 2025; 6+ built by 2026 (csg-cn-kj600-flightglobal, B/C, relays a paywalled Apr 2026 FlightGlobal report)",
+        "status": "content_only_full_damage_model; unarmed C2Node per e2d_hawkeye.json precedent"
+    },
+    "_provenance": {
+        "sources": ["csg-cn-fujian-dod-cmpr2025", "csg-cn-kj600-analysis", "csg-cn-kj600-deagel", "csg-cn-kj600-flightglobal"],
+        "modeling_note": "Full hand-authored damage model (6 hitboxes) following the e2d_hawkeye.json C2Node template pattern directly, since KJ-600 is the PLAN's E-2D-analogous carrier AEW aircraft. Geometry scaled from the sourced 18.1m length/25m wingspan/5.7m height (Tier C, Deagel). Dorsal AESA radome and its rotodome drive mechanism modeled as the mission-critical sensor hitbox, distinct from a separate mission-console-bay component reflecting the sourced 4-6 person crew (redundancy_group_id 'mission_operator_stations', weight 0.33 reflecting a 3-way console redundancy consistent with the lower end of the sourced crew count). Twin engines share redundancy_group_id 'engine_cores'. Wing-fold hinges included per the task's carrier fixed-wing requirement; tailhook included on the tail hitbox. No weapons per C2Node convention (hardpoints/default_loadout empty, has_ammo false), matching e2d_hawkeye.json.",
+        "parameters": {
+            "airframe.empty_mass_kg": {"value_basis": "engineering_estimate", "source_ids": ["csg-cn-kj600-deagel"], "tier": "proxy", "note": "no reliable empty-mass figure; Deagel's own 25,400kg empty figure is flagged implausible against its own 30,500kg MTOW claim by the OOB doc, so this record uses an independent engineering estimate (~55% of the engineering-estimate 28,000kg MTOW below) rather than propagate the flagged-implausible Deagel figure"},
+            "airframe.max_fuel_kg": {"value_basis": "sourced", "source_ids": ["csg-cn-kj600-deagel"], "tier": "C-only", "note": "~6,000kg internal fuel estimate"},
+            "airframe.drag_coefficient": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering estimate typical of a high-wing twin-turboprop AEW airframe (E-2D analogue); no public figure"},
+            "airframe.reference_area": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering estimate scaled from the sourced 25m wingspan by analogy to the E-2D's wing-area-to-span ratio; no public wing area figure"},
+            "airframe.length_m": {"value_basis": "sourced", "source_ids": ["csg-cn-kj600-deagel"], "tier": "C", "note": "18.1m, close to E-2D class"},
+            "airframe.wingspan_m": {"value_basis": "sourced", "source_ids": ["csg-cn-kj600-deagel"], "tier": "C", "note": "25m"},
+            "airframe.height_m": {"value_basis": "sourced", "source_ids": ["csg-cn-kj600-deagel"], "tier": "C", "note": "5.7m"},
+            "airframe.configuration": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "Conventional: not a Flanker-derivative; irrelevant regardless since this record hand-authors its own full damage_model"},
+            "flight_model.max_speed": {"value_basis": "engineering_estimate", "source_ids": ["csg-cn-kj600-deagel"], "tier": "C-est", "note": "193 m/s (~693km/h) is the published figure per the source, converted via 1km/h=0.277778m/s (693 x 0.277778 = 192.6 m/s); used directly since flight_model.max_speed itself is not the flagged-implausible parameter (only service_ceiling was flagged in the OOB doc), retained as a C-only published figure"},
+            "flight_model.min_speed": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public stall speed; engineering estimate typical of a twin-turboprop AEW aircraft (E-2D analogue), consistent with catapult-launch minimum airspeed"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate typical of a large twin-turboprop AEW aircraft, much lower than a fighter"},
+            "flight_model.max_climb_rate": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate typical of a heavy twin-turboprop AEW aircraft"},
+            "flight_model.max_accel": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate consistent with max_g"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate typical of a non-combat AEW aircraft, much lower than a fighter"},
+            "flight_model.min_g": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate typical of a non-combat AEW aircraft"},
+            "flight_model.takeoff_speed": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate for a catapult-assisted carrier launch speed typical of the E-2D class"},
+            "flight_model.landing_speed": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate for an arrested carrier landing approach speed typical of the E-2D class"},
+            "flight_model.taxi_turn_rate": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo e2d_hawkeye.json convention; no public figure"},
+            "landing_gear.can_use_unpaved": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "false: carrier-based fixed-wing aircraft, not designed for unpaved-strip operation"},
+            "landing_gear.rolling_friction_coeff": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo e2d_hawkeye.json convention; no public figure"},
+            "landing_gear.max_load_factor": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "engineering estimate reflecting reinforced carrier-landing gear implied by the sourced arrested-landing operation; no public figure"},
+            "landing_gear.contact_height_m": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "engineering estimate scaled from this record's sourced airframe.height_m; no public figure"},
+            "engine_ref": {"value_basis": "sourced", "source_ids": ["csg-cn-kj600-analysis"], "tier": "B", "note": "2x FWJ-6C turboprops confirmed; see the CSG_CN_FWJ-6C engine module record's own provenance for the full sourcing chain including the C-only 3,805kW-each wiki figure"},
+            "sensor_ref": {"value_basis": "sourced", "source_ids": ["csg-cn-kj600-analysis"], "tier": "B", "note": "AESA in dorsal radome confirmed; see the CSG_CN_KJ-600_AESA module record's own provenance for the full sourcing chain, including its explicit rejection of the propaganda-grade Chinese detection-range claims in favor of a radar-horizon engineering_estimate"},
+            "rcs_profile_ref": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "see the CSG_CN_KJ-600_RCS module record's own provenance"},
+            "hardpoints": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "empty: unarmed AEW aircraft, matching the e2d_hawkeye.json C2Node precedent; no public evidence of any weapon carriage on KJ-600"},
+            "default_loadout": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "empty, matching hardpoints"},
+            "has_ammo": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "false: unarmed AEW aircraft, matching the e2d_hawkeye.json C2Node precedent"},
+            "has_data_link": {"value_basis": "sourced", "source_ids": ["csg-cn-kj600-analysis"], "tier": "B", "note": "true: AEW&C's core function requires a data link to relay track data to the fleet"},
+            "data_link_network_id": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "2 = PLAN per the task's fixed convention"},
+            "has_command_link": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "true: standard convention, especially important for a C2Node that would relay command guidance to strike aircraft/missiles in a NIFC-CA-analogous role"},
+            "command_link.latency_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo e2d_hawkeye.json convention, slightly better reflecting the AEW C2 role; no public figure"},
+            "command_link.drop_prob": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy; no public figure"},
+            "damage_model": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "single consolidated entry per authoring_standard: all hitbox/component geometry, offsets, sizes, armor, thresholds, and redundancy values are synthetic engineering scaffolding scaled from the sourced 18.1m length/25m wingspan/5.7m height, following the repo e2d_hawkeye.json C2Node template pattern (6 hitboxes: nose/cockpit+avionics, dorsal AESA radome+rotodome drive as the mission-critical sensor hitbox, center fuselage+mission-console-bay+fuel+data-link, twin engine/wing assemblies sharing redundancy_group_id 'engine_cores' with fold hinges, tail with quad-fin structure+tailhook). Not independently sourced; consistent with every other aircraft damage model in this repo"}
+        }
+    }
+}

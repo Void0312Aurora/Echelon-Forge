@@ -1,0 +1,62 @@
+{
+    "name": "CSG_CN_Z-20F_Dipping_Sonar",
+    "type": "Sensor",
+    "sonar": {
+        "mode": "Active",
+        "max_range_m": 5000.0,
+        "scan_period_s": 20.0,
+        "detection_threshold_db": 9.0,
+        "track_memory_s": 30.0,
+        "bearing_noise_std_deg": 2.2,
+        "range_noise_std_m": 160.0,
+        "directivity_gain_db": 10.0,
+        "self_noise_per_speed_db": 0.0,
+        "ambient_noise_db": 65.0,
+        "source_level_reference_db": 215.0,
+        "source_level_speed_factor_db": 0.0,
+        "transmission_loss_alpha_db_per_km": 0.1,
+        "layer_break_penalty_db": 4.0,
+        "convergence_zone_bonus_m": 0.0,
+        "baffle_exclusion_deg": 0.0,
+        "ownship_quieting_speed_mps": 0.0,
+        "active_ping_source_level_db": 215.0,
+        "confirm_hits_m": 2,
+        "confirm_window_n": 3,
+        "passive_only": false,
+        "bearing_only": false
+    },
+    "_real_world": {
+        "class": "Dipping (variable-depth) sonar, designation not publicly disclosed",
+        "variant_scope": "Z-20F naval ASW helicopter dipping sonar",
+        "hulls": [],
+        "public_equipment": ["Dipping sonar confirmed by Global Times (state media, A-adjacent for the type's existence) and multiple B/C-tier sources (Defence Security Asia, globalmilitary.net); ALFS-like description in the OOB page's uncertainty note; designation and detection performance not public"]
+    },
+    "_provenance": {
+        "modeling_note": "Dipping sonar for Z-20F per the task's requirement. Global Times (PRC state media) confirms the Z-20F carries 'maritime-search radar, sonobuoys, dipping sonar and anti-submarine torpedoes' for 'open-seas anti-submarine warfare' — the clearest available confirmation of the sensor's existence and role, though without any designation or performance figures. The OOB page separately flags the equipment list (dipping sonar, MAD, sonobuoy launcher) as C-only pending the Global Times confirmation obtained in this packet's web search. No sonar-equation parameters (range, source level, noise) are public for any PLAN airborne dipping sonar. All numeric fields are engineering_estimate proxies copied from the repo CSG_US_AQS-22_ALFS record (aircraft/modules/sensors/csg/us/aqs_22_alfs.json), the MH-60R's dipping sonar and the closest analogous system in the database, nudged marginally downward (max_range_m, source levels) reflecting the general one-to-two-generation gap in publicly assessed PLAN ASW sensor maturity versus the US Navy's AQS-22, consistent with the OOB page's broader characterization of PLAN naval-helicopter ASW equipment as less mature/less well-documented than USN equivalents.",
+        "sources": ["csg-cn-z20f-globaltimes-asw", "csg-cn-z20f-armyrec-sonar", "csg-cn-z20f-dsa-radar"],
+        "parameters": {
+            "sonar.mode": {"value_basis": "sourced", "source_ids": ["csg-cn-z20f-globaltimes-asw"], "tier": "B", "note": "Active: Global Times confirms a 'dipping sonar' fit for open-seas ASW, which by definition operates in active (ping) mode for depth-independent detection, matching the repo CSG_US_AQS-22_ALFS record's convention"},
+            "sonar.max_range_m": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate proxy scaled down from the repo CSG_US_AQS-22_ALFS record's 5,500 m, reflecting the general assessed maturity gap in PLAN airborne ASW sensors versus the USN AQS-22; no public figure"},
+            "sonar.scan_period_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_AQS-22_ALFS record; no public figure"},
+            "sonar.detection_threshold_db": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy close to the repo CSG_US_AQS-22_ALFS record, nudged up slightly (harder to detect) consistent with the assessed maturity gap; no public figure"},
+            "sonar.track_memory_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_AQS-22_ALFS record; no public figure"},
+            "sonar.bearing_noise_std_deg": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy close to the repo CSG_US_AQS-22_ALFS record, nudged up slightly; no public figure"},
+            "sonar.range_noise_std_m": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy close to the repo CSG_US_AQS-22_ALFS record, nudged up slightly; no public figure"},
+            "sonar.directivity_gain_db": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo CSG_US_AQS-22_ALFS record; no public figure"},
+            "sonar.self_noise_per_speed_db": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo CSG_US_AQS-22_ALFS record"},
+            "sonar.ambient_noise_db": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo CSG_US_AQS-22_ALFS record (environmental parameter, not platform-specific)"},
+            "sonar.source_level_reference_db": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate proxy scaled down slightly from the repo CSG_US_AQS-22_ALFS record's 220.0 dB, same maturity-gap reasoning as max_range_m; no public figure"},
+            "sonar.source_level_speed_factor_db": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo CSG_US_AQS-22_ALFS record"},
+            "sonar.transmission_loss_alpha_db_per_km": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo CSG_US_AQS-22_ALFS record (physical propagation constant, not platform-specific)"},
+            "sonar.layer_break_penalty_db": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo CSG_US_AQS-22_ALFS record (environmental parameter, not platform-specific)"},
+            "sonar.convergence_zone_bonus_m": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo CSG_US_AQS-22_ALFS record"},
+            "sonar.baffle_exclusion_deg": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo CSG_US_AQS-22_ALFS record"},
+            "sonar.ownship_quieting_speed_mps": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo CSG_US_AQS-22_ALFS record"},
+            "sonar.active_ping_source_level_db": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate proxy scaled down slightly, same basis as source_level_reference_db; no public figure"},
+            "sonar.confirm_hits_m": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo CSG_US_AQS-22_ALFS record (engine detection-confirmation convention, not platform-specific)"},
+            "sonar.confirm_window_n": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo CSG_US_AQS-22_ALFS record"},
+            "sonar.passive_only": {"value_basis": "sourced", "source_ids": ["csg-cn-z20f-globaltimes-asw"], "tier": "B", "note": "false: Global Times confirms a dipping (active) sonar, not a passive-only system, matching the repo CSG_US_AQS-22_ALFS record's convention"},
+            "sonar.bearing_only": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "false: proxy copied unchanged from the repo CSG_US_AQS-22_ALFS record; an active dipping sonar provides range as well as bearing"}
+        }
+    }
+}

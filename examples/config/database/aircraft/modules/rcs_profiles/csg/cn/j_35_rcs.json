@@ -1,0 +1,28 @@
+{
+    "name": "CSG_CN_J-35_RCS",
+    "type": "RCSProfile",
+    "rcs": {
+        "frontal_rcs": 0.01,
+        "side_rcs": 0.05,
+        "rear_rcs": 0.016,
+        "top_rcs": 0.04,
+        "bottom_rcs": 0.04
+    },
+    "_real_world": {
+        "class": "Carrier-based low-observable (5th-generation) stealth fighter, FC-31/J-31 lineage",
+        "variant_scope": "J-35 carrier fighter, clean/internal-loadout frontal aspect",
+        "hulls": [],
+        "public_equipment": ["No numeric RCS figure disclosed by PRC sources; qualitative state-media claim via CCTV/analyst commentary: 'smaller than a human palm' frontal RCS (Defence Security Asia, flyingmag, C-tier PR claim, directional/unverifiable)"]
+    },
+    "_provenance": {
+        "modeling_note": "RCS profile for J-35 per the task's requirement (LO airframe). No numeric RCS figure has ever been officially disclosed by PRC sources for the J-35 or its land-based J-31/FC-31 predecessor; the only public claim is the qualitative, unverifiable 'smaller than a human palm' state-media talking point (C-tier, directional, no units or aspect specified), which is explicitly not used as a numeric basis here. frontal_rcs is instead an engineering_estimate proxy set equal to the repo's own LO_Fighter_RCS generic profile (0.01 m2, F-22-class), reflecting the general expectation that a purpose-designed carrier stealth fighter contemporary with J-20-era LO shaping should sit in the same broad class as Western 5th-generation fighters, while flagging this as the packet's least-grounded RCS figure given China's claim is explicitly unverifiable and non-numeric. side/rear/top/bottom_rcs are scaled from frontal_rcs using the repo Standard_Fighter_RCS's own frontal:side:rear:top:bottom ratio (1:5:1.6:4:4), the same convention applied to CSG_US_FA18EF_RCS, since no directional-aspect data exists for any LO airframe in this class either; this likely understates the RCS reduction achieved at non-frontal aspects on a true LO design (real stealth aircraft typically show a much sharper frontal-vs-broadside RCS disparity than a legacy 4th-gen fighter), but no sourced ratio exists for a 5th-generation shape to use instead, so the same generic ratio is retained for consistency with the repo's established scaling convention rather than introducing an unsourced steeper ratio.",
+        "sources": ["csg-cn-j35-dsa-rcs", "csg-cn-j35-flyingmag-rcs"],
+        "parameters": {
+            "rcs.frontal_rcs": {"value_basis": "proxy", "source_ids": ["csg-cn-j35-dsa-rcs"], "tier": "proxy", "note": "engineering_estimate 0.01 m2, set equal to the repo LO_Fighter_RCS generic profile (F-22-class); the only public claim ('smaller than a human palm', Defence Security Asia/flyingmag, C-tier) is qualitative/directional/unverifiable and not used as a numeric basis; this is the packet's single highest outcome-risk proxy"},
+            "rcs.side_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:side ratio (~1:5), the same convention as CSG_US_FA18EF_RCS; likely understates true LO side-aspect reduction but no sourced 5th-gen ratio exists"},
+            "rcs.rear_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:rear ratio (~1:1.6); no public figure"},
+            "rcs.top_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:top ratio (~1:4); no public figure"},
+            "rcs.bottom_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:bottom ratio (~1:4); no public figure"}
+        }
+    }
+}

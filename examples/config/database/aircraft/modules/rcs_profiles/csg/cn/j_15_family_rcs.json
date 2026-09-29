@@ -1,0 +1,28 @@
+{
+    "name": "CSG_CN_J-15_Family_RCS",
+    "type": "RCSProfile",
+    "rcs": {
+        "frontal_rcs": 4.0,
+        "side_rcs": 20.0,
+        "rear_rcs": 6.4,
+        "top_rcs": 16.0,
+        "bottom_rcs": 16.0
+    },
+    "_real_world": {
+        "class": "Flanker-derivative twin-engine heavy fighter, non-stealth 4th/4.5-generation airframe (large twin-engine RAM-untreated Flanker shape)",
+        "variant_scope": "J-15/J-15T/J-15D carrier-based fighter family, clean/light-loadout frontal aspect",
+        "hulls": [],
+        "public_equipment": ["No numeric RCS figure officially disclosed; generically cited alongside other large Flanker-family fighters as a several-square-meter-class airframe in RCS comparison literature (GlobalSecurity.org-style tables cite baseline Su-27/J-11 Flanker RCS around 10-15 m2 class for non-treated variants)"]
+    },
+    "_provenance": {
+        "modeling_note": "RCS profile covering J-15T and J-15D per the task's requirement (RCS profile for 'J-15 family'). No PRC or independent numeric RCS figure exists for any J-15 variant. The J-15 is a large twin-engine Flanker derivative (heavier and larger than a single-engine 4th-gen fighter), and public RCS-comparison literature generically places baseline non-stealth-treated Flanker-family airframes (Su-27/J-11) in a several-square-meter class, larger than the repo's own Standard_Fighter_RCS generic profile (5.0 m2 frontal, representative of a mid-size 4th-gen fighter such as an F-16/MiG-29 class). frontal_rcs is set to 4.0 m2 as an engineering_estimate proxy: slightly below the repo generic Standard_Fighter_RCS baseline, reflecting some minor RCS-reduction shaping on the J-15T/J-15D versus the unmodified baseline J-15/Su-27 (TWZ notes canted, pitot-less radome and other detail changes on J-15T consistent with modest signature attention) while still remaining in the large-Flanker-class range implied by general RCS literature; this is not a sourced figure. side/rear/top/bottom_rcs are scaled from frontal_rcs using the repo Standard_Fighter_RCS's own frontal:side:rear:top:bottom ratio (1:5:1.6:4:4), consistent with the convention applied to CSG_US_FA18EF_RCS and CSG_CN_J-35_RCS.",
+        "sources": ["csg-cn-j15-rcs-generic-flanker"],
+        "parameters": {
+            "rcs.frontal_rcs": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate 4.0 m2, set slightly below the repo Standard_Fighter_RCS generic baseline (5.0 m2) to reflect the J-15T/J-15D's minor detail-level signature attention (new radome, EW pods) vs the unmodified baseline J-15/Su-27 Flanker, while remaining in the large-Flanker several-square-meter class cited generically in public RCS-comparison literature; no numeric figure is public for any J-15 variant"},
+            "rcs.side_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:side ratio (~1:5); no public figure"},
+            "rcs.rear_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:rear ratio (~1:1.6); no public figure"},
+            "rcs.top_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:top ratio (~1:4); no public figure"},
+            "rcs.bottom_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:bottom ratio (~1:4); no public figure"}
+        }
+    }
+}

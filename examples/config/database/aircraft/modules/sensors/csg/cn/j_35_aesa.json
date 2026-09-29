@@ -1,0 +1,38 @@
+{
+    "name": "CSG_CN_J-35_AESA",
+    "type": "Sensor",
+    "sensor": {
+        "max_range": 170000.0,
+        "fov_deg": 120.0,
+        "scan_period": 0.9,
+        "detection_prob": 0.90,
+        "bearing_noise_std": 0.4,
+        "range_noise_std": 15.0,
+        "track_memory_s": 6.0,
+        "range_power": 2.0,
+        "aspect_influence": 0.25,
+        "doppler_notch_width": 18.0
+    },
+    "_real_world": {
+        "class": "AESA fire-control radar, type not officially disclosed",
+        "variant_scope": "J-35 carrier-based stealth fighter nose radar; several public sources suggest kinship with the J-20's Type 1475 AESA, unconfirmed",
+        "hulls": [],
+        "public_equipment": ["AESA radar (OOB page, C-tier, 'type not public'); one blog source names 'Type 1475 AESA (same as J-20)' with a claimed 1,500 km detection range against unspecified target class, unverified"]
+    },
+    "_provenance": {
+        "modeling_note": "Primary fire-control radar for the carrier-based J-35 per the task's requirement. No official PRC disclosure of the J-35's radar type or performance exists; the OOB page itself states 'Radar: AESA; type not public' at C-tier only, and the export FC-31's advertised KLJ-7A radar is explicitly noted as not applicable to the naval J-35. A single blog-tier source (not independently corroborated, not in the ledger) claims a 'Type 1475 AESA (same as J-20)' fit with a 1,500 km detection figure; that 1,500 km number is almost certainly a garbled/exaggerated derivative-target claim (implausible for any fighter radar against a fighter-size target) and is explicitly rejected here as unusable. max_range is therefore an engineering_estimate proxy set modestly above the repo CSG_US_APG-79 (150 km, Super Hornet AESA) to reflect the general public expectation that a newer-generation Chinese naval AESA (contemporary with J-20-era radars) should be at least competitive with a 2010s-vintage Western AESA, while avoiding any reliance on the unverifiable 1,500 km claim. All other scan/track/noise parameters are proxies patterned on the repo CSG_US_APG-79 record, nudged slightly toward its own AESA-vs-mechanically-scanned-array reasoning; no public figures exist for any of them.",
+        "sources": ["csg-cn-j35-migflug", "csg-cn-j35-wiki", "csg-cn-j35-1475-blog"],
+        "parameters": {
+            "sensor.max_range": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate 170 km, modestly above the repo CSG_US_APG-79's 150 km sourced figure, reflecting general expectation of a newer-generation AESA; the only web-found specific figure (1,500 km, blog-tier, unverified) is explicitly rejected as implausible for a fighter fire-control radar against a fighter-size target and not used"},
+            "sensor.fov_deg": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_APG-79 pattern; no public figure"},
+            "sensor.scan_period": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate slightly faster than the repo CSG_US_APG-79's 1.0 s, reflecting a newer AESA generation; no public figure"},
+            "sensor.detection_prob": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy close to the repo CSG_US_APG-79's 0.92, nudged down slightly given the total absence of independent performance corroboration for this radar; no public figure"},
+            "sensor.bearing_noise_std": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_APG-79 pattern; no public figure"},
+            "sensor.range_noise_std": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_APG-79 pattern; no public figure"},
+            "sensor.track_memory_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_APG-79 pattern; no public figure"},
+            "sensor.range_power": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged (radar-equation exponent, not platform-specific)"},
+            "sensor.aspect_influence": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_APG-79 pattern; no public figure"},
+            "sensor.doppler_notch_width": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy close to the repo CSG_US_APG-79 pattern; no public figure"}
+        }
+    }
+}
