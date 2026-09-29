@@ -106,7 +106,7 @@ The current Ground surface is deliberately incomplete:
 - [`src/systems/domains/ground/`](../../../../src/systems/domains/ground/)
   owns the admitted `GroundInfantryMovement` and ground damage response slices;
   the movement slice is documented in
-  [`Ground Infantry Movement v1`](../../../../docs/domains/ground/work/active/ground_infantry_movement_v1/README.md).
+  [`Ground Infantry Movement v1`](../../../../docs/domains/ground/reviews/ground_infantry_movement_v1_20260924/README.md).
 
 Consequently, this issue must not present Ground route movement, sensing, fires,
 terrain control, or a complete land-domain tick loop as implemented. The bounded
@@ -162,7 +162,7 @@ commitment:
 - The first bounded slice is individual-infantry movement: `MoveStatic` plus
   shared surface/slope lookup and horizontal kinematic drift.
 - Its stage-local contract and evidence live in
-  `docs/domains/ground/work/active/ground_infantry_movement_v1/`.
+  `docs/domains/ground/reviews/ground_infantry_movement_v1_20260924/`.
 - Route movement, sensing, fires, passability, and complete damage semantics
   remain separate residuals and must not be inferred from this admission.
 

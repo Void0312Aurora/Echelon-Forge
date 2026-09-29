@@ -6,7 +6,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/domains/ground/standards/specialization_baseline.md`
 Owner: `domains/ground`
-Last verified: `2026-09-24`
+Last verified: `2026-09-29`
 
 ## Scope
 
@@ -51,6 +51,34 @@ The following surfaces are implemented and test-backed:
   system. The system applies surface and slope speed costs and advances a
   horizontal kinematic step; it does not establish route following or a full
   infantry dynamics model.
+- The default environment provider can explicitly load a verified Arnis
+  `arnis_cmo_bundle.v1` continuous elevation/landcover raster pair through
+  `SimulationKernel.load_arnis_terrain_bundle(bundle_root)`; this is an
+  explicit provider load, not automatic runtime setup
+  (`tests/runtime/ground/test_ground_infantry_native_unit.py`).
+- The native provider samples declared Arnis hydrology and bridge road
+  vectors for bounded point classification: river corridors are water and a
+  declared bridge segment overrides them as a hard-packed crossing surface.
+  This is bounded local sampling, not a route graph or general passability
+  product (`tests/runtime/ground/test_ground_infantry_native_unit.py`).
+- Movement cost is stance-, surface-, slope-, and vegetation-aware. A sampled
+  one-tick transition observation (5 m segment intervals) supplies the
+  average combined movement multiplier that `GroundInfantryMovement`
+  consumes, and the same local transition check blocks any one-tick segment
+  that intersects water or an unknown/obstacle cell without advancing the
+  transform. This is a local segment-cost observation and transition block,
+  not a route-level cost grid or general passability mask
+  (`tests/runtime/ground/test_ground_infantry_native_unit.py`).
+- A bounded native direct-fire slice is admitted for the infantry fixture:
+  `GroundWeaponState` plus `SimulationKernel.fire_ground_weapon` require a
+  tracked hostile Ground contact, finite rifle range, ammunition, and
+  cooldown, and enter the shared effects/damage bridge on a successful shot.
+  This is a deterministic close-range proxy; it does not claim line of
+  sight, cover, suppression, ballistics, indirect fire, or a complete
+  fire-control model (`tests/runtime/ground/test_ground_infantry_native_unit.py`).
+  These native probe bindings live on the quarantined
+  `bindings_core_kernel_diagnostics_ground.cpp` diagnostics surface, not the
+  maintained `SimulationKernel` binding surface.
 
 ## Registered And Reachable, But Not A Capability
 
@@ -89,7 +117,7 @@ paired with `GroundInfantryMovement` from
 `builtin.system.ground_infantry_movement` at stage 34. That second system is a
 bounded single-step consumer for the individual infantry fixture, not a release
 of route movement, passability, sensing, fires, logistics, or observation export.
-The admission is recorded in [Ground Infantry Movement v1](../work/active/ground_infantry_movement_v1/README.md).
+The admission is recorded in [Ground Infantry Movement v1](../reviews/ground_infantry_movement_v1_20260924/README.md).
 
 ## Content And Capability Rules
 
@@ -110,13 +138,22 @@ The admission is recorded in [Ground Infantry Movement v1](../work/active/ground
 
 ## Held Boundaries
 
-The current maintained surface does not establish:
+The current maintained surface does not establish, beyond the bounded local
+slices admitted above:
 
-- route following, acceleration/fatigue/formation dynamics, terrain traversal,
-  passability, cover, concealment, obstacles, or breach behavior;
-- Ground sensing, line-of-sight computation, track fusion, data-link behavior,
-  or observation export;
-- direct fire, indirect fire, effects, damage, suppression, attrition, or combat runtime;
+- route following, waypoint/route planning, acceleration/fatigue/formation
+  dynamics, a route graph, a general passability mask, or route-level
+  river-crossing planning, obstacles, or breach behavior (the admitted surface
+  is a local one-tick transition sample and block, not a route product);
+- Ground sensing, line-of-sight computation, cover, concealment, track
+  fusion, data-link behavior, or observation export beyond the bounded
+  terrain/transition/field-semantic observation tuples named above;
+- indirect fire, suppression, attrition, full fire control, ballistics, or a
+  combat runtime
+  (the admitted direct-fire slice is a deterministic close-range proxy on a
+  quarantined diagnostics binding surface, not a fire-control or ballistics
+  model, and the ground damage mechanism it feeds remains a reachable
+  mechanism rather than a released effects capability);
 - logistics, sustainment, recovery, or a learned Ground policy;
 - formal Ground `CommandPacket`, `ObservationPacket`, or `TrackPacket`
   specializations.

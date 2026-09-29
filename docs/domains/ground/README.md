@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/domains/ground/README.md`
 Owner: `domains/ground`
-Last verified: `2026-09-24`
+Last verified: `2026-09-29`
 
 The Ground owner defines land-domain specialization semantics without turning
 Army service doctrine into a private runtime stack. It owns Ground-specific
@@ -41,7 +41,7 @@ remain with their respective owners.
   native training probe. This
   is a single-agent movement primitive, not route following, passability,
   formation, or full land-combat dynamics. The admission record is
-  [Ground Infantry Movement v1](work/active/ground_infantry_movement_v1/README.md).
+  [Ground Infantry Movement v1](reviews/ground_infantry_movement_v1_20260924/README.md).
 - The default environment provider can explicitly load the verified Arnis
   continuous elevation/landcover raster pair, and the maintained kernel exposes
   bounded terrain and movement-effect observation tuples for training adapters. Tree-line/settlement
@@ -79,6 +79,11 @@ runtime.
   substrate contracts and retained G0/Arnis acceptance boundaries.
 - [Ground defect inventory](reviews/ground_domain_defect_inventory_20260522.md):
   dated review snapshot; open items require current reverification.
+- [Ground Infantry Movement v1](reviews/ground_infantry_movement_v1_20260924/README.md)
+  and
+  [Ground Arnis Native Terrain v1](reviews/ground_arnis_native_terrain_v1_20260924/README.md):
+  accepted `2026-09-24`, retained as dated review records; their lasting facts
+  are promoted into the [Ground specialization baseline](standards/specialization_baseline.md).
 
 The authorized Ground work surface was
 [Ground Systems Owner Admission](reviews/ground_systems_owner_admission_20260921/README.md),

@@ -2,11 +2,15 @@
 
 语言：[英文规范页](README.md)；本页为中文配套。
 
-Document kind: `work-package`
-Lifecycle: `active`
-Canonical: `docs/domains/ground/work/active/ground_arnis_native_terrain_v1/README.md`
+Document kind: `review`
+Lifecycle: `maintained`
+Canonical: `docs/domains/ground/reviews/ground_arnis_native_terrain_v1_20260924/README.md`
 Owner: `domains/ground`
 Accepted: `2026-09-24`
+Last verified: `2026-09-29`
+
+本包已于 `2026-09-24` 接受并冻结，此处作为存档记录保留。其长期事实已并入
+[Ground 特化基线](../../standards/specialization_baseline.zh.md)。
 
 ## 目的
 
