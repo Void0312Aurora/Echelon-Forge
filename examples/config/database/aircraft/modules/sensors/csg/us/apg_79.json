@@ -1,0 +1,38 @@
+{
+    "name": "CSG_US_APG-79",
+    "type": "Sensor",
+    "sensor": {
+        "max_range": 150000.0,
+        "fov_deg": 120.0,
+        "scan_period": 1.0,
+        "detection_prob": 0.92,
+        "bearing_noise_std": 0.4,
+        "range_noise_std": 15.0,
+        "track_memory_s": 6.0,
+        "range_power": 2.0,
+        "aspect_influence": 0.25,
+        "doppler_notch_width": 20.0
+    },
+    "_real_world": {
+        "class": "Raytheon (RTX) AN/APG-79 AESA fire-control radar",
+        "variant_scope": "AN/APG-79 as fitted to F/A-18E/F Block II/III Super Hornet and EA-18G Growler",
+        "hulls": [],
+        "public_equipment": ["AN/APG-79 AESA, X-band, 150 km range class (Raytheon/missiledefenseadvocacy public spec)"]
+    },
+    "_provenance": {
+        "modeling_note": "Primary fire-control radar for CVW-8's F/A-18E/F and EA-18G. The CSG order-of-battle page confirms the AESA designation only via Tier C but gives no detection range; max_range is web-sourced. Scan/track/noise parameters (fov_deg, scan_period, detection_prob, bearing/range_noise_std, track_memory_s, range_power, aspect_influence, doppler_notch_width) have no public figures and are proxy values patterned on the repo AN/APG-68(V)9 record (aircraft/modules/sensors/an_apg_68.json), adjusted modestly upward for detection_prob and downward for noise terms to reflect the AESA's solid-state, faster-scan advantage over the APG-68's mechanically-scanned array, per the public qualitative claims (RTX, NAVAIR) of improved tracking/reliability.",
+        "sources": ["csg-us-apg79-wiki", "csg-us-apg79-mda"],
+        "parameters": {
+            "sensor.max_range": {"value_basis": "sourced", "source_ids": ["csg-us-apg79-wiki", "csg-us-apg79-mda"], "tier": "C-est", "note": "150 km detection/track range, Wikipedia and Missile Defense Advocacy Alliance both cite 150 km; no Tier A/B figure found in 2 searches"},
+            "sensor.fov_deg": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy from repo AN/APG-68(V)9 (aircraft/modules/sensors/an_apg_68.json); AESA arrays typically have a wider mechanical+electronic FOV but no public figure found"},
+            "sensor.scan_period": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate halved vs repo APG-68's 2.0 s to reflect AESA electronic (non-mechanical) beam-steering speed advantage claimed qualitatively by RTX/NAVAIR sources"},
+            "sensor.detection_prob": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate slightly above repo APG-68's 0.9, reflecting AESA reliability/performance improvement claims (RTX, NAVAIR); no quantified public figure"},
+            "sensor.bearing_noise_std": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate slightly below repo APG-68's 0.5, same AESA-precision reasoning"},
+            "sensor.range_noise_std": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate below repo APG-68's 20.0, same AESA-precision reasoning"},
+            "sensor.track_memory_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy close to repo APG-68's 5.0 s; no public figure"},
+            "sensor.range_power": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from repo APG-68 (radar-equation exponent, not platform-specific)"},
+            "sensor.aspect_influence": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy close to repo APG-68's 0.3"},
+            "sensor.doppler_notch_width": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy close to repo APG-68's 25.0"}
+        }
+    }
+}

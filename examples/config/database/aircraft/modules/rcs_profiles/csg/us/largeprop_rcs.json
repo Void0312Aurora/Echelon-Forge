@@ -1,0 +1,28 @@
+{
+    "name": "CSG_US_LargeProp_RCS",
+    "type": "RCSProfile",
+    "rcs": {
+        "frontal_rcs": 50.0,
+        "side_rcs": 90.0,
+        "rear_rcs": 60.0,
+        "top_rcs": 100.0,
+        "bottom_rcs": 100.0
+    },
+    "_real_world": {
+        "class": "Large twin-turboprop carrier support aircraft radar cross section (non-low-observable, no RCS reduction design features)",
+        "variant_scope": "Shared proxy class for E-2D Advanced Hawkeye (C2Node), C-2A Greyhound, and CMV-22B Osprey: comparably-sized twin-engine carrier-support airframes with no stealth shaping",
+        "hulls": [],
+        "public_equipment": ["No public per-type RCS figure exists for E-2D/C-2A/CMV-22B; C-130 Hercules (comparable-class large multi-engine transport/utility aircraft) publicly cited at 80 m2 (GlobalSecurity.org) used as the closest sourced size-class anchor"]
+    },
+    "_provenance": {
+        "modeling_note": "No public RCS figure exists for the E-2D, C-2A, or CMV-22B specifically. The E-2D additionally carries a large rotating radar rotodome (24 ft / 7.3 m diameter per USNA/Navy.mil fact files) that is a significant additional non-stealth reflector; the C-2A and CMV-22B share a generally similar large-airframe, non-LO design philosophy. A single shared proxy profile is used across all three types rather than three separately-guessed profiles, anchored on the sourced C-130 Hercules figure (80 m2, GlobalSecurity.org comparison table) as the closest publicly-cited size-class reference for a large multi-engine, non-stealth military aircraft; frontal_rcs is set modestly below the C-130 anchor (these CVW types are somewhat smaller), with side/top/bottom scaled up from frontal using the repo Standard_Fighter_RCS's aspect-ratio pattern, and rear scaled down proportionally less due to the exposed rotodome/engine nacelles at all aspects on these props-and-radome airframes.",
+        "sources": ["csg-us-largeprop-rcs-globalsecurity-c130", "csg-us-e2d-navy-factfile"],
+        "parameters": {
+            "rcs.frontal_rcs": {"value_basis": "proxy", "source_ids": ["csg-us-largeprop-rcs-globalsecurity-c130"], "tier": "C-est", "note": "engineering_estimate below the sourced C-130 Hercules anchor figure (80 m2, GlobalSecurity.org), reflecting the E-2D/C-2A/CMV-22B's somewhat smaller airframe size class; no direct public figure for any of the three types"},
+            "rcs.side_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:side ratio (~1:5, capped conservatively lower here since absolute scale is already large); no public figure"},
+            "rcs.rear_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:rear ratio (~1:1.6); no public figure"},
+            "rcs.top_rcs": {"value_basis": "engineering_estimate", "source_ids": ["csg-us-e2d-navy-factfile"], "tier": "proxy", "note": "scaled above frontal_rcs to reflect the E-2D's large top-mounted rotodome (24 ft / 7.3 m diameter, sourced from USNA/Navy.mil fact files) as an additional major reflector at the top aspect specifically; shared across the C-2A/CMV-22B proxy for consistency though they lack a rotodome"},
+            "rcs.bottom_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:bottom ratio (~1:4); no public figure"}
+        }
+    }
+}

@@ -1,0 +1,28 @@
+{
+    "name": "CSG_US_F414-GE-400",
+    "type": "Engine",
+    "engine": {
+        "mil_thrust_n": 57827.0,
+        "ab_thrust_n": 97860.0,
+        "sfc_mil": 0.84,
+        "sfc_ab": 1.85,
+        "bypass_ratio": 0.25
+    },
+    "_real_world": {
+        "class": "General Electric F414-GE-400 turbofan",
+        "variant_scope": "F414-GE-400 as fitted to F/A-18E/F Block II/III Super Hornet and EA-18G Growler (twin-engine installation)",
+        "hulls": [],
+        "public_equipment": ["F414-GE-400 afterburning turbofan, 22,000 lbf class"]
+    },
+    "_provenance": {
+        "modeling_note": "F414-GE-400 turbofan powering CVW-8's F/A-18E/F and EA-18G. The CSG order-of-battle page does not carry per-engine thrust (only airframe-level performance), so this record uses a targeted web search of GE Aerospace/MTU public engine specifications for thrust, SFC, and bypass ratio.",
+        "sources": ["csg-us-f414-geaerospace", "csg-us-f414-mtu"],
+        "parameters": {
+            "engine.mil_thrust_n": {"value_basis": "sourced", "source_ids": ["csg-us-f414-geaerospace"], "tier": "B", "note": "13,000 lbf military (dry) thrust per Wikipedia/GE Aerospace-sourced spec; 13000 x 4.4482 = 57826.6 N"},
+            "engine.ab_thrust_n": {"value_basis": "sourced", "source_ids": ["csg-us-f414-geaerospace", "csg-us-f414-mtu"], "tier": "B", "note": "22,000 lbf (98 kN) afterburning thrust class, confirmed by GE Aerospace and MTU product leaflet; 22000 x 4.4482 = 97860.4 N"},
+            "engine.sfc_mil": {"value_basis": "sourced", "source_ids": ["csg-us-f414-geaerospace"], "tier": "C-est", "note": "0.840 lb/hr/lb dry SFC (23.9 g/kN.s), Wikipedia-carried public figure, uncited primary source (citation needed) so treated as C-est"},
+            "engine.sfc_ab": {"value_basis": "sourced", "source_ids": ["csg-us-f414-geaerospace"], "tier": "C-est", "note": "1.850 lb/hr/lb afterburner SFC (49.3 g/kN.s), same C-est caveat as sfc_mil"},
+            "engine.bypass_ratio": {"value_basis": "sourced", "source_ids": ["csg-us-f414-geaerospace"], "tier": "C-est", "note": "0.25:1 bypass ratio, same Wikipedia performance table, same C-est caveat"}
+        }
+    }
+}

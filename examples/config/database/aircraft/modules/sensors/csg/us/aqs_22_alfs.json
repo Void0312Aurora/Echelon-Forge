@@ -1,0 +1,62 @@
+{
+    "name": "CSG_US_AQS-22_ALFS",
+    "type": "Sensor",
+    "sonar": {
+        "mode": "Active",
+        "max_range_m": 5500.0,
+        "scan_period_s": 20.0,
+        "detection_threshold_db": 8.0,
+        "track_memory_s": 30.0,
+        "bearing_noise_std_deg": 2.0,
+        "range_noise_std_m": 150.0,
+        "directivity_gain_db": 10.0,
+        "self_noise_per_speed_db": 0.0,
+        "ambient_noise_db": 65.0,
+        "source_level_reference_db": 220.0,
+        "source_level_speed_factor_db": 0.0,
+        "transmission_loss_alpha_db_per_km": 0.1,
+        "layer_break_penalty_db": 4.0,
+        "convergence_zone_bonus_m": 0.0,
+        "baffle_exclusion_deg": 0.0,
+        "ownship_quieting_speed_mps": 0.0,
+        "active_ping_source_level_db": 220.0,
+        "confirm_hits_m": 2,
+        "confirm_window_n": 3,
+        "passive_only": false,
+        "bearing_only": false
+    },
+    "_real_world": {
+        "class": "Raytheon (Thales-derived) AN/AQS-22 Airborne Low Frequency Sonar (ALFS), dipping sonar",
+        "variant_scope": "AN/AQS-22 as fitted to MH-60R Seahawk, deployed on a winch cable while the helicopter hovers",
+        "hulls": [],
+        "public_equipment": ["AN/AQS-22 ALFS dipping sonar (NAVAIR-confirmed fit, csg-us-mh60r-navair-frp, Tier A)"]
+    },
+    "_provenance": {
+        "modeling_note": "MH-60R primary ASW sensor. The loader's parse_sensor_and_sonar_json_fields runs for every unit type including Aircraft/C2Node (confirmed by reading src/content/unit_definition_loader.cpp directly, not type-gated), so mounted_sonars is a legitimate, parsed field on the MH-60R Aircraft record, not a silently-dropped key; this module is referenced there. No public AQS-22 detection range, source level, or noise figures exist (OOB page residual R18, authority_blocked). All sonar.* fields are proxy values patterned on the repo's CSG_US_SQS-53C_Hull_Sonar (ships/modules/sensors/csg/us/sqs_53c_hull_sonar.json) active-sonar pattern from packet 1, rescaled down for a much smaller airborne dipping transducer versus a large bow-mounted hull array: shorter max_range_m, longer scan_period_s (dip/retrieve cycle time rather than continuous ping), zero speed-dependent self-noise and zero ownship_quieting_speed (the helicopter hovers stationary while dipping, so speed-noise terms do not apply), and zero baffle_exclusion_deg/convergence_zone_bonus_m (a lowered dipping transducer has no hull-mounted stern baffle and is not modeled with a convergence-zone bonus at this shallow, localized employment).",
+        "sources": ["csg-us-mh60r-navair-frp", "csg-us-mh60r-armyrec"],
+        "parameters": {
+            "sonar.mode": {"value_basis": "sourced", "source_ids": ["csg-us-mh60r-navair-frp"], "tier": "A", "note": "AQS-22 is an active dipping sonar (NAVAIR confirms the fit); active/passive listening modes both exist operationally but active is the primary detection mode modeled here"},
+            "sonar.max_range_m": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate scaled well below the repo SQS-53C hull sonar's 27000 m, reflecting a much smaller airborne dipping transducer's lower source level and shallower typical dip depth; no public figure"},
+            "sonar.scan_period_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate longer than the repo SQS-53C's 8.0 s, reflecting the dip/hover/retrieve cycle time of a dipping sonar versus a continuously-towed hull array; no public figure"},
+            "sonar.detection_threshold_db": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy close to the repo SQS-53C baseline; no public figure"},
+            "sonar.track_memory_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate longer than the repo SQS-53C's 24.0 s, reflecting the sparser, cued nature of dipping-sonar contact refresh; no public figure"},
+            "sonar.bearing_noise_std_deg": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate slightly worse than the repo SQS-53C's 1.5 deg, reflecting a smaller transducer aperture; no public figure"},
+            "sonar.range_noise_std_m": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate scaled down with max_range_m relative to the repo SQS-53C baseline; no public figure"},
+            "sonar.directivity_gain_db": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy close to the repo SQS-53C baseline; no public figure"},
+            "sonar.self_noise_per_speed_db": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "0.0: the helicopter hovers stationary while the transducer is lowered, so ownship-speed-dependent self-noise does not apply as it does for a hull sonar underway"},
+            "sonar.ambient_noise_db": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy close to the repo SQS-53C's 71.0 dB, slightly lower to reflect typical shallow littoral employment; no public figure"},
+            "sonar.source_level_reference_db": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate below the repo SQS-53C's 235 dB, reflecting a much smaller dipping transducer's lower acoustic source level; no public AQS-22 figure"},
+            "sonar.source_level_speed_factor_db": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "0.0: paired with self_noise_per_speed_db=0.0, since the platform is stationary (hovering) during the active ping"},
+            "sonar.transmission_loss_alpha_db_per_km": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy close to the repo SQS-53C baseline (generic underwater transmission-loss constant, not platform-specific); no public figure"},
+            "sonar.layer_break_penalty_db": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo SQS-53C baseline; no public figure"},
+            "sonar.convergence_zone_bonus_m": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "0.0: a dipping sonar's shallow, localized, repositionable employment is not modeled with a long-range convergence-zone detection bonus, unlike a towed array"},
+            "sonar.baffle_exclusion_deg": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "0.0: a lowered dipping transducer has no hull-mounted stern baffle exclusion zone"},
+            "sonar.ownship_quieting_speed_mps": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "0.0: the aircraft hovers while dipping, so an ownship-quieting-speed threshold is not a meaningful concept here"},
+            "sonar.active_ping_source_level_db": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "set equal to source_level_reference_db per the engine's active-sonar convention, same basis as that field"},
+            "sonar.confirm_hits_m": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard engine detection-confirmation default, not sourced per-platform, matching the repo SQS-53C pattern"},
+            "sonar.confirm_window_n": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard engine detection-confirmation default, not sourced per-platform, matching the repo SQS-53C pattern"},
+            "sonar.passive_only": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "false: AQS-22 is an active dipping sonar, though it also supports passive listening; active mode is what is modeled numerically here"},
+            "sonar.bearing_only": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "false: an active dipping sonar provides range as well as bearing"}
+        }
+    }
+}

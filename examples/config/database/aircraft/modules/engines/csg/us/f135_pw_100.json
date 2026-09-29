@@ -1,0 +1,28 @@
+{
+    "name": "CSG_US_F135-PW-100",
+    "type": "Engine",
+    "engine": {
+        "mil_thrust_n": 124550.0,
+        "ab_thrust_n": 191270.0,
+        "sfc_mil": 0.85,
+        "sfc_ab": 1.9,
+        "bypass_ratio": 0.57
+    },
+    "_real_world": {
+        "class": "Pratt & Whitney F135-PW-100 turbofan",
+        "variant_scope": "F135-PW-100 CTOL-lineage engine as fitted to the F-35C carrier variant (optional CVW-8 branch, count 0 in the 2025-26 deployment)",
+        "hulls": [],
+        "public_equipment": ["F135-PW-100, 28,000 lbf military / 43,000 lbf afterburning thrust class (Pratt & Whitney official specification)"]
+    },
+    "_provenance": {
+        "modeling_note": "F-35C is the optional CVW-8 branch (count 0 in the 2025-26 baseline per the OOB page). Pratt & Whitney's public F135 specification sheet lists F135-PW-100 (CTOL/F-35A) and F135-PW-400 (carrier variant/F-35C) as producing 'almost identical results'; this record uses the same published thrust figures for both, matching the source's own statement that the CV engine differs mainly in corrosion-resistant materials, not performance.",
+        "sources": ["csg-us-f135-prattwhitney"],
+        "parameters": {
+            "engine.mil_thrust_n": {"value_basis": "sourced", "source_ids": ["csg-us-f135-prattwhitney"], "tier": "B", "note": "28,000 lbf military (Intermediate) thrust class per Pratt & Whitney F135 official spec sheet; 28000 x 4.4482 = 124549.6 N"},
+            "engine.ab_thrust_n": {"value_basis": "sourced", "source_ids": ["csg-us-f135-prattwhitney"], "tier": "B", "note": "43,000 lbf maximum (afterburning) thrust class per Pratt & Whitney official spec sheet; 43000 x 4.4482 = 191272.6 N"},
+            "engine.sfc_mil": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "no public SFC found for F135; proxy engineering_estimate patterned on repo F110-GE-129 (aircraft/modules/engines/f110_ge_129.json), a comparable-generation high-bypass-for-fighter afterburning turbofan"},
+            "engine.sfc_ab": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "same proxy reasoning as sfc_mil, from repo F110-GE-129"},
+            "engine.bypass_ratio": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "0.57 engineering_estimate; publicly reported F135 bypass ratio figures are inconsistent/unconfirmed in open sources, using a mid-range low-bypass fighter turbofan estimate consistent with F119 lineage, not a sourced figure"}
+        }
+    }
+}

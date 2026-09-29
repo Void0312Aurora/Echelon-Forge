@@ -1,0 +1,474 @@
+{
+    "name": "CSG_US_CMV-22B_Osprey",
+    "type": "Aircraft",
+    "airframe": {
+        "empty_mass_kg": 15032.0,
+        "max_fuel_kg": 4200.0,
+        "drag_coefficient": 0.07,
+        "reference_area": 105.7,
+        "length_m": 17.47,
+        "wingspan_m": 11.6,
+        "height_m": 6.73,
+        "configuration": "Tiltrotor"
+    },
+    "damage_model": {
+        "vulnerability": {
+            "synthetic": true,
+            "calibrated": false,
+            "pk_authority": false,
+            "deterministic_fuze_authority": false,
+            "provenance": "CSG S0-C synthetic naval-tiltrotor vulnerability scaffold (packet 2, solo worker); geometry scaled from real CMV-22B/V-22 dimensions, mechanism thresholds proxied from the repo mh60r_mvp.json helicopter template and this packet's own CSG_US_C-2A_Greyhound record (shared cargo/COD role); requires calibration before deterministic fuze/Pk claims",
+            "evidence_dataset_ref": "",
+            "calibration_status": "unvalidated",
+            "blast_scale": 1.10,
+            "fragmentation_scale": 1.10,
+            "continuous_rod_scale": 1.20,
+            "hit_to_kill_scale": 1.15,
+            "nose_aspect_scale": 1.0,
+            "beam_aspect_scale": 1.20,
+            "tail_aspect_scale": 0.95,
+            "high_closure_scale": 1.05,
+            "low_closure_scale": 0.90,
+            "near_miss_scale": 0.88,
+            "direct_hit_scale": 1.0
+        },
+        "hitboxes": [
+            {
+                "offset": [6.5, 0.0, 0.4],
+                "size": [2.2, 2.0, 1.5],
+                "armor": 3.0,
+                "systems": ["cockpit", "avionics"],
+                "components": [
+                    {
+                        "name": "flight_deck_crew_station",
+                        "system": "cockpit",
+                        "offset": [6.8, 0.0, 0.6],
+                        "size": [1.6, 1.7, 1.0],
+                        "armor": 4.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.20, "blast_fragmentation": 1.10, "continuous_rod": 1.00, "hit_to_kill": 1.25},
+                        "redundancy_group_id": "cockpit_crew_stations",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "nose_avionics_bay",
+                        "system": "avionics",
+                        "offset": [7.6, 0.0, 0.3],
+                        "size": [0.9, 0.8, 0.5],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.25, "blast_fragmentation": 1.15, "continuous_rod": 0.85, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "tiltrotor_avionics_bus",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "cockpit_flight_control_computer",
+                        "system": "flight_control",
+                        "offset": [6.2, 0.0, 0.0],
+                        "size": [0.7, 0.6, 0.5],
+                        "armor": 3.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.20, "blast_fragmentation": 1.12, "continuous_rod": 0.90, "hit_to_kill": 1.25},
+                        "redundancy_group_id": "tiltrotor_flight_control",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    }
+                ]
+            },
+            {
+                "offset": [0.5, 0.0, 0.0],
+                "size": [6.0, 2.2, 2.0],
+                "armor": 3.0,
+                "systems": ["fuel", "avionics", "data_link", "cargo"],
+                "components": [
+                    {
+                        "name": "cabin_fuel_cell",
+                        "system": "fuel",
+                        "offset": [0.5, 0.0, -0.5],
+                        "size": [2.0, 1.6, 0.5],
+                        "armor": 3.0,
+                        "threshold_scale": 1.25,
+                        "mechanism_thresholds": {"blast": 1.45, "fragmentation": 1.20, "blast_fragmentation": 1.32, "continuous_rod": 0.80, "hit_to_kill": 0.95},
+                        "redundancy_group_id": "fuselage_fuel_cells",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "mission_computer",
+                        "system": "avionics",
+                        "offset": [1.2, 0.0, 0.4],
+                        "size": [0.9, 0.8, 0.5],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.25, "blast_fragmentation": 1.15, "continuous_rod": 0.85, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "tiltrotor_avionics_bus",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "data_link_terminal",
+                        "system": "data_link",
+                        "offset": [1.6, 0.5, 0.5],
+                        "size": [0.6, 0.6, 0.4],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.25, "blast_fragmentation": 1.15, "continuous_rod": 0.85, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "tiltrotor_datalink",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "cargo_bay_deck",
+                        "system": "fuselage_cargo_bay",
+                        "offset": [-0.8, 0.0, -0.4],
+                        "size": [4.0, 1.9, 1.3],
+                        "armor": 2.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 1.05, "fragmentation": 1.10, "blast_fragmentation": 1.08, "continuous_rod": 0.90, "hit_to_kill": 1.05},
+                        "redundancy_group_id": "cargo_structure",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 0.5,
+                        "critical": false
+                    },
+                    {
+                        "name": "electrical_power_bus",
+                        "system": "avionics_electrical_bus",
+                        "offset": [2.0, 0.6, -0.1],
+                        "size": [0.6, 0.4, 0.4],
+                        "armor": 3.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 1.05, "fragmentation": 1.10, "blast_fragmentation": 1.12, "continuous_rod": 1.00, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "tiltrotor_primary_power_bus",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "avionics", "target_system": "avionics", "edge_type": "electrical_power", "scale": 0.60, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    }
+                ]
+            },
+            {
+                "offset": [-4.7, 0.0, 0.3],
+                "size": [1.3, 1.2, 1.0],
+                "armor": 2.0,
+                "systems": ["cargo", "hydraulic"],
+                "components": [
+                    {
+                        "name": "aft_cargo_ramp_actuator",
+                        "system": "hydraulic",
+                        "offset": [-5.3, 0.0, -0.1],
+                        "size": [0.7, 1.0, 0.4],
+                        "armor": 3.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 0.95, "fragmentation": 1.15, "blast_fragmentation": 1.10, "continuous_rod": 1.20, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "tiltrotor_hydraulic_actuators",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "cargo", "target_system": "cargo", "edge_type": "hydraulic_power", "scale": 0.70, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    },
+                    {
+                        "name": "cargo_winch_mechanism",
+                        "system": "fuselage_cargo_bay",
+                        "offset": [-4.2, 0.0, 0.4],
+                        "size": [0.5, 0.5, 0.3],
+                        "armor": 2.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.95, "fragmentation": 1.10, "blast_fragmentation": 1.05, "continuous_rod": 0.90, "hit_to_kill": 1.10},
+                        "redundancy_group_id": "cargo_structure",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 0.4,
+                        "critical": false
+                    },
+                    {
+                        "name": "tail_ramp_hydraulic_pump",
+                        "system": "hydraulic",
+                        "offset": [-4.0, 0.0, 0.6],
+                        "size": [0.4, 0.4, 0.3],
+                        "armor": 2.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.15, "blast_fragmentation": 1.10, "continuous_rod": 1.25, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "tiltrotor_hydraulic_pumps",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 0.8,
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [0.5, -5.8, 0.3],
+                "size": [1.5, 1.8, 1.8],
+                "armor": 3.0,
+                "systems": ["engine", "rotor", "flight_control"],
+                "components": [
+                    {
+                        "name": "left_engine_core",
+                        "system": "engine",
+                        "offset": [0.4, -5.8, 0.2],
+                        "size": [1.0, 0.6, 0.6],
+                        "armor": 4.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 1.10, "fragmentation": 1.05, "blast_fragmentation": 1.12, "continuous_rod": 0.95, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "engine_cores",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "left_tilt_nacelle_gearbox",
+                        "system": "transmission",
+                        "offset": [0.6, -5.8, 0.6],
+                        "size": [0.7, 0.6, 0.5],
+                        "armor": 4.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 1.00, "fragmentation": 1.05, "blast_fragmentation": 1.08, "continuous_rod": 1.25, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "tilt_nacelle_gearboxes",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "engine", "target_system": "engine", "edge_type": "generic", "scale": 0.90, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "left_nacelle_tilt_actuator",
+                        "system": "flight_control",
+                        "offset": [0.5, -5.8, 0.9],
+                        "size": [0.4, 0.4, 0.3],
+                        "armor": 3.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.15, "blast_fragmentation": 1.10, "continuous_rod": 1.25, "hit_to_kill": 1.25},
+                        "redundancy_group_id": "nacelle_tilt_actuators",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.85, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative — V-22 nacelles rotate 90 degrees between helicopter and airplane mode per Boeing/Wikipedia"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "left_proprotor_hub",
+                        "system": "rotor",
+                        "offset": [0.5, -5.8, 1.3],
+                        "size": [0.6, 0.6, 0.4],
+                        "armor": 4.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.95, "fragmentation": 1.10, "blast_fragmentation": 1.10, "continuous_rod": 1.20, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "proprotor_systems",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "transmission", "target_system": "transmission", "edge_type": "generic", "scale": 0.95, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "left_proprotor_blades",
+                        "system": "rotor",
+                        "offset": [0.5, -5.8, 1.35],
+                        "size": [0.2, 5.8, 0.15],
+                        "armor": 1.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 1.05, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "proprotor_systems",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 0.7,
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [0.5, 5.8, 0.3],
+                "size": [1.5, 1.8, 1.8],
+                "armor": 3.0,
+                "systems": ["engine", "rotor", "flight_control"],
+                "components": [
+                    {
+                        "name": "right_engine_core",
+                        "system": "engine",
+                        "offset": [0.4, 5.8, 0.2],
+                        "size": [1.0, 0.6, 0.6],
+                        "armor": 4.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 1.10, "fragmentation": 1.05, "blast_fragmentation": 1.12, "continuous_rod": 0.95, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "engine_cores",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "right_tilt_nacelle_gearbox",
+                        "system": "transmission",
+                        "offset": [0.6, 5.8, 0.6],
+                        "size": [0.7, 0.6, 0.5],
+                        "armor": 4.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 1.00, "fragmentation": 1.05, "blast_fragmentation": 1.08, "continuous_rod": 1.25, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "tilt_nacelle_gearboxes",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "engine", "target_system": "engine", "edge_type": "generic", "scale": 0.90, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "right_nacelle_tilt_actuator",
+                        "system": "flight_control",
+                        "offset": [0.5, 5.8, 0.9],
+                        "size": [0.4, 0.4, 0.3],
+                        "armor": 3.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.15, "blast_fragmentation": 1.10, "continuous_rod": 1.25, "hit_to_kill": 1.25},
+                        "redundancy_group_id": "nacelle_tilt_actuators",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.85, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative — V-22 nacelles rotate 90 degrees between helicopter and airplane mode per Boeing/Wikipedia"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "right_proprotor_hub",
+                        "system": "rotor",
+                        "offset": [0.5, 5.8, 1.3],
+                        "size": [0.6, 0.6, 0.4],
+                        "armor": 4.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.95, "fragmentation": 1.10, "blast_fragmentation": 1.10, "continuous_rod": 1.20, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "proprotor_systems",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "transmission", "target_system": "transmission", "edge_type": "generic", "scale": 0.95, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "right_proprotor_blades",
+                        "system": "rotor",
+                        "offset": [0.5, 5.8, 1.35],
+                        "size": [0.2, 5.8, 0.15],
+                        "armor": 1.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 1.05, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "proprotor_systems",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 0.7,
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [0.5, 0.0, 0.5],
+                "size": [3.5, 11.6, 0.6],
+                "armor": 3.0,
+                "systems": ["structure"],
+                "components": [
+                    {
+                        "name": "wing_spar_center",
+                        "system": "structure",
+                        "offset": [0.5, 0.0, 0.6],
+                        "size": [1.2, 1.5, 0.4],
+                        "armor": 5.0,
+                        "threshold_scale": 1.30,
+                        "mechanism_thresholds": {"blast": 1.10, "fragmentation": 1.05, "blast_fragmentation": 1.08, "continuous_rod": 1.30, "hit_to_kill": 1.35},
+                        "redundancy_group_id": "wing_primary_structure",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "cross_shaft_interconnect",
+                        "system": "transmission",
+                        "offset": [0.5, 0.0, 0.7],
+                        "size": [0.3, 11.0, 0.2],
+                        "armor": 3.0,
+                        "threshold_scale": 1.25,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.15, "blast_fragmentation": 1.10, "continuous_rod": 1.40, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "tiltrotor_cross_shaft",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    }
+                ]
+            }
+        ]
+    },
+    "flight_model": {
+        "current_hp": 100.0,
+        "max_hp": 100.0,
+        "max_speed": 130.0,
+        "min_speed": 0.0,
+        "max_turn_rate": 10.0,
+        "max_climb_rate": 11.5,
+        "max_accel": 2.5,
+        "max_g": 2.5
+    },
+    "landing_gear": {
+        "can_use_unpaved": true,
+        "rolling_friction_coeff": 0.03,
+        "max_load_factor": 3.0,
+        "contact_height_m": 1.6
+    },
+    "engine_ref": "CSG_US_AE1107C",
+    "rcs_profile_ref": "CSG_US_LargeProp_RCS",
+    "has_data_link": true,
+    "data_link_network_id": 1,
+    "has_command_link": true,
+    "command_link": {
+        "latency_s": 0.1,
+        "drop_prob": 0.0
+    },
+    "hardpoints": [],
+    "default_loadout": {},
+    "has_ammo": false,
+    "_real_world": {
+        "designation": "CMV-22B Osprey",
+        "role": "Carrier Onboard Delivery (COD) — unarmed tiltrotor logistics transport replacing the C-2A, delivering personnel/mail/high-priority cargo (including F-35C engine power modules) between shore bases and CVN-78; combines vertical takeoff/landing with turboprop-speed cruise per NAVAIR",
+        "crew": "4 (pilot, copilot, two crew chiefs)",
+        "status": "content_only_full_damage_model",
+        "carrier_features": "vertical takeoff/landing capability eliminates catapult/arresting-gear dependency (no tailhook modeled); wing-mounted tiltrotor nacelles rotate 90 degrees between helicopter and airplane mode per Boeing; folds for shipboard hangar stowage (rotors fold, wing rotates to align with fuselage per Wikipedia) though not separately modeled as a hitbox component given the packet's damage-model scope"
+    },
+    "_provenance": {
+        "sources": ["csg-us-cmv22b-navair", "csg-us-v22-boeing", "csg-us-v22-wiki", "csg-us-mv22b-navair"],
+        "parameters": {
+            "airframe.empty_mass_kg": {"value_basis": "engineering_estimate", "source_ids": ["csg-us-cmv22b-navair"], "tier": "proxy", "note": "no CMV-22B-specific empty-weight figure published by NAVAIR (only max-gross-weight variants given); derived as an engineering_estimate from the MV-22B's commonly-cited ~33,140 lb (15,032 kg) empty weight (same Bell-Boeing airframe/engine per NAVAIR, CMV-22B differs mainly in avionics/radio/lighting per NAVAIR's own CMV-22B-vs-MV-22B comparison, not structural mass)"},
+            "airframe.max_fuel_kg": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate for the V-22's internal fuel capacity based on its sourced 1,150 nmi CMV-22B range and turboshaft fuel-burn class, consistent with the packet's existing turboprop/turboshaft engineering-estimate approach for T56/AE1107C-family aircraft"},
+            "airframe.drag_coefficient": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate reflecting the V-22's high-disk-loading tiltrotor/wing/nacelle configuration, higher than a clean fixed-wing turboprop"},
+            "airframe.reference_area": {"value_basis": "engineering_estimate", "source_ids": ["csg-us-v22-boeing"], "tier": "proxy", "note": "105.7 m2 engineering estimate combining both proprotor disc areas (Boeing: rotor diameter 38.1 ft/11.6 m each, 2x pi*(5.8)^2 = ~211 m2 total swept disc, halved as a rough net-lift-relevant reference-area proxy since the two rotor discs substantially overlap the wing's own planform) — flagged as one of the least-certain proxies in this record given the V-22's unconventional dual-rotor-plus-wing lift configuration with no single 'reference area' concept analogous to a fixed-wing aircraft"},
+            "airframe.length_m": {"value_basis": "sourced", "source_ids": ["csg-us-v22-boeing"], "tier": "A", "note": "fuselage length 57.3 ft = 17.47 m per Boeing's official V-22 product page, cross-confirmed by NAVAIR's CMV-22B page's identical 57'4in figure"},
+            "airframe.wingspan_m": {"value_basis": "sourced", "source_ids": ["csg-us-v22-boeing"], "tier": "A", "note": "rotor diameter 38.1 ft = 11.6 m per Boeing, mapped to airframe.wingspan_m per this packet's established helicopter/rotor-diameter-as-wingspan convention (same basis as MH-60R/S); NAVAIR's stated 83'10in/25.56m figure is the rotors-turning tip-to-tip width (both proprotor discs plus wing), not a single-rotor diameter, so Boeing's explicit per-rotor diameter figure was used instead for consistency with the repo's per-rotor convention"},
+            "airframe.height_m": {"value_basis": "sourced", "source_ids": ["csg-us-cmv22b-navair"], "tier": "A", "note": "22 ft 1 in = 6.73 m per NAVAIR's direct CMV-22B product page (nacelles-vertical configuration), cross-confirmed by Boeing's identical 22.1 ft figure"},
+            "airframe.configuration": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "Tiltrotor: a new configuration value not used by any prior record in this packet, reflecting the V-22's unique powered-lift classification (FAA classifies it as a powered-lift aircraft per Wikipedia); no repo template precedent exists for this configuration enum value, flagged as a schema-coverage assumption"},
+            "flight_model.current_hp": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "100.0: engineering-estimate abstract structural health pool, same value as CSG_US_C-2A_Greyhound reflecting a comparable unarmored cargo-transport class; no public component-level Pk/damage data exists for this or any aircraft in this packet"},
+            "flight_model.max_hp": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "100.0: same basis as flight_model.current_hp (initialized full health)"},
+            "flight_model.max_speed": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "130.0 m/s (~253 kt) engineering estimate; no public max-speed figure found for the V-22 family in this search pass (only shaft horsepower/weight/range were sourced), set below the commonly-cited V-22 cruise-speed class (~250-280 kt is widely reported for the type in general aviation literature, not independently re-verified with a tier-A source this session) as a conservative airplane-mode cruise proxy"},
+            "flight_model.min_speed": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "0.0: tiltrotor can hover/fly at zero forward airspeed in helicopter mode, matching the repo mh60r_mvp.json helicopter template's convention"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate between the helicopter-class MH-60R/S records and the fixed-wing C-2A, reflecting the V-22's hybrid flight envelope"},
+            "flight_model.max_climb_rate": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate comparable to the T56/AE1107C-class turboshaft aircraft already in this packet"},
+            "flight_model.max_accel": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "copied unchanged from CSG_US_MH-60R_Seahawk's proxy value; no public figure"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "copied unchanged from CSG_US_MH-60R_Seahawk's proxy value; no public structural-limit figure for a tiltrotor of this class"},
+            "landing_gear.can_use_unpaved": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "true: tiltrotor can land vertically on unprepared surfaces/ship decks in helicopter mode, matching the repo mh60r_mvp.json template's convention"},
+            "landing_gear.rolling_friction_coeff": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "copied unchanged from CSG_US_MH-60R_Seahawk's proxy value; no public figure"},
+            "landing_gear.max_load_factor": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "3.0: engineering estimate for a vertical-landing-capable transport, no public figure"},
+            "landing_gear.contact_height_m": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "derived from airframe.height_m and typical fuselage-to-ground-contact-point ratio; no public figure"},
+            "engine_ref": {"value_basis": "sourced", "source_ids": ["csg-us-cmv22b-navair"], "tier": "A", "note": "2x Rolls-Royce Liberty AE1107C, 6,200 shp each per NAVAIR's direct CMV-22B page (slightly higher than the MV-22B's stated 6,150 shp and CV-22's 'more than 6,200 shp'; NAVAIR's CMV-22B-specific figure used); reuses the existing CSG_US_AE1107C engine record already authored earlier in this packet from the Rolls-Royce official product page (7,000 shp rated max), not re-derived, since it is the same engine family/part number"},
+            "rcs_profile_ref": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "reuses CSG_US_LargeProp_RCS (shared E-2D/C-2A/CMV-22B profile per that record's documented 3-type scope, already anticipating the CMV-22B in its original provenance note)"},
+            "hardpoints": {"value_basis": "sourced", "source_ids": ["csg-us-cmv22b-navair"], "tier": "A", "note": "empty list: NAVAIR's CMV-22B primary function is explicitly logistics-only ('transporting personnel, mail, supplies and high-priority cargo'), no weapons systems described (unlike the CV-22/MV-22 which the Air Force fact sheet notes carries 'one .50-caliber machine gun on ramp' for the special-operations variant — not applicable to the Navy COD-only CMV-22B)"},
+            "default_loadout": {"value_basis": "sourced", "source_ids": ["csg-us-cmv22b-navair"], "tier": "A", "note": "empty: consistent with the unarmed hardpoints=[] finding above, per the task's explicit instruction for this record"},
+            "damage_model": {"value_basis": "engineering_estimate", "source_ids": ["csg-us-v22-boeing", "csg-us-v22-wiki"], "tier": "proxy", "note": "Full component damage model built as a hybrid of the repo mh60r_mvp.json helicopter template and this packet's own CSG_US_C-2A_Greyhound cargo-transport pattern, adapted for the V-22's unique tiltrotor architecture. Two wingtip-nacelle hitboxes each contain an engine_core, a tilt_nacelle_gearbox (system='transmission', reflecting the sourced 'engine/transmission nacelles... mounted on each wing tip' per the NLR aerodynamic-development paper), a nacelle_tilt_actuator (system='flight_control', hydraulic-dependent, reflecting the sourced 90-degree nacelle rotation between helicopter/airplane mode per Boeing/Wikipedia), and a proprotor_hub+proprotor_blades pair (system='rotor') sized to the sourced 11.6 m rotor diameter — left/right pairs share redundancy_group_id groupings (engine_cores/tilt_nacelle_gearboxes/proprotor_systems) per this packet's twin-powerplant convention. A wing hitbox adds a cross_shaft_interconnect component (system='transmission') reflecting the V-22's sourced drive-shaft interconnect enabling single-engine flight if one engine fails (general V-22 safety-design literature, not independently re-verified this session — flagged as a design feature widely reported for the type but not re-confirmed against an official source in this search pass). Center-fuselage hitbox follows the C-2A pattern (cargo_bay_deck, aft_cargo_ramp_actuator, cargo_winch_mechanism) reflecting the shared COD/cargo role; no tailhook component modeled since the CMV-22B's vertical-takeoff/landing capability per NAVAIR eliminates the catapult/arresting-gear dependency that the C-2A/E-2D require. mechanism_thresholds/redundancy weightings proxied unchanged from the repo mh60r_mvp.json template's per-system values; no public component-level vulnerability data exists for this or any aircraft in this packet."}
+        }
+    }
+}

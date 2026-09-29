@@ -1,0 +1,28 @@
+{
+    "name": "CSG_US_T56-A-425",
+    "type": "Engine",
+    "engine": {
+        "mil_thrust_n": 18400.0,
+        "ab_thrust_n": 18400.0,
+        "sfc_mil": 0.47,
+        "sfc_ab": 0.47,
+        "bypass_ratio": 0.0
+    },
+    "_real_world": {
+        "class": "Rolls-Royce (Allison) T56-A-425 turboprop",
+        "variant_scope": "T56-A-425 as fitted to C-2A Greyhound (twin-engine installation, 4,600 shp each)",
+        "hulls": [],
+        "public_equipment": ["2 x Allison T56-A-425, 4,600 shp each (csg-us-c2a-navy)"]
+    },
+    "_provenance": {
+        "modeling_note": "Same schema limitation and conversion approach as CSG_US_T56-A-427A (aircraft/modules/engines/csg/us/t56_a_427a.json): the loader's Engine block is thrust-in-newtons shaped with no shaft-horsepower field, so mil_thrust_n/ab_thrust_n is an engineering_estimate equivalent static thrust from the sourced 4,600 shp rating via the same T[N]~=4.0*shp proxy factor, not a real turboprop performance figure. ab_thrust_n=mil_thrust_n (no afterburner); bypass_ratio=0.0 placeholder (not applicable to a turboprop).",
+        "sources": ["csg-us-c2a-navy", "csg-us-t56-wiki"],
+        "parameters": {
+            "engine.mil_thrust_n": {"value_basis": "engineering_estimate", "source_ids": ["csg-us-c2a-navy"], "tier": "est", "note": "4,600 shp sourced (A, OOB page); converted via T[N]=4.0*shp proxy factor since the loader has no shp field. Not a real thrust figure"},
+            "engine.ab_thrust_n": {"value_basis": "engineering_estimate", "source_ids": ["csg-us-c2a-navy"], "tier": "est", "note": "set equal to mil_thrust_n; turboprop has no afterburner stage"},
+            "engine.sfc_mil": {"value_basis": "proxy", "source_ids": ["csg-us-t56-wiki"], "tier": "C-est", "note": "generic T56-family max-power SFC (0.4690 lb/(hp.h), Wikipedia Allison T56 performance table); same-family proxy, no -425-specific SFC found"},
+            "engine.sfc_ab": {"value_basis": "proxy", "source_ids": ["csg-us-t56-wiki"], "tier": "C-est", "note": "same generic T56-family SFC figure as sfc_mil"},
+            "engine.bypass_ratio": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "0.0 placeholder; not a meaningful concept for a turboprop"}
+        }
+    }
+}
