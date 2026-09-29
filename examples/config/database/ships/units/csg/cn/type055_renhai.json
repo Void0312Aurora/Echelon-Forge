@@ -108,7 +108,7 @@
     ],
     "embarked_air_ops": {
         "enabled": true,
-        "helo_unit_name": "MH-60R_MVP",
+        "helo_unit_name": "CSG_CN_Z-20F",
         "launch_altitude_m": 180.0,
         "launch_offset_forward_m": -70.0,
         "launch_offset_starboard_m": 0.0,
@@ -363,7 +363,7 @@
             "naval_weapon_system.mounts.fire_control_channel": {"value_basis": "engineering_estimate", "note": "internal identifier, not a real-world parameter"},
             "naval_weapon_system.mounts.provenance_note": {"value_basis": "sourced", "note": "free-text field documenting each mount's own sourcing inline; see each mount's provenance_note string"},
             "naval_weapon_system.mounts.ready_count": {"value_basis": "sourced", "source_ids": ["csg-cn-dia-2019", "csg-cn-type055-usni-proc-202303"], "tier": "A/B", "note": "flat fallback: hhq9b_vls_sam/hhq16_vls_sam ready_count individually sourced/estimated per their own bracketed entries above (48 HHQ-9B A/B-tier, 16 HHQ-16 C-only); hhq10_ciws sourced B (24-cell); main_gun and type1130_ciws ready_count are engineering-estimate/proxy, no public magazine depth for either"},
-            "embarked_air_ops.helo_unit_name": {"value_basis": "proxy", "note": "2 maritime helicopters (Z-9 class or Z-20F) per OOB (B); references the repo's existing MH-60R_MVP as the nearest available embarked-helo stand-in pending a real Z-9/Z-20F record"},
+            "embarked_air_ops.helo_unit_name": {"value_basis": "engineering_estimate", "note": "Z-20F naval ASW helicopter as the 055 hangar type; replaced the MH-60R_MVP placeholder once the S0-C helicopter records existed (main thread, 2026-09-29)"},
             "data_link_network_id": {"value_basis": "engineering_estimate", "note": "2: PLAN CSG network membership scaffold value"}
         },
         "modeling_notes": [

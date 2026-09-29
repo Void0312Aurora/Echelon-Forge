@@ -108,7 +108,7 @@
     ],
     "embarked_air_ops": {
         "enabled": true,
-        "helo_unit_name": "MH-60R_MVP",
+        "helo_unit_name": "CSG_CN_Z-20F",
         "launch_altitude_m": 180.0,
         "launch_offset_forward_m": -45.0,
         "launch_offset_starboard_m": 0.0,
@@ -315,7 +315,7 @@
             "naval_weapon_system.mounts.engagement_range_m": {"value_basis": "engineering_estimate", "note": "flat fallback: forward_vls_sam's engagement_range_m is sourced A (HHQ-16/DIA-2019); main_gun and gun_ciws engagement_range_m are engineering-estimate proxies from the repo's gun/CIWS MVP calibrations, no public range figure for either"},
             "sensor_ref": {"value_basis": "sourced", "source_ids": ["csg-cn-054a-globalsecurity"], "tier": "C-only", "note": "Type 382 3D air search (Top Plate derivative); references the packet's CSG_CN_Type_382_3D_Air_Search module"},
             "mounted_sonars": {"value_basis": "sourced", "note": "hull sonar on all hulls (B); VDS + towed array on late-production units (17th unit Huanggang onward) per USNI ('thought to possess'), Tongliao (554, resumed batch) assumed to have this fit per the OOB's own inference. References the packet's shared PLAN_Escort_Hull_Sonar and PLAN_Escort_Towed_Array_VDS modules"},
-            "embarked_air_ops.helo_unit_name": {"value_basis": "proxy", "note": "1 x Z-9 (AS365 derivative) or Ka-28 per OOB (B); Z-20 does not fit the standard 054A hangar per OOB inference. References MH-60R_MVP as the nearest available stand-in"},
+            "embarked_air_ops.helo_unit_name": {"value_basis": "engineering_estimate", "note": "Z-20F replacing Z-9 in the 054A hangar (proxy for the fleet mix); replaced the MH-60R_MVP placeholder once the S0-C helicopter records existed (main thread, 2026-09-29)"},
             "data_link_network_id": {"value_basis": "engineering_estimate", "note": "2: PLAN CSG network membership scaffold value"}
         },
         "modeling_notes": [

@@ -52,7 +52,7 @@
     },
     "embarked_air_ops": {
         "enabled": true,
-        "helo_unit_name": "MH-60R_MVP",
+        "helo_unit_name": "CSG_CN_Z-20F",
         "launch_altitude_m": 180.0,
         "launch_offset_forward_m": -120.0,
         "launch_offset_starboard_m": 30.0,
@@ -256,7 +256,7 @@
             "naval_weapon_system.mounts.hit_probability": {"value_basis": "engineering_estimate", "note": "no public engagement-effectiveness figure; engineering estimate carried from the packet's per-weapon-type MVP calibrations"},
             "naval_weapon_system.mounts.cooldown_s": {"value_basis": "proxy", "note": "no public per-mount cycle-rate figure; carried from the packet's per-weapon-type MVP calibrations"},
             "sensor_ref": {"value_basis": "sourced", "source_ids": ["csg-cn-fujian-navaltech", "csg-cn-fujian-twz-2024"], "tier": "B", "note": "island-integrated fixed-face AESA main radar, named by role since designation is not officially disclosed ('Type 346B' is C-only speculation per CSIS 'TBD'); references the packet's CSG_CN_Fujian_Island_AESA_Volume_Search sensor module"},
-            "embarked_air_ops.helo_unit_name": {"value_basis": "proxy", "note": "references the repo's existing MH-60R_MVP unit as a placeholder for Z-20F pending packet 4's real record, per task instruction; Z-20F confirmed aboard at commissioning carrying YJ-9-family anti-ship missiles (csg-cn-fujian-aviationist-commission, csg-cn-fujian-navalnews-commission, B)"},
+            "embarked_air_ops.helo_unit_name": {"value_basis": "engineering_estimate", "note": "Z-20F ASW helicopters per the S0-A Fujian air-wing table; replaced the MH-60R_MVP placeholder once the S0-C helicopter records existed (main thread, 2026-09-29)"},
             "embarked_air_ops.launch_altitude_m": {"value_basis": "engineering_estimate", "note": "carried from the DDG-51 template's embarked_air_ops scaffold convention"},
             "embarked_air_ops.launch_offset_forward_m": {"value_basis": "engineering_estimate", "note": "negative (aft) offset reflecting the carrier's helicopter spots being aft of the island per OOB (5 marked spots, csg-cn-fujian-navaltech B); engineering estimate, not measured from imagery"},
             "embarked_air_ops.launch_offset_starboard_m": {"value_basis": "engineering_estimate", "note": "engineering estimate consistent with a starboard-island carrier layout"},

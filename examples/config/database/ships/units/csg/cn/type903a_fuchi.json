@@ -60,7 +60,7 @@
     },
     "embarked_air_ops": {
         "enabled": true,
-        "helo_unit_name": "MH-60R_MVP",
+        "helo_unit_name": "CSG_CN_Z-20J",
         "max_sorties_per_cycle": 1,
         "launch_interval_s": 540.0,
         "recovery_interval_s": 480.0,
@@ -145,6 +145,7 @@
             "csg-cn-901-uscc-2020"
         ],
         "parameters": {
+            "embarked_air_ops.helo_unit_name": {"value_basis": "engineering_estimate", "note": "Z-20J naval utility helicopter for VERTREP; replaced the MH-60R_MVP placeholder once the S0-C helicopter records existed (main thread, 2026-09-29)"},
             "damage_model.hitboxes.components.system": {"value_basis": "engineering_estimate", "note": "component system tags follow the packet-wide convention; hitbox zones proxy-scaled from the Type 901 record's 4-zone layout"},
             "ship_platform.displacement_full_load_kg": {"value_basis": "proxy", "tier": "C", "note": "~23,000t widely repeated secondary-source figure for the Fuchi class; used as the scaling anchor per decision #7's fallback since 3 targeted web searches for a 903A-specific figure returned no usable results"},
             "ship_platform.length_m": {"value_basis": "proxy", "note": "engineering-estimate, scaled from Type 901's sourced 241m by the cube-root of the displacement ratio (23,000t/48,000t), per decision #7's explicit fallback instruction"},
