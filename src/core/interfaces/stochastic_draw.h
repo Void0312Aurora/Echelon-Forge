@@ -66,6 +66,15 @@ inline constexpr std::uint64_t kSplitmix64Gamma = 0x9e3779b97f4a7c15ULL;
            (1.0 / 9007199254740992.0);
 }
 
+// Uniform double in [0, 1) from a value already produced by `splitmix64_weyl_next` or
+// `splitmix64_feedback_next`: 53 random bits / 2^53, with no re-mix. `uniform01` re-mixes its
+// argument as a seed, which is the right call at every draw site; the two consolidated stream
+// steps (geometry, damage) instead advance their own long-lived `rng_state` and need the mixed
+// output scaled directly, exactly as their pre-consolidation copies did.
+[[nodiscard]] constexpr double stream_uniform01(std::uint64_t mixed) noexcept {
+    return static_cast<double>(mixed >> 11) * (1.0 / 9007199254740992.0);
+}
+
 // Independent sub-seed for one named quantity drawn from a site seed (for example range noise
 // versus bearing noise). Replaces the sites' ad hoc xor constants.
 [[nodiscard]] constexpr std::uint64_t lane(std::uint64_t seed, std::uint64_t tag) noexcept {

@@ -26,9 +26,8 @@
 
 namespace {
 inline double damage_rand_uniform01(uint64_t &state) {
-    // 53 random bits / 2^53, from the already-mixed feedback-form stream output.
     state = stochastic_draw::splitmix64_feedback_next(state);
-    return static_cast<double>(state >> 11) * (1.0 / 9007199254740992.0);
+    return stochastic_draw::stream_uniform01(state);
 }
 
 inline bool proximity_fuze_has_terminal_guidance_support(const Missile &missile) {

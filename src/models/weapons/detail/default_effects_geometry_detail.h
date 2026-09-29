@@ -43,8 +43,7 @@ uint64_t splitmix64(uint64_t &state) {
 }
 
 double rand_uniform01(uint64_t &state) {
-    // 53 random bits / 2^53, from the already-mixed stream output (not re-mixed as a seed).
-    return static_cast<double>(splitmix64(state) >> 11) * (1.0 / 9007199254740992.0);
+    return stochastic_draw::stream_uniform01(splitmix64(state));
 }
 
 bool check_hitbox(const Vec3 &local_p, const Hitbox &box) {
