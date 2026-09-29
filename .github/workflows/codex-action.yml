@@ -31,21 +31,6 @@ on:
         description: Create a pull request when a manual Codex task changes files.
         type: boolean
         default: true
-  workflow_run:
-    workflows:
-      - ci-smoke
-    types:
-      - completed
-  release:
-    types:
-      - created
-      - edited
-      - prereleased
-      - published
-  push:
-    tags:
-      - "v*"
-
 
 concurrency:
   group: codex-action-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.issue.number || github.run_id }}
