@@ -1,0 +1,90 @@
+{
+    "name": "CSG_US_VLA_RUM-139",
+    "type": "Missile",
+    "mass_kg": 748.4,
+    "max_flight_time_s": 90.0,
+    "flight_model": {
+        "max_speed": 680.0,
+        "max_g": 8.0,
+        "max_turn_rate": 12.0
+    },
+    "guidance": {
+        "type": "GpsInsWaypoint",
+        "active_seek_range": 0.0,
+        "pn_los_rate_source": "world_los_history",
+        "target_kinematics_estimator": "world_cva",
+        "capture_guidance_mode": "disabled",
+        "target_tracker_alpha": 0.2,
+        "target_tracker_beta": 0.02,
+        "target_tracker_gamma": 0.5,
+        "nav_gain": 2.0,
+        "apn_target_accel_gain": 0.05,
+        "autopilot_tau_s": 0.15,
+        "max_accel_response_g_per_s": 30.0
+    },
+    "warhead": {
+        "type": "blast",
+        "mass_kg": 43.9,
+        "lethal_radius": 10.0,
+        "damage": 280.0,
+        "explosive_mass_kg": 26.3,
+        "case_mass_kg": 17.6,
+        "projection_radius_fraction": 0.5,
+        "projection_max_radius_m": 14.0,
+        "projection_max_projected_hitboxes": 3,
+        "provenance": "96.8 lb HE payload = 43.9 kg per OOB (csg-us-vla-navy, A) — this is the Mk 54 payload torpedo's warhead delivered by VLA; OOB notes the Mk 54 fact file separately gives 100 lb. Explosive/case split, lethal radius, damage are engineering-estimate surrogates."
+    },
+    "fuze": {
+        "type": "contact",
+        "trigger_radius_m": 0.0,
+        "delay_s": 0.0,
+        "reliability": 0.95,
+        "provenance": "VLA is a rocket-boosted delivery vehicle that releases a Mk 54 (or Mk 46 Mod 5A(SW)) torpedo at a water-entry point; this fuze scaffold represents the release/separation event, not a torpedo's own fuze."
+    },
+    "_real_world": {
+        "designation": "RUM-139 Vertical Launch ASROC (VLA)",
+        "role": "VLS-launched (Mk 41) ASW rocket that delivers a Mk 54 (or Mk 46 Mod 5A(SW)) lightweight torpedo to a water-entry point",
+        "range_statute_mi": "over 10",
+        "guidance_real": "Ballistic/guided rocket delivery to a computed water-entry point; no independent seeker on the rocket stage itself",
+        "status": "content_only_no_mechanism",
+        "mount_mapping": "none — no NavalWeaponType exists for ASROC; placed only in _real_world.weapon_inventory (DDG VLS load categories include VL-ASROC per representative loadout)"
+    },
+    "_provenance": {
+        "sources": ["csg-us-vla-navy", "csg-us-mk54-navy"],
+        "parameters": {
+            "warhead.type": {"value_basis": "engineering_estimate", "note": "blast: matches the delivered Mk 54 torpedo's own warhead type; generic blast is the nearest real engine-recognized warhead type for an underwater HE warhead"},
+            "warhead.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "fuze.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-vla-navy"], "tier": "A", "note": "1,650 lb = 748.4 kg"},
+            "max_flight_time_s": {"value_basis": "engineering_estimate", "note": "no public flight time; engineering estimate for a short-range rocket-boosted delivery vehicle over its >10 statute mile range"},
+            "flight_model.max_speed": {"value_basis": "proxy", "note": "no public rocket-stage speed; engineering estimate for a solid-rocket ASW delivery vehicle over its >10 statute mile range"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "note": "no public maneuver-load figure; engineering estimate for a ballistic rocket-delivery vehicle, not a maneuvering interceptor"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "note": "no public figure; engineering estimate for a ballistic waypoint-delivery rocket's limited course correction"},
+            "guidance.type": {"value_basis": "engineering_estimate", "note": "descriptive metadata only: the engine's guidance.type loader only recognizes ActiveRadar/Radar or IR/Infrared as a seeker_type; a ballistic waypoint-delivery rocket has no matching engine category, and this record has no functional mount anyway (mechanism gap, ASROC)"},
+            "guidance.active_seek_range": {"value_basis": "engineering_estimate", "note": "0.0: no independent seeker exists on the VLA rocket stage itself per OOB; range is a ballistic delivery calculation, not a terminal seeker"},
+            "guidance.pn_los_rate_source": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, not a sourced weapon characteristic; record has no functional mount regardless"},
+            "guidance.target_kinematics_estimator": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, same basis as pn_los_rate_source"},
+            "guidance.capture_guidance_mode": {"value_basis": "engineering_estimate", "note": "disabled: no terminal capture-guidance submode exists for a ballistic delivery rocket"},
+            "guidance.target_tracker_alpha": {"value_basis": "engineering_estimate", "note": "standard alpha-beta-gamma tracker filter constant, engine convention shared across missile records, not weapon-specific"},
+            "guidance.target_tracker_beta": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.target_tracker_gamma": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.nav_gain": {"value_basis": "engineering_estimate", "note": "proportional-navigation gain scaffold, low since this is a ballistic delivery vehicle with no maneuvering terminal homing"},
+            "guidance.apn_target_accel_gain": {"value_basis": "engineering_estimate", "note": "augmented-PN target-acceleration compensation gain scaffold, not applicable to a fixed water-entry-point delivery but retained for schema completeness"},
+            "guidance.autopilot_tau_s": {"value_basis": "engineering_estimate", "note": "autopilot response time-constant scaffold, consistent with a rocket-boosted delivery vehicle's flight control"},
+            "guidance.max_accel_response_g_per_s": {"value_basis": "engineering_estimate", "note": "autopilot response-rate scaffold for the ballistic delivery flight phase"},
+            "warhead.mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-vla-navy"], "tier": "A", "note": "96.8 lb HE payload (the delivered Mk 54 torpedo's warhead) = 43.9 kg; OOB notes Mk 54 fact file separately states 100 lb, minor conflict"},
+            "warhead.lethal_radius": {"value_basis": "proxy", "note": "engineering-estimate surrogate matching the delivered Mk 54 torpedo's own warhead lethal_radius"},
+            "warhead.damage": {"value_basis": "proxy", "note": "engineering-estimate surrogate matching the delivered Mk 54 torpedo's own warhead damage figure"},
+            "warhead.explosive_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split of the sourced 43.9 kg total warhead mass, no public split figure"},
+            "warhead.case_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split, see explosive_mass_kg"},
+            "warhead.projection_radius_fraction": {"value_basis": "proxy", "note": "copied from the weapons/air_to_air/aim_120c.json blast projection-geometry template, matching the delivered Mk 54 payload's own projection fields"},
+            "warhead.projection_max_radius_m": {"value_basis": "proxy", "note": "copied/scaled from the aim_120c.json template pattern, matching the Mk 54 payload record"},
+            "warhead.projection_max_projected_hitboxes": {"value_basis": "proxy", "note": "copied from the aim_120c.json template pattern"},
+            "fuze.type": {"value_basis": "engineering_estimate", "note": "VLA is a rocket-boosted delivery vehicle that releases a torpedo at a water-entry point; contact fuze is the nearest real engine-recognized fuze family for this release/separation event, per the loader's 4-value fuze.type vocabulary. This is not the delivered torpedo's own fuze"},
+            "fuze.trigger_radius_m": {"value_basis": "engineering_estimate", "note": "0.0: represents the release/separation event, not a torpedo's own contact-fuze standoff"},
+            "fuze.delay_s": {"value_basis": "engineering_estimate", "note": "0.0: release/separation event has no fuze delay; scaffold value for schema completeness"},
+            "fuze.reliability": {"value_basis": "engineering_estimate", "note": "no public reliability figure for the release/separation event; engineering-estimate scaffold value"}
+        },
+        "modeling_notes": ["No functional mount exists (mechanism gap, ASROC); content-only for _real_world.weapon_inventory. Represents the combined rocket-delivery + torpedo-payload system as a single record per the task's instruction that ASROC gets a full Missile record despite having no mount mechanism."]
+    }
+}

@@ -1,0 +1,90 @@
+{
+    "name": "CSG_US_ESSM_Block_1",
+    "type": "Missile",
+    "mass_kg": 280.2,
+    "max_flight_time_s": 55.0,
+    "flight_model": {
+        "max_speed": 1361.7,
+        "max_g": 50.0,
+        "max_turn_rate": 40.0
+    },
+    "guidance": {
+        "type": "ActiveRadar",
+        "active_seek_range": 0.0,
+        "pn_los_rate_source": "world_los_history",
+        "target_kinematics_estimator": "world_cva",
+        "capture_guidance_mode": "disabled",
+        "target_tracker_alpha": 0.2,
+        "target_tracker_beta": 0.02,
+        "target_tracker_gamma": 0.5,
+        "nav_gain": 4.0,
+        "apn_target_accel_gain": 0.125,
+        "autopilot_tau_s": 0.03,
+        "max_accel_response_g_per_s": 450.0
+    },
+    "warhead": {
+        "type": "blast_fragmentation",
+        "mass_kg": 40.8,
+        "lethal_radius": 10.0,
+        "damage": 150.0,
+        "explosive_mass_kg": 16.3,
+        "case_mass_kg": 24.5,
+        "projection_radius_fraction": 0.6,
+        "projection_max_radius_m": 14.0,
+        "projection_max_projected_hitboxes": 3,
+        "provenance": "Annular blast-fragmentation warhead, 90 lb = 40.8 kg per OOB (csg-us-essm-navy, A). Lethal radius/damage/case-explosive split are engineering-estimate surrogates following the aim_120c.json pattern."
+    },
+    "fuze": {
+        "type": "radar_proximity",
+        "trigger_radius_m": 10.0,
+        "delay_s": 0.012,
+        "reliability": 0.94,
+        "provenance": "No public fuze timing data; engineering-estimate scaffold values consistent with a point-defense semi-active-radar SAM."
+    },
+    "_real_world": {
+        "designation": "ESSM Block 1 (RIM-162D)",
+        "role": "Point/short-range air-defense SAM, quad-packed 4/cell in Mk 41 (Mk 25) or 8 per Mk 29 launcher",
+        "range_nmi": "n/p (Navy: Classified); ~27 nmi (50 km) open source (C-est)",
+        "speed_mach": "n/p (Navy: Classified); Mach 4+ open source (C-est)",
+        "guidance_real": "Semi-active CW/ICW illumination with S/X-band midcourse uplink (Block 1)",
+        "mount_mapping": "vls_sam (quad-packed cells) or ciws-style Mk 29 launcher per ship; documented per-ship in the ship record"
+    },
+    "_provenance": {
+        "sources": ["csg-us-essm-navy", "csg-us-essm-navalnews"],
+        "parameters": {
+            "warhead.type": {"value_basis": "sourced", "source_ids": ["csg-us-essm-navy"], "tier": "A", "note": "annular blast_fragmentation warhead per OOB"},
+            "warhead.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "fuze.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "guidance.type": {"value_basis": "sourced", "source_ids": ["csg-us-essm-navy"], "tier": "A", "note": "OOB: semi-active CW/ICW illumination (Block 1). Engine's guidance.type loader only recognizes ActiveRadar/Radar or IR/Infrared as seeker_type; semi-active radar has no dedicated engine category, so ActiveRadar is used as the nearest available bucket. Engine mechanism gap, not a modeling choice"},
+            "mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-essm-navy"], "tier": "A", "note": "622 lb = 280.2 kg, Block 1"},
+            "max_flight_time_s": {"value_basis": "proxy", "note": "engineering estimate derived from the ~27 nmi open-source range at the Mach 4+ proxy speed; Navy classifies both figures"},
+            "flight_model.max_speed": {"value_basis": "proxy", "source_ids": ["csg-us-essm-navalnews"], "tier": "C-est", "note": "Navy classifies speed; open-source Mach 4+ used as estimate, ~1361.7 m/s at sea level"},
+            "flight_model.max_g": {"value_basis": "proxy", "note": "no public figure; engineering estimate reflecting ESSM's known high-agility point-defense role (thrust-vectored variants), higher than SM-2/SM-6"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "note": "no public figure; engineering estimate consistent with max_g for a thrust-vectored point-defense SAM, higher than SM-2/SM-6"},
+            "guidance.active_seek_range": {"value_basis": "engineering_estimate", "note": "0.0: ESSM's real terminal mode is semi-active (requires ship illumination), not a true active seeker with its own acquisition range; set to 0 to avoid implying a self-contained active seeker capability it doesn't have"},
+            "guidance.pn_los_rate_source": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, not a sourced weapon characteristic; VLS/Mk 29 mount override makes this documentation-only for launched use"},
+            "guidance.target_kinematics_estimator": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, same basis as pn_los_rate_source"},
+            "guidance.capture_guidance_mode": {"value_basis": "engineering_estimate", "note": "disabled: no terminal capture-guidance submode is modeled beyond the semi-active homing already described"},
+            "guidance.target_tracker_alpha": {"value_basis": "engineering_estimate", "note": "standard alpha-beta-gamma tracker filter constant, engine convention shared across missile records, not weapon-specific"},
+            "guidance.target_tracker_beta": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.target_tracker_gamma": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.nav_gain": {"value_basis": "engineering_estimate", "note": "proportional-navigation gain scaffold; highest among the packet's SAMs, consistent with ESSM's thrust-vectored point-defense terminal homing against highly maneuverable threats"},
+            "guidance.apn_target_accel_gain": {"value_basis": "engineering_estimate", "note": "augmented-PN target-acceleration compensation gain scaffold, consistent with intercepting a maneuvering anti-ship missile; not sourced per-weapon"},
+            "guidance.autopilot_tau_s": {"value_basis": "engineering_estimate", "note": "autopilot response time-constant scaffold; fastest among the packet's SAMs, consistent with ESSM's thrust-vectored high-agility design"},
+            "guidance.max_accel_response_g_per_s": {"value_basis": "engineering_estimate", "note": "autopilot response-rate scaffold, highest among the packet's SAMs consistent with flight_model.max_g"},
+            "warhead.mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-essm-navy"], "tier": "A", "note": "90 lb = 40.8 kg annular blast-fragmentation"},
+            "warhead.lethal_radius": {"value_basis": "proxy", "note": "engineering-estimate surrogate following the aim_120c.json blast-fragmentation pattern"},
+            "warhead.damage": {"value_basis": "proxy", "note": "engineering-estimate surrogate, no public damage-effectiveness figure"},
+            "warhead.explosive_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split of the sourced 40.8 kg total warhead mass, no public split figure"},
+            "warhead.case_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split, see explosive_mass_kg"},
+            "warhead.projection_radius_fraction": {"value_basis": "proxy", "note": "copied from the weapons/air_to_air/aim_120c.json blast-fragmentation projection-geometry template"},
+            "warhead.projection_max_radius_m": {"value_basis": "proxy", "note": "copied/scaled from the aim_120c.json template pattern for this warhead's lethal_radius"},
+            "warhead.projection_max_projected_hitboxes": {"value_basis": "proxy", "note": "copied from the aim_120c.json template pattern"},
+            "fuze.type": {"value_basis": "engineering_estimate", "note": "no public fuze timing data; radar_proximity is the matching real engine-recognized fuze type consistent with a point-defense semi-active-radar SAM"},
+            "fuze.trigger_radius_m": {"value_basis": "proxy", "note": "no public fuze timing data; engineering-estimate scaffold value matching warhead.lethal_radius"},
+            "fuze.delay_s": {"value_basis": "proxy", "note": "no public fuze timing data; engineering-estimate scaffold value"},
+            "fuze.reliability": {"value_basis": "proxy", "note": "no public reliability figure; engineering-estimate scaffold value"}
+        },
+        "modeling_notes": ["Range is explicitly classified by the Navy (A); the ~27 nmi/50 km open-source figure is Tier C-est and not directly encoded as a JSON field (not present in this Missile schema).", "Engine note: for a vls_sam mount, simulation_kernel_weapon_release_service.cpp (~line 644-654) overrides the fired missile's speed/turn_rate/fuse_distance/damage/max_flight_time_s from the ship record's naval_weapon_system.mounts[] fields, not from this standalone Missile record. This record is documentation/reference only for VLS-launched ESSM; the ship record's mount fields drive actual in-engine outcomes."]
+    }
+}
