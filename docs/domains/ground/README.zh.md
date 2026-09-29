@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/domains/ground/README.md`
 Owner: `domains/ground`
-Last verified: `2026-09-24`
+Last verified: `2026-09-29`
 
 Ground owner 定义陆上领域特化语义，但不把 Army 军种条令变成一条私有 runtime
 栈。它拥有 Ground 专属平台身份和静态 task/status 词汇。Joint 关系、Army
@@ -34,7 +34,7 @@ service-profile 解释以及跨域 runtime 架构仍由各自 owner 负责。
   运动学步；kernel 还向 native training probe 暴露同一 owner 计算出的 movement-effect
   倍率。这是单兵移动原语，不是 route following、passability、formation 或完整陆战动力学。
   准入记录见
-  [Ground Infantry Movement v1](work/active/ground_infantry_movement_v1/README.zh.md)。
+  [Ground Infantry Movement v1](reviews/ground_infantry_movement_v1_20260924/README.zh.md)。
 - 默认环境 provider 可以显式加载已验证的 Arnis 连续高程/地表覆盖栅格对，维护中的
   kernel 也向训练 adapter 暴露有界地形和 movement-effect 观测 tuple。树线/聚落语义、一般通行性以及
   track/sensor observation export 仍保持 held；河流/桥面地表采样已有限准入。
@@ -65,6 +65,10 @@ service-profile 解释以及跨域 runtime 架构仍由各自 owner 负责。
   G0/Arnis 验收边界。
 - [Ground 缺陷清单](reviews/ground_domain_defect_inventory_20260522.zh.md)：带日期的
   review 快照；开放项需要按当前状态重新核验。
+- [Ground 单兵移动 v1](reviews/ground_infantry_movement_v1_20260924/README.zh.md)与
+  [Ground Arnis 原生地形 v1](reviews/ground_arnis_native_terrain_v1_20260924/README.zh.md)：
+  于 `2026-09-24` 接受，作为带日期的 review 记录保留；其长期事实已并入
+  [Ground 特化基线](standards/specialization_baseline.zh.md)。
 
 当前已授权的地面工作面曾是
 [地面域系统归属准入](reviews/ground_systems_owner_admission_20260921/README.zh.md)，

@@ -6,7 +6,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/domains/ground/standards/specialization_baseline.md`
 Owner: `domains/ground`
-Last verified: `2026-09-24`
+Last verified: `2026-09-29`
 
 ## 范围
 
@@ -46,6 +46,25 @@ held 的执行行为。
 - `Ground_Infantry_Soldier_MVP` 是原生的单兵 fixture，其 `MoveStatic` 命令由受限的
   `GroundInfantryMovement` 系统消费。该系统应用地表与坡度速度代价并推进一个水平
   运动学步；它不建立 route following 或完整的单兵动力学模型。
+- 默认 environment provider 可以通过
+  `SimulationKernel.load_arnis_terrain_bundle(bundle_root)` 显式加载已验证的 Arnis
+  `arnis_cmo_bundle.v1` 连续高程/地表覆盖栅格对；这是显式的 provider 加载操作，不是自动
+  runtime setup（`tests/runtime/ground/test_ground_infantry_native_unit.py`）。
+- 原生 provider 对声明的 Arnis 水文与桥梁道路矢量做有界点分类采样：河流走廊是水面，声明的
+  桥面线段覆盖水面并成为硬压实通行面。这是有界的局部采样，不是路线图或一般通行性产品
+  （`tests/runtime/ground/test_ground_infantry_native_unit.py`）。
+- 移动代价同时考虑姿态、地表、坡度与植被。一次采样的单 tick 过渡观测（5 m 线段间隔）为
+  `GroundInfantryMovement` 提供其消费的平均综合移动倍率，同一局部过渡检查会在一个单 tick
+  线段触及水面或未知/障碍单元时阻止该次推进而不推进 transform。这是局部线段代价观测与过渡
+  阻断，不是路线级代价栅格或一般通行性掩码
+  （`tests/runtime/ground/test_ground_infantry_native_unit.py`）。
+- 为单兵 fixture 准入了有界原生直射切片：`GroundWeaponState` 与
+  `SimulationKernel.fire_ground_weapon` 要求存在被跟踪的敌方 Ground 目标、有限的步枪射程、
+  弹药与冷却时间，并在命中成功时进入共享 effects/damage bridge。这是确定性的近距离代理；
+  它不宣称视线、掩体、压制、弹道或完整火控模型
+  （`tests/runtime/ground/test_ground_infantry_native_unit.py`）。这些原生 probe 绑定位于
+  被隔离的 `bindings_core_kernel_diagnostics_ground.cpp` 诊断面，不在维护中的
+  `SimulationKernel` 绑定面上。
 
 ## 已注册且可达，但不构成能力
 
@@ -74,7 +93,7 @@ model 只对结构化空中目标估算弹头机理载荷，因此 Ground 路径
 `builtin.system.ground_infantry_movement` 为 stage 34。后者只是单兵 fixture 的受限
 单步消费者，不释放 route movement、passability、sensing、fires、logistics 或
 observation export。准入记录见
-[Ground Infantry Movement v1](../work/active/ground_infantry_movement_v1/README.zh.md)。
+[Ground Infantry Movement v1](../reviews/ground_infantry_movement_v1_20260924/README.zh.md)。
 
 ## 内容与 Capability 规则
 
@@ -92,13 +111,15 @@ observation export。准入记录见
 
 ## Held 边界
 
-当前维护面尚未建立：
+在上面准入的有界局部切片之外，当前维护面尚未建立：
 
-- route following、加速度/疲劳/队形 dynamics、terrain traversal、passability、cover、
-  concealment、obstacle 或 breach behavior；
-- Ground sensing、line-of-sight 计算、track fusion、data-link behavior 或
-  observation export；
-- direct fire、indirect fire、effects、damage、suppression、attrition 或 combat runtime；
+- route following、waypoint/路线规划、加速度/疲劳/队形 dynamics、路线图、一般通行性
+  掩码、路线级河流通行规划、obstacle 或 breach behavior（已准入的表面只是局部单 tick 过渡采样与阻断，不是路线产品）；
+- Ground sensing、line-of-sight 计算、cover、concealment、track fusion、data-link
+  behavior，或超出上面所列有界地形/过渡/字段语义观测元组之外的 observation export；
+- indirect fire、suppression、attrition、完整火控、弹道模型或 combat runtime（已准入的直射切片是位于被隔离
+  诊断绑定面上的确定性近距离代理，不是火控或弹道模型；它所驱动的 ground damage 机制仍只是
+  可达机制，不是已释放的 effects 能力）；
 - logistics、sustainment、recovery 或 learned Ground policy；
 - 正式 Ground `CommandPacket`、`ObservationPacket` 或 `TrackPacket` 特化。
 

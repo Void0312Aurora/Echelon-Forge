@@ -2,11 +2,16 @@
 
 Language: English canonical; [Chinese companion](README.zh.md).
 
-Document kind: `work-package`
-Lifecycle: `active`
-Canonical: `docs/domains/ground/work/active/ground_infantry_movement_v1/README.md`
+Document kind: `review`
+Lifecycle: `maintained`
+Canonical: `docs/domains/ground/reviews/ground_infantry_movement_v1_20260924/README.md`
 Owner: `domains/ground`
 Accepted: `2026-09-24`
+Last verified: `2026-09-29`
+
+This package is accepted and frozen as of `2026-09-24`; it is retained here as a
+provenance record. Its lasting facts are promoted into the
+[Ground specialization baseline](../../standards/specialization_baseline.md).
 
 ## Purpose
 
