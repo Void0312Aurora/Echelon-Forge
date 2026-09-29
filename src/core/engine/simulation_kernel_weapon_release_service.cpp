@@ -801,12 +801,25 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
         std::max(0.0, finite_or_default(resolved_tuning.sustain_thrust_n,
                                         default_sustain_thrust_n(boost_thrust_n)));
 
+    // The target is looked up by caller-supplied raw id with no KeyEntity gate. ContactList
+    // deliberately keeps dead ids for track memory (sensor_system.h), so firing at a target
+    // whose track outlived it is a reachable, normal-play path, not a caller bug. Reject it
+    // here, on the same invalid-target path as an invalid attacker, before either mt19937
+    // draw below: a rejected fire must not advance the rng_ stream (P5 review B1).
+    const auto missile_release_target = ecs_.entity(target_id);
+    if (!missile_release_target.is_alive() ||
+        !missile_release_target.has<StableEntitySerial>()) {
+        spdlog::warn("fire_missile rejected target {}: it is not alive or carries no stable "
+                     "entity serial",
+                     target_id);
+        return flecs::entity::null();
+    }
+
     // Site 2 (missile release): keeps its two mt19937 draws, in the same order, passed as
     // `words` alongside the entropy word they always mixed in, so the mt19937 stream position
     // is unchanged (Decision 3).
     const uint64_t missile_release_rng_word1 = static_cast<uint64_t>(rng_());
     const uint64_t missile_release_rng_word2 = static_cast<uint64_t>(rng_());
-    const auto missile_release_target = ecs_.entity(target_id);
     const uint64_t missile_seed = stochastic_draw::draw_seed(
         ecs_, stochastic_draw::DrawSite::missile_release, current_time,
         {attacker, missile_release_target},
@@ -1049,7 +1062,10 @@ bool SimulationKernelWeaponReleaseService::fire_naval_weapon(uint64_t attacker_i
 
     double hit_probability = std::clamp(mount->hit_probability, 0.05, 0.99);
     auto target = ecs_.entity(target_id);
-    const bool target_valid = target.is_valid();
+    // `is_alive()`, not `is_valid()`: the target may be a dead id that ContactList still
+    // carries for track memory (sensor_system.h), and that must be an explicit dead-target
+    // case here, not a silent pass-through into the draw below (P5 review B1).
+    const bool target_valid = target.is_alive();
     const bool target_is_missile = entity_is_missile(ecs_, target_id);
     if (weapon_type == NavalWeaponType::Ciws && mount->can_intercept_missiles &&
         target_is_missile) {
@@ -1058,11 +1074,19 @@ bool SimulationKernelWeaponReleaseService::fire_naval_weapon(uint64_t attacker_i
             hit_probability = 1.0;
         }
     }
-    uint64_t rng_state = stochastic_draw::draw_seed(
-        ecs_, stochastic_draw::DrawSite::naval_gun_ciws, current_time, {attacker, target},
-        {static_cast<uint64_t>(weapon_type_code)});
-    const double u = stochastic_draw::uniform01(rng_state);
-    const bool hit = u <= hit_probability;
+    // A dead target must not reach `draw_seed`: `participant_serial` aborts on a
+    // non-`is_valid()` participant, and firing at a track whose target outlived it is a
+    // reachable, normal-play path (ContactList's deliberate track memory), not a defect. Only
+    // draw for a live target; a dead target falls through to the existing `!target_valid`
+    // return below, keeping main's ammo/cooldown accounting and `true` return unchanged.
+    bool hit = false;
+    if (target_valid) {
+        const uint64_t rng_state = stochastic_draw::draw_seed(
+            ecs_, stochastic_draw::DrawSite::naval_gun_ciws, current_time, {attacker, target},
+            {static_cast<uint64_t>(weapon_type_code)});
+        const double u = stochastic_draw::uniform01(rng_state);
+        hit = u <= hit_probability;
+    }
 
     if (weapon_type == NavalWeaponType::Ciws && mount->can_intercept_missiles &&
         target_is_missile) {
