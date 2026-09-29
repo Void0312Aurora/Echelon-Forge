@@ -41,7 +41,6 @@
     },
     "sensor_ref": "AN/SPS-67(V)_Surface_Search",
     "sensor_refs": [
-        "AN/SPS-67(V)_Surface_Search",
         "CSG_US_SPY-1D_V_Volume_Search",
         "SLQ-32_Passive_ESM_MVP"
     ],

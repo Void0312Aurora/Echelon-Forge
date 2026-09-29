@@ -50,7 +50,6 @@
     },
     "sensor_ref": "CSG_CN_Type_901_Navigation_Radar",
     "sensor_refs": [
-        "CSG_CN_Type_901_Navigation_Radar",
         "CSG_CN_PLAN_Naval_ESM"
     ],
     "esm": {

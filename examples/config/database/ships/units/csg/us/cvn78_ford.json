@@ -41,7 +41,6 @@
     },
     "sensor_ref": "CSG_US_AN_SPY-3_4_Dual_Band_Radar",
     "sensor_refs": [
-        "CSG_US_AN_SPY-3_4_Dual_Band_Radar",
         "CSG_US_SLQ-32B_V6_SEWIP_ESM"
     ],
     "esm": {

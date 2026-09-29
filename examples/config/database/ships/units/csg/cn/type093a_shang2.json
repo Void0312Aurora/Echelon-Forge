@@ -23,9 +23,7 @@
         "max_hp": 3000.0
     },
     "sensor_ref": "CSG_CN_PLAN_Naval_ESM",
-    "sensor_refs": [
-        "CSG_CN_PLAN_Naval_ESM"
-    ],
+    "sensor_refs": [],
     "esm": {
         "sensitivity_dbm": -90.0,
         "max_detection_range_m": 240000.0,
