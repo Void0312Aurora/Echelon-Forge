@@ -4,6 +4,7 @@
 #include <spdlog/spdlog.h>
 #include "components/basic/common.h"
 #include "components/basic/tags.h"
+#include "core/interfaces/stable_entity_identity.h"
 #include "components/command/legacy_command_bridge.h"
 #include "components/systems/ew.h"
 
@@ -27,13 +28,16 @@ inline void register_ew_system(flecs::world& ecs) {
                             cm[i].last_release_time = current_time;
 
                             // Spawn Chaff Entity
-                            it.world().entity()
-                                .set<Transform>({p[i].x, p[i].y, p[i].z, 0.0, 0.0, 0.0})
+                            // Creation is deferred inside this system; the stamp advances
+                            // the live identity counter immediately, in iteration order.
+                            auto chaff = it.world().entity();
+                            chaff.set<Transform>({p[i].x, p[i].y, p[i].z, 0.0, 0.0, 0.0})
                                 .set<Velocity>({v[i].vx * 0.1, v[i].vy * 0.1, v[i].vz * 0.1})
                                 .set<RCSProfile>({50.0, 50.0, 50.0}) 
                                 .set<Lifetime>({20.0, 0.0}) 
                                 .set<KeyEntity>({UnitType::Unknown}) 
                                 .add<SimObject>();
+                            stamp_stable_serial(chaff);
                             
                             spdlog::debug("Unit {} released Chaff. Remaining: {}", it.entity(i).id(), cm[i].chaff_count);
                         }
@@ -60,12 +64,13 @@ inline void register_ew_system(flecs::world& ecs) {
                             cm[i].flare_count--;
                             cm[i].last_release_time = current_time;
 
-                            it.world().entity()
-                                .set<Transform>({p[i].x, p[i].y, p[i].z, 0.0, 0.0, 0.0})
+                            auto flare = it.world().entity();
+                            flare.set<Transform>({p[i].x, p[i].y, p[i].z, 0.0, 0.0, 0.0})
                                 .set<Velocity>({v[i].vx, v[i].vy, v[i].vz}) 
                                 .set<Lifetime>({10.0, 0.0}) 
                                 .set<KeyEntity>({UnitType::Unknown}) 
                                 .add<SimObject>();
+                            stamp_stable_serial(flare);
                                 
                             spdlog::debug("Unit {} released Flare. Remaining: {}", it.entity(i).id(), cm[i].flare_count);
                         }

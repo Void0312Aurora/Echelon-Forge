@@ -15,6 +15,7 @@
 #include "components/systems/logistics.h"
 #include "components/systems/sensor.h"
 #include "content/unit_definition.h"
+#include "core/interfaces/stable_entity_identity.h"
 #include "core/interfaces/unit_factory.h"
 #include "models/weapons/missile_guidance_types.h"
 #include "models/weapons/naval_weapon_mounts.h"
@@ -966,6 +967,7 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
                  .set<Sensor>(sensor)
                  .set<ContactList>({})
                  .add<SimObject>(); // Tag for cleanup
+    stamp_stable_serial(m);
 
     const int ammo_delta =
         use_naval_vls && vls_mount ? -std::max(1, vls_mount->ammo_per_shot) : (ammo ? -1 : 0);
