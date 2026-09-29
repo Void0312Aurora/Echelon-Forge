@@ -1,0 +1,143 @@
+{
+    "name": "CSG_CN_Type_346B_AESA",
+    "type": "Sensor",
+    "sensor": {
+        "type": "Radar",
+        "max_range": 480000.0,
+        "fov_deg": 360.0,
+        "scan_period": 1.5,
+        "detection_prob": 0.93,
+        "bearing_noise_std": 0.15,
+        "range_noise_std": 100.0,
+        "track_memory_s": 28.0,
+        "range_power": 2.0,
+        "aspect_influence": 0.0,
+        "doppler_notch_width": 15.0,
+        "reference_snr_db": 16.0,
+        "reference_range_m": 150000.0,
+        "reference_rcs_m2": 5.0,
+        "antenna_height_m": 32.0,
+        "target_height_bias_m": 25.0,
+        "environment_domain": "SurfaceMaritime",
+        "sea_clutter_enabled": false,
+        "enable_ducting": true,
+        "ducting_gain_factor": 1.15,
+        "ducting_max_bonus_m": 18000.0
+    },
+    "_real_world": {
+        "class": "Type 346B (H/LJG-346B) S-band dual-band AESA, 4 large planar faces + 4 smaller X-band mast panels",
+        "variant_scope": "Type 055 (Renhai) only; about 40% larger aperture than Type 052D's Type 346A.",
+        "hulls": [
+            "Type 055 (101-108, 109-110)"
+        ],
+        "public_equipment": [
+            "Type 346B (H/LJG-346B) primary S-band AESA",
+            "4x X-band multifunction mast panels (fire control / horizon search)"
+        ]
+    },
+    "_provenance": {
+        "modeling_note": "Primary S-band AESA for Type 055, confirmed by a CCTV report relayed by Janes as a dual-band system with 4 large planar faces plus 4 smaller mast panels. No A/B detection-range figure exists; the 400-600 km band is a forum-grade estimate reasoned from a 40% aperture increase over Type 346A, modeled here as a single merged-radar record per engine convention.",
+        "sources": [
+            "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md#type-055-renhai-class-cruiser--large-destroyer",
+            "csg-cn-type055-janes-2020",
+            "csg-cn-type055-usni-proc-202303",
+            "csg-cn-type346-forum",
+            "csg-cn-type055-wiki"
+        ],
+        "parameters": {
+            "sensor.type": {
+                "value_basis": "sourced",
+                "source_ids": ["csg-cn-type055-janes-2020"],
+                "tier": "B",
+                "note": "Type 346B is an AESA radar; Radar is the matching engine sensor type"
+            },
+            "sensor.max_range": {
+                "value_basis": "proxy",
+                "source_ids": ["csg-cn-type346-forum"],
+                "tier": "C",
+                "note": "no A/B detection-range figure; forum estimate ~500-600 km against large high-altitude targets; used 480000.0 m as a conservative point within that C-only band, per authoring guidance to avoid overstating an unsourced figure"
+            },
+            "sensor.fov_deg": {
+                "value_basis": "sourced",
+                "source_ids": ["csg-cn-type055-janes-2020"],
+                "tier": "B",
+                "note": "4 large planar faces give full 360-deg coverage; engine models one merged radar, not per-face FOV"
+            },
+            "sensor.scan_period": {
+                "value_basis": "proxy",
+                "note": "no public scan-rate figure; engineering estimate consistent with a large 4-face AESA volume-search radar"
+            },
+            "sensor.detection_prob": {
+                "value_basis": "proxy",
+                "note": "no public Pd figure; engineering estimate slightly above the Fujian island-radar proxy given Type 346B's larger, more mature, dedicated fit"
+            },
+            "sensor.bearing_noise_std": {
+                "value_basis": "proxy",
+                "note": "no public bearing-accuracy figure; engineering estimate for a large fixed-face AESA"
+            },
+            "sensor.range_noise_std": {
+                "value_basis": "proxy",
+                "note": "no public range-accuracy figure; engineering estimate for a large fixed-face AESA"
+            },
+            "sensor.track_memory_s": {
+                "value_basis": "proxy",
+                "note": "no public track-coast figure; engineering estimate consistent with a fleet air-defence radar"
+            },
+            "sensor.range_power": {
+                "value_basis": "engineering_estimate",
+                "note": "radar-equation exponent (inverse-4th-power family); standard engine default, not sourced per-platform"
+            },
+            "sensor.aspect_influence": {
+                "value_basis": "engineering_estimate",
+                "note": "0.0 disables RCS aspect-angle modeling, consistent with this packet's simplified surface-search detection model"
+            },
+            "sensor.doppler_notch_width": {
+                "value_basis": "proxy",
+                "note": "no public MTI/doppler-notch figure; engineering estimate consistent with the packet's other large naval AESA modules"
+            },
+            "sensor.reference_snr_db": {
+                "value_basis": "proxy",
+                "note": "radar-equation calibration constant paired with reference_range_m/reference_rcs_m2 to reproduce max_range at a reference target; no public figure"
+            },
+            "sensor.reference_range_m": {
+                "value_basis": "proxy",
+                "note": "paired radar-equation calibration constant, see reference_snr_db"
+            },
+            "sensor.reference_rcs_m2": {
+                "value_basis": "engineering_estimate",
+                "note": "5 m^2 generic warship/large-aircraft reference RCS, engine convention used across this packet's naval radar records"
+            },
+            "sensor.antenna_height_m": {
+                "value_basis": "proxy",
+                "note": "no public integrated-mast height for Type 055; engineering estimate typical of a large destroyer/cruiser integrated mast"
+            },
+            "sensor.target_height_bias_m": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate consistent with the packet's other naval AESA modules (horizon-geometry bias term)"
+            },
+            "sensor.environment_domain": {
+                "value_basis": "engineering_estimate",
+                "note": "surface/maritime domain selected for a shipborne air/surface search radar per authoring standard"
+            },
+            "sensor.sea_clutter_enabled": {
+                "value_basis": "engineering_estimate",
+                "note": "disabled, consistent with this packet's simplified detection model; no sourced clutter-suppression figure exists to calibrate an enabled model"
+            },
+            "sensor.enable_ducting": {
+                "value_basis": "engineering_estimate",
+                "note": "standard engine atmospheric-ducting toggle, enabled consistent with the packet's convention for a long-range search radar"
+            },
+            "sensor.ducting_gain_factor": {
+                "value_basis": "proxy",
+                "note": "engineering estimate consistent with the packet's other naval AESA modules"
+            },
+            "sensor.ducting_max_bonus_m": {
+                "value_basis": "proxy",
+                "note": "engineering estimate consistent with the packet's other naval AESA modules"
+            }
+        },
+        "modeling_notes": [
+            "The X-band mast panels (fire-control/horizon-search) are not separately modeled as a second sensor record; the engine's single sensor_ref/sensor_refs convention for ships treats the ship's radar fit as merged records, consistent with the DDG-51 SPY-1D(V) pattern."
+        ]
+    }
+}

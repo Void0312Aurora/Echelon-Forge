@@ -1,0 +1,139 @@
+{
+    "name": "CSG_CN_054B_DualFace_AESA",
+    "type": "Sensor",
+    "sensor": {
+        "type": "Radar",
+        "max_range": 280000.0,
+        "fov_deg": 360.0,
+        "scan_period": 2.0,
+        "detection_prob": 0.89,
+        "bearing_noise_std": 0.2,
+        "range_noise_std": 130.0,
+        "track_memory_s": 24.0,
+        "range_power": 2.0,
+        "aspect_influence": 0.0,
+        "doppler_notch_width": 14.0,
+        "reference_snr_db": 15.0,
+        "reference_range_m": 110000.0,
+        "reference_rcs_m2": 5.0,
+        "antenna_height_m": 24.0,
+        "target_height_bias_m": 22.0,
+        "environment_domain": "SurfaceMaritime",
+        "sea_clutter_enabled": false,
+        "enable_ducting": true,
+        "ducting_gain_factor": 1.12,
+        "ducting_max_bonus_m": 16000.0
+    },
+    "_real_world": {
+        "class": "Dual-face (back-to-back) rotating AESA on the foremast (S-band 'mini-shield'), integrated RF mast",
+        "variant_scope": "Type 054B (Jiangkai III).",
+        "hulls": [
+            "545 Luohe",
+            "555 Qinzhou"
+        ],
+        "public_equipment": [
+            "dual-face rotating AESA, foremast",
+            "possible second rotating AESA aft (unconfirmed)"
+        ]
+    },
+    "_provenance": {
+        "modeling_note": "Primary radar for Type 054B, a dual-face back-to-back rotating AESA replacing 054A's separate Type 382/366 fit (USNI B-tier). S-band attribution and the specific replacement claim are C-only (GlobalSecurity). No public detection-range figure exists at all; modeled between the packet's Type 346A module (052D, larger fixed 4-face AESA) and Type 382 module (054A, older rotating passive array), reflecting 054B's newer AESA technology on a smaller frigate-class hull.",
+        "sources": [
+            "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md#type-054b-jiangkai-iii-frigate",
+            "csg-cn-054b-usni-proc-202503",
+            "csg-cn-054b-twz-202501",
+            "csg-cn-054b-armyrecognition"
+        ],
+        "parameters": {
+            "sensor.type": {
+                "value_basis": "sourced",
+                "source_ids": ["csg-cn-054b-usni-proc-202503"],
+                "tier": "B",
+                "note": "dual-face rotating AESA is a radar; Radar is the matching engine sensor type"
+            },
+            "sensor.max_range": {
+                "value_basis": "proxy",
+                "note": "no public detection-range figure at all; engineering estimate positioned between the packet's Type 346A module (052D) and Type 382 module (054A), reflecting a newer AESA generation on a smaller frigate hull with a correspondingly lower mast/antenna height"
+            },
+            "sensor.fov_deg": {
+                "value_basis": "engineering_estimate",
+                "note": "360 deg: a rotating dual-face (back-to-back) array gives full coverage as it rotates; engine models one merged radar"
+            },
+            "sensor.scan_period": {
+                "value_basis": "proxy",
+                "note": "no public rotation-rate figure; engineering estimate faster than the Type 382 rotating array (AESA electronic scan aided by mechanical rotation) but slower than a fully fixed 4-face AESA"
+            },
+            "sensor.detection_prob": {
+                "value_basis": "proxy",
+                "note": "no public Pd figure; engineering estimate between the packet's Type 346A and Type 382 modules"
+            },
+            "sensor.bearing_noise_std": {
+                "value_basis": "proxy",
+                "note": "no public bearing-accuracy figure; engineering estimate for a modern rotating AESA, better than Type 382 but worse than a fixed 4-face array"
+            },
+            "sensor.range_noise_std": {
+                "value_basis": "proxy",
+                "note": "no public range-accuracy figure; engineering estimate for a modern rotating AESA, better than Type 382 but worse than a fixed 4-face array"
+            },
+            "sensor.track_memory_s": {
+                "value_basis": "proxy",
+                "note": "no public track-coast figure; engineering estimate consistent with a general-purpose frigate air-search radar"
+            },
+            "sensor.range_power": {
+                "value_basis": "engineering_estimate",
+                "note": "radar-equation exponent (inverse-4th-power family); standard engine default, not sourced per-platform"
+            },
+            "sensor.aspect_influence": {
+                "value_basis": "engineering_estimate",
+                "note": "0.0 disables RCS aspect-angle modeling, consistent with this packet's simplified surface-search detection model"
+            },
+            "sensor.doppler_notch_width": {
+                "value_basis": "proxy",
+                "note": "no public MTI/doppler-notch figure; engineering estimate consistent with a modern AESA"
+            },
+            "sensor.reference_snr_db": {
+                "value_basis": "proxy",
+                "note": "radar-equation calibration constant paired with reference_range_m/reference_rcs_m2 to reproduce max_range at a reference target; no public figure"
+            },
+            "sensor.reference_range_m": {
+                "value_basis": "proxy",
+                "note": "paired radar-equation calibration constant, see reference_snr_db"
+            },
+            "sensor.reference_rcs_m2": {
+                "value_basis": "engineering_estimate",
+                "note": "5 m^2 generic warship/large-aircraft reference RCS, engine convention used across this packet's naval radar records"
+            },
+            "sensor.antenna_height_m": {
+                "value_basis": "proxy",
+                "note": "no public mast height for Type 054B; engineering estimate typical of a ~147m frigate's integrated mast, slightly above 054A given the 054B's larger hull"
+            },
+            "sensor.target_height_bias_m": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate consistent with the packet's other naval radar modules (horizon-geometry bias term)"
+            },
+            "sensor.environment_domain": {
+                "value_basis": "engineering_estimate",
+                "note": "surface/maritime domain selected for a shipborne air/surface search radar per authoring standard"
+            },
+            "sensor.sea_clutter_enabled": {
+                "value_basis": "engineering_estimate",
+                "note": "disabled, consistent with this packet's simplified detection model; no sourced clutter-suppression figure exists to calibrate an enabled model"
+            },
+            "sensor.enable_ducting": {
+                "value_basis": "engineering_estimate",
+                "note": "standard engine atmospheric-ducting toggle, enabled consistent with the packet's convention for a search radar"
+            },
+            "sensor.ducting_gain_factor": {
+                "value_basis": "proxy",
+                "note": "engineering estimate between the packet's Type 346A and Type 382 modules"
+            },
+            "sensor.ducting_max_bonus_m": {
+                "value_basis": "proxy",
+                "note": "engineering estimate between the packet's Type 346A and Type 382 modules"
+            }
+        },
+        "modeling_notes": [
+            "A possible second rotating AESA aft is mentioned as unconfirmed by USNI and is not separately modeled; this record represents the primary foremast array only."
+        ]
+    }
+}

@@ -1,0 +1,141 @@
+{
+    "name": "CSG_CN_Type_093B_Bow_Sonar",
+    "type": "Sensor",
+    "sonar": {
+        "mode": "Passive",
+        "max_range_m": 38000.0,
+        "scan_period_s": 6.0,
+        "detection_threshold_db": 3.0,
+        "track_memory_s": 30.0,
+        "bearing_noise_std_deg": 1.0,
+        "range_noise_std_m": 700.0,
+        "directivity_gain_db": 14.0,
+        "self_noise_per_speed_db": 1.0,
+        "ambient_noise_db": 65.0,
+        "source_level_reference_db": 215.0,
+        "source_level_speed_factor_db": 1.4,
+        "transmission_loss_alpha_db_per_km": 0.06,
+        "layer_break_penalty_db": 3.0,
+        "convergence_zone_bonus_m": 60000.0,
+        "baffle_exclusion_deg": 40.0,
+        "ownship_quieting_speed_mps": 4.0,
+        "active_ping_source_level_db": 215.0,
+        "confirm_hits_m": 2,
+        "confirm_window_n": 3,
+        "passive_only": false,
+        "bearing_only": false
+    },
+    "_real_world": {
+        "class": "Bow-mounted large-aperture spherical/cylindrical sonar array",
+        "variant_scope": "Type 093B (Shang-III) SSN. Also used as the Type 093A bow sonar (no distinct bow-array data reported for 093A vs 093B).",
+        "hulls": [
+            "Type 093B (Shang-III) hull numbers not individually public",
+            "Type 093A (Shang-II), reused per _real_world note"
+        ],
+        "public_equipment": [
+            "bow-mounted sonar array, designation not public (improved over Type 093A per ONI/USNI, no model number)"
+        ]
+    },
+    "_provenance": {
+        "modeling_note": "The OOB and ONI/USNI sourcing (A/B-tier) confirm Type 093B carries an improved bow sonar suite over the original Type 093/093A, but no designation or detection-range figure is public for either variant. Modeled as a modern SSN bow sonar following the repo's SSN Virginia-class bow sonar module convention (active/passive, large-aperture), scaled down slightly given the absence of PLAN-specific performance data. Reused for Type 093A per this packet's decision to write 093A as a distinct hull/loadout record (no VLS) but without inventing a separate, undifferentiated bow-sonar figure for it.",
+        "sources": [
+            "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md#type-093b-shang-iii-class-nuclear-attack-submarine-ssn",
+            "csg-cn-ssn-usni-oni-20260305",
+            "csg-cn-093b-navalnews-202410",
+            "csg-cn-093-globalsecurity"
+        ],
+        "parameters": {
+            "sonar.mode": {
+                "value_basis": "engineering_estimate",
+                "note": "modeled as active/passive per the repo's SSN bow-sonar convention; no PLAN source states passive-only operation for the bow array specifically (the boat's overall quieting is a separate, unmodeled characteristic)"
+            },
+            "sonar.max_range_m": {
+                "value_basis": "proxy",
+                "note": "no public detection-range figure; engineering estimate for a modern large-aperture SSN bow sonar, scaled below the repo's US Virginia-class module given the absence of PLAN-specific sourcing"
+            },
+            "sonar.scan_period_s": {
+                "value_basis": "proxy",
+                "note": "no public figure; carried close to the repo's SSN bow sonar module convention"
+            },
+            "sonar.detection_threshold_db": {
+                "value_basis": "proxy",
+                "note": "no public figure; carried close to the repo's SSN bow sonar module convention"
+            },
+            "sonar.track_memory_s": {
+                "value_basis": "proxy",
+                "note": "no public figure; carried close to the repo's SSN bow sonar module convention"
+            },
+            "sonar.bearing_noise_std_deg": {
+                "value_basis": "proxy",
+                "note": "no public figure; carried close to the repo's SSN bow sonar module convention"
+            },
+            "sonar.range_noise_std_m": {
+                "value_basis": "proxy",
+                "note": "no public figure; carried close to the repo's SSN bow sonar module convention"
+            },
+            "sonar.directivity_gain_db": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate for a large-aperture bow array, higher than the packet's surface-combatant bow sonar module"
+            },
+            "sonar.self_noise_per_speed_db": {
+                "value_basis": "proxy",
+                "note": "no public figure; carried close to the repo's SSN bow sonar module convention"
+            },
+            "sonar.ambient_noise_db": {
+                "value_basis": "engineering_estimate",
+                "note": "standard engine ambient-ocean-noise scaffold constant, not independently sourced per hull"
+            },
+            "sonar.source_level_reference_db": {
+                "value_basis": "proxy",
+                "note": "no public source level; engineering-estimate active-sonar source level for a large SSN bow array, below the repo's US Virginia-class module"
+            },
+            "sonar.source_level_speed_factor_db": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate paired with source_level_reference_db"
+            },
+            "sonar.transmission_loss_alpha_db_per_km": {
+                "value_basis": "proxy",
+                "note": "no public figure; carried close to the repo's SSN bow sonar module convention (generic underwater transmission-loss constant)"
+            },
+            "sonar.layer_break_penalty_db": {
+                "value_basis": "proxy",
+                "note": "no public figure; carried close to the repo's SSN bow sonar module convention"
+            },
+            "sonar.convergence_zone_bonus_m": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate scaled with max_range_m"
+            },
+            "sonar.baffle_exclusion_deg": {
+                "value_basis": "proxy",
+                "note": "bow-mounted array's stern baffle-exclusion cone is a known generic sonar-geometry characteristic; exact figure is an engineering estimate carried from the repo's SSN bow sonar module convention"
+            },
+            "sonar.ownship_quieting_speed_mps": {
+                "value_basis": "proxy",
+                "note": "no public figure; engineering estimate lower than the packet's surface-combatant bow sonar module, reflecting a submarine's lower typical quieting speed threshold"
+            },
+            "sonar.active_ping_source_level_db": {
+                "value_basis": "proxy",
+                "note": "set equal to source_level_reference_db per the engine's active-sonar convention; same basis as that field"
+            },
+            "sonar.confirm_hits_m": {
+                "value_basis": "engineering_estimate",
+                "note": "standard engine detection-confirmation default, not sourced per-platform"
+            },
+            "sonar.confirm_window_n": {
+                "value_basis": "engineering_estimate",
+                "note": "standard engine detection-confirmation default, same basis as confirm_hits_m"
+            },
+            "sonar.passive_only": {
+                "value_basis": "engineering_estimate",
+                "note": "false: modeled as active/passive per the repo's SSN bow sonar module convention, since no PLAN source states passive-only operation"
+            },
+            "sonar.bearing_only": {
+                "value_basis": "engineering_estimate",
+                "note": "false: an active/passive bow sonar provides range as well as bearing"
+            }
+        },
+        "modeling_notes": [
+            "Reused for both Type 093A and Type 093B bow sonar per this packet's decision to differentiate the two hulls by VLS/weapon loadout rather than by an unsourced bow-sonar performance delta; no ONI/USNI source distinguishes 093A's bow array performance from 093B's."
+        ]
+    }
+}

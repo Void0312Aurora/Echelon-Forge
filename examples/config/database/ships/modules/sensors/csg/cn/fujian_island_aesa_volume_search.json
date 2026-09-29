@@ -1,0 +1,143 @@
+{
+    "name": "CSG_CN_Fujian_Island_AESA_Volume_Search",
+    "type": "Sensor",
+    "sensor": {
+        "type": "Radar",
+        "max_range": 300000.0,
+        "fov_deg": 360.0,
+        "scan_period": 2.0,
+        "detection_prob": 0.9,
+        "bearing_noise_std": 0.2,
+        "range_noise_std": 150.0,
+        "track_memory_s": 25.0,
+        "range_power": 2.0,
+        "aspect_influence": 0.0,
+        "doppler_notch_width": 15.0,
+        "reference_snr_db": 15.0,
+        "reference_range_m": 120000.0,
+        "reference_rcs_m2": 5.0,
+        "antenna_height_m": 35.0,
+        "target_height_bias_m": 25.0,
+        "environment_domain": "SurfaceMaritime",
+        "sea_clutter_enabled": false,
+        "enable_ducting": true,
+        "ducting_gain_factor": 1.15,
+        "ducting_max_bonus_m": 18000.0
+    },
+    "_real_world": {
+        "class": "Island-integrated fixed-face AESA volume-search radar, designation not officially disclosed",
+        "variant_scope": "Fujian (Type 003, CV-18) only.",
+        "hulls": [
+            "Fujian (CV-18)"
+        ],
+        "public_equipment": [
+            "island-integrated fixed-face AESA (public designation not confirmed)"
+        ]
+    },
+    "_provenance": {
+        "modeling_note": "Named by role, not by designation, per authoring instruction: Fujian's main radar is officially undisclosed. 'Type 346B' is a Tier-C-only speculation (csg-cn-fujian-eurasiareview relays it as a guess, csg-cn-fujian-nsj says 'possibly'; csg-cn-fujian-csis-chinapower lists the radar as 'TBD'). This record therefore models a generic island-integrated fixed-face AESA volume-search radar consistent with the qualitative B-tier description in csg-cn-fujian-navaltech/csg-cn-fujian-twz-2024, and borrows the 500-600 km Type-346B-on-055 figure only as an upper-bound reasoning anchor, not as a confirmed Fujian fit.",
+        "sources": [
+            "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md#fujian-type-003",
+            "csg-cn-fujian-navaltech",
+            "csg-cn-fujian-twz-2024",
+            "csg-cn-fujian-csis-chinapower",
+            "csg-cn-fujian-eurasiareview",
+            "csg-cn-fujian-nsj",
+            "csg-cn-type346b-deagel",
+            "csg-cn-type346-forum"
+        ],
+        "parameters": {
+            "sensor.type": {
+                "value_basis": "sourced",
+                "source_ids": ["csg-cn-fujian-navaltech"],
+                "tier": "B",
+                "note": "island-integrated fixed-face AESA is a radar; Radar is the matching engine sensor type"
+            },
+            "sensor.max_range": {
+                "value_basis": "proxy",
+                "source_ids": ["csg-cn-type346b-deagel", "csg-cn-type346-forum"],
+                "tier": "C",
+                "note": "no Fujian-specific figure exists (designation itself is unconfirmed); 300000.0 m set as a conservative fraction of the C-only 500-600 km Type-346B-on-055 estimate, reasoning that an undisclosed Fujian-specific array should not be assumed equal to 055's larger dedicated air-defence radar"
+            },
+            "sensor.fov_deg": {
+                "value_basis": "engineering_estimate",
+                "note": "360 deg: a multi-face fixed island-integrated array gives full coverage, consistent with the engine's single-merged-radar convention used for 346-series arrays elsewhere in this packet"
+            },
+            "sensor.scan_period": {
+                "value_basis": "proxy",
+                "note": "no public figure; carried close to the repo's other large naval AESA volume-search modules (SPY-1D(V) MVP pattern)"
+            },
+            "sensor.detection_prob": {
+                "value_basis": "proxy",
+                "note": "no public Pd figure; engineering estimate consistent with a modern AESA search radar, slightly below the SPY-1D(V) proxy given the undisclosed/less-mature Fujian fit"
+            },
+            "sensor.bearing_noise_std": {
+                "value_basis": "proxy",
+                "note": "no public bearing-accuracy figure; carried close to the repo's SPY-1D(V) proxy pattern"
+            },
+            "sensor.range_noise_std": {
+                "value_basis": "proxy",
+                "note": "no public range-accuracy figure; carried close to the repo's SPY-1D(V) proxy pattern"
+            },
+            "sensor.track_memory_s": {
+                "value_basis": "proxy",
+                "note": "no public track-coast figure; carried close to the repo's SPY-1D(V) proxy pattern"
+            },
+            "sensor.range_power": {
+                "value_basis": "engineering_estimate",
+                "note": "radar-equation exponent (inverse-4th-power family); standard engine default for a search radar, not sourced per-platform"
+            },
+            "sensor.aspect_influence": {
+                "value_basis": "engineering_estimate",
+                "note": "0.0 disables RCS aspect-angle modeling, consistent with the packet's simplified surface-search detection model convention"
+            },
+            "sensor.doppler_notch_width": {
+                "value_basis": "proxy",
+                "note": "no public MTI/doppler-notch figure; carried close to the repo's SPY-1D(V) proxy pattern"
+            },
+            "sensor.reference_snr_db": {
+                "value_basis": "proxy",
+                "note": "radar-equation calibration constant, paired with reference_range_m/reference_rcs_m2 to reproduce max_range at a reference target; no public figure"
+            },
+            "sensor.reference_range_m": {
+                "value_basis": "proxy",
+                "note": "paired radar-equation calibration constant, see reference_snr_db"
+            },
+            "sensor.reference_rcs_m2": {
+                "value_basis": "engineering_estimate",
+                "note": "5 m^2 generic warship/large-aircraft reference RCS, engine convention used across this packet's other naval radar records"
+            },
+            "sensor.antenna_height_m": {
+                "value_basis": "proxy",
+                "note": "no public island/mast height for Fujian; engineering estimate slightly above the SPY-1D(V) proxy mount height, consistent with a large carrier island superstructure"
+            },
+            "sensor.target_height_bias_m": {
+                "value_basis": "proxy",
+                "note": "no public figure; carried close to the repo's SPY-1D(V) proxy pattern (horizon-geometry bias term)"
+            },
+            "sensor.environment_domain": {
+                "value_basis": "engineering_estimate",
+                "note": "surface/maritime domain selected for a shipborne air/surface search radar per authoring standard"
+            },
+            "sensor.sea_clutter_enabled": {
+                "value_basis": "engineering_estimate",
+                "note": "disabled, consistent with the packet's simplified detection model; no sourced clutter-suppression figure exists to calibrate an enabled model"
+            },
+            "sensor.enable_ducting": {
+                "value_basis": "engineering_estimate",
+                "note": "standard engine atmospheric-ducting toggle, enabled consistent with the packet's convention for a long-range search radar"
+            },
+            "sensor.ducting_gain_factor": {
+                "value_basis": "proxy",
+                "note": "carried close to the repo's SPY-1D(V) proxy pattern"
+            },
+            "sensor.ducting_max_bonus_m": {
+                "value_basis": "proxy",
+                "note": "carried close to the repo's SPY-1D(V) proxy pattern"
+            }
+        },
+        "modeling_notes": [
+            "Designation deliberately omitted from 'name' and 'class' per task instruction: no public source confirms 'Type 346B' or any other designation for Fujian's main radar. csg-cn-fujian-csis-chinapower explicitly lists it as 'TBD'."
+        ]
+    }
+}
