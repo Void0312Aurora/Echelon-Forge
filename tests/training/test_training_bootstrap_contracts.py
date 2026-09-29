@@ -20,8 +20,10 @@ from python.training.deps import (
 class TrainingBootstrapContractTests(unittest.TestCase):
   def test_launch_decision_bootstrap_enforces_frozen_c0_identity(self) -> None:
     repo_root = Path(__file__).resolve().parents[2]
-    manifest_path = repo_root / "tests" / "fixtures" / "launch_decision_reorg" / "v1" / "manifest.json"
+    manifest_path = repo_root / "tests" / "fixtures" / "launch_decision_reorg" / "v2" / "canonical_provenance_v1.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    self.assertEqual(manifest["schema_version"], "launch_decision_provenance_v1")
+    self.assertEqual(manifest["canonicalization"], "git_blob_utf8_lf_v1")
     entry = manifest["legacy_provenance_allowlist"][0]
     config_path = repo_root / entry["path"]
     config = json.loads(config_path.read_text(encoding="utf-8"))

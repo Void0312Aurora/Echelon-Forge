@@ -1,0 +1,79 @@
+{
+  "schema_version": "launch_decision_provenance_v1",
+  "canonicalization": "git_blob_utf8_lf_v1",
+  "hash_algorithm": "sha256",
+  "source_manifest": "tests/fixtures/launch_decision_reorg/v1/manifest.json",
+  "source_manifest_sha256": "7daa1168ca4efaeb8b49d299aea9d6cf480beee9da0eaa49081df2505dfef323",
+  "legacy_provenance_allowlist": [
+    {
+      "source_revision": "cfb9924ecaa88203c6bd32c9008dee420d649c6a",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_shaped_world_batch_probe_v1.json",
+      "sha256": "648dd57c442add24e67882ed64f231359bf03c03b2a80b0a0aaea74f48ee6fac"
+    },
+    {
+      "source_revision": "cfb9924ecaa88203c6bd32c9008dee420d649c6a",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_launch_window_shaped_world_batch_probe_v1.json",
+      "sha256": "64c321db86f041c7eb5d6a3abaa5be38c8671c0c5421627882551a387881c487"
+    },
+    {
+      "source_revision": "cfb9924ecaa88203c6bd32c9008dee420d649c6a",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_shaped_world_batch_probe_v1.json",
+      "sha256": "541c703959105641e9ce30e617f43fe29437c042446e65e63fd598eb2aaa12c9"
+    },
+    {
+      "source_revision": "cfb9924ecaa88203c6bd32c9008dee420d649c6a",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_shaped_world_batch_probe_v1.json",
+      "sha256": "826e67d0b16ac0d3dd30d1d4789ce64fc09db4e04d23de1a3ce9148e9a0b6c39"
+    },
+    {
+      "source_revision": "cfb9924ecaa88203c6bd32c9008dee420d649c6a",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_credit_launch_window_shaped_world_batch_probe_v1.json",
+      "sha256": "2c292b47a3d18cc9c46af9b62270c41a511e941aa4b2729557ff190d91464152"
+    },
+    {
+      "source_revision": "cfb9924ecaa88203c6bd32c9008dee420d649c6a",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_credit_launch_window_state_completed_world_batch_probe_v1.json",
+      "sha256": "f6f28a2003aa22ec29ceee1da3c2a8a712084a8facd07538e4324650e9e9ab87"
+    },
+    {
+      "source_revision": "cfb9924ecaa88203c6bd32c9008dee420d649c6a",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_window_state_completed_world_batch_probe_v1.json",
+      "sha256": "0d62e0fa2feb923b3c4a2ac2922e218bbbf5426b1926b9beec92ddee6612fa86"
+    },
+    {
+      "source_revision": "cfb9924ecaa88203c6bd32c9008dee420d649c6a",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_grouped_stopping_state_completed_world_batch_probe_v1.json",
+      "sha256": "d7641a6343a8749d48dcf5a0aa63a9a36033692a10a8baf9c8c981b4a6a8dcbd"
+    },
+    {
+      "source_revision": "cfb9924ecaa88203c6bd32c9008dee420d649c6a",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_shaped_world_batch_probe_v1.json",
+      "sha256": "face7a08129373a9c1106ada6ecc86de63bb88fc1d1a1743090c0caef6415d4e"
+    },
+    {
+      "source_revision": "cfb9924ecaa88203c6bd32c9008dee420d649c6a",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_shaped_world_batch_probe_v1.json",
+      "sha256": "3f1648e4e71d5c582a71734e3c71bc7bc47e8fc9206f16f0a48d2d3acd308257"
+    },
+    {
+      "source_revision": "cfb9924ecaa88203c6bd32c9008dee420d649c6a",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json",
+      "sha256": "94afdbe98acdd15ec8315d40aaa0f26a44176ca48b540edfeb1ef59a35f28287"
+    },
+    {
+      "source_revision": "cfb9924ecaa88203c6bd32c9008dee420d649c6a",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_world_batch_probe_v1.json",
+      "sha256": "45fb3821552fb40666154b378f22c07f321f9c5a53a830e33c322ac3076f3d95"
+    },
+    {
+      "source_revision": "cfb9924ecaa88203c6bd32c9008dee420d649c6a",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_world_batch_probe_v1.json",
+      "sha256": "a3e7b78915afa78d51e404e1d83506e79451d4611536b6ba69b15dba4718f6ec"
+    },
+    {
+      "source_revision": "cfb9924ecaa88203c6bd32c9008dee420d649c6a",
+      "path": "examples/config/training/active/air_combat/air_combat_1v1_stage2_evasive_fighter_c2_roe_hybrid_temporal_event_window_state_completed_world_batch_probe_v1.json",
+      "sha256": "3b7d32cd34c1c6427ec51cb3506baffe7c5095dc4d676d71bdaaddf8d848b642"
+    }
+  ]
+}

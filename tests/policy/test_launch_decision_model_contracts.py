@@ -24,6 +24,7 @@ from python.rl.policy_algo.model_contracts import (
 from tools.maintenance.generate_launch_decision_fixtures import (
   _active_hybrid_configs,
   _source_revision,
+  build_canonical_provenance_manifest,
 )
 
 
@@ -168,6 +169,21 @@ class LaunchDecisionModelContractTests(unittest.TestCase):
         records[0]["sha256"],
         hashlib.sha256(config_path.read_bytes()).hexdigest(),
       )
+
+  def test_canonical_provenance_manifest_uses_git_blob_hashes(self) -> None:
+    source_revision = "cfb9924ecaa88203c6bd32c9008dee420d649c6a"
+    generated = build_canonical_provenance_manifest(REPO_ROOT, source_revision)
+    tracked = json.loads(
+      (
+        REPO_ROOT
+        / "tests"
+        / "fixtures"
+        / "launch_decision_reorg"
+        / "v2"
+        / "canonical_provenance_v1.json"
+      ).read_text(encoding="utf-8")
+    )
+    self.assertEqual(generated, tracked)
 
   def test_fixture_source_revision_rejects_unknown_and_non_commit(self) -> None:
     with tempfile.TemporaryDirectory() as temp_dir:

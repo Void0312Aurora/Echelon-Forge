@@ -335,6 +335,12 @@ Fixture identity is fixed rather than conceptual:
   recorded separately in `tests/fixtures/launch_decision_reorg/v2/manifest.json`;
   it references the same baseline census but has its own generator/schema
   identity and external artifact root.
+- Runtime legacy provenance uses the corrective
+  `tests/fixtures/launch_decision_reorg/v2/canonical_provenance_v1.json`. It
+  preserves the v1 source revision and paths without rewriting the frozen v1
+  file, and hashes the canonical Git blob representation (UTF-8 with LF line
+  endings). Repository attributes keep those tracked inputs byte-stable on
+  Windows and Linux; a path, line-ending, or content change still fails closed.
 - The deterministic generator is
   `tools/maintenance/generate_launch_decision_fixtures.py`.
 - Generated v2 artifacts live outside the checkout under
@@ -357,8 +363,8 @@ C0 must freeze one immutable v1 manifest containing:
 - all active air_combat_hybrid_v1 configurations, including the baseline seven
   headless and seven event-head-enabled entries;
 - for every configuration allowed to use the unmarked legacy fallback, its
-  frozen source commit, repository-relative path, and SHA-256 of the exact
-  UTF-8 config bytes; these entries form the complete legacy provenance
+  frozen source commit, repository-relative path, and SHA-256 of the canonical
+  UTF-8/LF config bytes; these entries form the complete legacy provenance
   allowlist and no later cluster may add to it;
 - one representative checkpoint/state-dict for each owner mode that actually
   exists;
@@ -371,9 +377,9 @@ C0 must freeze one immutable v1 manifest containing:
   numeric limits.
 
 After C0 closes, no later cluster may rewrite this manifest. C4 may create a
-separately versioned migration manifest that references the C0 SHA-256; the v2
-manifest is that append-only handoff and must not add target artifacts to the
-C0 file.
+separately versioned migration or canonicalization manifest that references the
+C0 SHA-256; the v2 manifests are append-only handoffs and must not add target
+artifacts or new allowlist paths to the C0 file.
 
 The compatibility probe uses seeds 0, 1, 2 and three declared episodes per
 seed for runtime behavior. For strict learned-firing acceptance, C0 pins both a

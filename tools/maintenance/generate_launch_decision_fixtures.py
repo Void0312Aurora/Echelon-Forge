@@ -38,6 +38,10 @@ from python.rl.policy_algo.model_contracts import (
 SCHEMA_VERSION = "launch_decision_fixture_v1"
 DEFAULT_ROOT = Path(r"D:\workshop\Research\Echelon-Forge-fixtures\launch_decision_reorg\v1")
 MANIFEST_PATH = Path("tests/fixtures/launch_decision_reorg/v1/manifest.json")
+CANONICAL_PROVENANCE_MANIFEST_PATH = Path(
+    "tests/fixtures/launch_decision_reorg/v2/canonical_provenance_v1.json"
+)
+CANONICAL_PROVENANCE_SCHEMA_VERSION = "launch_decision_provenance_v1"
 SEEDS = (0, 1, 2)
 EPISODES_PER_SEED = 3
 STRICT_COUNTER_KEYS = (
@@ -419,12 +423,48 @@ def semantic_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     return json.loads(json.dumps(manifest, sort_keys=True))
 
 
+def build_canonical_provenance_manifest(
+    repo_root: Path,
+    source_revision: str | None,
+) -> dict[str, Any]:
+    """Build the cross-platform allowlist from canonical Git blob bytes."""
+
+    resolved_revision = _source_revision(repo_root, source_revision)
+    active_configs = _active_hybrid_configs(repo_root, resolved_revision)
+    source_manifest_bytes = _git_file_bytes(
+        repo_root,
+        "HEAD",
+        MANIFEST_PATH.as_posix(),
+    )
+    return {
+        "schema_version": CANONICAL_PROVENANCE_SCHEMA_VERSION,
+        "canonicalization": "git_blob_utf8_lf_v1",
+        "hash_algorithm": "sha256",
+        "source_manifest": MANIFEST_PATH.as_posix(),
+        "source_manifest_sha256": _sha256_bytes(source_manifest_bytes),
+        "legacy_provenance_allowlist": [
+            {
+                "source_revision": item["source_revision"],
+                "path": item["path"],
+                "sha256": item["sha256"],
+            }
+            for item in active_configs
+            if item["legacy_provenance_eligible"]
+        ],
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo-root", type=Path, default=_repo_root())
     parser.add_argument("--output-root", type=Path, default=None)
     parser.add_argument("--source-revision", default=None)
     parser.add_argument("--manifest", type=Path, default=None)
+    parser.add_argument(
+        "--canonical-provenance",
+        action="store_true",
+        help="Build the versioned LF-canonical runtime provenance manifest.",
+    )
     args = parser.parse_args()
 
     repo_root = args.repo_root.resolve()
@@ -432,8 +472,17 @@ def main() -> int:
         args.output_root
         or Path(os.environ.get("EF_LAUNCH_DECISION_FIXTURE_ROOT", str(DEFAULT_ROOT)))
     ).resolve()
-    manifest_path = (args.manifest or (repo_root / MANIFEST_PATH)).resolve()
-    manifest = build_manifest(repo_root, output_root, args.source_revision)
+    if args.canonical_provenance:
+        manifest_path = (
+            args.manifest or (repo_root / CANONICAL_PROVENANCE_MANIFEST_PATH)
+        ).resolve()
+        manifest = build_canonical_provenance_manifest(
+            repo_root,
+            args.source_revision,
+        )
+    else:
+        manifest_path = (args.manifest or (repo_root / MANIFEST_PATH)).resolve()
+        manifest = build_manifest(repo_root, output_root, args.source_revision)
 
     if manifest_path.exists():
         existing = json.loads(manifest_path.read_text(encoding="utf-8"))

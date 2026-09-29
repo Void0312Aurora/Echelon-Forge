@@ -31,8 +31,8 @@ from python.training.deps import (
 
 
 SUPPORTED_AGENT_LAYERS = frozenset({"execution", "leader", "cooperative_execution"})
-_C0_LAUNCH_DECISION_MANIFEST = Path(
-    "tests/fixtures/launch_decision_reorg/v1/manifest.json"
+_C0_LAUNCH_DECISION_PROVENANCE_MANIFEST = Path(
+    "tests/fixtures/launch_decision_reorg/v2/canonical_provenance_v1.json"
 )
 _TORCH: Any | None = None
 _TORCH_IMPORT_ERROR: Exception | None = None
@@ -168,7 +168,7 @@ def _resolve_c0_launch_decision_provenance(
         return None, ()
 
     repo_root = Path(_repo_root()).resolve()
-    manifest_path = repo_root / _C0_LAUNCH_DECISION_MANIFEST
+    manifest_path = repo_root / _C0_LAUNCH_DECISION_PROVENANCE_MANIFEST
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -195,6 +195,8 @@ def _resolve_c0_launch_decision_provenance(
         # Keep the candidate visible in the contract error while ensuring it
         # cannot equal a repo-relative allowlist entry.
         relative_path = config_path.as_posix()
+    # The repository attributes keep these provenance inputs byte-stable across
+    # platforms, so the runtime hash remains an exact raw-byte identity.
     digest = hashlib.sha256(config_path.read_bytes()).hexdigest()
     candidate: dict[str, Any] = {
         "source_revision": "",
