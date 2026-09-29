@@ -11,7 +11,9 @@ Status: `2026-09-28` active. `P0 Boundary` accepted; `P1 Evidence` passed with t
 `P2` core landed in `src/components/physics/geodesy.h` with reference tests.
 `P3-A` accepted `2026-09-29`: every non-sonar sensor and the data link use the
 shared smooth-earth horizon, and the `enforce_radar_horizon` proxy is retired;
-`P3-B` (anchor in scenarios, bindings, replay) is next.
+`P3-B` accepted `2026-09-29`: scenarios declare `environment.geodetic_anchor` or
+inherit the documented default, and EGI reads that anchor. `P4-A` cross-domain
+regression is next.
 
 Language:
 
@@ -51,7 +53,7 @@ case, and no domain owns the frame.
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
 | Simulation frame | flat local ENU | `Transform` (`src/components/basic/common.h`) | no earth model, no curvature |
-| Geodetic fields | navigation-only; hard-coded anchor | EGI conversion in `src/systems/systems/navigation_system.h:9-48` uses a fixed Nellis AFB anchor, equirectangular | 3.7 km error at 250 km east; the Arnis WGS84 origin is dropped by the importer; no scenario anchor exists |
+| Geodetic fields | scenario anchor (`P3-B`, `2026-09-29`) | `environment.geodetic_anchor` -> environment model -> EGI via the inverse azimuthal-equidistant projection | the Arnis WGS84 origin is still dropped by the importer |
 | Sensor horizon | shared smooth-earth gate (`P3-A`, `2026-09-29`) | `within_smooth_earth_horizon` in `src/models/systems/default_sensor_model.cpp` calls `geodesy::two_way_horizon_arc_m`; 4/3 for radio sensors, NGA Pub. No. 9 optical factor for visual/IR | was a dead `enforce_radar_horizon` gate with a geometric `3570·(√h1+√h2)` constant; see the [P1-A inventory](geodetic_frame_p1a_inventory_20260928.md) |
 | Data-link horizon | shared 4/3 arc (`P3-A`) | `src/systems/systems/data_link_system.h` | was a geometric `3.57` km constant, 13.4 % short |
 | Terrain line of sight | environment model | `IEnvironmentModel::check_line_of_sight` (`src/core/interfaces/environment_model.h`) | terrain only; no earth bulge |
@@ -87,7 +89,7 @@ Out of scope:
 | `P0 Boundary` | Freeze scope, earth-model choice, and frame contract. | owner approval | README and task clusters approved | accepted |
 | `P1 Evidence` | Inventory every place that assumes a flat frame or computes a horizon. | `P0` | inventory classifies each site as must-migrate, may-stay, or out of scope | accepted ([inventory](geodetic_frame_p1a_inventory_20260928.md)) |
 | `P2 Implementation` | Earth model, anchor, conversions, geometry queries. | `P1` | native and Python tests pass against reference values | accepted (native; `src/tests/test_geodesy.cpp`) |
-| `P3 Integration` | Move sensing horizon and line of sight onto the queries; expose the anchor in scenarios. | `P2` | consumers call the shared queries; proxy flag retired or wrapped | in progress (`P3-A` accepted `2026-09-29`; `P3-B` next) |
+| `P3 Integration` | Move sensing horizon and line of sight onto the queries; expose the anchor in scenarios. | `P2` | consumers call the shared queries; proxy flag retired or wrapped | accepted (`P3-A`, `P3-B` `2026-09-29`) |
 | `P4 Validation` | Cross-domain regression and throughput check. | `P3` | air, ground, naval suites pass or change by the documented amount | planned |
 | `P5 Closure` | Acceptance and indexes. | `P4` | acceptance record; lasting contract promoted to a physics standard | planned |
 
