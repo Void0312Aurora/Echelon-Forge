@@ -5,6 +5,11 @@ from typing import Any
 
 import ef_py
 
+from python.scenario.compiler.common import (
+    DEFAULT_GEODETIC_ANCHOR,
+    GEODETIC_ANCHOR_SOURCE_DEFAULT,
+)
+
 
 _SURFACE_TYPE_MAP = {
     "Concrete": 0,
@@ -124,6 +129,10 @@ class ScenarioWorldLayout:
     wave_period_s: float
     zones: list[ScenarioZoneLayout]
     spawns: list[ScenarioSpawnLayout]
+    # Geodetic anchor of the local frame, (latitude_deg, longitude_deg,
+    # height_m); `geodetic_anchor_source` is "explicit" or "default".
+    geodetic_anchor: tuple[float, float, float] = DEFAULT_GEODETIC_ANCHOR
+    geodetic_anchor_source: str = GEODETIC_ANCHOR_SOURCE_DEFAULT
 
 
 @dataclass

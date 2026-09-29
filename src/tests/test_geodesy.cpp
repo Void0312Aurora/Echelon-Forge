@@ -180,6 +180,19 @@ TEST_SUITE("geodesy") {
         CHECK(geodesy::earth_bulge_m(re, 50000.0, 50000.0) == doctest::Approx(147.2).epsilon(5e-3));
     }
 
+    TEST_CASE("the default anchor is valid and anchors are validated fail closed") {
+        CHECK(geodesy::is_valid_anchor(geodesy::kDefaultGeodeticAnchor));
+        CHECK(geodesy::kDefaultGeodeticAnchor.latitude_deg == doctest::Approx(36.24));
+        CHECK(geodesy::kDefaultGeodeticAnchor.longitude_deg == doctest::Approx(-115.05));
+        CHECK(geodesy::is_valid_anchor({18.2, 109.5, 0.0}));
+        CHECK(geodesy::is_valid_anchor({-89.9, 540.0, -10.0})); // longitude is wrapped later
+        CHECK_FALSE(geodesy::is_valid_anchor({90.0, 0.0, 0.0}));
+        CHECK_FALSE(geodesy::is_valid_anchor({-90.0, 0.0, 0.0}));
+        CHECK_FALSE(geodesy::is_valid_anchor({std::nan(""), 0.0, 0.0}));
+        CHECK_FALSE(geodesy::is_valid_anchor({0.0, INFINITY, 0.0}));
+        CHECK_FALSE(geodesy::is_valid_anchor({0.0, 0.0, std::nan("")}));
+    }
+
     TEST_CASE("longitude wraps into [-180, 180)") {
         CHECK(geodesy::wrap_longitude_deg(190.0) == doctest::Approx(-170.0));
         CHECK(geodesy::wrap_longitude_deg(-190.0) == doctest::Approx(170.0));

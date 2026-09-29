@@ -12,6 +12,7 @@ from python.scenario.compiler import (
     DEFAULT_TERRAIN_TYPE,
     _clone_runtime_mission_command,
     materialize_runtime_waypoint_cache,
+    resolve_environment_geodetic_anchor,
     resolve_environment_terrain_config,
 )
 
@@ -78,6 +79,8 @@ def prepare_scenario_world_layout(
         sea_state = float(compiled_template.sea_state)
         wave_heading_deg = float(compiled_template.wave_heading_deg)
         wave_period_s = float(compiled_template.wave_period_s)
+        geodetic_anchor = tuple(compiled_template.geodetic_anchor)
+        geodetic_anchor_source = str(compiled_template.geodetic_anchor_source)
         runway_heading_deg_template = compiled_template.primary_runway_heading_deg
         compiled_wind_ref_alt_m = float(compiled_template.wind_ref_alt_m)
     else:
@@ -104,6 +107,7 @@ def prepare_scenario_world_layout(
         sea_state = float(maritime_cfg.get("sea_state", 0.0))
         wave_heading_deg = float(maritime_cfg.get("wave_heading_deg", 0.0))
         wave_period_s = float(maritime_cfg.get("wave_period_s", 8.0))
+        geodetic_anchor, geodetic_anchor_source = resolve_environment_geodetic_anchor(env_cfg)
         runway_heading_deg_template = None
         compiled_wind_ref_alt_m = None
 
@@ -346,6 +350,12 @@ def prepare_scenario_world_layout(
         wave_period_s=float(wave_period_s),
         zones=zones,
         spawns=spawns,
+        geodetic_anchor=(
+            float(geodetic_anchor[0]),
+            float(geodetic_anchor[1]),
+            float(geodetic_anchor[2]),
+        ),
+        geodetic_anchor_source=str(geodetic_anchor_source),
     )
 
 
@@ -385,6 +395,11 @@ def apply_world_layout_to_kernel(sim, layout: ScenarioWorldLayout) -> AppliedSce
             sim.clear_maritime_state()
         except Exception:
             pass
+    if hasattr(sim, "set_geodetic_anchor"):
+        # Not wrapped in try/except: a rejected anchor must fail the scenario
+        # rather than leave the world on a stale or default frame.
+        latitude_deg, longitude_deg, height_m = layout.geodetic_anchor
+        sim.set_geodetic_anchor(float(latitude_deg), float(longitude_deg), float(height_m))
     if hasattr(sim, "clear_zones"):
         sim.clear_zones()
         for zone in layout.zones:

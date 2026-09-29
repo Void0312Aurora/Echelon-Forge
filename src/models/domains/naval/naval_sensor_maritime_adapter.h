@@ -92,4 +92,15 @@ inline double maritime_radar_target_height_m(const Sensor &sensor, const flecs::
     return target_height;
 }
 
+// Radar-significant height of a ship target above its waterline for the shared
+// smooth-earth horizon gate, or a negative value when the target is not a ship
+// (the generic sensor model then uses the target's own height).
+inline double ship_target_horizon_height_m(const Sensor &sensor, const flecs::entity &target,
+                                           const Transform &target_transform) {
+    if (target.get<ShipPlatform>() == nullptr) {
+        return -1.0;
+    }
+    return maritime_radar_target_height_m(sensor, target, target_transform);
+}
+
 } // namespace naval::sensor

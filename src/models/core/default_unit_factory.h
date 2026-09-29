@@ -43,6 +43,7 @@
 #include "components/domains/naval/platform/ship_platform.h"
 #include "components/domains/naval/platform/submarine_platform.h"
 #include "content/unit_definition_loader.h"
+#include "core/interfaces/environment_model.h"
 #include "core/interfaces/unit_factory.h"
 #include "runtime/contracts/platform_capability_contracts.h"
 #include "models/weapons/missile_guidance_types.h"
@@ -1336,15 +1337,12 @@ class DefaultUnitFactory : public IUnitFactory {
         e.set<Loadout>({});
 
         // Initialize EGI (Embedded GPS/INS)
-        // Assume perfect alignment at spawn
-        // Recalculate Initial Lat/Lon (Use same constants as NavigationSystem)
-        constexpr double kRefLat = 36.24;
-        constexpr double kRefLon = -115.05;
-        constexpr double kMetersPerDegLat = 111132.954;
-        constexpr double kMetersPerDegLon = 90000.0;
-
-        double lat = kRefLat + (params.y / kMetersPerDegLat);
-        double lon = kRefLon + (params.x / kMetersPerDegLon);
+        // Assume perfect alignment at spawn; same projection as NavigationSystem.
+        const EnvironmentModelRef *env_ref = e.world().get<EnvironmentModelRef>();
+        const geodesy::GeodeticPosition geo = environment_local_to_geodetic(
+            env_ref ? env_ref->model : nullptr, params.x, params.y, params.z);
+        const double lat = geo.latitude_deg;
+        const double lon = geo.longitude_deg;
 
         e.set<EGI>({
             lat, lon, params.z, params.z,        // Pos

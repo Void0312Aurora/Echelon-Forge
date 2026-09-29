@@ -329,7 +329,8 @@ std::vector<uint64_t> RuntimeFacade::apply_world_setup_batch(
     const std::vector<WorldTerrainAssignment> &terrain_assignments,
     const std::vector<WorldWindAssignment> &wind_assignments,
     const std::vector<WorldZoneDefinition> &zones, const std::vector<WorldSpawnRequest> &requests,
-    const std::vector<double> &time_steps, const std::vector<WorldSunAssignment> &sun_assignments) {
+    const std::vector<double> &time_steps, const std::vector<WorldSunAssignment> &sun_assignments,
+    const std::vector<WorldGeodeticAnchorAssignment> &geodetic_anchor_assignments) {
     return runtime_
         ->setup(runtime::backend::SetupRequest{
             .kind = runtime::backend::SetupKind::Batch,
@@ -340,6 +341,7 @@ std::vector<uint64_t> RuntimeFacade::apply_world_setup_batch(
             .spawn_requests = requests,
             .time_steps = time_steps,
             .sun_assignments = sun_assignments,
+            .geodetic_anchor_assignments = geodetic_anchor_assignments,
         })
         .entity_ids;
 }
@@ -356,6 +358,7 @@ BatchWorldSetupResult RuntimeFacade::apply_world_setup(const BatchWorldSetupRequ
                                 .spawn_requests = request.spawn_requests,
                                 .time_steps = request.time_steps,
                                 .sun_assignments = request.sun_assignments,
+                                .geodetic_anchor_assignments = request.geodetic_anchor_assignments,
                             })
                             .entity_ids;
     result.typed_platform_spawn_results.reserve(request.typed_platform_spawn_requests.size());
@@ -390,6 +393,9 @@ RuntimeFacade::apply_world_layout(const RuntimeWorldLayoutRequest &request) {
                                 .wave_period_s = request.wave_period_s,
                                 .sun_azimuth_deg = request.sun_azimuth_deg,
                                 .sun_elevation_deg = request.sun_elevation_deg,
+                                .anchor_latitude_deg = request.anchor_latitude_deg,
+                                .anchor_longitude_deg = request.anchor_longitude_deg,
+                                .anchor_height_m = request.anchor_height_m,
                             })
                             .entity_ids;
     return result;

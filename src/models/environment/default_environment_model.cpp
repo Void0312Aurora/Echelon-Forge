@@ -405,6 +405,7 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
     double sun_azimuth_deg_ = 0.0;    // NAV: 0=North, CW positive
     double sun_elevation_deg_ = 45.0; // above horizon
     MaritimeState maritime_state_{};
+    geodesy::GeodeticAnchor geodetic_anchor_ = geodesy::kDefaultGeodeticAnchor;
     bool flat_terrain_ = false;
 
   public:
@@ -999,6 +1000,12 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
     void clear_maritime_state() override { maritime_state_ = MaritimeState{}; }
 
     MaritimeState get_maritime_state() const override { return maritime_state_; }
+
+    void set_geodetic_anchor(const geodesy::GeodeticAnchor &anchor) override {
+        geodetic_anchor_ = anchor;
+    }
+
+    geodesy::GeodeticAnchor get_geodetic_anchor() const override { return geodetic_anchor_; }
 
     bool snapshot_to(DefaultEnvironmentSnapshot *out) const {
         if (out == nullptr) {

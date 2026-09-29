@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 from collections.abc import Iterator, Mapping
 from typing import Any
@@ -231,8 +232,58 @@ def resolve_environment_terrain_config(
     return terrain_type, _terrain_type_source_for_value(terrain_type)
 
 
+# Geodetic anchor of the local frame (Geodetic Frame P3-B). A scenario that does
+# not declare `environment.geodetic_anchor` inherits this documented default,
+# which mirrors `geodesy::kDefaultGeodeticAnchor` in
+# src/components/physics/geodesy.h (the historical Nellis AFB EGI reference).
+DEFAULT_GEODETIC_ANCHOR: tuple[float, float, float] = (36.24, -115.05, 0.0)
+GEODETIC_ANCHOR_SOURCE_EXPLICIT = "explicit"
+GEODETIC_ANCHOR_SOURCE_DEFAULT = "default"
+
+
+def resolve_environment_geodetic_anchor(
+    env_cfg: dict[str, Any] | None,
+) -> tuple[tuple[float, float, float], str]:
+    """Return ``((latitude_deg, longitude_deg, height_m), source)``.
+
+    ``environment.geodetic_anchor`` must be an object with finite
+    ``latitude_deg`` in (-90, 90) and finite ``longitude_deg``; ``height_m`` is
+    optional (default 0). Anything else fails closed rather than silently
+    falling back to the default anchor.
+    """
+    if not isinstance(env_cfg, dict) or "geodetic_anchor" not in env_cfg:
+        return DEFAULT_GEODETIC_ANCHOR, GEODETIC_ANCHOR_SOURCE_DEFAULT
+    raw = env_cfg.get("geodetic_anchor")
+    if not isinstance(raw, dict):
+        raise ValueError("environment.geodetic_anchor must be an object")
+    unknown = sorted(set(raw) - {"latitude_deg", "longitude_deg", "height_m"})
+    if unknown:
+        raise ValueError(f"environment.geodetic_anchor has unknown keys: {unknown}")
+    values: list[float] = []
+    for key, default in (("latitude_deg", None), ("longitude_deg", None), ("height_m", 0.0)):
+        if key not in raw:
+            if default is None:
+                raise ValueError(f"environment.geodetic_anchor.{key} is required")
+            values.append(float(default))
+            continue
+        value = raw[key]
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"environment.geodetic_anchor.{key} must be a number")
+        if not math.isfinite(float(value)):
+            raise ValueError(f"environment.geodetic_anchor.{key} must be finite")
+        values.append(float(value))
+    latitude_deg, longitude_deg, height_m = values
+    if not -90.0 < latitude_deg < 90.0:
+        raise ValueError("environment.geodetic_anchor.latitude_deg must lie inside (-90, 90)")
+    return (latitude_deg, longitude_deg, height_m), GEODETIC_ANCHOR_SOURCE_EXPLICIT
+
+
 __all__ = [
     "REPO_ROOT",
+    "DEFAULT_GEODETIC_ANCHOR",
+    "GEODETIC_ANCHOR_SOURCE_DEFAULT",
+    "GEODETIC_ANCHOR_SOURCE_EXPLICIT",
+    "resolve_environment_geodetic_anchor",
     "_SCALAR_TYPES",
     "_OBJECTIVE_PROPERTY_MAP",
     "_OBJECTIVE_OP_MAP",
