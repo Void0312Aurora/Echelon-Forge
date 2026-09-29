@@ -89,8 +89,8 @@ its root filesystem is 91 % full.
    surface target: 43.9 km + declared ducting, not the configured 185 km), and
    `P3-B` lets CSG scenarios declare their geodetic anchor.
 3. `S0-C` accepted `2026-09-30` (115 records; see the task clusters' S0-C
-   Record). Next: `S0-D` scenarios (design in progress), then `S0-B` frame
-   integration, then `S0-X`.
+   Record). `S0-D` accepted `2026-09-30` (group schema, named and mirror
+   scenarios). Next: `S0-B` frame integration, then `S0-X`.
 
 ## Overclaim Refusals
 
