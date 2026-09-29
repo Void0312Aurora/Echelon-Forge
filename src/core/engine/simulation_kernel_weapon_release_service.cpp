@@ -16,6 +16,7 @@
 #include "components/systems/sensor.h"
 #include "content/unit_definition.h"
 #include "core/interfaces/stable_entity_identity.h"
+#include "core/interfaces/stochastic_draw.h"
 #include "core/interfaces/unit_factory.h"
 #include "models/weapons/missile_guidance_types.h"
 #include "models/weapons/naval_weapon_mounts.h"
@@ -31,13 +32,6 @@
 #include <utility>
 
 namespace {
-uint64_t splitmix64(uint64_t seed) {
-    uint64_t z = seed + 0x9e3779b97f4a7c15ULL;
-    z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ULL;
-    z = (z ^ (z >> 27)) * 0x94d049bb133111ebULL;
-    return z ^ (z >> 31);
-}
-
 bool contact_matches_target_id(const ContactList *contacts, uint64_t target_id) {
     if (!contacts || target_id == 0) {
         return false;
@@ -807,11 +801,16 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
         std::max(0.0, finite_or_default(resolved_tuning.sustain_thrust_n,
                                         default_sustain_thrust_n(boost_thrust_n)));
 
-    const uint64_t reset_seed_entropy =
-        (static_cast<uint64_t>(rng_()) << 32U) ^ static_cast<uint64_t>(rng_());
-    uint64_t missile_seed = splitmix64(static_cast<uint64_t>(current_time * 1000.0) ^
-                                       (attacker_id * 0x9e3779b97f4a7c15ULL) ^
-                                       (target_id * 0xbf58476d1ce4e5b9ULL) ^ reset_seed_entropy);
+    // Site 2 (missile release): keeps its two mt19937 draws, in the same order, passed as
+    // `words` alongside the entropy word they always mixed in, so the mt19937 stream position
+    // is unchanged (Decision 3).
+    const uint64_t missile_release_rng_word1 = static_cast<uint64_t>(rng_());
+    const uint64_t missile_release_rng_word2 = static_cast<uint64_t>(rng_());
+    const auto missile_release_target = ecs_.entity(target_id);
+    const uint64_t missile_seed = stochastic_draw::draw_seed(
+        ecs_, stochastic_draw::DrawSite::missile_release, current_time,
+        {attacker, missile_release_target},
+        {missile_release_rng_word1, missile_release_rng_word2});
 
     const Mass mass = make_missile_mass_state(missile_total_mass_kg, propellant_mass_kg);
     const MassProperties mass_properties = make_missile_mass_properties(mass, reference_area_m2);
@@ -1059,10 +1058,10 @@ bool SimulationKernelWeaponReleaseService::fire_naval_weapon(uint64_t attacker_i
             hit_probability = 1.0;
         }
     }
-    uint64_t rng_state = splitmix64(
-        static_cast<uint64_t>(current_time * 1000.0) ^ (attacker_id * 0x9e3779b97f4a7c15ULL) ^
-        (target_id * 0xbf58476d1ce4e5b9ULL) ^ (static_cast<uint64_t>(weapon_type_code) << 32));
-    const double u = (splitmix64(rng_state) >> 11) * (1.0 / 9007199254740992.0);
+    uint64_t rng_state = stochastic_draw::draw_seed(
+        ecs_, stochastic_draw::DrawSite::naval_gun_ciws, current_time, {attacker, target},
+        {static_cast<uint64_t>(weapon_type_code)});
+    const double u = stochastic_draw::uniform01(rng_state);
     const bool hit = u <= hit_probability;
 
     if (weapon_type == NavalWeaponType::Ciws && mount->can_intercept_missiles &&
