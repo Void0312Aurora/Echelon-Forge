@@ -1,35 +1,37 @@
 # Ground Damage Effects Route Repair
 
-Status: `2026-09-28` active. Route repaired, measured, and reconciled across its
+Status: `2026-09-29` accepted. Route repaired, measured, and reconciled across its
 declaration surfaces. The mobility-projection expectation that held acceptance was
-decided on `2026-09-28`: withdrawn as an uncalibrated expectation, pinned as the current
-bootstrap contract, and carried forward as a registered follow-up (see
-[Decision: mobility expectation](#decision-mobility-expectation-2026-09-28)). What remains
-before `P5` is independent review of that decision.
+decided on `2026-09-28` (withdrawn, pinned on the synthesized bootstrap surface, and
+carried forward as a registered follow-up; see
+[Decision: mobility expectation](#decision-mobility-expectation-2026-09-28)), and review
+round 2 scoped it on `2026-09-29`. This is a frozen record; the lasting facts live in the
+Ground specialization baseline.
 
 Language:
 - English canonical: `README.md`
 - Chinese companion: not required yet; high-churn implementation slice.
 
-Document kind: `task`
-Lifecycle: `active`
-Canonical: `docs/domains/ground/work/active/ground_damage_effects_route_repair/README.md`
+Document kind: `review`
+Lifecycle: `maintained`
+Canonical: `docs/domains/ground/reviews/ground_damage_effects_route_repair_20260922/README.md`
 Owner: `domains/ground`
-Last verified: `2026-09-28`
+Accepted: `2026-09-29`
+Last verified: `2026-09-29`
 
 Inputs:
 
-- [Ground owner README](../../../README.md) — the residual this package discharges
-- [Ground specialization baseline](../../../standards/specialization_baseline.md) — the
+- [Ground owner README](../../README.md) — the residual this package discharges
+- [Ground specialization baseline](../../standards/specialization_baseline.md) — the
   registered-but-unreachable statement this repair changed
-- [DM-G1 diagnosis](../../../../../systems/combat/reviews/ground_damage_reachability_20260921.md)
+- [DM-G1 diagnosis](../../../../systems/combat/reviews/ground_damage_reachability_20260921.md)
   — the measurement the fix rests on
-- [Simulation System Architecture Design](../../../../../architecture/standards/simulation_system_architecture_design.md)
+- [Simulation System Architecture Design](../../../../architecture/standards/simulation_system_architecture_design.md)
   §4 laws, §6.1, §10 domain extension model
-- [Modularization Plan](../../../../../architecture/work/issues/modularization_plan.md)
+- [Modularization Plan](../../../../architecture/work/issues/modularization_plan.md)
   — the ownership boundaries and the admission declaration list
-- [Runtime Composition Baseline](../../../../../architecture/standards/runtime_composition_baseline.md)
-- [Ground Systems Owner Admission](../../../reviews/ground_systems_owner_admission_20260921/README.md)
+- [Runtime Composition Baseline](../../../../architecture/standards/runtime_composition_baseline.md)
+- [Ground Systems Owner Admission](../../reviews/ground_systems_owner_admission_20260921/README.md)
   — the accepted record that requires this fix to have its own package
 
 ## Purpose
@@ -51,11 +53,11 @@ to take on the admission's authority.
 
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
-| Per-tick ground damage | reachable | `GroundDamageStateUpdate` matches spawned ground entities; registered as `builtin.system.ground_damage`, domain `ground`, stage 30, [`system_contribution_registry.cpp`](../../../../../../src/core/engine/system_contribution_registry.cpp) | proves the system runs, not that damage lands |
+| Per-tick ground damage | reachable | `GroundDamageStateUpdate` matches spawned ground entities; registered as `builtin.system.ground_damage`, domain `ground`, stage 30, [`system_contribution_registry.cpp`](../../../../../src/core/engine/system_contribution_registry.cpp) | proves the system runs, not that damage lands |
 | Effects route | reachable, measured `2026-09-22` | the warn-level probe prints `GROUND SELECT entity=582 key_type=11 state=1 hitbox=1 sys=1 platform=1` where it printed `state=0` before; `test_ground_damage_response.py` reports `4 passed, 1 xfailed` where it reported `1 passed, 4 xfailed` | measured for the hit this test exercises; the duplicate's creation site was never observed, so "only the effects route was affected" holds for the routes measured |
 | Component identity minting | composition-owned | `register_component<T>` is `ecs.component<T>()` from the admitted rows, and it runs before model realization | the repair must not move identity derivation into `src/models/**` |
 | Duplicate-id detection | absent in this build | flecs's `ECS_INCONSISTENT_COMPONENT_ID` assert is compiled out: `Release` plus `NDEBUG` means no `FLECS_DEBUG` and no `FLECS_KEEP_ASSERT` | the 94/105 split is a **silent** failure class here, not a loud one |
-| Ground damage test markers | none held | three reachability markers removed and their nodes pass; the fourth node was split on `2026-09-28` into its reachability assertions and `test_ground_route_does_not_degrade_mobility_for_any_warhead_family` in [`test_ground_damage_response.py`](../../../../../../tests/runtime/ground/test_ground_damage_response.py), `8 passed` | the split node pins the current mobility contract (no warhead family reaches the chassis mobility branches, on the synthesized bootstrap surface, because Ground mechanism-load estimation is not admitted); it is not a claim that ground movement is immune to damage |
+| Ground damage test markers | none held | three reachability markers removed and their nodes pass; the fourth node was split on `2026-09-28` into its reachability assertions and `test_ground_route_does_not_degrade_mobility_for_any_warhead_family` in [`test_ground_damage_response.py`](../../../../../tests/runtime/ground/test_ground_damage_response.py), `8 passed` | the split node pins the current mobility contract (no warhead family reaches the chassis mobility branches, on the synthesized bootstrap surface, because Ground mechanism-load estimation is not admitted); it is not a claim that ground movement is immune to damage |
 
 ## Scope
 
@@ -66,7 +68,7 @@ In scope:
 - consume that id in the effects routing detail and in the ground domain header, replacing
   the typed reads;
 - delete the diagnostic `id<T>()` call at
-  [`default_effects_domain_routing_detail.h`](../../../../../../src/models/weapons/detail/default_effects_domain_routing_detail.h),
+  [`default_effects_domain_routing_detail.h`](../../../../../src/models/weapons/detail/default_effects_domain_routing_detail.h),
   which is the only `id<T>()` in all of `src/` and the one live creation-site candidate for
   the duplicate;
 - remove the four `xfail(strict=True)` markers and re-pin the unmarked monotonicity node
@@ -101,7 +103,7 @@ Out of scope, and refused:
 | `P2 Implementation` | Resolve once in composition and consume the id in the effects route. | `P1` | the duplicate-resolving call is gone and the route reads the passed id | accepted |
 | `P3 Integration` | Wire the tests and the declaration surfaces. | `P2` | four `xfail` markers removed, the monotonicity node re-pinned, and the §10 items 1, 2, 4, 6, 9, 10 reconciled | met `2026-09-28` — three markers removed and the route proven; the fourth node was split so its reachability assertions pass unmarked and its withdrawn mobility expectation is pinned as the bootstrap contract. The declaration reconciliation is done: §10 items 1 and 2 in the Ground specialization baseline, item 4 in `src/models/domains/ground/README.md`, item 6 in `src/runtime/facade/README.md`, items 9 and 10 in the same baseline's verification anchors and the unchanged Python-caller surface |
 | `P4 Validation` | Run the gates and record outcomes. | `P3` | named commands show no failures beyond the branch baseline, and the behaviour change is stated with its flip set | met `2026-09-28` — the gates are run and the flip set is recorded below. The smoke suite ran as `ef_test` 174/174 and CTest 14/14. The only failures beyond the base set are the two Air realism nodes recorded as known exposures of the entity-id seed defect |
-| `P5 Closure` | Write acceptance and sync indexes. | `P4` | package accepted, or explicitly held with a named blocker | held — the mobility decision is recorded below; closure waits on an independent review of that decision and of the split node |
+| `P5 Closure` | Write acceptance and sync indexes. | `P4` | package accepted, or explicitly held with a named blocker | accepted `2026-09-29` — the mobility decision is recorded below; review round 2 (below) found one scope defect, fixed in `e6ac4652`; the package moved to `reviews/` |
 
 ## Task Clusters
 
@@ -122,7 +124,7 @@ Out of scope, and refused:
 - validation output for the ground suites, the composition contracts and the governance
   guards;
 - the multi-world measurement, reported with the per-world vectors, and pinned as two nodes
-  in [`test_ground_damage_response.py`](../../../../../../tests/runtime/ground/test_ground_damage_response.py)
+  in [`test_ground_damage_response.py`](../../../../../tests/runtime/ground/test_ground_damage_response.py)
   so the property is re-checked rather than measured once.
 
 ### Review Record
@@ -142,6 +144,17 @@ failure is the mobility assertion, with every reachability assertion passing.
 | The scope line said "remove the four markers" while the outcome is three-plus-one | **Addressed**: the scope entry now carries the outcome inline. |
 | The composition figure `72 passed, 1 skipped` is host-dependent; three of those are missing-prerequisite skips elsewhere | **Addressed**: the gate row now names the host, the prerequisites, and the independently measured `69 passed, 4 skipped`, and states that the census is the host-independent part. |
 
+Round 2, independent, `2026-09-29`, on the mobility decision and the split node. It probed
+other hit paths against a Ground target rather than reading the cause. Its finding: the
+decision's cause was stated without scope. An authored Ground `damage_model` whose hitbox
+lists an `engine` system drops mobility to about `0.62` for every warhead family, through
+the generic non-air system-name coefficient, not through the Ground chassis branches.
+**Addressed** in `e6ac4652`: the decision, the pinned node's docstring, and every page
+stating the claim are scoped to the synthesized bootstrap surface. The generic path is
+recorded as a known exposure, and entry condition 3 of the follow-up now forbids relying on it.
+No behaviour changed, and no test pins the `0.62` coefficient. The round was stopped
+after this finding, so its remaining checks (header-comment accuracy, gate-table evidence)
+were not re-reported. They were carried out on the main thread during closure.
 ## Acceptance Gate
 
 This subproject can be marked accepted only when:
@@ -284,7 +297,7 @@ all required:
   XPASSes its strict marker. The same flips reproduce on the base build by spawning
   unrelated units first, or by running a second episode after `reset(seed)` on one kernel.
   The root fix is a stable per-world entity serial, owned by
-  [Stable Entity Identity For Stochastic Draws](../../../../../architecture/work/issues/stable_entity_identity_for_stochastic_draws.md).
+  [Stable Entity Identity For Stochastic Draws](../../../../architecture/work/issues/stable_entity_identity_for_stochastic_draws.md).
   Both nodes are left unmarked here on purpose: re-marking them would hide the defect
   instead of fixing it.
 
@@ -303,10 +316,10 @@ all required:
 - If the multi-world measurement contradicts the premise, the repair is not this one: the
   candidate becomes `FLECS_CPP_NO_AUTO_REGISTRATION` plus registry-only registration.
 - `ground_p2_stage_node` and the `docs/task/ground/` archive-ledger registration remain
-  separate packages, recorded on the [Ground owner README](../../../README.md).
+  separate packages, recorded on the [Ground owner README](../../README.md).
 
 ## Archive
 
-Promote lasting facts to the Ground standards and the owner pages, retain the accepted
-decisions under `docs/domains/ground/reviews/`, and retire this packet from `work/active/`
-once accepted.
+Retired from `work/active/` on `2026-09-29` into
+`docs/domains/ground/reviews/ground_damage_effects_route_repair_20260922/`. Its lasting
+facts are in the Ground specialization baseline and the owner README.

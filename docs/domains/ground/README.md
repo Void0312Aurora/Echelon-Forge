@@ -60,7 +60,7 @@ remain with their respective owners.
   component id is resolved once per world in the composition path, so a structural hit
   produces the ground consequence instead of the placeholder fallback's all-zero
   destruction. Measured `2026-09-22` and recorded in the
-  [DM-G1 repair package](work/active/ground_damage_effects_route_repair/README.md). The
+  [DM-G1 repair package](reviews/ground_damage_effects_route_repair_20260922/README.md). The
   [Ground Systems Owner Admission](reviews/ground_systems_owner_admission_20260921/README.md)
   package reconciled that placement and is accepted.
 - `src/systems/domains/ground/` owns the bounded infantry movement and damage
@@ -95,7 +95,8 @@ pre-repair measurement that located the cause; the route is reachable now. Archi
 may provide provenance but do not redefine the standards above.
 
 Open work that outlived the admission record, restated here rather than left inside it: the
-`DM-G1` repair has landed with its own package. The mobility expectation it left open was
+`DM-G1` repair has landed with its own package, accepted `2026-09-29` and retained as a
+dated review record. The mobility expectation it left open was
 decided on `2026-09-28`: withdrawn and pinned on the synthesized bootstrap surface every
 shipped Ground unit uses, because Ground mechanism-load estimation is not admitted there, so
 no warhead family reaches the chassis mobility branches on that surface. A `2026-09-29`

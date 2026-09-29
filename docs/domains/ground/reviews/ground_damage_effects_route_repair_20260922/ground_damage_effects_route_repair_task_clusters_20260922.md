@@ -19,14 +19,14 @@ Two decisions are fixed here because they are the ones a later reader would reop
 
 1. **Resolution happens in the composition path**, in the effects-provider construction
    lambda, on the world-scoped model instance. The authority is
-   [modularization_plan.md](../../../../../architecture/work/issues/modularization_plan.md)
+   [modularization_plan.md](../../../../architecture/work/issues/modularization_plan.md)
    — models do not own lifecycle, the engine owns composition — read with
-   [runtime_composition_baseline.md](../../../../../architecture/standards/runtime_composition_baseline.md):
+   [runtime_composition_baseline.md](../../../../architecture/standards/runtime_composition_baseline.md):
    the owner-derived registry owns component membership.
 2. **No new component carries the id.** A world-scoped singleton would move the component
    census from 85 to 86 and force regeneration of the registry constant, both generated
    manifests, four fixtures and the closure hashes — the exact chain the
-   [registry-sync slice](../../../../../architecture/work/issues/runtime_composition_registry_sync.md)
+   [registry-sync slice](../../../../architecture/work/issues/runtime_composition_registry_sync.md)
    has just finished repairing.
 
 ## Finite Task Cluster List
@@ -50,7 +50,7 @@ Two decisions are fixed here because they are the ones a later reader would reop
 - Nothing under `src/` is edited by `G1-A` or by the documentation half of `G1-E`; the
   component census must be provably unmoved at every cluster boundary.
 - If a cluster exceeds its round cap, stop and re-scope before adding a follow-up wave.
-- Follow [Subagent Usage Policy](../../../../../engineering/automation/standards/subagent_usage_policy.md).
+- Follow [Subagent Usage Policy](../../../../engineering/automation/standards/subagent_usage_policy.md).
 
 ## Worker Packet Requirements
 
@@ -116,4 +116,4 @@ pre-existing node ids; "no new failures" means that same set, not a green suite.
   `FLECS_CPP_NO_AUTO_REGISTRATION` plus registry-only registration, which is a different
   package with a different write set.
 - `ground_p2_stage_node` and the `docs/task/ground/` archive-ledger registration stay
-  separate, recorded on the [Ground owner README](../../../README.md).
+  separate, recorded on the [Ground owner README](../../README.md).

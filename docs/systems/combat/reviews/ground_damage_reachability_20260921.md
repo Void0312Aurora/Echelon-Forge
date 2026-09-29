@@ -15,7 +15,7 @@ therefore found nothing where the spawn path wrote. The per-tick system reads th
 same component the factory writes and was unaffected. The repair resolves the id once
 per world in the composition path and passes it to the route, so the same probe now
 reads `state=1`; it is recorded in
-[Ground Damage Effects Route Repair](../../../domains/ground/work/active/ground_damage_effects_route_repair/README.md).
+[Ground Damage Effects Route Repair](../../../domains/ground/reviews/ground_damage_effects_route_repair_20260922/README.md).
 One expectation inside the mechanism was left open and named there: a Ground hit leaves
 mobility at `1.0`. It was decided on `2026-09-28`: the expectation is withdrawn and pinned
 on the synthesized bootstrap surface every shipped Ground unit uses, because the effects
