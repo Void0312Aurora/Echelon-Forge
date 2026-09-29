@@ -7,6 +7,7 @@
 #include <flecs.h>
 
 #include "components/basic/common.h"
+#include "components/basic/stable_identity.h"
 #include "components/command/mission_command.h"
 #include "components/command/pilot_action.h"
 #include "components/domains/naval/platform/ship_platform.h"
@@ -242,8 +243,16 @@ inline void register_ship_motion_system(flecs::world &ecs) {
                         const double pitch_amplitude_deg =
                             std::max(0.0, ship[i].max_pitch_deg_sea_state_6) * sea_state_scale *
                             (0.35 + 0.65 * head_seas_factor);
+                        // Derived from the stable serial, not the raw Flecs id: the id moves
+                        // with the census, with earlier spawns and with post-reset recycling,
+                        // so a raw-id phase would drift with unrelated changes to other units
+                        // (docs/architecture/work/active/stable_entity_identity, P1 E4). This is
+                        // a pure function of the serial, not a stochastic draw, so it does not
+                        // go through stochastic_draw.h.
+                        const StableEntitySerial *serial = it.entity(i).get<StableEntitySerial>();
+                        const std::uint64_t serial_value = serial ? serial->value : 0ULL;
                         const double phase_seed =
-                            std::fmod(static_cast<double>(it.entity(i).id() % 1024ULL) * 0.137,
+                            std::fmod(static_cast<double>(serial_value % 1024ULL) * 0.137,
                                       2.0 * std::numbers::pi_v<double>);
                         transform[i].roll =
                             roll_amplitude_deg * std::sin(omega * current_time + phase_seed);
