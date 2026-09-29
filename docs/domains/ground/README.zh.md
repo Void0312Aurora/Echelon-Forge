@@ -47,7 +47,7 @@ service-profile 解释以及跨域 runtime 架构仍由各自 owner 负责。
   ground 自有的 `GroundPlatformDamageState`，而且通往该 state 的 effects 路由可达：组件 id
   在组合路径里按 world 解析一次，因此一次结构命中会给出 ground 后果，而不是 placeholder
   兜底的"全零并被摧毁"。`2026-09-22` 实测，记录见
-  [DM-G1 修复包](work/active/ground_damage_effects_route_repair/README.md)。
+  [DM-G1 修复包](reviews/ground_damage_effects_route_repair_20260922/README.md)。
   [地面域系统归属准入](reviews/ground_systems_owner_admission_20260921/README.zh.md)
   包已收口该放置位置并被接受。
 - `src/systems/domains/ground/` 拥有受限的单兵 movement 与 damage response，
@@ -77,7 +77,7 @@ service-profile 解释以及跨域 runtime 架构仍由各自 owner 负责。
 是**写明的**，而不是以 placeholder 措辞暗示的。该记录中的每一处读数都是定位成因时的
 **修复前**测量；该路由现在是可达的。归档记录可以提供 provenance，但不得重新定义以上标准。
 
-超出该准入记录、仍然开放的工作，在此重述以免只存在于记录内部：`DM-G1` 修复已随自己的包落地；
+超出该准入记录、仍然开放的工作，在此重述以免只存在于记录内部：`DM-G1` 修复已随自己的包落地，并于 `2026-09-29` 验收、作为带日期的 review 记录保留；
 它留下的 mobility 期望已于 `2026-09-28` 决定在目前所有已上线 Ground 单位使用的合成 bootstrap
 表面上撤回并钉住现状，原因是该表面上 Ground 的弹头机理载荷估算尚未准入，任何弹头类型都到不了
 底盘 mobility 分支。`2026-09-29` 的范围澄清记录了另一处已知暴露：若 authored 的 Ground

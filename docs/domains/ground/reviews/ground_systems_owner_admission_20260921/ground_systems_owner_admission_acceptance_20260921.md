@@ -147,7 +147,7 @@ state and does not repair it.
 
 Lifecycle note `2026-09-22`: the entries below are the residual set **as of this
 acceptance**. The `DM-G1` item and the `xfail`-marker item are discharged by the
-[Ground Damage Effects Route Repair](../../work/active/ground_damage_effects_route_repair/README.md)
+[Ground Damage Effects Route Repair](../ground_damage_effects_route_repair_20260922/README.md)
 package, which landed on that date; the readings are kept as the record of what was open
 then. The capability refusal above and the held areas below are unchanged.
 

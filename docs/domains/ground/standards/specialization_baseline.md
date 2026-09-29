@@ -94,7 +94,7 @@ leaves the shared capability vector at `[0.8167, 1.0000, 0.9010, 0.8680]` rather
 the placeholder fallback's all-zero destroyed result, and every world of a
 many-world process produces that same consequence. The repair and its measurements
 are recorded in
-[Ground Damage Effects Route Repair](../../../domains/ground/work/active/ground_damage_effects_route_repair/README.md).
+[Ground Damage Effects Route Repair](../../../domains/ground/reviews/ground_damage_effects_route_repair_20260922/README.md).
 
 A reachable mechanism is still not a capability. This is not a released Ground effects
 model: no Ground task, scenario, or observation claim may rest on it. No Ground hit

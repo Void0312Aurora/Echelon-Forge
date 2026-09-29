@@ -20,7 +20,7 @@ _GROUND_UNIT_NAME = "Ground_Platoon_MVP"
 # the ground response instead of falling through to the `GroundPlaceholder`.
 #
 # Tracking artifacts: docs/systems/combat/reviews/ground_damage_reachability_20260921.md
-# records the defect; docs/domains/ground/work/active/ground_damage_effects_route_repair/
+# records the defect; docs/domains/ground/reviews/ground_damage_effects_route_repair_20260922/
 # records the repair, its flip set, and its residual.
 #
 # One node below used to carry a `strict=True` marker for a second expectation it
@@ -54,7 +54,7 @@ _GROUND_UNIT_NAME = "Ground_Platoon_MVP"
 # satisfied: admitting ground mechanism-load estimation without a Ground vulnerability
 # profile would put uncalibrated air warhead physics into Ground consequences. The
 # follow-up and its entry conditions are in
-# docs/domains/ground/work/active/ground_damage_effects_route_repair/README.md; this
+# docs/domains/ground/reviews/ground_damage_effects_route_repair_20260922/README.md; this
 # suite pins the current contract so that work has to change it deliberately.
 
 # `get_unit_damage_state` order: [mission, mobility, sensor, survivability].
