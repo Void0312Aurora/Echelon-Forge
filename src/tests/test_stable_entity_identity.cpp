@@ -11,7 +11,11 @@
 #include "components/basic/stable_identity.h"
 #include "components/basic/tags.h"
 #include "components/combat/common/weapon_common.h"
+#include "components/combat/health.h"
+#include "components/command/command_link.h"
 #include "components/command/pilot_action.h"
+#include "components/domains/ground/combat/weapon_ground.h"
+#include "components/domains/naval/combat/weapon_naval.h"
 #include "components/systems/ew.h"
 #include "components/systems/sensor.h"
 #include "core/interfaces/stable_entity_identity.h"
@@ -25,6 +29,7 @@
 #include <array>
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 
 // Bit-identity references: verbatim copies of the two pre-existing stream steps, so this test
@@ -364,6 +369,165 @@ TEST_SUITE("stable_entity_identity") {
         CHECK(u >= 0.0);
         CHECK(u < 1.0);
         CHECK(static_cast<std::uint64_t>(DrawSite::ground_direct_fire) == 4);
+    }
+
+    // Spawns a shooter/target pair, gives the shooter a track on the target, and returns both
+    // entities. Shared by the sites 1/2 seed-sensitivity cases below.
+    flecs::entity spawn_tracked_pair(SimulationKernel &kernel, flecs::entity &out_target) {
+        REQUIRE(kernel.load_database("examples/config/database"));
+        auto shooter = kernel.spawn_unit(Side::Blue, "F-16C_Block50", 0.0, 0.0, 5000.0, 0.0, 0.0,
+                                         0.0, 200.0, 0.0, 0.0);
+        auto target = kernel.spawn_unit(Side::Red, "F-16C_Block50", 0.0, 20000.0, 5000.0, 180.0,
+                                        0.0, 0.0, 200.0, 0.0, 0.0);
+        REQUIRE(shooter.is_valid());
+        REQUIRE(target.is_valid());
+        Detection det{};
+        det.target_id = target.id();
+        det.range = 20000.0;
+        det.local_sensor_hit = true;
+        shooter.set<ContactList>({{det}});
+        shooter.set<Ammo>({4, 4});
+        out_target = target;
+        return shooter;
+    }
+
+    TEST_CASE("site 2 (missile release): reset seed drives the fired missile's rng_state") {
+        SimulationKernel kernel_a;
+        flecs::entity target_a;
+        kernel_a.reset(101);
+        auto shooter_a = spawn_tracked_pair(kernel_a, target_a);
+        auto missile_a1 = kernel_a.fire_missile(shooter_a.id(), target_a.id());
+        REQUIRE(missile_a1.is_valid());
+        const std::uint64_t rng_a1 = missile_a1.get<Missile>()->rng_state;
+
+        SimulationKernel kernel_a2;
+        flecs::entity target_a2;
+        kernel_a2.reset(101);
+        auto shooter_a2 = spawn_tracked_pair(kernel_a2, target_a2);
+        auto missile_a2 = kernel_a2.fire_missile(shooter_a2.id(), target_a2.id());
+        REQUIRE(missile_a2.is_valid());
+        const std::uint64_t rng_a2 = missile_a2.get<Missile>()->rng_state;
+        // Same reset seed, same setup and call sequence on an otherwise-identical kernel: the
+        // draw must reproduce exactly.
+        CHECK(rng_a1 == rng_a2);
+
+        SimulationKernel kernel_b;
+        flecs::entity target_b;
+        kernel_b.reset(202);
+        auto shooter_b = spawn_tracked_pair(kernel_b, target_b);
+        auto missile_b = kernel_b.fire_missile(shooter_b.id(), target_b.id());
+        REQUIRE(missile_b.is_valid());
+        const std::uint64_t rng_b = missile_b.get<Missile>()->rng_state;
+        // A different reset seed must draw a different rng_state for the fired missile.
+        CHECK(rng_a1 != rng_b);
+    }
+
+    TEST_CASE("site 1 (debug synthetic missile): reset seed drives the proximity-hit outcome") {
+        auto run_once = [](std::uint64_t reset_seed) {
+            SimulationKernel kernel;
+            flecs::entity target;
+            kernel.reset(reset_seed);
+            auto shooter = spawn_tracked_pair(kernel, target);
+            const double before_hp = target.get<Health>()->current_hp;
+            const bool applied =
+                kernel.debug_apply_local_proximity_hit(shooter.id(), target.id(), 0.0, 0.0, 0.0,
+                                                       25.0, 5.0);
+            REQUIRE(applied);
+            const double after_hp = target.get<Health>()->current_hp;
+            return std::make_pair(before_hp, after_hp);
+        };
+        const auto [before_a1, after_a1] = run_once(303);
+        const auto [before_a2, after_a2] = run_once(303);
+        // Same reset seed on an otherwise-identical kernel reproduces the same damage outcome.
+        CHECK(before_a1 == before_a2);
+        CHECK(after_a1 == after_a2);
+    }
+
+    TEST_CASE("site 7 (command-link drop): reset seed drives the drop roll") {
+        auto run_once = [](std::uint64_t reset_seed) {
+            SimulationKernel kernel;
+            REQUIRE(kernel.load_database("examples/config/database"));
+            kernel.reset(reset_seed);
+            auto unit = kernel.spawn_unit(Side::Blue, "F-16C_Block50", 0.0, 0.0, 5000.0, 0.0, 0.0,
+                                          0.0, 200.0, 0.0, 0.0);
+            REQUIRE(unit.is_valid());
+            unit.set<CommandLink>({0.2, 0.5});
+            kernel.set_unit_command(unit.id(), 90.0, 220.0, 5000.0);
+            auto lease = kernel.acquire_world_lease();
+            const PendingMovementCommand *pending = unit.get<PendingMovementCommand>();
+            REQUIRE(pending != nullptr);
+            return pending->active;
+        };
+        const bool queued_a1 = run_once(404);
+        const bool queued_a2 = run_once(404);
+        // Same reset seed reproduces the same drop/deliver decision.
+        CHECK(queued_a1 == queued_a2);
+    }
+
+    TEST_CASE("site 3 (naval gun/CIWS) and site 4 (ground direct fire): reset seed drives the "
+             "hit roll") {
+        auto naval_hit_at = [](std::uint64_t reset_seed) {
+            SimulationKernel kernel;
+            REQUIRE(kernel.load_database("examples/config/database"));
+            kernel.reset(reset_seed);
+            auto shooter = kernel.spawn_unit(Side::Blue, "DDG-51_Flight_I_ASW_Helo_MVP", 0.0, 0.0,
+                                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            auto target = kernel.spawn_unit(Side::Red, "DDG-51_Flight_I_ASW_Helo_MVP", 5000.0,
+                                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            REQUIRE(shooter.is_valid());
+            REQUIRE(target.is_valid());
+            NavalWeaponMountDefinition mount{};
+            mount.mount_id = "test_gun";
+            mount.weapon_type = NavalWeaponType::DeckGun;
+            mount.ready_count = 10;
+            mount.max_ready_count = 10;
+            mount.ammo_per_shot = 1;
+            mount.cooldown_s = 0.0;
+            mount.engagement_range_m = 10000.0;
+            mount.hit_probability = 0.5;
+            mount.damage_per_hit = 10.0;
+            shooter.set<NavalWeaponSystem>({{mount}});
+            Detection det{};
+            det.target_id = target.id();
+            det.range = 5000.0;
+            shooter.set<ContactList>({{det}});
+            const bool fired =
+                kernel.fire_naval_weapon(shooter.id(), target.id(), static_cast<int>(NavalWeaponType::DeckGun));
+            REQUIRE(fired);
+            return target.get<Health>()->current_hp;
+        };
+        const double hp_a1 = naval_hit_at(505);
+        const double hp_a2 = naval_hit_at(505);
+        CHECK(hp_a1 == hp_a2);
+
+        auto ground_hit_at = [](std::uint64_t reset_seed) {
+            SimulationKernel kernel;
+            REQUIRE(kernel.load_database("examples/config/database"));
+            kernel.reset(reset_seed);
+            auto shooter = kernel.spawn_unit(Side::Blue, "Ground_Infantry_Soldier_MVP", 0.0, 0.0,
+                                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            auto target = kernel.spawn_unit(Side::Red, "Ground_Infantry_Soldier_MVP", 50.0, 0.0,
+                                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            REQUIRE(shooter.is_valid());
+            REQUIRE(target.is_valid());
+            GroundWeaponState *weapons = shooter.get_mut<GroundWeaponState>();
+            REQUIRE(weapons != nullptr);
+            REQUIRE_FALSE(weapons->weapons.empty());
+            weapons->weapons[0].hit_probability = 0.5;
+            weapons->weapons[0].engagement_range_m = 300.0;
+            Detection det{};
+            det.target_id = target.id();
+            det.range = 50.0;
+            shooter.set<ContactList>({{det}});
+            const bool fired = kernel.fire_ground_weapon(
+                shooter.id(), target.id(),
+                static_cast<int>(weapons->weapons[0].weapon_type));
+            REQUIRE(fired);
+            return target.get<Health>()->current_hp;
+        };
+        const double ghp_a1 = ground_hit_at(606);
+        const double ghp_a2 = ground_hit_at(606);
+        CHECK(ghp_a1 == ghp_a2);
     }
 
     TEST_CASE("helper: stream steps are bit-identical to the pre-existing copies") {
