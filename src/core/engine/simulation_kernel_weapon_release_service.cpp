@@ -996,6 +996,15 @@ bool SimulationKernelWeaponReleaseService::fire_naval_weapon(uint64_t attacker_i
     if (!attacker.is_valid() || target_id == 0) {
         return false;
     }
+    // The target is looked up by caller-supplied raw id with no KeyEntity gate, so a live
+    // entity without a stable serial (for example a debug synthetic missile) must be rejected
+    // here, on the invalid-target path, before it can reach a draw (P1 E9, Decision 4).
+    if (const auto requested_target = ecs_.entity(target_id);
+        requested_target.is_alive() && !requested_target.has<StableEntitySerial>()) {
+        spdlog::warn("fire_naval_weapon rejected target {}: it carries no stable entity serial",
+                     target_id);
+        return false;
+    }
 
     const Transform *attacker_pos = attacker.get<Transform>();
     const ContactList *contacts = attacker.get<ContactList>();
