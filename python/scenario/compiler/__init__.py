@@ -40,6 +40,11 @@ from .common import (
     _stable_ref_id,
     _SURFACE_TYPE_MAP,
 )
+from .group_composition import (
+    expand_group_composition,
+    station_local_offset_m,
+    validate_group_composition,
+)
 from .generation_request import (
     SCENARIO_GENERATION_EVIDENCE_KINDS,
     SCENARIO_GENERATION_KINDS,
@@ -105,6 +110,9 @@ from .waypoint_cache import (
 
 
 __all__ = [
+    "expand_group_composition",
+    "station_local_offset_m",
+    "validate_group_composition",
     "REPO_ROOT",
     "_SCALAR_TYPES",
     "_OBJECTIVE_PROPERTY_MAP",
