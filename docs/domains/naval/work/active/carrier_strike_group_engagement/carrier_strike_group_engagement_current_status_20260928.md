@@ -4,7 +4,7 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/domains/naval/work/active/carrier_strike_group_engagement/carrier_strike_group_engagement_current_status_20260928.md`
 Owner: `domains/naval`
-Last verified: `2026-09-28`
+Last verified: `2026-09-29`
 
 Status: `2026-09-28` planning baseline for
 [Carrier Strike Group Engagement](README.md). This is the first checkpoint; there
@@ -31,7 +31,7 @@ Measured on branch `work/naval-mechanisms` at `5fa7fc9e` (rebased on
 | Named naval platforms | partial | 5 ship units in `examples/config/database/ships/units/` | no carrier, cruiser, Type 055/052D, SSN, or Chinese replenishment ship |
 | Carrier aircraft | absent | aircraft units: F-16C, Su-35S, E-3, MQ-9, MH-60R MVP | no F/A-18E/F, F-35C, EA-18G, E-2D, J-15T, J-35, KJ-600, Z-20 |
 | Naval weapons | partial | VLS-SAM, Mk45, Phalanx mounts | no anti-ship missile, named SAM family, or torpedo |
-| World frame | flat | radar horizon is a proxy flag in `src/components/systems/sensor.h` | no geodetic frame or earth curvature |
+| World frame | geodetic core + sensing horizon | `src/components/physics/geodesy.h`; every non-sonar sensor and the data link are gated on the smooth-earth horizon (Geodetic Frame `P3-A`, `2026-09-29`) | scenario anchor not yet exposed (`P3-B`); terrain LOS has no earth bulge |
 | Ship motion | kinematic | `src/systems/domains/naval/ship_motion_system.h` | no turning circle, route following, or damage coupling |
 | Group command | single screen station | `NavalCommandIntent` | no formation or group command hierarchy |
 | Carrier aviation | absent | none | whole surface missing |
@@ -84,7 +84,9 @@ its root filesystem is 91 % full.
 2. `S0-A` accepted: [Ford OOB](../../../reviews/csg_order_of_battle_20260928/csg_order_of_battle_ford_20260928.md)
    (7 ships, 74 aircraft, 312 sourced rows), [Fujian OOB](../../../reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md)
    (6 ships, about 48 aircraft, 408 sourced rows), and the [source ledger](../../../reviews/csg_order_of_battle_20260928/csg_source_ledger_20260928.md)
-   (305 sources, 22 pending). Geodetic Frame `P1-A` and `P2` are accepted.
+   (305 sources, 22 pending). Geodetic Frame `P1-A`, `P2`, and `P3-A` are accepted;
+   `P3-A` moves surface detection to the curvature horizon (SPY-1D against a
+   surface target: 43.9 km + declared ducting, not the configured 185 km).
 3. `S0-C` unit content and `S0-D` scenarios, then `S0-B` frame integration,
    then `S0-X`.
 
