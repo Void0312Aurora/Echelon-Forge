@@ -6,12 +6,13 @@ aircraft inventory in ``meta.csg``. The runtime spawn paths never see
 ``groups``: they consume the expanded entities unchanged, so the single-world
 and batch loaders stay identical.
 
-Why aircraft are inventory, not entities, at CSG-S0: the flight models have no
-deck-parked state, so an aircraft spawned at zero speed on a deck climbs away
-within a few steps. The one stowed helicopter each ship's
-``embarked_air_ops`` record spawns (pinned by EmbarkedAirOpsSystem) is counted
-against that host's inventory row. CSG-S2 consumes the inventory as the deck
-cycle's initial condition.
+Why aircraft are inventory, not entities, at CSG-S0: there is no deck contact
+surface (ground contact reads terrain elevation only), and the explicitly
+integrated gear spring-damper is unstable at the naval 0.5 s step, so an
+aircraft placed on a deck is thrown clear by its first contact step. The one
+stowed helicopter each ship's ``embarked_air_ops`` record spawns (pinned by
+EmbarkedAirOpsSystem) is counted against that host's inventory row. CSG-S2
+consumes the inventory as the deck cycle's initial condition.
 
 Placement: ``station`` is range and relative bearing from the group guide,
 measured from the guide's threat axis (NAV convention: 0 = north, clockwise),
