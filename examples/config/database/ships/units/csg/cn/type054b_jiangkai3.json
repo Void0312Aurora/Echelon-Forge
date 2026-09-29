@@ -108,7 +108,7 @@
     ],
     "embarked_air_ops": {
         "enabled": true,
-        "helo_unit_name": "MH-60R_MVP",
+        "helo_unit_name": "CSG_CN_Z-20F",
         "launch_altitude_m": 180.0,
         "launch_offset_forward_m": -50.0,
         "launch_offset_starboard_m": 0.0,
@@ -331,7 +331,7 @@
             "naval_weapon_system.mounts.ready_count": {"value_basis": "sourced", "source_ids": ["csg-cn-054b-usni-proc-202503"], "tier": "B", "note": "flat fallback: forward_vls_sam and hhq10_ciws ready_count sourced B (32-cell/24-tube); main_gun and type1130_ciws ready_count are engineering-estimate proxies, no public magazine depth for either"},
             "sensor_ref": {"value_basis": "sourced", "source_ids": ["csg-cn-054b-usni-proc-202503"], "tier": "B", "note": "dual-face (back-to-back) rotating AESA on foremast; S-band attribution and 382/366 replacement claim are C-only (GlobalSecurity), not modeled directly. References the packet's CSG_CN_054B_DualFace_AESA module"},
             "mounted_sonars": {"value_basis": "sourced", "note": "hull-mounted + variable-depth + towed-array sonar per USNI (B); designations/ranges not public. References the packet's shared PLAN_Escort_Hull_Sonar and PLAN_Escort_Towed_Array_VDS modules"},
-            "embarked_air_ops.helo_unit_name": {"value_basis": "sourced", "source_ids": ["csg-cn-cmpr-2025"], "tier": "A", "note": "1 x Z-20 (flight deck + hangar); CMPR 2025 explicitly confirms 054B 'can carry larger utility helicopters, such as the Z-20' (A-tier, official). References MH-60R_MVP as the nearest available stand-in pending a real Z-20 record"},
+            "embarked_air_ops.helo_unit_name": {"value_basis": "engineering_estimate", "note": "Z-20F embarked per the 054B record's sourced hangar entry; replaced the MH-60R_MVP placeholder once the S0-C helicopter records existed (main thread, 2026-09-29)"},
             "data_link_network_id": {"value_basis": "engineering_estimate", "note": "2: PLAN CSG network membership scaffold value"}
         },
         "modeling_notes": [

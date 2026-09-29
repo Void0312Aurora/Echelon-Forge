@@ -108,7 +108,7 @@
     ],
     "embarked_air_ops": {
         "enabled": true,
-        "helo_unit_name": "MH-60R_MVP",
+        "helo_unit_name": "CSG_US_MH-60R_Seahawk",
         "launch_altitude_m": 180.0,
         "launch_offset_forward_m": 120.0,
         "launch_offset_starboard_m": 20.0,
@@ -315,6 +315,7 @@
             "csg-us-ddg-surflant", "csg-us-ddg51-navy-factfile", "csg-us-aegis-navy", "csg-us-mk45-navy", "csg-us-ram-navy"
         ],
         "parameters": {
+            "embarked_air_ops.helo_unit_name": {"value_basis": "engineering_estimate", "note": "HSM-70 detachment (2 x MH-60R) per the S0-A CVW-8 table; replaced the MH-60R_MVP placeholder once the S0-C helicopter records existed (main thread, 2026-09-29)"},
             "naval_weapon_system.mounts[sm6_vls].ready_count": {"value_basis": "engineering_estimate", "note": "96 Mk 41 cells = 40 SM-2 + 16 SM-6 + 32 ESSM quad-packed in 8 cells + 32 strike/ASW cells (Tomahawk, VLA; content-only). Only SAM rounds sit in vls_sam mounts: the runtime fires the first ready vls_sam mount as an air-defence missile, and a mount's envelope overrides the missile record. The split is the representative load in _real_world.weapon_inventory (not public per ship)."},
             "naval_weapon_system.mounts[sm2_vls].ready_count": {"value_basis": "engineering_estimate", "note": "see sm6_vls ready_count"},
             "naval_weapon_system.mounts[essm_vls].ready_count": {"value_basis": "engineering_estimate", "note": "see sm6_vls ready_count"},
