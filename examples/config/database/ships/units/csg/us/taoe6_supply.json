@@ -72,8 +72,8 @@
                 "armor": 0.0,
                 "systems": ["forward_cargo", "fuel_tanks_fwd", "ammunition_stowage"],
                 "components": [
-                    {"name": "fuel_cargo_tank_fwd", "system": "cargo_stowage"},
-                    {"name": "ammunition_magazine_fwd", "system": "cargo_stowage"}
+                    {"name": "fuel_cargo_tank_fwd", "system": "cargo_fuel_stowage"},
+                    {"name": "ammunition_magazine_fwd", "system": "cargo_combat_ammunition_stowage"}
                 ]
             },
             {
@@ -82,12 +82,12 @@
                 "armor": 0.0,
                 "systems": ["cargo_holds", "dry_stores", "refrigerated_stores", "cargo_transfer_rigs"],
                 "components": [
-                    {"name": "fuel_cargo_tank_mid", "system": "cargo_stowage"},
-                    {"name": "dry_stores_hold", "system": "cargo_stowage"},
-                    {"name": "refrigerated_stores_hold", "system": "cargo_stowage"},
-                    {"name": "underway_replenishment_rig_1", "system": "cargo_transfer"},
-                    {"name": "underway_replenishment_rig_2", "system": "cargo_transfer"},
-                    {"name": "underway_replenishment_rig_3", "system": "cargo_transfer"}
+                    {"name": "fuel_cargo_tank_mid", "system": "cargo_fuel_stowage"},
+                    {"name": "dry_stores_hold", "system": "cargo_hold_structure"},
+                    {"name": "refrigerated_stores_hold", "system": "cargo_hold_structure"},
+                    {"name": "underway_replenishment_rig_1", "system": "cargo_transfer_mission"},
+                    {"name": "underway_replenishment_rig_2", "system": "cargo_transfer_mission"},
+                    {"name": "underway_replenishment_rig_3", "system": "cargo_transfer_mission"}
                 ]
             },
             {
@@ -96,12 +96,12 @@
                 "armor": 0.0,
                 "systems": ["engineering", "flight_deck", "hangar"],
                 "components": [
-                    {"name": "lm2500_gas_turbine_1", "system": "propulsion"},
-                    {"name": "lm2500_gas_turbine_2", "system": "propulsion"},
-                    {"name": "lm2500_gas_turbine_3", "system": "propulsion"},
-                    {"name": "lm2500_gas_turbine_4", "system": "propulsion"},
-                    {"name": "helo_hangar_bay", "system": "aviation_facilities"},
-                    {"name": "flight_deck", "system": "aviation_facilities"}
+                    {"name": "lm2500_gas_turbine_1", "system": "propulsion_engineering"},
+                    {"name": "lm2500_gas_turbine_2", "system": "propulsion_engineering"},
+                    {"name": "lm2500_gas_turbine_3", "system": "propulsion_engineering"},
+                    {"name": "lm2500_gas_turbine_4", "system": "propulsion_engineering"},
+                    {"name": "helo_hangar_bay", "system": "aviation_mission_facilities"},
+                    {"name": "flight_deck", "system": "aviation_mission_facilities"}
                 ]
             }
         ]
@@ -132,6 +132,7 @@
             "csg-us-taoe6-navy"
         ],
         "parameters": {
+            "damage_model.hitboxes.components.system": {"value_basis": "engineering_estimate", "note": "S0-C packet-1 follow-up (main thread, 2026-09-29): component system tags renamed so each routes to a platform damage axis (propulsion->propulsion_engineering, sonar->sonar_sensor, aviation facilities->aviation_mission_*, weapons/countermeasures->*_combat, cargo holds by content: fuel, combat ammunition, or hold structure). Geometry, thresholds, and every numeric value unchanged."},
             "ship_platform.displacement_light_kg": {"value_basis": "engineering_estimate", "note": "0.0: light displacement not sourced or estimated separately; only full-load displacement is used by the repo's health-scaling convention"},
             "ship_platform.displacement_full_load_kg": {"value_basis": "sourced", "source_ids": ["csg-us-taoe6-navy"], "tier": "A", "note": "full-load displacement 48,800 LT -> 49,560,690 kg, rounded to nearest 10,000 kg"},
             "ship_platform.length_m": {"value_basis": "sourced", "source_ids": ["csg-us-taoe6-navy"], "tier": "A", "note": "754 ft -> 229.9 m"},
