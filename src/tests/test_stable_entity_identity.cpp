@@ -16,6 +16,7 @@
 #include "components/systems/sensor.h"
 #include "core/interfaces/stable_entity_identity.h"
 #include "core/interfaces/stochastic_draw.h"
+#include "systems/system_contribution_registry.h"
 
 #include <doctest/doctest.h>
 #include <flecs.h>
@@ -56,9 +57,16 @@ namespace {
 
 // Raw-world fixture (P1 E5): a world built without a kernel must install the identity state
 // explicitly before any stamped path; nothing defaults it.
+//
+// Components are registered through the admitted registry, in registry order, not one type at
+// a time. Flecs caches a component id per C++ type for the whole process (first registration
+// wins, and the consistency assert is compiled out in Release). A raw world that registers
+// `StableEntitySerial` first would claim the id that a kernel world later expects for
+// `Transform`. The kernel then aborts with INCONSISTENT_NAME, but only when this suite runs
+// first, which is exactly what `ef_test -ts=...` does. This is the same defect class as the
+// DM-G1 94/105 component split.
 void install_stable_identity_state(flecs::world &world, std::uint64_t episode_seed) {
-    world.component<StableEntitySerial>();
-    world.component<StableIdentityState>();
+    runtime::systems::register_default_component_contributions(world);
     world.set<StableIdentityState>({1, episode_seed});
 }
 
@@ -120,7 +128,7 @@ TEST_SUITE("stable_entity_identity") {
               stable_identity::StampRefusal::invalid_entity);
 
         flecs::world bare;
-        bare.component<StableEntitySerial>();
+        runtime::systems::register_default_component_contributions(bare);
         CHECK(stable_identity::stamp_refusal(bare.entity()) ==
               stable_identity::StampRefusal::missing_state);
     }
