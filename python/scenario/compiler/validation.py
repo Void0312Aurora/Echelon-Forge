@@ -93,7 +93,7 @@ def validate_scenario_compiler_shape(
             source_path=source_path,
         )
 
-    for field_name in ("imports", "entities", "objectives", "zones"):
+    for field_name in ("imports", "entities", "objectives", "zones", "groups"):
         _require_optional_list(
             scenario_data,
             field_name,

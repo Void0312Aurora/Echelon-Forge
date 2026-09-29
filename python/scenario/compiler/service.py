@@ -12,6 +12,7 @@ from .clone import (
     _clone_scenario_value,
 )
 from .common import _mtime_ns, REPO_ROOT
+from .group_composition import expand_group_composition
 from .layout_template import _compile_world_layout_template, _extract_ils_beacons
 from .merge import _compile_merged_scenario_data
 from .reward_metadata import (
@@ -71,6 +72,28 @@ class CompiledScenario:
         return True
 
 
+def _expand_scenario_groups(merged: dict[str, Any]) -> dict[str, Any]:
+    """Expand a ``groups`` block into plain entities and ``meta.csg`` (CSG S0-D).
+
+    ``groups`` is popped so a recompile of ``instantiate()`` output cannot expand
+    twice; the merged shape check that follows catches name collisions between
+    hand-written and generated entities.
+    """
+    if "groups" not in merged:
+        return merged
+    entities, csg_meta = expand_group_composition(merged, project_root=REPO_ROOT)
+    expanded = dict(merged)
+    expanded.pop("groups")
+    expanded["entities"] = list(expanded.get("entities", [])) + entities
+    meta = dict(expanded.get("meta", {})) if isinstance(expanded.get("meta"), dict) else {}
+    reserved = meta.get("csg", {}).get("reserved") if isinstance(meta.get("csg"), dict) else None
+    if reserved is not None:
+        csg_meta["reserved"] = reserved
+    meta["csg"] = csg_meta
+    expanded["meta"] = meta
+    return expanded
+
+
 class ScenarioCompiler:
     _path_cache: dict[str, CompiledScenario] = {}
 
@@ -125,6 +148,7 @@ class ScenarioCompiler:
             )
         if ingestion.scenario_data is not None:
             merged = ingestion.scenario_data
+        merged = _expand_scenario_groups(merged)
         validate_scenario_compiler_shape(
             merged,
             source_path=source_path,
