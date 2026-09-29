@@ -41,7 +41,6 @@
     },
     "sensor_ref": "CSG_CN_Fujian_Island_AESA_Volume_Search",
     "sensor_refs": [
-        "CSG_CN_Fujian_Island_AESA_Volume_Search",
         "CSG_CN_Type_366_Surface_Search",
         "CSG_CN_PLAN_Naval_ESM"
     ],
