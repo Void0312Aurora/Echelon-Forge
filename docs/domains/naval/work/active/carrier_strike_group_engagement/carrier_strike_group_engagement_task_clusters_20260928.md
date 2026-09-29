@@ -150,10 +150,21 @@ Commit `48aa6eb4`: 461 lines of code and tests plus two scenario files.
   with a count basis, and either a `station` (range and bearing from the
   axis; `depth_m` for submarines) or `embarked_on`.
 - Embarked aircraft are inventory in `meta.csg.groups[*].embarked_inventory`,
-  not entities: aircraft spawned at zero speed on a deck climb away because the
-  flight models have no parked state. Each hangar ship's own stowed helicopter
-  (`embarked_air_ops`) still spawns and is pinned by `EmbarkedAirOpsSystem`.
-  `CSG-S2` consumes the inventory as the deck cycle's initial condition.
+  not entities, because two things are missing. (1) No deck contact surface:
+  ground contact reads only terrain elevation, so an aircraft cannot rest on a
+  ship's flight deck (about 18-20 m above the waterline on CVN-78). (2) The
+  gear spring-damper in `ground_contact_system.h` (k = 2.0e6 N/m,
+  c = 3.5e5 N s/m) is integrated explicitly; with a light airframe its natural
+  period is about 0.4 s, so the stable step is about 0.12-0.17 s, while the
+  naval scenarios step at 0.5 s. Measured: with no command and zero throttle,
+  an F/A-18E, F-16C, and MH-60R placed at gear height stay put for 10 s at
+  dt = 0.05 s but are thrown up by the first contact step at dt = 0.5 s (the
+  MH-60R diverges). The aircraft are not driven by any policy or autopilot.
+  (Corrected `2026-09-30`: an earlier version of this record said the flight
+  models lack a parked state; that was wrong.) Each hangar ship's own stowed
+  helicopter (`embarked_air_ops`) still spawns and is pinned by
+  `EmbarkedAirOpsSystem`. `CSG-S2` consumes the inventory as the deck cycle's
+  initial condition.
 - Scenarios: `csg_s0_ford_vs_fujian_named_v1.json` (Ford CSG-12, 7 hulls and
   74 aircraft, against Fujian CV-18, 7 hulls, the 48-aircraft wing and 7
   organic helicopters) and `csg_s0_ford_mirror_v1.json` (the Ford platform
