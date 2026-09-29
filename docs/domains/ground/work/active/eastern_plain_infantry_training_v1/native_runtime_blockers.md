@@ -3,7 +3,7 @@
 Document kind: `work-package evidence`
 Lifecycle: `active`
 Owner: `domains/ground`
-Last verified: `2026-09-25`
+Last verified: `2026-09-29`
 
 ## What was blocked and is now admitted
 
@@ -202,12 +202,18 @@ automatic map-provider integration.
 
 ## Verification residual outside this slice
 
-The composition-evidence C++ gate is green for this batch. The broad `ef_test`
-gate still has two pre-existing CUDA resident fixture identity failures: the
-fixture contract expects entity base `581`, while the current registry (after
-the already-landed Ground damage component admission) produces `583` in this
-worktree. The composition migration-closure/P7 fixtures also require a separate
-Cordis package-producer refresh; the local checkout has no
-`packages/cordis-runtime/node_modules/cordis`, so that refresh was not safely
-performed here. These are recorded integration residuals, not evidence of
-native infantry movement failure.
+The two integration residuals this section recorded on `2026-09-25` are closed on
+`work/army-mechanisms` as of `2026-09-28`:
+
+- the CUDA resident fixture identity failures (contract base `581`, registry `583`)
+  are gone because the CPU reference tests no longer pin raw Flecs ids; they assert
+  census-independent identity invariants instead (`dbc616fe`, `e674672d`);
+- the Cordis package, provenance, parity, and closure evidence were regenerated in the
+  documented causal order (`b0a17ab1`); the local `packages/cordis-runtime/node_modules`
+  is installed with `npm ci`.
+
+One residual remains and is not owned here. Two Air realism nodes flip on this branch
+because stochastic draws are seeded from raw Flecs entity ids, which move with every
+composition change. The root fix and its acceptance gate are in
+[Stable Entity Identity For Stochastic Draws](../../../../../architecture/work/issues/stable_entity_identity_for_stochastic_draws.md);
+neither flip is evidence of a native infantry movement failure.
