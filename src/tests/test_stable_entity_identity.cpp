@@ -444,6 +444,9 @@ TEST_SUITE("stable_entity_identity") {
     }
 
     TEST_CASE("site 7 (command-link drop): reset seed drives the drop roll") {
+        // `set_unit_command` on a non-ship only creates PendingMovementCommand when the
+        // command-link drop roll delivers (roll >= drop_prob); a dropped roll leaves it unset.
+        // Both are valid, seed-determined outcomes, so the observable is "delivered or not".
         auto run_once = [](std::uint64_t reset_seed) {
             SimulationKernel kernel;
             REQUIRE(kernel.load_database("examples/config/database"));
@@ -453,15 +456,13 @@ TEST_SUITE("stable_entity_identity") {
             REQUIRE(unit.is_valid());
             unit.set<CommandLink>({0.2, 0.5});
             kernel.set_unit_command(unit.id(), 90.0, 220.0, 5000.0);
-            auto lease = kernel.acquire_world_lease();
             const PendingMovementCommand *pending = unit.get<PendingMovementCommand>();
-            REQUIRE(pending != nullptr);
-            return pending->active;
+            return pending != nullptr && pending->active;
         };
-        const bool queued_a1 = run_once(404);
-        const bool queued_a2 = run_once(404);
+        const bool delivered_a1 = run_once(404);
+        const bool delivered_a2 = run_once(404);
         // Same reset seed reproduces the same drop/deliver decision.
-        CHECK(queued_a1 == queued_a2);
+        CHECK(delivered_a1 == delivered_a2);
     }
 
     TEST_CASE("site 3 (naval gun/CIWS) and site 4 (ground direct fire): reset seed drives the "
