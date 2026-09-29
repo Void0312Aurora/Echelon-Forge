@@ -76,7 +76,7 @@ capability 字段，然后调用共享 finalize。组件 id 在组合路径里�
 实测：一次结构命中后共享 capability 向量为 `[0.8167, 1.0000, 0.9010, 0.8680]`，而不是
 placeholder 兜底的"全零并被摧毁"；在多 world 进程里每个 world 都给出同一后果。修复与
 测量记录见
-[Ground Damage Effects Route Repair](../../../domains/ground/work/active/ground_damage_effects_route_repair/README.md)。
+[Ground Damage Effects Route Repair](../../../domains/ground/reviews/ground_damage_effects_route_repair_20260922/README.md)。
 
 机制可达仍不等于能力。这不是已释放的 Ground effects model：任何 Ground 任务、场景或
 observation 声明都不得以它为依据。在目前所有已上线 Ground 单位使用的合成 bootstrap 表面上，

@@ -16,7 +16,7 @@ authorised which status change.
 
 Lifecycle note `2026-09-22`: this packet is an accepted review record retained as
 provenance. The `DM-G1` residual it recorded is discharged by the
-[Ground Damage Effects Route Repair](../../work/active/ground_damage_effects_route_repair/README.md)
+[Ground Damage Effects Route Repair](../ground_damage_effects_route_repair_20260922/README.md)
 package, which landed on that date: the effects route resolves its component id once per
 world in the composition path and is reachable. Where this packet, the review log, the
 acceptance record, or the cluster plan says the effects route is unreachable, that is the
@@ -98,7 +98,7 @@ Out of scope:
   observation export;
 - any Ground combat capability claim — the effects route stays unreachable until a
   separate fix package closes it (discharged `2026-09-22`: the
-  [repair package](../../work/active/ground_damage_effects_route_repair/README.md) closed it,
+  [repair package](../ground_damage_effects_route_repair_20260922/README.md) closed it,
   and the capability refusal is the part that survives);
 - the `DM-G1` fix itself;
 - the P2 stage node and any facade-visibility promotion;
@@ -162,7 +162,7 @@ This subproject can be marked accepted only when:
   measurement and the corrections it forced are in the
   [DM-G1 diagnosis](../../../../systems/combat/reviews/ground_damage_reachability_20260921.md).
   **Discharged `2026-09-22` by the
-  [repair package](../../work/active/ground_damage_effects_route_repair/README.md)**, which is
+  [repair package](../ground_damage_effects_route_repair_20260922/README.md)**, which is
   the separate package this residual asked for. What it leaves open is the mobility
   projection expectation that still carries one `xfail(strict=True)`, and the duplicate's
   creation site, which remained unobserved.

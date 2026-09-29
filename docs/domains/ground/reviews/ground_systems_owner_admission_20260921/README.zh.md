@@ -13,7 +13,7 @@ Last verified: `2026-09-22`
 
 生命周期说明 `2026-09-22`：本包是作为 provenance 保留的已接受 review 记录。它记录的
 `DM-G1` 残余已由
-[Ground Damage Effects Route Repair](../../work/active/ground_damage_effects_route_repair/README.md)
+[Ground Damage Effects Route Repair](../ground_damage_effects_route_repair_20260922/README.md)
 包在同日结清：effects 路由现在在组合路径按 world 解析一次组件 id，并且可达。本包、Review
 Log、验收记录或簇计划里凡说 effects 路由不可达之处，都是**审核当时**的状态，修复前的测量是
 有意保留的。本包做出的能力拒绝没有改变、依然生效；修复包也不因可达性而声明任何 Ground 能力。
@@ -86,7 +86,7 @@ damage, or land-domain combat runtime ownership" 列为 **Prohibited**。模块�
 - 地面机动、路线跟随、地形、感知、火力、后勤、观测导出；
 - 任何地面战斗能力声明 —— effects 路由在独立修复包收口前保持不可达（已于 `2026-09-22`
   由
-  [修复包](../../work/active/ground_damage_effects_route_repair/README.md)
+  [修复包](../ground_damage_effects_route_repair_20260922/README.md)
   收口，留存下来的是能力拒绝这一部分）；
 - `DM-G1` 的修复本身；
 - P2 stage node 与任何 facade 可见性提升；
@@ -141,7 +141,7 @@ damage, or land-domain combat runtime ownership" 列为 **Prohibited**。模块�
   因此**只有 effects 路由**不可达；per-tick 系统能匹配，不受影响。测量过程与它逼出的
   更正都在 [DM-G1 诊断](../../../../systems/combat/reviews/ground_damage_reachability_20260921.md)
   里。**已于 `2026-09-22` 由
-  [修复包](../../work/active/ground_damage_effects_route_repair/README.md)结清**，它正是该
+  [修复包](../ground_damage_effects_route_repair_20260922/README.md)结清**，它正是该
   残余所要求的独立包。它留下的是仍带一个 `xfail(strict=True)` 的 mobility 投影期望，以及
   始终未被观测到的重复 id 创建点。
 - P2 stage node 是任务侧的独立包；地面域唯一声明的阶段目前没有注册节点。

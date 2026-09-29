@@ -21,7 +21,7 @@ Parent subproject:
 ## Maturity Matrix
 
 Snapshot as of the review. The effects half became reachable `2026-09-22` through the
-[Ground Damage Effects Route Repair](../../work/active/ground_damage_effects_route_repair/README.md)
+[Ground Damage Effects Route Repair](../ground_damage_effects_route_repair_20260922/README.md)
 package, which resolved the component id once per world in the composition path; the row
 below records what the review measured, not a current status.
 
