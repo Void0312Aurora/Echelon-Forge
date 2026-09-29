@@ -1,0 +1,28 @@
+{
+    "name": "CSG_CN_Z-20_RCS",
+    "type": "RCSProfile",
+    "rcs": {
+        "frontal_rcs": 8.0,
+        "side_rcs": 40.0,
+        "rear_rcs": 12.8,
+        "top_rcs": 32.0,
+        "bottom_rcs": 32.0
+    },
+    "_real_world": {
+        "class": "Medium-lift utility/naval helicopter, Black Hawk-class airframe, non-stealth",
+        "variant_scope": "Z-20F/Z-20J naval helicopter variants, clean airframe (main rotor included)",
+        "hulls": [],
+        "public_equipment": ["No numeric RCS figure disclosed; Black Hawk-class medium helicopter, broadly comparable in size/shape to the UH-60/MH-60 family"]
+    },
+    "_provenance": {
+        "modeling_note": "RCS profile covering both Z-20F and Z-20J per the task's requirement. No PRC or independent numeric RCS figure exists for the Z-20 family. It is a Black Hawk-class medium-lift helicopter, broadly comparable in size and shape to the US UH-60/MH-60 family. Absent any sourced Z-20 or UH-60/MH-60 RCS figure in the ledger, frontal_rcs is set as an engineering_estimate proxy above the repo Standard_Fighter_RCS generic fighter baseline (5.0 m2), reflecting a helicopter's characteristically large, non-optimized fuselage and especially its rotor disk/blades, which contribute a large and highly aspect-variable radar return; set to 8.0 m2, roughly 1.6x the fighter baseline, as a middle-of-range estimate for a medium helicopter's fuselage-plus-rotor combination. side/rear/top/bottom_rcs are scaled from frontal_rcs using the repo Standard_Fighter_RCS's own frontal:side:rear:top:bottom ratio (1:5:1.6:4:4) for consistency with the packet's other RCS profiles, though a helicopter's true RCS behavior (dominated by rotor-blade flash returns that vary rapidly with blade position/aspect) is not well captured by any static 5-value aspect model; this is a structural limitation of the schema rather than a sourcing gap, and is noted here for completeness.",
+        "sources": ["csg-cn-z20-rcs-generic-helo"],
+        "parameters": {
+            "rcs.frontal_rcs": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate 8.0 m2, roughly 1.6x the repo Standard_Fighter_RCS generic fighter baseline (5.0 m2), reflecting a Black Hawk-class medium helicopter's large fuselage plus main-rotor disk/blade returns; no numeric figure is public for Z-20 or a comparable UH-60/MH-60-class helicopter in the ledger"},
+            "rcs.side_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:side ratio (~1:5); no public figure. Helicopter RCS is dominated by rapidly aspect-varying rotor-blade flash returns not well captured by this static ratio, a schema limitation rather than a sourcing gap"},
+            "rcs.rear_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:rear ratio (~1:1.6); no public figure"},
+            "rcs.top_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:top ratio (~1:4); no public figure, though top-aspect is likely the single largest true return direction for a helicopter given rotor-disk exposure, plausibly understated by this generic ratio"},
+            "rcs.bottom_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:bottom ratio (~1:4); no public figure"}
+        }
+    }
+}

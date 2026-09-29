@@ -1,0 +1,491 @@
+{
+    "name": "CSG_CN_J-15T",
+    "type": "Aircraft",
+    "airframe": {
+        "empty_mass_kg": 17600.0,
+        "max_fuel_kg": 9600.0,
+        "drag_coefficient": 0.028,
+        "reference_area": 62.0,
+        "length_m": 21.9,
+        "wingspan_m": 14.7,
+        "height_m": 5.9,
+        "configuration": "Flanker"
+    },
+    "health": {
+        "current_hp": 130.0,
+        "max_hp": 130.0
+    },
+    "damage_model": {
+        "vulnerability": {
+            "synthetic": true,
+            "calibrated": false,
+            "pk_authority": false,
+            "deterministic_fuze_authority": false,
+            "provenance": "CSG S0-C synthetic carrier-Flanker vulnerability scaffold (packet 4, solo worker); geometry scaled from real J-15T dimensions (baseline J-15 airframe, Tier C), mechanism thresholds proxied from the repo su35s_flanker_e.json Flanker template pattern; requires calibration before deterministic fuze/Pk claims",
+            "evidence_dataset_ref": "",
+            "calibration_status": "unvalidated",
+            "blast_scale": 1.0,
+            "fragmentation_scale": 1.0,
+            "continuous_rod_scale": 1.0,
+            "hit_to_kill_scale": 1.0,
+            "nose_aspect_scale": 1.0,
+            "beam_aspect_scale": 1.0,
+            "tail_aspect_scale": 1.0,
+            "high_closure_scale": 1.0,
+            "low_closure_scale": 1.0,
+            "near_miss_scale": 1.0,
+            "direct_hit_scale": 1.0
+        },
+        "hitboxes": [
+            {
+                "offset": [8.5, 0.0, 0.2],
+                "size": [3.0, 1.4, 1.2],
+                "armor": 3.0,
+                "systems": ["cockpit", "radar", "avionics", "sensor"],
+                "components": [
+                    {
+                        "name": "aesa_radar_array",
+                        "system": "radar_avionics",
+                        "offset": [9.8, 0.0, 0.1],
+                        "size": [0.6, 0.6, 0.5],
+                        "armor": 2.5,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.25, "blast_fragmentation": 1.15, "continuous_rod": 0.90, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "cockpit_crew_station",
+                        "system": "cockpit",
+                        "offset": [8.6, 0.0, 0.4],
+                        "size": [1.4, 1.1, 1.0],
+                        "armor": 4.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 1.00, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "irst_module",
+                        "system": "sensor",
+                        "offset": [9.0, 0.15, 0.5],
+                        "size": [0.3, 0.25, 0.25],
+                        "armor": 2.5,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.25, "blast_fragmentation": 1.15, "continuous_rod": 0.90, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "nose_avionics_bay",
+                        "system": "avionics",
+                        "offset": [7.9, 0.0, 0.0],
+                        "size": [1.0, 1.0, 0.6],
+                        "armor": 3.5,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 1.00, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [4.0, 0.0, 0.0],
+                "size": [3.5, 1.8, 1.2],
+                "armor": 4.5,
+                "systems": ["fuel", "avionics", "data_link"],
+                "components": [
+                    {
+                        "name": "center_fuel_tank",
+                        "system": "fuel",
+                        "offset": [4.0, 0.0, 0.3],
+                        "size": [3.0, 1.5, 0.6],
+                        "armor": 3.5,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.75, "fragmentation": 1.05, "blast_fragmentation": 0.95, "continuous_rod": 0.85, "hit_to_kill": 1.10},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "mission_computer",
+                        "system": "avionics",
+                        "offset": [4.8, 0.3, 0.1],
+                        "size": [0.5, 0.4, 0.3],
+                        "armor": 4.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 1.00, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "data_link_terminal",
+                        "system": "data_link",
+                        "offset": [3.6, -0.4, 0.2],
+                        "size": [0.4, 0.3, 0.3],
+                        "armor": 3.5,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.20, "blast_fragmentation": 1.10, "continuous_rod": 0.90, "hit_to_kill": 1.25},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "flight_control_computer",
+                        "system": "flight_control",
+                        "offset": [4.4, 0.0, -0.2],
+                        "size": [0.4, 0.4, 0.3],
+                        "armor": 4.5,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 1.00, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "arresting_hook_mount_structure",
+                        "system": "tail_hook",
+                        "offset": [2.6, 0.0, -0.4],
+                        "size": [0.6, 0.4, 0.4],
+                        "armor": 5.0,
+                        "threshold_scale": 0.95,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.05, "blast_fragmentation": 0.95, "continuous_rod": 1.05, "hit_to_kill": 1.10},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [1.8, 0.9, -0.1],
+                "size": [3.2, 1.1, 0.9],
+                "armor": 4.0,
+                "systems": ["engine"],
+                "components": [
+                    {
+                        "name": "left_engine_core",
+                        "system": "engine",
+                        "offset": [1.8, 0.9, -0.1],
+                        "size": [2.8, 0.6, 0.6],
+                        "armor": 4.5,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 0.90, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "engine_cores",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 0.5,
+                        "critical": false
+                    },
+                    {
+                        "name": "left_fuel_feed",
+                        "system": "fuel",
+                        "offset": [1.4, 0.9, 0.1],
+                        "size": [1.0, 0.35, 0.3],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.75, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 0.85, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "engine", "target_system": "engine", "edge_type": "fuel_feed", "scale": 0.7, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [1.8, -0.9, -0.1],
+                "size": [3.2, 1.1, 0.9],
+                "armor": 4.0,
+                "systems": ["engine"],
+                "components": [
+                    {
+                        "name": "right_engine_core",
+                        "system": "engine",
+                        "offset": [1.8, -0.9, -0.1],
+                        "size": [2.8, 0.6, 0.6],
+                        "armor": 4.5,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 0.90, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "engine_cores",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 0.5,
+                        "critical": false
+                    },
+                    {
+                        "name": "right_fuel_feed",
+                        "system": "fuel",
+                        "offset": [1.4, -0.9, 0.1],
+                        "size": [1.0, 0.35, 0.3],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.75, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 0.85, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "engine", "target_system": "engine", "edge_type": "fuel_feed", "scale": 0.7, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [1.5, 3.8, 0.0],
+                "size": [4.5, 3.6, 0.5],
+                "armor": 2.5,
+                "systems": ["wing", "fuel", "structure"],
+                "components": [
+                    {
+                        "name": "wing_fuel_cells",
+                        "system": "wing_fuel",
+                        "offset": [1.5, 3.8, 0.0],
+                        "size": [4.0, 3.2, 0.35],
+                        "armor": 2.5,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.75, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 0.85, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "wing_spar_center",
+                        "system": "wing_structure",
+                        "offset": [1.5, 2.4, 0.0],
+                        "size": [0.7, 4.0, 0.35],
+                        "armor": 5.0,
+                        "threshold_scale": 0.90,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.05, "blast_fragmentation": 0.95, "continuous_rod": 1.10, "hit_to_kill": 1.10},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "wing_fold_hinge",
+                        "system": "wing_structure",
+                        "offset": [2.0, 4.4, 0.05],
+                        "size": [0.5, 0.5, 0.35],
+                        "armor": 4.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 1.00, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "wing_fold_hinges",
+                        "redundancy_group": 3.0,
+                        "redundancy_weight": 0.5,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.6, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    },
+                    {
+                        "name": "wingtip_pl10_rail_mount",
+                        "system": "weapons_mission",
+                        "offset": [1.8, 5.6, 0.1],
+                        "size": [0.4, 0.3, 0.25],
+                        "armor": 2.5,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.25, "blast_fragmentation": 1.15, "continuous_rod": 0.90, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [-2.5, 0.0, 0.4],
+                "size": [3.0, 3.6, 1.8],
+                "armor": 3.0,
+                "systems": ["tail", "structure"],
+                "components": [
+                    {
+                        "name": "tailhook_assembly",
+                        "system": "tail_hook",
+                        "offset": [-3.0, 0.0, -0.4],
+                        "size": [0.7, 0.35, 0.5],
+                        "armor": 5.0,
+                        "threshold_scale": 0.95,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.05, "blast_fragmentation": 0.95, "continuous_rod": 1.05, "hit_to_kill": 1.10},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "twin_vertical_tail_structure",
+                        "system": "tail_structure",
+                        "offset": [-2.6, 0.8, 1.3],
+                        "size": [1.6, 0.35, 1.6],
+                        "armor": 3.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 1.05, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "maws_sensor",
+                        "system": "sensor",
+                        "offset": [-2.8, 0.0, 1.0],
+                        "size": [0.3, 0.3, 0.25],
+                        "armor": 2.5,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.25, "blast_fragmentation": 1.15, "continuous_rod": 0.90, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "rudder_actuator",
+                        "system": "flight_control_hydraulic",
+                        "offset": [-3.2, 0.8, 1.7],
+                        "size": [0.3, 0.3, 0.3],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 0.95, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    }
+                ]
+            }
+        ]
+    },
+    "flight_model": {
+        "max_speed": 738.0,
+        "min_speed": 70.0,
+        "max_turn_rate": 18.0,
+        "max_climb_rate": 260.0,
+        "max_accel": 8.5,
+        "max_g": 9.0,
+        "min_g": -3.0,
+        "takeoff_speed": 80.0,
+        "landing_speed": 70.0,
+        "taxi_turn_rate": 10.0
+    },
+    "landing_gear": {
+        "can_use_unpaved": false,
+        "rolling_friction_coeff": 0.02,
+        "max_load_factor": 7.0,
+        "contact_height_m": 1.6
+    },
+    "engine_ref": "CSG_CN_WS-10H",
+    "sensor_ref": "CSG_CN_J-15T_AESA",
+    "rcs_profile_ref": "CSG_CN_J-15_Family_RCS",
+    "has_data_link": true,
+    "data_link_network_id": 2,
+    "has_command_link": true,
+    "command_link": {
+        "latency_s": 0.15,
+        "drop_prob": 0.02
+    },
+    "hardpoints": [
+        {"station_id": 1, "type": ["Pylon", "Wing"], "capacity_kg": 500.0},
+        {"station_id": 2, "type": ["Pylon", "Wing"], "capacity_kg": 1000.0},
+        {"station_id": 3, "type": ["Pylon", "Wing"], "capacity_kg": 1500.0},
+        {"station_id": 4, "type": ["Pylon", "Heavy", "Wing"], "capacity_kg": 1500.0},
+        {"station_id": 5, "type": ["Pylon", "Fuselage"], "capacity_kg": 1000.0},
+        {"station_id": 6, "type": ["Pylon", "Fuselage"], "capacity_kg": 1000.0},
+        {"station_id": 7, "type": ["Pylon", "Heavy", "Wing"], "capacity_kg": 1500.0},
+        {"station_id": 8, "type": ["Pylon", "Wing"], "capacity_kg": 1500.0},
+        {"station_id": 9, "type": ["Pylon", "Wing"], "capacity_kg": 1000.0},
+        {"station_id": 10, "type": ["Pylon", "Wing"], "capacity_kg": 500.0},
+        {"station_id": 11, "type": ["Rail", "Tip"], "capacity_kg": 150.0},
+        {"station_id": 12, "type": ["Rail", "Tip"], "capacity_kg": 150.0}
+    ],
+    "default_loadout": {
+        "3": "CSG_CN_PL-15",
+        "4": "CSG_CN_YJ-83K",
+        "7": "CSG_CN_YJ-83K",
+        "8": "CSG_CN_PL-15",
+        "5": "CSG_CN_PL-10",
+        "6": "CSG_CN_PL-10",
+        "11": "CSG_CN_PL-10",
+        "12": "CSG_CN_PL-10"
+    },
+    "ammo": {
+        "missile_count": 8,
+        "max_missile_count": 8
+    },
+    "_real_world": {
+        "designation": "J-15T (CATOBAR-capable derivative of the J-15, for Fujian's catapult decks)",
+        "role": "Carrier-based multirole fighter, primary air-to-air and anti-ship strike platform of the Fujian air wing",
+        "carrier_operation": "EM catapult launch + arrested landing aboard Fujian; also STOBAR-capable (csg-cn-fujian-dod-cmpr2025, A; csg-cn-j15t-usni-2026, B)",
+        "catobar_features": "Reinforced twin-wheel nose gear with launch bar, tailhook, wing and stabilator fold, tail MAWS sensor (observed on Zhuhai 2024 display airframe 1518) (csg-cn-j15t-usni-2026, B)",
+        "dimensions": "Length/span 21.9/14.7m (7.4m folded) baseline J-15 figures; en-wiki gives 22.28m length (csg-cn-j15-wiki, C)",
+        "mass": "Empty weight 17,500-17,700kg; MTOW 32,500-33,000kg, reachable only from catapult (csg-cn-j15-wiki, C)",
+        "internal_fuel": "~9,400-9,800kg (csg-cn-j15-wiki, C)",
+        "engines": "2x WS-10-series, at least some airframes; some may still fly AL-31F (csg-cn-j15t-usni-2026, B; forum reports, C)",
+        "speed": "Mach 2.17-2.4, not demonstrated with stores (csg-cn-j15-wiki, C)",
+        "combat_radius": "~1,270km baseline internal fuel (C); CATOBAR radius not public; engineering_estimate 1,000-1,300km trading fuel vs weapons under catapult launch",
+        "ferry_range": "3,500km (csg-cn-j15-wiki, C)",
+        "service_ceiling": "18,000m (Chinese sources give 20,000m) (csg-cn-j15-wiki, C)",
+        "radar": "New AESA behind canted, pitot-less radome, designation not public; TWZ/Aviationist say 'probably same as J-11D' (csg-cn-j15t-twz, csg-cn-j15t-aviationist, B). Baseline J-15 used Type 1493 pulse-Doppler (C)",
+        "hardpoints_max_stores": "12 stations / 6,500kg baseline J-15 figure (C); J-15T wingtip PL-10 rails confirmed (csg-cn-j15t-usni-2026, B)",
+        "weapons_air_to_air": "PL-15 (BVR), PL-10 (WVR, wingtip rail, B), PL-12 (legacy, not modeled here)",
+        "weapons_anti_ship_subsonic": "4x YJ-83K observed off Fujian Jul 2026 (csg-cn-j15t-yj83k-sighting, C-only, ~700kg/~230km class)",
+        "weapons_anti_ship_supersonic": "2x YJ-15 observed Feb 2026, likely test (csg-cn-j15t-usni-yj15, B); YJ-12 per Chinese military media",
+        "weapons_land_attack": "AKF-98A (KD-88 family) (csg-cn-j15t-akf98a, B) -- not modeled in this packet (not tasked)",
+        "buddy_refuelling": "Demonstrated on baseline J-15 with a pod (csg-cn-j15-buddy-tanker, B); J-15T tanker role aboard Fujian not public",
+        "receiver_probe": "Retractable IFR probe",
+        "status": "content_only_full_damage_model; functional weapons wired via default_loadout"
+    },
+    "_provenance": {
+        "sources": ["csg-cn-fujian-dod-cmpr2025", "csg-cn-j15t-usni-2026", "csg-cn-j15-wiki", "csg-cn-j15t-twz", "csg-cn-j15t-aviationist", "csg-cn-j15t-yj83k-sighting", "csg-cn-j15t-usni-yj15", "csg-cn-j15t-akf98a", "csg-cn-j15-buddy-tanker"],
+        "modeling_note": "Full hand-authored damage model (6 hitboxes) following the su35s_flanker_e.json Flanker-family template directly, since J-15T is itself a Flanker derivative (configuration: 'Flanker' set consistent with su35s_flanker_e.json precedent). Geometry scaled from the sourced 21.9m length/14.7m wingspan/5.9m height baseline-J-15 figures (Tier C). Twin engines share redundancy_group_id 'engine_cores'. Tailhook, wing-fold-hinge, and wingtip PL-10 rail-mount components included per the task's carrier fixed-wing requirement and the sourced J-15T-specific wingtip rail feature. Rear-fuselage arresting-hook mount structure added as a distinct component from the tail-mounted tailhook itself, reflecting the reinforced carrier-landing structure. MAWS sensor component added per the sourced Zhuhai 2024 airframe observation.",
+        "parameters": {
+            "airframe.empty_mass_kg": {"value_basis": "sourced", "source_ids": ["csg-cn-j15-wiki"], "tier": "C", "note": "17,500-17,700kg baseline J-15 figure; midpoint 17,600kg used; no J-15T-specific delta public"},
+            "airframe.max_fuel_kg": {"value_basis": "sourced", "source_ids": ["csg-cn-j15-wiki"], "tier": "C", "note": "~9,400-9,800kg baseline J-15 figure; midpoint 9,600kg used"},
+            "airframe.drag_coefficient": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo su35s_flanker_e.json convention, slightly increased reflecting carrier-strengthened non-LO airframe; no public figure"},
+            "airframe.reference_area": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo su35s_flanker_e.json wing-area convention scaled to this airframe's larger wingspan; no public wing area figure"},
+            "airframe.length_m": {"value_basis": "sourced", "source_ids": ["csg-cn-j15-wiki"], "tier": "C", "note": "21.9m baseline J-15 figure (en-wiki gives 22.28m, conflict noted, not resolved, smaller conservative figure used)"},
+            "airframe.wingspan_m": {"value_basis": "sourced", "source_ids": ["csg-cn-j15-wiki"], "tier": "C", "note": "14.7m spread (7.4m folded)"},
+            "airframe.height_m": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "no public height figure specific to this record's sourcing; engineering estimate consistent with baseline Su-33/J-15 family height class"},
+            "airframe.configuration": {"value_basis": "sourced", "source_ids": ["csg-cn-j15-wiki"], "tier": "C", "note": "Flanker: J-15 is a Flanker-family derivative (Su-33 lineage), matching the repo su35s_flanker_e.json precedent and enabling the 5-hitbox procedural fallback tag consistency even though this record hand-authors its own damage_model"},
+            "flight_model.max_speed": {"value_basis": "sourced", "source_ids": ["csg-cn-j15-wiki"], "tier": "C", "note": "Mach 2.17 (conservative low end of the sourced Mach 2.17-2.4 band, not demonstrated with stores) = 738.4 m/s per the conversion Mach 1 = 340.29 m/s"},
+            "flight_model.min_speed": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public stall speed; engineering estimate typical of a heavier Flanker-derivative carrier fighter's catapult-launch minimum controllable airspeed"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate typical of a Flanker-family fighter, slightly lower than J-35 given the heavier carrier-strengthened airframe"},
+            "flight_model.max_climb_rate": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate typical of a twin-engine Flanker-derivative"},
+            "flight_model.max_accel": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate consistent with max_g"},
+            "flight_model.max_g": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "no public figure specific to J-15T; proxy copied from the repo su35s_flanker_e.json Flanker-family convention"},
+            "flight_model.min_g": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo su35s_flanker_e.json Flanker-family convention"},
+            "flight_model.takeoff_speed": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate for a catapult-assisted carrier launch speed, slightly higher than J-35 given the heavier MTOW"},
+            "flight_model.landing_speed": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate for an arrested carrier landing approach speed"},
+            "flight_model.taxi_turn_rate": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo su35s_flanker_e.json convention; no public figure"},
+            "landing_gear.can_use_unpaved": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "false: carrier-based fixed-wing fighter, not designed for unpaved-strip operation"},
+            "landing_gear.rolling_friction_coeff": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo su35s_flanker_e.json convention; no public figure"},
+            "landing_gear.max_load_factor": {"value_basis": "sourced", "source_ids": ["csg-cn-j15t-usni-2026"], "tier": "B", "note": "engineering estimate reflecting the sourced 'reinforced twin-wheel nose gear' feature for catapult/arrested operations, set higher than J-35's given the heavier MTOW class; no numeric public figure"},
+            "landing_gear.contact_height_m": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "engineering estimate scaled from this record's airframe.height_m proxy; no public figure"},
+            "engine_ref": {"value_basis": "sourced", "source_ids": ["csg-cn-j15t-usni-2026"], "tier": "B", "note": "2x WS-10-series confirmed for at least some airframes; AL-31F uncertainty noted in _real_world per the task's explicit instruction, but WS-10 is modeled here as the primary/intended engine per the OOB doc's own preferred characterization"},
+            "sensor_ref": {"value_basis": "sourced", "source_ids": ["csg-cn-j15t-twz", "csg-cn-j15t-aviationist"], "tier": "B", "note": "new AESA confirmed by TWZ/Aviationist ('probably same as J-11D'); see the CSG_CN_J-15T_AESA module record's own provenance for the full sourcing chain"},
+            "rcs_profile_ref": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "see the CSG_CN_J-15_Family_RCS module record's own provenance (shared with J-15D)"},
+            "hardpoints": {"value_basis": "sourced", "source_ids": ["csg-cn-j15-wiki", "csg-cn-j15t-usni-2026"], "tier": "C", "note": "12 stations / 6,500kg baseline J-15 figure (C) plus 2 wingtip PL-10 rails confirmed for J-15T specifically (B); per-station capacities engineering-estimated by distributing the sourced 6,500kg total across a typical heavy/medium/light Flanker-family pylon layout, matched to the su35s_flanker_e.json 12-hardpoint precedent"},
+            "default_loadout": {"value_basis": "sourced", "source_ids": ["csg-cn-j15t-yj83k-sighting", "csg-cn-j15t-usni-yj15"], "tier": "C-B", "note": "Mixed air-defence/anti-ship strike loadout: 2x PL-15 (BVR) + 2x YJ-83K (subsonic ASCM, observed sighting Jul 2026, C-only) + 2x PL-10 fuselage + 2x PL-10 wingtip rail (WVR, B). YJ-12/YJ-15 supersonic ASCMs are NOT included in the default_loadout since the OOB doc characterizes their sightings as infrequent/test-only (Feb 2026) rather than the standard load; both remain available as alternate loadout options via their own weapon records"},
+            "ammo": {"value_basis": "sourced", "source_ids": ["csg-cn-j15-wiki"], "tier": "C", "note": "8 missiles matches this record's 8 populated missile-carrying default_loadout stations"},
+            "has_data_link": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "true: standard convention for a modern networked PLANAF fighter"},
+            "data_link_network_id": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "2 = PLAN per the task's fixed convention"},
+            "has_command_link": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "true: standard convention"},
+            "command_link.latency_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo su35s_flanker_e.json/e2d_hawkeye.json convention; no public figure"},
+            "command_link.drop_prob": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy; no public figure"},
+            "damage_model": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "single consolidated entry per authoring_standard: all hitbox/component geometry, offsets, sizes, armor, thresholds, and redundancy values are synthetic engineering scaffolding scaled from the sourced 21.9m length/14.7m wingspan baseline-J-15 figures, following the repo su35s_flanker_e.json Flanker-family template directly (6 hitboxes: nose/cockpit+radar+IRST, center fuselage+fuel+arresting-hook-mount, twin engine bays sharing redundancy_group_id 'engine_cores', wings with fold hinges and wingtip PL-10 rail mount, tail with tailhook and MAWS sensor). Not independently sourced; consistent with every other aircraft damage model in this repo"}
+        }
+    }
+}

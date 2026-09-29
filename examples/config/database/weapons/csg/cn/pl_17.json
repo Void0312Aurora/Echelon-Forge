@@ -1,0 +1,98 @@
+{
+    "name": "CSG_CN_PL-17",
+    "type": "Missile",
+    "mass_kg": 470.0,
+    "max_flight_time_s": 320.0,
+    "flight_model": {
+        "max_speed": 4.0,
+        "max_g": 25.0,
+        "max_turn_rate": 12.0
+    },
+    "guidance": {
+        "type": "ActiveRadar",
+        "active_seek_range": 40000.0,
+        "pn_los_rate_source": "world_los_history",
+        "target_kinematics_estimator": "world_cva",
+        "capture_guidance_mode": "disabled",
+        "target_tracker_alpha": 0.22,
+        "target_tracker_beta": 0.025,
+        "target_tracker_gamma": 0.5,
+        "nav_gain": 3.8,
+        "apn_target_accel_gain": 0.1,
+        "autopilot_tau_s": 0.12,
+        "max_accel_response_g_per_s": 70.0
+    },
+    "warhead": {
+        "type": "blast_fragmentation",
+        "mass_kg": 40.0,
+        "lethal_radius": 16.0,
+        "damage": 220.0,
+        "explosive_mass_kg": 24.0,
+        "case_mass_kg": 16.0,
+        "projection_radius_fraction": 0.5,
+        "projection_max_radius_m": 20.0,
+        "projection_max_projected_hitboxes": 3,
+        "provenance": "No public warhead mass. Engineering-estimate surrogate scaled up from the repo/packet PL-15 pattern given PL-17's much larger ~6m airframe intended for high-value airborne asset kills."
+    },
+    "fuze": {
+        "type": "proximity",
+        "trigger_radius_m": 15.0,
+        "delay_s": 0.0,
+        "reliability": 0.88,
+        "provenance": "No public fuze data; engineering-estimate active-radar proximity fuze scaffold, scaled up from PL-15."
+    },
+    "_real_world": {
+        "designation": "PL-17",
+        "role": "Very-long-range AAM against high-value airborne assets (AEW&C, tankers)",
+        "primary_platform": "J-16 (external heavy pylon, 2 per aircraft reported)",
+        "dod_reach": "1,400 km total system reach for J-16+PL-17 (csg-cn-dod-cmpr-2025, A); J-16 combat radius ~1,000 km per DoD footnote implies missile-only reach of ~400 km (engineering_estimate by subtraction)",
+        "missile_range_km": "~400, estimates 300-500 km (csg-cn-pl17-gpm, B; csg-cn-pl17-mwm, C)",
+        "speed": ">=Mach 4 assessed (csg-cn-pl17-gpm, B); Mach 6 claims are C-only",
+        "propulsion": "Dual-pulse solid rocket motor (csg-cn-pl17-gpm, B)",
+        "dimensions": "~5.8-6.0 m length, ~305 mm diameter (csg-cn-pl17-mwm, C-only, from first close-up photo)",
+        "ioc": "Chinese state media indicated service 2022; not independently confirmed; not shown at Sep 2025 parade (csg-cn-pl17-gpm, B)",
+        "carrier_aircraft_relevance": "No public evidence of PL-17 on J-15/J-15T/J-35 or the Fujian air wing (OOB page, not public). Engineering_estimate: J-15T (Flanker-derived, J-16 sibling) is the only plausible Fujian carrier; J-35's internal bay is too short for a ~6 m round. Modeled here as a standalone content record for a J-15T external-carriage option only if a scenario explicitly requires it; NOT wired into any aircraft's default_loadout in this packet, per the task's explicit instruction",
+        "status": "standalone/speculative record; not referenced by any aircraft default_loadout in this packet"
+    },
+    "_provenance": {
+        "sources": ["csg-cn-dod-cmpr-2025", "csg-cn-pl17-gpm", "csg-cn-pl17-mwm"],
+        "parameters": {
+            "warhead.type": {"value_basis": "engineering_estimate", "note": "blast_fragmentation is the standard long-range AAM warhead family assumed following the packet's PL-15 pattern; no PRC source describes detonation mechanism"},
+            "warhead.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "fuze.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "mass_kg": {"value_basis": "proxy", "source_ids": ["csg-cn-pl17-mwm"], "tier": "proxy", "note": "no public mass figure; engineering-estimate scaled from the sourced ~5.8-6.0 m length / ~305 mm diameter dimensions (C-only, MWM) by analogy to similarly-sized long-range AAMs (e.g. AIM-54 Phoenix class), since PL-17 is roughly 50% longer than PL-15"},
+            "max_flight_time_s": {"value_basis": "proxy", "source_ids": ["csg-cn-pl17-gpm"], "tier": "B", "note": "engineering estimate derived from the sourced ~400 km missile-only range (B, by DoD-figure subtraction) at the sourced >=Mach 4 speed"},
+            "flight_model.max_speed": {"value_basis": "sourced", "source_ids": ["csg-cn-pl17-gpm"], "tier": "B", "note": ">=Mach 4 assessed; Mach 6 claims are explicitly C-only per the OOB doc and not used"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public maneuver-load figure; engineering estimate set lower than PL-15 reflecting PL-17's much larger, less-agile airframe optimized for range over maneuverability against large, slow HVAA targets"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate consistent with max_g, lower than PL-15 for the same large-airframe reasoning"},
+            "guidance.type": {"value_basis": "engineering_estimate", "source_ids": ["csg-cn-pl17-gpm"], "tier": "proxy", "note": "ActiveRadar: no public seeker-type confirmation, but assumed consistent with PL-15's terminal active-radar seeker as the standard PLA long-range AAM guidance approach; no independent source confirms this for PL-17 specifically"},
+            "guidance.active_seek_range": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public active-radar seeker acquisition range; engineering estimate scaled up from PL-15's proxy given PL-17's larger seeker aperture (larger diameter airframe) intended for very-long-range HVAA engagement"},
+            "guidance.pn_los_rate_source": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default"},
+            "guidance.target_kinematics_estimator": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default"},
+            "guidance.capture_guidance_mode": {"value_basis": "engineering_estimate", "note": "disabled: no terminal capture-guidance submode sourced or modeled"},
+            "guidance.target_tracker_alpha": {"value_basis": "engineering_estimate", "note": "standard alpha-beta-gamma tracker filter constant, engine convention shared across missile records"},
+            "guidance.target_tracker_beta": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.target_tracker_gamma": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.nav_gain": {"value_basis": "engineering_estimate", "note": "proportional-navigation gain scaffold; no public guidance-law constant, set close to PL-15's given the shared dual-pulse-motor/active-radar architecture"},
+            "guidance.apn_target_accel_gain": {"value_basis": "engineering_estimate", "note": "augmented-PN target-acceleration compensation gain scaffold, set lower than PL-15/PL-10 reflecting the intended slow/large HVAA target class (AEW&C, tankers) requiring less target-maneuver compensation"},
+            "guidance.autopilot_tau_s": {"value_basis": "engineering_estimate", "note": "autopilot response time-constant scaffold; slower than PL-15 reflecting the larger, heavier airframe's slower control response"},
+            "guidance.max_accel_response_g_per_s": {"value_basis": "engineering_estimate", "note": "autopilot response-rate scaffold consistent with flight_model.max_g"},
+            "warhead.mass_kg": {"value_basis": "proxy", "note": "no public warhead mass; engineering-estimate surrogate scaled up from the packet's PL-15 pattern given PL-17's much larger ~6m airframe intended for high-value airborne asset kills, where a larger blast-fragmentation warhead is plausible against a large, thin-skinned target such as an AEW&C aircraft"},
+            "warhead.lethal_radius": {"value_basis": "proxy", "note": "engineering-estimate surrogate, scaled up from PL-15 consistent with the larger estimated warhead mass"},
+            "warhead.damage": {"value_basis": "proxy", "note": "engineering-estimate surrogate, no public damage-effectiveness figure"},
+            "warhead.explosive_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split of the estimated total warhead mass, no public split figure"},
+            "warhead.case_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split, see explosive_mass_kg"},
+            "warhead.projection_radius_fraction": {"value_basis": "proxy", "note": "copied from the packet's PL-15 projection-geometry template"},
+            "warhead.projection_max_radius_m": {"value_basis": "proxy", "note": "scaled from this warhead's larger estimated lethal_radius per repo convention"},
+            "warhead.projection_max_projected_hitboxes": {"value_basis": "proxy", "note": "copied from the packet's PL-15 template pattern"},
+            "fuze.type": {"value_basis": "engineering_estimate", "note": "no public fuze data; proximity fuze scaffold, consistent with the packet's PL-15 convention for a modern active-radar-seeker AAM"},
+            "fuze.trigger_radius_m": {"value_basis": "engineering_estimate", "note": "no public figure; engineering-estimate scaffold, scaled up from PL-15 given the larger estimated warhead"},
+            "fuze.delay_s": {"value_basis": "engineering_estimate", "note": "0.0, consistent with a proximity-triggered fuze"},
+            "fuze.reliability": {"value_basis": "engineering_estimate", "note": "no public reliability figure; engineering-estimate scaffold value, set slightly lower than PL-15 reflecting the weapon's more limited operational history/confirmation"}
+        },
+        "modeling_notes": [
+            "This is a standalone content record only, per the task's explicit instruction: PL-17 is NOT wired into the default_loadout of J-35, J-15T, J-15D, or any other aircraft in this packet, since the OOB doc states plainly there is 'No public evidence of PL-17 on J-15/J-15T/J-35 or the Fujian air wing.' The record exists so a scenario author could optionally add it as a J-15T external-carriage option, flagged speculative.",
+            "Primary real-world platform is J-16 (land-based), not any Fujian carrier aircraft; this record is written for completeness/packet-scope reasons only."
+        ]
+    }
+}

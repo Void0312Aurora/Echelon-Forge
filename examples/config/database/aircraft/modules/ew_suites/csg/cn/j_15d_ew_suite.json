@@ -1,0 +1,42 @@
+{
+    "name": "CSG_CN_J-15D_EW_Suite",
+    "type": "EWSuite",
+    "rwr": {
+        "sensitivity_dbm": -68.0
+    },
+    "jammer": {
+        "power_watts": 900.0,
+        "bandwidth_mhz": 4000.0,
+        "type": "DeceptionDRFM",
+        "effective_angle": 100.0,
+        "is_active": true
+    },
+    "countermeasures": {
+        "chaff_count": 30,
+        "flare_count": 30,
+        "release_interval": 0.4,
+        "auto_mode": true
+    },
+    "_real_world": {
+        "class": "Dedicated electronic-attack variant of the J-15 carrier fighter, analogous in role to the USN EA-18G Growler",
+        "variant_scope": "J-15D EW suite: wingtip ESM/ECM pods (replacing the baseline J-15's wingtip missile rails), plus a fuselage jammer/countermeasures fit",
+        "hulls": [],
+        "public_equipment": ["Wingtip ESM/ECM pods replacing wingtip AAM rails (TWZ, B); described as China's first dedicated carrier-based electronic-attack aircraft, EA-18G-analogous role (TWZ, Naval News); no jammer power, bandwidth, or RWR sensitivity figures publicly disclosed"]
+    },
+    "_provenance": {
+        "modeling_note": "EW suite for J-15D per the task's requirement (jammer pods/ESM). TWZ and Naval News (Tier B) confirm the J-15D's role as a dedicated carrier electronic-attack aircraft comparable to the EA-18G Growler, with wingtip ESM/ECM pods replacing the baseline J-15's wingtip AAM rails. No PRC disclosure of jammer power, bandwidth, RWR sensitivity, or countermeasures loadout exists. All numeric fields are engineering_estimate proxies patterned on the repo CSG_US_ALQ-99 (Growler-analogous jammer pod) where present in the database, or on the repo CSG_US_ALQ-214_ALR-67 (self-protection EW suite template read this session) scaled upward to reflect the J-15D's dedicated stand-off/escort-jamming role rather than pure self-protection, since no J-15D-specific figures exist. jammer.type is set to DeceptionDRFM reflecting modern EW-suite convention for a dedicated jamming aircraft (vs a simpler self-protection noise jammer), consistent with the EA-18G-analogous role attributed by TWZ/Naval News.",
+        "sources": ["csg-cn-j15d-twz-ew", "csg-cn-j15d-navalnews-ew"],
+        "parameters": {
+            "rwr.sensitivity_dbm": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_ALQ-214_ALR-67 record; no public figure"},
+            "jammer.power_watts": {"value_basis": "proxy", "source_ids": ["csg-cn-j15d-twz-ew"], "tier": "proxy", "note": "engineering_estimate scaled upward from a pure self-protection jammer template to reflect the J-15D's dedicated stand-off/escort-jamming role (EA-18G-analogous per TWZ/Naval News); no public power figure exists"},
+            "jammer.bandwidth_mhz": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate consistent with a wideband dedicated jamming pod; no public figure"},
+            "jammer.type": {"value_basis": "engineering_estimate", "source_ids": ["csg-cn-j15d-twz-ew"], "tier": "proxy", "note": "DeceptionDRFM: chosen to reflect a modern dedicated electronic-attack role (TWZ/Naval News's EA-18G-analogous characterization) rather than a simple self-protection noise jammer; no public confirmation of the specific jamming technique"},
+            "jammer.effective_angle": {"value_basis": "proxy", "source_ids": ["csg-cn-j15d-twz-ew"], "tier": "proxy", "note": "engineering_estimate reflecting wingtip-pod placement (TWZ) giving wide-angle coverage; no public figure"},
+            "jammer.is_active": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "true: a dedicated electronic-attack aircraft's jammer defaults to active; standard convention"},
+            "countermeasures.chaff_count": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy consistent with the repo CSG_US_ALQ-214_ALR-67 pattern for a carrier fighter-size airframe; no public figure"},
+            "countermeasures.flare_count": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy consistent with the repo CSG_US_ALQ-214_ALR-67 pattern; no public figure"},
+            "countermeasures.release_interval": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_ALQ-214_ALR-67 pattern; no public figure"},
+            "countermeasures.auto_mode": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "true: standard convention, copied from the repo CSG_US_ALQ-214_ALR-67 pattern"}
+        }
+    }
+}

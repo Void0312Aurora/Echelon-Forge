@@ -1,0 +1,374 @@
+{
+    "name": "CSG_CN_GJ-21",
+    "type": "Aircraft",
+    "airframe": {
+        "empty_mass_kg": 7500.0,
+        "max_fuel_kg": 2500.0,
+        "drag_coefficient": 0.020,
+        "reference_area": 22.0,
+        "length_m": 11.0,
+        "wingspan_m": 14.0,
+        "height_m": 2.7,
+        "configuration": "Conventional"
+    },
+    "health": {
+        "current_hp": 75.0,
+        "max_hp": 75.0
+    },
+    "damage_model": {
+        "vulnerability": {
+            "synthetic": true,
+            "calibrated": false,
+            "pk_authority": false,
+            "deterministic_fuze_authority": false,
+            "provenance": "CSG S0-C synthetic prospective-naval-UCAV vulnerability scaffold (packet 4, solo worker); geometry scaled from the land-based GJ-11 analogue (Tier C-only), mechanism thresholds proxied from the repo su35s_flanker_e.json/j_35.json template pattern adapted for an unmanned flying-wing LO airframe; count-0 prospective branch, requires calibration before deterministic fuze/Pk claims and before any operational status change",
+            "evidence_dataset_ref": "",
+            "calibration_status": "unvalidated",
+            "blast_scale": 1.0,
+            "fragmentation_scale": 1.0,
+            "continuous_rod_scale": 1.0,
+            "hit_to_kill_scale": 1.0,
+            "nose_aspect_scale": 1.0,
+            "beam_aspect_scale": 1.0,
+            "tail_aspect_scale": 1.0,
+            "high_closure_scale": 1.0,
+            "low_closure_scale": 1.0,
+            "near_miss_scale": 1.0,
+            "direct_hit_scale": 1.0
+        },
+        "hitboxes": [
+            {
+                "offset": [4.0, 0.0, -0.1],
+                "size": [2.5, 2.0, 0.7],
+                "armor": 2.5,
+                "systems": ["avionics", "sensor", "data_link"],
+                "components": [
+                    {
+                        "name": "nose_avionics_autonomy_bay",
+                        "system": "avionics",
+                        "offset": [4.2, 0.0, -0.1],
+                        "size": [1.4, 1.2, 0.4],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 1.00, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "chin_eo_ir_sensor",
+                        "system": "sensor",
+                        "offset": [4.9, 0.0, -0.35],
+                        "size": [0.4, 0.35, 0.25],
+                        "armor": 2.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.25, "blast_fragmentation": 1.15, "continuous_rod": 0.90, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "satcom_data_link_terminal",
+                        "system": "data_link",
+                        "offset": [3.6, 0.4, 0.1],
+                        "size": [0.4, 0.3, 0.25],
+                        "armor": 2.5,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.20, "blast_fragmentation": 1.10, "continuous_rod": 0.90, "hit_to_kill": 1.25},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    }
+                ]
+            },
+            {
+                "offset": [1.0, 0.0, -0.05],
+                "size": [3.0, 2.2, 0.7],
+                "armor": 3.0,
+                "systems": ["fuel", "weapons_mission", "structure"],
+                "components": [
+                    {
+                        "name": "internal_weapons_bay_left",
+                        "system": "weapons_mission",
+                        "offset": [1.2, 0.6, -0.3],
+                        "size": [1.6, 0.7, 0.4],
+                        "armor": 3.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.20, "blast_fragmentation": 1.10, "continuous_rod": 0.90, "hit_to_kill": 1.25},
+                        "redundancy_group_id": "weapons_bays",
+                        "redundancy_group": 7.0,
+                        "redundancy_weight": 0.5,
+                        "critical": false
+                    },
+                    {
+                        "name": "internal_weapons_bay_right",
+                        "system": "weapons_mission",
+                        "offset": [1.2, -0.6, -0.3],
+                        "size": [1.6, 0.7, 0.4],
+                        "armor": 3.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.20, "blast_fragmentation": 1.10, "continuous_rod": 0.90, "hit_to_kill": 1.25},
+                        "redundancy_group_id": "weapons_bays",
+                        "redundancy_group": 7.0,
+                        "redundancy_weight": 0.5,
+                        "critical": false
+                    },
+                    {
+                        "name": "center_fuel_cell",
+                        "system": "fuel",
+                        "offset": [0.6, 0.0, 0.2],
+                        "size": [2.2, 1.8, 0.35],
+                        "armor": 3.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.75, "fragmentation": 1.05, "blast_fragmentation": 0.95, "continuous_rod": 0.85, "hit_to_kill": 1.10},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "flight_control_computer",
+                        "system": "flight_control",
+                        "offset": [1.6, 0.0, 0.1],
+                        "size": [0.35, 0.35, 0.25],
+                        "armor": 3.5,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 1.00, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    }
+                ]
+            },
+            {
+                "offset": [-1.5, 0.0, -0.05],
+                "size": [2.0, 1.6, 0.6],
+                "armor": 3.5,
+                "systems": ["engine"],
+                "components": [
+                    {
+                        "name": "dorsal_buried_engine_core",
+                        "system": "engine",
+                        "offset": [-1.5, 0.0, 0.15],
+                        "size": [1.8, 0.8, 0.4],
+                        "armor": 4.0,
+                        "threshold_scale": 0.95,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.05, "blast_fragmentation": 0.95, "continuous_rod": 0.95, "hit_to_kill": 1.10},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "engine_fuel_feed",
+                        "system": "fuel",
+                        "offset": [-1.1, 0.0, -0.1],
+                        "size": [0.8, 0.4, 0.25],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.75, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 0.85, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "engine", "target_system": "engine", "edge_type": "fuel_feed", "scale": 0.8, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [1.0, 4.0, -0.1],
+                "size": [3.5, 4.0, 0.4],
+                "armor": 2.0,
+                "systems": ["wing", "fuel", "structure"],
+                "components": [
+                    {
+                        "name": "wing_fuel_cells",
+                        "system": "wing_fuel",
+                        "offset": [1.0, 4.0, -0.1],
+                        "size": [3.0, 3.6, 0.25],
+                        "armor": 2.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.75, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 0.85, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "wing_spar_center",
+                        "system": "wing_structure",
+                        "offset": [1.0, 2.5, -0.1],
+                        "size": [0.6, 4.0, 0.25],
+                        "armor": 4.5,
+                        "threshold_scale": 0.90,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.05, "blast_fragmentation": 0.95, "continuous_rod": 1.10, "hit_to_kill": 1.10},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "wing_fold_hinge",
+                        "system": "wing_structure",
+                        "offset": [1.2, 5.5, -0.05],
+                        "size": [0.4, 0.4, 0.25],
+                        "armor": 3.5,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 1.00, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "wing_fold_hinges",
+                        "redundancy_group": 3.0,
+                        "redundancy_weight": 0.5,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.6, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [-2.2, 0.0, -0.1],
+                "size": [1.2, 3.0, 0.5],
+                "armor": 2.5,
+                "systems": ["structure", "tail"],
+                "components": [
+                    {
+                        "name": "tailhook_assembly",
+                        "system": "tail_hook",
+                        "offset": [-2.6, 0.0, -0.3],
+                        "size": [0.5, 0.25, 0.3],
+                        "armor": 4.5,
+                        "threshold_scale": 0.95,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.05, "blast_fragmentation": 0.95, "continuous_rod": 1.05, "hit_to_kill": 1.10},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "twin_nose_gear_launch_bar",
+                        "system": "landing_gear_structure",
+                        "offset": [3.5, 0.0, -0.5],
+                        "size": [0.5, 0.5, 0.3],
+                        "armor": 4.0,
+                        "threshold_scale": 1.00,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.05, "blast_fragmentation": 0.95, "continuous_rod": 1.05, "hit_to_kill": 1.10},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "exhaust_nozzle_structure",
+                        "system": "propulsion_structure",
+                        "offset": [-2.8, 0.0, -0.1],
+                        "size": [0.6, 0.9, 0.35],
+                        "armor": 2.5,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 0.90, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "engine", "target_system": "engine", "edge_type": "structural_support", "scale": 0.7, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    }
+                ]
+            }
+        ]
+    },
+    "flight_model": {
+        "max_speed": 260.0,
+        "min_speed": 60.0,
+        "max_turn_rate": 10.0,
+        "max_climb_rate": 60.0,
+        "max_accel": 3.0,
+        "max_g": 4.0,
+        "min_g": -1.5,
+        "takeoff_speed": 70.0,
+        "landing_speed": 60.0,
+        "taxi_turn_rate": 8.0
+    },
+    "landing_gear": {
+        "can_use_unpaved": false,
+        "rolling_friction_coeff": 0.02,
+        "max_load_factor": 6.0,
+        "contact_height_m": 1.2
+    },
+    "engine_ref": "CSG_CN_WS-10H",
+    "rcs_profile_ref": "CSG_CN_J-35_RCS",
+    "has_data_link": true,
+    "data_link_network_id": 2,
+    "has_command_link": true,
+    "command_link": {
+        "latency_s": 0.25,
+        "drop_prob": 0.04
+    },
+    "hardpoints": [
+        {"station_id": 1, "type": ["Internal", "Bay"], "capacity_kg": 500.0},
+        {"station_id": 2, "type": ["Internal", "Bay"], "capacity_kg": 500.0}
+    ],
+    "default_loadout": {},
+    "ammo": {
+        "missile_count": 0,
+        "max_missile_count": 2
+    },
+    "_real_world": {
+        "designation": "GJ-21 (unofficial designation; also referred to as GJ-11J/GJ-11H); naval derivative of the land-based GJ-11 Sharp Sword flying-wing UCAV",
+        "role": "Prospective carrier-based unmanned combat air vehicle (UCAV) for reconnaissance/strike, NOT confirmed operational",
+        "official_reference": "\"various UAVs\" mentioned in official statements about a future Fujian air wing, no type named (csg-cn-fujian-plan-spokesperson, A)",
+        "identity": "Analyst attribution as a naval GJ-11 derivative; GJ-11J/GJ-11H/GJ-21 are all unofficial names (csg-cn-gj21-analysis, B)",
+        "carrier_features": "Folding wings, hook, twin nose wheel with launch bar (C-only for most features; hook-down flight test Nov 2025 is B) (csg-cn-gj21-hookdown-test, B; csg-cn-gj21-features, C)",
+        "test_status": "Hook-down flight Nov 2025; mock-up displayed on Type 076 Jan 2026; launch-bar prototype May 2026 (csg-cn-gj21-hookdown-test, csg-cn-gj21-type076-mockup, B/C); at-sea launch/recovery NOT confirmed as of 2026-05 (C)",
+        "dimensions": "Wingspan 14m (land-based GJ-11 figure); naval-variant span not public (csg-cn-gj11-wingspan, C)",
+        "endurance_range": "~6h / >1,500km (C-only estimate for the land-based GJ-11, not naval-specific)",
+        "weapons": "2 internal bays, payload not public (csg-cn-gj21-features, C)",
+        "oob_doc_status": "\"GJ-21 has not been confirmed operating at sea from Fujian. It is kept at 0 in the default OOB.\" -- this record is written at the task's explicit instruction as a count-0 prospective branch, all proxies clearly labeled",
+        "status": "content_only_full_damage_model, count_0_prospective; not confirmed operational, no default_loadout weapons wired (empty bays, ammo count 0)"
+    },
+    "_provenance": {
+        "sources": ["csg-cn-fujian-plan-spokesperson", "csg-cn-gj21-analysis", "csg-cn-gj21-hookdown-test", "csg-cn-gj21-type076-mockup", "csg-cn-gj21-features", "csg-cn-gj11-wingspan"],
+        "modeling_note": "COUNT-0 PROSPECTIVE BRANCH written at the task's explicit instruction, at the same authoring standard as every other record in this packet, with every proxy clearly labeled. Full hand-authored damage model (5 hitboxes) adapted from the J-35 record's LO-fighter template (flying-wing UCAV sharing the internal-weapons-bay-plus-buried-engine layout logic), since no repo precedent exists for an unmanned flying-wing airframe. Internal weapons bays modeled as a pair sharing redundancy_group_id 'weapons_bays' (2-way redundancy, each bay independently loadable). Single dorsal buried engine (no twin-engine redundancy, since GJ-11-class UCAVs are single-engine per all public imagery). Folding wings and tailhook/launch-bar components included per the sourced Nov 2025 hook-down test and May 2026 launch-bar prototype. No sensor_ref/mounted_sensors wired (no public sensor-suite designation for the naval variant) and no ew_suite_ref (no public EW fit); default_loadout left empty and ammo.missile_count set to 0 reflecting the OOB doc's explicit 'kept at 0 in the default OOB' instruction, distinct from the weapons bays' non-zero capacity which represents the platform's designed potential rather than an asserted current loadout.",
+        "parameters": {
+            "airframe.empty_mass_kg": {"value_basis": "proxy", "source_ids": ["csg-cn-gj11-wingspan"], "tier": "proxy", "note": "no public mass figure for GJ-21 or land-based GJ-11; engineering estimate scaled by analogy to comparable flying-wing UCAVs (RQ-170/X-47B class) given the sourced 14m wingspan"},
+            "airframe.max_fuel_kg": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate derived from the sourced ~6h/>1,500km land-based endurance figure at an assumed subsonic cruise speed and fuel-flow rate typical of a single medium turbofan"},
+            "airframe.drag_coefficient": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering estimate for a clean flying-wing LO airframe, lower than a conventional fighter; no public figure"},
+            "airframe.reference_area": {"value_basis": "proxy", "source_ids": ["csg-cn-gj11-wingspan"], "tier": "proxy", "note": "engineering estimate scaled from the sourced 14m wingspan by analogy to flying-wing UCAV wing-area ratios; no public wing area figure"},
+            "airframe.length_m": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "no public length figure for GJ-11/GJ-21; engineering estimate scaled proportionally from the sourced 14m wingspan by analogy to the X-47B/RQ-170 class flying-wing length-to-span ratio"},
+            "airframe.wingspan_m": {"value_basis": "sourced", "source_ids": ["csg-cn-gj11-wingspan"], "tier": "C", "note": "14m, land-based GJ-11 figure; naval-variant span not public, used as the best available proxy per task instruction"},
+            "airframe.height_m": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate typical of a low-profile flying-wing UCAV"},
+            "airframe.configuration": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "Conventional: no flying-wing-specific configuration tag exists in the schema; irrelevant regardless since this record hand-authors its own full damage_model"},
+            "flight_model.max_speed": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "no public speed figure for GJ-11/GJ-21; engineering estimate typical of a subsonic single-turbofan flying-wing UCAV (X-47B/RQ-170 class, high-subsonic)"},
+            "flight_model.min_speed": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate typical of a flying-wing UCAV's catapult-assisted minimum controllable airspeed"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate low, typical of a flying-wing reconnaissance/strike UCAV rather than an air-superiority fighter"},
+            "flight_model.max_climb_rate": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate typical of a single-engine subsonic UCAV"},
+            "flight_model.max_accel": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate consistent with max_g"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate low, typical of a non-air-superiority UCAV airframe"},
+            "flight_model.min_g": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate consistent with max_g"},
+            "flight_model.takeoff_speed": {"value_basis": "engineering_estimate", "source_ids": ["csg-cn-gj21-hookdown-test"], "tier": "proxy", "note": "no public figure; engineering estimate for a catapult-assisted carrier launch speed, consistent with the sourced launch-bar prototype feature (May 2026)"},
+            "flight_model.landing_speed": {"value_basis": "engineering_estimate", "source_ids": ["csg-cn-gj21-hookdown-test"], "tier": "proxy", "note": "no public figure; engineering estimate for an arrested carrier landing approach speed, consistent with the sourced hook-down flight test (Nov 2025)"},
+            "flight_model.taxi_turn_rate": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo su35s_flanker_e.json convention; no public figure"},
+            "landing_gear.can_use_unpaved": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "false: carrier-based UCAV, not designed for unpaved-strip operation"},
+            "landing_gear.rolling_friction_coeff": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo su35s_flanker_e.json convention; no public figure"},
+            "landing_gear.max_load_factor": {"value_basis": "engineering_estimate", "source_ids": ["csg-cn-gj21-features"], "tier": "proxy", "note": "engineering estimate reflecting the sourced 'twin nose wheel with launch bar' feature for catapult operations; no numeric public figure"},
+            "landing_gear.contact_height_m": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "engineering estimate scaled from this record's proxy airframe.height_m; no public figure"},
+            "engine_ref": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no naval-GJ-21-specific engine module was tasked (the task's engine list covers WS-21/WS-10/WZ-10/FWJ-6C/optional WS-19 only). Open-source analysis of the land-based GJ-11 widely assumes a WS-13-class single medium turbofan, but no such module exists in this packet or the wider repo. Rather than leave engine_ref dangling (unresolved _ref fields warn-and-continue at spawn rather than failing load, but the authoring_standard requires verifying resolution), this record reuses CSG_CN_WS-10H (written this packet for J-15T/J-15D) as the nearest-class proxy powerplant. This is flagged as an open issue in the final report: GJ-21's true engine class (WS-13, ~50kN thrust) is smaller than WS-10H (~130kN, twin-engine Flanker-class), so this proxy likely overstates GJ-21's thrust-to-weight and should be revisited if a WS-13 module is ever authored"},
+            "rcs_profile_ref": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "reuses CSG_CN_J-35_RCS as the best available LO proxy, since a flying-wing UCAV like GJ-11/GJ-21 is understood to have comparable or better frontal RCS to J-35; no GJ-21-specific RCS profile was tasked separately"},
+            "hardpoints": {"value_basis": "sourced", "source_ids": ["csg-cn-gj21-features"], "tier": "C", "note": "2 internal bays confirmed by the sourced '2 internal bays' feature; capacities engineering-estimated, payload not public"},
+            "default_loadout": {"value_basis": "sourced", "source_ids": [], "tier": "proxy", "note": "empty: per the OOB doc's explicit instruction that GJ-21 is kept at 0 in the default OOB and payload is not public"},
+            "ammo": {"value_basis": "sourced", "source_ids": [], "tier": "proxy", "note": "missile_count 0 reflecting the OOB doc's explicit count-0 prospective status; max_missile_count 2 reflecting the platform's designed 2-bay potential capacity"},
+            "has_data_link": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "true: a UCAV requires a data link for remote operation/autonomy supervision by definition"},
+            "data_link_network_id": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "2 = PLAN per the task's fixed convention"},
+            "has_command_link": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "true: a UCAV requires a command link for remote control/mission tasking by definition"},
+            "command_link.latency_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering estimate slightly higher than manned aircraft records reflecting SATCOM-relay-typical latency for a remotely supervised UCAV; no public figure"},
+            "command_link.drop_prob": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering estimate slightly higher than manned aircraft records reflecting SATCOM-link fragility; no public figure"},
+            "damage_model": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "single consolidated entry per authoring_standard: all hitbox/component geometry, offsets, sizes, armor, thresholds, and redundancy values are synthetic engineering scaffolding, adapted from the J-35 record's LO-fighter template for a single-engine flying-wing UCAV (5 hitboxes: nose avionics/autonomy bay+EO/IR+SATCOM link, center fuselage+twin internal weapons bays sharing redundancy_group_id 'weapons_bays'+fuel+flight-control-computer, single dorsal buried engine+fuel feed, wings with fold hinge, tail/aft structure with tailhook+nose-gear launch bar+exhaust nozzle). Not independently sourced; consistent with every other aircraft damage model in this repo. COUNT-0 PROSPECTIVE STATUS applies to the unit's OOB presence, not to the rigor of this damage model, which is written at the same standard as every confirmed-operational record in this packet per the task's explicit instruction"}
+        }
+    }
+}
