@@ -182,6 +182,7 @@ jobs:
       - name: Run C++ smoke tests
         run: |
           ctest --test-dir build-workshop -L release --output-on-failure
+          ctest --test-dir build-workshop -R '^runtime_host_candidate_boundary$' --output-on-failure
           ctest --test-dir build-workshop -R '^ef_test_all$' --output-on-failure
 
       - name: Run state-transfer and Python mirror contract gates

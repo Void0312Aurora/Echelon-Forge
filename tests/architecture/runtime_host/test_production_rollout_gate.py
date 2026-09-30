@@ -264,65 +264,6 @@ def test_long_lived_production_adapter_rechecks_kill_switch_before_mutation(
             production_wheel_digest="b" * 64,
         )
 
-
-def test_long_lived_production_adapter_rechecks_kill_switch_before_mutation(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    from python.rl.runtime.world_batch import adapter as adapter_module
-
-    path = tmp_path / "rollout.json"
-    store = FileRolloutDecisionStore(path, writer_id="release-controller", signing_key=KEY, key_id=KEY_ID)
-    prepared = store.commit(_envelope(state="prepared", sequence=0, decision_id="decision-0"))
-    shadow = store.commit(
-        _envelope(state="shadow", sequence=1, decision_id="decision-1", predecessor="decision-0"),
-        expected_decision_sha256=prepared.decision_sha256,
-    )
-    canary_ready = store.commit(
-        _envelope(state="canary-ready", sequence=2, decision_id="decision-2", predecessor="decision-1"),
-        expected_decision_sha256=shadow.decision_sha256,
-    )
-    canary = store.commit(
-        _envelope(state="production-canary", sequence=3, decision_id="decision-3", predecessor="decision-2"),
-        expected_decision_sha256=canary_ready.decision_sha256,
-    )
-
-    class _Facade:
-        def set_pilot_actions_batch(self, _assignments):
-            raise AssertionError("kill-switched production adapter must not reach the facade")
-
-    monkeypatch.setattr(adapter_module.ef_py, "RuntimeFacade", lambda _world_count: _Facade())
-    adapter = adapter_module.RuntimeFacadeAdapter(
-        1,
-        production_rollout_path=str(path),
-        production_rollout_key=KEY,
-        require_production_admission=True,
-        production_release_id="release-p5d-local",
-        production_manifest_sha256=MANIFEST,
-        production_plan_sha256=PLAN,
-    )
-    assert adapter.rollout_admission is not None
-    assert adapter.rollout_admission.decision_sha256 == canary.decision_sha256
-
-    killed = store.trip_kill_switch(["operator_backout"])
-    assert not killed.production_authorized
-    with pytest.raises(RuntimeError, match="production rollout admission rejected"):
-        adapter.refresh_rollout_admission()
-    with pytest.raises(RuntimeError, match="production rollout admission rejected"):
-        adapter.set_pilot_actions_batch([])
-
-    with pytest.raises(RuntimeError, match="production rollout admission rejected"):
-        adapter_module.RuntimeFacadeAdapter(
-            1,
-            production_rollout_path=str(path),
-            production_rollout_key=KEY,
-            require_production_admission=True,
-            production_release_id="release-p5d-local",
-            production_manifest_sha256=MANIFEST,
-            production_plan_sha256=PLAN,
-        )
-
-
 def test_release_controller_cli_commits_signed_slot(tmp_path: Path) -> None:
     payload_path = tmp_path / "payload.json"
     key_path = tmp_path / "rollout.key"
