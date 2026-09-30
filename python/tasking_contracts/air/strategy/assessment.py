@@ -163,7 +163,7 @@ class AirPostLaunchAssessment:
                 outcome="hit_evidence",
                 confidence=1.0,
                 allow_reattack=False,
-                blocks_fire=False,
+                blocks_fire=True,
                 release_executed=release_executed,
                 pending_assessment=pending,
                 target_contact_present=contact,
