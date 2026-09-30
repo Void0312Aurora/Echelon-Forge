@@ -121,6 +121,11 @@ class FacadeBatchBackend:
 
     def step(self, actions: Mapping[EntityKey, Any]) -> FacadeBatchSnapshot:
         self._require_ready()
+        if not isinstance(actions, Mapping):
+            raise TypeError("facade batch step requires an entity-keyed mapping")
+        missing = set(self._entity_keys).difference(actions)
+        if missing:
+            raise KeyError(f"facade batch step requires actions for every controlled entity: {sorted(missing)}")
         self._submit("set_pilot_actions_batch", "WorldPilotActionAssignment", "action", actions)
         self.facade.step_batch()
         return self.snapshot()

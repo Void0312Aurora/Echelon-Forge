@@ -49,7 +49,7 @@ def build_pilot_action(action: Any, *, action_mode: str = "full", instrument_sta
         pilot.master_arm = bool(values[13] > 0.5)
         pilot.fire_weapon = bool(values[14] > 0.5)
         pilot.fire_gun = bool(values[15] > 0.5)
-        pilot.weapon_select_id = int(np.clip(round(float(values[16] * 7.0)), 0, 7))
+        pilot.weapon_select_id = int(np.clip(float(values[16]) * 7.0, 0.0, 7.0))
     else:
         pilot.radar_active = False
         pilot.radar_scan_az = 0.0
