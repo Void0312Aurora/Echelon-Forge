@@ -115,6 +115,7 @@ def build_air_mission_vector(
     command: Any,
     *,
     mode: str = AIR_SCRIPTED_MISSION_MODE,
+    mission_facts: Mapping[str, Any] | None = None,
 ) -> np.ndarray:
     """Project a maintained mission command into a named-field Air vector."""
 
@@ -146,6 +147,8 @@ def build_air_mission_vector(
     set_field("form_offset_x_m", _field(command, "form_offset_x"))
     set_field("form_offset_y_m", _field(command, "form_offset_y"))
     set_field("form_offset_z_m", _field(command, "form_offset_z"))
+    for name, value in (mission_facts or {}).items():
+        set_field(str(name), value)
     return vector
 
 
@@ -158,6 +161,7 @@ def build_air_scripted_observation(
     ils: Sequence[float] = (0.0, 0.0, 0.0, 0.0),
     max_contacts: int = AIR_SCRIPTED_MAX_CONTACTS,
     max_rwr: int = AIR_SCRIPTED_MAX_RWR,
+    mission_facts: Mapping[str, Any] | None = None,
 ) -> dict[str, np.ndarray]:
     """Build the neutral scripted Air observation dictionary."""
 
@@ -165,7 +169,7 @@ def build_air_scripted_observation(
         "instruments": build_air_instrument_vector(instrument_state, ils=ils),
         "contacts": build_air_contact_matrix(observation, max_contacts=max_contacts),
         "rwr": build_air_rwr_matrix(observation, max_rwr=max_rwr),
-        "mission": build_air_mission_vector(command, mode=mode),
+        "mission": build_air_mission_vector(command, mode=mode, mission_facts=mission_facts),
     }
 
 

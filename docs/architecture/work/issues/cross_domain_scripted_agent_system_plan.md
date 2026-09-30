@@ -2624,3 +2624,276 @@ to a dedicated owner-local evidence document.
   scenario compiler lifecycle, combat/EW terminal acceptance, visualization,
   or full Air `playable` promotion is claimed; Air remains
   `playable_candidate`.
+
+### 2026-09-27 — Native facade engagement transport owner
+
+- Starting commit: `82ab1cdd`.
+- Change batch: extend `FacadeBatchBackend` with maintained launch-request
+  submission and typed engagement-event export. The adapter translates the
+  backend roster into `EngagementEntityRef` values for the event packet while
+  preserving `WorldEntityRef` for observation/tasking APIs.
+- Evidence: a real two-aircraft facade fixture detected the opposing F-16,
+  accepted a scripted `LaunchRequest`, spawned a native munition, reduced the
+  shooter's missile inventory from four to three, and exported an accepted
+  `LaunchEvent`; the focused backend and engagement tests passed `3 passed`.
+  Python compilation and `git diff --check` passed.
+- Boundary decision: direct simulation now owns the transport seam needed by
+  a scripted tactical role. This does not yet provide a direct engagement
+  planner, terminal damage objective, post-launch assessment loop, EW/jammer
+  closure, or final Air `playable` promotion; Air remains
+  `playable_candidate`.
+
+### 2026-09-27 — Direct scripted Air engagement composition
+
+- Starting commit: `878ef0d4`.
+- Change batch: add typed `AirEngagementFacts` and the simulation-owned
+  `AirScriptedEngagementController`. The controller composes the existing
+  RL-independent tactical planner/assessor model with the native Air
+  observation and `PilotAction` adapters. `FacadeBatchBackend` accepts the
+  declared tactical facts as an Air observation extension; no world-truth
+  target geometry or RL/Gym import crosses the seam.
+- Evidence: observation-field, physical-boundary, and facade engagement tests
+  passed `6 passed`. A real two-aircraft run produced a legal tactical
+  `fire_weapon` pulse, crossed the native fire gate, reduced missile inventory
+  from four to three, and exported an accepted `LaunchEvent`. Python
+  compilation and `git diff --check` passed.
+- Boundary decision: one scripted tactical role now reaches the compiled
+  launch owner through the direct simulation line. The facts are still an
+  explicit scenario/C2 input rather than a complete track/ROE lifecycle; post-
+  launch terminal assessment, EW/jammer closure, cooperative combat, and
+  final Air `playable` promotion remain open.
+
+### 2026-09-27 — Direct scripted Air EW action composition
+
+- Starting commit: `39422a78`.
+- Change batch: add the native `air_ew_hybrid_v1` action projection and a
+  simulation-owned `AirScriptedEWController`. The controller consumes native
+  RWR/MAWS rows through the neutral EW action model and emits a native
+  `PilotAction` with chaff/flare program bits; it does not inspect missile
+  truth or mutate countermeasure components directly.
+- Evidence: action, EW model, boundary, and facade EW tests passed `12 passed`.
+  A real red launch generated a blue `is_launch` warning; the controller
+  emitted the declared `request_chaff_and_flare` intent, and after the native
+  0.5-second release cadence the blue chaff inventory decreased. Python
+  compilation and `git diff --check` passed.
+- Boundary decision: the scripted EW decision-to-action path and one native
+  resource owner are now connected. Flare decrement semantics, jammer/data-
+  link ownership, terminal EW objective, cooperative threat replay, and final
+  Air `playable` promotion remain open; EW stays
+  `entry_surface_incomplete`.
+
+### 2026-09-27 — Cross-domain maturity audit after Air direct adapters
+
+- Evidence batch: the maintained Naval N4 station-hold model and screen
+  scenario gates passed `11 passed` (scripted registry plus screen geometry,
+  contact, report, and station behavior tests).
+- Boundary decision: the common registry/runtime direction is reusable across
+  Air and Naval, but Naval remains an `adapter` capability because the
+  scenario loader still owns contact products, station geometry, reports,
+  recovery, and rewards. Ground remains schema/static-task only. No direct
+  Naval facade provider or full cross-domain playable claim is admitted from
+  this audit.
+- Continuation choice: continue Air terminal/roster closure and use the same
+  neutral lifecycle for a future Naval direct slice only after a named native
+  observation/action owner exists; do not hide the maturity gap behind a
+  compatibility wrapper.
+
+### 2026-09-27 — Direct Air two-ship target coordination
+
+- Starting commit: `47aa6f02`.
+- Change batch: add the simulation-owned `AirScriptedRosterCoordinator` and
+  typed target assignments. It consumes only each member's declared contact
+  products, applies deterministic Lead/Wing priority, and reserves distinct
+  target tracks before the existing scripted engagement controller builds
+  legal tactical facts and native actions.
+- Evidence: a real two-Blue/two-Red facade run assigned distinct contacts,
+  accepted both native launches, reduced both Blue missile inventories from
+  four to three, and reproduced the assignment/ammo/event tuple exactly on a
+  same-seed rerun. Coordination and boundary tests passed `2 passed`; Python
+  compilation and `git diff --check` passed.
+- Boundary decision: direct two-aircraft target assignment and launch parity
+  are now evidenced. Formation geometry, authority arbitration, datalink
+  loss/latency, post-launch assessment, terminal combat objective, and the
+  large-scale Air demonstration remain open; Air remains
+  `playable_candidate`.
+
+### 2026-09-27 — Air roster authority fail-closed seam
+
+- Starting commit: `65f51722`.
+- Change batch: extend `AirScriptedRosterCoordinator` assignments with an
+  explicit authorized-member set and authority-holder identity. Members not
+  present in the authorization set remain assigned for awareness but are
+  marked unable to fire; unknown authority references fail closed.
+- Evidence: the two-aircraft target/replay gate and the unauthorized-Wing
+  check passed `3 passed`; Python compilation and `git diff --check` passed.
+- Boundary decision: target deconfliction and a minimal fire-authority seam
+  are now explicit in the direct roster path. Formation geometry,
+  communication loss/latency, delegation transfer, post-launch assessment,
+  terminal combat objective, and large-scale Air acceptance remain open.
+
+### 2026-09-27 — Direct Air post-launch assessment gate
+
+- Starting commit: `05cfb20f`.
+- Change batch: pass declared `last_event_info` through
+  `AirScriptedEngagementController` into the neutral post-launch assessor.
+  The controller now exposes the event context needed to hold fire while a
+  prior release is pending assessment.
+- Evidence: direct facade engagement and roster regressions passed `5 passed`;
+  a pending `release_executed` context produced `blocks_fire=True` and no
+  second native fire pulse. Python compilation and `git diff --check` passed.
+- Boundary decision: the direct tactical path now has a verified
+  post-launch fire-suppression gate. It does not claim missile hit/damage
+  assessment, terminal combat success, or full scenario lifecycle.
+
+### 2026-09-27 — Event-owned Air combat terminal evaluator
+
+- Starting commit: `70388482`.
+- Change batch: add `AirCombatTerminalEvaluator` and
+  `AirCombatTerminalState` under the simulation Air line. The evaluator reads
+  only maintained `damage_reports`, treats `destroyed` reports as terminal,
+  gives own loss precedence over target win, and leaves near-miss or
+  non-destroying damage in `running`.
+- Evidence: native-shaped terminal evaluator and physical-boundary tests
+  passed `3 passed`; Python compilation and `git diff --check` passed. A real
+  facade missile probe produced a non-destroying proximity event and therefore
+  correctly remains outside terminal-win evidence.
+- Boundary decision: terminal status now has an explicit replaceable event
+  owner. A direct facade scenario with deterministic target destruction,
+  damage consequence, and full reset/replay is still required before Air can
+  be promoted to `playable`.
+
+### 2026-09-27 — Facade-integrated Air terminal entry
+
+- Starting commit: `70283fba`.
+- Change batch: expose `FacadeBatchBackend.evaluate_air_combat_terminal()`
+  as the direct simulation entry for event-owned Air terminal evaluation. The
+  method exports the maintained engagement packet and delegates to the
+  replaceable terminal evaluator; callers do not parse native damage DTOs.
+- Evidence: facade terminal integration and evaluator tests passed `6 passed`;
+  an empty/non-destroying packet remains `running` with
+  `no_terminal_damage_report`. Python compilation and `git diff --check`
+  passed.
+- Boundary decision: direct episodes now have a single terminal-status seam,
+  but no deterministic direct facade damage/kill scenario has been admitted.
+  Air remains `playable_candidate`.
+
+### 2026-09-27 — Direct facade terminal probe residual
+
+- Evidence: a real direct `FacadeBatchBackend` Air launch was stepped through
+  the maintained event export. The missile produced a launch and proximity
+  event, but the observed result was `PROXIMITY HIT BUT NO STRUCTURAL IMPACT`;
+  no `destroyed` `DamageReport` was emitted, so the terminal evaluator
+  correctly returned `running`.
+- Boundary decision: this is a concrete terminal-evidence residual, not a
+  failed assertion to suppress. The existing deterministic damage injectors
+  (`SimulationKernel` debug APIs) are diagnostics-only and must not be used to
+  claim a playable facade episode. A maintained native weapon/profile fixture
+  or another authoritative damage owner is still required for direct Air
+  combat-win promotion.
+- Continuation choice: preserve the event-owned evaluator and continue with
+  lifecycle/cross-domain contract work while the native damage fixture remains
+  a separate owner gate.
+
+### 2026-09-27 — Air engagement on the common decision runtime
+
+- Starting commit: `781610bd`.
+- Change batch: add `AirEngagementRuntimeInput` and
+  `AirScriptedEngagementRuntimeModel` under the simulation Air adapter layer.
+  The adapter translates one typed native Air input packet into the existing
+  `AirScriptedEngagementController`; scheduling, action hold/expiry, replay
+  identity, and lifecycle remain owned by the neutral `DecisionRuntimeAgent`.
+  No second registry, observation DTO, action DTO, or RL dependency was added.
+- Evidence: a real two-aircraft facade fixture passed through the common
+  runtime, emitted a native fire pulse on the first decision, held that action
+  at the next clock tick, and produced the deterministic replay identity.
+  Focused runtime test passed `1 passed`; the 69-test Air/simulation/Naval
+  regression, Python compilation, and `git diff --check` all passed.
+- Boundary decision: Air scripted engagement is now demonstrably a peer
+  decision provider at the common runtime seam. This does not promote terminal
+  damage, EW completion, formation communication, or the full Air scenario to
+  `playable`.
+
+### 2026-09-27 — Direct facade native guidance residual narrowed
+
+- Evidence batch: repeated the maintained `RuntimeFacade` live-launch path
+  across `Aircraft` and `F-16C_Block50` targets, 0.5–30 km initial ranges,
+  stationary and head-on target motion, and both x/y world-axis layouts. Every
+  accepted missile produced a native `EffectsEvent`/`DamageReport` pair, but
+  the damage remained `hp_delta=0`, `destroyed=false`, and
+  `loss_state_to=combat_capable`.
+- Native diagnostics on the same events reported
+  `outcome_state=detonated_no_effect`, approximately 180–400 m nearest
+  approach, `fuze_target_detected=true`,
+  `fuze_contact_inside_hitbox=false`, `projected_hitbox_count=0`, and
+  `spatial_effect_scale=0`. This distinguishes the residual from a missing
+  facade export or terminal evaluator read.
+- Boundary decision: direct facade combat-win promotion still requires a
+  maintained native guidance/target-intersection owner or an accepted
+  database-backed geometry fixture. The scripted line must continue to consume
+  the resulting event packet; no Python-side damage injection or proximity
+  radius widening is admitted as a substitute.
+- Continuation choice: keep the direct terminal evaluator and common runtime
+  adapter unchanged, and route the next implementation batch to the native
+  guidance/geometry owner while continuing independent cross-domain provider
+  work.
+
+### 2026-09-27 — Scripted PilotAction database munition path
+
+- Change batch: add a maintained facade regression for the actual scripted
+  `PilotAction` route. The test supplies an authorized mission target, keeps
+  the scripted weapon-selection output, and drives the compiled F-16 path
+  rather than calling the low-level generic launch request in isolation.
+- Evidence: the scripted action selected station `1`, the native launch event
+  resolved the database munition `AIM-120C-7`, and the seeded F-16 geometry
+  emitted a native damage report with a negative `system_health_delta`.
+  `tests/runtime/simulation/test_facade_engagement.py` passed `5 passed`.
+- Boundary decision: this closes the earlier ambiguity that a generic
+  `LaunchRequest` probe could exercise a legacy synthetic missile. It proves a
+  native scripted structural consequence, but not a platform kill or terminal
+  win; the test intentionally does not promote Air to `playable`.
+- Continuation choice: keep the direct terminal evaluator unchanged and select
+  an accepted database-backed kill/health fixture or native damage owner for
+  the remaining terminal gate. Do not widen proximity or inject damage from
+  Python.
+
+### 2026-09-27 — Direct facade scripted terminal surrogate
+
+- Change batch: add a direct `FacadeBatchBackend` terminal regression using the
+  maintained scripted Air controller, database-backed station selection, and a
+  declared generic `Aircraft` target surrogate. The test evaluates terminal
+  state through the event-owned `AirCombatTerminalEvaluator`, then repeats the
+  same seed to compare effect and damage identity fields.
+- Evidence: both runs selected `AIM-120C-7`, emitted native `damage_applied`
+  and `hp_delta=-180.0`, produced `destroyed=true`, and returned
+  `combat_win/all_targets_destroyed`; the focused facade engagement suite passed
+  `6 passed`.
+- Boundary decision: this closes the direct-facade surrogate terminal gate and
+  proves the common runtime/facade route can be replayed without RL. It remains
+  a generic target surrogate; the named-platform MQ-9 path still reports
+  synthetic, unvalidated `mission_kill` while the entity remains active, so no
+  named-platform or global Air `playable` promotion follows.
+- Continuation choice: retain the surrogate as the direct terminal baseline and
+  keep named-platform consequence authority separate. Continue Air EW/formation
+  and cross-domain provider work without converting synthetic `mission_kill`
+  into a universal terminal rule.
+
+### 2026-09-27 — Air command/report authority-field closure
+
+- Starting commit: `794cfc99`.
+- Change batch: complete the declared authority and target-field projection
+  across the direct Air command chain. `AirScriptedDirector` now carries ROE,
+  fire authorization, target/track/source identity, snapshot time, engagement
+  authority, task-group, objective, and threat fields into the maintained
+  `LeaderIntent`, `PilotReport`, and `MissionCommand` DTOs wherever the target
+  DTO exposes the field. The facade regression writes the chain, advances the
+  native clock, and reads it back to verify sender ownership and field
+  persistence.
+- Evidence: direct Director and facade command-chain tests passed `6 passed`;
+  the Air/simulation/Naval maintenance regression passed `72 passed`.
+  The regression confirms that the target identity and fire authority survive
+  a native step without importing RL or bypassing the maintained batch
+  contracts.
+- Boundary decision: this closes the command/report authority-field and
+  persistence sub-gate. It does not prove successful landing geometry,
+  platform-specific terminal damage, EW jammer/data-link completion, or the
+  cross-domain task-graph consumer. Air remains `playable_candidate`.

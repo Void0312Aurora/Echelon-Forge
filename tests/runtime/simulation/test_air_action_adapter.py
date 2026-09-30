@@ -44,3 +44,14 @@ def test_takeoff_action_projects_gear_from_instrument_state() -> None:
     assert pilot.stick_pitch == pytest.approx(0.2)
     assert pilot.throttle == pytest.approx(0.8)
     assert pilot.gear_handle == 1.0
+
+
+def test_ew_hybrid_action_projects_countermeasure_bits() -> None:
+    action = np.zeros((14,), dtype=np.float32)
+    action[12] = 1.0
+    action[13] = 1.0
+
+    pilot = build_pilot_action(action, action_mode="air_ew_hybrid_v1")
+
+    assert pilot.program_chaff is True
+    assert pilot.program_flare is True

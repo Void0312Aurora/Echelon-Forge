@@ -89,3 +89,67 @@ def test_direct_air_director_consumes_explicit_approach_gate() -> None:
     decision = AirScriptedDirector().decide(state)
     assert decision.phase_name == "approach_armed"
     assert decision.mission_command.command_code == 4
+
+
+def test_direct_air_director_preserves_declared_authority_and_target_fields() -> None:
+    state = _state(alt_radar=1200.0, ground_speed=180.0, command_code=2, remaining=0, total=0)
+    state = AirDirectorInput(
+        **{
+            **state.__dict__,
+            "mission_command": SimpleNamespace(
+                command_code=2,
+                cmd_heading_deg=90.0,
+                cmd_altitude_m=1500.0,
+                cmd_speed_mps=200.0,
+                roe_state=3,
+                authorization_to_fire=True,
+                assigned_target_id=9002,
+                assigned_target_track_id=7002,
+                assigned_target_source_id=581,
+                assigned_target_snapshot_time_s=12.5,
+                engagement_authority_holder_id=581,
+                engagement_authority_grantor_id=100,
+                task_group_id=17,
+                objective_node_id=42,
+                objective_area_id=9,
+                threat_state=4,
+            ),
+        }
+    )
+
+    decision = AirScriptedDirector().decide(state)
+
+    leader_fields = (
+        "roe_state",
+        "authorization_to_fire",
+        "assigned_target_id",
+        "assigned_target_track_id",
+        "assigned_target_source_id",
+        "assigned_target_snapshot_time_s",
+        "engagement_authority_holder_id",
+        "engagement_authority_grantor_id",
+        "task_group_id",
+        "objective_node_id",
+        "objective_area_id",
+        "threat_state",
+    )
+    for name in leader_fields:
+        assert getattr(decision.leader_intent, name) == getattr(state.mission_command, name)
+    for name in (
+        "roe_state",
+        "authorization_to_fire",
+        "assigned_target_id",
+        "assigned_target_track_id",
+        "assigned_target_source_id",
+        "assigned_target_snapshot_time_s",
+        "engagement_authority_holder_id",
+        "engagement_authority_grantor_id",
+        "objective_node_id",
+        "objective_area_id",
+        "threat_state",
+    ):
+        assert getattr(decision.leader_intent, name) == getattr(decision.mission_command, name)
+    assert decision.task_order.task_group_id == 17
+    assert decision.pilot_report.task_group_id == 17
+    assert decision.leader_intent.authorization_to_fire is True
+    assert decision.mission_command.assigned_target_id == 9002

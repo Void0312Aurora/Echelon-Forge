@@ -98,3 +98,26 @@ def test_air_observation_projection_pads_native_contacts_and_rwr() -> None:
     assert np.allclose(projected["contacts"][0], [12000.0, 4.0, -1.0, 100.0, 0.5])
     assert np.allclose(projected["rwr"][0], [-20.0, 0.8, 1.0, 0.0])
     assert np.count_nonzero(projected["contacts"][1:]) == 0
+
+
+def test_air_observation_projection_accepts_declared_combat_facts() -> None:
+    projected = build_air_scripted_observation(
+        SimpleNamespace(contacts=[], rwr_warnings=[]),
+        _instrument(),
+        None,
+        mode="air_combat_c2_roe_v2",
+        mission_facts={
+            "authorization_to_fire": 1.0,
+            "target_contact_present": 1.0,
+            "fire_mask_open": 1.0,
+            "launch_window_open": 1.0,
+            "quality_window_ready": 1.0,
+            "shot_budget_remaining": 4.0,
+            "target_range_m": 16000.0,
+        },
+    )
+
+    mission = projected["mission"]
+    assert mission[mission_observation_field_index("air_combat_c2_roe_v2", "target_contact_present")] == 1.0
+    assert mission[mission_observation_field_index("air_combat_c2_roe_v2", "launch_window_open")] == 1.0
+    assert mission[mission_observation_field_index("air_combat_c2_roe_v2", "target_range_m")] == 16000.0
