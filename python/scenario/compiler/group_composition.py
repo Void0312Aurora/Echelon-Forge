@@ -7,17 +7,29 @@ aircraft inventory in ``meta.csg``. The runtime spawn paths never see
 and batch loaders stay identical.
 
 Why aircraft are inventory, not entities, at CSG-S0: there is no deck contact
-surface (ground contact reads terrain elevation only), and the explicitly
-integrated gear spring-damper is unstable at the naval 0.5 s step, so an
-aircraft placed on a deck is thrown clear by its first contact step. The one
-stowed helicopter each ship's ``embarked_air_ops`` record spawns (pinned by
+surface (ground contact reads terrain elevation only), so an aircraft cannot
+rest on a flight deck. (The gear-contact step-size limit that also blocked this
+was closed by the semi-implicit ground contact, 2026-09-30.) The one stowed
+helicopter each ship's ``embarked_air_ops`` record spawns (pinned by
 EmbarkedAirOpsSystem) is counted against that host's inventory row. CSG-S2
 consumes the inventory as the deck cycle's initial condition.
 
-Placement: ``station`` is range and relative bearing from the group guide,
-measured from the guide's threat axis (NAV convention: 0 = north, clockwise),
-converted to local east/north metres. CSG-S0-B replaces only
-``station_local_offset_m`` to place the guide through the geodetic frame.
+Placement (CSG-S0-B, through the shared geodetic frame):
+
+* A guide declares either ``geo`` (``latitude_deg``, ``longitude_deg``) or a
+  local ``pos``. ``geo`` is projected into the scenario's local frame through
+  ``environment.geodetic_anchor`` with the runtime's own azimuthal-equidistant
+  projection (``ef_py.geodesy_geodetic_to_local``), so the compiler and the
+  runtime share one frame. A geodetic guide requires a declared anchor.
+* ``axis_deg`` is the threat axis as a TRUE bearing at the guide (NAV
+  convention: 0 = north, clockwise). A station is range and bearing relative to
+  that axis; for a geodetic guide the station point is found along the great
+  circle from the guide (direct geodesic problem on the model sphere) and then
+  projected, so screen geometry is exact on the sphere at any distance from the
+  anchor.
+* ``meta.csg.geometry`` records the anchor and the great-circle separation and
+  bearing between geodetic guides.
+* A local ``pos`` guide keeps the flat ``station_local_offset_m`` layout.
 """
 
 from __future__ import annotations
@@ -25,6 +37,10 @@ from __future__ import annotations
 import math
 from pathlib import Path
 from typing import Any
+
+import ef_py
+
+from .common import resolve_environment_geodetic_anchor
 
 GROUP_SIDES = ("Blue", "Red")
 MEMBER_ROLES = (
@@ -76,6 +92,56 @@ def station_local_offset_m(station: dict[str, Any], axis_deg: float) -> tuple[fl
     bearing = math.radians(axis_deg + float(station.get("bearing_rel_deg", 0.0)))
     range_m = float(station.get("range_m", 0.0))
     return range_m * math.sin(bearing), range_m * math.cos(bearing)
+
+
+# Mean earth radius of the runtime's model sphere (geodesy::kMeanEarthRadiusM).
+# Only the direct geodesic below needs it; projection itself goes through ef_py.
+_MEAN_EARTH_RADIUS_M = 6371009.0
+
+
+def geodesic_destination_deg(
+    latitude_deg: float, longitude_deg: float, bearing_deg: float, distance_m: float
+) -> tuple[float, float]:
+    """Point reached along a great circle from a start point (direct problem, sphere)."""
+    if distance_m == 0.0:
+        return latitude_deg, longitude_deg
+    phi1 = math.radians(latitude_deg)
+    lam1 = math.radians(longitude_deg)
+    theta = math.radians(bearing_deg)
+    delta = distance_m / _MEAN_EARTH_RADIUS_M
+    sin_phi2 = math.sin(phi1) * math.cos(delta) + math.cos(phi1) * math.sin(delta) * math.cos(theta)
+    phi2 = math.asin(max(-1.0, min(1.0, sin_phi2)))
+    lam2 = lam1 + math.atan2(
+        math.sin(theta) * math.sin(delta) * math.cos(phi1),
+        math.cos(delta) - math.sin(phi1) * sin_phi2,
+    )
+    return math.degrees(phi2), (math.degrees(lam2) + 180.0) % 360.0 - 180.0
+
+
+class _GuideFrame:
+    """Places one group's stations in the local frame, geodetically or flat."""
+
+    def __init__(self, guide: dict[str, Any], anchor: tuple[float, float, float]):
+        self.axis_deg = float(guide.get("axis_deg", 0.0))
+        self.anchor = anchor
+        geo = guide.get("geo")
+        if geo is not None:
+            self.geo: tuple[float, float] | None = (float(geo["latitude_deg"]), float(geo["longitude_deg"]))
+            east, north, _up = ef_py.geodesy_geodetic_to_local(*anchor, self.geo[0], self.geo[1], anchor[2])
+            self.origin: tuple[float, float, float] = (float(east), float(north), 0.0)
+        else:
+            self.geo = None
+            gx, gy, gz = (float(v) for v in guide["pos"])
+            self.origin = (gx, gy, gz)
+
+    def place(self, true_bearing_deg: float, range_m: float) -> tuple[float, float]:
+        """Local (east, north) of the point ``range_m`` from the guide on a true bearing."""
+        if self.geo is None:
+            b = math.radians(true_bearing_deg)
+            return self.origin[0] + range_m * math.sin(b), self.origin[1] + range_m * math.cos(b)
+        lat, lon = geodesic_destination_deg(self.geo[0], self.geo[1], true_bearing_deg, range_m)
+        east, north, _up = ef_py.geodesy_geodetic_to_local(*self.anchor, lat, lon, self.anchor[2])
+        return float(east), float(north)
 
 
 def _validate_member(member: Any, context: str, branches: dict[str, bool]) -> None:
@@ -145,12 +211,28 @@ def validate_group_composition(scenario: dict[str, Any], *, project_root: str | 
         guide = group.get("guide")
         if not isinstance(guide, dict):
             _fail(f"{ctx}.guide", "is required")
-        _unknown_keys(guide, {"pos", "axis_deg"}, f"{ctx}.guide")
-        pos = guide.get("pos")
-        if not isinstance(pos, list) or len(pos) != 3:
-            _fail(f"{ctx}.guide.pos", "must be [x, y, z]")
-        for k, v in enumerate(pos):
-            _number(v, f"{ctx}.guide.pos[{k}]")
+        _unknown_keys(guide, {"pos", "geo", "axis_deg"}, f"{ctx}.guide")
+        if ("pos" in guide) == ("geo" in guide):
+            _fail(f"{ctx}.guide", "must declare exactly one of 'pos' (local) or 'geo' (geodetic)")
+        if "pos" in guide:
+            pos = guide.get("pos")
+            if not isinstance(pos, list) or len(pos) != 3:
+                _fail(f"{ctx}.guide.pos", "must be [x, y, z]")
+            for k, v in enumerate(pos):
+                _number(v, f"{ctx}.guide.pos[{k}]")
+        else:
+            geo = guide.get("geo")
+            if not isinstance(geo, dict):
+                _fail(f"{ctx}.guide.geo", "must be an object")
+            _unknown_keys(geo, {"latitude_deg", "longitude_deg"}, f"{ctx}.guide.geo")
+            lat = _number(geo.get("latitude_deg"), f"{ctx}.guide.geo.latitude_deg")
+            _number(geo.get("longitude_deg"), f"{ctx}.guide.geo.longitude_deg")
+            if not -90.0 < lat < 90.0:
+                _fail(f"{ctx}.guide.geo.latitude_deg", "must lie inside (-90, 90)")
+            env = scenario.get("environment")
+            if not isinstance(env, dict) or "geodetic_anchor" not in env:
+                # A geodetic guide needs a declared frame, not the inherited default anchor.
+                _fail(f"{ctx}.guide.geo", "requires environment.geodetic_anchor")
         _number(guide.get("axis_deg", 0.0), f"{ctx}.guide.axis_deg")
         if "default_heading_deg" in group:
             _number(group["default_heading_deg"], f"{ctx}.default_heading_deg")
@@ -187,14 +269,18 @@ def expand_group_composition(
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Return ``(entities, csg_meta)`` for the scenario's ``groups`` block."""
     validate_group_composition(scenario, project_root=project_root)
+    anchor, anchor_source = resolve_environment_geodetic_anchor(scenario.get("environment"))
     entities: list[dict[str, Any]] = []
     groups_meta: list[dict[str, Any]] = []
+    frames: dict[str, _GuideFrame] = {}
     for group in scenario.get("groups") or []:
         gid = group["group_id"]
         side = group["side"]
         branches = dict(group.get("branches", {}))
-        gx, gy, gz = (float(v) for v in group["guide"]["pos"])
-        axis = float(group["guide"].get("axis_deg", 0.0))
+        frame = _GuideFrame(group["guide"], anchor)
+        frames[gid] = frame
+        gx, gy, gz = frame.origin
+        axis = frame.axis_deg
         heading = float(group.get("default_heading_deg", axis))
         rows: list[dict[str, Any]] = []
         inventory: list[dict[str, Any]] = []
@@ -224,14 +310,15 @@ def expand_group_composition(
                 name = f"{gid}__{member['member_id']}" + (f"_{n + 1:02d}" if count > 1 else "")
                 # Multiple hulls on one station line up across the axis.
                 lateral = (n - (count - 1) / 2.0) * spacing
-                lx = east + lateral * math.cos(math.radians(axis))
-                ly = north - lateral * math.sin(math.radians(axis))
+                dx = east + lateral * math.cos(math.radians(axis))
+                dy = north - lateral * math.sin(math.radians(axis))
+                px, py = frame.place(math.degrees(math.atan2(dx, dy)), math.hypot(dx, dy))
                 entities.append(
                     {
                         "name": name,
                         "type": member["type"],
                         "side": side,
-                        "pos": [gx + lx, gy + ly, gz - depth],
+                        "pos": [px, py, gz - depth],
                         "vel": [0.0, 0.0, 0.0],
                         "heading": heading,
                         "csg_member": {
@@ -246,18 +333,41 @@ def expand_group_composition(
                 names.append(name)
             row["entity_names"] = names
             rows.append(row)
+        guide_meta: dict[str, Any] = {"pos": [gx, gy, gz], "axis_deg": axis}
+        if frame.geo is not None:
+            guide_meta["geo"] = {"latitude_deg": frame.geo[0], "longitude_deg": frame.geo[1]}
         groups_meta.append(
             {
                 "group_id": gid,
                 "side": side,
                 "oob_ref": group["oob_ref"],
-                "guide": {"pos": [gx, gy, gz], "axis_deg": axis},
+                "guide": guide_meta,
                 "branches": branches,
                 "ships": rows,
                 "embarked_inventory": inventory,
             }
         )
-    return entities, {"schema": "csg.group_composition.v1", "groups": groups_meta}
+    geo_ids = sorted(gid for gid, f in frames.items() if f.geo is not None)
+    separations = []
+    for i, a in enumerate(geo_ids):
+        for b in geo_ids[i + 1:]:
+            la, oa = frames[a].geo  # type: ignore[misc]
+            lb, ob = frames[b].geo  # type: ignore[misc]
+            separations.append(
+                {
+                    "from": a,
+                    "to": b,
+                    "great_circle_m": float(ef_py.geodesy_great_circle_distance_m(la, oa, lb, ob)),
+                    "initial_bearing_deg": float(ef_py.geodesy_initial_bearing_deg(la, oa, lb, ob)),
+                }
+            )
+    geometry = {
+        "anchor": {"latitude_deg": anchor[0], "longitude_deg": anchor[1], "height_m": anchor[2]},
+        "anchor_source": anchor_source,
+        "placement": "geodetic" if geo_ids else "local",
+        "guide_separations": separations,
+    }
+    return entities, {"schema": "csg.group_composition.v2", "groups": groups_meta, "geometry": geometry}
 
 
 __all__ = [
@@ -265,6 +375,7 @@ __all__ = [
     "GROUP_SIDES",
     "MEMBER_ROLES",
     "expand_group_composition",
+    "geodesic_destination_deg",
     "station_local_offset_m",
     "validate_group_composition",
 ]
