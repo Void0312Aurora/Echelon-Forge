@@ -441,6 +441,7 @@ FINE_GROUP_ALLOWED_TARGETS: dict[str, frozenset[str]] = {
       "runtime_facade",
       "runtime_contracts",
       "runtime_composition",
+      "runtime_host",
       "components",
       "core_interfaces",
       "core_geometry",

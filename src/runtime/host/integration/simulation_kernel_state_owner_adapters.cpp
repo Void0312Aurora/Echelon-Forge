@@ -1,6 +1,6 @@
 #include "simulation_kernel_state_owner_adapters.h"
 
-#include "state_transfer_component_reflection.h"
+#include "core/engine/state_transfer_component_reflection.h"
 
 #include "components/basic/tags.h"
 #include "components/command/common/comm_message.h"
