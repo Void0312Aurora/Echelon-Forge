@@ -17,6 +17,7 @@ from python.tasking_contracts.common.bridge_views import (
 from python.tasking_contracts.common.mission_defs import (
     COMMAND_CODE_LANDING,
     is_landing_command_code,
+    parse_command_code,
 )
 from python.tasking_contracts.air.tasking.c2_observation import (
     C2RecoveryReadinessInput,
@@ -147,7 +148,7 @@ class ScriptedC2TaskManager:
         scenario_data = getattr(loader, "scenario_data", {}) or {}
         meta = scenario_data.get("meta", {}) if isinstance(scenario_data, dict) else {}
         init_task = meta.get("initial_c2_task", self.TASK_SCRAMBLE) if isinstance(meta, dict) else self.TASK_SCRAMBLE
-        self.current_task_name = str(init_task or self.TASK_SCRAMBLE).strip().upper()
+        self.current_task_name = self._validate_task_name(init_task or self.TASK_SCRAMBLE)
         self.station_entry_time_s = None
         self.task_order_projection.retask_order(
             loader,
@@ -174,7 +175,23 @@ class ScriptedC2TaskManager:
         post = getattr(loader, "post_waypoint_transition", None)
         if not isinstance(post, dict) or not post:
             return False
-        return bool(is_landing_command_code(post.get("command_code", COMMAND_CODE_LANDING)))
+        if "command_code" not in post or post.get("command_code") is None:
+            return bool(is_landing_command_code(COMMAND_CODE_LANDING))
+        code = parse_command_code(post.get("command_code"), default=None)
+        return code is not None and bool(is_landing_command_code(code))
+
+    @classmethod
+    def _validate_task_name(cls, task_name: Any) -> str:
+        value = str(task_name or "").strip().upper()
+        if value not in {
+            cls.TASK_IDLE,
+            cls.TASK_SCRAMBLE,
+            cls.TASK_CAP,
+            cls.TASK_RTB,
+            cls.TASK_RECOVER_LAND,
+        }:
+            raise ValueError(f"C2 transition policy returned unknown task name: {task_name!r}")
+        return value
 
     def _route_exhausted_for_recovery(self, loader: Any) -> bool:
         if not self._landing_post_transition_pending(loader):
@@ -382,8 +399,9 @@ class ScriptedC2TaskManager:
                 ),
             )
         )
+        current = self._validate_task_name(decision.task_name)
+        # Validate replaceable policy output before changing manager or loader state.
         self.station_entry_time_s = decision.station_entry_time_s
-        current = str(decision.task_name)
 
         self.current_task_name = str(current)
         self.task_order_projection.retask_order(

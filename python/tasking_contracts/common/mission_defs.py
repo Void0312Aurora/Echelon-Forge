@@ -41,6 +41,21 @@ def normalize_command_code(command_code: int | float | str | None, default: int 
         return int(default)
 
 
+def parse_command_code(
+    command_code: int | float | str | None,
+    *,
+    default: int | None = None,
+) -> int | None:
+    """Parse authored command codes without turning malformed values into commands."""
+
+    if command_code is None:
+        return default
+    try:
+        return int(command_code)
+    except (TypeError, ValueError):
+        return None
+
+
 def is_route_command_code(command_code: int | float | str | None) -> bool:
     return normalize_command_code(command_code) == COMMAND_CODE_ROUTE
 
@@ -129,6 +144,7 @@ __all__ = [
     "is_route_command_code",
     "is_takeoff_phase_name",
     "normalize_command_code",
+    "parse_command_code",
     "normalize_phase_name",
     "scripted_mode_for_command_code",
     "scripted_mode_for_phase_name",

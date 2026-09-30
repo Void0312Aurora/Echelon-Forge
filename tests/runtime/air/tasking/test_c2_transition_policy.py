@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from types import SimpleNamespace
+
+import pytest
 
 from python.tasking_contracts.air.tasking.c2_policy import (
     C2TransitionInput,
@@ -10,6 +13,7 @@ from python.tasking_contracts.air.tasking.c2_policy import (
     TASK_RTB,
     TASK_SCRAMBLE,
 )
+from python.tasking_contracts.air.tasking.c2_manager import ScriptedC2TaskManager
 
 
 def _state(**overrides):
@@ -100,3 +104,14 @@ def test_recovery_window_requires_report_and_geometry_readiness() -> None:
     )
     assert admitted.task_name == TASK_RECOVER_LAND
     assert admitted.reason == "recovery_window_open"
+
+
+def test_malformed_post_transition_command_does_not_become_landing() -> None:
+    malformed = SimpleNamespace(post_waypoint_transition={"command_code": "not-a-command"})
+
+    assert ScriptedC2TaskManager._landing_post_transition_pending(malformed) is False
+
+
+def test_c2_task_name_validation_rejects_unknown_policy_output() -> None:
+    with pytest.raises(ValueError, match="unknown task name"):
+        ScriptedC2TaskManager._validate_task_name("TASK_INTERCEPT")
