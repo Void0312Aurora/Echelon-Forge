@@ -21,6 +21,12 @@ from python.scenario.runtime.world_setup import extract_batch_world_setup_entity
 from python.tasking_contracts.common.agent_contracts import MAINTAINED
 from python.tasking_contracts.common.agent_contracts import OBS_DECISION_BELIEF_PACKET
 from python.tasking_contracts.common.agent_contracts import OBS_FACADE_OBSERVATION_PACKET
+from ..rollout_evidence import RolloutEvidenceError
+from ..rollout_evidence import assert_rollout_evidence_binding
+from ..rollout_evidence import load_rollout_evidence
+from ..rollout_evidence import project_rollout_evidence
+from ..rollout_gate import RolloutAdmission
+from ..rollout_gate import RolloutAdmissionError
 from .command_chain_cache import project_world_leader_intent_maintained_assignment
 from .command_chain_cache import project_world_mission_command_maintained_assignment
 from .command_chain_cache import project_world_pilot_report_maintained_assignment
