@@ -45,9 +45,9 @@ MIRROR = resolve_repo_path("scenarios", "naval", "csg", "csg_s0_ford_mirror_v1.j
 # the Flight IIA hulls); Fujian planning wing 48 plus 7 escort and AOE organic
 # helicopters.
 EXPECTED = {
-    "BLUE_CSG12": {"hulls": 7, "aircraft": 74},
-    "RED_CV18": {"hulls": 7, "aircraft": 55},
-    "RED_MIRROR_CSG12": {"hulls": 7, "aircraft": 74},
+    "BLUE_CSG12": {"hulls": 7, "aircraft": 74, "stowed_helos": 4},
+    "RED_CV18": {"hulls": 7, "aircraft": 55, "stowed_helos": 6},
+    "RED_MIRROR_CSG12": {"hulls": 7, "aircraft": 74, "stowed_helos": 4},
 }
 UNIT_TYPE = {"Ship": 2, "Submarine": 10}
 
@@ -276,13 +276,35 @@ class CsgS0ScenarioTests(unittest.TestCase):
             for row in group["embarked_inventory"]:
                 self.assertIn(row["type"], self.records, row["member_id"])
                 self.assertIn(row["embarked_on"], {r["member_id"] for r in group["ships"]})
-        # CSG-S0 is static: no spawned hull moves in 20 steps.
+        units = {int(u.id): u for u in kernel.get_all_units()}
+        for group in meta["groups"]:
+            gid = group["group_id"]
+            side = int(ef_py.Side.Blue if group["side"] == "Blue" else ef_py.Side.Red)
+            group_units = [u for u in units.values() if int(u.side) == side]
+            self.assertEqual(len(group_units), EXPECTED[gid]["hulls"] + EXPECTED[gid]["stowed_helos"], gid)
+            self.assertEqual(sum(int(u.type) == int(ef_py.UnitType.Aircraft) for u in group_units),
+                             EXPECTED[gid]["stowed_helos"], gid)
+            for row in group["ships"]:
+                for name in row["entity_names"]:
+                    self.assertEqual(int(units[int(loader.entities[name])].side), side, name)
+
+        # Use the declared duration. The first tick pins automatically spawned
+        # stowed helicopters to their host; hulls must remain static from spawn.
         before = {n: kernel.get_unit_position(int(i)) for n, i in loader.entities.items()}
-        for _ in range(20):
+        self.assertAlmostEqual(kernel.get_time_step(), source["environment"]["time_step"])
+        settled = None
+        for _ in range(source["environment"]["max_steps"]):
             kernel.step()
-        for name, pos in before.items():
-            after = kernel.get_unit_position(int(loader.entities[name]))
-            self.assertLess(max(abs(a - b) for a, b in zip(after, pos)), 1.0e-6, name)
+            current = {int(u.id): (float(u.x), float(u.y), float(u.z)) for u in kernel.get_all_units()}
+            self.assertEqual(set(current), set(units))
+            for name, pos in before.items():
+                after = current[int(loader.entities[name])]
+                self.assertLess(max(abs(a - b) for a, b in zip(after, pos)), 1.0e-6, name)
+            if settled is None:
+                settled = current
+            for eid, pos in current.items():
+                self.assertTrue(all(math.isfinite(v) for v in pos), eid)
+                self.assertLess(max(abs(a - b) for a, b in zip(pos, settled[eid])), 1.0e-6, eid)
 
     def test_named_variant_spawns_the_full_order_of_battle(self) -> None:
         self._check(NAMED, {"BLUE_CSG12", "RED_CV18"})
