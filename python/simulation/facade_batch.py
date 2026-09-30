@@ -56,7 +56,7 @@ class FacadeBatchBackend:
     def seed(self, seed: int) -> tuple[int, ...]:
         self._require_open()
         value = int(seed) & 0xFFFFFFFF
-        self._seeds = tuple(value for _ in range(self.world_count))
+        self._seeds = tuple((value + index) & 0xFFFFFFFF for index in range(self.world_count))
         return self._seeds
 
     def reset(self) -> FacadeBatchSnapshot:
@@ -88,6 +88,37 @@ class FacadeBatchBackend:
         if len(observations) != len(refs) or len(instruments) != len(refs):
             raise RuntimeError("facade batch observation count does not match controlled roster")
         return FacadeBatchSnapshot(self._entity_keys, observations, instruments)
+
+    @property
+    def entity_keys(self) -> tuple[EntityKey, ...]:
+        """Controlled roster identity for explicit cross-domain adapters."""
+
+        self._require_ready()
+        return self._entity_keys
+
+    @property
+    def slots_per_world(self) -> int:
+        """Number of controlled cooperative slots exposed by this provider."""
+
+        if self._entity_keys:
+            return len(self._entity_keys)
+        return len(self.controlled_spawn_indices or ())
+
+    def cooperative_slot_metadata(self) -> tuple[dict[str, Any], ...]:
+        """Expose controlled entity identity without leaking provider internals."""
+
+        self._require_ready()
+        return tuple(
+            {
+                "world_index": int(world_index),
+                "slot_index": int(index),
+                "entity_id": int(entity_id),
+                "entity_name": f"entity:{world_index}:{entity_id}",
+                "formation_role_id": "Unspecified",
+                "target_owner_name": "",
+            }
+            for index, (world_index, entity_id) in enumerate(self._entity_keys)
+        )
 
     def air_scripted_observations(
         self,
