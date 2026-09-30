@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from argparse import Namespace
+from pathlib import Path
 
 from examples.viz.app.profile_loader import load_viz_profile
 from examples.viz.runtime.viz_session import VizSession
@@ -63,3 +64,27 @@ def test_csg_s0_replay_profiles_stream_all_frames() -> None:
             assert states[-1]["spectator"]["native"] is True
             assert states[-1]["tick"] == 120.0
         assert session.last_error == ""
+
+
+def test_csg_replay_rejects_substituted_scenario(tmp_path: Path) -> None:
+    profile = load_viz_profile("examples/viz/profiles/naval_csg_s0_ford_vs_fujian_replay.json")
+    substituted_scenario = tmp_path / "substituted-csg-scenario.json"
+    substituted_scenario.write_bytes(Path(profile["scenario"]).read_bytes() + b"\n")
+
+    socket = _ReplaySocket()
+    args = Namespace(
+        scenario=str(substituted_scenario),
+        mode="replay",
+        replay=profile["session_overrides"]["replay"],
+        seed=None,
+        model=None,
+        train_config=None,
+        fixed_action=None,
+    )
+    session = VizSession(args, socket)
+    socket.session = session
+    session.start()
+    session.run_loop()
+
+    assert "scenario identity mismatch" in session.last_error
+    assert not [event for event, _payload in socket.events if event in {"map_setup", "state_update"}]
