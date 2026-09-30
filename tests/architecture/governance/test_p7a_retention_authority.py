@@ -1,11 +1,24 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import subprocess
 from pathlib import Path
 
 import pytest
 
+from tools.maintenance.p7b_evidence_manifest import EvidenceManifestError
+from tools.maintenance.p7b_evidence_manifest import build_evidence_manifest
+from tools.maintenance.p7b_evidence_manifest import validate_evidence_manifest
+from tools.maintenance.runtime_authority_contracts import canonical_json_bytes
+from tools.maintenance.runtime_artifact_ledger import LedgerContractError
+from tools.maintenance.runtime_durable_artifact_ledger import EVIDENCE_MANIFEST_MEDIA_TYPE
+from tools.maintenance.runtime_durable_artifact_ledger import SQLiteArtifactLedger
+from tests.architecture.runtime_host import test_rollout_evidence_binding as evidence_fixtures
+from tests.architecture.runtime_host.test_sqlite_rollout_admission import (
+  _advance_to_stable,
+  _open_ledger,
+)
 
 pytestmark = pytest.mark.governance_audit
 
@@ -68,9 +81,10 @@ def test_p7a_evidence_retention_requires_restore_and_provider_migration_fields()
     "provider_migration_policy",
   } <= required
   drill = retention["restore_drill"]
-  assert drill["cadence"] == "quarterly"
+  assert drill["cadence"] == "per-acceptance-local"
   assert drill["owner"]
   assert "RunReceipt" in drill["minimum_scope"]
+  assert "external providers" in drill["boundary"]
 
 
 def test_p7a_policy_bindings_match_lifecycle_standard_and_governance_suite() -> None:
@@ -112,3 +126,131 @@ def test_p7a_git_history_route_restores_one_entry_per_ledger() -> None:
       capture_output=True,
     )
     assert result.returncode == 0, f"unrestorable retained document: {commit}:{path}"
+
+
+def test_p7b_local_ledger_projection_emits_provider_neutral_manifest(tmp_path: Path) -> None:
+  ledger, token, release = _open_ledger(tmp_path)
+  try:
+    _advance_to_stable(ledger, token, release)
+    admission = ledger.read_rollout_admission(
+      "release-evidence-test",
+      verification_key=evidence_fixtures.KEY,
+    )
+    retention = ledger.read_rollout_retention(
+      "release-evidence-test",
+      verification_key=evidence_fixtures.KEY,
+    )
+    payload = canonical_json_bytes(json.loads(json.dumps({
+      "admission": admission,
+      "retention": retention,
+    })))
+    manifest = build_evidence_manifest(
+      artifact_id="release-evidence-test:stable:7",
+      claim="durable stable rollout admission and rollback retention projection",
+      payload=payload,
+      producer="release/runtime integration",
+      created_at="2026-09-25T00:00:00Z",
+      retention_until="2026-12-31T00:00:00Z",
+      restore_owner="release-engineering",
+      access_policy="runtime-evidence-reader",
+      backup_policy="SQLite backup before provider migration",
+      provider="SQLiteArtifactLedger-local",
+      provider_migration_policy="restore into a distinct ledger root and revalidate digests",
+    )
+
+    assert validate_evidence_manifest(manifest, payload=payload) == manifest
+    assert manifest["sha256"]
+    assert manifest["provider"] == "SQLiteArtifactLedger-local"
+    manifest_blob = canonical_json_bytes(manifest)
+    manifest_blob_digest = ledger.put_blob(
+      manifest_blob,
+      media_type=EVIDENCE_MANIFEST_MEDIA_TYPE,
+      retention_class="evidence-short",
+      audit_identity="p7b-manifest-test",
+      role="release_controller",
+    )
+    assert manifest_blob_digest == hashlib.sha256(manifest_blob).hexdigest()
+    with pytest.raises(LedgerContractError, match="evidence manifest blob is invalid"):
+      ledger.put_blob(
+        canonical_json_bytes({**manifest, "unexpected": True}),
+        media_type=EVIDENCE_MANIFEST_MEDIA_TYPE,
+        retention_class="evidence-short",
+        audit_identity="p7b-invalid-manifest-test",
+        role="release_controller",
+      )
+
+    backup = tmp_path / "evidence-manifest.sqlite3"
+    ledger.backup_to(backup)
+    restored = SQLiteArtifactLedger.restore_from(backup, tmp_path / "restored-ledger")
+    try:
+      restored_payload = canonical_json_bytes(json.loads(json.dumps({
+        "admission": restored.read_rollout_admission(
+          "release-evidence-test",
+          verification_key=evidence_fixtures.KEY,
+        ),
+        "retention": restored.read_rollout_retention(
+          "release-evidence-test",
+          verification_key=evidence_fixtures.KEY,
+        ),
+      })))
+      assert restored_payload == payload
+      assert validate_evidence_manifest(manifest, payload=restored_payload) == manifest
+      restored_manifest_blob, media_type, retention_class = restored.get_blob(
+        manifest_blob_digest,
+        role="runtime_evidence",
+      )
+      assert media_type == EVIDENCE_MANIFEST_MEDIA_TYPE
+      assert retention_class == "evidence-short"
+      assert validate_evidence_manifest(
+        json.loads(restored_manifest_blob),
+        payload=restored_payload,
+      ) == manifest
+    finally:
+      restored.close()
+  finally:
+    ledger.close()
+
+
+def test_p7b_manifest_rejects_tampered_or_incomplete_shape() -> None:
+  manifest = build_evidence_manifest(
+    artifact_id="manifest-test",
+    claim="test evidence",
+    payload=b"stable-evidence",
+    producer="test",
+    created_at="2026-09-25T00:00:00Z",
+    retention_until="2026-12-31T00:00:00Z",
+    restore_owner="release-engineering",
+    access_policy="read-only",
+    backup_policy="copy-before-migration",
+    provider="local-test",
+    provider_migration_policy="distinct-root-restore",
+  )
+  tampered = {**manifest, "sha256": "0" * 64}
+  with pytest.raises(EvidenceManifestError, match="fields are not exact"):
+    validate_evidence_manifest({**manifest, "unexpected": True})
+  with pytest.raises(EvidenceManifestError, match="payload digest differs"):
+    validate_evidence_manifest(tampered, payload=b"stable-evidence")
+
+
+def test_p7b_manifest_rejects_ambiguous_or_reversed_time_bounds() -> None:
+  manifest = build_evidence_manifest(
+    artifact_id="manifest-time-test",
+    claim="test evidence",
+    payload=b"stable-evidence",
+    producer="test",
+    created_at="2026-09-25T00:00:00Z",
+    retention_until="2026-12-31T00:00:00Z",
+    restore_owner="release-engineering",
+    access_policy="read-only",
+    backup_policy="copy-before-migration",
+    provider="local-test",
+    provider_migration_policy="distinct-root-restore",
+  )
+  cases = (
+    ({"created_at": "2026-09-25", "retention_until": manifest["retention_until"]}, "created_at"),
+    ({"created_at": "2026-09-25T00:00:00", "retention_until": manifest["retention_until"]}, "created_at"),
+    ({"created_at": "2026-12-31T00:00:00Z", "retention_until": "2026-09-25T00:00:00Z"}, "retention_until"),
+  )
+  for updates, message in cases:
+    with pytest.raises(EvidenceManifestError, match=message):
+      validate_evidence_manifest({**manifest, **updates})

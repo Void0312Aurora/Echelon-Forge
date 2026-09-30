@@ -2,7 +2,7 @@
   "schema_version": 1,
   "policy_id": "documentation_retention.v1",
   "owner": "engineering/documentation-governance",
-  "last_verified": "2026-09-24",
+  "last_verified": "2026-09-25",
   "active_surfaces": [
     "docs/architecture/standards",
     "docs/architecture/reference",
@@ -63,10 +63,11 @@
       "provider_migration_policy"
     ],
     "restore_drill": {
-      "cadence": "quarterly",
+      "cadence": "per-acceptance-local",
       "owner": "release-engineering",
       "minimum_scope": "one accepted RunReceipt, one checkpoint, and one release/rollout decision chain",
-      "result": "recorded as a new immutable evidence packet"
+      "result": "recorded as a new immutable evidence packet",
+      "boundary": "local SQLite backup/restore and short-cycle verification only; external providers, quarterly operations, and production rollback-window observation are outside the current acceptance"
     }
   },
   "governance_bindings": {

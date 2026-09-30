@@ -7,6 +7,7 @@
 #include "core/engine/world_batch_setup_helper.h"
 #include "core/engine/world_batch_visual_binding_compatibility_helper.h"
 #include "gpu/gpu_interaction_broadphase_runtime.h"
+#include "runtime/contracts/composition/resolved_execution_plan.v1.generated.h"
 
 #include <algorithm>
 #include <bit>
@@ -237,7 +238,8 @@ void WorldBatchRuntime::resize(size_t world_count) {
     } else if (world_count > existing_count) {
         worlds_.reserve(world_count);
         for (size_t i = existing_count; i < world_count; ++i) {
-            worlds_.push_back(std::make_unique<SimulationKernel>());
+            worlds_.push_back(std::make_unique<SimulationKernel>(
+                std::string(runtime::contracts::generated::kDefaultResolvedExecutionPlanJson)));
         }
     }
 }

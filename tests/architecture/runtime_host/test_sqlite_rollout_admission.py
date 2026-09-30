@@ -7,6 +7,7 @@ from typing import Mapping
 import pytest
 
 from tools.maintenance.runtime_authority_contracts import authority_digest_sha256
+from tools.maintenance.runtime_authority_contracts import build_state_checkpoint_shell
 from tools.maintenance.runtime_authority_contracts import canonical_json_bytes as authority_json_bytes
 from tools.maintenance.runtime_durable_artifact_ledger import LedgerContractError
 from tools.maintenance.runtime_durable_artifact_ledger import SQLiteArtifactLedger
@@ -180,6 +181,42 @@ def test_sqlite_rollout_retention_survives_backup_and_restore(tmp_path: Path) ->
             "run_receipt": "run-retained",
             "rollout_evidence": "rollback-window",
         }
+        checkpoint_token = ledger.acquire_fence(
+            "checkpoint:p7b-restore-checkpoint",
+            "release-controller",
+            audit_identity="release-controller-test",
+        )
+        checkpoint = build_state_checkpoint_shell({
+            "authority_kind": "state_checkpoint",
+            "schema_version": "echelon_forge.state_checkpoint.v1",
+            "contract_version": "echelon_forge.state_checkpoint_contract.v1",
+            "writer_role": "runtime_host",
+            "writer_generation": str(checkpoint_token.generation),
+            "checkpoint_id": "p7b-restore-checkpoint",
+            "plan_sha256": "c" * 64,
+            "release_id": "release-evidence-test",
+            "decision_id": "decision-evidence-3",
+            "run_id": "p7b-restore-run",
+            "host_boot_id": "p7b-restore-boot",
+            "incarnation_epoch": "1",
+            "transfer_fence_sequence": "1",
+            "world_fragments": [{
+                "world_id": "world-p7b",
+                "episode_ids": ["episode-p7b"],
+                "fragment_sequence": "0",
+                "state_sha256": "d" * 64,
+            }],
+            "aggregate_state_sha256": "e" * 64,
+            "state_schema_generation": "1",
+            "target_reader_generation_min": "1",
+            "target_reader_generation_max": "1",
+        })
+        ledger.persist_checkpoint(
+            checkpoint_token,
+            authority_json_bytes(checkpoint),
+            expected_slot_version=0,
+            audit_identity="release-controller-test",
+        )
         backup = tmp_path / "ledger-backup.sqlite3"
         ledger.backup_to(backup)
     finally:
@@ -192,6 +229,9 @@ def test_sqlite_rollout_retention_survives_backup_and_restore(tmp_path: Path) ->
             verification_key=evidence_fixtures.KEY,
         )
         assert restored_retention["blobs"] == retention["blobs"]
+        restored_checkpoint = restored.read_checkpoint("p7b-restore-checkpoint")
+        assert restored_checkpoint["payload"]["release_id"] == "release-evidence-test"
+        assert restored_checkpoint["payload"]["decision_id"] == "decision-evidence-3"
     finally:
         restored.close()
 
@@ -414,6 +454,81 @@ def test_runtime_facade_adapter_can_read_sqlite_rollout_snapshot(tmp_path: Path,
         assert adapter.rollout_admission is not None
         assert adapter.rollout_admission.state == "production-canary"
         assert adapter.rollout_evidence_binding is not None
+
+        ledger.trip_rollout_kill_switch(
+            token,
+            ["operator_backout"],
+            verification_key=evidence_fixtures.KEY,
+            audit_identity="release-controller-test",
+        )
+        with pytest.raises(RuntimeError, match="production rollout admission rejected"):
+            adapter.refresh_rollout_admission()
+    finally:
+        ledger.close()
+
+
+def test_runtime_facade_adapter_rechecks_rollback_window_and_stable_before_backout(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A long-lived local adapter follows the durable window before backout.
+
+    The startup admission check alone is insufficient: the release controller
+    may advance the same admitted package through adoption and the bounded
+    rollback window while a process is alive.  The adapter must observe those
+    signed snapshots, and a later kill switch must still fail closed before a
+    mutation reaches the facade.
+    """
+
+    from python.rl.runtime.world_batch import adapter as adapter_module
+
+    ledger, token, release = _open_ledger(tmp_path)
+    try:
+        _advance_to_production(ledger, token, release)
+        reader = lambda: ledger.read_rollout_snapshot(
+            "release-evidence-test",
+            verification_key=evidence_fixtures.KEY,
+        )
+
+        class _Facade:
+            pass
+
+        monkeypatch.setattr(adapter_module.ef_py, "RuntimeFacade", lambda _world_count: _Facade())
+        adapter = adapter_module.RuntimeFacadeAdapter(
+            1,
+            production_rollout_key=evidence_fixtures.KEY,
+            production_rollout_snapshot_reader=reader,
+            require_production_admission=True,
+            production_release_id="release-evidence-test",
+            production_manifest_sha256=str(release["payload_sha256"]),
+            production_plan_sha256=evidence_fixtures.PLAN,
+            production_package_digest=evidence_fixtures.PACKAGE,
+            production_wheel_digest=evidence_fixtures.WHEEL,
+        )
+
+        predecessor = "decision-evidence-3"
+        for sequence, state in enumerate(("adoption-expanding", "rollback-window", "stable"), start=4):
+            decision_id = f"decision-evidence-{sequence}"
+            decision = _decision(
+                state=state,
+                sequence=sequence,
+                decision_id=decision_id,
+                predecessor=predecessor,
+            )
+            ledger.commit_rollout_admission(
+                token,
+                decision,
+                release_manifest=release,
+                run_receipt=_receipt_for(decision, release),
+                verification_key=evidence_fixtures.KEY,
+                audit_identity="release-controller-test",
+                expected_slot_version=sequence,
+            )
+            refreshed = adapter.refresh_rollout_admission()
+            assert refreshed is not None
+            assert refreshed.state == state
+            assert refreshed.production_authorized
+            predecessor = decision_id
 
         ledger.trip_rollout_kill_switch(
             token,

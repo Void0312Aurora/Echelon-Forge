@@ -1,6 +1,6 @@
 # P2-A Control Lifecycle Inventory Evidence
 
-Status: `2026-09-23` — the active suite declarations now carry checked
+Status: `2026-09-27` — the active suite declarations now carry checked
 lifecycle metadata; the full program remains open.
 
 P2-A attaches lifecycle data to the four manifests that actually declare and
@@ -20,14 +20,14 @@ membership, or become a runtime authority.
 | Kind | Count | Controls |
 | --- | ---: | --- |
 | `permanent` | 5 | architecture guard, governance audit, document-link retrieval, CI smoke, CI contract smoke |
-| `migratory` | 2 | runtime-facade compatibility migration, archive-retirement transition |
+| `migratory` | 1 | runtime-facade compatibility migration |
 | `renewable` | 0 | none currently admitted |
 | `evidentiary` | 0 | evidence remains attached to the owning gate or P2-B measurement packet |
 
 Every row records `owner`, `invariant`, `kind`, `created`, `expiry`,
 `successor`, `renewal_count`, `removal_proof`, and a coverage path. Permanent
-controls have no expiry or successor. Migratory controls expire on
-`2027-03-31`, have a named successor, and currently have zero renewals. A
+ controls have no expiry or successor. The remaining migratory control expires
+on `2027-03-31`, has a named successor, and currently has zero renewals. A
 renewal is accepted only with a sponsor and forced removal date, and the
 validator caps the count at one.
 
@@ -56,13 +56,12 @@ lifecycle validator.
 
 ## Expiry and removal boundary
 
-The two remaining migratory rows are intentionally still active because their
-physical successors are not all complete: full maintained-facade parity, the
-P7-A retention decision, and the corresponding replacement evidence remain
-open. The UniversalEnv compatibility row was retired in the first P7-B cleanup
-slice after its zero-entry inventory and successor facade/VecEnv gates were
-verified.
-At the simulated date `2027-04-01`, each row is due for disposition; it cannot
+The remaining migratory row is intentionally active because full
+maintained-facade parity is not complete. The UniversalEnv compatibility row
+was retired in the first P7-B cleanup slice after its zero-entry inventory and
+successor facade/VecEnv gates were verified; the archive-retirement transition
+was retired in the second slice after P7-A's retention authority and archive
+gate were verified. At the simulated date `2027-04-01`, the remaining row is due for disposition; it cannot
 be silently renewed. The next allowed action is removal after successor proof,
 one bounded sponsored renewal with a forced removal date, or permanent
 semantic re-admission through a new decision.

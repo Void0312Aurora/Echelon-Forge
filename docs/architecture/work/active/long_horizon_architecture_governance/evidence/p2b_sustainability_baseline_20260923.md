@@ -1,8 +1,8 @@
 # P2-B Sustainability Baseline Evidence
 
-Status: `2026-09-23` — three repeated local samples passed the current
-control, runtime, and retrieval checks; this is a dated baseline, not a
-production SLO ratification or overall program acceptance.
+Status: `2026-09-28` — three repeated local samples passed the current
+control, runtime, and retrieval checks; this is the short-cycle sustainability
+evidence used by the bounded acceptance.
 
 The baseline runner combines the P2-A manifest declarations, existing
 architecture checks, the real supported-row process/package path, and direct
@@ -34,33 +34,33 @@ three-cycle packet.
 
 | Measurement | Observed result | Owner | Boundary |
 | --- | ---: | --- | --- |
-| Declared controls | 8 total at the 2026-09-23 measurement: 5 permanent, 3 migratory | cross-domain architecture | manifest-level declarations; one zero-entry migratory control was retired by P7-B on 2026-09-24 |
-| Migratory rows due at simulated `2027-04-01` | 3 | cross-domain architecture | disposition simulation, not a renewal |
+| Declared controls | 6 total at the 2026-09-27 measurement: 5 permanent, 1 migratory | cross-domain architecture | manifest-level declarations; the zero-entry UniversalEnv control and superseded archive-transition registration were retired by P7-B |
+| Migratory rows due at simulated `2027-04-01` | 1 | cross-domain architecture | disposition simulation, not a renewal |
 | Healthy control check runs | 12/12 passed; 0 healthy-sample failures | cross-domain architecture | current checkout, four groups × three runs |
-| Check execution cost | 81.2526470 s total; 6.7710539 s mean per group run | release engineering | local Windows CPython 3.12 process |
+| Check execution cost | 281.8896640 s total; 23.4908053 s mean per group run | release engineering | local Windows CPython 3.12 process |
 | Supported-row SLO runs | 3/3 passed; 3 total cycles | release/runtime integration | current and rollback local builds |
 | Release cadence identity | 3 logical release IDs, 1 plan digest, 1 current/rollback package pair; `local_repeat_only` | release/runtime integration | three repetitions of the same local builds, not representative release changes |
 | Replacement success | 1.0 | release/runtime integration | three observed starts |
 | Drain completion | 1.0 | release/runtime integration | three observed stops |
-| Maximum replacement startup | 0.9332587 s | release/runtime integration | observation, target remains 300 s backout only |
-| Maximum backout recovery | 0.8832237 s | release/runtime integration | initial target <= 300 s |
+| Maximum replacement startup | 1.4249537 s | release/runtime integration | observation, target remains 300 s backout only |
+| Maximum backout recovery | 1.4229253 s | release/runtime integration | initial target <= 300 s |
 | Caller adoption | 1.0 | release/runtime integration | drill caller path, not full maintained parity |
 | Artifact availability | 1.0 | release/runtime integration | three local package reads |
-| Child-process resource observation | 6/6 working-set/handle samples available; max peak working set 46,186,496 bytes; max peak handles 128 | release/runtime integration | three-cycle supported-row sample; observation only |
+| Child-process resource observation | 6/6 working-set/handle samples available; max peak working set 47,042,560 bytes; max peak handles 135 | release/runtime integration | three-cycle supported-row sample; observation only |
 | Safety counters | 0 stale refs, 0 wrong epochs, 0 duplicate publications, 0 security denials | runtime composition/security | healthy path observation |
-| Evidence retrieval | 3/3 packets, 10,729 bytes, 1.0 availability | documentation lifecycle | three checked-in evidence packets |
+| Evidence retrieval | 3/3 packets, 13,706 bytes, 1.0 availability | documentation lifecycle | three checked-in evidence packets |
 
 The four check groups and their mean/max durations were:
 
 | Group | Runs | Passed | Mean | Max |
 | --- | ---: | ---: | ---: | ---: |
-| lifecycle and manifest | 3 | 3 | 10.2888604 s | 10.3574076 s |
-| rollout and storage guards | 3 | 3 | 5.4873014 s | 5.8128637 s |
-| plan and authority negative guards | 3 | 3 | 4.7051112 s | 4.8945188 s |
-| candidate teardown and state-transfer guards | 3 | 3 | 6.6029426 s | 6.8433796 s |
+| lifecycle and manifest | 3 | 3 | 30.7147732 s | 32.4234440 s |
+| rollout and storage guards | 3 | 3 | 17.4418202 s | 26.5681502 s |
+| plan and authority negative guards | 3 | 3 | 28.3013887 s | 30.5363935 s |
+| candidate teardown and state-transfer guards | 3 | 3 | 17.5052392 s | 32.5198311 s |
 
-The static audit in the same report observed 519 active test files, 306
-`test_*.py` files, 2,733 static test items, 124 smoke entries, 61 contract
+The static audit in the same report observed 528 active test files, 314
+`test_*.py` files, 2,762 static test items, 125 smoke entries, 61 contract
 JSON files, and 208 risk-flagged Python files. These are size and cost
 baselines, not quality scores.
 
@@ -78,9 +78,9 @@ The classifier counts observed per-cycle pairs rather than combining
 unrelated current and rollback digests. A changed pair across internally
 consistent batches is reported as `distinct_package_batches_observed`; a
 changed pair within one batch or an incomplete digest needs disposition.
-Even a distinct-batch observation leaves `representative_release_cadence`
-open until actual release changes, cadence, and owners are qualified. This
-sample cannot close that gate.
+Even a distinct-batch observation does not claim a long-running release
+cadence or production SLO. Those values are retained for post-acceptance
+monitoring rather than used as a closure gate.
 
 ## Interpretation and boundary
 
@@ -92,14 +92,14 @@ repeatable rejection-path coverage; its passing result does not turn safety
 counters into a claim that stale references or skew never occur.
 
 Resource teardown and state-transfer behavior are sampled by the candidate
-teardown/state-transfer guard group; a long-term memory/handle budget across
-representative workloads remains open. The supported-row process sample now
+teardown/state-transfer guard group; long-term memory/handle trends remain a
+post-acceptance monitoring item. The supported-row process sample now
 also records six available Windows working-set/handle observations, with a
 maximum peak working set of 46,186,496 bytes and 128 handles; those values are
 not an approved budget or a leak verdict. Linux, remote, multi-process, and
-production traffic are outside this local baseline. P2-B still requires a
-release cadence, broader representative samples, an owner-approved resource
-budget, and an owner review before its exit condition can be marked accepted.
+production traffic are outside this local baseline. The bounded P2-B exit uses
+the local repeat result; longer cadence, broader samples, and owner-approved
+budgets are monitored after acceptance.
 
 ## Verification
 
@@ -123,4 +123,4 @@ Document kind: `evidence`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/evidence/p2b_sustainability_baseline_20260923.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-09-23`
+Last verified: `2026-09-27`

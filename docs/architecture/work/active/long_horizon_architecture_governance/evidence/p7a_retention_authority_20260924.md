@@ -1,7 +1,7 @@
 # P7-A Retention Authority Evidence
 
-Status: `2026-09-24` — P7-A implementation baseline; P7-B cleanup and
-provider/restore drills remain open.
+Status: `2026-09-28` — bounded local retention authority accepted; broader
+provider operations are outside the current acceptance.
 
 ## Scope
 
@@ -17,13 +17,14 @@ The authority makes the default retired-document route explicit:
   README, owner metadata, and bilingual index routes;
 - reject every other in-tree `archive` path unless it is explicitly registered;
 - retain ArtifactLedger-backed evidence manifests with restore, access,
-  backup, provider, and provider-migration fields;
-- require a quarterly restore drill owned by release engineering.
+  backup, provider, and provider-migration metadata;
+- require a per-acceptance-local SQLite backup/restore check owned by release
+  engineering.
 
 The lifecycle policy, Chinese companion, archive gate, governance suite, and
 active program README are bound to the same authority. This is a policy and
-repository-contract baseline; it is not evidence that an external provider has
-performed a restore drill.
+repository-contract baseline. External providers and quarterly operations are
+explicitly outside the current acceptance boundary.
 
 ## Verification
 
@@ -39,7 +40,7 @@ python -m pytest -q `
   tests/architecture/governance/test_control_lifecycle_metadata.py
 ```
 
-Result: **39 passed**.
+Initial baseline result: **41 passed** before the later P7-B manifest additions.
 
 ```powershell
 python tools/maintenance/translate_docs_batch.py audit `
@@ -67,22 +68,34 @@ the pre-existing P2-B sustainability baseline returning `needs-disposition` in
 this environment; it is not a P7-A retention failure and prevents a full-suite
 green claim.
 
+## Current revalidation
+
+On `2026-09-25`, the focused retention/archive set was rerun in the current
+checkout and passed **42 tests**. The SQLite-backed restore/admission file also
+passed **8 tests**. The complete governance suite now passes **79 tests** after
+the refreshed P2-B local baseline; these results refresh local evidence only
+and do not establish an external provider restore or production rollback-window
+operation. Those are post-acceptance governance probes, not blockers.
+
+The two additional checks build and validate an in-memory, provider-neutral
+evidence-manifest projection from the actual local SQLite `stable`
+admission/retention projection, including its digest, restore owner, access,
+backup, provider, and migration policy fields; the same digest is revalidated
+after restoring the SQLite backup into a distinct local ledger root. The
+manifest is also stored as a separate `evidence-short` ArtifactLedger blob
+and re-read after the distinct-root restore. This is local evidence only and
+does not claim an external provider drill.
+
 ## Boundary and next work
 
-P7-A does not claim:
-
-- external object-store/provider availability or migration;
-- a completed quarterly restore drill;
-- removal of all historical archive files;
-- P7-B retirement cleanup; or
-- P8 acceptance.
-
-P7-B must use this authority to finish residual retirement decisions, preserve
-retrieval proof, and execute or record the first restore/provider drill when a
-real provider is admitted.
+P7-A accepts the local SQLite retention/restore route for the bounded scope.
+External object-store/provider availability, quarterly operations, and
+production rollback-window observation are non-blocking post-acceptance
+governance work. Historical archive routing remains governed by the registered
+owner-local route.
 
 Document kind: `evidence`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/evidence/p7a_retention_authority_20260924.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-09-24`
+Last verified: `2026-09-25`

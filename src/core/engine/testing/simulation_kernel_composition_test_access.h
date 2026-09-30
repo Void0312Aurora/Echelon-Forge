@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
 class SimulationKernel;
 
@@ -13,6 +14,10 @@ struct SimulationKernelCompositionFailureProbeResult {
 // access without carrying a public fault-injection entry point in production.
 class SimulationKernelCompositionTestAccess {
   public:
+    [[nodiscard]] static bool rebuild_world_composition_for_testing(SimulationKernel &kernel,
+                                                                    std::string_view barrier,
+                                                                    std::string *error = nullptr);
+
     [[nodiscard]] static SimulationKernelCompositionFailureProbeResult
     probe_default_provider_publication_failure_for_testing(SimulationKernel &kernel);
 };

@@ -140,7 +140,4 @@ def test_expiry_simulation_requires_disposition_without_silent_renewal() -> None
       assert expiry is not None and expiry < simulated_date
       assert control["renewal_count"] == 0
       due_ids.append(control["id"])
-  assert due_ids == [
-    "runtime_facade_compatibility_migration",
-    "archive_retirement_transition",
-  ]
+  assert due_ids == ["runtime_facade_compatibility_migration"]

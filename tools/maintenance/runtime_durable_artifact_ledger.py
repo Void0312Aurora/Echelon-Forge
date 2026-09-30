@@ -20,6 +20,8 @@ from tools.maintenance.runtime_artifact_ledger import (
   FenceToken,
   TerminationProof,
 )
+from tools.maintenance.p7b_evidence_manifest import EvidenceManifestError
+from tools.maintenance.p7b_evidence_manifest import validate_evidence_manifest
 from tools.maintenance.runtime_authority_contracts import (
   canonical_json_bytes,
   parse_canonical_json_bytes,
@@ -46,6 +48,7 @@ RECEIPT_MEDIA_TYPE = "application/vnd.echelon-forge.run-receipt.v1+json"
 RELEASE_MANIFEST_MEDIA_TYPE = "application/vnd.echelon-forge.release-manifest.v1+json"
 ROLLOUT_DECISION_MEDIA_TYPE = "application/vnd.echelon-forge.rollout-decision.v1+json"
 ROLLOUT_EVIDENCE_MEDIA_TYPE = "application/vnd.echelon-forge.rollout-evidence-binding.v1+json"
+EVIDENCE_MANIFEST_MEDIA_TYPE = "application/vnd.echelon-forge.evidence-manifest.v1+json"
 ROLLOUT_EVIDENCE_SCHEMA_VERSION = "echelon_forge.rollout_evidence_binding.v1"
 CHECKPOINT_MEDIA_TYPE = "application/vnd.echelon-forge.state-checkpoint-envelope.v1+json"
 CHECKPOINT_VALIDATION_MEDIA_TYPE = "application/vnd.echelon-forge.state-checkpoint-validation.v1+json"
@@ -64,6 +67,19 @@ REQUIRED_LEDGER_TABLES = frozenset({
   "receipts",
   "audit",
 })
+REQUIRED_LEDGER_COLUMNS = {
+  "metadata": frozenset({"key", "value"}),
+  "blobs": frozenset({"digest", "payload", "media_type", "retention_class", "audit_identity", "size"}),
+  "fences": frozenset({"stream_id", "generation", "writer_id"}),
+  "terminations": frozenset({"stream_id", "generation", "writer_id", "observed_exit_digest"}),
+  "writer_processes": frozenset({"stream_id", "generation", "writer_id", "process_id", "process_start_identity", "os_boot_marker", "host_boot_id"}),
+  "tombstones": frozenset({"stream_id", "generation", "writer_id", "observed_exit_digest"}),
+  "slots": frozenset({"slot_key", "version", "blob_digest", "fence_generation", "audit_identity"}),
+  "journals": frozenset({"journal_id", "stream_id", "generation", "writer_id", "header_digest", "last_sequence", "last_record_digest", "terminal_state", "finalization_digest"}),
+  "frames": frozenset({"journal_id", "sequence", "fence_generation", "payload", "payload_digest", "prior_digest", "frame_digest", "frame_length", "frame_checksum"}),
+  "receipts": frozenset({"receipt_id", "journal_id", "blob_digest", "receipt_digest", "terminal_state"}),
+  "audit": frozenset({"sequence", "operation", "object_id", "digest"}),
+}
 RETENTION_CLASSES = frozenset({"active-release", "rollback-window", "run-retained", "evidence-short"})
 ROLE_PERMISSIONS = {
   "runtime_host": frozenset({"blob.put", "blob.get", "blob.stat", "fence.acquire", "process.register", "journal.write", "checkpoint.read", "checkpoint.write", "slot.write"}),
@@ -74,7 +90,7 @@ ROLE_PERMISSIONS = {
 ROLE_WRITE_MEDIA_TYPES = {
   "runtime_host": frozenset({JOURNAL_HEADER_MEDIA_TYPE, JOURNAL_RECORD_MEDIA_TYPE, RECEIPT_MEDIA_TYPE, CHECKPOINT_MEDIA_TYPE, CHECKPOINT_VALIDATION_MEDIA_TYPE, OUTPUT_ARTIFACT_MEDIA_TYPE}),
   "crash_reconciler": frozenset({JOURNAL_RECORD_MEDIA_TYPE, RECEIPT_MEDIA_TYPE}),
-  "release_controller": frozenset({RELEASE_MANIFEST_MEDIA_TYPE, ROLLOUT_DECISION_MEDIA_TYPE, RECEIPT_MEDIA_TYPE, ROLLOUT_EVIDENCE_MEDIA_TYPE}),
+  "release_controller": frozenset({RELEASE_MANIFEST_MEDIA_TYPE, ROLLOUT_DECISION_MEDIA_TYPE, RECEIPT_MEDIA_TYPE, ROLLOUT_EVIDENCE_MEDIA_TYPE, EVIDENCE_MANIFEST_MEDIA_TYPE}),
 }
 ROLE_READ_MEDIA_TYPES = {
   "runtime_host": ROLE_WRITE_MEDIA_TYPES["runtime_host"],
@@ -303,6 +319,16 @@ class SQLiteArtifactLedger:
     }
     if not REQUIRED_LEDGER_TABLES.issubset(tables):
       raise LedgerContractError(f"{context} is not a complete SQLite ArtifactLedger")
+    for table, required_columns in REQUIRED_LEDGER_COLUMNS.items():
+      columns = {
+        row[1] for row in db.execute(f"PRAGMA table_info({table})")
+      }
+      missing = required_columns - columns
+      if missing:
+        missing_text = ", ".join(sorted(missing))
+        raise LedgerContractError(
+          f"{context} table {table!r} schema is incomplete; missing columns: {missing_text}",
+        )
     schema_row = db.execute(
       "SELECT value FROM metadata WHERE key='schema_version'",
     ).fetchone()
@@ -370,6 +396,11 @@ class SQLiteArtifactLedger:
     if retention_class not in RETENTION_CLASSES:
       raise LedgerContractError("retention_class is not admitted")
     self._validate_media(role, media_type, write=True)
+    if media_type == EVIDENCE_MANIFEST_MEDIA_TYPE:
+      try:
+        validate_evidence_manifest(json.loads(payload.decode("utf-8")))
+      except (EvidenceManifestError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise LedgerContractError("evidence manifest blob is invalid") from error
     try:
       self._transaction()
       digest = self._put_blob_locked(

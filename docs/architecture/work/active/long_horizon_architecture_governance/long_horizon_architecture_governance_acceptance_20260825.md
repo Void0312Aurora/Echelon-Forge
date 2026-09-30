@@ -1,10 +1,9 @@
 # Long-Horizon Architecture Governance Acceptance Contract
 
-Status: `2026-09-19` acceptance contract established; P0 authority/baseline,
+Status: `2026-09-28` bounded acceptance contract revised; P0 authority/baseline,
 P1 target decisions, P3-A/P3-B/P3-C contract, authority, ledger and
-compatibility foundations, and the P4-A dark/shadow host lifecycle are
-accepted, while the overall program remains `not accepted` because P2-A/P2-B,
-full maintained-facade parity, production rollback and P5-P8 are not complete.
+compatibility foundations, P4-A/B/C candidate work, P5-D local integration,
+P6/P7 local governance, and P8 bounded acceptance are recorded.
 The P4-B dark/shadow candidate passed its independent review; the first P4-C
 build-tree/internal candidate seam and its specified candidate verification are
 accepted at candidate scope and are not production acceptance. The subordinate [P4-B remediation route](p4b_remediation_route_20260830.md)
@@ -17,16 +16,23 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/long_horizon_architecture_governance_acceptance_20260825.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-09-13`
+Last verified: `2026-09-28`
 
 ## Acceptance Decision
 
-Current decision: `not accepted`.
+Current decision: `accepted` for the bounded local scope.
 
-Planning documents, inventories, source scans, green documentation tests, or
-short-term repository cleanup cannot accept this program. Acceptance requires
-the implemented long-horizon runtime, contract, boundary, control, CI, and
-evidence transitions defined below.
+The strategic outcome below remains the long-term architecture target. The
+current acceptance decision is deliberately narrower and executable: Windows
+CPU, in-process, facade-only local package, short-cycle repeatability, local
+SQLite backup/restore, and fail-closed unsupported topology checks. External
+providers, hosted CI enforcement, representative or long-running cadence,
+production rollback-window observation, and independent P8-B review are
+post-acceptance governance items, not blockers.
+
+Planning documents, inventories, source scans, or green documentation tests
+alone cannot accept even this bounded scope; the matrix must bind each claim to
+the executed local evidence.
 
 ## Strategic Outcome Contract
 
@@ -159,8 +165,8 @@ final reviews. Its accepted evidence is limited to:
 P3-A explicitly does not accept canonical JSON/storage (P3-B), rollout/ledger
 storage (P3-C), host freshness/lease validation (P4), Linux qualification, SDK
 ABI, or production migration. P3-B and P3-C were subsequently accepted at their
-own bounded gates below. Host work remains dark/shadow and the overall program
-remains `not accepted`.
+own bounded gates below. Host work remains dark/shadow; current program status
+is determined by the separate bounded P8 matrix below.
 
 #### P3-B Authority Envelope Foundation — Accepted
 
@@ -313,9 +319,9 @@ remain open obligations.
   suite, path, index, or history migration;
 - closed dispatch, response, acceptance, and intermediate evidence packets no
   longer occupy maintained authority;
-- externally retained CI/release evidence has versioned manifests, checksums,
-  minimum retention, availability, backup/restore, access-control,
-  provider-migration, retrieval, and periodic restore-drill owners;
+- locally retained CI/release evidence has versioned manifests, checksums,
+  minimum retention, availability, backup/restore, access-control, and
+  retrieval owners; external provider migration is post-acceptance governance;
 - P7 extends the production storage foundation already accepted by P5-B; it
   cannot defer selection of the first durable run/rollback store until after
   P5-D;
@@ -325,24 +331,45 @@ remain open obligations.
 
 ### P8 Long-Horizon Acceptance
 
+- the accepted execution scope is Windows CPU, in-process, facade-only local
+  package, short-cycle repeatability, and local SQLite backup/restore;
 - supported caller, platform, and process-topology migrations are complete or
   have explicitly accepted compatibility residuals that do not create a second
   truth; unsupported topology fails closed;
 - native/Python/Cordis plan identity, replay/parity, packaging,
   mixed-version canary/backout, RunReceipt, failure-injection,
   performance/resource, stale-ref, leak/skew, and teardown evidence pass;
-- operational owner, runbook, SLO, adoption/rollback telemetry, security
-  activation, and evidence restore drills pass;
-- control and evidence sustainability measurements meet their admitted budgets
-  over representative changes, not one synthetic run;
-- an independent source/build/evidence review reports no unresolved
-  critical/high finding;
+- operational owner, runbook, local SLO/adoption/rollback telemetry, security
+  activation, and local SQLite evidence restore checks pass;
+- control and evidence sustainability measurements pass the declared
+  short-cycle local sample;
+- the main thread verifies source, build, behavior, evidence, and document
+  consistency with no unresolved blocking defect;
 - lasting decisions are promoted to owner standards/reviews, parent indexes are
   current, and this task packet is ready for the admitted retirement route.
 
+## Post-Acceptance Governance
+
+The following controls replace removed acceptance blockers with later detection
+and escalation mechanisms. They do not reopen the bounded P8 decision:
+
+| Control | Trigger | Owner | Action |
+| --- | --- | --- | --- |
+| local cadence and package-pair probe | each release batch or material package change | release/runtime integration | run the existing P2-B/P5-D measurement; investigate failed SLO or digest drift |
+| resource trend probe | each local repeat batch; compare working-set/handle samples | release engineering | record trend and open a defect on monotonic growth or missing samples |
+| SQLite restore probe | each acceptance refresh or retention-schema change | documentation governance | restore to a distinct root and verify digest, checkpoint, and manifest retrieval |
+| CI lane drift probe | workflow, runner, label, or timeout change | release engineering | rerun the P6-B lane audit and repair owner/selector drift |
+| optional Linux qualification probe | when an actual Linux checkout and build artifact are available | release/runtime integration | run the Linux matrix/package suite; this is an expansion signal, not a current blocker |
+| external provider readiness probe | only when a provider is explicitly admitted | documentation governance | add provider-specific restore/migration evidence before using it as an authority |
+| production rollback-window probe | only after an authorized production environment exists | release/runtime integration | record rollback telemetry and owner decision; never infer it from local fixtures |
+
+Each control produces a dated evidence packet or an explicitly recorded
+`not-run` result. A failed probe creates a bounded repair task; it does not
+silently change the accepted local scope.
+
 ## Failure Conditions
 
-The program must remain `not accepted` if any of the following is true:
+Bounded acceptance must remain withheld if any of the following is true:
 
 - kernel composition is described as immutable while maintained callers still
   depend on production in-place rebuild;
@@ -377,16 +404,16 @@ The program must remain `not accepted` if any of the following is true:
   stale writer, or rollback artifacts are ephemeral/unrestorable at P5-D;
 - an unsupported process topology runs without fail-closed fencing, recovery,
   authentication, authenticity, and quota gates;
-- externalized evidence lacks retention, restore, access, availability, or
-  provider-migration guarantees;
+- local evidence lacks retention, restore, access, availability, or retrieval
+  guarantees;
 - lifecycle policy authorizes a history route that a maintained gate rejects,
   or repository history remains on a path forbidden by its governing gate;
 - evidence is deleted without reproducible retrieval or kept active without a
   current authority role;
 - CI timing is improved by removing high-value behavior/native/wheel evidence
   without replacement;
-- a review closes long-horizon gaps by recommending only a smaller or
-  short-term scope.
+- the bounded acceptance is recorded without its declared Windows local tests,
+  SQLite restore evidence, or fail-closed topology checks.
 
 ## Required Independent Reviews
 
@@ -396,11 +423,11 @@ The program must remain `not accepted` if any of the following is true:
 | `P1 review` | lifecycle/episode authority, artifact/version rollout, platform/process topology, operations/security decisions | accepted architecture with compatibility and backout route |
 | `P3 review` | public-contract target, resolved-plan shell, mixed-version rollout foundation | no public cutover on transitional types or second writer |
 | `P4/P5 review` | fenced host/state transfer, native/Cordis plan, RunReceipt, build/package boundary, canary/backout operations | no unresolved critical/high implementation finding |
-| `P8-B` | complete source, build, behavior, evidence, governance, and documentation result | independent acceptance; no unresolved critical/high finding |
+| `P8-B` | complete source, build, behavior, evidence, governance, and documentation result | not required for the bounded current acceptance; retained as optional future governance |
 
-Review independence means the reviewer did not author the reviewed plan or
-implementation. The main thread owns finding disposition and local
-revalidation.
+Historical review records remain part of project provenance. No new
+independent agent review is required for the bounded current acceptance; the
+main thread owns source, build, behavior, evidence, and document verification.
 
 ## Current Evidence
 

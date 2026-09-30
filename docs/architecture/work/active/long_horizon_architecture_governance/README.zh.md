@@ -1,11 +1,12 @@
 # 长期架构治理
 
-状态：`2026-09-24`，长期架构治理计划处于 active；P0 authority/baseline、P1
+状态：`2026-09-28`，长期架构治理计划处于 active；P0 authority/baseline、P1
 target-architecture 决策、完整的 P3-A/P3-B/P3-C contract、authority-envelope、
 ledger 与 compatibility foundation，以及 P4-A dark/shadow host lifecycle 已在
-独立复核后接受。P4-B dark/shadow candidate implementation 与独立综合复核已完成；P4-C 首个 build-tree/internal candidate 任务已通过 candidate-scope 独立复核并被接受，尚未获得 production acceptance。
-P2-A 已有 manifest-level lifecycle baseline 实现，P2-B 也已有首个可重复的本地 sustainability baseline；代表性 release cadence、完整 maintained facade parity、production caller
-cutover、production rollback-window operation、rebuild retirement 与 P6-P8 仍开放；尚无 production truth 发布或 production cutover 被接受。maintained 合同调用方迁移、process-resync、
+独立复核后接受。P4-B dark/shadow candidate implementation 及其历史复核已完成；P4-C 首个 build-tree/internal candidate 任务已在 candidate scope 接受。当前 P8 有界验收已针对可执行的 Windows CPU in-process lane 记录；更广 topology 继续 fail-closed。
+P2-A 已有 manifest-level lifecycle baseline 实现，P2-B 也已有首个可重复的本地 sustainability baseline；P5-D 的有界 maintained caller parity 已完成，并有独立可执行门禁记录于
+[parity evidence](evidence/p5d_maintained_caller_parity_20260925.md)。P5-D 已按项目负责人决定接受并继续主计划；旧 production rebuild authority 已退役，但测试/故障注入 seam 仍保留。决定与可执行退役证据见
+[owner acceptance packet](evidence/p5d_owner_acceptance_and_rebuild_retirement_20260927.md)。代表性 cadence、external provider、hosted CI enforcement 与 production rollback observation 已登记为有界验收后的治理探针，不再阻塞验收；当前范围不再派发新的独立复核 agent。maintained 合同调用方迁移、process-resync、
 mandatory production-state release/receipt binding、ArtifactLedger durable rollout controller
 以及首个 operations drill 证据见
 [P5-D caller migration evidence](evidence/p5d_facade_caller_migration_20260923.md) 与
@@ -22,21 +23,23 @@ mandatory production-state release/receipt binding、ArtifactLedger durable roll
 rebuild-retirement gate 见
 [lifecycle controller evidence](evidence/p5d_sqlite_rollout_controller_20260923.md)
 与 [rebuild retirement gate evidence](evidence/p5d_rebuild_retirement_gate_20260924.md)。
-cutover 前的 rebuild-unreachability inventory（维护生产调用方与 Python
-binding 均为零，但尚未退役 rebuild）见
+分支内 P5-D 门禁汇总见
+[local gate matrix](evidence/p5d_local_gate_matrix_20260925.md)。
+决定后的 rebuild-unreachability inventory（维护生产调用方与 Python
+binding 均为零，production authority 已退役但测试 seam 保留）见
 [rebuild evidence](evidence/p5d_rebuild_unreachability_20260923.md)。
 首个 P2-B control/cost/retrieval baseline 见
 [sustainability evidence](evidence/p2b_sustainability_baseline_20260923.md)。
 distinct-package cadence follow-up 见
-[cadence evidence](evidence/p2b_release_cadence_followup_20260924.md)，代表性
-cadence 仍开放。
+[cadence evidence](evidence/p2b_release_cadence_followup_20260924.md)，更长 cadence
+作为验收后的监测项。
 
 P6-A 测试 authority baseline 记录于[派生审计包]
 (evidence/p6a_test_authority_audit_20260924.md)：architecture tier manifest
 现在声明 owner、failure audience 与 execution strategy，派生报告保留
 source-scan residual，并拒绝 orphan、stale、duplicate 与跨 tier assignment。
 Native CTest 的 25 个条目现在均暴露 primary lane label。P6-A 的替换/退役证据
-与 P6-B workflow lane 工作仍开放。
+与 P6-B workflow lane 工作已形成有界本地基线；hosted drift 由后续监测处理。
 
 语言：
 
@@ -84,7 +87,7 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 | Runtime 边界 | facade 方向已接受；compatibility surface 仍存在 | [runtime facade guards](../../../../../tests/architecture/runtime_facade/test_runtime_escape_hatches.py) | source scan 能描述边界，但不能让越界在物理上不可表示 |
 | Contract 与证据链 | 已覆盖 accepted 默认 profile | request、catalog lock、projection、requested/resolved manifest、provenance、parity 与 closure artifact | 中间迁移 artifact 仍是永久治理输入 |
 | Public/runtime authority boundary | P3-A/P3-B/P3-C 与 P4-A accepted；P4-B 已通过独立复核；P4-C candidate-scope 任务已接受 | [`ef_runtime_contracts`](../../../../../include/echelon_forge/runtime_contracts/runtime_identity.h)、[`RuntimeHostCandidate`](../../../../../src/runtime/host/runtime_host_candidate.h)、[P4-B candidate](p4b_state_transfer_candidate_20260830.md)、[P4-C candidate seam](p4c_internal_candidate_seam_20260915.md)、12-row owner adapters、authority/ledger schema、exact vector、non-production ArtifactLedger simulator、fresh Windows/MSVC native gate 与 [P4-B 独立审查](../../../reviews/long_horizon_architecture_governance_p4b_review_20260831.md) | P4-A/B/C 仍仅 dark/shadow；完整 maintained facade parity 与 P5-B/P5-D production durability、authenticity、activation、cutover 仍受 gate 约束 |
-| 测试与 CI 治理 | CI smoke 已验证为绿；P6-A authority baseline 与 P7-A retention 检查已有聚焦证据；完整 hosted governance/CI 验收未完成 | [CI smoke suite](../../../../../tests/smoke/ci_smoke_suite.json)、[governance audit suite](../../../../../tests/suites/governance_audit_suite.json)、[P6-A 派生审计](evidence/p6a_test_authority_audit_20260924.md) 与 [retention authority](../../../../engineering/documentation/reference/retention_authority.json) | source-scan residual 与 hosted CI/branch-protection 证据仍开放；archive 路由受 P7-A authority 约束 |
+| 测试与 CI 治理 | P6-A/P6-B authority 与 selector 的本地基线已接受；hosted enforcement 单独监测 | [CI smoke suite](../../../../../tests/smoke/ci_smoke_suite.json)、[governance audit suite](../../../../../tests/suites/governance_audit_suite.json)、[P6-A 派生审计](evidence/p6a_test_authority_audit_20260924.md) 与 [retention authority](../../../../engineering/documentation/reference/retention_authority.json) | hosted CI/branch-protection 与 source-scan 趋势是验收后探针；archive 路由受 P7-A authority 约束 |
 | 文档生命周期 | P7-A retention authority baseline 已实现 | [P7-A retention 证据](evidence/p7a_retention_authority_20260924.md)、[文档生命周期规范](../../../../engineering/documentation/standards/document_lifecycle_policy.zh.md)、[retention authority](../../../../engineering/documentation/reference/retention_authority.json)、archive gate 与当前 architecture archive | 仅登记的 Cordis owner-local archive 可保留；其他 archive 路径禁止，退役材料使用 owner ledger/Git 历史 |
 
 ## Scope
@@ -168,13 +171,13 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 | --- | --- | --- | --- | --- |
 | `P0 Authority And Baseline` | 建立已核验 source、control、CI、evidence、ownership 基线及独立审查。 | 用户授权与最新 `origin/main` | 项目包、度量、审查 finding 与 owner index 保持当前 | accepted |
 | `P1 Target Architecture` | 固定 lifecycle、episode authority、versioning/rollout、platform/process topology、contract chain、boundary 与 control lifecycle 决策。 | P0 evidence accepted | 决策包含 compatibility、rollback、operations、storage 与 security activation 路径并通过独立审查 | accepted |
-| `P2 Control Lifecycle` | 将每个架构控制分类为 permanent、renewable、migratory 或 evidentiary，并明确 owner 与退役。 | P1 术语固定 | 既有控制完成分类，migration control 具备可执行退出条件 | P2-A 基线；P2-B 首个基线与 distinct-package follow-up；代表性 cadence 开放 |
+| `P2 Control Lifecycle` | 将每个架构控制分类为 permanent、renewable、migratory 或 evidentiary，并明确 owner 与退役。 | P1 术语固定 | 既有控制完成分类，migration control 具备可执行退出条件 | P2-A/P2-B 短周期基线已接受；更长 cadence 进入监测 |
 | `P3 Contract And Public Boundary Foundation` | 在 host cutover 前落地 canonical authority envelope、plan/release/rollout/checkpoint shell、engine-independent DTO target、ledger foundation 与初始 visibility。 | P1 accepted | transitional adapter 单一 owner，host 可使用最终 public type/storage 且不发布第二 truth | P3-A/P3-B/P3-C accepted |
 | `P4 Host Lifecycle And Immutable Kernel Candidate` | 实现 fenced host replacement、唯一 episode authority、完整 state transfer 与 dark/shadow immutable candidate path。 | P3 contract/boundary foundation 稳定 | candidate path 已 state-complete 且 fenced，但不得成为 production truth 或退役 production rebuild | P4-A accepted；P4-B 已通过独立复核；P4-C candidate-scope 任务已接受；完整 maintained facade parity 与 P5 仍开放 |
-| `P5 Plan, Evidence, Binding, And Production Cutover` | 闭合 executable plan，引入完整 RunReceipt，完成 facade/diagnostics packaging，再执行唯一 production cutover/backout 并退役 rebuild。 | P4 candidate 通过 dark/shadow | Cordis/native/facade/wheel 使用同一 plan；supported caller 只切换一次且有 rollback evidence，rebuild 失去 production authority | planned |
-| `P6 Test And CI Architecture` | 按独立 failure audience 对齐 fast、qualification、nightly、release 与 research lane。 | P2 control class 与 P5 boundary 可用 | permanent gate 有具名检测价值，migration scan 已消失或带到期约束 | P6-A authority baseline；替换/退役证据与 P6-B lane 仍开放 |
-| `P7 Evidence And Documentation Lifecycle` | 保留可复现 proof，且不让 closed work package 留在永久权威。 | P2 class 与 P5 evidence ownership 稳定 | standard、current reference、历史记录与 generated evidence 有单一 owner 和路由 | planned |
-| `P8 Long-Horizon Acceptance` | 证明迁移 compatibility、operational sustainability 与不存在 duplicate truth。 | P3-P7 完成 | 完整 acceptance contract 与独立审查通过；长期规则提升且 task history 遵循已准入退役路由 | planned |
+| `P5 Plan, Evidence, Binding, And Production Cutover` | 闭合 executable plan，引入完整 RunReceipt，完成 facade/diagnostics packaging，再执行唯一 production cutover/backout 并退役 rebuild。 | P4 candidate 通过 dark/shadow | Cordis/native/facade/wheel 使用同一 plan；supported caller 只切换一次且有 rollback evidence，rebuild 失去 production authority | P5-D 已按负责人决定接受；production rebuild authority 已退役；更广 topology 保持 fail-closed |
+| `P6 Test And CI Architecture` | 按独立 failure audience 对齐 fast、qualification、nightly、release 与 research lane。 | P2 control class 与 P5 boundary 可用 | permanent gate 有具名检测价值，migration scan 已消失或带到期约束 | P6-A/P6-B 有界本地 lane 基线已接受；hosted drift 进入监测 |
+| `P7 Evidence And Documentation Lifecycle` | 保留可复现 proof，且不让 closed work package 留在永久权威。 | P2 class 与 P5 evidence ownership 稳定 | standard、current reference、历史记录与 generated evidence 有单一 owner 和路由 | P7-A/P7-B 本地 retention 与 SQLite restore 已接受；provider readiness 进入监测 |
+| `P8 Long-Horizon Acceptance` | 证明有界迁移 compatibility、operational sustainability 与不存在 duplicate truth。 | P3-P7 本地 evidence 可用 | local matrix、短周期 evidence、SQLite restore 与 fail-closed topology 检查通过 | [P8-A acceptance 基线](evidence/p8_acceptance_baseline_20260924.md) 已在有界范围接受；后续探针由 post-acceptance governance 跟踪 |
 
 ## Task Clusters
 
@@ -204,6 +207,7 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 - [P2-A control lifecycle 清单（英文）](evidence/p2_control_lifecycle_inventory_20260923.md)
 - [P2-B sustainability baseline（英文）](evidence/p2b_sustainability_baseline_20260923.md)
 - [P2-B release cadence follow-up（英文）](evidence/p2b_release_cadence_followup_20260924.md)
+- [P8 post-acceptance governance monitor（英文）](evidence/p8_post_acceptance_governance_20260928.md)
 
 ## Outputs And Evidence
 
@@ -236,11 +240,12 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
   canary/backout、完整 RunReceipt 和 supported topology/platform 规则已实现并测试；
 - 每个 permanent control 都说明受保护 invariant 与独立检测路径，每个 migration
   control 都已退役，或获得最多一次、有界、带 forced removal date 的独立审查续期；
-- CI 与文档证据证明 ordinary development、qualification、release 与长期演进的
-  可持续性；
-- 独立架构审查对长期结果不存在未解决 critical/high finding。
+- 本地 CI 与文档证据证明 admitted Windows CPU in-process lane 的可重复性；
+- multi-process、external-host 与 CUDA-canonical row 均 fail closed。
 
-局部清理、绿色文档测试或更窄的短期计划不能满足此 gate。
+External provider、hosted branch protection、代表性或长期演进、production
+rollback-window observation 与新的独立复核不属于此 gate，由 post-acceptance
+governance monitor 跟踪。
 
 ## Residuals And Next Steps
 
@@ -261,6 +266,6 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 architecture standard 或 review。P7-A 通过 `retention_authority.json` 解决
 owner-archive policy：已接受的 Cordis 历史是唯一登记的 owner-local archive，其他
 archive 路径仍禁止；该路由之外的退役材料使用 owner ledger 和 Git 历史。active
-目录仍是当前执行面，不得变成 append-only evidence store。首条 P7-B 零项
-inventory 退役记录在 [P7-B 证据包](evidence/p7b_zero_inventory_retirement_20260924.md)；
-其余清理与 provider/restore drill 仍开放。
+目录仍是当前执行面，不得变成 append-only evidence store。P7-B 两条有界
+退役记录在 [P7-B 证据包](evidence/p7b_zero_inventory_retirement_20260924.md)；
+provider 与 production probe 作为验收后的治理项跟踪。

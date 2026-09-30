@@ -1,15 +1,13 @@
 """Capture and validate the P5-D in-kernel rebuild reachability boundary.
 
-The native ``SimulationKernel::rebuild_world_composition`` capability remains
-in the compatibility implementation until the unique production cutover and
-rollback-window gate are complete.  This inventory makes the interim safety
-claim executable: only the native declaration/definition and test-only calls
-may mention the callable symbol, while the production wheel stays facade-only
+The native ``SimulationKernel::rebuild_world_composition`` implementation is
+retained only as a test/fault-injection seam.  The public production API no
+longer exposes it; this inventory keeps the remaining implementation and
+test-accessor references explicit while the production wheel stays facade-only
 and the diagnostics binding remains an explicit opt-in target.
 
-This tool deliberately does *not* mark the rebuild capability retired.  A
-zero-caller inventory is a prerequisite for retirement, not the retirement
-decision itself.
+The inventory records production-authority retirement, not deletion of the
+native test capability.
 """
 
 from __future__ import annotations
@@ -72,7 +70,7 @@ SKIP_DIRECTORY_NAMES = {
     "build",
     "node_modules",
 }
-TEST_CALL_ROOTS = ("src/tests/",)
+TEST_CALL_ROOTS = ("src/tests/", "src/core/engine/testing/")
 CALL_PATTERN = re.compile(rf"(?<![\w:]){re.escape(SYMBOL)}\s*\(")
 
 
@@ -209,7 +207,7 @@ def build_inventory() -> dict[str, Any]:
     package_guard = _production_package_guard()
     body: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
-        "scope": "P5-D in-kernel rebuild reachability before production cutover",
+        "scope": "P5-D in-kernel rebuild reachability after production-authority retirement",
         "symbol": QUALIFIED_SYMBOL,
         "references": references,
         "implementation_references": implementation_lines,
@@ -218,8 +216,8 @@ def build_inventory() -> dict[str, Any]:
         "production_callable_references": production_callable_references,
         "python_binding_references": python_binding_references,
         "production_package_guard": package_guard,
-        "reachability_state": "quarantined_before_production_cutover",
-        "retired": False,
+        "reachability_state": "retired_production_authority_test_seam_retained",
+        "retired": True,
         "retirement_gate": (
             "single production cutover plus rollback-window retention and rebuild gate"
         ),
@@ -244,8 +242,8 @@ def validate_inventory(record: dict[str, Any]) -> dict[str, Any]:
             "rebuild symbol appeared in Python binding sources: "
             + ", ".join(record["python_binding_references"])
         )
-    if record["retired"]:
-        raise InventoryError("rebuild retirement cannot be asserted by the pre-cutover inventory")
+    if record["retired"] is not True:
+        raise InventoryError("retired production rebuild authority is not recorded")
     if not all(record["production_package_guard"].values()):
         raise InventoryError("production package is not fail-closed to the facade-only boundary")
     return record

@@ -43,6 +43,9 @@ CPP_CALLER_SUFFIXES = {".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".hxx",
 BUILD_TREE_ONLY_EXPLICIT_KERNEL_CALLERS = {
     "src/runtime/host/integration/runtime_kernel_candidate.cpp",
 }
+MAINTAINED_EXPLICIT_KERNEL_CALLERS = {
+    "src/core/engine/world_batch_runtime.cpp",
+}
 SKIPPED_CALLER_DIRECTORIES = {
     ".git",
     ".mypy_cache",
@@ -174,6 +177,8 @@ def python_source_calls_ef_py_symbol(source: str, symbol: str) -> bool:
     symbol_aliases: set[str] = set()
     importlib_aliases: set[str] = set()
     import_module_aliases: set[str] = set()
+    import_callable_aliases: set[str] = {"__import__"}
+    getattr_aliases: set[str] = {"getattr"}
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for imported in node.names:
@@ -190,19 +195,42 @@ def python_source_calls_ef_py_symbol(source: str, symbol: str) -> bool:
                 if imported.name == "import_module":
                     import_module_aliases.add(imported.asname or "import_module")
 
+    def is_getattr_call(node: ast.AST) -> bool:
+        return (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id in getattr_aliases
+        )
+
+    def is_import_module_callable(node: ast.AST) -> bool:
+        if isinstance(node, ast.Name):
+            return node.id in import_module_aliases or node.id in import_callable_aliases
+        if (
+            isinstance(node, ast.Attribute)
+            and node.attr == "import_module"
+            and isinstance(node.value, ast.Name)
+            and node.value.id in importlib_aliases
+        ):
+            return True
+        return (
+            is_getattr_call(node)
+            and len(node.args) >= 2
+            and isinstance(node.args[0], ast.Name)
+            and node.args[0].id in importlib_aliases
+            and isinstance(node.args[1], ast.Constant)
+            and node.args[1].value == "import_module"
+        )
+
+    def is_getattr_callable(node: ast.AST) -> bool:
+        return isinstance(node, ast.Name) and node.id in getattr_aliases
+
     def is_module_reference(node: ast.AST) -> bool:
         if isinstance(node, ast.Name) and node.id in module_aliases:
             return True
         if not isinstance(node, ast.Call) or not node.args:
             return False
         imports_module = (
-            isinstance(node.func, ast.Name)
-            and node.func.id in {"__import__", *import_module_aliases}
-        ) or (
-            isinstance(node.func, ast.Attribute)
-            and node.func.attr == "import_module"
-            and isinstance(node.func.value, ast.Name)
-            and node.func.value.id in importlib_aliases
+            is_import_module_callable(node.func)
         )
         return (
             imports_module
@@ -220,8 +248,7 @@ def python_source_calls_ef_py_symbol(source: str, symbol: str) -> bool:
     def is_dynamic_symbol_reference(node: ast.AST) -> bool:
         return (
             isinstance(node, ast.Call)
-            and isinstance(node.func, ast.Name)
-            and node.func.id == "getattr"
+            and is_getattr_callable(node.func)
             and len(node.args) >= 2
             and is_module_reference(node.args[0])
             and isinstance(node.args[1], ast.Constant)
@@ -244,6 +271,16 @@ def python_source_calls_ef_py_symbol(source: str, symbol: str) -> bool:
                 for target in targets:
                     if isinstance(target, ast.Name) and target.id not in module_aliases:
                         module_aliases.add(target.id)
+                        changed = True
+            elif value is not None and is_import_module_callable(value):
+                for target in targets:
+                    if isinstance(target, ast.Name) and target.id not in import_module_aliases:
+                        import_module_aliases.add(target.id)
+                        changed = True
+            elif value is not None and is_getattr_callable(value):
+                for target in targets:
+                    if isinstance(target, ast.Name) and target.id not in getattr_aliases:
+                        getattr_aliases.add(target.id)
                         changed = True
             elif value is not None and (
                 is_symbol_reference(value) or is_dynamic_symbol_reference(value)
@@ -1005,11 +1042,14 @@ def verify_source_truth() -> None:
         raise ClosureError(
             "Cordis/native conformance no longer reaches explicit native realization"
         )
-    if not scan_cpp_default_kernel_callers():
-        raise ClosureError("native default-kernel callers disappeared from the retained inventory")
+    # An empty inventory is now the desired state for maintained native
+    # default construction: every surviving native caller must use an explicit
+    # generated execution plan or the build-tree-only candidate allowlist.
     explicit_kernel_callers = scan_cpp_explicit_kernel_callers()
     unadmitted_explicit_kernel_callers = sorted(
-        set(explicit_kernel_callers) - BUILD_TREE_ONLY_EXPLICIT_KERNEL_CALLERS
+        set(explicit_kernel_callers)
+        - BUILD_TREE_ONLY_EXPLICIT_KERNEL_CALLERS
+        - MAINTAINED_EXPLICIT_KERNEL_CALLERS
     )
     if unadmitted_explicit_kernel_callers:
         raise ClosureError(
@@ -1117,11 +1157,14 @@ def build_record() -> dict[str, Any]:
                 "disposition": "retained; explicit alias of the generated resolved manifest",
             },
             {
-                "surface_id": "simulation_kernel.native_default_callers",
-                "classification": "standalone_and_batch_compatibility",
+                "surface_id": "simulation_kernel.native_explicit_callers",
+                "classification": "maintained_explicit_manifest",
                 "owner": "core/engine",
-                "callers": scan_cpp_default_kernel_callers(),
-                "disposition": "retained; both enter the explicit generated-manifest alias",
+                "callers": sorted(MAINTAINED_EXPLICIT_KERNEL_CALLERS),
+                "disposition": (
+                    "retained behind the generated resolved execution plan; "
+                    "production caller cutover and rebuild retirement remain gated"
+                ),
             },
             {
                 "surface_id": "simulation_kernel.python_binding_exposure",

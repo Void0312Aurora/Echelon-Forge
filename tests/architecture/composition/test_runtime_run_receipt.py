@@ -17,6 +17,7 @@ from tools.maintenance.generate_runtime_run_receipt_vector import build_vector
 from tools.maintenance.runtime_durable_artifact_ledger import (
   CHECKPOINT_VALIDATION_MEDIA_TYPE,
   FenceToken,
+  REQUIRED_LEDGER_COLUMNS,
   SQLiteArtifactLedger,
 )
 from tools.maintenance.runtime_execution_provenance import (
@@ -572,6 +573,25 @@ def test_sqlite_restore_rejects_an_incomplete_database(tmp_path: Path) -> None:
   finally:
     db.close()
   with pytest.raises(Exception, match="not a complete SQLite ArtifactLedger"):
+    SQLiteArtifactLedger.restore_from(source, tmp_path / "restored")
+
+
+def test_sqlite_restore_rejects_missing_required_columns(tmp_path: Path) -> None:
+  source = tmp_path / "missing-columns.sqlite3"
+  db = sqlite3.connect(source)
+  try:
+    db.execute("CREATE TABLE metadata(key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+    db.execute(
+      "INSERT INTO metadata VALUES('schema_version', 'echelon_forge.sqlite_artifact_ledger.v1')",
+    )
+    for table in REQUIRED_LEDGER_COLUMNS:
+      if table == "metadata":
+        continue
+      db.execute(f"CREATE TABLE {table}(placeholder TEXT)")
+    db.commit()
+  finally:
+    db.close()
+  with pytest.raises(Exception, match="schema is incomplete; missing columns"):
     SQLiteArtifactLedger.restore_from(source, tmp_path / "restored")
 
 

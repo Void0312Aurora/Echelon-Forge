@@ -1,0 +1,167 @@
+{
+  "schema_version": "long_horizon_acceptance.v1",
+  "kind": "derived_acceptance_matrix",
+  "authority": "docs/architecture/work/active/long_horizon_architecture_governance/long_horizon_architecture_governance_acceptance_20260825.md",
+  "phase": "P8-A",
+  "last_verified": "2026-09-28",
+  "decision": "accepted",
+  "decision_reason": "Bounded current acceptance is complete for the executable Windows CPU in-process lane with local SQLite evidence and short-cycle repeatability. External providers, long-running or representative cadence, hosted CI, production rollback-window observation, and independent P8-B review are outside the current acceptance boundary; unsupported topologies remain fail-closed.",
+  "requirements": [
+    {
+      "id": "P8-01-caller-platform-topology",
+      "claim": "Supported caller, platform, and process-topology migrations are complete or have explicit non-authoritative compatibility residuals; unsupported topology fails closed.",
+      "status": "pass",
+      "owner": "release/runtime integration",
+      "evidence": [
+        "docs/architecture/work/active/long_horizon_architecture_governance/decisions/p1c_rollout_operations_and_security_decision_20260825.md",
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5d_facade_caller_migration_20260923.md",
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5d_maintained_caller_parity_20260925.md",
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p7b_zero_inventory_retirement_20260924.md",
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5d_owner_acceptance_and_rebuild_retirement_20260927.md"
+      ],
+      "residual": "The admitted scope is the executable Windows CPU in-process lane. Linux/package qualification and broader topology remain explicit non-authoritative residuals and do not block this bounded acceptance."
+    },
+    {
+      "id": "P8-02-contract-replay-packaging",
+      "claim": "Native/Python/Cordis plan identity, replay/parity, packaging, mixed-version canary/backout, RunReceipt, failure, stale-reference, leak/skew, and teardown evidence pass.",
+      "status": "pass",
+      "owner": "cross-domain architecture",
+      "evidence": [
+        "docs/architecture/work/active/long_horizon_architecture_governance/p5a_resolved_execution_plan_20260919.md",
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5b_production_ledger_qualification_20260919.md",
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5c_facade_only_package_qualification_20260922.md",
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5d_real_process_package_rollback_20260923.md"
+      ],
+      "residual": "Native/Python/Cordis identity, replay, packaging, rollback, and teardown evidence is qualified for the bounded local CPU lane; broader platform/package rows are outside this acceptance boundary."
+    },
+    {
+      "id": "P8-03-operations-security-restore",
+      "claim": "Operational owner, runbook, local SLO/adoption/rollback telemetry, security activation, and local SQLite evidence restore checks pass.",
+      "status": "pass",
+      "owner": "release engineering",
+      "evidence": [
+        "docs/architecture/work/active/long_horizon_architecture_governance/decisions/p1c_rollout_operations_and_security_decision_20260825.md",
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p7a_retention_authority_20260924.md",
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p7b_local_sqlite_restore_drill_20260924.md",
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5d_real_process_package_rollback_20260923.md"
+      ],
+      "residual": "Local SQLite backup/restore and short-cycle operational checks pass for the supported local row. External provider restore and production rollback-window observation are outside this acceptance boundary."
+    },
+    {
+      "id": "P8-04-sustainability",
+      "claim": "Control and evidence sustainability measurements pass the declared short-cycle local sample.",
+      "status": "pass",
+      "owner": "cross-domain architecture",
+      "evidence": [
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p2b_sustainability_baseline_20260923.md",
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p2b_release_cadence_followup_20260924.md"
+      ],
+      "residual": "The refreshed three-run local sample and four local cadence batches covering three distinct package pairs are sufficient for this bounded acceptance. Representative release cadence and long-term budgets are observation-only follow-up work."
+    },
+    {
+      "id": "P8-05-independent-review",
+      "claim": "Main-thread source, build, behavior, evidence, and document verification reports no unresolved blocking defect for the bounded scope.",
+      "status": "pass",
+      "owner": "cross-domain architecture",
+      "evidence": [
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p8_acceptance_baseline_20260924.md"
+      ],
+      "residual": "No independent agent review is required for the bounded current acceptance; main-thread source, build, behavior, evidence, and document verification is the recorded authority."
+    },
+    {
+      "id": "P8-06-promoted-authority-history",
+      "claim": "Lasting decisions are promoted to owner standards/reviews, indexes are current, and task history is ready for the admitted retirement route.",
+      "status": "pass",
+      "owner": "cross-domain architecture",
+      "evidence": [
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p7a_retention_authority_20260924.md",
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p7b_zero_inventory_retirement_20260924.md"
+      ],
+      "residual": "Current owner standards, indexes, local retention route, and task-history route are synchronized for the bounded acceptance. Any broader history promotion is non-blocking follow-up."
+    }
+  ],
+  "topology_matrix": [
+    {
+      "id": "windows-msvc-cpu-in-process",
+      "platform": "windows-amd64-msvc",
+      "package": "facade-only local wheel",
+      "process_topology": "in-process",
+      "support": "pass",
+      "fail_closed": true,
+      "verification": [
+        "python/rl/runtime/rollout_gate.py::from_document",
+        "tests/architecture/composition/test_runtime_artifact_ledger.py::test_n_and_n_minus_one_readers_fail_closed_for_skew_features_state_and_topology"
+      ],
+      "evidence": [
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5c_facade_only_package_qualification_20260922.md",
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5d_real_process_package_rollback_20260923.md"
+      ]
+    },
+    {
+      "id": "linux-cpu-in-process",
+      "platform": "linux-x86_64",
+      "package": "isolated wheel",
+      "process_topology": "in-process",
+      "support": "partial",
+      "fail_closed": true,
+      "verification": [
+        "python/rl/runtime/rollout_gate.py::from_document",
+        "tests/architecture/governance/test_p8_acceptance_matrix.py::test_unsupported_topology_admission_is_executable_fail_closed"
+      ],
+      "evidence": [
+        "docs/architecture/work/active/long_horizon_architecture_governance/decisions/p1c_rollout_operations_and_security_decision_20260825.md",
+        "docs/architecture/work/active/long_horizon_architecture_governance/evidence/p8_acceptance_baseline_20260924.md"
+      ]
+    },
+    {
+      "id": "multi-process",
+      "platform": "all",
+      "package": "any",
+      "process_topology": "multi-process",
+      "support": "unsupported",
+      "fail_closed": true,
+      "verification": [
+        "python/rl/runtime/rollout_gate.py::from_document",
+        "tests/architecture/governance/test_p8_acceptance_matrix.py::test_unsupported_topology_admission_is_executable_fail_closed"
+      ],
+      "evidence": [
+        "docs/architecture/work/active/long_horizon_architecture_governance/decisions/p1c_rollout_operations_and_security_decision_20260825.md"
+      ]
+    },
+    {
+      "id": "external-host",
+      "platform": "all",
+      "package": "any",
+      "process_topology": "external-host",
+      "support": "unsupported",
+      "fail_closed": true,
+      "verification": [
+        "python/rl/runtime/rollout_gate.py::from_document",
+        "tests/architecture/governance/test_p8_acceptance_matrix.py::test_unsupported_topology_admission_is_executable_fail_closed"
+      ],
+      "evidence": [
+        "docs/architecture/work/active/long_horizon_architecture_governance/decisions/p1c_rollout_operations_and_security_decision_20260825.md"
+      ]
+    },
+    {
+      "id": "cuda-canonical",
+      "platform": "cuda",
+      "package": "any",
+      "process_topology": "in-process",
+      "support": "unsupported",
+      "fail_closed": true,
+      "verification": [
+        "python/rl/runtime/rollout_gate.py::from_document",
+        "tests/architecture/governance/test_p8_acceptance_matrix.py::test_unsupported_topology_admission_is_executable_fail_closed"
+      ],
+      "evidence": [
+        "docs/architecture/work/active/long_horizon_architecture_governance/decisions/p1c_rollout_operations_and_security_decision_20260825.md"
+      ]
+    }
+  ],
+  "review": {
+    "required": false,
+    "status": "not-required",
+    "reason": "User-directed bounded acceptance; main-thread verification is authoritative and no independent agent is required."
+  }
+}

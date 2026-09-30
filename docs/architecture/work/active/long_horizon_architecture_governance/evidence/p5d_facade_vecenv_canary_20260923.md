@@ -1,6 +1,6 @@
 # P5-D Real Facade VecEnv Canary Evidence
 
-Status: `2026-09-23` — one locally admitted facade VecEnv reset/step cycle
+Status: `2026-09-25` — one locally admitted facade VecEnv reset/step cycle
 passed with the release, plan, package, wheel, and RunReceipt bindings. This
 is a canary-path verification, not final production publication or P5-D
 acceptance.
@@ -39,6 +39,12 @@ git diff --check
 
 Result: **2 tests passed** in 15.72 seconds; Ruff and the diff check passed.
 
+The same two-test canary file was rerun against the current local
+`build-long-horizon-p5d-wheel` Release binding on `2026-09-25`; both tests
+passed in **16.99 seconds**, and Ruff remained clean. The real process/package
+rollback drill was also rerun against that binding: **1 test passed** in
+**13.87 seconds**.
+
 ## Boundary
 
 The result proves the real facade VecEnv can execute an admission-bound reset
@@ -50,4 +56,4 @@ Document kind: `evidence`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5d_facade_vecenv_canary_20260923.md`
 Owner: `release/runtime integration`
-Last verified: `2026-09-23`
+Last verified: `2026-09-25`
