@@ -91,6 +91,7 @@
     "tests/architecture/runtime_profiles/test_runtime_profile_contracts.py",
     "tests/architecture/runtime_contracts/test_public_runtime_contract_foundation.py",
     "tests/architecture/runtime_spine/test_clock_domain_enforcement.py",
+    "tests/architecture/runtime_spine/test_web_viz_facade_caller.py",
     "tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py",
     "tests/architecture/simulation/test_backend_boundary.py",
     "tests/architecture/simulation/test_air_observation_boundary.py",
