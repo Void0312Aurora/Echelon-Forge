@@ -326,6 +326,7 @@ class SimulationKernel {
     friend class SimulationKernelWeaponReleaseService;
     friend class runtime::host::integration::SimulationKernelStateOwnerBridge;
     void ensure_active(const char *operation) const;
+    void ensure_state_transfer_component_reflection();
     using CompositionOperationLock = std::unique_lock<std::recursive_mutex>;
     [[nodiscard]] CompositionOperationLock acquire_composition_operation() const {
         return CompositionOperationLock(composition_lifecycle_mutex_);
@@ -355,6 +356,7 @@ class SimulationKernel {
     mutable std::recursive_mutex composition_lifecycle_mutex_;
     mutable bool raw_world_access_exposed_ = false;
     bool world_state_mutated_ = false;
+    bool state_transfer_reflection_registered_ = false;
     bool exact_stage_trace_frame_active_ = false;
     bool shutdown_complete_ = false;
 };

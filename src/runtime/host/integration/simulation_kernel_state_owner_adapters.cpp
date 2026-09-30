@@ -1398,7 +1398,7 @@ std::string SimulationKernelStateOwnerBridge::serialize_world(SimulationKernel &
     // keeps its stable entity-id allocation. State-transfer admission owns
     // this additional Flecs schema surface and is the first path that needs
     // it.
-    register_state_transfer_component_reflection(kernel.ecs);
+    kernel.ensure_state_transfer_component_reflection();
     // Flecs' table JSON writer on this pinned version emits raw ChildOf pair
     // expressions that are not valid JSON.  Detach mutable hierarchy edges
     // while serializing, then restore them before returning; the transfer ABI
