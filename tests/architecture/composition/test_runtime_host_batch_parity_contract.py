@@ -67,6 +67,8 @@ def test_p7_budget_and_reference_evidence_are_schema_valid_and_fresh() -> None:
 
   budget_validator.validate(budget)
   evidence_validator.validate(evidence)
+  assert all(host["environment"]["platform"] == "linux" for host in evidence["hosts"])
+  assert evidence["hosts"][0]["environment"]["runtime"].startswith("gcc.")
   assert budget == parity.BUDGET
   parity.validate_semantic_reference(semantic_reference)
   parity.validate_evidence(evidence)

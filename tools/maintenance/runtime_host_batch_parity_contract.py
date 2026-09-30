@@ -30,7 +30,8 @@ if __package__ in (None, ""):
   sys.path.insert(0, str(REPO_ROOT))
 FIXTURES = REPO_ROOT / "tests/architecture/composition/fixtures"
 BUDGET_PATH = FIXTURES / "default_runtime_host_batch_parity_budget.v1.json"
-EVIDENCE_PATH = FIXTURES / "default_runtime_host_batch_parity.windows_msvc.v1.json"
+# The Windows fixture remains historical; this is the current measured baseline.
+EVIDENCE_PATH = FIXTURES / "default_runtime_host_batch_parity.linux_gcc.v1.json"
 SEMANTIC_REFERENCE_PATH = FIXTURES / "default_runtime_host_batch_semantic_reference.v1.json"
 CORDIS_PACKAGE = REPO_ROOT / "packages/cordis-runtime"
 BUDGET_SCHEMA_PATH = REPO_ROOT / (

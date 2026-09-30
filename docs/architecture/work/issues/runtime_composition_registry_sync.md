@@ -8,7 +8,7 @@ Document kind: `plan`
 Lifecycle: `draft`
 Canonical: `docs/architecture/work/issues/runtime_composition_registry_sync.md`
 Owner: `architecture/runtime-composition`
-Last verified: `2026-09-21`
+Last verified: `2026-09-30`
 Content status: remediation record opened after the ground systems-owner package
 found the composition evidence chain disagreeing with the component registry. The
 derived-surface repair below is complete and measured; the CI push trigger is
@@ -19,7 +19,8 @@ deliberately left alone and that residual is recorded here.
 > kept byte-for-byte as that branch's record. `work/army-mechanisms` differs from it in
 > ways a reader would otherwise misapply here. The differences are listed in
 > [Addendum: `work/army-mechanisms` (2026-09-28)](#addendum-workarmy-mechanisms-2026-09-28).
-> Read that section before relying on any count, component name or tool mode below.
+> The [main integration addendum](#addendum-main-integration-2026-09-30) supersedes
+> that branch snapshot. Read the addenda before relying on any count below.
 
 ## Scope
 
@@ -299,7 +300,7 @@ not, and they differ here as follows:
 | Record says | On `work/army-mechanisms` |
 | --- | --- |
 | `10945ffc` added `GroundPlatformDamageState` and `NavalCommandIntent` | The branch adds `GroundPlatformDamageState` (`eeba773f`) and `GroundWeaponState` (`6830414e`) over `cfb9924e`; `NavalCommandIntent` is not on this branch, it belongs to `work/naval-mechanisms` |
-| census 87 components / **35** systems | pinned `(87, 2, 35)` in `tools/maintenance/runtime_composition_evidence_contract.py`: 87 components, 2 kernel systems, 35 resolved systems |
+| census 85 components / **34** systems | pinned `(85, 2, 35)` in `tools/maintenance/runtime_composition_evidence_contract.py`: 85 components, 2 kernel systems, 35 resolved systems |
 | the issue "adds a `check` mode" to the projection tool | not on this branch: `runtime_profile_projection_contract.py` accepts only `generate` and `validate`. The [Gate Coverage](#gate-coverage) protection therefore does not exist here; a cascade that stops at the manifests is caught only by the census pin and the composition contract tests |
 | composition `0 failed, 72 passed, 1 skipped` after repair | this branch's own measurement, after the same steps 3–9 on `2026-09-28`: `72 passed, 1 skipped` on the Windows MSVC host with g++, Node and the Cordis dependencies present |
 
@@ -328,3 +329,54 @@ finding as the original record. Steps 3–9 were redone:
 - The closure admitted `native_probe.py` under the generic compatibility disposition. Its
   real disposition is the `native_probe_only` quarantine enforced by the WP22-E Ground
   native-probe allowlist. The closure tool has no fail-closed guard for new Python callers.
+
+## Addendum: Main Integration (2026-09-30)
+
+`work/army-mechanisms` was rebased onto `origin/main` at `e0600f70` (SI PR #78).
+The original tip is retained as `backup/army-before-main-rebase-20260930` at
+`0ba1e6ba`. The live pre-rebase patch inventory was 19 upstream-equivalent and
+71 branch-unique commits, not the earlier 22/72 estimate. Replaying Ground work
+and omitting superseded identity and derived-evidence commits left 62 commits
+before the integration repairs.
+
+The registry now contains **87 components / 35 systems**: main contributes
+85/34; Ground adds `GroundWeaponState`, `GroundPlatformDamageState`, and
+`builtin.system.ground_infantry_movement`. The evidence tripwire is `(87, 2, 35)`.
+Ground direct fire now draws through `DrawSite::ground_direct_fire` and rejects
+serial-less targets. Its native seed-sensitivity test is restored in the stable
+identity suite.
+
+All native builds and new measurements run on HEI with `-j32`. The current P7
+baseline is `default_runtime_host_batch_parity.linux_gcc.v1.json`, captured by the
+repository's `capture --refresh-semantic-reference` command on Linux/GCC 13.3,
+Python 3.13.5, 88 logical CPUs, Release. It records both measured host rows and
+live Cordis/native admission. Its evidence digest is
+`80658dd1dc6b9756672add2f57d863827aed9dbc8451fed81324655a2630e25c`;
+the semantic-reference digest is
+`49b54ca5a68462a0d750552828504b808136b37ec11300cb5a576a10ed8249a5`.
+
+The Windows/MSVC fixture is retained unchanged from the pre-integration baseline
+as historical evidence. It is not current acceptance evidence and is not joined
+to the new semantic reference. Intermediate identity-only edits made during this
+repair were superseded by the full Linux capture; old timing values are not
+represented as measurements of the new composition. The P8 closure reads the
+active P7 evidence path from its owner rather than a Windows filename.
+
+Measured integration gates before the final evidence-only repair:
+
+| Gate | HEI result |
+| --- | --- |
+| `ef_core`, `ef_py`, `ef_test` build | passed, `-j32` |
+| complete `ef_test` | 191 passed, 20,989 assertions |
+| isolated stable-identity suite | 17 passed, 1,343 assertions |
+| Ground / identity / quarantine / stochastic guards | 61 passed |
+| `tests/runtime/air_combat` | 355 passed, 38 xfailed, 219 subtests passed |
+| Cordis package | 27 passed |
+| composition directory before downstream refresh | 101 passed, 3 failed, 9 errors, 3 skipped |
+
+The composition failures were stale P7 producer identity, authority vectors, and
+ledger fixtures; the P8 errors depended on the stale P7 join. Authority and ledger
+fixtures are regenerated with their canonical generators, and P8 is regenerated
+after the current P7 capture. Final composition and governance results are recorded
+after revalidation. This addendum alone does not assert that the public branch has
+been merged or that all merge gates are open.

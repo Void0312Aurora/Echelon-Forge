@@ -739,7 +739,7 @@ def artifact_identities() -> dict[str, str]:
     resolved = load_json(FIXTURES / "default_compatibility_manifest.resolved.json")
     provenance = load_json(FIXTURES / "default_runtime_package_provenance.v1.json")
     evidence = load_json(FIXTURES / "default_runtime_composition_evidence.v1.json")
-    parity = load_json(FIXTURES / "default_runtime_host_batch_parity.windows_msvc.v1.json")
+    parity = load_json(parity_contract.EVIDENCE_PATH)
     backend_request = load_json(FIXTURES / "default_backend_provider_request.v1.json")
 
     request_sha256 = projection_contract.request_identity(request)
