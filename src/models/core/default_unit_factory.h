@@ -26,7 +26,6 @@
 #include "components/domains/air/combat/damage_air.h"
 #include "components/domains/ground/combat/damage_ground.h"
 #include "components/domains/ground/ground_capabilities.h"
-#include "components/domains/ground/combat/weapon_ground.h"
 #include "components/combat/common/damage_common.h"
 #include "components/combat/common/weapon_common.h"
 #include "components/domains/naval/combat/weapon_naval.h"
@@ -1469,22 +1468,13 @@ class DefaultUnitFactory : public IUnitFactory {
     // contract: a domain whose damage state is missing here cannot be reached by
     // its own effects mechanism even when the shared HitboxConfig/SystemHealth/
     // PlatformDamageState triple is present.
-    static void
-    initialize_spawn_structured_domain_damage_state(flecs::entity &e, UnitType type,
-                                                    bool ground_infantry_capability = false) {
+    static void initialize_spawn_structured_domain_damage_state(flecs::entity &e, UnitType type) {
         if (type == UnitType::Aircraft || type == UnitType::C2Node) {
             e.set<AircraftDamageState>({});
             return;
         }
         if (type == UnitType::Ground) {
             e.set<GroundPlatformDamageState>({});
-            if (ground_infantry_capability) {
-                // The first native infantry fire slice uses one deterministic
-                // rifle contract. It is a representative direct-fire capability,
-                // not a claim that every ground aggregate has individual weapon
-                // inventory modeled.
-                e.set<GroundWeaponState>(make_default_ground_infantry_weapon_state());
-            }
         }
     }
 
@@ -1538,8 +1528,7 @@ class DefaultUnitFactory : public IUnitFactory {
                 e.set<ComponentDamageState>(component_damage);
             }
             e.set<PlatformDamageState>({});
-            initialize_spawn_structured_domain_damage_state(e, def.type,
-                                                            def.has_ground_infantry_capability);
+            initialize_spawn_structured_domain_damage_state(e, def.type);
         } else if (def.airframe.length_m > 0.0) {
             // Procedural Generation
             HitboxConfig generated = generate_default_hitboxes(def.airframe);
@@ -1556,8 +1545,7 @@ class DefaultUnitFactory : public IUnitFactory {
             }
             e.set<SystemHealth>(initial_health);
             e.set<PlatformDamageState>({});
-            initialize_spawn_structured_domain_damage_state(e, def.type,
-                                                            def.has_ground_infantry_capability);
+            initialize_spawn_structured_domain_damage_state(e, def.type);
         } else if (def.type == UnitType::Ground) {
             // Ground bootstrap: reach the shared structured damage path.
             //
@@ -1593,8 +1581,7 @@ class DefaultUnitFactory : public IUnitFactory {
             initial_health.systems["structure"] = 1.0;
             e.set<SystemHealth>(initial_health);
             e.set<PlatformDamageState>({});
-            initialize_spawn_structured_domain_damage_state(e, def.type,
-                                                            def.has_ground_infantry_capability);
+            initialize_spawn_structured_domain_damage_state(e, def.type);
         }
     }
 
