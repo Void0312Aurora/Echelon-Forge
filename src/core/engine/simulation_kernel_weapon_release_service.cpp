@@ -1153,6 +1153,11 @@ bool SimulationKernelWeaponReleaseService::fire_ground_weapon(uint64_t attacker_
         !entity_is_ground(ecs_, target_id) || attacker_id == target_id) {
         return false;
     }
+    if (!target.has<StableEntitySerial>()) {
+        spdlog::warn("fire_ground_weapon rejected target {}: it carries no stable entity serial",
+                     target_id);
+        return false;
+    }
 
     const Transform *attacker_transform = attacker.get<Transform>();
     const Transform *target_transform = target.get<Transform>();
@@ -1211,10 +1216,10 @@ bool SimulationKernelWeaponReleaseService::fire_ground_weapon(uint64_t attacker_
 
     const double hit_probability =
         std::clamp(std::isfinite(weapon.hit_probability) ? weapon.hit_probability : 0.0, 0.0, 1.0);
-    const std::uint64_t seed = splitmix64(
-        static_cast<std::uint64_t>(current_time * 1000.0) ^ (attacker_id * 0x9e3779b97f4a7c15ULL) ^
-        (target_id * 0xbf58476d1ce4e5b9ULL) ^ (static_cast<std::uint64_t>(weapon_type_code) << 32));
-    const double sample = (splitmix64(seed) >> 11) * (1.0 / 9007199254740992.0);
+    const std::uint64_t seed = stochastic_draw::draw_seed(
+        ecs_, stochastic_draw::DrawSite::ground_direct_fire, current_time, {attacker, target},
+        {static_cast<std::uint64_t>(weapon_type_code)});
+    const double sample = stochastic_draw::uniform01(seed);
     if (sample > hit_probability) {
         return true;
     }
