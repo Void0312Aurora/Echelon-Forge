@@ -637,7 +637,7 @@ install(TARGETS ef_facade_backend
 # SimulationKernel construction remains in the explicitly quarantined
 # compatibility/diagnostics targets and is not the app's execution owner.
 add_executable(ef_app src/main.cpp)
-target_link_libraries(ef_app PRIVATE ef_facade ef_gpu_experiments)
+target_link_libraries(ef_app PRIVATE ef_facade ef_core ef_gpu_experiments)
 
 set(EF_PYTHON_BINDING_SOURCES
     src/interfaces/python/python_module.cpp
