@@ -9,6 +9,8 @@ from examples.viz.runtime.action_utils import normalize_fixed_action
 
 DEFAULT_PROFILE_ROOTS = ("examples/viz/profiles",)
 SESSION_OVERRIDE_FIELDS = {
+    "mode",
+    "replay",
     "model",
     "scripted",
     "train_config",
@@ -214,7 +216,7 @@ def _normalize_session_overrides(raw_session: dict | None, *, profile_dir: str) 
         if key not in session:
             continue
         value = session.get(key)
-        if key in {"model", "train_config"}:
+        if key in {"model", "replay", "train_config"}:
             value = _resolve_path(value, profile_dir=profile_dir)
         elif key == "fixed_action":
             value = normalize_fixed_action(value, name="profile session.fixed_action")
