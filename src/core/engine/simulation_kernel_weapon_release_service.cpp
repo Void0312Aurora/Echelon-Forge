@@ -807,8 +807,7 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     // here, on the same invalid-target path as an invalid attacker, before either mt19937
     // draw below: a rejected fire must not advance the rng_ stream (P5 review B1).
     const auto missile_release_target = ecs_.entity(target_id);
-    if (!missile_release_target.is_alive() ||
-        !missile_release_target.has<StableEntitySerial>()) {
+    if (!missile_release_target.is_alive() || !missile_release_target.has<StableEntitySerial>()) {
         spdlog::warn("fire_missile rejected target {}: it is not alive or carries no stable "
                      "entity serial",
                      target_id);
@@ -822,8 +821,7 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     const uint64_t missile_release_rng_word2 = static_cast<uint64_t>(rng_());
     const uint64_t missile_seed = stochastic_draw::draw_seed(
         ecs_, stochastic_draw::DrawSite::missile_release, current_time,
-        {attacker, missile_release_target},
-        {missile_release_rng_word1, missile_release_rng_word2});
+        {attacker, missile_release_target}, {missile_release_rng_word1, missile_release_rng_word2});
 
     const Mass mass = make_missile_mass_state(missile_total_mass_kg, propellant_mass_kg);
     const MassProperties mass_properties = make_missile_mass_properties(mass, reference_area_m2);

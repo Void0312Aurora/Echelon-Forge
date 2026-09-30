@@ -161,23 +161,23 @@ class DefaultAcousticModel : public IAcousticModel {
             const double margin_db = snr_db - sonar.detection_threshold_db;
             if (margin_db < 0.0) return;
             const double pd = std::clamp(0.55 + margin_db / 18.0, 0.0, 1.0);
-            const uint64_t seed = stochastic_draw::draw_seed(
-                world, stochastic_draw::DrawSite::acoustic_detection, current_time,
-                {owner, target});
+            const uint64_t seed =
+                stochastic_draw::draw_seed(world, stochastic_draw::DrawSite::acoustic_detection,
+                                           current_time, {owner, target});
             if (stochastic_draw::uniform01(seed) > pd) return;
 
             double noisy_bearing = rel_bearing_deg;
             if (sonar.bearing_noise_std_deg > 0.0) {
                 noisy_bearing +=
                     rand_normal(stochastic_draw::uniform01(stochastic_draw::lane(seed, 1)),
-                               stochastic_draw::uniform01(stochastic_draw::lane(seed, 2))) *
+                                stochastic_draw::uniform01(stochastic_draw::lane(seed, 2))) *
                     sonar.bearing_noise_std_deg;
             }
             double noisy_range = range_m;
             if (!sonar.bearing_only && sonar.range_noise_std_m > 0.0) {
                 noisy_range +=
                     rand_normal(stochastic_draw::uniform01(stochastic_draw::lane(seed, 3)),
-                               stochastic_draw::uniform01(stochastic_draw::lane(seed, 4))) *
+                                stochastic_draw::uniform01(stochastic_draw::lane(seed, 4))) *
                     sonar.range_noise_std_m;
                 noisy_range = std::max(1.0, noisy_range);
             }

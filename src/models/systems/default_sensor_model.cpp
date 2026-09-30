@@ -367,9 +367,9 @@ class DefaultSensorModel : public ISensorModel {
                 detection_prob *= range_factor;
                 detection_prob = clamp_sensor_probability(detection_prob);
 
-                const uint64_t seed_det = stochastic_draw::draw_seed(
-                    world, stochastic_draw::DrawSite::radar_detection, current_time,
-                    {owner, target_e});
+                const uint64_t seed_det =
+                    stochastic_draw::draw_seed(world, stochastic_draw::DrawSite::radar_detection,
+                                               current_time, {owner, target_e});
                 if (stochastic_draw::uniform01(seed_det) > detection_prob) {
                     return;
                 }
@@ -384,15 +384,17 @@ class DefaultSensorModel : public ISensorModel {
                 double noisy_bearing = rel_bearing;
                 if (sensor.bearing_noise_std > 0.0) {
                     noisy_bearing +=
-                        rand_normal(stochastic_draw::uniform01(stochastic_draw::lane(seed_det, 1)),
-                                   stochastic_draw::uniform01(stochastic_draw::lane(seed_det, 2))) *
+                        rand_normal(
+                            stochastic_draw::uniform01(stochastic_draw::lane(seed_det, 1)),
+                            stochastic_draw::uniform01(stochastic_draw::lane(seed_det, 2))) *
                         sensor.bearing_noise_std;
                 }
                 double noisy_range = dist;
                 if (sensor.range_noise_std > 0.0) {
                     noisy_range +=
-                        rand_normal(stochastic_draw::uniform01(stochastic_draw::lane(seed_det, 3)),
-                                   stochastic_draw::uniform01(stochastic_draw::lane(seed_det, 4))) *
+                        rand_normal(
+                            stochastic_draw::uniform01(stochastic_draw::lane(seed_det, 3)),
+                            stochastic_draw::uniform01(stochastic_draw::lane(seed_det, 4))) *
                         sensor.range_noise_std;
                 }
                 noisy_range = std::max(0.0, noisy_range);
@@ -442,8 +444,9 @@ class DefaultSensorModel : public ISensorModel {
                 double measured_vr = v_closing;
                 if (sensor.velocity_noise_std > 0.0) {
                     measured_vr +=
-                        rand_normal(stochastic_draw::uniform01(stochastic_draw::lane(seed_det, 5)),
-                                   stochastic_draw::uniform01(stochastic_draw::lane(seed_det, 6))) *
+                        rand_normal(
+                            stochastic_draw::uniform01(stochastic_draw::lane(seed_det, 5)),
+                            stochastic_draw::uniform01(stochastic_draw::lane(seed_det, 6))) *
                         sensor.velocity_noise_std;
                 }
 

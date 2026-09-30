@@ -44,10 +44,10 @@ flecs::entity resolve_valid_entity_or_warn(WorldT &world, uint64_t entity_id,
 // raw id with no KeyEntity gate, so this is the boundary that must reject before a command-link
 // drop roll could otherwise reach draw_seed's internal abort.
 inline bool command_boundary_rejects_missing_serial(flecs::entity entity, const char *operation,
-                                                     uint64_t entity_id) {
+                                                    uint64_t entity_id) {
     if (entity.is_alive() && !entity.has<StableEntitySerial>()) {
-        spdlog::warn("Attempted to {} for entity {}: it carries no stable entity serial",
-                     operation, entity_id);
+        spdlog::warn("Attempted to {} for entity {}: it carries no stable entity serial", operation,
+                     entity_id);
         return true;
     }
     return false;

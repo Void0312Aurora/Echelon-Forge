@@ -375,7 +375,7 @@ TEST_SUITE("stable_entity_identity") {
 
     // Spawns a shooter/target pair, gives the shooter a track on the target, and returns both
     // entities. Shared by the sites 1/2 seed-sensitivity cases below.
-    flecs::entity spawn_tracked_pair(SimulationKernel &kernel, flecs::entity &out_target) {
+    flecs::entity spawn_tracked_pair(SimulationKernel & kernel, flecs::entity & out_target) {
         REQUIRE(kernel.load_database("examples/config/database"));
         auto shooter = kernel.spawn_unit(Side::Blue, "F-16C_Block50", 0.0, 0.0, 5000.0, 0.0, 0.0,
                                          0.0, 200.0, 0.0, 0.0);
@@ -431,9 +431,8 @@ TEST_SUITE("stable_entity_identity") {
             kernel.reset(reset_seed);
             auto shooter = spawn_tracked_pair(kernel, target);
             const double before_hp = target.get<Health>()->current_hp;
-            const bool applied =
-                kernel.debug_apply_local_proximity_hit(shooter.id(), target.id(), 0.0, 0.0, 0.0,
-                                                       25.0, 5.0);
+            const bool applied = kernel.debug_apply_local_proximity_hit(shooter.id(), target.id(),
+                                                                        0.0, 0.0, 0.0, 25.0, 5.0);
             REQUIRE(applied);
             const double after_hp = target.get<Health>()->current_hp;
             return std::make_pair(before_hp, after_hp);
@@ -506,8 +505,8 @@ TEST_SUITE("stable_entity_identity") {
             kernel.reset(reset_seed);
             auto shooter = kernel.spawn_unit(Side::Blue, "DDG-51_Flight_I_ASW_Helo_MVP", 0.0, 0.0,
                                              0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-            auto target = kernel.spawn_unit(Side::Red, "DDG-51_Flight_I_ASW_Helo_MVP", 5000.0,
-                                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            auto target = kernel.spawn_unit(Side::Red, "DDG-51_Flight_I_ASW_Helo_MVP", 5000.0, 0.0,
+                                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
             REQUIRE(shooter.is_valid());
             REQUIRE(target.is_valid());
             NavalWeaponMountDefinition mount{};
@@ -525,8 +524,8 @@ TEST_SUITE("stable_entity_identity") {
             det.target_id = target.id();
             det.range = 5000.0;
             shooter.set<ContactList>({{det}});
-            const bool fired =
-                kernel.fire_naval_weapon(shooter.id(), target.id(), static_cast<int>(NavalWeaponType::DeckGun));
+            const bool fired = kernel.fire_naval_weapon(shooter.id(), target.id(),
+                                                        static_cast<int>(NavalWeaponType::DeckGun));
             REQUIRE(fired);
             return target.get<Health>()->current_hp;
         };
@@ -542,8 +541,8 @@ TEST_SUITE("stable_entity_identity") {
             kernel.reset(reset_seed);
             auto shooter = kernel.spawn_unit(Side::Blue, "DDG-51_Flight_I_ASW_Helo_MVP", 0.0, 0.0,
                                              0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-            auto target = kernel.spawn_unit(Side::Red, "DDG-51_Flight_I_ASW_Helo_MVP", 5000.0,
-                                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            auto target = kernel.spawn_unit(Side::Red, "DDG-51_Flight_I_ASW_Helo_MVP", 5000.0, 0.0,
+                                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
             REQUIRE(shooter.is_valid());
             REQUIRE(target.is_valid());
             auto lease = kernel.acquire_world_lease();
@@ -579,15 +578,15 @@ TEST_SUITE("stable_entity_identity") {
             }
             auto shooter = kernel.spawn_unit(Side::Blue, "F-16C_Block50", 0.0, 0.0, 5000.0, 0.0,
                                              0.0, 0.0, 200.0, 0.0, 0.0);
-            auto target = kernel.spawn_unit(Side::Red, "F-16C_Block50", 0.0, 20000.0, 5000.0,
-                                            180.0, 0.0, 0.0, 200.0, 0.0, 0.0);
+            auto target = kernel.spawn_unit(Side::Red, "F-16C_Block50", 0.0, 20000.0, 5000.0, 180.0,
+                                            0.0, 0.0, 200.0, 0.0, 0.0);
             REQUIRE(shooter.is_valid());
             REQUIRE(target.is_valid());
             shooter_raw = shooter.id();
             auto lease = kernel.acquire_world_lease();
-            const std::uint64_t seed = stochastic_draw::draw_seed(
-                lease.world(), stochastic_draw::DrawSite::naval_gun_ciws, 1.5, {shooter, target},
-                {2});
+            const std::uint64_t seed =
+                stochastic_draw::draw_seed(lease.world(), stochastic_draw::DrawSite::naval_gun_ciws,
+                                           1.5, {shooter, target}, {2});
             return std::make_tuple(shooter.get<StableEntitySerial>()->value,
                                    target.get<StableEntitySerial>()->value, seed, shooter_raw);
         };
@@ -633,8 +632,8 @@ TEST_SUITE("stable_entity_identity") {
             kernel.reset(808);
             auto shooter = kernel.spawn_unit(Side::Blue, "DDG-51_Flight_I_ASW_Helo_MVP", 0.0, 0.0,
                                              0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-            auto target = kernel.spawn_unit(Side::Red, "DDG-51_Flight_I_ASW_Helo_MVP", 5000.0,
-                                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            auto target = kernel.spawn_unit(Side::Red, "DDG-51_Flight_I_ASW_Helo_MVP", 5000.0, 0.0,
+                                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
             REQUIRE(shooter.is_valid());
             REQUIRE(target.is_valid());
             NavalWeaponMountDefinition mount{};
@@ -656,8 +655,8 @@ TEST_SUITE("stable_entity_identity") {
             if (kill_target) {
                 target.destruct();
             }
-            const bool fired = kernel.fire_naval_weapon(
-                shooter.id(), target_id, static_cast<int>(NavalWeaponType::DeckGun));
+            const bool fired = kernel.fire_naval_weapon(shooter.id(), target_id,
+                                                        static_cast<int>(NavalWeaponType::DeckGun));
             ready_after = shooter.get<NavalWeaponSystem>()->mounts.front().ready_count;
             return fired;
         };
@@ -671,7 +670,7 @@ TEST_SUITE("stable_entity_identity") {
     }
 
     TEST_CASE("site 5 (radar detection) and site 6 (acoustic detection): seed composition "
-             "matches each site's production call shape") {
+              "matches each site's production call shape") {
         // Sensor and acoustic detection don't expose their roll on a component the way sites
         // 1-4/7 do, so this exercises `draw_seed` directly with each site's exact production
         // signature (default_sensor_model.cpp / default_acoustic_model.cpp): two participants,
@@ -683,8 +682,8 @@ TEST_SUITE("stable_entity_identity") {
         auto target = world.entity();
         stamp_stable_serial(owner);
         stamp_stable_serial(target);
-        using stochastic_draw::DrawSite;
         using stochastic_draw::draw_seed;
+        using stochastic_draw::DrawSite;
 
         const std::uint64_t radar_seed =
             draw_seed(world, DrawSite::radar_detection, 12.5, {owner, target});

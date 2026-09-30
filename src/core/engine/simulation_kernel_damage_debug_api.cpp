@@ -214,8 +214,7 @@ bool SimulationKernel::debug_apply_proximity_hit(uint64_t attacker_id, uint64_t 
     if (!attacker.is_valid() || !target.is_valid()) {
         return false;
     }
-    if (debug_boundary_rejects_missing_serial(attacker, "debug_apply_proximity_hit",
-                                              attacker_id) ||
+    if (debug_boundary_rejects_missing_serial(attacker, "debug_apply_proximity_hit", attacker_id) ||
         debug_boundary_rejects_missing_serial(target, "debug_apply_proximity_hit", target_id)) {
         return false;
     }
@@ -233,9 +232,8 @@ bool SimulationKernel::debug_apply_proximity_hit(uint64_t attacker_id, uint64_t 
     const EngagementDamageStateSnapshot before =
         engagement_event_store()->capture_engagement_damage_state(target_id);
     const ecs_world_info_t *seed_time_info = ecs_get_world_info(ecs.c_ptr());
-    const double seed_sim_time = seed_time_info
-                                     ? static_cast<double>(seed_time_info->world_time_total)
-                                     : 0.0;
+    const double seed_sim_time =
+        seed_time_info ? static_cast<double>(seed_time_info->world_time_total) : 0.0;
 
     Missile synthetic{};
     synthetic.attacker_id = attacker_id;
@@ -257,8 +255,8 @@ bool SimulationKernel::debug_apply_proximity_hit(uint64_t attacker_id, uint64_t 
         make_synthetic_warhead_profile(damage, fuse_distance, "debug_synthetic_warhead");
     synthetic.fuze_profile =
         make_synthetic_fuze_profile(fuse_distance, "debug_synthetic_fuze_distance");
-    synthetic.rng_state = make_debug_synthetic_missile_seed(ecs, rng, attacker, target,
-                                                            seed_sim_time, 0.0, 0.0, 0.0);
+    synthetic.rng_state =
+        make_debug_synthetic_missile_seed(ecs, rng, attacker, target, seed_sim_time, 0.0, 0.0, 0.0);
     synthetic.proximity_min_dist_m = 0.0;
     synthetic.proximity_last_dist_m = 0.0;
     synthetic.proximity_engaged = true;
@@ -339,9 +337,8 @@ bool SimulationKernel::debug_apply_local_proximity_hit(uint64_t attacker_id, uin
     const EngagementDamageStateSnapshot before =
         engagement_event_store()->capture_engagement_damage_state(target_id);
     const ecs_world_info_t *seed_time_info = ecs_get_world_info(ecs.c_ptr());
-    const double seed_sim_time = seed_time_info
-                                     ? static_cast<double>(seed_time_info->world_time_total)
-                                     : 0.0;
+    const double seed_sim_time =
+        seed_time_info ? static_cast<double>(seed_time_info->world_time_total) : 0.0;
 
     Missile synthetic{};
     synthetic.attacker_id = attacker_id;
@@ -488,9 +485,8 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_an
     const EngagementDamageStateSnapshot before =
         engagement_event_store()->capture_engagement_damage_state(target_id);
     const ecs_world_info_t *seed_time_info = ecs_get_world_info(ecs.c_ptr());
-    const double seed_sim_time = seed_time_info
-                                     ? static_cast<double>(seed_time_info->world_time_total)
-                                     : 0.0;
+    const double seed_sim_time =
+        seed_time_info ? static_cast<double>(seed_time_info->world_time_total) : 0.0;
 
     Missile synthetic{};
     synthetic.attacker_id = attacker_id;
