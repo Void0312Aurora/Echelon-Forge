@@ -13,6 +13,8 @@ enum class GroundWeaponType : int {
     Rifle = 1,
 };
 
+inline constexpr double kGroundWeaponNeverFiredTimeS = -1.0;
+
 struct GroundWeapon {
     GroundWeaponType weapon_type = GroundWeaponType::Rifle;
     int ammunition = 0;
@@ -21,7 +23,7 @@ struct GroundWeapon {
     double engagement_range_m = 0.0;
     double hit_probability = 0.0;
     double cooldown_s = 0.0;
-    double last_fire_time_s = -std::numeric_limits<double>::infinity();
+    double last_fire_time_s = kGroundWeaponNeverFiredTimeS;
 };
 
 struct GroundWeaponState {
@@ -39,7 +41,7 @@ struct GroundWeaponState {
         .engagement_range_m = 300.0,
         .hit_probability = 1.0,
         .cooldown_s = 0.5,
-        .last_fire_time_s = -std::numeric_limits<double>::infinity(),
+        .last_fire_time_s = kGroundWeaponNeverFiredTimeS,
     });
     return state;
 }

@@ -422,7 +422,7 @@ std::vector<double> SimulationKernel::get_ground_weapon_state(uint64_t entity_id
     const ecs_world_info_t *info = ecs_get_world_info(ecs.c_ptr());
     const double current_time = info ? static_cast<double>(info->world_time_total) : 0.0;
     const double cooldown_remaining =
-        std::isfinite(weapon.last_fire_time_s)
+        std::isfinite(weapon.last_fire_time_s) && weapon.last_fire_time_s >= 0.0
             ? std::max(0.0,
                        std::max(0.0, weapon.cooldown_s) + weapon.last_fire_time_s - current_time)
             : 0.0;

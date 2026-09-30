@@ -1204,7 +1204,7 @@ bool SimulationKernelWeaponReleaseService::fire_ground_weapon(uint64_t attacker_
     const ecs_world_info_t *info = ecs_get_world_info(ecs_.c_ptr());
     const double current_time = info ? static_cast<double>(info->world_time_total) : 0.0;
     const double cooldown = std::max(0.0, weapon.cooldown_s);
-    if (std::isfinite(weapon.last_fire_time_s) &&
+    if (std::isfinite(weapon.last_fire_time_s) && weapon.last_fire_time_s >= 0.0 &&
         current_time - weapon.last_fire_time_s < cooldown) {
         return false;
     }
