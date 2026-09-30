@@ -158,9 +158,9 @@ def _registry_graph() -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[
       r'X\("([^"]+)",\s*"([^"]+)",\s*(\d+),', kernel_block
     )
   ]
-  if len(components) != 85 or len(systems) != 34 or len(kernel_systems) != 2:
+  if len(components) != 85 or len(systems) != 34 or len(kernel_systems) != 3:
     raise ContractError(
-      [ValidationIssue("evidence.registry_drift", "$", "expected 85 components, 2 kernel systems, and 34 resolved systems")]
+      [ValidationIssue("evidence.registry_drift", "$", "expected 85 components, 3 kernel systems, and 34 resolved systems")]
     )
   return components, kernel_systems, systems
 
