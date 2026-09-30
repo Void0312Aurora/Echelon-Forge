@@ -1,13 +1,9 @@
 # Stable Entity Identity For Stochastic Draws
 
-Status: `2026-09-30` accepted at bounded scope on `work/stable-entity-identity`, off
-`origin/main` `a1114fcd`. P0–P5 are done. The single independent review returned HOLD on one
-blocker, and every finding is fixed (see Review Record). Pending: the owner's decision to push
-and open a PR to `main`, then army integrates main and converts its site 4.
-`a1114fcd`. The owner chose to land this package on main as infrastructure, so it runs here
-rather than on `work/army-mechanisms`. P0, P1, P2 and P3 are done: P2-B and P3 were written on
-army and ported with `-x`, and army's site 4 (Ground direct fire) was split out. What remains
-is P4, which regenerates the evidence and re-decides the Air nodes, then the P5 acceptance review.
+Status: `2026-09-30` accepted at bounded scope. P0–P5 are done. The single independent review
+returned HOLD on one blocker, and every finding is fixed (see Review Record). The package lands on
+`main` as infrastructure, as the five-PR stack #74–#78 on `22455c12`. Pending: the merge, and then
+army's integration of main, which converts its site 4 (Ground direct fire).
 
 Language:
 - English canonical: `README.md`
@@ -17,7 +13,7 @@ Document kind: `task`
 Lifecycle: `active`
 Canonical: `docs/architecture/work/active/stable_entity_identity/README.md`
 Owner: `architecture/runtime-composition`
-Last verified: `2026-09-29`
+Last verified: `2026-09-30`
 
 Inputs:
 
@@ -401,6 +397,14 @@ One more defect was found while writing S3. A native test that registers *new C+
 component types* in a kernel world poisons the process-wide flecs type-id cache for later
 kernels, which is the same class as `3dc2b718`. The census case therefore models extra census
 as extra entities, and its comment records why.
+
+Landing review, 2026-09-30. The automated PR review on #74–#78 found no blocking issue and
+made two suggestions:
+
+| Suggestion | Disposition |
+| --- | --- |
+| #78, P3: the header carried two status narratives | **Fixed.** A single current status remains, and `Last verified` moved to `2026-09-30`. |
+| #76, P2: the three premise/property rewrites only require `premise_satisfied > 0`, so a regression that cuts reachability to 1 of 16 seeds would stay green. It suggests a loose minimum premise count taken from the measured baseline | **Declined, and recorded here.** A minimum count would pin the stochastic incidence rate, which is a calibration property; the rewrite deliberately scopes these tests to the conditional property. It would also be the uncalibrated threshold this package refuses to add. The rate did not move with this package: the K=32 main-vs-package fractions agree within ±0.2. If incidence itself needs to be guarded, that is a calibration test with owned evidence, which is outside this package. |
 
 ## Acceptance Gate
 
