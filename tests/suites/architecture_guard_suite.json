@@ -92,6 +92,7 @@
     "tests/architecture/scripted_agent/test_naval_entrypoint_contract.py",
     "tests/architecture/scripted_agent/test_wrapper_neutral_route.py",
     "tests/architecture/tasking_contracts/test_air_strategy_physical_layers.py",
+    "tests/architecture/tasking_contracts/test_air_tasking_physical_layers.py",
     "tests/architecture/tasking_contracts/test_decision_registry.py",
     "tests/architecture/tasking_contracts/test_tasking_contracts_physical_layers.py",
     "tests/architecture/structural_boundaries/test_binding_quarantine_boundaries.py",

@@ -2316,3 +2316,145 @@ to a dedicated owner-local evidence document.
   requested, so this closes the entry-point dependency edge but does not yet
   prove an independent no-RL world implementation or full Air playable
   promotion.
+
+### 2026-09-27 — Air C2 transition policy extraction
+
+- Starting commit: `6ca58df3`.
+- Change batch: extract the pure `SCRAMBLE -> CAP -> RTB -> RECOVER_LAND`
+  transition algorithm into
+  `python/tasking_contracts/air/tasking/c2_policy.py`. The policy consumes a
+  typed information-state projection and returns only next task, transition
+  provenance, and station-timer state. It does not read a loader, author a
+  command, touch a kernel, or import RL/native/runtime adapters.
+- Consumer update: the maintained `ScriptedC2TaskManager` injects the default
+  `ScriptedC2TransitionPolicy` and passes the existing report, geometry,
+  route-exhaustion, and readiness products into it. Task DTO projection,
+  command-chain synchronization, and domain report ownership remain in the
+  existing manager.
+- Substitution/evidence: the policy tests cover scramble thresholds, station
+  timer completion, report-triggered RTB, route-exhaustion precedence, and
+  recovery-window gating. Air tasking physical-layer tests enforce no RL/Gym/
+  native/NumPy imports. Existing leader/tasking/bridge tests passed `34 passed,
+  4 subtests passed`; Python compilation and `git diff --check` passed.
+- Boundary decision: this closes one replaceable Air C2 algorithm seam and
+  proves the transition logic is independent of RL. It does not yet relocate
+  the full DTO-producing manager from `python.rl.tasking`, nor does it claim
+  no-RL scenario execution or final Air `playable` promotion.
+
+### 2026-09-27 — Air C2 information assessment extraction
+
+- Starting commit: `a886bf79`.
+- Change batch: move station-entry assessment, pilot-report validity, and
+  recovery-window geometry gating into the RL-independent
+  `python/tasking_contracts/air/tasking/c2_observation.py` module. The module
+  accepts declared scalar/object projections and injected report enum values;
+  it does not read a loader, mutate DTOs, import RL/Gym/native bindings, or
+  resolve compiled enums.
+- Consumer update: `ScriptedC2TaskManager` remains the runtime adapter, but now
+  only collects loader observations, supplies compiled report codes, and
+  projects the pure results into its existing task/report state. The default
+  thresholds and report reasons are preserved.
+- Substitution/evidence: pure tests cover station geometry, invalid station
+  and bingo reports, and recovery geometry gates. The C2, leader, tasking,
+  bridge, and physical-layer regressions passed `76 passed, 4 subtests
+  passed`; Python compilation and `git diff --check` passed.
+- Boundary decision: three additional C2 algorithms now have an independent
+  substitution seam. The DTO-producing manager, common-core task-order
+  profile, and default WorldBatch provider remain open RL-owned adapter
+  surfaces; this batch does not claim no-RL scenario execution or Air
+  `playable` promotion.
+
+### 2026-09-27 — Air C2 task-order projection port
+
+- Starting commit: `6394be9d`.
+- Change batch: add the RL-independent `C2TaskOrderProjection` protocol under
+  `python/tasking_contracts/air/tasking/task_order_projection.py`. Move the
+  compiled Air task-order mutation and common-core profile application into
+  the explicit `python/rl/tasking/air_c2_task_order_projection.py` adapter.
+- Consumer update: `ScriptedC2TaskManager` accepts and validates an injected
+  projection and no longer owns `_retask_order` or its route-block mutation
+  helpers. Existing callers use the default compiled adapter; tests also prove
+  a recording projection can replace it at the manager boundary.
+- Evidence: Air tasking/profile, manager runtime, bridge, and physical-layer
+  tests passed `69 passed, 4 subtests passed`; Python compilation and
+  `git diff --check` passed. An initial test run exposed three tests calling
+  the removed private manager method; those tests were migrated to the public
+  projection port before the passing rerun.
+- Boundary decision: task-order DTO ownership is now explicit at an adapter
+  boundary, but the default adapter still depends on RL profile/common-core
+  code and compiled bindings. The full C2 manager migration and independent
+  no-RL simulation provider remain open.
+
+### 2026-09-27 — Air C2 manager moved to the neutral tasking layer
+
+- Starting commit: `86f721c2`.
+- Change batch: move `ScriptedC2TaskManager` state, observation collection,
+  recovery readiness, report assessment, and transition orchestration into
+  `python/tasking_contracts/air/tasking/c2_manager.py`. The manager now
+  requires injected `C2ReportTypeCodes` and `C2TaskOrderProjection` ports;
+  its implementation contains no RL, Gym, native-binding, or compiled-enum
+  import.
+- Adapter update: `python/rl/tasking/air_adapter.py` is now the explicit
+  compiled Air adapter. It binds report enum values and the task-order
+  projection before constructing the neutral manager. The generic bridge
+  fails closed for profiles without a domain factory, and Ground/Naval
+  adapters no longer re-export the Air-only manager.
+- Consumer update: internal tests now import the neutral manager for constants
+  and obtain runtime instances through the Air factory. The RL leader module
+  retains only a private constant reference for phase gating and no longer
+  exposes the manager as an RL-owned symbol.
+- Evidence: Air physical-layer, leader/tasking/profile, architecture boundary,
+  and mission-runtime tests passed `179 passed, 10 subtests passed`; Python
+  compilation and `git diff --check` passed with the maintained local
+  `CMO_BUILD_DIR` binding. A test run without that binding remains rejected by
+  the repository's local-`ef_py` fail-closed guard.
+- Boundary decision: C2 state-machine ownership is now neutral and can be
+  supplied to the simulator independently of RL. The compiled Air adapter,
+  common-core profile, WorldBatch provider, and a complete no-RL playable
+  scenario remain open; this batch does not claim final Air `playable`
+  promotion.
+
+### 2026-09-27 — Air leader-phase policy extraction
+
+- Starting commit: `680d566e`.
+- Change batch: add the RL-independent
+  `python/tasking_contracts/air/tasking/leader_phase_policy.py` policy seam.
+  It maps normalized command, route, altitude, speed, DME, and ground-state
+  facts to `scramble`, `takeoff`, `departure`, `transit_to_station`, `rtb`,
+  `approach_armed`, `landing_final`, or `rollout` without reading a loader,
+  constructing DTOs, resolving compiled enums, or importing RL/Gym code.
+- Consumer update: `RuleBasedLeaderPhaseManager` now injects a
+  `LeaderPhasePolicy` and passes a typed `LeaderPhaseInput` to the default
+  `ScriptedLeaderPhasePolicy`. Its former inline `_infer_phase_name` algorithm
+  was removed; command/report projection and kernel synchronization remain in
+  the runtime adapter.
+- Evidence: pure phase-policy, Air physical-layer, leader/tasking/profile, and
+  mission-runtime regressions passed `196 passed, 10 subtests passed`; Python
+  compilation and `git diff --check` passed with the maintained local
+  `CMO_BUILD_DIR` binding.
+- Boundary decision: phase selection is now independently replaceable at the
+  algorithm layer. The leader DTO projection, common-core profile, compiled
+  Air adapter, WorldBatch provider, and complete no-RL playable command/report
+  scenario remain open; this batch does not promote Air beyond
+  `playable_candidate`.
+
+### 2026-09-27 — Air leader approach gate extraction
+
+- Starting commit: `231eed9f`.
+- Change batch: add the RL-independent
+  `python/tasking_contracts/air/tasking/leader_approach_policy.py` gate for
+  post-waypoint landing entry. It evaluates task admission, landing command
+  identity, route exhaustion, ILS validity, DME/localizer/glide-slope limits,
+  runway heading, and runway-frame geometry from a typed input.
+- Consumer update: `RuleBasedLeaderPhaseManager` now collects loader-owned ILS,
+  beacon, and runway-frame facts, injects `LeaderApproachPolicy`, and delegates
+  the pure gate. The existing recovery-task readiness callback and fail-closed
+  terminal geometry behavior are preserved in the adapter.
+- Evidence: Air tasking policy, physical-layer, leader/profile, and mission
+  runtime regressions passed `213 passed, 10 subtests passed`; Python
+  compilation and `git diff --check` passed with the maintained local
+  `CMO_BUILD_DIR` binding.
+- Boundary decision: phase and approach selection are now separate neutral
+  algorithms. DTO construction, common-core normalization, compiled tasking
+  projection, WorldBatch execution, and complete no-RL playable command/report
+  closure remain open; Air stays `playable_candidate`.

@@ -28,14 +28,14 @@
   },
   "entries": [
     {
-      "file": "python/rl/tasking/leader_tasking.py",
+      "file": "python/tasking_contracts/air/tasking/c2_manager.py",
       "tokens": ["allowed to directly author"],
       "token_counts": {"allowed to directly author": 1},
       "categories": ["scope"],
       "form": "docstring-convention",
       "semantic": "ScriptedC2TaskManager authority-scope folklore: the C2 layer may consume shared situation data and pilot reports but is *not* allowed to directly author low-level mission commands (that authority belongs to the leader layer). Enforced only by prose today; matched on the prose (docstring) surface.",
-      "owner": "T9 tasking-authority surface",
-      "note": "Prime example of authority as folklore rather than inspectable data. Prose-surface token."
+      "owner": "air/scripted-agent C2 tasking layer",
+      "note": "Moved with the physical Air tasking contract layer; this entry pins the prose boundary at the maintained owner rather than the retired RL-facing shim."
     },
     {
       "file": "python/rl/tasking/common_core_profile.py",
@@ -178,26 +178,6 @@
       "note": "Updated for the physical Air engagement layer; the four occurrences are the declared observation read, the boolean gate, the retained decision-info field, and the emitted action field."
     },
     {
-      "file": "python/tasking_contracts/air/strategy/action.py",
-      "tokens": ["authorization_to_fire"],
-      "token_counts": {"authorization_to_fire": 3},
-      "categories": ["gating"],
-      "form": "scripted-action-gate",
-      "semantic": "The RL-independent Air action adapter consumes authorization_to_fire to gate master-arm and station-availability action fields. It does not grant authority, resolve holder conflicts, or write mission-command authority state; it translates a declared eligibility input into an action packet.",
-      "owner": "air/scripted-agent action adapter",
-      "note": "Registered after physical Air layering; the two occurrences are the master-arm gate and the station-availability gate."
-    },
-    {
-      "file": "python/tasking_contracts/air/strategy/observation.py",
-      "tokens": ["authorization_to_fire"],
-      "token_counts": {"authorization_to_fire": 1},
-      "categories": ["gating"],
-      "form": "scripted-observation-field",
-      "semantic": "The RL-independent Air observation adapter decodes the declared authorization_to_fire mission field into the typed tactical observation. It transports a gate input and does not grant authority, resolve holder conflicts, or write mission-command authority state.",
-      "owner": "air/scripted-agent observation adapter",
-      "note": "Registered after physical Air layering; the single occurrence is the required mission-field lookup."
-    },
-    {
       "file": "python/tasking_contracts/air/strategy/contracts.py",
       "tokens": ["authorization_to_fire"],
       "token_counts": {"authorization_to_fire": 2},
@@ -216,6 +196,26 @@
       "semantic": "The RL-independent Air planner carries authorization_to_fire through candidate evaluation and blocks a release plan when the declared gate is closed. It does not grant authority, resolve holder conflicts, or write mission-command authority state.",
       "owner": "air/scripted-agent strategy layer",
       "note": "Registered after physical layering; planner gating remains downstream of the environment-owned release authority."
+    },
+    {
+      "file": "python/tasking_contracts/air/strategy/action.py",
+      "tokens": ["authorization_to_fire"],
+      "token_counts": {"authorization_to_fire": 3},
+      "categories": ["gating"],
+      "form": "scripted-strategy-action-adapter",
+      "semantic": "The RL-independent Air action adapter uses the declared authorization_to_fire input when constructing the maintained fire and station action fields. It does not grant authority, resolve holder conflicts, or write mission-command authority state.",
+      "owner": "air/scripted-agent strategy layer",
+      "note": "Registered during the 2026-09-27 neutral contract ownership migration; action transport remains downstream of environment-owned release authority."
+    },
+    {
+      "file": "python/tasking_contracts/air/strategy/observation.py",
+      "tokens": ["authorization_to_fire"],
+      "token_counts": {"authorization_to_fire": 1},
+      "categories": ["gating"],
+      "form": "scripted-strategy-observation-adapter",
+      "semantic": "The RL-independent Air observation adapter decodes the declared authorization_to_fire mission field into the typed tactical observation. It does not grant authority, resolve holder conflicts, or write mission-command authority state.",
+      "owner": "air/scripted-agent strategy layer",
+      "note": "Registered during the 2026-09-27 neutral contract ownership migration; observation decoding remains a read-only domain adapter."
     }
   ]
 }

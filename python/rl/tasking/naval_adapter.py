@@ -8,7 +8,7 @@ from .common_core_profile import (
     apply_task_order_common_core_defaults,
     apply_task_order_common_core_spec,
 )
-from .leader_tasking import RuleBasedLeaderPhaseManager, ScriptedC2TaskManager
+from .leader_tasking import RuleBasedLeaderPhaseManager
 from python.rl.profile.naval_profile import (
     build_kernel_mission_command,
     infer_coordination_mode,
@@ -25,7 +25,6 @@ from python.rl.profile.naval_profile import (
 
 __all__ = [
     "RuleBasedLeaderPhaseManager",
-    "ScriptedC2TaskManager",
     "apply_leader_intent_common_core_defaults",
     "apply_leader_intent_common_core_spec",
     "apply_pilot_report_common_core_defaults",
