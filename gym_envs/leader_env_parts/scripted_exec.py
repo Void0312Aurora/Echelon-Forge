@@ -117,7 +117,7 @@ class ScriptedExecutiveController:
         phase_name = self._phase_name()
         observation_version = (
             f"reset:{self._runtime_agent.reset_index}:"
-            f"step:{int(getattr(self.env.unwrapped, "steps", 0))}"
+            f"step:{int(getattr(self.env.unwrapped, 'steps', 0))}"
         )
         self._last_runtime_step = self._runtime_agent.step(
             observation=obs,
