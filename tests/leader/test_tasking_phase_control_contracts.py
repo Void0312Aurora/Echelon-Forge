@@ -9,7 +9,11 @@ from python.runtime_bootstrap import ensure_repo_imports
 
 ensure_repo_imports()
 
-from python.rl.tasking.leader_tasking import RuleBasedLeaderPhaseManager, ScriptedC2TaskManager
+from python.rl.tasking import air_adapter as _air_adapter_module
+from python.rl.tasking import air_c2_task_order_projection as _air_projection_module
+from python.rl.tasking.air_adapter import make_scripted_c2_task_manager
+from python.rl.tasking.leader_tasking import RuleBasedLeaderPhaseManager
+from python.tasking_contracts.air.tasking.c2_manager import ScriptedC2TaskManager
 from python.rl.tasking import leader_tasking as _leader_tasking_module
 
 
@@ -74,7 +78,11 @@ _FAKE_EF = SimpleNamespace(
 
 @contextmanager
 def _patched_tasking_ef():
-  with mock.patch.object(_leader_tasking_module, "ef_py", _FAKE_EF):
+  with (
+    mock.patch.object(_leader_tasking_module, "ef_py", _FAKE_EF),
+    mock.patch.object(_air_adapter_module, "ef_py", _FAKE_EF),
+    mock.patch.object(_air_projection_module, "ef_py", _FAKE_EF),
+  ):
     yield
 
 
@@ -218,9 +226,9 @@ class TaskingPhaseControlTests(unittest.TestCase):
       },
     )
 
-    manager = ScriptedC2TaskManager()
+    manager = make_scripted_c2_task_manager()
     with _patched_tasking_ef():
-      manager._retask_order(loader, task_name=manager.TASK_SCRAMBLE, sim_time_s=0.0)
+      manager.task_order_projection.retask_order(loader, task_name=manager.TASK_SCRAMBLE, sim_time_s=0.0)
 
     task = loader.task_order
     self.assertAlmostEqual(float(task.target_altitude_m), 2430.2, places=3)
@@ -263,9 +271,9 @@ class TaskingPhaseControlTests(unittest.TestCase):
       waypoint_idx=0,
     )
 
-    manager = ScriptedC2TaskManager()
+    manager = make_scripted_c2_task_manager()
     with _patched_tasking_ef():
-      manager._retask_order(loader, task_name=manager.TASK_CAP, sim_time_s=0.0)
+      manager.task_order_projection.retask_order(loader, task_name=manager.TASK_CAP, sim_time_s=0.0)
 
     task = loader.task_order
     self.assertAlmostEqual(float(task.target_altitude_m), 1650.0, places=3)
@@ -284,7 +292,7 @@ class TaskingPhaseControlTests(unittest.TestCase):
     truth = SimpleNamespace(x=-9800.0, y=100.0)
     inst = SimpleNamespace(alt_radar=900.0, heading=90.0)
 
-    manager = ScriptedC2TaskManager()
+    manager = make_scripted_c2_task_manager()
     self.assertFalse(manager._recovery_ready(loader, truth=truth, inst=inst))
 
   def test_recovery_ready_accepts_terminal_feasible_geometry(self):
@@ -296,7 +304,7 @@ class TaskingPhaseControlTests(unittest.TestCase):
     truth = SimpleNamespace(x=-9200.0, y=50.0)
     inst = SimpleNamespace(alt_radar=900.0, heading=104.0)
 
-    manager = ScriptedC2TaskManager()
+    manager = make_scripted_c2_task_manager()
     self.assertTrue(manager._recovery_ready(loader, truth=truth, inst=inst))
 
   def test_rtb_route_exhaustion_transitions_to_recover_land(self):
@@ -331,7 +339,7 @@ class TaskingPhaseControlTests(unittest.TestCase):
     truth = SimpleNamespace(x=-8200.0, y=0.0)
     inst = SimpleNamespace(alt_radar=450.0, ground_speed=84.0, heading=90.0)
 
-    manager = ScriptedC2TaskManager()
+    manager = make_scripted_c2_task_manager()
     manager.current_task_name = manager.TASK_RTB
     with _patched_tasking_ef():
       state = manager.update(loader, sim_time_s=42.0, truth=truth, inst=inst)

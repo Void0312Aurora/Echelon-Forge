@@ -181,12 +181,24 @@ def make_rule_based_leader_phase_manager(loader: Any | None = None, **kwargs: An
 
 def make_scripted_c2_task_manager(loader: Any | None = None, **kwargs: Any):
     profile = tasking_profile_for_loader(loader) if loader is not None else resolve_tasking_profile(None)
-    return profile.ScriptedC2TaskManager(**kwargs)
+    factory = getattr(profile, "make_scripted_c2_task_manager", None)
+    if callable(factory):
+        return factory(**kwargs)
+    raise RuntimeError(
+        "scripted C2 task manager is not admitted for tasking profile "
+        f"{getattr(profile, '__name__', profile)!s}; select an explicit domain adapter"
+    )
 
 
 def scripted_c2_task_manager_class(loader: Any | None = None):
     profile = tasking_profile_for_loader(loader) if loader is not None else resolve_tasking_profile(None)
-    return profile.ScriptedC2TaskManager
+    manager_class = getattr(profile, "ScriptedC2TaskManager", None)
+    if manager_class is None or not callable(getattr(profile, "make_scripted_c2_task_manager", None)):
+        raise RuntimeError(
+            "scripted C2 task manager class is not admitted for tasking profile "
+            f"{getattr(profile, '__name__', profile)!s}; select an explicit domain adapter"
+        )
+    return manager_class
 
 
 def is_patrol_task(

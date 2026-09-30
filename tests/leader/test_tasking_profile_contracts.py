@@ -20,10 +20,8 @@ from python.rl.tasking.common_core_profile import ( # noqa: E402
   normalize_task_order_spec,
   task_observation_codes,
 )
-from python.rl.tasking.leader_tasking import ( # noqa: E402
-  RuleBasedLeaderPhaseManager,
-  ScriptedC2TaskManager,
-)
+from python.rl.tasking.air_adapter import make_scripted_c2_task_manager # noqa: E402
+from python.rl.tasking.leader_tasking import RuleBasedLeaderPhaseManager # noqa: E402
 
 
 class _DummySim:
@@ -42,7 +40,27 @@ class _DummySim:
     )
 
 
+class _RecordingC2TaskOrderProjection:
+  def __init__(self) -> None:
+    self.calls: list[tuple[object, str, float]] = []
+
+  def retask_order(self, loader: object, *, task_name: str, sim_time_s: float) -> None:
+    self.calls.append((loader, task_name, sim_time_s))
+
+
 class CommonCoreSemanticTests(unittest.TestCase):
+  def test_scripted_c2_accepts_a_replaceable_task_order_projection(self) -> None:
+    projection = _RecordingC2TaskOrderProjection()
+    manager = make_scripted_c2_task_manager(task_order_projection=projection)
+    loader = SimpleNamespace(scenario_data={}, task_order=object())
+
+    manager.reset(loader, sim_time_s=3.5)
+
+    self.assertEqual(len(projection.calls), 1)
+    self.assertIs(projection.calls[0][0], loader)
+    self.assertEqual(projection.calls[0][1], manager.TASK_SCRAMBLE)
+    self.assertEqual(projection.calls[0][2], 3.5)
+
   def test_normalize_task_order_spec_without_profile_context_uses_common_fallback(self) -> None:
     normalized = normalize_task_order_spec(
       {
@@ -207,13 +225,13 @@ class CommonCoreSemanticTests(unittest.TestCase):
       waypoint_idx=0,
     )
 
-    manager = ScriptedC2TaskManager()
-    manager._retask_order(loader, task_name=manager.TASK_CAP, sim_time_s=5.0)
+    manager = make_scripted_c2_task_manager()
+    manager.task_order_projection.retask_order(loader, task_name=manager.TASK_CAP, sim_time_s=5.0)
     self.assertEqual(order.task_family, ef_py.TaskFamily.Patrol)
     self.assertEqual(order.tactical_unit_type, ef_py.TacticalUnitType.TacticalUnit)
     self.assertEqual(order.coordination_mode, ef_py.CoordinationMode.Attached)
 
-    manager._retask_order(loader, task_name=manager.TASK_RTB, sim_time_s=10.0)
+    manager.task_order_projection.retask_order(loader, task_name=manager.TASK_RTB, sim_time_s=10.0)
     self.assertEqual(order.task_family, ef_py.TaskFamily.Recover)
     self.assertEqual(order.coordination_mode, ef_py.CoordinationMode.Recover)
     self.assertEqual(int(order.recovery_site_id), 9)
