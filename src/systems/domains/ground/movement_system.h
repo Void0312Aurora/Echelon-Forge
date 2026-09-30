@@ -116,8 +116,8 @@ inline void register_ground_infantry_movement_system(flecs::world &ecs) {
                         const auto transition_effects =
                             ground_infantry_movement_detail::evaluate_transition_movement_effects(
                                 *environment, transform[i].x, transform[i].y,
-                                transform[i].x + probe_vx * dt,
-                                transform[i].y + probe_vy * dt, ground_task.stance);
+                                transform[i].x + probe_vx * dt, transform[i].y + probe_vy * dt,
+                                ground_task.stance);
                         if (transition_effects.sample_count > 0 &&
                             std::isfinite(transition_effects.average_combined_multiplier)) {
                             effective_speed = requested_speed *

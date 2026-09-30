@@ -388,9 +388,8 @@ double SimulationKernel::get_ground_slope_deg(double x, double y) {
     return std::numeric_limits<double>::quiet_NaN();
 }
 
-std::array<double, 8> SimulationKernel::get_ground_movement_effect_observation(double x,
-                                                                                 double y,
-                                                                                 int stance_code) {
+std::array<double, 8> SimulationKernel::get_ground_movement_effect_observation(double x, double y,
+                                                                               int stance_code) {
     auto composition_lock = acquire_composition_operation();
     ensure_active("get_ground_movement_effect_observation");
     if (IEnvironmentModel *model = environment_model()) {
@@ -431,9 +430,9 @@ std::array<double, 7> SimulationKernel::get_ground_field_semantic_observation(do
 }
 
 std::array<double, 7> SimulationKernel::get_ground_transition_observation(double from_x,
-                                                                            double from_y,
-                                                                            double to_x,
-                                                                            double to_y) {
+                                                                          double from_y,
+                                                                          double to_x,
+                                                                          double to_y) {
     auto composition_lock = acquire_composition_operation();
     ensure_active("get_ground_transition_observation");
     if (IEnvironmentModel *model = environment_model()) {
@@ -470,8 +469,10 @@ std::array<double, 10> SimulationKernel::get_ground_transition_movement_observat
                 observation.average_combined_multiplier,
                 static_cast<double>(observation.sample_count)};
     }
-    return {0.0, 0.0, static_cast<double>(IEnvironmentModel::SurfaceType::Obstacle), 0.0, 1.0,
-            0.0, 0.0, 0.0, 0.0, 0.0};
+    return {0.0, 0.0, static_cast<double>(IEnvironmentModel::SurfaceType::Obstacle),
+            0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0,
+            0.0};
 }
 
 void SimulationKernel::set_maritime_state(double sea_state, double wave_heading_deg,

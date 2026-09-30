@@ -710,7 +710,8 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
     }
 
     GroundTransitionObservation get_ground_transition_observation(double from_x, double from_y,
-                                                                   double to_x, double to_y) override {
+                                                                  double to_x,
+                                                                  double to_y) override {
         GroundTransitionObservation observation;
         observation.configured = raster_layer_.arnis_metric_bundle;
         observation.distance_m = std::hypot(to_x - from_x, to_y - from_y);
@@ -718,8 +719,7 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
             1, static_cast<std::size_t>(std::ceil(observation.distance_m / 5.0)));
         SurfaceType endpoint_surface = SurfaceType::Obstacle;
         for (std::size_t index = 0; index <= sample_count; ++index) {
-            const double fraction = static_cast<double>(index) /
-                                    static_cast<double>(sample_count);
+            const double fraction = static_cast<double>(index) / static_cast<double>(sample_count);
             const double x = from_x + (to_x - from_x) * fraction;
             const double y = from_y + (to_y - from_y) * fraction;
             const auto terrain = get_terrain_at(x, y);
@@ -733,10 +733,10 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
                 observation.obstacle_blocked = true;
             }
         }
-        observation.destination_surface = observation.water_blocked
-                                             ? SurfaceType::Water
-                                             : (observation.obstacle_blocked ? SurfaceType::Obstacle
-                                                                              : endpoint_surface);
+        observation.destination_surface =
+            observation.water_blocked
+                ? SurfaceType::Water
+                : (observation.obstacle_blocked ? SurfaceType::Obstacle : endpoint_surface);
         observation.passable = !observation.water_blocked && !observation.obstacle_blocked;
         return observation;
     }
