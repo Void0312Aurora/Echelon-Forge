@@ -4,10 +4,13 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/domains/naval/work/active/carrier_strike_group_engagement/README.md`
 Owner: `domains/naval`
-Last verified: `2026-09-28`
+Last verified: `2026-09-30`
 
-Status: `2026-09-28` active. `P0 Boundary` accepted by the owner on `2026-09-28`;
-`CSG-S0` has started with `S0-A` order-of-battle research.
+Status: `2026-09-30` active. `P0 Boundary`, `S0-A`..`S0-D`, and `S0-X` are
+accepted; `S0-B` geodetic placement is verified at `087c1928`. S0-X closes
+with native deterministic replay artifacts and agent-free spectator profiles
+for both variants. The package itself remains open because later stages are
+not yet implemented.
 
 Language:
 
@@ -61,20 +64,21 @@ remains dated provenance and is not extended.
 
 ## Current State
 
-Measured on `work/naval-mechanisms` at `5fa7fc9e` on `2026-09-28`. The
+The initial inventory was measured on `work/naval-mechanisms` at `5fa7fc9e` on
+`2026-09-28`. The current checkpoint is `087c1928` on `2026-09-30`; the
 [current status](carrier_strike_group_engagement_current_status_20260928.md)
-records the full inventory.
+records the full inventory and the S0-X runtime evidence.
 
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
-| Naval platforms | bounded content | `examples/config/database/ships/units/*.json` (DDG-51 Flight I, ASW-helo DDG, Kilo MVP, Red surface placeholder, T-AKE) | no carrier, cruiser, Type 055/052D, SSN, or Chinese replenishment unit exists |
+| Naval platforms | S0 named content | `examples/config/database/**/csg/{us,cn}/` and the S0-C content tests | S0 loadouts are content and spawn evidence; anti-ship and torpedo mechanisms remain deferred |
 | Ship / submarine motion | kinematic | `src/systems/domains/naval/ship_motion_system.h`, `submarine_motion_system.h` | rate-limited speed/heading/depth; no hydrodynamics, turning circle, route following, or damage coupling |
 | Command projection | accepted | `NavalCommandIntent` (`src/components/domains/naval/command/mission_command_naval.h`) | one screen station per ship; no multi-ship formation or group command hierarchy |
-| Surface sensing | bounded | radar with sea clutter, ducting, and a horizon proxy (`src/models/domains/naval/naval_sensor_maritime_adapter.h`) | flat world; no geodetic frame |
+| Surface sensing | bounded | radar with sea clutter, ducting, and a horizon proxy (`src/models/domains/naval/naval_sensor_maritime_adapter.h`) | sensor horizon remains flat-world; S0 placement now uses the shared geodetic frame |
 | Undersea sensing | passive only | `src/systems/systems/sonar_system.h`, `src/models/systems/default_acoustic_model.cpp` | reads true positions of every Ship/Submarine; no active sonar, propagation profile, towed array, or sonobuoy |
 | Naval weapons | bounded | `src/components/domains/naval/combat/weapon_naval.h`; `naval_mission_weapon_release_system.h` | gun and CIWS resolve as one hit roll; VLS only via the pilot-action path; no anti-ship missile, ship SAM family, or torpedo |
 | Naval damage | synthetic | `DM-N1` profile in `src/components/domains/naval/combat/damage_naval.h`; `src/systems/combat/damage_system_naval.h` | compartment effects seed only on hitbox hits; ship motion ignores the damage state |
-| Carrier aviation | absent | none | no catapult, arresting gear, deck/hangar capacity, sortie generation, or carrier landing |
+| Carrier aviation | S0 inventory only | `meta.csg.groups[*].embarked_inventory`; named aircraft records | no flight-deck contact surface or deck cycle; inventory aircraft are not live entities until S2 |
 | Air combat substrate | maintained on `main`; scripted stack unmerged | air combat scenarios; `origin/codex/scripted-stack-*` | reused, not re-owned; no carrier-based aircraft unit exists |
 | Learned naval policy | absent | three smoke entries under `examples/config/training/active/naval/` | no checkpoint or training result |
 
@@ -123,7 +127,7 @@ in parallel because its write sets are largely disjoint; it must join before
 | Phase | Stage scenario | Naval-owned work (system dependencies in the register below) | Claim ceiling | Status |
 | --- | --- | --- | --- | --- |
 | `P0 Boundary` | none | package scope, stage ladder, claim ceilings, parameter-provenance policy | docs only | accepted |
-| `CSG-S0` | both groups spawn statically with full order of battle | named units and loadouts with parameter provenance; scenario schema for group composition | `G0` | active |
+| `CSG-S0` | both groups spawn statically with full order of battle | named units, group schema, and shared geodetic placement | `G0` | accepted `2026-09-30`; S0-X replay/viz closure recorded |
 | `CSG-S1` | both groups transit in formation | group formation and screen geometry; route following; ship turning and speed response; damage-to-mobility coupling; group replenishment scheduling | `G1`-`G2` | planned |
 | `CSG-S2` | deck cycle: launch waves, CAP, recovery | catapult and arresting-gear cycle; deck, elevator, and hangar capacity; sortie generation; recovery pattern; embarked helicopter operations | `G3` | planned |
 | `CSG-S3` | mutual search and tactical picture | naval sensor platform adapters and group track reporting; naval emission-control doctrine | `G4` | planned |
@@ -148,7 +152,7 @@ ready to start.
 
 | Mechanism | System owner | Owner package | Needed by | Naval-owned part |
 | --- | --- | --- | --- | --- |
-| Geodetic frame and earth curvature | `systems/physics` | [Geodetic Frame](../../../../../systems/physics/work/active/geodetic_frame/README.md) (open) | `CSG-S0`, every later stage | none |
+| Geodetic frame and earth curvature | `systems/physics` | [Geodetic Frame](../../../../../systems/physics/work/active/geodetic_frame/README.md) (`P3-A`/`P3-B` accepted) | `CSG-S0`, every later stage | none |
 | Layered environment: land, freshwater, sea, bathymetry, coastline, sea state, wind, day/night, ocean acoustic data | `systems/environment` | [Environment Runtime](../../../../../systems/environment/work/active/environment_runtime/README.md) (open); ocean data line opens after its `P2 Contract` | `CSG-S1`; `S2` deck limits; `S3` sensing; `U1` depth limits; `U2` acoustics | ship seakeeping response |
 | Sensor detection, horizon use, truth-read removal | `systems/sensing` | opens at `CSG-S3` | `S3`, `U2` | naval radar and sonar platform adapters |
 | Data links, group command hierarchy, identification | `systems/command-tasking` (relationships per the Joint baseline) | opens at `CSG-S3` | `S1` hierarchy, `S3`, `S5` | naval formation roles |
@@ -206,12 +210,15 @@ The package can be marked accepted only when:
 
 ## Residuals And Next Steps
 
-- `P0 Boundary` needs owner review of this README, the task clusters, and the
-  acceptance gate.
-- `CSG-S0` is the first implementation stage. It needs the
-  [Geodetic Frame](../../../../../systems/physics/work/active/geodetic_frame/README.md)
-  package's anchor and conversions; order-of-battle research can start before
-  them.
+- `S0-X` is accepted. The two checked-in replay artifacts under
+  `docs/domains/naval/work/active/carrier_strike_group_engagement/artifacts/`
+  are regenerated and verified by the `naval_csg_replay` contracts; the two
+  `examples/viz/profiles/naval_csg_s0_*_replay.json` profiles stream those
+  frames through the existing map/state visualization contract without an
+  agent; the companion `*_spectator.json` profiles step the native kernel
+  directly. `CSG-S1` and `CSG-U1` may now be dispatched.
+- The [Geodetic Frame](../../../../../systems/physics/work/active/geodetic_frame/README.md)
+  package's anchor and conversions are now consumed by both S0 variants.
 - The throughput record at `CSG-S1`/`CSG-S2` decides whether uniform
   high-fidelity stepping holds for the full order of battle. Mixed step rates
   need a separate decision; this package does not assume them.

@@ -4,10 +4,11 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/domains/naval/work/active/carrier_strike_group_engagement/carrier_strike_group_engagement_task_clusters_20260928.md`
 Owner: `domains/naval`
-Last verified: `2026-09-28`
+Last verified: `2026-09-30`
 
-Status: `2026-09-28` finite task-cluster plan for
-[Carrier Strike Group Engagement](README.md). `P0-A` accepted `2026-09-28`.
+Status: `2026-09-30` finite task-cluster plan for
+[Carrier Strike Group Engagement](README.md). `P0-A` and `S0-A`..`S0-X`
+accepted; replay and agent-free visualization close S0-X.
 
 ## Boundary Decision
 
@@ -48,10 +49,10 @@ at dispatch; `n/a` means not yet dispatched.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `P0-A` | main thread | main thread / session model / high | Freeze scope, ladder, claim ceilings, and provenance policy. | this directory; naval owner README index | runtime code | doc link audit; bilingual audit | owner approves README, clusters, acceptance | first | 1 | accepted |
 | `S0-A` | future worker | moderate (public-source research) / sonnet for integration; research ran on default / medium | Order-of-battle research: both groups' ship, submarine, aircraft, weapon, and sensor lists with sources. | `docs/domains/naval/reviews/csg_order_of_battle_20260928/` | runtime content | provenance check: every row has source ID, tier, uncertainty | both sides' OOB tables complete | after `P0-A`; parallel with `S0-B` | 2 | accepted |
-| `S0-B` | main thread | moderate / sonnet / medium | Integrate [Geodetic Frame](../../../../../systems/physics/work/active/geodetic_frame/README.md): scenarios declare a geodetic anchor; OOB placement and ranges use the shared frame. | `scenarios/naval/csg/`; naval scenario tests | building the frame (owned by `systems/physics`) | scenario anchor tests | CSG scenarios place both groups through the shared frame | after Geodetic Frame `P3-B` accepted | 1 + 1 repair | planned |
+| `S0-B` | main thread | moderate / sonnet / medium | Integrate [Geodetic Frame](../../../../../systems/physics/work/active/geodetic_frame/README.md): scenarios declare a geodetic anchor; OOB placement and ranges use the shared frame. | scenario compiler, `scenarios/naval/csg/`, stateless geodesy bindings; naval scenario tests | building the frame (owned by `systems/physics`) | scenario anchor tests | CSG scenarios place both groups through the shared frame | after Geodetic Frame `P3-B` accepted | 1 + 1 repair | accepted `2026-09-30` (`087c1928`); see S0-B Record |
 | `S0-C` | future worker | moderate / sonnet / medium for schema mapping and the four authoring packets (US naval, US air, PLAN naval, PLAN air); main thread integrates and fixes; no independent review (database content, not code) | Named unit content for both groups from `S0-A`, at full fidelity in one pass (owner decision `2026-09-29`): aircraft carry component damage models at the F-16C standard. A parameter without an `S0-A` or web source is a labelled `proxy` value with its reasoning, never a silent default. | `examples/config/database/**` (ships, submarines, aircraft, weapons, sensors) | new mechanisms | content-compile tests; unit spawn tests | every OOB row spawns with provenance | after `S0-A` | 2 + 1 repair | accepted `2026-09-30` (see S0-C Record) |
 | `S0-D` | main thread | moderate / main thread / medium (a design worker was stopped by owner decision; no subagents from `2026-09-30`) | Group-composition scenario schema plus `CSG-S0` named and mirror scenarios. | scenario compiler (`group_composition.py`), `scenarios/naval/csg/`, `tests/scenario/test_csg_group_composition.py`, `tests/content/test_csg_unit_content.py` | motion | scenario and content tests | both variants load and spawn the full OOB | after `S0-C` | 2 | accepted `2026-09-30` (`48aa6eb4`) |
-| `S0-X` | main thread | high (stage acceptance) / main thread + opus reviewer / high | Accept `CSG-S0`; first throughput record. | stage acceptance record | — | stage validation plan | `G0` gate met | after `S0-B`, `S0-D` | 1 | planned |
+| `S0-X` | main thread | high (stage acceptance) / main thread / high; serial, no subagents under the `2026-09-30` owner decision | Accept `CSG-S0`; first throughput record; verify replay and spectator playback. | stage acceptance record; full-duration scenario tests; replay artifacts, contracts, and profiles | new simulation mechanisms | stage validation plan | `G0` and all Stage Gates met | after `S0-B`, `S0-D` | 1 | accepted `2026-09-30`; [runtime checkpoint](carrier_strike_group_engagement_acceptance_20260928.md#csg-s0-runtime-checkpoint-2026-09-30) |
 | `S1-A` | future worker | n/a | Group formation and screen geometry; route following. | naval command/formation components and systems | fleet doctrine beyond formation | formation-keeping tests | formation holds under turns | after `S0-X` | 2 + 1 repair | planned |
 | `S1-B` | future worker | n/a | Ship turning-circle and speed response; damage-to-mobility coupling. | `ship_motion_system.h`, platform fields | full hydrodynamics | motion tests against sourced turning data | damaged ship loses speed through the maintained path | after `S0-X`; parallel with `S1-A` if write sets split | 2 + 1 repair | planned |
 | `S1-C` | future worker | n/a | Ship endurance and group replenishment scheduling on the shared logistics components. | naval logistics system; naval stores content | shared fuel/logistics components (owned by `systems/physics`) | logistics tests | endurance and replenishment observable in the scenario | after `S0-X` and the shared-logistics owner package | 2 | planned |
@@ -188,6 +189,23 @@ Residuals: the helicopter split moves one MH-60R detachment from the carrier
 to the doctrinal 4th DDG (squadron total unchanged); the 054A and 901 organic
 helicopters are Z-20F/Z-20J proxies for Z-9 and Z-8/Z-18.
 
+## S0-B Record (`2026-09-30`)
+
+Commit `087c1928` places both CSG variants through the Geodetic Frame owner's
+azimuthal-equidistant projection, exposed by stateless `ef_py.geodesy_*`
+bindings. Geodetic guides require a declared scenario anchor; local guides
+retain the existing flat layout. Stations follow a great circle from the guide
+before projection, with axes facing the other group along the great circle.
+`meta.csg` is `csg.group_composition.v2` and records the anchor and separation.
+
+Current validation: 21 scenario/content tests and 12 subtests passed with
+`CMO_BUILD_DIR=build-independent-win`. The scenario test now runs both variants
+for all 240 steps at 0.5 s, verifies hull sides and positions, and accounts for
+the runtime-spawned stowed helicopters. The named variant has 24 runtime
+entities; the mirror has 22. Both remain static after the first tick pins the
+helicopters to their hosts. See the S0-X checkpoint for measured throughput and
+the remaining stage gates.
+
 ## Dispatch Rules
 
 - Every worker packet maps to exactly one cluster above.
@@ -246,7 +264,9 @@ records the host.
 
 Immediate:
 
-- `P0-A` owner review.
+- `S0-X` is accepted: the CSG composition and replay contract surface is
+  covered by the CI contract smoke suite, and both visualization profiles are
+  runnable without an agent. S1/U1 may dispatch.
 
 Follow-on:
 
