@@ -299,7 +299,7 @@ not, and they differ here as follows:
 | Record says | On `work/army-mechanisms` |
 | --- | --- |
 | `10945ffc` added `GroundPlatformDamageState` and `NavalCommandIntent` | The branch adds `GroundPlatformDamageState` (`eeba773f`) and `GroundWeaponState` (`6830414e`) over `cfb9924e`; `NavalCommandIntent` is not on this branch, it belongs to `work/naval-mechanisms` |
-| census 85 components / **34** systems | pinned `(85, 2, 35)` in `tools/maintenance/runtime_composition_evidence_contract.py`: 85 components, 2 kernel systems, 35 resolved systems |
+| census 87 components / **35** systems | pinned `(87, 2, 35)` in `tools/maintenance/runtime_composition_evidence_contract.py`: 87 components, 2 kernel systems, 35 resolved systems |
 | the issue "adds a `check` mode" to the projection tool | not on this branch: `runtime_profile_projection_contract.py` accepts only `generate` and `validate`. The [Gate Coverage](#gate-coverage) protection therefore does not exist here; a cascade that stops at the manifests is caught only by the census pin and the composition contract tests |
 | composition `0 failed, 72 passed, 1 skipped` after repair | this branch's own measurement, after the same steps 3–9 on `2026-09-28`: `72 passed, 1 skipped` on the Windows MSVC host with g++, Node and the Cordis dependencies present |
 

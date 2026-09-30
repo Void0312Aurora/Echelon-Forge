@@ -54,16 +54,15 @@ def test_default_evidence_fixture_schema_and_generated_header_are_fresh() -> Non
   )
 
 
-def test_executable_graph_hash_joins_owner_registry_85_plus_3_plus_34() -> None:
+def test_executable_graph_hash_joins_owner_registry_87_plus_2_plus_35() -> None:
   resolved = _inputs()[-1]
   payload = evidence._graph_payload(resolved)
-  assert len(payload["component_contributions"]) == 85
-  assert len(payload["kernel_system_contributions"]) == 3
-  assert len(payload["resolved_system_contributions"]) == 34
+  assert len(payload["component_contributions"]) == 87
+  assert len(payload["kernel_system_contributions"]) == 2
+  assert len(payload["resolved_system_contributions"]) == 35
   assert [row["contribution_id"] for row in payload["kernel_system_contributions"]] == [
     "builtin.kernel.system.rwr_reset",
     "builtin.kernel.system.esm_reset",
-    "builtin.kernel.system.maws_update",
   ]
   assert evidence.executable_graph_sha256(resolved) == _read(
     "default_runtime_composition_evidence.v1.json"
