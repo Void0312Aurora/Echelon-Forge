@@ -30,7 +30,7 @@
       "dependency_id": "profile.bundle",
       "kind": "repository_artifact",
       "path": "profiles/default-compatibility.bundle.json",
-      "sha256": "e082fad0b66f5de39760b5018ce21651d1e96cf44f698bba55437833ceeb7e1c",
+      "sha256": "eb6c78ea117a3061cec5015b9d0915de8ba8ce7594b2d9914b25034b2b01f614",
       "requires": [
         "profile.module"
       ]

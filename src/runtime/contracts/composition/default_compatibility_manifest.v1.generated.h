@@ -298,6 +298,11 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "registration_id": "flecs.component.munition"
       },
       {
+        "component_id": "NavalCommandIntent",
+        "plugin_id": "builtin.core_runtime",
+        "registration_id": "flecs.component.naval_command_intent"
+      },
+      {
         "component_id": "NavalStores",
         "plugin_id": "builtin.core_runtime",
         "registration_id": "flecs.component.naval_stores"
@@ -498,14 +503,14 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "required_services": [
           "simulation.environment.model"
         ],
-        "restart_policy": "rebuild_scope_generation",
+        "restart_)EFJSON",
+    R"EFJSON(policy": "rebuild_scope_generation",
         "scope": "world",
         "teardown_policy": "reverse_dependency_order"
       },
       {
         "after_provider_ids": [],
-      )EFJSON",
-    R"EFJSON(  "cardinality": "one_per_scope",
+        "cardinality": "one_per_scope",
         "configuration": {},
         "conflicts": [],
         "implementation_version": "1.0.0",
@@ -744,13 +749,13 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
       {
         "consumer_id": "builtin.control.default",
         "consumer_kind": "provider",
-        "provider_id": "builtin.environment.default",
+        "provider_id":)EFJSON",
+    R"EFJSON( "builtin.environment.default",
         "service_key": "simulation.environment.model"
       },
       {
         "consumer_id": "builtin.guidance.default",
-        "consumer_ki)EFJSON",
-    R"EFJSON(nd": "provider",
+        "consumer_kind": "provider",
         "provider_id": "builtin.engagement_event_store",
         "service_key": "runtime.engagement_event_recorder"
       },
@@ -988,12 +993,12 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
           "CommandLag"
         ],
         "plugin_id": "builtin.core_runtime",
-        "provided_components": [],
+        "provided_component)EFJSON",
+    R"EFJSON(s": [],
         "read_state_shards": [],
         "registration_factory_id": "register_command_lag_system",
         "required_barriers": [],
-        "required_capabilities": [)EFJSON",
-    R"EFJSON(],
+        "required_capabilities": [],
         "required_components": [],
         "required_services": [],
         "semantic_stage_ids": [],
@@ -1250,14 +1255,14 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
           "builtin.system.naval_weapon_release"
         ],
         "before": [],
-        "conflicts": [],
+        "con)EFJSON",
+    R"EFJSON(flicts": [],
         "contribution_id": "builtin.system.instrument",
         "domain": "common",
         "executable_node_ids": [
           "UpdateInstruments"
         ],
-   )EFJSON",
-    R"EFJSON(     "plugin_id": "builtin.core_runtime",
+        "plugin_id": "builtin.core_runtime",
         "provided_components": [],
         "read_state_shards": [],
         "registration_factory_id": "register_instrument_system",
@@ -1504,14 +1509,14 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "provided_components": [],
         "read_state_shards": [],
         "registration_factory_id": "register_ship_motion_system",
-        "required_barriers": [],
+        "required_barriers)EFJSON",
+    R"EFJSON(": [],
         "required_capabilities": [],
         "required_components": [],
         "required_services": [
           "simulation.environment.model"
         ],
-        "sem)EFJSON",
-    R"EFJSON(antic_stage_ids": [],
+        "semantic_stage_ids": [],
         "write_state_shards": []
       },
       {
@@ -1631,8 +1636,8 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
     "builtin.weapon_release.damage_bridge",
     "builtin.weapon_release.service"
   ],
-  "requested_manifest_sha256": "d35fc20bdd9ec50448ed7dd70da218cb735edb14dfd0fbe3122779783f0f164b",
-  "resolved_manifest_sha256": "4fb0170b00f9b3008f37adfa99c3134bed836501fe6267fd302719926736434f",
+  "requested_manifest_sha256": "4a4321d88fa639934befcbd458c95b0e33c3902b17a8403df1bae991fa46ff8a",
+  "resolved_manifest_sha256": "45d32e5d43a582998dfb2f19d67ecdf5d736838d33e418cec33c0d6489f98885",
   "resolver_contract_version": "echelon_forge.simulation_composition_resolver.v1",
   "schema_version": "echelon_forge.resolved_simulation_composition.v1",
   "system_registration_order": [
@@ -1676,9 +1681,9 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
 };
 
 inline constexpr std::string_view kDefaultCompatibilityRequestedSha256 =
-    "d35fc20bdd9ec50448ed7dd70da218cb735edb14dfd0fbe3122779783f0f164b";
+    "4a4321d88fa639934befcbd458c95b0e33c3902b17a8403df1bae991fa46ff8a";
 inline constexpr std::string_view kDefaultCompatibilityResolvedSha256 =
-    "4fb0170b00f9b3008f37adfa99c3134bed836501fe6267fd302719926736434f";
+    "45d32e5d43a582998dfb2f19d67ecdf5d736838d33e418cec33c0d6489f98885";
 
 inline constexpr std::string_view kDefaultBackendProfileId = "cpu_exact.reference";
 inline constexpr std::string_view kDefaultBackendProviderId = "builtin.backend.flecs_cpu";
