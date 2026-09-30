@@ -612,6 +612,7 @@ set(EF_PYTHON_BINDING_SOURCES
     src/interfaces/python/bindings_episode_termination.cpp
     src/interfaces/python/bindings_episode_execution_runtime.cpp
     src/interfaces/python/bindings_episode_state_batch.cpp
+    src/interfaces/python/bindings_episode_geodesy.cpp
     src/interfaces/python/bindings_runtime.cpp
     # bind_runtime() domain slices, listed in nanobind registration order.
     src/interfaces/python/bindings_runtime_runtime.cpp

@@ -40,12 +40,11 @@
       "side": "Blue",
       "oob_ref": "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_ford_20260928.md",
       "guide": {
-        "pos": [
-          -150000.0,
-          0.0,
-          0.0
-        ],
-        "axis_deg": 90.0
+        "geo": {
+          "latitude_deg": 20.993905,
+          "longitude_deg": 123.555086
+        },
+        "axis_deg": 89.48
       },
       "branches": {
         "taoe_instead_of_tao": false,
@@ -387,12 +386,11 @@
       "side": "Red",
       "oob_ref": "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md",
       "guide": {
-        "pos": [
-          150000.0,
-          0.0,
-          0.0
-        ],
-        "axis_deg": 270.0
+        "geo": {
+          "latitude_deg": 20.993905,
+          "longitude_deg": 126.444914
+        },
+        "axis_deg": 270.52
       },
       "branches": {
         "frigate_054b": false,
