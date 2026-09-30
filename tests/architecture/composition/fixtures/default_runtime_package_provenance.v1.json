@@ -1,5 +1,5 @@
 {
-  "canonical_json": "{\"canonicalization\":\"echelon_forge.sorted_utf8_json.v1\",\"configuration_overlays\":[{\"overlay_id\":\"builtin.default_compatibility.overlay.default\",\"overlay_version\":\"1.0.0\",\"precedence\":0,\"sha256\":\"2ab04cf6d5f2e377e343949641058fe05fd9f3024891aa3892a1eb43ff00603e\"}],\"dependency_resolution\":{\"graph_sha256\":\"1223154bf935c8b86174c3c3b80fd13baa6940cdfb463b5a86b9aef812f7608f\",\"order\":[\"cordis.runtime\",\"profile.module\",\"profile.bundle\",\"builtin.default_compatibility.overlay.default\"]},\"hash_algorithm\":\"sha256\",\"package\":{\"descriptor_sha256\":\"7b1874072187606d24931e2d4364e53a2a2a4f4fd1afa8c4db527433e941dbf8\",\"package_id\":\"builtin.default_compatibility.package\",\"package_version\":\"1.0.0\"},\"producer\":{\"cordis_version\":\"4.0.0-rc.8\",\"package_lock_sha256\":\"7eaa240633d1b0eff2f112d664307c6e7a36467e3898c4e52f8ba181ebfa8d81\",\"package_name\":\"@echelon-forge/cordis-runtime\",\"package_version\":\"0.1.0\"},\"profile\":{\"bundle_sha256\":\"e082fad0b66f5de39760b5018ce21651d1e96cf44f698bba55437833ceeb7e1c\",\"module_sha256\":\"80ced7048aa0d97a10c88f03160049a0d6f96f8414c3ba0674c6b049e052c98a\",\"profile_id\":\"builtin.default_compatibility\",\"profile_version\":\"1.0.0\"},\"runtime_artifacts\":{\"lock_sha256\":\"ec36d4f134e003e852a87f0dc2edb8095bbd798855d88b099e0174d45efa7f94\",\"profile_projection_sha256\":\"f9e73c2add32ed0739615b58e8e3cc2ef58a82a81746a055ebe3fc6b37458329\",\"request_sha256\":\"5c2954d6d04c77fe803130db14d7e5b56391dcf51e482c73ac8cd96877698d6f\"},\"schema_version\":\"echelon_forge.cordis_runtime_package_provenance.v1\"}",
+  "canonical_json": "{\"canonicalization\":\"echelon_forge.sorted_utf8_json.v1\",\"configuration_overlays\":[{\"overlay_id\":\"builtin.default_compatibility.overlay.default\",\"overlay_version\":\"1.0.0\",\"precedence\":0,\"sha256\":\"2ab04cf6d5f2e377e343949641058fe05fd9f3024891aa3892a1eb43ff00603e\"}],\"dependency_resolution\":{\"graph_sha256\":\"b30c4d1ba07b0ee9023955012b43c95829580d7ce24acce57a8a85905f509fa5\",\"order\":[\"cordis.runtime\",\"profile.module\",\"profile.bundle\",\"builtin.default_compatibility.overlay.default\"]},\"hash_algorithm\":\"sha256\",\"package\":{\"descriptor_sha256\":\"f5a0e08956c3ef10f314a924e3cb6cd70b0d2f0d98bfbb545ad0c9d52968c702\",\"package_id\":\"builtin.default_compatibility.package\",\"package_version\":\"1.0.0\"},\"producer\":{\"cordis_version\":\"4.0.0-rc.8\",\"package_lock_sha256\":\"7eaa240633d1b0eff2f112d664307c6e7a36467e3898c4e52f8ba181ebfa8d81\",\"package_name\":\"@echelon-forge/cordis-runtime\",\"package_version\":\"0.1.0\"},\"profile\":{\"bundle_sha256\":\"eb6c78ea117a3061cec5015b9d0915de8ba8ce7594b2d9914b25034b2b01f614\",\"module_sha256\":\"80ced7048aa0d97a10c88f03160049a0d6f96f8414c3ba0674c6b049e052c98a\",\"profile_id\":\"builtin.default_compatibility\",\"profile_version\":\"1.0.0\"},\"runtime_artifacts\":{\"lock_sha256\":\"ec36d4f134e003e852a87f0dc2edb8095bbd798855d88b099e0174d45efa7f94\",\"profile_projection_sha256\":\"e4ec8866ea0e9d8e9bb68e688707c38609b39d2b787599172ae9df5afb114b29\",\"request_sha256\":\"5c2954d6d04c77fe803130db14d7e5b56391dcf51e482c73ac8cd96877698d6f\"},\"schema_version\":\"echelon_forge.cordis_runtime_package_provenance.v1\"}",
   "canonicalization": "echelon_forge.sorted_utf8_json.v1",
   "configuration_overlays": [
     {
@@ -10,7 +10,7 @@
     }
   ],
   "dependency_resolution": {
-    "graph_sha256": "1223154bf935c8b86174c3c3b80fd13baa6940cdfb463b5a86b9aef812f7608f",
+    "graph_sha256": "b30c4d1ba07b0ee9023955012b43c95829580d7ce24acce57a8a85905f509fa5",
     "order": [
       "cordis.runtime",
       "profile.module",
@@ -20,7 +20,7 @@
   },
   "hash_algorithm": "sha256",
   "package": {
-    "descriptor_sha256": "7b1874072187606d24931e2d4364e53a2a2a4f4fd1afa8c4db527433e941dbf8",
+    "descriptor_sha256": "f5a0e08956c3ef10f314a924e3cb6cd70b0d2f0d98bfbb545ad0c9d52968c702",
     "package_id": "builtin.default_compatibility.package",
     "package_version": "1.0.0"
   },
@@ -31,15 +31,15 @@
     "package_version": "0.1.0"
   },
   "profile": {
-    "bundle_sha256": "e082fad0b66f5de39760b5018ce21651d1e96cf44f698bba55437833ceeb7e1c",
+    "bundle_sha256": "eb6c78ea117a3061cec5015b9d0915de8ba8ce7594b2d9914b25034b2b01f614",
     "module_sha256": "80ced7048aa0d97a10c88f03160049a0d6f96f8414c3ba0674c6b049e052c98a",
     "profile_id": "builtin.default_compatibility",
     "profile_version": "1.0.0"
   },
-  "provenance_sha256": "3fb3f7b67cc33312d64aa4d295ca2d33b83211e7df1ac0ec218ac7efd3deef3d",
+  "provenance_sha256": "e4002f8c30524e127b5170221be59310940cd44f537014b920964ef942e45b20",
   "runtime_artifacts": {
     "lock_sha256": "ec36d4f134e003e852a87f0dc2edb8095bbd798855d88b099e0174d45efa7f94",
-    "profile_projection_sha256": "f9e73c2add32ed0739615b58e8e3cc2ef58a82a81746a055ebe3fc6b37458329",
+    "profile_projection_sha256": "e4ec8866ea0e9d8e9bb68e688707c38609b39d2b787599172ae9df5afb114b29",
     "request_sha256": "5c2954d6d04c77fe803130db14d7e5b56391dcf51e482c73ac8cd96877698d6f"
   },
   "schema_version": "echelon_forge.cordis_runtime_package_provenance.v1"
