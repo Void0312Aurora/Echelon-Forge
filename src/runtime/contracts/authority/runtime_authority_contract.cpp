@@ -264,7 +264,8 @@ std::optional<std::string> canonical_authority_json(std::string_view json_bytes)
 std::optional<std::string>
 checkpoint_replay_aggregate_sha256(std::string_view checkpoint_payload_json) {
     try {
-        const auto payload = Json::parse(checkpoint_payload_json.begin(), checkpoint_payload_json.end());
+        const auto payload =
+            Json::parse(checkpoint_payload_json.begin(), checkpoint_payload_json.end());
         if (!payload.is_object() || !payload.contains("state_schema_generation") ||
             !payload.contains("transfer_fence_sequence") || !payload.contains("world_fragments")) {
             return std::nullopt;
