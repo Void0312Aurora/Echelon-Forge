@@ -6,10 +6,10 @@ from typing import Any, Callable
 
 import numpy as np
 
-from python.tasking_contracts.timing_utils import coerce_timing_dict
+from python.tasking_contracts.common.timing_utils import coerce_timing_dict
 
 # I24 (W2 critical period): `coerce_timing_dict` moved to
-# `python.tasking_contracts.timing_utils` (pure, no dependency on this
+# `python.tasking_contracts.common.timing_utils` (pure, no dependency on this
 # file's other runtime classes) so `gym_envs.leader_env_parts.runtime_facade`
 # can use it without importing `python.rl`. Re-exported here for backward
 # compatibility; see the compat-shim assertIs test in

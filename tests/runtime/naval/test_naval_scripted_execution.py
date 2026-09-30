@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from pathlib import Path
 
-from python.tasking_contracts.naval_scripted_execution import (
+from python.tasking_contracts.naval.execution import (
     NAVAL_SCRIPTED_MODEL_REGISTRY,
     NAVAL_STATION_HOLD_MODEL_ID,
 )

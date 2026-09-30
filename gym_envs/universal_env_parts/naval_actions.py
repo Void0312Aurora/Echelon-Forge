@@ -6,7 +6,7 @@ from typing import Any
 import numpy as np
 
 from python.angles import wrap_heading_deg
-from python.tasking_contracts.bridge_views import (
+from python.tasking_contracts.common.bridge_views import (
     has_mission_command_dict,
     mission_command_dict,
 )

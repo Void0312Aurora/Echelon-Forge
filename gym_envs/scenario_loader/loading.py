@@ -18,7 +18,7 @@ from python.scenario.runtime import (
     find_active_roster_member,
     prepare_scenario_world_layout,
 )
-from python.tasking_contracts.bridge_views import (
+from python.tasking_contracts.common.bridge_views import (
     apply_loader_owned_world_layout_to_kernel,
     get_policy_agent_observation,
     get_policy_instrument_state,

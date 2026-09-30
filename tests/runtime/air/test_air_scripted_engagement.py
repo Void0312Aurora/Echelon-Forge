@@ -4,14 +4,23 @@ import numpy as np
 import pytest
 
 from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index
-from python.tasking_contracts.air_scripted_engagement import (
+from python.tasking_contracts.air.engagement.model import (
     AIR_COMBAT_C2_ROE_V2,
     AIR_COMBAT_HYBRID_ACTION_DIM,
     AIR_SCRIPTED_ENGAGEMENT_MODEL_ID,
     AirScriptedEngagementModel,
 )
-from python.tasking_contracts.air_scripted_execution import AIR_SCRIPTED_MODEL_REGISTRY
-from python.tasking_contracts.scripted_registry import ScriptedDecisionModel
+from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY
+from python.tasking_contracts.common.scripted_registry import ScriptedDecisionModel
+from python.tasking_contracts.air.strategy.action import AirActionLayoutAdapter
+from python.tasking_contracts.air.strategy.contracts import (
+    AirActionApplication,
+    AirActionAdapter,
+    AirObservationAdapter,
+    AirTacticalActionIntent,
+    AirTacticalObservation,
+)
+from python.tasking_contracts.air.strategy.observation import AirMissionContactObservationAdapter
 
 
 def _observation(*, contact: bool, fire_window: bool, budget: float = 1.0, pending: bool = False) -> dict:
@@ -151,6 +160,23 @@ def test_engagement_model_fails_closed_for_invalid_weapon_station() -> None:
     model.close()
 
 
+def test_engagement_model_accepts_context_station_override_and_fails_closed_when_missing() -> None:
+    model = AirScriptedEngagementModel(weapon_station_id=1)
+    hold = _observation(contact=True, fire_window=False)
+    open_window = _observation(contact=True, fire_window=True)
+    model.reset(context={"observation": hold, "phase_name": "stable_flight"})
+    action = model.decide(
+        observation=open_window,
+        context={"phase_name": "stable_flight", "weapon_station_id": None},
+        dt=0.05,
+    )
+
+    assert action[13] == 0.0
+    assert action[14] == 0.0
+    assert model.last_decision_info["weapon_station_valid"] is False
+    model.close()
+
+
 def test_engagement_model_is_registered_as_an_adapter_until_runtime_gate_closes() -> None:
     entries = AIR_SCRIPTED_MODEL_REGISTRY.resolve(
         domain="air",
@@ -180,4 +206,50 @@ def test_engagement_model_rejects_non_c2_roe_mission_shapes() -> None:
     model.reset(context={"observation": obs})
     with pytest.raises(ValueError, match="missing required fields"):
         model.decide(observation=obs, context={}, dt=0.05)
+    model.close()
+
+
+class _RecordingObservationAdapter:
+    def __init__(self) -> None:
+        self.delegate = AirMissionContactObservationAdapter()
+        self.last: AirTacticalObservation | None = None
+
+    def decode(self, *, observation: dict, mission_obs_mode: str) -> AirTacticalObservation:
+        self.last = self.delegate.decode(
+            observation=observation,
+            mission_obs_mode=mission_obs_mode,
+        )
+        return self.last
+
+
+class _RecordingActionAdapter:
+    def __init__(self) -> None:
+        self.delegate = AirActionLayoutAdapter(action_dim=17)
+        self.last_intent: AirTacticalActionIntent | None = None
+
+    def reset(self) -> None:
+        self.delegate.reset()
+
+    def apply(self, action: np.ndarray, *, intent: AirTacticalActionIntent) -> AirActionApplication:
+        self.last_intent = intent
+        return self.delegate.apply(action, intent=intent)
+
+
+def test_engagement_model_injects_observation_and_action_adapters_with_default_parity() -> None:
+    observation = _observation(contact=True, fire_window=True)
+    observation_adapter = _RecordingObservationAdapter()
+    action_adapter = _RecordingActionAdapter()
+    model = AirScriptedEngagementModel(
+        observation_adapter=observation_adapter,
+        action_adapter=action_adapter,
+    )
+    model.reset(context={"observation": observation, "phase_name": "stable_flight"})
+    action = model.decide(observation=observation, context={"phase_name": "stable_flight"}, dt=0.05)
+
+    assert isinstance(observation_adapter, AirObservationAdapter)
+    assert isinstance(action_adapter, AirActionAdapter)
+    assert observation_adapter.last is not None
+    assert action_adapter.last_intent is not None
+    assert action_adapter.last_intent.request_fire is True
+    assert action[14] == 1.0
     model.close()

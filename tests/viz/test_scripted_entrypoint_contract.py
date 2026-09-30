@@ -18,11 +18,11 @@ def test_viz_scripted_entrypoint_uses_neutral_air_registry() -> None:
         for node in ast.walk(tree)
         if isinstance(node, ast.ImportFrom) and node.module is not None
     }
-    assert "python.tasking_contracts.air_scripted_execution" in imported_modules
-    assert "python.tasking_contracts.scripted_landing" in imported_modules
-    assert "python.tasking_contracts.scripted_stable_flight" in imported_modules
-    assert "python.tasking_contracts.scripted_takeoff" in imported_modules
-    assert "python.tasking_contracts.scripted_capability" in imported_modules
+    assert "python.tasking_contracts.air.execution.model" in imported_modules
+    assert "python.tasking_contracts.air.execution.landing" in imported_modules
+    assert "python.tasking_contracts.air.execution.stable_flight" in imported_modules
+    assert "python.tasking_contracts.air.execution.takeoff" in imported_modules
+    assert "python.tasking_contracts.common.scripted_capability" in imported_modules
     assert not any(module.startswith("python.rl.control.scripted_") for module in imported_modules)
 
 
@@ -44,7 +44,7 @@ def test_viz_combined_scripted_mode_is_registry_backed() -> None:
 
 def test_task_eval_scripted_builders_use_neutral_controllers() -> None:
     source = TASK_EVAL_DRIVER_PATH.read_text(encoding="utf-8")
-    assert "python.tasking_contracts.scripted_stable_flight" in source
-    assert "python.tasking_contracts.scripted_takeoff" in source
+    assert "python.tasking_contracts.air.execution.stable_flight" in source
+    assert "python.tasking_contracts.air.execution.takeoff" in source
     assert "python.rl.control.scripted_stable_flight" not in source
     assert "python.rl.control.scripted_takeoff" not in source

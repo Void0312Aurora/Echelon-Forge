@@ -31,8 +31,9 @@ Verified current facts:
   compatible contracts.
 - `AgentRole` already has a five-part schema: `role`, `authority_scope`,
   `information_state_source`, `decision_model_ref`, and `action_interface`.
-- `python/tasking_contracts/agency_registry.py` is a declarative registry and
-  explicitly avoids wiring behavior. It currently includes autopilot, flight
+- `python/tasking_contracts/common/agency_registry.py` is the canonical
+  declarative registry; the former root path has been removed. It explicitly
+  avoids wiring behavior. It currently includes autopilot, flight
   lead, scripted C2, cooperative director, naval, and ground command roles.
 - `python/rl/runtime/agent_shim.py` currently carries observation provenance,
   maintained versus diagnostics-only status, action-intent metadata, and policy
@@ -209,7 +210,8 @@ replay contracts. Keep domain fields in domain-owned extensions.
 Promotion condition: a repository-wide consumer map, dependency direction, and
 rollback plan exist before changing a maintained contract.
 
-Initial WP1 slice: `python/tasking_contracts/scripted_registry.py` now provides
+Initial WP1 slice: `python/tasking_contracts/common/scripted_registry.py` now
+provides
 a dependency-terminal scripted model-factory registry and a minimal structural
 `reset -> decide -> close` lifecycle. It does not duplicate observation,
 action, or AgentRole DTOs, and it does not wire a runtime or import RL.
@@ -224,7 +226,8 @@ action hold/expiry behavior, report stream, and deterministic seed handling.
 The registry must route by scenario and active roster without making the legacy
 first-agent compatibility path authoritative for new multi-agent scenarios.
 
-Initial runtime slice: `python/tasking_contracts/scripted_runtime.py` now owns
+Initial runtime slice: `python/tasking_contracts/common/scripted_runtime.py` now
+owns
 the common scheduling envelope for registered scripted models. It provides
 single-agent and active-roster lifecycle entry points, monotonic clock checks,
 decision cadence, action hold/expiry, provenance context, deterministic replay
@@ -1001,7 +1004,7 @@ to a dedicated owner-local evidence document.
 - Starting commit: `b90d7209`.
 - Change batch: add the dependency-terminal
   `ScriptedRuntimeAgent`/`ScriptedRuntimeRoster` scheduler in
-  `python/tasking_contracts/scripted_runtime.py`. It reuses the existing
+  `python/tasking_contracts/common/scripted_runtime.py`. It reuses the existing
   `ScriptedDecisionModel` and `ScriptedModelRegistry`; it does not add a second
   observation/action DTO or import RL, gym, NumPy, native bindings, or a world
   runtime.
@@ -2001,3 +2004,113 @@ to a dedicated owner-local evidence document.
   until ALG-2. Air remains `playable_candidate`; RL remains optional.
 - Continuation choice: extract observation and action adapters with a default
   parity fixture before adding any second maintained strategy profile.
+
+### 2026-09-26 — Air strategy physical-layer split
+
+- Starting commit: `1ff78ff2`.
+- Change batch: move the canonical Air strategy implementations into
+  `python/tasking_contracts/air/strategy/` (`contracts`, `planning`,
+  `assessment`, and `weapons`). The old flat `air_scripted_*` strategy paths
+  were removed. Strategy tests now live under `tests/runtime/air/strategy/`;
+  a physical-layer test checks the package contents and RL/environment-free
+  imports.
+- Boundary decision: physical location now reflects policy ownership without
+  moving the neutral lifecycle or creating a second registry. The engagement
+  model imports the canonical Air strategy layer; repository consumers use
+  canonical imports directly.
+- Focused verification: canonical strategy, compatibility, engagement, and
+  physical-layer tests passed `28 passed`; explicit-file Python compilation and
+  `git diff --check` passed. The earlier wildcard compile invocation was a
+  PowerShell argument-expansion error and was replaced by an explicit-file run.
+- Evidence boundary: this closes the first physical-layer split only. The
+  remaining `python/tasking_contracts` root still contains mixed common and
+  domain modules; the next layout batch must partition those into common,
+  Air, Naval, and Joint packages without changing runtime ownership claims.
+
+### 2026-09-26 — Tasking contracts physical domain partition
+
+- Starting commit: `8bb307a4`.
+- Change batch: partition the canonical tasking-contract implementation into
+  `python/tasking_contracts/common`, `air`, `naval`, and `joint`. Air is split
+  further into `execution`, `engagement`, `ew`, and `strategy`. The former root
+  module paths were removed after repository consumers migrated to canonical
+  imports; no second compatibility path is retained.
+- Consumer update: maintained Air, Naval, visualization, evaluation, and
+  diagnostics entry points now import their canonical physical layers. The RL
+  control package remains a facade for wrapper access, while scripted models
+  are imported from their canonical Air/common modules.
+- Focused verification: Air/Naval/Joint/runtime regressions passed `67 passed`;
+  physical-layer, compatibility, neutral-boundary, CLI, wrapper, and
+  visualization contract tests passed `31 passed` with the explicit local
+  `ef_py` path; Python compilation and `git diff --check` passed.
+- Environment residual: one initial compatibility test invocation omitted the
+  explicit `PYTHONPATH=build-scripted-agent` binding and stopped at the known
+  missing-`ef_py` collection boundary. Re-running with the maintained local
+  binding passed; no code failure was inferred from the first invocation.
+- Boundary decision: physical placement now distinguishes common contracts
+  from domain policy and adapters. This is a structural refactor only; it does
+  not promote Air, Naval, Joint, or Ground capability labels and does not make
+  RL part of the scripted line.
+
+### 2026-09-26 — Canonical tasking imports and compatibility-shell removal
+
+- Starting commit: `acc19c87`.
+- Change batch: removed the remaining flat `python/tasking_contracts/*.py`
+  forwarding modules and the scripted-controller/mission forwarding modules
+  under `python/rl/control`. Repository production code, tests, scenario
+  manifests, tools, and visualization entry points now import the canonical
+  `common`, `air`, `naval`, or `joint` modules directly.
+- Structural consequence: the tasking-contract root contains only its package
+  initializer; the RL control package retains only real wrapper behavior and
+  direct canonical exports. There is no repository-owned dual-path contract to
+  maintain.
+- Focused verification: canonical physical-layer, boundary, registry,
+  capability-manifest, Air/Naval/Joint runtime, authority-census, and
+  visualization tests passed `274 passed` plus `7` subtests in the final focused run; the first
+  run exposed stale manifest and census paths, which were migrated to the
+  canonical files before the green rerun.
+- Boundary decision: this is an import-topology cleanup only. It does not
+  change scripted capability labels, RL participation rules, or native action
+  ownership. Downstream external consumers of the deleted paths must migrate
+  to the canonical modules.
+
+### 2026-09-26 — Air ALG-2 observation and action adapter extraction
+
+- Starting commit: `33e59f36`.
+- Change batch: extract Air mission/contact decoding into
+  `AirMissionContactObservationAdapter` and the maintained full/hybrid action
+  layout, target-contact edge pulse, station encoding, and fire latch into
+  `AirActionLayoutAdapter`. Add typed `AirTacticalObservation`,
+  `AirTacticalActionIntent`, and `AirActionApplication` contracts plus
+  `AirObservationAdapter`/`AirActionAdapter` protocols.
+- Consumer update: `AirScriptedEngagementModel` now coordinates the flight
+  model, observation adapter, planner, assessor, and action adapter. The model
+  no longer owns mission-array indexing, contact-row selection, action indices,
+  or fire-latch state. Default adapters are injected automatically and custom
+  adapters are validated structurally.
+- Focused verification: Air strategy physical-layer, adapter contract,
+  Air engagement/execution, cross-domain roster, and cooperative 4v4 terminal
+  tests passed `43 passed`; compile and `git diff --check` passed. The direct
+  adapter test covers both first-fire and repeated-fire latch behavior, while
+  the engagement test verifies recording adapter injection.
+- Boundary decision: the extraction changes ownership and substitution seams
+  only. It preserves the 17/12 action transports and leaves native event/fire
+  acceptance, terminal effects, capability labels, and RL participation rules
+  unchanged.
+
+### 2026-09-26 — Air ALG-3 adapter substitution parity
+
+- Starting commit: `725103fc`.
+- Change batch: add a private model-factory injection point to the maintained
+  cooperative Air combat diagnostic and a regression that runs the same 2v1
+  compiled scenario through the canonical default route and through recording
+  observation/action adapters delegating to the default implementations.
+- Focused verification: the cooperative combat regression passed `5 passed`.
+  The injected route matched terminal state, event/release steps, roster,
+  decision reports, runtime decision counts, and deterministic replay identity;
+  both per-slot adapters recorded calls.
+- Boundary decision: this proves the adapter layer is substitutable at a
+  scenario terminal boundary without changing fire-gate or native ownership.
+  No second maintained strategy profile or strategy registry was added, and
+  Air remains `playable_candidate` pending command/report, visualization, and
+  named-platform effect gates.

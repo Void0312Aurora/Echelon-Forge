@@ -9,7 +9,7 @@ from python.scenario.compiler import (
     cache_runtime_waypoint_cache,
     materialize_runtime_waypoint_cache,
 )
-from python.tasking_contracts.bridge_views import (
+from python.tasking_contracts.common.bridge_views import (
     has_mission_command_dict,
     mission_command_dict,
     mission_command_view,

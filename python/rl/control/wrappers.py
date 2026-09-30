@@ -6,19 +6,17 @@ from typing import Iterable, Optional
 import numpy as np
 
 import gymnasium as gym
-from python.tasking_contracts.air_scripted_execution import (
-    AIR_SCRIPTED_EXECUTION_MODEL_ID,
-    AIR_SCRIPTED_MODEL_REGISTRY,
-)
-from .mission_defs import (
+from python.tasking_contracts.air.execution.model import AIR_SCRIPTED_EXECUTION_MODEL_ID
+from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY
+from python.tasking_contracts.common.mission_defs import (
     is_route_command_code,
     normalize_command_code,
     scripted_mode_for_command_code,
     scripted_mode_for_phase_name,
 )
-from .scripted_landing import ScriptedLandingController
-from .scripted_takeoff import ScriptedTakeoffController
-from .scripted_stable_flight import ScriptedStableFlightController
+from python.tasking_contracts.air.execution.landing import ScriptedLandingController
+from python.tasking_contracts.air.execution.takeoff import ScriptedTakeoffController
+from python.tasking_contracts.air.execution.stable_flight import ScriptedStableFlightController
 
 
 @dataclass

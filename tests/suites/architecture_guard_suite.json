@@ -90,6 +90,8 @@
     "tests/architecture/scripted_agent/test_capability_manifests.py",
     "tests/architecture/scripted_agent/test_naval_entrypoint_contract.py",
     "tests/architecture/scripted_agent/test_wrapper_neutral_route.py",
+    "tests/architecture/tasking_contracts/test_air_strategy_physical_layers.py",
+    "tests/architecture/tasking_contracts/test_tasking_contracts_physical_layers.py",
     "tests/architecture/tasking_contracts/test_scripted_registry.py",
     "tests/architecture/structural_boundaries/test_binding_quarantine_boundaries.py",
     "tests/architecture/structural_boundaries/test_domain_separation_boundaries.py",
@@ -98,7 +100,6 @@
     "tests/architecture/structural_boundaries/test_stochastic_draw_guard.py",
     "tests/architecture/structural_boundaries/test_weapon_release_structure.py",
     "tests/architecture/tasking_contracts/test_scenario_loader_runtime_contract.py",
-    "tests/architecture/tasking_contracts/test_tasking_contracts_boundary.py",
-    "tests/architecture/tasking_contracts/test_tasking_contracts_compat_shims.py"
+    "tests/architecture/tasking_contracts/test_tasking_contracts_boundary.py"
   ]
 }

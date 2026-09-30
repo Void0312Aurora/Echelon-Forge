@@ -20,24 +20,22 @@ ensure_repo_imports()
 
 from gym_envs.leader_env import LeaderTrainingEnv
 from gym_envs.universal_env_parts.actions import half_to_unit
-from python.rl.control.mission_defs import (
+from python.tasking_contracts.common.mission_defs import (
     COMMAND_NAME_TO_CODE,
     CRUISE_PHASE_NAMES,
     LANDING_PHASE_NAMES,
     TAKEOFF_PHASE_NAMES,
     normalize_phase_name,
 )
-from python.tasking_contracts.air_scripted_execution import (
-    AIR_SCRIPTED_EXECUTION_MODEL_ID,
-    AIR_SCRIPTED_MODEL_REGISTRY,
-)
-from python.tasking_contracts.scripted_capability import (
+from python.tasking_contracts.air.execution.model import AIR_SCRIPTED_EXECUTION_MODEL_ID
+from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY
+from python.tasking_contracts.common.scripted_capability import (
     parse_scripted_capability,
     resolve_scripted_model_id,
 )
-from python.tasking_contracts.scripted_landing import ScriptedLandingController
-from python.tasking_contracts.scripted_stable_flight import ScriptedStableFlightController
-from python.tasking_contracts.scripted_takeoff import ScriptedTakeoffController
+from python.tasking_contracts.air.execution.landing import ScriptedLandingController
+from python.tasking_contracts.air.execution.stable_flight import ScriptedStableFlightController
+from python.tasking_contracts.air.execution.takeoff import ScriptedTakeoffController
 from python.rl.control.wrappers import get_action_wrapper_spec
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv

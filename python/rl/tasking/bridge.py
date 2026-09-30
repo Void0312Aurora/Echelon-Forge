@@ -5,7 +5,7 @@ from typing import Any
 
 import ef_py
 
-from python.tasking_contracts.bridge_views import (
+from python.tasking_contracts.common.bridge_views import (
     TASKING_INSTRUMENT_READ_BLOCKER,
     TASKING_TRUTH_READ_BLOCKER,
     LoaderOwnedRuntimeView,
@@ -27,7 +27,7 @@ from python.tasking_contracts.bridge_views import (
 
 # I24 (W2 critical period) moved the loader-owned runtime views and the
 # profile-independent command-chain/mission-command helpers above into the
-# neutral `python.tasking_contracts.bridge_views` module so `gym_envs` no
+# common `python.tasking_contracts.common.bridge_views` module so `gym_envs` no
 # longer has to import `python.rl` for them. Every re-exported name is the
 # exact same object as its neutral-layer counterpart (see the compat-shim
 # assertIs test in `tests/architecture/tasking_contracts/`).

@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any, Mapping
 
-from python.tasking_contracts.agency_registry import MERGE_POLICIES as _REGISTRY_MERGE_POLICIES
+from python.tasking_contracts.common.agency_registry import MERGE_POLICIES as _REGISTRY_MERGE_POLICIES
 
 
 MAINTAINED = "maintained"

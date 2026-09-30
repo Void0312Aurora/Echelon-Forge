@@ -12,9 +12,9 @@ compiled/native-facing packages such as ``python.scenario``), and each other.
 They must never import ``python.rl`` or ``gym_envs`` — that boundary is
 enforced by ``tests/architecture/tasking_contracts/test_tasking_contracts_boundary.py``.
 
-``python.rl.control.mission_defs``, ``python.rl.tasking.bridge``, and the
-scripted-controller modules under ``python.rl.control`` re-export the names
-that moved here so every previously working import path keeps working.
+The canonical modules are split by physical layer under ``common``, ``air``,
+``naval``, and ``joint``. Consumers must import those canonical modules
+directly; this package intentionally exposes no flat compatibility shims.
 """
 
 from __future__ import annotations

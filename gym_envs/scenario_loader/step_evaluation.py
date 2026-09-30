@@ -2,8 +2,8 @@ import math
 
 import ef_py
 
-from python.tasking_contracts.mission_defs import is_landing_command_code
-from python.tasking_contracts.bridge_views import resolve_loader_time_step
+from python.tasking_contracts.common.mission_defs import is_landing_command_code
+from python.tasking_contracts.common.bridge_views import resolve_loader_time_step
 
 from .mission_observation import build_mission_observation_runtime_inputs
 

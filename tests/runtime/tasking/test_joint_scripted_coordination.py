@@ -2,17 +2,17 @@ from __future__ import annotations
 
 import pytest
 
-from python.tasking_contracts.joint_scripted_coordination import (
+from python.tasking_contracts.joint.coordination import (
     JOINT_SCRIPTED_COORDINATION_MODEL_ID,
     JOINT_SCRIPTED_MODEL_REGISTRY,
     SCRIPTED_JOINT_TASK_GRAPH_VERSION,
     ScriptedJointCoordinationIntent,
     ScriptedJointTaskGraph,
 )
-from python.tasking_contracts.joint_coordination_projection import (
+from python.tasking_contracts.joint.projection import (
     project_joint_intent_to_compiled_packet,
 )
-from python.tasking_contracts.scripted_runtime import (
+from python.tasking_contracts.common.scripted_runtime import (
     SCRIPTED_RUNTIME_ACTION_DECIDED,
     ScriptedRuntimeAgent,
     ScriptedRuntimeAgentSpec,

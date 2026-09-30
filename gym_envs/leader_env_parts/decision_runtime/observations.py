@@ -6,7 +6,7 @@ from typing import Any
 import numpy as np
 
 from gym_envs import observation_view
-from python.tasking_contracts.mission_defs import COMMAND_CODE_LANDING, normalize_phase_name
+from python.tasking_contracts.common.mission_defs import COMMAND_CODE_LANDING, normalize_phase_name
 
 from ..common import wrap_deg
 from .commands import fuel_margin_state

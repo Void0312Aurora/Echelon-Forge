@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from python.tasking_contracts.air_scripted_ew import (
+from python.tasking_contracts.air.ew.model import (
     AIR_EW_HYBRID_ACTION_DIM,
     AIR_SCRIPTED_EW_ACTION_MODEL_ID,
     AIR_SCRIPTED_EW_MODEL_ID,
@@ -13,8 +13,8 @@ from python.tasking_contracts.air_scripted_ew import (
     AirScriptedEWIntent,
     AirScriptedEWModel,
 )
-from python.tasking_contracts.air_scripted_registry import AIR_SCRIPTED_MODEL_REGISTRY
-from python.tasking_contracts.scripted_registry import ScriptedDecisionModel
+from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY
+from python.tasking_contracts.common.scripted_registry import ScriptedDecisionModel
 try:
     from gym_envs.universal_env_parts import (
         AIR_EW_HYBRID_V1_ACTION_MODE,

@@ -31,7 +31,7 @@ from python.rl.profile.common_core_defaults import (
     tactical_unit_type_default,
     task_family_default,
 )
-from python.rl.control.mission_defs import (
+from python.tasking_contracts.common.mission_defs import (
     COMMAND_CODE_LANDING,
     LANDING_PHASE_NAMES,
     command_code_for_phase_name,

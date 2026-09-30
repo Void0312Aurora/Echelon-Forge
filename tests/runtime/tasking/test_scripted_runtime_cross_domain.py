@@ -2,23 +2,21 @@ from __future__ import annotations
 
 import numpy as np
 
-from python.tasking_contracts.air_scripted_execution import (
-    AIR_SCRIPTED_EXECUTION_MODEL_ID,
-    AIR_SCRIPTED_MODEL_REGISTRY,
-)
-from python.tasking_contracts.air_scripted_engagement import (
+from python.tasking_contracts.air.execution.model import AIR_SCRIPTED_EXECUTION_MODEL_ID
+from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY
+from python.tasking_contracts.air.engagement.model import (
     AIR_COMBAT_C2_ROE_V2,
     AIR_SCRIPTED_ENGAGEMENT_MODEL_ID,
 )
-from python.tasking_contracts.air_scripted_ew import (
+from python.tasking_contracts.air.ew.model import (
     AIR_SCRIPTED_EW_ACTION_MODEL_ID,
 )
 from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index
-from python.tasking_contracts.naval_scripted_execution import (
+from python.tasking_contracts.naval.execution import (
     NAVAL_SCRIPTED_MODEL_REGISTRY,
     NAVAL_STATION_HOLD_MODEL_ID,
 )
-from python.tasking_contracts.scripted_runtime import (
+from python.tasking_contracts.common.scripted_runtime import (
     SCRIPTED_RUNTIME_ACTION_DECIDED,
     SCRIPTED_RUNTIME_ACTION_HELD,
     ScriptedRuntimeAgent,

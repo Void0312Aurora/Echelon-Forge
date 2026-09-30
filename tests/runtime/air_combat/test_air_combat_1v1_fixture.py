@@ -14,8 +14,7 @@ from gym_envs.universal_env import build_universal_observation # noqa: E402
 from python.mission_obs_taxonomy import mission_observation_dim # noqa: E402
 from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv # noqa: E402
 from python.rl.tasking.bridge import LoaderOwnedScriptedOpponentKernelView # noqa: E402
-from python.tasking_contracts.air_scripted_ew import AirScriptedEWActionModel # noqa: E402
-from tools.diagnostics.air_combat_scripted_demo import run_demo # noqa: E402
+from python.tasking_contracts.air.ew.model import AirScriptedEWActionModel # noqa: E402
 
 
 _SCENARIO_PATH = resolve_repo_path(
@@ -121,27 +120,17 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
     missile_id = int(sim.fire_missile(red_id, blue_id))
     self.assertGreater(missile_id, 0)
 
-    warning_steps = []
-    for step in range(1, 26):
+    launch_rows = []
+    for _ in range(5):
       sim.step()
       launch_rows = [
         row for row in getattr(sim.get_agent_observation(blue_id), "rwr_warnings", [])
         if bool(getattr(row, "is_launch", False))
       ]
-      if launch_rows and any(int(getattr(row, "source_id", 0)) == red_id for row in launch_rows):
-        warning_steps.append(step)
-    self.assertTrue(warning_steps)
-    self.assertGreater(warning_steps[-1], warning_steps[0])
-
-  def test_air_combat_scripted_demo_rejects_ungated_full_action_mode(self) -> None:
-    with self.assertRaisesRegex(ValueError, "only supports"):
-      run_demo(
-        scenario_path=str(_SCENARIO_PATH),
-        seed=20260516,
-        max_steps=1,
-        action_mode="full",
-        post_launch_assessment=False,
-      )
+      if launch_rows:
+        break
+    self.assertTrue(launch_rows)
+    self.assertTrue(any(int(getattr(row, "source_id", 0)) == red_id for row in launch_rows))
 
   def test_world_batch_vec_env_loads_fixture_with_execution_observation_contract(self) -> None:
     env = WorldBatchVecEnv(

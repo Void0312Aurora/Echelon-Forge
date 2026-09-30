@@ -15,7 +15,7 @@ from python.scenario.compiler import (
 from python.scenario.runtime import (
     resolve_active_controllable_roster,
 )
-from python.tasking_contracts.runtime_contract import ScenarioLoaderRuntime
+from python.tasking_contracts.common.runtime_contract import ScenarioLoaderRuntime
 from .common import (
     execution_step_runtime_mode_enabled,
     normalize_execution_step_runtime_mode,
@@ -207,7 +207,7 @@ class ScenarioLoader:
     def __init__(self, sim_kernel: ScenarioLoaderRuntime):
         # Typed seam (this iteration): the maintained path injects the
         # facade-backed _ScenarioLoaderRuntimeProxy; raw ef_py.SimulationKernel
-        # injection is test-only. See python/tasking_contracts/runtime_contract.py.
+        # injection is test-only. See python/tasking_contracts/common/runtime_contract.py.
         self.sim = sim_kernel
         self.scenario_data = {}
         self.entities = {} # map name -> entity_id

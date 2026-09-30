@@ -1,6 +1,6 @@
 """Gates for the typed ``ScenarioLoader.sim`` seam (this iteration).
 
-The seam contract lives in ``python/tasking_contracts/runtime_contract.py``
+The seam contract lives in ``python/tasking_contracts/common/runtime_contract.py``
 (a pure-stdlib ``typing.Protocol`` named ``ScenarioLoaderRuntime``). This
 module enforces, in order:
 
@@ -38,20 +38,20 @@ from tests.support.paths import REPO_ROOT
 
 ensure_repo_root_on_sys_path()
 
-RUNTIME_CONTRACT_PATH = REPO_ROOT / "python" / "tasking_contracts" / "runtime_contract.py"
+RUNTIME_CONTRACT_PATH = REPO_ROOT / "python" / "tasking_contracts" / "common" / "runtime_contract.py"
 WORLD_BATCH_ADAPTER_PATH = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "adapter.py"
 
 
 # --- 1. Census fixture: method -> [(repo-relative file, exact text needle)] ---
-# Mirrors the census section of python/tasking_contracts/runtime_contract.py's
+# Mirrors the census section of python/tasking_contracts/common/runtime_contract.py's
 # module docstring by stable source text instead of line numbers.
 REQUIRED_METHOD_CALLER_CENSUS: dict[str, list[tuple[str, str]]] = {
     "get_agent_observation": [
         ("gym_envs/scenario_loader/core.py", "return self.sim.get_agent_observation(resolved_agent_id)"),
         ("gym_envs/scenario_loader/execution_runtime/mainline.py", "truth = sim.get_agent_observation(loader.agent_id)"),
         ("gym_envs/universal_env_parts/info.py", "sim.get_agent_observation(agent_id)"),
-        ("python/tasking_contracts/bridge_views.py", 'return self.call_optional("get_agent_observation", int(entity_id))'),
-        ("python/tasking_contracts/bridge_views.py", 'return self._call("get_agent_observation", int(entity_id))'),
+        ("python/tasking_contracts/common/bridge_views.py", 'return self.call_optional("get_agent_observation", int(entity_id))'),
+        ("python/tasking_contracts/common/bridge_views.py", 'return self._call("get_agent_observation", int(entity_id))'),
         ("gym_envs/observation_view.py", "return reader.get_agent_observation(entity_id)"),
         (
             "gym_envs/leader_env_parts/execution_runtime/policy_runtime.py",
@@ -62,56 +62,56 @@ REQUIRED_METHOD_CALLER_CENSUS: dict[str, list[tuple[str, str]]] = {
         ("gym_envs/scenario_loader/core.py", "return self.sim.get_instrument_state(resolved_agent_id)"),
         ("gym_envs/scenario_loader/execution_runtime/mainline.py", "sim.get_instrument_state(loader.agent_id)"),
         ("gym_envs/universal_env_parts/info.py", "sim.get_instrument_state(agent_id)"),
-        ("python/tasking_contracts/bridge_views.py", 'return self.call_optional("get_instrument_state", int(entity_id))'),
+        ("python/tasking_contracts/common/bridge_views.py", 'return self.call_optional("get_instrument_state", int(entity_id))'),
         (
             "gym_envs/leader_env_parts/execution_runtime/policy_runtime.py",
             "inst_now = env.unwrapped.sim.get_instrument_state(env.unwrapped.agent_id)",
         ),
     ],
     "get_time_step": [
-        ("python/tasking_contracts/bridge_views.py", 'self.call_optional("get_time_step", default=float(default))'),
+        ("python/tasking_contracts/common/bridge_views.py", 'self.call_optional("get_time_step", default=float(default))'),
         ("python/rl/control/wrappers.py", 'getattr(self.unwrapped.sim, "get_time_step", lambda: 0.05)()'),
         ("gym_envs/leader_env_parts/runtime_facade.py", "float(self.unwrapped.sim.get_time_step())"),
         ("gym_envs/leader_env_parts/scripted_exec.py", 'getattr(self.env.unwrapped.sim, "get_time_step", lambda: 0.05)()'),
         ("gym_envs/leader_env_parts/decision_runtime/observations.py", "float(env.unwrapped.sim.get_time_step())"),
     ],
     "is_unit_active": [
-        ("python/tasking_contracts/bridge_views.py", 'return bool(self.call_optional("is_unit_active", int(entity_id), default=False))'),
-        ("python/tasking_contracts/bridge_views.py", 'return bool(self._call("is_unit_active", int(entity_id), default=False))'),
+        ("python/tasking_contracts/common/bridge_views.py", 'return bool(self.call_optional("is_unit_active", int(entity_id), default=False))'),
+        ("python/tasking_contracts/common/bridge_views.py", 'return bool(self._call("is_unit_active", int(entity_id), default=False))'),
         ("gym_envs/scenario_loader/behavior_runtime/naval_screen.py", "runtime_view.is_unit_active(last_reference_entity_id)"),
         ("gym_envs/scenario_loader/reward_runtime/air_combat.py", 'hasattr(sim, "is_unit_active")'),
     ],
     "get_unit_position": [
-        ("python/tasking_contracts/bridge_views.py", 'return self.call_optional("get_unit_position", int(entity_id))'),
-        ("python/tasking_contracts/bridge_views.py", 'return self._call("get_unit_position", int(entity_id))'),
+        ("python/tasking_contracts/common/bridge_views.py", 'return self.call_optional("get_unit_position", int(entity_id))'),
+        ("python/tasking_contracts/common/bridge_views.py", 'return self._call("get_unit_position", int(entity_id))'),
         ("gym_envs/scenario_loader/behavior_runtime/naval_screen.py", "ref_pos = runtime_view.get_unit_position(int(entity_id))"),
         ("gym_envs/observation_view.py", "return reader.get_unit_position(entity_id)"),
     ],
     "set_command": [
-        ("python/tasking_contracts/bridge_views.py", '"set_command",'),
+        ("python/tasking_contracts/common/bridge_views.py", '"set_command",'),
     ],
     "fire_missile": [
-        ("python/tasking_contracts/bridge_views.py", 'self.call_optional("fire_missile", int(entity_id), int(target_id), default=0)'),
-        ("python/tasking_contracts/bridge_views.py", 'self._call("fire_missile", int(entity_id), int(target_id), default=0)'),
+        ("python/tasking_contracts/common/bridge_views.py", 'self.call_optional("fire_missile", int(entity_id), int(target_id), default=0)'),
+        ("python/tasking_contracts/common/bridge_views.py", 'self._call("fire_missile", int(entity_id), int(target_id), default=0)'),
     ],
     "set_mission_command": [
-        ("python/tasking_contracts/bridge_views.py", 'self.call_optional("set_mission_command", agent_id, cmd)'),
+        ("python/tasking_contracts/common/bridge_views.py", 'self.call_optional("set_mission_command", agent_id, cmd)'),
         ("gym_envs/scenario_loader/behavior_runtime/command_chain.py", 'loader_owned_runtime_view(loader).supports("set_mission_command")'),
     ],
     "set_task_order": [
-        ("python/tasking_contracts/bridge_views.py", 'self.call_optional("set_task_order", agent_id, task_order)'),
+        ("python/tasking_contracts/common/bridge_views.py", 'self.call_optional("set_task_order", agent_id, task_order)'),
     ],
     "set_leader_intent": [
-        ("python/tasking_contracts/bridge_views.py", 'self.call_optional("set_leader_intent", agent_id, leader_intent)'),
+        ("python/tasking_contracts/common/bridge_views.py", 'self.call_optional("set_leader_intent", agent_id, leader_intent)'),
     ],
     "set_pilot_report": [
-        ("python/tasking_contracts/bridge_views.py", 'self.call_optional("set_pilot_report", agent_id, pilot_report)'),
+        ("python/tasking_contracts/common/bridge_views.py", 'self.call_optional("set_pilot_report", agent_id, pilot_report)'),
     ],
 }
 
 OPTIONAL_METHOD_CALLER_CENSUS: dict[str, list[tuple[str, str]]] = {
     "get_unit_velocity": [
-        ("python/tasking_contracts/bridge_views.py", 'return self.call_optional("get_unit_velocity", int(entity_id))'),
+        ("python/tasking_contracts/common/bridge_views.py", 'return self.call_optional("get_unit_velocity", int(entity_id))'),
         ("gym_envs/scenario_loader/behavior_runtime/naval_screen.py", "ref_vel = runtime_view.get_unit_velocity(int(entity_id))"),
     ],
     "get_unit_messages": [
@@ -137,7 +137,7 @@ SIM_HANDLE_ROUTE_CENSUS: list[tuple[str, str]] = [
     ("python/rl/runtime/world_batch/runtime_support.py", 'return getattr(loader, "sim")'),
     ("python/rl/runtime/leader_world_batch_runtime.py", "return self.loader.sim"),
     ("python/rl/runtime/world_batch/runtime_access.py", "return self.loader(env_idx).sim"),
-    ("python/tasking_contracts/bridge_views.py", 'return getattr(self._loader, "sim", None)'),
+    ("python/tasking_contracts/common/bridge_views.py", 'return getattr(self._loader, "sim", None)'),
 ]
 
 
@@ -150,7 +150,7 @@ def _assert_needles_present(census: dict[str, list[tuple[str, str]]]) -> None:
                 missing.append((method, rel, needle))
     assert not missing, (
         "ScenarioLoader.sim seam census drifted; update the fixture AND the census "
-        f"docstring in python/tasking_contracts/runtime_contract.py: {missing}"
+        f"docstring in python/tasking_contracts/common/runtime_contract.py: {missing}"
     )
 
 
@@ -172,7 +172,7 @@ def test_sim_seam_handle_route_census_needles_are_current() -> None:
 
 
 def test_census_fixture_matches_contract_method_sets() -> None:
-    from python.tasking_contracts.runtime_contract import (
+    from python.tasking_contracts.common.runtime_contract import (
         SCENARIO_LOADER_RUNTIME_OPTIONAL_METHODS,
         SCENARIO_LOADER_RUNTIME_REQUIRED_METHODS,
     )
@@ -188,7 +188,7 @@ def test_census_fixture_matches_contract_method_sets() -> None:
 
 
 def _protocol_members() -> set[str]:
-    from python.tasking_contracts.runtime_contract import ScenarioLoaderRuntime
+    from python.tasking_contracts.common.runtime_contract import ScenarioLoaderRuntime
 
     return {
         name
@@ -198,7 +198,7 @@ def _protocol_members() -> set[str]:
 
 
 def test_protocol_members_match_required_method_set() -> None:
-    from python.tasking_contracts.runtime_contract import (
+    from python.tasking_contracts.common.runtime_contract import (
         SCENARIO_LOADER_RUNTIME_REQUIRED_METHODS,
     )
 
@@ -218,7 +218,7 @@ def test_scenario_loader_runtime_proxy_defines_every_protocol_method_directly() 
 
 def test_scenario_loader_runtime_proxy_signatures_match_protocol_exactly() -> None:
     from python.rl.runtime.world_batch.adapter import _ScenarioLoaderRuntimeProxy
-    from python.tasking_contracts.runtime_contract import ScenarioLoaderRuntime
+    from python.tasking_contracts.common.runtime_contract import ScenarioLoaderRuntime
 
     mismatched: list[tuple[str, str, str]] = []
     for name in sorted(_protocol_members()):
@@ -231,7 +231,7 @@ def test_scenario_loader_runtime_proxy_signatures_match_protocol_exactly() -> No
 
 def test_scenario_loader_runtime_proxy_satisfies_runtime_checkable_protocol() -> None:
     from python.rl.runtime.world_batch.adapter import _ScenarioLoaderRuntimeProxy
-    from python.tasking_contracts.runtime_contract import ScenarioLoaderRuntime
+    from python.tasking_contracts.common.runtime_contract import ScenarioLoaderRuntime
 
     proxy = _ScenarioLoaderRuntimeProxy(object(), 0)
     assert isinstance(proxy, ScenarioLoaderRuntime)
@@ -241,7 +241,7 @@ def test_scenario_loader_runtime_proxy_satisfies_runtime_checkable_protocol() ->
 
 def test_scenario_loader_runtime_proxy_deliberately_omits_optional_methods() -> None:
     from python.rl.runtime.world_batch.adapter import _ScenarioLoaderRuntimeProxy
-    from python.tasking_contracts.runtime_contract import (
+    from python.tasking_contracts.common.runtime_contract import (
         SCENARIO_LOADER_RUNTIME_OPTIONAL_METHODS,
     )
 
@@ -341,7 +341,7 @@ def test_runtime_contract_module_imports_stdlib_typing_only() -> None:
             if node.level > 0 or root not in _ALLOWED_CONTRACT_IMPORT_ROOTS:
                 offenders.append((node.lineno, f"from {'.' * node.level}{module}"))
     assert not offenders, (
-        "python/tasking_contracts/runtime_contract.py must stay dependency-terminal "
+        "python/tasking_contracts/common/runtime_contract.py must stay dependency-terminal "
         "(stdlib typing only; no ef_py/numpy/gym_envs/python.rl, no relative imports): "
         f"{offenders}"
     )

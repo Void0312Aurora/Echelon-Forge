@@ -32,11 +32,11 @@ The canonical low-level air controllers live under `python/tasking_contracts`:
 
 | Surface | Evidence | Current role | Boundary |
 | --- | --- | --- | --- |
-| `BaseScriptedController` | `python/tasking_contracts/base_scripted_controller.py` | shared controller state/action helpers | low-level execution only |
-| takeoff | `python/tasking_contracts/scripted_takeoff.py` | instrument/mission driven takeoff | air specialization |
-| stable flight | `python/tasking_contracts/scripted_stable_flight.py` | heading/altitude/speed stabilization | air specialization |
-| landing | `python/tasking_contracts/scripted_landing.py` | ILS/final/rollout control | air specialization |
-| mission vocabulary | `python/tasking_contracts/mission_defs.py` | phase and command mapping | tasking vocabulary |
+| `BaseScriptedController` | `python/tasking_contracts/air/execution/base_controller.py` | shared controller state/action helpers | low-level execution only |
+| takeoff | `python/tasking_contracts/air/execution/takeoff.py` | instrument/mission driven takeoff | air specialization |
+| stable flight | `python/tasking_contracts/air/execution/stable_flight.py` | heading/altitude/speed stabilization | air specialization |
+| landing | `python/tasking_contracts/air/execution/landing.py` | ILS/final/rollout control | air specialization |
+| mission vocabulary | `python/tasking_contracts/common/mission_defs.py` | phase and command mapping | tasking vocabulary |
 | phase execution | `gym_envs/leader_env_parts/scripted_exec.py` | switches the three controllers | environment adapter |
 
 The matching `python/rl/control/*.py` modules are compatibility shells that
@@ -46,7 +46,7 @@ repository complexity rule.
 
 ### F2 — A narrow neutral runtime seam exists, but it is not a full Agent Runtime
 
-`python/tasking_contracts/runtime_contract.py` defines a stdlib-only
+`python/tasking_contracts/common/runtime_contract.py` defines a stdlib-only
 `ScenarioLoaderRuntime` protocol for observation, instrument, time-step,
 position, command, missile, task order, leader intent, mission command, and
 pilot report access. `bridge_views.py` provides loader-owned views and keeps
@@ -75,7 +75,7 @@ contracts rather than define a second Python-only authority model.
 
 ### F4 — The Python Agency Registry is declarative and neutral
 
-`python/tasking_contracts/agency_registry.py` is a pure declaration layer with
+`python/tasking_contracts/common/agency_registry.py` is a pure declaration layer with
 no `ef_py`, `python.rl`, or `gym_envs` import. It records roles such as:
 
 - `autopilot_controller`
@@ -165,7 +165,7 @@ src/runtime/contracts/policy_contracts.h
         ▼
 src/interfaces/python/bindings_runtime_policy.cpp
         │
-        ├── python/tasking_contracts/agency_registry.py
+        ├── python/tasking_contracts/common/agency_registry.py
         ├── python/rl/runtime/agent_shim.py
         └── python/rl/runtime/world_batch/adapter.py
 

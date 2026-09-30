@@ -5,14 +5,14 @@ from typing import Any
 import ef_py
 import numpy as np
 
-from python.tasking_contracts.mission_defs import (
+from python.tasking_contracts.common.mission_defs import (
     COMMAND_CODE_LANDING,
     COMMAND_CODE_ROUTE,
     COMMAND_CODE_TAKEOFF,
     COMMAND_CODE_VECTOR,
     normalize_phase_name,
 )
-from python.tasking_contracts.bridge_views import (
+from python.tasking_contracts.common.bridge_views import (
     get_policy_agent_observation,
     get_policy_instrument_state,
     resolve_loader_time_step,

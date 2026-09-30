@@ -22,15 +22,15 @@ from python.runtime_bootstrap import ensure_repo_imports
 ensure_repo_imports()
 
 from python.env_config import resolve_env_settings
-from python.tasking_contracts.naval_scripted_execution import (
+from python.tasking_contracts.naval.execution import (
     NAVAL_SCRIPTED_MODEL_REGISTRY,
     NAVAL_STATION_HOLD_MODEL_ID,
 )
-from python.tasking_contracts.scripted_capability import (
+from python.tasking_contracts.common.scripted_capability import (
     parse_scripted_capability,
     resolve_scripted_model_id,
 )
-from python.tasking_contracts.scripted_runtime import (
+from python.tasking_contracts.common.scripted_runtime import (
     ScriptedRuntimeAgent,
     ScriptedRuntimeAgentSpec,
 )

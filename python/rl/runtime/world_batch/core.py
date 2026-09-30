@@ -26,7 +26,7 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any, Callable, ClassVar, Mapping
 
-from python.tasking_contracts.runtime_contract import ScenarioLoaderRuntime
+from python.tasking_contracts.common.runtime_contract import ScenarioLoaderRuntime
 
 
 class WorldBatchCore:

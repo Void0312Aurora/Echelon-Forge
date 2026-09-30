@@ -26,7 +26,7 @@ except ModuleNotFoundError: # pragma: no cover
 import python.rl.runtime.cooperative_world_batch_vec_env as cooperative_vec_env_module # noqa: E402
 from python.rl.runtime.multi_agent_runtime import MultiAgentWorldRuntimeView # noqa: E402
 from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index # noqa: E402
-from python.tasking_contracts.air_scripted_ew import AirScriptedEWActionModel # noqa: E402
+from python.tasking_contracts.air.ew.model import AirScriptedEWActionModel # noqa: E402
 
 
 _COOPERATIVE_AIR_2V2_SCENARIO_PATH = resolve_repo_path(
