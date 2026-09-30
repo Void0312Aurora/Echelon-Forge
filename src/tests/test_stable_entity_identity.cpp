@@ -560,9 +560,9 @@ TEST_SUITE("stable_entity_identity") {
             REQUIRE(kernel.load_database("examples/config/database"));
             kernel.reset(reset_seed);
             auto shooter = kernel.spawn_unit(Side::Blue, "Ground_Infantry_Soldier_MVP", 0.0, 0.0,
-                                              0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-            auto target = kernel.spawn_unit(Side::Red, "Ground_Infantry_Soldier_MVP", 50.0, 0.0,
                                              0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            auto target = kernel.spawn_unit(Side::Red, "Ground_Infantry_Soldier_MVP", 50.0, 0.0,
+                                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
             REQUIRE(shooter.is_valid());
             REQUIRE(target.is_valid());
             auto *weapons = shooter.get_mut<GroundWeaponState>();
@@ -586,9 +586,9 @@ TEST_SUITE("stable_entity_identity") {
             REQUIRE(kernel.load_database("examples/config/database"));
             kernel.reset(reset_seed);
             auto shooter = kernel.spawn_unit(Side::Blue, "Ground_Infantry_Soldier_MVP", 0.0, 0.0,
-                                              0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-            auto target = kernel.spawn_unit(Side::Red, "Ground_Infantry_Soldier_MVP", 50.0, 0.0,
                                              0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            auto target = kernel.spawn_unit(Side::Red, "Ground_Infantry_Soldier_MVP", 50.0, 0.0,
+                                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
             REQUIRE(shooter.is_valid());
             REQUIRE(target.is_valid());
             const auto *weapons = shooter.get<GroundWeaponState>();
@@ -597,8 +597,7 @@ TEST_SUITE("stable_entity_identity") {
             auto lease = kernel.acquire_world_lease();
             return stochastic_draw::uniform01(stochastic_draw::draw_seed(
                 lease.world(), stochastic_draw::DrawSite::ground_direct_fire, 0.0,
-                {shooter, target},
-                {static_cast<std::uint64_t>(weapons->weapons[0].weapon_type)}));
+                {shooter, target}, {static_cast<std::uint64_t>(weapons->weapons[0].weapon_type)}));
         };
         CHECK(ground_roll_at(606) == ground_roll_at(606));
         CHECK(ground_roll_at(606) != ground_roll_at(607));
