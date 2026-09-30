@@ -236,8 +236,7 @@ inline void register_instrument_system(flecs::world &ecs) {
                     const Ammo *ammo = it.entity(i).get<Ammo>();
                     inst[i].missiles_remaining = ammo ? ammo->missiles_remaining : 0;
 
-                    const ecs_world_info_t *world_info =
-                        ecs_get_world_info(it.world().c_ptr());
+                    const ecs_world_info_t *world_info = ecs_get_world_info(it.world().c_ptr());
                     const double countermeasure_snapshot_time_s =
                         world_info ? static_cast<double>(world_info->world_time_total) : -1.0;
                     inst[i].countermeasure_snapshot_stage = 24;
