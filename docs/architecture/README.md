@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/README.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-09-25`
+Last verified: `2026-08-27`
 
 This owner covers cross-domain system architecture, runtime layers, contracts,
 backends, and architecture decisions. Maintained standards, references, issues,
@@ -73,6 +73,38 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
 
 ## Reviews
 
+- [Long-horizon architecture governance plan review — 2026-08-25](reviews/long_horizon_architecture_governance_plan_review_20260825.md):
+  independent P0-B review of lifecycle fencing, phase order, mixed-version
+  rollout, run receipts, control retirement, operations, topology, and
+  evidence durability. Initial and first repair verdicts were repair-required;
+  the final repair review passed without shrinking the long-horizon outcome.
+- [Long-horizon architecture governance P1 review — 2026-08-25](reviews/long_horizon_architecture_governance_p1_review_20260825.md):
+  independent `gpt-5.6-sol` max review of host bootstrap/replacement/recovery and
+  shutdown, plan/release/checkpoint/receipt authority, canonical journal/storage,
+  one production-canary cutover, package rollback, operations and security. The
+  final repair snapshot passed with no unresolved critical/high finding.
+- [Long-horizon architecture governance P3-A review — 2026-08-25](reviews/long_horizon_architecture_governance_p3a_review_20260825.md):
+  independent `gpt-5.6-sol` max review of the engine-independent public identity
+  target, same-build value/schema authority, result/epoch semantics, actual
+  target/install graph, and negative bypass gates. The repaired snapshot passed
+  with no unresolved finding and no caller cutover.
+- [Long-horizon architecture governance P3-B review — 2026-08-25](reviews/long_horizon_architecture_governance_p3b_review_20260825.md):
+  independent `gpt-5.6-sol` max review of the typed authority envelope/schema
+  owner, one-way provenance-bound adapter, exact cross-language vectors, native
+  boundary and Cordis conformance. The repaired snapshot passed with no
+  unresolved Critical/High finding and no short-term substitution.
+- [Long-horizon architecture governance P3-C review — 2026-08-27](reviews/long_horizon_architecture_governance_p3c_review_20260827.md):
+  independent `gpt-5.6-sol` max adversarial and repair review of the
+  non-production ArtifactLedger, exact N/N-1 compatibility, fencing, recovery,
+  kill/backout, ACL and snapshot gates. The final repaired snapshot passed with
+  no unresolved Critical/High/Medium finding; P5-B/P5-D production authority
+  remains held.
+- [Long-horizon architecture governance P4-A review — 2026-08-27](reviews/long_horizon_architecture_governance_p4a_review_20260827.md):
+  independent `gpt-5.6-sol` max confirmation of the dark/shadow host lifecycle,
+  bounded candidate settlement, lease/result linearization, mutex-external CAS
+  fault injection, timeout retry behavior and physical boundary. It passed with
+  no unresolved Critical/High/Medium finding; P4-B/P4-C and production authority
+  remain open.
 - [Cross-domain scripted agent system consumer census — 2026-09-24](reviews/cross_domain_scripted_agent_system_consumer_census_20260924.md):
   advisory WP0 review; confirms the existing neutral tasking seam, compiled
   AgentRole/intent authority, RL-adjacent entanglements, and domain capability
