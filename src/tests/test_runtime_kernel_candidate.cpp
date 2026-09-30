@@ -54,8 +54,7 @@ class CandidateRunStore final : public runtime::host::RuntimeRunRecorderStore {
         return true;
     }
 
-    bool append_record(std::string_view, std::uint64_t, std::string_view,
-                       std::uint64_t sequence,
+    bool append_record(std::string_view, std::uint64_t, std::string_view, std::uint64_t sequence,
                        std::string_view payload, runtime::host::RuntimeRunRecorderAppendAck &ack,
                        std::string &detail) override {
         if (!available) {
@@ -96,8 +95,7 @@ class CandidateRunStore final : public runtime::host::RuntimeRunRecorderStore {
     }
 
     bool commit_checkpoint(std::string_view, std::uint64_t, std::string_view,
-                           std::string_view checkpoint_json,
-                           std::string_view validation_json,
+                           std::string_view checkpoint_json, std::string_view validation_json,
                            runtime::host::RuntimeRunRecorderCheckpointAck &ack,
                            std::string &) override {
         if (checkpoint_callback) checkpoint_callback();
@@ -160,14 +158,15 @@ runtime::host::RuntimeExecutionProvenanceSources execution_sources() {
         .request_path = EF_RUNTIME_COMPOSITION_REQUEST_PATH,
         .package_path = EF_CANDIDATE_RELEASE_PACKAGE_PATH,
         .wheel_path = EF_CANDIDATE_RELEASE_PACKAGE_PATH,
-        .owner_facts = {
-            .build_mode = build_mode,
-            .build_dirty = false,
-            .linker = "link.exe",
-            .cxx_abi = "msvc-native",
-            .python_abi = "cp312-win_amd64",
-            .node_abi = "native-runtime",
-        },
+        .owner_facts =
+            {
+                .build_mode = build_mode,
+                .build_dirty = false,
+                .linker = "link.exe",
+                .cxx_abi = "msvc-native",
+                .python_abi = "cp312-win_amd64",
+                .node_abi = "native-runtime",
+            },
     };
 }
 
@@ -180,15 +179,15 @@ std::string file_bytes(const char *path) {
 }
 
 std::string rollout_envelope_for_plan(std::string_view plan_sha256) {
-    auto rollout = nlohmann::json::parse(
-        authority_envelope_from_vector(EF_ROLLOUT_AUTHORITY_VECTOR_PATH));
+    auto rollout =
+        nlohmann::json::parse(authority_envelope_from_vector(EF_ROLLOUT_AUTHORITY_VECTOR_PATH));
     rollout.at("payload")["plan_sha256"] = plan_sha256;
     const auto canonical_payload =
         runtime::authority_contracts::canonical_authority_json(rollout.at("payload").dump())
             .value();
     rollout["payload_sha256"] = runtime::authority_contracts::authority_digest_sha256_hex(
-        "release.rollout-decision",
-        "application/vnd.echelon-forge.rollout-decision.v1+json", canonical_payload);
+        "release.rollout-decision", "application/vnd.echelon-forge.rollout-decision.v1+json",
+        canonical_payload);
     return runtime::authority_contracts::canonical_authority_json(rollout.dump()).value();
 }
 
@@ -220,8 +219,7 @@ std::string receipt_template_for_run(
         {"plan_sha256", plan_sha256},
         {"request_canonical_sha256", plan.at("input_bindings").at("request_sha256")},
         {"request_location",
-         "ledger://blob-" +
-             plan.at("input_bindings").at("request_sha256").get<std::string>()},
+         "ledger://blob-" + plan.at("input_bindings").at("request_sha256").get<std::string>()},
         {"request_sha256", plan.at("input_bindings").at("request_sha256")},
     };
     const auto release_envelope = authority_envelope_from_vector(EF_RELEASE_AUTHORITY_VECTOR_PATH);
@@ -237,13 +235,13 @@ std::string receipt_template_for_run(
         {"rollout_decision_sha256", rollout.at("payload_sha256")},
         {"provenance_sha256", release.at("payload").at("provenance_sha256")},
         {"sbom_sha256", release.at("payload").at("sbom_sha256")},
-        {"attestation_sha256", receipt.at("payload").at("release_binding").at("attestation_sha256")},
+        {"attestation_sha256",
+         receipt.at("payload").at("release_binding").at("attestation_sha256")},
     };
     receipt.at("payload").at("package")["identity"] = "cmo";
     receipt.at("payload").at("build")["source_revision"] =
         release.at("payload").at("source_revision");
-    receipt.at("payload").at("build")["toolchain"] =
-        release.at("payload").at("toolchain_identity");
+    receipt.at("payload").at("build")["toolchain"] = release.at("payload").at("toolchain_identity");
     receipt.at("payload").at("inputs")["artifacts"] = {
         {"request", plan.at("input_bindings").at("request_sha256")},
         {"resolved_execution_plan", runtime::authority_contracts::sha256_hex(plan_bytes)},
@@ -265,8 +263,7 @@ std::string receipt_template_for_run(
     std::string observed_detail;
     if (!runtime::host::collect_runtime_execution_bindings_json(
             sources, measurement_template.dump(), observed_json, observed_detail)) {
-        throw std::runtime_error("failed to collect test execution provenance: " +
-                                 observed_detail);
+        throw std::runtime_error("failed to collect test execution provenance: " + observed_detail);
     }
     const auto observed = nlohmann::json::parse(observed_json);
     for (const auto section : {"backend", "build", "executable", "inputs", "package", "platform"}) {
@@ -278,8 +275,8 @@ std::string receipt_template_for_run(
 std::string run_header_for_run(
     std::string_view run_id, std::string_view plan_sha256_override = {},
     const runtime::host::RuntimeExecutionProvenanceSources &sources = execution_sources()) {
-    const auto receipt = nlohmann::json::parse(
-        receipt_template_for_run(run_id, plan_sha256_override, sources));
+    const auto receipt =
+        nlohmann::json::parse(receipt_template_for_run(run_id, plan_sha256_override, sources));
     const auto &payload = receipt.at("payload");
     nlohmann::json bindings = {
         {"attempt_id", payload.at("attempt_id")},
@@ -297,7 +294,8 @@ std::string run_header_for_run(
         {"release_manifest_envelope_json",
          authority_envelope_from_vector(EF_RELEASE_AUTHORITY_VECTOR_PATH)},
         {"rollout_decision_envelope_json",
-         rollout_envelope_for_plan(payload.at("plan_binding").at("plan_sha256").get<std::string>())},
+         rollout_envelope_for_plan(
+             payload.at("plan_binding").at("plan_sha256").get<std::string>())},
     };
     const nlohmann::json measurement_material = {
         {"executable", bindings.at("executable")},
@@ -313,8 +311,7 @@ std::string run_header_for_run(
     const auto canonical_bindings =
         runtime::authority_contracts::canonical_authority_json(admission_material.dump()).value();
     const nlohmann::json header = {
-        {"admission_binding_sha256",
-         runtime::authority_contracts::sha256_hex(canonical_bindings)},
+        {"admission_binding_sha256", runtime::authority_contracts::sha256_hex(canonical_bindings)},
         {"observed_measurement_sha256",
          runtime::authority_contracts::sha256_hex(canonical_measurement)},
         {"receipt_bindings", bindings},
@@ -330,94 +327,90 @@ TEST_SUITE("runtime_kernel_candidate") {
     TEST_CASE("P5-B recorder admission and mutation ACKs gate the real candidate") {
         CandidateRunStore tampered_authority_store;
         auto tampered_header = nlohmann::json::parse(run_header_for_run("run-tampered-authority"));
-        auto tampered_rollout = nlohmann::json::parse(
-            tampered_header.at("receipt_bindings")
-                .at("rollout_decision_envelope_json")
-                .get<std::string>());
+        auto tampered_rollout = nlohmann::json::parse(tampered_header.at("receipt_bindings")
+                                                          .at("rollout_decision_envelope_json")
+                                                          .get<std::string>());
         tampered_rollout.at("payload")["release_id"] = "release-forged";
         tampered_header.at("receipt_bindings")["rollout_decision_envelope_json"] =
             runtime::authority_contracts::canonical_authority_json(tampered_rollout.dump()).value();
         const auto tampered_header_json =
             runtime::authority_contracts::canonical_authority_json(tampered_header.dump()).value();
-        CHECK_THROWS_AS(RuntimeKernelCandidate({
-                            .host_id = {.high = 0x5035422D41555448ULL, .low = 1},
-                            .run_recorder_store = &tampered_authority_store,
-                            .run_id = "run-tampered-authority",
-                            .run_writer_id = "writer-1",
-                            .run_header_json = tampered_header_json,
-                            .run_receipt_template_json =
-                                receipt_template_for_run("run-tampered-authority"),
-                            .run_execution_sources = execution_sources(),
-                        }),
-                        std::invalid_argument);
+        CHECK_THROWS_AS(
+            RuntimeKernelCandidate({
+                .host_id = {.high = 0x5035422D41555448ULL, .low = 1},
+                .run_recorder_store = &tampered_authority_store,
+                .run_id = "run-tampered-authority",
+                .run_writer_id = "writer-1",
+                .run_header_json = tampered_header_json,
+                .run_receipt_template_json = receipt_template_for_run("run-tampered-authority"),
+                .run_execution_sources = execution_sources(),
+            }),
+            std::invalid_argument);
         CHECK_FALSE(tampered_authority_store.header_committed);
 
         CandidateRunStore mismatched_provenance_store;
         auto mismatched_sources = execution_sources();
         mismatched_sources.wheel_path = EF_RUN_RECEIPT_VECTOR_PATH;
-        CHECK_THROWS_AS(RuntimeKernelCandidate({
-                            .host_id = {.high = 0x5035422D50524F56ULL, .low = 1},
-                            .run_recorder_store = &mismatched_provenance_store,
-                            .run_id = "run-mismatched-provenance",
-                            .run_writer_id = "writer-1",
-                            .run_header_json =
-                                run_header_for_run("run-mismatched-provenance"),
-                            .run_receipt_template_json =
-                                receipt_template_for_run("run-mismatched-provenance"),
-                            .run_execution_sources = mismatched_sources,
-                        }),
-                        std::invalid_argument);
+        CHECK_THROWS_AS(
+            RuntimeKernelCandidate({
+                .host_id = {.high = 0x5035422D50524F56ULL, .low = 1},
+                .run_recorder_store = &mismatched_provenance_store,
+                .run_id = "run-mismatched-provenance",
+                .run_writer_id = "writer-1",
+                .run_header_json = run_header_for_run("run-mismatched-provenance"),
+                .run_receipt_template_json = receipt_template_for_run("run-mismatched-provenance"),
+                .run_execution_sources = mismatched_sources,
+            }),
+            std::invalid_argument);
         CHECK_FALSE(mismatched_provenance_store.header_committed);
 
         CandidateRunStore missing_owner_facts_store;
         auto missing_owner_facts = execution_sources();
         missing_owner_facts.owner_facts.build_mode.clear();
-        CHECK_THROWS_AS(RuntimeKernelCandidate({
-                            .host_id = {.high = 0x5035422D4F574E52ULL, .low = 1},
-                            .run_recorder_store = &missing_owner_facts_store,
-                            .run_id = "run-missing-owner-facts",
-                            .run_writer_id = "writer-1",
-                            .run_header_json = run_header_for_run(
-                                "run-missing-owner-facts"),
-                            .run_receipt_template_json = receipt_template_for_run(
-                                "run-missing-owner-facts"),
-                            .run_execution_sources = missing_owner_facts,
-                        }),
-                        std::invalid_argument);
+        CHECK_THROWS_AS(
+            RuntimeKernelCandidate({
+                .host_id = {.high = 0x5035422D4F574E52ULL, .low = 1},
+                .run_recorder_store = &missing_owner_facts_store,
+                .run_id = "run-missing-owner-facts",
+                .run_writer_id = "writer-1",
+                .run_header_json = run_header_for_run("run-missing-owner-facts"),
+                .run_receipt_template_json = receipt_template_for_run("run-missing-owner-facts"),
+                .run_execution_sources = missing_owner_facts,
+            }),
+            std::invalid_argument);
         CHECK_FALSE(missing_owner_facts_store.header_committed);
 
         CandidateRunStore mismatched_build_facts_store;
         auto mismatched_build_facts = execution_sources();
         mismatched_build_facts.owner_facts.build_mode =
             mismatched_build_facts.owner_facts.build_mode == "Debug" ? "Release" : "Debug";
-        CHECK_THROWS_AS(RuntimeKernelCandidate({
-                            .host_id = {.high = 0x5035422D4255494CULL, .low = 1},
-                            .run_recorder_store = &mismatched_build_facts_store,
-                            .run_id = "run-mismatched-build-facts",
-                            .run_writer_id = "writer-1",
-                            .run_header_json =
-                                run_header_for_run("run-mismatched-build-facts"),
-                            .run_receipt_template_json =
-                                receipt_template_for_run("run-mismatched-build-facts"),
-                            .run_execution_sources = mismatched_build_facts,
-                        }),
-                        std::invalid_argument);
+        CHECK_THROWS_AS(
+            RuntimeKernelCandidate({
+                .host_id = {.high = 0x5035422D4255494CULL, .low = 1},
+                .run_recorder_store = &mismatched_build_facts_store,
+                .run_id = "run-mismatched-build-facts",
+                .run_writer_id = "writer-1",
+                .run_header_json = run_header_for_run("run-mismatched-build-facts"),
+                .run_receipt_template_json = receipt_template_for_run("run-mismatched-build-facts"),
+                .run_execution_sources = mismatched_build_facts,
+            }),
+            std::invalid_argument);
         CHECK_FALSE(mismatched_build_facts_store.header_committed);
 
         CandidateRunStore mismatched_request_store;
         auto mismatched_request = execution_sources();
         mismatched_request.request_path = EF_RESOLVED_EXECUTION_PLAN_PATH;
-        CHECK_THROWS_AS(RuntimeKernelCandidate({
-                            .host_id = {.high = 0x5035422D52455155ULL, .low = 1},
-                            .run_recorder_store = &mismatched_request_store,
-                            .run_id = "run-mismatched-request",
-                            .run_writer_id = "writer-1",
-                            .run_header_json = run_header_for_run("run-mismatched-request"),
-                            .run_receipt_template_json =
-                                receipt_template_for_run("run-mismatched-request"),
-                            .run_execution_sources = mismatched_request,
-                        }),
-                        std::invalid_argument);
+        CHECK_THROWS_AS(
+            RuntimeKernelCandidate({
+                .host_id = {.high = 0x5035422D52455155ULL, .low = 1},
+                .run_recorder_store = &mismatched_request_store,
+                .run_id = "run-mismatched-request",
+                .run_writer_id = "writer-1",
+                .run_header_json = run_header_for_run("run-mismatched-request"),
+                .run_receipt_template_json = receipt_template_for_run("run-mismatched-request"),
+                .run_execution_sources = mismatched_request,
+            }),
+            std::invalid_argument);
         CHECK_FALSE(mismatched_request_store.header_committed);
 
         CandidateRunStore unavailable;
@@ -450,9 +443,9 @@ TEST_SUITE("runtime_kernel_candidate") {
         store.checkpoint_callback = [&] {
             checkpoint_mutation_blocked = !admitted.step(admitted.world_ref());
         };
-        const auto checkpoint_status = admitted.persist_checkpoint(
-            checkpoint_for_run("run-admitted"),
-            R"({"accepted":true,"checkpoint_id":"checkpoint-1"})");
+        const auto checkpoint_status =
+            admitted.persist_checkpoint(checkpoint_for_run("run-admitted"),
+                                        R"({"accepted":true,"checkpoint_id":"checkpoint-1"})");
         INFO(checkpoint_status.code);
         INFO(checkpoint_status.detail);
         CHECK(checkpoint_status);
@@ -460,17 +453,13 @@ TEST_SUITE("runtime_kernel_candidate") {
         REQUIRE(store.records.size() == 9);
         CHECK(store.records.front().find(R"("lifecycle_event":"journal_admitted")") !=
               std::string::npos);
-        CHECK(store.records.at(1).find(R"("event":"runtime_configuration")") !=
-              std::string::npos);
+        CHECK(store.records.at(1).find(R"("event":"runtime_configuration")") != std::string::npos);
         CHECK(store.records.at(1).find(R"("phase":"intent")") != std::string::npos);
         CHECK(store.records.at(1).find(R"("seed":42)") != std::string::npos);
-        CHECK(store.records.at(1).find(R"("time_step_ns":16666667)") !=
-              std::string::npos);
+        CHECK(store.records.at(1).find(R"("time_step_ns":16666667)") != std::string::npos);
         CHECK(store.records.at(2).find(R"("phase":"outcome")") != std::string::npos);
-        CHECK(store.records.at(7).find(R"("lifecycle_event":"episode")") !=
-              std::string::npos);
-        CHECK(store.records.back().find(R"("event":"checkpoint_commit")") !=
-              std::string::npos);
+        CHECK(store.records.at(7).find(R"("lifecycle_event":"episode")") != std::string::npos);
+        CHECK(store.records.back().find(R"("event":"checkpoint_commit")") != std::string::npos);
 
         WorldSpawnRequest request{};
         request.side = Side::Blue;
@@ -501,24 +490,22 @@ TEST_SUITE("runtime_kernel_candidate") {
                   .at("accepted") == false);
 
         CandidateRunStore terminal_store;
-        auto tampered_template =
-            nlohmann::json::parse(receipt_template_for_run("run-completed"));
+        auto tampered_template = nlohmann::json::parse(receipt_template_for_run("run-completed"));
         auto &tampered_payload = tampered_template.at("payload");
         tampered_payload["receipt_id"] = "receipt-forged";
         tampered_payload["attempt_id"] = "attempt-forged";
         tampered_payload["host_boot_id"] = "boot-forged";
         tampered_payload["incarnation_epoch"] = "999";
-        tampered_payload["execution_scope"] =
-            nlohmann::json{{"world_ids", {"world-forged"}},
-                           {"entity_ids", {"entity-forged"}},
-                           {"episode_ids", {"episode-forged"}},
-                           {"request_ids", {"request-forged"}},
-                           {"epochs", {{"world", "999"},
-                                       {"entity", "999"},
-                                       {"episode", "999"},
-                                       {"request", "999"}}}};
-        tampered_payload.at("results").at("output_artifacts").push_back(
-            tampered_payload.at("results").at("output_artifacts").front());
+        tampered_payload["execution_scope"] = nlohmann::json{
+            {"world_ids", {"world-forged"}},
+            {"entity_ids", {"entity-forged"}},
+            {"episode_ids", {"episode-forged"}},
+            {"request_ids", {"request-forged"}},
+            {"epochs",
+             {{"world", "999"}, {"entity", "999"}, {"episode", "999"}, {"request", "999"}}}};
+        tampered_payload.at("results")
+            .at("output_artifacts")
+            .push_back(tampered_payload.at("results").at("output_artifacts").front());
         tampered_payload.at("results").at("output_artifacts").front()["name"] = "forged-output";
         tampered_payload["checkpoints"] = {
             {"source_refs", {nlohmann::json{{"checkpoint_id", "forged-source"}}}},
@@ -526,13 +513,13 @@ TEST_SUITE("runtime_kernel_candidate") {
         };
         tampered_payload["qualification_refs"] =
             nlohmann::json::array({{{"identity", "forged"}, {"digest", std::string(64, 'f')}}});
-        tampered_payload["side_effect_receipts"] = nlohmann::json::array(
-            {{{"identity", "forged"},
-              {"digest", std::string(64, 'f')},
-              {"media_type", "application/forged"},
-              {"retrieval_location", "workspace://forged"}}});
-        tampered_payload["authenticity"] =
-            {{"attestation_sha256", std::string(64, 'f')}, {"signatures", nlohmann::json::array()}};
+        tampered_payload["side_effect_receipts"] =
+            nlohmann::json::array({{{"identity", "forged"},
+                                    {"digest", std::string(64, 'f')},
+                                    {"media_type", "application/forged"},
+                                    {"retrieval_location", "workspace://forged"}}});
+        tampered_payload["authenticity"] = {{"attestation_sha256", std::string(64, 'f')},
+                                            {"signatures", nlohmann::json::array()}};
         RuntimeKernelCandidate completed({
             .host_id = {.high = 0x5035422D434F4D50ULL, .low = 1},
             .run_recorder_store = &terminal_store,
@@ -571,13 +558,21 @@ TEST_SUITE("runtime_kernel_candidate") {
         CHECK(owner_outputs.front().at("name") == "runtime-state");
         CHECK(owner_outputs.front().at("media_type") ==
               "application/vnd.echelon-forge.runtime-state.v1+octets");
-        CHECK(terminal_store.final_receipt.at("payload").at("checkpoints").at("source_refs").empty());
-        CHECK(terminal_store.final_receipt.at("payload").at("checkpoints").at("created_refs").empty());
+        CHECK(
+            terminal_store.final_receipt.at("payload").at("checkpoints").at("source_refs").empty());
+        CHECK(terminal_store.final_receipt.at("payload")
+                  .at("checkpoints")
+                  .at("created_refs")
+                  .empty());
         CHECK(terminal_store.final_receipt.at("payload").at("qualification_refs").empty());
         CHECK(terminal_store.final_receipt.at("payload").at("side_effect_receipts").empty());
-        CHECK(terminal_store.final_receipt.at("payload").at("authenticity").at("attestation_sha256") !=
-              std::string(64, 'f'));
-        CHECK(terminal_store.final_receipt.at("payload").at("execution_scope").at("entity_ids").size() == 1);
+        CHECK(terminal_store.final_receipt.at("payload")
+                  .at("authenticity")
+                  .at("attestation_sha256") != std::string(64, 'f'));
+        CHECK(terminal_store.final_receipt.at("payload")
+                  .at("execution_scope")
+                  .at("entity_ids")
+                  .size() == 1);
         const auto &completed_lifecycle =
             terminal_store.final_receipt.at("payload").at("lifecycle");
         REQUIRE(completed_lifecycle.size() == 9);
@@ -601,8 +596,7 @@ TEST_SUITE("runtime_kernel_candidate") {
             .run_recorder_store = &mutated_package_store,
             .run_id = "run-mutated-package",
             .run_writer_id = "writer-1",
-            .run_header_json =
-                run_header_for_run("run-mutated-package", {}, mutable_sources),
+            .run_header_json = run_header_for_run("run-mutated-package", {}, mutable_sources),
             .run_receipt_template_json =
                 receipt_template_for_run("run-mutated-package", {}, mutable_sources),
             .run_execution_sources = mutable_sources,
@@ -720,8 +714,7 @@ TEST_SUITE("runtime_kernel_candidate") {
         const std::string rejected_plan_sha256(64, 'f');
         RuntimeKernelCandidate candidate({
             .host_id = {.high = 0x5044432D504C414EULL, .low = 3},
-            .plan = {.plan_id = "p4c.kernel-candidate.v1",
-                     .plan_sha256 = rejected_plan_sha256},
+            .plan = {.plan_id = "p4c.kernel-candidate.v1", .plan_sha256 = rejected_plan_sha256},
         });
         CHECK_FALSE(candidate.start());
 
@@ -730,7 +723,6 @@ TEST_SUITE("runtime_kernel_candidate") {
             .plan = {.plan_id = "p4c.kernel-candidate.v1"},
         });
         CHECK_FALSE(partial.start());
-
     }
 
     TEST_CASE("P4-C facade adapter keeps batch operations on epoch-bearing refs") {

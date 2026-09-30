@@ -39,11 +39,11 @@ std::string token_name(std::string_view value) {
 }
 
 bool is_audit_event_filename(std::string_view name) {
-    constexpr std::size_t prefix_size = 6U;  // event-
+    constexpr std::size_t prefix_size = 6U; // event-
     constexpr std::size_t sequence_size = 20U;
-    constexpr std::size_t suffix_size = 5U;  // .json
-    if (name.size() != prefix_size + sequence_size + suffix_size ||
-        !name.starts_with("event-") || !name.ends_with(".json"))
+    constexpr std::size_t suffix_size = 5U; // .json
+    if (name.size() != prefix_size + sequence_size + suffix_size || !name.starts_with("event-") ||
+        !name.ends_with(".json"))
         return false;
     for (std::size_t index = prefix_size; index < prefix_size + sequence_size; ++index) {
         if (name[index] < '0' || name[index] > '9') return false;
@@ -52,10 +52,9 @@ bool is_audit_event_filename(std::string_view name) {
 }
 
 bool is_audit_event_temporary_filename(std::string_view name) {
-    constexpr std::size_t marker_size = 5U;  // .tmp-
+    constexpr std::size_t marker_size = 5U; // .tmp-
     const auto marker = name.find(".json.tmp-");
-    if (marker == std::string_view::npos || marker + 10U != name.size() - 16U)
-        return false;
+    if (marker == std::string_view::npos || marker + 10U != name.size() - 16U) return false;
     if (!is_audit_event_filename(name.substr(0, marker + 5U))) return false;
     for (std::size_t index = marker + marker_size + 5U; index < name.size(); ++index) {
         const char value = name[index];
@@ -66,18 +65,23 @@ bool is_audit_event_temporary_filename(std::string_view name) {
 
 std::string_view role_name(RuntimeArtifactLedgerRole role) {
     switch (role) {
-    case RuntimeArtifactLedgerRole::RuntimeHost: return "runtime_host";
-    case RuntimeArtifactLedgerRole::CrashReconciler: return "crash_reconciler";
-    case RuntimeArtifactLedgerRole::PlanCompiler: return "plan_compiler";
-    case RuntimeArtifactLedgerRole::ReleaseArtifactPipeline: return "release_artifact_pipeline";
-    case RuntimeArtifactLedgerRole::BackupOperator: return "backup_operator";
-    case RuntimeArtifactLedgerRole::ReadOnlyAuditor: return "read_only_auditor";
+    case RuntimeArtifactLedgerRole::RuntimeHost:
+        return "runtime_host";
+    case RuntimeArtifactLedgerRole::CrashReconciler:
+        return "crash_reconciler";
+    case RuntimeArtifactLedgerRole::PlanCompiler:
+        return "plan_compiler";
+    case RuntimeArtifactLedgerRole::ReleaseArtifactPipeline:
+        return "release_artifact_pipeline";
+    case RuntimeArtifactLedgerRole::BackupOperator:
+        return "backup_operator";
+    case RuntimeArtifactLedgerRole::ReadOnlyAuditor:
+        return "read_only_auditor";
     }
     return "unknown";
 }
 
-bool role_can_write_artifact_media(RuntimeArtifactLedgerRole role,
-                                   std::string_view media_type) {
+bool role_can_write_artifact_media(RuntimeArtifactLedgerRole role, std::string_view media_type) {
     switch (role) {
     case RuntimeArtifactLedgerRole::RuntimeHost:
         return media_type == "application/octet-stream" ||
@@ -88,8 +92,7 @@ bool role_can_write_artifact_media(RuntimeArtifactLedgerRole role,
     case RuntimeArtifactLedgerRole::ReleaseArtifactPipeline:
         return media_type == "application/vnd.echelon-forge.release-manifest.v1+json" ||
                media_type == "application/vnd.echelon-forge.release-package.v1+octets" ||
-               media_type ==
-                   "application/vnd.echelon-forge.stored-artifact-inventory.v1+json";
+               media_type == "application/vnd.echelon-forge.stored-artifact-inventory.v1+json";
     case RuntimeArtifactLedgerRole::CrashReconciler:
     case RuntimeArtifactLedgerRole::BackupOperator:
     case RuntimeArtifactLedgerRole::ReadOnlyAuditor:
@@ -110,8 +113,7 @@ bool sync_directory(const std::filesystem::path &directory);
 #endif
 
 bool copy_tree_without_lock(const std::filesystem::path &source,
-                            const std::filesystem::path &target,
-                            std::string &detail) {
+                            const std::filesystem::path &target, std::string &detail) {
     std::error_code error;
     std::filesystem::create_directories(target, error);
     if (error) {
@@ -124,8 +126,7 @@ bool copy_tree_without_lock(const std::filesystem::path &source,
             return false;
         }
         const auto name = entry.path().filename().string();
-        if (name == ".artifact-ledger.lock" || name.find(".tmp-") != std::string::npos)
-            continue;
+        if (name == ".artifact-ledger.lock" || name.find(".tmp-") != std::string::npos) continue;
         const auto relative = std::filesystem::relative(entry.path(), source, error);
         if (error) {
             detail = "native ArtifactLedger backup relative path failed";
@@ -224,8 +225,7 @@ bool parse_sequence(std::string_view name, std::uint64_t &sequence) {
 }
 
 bool receipt_matches_header(const Json &payload, const Json &header, std::string &detail) {
-    if (!header.contains("receipt_bindings") ||
-        !header.contains("admission_binding_sha256")) {
+    if (!header.contains("receipt_bindings") || !header.contains("admission_binding_sha256")) {
         detail = "native ArtifactLedger header lacks admission bindings";
         return false;
     }
@@ -265,8 +265,7 @@ std::uint32_t crc32(std::string_view bytes) {
     for (const unsigned char byte : bytes) {
         checksum ^= byte;
         for (unsigned bit = 0; bit < 8U; ++bit) {
-            const auto mask = static_cast<std::uint32_t>(
-                -static_cast<std::int32_t>(checksum & 1U));
+            const auto mask = static_cast<std::uint32_t>(-static_cast<std::int32_t>(checksum & 1U));
             checksum = (checksum >> 1U) ^ (0xedb88320U & mask);
         }
     }
@@ -285,18 +284,19 @@ std::string crash_marker_observation_digest(std::string_view stream_id,
 }
 
 bool validate_crash_marker(const Json &marker, std::string_view stream_id,
-                           std::uint64_t recovery_generation,
-                           std::string_view recovery_writer_id, std::uint64_t prior_generation,
-                           std::string_view prior_writer_id, std::string &detail) {
+                           std::uint64_t recovery_generation, std::string_view recovery_writer_id,
+                           std::uint64_t prior_generation, std::string_view prior_writer_id,
+                           std::string &detail) {
     if (!marker.is_object()) {
         detail = "native crash reconciliation marker is not an object";
         return false;
     }
     static const std::set<std::string> fields = {
-        "event", "observed_exit_sha256", "prior_writer_generation", "prior_writer_id",
-        "recovery_writer_generation", "recovery_writer_id"};
+        "event",           "observed_exit_sha256",       "prior_writer_generation",
+        "prior_writer_id", "recovery_writer_generation", "recovery_writer_id"};
     std::set<std::string> actual;
-    for (auto it = marker.begin(); it != marker.end(); ++it) actual.insert(it.key());
+    for (auto it = marker.begin(); it != marker.end(); ++it)
+        actual.insert(it.key());
     const auto expected_observation = crash_marker_observation_digest(
         stream_id, prior_generation, prior_writer_id, recovery_generation, recovery_writer_id);
     if (actual != fields || marker.at("event").get<std::string>() != "crash_reconciled" ||
@@ -305,17 +305,25 @@ bool validate_crash_marker(const Json &marker, std::string_view stream_id,
         marker.at("recovery_writer_generation").get<std::uint64_t>() != recovery_generation ||
         marker.at("recovery_writer_id").get<std::string>() != recovery_writer_id ||
         marker.at("observed_exit_sha256").get<std::string>() != expected_observation) {
-        detail = "native crash reconciliation marker does not bind the released root lock and fence";
+        detail =
+            "native crash reconciliation marker does not bind the released root lock and fence";
         if (actual != fields) {
             detail += ": fields actual=";
-            for (const auto &field : actual) detail += field + ",";
-        }
-        else if (marker.at("event").get<std::string>() != "crash_reconciled") detail += ": event";
-        else if (marker.at("prior_writer_generation").get<std::uint64_t>() != prior_generation) detail += ": prior generation";
-        else if (marker.at("prior_writer_id").get<std::string>() != prior_writer_id) detail += ": prior writer";
-        else if (marker.at("recovery_writer_generation").get<std::uint64_t>() != recovery_generation) detail += ": recovery generation";
-        else if (marker.at("recovery_writer_id").get<std::string>() != recovery_writer_id) detail += ": recovery writer";
-        else detail += ": observation";
+            for (const auto &field : actual)
+                detail += field + ",";
+        } else if (marker.at("event").get<std::string>() != "crash_reconciled")
+            detail += ": event";
+        else if (marker.at("prior_writer_generation").get<std::uint64_t>() != prior_generation)
+            detail += ": prior generation";
+        else if (marker.at("prior_writer_id").get<std::string>() != prior_writer_id)
+            detail += ": prior writer";
+        else if (marker.at("recovery_writer_generation").get<std::uint64_t>() !=
+                 recovery_generation)
+            detail += ": recovery generation";
+        else if (marker.at("recovery_writer_id").get<std::string>() != recovery_writer_id)
+            detail += ": recovery writer";
+        else
+            detail += ": observation";
         return false;
     }
     return true;
@@ -326,8 +334,8 @@ bool validate_crash_marker(const Json &marker, std::string_view stream_id,
 RuntimeFileArtifactLedgerStore::RuntimeFileArtifactLedgerStore(
     std::filesystem::path root, RuntimeArtifactLedgerAccessContext access)
     : root_(std::move(root)), access_(std::move(access)) {
-    if (access_.audit_identity.empty() || access_.audit_identity.find_first_of("/\\") !=
-                                               std::string::npos) {
+    if (access_.audit_identity.empty() ||
+        access_.audit_identity.find_first_of("/\\") != std::string::npos) {
         throw std::invalid_argument("ArtifactLedger audit identity is invalid");
     }
     std::error_code error;
@@ -341,8 +349,7 @@ RuntimeFileArtifactLedgerStore::RuntimeFileArtifactLedgerStore(
     std::filesystem::create_directories(root_ / "audit", error);
     if (error) throw std::system_error(error, "create ArtifactLedger directories");
     std::string security_detail;
-    if (!secure_root_permissions(security_detail))
-        throw std::runtime_error(security_detail);
+    if (!secure_root_permissions(security_detail)) throw std::runtime_error(security_detail);
 
     const auto lock_path = root_ / ".artifact-ledger.lock";
     int root_lock_error = 0;
@@ -405,8 +412,9 @@ std::filesystem::path RuntimeFileArtifactLedgerStore::fence_path(std::string_vie
     return root_ / "fences" / (token_name(stream_id) + ".json");
 }
 
-std::filesystem::path RuntimeFileArtifactLedgerStore::fence_history_path(
-    std::string_view stream_id, std::uint64_t generation) const {
+std::filesystem::path
+RuntimeFileArtifactLedgerStore::fence_history_path(std::string_view stream_id,
+                                                   std::uint64_t generation) const {
     return root_ / "fences" / "history" /
            (token_name(stream_id) + "-" + std::to_string(generation) + ".json");
 }
@@ -574,22 +582,23 @@ bool RuntimeFileArtifactLedgerStore::record_audit(std::string_view operation,
     const auto canonical_persisted =
         runtime::authority_contracts::canonical_authority_json(persisted.dump());
     const auto sequence_text = std::to_string(next);
-    const auto event_name = "event-" + std::string(20U - sequence_text.size(), '0') +
-                            sequence_text + ".json";
+    const auto event_name =
+        "event-" + std::string(20U - sequence_text.size(), '0') + sequence_text + ".json";
     return canonical_persisted.has_value() &&
-           durable_write(root_ / "audit" / event_name,
-                         *canonical_persisted, detail);
+           durable_write(root_ / "audit" / event_name, *canonical_persisted, detail);
 }
 
-bool RuntimeFileArtifactLedgerStore::verify_audit_chain(
-    std::size_t &event_count, std::string &last_event_sha256, std::string &detail) const {
+bool RuntimeFileArtifactLedgerStore::verify_audit_chain(std::size_t &event_count,
+                                                        std::string &last_event_sha256,
+                                                        std::string &detail) const {
     event_count = 0;
     last_event_sha256.clear();
     std::vector<std::filesystem::path> paths;
     std::error_code error;
     for (const auto &entry : std::filesystem::directory_iterator(root_ / "audit", error)) {
         if (error) break;
-        if (is_audit_event_filename(entry.path().filename().string())) paths.push_back(entry.path());
+        if (is_audit_event_filename(entry.path().filename().string()))
+            paths.push_back(entry.path());
     }
     if (error) {
         detail = "ArtifactLedger audit directory cannot be read";
@@ -616,7 +625,8 @@ bool RuntimeFileArtifactLedgerStore::verify_audit_chain(
             material.erase("event_sha256");
             const auto canonical =
                 runtime::authority_contracts::canonical_authority_json(material.dump());
-            if (!canonical.has_value() || runtime::authority_contracts::sha256_hex(*canonical) != actual) {
+            if (!canonical.has_value() ||
+                runtime::authority_contracts::sha256_hex(*canonical) != actual) {
                 detail = "ArtifactLedger audit event digest is invalid";
                 return false;
             }
@@ -665,12 +675,12 @@ bool RuntimeFileArtifactLedgerStore::secure_root_permissions(std::string &detail
     entries[1].Trustee.ptstrName = reinterpret_cast<LPWSTR>(system);
     PACL acl = nullptr;
     const auto acl_error = SetEntriesInAclW(2, entries, nullptr, &acl);
-    const auto set_error = acl_error == ERROR_SUCCESS
-                               ? SetNamedSecurityInfoW(
-                                     const_cast<LPWSTR>(root_.wstring().c_str()), SE_FILE_OBJECT,
-                                     DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION,
-                                     nullptr, nullptr, acl, nullptr)
-                               : acl_error;
+    const auto set_error =
+        acl_error == ERROR_SUCCESS
+            ? SetNamedSecurityInfoW(const_cast<LPWSTR>(root_.wstring().c_str()), SE_FILE_OBJECT,
+                                    DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION,
+                                    nullptr, nullptr, acl, nullptr)
+            : acl_error;
     if (acl != nullptr) LocalFree(acl);
     LocalFree(system);
     CloseHandle(token);
@@ -687,8 +697,8 @@ bool RuntimeFileArtifactLedgerStore::secure_root_permissions(std::string &detail
         detail = "ArtifactLedger cannot set private root permissions";
         return false;
     }
-    for (const auto name : {"fences", "fences/history", "journals", "checkpoints", "blobs",
-                            "audit"}) {
+    for (const auto name :
+         {"fences", "fences/history", "journals", "checkpoints", "blobs", "audit"}) {
         std::filesystem::permissions(root_ / name, std::filesystem::perms::owner_all,
                                      std::filesystem::perm_options::replace, error);
         if (error) return false;
@@ -810,8 +820,8 @@ bool RuntimeFileArtifactLedgerStore::commit_header_authorized(
 
 bool RuntimeFileArtifactLedgerStore::resume_journal(
     std::string_view journal_id, std::uint64_t generation, std::string_view writer_id,
-    std::string_view header_json,
-    std::uint64_t &next_sequence, std::string &last_record_sha256, std::string &detail) {
+    std::string_view header_json, std::uint64_t &next_sequence, std::string &last_record_sha256,
+    std::string &detail) {
     (void)journal_id;
     (void)generation;
     (void)writer_id;
@@ -824,8 +834,8 @@ bool RuntimeFileArtifactLedgerStore::resume_journal(
 
 bool RuntimeFileArtifactLedgerStore::resume_journal_impl(
     std::string_view journal_id, std::uint64_t generation, std::string_view writer_id,
-    std::string_view header_json,
-    std::uint64_t &next_sequence, std::string &last_record_sha256, std::string &detail) {
+    std::string_view header_json, std::uint64_t &next_sequence, std::string &last_record_sha256,
+    std::string &detail) {
     if (!authorize("append", detail)) return false;
     std::lock_guard lock(mutex_);
     if (!active_fence("journal:" + std::string(journal_id), generation, writer_id, detail))
@@ -849,8 +859,7 @@ bool RuntimeFileArtifactLedgerStore::resume_journal_impl(
     // the receipt write succeeded but its outcome audit acknowledgement did not.
     // append_record and finalize_receipt still enforce their own finalized/capability
     // gates, so this does not reopen the journal for mutation.
-    if (!scan_journal(directory, journal_id, generation, next_sequence, last_record_sha256,
-                      detail))
+    if (!scan_journal(directory, journal_id, generation, next_sequence, last_record_sha256, detail))
         return false;
     return record_audit("resume_journal", journal_id,
                         runtime::authority_contracts::sha256_hex(existing_header), detail);
@@ -963,8 +972,7 @@ bool RuntimeFileArtifactLedgerStore::scan_journal(const std::filesystem::path &d
 bool RuntimeFileArtifactLedgerStore::append_record(std::string_view journal_id,
                                                    std::uint64_t generation,
                                                    std::string_view writer_id,
-                                                   std::uint64_t sequence,
-                                                   std::string_view payload,
+                                                   std::uint64_t sequence, std::string_view payload,
                                                    RuntimeRunRecorderAppendAck &ack,
                                                    std::string &detail) {
     (void)journal_id;
@@ -1007,8 +1015,7 @@ bool RuntimeFileArtifactLedgerStore::append_record_impl(
     const auto directory = stream_path("journal:" + std::string(journal_id));
     std::uint64_t next = 0;
     std::string prior;
-    if (!scan_journal(directory, journal_id, generation, next, prior, detail) ||
-        sequence != next) {
+    if (!scan_journal(directory, journal_id, generation, next, prior, detail) || sequence != next) {
         if (detail.empty()) detail = "native ArtifactLedger journal sequence is not monotonic";
         return false;
     }
@@ -1024,16 +1031,19 @@ bool RuntimeFileArtifactLedgerStore::append_record_impl(
                 return false;
             }
             std::string prior_fence_bytes;
-            if (!read_text(fence_history_path("journal:" + std::string(journal_id), generation - 1U),
-                           prior_fence_bytes)) {
+            if (!read_text(
+                    fence_history_path("journal:" + std::string(journal_id), generation - 1U),
+                    prior_fence_bytes)) {
                 detail = "crash reconciler lacks the prior durable fence";
                 return false;
             }
-            const auto prior_fence = Json::parse(prior_fence_bytes.begin(), prior_fence_bytes.end());
+            const auto prior_fence =
+                Json::parse(prior_fence_bytes.begin(), prior_fence_bytes.end());
             const auto prior_writer_id = prior_fence.at("writer_id").get<std::string>();
             if (recovery.value("event", "") == "crash_reconciled") {
-                if (!validate_crash_marker(recovery, "journal:" + std::string(journal_id), generation,
-                                           writer_id, generation - 1U, prior_writer_id, detail))
+                if (!validate_crash_marker(recovery, "journal:" + std::string(journal_id),
+                                           generation, writer_id, generation - 1U, prior_writer_id,
+                                           detail))
                     return false;
             } else if (recovery.value("event", "") == "runtime_lifecycle" &&
                        recovery.value("lifecycle_event", "") == "terminal") {
@@ -1049,8 +1059,9 @@ bool RuntimeFileArtifactLedgerStore::append_record_impl(
                     if (!hex_decode(frame.value("payload_hex", ""), marker_bytes)) continue;
                     const auto marker = Json::parse(marker_bytes.begin(), marker_bytes.end());
                     if (marker.is_object() && marker.value("event", "") == "crash_reconciled" &&
-                        validate_crash_marker(marker, "journal:" + std::string(journal_id), generation,
-                                              writer_id, generation - 1U, prior_writer_id, detail)) {
+                        validate_crash_marker(marker, "journal:" + std::string(journal_id),
+                                              generation, writer_id, generation - 1U,
+                                              prior_writer_id, detail)) {
                         found_marker = true;
                         break;
                     }
@@ -1080,17 +1091,17 @@ bool RuntimeFileArtifactLedgerStore::append_record_impl(
     const auto identity_bytes = identity.dump();
     const auto frame_sha256 = runtime::authority_contracts::sha256_hex(identity_bytes);
     auto frame = Json{{"fence_generation", identity.at("fence_generation")},
-                            {"frame_checksum", crc32(identity_bytes)},
-                            {"frame_length", identity_bytes.size() + sizeof(std::uint32_t)},
-                            {"frame_sha256", frame_sha256},
-                            {"journal_id", identity.at("journal_id")},
-                            {"payload_hex", hex_encode(payload)},
-                            {"payload_sha256", identity.at("payload_sha256")},
-                            {"payload_size", identity.at("payload_size")},
-                            {"prior_record_sha256", identity.at("prior_record_sha256")},
-                            {"sequence", identity.at("sequence")},
-                            {"stream_id", identity.at("stream_id")},
-                            {"writer_id", identity.at("writer_id")}};
+                      {"frame_checksum", crc32(identity_bytes)},
+                      {"frame_length", identity_bytes.size() + sizeof(std::uint32_t)},
+                      {"frame_sha256", frame_sha256},
+                      {"journal_id", identity.at("journal_id")},
+                      {"payload_hex", hex_encode(payload)},
+                      {"payload_sha256", identity.at("payload_sha256")},
+                      {"payload_size", identity.at("payload_size")},
+                      {"prior_record_sha256", identity.at("prior_record_sha256")},
+                      {"sequence", identity.at("sequence")},
+                      {"stream_id", identity.at("stream_id")},
+                      {"writer_id", identity.at("writer_id")}};
     std::size_t frame_size = 0;
     for (;;) {
         frame["frame_size"] = frame_size;
@@ -1110,10 +1121,8 @@ bool RuntimeFileArtifactLedgerStore::append_record_impl(
     return true;
 }
 
-bool RuntimeFileArtifactLedgerStore::finalize_receipt(std::string_view,
-                                                      std::uint64_t,
-                                                      std::string_view,
-                                                      std::string_view,
+bool RuntimeFileArtifactLedgerStore::finalize_receipt(std::string_view, std::uint64_t,
+                                                      std::string_view, std::string_view,
                                                       RuntimeRunRecorderFinalizeAck &,
                                                       std::string &detail) {
     detail = "native ArtifactLedger receipt finalization requires a recorder admission capability";
@@ -1124,8 +1133,8 @@ bool RuntimeFileArtifactLedgerStore::finalize_receipt_authorized(
     std::string_view journal_id, std::uint64_t generation, std::string_view writer_id,
     std::string_view receipt_json, const RuntimeRunAdmissionCapability &capability,
     RuntimeRunRecorderFinalizeAck &ack, std::string &detail) {
-    return finalize_receipt_impl(journal_id, generation, writer_id, receipt_json, &capability,
-                                 ack, detail);
+    return finalize_receipt_impl(journal_id, generation, writer_id, receipt_json, &capability, ack,
+                                 detail);
 }
 
 bool RuntimeFileArtifactLedgerStore::finalize_receipt_impl(
@@ -1133,14 +1142,14 @@ bool RuntimeFileArtifactLedgerStore::finalize_receipt_impl(
     std::string_view receipt_json, const RuntimeRunAdmissionCapability *capability,
     RuntimeRunRecorderFinalizeAck &ack, std::string &detail) {
     if (capability == nullptr || !capability->valid()) {
-        detail = "native ArtifactLedger receipt finalization requires a recorder admission capability";
+        detail =
+            "native ArtifactLedger receipt finalization requires a recorder admission capability";
         return false;
     }
     {
         std::lock_guard lock(mutex_);
         const auto admitted = admission_capabilities_.find(std::string(journal_id));
-        if (admitted == admission_capabilities_.end() ||
-            admitted->second != capability->token()) {
+        if (admitted == admission_capabilities_.end() || admitted->second != capability->token()) {
             detail = "native ArtifactLedger admission capability does not own this journal";
             return false;
         }
@@ -1169,8 +1178,7 @@ bool RuntimeFileArtifactLedgerStore::finalize_receipt_impl(
             }
             existing_exact = true;
         }
-        const auto receipt_generation_text =
-            payload.at("writer_generation").get<std::string>();
+        const auto receipt_generation_text = payload.at("writer_generation").get<std::string>();
         std::size_t parsed_characters = 0U;
         const auto receipt_generation = std::stoull(receipt_generation_text, &parsed_characters);
         if (parsed_characters != receipt_generation_text.size() || receipt_generation == 0U ||
@@ -1234,12 +1242,14 @@ bool RuntimeFileArtifactLedgerStore::finalize_receipt_impl(
                 return false;
             }
             std::string prior_fence_bytes;
-            if (!read_text(fence_history_path("journal:" + std::string(journal_id), generation - 1U),
-                           prior_fence_bytes)) {
+            if (!read_text(
+                    fence_history_path("journal:" + std::string(journal_id), generation - 1U),
+                    prior_fence_bytes)) {
                 detail = "crash reconciler receipt lacks the prior durable fence";
                 return false;
             }
-            const auto prior_fence = Json::parse(prior_fence_bytes.begin(), prior_fence_bytes.end());
+            const auto prior_fence =
+                Json::parse(prior_fence_bytes.begin(), prior_fence_bytes.end());
             if (!validate_crash_marker(marker, "journal:" + std::string(journal_id), generation,
                                        writer_id, generation - 1U,
                                        prior_fence.at("writer_id").get<std::string>(), detail))
@@ -1269,7 +1279,8 @@ bool RuntimeFileArtifactLedgerStore::finalize_receipt_impl(
                     !verify_artifact(digest, artifact.at("size").get<std::size_t>(),
                                      artifact.at("media_type").get<std::string>(),
                                      artifact.at("retention_class").get<std::string>(), detail)) {
-                    if (detail.empty()) detail = "native ArtifactLedger receipt output is not durable";
+                    if (detail.empty())
+                        detail = "native ArtifactLedger receipt output is not durable";
                     return false;
                 }
             }
@@ -1292,8 +1303,8 @@ bool RuntimeFileArtifactLedgerStore::finalize_receipt_impl(
 
 bool RuntimeFileArtifactLedgerStore::commit_checkpoint(
     std::string_view journal_id, std::uint64_t generation, std::string_view writer_id,
-    std::string_view checkpoint_json,
-    std::string_view validation_json, RuntimeRunRecorderCheckpointAck &ack, std::string &detail) {
+    std::string_view checkpoint_json, std::string_view validation_json,
+    RuntimeRunRecorderCheckpointAck &ack, std::string &detail) {
     (void)journal_id;
     (void)generation;
     (void)writer_id;
@@ -1342,8 +1353,8 @@ bool RuntimeFileArtifactLedgerStore::commit_checkpoint_impl(
         const auto canonical_payload =
             runtime::authority_contracts::canonical_authority_json(payload.dump());
         if (!canonical_payload.has_value() ||
-            !runtime::authority_contracts::validate_authority_envelope_json(
-                 checkpoint_json, *canonical_payload)
+            !runtime::authority_contracts::validate_authority_envelope_json(checkpoint_json,
+                                                                            *canonical_payload)
                  .valid) {
             detail = "native ArtifactLedger checkpoint authority is invalid";
             return false;
@@ -1361,8 +1372,8 @@ bool RuntimeFileArtifactLedgerStore::commit_checkpoint_impl(
         const auto header = Json::parse(header_bytes.begin(), header_bytes.end());
         if (!validate_runtime_run_header_json(journal_id, header_bytes, detail)) return false;
         const auto &bindings = header.at("receipt_bindings");
-        const auto release = Json::parse(
-            bindings.at("release_manifest_envelope_json").get<std::string>());
+        const auto release =
+            Json::parse(bindings.at("release_manifest_envelope_json").get<std::string>());
         if (payload.at("state_schema_generation") !=
             release.at("payload").at("state_schema_generation")) {
             detail = "native ArtifactLedger checkpoint state schema differs from release";
@@ -1370,12 +1381,9 @@ bool RuntimeFileArtifactLedgerStore::commit_checkpoint_impl(
         }
         if (payload.at("plan_sha256") != bindings.at("plan_binding").at("plan_sha256") ||
             payload.at("release_id") != bindings.at("release_binding").at("release_id") ||
-            payload.at("decision_id") !=
-                bindings.at("release_binding").at("rollout_decision_id") ||
-            payload.at("target_reader_generation_min") !=
-                bindings.at("reader_generation_min") ||
-            payload.at("target_reader_generation_max") !=
-                bindings.at("reader_generation_max")) {
+            payload.at("decision_id") != bindings.at("release_binding").at("rollout_decision_id") ||
+            payload.at("target_reader_generation_min") != bindings.at("reader_generation_min") ||
+            payload.at("target_reader_generation_max") != bindings.at("reader_generation_max")) {
             detail = "native ArtifactLedger checkpoint differs from durable admission bindings";
             return false;
         }
@@ -1383,7 +1391,8 @@ bool RuntimeFileArtifactLedgerStore::commit_checkpoint_impl(
         if (!validation.is_object() || validation.value("accepted", false) != true ||
             validation.value("checkpoint_id", "") != checkpoint_id ||
             !validation.contains("state_payload_hex") || !validation.contains("state_sha256") ||
-            !validation.contains("aggregate_replay_sha256") || !validation.contains("validator_id") ||
+            !validation.contains("aggregate_replay_sha256") ||
+            !validation.contains("validator_id") ||
             runtime::authority_contracts::canonical_authority_json(validation_json).value_or("") !=
                 validation_json) {
             detail = "native ArtifactLedger checkpoint validation evidence is not accepted";
@@ -1398,10 +1407,11 @@ bool RuntimeFileArtifactLedgerStore::commit_checkpoint_impl(
         }
         std::uint64_t journal_next = 0;
         std::string journal_tail;
-        if (!scan_journal(stream_path("journal:" + std::string(journal_id)), journal_id,
-                          generation, journal_next, journal_tail, detail) ||
+        if (!scan_journal(stream_path("journal:" + std::string(journal_id)), journal_id, generation,
+                          journal_next, journal_tail, detail) ||
             transfer_fence == 0U || transfer_fence >= journal_next) {
-            detail = "native ArtifactLedger checkpoint transfer fence is not a durable journal sequence";
+            detail =
+                "native ArtifactLedger checkpoint transfer fence is not a durable journal sequence";
             return false;
         }
         std::string intent_frame_bytes;
@@ -1420,8 +1430,10 @@ bool RuntimeFileArtifactLedgerStore::commit_checkpoint_impl(
         const auto intent = Json::parse(intent_payload.begin(), intent_payload.end());
         if (!intent.is_object() || intent.value("event", "") != "checkpoint_commit" ||
             intent.value("checkpoint_id", "") != checkpoint_id ||
-            intent.value("checkpoint_sha256", "") != runtime::authority_contracts::sha256_hex(checkpoint_json) ||
-            intent.value("validation_sha256", "") != runtime::authority_contracts::sha256_hex(validation_json) ||
+            intent.value("checkpoint_sha256", "") !=
+                runtime::authority_contracts::sha256_hex(checkpoint_json) ||
+            intent.value("validation_sha256", "") !=
+                runtime::authority_contracts::sha256_hex(validation_json) ||
             intent.value("transfer_fence_sequence", "") !=
                 payload.at("transfer_fence_sequence").get<std::string>()) {
             detail = "native ArtifactLedger checkpoint commit intent does not bind the checkpoint";
@@ -1433,8 +1445,10 @@ bool RuntimeFileArtifactLedgerStore::commit_checkpoint_impl(
                 runtime::authority_contracts::sha256_hex(state_payload) ||
             validation.value("state_sha256", "") != payload.value("aggregate_state_sha256", "") ||
             validation.value("aggregate_replay_sha256", "") !=
-                runtime::authority_contracts::checkpoint_replay_aggregate_sha256(payload.dump()).value_or("")) {
-            detail = "native ArtifactLedger checkpoint validation evidence is not state/replay bound";
+                runtime::authority_contracts::checkpoint_replay_aggregate_sha256(payload.dump())
+                    .value_or("")) {
+            detail =
+                "native ArtifactLedger checkpoint validation evidence is not state/replay bound";
             return false;
         }
         const auto directory = root_ / "checkpoints" / token_name(checkpoint_id);
@@ -1445,8 +1459,7 @@ bool RuntimeFileArtifactLedgerStore::commit_checkpoint_impl(
             return false;
         }
         const auto bundle = Json{{"checkpoint", checkpoint}, {"validation", validation}}.dump();
-        const auto checkpoint_digest =
-            runtime::authority_contracts::sha256_hex(checkpoint_json);
+        const auto checkpoint_digest = runtime::authority_contracts::sha256_hex(checkpoint_json);
         if (!record_audit("intent.commit_checkpoint", checkpoint_id, checkpoint_digest, detail))
             return false;
         const auto bundle_path = directory / "bundle.json";
@@ -1476,7 +1489,8 @@ bool RuntimeFileArtifactLedgerStore::rehydrate_state_authorized(
     std::string_view journal_id, const RuntimeRunAdmissionCapability &capability,
     RuntimeRunRecorderRecoveryState &state, std::string &detail) {
     if (!capability.valid()) {
-        detail = "native ArtifactLedger checkpoint rehydration requires a recorder admission capability";
+        detail =
+            "native ArtifactLedger checkpoint rehydration requires a recorder admission capability";
         return false;
     }
     std::lock_guard lock(mutex_);
@@ -1534,18 +1548,18 @@ bool RuntimeFileArtifactLedgerStore::rehydrate_state_authorized(
                 const auto event = payload.at("lifecycle_event").get<std::string>();
                 const auto timestamp = payload.at("timestamp").get<std::string>();
                 const auto epoch = state.incarnation_epoch.empty() ? "0" : state.incarnation_epoch;
-                state.lifecycle_events.push_back(
-                    Json{{"sequence", state.lifecycle_events.size()},
-                         {"event", event},
-                         {"timestamp", timestamp},
-                         {"epoch", epoch},
-                         {"durable_sequence", sequence}}
-                        .dump());
+                state.lifecycle_events.push_back(Json{
+                    {"sequence", state.lifecycle_events.size()},
+                    {"event", event},
+                    {"timestamp", timestamp},
+                    {"epoch", epoch},
+                    {"durable_sequence", sequence}}.dump());
                 if (event == "journal_admitted") state.admitted_at = timestamp;
             }
         }
         std::error_code error;
-        for (const auto &entry : std::filesystem::directory_iterator(root_ / "checkpoints", error)) {
+        for (const auto &entry :
+             std::filesystem::directory_iterator(root_ / "checkpoints", error)) {
             if (error) {
                 detail = "native ArtifactLedger checkpoint inventory cannot be enumerated";
                 return false;
@@ -1574,10 +1588,9 @@ bool RuntimeFileArtifactLedgerStore::rehydrate_state_authorized(
             return false;
         }
         auto &checkpoints = state.committed_checkpoints;
-        std::sort(checkpoints.begin(), checkpoints.end(),
-                  [](const auto &left, const auto &right) {
-                      return left.checkpoint_id < right.checkpoint_id;
-                  });
+        std::sort(checkpoints.begin(), checkpoints.end(), [](const auto &left, const auto &right) {
+            return left.checkpoint_id < right.checkpoint_id;
+        });
         if (std::adjacent_find(checkpoints.begin(), checkpoints.end(),
                                [](const auto &left, const auto &right) {
                                    return left.checkpoint_id == right.checkpoint_id;
@@ -1592,12 +1605,9 @@ bool RuntimeFileArtifactLedgerStore::rehydrate_state_authorized(
     return true;
 }
 
-bool RuntimeFileArtifactLedgerStore::put_artifact(std::string_view bytes,
-                                                  std::string_view media_type,
-                                                  std::string_view retention_class,
-                                                  std::string &digest,
-                                                  std::string &retrieval_location,
-                                                  std::string &detail) {
+bool RuntimeFileArtifactLedgerStore::put_artifact(
+    std::string_view bytes, std::string_view media_type, std::string_view retention_class,
+    std::string &digest, std::string &retrieval_location, std::string &detail) {
     if (!authorize("artifact", detail)) return false;
     if (bytes.empty() || media_type.empty() || retention_class.empty()) {
         detail = "native ArtifactLedger artifact content metadata is required";
@@ -1631,8 +1641,7 @@ bool RuntimeFileArtifactLedgerStore::put_artifact(std::string_view bytes,
         if (!verify_artifact(digest, bytes.size(), media_type, retention_class, detail))
             return false;
     } else {
-        if (!durable_write(data_path, bytes, detail))
-            return false;
+        if (!durable_write(data_path, bytes, detail)) return false;
         if (!durable_write(meta_path, metadata.dump(), detail)) {
             std::error_code ignored;
             std::filesystem::remove(data_path, ignored);
@@ -1674,15 +1683,14 @@ bool RuntimeFileArtifactLedgerStore::verify_artifact(std::string_view digest, st
 bool RuntimeFileArtifactLedgerStore::verify_admission_artifacts_unlocked(
     std::string_view receipt_payload_json, std::string &detail) const {
     try {
-        const auto receipt_payload = Json::parse(receipt_payload_json.begin(), receipt_payload_json.end());
+        const auto receipt_payload =
+            Json::parse(receipt_payload_json.begin(), receipt_payload_json.end());
         const auto &artifacts = receipt_payload.at("inputs").at("artifacts");
         const auto verify_authority_blob = [&](const std::string &digest,
-                                               const std::string &media_type,
-                                               const char *label) {
+                                               const std::string &media_type, const char *label) {
             std::string metadata_bytes;
             if (!read_text(root_ / "blobs" / (digest + ".json"), metadata_bytes)) {
-                detail = std::string("native ArtifactLedger admitted ") + label +
-                         " blob is absent";
+                detail = std::string("native ArtifactLedger admitted ") + label + " blob is absent";
                 return false;
             }
             const auto metadata = Json::parse(metadata_bytes);
@@ -1690,15 +1698,15 @@ bool RuntimeFileArtifactLedgerStore::verify_admission_artifacts_unlocked(
                 metadata.value("retention_class", "") != "active-release" ||
                 !verify_artifact(digest, metadata.at("size").get<std::size_t>(), media_type,
                                  "active-release", detail)) {
-                detail = std::string("native ArtifactLedger admitted ") + label +
-                         " blob is not durable";
+                detail =
+                    std::string("native ArtifactLedger admitted ") + label + " blob is not durable";
                 return false;
             }
             return true;
         };
-        if (!verify_authority_blob(
-                artifacts.at("resolved_execution_plan").get<std::string>(),
-                "application/vnd.echelon-forge.resolved-execution-plan.v1+json", "execution plan") ||
+        if (!verify_authority_blob(artifacts.at("resolved_execution_plan").get<std::string>(),
+                                   "application/vnd.echelon-forge.resolved-execution-plan.v1+json",
+                                   "execution plan") ||
             !verify_authority_blob(
                 artifacts.at("request").get<std::string>(),
                 "application/vnd.echelon-forge.runtime-composition-request.v1+json", "request"))
@@ -1743,7 +1751,8 @@ bool RuntimeFileArtifactLedgerStore::verify_checkpoint_commit_intent_unlocked(
         if (!scan_journal(journal_directory, run_id, current_generation, next_sequence, tail_digest,
                           detail) ||
             transfer_fence >= next_sequence) {
-            if (detail.empty()) detail = "native ArtifactLedger checkpoint intent is outside the journal";
+            if (detail.empty())
+                detail = "native ArtifactLedger checkpoint intent is outside the journal";
             return false;
         }
         std::string frame_bytes;
@@ -1809,8 +1818,8 @@ bool RuntimeFileArtifactLedgerStore::read_checkpoint_unlocked(std::string_view c
         const auto canonical_payload =
             runtime::authority_contracts::canonical_authority_json(payload.dump());
         if (!canonical_payload.has_value() ||
-            !runtime::authority_contracts::validate_authority_envelope_json(
-                 checkpoint.dump(), *canonical_payload)
+            !runtime::authority_contracts::validate_authority_envelope_json(checkpoint.dump(),
+                                                                            *canonical_payload)
                  .valid) {
             detail = "native ArtifactLedger checkpoint authority is invalid";
             return false;
@@ -1821,8 +1830,8 @@ bool RuntimeFileArtifactLedgerStore::read_checkpoint_unlocked(std::string_view c
             validation.value("checkpoint_id", "") != checkpoint_id ||
             !validation.contains("aggregate_replay_sha256") ||
             !validation.contains("validator_id") ||
-            runtime::authority_contracts::canonical_authority_json(validation.dump()).value_or("") !=
-                validation.dump() ||
+            runtime::authority_contracts::canonical_authority_json(validation.dump())
+                    .value_or("") != validation.dump() ||
             !hex_decode(validation.value("state_payload_hex", ""), state_payload) ||
             validation.value("state_sha256", "") !=
                 runtime::authority_contracts::sha256_hex(state_payload) ||
@@ -1846,8 +1855,8 @@ bool RuntimeFileArtifactLedgerStore::read_checkpoint_unlocked(std::string_view c
             return false;
         }
         const auto &bindings = header.at("receipt_bindings");
-        const auto release = Json::parse(
-            bindings.at("release_manifest_envelope_json").get<std::string>());
+        const auto release =
+            Json::parse(bindings.at("release_manifest_envelope_json").get<std::string>());
         if (payload.at("state_schema_generation") !=
             release.at("payload").at("state_schema_generation")) {
             detail = "native ArtifactLedger checkpoint state schema differs from owning release";
@@ -1855,12 +1864,9 @@ bool RuntimeFileArtifactLedgerStore::read_checkpoint_unlocked(std::string_view c
         }
         if (payload.at("plan_sha256") != bindings.at("plan_binding").at("plan_sha256") ||
             payload.at("release_id") != bindings.at("release_binding").at("release_id") ||
-            payload.at("decision_id") !=
-                bindings.at("release_binding").at("rollout_decision_id") ||
-            payload.at("target_reader_generation_min") !=
-                bindings.at("reader_generation_min") ||
-            payload.at("target_reader_generation_max") !=
-                bindings.at("reader_generation_max")) {
+            payload.at("decision_id") != bindings.at("release_binding").at("rollout_decision_id") ||
+            payload.at("target_reader_generation_min") != bindings.at("reader_generation_min") ||
+            payload.at("target_reader_generation_max") != bindings.at("reader_generation_max")) {
             detail = "native ArtifactLedger checkpoint differs from owning admission bindings";
             return false;
         }
@@ -1890,24 +1896,19 @@ bool RuntimeFileArtifactLedgerStore::validate_checkpoint_reference_unlocked(
                 runtime::authority_contracts::sha256_hex(checkpoint.dump()) ||
             reference.at("validation_sha256") !=
                 runtime::authority_contracts::sha256_hex(validation.dump()) ||
-            reference.at("state_schema_generation") !=
-                payload.at("state_schema_generation") ||
+            reference.at("state_schema_generation") != payload.at("state_schema_generation") ||
             reference.at("retrieval_location") != "ledger://checkpoint-" + checkpoint_id ||
             payload.at("plan_sha256") != receipt.at("plan_binding").at("plan_sha256") ||
             payload.at("release_id") != receipt.at("release_binding").at("release_id") ||
-            payload.at("decision_id") !=
-                receipt.at("release_binding").at("rollout_decision_id") ||
-            payload.at("target_reader_generation_min") !=
-                receipt.at("reader_generation_min") ||
-            payload.at("target_reader_generation_max") !=
-                receipt.at("reader_generation_max")) {
+            payload.at("decision_id") != receipt.at("release_binding").at("rollout_decision_id") ||
+            payload.at("target_reader_generation_min") != receipt.at("reader_generation_min") ||
+            payload.at("target_reader_generation_max") != receipt.at("reader_generation_max")) {
             detail = "native ArtifactLedger checkpoint reference differs from durable bundle";
             return false;
         }
-        if (created &&
-            (payload.at("run_id") != receipt.at("run_id") ||
-             payload.at("host_boot_id") != receipt.at("host_boot_id") ||
-             payload.at("incarnation_epoch") != receipt.at("incarnation_epoch"))) {
+        if (created && (payload.at("run_id") != receipt.at("run_id") ||
+                        payload.at("host_boot_id") != receipt.at("host_boot_id") ||
+                        payload.at("incarnation_epoch") != receipt.at("incarnation_epoch"))) {
             detail = "created checkpoint differs from receipt run/boot/incarnation";
             return false;
         }
@@ -1952,13 +1953,13 @@ bool RuntimeFileArtifactLedgerStore::validate_receipt_checkpoints_unlocked(
                                                             created, detail))
                     return false;
                 if (created)
-                    referenced_created.insert(
-                        reference.at("checkpoint_id").get<std::string>());
+                    referenced_created.insert(reference.at("checkpoint_id").get<std::string>());
             }
         }
         std::set<std::string> committed_created;
         std::error_code error;
-        for (const auto &entry : std::filesystem::directory_iterator(root_ / "checkpoints", error)) {
+        for (const auto &entry :
+             std::filesystem::directory_iterator(root_ / "checkpoints", error)) {
             if (error) break;
             if (!entry.is_directory(error) || error) continue;
             std::string bundle_json;
@@ -1986,9 +1987,9 @@ bool RuntimeFileArtifactLedgerStore::backup_to(const std::filesystem::path &targ
     const auto root_absolute = std::filesystem::absolute(root_).lexically_normal();
     const auto target_absolute = std::filesystem::absolute(target).lexically_normal();
     const auto relative = target_absolute.lexically_relative(root_absolute);
-    const bool target_inside_root = relative.empty() ||
-                                    (!relative.has_root_name() && relative.begin() != relative.end() &&
-                                     *relative.begin() != "..");
+    const bool target_inside_root =
+        relative.empty() || (!relative.has_root_name() && relative.begin() != relative.end() &&
+                             *relative.begin() != "..");
     if (target.empty() || target_inside_root) {
         detail = "native ArtifactLedger backup target must differ from the live root";
         return false;
@@ -2030,8 +2031,7 @@ bool RuntimeFileArtifactLedgerStore::availability_report(std::string &report_jso
             if (!validate_runtime_run_header_json(run_id, header_bytes, detail)) return false;
             std::string fence_bytes;
             if (!read_text(fence_path("journal:" + run_id), fence_bytes)) return false;
-            const auto generation =
-                Json::parse(fence_bytes).at("generation").get<std::uint64_t>();
+            const auto generation = Json::parse(fence_bytes).at("generation").get<std::uint64_t>();
             std::uint64_t next = 0;
             std::string tail;
             if (!scan_journal(entry.path(), run_id, generation, next, tail, detail)) return false;
@@ -2096,7 +2096,8 @@ bool RuntimeFileArtifactLedgerStore::availability_report(std::string &report_jso
             nullptr, nullptr, &dacl, nullptr, &descriptor);
         SECURITY_DESCRIPTOR_CONTROL control = 0;
         DWORD revision = 0;
-        private_root = security_error == ERROR_SUCCESS && descriptor != nullptr && dacl != nullptr &&
+        private_root = security_error == ERROR_SUCCESS && descriptor != nullptr &&
+                       dacl != nullptr &&
                        GetSecurityDescriptorControl(descriptor, &control, &revision) != FALSE &&
                        (control & SE_DACL_PROTECTED) != 0;
         if (descriptor != nullptr) LocalFree(descriptor);
@@ -2118,8 +2119,7 @@ bool RuntimeFileArtifactLedgerStore::availability_report(std::string &report_jso
                              {"journal_count", journal_count},
                              {"private_root", true},
                              {"receipt_count", receipt_count}};
-        report_json =
-            runtime::authority_contracts::canonical_authority_json(report.dump()).value();
+        report_json = runtime::authority_contracts::canonical_authority_json(report.dump()).value();
         return true;
     } catch (const std::exception &error) {
         detail = std::string("ArtifactLedger availability audit failed: ") + error.what();
@@ -2131,8 +2131,7 @@ bool RuntimeFileArtifactLedgerStore::restore_from(const std::filesystem::path &s
                                                   const std::filesystem::path &target,
                                                   const RuntimeArtifactLedgerAccessContext &access,
                                                   std::string &detail) {
-    if (access.role != RuntimeArtifactLedgerRole::BackupOperator ||
-        access.audit_identity.empty()) {
+    if (access.role != RuntimeArtifactLedgerRole::BackupOperator || access.audit_identity.empty()) {
         detail = "ArtifactLedger restore requires a backup-operator audit identity";
         return false;
     }
@@ -2150,9 +2149,8 @@ bool RuntimeFileArtifactLedgerStore::restore_from(const std::filesystem::path &s
     try {
         RuntimeFileArtifactLedgerStore restored(target, access);
         const auto fail_restore = [&]() -> bool {
-            throw std::runtime_error(detail.empty()
-                                         ? "native ArtifactLedger restore verification failed"
-                                         : detail);
+            throw std::runtime_error(
+                detail.empty() ? "native ArtifactLedger restore verification failed" : detail);
         };
         for (const auto &entry : std::filesystem::directory_iterator(target / "journals")) {
             if (!entry.is_directory()) continue;
@@ -2187,7 +2185,8 @@ bool RuntimeFileArtifactLedgerStore::restore_from(const std::filesystem::path &s
                 !parsed.contains("validation"))
                 return fail_restore();
             const auto &checkpoint = parsed.at("checkpoint");
-            const auto checkpoint_id = checkpoint.at("payload").at("checkpoint_id").get<std::string>();
+            const auto checkpoint_id =
+                checkpoint.at("payload").at("checkpoint_id").get<std::string>();
             std::string verified;
             if (!restored.read_checkpoint(checkpoint_id, verified, detail)) return fail_restore();
         }
@@ -2207,10 +2206,9 @@ bool RuntimeFileArtifactLedgerStore::restore_from(const std::filesystem::path &s
                 return fail_restore();
             }
         }
-        if (!restored.record_audit("restore", source.generic_string(),
-                                   runtime::authority_contracts::sha256_hex(
-                                       source.generic_string()),
-                                   detail))
+        if (!restored.record_audit(
+                "restore", source.generic_string(),
+                runtime::authority_contracts::sha256_hex(source.generic_string()), detail))
             return fail_restore();
         return true;
     } catch (const std::exception &error) {
@@ -2235,16 +2233,16 @@ bool RuntimeFileArtifactLedgerStore::read_receipt(std::string_view journal_id,
     try {
         const auto receipt = Json::parse(receipt_json.begin(), receipt_json.end());
         const auto canonical = runtime::authority_contracts::canonical_authority_json(receipt_json);
-        if (!canonical.has_value() || *canonical != receipt_json ||
-            !receipt.is_object() || receipt.size() != 7U ||
-            receipt.value("domain", "") != "runtime.run-receipt" ||
+        if (!canonical.has_value() || *canonical != receipt_json || !receipt.is_object() ||
+            receipt.size() != 7U || receipt.value("domain", "") != "runtime.run-receipt" ||
             receipt.value("media_type", "") !=
                 "application/vnd.echelon-forge.run-receipt.v1+json" ||
-            receipt.at("payload_sha256") != runtime::authority_contracts::authority_digest_sha256_hex(
-                "runtime.run-receipt", "application/vnd.echelon-forge.run-receipt.v1+json",
-                runtime::authority_contracts::canonical_authority_json(
-                    receipt.at("payload").dump())
-                    .value())) {
+            receipt.at("payload_sha256") !=
+                runtime::authority_contracts::authority_digest_sha256_hex(
+                    "runtime.run-receipt", "application/vnd.echelon-forge.run-receipt.v1+json",
+                    runtime::authority_contracts::canonical_authority_json(
+                        receipt.at("payload").dump())
+                        .value())) {
             detail = "native ArtifactLedger stored receipt envelope is invalid";
             return false;
         }
@@ -2261,8 +2259,11 @@ bool RuntimeFileArtifactLedgerStore::read_receipt(std::string_view journal_id,
             !receipt_matches_header(payload, Json::parse(header_bytes), detail))
             return false;
         if (!verify_admission_artifacts_unlocked(payload.dump(), detail)) return false;
-        const auto fence = Json::parse(
-            [&] { std::string value; read_text(fence_path("journal:" + std::string(journal_id)), value); return value; }());
+        const auto fence = Json::parse([&] {
+            std::string value;
+            read_text(fence_path("journal:" + std::string(journal_id)), value);
+            return value;
+        }());
         std::uint64_t next = 0;
         std::string tail;
         if (!scan_journal(stream_path("journal:" + std::string(journal_id)), journal_id,

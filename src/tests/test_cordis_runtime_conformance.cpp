@@ -277,7 +277,8 @@ bool profile_projection_matches_artifacts(const Json &projection, const Json &re
 int main(int argc, char **argv) {
     if (argc != 6 && argc != 7 && argc != 8) {
         std::cerr << "usage: ef_cordis_runtime_conformance_test <request> <lock> <authority> "
-                     "<requested_manifest> <resolved_manifest> [profile_projection] [resolved_execution_plan]\n";
+                     "<requested_manifest> <resolved_manifest> [profile_projection] "
+                     "[resolved_execution_plan]\n";
         return 2;
     }
     try {
@@ -292,7 +293,8 @@ int main(int argc, char **argv) {
         const auto profile_projection = argc >= 7 ? Json::parse(read_file(argv[6])) : Json{};
         std::string execution_plan = argc == 8 ? read_file(argv[7]) : std::string{};
         if (!execution_plan.empty()) {
-            const auto plan_result = runtime::authority_contracts::validate_resolved_execution_plan_json(execution_plan);
+            const auto plan_result =
+                runtime::authority_contracts::validate_resolved_execution_plan_json(execution_plan);
             if (!plan_result.valid) {
                 std::cerr << plan_result.code << ": " << plan_result.detail << '\n';
                 return 1;
@@ -301,11 +303,14 @@ int main(int argc, char **argv) {
             if (plan_doc.at("owner_inputs").at("request") != request_doc ||
                 plan_doc.at("owner_inputs").at("catalog_lock") != lock_doc ||
                 plan_doc.at("owner_inputs").at("requested_manifest") != requested_doc ||
-                (argc >= 7 && plan_doc.at("owner_inputs").at("profile_projection") != profile_projection)) {
-                std::cerr << "closed execution plan owner inputs differ from supplied Cordis artifacts\n";
+                (argc >= 7 &&
+                 plan_doc.at("owner_inputs").at("profile_projection") != profile_projection)) {
+                std::cerr
+                    << "closed execution plan owner inputs differ from supplied Cordis artifacts\n";
                 return 1;
             }
-            resolved_manifest = plan_doc.at("authority_payload_bytes").at("resolved_manifest").dump();
+            resolved_manifest =
+                plan_doc.at("authority_payload_bytes").at("resolved_manifest").dump();
         }
 
         const auto projection =

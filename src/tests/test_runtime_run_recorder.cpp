@@ -14,13 +14,13 @@
 
 namespace {
 
-runtime::host::RuntimeArtifactLedgerAccessContext runtime_ledger_access(
-    std::string identity = "runtime-test") {
+runtime::host::RuntimeArtifactLedgerAccessContext
+runtime_ledger_access(std::string identity = "runtime-test") {
     return {runtime::host::RuntimeArtifactLedgerRole::RuntimeHost, std::move(identity)};
 }
 
-runtime::host::RuntimeArtifactLedgerAccessContext backup_ledger_access(
-    std::string identity = "backup-test") {
+runtime::host::RuntimeArtifactLedgerAccessContext
+backup_ledger_access(std::string identity = "backup-test") {
     return {runtime::host::RuntimeArtifactLedgerRole::BackupOperator, std::move(identity)};
 }
 
@@ -40,14 +40,12 @@ bool seed_authority_blobs(const std::filesystem::path &root) {
     const auto request = nlohmann::json::parse(read(EF_RUNTIME_COMPOSITION_REQUEST_PATH));
     const auto request_bytes =
         runtime::authority_contracts::canonical_authority_json(request.dump()).value();
-    return compiler.put_artifact(
-               plan_bytes,
-               "application/vnd.echelon-forge.resolved-execution-plan.v1+json", "active-release",
-               digest, location, detail) &&
+    return compiler.put_artifact(plan_bytes,
+                                 "application/vnd.echelon-forge.resolved-execution-plan.v1+json",
+                                 "active-release", digest, location, detail) &&
            compiler.put_artifact(
-               request_bytes,
-               "application/vnd.echelon-forge.runtime-composition-request.v1+json", "active-release",
-               digest, location, detail);
+               request_bytes, "application/vnd.echelon-forge.runtime-composition-request.v1+json",
+               "active-release", digest, location, detail);
 }
 
 class FakeStore final : public runtime::host::RuntimeRunRecorderStore {
@@ -61,8 +59,7 @@ class FakeStore final : public runtime::host::RuntimeRunRecorderStore {
         generation = 1;
         return true;
     }
-    bool commit_header(std::string_view, std::uint64_t, std::string_view,
-                       std::string_view header,
+    bool commit_header(std::string_view, std::uint64_t, std::string_view, std::string_view header,
                        std::string &detail) override {
         if (!available) {
             detail = "store unavailable";
@@ -86,8 +83,7 @@ class FakeStore final : public runtime::host::RuntimeRunRecorderStore {
         last_record_sha256 = last_record_digest;
         return true;
     }
-    bool append_record(std::string_view, std::uint64_t, std::string_view,
-                       std::uint64_t sequence,
+    bool append_record(std::string_view, std::uint64_t, std::string_view, std::uint64_t sequence,
                        std::string_view payload, runtime::host::RuntimeRunRecorderAppendAck &ack,
                        std::string &detail) override {
         if (!header_committed) {
@@ -125,8 +121,7 @@ class FakeStore final : public runtime::host::RuntimeRunRecorderStore {
     }
 
     bool commit_checkpoint(std::string_view, std::uint64_t, std::string_view,
-                           std::string_view checkpoint_json,
-                           std::string_view validation_json,
+                           std::string_view checkpoint_json, std::string_view validation_json,
                            runtime::host::RuntimeRunRecorderCheckpointAck &ack,
                            std::string &detail) override {
         if (!header_committed) {
@@ -209,8 +204,7 @@ std::string vector_receipt_json(std::string_view record_sha256 = {}) {
                                     .at("request_sha256")
                                     .get<std::string>();
     const auto plan_blob_sha256 = runtime::authority_contracts::sha256_hex(plan_bytes);
-    receipt.at("payload").at("plan_binding")["plan_location"] =
-        "ledger://blob-" + plan_blob_sha256;
+    receipt.at("payload").at("plan_binding")["plan_location"] = "ledger://blob-" + plan_blob_sha256;
     receipt.at("payload").at("plan_binding")["request_location"] =
         "ledger://blob-" + request_sha256;
     receipt.at("payload").at("inputs")["artifacts"] = {
@@ -219,7 +213,8 @@ std::string vector_receipt_json(std::string_view record_sha256 = {}) {
         receipt.at("payload").at("journal_last_record_sha256") = record_sha256;
     }
     const auto canonical_payload =
-        runtime::authority_contracts::canonical_authority_json(receipt.at("payload").dump()).value();
+        runtime::authority_contracts::canonical_authority_json(receipt.at("payload").dump())
+            .value();
     receipt.at("payload_sha256") = runtime::authority_contracts::authority_digest_sha256_hex(
         "runtime.run-receipt", "application/vnd.echelon-forge.run-receipt.v1+json",
         canonical_payload);
@@ -260,8 +255,8 @@ std::string vector_run_header(std::string_view run_id) {
     const auto plan_blob_sha256 = runtime::authority_contracts::sha256_hex(plan_bytes);
     payload.at("plan_binding")["plan_location"] = "ledger://blob-" + plan_blob_sha256;
     payload.at("plan_binding")["request_location"] = "ledger://blob-" + request_sha256;
-    payload.at("inputs")["artifacts"] = {
-        {"request", request_sha256}, {"resolved_execution_plan", plan_blob_sha256}};
+    payload.at("inputs")["artifacts"] = {{"request", request_sha256},
+                                         {"resolved_execution_plan", plan_blob_sha256}};
     nlohmann::json bindings = {
         {"attempt_id", payload.at("attempt_id")},
         {"backend", payload.at("backend")},
@@ -376,9 +371,9 @@ std::string checkpoint_validation_for_native(std::string_view checkpoint_json) {
 }
 
 std::string reseal_receipt(nlohmann::json receipt) {
-    const auto canonical_payload = runtime::authority_contracts::canonical_authority_json(
-                                       receipt.at("payload").dump())
-                                       .value();
+    const auto canonical_payload =
+        runtime::authority_contracts::canonical_authority_json(receipt.at("payload").dump())
+            .value();
     receipt["payload_sha256"] = runtime::authority_contracts::authority_digest_sha256_hex(
         "runtime.run-receipt", "application/vnd.echelon-forge.run-receipt.v1+json",
         canonical_payload);
@@ -386,9 +381,9 @@ std::string reseal_receipt(nlohmann::json receipt) {
 }
 
 std::string reseal_checkpoint(nlohmann::json checkpoint) {
-    const auto canonical_payload = runtime::authority_contracts::canonical_authority_json(
-                                        checkpoint.at("payload").dump())
-                                        .value();
+    const auto canonical_payload =
+        runtime::authority_contracts::canonical_authority_json(checkpoint.at("payload").dump())
+            .value();
     checkpoint["payload_sha256"] = runtime::authority_contracts::authority_digest_sha256_hex(
         "runtime.state-checkpoint", "application/vnd.echelon-forge.state-checkpoint.v1+json",
         canonical_payload);
@@ -462,11 +457,11 @@ TEST_SUITE("runtime_run_recorder") {
         store.fail_finalize_once_after_persist = true;
         runtime::host::RuntimeRunRecorder recorder(store, "run-1", "writer-1");
         REQUIRE(recorder.admit(R"({"run_id":"run-1"})"));
-        const auto first = recorder.finalize_observed(vector_receipt_json(), "failed",
-                                                      "simulated audit retry");
+        const auto first =
+            recorder.finalize_observed(vector_receipt_json(), "failed", "simulated audit retry");
         CHECK_FALSE(first);
-        const auto second = recorder.finalize_observed(vector_receipt_json(), "failed",
-                                                       "simulated audit retry");
+        const auto second =
+            recorder.finalize_observed(vector_receipt_json(), "failed", "simulated audit retry");
         INFO(second.code);
         INFO(second.detail);
         REQUIRE(second);
@@ -484,21 +479,20 @@ TEST_SUITE("runtime_run_recorder") {
         std::uint64_t original_next_sequence = 0U;
         {
             runtime::host::RuntimeFileArtifactLedgerStore store(root,
-                                                                 runtime_ledger_access("writer-1"));
+                                                                runtime_ledger_access("writer-1"));
             runtime::host::RuntimeRunRecorder recorder(store, "run-1", "writer-1");
             REQUIRE(recorder.admit(vector_run_header("run-1")));
             REQUIRE(recorder.note_lifecycle("construction"));
             REQUIRE(recorder.note_lifecycle("validation"));
-            REQUIRE(recorder.bind_runtime_identity("boot-1", "1", "world-1", "1",
-                                                   "episode-1", "1", "request-1"));
+            REQUIRE(recorder.bind_runtime_identity("boot-1", "1", "world-1", "1", "episode-1", "1",
+                                                   "request-1"));
             REQUIRE(recorder.note_lifecycle("publication"));
             REQUIRE(recorder.note_lifecycle("episode"));
             std::string artifact_digest;
             std::string artifact_location;
-            REQUIRE(recorder.put_artifact(
-                "runtime-state", "native-output",
-                "application/vnd.echelon-forge.runtime-state.v1+octets", "run-retained",
-                artifact_digest, artifact_location));
+            REQUIRE(recorder.put_artifact("runtime-state", "native-output",
+                                          "application/vnd.echelon-forge.runtime-state.v1+octets",
+                                          "run-retained", artifact_digest, artifact_location));
             REQUIRE(recorder.record_native_result(
                 runtime::authority_contracts::sha256_hex("native-output"),
                 runtime::authority_contracts::sha256_hex("native-output")));
@@ -512,8 +506,8 @@ TEST_SUITE("runtime_run_recorder") {
         }
         {
             runtime::host::RuntimeFileArtifactLedgerStore store(
-                root, {runtime::host::RuntimeArtifactLedgerRole::CrashReconciler,
-                       "crash-reconciler"});
+                root,
+                {runtime::host::RuntimeArtifactLedgerRole::CrashReconciler, "crash-reconciler"});
             runtime::host::RuntimeRunRecorder recorder(store, "run-1", "writer-2");
             REQUIRE(recorder.admit(vector_run_header("run-1")));
             CHECK(recorder.fence_generation() == 2U);
@@ -638,7 +632,7 @@ TEST_SUITE("runtime_run_recorder") {
             bool duplicate_rejected = false;
             try {
                 runtime::host::RuntimeFileArtifactLedgerStore duplicate(root,
-                                                                         runtime_ledger_access());
+                                                                        runtime_ledger_access());
             } catch (...) {
                 duplicate_rejected = true;
             }
@@ -647,14 +641,14 @@ TEST_SUITE("runtime_run_recorder") {
             REQUIRE(recorder.admit(vector_run_header("run-1")));
             REQUIRE(recorder.note_lifecycle("construction"));
             REQUIRE(recorder.note_lifecycle("validation"));
-            REQUIRE(recorder.bind_runtime_identity("boot-1", "1", "world-1", "1", "episode-1",
-                                                   "1", "request-1"));
+            REQUIRE(recorder.bind_runtime_identity("boot-1", "1", "world-1", "1", "episode-1", "1",
+                                                   "request-1"));
             REQUIRE(recorder.note_lifecycle("publication"));
             REQUIRE(recorder.note_lifecycle("episode"));
             REQUIRE(recorder.append(recorder.next_sequence(), "step-0"));
             const auto checkpoint = checkpoint_json_for_run("run-1");
-            const auto checkpoint_id = "checkpoint-run-1-" +
-                                       std::to_string(recorder.next_sequence());
+            const auto checkpoint_id =
+                "checkpoint-run-1-" + std::to_string(recorder.next_sequence());
             const auto checkpoint_status = recorder.persist_checkpoint(
                 checkpoint, checkpoint_validation_for_native(checkpoint));
             INFO(checkpoint_status.code);
@@ -662,8 +656,9 @@ TEST_SUITE("runtime_run_recorder") {
             REQUIRE(checkpoint_status);
             std::string artifact_digest;
             std::string artifact_location;
-            REQUIRE(recorder.put_artifact("runtime-state", "trace-bytes", "application/octet-stream",
-                                           "run-retained", artifact_digest, artifact_location));
+            REQUIRE(recorder.put_artifact("runtime-state", "trace-bytes",
+                                          "application/octet-stream", "run-retained",
+                                          artifact_digest, artifact_location));
             REQUIRE(recorder.record_native_result(
                 runtime::authority_contracts::sha256_hex("trace-bytes"),
                 runtime::authority_contracts::sha256_hex("trace-bytes")));
@@ -703,8 +698,7 @@ TEST_SUITE("runtime_run_recorder") {
             REQUIRE(recorder.note_lifecycle("shutdown"));
             REQUIRE(recorder.note_lifecycle("reclamation"));
             const auto canonical_payload =
-                runtime::authority_contracts::canonical_authority_json(
-                    receipt.at("payload").dump())
+                runtime::authority_contracts::canonical_authority_json(receipt.at("payload").dump())
                     .value();
             receipt["payload_sha256"] = runtime::authority_contracts::authority_digest_sha256_hex(
                 "runtime.run-receipt", "application/vnd.echelon-forge.run-receipt.v1+json",
@@ -725,8 +719,8 @@ TEST_SUITE("runtime_run_recorder") {
                 backup, restored_root, backup_ledger_access(), detail));
             {
                 runtime::host::RuntimeFileArtifactLedgerStore restored(
-                    restored_root, {runtime::host::RuntimeArtifactLedgerRole::ReadOnlyAuditor,
-                                    "restore-reader"});
+                    restored_root,
+                    {runtime::host::RuntimeArtifactLedgerRole::ReadOnlyAuditor, "restore-reader"});
                 std::string restored_receipt;
                 REQUIRE(restored.read_receipt("run-1", restored_receipt, detail));
                 CHECK(nlohmann::json::parse(restored_receipt).at("payload").at("terminal_state") ==
@@ -736,8 +730,8 @@ TEST_SUITE("runtime_run_recorder") {
             }
             std::filesystem::remove_all(restored_root, cleanup_error);
             const auto backup_bundle_path =
-                backup / "checkpoints" /
-                runtime::authority_contracts::sha256_hex(checkpoint_id) / "bundle.json";
+                backup / "checkpoints" / runtime::authority_contracts::sha256_hex(checkpoint_id) /
+                "bundle.json";
             std::ifstream backup_bundle_input(backup_bundle_path, std::ios::binary);
             REQUIRE(backup_bundle_input);
             auto tampered_bundle = nlohmann::json::parse(backup_bundle_input);
@@ -782,8 +776,7 @@ TEST_SUITE("runtime_run_recorder") {
                 std::ifstream plan_input(EF_RESOLVED_EXECUTION_PLAN_PATH, std::ios::binary);
                 std::ostringstream plan_bytes;
                 plan_bytes << plan_input.rdbuf();
-                const auto plan_digest =
-                    runtime::authority_contracts::sha256_hex(plan_bytes.str());
+                const auto plan_digest = runtime::authority_contracts::sha256_hex(plan_bytes.str());
                 const auto data = root / "blobs" / (plan_digest + ".data");
                 const auto held = root / "blobs" / (plan_digest + ".data.held");
                 std::filesystem::rename(data, held);
@@ -821,8 +814,7 @@ TEST_SUITE("runtime_run_recorder") {
                 root, {runtime::host::RuntimeArtifactLedgerRole::ReadOnlyAuditor, "auditor"});
             std::uint64_t generation = 0;
             std::string detail;
-            CHECK_FALSE(reader.acquire_fence("journal:unauthorized", "writer", generation,
-                                             detail));
+            CHECK_FALSE(reader.acquire_fence("journal:unauthorized", "writer", generation, detail));
             std::string digest;
             std::string location;
             CHECK_FALSE(reader.put_artifact("bytes", "application/octet-stream", "run-retained",
@@ -832,19 +824,16 @@ TEST_SUITE("runtime_run_recorder") {
         std::filesystem::remove_all(root, cleanup_error);
         {
             runtime::host::RuntimeFileArtifactLedgerStore plan_compiler(
-                root, {runtime::host::RuntimeArtifactLedgerRole::PlanCompiler,
-                       "plan-compiler"});
+                root, {runtime::host::RuntimeArtifactLedgerRole::PlanCompiler, "plan-compiler"});
             std::string digest;
             std::string location;
             std::string detail;
             REQUIRE(plan_compiler.put_artifact(
-                "closed-plan",
-                "application/vnd.echelon-forge.resolved-execution-plan.v1+json",
+                "closed-plan", "application/vnd.echelon-forge.resolved-execution-plan.v1+json",
                 "active-release", digest, location, detail));
             CHECK(location == "ledger://blob-" + digest);
-            CHECK_FALSE(plan_compiler.put_artifact(
-                "runtime-output", "application/octet-stream", "run-retained", digest,
-                location, detail));
+            CHECK_FALSE(plan_compiler.put_artifact("runtime-output", "application/octet-stream",
+                                                   "run-retained", digest, location, detail));
             std::string receipt;
             CHECK_FALSE(plan_compiler.read_receipt("run-1", receipt, detail));
         }
@@ -857,33 +846,30 @@ TEST_SUITE("runtime_run_recorder") {
             std::string location;
             std::string detail;
             REQUIRE(release_pipeline.put_artifact(
-                "release-envelope",
-                "application/vnd.echelon-forge.release-manifest.v1+json",
+                "release-envelope", "application/vnd.echelon-forge.release-manifest.v1+json",
                 "active-release", digest, location, detail));
             REQUIRE(release_pipeline.put_artifact(
-                "release-package",
-                "application/vnd.echelon-forge.release-package.v1+octets",
+                "release-package", "application/vnd.echelon-forge.release-package.v1+octets",
                 "rollback-window", digest, location, detail));
             CHECK_FALSE(release_pipeline.put_artifact(
-                "closed-plan",
-                "application/vnd.echelon-forge.resolved-execution-plan.v1+json",
+                "closed-plan", "application/vnd.echelon-forge.resolved-execution-plan.v1+json",
                 "active-release", digest, location, detail));
         }
         std::filesystem::remove_all(root, cleanup_error);
         {
             runtime::host::RuntimeFileArtifactLedgerStore reconciler(
-                root, {runtime::host::RuntimeArtifactLedgerRole::CrashReconciler,
-                       "reconciler"});
+                root, {runtime::host::RuntimeArtifactLedgerRole::CrashReconciler, "reconciler"});
             std::uint64_t generation = 0;
             std::string detail;
             CHECK_FALSE(reconciler.acquire_fence("journal:new", "writer", generation, detail));
-            CHECK_FALSE(reconciler.commit_header("new", 1, "writer", vector_run_header("new"),
-                                                 detail));
+            CHECK_FALSE(
+                reconciler.commit_header("new", 1, "writer", vector_run_header("new"), detail));
         }
         std::filesystem::remove_all(root, cleanup_error);
     }
 
-    TEST_CASE("native ArtifactLedger ignores complete and truncated audit temp files after restart") {
+    TEST_CASE(
+        "native ArtifactLedger ignores complete and truncated audit temp files after restart") {
         const auto root =
             std::filesystem::temp_directory_path() / "echelon-forge-p5b-native-audit-restart";
         std::error_code cleanup_error;
@@ -902,10 +888,10 @@ TEST_SUITE("runtime_run_recorder") {
             }
             REQUIRE(std::filesystem::is_regular_file(committed_event));
         }
-        const auto complete_temp = root / "audit" /
-                                   (committed_event.filename().string() + ".tmp-0123456789abcdef");
-        const auto truncated_temp = root / "audit" /
-                                    (committed_event.filename().string() + ".tmp-fedcba9876543210");
+        const auto complete_temp =
+            root / "audit" / (committed_event.filename().string() + ".tmp-0123456789abcdef");
+        const auto truncated_temp =
+            root / "audit" / (committed_event.filename().string() + ".tmp-fedcba9876543210");
         std::filesystem::copy_file(committed_event, complete_temp);
         {
             std::ofstream output(truncated_temp, std::ios::binary | std::ios::trunc);
@@ -978,9 +964,9 @@ TEST_SUITE("runtime_run_recorder") {
                                             append_ack, detail));
             runtime::host::RuntimeRunRecorderCheckpointAck checkpoint_ack;
             const auto checkpoint = checkpoint_json_for_run("run-1");
-            CHECK_FALSE(store.commit_checkpoint(
-                "run-1", generation, "writer-1", checkpoint,
-                checkpoint_validation_for_native(checkpoint), checkpoint_ack, detail));
+            CHECK_FALSE(store.commit_checkpoint("run-1", generation, "writer-1", checkpoint,
+                                                checkpoint_validation_for_native(checkpoint),
+                                                checkpoint_ack, detail));
             runtime::host::RuntimeRunRecorderFinalizeAck finalize_ack;
             CHECK_FALSE(store.finalize_receipt("run-1", generation, "writer-1",
                                                vector_receipt_json(), finalize_ack, detail));
@@ -1003,12 +989,12 @@ TEST_SUITE("runtime_run_recorder") {
             std::uint64_t other_generation = 0;
             REQUIRE(store.acquire_fence("journal:run-2", "writer-2", other_generation, detail));
             REQUIRE(other_generation == 1U);
-            const auto run_one_fence = root / "fences" /
-                                       (runtime::authority_contracts::sha256_hex("journal:run-1") +
-                                        ".json");
-            const auto run_two_fence = root / "fences" /
-                                       (runtime::authority_contracts::sha256_hex("journal:run-2") +
-                                        ".json");
+            const auto run_one_fence =
+                root / "fences" /
+                (runtime::authority_contracts::sha256_hex("journal:run-1") + ".json");
+            const auto run_two_fence =
+                root / "fences" /
+                (runtime::authority_contracts::sha256_hex("journal:run-2") + ".json");
             std::filesystem::copy_file(run_two_fence, run_one_fence,
                                        std::filesystem::copy_options::overwrite_existing);
 
@@ -1032,8 +1018,8 @@ TEST_SUITE("runtime_run_recorder") {
             REQUIRE(recorder.admit(header_json));
             REQUIRE(recorder.note_lifecycle("construction"));
             REQUIRE(recorder.note_lifecycle("validation"));
-            REQUIRE(recorder.bind_runtime_identity("boot-1", "1", "world-1", "1",
-                                                   "episode-1", "1", "request-1"));
+            REQUIRE(recorder.bind_runtime_identity("boot-1", "1", "world-1", "1", "episode-1", "1",
+                                                   "request-1"));
             REQUIRE(recorder.note_lifecycle("publication"));
             REQUIRE(recorder.note_lifecycle("episode"));
             const auto checkpoint = checkpoint_json_for_run("run-1");
@@ -1069,8 +1055,7 @@ TEST_SUITE("runtime_run_recorder") {
             const auto stored = nlohmann::json::parse(receipt_json).at("payload").at("checkpoints");
             CHECK(stored.at("source_refs").empty());
             REQUIRE(stored.at("created_refs").size() == 1);
-            CHECK(stored.at("created_refs").front().at("checkpoint_id") !=
-                  "checkpoint-absent");
+            CHECK(stored.at("created_refs").front().at("checkpoint_id") != "checkpoint-absent");
         }
         std::filesystem::remove_all(root, cleanup_error);
     }
@@ -1082,25 +1067,25 @@ TEST_SUITE("runtime_run_recorder") {
         std::filesystem::remove_all(root, cleanup_error);
         REQUIRE(seed_authority_blobs(root));
         {
-            runtime::host::RuntimeFileArtifactLedgerStore first_store(root,
-                                                                       runtime_ledger_access("writer-1"));
+            runtime::host::RuntimeFileArtifactLedgerStore first_store(
+                root, runtime_ledger_access("writer-1"));
             runtime::host::RuntimeRunRecorder first(first_store, "run-1", "writer-1");
             REQUIRE(first.admit(vector_run_header("run-1")));
             REQUIRE(first.note_lifecycle("construction"));
             REQUIRE(first.note_lifecycle("validation"));
-            REQUIRE(first.bind_runtime_identity("boot-1", "1", "world-1", "1", "episode-1",
-                                                "1", "request-1"));
+            REQUIRE(first.bind_runtime_identity("boot-1", "1", "world-1", "1", "episode-1", "1",
+                                                "request-1"));
             REQUIRE(first.note_lifecycle("publication"));
             REQUIRE(first.note_lifecycle("episode"));
             REQUIRE(first.append(first.next_sequence(), "step-before-crash"));
             const auto checkpoint = checkpoint_json_for_run("run-1");
-            REQUIRE(first.persist_checkpoint(checkpoint,
-                                             checkpoint_validation_for_native(checkpoint)));
+            REQUIRE(
+                first.persist_checkpoint(checkpoint, checkpoint_validation_for_native(checkpoint)));
         }
         {
             runtime::host::RuntimeFileArtifactLedgerStore recovery_store(
-                root, {runtime::host::RuntimeArtifactLedgerRole::CrashReconciler,
-                       "crash-reconciler"});
+                root,
+                {runtime::host::RuntimeArtifactLedgerRole::CrashReconciler, "crash-reconciler"});
             runtime::host::RuntimeRunRecorder recovered(recovery_store, "run-1", "writer-2");
             REQUIRE(recovered.admit(vector_run_header("run-1")));
             CHECK(recovered.fence_generation() == 2);
@@ -1110,12 +1095,12 @@ TEST_SUITE("runtime_run_recorder") {
                 "native-root-lock-released:journal:run-1:1:writer-1:2:writer-2");
             const auto crash_append = recovered.append(
                 recovery_sequence, nlohmann::json{{"event", "crash_reconciled"},
-                                  {"observed_exit_sha256", observed_exit},
-                                  {"prior_writer_generation", 1},
-                                  {"prior_writer_id", "writer-1"},
-                                  {"recovery_writer_generation", 2},
-                                  {"recovery_writer_id", "writer-2"}}
-                        .dump());
+                                                  {"observed_exit_sha256", observed_exit},
+                                                  {"prior_writer_generation", 1},
+                                                  {"prior_writer_id", "writer-1"},
+                                                  {"recovery_writer_generation", 2},
+                                                  {"recovery_writer_id", "writer-2"}}
+                                       .dump());
             INFO(crash_append.detail);
             REQUIRE(crash_append);
             const auto recovered_final =
@@ -1130,7 +1115,10 @@ TEST_SUITE("runtime_run_recorder") {
             CHECK(recovered_payload.at("host_boot_id") == "boot-1");
             CHECK(recovered_payload.at("incarnation_epoch") == "1");
             REQUIRE(recovered_payload.at("checkpoints").at("created_refs").size() == 1);
-            CHECK(recovered_payload.at("checkpoints").at("created_refs").front().at("checkpoint_id") != "");
+            CHECK(recovered_payload.at("checkpoints")
+                      .at("created_refs")
+                      .front()
+                      .at("checkpoint_id") != "");
         }
         std::filesystem::remove_all(root, cleanup_error);
     }
@@ -1143,35 +1131,34 @@ TEST_SUITE("runtime_run_recorder") {
         REQUIRE(seed_authority_blobs(root));
         {
             runtime::host::RuntimeFileArtifactLedgerStore store(root,
-                                                                 runtime_ledger_access("writer-1"));
+                                                                runtime_ledger_access("writer-1"));
             runtime::host::RuntimeRunRecorder recorder(store, "run-1", "writer-1");
             REQUIRE(recorder.admit(vector_run_header("run-1")));
             REQUIRE(recorder.note_lifecycle("construction"));
             REQUIRE(recorder.note_lifecycle("validation"));
-            REQUIRE(recorder.bind_runtime_identity("boot-1", "1", "world-1", "1",
-                                                   "episode-1", "1", "request-1"));
+            REQUIRE(recorder.bind_runtime_identity("boot-1", "1", "world-1", "1", "episode-1", "1",
+                                                   "request-1"));
             REQUIRE(recorder.note_lifecycle("publication"));
             REQUIRE(recorder.note_lifecycle("episode"));
             REQUIRE(recorder.note_lifecycle("terminal"));
         }
         {
             runtime::host::RuntimeFileArtifactLedgerStore store(
-                root, {runtime::host::RuntimeArtifactLedgerRole::CrashReconciler,
-                       "crash-reconciler"});
+                root,
+                {runtime::host::RuntimeArtifactLedgerRole::CrashReconciler, "crash-reconciler"});
             runtime::host::RuntimeRunRecorder recorder(store, "run-1", "writer-2");
             REQUIRE(recorder.admit(vector_run_header("run-1")));
             const auto marker_sequence = recorder.next_sequence();
             const auto observed_exit = runtime::authority_contracts::sha256_hex(
                 "native-root-lock-released:journal:run-1:1:writer-1:2:writer-2");
-            REQUIRE(recorder.append(
-                marker_sequence,
-                nlohmann::json{{"event", "crash_reconciled"},
-                               {"observed_exit_sha256", observed_exit},
-                               {"prior_writer_generation", 1},
-                               {"prior_writer_id", "writer-1"},
-                               {"recovery_writer_generation", 2},
-                               {"recovery_writer_id", "writer-2"}}
-                    .dump()));
+            REQUIRE(recorder.append(marker_sequence,
+                                    nlohmann::json{{"event", "crash_reconciled"},
+                                                   {"observed_exit_sha256", observed_exit},
+                                                   {"prior_writer_generation", 1},
+                                                   {"prior_writer_id", "writer-1"},
+                                                   {"recovery_writer_generation", 2},
+                                                   {"recovery_writer_id", "writer-2"}}
+                                        .dump()));
             const auto recovered =
                 recorder.finalize_observed(vector_receipt_json(), "crashed", "prior writer lost");
             INFO(recovered.detail);

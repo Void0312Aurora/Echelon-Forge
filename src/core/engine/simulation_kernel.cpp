@@ -32,12 +32,15 @@ constexpr const char *kTransferReflectionSpawnReservation =
 } // namespace
 
 SimulationKernel::SimulationKernel()
-    : SimulationKernel(std::string(runtime::contracts::generated::kDefaultResolvedExecutionPlanJson)) {}
+    : SimulationKernel(
+          std::string(runtime::contracts::generated::kDefaultResolvedExecutionPlanJson)) {}
 
 SimulationKernel::SimulationKernel(std::string resolved_manifest_json) {
-    if (runtime::authority_contracts::validate_resolved_execution_plan_json(resolved_manifest_json).valid) {
-        const auto manifest = runtime::authority_contracts::resolved_manifest_from_execution_plan_json(
-            resolved_manifest_json);
+    if (runtime::authority_contracts::validate_resolved_execution_plan_json(resolved_manifest_json)
+            .valid) {
+        const auto manifest =
+            runtime::authority_contracts::resolved_manifest_from_execution_plan_json(
+                resolved_manifest_json);
         if (!manifest) {
             throw std::runtime_error("resolved execution plan admission failed");
         }

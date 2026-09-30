@@ -109,9 +109,9 @@ class RuntimeKernelCandidate final {
                                        std::string_view arguments_json = "{}");
     [[nodiscard]] bool record_outcome(std::string_view operation, bool success,
                                       std::string_view result_json = "{}");
-    [[nodiscard]] RuntimeRunRecorderStatus finalize_observed(
-        std::string_view receipt_template_json, std::string_view terminal_state,
-        std::string_view terminal_reason);
+    [[nodiscard]] RuntimeRunRecorderStatus finalize_observed(std::string_view receipt_template_json,
+                                                             std::string_view terminal_state,
+                                                             std::string_view terminal_reason);
     void terminalize_evidence_failure(std::string_view reason) noexcept;
 
     RuntimeKernelCandidateConfig config_;

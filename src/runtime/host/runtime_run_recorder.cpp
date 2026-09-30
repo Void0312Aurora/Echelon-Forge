@@ -179,8 +179,8 @@ std::string utc_timestamp() {
 
 std::optional<std::size_t> lifecycle_rank(std::string_view event) {
     static constexpr std::array<std::string_view, 10> order = {
-        "journal_admitted", "construction", "validation",  "publication", "episode",
-        "drain",            "rollback",     "shutdown",    "reclamation", "terminal",
+        "journal_admitted", "construction", "validation",  "publication", "episode", "drain",
+        "rollback",         "shutdown",     "reclamation", "terminal",
     };
     const auto found = std::find(order.begin(), order.end(), event);
     if (found == order.end()) return std::nullopt;
@@ -559,10 +559,8 @@ bool validate_embedded_authorities(const Json &bindings, std::string &detail) {
     Json release;
     Json decision;
     try {
-        release = Json::parse(
-            bindings.at("release_manifest_envelope_json").get<std::string>());
-        decision = Json::parse(
-            bindings.at("rollout_decision_envelope_json").get<std::string>());
+        release = Json::parse(bindings.at("release_manifest_envelope_json").get<std::string>());
+        decision = Json::parse(bindings.at("rollout_decision_envelope_json").get<std::string>());
     } catch (const Json::exception &error) {
         detail = std::string("embedded authority envelope is invalid: ") + error.what();
         return false;
@@ -573,8 +571,7 @@ bool validate_embedded_authorities(const Json &bindings, std::string &detail) {
             return false;
         const auto result = runtime::authority_contracts::validate_authority_envelope_json(
             envelope.dump(), envelope.at("payload").dump());
-        return result.valid && envelope.at("payload").value("authority_kind", "") ==
-                                    expected_kind;
+        return result.valid && envelope.at("payload").value("authority_kind", "") == expected_kind;
     };
     if (!validate(release, "release_manifest") || !validate(decision, "rollout_decision")) {
         detail = "embedded release or rollout authority envelope is not valid";
@@ -615,12 +612,12 @@ bool validate_embedded_authorities(const Json &bindings, std::string &detail) {
         }
     }
     const auto supported_row = bindings.at("platform").at("os").get<std::string>() + "-" +
-                               bindings.at("platform").at("architecture").get<std::string>() +
-                               "-" + bindings.at("platform").at("compiler").get<std::string>();
+                               bindings.at("platform").at("architecture").get<std::string>() + "-" +
+                               bindings.at("platform").at("compiler").get<std::string>();
     if (!package_matched ||
         std::find(release_payload.at("supported_rows").begin(),
-                  release_payload.at("supported_rows").end(), supported_row) ==
-            release_payload.at("supported_rows").end() ||
+                  release_payload.at("supported_rows").end(),
+                  supported_row) == release_payload.at("supported_rows").end() ||
         bindings.at("build").at("source_revision") != release_payload.at("source_revision") ||
         bindings.at("build").at("toolchain") != release_payload.at("toolchain_identity")) {
         detail = "measured package, build, or platform is not admitted by ReleaseManifest";
@@ -629,8 +626,7 @@ bool validate_embedded_authorities(const Json &bindings, std::string &detail) {
     return true;
 }
 
-std::optional<std::string> digest_path(const std::filesystem::path &path,
-                                        std::string &detail) {
+std::optional<std::string> digest_path(const std::filesystem::path &path, std::string &detail) {
     std::error_code error;
     if (!std::filesystem::exists(path, error) || error) {
         detail = "execution provenance path is absent: " + path.string();
@@ -647,13 +643,13 @@ std::optional<std::string> digest_path(const std::filesystem::path &path,
         return runtime::authority_contracts::sha256_hex(bytes.str());
     }
     if (!std::filesystem::is_directory(path, error) || error) {
-        detail = "execution provenance path is not a regular file or directory: " +
-                 path.string();
+        detail = "execution provenance path is not a regular file or directory: " + path.string();
         return std::nullopt;
     }
     Json entries = Json::array();
-    for (std::filesystem::recursive_directory_iterator it(
-             path, std::filesystem::directory_options::skip_permission_denied, error), end;
+    for (std::filesystem::recursive_directory_iterator
+             it(path, std::filesystem::directory_options::skip_permission_denied, error),
+         end;
          it != end && !error; it.increment(error)) {
         if (!it->is_regular_file(error) || error) continue;
         std::ifstream input(it->path(), std::ios::binary);
@@ -684,9 +680,8 @@ std::string module_identity(std::string value) {
         return static_cast<char>(std::tolower(character));
     });
     for (auto &character : value) {
-        if (!((character >= 'a' && character <= 'z') ||
-              (character >= '0' && character <= '9') || character == '.' ||
-              character == '_' || character == ':' || character == '-')) {
+        if (!((character >= 'a' && character <= 'z') || (character >= '0' && character <= '9') ||
+              character == '.' || character == '_' || character == ':' || character == '-')) {
             character = '_';
         }
     }
@@ -725,8 +720,8 @@ std::optional<std::filesystem::path> current_process_executable_path(std::string
 bool collect_loaded_module_digests(Json &modules, std::string &detail) {
     std::map<std::string, std::filesystem::path> observed_paths;
 #if defined(_WIN32)
-    const HANDLE snapshot = CreateToolhelp32Snapshot(
-        TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, GetCurrentProcessId());
+    const HANDLE snapshot =
+        CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, GetCurrentProcessId());
     if (snapshot == INVALID_HANDLE_VALUE) {
         detail = "loaded native modules cannot be enumerated";
         return false;
@@ -782,8 +777,7 @@ bool collect_loaded_module_digests(Json &modules, std::string &detail) {
     return true;
 }
 
-std::optional<std::string> read_file_bytes(const std::filesystem::path &path,
-                                           std::string &detail) {
+std::optional<std::string> read_file_bytes(const std::filesystem::path &path, std::string &detail) {
     std::ifstream input(path, std::ios::binary);
     if (!input) {
         detail = "runtime authority file cannot be opened: " + path.string();
@@ -836,10 +830,11 @@ bool validate_execution_plan_source(const RuntimeExecutionProvenanceSources &sou
     return true;
 }
 
-bool collect_runtime_execution_bindings_json(
-    const RuntimeExecutionProvenanceSources &sources, std::string_view binding_template_json,
-    std::string &observed_bindings_json, std::string &detail,
-    std::string *verified_request_json) {
+bool collect_runtime_execution_bindings_json(const RuntimeExecutionProvenanceSources &sources,
+                                             std::string_view binding_template_json,
+                                             std::string &observed_bindings_json,
+                                             std::string &detail,
+                                             std::string *verified_request_json) {
     try {
         auto observed = Json::parse(binding_template_json.begin(), binding_template_json.end());
         if (!observed.is_object() || !observed.contains("executable") ||
@@ -929,10 +924,11 @@ bool collect_runtime_execution_bindings_json(
         const auto catalog_sha =
             plan.at("input_bindings").at("catalog_lock_sha256").get<std::string>();
         const auto canonical_hash = [&](const Json &value) -> std::optional<std::string> {
-            const auto canonical = runtime::authority_contracts::canonical_authority_json(value.dump());
-            return canonical.has_value()
-                       ? std::optional<std::string>(runtime::authority_contracts::sha256_hex(*canonical))
-                       : std::nullopt;
+            const auto canonical =
+                runtime::authority_contracts::canonical_authority_json(value.dump());
+            return canonical.has_value() ? std::optional<std::string>(
+                                               runtime::authority_contracts::sha256_hex(*canonical))
+                                         : std::nullopt;
         };
         const auto &resolved_manifest = plan_payload.at("resolved_manifest").at("manifest");
         const auto system_graph_sha = canonical_hash(resolved_manifest.at("system_contributions"));
@@ -961,15 +957,17 @@ bool collect_runtime_execution_bindings_json(
             {"database_id", "catalog-lock-" + catalog_sha},
             {"configuration_id", request.at("request_id")},
             {"seed_policy", "fixed"},
-            {"seed_value", std::to_string(request.at("configuration").at("seed").get<std::uint64_t>())},
+            {"seed_value",
+             std::to_string(request.at("configuration").at("seed").get<std::uint64_t>())},
             {"seed_stream_id", request.at("request_id").get<std::string>() + ".seed"},
-            {"artifacts", Json{{"request", request_sha},
-                                {"resolved_execution_plan", plan_blob_sha256}}},
+            {"artifacts",
+             Json{{"request", request_sha}, {"resolved_execution_plan", plan_blob_sha256}}},
         };
         observed["backend"] = {
             {"profile_id", plan_payload.at("backend").at("profile_id")},
             {"backend_provider_id", plan_payload.at("backend").at("provider_id")},
-            {"backend_implementation_version", plan_payload.at("backend").at("implementation_version")},
+            {"backend_implementation_version",
+             plan_payload.at("backend").at("implementation_version")},
             {"determinism_profile", "exact"},
             {"system_graph_sha256", *system_graph_sha},
             {"stage_contract_sha256", *stage_contract_sha},
@@ -1071,11 +1069,11 @@ bool validate_runtime_run_header_json(std::string_view run_id, std::string_view 
             return false;
         }
         const auto &bindings = header.at("receipt_bindings");
-        if (!exact_fields(bindings, {"receipt_id", "attempt_id", "plan_binding", "release_binding", "executable", "package", "build",
-                                     "platform", "inputs", "backend",
-                                     "reader_generation_min", "reader_generation_max",
-                                     "release_manifest_envelope_json",
-                                     "rollout_decision_envelope_json"}) ||
+        if (!exact_fields(bindings,
+                          {"receipt_id", "attempt_id", "plan_binding", "release_binding",
+                           "executable", "package", "build", "platform", "inputs", "backend",
+                           "reader_generation_min", "reader_generation_max",
+                           "release_manifest_envelope_json", "rollout_decision_envelope_json"}) ||
             !identifier_string(bindings.at("receipt_id")) ||
             !identifier_string(bindings.at("attempt_id")) ||
             !generation_string(bindings.at("reader_generation_min")) ||
@@ -1087,10 +1085,9 @@ bool validate_runtime_run_header_json(std::string_view run_id, std::string_view 
         }
         if (!validate_embedded_authorities(bindings, detail)) return false;
         const auto measured = execution_measurement_sha256(bindings);
-    const auto canonical_bindings = runtime::authority_contracts::canonical_authority_json(
-        admission_binding_material(bindings).dump());
-        if (!measured.has_value() ||
-            !canonical_bindings.has_value() ||
+        const auto canonical_bindings = runtime::authority_contracts::canonical_authority_json(
+            admission_binding_material(bindings).dump());
+        if (!measured.has_value() || !canonical_bindings.has_value() ||
             runtime::authority_contracts::sha256_hex(*canonical_bindings) !=
                 header.at("admission_binding_sha256").get<std::string>() ||
             *measured != header.at("observed_measurement_sha256").get<std::string>()) {
@@ -1113,8 +1110,7 @@ std::optional<std::string> execution_measurement_sha256(const Json &bindings) {
                            {"inputs", bindings.at("inputs")},
                            {"package", bindings.at("package")},
                            {"platform", bindings.at("platform")}};
-    const auto canonical =
-        runtime::authority_contracts::canonical_authority_json(material.dump());
+    const auto canonical = runtime::authority_contracts::canonical_authority_json(material.dump());
     return canonical.has_value()
                ? std::optional<std::string>(runtime::authority_contracts::sha256_hex(*canonical))
                : std::nullopt;
@@ -1125,8 +1121,8 @@ RuntimeRunRecorder::RuntimeRunRecorder(RuntimeRunRecorderStore &store, std::stri
     : store_(store), run_id_(std::move(run_id)), writer_id_(std::move(writer_id)),
       admission_capability_(make_admission_capability(run_id_, writer_id_)) {}
 
-RuntimeRunAdmissionCapability RuntimeRunRecorder::make_admission_capability(
-    std::string_view run_id, std::string_view writer_id) {
+RuntimeRunAdmissionCapability
+RuntimeRunRecorder::make_admission_capability(std::string_view run_id, std::string_view writer_id) {
     std::random_device random;
     const auto now = std::chrono::steady_clock::now().time_since_epoch().count();
     const auto seed = std::string(run_id) + "\0" + std::string(writer_id) + "\0" +
@@ -1163,10 +1159,10 @@ RuntimeRunRecorderStatus RuntimeRunRecorder::admit(std::string_view header_json)
                 !sha256_string(header.at("observed_measurement_sha256")))
                 return reject("recorder.header", "admission bindings are not canonical");
             const auto &bindings = header.at("receipt_bindings");
-            if (!exact_fields(bindings, {"receipt_id", "attempt_id", "plan_binding", "release_binding", "executable", "package", "build",
-                                         "platform", "inputs", "backend",
-                                         "reader_generation_min", "reader_generation_max",
-                                         "release_manifest_envelope_json",
+            if (!exact_fields(bindings, {"receipt_id", "attempt_id", "plan_binding",
+                                         "release_binding", "executable", "package", "build",
+                                         "platform", "inputs", "backend", "reader_generation_min",
+                                         "reader_generation_max", "release_manifest_envelope_json",
                                          "rollout_decision_envelope_json"}) ||
                 !identifier_string(bindings.at("receipt_id")) ||
                 !identifier_string(bindings.at("attempt_id")) ||
@@ -1196,10 +1192,8 @@ RuntimeRunRecorderStatus RuntimeRunRecorder::admit(std::string_view header_json)
                      {"entity_ids", Json::array()},
                      {"episode_ids", Json::array({"episode-unpublished"})},
                      {"request_ids", Json::array({"request-" + run_id_})},
-                     {"epochs", Json{{"world", "0"},
-                                     {"entity", "0"},
-                                     {"episode", "0"},
-                                     {"request", "0"}}}}
+                     {"epochs",
+                      Json{{"world", "0"}, {"entity", "0"}, {"episode", "0"}, {"request", "0"}}}}
                     .dump();
         }
     } catch (const Json::exception &error) {
@@ -1215,8 +1209,8 @@ RuntimeRunRecorderStatus RuntimeRunRecorder::admit(std::string_view header_json)
         std::string recovered_tail;
         std::string recovery_detail;
         if (!store_.resume_journal_authorized(run_id_, fence_generation_, writer_id_, header_json,
-                                              admission_capability_, recovered_next,
-                                              recovered_tail, recovery_detail)) {
+                                              admission_capability_, recovered_next, recovered_tail,
+                                              recovery_detail)) {
             return reject("recorder.admission", detail + "; resume failed: " + recovery_detail);
         }
         next_sequence_ = recovered_next;
@@ -1237,7 +1231,8 @@ RuntimeRunRecorderStatus RuntimeRunRecorder::admit(std::string_view header_json)
         pending_receipt_json_ = std::move(recovered.existing_receipt_json);
     state_ = RuntimeRunRecorderState::Admitted;
     terminalizable_ = true;
-    admitted_at_ = recovered.admitted_at.empty() ? utc_timestamp() : std::move(recovered.admitted_at);
+    admitted_at_ =
+        recovered.admitted_at.empty() ? utc_timestamp() : std::move(recovered.admitted_at);
     if (!admission_bindings_json_.empty()) {
         if (next_sequence_ == 0U) {
             const auto lifecycle = note_lifecycle("journal_admitted");
@@ -1246,13 +1241,12 @@ RuntimeRunRecorderStatus RuntimeRunRecorder::admit(std::string_view header_json)
             // A resumed strict journal already contains the original durable
             // admission frame. Reconstruct the receipt projection without
             // appending a second admission event under the recovery fence.
-            lifecycle_events_.push_back(
-                Json{{"sequence", 0U},
-                     {"event", "journal_admitted"},
-                     {"timestamp", admitted_at_},
-                     {"epoch", incarnation_epoch_},
-                     {"durable_sequence", 0U}}
-                    .dump());
+            lifecycle_events_.push_back(Json{
+                {"sequence", 0U},
+                {"event", "journal_admitted"},
+                {"timestamp", admitted_at_},
+                {"epoch", incarnation_epoch_},
+                {"durable_sequence", 0U}}.dump());
         }
     }
     return {true, {}, {}};
@@ -1273,27 +1267,24 @@ RuntimeRunRecorderStatus RuntimeRunRecorder::note_lifecycle(std::string_view eve
         if (previous_event == event && !recovery_terminal) return {true, {}, {}};
         const auto previous_rank = lifecycle_rank(previous_event);
         if (!previous_rank.has_value() || *rank < *previous_rank)
-            return reject_after_admission("recorder.lifecycle",
-                                          "lifecycle event order regressed");
+            return reject_after_admission("recorder.lifecycle", "lifecycle event order regressed");
         if (previous_event == "terminal" && !recovery_terminal)
-            return reject_after_admission("recorder.lifecycle",
-                                          "lifecycle is already terminal");
+            return reject_after_admission("recorder.lifecycle", "lifecycle is already terminal");
     }
     const auto timestamp = utc_timestamp();
     const auto durable_sequence = next_sequence_;
-    const auto record = Json{{"event", "runtime_lifecycle"},
-                             {"lifecycle_event", event},
-                             {"timestamp", timestamp}}
-                            .dump();
+    const auto record =
+        Json{{"event", "runtime_lifecycle"}, {"lifecycle_event", event}, {"timestamp", timestamp}}
+            .dump();
     const auto appended = append(durable_sequence, record);
     if (!appended) return appended;
-    lifecycle_events_.push_back(
-        Json{{"sequence", lifecycle_events_.size()},
-             {"event", event},
-             {"timestamp", timestamp},
-             {"epoch", incarnation_epoch_},
-             {"durable_sequence", durable_sequence}}
-            .dump());
+    lifecycle_events_.push_back(Json{
+        {"sequence", lifecycle_events_.size()},
+        {"event", event},
+        {"timestamp", timestamp},
+        {"epoch", incarnation_epoch_},
+        {"durable_sequence",
+         durable_sequence}}.dump());
     return {true, {}, {}};
 }
 
@@ -1325,12 +1316,11 @@ RuntimeRunRecorderStatus RuntimeRunRecorder::bind_runtime_identity(
             return {true, {}, {}};
         return reject_after_admission("recorder.identity", "runtime identity is already bound");
     }
-    const auto appended = append(
-        next_sequence_, Json{{"event", "runtime_identity_bound"},
-                             {"host_boot_id", host_boot_id},
-                             {"incarnation_epoch", incarnation_epoch},
-                             {"execution_scope", candidate}}
-                            .dump());
+    const auto appended = append(next_sequence_, Json{{"event", "runtime_identity_bound"},
+                                                      {"host_boot_id", host_boot_id},
+                                                      {"incarnation_epoch", incarnation_epoch},
+                                                      {"execution_scope", candidate}}
+                                                     .dump());
     if (!appended) return appended;
     host_boot_id_ = host_boot_id;
     incarnation_epoch_ = incarnation_epoch;
@@ -1339,7 +1329,7 @@ RuntimeRunRecorderStatus RuntimeRunRecorder::bind_runtime_identity(
 }
 
 RuntimeRunRecorderStatus RuntimeRunRecorder::observe_entity(std::string_view entity_id,
-                                                             std::string_view entity_epoch) {
+                                                            std::string_view entity_epoch) {
     if (state_ != RuntimeRunRecorderState::Admitted)
         return failure("recorder.state", "entity observation requires an admitted journal");
     if (!identifier_string(Json(entity_id)) || !generation_string(Json(entity_epoch)))
@@ -1348,11 +1338,10 @@ RuntimeRunRecorderStatus RuntimeRunRecorder::observe_entity(std::string_view ent
     auto &entities = scope.at("entity_ids");
     if (std::find(entities.begin(), entities.end(), Json(std::string(entity_id))) != entities.end())
         return {true, {}, {}};
-    const auto appended = append(next_sequence_,
-                                 Json{{"event", "runtime_entity_observed"},
-                                      {"entity_id", entity_id},
-                                      {"entity_epoch", entity_epoch}}
-                                     .dump());
+    const auto appended = append(next_sequence_, Json{{"event", "runtime_entity_observed"},
+                                                      {"entity_id", entity_id},
+                                                      {"entity_epoch", entity_epoch}}
+                                                     .dump());
     if (!appended) return appended;
     entities.push_back(entity_id);
     std::sort(entities.begin(), entities.end());
@@ -1370,8 +1359,8 @@ RuntimeRunRecorderStatus RuntimeRunRecorder::append(std::uint64_t sequence,
         return failure("recorder.sequence", "journal sequence is not monotonic");
     std::string detail;
     RuntimeRunRecorderAppendAck ack;
-    if (!store_.append_record_authorized(run_id_, fence_generation_, writer_id_, sequence,
-                                         payload, admission_capability_, ack, detail)) {
+    if (!store_.append_record_authorized(run_id_, fence_generation_, writer_id_, sequence, payload,
+                                         admission_capability_, ack, detail)) {
         return reject_after_admission("recorder.append", detail);
     }
     if (!ack.durable || ack.sequence != sequence || !sha256_string(Json(ack.payload_sha256)) ||
@@ -1434,13 +1423,13 @@ RuntimeRunRecorderStatus RuntimeRunRecorder::persist_checkpoint(std::string_view
             return reject("recorder.checkpoint", "checkpoint payload is not canonical");
         auto validation = Json::parse(validation_json.begin(), validation_json.end());
         validation["checkpoint_id"] = checkpoint_payload.at("checkpoint_id");
-        const auto replay_sha256 =
-            runtime::authority_contracts::checkpoint_replay_aggregate_sha256(
-                checkpoint_payload.dump());
+        const auto replay_sha256 = runtime::authority_contracts::checkpoint_replay_aggregate_sha256(
+            checkpoint_payload.dump());
         if (replay_sha256.has_value() && validation.contains("aggregate_replay_sha256"))
             validation["aggregate_replay_sha256"] = *replay_sha256;
         if (!validation.is_object() || validation.value("accepted", false) != true ||
-            validation.value("checkpoint_id", "") != checkpoint_payload.value("checkpoint_id", "") ||
+            validation.value("checkpoint_id", "") !=
+                checkpoint_payload.value("checkpoint_id", "") ||
             validation.value("state_sha256", "").empty() ||
             validation.value("state_sha256", "") !=
                 checkpoint_payload.value("aggregate_state_sha256", ""))
@@ -1448,10 +1437,10 @@ RuntimeRunRecorderStatus RuntimeRunRecorder::persist_checkpoint(std::string_view
         if (checkpoint.at("payload").at("writer_generation") != std::to_string(fence_generation_))
             return reject("recorder.checkpoint", "checkpoint writer generation differs from fence");
         if (!admission_bindings_json_.empty()) {
-            const auto bindings = Json::parse(admission_bindings_json_.begin(),
-                                              admission_bindings_json_.end());
-            const auto release = Json::parse(
-                bindings.at("release_manifest_envelope_json").get<std::string>());
+            const auto bindings =
+                Json::parse(admission_bindings_json_.begin(), admission_bindings_json_.end());
+            const auto release =
+                Json::parse(bindings.at("release_manifest_envelope_json").get<std::string>());
             if (checkpoint.at("payload").at("state_schema_generation") !=
                 release.at("payload").at("state_schema_generation"))
                 return reject("recorder.checkpoint",
@@ -1478,31 +1467,36 @@ RuntimeRunRecorderStatus RuntimeRunRecorder::persist_checkpoint(std::string_view
                                                                            *canonical_payload);
         if (!validation_result.valid)
             return reject("recorder.checkpoint", validation_result.detail);
-        const auto checkpoint_sha256 = runtime::authority_contracts::sha256_hex(*canonical_checkpoint);
+        const auto checkpoint_sha256 =
+            runtime::authority_contracts::sha256_hex(*canonical_checkpoint);
         const auto validation_canonical =
             runtime::authority_contracts::canonical_authority_json(validation.dump());
         if (!validation_canonical.has_value())
             return reject("recorder.checkpoint", "validation evidence is not canonicalizable");
-        const auto validation_sha256 = runtime::authority_contracts::sha256_hex(*validation_canonical);
+        const auto validation_sha256 =
+            runtime::authority_contracts::sha256_hex(*validation_canonical);
         const auto intent = append(
-            next_sequence_, Json{{"checkpoint_id", checkpoint_payload.at("checkpoint_id")},
-                                 {"checkpoint_sha256", checkpoint_sha256},
-                                 {"event", "checkpoint_commit"},
-                                 {"transfer_fence_sequence", checkpoint_payload.at("transfer_fence_sequence")},
-                                 {"validation_sha256", validation_sha256}}
-                                    .dump());
+            next_sequence_,
+            Json{{"checkpoint_id", checkpoint_payload.at("checkpoint_id")},
+                 {"checkpoint_sha256", checkpoint_sha256},
+                 {"event", "checkpoint_commit"},
+                 {"transfer_fence_sequence", checkpoint_payload.at("transfer_fence_sequence")},
+                 {"validation_sha256", validation_sha256}}
+                .dump());
         if (!intent) return intent;
         std::string detail;
         RuntimeRunRecorderCheckpointAck ack;
-        if (!store_.commit_checkpoint_authorized(
-                run_id_, fence_generation_, writer_id_, *canonical_checkpoint,
-                *validation_canonical, admission_capability_, ack, detail)) {
+        if (!store_.commit_checkpoint_authorized(run_id_, fence_generation_, writer_id_,
+                                                 *canonical_checkpoint, *validation_canonical,
+                                                 admission_capability_, ack, detail)) {
             return reject("recorder.checkpoint", detail);
         }
         if (!ack.durable || !sha256_string(Json(ack.checkpoint_sha256)) ||
             !sha256_string(Json(ack.validation_sha256)) ||
-            ack.checkpoint_sha256 != runtime::authority_contracts::sha256_hex(*canonical_checkpoint) ||
-            ack.validation_sha256 != runtime::authority_contracts::sha256_hex(*validation_canonical) ||
+            ack.checkpoint_sha256 !=
+                runtime::authority_contracts::sha256_hex(*canonical_checkpoint) ||
+            ack.validation_sha256 !=
+                runtime::authority_contracts::sha256_hex(*validation_canonical) ||
             ack.state_schema_generation !=
                 checkpoint.at("payload").at("state_schema_generation").get<std::string>()) {
             return reject("recorder.checkpoint",
@@ -1517,12 +1511,10 @@ RuntimeRunRecorderStatus RuntimeRunRecorder::persist_checkpoint(std::string_view
     return {true, {}, {}};
 }
 
-RuntimeRunRecorderStatus RuntimeRunRecorder::put_artifact(std::string_view name,
-                                                           std::string_view bytes,
-                                                           std::string_view media_type,
-                                                           std::string_view retention_class,
-                                                           std::string &digest,
-                                                           std::string &retrieval_location) {
+RuntimeRunRecorderStatus
+RuntimeRunRecorder::put_artifact(std::string_view name, std::string_view bytes,
+                                 std::string_view media_type, std::string_view retention_class,
+                                 std::string &digest, std::string &retrieval_location) {
     if (state_ != RuntimeRunRecorderState::Admitted)
         return failure("recorder.state", "artifact requires an admitted journal");
     if (!identifier_string(Json(std::string(name))) || bytes.empty() || media_type.empty() ||
@@ -1546,8 +1538,9 @@ RuntimeRunRecorderStatus RuntimeRunRecorder::put_artifact(std::string_view name,
     return {true, {}, {}};
 }
 
-RuntimeRunRecorderStatus RuntimeRunRecorder::record_native_result(
-    std::string_view result_digest, std::string_view validation_evidence_sha256) {
+RuntimeRunRecorderStatus
+RuntimeRunRecorder::record_native_result(std::string_view result_digest,
+                                         std::string_view validation_evidence_sha256) {
     if (state_ != RuntimeRunRecorderState::Admitted)
         return failure("recorder.state", "native result requires an admitted journal");
     if (!sha256_string(Json(std::string(result_digest))) ||
@@ -1566,8 +1559,8 @@ RuntimeRunRecorderStatus RuntimeRunRecorder::finalize(std::string_view receipt_j
     if (state_ != RuntimeRunRecorderState::Admitted)
         return failure("recorder.state", "journal is not admitted");
     if (receipt_json.empty()) return reject("recorder.receipt", "receipt is empty");
-    if (!admission_bindings_json_.empty() &&
-        receipt_json != owner_projected_receipt_json_ && receipt_json != pending_receipt_json_) {
+    if (!admission_bindings_json_.empty() && receipt_json != owner_projected_receipt_json_ &&
+        receipt_json != pending_receipt_json_) {
         return reject("recorder.receipt",
                       "strict run receipt was not projected by the admitted recorder owner");
     }
@@ -1600,8 +1593,8 @@ RuntimeRunRecorderStatus RuntimeRunRecorder::finalize(std::string_view receipt_j
             return reject("recorder.receipt", "receipt run identity differs");
         const auto &payload = receipt.at("payload");
         if (!admission_bindings_json_.empty()) {
-            const auto bindings = Json::parse(admission_bindings_json_.begin(),
-                                              admission_bindings_json_.end());
+            const auto bindings =
+                Json::parse(admission_bindings_json_.begin(), admission_bindings_json_.end());
             const auto measured = execution_measurement_sha256(payload);
             if (!measured.has_value() || *measured != admission_measurement_sha256_ ||
                 payload.at("admission_binding_sha256") != admission_binding_sha256_ ||
@@ -1700,8 +1693,8 @@ RuntimeRunRecorder::finalize_observed(std::string_view receipt_template_json,
         std::string recovered_tail;
         std::string detail;
         if (!store_.resume_journal_authorized(run_id_, fence_generation_, writer_id_, {},
-                                              admission_capability_, recovered_next,
-                                              recovered_tail, detail)) {
+                                              admission_capability_, recovered_next, recovered_tail,
+                                              detail)) {
             return failure("recorder.recovery", detail);
         }
         next_sequence_ = recovered_next;
@@ -1711,16 +1704,15 @@ RuntimeRunRecorder::finalize_observed(std::string_view receipt_template_json,
     }
     if (state_ != RuntimeRunRecorderState::Admitted)
         return failure("recorder.state", "journal is not admitted");
-    if (!pending_receipt_json_.empty())
-        return finalize(pending_receipt_json_);
+    if (!pending_receipt_json_.empty()) return finalize(pending_receipt_json_);
     if (!admission_bindings_json_.empty()) {
         const auto terminal = note_lifecycle("terminal");
         if (!terminal) return terminal;
     } else if (next_sequence_ == 0U || recovered_after_rejection) {
-        const auto terminal_record = Json{{"event", "terminal"},
-                                          {"reason", terminal_reason},
-                                          {"state", terminal_state}}
-                                         .dump();
+        const auto terminal_record = Json{
+            {"event", "terminal"},
+            {"reason", terminal_reason},
+            {"state", terminal_state}}.dump();
         const auto appended = append(next_sequence_, terminal_record);
         if (!appended) return appended;
     }
