@@ -405,9 +405,24 @@ class TaskingPhaseControlTests(unittest.TestCase):
       )
     )
 
-    self.assertTrue(
+    loader_recover_preterminal._post_waypoint_transition_ready = lambda: False
+    self.assertFalse(
       manager._should_arm_approach(
         loader=loader_recover_preterminal,
+        truth=truth,
+        alt_agl_m=float(inst.alt_radar),
+        heading_deg=float(inst.heading),
+        ils_valid=True,
+        loc_abs=0.18,
+        gs_abs=0.22,
+        dme_m=9500.0,
+        remaining_waypoints=0,
+      )
+    )
+    loader_recover_terminal._post_waypoint_transition_ready = lambda: True
+    self.assertTrue(
+      manager._should_arm_approach(
+        loader=loader_recover_terminal,
         truth=truth,
         alt_agl_m=float(inst.alt_radar),
         heading_deg=float(inst.heading),

@@ -99,6 +99,8 @@
       "target_speed": 82.0,
       "landing_mode": "ils_final",
       "reference_runway": "Runway 09",
+      "approach_arm_before_threshold_m": 2600.0,
+      "terminal_ready_threshold_window_m": 3500.0,
       "threshold_crossing_height_m": 15.0,
       "touchdown_zone_from_threshold_m": 300.0,
       "touchdown_zone_radius_m": 120.0,
