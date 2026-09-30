@@ -1,10 +1,13 @@
 # Long-Horizon Architecture Governance Dispatch Queue
 
-Status: `2026-08-27` P0 and P1 architecture decisions plus the complete
+Status: `2026-09-19` P0 and P1 architecture decisions plus the complete
 P3-A/P3-B/P3-C contract, authority-envelope, ledger and compatibility
 foundations and P4-A dark/shadow host lifecycle are accepted. Independent P3
 and P4-A reviews closed every Critical/High/Medium finding without short-term
-substitution. P2-A/P2-B and P4-B are ready; P4-C-P8 remain dependency-gated.
+substitution. P4-B dark/shadow candidate review has now passed; the first P4-C
+build-tree/internal seam has passed candidate-scope independent review.
+P2-A/P2-B, full maintained-facade parity, production rollback and P5-P8 remain
+dependency-gated.
 The active P4-B implementation route is the subordinate [remediation route](p4b_remediation_route_20260830.md);
 this dispatch queue remains authoritative for ordering and review cadence.
 
@@ -48,7 +51,8 @@ Authoritative cluster definitions:
 | 16 | `P3-B` | accepted | main thread + independent `gpt-5.6-sol` max reviewer | P3-A accepted | canonical JSON authority envelopes, versioned plan/release/rollout/checkpoint shells, provenance binding, exact vectors and native/Cordis conformance |
 | 17 | `P3-C` | accepted | main thread + independent `gpt-5.6-sol` max reviewer | P3-B accepted | non-production ArtifactLedger, exact N/N-1 readers, fenced journals/checkpoints, durable kill/backout recovery and final review pass |
 | 18 | `P4-A` | accepted | main thread + independent `gpt-5.6-sol` max reviewer | P3 foundation accepted | dark/shadow one-CAS host lifecycle with quiescence, leases, fences, termination, quarantine, timeout retry and no production publication |
-| 19 | `P4-B` | implementation-complete; independent review pending | main thread + independent `gpt-5.6-sol` max reviewer | P4-A accepted | twelve-row versioned native episode/state-transfer candidate, strict decoding, N/N-1 WAL evidence and host replacement; no production publication |
+| 19 | `P4-B` | dark/shadow candidate independently passed; no production publication | main thread + independent `gpt-5.6-sol` max reviewer | P4-A accepted | twelve-row versioned native episode/state-transfer candidate, strict decoding, N/N-1 WAL evidence and host replacement; no production publication |
+| 20 | `P4-C` | candidate-scope task accepted; no production publication | main thread + independent `gpt-5.6-sol` max reviewer | P4-B handoff ready | build-tree-only kernel/world-batch seam, caller inventory, common-surface parity, candidate stress/teardown/rollback evidence, and explicit production residuals; no maintained caller cutover |
 
 ## Later Dependency Queue
 

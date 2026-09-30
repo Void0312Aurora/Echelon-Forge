@@ -1,13 +1,12 @@
 # P4-B Remediation Route: Provenance And Durable Transfer
 
-Status: `2026-09-01` implementation-complete checkpoint with one open owner
-decision (child-entity transfer scope, see the open-defect section); independent
-review pending. P4-B is not yet accepted for production.
+Status: `2026-09-13` repaired implementation checkpoint; independent review
+passed for the dark/shadow candidate. P4-B is not accepted for production.
 Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/p4b_remediation_route_20260830.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-08-31`
+Last verified: `2026-09-13`
 
 ## Objective
 
@@ -78,50 +77,27 @@ This route is long-horizon; fixture compatibility is evidence only.
   blockage. Production authentication, P5 durability, cross-process replay,
   and caller cutover remain separately gated.
 
-## Open defect: child-entity transfer scope (2026-09-01)
+## Resolved child-entity transfer closure (2026-09-13)
 
-Measured native state is **59/60 cases, 1607/1607 assertions**. One case,
-`ECS owner covers maintained database platform definitions`, fails closed:
+The transferred ECS set is the transitive `SimObject` closure returned by
+`SimulationKernel::spawn_unit`. The host-level spawn path tags every
+factory-owned `ChildOf` descendant, including embarked aircraft and loadout
+munitions, so cleanup, barrier counts, and state transfer observe one explicit
+native truth set. The serializer carries `ChildOf` edges as logical-name pairs
+and restores them only after all entities exist.
 
-```text
-ECS snapshot contains an unresolved entity reference
-(active_helo_entity_id=1475) on entity 'p4b-simobject-1474'
-```
-
-Root cause is an ownership boundary, not a codec defect.
-`SimulationKernel::spawn_unit` adds the `SimObject` tag only to the entity the
-factory returns. `DefaultUnitFactory::spawn_embarked_helo` pre-spawns the
-embarked helo through the factory's own internal `spawn()` and reparents it with
-`child_of`, so that helo never receives the tag. The snapshot query is
-`terms[0].id = SimObject`, so the helo is outside the transferred set while the
-ship's `EmbarkedAirOps::active_helo_entity_id` still references it. The export
-refuses to emit an id that a target could resolve to an unrelated entity, which
-is the intended fail-closed behavior.
-
-The same applies to the munition child entities created per loadout station
-(`unit_name + "_Stn_" + station`), which are also untagged children.
-
-This is **not** patched here because every available repair changes an authority
-that belongs to an owner decision:
-
-1. Tagging the pre-spawned helo `SimObject` widens the transferred set and, when
-   probed locally, immediately exposed a second gap: `ChildOf` pairs reach the
-   snapshot and the Flecs JSON emits `"ChildOf":#...`, which the strict parser
-   rejects. Hierarchy transfer needs a pair-remap design, and the restore path
-   currently rejects any non-empty `pairs`. Tagging also changes
-   `ecs.count<SimObject>()`, which gates the rebuild barrier, and
-   `delete_with<SimObject>()` cleanup semantics.
-2. Declaring `active_helo_entity_id` a rederive field contradicts the P1-A
-   disposition table, where `EcsComponentTruth` is `transfer`.
-3. Removing the field from the scalar reference set would let a dangling
-   source-local id reach a target, which is the exact defect the guard exists to
-   prevent.
-
-Required owner decision before P4-B acceptance: whether the transferred ECS set
-is the `SimObject` set (then factory-internal children need either explicit
-admission plus `ChildOf` pair remap, or a declared rederive policy), or a
-hierarchy closure over it. The independent reviewer must disposition this rather
-than accept a widened tag as an incidental fix.
+Every declared entity-bearing scalar and vector reference is logical-name
+remapped or rejected; tactical track identities and generic command arguments
+retain their typed logical scalar semantics, while target-bearing compatibility
+messages remap `msg_arg` only for the declared entity-bearing kinds. Raw source-
+local entity IDs never cross the boundary.
+`EmbarkedAirOps.active_helo_entity_id` remains a transferred scalar reference:
+it is remapped when the child is in the admitted closure, and an unresolved
+non-zero value fails closed rather than being silently reset or carried into
+the target. The maintained database-platform round-trip, including mutated
+embarked-helo and loadout-munition children, strict `SimObject`/subset collision
+rejection, and a destroyed-child case, is green. A live WAL object also
+truncates an interrupted tail before same-instance recovery.
 
 ## Post-audit repair pass (2026-08-31)
 
@@ -143,19 +119,28 @@ covered by the local regression suites:
   require a non-zero drain deadline. Target controls must expose a real
   transfer fence around the owner reservation; the base control fails closed
   until that fence is implemented.
-- ECS export rejects unresolved `msg_arg` references and maps that field
-  through logical entity identities; `SystemHealth` decoding rejects missing
-  required keys. World and component-subset restore paths take a pre-image and
-  compensate mutation failures.
+- ECS export maps every declared entity-bearing scalar/vector reference through
+  logical entity identities and rejects unknown source-local ids; tactical track
+  identities and generic command arguments retain their typed scalar domain,
+  while target-bearing compatibility messages remap `msg_arg` only for the
+  declared entity-bearing kinds. Factory-owned `ChildOf` descendants are
+  admitted into the `SimObject` closure, so `EmbarkedAirOps.active_helo_entity_id`
+  is remapped as ordinary transferred truth; any unresolved non-zero entity
+  reference still fails closed.
+  `SystemHealth` decoding rejects missing required keys. World and
+  component-subset restore paths take a pre-image and compensate mutation
+  failures, while name collisions with non-`SimObject` entities fail closed.
 - The Python cache rederive path clears and rebuilds command-chain, behavior,
   scripted-controller, and reward mirror state. Host-bound native owner
   registries require a target callback for invoking that hook after native
   import, while host-neutral fixtures may omit it.
 
-These changes close the corresponding implementation defects but do not turn
-the branch into a production-qualified or accepted P4-B release. The same
-independent reviewer must re-run the integrated audit, and any residual
-critical/high finding remains an acceptance blocker.
+These changes close the corresponding implementation defects within the
+declared candidate scope. The independent reviewer re-ran the integrated audit
+and returned `pass` for the dark/shadow candidate. This does not turn the branch
+into a production-qualified P4-B release; P5 production-boundary findings remain
+gated and any future candidate-scope Critical/High finding remains an acceptance
+blocker.
 
 ## Authority and handoff
 

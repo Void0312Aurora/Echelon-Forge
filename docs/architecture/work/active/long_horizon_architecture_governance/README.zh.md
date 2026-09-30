@@ -1,10 +1,10 @@
 # 长期架构治理
 
-状态：`2026-08-31`，长期架构治理计划处于 active；P0 authority/baseline、P1
+状态：`2026-09-19`，长期架构治理计划处于 active；P0 authority/baseline、P1
 target-architecture 决策、完整的 P3-A/P3-B/P3-C contract、authority-envelope、
 ledger 与 compatibility foundation，以及 P4-A dark/shadow host lifecycle 已在
-独立复核后接受。P4-B candidate implementation 已在隔离分支完成；独立综合复核待进行，尚未获得 production acceptance。
-P2-A/P2-B、P4-C 与 P5-P8 仍开放；尚无 production truth
+独立复核后接受。P4-B dark/shadow candidate implementation 与独立综合复核已完成；P4-C 首个 build-tree/internal candidate 任务已通过 candidate-scope 独立复核并被接受，尚未获得 production acceptance。
+P2-A/P2-B、完整 maintained facade parity、production rollback 与 P5-P8 仍开放；尚无 production truth
 发布、runtime caller 迁移或 production cutover 被接受。
 
 语言：
@@ -52,7 +52,7 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 | Composition replacement | 已实现，但战略方向未裁定 | `rebuild_world_composition`、mutation barrier、raw-world quarantine、scope generation 与 handover 机制 | 当前没有 maintained 非测试 caller 或 binding 要求原地 kernel rebuild |
 | Runtime 边界 | facade 方向已接受；compatibility surface 仍存在 | [runtime facade guards](../../../../../tests/architecture/runtime_facade/test_runtime_escape_hatches.py) | source scan 能描述边界，但不能让越界在物理上不可表示 |
 | Contract 与证据链 | 已覆盖 accepted 默认 profile | request、catalog lock、projection、requested/resolved manifest、provenance、parity 与 closure artifact | 中间迁移 artifact 仍是永久治理输入 |
-| Public/runtime authority boundary | P3-A/P3-B/P3-C 与 P4-A accepted；P4-B implementation 完成，独立复核待进行 | [`ef_runtime_contracts`](../../../../../include/echelon_forge/runtime_contracts/runtime_identity.h)、[`RuntimeHostCandidate`](../../../../../src/runtime/host/runtime_host_candidate.h)、[P4-B candidate](p4b_state_transfer_candidate_20260830.md)、12-row owner adapters、authority/ledger schema、exact vector、non-production ArtifactLedger simulator、fresh Windows/MSVC native gate 与 [P4-A 独立审查](../../../reviews/long_horizon_architecture_governance_p4a_review_20260827.md) | P4-A/B 仍仅 dark/shadow；P4-B 独立复核、P4-C candidate integration 与 P5-B/P5-D production durability、authenticity、activation、cutover 仍受 gate 约束 |
+| Public/runtime authority boundary | P3-A/P3-B/P3-C 与 P4-A accepted；P4-B 已通过独立复核；P4-C candidate-scope 任务已接受 | [`ef_runtime_contracts`](../../../../../include/echelon_forge/runtime_contracts/runtime_identity.h)、[`RuntimeHostCandidate`](../../../../../src/runtime/host/runtime_host_candidate.h)、[P4-B candidate](p4b_state_transfer_candidate_20260830.md)、[P4-C candidate seam](p4c_internal_candidate_seam_20260915.md)、12-row owner adapters、authority/ledger schema、exact vector、non-production ArtifactLedger simulator、fresh Windows/MSVC native gate 与 [P4-B 独立审查](../../../reviews/long_horizon_architecture_governance_p4b_review_20260831.md) | P4-A/B/C 仍仅 dark/shadow；完整 maintained facade parity 与 P5-B/P5-D production durability、authenticity、activation、cutover 仍受 gate 约束 |
 | 测试与 CI 治理 | 已验证 CI smoke 为绿；完整 governance audit 非绿 | [CI smoke suite](../../../../../tests/smoke/ci_smoke_suite.json)、[governance audit suite](../../../../../tests/suites/governance_audit_suite.json) 与 `test_archive_retirement.py` | 远端基线跟踪的 20 个 owner-archive 文档使 retirement gate 失败 |
 | 文档生命周期 | policy、gate 与仓库路由冲突 | [文档生命周期规范](../../../../engineering/documentation/standards/document_lifecycle_policy.zh.md)、子项目规范与当前 architecture archive | standard 接受 owner-local archive，但 maintained gate 禁止所有 `docs/**/archive/**` 路径 |
 
@@ -139,7 +139,7 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 | `P1 Target Architecture` | 固定 lifecycle、episode authority、versioning/rollout、platform/process topology、contract chain、boundary 与 control lifecycle 决策。 | P0 evidence accepted | 决策包含 compatibility、rollback、operations、storage 与 security activation 路径并通过独立审查 | accepted |
 | `P2 Control Lifecycle` | 将每个架构控制分类为 permanent、renewable、migratory 或 evidentiary，并明确 owner 与退役。 | P1 术语固定 | 既有控制完成分类，migration control 具备可执行退出条件 | P2-A/P2-B ready |
 | `P3 Contract And Public Boundary Foundation` | 在 host cutover 前落地 canonical authority envelope、plan/release/rollout/checkpoint shell、engine-independent DTO target、ledger foundation 与初始 visibility。 | P1 accepted | transitional adapter 单一 owner，host 可使用最终 public type/storage 且不发布第二 truth | P3-A/P3-B/P3-C accepted |
-| `P4 Host Lifecycle And Immutable Kernel Candidate` | 实现 fenced host replacement、唯一 episode authority、完整 state transfer 与 dark/shadow immutable candidate path。 | P3 contract/boundary foundation 稳定 | candidate path 已 state-complete 且 fenced，但不得成为 production truth 或退役 production rebuild | P4-A accepted；P4-B implementation 完成、独立复核待进行；P4-C planned |
+| `P4 Host Lifecycle And Immutable Kernel Candidate` | 实现 fenced host replacement、唯一 episode authority、完整 state transfer 与 dark/shadow immutable candidate path。 | P3 contract/boundary foundation 稳定 | candidate path 已 state-complete 且 fenced，但不得成为 production truth 或退役 production rebuild | P4-A accepted；P4-B 已通过独立复核；P4-C candidate-scope 任务已接受；完整 maintained facade parity 与 P5 仍开放 |
 | `P5 Plan, Evidence, Binding, And Production Cutover` | 闭合 executable plan，引入完整 RunReceipt，完成 facade/diagnostics packaging，再执行唯一 production cutover/backout 并退役 rebuild。 | P4 candidate 通过 dark/shadow | Cordis/native/facade/wheel 使用同一 plan；supported caller 只切换一次且有 rollback evidence，rebuild 失去 production authority | planned |
 | `P6 Test And CI Architecture` | 按独立 failure audience 对齐 fast、qualification、nightly、release 与 research lane。 | P2 control class 与 P5 boundary 可用 | permanent gate 有具名检测价值，migration scan 已消失或带到期约束 | planned |
 | `P7 Evidence And Documentation Lifecycle` | 保留可复现 proof，且不让 closed work package 留在永久权威。 | P2 class 与 P5 evidence ownership 稳定 | standard、current reference、历史记录与 generated evidence 有单一 owner 和路由 | planned |
@@ -160,13 +160,16 @@ facade contract；治理控制必须退役或续期，而不是在每次迁移�
 - [P3-B 独立审查（英文）](../../../reviews/long_horizon_architecture_governance_p3b_review_20260825.md)
 - [P3-C 独立审查（英文）](../../../reviews/long_horizon_architecture_governance_p3c_review_20260827.md)
 - [P4-A 独立审查（英文）](../../../reviews/long_horizon_architecture_governance_p4a_review_20260827.md)
-- [P4-B 首轮独立审查（英文）](../../../reviews/long_horizon_architecture_governance_p4b_review_20260831.md)
+- [P4-B 独立审查与修复后通过记录（英文）](../../../reviews/long_horizon_architecture_governance_p4b_review_20260831.md)
 - [P4-B state-transfer candidate snapshot（英文）](p4b_state_transfer_candidate_20260830.md)：
 - [P4-B 修正路线（英文权威）](p4b_remediation_route_20260830.md)
   记录 source/target owner 分离、typed artifacts、transaction abort guard、host-owned
   native control 与当前验收边界；candidate 仍不得成为 production truth。另记录
-  child-entity transfer scope 未决缺陷，须由独立复核裁定。
+  child-entity transfer closure 修复已实现并通过本地回归；独立复核已在
+  dark/shadow candidate 范围内通过，production gate 仍由 P5 保持。
 - [P4-B owner adapter 清单（英文）](p4b_owner_adapter_inventory_20260830.md)
+- [P4-C internal candidate seam（英文）](p4c_internal_candidate_seam_20260915.md)
+- [P4-C 独立复核（英文）](../../../reviews/long_horizon_architecture_governance_p4c_review_20260919.md)
 
 ## Outputs And Evidence
 

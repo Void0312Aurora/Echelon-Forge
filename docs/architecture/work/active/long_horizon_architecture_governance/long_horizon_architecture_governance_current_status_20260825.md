@@ -1,14 +1,18 @@
 # Long-Horizon Architecture Governance Current Status
 
-Status: `2026-08-31` P0 authority and baseline accepted against `origin/main`
+Status: `2026-09-19` P0 authority and baseline accepted against `origin/main`
 at `82d5b6e893c442950e334eb3e9ec92f8174eeb35` and plan commit
 `c668bae91900df4b5488099384c95d9820209de2`. P1 target-architecture decisions
 are accepted after independent initial, repair and final-confirmation reviews.
 All critical/high and the final medium finding are closed; no review detected
 short-term substitution. P3-A, P3-B and the non-production P3-C ledger and
 compatibility foundation, plus P4-A's dark/shadow host lifecycle candidate, are
-accepted after independent adversarial, repair and final-confirmation reviews;
-P2-A/P2-B, P4-B/P4-C, P5-P8 and runtime migration remain open. No production
+accepted after independent adversarial, repair and final-confirmation reviews.
+The P4-B dark/shadow state-transfer candidate also passed independent review;
+the first P4-C build-tree/internal kernel/world-batch candidate seam and its
+specified candidate verification are accepted after independent review.
+P2-A/P2-B, full maintained-facade parity, production publication, P5-P8 and
+runtime migration remain open. No production
 truth publication, runtime caller migration or production cutover is accepted.
 
 Parent subproject: [Long-Horizon Architecture Governance](README.md)
@@ -21,7 +25,7 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/long_horizon_architecture_governance_current_status_20260825.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-08-31`
+Last verified: `2026-09-13`
 
 ## Verification Boundary
 
@@ -124,8 +128,8 @@ They must be remeasured before an implementation or acceptance claim.
   composition/RNG/clock, explicit external-effect rejection, and telemetry
   reset policy. A real host replacement test commits all twelve rows and
   reopens the target WAL to recover the terminal composite transaction. P4-B
-  implementation is complete on the branch; independent integrated review and
-  production/P5 qualification remain open. See [P4-B candidate snapshot]
+  implementation and independent integrated review are complete for the
+  dark/shadow candidate; production/P5 qualification remains open. See [P4-B candidate snapshot]
   (p4b_state_transfer_candidate_20260830.md) and the maintained [owner adapter
   inventory](p4b_owner_adapter_inventory_20260830.md).
 
@@ -155,16 +159,16 @@ They must be remeasured before an implementation or acceptance claim.
 | --- | --- | --- | --- |
 | P0 project authority | accepted | owner route, isolated worktree, independent plan-review pass, and accepted P0 authority inventory | P1 decisions only; no implementation authority |
 | Source/control baseline | accepted | reproducible caller, target/link, artifact, control/CI, and document commands in P0 evidence | remeasure at each decision/implementation acceptance boundary |
-| Immutable-kernel/host decision | accepted | P1-A freezes one-CAS bootstrap/replacement/checkpoint recovery, terminal shutdown, final-state fence, active-fault drain, all generations and exact P0 caller crosswalk; P4-A implements the bounded dark/shadow host candidate | P4-B/P4-C state transfer, episode authority and candidate integration remain; production truth remains gated by P5 |
-| Host replacement | dark/shadow candidate implemented | `RuntimeHostCandidate`, host replacement integration test, and P4-A/P4-B evidence routes | independent P4-B review, P4-C seam integration, and P5 production qualification |
+| Immutable-kernel/host decision | accepted; P4-C candidate-scope task accepted | P1-A freezes one-CAS bootstrap/replacement/checkpoint recovery, terminal shutdown, final-state fence, active-fault drain, all generations and exact P0 caller crosswalk; P4-A/P4-B implement the bounded dark/shadow host and transfer candidates; [P4-C seam packet](p4c_internal_candidate_seam_20260915.md) adds the build-tree-only kernel/world-batch adapter and candidate verification | full maintained-facade parity, production truth and P5 qualification |
+| Host replacement | dark/shadow candidate implemented; P4-B independently passed; P4-C candidate task accepted | `RuntimeHostCandidate`, host replacement integration test, P4-B twelve-owner review and evidence routes, P4-C native/Python candidate, stress, parity and rollback gates | full maintained-facade parity and P5 production qualification |
 | Contract consolidation decision | accepted | P1-B classifies artifacts and adds singular plan/release/rollout/checkpoint-fragment/aggregate/receipt authorities, canonical envelope and ledger journal | P4 candidate evidence and P5-A/P5-B production closure |
 | Rollout/operations decision | accepted | P1-C defines one production-canary decision, support rows, checkpoint-recovery/package-restart rollback, SLO/runbook and security gates | P2 measurements, P4 candidate evidence and P5 production qualification |
-| Public/runtime foundation | accepted P3-A/P3-B/P3-C/P4-A; P4-B implementation complete, independent review pending | `ef_runtime_contracts`, authority/ledger schemas, exact vectors, non-production ledger/recovery and N/N-1 gates, `RuntimeHostCandidate`, twelve-row P4-B state-transfer candidate, fresh Windows/MSVC native checks and independent reviews through P4-A | independent P4-B review, P4-C immutable candidate seam, and P5-B durable production ledger/P5-D cutover |
+| Public/runtime foundation | accepted P3-A/P3-B/P3-C/P4-A; P4-B passed; P4-C candidate task accepted | `ef_runtime_contracts`, authority/ledger schemas, exact vectors, non-production ledger/recovery and N/N-1 gates, `RuntimeHostCandidate`, twelve-row P4-B state-transfer candidate, `RuntimeKernelCandidate`/world-batch adapter, fresh Windows/MSVC native checks and independent reviews | P5-B durable production ledger/P5-D cutover and full maintained caller parity |
 | Physical facade boundary | planned | current facade direction and source guards | CMake/package topology and diagnostics migration design |
 | Control lifecycle | planned | completed ratchet examples identified | accepted lifecycle vocabulary, owner model, and renewal/retirement process |
 | Test/CI architecture | planned | suite and timing baseline | failure-audience model and replacement evidence for retired scans |
 | Evidence/document lifecycle | baseline conflict | policy, gate, suite, and current archive inspected | reconcile retention authority, gate behavior, suite placement, retrieval, and migration |
-| Long-horizon acceptance | not eligible | acceptance contract and P4-A review are current | P2/P4-B/P4-C/P5-P7 implementation plus independent P8 review |
+| Long-horizon acceptance | not eligible | acceptance contract, P4-A review and P4-B candidate review are current | P2/P4-C/P5-P7 implementation plus independent P8 review |
 
 ## Required Support-Matrix Decision
 

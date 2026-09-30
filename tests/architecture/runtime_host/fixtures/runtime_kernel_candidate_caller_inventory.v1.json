@@ -1,0 +1,104 @@
+{
+  "schema_version": "echelon_forge.runtime_kernel_candidate_caller_inventory.v1",
+  "scope": "P4-C build-tree/internal candidate caller boundary",
+  "tokens": [
+    "RuntimeKernelCandidate",
+    "runtime_kernel_candidate",
+    "candidate_adapter",
+    "EpochReferenceFence"
+  ],
+  "references": {
+    "CMakeLists.txt": ["runtime_kernel_candidate"],
+    "pyproject.toml": ["candidate_adapter"],
+    "python/rl/runtime/world_batch/candidate_adapter.py": [
+      "EpochReferenceFence",
+      "candidate_adapter"
+    ],
+    "src/runtime/host/integration/runtime_kernel_candidate.cpp": [
+      "RuntimeKernelCandidate",
+      "runtime_kernel_candidate"
+    ],
+    "src/runtime/host/integration/runtime_kernel_candidate.h": [
+      "RuntimeKernelCandidate"
+    ],
+    "src/runtime/host/integration/runtime_kernel_candidate_facade.cpp": [
+      "RuntimeKernelCandidate",
+      "runtime_kernel_candidate"
+    ],
+    "src/runtime/host/integration/runtime_kernel_candidate_facade.h": [
+      "RuntimeKernelCandidate",
+      "runtime_kernel_candidate"
+    ],
+    "src/tests/test_runtime_kernel_candidate.cpp": [
+      "RuntimeKernelCandidate",
+      "runtime_kernel_candidate"
+    ],
+    "src/tests/test_runtime_kernel_candidate_parity.cpp": [
+      "RuntimeKernelCandidate",
+      "runtime_kernel_candidate"
+    ],
+    "tests/architecture/composition/fixtures/default_runtime_composition_migration_closure.v1.json": [
+      "runtime_kernel_candidate"
+    ],
+    "tests/architecture/composition/test_runtime_composition_migration_closure.py": [
+      "runtime_kernel_candidate"
+    ],
+    "tests/architecture/runtime_host/fixtures/runtime_kernel_candidate_caller_inventory.v1.json": [
+      "EpochReferenceFence",
+      "RuntimeKernelCandidate",
+      "candidate_adapter",
+      "runtime_kernel_candidate"
+    ],
+    "tests/architecture/runtime_host/test_runtime_kernel_candidate_contract.py": [
+      "EpochReferenceFence",
+      "RuntimeKernelCandidate",
+      "candidate_adapter",
+      "runtime_kernel_candidate"
+    ],
+    "tools/maintenance/runtime_composition_migration_closure.py": [
+      "runtime_kernel_candidate"
+    ],
+    "tools/maintenance/runtime_kernel_candidate_caller_inventory.py": [
+      "EpochReferenceFence",
+      "RuntimeKernelCandidate",
+      "candidate_adapter",
+      "runtime_kernel_candidate"
+    ]
+  },
+  "classified_callers": {
+    "build_tree_candidate": [
+      "src/runtime/host/integration/runtime_kernel_candidate.cpp",
+      "src/runtime/host/integration/runtime_kernel_candidate.h",
+      "src/runtime/host/integration/runtime_kernel_candidate_facade.cpp",
+      "src/runtime/host/integration/runtime_kernel_candidate_facade.h"
+    ],
+    "test_only": [
+      "src/tests/test_runtime_kernel_candidate.cpp",
+      "src/tests/test_runtime_kernel_candidate_parity.cpp",
+      "tests/architecture/runtime_host/test_runtime_kernel_candidate_contract.py"
+    ],
+    "shadow_only": [
+      "python/rl/runtime/world_batch/candidate_adapter.py"
+    ],
+    "governance": [
+      "CMakeLists.txt",
+      "pyproject.toml",
+      "tests/architecture/composition/fixtures/default_runtime_composition_migration_closure.v1.json",
+      "tests/architecture/composition/test_runtime_composition_migration_closure.py",
+      "tests/architecture/runtime_host/fixtures/runtime_kernel_candidate_caller_inventory.v1.json",
+      "tools/maintenance/runtime_composition_migration_closure.py",
+      "tools/maintenance/runtime_kernel_candidate_caller_inventory.py"
+    ],
+    "unclassified": []
+  },
+  "maintained_surface_prefixes": [
+    "src/runtime/facade/",
+    "src/interfaces/python/",
+    "python/rl/runtime/world_batch/adapter.py",
+    "examples/",
+    "tools/diagnostics/"
+  ],
+  "maintained_surface_violations": [],
+  "production_authority": "forbidden",
+  "inventory_sha256": "debc0aeefb28658a44c105f2605deb716e755379d5135d254df6de0a9f58f065"
+}

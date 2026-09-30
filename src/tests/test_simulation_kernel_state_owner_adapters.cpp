@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <atomic>
 #include <filesystem>
+#include <fstream>
 #include <memory>
 #include <random>
 #include <sstream>
@@ -580,6 +581,267 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         target_control.reset();
         source_registry.reset();
         target_registry.reset();
+        std::filesystem::remove(source_journal_path, remove_error);
+        std::filesystem::remove(target_journal_path, remove_error);
+    }
+
+    TEST_CASE("failed real SimulationKernel replacement compensates owners and restores the active "
+              "epoch") {
+        SimulationKernel source;
+        SimulationKernel target;
+        source.reset(931);
+        target.reset(932);
+        const auto source_unit = source.spawn_unit(Side::Blue, "Aircraft", 100.0, 200.0, 3000.0,
+                                                   45.0, 0.0, 0.0, 150.0, 0.0, 0.0);
+        REQUIRE(source_unit.is_valid());
+        source.set_command_link(source_unit.id(), 2.5, 0.0);
+        source.step();
+
+        const std::string target_world_before =
+            integration::SimulationKernelStateOwnerBridge::serialize_world(target);
+        const std::string target_rng_before =
+            integration::SimulationKernelStateOwnerBridge::serialize_rng(target);
+        const auto target_python_applied = std::make_shared<std::atomic<bool>>(false);
+        const auto target_tick_calls = std::make_shared<std::atomic<std::uint64_t>>(0);
+        const auto target_rollback_calls = std::make_shared<std::atomic<std::uint64_t>>(0);
+
+        const auto source_journal_path =
+            std::filesystem::temp_directory_path() / "echelon_forge_p4c_rollback_source.wal";
+        const auto target_journal_path =
+            std::filesystem::temp_directory_path() / "echelon_forge_p4c_rollback_target.wal";
+        std::error_code remove_error;
+        std::filesystem::remove(source_journal_path, remove_error);
+        std::filesystem::remove(target_journal_path, remove_error);
+
+        const auto source_python_applied = std::make_shared<std::atomic<bool>>(false);
+        auto source_registry = integration::SimulationKernelStateOwnerBridge::create_registry({
+            .kernel = &source,
+            .journal = std::make_shared<host::RuntimeStateTransferFileJournal>(
+                source_journal_path.string()),
+            .transaction_namespace = "p4c-rollback-source",
+            .bound_resource_identity = {.high = 932, .low = 933},
+            .sample_tick = [] { return std::uint64_t{0}; },
+            .rederive_python_caches =
+                [source_python_applied] {
+                    source_python_applied->store(true);
+                    return true;
+                },
+            .snapshot_python_caches =
+                [source_python_applied] {
+                    return std::vector<std::uint8_t>{source_python_applied->load() ? 1U : 0U};
+                },
+            .rollback_python_caches =
+                [source_python_applied](const auto &before) {
+                    if (before.size() != 1) {
+                        return false;
+                    }
+                    source_python_applied->store(before.front() != 0);
+                    return true;
+                },
+            .recover_python_caches =
+                [source_python_applied](const auto &) {
+                    return source_python_applied->load()
+                               ? host::RuntimeStateOwnerImportTransactionPhase::Committed
+                               : host::RuntimeStateOwnerImportTransactionPhase::Aborted;
+                },
+        });
+
+        // Each real owner transaction samples this clock before and after its
+        // native apply.  Trigger the deadline on the post-apply sample of the
+        // final row so every earlier row has a durable commit that must be
+        // compensated, while no synthetic owner is involved.
+        auto target_registry = integration::SimulationKernelStateOwnerBridge::create_registry({
+            .kernel = &target,
+            .journal = std::make_shared<host::RuntimeStateTransferFileJournal>(
+                target_journal_path.string()),
+            .transaction_namespace = "p4c-rollback-target",
+            .bound_resource_identity = {.high = 934, .low = 935},
+            .sample_tick =
+                [target_tick_calls] {
+                    const std::uint64_t call =
+                        target_tick_calls->fetch_add(1, std::memory_order_relaxed) + 1;
+                    return call >= 24 ? std::uint64_t{180} : std::uint64_t{0};
+                },
+            .rederive_python_caches =
+                [target_python_applied] {
+                    target_python_applied->store(true);
+                    return true;
+                },
+            .snapshot_python_caches =
+                [target_python_applied] {
+                    return std::vector<std::uint8_t>{target_python_applied->load() ? 1U : 0U};
+                },
+            .rollback_python_caches =
+                [target_python_applied, target_rollback_calls](const auto &before) {
+                    if (before.size() != 1) {
+                        return false;
+                    }
+                    target_rollback_calls->fetch_add(1, std::memory_order_relaxed);
+                    target_python_applied->store(before.front() != 0);
+                    return true;
+                },
+            .recover_python_caches =
+                [target_python_applied](const auto &) {
+                    return target_python_applied->load()
+                               ? host::RuntimeStateOwnerImportTransactionPhase::Committed
+                               : host::RuntimeStateOwnerImportTransactionPhase::Aborted;
+                },
+        });
+        REQUIRE(source_registry != nullptr);
+        REQUIRE(target_registry != nullptr);
+        const std::string plan_sha256 = source.resolved_composition_sha256();
+        REQUIRE(plan_sha256 == target.resolved_composition_sha256());
+
+        const std::size_t orphaned_before = host::RuntimeHostCandidate::orphaned_host_count();
+        auto runtime = std::make_unique<host::RuntimeHostCandidate>(host::RuntimeHostConfig{
+            .host_id = {.high = 930, .low = 931},
+            .mode = host::RuntimeHostMode::Dark,
+        });
+        auto source_control = std::make_shared<KernelReplacementControl>(
+            RuntimeIdentity128{.high = 932, .low = 933}, source_registry);
+        const host::RuntimePlanBinding source_plan{
+            .plan_id = "p4c-rollback-source",
+            .plan_sha256 = plan_sha256,
+        };
+        auto source_owner_handle = runtime->issue_owner_handle(
+            source_control, {.transaction_kind = host::RuntimeHostTransactionKind::Initial,
+                             .plan = source_plan,
+                             .world_slot_count = 1});
+        REQUIRE(source_owner_handle.valid());
+        const auto initial =
+            runtime->begin_candidate({.transaction_kind = host::RuntimeHostTransactionKind::Initial,
+                                      .plan = source_plan,
+                                      .lifecycle_deadline_tick = 200,
+                                      .world_slot_count = 1},
+                                     source_owner_handle);
+        REQUIRE(initial.status);
+        REQUIRE(runtime->validate_candidate(initial.handle, {.static_plan_validated = true,
+                                                             .resources_ready = true,
+                                                             .shadow_probe_passed = true,
+                                                             .unreachable_from_production = true}));
+        REQUIRE(
+            runtime
+                ->commit_initial(initial.handle, {.lifecycle_evidence_sha256 = std::string(64, 'c'),
+                                                  .dark_evidence_sealed = true})
+                .status);
+        const auto source_slot = runtime->snapshot().active->incarnation;
+
+        auto target_control = std::make_shared<KernelReplacementControl>(
+            RuntimeIdentity128{.high = 934, .low = 935}, target_registry);
+        const host::RuntimePlanBinding target_plan{
+            .plan_id = "p4c-rollback-target",
+            .plan_sha256 = plan_sha256,
+        };
+        auto target_owner_handle = runtime->issue_owner_handle(
+            target_control, {.transaction_kind = host::RuntimeHostTransactionKind::Replacement,
+                             .expected_slot = source_slot,
+                             .plan = target_plan,
+                             .world_slot_count = 1});
+        REQUIRE(target_owner_handle.valid());
+        const auto candidate = runtime->begin_candidate(
+            {.transaction_kind = host::RuntimeHostTransactionKind::Replacement,
+             .expected_slot = source_slot,
+             .plan = target_plan,
+             .lifecycle_deadline_tick = 200,
+             .world_slot_count = 1},
+            target_owner_handle);
+        REQUIRE(candidate.status);
+        REQUIRE(
+            runtime->validate_candidate(candidate.handle, {.static_plan_validated = true,
+                                                           .resources_ready = true,
+                                                           .shadow_probe_passed = true,
+                                                           .unreachable_from_production = true}));
+
+        const auto episode_admission = runtime->issue_shadow_episode(0);
+        REQUIRE(episode_admission.status);
+        auto old_result = runtime->acquire_lease(episode_admission.capability,
+                                                 host::RuntimeLeaseKind::ReadOnlyResult);
+        REQUIRE(old_result.status);
+        const auto terminal = runtime->submit_shadow_episode(
+            episode_admission.capability,
+            {.kind = host::RuntimeEpisodeIntentKind::Action,
+             .expected_episode = episode_admission.capability.episode(),
+             .expected_step_sequence = 0,
+             .idempotency_key = {.high = 936, .low = 937},
+             .payload_sha256 = std::string(64, 'd')});
+        REQUIRE(terminal.status);
+        REQUIRE(terminal.receipt.terminal);
+        auto quiescence = runtime->quiesce_replacement_source(candidate.handle);
+        REQUIRE(quiescence.status);
+        auto barrier = runtime->open_shadow_replacement_barrier(
+            terminal.receipt.episode_after, terminal.receipt.resulting_step_sequence);
+        REQUIRE(barrier.status);
+        const auto profile = host::runtime_state_transfer_profile_from_decoder_matrix(
+            "p4c-real-rollback.v2", 1, plan_sha256, plan_sha256);
+        const auto source_export =
+            source_registry->export_source(profile, source_slot,
+                                           {.barrier_snapshot = barrier.capability.snapshot(),
+                                            .source_read_only_result_leases = 1,
+                                            .cooperative_cancellation_acknowledged = true});
+        REQUIRE(source_export.status);
+        auto validated = host::RuntimeStateTransferValidator::validate({
+            .profile = profile,
+            .census = source_export.census,
+            .evidence =
+                {
+                    .source_final_mutation_fence_sequence =
+                        quiescence.capability.mutation_fence_sequence(),
+                },
+            .host_quiescence = std::move(quiescence.capability),
+            .episode_barrier = std::move(barrier.capability),
+        });
+        REQUIRE(validated.status);
+        REQUIRE(validated.transfer.valid());
+        REQUIRE(runtime->prepare_replacement(
+            candidate.handle,
+            {.validated_transfer = std::move(validated.transfer), .drain_deadline_tick = 180}));
+
+        const auto publication = runtime->commit_prepared_candidate(candidate.handle, 20);
+        CHECK(publication.status.error == host::RuntimeHostError::InvalidCommitProof);
+        REQUIRE(runtime->snapshot().active.has_value());
+        CHECK(runtime->snapshot().active->incarnation == source_slot);
+        CHECK(runtime->snapshot().active->admission_open);
+        CHECK_FALSE(runtime->snapshot().candidate.has_value());
+        CHECK_FALSE(runtime->snapshot().draining.has_value());
+        CHECK(runtime->snapshot().quarantined.empty());
+
+        // The target actually imported native truth before the final deadline
+        // crossed; compensation must restore the exact target pre-image.
+        CHECK(target_tick_calls->load(std::memory_order_relaxed) >= 24);
+        CHECK(target_rollback_calls->load(std::memory_order_relaxed) > 0);
+        CHECK_FALSE(target_python_applied->load(std::memory_order_relaxed));
+        CHECK(integration::SimulationKernelStateOwnerBridge::serialize_world(target) ==
+              target_world_before);
+        CHECK(integration::SimulationKernelStateOwnerBridge::serialize_rng(target) ==
+              target_rng_before);
+
+        std::ifstream target_wal(target_journal_path, std::ios::binary);
+        const std::string wal_bytes((std::istreambuf_iterator<char>(target_wal)),
+                                    std::istreambuf_iterator<char>());
+        std::size_t aborted_records = 0;
+        for (std::size_t offset = wal_bytes.find("\taborted\t"); offset != std::string::npos;
+             offset = wal_bytes.find("\taborted\t", offset + 1)) {
+            ++aborted_records;
+        }
+        CHECK(aborted_records >= 12);
+
+        // The source result lease and source epoch remain valid after the failed
+        // replacement, while no candidate epoch escaped the host authority table.
+        REQUIRE(runtime->validate_result(old_result.lease, {.request = old_result.request_ref}));
+        const auto restored_episode = runtime->issue_shadow_episode(0);
+        REQUIRE(restored_episode.status);
+        CHECK(restored_episode.capability.episode().world.incarnation == source_slot);
+        REQUIRE(runtime->release_shadow_episode(restored_episode.capability));
+        old_result.lease.settle();
+
+        const auto shutdown = runtime->begin_shutdown(40, 200);
+        REQUIRE(shutdown.status);
+        runtime.reset();
+        source_control.reset();
+        target_control.reset();
+        source_registry.reset();
+        target_registry.reset();
+        CHECK(host::RuntimeHostCandidate::orphaned_host_count() <= orphaned_before);
         std::filesystem::remove(source_journal_path, remove_error);
         std::filesystem::remove(target_journal_path, remove_error);
     }

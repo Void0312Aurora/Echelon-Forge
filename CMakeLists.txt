@@ -394,6 +394,26 @@ target_link_libraries(ef_runtime_state_owner_adapters_candidate PRIVATE
     ef_core
 )
 
+# P4-C internal candidate seam. This target is build-tree-only: it binds a
+# real SimulationKernel to the accepted host/state-transfer candidate, but it
+# cannot be installed or linked by maintained production callers before P5-D.
+add_library(ef_runtime_kernel_candidate STATIC
+    src/runtime/host/integration/runtime_kernel_candidate.h
+    src/runtime/host/integration/runtime_kernel_candidate.cpp
+    src/runtime/host/integration/runtime_kernel_candidate_facade.h
+    src/runtime/host/integration/runtime_kernel_candidate_facade.cpp
+)
+target_include_directories(ef_runtime_kernel_candidate PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/host
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+target_compile_features(ef_runtime_kernel_candidate PUBLIC cxx_std_20)
+target_link_libraries(ef_runtime_kernel_candidate PRIVATE
+    ef_runtime_state_owner_adapters_candidate
+    ef_core
+)
+
 # P3-B authority contract owner: native consumes canonical bytes and detached
 # digests from the same schema/vector surface as Python and Cordis.  The one
 # legacy `ef_composition` edge is a read-only parser adapter for validating the
@@ -839,6 +859,39 @@ target_include_directories(ef_runtime_host_candidate_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/host
 )
 
+add_executable(ef_runtime_kernel_candidate_test
+    src/tests/test_main.cpp
+    src/tests/test_runtime_kernel_candidate.cpp
+)
+target_link_libraries(ef_runtime_kernel_candidate_test PRIVATE
+    ef_runtime_kernel_candidate
+    ef_runtime_state_owner_adapters_candidate
+    ef_core
+    doctest::doctest
+)
+target_include_directories(ef_runtime_kernel_candidate_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/host
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+add_executable(ef_runtime_kernel_candidate_parity_test
+    src/tests/test_main.cpp
+    src/tests/test_runtime_kernel_candidate_parity.cpp
+)
+target_link_libraries(ef_runtime_kernel_candidate_parity_test PRIVATE
+    ef_runtime_kernel_candidate
+    ef_facade
+    ef_runtime_state_owner_adapters_candidate
+    ef_gpu_experiments
+    doctest::doctest
+)
+target_include_directories(ef_runtime_kernel_candidate_parity_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/host
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
 FetchContent_Declare(
     doctest
     GIT_REPOSITORY https://github.com/doctest/doctest.git
@@ -1073,6 +1126,12 @@ add_test(NAME runtime_contracts_compile COMMAND ef_runtime_contracts_compile_tes
 add_test(NAME runtime_host_candidate COMMAND ef_runtime_host_candidate_test)
 set_tests_properties(runtime_host_candidate PROPERTIES
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+add_test(NAME runtime_kernel_candidate COMMAND ef_runtime_kernel_candidate_test)
+set_tests_properties(runtime_kernel_candidate PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+add_test(NAME runtime_kernel_candidate_parity COMMAND ef_runtime_kernel_candidate_parity_test)
+set_tests_properties(runtime_kernel_candidate_parity PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 add_test(
     NAME runtime_host_candidate_boundary
     COMMAND ${CMAKE_COMMAND}
@@ -1197,7 +1256,9 @@ function(ef_assert_p3a_runtime_contract_boundary)
 
     set(allowed_consumers ef_runtime_contracts_compile_test ef_runtime_host_candidate)
     set(allowed_host_consumers ef_runtime_host_candidate_test
-        ef_runtime_state_owner_adapters_candidate)
+        ef_runtime_state_owner_adapters_candidate
+        ef_runtime_kernel_candidate
+        ef_runtime_kernel_candidate_test)
     ef_collect_directory_targets("${CMAKE_CURRENT_SOURCE_DIR}" all_targets)
     foreach(candidate IN LISTS all_targets)
         if (candidate STREQUAL ef_runtime_contracts)
