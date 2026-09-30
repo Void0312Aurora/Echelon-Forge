@@ -1,6 +1,7 @@
 #include "state_transfer_component_reflection.h"
 
 #include "components/basic/common.h"
+#include "components/basic/stable_identity.h"
 #include "components/combat/common/weapon_common.h"
 #include "components/combat/health.h"
 #include "components/combat/scoring.h"
@@ -574,6 +575,10 @@ void register_basic_reflection(flecs::world &ecs) {
     ecs.component<Alliance>().member<std::uint8_t>("side", 1, offsetof(Alliance, side));
     static_assert(sizeof(UnitType) == sizeof(std::uint8_t));
     ecs.component<KeyEntity>().member<std::uint8_t>("type", 1, offsetof(KeyEntity, type));
+    ecs.component<StableEntitySerial>().member<std::uint64_t>("value");
+    ecs.component<StableIdentityState>()
+        .member<std::uint64_t>("next_serial")
+        .member<std::uint64_t>("episode_seed");
 }
 
 void register_command_scalar_reflection(flecs::world &ecs) {
