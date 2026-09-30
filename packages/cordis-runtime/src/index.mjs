@@ -25,3 +25,12 @@ export {
   produceRuntimePackageRequest,
   resolveRuntimePackage,
 } from './package.mjs';
+
+export {
+  AUTHORITY_CANONICALIZATION,
+  AUTHORITY_ENVELOPE_VERSION,
+  authorityDigestHex,
+  buildReleaseManifestShell,
+  canonicalAuthorityJson,
+  parseCanonicalAuthorityJson,
+} from './authority.mjs';

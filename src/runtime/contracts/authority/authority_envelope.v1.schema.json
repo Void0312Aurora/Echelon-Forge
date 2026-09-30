@@ -1,0 +1,35 @@
+{
+  "$id": "https://echelon-forge.local/contracts/authority/authority_envelope.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["canonicalization", "domain", "envelope_version", "media_type", "payload", "payload_sha256", "signatures"],
+  "properties": {
+    "canonicalization": {"const": "echelon_forge.canonical_json.v2"},
+    "domain": {"type": "string", "minLength": 1},
+    "envelope_version": {"const": "echelon_forge.authority_envelope.v1"},
+    "media_type": {"type": "string", "minLength": 1},
+    "payload": {"$ref": "authority_payloads.v1.schema.json"},
+    "payload_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "signatures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["algorithm", "key_id", "signature", "signer_context"],
+        "properties": {
+          "algorithm": {"type": "string", "minLength": 1},
+          "key_id": {"type": "string", "minLength": 1},
+          "signature": {"type": "string", "minLength": 1},
+          "signer_context": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  },
+  "oneOf": [
+    {"properties": {"domain": {"const": "release.manifest"}, "media_type": {"const": "application/vnd.echelon-forge.release-manifest.v1+json"}, "payload": {"properties": {"authority_kind": {"const": "release_manifest"}}}}},
+    {"properties": {"domain": {"const": "composition.resolved-plan"}, "media_type": {"const": "application/vnd.echelon-forge.resolved-composition-plan.v1+json"}, "payload": {"properties": {"authority_kind": {"const": "resolved_composition_plan"}}}}},
+    {"properties": {"domain": {"const": "release.rollout-decision"}, "media_type": {"const": "application/vnd.echelon-forge.rollout-decision.v1+json"}, "payload": {"properties": {"authority_kind": {"const": "rollout_decision"}}}}},
+    {"properties": {"domain": {"const": "runtime.state-checkpoint"}, "media_type": {"const": "application/vnd.echelon-forge.state-checkpoint.v1+json"}, "payload": {"properties": {"authority_kind": {"const": "state_checkpoint"}}}}}
+  ]
+}

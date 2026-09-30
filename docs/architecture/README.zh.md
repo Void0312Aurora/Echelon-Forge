@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/README.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-08-25`
+Last verified: `2026-08-27`
 
 本 owner 覆盖跨领域系统架构、runtime 分层、contracts、后端和架构决策。
 维护中的 standards、reference、issues 与 reviews 现均位于本 owner；旧 plan
@@ -33,9 +33,10 @@ packet 只作为归档 provenance。
 - [长期架构治理](work/active/long_horizon_architecture_governance/README.zh.md)：
   面向 immutable admitted kernel、host-owned replacement、收敛 composition
   authority、物理 facade boundary、具备生命周期的 control，以及可持续 CI/evidence
-  演进的 active program。P0 authority/baseline、P1 target decision 与 P3-A
-  public identity/target foundation 已接受；P2 control-lifecycle 与 P3-B
-  authority-envelope 工作可开始，尚无 runtime 迁移被接受。
+  演进的 active program。P0 authority/baseline、P1 target decision，以及完整的
+  P3-A/P3-B/P3-C public contract、authority-envelope、ledger 与 compatibility
+  foundation 已接受；P2 control-lifecycle 与 P4-P8 仍开放，尚无 runtime 迁移或
+  production cutover 被接受。
 
 ## 已完成工作
 
@@ -70,6 +71,15 @@ packet 只作为归档 provenance。
   由独立 `gpt-5.6-sol` max reviewer 审查 engine-independent public identity
   target、same-build value/schema authority、result/epoch 语义、实际 target/install
   graph 与负向绕过门禁；修复快照无未解决 finding，且没有 caller cutover。
+- [长期架构治理 P3-B 审查 — 2026-08-25（英文）](reviews/long_horizon_architecture_governance_p3b_review_20260825.md)：
+  由独立 `gpt-5.6-sol` max reviewer 审查 typed authority envelope/schema owner、
+  单向 provenance-bound adapter、exact cross-language vector、native boundary 与
+  Cordis conformance；修复快照无未解决 Critical/High finding，且没有短期替代。
+- [长期架构治理 P3-C 审查 — 2026-08-27（英文）](reviews/long_horizon_architecture_governance_p3c_review_20260827.md)：
+  由独立 `gpt-5.6-sol` max reviewer 对 non-production ArtifactLedger、exact N/N-1
+  compatibility、fencing、recovery、kill/backout、ACL 与 snapshot gate 进行对抗及
+  修复审查；最终快照无未解决 Critical/High/Medium finding，P5-B/P5-D 的
+  production authority 仍被保留。
 - [Cordis 仿真组合计划架构审阅 — 2026-08-17](reviews/cordis_simulation_composition_program_review_20260817.zh.md)：
   总体咨询性审阅；保留原生 composition 方向，但要求在后续 system/plugin/host
   阶段前修订权威与计划边界。

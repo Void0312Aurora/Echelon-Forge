@@ -8,6 +8,12 @@ import {
   lowerDefaultProfileProjection,
   sha256Hex,
 } from '../src/producer.mjs';
+import {
+  authorityDigestHex,
+  buildReleaseManifestShell,
+  canonicalAuthorityJson,
+  parseCanonicalAuthorityJson,
+} from '../src/authority.mjs';
 
 const FIXTURES = new URL('../../../tests/architecture/composition/fixtures/', import.meta.url);
 
@@ -117,4 +123,51 @@ test('Cordis profile projection rejects a request outside its admitted capabilit
     ),
     /request is not bound|capability\/policy set mismatch/,
   );
+});
+
+test('Cordis authority canonical bytes match the cross-language number profile', () => {
+  assert.equal(
+    canonicalAuthorityJson({ n: -0, small: 1e-6, large: 1e6 }),
+    '{"large":1000000,"n":0,"small":0.000001}',
+  );
+  const payload = {
+    authority_kind: 'release_manifest',
+    contract_version: 'echelon_forge.release_manifest_contract.v1',
+    compatibility_generation: '2',
+    minimum_reader_generation: '1',
+    package_set: [{ name: 'cmo', sha256: 'a'.repeat(64) }],
+    provenance_sha256: 'b'.repeat(64),
+    reader_generation_max: '2',
+    reader_generation_min: '1',
+    release_id: 'release-2026-08-25',
+    rollback_policy: 'checkpoint-recovery',
+    rollback_deadline: '2026-09-01T00:00:00Z',
+    sbom_sha256: 'c'.repeat(64),
+    schema_version: 'echelon_forge.release_manifest.v1',
+    source_revision: '82d5b6e893c442950e334eb3e9ec92f8174eeb35',
+    state_schema_generation: '1',
+    stored_artifact_inventory_sha256: 'f'.repeat(64),
+    last_reader_deadline: '2026-10-01T00:00:00Z',
+    irreversible_write_boundary: 'none',
+    supported_rows: ['windows-amd64-msvc'],
+    toolchain_identity: 'msvc-v143',
+    writer_generation: '1',
+    writer_role: 'release_artifact_pipeline',
+  };
+  const envelope = buildReleaseManifestShell(payload);
+  const bytes = canonicalAuthorityJson(envelope.payload);
+  assert.equal(envelope.payload_sha256, authorityDigestHex(envelope.domain, envelope.media_type, bytes));
+  assert.deepEqual(parseCanonicalAuthorityJson(Buffer.from(bytes, 'utf8')), payload);
+});
+
+test('Cordis authority parser rejects non-canonical and BOM payloads', () => {
+  assert.throws(() => parseCanonicalAuthorityJson(Buffer.from('\ufeff{}')), /BOM/);
+  assert.throws(() => parseCanonicalAuthorityJson(Buffer.from('{ "a": 1 }')), /not canonical/);
+});
+
+test('Cordis executes the checked-in cross-language authority vector', () => {
+  const vector = fixture('authority_cross_language_vector.v1.json');
+  assert.equal(canonicalAuthorityJson(JSON.parse(vector.canonical_payload_bytes)), vector.canonical_payload_bytes);
+  assert.equal(authorityDigestHex(vector.domain, vector.media_type, vector.canonical_payload_bytes), vector.payload_sha256);
+  assert.deepEqual(parseCanonicalAuthorityJson(Buffer.from(vector.canonical_payload_bytes)), JSON.parse(vector.canonical_payload_bytes));
 });

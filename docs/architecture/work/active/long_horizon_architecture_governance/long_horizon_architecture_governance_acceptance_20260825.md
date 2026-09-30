@@ -1,9 +1,9 @@
 # Long-Horizon Architecture Governance Acceptance Contract
 
-Status: `2026-08-25` acceptance contract established; P0 authority/baseline,
-P1 target decisions, and P3-A public-contract foundation are accepted, while
-the overall program remains `not accepted` because P2-B/P3-B-P8 are not
-complete.
+Status: `2026-08-27` acceptance contract established; P0 authority/baseline,
+P1 target decisions, and P3-A/P3-B/P3-C contract, authority, ledger and
+compatibility foundations are accepted, while the overall program remains
+`not accepted` because P2-A/P2-B and P4-P8 are not complete.
 
 Parent subproject: [Long-Horizon Architecture Governance](README.md)
 
@@ -11,7 +11,7 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/long_horizon_architecture_governance_acceptance_20260825.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-08-25`
+Last verified: `2026-08-27`
 
 ## Acceptance Decision
 
@@ -152,8 +152,62 @@ final reviews. Its accepted evidence is limited to:
 
 P3-A explicitly does not accept canonical JSON/storage (P3-B), rollout/ledger
 storage (P3-C), host freshness/lease validation (P4), Linux qualification, SDK
-ABI, or production migration. P3-B is now eligible to start; host work remains
-dark/shadow and the overall program remains `not accepted`.
+ABI, or production migration. P3-B and P3-C were subsequently accepted at their
+own bounded gates below. Host work remains dark/shadow and the overall program
+remains `not accepted`.
+
+#### P3-B Authority Envelope Foundation — Accepted
+
+P3-B is accepted independently after the `gpt-5.6-sol` max repair review. The
+accepted foundation includes:
+
+- one versioned envelope and payload-schema owner for resolved plans, releases,
+  rollout decisions, and state checkpoints;
+- Python semantic validation, a one-way current-artifact adapter with explicit
+  request/manifest provenance binding, Cordis canonical parsing/digest support,
+  and a native strict validator with an explicit read-only legacy parser edge;
+- owner-scoped writer roles, exact fields, typed identifiers/hashes, generation
+  windows, `prepared` rollout state, typed rollback policy, UTF-16 ordering and
+  fail-closed signature/media/domain checks;
+- exact checked-in canonical bytes/digest vectors consumed directly by Python,
+  Cordis and native tests, including rollout/checkpoint lanes and negative plan
+  admission tests;
+- fresh Windows/MSVC native authority and boundary CTest plus Python/Cordis and
+  composition architecture evidence.
+
+P3-B does not accept durable ArtifactLedger storage, N/N-1 reader sequencing,
+host freshness/leases/tombstones, state transfer, package/SDK publication,
+Linux qualification, production caller migration, or host publication. P3-C
+subsequently accepted only the bounded non-production foundation below.
+
+#### P3-C Ledger And Compatibility Foundation — Accepted
+
+P3-C is accepted independently after adversarial and repair reviews by an
+independent `gpt-5.6-sol` max reviewer. The accepted foundation includes:
+
+- deterministic content-addressed artifact storage, exact media/size/digest and
+  namespace validation, role/media ACLs, conditional slots, active-writer
+  fences, termination tombstones, journal/checkpoint recovery, retention and
+  runtime-evidence-only snapshot export;
+- exact one-per-kind N/N-1 plan/checkpoint/package membership, reader-first
+  admission, package compatibility state/features/topology and checkpoint-to-
+  rollout-decision binding;
+- one non-production rollout writer with durable hash-linked qualification,
+  proof-backed shadow receipts, kill-switch reason union, typed backout and
+  explicit repaired reopen across restart;
+- Python/Cordis/native authority compatibility updates, generated fixtures and
+  negative tests; the simulator fails closed for production authorization;
+- focused `19 passed`, full composition `102 passed, 4 skipped`, Windows/MSVC
+  native CTest `4/4`, standalone Cordis authority `4 passed`, freshness and
+  lint/diff gates, plus a final review with no unresolved Critical/High/Medium
+  blocker.
+
+P3-C does not accept a production-qualified durable backend, real atomicity or
+crash guarantees, authenticity/signature/attestation policy, native
+pre-mutation journal and complete RunReceipt, supported-row restore drills,
+package/SDK or Linux qualification, host publication, caller activation, or
+production cutover. P4 may consume it only for dark/shadow candidate work;
+P5-B and P5-D retain the production gates.
 
 ### P4 Host Lifecycle And Immutable Kernel
 
@@ -354,10 +408,38 @@ Accepted P3-A evidence:
 - explicit residual boundaries for P3-B canonical serialization, P3-C
   rollout/ledger, P4 freshness/leases, P5 package/cutover and Linux support.
 
-P0/P1 authorized P2-A/P2-B and P3-A entry. P3-A is now accepted and authorizes
-P3-B entry only. These decisions do not accept P2-A/P2-B implementation,
-P3-C-P8 implementation, platform support, host migration or production
-cutover.
+Accepted P3-B evidence:
+
+- [independent P3-B review](../../../reviews/long_horizon_architecture_governance_p3b_review_20260825.md)
+  with final `pass`, no unresolved Critical/High finding, and no short-term
+  substitution;
+- four typed authority schemas, exact canonical vectors, one-way adapter and
+  cross-language Python/Cordis/native conformance tests;
+- fresh Windows/MSVC native CTest `2/2`, Python authority/schema `12 passed`,
+  full composition architecture `81 passed, 4 skipped`, and Cordis authority
+  lane `4 passed`;
+- explicit residual boundaries for P3-C ledger/compatibility, P4 host
+  freshness/state transfer, P5 package/cutover and Linux support.
+
+Accepted P3-C evidence:
+
+- [independent P3-C review](../../../reviews/long_horizon_architecture_governance_p3c_review_20260827.md)
+  with final `pass` and no unresolved Critical/High/Medium blocker after the
+  durable kill/backout/restart repair;
+- content-addressed ledger/schema/simulator, fenced slots/writers/journals,
+  snapshot/ACL/retention/recovery validation, exact N/N-1 reader admission and
+  durable qualification/kill/backout state;
+- focused ledger `19 passed`, full composition `102 passed, 4 skipped`, native
+  CTest `4/4`, standalone Cordis authority `4 passed`, generator freshness,
+  `ruff` and diff checks;
+- explicit residual boundaries for P4 dark/shadow host/state transfer, P5-B
+  production ledger/RunReceipt/authenticity, P5-D activation/cutover, Linux and
+  package/SDK qualification.
+
+P0/P1 authorized P2-A/P2-B and P3 entry. P3-A/P3-B/P3-C are now accepted and
+authorize P4 dark/shadow candidate entry only. These decisions do not accept
+P2-A/P2-B implementation, P4 production publication, P5-P8 implementation,
+platform support, host migration or production cutover.
 
 ## Residual Policy
 

@@ -7,6 +7,16 @@
   "description": "Ratchet allowlist for tests/architecture/governance/test_cpp_include_direction.py. Each entry is a pre-existing include-direction violation identified by an exact (file, line, include spelling) fingerprint. The 2026-08-13 execution-controller retirement closed the engine-to-mission controller edge and the runtime-contracts-to-mission step-request edge; both stale entries were removed. The remaining entries are GPU/engine integration seams.",
   "entries": [
     {
+      "file": "src/runtime/contracts/authority/runtime_authority_contract.cpp",
+      "line": 16,
+      "include": "runtime/composition/composition_json.h",
+      "from_group": "runtime_contracts",
+      "to_group": "runtime_composition",
+      "owner": "P5-A authority compatibility adapter (deferred physical parser split)",
+      "next_gate": "Move resolved-composition parsing behind an engine-independent contract-owned boundary so the authority validator no longer includes runtime composition directly.",
+      "reason": "P5-A validates the resolved manifest nested in the execution-plan authority envelope by reusing the canonical native composition parser. The dependency is intentional and currently required for exact schema parity; it is explicitly retained as a bounded adapter edge until the parser boundary is split."
+    },
+    {
       "file": "src/core/engine/world_batch_runtime.cpp",
       "line": 9,
       "include": "gpu/gpu_interaction_broadphase_runtime.h",

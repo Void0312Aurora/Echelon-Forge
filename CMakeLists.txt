@@ -345,6 +345,34 @@ target_include_directories(ef_runtime_contracts PUBLIC
 )
 target_compile_features(ef_runtime_contracts PUBLIC cxx_std_20)
 
+# P3-B authority contract owner: native consumes canonical bytes and detached
+# digests from the same schema/vector surface as Python and Cordis.  The one
+# legacy `ef_composition` edge is a read-only parser adapter for validating the
+# current resolved artifact; this target cannot publish, persist, or replace
+# that artifact and has no engine/facade/binding dependency.
+add_library(ef_runtime_authority_contracts STATIC
+    src/runtime/contracts/authority/runtime_authority_contract.h
+    src/runtime/contracts/authority/runtime_authority_contract.cpp
+)
+target_include_directories(ef_runtime_authority_contracts PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_compile_features(ef_runtime_authority_contracts PUBLIC cxx_std_20)
+target_link_libraries(ef_runtime_authority_contracts PRIVATE
+    ef_composition
+    nlohmann_json::nlohmann_json
+)
+file(GENERATE
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/ef_runtime_authority_boundary_manifest.txt"
+    CONTENT
+"type=$<TARGET_PROPERTY:ef_runtime_authority_contracts,TYPE>
+links=$<JOIN:$<TARGET_PROPERTY:ef_runtime_authority_contracts,LINK_LIBRARIES>,|>
+interface_links=$<JOIN:$<TARGET_PROPERTY:ef_runtime_authority_contracts,INTERFACE_LINK_LIBRARIES>,|>
+includes=$<JOIN:$<TARGET_PROPERTY:ef_runtime_authority_contracts,INCLUDE_DIRECTORIES>,|>
+interface_includes=$<JOIN:$<TARGET_PROPERTY:ef_runtime_authority_contracts,INTERFACE_INCLUDE_DIRECTORIES>,|>
+sources=$<JOIN:$<TARGET_PROPERTY:ef_runtime_authority_contracts,SOURCES>,|>
+")
+
 # Evaluated at generate time, after all target mutations. The CTest verifier
 # consumes actual target properties instead of re-parsing this CMake section.
 file(GENERATE
@@ -725,6 +753,22 @@ if (BUILD_TESTING)
 add_executable(ef_runtime_contracts_compile_test
     src/tests/test_runtime_identity_contracts.cpp
 )
+
+add_executable(ef_runtime_authority_contract_test
+    src/tests/test_main.cpp
+    src/tests/test_runtime_authority_contract.cpp
+)
+target_link_libraries(ef_runtime_authority_contract_test PRIVATE
+    ef_runtime_authority_contracts
+    doctest::doctest
+    nlohmann_json::nlohmann_json
+)
+target_include_directories(ef_runtime_authority_contract_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_compile_definitions(ef_runtime_authority_contract_test PRIVATE
+    EF_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
+)
 target_link_libraries(ef_runtime_contracts_compile_test PRIVATE
     ef_runtime_contracts
 )
@@ -959,6 +1003,13 @@ add_test(NAME composition_lifecycle COMMAND ef_composition_lifecycle_test)
 add_test(NAME backend_provider_migration COMMAND ef_backend_provider_migration_test)
 add_test(NAME composition_evidence COMMAND ef_composition_evidence_test)
 add_test(NAME runtime_contracts_compile COMMAND ef_runtime_contracts_compile_test)
+add_test(NAME runtime_authority_contract COMMAND ef_runtime_authority_contract_test)
+add_test(
+    NAME runtime_authority_boundary
+    COMMAND ${CMAKE_COMMAND}
+        -DMANIFEST=${CMAKE_CURRENT_BINARY_DIR}/ef_runtime_authority_boundary_manifest.txt
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/verify_runtime_authority_boundary.cmake
+)
 add_test(
     NAME runtime_contracts_boundary
     COMMAND ${CMAKE_COMMAND}

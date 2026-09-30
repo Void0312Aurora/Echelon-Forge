@@ -1,0 +1,11 @@
+{
+  "schema_version": "echelon_forge.kill_switch_record.v1",
+  "contract_version": "echelon_forge.artifact_ledger_contract.v1",
+  "release_id": "release-2026-08-25",
+  "admissions_open": false,
+  "writer_advancement_frozen": true,
+  "reasons": [
+    "wrong_epoch_results"
+  ],
+  "authoritative_runtime_mutation": false
+}
