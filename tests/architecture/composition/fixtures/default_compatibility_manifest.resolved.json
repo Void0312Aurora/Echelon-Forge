@@ -184,6 +184,11 @@
         "registration_id": "flecs.component.ground_state"
       },
       {
+        "component_id": "GroundWeaponState",
+        "plugin_id": "builtin.core_runtime",
+        "registration_id": "flecs.component.ground_weapon_state"
+      },
+      {
         "component_id": "GuidanceModelRef",
         "plugin_id": "builtin.core_runtime",
         "registration_id": "flecs.component.guidance_model_ref"
@@ -1657,8 +1662,8 @@
     "builtin.weapon_release.damage_bridge",
     "builtin.weapon_release.service"
   ],
-  "requested_manifest_sha256": "5627bc9e8968f02b48f83d6107e8ed72830e8a589b8fc6b96d3bd451b183b242",
-  "resolved_manifest_sha256": "5556901f96740ca4b2a85ebf2d15d6e6a9e1eff3e4b7407148923b0373a4fe73",
+  "requested_manifest_sha256": "b17fd07c4fdeef3a8c7ae64f7cb89772b3a1665aad2b83f1d1ce58a9d344fb8f",
+  "resolved_manifest_sha256": "45426d3dfc24a4d74986e11567854f5c19b996c50cef38da33c87e3e93083417",
   "resolver_contract_version": "echelon_forge.simulation_composition_resolver.v1",
   "schema_version": "echelon_forge.resolved_simulation_composition.v1",
   "system_registration_order": [
