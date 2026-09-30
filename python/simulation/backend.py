@@ -97,6 +97,17 @@ def _load_builtin_backend() -> SimulationBackendRegistration:
     return _REGISTRATIONS[registration.backend_id]
 
 
+def _load_facade_batch_backend() -> SimulationBackendRegistration:
+    provider = import_module("python.simulation.facade_batch")
+    registration = SimulationBackendRegistration(
+        backend_id="facade_batch",
+        single_factory=provider.FacadeBatchBackend,
+        cooperative_factory=provider.FacadeBatchBackend,
+    )
+    _REGISTRATIONS.setdefault(registration.backend_id, registration)
+    return _REGISTRATIONS[registration.backend_id]
+
+
 def _resolve_backend(backend_id: str) -> SimulationBackendRegistration:
     key = str(backend_id).strip().lower()
     if not key:
@@ -104,6 +115,8 @@ def _resolve_backend(backend_id: str) -> SimulationBackendRegistration:
     registration = _REGISTRATIONS.get(key)
     if registration is None and key == _BUILTIN_BACKEND_ID:
         registration = _load_builtin_backend()
+    if registration is None and key == "facade_batch":
+        registration = _load_facade_batch_backend()
     if registration is None:
         known = ", ".join(sorted(_REGISTRATIONS)) or "<none>"
         raise KeyError(f"unknown simulation backend {key!r}; registered={known}")

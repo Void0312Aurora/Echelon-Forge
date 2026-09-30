@@ -2538,3 +2538,89 @@ to a dedicated owner-local evidence document.
   runtime behavior.
 - Boundary decision: the runtime-facade escape-hatch gate is green again; it
   does not alter the open no-RL WorldBatch provider or Air playable boundary.
+
+### 2026-09-27 — Direct compiled simulation backend provider
+
+- Starting commit: `e189b169`.
+- Change batch: add `python/simulation/facade_batch.py` and register the lazy
+  `facade_batch` provider in `python/simulation/backend.py`. The provider owns
+  a compiled `ef_py.RuntimeFacade`, accepts a maintained setup factory, exposes
+  controlled-entity snapshots, submits pilot actions, and projects task-order,
+  leader-intent, pilot-report, and mission-command writes through the native
+  maintained batch contracts. It imports neither RL nor Gym.
+- Evidence: native binding tests passed `7 passed`, covering database/setup
+  materialization, two controlled Air entities, per-entity action routing,
+  scripted C2 task-order roundtrip, reset replay state, and invalid roster
+  rejection. Python compilation and `git diff --check` passed.
+- Boundary decision: a real non-RL compiled simulation provider now exists
+  behind the neutral backend registry. It is not yet the default provider and
+  does not claim scenario compiler integration, Air phase/report orchestration,
+  combat terminal acceptance, or final `playable` promotion; Air remains
+  `playable_candidate`.
+
+### 2026-09-27 — Native Air observation projection for the scripted provider
+
+- Starting commit: `ecd0eabf`.
+- Change batch: add `python/simulation/air/observation.py` as the simulation-side
+  projection from native `AgentObservation`, `InstrumentState`, and maintained
+  mission-command DTOs into the neutral scripted Air observation dictionary.
+  The adapter emits named instrument, contact, RWR, and mission vectors and
+  does not import RL or Gym. `FacadeBatchBackend.air_scripted_observations()`
+  exposes the projection without routing through an environment wrapper.
+- Evidence: the Air observation boundary and adapter tests plus the native
+  facade test passed `5 passed`; Python compilation and `git diff --check`
+  passed.
+- Boundary decision: the scripted line now has a native observation seam that
+  can feed the neutral Air execution model. It does not yet provide ILS
+  geometry, scenario phase/report orchestration, combat launch policy, or a
+  complete unattended playable episode; Air remains `playable_candidate`.
+
+### 2026-09-27 — Direct Air command-chain director
+
+- Starting commit: `6ba7f51`.
+- Change batch: add `python/simulation/air/director.py` with an RL/Gym-free
+  `AirScriptedDirector`. It consumes a declared native-state snapshot, uses
+  the existing replaceable Air phase and approach policies, and emits
+  `TaskOrder`, `LeaderIntent`, `PilotReport`, and `MissionCommand` DTOs.
+  `FacadeBatchBackend.submit_air_director_decisions()` submits the complete
+  chain through maintained batch contracts.
+- Evidence: direct director phase/report tests, physical-boundary tests, and
+  the native facade roundtrip passed `6 passed`; Python compilation and
+  `git diff --check` passed.
+- Boundary decision: this is the first direct no-RL Air command/report
+  provider. The input snapshot still requires an adapter to supply scenario
+  route and ILS facts; it does not yet replace the RL loader manager, provide
+  full scenario lifecycle/visualization, or claim final Air `playable` status.
+
+### 2026-09-27 — Native Air pilot-action projection
+
+- Starting commit: `171d63bb`.
+- Change batch: add `python/simulation/air/action.py` as the simulation-side
+  projection from the maintained full and takeoff action vectors into native
+  `ef_py.PilotAction`. The adapter keeps action dimensions and avionics fields
+  explicit, derives takeoff gear from native instrument state, and imports no
+  RL or Gym modules.
+- Evidence: action projection and physical-boundary tests passed `3 passed`;
+  Python compilation and `git diff --check` passed.
+- Boundary decision: the direct scripted Air path now has native observation,
+  command-chain, and pilot-action seams. It still needs an executable facade
+  episode and lifecycle/terminal evidence before any `playable` promotion;
+  Air remains `playable_candidate`.
+
+### 2026-09-27 — Direct Air facade scripted smoke episode
+
+- Starting commit: `71220dbe`.
+- Change batch: add `python/simulation/air/demo.py` with a two-ship native
+  `FacadeBatchBackend` setup and a direct loop that composes the Air director,
+  neutral scripted execution model, native pilot-action adapter, and compiled
+  facade step. The trace records phases, simulation time, positions, and action
+  norms for replay checks; it does not route through an RL or Gym environment.
+- Evidence: the direct demo, action adapter, physical-boundary, and existing
+  facade backend tests passed `6 passed`; an equal-seed eight-step run produced
+  matching phase histories, final times, positions, and action summaries.
+  Python compilation and `git diff --check` passed.
+- Boundary decision: the scripted line now has a verified multi-entity,
+  multi-step native facade smoke path. It remains a smoke/demo surface: no
+  scenario compiler lifecycle, combat/EW terminal acceptance, visualization,
+  or full Air `playable` promotion is claimed; Air remains
+  `playable_candidate`.
