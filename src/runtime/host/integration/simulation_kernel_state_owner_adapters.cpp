@@ -1682,7 +1682,6 @@ bool SimulationKernelStateOwnerBridge::restore_world(SimulationKernel &kernel,
     }
     auto lock = kernel.acquire_composition_operation();
     kernel.ensure_active("state_transfer_restore_world");
-    register_state_transfer_component_reflection(kernel.ecs);
     const bool restored = [&]() {
         const std::string json = text(payload);
         nlohmann::json document;
