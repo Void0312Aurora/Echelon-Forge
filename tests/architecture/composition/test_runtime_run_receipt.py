@@ -184,6 +184,22 @@ def test_run_receipt_cross_language_vector_is_fresh() -> None:
   assert fixture == build_vector()
 
 
+def test_run_receipt_vector_is_independent_of_generator_host(monkeypatch: pytest.MonkeyPatch) -> None:
+  from tools.maintenance import runtime_execution_provenance as provenance
+
+  expected = build_vector()
+  for host_os, architecture, cpu in (
+    ("Linux", "x86_64", "ci-linux-cpu"),
+    ("Windows", "AMD64", "ci-windows-cpu"),
+  ):
+    monkeypatch.setattr(provenance.platform, "system", lambda: host_os)
+    monkeypatch.setattr(provenance.platform, "machine", lambda: architecture)
+    monkeypatch.setattr(provenance.platform, "processor", lambda: cpu)
+    monkeypatch.setattr(provenance.platform, "python_compiler", lambda: "other compiler")
+    monkeypatch.setattr(provenance.platform, "python_implementation", lambda: "other runtime")
+    assert build_vector() == expected
+
+
 def test_run_receipt_rejects_resealed_lifecycle_or_missing_durable_ack() -> None:
   receipt = _receipt()
   receipt["payload"]["lifecycle"][1]["sequence"] = 99

@@ -124,14 +124,13 @@ def build_sample_run_receipt(
   )
   value["executable"] = measured["executable"]
   value["package"] = measured["package"]
-  value["platform"] = measured["platform"]
-  # The supported release row is a contract identity rather than the verbose
-  # Python compiler banner returned by platform.python_compiler().
-  value["platform"]["compiler"] = "msvc"
-  # The cross-language vector is a checked-in contract fixture.  Keep the
-  # platform row architecture-level and independent of the host CPU model
-  # reported by the generator's workstation or CI runner.
-  value["platform"]["cpu"] = "x64"
+  # This is a contract example, not a receipt attesting to the generator host.
+  # Preserve its declared Windows/MSVC row while measuring fixture byte inputs.
+  value["platform"] = {
+    "os": "windows", "architecture": "amd64", "compiler": "msvc",
+    "standard_library": "msvc", "cpu": "x64", "gpu": "none", "driver": "none",
+    "runtime_dependency_digests": measured["platform"]["runtime_dependency_digests"],
+  }
   value["inputs"] = {
     **value["inputs"], "artifacts": measured["inputs"]["artifacts"],
   }
