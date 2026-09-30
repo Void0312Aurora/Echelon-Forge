@@ -664,7 +664,7 @@ class DefaultUnitFactory : public IUnitFactory {
         }
         stamp_stable_serial(e);
         if (def.has_ground_infantry_capability) {
-            e.set<GroundInfantryCapability>({});
+            e.add<GroundInfantryCapability>();
         }
 
         attach_spawn_sensor_suite(e, unit_name, def);

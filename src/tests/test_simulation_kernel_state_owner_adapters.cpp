@@ -1336,7 +1336,10 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
             "EffectsModelRef",     "EngagementEventRecorderRef",
             "SensorModelRef",      "AcousticModelRef",
             "ControlModelRef",     "GuidanceModelRef",
-            "EnvironmentModelRef", "WeaponReleaseServiceRef"};
+            "EnvironmentModelRef", "WeaponReleaseServiceRef",
+            // Authored ground capabilities are rederived from unit content;
+            // the zero-sized Flecs tag has no transfer payload.
+            "GroundInfantryCapability"};
         std::vector<std::string> missing;
         auto lease = kernel.acquire_world_lease();
         for (const auto &row : runtime::systems::default_component_contributions()) {
