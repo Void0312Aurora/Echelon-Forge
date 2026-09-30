@@ -629,8 +629,8 @@ target_link_libraries(ef_facade_backend PRIVATE
     Threads::Threads
 )
 install(TARGETS ef_facade_backend
-    RUNTIME DESTINATION .
-    LIBRARY DESTINATION .
+    RUNTIME DESTINATION lib
+    LIBRARY DESTINATION lib
 )
 # --- Standalone App ---
 # We keep src/main.cpp for local C++ testing, but now it needs to include/use SimulationKernel
