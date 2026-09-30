@@ -766,7 +766,8 @@ WorldBatchRuntime::get_unit_messages_batch(const std::vector<WorldEntityRef> &re
     std::vector<std::vector<CommPacket>> out(refs.size());
     parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
         const auto &ref = refs[i];
-        out[i] = checked_world(static_cast<size_t>(ref.world_index)).get_unit_messages(ref.entity_id);
+        out[i] =
+            checked_world(static_cast<size_t>(ref.world_index)).get_unit_messages(ref.entity_id);
     });
     return out;
 }

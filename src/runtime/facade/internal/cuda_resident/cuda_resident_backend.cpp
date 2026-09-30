@@ -264,8 +264,9 @@ CudaResidentBackend::setup(const runtime::backend::SetupRequest &request) {
 runtime::backend::InputResult
 CudaResidentBackend::inject(const runtime::backend::InputBatch &input) {
     if (input.kinematics_write.has_value() || !input.launch_requests.empty() ||
-        !input.command_links.empty() || !input.mission_commands.empty() || !input.task_orders.empty() ||
-        !input.leader_intents.empty() || !input.pilot_reports.empty()) {
+        !input.command_links.empty() || !input.mission_commands.empty() ||
+        !input.task_orders.empty() || !input.leader_intents.empty() ||
+        !input.pilot_reports.empty()) {
         throw std::logic_error(
             "CUDA fixed-air resident input injection supports only selected pilot flight controls");
     }

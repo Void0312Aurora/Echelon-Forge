@@ -80,8 +80,7 @@ void bind_runtime_facade(nb::module_ &m) {
              &RuntimeFacade::get_leader_intents_maintained_batch, nb::arg("refs"))
         .def("get_pilot_reports_maintained_batch",
              &RuntimeFacade::get_pilot_reports_maintained_batch, nb::arg("refs"))
-        .def("get_unit_messages_batch", &RuntimeFacade::get_unit_messages_batch,
-             nb::arg("refs"))
+        .def("get_unit_messages_batch", &RuntimeFacade::get_unit_messages_batch, nb::arg("refs"))
         .def(
             "export_observation_packet",
             [](const RuntimeFacade &self, const std::vector<WorldEntityRef> &refs) {
