@@ -97,10 +97,9 @@ inline double canonicalize_environment_scalar(double value) {
     return std::abs(rounded) <= (kEnvironmentScalarCanonicalQuantum * 0.5) ? 0.0 : rounded;
 }
 
-inline void record_mlf8_terminal_wreck_lifecycle(flecs::entity entity,
-                                                 IEngagementEventRecorder *recorder,
-                                                 GroundImpactLifecycle lifecycle,
-                                                 double source_time_s) {
+inline void record_terminal_wreck_lifecycle(flecs::entity entity,
+                                            IEngagementEventRecorder *recorder,
+                                            GroundImpactLifecycle lifecycle, double source_time_s) {
     mlf8_lifecycle::record_terminal_wreck_lifecycle(entity, recorder, lifecycle, source_time_s);
 }
 
@@ -290,8 +289,8 @@ inline void register_ground_contact_system(flecs::world &ecs) {
                                                             : GroundImpactLifecycle::LandedAirframe;
                         if (ground[i].lifecycle != prior_lifecycle &&
                             mlf8_lifecycle::is_terminal_wreck_lifecycle(ground[i].lifecycle)) {
-                            record_mlf8_terminal_wreck_lifecycle(entity, recorder,
-                                                                 ground[i].lifecycle, current_time);
+                            record_terminal_wreck_lifecycle(entity, recorder, ground[i].lifecycle,
+                                                            current_time);
                         }
                     }
                     const ResolvedAirControlInput control_input = resolve_air_control_input(
@@ -337,7 +336,7 @@ inline void register_ground_contact_system(flecs::world &ecs) {
                                 ground[i].impact_severity =
                                     std::max(ground[i].impact_severity, 1.0);
                                 if (ground[i].lifecycle != prior_gear_lifecycle) {
-                                    record_mlf8_terminal_wreck_lifecycle(
+                                    record_terminal_wreck_lifecycle(
                                         entity, recorder, ground[i].lifecycle, current_time);
                                 }
                             }
