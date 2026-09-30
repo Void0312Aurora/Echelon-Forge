@@ -28,21 +28,24 @@ RuntimeIdentity128 mint_candidate_resource() noexcept {
             .low = next_resource_sequence.fetch_add(1, std::memory_order_relaxed)};
 }
 
-std::string valid_digest(char value) { return std::string(64, value); }
+std::string valid_digest(char value) {
+    return std::string(64, value);
+}
 
 class FileJournal final : public RuntimeStateTransferJournal {
   public:
     explicit FileJournal(std::string path) : journal_(std::move(path)) {}
 
-    RuntimeStateTransferJournalAppendResult append_and_sync(
-        std::string_view transaction_id, RuntimeStateOwnerImportTransactionPhase phase,
-        std::string_view payload_sha256, std::string_view pre_mutation_sha256,
-        const std::vector<std::uint8_t> &pre_mutation_payload) noexcept override {
-        return journal_.append_and_sync(transaction_id, phase, payload_sha256,
-                                        pre_mutation_sha256, pre_mutation_payload);
+    RuntimeStateTransferJournalAppendResult
+    append_and_sync(std::string_view transaction_id, RuntimeStateOwnerImportTransactionPhase phase,
+                    std::string_view payload_sha256, std::string_view pre_mutation_sha256,
+                    const std::vector<std::uint8_t> &pre_mutation_payload) noexcept override {
+        return journal_.append_and_sync(transaction_id, phase, payload_sha256, pre_mutation_sha256,
+                                        pre_mutation_payload);
     }
 
-    RuntimeStateTransferJournalReadResult latest(std::string_view transaction_id) noexcept override {
+    RuntimeStateTransferJournalReadResult
+    latest(std::string_view transaction_id) noexcept override {
         return journal_.latest(transaction_id);
     }
 
@@ -55,7 +58,8 @@ class FileJournal final : public RuntimeStateTransferJournal {
 class RuntimeKernelCandidate::Control final : public RuntimeInstanceControl {
   public:
     Control(RuntimeIdentity128 resource, std::shared_ptr<SimulationKernel> kernel)
-        : resource_(resource), kernel_(kernel), native_(std::make_shared<Native>(resource, kernel)) {}
+        : resource_(resource), kernel_(kernel),
+          native_(std::make_shared<Native>(resource, kernel)) {}
 
     class Native final : public RuntimeNativeEpisodeControl {
       public:
@@ -64,8 +68,8 @@ class RuntimeKernelCandidate::Control final : public RuntimeInstanceControl {
 
         RuntimeIdentity128 resource_identity() const noexcept override { return resource_; }
 
-        RuntimeNativeEpisodeMutation apply(
-            const RuntimeNativeEpisodeCommand &command) noexcept override {
+        RuntimeNativeEpisodeMutation
+        apply(const RuntimeNativeEpisodeCommand &command) noexcept override {
             if (kernel_ == nullptr) {
                 return {};
             }
@@ -80,9 +84,9 @@ class RuntimeKernelCandidate::Control final : public RuntimeInstanceControl {
             } catch (...) {
                 return {};
             }
-            const bool terminal = command.intent.kind == RuntimeEpisodeIntentKind::Action &&
-                                  terminal_receipt_for_test_.exchange(false,
-                                                                      std::memory_order_acq_rel);
+            const bool terminal =
+                command.intent.kind == RuntimeEpisodeIntentKind::Action &&
+                terminal_receipt_for_test_.exchange(false, std::memory_order_acq_rel);
             std::string snapshot_sha256;
             try {
                 const std::string serialized =
@@ -112,10 +116,13 @@ class RuntimeKernelCandidate::Control final : public RuntimeInstanceControl {
     };
 
     RuntimeIdentity128 resource_identity() const noexcept override { return resource_; }
-    std::shared_ptr<RuntimeNativeEpisodeControl>
-    native_episode_control() const noexcept override { return native_; }
+    std::shared_ptr<RuntimeNativeEpisodeControl> native_episode_control() const noexcept override {
+        return native_;
+    }
     std::shared_ptr<RuntimeStateTransferOwnerRegistry>
-    state_transfer_owner_registry() const noexcept override { return registry_; }
+    state_transfer_owner_registry() const noexcept override {
+        return registry_;
+    }
     bool begin_state_transfer() noexcept override {
         std::lock_guard<std::mutex> lock(lifecycle_mutex_);
         if (released_ || transfer_active_) return false;
@@ -149,9 +156,7 @@ class RuntimeKernelCandidate::Control final : public RuntimeInstanceControl {
         registry_ = std::move(registry);
     }
 
-    void arm_terminal_receipt_for_test() noexcept {
-        native_->arm_terminal_receipt_for_test();
-    }
+    void arm_terminal_receipt_for_test() noexcept { native_->arm_terminal_receipt_for_test(); }
 
   private:
     RuntimeIdentity128 resource_;
@@ -189,17 +194,15 @@ RuntimeKernelCandidate::RuntimeKernelCandidate(RuntimeKernelCandidateConfig conf
         .journal = journal_,
         .transaction_namespace = "p4c-kernel-candidate-" + std::to_string(resource.low),
         .bound_resource_identity = resource,
-        .sample_tick = [deadline_tick = config_.lifecycle_deadline_tick] {
-            return deadline_tick;
-        },
+        .sample_tick = [deadline_tick = config_.lifecycle_deadline_tick] { return deadline_tick; },
         .rederive_python_caches = [] { return true; },
         .snapshot_python_caches = [] { return std::vector<std::uint8_t>{0}; },
-        .rollback_python_caches = [](const std::vector<std::uint8_t> &before) {
-            return before.size() == 1;
-        },
-        .recover_python_caches = [](const std::vector<std::uint8_t> &) {
-            return RuntimeStateOwnerImportTransactionPhase::Committed;
-        },
+        .rollback_python_caches =
+            [](const std::vector<std::uint8_t> &before) { return before.size() == 1; },
+        .recover_python_caches =
+            [](const std::vector<std::uint8_t> &) {
+                return RuntimeStateOwnerImportTransactionPhase::Committed;
+            },
     });
     if (registry_ == nullptr) {
         throw std::runtime_error("P4-C kernel owner registry construction failed");
@@ -252,39 +255,40 @@ RuntimeHostStatus RuntimeKernelCandidate::initialize_candidate() {
         return {.error = RuntimeHostError::InvalidArgument,
                 .detail = "P4-C candidate plan is not bound to the sealed resolved composition"};
     }
-    const auto owner = host_.issue_owner_handle(control_, {
-        .transaction_kind = RuntimeHostTransactionKind::Initial,
-        .plan = config_.plan,
-        .world_slot_count = 1,
-    });
+    const auto owner = host_.issue_owner_handle(
+        control_, {
+                      .transaction_kind = RuntimeHostTransactionKind::Initial,
+                      .plan = config_.plan,
+                      .world_slot_count = 1,
+                  });
     if (!owner.valid()) {
         return {.error = RuntimeHostError::InvalidArgument,
                 .detail = "P4-C candidate owner handle was not issued"};
     }
-    const auto begun = host_.begin_candidate({
-        .transaction_kind = RuntimeHostTransactionKind::Initial,
-        .plan = config_.plan,
-        .lifecycle_deadline_tick = config_.lifecycle_deadline_tick,
-        .world_slot_count = 1,
-    }, owner);
+    const auto begun = host_.begin_candidate(
+        {
+            .transaction_kind = RuntimeHostTransactionKind::Initial,
+            .plan = config_.plan,
+            .lifecycle_deadline_tick = config_.lifecycle_deadline_tick,
+            .world_slot_count = 1,
+        },
+        owner);
     if (!begun.status) {
         return begun.status;
     }
-    const auto validated = host_.validate_candidate(
-        begun.handle,
-        {.static_plan_validated = true,
-         .resources_ready = true,
-         .shadow_probe_passed = true,
-         .unreachable_from_production = true,
-         .production_authorized = false});
+    const auto validated =
+        host_.validate_candidate(begun.handle, {.static_plan_validated = true,
+                                                .resources_ready = true,
+                                                .shadow_probe_passed = true,
+                                                .unreachable_from_production = true,
+                                                .production_authorized = false});
     if (!validated) {
         return validated;
     }
-    const auto published = host_.commit_initial(
-        begun.handle,
-        {.lifecycle_evidence_sha256 = valid_digest('b'),
-         .dark_evidence_sealed = true,
-         .production_authorized = false});
+    const auto published =
+        host_.commit_initial(begun.handle, {.lifecycle_evidence_sha256 = valid_digest('b'),
+                                            .dark_evidence_sealed = true,
+                                            .production_authorized = false});
     if (!published.status) {
         return published.status;
     }
@@ -323,15 +327,21 @@ RuntimeShutdownResult RuntimeKernelCandidate::shutdown(std::uint64_t now_tick,
     return result;
 }
 
-RuntimeHostSnapshot RuntimeKernelCandidate::host_snapshot() const { return host_.snapshot(); }
+RuntimeHostSnapshot RuntimeKernelCandidate::host_snapshot() const {
+    return host_.snapshot();
+}
 
-RuntimeIncarnationRef RuntimeKernelCandidate::incarnation() const noexcept { return incarnation_; }
+RuntimeIncarnationRef RuntimeKernelCandidate::incarnation() const noexcept {
+    return incarnation_;
+}
 
 RuntimeWorldRef RuntimeKernelCandidate::world_ref() const noexcept {
     return {.incarnation = incarnation_, .world_slot = 0, .world_generation = world_generation_};
 }
 
-RuntimeEpisodeRef RuntimeKernelCandidate::episode_ref() noexcept { return current_episode(); }
+RuntimeEpisodeRef RuntimeKernelCandidate::episode_ref() noexcept {
+    return current_episode();
+}
 
 RuntimeEpisodeRef RuntimeKernelCandidate::current_episode() noexcept {
     const auto admission = host_.issue_shadow_episode(0);
@@ -345,8 +355,7 @@ RuntimeEpisodeRef RuntimeKernelCandidate::current_episode() noexcept {
 
 bool RuntimeKernelCandidate::validate_world(const RuntimeWorldRef &world) const noexcept {
     return started_ && !stopped_ && control_ != nullptr && !control_->transfer_active() &&
-           world.well_formed() && world == world_ref() &&
-           host_.snapshot().active.has_value() &&
+           world.well_formed() && world == world_ref() && host_.snapshot().active.has_value() &&
            host_.snapshot().active->incarnation == incarnation_;
 }
 
@@ -354,8 +363,8 @@ std::optional<RuntimeEntityRef> RuntimeKernelCandidate::entity_ref(std::uint64_t
     if (entity_id == 0 || !validate_world(world_ref())) {
         return std::nullopt;
     }
-    return RuntimeEntityRef{.world = world_ref(), .entity_id = entity_id,
-                            .entity_generation = next_entity_generation_};
+    return RuntimeEntityRef{
+        .world = world_ref(), .entity_id = entity_id, .entity_generation = next_entity_generation_};
 }
 
 bool RuntimeKernelCandidate::validate_entity(const RuntimeEntityRef &entity) const noexcept {
@@ -363,8 +372,8 @@ bool RuntimeKernelCandidate::validate_entity(const RuntimeEntityRef &entity) con
            entity.entity_generation == next_entity_generation_;
 }
 
-std::optional<RuntimeEntityRef> RuntimeKernelCandidate::spawn_unit(
-    const RuntimeWorldRef &world, const WorldSpawnRequest &request) {
+std::optional<RuntimeEntityRef>
+RuntimeKernelCandidate::spawn_unit(const RuntimeWorldRef &world, const WorldSpawnRequest &request) {
     if (!validate_world(world) || request.world_index != 0 || kernel_ == nullptr ||
         request.type_name.empty()) {
         return std::nullopt;
@@ -380,10 +389,9 @@ std::optional<RuntimeEntityRef> RuntimeKernelCandidate::spawn_unit(
         return std::nullopt;
     }
     try {
-        const auto entity = kernel_->spawn_unit(request.side, request.type_name, request.x,
-                                                request.y, request.z, request.heading,
-                                                request.pitch, request.roll, request.vx, request.vy,
-                                                request.vz);
+        const auto entity = kernel_->spawn_unit(
+            request.side, request.type_name, request.x, request.y, request.z, request.heading,
+            request.pitch, request.roll, request.vx, request.vy, request.vz);
         if (!entity.is_valid()) {
             lease_admission.lease.settle();
             (void)host_.release_shadow_episode(episode_admission.capability);
@@ -406,9 +414,8 @@ bool RuntimeKernelCandidate::submit_episode(const RuntimeEpisodeRef &expected_ep
                                             std::string payload_sha256,
                                             RuntimeEpisodeTransitionReceipt *receipt) {
     if (!started_ || stopped_ || control_ == nullptr || control_->transfer_active() ||
-        !expected_episode.well_formed() ||
-        expected_episode.world != world_ref() || !idempotency_key.well_formed() ||
-        payload_sha256.size() != 64) {
+        !expected_episode.well_formed() || expected_episode.world != world_ref() ||
+        !idempotency_key.well_formed() || payload_sha256.size() != 64) {
         return false;
     }
     const auto admission = host_.issue_shadow_episode(0);
@@ -420,13 +427,12 @@ bool RuntimeKernelCandidate::submit_episode(const RuntimeEpisodeRef &expected_ep
         return false;
     }
     const auto transition = host_.submit_shadow_episode(
-        admission.capability,
-        {.kind = kind,
-         .expected_episode = expected_episode,
-         .expected_step_sequence = episode_step_sequence_,
-         .idempotency_key = idempotency_key,
-         .payload_sha256 = std::move(payload_sha256),
-         .production_authorized = false});
+        admission.capability, {.kind = kind,
+                               .expected_episode = expected_episode,
+                               .expected_step_sequence = episode_step_sequence_,
+                               .idempotency_key = idempotency_key,
+                               .payload_sha256 = std::move(payload_sha256),
+                               .production_authorized = false});
     if (receipt != nullptr && transition.status) {
         *receipt = transition.receipt;
     }
@@ -454,8 +460,7 @@ bool RuntimeKernelCandidate::step(const RuntimeWorldRef &world) {
     RuntimeEpisodeTransitionReceipt receipt{};
     return submit_episode(episode, RuntimeEpisodeIntentKind::Action,
                           {.high = 0x4550432D53544550ULL, .low = idempotency_sequence},
-                          valid_digest('c'),
-                          &receipt);
+                          valid_digest('c'), &receipt);
 }
 
 bool RuntimeKernelCandidate::set_time_step(const RuntimeWorldRef &world, double dt) {
@@ -470,8 +475,8 @@ bool RuntimeKernelCandidate::set_time_step(const RuntimeWorldRef &world, double 
     }
 }
 
-bool RuntimeKernelCandidate::try_get_entity_kinematics(
-    const RuntimeEntityRef &entity, WorldEntityKinematics *state) {
+bool RuntimeKernelCandidate::try_get_entity_kinematics(const RuntimeEntityRef &entity,
+                                                       WorldEntityKinematics *state) {
     if (!validate_entity(entity) || state == nullptr || kernel_ == nullptr) {
         return false;
     }
@@ -513,8 +518,8 @@ bool RuntimeKernelCandidate::try_get_entity_kinematics(
     return true;
 }
 
-bool RuntimeKernelCandidate::try_set_entity_kinematics(
-    const RuntimeEntityRef &entity, const WorldEntityKinematics &state) {
+bool RuntimeKernelCandidate::try_set_entity_kinematics(const RuntimeEntityRef &entity,
+                                                       const WorldEntityKinematics &state) {
     if (!validate_entity(entity) || kernel_ == nullptr) {
         return false;
     }
