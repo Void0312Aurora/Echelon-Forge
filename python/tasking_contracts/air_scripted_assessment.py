@@ -163,7 +163,11 @@ class AirPostLaunchAssessment:
                 outcome="hit_evidence",
                 confidence=1.0,
                 allow_reattack=False,
-                blocks_fire=False,
+                # Terminal evidence closes the post-launch fire gate.  The
+                # report is consumed through blocks_fire by the engagement
+                # orchestrator, so allow_reattack alone cannot carry this
+                # safety invariant.
+                blocks_fire=True,
                 release_executed=release_executed,
                 pending_assessment=pending,
                 target_contact_present=contact,

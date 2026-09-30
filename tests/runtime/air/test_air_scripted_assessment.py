@@ -38,6 +38,7 @@ def test_explicit_target_effect_is_the_only_terminal_hit_evidence() -> None:
     assert report.outcome == "hit_evidence"
     assert report.confidence == 1.0
     assert report.allow_reattack is False
+    assert report.blocks_fire is True
 
 
 def test_clear_gate_allows_inconclusive_reattack() -> None:
