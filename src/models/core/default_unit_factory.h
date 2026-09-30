@@ -7,6 +7,8 @@
 #include <numbers>
 #include <unordered_map>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include <spdlog/spdlog.h>
 
@@ -14,6 +16,7 @@
 #include "components/command/command_link_qos.h"
 #include "components/command/default_factory_spawn_command_projection.h"
 #include "components/basic/common.h"
+#include "core/interfaces/stable_entity_identity.h"
 #include "components/combat/health.h"
 #include "components/physics/performance.h"
 #include "components/combat/scoring.h"
@@ -657,6 +660,7 @@ class DefaultUnitFactory : public IUnitFactory {
         if (reserved_spawn_entity.is_valid()) {
             ecs_set_name(ecs.c_ptr(), e.id(), nullptr);
         }
+        stamp_stable_serial(e);
 
         attach_spawn_sensor_suite(e, unit_name, def);
 
@@ -816,18 +820,35 @@ class DefaultUnitFactory : public IUnitFactory {
                                         const UnitDefinition &def) const {
         double stores_kg = 0.0;
         if (!def.default_loadout.empty()) {
-            for (const auto &[station, weapon_name] : def.default_loadout) {
+            // `default_loadout` is an unordered_map whose iteration order differs between
+            // standard libraries. Station munitions are created, and therefore stamped, in
+            // ascending station order so creation order is portable (P1 E1).
+            std::vector<std::pair<int, std::string>> stations(def.default_loadout.begin(),
+                                                              def.default_loadout.end());
+            std::sort(stations.begin(), stations.end(),
+                      [](const auto &lhs, const auto &rhs) { return lhs.first < rhs.first; });
+            for (const auto &[station, weapon_name] : stations) {
                 auto w_it = definitions_.find(weapon_name);
                 if (w_it != definitions_.end()) {
                     stores_kg += w_it->second.mass_kg;
 
-                    // Spawn Real Munition Entity (Child)
-                    std::string mun_name = unit_name + "_Stn_" + std::to_string(station);
-                    auto m_e = ecs.entity(mun_name.c_str())
-                                   .child_of(e)
-                                   .set<Munition>({station, false})
-                                   .set<KeyEntity>({w_it->second.type})
-                                   .set<Mass>({w_it->second.mass_kg, 0, 0});
+                    // Spawn Real Munition Entity (Child). The name is resolved inside the new
+                    // parent's scope: `ecs.entity(name).child_of(e)` resolved it at root scope,
+                    // so a second spawn of the same type found and re-parented the first
+                    // spawn's `<type>_Stn_<n>` instead of creating its own (P1 E2). With the
+                    // parent in the descriptor every spawn gets fresh children, and
+                    // `ecs_get_name` still yields `<type>_Stn_<n>` for the launch resolver.
+                    const std::string mun_name = unit_name + "_Stn_" + std::to_string(station);
+                    ecs_entity_desc_t mun_desc = {};
+                    mun_desc.name = mun_name.c_str();
+                    mun_desc.parent = e.id();
+                    mun_desc.sep = "::";
+                    mun_desc.root_sep = "::";
+                    auto m_e = ecs.entity(ecs_entity_init(ecs.c_ptr(), &mun_desc));
+                    m_e.set<Munition>({station, false})
+                        .set<KeyEntity>({w_it->second.type})
+                        .set<Mass>({w_it->second.mass_kg, 0, 0});
+                    stamp_stable_serial(m_e);
 
                     // Copy weapon characteristics if present?
                     // Ideally we just point to the def, but for now copying generic props or

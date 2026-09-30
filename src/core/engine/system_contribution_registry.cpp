@@ -2,6 +2,7 @@
 
 #include "simulation_kernel.h"
 
+#include "components/basic/stable_identity.h"
 #include "components/combat/health.h"
 #include "components/combat/scoring.h"
 #include "components/combat/structural_failure.h"
@@ -93,6 +94,8 @@ void register_esm_reset_system(flecs::world &ecs) {
     X(Velocity, "Velocity", "flecs.component.velocity")                                            \
     X(Alliance, "Alliance", "flecs.component.alliance")                                            \
     X(KeyEntity, "KeyEntity", "flecs.component.key_entity")                                        \
+    X(StableEntitySerial, "StableEntitySerial", "flecs.component.stable_entity_serial")            \
+    X(StableIdentityState, "StableIdentityState", "flecs.component.stable_identity_state")         \
     X(MovementCommand, "MovementCommand", "flecs.component.movement_command")                      \
     X(MissionCommandControlState, "MissionCommandControlState",                                    \
       "flecs.component.mission_command_control_state")                                             \
@@ -283,7 +286,7 @@ struct ValidationResult {
 };
 
 ValidationResult validate_registry() {
-    if (std::size(kDefaultComponents) != 83) {
+    if (std::size(kDefaultComponents) != 85) {
         return {false, "component contribution count is not the admitted default count"};
     }
     std::unordered_set<std::string_view> component_ids;

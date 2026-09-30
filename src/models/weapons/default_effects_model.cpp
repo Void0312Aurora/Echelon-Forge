@@ -1,4 +1,5 @@
 #include "core/interfaces/effects_model.h"
+#include "core/interfaces/stochastic_draw.h"
 
 #include <algorithm>
 #include <array>

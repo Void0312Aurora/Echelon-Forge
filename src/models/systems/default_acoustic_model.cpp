@@ -10,6 +10,7 @@
 #include "components/domains/naval/platform/submarine_platform.h"
 #include "components/systems/ew.h"
 #include "core/interfaces/environment_model.h"
+#include "core/interfaces/stochastic_draw.h"
 
 namespace {
 
@@ -29,18 +30,9 @@ double nav_bearing_rel_deg(const Transform &owner, const Transform &target) {
     return wrap_angle_deg(bearing_nav_deg - owner.heading);
 }
 
-double splitmix01(std::uint64_t seed) {
-    std::uint64_t z = seed + 0x9e3779b97f4a7c15ULL;
-    z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ULL;
-    z = (z ^ (z >> 27)) * 0x94d049bb133111ebULL;
-    z ^= (z >> 31);
-    return (z >> 11) * (1.0 / 9007199254740992.0);
-}
-
-double splitmix_normal(std::uint64_t seed_a, std::uint64_t seed_b) {
-    const double u1 = std::max(1.0e-12, splitmix01(seed_a));
-    const double u2 = splitmix01(seed_b);
-    return std::sqrt(-2.0 * std::log(u1)) * std::cos(2.0 * std::numbers::pi_v<double> * u2);
+double rand_normal(double u1, double u2) {
+    const double safe_u1 = std::max(1.0e-12, u1);
+    return std::sqrt(-2.0 * std::log(safe_u1)) * std::cos(2.0 * std::numbers::pi_v<double> * u2);
 }
 
 double platform_self_noise_bias_db(const flecs::entity &entity, double speed_mps) {
@@ -169,20 +161,24 @@ class DefaultAcousticModel : public IAcousticModel {
             const double margin_db = snr_db - sonar.detection_threshold_db;
             if (margin_db < 0.0) return;
             const double pd = std::clamp(0.55 + margin_db / 18.0, 0.0, 1.0);
-            const std::uint64_t seed_base = static_cast<std::uint64_t>(current_time * 1000.0);
-            const std::uint64_t seed =
-                seed_base ^ (owner.id() * 0x9e3779b97f4a7c15ULL) ^ target.id();
-            if (splitmix01(seed) > pd) return;
+            const uint64_t seed =
+                stochastic_draw::draw_seed(world, stochastic_draw::DrawSite::acoustic_detection,
+                                           current_time, {owner, target});
+            if (stochastic_draw::uniform01(seed) > pd) return;
 
             double noisy_bearing = rel_bearing_deg;
             if (sonar.bearing_noise_std_deg > 0.0) {
-                noisy_bearing += splitmix_normal(seed ^ 0xabc123ULL, seed ^ 0xdef456ULL) *
-                                 sonar.bearing_noise_std_deg;
+                noisy_bearing +=
+                    rand_normal(stochastic_draw::uniform01(stochastic_draw::lane(seed, 1)),
+                                stochastic_draw::uniform01(stochastic_draw::lane(seed, 2))) *
+                    sonar.bearing_noise_std_deg;
             }
             double noisy_range = range_m;
             if (!sonar.bearing_only && sonar.range_noise_std_m > 0.0) {
-                noisy_range += splitmix_normal(seed ^ 0x456abcULL, seed ^ 0x123defULL) *
-                               sonar.range_noise_std_m;
+                noisy_range +=
+                    rand_normal(stochastic_draw::uniform01(stochastic_draw::lane(seed, 3)),
+                                stochastic_draw::uniform01(stochastic_draw::lane(seed, 4))) *
+                    sonar.range_noise_std_m;
                 noisy_range = std::max(1.0, noisy_range);
             }
 

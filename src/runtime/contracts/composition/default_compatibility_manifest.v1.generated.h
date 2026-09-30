@@ -388,6 +388,16 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "registration_id": "flecs.component.sonar"
       },
       {
+        "component_id": "StableEntitySerial",
+        "plugin_id": "builtin.core_runtime",
+        "registration_id": "flecs.component.stable_entity_serial"
+      },
+      {
+        "component_id": "StableIdentityState",
+        "plugin_id": "builtin.core_runtime",
+        "registration_id": "flecs.component.stable_identity_state"
+      },
+      {
         "component_id": "StallState",
         "plugin_id": "builtin.core_runtime",
         "registration_id": "flecs.component.stall_state"
@@ -494,7 +504,8 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
       },
       {
         "after_provider_ids": [],
-        "cardinality": "one_per_scope",
+      )EFJSON",
+    R"EFJSON(  "cardinality": "one_per_scope",
         "configuration": {},
         "conflicts": [],
         "implementation_version": "1.0.0",
@@ -504,8 +515,7 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "plugin_id": "builtin.core_runtime",
         "provider_id": "builtin.backend.flecs_cpu",
         "required_capabilities": [],
-    )EFJSON",
-    R"EFJSON(    "required_services": [],
+        "required_services": [],
         "restart_policy": "rebuild_scope_generation",
         "scope": "backend",
         "teardown_policy": "reverse_dependency_order"
@@ -739,7 +749,8 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
       },
       {
         "consumer_id": "builtin.guidance.default",
-        "consumer_kind": "provider",
+        "consumer_ki)EFJSON",
+    R"EFJSON(nd": "provider",
         "provider_id": "builtin.engagement_event_store",
         "service_key": "runtime.engagement_event_recorder"
       },
@@ -748,8 +759,7 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "consumer_kind": "provider",
         "provider_id": "builtin.environment.default",
         "service_key": "simulation.environment.model"
-    )EFJSON",
-    R"EFJSON(  },
+      },
       {
         "consumer_id": "builtin.sensor.default",
         "consumer_kind": "provider",
@@ -982,7 +992,8 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "read_state_shards": [],
         "registration_factory_id": "register_command_lag_system",
         "required_barriers": [],
-        "required_capabilities": [],
+        "required_capabilities": [)EFJSON",
+    R"EFJSON(],
         "required_components": [],
         "required_services": [],
         "semantic_stage_ids": [],
@@ -995,8 +1006,7 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "contribution_id": "builtin.system.command_link",
         "domain": "common",
         "executable_node_ids": [
-        )EFJSON",
-    R"EFJSON(  "CommandLinkAction",
+          "CommandLinkAction",
           "CommandLinkMission",
           "CommandLinkMovement"
         ],
@@ -1246,7 +1256,8 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "executable_node_ids": [
           "UpdateInstruments"
         ],
-        "plugin_id": "builtin.core_runtime",
+   )EFJSON",
+    R"EFJSON(     "plugin_id": "builtin.core_runtime",
         "provided_components": [],
         "read_state_shards": [],
         "registration_factory_id": "register_instrument_system",
@@ -1255,8 +1266,7 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "required_components": [],
         "required_services": [],
         "semantic_stage_ids": [],
-   )EFJSON",
-    R"EFJSON(     "write_state_shards": []
+        "write_state_shards": []
       },
       {
         "after": [
@@ -1500,7 +1510,8 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "required_services": [
           "simulation.environment.model"
         ],
-        "semantic_stage_ids": [],
+        "sem)EFJSON",
+    R"EFJSON(antic_stage_ids": [],
         "write_state_shards": []
       },
       {
@@ -1513,8 +1524,7 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "domain": "naval",
         "executable_node_ids": [],
         "plugin_id": "builtin.core_runtime",
-        ")EFJSON",
-    R"EFJSON(provided_components": [],
+        "provided_components": [],
         "read_state_shards": [],
         "registration_factory_id": "register_sonar_system",
         "required_barriers": [],
@@ -1621,8 +1631,8 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
     "builtin.weapon_release.damage_bridge",
     "builtin.weapon_release.service"
   ],
-  "requested_manifest_sha256": "c6581f81cc50b8f3ce155919a45737683c9a503645db59ef280cbcebac020c46",
-  "resolved_manifest_sha256": "138e82a8a59fa4d3960da23f1c0acdda4e7a634f3a02e7f9268933c3a38bc7a5",
+  "requested_manifest_sha256": "d35fc20bdd9ec50448ed7dd70da218cb735edb14dfd0fbe3122779783f0f164b",
+  "resolved_manifest_sha256": "4fb0170b00f9b3008f37adfa99c3134bed836501fe6267fd302719926736434f",
   "resolver_contract_version": "echelon_forge.simulation_composition_resolver.v1",
   "schema_version": "echelon_forge.resolved_simulation_composition.v1",
   "system_registration_order": [
@@ -1666,9 +1676,9 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
 };
 
 inline constexpr std::string_view kDefaultCompatibilityRequestedSha256 =
-    "c6581f81cc50b8f3ce155919a45737683c9a503645db59ef280cbcebac020c46";
+    "d35fc20bdd9ec50448ed7dd70da218cb735edb14dfd0fbe3122779783f0f164b";
 inline constexpr std::string_view kDefaultCompatibilityResolvedSha256 =
-    "138e82a8a59fa4d3960da23f1c0acdda4e7a634f3a02e7f9268933c3a38bc7a5";
+    "4fb0170b00f9b3008f37adfa99c3134bed836501fe6267fd302719926736434f";
 
 inline constexpr std::string_view kDefaultBackendProfileId = "cpu_exact.reference";
 inline constexpr std::string_view kDefaultBackendProviderId = "builtin.backend.flecs_cpu";

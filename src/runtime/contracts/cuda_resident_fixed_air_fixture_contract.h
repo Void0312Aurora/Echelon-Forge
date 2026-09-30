@@ -7,9 +7,11 @@
 
 namespace runtime::cuda_resident {
 
-// Baseline-locked identity contract for the RB4 minimal fixture. The CPU
-// reference and resident backend are tested independently against this value;
-// production CUDA code never calls into Flecs to discover or translate ids.
+// Baseline-locked identity contract for the RB4 CUDA-resident fixture. The
+// resident backend owns this device-side identity; CPU/Flecs reference paths
+// use their runtime-issued entity ids and must not translate them to this
+// value. Production CUDA code never calls into Flecs to discover or translate
+// ids.
 inline constexpr std::uint64_t kFixedAirFixtureEntityBaseId = 581;
 inline constexpr std::string_view kFixedAirFixtureTypeName = "Aircraft";
 inline constexpr std::string_view kFixedAirFixtureRequestId = "rb4.fixed_air_fixture.v1";

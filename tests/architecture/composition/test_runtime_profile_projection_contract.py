@@ -43,7 +43,7 @@ def test_default_profile_projection_fixture_is_owner_derived_and_fresh() -> None
   assert actual == expected
   assert profile.validate_profile_projection(actual, request, lock, requested, resolved) == []
   assert len(actual["catalog_entries"]) == 6
-  assert len(actual["component_contributions"]) == 83
+  assert len(actual["component_contributions"]) == 85
   assert len(actual["system_contributions"]) == 34
   assert actual["required_capabilities"] == ["deterministic.step", "runtime.world_batch.cpu"]
   assert SCHEMA.read_text(encoding="utf-8") == profile._pretty(profile.profile_schema())

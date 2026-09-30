@@ -45,6 +45,12 @@ packet 只作为归档 provenance。
   runtime composition standard；Node、CUDA、更广 profile/provider、外部 plugin 与完整
   replay 继续作为 held 残余。
 
+## 活跃工作
+
+- [随机抽样的稳定实体标识](work/active/stable_entity_identity/README.md)：
+  仅英文的 task 包；把逐交战、逐探测 seed 中的原始 Flecs id 替换为
+  每个 world 的 serial 与 reset seed。
+
 ## 开放问题
 
 - [系统模块化 issue](work/issues/modularization_plan.md)：draft residual 分析；
