@@ -25,6 +25,14 @@ using echelon_forge::runtime_contracts::v1::RuntimeWorldRef;
 constexpr const char *kHash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 constexpr const char *kHash2 = "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789";
 
+std::vector<std::uint8_t> fixture_owner_state_payload(host::RuntimeStateCategory category,
+                                                      std::uint32_t generation) {
+    const std::string bytes = std::string("fixture-owner-state:") +
+                              std::string(host::runtime_state_category_name(category)) + ":v" +
+                              std::to_string(generation);
+    return {bytes.begin(), bytes.end()};
+}
+
 RuntimeIdentity128 logical_host_id(std::uint64_t low = 2) {
     return {.high = 1, .low = low};
 }
@@ -46,7 +54,8 @@ RuntimeEpisodeRef episode(const RuntimeIncarnationRef &slot, std::uint64_t gener
     };
 }
 
-std::shared_ptr<host::RuntimeStateTransferOwnerRegistry> make_transfer_owner_registry();
+std::shared_ptr<host::RuntimeStateTransferOwnerRegistry>
+make_transfer_owner_registry(RuntimeIdentity128 resource_identity);
 
 class FakeControl final : public host::RuntimeInstanceControl {
   public:
@@ -76,7 +85,7 @@ class FakeControl final : public host::RuntimeInstanceControl {
           resource_identity_(resource_identity.value_or(
               RuntimeIdentity128{.high = 9, .low = next_identity.fetch_add(1)})),
           native_episode_control_(std::make_shared<NativeControl>(resource_identity_)),
-          owner_registry_(make_transfer_owner_registry()) {}
+          owner_registry_(make_transfer_owner_registry(resource_identity_)) {}
 
     [[nodiscard]] RuntimeIdentity128 resource_identity() const noexcept override {
         return resource_identity_;
@@ -91,6 +100,12 @@ class FakeControl final : public host::RuntimeInstanceControl {
     state_transfer_owner_registry() const noexcept override {
         return owner_registry_;
     }
+
+    [[nodiscard]] bool begin_state_transfer() noexcept override {
+        ++begin_transfer_calls;
+        return true;
+    }
+    void end_state_transfer() noexcept override { ++end_transfer_calls; }
 
     [[nodiscard]] bool request_cooperative_cancel() noexcept override {
         ++cancel_calls;
@@ -112,6 +127,8 @@ class FakeControl final : public host::RuntimeInstanceControl {
 
     int cancel_calls = 0;
     int release_calls = 0;
+    int begin_transfer_calls = 0;
+    int end_transfer_calls = 0;
     bool released = false;
     bool cancel_acknowledged = true;
 
@@ -184,13 +201,49 @@ class NoopImportTransaction final : public host::RuntimeStateOwnerImportTransact
   public:
     void commit() noexcept override {}
     void abort() noexcept override {}
+
+    [[nodiscard]] host::RuntimeStateOwnerImportTransactionStatus
+    commit_with_deadline(std::uint64_t now_tick, std::uint64_t deadline_tick) noexcept override {
+        if (deadline_tick != 0 && now_tick >= deadline_tick) {
+            return {.phase = host::RuntimeStateOwnerImportTransactionPhase::Prepared,
+                    .error = host::RuntimeStateTransferError::ImportTransactionDeadlineExceeded,
+                    .journal_sequence = 0,
+                    .durable = false};
+        }
+        commit();
+        // Synthetic fixture receipt: this models the terminal shape only; it
+        // is not evidence of a production WAL or crash-recovery journal.
+        return {.phase = host::RuntimeStateOwnerImportTransactionPhase::Committed,
+                .error = host::RuntimeStateTransferError::None,
+                .journal_sequence = 1,
+                .durable = true};
+    }
+
+    [[nodiscard]] host::RuntimeStateOwnerImportTransactionStatus
+    abort_with_deadline(std::uint64_t, std::uint64_t) noexcept override {
+        abort();
+        return {.phase = host::RuntimeStateOwnerImportTransactionPhase::Aborted,
+                .error = host::RuntimeStateTransferError::None,
+                .journal_sequence = 2,
+                .durable = true};
+    }
 };
 
 class TransferOwnerRegistry final : public host::RuntimeStateTransferOwnerRegistry {
   public:
-    [[nodiscard]] host::RuntimeStateOwnerExport export_source(
-        const host::RuntimeStateTransferProfile &profile, const RuntimeIncarnationRef &source_slot,
-        const host::RuntimeEpisodeCoordinatorSnapshot &barrier_snapshot) noexcept override {
+    explicit TransferOwnerRegistry(RuntimeIdentity128 resource_identity)
+        : resource_identity_(resource_identity) {}
+
+    [[nodiscard]] RuntimeIdentity128 bound_resource_identity() const noexcept override {
+        return resource_identity_;
+    }
+    [[nodiscard]] const void *owner_binding_token() const noexcept override { return this; }
+
+    [[nodiscard]] host::RuntimeStateOwnerExport
+    export_source(const host::RuntimeStateTransferProfile &profile,
+                  const RuntimeIncarnationRef &source_slot,
+                  const host::RuntimeStateOwnerExportContext &context) noexcept override {
+        const auto &barrier_snapshot = context.barrier_snapshot;
         host::RuntimeStateOwnerExport exported;
         exported.source_slot = source_slot;
         exported.census = {.profile_id = profile.profile_id,
@@ -210,7 +263,9 @@ class TransferOwnerRegistry final : public host::RuntimeStateTransferOwnerRegist
                     .barrier_sequence = barrier_snapshot.barrier_sequence,
                 };
                 if (policy.disposition == host::RuntimeStateDisposition::Transfer) {
-                    entry.state_content_sha256 = kHash;
+                    const auto owner_payload =
+                        fixture_owner_state_payload(entry.category, entry.schema_generation);
+                    entry.state_content_sha256 = host::runtime_state_payload_sha256(owner_payload);
                     entry.canonical_payload = host::runtime_state_canonical_payload(entry);
                     entry.canonical_payload_sha256 =
                         host::runtime_state_payload_sha256(entry.canonical_payload);
@@ -223,9 +278,10 @@ class TransferOwnerRegistry final : public host::RuntimeStateTransferOwnerRegist
                     .category = entry.category,
                     .schema_id = entry.schema_id,
                     .schema_generation = entry.schema_generation,
-                    .payload = entry.canonical_payload.empty()
-                                   ? host::runtime_state_canonical_payload(entry)
-                                   : entry.canonical_payload,
+                    .payload =
+                        policy.disposition == host::RuntimeStateDisposition::Transfer
+                            ? fixture_owner_state_payload(entry.category, entry.schema_generation)
+                            : std::vector<std::uint8_t>{},
                 };
                 artifact.payload_sha256 = host::runtime_state_payload_sha256(artifact.payload);
                 exported.artifacts.push_back(std::move(artifact));
@@ -291,10 +347,14 @@ class TransferOwnerRegistry final : public host::RuntimeStateTransferOwnerRegist
             return receipt;
         }
     }
+
+  private:
+    RuntimeIdentity128 resource_identity_;
 };
 
-std::shared_ptr<host::RuntimeStateTransferOwnerRegistry> make_transfer_owner_registry() {
-    return std::make_shared<TransferOwnerRegistry>();
+std::shared_ptr<host::RuntimeStateTransferOwnerRegistry>
+make_transfer_owner_registry(RuntimeIdentity128 resource_identity) {
+    return std::make_shared<TransferOwnerRegistry>(resource_identity);
 }
 
 host::RuntimeTransferCommitProof transfer_proof(host::RuntimeHostCandidate &runtime,
@@ -388,7 +448,9 @@ host::RuntimeTransferCommitProof transfer_proof(host::RuntimeHostCandidate &runt
             .barrier_sequence = barrier_snapshot.barrier_sequence,
         };
         if (disposition == host::RuntimeStateDisposition::Transfer) {
-            entry.state_content_sha256 = kHash;
+            const auto owner_payload =
+                fixture_owner_state_payload(category, entry.schema_generation);
+            entry.state_content_sha256 = host::runtime_state_payload_sha256(owner_payload);
             entry.canonical_payload = host::runtime_state_canonical_payload(entry);
             entry.canonical_payload_sha256 =
                 host::runtime_state_payload_sha256(entry.canonical_payload);
@@ -651,11 +713,12 @@ TEST_SUITE("runtime_host_candidate") {
         REQUIRE(truth.status);
         REQUIRE(read.status);
 
+        const auto replacement_control = make_control();
         const auto begun = runtime.begin_candidate({
             .transaction_kind = host::RuntimeHostTransactionKind::Replacement,
             .expected_slot = old_slot,
             .plan = plan("plan.v2", kHash2),
-            .control = make_control(),
+            .control = replacement_control,
             .lifecycle_deadline_tick = 20,
         });
         REQUIRE(begun.status);
@@ -670,8 +733,11 @@ TEST_SUITE("runtime_host_candidate") {
         truth.lease = {};
         REQUIRE(runtime.prepare_replacement(begun.handle,
                                             transfer_proof(runtime, begun.handle, old_slot)));
-        const auto published = runtime.commit_prepared_candidate(begun.handle);
+        CHECK(replacement_control->begin_transfer_calls == 1);
+        CHECK(replacement_control->end_transfer_calls == 0);
+        const auto published = runtime.commit_prepared_candidate(begun.handle, 1);
         REQUIRE(published.status);
+        CHECK(replacement_control->end_transfer_calls == 1);
         CHECK(published.published_slot.incarnation_epoch == 2);
         REQUIRE(runtime.validate_result(read.lease, RuntimeResultRef{.request = read.request_ref}));
         CHECK_FALSE(
@@ -740,7 +806,7 @@ TEST_SUITE("runtime_host_candidate") {
         REQUIRE(retry.status);
         REQUIRE(runtime.validate_candidate(retry.handle, validation()));
         REQUIRE(runtime.prepare_checkpoint_recovery(retry.handle, recovery_proof(old_slot)));
-        const auto recovered = runtime.commit_prepared_candidate(retry.handle);
+        const auto recovered = runtime.commit_prepared_candidate(retry.handle, 1);
         REQUIRE(recovered.status);
         CHECK(recovered.published_slot.incarnation_epoch == 2);
         CHECK_FALSE(runtime.validate_result(
@@ -768,7 +834,7 @@ TEST_SUITE("runtime_host_candidate") {
         REQUIRE(runtime.validate_candidate(replacement.handle, validation()));
         REQUIRE(runtime.prepare_replacement(
             replacement.handle, transfer_proof(runtime, replacement.handle, old_slot, 3)));
-        REQUIRE(runtime.commit_prepared_candidate(replacement.handle).status);
+        REQUIRE(runtime.commit_prepared_candidate(replacement.handle, 1).status);
         CHECK(runtime.poll(2));
         CHECK(runtime.poll(3).error == host::RuntimeHostError::QuarantineUnresolved);
         CHECK(runtime.snapshot().quarantined.size() == 1);
@@ -932,7 +998,7 @@ TEST_SUITE("runtime_host_candidate") {
             REQUIRE(runtime.validate_candidate(begun.handle, validation()));
             REQUIRE(runtime.prepare_replacement(begun.handle,
                                                 transfer_proof(runtime, begun.handle, old_slot)));
-            CHECK(runtime.commit_prepared_candidate(begun.handle).status.error ==
+            CHECK(runtime.commit_prepared_candidate(begun.handle, 1).status.error ==
                   host::RuntimeHostError::PublicationRaceLost);
             REQUIRE(runtime.snapshot().active.has_value());
             CHECK(runtime.snapshot().active->incarnation == old_slot);
@@ -959,7 +1025,7 @@ TEST_SUITE("runtime_host_candidate") {
             REQUIRE(recovery_host.validate_candidate(recovery.handle, validation()));
             REQUIRE(recovery_host.prepare_checkpoint_recovery(recovery.handle,
                                                               recovery_proof(faulted)));
-            CHECK(recovery_host.commit_prepared_candidate(recovery.handle).status.error ==
+            CHECK(recovery_host.commit_prepared_candidate(recovery.handle, 1).status.error ==
                   host::RuntimeHostError::PublicationRaceLost);
             CHECK(recovery_host.snapshot().state == host::RuntimeHostState::Faulted);
             REQUIRE(recovery_host.snapshot().active.has_value());
@@ -999,7 +1065,7 @@ TEST_SUITE("runtime_host_candidate") {
         REQUIRE(runtime.validate_candidate(replacement.handle, validation()));
         REQUIRE(runtime.prepare_replacement(replacement.handle,
                                             transfer_proof(runtime, replacement.handle, old_slot)));
-        CHECK(runtime.commit_prepared_candidate(replacement.handle).status.error ==
+        CHECK(runtime.commit_prepared_candidate(replacement.handle, 1).status.error ==
               host::RuntimeHostError::PublicationRaceLost);
         CHECK(injector->observed);
     }
@@ -1207,7 +1273,7 @@ TEST_SUITE("runtime_host_candidate") {
         REQUIRE(runtime.validate_candidate(replacement.handle, validation()));
         REQUIRE(runtime.prepare_replacement(
             replacement.handle, transfer_proof(runtime, replacement.handle, old_slot, 2)));
-        REQUIRE(runtime.commit_prepared_candidate(replacement.handle).status);
+        REQUIRE(runtime.commit_prepared_candidate(replacement.handle, 1).status);
         CHECK(runtime.poll(2).error == host::RuntimeHostError::QuarantineUnresolved);
         CHECK(runtime.snapshot().quarantined.size() == 1);
 
@@ -1270,6 +1336,84 @@ TEST_SUITE("runtime_host_candidate") {
         CHECK(second.validate_candidate(first_candidate.handle, validation()).error ==
               host::RuntimeHostError::CandidateNotFound);
         CHECK(first_candidate.handle.host.boot_id != second_candidate.handle.host.boot_id);
+    }
+
+    TEST_CASE("host-issued owner handles bind admission and are single-use") {
+        host::RuntimeHostCandidate runtime(
+            {.host_id = logical_host_id(), .mode = host::RuntimeHostMode::Dark});
+        const auto control = make_control();
+        const host::RuntimeCandidateRequest request{
+            .transaction_kind = host::RuntimeHostTransactionKind::Initial,
+            .plan = plan(),
+            .lifecycle_deadline_tick = 20,
+        };
+        const auto owner_handle =
+            runtime.issue_owner_handle(control, {.transaction_kind = request.transaction_kind,
+                                                 .expected_slot = request.expected_slot,
+                                                 .plan = request.plan,
+                                                 .world_slot_count = request.world_slot_count});
+        REQUIRE(owner_handle.valid());
+        const auto begun = runtime.begin_candidate(request, owner_handle);
+        REQUIRE(begun.status);
+        CHECK(!owner_handle.valid());
+        CHECK(runtime.begin_candidate(request, owner_handle).status.error ==
+              host::RuntimeHostError::InvalidArgument);
+        REQUIRE(runtime.validate_candidate(begun.handle, validation()));
+        REQUIRE(runtime.commit_initial(begun.handle, initial_proof()).status);
+    }
+
+    TEST_CASE("failed host-issued admission releases the token for retry") {
+        host::RuntimeHostCandidate runtime(
+            {.host_id = logical_host_id(), .mode = host::RuntimeHostMode::Dark});
+        const auto control = make_control();
+        const host::RuntimeCandidateRequest invalid_request{
+            .transaction_kind = host::RuntimeHostTransactionKind::Initial,
+            .plan = plan("other-plan", kHash2),
+            .lifecycle_deadline_tick = 20,
+        };
+        const auto owner_handle = runtime.issue_owner_handle(
+            control, {.transaction_kind = invalid_request.transaction_kind,
+                      .expected_slot = invalid_request.expected_slot,
+                      .plan = plan(),
+                      .world_slot_count = invalid_request.world_slot_count});
+        REQUIRE(owner_handle.valid());
+        CHECK(!runtime.begin_candidate(invalid_request, owner_handle).status);
+        CHECK(owner_handle.valid());
+        const host::RuntimeCandidateRequest valid_request{
+            .transaction_kind = host::RuntimeHostTransactionKind::Initial,
+            .plan = plan(),
+            .lifecycle_deadline_tick = 20,
+        };
+        const auto begun = runtime.begin_candidate(valid_request, owner_handle);
+        REQUIRE(begun.status);
+        REQUIRE(runtime.validate_candidate(begun.handle, validation()));
+        REQUIRE(runtime.commit_initial(begun.handle, initial_proof()).status);
+    }
+
+    TEST_CASE("prepared replacement publication requires an unexpired clock sample") {
+        host::RuntimeHostCandidate runtime(
+            {.host_id = logical_host_id(), .mode = host::RuntimeHostMode::Dark});
+        const RuntimeIncarnationRef old_slot = publish_initial(runtime, make_control());
+        const auto replacement = runtime.begin_candidate({
+            .transaction_kind = host::RuntimeHostTransactionKind::Replacement,
+            .expected_slot = old_slot,
+            .plan = plan("plan.deadline", kHash2),
+            .control = make_control(),
+            .lifecycle_deadline_tick = 20,
+        });
+        REQUIRE(replacement.status);
+        REQUIRE(runtime.validate_candidate(replacement.handle, validation()));
+        REQUIRE(runtime.prepare_replacement(
+            replacement.handle, transfer_proof(runtime, replacement.handle, old_slot, 3)));
+
+        const auto expired = runtime.commit_prepared_candidate(replacement.handle, 3);
+        CHECK(expired.status.error == host::RuntimeHostError::LifecycleDeadlineExpired);
+        REQUIRE(runtime.snapshot().active.has_value());
+        CHECK(runtime.snapshot().active->incarnation == old_slot);
+        CHECK(runtime.abort_candidate(replacement.handle));
+        REQUIRE(runtime.snapshot().active.has_value());
+        CHECK(runtime.snapshot().active->state == host::RuntimeSlotState::Active);
+        CHECK(runtime.snapshot().active->admission_open);
     }
 
     TEST_CASE("destruction hands unreleased resources to an observable retry registry") {

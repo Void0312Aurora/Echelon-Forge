@@ -586,3 +586,55 @@ def apply_execution_episode_state(loader, state) -> None:
         loader_state._cached_route_ref_id = None
     _sync_command_chain_runtime_mirror(loader)
     loader._rebuild_spatial_geometry()
+
+
+def rederive_loader_controller_caches_after_state_transfer(loader, native_state) -> None:
+    """Rebuild Python mirrors at a terminal P4-B replacement barrier.
+
+    ``native_state`` must be read from the imported target runtime.  Source
+    Python objects and their caches are deliberately not accepted as transfer
+    authority.  The target coordinator remains terminal until an explicit
+    reset, so per-episode reward cursors can restart without admitting an
+    action between import and reset.
+    """
+
+    # Drop every target-side controller object before applying native truth.
+    # These objects are mirrors, never transfer authority; retaining them
+    # would preserve source-era task/leader/pilot state across a replacement.
+    failures: list[str] = []
+
+    def _run_required(label: str, callback) -> None:
+        if not callable(callback):
+            return
+        try:
+            callback()
+        except Exception as exc:
+            failures.append(f"{label}: {exc}")
+
+    _run_required("reset_behavior_phase_owner", getattr(loader, "_reset_behavior_phase_owner", None))
+    _run_required("reset_command_chain_owner", getattr(loader, "_reset_command_chain_owner", None))
+    loader.task_order = None
+    loader.leader_intent = None
+    loader.pilot_report = None
+    apply_execution_episode_state(loader, native_state)
+    _run_required(
+        "reset_command_chain",
+        lambda: loader._reset_command_chain(sync_to_kernel=False),
+    )
+    _run_required("reset_scripted_opponents", getattr(loader, "reset_scripted_opponents", None))
+    _run_required("build_scripted_opponents", getattr(loader, "build_scripted_opponents", None))
+    _run_required("reset_runtime_eval_cache", getattr(loader, "reset_runtime_eval_cache", None))
+    loader._air_combat_reward_last_report_id = 0
+    loader._air_combat_reward_prev_missiles = None
+    loader._air_combat_reward_release_count = 0
+    loader._air_combat_c2_roe_initial_missiles = None
+    loader._air_combat_c2_roe_reward_once_terms = set()
+    loader._air_combat_c2_roe_legal_open_age_steps = 0
+    loader._air_combat_c2_roe_legal_open_age_step_key = None
+    loader._air_combat_c2_roe_launch_window_age_steps = 0
+    loader._air_combat_c2_roe_launch_window_age_step_key = None
+    if failures:
+        raise RuntimeError(
+            "Python controller/cache rederive failed; native transfer must remain "
+            "ambiguous: " + "; ".join(failures)
+        )

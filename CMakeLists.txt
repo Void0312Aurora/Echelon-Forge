@@ -226,6 +226,7 @@ set(EF_CORE_ENGINE_SOURCES
     src/core/engine/world_batch_runtime.cpp
     src/core/engine/default_executable_composition_graph.cpp
     src/core/engine/system_contribution_registry.cpp
+    src/core/engine/state_transfer_component_reflection.cpp
     src/runtime/providers/default_simulation_provider_catalog.cpp
 )
 
@@ -372,6 +373,26 @@ includes=$<JOIN:$<TARGET_PROPERTY:ef_runtime_host_candidate,INCLUDE_DIRECTORIES>
 interface_includes=$<JOIN:$<TARGET_PROPERTY:ef_runtime_host_candidate,INTERFACE_INCLUDE_DIRECTORIES>,|>
 sources=$<JOIN:$<TARGET_PROPERTY:ef_runtime_host_candidate,SOURCES>,|>
 ")
+
+# P4-B dark/shadow owner-integration probe. It exercises the twelve maintained
+# kernel/host owner adapters with strict codecs and durable candidate journals.
+# This target is deliberately
+# separate from ef_runtime_host_candidate so the host library keeps its
+# no-Flecs/no-core boundary, and it is not installed or linked by production
+# callers before the later P4-C/P5-D activation gates.
+add_library(ef_runtime_state_owner_adapters_candidate STATIC
+    src/runtime/host/integration/simulation_kernel_state_owner_adapters.h
+    src/runtime/host/integration/simulation_kernel_state_owner_adapters.cpp
+)
+target_include_directories(ef_runtime_state_owner_adapters_candidate PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/host
+)
+target_compile_features(ef_runtime_state_owner_adapters_candidate PUBLIC cxx_std_20)
+target_link_libraries(ef_runtime_state_owner_adapters_candidate PRIVATE
+    ef_runtime_host_candidate
+    ef_core
+)
 
 # P3-B authority contract owner: native consumes canonical bytes and detached
 # digests from the same schema/vector surface as Python and Cordis.  The one
@@ -805,12 +826,16 @@ add_executable(ef_runtime_host_candidate_test
     src/tests/test_main.cpp
     src/tests/test_runtime_host_candidate.cpp
     src/tests/test_runtime_state_transfer_candidate.cpp
+    src/tests/test_simulation_kernel_state_owner_adapters.cpp
 )
 target_link_libraries(ef_runtime_host_candidate_test PRIVATE
     ef_runtime_host_candidate
+    ef_runtime_state_owner_adapters_candidate
+    ef_core
     doctest::doctest
 )
 target_include_directories(ef_runtime_host_candidate_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/host
 )
 
@@ -1046,6 +1071,8 @@ add_test(NAME backend_provider_migration COMMAND ef_backend_provider_migration_t
 add_test(NAME composition_evidence COMMAND ef_composition_evidence_test)
 add_test(NAME runtime_contracts_compile COMMAND ef_runtime_contracts_compile_test)
 add_test(NAME runtime_host_candidate COMMAND ef_runtime_host_candidate_test)
+set_tests_properties(runtime_host_candidate PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 add_test(
     NAME runtime_host_candidate_boundary
     COMMAND ${CMAKE_COMMAND}
@@ -1169,7 +1196,8 @@ function(ef_assert_p3a_runtime_contract_boundary)
     endif()
 
     set(allowed_consumers ef_runtime_contracts_compile_test ef_runtime_host_candidate)
-    set(allowed_host_consumers ef_runtime_host_candidate_test)
+    set(allowed_host_consumers ef_runtime_host_candidate_test
+        ef_runtime_state_owner_adapters_candidate)
     ef_collect_directory_targets("${CMAKE_CURRENT_SOURCE_DIR}" all_targets)
     foreach(candidate IN LISTS all_targets)
         if (candidate STREQUAL ef_runtime_contracts)

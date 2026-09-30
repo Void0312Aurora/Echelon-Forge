@@ -569,6 +569,13 @@ TEST_SUITE("stable_entity_identity") {
             REQUIRE(kernel.load_database("examples/config/database"));
             kernel.reset(20260529);
             std::uint64_t shooter_raw = 0;
+            // The kernel reserves the first Flecs entity for transfer-reflection schema
+            // admission and consumes that reservation on the first spawn. Consume it before
+            // adding the extra census so this test compares later allocations, not the stable
+            // reservation itself.
+            auto reservation_consumer = kernel.spawn_unit(Side::Blue, "F-16C_Block50", 0.0, 0.0,
+                                                          5000.0, 0.0, 0.0, 0.0, 200.0, 0.0, 0.0);
+            REQUIRE(reservation_consumer.is_valid());
             if (extra_census) {
                 auto lease = kernel.acquire_world_lease();
                 flecs::world &world = lease.world();

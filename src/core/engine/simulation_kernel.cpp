@@ -1,4 +1,5 @@
 #include "simulation_kernel.h"
+#include "state_transfer_component_reflection.h"
 
 #include "components/basic/stable_identity.h"
 #include "components/physics/instruments.h"
@@ -15,10 +16,18 @@
 
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <limits>
 #include <stdexcept>
 #include <string>
+#include <vector>
+
+namespace {
+constexpr const char *kTransferReflectionSpawnReservation =
+    "__echelon_forge_transfer_reflection_spawn_reservation";
+}
 
 SimulationKernel::SimulationKernel()
     : SimulationKernel(runtime::providers::default_compatibility_resolved_manifest_json()) {}
@@ -43,6 +52,9 @@ SimulationKernel::SimulationKernel(std::string resolved_manifest_json) {
     if (auto resupply_logic = ecs.lookup("ResupplyLogic"); resupply_logic.is_valid()) {
         ecs_enable(ecs.c_ptr(), resupply_logic.id(), false);
     }
+    auto transfer_reservation = ecs.entity();
+    transfer_reservation.set_name(kTransferReflectionSpawnReservation);
+    ensure_state_transfer_component_reflection();
     reset(42); // Default reset
     // Constructor initialization establishes generation 1's clean baseline;
     // later explicit resets are truth mutations and close the rebuild barrier.
@@ -58,6 +70,14 @@ void SimulationKernel::ensure_active(const char *operation) const {
         throw std::logic_error(std::string("SimulationKernel::") + operation +
                                " cannot be used after shutdown");
     }
+}
+
+void SimulationKernel::ensure_state_transfer_component_reflection() {
+    if (state_transfer_reflection_registered_) {
+        return;
+    }
+    register_state_transfer_component_reflection(ecs);
+    state_transfer_reflection_registered_ = true;
 }
 
 void SimulationKernel::shutdown() {
@@ -141,6 +161,7 @@ void SimulationKernel::reset(unsigned int seed) {
     ecs_reset_clock(ecs.c_ptr());
 
     rng.seed(seed);
+    rng_draw_position_ = 0;
     // Episode identity restarts with the episode: serials are 1..N in creation order after
     // every reset, and draws mix the reset seed. The constructor reaches this through its
     // default reset(42), which is also the seed `rng` is given there, so a kernel used before
@@ -190,6 +211,13 @@ void SimulationKernel::set_time_step(double dt) {
     world_state_mutated_ = true;
 }
 
+void SimulationKernel::record_rng_draws_for_state_transfer(std::uint64_t count) {
+    if (count > std::numeric_limits<std::uint64_t>::max() - rng_draw_position_) {
+        throw std::overflow_error("SimulationKernel RNG draw position is exhausted");
+    }
+    rng_draw_position_ += count;
+}
+
 flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_name, double x,
                                            double y, double z, double heading, double pitch,
                                            double roll, double vx, double vy, double vz) {
@@ -205,9 +233,40 @@ flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_na
     // Optional: Check existence first or trust spawn to handle it.
     // The factory->spawn is responsible for lookup now.
     SpawnParams params{side, x, y, z, heading, pitch, roll, vx, vy, vz};
+    auto reserved_spawn_entity = ecs.lookup(kTransferReflectionSpawnReservation);
+    const bool created_reservation = !reserved_spawn_entity.is_valid();
+    if (created_reservation) {
+        reserved_spawn_entity = ecs.entity();
+        reserved_spawn_entity.set_name(kTransferReflectionSpawnReservation);
+    }
     auto e = factory->spawn(ecs, unit_name, params);
     if (e.is_valid()) {
+        if (e.id() == reserved_spawn_entity.id()) {
+            ecs_set_name(ecs.c_ptr(), e.id(), nullptr);
+        } else if (ecs_is_alive(ecs.c_ptr(), reserved_spawn_entity.id())) {
+            reserved_spawn_entity.destruct();
+        }
         e.add<SimObject>(); // Tag for cleanup
+        // Factory-owned ChildOf descendants (for example an embarked helo)
+        // are part of the native ECS truth closure.  Tag them after the
+        // factory returns so the same world/type registration is used as the
+        // parent and the transfer query cannot lose their state.
+        std::vector<ecs_entity_t> descendants;
+        e.children([&](flecs::entity child) { descendants.push_back(child.id()); });
+        for (std::size_t index = 0; index < descendants.size(); ++index) {
+            auto descendant = ecs.entity(descendants[index]);
+            descendant.children([&](flecs::entity child) {
+                if (std::find(descendants.begin(), descendants.end(), child.id()) ==
+                    descendants.end()) {
+                    descendants.push_back(child.id());
+                }
+            });
+            descendant.add<SimObject>();
+        }
+    }
+    if (!e.is_valid() && created_reservation &&
+        ecs_is_alive(ecs.c_ptr(), reserved_spawn_entity.id())) {
+        reserved_spawn_entity.destruct();
     }
     return e;
 }

@@ -647,14 +647,19 @@ class DefaultUnitFactory : public IUnitFactory {
 
         resolve_spawn_orientation(params, heading_init, pitch_init, roll_init);
 
+        auto reserved_spawn_entity =
+            ecs.lookup("__echelon_forge_transfer_reflection_spawn_reservation");
         auto e =
-            ecs.entity()
+            (reserved_spawn_entity.is_valid() ? reserved_spawn_entity : ecs.entity())
                 .set<Transform>({params.x, params.y, params.z, heading_init, pitch_init, roll_init})
                 .set<Velocity>({params.vx, params.vy, params.vz})
                 .set<Alliance>({params.side})
                 .set<KeyEntity>({def.type})
                 .set<Health>({def.health.current_hp, def.health.max_hp, def.health.mission_kill,
                               def.health.mobility_kill, def.health.sensor_kill});
+        if (reserved_spawn_entity.is_valid()) {
+            ecs_set_name(ecs.c_ptr(), e.id(), nullptr);
+        }
         stamp_stable_serial(e);
 
         attach_spawn_sensor_suite(e, unit_name, def);
@@ -1568,6 +1573,11 @@ class DefaultUnitFactory : public IUnitFactory {
                 helo_params.vz = 0.0;
                 auto helo = spawn(ecs, def.embarked_air_ops.helo_unit_name, helo_params);
                 if (helo.is_valid()) {
+                    // The embarked child is part of the SimObject transfer
+                    // closure.  Tagging it here preserves its complete native
+                    // truth (health, fuel, stores, and identity references)
+                    // instead of reconstructing a lossy factory default.
+                    helo.add<SimObject>();
                     helo.child_of(e);
                     MissionCommand helo_cmd{};
                     helo.set<MissionCommand>(helo_cmd);

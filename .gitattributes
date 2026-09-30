@@ -21,6 +21,13 @@ tests/architecture/composition/fixtures/default_runtime_profile_projection.v1.js
 tests/architecture/composition/fixtures/default_compatibility_manifest.requested.json -text
 tests/architecture/composition/fixtures/default_compatibility_manifest.resolved.json -text
 
+# Authority and receipt vectors are byte-addressed cross-language fixtures.
+tests/architecture/composition/fixtures/authority_cross_language_vector.v1.json -text
+tests/architecture/composition/fixtures/authority_rollout_decision.v1.json -text
+tests/architecture/composition/fixtures/authority_resolved_composition_plan*.json -text
+tests/architecture/composition/fixtures/authority_state_checkpoint.v1.json -text
+tests/architecture/composition/fixtures/run_receipt.v1.json -text
+
 # Launch-decision provenance inputs are hashed as canonical Git LF blobs.
 examples/config/training/active/air_combat/*.json -text
 tests/fixtures/launch_decision_reorg/v2/canonical_provenance_v1.json -text

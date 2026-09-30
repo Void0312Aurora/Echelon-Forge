@@ -3,10 +3,10 @@
 enum class CommMsgType {
     None = 0,
     // 1. Command Acknowledgment
-    REP_WILCO,     // "Will Comply"
-    REP_ROGER,     // "Received"
-    REP_UNABLE,    // "Cannot Comply" (Reason)
-    REP_CANT_DO,   // "Technical Limitation"
+    REP_WILCO,   // "Will Comply"
+    REP_ROGER,   // "Received"
+    REP_UNABLE,  // "Cannot Comply" (Reason)
+    REP_CANT_DO, // "Technical Limitation"
 
     // 2. Status Report
     STATUS_FUEL,   // Arg: Joker/Bingo/State
@@ -15,14 +15,14 @@ enum class CommMsgType {
     STATUS_POS,    // Arg: (x,y,z)
 
     // 3. Tactical / Brevity
-    REP_TALLY,     // Visual Enemy (Arg: Target ID)
-    REP_VISUAL,    // Visual Friendly (Arg: Target ID)
-    REP_BLIND,     // Lost Visual/Radar (Arg: Target ID)
-    REP_SPIKE,     // RWR Lock (Arg: Azimuth?)
+    REP_TALLY,       // Visual Enemy (Arg: Target ID)
+    REP_VISUAL,      // Visual Friendly (Arg: Target ID)
+    REP_BLIND,       // Lost Visual/Radar (Arg: Target ID)
+    REP_SPIKE,       // RWR Lock (Arg: Azimuth?)
     REP_FAILED_SORT, // Cannot execute sort
-    REP_ENGAGED,   // Engaging Target (Arg: Target ID)
-    REP_SPLASH,    // Target Destroyed (Arg: Target ID)
-    REP_DEFENDING, // Defensive Maneuver (Arg: Threat Type)
+    REP_ENGAGED,     // Engaging Target (Arg: Target ID)
+    REP_SPLASH,      // Target Destroyed (Arg: Target ID)
+    REP_DEFENDING,   // Defensive Maneuver (Arg: Threat Type)
 
     // 4. Mission Progress
     REP_ON_STATION, // Arrived at station
@@ -41,18 +41,20 @@ enum class CommMsgType {
     ACK_UNABLE = REP_UNABLE,
     ACK_CANT_DO = REP_CANT_DO,
 
-    // 6. Python Binding Compatibility
-    ReportContact,
+    // 6. Python Binding Compatibility. Keep these values explicit: the
+    // original implicit sequence collided with the maintained status/tactical
+    // values above, making typed message arguments impossible to decode.
+    ReportContact = 100,
     ReportTrack = ReportContact,
-    AssignTask,
-    StatusUpdate,
-    RequestSupport,
+    AssignTask = 101,
+    StatusUpdate = 102,
+    RequestSupport = 103,
 
     // 7. Two-ship / formation status extensions
-    REP_JOINED,      // Joined assigned formation slot
-    REP_REJOINING,   // Rejoin maneuver in progress
-    REP_FORM_LOST,   // Lost formation reference
-    REP_UNABLE_FORM, // Unable to establish/maintain formation
-    REP_SUPPORTING,  // Supporting lead / assigned element
-    WARN_SEPARATION  // Unsafe closure / separation alert
+    REP_JOINED = 104,      // Joined assigned formation slot
+    REP_REJOINING = 105,   // Rejoin maneuver in progress
+    REP_FORM_LOST = 106,   // Lost formation reference
+    REP_UNABLE_FORM = 107, // Unable to establish/maintain formation
+    REP_SUPPORTING = 108,  // Supporting lead / assigned element
+    WARN_SEPARATION = 109  // Unsafe closure / separation alert
 };

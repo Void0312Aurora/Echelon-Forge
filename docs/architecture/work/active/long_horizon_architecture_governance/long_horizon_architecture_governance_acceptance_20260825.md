@@ -1,9 +1,12 @@
 # Long-Horizon Architecture Governance Acceptance Contract
 
 Status: `2026-08-27` acceptance contract established; P0 authority/baseline,
-P1 target decisions, and P3-A/P3-B/P3-C contract, authority, ledger and
-compatibility foundations are accepted, while the overall program remains
-`not accepted` because P2-A/P2-B and P4-P8 are not complete.
+P1 target decisions, P3-A/P3-B/P3-C contract, authority, ledger and
+compatibility foundations, and the P4-A dark/shadow host lifecycle are
+accepted, while the overall program remains `not accepted` because P2-A/P2-B,
+P4-B/P4-C and P5-P8 are not complete. The subordinate [P4-B remediation route](p4b_remediation_route_20260830.md)
+is implementation guidance only; this acceptance contract remains the release
+authority and cannot be replaced by that route.
 
 Parent subproject: [Long-Horizon Architecture Governance](README.md)
 
@@ -210,6 +213,22 @@ production cutover. P4 may consume it only for dark/shadow candidate work;
 P5-B and P5-D retain the production gates.
 
 ### P4 Host Lifecycle And Immutable Kernel
+
+#### P4-A Dark/Shadow Host Lifecycle — Accepted
+
+P4-A is accepted after an independent `gpt-5.6-sol` max final confirmation.
+The accepted slice is limited to a non-production host candidate with one-CAS
+publication/unpublish, host/object and incarnation fencing, bounded candidate
+deadlines, cooperative cancellation, quarantine/reclamation, orphan ownership,
+joint lease/result linearization, terminal shutdown, active-fault drain and
+timeout CAS-loss retry. Fresh Windows/MSVC native evidence is `22/22` cases and
+`706/706` assertions; focused CTest is `2/2`, the candidate architecture
+contract is `3 passed`, and adjacent authority/ledger contracts are `31 passed`.
+
+P4-A has no production mode and does not accept state-complete transfer, a
+versioned native episode handshake, an immutable candidate kernel seam,
+production packaging, caller migration or production cutover. Those remain
+P4-B/P4-C and P5 obligations.
 
 - the host state machine constructs, validates, quiesces the old truth,
   proves final transfer commit, boots from absent, recovers only from admitted
