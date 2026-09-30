@@ -908,6 +908,7 @@ set(EF_TEST_SOURCES
     src/tests/test_content_compile_passes.cpp
     src/tests/test_aero_physics_common.cpp
     src/tests/test_geodesy.cpp
+    src/tests/test_ground_contact_solver.cpp
     src/tests/test_world_cv_alpha_beta_tracker.cpp
     src/tests/test_kalman_seeker.cpp
     src/tests/test_structural_failure_system.cpp
