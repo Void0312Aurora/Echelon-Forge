@@ -1,4 +1,5 @@
 #include "simulation_kernel.h"
+#include "state_transfer_component_reflection.h"
 
 #include "components/physics/instruments.h"
 #include "core/interfaces/acoustic_model.h"
@@ -60,6 +61,14 @@ void SimulationKernel::ensure_active(const char *operation) const {
         throw std::logic_error(std::string("SimulationKernel::") + operation +
                                " cannot be used after shutdown");
     }
+}
+
+void SimulationKernel::ensure_state_transfer_component_reflection() {
+    if (state_transfer_reflection_registered_) {
+        return;
+    }
+    register_state_transfer_component_reflection(ecs);
+    state_transfer_reflection_registered_ = true;
 }
 
 void SimulationKernel::shutdown() {

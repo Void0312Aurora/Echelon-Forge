@@ -1,6 +1,5 @@
 #include "simulation_kernel.h"
 #include "simulation_kernel_engagement_event_store.h"
-#include "state_transfer_component_reflection.h"
 
 #include "components/combat/scoring.h"
 #include "components/combat/structural_failure.h"
@@ -67,14 +66,6 @@ void SimulationKernel::register_components_and_systems() {
     // Cordis package can request contributions, but cannot turn package order
     // into Flecs execution order or install a private pipeline.
     runtime::systems::register_default_system_contributions(ecs);
-}
-
-void SimulationKernel::ensure_state_transfer_component_reflection() {
-    if (state_transfer_reflection_registered_) {
-        return;
-    }
-    register_state_transfer_component_reflection(ecs);
-    state_transfer_reflection_registered_ = true;
 }
 
 std::string SimulationKernel::executable_composition_graph_sha256() const {

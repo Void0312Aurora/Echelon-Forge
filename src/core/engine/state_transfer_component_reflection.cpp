@@ -159,7 +159,6 @@ void register_nested_value_reflection(flecs::world &ecs) {
         .member<bool>("iff_known")
         .member<double>("classification_confidence");
 
-    ecs.component<std::vector<CommPacket>>().opaque(vector_support<CommPacket>);
     ecs.component<std::vector<Detection>>().opaque(vector_support<Detection>);
     ecs.component<std::vector<EmitterDetection>>().opaque(vector_support<EmitterDetection>);
     ecs.component<std::vector<WeaponStation>>().opaque(vector_support<WeaponStation>);
