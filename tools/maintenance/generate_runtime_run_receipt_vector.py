@@ -128,6 +128,10 @@ def build_sample_run_receipt(
   # The supported release row is a contract identity rather than the verbose
   # Python compiler banner returned by platform.python_compiler().
   value["platform"]["compiler"] = "msvc"
+  # The cross-language vector is a checked-in contract fixture.  Keep the
+  # platform row architecture-level and independent of the host CPU model
+  # reported by the generator's workstation or CI runner.
+  value["platform"]["cpu"] = "x64"
   value["inputs"] = {
     **value["inputs"], "artifacts": measured["inputs"]["artifacts"],
   }
