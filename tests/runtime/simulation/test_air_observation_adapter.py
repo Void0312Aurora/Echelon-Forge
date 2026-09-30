@@ -1,0 +1,100 @@
+from __future__ import annotations
+
+from types import SimpleNamespace
+
+import numpy as np
+
+from python.mission_obs_taxonomy import mission_observation_field_index
+from python.simulation.air.observation import (
+    AIR_SCRIPTED_MISSION_MODE,
+    build_air_contact_matrix,
+    build_air_instrument_vector,
+    build_air_mission_vector,
+    build_air_scripted_observation,
+)
+
+
+def _instrument() -> SimpleNamespace:
+    return SimpleNamespace(
+        ias=180.0,
+        mach=0.55,
+        alt_baro=1200.0,
+        alt_radar=1195.0,
+        vvi=2.0,
+        aoa=4.0,
+        beta=0.1,
+        pitch=3.0,
+        roll=-2.0,
+        heading=90.0,
+        g_load=1.0,
+        g_load_axial=0.0,
+        p=0.1,
+        q=0.2,
+        r=0.3,
+        engine_rpm=80.0,
+        fuel_internal=1000.0,
+        fuel_external=100.0,
+        fuel_flow=4.0,
+        gear_pos=1.0,
+        flaps_pos=0.2,
+        speedbrake_pos=0.0,
+        cmd_heading=90.0,
+        cmd_alt=1500.0,
+        cmd_speed=200.0,
+        lat=1.0,
+        lon=2.0,
+        vn=0.0,
+        ve=180.0,
+        vd=0.0,
+        ground_speed=180.0,
+        ground_track=90.0,
+        wind_speed=5.0,
+        wind_dir=270.0,
+        oat=15.0,
+        gps_available=True,
+        position_uncertainty=10.0,
+        rwr_active=False,
+        missiles_remaining=4,
+    )
+
+
+def test_air_observation_projection_keeps_named_instrument_and_mission_fields() -> None:
+    command = SimpleNamespace(
+        shared_core=SimpleNamespace(
+            command_code=1,
+            cmd_heading_deg=90.0,
+            cmd_altitude_m=1500.0,
+            cmd_speed_mps=200.0,
+            roe_state=2,
+            authorization_to_fire=True,
+            assigned_target_id=42,
+        ),
+        air_takeoff=SimpleNamespace(
+            takeoff_procedure_id=3,
+            takeoff_clearance_id=4,
+            takeoff_interval_s=12.0,
+            runway_slot_id=5,
+        ),
+    )
+    vector = build_air_instrument_vector(_instrument(), ils=(1.0, 2.0, 3.0, 4.0))
+    mission = build_air_mission_vector(command)
+
+    assert vector.shape == (42,)
+    assert np.allclose(vector[[0, 3, 9, 37, 38, 39, 40, 41]], [180.0, 1195.0, 90.0, 4.0, 1.0, 2.0, 3.0, 4.0])
+    assert mission[mission_observation_field_index(AIR_SCRIPTED_MISSION_MODE, "command_code")] == 1.0
+    assert mission[mission_observation_field_index(AIR_SCRIPTED_MISSION_MODE, "target_altitude_m")] == 1500.0
+    assert mission[mission_observation_field_index(AIR_SCRIPTED_MISSION_MODE, "takeoff_clearance_code")] == 4.0
+
+
+def test_air_observation_projection_pads_native_contacts_and_rwr() -> None:
+    observation = SimpleNamespace(
+        contacts=[SimpleNamespace(range=12000.0, azimuth=4.0, elevation=-1.0, closing_speed=100.0, time_since_update=0.5)],
+        rwr_warnings=[SimpleNamespace(bearing=-20.0, signal_strength=0.8, is_lock=True, is_launch=False)],
+    )
+    projected = build_air_scripted_observation(observation, _instrument(), None)
+
+    assert projected["contacts"].shape == (8, 5)
+    assert projected["rwr"].shape == (8, 4)
+    assert np.allclose(projected["contacts"][0], [12000.0, 4.0, -1.0, 100.0, 0.5])
+    assert np.allclose(projected["rwr"][0], [-20.0, 0.8, 1.0, 0.0])
+    assert np.count_nonzero(projected["contacts"][1:]) == 0
