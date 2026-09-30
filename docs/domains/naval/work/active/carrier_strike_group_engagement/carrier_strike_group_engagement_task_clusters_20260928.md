@@ -161,7 +161,11 @@ Commit `48aa6eb4`: 461 lines of code and tests plus two scenario files.
   dt = 0.05 s but are thrown up by the first contact step at dt = 0.5 s (the
   MH-60R diverges). The aircraft are not driven by any policy or autopilot.
   (Corrected `2026-09-30`: an earlier version of this record said the flight
-  models lack a parked state; that was wrong.) Each hangar ship's own stowed
+  models lack a parked state; that was wrong.) Reason (2) is closed
+  `2026-09-30` by [Semi-Implicit Ground Contact](../../../../../systems/physics/reviews/semi_implicit_ground_contact_20260930/README.md)
+  (`systems/physics`): the same four airframes now hold still at dt 0.05, 0.2,
+  and 0.5 s. Reason (1), the deck surface, remains and keeps the inventory
+  form until `CSG-S2`. Each hangar ship's own stowed
   helicopter (`embarked_air_ops`) still spawns and is pinned by
   `EmbarkedAirOpsSystem`. `CSG-S2` consumes the inventory as the deck cycle's
   initial condition.

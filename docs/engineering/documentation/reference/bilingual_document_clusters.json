@@ -628,9 +628,9 @@
       "english": "docs/systems/README.md",
       "chinese": "docs/systems/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-09-28",
-      "english_hash": "7ebc6cb74a380d099eb7812fb250e63ffb8904efaf0eabca6cac0bb8cb5f9c0a",
-      "chinese_hash": "a1c0b30c085e0c8c7287c1b51796922cd2f9fe5e927feff704333742a1f2bf16"
+      "last_verified": "2026-09-30",
+      "english_hash": "1c890d3b20796e4123e80c1fe1355de3553e58f53af2d01cc234f617dfd828be",
+      "chinese_hash": "4c7a6dd8a95c1df8de42bddea2808f8820c7f01a795c47d2d159aed070e6a54e"
     },
     {
       "pair_id": "systems/command-tasking/reference/agency_authority_census_20260721",
