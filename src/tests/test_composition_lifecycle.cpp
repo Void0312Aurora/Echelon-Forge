@@ -622,7 +622,7 @@ TEST_SUITE("composition_lifecycle") {
         REQUIRE(requested.ok());
         CHECK(requested.value().providers.size() == 11);
         CHECK(requested.value().component_contributions.size() == 87);
-        CHECK(requested.value().system_contributions.size() == 34);
+        CHECK(requested.value().system_contributions.size() == 35);
 
         std::string requested_with_extra_field = requested_fixture;
         const std::string schema_version = "\"schema_version\":";
@@ -644,9 +644,9 @@ TEST_SUITE("composition_lifecycle") {
         auto resolved = std::move(parsed).value();
         CHECK(resolved.manifest.providers.size() == 11);
         CHECK(resolved.manifest.component_contributions.size() == 87);
-        CHECK(resolved.manifest.system_contributions.size() == 34);
+        CHECK(resolved.manifest.system_contributions.size() == 35);
         CHECK(resolved.provider_construction_order.size() == 11);
-        CHECK(resolved.system_registration_order.size() == 34);
+        CHECK(resolved.system_registration_order.size() == 35);
 
         composition::ProviderCatalog catalog;
         for (const auto &provider_descriptor : resolved.manifest.providers) {
