@@ -204,8 +204,9 @@ TEST_SUITE("simulation_kernel_smoke") {
             SimulationKernel kernel;
             mutate(kernel);
             std::string error;
-            CHECK_FALSE(SimulationKernelCompositionTestAccess::rebuild_world_composition_for_testing(
-                kernel, "world_rebuild", &error));
+            CHECK_FALSE(
+                SimulationKernelCompositionTestAccess::rebuild_world_composition_for_testing(
+                    kernel, "world_rebuild", &error));
             CHECK(error.find("world state has been mutated") != std::string::npos);
             CHECK(kernel.world_composition_generation() == 1);
         };
@@ -248,8 +249,10 @@ TEST_SUITE("simulation_kernel_smoke") {
                 std::string error;
                 results[index] =
                     SimulationKernelCompositionTestAccess::rebuild_world_composition_for_testing(
-                        kernel, "world_rebuild", &error) && error.empty() ? 1
-                                                                                               : -1;
+                        kernel, "world_rebuild", &error) &&
+                            error.empty()
+                        ? 1
+                        : -1;
             });
         }
         for (auto &worker : workers) {

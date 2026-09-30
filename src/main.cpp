@@ -50,6 +50,6 @@ int main() {
                          observation.y, observation.z);
         }
     }
-    
+
     return 0;
 }
