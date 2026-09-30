@@ -147,8 +147,8 @@ bool resolve_default_effects_domain_platform_consequences(
         // ground consequence path is a no-op when neither is present.
         return ground::effects::resolve_default_effects_ground_domain_consequences(
             scratch, target_entity, missile, true, hitboxes, local_imp, severity, warhead_effects,
-            platform_damage,
-            ground_damage != nullptr ? ground_damage : domain_target.ground_damage, hp);
+            platform_damage, ground_damage != nullptr ? ground_damage : domain_target.ground_damage,
+            hp);
     case DefaultEffectsTargetDomain::GroundPlaceholder:
         return ground::effects::resolve_default_effects_ground_placeholder_consequences(
             target_entity, platform_damage, hp);
