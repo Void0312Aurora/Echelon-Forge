@@ -13,20 +13,31 @@ from python.runtime_bootstrap import resolve_repo_path
 
 
 CSG_REPLAY_SCHEMA = "csg.s0.replay.v1"
-_CSG_REPLAY_TYPE_NAMES = {
-    1: "Aircraft",
-    2: "Ship",
-    3: "Missile",
-    4: "Facility",
-    5: "C2Node",
-    6: "Sensor",
-    7: "Engine",
-    8: "EWSuite",
-    9: "RCSProfile",
-    10: "Submarine",
-    11: "Ground",
-}
-_CSG_REPLAY_SIDE_NAMES = {1: "Blue", 2: "Red", 0: "Neutral"}
+def _csg_replay_platform_type(platform_type: str) -> str:
+    """Project the catalog type into the stable visualization category."""
+    lowered = platform_type.lower()
+    if any(token in lowered for token in ("submarine", "ssn", "type093")):
+        return "Submarine"
+    if any(
+        token in lowered
+        for token in (
+            "aircraft",
+            "fa-",
+            "f-35",
+            "j-15",
+            "j-35",
+            "e-2",
+            "ea-18",
+            "mh-",
+            "c-2",
+            "cmv-",
+            "kj-600",
+            "gj-21",
+            "z-20",
+        )
+    ):
+        return "Aircraft"
+    return "Ship"
 
 
 def _csg_replay_unit_frame(sim, loader) -> list[dict[str, Any]]:
@@ -38,57 +49,42 @@ def _csg_replay_unit_frame(sim, loader) -> list[dict[str, Any]]:
         for item in raw_entities
         if isinstance(item, dict) and str(item.get("name", "")).strip()
     }
-    explicit_by_id = {int(entity_id): str(name) for name, entity_id in loader.entities.items()}
-    csg_groups = {}
     try:
         groups = loader._compiled_runtime_metadata.meta_config.get("csg", {}).get("groups", [])
     except Exception:
         groups = []
-    for group in groups if isinstance(groups, list) else []:
-        if isinstance(group, dict):
-            csg_groups[str(group.get("side", "Unknown"))] = str(group.get("group_id", "CSG"))
 
-    runtime_units = sorted(list(sim.get_all_units()), key=lambda unit: int(unit.id))
-    aircraft_ordinals: dict[str, int] = {}
     out: list[dict[str, Any]] = []
-    for unit in runtime_units:
-        entity_id = int(unit.id)
-        side_code = int(unit.side)
-        type_code = int(unit.type)
-        side = _CSG_REPLAY_SIDE_NAMES.get(side_code, f"Side{side_code}")
-        unit_type = _CSG_REPLAY_TYPE_NAMES.get(type_code, f"UnitType{type_code}")
-        name = explicit_by_id.get(entity_id)
-        config = config_by_name.get(name or "", {})
-        if not name:
-            if unit_type == "Aircraft":
-                ordinal = aircraft_ordinals.get(side, 0) + 1
-                aircraft_ordinals[side] = ordinal
-                group_id = csg_groups.get(side, f"{side.upper()}_CSG")
-                name = f"{group_id}__stowed_aircraft_{ordinal:02d}"
-            else:
-                name = f"{side.lower()}__runtime_{entity_id}"
-        try:
-            velocity = tuple(float(value) for value in sim.get_unit_velocity(entity_id))
+    physical_names_by_member: dict[tuple[str, str], list[str]] = {}
+    for name in loader.entities:
+        config = config_by_name.get(str(name), {})
+        csg_member = config.get("csg_member", {})
+        if isinstance(csg_member, dict):
+            key = (str(csg_member.get("group_id", "")), str(csg_member.get("member_id", "")))
+            physical_names_by_member.setdefault(key, []).append(str(name))
+
+    def append_unit(entity_id: int, name: str, config: dict[str, Any], observation: Any) -> None:
+        platform_type = str(config.get("type", ""))
+        unit_type = _csg_replay_platform_type(platform_type)
+        side = str(config.get("side", "Unknown"))
+        velocity = tuple(float(getattr(observation, axis, 0.0)) for axis in ("vx", "vy", "vz"))
+        speed = float(getattr(observation, "speed", 0.0))
+        if not math.isfinite(speed):
             speed = math.sqrt(sum(value * value for value in velocity))
-        except Exception:
-            speed = float(getattr(unit, "speed", 0.0))
-        try:
-            health = float(sim.get_unit_health(entity_id))
-        except Exception:
-            health = float(getattr(unit, "health", 100.0))
+        health = float(getattr(observation, "health", 100.0))
         out.append(
             {
                 "id": entity_id,
                 "name": str(name),
                 "side": side,
                 "type": unit_type,
-                "platform_type": str(config.get("type", unit_type)),
+                "platform_type": platform_type or unit_type,
                 "echelon": "platform",
                 "service_profile": "BlueAir" if side == "Blue" and unit_type == "Aircraft" else "RedAir" if side == "Red" and unit_type == "Aircraft" else "",
-                "x": float(unit.x),
-                "y": float(unit.y),
-                "z": float(unit.z),
-                "heading": float(getattr(unit, "heading", 0.0)),
+                "x": float(getattr(observation, "x", 0.0)),
+                "y": float(getattr(observation, "y", 0.0)),
+                "z": float(getattr(observation, "z", 0.0)),
+                "heading": float(getattr(observation, "heading", 0.0)),
                 "pitch": 0.0,
                 "roll": 0.0,
                 "speed": speed,
@@ -99,13 +95,47 @@ def _csg_replay_unit_frame(sim, loader) -> list[dict[str, Any]]:
                 "is_active": True,
             }
         )
+
+    for entity_id, name in sorted(
+        ((int(entity_id), str(name)) for name, entity_id in loader.entities.items()),
+        key=lambda item: item[0],
+    ):
+        config = config_by_name.get(name, {})
+        observation = sim.get_agent_observation(entity_id)
+        append_unit(entity_id, name, config, observation)
+
+    # The facade setup path keeps embarked inventories as metadata at S0. Keep
+    # their stable spectator presence by projecting one stowed aircraft per
+    # active host, colocated with the host until a future deck-cycle phase.
+    virtual_id = -1
+    virtual_hosts: dict[str, tuple[str, dict[str, Any]]] = {}
+    for group in groups if isinstance(groups, list) else []:
+        if not isinstance(group, dict):
+            continue
+        group_id = str(group.get("group_id", ""))
+        side = str(group.get("side", "Unknown"))
+        for inventory in group.get("embarked_inventory", []):
+            if not isinstance(inventory, dict) or int(inventory.get("count", 0)) <= 0:
+                continue
+            member_id = str(inventory.get("embarked_on", ""))
+            for host_name in physical_names_by_member.get((group_id, member_id), []):
+                virtual_hosts.setdefault(
+                    host_name,
+                    (side, {"type": str(inventory.get("type", "Aircraft"))}),
+                )
+    for host_name, (side, config) in virtual_hosts.items():
+        host_id = int(loader.entities[host_name])
+        host_observation = sim.get_agent_observation(host_id)
+        virtual_name = f"{host_name}__stowed_aircraft"
+        config = {**config, "name": virtual_name, "side": side}
+        append_unit(virtual_id, virtual_name, config, host_observation)
+        virtual_id -= 1
     return out
 
 
 def capture_csg_replay(scenario_path: str, *, seed: int, max_steps: int | None = None) -> dict[str, Any]:
     """Run an agent-free CSG scenario and capture deterministic state frames."""
-    import ef_py
-    from gym_envs.scenario_loader import ScenarioLoader
+    from python.rl.runtime.world_batch.adapter import RuntimeFacadeAdapter
 
     scenario_abs = resolve_repo_path(scenario_path)
     with open(scenario_abs, "rb") as handle:
@@ -114,11 +144,11 @@ def capture_csg_replay(scenario_path: str, *, seed: int, max_steps: int | None =
         raw_scenario = json.load(handle)
 
     database = resolve_repo_path("examples", "config", "database")
-    sim = ef_py.SimulationKernel()
-    sim.reset(1)
-    if not sim.load_database(database):
+    adapter = RuntimeFacadeAdapter(1)
+    if not adapter.load_database(database):
         raise RuntimeError(f"database load failed for {scenario_abs}")
-    loader = ScenarioLoader(sim)
+    loader = adapter.make_scenario_loader(0)
+    sim = loader.sim
     if loader.load_scenario(scenario_abs, seed=int(seed)) is not None:
         raise RuntimeError(f"CSG replay scenario must remain agent-free: {scenario_abs}")
 
@@ -139,7 +169,14 @@ def capture_csg_replay(scenario_path: str, *, seed: int, max_steps: int | None =
                 "units": _csg_replay_unit_frame(sim, loader),
             }
         )
-    anchor = [float(value) for value in sim.get_geodetic_anchor()]
+    anchor_config = environment.get("geodetic_anchor", {})
+    if not isinstance(anchor_config, dict):
+        anchor_config = {}
+    anchor = [
+        float(anchor_config.get("latitude_deg", 0.0)),
+        float(anchor_config.get("longitude_deg", 0.0)),
+        float(anchor_config.get("height_m", 0.0)),
+    ]
     return {
         "schema": CSG_REPLAY_SCHEMA,
         "scenario": os.path.relpath(scenario_abs, os.getcwd()).replace("\\", "/"),
@@ -166,8 +203,7 @@ def iter_csg_spectator_frames(
     max_steps: int | None = None,
 ):
     """Yield native CSG state frames for a no-agent spectator session."""
-    import ef_py
-    from gym_envs.scenario_loader import ScenarioLoader
+    from python.rl.runtime.world_batch.adapter import RuntimeFacadeAdapter
 
     scenario_abs = resolve_repo_path(scenario_path)
     with open(scenario_abs, "r", encoding="utf-8") as handle:
@@ -180,11 +216,11 @@ def iter_csg_spectator_frames(
         raise ValueError("CSG spectator max_steps must be non-negative")
     time_step_s = float(environment.get("time_step", 0.5))
 
-    sim = ef_py.SimulationKernel()
-    sim.reset(1)
-    if not sim.load_database(resolve_repo_path("examples", "config", "database")):
+    adapter = RuntimeFacadeAdapter(1)
+    if not adapter.load_database(resolve_repo_path("examples", "config", "database")):
         raise RuntimeError(f"database load failed for {scenario_abs}")
-    loader = ScenarioLoader(sim)
+    loader = adapter.make_scenario_loader(0)
+    sim = loader.sim
     if loader.load_scenario(scenario_abs, seed=int(seed)) is not None:
         raise RuntimeError(f"CSG spectator scenario must remain agent-free: {scenario_abs}")
 
@@ -212,4 +248,3 @@ def write_csg_replay_artifact(
     output_abs.parent.mkdir(parents=True, exist_ok=True)
     output_abs.write_text(json.dumps(artifact, indent=2, sort_keys=False) + "\n", encoding="utf-8")
     return artifact
-
