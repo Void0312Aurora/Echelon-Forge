@@ -69,8 +69,9 @@ struct GroundMovementEffectObservation {
     double combined_multiplier = 0.0;
 };
 
-inline GroundMovementEffectObservation evaluate_movement_effects(
-    const IEnvironmentModel::TerrainCell &terrain, double slope_deg, GroundStance stance) {
+inline GroundMovementEffectObservation
+evaluate_movement_effects(const IEnvironmentModel::TerrainCell &terrain, double slope_deg,
+                          GroundStance stance) {
     GroundMovementEffectObservation observation;
     observation.surface = terrain.type;
     observation.slope_deg = slope_deg;
@@ -79,8 +80,9 @@ inline GroundMovementEffectObservation evaluate_movement_effects(
     observation.slope_multiplier = slope_speed_multiplier(slope_deg);
     observation.vegetation_multiplier = vegetation_speed_multiplier(terrain.vegetation_density);
     observation.stance_multiplier = stance_speed_multiplier(stance);
-    observation.combined_multiplier = observation.surface_multiplier * observation.slope_multiplier *
-                                      observation.vegetation_multiplier * observation.stance_multiplier;
+    observation.combined_multiplier =
+        observation.surface_multiplier * observation.slope_multiplier *
+        observation.vegetation_multiplier * observation.stance_multiplier;
     return observation;
 }
 
@@ -98,9 +100,9 @@ struct GroundTransitionMovementObservation {
 // cost semantics. Sample density comes from the segment geometry, not from the
 // provider's transition answer, so a provider without transition support still gets
 // a correctly sampled cost (its `transition` stays the provider default).
-inline GroundTransitionMovementObservation evaluate_transition_movement_effects(
-    IEnvironmentModel &environment, double from_x, double from_y, double to_x, double to_y,
-    GroundStance stance) {
+inline GroundTransitionMovementObservation
+evaluate_transition_movement_effects(IEnvironmentModel &environment, double from_x, double from_y,
+                                     double to_x, double to_y, GroundStance stance) {
     GroundTransitionMovementObservation observation;
     observation.transition =
         environment.get_ground_transition_observation(from_x, from_y, to_x, to_y);

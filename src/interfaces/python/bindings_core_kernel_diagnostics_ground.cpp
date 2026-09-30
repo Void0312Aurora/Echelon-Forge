@@ -14,11 +14,9 @@ void bind_simulation_kernel_diagnostics_ground_native_probe_surface(
     nb::class_<SimulationKernel> &kernel) {
     kernel
         .def("load_arnis_terrain_bundle", &SimulationKernel::load_arnis_terrain_bundle,
-             "Load a verified Arnis continuous raster bundle directory",
-             nb::arg("bundle_root"))
+             "Load a verified Arnis continuous raster bundle directory", nb::arg("bundle_root"))
         .def("load_arnis_field_overlay", &SimulationKernel::load_arnis_field_overlay,
-             "Load a metadata-only Arnis field overlay",
-             nb::arg("overlay_path"))
+             "Load a metadata-only Arnis field overlay", nb::arg("overlay_path"))
         .def(
             "get_ground_terrain_observation",
             [](SimulationKernel &self, double x, double y) {
@@ -33,8 +31,7 @@ void bind_simulation_kernel_diagnostics_ground_native_probe_surface(
         .def(
             "get_ground_movement_effect_observation",
             [](SimulationKernel &self, double x, double y, int stance_code) {
-                const auto sample =
-                    self.get_ground_movement_effect_observation(x, y, stance_code);
+                const auto sample = self.get_ground_movement_effect_observation(x, y, stance_code);
                 return std::make_tuple(sample[0], sample[1], sample[2], sample[3], sample[4],
                                        sample[5], sample[6], sample[7]);
             },
@@ -56,8 +53,8 @@ void bind_simulation_kernel_diagnostics_ground_native_probe_surface(
         .def(
             "get_ground_transition_observation",
             [](SimulationKernel &self, double from_x, double from_y, double to_x, double to_y) {
-                const auto sample = self.get_ground_transition_observation(from_x, from_y, to_x,
-                                                                             to_y);
+                const auto sample =
+                    self.get_ground_transition_observation(from_x, from_y, to_x, to_y);
                 return std::make_tuple(sample[0], sample[1], sample[2], sample[3], sample[4],
                                        sample[5], sample[6]);
             },

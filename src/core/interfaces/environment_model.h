@@ -35,14 +35,12 @@ class IEnvironmentModel {
     // decision.
     virtual double get_ground_slope_deg(double x, double y) {
         constexpr double kSampleHalfSpanM = 5.0;
-        const double east_gradient =
-            (get_terrain_elevation(x + kSampleHalfSpanM, y) -
-             get_terrain_elevation(x - kSampleHalfSpanM, y)) /
-            (2.0 * kSampleHalfSpanM);
-        const double north_gradient =
-            (get_terrain_elevation(x, y + kSampleHalfSpanM) -
-             get_terrain_elevation(x, y - kSampleHalfSpanM)) /
-            (2.0 * kSampleHalfSpanM);
+        const double east_gradient = (get_terrain_elevation(x + kSampleHalfSpanM, y) -
+                                      get_terrain_elevation(x - kSampleHalfSpanM, y)) /
+                                     (2.0 * kSampleHalfSpanM);
+        const double north_gradient = (get_terrain_elevation(x, y + kSampleHalfSpanM) -
+                                       get_terrain_elevation(x, y - kSampleHalfSpanM)) /
+                                      (2.0 * kSampleHalfSpanM);
         if (!std::isfinite(east_gradient) || !std::isfinite(north_gradient)) {
             return std::numeric_limits<double>::quiet_NaN();
         }
@@ -139,8 +137,10 @@ class IEnvironmentModel {
         return {};
     }
 
-    virtual GroundTransitionObservation
-    get_ground_transition_observation(double /*from_x*/, double /*from_y*/, double /*to_x*/, double /*to_y*/) {
+    virtual GroundTransitionObservation get_ground_transition_observation(double /*from_x*/,
+                                                                          double /*from_y*/,
+                                                                          double /*to_x*/,
+                                                                          double /*to_y*/) {
         return {};
     }
 
