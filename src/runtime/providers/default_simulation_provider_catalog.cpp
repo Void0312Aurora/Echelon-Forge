@@ -471,8 +471,7 @@ register_default_factories(composition::ProviderCatalog &catalog, SimulationKern
                     kWeaponReleaseProviderId, "weapon-release dependency is unavailable"));
             }
             auto service = make_simulation_kernel_weapon_release_service(
-                kernel, world, *unit_factory.try_get(), missile_tuning, rng,
-                *event_store.try_get(),
+                kernel, world, *unit_factory.try_get(), missile_tuning, rng, *event_store.try_get(),
                 *event_store.try_get(), *damage_bridge.try_get());
             IWeaponReleaseService *pointer = service.get();
             adopt_singleton_effect(context, world, &WeaponReleaseServiceRef::service, pointer,

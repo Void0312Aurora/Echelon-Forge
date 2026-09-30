@@ -17,7 +17,9 @@ constexpr std::uint64_t kFirstIncarnationEpoch = 1;
 constexpr std::size_t kMaxAdmittedShadowEpisodes = 4096;
 constexpr std::uint64_t kMaxWorldSlots = 64;
 
-RuntimeHostStatus success() { return {}; }
+RuntimeHostStatus success() {
+    return {};
+}
 
 RuntimeHostStatus failure(RuntimeHostError error, std::string detail) {
     return {.error = error, .detail = std::move(detail)};
@@ -28,8 +30,7 @@ bool is_lower_hex_sha256(const std::string &value) {
         return false;
     }
     return std::all_of(value.begin(), value.end(), [](unsigned char character) {
-        return (character >= '0' && character <= '9') ||
-               (character >= 'a' && character <= 'f');
+        return (character >= '0' && character <= '9') || (character >= 'a' && character <= 'f');
     });
 }
 
@@ -142,19 +143,14 @@ struct RuntimeHostSharedState {
     std::uint64_t shutdown_ticket = 0;
     std::uint64_t shutdown_deadline_tick = 0;
     std::uint64_t retired_incarnation_high_watermark = 0;
-    std::unordered_map<std::uint64_t, RuntimeAdmittedShadowEpisode>
-        admitted_shadow_episodes;
-    std::unordered_map<std::uint64_t, RuntimeWorldAuthorityRecord>
-        world_authority;
-    std::unordered_map<std::uint64_t,
-                       std::shared_ptr<RuntimeEpisodeCoordinatorCandidate>>
+    std::unordered_map<std::uint64_t, RuntimeAdmittedShadowEpisode> admitted_shadow_episodes;
+    std::unordered_map<std::uint64_t, RuntimeWorldAuthorityRecord> world_authority;
+    std::unordered_map<std::uint64_t, std::shared_ptr<RuntimeEpisodeCoordinatorCandidate>>
         world_coordinators;
     // Saved source routing used only while a failed replacement is retained
     // for durable owner-outcome recovery.
-    std::unordered_map<std::uint64_t, RuntimeWorldAuthorityRecord>
-        rollback_world_authority;
-    std::unordered_map<std::uint64_t,
-                       std::shared_ptr<RuntimeEpisodeCoordinatorCandidate>>
+    std::unordered_map<std::uint64_t, RuntimeWorldAuthorityRecord> rollback_world_authority;
+    std::unordered_map<std::uint64_t, std::shared_ptr<RuntimeEpisodeCoordinatorCandidate>>
         rollback_world_coordinators;
     std::atomic<std::size_t> state_transfers_in_flight{0};
     std::size_t native_episode_submissions_in_flight = 0;
@@ -205,62 +201,56 @@ struct RuntimeHostSlot {
 };
 
 using RuntimeCoordinatorMap =
-    std::unordered_map<std::uint64_t,
-                       std::shared_ptr<RuntimeEpisodeCoordinatorCandidate>>;
+    std::unordered_map<std::uint64_t, std::shared_ptr<RuntimeEpisodeCoordinatorCandidate>>;
 
 std::optional<RuntimeCoordinatorMap> build_world_coordinators(
     const RuntimeHostSlot &slot,
     const std::optional<RuntimeEpisodeCoordinatorSnapshot> &transferred = std::nullopt) noexcept {
     try {
         RuntimeCoordinatorMap built;
-        for (std::uint64_t world_slot = 0; world_slot < slot.world_slot_count;
-             ++world_slot) {
-        RuntimeEpisodeRef initial_episode{
-            .world = {.incarnation = slot.incarnation,
-                      .world_slot = world_slot,
-                      .world_generation = 1},
-            .episode_id = {.high = 0x4550462D434F4F52ULL,
-                           .low = world_slot + 1},
-            .episode_generation = 1};
-        std::uint64_t initial_step_sequence = 0;
-        std::uint64_t initial_barrier_sequence = 0;
-        RuntimeEpisodePhase initial_phase = RuntimeEpisodePhase::Running;
-        RuntimeIdentity128 initial_snapshot_id{
-            .high = 0x4550462D534E4150ULL, .low = world_slot + 1};
-        std::string initial_snapshot_sha256 =
-            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
-        if (transferred.has_value() &&
-            transferred->episode.world.world_slot == world_slot) {
-            initial_episode = transferred->episode;
-            initial_episode.world.incarnation = slot.incarnation;
-            initial_step_sequence = transferred->step_sequence;
-            initial_barrier_sequence = transferred->barrier_sequence;
-            // The source barrier proves a terminal episode, but its
-            // ReplacementBarrier phase belongs to the source-side capability
-            // and cannot be reconstructed on the fresh target coordinator.
-            // Preserve the terminal boundary and require an explicit reset
-            // before target actions are admitted.
-            initial_phase = transferred->phase == RuntimeEpisodePhase::ReplacementBarrier
-                                ? RuntimeEpisodePhase::Terminal
-                                : transferred->phase;
-            initial_snapshot_id = transferred->snapshot_id;
-            initial_snapshot_sha256 = transferred->snapshot_sha256;
-        }
-        auto created = RuntimeEpisodeCoordinatorCandidate::create({
-            .initial_episode = initial_episode,
-            .initial_phase = initial_phase,
-            .initial_snapshot_id = initial_snapshot_id,
-            .initial_snapshot_sha256 = initial_snapshot_sha256,
-            .initial_step_sequence = initial_step_sequence,
-            .initial_barrier_sequence = initial_barrier_sequence,
-        });
+        for (std::uint64_t world_slot = 0; world_slot < slot.world_slot_count; ++world_slot) {
+            RuntimeEpisodeRef initial_episode{
+                .world = {.incarnation = slot.incarnation,
+                          .world_slot = world_slot,
+                          .world_generation = 1},
+                .episode_id = {.high = 0x4550462D434F4F52ULL, .low = world_slot + 1},
+                .episode_generation = 1};
+            std::uint64_t initial_step_sequence = 0;
+            std::uint64_t initial_barrier_sequence = 0;
+            RuntimeEpisodePhase initial_phase = RuntimeEpisodePhase::Running;
+            RuntimeIdentity128 initial_snapshot_id{.high = 0x4550462D534E4150ULL,
+                                                   .low = world_slot + 1};
+            std::string initial_snapshot_sha256 =
+                "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+            if (transferred.has_value() && transferred->episode.world.world_slot == world_slot) {
+                initial_episode = transferred->episode;
+                initial_episode.world.incarnation = slot.incarnation;
+                initial_step_sequence = transferred->step_sequence;
+                initial_barrier_sequence = transferred->barrier_sequence;
+                // The source barrier proves a terminal episode, but its
+                // ReplacementBarrier phase belongs to the source-side capability
+                // and cannot be reconstructed on the fresh target coordinator.
+                // Preserve the terminal boundary and require an explicit reset
+                // before target actions are admitted.
+                initial_phase = transferred->phase == RuntimeEpisodePhase::ReplacementBarrier
+                                    ? RuntimeEpisodePhase::Terminal
+                                    : transferred->phase;
+                initial_snapshot_id = transferred->snapshot_id;
+                initial_snapshot_sha256 = transferred->snapshot_sha256;
+            }
+            auto created = RuntimeEpisodeCoordinatorCandidate::create({
+                .initial_episode = initial_episode,
+                .initial_phase = initial_phase,
+                .initial_snapshot_id = initial_snapshot_id,
+                .initial_snapshot_sha256 = initial_snapshot_sha256,
+                .initial_step_sequence = initial_step_sequence,
+                .initial_barrier_sequence = initial_barrier_sequence,
+            });
             if (!created.status || created.coordinator == nullptr) {
                 return std::nullopt;
             }
-            built.emplace(
-                world_slot,
-                std::shared_ptr<RuntimeEpisodeCoordinatorCandidate>(
-                    std::move(created.coordinator)));
+            built.emplace(world_slot, std::shared_ptr<RuntimeEpisodeCoordinatorCandidate>(
+                                          std::move(created.coordinator)));
         }
         return built;
     } catch (...) {
@@ -271,19 +261,16 @@ std::optional<RuntimeCoordinatorMap> build_world_coordinators(
     }
 }
 
-using RuntimeAuthorityMap =
-    std::unordered_map<std::uint64_t, RuntimeWorldAuthorityRecord>;
+using RuntimeAuthorityMap = std::unordered_map<std::uint64_t, RuntimeWorldAuthorityRecord>;
 
 std::optional<RuntimeAuthorityMap> build_world_authority(
     const RuntimeHostSlot &slot,
     const std::optional<RuntimeEpisodeCoordinatorSnapshot> &transferred = std::nullopt) noexcept {
     try {
         RuntimeAuthorityMap built;
-        for (std::uint64_t world_slot = 0; world_slot < slot.world_slot_count;
-             ++world_slot) {
+        for (std::uint64_t world_slot = 0; world_slot < slot.world_slot_count; ++world_slot) {
             const std::uint64_t world_generation =
-                transferred.has_value() &&
-                        transferred->episode.world.world_slot == world_slot
+                transferred.has_value() && transferred->episode.world.world_slot == world_slot
                     ? transferred->episode.world.world_generation
                     : 1;
             built.emplace(world_slot,
@@ -297,12 +284,10 @@ std::optional<RuntimeAuthorityMap> build_world_authority(
 
 struct RuntimeLeaseToken {
     RuntimeLeaseToken(std::shared_ptr<RuntimeHostSharedState> state_value,
-                      std::shared_ptr<RuntimeHostSlot> slot_value,
-                      RuntimeRequestRef request_value, RuntimeLeaseKind kind_value)
-        : state(std::move(state_value)),
-          slot(std::move(slot_value)),
-          request(std::move(request_value)),
-          lease_kind(kind_value) {}
+                      std::shared_ptr<RuntimeHostSlot> slot_value, RuntimeRequestRef request_value,
+                      RuntimeLeaseKind kind_value)
+        : state(std::move(state_value)), slot(std::move(slot_value)),
+          request(std::move(request_value)), lease_kind(kind_value) {}
 
     ~RuntimeLeaseToken();
 
@@ -369,10 +354,10 @@ void retain_orphan_state(const std::shared_ptr<RuntimeHostSharedState> &state) n
     try {
         HostOrphanRegistry &registry = orphan_registry();
         std::scoped_lock lock(registry.mutex, state->mutex);
-        const bool owns_resources =
-            state->active.load(std::memory_order_acquire) != nullptr ||
-            state->candidate != nullptr || state->draining != nullptr ||
-            state->shutdown_pending != nullptr || !state->quarantined.empty();
+        const bool owns_resources = state->active.load(std::memory_order_acquire) != nullptr ||
+                                    state->candidate != nullptr || state->draining != nullptr ||
+                                    state->shutdown_pending != nullptr ||
+                                    !state->quarantined.empty();
         if (!state->orphan_handoff_recorded && owns_resources) {
             state->orphan_handoff_recorded = true;
             registry.hosts.push_back(state);
@@ -468,8 +453,7 @@ void append_tombstone(RuntimeHostSharedState &state, const RuntimeHostSlot &slot
         return;
     }
     state.retired_incarnation_high_watermark =
-        std::max(state.retired_incarnation_high_watermark,
-                 slot.incarnation.incarnation_epoch);
+        std::max(state.retired_incarnation_high_watermark, slot.incarnation.incarnation_epoch);
     for (auto iterator = state.admitted_shadow_episodes.begin();
          iterator != state.admitted_shadow_episodes.end();) {
         if (same_slot(iterator->second.episode.world.incarnation, slot.incarnation)) {
@@ -487,7 +471,7 @@ bool is_quarantined(const RuntimeHostSharedState &state,
 }
 
 void retain_quarantine(RuntimeHostSharedState &state,
-                        const std::shared_ptr<RuntimeHostSlot> &slot) {
+                       const std::shared_ptr<RuntimeHostSlot> &slot) {
     if (slot == nullptr || is_quarantined(state, slot)) {
         return;
     }
@@ -505,20 +489,18 @@ bool reclaim_slot(RuntimeHostSharedState &state, std::unique_lock<std::mutex> &l
     if (slot == nullptr || !no_leases(*slot) ||
         state.state_transfers_in_flight.load(std::memory_order_acquire) != 0 ||
         state.native_episode_submissions_in_flight != 0 ||
-        slot->state == RuntimeSlotState::Retired ||
-        slot->state == RuntimeSlotState::Reclaiming) {
+        slot->state == RuntimeSlotState::Retired || slot->state == RuntimeSlotState::Reclaiming) {
         return false;
     }
     slot->state = RuntimeSlotState::Reclaiming;
     std::shared_ptr<RuntimeInstanceControl> control = slot->control;
-    std::shared_ptr<RuntimeStateTransferOwnerRegistry> owner_registry =
-        slot->owner_registry;
+    std::shared_ptr<RuntimeStateTransferOwnerRegistry> owner_registry = slot->owner_registry;
     slot->owner_registry.reset();
     lock.unlock();
     bool released = false;
     try {
-        released = control != nullptr && control->release_resources() &&
-                   control->resources_released();
+        released =
+            control != nullptr && control->release_resources() && control->resources_released();
     } catch (...) {
         released = false;
     }
@@ -549,8 +531,7 @@ void clear_slot_reference(RuntimeHostSharedState &state,
     if (state.draining == slot) {
         state.draining.reset();
     }
-    const auto quarantine =
-        std::find(state.quarantined.begin(), state.quarantined.end(), slot);
+    const auto quarantine = std::find(state.quarantined.begin(), state.quarantined.end(), slot);
     if (quarantine != state.quarantined.end()) {
         state.quarantined.erase(quarantine);
     }
@@ -570,10 +551,10 @@ void apply_pending_quiescence_rollback(RuntimeHostSharedState &state) {
     if (active == nullptr || candidate == nullptr) {
         return;
     }
-    const bool same_attempt =
-        state.host_state == RuntimeHostState::Active &&
-        state.active.load(std::memory_order_acquire) == active &&
-        state.candidate == candidate && active->state == RuntimeSlotState::Quiescing;
+    const bool same_attempt = state.host_state == RuntimeHostState::Active &&
+                              state.active.load(std::memory_order_acquire) == active &&
+                              state.candidate == candidate &&
+                              active->state == RuntimeSlotState::Quiescing;
     if (!same_attempt) {
         return;
     }
@@ -592,18 +573,15 @@ void apply_pending_quiescence_rollback(RuntimeHostSharedState &state) {
     active->final_transfer_fence_sequence = 0;
 }
 
-RuntimeHostStatus cancel_slot(RuntimeHostSharedState &state,
-                              std::unique_lock<std::mutex> &lock,
+RuntimeHostStatus cancel_slot(RuntimeHostSharedState &state, std::unique_lock<std::mutex> &lock,
                               const std::shared_ptr<RuntimeHostSlot> &slot);
 
-void abandon_transfer_outside_host_mutex(
-    std::unique_lock<std::mutex> &lock,
-    const std::shared_ptr<RuntimeHostSlot> &candidate) {
+void abandon_transfer_outside_host_mutex(std::unique_lock<std::mutex> &lock,
+                                         const std::shared_ptr<RuntimeHostSlot> &candidate) {
     if (candidate == nullptr) {
         return;
     }
-    RuntimeValidatedStateTransfer transfer =
-        std::move(candidate->validated_transfer);
+    RuntimeValidatedStateTransfer transfer = std::move(candidate->validated_transfer);
     lock.unlock();
     transfer.abandon();
     lock.lock();
@@ -645,8 +623,7 @@ RuntimeHostStatus fail_candidate(RuntimeHostSharedState &state, std::unique_lock
     return reason;
 }
 
-RuntimeHostStatus cancel_slot(RuntimeHostSharedState &state,
-                              std::unique_lock<std::mutex> &lock,
+RuntimeHostStatus cancel_slot(RuntimeHostSharedState &state, std::unique_lock<std::mutex> &lock,
                               const std::shared_ptr<RuntimeHostSlot> &slot) {
     (void)state;
     if (slot == nullptr || slot->control == nullptr || slot->cancellation_acknowledged) {
@@ -668,10 +645,9 @@ RuntimeHostStatus cancel_slot(RuntimeHostSharedState &state,
     lock.lock();
     slot->cancellation_in_progress = false;
     slot->cancellation_acknowledged = acknowledged;
-    return acknowledged
-               ? success()
-               : failure(RuntimeHostError::CancellationPending,
-                         "cooperative cancellation was not acknowledged");
+    return acknowledged ? success()
+                        : failure(RuntimeHostError::CancellationPending,
+                                  "cooperative cancellation was not acknowledged");
 }
 
 RuntimeHostStatus move_to_quarantine(RuntimeHostSharedState &state,
@@ -691,16 +667,14 @@ RuntimeHostStatus compare_exchange_active(RuntimeHostSharedState &state,
                                           std::shared_ptr<RuntimeHostSlot> desired,
                                           bool injected_loss) {
     if (state.last_publication_ticket == std::numeric_limits<std::uint64_t>::max()) {
-        return failure(RuntimeHostError::TicketExhausted,
-                       "publication ticket sequence exhausted");
+        return failure(RuntimeHostError::TicketExhausted, "publication ticket sequence exhausted");
     }
     if (injected_loss) {
         return failure(RuntimeHostError::PublicationRaceLost,
                        "publication compare-and-swap loss was injected");
     }
-    if (!state.active.compare_exchange_strong(expected, std::move(desired),
-                                              std::memory_order_acq_rel,
-                                              std::memory_order_acquire)) {
+    if (!state.active.compare_exchange_strong(
+            expected, std::move(desired), std::memory_order_acq_rel, std::memory_order_acquire)) {
         return failure(RuntimeHostError::PublicationRaceLost,
                        "active-slot compare-and-swap lost its expected value");
     }
@@ -746,26 +720,25 @@ RuntimeHostStatus settle_candidate_at_deadline(RuntimeHostSharedState &state,
 
 RuntimeHostStatus progress_candidate_deadline(RuntimeHostSharedState &state,
                                               std::unique_lock<std::mutex> &lock,
-                                              std::uint64_t now_tick,
-                                              bool injected_loss) {
+                                              std::uint64_t now_tick, bool injected_loss) {
     if (state.candidate == nullptr || state.candidate->lifecycle_deadline_tick == 0 ||
         now_tick < state.candidate->lifecycle_deadline_tick) {
         return success();
     }
     if (state.native_episode_submissions_in_flight != 0 ||
         state.state_transfers_in_flight.load(std::memory_order_acquire) != 0) {
-        return failure(RuntimeHostError::CandidateBusy,
-                       "candidate deadline cannot retire a slot with native or state-transfer work in flight");
+        return failure(
+            RuntimeHostError::CandidateBusy,
+            "candidate deadline cannot retire a slot with native or state-transfer work in flight");
     }
-    const std::shared_ptr<RuntimeHostSlot> old =
-        state.active.load(std::memory_order_acquire);
+    const std::shared_ptr<RuntimeHostSlot> old = state.active.load(std::memory_order_acquire);
     if (old != nullptr && old->state == RuntimeSlotState::Publishing) {
         return failure(RuntimeHostError::CandidateBusy,
                        "candidate deadline cannot interrupt target import publication");
     }
-    const RuntimeHostStatus timeout = failure(
-        RuntimeHostError::LifecycleDeadlineExpired,
-        "candidate lifecycle deadline expired before publication");
+    const RuntimeHostStatus timeout =
+        failure(RuntimeHostError::LifecycleDeadlineExpired,
+                "candidate lifecycle deadline expired before publication");
     if (old == nullptr) {
         return settle_candidate_at_deadline(state, lock, timeout);
     }
@@ -788,8 +761,8 @@ RuntimeHostStatus progress_candidate_deadline(RuntimeHostSharedState &state,
     }
 
     std::shared_ptr<RuntimeHostSlot> expected = old;
-    const RuntimeHostStatus unpublished = compare_exchange_active(
-        state, expected, {}, injected_loss);
+    const RuntimeHostStatus unpublished =
+        compare_exchange_active(state, expected, {}, injected_loss);
     if (!unpublished) {
         return unpublished;
     }
@@ -798,9 +771,9 @@ RuntimeHostStatus progress_candidate_deadline(RuntimeHostSharedState &state,
     old->state = RuntimeSlotState::Quarantined;
     retain_quarantine(state, old);
 
-    const RuntimeHostStatus terminal_timeout = failure(
-        RuntimeHostError::QuarantineUnresolved,
-        "quiesce deadline expired with a live truth lease; host is fail-stopped");
+    const RuntimeHostStatus terminal_timeout =
+        failure(RuntimeHostError::QuarantineUnresolved,
+                "quiesce deadline expired with a live truth lease; host is fail-stopped");
     state.host_state = RuntimeHostState::FailStopped;
     (void)settle_candidate_at_deadline(state, lock, terminal_timeout);
     return terminal_timeout;
@@ -808,13 +781,11 @@ RuntimeHostStatus progress_candidate_deadline(RuntimeHostSharedState &state,
 
 RuntimeHostStatus progress_fault_deadline(RuntimeHostSharedState &state,
                                           std::unique_lock<std::mutex> &lock,
-                                          std::uint64_t now_tick,
-                                          bool injected_loss) {
+                                          std::uint64_t now_tick, bool injected_loss) {
     if (state.host_state != RuntimeHostState::Faulted) {
         return success();
     }
-    const std::shared_ptr<RuntimeHostSlot> faulted =
-        state.active.load(std::memory_order_acquire);
+    const std::shared_ptr<RuntimeHostSlot> faulted = state.active.load(std::memory_order_acquire);
     if (faulted == nullptr || faulted->state != RuntimeSlotState::ActiveFaulted ||
         now_tick < faulted->drain_deadline_tick) {
         return success();
@@ -824,17 +795,16 @@ RuntimeHostStatus progress_fault_deadline(RuntimeHostSharedState &state,
                        "fault deadline is waiting for native episode submissions to settle");
     }
     state.host_state = RuntimeHostState::FailStopped;
-    const RuntimeHostStatus terminal = failure(
-        RuntimeHostError::HostTerminal,
-        "fault deadline expired; host is fail-stopped");
+    const RuntimeHostStatus terminal =
+        failure(RuntimeHostError::HostTerminal, "fault deadline expired; host is fail-stopped");
     if (state.candidate != nullptr) {
         (void)settle_candidate_at_deadline(state, lock, terminal);
     }
     const RuntimeHostStatus cancellation = cancel_slot(state, lock, faulted);
     (void)cancellation;
     std::shared_ptr<RuntimeHostSlot> expected = faulted;
-    const RuntimeHostStatus unpublished = compare_exchange_active(
-        state, expected, {}, injected_loss);
+    const RuntimeHostStatus unpublished =
+        compare_exchange_active(state, expected, {}, injected_loss);
     if (!unpublished) {
         state.host_state = RuntimeHostState::Faulted;
         return unpublished;
@@ -850,8 +820,8 @@ RuntimeHostStatus progress_fault_deadline(RuntimeHostSharedState &state,
     return terminal;
 }
 
-RuntimeHostStatus progress_shutdown(RuntimeHostSharedState &state, std::unique_lock<std::mutex> &lock,
-                                     std::uint64_t now_tick) {
+RuntimeHostStatus progress_shutdown(RuntimeHostSharedState &state,
+                                    std::unique_lock<std::mutex> &lock, std::uint64_t now_tick) {
     if (state.host_state != RuntimeHostState::ShuttingDown) {
         return success();
     }
@@ -864,12 +834,12 @@ RuntimeHostStatus progress_shutdown(RuntimeHostSharedState &state, std::unique_l
         active != nullptr && active->state == RuntimeSlotState::ShuttingDown) {
         if (state.native_episode_submissions_in_flight != 0 ||
             state.state_transfers_in_flight.load(std::memory_order_acquire) != 0) {
-            return failure(RuntimeHostError::ShutdownPending,
-                           "shutdown is waiting for native episode or state-transfer work to settle");
+            return failure(
+                RuntimeHostError::ShutdownPending,
+                "shutdown is waiting for native episode or state-transfer work to settle");
         }
         std::shared_ptr<RuntimeHostSlot> expected = active;
-        const RuntimeHostStatus unpublished =
-            compare_exchange_active(state, expected, {}, false);
+        const RuntimeHostStatus unpublished = compare_exchange_active(state, expected, {}, false);
         if (!unpublished) {
             return unpublished;
         }
@@ -967,8 +937,7 @@ RuntimeHostStatus progress_shutdown(RuntimeHostSharedState &state, std::unique_l
     }
 
     if (state.draining == nullptr && state.shutdown_pending == nullptr &&
-        state.quarantined.empty() &&
-        state.active.load(std::memory_order_acquire) == nullptr &&
+        state.quarantined.empty() && state.active.load(std::memory_order_acquire) == nullptr &&
         state.candidate == nullptr) {
         state.host_state = RuntimeHostState::Stopped;
         return success();
@@ -988,8 +957,7 @@ void release_lease_token(RuntimeLeaseToken &token) noexcept {
     try {
         std::unique_lock<std::mutex> lock(state->mutex);
         bool expected_active = true;
-        if (!token.active.compare_exchange_strong(expected_active, false,
-                                                  std::memory_order_acq_rel,
+        if (!token.active.compare_exchange_strong(expected_active, false, std::memory_order_acq_rel,
                                                   std::memory_order_acquire)) {
             return;
         }
@@ -1028,7 +996,9 @@ void release_lease_token(RuntimeLeaseToken &token) noexcept {
     }
 }
 
-RuntimeLeaseToken::~RuntimeLeaseToken() { release_lease_token(*this); }
+RuntimeLeaseToken::~RuntimeLeaseToken() {
+    release_lease_token(*this);
+}
 
 bool RuntimePlanBinding::well_formed() const noexcept {
     return !plan_id.empty() && is_lower_hex_sha256(plan_sha256);
@@ -1069,8 +1039,7 @@ void RuntimeInstanceLease::settle() noexcept {
 
 bool RuntimeShadowEpisodeCapability::valid() const noexcept {
     return host_.well_formed() && host_instance_nonce_.well_formed() &&
-           resource_identity_.well_formed() && episode_.well_formed() &&
-           capability_sequence_ != 0;
+           resource_identity_.well_formed() && episode_.well_formed() && capability_sequence_ != 0;
 }
 
 RuntimeEpisodeRef RuntimeShadowEpisodeCapability::episode() const noexcept {
@@ -1128,19 +1097,17 @@ RuntimeHostCandidate::~RuntimeHostCandidate() {
 
 bool RuntimeOwnerHandle::valid() const noexcept {
     return token_ != nullptr && token_->host.well_formed() &&
-           token_->host_instance_nonce.well_formed() &&
-           token_->resource_identity.well_formed() && token_->control != nullptr &&
-           token_->authenticator.well_formed() &&
-           !token_->consumed.load(std::memory_order_acquire) &&
-           !token_->issuer.expired();
+           token_->host_instance_nonce.well_formed() && token_->resource_identity.well_formed() &&
+           token_->control != nullptr && token_->authenticator.well_formed() &&
+           !token_->consumed.load(std::memory_order_acquire) && !token_->issuer.expired();
 }
 
 RuntimeIdentity128 RuntimeOwnerHandle::resource_identity() const noexcept {
     return token_ == nullptr ? RuntimeIdentity128{} : token_->resource_identity;
 }
 
-RuntimeOwnerHandle RuntimeHostCandidate::issue_owner_handle(
-    const std::shared_ptr<RuntimeInstanceControl> &control) {
+RuntimeOwnerHandle
+RuntimeHostCandidate::issue_owner_handle(const std::shared_ptr<RuntimeInstanceControl> &control) {
     const std::shared_ptr<RuntimeHostSharedState> state = state_;
     if (state == nullptr || control == nullptr) {
         return {};
@@ -1175,9 +1142,9 @@ RuntimeOwnerHandle RuntimeHostCandidate::issue_owner_handle(
     }
 }
 
-RuntimeOwnerHandle RuntimeHostCandidate::issue_owner_handle(
-    const std::shared_ptr<RuntimeInstanceControl> &control,
-    const RuntimeOwnerAdmissionBinding &binding) {
+RuntimeOwnerHandle
+RuntimeHostCandidate::issue_owner_handle(const std::shared_ptr<RuntimeInstanceControl> &control,
+                                         const RuntimeOwnerAdmissionBinding &binding) {
     if (!binding.plan.well_formed() || binding.world_slot_count > kMaxWorldSlots ||
         (binding.expected_slot.has_value() && !binding.expected_slot->well_formed())) {
         return {};
@@ -1191,14 +1158,15 @@ RuntimeOwnerHandle RuntimeHostCandidate::issue_owner_handle(
     return handle;
 }
 
-RuntimeCandidateBeginResult RuntimeHostCandidate::begin_candidate(
-    const RuntimeCandidateRequest &request, const RuntimeOwnerHandle &owner_handle) {
+RuntimeCandidateBeginResult
+RuntimeHostCandidate::begin_candidate(const RuntimeCandidateRequest &request,
+                                      const RuntimeOwnerHandle &owner_handle) {
     const std::shared_ptr<RuntimeHostSharedState> state = state_;
     const std::shared_ptr<RuntimeOwnerHandleToken> token = owner_handle.token_;
     if (state == nullptr || token == nullptr || token->issuer.lock() != state ||
         token->host != state->identity ||
-        token->host_instance_nonce != state->host_instance_nonce ||
-        token->control == nullptr || token->consumed.load(std::memory_order_acquire)) {
+        token->host_instance_nonce != state->host_instance_nonce || token->control == nullptr ||
+        token->consumed.load(std::memory_order_acquire)) {
         return {.status = failure(RuntimeHostError::InvalidArgument,
                                   "owner handle is stale, forged, or already consumed"),
                 .handle = {}};
@@ -1208,12 +1176,11 @@ RuntimeCandidateBeginResult RuntimeHostCandidate::begin_candidate(
                                   "owner handle resource identity drifted"),
                 .handle = {}};
     }
-    if (token->binding_present &&
-        (token->binding.transaction_kind != request.transaction_kind ||
-         token->binding.expected_slot != request.expected_slot ||
-         token->binding.plan != request.plan ||
-         (token->binding.world_slot_count != 0 &&
-          token->binding.world_slot_count != request.world_slot_count))) {
+    if (token->binding_present && (token->binding.transaction_kind != request.transaction_kind ||
+                                   token->binding.expected_slot != request.expected_slot ||
+                                   token->binding.plan != request.plan ||
+                                   (token->binding.world_slot_count != 0 &&
+                                    token->binding.world_slot_count != request.world_slot_count))) {
         return {.status = failure(RuntimeHostError::InvalidArgument,
                                   "owner handle admission binding does not match request"),
                 .handle = {}};
@@ -1236,8 +1203,7 @@ RuntimeCandidateBeginResult
 RuntimeHostCandidate::begin_candidate(const RuntimeCandidateRequest &request) {
     const std::shared_ptr<RuntimeHostSharedState> state = state_;
     if (state == nullptr) {
-        return {.status = failure(RuntimeHostError::HostTerminal,
-                                  "host state is unavailable"),
+        return {.status = failure(RuntimeHostError::HostTerminal, "host state is unavailable"),
                 .handle = {}};
     }
     if (!request.plan.well_formed() || request.control == nullptr) {
@@ -1276,8 +1242,9 @@ RuntimeHostCandidate::begin_candidate(const RuntimeCandidateRequest &request) {
                 .handle = {}};
     }
     if (request.world_slot_count > kMaxWorldSlots) {
-        return {.status = failure(RuntimeHostError::InvalidArgument,
-                                  "candidate world-slot cardinality exceeds the bounded host contract"),
+        return {.status =
+                    failure(RuntimeHostError::InvalidArgument,
+                            "candidate world-slot cardinality exceeds the bounded host contract"),
                 .handle = {}};
     }
     if (request.expected_slot.has_value() &&
@@ -1298,8 +1265,8 @@ RuntimeHostCandidate::begin_candidate(const RuntimeCandidateRequest &request) {
                 .handle = {}};
     }
     if (state->draining != nullptr) {
-        return {.status = failure(RuntimeHostError::DrainBackpressure,
-                                  "a prior slot is still draining"),
+        return {.status =
+                    failure(RuntimeHostError::DrainBackpressure, "a prior slot is still draining"),
                 .handle = {}};
     }
     if (resource_identity_in_use(*state, resource_identity)) {
@@ -1329,7 +1296,7 @@ RuntimeHostCandidate::begin_candidate(const RuntimeCandidateRequest &request) {
                 .handle = {}};
     } else if (request.transaction_kind == RuntimeHostTransactionKind::CheckpointRecovery &&
                (state->host_state != RuntimeHostState::Faulted ||
-               active->state != RuntimeSlotState::ActiveFaulted)) {
+                active->state != RuntimeSlotState::ActiveFaulted)) {
         return {.status = failure(RuntimeHostError::HostStateMismatch,
                                   "checkpoint recovery requires an active faulted slot"),
                 .handle = {}};
@@ -1358,12 +1325,11 @@ RuntimeHostCandidate::begin_candidate(const RuntimeCandidateRequest &request) {
                                   "host object changed while acquiring the owner registry"),
                 .handle = {}};
     }
-    auto reject_after_registry =
-        [&](RuntimeHostStatus reason) -> RuntimeCandidateBeginResult {
-            lock.unlock();
-            owner_registry.reset();
-            return {.status = std::move(reason), .handle = {}};
-        };
+    auto reject_after_registry = [&](RuntimeHostStatus reason) -> RuntimeCandidateBeginResult {
+        lock.unlock();
+        owner_registry.reset();
+        return {.status = std::move(reason), .handle = {}};
+    };
     if (native_episode_control == nullptr ||
         native_episode_control->resource_identity() != resource_identity ||
         owner_registry == nullptr) {
@@ -1371,10 +1337,8 @@ RuntimeHostCandidate::begin_candidate(const RuntimeCandidateRequest &request) {
             failure(RuntimeHostError::InvalidArgument,
                     "candidate control returned no host-bound native/owner adapter"));
     }
-    const RuntimeIdentity128 bound_owner_resource =
-        owner_registry->bound_resource_identity();
-    if (!bound_owner_resource.well_formed() ||
-        bound_owner_resource != resource_identity ||
+    const RuntimeIdentity128 bound_owner_resource = owner_registry->bound_resource_identity();
+    if (!bound_owner_resource.well_formed() || bound_owner_resource != resource_identity ||
         owner_registry->owner_binding_token() == nullptr) {
         return reject_after_registry(
             failure(RuntimeHostError::InvalidArgument,
@@ -1382,9 +1346,9 @@ RuntimeHostCandidate::begin_candidate(const RuntimeCandidateRequest &request) {
     }
     if (state->host_state == RuntimeHostState::ShuttingDown ||
         state->host_state == RuntimeHostState::Stopped ||
-        state->host_state == RuntimeHostState::FailStopped ||
-        state->candidate != nullptr || !state->quarantined.empty() ||
-        state->draining != nullptr || resource_identity_in_use(*state, resource_identity)) {
+        state->host_state == RuntimeHostState::FailStopped || state->candidate != nullptr ||
+        !state->quarantined.empty() || state->draining != nullptr ||
+        resource_identity_in_use(*state, resource_identity)) {
         return reject_after_registry(
             failure(RuntimeHostError::CandidateBusy,
                     "host lifecycle changed while acquiring the owner registry"));
@@ -1427,16 +1391,14 @@ RuntimeHostCandidate::begin_candidate(const RuntimeCandidateRequest &request) {
     if (!increment_nonzero(state->last_lifecycle_ticket) ||
         !increment_nonzero(state->last_candidate_sequence)) {
         return reject_after_registry(
-            failure(RuntimeHostError::TicketExhausted,
-                    "lifecycle or candidate ticket exhausted"));
+            failure(RuntimeHostError::TicketExhausted, "lifecycle or candidate ticket exhausted"));
     }
     std::shared_ptr<RuntimeHostSlot> candidate;
     try {
         candidate = std::make_shared<RuntimeHostSlot>();
     } catch (...) {
         return reject_after_registry(
-            failure(RuntimeHostError::InvalidArgument,
-                    "candidate slot allocation failed"));
+            failure(RuntimeHostError::InvalidArgument, "candidate slot allocation failed"));
     }
     candidate->candidate_sequence = state->last_candidate_sequence;
     candidate->transaction_kind = request.transaction_kind;
@@ -1468,8 +1430,9 @@ RuntimeHostCandidate::begin_candidate(const RuntimeCandidateRequest &request) {
                        .transaction_kind = request.transaction_kind}};
 }
 
-RuntimeHostStatus RuntimeHostCandidate::validate_candidate(
-    const RuntimeCandidateHandle &handle, const RuntimeCandidateValidationProof &proof) {
+RuntimeHostStatus
+RuntimeHostCandidate::validate_candidate(const RuntimeCandidateHandle &handle,
+                                         const RuntimeCandidateValidationProof &proof) {
     std::unique_lock<std::mutex> lock(state_->mutex);
     RuntimeHostStatus status = validate_candidate_handle(*state_, handle);
     if (!status) {
@@ -1482,20 +1445,22 @@ RuntimeHostStatus RuntimeHostCandidate::validate_candidate(
                        "candidate validation must start from constructing");
     }
     candidate.state = RuntimeSlotState::Validating;
-    const bool mode_probe_ok = state_->config.mode == RuntimeHostMode::Dark ||
-                               proof.shadow_probe_passed;
+    const bool mode_probe_ok =
+        state_->config.mode == RuntimeHostMode::Dark || proof.shadow_probe_passed;
     if (!proof.static_plan_validated || !proof.resources_ready || !mode_probe_ok ||
         !proof.unreachable_from_production || proof.production_authorized) {
-        return fail_candidate(*state_, lock,
-                              failure(RuntimeHostError::InvalidCommitProof,
-                                      "candidate validation proof is incomplete or authorizes production"));
+        return fail_candidate(
+            *state_, lock,
+            failure(RuntimeHostError::InvalidCommitProof,
+                    "candidate validation proof is incomplete or authorizes production"));
     }
     candidate.state = RuntimeSlotState::Ready;
     return success();
 }
 
-RuntimePublicationResult RuntimeHostCandidate::commit_initial(
-    const RuntimeCandidateHandle &handle, const RuntimeInitialCommitProof &proof) {
+RuntimePublicationResult
+RuntimeHostCandidate::commit_initial(const RuntimeCandidateHandle &handle,
+                                     const RuntimeInitialCommitProof &proof) {
     const bool injected_loss =
         invoke_cas_fault_injector(state_, RuntimeSlotCasOperation::InitialPublish);
     std::unique_lock<std::mutex> lock(state_->mutex);
@@ -1516,8 +1481,7 @@ RuntimePublicationResult RuntimeHostCandidate::commit_initial(
                                   "initial commit requires sealed dark evidence"),
                 .published_slot = {}};
     }
-    candidate.incarnation = {.host = state_->identity,
-                              .incarnation_epoch = kFirstIncarnationEpoch};
+    candidate.incarnation = {.host = state_->identity, .incarnation_epoch = kFirstIncarnationEpoch};
     auto coordinators = build_world_coordinators(candidate);
     auto authority = build_world_authority(candidate);
     if (!coordinators.has_value() || !authority.has_value()) {
@@ -1532,8 +1496,8 @@ RuntimePublicationResult RuntimeHostCandidate::commit_initial(
     candidate.admission_open = true;
     candidate.result_publication_open = true;
     std::shared_ptr<RuntimeHostSlot> expected;
-    const RuntimeHostStatus publication = compare_exchange_active(
-        *state_, expected, state_->candidate, injected_loss);
+    const RuntimeHostStatus publication =
+        compare_exchange_active(*state_, expected, state_->candidate, injected_loss);
     if (!publication) {
         const RuntimeHostStatus failure_status = publication;
         return {.status = fail_candidate(*state_, lock, failure_status), .published_slot = {}};
@@ -1549,8 +1513,8 @@ RuntimePublicationResult RuntimeHostCandidate::commit_initial(
             .publication_ticket = state_->last_publication_ticket};
 }
 
-RuntimeHostStatus RuntimeHostCandidate::prepare_replacement(
-    const RuntimeCandidateHandle &handle, RuntimeTransferCommitProof &&proof) {
+RuntimeHostStatus RuntimeHostCandidate::prepare_replacement(const RuntimeCandidateHandle &handle,
+                                                            RuntimeTransferCommitProof &&proof) {
     std::unique_lock<std::mutex> lock(state_->mutex);
     RuntimeHostStatus status = validate_candidate_handle(*state_, handle);
     if (!status) {
@@ -1574,9 +1538,8 @@ RuntimeHostStatus RuntimeHostCandidate::prepare_replacement(
         return failure(RuntimeHostError::StaleExpectedSlot,
                        "replacement proof source is not the active slot");
     }
-    if (active->state != RuntimeSlotState::Quiescing ||
-        !active->cancellation_acknowledged || !no_truth_leases(*active) ||
-        active->final_transfer_fence_sequence == 0) {
+    if (active->state != RuntimeSlotState::Quiescing || !active->cancellation_acknowledged ||
+        !no_truth_leases(*active) || active->final_transfer_fence_sequence == 0) {
         return failure(RuntimeHostError::InvalidCandidateState,
                        "replacement source lacks the final host quiescence fence");
     }
@@ -1588,10 +1551,9 @@ RuntimeHostStatus RuntimeHostCandidate::prepare_replacement(
                        "replacement candidate is not ready or quiescing");
     }
     const RuntimeStateTransferStatus prepared = proof.validated_transfer.prepare_for_host(
-        active->incarnation, active->plan.plan_sha256,
-        state_->candidate->plan.plan_sha256,
-        state_->candidate->resource_identity, handle.lifecycle_ticket,
-        handle.candidate_sequence, active->final_transfer_fence_sequence);
+        active->incarnation, active->plan.plan_sha256, state_->candidate->plan.plan_sha256,
+        state_->candidate->resource_identity, handle.lifecycle_ticket, handle.candidate_sequence,
+        active->final_transfer_fence_sequence);
     if (!prepared) {
         return failure(RuntimeHostError::InvalidCommitProof, prepared.detail);
     }
@@ -1605,8 +1567,8 @@ RuntimeHostStatus RuntimeHostCandidate::prepare_replacement(
     return success();
 }
 
-RuntimeReplacementQuiescenceResult RuntimeHostCandidate::quiesce_replacement_source(
-    const RuntimeCandidateHandle &handle) {
+RuntimeReplacementQuiescenceResult
+RuntimeHostCandidate::quiesce_replacement_source(const RuntimeCandidateHandle &handle) {
     std::unique_lock<std::mutex> lock(state_->mutex);
     apply_pending_quiescence_rollback(*state_);
     RuntimeHostStatus status = validate_candidate_handle(*state_, handle);
@@ -1614,12 +1576,12 @@ RuntimeReplacementQuiescenceResult RuntimeHostCandidate::quiesce_replacement_sou
         return {.status = status, .capability = {}};
     }
     const std::shared_ptr<RuntimeHostSlot> candidate = state_->candidate;
-    const std::shared_ptr<RuntimeHostSlot> active =
-        state_->active.load(std::memory_order_acquire);
+    const std::shared_ptr<RuntimeHostSlot> active = state_->active.load(std::memory_order_acquire);
     if (candidate->transaction_kind != RuntimeHostTransactionKind::Replacement ||
         candidate->state != RuntimeSlotState::Ready || active == nullptr) {
-        return {.status = failure(RuntimeHostError::InvalidCandidateState,
-                                  "replacement quiescence requires a ready candidate and active source"),
+        return {.status =
+                    failure(RuntimeHostError::InvalidCandidateState,
+                            "replacement quiescence requires a ready candidate and active source"),
                 .capability = {}};
     }
     if (state_->native_episode_submissions_in_flight != 0) {
@@ -1629,21 +1591,22 @@ RuntimeReplacementQuiescenceResult RuntimeHostCandidate::quiesce_replacement_sou
     }
     if (candidate->world_slot_count != 1) {
         return {.status = failure(RuntimeHostError::InvalidCommitProof,
-                                  "P4-B transfer requires one host-owned world barrier; multi-world transfer remains unqualified"),
+                                  "P4-B transfer requires one host-owned world barrier; "
+                                  "multi-world transfer remains unqualified"),
                 .capability = {}};
     }
     const auto coordinator = state_->world_coordinators.find(0);
     if (coordinator == state_->world_coordinators.end() ||
         coordinator->second->snapshot().phase != RuntimeEpisodePhase::Terminal) {
-        return {.status = failure(RuntimeHostError::InvalidCandidateState,
-                                  "replacement source episode must be terminal before host quiescence"),
+        return {.status =
+                    failure(RuntimeHostError::InvalidCandidateState,
+                            "replacement source episode must be terminal before host quiescence"),
                 .capability = {}};
     }
     auto restore_source_after_failed_quiescence = [&]() noexcept {
         if (state_->host_state == RuntimeHostState::Active &&
             state_->active.load(std::memory_order_acquire) == active &&
-            state_->candidate == candidate &&
-            active->state == RuntimeSlotState::Quiescing &&
+            state_->candidate == candidate && active->state == RuntimeSlotState::Quiescing &&
             !active->quiescence_capability_live.load(std::memory_order_acquire) &&
             active->truth_mutating_leases == 0) {
             active->state = RuntimeSlotState::Active;
@@ -1668,12 +1631,11 @@ RuntimeReplacementQuiescenceResult RuntimeHostCandidate::quiesce_replacement_sou
     }
     if (!active->cancellation_acknowledged) {
         status = cancel_slot(*state_, lock, active);
-        const RuntimeHostStatus transaction_status =
-            validate_candidate_handle(*state_, handle);
+        const RuntimeHostStatus transaction_status = validate_candidate_handle(*state_, handle);
         const std::shared_ptr<RuntimeHostSlot> current_active =
             state_->active.load(std::memory_order_acquire);
-        if (!transaction_status || state_->candidate != candidate ||
-            current_active != active || active->state != RuntimeSlotState::Quiescing) {
+        if (!transaction_status || state_->candidate != candidate || current_active != active ||
+            active->state != RuntimeSlotState::Quiescing) {
             return {.status = transaction_status
                                   ? failure(RuntimeHostError::InvalidCandidateState,
                                             "replacement transaction changed during cancellation")
@@ -1712,171 +1674,150 @@ RuntimeReplacementQuiescenceResult RuntimeHostCandidate::quiesce_replacement_sou
     }
     try {
         auto capability = RuntimeHostQuiescenceCapability::mint_for_host(
-                    active->incarnation, active->plan.plan_sha256,
-                    candidate->plan.plan_sha256, active->resource_identity,
-                    candidate->resource_identity,
-                    active->owner_registry, candidate->owner_registry,
-                    state_->host_instance_nonce,
-                    [weak_state = std::weak_ptr<RuntimeHostSharedState>(state_),
-                     active, candidate]() noexcept {
-                        const auto state = weak_state.lock();
-                        if (state == nullptr) {
-                            return false;
-                        }
-                        std::lock_guard<std::mutex> lock(state->mutex);
-                        return state->host_state == RuntimeHostState::Active &&
-                               state->active.load(std::memory_order_acquire) == active &&
-                               state->candidate == candidate &&
-                               active->state == RuntimeSlotState::Quiescing &&
-                               !active->admission_open &&
-                               active->cancellation_acknowledged &&
-                               active->final_transfer_fence_sequence != 0 &&
-                               active->truth_mutating_leases == 0 &&
-                               state->native_episode_submissions_in_flight == 0;
-                    },
-                    [weak_state = std::weak_ptr<RuntimeHostSharedState>(state_),
-                     active, candidate]() noexcept {
-                        const auto state = weak_state.lock();
-                        if (state == nullptr) {
-                            return;
-                        }
-                        active->quiescence_capability_live.store(
-                            false, std::memory_order_release);
-                        std::unique_lock<std::mutex> lock(state->mutex,
-                                                         std::try_to_lock);
-                        // Host abort/CAS-failure paths restore the source
-                        // explicitly while already holding this mutex.  Do
-                        // not deadlock if the transfer destructor is running
-                        // from one of those paths.
-                        if (!lock.owns_lock()) {
-                            std::lock_guard<std::mutex> pending_lock(
-                                state->pending_rollback_mutex);
-                            state->pending_rollback_active = active;
-                            state->pending_rollback_candidate = candidate;
-                            return;
-                        }
-                        if (state->host_state == RuntimeHostState::Active &&
-                            state->active.load(std::memory_order_acquire) == active &&
-                            state->candidate == candidate &&
-                            active->state == RuntimeSlotState::Quiescing &&
-                            !active->admission_open &&
-                            active->truth_mutating_leases == 0 &&
-                            state->state_transfers_in_flight.load(
-                                std::memory_order_acquire) == 0 &&
-                            state->native_episode_submissions_in_flight == 0) {
-                            active->state = RuntimeSlotState::Active;
-                            active->admission_open = true;
-                            active->result_publication_open = true;
-                            active->final_transfer_fence_sequence = 0;
-                        } else if (state->host_state == RuntimeHostState::Active &&
-                                   state->active.load(std::memory_order_acquire) == active &&
-                                   state->candidate == candidate &&
-                                   active->state == RuntimeSlotState::Quiescing) {
-                            // A transfer or native callback may still own the
-                            // quiescence reservation. Keep rollback durable
-                            // until its matching end callback drains.
-                            std::lock_guard<std::mutex> pending_lock(
-                                state->pending_rollback_mutex);
-                            state->pending_rollback_active = active;
-                            state->pending_rollback_candidate = candidate;
-                        }
-                    },
-                    [weak_state = std::weak_ptr<RuntimeHostSharedState>(state_),
-                     candidate]() noexcept {
-                        const auto state = weak_state.lock();
-                        if (state == nullptr) {
-                            return false;
-                        }
-                        {
-                            std::lock_guard<std::mutex> lock(state->mutex);
-                            const auto active = state->active.load(std::memory_order_acquire);
-                            if (state->host_state != RuntimeHostState::Active ||
-                                active == nullptr || active->state != RuntimeSlotState::Quiescing ||
-                                active->admission_open || state->candidate != candidate ||
-                                active->truth_mutating_leases != 0 ||
-                                state->native_episode_submissions_in_flight != 0) {
-                                return false;
-                            }
-                            auto count = state->state_transfers_in_flight.load(
-                                std::memory_order_acquire);
-                            while (count != std::numeric_limits<std::size_t>::max() &&
-                                   !state->state_transfers_in_flight.compare_exchange_weak(
-                                       count, count + 1, std::memory_order_acq_rel,
-                                       std::memory_order_acquire)) {
-                            }
-                            if (count == std::numeric_limits<std::size_t>::max()) {
-                                return false;
-                            }
-                        }
-                        bool fenced = false;
-                        try {
-                            fenced = candidate->control != nullptr &&
-                                     candidate->control->begin_state_transfer();
-                        } catch (...) {
-                            fenced = false;
-                        }
-                        if (!fenced) {
-                            auto count = state->state_transfers_in_flight.load(
-                                std::memory_order_acquire);
-                            while (count != 0 &&
-                                   !state->state_transfers_in_flight.compare_exchange_weak(
-                                       count, count - 1, std::memory_order_acq_rel,
-                                       std::memory_order_acquire)) {
-                            }
-                        }
-                        return fenced;
-                    },
-                    [weak_state = std::weak_ptr<RuntimeHostSharedState>(state_),
-                     active, candidate]() noexcept {
-                        const auto state = weak_state.lock();
-                        if (state == nullptr) {
-                            return false;
-                        }
-                        std::lock_guard<std::mutex> lock(state->mutex);
-                        return state->host_state == RuntimeHostState::Active &&
-                               state->active.load(std::memory_order_acquire) == active &&
-                               state->candidate == candidate &&
-                               active->state == RuntimeSlotState::Quiescing &&
-                               state->state_transfers_in_flight.load(
-                                   std::memory_order_acquire) != 0;
-                    },
-                    [weak_state = std::weak_ptr<RuntimeHostSharedState>(state_),
-                     active, candidate]() noexcept {
-                        const auto state = weak_state.lock();
-                        if (state == nullptr) {
-                            return;
-                        }
-                        try {
-                            if (candidate->control != nullptr) {
-                                candidate->control->end_state_transfer();
-                            }
-                        } catch (...) {
-                        }
-                        active->quiescence_capability_live.store(
-                            false, std::memory_order_release);
-                        std::size_t count = state->state_transfers_in_flight.load(
-                            std::memory_order_acquire);
-                        while (count != 0 &&
-                               !state->state_transfers_in_flight.compare_exchange_weak(
-                                   count, count - 1, std::memory_order_acq_rel,
-                                   std::memory_order_acquire)) {
-                        }
-                        // The transfer destructor may have queued source
-                        // rollback while this reservation was still counted.
-                        // Revisit that queue immediately after the matching
-                        // end callback so failed preparation does not strand
-                        // the active slot in Quiescing.
-                        std::unique_lock<std::mutex> rollback_lock(
-                            state->mutex, std::try_to_lock);
-                        if (rollback_lock.owns_lock()) {
-                            apply_pending_quiescence_rollback(*state);
-                        }
-                    },
-                    handle.lifecycle_ticket,
-                    handle.candidate_sequence,
-                    active->final_transfer_fence_sequence,
-                    active->read_only_result_leases,
-                    active->cancellation_acknowledged);
+            active->incarnation, active->plan.plan_sha256, candidate->plan.plan_sha256,
+            active->resource_identity, candidate->resource_identity, active->owner_registry,
+            candidate->owner_registry, state_->host_instance_nonce,
+            [weak_state = std::weak_ptr<RuntimeHostSharedState>(state_), active,
+             candidate]() noexcept {
+                const auto state = weak_state.lock();
+                if (state == nullptr) {
+                    return false;
+                }
+                std::lock_guard<std::mutex> lock(state->mutex);
+                return state->host_state == RuntimeHostState::Active &&
+                       state->active.load(std::memory_order_acquire) == active &&
+                       state->candidate == candidate &&
+                       active->state == RuntimeSlotState::Quiescing && !active->admission_open &&
+                       active->cancellation_acknowledged &&
+                       active->final_transfer_fence_sequence != 0 &&
+                       active->truth_mutating_leases == 0 &&
+                       state->native_episode_submissions_in_flight == 0;
+            },
+            [weak_state = std::weak_ptr<RuntimeHostSharedState>(state_), active,
+             candidate]() noexcept {
+                const auto state = weak_state.lock();
+                if (state == nullptr) {
+                    return;
+                }
+                active->quiescence_capability_live.store(false, std::memory_order_release);
+                std::unique_lock<std::mutex> lock(state->mutex, std::try_to_lock);
+                // Host abort/CAS-failure paths restore the source
+                // explicitly while already holding this mutex.  Do
+                // not deadlock if the transfer destructor is running
+                // from one of those paths.
+                if (!lock.owns_lock()) {
+                    std::lock_guard<std::mutex> pending_lock(state->pending_rollback_mutex);
+                    state->pending_rollback_active = active;
+                    state->pending_rollback_candidate = candidate;
+                    return;
+                }
+                if (state->host_state == RuntimeHostState::Active &&
+                    state->active.load(std::memory_order_acquire) == active &&
+                    state->candidate == candidate && active->state == RuntimeSlotState::Quiescing &&
+                    !active->admission_open && active->truth_mutating_leases == 0 &&
+                    state->state_transfers_in_flight.load(std::memory_order_acquire) == 0 &&
+                    state->native_episode_submissions_in_flight == 0) {
+                    active->state = RuntimeSlotState::Active;
+                    active->admission_open = true;
+                    active->result_publication_open = true;
+                    active->final_transfer_fence_sequence = 0;
+                } else if (state->host_state == RuntimeHostState::Active &&
+                           state->active.load(std::memory_order_acquire) == active &&
+                           state->candidate == candidate &&
+                           active->state == RuntimeSlotState::Quiescing) {
+                    // A transfer or native callback may still own the
+                    // quiescence reservation. Keep rollback durable
+                    // until its matching end callback drains.
+                    std::lock_guard<std::mutex> pending_lock(state->pending_rollback_mutex);
+                    state->pending_rollback_active = active;
+                    state->pending_rollback_candidate = candidate;
+                }
+            },
+            [weak_state = std::weak_ptr<RuntimeHostSharedState>(state_), candidate]() noexcept {
+                const auto state = weak_state.lock();
+                if (state == nullptr) {
+                    return false;
+                }
+                {
+                    std::lock_guard<std::mutex> lock(state->mutex);
+                    const auto active = state->active.load(std::memory_order_acquire);
+                    if (state->host_state != RuntimeHostState::Active || active == nullptr ||
+                        active->state != RuntimeSlotState::Quiescing || active->admission_open ||
+                        state->candidate != candidate || active->truth_mutating_leases != 0 ||
+                        state->native_episode_submissions_in_flight != 0) {
+                        return false;
+                    }
+                    auto count = state->state_transfers_in_flight.load(std::memory_order_acquire);
+                    while (count != std::numeric_limits<std::size_t>::max() &&
+                           !state->state_transfers_in_flight.compare_exchange_weak(
+                               count, count + 1, std::memory_order_acq_rel,
+                               std::memory_order_acquire)) {
+                    }
+                    if (count == std::numeric_limits<std::size_t>::max()) {
+                        return false;
+                    }
+                }
+                bool fenced = false;
+                try {
+                    fenced =
+                        candidate->control != nullptr && candidate->control->begin_state_transfer();
+                } catch (...) {
+                    fenced = false;
+                }
+                if (!fenced) {
+                    auto count = state->state_transfers_in_flight.load(std::memory_order_acquire);
+                    while (count != 0 && !state->state_transfers_in_flight.compare_exchange_weak(
+                                             count, count - 1, std::memory_order_acq_rel,
+                                             std::memory_order_acquire)) {
+                    }
+                }
+                return fenced;
+            },
+            [weak_state = std::weak_ptr<RuntimeHostSharedState>(state_), active,
+             candidate]() noexcept {
+                const auto state = weak_state.lock();
+                if (state == nullptr) {
+                    return false;
+                }
+                std::lock_guard<std::mutex> lock(state->mutex);
+                return state->host_state == RuntimeHostState::Active &&
+                       state->active.load(std::memory_order_acquire) == active &&
+                       state->candidate == candidate &&
+                       active->state == RuntimeSlotState::Quiescing &&
+                       state->state_transfers_in_flight.load(std::memory_order_acquire) != 0;
+            },
+            [weak_state = std::weak_ptr<RuntimeHostSharedState>(state_), active,
+             candidate]() noexcept {
+                const auto state = weak_state.lock();
+                if (state == nullptr) {
+                    return;
+                }
+                try {
+                    if (candidate->control != nullptr) {
+                        candidate->control->end_state_transfer();
+                    }
+                } catch (...) {
+                }
+                active->quiescence_capability_live.store(false, std::memory_order_release);
+                std::size_t count =
+                    state->state_transfers_in_flight.load(std::memory_order_acquire);
+                while (count != 0 && !state->state_transfers_in_flight.compare_exchange_weak(
+                                         count, count - 1, std::memory_order_acq_rel,
+                                         std::memory_order_acquire)) {
+                }
+                // The transfer destructor may have queued source
+                // rollback while this reservation was still counted.
+                // Revisit that queue immediately after the matching
+                // end callback so failed preparation does not strand
+                // the active slot in Quiescing.
+                std::unique_lock<std::mutex> rollback_lock(state->mutex, std::try_to_lock);
+                if (rollback_lock.owns_lock()) {
+                    apply_pending_quiescence_rollback(*state);
+                }
+            },
+            handle.lifecycle_ticket, handle.candidate_sequence,
+            active->final_transfer_fence_sequence, active->read_only_result_leases,
+            active->cancellation_acknowledged);
         active->quiescence_capability_live.store(true, std::memory_order_release);
         return {.status = success(), .capability = std::move(capability)};
     } catch (...) {
@@ -1887,8 +1828,9 @@ RuntimeReplacementQuiescenceResult RuntimeHostCandidate::quiesce_replacement_sou
     }
 }
 
-RuntimeHostStatus RuntimeHostCandidate::prepare_checkpoint_recovery(
-    const RuntimeCandidateHandle &handle, const RuntimeRecoveryCommitProof &proof) {
+RuntimeHostStatus
+RuntimeHostCandidate::prepare_checkpoint_recovery(const RuntimeCandidateHandle &handle,
+                                                  const RuntimeRecoveryCommitProof &proof) {
     std::unique_lock<std::mutex> lock(state_->mutex);
     RuntimeHostStatus status = validate_candidate_handle(*state_, handle);
     if (!status) {
@@ -1920,17 +1862,14 @@ RuntimeHostStatus RuntimeHostCandidate::prepare_checkpoint_recovery(
         active->admission_open = false;
         active->state = RuntimeSlotState::RecoveryQuiesced;
         const RuntimeHostStatus cancellation = cancel_slot(*state_, lock, active);
-        const RuntimeHostStatus transaction_status =
-            validate_candidate_handle(*state_, handle);
+        const RuntimeHostStatus transaction_status = validate_candidate_handle(*state_, handle);
         const std::shared_ptr<RuntimeHostSlot> current_active =
             state_->active.load(std::memory_order_acquire);
-        if (!transaction_status || state_->candidate != candidate ||
-            current_active != active ||
+        if (!transaction_status || state_->candidate != candidate || current_active != active ||
             active->state != RuntimeSlotState::RecoveryQuiesced) {
-            return transaction_status
-                       ? failure(RuntimeHostError::InvalidCandidateState,
-                                 "recovery transaction changed during cancellation")
-                       : transaction_status;
+            return transaction_status ? failure(RuntimeHostError::InvalidCandidateState,
+                                                "recovery transaction changed during cancellation")
+                                      : transaction_status;
         }
         if (!cancellation) {
             return cancellation;
@@ -1942,17 +1881,14 @@ RuntimeHostStatus RuntimeHostCandidate::prepare_checkpoint_recovery(
     }
     if (!active->cancellation_acknowledged) {
         const RuntimeHostStatus cancellation = cancel_slot(*state_, lock, active);
-        const RuntimeHostStatus transaction_status =
-            validate_candidate_handle(*state_, handle);
+        const RuntimeHostStatus transaction_status = validate_candidate_handle(*state_, handle);
         const std::shared_ptr<RuntimeHostSlot> current_active =
             state_->active.load(std::memory_order_acquire);
-        if (!transaction_status || state_->candidate != candidate ||
-            current_active != active ||
+        if (!transaction_status || state_->candidate != candidate || current_active != active ||
             active->state != RuntimeSlotState::RecoveryQuiesced) {
-            return transaction_status
-                       ? failure(RuntimeHostError::InvalidCandidateState,
-                                 "recovery transaction changed during cancellation")
-                       : transaction_status;
+            return transaction_status ? failure(RuntimeHostError::InvalidCandidateState,
+                                                "recovery transaction changed during cancellation")
+                                      : transaction_status;
         }
         if (!cancellation) {
             return cancellation;
@@ -1968,8 +1904,9 @@ RuntimeHostStatus RuntimeHostCandidate::prepare_checkpoint_recovery(
     return success();
 }
 
-RuntimePublicationResult RuntimeHostCandidate::commit_prepared_candidate(
-    const RuntimeCandidateHandle &handle, std::uint64_t now_tick) {
+RuntimePublicationResult
+RuntimeHostCandidate::commit_prepared_candidate(const RuntimeCandidateHandle &handle,
+                                                std::uint64_t now_tick) {
     const RuntimeSlotCasOperation operation =
         handle.transaction_kind == RuntimeHostTransactionKind::Replacement
             ? RuntimeSlotCasOperation::ReplacementPublish
@@ -1993,15 +1930,14 @@ RuntimePublicationResult RuntimeHostCandidate::commit_prepared_candidate(
                                   "prepared publication state is incomplete"),
                 .published_slot = {}};
     }
-    if (candidate->drain_deadline_tick != 0 &&
-        now_tick >= candidate->drain_deadline_tick) {
+    if (candidate->drain_deadline_tick != 0 && now_tick >= candidate->drain_deadline_tick) {
         return {.status = failure(RuntimeHostError::LifecycleDeadlineExpired,
                                   "prepared publication deadline has expired"),
                 .published_slot = {}};
     }
     if (old->incarnation.incarnation_epoch == std::numeric_limits<std::uint64_t>::max()) {
-        return {.status = failure(RuntimeHostError::EpochExhausted,
-                                  "host incarnation epoch exhausted"),
+        return {.status =
+                    failure(RuntimeHostError::EpochExhausted, "host incarnation epoch exhausted"),
                 .published_slot = {}};
     }
     candidate->incarnation = {
@@ -2010,7 +1946,7 @@ RuntimePublicationResult RuntimeHostCandidate::commit_prepared_candidate(
     };
     const std::optional<RuntimeEpisodeCoordinatorSnapshot> transferred_snapshot =
         replacement ? std::optional<RuntimeEpisodeCoordinatorSnapshot>(
-                           candidate->validated_transfer.source_barrier_snapshot())
+                          candidate->validated_transfer.source_barrier_snapshot())
                     : std::nullopt;
     auto coordinators = build_world_coordinators(*candidate, transferred_snapshot);
     auto authority = build_world_authority(*candidate, transferred_snapshot);
@@ -2025,16 +1961,15 @@ RuntimePublicationResult RuntimeHostCandidate::commit_prepared_candidate(
         const RuntimeHostStatus build_failure =
             failure(RuntimeHostError::InvalidCommitProof,
                     "candidate native world authority could not be constructed");
-        return {.status = fail_candidate(*state_, lock, build_failure),
-                .published_slot = {}};
+        return {.status = fail_candidate(*state_, lock, build_failure), .published_slot = {}};
     }
     candidate->state = RuntimeSlotState::Publishing;
     candidate->rollback_target = old;
     candidate->admission_open = true;
     candidate->result_publication_open = true;
     std::shared_ptr<RuntimeHostSlot> expected = old;
-    const RuntimeHostStatus publication = compare_exchange_active(
-        *state_, expected, candidate, injected_loss);
+    const RuntimeHostStatus publication =
+        compare_exchange_active(*state_, expected, candidate, injected_loss);
     if (!publication) {
         candidate->state = RuntimeSlotState::CandidateFailed;
         abandon_transfer_outside_host_mutex(lock, candidate);
@@ -2070,8 +2005,7 @@ RuntimePublicationResult RuntimeHostCandidate::commit_prepared_candidate(
         candidate->state = RuntimeSlotState::Publishing;
         lock.unlock();
         RuntimeStateTransferStatus committed =
-            candidate->validated_transfer.commit_for_host(
-                now_tick, candidate->drain_deadline_tick);
+            candidate->validated_transfer.commit_for_host(now_tick, candidate->drain_deadline_tick);
         lock.lock();
         if (!committed) {
             // The owner transaction may have crossed the process boundary
@@ -2081,8 +2015,8 @@ RuntimePublicationResult RuntimeHostCandidate::commit_prepared_candidate(
             // already-committed target from an abortable provisional import.
             lock.unlock();
             const RuntimeStateTransferStatus recovered =
-                candidate->validated_transfer.recover_for_host(
-                    now_tick, candidate->drain_deadline_tick);
+                candidate->validated_transfer.recover_for_host(now_tick,
+                                                               candidate->drain_deadline_tick);
             lock.lock();
             if (recovered && candidate->validated_transfer.committed() &&
                 state_->active.load(std::memory_order_acquire) == candidate &&
@@ -2090,8 +2024,8 @@ RuntimePublicationResult RuntimeHostCandidate::commit_prepared_candidate(
                 committed = RuntimeStateTransferStatus{};
             } else if (candidate->validated_transfer.aborted()) {
                 std::shared_ptr<RuntimeHostSlot> expected_candidate = candidate;
-                const RuntimeHostStatus unpublished = compare_exchange_active(
-                    *state_, expected_candidate, old, false);
+                const RuntimeHostStatus unpublished =
+                    compare_exchange_active(*state_, expected_candidate, old, false);
                 if (unpublished) {
                     state_->world_authority = previous_authority;
                     state_->world_coordinators = previous_coordinators;
@@ -2102,14 +2036,12 @@ RuntimePublicationResult RuntimeHostCandidate::commit_prepared_candidate(
                     old->admission_open = true;
                     old->result_publication_open = true;
                     old->final_transfer_fence_sequence = 0;
-                    old->quiescence_capability_live.store(false,
-                                                         std::memory_order_release);
+                    old->quiescence_capability_live.store(false, std::memory_order_release);
                     state_->host_state = RuntimeHostState::Active;
-                    const RuntimeHostStatus import_failure = failure(
-                        RuntimeHostError::InvalidCommitProof,
-                        committed.detail.empty()
-                            ? "owner import recovered as aborted"
-                            : committed.detail);
+                    const RuntimeHostStatus import_failure =
+                        failure(RuntimeHostError::InvalidCommitProof,
+                                committed.detail.empty() ? "owner import recovered as aborted"
+                                                         : committed.detail);
                     lock.unlock();
                     candidate->validated_transfer.release_host_transfer_fence();
                     lock.lock();
@@ -2122,8 +2054,8 @@ RuntimePublicationResult RuntimeHostCandidate::commit_prepared_candidate(
                 // candidate, restore the old authority, and retain both slots
                 // with an explicit rollback link for retry_quarantined_reclamation().
                 std::shared_ptr<RuntimeHostSlot> expected_candidate = candidate;
-                const RuntimeHostStatus unpublished = compare_exchange_active(
-                    *state_, expected_candidate, {}, false);
+                const RuntimeHostStatus unpublished =
+                    compare_exchange_active(*state_, expected_candidate, {}, false);
                 if (unpublished) {
                     state_->rollback_world_authority = previous_authority;
                     state_->rollback_world_coordinators = previous_coordinators;
@@ -2150,11 +2082,9 @@ RuntimePublicationResult RuntimeHostCandidate::commit_prepared_candidate(
                     state_->candidate.reset();
                 }
                 state_->host_state = RuntimeHostState::FailStopped;
-                return {.status = failure(
-                            RuntimeHostError::QuarantineUnresolved,
-                            recovered.detail.empty()
-                                ? committed.detail
-                                : recovered.detail),
+                return {.status =
+                            failure(RuntimeHostError::QuarantineUnresolved,
+                                    recovered.detail.empty() ? committed.detail : recovered.detail),
                         .published_slot = {}};
             }
         }
@@ -2239,8 +2169,9 @@ RuntimeHostStatus RuntimeHostCandidate::abort_candidate(const RuntimeCandidateHa
     return result;
 }
 
-RuntimeHostStatus RuntimeHostCandidate::mark_active_faulted(
-    const RuntimeIncarnationRef &expected_slot, std::uint64_t fault_deadline_tick) {
+RuntimeHostStatus
+RuntimeHostCandidate::mark_active_faulted(const RuntimeIncarnationRef &expected_slot,
+                                          std::uint64_t fault_deadline_tick) {
     std::unique_lock<std::mutex> lock(state_->mutex);
     const std::shared_ptr<RuntimeHostSlot> active = state_->active.load(std::memory_order_acquire);
     if (state_->host_state != RuntimeHostState::Active || active == nullptr ||
@@ -2269,8 +2200,8 @@ RuntimeHostStatus RuntimeHostCandidate::mark_active_faulted(
     return cancel_slot(*state_, lock, active);
 }
 
-RuntimeShadowEpisodeAdmission RuntimeHostCandidate::admit_shadow_episode(
-    RuntimeNativeEpisodeCapability &&native_episode) {
+RuntimeShadowEpisodeAdmission
+RuntimeHostCandidate::admit_shadow_episode(RuntimeNativeEpisodeCapability &&native_episode) {
     const RuntimeEpisodeRef episode = native_episode.episode();
     std::unique_lock<std::mutex> lock(state_->mutex);
     const std::shared_ptr<RuntimeHostSlot> active = state_->active.load(std::memory_order_acquire);
@@ -2288,8 +2219,7 @@ RuntimeShadowEpisodeAdmission RuntimeHostCandidate::admit_shadow_episode(
     const auto authority = state_->world_authority.find(episode.world.world_slot);
     const auto coordinator = state_->world_coordinators.find(episode.world.world_slot);
     if (authority == state_->world_authority.end() ||
-        coordinator == state_->world_coordinators.end() ||
-        episode.world.world_generation == 0 ||
+        coordinator == state_->world_coordinators.end() || episode.world.world_generation == 0 ||
         authority->second.world_generation != episode.world.world_generation ||
         native_episode.coordinator_nonce() != coordinator->second->coordinator_nonce()) {
         return {.status = failure(RuntimeHostError::StaleReference,
@@ -2301,10 +2231,8 @@ RuntimeShadowEpisodeAdmission RuntimeHostCandidate::admit_shadow_episode(
     const RuntimeStateTransferStatus native_status =
         native_episode.consume_for_host(expected_source);
     lock.lock();
-    const std::shared_ptr<RuntimeHostSlot> current =
-        state_->active.load(std::memory_order_acquire);
-    if (!native_status || current != active ||
-        state_->host_state != RuntimeHostState::Active ||
+    const std::shared_ptr<RuntimeHostSlot> current = state_->active.load(std::memory_order_acquire);
+    if (!native_status || current != active || state_->host_state != RuntimeHostState::Active ||
         active->state != RuntimeSlotState::Active || !active->admission_open) {
         return {.status = failure(RuntimeHostError::StaleReference,
                                   native_status ? "host changed while admitting native episode"
@@ -2337,8 +2265,7 @@ RuntimeShadowEpisodeAdmission RuntimeHostCandidate::admit_shadow_episode(
     const std::uint64_t sequence = state_->last_episode_capability_sequence;
     state_->admitted_shadow_episodes.emplace(
         sequence, RuntimeAdmittedShadowEpisode{.episode = episode,
-                                                .native_episode =
-                                                    std::move(native_episode)});
+                                               .native_episode = std::move(native_episode)});
     RuntimeShadowEpisodeCapability capability;
     capability.host_ = state_->identity;
     capability.host_instance_nonce_ = state_->host_instance_nonce;
@@ -2348,8 +2275,7 @@ RuntimeShadowEpisodeAdmission RuntimeHostCandidate::admit_shadow_episode(
     return {.status = success(), .capability = capability};
 }
 
-RuntimeShadowEpisodeAdmission RuntimeHostCandidate::issue_shadow_episode(
-    std::uint64_t world_slot) {
+RuntimeShadowEpisodeAdmission RuntimeHostCandidate::issue_shadow_episode(std::uint64_t world_slot) {
     std::shared_ptr<RuntimeEpisodeCoordinatorCandidate> coordinator;
     {
         std::lock_guard<std::mutex> lock(state_->mutex);
@@ -2370,23 +2296,21 @@ RuntimeShadowEpisodeAdmission RuntimeHostCandidate::issue_shadow_episode(
     }
     auto native = coordinator->issue_episode_capability();
     if (!native.status) {
-        return {.status = failure(RuntimeHostError::StaleReference,
-                                  native.status.detail),
+        return {.status = failure(RuntimeHostError::StaleReference, native.status.detail),
                 .capability = {}};
     }
     return admit_shadow_episode(std::move(native.capability));
 }
 
-RuntimeHostStatus RuntimeHostCandidate::release_shadow_episode(
-    const RuntimeShadowEpisodeCapability &capability) {
+RuntimeHostStatus
+RuntimeHostCandidate::release_shadow_episode(const RuntimeShadowEpisodeCapability &capability) {
     std::lock_guard<std::mutex> lock(state_->mutex);
     if (!capability.valid() || !same_host(capability.host_, state_->identity) ||
         capability.host_instance_nonce_ != state_->host_instance_nonce) {
         return failure(RuntimeHostError::StaleReference,
                        "shadow episode capability is stale or belongs to another host");
     }
-    const auto iterator =
-        state_->admitted_shadow_episodes.find(capability.capability_sequence_);
+    const auto iterator = state_->admitted_shadow_episodes.find(capability.capability_sequence_);
     if (iterator == state_->admitted_shadow_episodes.end() ||
         iterator->second.episode != capability.episode_) {
         return failure(RuntimeHostError::StaleReference,
@@ -2410,24 +2334,24 @@ RuntimeEpisodeTransitionResult RuntimeHostCandidate::submit_shadow_episode(
         std::lock_guard<std::mutex> lock(state->mutex);
         const auto active = state->active.load(std::memory_order_acquire);
         if (active == nullptr || state->host_state != RuntimeHostState::Active ||
-            !active->admission_open ||
-            !episode_capability.valid() ||
+            !active->admission_open || !episode_capability.valid() ||
             !same_host(episode_capability.host_, state->identity) ||
             episode_capability.host_instance_nonce_ != state->host_instance_nonce ||
             intent.expected_episode != episode_capability.episode_) {
-            return {.status = {.error = RuntimeStateTransferError::StaleIntent,
-                               .detail = "episode submission is not bound to an admitted host capability"}};
+            return {
+                .status = {.error = RuntimeStateTransferError::StaleIntent,
+                           .detail =
+                               "episode submission is not bound to an admitted host capability"}};
         }
-        const auto admitted = state->admitted_shadow_episodes.find(
-            episode_capability.capability_sequence_);
+        const auto admitted =
+            state->admitted_shadow_episodes.find(episode_capability.capability_sequence_);
         if (admitted == state->admitted_shadow_episodes.end() ||
             admitted->second.episode != episode_capability.episode_) {
             return {.status = {.error = RuntimeStateTransferError::StaleIntent,
                                .detail = "episode capability is not admitted by this host"}};
         }
         if (active == nullptr || state->host_state != RuntimeHostState::Active ||
-            !active->admission_open ||
-            !intent.expected_episode.well_formed() ||
+            !active->admission_open || !intent.expected_episode.well_formed() ||
             !same_slot(intent.expected_episode.world.incarnation, active->incarnation)) {
             return {.status = {.error = RuntimeStateTransferError::StaleIntent,
                                .detail = "episode intent is not bound to the active host slot"}};
@@ -2461,34 +2385,31 @@ RuntimeEpisodeTransitionResult RuntimeHostCandidate::submit_shadow_episode(
     std::lock_guard<std::mutex> lock(state->mutex);
     --state->native_episode_submissions_in_flight;
     const auto active = state->active.load(std::memory_order_acquire);
-    const auto authority = state->world_authority.find(
-        result.receipt.episode_after.world.world_slot);
-    const auto current_coordinator = state->world_coordinators.find(
-        result.receipt.episode_after.world.world_slot);
+    const auto authority =
+        state->world_authority.find(result.receipt.episode_after.world.world_slot);
+    const auto current_coordinator =
+        state->world_coordinators.find(result.receipt.episode_after.world.world_slot);
     if (active == nullptr || active->state != RuntimeSlotState::Active ||
         state->host_state != RuntimeHostState::Active ||
         current_coordinator == state->world_coordinators.end() ||
         authority == state->world_authority.end() ||
-        !same_slot(result.receipt.episode_after.world.incarnation,
-                   active->incarnation) ||
-        current_coordinator->second != coordinator ||
-        !result.receipt.episode_after.well_formed()) {
+        !same_slot(result.receipt.episode_after.world.incarnation, active->incarnation) ||
+        current_coordinator->second != coordinator || !result.receipt.episode_after.well_formed()) {
         return {.status = {.error = RuntimeStateTransferError::ConcurrentMutation,
                            .detail = "host authority changed while recording the native receipt"},
                 .receipt = result.receipt,
                 .replayed = result.replayed};
     }
-    if (result.receipt.episode_after.world.world_generation >=
-        authority->second.world_generation) {
-        authority->second.world_generation =
-            result.receipt.episode_after.world.world_generation;
+    if (result.receipt.episode_after.world.world_generation >= authority->second.world_generation) {
+        authority->second.world_generation = result.receipt.episode_after.world.world_generation;
         authority->second.coordinator_nonce = coordinator->coordinator_nonce();
     }
     return result;
 }
 
-RuntimeEpisodeBarrierAdmission RuntimeHostCandidate::open_shadow_replacement_barrier(
-    const RuntimeEpisodeRef &expected_episode, std::uint64_t expected_step_sequence) {
+RuntimeEpisodeBarrierAdmission
+RuntimeHostCandidate::open_shadow_replacement_barrier(const RuntimeEpisodeRef &expected_episode,
+                                                      std::uint64_t expected_step_sequence) {
     std::shared_ptr<RuntimeEpisodeCoordinatorCandidate> coordinator;
     {
         std::lock_guard<std::mutex> lock(state_->mutex);
@@ -2496,28 +2417,25 @@ RuntimeEpisodeBarrierAdmission RuntimeHostCandidate::open_shadow_replacement_bar
         if (active == nullptr || state_->host_state != RuntimeHostState::Active ||
             active->state != RuntimeSlotState::Quiescing || active->admission_open ||
             !active->cancellation_acknowledged || active->final_transfer_fence_sequence == 0 ||
-            !no_truth_leases(*active) ||
-            !expected_episode.well_formed() ||
+            !no_truth_leases(*active) || !expected_episode.well_formed() ||
             !same_slot(expected_episode.world.incarnation, active->incarnation)) {
-            return {.status = {.error = RuntimeStateTransferError::StaleIntent,
-                               .detail = "replacement barrier requires a host-quiesced active slot"}};
+            return {
+                .status = {.error = RuntimeStateTransferError::StaleIntent,
+                           .detail = "replacement barrier requires a host-quiesced active slot"}};
         }
-        const auto iterator =
-            state_->world_coordinators.find(expected_episode.world.world_slot);
+        const auto iterator = state_->world_coordinators.find(expected_episode.world.world_slot);
         if (iterator == state_->world_coordinators.end()) {
             return {.status = {.error = RuntimeStateTransferError::StaleIntent,
                                .detail = "episode world slot has no host-owned coordinator"}};
         }
         coordinator = iterator->second;
     }
-    auto barrier = coordinator->open_replacement_barrier(expected_episode,
-                                                         expected_step_sequence);
+    auto barrier = coordinator->open_replacement_barrier(expected_episode, expected_step_sequence);
     if (!barrier.status) {
         return barrier;
     }
-    const RuntimeStateTransferStatus binding =
-        barrier.capability.bind_for_host(state_->host_instance_nonce,
-                                         expected_episode.world.world_slot);
+    const RuntimeStateTransferStatus binding = barrier.capability.bind_for_host(
+        state_->host_instance_nonce, expected_episode.world.world_slot);
     if (!binding) {
         (void)coordinator->abort_replacement_barrier(std::move(barrier.capability));
         return {.status = binding, .capability = {}};
@@ -2525,35 +2443,36 @@ RuntimeEpisodeBarrierAdmission RuntimeHostCandidate::open_shadow_replacement_bar
     {
         std::lock_guard<std::mutex> lock(state_->mutex);
         const auto active = state_->active.load(std::memory_order_acquire);
-        const auto current = state_->world_coordinators.find(
-            expected_episode.world.world_slot);
+        const auto current = state_->world_coordinators.find(expected_episode.world.world_slot);
         if (active == nullptr || state_->host_state != RuntimeHostState::Active ||
             active->state != RuntimeSlotState::Quiescing || active->admission_open ||
-            !active->cancellation_acknowledged ||
-            active->final_transfer_fence_sequence == 0 || !no_truth_leases(*active) ||
-            current == state_->world_coordinators.end() || current->second != coordinator) {
+            !active->cancellation_acknowledged || active->final_transfer_fence_sequence == 0 ||
+            !no_truth_leases(*active) || current == state_->world_coordinators.end() ||
+            current->second != coordinator) {
             (void)coordinator->abort_replacement_barrier(std::move(barrier.capability));
-            return {.status = {.error = RuntimeStateTransferError::StaleIntent,
-                               .detail = "host authority changed while opening the episode barrier"},
-                    .capability = {}};
+            return {
+                .status = {.error = RuntimeStateTransferError::StaleIntent,
+                           .detail = "host authority changed while opening the episode barrier"},
+                .capability = {}};
         }
     }
     return barrier;
 }
 
-RuntimeEpisodeBarrierAdmission RuntimeHostCandidate::open_shadow_replacement_barrier(
-    std::uint64_t world_slot) {
+RuntimeEpisodeBarrierAdmission
+RuntimeHostCandidate::open_shadow_replacement_barrier(std::uint64_t world_slot) {
     std::shared_ptr<RuntimeEpisodeCoordinatorCandidate> coordinator;
     RuntimeEpisodeCoordinatorSnapshot current;
     {
         std::lock_guard<std::mutex> lock(state_->mutex);
         const auto active = state_->active.load(std::memory_order_acquire);
         if (active == nullptr || state_->host_state != RuntimeHostState::Active ||
-            active->state != RuntimeSlotState::Quiescing ||
-            active->admission_open || !active->cancellation_acknowledged ||
-            active->final_transfer_fence_sequence == 0 || !no_truth_leases(*active)) {
+            active->state != RuntimeSlotState::Quiescing || active->admission_open ||
+            !active->cancellation_acknowledged || active->final_transfer_fence_sequence == 0 ||
+            !no_truth_leases(*active)) {
             return {.status = {.error = RuntimeStateTransferError::BarrierRequired,
-                               .detail = "host must quiesce the active slot before opening its barrier"}};
+                               .detail =
+                                   "host must quiesce the active slot before opening its barrier"}};
         }
         const auto iterator = state_->world_coordinators.find(world_slot);
         if (iterator == state_->world_coordinators.end()) {
@@ -2563,8 +2482,7 @@ RuntimeEpisodeBarrierAdmission RuntimeHostCandidate::open_shadow_replacement_bar
         coordinator = iterator->second;
         current = coordinator->snapshot();
     }
-    auto barrier = coordinator->open_replacement_barrier(current.episode,
-                                                         current.step_sequence);
+    auto barrier = coordinator->open_replacement_barrier(current.episode, current.step_sequence);
     if (!barrier.status) {
         return barrier;
     }
@@ -2584,34 +2502,35 @@ RuntimeEpisodeBarrierAdmission RuntimeHostCandidate::open_shadow_replacement_bar
             current_coordinator == state_->world_coordinators.end() ||
             current_coordinator->second != coordinator) {
             (void)coordinator->abort_replacement_barrier(std::move(barrier.capability));
-            return {.status = {.error = RuntimeStateTransferError::StaleIntent,
-                               .detail = "host authority changed while opening the episode barrier"},
-                    .capability = {}};
+            return {
+                .status = {.error = RuntimeStateTransferError::StaleIntent,
+                           .detail = "host authority changed while opening the episode barrier"},
+                .capability = {}};
         }
     }
     return barrier;
 }
 
-RuntimeLeaseAdmission RuntimeHostCandidate::acquire_lease(
-    const RuntimeShadowEpisodeCapability &episode, RuntimeLeaseKind kind) {
+RuntimeLeaseAdmission
+RuntimeHostCandidate::acquire_lease(const RuntimeShadowEpisodeCapability &episode,
+                                    RuntimeLeaseKind kind) {
     std::unique_lock<std::mutex> lock(state_->mutex);
     if (!supported_lease_kind(kind)) {
-        return {.status = failure(RuntimeHostError::InvalidArgument,
-                                  "lease kind is unsupported"),
+        return {.status = failure(RuntimeHostError::InvalidArgument, "lease kind is unsupported"),
                 .lease = {},
                 .request_ref = {}};
     }
     const std::shared_ptr<RuntimeHostSlot> active = state_->active.load(std::memory_order_acquire);
     if (state_->host_state != RuntimeHostState::Active || active == nullptr ||
         active->state != RuntimeSlotState::Active) {
-        return {.status = failure(RuntimeHostError::AdmissionClosed,
-                                  "host has no active admitting slot"),
+        return {.status =
+                    failure(RuntimeHostError::AdmissionClosed, "host has no active admitting slot"),
                 .lease = {},
                 .request_ref = {}};
     }
     if (!active->admission_open) {
-        return {.status = failure(RuntimeHostError::AdmissionClosed,
-                                  "active slot admission is closed"),
+        return {.status =
+                    failure(RuntimeHostError::AdmissionClosed, "active slot admission is closed"),
                 .lease = {},
                 .request_ref = {}};
     }
@@ -2621,8 +2540,9 @@ RuntimeLeaseAdmission RuntimeHostCandidate::acquire_lease(
         admitted == state_->admitted_shadow_episodes.end() ||
         admitted->second.episode != episode.episode_ ||
         !same_slot(episode.episode_.world.incarnation, active->incarnation)) {
-        return {.status = failure(RuntimeHostError::StaleReference,
-                                  "episode capability is stale, forged, or belongs to another host"),
+        return {.status =
+                    failure(RuntimeHostError::StaleReference,
+                            "episode capability is stale, forged, or belongs to another host"),
                 .lease = {},
                 .request_ref = {}};
     }
@@ -2630,8 +2550,7 @@ RuntimeLeaseAdmission RuntimeHostCandidate::acquire_lease(
         admitted->second.native_episode.validate_for_host(active->incarnation);
     if (!native_status) {
         state_->admitted_shadow_episodes.erase(admitted);
-        return {.status = failure(RuntimeHostError::StaleReference,
-                                  native_status.detail),
+        return {.status = failure(RuntimeHostError::StaleReference, native_status.detail),
                 .lease = {},
                 .request_ref = {}};
     }
@@ -2649,463 +2568,463 @@ RuntimeLeaseAdmission RuntimeHostCandidate::acquire_lease(
                     .lease = {},
                     .request_ref = {}};
         }
-    const auto coordinator =
-        state_->world_coordinators.find(episode.episode_.world.world_slot);
-    if (coordinator == state_->world_coordinators.end() || coordinator->second == nullptr) {
-        return {.status = failure(RuntimeHostError::StaleReference,
-                                  "episode world slot has no host-owned coordinator"),
-                .lease = {},
-                .request_ref = {}};
+        const auto coordinator = state_->world_coordinators.find(episode.episode_.world.world_slot);
+        if (coordinator == state_->world_coordinators.end() || coordinator->second == nullptr) {
+            return {.status = failure(RuntimeHostError::StaleReference,
+                                      "episode world slot has no host-owned coordinator"),
+                    .lease = {},
+                    .request_ref = {}};
+        }
+        const RuntimeEpisodeCoordinatorSnapshot episode_snapshot = coordinator->second->snapshot();
+        if (kind == RuntimeLeaseKind::TruthMutating &&
+            episode_snapshot.phase == RuntimeEpisodePhase::Terminal) {
+            return {.status = failure(
+                        RuntimeHostError::AdmissionClosed,
+                        "truth-mutating lease is closed at terminal episode; use reset intent"),
+                    .lease = {},
+                    .request_ref = {}};
+        }
+        if (!increment_nonzero(state_->last_request_sequence)) {
+            return {.status = failure(RuntimeHostError::RequestSequenceExhausted,
+                                      "request sequence exhausted"),
+                    .lease = {},
+                    .request_ref = {}};
+        }
+        RuntimeRequestRef request_ref = {.episode = episode.episode_,
+                                         .request_sequence = state_->last_request_sequence};
+        if (kind == RuntimeLeaseKind::TruthMutating) {
+            ++active->truth_mutating_leases;
+        } else {
+            ++active->read_only_result_leases;
+        }
+        auto token = std::make_shared<RuntimeLeaseToken>(state_, active, request_ref, kind);
+        return {.status = success(),
+                .lease = RuntimeInstanceLease(std::move(token)),
+                .request_ref = request_ref};
     }
-    const RuntimeEpisodeCoordinatorSnapshot episode_snapshot =
-        coordinator->second->snapshot();
-    if (kind == RuntimeLeaseKind::TruthMutating &&
-        episode_snapshot.phase == RuntimeEpisodePhase::Terminal) {
-        return {.status = failure(RuntimeHostError::AdmissionClosed,
-                                  "truth-mutating lease is closed at terminal episode; use reset intent"),
-                .lease = {},
-                .request_ref = {}};
-    }
-    if (!increment_nonzero(state_->last_request_sequence)) {
-        return {.status = failure(RuntimeHostError::RequestSequenceExhausted,
-                                  "request sequence exhausted"),
-                .lease = {},
-                .request_ref = {}};
-    }
-    RuntimeRequestRef request_ref = {.episode = episode.episode_,
-                                     .request_sequence = state_->last_request_sequence};
-    if (kind == RuntimeLeaseKind::TruthMutating) {
-        ++active->truth_mutating_leases;
-    } else {
-        ++active->read_only_result_leases;
-    }
-    auto token = std::make_shared<RuntimeLeaseToken>(state_, active, request_ref, kind);
-    return {.status = success(),
-            .lease = RuntimeInstanceLease(std::move(token)),
-            .request_ref = request_ref};
-}
 
-RuntimeHostStatus RuntimeHostCandidate::validate_result(const RuntimeInstanceLease &lease,
-                                                        const RuntimeResultRef &result) const {
-    if (!result.well_formed() || result.request != lease.request_ref()) {
-        return failure(RuntimeHostError::ResultMismatch,
-                       "result identity does not match the admitted lease");
-    }
-    const std::shared_ptr<RuntimeLeaseToken> token = lease.token_;
-    std::unique_lock<std::mutex> lock(state_->mutex);
-    if (token == nullptr || token->state != state_ || token->slot == nullptr) {
-        return failure(RuntimeHostError::StaleReference, "lease belongs to another host");
-    }
-    if (!token->active.load(std::memory_order_acquire)) {
+    RuntimeHostStatus RuntimeHostCandidate::validate_result(const RuntimeInstanceLease &lease,
+                                                            const RuntimeResultRef &result) const {
+        if (!result.well_formed() || result.request != lease.request_ref()) {
+            return failure(RuntimeHostError::ResultMismatch,
+                           "result identity does not match the admitted lease");
+        }
+        const std::shared_ptr<RuntimeLeaseToken> token = lease.token_;
+        std::unique_lock<std::mutex> lock(state_->mutex);
+        if (token == nullptr || token->state != state_ || token->slot == nullptr) {
+            return failure(RuntimeHostError::StaleReference, "lease belongs to another host");
+        }
+        if (!token->active.load(std::memory_order_acquire)) {
+            return failure(RuntimeHostError::StaleReference,
+                           "lease was settled before terminal-result admission");
+        }
+        if (token->slot->state == RuntimeSlotState::Active &&
+            token->slot->result_publication_open) {
+            bool expected = false;
+            return token->result_accepted.compare_exchange_strong(expected, true)
+                       ? success()
+                       : failure(RuntimeHostError::DuplicateResult,
+                                 "terminal result was already accepted for this request");
+        }
+        if (token->slot->state == RuntimeSlotState::Draining &&
+            token->lease_kind == RuntimeLeaseKind::ReadOnlyResult &&
+            token->slot->result_publication_open) {
+            bool expected = false;
+            return token->result_accepted.compare_exchange_strong(expected, true)
+                       ? success()
+                       : failure(RuntimeHostError::DuplicateResult,
+                                 "terminal result was already accepted for this request");
+        }
         return failure(RuntimeHostError::StaleReference,
-                       "lease was settled before terminal-result admission");
+                       "slot no longer permits result publication for this lease");
     }
-    if (token->slot->state == RuntimeSlotState::Active && token->slot->result_publication_open) {
-        bool expected = false;
-        return token->result_accepted.compare_exchange_strong(expected, true)
-                   ? success()
-                   : failure(RuntimeHostError::DuplicateResult,
-                             "terminal result was already accepted for this request");
-    }
-    if (token->slot->state == RuntimeSlotState::Draining &&
-        token->lease_kind == RuntimeLeaseKind::ReadOnlyResult &&
-        token->slot->result_publication_open) {
-        bool expected = false;
-        return token->result_accepted.compare_exchange_strong(expected, true)
-                   ? success()
-                   : failure(RuntimeHostError::DuplicateResult,
-                             "terminal result was already accepted for this request");
-    }
-    return failure(RuntimeHostError::StaleReference,
-                   "slot no longer permits result publication for this lease");
-}
 
-RuntimeShutdownResult RuntimeHostCandidate::begin_shutdown(std::uint64_t now_tick,
-                                                            std::uint64_t deadline_tick) {
-    const bool injected_loss =
-        invoke_cas_fault_injector(state_, RuntimeSlotCasOperation::ShutdownUnpublish);
-    std::unique_lock<std::mutex> lock(state_->mutex);
-    if (state_->host_state == RuntimeHostState::Stopped) {
-        return {.status = success(), .shutdown_ticket = state_->shutdown_ticket,
-                .state = RuntimeHostState::Stopped,
-                .publication_ticket = state_->last_publication_ticket};
-    }
-    if (state_->host_state == RuntimeHostState::FailStopped) {
-        return {.status = failure(RuntimeHostError::QuarantineUnresolved,
-                                  "host is fail-stopped with unresolved resources"),
+    RuntimeShutdownResult RuntimeHostCandidate::begin_shutdown(std::uint64_t now_tick,
+                                                               std::uint64_t deadline_tick) {
+        const bool injected_loss =
+            invoke_cas_fault_injector(state_, RuntimeSlotCasOperation::ShutdownUnpublish);
+        std::unique_lock<std::mutex> lock(state_->mutex);
+        if (state_->host_state == RuntimeHostState::Stopped) {
+            return {.status = success(),
+                    .shutdown_ticket = state_->shutdown_ticket,
+                    .state = RuntimeHostState::Stopped,
+                    .publication_ticket = state_->last_publication_ticket};
+        }
+        if (state_->host_state == RuntimeHostState::FailStopped) {
+            return {.status = failure(RuntimeHostError::QuarantineUnresolved,
+                                      "host is fail-stopped with unresolved resources"),
+                    .shutdown_ticket = state_->shutdown_ticket,
+                    .state = RuntimeHostState::FailStopped,
+                    .publication_ticket = state_->last_publication_ticket};
+        }
+        if (state_->host_state == RuntimeHostState::ShuttingDown) {
+            RuntimeHostStatus status = progress_shutdown(*state_, lock, now_tick);
+            return {.status = status,
+                    .shutdown_ticket = state_->shutdown_ticket,
+                    .state = state_->host_state,
+                    .publication_ticket = state_->last_publication_ticket};
+        }
+        if (!increment_nonzero(state_->last_lifecycle_ticket)) {
+            state_->host_state = RuntimeHostState::FailStopped;
+            return {.status =
+                        failure(RuntimeHostError::TicketExhausted, "shutdown ticket exhausted"),
+                    .shutdown_ticket = 0,
+                    .state = state_->host_state,
+                    .publication_ticket = state_->last_publication_ticket};
+        }
+        state_->shutdown_ticket = state_->last_lifecycle_ticket;
+        state_->shutdown_deadline_tick = std::max(now_tick, deadline_tick);
+        const std::shared_ptr<RuntimeHostSlot> active =
+            state_->active.load(std::memory_order_acquire);
+        if (active != nullptr && active->state == RuntimeSlotState::Publishing) {
+            return {.status =
+                        failure(RuntimeHostError::ShutdownPending,
+                                "shutdown is waiting for target import publication to finish"),
+                    .shutdown_ticket = state_->shutdown_ticket,
+                    .state = state_->host_state,
+                    .publication_ticket = state_->last_publication_ticket};
+        }
+        if (state_->native_episode_submissions_in_flight != 0 ||
+            state_->state_transfers_in_flight.load(std::memory_order_acquire) != 0) {
+            return {
+                .status = failure(
+                    RuntimeHostError::ShutdownPending,
+                    "shutdown is waiting for native episode or state-transfer callbacks to settle"),
                 .shutdown_ticket = state_->shutdown_ticket,
-                .state = RuntimeHostState::FailStopped,
+                .state = state_->host_state,
                 .publication_ticket = state_->last_publication_ticket};
-    }
-    if (state_->host_state == RuntimeHostState::ShuttingDown) {
+        }
+        state_->host_state = RuntimeHostState::ShuttingDown;
+
+        if (active != nullptr) {
+            const RuntimeSlotState prior_active_state = active->state;
+            const bool prior_admission_open = active->admission_open;
+            const bool prior_result_publication_open = active->result_publication_open;
+            active->admission_open = false;
+            active->result_publication_open = false;
+            active->state = RuntimeSlotState::ShuttingDown;
+            std::shared_ptr<RuntimeHostSlot> expected = active;
+            const RuntimeHostStatus unpublished =
+                compare_exchange_active(*state_, expected, {}, injected_loss);
+            if (!unpublished) {
+                active->state = prior_active_state;
+                active->admission_open = prior_admission_open;
+                active->result_publication_open = prior_result_publication_open;
+                state_->host_state = active->state == RuntimeSlotState::ActiveFaulted
+                                         ? RuntimeHostState::Faulted
+                                         : RuntimeHostState::Active;
+                return {.status = unpublished,
+                        .shutdown_ticket = state_->shutdown_ticket,
+                        .state = state_->host_state,
+                        .publication_ticket = state_->last_publication_ticket};
+            }
+            const RuntimeHostStatus cancellation = cancel_slot(*state_, lock, active);
+            if (!cancellation) {
+                state_->shutdown_pending = active;
+                return {.status = cancellation,
+                        .shutdown_ticket = state_->shutdown_ticket,
+                        .state = state_->host_state,
+                        .publication_ticket = state_->last_publication_ticket};
+            }
+            state_->shutdown_pending = active;
+        }
         RuntimeHostStatus status = progress_shutdown(*state_, lock, now_tick);
         return {.status = status,
                 .shutdown_ticket = state_->shutdown_ticket,
                 .state = state_->host_state,
                 .publication_ticket = state_->last_publication_ticket};
     }
-    if (!increment_nonzero(state_->last_lifecycle_ticket)) {
-        state_->host_state = RuntimeHostState::FailStopped;
-        return {.status = failure(RuntimeHostError::TicketExhausted,
-                                  "shutdown ticket exhausted"),
-                .shutdown_ticket = 0,
-                .state = state_->host_state,
-                .publication_ticket = state_->last_publication_ticket};
-    }
-    state_->shutdown_ticket = state_->last_lifecycle_ticket;
-    state_->shutdown_deadline_tick = std::max(now_tick, deadline_tick);
-    const std::shared_ptr<RuntimeHostSlot> active = state_->active.load(std::memory_order_acquire);
-    if (active != nullptr && active->state == RuntimeSlotState::Publishing) {
-        return {.status = failure(RuntimeHostError::ShutdownPending,
-                                  "shutdown is waiting for target import publication to finish"),
-                .shutdown_ticket = state_->shutdown_ticket,
-                .state = state_->host_state,
-                .publication_ticket = state_->last_publication_ticket};
-    }
-    if (state_->native_episode_submissions_in_flight != 0 ||
-        state_->state_transfers_in_flight.load(std::memory_order_acquire) != 0) {
-        return {.status = failure(RuntimeHostError::ShutdownPending,
-                                  "shutdown is waiting for native episode or state-transfer callbacks to settle"),
-                .shutdown_ticket = state_->shutdown_ticket,
-                .state = state_->host_state,
-                .publication_ticket = state_->last_publication_ticket};
-    }
-    state_->host_state = RuntimeHostState::ShuttingDown;
 
-    if (active != nullptr) {
-        const RuntimeSlotState prior_active_state = active->state;
-        const bool prior_admission_open = active->admission_open;
-        const bool prior_result_publication_open = active->result_publication_open;
-        active->admission_open = false;
-        active->result_publication_open = false;
-        active->state = RuntimeSlotState::ShuttingDown;
-        std::shared_ptr<RuntimeHostSlot> expected = active;
-        const RuntimeHostStatus unpublished = compare_exchange_active(
-            *state_, expected, {}, injected_loss);
-        if (!unpublished) {
-            active->state = prior_active_state;
-            active->admission_open = prior_admission_open;
-            active->result_publication_open = prior_result_publication_open;
-            state_->host_state = active->state == RuntimeSlotState::ActiveFaulted
-                                     ? RuntimeHostState::Faulted
-                                     : RuntimeHostState::Active;
-            return {.status = unpublished,
-                    .shutdown_ticket = state_->shutdown_ticket,
-                    .state = state_->host_state,
-                    .publication_ticket = state_->last_publication_ticket};
+    RuntimeHostStatus RuntimeHostCandidate::poll(std::uint64_t now_tick) {
+        std::unique_lock<std::mutex> lock(state_->mutex);
+        const std::shared_ptr<RuntimeHostSlot> active_before_probe =
+            state_->active.load(std::memory_order_acquire);
+        const bool candidate_timeout_cas_expected =
+            state_->candidate != nullptr && active_before_probe != nullptr &&
+            state_->candidate->lifecycle_deadline_tick != 0 &&
+            now_tick >= state_->candidate->lifecycle_deadline_tick &&
+            !no_truth_leases(*active_before_probe) &&
+            (active_before_probe->state == RuntimeSlotState::Quiescing ||
+             active_before_probe->state == RuntimeSlotState::RecoveryQuiesced);
+        const bool fault_timeout_cas_expected =
+            state_->host_state == RuntimeHostState::Faulted && active_before_probe != nullptr &&
+            active_before_probe->state == RuntimeSlotState::ActiveFaulted &&
+            now_tick >= active_before_probe->drain_deadline_tick;
+        lock.unlock();
+        const bool injected_quiesce_loss =
+            candidate_timeout_cas_expected &&
+            invoke_cas_fault_injector(state_, RuntimeSlotCasOperation::QuiesceTimeoutUnpublish);
+        const bool injected_fault_loss =
+            fault_timeout_cas_expected &&
+            invoke_cas_fault_injector(state_, RuntimeSlotCasOperation::FaultTimeoutUnpublish);
+        lock.lock();
+        apply_pending_quiescence_rollback(*state_);
+        const RuntimeHostStatus candidate_deadline =
+            progress_candidate_deadline(*state_, lock, now_tick, injected_quiesce_loss);
+        if (!candidate_deadline) {
+            return candidate_deadline;
         }
-        const RuntimeHostStatus cancellation = cancel_slot(*state_, lock, active);
-        if (!cancellation) {
-            state_->shutdown_pending = active;
-            return {.status = cancellation,
-                    .shutdown_ticket = state_->shutdown_ticket,
-                    .state = state_->host_state,
-                    .publication_ticket = state_->last_publication_ticket};
+        const RuntimeHostStatus fault_deadline =
+            progress_fault_deadline(*state_, lock, now_tick, injected_fault_loss);
+        if (!fault_deadline) {
+            return fault_deadline;
         }
-        state_->shutdown_pending = active;
-    }
-    RuntimeHostStatus status = progress_shutdown(*state_, lock, now_tick);
-    return {.status = status,
-            .shutdown_ticket = state_->shutdown_ticket,
-            .state = state_->host_state,
-            .publication_ticket = state_->last_publication_ticket};
-}
-
-RuntimeHostStatus RuntimeHostCandidate::poll(std::uint64_t now_tick) {
-    std::unique_lock<std::mutex> lock(state_->mutex);
-    const std::shared_ptr<RuntimeHostSlot> active_before_probe =
-        state_->active.load(std::memory_order_acquire);
-    const bool candidate_timeout_cas_expected =
-        state_->candidate != nullptr && active_before_probe != nullptr &&
-        state_->candidate->lifecycle_deadline_tick != 0 &&
-        now_tick >= state_->candidate->lifecycle_deadline_tick &&
-        !no_truth_leases(*active_before_probe) &&
-        (active_before_probe->state == RuntimeSlotState::Quiescing ||
-         active_before_probe->state == RuntimeSlotState::RecoveryQuiesced);
-    const bool fault_timeout_cas_expected =
-        state_->host_state == RuntimeHostState::Faulted && active_before_probe != nullptr &&
-        active_before_probe->state == RuntimeSlotState::ActiveFaulted &&
-        now_tick >= active_before_probe->drain_deadline_tick;
-    lock.unlock();
-    const bool injected_quiesce_loss =
-        candidate_timeout_cas_expected && invoke_cas_fault_injector(
-                                               state_, RuntimeSlotCasOperation::QuiesceTimeoutUnpublish);
-    const bool injected_fault_loss =
-        fault_timeout_cas_expected && invoke_cas_fault_injector(
-                                           state_, RuntimeSlotCasOperation::FaultTimeoutUnpublish);
-    lock.lock();
-    apply_pending_quiescence_rollback(*state_);
-    const RuntimeHostStatus candidate_deadline =
-        progress_candidate_deadline(*state_, lock, now_tick, injected_quiesce_loss);
-    if (!candidate_deadline) {
-        return candidate_deadline;
-    }
-    const RuntimeHostStatus fault_deadline =
-        progress_fault_deadline(*state_, lock, now_tick, injected_fault_loss);
-    if (!fault_deadline) {
-        return fault_deadline;
-    }
-    if (state_->host_state == RuntimeHostState::Stopped ||
-        state_->host_state == RuntimeHostState::FailStopped) {
-        return state_->host_state == RuntimeHostState::Stopped
-                   ? success()
-                   : failure(RuntimeHostError::QuarantineUnresolved,
-                             "host is fail-stopped with unresolved resources");
-    }
-    if (state_->draining != nullptr) {
-        const std::shared_ptr<RuntimeHostSlot> draining = state_->draining;
-        if (no_leases(*draining)) {
-            if (reclaim_slot(*state_, lock, draining)) {
-                clear_slot_reference(*state_, draining);
-            } else if (draining->state == RuntimeSlotState::Quarantined) {
+        if (state_->host_state == RuntimeHostState::Stopped ||
+            state_->host_state == RuntimeHostState::FailStopped) {
+            return state_->host_state == RuntimeHostState::Stopped
+                       ? success()
+                       : failure(RuntimeHostError::QuarantineUnresolved,
+                                 "host is fail-stopped with unresolved resources");
+        }
+        if (state_->draining != nullptr) {
+            const std::shared_ptr<RuntimeHostSlot> draining = state_->draining;
+            if (no_leases(*draining)) {
+                if (reclaim_slot(*state_, lock, draining)) {
+                    clear_slot_reference(*state_, draining);
+                } else if (draining->state == RuntimeSlotState::Quarantined) {
+                    state_->draining.reset();
+                    retain_quarantine(*state_, draining);
+                }
+            } else if (now_tick >= draining->drain_deadline_tick) {
                 state_->draining.reset();
-                retain_quarantine(*state_, draining);
+                return move_to_quarantine(*state_, draining);
             }
-        } else if (now_tick >= draining->drain_deadline_tick) {
-            state_->draining.reset();
-            return move_to_quarantine(*state_, draining);
         }
-    }
-    if (state_->host_state == RuntimeHostState::ShuttingDown) {
-        return progress_shutdown(*state_, lock, now_tick);
-    }
-    return success();
-}
-
-RuntimeHostStatus RuntimeHostCandidate::retry_quarantined_reclamation() {
-    std::unique_lock<std::mutex> lock(state_->mutex);
-    if (state_->quarantined.empty()) {
+        if (state_->host_state == RuntimeHostState::ShuttingDown) {
+            return progress_shutdown(*state_, lock, now_tick);
+        }
         return success();
     }
-    bool unresolved = false;
-    const auto retained = state_->quarantined;
 
-    // First resolve any replacement publication whose owner transaction was
-    // left ambiguous.  The source slot is intentionally kept quarantined
-    // until this classification completes, so reclamation cannot destroy the
-    // rollback target before the durable transaction is settled.
-    for (const std::shared_ptr<RuntimeHostSlot> &quarantined : retained) {
-        if (quarantined == nullptr || quarantined->rollback_target == nullptr ||
-            !quarantined->owner_publication_recovery_pending ||
-            quarantined->state != RuntimeSlotState::Quarantined ||
-            (!quarantined->validated_transfer.ambiguous() &&
-             !quarantined->validated_transfer.committed() &&
-             !quarantined->validated_transfer.aborted())) {
-            continue;
+    RuntimeHostStatus RuntimeHostCandidate::retry_quarantined_reclamation() {
+        std::unique_lock<std::mutex> lock(state_->mutex);
+        if (state_->quarantined.empty()) {
+            return success();
         }
-        const std::shared_ptr<RuntimeHostSlot> rollback_target =
-            quarantined->rollback_target;
-        lock.unlock();
-        const RuntimeStateTransferStatus recovered =
-            quarantined->validated_transfer.recover_for_host(
-                0, quarantined->drain_deadline_tick);
-        lock.lock();
-        if (!recovered) {
-            unresolved = true;
-            continue;
-        }
-        if (quarantined->validated_transfer.committed()) {
-            std::shared_ptr<RuntimeHostSlot> expected;
-            const RuntimeHostStatus published = compare_exchange_active(
-                *state_, expected, quarantined, false);
-            if (!published) {
+        bool unresolved = false;
+        const auto retained = state_->quarantined;
+
+        // First resolve any replacement publication whose owner transaction was
+        // left ambiguous.  The source slot is intentionally kept quarantined
+        // until this classification completes, so reclamation cannot destroy the
+        // rollback target before the durable transaction is settled.
+        for (const std::shared_ptr<RuntimeHostSlot> &quarantined : retained) {
+            if (quarantined == nullptr || quarantined->rollback_target == nullptr ||
+                !quarantined->owner_publication_recovery_pending ||
+                quarantined->state != RuntimeSlotState::Quarantined ||
+                (!quarantined->validated_transfer.ambiguous() &&
+                 !quarantined->validated_transfer.committed() &&
+                 !quarantined->validated_transfer.aborted())) {
+                continue;
+            }
+            const std::shared_ptr<RuntimeHostSlot> rollback_target = quarantined->rollback_target;
+            lock.unlock();
+            const RuntimeStateTransferStatus recovered =
+                quarantined->validated_transfer.recover_for_host(0,
+                                                                 quarantined->drain_deadline_tick);
+            lock.lock();
+            if (!recovered) {
                 unresolved = true;
                 continue;
             }
-            quarantined->state = RuntimeSlotState::Active;
-            quarantined->owner_publication_recovery_pending = false;
-            quarantined->admission_open = true;
-            quarantined->result_publication_open = true;
-            rollback_target->state = RuntimeSlotState::Draining;
-            rollback_target->admission_open = false;
-            rollback_target->result_publication_open = true;
-            rollback_target->drain_deadline_tick = quarantined->drain_deadline_tick;
-            state_->draining = rollback_target;
-            state_->rollback_world_authority.clear();
-            state_->rollback_world_coordinators.clear();
-            state_->host_state = RuntimeHostState::Active;
-            state_->quarantined.erase(
-                std::remove(state_->quarantined.begin(), state_->quarantined.end(),
-                            quarantined),
-                state_->quarantined.end());
-            lock.unlock();
-            quarantined->validated_transfer.release_host_transfer_fence();
-            lock.lock();
-            continue;
+            if (quarantined->validated_transfer.committed()) {
+                std::shared_ptr<RuntimeHostSlot> expected;
+                const RuntimeHostStatus published =
+                    compare_exchange_active(*state_, expected, quarantined, false);
+                if (!published) {
+                    unresolved = true;
+                    continue;
+                }
+                quarantined->state = RuntimeSlotState::Active;
+                quarantined->owner_publication_recovery_pending = false;
+                quarantined->admission_open = true;
+                quarantined->result_publication_open = true;
+                rollback_target->state = RuntimeSlotState::Draining;
+                rollback_target->admission_open = false;
+                rollback_target->result_publication_open = true;
+                rollback_target->drain_deadline_tick = quarantined->drain_deadline_tick;
+                state_->draining = rollback_target;
+                state_->rollback_world_authority.clear();
+                state_->rollback_world_coordinators.clear();
+                state_->host_state = RuntimeHostState::Active;
+                state_->quarantined.erase(std::remove(state_->quarantined.begin(),
+                                                      state_->quarantined.end(), quarantined),
+                                          state_->quarantined.end());
+                lock.unlock();
+                quarantined->validated_transfer.release_host_transfer_fence();
+                lock.lock();
+                continue;
+            }
+            if (quarantined->validated_transfer.aborted()) {
+                std::shared_ptr<RuntimeHostSlot> expected;
+                const RuntimeHostStatus published =
+                    compare_exchange_active(*state_, expected, rollback_target, false);
+                if (!published) {
+                    unresolved = true;
+                    continue;
+                }
+                if (!state_->rollback_world_authority.empty() ||
+                    !state_->rollback_world_coordinators.empty()) {
+                    state_->world_authority = std::move(state_->rollback_world_authority);
+                    state_->world_coordinators = std::move(state_->rollback_world_coordinators);
+                }
+                rollback_target->state = RuntimeSlotState::Active;
+                rollback_target->admission_open = true;
+                rollback_target->result_publication_open = true;
+                rollback_target->final_transfer_fence_sequence = 0;
+                rollback_target->quiescence_capability_live.store(false, std::memory_order_release);
+                state_->host_state = RuntimeHostState::Active;
+                quarantined->state = RuntimeSlotState::CandidateFailed;
+                quarantined->owner_publication_recovery_pending = false;
+                quarantined->admission_open = false;
+                quarantined->result_publication_open = false;
+                state_->quarantined.erase(std::remove(state_->quarantined.begin(),
+                                                      state_->quarantined.end(), quarantined),
+                                          state_->quarantined.end());
+                state_->quarantined.erase(std::remove(state_->quarantined.begin(),
+                                                      state_->quarantined.end(), rollback_target),
+                                          state_->quarantined.end());
+                lock.unlock();
+                quarantined->validated_transfer.release_host_transfer_fence();
+                lock.lock();
+                if (!reclaim_slot(*state_, lock, quarantined)) {
+                    unresolved = true;
+                }
+            }
         }
-        if (quarantined->validated_transfer.aborted()) {
-            std::shared_ptr<RuntimeHostSlot> expected;
-            const RuntimeHostStatus published = compare_exchange_active(
-                *state_, expected, rollback_target, false);
-            if (!published) {
+
+        for (const std::shared_ptr<RuntimeHostSlot> &quarantined : retained) {
+            if (quarantined == nullptr || quarantined->state != RuntimeSlotState::Quarantined) {
+                continue;
+            }
+            const bool waits_for_replacement =
+                std::any_of(retained.begin(), retained.end(), [&](const auto &candidate) {
+                    return candidate != nullptr &&
+                           candidate->state == RuntimeSlotState::Quarantined &&
+                           candidate->owner_publication_recovery_pending &&
+                           candidate->rollback_target == quarantined;
+                });
+            if (waits_for_replacement) {
                 unresolved = true;
                 continue;
             }
-            if (!state_->rollback_world_authority.empty() ||
-                !state_->rollback_world_coordinators.empty()) {
-                state_->world_authority = std::move(state_->rollback_world_authority);
-                state_->world_coordinators = std::move(state_->rollback_world_coordinators);
+            if (!no_leases(*quarantined)) {
+                unresolved = true;
+                continue;
             }
-            rollback_target->state = RuntimeSlotState::Active;
-            rollback_target->admission_open = true;
-            rollback_target->result_publication_open = true;
-            rollback_target->final_transfer_fence_sequence = 0;
-            rollback_target->quiescence_capability_live.store(
-                false, std::memory_order_release);
-            state_->host_state = RuntimeHostState::Active;
-            quarantined->state = RuntimeSlotState::CandidateFailed;
-            quarantined->owner_publication_recovery_pending = false;
-            quarantined->admission_open = false;
-            quarantined->result_publication_open = false;
-            state_->quarantined.erase(
-                std::remove(state_->quarantined.begin(), state_->quarantined.end(),
-                            quarantined),
-                state_->quarantined.end());
-            state_->quarantined.erase(
-                std::remove(state_->quarantined.begin(), state_->quarantined.end(),
-                            rollback_target),
-                state_->quarantined.end());
-            lock.unlock();
-            quarantined->validated_transfer.release_host_transfer_fence();
-            lock.lock();
             if (!reclaim_slot(*state_, lock, quarantined)) {
                 unresolved = true;
-            }
-        }
-    }
-
-    for (const std::shared_ptr<RuntimeHostSlot> &quarantined : retained) {
-        if (quarantined == nullptr || quarantined->state != RuntimeSlotState::Quarantined) {
-            continue;
-        }
-        const bool waits_for_replacement = std::any_of(
-            retained.begin(), retained.end(), [&](const auto &candidate) {
-                return candidate != nullptr && candidate->state == RuntimeSlotState::Quarantined &&
-                       candidate->owner_publication_recovery_pending &&
-                       candidate->rollback_target == quarantined;
-            });
-        if (waits_for_replacement) {
-            unresolved = true;
-            continue;
-        }
-        if (!no_leases(*quarantined)) {
-            unresolved = true;
-            continue;
-        }
-        if (!reclaim_slot(*state_, lock, quarantined)) {
-            unresolved = true;
-            continue;
-        }
-        clear_slot_reference(*state_, quarantined);
-    }
-    if (unresolved) {
-        return failure(RuntimeHostError::QuarantineUnresolved,
-                       "one or more quarantined resources remain retained");
-    }
-    if (state_->host_state == RuntimeHostState::ShuttingDown) {
-        return progress_shutdown(*state_, lock, state_->shutdown_deadline_tick);
-    }
-    return state_->host_state == RuntimeHostState::FailStopped
-               ? failure(RuntimeHostError::HostTerminal,
-                         "resources were released but fail-stopped host remains terminal")
-               : success();
-}
-
-RuntimeHostSnapshot RuntimeHostCandidate::snapshot() const {
-    std::unique_lock<std::mutex> lock(state_->mutex);
-    const std::shared_ptr<RuntimeHostSlot> active =
-        state_->active.load(std::memory_order_acquire);
-    std::vector<RuntimeSlotSnapshot> quarantined;
-    quarantined.reserve(state_->quarantined.size());
-    for (const std::shared_ptr<RuntimeHostSlot> &slot : state_->quarantined) {
-        quarantined.push_back(snapshot_slot(*slot));
-    }
-    RuntimeHostSnapshot output{
-        .identity = state_->identity,
-        .mode = state_->config.mode,
-        .state = state_->host_state,
-        .host_instance_nonce = state_->host_instance_nonce,
-        .production_authorized = state_->production_authorized,
-        .last_lifecycle_ticket = state_->last_lifecycle_ticket,
-        .last_request_sequence = state_->last_request_sequence,
-        .shutdown_ticket = state_->shutdown_ticket,
-        .last_publication_ticket = state_->last_publication_ticket,
-        .active = active == nullptr
-                       ? std::nullopt
-                       : std::optional<RuntimeSlotSnapshot>(snapshot_slot(*active)),
-        .candidate = state_->candidate == nullptr
-                         ? std::nullopt
-                         : std::optional<RuntimeSlotSnapshot>(snapshot_slot(*state_->candidate)),
-        .draining = state_->draining == nullptr
-                        ? std::nullopt
-                        : std::optional<RuntimeSlotSnapshot>(snapshot_slot(*state_->draining)),
-        .quarantined = std::move(quarantined),
-        .shutdown_pending = state_->shutdown_pending == nullptr
-                                ? std::nullopt
-                                : std::optional<RuntimeSlotSnapshot>(
-                                      snapshot_slot(*state_->shutdown_pending)),
-        .retired_incarnation_high_watermark = state_->retired_incarnation_high_watermark,
-    };
-    return output;
-}
-
-std::size_t RuntimeHostCandidate::orphaned_host_count() noexcept {
-    try {
-        HostOrphanRegistry &registry = orphan_registry();
-        std::lock_guard<std::mutex> lock(registry.mutex);
-        return registry.hosts.size();
-    } catch (...) {
-        return 0;
-    }
-}
-
-RuntimeHostStatus RuntimeHostCandidate::retry_orphaned_reclamation() {
-    std::vector<std::shared_ptr<RuntimeHostSharedState>> states;
-    {
-        HostOrphanRegistry &registry = orphan_registry();
-        std::lock_guard<std::mutex> lock(registry.mutex);
-        states = registry.hosts;
-    }
-
-    bool unresolved = false;
-    for (const std::shared_ptr<RuntimeHostSharedState> &state : states) {
-        std::unique_lock<std::mutex> lock(state->mutex);
-        const auto quarantined = state->quarantined;
-        for (const std::shared_ptr<RuntimeHostSlot> &slot : quarantined) {
-            if (!no_leases(*slot) || !reclaim_slot(*state, lock, slot)) {
-                unresolved = true;
                 continue;
             }
-            clear_slot_reference(*state, slot);
+            clear_slot_reference(*state_, quarantined);
         }
-        if (state->host_state == RuntimeHostState::ShuttingDown) {
-            const RuntimeHostStatus status = progress_shutdown(*state, lock, 0);
-            if (!status && status.error != RuntimeHostError::ShutdownPending) {
-                unresolved = true;
-            }
+        if (unresolved) {
+            return failure(RuntimeHostError::QuarantineUnresolved,
+                           "one or more quarantined resources remain retained");
+        }
+        if (state_->host_state == RuntimeHostState::ShuttingDown) {
+            return progress_shutdown(*state_, lock, state_->shutdown_deadline_tick);
+        }
+        return state_->host_state == RuntimeHostState::FailStopped
+                   ? failure(RuntimeHostError::HostTerminal,
+                             "resources were released but fail-stopped host remains terminal")
+                   : success();
+    }
+
+    RuntimeHostSnapshot RuntimeHostCandidate::snapshot() const {
+        std::unique_lock<std::mutex> lock(state_->mutex);
+        const std::shared_ptr<RuntimeHostSlot> active =
+            state_->active.load(std::memory_order_acquire);
+        std::vector<RuntimeSlotSnapshot> quarantined;
+        quarantined.reserve(state_->quarantined.size());
+        for (const std::shared_ptr<RuntimeHostSlot> &slot : state_->quarantined) {
+            quarantined.push_back(snapshot_slot(*slot));
+        }
+        RuntimeHostSnapshot output{
+            .identity = state_->identity,
+            .mode = state_->config.mode,
+            .state = state_->host_state,
+            .host_instance_nonce = state_->host_instance_nonce,
+            .production_authorized = state_->production_authorized,
+            .last_lifecycle_ticket = state_->last_lifecycle_ticket,
+            .last_request_sequence = state_->last_request_sequence,
+            .shutdown_ticket = state_->shutdown_ticket,
+            .last_publication_ticket = state_->last_publication_ticket,
+            .active = active == nullptr
+                          ? std::nullopt
+                          : std::optional<RuntimeSlotSnapshot>(snapshot_slot(*active)),
+            .candidate = state_->candidate == nullptr ? std::nullopt
+                                                      : std::optional<RuntimeSlotSnapshot>(
+                                                            snapshot_slot(*state_->candidate)),
+            .draining = state_->draining == nullptr
+                            ? std::nullopt
+                            : std::optional<RuntimeSlotSnapshot>(snapshot_slot(*state_->draining)),
+            .quarantined = std::move(quarantined),
+            .shutdown_pending =
+                state_->shutdown_pending == nullptr
+                    ? std::nullopt
+                    : std::optional<RuntimeSlotSnapshot>(snapshot_slot(*state_->shutdown_pending)),
+            .retired_incarnation_high_watermark = state_->retired_incarnation_high_watermark,
+        };
+        return output;
+    }
+
+    std::size_t RuntimeHostCandidate::orphaned_host_count() noexcept {
+        try {
+            HostOrphanRegistry &registry = orphan_registry();
+            std::lock_guard<std::mutex> lock(registry.mutex);
+            return registry.hosts.size();
+        } catch (...) {
+            return 0;
         }
     }
 
-    {
-        HostOrphanRegistry &registry = orphan_registry();
-        std::lock_guard<std::mutex> orphan_lock(registry.mutex);
-        std::erase_if(registry.hosts, [](const auto &state) {
-            std::lock_guard<std::mutex> state_lock(state->mutex);
-            const bool no_owned_slots =
-                state->active.load(std::memory_order_acquire) == nullptr &&
-                state->candidate == nullptr && state->draining == nullptr &&
-                state->shutdown_pending == nullptr && state->quarantined.empty();
-            if (no_owned_slots) {
-                state->orphan_handoff_recorded = false;
+    RuntimeHostStatus RuntimeHostCandidate::retry_orphaned_reclamation() {
+        std::vector<std::shared_ptr<RuntimeHostSharedState>> states;
+        {
+            HostOrphanRegistry &registry = orphan_registry();
+            std::lock_guard<std::mutex> lock(registry.mutex);
+            states = registry.hosts;
+        }
+
+        bool unresolved = false;
+        for (const std::shared_ptr<RuntimeHostSharedState> &state : states) {
+            std::unique_lock<std::mutex> lock(state->mutex);
+            const auto quarantined = state->quarantined;
+            for (const std::shared_ptr<RuntimeHostSlot> &slot : quarantined) {
+                if (!no_leases(*slot) || !reclaim_slot(*state, lock, slot)) {
+                    unresolved = true;
+                    continue;
+                }
+                clear_slot_reference(*state, slot);
             }
-            return no_owned_slots;
-        });
-        unresolved = unresolved || !registry.hosts.empty();
+            if (state->host_state == RuntimeHostState::ShuttingDown) {
+                const RuntimeHostStatus status = progress_shutdown(*state, lock, 0);
+                if (!status && status.error != RuntimeHostError::ShutdownPending) {
+                    unresolved = true;
+                }
+            }
+        }
+
+        {
+            HostOrphanRegistry &registry = orphan_registry();
+            std::lock_guard<std::mutex> orphan_lock(registry.mutex);
+            std::erase_if(registry.hosts, [](const auto &state) {
+                std::lock_guard<std::mutex> state_lock(state->mutex);
+                const bool no_owned_slots =
+                    state->active.load(std::memory_order_acquire) == nullptr &&
+                    state->candidate == nullptr && state->draining == nullptr &&
+                    state->shutdown_pending == nullptr && state->quarantined.empty();
+                if (no_owned_slots) {
+                    state->orphan_handoff_recorded = false;
+                }
+                return no_owned_slots;
+            });
+            unresolved = unresolved || !registry.hosts.empty();
+        }
+        return unresolved ? failure(RuntimeHostError::QuarantineUnresolved,
+                                    "one or more orphaned host resources remain retained")
+                          : success();
     }
-    return unresolved
-               ? failure(RuntimeHostError::QuarantineUnresolved,
-                         "one or more orphaned host resources remain retained")
-               : success();
-}
 
 } // namespace runtime::host

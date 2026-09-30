@@ -466,12 +466,10 @@ bool missile_launch_envelope_allows(const MissileTuning &tuning, const Detection
 
 SimulationKernelWeaponReleaseService::SimulationKernelWeaponReleaseService(
     SimulationKernel &kernel, flecs::world &ecs, IUnitFactory &unit_factory,
-    MissileTuning &missile_tuning, std::mt19937 &rng,
-    IEngagementLaunchRecorder &launch_recorder, IEngagementEventRecorder &damage_recorder,
-    IWeaponReleaseDamageBridge &damage_bridge)
-    : ecs_(ecs), kernel_(kernel), unit_factory_(unit_factory),
-      missile_tuning_(missile_tuning), rng_(rng),
-      launch_recorder_(launch_recorder), damage_recorder_(damage_recorder),
+    MissileTuning &missile_tuning, std::mt19937 &rng, IEngagementLaunchRecorder &launch_recorder,
+    IEngagementEventRecorder &damage_recorder, IWeaponReleaseDamageBridge &damage_bridge)
+    : ecs_(ecs), kernel_(kernel), unit_factory_(unit_factory), missile_tuning_(missile_tuning),
+      rng_(rng), launch_recorder_(launch_recorder), damage_recorder_(damage_recorder),
       damage_bridge_(damage_bridge) {}
 
 std::optional<SimulationKernelWeaponReleaseService::ResolvedMissileLaunchDefinition>

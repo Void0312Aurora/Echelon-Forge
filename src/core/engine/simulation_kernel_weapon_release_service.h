@@ -22,8 +22,8 @@ struct UnitDefinition;
 class SimulationKernelWeaponReleaseService final : public IWeaponReleaseService {
   public:
     SimulationKernelWeaponReleaseService(SimulationKernel &kernel, flecs::world &ecs,
-                                         IUnitFactory &unit_factory,
-                                         MissileTuning &missile_tuning, std::mt19937 &rng,
+                                         IUnitFactory &unit_factory, MissileTuning &missile_tuning,
+                                         std::mt19937 &rng,
                                          IEngagementLaunchRecorder &launch_recorder,
                                          IEngagementEventRecorder &damage_recorder,
                                          IWeaponReleaseDamageBridge &damage_bridge);

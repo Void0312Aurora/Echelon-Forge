@@ -362,13 +362,12 @@ class RuntimeHostCandidate {
     [[nodiscard]] RuntimeCandidateBeginResult
     begin_candidate(const RuntimeCandidateRequest &request);
     [[nodiscard]] RuntimeCandidateBeginResult
-    begin_candidate(const RuntimeCandidateRequest &request,
-                    const RuntimeOwnerHandle &owner_handle);
+    begin_candidate(const RuntimeCandidateRequest &request, const RuntimeOwnerHandle &owner_handle);
     [[nodiscard]] RuntimeOwnerHandle
     issue_owner_handle(const std::shared_ptr<RuntimeInstanceControl> &control);
-    [[nodiscard]] RuntimeOwnerHandle issue_owner_handle(
-        const std::shared_ptr<RuntimeInstanceControl> &control,
-        const RuntimeOwnerAdmissionBinding &binding);
+    [[nodiscard]] RuntimeOwnerHandle
+    issue_owner_handle(const std::shared_ptr<RuntimeInstanceControl> &control,
+                       const RuntimeOwnerAdmissionBinding &binding);
     [[nodiscard]] RuntimeHostStatus
     validate_candidate(const RuntimeCandidateHandle &handle,
                        const RuntimeCandidateValidationProof &proof);
@@ -382,8 +381,7 @@ class RuntimeHostCandidate {
     prepare_checkpoint_recovery(const RuntimeCandidateHandle &handle,
                                 const RuntimeRecoveryCommitProof &proof);
     [[nodiscard]] RuntimePublicationResult
-    commit_prepared_candidate(const RuntimeCandidateHandle &handle,
-                              std::uint64_t now_tick);
+    commit_prepared_candidate(const RuntimeCandidateHandle &handle, std::uint64_t now_tick);
     [[nodiscard]] RuntimeHostStatus abort_candidate(const RuntimeCandidateHandle &handle);
 
     [[nodiscard]] RuntimeHostStatus mark_active_faulted(const RuntimeIncarnationRef &expected_slot,

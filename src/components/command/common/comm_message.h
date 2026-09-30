@@ -3,10 +3,10 @@
 enum class CommMsgType {
     None = 0,
     // 1. Command Acknowledgment
-    REP_WILCO,     // "Will Comply"
-    REP_ROGER,     // "Received"
-    REP_UNABLE,    // "Cannot Comply" (Reason)
-    REP_CANT_DO,   // "Technical Limitation"
+    REP_WILCO,   // "Will Comply"
+    REP_ROGER,   // "Received"
+    REP_UNABLE,  // "Cannot Comply" (Reason)
+    REP_CANT_DO, // "Technical Limitation"
 
     // 2. Status Report
     STATUS_FUEL,   // Arg: Joker/Bingo/State
@@ -15,14 +15,14 @@ enum class CommMsgType {
     STATUS_POS,    // Arg: (x,y,z)
 
     // 3. Tactical / Brevity
-    REP_TALLY,     // Visual Enemy (Arg: Target ID)
-    REP_VISUAL,    // Visual Friendly (Arg: Target ID)
-    REP_BLIND,     // Lost Visual/Radar (Arg: Target ID)
-    REP_SPIKE,     // RWR Lock (Arg: Azimuth?)
+    REP_TALLY,       // Visual Enemy (Arg: Target ID)
+    REP_VISUAL,      // Visual Friendly (Arg: Target ID)
+    REP_BLIND,       // Lost Visual/Radar (Arg: Target ID)
+    REP_SPIKE,       // RWR Lock (Arg: Azimuth?)
     REP_FAILED_SORT, // Cannot execute sort
-    REP_ENGAGED,   // Engaging Target (Arg: Target ID)
-    REP_SPLASH,    // Target Destroyed (Arg: Target ID)
-    REP_DEFENDING, // Defensive Maneuver (Arg: Threat Type)
+    REP_ENGAGED,     // Engaging Target (Arg: Target ID)
+    REP_SPLASH,      // Target Destroyed (Arg: Target ID)
+    REP_DEFENDING,   // Defensive Maneuver (Arg: Threat Type)
 
     // 4. Mission Progress
     REP_ON_STATION, // Arrived at station

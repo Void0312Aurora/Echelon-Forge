@@ -36,10 +36,8 @@ struct SimulationKernelStateOwnerRegistryConfig {
     // real participant in the durable composite transaction. Host-bound
     // registries must provide all three callbacks; fixture registries may use
     // the in-memory staged fallback.
-    std::function<bool(const std::vector<std::uint8_t> &)>
-        rollback_python_caches;
-    std::function<RuntimeStateOwnerImportTransactionPhase(
-        const std::vector<std::uint8_t> &)>
+    std::function<bool(const std::vector<std::uint8_t> &)> rollback_python_caches;
+    std::function<RuntimeStateOwnerImportTransactionPhase(const std::vector<std::uint8_t> &)>
         recover_python_caches;
 };
 
@@ -52,18 +50,18 @@ class SimulationKernelStateOwnerBridge {
     // category callbacks can remain small value-capturing functions; callers
     // should construct a registry instead of invoking them directly.
     [[nodiscard]] static std::string serialize_world(SimulationKernel &kernel);
-    [[nodiscard]] static bool restore_world(
-        SimulationKernel &kernel, const std::vector<std::uint8_t> &payload);
+    [[nodiscard]] static bool restore_world(SimulationKernel &kernel,
+                                            const std::vector<std::uint8_t> &payload);
     [[nodiscard]] static std::string serialize_rng(SimulationKernel &kernel);
-    [[nodiscard]] static bool restore_rng(
-        SimulationKernel &kernel, const std::vector<std::uint8_t> &payload);
-    [[nodiscard]] static std::string serialize_clock(
-        SimulationKernel &kernel, std::uint64_t step_sequence,
-        std::uint64_t barrier_sequence);
-    [[nodiscard]] static bool restore_clock(
-        SimulationKernel &kernel, const std::vector<std::uint8_t> &payload);
-    [[nodiscard]] static std::string serialize_episode_barrier(
-        const RuntimeEpisodeCoordinatorSnapshot &barrier);
+    [[nodiscard]] static bool restore_rng(SimulationKernel &kernel,
+                                          const std::vector<std::uint8_t> &payload);
+    [[nodiscard]] static std::string serialize_clock(SimulationKernel &kernel,
+                                                     std::uint64_t step_sequence,
+                                                     std::uint64_t barrier_sequence);
+    [[nodiscard]] static bool restore_clock(SimulationKernel &kernel,
+                                            const std::vector<std::uint8_t> &payload);
+    [[nodiscard]] static std::string
+    serialize_episode_barrier(const RuntimeEpisodeCoordinatorSnapshot &barrier);
     [[nodiscard]] static std::string serialize_composition(SimulationKernel &kernel);
 };
 

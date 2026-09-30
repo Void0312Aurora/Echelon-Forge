@@ -263,9 +263,8 @@ class RuntimeEpisodeBarrierCapability {
     friend class RuntimeStateTransferValidator;
     explicit RuntimeEpisodeBarrierCapability(
         std::shared_ptr<RuntimeEpisodeBarrierToken> token) noexcept;
-    [[nodiscard]] RuntimeStateTransferStatus bind_for_host(
-        const RuntimeIdentity128 &host_instance_nonce,
-        std::uint64_t world_slot) noexcept;
+    [[nodiscard]] RuntimeStateTransferStatus
+    bind_for_host(const RuntimeIdentity128 &host_instance_nonce, std::uint64_t world_slot) noexcept;
     std::shared_ptr<RuntimeEpisodeBarrierToken> token_;
 };
 
@@ -282,14 +281,15 @@ class RuntimeEpisodeCoordinatorCandidate {
     create(const RuntimeEpisodeCoordinatorConfig &config);
 
     RuntimeEpisodeCoordinatorCandidate(const RuntimeEpisodeCoordinatorCandidate &) = delete;
-    RuntimeEpisodeCoordinatorCandidate &operator=(const RuntimeEpisodeCoordinatorCandidate &) = delete;
+    RuntimeEpisodeCoordinatorCandidate &
+    operator=(const RuntimeEpisodeCoordinatorCandidate &) = delete;
     RuntimeEpisodeCoordinatorCandidate(RuntimeEpisodeCoordinatorCandidate &&) noexcept = default;
-    RuntimeEpisodeCoordinatorCandidate &operator=(RuntimeEpisodeCoordinatorCandidate &&) noexcept = default;
+    RuntimeEpisodeCoordinatorCandidate &
+    operator=(RuntimeEpisodeCoordinatorCandidate &&) noexcept = default;
     ~RuntimeEpisodeCoordinatorCandidate();
 
     [[nodiscard]] RuntimeEpisodeTransitionResult
-    submit(const RuntimeEpisodeTransitionIntent &intent,
-           RuntimeNativeEpisodeControl &control);
+    submit(const RuntimeEpisodeTransitionIntent &intent, RuntimeNativeEpisodeControl &control);
     [[nodiscard]] RuntimeStateTransferStatus
     acknowledge_receipt(const RuntimeEpisodeTransitionReceipt &receipt);
     [[nodiscard]] RuntimeEpisodeBarrierAdmission
@@ -334,8 +334,7 @@ struct RuntimeStateDecoderReplayRule {
     std::string_view schema_id;
     std::uint32_t current_schema_generation = kRuntimeStateTransferContractGeneration;
     std::uint32_t previous_schema_generation = kRuntimeStateTransferPreviousGeneration;
-    RuntimeStateUnknownFieldPolicy unknown_field_policy =
-        RuntimeStateUnknownFieldPolicy::Reject;
+    RuntimeStateUnknownFieldPolicy unknown_field_policy = RuntimeStateUnknownFieldPolicy::Reject;
     RuntimeStateReplayPolicy replay_policy = RuntimeStateReplayPolicy::Reject;
     std::string_view migration_sha256;
     bool rollback_required = true;
@@ -446,21 +445,17 @@ class RuntimeStateOwnerImportTransaction {
     // bounded deadline and expose terminal outcome.  A deadline of zero means
     // that the caller has not supplied a clock for this dark/shadow probe.
     [[nodiscard]] virtual RuntimeStateOwnerImportTransactionStatus
-    commit_with_deadline(std::uint64_t now_tick,
-                         std::uint64_t deadline_tick) noexcept;
+    commit_with_deadline(std::uint64_t now_tick, std::uint64_t deadline_tick) noexcept;
     [[nodiscard]] virtual RuntimeStateOwnerImportTransactionStatus
-    abort_with_deadline(std::uint64_t now_tick,
-                        std::uint64_t deadline_tick) noexcept;
+    abort_with_deadline(std::uint64_t now_tick, std::uint64_t deadline_tick) noexcept;
     [[nodiscard]] virtual RuntimeStateOwnerImportTransactionStatus
-    recover_with_deadline(std::uint64_t now_tick,
-                          std::uint64_t deadline_tick) noexcept;
+    recover_with_deadline(std::uint64_t now_tick, std::uint64_t deadline_tick) noexcept;
     // Compensation hook for a composite import whose later child failed
     // after this transaction had already committed.  Owners that cannot
     // compensate must return false; the composite then remains Ambiguous and
     // the host must keep the candidate quarantined.
     [[nodiscard]] virtual bool rollback_committed() noexcept;
-    [[nodiscard]] virtual RuntimeStateOwnerImportTransactionStatus
-    status() const noexcept;
+    [[nodiscard]] virtual RuntimeStateOwnerImportTransactionStatus status() const noexcept;
 };
 
 struct RuntimeStateTransferJournalRecord {
@@ -489,14 +484,12 @@ struct RuntimeStateTransferJournalReadResult {
 class RuntimeStateTransferJournal {
   public:
     virtual ~RuntimeStateTransferJournal() = default;
-    [[nodiscard]] virtual RuntimeStateTransferJournalAppendResult append_and_sync(
-        std::string_view transaction_id,
-        RuntimeStateOwnerImportTransactionPhase phase,
-        std::string_view payload_sha256,
-        std::string_view pre_mutation_sha256 = {},
-        const std::vector<std::uint8_t> &pre_mutation_payload = {}) noexcept = 0;
-    [[nodiscard]] virtual RuntimeStateTransferJournalReadResult latest(
-        std::string_view transaction_id) noexcept = 0;
+    [[nodiscard]] virtual RuntimeStateTransferJournalAppendResult
+    append_and_sync(std::string_view transaction_id, RuntimeStateOwnerImportTransactionPhase phase,
+                    std::string_view payload_sha256, std::string_view pre_mutation_sha256 = {},
+                    const std::vector<std::uint8_t> &pre_mutation_payload = {}) noexcept = 0;
+    [[nodiscard]] virtual RuntimeStateTransferJournalReadResult
+    latest(std::string_view transaction_id) noexcept = 0;
 };
 
 // Append-only, checksummed, fsync/_commit-backed local WAL for the P4-B owner
@@ -510,14 +503,12 @@ class RuntimeStateTransferFileJournal final : public RuntimeStateTransferJournal
     RuntimeStateTransferFileJournal(const RuntimeStateTransferFileJournal &) = delete;
     RuntimeStateTransferFileJournal &operator=(const RuntimeStateTransferFileJournal &) = delete;
 
-    [[nodiscard]] RuntimeStateTransferJournalAppendResult append_and_sync(
-        std::string_view transaction_id,
-        RuntimeStateOwnerImportTransactionPhase phase,
-        std::string_view payload_sha256,
-        std::string_view pre_mutation_sha256 = {},
-        const std::vector<std::uint8_t> &pre_mutation_payload = {}) noexcept override;
-    [[nodiscard]] RuntimeStateTransferJournalReadResult latest(
-        std::string_view transaction_id) noexcept override;
+    [[nodiscard]] RuntimeStateTransferJournalAppendResult
+    append_and_sync(std::string_view transaction_id, RuntimeStateOwnerImportTransactionPhase phase,
+                    std::string_view payload_sha256, std::string_view pre_mutation_sha256 = {},
+                    const std::vector<std::uint8_t> &pre_mutation_payload = {}) noexcept override;
+    [[nodiscard]] RuntimeStateTransferJournalReadResult
+    latest(std::string_view transaction_id) noexcept override;
 
   private:
     struct State;
@@ -544,32 +535,26 @@ struct RuntimeStateOwnerImportRecoveryCallbacks {
     std::function<std::uint64_t()> sample_tick;
 };
 
-class RuntimeDurableOwnerImportTransaction final
-    : public RuntimeStateOwnerImportTransaction {
+class RuntimeDurableOwnerImportTransaction final : public RuntimeStateOwnerImportTransaction {
   public:
     RuntimeDurableOwnerImportTransaction(
         std::string transaction_id, std::string payload_sha256,
         std::shared_ptr<RuntimeStateTransferJournal> journal,
-        RuntimeStateOwnerImportRecoveryCallbacks callbacks,
-        std::string pre_mutation_sha256 = {},
+        RuntimeStateOwnerImportRecoveryCallbacks callbacks, std::string pre_mutation_sha256 = {},
         std::vector<std::uint8_t> pre_mutation_payload = {}) noexcept;
 
     [[nodiscard]] RuntimeStateOwnerImportTransactionStatus
-    commit_with_deadline(std::uint64_t now_tick,
-                         std::uint64_t deadline_tick) noexcept override;
+    commit_with_deadline(std::uint64_t now_tick, std::uint64_t deadline_tick) noexcept override;
     [[nodiscard]] RuntimeStateOwnerImportTransactionStatus
-    abort_with_deadline(std::uint64_t now_tick,
-                        std::uint64_t deadline_tick) noexcept override;
+    abort_with_deadline(std::uint64_t now_tick, std::uint64_t deadline_tick) noexcept override;
     [[nodiscard]] RuntimeStateOwnerImportTransactionStatus
-    recover_with_deadline(std::uint64_t now_tick,
-                          std::uint64_t deadline_tick) noexcept override;
+    recover_with_deadline(std::uint64_t now_tick, std::uint64_t deadline_tick) noexcept override;
     [[nodiscard]] bool rollback_committed() noexcept override;
-    [[nodiscard]] RuntimeStateOwnerImportTransactionStatus
-    status() const noexcept override;
+    [[nodiscard]] RuntimeStateOwnerImportTransactionStatus status() const noexcept override;
 
   private:
-    [[nodiscard]] RuntimeStateOwnerImportTransactionStatus append_terminal(
-        RuntimeStateOwnerImportTransactionPhase phase) noexcept;
+    [[nodiscard]] RuntimeStateOwnerImportTransactionStatus
+    append_terminal(RuntimeStateOwnerImportTransactionPhase phase) noexcept;
 
     mutable std::mutex mutex_;
     std::string transaction_id_;
@@ -638,17 +623,15 @@ struct RuntimeStateOwnerAdapterRegistration {
     std::string owner_id;
     std::string schema_id;
     std::string migration_sha256;
-    std::function<RuntimeStateOwnerAdapterExport(
-        const RuntimeStateTransferProfile &, const RuntimeIncarnationRef &,
-        const RuntimeStateOwnerExportContext &)>
+    std::function<RuntimeStateOwnerAdapterExport(const RuntimeStateTransferProfile &,
+                                                 const RuntimeIncarnationRef &,
+                                                 const RuntimeStateOwnerExportContext &)>
         export_state;
-    std::function<RuntimeStateOwnerArtifact(const RuntimeStateOwnerArtifact &)>
-        migrate_previous;
+    std::function<RuntimeStateOwnerArtifact(const RuntimeStateOwnerArtifact &)> migrate_previous;
     std::function<RuntimeStateOwnerAdapterImport(
         const RuntimeStateTransferProfile &, const RuntimeIncarnationRef &,
-        const RuntimeStateCensusEntry &,
-        const RuntimeStateOwnerArtifact &, const RuntimeStateOwnerArtifact &,
-        const RuntimeIdentity128 &)>
+        const RuntimeStateCensusEntry &, const RuntimeStateOwnerArtifact &,
+        const RuntimeStateOwnerArtifact &, const RuntimeIdentity128 &)>
         import_state;
 };
 
@@ -682,10 +665,8 @@ class RuntimeStateTransferOwnerRegistry {
 class RuntimeStateOwnerAdapterRegistry final : public RuntimeStateTransferOwnerRegistry {
   public:
     explicit RuntimeStateOwnerAdapterRegistry(
-        std::array<RuntimeStateOwnerAdapterRegistration, kRuntimeStateCategoryCount>
-            registrations,
-        RuntimeIdentity128 bound_resource_identity = {},
-        const void *owner_binding_token = nullptr);
+        std::array<RuntimeStateOwnerAdapterRegistration, kRuntimeStateCategoryCount> registrations,
+        RuntimeIdentity128 bound_resource_identity = {}, const void *owner_binding_token = nullptr);
 
     [[nodiscard]] RuntimeStateTransferStatus registration_status() const noexcept;
     [[nodiscard]] RuntimeIdentity128 bound_resource_identity() const noexcept override {
@@ -744,23 +725,16 @@ class RuntimeHostQuiescenceCapability {
     explicit RuntimeHostQuiescenceCapability(
         std::shared_ptr<RuntimeHostQuiescenceToken> token) noexcept;
     [[nodiscard]] static RuntimeHostQuiescenceCapability mint_for_host(
-        const RuntimeIncarnationRef &source_slot,
-        std::string source_plan_sha256,
-        std::string target_plan_sha256,
-        RuntimeIdentity128 source_resource_identity,
+        const RuntimeIncarnationRef &source_slot, std::string source_plan_sha256,
+        std::string target_plan_sha256, RuntimeIdentity128 source_resource_identity,
         RuntimeIdentity128 candidate_resource_identity,
         std::shared_ptr<RuntimeStateTransferOwnerRegistry> source_owner_registry,
         std::shared_ptr<RuntimeStateTransferOwnerRegistry> target_owner_registry,
-        const RuntimeIdentity128 &host_instance_nonce,
-        std::function<bool()> host_revalidate,
-        std::function<void()> host_rollback,
-        std::function<bool()> host_begin_transfer,
-        std::function<bool()> host_claim_transfer,
-        std::function<void()> host_end_transfer,
-        std::uint64_t lifecycle_ticket,
-        std::uint64_t candidate_sequence,
-        std::uint64_t mutation_fence_sequence,
-        std::size_t source_read_only_result_leases,
+        const RuntimeIdentity128 &host_instance_nonce, std::function<bool()> host_revalidate,
+        std::function<void()> host_rollback, std::function<bool()> host_begin_transfer,
+        std::function<bool()> host_claim_transfer, std::function<void()> host_end_transfer,
+        std::uint64_t lifecycle_ticket, std::uint64_t candidate_sequence,
+        std::uint64_t mutation_fence_sequence, std::size_t source_read_only_result_leases,
         bool cooperative_cancellation_acknowledged);
     std::shared_ptr<RuntimeHostQuiescenceToken> token_;
 };
@@ -791,20 +765,16 @@ class RuntimeValidatedStateTransfer {
     explicit RuntimeValidatedStateTransfer(
         std::shared_ptr<RuntimeValidatedStateTransferState> state) noexcept;
 
+    [[nodiscard]] RuntimeStateTransferStatus prepare_for_host(
+        const RuntimeIncarnationRef &expected_source, std::string_view expected_source_plan_sha256,
+        std::string_view expected_target_plan_sha256,
+        const RuntimeIdentity128 &expected_candidate_resource_identity,
+        std::uint64_t expected_lifecycle_ticket, std::uint64_t expected_candidate_sequence,
+        std::uint64_t expected_mutation_fence_sequence);
     [[nodiscard]] RuntimeStateTransferStatus
-    prepare_for_host(const RuntimeIncarnationRef &expected_source,
-                     std::string_view expected_source_plan_sha256,
-                     std::string_view expected_target_plan_sha256,
-                     const RuntimeIdentity128 &expected_candidate_resource_identity,
-                     std::uint64_t expected_lifecycle_ticket,
-                     std::uint64_t expected_candidate_sequence,
-                     std::uint64_t expected_mutation_fence_sequence);
+    commit_for_host(std::uint64_t now_tick = 0, std::uint64_t deadline_tick = 0) noexcept;
     [[nodiscard]] RuntimeStateTransferStatus
-    commit_for_host(std::uint64_t now_tick = 0,
-                    std::uint64_t deadline_tick = 0) noexcept;
-    [[nodiscard]] RuntimeStateTransferStatus
-    recover_for_host(std::uint64_t now_tick = 0,
-                     std::uint64_t deadline_tick = 0) noexcept;
+    recover_for_host(std::uint64_t now_tick = 0, std::uint64_t deadline_tick = 0) noexcept;
     void abort_for_host() noexcept;
 
     [[nodiscard]] bool committed() const noexcept;
@@ -838,25 +808,20 @@ class RuntimeStateTransferValidator {
     validate(RuntimeStateTransferValidationRequest &&request);
 };
 
-[[nodiscard]] std::string
-runtime_state_payload_sha256(const std::vector<std::uint8_t> &payload);
+[[nodiscard]] std::string runtime_state_payload_sha256(const std::vector<std::uint8_t> &payload);
 [[nodiscard]] std::vector<std::uint8_t>
 runtime_state_canonical_payload(const RuntimeStateCensusEntry &entry);
+[[nodiscard]] std::string runtime_state_census_entry_sha256(const RuntimeStateCensusEntry &entry);
 [[nodiscard]] std::string
-runtime_state_census_entry_sha256(const RuntimeStateCensusEntry &entry);
+canonical_episode_transition_intent_bytes(const RuntimeEpisodeTransitionIntent &intent);
 [[nodiscard]] std::string
-canonical_episode_transition_intent_bytes(
-    const RuntimeEpisodeTransitionIntent &intent);
-[[nodiscard]] std::string
-canonical_episode_transition_receipt_bytes(
-    const RuntimeEpisodeTransitionReceipt &receipt);
+canonical_episode_transition_receipt_bytes(const RuntimeEpisodeTransitionReceipt &receipt);
 [[nodiscard]] std::string_view runtime_state_category_name(RuntimeStateCategory category) noexcept;
 [[nodiscard]] std::string_view
 runtime_state_disposition_name(RuntimeStateDisposition disposition) noexcept;
 [[nodiscard]] std::string_view runtime_state_owner_id(RuntimeStateCategory category) noexcept;
 [[nodiscard]] std::string_view runtime_state_schema_id(RuntimeStateCategory category) noexcept;
-[[nodiscard]] const std::array<RuntimeStateDecoderReplayRule,
-                                kRuntimeStateCategoryCount> &
+[[nodiscard]] const std::array<RuntimeStateDecoderReplayRule, kRuntimeStateCategoryCount> &
 runtime_state_decoder_replay_matrix() noexcept;
 [[nodiscard]] const RuntimeStateDecoderReplayRule *
 runtime_state_decoder_replay_rule(RuntimeStateCategory category) noexcept;
@@ -866,9 +831,8 @@ runtime_state_decoder_replay_rule(RuntimeStateCategory category) noexcept;
 // but cannot accidentally rename an owner/schema or widen the N/N-1 window.
 // This is a profile-construction guard; it does not claim that the production
 // owner adapters or durable journal behind the rows already exist.
-[[nodiscard]] RuntimeStateTransferProfile
-runtime_state_transfer_profile_from_decoder_matrix(
-    std::string profile_id, std::uint32_t profile_generation,
-    std::string source_plan_sha256, std::string target_plan_sha256);
+[[nodiscard]] RuntimeStateTransferProfile runtime_state_transfer_profile_from_decoder_matrix(
+    std::string profile_id, std::uint32_t profile_generation, std::string source_plan_sha256,
+    std::string target_plan_sha256);
 
 } // namespace runtime::host
