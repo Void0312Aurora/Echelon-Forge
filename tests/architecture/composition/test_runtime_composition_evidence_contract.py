@@ -63,6 +63,7 @@ def test_executable_graph_hash_joins_owner_registry_88_plus_3_plus_35() -> None:
   assert [row["contribution_id"] for row in payload["kernel_system_contributions"]] == [
     "builtin.kernel.system.rwr_reset",
     "builtin.kernel.system.esm_reset",
+    "builtin.kernel.system.maws_update",
   ]
   assert evidence.executable_graph_sha256(resolved) == _read(
     "default_runtime_composition_evidence.v1.json"
