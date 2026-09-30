@@ -50,6 +50,7 @@ _FINE_GROUP_PREFIXES: tuple[tuple[str, str], ...] = (
   ("core/interfaces", "core_interfaces"),
   ("runtime/facade", "runtime_facade"),
   ("runtime/providers", "runtime_providers"),
+  ("runtime/host", "runtime_host"),
   ("runtime/composition", "runtime_composition"),
   ("runtime/contracts", "runtime_contracts"),
   ("content", "content"),
@@ -70,6 +71,7 @@ COARSE_LAYER_OF_FINE: dict[str, str] = {
   "core_mission_episode_detail": "mission",
   "runtime_facade": "facade",
   "runtime_providers": "other",
+  "runtime_host": "other",
   "runtime_composition": "other",
   "runtime_contracts": "facade",
   "content": "content",
@@ -93,6 +95,7 @@ FINE_GROUP_DESCRIPTION: dict[str, str] = {
   "core_mission_episode_detail": "src/core/mission/episode/detail (T3 mission layer: private episode helpers)",
   "runtime_facade": "src/runtime/facade (T3 facade layer: RuntimeFacade application API)",
   "runtime_providers": "src/runtime/providers (native provider catalogs and composition-root adapters)",
+  "runtime_host": "src/runtime/host (dark/shadow host candidate and transfer admission owner)",
   "runtime_composition": "src/runtime/composition (isolated host-neutral composition realization/lifecycle owner)",
   "runtime_contracts": "src/runtime/contracts (T3 facade layer per task mapping; shared leaf DTOs in the repo's own boundary docs)",
   "content": "src/content (T3 content layer: unit/scenario content schemas and loaders)",
@@ -332,6 +335,20 @@ FINE_GROUP_ALLOWED_TARGETS: dict[str, frozenset[str]] = {
     {
       "runtime_composition",
       "runtime_contracts",
+      "core_engine",
+      "core_interfaces",
+      "components",
+      "models",
+    }
+  ),
+  # The host candidate owns dark/shadow host publication and transfer
+  # admission. It may consume the stable runtime vocabulary and native
+  # composition/engine seams, but it must not become a facade or binding.
+  "runtime_host": frozenset(
+    {
+      "runtime_contracts",
+      "runtime_composition",
+      "runtime_providers",
       "core_engine",
       "core_interfaces",
       "components",

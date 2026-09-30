@@ -175,9 +175,11 @@ def test_cmake_uses_generated_target_properties_and_final_graph_gate() -> None:
 
   gate_call = "ef_assert_p3a_runtime_contract_boundary()"
   assert cmake.rstrip().endswith(gate_call)
-  assert "get_property(root_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)" in cmake
+  assert "ef_collect_directory_targets" in cmake
+  assert 'PROPERTY SUBDIRECTORIES' in cmake
+  assert "allowed_host_consumers ef_runtime_host_candidate_test" in cmake
   assert "allowed_consumers ef_runtime_contracts_compile_test" in cmake
-  assert "P4-A may replace" in cmake
+  assert "P4-A/P4-B replace" in cmake
   assert "P5-D cutover" in cmake
 
 
@@ -245,14 +247,21 @@ def test_focused_native_consumer_and_production_graph_remain_separate() -> None:
     assert forbidden not in source
 
   target = cmake.split("add_executable(ef_runtime_contracts_compile_test", 1)[1].split(
-    "FetchContent_Declare(", 1
+    ")", 1
   )[0]
-  assert "ef_runtime_contracts" in target
+  link = cmake.split("target_link_libraries(ef_runtime_contracts_compile_test", 1)[1].split(
+    ")", 1
+  )[0]
+  assert "test_runtime_identity_contracts.cpp" in target
+  assert "ef_runtime_contracts" in link
   for forbidden in ("ef_core", "ef_facade", "ef_composition", "flecs", "doctest"):
     assert forbidden not in target
+    assert forbidden not in link
 
   allowed_source_consumers = {
     REPO_ROOT / "src" / "runtime" / "contracts" / "public" / "runtime_identity.cpp",
+    REPO_ROOT / "src" / "runtime" / "host" / "runtime_host_candidate.h",
+    REPO_ROOT / "src" / "runtime" / "host" / "runtime_state_transfer_candidate.h",
     COMPILE_TEST,
   }
   source_consumers = {
