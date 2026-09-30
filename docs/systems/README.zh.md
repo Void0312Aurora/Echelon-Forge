@@ -21,6 +21,7 @@ weapons、effects/damage 文档，避免共享机制被重复塞入 air、naval�
 - Command/tasking reference：[agency authority 清单](command-tasking/reference/agency_authority_census_20260721.zh.md)与[authority representation 裁决](command-tasking/reference/t9_authority_representation_adjudication_20260726.zh.md)。
 - Physics issues：[物理引擎路线图](physics/work/issues/physics_engine_roadmap.md)。
   活跃工作包：[大地坐标系](physics/work/active/geodetic_frame/README.zh.md)（planning）。
+  Physics reviews：[半隐式地面接触](physics/reviews/semi_implicit_ground_contact_20260930/README.zh.md)。
 - Sensing issues：[传感器与态势计划](sensing/work/issues/sensor_situation.md)。
 - Weapons issues：[交战路线图](weapons/work/issues/weapons_engagement.md)、[实现笔记](weapons/work/issues/weapons_engagement_impl.md)和[终止逻辑](weapons/work/issues/engagement_termination.md)；保留 guidance 证据位于[制导机制评审](weapons/reviews/kill_chain_guidance_mechanism_20260715/README.zh.md)。
 - Effects issues：[毁伤模型校准残差](effects/work/issues/damage_model_calibration_residuals.md)、[毁伤/控制权威耦合](effects/work/issues/damage_control_authority_coupling_gap/README.zh.md)与[杀伤/几何保真度](effects/work/issues/lethality_hitbox_geometry_fidelity_gap/README.zh.md)。
