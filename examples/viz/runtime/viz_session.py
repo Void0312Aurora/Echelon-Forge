@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
@@ -125,6 +126,14 @@ DEFAULT_C2_TASK_SEQUENCE = [
     "TASK_RTB",
     "TASK_RECOVER_LAND",
 ]
+
+
+def _sha256_file(path: str) -> str:
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _scenario_tasking_profile(scenario_data: object) -> str:
@@ -1019,6 +1028,21 @@ class VizSession:
             artifact = json.load(handle)
         if artifact.get("schema") != "csg.s0.replay.v1":
             raise ValueError(f"unsupported replay schema: {artifact.get('schema')!r}")
+        scenario_path = str(self.scenario or "").strip()
+        if not scenario_path or not os.path.isfile(scenario_path):
+            raise FileNotFoundError(
+                "CSG replay requires the profile scenario file to validate scenario identity: "
+                f"{scenario_path or '<missing>'}"
+            )
+        expected_scenario_sha256 = str(artifact.get("scenario_sha256") or "").strip().lower()
+        if len(expected_scenario_sha256) != 64:
+            raise ValueError("CSG replay artifact is missing a valid scenario_sha256")
+        actual_scenario_sha256 = _sha256_file(scenario_path)
+        if actual_scenario_sha256 != expected_scenario_sha256:
+            raise ValueError(
+                "CSG replay scenario identity mismatch: "
+                f"artifact={expected_scenario_sha256}, loaded={actual_scenario_sha256}"
+            )
         frames = artifact.get("frames")
         if not isinstance(frames, list) or not frames:
             raise ValueError("CSG replay artifact has no frames")
