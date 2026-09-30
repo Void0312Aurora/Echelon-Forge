@@ -956,6 +956,7 @@ target_link_libraries(ef_runtime_kernel_candidate_parity_test PRIVATE
     ef_facade
     ef_runtime_state_owner_adapters_candidate
     ef_gpu_experiments
+    ef_core
     $<$<PLATFORM_ID:Linux>:-Wl,--end-group>
     doctest::doctest
 )
