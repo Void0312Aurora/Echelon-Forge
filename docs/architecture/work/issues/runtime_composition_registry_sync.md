@@ -362,21 +362,26 @@ repair were superseded by the full Linux capture; old timing values are not
 represented as measurements of the new composition. The P8 closure reads the
 active P7 evidence path from its owner rather than a Windows filename.
 
-Measured integration gates before the final evidence-only repair:
+Final integration gates after the downstream refresh and C++ formatting pass:
 
 | Gate | HEI result |
 | --- | --- |
 | `ef_core`, `ef_py`, `ef_test` build | passed, `-j32` |
+| CTest integration selection | 7 passed, 0 failed |
 | complete `ef_test` | 191 passed, 20,989 assertions |
 | isolated stable-identity suite | 17 passed, 1,343 assertions |
 | Ground / identity / quarantine / stochastic guards | 61 passed |
 | `tests/runtime/air_combat` | 355 passed, 38 xfailed, 219 subtests passed |
+| `tests/architecture/composition` | 115 passed, 1 skipped, 4 dependency warnings |
 | Cordis package | 27 passed |
-| composition directory before downstream refresh | 101 passed, 3 failed, 9 errors, 3 skipped |
+| `ruff` and changed-file `clang-format` | passed |
+| internal code governance | 0 errors, 12 existing warnings |
 
-The composition failures were stale P7 producer identity, authority vectors, and
-ledger fixtures; the P8 errors depended on the stale P7 join. Authority and ledger
-fixtures are regenerated with their canonical generators, and P8 is regenerated
-after the current P7 capture. Final composition and governance results are recorded
-after revalidation. This addendum alone does not assert that the public branch has
-been merged or that all merge gates are open.
+The earlier composition failures were stale P7 producer identity, authority vectors,
+and ledger fixtures; the P8 errors depended on that stale P7 join. Authority and
+ledger fixtures were regenerated with their canonical generators, and P8 was
+regenerated after the current P7 capture. A final HEI capture reproduced the same
+producer, profile, workload, and semantic-reference identities; only timing and
+memory samples varied, as expected for a live host. This addendum does not assert
+that the public branch has been merged; it records that the local integration gates
+are green and the branch is ready for review.
