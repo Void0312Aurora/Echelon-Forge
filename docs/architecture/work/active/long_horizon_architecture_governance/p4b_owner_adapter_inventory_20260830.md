@@ -1,7 +1,7 @@
 # P4-B Owner Adapter Inventory
 
-Status: `2026-08-31` implementation checkpoint  
-Document kind: `evidence / task support`  
+Status: `2026-08-31` implementation checkpoint
+Document kind: `evidence / task support`
 Canonical phase: P4-B state-transfer repair
 
 This inventory records the project-internal runtime surfaces bound by the P4-B
