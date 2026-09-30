@@ -167,15 +167,35 @@
       "owner": "runtime/observation face (I45) -- write-excluded; read-only census, not converged by T9",
       "note": "Listed for census completeness only; T9 must not modify this file (I45 owns the observation face). Repair round 1: semantic completed to record the fire_mask_open policy gate. Repair round 2 (P1-3): reclassified arbitration -> gating -- the mask is a holder-blind eligibility gate (grounded by the authorization_to_fire gating candidate), not the A13 who-may-fire arbitration; delegation/doctrine retained per the ROE/authorization fields it reads. Category set pinned exactly in the gate."
     },
-    {
-      "file": "python/tasking_contracts/air_scripted_engagement.py",
-      "tokens": ["authorization_to_fire"],
-      "token_counts": {"authorization_to_fire": 3},
+      {
+        "file": "python/tasking_contracts/air_scripted_planning.py",
+        "tokens": ["authorization_to_fire"],
+        "token_counts": {"authorization_to_fire": 5},
+        "categories": ["gating"],
+        "form": "scripted-planner-fire-gate",
+        "semantic": "The RL-independent Air engagement planner consumes authorization_to_fire as one of the declared eligibility inputs for a fire recommendation. It does not grant authority, resolve holder conflicts, or write mission-command authority state; the planner's legal predicate remains an eligibility gate.",
+        "owner": "air/scripted-agent planner",
+        "note": "Registered for the Air strategy core slice; the five occurrences are the planner input, context projection, legal predicate, and fail-closed authorization checks."
+      },
+      {
+        "file": "python/tasking_contracts/air_scripted_strategy_contracts.py",
+        "tokens": ["authorization_to_fire"],
+        "token_counts": {"authorization_to_fire": 1},
+        "categories": ["gating"],
+        "form": "scripted-contract-field",
+        "semantic": "The RL-independent Air planning context declares authorization_to_fire as an input field for downstream fire-eligibility evaluation. This DTO declares and transports the field; it does not grant authority, resolve holder conflicts, or write mission-command authority state.",
+        "owner": "air/scripted-agent contract",
+        "note": "Registered for the Air strategy core slice; the single occurrence is the typed planning-context field."
+      },
+      {
+        "file": "python/tasking_contracts/air_scripted_engagement.py",
+        "tokens": ["authorization_to_fire"],
+        "token_counts": {"authorization_to_fire": 4},
       "categories": ["gating"],
       "form": "scripted-observation-gate",
       "semantic": "The RL-independent Air tactical adapter consumes the declared authorization_to_fire mission-observation field as an input gate for its fire request. It does not grant authority, resolve holder conflicts, or write mission-command authority state; the existing Air combat event gate remains the release authority.",
       "owner": "air/scripted-agent adapter",
-      "note": "Registered after the Air tactical adapter slice (89ed1faf); the three occurrences are the declared observation read, the boolean gate, and the retained decision-info field."
+        "note": "Registered after the Air tactical adapter slice (89ed1faf); the four occurrences are the declared observation read, the boolean gate, the retained decision-info field, and the normalized decision projection."
     }
   ]
 }

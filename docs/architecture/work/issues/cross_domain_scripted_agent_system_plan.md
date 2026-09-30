@@ -151,6 +151,32 @@ RL adapters may:
 The scripted runtime, scenarios, tests, and playable acceptance must remain
 usable when RL packages and checkpoints are absent.
 
+### 6. Algorithm strategy substitution boundary
+
+The common lifecycle registry selects complete decision models. It must not be
+replaced by a second global registry for inner algorithms. Within a domain,
+observation decoding, tactical planning, post-action assessment, and action
+transport are separate responsibilities and must be independently replaceable
+when a second maintained consumer exists.
+
+For the current Air slice, the next composition seam is documented in the
+[Air algorithm substitution research review](../../reviews/air_scripted_algorithm_substitution_research_20260926.md).
+The required direction is:
+
+```text
+ObservationAdapter -> PlanningContext -> TacticalPlanner
+                                      -> TacticalDecision
+AssessmentAdapter -> AssessmentInput -> PostLaunchAssessor
+TacticalDecision + FlightAction -> ActionAdapter -> domain action
+```
+
+The first implementation must preserve the current default planner and
+assessor behavior, inject them through Air-owned protocols, and extract the
+mission/contact and action-layout adapters from the engagement orchestrator.
+No raw mission arrays, action indices, reward values, or World Truth may cross
+the strategy seam. RL remains an optional consumer of the same neutral
+lifecycle and is not permitted to own these scripted strategy contracts.
+
 ## Proposed Work Packages
 
 ### WP0 — Authority and consumer census
@@ -279,6 +305,27 @@ one EW role, two-aircraft coordination, joint tasking, and then the large-scale
 demonstration. Each stage gets its own scenario, direct/proxy evidence
 boundary, and thematic commit. RL adapters may consume a closed stage but may
 not be used to claim that the independent scripted stage is playable.
+
+### WP3-AIR-ALG — Air algorithm composition and substitution
+
+This work package addresses the internal modularity gap after the first Air
+tactical planner and post-launch assessor exist. It is a strategy-composition
+package, not a new combat-runtime package.
+
+1. Freeze typed Air planning, decision, assessment, and adapter DTOs around the
+   current default behavior.
+2. Add Air-owned planner/assessor/observation/action protocols and inject the
+   current implementations by default.
+3. Extract mission/contact decoding and 17/12 action-layout mapping from
+   `AirScriptedEngagementModel`.
+4. Prove independent replacement with deterministic no-fire and blocking
+   test doubles, then run default-policy release/replay and 4v4 parity.
+5. Add a versioned strategy profile only when a second maintained Air or
+   cross-domain consumer is named; do not create a parallel global registry.
+
+Promotion condition: default behavior is unchanged, each inner strategy can
+be replaced independently, strategy modules remain RL/native independent, and
+the test matrix proves transport/action/fire-gate ownership did not move.
 
 ### WP4 — Naval bounded playable slice
 
@@ -1801,3 +1848,156 @@ to a dedicated owner-local evidence document.
 - Continuation choice: retain 4v4 as the current large-scale scripted combat
   baseline; inspect formation/report and visualization gates before widening
   the label or adding joint tasking.
+
+### 2026-09-26 — Air deterministic tactical planning layer
+
+- Change batch: add the RL-independent `AirEngagementPlanner` and
+  `AirEngagementPlannerConfig` under `python/tasking_contracts`. The planner
+  consumes only the declared C2/ROE mission fields and the five-column contact
+  token, evaluates hold/intercept/reposition candidates, filters by target
+  contact, authority, window, assessment, and shot-budget constraints, and
+  selects a weighted range/geometry/closure/freshness utility. It emits an
+  auditable plan with candidate scores and reason codes; bounded guidance is
+  applied through the existing flight action transport, while native fire
+  gates retain final release authority. No RL, simulator truth, or privileged
+  target geometry is imported.
+- Focused verification: the pure planner and engagement model tests passed
+  `9 passed`; the cooperative scripted combat regression passed `4 passed`
+  after the planner was integrated. A clean `b7c63944` baseline reproduced
+  the four-ship terminal trace at step `206`; the first planner attempt waited
+  for the quality-window age and delayed release to step `33`, causing one
+  surrogate miss. Removing that duplicate gate restored release at step `2`
+  and the full 4v4 terminal trace. This is a recorded behavioral correction,
+  not evidence of calibrated weapon optimality.
+- Evidence boundary: this closes the first L3-style bounded tactical-planning
+  seam (finite candidate evaluation plus receding replanning) above the L1
+  flight controllers and L2 event policy. It does not establish global
+  optimality, a calibrated WEZ/LAR/Pk model, adversarial maneuver search,
+  post-launch guidance, dynamic multi-aircraft task allocation, or a
+  named-platform terminal claim. Air remains `playable_candidate`.
+- Continuation choice: retain the planner as an explicit algorithm layer and
+  next add source-backed weapon-envelope inputs and post-launch assessment
+  before claiming an optimal firing-position policy. Keep RL on its separate
+  adapter line.
+
+### 2026-09-26 — Air source-backed weapon-envelope planning slice
+
+- Change batch: add the pure-Python `AirWeaponEnvelope` loader and expose it
+  as an optional input to `AirEngagementPlannerConfig` and
+  `AirScriptedEngagementModel`. The loader reads only declared database
+  fields: AIM-120C-7 seeker/sensor opportunity range, flight time, speed,
+  lateral-g, and any explicitly supplied launch limits. It retains source
+  fields and labels the profile `runtime_tuning_only` with `pk_authority=false`.
+- Algorithm boundary: the planner adds a guidance-opportunity term to its
+  finite candidate utility. An explicit closed opportunity prevents scripted
+  `commit`, while the native fire gate remains the final release authority.
+  The implementation does not infer effective range from speed, fill missing
+  minimum range/off-boresight values, or claim WEZ/LAR/Pk calibration.
+- Focused verification: Air planner and engagement tests passed `12 passed`;
+  Python compilation and `git diff --check` passed. Direct construction loaded
+  `examples/config/database/weapons/air_to_air/aim_120c.json` as
+  `AIM-120C-7` with `guidance.active_seek_range=16000` and no inferred launch
+  limits.
+- Evidence boundary: this is a source-backed planning constraint, not a
+  weapon-effectiveness model. Post-launch outcome assessment, midcourse
+  guidance, dynamic weapon allocation, and named-platform terminal success
+  remain open. Air remains `playable_candidate`; RL remains a separate
+  optional adapter line.
+- Continuation choice: add a conservative scripted post-launch assessment
+  state machine that consumes declared event facts and mission observation,
+  then independently test reattack gating and inconclusive outcomes.
+
+### 2026-09-26 — Air conservative scripted post-launch assessment slice
+
+- Change batch: add `AirPostLaunchAssessment` as an RL-independent state
+  estimator with explicit `idle`, `in_flight`, `terminal_observed`,
+  `reattack_ready`, `track_lost`, and `track_unavailable` states. The
+  engagement model consumes the previous step's declared event info and the
+  C2/ROE mission fields, reports the assessment beside the tactical plan, and
+  uses only the estimator's `blocks_fire` result for scripted reattack gating.
+- Algorithm boundary: `terminal_observed` requires explicit
+  `target_effect_observed`, `target_mission_killed`, or `target_destroyed`
+  evidence. A missing contact, stale track, or missing effect evidence stays
+  `inconclusive`; no state writes rewards, damage, terminal status, or RL
+  buffers. The native environment remains the owner of release acceptance and
+  terminal semantics.
+- Focused verification: Air assessment, planner, and engagement tests passed
+  `17 passed`; the cooperative 4v4 scripted combat regression passed `4
+  passed`; cross-domain roster and tasking-boundary regression passed `13
+  passed`; Python compilation and `git diff --check` passed.
+- Evidence boundary: this closes a conservative scripted post-launch
+  decision layer and reattack gate, not a calibrated hit/miss classifier or
+  complete terminal objective. Midcourse guidance, target-effect authority,
+  dynamic multi-aircraft weapon allocation, and named-platform playable
+  promotion remain open. RL stays on its separate optional adapter line.
+- Continuation choice: use the assessment report in a maintained scenario
+  trace, then address target-effect/event ownership before any claim of
+  complete post-launch combat assessment.
+
+### 2026-09-26 — Air algorithm substitution research and planning slice
+
+- Scope: read-only architecture research after the Air planner and conservative
+  post-launch assessor were implemented. No runtime or scenario behavior was
+  changed in this slice.
+- Finding: `ScriptedModelRegistry` can replace the complete scripted model,
+  while `AirScriptedEngagementModel` still directly constructs the planner and
+  assessor and also owns mission decoding, fire-latch state, and 17/12 action
+  mapping. The algorithm modules are independently testable, but the inner
+  strategies are not yet drop-in replaceable.
+- Research record: add
+  `docs/architecture/reviews/air_scripted_algorithm_substitution_research_20260926.md`
+  with the dependency map, replacement assessment, typed Air-owned strategy
+  seams, ALG-0 through ALG-4 migration batches, acceptance gates, and open
+  research questions.
+- Boundary decision: use Air-owned planner/assessor/observation/action
+  protocols and dependency injection; retain the existing model registry as
+  the outer selection surface; do not create a second global strategy
+  registry, common weapon/geometry mega-schema, or RL-owned implementation.
+- Evidence boundary: this is a planning and research record. Air remains
+  `playable_candidate`; no strategy substitution, behavior parity, or
+  complete target-effect closure is claimed until WP3-AIR-ALG is implemented
+  and its acceptance gates pass.
+- Continuation choice: implement ALG-0/ALG-1 as the next code batch, starting
+  with typed context/decision contracts and default-injection parity tests.
+
+### 2026-09-26 — Air ALG-0 typed strategy contract slice
+
+- Starting commit: `30706c5c`.
+- Change batch: add the Air-owned `AirPlanningContext`, `AirTacticalDecision`,
+  `AirAssessmentInput` and replacement protocols in
+  `air_scripted_strategy_contracts.py`. The existing planner now exposes a
+  context entry point and projects its rich audit record onto the typed
+  decision DTO; legacy primitive `plan(...)` callers remain available.
+- Focused verification: the new strategy-contract tests and existing planner
+  tests passed `10 passed`; Python compilation and `git diff --check` passed.
+- Boundary decision: the contracts validate finite/non-negative declared
+  values and bound guidance outputs, while retaining diagnostics as an
+  immutable mapping. They do not import RL/native runtime, expose raw mission
+  arrays, or grant fire/terminal authority.
+- Evidence boundary: this freezes the typed substitution boundary but does not
+  yet prove that the engagement orchestrator can inject a replacement planner
+  or assessor. That is the next ALG-1 batch.
+
+### 2026-09-26 — Air ALG-1 planner and assessor injection slice
+
+- Starting commit: `da806d93`.
+- Change batch: add Air-owned planner/assessor protocol use to
+  `AirScriptedEngagementModel`; the default implementations are constructed
+  only when no override is supplied. The engagement model now passes typed
+  `AirPlanningContext` and `AirAssessmentInput` values and consumes the typed
+  tactical decision. Default rich diagnostics remain available under the
+  tactical-plan report for replay compatibility.
+- Replacement proof: a no-fire planner suppresses only tactical release while
+  preserving flight and radar transport; a blocking assessor suppresses only
+  the fire request while preserving the default planner. Configuration is
+  rejected when it is ambiguously combined with an injected planner.
+- Focused verification: the strategy-contract, assessment, planner, and
+  engagement tests passed `25 passed`; the cooperative terminal and tasking
+  boundary regression passed `19 passed`; Python compilation and
+  `git diff --check` also passed.
+- Evidence boundary: this closes planner/assessor injection, not observation
+  decoding or action-layout extraction. `_mission_values`, contact geometry,
+  17/12 action mapping, and fire-latch transport remain in the orchestrator
+  until ALG-2. Air remains `playable_candidate`; RL remains optional.
+- Continuation choice: extract observation and action adapters with a default
+  parity fixture before adding any second maintained strategy profile.

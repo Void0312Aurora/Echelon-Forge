@@ -26,6 +26,7 @@ def _observation(*, contact: bool, fire_window: bool, budget: float = 1.0, pendi
         "target_contact_present": 1.0 if contact else 0.0,
         "fire_mask_open": 1.0 if fire_window else 0.0,
         "launch_window_open": 1.0 if fire_window else 0.0,
+        "quality_window_ready": 1.0 if fire_window else 0.0,
         "shot_budget_remaining": budget,
         "pending_assessment": 1.0 if pending else 0.0,
     }
@@ -72,6 +73,52 @@ def test_engagement_model_emits_one_fire_pulse_and_respects_assessment() -> None
     model.close()
 
 
+def test_engagement_model_reports_conservative_post_launch_assessment() -> None:
+    model = AirScriptedEngagementModel()
+    hold = _observation(contact=True, fire_window=False)
+    open_window = _observation(contact=True, fire_window=True)
+    model.reset(context={"observation": hold, "phase_name": "stable_flight"})
+    model.decide(observation=open_window, context={"phase_name": "stable_flight"}, dt=0.05)
+    model.decide(
+        observation=open_window,
+        context={
+            "phase_name": "stable_flight",
+            "last_event_info": {"release_executed": True},
+        },
+        dt=0.05,
+    )
+
+    report = model.last_decision_info["post_launch_assessment"]
+    assert report["state"] == "reattack_ready"
+    assert report["outcome"] == "inconclusive"
+    assert report["confidence"] == 0.0
+    model.close()
+
+
+def test_engagement_model_blocks_fire_after_terminal_effect_evidence() -> None:
+    model = AirScriptedEngagementModel(weapon_station_id=1)
+    hold = _observation(contact=True, fire_window=False)
+    open_window = _observation(contact=True, fire_window=True)
+    model.reset(context={"observation": hold, "phase_name": "stable_flight"})
+    model.decide(observation=open_window, context={"phase_name": "stable_flight"}, dt=0.05)
+    terminal = model.decide(
+        observation=open_window,
+        context={
+            "phase_name": "stable_flight",
+            "last_event_info": {
+                "release_executed": True,
+                "target_effect_observed": True,
+            },
+        },
+        dt=0.05,
+    )
+
+    assert terminal[14] == 0.0
+    assert model.last_decision_info["post_launch_assessment"]["state"] == "terminal_observed"
+    assert model.last_decision_info["post_launch_assessment"]["blocks_fire"] is True
+    model.close()
+
+
 def test_engagement_model_maps_the_maintained_hybrid_action_layout() -> None:
     model = AirScriptedEngagementModel(action_dim=AIR_COMBAT_HYBRID_ACTION_DIM, weapon_station_id=1)
     hold = _observation(contact=True, fire_window=False)
@@ -113,6 +160,17 @@ def test_engagement_model_is_registered_as_an_adapter_until_runtime_gate_closes(
     assert entries[0].status == "adapter"
     model = AIR_SCRIPTED_MODEL_REGISTRY.create(AIR_SCRIPTED_ENGAGEMENT_MODEL_ID)
     assert isinstance(model, AirScriptedEngagementModel)
+    model.close()
+
+
+def test_engagement_model_can_consume_a_maintained_weapon_profile() -> None:
+    model = AirScriptedEngagementModel(
+        weapon_profile_path="examples/config/database/weapons/air_to_air/aim_120c.json"
+    )
+
+    assert model.planner.config.weapon_envelope is not None
+    assert model.planner.config.weapon_envelope.weapon_id == "AIM-120C-7"
+    assert model.planner.config.weapon_envelope.pk_authority is False
     model.close()
 
 
