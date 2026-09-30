@@ -253,8 +253,8 @@ const std::vector<ExactStepStageContractDescriptor> &exact_gpu_stage_contract_in
                       "MissionCommandControlState", "ControlLawState", "GearState", "Health",
                       "EnvironmentModelRef"}),
          string_list({"ForceAccumulator", "GroundState", "GearState", "Health"}),
-         string_list({"hidden_dynamics.force_accumulator", "packed.GroundState",
-                      "packed.GearState", "terminal"}),
+         string_list({"hidden_dynamics.force_accumulator", "packed.GroundState", "packed.GearState",
+                      "terminal"}),
          string_list({"ComputeAerodynamics"}),
          "Apply normal force, braking, steering, and ground-restoring torques from bridge-resolved "
          "ground control, solved semi-implicitly against the downstream integrator updates.",

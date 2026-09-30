@@ -20,8 +20,7 @@ inline void register_submarine_motion_system(flecs::world &ecs) {
                 const double dt = it.delta_time() > 0.0 ? it.delta_time() : 1.0 / 60.0;
 
                 for (auto i : it) {
-                    const NavalCommandIntent *naval_intent =
-                        it.entity(i).get<NavalCommandIntent>();
+                    const NavalCommandIntent *naval_intent = it.entity(i).get<NavalCommandIntent>();
 
                     double target_heading_deg = transform[i].heading;
                     double target_speed_mps = std::hypot(velocity[i].vx, velocity[i].vy);

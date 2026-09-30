@@ -47,8 +47,8 @@ inline NavalDamageResponseSelection select_naval_damage_response(flecs::entity e
 
     // Profiles are address-stable for the process lifetime because the registry
     // is a function-local static.
-    selection.profile = resolve_naval_damage_response_profile(
-        kNavalDamageResponseProfileDefaultIndex);
+    selection.profile =
+        resolve_naval_damage_response_profile(kNavalDamageResponseProfileDefaultIndex);
     return selection;
 }
 
@@ -65,9 +65,10 @@ inline double resolve_naval_mount_ready_fraction(flecs::entity e) {
 // Project the damage response onto propulsion. The projection shape remains the
 // pre-DM-N1 ship behavior; the declared profile supplies the coefficients and
 // the tick above supplies the elapsed-time evolution.
-inline void apply_naval_damage_response_to_engine(
-    flecs::entity e, const NavalDamageResponseSelection &selection,
-    const NavalDamageResponseProfile &profile, const PlatformDamageState &damage) {
+inline void apply_naval_damage_response_to_engine(flecs::entity e,
+                                                  const NavalDamageResponseSelection &selection,
+                                                  const NavalDamageResponseProfile &profile,
+                                                  const PlatformDamageState &damage) {
     Propulsion *propulsion = e.get_mut<Propulsion>();
     if (propulsion == nullptr) {
         return;
@@ -83,12 +84,10 @@ inline void apply_naval_damage_response_to_engine(
     }
     const double max_speed_mps = selection.ship_platform->max_speed_mps;
 
-    propulsion->mil_thrust_n =
-        std::min(propulsion->mil_thrust_n,
-                 max_speed_mps * profile.mil_thrust_n_per_mps * mobility_scale);
-    propulsion->ab_thrust_n =
-        std::min(propulsion->ab_thrust_n,
-                 max_speed_mps * profile.ab_thrust_n_per_mps * mobility_scale);
+    propulsion->mil_thrust_n = std::min(
+        propulsion->mil_thrust_n, max_speed_mps * profile.mil_thrust_n_per_mps * mobility_scale);
+    propulsion->ab_thrust_n = std::min(
+        propulsion->ab_thrust_n, max_speed_mps * profile.ab_thrust_n_per_mps * mobility_scale);
 }
 
 } // namespace naval_damage_detail
@@ -150,24 +149,24 @@ inline void register_naval_damage_system(flecs::world &ecs) {
                         naval_damage_capability_loss_per_s(profile.sensor_loss_per_s_at_fire,
                                                            fire_progress, loss_response_scale) *
                         dt_s;
-                    damage.mobility_capability -= naval_damage_capability_loss_per_s(
-                        profile.mobility_loss_per_s_at_flooding, flooding_progress,
-                        loss_response_scale) *
+                    damage.mobility_capability -=
+                        naval_damage_capability_loss_per_s(profile.mobility_loss_per_s_at_flooding,
+                                                           flooding_progress, loss_response_scale) *
                         dt_s;
                     damage.survivability_margin -= naval_damage_capability_loss_per_s(
-                        profile.survivability_loss_per_s_at_flooding, flooding_progress,
-                        loss_response_scale) *
-                        dt_s;
-                    damage.survivability_margin -= naval_damage_capability_loss_per_s(
-                        profile.survivability_loss_per_s_at_fire, fire_progress,
-                        loss_response_scale) *
+                                                       profile.survivability_loss_per_s_at_flooding,
+                                                       flooding_progress, loss_response_scale) *
+                                                   dt_s;
+                    damage.survivability_margin -=
+                        naval_damage_capability_loss_per_s(profile.survivability_loss_per_s_at_fire,
+                                                           fire_progress, loss_response_scale) *
                         dt_s;
 
                     // Loss semantics stay owned by the shared helper.
                     sync_platform_damage_loss_state(health_state, damage);
 
-                    naval_damage_detail::apply_naval_damage_response_to_engine(
-                        e, selection, profile, damage);
+                    naval_damage_detail::apply_naval_damage_response_to_engine(e, selection,
+                                                                               profile, damage);
 
                     if (damage.loss_state == PlatformLossState::Lost) {
                         health_state.current_hp = 0.0;

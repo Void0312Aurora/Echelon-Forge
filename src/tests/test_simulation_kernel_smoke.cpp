@@ -692,10 +692,10 @@ TEST_SUITE("simulation_kernel_smoke") {
         SimulationKernel kernel;
         kernel.reset(42);
 
-        const auto ship = kernel.spawn_unit(Side::Blue, "Ship", 0.0, 0.0, 0.0, 90.0, 0.0,
-                                            0.0, 0.0, 10.0, 0.0);
-        const auto aircraft = kernel.spawn_unit(Side::Blue, "Aircraft", 0.0, 0.0, 5000.0,
-                                                0.0, 0.0, 0.0, 100.0, 0.0, 0.0);
+        const auto ship =
+            kernel.spawn_unit(Side::Blue, "Ship", 0.0, 0.0, 0.0, 90.0, 0.0, 0.0, 0.0, 10.0, 0.0);
+        const auto aircraft = kernel.spawn_unit(Side::Blue, "Aircraft", 0.0, 0.0, 5000.0, 0.0, 0.0,
+                                                0.0, 100.0, 0.0, 0.0);
         REQUIRE(ship.is_valid());
         REQUIRE(aircraft.is_valid());
 

@@ -101,7 +101,7 @@ void register_esm_reset_system(flecs::world &ecs) {
       "flecs.component.mission_command_control_state")                                             \
     X(PilotAction, "PilotAction", "flecs.component.pilot_action")                                  \
     X(MissionCommand, "MissionCommand", "flecs.component.mission_command")                         \
-    X(NavalCommandIntent, "NavalCommandIntent", "flecs.component.naval_command_intent")             \
+    X(NavalCommandIntent, "NavalCommandIntent", "flecs.component.naval_command_intent")            \
     X(TaskOrder, "TaskOrder", "flecs.component.task_order")                                        \
     X(LeaderIntent, "LeaderIntent", "flecs.component.leader_intent")                               \
     X(PendingMissionCommand, "PendingMissionCommand", "flecs.component.pending_mission_command")   \
