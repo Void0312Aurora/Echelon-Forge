@@ -77,6 +77,23 @@ class AirCombatHybridActionTests(unittest.TestCase):
     self.assertAlmostEqual(float(pilot.radar_scan_az), 15.0, places=5)
     self.assertAlmostEqual(float(pilot.radar_scan_el), -15.0, places=5)
 
+  def test_ew_hybrid_extension_reuses_combat_prefix_and_keeps_ew_tail(self) -> None:
+    from gym_envs.universal_env_parts import AIR_EW_HYBRID_V1_ACTION_MODE
+
+    self.assertEqual(expected_action_dim(AIR_EW_HYBRID_V1_ACTION_MODE), 14)
+    raw = np.zeros((14,), dtype=np.float32)
+    raw[6] = 1.0
+    raw[7] = 1.0
+    raw[9] = 1.0
+    raw[12] = 1.0
+    raw[13] = 1.0
+    effective = air_combat_hybrid_effective_action(raw)
+    self.assertEqual(float(effective[6]), 1.0)
+    self.assertEqual(float(effective[7]), 1.0)
+    self.assertEqual(float(effective[9]), 1.0)
+    self.assertEqual(float(effective[12]), 1.0)
+    self.assertEqual(float(effective[13]), 1.0)
+
 
 if __name__ == "__main__":
   unittest.main()

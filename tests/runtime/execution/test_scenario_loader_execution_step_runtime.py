@@ -4,6 +4,7 @@ import copy
 import math
 import os
 import unittest
+from types import SimpleNamespace
 from unittest import mock
 
 import numpy as np
@@ -18,6 +19,7 @@ import ef_py # noqa: E402
 from gym_envs.scenario_loader import ScenarioLoader # noqa: E402
 from gym_envs.scenario_loader import normalize_execution_step_runtime_mode # noqa: E402
 from gym_envs.scenario_loader import normalize_flight_shaping_backend # noqa: E402
+from gym_envs.scenario_loader.behavior_runtime.post_waypoint_transition import post_waypoint_transition_ready # noqa: E402
 from gym_envs.universal_env import build_step_info, build_universal_observation # noqa: E402
 
 
@@ -554,6 +556,32 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
     self.assertIsInstance(entry, dict)
     self.assertLessEqual(mocked_route_query.call_count, 1)
     self.assertIn("waypoint_guidance_state", loader._runtime_eval_cache)
+
+  def test_c2_route_exhaustion_waits_for_terminal_recovery_geometry(self) -> None:
+    runway = {"along_m": -8200.0}
+    truth = SimpleNamespace(x=-8200.0, y=-181.0)
+    inst = SimpleNamespace(heading=55.0, alt_baro=307.0)
+    loader = SimpleNamespace(
+      agent_id=1,
+      c2_task_name="TASK_RECOVER_LAND",
+      c2_transitioned=False,
+      waypoints=[{"x": -8200.0, "y": 0.0}],
+      waypoint_idx=1,
+      post_waypoint_transition={
+        "command_code": 4,
+        "terminal_ready_threshold_window_m": 3500.0,
+      },
+      get_policy_agent_observation=lambda _agent_id: truth,
+      get_policy_instrument_state=lambda _agent_id: inst,
+      get_runway_local_frame=lambda _x, _y: (True, runway["along_m"], 181.0, 3000.0, 45.0),
+      _nearest_ils_beacon=lambda _x, _y: {"heading": 90.0},
+      get_ils_observation=lambda _x, _y, _alt: [1.0, 0.1, 0.1, 5000.0],
+    )
+
+    self.assertFalse(post_waypoint_transition_ready(loader))
+    runway["along_m"] = -4800.0
+    inst.heading = 82.0
+    self.assertTrue(post_waypoint_transition_ready(loader))
 
   def test_pending_landing_transition_retargets_heading_to_recovery_vector(self) -> None:
     class _Truth:

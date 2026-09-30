@@ -2,7 +2,7 @@
   "schema": "agency_authority_census/v1",
   "baseline_commit": "8bd21d86",
   "generated_by": "Unified Architecture Program track T9 slice 1 (I47, repair round 2)",
-  "description": "Fingerprint pin of every scattered authority-check ('who-may-command / who-may-fire / who-may-write') site on the maintained tasking surface. Each site is pinned by a per-file token->count fingerprint (a repeated occurrence of an already-present token drifts the fingerprint). Tokens are matched by WORD BOUNDARY (\\bTOKEN\\b) over the code/prose surface, so a token never double-counts inside a longer identifier (commander_id inside ground_commander_id; command_relationship inside _command_relationship_default; the gate name inside _hierarchical_command_chain_active_impl). Categories are per-site adjudications grounded in and covering the pinned tokens' candidate categories in python/tasking_contracts/agency_registry.py:AUTHORITY_TOKEN_CATEGORIES (a token maps to a set of legitimate categories, not one fixed category). The scanner ignores comments, docstrings, and import/__all__ re-export plumbing (code-surface tokens) and matches folklore phrases only in docstrings/comments (prose-surface tokens). Ratchet is shrink-only (I38 precedent): a new authority-bearing file or a per-file token-count drift fails the gate. Key re-adjudicated sites (A5, A7, A8, A9, A14) additionally pin their exact category set in the gate.",
+  "description": "Fingerprint pin of every scattered authority-check ('who-may-command / who-may-fire / who-may-write') site on the maintained tasking surface. Each site is pinned by a per-file token->count fingerprint (a repeated occurrence of an already-present token drifts the fingerprint). Tokens are matched by WORD BOUNDARY (\\bTOKEN\\b) over the code/prose surface, so a token never double-counts inside a longer identifier (commander_id inside ground_commander_id; command_relationship inside _command_relationship_default; the gate name inside _hierarchical_command_chain_active_impl). Categories are per-site adjudications grounded in and covering the pinned tokens' candidate categories in python/tasking_contracts/common/agency_registry.py:AUTHORITY_TOKEN_CATEGORIES (a token maps to a set of legitimate categories, not one fixed category). The scanner ignores comments, docstrings, and import/__all__ re-export plumbing (code-surface tokens) and matches folklore phrases only in docstrings/comments (prose-surface tokens). Ratchet is shrink-only (I38 precedent): a new authority-bearing file or a per-file token-count drift fails the gate. Key re-adjudicated sites (A5, A7, A8, A9, A14) additionally pin their exact category set in the gate.",
   "scan_roots": [
     "python/tasking_contracts",
     "python/rl/tasking",
@@ -11,7 +11,7 @@
     "gym_envs/universal_env_parts"
   ],
   "excluded_files": {
-    "python/tasking_contracts/agency_registry.py": "The registry is the vocabulary owner; it names the tokens definitionally and must not be scanned as scatter."
+    "python/tasking_contracts/common/agency_registry.py": "The registry is the vocabulary owner; it names the tokens definitionally and must not be scanned as scatter."
   },
   "scan_scope_boundary": {
     "python/rl/runtime/world_batch/cooperative_director.py": "runtime/observation face (sibling worktree); is_leader role/leader arbitration + formation-role metadata. Out of the T9 scan roots; cross-referenced (R1), not gated by T9.",
@@ -28,14 +28,14 @@
   },
   "entries": [
     {
-      "file": "python/rl/tasking/leader_tasking.py",
+      "file": "python/tasking_contracts/air/tasking/c2_manager.py",
       "tokens": ["allowed to directly author"],
       "token_counts": {"allowed to directly author": 1},
       "categories": ["scope"],
       "form": "docstring-convention",
       "semantic": "ScriptedC2TaskManager authority-scope folklore: the C2 layer may consume shared situation data and pilot reports but is *not* allowed to directly author low-level mission commands (that authority belongs to the leader layer). Enforced only by prose today; matched on the prose (docstring) surface.",
-      "owner": "T9 tasking-authority surface",
-      "note": "Prime example of authority as folklore rather than inspectable data. Prose-surface token."
+      "owner": "air/scripted-agent C2 tasking layer",
+      "note": "Moved with the physical Air tasking contract layer; this entry pins the prose boundary at the maintained owner rather than the retired RL-facing shim."
     },
     {
       "file": "python/rl/tasking/common_core_profile.py",
@@ -46,6 +46,16 @@
       "semantic": "Cross-profile authority defaults applied to task orders / leader intents / pilot reports: command_relationship + authority_scope defaults, officer_in_tactical_command (OTC) delegation inference, naval warfare_role_code and ground_commander_id / commander_id role inference, and the infer_command_relationship delegation-inference dispatch. Default/identity inference only -- no cross-source conflict resolution.",
       "owner": "T9 tasking-authority surface",
       "note": "Neutral dispatcher over the air/ground/naval/common profile authority defaults. Repair round 2: now also pins the snake_case command_relationship field, the bare commander_id local, and infer_command_relationship (word-boundary matched, so they never fold into ground_commander_id / _command_relationship_default)."
+    },
+    {
+      "file": "python/tasking_contracts/common/task_order.py",
+      "tokens": ["officer_in_tactical_command", "warfare_role_code"],
+      "token_counts": {"officer_in_tactical_command": 1, "warfare_role_code": 4},
+      "categories": ["delegation", "role"],
+      "form": "neutral-field-caster",
+      "semantic": "Domain-neutral task-order field casting preserves common authority metadata while leaving domain enum conversion to adapters. It copies officer_in_tactical_command and warfare_role_code; it does not resolve authority conflicts or grant command authority.",
+      "owner": "cross-domain task-order contract",
+      "note": "Added with the physical common task-order layer; the fields are retained as authored metadata and remain subject to domain-owned authority interpretation."
     },
     {
       "file": "python/rl/profile/common_core_defaults.py",
@@ -80,7 +90,7 @@
     {
       "file": "python/rl/profile/naval_profile.py",
       "tokens": ["AuthorityScope", "CommandRelationship", "NavalWarfareRole", "authorization_to_fire", "command_relationship", "engagement_authority_grantor_id", "engagement_authority_holder_id", "officer_in_tactical_command", "roe_state", "warfare_role_code"],
-      "token_counts": {"AuthorityScope": 1, "CommandRelationship": 1, "NavalWarfareRole": 2, "authorization_to_fire": 7, "command_relationship": 4, "engagement_authority_grantor_id": 7, "engagement_authority_holder_id": 9, "officer_in_tactical_command": 2, "roe_state": 7, "warfare_role_code": 2},
+      "token_counts": {"AuthorityScope": 2, "CommandRelationship": 2, "NavalWarfareRole": 4, "authorization_to_fire": 7, "command_relationship": 5, "engagement_authority_grantor_id": 7, "engagement_authority_holder_id": 9, "officer_in_tactical_command": 2, "roe_state": 7, "warfare_role_code": 6},
       "categories": ["arbitration", "delegation", "doctrine", "role", "scope"],
       "form": "default+delegation+precedence",
       "semantic": "Naval profile warfare-role (NavalWarfareRole/warfare_role_code) role inference, command-relationship/authority-scope defaults, officer_in_tactical_command delegation, and ROE-state / engagement-authority field resolution. I53 correction (was 'leader-intent-over-mission-command fire-authorization precedence'): naval_profile carries no leader_intent -- build_kernel_mission_command fills the authority/ROE fields (roe_state, holder/grantor ids, authorization_to_fire) from loader.mission_cmd, then re-reads the same fields from scenario_data['mission_command']; on the regular load path the two names are bound to the same dict (loading.py:113-117, re-synced at :242), so the arbitration-shaped re-read is an idempotent pseudo-precedence, not a real one -- whether any runtime rebinding ever separates the two mappings into a real override is to-be-adjudicated (see census doc, A6 row and section 3.2). Densest single-file authority surface (all five gated dimensions except gating).",
@@ -166,6 +176,56 @@
       "semantic": "Projects the C2/ROE authority fields (authorization_to_fire, engagement-authority holder/grantor, roe_state) into the air_combat_c2_roe mission observation vector AND computes the _air_combat_c2_roe_policy_fire_mask_open policy gate (fire_mask_open = target_contact_present AND authorization_to_fire AND wcs_state != 1 AND not engage_hold AND shot_policy_state > 0 AND shot_budget_remaining > 0 AND not pending_assessment, lines 281-300). The fire mask is an eligibility GATE (enable/disable whether the policy may fire); it reads authorization_to_fire (+ wcs/engage/shot state) but does NOT read the engagement_authority_holder_id/grantor_id (those are pure observation projection at lines 405-406), so it resolves no who-may-fire competition between agents. Write-excluded (I45 observation face); read-only census.",
       "owner": "runtime/observation face (I45) -- write-excluded; read-only census, not converged by T9",
       "note": "Listed for census completeness only; T9 must not modify this file (I45 owns the observation face). Repair round 1: semantic completed to record the fire_mask_open policy gate. Repair round 2 (P1-3): reclassified arbitration -> gating -- the mask is a holder-blind eligibility gate (grounded by the authorization_to_fire gating candidate), not the A13 who-may-fire arbitration; delegation/doctrine retained per the ROE/authorization fields it reads. Category set pinned exactly in the gate."
+    },
+    {
+      "file": "python/tasking_contracts/air/engagement/model.py",
+      "tokens": ["authorization_to_fire"],
+      "token_counts": {"authorization_to_fire": 4},
+      "categories": ["gating"],
+      "form": "scripted-observation-gate",
+      "semantic": "The RL-independent Air tactical adapter consumes the declared authorization_to_fire mission-observation field as an input gate for its fire request. It does not grant authority, resolve holder conflicts, or write mission-command authority state; the existing Air combat event gate remains the release authority.",
+      "owner": "air/scripted-agent adapter",
+      "note": "Updated for the physical Air engagement layer; the four occurrences are the declared observation read, the boolean gate, the retained decision-info field, and the emitted action field."
+    },
+    {
+      "file": "python/tasking_contracts/air/strategy/contracts.py",
+      "tokens": ["authorization_to_fire"],
+      "token_counts": {"authorization_to_fire": 2},
+      "categories": ["gating"],
+      "form": "scripted-strategy-contract",
+      "semantic": "Carries the declared authorization_to_fire field in the RL-independent Air tactical decision contract. The contract preserves an input gate for downstream release authority and does not grant authority or write mission-command state.",
+      "owner": "air/scripted-agent strategy layer",
+      "note": "Registered after physical layering; the two typed contract fields carry the gate into observation and action intents, not an authority decision site."
+    },
+    {
+      "file": "python/tasking_contracts/air/strategy/planning.py",
+      "tokens": ["authorization_to_fire"],
+      "token_counts": {"authorization_to_fire": 5},
+      "categories": ["gating"],
+      "form": "scripted-strategy-planner",
+      "semantic": "The RL-independent Air planner carries authorization_to_fire through candidate evaluation and blocks a release plan when the declared gate is closed. It does not grant authority, resolve holder conflicts, or write mission-command authority state.",
+      "owner": "air/scripted-agent strategy layer",
+      "note": "Registered after physical layering; planner gating remains downstream of the environment-owned release authority."
+    },
+    {
+      "file": "python/tasking_contracts/air/strategy/action.py",
+      "tokens": ["authorization_to_fire"],
+      "token_counts": {"authorization_to_fire": 3},
+      "categories": ["gating"],
+      "form": "scripted-strategy-action-adapter",
+      "semantic": "The RL-independent Air action adapter uses the declared authorization_to_fire input when constructing the maintained fire and station action fields. It does not grant authority, resolve holder conflicts, or write mission-command authority state.",
+      "owner": "air/scripted-agent strategy layer",
+      "note": "Registered during the 2026-09-27 neutral contract ownership migration; action transport remains downstream of environment-owned release authority."
+    },
+    {
+      "file": "python/tasking_contracts/air/strategy/observation.py",
+      "tokens": ["authorization_to_fire"],
+      "token_counts": {"authorization_to_fire": 1},
+      "categories": ["gating"],
+      "form": "scripted-strategy-observation-adapter",
+      "semantic": "The RL-independent Air observation adapter decodes the declared authorization_to_fire mission field into the typed tactical observation. It does not grant authority, resolve holder conflicts, or write mission-command authority state.",
+      "owner": "air/scripted-agent strategy layer",
+      "note": "Registered during the 2026-09-27 neutral contract ownership migration; observation decoding remains a read-only domain adapter."
     }
   ]
 }

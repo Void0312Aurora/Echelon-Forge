@@ -216,6 +216,28 @@ int SimulationKernel::debug_get_contact_count(uint64_t entity_id) {
     return -1;
 }
 
+std::vector<double> SimulationKernel::debug_get_countermeasure_state(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("debug_get_countermeasure_state");
+    auto e = ecs.entity(entity_id);
+    if (!e.is_alive()) {
+        return {};
+    }
+
+    const Countermeasures *countermeasures = e.get<Countermeasures>();
+    if (!countermeasures) {
+        return {};
+    }
+
+    return {
+        static_cast<double>(countermeasures->chaff_count),
+        static_cast<double>(countermeasures->flare_count),
+        countermeasures->release_interval,
+        countermeasures->last_release_time,
+        countermeasures->auto_mode ? 1.0 : 0.0,
+    };
+}
+
 std::vector<double> SimulationKernel::debug_get_mass_state(uint64_t entity_id) {
     auto composition_lock = acquire_composition_operation();
     ensure_active("debug_get_mass_state");
@@ -734,6 +756,21 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
 
             event.is_launch = rwr->is_missile_launch;
 
+            obs.rwr_warnings.push_back(event);
+        }
+
+        for (uint64_t source_id : rwr->missile_launch_source_ids) {
+            auto existing = std::find_if(
+                obs.rwr_warnings.begin(), obs.rwr_warnings.end(),
+                [source_id](const RWREvent &event) { return event.source_id == source_id; });
+            if (existing != obs.rwr_warnings.end()) {
+                existing->is_launch = true;
+                continue;
+            }
+            RWREvent event{};
+            event.source_id = source_id;
+            event.signal_strength = 1.0;
+            event.is_launch = true;
             obs.rwr_warnings.push_back(event);
         }
     }

@@ -22,6 +22,9 @@ from python.scenario.compiler import ( # noqa: E402
   CompiledScenario as PackagedCompiledScenario,
 )
 from python.scenario.compiler import ScenarioCompiler as PackagedScenarioCompiler # noqa: E402
+from python.scenario.compiler.waypoint_cache import ( # noqa: E402
+  _normalize_runtime_mission_command,
+)
 from python.scenario_compiler import ( # noqa: E402
   DEFAULT_TERRAIN_TYPE,
   ScenarioCompiler,
@@ -446,6 +449,24 @@ class ScenarioCompilerTests(unittest.TestCase):
     self.assertAlmostEqual(float(runtime.normalized_waypoint_templates[0][0]["x"]), 1000.0, places=6)
     self.assertAlmostEqual(float(runtime.normalized_waypoint_templates[1][1]["y"]), -900.0, places=6)
     self.assertGreater(int(runtime.waypoint_template_route_ref_ids[0]), 0)
+
+  def test_runtime_mission_normalization_fails_closed_on_malformed_scalars(self) -> None:
+    normalized = _normalize_runtime_mission_command(
+      {
+        "command_code": "not-a-command",
+        "target_heading": "nan",
+        "target_altitude": float("inf"),
+        "target_speed": "not-a-speed",
+        "takeoff_interval_s": -5.0,
+        "waypoints": [{"x": "nan", "y": "inf"}],
+      }
+    )
+
+    self.assertEqual(normalized["command_code"], 0)
+    self.assertEqual(normalized["target_heading"], 0.0)
+    self.assertEqual(normalized["target_altitude"], 0.0)
+    self.assertEqual(normalized["target_speed"], 0.0)
+    self.assertEqual(normalized["takeoff_interval_s"], 0.0)
 
 
 class SpatialQueryRuntimeTests(unittest.TestCase):

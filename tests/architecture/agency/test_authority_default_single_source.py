@@ -10,8 +10,8 @@ neither side can drift silently, and proves the move is byte-identical to the
 former local literals (``"TACON"`` / ``"Tactical"``): the runtime value is the
 exact same compiled enum member.
 
-It is the A3 analogue of the I53 ``agent_shim`` merge-policy drift pin
-(``tests/runtime/test_agent_shim.py``). Every test function here contains at
+It is the A3 analogue of the I53 ``agent_contracts`` merge-policy drift pin
+(``tests/runtime/test_agent_contracts.py``). Every test function here contains at
 least one assertion on a symbol that did not exist at the baseline (0aa76a00),
 so the whole module is red before the change and green after (the
 "red -> green" equivalence evidence at function granularity).
@@ -22,7 +22,7 @@ from __future__ import annotations
 import ef_py
 
 from python.rl.profile import common_core_defaults as a3
-from python.tasking_contracts import agency_registry as registry
+from python.tasking_contracts.common import agency_registry as registry
 
 
 def test_default_names_are_registry_owned_and_mirror_the_compiled_enum_positions():

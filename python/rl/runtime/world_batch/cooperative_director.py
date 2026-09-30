@@ -6,7 +6,7 @@ from typing import Any
 import ef_py
 import numpy as np
 
-from python.rl.tasking.bridge import resolve_loader_time_step
+from python.rl.tasking.bridge import resolve_loader_time_step, tasking_profile_for_loader
 
 from .state import CooperativeSlotState, CooperativeWorldState
 
@@ -485,6 +485,25 @@ class ScriptedCooperativeCoordinationDirector:
             mission_cmd = {}
             loader.mission_cmd = mission_cmd
         mission_changed = False
+        member_cmd = clone_small_dict(getattr(slot_state.control_slot, "mission_command_overrides", None)) or {}
+        # Roster-owned mission overrides are the per-slot tasking seam.  The
+        # director retains ownership of formation and takeoff progression; all
+        # other declared fields (including target/C2/ROE fields) are copied to
+        # this slot's isolated command object.
+        director_owned_fields = {
+            "formation_id",
+            "form_offset_x",
+            "form_offset_y",
+            "form_offset_z",
+            "takeoff_procedure_code",
+            "takeoff_clearance_code",
+            "takeoff_interval_s",
+            "runway_slot_code",
+        }
+        for key, value in member_cmd.items():
+            if str(key) in director_owned_fields:
+                continue
+            mission_changed |= _assign_mapping_value(mission_cmd, str(key), deepcopy(value))
         mission_changed |= _assign_mapping_value(mission_cmd, "formation_id", int(formation_id))
         mission_changed |= _assign_mapping_value(mission_cmd, "form_offset_x", float(form_offset_x))
         mission_changed |= _assign_mapping_value(mission_cmd, "form_offset_y", float(form_offset_y))
@@ -513,17 +532,60 @@ class ScriptedCooperativeCoordinationDirector:
         if mission_changed and isinstance(scenario_data, dict):
             scenario_data["mission_command"] = mission_cmd
 
+        # ``primary_target_id`` is resolved during initial load.  If a roster
+        # member changes its assigned target, refresh that derived lookup after
+        # applying the member command so the objective, observation and event
+        # gate all consume the same slot-owned target.
+        assigned_target_name = str(mission_cmd.get("assigned_target_name", "") or "").strip()
+        assigned_target_id = _coerce_optional_int(mission_cmd.get("assigned_target_id", 0), 0)
+        if assigned_target_name:
+            try:
+                resolved_target_id = _coerce_optional_int(
+                    getattr(loader, "entities", {}).get(assigned_target_name, 0), 0
+                )
+                if resolved_target_id <= 0:
+                    assigned_target_id = 0
+                else:
+                    assigned_target_id = resolved_target_id
+            except Exception:
+                assigned_target_id = 0
+        if assigned_target_id > 0:
+            mission_cmd["assigned_target_id"] = int(assigned_target_id)
+            loader.primary_target_id = int(assigned_target_id)
+            loader.primary_target_name = assigned_target_name
+        elif assigned_target_name:
+            mission_cmd["assigned_target_id"] = 0
+            loader.primary_target_id = None
+            loader.primary_target_name = ""
+
         task_order = getattr(loader, "task_order", None)
         if task_order is not None:
             member_task = getattr(slot_state.control_slot, "task_order_overrides", None)
             if isinstance(member_task, dict):
-                from python.rl.tasking.leader_tasking import _apply_task_order_overrides
+                live_task_type = getattr(task_order, "task_type", None)
+                profile = tasking_profile_for_loader(loader)
+                domain_apply = getattr(profile, "apply_task_order_overrides", None)
+                if callable(domain_apply):
+                    domain_apply(
+                        task_order,
+                        member_task,
+                        default_assignee_id=int(slot_state.entity_id),
+                    )
+                else:
+                    from python.tasking_contracts.common.task_order import apply_common_task_order_overrides
 
-                _apply_task_order_overrides(
-                    task_order,
-                    member_task,
-                    default_assignee_id=int(slot_state.entity_id),
-                )
+                    apply_common_task_order_overrides(
+                        task_order,
+                        member_task,
+                        assignee_id=int(slot_state.entity_id),
+                    )
+                from python.tasking_contracts.common.task_order import apply_common_task_order_defaults
+
+                apply_common_task_order_defaults(task_order)
+                # Authored roster metadata may fill neutral fields, but the
+                # live C2 transition owner controls task_type after reset.
+                if live_task_type is not None and hasattr(task_order, "task_type"):
+                    _assign_attr_if_present(task_order, "task_type", live_task_type)
             if hasattr(task_order, "takeoff_procedure_id"):
                 _assign_attr_if_present(
                     task_order,

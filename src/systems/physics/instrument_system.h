@@ -236,6 +236,30 @@ inline void register_instrument_system(flecs::world &ecs) {
                     const Ammo *ammo = it.entity(i).get<Ammo>();
                     inst[i].missiles_remaining = ammo ? ammo->missiles_remaining : 0;
 
+                    const ecs_world_info_t *world_info = ecs_get_world_info(it.world().c_ptr());
+                    const double countermeasure_snapshot_time_s =
+                        world_info ? static_cast<double>(world_info->world_time_total) : -1.0;
+                    inst[i].countermeasure_snapshot_stage = 24;
+                    inst[i].countermeasure_snapshot_time_s = countermeasure_snapshot_time_s;
+                    inst[i].countermeasure_snapshot_post_ew = false;
+
+                    const Countermeasures *countermeasures = it.entity(i).get<Countermeasures>();
+                    if (countermeasures) {
+                        inst[i].countermeasure_chaff_remaining = countermeasures->chaff_count;
+                        inst[i].countermeasure_flare_remaining = countermeasures->flare_count;
+                        inst[i].countermeasure_release_interval_s =
+                            countermeasures->release_interval;
+                        inst[i].countermeasure_last_release_time_s =
+                            countermeasures->last_release_time;
+                        inst[i].countermeasure_auto_mode = countermeasures->auto_mode;
+                    } else {
+                        inst[i].countermeasure_chaff_remaining = -1;
+                        inst[i].countermeasure_flare_remaining = -1;
+                        inst[i].countermeasure_release_interval_s = -1.0;
+                        inst[i].countermeasure_last_release_time_s = -1.0;
+                        inst[i].countermeasure_auto_mode = false;
+                    }
+
                     // 5. EGI / Navigation
                     const EGI *egi = it.entity(i).get<EGI>();
                     if (egi) {

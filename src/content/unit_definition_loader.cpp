@@ -1615,6 +1615,10 @@ void parse_electronic_warfare_json_fields(const nlohmann::json &entry, UnitDefin
             cms.value("release_interval", def.cms_data.release_interval);
         def.cms_data.last_release_time =
             cms.value("last_release_time", def.cms_data.last_release_time);
+        def.cms_data.last_chaff_release_time =
+            cms.value("last_chaff_release_time", def.cms_data.last_release_time);
+        def.cms_data.last_flare_release_time =
+            cms.value("last_flare_release_time", def.cms_data.last_release_time);
         def.cms_data.auto_mode = cms.value("auto_mode", def.cms_data.auto_mode);
     }
 
@@ -1745,6 +1749,11 @@ bool parse_unit_json(
 #define EF_UNIT_DIRECT_DATA_LINK_FIELD(cpp_type, name, default_value)                              \
     def.name = entry.value(#name, default_value);
 #include "content/detail/unit_definition_direct_fields.inc"
+    // Keep the EW suite edge available for the factory's deferred materialize
+    // lookup.  The reference remains unresolved until spawn, but the parsed
+    // name must survive the content pass so native EW components can be
+    // attached to runtime units.
+    def.ew_suite_ref = entry.value("ew_suite_ref", "");
     def.data_link_max_reports_per_update =
         std::max(0, entry.value("data_link_max_reports_per_update", 16));
     def.data_link_max_messages_per_update =

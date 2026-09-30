@@ -164,6 +164,7 @@ class WorldBatchVecEnv(
         air_combat_post_launch_assessment_timeout_s: float = 0.0,
         air_combat_post_launch_assessment_gamma: float = 0.999,
         air_combat_post_launch_assessment_blue_throttle: float = 0.65,
+        scripted_tasking_runtime: bool | None = None,
     ):
         if render_mode not in (None,):
             raise ValueError("WorldBatchVecEnv currently only supports render_mode=None.")
@@ -190,6 +191,10 @@ class WorldBatchVecEnv(
         if self.step_info_mode not in VALID_STEP_INFO_MODES:
             raise ValueError(f"Unknown step_info_mode: {step_info_mode!r}")
         self.collect_step_timing = bool(collect_step_timing)
+        # ``None`` lets the runtime admit the scripted provider when the
+        # scenario declares an initial C2 task. ``False`` remains an explicit
+        # caller opt-out for evaluation and compatibility cases.
+        self.scripted_tasking_runtime = None if scripted_tasking_runtime is None else bool(scripted_tasking_runtime)
         self.batch_observation_backend = _normalize_batch_observation_backend(batch_observation_backend)
         self.batch_visual_backend = _normalize_batch_visual_backend(batch_visual_backend)
         self.execution_step_batch_prepare = bool(execution_step_batch_prepare)
@@ -477,6 +482,7 @@ class WorldBatchVecEnv(
         sync_to_kernel: bool = True,
     ) -> None:
         handle = self._handles[env_idx]
+        handle.loader._scripted_tasking_runtime = None
         handle.loader._compiled_scenario = self._compiled_scenario
         handle.loader._compiled_runtime_metadata = self._compiled_scenario.runtime_metadata
         handle.loader._scenario_source_path = self.scenario_path
@@ -487,6 +493,29 @@ class WorldBatchVecEnv(
             initial_inst=initial_inst,
             sync_to_kernel=sync_to_kernel,
         )
+        scenario_data = getattr(handle.loader, "scenario_data", {})
+        meta = scenario_data.get("meta", {}) if isinstance(scenario_data, dict) else {}
+        initial_c2_task = meta.get("initial_c2_task") if isinstance(meta, dict) else None
+        scripted_runtime_enabled = self.scripted_tasking_runtime
+        if scripted_runtime_enabled is None:
+            scripted_runtime_enabled = bool(str(initial_c2_task or "").strip())
+        if scripted_runtime_enabled and str(initial_c2_task or "").strip():
+            from python.simulation.air import AirScriptedTaskingRuntime
+
+            handle.loader._scripted_tasking_runtime = AirScriptedTaskingRuntime()
+            handle.loader._scripted_tasking_runtime.reset(
+                handle.loader,
+                sim_time_s=0.0,
+                truth=initial_truth,
+                inst=initial_inst,
+                sync_to_kernel=False,
+            )
+            handle.loader._update_command_chain(
+                0.0,
+                truth=initial_truth,
+                inst=initial_inst,
+                sync_to_kernel=False,
+            )
         validate_naval_action_mode_for_loader(handle.loader, self.action_mode)
         handle.max_steps = int(handle.loader.get_max_steps())
         handle.steps = 0

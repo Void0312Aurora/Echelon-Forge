@@ -15,7 +15,7 @@ from python.scenario.compiler import (
 from python.scenario.runtime import (
     resolve_active_controllable_roster,
 )
-from python.tasking_contracts.runtime_contract import ScenarioLoaderRuntime
+from python.tasking_contracts.common.runtime_contract import ScenarioLoaderRuntime
 from .common import (
     execution_step_runtime_mode_enabled,
     normalize_execution_step_runtime_mode,
@@ -207,7 +207,7 @@ class ScenarioLoader:
     def __init__(self, sim_kernel: ScenarioLoaderRuntime):
         # Typed seam (this iteration): the maintained path injects the
         # facade-backed _ScenarioLoaderRuntimeProxy; raw ef_py.SimulationKernel
-        # injection is test-only. See python/tasking_contracts/runtime_contract.py.
+        # injection is test-only. See python/tasking_contracts/common/runtime_contract.py.
         self.sim = sim_kernel
         self.scenario_data = {}
         self.entities = {} # map name -> entity_id
@@ -384,12 +384,20 @@ class ScenarioLoader:
     def _apply_compiled_runtime_metadata(self) -> None:
         _apply_compiled_runtime_metadata_impl(self)
 
-    def _finalize_loaded_world(self, *, initial_truth=None, initial_inst=None, sync_to_kernel: bool = True):
+    def _finalize_loaded_world(
+        self,
+        *,
+        initial_truth=None,
+        initial_inst=None,
+        sync_to_kernel: bool = True,
+        build_scripted_opponents: bool = True,
+    ):
         return _finalize_loaded_world_impl(
             self,
             initial_truth=initial_truth,
             initial_inst=initial_inst,
             sync_to_kernel=sync_to_kernel,
+            build_scripted_opponents=build_scripted_opponents,
         )
 
     @staticmethod
@@ -432,11 +440,11 @@ class ScenarioLoader:
     def _query_runway_frame_result(self, x_m: float, y_m: float):
         return _query_runway_frame_result_impl(self, x_m, y_m)
 
-    def get_runway_local_frame(self, x_m: float, y_m: float):
-        return _get_runway_local_frame_impl(self, x_m, y_m)
+    def get_runway_local_frame(self, x_m: float, y_m: float, runway_id: int | None = None):
+        return _get_runway_local_frame_impl(self, x_m, y_m, runway_id=runway_id)
 
-    def get_ils_observation(self, x_m: float, y_m: float, alt_m: float):
-        return _get_ils_observation_impl(self, x_m, y_m, alt_m)
+    def get_ils_observation(self, x_m: float, y_m: float, alt_m: float, runway_id: int | None = None):
+        return _get_ils_observation_impl(self, x_m, y_m, alt_m, runway_id=runway_id)
 
     def _randomize_mission(self):
         _randomize_mission_impl(self)

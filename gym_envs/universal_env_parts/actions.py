@@ -4,7 +4,11 @@ import numpy as np
 
 from .common import ef_py
 from .naval_actions import build_naval_station_action_transport, is_naval_station_action_mode
-from .spaces import AIR_COMBAT_HYBRID_V1_ACTION_MODE, expected_action_dim
+from .spaces import (
+    AIR_COMBAT_HYBRID_V1_ACTION_MODE,
+    AIR_EW_HYBRID_V1_ACTION_MODE,
+    expected_action_dim,
+)
 
 
 def half_to_unit(x: float) -> float:
@@ -34,29 +38,48 @@ def normalize_action(action, *, action_space, action_mode: str) -> np.ndarray:
 
 
 def is_air_combat_hybrid_action_mode(action_mode: str) -> bool:
-    return str(action_mode) == AIR_COMBAT_HYBRID_V1_ACTION_MODE
+    return str(action_mode) in {
+        AIR_COMBAT_HYBRID_V1_ACTION_MODE,
+        AIR_EW_HYBRID_V1_ACTION_MODE,
+    }
+
+
+def is_air_ew_hybrid_action_mode(action_mode: str) -> bool:
+    return str(action_mode) == AIR_EW_HYBRID_V1_ACTION_MODE
 
 
 def air_combat_hybrid_effective_action(action: np.ndarray, *, previous_intent=None) -> np.ndarray:
     raw = np.asarray(action, dtype=np.float32).reshape(-1)
-    if raw.size != expected_action_dim(AIR_COMBAT_HYBRID_V1_ACTION_MODE):
+    combat_dim = expected_action_dim(AIR_COMBAT_HYBRID_V1_ACTION_MODE)
+    ew_dim = expected_action_dim(AIR_EW_HYBRID_V1_ACTION_MODE)
+    if raw.size not in {combat_dim, ew_dim}:
         raise ValueError(
             f"Action shape mismatch for action_mode='{AIR_COMBAT_HYBRID_V1_ACTION_MODE}': "
             f"got {raw.shape}."
         )
-    prev = np.zeros_like(raw)
+
+    prefix = raw[:combat_dim]
+    prev = np.zeros((combat_dim,), dtype=np.float32)
     if previous_intent is not None:
         prev_arr = np.asarray(previous_intent, dtype=np.float32).reshape(-1)
-        if prev_arr.size == raw.size:
-            prev = prev_arr
+        if prev_arr.size >= combat_dim:
+            prev = prev_arr[:combat_dim]
 
-    effective = raw.astype(np.float32, copy=True)
+    effective_prefix = prefix.astype(np.float32, copy=True)
     for idx in (6, 8):
-        effective[idx] = 1.0 if float(raw[idx]) > 0.5 else 0.0
+        effective_prefix[idx] = 1.0 if float(prefix[idx]) > 0.5 else 0.0
     for idx in (7, 9, 10):
-        effective[idx] = 1.0 if float(raw[idx]) > 0.5 and float(prev[idx]) <= 0.5 else 0.0
-    effective[11] = float(np.clip(round(float(raw[11])), 0, 7))
-    return effective.astype(np.float32, copy=False)
+        effective_prefix[idx] = 1.0 if float(prefix[idx]) > 0.5 and float(prev[idx]) <= 0.5 else 0.0
+    # Discrete weapon stations use floor quantization across every maintained
+    # Air transport path; rounding would make half-step actions disagree with
+    # the direct facade adapter.
+    effective_prefix[11] = float(np.floor(np.clip(prefix[11], 0.0, 7.0)))
+    if raw.size == ew_dim:
+        return np.concatenate((effective_prefix, raw[combat_dim:]), axis=0).astype(
+            np.float32,
+            copy=False,
+        )
+    return effective_prefix.astype(np.float32, copy=False)
 
 
 def build_pilot_action(action: np.ndarray, *, action_mode: str, inst_now=None):
@@ -108,9 +131,33 @@ def build_pilot_action(action: np.ndarray, *, action_mode: str, inst_now=None):
         pilot_act.master_arm = bool(action[8] > 0.5)
         pilot_act.fire_weapon = bool(action[9] > 0.5)
         pilot_act.fire_gun = bool(action[10] > 0.5)
-        pilot_act.weapon_select_id = int(np.clip(round(float(action[11])), 0, 7))
+        pilot_act.weapon_select_id = int(np.clip(float(action[11]), 0.0, 7.0))
         pilot_act.program_chaff = False
         pilot_act.program_flare = False
+        pilot_act.jettison_emergency = False
+        return pilot_act
+
+    if action_mode == AIR_EW_HYBRID_V1_ACTION_MODE:
+        pilot_act.stick_pitch = float(action[0])
+        pilot_act.stick_roll = float(action[1])
+        pilot_act.rudder = float(action[2])
+        pilot_act.throttle = float(action[3])
+        pilot_act.gear_handle = 0.0
+        pilot_act.flaps = 0.0
+        pilot_act.speedbrake = 0.0
+        pilot_act.brake_left = False
+        pilot_act.brake_right = False
+        pilot_act.brake = 0.0
+        pilot_act.radar_active = bool(action[6] > 0.5)
+        pilot_act.radar_scan_az = float(action[4]) * 60.0
+        pilot_act.radar_scan_el = float(action[5]) * 30.0
+        pilot_act.tms_up = bool(action[7] > 0.5)
+        pilot_act.master_arm = bool(action[8] > 0.5)
+        pilot_act.fire_weapon = bool(action[9] > 0.5)
+        pilot_act.fire_gun = bool(action[10] > 0.5)
+        pilot_act.weapon_select_id = int(np.clip(float(action[11]), 0.0, 7.0))
+        pilot_act.program_chaff = bool(action[12] > 0.5)
+        pilot_act.program_flare = bool(action[13] > 0.5)
         pilot_act.jettison_emergency = False
         return pilot_act
 
@@ -154,5 +201,6 @@ __all__ = [
     "build_pilot_action",
     "half_to_unit",
     "is_air_combat_hybrid_action_mode",
+    "is_air_ew_hybrid_action_mode",
     "normalize_action",
 ]

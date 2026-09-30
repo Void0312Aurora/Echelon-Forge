@@ -58,14 +58,13 @@ def test_maintained_tasking_consumes_typed_mission_command_helpers() -> None:
 
 def test_policy_state_reads_route_maintained_loader_owned_seam() -> None:
   # I24 (W2 critical period) moved the loader-owned policy-state-read seam into the
-  # neutral `python.tasking_contracts.bridge_views` module so gym_envs no longer has
+  # common `python.tasking_contracts.common.bridge_views` module so gym_envs no longer has
   # to import python.rl for it. `python/rl/tasking/bridge.py` re-exports the exact
-  # same objects (see the compat-shim assertIs test in tests/architecture/tasking_contracts/),
-  # so this gate now checks the canonical definitions there and pins the bridge.py
-  # shell import as the compatibility half of the contract.
+  # same objects, so this gate checks the canonical definitions there and pins
+  # the bridge import as the profile-dispatch seam.
   leader_text = _read("python/rl/tasking/leader_tasking.py")
   bridge_text = _read("python/rl/tasking/bridge.py")
-  bridge_views_text = _read("python/tasking_contracts/bridge_views.py")
+  bridge_views_text = _read("python/tasking_contracts/common/bridge_views.py")
   loader_text = _read("gym_envs/scenario_loader/core.py")
   loading_text = _read("gym_envs/scenario_loader/loading.py")
 
@@ -105,10 +104,10 @@ def test_common_core_profile_no_longer_defaults_or_exports_air_only_profile_logi
 
 def test_bridge_quarantines_legacy_command_chain_raw_writes_to_single_owner_seam() -> None:
   # I24 (W2 critical period) moved the loader-owned runtime view / command-chain sync
-  # seam into the neutral `python.tasking_contracts.bridge_views` module (canonical
-  # owner below); `python/rl/tasking/bridge.py` keeps re-exporting it as the exact
-  # same object (compat-shim assertIs test in tests/architecture/tasking_contracts/).
-  text = _read("python/tasking_contracts/bridge_views.py")
+  # seam into the common `python.tasking_contracts.common.bridge_views` module (canonical
+  # owner below); `python/rl/tasking/bridge.py` imports the common helpers while
+  # retaining only the profile-dispatch surface.
+  text = _read("python/tasking_contracts/common/bridge_views.py")
   bridge_text = _read("python/rl/tasking/bridge.py")
   assert "class LoaderOwnedRuntimeView:" in text
   assert "def loader_owned_runtime_view(loader: Any) -> LoaderOwnedRuntimeView:" in text

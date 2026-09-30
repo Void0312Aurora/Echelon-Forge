@@ -8,7 +8,8 @@ from .common_core_profile import (
     apply_task_order_common_core_defaults,
     apply_task_order_common_core_spec,
 )
-from .leader_tasking import RuleBasedLeaderPhaseManager, ScriptedC2TaskManager
+from .leader_tasking import RuleBasedLeaderPhaseManager
+from python.simulation.air.tasking import make_scripted_c2_task_manager as _make_scripted_c2_task_manager
 from python.rl.profile.air_profile import (
     build_kernel_mission_command,
     infer_air_task_family,
@@ -24,9 +25,16 @@ from python.rl.profile.air_profile import (
     task_observation_codes,
 )
 
+
+def make_scripted_c2_task_manager(**kwargs: object):
+    """Forward the RL entry point to the simulation-owned Air adapter."""
+
+    return _make_scripted_c2_task_manager(**kwargs)
+
+
 __all__ = [
     "RuleBasedLeaderPhaseManager",
-    "ScriptedC2TaskManager",
+    "make_scripted_c2_task_manager",
     "apply_leader_intent_common_core_defaults",
     "apply_leader_intent_common_core_spec",
     "apply_pilot_report_common_core_defaults",

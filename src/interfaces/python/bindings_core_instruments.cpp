@@ -36,6 +36,17 @@ void bind_core_instruments(nb::module_ &m) {
         .def_rw("cmd_speed", &InstrumentState::cmd_speed_mps)
         .def_rw("rwr_active", &InstrumentState::rwr_active)
         .def_rw("missiles_remaining", &InstrumentState::missiles_remaining)
+        .def_rw("countermeasure_chaff_remaining", &InstrumentState::countermeasure_chaff_remaining)
+        .def_rw("countermeasure_flare_remaining", &InstrumentState::countermeasure_flare_remaining)
+        .def_rw("countermeasure_release_interval_s",
+                &InstrumentState::countermeasure_release_interval_s)
+        .def_rw("countermeasure_last_release_time_s",
+                &InstrumentState::countermeasure_last_release_time_s)
+        .def_rw("countermeasure_auto_mode", &InstrumentState::countermeasure_auto_mode)
+        .def_rw("countermeasure_snapshot_stage", &InstrumentState::countermeasure_snapshot_stage)
+        .def_rw("countermeasure_snapshot_time_s", &InstrumentState::countermeasure_snapshot_time_s)
+        .def_rw("countermeasure_snapshot_post_ew",
+                &InstrumentState::countermeasure_snapshot_post_ew)
         // EGI / Navigation
         .def_rw("lat", &InstrumentState::lat_deg)
         .def_rw("lon", &InstrumentState::lon_deg)

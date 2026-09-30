@@ -6,7 +6,7 @@ from typing import Any
 import ef_py
 import numpy as np
 
-from python.tasking_contracts.timing_utils import coerce_timing_dict
+from python.tasking_contracts.common.timing_utils import coerce_timing_dict
 
 from .bridges import LeaderCommandBridge
 from .common import load_json_dict, make_args_stub
@@ -155,6 +155,7 @@ class LeaderRuntimeFacadeMixin:
 
     def reset(self, *, seed: int | None = None, options: dict | None = None):
         _ = options
+        self._scripted_episode_seed = None if seed is None else int(seed)
         collect_step_timing = bool(getattr(self, "collect_step_timing", False))
         reset_t0 = time.perf_counter() if collect_step_timing else 0.0
         obs, info = self._exec_runtime.reset(seed=seed)
@@ -343,9 +344,18 @@ class LeaderRuntimeFacadeMixin:
         return build_execution_policy(self)
 
     def close(self):
+        policy = getattr(self, "_exec_policy", None)
+        self._exec_policy = None
+        if policy is not None:
+            close = getattr(policy, "close", None)
+            if callable(close):
+                close()
         runtime = getattr(self, "_exec_runtime", None)
         self._exec_runtime = None
         close_execution_runtime(runtime)
+        policy = getattr(self, "_exec_policy", None)
+        self._exec_policy = None
+        close_execution_runtime(policy)
         try:
             super().close()
         except Exception:

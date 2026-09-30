@@ -342,19 +342,25 @@ class Mq9Aim120ValidationRuntimeMixin:
     self.assertEqual(str(effect.effect_family), "blast_fragmentation")
     self.assertGreaterEqual(float(effect.miss_distance_m), 0.0)
     self.assertTrue(math.isfinite(float(effect.miss_distance_m)))
-    self.assertEqual(str(effect.component_primary_name), "")
-    self.assertEqual(str(effect.component_primary_system), "")
-    self.assertEqual(int(effect.component_hit_count), 0)
+    self.assertEqual(str(effect.outcome_state), "damage_applied")
+    self.assertTrue(bool(effect.direct_hitbox_intersection))
+    self.assertGreaterEqual(int(effect.projected_hitbox_count), 1)
+    self.assertGreater(int(effect.component_hit_count), 0)
+    self.assertNotEqual(str(effect.component_primary_name), "")
+    self.assertNotEqual(str(effect.component_primary_system), "")
+    self.assertGreater(float(effect.spatial_effect_scale), 0.0)
     self.assertAlmostEqual(float(report.hp_delta), 0.0, delta=1.0e-6)
-    self.assertAlmostEqual(float(report.system_health_delta), 0.0, delta=1.0e-6)
+    self.assertLess(float(report.system_health_delta), 0.0)
     self.assertFalse(bool(report.destroyed))
-    self.assertEqual(str(report.loss_state_to), "combat_capable")
-    self.assertFalse(bool(effect.vulnerability_profile_present))
+    self.assertEqual(str(report.loss_state_to), "mission_kill")
+    self.assertTrue(bool(report.mission_kill))
+    _assert_mq9_event_is_non_authoritative(self, effect)
 
     overlay = _aircraft_damage_overlay(sim, target_id)
-    for field in ("flight_control", "roll_control", "propulsion", "fuel"):
-      self.assertAlmostEqual(overlay[field], 1.0, delta=1.0e-6, msg=field)
-    self.assertAlmostEqual(overlay["fuel_leak"], 0.0, delta=1.0e-6)
+    self.assertLess(overlay["structure"], 1.0)
+    self.assertLess(overlay["flight_control"], 1.0)
+    self.assertLess(overlay["fuel"], 1.0)
+    self.assertGreater(overlay["fuel_leak"], 0.0)
 
   def test_mq9_aim120_longer_range_live_chain_is_auditable_without_lethality_claim(
     self,
@@ -384,19 +390,24 @@ class Mq9Aim120ValidationRuntimeMixin:
     self.assertEqual(str(effect.effect_family), "blast_fragmentation")
     self.assertGreater(float(effect.miss_distance_m), 0.0)
     self.assertTrue(math.isfinite(float(effect.miss_distance_m)))
-    self.assertEqual(int(effect.component_hit_count), 0)
-    self.assertEqual(str(effect.component_primary_name), "")
+    self.assertEqual(str(effect.outcome_state), "damage_applied")
+    self.assertFalse(bool(effect.direct_hitbox_intersection))
+    self.assertGreaterEqual(int(effect.projected_hitbox_count), 1)
+    self.assertGreater(int(effect.component_hit_count), 0)
+    self.assertNotEqual(str(effect.component_primary_name), "")
+    self.assertNotEqual(str(effect.component_primary_system), "")
+    self.assertGreater(float(effect.spatial_effect_scale), 0.0)
     self.assertAlmostEqual(float(report.hp_delta), 0.0, delta=1.0e-6)
-    self.assertAlmostEqual(float(report.system_health_delta), 0.0, delta=1.0e-6)
+    self.assertLess(float(report.system_health_delta), 0.0)
     self.assertFalse(bool(report.destroyed))
     self.assertTrue(sim.is_unit_active(target_id))
-    self.assertFalse(bool(effect.vulnerability_profile_present))
+    _assert_mq9_event_is_non_authoritative(self, effect)
 
     health_after = [float(value) for value in sim.get_unit_health(target_id)]
     self.assertEqual(health_after, [40.0, 40.0])
     overlay = _aircraft_damage_overlay(sim, target_id)
-    for field in ("flight_control", "propulsion", "fuel", "avionics"):
-      self.assertAlmostEqual(overlay[field], 1.0, delta=1.0e-6, msg=field)
+    for field in ("flight_control", "fuel", "avionics"):
+      self.assertLess(overlay[field], 1.0, field)
 
   def test_mq9_aim120_right_aileron_and_flap_control_hits_are_fixed_component_cases(
     self,

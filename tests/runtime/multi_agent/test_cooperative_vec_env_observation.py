@@ -292,16 +292,29 @@ def _cooperative_takeoff_to_cruise_scenario() -> dict:
 
 
 class CooperativeVecEnvObservationTests(unittest.TestCase):
-  def test_cooperative_world_batch_rejects_unimplemented_air_combat_event_actions(self) -> None:
+  def test_cooperative_world_batch_routes_air_combat_event_actions(self) -> None:
     if CooperativeWorldBatchVecEnv is None:
       self.skipTest("gymnasium is not available in the active interpreter")
-
-    with self.assertRaisesRegex(ValueError, "event-action gate/finalization contract"):
-      CooperativeWorldBatchVecEnv(
-        scenario_path="unused.json",
+    with tempfile.TemporaryDirectory() as tmpdir:
+      scenario_path = f"{tmpdir}/cooperative_scenario.json"
+      with open(scenario_path, "w", encoding="utf-8") as f:
+        json.dump(_cooperative_cruise_scenario(), f, ensure_ascii=True)
+      vec_env = CooperativeWorldBatchVecEnv(
+        scenario_path=scenario_path,
         n_envs=1,
+        include_visual=False,
+        include_proprio=True,
         action_mode="air_combat_hybrid_v1",
+        mission_obs_mode="nav_v2_formation_v1",
+        batch_observation_backend="compiled",
       )
+      try:
+        vec_env.reset()
+        _obs, _rewards, _dones, infos = vec_env.step(np.zeros((2, 12), dtype=np.float32))
+        self.assertEqual(len(infos), 2)
+        self.assertEqual(vec_env.action_mode, "air_combat_hybrid_v1")
+      finally:
+        vec_env.close()
 
   def test_cooperative_world_batch_vec_env_compiled_observation_arrays_are_float32(self) -> None:
     if CooperativeWorldBatchVecEnv is None:

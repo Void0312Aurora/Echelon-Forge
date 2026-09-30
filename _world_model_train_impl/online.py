@@ -31,8 +31,8 @@ from _world_model_train_impl.common import (
 )
 
 from _world_model_train_impl.runtime_env import build_world_model_execution_env
-from python.rl.control.scripted_stable_flight import ScriptedStableFlightController
-from python.rl.control.scripted_takeoff import ScriptedTakeoffController, scripted_takeoff_action
+from python.tasking_contracts.air.execution.stable_flight import ScriptedStableFlightController
+from python.tasking_contracts.air.execution.takeoff import ScriptedTakeoffController, scripted_takeoff_action
 from python.world_model.dreamer import DreamerConfig, DreamerTrainer
 from python.world_model.features import (
     angle_sincos_features,

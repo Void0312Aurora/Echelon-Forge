@@ -5,7 +5,7 @@ from typing import Any
 
 import ef_py
 
-from python.tasking_contracts.bridge_views import (
+from python.tasking_contracts.common.bridge_views import (
     TASKING_INSTRUMENT_READ_BLOCKER,
     TASKING_TRUTH_READ_BLOCKER,
     LoaderOwnedRuntimeView,
@@ -27,7 +27,7 @@ from python.tasking_contracts.bridge_views import (
 
 # I24 (W2 critical period) moved the loader-owned runtime views and the
 # profile-independent command-chain/mission-command helpers above into the
-# neutral `python.tasking_contracts.bridge_views` module so `gym_envs` no
+# common `python.tasking_contracts.common.bridge_views` module so `gym_envs` no
 # longer has to import `python.rl` for them. Every re-exported name is the
 # exact same object as its neutral-layer counterpart (see the compat-shim
 # assertIs test in `tests/architecture/tasking_contracts/`).
@@ -176,17 +176,24 @@ def build_kernel_mission_command(loader: Any):
 
 def make_rule_based_leader_phase_manager(loader: Any | None = None, **kwargs: Any):
     profile = tasking_profile_for_loader(loader) if loader is not None else resolve_tasking_profile(None)
-    return profile.RuleBasedLeaderPhaseManager(**kwargs)
+    options = dict(kwargs)
+    if loader is not None and "departure_route_alt_agl_m" not in options:
+        scenario_data = getattr(loader, "scenario_data", {}) or {}
+        c2_cfg = scenario_data.get("c2_logic", {}) if isinstance(scenario_data, dict) else {}
+        if isinstance(c2_cfg, dict) and "departure_route_alt_agl_m" in c2_cfg:
+            options["departure_route_alt_agl_m"] = c2_cfg["departure_route_alt_agl_m"]
+    return profile.RuleBasedLeaderPhaseManager(**options)
 
 
 def make_scripted_c2_task_manager(loader: Any | None = None, **kwargs: Any):
     profile = tasking_profile_for_loader(loader) if loader is not None else resolve_tasking_profile(None)
-    return profile.ScriptedC2TaskManager(**kwargs)
-
-
-def scripted_c2_task_manager_class(loader: Any | None = None):
-    profile = tasking_profile_for_loader(loader) if loader is not None else resolve_tasking_profile(None)
-    return profile.ScriptedC2TaskManager
+    factory = getattr(profile, "make_scripted_c2_task_manager", None)
+    if callable(factory):
+        return factory(**kwargs)
+    raise RuntimeError(
+        "scripted C2 task manager is not admitted for tasking profile "
+        f"{getattr(profile, '__name__', profile)!s}; select an explicit domain adapter"
+    )
 
 
 def is_patrol_task(
@@ -281,7 +288,6 @@ __all__ = [
     "normalize_task_order_spec",
     "resolve_loader_time_step",
     "resolve_tasking_profile",
-    "scripted_c2_task_manager_class",
     "sync_loader_command_chain",
     "sync_loader_command_chain_reentrant",
     "sync_loader_mission_command",

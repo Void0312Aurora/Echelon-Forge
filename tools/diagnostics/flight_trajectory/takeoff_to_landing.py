@@ -44,10 +44,33 @@ from python.runtime_bootstrap import ensure_repo_imports
 BASE_DIR = ensure_repo_imports()
 
 from python.env_config import resolve_env_settings
-from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
-from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
-from python.rl.control.wrappers import get_action_wrapper_spec
+from python.tasking_contracts.air.execution.model import AIR_SCRIPTED_EXECUTION_MODEL_ID
+from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY
+from python.tasking_contracts.common.scripted_capability import (
+    parse_scripted_capability,
+    resolve_scripted_model_id,
+)
+from python.tasking_contracts.common.decision_runtime import (
+    DecisionRuntimeAgent,
+    DecisionRuntimeAgentSpec,
+)
+from python.simulation import create_single_execution_runtime
+from gym_envs.scenario_loader.spatial_runtime.geometry import select_ils_beacon
 from tools.diagnostics.common import add_model_load_args, add_probe_run_args
+
+
+def _finite_json(value: Any) -> Any:
+    """Recursively convert non-finite and numpy scalar values for strict JSON."""
+
+    if isinstance(value, dict):
+        return {str(key): _finite_json(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_finite_json(item) for item in value]
+    if isinstance(value, np.generic):
+        return _finite_json(value.item())
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    return value
 
 
 @dataclass(frozen=True)
@@ -68,6 +91,9 @@ class EpisodeSummary:
     final_waypoint_idx: int
     final_command_code: int
     final_baseline_mode: str
+    c2_task_name: str
+    c2_transition_sequence: list[str]
+    c2_report_valid: bool
     final_position_xyz_m: list[float]
     final_runway_along_m: float | None
     final_runway_cross_m: float | None
@@ -76,6 +102,9 @@ class EpisodeSummary:
     final_altitude_agl_m: float | None
     final_on_ground: float | None
     final_on_runway_geom: float | None
+    scripted_runtime_decisions: int
+    scripted_runtime_holds: int
+    scripted_runtime_identity: str
 
 
 def _load_json(path: str) -> dict[str, Any]:
@@ -84,6 +113,20 @@ def _load_json(path: str) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise TypeError(f"expected dict JSON at {path!r}")
     return data
+
+
+def _scripted_model_id_for_scenario(path: str) -> str:
+    """Resolve a declared Air scripted model without breaking legacy scenarios."""
+
+    scenario = _load_json(path)
+    if "scripted_capability" not in scenario:
+        return AIR_SCRIPTED_EXECUTION_MODEL_ID
+    manifest = parse_scripted_capability(scenario)
+    return resolve_scripted_model_id(
+        manifest,
+        expected_domain="air",
+        expected_role_id="autopilot_controller",
+    )
 
 
 def _zero_randomization_overrides() -> dict[str, Any]:
@@ -96,10 +139,20 @@ def _zero_randomization_overrides() -> dict[str, Any]:
     }
 
 
+def _optional_finite_float(value: Any) -> float | None:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) else None
+
+
 def _load_policy(model_path: str, algo: str):
     load_path = model_path[:-4] if model_path.endswith(".zip") else model_path
     algo_name = str(algo).strip()
     if algo_name in ("auto", "AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
+        from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
+
         try:
             return AdaptiveKLPPO.load(load_path, device="cpu")
         except Exception:
@@ -136,17 +189,18 @@ def _make_env(
         # Scripted diagnostics do not consume pixel observations; disabling them
         # keeps the diagnostic fast while preserving task geometry and mission logic.
         env_settings["include_visual"] = False
-    wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config or {})
     if scripted:
-        if wrapper_class is None:
-            raise ValueError("scripted mode requires a train config that enables the action wrapper")
-        wrapper_kwargs = dict(wrapper_kwargs or {})
-        wrapper_kwargs["scripted_residual_scale"] = 0.0
-        wrapper_kwargs["scripted_residual_alt_breakpoints_m"] = []
-        wrapper_kwargs["scripted_residual_alt_scales"] = []
-        wrapper_kwargs["action_rate_penalty_coef"] = 0.0
+        # The standalone scripted CLI owns its neutral model lifecycle.  The
+        # action wrapper remains a learned-policy adapter and is not needed to
+        # express a zero-residual training baseline here.
+        wrapper_class = None
+        wrapper_kwargs = None
+    else:
+        from python.rl.control.wrappers import get_action_wrapper_spec
 
-    env = build_single_world_batch_execution_runtime(
+        wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config or {})
+
+    env = create_single_execution_runtime(
         scenario_path=os.path.abspath(scenario_path),
         env_settings=env_settings,
         wrapper_class=wrapper_class,
@@ -180,6 +234,12 @@ def _env_max_steps(env) -> int:
 
 
 def _pick_runway_beacon(loader, x_ref: float, y_ref: float) -> dict[str, Any] | None:
+    try:
+        declared = select_ils_beacon(loader, float(x_ref), float(y_ref))
+    except Exception:
+        declared = None
+    if isinstance(declared, dict):
+        return dict(declared)
     ref_name = None
     try:
         post = loader.scenario_data.get("mission_command", {}).get("post_waypoint_transition", {})
@@ -235,17 +295,67 @@ def _collect_episode(
     seed: int,
     max_steps: int | None,
     zero_randomization: bool,
+    scenario_path: str,
 ):
     obs, _info = env.reset(seed=int(seed))
     sim_env = env.unwrapped
     loader = sim_env.loader
 
-    start_pos = np.asarray(sim_env.sim.get_unit_position(sim_env.agent_id), dtype=np.float64)
-    runway_beacon = _pick_runway_beacon(loader, float(start_pos[0]), float(start_pos[1]))
+    scripted_model = None
+    scripted_runtime_agent = None
+    scripted_runtime_decisions = 0
+    scripted_runtime_holds = 0
+    scripted_dt = 0.05
+    if scripted:
+        try:
+            scripted_dt = float(sim_env.sim.get_time_step())
+        except Exception:
+            scripted_dt = 0.05
+        start_pos = np.asarray(sim_env.sim.get_unit_position(sim_env.agent_id), dtype=np.float64)
+        runway_beacon = _pick_runway_beacon(loader, float(start_pos[0]), float(start_pos[1]))
+        runway_length_m = float(runway_beacon.get("length", 0.0)) if runway_beacon else 0.0
+        model_id = (
+            _scripted_model_id_for_scenario(scenario_path)
+            if scenario_path
+            else AIR_SCRIPTED_EXECUTION_MODEL_ID
+        )
+        scripted_model = AIR_SCRIPTED_MODEL_REGISTRY.create_for(
+            domain="air",
+            role_id="autopilot_controller",
+            model_id=model_id,
+            action_dim=int(_action_space(env).shape[0]),
+            dt=scripted_dt,
+            runway_length_m=runway_length_m,
+        )
+        scripted_runtime_agent = DecisionRuntimeAgent(
+            DecisionRuntimeAgentSpec(
+                agent_id=str(sim_env.agent_id),
+                model_id=model_id,
+                domain="air",
+                  role_id="autopilot_controller",
+                  decision_period_s=0.0,
+                  communication_state="available",
+                authority_scope="platform_control",
+            ),
+            scripted_model,
+        )
+        # The common runtime owns model reset so every scripted entry receives
+        # the same replay and provenance context.
+        scripted_runtime_agent.reset(
+            context={
+                "observation": obs,
+                "phase_name": str(getattr(loader, "mission_phase_name", "") or ""),
+                "scenario": scenario_path,
+            },
+            episode_seed=int(seed),
+        )
+
+    if "start_pos" not in locals():
+        start_pos = np.asarray(sim_env.sim.get_unit_position(sim_env.agent_id), dtype=np.float64)
+        runway_beacon = _pick_runway_beacon(loader, float(start_pos[0]), float(start_pos[1]))
     waypoints = [dict(wp) for wp in list(getattr(loader, "waypoints", []) or [])]
     waypoint_template_idx = int(loader.mission_cmd.get("_waypoint_template_idx", -2))
 
-    action = np.zeros(_action_space(env).shape, dtype=np.float32)
     limit = int(max_steps) if max_steps is not None else _env_max_steps(env)
     if limit <= 0:
         limit = 20000
@@ -269,7 +379,18 @@ def _collect_episode(
 
     for step in range(1, limit + 1):
         if scripted:
-            act = action
+            assert scripted_runtime_agent is not None
+            runtime_step = scripted_runtime_agent.step(
+                observation=obs,
+                clock_s=float(step - 1) * scripted_dt,
+                observation_version=f"obs:{step - 1}",
+                context={"phase_name": str(getattr(loader, "mission_phase_name", "") or "")},
+            )
+            act = runtime_step.action
+            if runtime_step.report.action_source == "decided":
+                scripted_runtime_decisions += 1
+            elif runtime_step.report.action_source == "held":
+                scripted_runtime_holds += 1
         else:
             act, _ = model.predict(obs, deterministic=True)
         obs, reward, terminated, truncated, info = env.step(act)
@@ -286,7 +407,11 @@ def _collect_episode(
 
         cmd_code = int(loader.mission_cmd.get("command_code", 0))
         wp_idx = int(getattr(loader, "waypoint_idx", 0))
-        mode_active = str(final_info.get("scripted_baseline_mode_active", ""))
+        mode_active = (
+            str(scripted_model.active_mode)
+            if scripted_model is not None
+            else str(final_info.get("scripted_baseline_mode_active", ""))
+        )
 
         if landing_transition_step is None and cmd_code >= 4:
             landing_transition_step = int(step)
@@ -310,25 +435,30 @@ def _collect_episode(
                 mission_status = []
             break
 
+    if scripted_runtime_agent is not None:
+        scripted_runtime_agent.close()
+    elif scripted_model is not None:
+        scripted_model.close()
+
     final_pos = [float(xs[-1]), float(ys[-1]), float(zs[-1])]
     final_ias = None
     final_ground_speed = None
     final_alt_agl = None
     if final_inst is not None:
-        try:
-            final_ias = float(getattr(final_inst, "ias", float("nan")))
-        except Exception:
-            final_ias = None
-        try:
-            final_ground_speed = float(getattr(final_inst, "ground_speed", float("nan")))
-        except Exception:
-            final_ground_speed = None
-        try:
-            final_alt_agl = float(getattr(final_inst, "altitude_agl", float("nan")))
-        except Exception:
-            final_alt_agl = None
+        final_ias = _optional_finite_float(getattr(final_inst, "ias", None))
+        final_ground_speed = _optional_finite_float(getattr(final_inst, "ground_speed", None))
+        final_alt_agl = _optional_finite_float(getattr(final_inst, "alt_radar", None))
+    scenario_data = getattr(loader, "scenario_data", None)
+    scenario_name = str(getattr(loader, "scenario_name", "") or "")
+    if not scenario_name and isinstance(scenario_data, dict):
+        scenario_name = str(scenario_data.get("scenario_name", "") or "")
+    if not scenario_name:
+        scenario_name = os.path.basename(str(getattr(loader, "scenario_path", "") or ""))
+    tasking_runtime = getattr(loader, "_scripted_tasking_runtime", None)
+    transition_history = list(getattr(tasking_runtime, "transition_history", []) or [])
+    task_sequence = list(getattr(tasking_runtime, "task_sequence", []) or [])
     summary = EpisodeSummary(
-        scenario=str(getattr(loader, "scenario_name", "")) or os.path.basename(str(getattr(sim_env, "scenario_path", ""))),
+        scenario=scenario_name,
         seed=int(seed),
         mode="scripted" if scripted else "model",
         zero_randomization=bool(zero_randomization),
@@ -344,14 +474,26 @@ def _collect_episode(
         final_waypoint_idx=int(wp_indices[-1]),
         final_command_code=int(cmd_codes[-1]),
         final_baseline_mode=str(baseline_modes[-1]),
+        c2_task_name=str(getattr(loader, "c2_task_name", "") or ""),
+        c2_transition_sequence=(
+            [str(name) for name in task_sequence]
+            if task_sequence
+            else [str(item.get("task_name", "")) for item in transition_history if isinstance(item, dict)]
+        ),
+        c2_report_valid=bool(getattr(loader, "c2_report_valid", False)),
         final_position_xyz_m=list(final_pos),
-        final_runway_along_m=runway_alongs[-1],
-        final_runway_cross_m=runway_crosses[-1],
+        final_runway_along_m=_optional_finite_float(runway_alongs[-1]),
+        final_runway_cross_m=_optional_finite_float(runway_crosses[-1]),
         final_ias_mps=final_ias,
         final_ground_speed_mps=final_ground_speed,
         final_altitude_agl_m=final_alt_agl,
-        final_on_ground=float(final_info["on_ground"]) if "on_ground" in final_info and final_info["on_ground"] is not None else None,
-        final_on_runway_geom=float(final_info["on_runway_geom"]) if "on_runway_geom" in final_info and final_info["on_runway_geom"] is not None else None,
+        final_on_ground=_optional_finite_float(final_info.get("on_ground")),
+        final_on_runway_geom=_optional_finite_float(final_info.get("on_runway_geom")),
+        scripted_runtime_decisions=int(scripted_runtime_decisions),
+        scripted_runtime_holds=int(scripted_runtime_holds),
+        scripted_runtime_identity=(
+            scripted_runtime_agent.replay_identity if scripted_runtime_agent is not None else ""
+        ),
     )
     return {
         "summary": summary,
@@ -500,7 +642,11 @@ def _save_plot(data: dict[str, Any], output_path: str) -> None:
 def _main() -> int:
     p = argparse.ArgumentParser(description="Export 2D trajectory diagnostics for the continuous takeoff-to-landing task.")
     add_probe_run_args(p, include=["scenario"], required={"scenario": True})
-    add_model_load_args(p, include=["train_config"], required={"train_config": True})
+    add_model_load_args(
+        p,
+        include=["train_config"],
+        helps={"train_config": "Training configuration required with --model; optional with --scripted."},
+    )
     add_model_load_args(
         p,
         include=["model", "algo"],
@@ -510,7 +656,7 @@ def _main() -> int:
             "algo": "auto / AdaptiveKLPPO / PPO",
         },
     )
-    p.add_argument("--scripted", action="store_true", help="Run the pure scripted baseline (wrapper residual scale forced to zero).")
+    p.add_argument("--scripted", action="store_true", help="Run the standalone neutral scripted Air model.")
     add_probe_run_args(p, include=["seed", "max_steps"], defaults={"seed": 0, "max_steps": None})
     p.add_argument("--zero_randomization", action="store_true")
     p.add_argument("--output", type=str, required=True, help="PNG output path")
@@ -518,6 +664,8 @@ def _main() -> int:
 
     if bool(args.scripted) == bool(args.model):
         raise ValueError("choose exactly one of --scripted or --model")
+    if args.model and not args.train_config:
+        p.error("--train_config is required with --model")
 
     train_config = _resolve_train_config(args.train_config)
     env = _make_env(
@@ -535,6 +683,7 @@ def _main() -> int:
         seed=int(args.seed),
         max_steps=args.max_steps,
         zero_randomization=bool(args.zero_randomization),
+        scenario_path=os.path.abspath(args.scenario),
     )
     summary: EpisodeSummary = data["summary"]
 
@@ -542,11 +691,11 @@ def _main() -> int:
     out_json = os.path.splitext(out_png)[0] + ".json"
     _save_plot(data, out_png)
     with open(out_json, "w", encoding="utf-8") as f:
-        json.dump(asdict(summary), f, indent=2)
+        json.dump(_finite_json(asdict(summary)), f, indent=2, allow_nan=False)
 
     print(f"saved_plot={out_png}")
     print(f"saved_summary={out_json}")
-    print(json.dumps(asdict(summary), indent=2))
+    print(json.dumps(_finite_json(asdict(summary)), indent=2, allow_nan=False))
     return 0
 
 

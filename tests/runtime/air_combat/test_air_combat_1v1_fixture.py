@@ -14,6 +14,7 @@ from gym_envs.universal_env import build_universal_observation # noqa: E402
 from python.mission_obs_taxonomy import mission_observation_dim # noqa: E402
 from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv # noqa: E402
 from python.rl.tasking.bridge import LoaderOwnedScriptedOpponentKernelView # noqa: E402
+from python.tasking_contracts.air.ew.model import AirScriptedEWActionModel # noqa: E402
 
 
 _SCENARIO_PATH = resolve_repo_path(
@@ -31,6 +32,44 @@ _DB_PATH = resolve_repo_path("examples", "config", "database")
 
 
 class AirCombat1v1FixtureTests(unittest.TestCase):
+  def test_native_ew_countermeasure_release_consumes_component_inventory(self) -> None:
+    sim = ef_py.SimulationKernel()
+    self.assertTrue(sim.load_database(_DB_PATH))
+    sim.set_time_step(0.05)
+
+    loader = ScenarioLoader(sim)
+    agent_id = int(loader.load_scenario(_SCENARIO_PATH, seed=20260516))
+
+    before = [float(value) for value in sim.debug_get_countermeasure_state(agent_id)]
+    self.assertEqual(len(before), 5)
+    self.assertGreaterEqual(before[0], 1.0)
+    self.assertGreaterEqual(before[1], 1.0)
+    self.assertGreater(before[2], 0.0)
+
+    chaff = ef_py.PilotAction()
+    chaff.active = True
+    chaff.program_chaff = True
+    sim.set_pilot_action(agent_id, chaff)
+    for _ in range(20):
+      sim.step()
+      current = [float(value) for value in sim.debug_get_countermeasure_state(agent_id)]
+      if current[0] < before[0]:
+        break
+    self.assertEqual(current[0], before[0] - 1.0)
+    self.assertEqual(current[1], before[1])
+
+    flare = ef_py.PilotAction()
+    flare.active = True
+    flare.program_flare = True
+    sim.set_pilot_action(agent_id, flare)
+    for _ in range(20):
+      sim.step()
+      current = [float(value) for value in sim.debug_get_countermeasure_state(agent_id)]
+      if current[1] < before[1]:
+        break
+    self.assertEqual(current[0], before[0] - 1.0)
+    self.assertEqual(current[1], before[1] - 1.0)
+
   def test_loader_fixture_exposes_hostile_contact_and_weapon_state(self) -> None:
     sim = ef_py.SimulationKernel()
     self.assertTrue(sim.load_database(_DB_PATH))
@@ -68,6 +107,31 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
     self.assertEqual(int(getattr(hostile_track, "classification", 0)), 2)
     self.assertIn(int(getattr(hostile_track, "source", 0)), {1, 3})
 
+  def test_native_maws_marks_inbound_missile_as_rwr_launch_warning(self) -> None:
+    sim = ef_py.SimulationKernel()
+    self.assertTrue(sim.load_database(_DB_PATH))
+    sim.set_time_step(0.05)
+    loader = ScenarioLoader(sim)
+    blue_id = int(loader.load_scenario(_SCENARIO_PATH, seed=20260516))
+    red_id = int(loader.entities["Red_Fighter"])
+
+    for _ in range(80):
+      sim.step()
+    missile_id = int(sim.fire_missile(red_id, blue_id))
+    self.assertGreater(missile_id, 0)
+
+    launch_rows = []
+    for _ in range(5):
+      sim.step()
+      launch_rows = [
+        row for row in getattr(sim.get_agent_observation(blue_id), "rwr_warnings", [])
+        if bool(getattr(row, "is_launch", False))
+      ]
+      if launch_rows:
+        break
+    self.assertTrue(launch_rows)
+    self.assertTrue(any(int(getattr(row, "source_id", 0)) == red_id for row in launch_rows))
+
   def test_world_batch_vec_env_loads_fixture_with_execution_observation_contract(self) -> None:
     env = WorldBatchVecEnv(
       scenario_path=_SCENARIO_PATH,
@@ -85,6 +149,79 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
       self.assertEqual(obs["rwr"].shape, (1, env.max_rwr, 4))
       self.assertEqual(obs["mission"].shape, (1, mission_observation_dim("basic")))
     finally:
+      env.close()
+
+  def test_maintained_ew_action_mode_consumes_native_chaff_after_launch_warning(self) -> None:
+    env = WorldBatchVecEnv(
+      scenario_path=_SCENARIO_PATH,
+      n_envs=1,
+      include_visual=False,
+      include_proprio=False,
+      action_mode="air_ew_hybrid_v1",
+      mission_obs_mode="basic",
+      execution_step_runtime_mode="compiled",
+      flight_shaping_backend="compiled",
+      worker_threads=1,
+    )
+    model = AirScriptedEWActionModel(dt=0.05)
+    try:
+      env.seed(20260516)
+      observation_batch = env.reset()
+      observation = {key: np.asarray(value)[0] for key, value in observation_batch.items()}
+      model.reset(
+        context={
+          "observation": observation,
+          "phase_name": "stable_flight",
+          "response_doctrine": "countermeasure_ready",
+        }
+      )
+      initial_chaff = -1
+
+      launch_warning_steps = []
+      request_steps = []
+      consumed_step = None
+      for step in range(1, 121):
+        observation = {key: np.asarray(value)[0] for key, value in observation_batch.items()}
+        rwr = np.asarray(observation.get("rwr", []), dtype=np.float32).reshape(-1, 4)
+        if rwr.size and bool(np.any(rwr[:, 3] > 0.5)):
+          launch_warning_steps.append(step)
+        action = model.decide(
+          observation=observation,
+          context={
+            "phase_name": "stable_flight",
+            "response_doctrine": "countermeasure_ready",
+          },
+          dt=0.05,
+        )
+        if bool(np.any(np.asarray(action[12:14]) > 0.5)):
+          request_steps.append(step)
+        observation_batch, _rewards, dones, _infos = env.step(
+          np.asarray(action, dtype=np.float32).reshape(1, -1)
+        )
+        current = env.envs[0].last_inst
+        current_chaff = int(getattr(current, "countermeasure_chaff_remaining", -1))
+        if initial_chaff < 0 and current_chaff >= 0:
+          initial_chaff = current_chaff
+          self.assertGreater(initial_chaff, 0)
+        if initial_chaff >= 0 and current_chaff < initial_chaff:
+          consumed_step = step
+          break
+        if bool(dones[0]):
+          break
+
+      self.assertTrue(launch_warning_steps)
+      self.assertTrue(request_steps)
+      self.assertIsNotNone(consumed_step)
+      self.assertGreater(initial_chaff, 0)
+      self.assertLess(
+        int(getattr(env.envs[0].last_inst, "countermeasure_chaff_remaining", -1)),
+        initial_chaff,
+      )
+      self.assertEqual(int(getattr(env.envs[0].last_inst, "countermeasure_snapshot_stage", -1)), 31)
+      self.assertTrue(bool(getattr(env.envs[0].last_inst, "countermeasure_snapshot_post_ew", False)))
+      self.assertGreaterEqual(float(getattr(env.envs[0].last_inst, "countermeasure_snapshot_time_s", -1.0)), 0.0)
+    finally:
+      model.close()
       env.close()
 
   def test_loader_registers_red_scripted_opponent_from_scenario(self) -> None:

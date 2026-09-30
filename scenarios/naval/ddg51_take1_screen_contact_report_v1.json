@@ -1,6 +1,25 @@
 {
   "scenario_name": "DDG-51 Screens T-AKE Surface Contact Report V1",
   "description": "Minimal naval escort baseline built around real public ship units. USS Arleigh Burke (DDG-51) screens USNS Lewis and Clark (T-AKE-1) while an opposing surface contact appears inside the destroyer's surface-search picture but outside the support ship's initial radar horizon. This scenario is for validating ship spawning, naval task semantics, surface contact geometry, and report sharing before modeling weapons employment.",
+  "scripted_capability": {
+    "version": "scripted_capability.v1",
+    "domain": "naval",
+    "label": "bounded_adapter",
+    "model_id": "naval.station.screen_hold",
+    "role_id": "naval_warfare_commander",
+    "lifecycle": "reset_decide_close",
+    "evidence_refs": [
+      "source:python/tasking_contracts/naval/execution.py",
+      "source:tools/eval/naval_station_policy_eval.py",
+      "scenario:scoped-n4-station-and-contact-reporting"
+    ],
+    "deferred_claims": [
+      "fleet combat",
+      "weapon employment",
+      "general naval maneuver policy",
+      "full naval playable coverage"
+    ]
+  },
   "tasking_profile": "naval",
   "environment": {
     "time_step": 0.5,

@@ -5,7 +5,7 @@ from __future__ import annotations
 from importlib import import_module
 from typing import TYPE_CHECKING
 
-from .mission_defs import (
+from python.tasking_contracts.common.mission_defs import (
     COMMAND_CODE_IDLE,
     COMMAND_CODE_LANDING,
     COMMAND_CODE_ROUTE,
@@ -26,9 +26,12 @@ from .mission_defs import (
     scripted_mode_for_command_code,
     scripted_mode_for_phase_name,
 )
-from .scripted_landing import ScriptedLandingController
-from .scripted_stable_flight import ScriptedStableFlightController, scripted_stable_flight_action
-from .scripted_takeoff import ScriptedTakeoffController
+from python.tasking_contracts.air.execution.landing import ScriptedLandingController
+from python.tasking_contracts.air.execution.stable_flight import (
+    ScriptedStableFlightController,
+    scripted_stable_flight_action,
+)
+from python.tasking_contracts.air.execution.takeoff import ScriptedTakeoffController
 
 if TYPE_CHECKING:
     from .wrappers import (

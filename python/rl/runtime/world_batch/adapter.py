@@ -18,15 +18,15 @@ from python.scenario.runtime.world_setup import build_batch_world_setup_request
 from python.scenario.runtime.world_setup import build_runtime_world_layout_request
 from python.scenario.runtime.world_setup import extract_batch_world_setup_entity_ids
 
-from python.rl.runtime.agent_shim import MAINTAINED
-from python.rl.runtime.agent_shim import OBS_DECISION_BELIEF_PACKET
-from python.rl.runtime.agent_shim import OBS_FACADE_OBSERVATION_PACKET
-from python.rl.runtime.rollout_gate import RolloutAdmission
-from python.rl.runtime.rollout_gate import RolloutAdmissionError
-from python.rl.runtime.rollout_evidence import RolloutEvidenceError
-from python.rl.runtime.rollout_evidence import assert_rollout_evidence_binding
-from python.rl.runtime.rollout_evidence import load_rollout_evidence
-from python.rl.runtime.rollout_evidence import project_rollout_evidence
+from python.tasking_contracts.common.agent_contracts import MAINTAINED
+from python.tasking_contracts.common.agent_contracts import OBS_DECISION_BELIEF_PACKET
+from python.tasking_contracts.common.agent_contracts import OBS_FACADE_OBSERVATION_PACKET
+from ..rollout_evidence import RolloutEvidenceError
+from ..rollout_evidence import assert_rollout_evidence_binding
+from ..rollout_evidence import load_rollout_evidence
+from ..rollout_evidence import project_rollout_evidence
+from ..rollout_gate import RolloutAdmission
+from ..rollout_gate import RolloutAdmissionError
 from .command_chain_cache import project_world_leader_intent_maintained_assignment
 from .command_chain_cache import project_world_mission_command_maintained_assignment
 from .command_chain_cache import project_world_pilot_report_maintained_assignment
@@ -138,8 +138,8 @@ class _ScenarioLoaderRuntimeProxy:
     """World-indexed loader runtime shim that prefers facade-owned batch surfaces.
 
     Structurally implements the maintained ``ScenarioLoader.sim`` seam contract
-    ``python.tasking_contracts.runtime_contract.ScenarioLoaderRuntime`` (kept
-    structural — no nominal inheritance); conformance is enforced by
+    ``python.tasking_contracts.common.runtime_contract.ScenarioLoaderRuntime``
+    (kept structural — no nominal inheritance); conformance is enforced by
     ``tests/architecture/tasking_contracts/test_scenario_loader_runtime_contract.py``.
     """
 

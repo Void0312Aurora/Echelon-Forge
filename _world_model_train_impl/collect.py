@@ -25,8 +25,8 @@ from _world_model_train_impl.common import (
 configure_repo_imports()
 
 from _world_model_train_impl.runtime_env import build_world_model_execution_env  # noqa: E402
-from python.rl.control.scripted_stable_flight import ScriptedStableFlightController  # noqa: E402
-from python.rl.control.scripted_takeoff import ScriptedTakeoffController, scripted_takeoff_action  # noqa: E402
+from python.tasking_contracts.air.execution.stable_flight import ScriptedStableFlightController  # noqa: E402
+from python.tasking_contracts.air.execution.takeoff import ScriptedTakeoffController, scripted_takeoff_action  # noqa: E402
 from python.world_model.features import (  # noqa: E402
     DEFAULT_ANGLE_DEG_INDICES,
     angle_sincos_features,

@@ -16,7 +16,6 @@ from .bridge import (
     make_scripted_c2_task_manager,
     normalize_task_order_spec,
     resolve_tasking_profile,
-    scripted_c2_task_manager_class,
     task_observation_codes,
     tasking_profile_for_loader,
 )
@@ -33,7 +32,6 @@ __all__ = [
     "make_scripted_c2_task_manager",
     "normalize_task_order_spec",
     "resolve_tasking_profile",
-    "scripted_c2_task_manager_class",
     "task_observation_codes",
     "tasking_profile_for_loader",
 ]

@@ -22,7 +22,19 @@ from python.runtime_bootstrap import ensure_repo_imports
 ensure_repo_imports()
 
 from python.env_config import resolve_env_settings
-from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
+from python.tasking_contracts.naval.execution import (
+    NAVAL_SCRIPTED_MODEL_REGISTRY,
+    NAVAL_STATION_HOLD_MODEL_ID,
+)
+from python.tasking_contracts.common.scripted_capability import (
+    parse_scripted_capability,
+    resolve_scripted_model_id,
+)
+from python.tasking_contracts.common.decision_runtime import (
+    DecisionRuntimeAgent,
+    DecisionRuntimeAgentSpec,
+)
+from python.simulation import create_cooperative_backend
 from python.training.bootstrap import validate_declared_training_entry_env_surface, validate_declared_training_entry_paths
 from python.experiment.report_envelope import add_report_envelope_arg, apply_report_envelope
 from tools.diagnostics.common import add_json_out_arg, add_model_load_args, add_probe_run_args
@@ -77,7 +89,7 @@ def _finite_float(value: Any, default: float = 0.0) -> float:
     return out if np.isfinite(out) else float(default)
 
 
-def _slot_control_summary(env: CooperativeWorldBatchVecEnv) -> list[dict[str, Any]]:
+def _slot_control_summary(env: Any) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for idx, slot in enumerate(env.slot_control_slots()):
         out.append(
@@ -99,7 +111,7 @@ def _slot_control_summary(env: CooperativeWorldBatchVecEnv) -> list[dict[str, An
     return out
 
 
-def _active_roster_summary(env: CooperativeWorldBatchVecEnv) -> list[dict[str, Any]]:
+def _active_roster_summary(env: Any) -> list[dict[str, Any]]:
     for slot_state in getattr(env, "_slots", []):
         if slot_state is None:
             continue
@@ -127,7 +139,7 @@ def _active_roster_summary(env: CooperativeWorldBatchVecEnv) -> list[dict[str, A
     return []
 
 
-def _surface_gate_summary(env: CooperativeWorldBatchVecEnv) -> dict[str, Any]:
+def _surface_gate_summary(env: Any) -> dict[str, Any]:
     loader = None
     for slot_state in getattr(env, "_slots", []) or []:
         if slot_state is not None:
@@ -217,6 +229,20 @@ def _load_train_config_unchecked(train_config_path: str) -> dict[str, Any]:
     return load_json_config(os.path.abspath(train_config_path))
 
 
+def _scripted_model_id_for_scenario(path: str) -> str:
+    """Resolve a declared Naval scripted model while preserving legacy inputs."""
+
+    scenario = load_json_config(os.path.abspath(path))
+    if "scripted_capability" not in scenario:
+        return NAVAL_STATION_HOLD_MODEL_ID
+    manifest = parse_scripted_capability(scenario)
+    return resolve_scripted_model_id(
+        manifest,
+        expected_domain="naval",
+        expected_role_id="naval_warfare_commander",
+    )
+
+
 def _reward_term_sums(last_info: dict[str, Any], accum: dict[str, float]) -> dict[str, float]:
     reward_terms_last = {
         str(key): _finite_float(value)
@@ -243,7 +269,7 @@ def _run_fixed_action_eval(
         else _load_train_config_unchecked(train_config_path)
     )
     env_settings = _build_env_settings(train_config)
-    env = CooperativeWorldBatchVecEnv(
+    env = create_cooperative_backend(
         scenario_path=os.path.abspath(scenario_path),
         n_envs=1,
         worker_threads=max(1, int(worker_threads)),
@@ -317,20 +343,52 @@ def run_baseline_eval(
 ) -> dict[str, Any]:
     train_config = _load_validated_train_config(scenario_path, train_config_path)
     env_settings = _build_env_settings(train_config)
-    env = CooperativeWorldBatchVecEnv(
+    env = create_cooperative_backend(
         scenario_path=os.path.abspath(scenario_path),
         n_envs=1,
         worker_threads=max(1, int(worker_threads)),
         **env_settings,
     )
+    scripted_model = None
+    scripted_runtime_agent = None
+    scripted_runtime_decisions = 0
+    scripted_runtime_holds = 0
     try:
         env.seed(int(seed))
         obs = env.reset()
-        del obs
+        active_roster = _active_roster_summary(env)
+        scripted_model = NAVAL_SCRIPTED_MODEL_REGISTRY.create_for(
+            domain="naval",
+            role_id="naval_warfare_commander",
+            model_id=_scripted_model_id_for_scenario(scenario_path),
+            action_dim=int(env.action_space.shape[0]),
+        )
+        agent_id = next(
+            (
+                str(member.get("entity_name", "")).strip()
+                for member in active_roster
+                if bool(member.get("is_agent", False)) and str(member.get("entity_name", "")).strip()
+            ),
+            "naval.primary",
+        )
+        scripted_runtime_agent = DecisionRuntimeAgent(
+            DecisionRuntimeAgentSpec(
+                agent_id=agent_id,
+                model_id=_scripted_model_id_for_scenario(scenario_path),
+                domain="naval",
+                 role_id="naval_warfare_commander",
+                 decision_period_s=0.0,
+                 communication_state="available",
+                authority_scope="naval_station_command",
+            ),
+            scripted_model,
+        )
+        scripted_runtime_agent.reset(
+            context={"scenario": os.path.abspath(scenario_path)},
+            episode_seed=int(seed),
+        )
 
         slot_control = _slot_control_summary(env)
-        active_roster = _active_roster_summary(env)
-        action = np.zeros((env.num_envs, int(env.action_space.shape[0])), dtype=np.float32)
         reward_total = 0.0
         reward_terms_sum: dict[str, float] = defaultdict(float)
         reward_terms_last: dict[str, float] = {}
@@ -341,7 +399,20 @@ def run_baseline_eval(
         executed_steps = 0
 
         for _step in range(max(1, int(steps))):
-            _obs, rewards, dones, infos = env.step(action)
+            assert scripted_runtime_agent is not None
+            runtime_step = scripted_runtime_agent.step(
+                observation=obs,
+                clock_s=float(_step) * 0.05,
+                observation_version=f"obs:{_step}",
+                context={"scenario": os.path.abspath(scenario_path)},
+            )
+            action = runtime_step.action
+            if runtime_step.report.action_source == "decided":
+                scripted_runtime_decisions += 1
+            elif runtime_step.report.action_source == "held":
+                scripted_runtime_holds += 1
+            action = np.asarray(action, dtype=np.float32).reshape(1, int(env.action_space.shape[0]))
+            obs, rewards, dones, infos = env.step(action)
             reward = _finite_float(rewards[0], default=float("nan"))
             if not np.isfinite(reward):
                 finite_reward = False
@@ -402,8 +473,17 @@ def run_baseline_eval(
             "finite_reward": bool(finite_reward),
             "termination_counts": dict(termination_counts),
             "final_mission_status": _mission_status_list(final_info),
+            "scripted_runtime_decisions": int(scripted_runtime_decisions),
+            "scripted_runtime_holds": int(scripted_runtime_holds),
+            "scripted_runtime_identity": (
+                scripted_runtime_agent.replay_identity if scripted_runtime_agent is not None else ""
+            ),
         }
     finally:
+        if scripted_runtime_agent is not None:
+            scripted_runtime_agent.close()
+        elif scripted_model is not None:
+            scripted_model.close()
         env.close()
 
 

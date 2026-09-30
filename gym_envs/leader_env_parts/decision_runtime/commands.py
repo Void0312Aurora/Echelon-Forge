@@ -5,14 +5,14 @@ from typing import Any
 import ef_py
 import numpy as np
 
-from python.tasking_contracts.mission_defs import (
+from python.tasking_contracts.common.mission_defs import (
     COMMAND_CODE_LANDING,
     COMMAND_CODE_ROUTE,
     COMMAND_CODE_TAKEOFF,
     COMMAND_CODE_VECTOR,
     normalize_phase_name,
 )
-from python.tasking_contracts.bridge_views import (
+from python.tasking_contracts.common.bridge_views import (
     get_policy_agent_observation,
     get_policy_instrument_state,
     resolve_loader_time_step,
@@ -259,9 +259,6 @@ def terminal_context(env: Any) -> dict[str, float | bool | str]:
 
 
 def terminal_feasible(env: Any, baseline: dict[str, Any], terminal_ctx: dict[str, Any]) -> bool:
-    # Deferred: profile-dispatch helpers stay python.rl-resident (see I24/I27).
-    from python.rl.tasking.bridge import is_recover_task
-
     phase_name = str(terminal_ctx.get("phase_name", ""))
     if phase_name in {"approach_armed", "landing_final", "rollout", "abort"}:
         return True
@@ -269,16 +266,6 @@ def terminal_feasible(env: Any, baseline: dict[str, Any], terminal_ctx: dict[str
         return True
     loader = env.unwrapped.loader
     task = getattr(loader, "task_order", None)
-    if (
-        is_recover_task(
-            task,
-            task_name=str(getattr(loader, "c2_task_name", "")).strip().upper(),
-            phase_name=phase_name,
-            loader=loader,
-        )
-        and not has_active_waypoints(env)
-    ):
-        return True
     if not bool(terminal_ctx.get("valid_runway_frame", False)):
         return False
     dme_m = abs(float(terminal_ctx.get("dme_m", 0.0)))

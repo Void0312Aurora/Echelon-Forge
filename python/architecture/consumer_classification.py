@@ -173,6 +173,9 @@ MAINTAINED_TRUTH_READER_CLASSIFICATION: dict[str, str] = {
     # Leader decision-runtime command construction: own-ship/station geometry
     # and runway/ILS frame reads that gate which commands are emitted.
     "gym_envs.leader_env_parts.decision_runtime.commands": COMMAND_ACTION_LOADING_READER,
+    # Scripted execution reads the declared loader observation only to select
+    # the runway parameter for command generation.
+    "gym_envs.leader_env_parts.scripted_exec": COMMAND_ACTION_LOADING_READER,
     # Behavior-phase transition gating after waypoint completion (runway
     # frame / ILS checks deciding a phase change, not observation content).
     "gym_envs.scenario_loader.behavior_runtime.post_waypoint_transition": COMMAND_ACTION_LOADING_READER,
@@ -187,6 +190,9 @@ MAINTAINED_TRUTH_READER_CLASSIFICATION: dict[str, str] = {
     # Batch vec-env command-chain gating: reads last-truth health to decide
     # whether the command-chain entity is still active.
     "python.rl.runtime.world_batch.vec_env": COMMAND_ACTION_LOADING_READER,
+    # Scripted baseline wrappers read loader state while constructing their
+    # command/action controller and do not author learner observations.
+    "python.rl.control.wrappers": COMMAND_ACTION_LOADING_READER,
 }
 
 # Classified observation/reward consumers not yet registered in

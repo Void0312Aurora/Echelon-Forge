@@ -14,6 +14,10 @@ from python.rl.profile.common_core_defaults import (
     tactical_unit_type_default,
     task_family_default,
 )
+from python.tasking_contracts.common.task_order import (
+    apply_common_task_order_defaults,
+    apply_common_task_order_overrides,
+)
 
 
 def _navy_service_profile() -> Any:
@@ -228,6 +232,19 @@ def normalize_task_order_spec(order_spec: dict[str, Any] | None) -> dict[str, An
             default_value = coordination_mode_default()
         normalized[field_name] = enum_or_default(namespace, normalized.get(field_name), default_value)
 
+    if "warfare_role_code" in normalized:
+        normalized["warfare_role_code"] = enum_or_default(
+            getattr(ef_py, "NavalWarfareRole", None),
+            normalized.get("warfare_role_code"),
+            _naval_warfare_role_default(),
+        )
+    if "naval_station_type" in normalized:
+        normalized["naval_station_type"] = enum_or_default(
+            getattr(ef_py, "NavalStationType", None),
+            normalized.get("naval_station_type"),
+            _naval_station_type_default(),
+        )
+
     if "service_profile" not in normalized:
         normalized["service_profile"] = _navy_service_profile()
 
@@ -298,6 +315,31 @@ def normalize_task_order_spec(order_spec: dict[str, Any] | None) -> dict[str, An
         if recovery_site_id > 0:
             normalized["recovery_site_id"] = int(recovery_site_id)
     return normalized
+
+
+def apply_task_order_overrides(order: Any, order_spec: dict[str, Any] | None, *, default_assignee_id: int) -> Any:
+    """Apply common fields and Naval enum fields at the Naval adapter boundary."""
+
+    if not isinstance(order_spec, dict):
+        return order
+    normalized = normalize_task_order_spec(order_spec)
+    apply_common_task_order_overrides(order, normalized, assignee_id=int(default_assignee_id))
+    enum_fields = {
+        "task_type": ef_py.TaskType,
+        "service_profile": ef_py.ServiceProfile,
+        "task_family": ef_py.TaskFamily,
+        "tactical_unit_type": ef_py.TacticalUnitType,
+        "command_relationship": ef_py.CommandRelationship,
+        "authority_scope": ef_py.AuthorityScope,
+        "coordination_mode": ef_py.CoordinationMode,
+        "warfare_role_code": getattr(ef_py, "NavalWarfareRole", None),
+        "naval_station_type": getattr(ef_py, "NavalStationType", None),
+    }
+    for field_name, namespace in enum_fields.items():
+        if field_name in normalized and hasattr(order, field_name) and namespace is not None:
+            setattr(order, field_name, normalized[field_name])
+    apply_common_task_order_defaults(order)
+    return order
 
 
 def task_observation_codes(task: Any | None, *, fallback_phase_id: int = 0) -> tuple[float, float, float]:

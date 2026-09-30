@@ -4,87 +4,129 @@ from typing import Any
 
 import numpy as np
 
-from python.tasking_contracts.mission_defs import (
-    COMMAND_CODE_LANDING,
-    normalize_phase_name,
-    scripted_mode_for_phase_name,
+from gym_envs.scenario_loader.spatial_runtime.geometry import select_ils_beacon
+from python.tasking_contracts.air.execution.model import AIR_SCRIPTED_EXECUTION_MODEL_ID
+from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY
+from python.tasking_contracts.common.decision_runtime import (
+    DecisionRuntimeAgent,
+    DecisionRuntimeAgentSpec,
+    DecisionRuntimeStep,
 )
-from python.tasking_contracts.scripted_landing import ScriptedLandingController
-from python.tasking_contracts.scripted_stable_flight import ScriptedStableFlightController
-from python.tasking_contracts.scripted_takeoff import ScriptedTakeoffController
 
 
 class ScriptedExecutiveController:
-    def __init__(self, env: Any, *, transition_alt_agl_m: float = 140.0):
+    def __init__(
+        self,
+        env: Any,
+        *,
+        transition_alt_agl_m: float = 140.0,
+        model_id: str = AIR_SCRIPTED_EXECUTION_MODEL_ID,
+    ):
         self.env = env
         self.transition_alt_agl_m = float(transition_alt_agl_m)
-        self.takeoff_ctrl: ScriptedTakeoffController | None = None
-        self.stable_ctrl: ScriptedStableFlightController | None = None
-        self.landing_ctrl: ScriptedLandingController | None = None
-        self.active_mode = "takeoff"
+        self.model_id = str(model_id).strip() or AIR_SCRIPTED_EXECUTION_MODEL_ID
+        self._model = None
+        self._runtime_agent: DecisionRuntimeAgent | None = None
+        self._last_runtime_step: DecisionRuntimeStep | None = None
+
+    @property
+    def active_mode(self) -> str:
+        return "takeoff" if self._model is None else self._model.active_mode
+
+    @property
+    def takeoff_ctrl(self):
+        return None if self._model is None else self._model.takeoff_ctrl
+
+    @property
+    def stable_ctrl(self):
+        return None if self._model is None else self._model.stable_ctrl
+
+    @property
+    def landing_ctrl(self):
+        return None if self._model is None else self._model.landing_ctrl
+
+    @property
+    def runtime_report(self):
+        return None if self._last_runtime_step is None else self._last_runtime_step.report
+
+    @property
+    def replay_identity(self) -> str | None:
+        return None if self._runtime_agent is None else self._runtime_agent.replay_identity
 
     @property
     def action_dim(self) -> int:
         return int(self.env.action_space.shape[0])
 
-    def reset(self, obs: dict) -> None:
+    def reset(self, obs: dict, *, episode_seed: int | None = None) -> None:
         dt = 0.05
         try:
             dt = float(getattr(self.env.unwrapped.sim, "get_time_step", lambda: 0.05)())
         except Exception:
             dt = 0.05
-        self.takeoff_ctrl = ScriptedTakeoffController(action_dim=self.action_dim, dt=dt)
-        self.stable_ctrl = ScriptedStableFlightController(action_dim=self.action_dim, dt=dt)
-        self.landing_ctrl = ScriptedLandingController(action_dim=self.action_dim, dt=dt)
-        self.active_mode = "takeoff"
-        self.takeoff_ctrl.reset(obs)
-        self.stable_ctrl.reset(obs)
-        self.landing_ctrl.reset(obs)
-
-    def _infer_mode(self, obs: dict) -> str:
         loader = getattr(self.env.unwrapped, "loader", None)
-        phase_name = normalize_phase_name(getattr(loader, "mission_phase_name", ""))
-        if phase_name == "departure":
-            try:
-                inst = np.asarray(obs.get("instruments", []), dtype=np.float32).reshape(-1)
-                if inst.size >= 4 and float(inst[3]) >= self.transition_alt_agl_m:
-                    return "stable_flight"
-            except Exception:
-                pass
-            return "takeoff"
-        mode = scripted_mode_for_phase_name(phase_name)
-        if mode:
-            return mode
+        runway_length_m = 0.0
+        try:
+            truth = loader.get_policy_agent_observation(loader.agent_id)
+            beacon = select_ils_beacon(loader, float(truth.x), float(truth.y))
+            if isinstance(beacon, dict):
+                runway_length_m = float(beacon.get("length", 0.0))
+        except Exception:
+            pass
+        if self._model is None:
+            self._model = AIR_SCRIPTED_MODEL_REGISTRY.create_for(
+                domain="air",
+                role_id="autopilot_controller",
+                model_id=self.model_id,
+                action_dim=self.action_dim,
+                dt=dt,
+                transition_alt_agl_m=self.transition_alt_agl_m,
+                runway_length_m=runway_length_m,
+            )
+        agent_id = str(getattr(self.env.unwrapped, "agent_id", "air-scripted-executive"))
+        if self._runtime_agent is None:
+            self._runtime_agent = DecisionRuntimeAgent(
+                DecisionRuntimeAgentSpec(
+                    agent_id=agent_id,
+                    model_id=self.model_id,
+                    domain="air",
+                    role_id="autopilot_controller",
+                    authority_scope="air_execution",
+                ),
+                self._model,
+            )
+        self._runtime_agent.reset(
+            context={"observation": obs, "phase_name": self._phase_name()},
+            episode_seed=episode_seed,
+        )
+        self._last_runtime_step = None
 
-        try:
-            mission = np.asarray(obs.get("mission", []), dtype=np.float32).reshape(-1)
-            if mission.size >= 1 and int(round(float(mission[0]))) >= COMMAND_CODE_LANDING:
-                return "landing_ils"
-        except Exception:
-            pass
-        try:
-            inst = np.asarray(obs.get("instruments", []), dtype=np.float32).reshape(-1)
-            if inst.size >= 4 and float(inst[3]) < self.transition_alt_agl_m:
-                return "takeoff"
-        except Exception:
-            pass
-        return "stable_flight"
+    def _phase_name(self) -> str:
+        loader = getattr(self.env.unwrapped, "loader", None)
+        return "" if loader is None else str(getattr(loader, "mission_phase_name", ""))
 
     def predict(self, obs: dict) -> np.ndarray:
-        mode = self._infer_mode(obs)
-        if mode != self.active_mode:
-            ctrl = self._controller_for_mode(mode)
-            if ctrl is not None:
-                ctrl.reset(obs)
-            self.active_mode = mode
-        ctrl = self._controller_for_mode(mode)
-        if ctrl is None:
-            return np.zeros((self.action_dim,), dtype=np.float32)
-        return np.asarray(ctrl.step(obs), dtype=np.float32).reshape(-1)
+        if self._runtime_agent is None:
+            self.reset(obs)
+        assert self._runtime_agent is not None
+        dt = 0.05
+        try:
+            dt = float(getattr(self.env.unwrapped.sim, "get_time_step", lambda: 0.05)())
+        except Exception:
+            dt = 0.05
+        clock_s = float(getattr(self.env.unwrapped, "steps", 0)) * max(dt, 1.0e-6)
+        phase_name = self._phase_name()
+        reset_index = int(getattr(self._runtime_agent, "reset_index", 0))
+        self._last_runtime_step = self._runtime_agent.step(
+            observation=obs,
+            clock_s=clock_s,
+            observation_version=f"obs:{int(getattr(self.env.unwrapped, 'steps', 0))}:reset:{reset_index}",
+            context={"observation": obs, "phase_name": phase_name},
+        )
+        return np.asarray(self._last_runtime_step.action, dtype=np.float32).reshape(-1)
 
-    def _controller_for_mode(self, mode: str):
-        if mode == "landing_ils":
-            return self.landing_ctrl
-        if mode == "stable_flight":
-            return self.stable_ctrl
-        return self.takeoff_ctrl
+    def close(self) -> None:
+        if self._runtime_agent is not None:
+            self._runtime_agent.close()
+        self._runtime_agent = None
+        self._last_runtime_step = None
+        self._model = None

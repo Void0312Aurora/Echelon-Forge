@@ -204,6 +204,16 @@ uint64_t spawn_from_request(SimulationKernel &world, const WorldSpawnRequest &re
         return entity.id();
     }
 
+    // A maintained batch spawn marked as an agent must be able to receive the
+    // maintained command chain immediately.  Aircraft definitions commonly
+    // carry a database command link, while naval and ground definitions may
+    // intentionally omit one.  The setup contract's is_agent bit is the
+    // explicit authority for this zero-latency local control link; it does not
+    // alter database capability metadata or introduce a compatibility shell.
+    if (request.is_agent && !world.has_command_link(entity.id())) {
+        world.set_command_link(entity.id(), 0.0, 0.0);
+    }
+
     if (request.ammo_override_enabled) {
         world.set_unit_ammo(entity.id(), request.missiles_remaining, request.max_missiles);
     }

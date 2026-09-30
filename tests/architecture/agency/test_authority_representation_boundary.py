@@ -12,7 +12,7 @@ the maintained surface carries two disjoint authority representations --
 - the **action-interface representation**: the compiled ``AgentRole`` /
   ``AgentAuthorityScope`` contracts (``src/runtime/contracts/policy_contracts.h``)
   consumed by the runtime-face ``authorize_maintained_*`` authorization path
-  (``python/rl/runtime/world_batch/adapter.py``, ``python/rl/runtime/agent_shim.py``)
+  (``python/rl/runtime/world_batch/adapter.py``, ``python/tasking_contracts/common/agent_contracts.py``)
 
 -- and the adjudication found **no code path on either side that flows an
 echelon-authority value into, or compares one against, an action-interface
@@ -119,7 +119,7 @@ ECHELON_NO_MAPPING_SITES: dict[str, str] = {
 # of the echelon family.
 ACTION_INTERFACE_NO_MAPPING_SITES: dict[str, str] = {
     "python/rl/runtime/world_batch/adapter.py": "AgentRole",
-    "python/rl/runtime/agent_shim.py": "AgentRole",
+    "python/tasking_contracts/common/agent_contracts.py": "AgentRole",
 }
 
 # Compiled-surface disjointness: each family's defining headers must not name

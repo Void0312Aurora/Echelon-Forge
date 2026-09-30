@@ -241,6 +241,7 @@ def test_default_fixture_tracks_current_component_and_system_registration() -> N
   ) == [
     ("builtin.kernel.system.rwr_reset", "kernel.pre_update.00", "0"),
     ("builtin.kernel.system.esm_reset", "kernel.pre_update.01", "1"),
+    ("builtin.kernel.system.maws_update", "kernel.pre_update.02", "2"),
   ]
 
 

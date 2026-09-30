@@ -1,0 +1,191 @@
+from __future__ import annotations
+
+import pytest
+
+from python.tasking_contracts.common.decision_registry import (
+    DecisionModel,
+    DecisionModelRegistration,
+    DecisionModelRegistry,
+)
+
+
+class _StubScriptedModel:
+    def __init__(self, marker: str = "") -> None:
+        self.marker = marker
+        self.reset_context = None
+        self.decisions: list[tuple[object, object, float]] = []
+        self.closed = False
+
+    def reset(self, *, context: object) -> None:
+        self.reset_context = context
+
+    def decide(self, *, observation: object, context: object, dt: float) -> object:
+        self.decisions.append((observation, context, float(dt)))
+        return {"marker": self.marker, "dt": float(dt)}
+
+    def close(self) -> None:
+        self.closed = True
+
+
+def _registration(
+    model_id: str = "air.execution.scripted",
+    *,
+    domain: str = "air",
+    roles: tuple[str, ...] = ("autopilot_controller",),
+    model_kind: str = "scripted",
+    status: str = "maintained",
+) -> DecisionModelRegistration:
+    return DecisionModelRegistration(
+        model_id=model_id,
+        domain=domain,
+        role_ids=roles,
+        factory=_StubScriptedModel,
+        model_kind=model_kind,
+        status=status,
+    )
+
+
+def test_registry_resolves_by_domain_and_role_and_preserves_registration_order() -> None:
+    registry = DecisionModelRegistry(
+        (
+            _registration(),
+            _registration(
+                "air.c2.scripted",
+                roles=("flight_lead",),
+            ),
+            _registration("naval.station.scripted", domain="naval", roles=("naval_warfare_commander",)),
+        )
+    )
+
+    assert [entry.model_id for entry in registry.resolve(domain="air")] == [
+        "air.execution.scripted",
+        "air.c2.scripted",
+    ]
+    assert [entry.model_id for entry in registry.resolve(domain="air", role_id="flight_lead")] == [
+        "air.c2.scripted"
+    ]
+    assert [entry.model_id for entry in registry.snapshot()] == [
+        "air.execution.scripted",
+        "air.c2.scripted",
+        "naval.station.scripted",
+    ]
+
+
+def test_registry_creates_and_validates_the_neutral_lifecycle() -> None:
+    registry = DecisionModelRegistry((_registration(),))
+    model = registry.create("air.execution.scripted", marker="baseline")
+
+    assert isinstance(model, DecisionModel)
+    model.reset(context={"entity_id": 7})
+    assert model.reset_context == {"entity_id": 7}
+    assert model.decide(observation={"heading": 90.0}, context=None, dt=0.05) == {
+        "marker": "baseline",
+        "dt": 0.05,
+    }
+    model.close()
+    assert model.closed is True
+
+
+def test_registry_rejects_duplicate_ids_and_unknown_statuses() -> None:
+    registry = DecisionModelRegistry((_registration(),))
+    with pytest.raises(ValueError, match="already registered"):
+        registry.register(_registration())
+    with pytest.raises(ValueError, match="unknown decision model status"):
+        _registration("air.bad", status="rl")
+    with pytest.raises(ValueError, match="unknown decision model statuses"):
+        registry.resolve(domain="air", statuses=frozenset({"rl"}))
+
+
+def test_registration_requires_an_explicit_model_kind() -> None:
+    with pytest.raises(TypeError, match="model_kind"):
+        DecisionModelRegistration(
+            model_id="air.implicit",
+            domain="air",
+            role_ids=("autopilot_controller",),
+            factory=_StubScriptedModel,
+        )
+
+
+def test_registry_rejects_a_factory_that_does_not_implement_the_lifecycle() -> None:
+    registration = DecisionModelRegistration(
+        model_id="air.invalid",
+        domain="air",
+        role_ids=("autopilot_controller",),
+        factory=lambda: object(),
+        model_kind="scripted",
+    )
+    registry = DecisionModelRegistry((registration,))
+    with pytest.raises(TypeError, match="without reset/decide/close"):
+        registry.create("air.invalid")
+
+
+def test_registry_create_for_resolves_one_role_and_validates_explicit_id() -> None:
+    registry = DecisionModelRegistry((_registration(),))
+    inferred = registry.create_for(domain="air", role_id="autopilot_controller", marker="inferred")
+    assert isinstance(inferred, _StubScriptedModel)
+    assert inferred.marker == "inferred"
+
+    explicit = registry.create_for(
+        domain="air",
+        role_id="autopilot_controller",
+        model_id="air.execution.scripted",
+        marker="explicit",
+    )
+    assert isinstance(explicit, _StubScriptedModel)
+    assert explicit.marker == "explicit"
+
+    with pytest.raises(ValueError, match="belongs to domain"):
+        registry.create_for(
+            domain="naval",
+            role_id="autopilot_controller",
+            model_id="air.execution.scripted",
+        )
+    with pytest.raises(ValueError, match="does not declare role"):
+        registry.create_for(
+            domain="air",
+            role_id="flight_lead",
+            model_id="air.execution.scripted",
+        )
+
+
+def test_registry_create_for_fails_closed_on_missing_or_ambiguous_role() -> None:
+    registry = DecisionModelRegistry((_registration(),))
+    with pytest.raises(LookupError, match="no decision model"):
+        registry.create_for(domain="naval", role_id="naval_warfare_commander")
+
+    registry.register(_registration("air.execution.scripted.v2"))
+    with pytest.raises(ValueError, match="ambiguous decision models"):
+        registry.create_for(domain="air", role_id="autopilot_controller")
+
+
+def test_registry_selects_one_model_kind_without_importing_its_implementation_stack() -> None:
+    registry = DecisionModelRegistry(
+        (
+            _registration(),
+            _registration("air.execution.learned", model_kind="learned"),
+            _registration("air.execution.human", model_kind="human"),
+            _registration("air.execution.hybrid", model_kind="hybrid"),
+        )
+    )
+    assert [entry.model_id for entry in registry.resolve(domain="air", model_kind="scripted")] == [
+        "air.execution.scripted"
+    ]
+    assert [entry.model_kind for entry in registry.snapshot()] == [
+        "scripted", "learned", "human", "hybrid"
+    ]
+    for kind in ("scripted", "learned", "human", "hybrid"):
+        model = registry.create_for(
+            domain="air", role_id="autopilot_controller", model_kind=kind, marker=kind
+        )
+        assert model.marker == kind
+    with pytest.raises(ValueError, match="ambiguous decision models"):
+        registry.create_for(domain="air", role_id="autopilot_controller")
+    with pytest.raises(ValueError, match="has kind"):
+        registry.create_for(
+            domain="air", role_id="autopilot_controller",
+            model_id="air.execution.learned", model_kind="scripted",
+        )
+    with pytest.raises(ValueError, match="unknown decision model kind"):
+        _registration("air.execution.unknown", model_kind="unknown")
+    with pytest.raises(ValueError, match="unknown decision model kind"):
+        registry.resolve(domain="air", model_kind="unknown")
