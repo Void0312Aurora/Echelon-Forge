@@ -13,10 +13,10 @@ from typing import Any
 
 import numpy as np
 
-from ..common.scripted_registry import (
-    ScriptedDecisionModel,
-    ScriptedModelRegistration,
-    ScriptedModelRegistry,
+from ..common.decision_registry import (
+    DecisionModel,
+    DecisionModelRegistration,
+    DecisionModelRegistry,
 )
 
 
@@ -50,13 +50,14 @@ def make_naval_station_hold_model(**kwargs: Any) -> NavalStationHoldScriptedMode
     return NavalStationHoldScriptedModel(**kwargs)
 
 
-NAVAL_SCRIPTED_MODEL_REGISTRY = ScriptedModelRegistry(
+NAVAL_SCRIPTED_MODEL_REGISTRY = DecisionModelRegistry(
     (
-        ScriptedModelRegistration(
+        DecisionModelRegistration(
             model_id=NAVAL_STATION_HOLD_MODEL_ID,
             domain="naval",
             role_ids=("naval_warfare_commander",),
             factory=make_naval_station_hold_model,
+            model_kind="scripted",
             status="adapter",
             note=(
                 "Scoped N4 station-hold baseline; scenario runtime owns "

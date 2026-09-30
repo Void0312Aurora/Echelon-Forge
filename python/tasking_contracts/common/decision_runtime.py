@@ -1,4 +1,4 @@
-"""Dependency-terminal runtime for independent scripted decision models.
+"""Dependency-terminal runtime for independent decision models.
 
 The runtime owns only the common scheduling envelope: model lifecycle, clock
 monotonicity, decision cadence, action hold/expiry, provenance context, and
@@ -13,16 +13,16 @@ from dataclasses import dataclass
 from math import isfinite
 from typing import Any, Mapping, Sequence
 
-from .scripted_registry import ScriptedDecisionModel, ScriptedModelRegistry
+from .decision_registry import DECISION_MODEL_KINDS, DecisionModel, DecisionModelRegistry
 
 
-SCRIPTED_RUNTIME_STATUS_READY = "ready"
-SCRIPTED_RUNTIME_STATUS_RUNNING = "running"
-SCRIPTED_RUNTIME_STATUS_TERMINATED = "terminated"
-SCRIPTED_RUNTIME_STATUS_CLOSED = "closed"
-SCRIPTED_RUNTIME_ACTION_DECIDED = "decided"
-SCRIPTED_RUNTIME_ACTION_HELD = "held"
-SCRIPTED_RUNTIME_ACTION_EXPIRED = "expired"
+DECISION_RUNTIME_STATUS_READY = "ready"
+DECISION_RUNTIME_STATUS_RUNNING = "running"
+DECISION_RUNTIME_STATUS_TERMINATED = "terminated"
+DECISION_RUNTIME_STATUS_CLOSED = "closed"
+DECISION_RUNTIME_ACTION_DECIDED = "decided"
+DECISION_RUNTIME_ACTION_HELD = "held"
+DECISION_RUNTIME_ACTION_EXPIRED = "expired"
 
 
 def _finite_nonnegative(value: float, *, name: str) -> float:
@@ -36,13 +36,14 @@ def _finite_nonnegative(value: float, *, name: str) -> float:
 
 
 @dataclass(frozen=True)
-class ScriptedRuntimeAgentSpec:
+class DecisionRuntimeAgentSpec:
     """Common scheduling envelope for one active or inactive roster member."""
 
     agent_id: str
     model_id: str
     domain: str
     role_id: str
+    model_kind: str = "scripted"
     decision_period_s: float = 0.0
     action_hold_s: float = 0.0
     action_expiry_s: float | None = None
@@ -61,11 +62,15 @@ class ScriptedRuntimeAgentSpec:
         }
         for name, value in values.items():
             if not str(value).strip():
-                raise ValueError(f"scripted runtime {name} must be non-empty")
+                raise ValueError(f"decision runtime {name} must be non-empty")
         object.__setattr__(self, "agent_id", str(self.agent_id).strip())
         object.__setattr__(self, "model_id", str(self.model_id).strip())
         object.__setattr__(self, "domain", str(self.domain).strip().lower())
         object.__setattr__(self, "role_id", str(self.role_id).strip())
+        model_kind = str(self.model_kind).strip().lower()
+        if model_kind not in DECISION_MODEL_KINDS:
+            raise ValueError(f"unknown decision model kind: {self.model_kind!r}")
+        object.__setattr__(self, "model_kind", model_kind)
         object.__setattr__(self, "communication_state", str(self.communication_state).strip())
         object.__setattr__(self, "authority_scope", str(self.authority_scope).strip())
         object.__setattr__(
@@ -83,13 +88,14 @@ class ScriptedRuntimeAgentSpec:
 
 
 @dataclass(frozen=True)
-class ScriptedRuntimeReport:
+class DecisionRuntimeReport:
     """Small common report envelope; payload reports remain domain-owned."""
 
     agent_id: str
     model_id: str
     domain: str
     role_id: str
+    model_kind: str
     clock_s: float
     dt_s: float
     decision_index: int
@@ -101,24 +107,24 @@ class ScriptedRuntimeReport:
 
 
 @dataclass(frozen=True)
-class ScriptedRuntimeStep:
+class DecisionRuntimeStep:
     """Opaque action plus the common runtime report for one roster member."""
 
     action: Any
-    report: ScriptedRuntimeReport
+    report: DecisionRuntimeReport
 
 
-class ScriptedRuntimeAgent:
-    """Schedule one registered scripted model without owning domain payloads."""
+class DecisionRuntimeAgent:
+    """Schedule one registered decision model without owning domain payloads."""
 
-    def __init__(self, spec: ScriptedRuntimeAgentSpec, model: ScriptedDecisionModel) -> None:
-        if not isinstance(spec, ScriptedRuntimeAgentSpec):
-            raise TypeError("scripted runtime agent requires ScriptedRuntimeAgentSpec")
-        if not isinstance(model, ScriptedDecisionModel):
-            raise TypeError("scripted runtime agent model must implement reset/decide/close")
+    def __init__(self, spec: DecisionRuntimeAgentSpec, model: DecisionModel) -> None:
+        if not isinstance(spec, DecisionRuntimeAgentSpec):
+            raise TypeError("decision runtime agent requires DecisionRuntimeAgentSpec")
+        if not isinstance(model, DecisionModel):
+            raise TypeError("decision runtime agent model must implement reset/decide/close")
         self.spec = spec
         self.model = model
-        self.status = SCRIPTED_RUNTIME_STATUS_READY
+        self.status = DECISION_RUNTIME_STATUS_READY
         self.episode_seed: int | None = None
         self.reset_index = 0
         self._last_clock_s: float | None = None
@@ -149,6 +155,7 @@ class ScriptedRuntimeAgent:
                 "model_id": self.spec.model_id,
                 "domain": self.spec.domain,
                 "role_id": self.spec.role_id,
+                "model_kind": self.spec.model_kind,
                 "communication_state": self.spec.communication_state,
                 "authority_scope": self.spec.authority_scope,
                 "episode_seed": self.episode_seed,
@@ -157,7 +164,7 @@ class ScriptedRuntimeAgent:
             }
         )
         self.model.reset(context=base_context)
-        self.status = SCRIPTED_RUNTIME_STATUS_RUNNING
+        self.status = DECISION_RUNTIME_STATUS_RUNNING
 
     def step(
         self,
@@ -167,15 +174,15 @@ class ScriptedRuntimeAgent:
         observation_version: str = "",
         context: Any = None,
         force_decide: bool = False,
-    ) -> ScriptedRuntimeStep:
-        if self.status == SCRIPTED_RUNTIME_STATUS_READY:
-            raise RuntimeError("scripted runtime agent must be reset before stepping")
-        if self.status != SCRIPTED_RUNTIME_STATUS_RUNNING:
-            raise RuntimeError(f"scripted runtime agent is not running: {self.status}")
+    ) -> DecisionRuntimeStep:
+        if self.status == DECISION_RUNTIME_STATUS_READY:
+            raise RuntimeError("decision runtime agent must be reset before stepping")
+        if self.status != DECISION_RUNTIME_STATUS_RUNNING:
+            raise RuntimeError(f"decision runtime agent is not running: {self.status}")
         now = _finite_nonnegative(clock_s, name="clock_s")
         if self._last_clock_s is not None and now < self._last_clock_s:
             raise ValueError(
-                f"scripted runtime clock moved backwards for {self.spec.agent_id!r}: "
+                f"decision runtime clock moved backwards for {self.spec.agent_id!r}: "
                 f"{now} < {self._last_clock_s}"
             )
         dt = 0.0 if self._last_clock_s is None else now - self._last_clock_s
@@ -197,6 +204,7 @@ class ScriptedRuntimeAgent:
                     "model_id": self.spec.model_id,
                     "domain": self.spec.domain,
                     "role_id": self.spec.role_id,
+                    "model_kind": self.spec.model_kind,
                     "clock_s": now,
                     "dt_s": dt,
                     "observation_version": observation_key,
@@ -215,15 +223,16 @@ class ScriptedRuntimeAgent:
             if expiry is None:
                 expiry = self.spec.action_hold_s
             self._action_expiry_s = None if expiry <= 0.0 else now + expiry
-            source = SCRIPTED_RUNTIME_ACTION_DECIDED
+            source = DECISION_RUNTIME_ACTION_DECIDED
         else:
-            source = SCRIPTED_RUNTIME_ACTION_EXPIRED if expired else SCRIPTED_RUNTIME_ACTION_HELD
+            source = DECISION_RUNTIME_ACTION_EXPIRED if expired else DECISION_RUNTIME_ACTION_HELD
 
-        report = ScriptedRuntimeReport(
+        report = DecisionRuntimeReport(
             agent_id=self.spec.agent_id,
             model_id=self.spec.model_id,
             domain=self.spec.domain,
             role_id=self.spec.role_id,
+            model_kind=self.spec.model_kind,
             clock_s=now,
             dt_s=dt,
             decision_index=self._decision_index,
@@ -233,36 +242,36 @@ class ScriptedRuntimeAgent:
             communication_state=self.spec.communication_state,
             runtime_status=self.status,
         )
-        return ScriptedRuntimeStep(action=self._last_action, report=report)
+        return DecisionRuntimeStep(action=self._last_action, report=report)
 
     def terminate(self, *, reason: str = "") -> None:
-        if self.status == SCRIPTED_RUNTIME_STATUS_CLOSED:
+        if self.status == DECISION_RUNTIME_STATUS_CLOSED:
             return
-        self.status = SCRIPTED_RUNTIME_STATUS_TERMINATED
+        self.status = DECISION_RUNTIME_STATUS_TERMINATED
         self.termination_reason = str(reason)
 
     def close(self) -> None:
-        if self.status != SCRIPTED_RUNTIME_STATUS_CLOSED:
+        if self.status != DECISION_RUNTIME_STATUS_CLOSED:
             self.model.close()
-            self.status = SCRIPTED_RUNTIME_STATUS_CLOSED
+            self.status = DECISION_RUNTIME_STATUS_CLOSED
 
 
-class ScriptedRuntimeRoster:
-    """Deterministic active-roster router for independent scripted models."""
+class DecisionRuntimeRoster:
+    """Deterministic active-roster router for independent decision models."""
 
-    def __init__(self, agents: Sequence[ScriptedRuntimeAgent] = ()) -> None:
-        self._agents: dict[str, ScriptedRuntimeAgent] = {}
+    def __init__(self, agents: Sequence[DecisionRuntimeAgent] = ()) -> None:
+        self._agents: dict[str, DecisionRuntimeAgent] = {}
         for agent in agents:
             self.add(agent)
 
     @classmethod
     def from_registry(
         cls,
-        registry: ScriptedModelRegistry,
-        specs: Sequence[ScriptedRuntimeAgentSpec],
+        registry: DecisionModelRegistry,
+        specs: Sequence[DecisionRuntimeAgentSpec],
         *,
         factory_kwargs_by_agent: Mapping[str, Mapping[str, Any]] | None = None,
-    ) -> "ScriptedRuntimeRoster":
+    ) -> "DecisionRuntimeRoster":
         kwargs_by_agent = factory_kwargs_by_agent or {}
         agents = []
         for spec in specs:
@@ -271,23 +280,24 @@ class ScriptedRuntimeRoster:
                 domain=spec.domain,
                 role_id=spec.role_id,
                 model_id=spec.model_id,
+                model_kind=spec.model_kind,
                 **kwargs,
             )
-            agents.append(ScriptedRuntimeAgent(spec, model))
+            agents.append(DecisionRuntimeAgent(spec, model))
         return cls(agents)
 
-    def add(self, agent: ScriptedRuntimeAgent) -> None:
-        if not isinstance(agent, ScriptedRuntimeAgent):
-            raise TypeError("scripted runtime roster entries must be ScriptedRuntimeAgent")
+    def add(self, agent: DecisionRuntimeAgent) -> None:
+        if not isinstance(agent, DecisionRuntimeAgent):
+            raise TypeError("decision runtime roster entries must be DecisionRuntimeAgent")
         if agent.spec.agent_id in self._agents:
-            raise ValueError(f"duplicate scripted runtime agent: {agent.spec.agent_id}")
+            raise ValueError(f"duplicate decision runtime agent: {agent.spec.agent_id}")
         self._agents[agent.spec.agent_id] = agent
 
-    def agent(self, agent_id: str) -> ScriptedRuntimeAgent:
+    def agent(self, agent_id: str) -> DecisionRuntimeAgent:
         try:
             return self._agents[str(agent_id)]
         except KeyError as exc:
-            raise KeyError(f"unknown scripted runtime agent: {agent_id}") from exc
+            raise KeyError(f"unknown decision runtime agent: {agent_id}") from exc
 
     def reset(
         self,
@@ -310,16 +320,16 @@ class ScriptedRuntimeRoster:
         observation_versions: Mapping[str, str] | None = None,
         context_by_agent: Mapping[str, Any] | None = None,
         force_decide: bool = False,
-    ) -> dict[str, ScriptedRuntimeStep]:
+    ) -> dict[str, DecisionRuntimeStep]:
         versions = observation_versions or {}
         contexts = context_by_agent or {}
-        results: dict[str, ScriptedRuntimeStep] = {}
+        results: dict[str, DecisionRuntimeStep] = {}
         for agent_id in sorted(self._agents):
             agent = self._agents[agent_id]
             if not agent.spec.active:
                 continue
             if agent_id not in observations:
-                raise KeyError(f"missing observation for active scripted runtime agent: {agent_id}")
+                raise KeyError(f"missing observation for active decision runtime agent: {agent_id}")
             results[agent_id] = agent.step(
                 observation=observations[agent_id],
                 clock_s=clock_s,
@@ -337,21 +347,21 @@ class ScriptedRuntimeRoster:
         for agent_id in sorted(self._agents):
             self._agents[agent_id].close()
 
-    def snapshot(self) -> tuple[ScriptedRuntimeAgentSpec, ...]:
+    def snapshot(self) -> tuple[DecisionRuntimeAgentSpec, ...]:
         return tuple(self._agents[agent_id].spec for agent_id in sorted(self._agents))
 
 
 __all__ = [
-    "SCRIPTED_RUNTIME_ACTION_DECIDED",
-    "SCRIPTED_RUNTIME_ACTION_EXPIRED",
-    "SCRIPTED_RUNTIME_ACTION_HELD",
-    "SCRIPTED_RUNTIME_STATUS_CLOSED",
-    "SCRIPTED_RUNTIME_STATUS_READY",
-    "SCRIPTED_RUNTIME_STATUS_RUNNING",
-    "SCRIPTED_RUNTIME_STATUS_TERMINATED",
-    "ScriptedRuntimeAgent",
-    "ScriptedRuntimeAgentSpec",
-    "ScriptedRuntimeReport",
-    "ScriptedRuntimeRoster",
-    "ScriptedRuntimeStep",
+    "DECISION_RUNTIME_ACTION_DECIDED",
+    "DECISION_RUNTIME_ACTION_EXPIRED",
+    "DECISION_RUNTIME_ACTION_HELD",
+    "DECISION_RUNTIME_STATUS_CLOSED",
+    "DECISION_RUNTIME_STATUS_READY",
+    "DECISION_RUNTIME_STATUS_RUNNING",
+    "DECISION_RUNTIME_STATUS_TERMINATED",
+    "DecisionRuntimeAgent",
+    "DecisionRuntimeAgentSpec",
+    "DecisionRuntimeReport",
+    "DecisionRuntimeRoster",
+    "DecisionRuntimeStep",
 ]

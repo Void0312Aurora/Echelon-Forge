@@ -20,7 +20,7 @@ ALLOWED_MAINTAINED_STATUSES = (
 # Named merge-policy constants keep their literal spellings for greppability and
 # stable keyword-argument call sites; the allowed *set* is owned by the T9
 # vocabulary registry (I53 P1-1 mechanical convergence). A unit test in
-# tests/runtime/test_agent_shim.py pins each name against the registry tuple so
+# tests/runtime/test_agent_contracts.py pins each name against the registry tuple so
 # neither side can drift silently.
 MERGE_LAST_WRITE_WINS = "last_write_wins"
 MERGE_PRIORITY_OVERRIDE = "priority_override"
@@ -156,7 +156,7 @@ def observation_provenance(
     diagnostics_note: str = "",
     source_layer: str = "adapter",
 ) -> ObservationProvenance:
-    """Build a provenance label from the WP4-H maintained/adapter-projection/oracle vocabulary."""
+    """Build a provenance label from the maintained, adapter, and oracle vocabulary."""
 
     spec = OBSERVATION_PROVENANCE_LABELS.get(str(label))
     if spec is None:
@@ -213,7 +213,7 @@ def _validate_maintained_entry_point_role(role: "AgentRole", *, entry_point: str
 
 @dataclass(frozen=True)
 class AgentRole:
-    """Passive Python-side sketch of the WP4 AgentRole five-element boundary."""
+    """Passive Python-side sketch of the five-element agent-role boundary."""
 
     role_id: str
     role_type: str

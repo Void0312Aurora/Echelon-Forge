@@ -30,7 +30,7 @@ Design constraints (Unified Architecture Program, track T9 slice 1):
   vocabulary item at the constant that owns it, in the census-legal direction
   ``python.rl -> python.tasking_contracts``, each pinned byte-identically by a
   drift/equivalence test so no behavior changes: the ownership correction
-  moved ``agent_shim.ALLOWED_MERGE_POLICIES`` to :data:`MERGE_POLICIES`, and a
+  moved ``agent_contracts.ALLOWED_MERGE_POLICIES`` to :data:`MERGE_POLICIES`, and a
   second moved the A3 command-relationship / authority-scope default *names* to
   :data:`DEFAULT_COMMAND_RELATIONSHIP` / :data:`DEFAULT_AUTHORITY_SCOPE`
   (census EN/ZH §9). Converging the *behavior* of the remaining scattered call

@@ -1,6 +1,6 @@
 """Neutral air execution model built from the maintained flight controllers.
 
-The model is the first concrete consumer of ``ScriptedModelRegistry``. It owns
+The model is the first concrete consumer of ``DecisionModelRegistry``. It owns
 air phase-to-controller selection and keeps environment-specific phase lookup in
 the ``gym_envs`` adapter. It does not load scenarios, access a kernel, or
 depend on RL.
@@ -18,8 +18,8 @@ from ...common.mission_defs import (
     scripted_mode_for_phase_name,
 )
 from .landing import ScriptedLandingController
-from ...common.scripted_registry import (
-    ScriptedDecisionModel,
+from ...common.decision_registry import (
+    DecisionModel,
 )
 from .stable_flight import ScriptedStableFlightController
 from .takeoff import ScriptedTakeoffController

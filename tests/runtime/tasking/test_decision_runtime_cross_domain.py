@@ -16,12 +16,12 @@ from python.tasking_contracts.naval.execution import (
     NAVAL_SCRIPTED_MODEL_REGISTRY,
     NAVAL_STATION_HOLD_MODEL_ID,
 )
-from python.tasking_contracts.common.scripted_runtime import (
-    SCRIPTED_RUNTIME_ACTION_DECIDED,
-    SCRIPTED_RUNTIME_ACTION_HELD,
-    ScriptedRuntimeAgent,
-    ScriptedRuntimeAgentSpec,
-    ScriptedRuntimeRoster,
+from python.tasking_contracts.common.decision_runtime import (
+    DECISION_RUNTIME_ACTION_DECIDED,
+    DECISION_RUNTIME_ACTION_HELD,
+    DecisionRuntimeAgent,
+    DecisionRuntimeAgentSpec,
+    DecisionRuntimeRoster,
 )
 
 
@@ -79,10 +79,10 @@ def test_air_and_naval_models_share_one_runtime_roster_envelope() -> None:
         model_id=NAVAL_STATION_HOLD_MODEL_ID,
         action_dim=3,
     )
-    roster = ScriptedRuntimeRoster(
+    roster = DecisionRuntimeRoster(
         (
-            ScriptedRuntimeAgent(
-                ScriptedRuntimeAgentSpec(
+            DecisionRuntimeAgent(
+                DecisionRuntimeAgentSpec(
                     agent_id=air_agent_id,
                     model_id=AIR_SCRIPTED_EXECUTION_MODEL_ID,
                     domain="air",
@@ -92,8 +92,8 @@ def test_air_and_naval_models_share_one_runtime_roster_envelope() -> None:
                 ),
                 air_model,
             ),
-            ScriptedRuntimeAgent(
-                ScriptedRuntimeAgentSpec(
+            DecisionRuntimeAgent(
+                DecisionRuntimeAgentSpec(
                     agent_id=naval_agent_id,
                     model_id=NAVAL_STATION_HOLD_MODEL_ID,
                     domain="naval",
@@ -126,10 +126,10 @@ def test_air_and_naval_models_share_one_runtime_roster_envelope() -> None:
         assert list(first) == [air_agent_id, naval_agent_id]
         assert first[air_agent_id].report.domain == "air"
         assert first[naval_agent_id].report.domain == "naval"
-        assert first[air_agent_id].report.action_source == SCRIPTED_RUNTIME_ACTION_DECIDED
-        assert first[naval_agent_id].report.action_source == SCRIPTED_RUNTIME_ACTION_DECIDED
-        assert second[air_agent_id].report.action_source == SCRIPTED_RUNTIME_ACTION_HELD
-        assert second[naval_agent_id].report.action_source == SCRIPTED_RUNTIME_ACTION_HELD
+        assert first[air_agent_id].report.action_source == DECISION_RUNTIME_ACTION_DECIDED
+        assert first[naval_agent_id].report.action_source == DECISION_RUNTIME_ACTION_DECIDED
+        assert second[air_agent_id].report.action_source == DECISION_RUNTIME_ACTION_HELD
+        assert second[naval_agent_id].report.action_source == DECISION_RUNTIME_ACTION_HELD
         assert first[air_agent_id].action.shape == (17,)
         assert first[naval_agent_id].action.shape == (3,)
         assert roster.agent(air_agent_id).replay_identity.endswith("seed=7:reset=1")
@@ -166,10 +166,10 @@ def test_one_air_roster_can_route_execution_engagement_and_ew_roles() -> None:
         model_id=AIR_SCRIPTED_EW_ACTION_MODEL_ID,
         dt=0.05,
     )
-    roster = ScriptedRuntimeRoster(
+    roster = DecisionRuntimeRoster(
         (
-            ScriptedRuntimeAgent(
-                ScriptedRuntimeAgentSpec(
+            DecisionRuntimeAgent(
+                DecisionRuntimeAgentSpec(
                     agent_id=engagement_id,
                     model_id=AIR_SCRIPTED_ENGAGEMENT_MODEL_ID,
                     domain="air",
@@ -180,8 +180,8 @@ def test_one_air_roster_can_route_execution_engagement_and_ew_roles() -> None:
                 ),
                 engagement_model,
             ),
-            ScriptedRuntimeAgent(
-                ScriptedRuntimeAgentSpec(
+            DecisionRuntimeAgent(
+                DecisionRuntimeAgentSpec(
                     agent_id=ew_id,
                     model_id=AIR_SCRIPTED_EW_ACTION_MODEL_ID,
                     domain="air",
@@ -223,7 +223,7 @@ def test_one_air_roster_can_route_execution_engagement_and_ew_roles() -> None:
         assert first[ew_id].action.shape == (14,)
         assert float(first[engagement_id].action[14]) == 1.0
         assert np.allclose(first[ew_id].action[12:14], np.asarray([1.0, 1.0], dtype=np.float32))
-        assert second[engagement_id].report.action_source == SCRIPTED_RUNTIME_ACTION_HELD
-        assert second[ew_id].report.action_source == SCRIPTED_RUNTIME_ACTION_HELD
+        assert second[engagement_id].report.action_source == DECISION_RUNTIME_ACTION_HELD
+        assert second[ew_id].report.action_source == DECISION_RUNTIME_ACTION_HELD
     finally:
         roster.close()

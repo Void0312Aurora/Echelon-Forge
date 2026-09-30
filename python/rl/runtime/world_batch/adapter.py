@@ -17,9 +17,9 @@ from python.scenario.runtime.world_setup import build_batch_world_setup_request
 from python.scenario.runtime.world_setup import build_runtime_world_layout_request
 from python.scenario.runtime.world_setup import extract_batch_world_setup_entity_ids
 
-from python.rl.runtime.agent_shim import MAINTAINED
-from python.rl.runtime.agent_shim import OBS_DECISION_BELIEF_PACKET
-from python.rl.runtime.agent_shim import OBS_FACADE_OBSERVATION_PACKET
+from python.tasking_contracts.common.agent_contracts import MAINTAINED
+from python.tasking_contracts.common.agent_contracts import OBS_DECISION_BELIEF_PACKET
+from python.tasking_contracts.common.agent_contracts import OBS_FACADE_OBSERVATION_PACKET
 from .command_chain_cache import project_world_leader_intent_maintained_assignment
 from .command_chain_cache import project_world_mission_command_maintained_assignment
 from .command_chain_cache import project_world_pilot_report_maintained_assignment

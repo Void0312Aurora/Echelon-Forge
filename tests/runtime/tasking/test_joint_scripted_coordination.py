@@ -12,10 +12,10 @@ from python.tasking_contracts.joint.coordination import (
 from python.tasking_contracts.joint.projection import (
     project_joint_intent_to_compiled_packet,
 )
-from python.tasking_contracts.common.scripted_runtime import (
-    SCRIPTED_RUNTIME_ACTION_DECIDED,
-    ScriptedRuntimeAgent,
-    ScriptedRuntimeAgentSpec,
+from python.tasking_contracts.common.decision_runtime import (
+    DECISION_RUNTIME_ACTION_DECIDED,
+    DecisionRuntimeAgent,
+    DecisionRuntimeAgentSpec,
 )
 
 
@@ -92,8 +92,8 @@ def test_joint_coordination_producer_runs_through_neutral_runtime() -> None:
         role_id="joint_coordination_director",
         model_id=JOINT_SCRIPTED_COORDINATION_MODEL_ID,
     )
-    agent = ScriptedRuntimeAgent(
-        ScriptedRuntimeAgentSpec(
+    agent = DecisionRuntimeAgent(
+        DecisionRuntimeAgentSpec(
             agent_id="joint:director",
             model_id=JOINT_SCRIPTED_COORDINATION_MODEL_ID,
               domain="joint",
@@ -112,7 +112,7 @@ def test_joint_coordination_producer_runs_through_neutral_runtime() -> None:
             observation_version="joint:0",
             context={},
         )
-        assert result.report.action_source == SCRIPTED_RUNTIME_ACTION_DECIDED
+        assert result.report.action_source == DECISION_RUNTIME_ACTION_DECIDED
         assert isinstance(result.action, ScriptedJointCoordinationIntent)
         assert result.action.graph_id == "joint.air_naval_screen_demo_v1"
         assert result.action.target_node_ids == ("air:lead", "naval:screen", "joint:director")
@@ -164,8 +164,8 @@ def test_joint_intent_projection_keeps_unrepresented_common_fields_explicit() ->
         role_id="joint_coordination_director",
         model_id=JOINT_SCRIPTED_COORDINATION_MODEL_ID,
     )
-    agent = ScriptedRuntimeAgent(
-        ScriptedRuntimeAgentSpec(
+    agent = DecisionRuntimeAgent(
+        DecisionRuntimeAgentSpec(
             agent_id="joint:director",
             model_id=JOINT_SCRIPTED_COORDINATION_MODEL_ID,
             domain="joint",

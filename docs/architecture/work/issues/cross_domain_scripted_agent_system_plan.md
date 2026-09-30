@@ -35,7 +35,7 @@ Verified current facts:
   declarative registry; the former root path has been removed. It explicitly
   avoids wiring behavior. It currently includes autopilot, flight
   lead, scripted C2, cooperative director, naval, and ground command roles.
-- `python/rl/runtime/agent_shim.py` currently carries observation provenance,
++ `python/tasking_contracts/common/agent_contracts.py` currently carries observation provenance,
   maintained versus diagnostics-only status, action-intent metadata, and policy
   routing. These are reusable contract ideas, but the current location makes
   RL appear to own a capability that must also run without RL.
@@ -210,8 +210,8 @@ replay contracts. Keep domain fields in domain-owned extensions.
 Promotion condition: a repository-wide consumer map, dependency direction, and
 rollback plan exist before changing a maintained contract.
 
-Initial WP1 slice: `python/tasking_contracts/common/scripted_registry.py` now
-provides
+Initial WP1 slice used `python/tasking_contracts/common/scripted_registry.py` to
+provide
 a dependency-terminal scripted model-factory registry and a minimal structural
 `reset -> decide -> close` lifecycle. It does not duplicate observation,
 action, or AgentRole DTOs, and it does not wire a runtime or import RL.
@@ -226,7 +226,7 @@ action hold/expiry behavior, report stream, and deterministic seed handling.
 The registry must route by scenario and active roster without making the legacy
 first-agent compatibility path authoritative for new multi-agent scenarios.
 
-Initial runtime slice: `python/tasking_contracts/common/scripted_runtime.py` now
+Initial runtime slice: `python/tasking_contracts/common/decision_runtime.py` now
 owns
 the common scheduling envelope for registered scripted models. It provides
 single-agent and active-roster lifecycle entry points, monotonic clock checks,
@@ -1003,8 +1003,8 @@ to a dedicated owner-local evidence document.
 
 - Starting commit: `b90d7209`.
 - Change batch: add the dependency-terminal
-  `ScriptedRuntimeAgent`/`ScriptedRuntimeRoster` scheduler in
-  `python/tasking_contracts/common/scripted_runtime.py`. It reuses the existing
+  `DecisionRuntimeAgent`/`DecisionRuntimeRoster` scheduler in
+  `python/tasking_contracts/common/decision_runtime.py`. It reuses the existing
   `ScriptedDecisionModel` and `ScriptedModelRegistry`; it does not add a second
   observation/action DTO or import RL, gym, NumPy, native bindings, or a world
   runtime.
@@ -1029,7 +1029,7 @@ to a dedicated owner-local evidence document.
 
 - Starting commit: `b5d79e0d`.
 - Change batch: route the standalone Air takeoff-to-landing diagnostic CLI
-  through `ScriptedRuntimeAgent` while preserving the learned-policy wrapper
+  through `DecisionRuntimeAgent` while preserving the learned-policy wrapper
   path. The CLI now reports runtime decision/hold counts and the deterministic
   replay identity for scripted episodes.
 - Focused verification: Air CLI contract tests and neutral runtime tests
@@ -1051,7 +1051,7 @@ to a dedicated owner-local evidence document.
 
 - Starting commit: `710048b8`.
 - Change batch: route the maintained Naval N4 station evaluator through
-  `ScriptedRuntimeAgent` while preserving the existing station command,
+  `DecisionRuntimeAgent` while preserving the existing station command,
   contact/report, reward, and compatibility transport owners. The evaluator
   now reports runtime decision/hold counts and replay identity alongside its
   existing gate payload.
@@ -1076,7 +1076,7 @@ to a dedicated owner-local evidence document.
 - Starting commit: `ed278d05`.
 - Change batch: add a contract test that constructs the maintained Air
   execution model and the bounded Naval station model under one
-  `ScriptedRuntimeRoster`. The test uses the real domain registries and keeps
+  `DecisionRuntimeRoster`. The test uses the real domain registries and keeps
   each domain's action payload and role/authority metadata behind the common
   runtime envelope.
 - Focused verification: cross-domain roster, neutral runtime, Air lifecycle,
@@ -1107,7 +1107,7 @@ to a dedicated owner-local evidence document.
 - Focused verification: joint graph/producer, cross-domain roster, neutral
   runtime, and tasking-boundary tests passed `20 passed`; Python compilation
   and `git diff --check` passed.
-- Direct result: the producer ran through `ScriptedRuntimeAgent` with seed
+- Direct result: the producer ran through `DecisionRuntimeAgent` with seed
   `11`, emitted the declared Air and Naval target node IDs, preserved the
   graph/task-group/coordination metadata, and retained communication,
   authority, clock, and observation-version provenance.
@@ -1257,7 +1257,7 @@ to a dedicated owner-local evidence document.
 
 - Starting commit: `8a0eb0ec`.
 - Change batch: route the Leader environment's maintained Air scripted
-  execution entry through `ScriptedRuntimeAgent`. The adapter now carries the
+  execution entry through `DecisionRuntimeAgent`. The adapter now carries the
   common lifecycle, clock, decision index, communication/authority metadata,
   seed/replay identity, and runtime report while leaving the Air observation
   and action payloads domain-owned. Leader info exposes the report as
@@ -1331,7 +1331,7 @@ to a dedicated owner-local evidence document.
 - Change batch: add `tools/diagnostics/air_combat_scripted_demo.py`, a
   reusable no-RL Stage 1 C2/ROE demonstration entry. It resolves the
   maintained Air engagement registry model, routes decisions through
-  `ScriptedRuntimeAgent`, drives the compiled `WorldBatchVecEnv`, and emits a
+  `DecisionRuntimeAgent`, drives the compiled `WorldBatchVecEnv`, and emits a
   compact JSON record of fire acceptance, native release, post-launch status,
   termination, and runtime replay identity.
 - Focused verification: Python compilation and `git diff --check` passed. The
@@ -2203,3 +2203,116 @@ to a dedicated owner-local evidence document.
   tested `LeaderTrainingEnv` still imports Gym/Torch and uses C2 ownership in
   `python.rl.tasking`. No-RL C2 command/report closure, broader seed coverage,
   visualization, and the full Air `playable` gate remain open.
+
+### 2026-09-26 — Neutral decision-model registry and explicit model-kind gate
+
+- Starting commit: `8f856d70`.
+- Change batch: move the canonical registry implementation from
+  `common/scripted_registry.py` to `common/decision_registry.py` and rename its
+  contract to `DecisionModel`/`DecisionModelRegistration`/`DecisionModelRegistry`.
+  The old module and names are removed, with no compatibility forwarding shell
+  or parallel RL registry. Registration now requires an explicit kind:
+  `scripted`, `learned`, `human`, or `hybrid`.
+- Selection rule: role/domain/status/kind filtering is explicit; omitted kind
+  with multiple eligible registrations fails closed. The existing
+  `DecisionRuntimeRoster` requests `model_kind="scripted"`, so it cannot
+  silently instantiate a learned, human, or hybrid entry.
+- Evidence: pure-registry tests exercise all four kinds with stub factories,
+  ambiguous selection, explicit-ID mismatch, and unknown-kind rejection.
+  After the explicit-kind edit, architecture, scripted runtime, Air, and Naval
+  regressions passed `85 passed` with the local `CMO_BUILD_DIR` binding.
+  Before that final declaration edit, cooperative Air/EW/replay/evaluation
+  regressions passed `22 passed, 2 skipped, 18 subtests passed`. Python
+  compilation and `git diff --check` passed. The neutral registry imports no
+  RL, Gym, or world-step implementation.
+- Boundary decision: this establishes one shared model-selection seam, not
+  production learned/human/hybrid providers or an interchangeable runtime.
+  Air/Naval/Joint registered implementations remain scripted; the full no-RL
+  C2 command/report loop and cross-kind scenario execution remain open.
+
+### 2026-09-27 — Neutral agent contract ownership moved out of RL runtime
+
+- Starting commit: `ecc0f81d`.
+- Change batch: move the Python-side `AgentRole`, `DecisionBelief`,
+  `ObservationProvenance`, `ActionIntent`, and `CoordinationIntent` contracts
+  from `python/rl/runtime/agent_shim.py` to
+  `python/tasking_contracts/common/agent_contracts.py`. The old module and
+  package export are removed; no compatibility forwarding shell remains.
+- Consumer update: the world-batch authorization adapter now imports the
+  neutral contract vocabulary directly. Architecture and runtime tests were
+  moved to the neutral path, and package boundaries continue to enforce
+  `gym_envs -> python/tasking_contracts <- python.rl`.
+- Evidence: focused contract, provenance, authority, and dependency-boundary
+  tests passed `65 passed` with the local `CMO_BUILD_DIR` binding.
+- Boundary decision: this removes RL ownership of the common role, belief,
+  provenance, and intent contracts. It does not yet remove RL ownership from
+  world-batch execution, C2 phase management, or Gym environment adapters.
+  The next runtime slice must preserve compiled authorization and provenance
+  gates while adding a non-RL scenario entry point.
+
+### 2026-09-27 — Decision runtime unified across model kinds
+
+- Starting commit: efb3e379.
+- Change batch: rename the dependency-terminal scheduler from
+  common/scripted_runtime.py to common/decision_runtime.py and remove the old
+  module path. DecisionRuntimeAgent, DecisionRuntimeRoster, report, step,
+  and scheduling constants now describe the neutral lifecycle rather than a
+  scripted-only runtime.
+- Runtime selection: DecisionRuntimeAgentSpec.model_kind is validated against the
+  shared DecisionModelRegistry vocabulary; roster construction forwards the declared
+  kind instead of forcing scripted. A learned stub and a scripted model both run
+  through the same reset, decide, hold, report, and close path in regression tests.
+- Evidence: decision-runtime, cross-domain tasking, Joint, Air, Naval, and
+  entry-point tests passed 16 passed for the focused runtime batch; Python
+  compilation passed. Existing diagnostic JSON keys remain unchanged because
+  they are output-schema fields, not runtime ownership names.
+- Boundary decision: this unifies model lifecycle scheduling without importing
+  RL, Gym, NumPy, native bindings, or world stepping. Actual learned policy
+  providers and the non-RL scenario/world adapter remain separate open work.
+
+### 2026-09-27 — Neutral simulation backend selection boundary
+
+- Starting commit: `aad3fe78`.
+- Change batch: add `python/simulation/backend.py` and its package export as a
+  dependency-light simulation backend boundary. It defines the lifecycle
+  protocol and explicit backend registration without importing RL, Gym, NumPy,
+  or native bindings. The existing WorldBatch single/cooperative providers are
+  loaded lazily only when `create_single_backend` or
+  `create_cooperative_backend` opens an episode.
+- Consumer update: Air combat, Air EW, cooperative Air combat/EW, and Naval N4
+  scripted entry points now construct the selected backend through
+  `python.simulation`; they no longer import `python.rl.runtime` directly.
+  The current default provider remains `world_batch`, so this is an ownership
+  and dependency boundary, not a claim that a second native backend already
+  exists.
+- Evidence: backend import-laziness, registration, and entrypoint boundary
+  tests plus tasking/scripted-entry regressions passed `54 passed`; the focused
+  runtime and Air diagnostics passed `49 passed, 2 skipped, 18 subtests
+  passed`. Python compilation and `git diff --check` passed. The first test
+  invocation without `CMO_BUILD_DIR` stopped at the known local-`ef_py`
+  bootstrap guard and was rerun with the maintained local build binding.
+- Boundary decision: scripted and learned decision models now depend on a
+  simulation selection seam rather than a direct RL package path. The default
+  provider is still RL-owned and remains an open migration target for a native
+  or otherwise independent simulation provider; this batch does not promote
+  full no-RL scenario execution or Air `playable` status.
+
+### 2026-09-27 — Air trajectory entry routed through simulation boundary
+
+- Starting commit: `a12d287e`.
+- Change batch: route the maintained `takeoff_to_landing` scripted/learned
+  trajectory entry through `create_single_execution_runtime`. The backend
+  contract now distinguishes direct batch providers from the single-world
+  execution wrapper, and accepts an execution-only provider for future native
+  or alternate simulation implementations.
+- Evidence: the backend boundary, Air CLI, and decision-runtime regressions
+  passed `13 passed`; Python compilation and `git diff --check` passed. A
+  compiled five-step scripted run through the new execution factory exited 0,
+  produced the expected scripted report, and wrote the plot/summary under the
+  ignored `build-scripted-agent` directory.
+- Boundary decision: the trajectory entry no longer imports
+  `python.rl.runtime.single_world_batch_runtime` directly. The default
+  `world_batch` provider still lazily loads that RL-owned implementation when
+  requested, so this closes the entry-point dependency edge but does not yet
+  prove an independent no-RL world implementation or full Air playable
+  promotion.

@@ -11,7 +11,7 @@ from python.tasking_contracts.air.engagement.model import (
     AirScriptedEngagementModel,
 )
 from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY
-from python.tasking_contracts.common.scripted_registry import ScriptedDecisionModel
+from python.tasking_contracts.common.decision_registry import DecisionModel
 from python.tasking_contracts.air.strategy.action import AirActionLayoutAdapter
 from python.tasking_contracts.air.strategy.contracts import (
     AirActionApplication,
@@ -45,8 +45,8 @@ def _observation(*, contact: bool, fire_window: bool, budget: float = 1.0, pendi
 
 
 def test_engagement_model_uses_neutral_lifecycle_and_declared_observation_only() -> None:
-    model = AirScriptedEngagementModel(weapon_station_id=1)
-    assert isinstance(model, ScriptedDecisionModel)
+    model = AirScriptedEngagementModel()
+    assert isinstance(model, DecisionModel)
     obs = _observation(contact=False, fire_window=False)
     model.reset(context={"observation": obs, "phase_name": "stable_flight"})
     action = model.decide(

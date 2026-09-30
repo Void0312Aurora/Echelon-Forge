@@ -2,7 +2,6 @@
 
 __all__ = [
     "execution_runtime",
-    "agent_shim",
     "leader_window_runtime",
     "multi_agent_runtime",
     "single_world_batch_runtime",

@@ -216,6 +216,7 @@
       "semantic": "The RL-independent Air planner carries authorization_to_fire through candidate evaluation and blocks a release plan when the declared gate is closed. It does not grant authority, resolve holder conflicts, or write mission-command authority state.",
       "owner": "air/scripted-agent strategy layer",
       "note": "Registered after physical layering; planner gating remains downstream of the environment-owned release authority."
+    },
     }
   ]
 }

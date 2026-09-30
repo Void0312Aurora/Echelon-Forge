@@ -16,12 +16,12 @@ from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 ensure_repo_imports()
 
-from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv  # noqa: E402
+from python.simulation import create_cooperative_backend  # noqa: E402
 from python.tasking_contracts.air.ew.model import AIR_SCRIPTED_EW_ACTION_MODEL_ID  # noqa: E402
 from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY  # noqa: E402
-from python.tasking_contracts.common.scripted_runtime import (  # noqa: E402
-    ScriptedRuntimeAgent,
-    ScriptedRuntimeAgentSpec,
+from python.tasking_contracts.common.decision_runtime import (  # noqa: E402
+    DecisionRuntimeAgent,
+    DecisionRuntimeAgentSpec,
 )
 
 
@@ -97,7 +97,7 @@ def run_demo(
     slot_names = tuple(item["entity_name"] for item in slot_metadata)
     slot_roles = tuple(item["formation_role_id"] for item in slot_metadata)
 
-    vec_env = CooperativeWorldBatchVecEnv(
+    vec_env = create_cooperative_backend(
         scenario_path=os.path.abspath(str(scenario_path)),
         n_envs=1,
         include_visual=False,
@@ -125,8 +125,8 @@ def run_demo(
             scenario_time_step = 0.05
     scenario_time_step = max(1.0e-6, scenario_time_step)
     agents = [
-        ScriptedRuntimeAgent(
-            ScriptedRuntimeAgentSpec(
+        DecisionRuntimeAgent(
+            DecisionRuntimeAgentSpec(
                 agent_id=f"air-ew-cooperative-{name.lower()}",
                 model_id=AIR_SCRIPTED_EW_ACTION_MODEL_ID,
                 domain="air",

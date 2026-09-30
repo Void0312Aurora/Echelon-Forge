@@ -16,8 +16,8 @@ def test_air_scripted_cli_uses_neutral_registry_model() -> None:
     assert "python.tasking_contracts.air.execution.model" in source
     assert "AIR_SCRIPTED_MODEL_REGISTRY.create_for" in source
     assert "AIR_SCRIPTED_EXECUTION_MODEL_ID" in source
-    assert "ScriptedRuntimeAgent" in source
-    assert "ScriptedRuntimeAgentSpec" in source
+    assert "DecisionRuntimeAgent" in source
+    assert "DecisionRuntimeAgentSpec" in source
     assert "scripted_runtime_agent.step" in source
     assert "parse_scripted_capability" in source
     assert "resolve_scripted_model_id" in source
