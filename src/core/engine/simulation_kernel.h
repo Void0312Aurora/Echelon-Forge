@@ -281,7 +281,7 @@ class SimulationKernel {
     std::vector<double> debug_get_ground_contact_state(
         uint64_t entity_id); // [on_ground, terrain_z, lifecycle, impact_h_speed, impact_sink_rate,
                              // impact_severity, gear_stress, gear_collapsed, on_runway]
-    std::vector<CommPacket> get_unit_messages(uint64_t entity_id);
+    std::vector<CommPacket> get_unit_messages(uint64_t entity_id) const;
     void send_message_command(uint64_t entity_id, uint64_t recipient_id, int msg_type,
                               uint64_t msg_arg);
     void set_unit_ammo(uint64_t entity_id, int missiles_remaining, int max_missiles);

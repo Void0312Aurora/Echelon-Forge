@@ -39,6 +39,7 @@
       "owner": "runtime/facade",
       "callers": [
         ".github/workflows/ci-smoke.yml",
+        "examples/viz/web_viz/server.py",
         "python/rl/runtime/world_batch/adapter.py",
         "python/simulation/facade_batch.py",
         "tools/maintenance/runtime_host_batch_parity_contract.py"
@@ -51,11 +52,6 @@
       "owner": "core/engine",
       "callers": [
         ".github/workflows/ci-smoke.yml",
-        "examples/viz/web_viz/server.py",
-        "python/testing/contracts/loader_command_chain.py",
-        "python/testing/contracts/route_generator.py",
-        "python/testing/contracts/unit/comm.py",
-        "python/testing/contracts/unit/kernel.py",
         "tools/diagnostics/benchmarks/scenario_compiler.py",
         "tools/diagnostics/benchmarks/spatial_query.py",
         "tools/diagnostics/kill_chain_decoupling_probe.py",

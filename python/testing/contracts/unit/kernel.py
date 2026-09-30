@@ -32,17 +32,19 @@ def _compare_kernel_summary_values(
 def _run_kernel_flight_contract(kernel_spec: dict[str, Any]) -> tuple[bool, str, dict[str, Any]]:
     import numpy as np
     import ef_py
-    from gym_envs.scenario_loader import ScenarioLoader
     from gym_envs.universal_env import half_to_unit
+    from python.rl.runtime.world_batch.adapter import RuntimeFacadeAdapter
 
     controller_kind = str(kernel_spec.get("controller_kind", "")).strip().lower()
     scenario_path = resolve_repo_path(str(kernel_spec["scenario"]))
     seed = int(kernel_spec.get("seed", 0))
     checks = dict(kernel_spec.get("checks", {}) or {})
 
-    sim = ef_py.SimulationKernel()
-    sim.load_database(resolve_repo_path("examples", "config", "database"))
-    loader = ScenarioLoader(sim)
+    adapter = RuntimeFacadeAdapter(1)
+    if not adapter.load_database(resolve_repo_path("examples", "config", "database")):
+        return False, "failed to load runtime database", {}
+    loader = adapter.make_scenario_loader(0)
+    sim = loader.sim
     randomization_overrides = dict(kernel_spec.get("randomization_overrides", {}) or {})
     if randomization_overrides:
         loader.set_randomization_overrides(randomization_overrides)
@@ -86,7 +88,7 @@ def _run_kernel_flight_contract(kernel_spec: dict[str, Any]) -> tuple[bool, str,
         inst = sim.get_instrument_state(agent_id)
         truth = sim.get_agent_observation(agent_id)
         pos = sim.get_unit_position(agent_id)
-        vel = sim.get_unit_velocity(agent_id)
+        vel = _unit_velocity(agent_id)
         out: dict[str, Any] = {
             "controller_kind": controller_kind,
             "seed": seed,
@@ -117,6 +119,23 @@ def _run_kernel_flight_contract(kernel_spec: dict[str, Any]) -> tuple[bool, str,
         if extra:
             out.update(dict(extra))
         return out
+
+    def _unit_velocity(entity_id: int) -> tuple[float, float, float]:
+        """Read velocity through the maintained observation packet seam.
+
+        ``get_unit_velocity`` is an optional raw-kernel convenience and is
+        intentionally absent from the maintained scenario-loader proxy.  The
+        contract therefore consumes the velocity fields already present in the
+        authoritative observation, keeping the migrated caller on the same
+        facade-owned read path without expanding the proxy's optional surface.
+        """
+
+        observation = sim.get_agent_observation(entity_id)
+        return (
+            float(getattr(observation, "vx", 0.0) or 0.0),
+            float(getattr(observation, "vy", 0.0) or 0.0),
+            float(getattr(observation, "vz", 0.0) or 0.0),
+        )
 
     if controller_kind == "midpoint_env_action":
         action_dim = int(kernel_spec.get("action_dim", 17))
@@ -625,7 +644,7 @@ def _run_kernel_flight_contract(kernel_spec: dict[str, Any]) -> tuple[bool, str,
             return False, f"invalid sim time step {dt}", {}
         max_steps = int(kernel_spec.get("max_steps", 20))
         initial_pos = sim.get_unit_position(agent_id)
-        initial_vel = sim.get_unit_velocity(agent_id)
+        initial_vel = _unit_velocity(agent_id)
         pa = _base_pilot_action()
         pa.throttle = float(kernel_spec.get("throttle", 0.0))
         pa.gear_handle = float(kernel_spec.get("gear_handle", 1.0))
@@ -633,7 +652,7 @@ def _run_kernel_flight_contract(kernel_spec: dict[str, Any]) -> tuple[bool, str,
             sim.set_pilot_action(agent_id, pa)
             sim.step()
         final_pos = sim.get_unit_position(agent_id)
-        final_vel = sim.get_unit_velocity(agent_id)
+        final_vel = _unit_velocity(agent_id)
         elapsed_s = max(1.0e-9, max_steps * dt)
         mean_vertical_accel = (float(final_vel[2]) - float(initial_vel[2])) / elapsed_s
         accel_range = list(checks.get("mean_vertical_accel_range", [-10.8, -8.8]))

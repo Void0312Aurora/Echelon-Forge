@@ -83,6 +83,7 @@ class EF_RUNTIME_FACADE_API RuntimeFacade {
     collect_visual_binding_compatibility_scenes_batch(const std::vector<WorldEntityRef> &refs,
                                                       int downsample, bool use_gpu = false) const;
     void set_pilot_actions_batch(const std::vector<WorldPilotActionAssignment> &assignments);
+    void set_command_links_batch(const std::vector<WorldCommandLinkAssignment> &assignments);
     std::vector<LaunchEvent>
     apply_launch_requests_batch(const std::vector<LaunchRequest> &requests);
     void set_mission_commands_maintained_batch(
@@ -106,6 +107,8 @@ class EF_RUNTIME_FACADE_API RuntimeFacade {
     get_leader_intents_maintained_batch(const std::vector<WorldEntityRef> &refs) const;
     std::vector<PilotReportMaintainedBatchContract>
     get_pilot_reports_maintained_batch(const std::vector<WorldEntityRef> &refs) const;
+    std::vector<std::vector<CommPacket>>
+    get_unit_messages_batch(const std::vector<WorldEntityRef> &refs) const;
     ObservationBatchPacket export_observation_packet(const std::vector<WorldEntityRef> &refs) const;
     ObservationBatchPacket export_observation_packet(const ObservationBatchRequest &request) const;
     TaskingBatchPacket export_tasking_packet(const TaskingBatchRequest &request) const;

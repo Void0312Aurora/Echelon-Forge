@@ -241,6 +241,9 @@ def apply_loader_owned_world_layout_to_kernel(loader: Any, layout: Any) -> Any:
     """Compatibility-only quarantine around loader-owned world-layout kernel apply."""
 
     sim = loader_owned_runtime_view(loader).require_sim("loader-owned world-layout kernel-apply seam")
+    maintained_apply = getattr(sim, "apply_world_layout", None)
+    if callable(maintained_apply):
+        return maintained_apply(layout)
     apply_world_layout = getattr(import_module("python.scenario.runtime"), "apply_world_layout_to_kernel", None)
     if not callable(apply_world_layout):
         raise RuntimeError("python.scenario.runtime.apply_world_layout_to_kernel is not available")

@@ -18,8 +18,7 @@ from .common import (
 def run_route_generator_contract(spec_path: str) -> tuple[bool, str]:
     repo_root = ensure_repo_imports()
 
-    import ef_py
-    from gym_envs.scenario_loader import ScenarioLoader
+    from python.rl.runtime.world_batch.adapter import RuntimeFacadeAdapter
 
     spec = _load_spec(spec_path)
     scenario_path, should_cleanup = _materialize_scenario_path(spec)
@@ -32,9 +31,10 @@ def run_route_generator_contract(spec_path: str) -> tuple[bool, str]:
     seeds = [int(x) for x in spec.get("seeds", [0])]
     checks = dict(spec.get("checks", {}) or {})
 
-    sim = ef_py.SimulationKernel()
-    sim.load_database(os.path.join(repo_root, "examples/config/database"))
-    loader = ScenarioLoader(sim)
+    adapter = RuntimeFacadeAdapter(1)
+    if not adapter.load_database(os.path.join(repo_root, "examples/config/database")):
+        return False, "failed to load runtime database"
+    loader = adapter.make_scenario_loader(0)
 
     route_signatures: list[tuple[tuple[float, float, float, float], ...]] = []
 

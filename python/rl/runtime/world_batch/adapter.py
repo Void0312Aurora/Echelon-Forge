@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import ef_py
@@ -76,11 +77,15 @@ class RuntimeFacadeAdapterCapabilities:
     has_observation_batch_request: bool
     has_export_observation_packet: bool
     has_get_task_orders_maintained_batch: bool
+    has_get_leader_intents_maintained_batch: bool
+    has_get_pilot_reports_maintained_batch: bool
+    has_get_unit_messages_batch: bool
     has_apply_launch_requests_batch: bool
     has_set_mission_commands_maintained_batch: bool
     has_set_task_orders_maintained_batch: bool
     has_set_leader_intents_maintained_batch: bool
     has_set_pilot_reports_maintained_batch: bool
+    has_set_command_links_batch: bool
 
 
 def _resolve_runtime_facade_adapter_capabilities(facade: Any) -> RuntimeFacadeAdapterCapabilities:
@@ -97,6 +102,13 @@ def _resolve_runtime_facade_adapter_capabilities(facade: Any) -> RuntimeFacadeAd
         has_get_task_orders_maintained_batch=bool(
             hasattr(facade, "get_task_orders_maintained_batch")
         ),
+        has_get_leader_intents_maintained_batch=bool(
+            hasattr(facade, "get_leader_intents_maintained_batch")
+        ),
+        has_get_pilot_reports_maintained_batch=bool(
+            hasattr(facade, "get_pilot_reports_maintained_batch")
+        ),
+        has_get_unit_messages_batch=bool(hasattr(facade, "get_unit_messages_batch")),
         has_apply_launch_requests_batch=bool(
             hasattr(facade, "apply_launch_requests_batch")
         ),
@@ -112,6 +124,7 @@ def _resolve_runtime_facade_adapter_capabilities(facade: Any) -> RuntimeFacadeAd
         has_set_pilot_reports_maintained_batch=bool(
             hasattr(facade, "set_pilot_reports_maintained_batch")
         ),
+        has_set_command_links_batch=bool(hasattr(facade, "set_command_links_batch")),
     )
 
 
@@ -144,6 +157,9 @@ class _ScenarioLoaderRuntimeProxy:
     def get_time_step(self) -> float:
         return self._adapter.get_time_step(self._world_index)
 
+    def apply_world_layout(self, layout: Any) -> AppliedScenarioWorld:
+        return self._adapter.apply_world_layout(self._world_index, layout)
+
     def is_unit_active(self, entity_id: int) -> bool:
         observation = self.get_agent_observation(int(entity_id))
         return float(getattr(observation, "health", 0.0) or 0.0) > 0.0
@@ -163,6 +179,16 @@ class _ScenarioLoaderRuntimeProxy:
             float(getattr(observation, "y", 0.0) or 0.0),
             float(getattr(observation, "z", 0.0) or 0.0),
         )
+
+    def set_pilot_action(self, entity_id: int, action: Any) -> None:
+        assignment = ef_py.WorldPilotActionAssignment()
+        assignment.world_index = int(self._world_index)
+        assignment.entity_id = int(entity_id)
+        assignment.action = action
+        self._adapter.set_pilot_actions_batch([assignment])
+
+    def step(self) -> None:
+        self._adapter.step_batch()
 
     def set_command(
         self,
@@ -290,10 +316,101 @@ class RuntimeFacadeAdapter:
         world_count: int,
         *,
         use_typed_observation_view: bool = False,
+        production_rollout_path: str | None = None,
+        production_rollout_key: bytes | None = None,
+        production_rollout_key_path: str | None = None,
+        production_rollout_snapshot_reader: Callable[[], Mapping[str, Any]] | None = None,
+        require_production_admission: bool = False,
+        production_release_id: str | None = None,
+        production_manifest_sha256: str | None = None,
+        production_plan_sha256: str | None = None,
+        production_release_manifest_path: str | None = None,
+        production_run_receipt_path: str | None = None,
+        production_package_digest: str | None = None,
+        production_wheel_digest: str | None = None,
+        require_production_evidence_binding: bool = False,
     ):
         self._world_count = int(world_count)
         if not hasattr(ef_py, "RuntimeFacade"):
             raise RuntimeError("RuntimeFacadeAdapter requires ef_py.RuntimeFacade bindings")
+        self.rollout_admission: RolloutAdmission | None = None
+        self._production_rollout_path: str | None = production_rollout_path
+        self._production_rollout_key: bytes | None = production_rollout_key
+        self._production_rollout_snapshot_reader = production_rollout_snapshot_reader
+        self._production_rollout_snapshot: Mapping[str, Any] | None = None
+        self._production_rollout_expected_release_id = production_release_id
+        self._production_rollout_expected_manifest_sha256 = production_manifest_sha256
+        self._production_rollout_expected_plan_sha256 = production_plan_sha256
+        self._require_production_admission = bool(require_production_admission)
+        self._production_release_manifest_path = production_release_manifest_path
+        self._production_run_receipt_path = production_run_receipt_path
+        self._production_package_digest = production_package_digest
+        self._production_wheel_digest = production_wheel_digest
+        # A caller that asks for production admission is selecting the
+        # production row, not merely the local slot.  That row must carry the
+        # release/RunReceipt projection as well; development and shadow
+        # callers remain unchanged unless either explicit production option is
+        # supplied.
+        self._require_production_evidence_binding = bool(
+            require_production_evidence_binding or require_production_admission
+        )
+        self.rollout_evidence_binding = None
+        if production_rollout_path is not None and production_rollout_snapshot_reader is not None:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter production admission accepts either a rollout path or a snapshot reader, not both"
+            )
+        if production_rollout_path is not None or production_rollout_snapshot_reader is not None:
+            verification_key = production_rollout_key
+            if verification_key is None and production_rollout_key_path is not None:
+                try:
+                    verification_key = Path(production_rollout_key_path).read_bytes()
+                except OSError as error:
+                    raise RuntimeError(
+                        "RuntimeFacadeAdapter could not read the production rollout verification key"
+                    ) from error
+            if verification_key is None:
+                raise RuntimeError(
+                    "RuntimeFacadeAdapter production rollout admission requires a verification key"
+                )
+            self._production_rollout_key = verification_key
+            try:
+                if production_rollout_snapshot_reader is not None:
+                    self._production_rollout_snapshot = production_rollout_snapshot_reader()
+                    if not isinstance(self._production_rollout_snapshot, Mapping):
+                        raise RolloutAdmissionError("production rollout snapshot is not an object")
+                    slot_document = self._production_rollout_snapshot.get("slot")
+                    if not isinstance(slot_document, Mapping):
+                        raise RolloutAdmissionError("production rollout snapshot lacks a slot document")
+                    self.rollout_admission = RolloutAdmission.from_document(
+                        slot_document,
+                        verification_key=verification_key,
+                        expected_release_id=production_release_id,
+                        expected_manifest_sha256=production_manifest_sha256,
+                        expected_plan_sha256=production_plan_sha256,
+                    )
+                else:
+                    self.rollout_admission = RolloutAdmission.from_slot(
+                        production_rollout_path,
+                        verification_key=verification_key,
+                        expected_release_id=production_release_id,
+                        expected_manifest_sha256=production_manifest_sha256,
+                        expected_plan_sha256=production_plan_sha256,
+                    )
+                if require_production_admission:
+                    self.rollout_admission.assert_production_authorized()
+                self._refresh_rollout_evidence_binding()
+            except RolloutAdmissionError as error:
+                raise RuntimeError(f"production rollout admission rejected: {error}") from error
+        elif require_production_admission:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter production mode requires an admitted RolloutDecision slot"
+            )
+        elif self._require_production_evidence_binding or (
+            production_release_manifest_path is not None or production_run_receipt_path is not None
+        ):
+            raise RuntimeError(
+                "RuntimeFacadeAdapter production evidence binding requires an admitted RolloutDecision slot"
+            )
         self.facade = ef_py.RuntimeFacade(self._world_count)
         self._capabilities_facade_id: int | None = None
         self._capabilities: RuntimeFacadeAdapterCapabilities | None = None
@@ -304,6 +421,100 @@ class RuntimeFacadeAdapter:
         self._typed_observation_view_spec: Any | None = None
         if use_typed_observation_view:
             self._typed_observation_view_spec = self._admit_typed_observation_view()
+
+    def refresh_rollout_admission(self) -> RolloutAdmission | None:
+        """Reload the durable rollout slot before accepting more runtime work.
+
+        A process restart naturally performs this check in ``__init__``.  A
+        long-lived process must also observe a kill switch or typed backout
+        written after construction; otherwise admission would be a one-time
+        startup check rather than an operational gate.
+        """
+
+        if self._production_rollout_path is None and self._production_rollout_snapshot_reader is None:
+            if self._require_production_admission:
+                raise RuntimeError(
+                    "RuntimeFacadeAdapter production mode requires an admitted RolloutDecision slot"
+                )
+            return self.rollout_admission
+        if self._production_rollout_key is None:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter production rollout admission requires a verification key"
+            )
+        try:
+            if self._production_rollout_snapshot_reader is not None:
+                snapshot = self._production_rollout_snapshot_reader()
+                if not isinstance(snapshot, Mapping) or not isinstance(snapshot.get("slot"), Mapping):
+                    raise RolloutAdmissionError("production rollout snapshot lacks a slot document")
+                self._production_rollout_snapshot = snapshot
+                admission = RolloutAdmission.from_document(
+                    snapshot["slot"],
+                    verification_key=self._production_rollout_key,
+                    expected_release_id=self._production_rollout_expected_release_id,
+                    expected_manifest_sha256=self._production_rollout_expected_manifest_sha256,
+                    expected_plan_sha256=self._production_rollout_expected_plan_sha256,
+                )
+            else:
+                admission = RolloutAdmission.from_slot(
+                    self._production_rollout_path,
+                    verification_key=self._production_rollout_key,
+                    expected_release_id=self._production_rollout_expected_release_id,
+                    expected_manifest_sha256=self._production_rollout_expected_manifest_sha256,
+                    expected_plan_sha256=self._production_rollout_expected_plan_sha256,
+                )
+            if self._require_production_admission:
+                admission.assert_production_authorized()
+        except RolloutAdmissionError as error:
+            raise RuntimeError(f"production rollout admission rejected: {error}") from error
+        self.rollout_admission = admission
+        self._refresh_rollout_evidence_binding()
+        return admission
+
+    def _refresh_rollout_evidence_binding(self) -> None:
+        paths_supplied = (
+            self._production_release_manifest_path is not None
+            or self._production_run_receipt_path is not None
+        )
+        snapshot_supplied = self._production_rollout_snapshot_reader is not None
+        if not self._require_production_evidence_binding and not paths_supplied and not snapshot_supplied:
+            return
+        if snapshot_supplied:
+            snapshot = self._production_rollout_snapshot
+            if not isinstance(snapshot, Mapping):
+                raise RuntimeError("RuntimeFacadeAdapter production rollout snapshot is absent")
+            release_manifest = snapshot.get("release_manifest")
+            run_receipt = snapshot.get("run_receipt")
+            if not isinstance(release_manifest, Mapping) or not isinstance(run_receipt, Mapping):
+                raise RuntimeError(
+                    "RuntimeFacadeAdapter production rollout snapshot requires release manifest and RunReceipt"
+                )
+        elif self._production_release_manifest_path is None or self._production_run_receipt_path is None:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter production evidence binding requires release manifest and RunReceipt paths"
+            )
+        if self.rollout_admission is None:
+            raise RuntimeError("RuntimeFacadeAdapter production evidence binding requires rollout admission")
+        try:
+            if snapshot_supplied:
+                binding = project_rollout_evidence(release_manifest, run_receipt)
+            else:
+                binding = load_rollout_evidence(
+                    self._production_release_manifest_path,
+                    self._production_run_receipt_path,
+                )
+            assert_rollout_evidence_binding(
+                self.rollout_admission,
+                binding,
+                expected_package_digest=self._production_package_digest,
+                expected_wheel_digest=self._production_wheel_digest,
+            )
+        except RolloutEvidenceError as error:
+            raise RuntimeError(f"production rollout evidence binding rejected: {error}") from error
+        self.rollout_evidence_binding = binding
+
+    def _require_current_production_admission(self) -> None:
+        if self._require_production_admission:
+            self.refresh_rollout_admission()
 
     @property
     def capabilities(self) -> RuntimeFacadeAdapterCapabilities:
@@ -471,6 +682,7 @@ class RuntimeFacadeAdapter:
         ``input_snapshot_version`` (else the synthetic
         ``"obs:{world}:{entity}"`` placeholder).
         """
+        self._require_current_production_admission()
         if not self.supports_runtime_window_api():
             self._last_window_evidence = None
             return None
@@ -633,6 +845,7 @@ class RuntimeFacadeAdapter:
         return applied_world
 
     def apply_world_layout(self, world_index: int, layout: Any):
+        self._require_current_production_admission()
         request = self._build_runtime_world_layout_request(int(world_index), layout)
         result = self._apply_runtime_world_layout_request(request)
         return self._materialize_applied_world(
@@ -710,6 +923,7 @@ class RuntimeFacadeAdapter:
         return list(self._batch_target().get_comm_candidate_ids_batch(list(refs), bool(use_gpu)))
 
     def apply_world_setup(self, request: Any):
+        self._require_current_production_admission()
         entity_ids = apply_world_setup_request_maintained(self.facade, request)
         if not hasattr(ef_py, "BatchWorldSetupResult"):
             raise RuntimeError(
@@ -729,6 +943,7 @@ class RuntimeFacadeAdapter:
         time_steps: Sequence[float] | None = None,
         sun_assignments: Sequence[Any] | None = None,
     ) -> list[int]:
+        self._require_current_production_admission()
         normalized_time_steps = [] if time_steps is None else [float(value) for value in time_steps]
         request = build_batch_world_setup_request(
             seeds=[int(seed) for seed in seeds],
@@ -827,9 +1042,48 @@ class RuntimeFacadeAdapter:
             return list(batch_target.get_task_orders_maintained_batch(list(refs)))
         return []
 
+    def get_leader_intents_maintained_batch(self, refs: Sequence[Any]) -> list[Any]:
+        """Read maintained leader-intent contracts through the facade batch seam."""
+
+        if not self.capabilities.has_get_leader_intents_maintained_batch:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter.get_leader_intents_maintained_batch requires maintained facade bindings"
+            )
+        return list(self._batch_target().get_leader_intents_maintained_batch(list(refs)))
+
+    def get_pilot_reports_maintained_batch(self, refs: Sequence[Any]) -> list[Any]:
+        """Read maintained pilot-report contracts through the facade batch seam."""
+
+        if not self.capabilities.has_get_pilot_reports_maintained_batch:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter.get_pilot_reports_maintained_batch requires maintained facade bindings"
+            )
+        return list(self._batch_target().get_pilot_reports_maintained_batch(list(refs)))
+
+    def get_unit_messages_batch(self, refs: Sequence[Any]) -> list[list[Any]]:
+        """Read communication packets through the maintained facade batch seam."""
+
+        if not self.capabilities.has_get_unit_messages_batch:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter.get_unit_messages_batch requires maintained facade bindings"
+            )
+        return [list(messages) for messages in self._batch_target().get_unit_messages_batch(list(refs))]
+
     def set_pilot_actions_batch(self, assignments: Sequence[Any]) -> None:
+        self._require_current_production_admission()
         self._last_window_evidence = None
         self._batch_target().set_pilot_actions_batch(list(assignments))
+
+    def set_command_links_batch(self, assignments: Sequence[Any]) -> None:
+        """Configure command-link latency/drop semantics through the facade."""
+
+        self._require_current_production_admission()
+        self._last_window_evidence = None
+        if not self.capabilities.has_set_command_links_batch:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter.set_command_links_batch requires maintained facade bindings"
+            )
+        self._batch_target().set_command_links_batch(list(assignments))
 
     def next_launch_request_id(self) -> int:
         request_id = int(self._next_launch_request_id)
@@ -837,6 +1091,7 @@ class RuntimeFacadeAdapter:
         return request_id
 
     def apply_launch_requests_batch(self, requests: Sequence[Any]) -> list[Any]:
+        self._require_current_production_admission()
         self._last_window_evidence = None
         batch_target = self._batch_target()
         if not self.capabilities.has_apply_launch_requests_batch:
@@ -847,10 +1102,12 @@ class RuntimeFacadeAdapter:
         return list(batch_target.apply_launch_requests_batch(list(requests)))
 
     def step_batch(self) -> None:
+        self._require_current_production_admission()
         self._last_window_evidence = None
         self._batch_target().step_batch()
 
     def step_worlds(self, world_indices: Sequence[int]) -> None:
+        self._require_current_production_admission()
         self._last_window_evidence = None
         indices = [int(index) for index in world_indices]
         if len(indices) == self.world_count() and indices == list(range(self.world_count())):
@@ -859,6 +1116,7 @@ class RuntimeFacadeAdapter:
         raise RuntimeError("RuntimeFacadeAdapter.step_worlds requires a full facade-owned batch step")
 
     def set_mission_commands_maintained_batch(self, assignments: Sequence[Any]) -> None:
+        self._require_current_production_admission()
         batch_target = self._batch_target()
         if self.capabilities.has_set_mission_commands_maintained_batch:
             batch_target.set_mission_commands_maintained_batch(list(assignments))
@@ -870,6 +1128,7 @@ class RuntimeFacadeAdapter:
         )
 
     def set_task_orders_maintained_batch(self, assignments: Sequence[Any]) -> None:
+        self._require_current_production_admission()
         batch_target = self._batch_target()
         materialized_assignments = list(assignments)
         if self.capabilities.has_set_task_orders_maintained_batch:
@@ -882,6 +1141,7 @@ class RuntimeFacadeAdapter:
         )
 
     def set_leader_intents_maintained_batch(self, assignments: Sequence[Any]) -> None:
+        self._require_current_production_admission()
         batch_target = self._batch_target()
         if self.capabilities.has_set_leader_intents_maintained_batch:
             batch_target.set_leader_intents_maintained_batch(list(assignments))
@@ -893,6 +1153,7 @@ class RuntimeFacadeAdapter:
         )
 
     def set_pilot_reports_maintained_batch(self, assignments: Sequence[Any]) -> None:
+        self._require_current_production_admission()
         batch_target = self._batch_target()
         if self.capabilities.has_set_pilot_reports_maintained_batch:
             batch_target.set_pilot_reports_maintained_batch(list(assignments))

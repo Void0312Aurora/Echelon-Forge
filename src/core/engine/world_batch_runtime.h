@@ -87,6 +87,7 @@ class WorldBatchRuntime {
     double world_time_step(std::size_t world_index) const;
 
     void set_pilot_actions_batch(const std::vector<WorldPilotActionAssignment> &assignments);
+    void set_command_links_batch(const std::vector<WorldCommandLinkAssignment> &assignments);
     std::vector<LaunchEvent>
     apply_launch_requests_batch(const std::vector<LaunchRequest> &requests);
     void set_mission_commands_batch(const std::vector<WorldMissionCommandAssignment> &assignments);
@@ -118,6 +119,8 @@ class WorldBatchRuntime {
     std::vector<LeaderIntent>
     get_leader_intents_batch(const std::vector<WorldEntityRef> &refs) const;
     std::vector<PilotReport> get_pilot_reports_batch(const std::vector<WorldEntityRef> &refs) const;
+    std::vector<std::vector<CommPacket>>
+    get_unit_messages_batch(const std::vector<WorldEntityRef> &refs) const;
 
     std::vector<std::vector<uint64_t>>
     get_sensor_candidate_ids_batch(const std::vector<WorldEntityRef> &refs,

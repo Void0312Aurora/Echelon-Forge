@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "runtime/facade/runtime_facade_types.h"
+#include "components/systems/comm.h"
 
 class IWorldBatchCompatibilityPort;
 
@@ -122,6 +123,7 @@ struct EntityKinematicsWrite {
 struct InputBatch {
     std::optional<EntityKinematicsWrite> kinematics_write;
     VectorBatchView<WorldPilotActionAssignment> pilot_actions;
+    VectorBatchView<WorldCommandLinkAssignment> command_links;
     VectorBatchView<LaunchRequest> launch_requests;
     VectorBatchView<WorldMissionCommandMaintainedAssignment> mission_commands;
     VectorBatchView<WorldTaskOrderMaintainedAssignment> task_orders;
@@ -167,6 +169,7 @@ struct ExportRequest {
     bool include_task_orders = false;
     bool include_leader_intents = false;
     bool include_pilot_reports = false;
+    bool include_unit_messages = false;
 };
 
 struct ExportResult {
@@ -179,6 +182,7 @@ struct ExportResult {
     std::vector<TaskOrderMaintainedBatchContract> task_orders;
     std::vector<LeaderIntentMaintainedBatchContract> leader_intents;
     std::vector<PilotReportMaintainedBatchContract> pilot_reports;
+    std::vector<std::vector<CommPacket>> unit_messages;
 };
 
 struct Diagnostics {
