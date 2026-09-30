@@ -4,7 +4,7 @@
   "authoritative": false,
   "production_activation_enabled": false,
   "inventory_sha256": "491d24a6ac45db7ca037c04faba6cd4d5332cb689517eabeb18194c3c446195d",
-  "release_manifest_blob_sha256": "37538b149449696c31667ad24469fffb51437be618b6e2efffca0257a4c8e093",
+  "release_manifest_blob_sha256": "f551d57e8c9bf24d0c462465b1b8d83cc3f0ccbdaddd9c357fdb93714ecba510",
   "active_plan_blob_sha256": "21a1e7564cc9716bc2a313e934dea5c5719e31c7bdec3e8d7b60c03c9350d4a1",
   "admissions_open": true,
   "writer_advancement_frozen": false,
@@ -35,7 +35,7 @@
       "decision_id": "decision-1",
       "decision_sequence": "0",
       "irreversible_write_boundary": "none",
-      "manifest_sha256": "54870f5998935284e6675014911b1de7265c88e1f0292ff7bfc383b1ce547a47",
+      "manifest_sha256": "112bd35292851365ba26a2c2d5284239728febf540ac347a3a1cd672bd7900e0",
       "plan_reader_generation_max": "2",
       "plan_reader_generation_min": "1",
       "plan_sha256": "048aa516dcf5554d4645ea52b108928314c53b30cb6ab16c9f9b922711fb0333",
@@ -47,7 +47,7 @@
       "writer_generation": "1",
       "writer_role": "release_controller"
     },
-    "payload_sha256": "762557d0f24efe75613c5a51be0f4646f8576377cb7237b1a80ebcc00860ef80",
+    "payload_sha256": "e80ac724293f438f49fd03adb93b68e7507a6c741eaeec30c868e4a7c01c4a99",
     "signatures": []
   }
 }
