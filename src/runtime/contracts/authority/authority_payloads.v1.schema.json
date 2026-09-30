@@ -2,6 +2,7 @@
   "$id": "https://echelon-forge.local/contracts/authority/authority_payloads.v1.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "oneOf": [
+    {"$ref": "#/$defs/resolved_execution_plan"},
     {"$ref": "#/$defs/resolved_composition_plan"},
     {"$ref": "#/$defs/release_manifest"},
     {"$ref": "#/$defs/rollout_decision"},
@@ -10,6 +11,13 @@
   "$defs": {
     "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "generation": {"type": "string", "pattern": "^(?:0|[1-9][0-9]*)$"},
+    "resolved_execution_plan": {
+      "type": "object", "additionalProperties": false,
+      "required": ["authority_kind", "schema_version", "contract_version", "writer_role", "plan_id", "writer_generation", "reader_generation_min", "reader_generation_max", "request_sha256", "catalog_lock_sha256", "profile_projection_sha256", "backend_request_sha256", "requested_manifest_sha256", "resolved_manifest_sha256", "composition_id", "requested_profile", "backend", "provider_versions", "resolved_manifest"],
+      "properties": {
+        "authority_kind": {"const": "resolved_execution_plan"}, "schema_version": {"const": "echelon_forge.resolved_execution_plan.v1"}, "contract_version": {"const": "echelon_forge.resolved_execution_plan_contract.v1"}, "writer_role": {"const": "plan_compiler"}, "plan_id": {"type": "string", "minLength": 1}, "writer_generation": {"$ref": "#/$defs/generation"}, "reader_generation_min": {"$ref": "#/$defs/generation"}, "reader_generation_max": {"$ref": "#/$defs/generation"}, "request_sha256": {"$ref": "#/$defs/sha256"}, "catalog_lock_sha256": {"$ref": "#/$defs/sha256"}, "profile_projection_sha256": {"$ref": "#/$defs/sha256"}, "backend_request_sha256": {"$ref": "#/$defs/sha256"}, "requested_manifest_sha256": {"$ref": "#/$defs/sha256"}, "resolved_manifest_sha256": {"$ref": "#/$defs/sha256"}, "composition_id": {"type": "string", "minLength": 1}, "requested_profile": {"type": "object", "additionalProperties": false, "required": ["profile_id", "profile_version"], "properties": {"profile_id": {"type": "string", "minLength": 1}, "profile_version": {"type": "string", "minLength": 1}}}, "backend": {"type": "object", "additionalProperties": false, "required": ["provider_id", "profile_id", "implementation_version", "required_capabilities"], "properties": {"provider_id": {"type": "string", "minLength": 1}, "profile_id": {"type": "string", "minLength": 1}, "implementation_version": {"type": "string", "minLength": 1}, "required_capabilities": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}}}, "provider_versions": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "object", "additionalProperties": false, "required": ["provider_id", "implementation_version"], "properties": {"provider_id": {"type": "string", "minLength": 1}, "implementation_version": {"type": "string", "minLength": 1}}}}, "resolved_manifest": {"$ref": "../composition/resolved_simulation_composition.v1.schema.json"}
+      }
+    },
     "resolved_composition_plan": {
       "type": "object", "additionalProperties": false,
       "required": ["authority_kind", "schema_version", "contract_version", "writer_role", "adapter_role", "plan_id", "request_sha256", "writer_generation", "reader_generation_min", "reader_generation_max", "source_artifact_sha256", "source_artifact_schema_version", "source_request_manifest_binding_sha256", "source_requested_manifest_sha256", "resolved_plan"],

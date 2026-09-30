@@ -48,6 +48,7 @@ _FINE_GROUP_PREFIXES: tuple[tuple[str, str], ...] = (
   ("core/engine", "core_engine"),
   ("core/geometry", "core_geometry"),
   ("core/interfaces", "core_interfaces"),
+  ("runtime/compatibility", "runtime_facade"),
   ("runtime/facade", "runtime_facade"),
   ("runtime/providers", "runtime_providers"),
   ("runtime/host", "runtime_host"),
@@ -362,7 +363,7 @@ FINE_GROUP_ALLOWED_TARGETS: dict[str, frozenset[str]] = {
   # (test_runtime_facade_contract_boundaries.py) and by the header-vs-impl
   # split enforced in this module's report, not by widening this matrix.
   "runtime_facade": frozenset(
-    {"runtime_contracts", "core_engine", "core_mission_runtime", "core_mission_episode", "components", "core_interfaces"}
+    {"runtime_contracts", "core_engine", "core_mission_runtime", "core_mission_episode", "components", "core_interfaces", "gpu"}
   ),
   # "exposes runtime/facade, required compatibility APIs from core, and the
   # relevant data types to Python." Documented as the outermost consumer;

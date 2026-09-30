@@ -153,8 +153,8 @@ def cpp_has_default_manifest_alias(source: str) -> bool:
     return bool(
         re.search(
             r"SimulationKernel::SimulationKernel\s*\(\s*\)\s*:\s*SimulationKernel\s*\(\s*"
-            r"runtime::providers::default_compatibility_resolved_manifest_json\s*\(\s*\)\s*"
-            r"\)\s*\{\s*\}",
+            r"(?:runtime::providers::default_compatibility_resolved_manifest_json\s*\(\s*\)|"
+            r"std::string\s*\(\s*runtime::contracts::generated::kDefaultResolvedExecutionPlanJson\s*\))\s*\)\s*\{\s*\}",
             code,
         )
     )
@@ -996,7 +996,7 @@ def verify_source_truth() -> None:
     ):
         raise ClosureError("default backend provider factory count is not exactly one")
     if not re.search(
-        r"\bSimulationKernel\s+kernel\s*\(\s*resolved_manifest\s*\)\s*;", conformance_code
+        r"\bSimulationKernel\s+kernel\s*\(\s*(?:resolved_manifest|execution_plan\.empty\(\)\s*\?\s*resolved_manifest\s*:\s*execution_plan)\s*\)\s*;", conformance_code
     ):
         raise ClosureError(
             "Cordis/native conformance no longer reaches explicit native realization"
@@ -1090,7 +1090,7 @@ def build_record() -> dict[str, Any]:
                 "runtime::providers::build_default_simulation_composition_impl"
             ),
             "default_compatibility_artifact": (
-                "runtime::providers::default_compatibility_resolved_manifest_json"
+                "runtime::contracts::generated::kDefaultResolvedExecutionPlanJson"
             ),
             "backend_materializer": (
                 "runtime::backend_provider::materialize_default_world_batch_backend"

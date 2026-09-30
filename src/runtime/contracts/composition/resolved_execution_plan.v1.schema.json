@@ -1,0 +1,256 @@
+{
+  "$id": "echelon_forge.resolved_execution_plan.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "authority_envelope_json": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "authority_payload_bytes": {
+      "type": "object"
+    },
+    "canonical_json": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "canonicalization": {
+      "const": "echelon_forge.sorted_utf8_json.v1"
+    },
+    "hash_algorithm": {
+      "const": "sha256"
+    },
+    "input_bindings": {
+      "additionalProperties": false,
+      "properties": {
+        "backend_request_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "catalog_lock_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "profile_projection_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "request_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "requested_manifest_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "resolved_manifest_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_sha256",
+        "catalog_lock_sha256",
+        "profile_projection_sha256",
+        "backend_request_sha256",
+        "requested_manifest_sha256",
+        "resolved_manifest_sha256"
+      ],
+      "type": "object"
+    },
+    "owner_inputs": {
+      "additionalProperties": false,
+      "properties": {
+        "backend_request": {
+          "type": "object"
+        },
+        "catalog_lock": {
+          "type": "object"
+        },
+        "profile_projection": {
+          "type": "object"
+        },
+        "request": {
+          "type": "object"
+        },
+        "requested_manifest": {
+          "type": "object"
+        },
+        "resolved_manifest": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "request",
+        "catalog_lock",
+        "profile_projection",
+        "backend_request",
+        "requested_manifest",
+        "resolved_manifest"
+      ],
+      "type": "object"
+    },
+    "owner_join": {
+      "additionalProperties": false,
+      "properties": {
+        "backend_implementation_version": {
+          "minLength": 1,
+          "pattern": "^[\\u0000-\\u007F]*$",
+          "type": "string"
+        },
+        "backend_profile_id": {
+          "minLength": 1,
+          "pattern": "^[\\u0000-\\u007F]*$",
+          "type": "string"
+        },
+        "backend_provider_id": {
+          "minLength": 1,
+          "pattern": "^[\\u0000-\\u007F]*$",
+          "type": "string"
+        },
+        "catalog_backend_capabilities": {
+          "items": {
+            "minLength": 1,
+            "pattern": "^[\\u0000-\\u007F]*$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "catalog_backend_implementation_id": {
+          "minLength": 1,
+          "pattern": "^[\\u0000-\\u007F]*$",
+          "type": "string"
+        },
+        "catalog_backend_owner_id": {
+          "minLength": 1,
+          "pattern": "^[\\u0000-\\u007F]*$",
+          "type": "string"
+        },
+        "catalog_backend_provenance": {
+          "additionalProperties": false,
+          "properties": {
+            "artifact_identity": {
+              "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
+              "type": "string"
+            },
+            "artifact_kind": {
+              "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
+              "type": "string"
+            },
+            "artifact_sha256": {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "artifact_identity",
+            "artifact_kind",
+            "artifact_sha256"
+          ],
+          "type": "object"
+        },
+        "composition_id": {
+          "minLength": 1,
+          "pattern": "^[\\u0000-\\u007F]*$",
+          "type": "string"
+        },
+        "requested_profile": {
+          "additionalProperties": false,
+          "properties": {
+            "profile_id": {
+              "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
+              "type": "string"
+            },
+            "profile_version": {
+              "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "profile_id",
+            "profile_version"
+          ],
+          "type": "object"
+        },
+        "resolver_contract_version": {
+          "minLength": 1,
+          "pattern": "^[\\u0000-\\u007F]*$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "composition_id",
+        "requested_profile",
+        "backend_provider_id",
+        "backend_profile_id",
+        "backend_implementation_version",
+        "catalog_backend_owner_id",
+        "catalog_backend_implementation_id",
+        "catalog_backend_provenance",
+        "catalog_backend_capabilities",
+        "resolver_contract_version"
+      ],
+      "type": "object"
+    },
+    "plan_contract_version": {
+      "const": "1.0.0"
+    },
+    "plan_id": {
+      "minLength": 1,
+      "pattern": "^[\\u0000-\\u007F]*$",
+      "type": "string"
+    },
+    "plan_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "reader_generation_max": {
+      "pattern": "^(?:0|[1-9][0-9]*)$",
+      "type": "string"
+    },
+    "reader_generation_min": {
+      "pattern": "^(?:0|[1-9][0-9]*)$",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "echelon_forge.resolved_execution_plan.v1"
+    },
+    "writer_generation": {
+      "pattern": "^(?:0|[1-9][0-9]*)$",
+      "type": "string"
+    },
+    "writer_role": {
+      "const": "plan_compiler"
+    }
+  },
+  "required": [
+    "schema_version",
+    "plan_contract_version",
+    "plan_id",
+    "writer_role",
+    "writer_generation",
+    "reader_generation_min",
+    "reader_generation_max",
+    "authority_envelope_json",
+    "authority_payload_bytes",
+    "owner_inputs",
+    "input_bindings",
+    "owner_join",
+    "canonicalization",
+    "hash_algorithm",
+    "canonical_json",
+    "plan_sha256"
+  ],
+  "type": "object"
+}

@@ -156,7 +156,10 @@ def build_vectors() -> dict[str, dict[str, Any]]:
     "reader_generation_min": "1",
     "reader_generation_max": "2",
     "package_set": [{"name": "cmo", "sha256": hashlib.sha256(CANDIDATE_RELEASE_PACKAGE_BYTES).hexdigest()}],
-    "supported_rows": ["windows-amd64-msvc"],
+    # The same closed fixture is exercised by the Linux native smoke job and
+    # the Windows qualification job.  Admit both concrete build rows rather
+    # than letting the Linux candidate fail before its recorder gates run.
+    "supported_rows": ["linux-amd64-gcc", "windows-amd64-msvc"],
     "provenance_sha256": "b" * 64,
     "sbom_sha256": "c" * 64,
     "toolchain_identity": "msvc-v143",

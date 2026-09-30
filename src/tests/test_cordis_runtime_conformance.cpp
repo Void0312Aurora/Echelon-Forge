@@ -3,6 +3,7 @@
 #include "runtime/composition/composition_identity.h"
 #include "runtime/composition/composition_json.h"
 #include "runtime/contracts/runtime_composition_projection_contract.h"
+#include "runtime/contracts/authority/runtime_authority_contract.h"
 
 #include <nlohmann/json.hpp>
 
@@ -274,9 +275,10 @@ bool profile_projection_matches_artifacts(const Json &projection, const Json &re
 } // namespace
 
 int main(int argc, char **argv) {
-    if (argc != 6 && argc != 7) {
+    if (argc != 6 && argc != 7 && argc != 8) {
         std::cerr << "usage: ef_cordis_runtime_conformance_test <request> <lock> <authority> "
-                     "<requested_manifest> <resolved_manifest> [profile_projection]\n";
+                     "<requested_manifest> <resolved_manifest> [profile_projection] "
+                     "[resolved_execution_plan]\n";
         return 2;
     }
     try {
@@ -284,11 +286,32 @@ int main(int argc, char **argv) {
         const auto lock = read_file(argv[2]);
         const auto authority = read_file(argv[3]);
         const auto requested_manifest = read_file(argv[4]);
-        const auto resolved_manifest = read_file(argv[5]);
+        auto resolved_manifest = read_file(argv[5]);
         const auto request_doc = Json::parse(request);
         const auto lock_doc = Json::parse(lock);
         const auto requested_doc = Json::parse(requested_manifest);
-        const auto profile_projection = argc == 7 ? Json::parse(read_file(argv[6])) : Json{};
+        const auto profile_projection = argc >= 7 ? Json::parse(read_file(argv[6])) : Json{};
+        std::string execution_plan = argc == 8 ? read_file(argv[7]) : std::string{};
+        if (!execution_plan.empty()) {
+            const auto plan_result =
+                runtime::authority_contracts::validate_resolved_execution_plan_json(execution_plan);
+            if (!plan_result.valid) {
+                std::cerr << plan_result.code << ": " << plan_result.detail << '\n';
+                return 1;
+            }
+            const auto plan_doc = Json::parse(execution_plan);
+            if (plan_doc.at("owner_inputs").at("request") != request_doc ||
+                plan_doc.at("owner_inputs").at("catalog_lock") != lock_doc ||
+                plan_doc.at("owner_inputs").at("requested_manifest") != requested_doc ||
+                (argc >= 7 &&
+                 plan_doc.at("owner_inputs").at("profile_projection") != profile_projection)) {
+                std::cerr
+                    << "closed execution plan owner inputs differ from supplied Cordis artifacts\n";
+                return 1;
+            }
+            resolved_manifest =
+                plan_doc.at("authority_payload_bytes").at("resolved_manifest").dump();
+        }
 
         const auto projection =
             runtime::projection_contracts::validate_runtime_composition_projection_json(
@@ -396,7 +419,7 @@ int main(int argc, char **argv) {
             std::cerr << "default request seed exceeds native range\n";
             return 1;
         }
-        SimulationKernel kernel(resolved_manifest);
+        SimulationKernel kernel(execution_plan.empty() ? resolved_manifest : execution_plan);
         kernel.set_time_step(static_cast<double>(time_step_ns) / 1'000'000'000.0);
         kernel.reset(static_cast<unsigned int>(seed));
         if (std::abs(kernel.get_time_step() - static_cast<double>(time_step_ns) / 1'000'000'000.0) >

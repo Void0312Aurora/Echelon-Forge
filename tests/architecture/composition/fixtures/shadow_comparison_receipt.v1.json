@@ -4,8 +4,8 @@
   "receipt_id": "shadow-1",
   "authoritative": false,
   "plan_sha256": "e27a8da7a26ce59d324ead3fcd3ab629464f5e5aa5eaaf1de7d5d5a4be607e09",
-  "release_manifest_sha256": "0aaa423f33224d30df4b521f2f9c94cb12b9664334436302d03da73de621d3b8",
-  "rollout_decision_sha256": "6179d69528cf51c260c8f807eaec4be962eb842b08ce4336979321ccc391eb28",
+  "release_manifest_sha256": "49cad290c9d86598aa2a2f4d00223e07eeaa64c2c1208a9f4d99edd854083f0e",
+  "rollout_decision_sha256": "8b23a1900a6ef6a6da6d8e815e843563895caab132b05a53c950ce208fe860e6",
   "comparison_kind": "cpu-exact-result",
   "outcome": "match",
   "evidence_sha256": "9999999999999999999999999999999999999999999999999999999999999999"

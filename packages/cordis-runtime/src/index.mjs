@@ -34,3 +34,9 @@ export {
   canonicalAuthorityJson,
   parseCanonicalAuthorityJson,
 } from './authority.mjs';
+
+export {
+  RESOLVED_EXECUTION_PLAN_SCHEMA_VERSION,
+  RESOLVED_EXECUTION_PLAN_CONTRACT_VERSION,
+  buildResolvedExecutionPlan,
+} from './resolved-plan.mjs';

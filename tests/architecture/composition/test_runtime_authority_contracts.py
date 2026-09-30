@@ -156,7 +156,7 @@ def test_all_four_authorities_have_distinct_domains_and_typed_envelopes() -> Non
   envelopes = [plan, release, rollout, checkpoint]
   assert len({envelope["domain"] for envelope in envelopes}) == 4
   assert len({envelope["media_type"] for envelope in envelopes}) == 4
-  assert set(AUTHORITY_SPECS) == {"resolved_composition_plan", "release_manifest", "rollout_decision", "state_checkpoint"}
+  assert set(AUTHORITY_SPECS) == {"resolved_execution_plan", "resolved_composition_plan", "release_manifest", "rollout_decision", "state_checkpoint"}
   for envelope in envelopes:
     assert set(envelope) == AUTHORITY_ENVELOPE_FIELDS
     assert validate_authority_envelope(envelope) == envelope

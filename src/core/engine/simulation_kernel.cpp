@@ -13,6 +13,8 @@
 #include "core/interfaces/unit_factory.h"
 #include "models/weapons/missile_guidance_types.h"
 #include "runtime/providers/default_simulation_provider_catalog.h"
+#include "runtime/contracts/authority/runtime_authority_contract.h"
+#include "runtime/contracts/composition/resolved_execution_plan.v1.generated.h"
 
 #include <spdlog/spdlog.h>
 
@@ -27,12 +29,23 @@
 namespace {
 constexpr const char *kTransferReflectionSpawnReservation =
     "__echelon_forge_transfer_reflection_spawn_reservation";
-}
+} // namespace
 
 SimulationKernel::SimulationKernel()
-    : SimulationKernel(runtime::providers::default_compatibility_resolved_manifest_json()) {}
+    : SimulationKernel(
+          std::string(runtime::contracts::generated::kDefaultResolvedExecutionPlanJson)) {}
 
 SimulationKernel::SimulationKernel(std::string resolved_manifest_json) {
+    if (runtime::authority_contracts::validate_resolved_execution_plan_json(resolved_manifest_json)
+            .valid) {
+        const auto manifest =
+            runtime::authority_contracts::resolved_manifest_from_execution_plan_json(
+                resolved_manifest_json);
+        if (!manifest) {
+            throw std::runtime_error("resolved execution plan admission failed");
+        }
+        resolved_manifest_json = *manifest;
+    }
     const auto admission = runtime::providers::validate_default_simulation_composition_manifest(
         resolved_manifest_json);
     if (!admission) {

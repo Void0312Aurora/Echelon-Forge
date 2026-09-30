@@ -81,6 +81,56 @@ TEST_SUITE("runtime_authority_contract") {
         }
     }
 
+    TEST_CASE("native executes the P5-A closed resolved execution plan") {
+        std::ifstream input(
+            std::string(EF_SOURCE_ROOT) +
+            "/tests/architecture/composition/fixtures/default_resolved_execution_plan.v1.json");
+        REQUIRE(input.good());
+        const auto plan = nlohmann::json::parse(input);
+        const auto result =
+            runtime::authority_contracts::validate_resolved_execution_plan_json(plan.dump());
+        CHECK(result.valid);
+    }
+
+    TEST_CASE("native rejects a P5-A owner-join substitution") {
+        std::ifstream input(
+            std::string(EF_SOURCE_ROOT) +
+            "/tests/architecture/composition/fixtures/default_resolved_execution_plan.v1.json");
+        REQUIRE(input.good());
+        auto plan = nlohmann::json::parse(input);
+        plan.at("input_bindings").at("catalog_lock_sha256") = std::string(64, '0');
+        auto canonical_payload = plan;
+        canonical_payload.erase("canonical_json");
+        canonical_payload.erase("plan_sha256");
+        plan.at("canonical_json") = canonical_payload.dump();
+        plan.at("plan_sha256") = runtime::authority_contracts::resolved_execution_plan_sha256_hex(
+            plan.at("canonical_json").get<std::string>());
+        const auto result =
+            runtime::authority_contracts::validate_resolved_execution_plan_json(plan.dump());
+        CHECK_FALSE(result.valid);
+        CHECK(result.code == "plan.owner_inputs");
+    }
+
+    TEST_CASE("native rejects P5-A provider and resolver drift") {
+        std::ifstream input(
+            std::string(EF_SOURCE_ROOT) +
+            "/tests/architecture/composition/fixtures/default_resolved_execution_plan.v1.json");
+        REQUIRE(input.good());
+        auto plan = nlohmann::json::parse(input);
+        plan.at("owner_inputs").at("backend_request").at("provider_implementation_version") =
+            "9.9.9";
+        plan.at("authority_payload_bytes").at("backend").at("implementation_version") = "9.9.9";
+        plan.at("owner_join").at("backend_implementation_version") = "9.9.9";
+        plan.at("owner_inputs").at("resolved_manifest").at("resolver_contract_version") =
+            "forged.resolver.v1";
+        plan.at("authority_payload_bytes").at("resolved_manifest").at("resolver_contract_version") =
+            "forged.resolver.v1";
+        plan.at("owner_join").at("resolver_contract_version") = "forged.resolver.v1";
+        const auto result =
+            runtime::authority_contracts::validate_resolved_execution_plan_json(plan.dump());
+        CHECK_FALSE(result.valid);
+    }
+
     TEST_CASE("native fails closed for plan shell and rollout/checkpoint semantic mutations") {
         nlohmann::json plan_payload = {
             {"adapter_role", "legacy_resolved_manifest_reader"},

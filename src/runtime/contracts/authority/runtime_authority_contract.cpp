@@ -20,7 +20,32 @@ namespace {
 
 using Json = nlohmann::json;
 
-std::string sha256_hex(std::string_view input) {
+Json sorted_json_value(const Json &value) {
+    if (value.is_object()) {
+        Json result = Json::object();
+        std::vector<std::string> keys;
+        keys.reserve(value.size());
+        for (const auto &item : value.items())
+            keys.push_back(item.key());
+        std::sort(keys.begin(), keys.end());
+        for (const auto &key : keys)
+            result[key] = sorted_json_value(value.at(key));
+        return result;
+    }
+    if (value.is_array()) {
+        Json result = Json::array();
+        for (const auto &item : value)
+            result.push_back(sorted_json_value(item));
+        return result;
+    }
+    return value;
+}
+
+std::string sorted_json_dump(const Json &value) {
+    return sorted_json_value(value).dump();
+}
+
+std::string sha256_hex_impl(std::string_view input) {
     constexpr std::array<std::uint32_t, 64> constants = {
         0x428a2f98U, 0x71374491U, 0xb5c0fbcfU, 0xe9b5dba5U, 0x3956c25bU, 0x59f111f1U, 0x923f82a4U,
         0xab1c5ed5U, 0xd807aa98U, 0x12835b01U, 0x243185beU, 0x550c7dc3U, 0x72be5d74U, 0x80deb1feU,
@@ -220,7 +245,40 @@ std::string authority_digest_sha256_hex(std::string_view domain, std::string_vie
     input.append(media_type);
     input.push_back('\0');
     input.append(payload_bytes);
-    return sha256_hex(input);
+    return sha256_hex_impl(input);
+}
+
+std::string sha256_hex(std::string_view bytes) {
+    return sha256_hex_impl(bytes);
+}
+
+std::optional<std::string> canonical_authority_json(std::string_view json_bytes) {
+    try {
+        const auto value = Json::parse(json_bytes.begin(), json_bytes.end());
+        return sorted_json_dump(value);
+    } catch (const Json::exception &) {
+        return std::nullopt;
+    }
+}
+
+std::optional<std::string>
+checkpoint_replay_aggregate_sha256(std::string_view checkpoint_payload_json) {
+    try {
+        const auto payload =
+            Json::parse(checkpoint_payload_json.begin(), checkpoint_payload_json.end());
+        if (!payload.is_object() || !payload.contains("state_schema_generation") ||
+            !payload.contains("transfer_fence_sequence") || !payload.contains("world_fragments")) {
+            return std::nullopt;
+        }
+        const Json material = {
+            {"state_schema_generation", payload.at("state_schema_generation")},
+            {"transfer_fence_sequence", payload.at("transfer_fence_sequence")},
+            {"world_fragments", payload.at("world_fragments")},
+        };
+        return sha256_hex_impl(sorted_json_dump(material));
+    } catch (const Json::exception &) {
+        return std::nullopt;
+    }
 }
 
 ValidationResult validate_authority_envelope_json(std::string_view envelope_json,
@@ -275,13 +333,16 @@ ValidationResult validate_authority_envelope_json(std::string_view envelope_json
         return invalid("authority.payload_type", "authority_kind must be a string");
     }
     const auto kind = payload.at("authority_kind").get<std::string>();
-    const auto expected_domain = kind == "release_manifest"            ? "release.manifest"
+    const auto expected_domain = kind == "release_manifest"          ? "release.manifest"
+                                 : kind == "resolved_execution_plan" ? "composition.execution-plan"
                                  : kind == "resolved_composition_plan" ? "composition.resolved-plan"
                                  : kind == "rollout_decision"          ? "release.rollout-decision"
                                  : kind == "state_checkpoint"          ? "runtime.state-checkpoint"
                                                                        : "";
     const auto expected_media =
         kind == "release_manifest" ? "application/vnd.echelon-forge.release-manifest.v1+json"
+        : kind == "resolved_execution_plan"
+            ? "application/vnd.echelon-forge.resolved-execution-plan.v1+json"
         : kind == "resolved_composition_plan"
             ? "application/vnd.echelon-forge.resolved-composition-plan.v1+json"
         : kind == "rollout_decision" ? "application/vnd.echelon-forge.rollout-decision.v1+json"
@@ -295,6 +356,7 @@ ValidationResult validate_authority_envelope_json(std::string_view envelope_json
     const auto expected_schema = std::string("echelon_forge.") + kind + ".v1";
     const auto expected_contract = std::string("echelon_forge.") + kind + "_contract.v1";
     const auto expected_writer = kind == "release_manifest"            ? "release_artifact_pipeline"
+                                 : kind == "resolved_execution_plan"   ? "plan_compiler"
                                  : kind == "resolved_composition_plan" ? "plan_compiler"
                                  : kind == "rollout_decision"          ? "release_controller"
                                                                        : "runtime_host";
@@ -403,6 +465,60 @@ ValidationResult validate_authority_envelope_json(std::string_view envelope_json
             return invalid("authority.payload_type", "release rollback policy is not admitted");
         }
     }
+    if (kind == "resolved_execution_plan") {
+        if (!exact_fields(payload,
+                          {"authority_kind", "backend", "backend_request_sha256",
+                           "catalog_lock_sha256", "composition_id", "contract_version",
+                           "profile_projection_sha256", "provider_versions", "plan_id",
+                           "reader_generation_max", "reader_generation_min", "request_sha256",
+                           "requested_manifest_sha256", "requested_profile", "resolved_manifest",
+                           "resolved_manifest_sha256", "schema_version", "writer_generation",
+                           "writer_role"})) {
+            return invalid("authority.payload_fields",
+                           "execution plan payload fields are not exact");
+        }
+        for (const auto field :
+             {"request_sha256", "catalog_lock_sha256", "profile_projection_sha256",
+              "backend_request_sha256", "requested_manifest_sha256", "resolved_manifest_sha256"}) {
+            if (!sha256_string(payload.at(field)))
+                return invalid("authority.payload_type", "execution plan hash is not SHA-256");
+        }
+        if (!identifier_string(payload.at("plan_id")) ||
+            !identifier_string(payload.at("composition_id")) ||
+            !generation_window(payload, "reader_generation_min", "reader_generation_max") ||
+            !payload.at("requested_profile").is_object() ||
+            !exact_fields(payload.at("requested_profile"), {"profile_id", "profile_version"}) ||
+            !identifier_string(payload.at("requested_profile").at("profile_id")) ||
+            !nonempty_string(payload.at("requested_profile").at("profile_version"))) {
+            return invalid("authority.payload_type",
+                           "execution plan identity/profile is not typed");
+        }
+        const auto &backend = payload.at("backend");
+        if (!exact_fields(backend, {"implementation_version", "profile_id", "provider_id",
+                                    "required_capabilities"}) ||
+            !identifier_string(backend.at("provider_id")) ||
+            !identifier_string(backend.at("profile_id")) ||
+            !nonempty_string(backend.at("implementation_version")) ||
+            !sorted_unique_strings(backend.at("required_capabilities"), false)) {
+            return invalid("authority.payload_type", "execution plan backend is not typed");
+        }
+        const auto &resolved = payload.at("resolved_manifest");
+        if (!resolved.is_object() ||
+            !runtime::composition::parse_resolved_composition_json(resolved.dump())) {
+            return invalid("authority.payload_type", "execution plan resolved manifest is invalid");
+        }
+        if (payload.at("requested_manifest_sha256") != resolved.at("requested_manifest_sha256") ||
+            payload.at("resolved_manifest_sha256") != resolved.at("resolved_manifest_sha256") ||
+            resolved.at("manifest").at("composition_id") != payload.at("composition_id") ||
+            resolved.at("manifest").at("requested_profile") != payload.at("requested_profile") ||
+            resolved.at("manifest").at("backend_request").at("provider_id") !=
+                backend.at("provider_id") ||
+            resolved.at("manifest").at("backend_request").at("backend_profile_id") !=
+                backend.at("profile_id")) {
+            return invalid("authority.payload_binding",
+                           "execution plan does not bind its resolved manifest");
+        }
+    }
     if (kind == "resolved_composition_plan") {
         if (!exact_fields(payload,
                           {"adapter_role", "authority_kind", "contract_version", "plan_id",
@@ -451,16 +567,16 @@ ValidationResult validate_authority_envelope_json(std::string_view envelope_json
         std::string binding_input = payload.at("request_sha256").get<std::string>();
         binding_input.push_back('\0');
         binding_input += payload.at("source_requested_manifest_sha256").get<std::string>();
-        if (sha256_hex(binding_input) !=
+        if (sha256_hex_impl(binding_input) !=
             payload.at("source_request_manifest_binding_sha256").get<std::string>()) {
             return invalid("authority.payload_binding",
                            "source request/manifest provenance binding differs");
         }
         auto resolved_body = resolved;
         resolved_body.erase("resolved_manifest_sha256");
-        if (sha256_hex(resolved_body.dump()) !=
+        if (sha256_hex_impl(resolved_body.dump()) !=
                 resolved.at("resolved_manifest_sha256").get<std::string>() ||
-            sha256_hex(resolved.dump()) !=
+            sha256_hex_impl(resolved.dump()) !=
                 payload.at("source_artifact_sha256").get<std::string>()) {
             return invalid("authority.payload_digest",
                            "resolved plan legacy digest does not match source bytes");
@@ -592,6 +708,320 @@ ValidationResult validate_authority_envelope_json(std::string_view envelope_json
         return invalid("authority.digest", "detached digest mismatch");
     }
     return ValidationResult{true, {}, {}};
+}
+
+ValidationResult validate_resolved_execution_plan_json(std::string_view plan_json) {
+    if (plan_json.starts_with("\xEF\xBB\xBF") || has_noncanonical_numeric_token(plan_json)) {
+        return invalid("plan.noncanonical_payload",
+                       "BOM or non-canonical numeric token is forbidden");
+    }
+    Json plan;
+    try {
+        plan = Json::parse(plan_json.begin(), plan_json.end());
+    } catch (const Json::exception &error) {
+        return invalid("plan.input_error", error.what());
+    }
+    if (plan.dump() != plan_json) {
+        return invalid("plan.noncanonical_payload", "closed plan bytes are not canonical JSON");
+    }
+    if (!exact_fields(plan, {"authority_envelope_json", "authority_payload_bytes", "canonical_json",
+                             "canonicalization", "hash_algorithm", "input_bindings", "owner_inputs",
+                             "owner_join", "plan_contract_version", "plan_id", "plan_sha256",
+                             "reader_generation_max", "reader_generation_min", "schema_version",
+                             "writer_generation", "writer_role"})) {
+        return invalid("plan.fields", "closed plan fields are not exact");
+    }
+    if (plan.at("schema_version") != "echelon_forge.resolved_execution_plan.v1" ||
+        plan.at("plan_contract_version") != "1.0.0" || plan.at("writer_role") != "plan_compiler" ||
+        plan.at("canonicalization") != "echelon_forge.sorted_utf8_json.v1" ||
+        plan.at("hash_algorithm") != "sha256" || !identifier_string(plan.at("plan_id")) ||
+        !generation_string(plan.at("writer_generation")) ||
+        !generation_window(plan, "reader_generation_min", "reader_generation_max") ||
+        !sha256_string(plan.at("plan_sha256")) || !plan.at("canonical_json").is_string() ||
+        !plan.at("authority_envelope_json").is_string() ||
+        !plan.at("authority_payload_bytes").is_object()) {
+        return invalid("plan.type", "closed plan version, identity, or generation is not admitted");
+    }
+    const auto &bindings = plan.at("input_bindings");
+    if (!exact_fields(bindings, {"backend_request_sha256", "catalog_lock_sha256",
+                                 "profile_projection_sha256", "request_sha256",
+                                 "requested_manifest_sha256", "resolved_manifest_sha256"})) {
+        return invalid("plan.bindings", "input bindings are not exact");
+    }
+    for (const auto field :
+         {"backend_request_sha256", "catalog_lock_sha256", "profile_projection_sha256",
+          "request_sha256", "requested_manifest_sha256", "resolved_manifest_sha256"}) {
+        if (!sha256_string(bindings.at(field)))
+            return invalid("plan.bindings", "input binding is not SHA-256");
+    }
+    const auto &owner_inputs = plan.at("owner_inputs");
+    if (!exact_fields(owner_inputs, {"backend_request", "catalog_lock", "profile_projection",
+                                     "request", "requested_manifest", "resolved_manifest"})) {
+        return invalid("plan.owner_inputs", "owner input fields are not exact");
+    }
+    for (const auto field : {"backend_request", "catalog_lock", "profile_projection", "request",
+                             "requested_manifest", "resolved_manifest"}) {
+        if (!owner_inputs.at(field).is_object())
+            return invalid("plan.owner_inputs", "owner input is not an object");
+    }
+    const auto request_sha = sha256_hex_impl(sorted_json_dump(owner_inputs.at("request")));
+    if (request_sha != bindings.at("request_sha256").get<std::string>())
+        return invalid("plan.owner_inputs", "request digest mismatch");
+    const auto backend_sha = sha256_hex_impl(sorted_json_dump(owner_inputs.at("backend_request")));
+    if (backend_sha != bindings.at("backend_request_sha256").get<std::string>())
+        return invalid("plan.owner_inputs", "backend request digest mismatch");
+    const auto requested_sha =
+        sha256_hex_impl(sorted_json_dump(owner_inputs.at("requested_manifest")));
+    if (requested_sha != bindings.at("requested_manifest_sha256").get<std::string>())
+        return invalid("plan.owner_inputs", "requested manifest digest mismatch");
+    Json lock_payload = owner_inputs.at("catalog_lock");
+    if (!lock_payload.contains("canonical_json") || !lock_payload.contains("lock_sha256") ||
+        !lock_payload.at("canonical_json").is_string() ||
+        !sha256_string(lock_payload.at("lock_sha256"))) {
+        return invalid("plan.owner_inputs", "catalog lock identity fields are absent");
+    }
+    if (lock_payload.at("canonical_json").get<std::string>() != sorted_json_dump([&]() {
+            Json copy = lock_payload;
+            copy.erase("canonical_json");
+            copy.erase("lock_sha256");
+            return copy;
+        }())) {
+        return invalid("plan.owner_inputs",
+                       "catalog lock canonical bytes are not sorted UTF-8 JSON");
+    }
+    const auto lock_sha = sha256_hex_impl(lock_payload.at("canonical_json").get<std::string>());
+    if (lock_sha != lock_payload.at("lock_sha256").get<std::string>() ||
+        lock_sha != bindings.at("catalog_lock_sha256").get<std::string>()) {
+        return invalid("plan.owner_inputs", "catalog lock digest mismatch");
+    }
+    if (!lock_payload.contains("request_sha256") ||
+        lock_payload.at("request_sha256") != bindings.at("request_sha256")) {
+        return invalid("plan.owner_inputs", "catalog lock is not bound to the request");
+    }
+    Json projection_payload = owner_inputs.at("profile_projection");
+    if (!projection_payload.contains("canonical_json") ||
+        !projection_payload.contains("projection_sha256") ||
+        !projection_payload.at("canonical_json").is_string() ||
+        !sha256_string(projection_payload.at("projection_sha256")) ||
+        sha256_hex_impl(projection_payload.at("canonical_json").get<std::string>()) !=
+            projection_payload.at("projection_sha256").get<std::string>() ||
+        projection_payload.at("projection_sha256").get<std::string>() !=
+            bindings.at("profile_projection_sha256").get<std::string>()) {
+        return invalid("plan.owner_inputs", "profile projection digest mismatch");
+    }
+    {
+        Json copy = projection_payload;
+        copy.erase("canonical_json");
+        copy.erase("projection_sha256");
+        if (projection_payload.at("canonical_json") != sorted_json_dump(copy) ||
+            projection_payload.at("request_sha256") != bindings.at("request_sha256") ||
+            projection_payload.at("lock_sha256") != bindings.at("catalog_lock_sha256")) {
+            return invalid("plan.owner_inputs",
+                           "profile projection is not bound to request and catalog lock");
+        }
+    }
+    Json resolved_payload = owner_inputs.at("resolved_manifest");
+    if (!resolved_payload.contains("resolved_manifest_sha256") ||
+        !sha256_string(resolved_payload.at("resolved_manifest_sha256"))) {
+        return invalid("plan.owner_inputs", "resolved manifest identity is absent");
+    }
+    const auto resolved_hash = resolved_payload.at("resolved_manifest_sha256").get<std::string>();
+    resolved_payload.erase("resolved_manifest_sha256");
+    if (sha256_hex_impl(sorted_json_dump(resolved_payload)) != resolved_hash ||
+        resolved_hash != bindings.at("resolved_manifest_sha256").get<std::string>()) {
+        return invalid("plan.owner_inputs", "resolved manifest digest mismatch");
+    }
+    const auto &owner = plan.at("owner_join");
+    if (!exact_fields(owner, {"backend_implementation_version", "backend_profile_id",
+                              "backend_provider_id", "catalog_backend_capabilities",
+                              "catalog_backend_implementation_id", "catalog_backend_owner_id",
+                              "catalog_backend_provenance", "composition_id", "requested_profile",
+                              "resolver_contract_version"}) ||
+        !nonempty_string(owner.at("backend_implementation_version")) ||
+        !identifier_string(owner.at("backend_profile_id")) ||
+        !identifier_string(owner.at("backend_provider_id")) ||
+        !identifier_string(owner.at("composition_id")) ||
+        !nonempty_string(owner.at("resolver_contract_version")) ||
+        !sorted_unique_strings(owner.at("catalog_backend_capabilities"), false) ||
+        !nonempty_string(owner.at("catalog_backend_implementation_id")) ||
+        !nonempty_string(owner.at("catalog_backend_owner_id")) ||
+        !owner.at("catalog_backend_provenance").is_object() ||
+        !exact_fields(owner.at("requested_profile"), {"profile_id", "profile_version"}) ||
+        !identifier_string(owner.at("requested_profile").at("profile_id")) ||
+        !nonempty_string(owner.at("requested_profile").at("profile_version"))) {
+        return invalid("plan.owner_join", "owner-derived join is not typed");
+    }
+
+    Json envelope;
+    try {
+        envelope = Json::parse(plan.at("authority_envelope_json").get<std::string>());
+    } catch (const Json::exception &error) {
+        return invalid("plan.authority", error.what());
+    }
+    const auto payload_bytes = plan.at("authority_payload_bytes").dump();
+    const auto authority_result = validate_authority_envelope_json(
+        plan.at("authority_envelope_json").get<std::string>(), payload_bytes);
+    if (!authority_result.valid) return authority_result;
+    if (envelope.at("payload") != plan.at("authority_payload_bytes") ||
+        envelope.at("payload").at("plan_id") != plan.at("plan_id") ||
+        envelope.at("payload").at("writer_generation") != plan.at("writer_generation") ||
+        envelope.at("payload").at("reader_generation_min") != plan.at("reader_generation_min") ||
+        envelope.at("payload").at("reader_generation_max") != plan.at("reader_generation_max")) {
+        return invalid("plan.authority_binding",
+                       "embedded plan authority does not match wrapper identity");
+    }
+    const auto &authority_payload = envelope.at("payload");
+    const auto &resolved = authority_payload.at("resolved_manifest");
+    const auto &manifest = resolved.at("manifest");
+    const auto &backend = authority_payload.at("backend");
+    if (owner_inputs.at("resolved_manifest") != resolved ||
+        owner_inputs.at("requested_manifest") != resolved.at("manifest") ||
+        bindings.at("catalog_lock_sha256").get<std::string>() !=
+            authority_payload.at("catalog_lock_sha256").get<std::string>() ||
+        bindings.at("profile_projection_sha256").get<std::string>() !=
+            authority_payload.at("profile_projection_sha256").get<std::string>() ||
+        bindings.at("backend_request_sha256").get<std::string>() !=
+            authority_payload.at("backend_request_sha256").get<std::string>()) {
+        return invalid("plan.owner_binding",
+                       "embedded owner inputs disagree with execution-plan authority");
+    }
+    if (bindings.at("request_sha256").get<std::string>() !=
+            authority_payload.at("request_sha256").get<std::string>() ||
+        bindings.at("requested_manifest_sha256").get<std::string>() !=
+            authority_payload.at("requested_manifest_sha256").get<std::string>() ||
+        bindings.at("resolved_manifest_sha256").get<std::string>() !=
+            authority_payload.at("resolved_manifest_sha256").get<std::string>() ||
+        owner.at("composition_id").get<std::string>() !=
+            manifest.at("composition_id").get<std::string>() ||
+        owner.at("requested_profile") != manifest.at("requested_profile") ||
+        owner.at("resolver_contract_version") != resolved.at("resolver_contract_version") ||
+        owner.at("backend_provider_id").get<std::string>() !=
+            manifest.at("backend_request").at("provider_id").get<std::string>() ||
+        owner.at("backend_profile_id").get<std::string>() !=
+            manifest.at("backend_request").at("backend_profile_id").get<std::string>()) {
+        return invalid("plan.owner_binding",
+                       "input bindings or owner join disagree with the embedded resolved plan");
+    }
+    const auto &request_input = owner_inputs.at("request");
+    const auto &projection_input = owner_inputs.at("profile_projection");
+    if (!request_input.contains("requested_profile") ||
+        !request_input.contains("contract_versions") ||
+        !projection_input.contains("requested_profile") ||
+        !projection_input.contains("request_sha256") || !projection_input.contains("lock_sha256") ||
+        request_input.at("requested_profile") != manifest.at("requested_profile") ||
+        projection_input.at("requested_profile") != manifest.at("requested_profile") ||
+        projection_input.at("request_sha256") != bindings.at("request_sha256") ||
+        projection_input.at("lock_sha256") != bindings.at("catalog_lock_sha256") ||
+        resolved.at("requested_manifest_sha256") != bindings.at("requested_manifest_sha256")) {
+        return invalid("plan.owner_binding",
+                       "request, projection, and manifest owner joins disagree");
+    }
+    const auto &backend_input = owner_inputs.at("backend_request");
+    const auto &lock_input = owner_inputs.at("catalog_lock");
+    const auto &backend_manifest = manifest.at("backend_request");
+    if (!exact_fields(backend_input,
+                      {"backend_profile_id", "provider_id", "provider_implementation_version",
+                       "required_capabilities", "schema_version"}) ||
+        backend_input.at("provider_id") != backend.at("provider_id") ||
+        backend_input.at("backend_profile_id") != backend.at("profile_id") ||
+        backend_input.at("required_capabilities") != backend.at("required_capabilities") ||
+        backend_input.at("provider_implementation_version") !=
+            backend.at("implementation_version") ||
+        backend_manifest.at("provider_id") != backend_input.at("provider_id") ||
+        backend_manifest.at("backend_profile_id") != backend_input.at("backend_profile_id")) {
+        return invalid("plan.owner_binding",
+                       "backend request is not bound to the execution-plan authority");
+    }
+    if (!lock_input.contains("entries") || !lock_input.at("entries").is_array()) {
+        return invalid("plan.owner_binding", "catalog lock entries are absent");
+    }
+    std::size_t backend_entries = 0;
+    for (const auto &entry : lock_input.at("entries")) {
+        if (!entry.is_object() || !entry.contains("category") || entry.at("category") != "backend")
+            continue;
+        ++backend_entries;
+        if (!exact_fields(entry,
+                          {"capabilities", "category", "descriptor_id", "implementation_id",
+                           "implementation_version", "owner_id", "provenance", "trust_decision"}) ||
+            entry.at("descriptor_id") != backend_input.at("provider_id") ||
+            entry.at("implementation_version") !=
+                backend_input.at("provider_implementation_version") ||
+            entry.at("trust_decision") != "admitted" ||
+            entry.at("owner_id") != owner.at("catalog_backend_owner_id") ||
+            entry.at("implementation_id") != owner.at("catalog_backend_implementation_id") ||
+            entry.at("provenance") != owner.at("catalog_backend_provenance") ||
+            entry.at("capabilities") != owner.at("catalog_backend_capabilities")) {
+            return invalid("plan.owner_binding",
+                           "backend request is not bound to the admitted catalog entry");
+        }
+    }
+    if (backend_entries != 1)
+        return invalid("plan.owner_binding", "catalog lock backend cardinality is not one");
+    if (!manifest.contains("providers") || !manifest.at("providers").is_array()) {
+        return invalid("plan.owner_binding", "resolved provider rows are absent");
+    }
+    std::size_t backend_provider_rows = 0;
+    for (const auto &provider : manifest.at("providers")) {
+        if (!provider.is_object() || !provider.contains("provider_id") ||
+            provider.at("provider_id") != backend_input.at("provider_id")) {
+            continue;
+        }
+        ++backend_provider_rows;
+        if (!provider.contains("implementation_version") ||
+            provider.at("implementation_version") !=
+                backend_input.at("provider_implementation_version")) {
+            return invalid("plan.owner_binding",
+                           "backend implementation version differs from resolved provider row");
+        }
+    }
+    if (backend_provider_rows != 1) {
+        return invalid("plan.owner_binding",
+                       "resolved manifest backend provider cardinality is not one");
+    }
+    if (!authority_payload.contains("provider_versions") ||
+        !authority_payload.at("provider_versions").is_array() ||
+        authority_payload.at("provider_versions").size() != manifest.at("providers").size()) {
+        return invalid("plan.owner_binding",
+                       "provider version projection is not bound to the resolved manifest");
+    }
+    for (std::size_t index = 0; index < manifest.at("providers").size(); ++index) {
+        const auto &provider = manifest.at("providers").at(index);
+        const auto &version = authority_payload.at("provider_versions").at(index);
+        if (!exact_fields(version, {"implementation_version", "provider_id"}) ||
+            version.at("provider_id") != provider.at("provider_id") ||
+            version.at("implementation_version") != provider.at("implementation_version")) {
+            return invalid("plan.owner_binding",
+                           "provider version projection is not bound to the resolved manifest");
+        }
+    }
+
+    Json canonical_payload = plan;
+    canonical_payload.erase("canonical_json");
+    canonical_payload.erase("plan_sha256");
+    const auto canonical_bytes = sorted_json_dump(canonical_payload);
+    if (plan.at("canonical_json").get<std::string>() != canonical_bytes) {
+        return invalid("plan.noncanonical_payload",
+                       "canonical_json does not match the closed plan payload");
+    }
+    if (sha256_hex_impl(canonical_bytes) != plan.at("plan_sha256").get<std::string>()) {
+        return invalid("plan.digest", "closed plan digest mismatch");
+    }
+    return ValidationResult{true, {}, {}};
+}
+
+std::string resolved_execution_plan_sha256_hex(std::string_view canonical_payload_bytes) {
+    return sha256_hex_impl(canonical_payload_bytes);
+}
+
+std::optional<std::string> resolved_manifest_from_execution_plan_json(std::string_view plan_json) {
+    const auto result = validate_resolved_execution_plan_json(plan_json);
+    if (!result.valid) return std::nullopt;
+    try {
+        const auto plan = Json::parse(plan_json.begin(), plan_json.end());
+        return plan.at("authority_payload_bytes").at("resolved_manifest").dump();
+    } catch (const Json::exception &) {
+        return std::nullopt;
+    }
 }
 
 } // namespace runtime::authority_contracts
