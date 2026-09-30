@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import math
+import json
 import os
 from typing import Any
 
 from python.runtime_bootstrap import resolve_repo_path
+from python.scenario.runtime.csg_replay import CSG_REPLAY_SCHEMA, capture_csg_replay
 
 from ..common import _check_optional_range, _load_json_file, _materialize_scenario_path, _load_spec
 from .common import (
@@ -822,6 +824,129 @@ def _check_naval_screen_threat_roe(spec: dict[str, Any]) -> tuple[bool, str]:
     return _run_naval_screen_check(spec, check_threat_roe=True)
 
 
+def _check_naval_csg_group_composition(spec: dict[str, Any]) -> tuple[bool, str]:
+    import ef_py
+    from gym_envs.scenario_loader import ScenarioLoader
+
+    scenarios = list(spec.get("scenarios", []) or [])
+    if not scenarios:
+        return False, "naval_csg_group_composition requires a non-empty scenarios list"
+
+    database = resolve_repo_path("examples", "config", "database")
+    schema = str(spec.get("schema", "csg.group_composition.v2"))
+    anchor = tuple(float(value) for value in list(spec.get("geodetic_anchor", []) or []))
+    if len(anchor) != 3:
+        return False, "geodetic_anchor must contain latitude, longitude, and height"
+
+    for scenario_spec in scenarios:
+        scenario_path = resolve_repo_path(str(scenario_spec["scenario"]))
+        seed = int(scenario_spec.get("seed", spec.get("seed", 0)))
+        sim = ef_py.SimulationKernel()
+        sim.reset(1)
+        if not sim.load_database(database):
+            return False, f"database load failed for {scenario_path}"
+        loader = ScenarioLoader(sim)
+        if loader.load_scenario(scenario_path, seed=seed) is not None:
+            return False, f"CSG S0 must remain agent-free: {scenario_path}"
+
+        csg = loader._compiled_runtime_metadata.meta_config.get("csg")
+        if not isinstance(csg, dict):
+            return False, f"missing compiled CSG metadata: {scenario_path}"
+        if csg.get("schema") != schema:
+            return False, f"unexpected CSG schema in {scenario_path}: {csg.get('schema')!r}"
+        if csg.get("geometry", {}).get("placement") != "geodetic":
+            return False, f"CSG scenario is not geodetic: {scenario_path}"
+        actual_anchor = tuple(float(value) for value in sim.get_geodetic_anchor())
+        if any(not math.isclose(actual, expected, abs_tol=1.0e-9) for actual, expected in zip(actual_anchor, anchor)):
+            return False, f"unexpected geodetic anchor in {scenario_path}: {actual_anchor!r}"
+
+        expected_groups = list(scenario_spec.get("groups", []) or [])
+        actual_groups = {str(group.get("group_id")): group for group in csg.get("groups", [])}
+        if set(actual_groups) != {str(group["group_id"]) for group in expected_groups}:
+            return False, f"unexpected CSG groups in {scenario_path}: {sorted(actual_groups)}"
+
+        units = {int(unit.id): unit for unit in sim.get_all_units()}
+        for expected in expected_groups:
+            group_id = str(expected["group_id"])
+            group = actual_groups[group_id]
+            if group.get("side") != expected["side"]:
+                return False, f"{scenario_path}: {group_id} side mismatch"
+            hull_names = [name for row in group.get("ships", []) for name in row.get("entity_names", [])]
+            if len(hull_names) != int(expected["hulls"]):
+                return False, f"{scenario_path}: {group_id} hull count mismatch"
+            inventory_count = sum(int(row.get("count", 0)) for row in group.get("embarked_inventory", []))
+            if inventory_count != int(expected["aircraft"]):
+                return False, f"{scenario_path}: {group_id} inventory count mismatch"
+            side = int(ef_py.Side.Blue if expected["side"] == "Blue" else ef_py.Side.Red)
+            side_units = [unit for unit in units.values() if int(unit.side) == side]
+            if len(side_units) != int(expected["hulls"]) + int(expected["stowed_helos"]):
+                return False, f"{scenario_path}: {group_id} live entity count mismatch"
+            aircraft_count = sum(int(unit.type) == int(ef_py.UnitType.Aircraft) for unit in side_units)
+            if aircraft_count != int(expected["stowed_helos"]):
+                return False, f"{scenario_path}: {group_id} stowed helicopter count mismatch"
+            for name in hull_names:
+                if name not in loader.entities:
+                    return False, f"{scenario_path}: missing loader entity {name}"
+                if int(loader.entities[name]) not in units:
+                    return False, f"{scenario_path}: missing runtime entity {name}"
+
+        for _ in range(int(scenario_spec.get("steps", spec.get("steps", 0)))):
+            sim.step()
+            if not all(math.isfinite(float(value)) for unit in sim.get_all_units() for value in (unit.x, unit.y, unit.z)):
+                return False, f"non-finite CSG runtime position: {scenario_path}"
+
+    return True, f"naval CSG group-composition contract passed ({len(scenarios)} variant(s))"
+
+
+
+
+def _check_naval_csg_replay(spec: dict[str, Any]) -> tuple[bool, str]:
+    replay_ref = str(spec.get("replay", "")).strip()
+    if not replay_ref:
+        return False, "naval_csg_replay requires a replay path"
+    replay_path = resolve_repo_path(replay_ref)
+    try:
+        with open(replay_path, "r", encoding="utf-8") as handle:
+            artifact = json.load(handle)
+    except Exception as exc:
+        return False, f"failed to load CSG replay {replay_path}: {exc}"
+    if artifact.get("schema") != CSG_REPLAY_SCHEMA:
+        return False, f"unexpected CSG replay schema: {artifact.get('schema')!r}"
+    scenario_ref = str(spec.get("scenario") or artifact.get("scenario") or "").strip()
+    if not scenario_ref:
+        return False, "CSG replay has no scenario reference"
+    try:
+        expected = capture_csg_replay(
+            scenario_ref,
+            seed=int(spec.get("seed", artifact.get("seed", 0))),
+            max_steps=int(spec.get("max_steps", artifact.get("max_steps", 0))),
+        )
+    except Exception as exc:
+        return False, f"native CSG replay regeneration failed: {exc}"
+    if artifact.get("scenario_sha256") != expected["scenario_sha256"]:
+        return False, "CSG replay scenario hash does not match the checked-in scenario"
+    if int(artifact.get("seed", -1)) != int(expected["seed"]):
+        return False, "CSG replay seed mismatch"
+    frames = artifact.get("frames")
+    expected_frames = expected["frames"]
+    if not isinstance(frames, list) or len(frames) != len(expected_frames):
+        return False, f"CSG replay frame count mismatch: {len(frames) if isinstance(frames, list) else 'invalid'} != {len(expected_frames)}"
+    for index, (actual_frame, expected_frame) in enumerate(zip(frames, expected_frames)):
+        if int(actual_frame.get("tick", -1)) != int(expected_frame["tick"]):
+            return False, f"CSG replay tick mismatch at frame {index}"
+        actual_units = actual_frame.get("units")
+        expected_units = expected_frame["units"]
+        if not isinstance(actual_units, list) or len(actual_units) != len(expected_units):
+            return False, f"CSG replay roster mismatch at frame {index}"
+        for actual_unit, expected_unit in zip(actual_units, expected_units):
+            if int(actual_unit.get("id", -1)) != int(expected_unit["id"]):
+                return False, f"CSG replay entity mismatch at frame {index}"
+            for field in ("x", "y", "z", "heading"):
+                if not math.isclose(float(actual_unit.get(field)), float(expected_unit[field]), rel_tol=1e-9, abs_tol=1e-6):
+                    return False, f"CSG replay {field} mismatch at frame {index}, entity {expected_unit['id']}"
+    return True, f"naval CSG replay contract passed ({len(frames)} frames)"
+
+
 _COMM_CONTRACT_CHECKS = {
     "task_order_and_mission_link": _check_task_order_and_mission_link,
     "task_order_common_core": _check_task_order_common_core,
@@ -829,6 +954,8 @@ _COMM_CONTRACT_CHECKS = {
     "scenario_loader_common_core_semantics": _check_scenario_loader_common_core_semantics,
     "naval_screen_contact_report": _check_naval_screen_contact_report,
     "naval_screen_threat_roe": _check_naval_screen_threat_roe,
+    "naval_csg_group_composition": _check_naval_csg_group_composition,
+    "naval_csg_replay": _check_naval_csg_replay,
     "mission_command_landing_gear_hold": _check_mission_command_landing_gear_hold,
     "instrument_command_bug_semantics": _check_instrument_command_bug_semantics,
 }

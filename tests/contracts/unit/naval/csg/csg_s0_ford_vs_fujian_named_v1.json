@@ -1,0 +1,17 @@
+{
+  "type": "unit_regression",
+  "check_kind": "naval_csg_group_composition",
+  "seed": 20260930,
+  "steps": 1,
+  "schema": "csg.group_composition.v2",
+  "geodetic_anchor": [21.0, 125.0, 0.0],
+  "scenarios": [
+    {
+      "scenario": "scenarios/naval/csg/csg_s0_ford_vs_fujian_named_v1.json",
+      "groups": [
+        {"group_id": "BLUE_CSG12", "side": "Blue", "hulls": 7, "aircraft": 74, "stowed_helos": 4},
+        {"group_id": "RED_CV18", "side": "Red", "hulls": 7, "aircraft": 55, "stowed_helos": 6}
+      ]
+    }
+  ]
+}
