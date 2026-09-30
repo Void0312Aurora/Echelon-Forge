@@ -1469,8 +1469,9 @@ class DefaultUnitFactory : public IUnitFactory {
     // contract: a domain whose damage state is missing here cannot be reached by
     // its own effects mechanism even when the shared HitboxConfig/SystemHealth/
     // PlatformDamageState triple is present.
-    static void initialize_spawn_structured_domain_damage_state(
-        flecs::entity &e, UnitType type, bool ground_infantry_capability = false) {
+    static void
+    initialize_spawn_structured_domain_damage_state(flecs::entity &e, UnitType type,
+                                                    bool ground_infantry_capability = false) {
         if (type == UnitType::Aircraft || type == UnitType::C2Node) {
             e.set<AircraftDamageState>({});
             return;
@@ -1538,7 +1539,7 @@ class DefaultUnitFactory : public IUnitFactory {
             }
             e.set<PlatformDamageState>({});
             initialize_spawn_structured_domain_damage_state(e, def.type,
-                                                             def.has_ground_infantry_capability);
+                                                            def.has_ground_infantry_capability);
         } else if (def.airframe.length_m > 0.0) {
             // Procedural Generation
             HitboxConfig generated = generate_default_hitboxes(def.airframe);
@@ -1556,7 +1557,7 @@ class DefaultUnitFactory : public IUnitFactory {
             e.set<SystemHealth>(initial_health);
             e.set<PlatformDamageState>({});
             initialize_spawn_structured_domain_damage_state(e, def.type,
-                                                             def.has_ground_infantry_capability);
+                                                            def.has_ground_infantry_capability);
         } else if (def.type == UnitType::Ground) {
             // Ground bootstrap: reach the shared structured damage path.
             //
@@ -1593,7 +1594,7 @@ class DefaultUnitFactory : public IUnitFactory {
             e.set<SystemHealth>(initial_health);
             e.set<PlatformDamageState>({});
             initialize_spawn_structured_domain_damage_state(e, def.type,
-                                                             def.has_ground_infantry_capability);
+                                                            def.has_ground_infantry_capability);
         }
     }
 
