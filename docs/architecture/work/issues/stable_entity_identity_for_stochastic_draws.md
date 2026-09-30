@@ -5,13 +5,16 @@ Language:
 - Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
-Lifecycle: `draft`
+Lifecycle: `implemented-core; acceptance follow-up remains`
 Canonical: `docs/architecture/work/issues/stable_entity_identity_for_stochastic_draws.md`
 Owner: `architecture/runtime-composition`
-Last verified: `2026-09-28`
-Content status: defect record and remediation plan. Opened from the Ground
-`work/army-mechanisms` repair after two Air realism nodes flipped. Nothing below is
-implemented yet.
+Last verified: `2026-10-01`
+Content status: historical pre-fix measurement plus current implementation status and
+acceptance follow-up. The measurements below were captured before the stable-identity
+repair. The current tree now implements `StableEntitySerial`, `StableIdentityState`, reset
+episode seeds, and the centralized `stochastic_draw::draw_seed` path, including the Ground
+direct-fire site. The acceptance items below still require re-running where the document
+does not cite a current result.
 
 ## Defect
 
@@ -96,7 +99,7 @@ package because the serial is what can replace their ids:
 Target: key those surfaces by `(world_index, StableEntitySerial)` so a census change
 leaves the frozen reference untouched.
 
-## Target Design
+## Target Design And Current Status
 
 1. **A per-world stable serial.** A new `components/basic` component (working name
    `StableEntitySerial { std::uint64_t value; }`) is assigned to every simulation entity
