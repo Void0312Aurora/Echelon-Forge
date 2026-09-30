@@ -42,6 +42,7 @@ from .common import (
 )
 from .group_composition import (
     expand_group_composition,
+    geodesic_destination_deg,
     station_local_offset_m,
     validate_group_composition,
 )
@@ -111,6 +112,7 @@ from .waypoint_cache import (
 
 __all__ = [
     "expand_group_composition",
+    "geodesic_destination_deg",
     "station_local_offset_m",
     "validate_group_composition",
     "REPO_ROOT",
