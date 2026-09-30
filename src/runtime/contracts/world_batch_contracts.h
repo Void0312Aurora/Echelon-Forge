@@ -48,6 +48,11 @@ struct WorldSpawnRequest {
 #include "runtime/contracts/detail/platform/world_spawn_request.inc"
 };
 
+struct WorldCommandLinkAssignment {
+#define EF_WORLD_COMMAND_LINK_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/tasking/world_command_link_assignment.inc"
+};
+
 inline constexpr std::string_view kTypedPlatformSpawnRejectionMissingRequestId =
     "typed_platform_spawn_request_id_required";
 inline constexpr std::string_view kTypedPlatformSpawnRejectionMissingSourceTypeName =

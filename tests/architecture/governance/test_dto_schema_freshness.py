@@ -127,6 +127,10 @@ EXPECTED_REGISTRATIONS = {
     "src/runtime/contracts/detail/tasking/world_pilot_action_assignment.inc",
     3,
   ),
+  "tools/maintenance/dto_schema/schemas/tasking/world_command_link_assignment_fields.py": (
+    "src/runtime/contracts/detail/tasking/world_command_link_assignment.inc",
+    4,
+  ),
   "tools/maintenance/dto_schema/schemas/batch/batch_world_setup_request_fields.py": (
     "src/runtime/facade/detail/batch/batch_world_setup_request.inc",
     8,

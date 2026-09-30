@@ -56,6 +56,8 @@ void bind_runtime_facade(nb::module_ &m) {
              nb::arg("refs"), nb::arg("use_gpu") = false)
         .def("set_pilot_actions_batch", &RuntimeFacade::set_pilot_actions_batch,
              nb::arg("assignments"))
+        .def("set_command_links_batch", &RuntimeFacade::set_command_links_batch,
+             nb::arg("assignments"))
         .def("apply_launch_requests_batch", &RuntimeFacade::apply_launch_requests_batch,
              nb::arg("requests"))
         .def("set_mission_commands_maintained_batch",
@@ -78,6 +80,7 @@ void bind_runtime_facade(nb::module_ &m) {
              &RuntimeFacade::get_leader_intents_maintained_batch, nb::arg("refs"))
         .def("get_pilot_reports_maintained_batch",
              &RuntimeFacade::get_pilot_reports_maintained_batch, nb::arg("refs"))
+        .def("get_unit_messages_batch", &RuntimeFacade::get_unit_messages_batch, nb::arg("refs"))
         .def(
             "export_observation_packet",
             [](const RuntimeFacade &self, const std::vector<WorldEntityRef> &refs) {

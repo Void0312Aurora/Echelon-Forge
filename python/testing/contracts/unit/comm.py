@@ -19,6 +19,24 @@ from .common import (
 )
 
 
+def _make_facade_loader() -> tuple[Any, Any]:
+    """Create the maintained contract-test runtime and its world-indexed loader."""
+
+    from python.rl.runtime.world_batch.adapter import RuntimeFacadeAdapter
+
+    adapter = RuntimeFacadeAdapter(1)
+    if not adapter.load_database(resolve_repo_path("examples", "config", "database")):
+        raise RuntimeError("failed to load runtime database")
+    return adapter, adapter.make_scenario_loader(0)
+
+
+def _world_ref(ef_py: Any, entity_id: int) -> Any:
+    ref = ef_py.WorldEntityRef()
+    ref.world_index = 0
+    ref.entity_id = int(entity_id)
+    return ref
+
+
 
 
 def _check_task_order_and_mission_link(spec: dict[str, Any]) -> tuple[bool, str]:
@@ -33,24 +51,14 @@ def _check_task_order_and_mission_link(spec: dict[str, Any]) -> tuple[bool, str]
     )
     from python.rl.tasking.bridge import normalize_task_order_spec
 
-    def _spawn_aircraft(sim):
-        sim.load_database(resolve_repo_path("examples", "config", "database"))
-        return sim.spawn_unit(
-            ef_py.Side.Blue,
-            "F-16C_Block50",
-            0.0,
-            0.0,
-            1200.0,
-            90.0,
-            0.0,
-            0.0,
-            90.0,
-            0.0,
-            0.0,
-        )
-
-    sim = ef_py.SimulationKernel()
-    entity_id = _spawn_aircraft(sim)
+    adapter, loader = _make_facade_loader()
+    entity_id = loader.load_scenario(
+        resolve_repo_path("scenarios", "takeoff", "takeoff.json"),
+        seed=0,
+    )
+    if entity_id is None:
+        return False, "facade setup did not spawn an aircraft"
+    sim = loader.sim
 
     order_spec = normalize_task_order_spec(dict(spec.get("task_order", {}) or {}))
     order = ef_py.TaskOrder()
@@ -77,33 +85,34 @@ def _check_task_order_and_mission_link(spec: dict[str, Any]) -> tuple[bool, str]
     apply_task_order_common_core_defaults(order)
     sim.set_task_order(entity_id, order)
 
-    stored_order = sim.get_task_order(entity_id)
-    if not bool(stored_order.active):
+    ref = _world_ref(ef_py, entity_id)
+    stored_order = adapter.get_task_orders_maintained_batch([ref])[0]
+    stored_order_core = stored_order.shared_core
+    if not bool(stored_order_core.active):
         return False, "stored task order is not active"
-    if int(stored_order.task_id) != int(order.task_id):
-        return False, f"stored task_id mismatch: {stored_order.task_id} != {order.task_id}"
-    if int(stored_order.task_type) != int(order.task_type):
-        return False, f"stored task_type mismatch: {stored_order.task_type} != {order.task_type}"
-    if int(stored_order.station_type) != int(order.station_type):
-        return False, f"stored station_type mismatch: {stored_order.station_type} != {order.station_type}"
-    if not math.isclose(float(stored_order.target_speed_mps), float(order.target_speed_mps), rel_tol=1e-6, abs_tol=1e-6):
-        return False, f"stored target_speed mismatch: {stored_order.target_speed_mps} != {order.target_speed_mps}"
-    ok, detail = _check_fields(
-        stored_order,
-        order,
-        _common_core_field_names("task_order"),
-        label="task_order",
-    )
-    if not ok:
-        return False, detail
-    ok, detail = _check_fields(
-        stored_order,
-        order,
-        _air_task_order_field_names(),
-        label="task_order_air",
-    )
-    if not ok:
-        return False, detail
+    expected_order = ef_py.task_order_maintained_batch_contract(order)
+    if int(stored_order_core.task_id) != int(expected_order.shared_core.task_id):
+        return False, f"stored task_id mismatch: {stored_order_core.task_id} != {expected_order.shared_core.task_id}"
+    if int(stored_order.air_tasking_identity.task_type) != int(expected_order.air_tasking_identity.task_type):
+        return False, (
+            "stored task_type mismatch: "
+            f"{stored_order.air_tasking_identity.task_type} != {expected_order.air_tasking_identity.task_type}"
+        )
+    if int(stored_order.air_stationing.station_type) != int(expected_order.air_stationing.station_type):
+        return False, (
+            "stored station_type mismatch: "
+            f"{stored_order.air_stationing.station_type} != {expected_order.air_stationing.station_type}"
+        )
+    if not math.isclose(
+        float(stored_order.air_stationing.target_speed_mps),
+        float(expected_order.air_stationing.target_speed_mps),
+        rel_tol=1e-6,
+        abs_tol=1e-6,
+    ):
+        return False, (
+            "stored target_speed mismatch: "
+            f"{stored_order.air_stationing.target_speed_mps} != {expected_order.air_stationing.target_speed_mps}"
+        )
 
     intent_spec = dict(spec.get("leader_intent", {}) or {})
     intent = ef_py.LeaderIntent()
@@ -127,31 +136,23 @@ def _check_task_order_and_mission_link(spec: dict[str, Any]) -> tuple[bool, str]
     apply_leader_intent_common_core_defaults(intent, order=order, default_tactical_unit_id=int(entity_id))
     sim.set_leader_intent(entity_id, intent)
 
-    stored_intent = sim.get_leader_intent(entity_id)
-    if not bool(stored_intent.active):
+    stored_intent = adapter.get_leader_intents_maintained_batch([ref])[0]
+    if not bool(stored_intent.shared_core.active):
         return False, "stored leader intent is not active"
     if int(stored_intent.phase_id) != int(intent.phase_id):
         return False, f"stored phase_id mismatch: {stored_intent.phase_id} != {intent.phase_id}"
-    if int(stored_intent.command_code) != int(intent.command_code):
-        return False, f"stored command_code mismatch: {stored_intent.command_code} != {intent.command_code}"
-    if not math.isclose(float(stored_intent.cmd_heading_deg), float(intent.cmd_heading_deg), rel_tol=1e-6, abs_tol=1e-6):
-        return False, f"stored intent heading mismatch: {stored_intent.cmd_heading_deg} != {intent.cmd_heading_deg}"
-    ok, detail = _check_fields(
-        stored_intent,
-        intent,
-        _common_core_field_names("leader_intent"),
-        label="leader_intent",
-    )
-    if not ok:
-        return False, detail
-    ok, detail = _check_fields(
-        stored_intent,
-        intent,
-        _air_leader_intent_field_names(),
-        label="leader_intent_air",
-    )
-    if not ok:
-        return False, detail
+    if int(stored_intent.shared_core.command_code) != int(intent.command_code):
+        return False, f"stored command_code mismatch: {stored_intent.shared_core.command_code} != {intent.command_code}"
+    if not math.isclose(
+        float(stored_intent.shared_core.cmd_heading_deg),
+        float(intent.cmd_heading_deg),
+        rel_tol=1e-6,
+        abs_tol=1e-6,
+    ):
+        return False, (
+            "stored intent heading mismatch: "
+            f"{stored_intent.shared_core.cmd_heading_deg} != {intent.cmd_heading_deg}"
+        )
 
     report_spec = dict(spec.get("pilot_report", {}) or {})
     report = ef_py.PilotReport()
@@ -168,40 +169,51 @@ def _check_task_order_and_mission_link(spec: dict[str, Any]) -> tuple[bool, str]
     apply_pilot_report_common_core_defaults(report, order=order, default_tactical_unit_id=int(entity_id))
     sim.set_pilot_report(entity_id, report)
 
-    stored_report = sim.get_pilot_report(entity_id)
-    if not bool(stored_report.active):
+    stored_report = adapter.get_pilot_reports_maintained_batch([ref])[0]
+    if not bool(stored_report.shared_core.active):
         return False, "stored pilot report is not active"
-    if int(stored_report.report_type) != int(report.report_type):
-        return False, f"stored report_type mismatch: {stored_report.report_type} != {report.report_type}"
-    if int(stored_report.task_id) != int(report.task_id):
-        return False, f"stored report task_id mismatch: {stored_report.task_id} != {report.task_id}"
-    if not math.isclose(float(stored_report.location_z_m), float(report.location_z_m), rel_tol=1e-6, abs_tol=1e-6):
-        return False, f"stored report altitude mismatch: {stored_report.location_z_m} != {report.location_z_m}"
-    ok, detail = _check_fields(
-        stored_report,
-        report,
-        _common_core_field_names("pilot_report"),
-        label="pilot_report",
-    )
-    if not ok:
-        return False, detail
-    ok, detail = _check_fields(
-        stored_report,
-        report,
-        _air_pilot_report_field_names(),
-        label="pilot_report_air",
-    )
-    if not ok:
-        return False, detail
+    if int(stored_report.shared_core.report_type) != int(report.report_type):
+        return False, f"stored report_type mismatch: {stored_report.shared_core.report_type} != {report.report_type}"
+    if int(stored_report.shared_core.task_id) != int(report.task_id):
+        return False, f"stored report task_id mismatch: {stored_report.shared_core.task_id} != {report.task_id}"
+    if not math.isclose(
+        float(stored_report.shared_core.location_z_m),
+        float(report.location_z_m),
+        rel_tol=1e-6,
+        abs_tol=1e-6,
+    ):
+        return False, f"stored report altitude mismatch: {stored_report.shared_core.location_z_m} != {report.location_z_m}"
 
-    latency_sim = ef_py.SimulationKernel()
-    latency_entity_id = _spawn_aircraft(latency_sim)
+    latency_adapter, latency_loader = _make_facade_loader()
+    latency_setup = ef_py.BatchWorldSetupRequest()
+    latency_setup.seeds = [0]
+    latency_terrain = ef_py.WorldTerrainAssignment()
+    latency_terrain.world_index = 0
+    latency_terrain.terrain_type = "flat"
+    latency_wind = ef_py.WorldWindAssignment()
+    latency_wind.world_index = 0
+    latency_spawn = ef_py.WorldSpawnRequest()
+    latency_spawn.world_index = 0
+    latency_spawn.side = ef_py.Side.Blue
+    latency_spawn.type_name = "F-16C_Block50"
+    latency_spawn.entity_name = "LatencyAircraft"
+    latency_spawn.is_agent = True
+    latency_spawn.z = 1200.0
+    latency_spawn.heading = 90.0
+    latency_spawn.vy = 90.0
+    latency_setup.terrain_assignments = [latency_terrain]
+    latency_setup.wind_assignments = [latency_wind]
+    latency_setup.spawn_requests = [latency_spawn]
+    latency_setup.time_steps = [0.05]
+    latency_entity_id = int(latency_adapter.apply_world_setup(latency_setup).entity_ids[0])
+    latency_sim = latency_loader.sim
     command_link = dict(spec.get("command_link", {}) or {})
-    latency_sim.set_command_link(
-        latency_entity_id,
-        float(command_link.get("latency_s", 0.2)),
-        float(command_link.get("loss_probability", 0.0)),
-    )
+    link_assignment = ef_py.WorldCommandLinkAssignment()
+    link_assignment.world_index = 0
+    link_assignment.entity_id = latency_entity_id
+    link_assignment.latency_s = float(command_link.get("latency_s", 0.2))
+    link_assignment.drop_probability = float(command_link.get("loss_probability", 0.0))
+    latency_adapter.set_command_links_batch([link_assignment])
     mission_spec = dict(spec.get("mission_command", {}) or {})
     command = ef_py.MissionCommand()
     command.cmd_heading_deg = float(mission_spec.get("cmd_heading_deg", 222.0))
@@ -220,14 +232,17 @@ def _check_task_order_and_mission_link(spec: dict[str, Any]) -> tuple[bool, str]
         )
     latency_sim.set_mission_command(latency_entity_id, command)
 
-    before = latency_sim.get_mission_command(latency_entity_id)
+    latency_ref = _world_ref(ef_py, latency_entity_id)
+    before_contract = latency_adapter.get_mission_commands_maintained_batch([latency_ref])[0]
+    before = before_contract.shared_core
     if bool(before.active):
         return False, "mission command should still be inactive before command-link latency elapses"
     if int(before.command_code) != int(spec.get("pre_link_command_code", 0)):
         return False, f"unexpected pre-link command_code {before.command_code}"
     for _ in range(int(spec.get("link_settle_steps", 20))):
         latency_sim.step()
-    after = latency_sim.get_mission_command(latency_entity_id)
+    after_contract = latency_adapter.get_mission_commands_maintained_batch([latency_ref])[0]
+    after = after_contract.shared_core
     if not bool(after.active):
         return False, "mission command did not activate after command-link latency"
     if int(after.command_code) != int(command.command_code):
@@ -236,12 +251,12 @@ def _check_task_order_and_mission_link(spec: dict[str, Any]) -> tuple[bool, str]
         return False, f"post-link heading mismatch: {after.cmd_heading_deg} != {command.cmd_heading_deg}"
     if not math.isclose(float(after.cmd_altitude_m), float(command.cmd_altitude_m), rel_tol=1e-6, abs_tol=1e-6):
         return False, f"post-link altitude mismatch: {after.cmd_altitude_m} != {command.cmd_altitude_m}"
-    if hasattr(command, "recovery_base_id") and int(getattr(after, "recovery_base_id", 0)) != int(getattr(command, "recovery_base_id", 0)):
-        return False, f"post-link recovery_base_id mismatch: {after.recovery_base_id} != {command.recovery_base_id}"
-    if hasattr(command, "recovery_runway_id") and int(getattr(after, "recovery_runway_id", 0)) != int(getattr(command, "recovery_runway_id", 0)):
-        return False, f"post-link recovery_runway_id mismatch: {after.recovery_runway_id} != {command.recovery_runway_id}"
-    if hasattr(command, "recovery_approach_type") and int(getattr(after, "recovery_approach_type", 0)) != int(getattr(command, "recovery_approach_type", 0)):
-        return False, f"post-link recovery_approach_type mismatch: {after.recovery_approach_type} != {command.recovery_approach_type}"
+    if hasattr(command, "recovery_base_id") and int(after_contract.air_recovery.recovery_base_id) != int(getattr(command, "recovery_base_id", 0)):
+        return False, f"post-link recovery_base_id mismatch: {after_contract.air_recovery.recovery_base_id} != {command.recovery_base_id}"
+    if hasattr(command, "recovery_runway_id") and int(after_contract.air_recovery.recovery_runway_id) != int(getattr(command, "recovery_runway_id", 0)):
+        return False, f"post-link recovery_runway_id mismatch: {after_contract.air_recovery.recovery_runway_id} != {command.recovery_runway_id}"
+    if hasattr(command, "recovery_approach_type") and int(after_contract.air_recovery.recovery_approach_type) != int(getattr(command, "recovery_approach_type", 0)):
+        return False, f"post-link recovery_approach_type mismatch: {after_contract.air_recovery.recovery_approach_type} != {command.recovery_approach_type}"
     return True, "task order / mission link contract passed"
 
 
@@ -284,14 +299,9 @@ def _check_task_order_common_core(spec: dict[str, Any]) -> tuple[bool, str]:
 
 
 def _check_scenario_loader_mission_semantics(spec: dict[str, Any]) -> tuple[bool, str]:
-    import ef_py
-    from gym_envs.scenario_loader import ScenarioLoader
-
     scenario_path, cleanup = _materialize_scenario_path(spec)
     try:
-        sim = ef_py.SimulationKernel()
-        sim.load_database(resolve_repo_path("examples", "config", "database"))
-        loader = ScenarioLoader(sim)
+        _adapter, loader = _make_facade_loader()
         randomization_overrides = dict(spec.get("randomization_overrides", {}) or {})
         if randomization_overrides:
             loader.set_randomization_overrides(randomization_overrides)
@@ -365,14 +375,9 @@ def _check_scenario_loader_mission_semantics(spec: dict[str, Any]) -> tuple[bool
 
 
 def _check_scenario_loader_common_core_semantics(spec: dict[str, Any]) -> tuple[bool, str]:
-    import ef_py
-    from gym_envs.scenario_loader import ScenarioLoader
-
     scenario_path, cleanup = _materialize_scenario_path(spec)
     try:
-        sim = ef_py.SimulationKernel()
-        sim.load_database(resolve_repo_path("examples", "config", "database"))
-        loader = ScenarioLoader(sim)
+        _adapter, loader = _make_facade_loader()
         randomization_overrides = dict(spec.get("randomization_overrides", {}) or {})
         if randomization_overrides:
             loader.set_randomization_overrides(randomization_overrides)
@@ -408,7 +413,6 @@ def _check_scenario_loader_common_core_semantics(spec: dict[str, Any]) -> tuple[
 
 def _run_naval_screen_check(spec: dict[str, Any], *, check_threat_roe: bool) -> tuple[bool, str]:
     import ef_py
-    from gym_envs.scenario_loader import ScenarioLoader
 
     scenario_path, cleanup = _materialize_scenario_path(spec)
     try:
@@ -459,9 +463,8 @@ def _run_naval_screen_check(spec: dict[str, Any], *, check_threat_roe: bool) -> 
                 if message is not None:
                     return False, message
 
-        sim = ef_py.SimulationKernel()
-        sim.load_database(resolve_repo_path("examples", "config", "database"))
-        loader = ScenarioLoader(sim)
+        adapter, loader = _make_facade_loader()
+        sim = loader.sim
         seed = int(spec.get("seed", 0))
         agent_id = loader.load_scenario(scenario_path, seed=seed)
         if agent_id is None:
@@ -474,16 +477,6 @@ def _run_naval_screen_check(spec: dict[str, Any], *, check_threat_roe: bool) -> 
         hvu_id = int(loader.entities[hvu_name])
         contact_id = int(loader.entities[contact_name])
 
-        def _vector_delta_norm(before: Any, after: Any) -> float:
-            before_values = list(before or [])
-            after_values = list(after or [])
-            if len(before_values) != len(after_values):
-                return float("inf")
-            total = 0.0
-            for lhs, rhs in zip(before_values, after_values):
-                total += abs(float(rhs) - float(lhs))
-            return float(total)
-
         max_steps = max(1, int(spec.get("max_steps", 80)))
         continue_after_contact_chain = bool(spec.get("continue_after_contact_chain", False))
         screen_required_first_source = int(spec.get("screen_required_first_source", 1))
@@ -491,11 +484,16 @@ def _run_naval_screen_check(spec: dict[str, Any], *, check_threat_roe: bool) -> 
         report_msg_type = int(getattr(ef_py.CommMsgType, str(spec.get("report_message_type", "ReportContact"))))
         forbid_hvu_local_source = bool(spec.get("forbid_hvu_local_source", True))
         expected_mission = dict(spec.get("expected_runtime_mission_command", {}) or {})
-        initial_contact_health = sim.get_unit_health(contact_id) if check_threat_roe else None
-        initial_contact_damage = sim.get_unit_damage_state(contact_id) if check_threat_roe else None
-        initial_screen_weapon_counts = (
-            sim.debug_get_naval_weapon_counts(screen_id)
-            if check_threat_roe and hasattr(sim, "debug_get_naval_weapon_counts")
+        screen_ref = _world_ref(ef_py, screen_id)
+        hvu_ref = _world_ref(ef_py, hvu_id)
+        initial_contact_observation = adapter.get_agent_observation(0, contact_id)
+        initial_screen_observation = adapter.get_agent_observation(0, screen_id)
+        initial_contact_health = (
+            float(getattr(initial_contact_observation, "health", 0.0)) if check_threat_roe else None
+        )
+        initial_screen_missiles = (
+            int(getattr(initial_screen_observation, "missiles_remaining", -1))
+            if check_threat_roe
             else None
         )
 
@@ -528,7 +526,8 @@ def _run_naval_screen_check(spec: dict[str, Any], *, check_threat_roe: bool) -> 
             hvu_pos = sim.get_unit_position(hvu_id)
             contact_pos = sim.get_unit_position(contact_id)
             if check_threat_roe:
-                mission_cmd = sim.get_mission_command(screen_id)
+                mission_contract = adapter.get_mission_commands_maintained_batch([screen_ref])[0]
+                mission_cmd = mission_contract.shared_core
                 if bool(getattr(mission_cmd, "active", False)):
                     if first_mission_active_step is None:
                         first_mission_active_step = step + 1
@@ -552,7 +551,7 @@ def _run_naval_screen_check(spec: dict[str, Any], *, check_threat_roe: bool) -> 
                     first_hvu_shared_step = step + 1
 
             if first_hvu_report_step is None:
-                for msg in sim.get_unit_messages(hvu_id):
+                for msg in adapter.get_unit_messages_batch([hvu_ref])[0]:
                     if (
                         int(getattr(msg, "type", 0)) == report_msg_type
                         and int(getattr(msg, "entity_ref", 0)) == contact_id
@@ -640,19 +639,36 @@ def _run_naval_screen_check(spec: dict[str, Any], *, check_threat_roe: bool) -> 
         }
         if check_threat_roe:
             runtime_checks["mission_command_first_active_step"] = float(first_mission_active_step or max_steps + 1)
-            runtime_checks["contact_health_delta"] = _vector_delta_norm(
-                initial_contact_health,
-                sim.get_unit_health(contact_id),
+            final_contact_observation = adapter.get_agent_observation(0, contact_id)
+            final_screen_observation = adapter.get_agent_observation(0, screen_id)
+            runtime_checks["contact_health_delta"] = abs(
+                float(getattr(final_contact_observation, "health", 0.0)) - float(initial_contact_health)
             )
-            runtime_checks["contact_damage_delta"] = _vector_delta_norm(
-                initial_contact_damage,
-                sim.get_unit_damage_state(contact_id),
-            )
-            if initial_screen_weapon_counts is not None:
-                runtime_checks["screen_weapon_inventory_delta"] = _vector_delta_norm(
-                    initial_screen_weapon_counts,
-                    sim.debug_get_naval_weapon_counts(screen_id),
+            damage_request = ef_py.EngagementBatchRequest()
+            damage_ref = ef_py.EngagementEntityRef()
+            damage_ref.world_index = 0
+            damage_ref.entity_id = contact_id
+            damage_request.refs = [damage_ref]
+            damage_request.include_track_packets = False
+            damage_request.include_launch_requests = False
+            damage_request.include_launch_events = False
+            damage_request.include_munition_lifecycle_packets = False
+            damage_request.include_effects_events = False
+            damage_request.include_damage_reports = True
+            damage_request.include_diagnostics_traces = False
+            damage_packet = adapter.facade.export_engagement_event_packet(damage_request)
+            runtime_checks["contact_damage_delta"] = float(
+                sum(
+                    1
+                    for report in list(getattr(damage_packet, "damage_reports", []) or [])
+                    if int(getattr(report, "target_id", getattr(report, "target_entity_id", 0)) or 0)
+                    == contact_id
                 )
+            )
+            runtime_checks["screen_weapon_inventory_delta"] = abs(
+                int(getattr(final_screen_observation, "missiles_remaining", -1))
+                - int(initial_screen_missiles)
+            )
         for label, value in runtime_checks.items():
             bounds = checks.get(label, None)
             if isinstance(bounds, dict):
@@ -673,13 +689,11 @@ def _run_naval_screen_check(spec: dict[str, Any], *, check_threat_roe: bool) -> 
 
 def _check_mission_command_landing_gear_hold(spec: dict[str, Any]) -> tuple[bool, str]:
     import ef_py
-    from gym_envs.scenario_loader import ScenarioLoader
 
     scenario_path, cleanup = _materialize_scenario_path(spec)
     try:
-        sim = ef_py.SimulationKernel()
-        sim.load_database(resolve_repo_path("examples", "config", "database"))
-        loader = ScenarioLoader(sim)
+        _adapter, loader = _make_facade_loader()
+        sim = loader.sim
         randomization_overrides = dict(spec.get("randomization_overrides", {}) or {})
         if randomization_overrides:
             loader.set_randomization_overrides(randomization_overrides)
@@ -732,13 +746,11 @@ def _check_mission_command_landing_gear_hold(spec: dict[str, Any]) -> tuple[bool
 
 def _check_instrument_command_bug_semantics(spec: dict[str, Any]) -> tuple[bool, str]:
     import ef_py
-    from gym_envs.scenario_loader import ScenarioLoader
 
     scenario_path, cleanup = _materialize_scenario_path(spec)
     try:
-        sim = ef_py.SimulationKernel()
-        sim.load_database(resolve_repo_path("examples", "config", "database"))
-        loader = ScenarioLoader(sim)
+        _adapter, loader = _make_facade_loader()
+        sim = loader.sim
         randomization_overrides = dict(spec.get("randomization_overrides", {}) or {})
         if randomization_overrides:
             loader.set_randomization_overrides(randomization_overrides)

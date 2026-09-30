@@ -8,6 +8,15 @@
 #include "runtime/facade/runtime_facade.h"
 
 void bind_runtime_tasking_world(nb::module_ &m) {
+    nb::class_<WorldCommandLinkAssignment> command_link_assignment_class(
+        m, "WorldCommandLinkAssignment");
+    command_link_assignment_class.def(nb::init<>());
+    command_link_assignment_class.def_rw("world_index", &WorldCommandLinkAssignment::world_index);
+    command_link_assignment_class.def_rw("entity_id", &WorldCommandLinkAssignment::entity_id);
+    command_link_assignment_class.def_rw("latency_s", &WorldCommandLinkAssignment::latency_s);
+    command_link_assignment_class.def_rw("drop_probability",
+                                         &WorldCommandLinkAssignment::drop_probability);
+
     nb::class_<WorldPilotActionAssignment> world_pilot_action_assignment_class(
         m, "WorldPilotActionAssignment");
     world_pilot_action_assignment_class.def(nb::init<>());

@@ -24,7 +24,15 @@ from tools.maintenance.runtime_authority_contracts import (
   canonical_json_bytes,
   parse_canonical_json_bytes,
   validate_authority_envelope,
+  validate_rollout_transition,
 )
+from python.rl.runtime.rollout_gate import SCHEMA_VERSION as ROLLOUT_SLOT_SCHEMA_VERSION
+from python.rl.runtime.rollout_gate import TRANSITIONS as ROLLOUT_TRANSITIONS
+from python.rl.runtime.rollout_gate import RolloutAdmissionError
+from python.rl.runtime.rollout_gate import validate_rollout_envelope
+from python.rl.runtime.rollout_evidence import assert_rollout_evidence_decision_binding
+from python.rl.runtime.rollout_evidence import RolloutEvidenceError
+from python.rl.runtime.rollout_evidence import project_rollout_evidence
 from tools.maintenance.runtime_execution_provenance import (
   ExecutionObservation,
   verify_actual_bindings,
@@ -35,6 +43,10 @@ from tools.maintenance.runtime_run_receipt import canonical_json, validate_run_r
 JOURNAL_HEADER_MEDIA_TYPE = "application/vnd.echelon-forge.run-journal-header.v1+json"
 JOURNAL_RECORD_MEDIA_TYPE = "application/vnd.echelon-forge.run-journal-record.v1+octets"
 RECEIPT_MEDIA_TYPE = "application/vnd.echelon-forge.run-receipt.v1+json"
+RELEASE_MANIFEST_MEDIA_TYPE = "application/vnd.echelon-forge.release-manifest.v1+json"
+ROLLOUT_DECISION_MEDIA_TYPE = "application/vnd.echelon-forge.rollout-decision.v1+json"
+ROLLOUT_EVIDENCE_MEDIA_TYPE = "application/vnd.echelon-forge.rollout-evidence-binding.v1+json"
+ROLLOUT_EVIDENCE_SCHEMA_VERSION = "echelon_forge.rollout_evidence_binding.v1"
 CHECKPOINT_MEDIA_TYPE = "application/vnd.echelon-forge.state-checkpoint-envelope.v1+json"
 CHECKPOINT_VALIDATION_MEDIA_TYPE = "application/vnd.echelon-forge.state-checkpoint-validation.v1+json"
 OUTPUT_ARTIFACT_MEDIA_TYPE = "application/octet-stream"
@@ -57,15 +69,18 @@ ROLE_PERMISSIONS = {
   "runtime_host": frozenset({"blob.put", "blob.get", "blob.stat", "fence.acquire", "process.register", "journal.write", "checkpoint.read", "checkpoint.write", "slot.write"}),
   "runtime_evidence": frozenset({"blob.get", "blob.stat", "journal.read", "checkpoint.read", "audit.read"}),
   "crash_reconciler": frozenset({"blob.put", "blob.get", "blob.stat", "fence.acquire", "process.confirm_terminated", "writer.tombstone", "journal.write", "journal.read", "checkpoint.read", "audit.read"}),
+  "release_controller": frozenset({"blob.put", "blob.get", "blob.stat", "fence.acquire", "slot.write", "audit.read"}),
 }
 ROLE_WRITE_MEDIA_TYPES = {
   "runtime_host": frozenset({JOURNAL_HEADER_MEDIA_TYPE, JOURNAL_RECORD_MEDIA_TYPE, RECEIPT_MEDIA_TYPE, CHECKPOINT_MEDIA_TYPE, CHECKPOINT_VALIDATION_MEDIA_TYPE, OUTPUT_ARTIFACT_MEDIA_TYPE}),
   "crash_reconciler": frozenset({JOURNAL_RECORD_MEDIA_TYPE, RECEIPT_MEDIA_TYPE}),
+  "release_controller": frozenset({RELEASE_MANIFEST_MEDIA_TYPE, ROLLOUT_DECISION_MEDIA_TYPE, RECEIPT_MEDIA_TYPE, ROLLOUT_EVIDENCE_MEDIA_TYPE}),
 }
 ROLE_READ_MEDIA_TYPES = {
   "runtime_host": ROLE_WRITE_MEDIA_TYPES["runtime_host"],
-  "runtime_evidence": ROLE_WRITE_MEDIA_TYPES["runtime_host"],
+  "runtime_evidence": ROLE_WRITE_MEDIA_TYPES["runtime_host"] | ROLE_WRITE_MEDIA_TYPES["release_controller"],
   "crash_reconciler": frozenset({JOURNAL_HEADER_MEDIA_TYPE, JOURNAL_RECORD_MEDIA_TYPE, RECEIPT_MEDIA_TYPE, CHECKPOINT_MEDIA_TYPE, CHECKPOINT_VALIDATION_MEDIA_TYPE, OUTPUT_ARTIFACT_MEDIA_TYPE}),
+  "release_controller": ROLE_WRITE_MEDIA_TYPES["release_controller"],
 }
 
 
@@ -403,7 +418,7 @@ class SQLiteArtifactLedger:
     _require_identity(stream_id, "stream_id")
     _require_identity(writer_id, "writer_id")
     _require_identity(audit_identity, "audit_identity")
-    if not stream_id.startswith(("journal:", "checkpoint:")):
+    if not stream_id.startswith(("journal:", "checkpoint:", "rollout:")):
       raise LedgerContractError("fence stream namespace is not admitted")
     try:
       self._transaction()
@@ -1131,6 +1146,448 @@ class SQLiteArtifactLedger:
     if normalized["payload"].get("checkpoint_id") != checkpoint_id:
       raise LedgerContractError("checkpoint slot identity differs from stored authority")
     return normalized
+
+  @staticmethod
+  def _validate_rollout_evidence_document(document: Mapping[str, Any]) -> dict[str, Any]:
+    expected = {
+      "schema_version", "release_id", "decision_id", "decision_payload_sha256",
+      "release_manifest_blob_sha256", "release_manifest_payload_sha256",
+      "run_receipt_blob_sha256", "run_receipt_payload_sha256", "receipt_id",
+      "package_digest", "wheel_digest", "admissions_open",
+      "writer_advancement_frozen", "kill_switch_reasons",
+    }
+    if not isinstance(document, Mapping) or set(document) != expected:
+      raise LedgerContractError("rollout evidence binding fields are not exact")
+    if document["schema_version"] != ROLLOUT_EVIDENCE_SCHEMA_VERSION:
+      raise LedgerContractError("rollout evidence binding schema is unsupported")
+    for field in (
+      "release_id", "decision_id", "receipt_id",
+    ):
+      _require_identity(document[field], field)
+    for field in (
+      "decision_payload_sha256", "release_manifest_blob_sha256",
+      "release_manifest_payload_sha256", "run_receipt_blob_sha256",
+      "run_receipt_payload_sha256", "package_digest", "wheel_digest",
+    ):
+      _require_sha256(document[field], field)
+    if not isinstance(document["admissions_open"], bool) or not isinstance(document["writer_advancement_frozen"], bool):
+      raise LedgerContractError("rollout evidence admission flags are invalid")
+    reasons = document["kill_switch_reasons"]
+    if not isinstance(reasons, list) or any(not isinstance(item, str) or not item for item in reasons) or reasons != sorted(set(reasons)):
+      raise LedgerContractError("rollout evidence kill-switch reasons are invalid")
+    if bool(reasons) != (not document["admissions_open"] and document["writer_advancement_frozen"]):
+      raise LedgerContractError("rollout evidence kill-switch state is inconsistent")
+    return dict(document)
+
+  @staticmethod
+  def _rollout_slot_keys(release_id: str) -> tuple[str, str]:
+    _require_identity(release_id, "release_id")
+    return f"rollout:{release_id}", f"rollout-evidence:{release_id}"
+
+  def _read_blob_locked(self, digest: str) -> tuple[bytes, str, str]:
+    _require_sha256(digest, "blob digest")
+    row = self.db.execute(
+      "SELECT payload,media_type,retention_class,size FROM blobs WHERE digest=?",
+      (digest,),
+    ).fetchone()
+    if row is None:
+      raise LedgerContractError("blob is absent")
+    payload = bytes(row[0])
+    if _sha(payload) != digest or int(row[3]) != len(payload):
+      raise LedgerContractError("blob digest or size verification failed")
+    return payload, str(row[1]), str(row[2])
+
+  def commit_rollout_admission(
+    self,
+    token: FenceToken,
+    decision: Mapping[str, Any],
+    *,
+    release_manifest: Mapping[str, Any],
+    run_receipt: Mapping[str, Any],
+    verification_key: bytes,
+    audit_identity: str,
+    expected_slot_version: int = 0,
+    admissions_open: bool = True,
+    writer_advancement_frozen: bool = False,
+    kill_switch_reasons: tuple[str, ...] = (),
+    expected_package_digest: str | None = None,
+    expected_wheel_digest: str | None = None,
+    role: str = "release_controller",
+  ) -> tuple[int, dict[str, Any]]:
+    """Atomically commit a release decision and its evidence binding.
+
+    This is the P5-D release-controller boundary on top of the qualified
+    SQLite ArtifactLedger. Release, decision, receipt, and the evidence
+    projection are content-addressed in the same transaction as the two CAS
+    slots. The method does not publish a runtime host; it only makes a durable
+    admission record available to a later runtime reader.
+    """
+
+    self._authorize(role, "slot.write")
+    _require_identity(audit_identity, "audit_identity")
+    if not isinstance(expected_slot_version, int) or isinstance(expected_slot_version, bool) or expected_slot_version < 0:
+      raise LedgerContractError("expected rollout slot version is invalid")
+    try:
+      normalized_decision = validate_rollout_envelope(
+        decision,
+        verification_key=verification_key,
+      )
+      normalized_release = validate_authority_envelope(release_manifest)
+      normalized_receipt = validate_run_receipt(run_receipt)
+    except (RolloutAdmissionError, ValueError, TypeError) as error:
+      raise LedgerContractError("rollout admission authority validation failed") from error
+    if normalized_release["media_type"] != RELEASE_MANIFEST_MEDIA_TYPE:
+      raise LedgerContractError("rollout release manifest media type is invalid")
+    if normalized_receipt["media_type"] != RECEIPT_MEDIA_TYPE:
+      raise LedgerContractError("rollout RunReceipt media type is invalid")
+    decision_payload = normalized_decision["payload"]
+    release_id = decision_payload["release_id"]
+    decision_key, evidence_key = self._rollout_slot_keys(release_id)
+    if token.stream_id != decision_key:
+      raise LedgerContractError("rollout fence stream differs from release identity")
+    if decision_payload["manifest_sha256"] != normalized_release["payload_sha256"]:
+      raise LedgerContractError("rollout decision does not name the supplied release manifest")
+    try:
+      binding = project_rollout_evidence(normalized_release, normalized_receipt)
+      assert_rollout_evidence_decision_binding(
+        normalized_decision,
+        binding,
+        expected_package_digest=expected_package_digest,
+        expected_wheel_digest=expected_wheel_digest,
+      )
+    except (RolloutEvidenceError, ValueError, TypeError, KeyError) as error:
+      raise LedgerContractError("rollout release/receipt evidence binding failed") from error
+    if binding.release_id != release_id or binding.receipt_id != normalized_receipt["payload"]["receipt_id"]:
+      raise LedgerContractError("rollout evidence release or receipt identity differs")
+    if (
+      not isinstance(admissions_open, bool)
+      or not isinstance(writer_advancement_frozen, bool)
+      or (admissions_open, writer_advancement_frozen) not in ((True, False), (False, True))
+    ):
+      raise LedgerContractError("rollout admission flags must be open/unfrozen or closed/frozen")
+    if not isinstance(kill_switch_reasons, (tuple, list)) or any(
+      not isinstance(reason, str) or not reason for reason in kill_switch_reasons
+    ):
+      raise LedgerContractError("rollout kill-switch reasons are invalid")
+    reasons = tuple(sorted(set(kill_switch_reasons)))
+    if bool(reasons) != (not admissions_open and writer_advancement_frozen):
+      raise LedgerContractError("rollout kill-switch reasons differ from admission state")
+    if decision_payload["state"] == "backed-out":
+      if decision_payload["irreversible_write_boundary"] != "none":
+        raise LedgerContractError("rollout backout is forbidden after the irreversible write boundary")
+      admissions_open = False
+      writer_advancement_frozen = True
+      reasons = tuple(sorted(set((*reasons, "typed-backout"))))
+    try:
+      release_bytes = canonical_json_bytes(normalized_release)
+      decision_bytes = canonical_json_bytes(normalized_decision)
+      receipt_bytes = canonical_json(normalized_receipt).encode("utf-8")
+      release_blob_digest = _sha(release_bytes)
+      decision_blob_digest = _sha(decision_bytes)
+      receipt_blob_digest = _sha(receipt_bytes)
+      evidence_document = {
+        "schema_version": ROLLOUT_EVIDENCE_SCHEMA_VERSION,
+        "release_id": release_id,
+        "decision_id": decision_payload["decision_id"],
+        "decision_payload_sha256": normalized_decision["payload_sha256"],
+        "release_manifest_blob_sha256": release_blob_digest,
+        "release_manifest_payload_sha256": normalized_release["payload_sha256"],
+        "run_receipt_blob_sha256": receipt_blob_digest,
+        "run_receipt_payload_sha256": normalized_receipt["payload_sha256"],
+        "receipt_id": binding.receipt_id,
+        "package_digest": binding.package_digest,
+        "wheel_digest": binding.wheel_digest,
+        "admissions_open": bool(admissions_open),
+        "writer_advancement_frozen": bool(writer_advancement_frozen),
+        "kill_switch_reasons": list(reasons),
+      }
+      evidence_document = self._validate_rollout_evidence_document(evidence_document)
+      evidence_bytes = canonical_json_bytes(evidence_document)
+      evidence_blob_digest = _sha(evidence_bytes)
+    except (KeyError, TypeError, ValueError) as error:
+      raise LedgerContractError("rollout evidence projection could not be materialized") from error
+    previous: dict[str, Any] | None = None
+    current_version = 0
+    try:
+      self._transaction()
+      self._assert_fence(token)
+      current_row = self.db.execute(
+        "SELECT version,blob_digest FROM slots WHERE slot_key=?",
+        (decision_key,),
+      ).fetchone()
+      current_evidence_row = self.db.execute(
+        "SELECT version,blob_digest FROM slots WHERE slot_key=?",
+        (evidence_key,),
+      ).fetchone()
+      if current_row is None:
+        if expected_slot_version != 0:
+          raise LedgerContractError("rollout slot compare-and-swap predecessor mismatch")
+        if current_evidence_row is not None:
+          raise LedgerContractError("rollout evidence slot exists without its decision slot")
+        if decision_payload["state"] != "prepared" or decision_payload["decision_sequence"] != "0" or decision_payload["predecessor_decision_id"]:
+          raise LedgerContractError("rollout slot must begin with prepared sequence zero")
+      else:
+        current_version = int(current_row[0])
+        if expected_slot_version != current_version:
+          raise LedgerContractError("rollout slot compare-and-swap predecessor mismatch")
+        if current_evidence_row is None or int(current_evidence_row[0]) < current_version:
+          raise LedgerContractError("rollout decision/evidence slot versions diverged")
+        prior_bytes, prior_media, _ = self._read_blob_locked(str(current_row[1]))
+        if prior_media != ROLLOUT_DECISION_MEDIA_TYPE:
+          raise LedgerContractError("stored rollout decision media type is invalid")
+        try:
+          previous = validate_rollout_envelope(
+            parse_canonical_json_bytes(prior_bytes),
+            verification_key=verification_key,
+          )
+        except (RolloutAdmissionError, ValueError, TypeError) as error:
+          raise LedgerContractError("stored rollout predecessor is invalid") from error
+        previous_payload = previous["payload"]
+        if decision_payload["release_id"] != previous_payload["release_id"] or decision_payload["manifest_sha256"] != previous_payload["manifest_sha256"]:
+          raise LedgerContractError("rollout release binding changed")
+        try:
+          validate_rollout_transition(previous, normalized_decision)
+        except Exception as error:
+          raise LedgerContractError("rollout predecessor/sequence transition is invalid") from error
+        if decision_payload["state"] not in ROLLOUT_TRANSITIONS[previous_payload["state"]]:
+          raise LedgerContractError("rollout state transition is not admitted")
+        writer_changed = decision_payload["writer_generation"] != previous_payload["writer_generation"]
+        plan_changed = decision_payload["plan_sha256"] != previous_payload["plan_sha256"]
+        if writer_changed != plan_changed:
+          raise LedgerContractError("rollout writer and plan changed independently")
+        if plan_changed and decision_payload["state"] not in {"adoption-expanding", "backed-out"}:
+          raise LedgerContractError("rollout plan changed outside advancement/backout")
+        if writer_changed:
+          expected_generation = int(previous_payload["writer_generation"]) - 1 if decision_payload["state"] == "backed-out" else int(previous_payload["writer_generation"]) + 1
+          if int(decision_payload["writer_generation"]) != expected_generation:
+            raise LedgerContractError("rollout writer generation is not adjacent")
+        prior_evidence_bytes, prior_evidence_media, _ = self._read_blob_locked(str(current_evidence_row[1]))
+        if prior_evidence_media != ROLLOUT_EVIDENCE_MEDIA_TYPE:
+          raise LedgerContractError("stored rollout evidence media type is invalid")
+        prior_evidence = self._validate_rollout_evidence_document(
+          parse_canonical_json_bytes(prior_evidence_bytes),
+        )
+        if (
+          prior_evidence["release_manifest_blob_sha256"] != release_blob_digest
+          or prior_evidence["release_manifest_payload_sha256"] != normalized_release["payload_sha256"]
+        ):
+          raise LedgerContractError("rollout release manifest changed")
+        if not prior_evidence["admissions_open"] and not (
+          decision_payload["state"] == "backed-out"
+          or (previous_payload["state"] == "backed-out" and decision_payload["state"] == "prepared")
+        ):
+          raise LedgerContractError("closed rollout admission requires typed backout repair")
+      self._validate_media(role, RELEASE_MANIFEST_MEDIA_TYPE, write=True)
+      self._validate_media(role, ROLLOUT_DECISION_MEDIA_TYPE, write=True)
+      self._validate_media(role, RECEIPT_MEDIA_TYPE, write=True)
+      self._validate_media(role, ROLLOUT_EVIDENCE_MEDIA_TYPE, write=True)
+      self._put_blob_locked(
+        release_bytes, media_type=RELEASE_MANIFEST_MEDIA_TYPE,
+        retention_class="active-release", audit_identity=audit_identity,
+        expected_sha256=release_blob_digest,
+      )
+      self._put_blob_locked(
+        decision_bytes, media_type=ROLLOUT_DECISION_MEDIA_TYPE,
+        retention_class="rollback-window", audit_identity=audit_identity,
+        expected_sha256=decision_blob_digest,
+      )
+      self._put_blob_locked(
+        receipt_bytes, media_type=RECEIPT_MEDIA_TYPE,
+        retention_class="run-retained", audit_identity=audit_identity,
+        expected_sha256=receipt_blob_digest,
+      )
+      self._put_blob_locked(
+        evidence_bytes, media_type=ROLLOUT_EVIDENCE_MEDIA_TYPE,
+        retention_class="rollback-window", audit_identity=audit_identity,
+        expected_sha256=evidence_blob_digest,
+      )
+      next_version = current_version + 1
+      if current_row is None:
+        self.db.execute(
+          "INSERT INTO slots VALUES(?,?,?,?,?)",
+          (decision_key, next_version, decision_blob_digest, token.generation, audit_identity),
+        )
+        self.db.execute(
+          "INSERT INTO slots VALUES(?,?,?,?,?)",
+          (evidence_key, next_version, evidence_blob_digest, token.generation, audit_identity),
+        )
+      else:
+        updated = self.db.execute(
+          "UPDATE slots SET version=?,blob_digest=?,fence_generation=?,audit_identity=? WHERE slot_key=? AND version=?",
+          (next_version, decision_blob_digest, token.generation, audit_identity, decision_key, current_version),
+        ).rowcount
+        evidence_updated = self.db.execute(
+          "UPDATE slots SET version=?,blob_digest=?,fence_generation=?,audit_identity=? WHERE slot_key=? AND version=?",
+          (next_version, evidence_blob_digest, token.generation, audit_identity, evidence_key, int(current_evidence_row[0])),
+        ).rowcount
+        if updated != 1 or evidence_updated != 1:
+          raise LedgerContractError("rollout decision/evidence CAS lost")
+      self._audit("rollout.commit", decision_key, decision_blob_digest)
+      self._audit("rollout.evidence", evidence_key, evidence_blob_digest)
+      self._finish()
+    except Exception:
+      self._abort()
+      raise
+    return next_version, evidence_document
+
+  def read_rollout_admission(
+    self,
+    release_id: str,
+    *,
+    verification_key: bytes,
+    role: str = "runtime_evidence",
+  ) -> dict[str, Any]:
+    """Read and revalidate the durable release/decision/receipt admission."""
+
+    self._authorize(role, "blob.get")
+    decision_key, evidence_key = self._rollout_slot_keys(release_id)
+    decision_row = self.db.execute(
+      "SELECT version,blob_digest FROM slots WHERE slot_key=?", (decision_key,)
+    ).fetchone()
+    evidence_row = self.db.execute(
+      "SELECT version,blob_digest FROM slots WHERE slot_key=?", (evidence_key,)
+    ).fetchone()
+    if decision_row is None or evidence_row is None:
+      raise LedgerContractError("rollout admission slot is absent")
+    if int(evidence_row[0]) < int(decision_row[0]):
+      raise LedgerContractError("rollout decision/evidence slot versions diverged")
+    decision_bytes, decision_media, _ = self.get_blob(str(decision_row[1]), role=role)
+    evidence_bytes, evidence_media, _ = self.get_blob(str(evidence_row[1]), role=role)
+    if decision_media != ROLLOUT_DECISION_MEDIA_TYPE or evidence_media != ROLLOUT_EVIDENCE_MEDIA_TYPE:
+      raise LedgerContractError("rollout admission media type is invalid")
+    try:
+      decision = validate_rollout_envelope(
+        parse_canonical_json_bytes(decision_bytes),
+        verification_key=verification_key,
+      )
+      evidence = self._validate_rollout_evidence_document(parse_canonical_json_bytes(evidence_bytes))
+      release_digest = evidence["release_manifest_blob_sha256"]
+      receipt_digest = evidence["run_receipt_blob_sha256"]
+      release_bytes, release_media, _ = self.get_blob(release_digest, role=role)
+      receipt_bytes, receipt_media, _ = self.get_blob(receipt_digest, role=role)
+      if release_media != RELEASE_MANIFEST_MEDIA_TYPE or receipt_media != RECEIPT_MEDIA_TYPE:
+        raise LedgerContractError("rollout evidence authority media type is invalid")
+      release = validate_authority_envelope(parse_canonical_json_bytes(release_bytes))
+      receipt = validate_run_receipt(json.loads(receipt_bytes.decode("utf-8")))
+      binding = project_rollout_evidence(release, receipt)
+      assert_rollout_evidence_decision_binding(decision, binding)
+    except (RolloutAdmissionError, RolloutEvidenceError, ValueError, TypeError) as error:
+      raise LedgerContractError("durable rollout admission validation failed") from error
+    if decision["payload"]["release_id"] != release_id or evidence["release_id"] != release_id:
+      raise LedgerContractError("rollout admission release identity differs from slot")
+    if (
+      evidence["decision_id"] != decision["payload"]["decision_id"]
+      or evidence["decision_payload_sha256"] != decision["payload_sha256"]
+    ):
+      raise LedgerContractError("rollout evidence decision digest differs")
+    if (
+      evidence["receipt_id"] != binding.receipt_id
+      or evidence["package_digest"] != binding.package_digest
+      or evidence["wheel_digest"] != binding.wheel_digest
+      or evidence["release_manifest_payload_sha256"] != release["payload_sha256"]
+      or evidence["run_receipt_payload_sha256"] != receipt["payload_sha256"]
+    ):
+      raise LedgerContractError("rollout evidence authority digest differs")
+    return {
+      "version": int(decision_row[0]),
+      "evidence_version": int(evidence_row[0]),
+      "decision": decision,
+      "release_manifest": release,
+      "run_receipt": receipt,
+      "evidence": evidence,
+      "admissions_open": evidence["admissions_open"],
+      "writer_advancement_frozen": evidence["writer_advancement_frozen"],
+      "kill_switch_reasons": tuple(evidence["kill_switch_reasons"]),
+    }
+
+  def read_rollout_snapshot(
+    self,
+    release_id: str,
+    *,
+    verification_key: bytes,
+    role: str = "runtime_evidence",
+  ) -> dict[str, Any]:
+    """Return a slot-compatible snapshot for a facade admission reader."""
+
+    admission = self.read_rollout_admission(
+      release_id,
+      verification_key=verification_key,
+      role=role,
+    )
+    decision = admission["decision"]
+    slot = {
+      "schema_version": ROLLOUT_SLOT_SCHEMA_VERSION,
+      "decision": decision,
+      "decision_sha256": _sha(canonical_json_bytes(decision)),
+      "admissions_open": admission["admissions_open"],
+      "writer_advancement_frozen": admission["writer_advancement_frozen"],
+      "kill_switch_reasons": list(admission["kill_switch_reasons"]),
+    }
+    return {
+      "slot": slot,
+      "release_manifest": admission["release_manifest"],
+      "run_receipt": admission["run_receipt"],
+    }
+
+  def trip_rollout_kill_switch(
+    self,
+    token: FenceToken,
+    reasons: list[str],
+    *,
+    verification_key: bytes,
+    audit_identity: str,
+    role: str = "release_controller",
+  ) -> dict[str, Any]:
+    """Close rollout admission without changing the decision payload."""
+
+    self._authorize(role, "slot.write")
+    _require_identity(audit_identity, "audit_identity")
+    if not reasons or any(not isinstance(reason, str) or not reason for reason in reasons):
+      raise LedgerContractError("rollout kill switch requires typed reasons")
+    if not token.stream_id.startswith("rollout:"):
+      raise LedgerContractError("rollout kill switch requires a rollout fence")
+    current = self.read_rollout_admission(
+      token.stream_id.removeprefix("rollout:"),
+      verification_key=verification_key,
+      role=role,
+    )
+    evidence = dict(current["evidence"])
+    evidence["admissions_open"] = False
+    evidence["writer_advancement_frozen"] = True
+    evidence["kill_switch_reasons"] = sorted(set((*evidence["kill_switch_reasons"], *reasons)))
+    evidence = self._validate_rollout_evidence_document(evidence)
+    evidence_bytes = canonical_json_bytes(evidence)
+    evidence_digest = _sha(evidence_bytes)
+    _, evidence_key = self._rollout_slot_keys(token.stream_id.removeprefix("rollout:"))
+    try:
+      self._transaction()
+      self._assert_fence(token)
+      row = self.db.execute("SELECT version FROM slots WHERE slot_key=?", (evidence_key,)).fetchone()
+      if row is None or int(row[0]) != int(current["evidence_version"]):
+        raise LedgerContractError("rollout kill-switch CAS predecessor mismatch")
+      self._put_blob_locked(
+        evidence_bytes, media_type=ROLLOUT_EVIDENCE_MEDIA_TYPE,
+        retention_class="rollback-window", audit_identity=audit_identity,
+        expected_sha256=evidence_digest,
+      )
+      updated = self.db.execute(
+        "UPDATE slots SET version=?,blob_digest=?,fence_generation=?,audit_identity=? WHERE slot_key=? AND version=?",
+        (int(row[0]) + 1, evidence_digest, token.generation, audit_identity, evidence_key, int(row[0])),
+      ).rowcount
+      if updated != 1:
+        raise LedgerContractError("rollout kill-switch CAS lost")
+      self._audit("rollout.kill", evidence_key, evidence_digest)
+      self._finish()
+    except Exception:
+      self._abort()
+      raise
+    # Re-read is intentionally performed after commit so callers observe the
+    # durable closed state rather than an in-memory projection.
+    return self.read_rollout_admission(
+      token.stream_id.removeprefix("rollout:"),
+      verification_key=verification_key,
+      role=role,
+    )
 
   def read_journal(self, journal_id: str, *, role: str = "runtime_host") -> tuple[dict[str, Any], tuple[tuple[int, str, str], ...]]:
     self._authorize(role, "journal.read" if role == "runtime_evidence" else "blob.get")

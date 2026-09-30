@@ -1,6 +1,6 @@
 # Long-Horizon Architecture Governance
 
-Status: `2026-09-19` active long-horizon architecture-governance program; P0
+Status: `2026-09-23` active long-horizon architecture-governance program; P0
 authority and baseline, P1 target-architecture decisions, the complete
 P3-A/P3-B/P3-C contract, authority-envelope, ledger, and compatibility
 foundations, and P4-A dark/shadow host lifecycle are accepted after independent
@@ -8,8 +8,16 @@ review. P4-B dark/shadow candidate implementation and independent integrated
 review are complete; the first P4-C build-tree/internal candidate task is
 accepted after candidate-scope independent review; production acceptance is
 not granted.
-P2-A/P2-B, full maintained-facade parity, production rollback and P5-P8 remain open; no production truth
-publication, runtime caller migration, or production cutover is accepted yet.
+P2-A/P2-B, full maintained-facade parity, production caller cutover, rollback-window retention, rebuild
+retirement and P6-P8 remain open; no production truth publication or production cutover is accepted yet.
+The maintained caller migration, process-resync, mandatory production-state release/receipt binding, the durable
+ArtifactLedger rollout controller, and initial operations drill evidence are recorded in [P5-D evidence]
+(evidence/p5d_production_binding_operations_20260923.md) and [the SQLite controller packet]
+(evidence/p5d_sqlite_rollout_controller_20260923.md), with the real process/package
+rollback drill recorded in [the rollback packet]
+(evidence/p5d_real_process_package_rollback_20260923.md). The follow-up
+three-cycle supported-row SLO/adoption measurement is recorded in [the
+measurement packet](evidence/p5d_supported_row_measurement_20260923.md).
 
 Language:
 

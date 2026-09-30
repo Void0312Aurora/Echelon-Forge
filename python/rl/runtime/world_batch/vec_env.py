@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
-from collections.abc import Sequence
+from collections.abc import Callable, Mapping, Sequence
 from copy import deepcopy
 from typing import Any
 import os
@@ -144,6 +144,19 @@ class WorldBatchVecEnv(
         execution_step_batch_prepare: bool = False,
         policy_observation_torch_bridge: bool = True,
         observation_return_mode: str = "copy",
+        production_rollout_path: str | None = None,
+        production_rollout_key: bytes | None = None,
+        production_rollout_key_path: str | None = None,
+        production_rollout_snapshot_reader: Callable[[], Mapping[str, Any]] | None = None,
+        require_production_admission: bool = False,
+        production_release_id: str | None = None,
+        production_manifest_sha256: str | None = None,
+        production_plan_sha256: str | None = None,
+        production_release_manifest_path: str | None = None,
+        production_run_receipt_path: str | None = None,
+        production_package_digest: str | None = None,
+        production_wheel_digest: str | None = None,
+        require_production_evidence_binding: bool = False,
         action_wrapper_kwargs: dict[str, Any] | None = None,
         air_combat_post_launch_assessment_enabled: bool = False,
         air_combat_post_launch_assessment_stages: Sequence[str] | str | None = None,
@@ -232,6 +245,19 @@ class WorldBatchVecEnv(
         self._runtime_adapter = _RuntimeFacadeAdapter(
             self.n_envs,
             use_typed_observation_view=bool(use_typed_observation_view),
+            production_rollout_path=production_rollout_path,
+            production_rollout_key=production_rollout_key,
+            production_rollout_key_path=production_rollout_key_path,
+            production_rollout_snapshot_reader=production_rollout_snapshot_reader,
+            require_production_admission=bool(require_production_admission),
+            production_release_id=production_release_id,
+            production_manifest_sha256=production_manifest_sha256,
+            production_plan_sha256=production_plan_sha256,
+            production_release_manifest_path=production_release_manifest_path,
+            production_run_receipt_path=production_run_receipt_path,
+            production_package_digest=production_package_digest,
+            production_wheel_digest=production_wheel_digest,
+            require_production_evidence_binding=bool(require_production_evidence_binding),
         )
         self._batch_apply_buffer = BatchWorldApplyBuffer(self.n_envs)
         self._worker_threads = None if worker_threads is None else max(0, int(worker_threads))

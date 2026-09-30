@@ -156,7 +156,8 @@ jobs:
         run: |
           ./.venv/bin/python -m pytest -q --confcutdir=tests/architecture \
             tests/architecture/composition/test_runtime_state_transfer_candidate_contract.py \
-            tests/runtime/test_runtime_episode_mirror.py
+            tests/runtime/test_runtime_episode_mirror.py \
+            tests/architecture/runtime_host/test_production_rollout_gate.py
 
       - name: Run Cordis producer and composition architecture gates
         env:
