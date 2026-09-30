@@ -1,12 +1,60 @@
 {
   "name": "governance_audit",
+  "owner": "cross-domain-architecture",
+  "failure_audience": "on-demand governance and evidence audit",
+  "execution_strategy": "pytest-manifest-file",
+  "control_lifecycle": {
+    "schema_version": 1,
+    "controls": [
+      {
+        "id": "governance_audit_suite",
+        "owner": "cross-domain-architecture",
+        "invariant": "maintained governance routes, evidence links, and document ownership remain auditable",
+        "kind": "permanent",
+        "created": "2026-08-25",
+        "expiry": null,
+        "successor": null,
+        "renewal_count": 0,
+        "removal_proof": "an accepted replacement audit preserves the same retrieval and ownership failure audience",
+        "coverage": ["manifest"]
+      },
+      {
+        "id": "archive_retirement_transition",
+        "owner": "documentation-lifecycle",
+        "invariant": "closed documentation has one admitted retrieval route without recreating a parallel archive authority",
+        "kind": "migratory",
+        "created": "2026-08-25",
+        "expiry": "2027-03-31",
+        "successor": "p7a-retention-authority",
+        "renewal_count": 0,
+        "removal_proof": "P7-A synchronizes policy, gate, suite, repository route, index, and restore evidence",
+        "coverage": ["tests/architecture/governance/test_archive_retirement.py"]
+      },
+      {
+        "id": "document_link_retrieval_audit",
+        "owner": "documentation-lifecycle",
+        "invariant": "maintained evidence and standards links resolve to the admitted repository or external authority",
+        "kind": "permanent",
+        "created": "2026-08-25",
+        "expiry": null,
+        "successor": null,
+        "renewal_count": 0,
+        "removal_proof": "a successor link and retrieval gate passes the same maintained-document corpus",
+        "coverage": ["tests/architecture/governance/test_document_link_audit.py"]
+      }
+    ]
+  },
   "paths": [
+    "tests/architecture/governance/test_control_lifecycle_metadata.py",
+    "tests/architecture/governance/test_p2b_sustainability_baseline.py",
     "tests/architecture/governance/test_archive_retirement.py",
+    "tests/architecture/governance/test_p7a_retention_authority.py",
     "tests/architecture/governance/test_doc_closure_audit.py",
     "tests/architecture/governance/test_docs_information_architecture.py",
     "tests/architecture/governance/test_document_link_audit.py",
     "tests/architecture/governance/test_document_tier_census.py",
     "tests/architecture/governance/test_runtime_infrastructure_documentation.py",
-    "tests/architecture/governance/test_standards_documentation_governance.py"
+    "tests/architecture/governance/test_standards_documentation_governance.py",
+    "tests/architecture/governance/test_test_authority_audit.py"
   ]
 }

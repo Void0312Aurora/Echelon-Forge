@@ -86,6 +86,41 @@ def _advance_to_production(
         predecessor = decision_id
 
 
+def _advance_to_stable(
+    ledger: SQLiteArtifactLedger,
+    token: object,
+    release: Mapping[str, object],
+) -> None:
+    predecessor = ""
+    states = (
+        "prepared",
+        "shadow",
+        "canary-ready",
+        "production-canary",
+        "adoption-expanding",
+        "rollback-window",
+        "stable",
+    )
+    for sequence, state in enumerate(states):
+        decision_id = f"decision-evidence-{sequence}"
+        decision = _decision(
+            state=state,
+            sequence=sequence,
+            decision_id=decision_id,
+            predecessor=predecessor,
+        )
+        ledger.commit_rollout_admission(
+            token,
+            decision,
+            release_manifest=release,
+            run_receipt=_receipt_for(decision, release),
+            verification_key=evidence_fixtures.KEY,
+            audit_identity="release-controller-test",
+            expected_slot_version=sequence,
+        )
+        predecessor = decision_id
+
+
 def test_sqlite_rollout_admission_commits_and_reloads_atomically(tmp_path: Path) -> None:
     ledger, token, release = _open_ledger(tmp_path)
     try:
@@ -125,6 +160,71 @@ def test_sqlite_rollout_admission_commits_and_reloads_atomically(tmp_path: Path)
         assert admission["decision"]["payload"]["state"] == "prepared"
     finally:
         restarted.close()
+
+
+def test_sqlite_rollout_retention_survives_backup_and_restore(tmp_path: Path) -> None:
+    ledger, token, release = _open_ledger(tmp_path)
+    try:
+        _advance_to_production(ledger, token, release)
+        retention = ledger.read_rollout_retention(
+            "release-evidence-test",
+            verification_key=evidence_fixtures.KEY,
+        )
+        assert retention["state"] == "production-canary"
+        assert {
+            name: row["retention_class"]
+            for name, row in retention["blobs"].items()
+        } == {
+            "release_manifest": "active-release",
+            "rollout_decision": "rollback-window",
+            "run_receipt": "run-retained",
+            "rollout_evidence": "rollback-window",
+        }
+        backup = tmp_path / "ledger-backup.sqlite3"
+        ledger.backup_to(backup)
+    finally:
+        ledger.close()
+
+    restored = SQLiteArtifactLedger.restore_from(backup, tmp_path / "restored")
+    try:
+        restored_retention = restored.read_rollout_retention(
+            "release-evidence-test",
+            verification_key=evidence_fixtures.KEY,
+        )
+        assert restored_retention["blobs"] == retention["blobs"]
+    finally:
+        restored.close()
+
+
+def test_sqlite_rollout_lifecycle_reaches_stable_with_rollback_retention(tmp_path: Path) -> None:
+    ledger, token, release = _open_ledger(tmp_path)
+    try:
+        _advance_to_stable(ledger, token, release)
+        admission = ledger.read_rollout_admission(
+            "release-evidence-test",
+            verification_key=evidence_fixtures.KEY,
+        )
+        assert admission["decision"]["payload"]["state"] == "stable"
+        assert admission["admissions_open"]
+        assert not admission["writer_advancement_frozen"]
+
+        retention = ledger.read_rollout_retention(
+            "release-evidence-test",
+            verification_key=evidence_fixtures.KEY,
+        )
+        assert retention["state"] == "stable"
+        assert retention["slot_version"] == 7
+        assert {
+            name: row["retention_class"]
+            for name, row in retention["blobs"].items()
+        } == {
+            "release_manifest": "active-release",
+            "rollout_decision": "rollback-window",
+            "run_receipt": "run-retained",
+            "rollout_evidence": "rollback-window",
+        }
+    finally:
+        ledger.close()
 
 
 def test_sqlite_rollout_admission_enforces_transition_cas_and_evidence_identity(tmp_path: Path) -> None:

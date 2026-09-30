@@ -1324,6 +1324,57 @@ add_test(
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/default_runtime_profile_projection.v1.json
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/default_resolved_execution_plan.v1.json
 )
+
+# CTest labels are the native lane declaration.  They are additive: existing
+# test names and commands remain unchanged, while fast/qualification/nightly/
+# release/research runners can select an explicit failure audience without
+# maintaining another regex-only inventory.
+set_tests_properties(
+    ef_test_all
+    structural_failure_state
+    structural_failure_events
+    structural_failure_break_modes
+    structural_consequence
+    aircraft_damage_lifecycle
+    world_batch_runtime
+    default_effects_model
+    PROPERTIES LABELS "nightly;native"
+)
+set_tests_properties(
+    runtime_contracts_compile
+    runtime_authority_contract
+    PROPERTIES LABELS "fast;native"
+)
+set_tests_properties(
+    cuda_resident_lifecycle
+    cuda_resident_replay
+    cuda_resident_full_window
+    PROPERTIES LABELS "research;cuda"
+)
+set_tests_properties(
+    composition_lifecycle
+    backend_provider_migration
+    composition_evidence
+    runtime_host_candidate
+    cordis_runtime_conformance
+    PROPERTIES LABELS "qualification;native;release"
+)
+set_tests_properties(
+    runtime_kernel_candidate
+    runtime_kernel_candidate_parity
+    runtime_run_recorder
+    PROPERTIES LABELS "qualification;native;release;p5b"
+)
+set_tests_properties(
+    runtime_host_candidate_boundary
+    runtime_authority_boundary
+    runtime_contracts_boundary
+    PROPERTIES LABELS "qualification;native;boundary;release"
+)
+set_tests_properties(
+    runtime_run_recorder_boundary
+    PROPERTIES LABELS "qualification;native;boundary;release;p5b"
+)
 endif()
 
 set(EF_PROJECT_WARNING_TARGETS

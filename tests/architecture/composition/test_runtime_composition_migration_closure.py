@@ -197,8 +197,14 @@ def test_p8a_cpp_inventory_covers_temporaries_qualified_names_and_using_aliases(
 def test_p8a_inventory_classifies_retained_callers_and_names_residual_owners(
     closure_context,
 ) -> None:
-    _, record = closure_context
+    tool, record = closure_context
     surfaces = {row["surface_id"]: row for row in record["caller_inventory"]}
+    assert "artifacts" in tool.SKIPPED_CALLER_DIRECTORIES
+    assert all(
+        not caller.startswith("artifacts/")
+        for row in record["caller_inventory"]
+        for caller in row["callers"]
+    )
     assert surfaces["runtime_facade.maintained_host"]["callers"]
     assert surfaces["simulation_kernel.default_compatibility"]["callers"]
     assert surfaces["simulation_kernel.build_tree_candidate"]["classification"] == (

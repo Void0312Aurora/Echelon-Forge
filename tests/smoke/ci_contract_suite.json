@@ -1,5 +1,25 @@
 {
   "name": "ci_contract_smoke",
+  "owner": "release-engineering",
+  "failure_audience": "pull-request canonical contract fixture regression",
+  "execution_strategy": "json-contract-suite",
+  "control_lifecycle": {
+    "schema_version": 1,
+    "controls": [
+      {
+        "id": "ci_contract_smoke_gate",
+        "owner": "release-engineering",
+        "invariant": "maintained contract fixtures exercise one canonical loader, route, communication, configuration, and replay authority",
+        "kind": "permanent",
+        "created": "2026-08-25",
+        "expiry": null,
+        "successor": null,
+        "renewal_count": 0,
+        "removal_proof": "an accepted contract lane replacement covers the same canonical authority and failure audience",
+        "coverage": ["manifest"]
+      }
+    ]
+  },
   "specs": [
     "tests/contracts/chain/loader_command_chain_takeoff_to_landing.json",
     "tests/contracts/route_generator/route_generator_v1.json",

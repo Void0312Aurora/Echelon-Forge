@@ -10,6 +10,7 @@ runtime publication authority.
 from __future__ import annotations
 
 import argparse
+import ctypes
 import hashlib
 import json
 import os
@@ -44,6 +45,83 @@ def _sha256(path: Path) -> str:
   return digest.hexdigest()
 
 
+def _process_resource_snapshot() -> dict[str, int | bool]:
+  """Read the child process working-set and handle counters when supported."""
+
+  if os.name != "nt":
+    return {
+      "available": False,
+      "working_set_bytes": 0,
+      "peak_working_set_bytes": 0,
+      "handle_count": 0,
+    }
+
+  class _ProcessMemoryCountersEx(ctypes.Structure):
+    _fields_ = [
+      ("cb", ctypes.c_ulong),
+      ("PageFaultCount", ctypes.c_ulong),
+      ("PeakWorkingSetSize", ctypes.c_size_t),
+      ("WorkingSetSize", ctypes.c_size_t),
+      ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+      ("QuotaPagedPoolUsage", ctypes.c_size_t),
+      ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+      ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+      ("PagefileUsage", ctypes.c_size_t),
+      ("PeakPagefileUsage", ctypes.c_size_t),
+      ("PrivateUsage", ctypes.c_size_t),
+    ]
+
+  counters = _ProcessMemoryCountersEx()
+  counters.cb = ctypes.sizeof(counters)
+  try:
+    get_current_process = ctypes.windll.kernel32.GetCurrentProcess
+    get_current_process.restype = ctypes.c_void_p
+    get_process_memory_info = ctypes.windll.psapi.GetProcessMemoryInfo
+    get_process_memory_info.argtypes = [
+      ctypes.c_void_p,
+      ctypes.POINTER(_ProcessMemoryCountersEx),
+      ctypes.c_ulong,
+    ]
+    get_process_memory_info.restype = ctypes.c_int
+    handle_count = ctypes.c_ulong(0)
+    get_process_handle_count = ctypes.windll.kernel32.GetProcessHandleCount
+    get_process_handle_count.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_ulong)]
+    get_process_handle_count.restype = ctypes.c_int
+    process_handle = get_current_process()
+    memory_ok = bool(
+      get_process_memory_info(process_handle, ctypes.byref(counters), ctypes.sizeof(counters))
+    )
+    handles_ok = bool(get_process_handle_count(process_handle, ctypes.byref(handle_count)))
+  except (AttributeError, OSError):
+    return {
+      "available": False,
+      "working_set_bytes": 0,
+      "peak_working_set_bytes": 0,
+      "handle_count": 0,
+    }
+  if not memory_ok or not handles_ok:
+    return {
+      "available": False,
+      "working_set_bytes": 0,
+      "peak_working_set_bytes": 0,
+      "handle_count": 0,
+    }
+  return {
+    "available": True,
+    "working_set_bytes": int(counters.WorkingSetSize),
+    "peak_working_set_bytes": int(counters.PeakWorkingSetSize),
+    "handle_count": int(handle_count.value),
+  }
+
+
+def _write_ready(path: Path, payload: dict[str, object]) -> None:
+  """Publish readiness/resource state atomically so readers never see a partial JSON file."""
+
+  temporary = path.with_name(path.name + ".tmp")
+  temporary.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+  temporary.replace(path)
+
+
 @dataclass(slots=True)
 class RuntimeProcess:
   """A real local runtime process and its observed package identity."""
@@ -63,6 +141,12 @@ class RuntimeProcess:
       raise RuntimeError("runtime process did not stop after the rollback signal")
     if self.process.returncode != 0:
       raise RuntimeError(f"runtime process exited with code {self.process.returncode}")
+    try:
+      final_observation = json.loads(self.ready_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+      final_observation = None
+    if isinstance(final_observation, dict):
+      self.observation.update(final_observation)
 
 
 def launch_runtime_process(
@@ -70,9 +154,37 @@ def launch_runtime_process(
   *,
   epoch: str,
   state_dir: str | Path,
+  production_ledger_root: str | Path | None = None,
+  production_release_id: str | None = None,
+  production_key_path: str | Path | None = None,
+  production_manifest_sha256: str | None = None,
+  production_plan_sha256: str | None = None,
+  production_package_digest: str | None = None,
+  production_authorization_required: bool = True,
   timeout_s: float = 30.0,
 ) -> RuntimeProcess:
-  """Start and observe one actual local ``RuntimeFacade`` process."""
+  """Start and observe one actual local ``RuntimeFacade`` process.
+
+  When the production admission arguments are supplied, the child is required
+  to read the durable SQLite rollout snapshot and construct the facade only
+  after validating the signed decision plus its release/RunReceipt binding.
+  The default path remains a development/shadow process for measurement.
+  """
+
+  admission_values = (
+    production_ledger_root,
+    production_release_id,
+    production_key_path,
+    production_manifest_sha256,
+    production_plan_sha256,
+    production_package_digest,
+  )
+  if any(value is not None for value in admission_values) and not all(
+    value is not None for value in admission_values
+  ):
+    raise ValueError(
+      "production process admission requires ledger root, release, key, manifest, plan, and package"
+    )
 
   resolved_build = Path(build_dir).resolve()
   binding = _find_native_binding(resolved_build)
@@ -95,6 +207,17 @@ def launch_runtime_process(
     "--ready", str(ready_path),
     "--stop", str(stop_path),
   ]
+  if production_ledger_root is not None:
+    command.extend([
+      "--production-ledger-root", str(Path(production_ledger_root).resolve()),
+      "--production-release-id", str(production_release_id),
+      "--production-key-path", str(Path(production_key_path).resolve()),
+      "--production-manifest-sha256", str(production_manifest_sha256),
+      "--production-plan-sha256", str(production_plan_sha256),
+      "--production-package-digest", str(production_package_digest),
+    ])
+    if not production_authorization_required:
+      command.append("--production-skip-authorization")
   process = subprocess.Popen(
     command,
     cwd=root,
@@ -127,6 +250,36 @@ def launch_runtime_process(
           process.kill()
           process.wait(timeout=timeout_s)
           raise RuntimeError(f"runtime process readiness field {field!r} differs")
+      if production_release_id is not None:
+        if observation.get("rollout_release_id") != production_release_id:
+          process.kill()
+          process.wait(timeout=timeout_s)
+          raise RuntimeError("runtime process rollout release differs")
+        if observation.get("rollout_manifest_sha256") != production_manifest_sha256:
+          process.kill()
+          process.wait(timeout=timeout_s)
+          raise RuntimeError("runtime process rollout manifest differs")
+        if observation.get("rollout_plan_sha256") != production_plan_sha256:
+          process.kill()
+          process.wait(timeout=timeout_s)
+          raise RuntimeError("runtime process rollout plan differs")
+        expected_authorized = bool(production_authorization_required)
+        if observation.get("production_authorized") is not expected_authorized:
+          process.kill()
+          process.wait(timeout=timeout_s)
+          raise RuntimeError("runtime process production-authorized state differs")
+        if observation.get("evidence_bound") is not True:
+          process.kill()
+          process.wait(timeout=timeout_s)
+          raise RuntimeError("runtime process did not prove release/receipt binding")
+        if observation.get("rollout_package_digest") != production_package_digest:
+          process.kill()
+          process.wait(timeout=timeout_s)
+          raise RuntimeError("runtime process rollout package digest differs")
+        if observation.get("rollout_wheel_digest") != _sha256(binding):
+          process.kill()
+          process.wait(timeout=timeout_s)
+          raise RuntimeError("runtime process rollout wheel digest differs")
       return RuntimeProcess(process, ready_path, stop_path, observation)
     if process.poll() is not None:
       stdout, stderr = process.communicate()
@@ -148,7 +301,39 @@ def _run_worker(args: argparse.Namespace) -> int:
 
   build_dir = Path(args.build_dir).resolve()
   binding = _find_native_binding(build_dir)
-  facade = ef_py.RuntimeFacade(1)
+  loaded_binding = Path(str(getattr(ef_py, "__file__", ""))).resolve()
+  if os.path.normcase(str(loaded_binding)) != os.path.normcase(str(binding.resolve())):
+    raise RuntimeError(
+      "selected local ef_py binding differs from the imported module: "
+      f"selected={binding.resolve()} imported={loaded_binding}"
+    )
+  ledger = None
+  adapter = None
+  if args.production_ledger_root:
+    from python.rl.runtime.world_batch.adapter import RuntimeFacadeAdapter
+    from tools.maintenance.runtime_durable_artifact_ledger import SQLiteArtifactLedger
+
+    ledger = SQLiteArtifactLedger(Path(args.production_ledger_root))
+    verification_key = Path(args.production_key_path).read_bytes()
+    adapter = RuntimeFacadeAdapter(
+      1,
+      production_rollout_key=verification_key,
+      production_rollout_snapshot_reader=lambda: ledger.read_rollout_snapshot(
+        args.production_release_id,
+        verification_key=verification_key,
+      ),
+      require_production_admission=not args.production_skip_authorization,
+      production_release_id=args.production_release_id,
+      production_manifest_sha256=args.production_manifest_sha256,
+      production_plan_sha256=args.production_plan_sha256,
+      production_package_digest=args.production_package_digest,
+      production_wheel_digest=_sha256(binding),
+    )
+    facade = adapter.facade
+    admission = adapter.rollout_admission
+  else:
+    facade = ef_py.RuntimeFacade(1)
+    admission = None
   ready = {
     "build_dir": str(build_dir),
     "epoch": args.epoch,
@@ -157,13 +342,72 @@ def _run_worker(args: argparse.Namespace) -> int:
     "boot_identity": uuid4().hex,
     "pyd_sha256": _sha256(binding),
   }
+  if admission is not None:
+    ready.update({
+      "rollout_state": admission.state,
+      "rollout_release_id": admission.envelope["payload"]["release_id"],
+      "rollout_manifest_sha256": admission.envelope["payload"]["manifest_sha256"],
+      "rollout_plan_sha256": admission.envelope["payload"]["plan_sha256"],
+      "rollout_decision_sha256": admission.decision_sha256,
+      "production_authorized": admission.production_authorized,
+      "evidence_bound": adapter.rollout_evidence_binding is not None,
+      "rollout_package_digest": adapter.rollout_evidence_binding.package_digest,
+      "rollout_wheel_digest": adapter.rollout_evidence_binding.wheel_digest,
+    })
   ready_path = Path(args.ready)
   ready_path.parent.mkdir(parents=True, exist_ok=True)
-  ready_path.write_text(json.dumps(ready, sort_keys=True), encoding="utf-8")
+  resource = _process_resource_snapshot()
+  resource_peak = {
+    "available": bool(resource["available"]),
+    "working_set_bytes": int(resource["working_set_bytes"]),
+    "peak_working_set_bytes": int(resource["peak_working_set_bytes"]),
+    "handle_count": int(resource["handle_count"]),
+    "peak_handle_count": int(resource["handle_count"]),
+  }
+  ready["resource"] = resource_peak
+  _write_ready(ready_path, ready)
   stop_path = Path(args.stop)
-  while not stop_path.exists():
-    time.sleep(0.02)
-  del facade
+  last_resource_write = time.monotonic()
+  try:
+    while not stop_path.exists():
+      resource = _process_resource_snapshot()
+      if bool(resource["available"]):
+        resource_peak["available"] = True
+        resource_peak["working_set_bytes"] = int(resource["working_set_bytes"])
+        resource_peak["peak_working_set_bytes"] = max(
+          int(resource_peak["peak_working_set_bytes"]),
+          int(resource["peak_working_set_bytes"]),
+        )
+        resource_peak["handle_count"] = int(resource["handle_count"])
+        resource_peak["peak_handle_count"] = max(
+          int(resource_peak["peak_handle_count"]),
+          int(resource["handle_count"]),
+        )
+      if time.monotonic() - last_resource_write >= 0.1:
+        ready["resource"] = dict(resource_peak)
+        _write_ready(ready_path, ready)
+        last_resource_write = time.monotonic()
+      time.sleep(0.02)
+  finally:
+    resource = _process_resource_snapshot()
+    if bool(resource["available"]):
+      resource_peak["available"] = True
+      resource_peak["working_set_bytes"] = int(resource["working_set_bytes"])
+      resource_peak["peak_working_set_bytes"] = max(
+        int(resource_peak["peak_working_set_bytes"]),
+        int(resource["peak_working_set_bytes"]),
+      )
+      resource_peak["handle_count"] = int(resource["handle_count"])
+      resource_peak["peak_handle_count"] = max(
+        int(resource_peak["peak_handle_count"]),
+        int(resource["handle_count"]),
+      )
+    ready["resource"] = dict(resource_peak)
+    _write_ready(ready_path, ready)
+    del adapter
+    del facade
+    if ledger is not None:
+      ledger.close()
   return 0
 
 
@@ -174,6 +418,13 @@ def main(argv: list[str] | None = None) -> int:
   parser.add_argument("--epoch", required=True)
   parser.add_argument("--ready", required=True)
   parser.add_argument("--stop", required=True)
+  parser.add_argument("--production-ledger-root")
+  parser.add_argument("--production-release-id")
+  parser.add_argument("--production-key-path")
+  parser.add_argument("--production-manifest-sha256")
+  parser.add_argument("--production-plan-sha256")
+  parser.add_argument("--production-package-digest")
+  parser.add_argument("--production-skip-authorization", action="store_true")
   args = parser.parse_args(argv)
   if not args.p5d_runtime_worker:
     parser.error("the worker entry point is internal; call launch_runtime_process from a drill")

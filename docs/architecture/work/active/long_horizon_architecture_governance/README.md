@@ -1,6 +1,6 @@
 # Long-Horizon Architecture Governance
 
-Status: `2026-09-23` active long-horizon architecture-governance program; P0
+Status: `2026-09-24` active long-horizon architecture-governance program; P0
 authority and baseline, P1 target-architecture decisions, the complete
 P3-A/P3-B/P3-C contract, authority-envelope, ledger, and compatibility
 foundations, and P4-A dark/shadow host lifecycle are accepted after independent
@@ -8,8 +8,10 @@ review. P4-B dark/shadow candidate implementation and independent integrated
 review are complete; the first P4-C build-tree/internal candidate task is
 accepted after candidate-scope independent review; production acceptance is
 not granted.
-P2-A/P2-B, full maintained-facade parity, production caller cutover, rollback-window retention, rebuild
-retirement and P6-P8 remain open; no production truth publication or production cutover is accepted yet.
+P2-A now has an implemented manifest-level lifecycle baseline, and P2-B has a first repeatable local
+sustainability baseline; representative release cadence, full maintained-facade parity, production caller
+cutover, production rollback-window operation, rebuild retirement and P6-P8 remain open; no
+production truth publication or production cutover is accepted yet.
 The maintained caller migration, process-resync, mandatory production-state release/receipt binding, the durable
 ArtifactLedger rollout controller, and initial operations drill evidence are recorded in [P5-D evidence]
 (evidence/p5d_production_binding_operations_20260923.md) and [the SQLite controller packet]
@@ -18,6 +20,27 @@ rollback drill recorded in [the rollback packet]
 (evidence/p5d_real_process_package_rollback_20260923.md). The follow-up
 three-cycle supported-row SLO/adoption measurement is recorded in [the
 measurement packet](evidence/p5d_supported_row_measurement_20260923.md).
+The real admission-bound facade VecEnv reset/step check is recorded in [the
+VecEnv canary packet](evidence/p5d_facade_vecenv_canary_20260923.md).
+The complete local durable rollout lifecycle/retention check and the separate
+fail-closed rebuild-retirement gate are recorded in [the lifecycle controller
+packet](evidence/p5d_sqlite_rollout_controller_20260923.md) and [the rebuild
+retirement gate packet](evidence/p5d_rebuild_retirement_gate_20260924.md).
+The pre-cutover rebuild-unreachability inventory, which records zero
+maintained callers and keeps rebuild unretired, is recorded in [the rebuild
+packet](evidence/p5d_rebuild_unreachability_20260923.md).
+The initial P2-B control/cost/retrieval baseline is recorded in [the
+sustainability packet](evidence/p2b_sustainability_baseline_20260923.md).
+The distinct-package cadence follow-up is recorded in [the cadence packet]
+(evidence/p2b_release_cadence_followup_20260924.md); representative cadence
+remains open.
+
+The P6-A test-authority baseline is recorded in [the derived audit packet]
+(evidence/p6a_test_authority_audit_20260924.md): architecture tier manifests
+now carry owner/failure-audience/execution-strategy metadata, and the derived
+report preserves source-scan residuals while rejecting orphan and duplicate
+assignments. Native CTest now exposes primary lane labels for all 25 entries.
+P6-A replacement/retirement evidence and P6-B workflow lane work remain open.
 
 Language:
 
@@ -28,7 +51,7 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/README.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-08-31`
+Last verified: `2026-09-24`
 
 Related authority:
 
@@ -67,8 +90,8 @@ controls that expire or renew instead of accumulating after every migration.
 | Runtime boundary | facade direction accepted; compatibility surfaces remain | [runtime facade guards](../../../../../tests/architecture/runtime_facade/test_runtime_escape_hatches.py) | source scans describe the boundary but do not make it physically unrepresentable |
 | Contract and evidence chain | complete for the accepted default profile | request, catalog lock, projection, requested/resolved manifests, provenance, parity, and closure artifacts | intermediate migration artifacts remain permanent governance inputs |
 | Public/runtime authority boundary | P3-A/P3-B/P3-C and P4-A accepted; P4-B independently passed; P4-C candidate task accepted | [`ef_runtime_contracts`](../../../../../include/echelon_forge/runtime_contracts/runtime_identity.h), [`RuntimeHostCandidate`](../../../../../src/runtime/host/runtime_host_candidate.h), [P4-B candidate](p4b_state_transfer_candidate_20260830.md), [P4-C candidate seam](p4c_internal_candidate_seam_20260915.md), twelve-row owner adapters, exact vectors, non-production ArtifactLedger simulator, fresh Windows/MSVC native gates and [P4-B independent review](../../../reviews/long_horizon_architecture_governance_p4b_review_20260831.md) | P4-A/B/C remain dark/shadow only; full maintained-facade parity plus P5-B/P5-D production durability, authenticity, activation and cutover remain gated |
-| Test and CI governance | verified CI smoke was green; full governance audit is not | [CI smoke suite](../../../../../tests/smoke/ci_smoke_suite.json), [governance audit suite](../../../../../tests/suites/governance_audit_suite.json), and `test_archive_retirement.py` | the remote baseline tracks 20 owner-archive documents that fail the retirement gate |
-| Documentation lifecycle | policy, gate, and repository route conflict | [document lifecycle policy](../../../../engineering/documentation/standards/document_lifecycle_policy.md), subproject standard, and current architecture archive | standards admit owner-local archives while the maintained gate prohibits every `docs/**/archive/**` path |
+| Test and CI governance | verified CI smoke was green; P6-A authority baseline and P7-A retention checks have focused evidence; full hosted governance/CI acceptance is not | [CI smoke suite](../../../../../tests/smoke/ci_smoke_suite.json), [governance audit suite](../../../../../tests/suites/governance_audit_suite.json), [P6-A derived audit](evidence/p6a_test_authority_audit_20260924.md), and [retention authority](../../../../engineering/documentation/reference/retention_authority.json) | source-scan residuals and hosted CI/branch-protection evidence remain open; archive routing is constrained by the P7-A authority |
+| Documentation lifecycle | P7-A retention authority baseline implemented | [P7-A retention evidence](evidence/p7a_retention_authority_20260924.md), [document lifecycle policy](../../../../engineering/documentation/standards/document_lifecycle_policy.md), [retention authority](../../../../engineering/documentation/reference/retention_authority.json), archive gate, and current architecture archive | one registered Cordis owner-local archive is allowed; every other archive path is forbidden and retired material uses owner ledgers/Git history |
 
 ## Scope
 
@@ -146,12 +169,12 @@ the same long-term authority, compatibility, and lifecycle result.
 | --- | --- | --- | --- | --- |
 | `P0 Authority And Baseline` | Establish verified source, control, CI, evidence, and ownership baselines plus independent review. | user authorization and latest `origin/main` | project packet, measurements, review findings, and owner index are current | accepted |
 | `P1 Target Architecture` | Freeze lifecycle, episode authority, versioning/rollout, platform/process topology, contract-chain, boundary, and control-lifecycle decisions. | P0 evidence accepted | decisions include compatibility, rollback, operations, storage and security activation paths and pass independent architecture review | accepted |
-| `P2 Control Lifecycle` | Make every architecture control permanent, renewable, migratory, or evidentiary with explicit ownership and retirement. | P1 terminology frozen | existing controls are classified and migration controls have enforced exit criteria | P2-A/P2-B ready |
+| `P2 Control Lifecycle` | Make every architecture control permanent, renewable, migratory, or evidentiary with explicit ownership and retirement. | P1 terminology frozen | existing controls are classified and migration controls have enforced exit criteria | P2-A baseline; P2-B initial baseline plus distinct-package follow-up; representative cadence open |
 | `P3 Contract And Public Boundary Foundation` | Land canonical authority envelopes, resolved-plan/release/rollout/checkpoint shells, engine-independent public DTO target, ledger foundation and target visibility before host cutover. | P1 accepted | transitional adapters are single-owner and host work can use final public types/storage without publishing a second truth | P3-A/P3-B/P3-C accepted |
 | `P4 Host Lifecycle And Immutable Kernel Candidate` | Implement fenced host replacement, unique episode authority, complete state-transfer semantics, and an immutable candidate path in dark/shadow mode. | P3 contract/boundary foundation stable | the candidate path is state-complete and fenced but cannot become production truth or retire production rebuild | P4-A accepted; P4-B independently passed; P4-C candidate-scope task accepted; full maintained-facade parity and P5 remain open |
 | `P5 Plan, Evidence, Binding, And Production Cutover` | Close the executable plan, introduce complete RunReceipt, finish physical facade/diagnostics packaging, then execute the only production cutover/backout and retire rebuild. | P4 candidate proven in dark/shadow mode | Cordis/native/facade/wheel use one plan; supported callers cut over once with rollback evidence and rebuild loses production authority | planned |
-| `P6 Test And CI Architecture` | Align fast, qualification, nightly, release, and research lanes with unique failure audiences. | P2 control classes and P5 boundaries available | permanent gates have named detection value and migration scans are absent or expiring | planned |
-| `P7 Evidence And Documentation Lifecycle` | Retain reproducible proof without keeping closed work packages in permanent authority. | P2 classes and P5 evidence ownership stable | standards, current references, historical records, and generated evidence have singular owners and routes | planned |
+| `P6 Test And CI Architecture` | Align fast, qualification, nightly, release, and research lanes with unique failure audiences. | P2 control classes and P5 boundaries available | permanent gates have named detection value and migration scans are absent or expiring | P6-A authority baseline; replacement/retirement evidence and P6-B lanes remain |
+| `P7 Evidence And Documentation Lifecycle` | Retain reproducible proof without keeping closed work packages in permanent authority. | P2 classes and P5 evidence ownership stable | standards, current references, historical records, and generated evidence have singular owners and routes | P7-A retention authority baseline; P7-B residual retirement planned |
 | `P8 Long-Horizon Acceptance` | Prove migration compatibility, operational sustainability, and absence of duplicate truth. | P3-P7 complete | full acceptance contract and independent review pass; lasting rules are promoted and task history follows the admitted retirement route | planned |
 
 ## Task Clusters
@@ -175,6 +198,9 @@ the same long-term authority, compatibility, and lifecycle result.
 - [P4-B owner adapter inventory](p4b_owner_adapter_inventory_20260830.md)
 - [P4-C internal candidate seam](p4c_internal_candidate_seam_20260915.md)
 - [P4-C independent review](../../../reviews/long_horizon_architecture_governance_p4c_review_20260919.md)
+- [P2-A control lifecycle inventory](evidence/p2_control_lifecycle_inventory_20260923.md)
+- [P2-B sustainability baseline](evidence/p2b_sustainability_baseline_20260923.md)
+- [P2-B release cadence follow-up](evidence/p2b_release_cadence_followup_20260924.md)
 
 ## Outputs And Evidence
 
@@ -229,7 +255,11 @@ cannot satisfy this gate.
 
 The active README and current-status file remain the entry points while the
 program is open. Accepted decisions move to architecture standards or reviews.
-P7 must reconcile the current owner-archive policy with the gate that prohibits
-all `docs/**/archive/**` paths before selecting a retirement route. Until then,
-no new archive tree is an accepted closure mechanism, and the active directory
-must not become an append-only evidence store.
+P7-A reconciles the owner-archive policy through
+`retention_authority.json`: the accepted Cordis history is the sole registered
+owner-local archive, while every other archive path remains forbidden. Retired
+material outside that route uses the owner ledger and Git history. The active
+directory remains a current execution surface, not an append-only evidence
+store. The first P7-B zero-inventory retirement is recorded in [the P7-B
+evidence packet](evidence/p7b_zero_inventory_retirement_20260924.md); further
+cleanup and provider/restore drills remain open.

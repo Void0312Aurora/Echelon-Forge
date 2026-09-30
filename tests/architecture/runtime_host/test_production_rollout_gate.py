@@ -264,7 +264,6 @@ def test_long_lived_production_adapter_rechecks_kill_switch_before_mutation(
             production_wheel_digest="b" * 64,
         )
 
-
 def test_release_controller_cli_commits_signed_slot(tmp_path: Path) -> None:
     payload_path = tmp_path / "payload.json"
     key_path = tmp_path / "rollout.key"

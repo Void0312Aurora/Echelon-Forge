@@ -126,9 +126,9 @@ contain only:
 4. open residuals or explicitly held work;
 5. links to review, evidence, and archive indexes.
 
-Completed work-package narratives belong in a local `archive/README.md` or a
-bounded acceptance record. New or substantially rewritten maintained READMEs
-should remain at or below 200 lines. A README above 300 lines requires a
+Completed work-package narratives belong in a bounded acceptance record or an
+explicitly registered owner-local archive route. New or substantially rewritten
+maintained READMEs should remain at or below 200 lines. A README above 300 lines requires a
 documented `Size exception` explaining why an index split would be harmful.
 
 Do not copy the same status narrative into the root README, `docs/README`, a
@@ -148,10 +148,14 @@ remains authoritative for task-specific state.
 - Evidence packages use `evidence/<topic>_<YYYYMMDD>/` with `README.md` and
   `manifest.json`.
 - `README.md` is reserved for directory navigation.
-- New archive directories use lowercase `archive/`.
-- Do not create `Archive/`, `archive/archive/`, or repeated lifecycle directory
-  components. Existing legacy paths are migrated only through a reviewed,
-  link-safe iteration.
+- In-tree archive directories are not a default route. A tracked archive path
+  is allowed only when it is listed in
+  `docs/engineering/documentation/reference/retention_authority.json`, has an
+  owner and archived README metadata, and is linked from its declared indexes.
+- Do not create `Archive/`, `archive/archive/`, repeated lifecycle components,
+  or an unregistered owner-local archive. Retired material outside an admitted
+  owner-local route is deleted from the working tree and retrieved through its
+  owner ledger and Git history.
 
 ## Bilingual Rules
 
@@ -265,13 +269,17 @@ findings by behavior risk rather than prose preference. Once its actions are
 transferred or closed, the review becomes `accepted` or `archived` and must not
 remain presented as an active implementation queue.
 
-A document may enter `archive/` only when:
+A document may enter an explicitly registered owner-local `archive/` only when:
 
 1. a maintained replacement or parent README exists;
 2. current facts needed by maintainers have been promoted to that replacement;
 3. incoming maintained links have been updated;
 4. provenance and evidence consumers have been checked;
-5. the archive index records the reason and date.
+5. the retention authority and archive index record the owner, reason, and
+   date.
+
+An unregistered archive path is not a retention route. The maintained archive
+gate rejects it; do not create a second in-tree history authority.
 
 Archived files are immutable except for link repair, license/rights correction,
 or an explicit erratum. New work must not be appended to an archived packet.

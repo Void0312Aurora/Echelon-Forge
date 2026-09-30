@@ -184,7 +184,16 @@ def _run_kernel_flight_contract(kernel_spec: dict[str, Any]) -> tuple[bool, str,
             alt = float(inst.alt_baro)
             pitch = float(inst.pitch)
             pa = _base_pilot_action()
-            pa.stick_roll = 0.0
+            roll = float(inst.roll)
+            p = float(inst.p)
+            pa.stick_roll = float(
+                np.clip(
+                    -float(kernel_spec.get("roll_kp", 0.03)) * roll
+                    - float(kernel_spec.get("roll_rate_kd", 0.01)) * p,
+                    -float(kernel_spec.get("max_roll_cmd", 0.6)),
+                    float(kernel_spec.get("max_roll_cmd", 0.6)),
+                )
+            )
             pa.rudder = 0.0
             pa.throttle = 1.0
             pa.flaps = 0.0

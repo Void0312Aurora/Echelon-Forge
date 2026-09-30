@@ -301,12 +301,14 @@ collection, so tier membership changes are deliberate manifest edits. The CI smo
 not affected by the marker split: promoted smoke entries keep gating CI even
 when their file belongs to the audit tier.
 
-The removed `UniversalEnv` raw-constructor surface is tracked by
-`tests/architecture/fixtures/universal_env_runtime_compatibility_callers_20260612.json`
-and guarded by
-`tests/architecture/runtime_facade/test_universal_env_compatibility_caller_inventory.py`.
-The expected active count is zero. New `runtime_compatibility_enabled=True` call
-sites must not be introduced; use a maintained runtime/facade path instead.
+The removed `UniversalEnv` raw-constructor surface was previously tracked by a
+zero-entry compatibility inventory. That completed ratchet was retired in
+P7-B after the maintained facade/VecEnv boundary gates became the successor
+evidence. New `runtime_compatibility_enabled=True` call sites must not be
+introduced; use a maintained runtime/facade path instead. The active boundary
+checks remain in
+`tests/architecture/runtime_facade/test_runtime_escape_hatches.py` and
+`tests/architecture/runtime_facade/test_scenario_setup_facade_boundary.py`.
 
 ## Dependency Notes
 

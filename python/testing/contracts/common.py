@@ -126,9 +126,14 @@ def _materialize_scenario_path(spec: dict[str, Any]) -> tuple[str, bool]:
     raise ValueError("Contract must provide either 'scenario' or 'scenario_inline'")
 
 
-def _leg_lengths(route: list[dict[str, Any]]) -> list[float]:
-    prev_x = 0.0
-    prev_y = 0.0
+def _leg_lengths(
+    route: list[dict[str, Any]],
+    *,
+    origin_x: float = 0.0,
+    origin_y: float = 0.0,
+) -> list[float]:
+    prev_x = float(origin_x)
+    prev_y = float(origin_y)
     out: list[float] = []
     for wp in route:
         x = float(wp["x"])
@@ -139,8 +144,15 @@ def _leg_lengths(route: list[dict[str, Any]]) -> list[float]:
     return out
 
 
-def _turn_geometry(route: list[dict[str, Any]]) -> tuple[list[float], list[float]]:
-    points = [(0.0, 0.0)] + [(float(wp["x"]), float(wp["y"])) for wp in route]
+def _turn_geometry(
+    route: list[dict[str, Any]],
+    *,
+    origin_x: float = 0.0,
+    origin_y: float = 0.0,
+) -> tuple[list[float], list[float]]:
+    points = [(float(origin_x), float(origin_y))] + [
+        (float(wp["x"]), float(wp["y"])) for wp in route
+    ]
     tracks: list[float] = []
     legs: list[float] = []
     for idx in range(1, len(points)):

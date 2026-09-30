@@ -1529,6 +1529,62 @@ class SQLiteArtifactLedger:
       "run_receipt": admission["run_receipt"],
     }
 
+  def read_rollout_retention(
+    self,
+    release_id: str,
+    *,
+    verification_key: bytes,
+    role: str = "runtime_evidence",
+  ) -> dict[str, Any]:
+    """Verify that the live rollout authority blobs retain their rollback roles.
+
+    The admission reader already validates the authority graph.  This
+    projection adds the storage-side invariant needed by P5-D: the release,
+    decision, RunReceipt, and evidence blobs must remain present with the
+    retention class assigned by the durable rollout transaction.  It is a
+    read-only check and does not advance or rewrite the rollout slot.
+    """
+
+    admission = self.read_rollout_admission(
+      release_id,
+      verification_key=verification_key,
+      role=role,
+    )
+    decision_digest = _sha(canonical_json_bytes(admission["decision"]))
+    evidence_digest = _sha(canonical_json_bytes(admission["evidence"]))
+    evidence = admission["evidence"]
+    references = (
+      ("release_manifest", evidence["release_manifest_blob_sha256"], RELEASE_MANIFEST_MEDIA_TYPE, "active-release"),
+      ("rollout_decision", decision_digest, ROLLOUT_DECISION_MEDIA_TYPE, "rollback-window"),
+      ("run_receipt", evidence["run_receipt_blob_sha256"], RECEIPT_MEDIA_TYPE, "run-retained"),
+      ("rollout_evidence", evidence_digest, ROLLOUT_EVIDENCE_MEDIA_TYPE, "rollback-window"),
+    )
+    blobs: dict[str, dict[str, Any]] = {}
+    for name, digest, expected_media_type, expected_retention in references:
+      media_type, size, retention_class, audit_identity = self.stat_blob(
+        digest,
+        role=role,
+      )
+      if media_type != expected_media_type:
+        raise LedgerContractError(f"rollout retention media type differs for {name}")
+      if retention_class != expected_retention:
+        raise LedgerContractError(f"rollout retention class differs for {name}")
+      blobs[name] = {
+        "digest": digest,
+        "media_type": media_type,
+        "size": size,
+        "retention_class": retention_class,
+        "audit_identity": audit_identity,
+      }
+    return {
+      "schema_version": "echelon_forge.rollout_retention_check.v1",
+      "release_id": release_id,
+      "state": admission["decision"]["payload"]["state"],
+      "slot_version": admission["version"],
+      "evidence_version": admission["evidence_version"],
+      "blobs": blobs,
+    }
+
   def trip_rollout_kill_switch(
     self,
     token: FenceToken,

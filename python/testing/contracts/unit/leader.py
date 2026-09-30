@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import math
 import os
+from pathlib import Path
 from typing import Any
 
 from python.angles import bearing_between_deg
@@ -29,10 +30,21 @@ def _check_leader_training_env(spec: dict[str, Any]) -> tuple[bool, str]:
 
     scenario_path = resolve_repo_path(str(spec["scenario"]))
     leader_cfg = dict(spec.get("leader_env", {}) or {})
+    execution_backend = str(leader_cfg.get("execution_backend", "scripted")).strip().lower()
+    execution_model_path = leader_cfg.get("execution_model_path")
+    if execution_backend == "frozen_model":
+        if not execution_model_path:
+            raise ContractSkipped("frozen_model execution requires an execution_model_path")
+        resolved_model = resolve_artifact_path(resolve_repo_path(str(execution_model_path)))
+        if not resolved_model or not Path(resolved_model).is_file():
+            raise ContractSkipped(
+                "frozen_model execution artifact is unavailable: "
+                f"{resolved_model or execution_model_path}"
+            )
     env = LeaderTrainingEnv(
         scenario_path=scenario_path,
         decision_interval_steps=int(leader_cfg.get("decision_interval_steps", 5)),
-        execution_backend=str(leader_cfg.get("execution_backend", "scripted")),
+        execution_backend=execution_backend,
         execution_train_config=(
             resolve_repo_path(str(leader_cfg["execution_train_config"]))
             if leader_cfg.get("execution_train_config")
@@ -127,6 +139,8 @@ def _check_leader_policy_generalization(spec: dict[str, Any]) -> tuple[bool, str
 
     def _load_leader_policy(model_path: str, algo_name: str):
         resolved_path = resolve_artifact_path(model_path) or str(model_path)
+        if not Path(resolved_path).is_file():
+            raise ContractSkipped(f"leader policy artifact is unavailable: {resolved_path}")
         load_path = resolved_path[:-4] if str(resolved_path).endswith(".zip") else str(resolved_path)
         algo_norm = str(algo_name or "auto").strip()
         if algo_norm in ("auto", "AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
@@ -354,6 +368,17 @@ def _check_leader_policy_generalization(spec: dict[str, Any]) -> tuple[bool, str
 
     policy_cfg = dict(spec.get("leader_policy", {}) or {})
     leader_cfg = dict(spec.get("leader_env", {}) or {})
+    execution_backend = str(leader_cfg.get("execution_backend", "scripted")).strip().lower()
+    execution_model_path = leader_cfg.get("execution_model_path")
+    if execution_backend == "frozen_model":
+        if not execution_model_path:
+            raise ContractSkipped("frozen_model execution requires an execution_model_path")
+        resolved_execution_model = resolve_artifact_path(resolve_repo_path(str(execution_model_path)))
+        if not resolved_execution_model or not Path(resolved_execution_model).is_file():
+            raise ContractSkipped(
+                "frozen_model execution artifact is unavailable: "
+                f"{resolved_execution_model or execution_model_path}"
+            )
     cases = list(spec.get("cases", []) or [])
     if not cases:
         return False, "leader_policy_generalization requires non-empty cases list"
@@ -395,7 +420,7 @@ def _check_leader_policy_generalization(spec: dict[str, Any]) -> tuple[bool, str
         return LeaderTrainingEnv(
             scenario_path=scenario_path,
             decision_interval_steps=int(leader_cfg.get("decision_interval_steps", 20)),
-            execution_backend=str(leader_cfg.get("execution_backend", "scripted")),
+            execution_backend=execution_backend,
             execution_train_config=(
                 resolve_repo_path(str(leader_cfg["execution_train_config"]))
                 if leader_cfg.get("execution_train_config")
@@ -622,7 +647,12 @@ def _check_leader_phase_manager_approach_arm(spec: dict[str, Any]) -> tuple[bool
             _ = x_m, y_m
             return dict(loader_spec.get("nearest_ils_beacon", {"heading": 90.0}))
 
-        def _activate_post_waypoint_transition(self):
+        def get_runway_local_frame(self, x_m, y_m):
+            _ = x_m, y_m
+            return True, 0.0, 0.0, 3000.0, 100.0
+
+        def _activate_post_waypoint_transition(self, *, sync_to_kernel=True):
+            _ = sync_to_kernel
             self.transition_calls += 1
             self.mission_cmd["command_code"] = 4
             self.mission_cmd["target_heading"] = 90.0

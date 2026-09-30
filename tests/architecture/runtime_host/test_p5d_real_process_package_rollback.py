@@ -4,6 +4,8 @@ from copy import deepcopy
 import hashlib
 from pathlib import Path
 
+import pytest
+
 from tools.maintenance.p5d_process_rollback_drill import launch_runtime_process
 from tools.maintenance.p5d_rollout_operations import rehearse_package_restart
 from tools.maintenance.runtime_authority_contracts import authority_digest_sha256
@@ -88,6 +90,8 @@ def test_real_process_and_package_restart_are_bound_to_durable_backout(tmp_path:
   ).hexdigest()
   release = _release_for_packages((current_package, rollback_package))
   ledger = SQLiteArtifactLedger(tmp_path / "ledger")
+  key_path = tmp_path / "rollout.key"
+  key_path.write_bytes(evidence_fixtures.KEY)
   token = ledger.acquire_fence(
     "rollout:release-evidence-test",
     "release-controller",
@@ -125,13 +129,32 @@ def test_real_process_and_package_restart_are_bound_to_durable_backout(tmp_path:
       )
       predecessor = decision["payload"]["decision_id"]
 
+    retained = ledger.read_rollout_retention(
+      str(release["payload"]["release_id"]),
+      verification_key=evidence_fixtures.KEY,
+    )
+    assert retained["state"] == "production-canary"
+    assert all(
+      row["retention_class"] in {"active-release", "rollback-window", "run-retained"}
+      for row in retained["blobs"].values()
+    )
+
     process = launch_runtime_process(
       current_build,
       epoch="epoch-production-canary",
       state_dir=tmp_path / "processes",
+      production_ledger_root=tmp_path / "ledger",
+      production_release_id=str(release["payload"]["release_id"]),
+      production_key_path=key_path,
+      production_manifest_sha256=str(release["payload_sha256"]),
+      production_plan_sha256=evidence_fixtures.PLAN,
+      production_package_digest=current_package,
     )
     assert process.observation["pid"] > 0
     assert process.observation["boot_identity"]
+    assert process.observation["rollout_state"] == "production-canary"
+    assert process.observation["production_authorized"] is True
+    assert process.observation["evidence_bound"] is True
     source_boot_identity = process.observation["boot_identity"]
     killed = ledger.trip_rollout_kill_switch(
       token,
@@ -172,13 +195,43 @@ def test_real_process_and_package_restart_are_bound_to_durable_backout(tmp_path:
       writer_advancement_frozen=True,
       kill_switch_reasons=("package_rollback_drill",),
     )
+    backed_out_retention = ledger.read_rollout_retention(
+      str(release["payload"]["release_id"]),
+      verification_key=evidence_fixtures.KEY,
+    )
+    assert backed_out_retention["state"] == "backed-out"
+    assert backed_out_retention["blobs"]["rollout_decision"]["retention_class"] == "rollback-window"
+    with pytest.raises(RuntimeError, match="runtime process exited before readiness"):
+      launch_runtime_process(
+        current_build,
+        epoch="epoch-package-rollback-wrong-build",
+        state_dir=tmp_path / "processes",
+        production_ledger_root=tmp_path / "ledger",
+        production_release_id=str(release["payload"]["release_id"]),
+        production_key_path=key_path,
+        production_manifest_sha256=str(release["payload_sha256"]),
+        production_plan_sha256="f" * 64,
+        production_package_digest=rollback_package,
+        production_authorization_required=False,
+      )
     rollback_process = launch_runtime_process(
       rollback_build,
       epoch="epoch-package-rollback",
       state_dir=tmp_path / "processes",
+      production_ledger_root=tmp_path / "ledger",
+      production_release_id=str(release["payload"]["release_id"]),
+      production_key_path=key_path,
+      production_manifest_sha256=str(release["payload_sha256"]),
+      production_plan_sha256="f" * 64,
+      production_package_digest=rollback_package,
+      production_authorization_required=False,
     )
     assert rollback_process.observation["epoch"] == "epoch-package-rollback"
     assert rollback_process.observation["boot_identity"] != source_boot_identity
+    assert rollback_process.observation["rollout_state"] == "backed-out"
+    assert rollback_process.observation["production_authorized"] is False
+    assert rollback_process.observation["rollout_package_digest"] == rollback_package
+    assert rollback_process.observation["rollout_wheel_digest"] == _sha256(rollback_binding)
     result = rehearse_package_restart(
       current_generation=1,
       target_generation=0,

@@ -1,7 +1,8 @@
 # P5-D SQLite Rollout Controller Evidence
 
-Status: `2026-09-23` — durable local-controller implementation slice; not a
-production cutover or P5-D acceptance.
+Status: `2026-09-24` — durable local-controller implementation slice with a
+complete local lifecycle/retention check; not a production cutover or P5-D
+acceptance.
 
 This packet records the first ArtifactLedger-backed RolloutDecision path on the
 already qualified local SQLite backend. It closes the gap between the signed
@@ -29,6 +30,10 @@ single-process, in-process CPU-canonical row.
 - The adapter path does not make SQLite a second publication authority: the
   ledger reader supplies the already committed decision, while the runtime
   still owns host publication and execution truth.
+- The durable test path now advances the complete local state graph through
+  `adoption-expanding`, `rollback-window`, and `stable`. The stable snapshot
+  continues to retain the release manifest as `active-release`, the decision
+  and evidence as `rollback-window`, and the RunReceipt as `run-retained`.
 
 ## Verification
 
@@ -47,7 +52,8 @@ git diff --check
 Results:
 
 - SQLite controller, restart, CAS, evidence-drift, immutable-release,
-  kill-switch/backout, and facade snapshot tests: **5 passed**;
+  kill-switch/backout, facade snapshot, and complete lifecycle/retention tests:
+  **7 passed**;
 - production admission and release/receipt binding regression tests:
   **12 passed**;
 - existing durable RunReceipt/ArtifactLedger qualification regression tests:
@@ -59,14 +65,14 @@ Results:
 This is a durable local controller and reader integration, not authorization
 to publish production truth. No remote or multi-process topology is admitted;
 the release-controller API still requires the caller to provide the signed
-authorities and verification key. Real installed-wheel stop/restart and
-same-release instance rollback drills, measured multi-run SLO/adoption data,
-rebuild retirement, and the sole production-canary cutover remain open P5-D
-work. A focused test green result does not substitute for those operational
-gates.
+authorities and verification key. The separate real process/package drill is
+recorded in the rollback packet. Representative release cadence, production
+caller cutover, production rollback-window operation, and rebuild retirement
+remain open P5-D work. A focused test green result does not substitute for
+those operational gates.
 
 Document kind: `evidence`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/evidence/p5d_sqlite_rollout_controller_20260923.md`
 Owner: `release/runtime integration`
-Last verified: `2026-09-23`
+Last verified: `2026-09-24`
