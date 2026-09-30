@@ -12,6 +12,7 @@ ensure_repo_imports()
 from python.rl.tasking import air_adapter as _air_adapter_module
 from python.simulation.air import tasking as _simulation_air_tasking_module
 from python.rl.tasking.air_adapter import make_scripted_c2_task_manager
+from python.rl.tasking.bridge import make_rule_based_leader_phase_manager
 from python.rl.tasking.leader_tasking import RuleBasedLeaderPhaseManager
 from python.tasking_contracts.air.tasking.c2_manager import ScriptedC2TaskManager
 from python.rl.tasking import leader_tasking as _leader_tasking_module
@@ -442,7 +443,7 @@ class TaskingPhaseControlTests(unittest.TestCase):
       )
     )
 
-  def test_phase_manager_fails_closed_on_malformed_post_transition_command(self):
+  def test_phase_manager_rejects_present_but_malformed_post_transition_command(self):
     manager = RuleBasedLeaderPhaseManager(terminal_waypoint_count=2)
     loader = _make_phase_loader(
       c2_task_name=ScriptedC2TaskManager.TASK_RECOVER_LAND,
@@ -451,13 +452,18 @@ class TaskingPhaseControlTests(unittest.TestCase):
       runway_heading_deg=90.0,
     )
     loader.post_waypoint_transition["command_code"] = "not-a-command"
+    activation_calls = []
+    loader._maybe_activate_post_waypoint_transition = lambda **kwargs: activation_calls.append(kwargs)
+
+    truth = loader.sim.get_agent_observation(loader.agent_id)
+    inst = loader.sim.get_instrument_state(loader.agent_id)
 
     self.assertFalse(
       manager._should_arm_approach(
         loader=loader,
-        truth=SimpleNamespace(x=-9200.0, y=50.0),
-        alt_agl_m=900.0,
-        heading_deg=104.0,
+        truth=truth,
+        alt_agl_m=float(inst.alt_radar),
+        heading_deg=float(inst.heading),
         ils_valid=True,
         loc_abs=0.18,
         gs_abs=0.22,
@@ -465,6 +471,7 @@ class TaskingPhaseControlTests(unittest.TestCase):
         remaining_waypoints=2,
       )
     )
+    self.assertEqual([], activation_calls)
 
   def test_phase_manager_preserves_route_command_but_clears_route_ref_after_exhaustion(self):
     manager = RuleBasedLeaderPhaseManager(terminal_waypoint_count=2)
@@ -486,6 +493,71 @@ class TaskingPhaseControlTests(unittest.TestCase):
     self.assertEqual(0, int(loader.leader_intent.route_ref_id))
     self.assertAlmostEqual(225.0, float(loader.leader_intent.cmd_heading_deg), places=3)
     self.assertEqual("rtb", str(loader.mission_phase_name))
+
+  def test_phase_manager_keeps_all_approach_safety_gates_after_route_exhaustion(self):
+    manager = RuleBasedLeaderPhaseManager(terminal_waypoint_count=2)
+    loader = _make_phase_loader(
+      c2_task_name=ScriptedC2TaskManager.TASK_RECOVER_LAND,
+      ils_obs=[1.0, 0.18, 0.22, 9500.0],
+      runway_frame=(True, -600.0, 900.0, 3000.0, 45.0),
+      runway_heading_deg=90.0,
+    )
+    loader._post_waypoint_transition_ready = lambda: True
+    truth = loader.sim.get_agent_observation(loader.agent_id)
+    inst = loader.sim.get_instrument_state(loader.agent_id)
+    base = dict(
+      loader=loader,
+      truth=truth,
+      alt_agl_m=float(inst.alt_radar),
+      heading_deg=float(inst.heading),
+      ils_valid=True,
+      loc_abs=0.18,
+      gs_abs=0.22,
+      dme_m=9500.0,
+      remaining_waypoints=0,
+    )
+    for name, overrides in (
+      ("invalid_ils", {"ils_valid": False}),
+      ("excessive_localizer", {"loc_abs": 0.8}),
+      ("excessive_glideslope", {"gs_abs": 1.5}),
+      ("excessive_altitude", {"alt_agl_m": 1600.0}),
+    ):
+      with self.subTest(name=name):
+        self.assertFalse(manager._should_arm_approach(**{**base, **overrides}))
+
+  def test_leader_factory_sources_departure_route_threshold_from_c2_logic(self):
+    loader = SimpleNamespace(
+      scenario_data={"c2_logic": {"departure_route_alt_agl_m": 325.0}},
+      mission_cmd={},
+    )
+    manager = make_rule_based_leader_phase_manager(loader)
+    self.assertAlmostEqual(325.0, float(manager.departure_route_alt_agl_m), places=6)
+
+  def test_phase_manager_enters_route_before_first_waypoint_when_climb_is_safe(self):
+    manager = RuleBasedLeaderPhaseManager(departure_route_alt_agl_m=140.0)
+    loader = _make_phase_loader(
+      c2_task_name=ScriptedC2TaskManager.TASK_CAP,
+      ils_obs=[0.0, 0.0, 0.0, 20000.0],
+      runway_frame=(True, -20000.0, 0.0, 3000.0, 45.0),
+      runway_heading_deg=90.0,
+    )
+    loader.waypoints.extend([{"x": 12000.0, "y": 6000.0}, {"x": -12000.0, "y": 0.0}])
+    loader.mission_cmd["command_code"] = 1
+    truth = loader.sim.get_agent_observation(loader.agent_id)
+    inst = loader.sim.get_instrument_state(loader.agent_id)
+
+    inst.alt_radar = 120.0
+    with _patched_tasking_ef():
+      manager.update(loader, sim_time_s=10.0, truth=truth, inst=inst, sync_to_kernel=False)
+    self.assertEqual("departure", str(loader.mission_phase_name))
+    self.assertEqual(1, int(loader.leader_intent.command_code))
+
+    inst.alt_radar = 160.0
+    with _patched_tasking_ef():
+      manager.update(loader, sim_time_s=11.0, truth=truth, inst=inst, sync_to_kernel=False)
+    self.assertEqual("transit_to_station", str(loader.mission_phase_name))
+    self.assertEqual(3, int(loader.leader_intent.command_code))
+    self.assertEqual(0, int(loader.waypoint_idx))
 
 
 if __name__ == "__main__":

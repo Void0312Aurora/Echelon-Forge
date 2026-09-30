@@ -24,6 +24,7 @@ NAVAL_STATION_HOLD_MODEL_ID = "naval.station.screen_hold"
 
 
 class NavalStationHoldScriptedModel:
+    model_kind = "scripted"
     """Produce the neutral station-order hold used by the scoped N4 gate."""
 
     def __init__(self, *, action_dim: int = 3) -> None:

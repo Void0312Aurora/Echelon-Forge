@@ -78,11 +78,52 @@ template <typename T> void register_component(flecs::world &ecs) {
 }
 
 void register_rwr_reset_system(flecs::world &ecs) {
-    ecs.system<RWR>("RWR_Reset").kind(flecs::PreUpdate).each([](flecs::entity, RWR &rwr) {
-        rwr.detected_radar_ids.clear();
-        rwr.locking_radar_ids.clear();
-        rwr.missile_launch_source_ids.clear();
-        rwr.is_missile_launch = false;
+    ecs.system<RWR, const Transform>("RWR_Reset").kind(flecs::PreUpdate).run([](flecs::iter &it) {
+        auto missile_query = it.world().query<const Missile, const Transform>();
+        struct MissileSnapshot {
+            std::uint64_t entity_id;
+            Missile missile;
+            Transform transform;
+        };
+        std::vector<MissileSnapshot> missiles;
+        missile_query.each(
+            [&](flecs::entity missile_entity, const Missile &missile, const Transform &transform) {
+                missiles.push_back({missile_entity.id(), missile, transform});
+            });
+        while (it.next()) {
+            auto rwr = it.field<RWR>(0);
+            auto transforms = it.field<const Transform>(1);
+            for (auto i : it) {
+                const auto owner_id = it.entity(i).id();
+                const auto owner_transform = transforms[i];
+                rwr[i].detected_radar_ids.clear();
+                rwr[i].locking_radar_ids.clear();
+                rwr[i].missile_launch_source_ids.clear();
+                rwr[i].is_missile_launch = false;
+                for (const auto &snapshot : missiles) {
+                    const auto &missile = snapshot.missile;
+                    const auto &missile_transform = snapshot.transform;
+                    if (!missile.active || missile.target_id != owner_id) {
+                        continue;
+                    }
+                    const double dx = missile_transform.x - owner_transform.x;
+                    const double dy = missile_transform.y - owner_transform.y;
+                    const double dz = missile_transform.z - owner_transform.z;
+                    const double distance_m = std::sqrt(dx * dx + dy * dy + dz * dz);
+                    if (!std::isfinite(distance_m) || distance_m > 120000.0) {
+                        return;
+                    }
+                    const uint64_t source_id =
+                        missile.attacker_id != 0 ? missile.attacker_id : snapshot.entity_id;
+                    if (std::find(rwr[i].missile_launch_source_ids.begin(),
+                                  rwr[i].missile_launch_source_ids.end(),
+                                  source_id) == rwr[i].missile_launch_source_ids.end()) {
+                        rwr[i].missile_launch_source_ids.push_back(source_id);
+                    }
+                    rwr[i].is_missile_launch = true;
+                }
+            }
+        }
     });
 }
 
@@ -118,7 +159,7 @@ void register_maws_update_system(flecs::world &ecs) {
                     const double dz = missile_transform.z - owner_transform[i].z;
                     const double distance_m = std::sqrt(dx * dx + dy * dy + dz * dz);
                     if (!std::isfinite(distance_m) || distance_m > 120000.0) {
-                        continue;
+                        return;
                     }
                     rwr[i].is_missile_launch = true;
                     const uint64_t source_id =

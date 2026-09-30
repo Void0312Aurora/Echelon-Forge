@@ -248,6 +248,7 @@ class CompiledAirC2TaskOrderProjection:
             order.speed_min_mps = max(55.0, speed - 20.0)
             order.speed_max_mps = max(order.speed_min_mps, speed + 20.0)
         _apply_air_defaults(order, task_name=task_name)
+        apply_common_task_order_defaults(order)
 
 
 def _compiled_report_type_codes() -> C2ReportTypeCodes:

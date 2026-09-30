@@ -65,6 +65,7 @@ def _run(seed: int) -> tuple[tuple[int | None, ...], tuple[int, ...], tuple[bool
             observations={key: current.observations[index] for index, key in enumerate(current.entity_keys)},
             members={blue_keys[0]: "Lead", blue_keys[1]: "Wingman"},
             candidate_target_ids=[key[1] for key in red_keys],
+            authorized_member_keys=blue_keys,
         )
         assert all(item.target_id is not None for item in assignments)
         assert len({item.target_id for item in assignments}) == 2
@@ -83,7 +84,7 @@ def _run(seed: int) -> tuple[tuple[int | None, ...], tuple[int, ...], tuple[bool
             command.assigned_target_track_id = target_id
             command.engagement_authority_holder_id = assignment.member_key[1]
             backend.submit_mission_commands({assignment.member_key: command})
-            controller = AirScriptedEngagementController()
+            controller = AirScriptedEngagementController(weapon_station_id=1)
             controllers.append(controller)
             member_index = current.entity_keys.index(assignment.member_key)
             facts = AirEngagementFacts(

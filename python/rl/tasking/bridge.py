@@ -176,7 +176,13 @@ def build_kernel_mission_command(loader: Any):
 
 def make_rule_based_leader_phase_manager(loader: Any | None = None, **kwargs: Any):
     profile = tasking_profile_for_loader(loader) if loader is not None else resolve_tasking_profile(None)
-    return profile.RuleBasedLeaderPhaseManager(**kwargs)
+    options = dict(kwargs)
+    if loader is not None and "departure_route_alt_agl_m" not in options:
+        scenario_data = getattr(loader, "scenario_data", {}) or {}
+        c2_cfg = scenario_data.get("c2_logic", {}) if isinstance(scenario_data, dict) else {}
+        if isinstance(c2_cfg, dict) and "departure_route_alt_agl_m" in c2_cfg:
+            options["departure_route_alt_agl_m"] = c2_cfg["departure_route_alt_agl_m"]
+    return profile.RuleBasedLeaderPhaseManager(**options)
 
 
 def make_scripted_c2_task_manager(loader: Any | None = None, **kwargs: Any):
@@ -188,17 +194,6 @@ def make_scripted_c2_task_manager(loader: Any | None = None, **kwargs: Any):
         "scripted C2 task manager is not admitted for tasking profile "
         f"{getattr(profile, '__name__', profile)!s}; select an explicit domain adapter"
     )
-
-
-def scripted_c2_task_manager_class(loader: Any | None = None):
-    profile = tasking_profile_for_loader(loader) if loader is not None else resolve_tasking_profile(None)
-    manager_class = getattr(profile, "ScriptedC2TaskManager", None)
-    if manager_class is None or not callable(getattr(profile, "make_scripted_c2_task_manager", None)):
-        raise RuntimeError(
-            "scripted C2 task manager class is not admitted for tasking profile "
-            f"{getattr(profile, '__name__', profile)!s}; select an explicit domain adapter"
-        )
-    return manager_class
 
 
 def is_patrol_task(
@@ -293,7 +288,6 @@ __all__ = [
     "normalize_task_order_spec",
     "resolve_loader_time_step",
     "resolve_tasking_profile",
-    "scripted_c2_task_manager_class",
     "sync_loader_command_chain",
     "sync_loader_command_chain_reentrant",
     "sync_loader_mission_command",

@@ -439,6 +439,13 @@ MissionCommand SimulationKernel::get_mission_command(uint64_t entity_id) const {
     return {};
 }
 
+bool SimulationKernel::has_command_link(uint64_t entity_id) const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("has_command_link");
+    auto e = ecs.entity(entity_id);
+    return e.is_valid() && e.has<CommandLink>();
+}
+
 PilotReport SimulationKernel::get_pilot_report(uint64_t entity_id) const {
     auto composition_lock = acquire_composition_operation();
     ensure_active("get_pilot_report");

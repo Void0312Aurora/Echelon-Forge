@@ -11,6 +11,7 @@ __all__ = [
     "mission_defs",
     "runtime_contract",
     "scripted_capability",
+    "task_order",
     "decision_runtime",
     "timing_utils",
 ]

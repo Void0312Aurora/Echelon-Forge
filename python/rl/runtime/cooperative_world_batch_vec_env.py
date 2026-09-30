@@ -973,6 +973,9 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                     slot_state.loader._last_effective_action = np.asarray(
                         effective_action, dtype=np.float32
                     ).copy()
+                    # Keep proprio/history aligned with the action that will
+                    # reach the kernel; raw intent remains separate above.
+                    slot_state.last_action = np.asarray(effective_action, dtype=np.float32).copy()
                 if is_naval_station_action_mode(self.action_mode):
                     if apply_naval_station_action(slot_state.loader, effective_action):
                         naval_action_sync_world_indices.add(int(world.world_index))
@@ -1416,6 +1419,26 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             if slot_state is not None:
                 out.append(slot_state.control_slot)
         return out
+
+    def cooperative_slot_metadata(self) -> tuple[dict[str, Any], ...]:
+        """Expose provider-neutral cooperative slot metadata to diagnostics."""
+
+        out: list[dict[str, Any]] = []
+        for slot_state in self._slots:
+            if slot_state is None:
+                continue
+            slot = slot_state.control_slot
+            out.append(
+                {
+                    "world_index": int(slot.world_index),
+                    "slot_index": int(slot_state.slot_index),
+                    "entity_id": int(slot.entity_id),
+                    "entity_name": str(slot.entity_name),
+                    "formation_role_id": str(slot.formation_role_id or "Unspecified"),
+                    "target_owner_name": str(getattr(slot_state.loader, "primary_target_name", "")),
+                }
+            )
+        return tuple(out)
 
     def slot_indices_by_policy_route(self) -> dict[str, list[int]]:
         out: dict[str, list[int]] = {}

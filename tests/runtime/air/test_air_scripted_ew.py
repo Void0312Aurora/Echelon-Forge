@@ -138,6 +138,24 @@ def test_ew_hybrid_routes_combat_prefix_through_both_maintained_consumers() -> N
         assert "air_combat_hybrid_effective_action" in source
         assert "apply_air_combat_event_action_gate" in source
         assert "finalize_air_combat_event_action_info" in source
+
+def test_ew_action_model_keeps_combat_and_avionics_prefix_zero_owned() -> None:
+    model = AirScriptedEWActionModel()
+    obs = {
+        "instruments": np.zeros((31,), dtype=np.float32),
+        "mission": np.asarray([4.0, 90.0, 1000.0, 120.0], dtype=np.float32),
+        "rwr": np.asarray([[0.0, 0.8, 1.0, 1.0]], dtype=np.float32),
+    }
+    model.reset(context={"observation": obs, "phase_name": "landing_final"})
+    action = model.decide(
+        observation=obs,
+        context={"response_doctrine": "countermeasure_ready", "observation_version": "rwr:landing"},
+        dt=0.05,
+    )
+    assert np.allclose(action[4:12], 0.0)
+    assert tuple(action[12:14]) == (1.0, 1.0)
+    model.close()
+
 def test_ew_model_supports_explicit_single_countermeasure_doctrines() -> None:
     model = AirScriptedEWModel(max_rwr=4)
     observation = _observation([45.0, 0.8, 1.0, 1.0])

@@ -29,6 +29,7 @@ AIR_SCRIPTED_EXECUTION_MODEL_ID = "air.execution.phase_scripted"
 
 
 class AirScriptedExecutionModel:
+    model_kind = "scripted"
     """Compose the existing air takeoff, cruise, and landing controllers.
 
     ``step`` is the environment-adapter convenience method. ``reset`` and

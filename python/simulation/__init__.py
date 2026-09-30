@@ -8,6 +8,7 @@ backend provider is loaded only when an episode is opened.
 from .backend import (
     SimulationBackendRegistration,
     SimulationBatchBackend,
+    SimulationCooperativeBatchBackend,
     SimulationExecutionRuntime,
     create_cooperative_backend,
     create_single_backend,
@@ -18,6 +19,7 @@ from .backend import (
 __all__ = [
     "SimulationBackendRegistration",
     "SimulationBatchBackend",
+    "SimulationCooperativeBatchBackend",
     "SimulationExecutionRuntime",
     "create_cooperative_backend",
     "create_single_backend",

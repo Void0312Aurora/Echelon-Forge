@@ -226,6 +226,7 @@ class SimulationKernel {
     LeaderIntent get_leader_intent(uint64_t entity_id) const;
     MissionCommand get_mission_command(uint64_t entity_id) const;
     PilotReport get_pilot_report(uint64_t entity_id) const;
+    [[nodiscard]] bool has_command_link(uint64_t entity_id) const;
 
     // Observation Interface
     std::vector<double> get_unit_position(uint64_t entity_id);        // Returns [x, y, z]

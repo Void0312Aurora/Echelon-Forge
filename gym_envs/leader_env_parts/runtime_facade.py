@@ -353,6 +353,9 @@ class LeaderRuntimeFacadeMixin:
         runtime = getattr(self, "_exec_runtime", None)
         self._exec_runtime = None
         close_execution_runtime(runtime)
+        policy = getattr(self, "_exec_policy", None)
+        self._exec_policy = None
+        close_execution_runtime(policy)
         try:
             super().close()
         except Exception:

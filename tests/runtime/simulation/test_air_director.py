@@ -153,3 +153,35 @@ def test_direct_air_director_preserves_declared_authority_and_target_fields() ->
     assert decision.pilot_report.task_group_id == 17
     assert decision.leader_intent.authorization_to_fire is True
     assert decision.mission_command.assigned_target_id == 9002
+
+
+def test_direct_air_director_preserves_incoming_task_identity_metadata() -> None:
+    source = ef_py.TaskOrder()
+    source.task_id = 91
+    source.issuer_id = 7001
+    source.priority = 8
+    source.package_id = 5101
+    source.element_id = 5201
+    source.task_group_id = 5301
+    source.recovery_base_id = 5401
+    source.recovery_runway_id = 5402
+    state = AirDirectorInput(
+        **{
+            **_state(alt_radar=1200.0, ground_speed=180.0, command_code=2, remaining=0, total=0).__dict__,
+            "task_order": source,
+        }
+    )
+
+    decision = AirScriptedDirector().decide(state)
+
+    for name in (
+        "task_id",
+        "issuer_id",
+        "priority",
+        "package_id",
+        "element_id",
+        "task_group_id",
+        "recovery_base_id",
+        "recovery_runway_id",
+    ):
+        assert getattr(decision.task_order, name) == getattr(source, name)

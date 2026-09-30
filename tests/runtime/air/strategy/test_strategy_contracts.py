@@ -77,6 +77,16 @@ def test_decision_contract_bounds_guidance_and_freezes_diagnostics() -> None:
             fire_recommended=False,
             guidance_pitch=1.1,
         )
+    with pytest.raises(ValueError, match="station_id"):
+        AirTacticalActionIntent(
+            target_contact_present=True,
+            authorization_to_fire=True,
+            shot_budget_available=True,
+            fire_window_open=True,
+            assessment_blocked=False,
+            request_fire=True,
+            station_id=99,
+        )
 
 
 def test_assessment_input_is_typed_and_rejects_negative_evidence_counts() -> None:
@@ -146,6 +156,21 @@ def test_action_adapter_owns_full_layout_and_fire_latch_transport() -> None:
     assert first.action[14] == 1.0
     assert first.action[16] == pytest.approx(1.0 / 7.0)
     assert second.fire_pulse == 0.0
+    released = adapter.apply(
+        np.zeros((17,), dtype=np.float32),
+        intent=AirTacticalActionIntent(
+            target_contact_present=False,
+            authorization_to_fire=False,
+            shot_budget_available=True,
+            fire_window_open=True,
+            assessment_blocked=False,
+            request_fire=True,
+            station_id=1,
+        ),
+    )
+    assert released.fire_pulse == 0.0
+    reacquired = adapter.apply(np.zeros((17,), dtype=np.float32), intent=intent)
+    assert reacquired.fire_pulse == 1.0
     adapter.reset()
     reset = adapter.apply(np.zeros((17,), dtype=np.float32), intent=intent)
     assert reset.fire_pulse == 1.0
@@ -270,6 +295,42 @@ class _NoFirePlanner:
         return np.asarray(action, dtype=np.float32).copy()
 
 
+class _GuidancePlanner:
+    def __init__(self) -> None:
+        self.last_context: AirPlanningContext | None = None
+
+    def reset(self) -> None:
+        self.last_context = None
+
+    def decide(self, *, context: AirPlanningContext) -> AirTacticalDecision:
+        self.last_context = context
+        return AirTacticalDecision(
+            mode="reposition",
+            selected_candidate="intercept",
+            fire_recommended=False,
+            guidance_roll=0.2,
+            guidance_pitch=0.1,
+            guidance_throttle=0.1,
+        )
+
+
+class _LayoutProbeAdapter:
+    def __init__(self) -> None:
+        self.received: np.ndarray | None = None
+
+    def reset(self) -> None:
+        self.received = None
+
+    def apply(self, action: np.ndarray, *, intent: AirTacticalActionIntent) -> AirActionApplication:
+        self.received = np.asarray(action, dtype=np.float32).copy()
+        return AirActionApplication(
+            action=np.full_like(self.received, 0.25),
+            tms_pulse=0.0,
+            master_arm=0.0,
+            fire_pulse=0.0,
+        )
+
+
 class _BlockingAssessor:
     def reset(self) -> None:
         pass
@@ -292,7 +353,7 @@ class _BlockingAssessor:
 
 def test_engagement_model_can_replace_planner_without_changing_flight_transport() -> None:
     observation = _engagement_observation()
-    model = AirScriptedEngagementModel(planner=_NoFirePlanner())
+    model = AirScriptedEngagementModel(planner=_NoFirePlanner(), weapon_station_id=1)
     model.reset(context={"observation": observation, "phase_name": "stable_flight"})
     action = model.decide(observation=observation, context={"phase_name": "stable_flight"}, dt=0.05)
 
@@ -304,9 +365,33 @@ def test_engagement_model_can_replace_planner_without_changing_flight_transport(
     model.close()
 
 
+def test_planner_stays_layout_neutral_when_adapter_owns_guidance_projection() -> None:
+    observation = _engagement_observation()
+    planner = _GuidancePlanner()
+    adapter = _LayoutProbeAdapter()
+    model = AirScriptedEngagementModel(
+        planner=planner,
+        action_adapter=adapter,
+        weapon_station_id=1,
+    )
+    model.reset(context={"observation": observation, "phase_name": "stable_flight"})
+    action = model.decide(
+        observation=observation,
+        context={"phase_name": "stable_flight", "observation_version": "frame:7"},
+        dt=0.05,
+    )
+
+    assert planner.last_context is not None
+    assert planner.last_context.observation_version == "frame:7"
+    assert adapter.received is not None
+    assert action.shape == (17,)
+    assert np.allclose(action, 0.25)
+    model.close()
+
+
 def test_engagement_model_can_replace_assessor_as_an_independent_fire_block() -> None:
     observation = _engagement_observation()
-    model = AirScriptedEngagementModel(assessor=_BlockingAssessor())
+    model = AirScriptedEngagementModel(assessor=_BlockingAssessor(), weapon_station_id=1)
     model.reset(context={"observation": observation, "phase_name": "stable_flight"})
     action = model.decide(observation=observation, context={"phase_name": "stable_flight"}, dt=0.05)
 

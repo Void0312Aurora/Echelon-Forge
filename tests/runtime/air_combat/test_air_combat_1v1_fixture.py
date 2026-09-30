@@ -217,6 +217,9 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
         int(getattr(env.envs[0].last_inst, "countermeasure_chaff_remaining", -1)),
         initial_chaff,
       )
+      self.assertEqual(int(getattr(env.envs[0].last_inst, "countermeasure_snapshot_stage", -1)), 31)
+      self.assertTrue(bool(getattr(env.envs[0].last_inst, "countermeasure_snapshot_post_ew", False)))
+      self.assertGreaterEqual(float(getattr(env.envs[0].last_inst, "countermeasure_snapshot_time_s", -1.0)), 0.0)
     finally:
       model.close()
       env.close()

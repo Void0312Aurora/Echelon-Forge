@@ -70,7 +70,7 @@ class AirScriptedEngagementModel:
         assessor: AirPostLaunchAssessor | None = None,
         observation_adapter: AirObservationAdapter | None = None,
         action_adapter: AirActionAdapter | None = None,
-        weapon_station_id: int | None = 1,
+        weapon_station_id: int | None = None,
     ) -> None:
         if int(action_dim) not in _SUPPORTED_ACTION_DIMS:
             raise ValueError(
@@ -177,7 +177,7 @@ class AirScriptedEngagementModel:
         authorized = bool(values["authorization_to_fire"] > 0.5)
         pending_assessment = bool(values["pending_assessment"] > 0.5)
         budget_available = bool(values["shot_budget_remaining"] > 0.5)
-        station_id = self._resolve_weapon_station_id(context)
+        station_id = self._resolve_station_id(context)
         event_info = context.get("last_event_info") if isinstance(context, dict) else None
         assessment_input = self._assessment_input(
             event_info=event_info,
@@ -212,6 +212,7 @@ class AirScriptedEngagementModel:
         decision = self.planner.decide(context=planning_context)
 
         request_fire = bool(decision.fire_recommended)
+        station_valid = station_id is not None
         action_application = self.action_adapter.apply(
             action,
             intent=AirTacticalActionIntent(
@@ -221,7 +222,8 @@ class AirScriptedEngagementModel:
                 fire_window_open=fire_window,
                 assessment_blocked=assessment_gate,
                 request_fire=request_fire,
-                station_id=station_id,
+                station_id=0 if station_id is None else station_id,
+                station_valid=station_valid,
                 guidance_roll=decision.guidance_roll,
                 guidance_pitch=decision.guidance_pitch,
                 guidance_throttle=decision.guidance_throttle,
@@ -247,27 +249,46 @@ class AirScriptedEngagementModel:
             "post_launch_assessment": assessment_report.as_dict(),
             "shot_budget_remaining": float(values["shot_budget_remaining"]),
             "weapon_station_id": station_id,
-            "weapon_station_valid": station_id is not None,
+            "station_id": 0 if station_id is None else int(station_id),
+            "weapon_station_valid": bool(station_valid),
+            "fire_rejected_reason": "invalid_weapon_station" if not station_valid else "",
             "fire_requested": bool(action_application.fire_pulse > 0.5),
             "tactical_plan": tactical_plan,
             "tactical_decision": decision.as_dict(),
         }
         return action
 
-    def _resolve_weapon_station_id(self, context: Any) -> int | None:
-        raw = self.weapon_station_id
-        if isinstance(context, Mapping) and "weapon_station_id" in context:
-            raw = context.get("weapon_station_id")
-        if raw is None or isinstance(raw, bool):
+    def _resolve_station_id(self, context: Any) -> int | None:
+        """Use a capability-owned legal station when one is supplied."""
+
+        payload = context if isinstance(context, Mapping) else {}
+        available = payload.get("available_weapon_stations")
+        if available is None:
+            raw = payload.get("weapon_station_id", self.weapon_station_id)
+            if raw is None:
+                return None
+            try:
+                station_id = int(raw)
+            except (TypeError, ValueError):
+                return None
+            return station_id if 0 <= station_id <= 7 else None
+        legal: list[int] = []
+        for value in available if isinstance(available, (list, tuple, set, frozenset)) else ():
+            try:
+                candidate = int(value)
+            except (TypeError, ValueError):
+                continue
+            if 0 <= candidate <= 7:
+                legal.append(candidate)
+        legal = sorted(set(legal))
+        if not legal:
             return None
+        raw = payload.get("weapon_station_id", legal[0])
         try:
-            numeric = float(raw)
+            station_id = int(raw)
         except (TypeError, ValueError):
             return None
-        if not np.isfinite(numeric) or numeric != float(int(numeric)):
-            return None
-        station_id = int(numeric)
-        return station_id if 0 <= station_id <= 7 else None
+        return station_id if station_id in legal else None
 
     def close(self) -> None:
         self.flight_model.close()

@@ -396,7 +396,7 @@ class RuleBasedLeaderPhaseManager:
             if transitioned is not None:
                 cmd_code = mission_command_view(loader).int_field("command_code", cmd_code)
 
-        phase_name = self.phase_policy.decide(
+        phase_decision = self.phase_policy.decide(
             LeaderPhaseInput(
                 command_code=cmd_code,
                 on_ground=on_ground,
@@ -411,7 +411,24 @@ class RuleBasedLeaderPhaseManager:
                 landing_final_dme_m=self.landing_final_dme_m,
                 landing_final_alt_agl_m=self.landing_final_alt_agl_m,
             )
-        ).phase_name
+        )
+        phase_name = str(getattr(phase_decision, "phase_name", "")).strip().lower()
+        if phase_name not in {
+            "idle",
+            "scramble",
+            "takeoff",
+            "departure",
+            "transit_to_station",
+            "establish_cap",
+            "on_station",
+            "reposition",
+            "rtb",
+            "approach_armed",
+            "landing_final",
+            "rollout",
+            "abort",
+        }:
+            raise ValueError(f"leader phase policy returned unknown phase name: {phase_name!r}")
         loader.mission_phase_name = phase_name
 
         intent = ef_py.LeaderIntent()
@@ -614,12 +631,8 @@ class RuleBasedLeaderPhaseManager:
             return False
         c2_task_name = str(getattr(loader, "c2_task_name", "")).strip().upper()
         current_command_code = mission_command_view(loader).int_field("command_code", 0)
-        raw_post_command_code = post.get("command_code")
-        post_command_code = parse_command_code(
-            raw_post_command_code,
-            default=COMMAND_CODE_LANDING,
-        )
-        if raw_post_command_code is not None and post_command_code is None:
+        post_command_code = parse_command_code(post.get("command_code"), default=COMMAND_CODE_LANDING)
+        if post_command_code is None:
             return False
         if c2_task_name and c2_task_name != _ScriptedC2TaskManager.TASK_RECOVER_LAND:
             return False

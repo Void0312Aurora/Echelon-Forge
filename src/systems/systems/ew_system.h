@@ -42,8 +42,8 @@ inline void register_ew_system(flecs::world &ecs) {
                             (current_time - cm[i].last_chaff_release_time >=
                              cm[i].release_interval)) {
                             cm[i].chaff_count--;
-                            cm[i].last_chaff_release_time = current_time;
                             cm[i].last_release_time = current_time;
+                            cm[i].last_chaff_release_time = current_time;
 
                             // Spawn Chaff Entity
                             // Creation is deferred inside this system; the stamp advances
@@ -86,8 +86,8 @@ inline void register_ew_system(flecs::world &ecs) {
                             (current_time - cm[i].last_flare_release_time >=
                              cm[i].release_interval)) {
                             cm[i].flare_count--;
-                            cm[i].last_flare_release_time = current_time;
                             cm[i].last_release_time = current_time;
+                            cm[i].last_flare_release_time = current_time;
 
                             auto flare = it.world().entity();
                             flare.set<Transform>({p[i].x, p[i].y, p[i].z, 0.0, 0.0, 0.0})

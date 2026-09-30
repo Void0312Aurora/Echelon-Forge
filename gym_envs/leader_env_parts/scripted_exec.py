@@ -4,6 +4,7 @@ from typing import Any
 
 import numpy as np
 
+from gym_envs.scenario_loader.spatial_runtime.geometry import select_ils_beacon
 from python.tasking_contracts.air.execution.model import AIR_SCRIPTED_EXECUTION_MODEL_ID
 from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY
 from python.tasking_contracts.common.decision_runtime import (
@@ -63,33 +64,36 @@ class ScriptedExecutiveController:
         except Exception:
             dt = 0.05
         loader = getattr(self.env.unwrapped, "loader", None)
-        runway_length_m = max(
-            (
-                float(beacon.get("length", 0.0))
-                for beacon in list(getattr(loader, "ils_beacons", []) or [])
-            ),
-            default=0.0,
-        )
-        self._model = AIR_SCRIPTED_MODEL_REGISTRY.create_for(
-            domain="air",
-            role_id="autopilot_controller",
-            model_id=self.model_id,
-            action_dim=self.action_dim,
-            dt=dt,
-            transition_alt_agl_m=self.transition_alt_agl_m,
-            runway_length_m=runway_length_m,
-        )
-        agent_id = str(getattr(self.env.unwrapped, "agent_id", "air-scripted-executive"))
-        self._runtime_agent = DecisionRuntimeAgent(
-            DecisionRuntimeAgentSpec(
-                agent_id=agent_id,
-                model_id=self.model_id,
+        runway_length_m = 0.0
+        try:
+            truth = loader.get_policy_agent_observation(loader.agent_id)
+            beacon = select_ils_beacon(loader, float(truth.x), float(truth.y))
+            if isinstance(beacon, dict):
+                runway_length_m = float(beacon.get("length", 0.0))
+        except Exception:
+            pass
+        if self._model is None:
+            self._model = AIR_SCRIPTED_MODEL_REGISTRY.create_for(
                 domain="air",
                 role_id="autopilot_controller",
-                authority_scope="air_execution",
-            ),
-            self._model,
-        )
+                model_id=self.model_id,
+                action_dim=self.action_dim,
+                dt=dt,
+                transition_alt_agl_m=self.transition_alt_agl_m,
+                runway_length_m=runway_length_m,
+            )
+        agent_id = str(getattr(self.env.unwrapped, "agent_id", "air-scripted-executive"))
+        if self._runtime_agent is None:
+            self._runtime_agent = DecisionRuntimeAgent(
+                DecisionRuntimeAgentSpec(
+                    agent_id=agent_id,
+                    model_id=self.model_id,
+                    domain="air",
+                    role_id="autopilot_controller",
+                    authority_scope="air_execution",
+                ),
+                self._model,
+            )
         self._runtime_agent.reset(
             context={"observation": obs, "phase_name": self._phase_name()},
             episode_seed=episode_seed,
@@ -111,14 +115,11 @@ class ScriptedExecutiveController:
             dt = 0.05
         clock_s = float(getattr(self.env.unwrapped, "steps", 0)) * max(dt, 1.0e-6)
         phase_name = self._phase_name()
-        observation_version = (
-            f"reset:{self._runtime_agent.reset_index}:"
-            f"step:{int(getattr(self.env.unwrapped, 'steps', 0))}"
-        )
+        reset_index = int(getattr(self._runtime_agent, "reset_index", 0))
         self._last_runtime_step = self._runtime_agent.step(
             observation=obs,
             clock_s=clock_s,
-            observation_version=observation_version,
+            observation_version=f"obs:{int(getattr(self.env.unwrapped, 'steps', 0))}:reset:{reset_index}",
             context={"observation": obs, "phase_name": phase_name},
         )
         return np.asarray(self._last_runtime_step.action, dtype=np.float32).reshape(-1)

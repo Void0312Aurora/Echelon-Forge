@@ -15,6 +15,8 @@ from python.tasking_contracts.common.decision_runtime import (
 
 
 class _FakeModel:
+    model_kind = "scripted"
+
     def __init__(self, *, label: str = "fake") -> None:
         self.label = label
         self.reset_contexts: list[dict] = []
@@ -33,14 +35,13 @@ class _FakeModel:
         self.closed = True
 
 
-def _spec(agent_id: str, *, period: float = 0.0, hold: float = 0.0, active: bool = True):
+def _spec(agent_id: str, *, period: float = 0.0, active: bool = True):
     return DecisionRuntimeAgentSpec(
         agent_id=agent_id,
         model_id=f"{agent_id}.model",
         domain="air" if agent_id.startswith("air") else "naval",
         role_id="autopilot_controller",
         decision_period_s=period,
-        action_hold_s=hold,
         active=active,
     )
 
@@ -49,7 +50,7 @@ def test_runtime_holds_action_until_expiry_and_exposes_provenance() -> None:
     model = _FakeModel()
     from python.tasking_contracts.common.decision_runtime import DecisionRuntimeAgent
 
-    agent = DecisionRuntimeAgent(_spec("air-1", period=10.0, hold=2.0), model)
+    agent = DecisionRuntimeAgent(_spec("air-1", period=2.0), model)
     agent.reset(context={"mission": "demo"}, episode_seed=17)
     first = agent.step(observation="obs-1", clock_s=0.0, observation_version="v1")
     held = agent.step(observation="obs-2", clock_s=1.0, observation_version="v2")
@@ -63,6 +64,19 @@ def test_runtime_holds_action_until_expiry_and_exposes_provenance() -> None:
     assert renewed.action != first.action
     assert model.reset_contexts[0]["episode_seed"] == 17
     assert model.reset_contexts[0]["replay_identity"].startswith("air-1:air-1.model:seed=17")
+    assert [entry[0] for entry in model.decisions] == [0.0, 2.0]
+
+
+def test_runtime_decision_dt_is_independent_of_held_polls() -> None:
+    from python.tasking_contracts.common.decision_runtime import DecisionRuntimeAgent
+
+    model = _FakeModel()
+    agent = DecisionRuntimeAgent(_spec("air-1", period=1.0), model)
+    agent.reset()
+    agent.step(observation="obs-0", clock_s=0.0)
+    agent.step(observation="obs-held", clock_s=0.9)
+    agent.step(observation="obs-1", clock_s=1.0)
+
     assert [entry[0] for entry in model.decisions] == [0.0, 1.0]
 
 
@@ -87,6 +101,22 @@ def test_runtime_rejects_unknown_model_kind() -> None:
             "autopilot_controller",
             model_kind="unknown",
         )
+
+
+def test_runtime_rejects_unclassified_or_mismatched_direct_models() -> None:
+    from python.tasking_contracts.common.decision_runtime import DecisionRuntimeAgent
+
+    class _UnclassifiedModel(_FakeModel):
+        model_kind = None
+
+    with pytest.raises(ValueError, match="must declare model_kind"):
+        DecisionRuntimeAgent(_spec("air-unclassified"), _UnclassifiedModel())
+
+    class _LearnedModel(_FakeModel):
+        model_kind = "learned"
+
+    with pytest.raises(ValueError, match="kind mismatch"):
+        DecisionRuntimeAgent(_spec("air-mismatch"), _LearnedModel())
 
 
 def test_roster_routes_active_agents_in_stable_order_and_skips_inactive() -> None:
@@ -176,3 +206,23 @@ def test_roster_rejects_duplicate_and_missing_active_entries() -> None:
     roster.reset()
     with pytest.raises(KeyError, match="missing observation"):
         roster.step(observations={}, clock_s=0.0)
+
+
+def test_roster_preflights_all_active_observations_before_stepping() -> None:
+    from python.tasking_contracts.common.decision_runtime import DecisionRuntimeAgent
+
+    first_model = _FakeModel(label="first")
+    second_model = _FakeModel(label="second")
+    roster = DecisionRuntimeRoster(
+        [
+            DecisionRuntimeAgent(_spec("air-1"), first_model),
+            DecisionRuntimeAgent(_spec("air-2"), second_model),
+        ]
+    )
+    roster.reset()
+
+    with pytest.raises(KeyError, match="air-2"):
+        roster.step(observations={"air-1": "present"}, clock_s=0.0)
+
+    assert first_model.decisions == []
+    assert second_model.decisions == []

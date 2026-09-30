@@ -17,6 +17,33 @@ from python.tasking_contracts.common.mission_defs import (
 from python.tasking_contracts.air.execution.landing import ScriptedLandingController
 from python.tasking_contracts.air.execution.takeoff import ScriptedTakeoffController
 from python.tasking_contracts.air.execution.stable_flight import ScriptedStableFlightController
+from gym_envs.scenario_loader.spatial_runtime.geometry import select_ils_beacon
+
+
+def _selected_runway_length(loader) -> float:
+    if loader is None:
+        return 0.0
+    try:
+        truth = loader.get_policy_agent_observation(loader.agent_id)
+        beacon = select_ils_beacon(loader, float(truth.x), float(truth.y))
+        return float(beacon.get("length", 0.0)) if isinstance(beacon, dict) else 0.0
+    except Exception:
+        return 0.0
+
+
+def _step_scripted_controller(controller, observation, *, loader, dt: float):
+    """Step a neutral model with the loader's authoritative phase metadata."""
+
+    if controller is None:
+        return None
+    if hasattr(controller, "decide") and hasattr(controller, "active_mode"):
+        phase_name = str(getattr(loader, "mission_phase_name", "") or "") if loader is not None else ""
+        return controller.decide(
+            observation=observation,
+            context={"phase_name": phase_name},
+            dt=float(dt),
+        )
+    return controller.step(observation)
 
 
 @dataclass
@@ -186,13 +213,6 @@ class MultiTimescaleActionController:
                 self._scripted_active_mode = "landing_ils"
             elif self.scripted_baseline_mode == "takeoff_cruise_landing":
                 loader = self._get_loader()
-                runway_length_m = max(
-                    (
-                        float(beacon.get("length", 0.0))
-                        for beacon in list(getattr(loader, "ils_beacons", []) or [])
-                    ),
-                    default=0.0,
-                )
                 self._scripted_model = AIR_SCRIPTED_MODEL_REGISTRY.create_for(
                     domain="air",
                     role_id="autopilot_controller",
@@ -200,7 +220,7 @@ class MultiTimescaleActionController:
                     action_dim=action_dim,
                     dt=dt,
                     transition_alt_agl_m=self.scripted_transition_alt_agl_m,
-                    runway_length_m=runway_length_m,
+                    runway_length_m=_selected_runway_length(loader),
                 )
                 self._scripted_ctrl = self._scripted_model
                 self._scripted_active_mode = "takeoff"
@@ -431,22 +451,17 @@ class MultiTimescaleActionController:
             and (self.scripted_blend_indices or self.scripted_lock_indices)
         ):
             try:
+                baseline_action = np.asarray(
+                    _step_scripted_controller(
+                        scripted_ctrl,
+                        self._last_obs,
+                        loader=self._get_loader(),
+                        dt=self._get_reset_dt(),
+                    ),
+                    dtype=np.float32,
+                ).reshape(-1)
                 if self._scripted_model is not None:
-                    baseline_action = np.asarray(
-                        self._scripted_model.step(
-                            self._last_obs,
-                            phase_name=str(
-                                getattr(self._get_loader(), "mission_phase_name", "") or ""
-                            ),
-                        ),
-                        dtype=np.float32,
-                    ).reshape(-1)
-                    self._scripted_active_mode = self._scripted_model.active_mode
-                else:
-                    baseline_action = np.asarray(
-                        scripted_ctrl.step(self._last_obs),
-                        dtype=np.float32,
-                    ).reshape(-1)
+                    self._scripted_active_mode = str(self._scripted_model.active_mode)
             except Exception:
                 baseline_action = None
             if baseline_action is not None and baseline_action.size == a.size:
@@ -670,13 +685,6 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
                 self._scripted_active_mode = "landing_ils"
             elif self.scripted_baseline_mode == "takeoff_cruise_landing":
                 loader = self._get_loader()
-                runway_length_m = max(
-                    (
-                        float(beacon.get("length", 0.0))
-                        for beacon in list(getattr(loader, "ils_beacons", []) or [])
-                    ),
-                    default=0.0,
-                )
                 self._scripted_model = AIR_SCRIPTED_MODEL_REGISTRY.create_for(
                     domain="air",
                     role_id="autopilot_controller",
@@ -684,7 +692,7 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
                     action_dim=int(self.action_space.shape[0]),
                     dt=dt,
                     transition_alt_agl_m=self.scripted_transition_alt_agl_m,
-                    runway_length_m=runway_length_m,
+                    runway_length_m=_selected_runway_length(loader),
                 )
                 self._scripted_ctrl = self._scripted_model
                 self._scripted_active_mode = "takeoff"
@@ -944,22 +952,17 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
             and (self.scripted_blend_indices or self.scripted_lock_indices)
         ):
             try:
+                baseline_action = np.asarray(
+                    _step_scripted_controller(
+                        scripted_ctrl,
+                        self._last_obs,
+                        loader=self._get_loader(),
+                        dt=self._get_reset_dt(),
+                    ),
+                    dtype=np.float32,
+                ).reshape(-1)
                 if self._scripted_model is not None:
-                    baseline_action = np.asarray(
-                        self._scripted_model.step(
-                            self._last_obs,
-                            phase_name=str(
-                                getattr(self._get_loader(), "mission_phase_name", "") or ""
-                            ),
-                        ),
-                        dtype=np.float32,
-                    ).reshape(-1)
-                    self._scripted_active_mode = self._scripted_model.active_mode
-                else:
-                    baseline_action = np.asarray(
-                        scripted_ctrl.step(self._last_obs),
-                        dtype=np.float32,
-                    ).reshape(-1)
+                    self._scripted_active_mode = str(self._scripted_model.active_mode)
             except Exception:
                 baseline_action = None
             if baseline_action is not None and baseline_action.size == a.size:

@@ -55,7 +55,22 @@ from python.tasking_contracts.common.decision_runtime import (
     DecisionRuntimeAgentSpec,
 )
 from python.simulation import create_single_execution_runtime
+from gym_envs.scenario_loader.spatial_runtime.geometry import select_ils_beacon
 from tools.diagnostics.common import add_model_load_args, add_probe_run_args
+
+
+def _finite_json(value: Any) -> Any:
+    """Recursively convert non-finite and numpy scalar values for strict JSON."""
+
+    if isinstance(value, dict):
+        return {str(key): _finite_json(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_finite_json(item) for item in value]
+    if isinstance(value, np.generic):
+        return _finite_json(value.item())
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    return value
 
 
 @dataclass(frozen=True)
@@ -76,6 +91,9 @@ class EpisodeSummary:
     final_waypoint_idx: int
     final_command_code: int
     final_baseline_mode: str
+    c2_task_name: str
+    c2_transition_sequence: list[str]
+    c2_report_valid: bool
     final_position_xyz_m: list[float]
     final_runway_along_m: float | None
     final_runway_cross_m: float | None
@@ -216,6 +234,12 @@ def _env_max_steps(env) -> int:
 
 
 def _pick_runway_beacon(loader, x_ref: float, y_ref: float) -> dict[str, Any] | None:
+    try:
+        declared = select_ils_beacon(loader, float(x_ref), float(y_ref))
+    except Exception:
+        declared = None
+    if isinstance(declared, dict):
+        return dict(declared)
     ref_name = None
     try:
         post = loader.scenario_data.get("mission_command", {}).get("post_waypoint_transition", {})
@@ -266,20 +290,16 @@ def _runway_outline(beacon: dict[str, Any]) -> np.ndarray:
 def _collect_episode(
     *,
     env,
-    scenario_path: str,
     model,
     scripted: bool,
     seed: int,
     max_steps: int | None,
     zero_randomization: bool,
+    scenario_path: str,
 ):
     obs, _info = env.reset(seed=int(seed))
     sim_env = env.unwrapped
     loader = sim_env.loader
-    scenario_path = os.path.abspath(str(scenario_path))
-
-    start_pos = np.asarray(sim_env.sim.get_unit_position(sim_env.agent_id), dtype=np.float64)
-    runway_beacon = _pick_runway_beacon(loader, float(start_pos[0]), float(start_pos[1]))
 
     scripted_model = None
     scripted_runtime_agent = None
@@ -291,12 +311,14 @@ def _collect_episode(
             scripted_dt = float(sim_env.sim.get_time_step())
         except Exception:
             scripted_dt = 0.05
-        runway_length_m = (
-            float(runway_beacon.get("length", 0.0))
-            if runway_beacon is not None
-            else 0.0
+        start_pos = np.asarray(sim_env.sim.get_unit_position(sim_env.agent_id), dtype=np.float64)
+        runway_beacon = _pick_runway_beacon(loader, float(start_pos[0]), float(start_pos[1]))
+        runway_length_m = float(runway_beacon.get("length", 0.0)) if runway_beacon else 0.0
+        model_id = (
+            _scripted_model_id_for_scenario(scenario_path)
+            if scenario_path
+            else AIR_SCRIPTED_EXECUTION_MODEL_ID
         )
-        model_id = _scripted_model_id_for_scenario(scenario_path)
         scripted_model = AIR_SCRIPTED_MODEL_REGISTRY.create_for(
             domain="air",
             role_id="autopilot_controller",
@@ -328,6 +350,9 @@ def _collect_episode(
             episode_seed=int(seed),
         )
 
+    if "start_pos" not in locals():
+        start_pos = np.asarray(sim_env.sim.get_unit_position(sim_env.agent_id), dtype=np.float64)
+        runway_beacon = _pick_runway_beacon(loader, float(start_pos[0]), float(start_pos[1]))
     waypoints = [dict(wp) for wp in list(getattr(loader, "waypoints", []) or [])]
     waypoint_template_idx = int(loader.mission_cmd.get("_waypoint_template_idx", -2))
 
@@ -429,6 +454,9 @@ def _collect_episode(
         scenario_name = str(scenario_data.get("scenario_name", "") or "")
     if not scenario_name:
         scenario_name = os.path.basename(str(getattr(loader, "scenario_path", "") or ""))
+    tasking_runtime = getattr(loader, "_scripted_tasking_runtime", None)
+    transition_history = list(getattr(tasking_runtime, "transition_history", []) or [])
+    task_sequence = list(getattr(tasking_runtime, "task_sequence", []) or [])
     summary = EpisodeSummary(
         scenario=scenario_name,
         seed=int(seed),
@@ -446,6 +474,13 @@ def _collect_episode(
         final_waypoint_idx=int(wp_indices[-1]),
         final_command_code=int(cmd_codes[-1]),
         final_baseline_mode=str(baseline_modes[-1]),
+        c2_task_name=str(getattr(loader, "c2_task_name", "") or ""),
+        c2_transition_sequence=(
+            [str(name) for name in task_sequence]
+            if task_sequence
+            else [str(item.get("task_name", "")) for item in transition_history if isinstance(item, dict)]
+        ),
+        c2_report_valid=bool(getattr(loader, "c2_report_valid", False)),
         final_position_xyz_m=list(final_pos),
         final_runway_along_m=_optional_finite_float(runway_alongs[-1]),
         final_runway_cross_m=_optional_finite_float(runway_crosses[-1]),
@@ -643,12 +678,12 @@ def _main() -> int:
 
     data = _collect_episode(
         env=env,
-        scenario_path=os.path.abspath(args.scenario),
         model=model,
         scripted=bool(args.scripted),
         seed=int(args.seed),
         max_steps=args.max_steps,
         zero_randomization=bool(args.zero_randomization),
+        scenario_path=os.path.abspath(args.scenario),
     )
     summary: EpisodeSummary = data["summary"]
 
@@ -656,11 +691,11 @@ def _main() -> int:
     out_json = os.path.splitext(out_png)[0] + ".json"
     _save_plot(data, out_png)
     with open(out_json, "w", encoding="utf-8") as f:
-        json.dump(asdict(summary), f, indent=2, allow_nan=False)
+        json.dump(_finite_json(asdict(summary)), f, indent=2, allow_nan=False)
 
     print(f"saved_plot={out_png}")
     print(f"saved_summary={out_json}")
-    print(json.dumps(asdict(summary), indent=2, allow_nan=False))
+    print(json.dumps(_finite_json(asdict(summary)), indent=2, allow_nan=False))
     return 0
 
 

@@ -31,6 +31,7 @@ from .engagement import (
     AirScriptedEngagementController,
 )
 from .runtime import AirEngagementRuntimeInput, AirScriptedEngagementRuntimeModel
+from .tasking_runtime import AirScriptedTaskingRuntime
 from .ew import AirEWDecision, AirScriptedEWController
 from .coordination import AirScriptedRosterCoordinator, AirTargetAssignment
 from .terminal import AirCombatTerminalEvaluator, AirCombatTerminalState
@@ -64,6 +65,7 @@ __all__ = [
     "AirScriptedEngagementController",
     "AirEngagementRuntimeInput",
     "AirScriptedEngagementRuntimeModel",
+    "AirScriptedTaskingRuntime",
     "AirEWDecision",
     "AirScriptedEWController",
     "AirScriptedRosterCoordinator",

@@ -53,6 +53,7 @@ class AirActionLayoutAdapter:
             if intent.authorization_to_fire
             and intent.target_contact_present
             and intent.shot_budget_available
+            and intent.station_valid
             else 0.0
         )
         legal_fire_request = bool(
@@ -62,8 +63,11 @@ class AirActionLayoutAdapter:
             and intent.shot_budget_available
             and intent.target_contact_present
             and intent.authorization_to_fire
+            and intent.station_valid
         )
         fire_pulse = 1.0 if legal_fire_request and not self._fire_latched else 0.0
+        # Any illegal request breaks the held-fire latch so a later legal
+        # request can produce a fresh pulse.
         self._fire_latched = bool(legal_fire_request)
         self._last_target_contact = bool(intent.target_contact_present)
 
@@ -71,7 +75,7 @@ class AirActionLayoutAdapter:
             intent.target_contact_present
             and intent.authorization_to_fire
             and intent.shot_budget_available
-            and intent.station_id is not None
+            and intent.station_valid
         )
         if self.action_dim == AIR_FULL_ACTION_DIM:
             values[9] = 1.0

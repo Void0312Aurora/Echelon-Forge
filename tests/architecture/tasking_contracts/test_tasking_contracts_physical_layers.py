@@ -41,7 +41,13 @@ def test_domain_packages_have_role_specific_subdirectories() -> None:
         "weapons.py",
     }
     assert _py_names(CONTRACT_ROOT / "naval") == {"__init__.py", "execution.py"}
-    assert _py_names(CONTRACT_ROOT / "joint") == {"__init__.py", "coordination.py", "projection.py"}
+    assert _py_names(CONTRACT_ROOT / "joint") == {
+        "__init__.py",
+        "command_link.py",
+        "coordination.py",
+        "projection.py",
+        "runtime.py",
+    }
 
 
 def test_canonical_packages_do_not_import_legacy_flat_implementation_paths() -> None:
