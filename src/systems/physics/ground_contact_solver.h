@@ -322,8 +322,7 @@ inline Vec2 minimize_over_wheel_force_set(const Mat2 &A, const Vec2 &g, const Wh
         const double cx = side * half_length;
         const Vec2 z = detail::disk_min(P, q, {cx, 0.0}, r);
         const double tol = 1e-12 * std::max(1.0, half_length);
-        const bool on_cap =
-            half_length <= 0.0 || (side > 0.0 ? z.x >= cx - tol : z.x <= cx + tol);
+        const bool on_cap = half_length <= 0.0 || (side > 0.0 ? z.x >= cx - tol : z.x <= cx + tol);
         if (on_cap) {
             consider(z);
         }

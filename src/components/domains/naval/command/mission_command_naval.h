@@ -117,9 +117,9 @@ mission_command_naval_embarked_helo_directive(const MissionCommandNavalOwnerSlic
 // Naval-owned command projection. The maintained naval runtime component is
 // projected from the shared core directive plus the naval owner slice, so the
 // flat MissionCommand transport never becomes naval runtime truth.
-[[nodiscard]] inline NavalCommandIntent mission_command_naval_intent(
-    const MissionCommandNavalOwnerSlice &naval,
-    const MissionCommandCore &core) noexcept {
+[[nodiscard]] inline NavalCommandIntent
+mission_command_naval_intent(const MissionCommandNavalOwnerSlice &naval,
+                             const MissionCommandCore &core) noexcept {
     NavalCommandIntent intent{};
     intent.reference_entity_id = naval.reference_entity_id;
     intent.station_radius_m = naval.station_radius_m;
@@ -159,8 +159,7 @@ mission_command_naval_embarked_helo_directive(const MissionCommandNavalOwnerSlic
 // The entity handle is taken by value: it is a trivially copyable id wrapper,
 // and callers routinely pass a temporary such as `iteration.entity(index)`.
 template <typename EntityT>
-inline void set_mission_command_naval_projection(EntityT entity,
-                                                 const MissionCommandCore &core,
+inline void set_mission_command_naval_projection(EntityT entity, const MissionCommandCore &core,
                                                  const MissionCommandNavalOwnerSlice &naval) {
     entity.template set<NavalCommandIntent>(mission_command_naval_intent(naval, core));
 }

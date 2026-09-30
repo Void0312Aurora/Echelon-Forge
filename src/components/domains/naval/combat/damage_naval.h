@@ -172,8 +172,7 @@ inline constexpr std::size_t kNavalDamageResponseProfileDefaultIndex = 0;
 // this platform".
 [[nodiscard]] inline const NavalDamageResponseProfile *
 resolve_naval_damage_response_profile(std::size_t profile_index) noexcept {
-    const std::vector<NavalDamageResponseProfile> &profiles =
-        naval_damage_response_profiles();
+    const std::vector<NavalDamageResponseProfile> &profiles = naval_damage_response_profiles();
     if (profile_index >= profiles.size()) {
         return nullptr;
     }
@@ -186,10 +185,10 @@ resolve_naval_damage_response_profile(std::size_t profile_index) noexcept {
 // is exactly 1.0 whenever the profile declares no coupling or the mounts are
 // full, so `mount_response_weight = 0.0` is provably neutral and a full magazine
 // never changes the declared coefficients.
-[[nodiscard]] inline double naval_damage_mount_response_scale(
-    const NavalDamageResponseProfile &profile, double mount_ready_fraction) noexcept {
-    const double floor_fraction =
-        std::clamp(profile.mount_ready_fraction_floor, 0.0, 1.0);
+[[nodiscard]] inline double
+naval_damage_mount_response_scale(const NavalDamageResponseProfile &profile,
+                                  double mount_ready_fraction) noexcept {
+    const double floor_fraction = std::clamp(profile.mount_ready_fraction_floor, 0.0, 1.0);
     const double ready_fraction = std::clamp(mount_ready_fraction, floor_fraction, 1.0);
     const double spent_fraction = 1.0 - ready_fraction;
     const double weight = std::max(0.0, profile.mount_response_weight);
@@ -201,8 +200,7 @@ resolve_naval_damage_response_profile(std::size_t profile_index) noexcept {
 // `mounts` only needs `ready_count` / `max_ready_count`, which keeps this a pure
 // projection without pulling a weapon header into the damage surface.
 template <typename MountRange>
-[[nodiscard]] inline double
-naval_damage_mount_ready_fraction(const MountRange &mounts) noexcept {
+[[nodiscard]] inline double naval_damage_mount_ready_fraction(const MountRange &mounts) noexcept {
     std::size_t counted_mounts = 0;
     double ready_fraction_sum = 0.0;
     for (const auto &mount : mounts) {
@@ -210,10 +208,9 @@ naval_damage_mount_ready_fraction(const MountRange &mounts) noexcept {
             continue;
         }
         ++counted_mounts;
-        ready_fraction_sum += std::clamp(
-            static_cast<double>(mount.ready_count) /
-                static_cast<double>(mount.max_ready_count),
-            0.0, 1.0);
+        ready_fraction_sum += std::clamp(static_cast<double>(mount.ready_count) /
+                                             static_cast<double>(mount.max_ready_count),
+                                         0.0, 1.0);
     }
     if (counted_mounts == 0) {
         return 1.0;
@@ -222,34 +219,37 @@ naval_damage_mount_ready_fraction(const MountRange &mounts) noexcept {
 }
 
 // Fire-severity decay term for one tick scaled by the mount coupling.
-[[nodiscard]] inline double naval_damage_fire_decay_per_s(
-    const NavalDamageResponseProfile &profile, double mount_response_scale) noexcept {
+[[nodiscard]] inline double naval_damage_fire_decay_per_s(const NavalDamageResponseProfile &profile,
+                                                          double mount_response_scale) noexcept {
     return profile.fire_decay_per_s * mount_response_scale;
 }
 
 // Hull-breach decay term for one tick scaled by the mount coupling.
-[[nodiscard]] inline double naval_damage_breach_decay_per_s(
-    const NavalDamageResponseProfile &profile, double mount_response_scale) noexcept {
+[[nodiscard]] inline double
+naval_damage_breach_decay_per_s(const NavalDamageResponseProfile &profile,
+                                double mount_response_scale) noexcept {
     return profile.breach_decay_per_s * mount_response_scale;
 }
 
 // Flooding decay term for one tick scaled by the mount coupling.
-[[nodiscard]] inline double naval_damage_flooding_decay_per_s(
-    const NavalDamageResponseProfile &profile, double mount_response_scale) noexcept {
+[[nodiscard]] inline double
+naval_damage_flooding_decay_per_s(const NavalDamageResponseProfile &profile,
+                                  double mount_response_scale) noexcept {
     return profile.flooding_decay_per_s * mount_response_scale;
 }
 
 // Flooding ingress from an open hull breach. Not mount scaled: an open breach
 // admits water whether or not the mounts have been firing.
-[[nodiscard]] inline double naval_damage_breach_flooding_gain_per_s(
-    const NavalDamageResponseProfile &profile, double breach_progress) noexcept {
+[[nodiscard]] inline double
+naval_damage_breach_flooding_gain_per_s(const NavalDamageResponseProfile &profile,
+                                        double breach_progress) noexcept {
     return profile.breach_to_flooding_per_s * breach_progress;
 }
 
 // Capability loss for one tick, scaled by the mount coupling. `progress` is the
 // severity of the driving channel (fire or flooding).
-[[nodiscard]] inline double naval_damage_capability_loss_per_s(double coefficient_per_s,
-                                                               double progress,
-                                                               double mount_response_scale) noexcept {
+[[nodiscard]] inline double
+naval_damage_capability_loss_per_s(double coefficient_per_s, double progress,
+                                   double mount_response_scale) noexcept {
     return coefficient_per_s * progress * mount_response_scale;
 }
