@@ -16,17 +16,17 @@ inline constexpr std::string_view kCompositionId = "builtin.default_compatibilit
 inline constexpr std::string_view kRequestedProfileId = "builtin.default_compatibility";
 inline constexpr std::string_view kRequestedProfileVersion = "1.0.0";
 inline constexpr std::string_view kRequestedManifestSha256 =
-    "d35fc20bdd9ec50448ed7dd70da218cb735edb14dfd0fbe3122779783f0f164b";
+    "5627bc9e8968f02b48f83d6107e8ed72830e8a589b8fc6b96d3bd451b183b242";
 inline constexpr std::string_view kResolvedManifestSha256 =
-    "4fb0170b00f9b3008f37adfa99c3134bed836501fe6267fd302719926736434f";
+    "5556901f96740ca4b2a85ebf2d15d6e6a9e1eff3e4b7407148923b0373a4fe73";
 inline constexpr std::string_view kCatalogLockSha256 =
     "ec36d4f134e003e852a87f0dc2edb8095bbd798855d88b099e0174d45efa7f94";
 inline constexpr std::string_view kProfileProjectionSha256 =
-    "f9e73c2add32ed0739615b58e8e3cc2ef58a82a81746a055ebe3fc6b37458329";
+    "808b04004b5e9725931d3ee7694103de63b37a2eacb3ed8f394cd5d3909434dd";
 inline constexpr std::string_view kResolverContractVersion =
     "echelon_forge.simulation_composition_resolver.v1";
 inline constexpr std::string_view kExecutableGraphSha256 =
-    "aa31bfeba7661e9eb0909d06f6f360f79b6bedf9d6948a0a6c639c8eb70de202";
+    "fce6fef9020200d4a57c2b50c97051837801f4201b2b918b0d051af3a9958aae";
 inline constexpr std::string_view kStageContractVersion = "1.0.0";
 inline constexpr std::string_view kHostMode = "native_cpp";
 inline constexpr std::string_view kBindingVersion = "native.v1";

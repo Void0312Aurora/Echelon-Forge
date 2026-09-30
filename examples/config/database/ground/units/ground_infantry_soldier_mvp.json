@@ -1,6 +1,7 @@
 {
   "name": "Ground_Infantry_Soldier_MVP",
   "type": "Ground",
+  "ground_infantry_capability": true,
   "mass_kg": 85.0,
   "health": {
     "current_hp": 100.0,

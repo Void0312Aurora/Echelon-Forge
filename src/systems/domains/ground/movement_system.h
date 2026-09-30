@@ -8,6 +8,7 @@
 
 #include "components/basic/common.h"
 #include "components/command/mission_command.h"
+#include "components/domains/ground/ground_capabilities.h"
 #include "core/interfaces/environment_model.h"
 
 namespace ground_infantry_movement_detail {
@@ -82,7 +83,8 @@ inline void stop(Velocity &velocity) {
 // kinematic drift for the admitted move contract. Route intent, bridge
 // admission, stance, cover, and observation export remain separate owners.
 inline void register_ground_infantry_movement_system(flecs::world &ecs) {
-    ecs.system<Transform, Velocity, const KeyEntity, const MissionCommand>("GroundInfantryMovement")
+    ecs.system<Transform, Velocity, const KeyEntity, const MissionCommand,
+               const GroundInfantryCapability>("GroundInfantryMovement")
         .kind(flecs::OnUpdate)
         .run([](flecs::iter &it) {
             const EnvironmentModelRef *environment_ref = it.world().get<EnvironmentModelRef>();

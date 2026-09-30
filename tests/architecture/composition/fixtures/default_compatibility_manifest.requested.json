@@ -168,6 +168,11 @@
       "registration_id": "flecs.component.gear_state"
     },
     {
+      "component_id": "GroundInfantryCapability",
+      "plugin_id": "builtin.core_runtime",
+      "registration_id": "flecs.component.ground_infantry_capability"
+    },
+    {
       "component_id": "GroundPlatformDamageState",
       "plugin_id": "builtin.core_runtime",
       "registration_id": "flecs.component.ground_platform_damage_state"

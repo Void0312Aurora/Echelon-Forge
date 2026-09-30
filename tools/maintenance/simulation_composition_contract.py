@@ -1370,6 +1370,7 @@ DEFAULT_COMPONENTS = (
   "Inertia",
   "AngularVelocity",
   "GroundState",
+  "GroundInfantryCapability",
   "GearState",
   "Missile",
   "Munition",

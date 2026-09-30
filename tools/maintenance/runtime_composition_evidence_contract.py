@@ -164,14 +164,14 @@ def _registry_graph() -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[
   # revision named only the expected counts, which left the reader of a failure
   # unable to tell what the registry had actually grown to.
   census = (len(components), len(kernel_systems), len(systems))
-  if census != (86, 2, 34):
+  if census != (87, 2, 35):
     raise ContractError(
       [
         ValidationIssue(
           "evidence.registry_drift",
           "$",
           f"registry census is {census[0]} components, {census[1]} kernel systems and {census[2]} resolved systems; "
-          "the recorded census is 86 components, 2 kernel systems and 34 resolved systems. Re-affirm this pin, then "
+          "the recorded census is 87 components, 2 kernel systems and 35 resolved systems. Re-affirm this pin, then "
           "regenerate the projection, evidence, closure and host-batch reference in that order "
           "(docs/architecture/work/issues/runtime_composition_registry_sync.md).",
         )

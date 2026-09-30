@@ -20,7 +20,7 @@
 //     (section 3 slice order, step 3; red lines)
 //   - docs/plan/archive/unified_architecture_program_completed_20260727/
 //     t11_content_schema_survey_20260721.md
-//     (the 106 recognized top-level keys + 6 present-but-unread keys)
+//     (the 106 recognized top-level keys + 7 present-but-unread keys)
 
 #include <cstddef>
 #include <string>
@@ -69,8 +69,8 @@ bool parse_pass(const std::string &path, std::vector<UnitDefinition> &out_defini
 // Validate pass
 // -------------------------------------------------------------------------
 // True when `key` is a recognized top-level content key: the union of the 106
-// parser-read keys (54 direct + 52 missile-tuning), the two semantic
-// present-but-unread keys (rcs / rcs_profile_ref), and the
+// parser-read keys (55 direct + 52 missile-tuning), the three semantic
+// present-but-unread keys (ew_suite_ref / rcs / rcs_profile_ref), and the
 // underscore-annotation convention (any key beginning with '_'). Hardcoded from
 // the I52 survey; the draft JSON is NOT read at build or run time.
 bool is_recognized_top_level_key(const std::string &key);
@@ -100,7 +100,7 @@ struct DeferredReferenceReport {
     std::size_t sensor_ref = 0;
     std::size_t sensor_refs = 0;
     std::size_t engine_ref = 0;
-    std::size_t ew_suite_ref = 0;
+    std::size_t ew_suite_ref = 0;    // present-but-unread: parser never populates it
     std::size_t rcs_profile_ref = 0; // present-but-unread: parser never populates it
     std::size_t default_loadout = 0;
     std::size_t embarked_helo_ref = 0;
