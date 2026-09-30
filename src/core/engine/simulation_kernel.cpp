@@ -51,6 +51,9 @@ SimulationKernel::SimulationKernel(std::string resolved_manifest_json) {
     if (auto resupply_logic = ecs.lookup("ResupplyLogic"); resupply_logic.is_valid()) {
         ecs_enable(ecs.c_ptr(), resupply_logic.id(), false);
     }
+    auto transfer_reservation = ecs.entity();
+    transfer_reservation.set_name(kTransferReflectionSpawnReservation);
+    ensure_state_transfer_component_reflection();
     reset(42); // Default reset
     // Constructor initialization establishes generation 1's clean baseline;
     // later explicit resets are truth mutations and close the rebuild barrier.
@@ -224,9 +227,12 @@ flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_na
     // Optional: Check existence first or trust spawn to handle it.
     // The factory->spawn is responsible for lookup now.
     SpawnParams params{side, x, y, z, heading, pitch, roll, vx, vy, vz};
-    auto reserved_spawn_entity = ecs.entity();
-    reserved_spawn_entity.set_name(kTransferReflectionSpawnReservation);
-    ensure_state_transfer_component_reflection();
+    auto reserved_spawn_entity = ecs.lookup(kTransferReflectionSpawnReservation);
+    const bool created_reservation = !reserved_spawn_entity.is_valid();
+    if (created_reservation) {
+        reserved_spawn_entity = ecs.entity();
+        reserved_spawn_entity.set_name(kTransferReflectionSpawnReservation);
+    }
     auto e = factory->spawn(ecs, unit_name, params);
     if (e.is_valid()) {
         if (e.id() == reserved_spawn_entity.id()) {
@@ -252,7 +258,8 @@ flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_na
             descendant.add<SimObject>();
         }
     }
-    if (!e.is_valid() && ecs_is_alive(ecs.c_ptr(), reserved_spawn_entity.id())) {
+    if (!e.is_valid() && created_reservation &&
+        ecs_is_alive(ecs.c_ptr(), reserved_spawn_entity.id())) {
         reserved_spawn_entity.destruct();
     }
     return e;
