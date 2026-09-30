@@ -74,6 +74,7 @@
     "tests/architecture/runtime_profiles/test_cuda_resident_observation_projection.py",
     "tests/architecture/runtime_profiles/test_cuda_resident_replay.py",
     "tests/architecture/runtime_profiles/test_runtime_profile_contracts.py",
+    "tests/architecture/runtime_contracts/test_public_runtime_contract_foundation.py",
     "tests/architecture/runtime_spine/test_clock_domain_enforcement.py",
     "tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py",
     "tests/architecture/structural_boundaries/test_binding_quarantine_boundaries.py",
