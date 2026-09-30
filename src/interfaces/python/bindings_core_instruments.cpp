@@ -45,7 +45,8 @@ void bind_core_instruments(nb::module_ &m) {
         .def_rw("countermeasure_auto_mode", &InstrumentState::countermeasure_auto_mode)
         .def_rw("countermeasure_snapshot_stage", &InstrumentState::countermeasure_snapshot_stage)
         .def_rw("countermeasure_snapshot_time_s", &InstrumentState::countermeasure_snapshot_time_s)
-        .def_rw("countermeasure_snapshot_post_ew", &InstrumentState::countermeasure_snapshot_post_ew)
+        .def_rw("countermeasure_snapshot_post_ew",
+                &InstrumentState::countermeasure_snapshot_post_ew)
         // EGI / Navigation
         .def_rw("lat", &InstrumentState::lat_deg)
         .def_rw("lon", &InstrumentState::lon_deg)
