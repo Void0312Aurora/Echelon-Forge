@@ -343,7 +343,7 @@ def generated_header(value: Mapping[str, Any]) -> str:
     "#pragma once\n\n"
     "#include <string_view>\n\n"
     "namespace runtime::contracts::generated {\n"
-    "inline constexpr std::string_view kDefaultResolvedExecutionPlanJson =\n"
+    "inline const std::string_view kDefaultResolvedExecutionPlanJson =\n"
     + literals
     + ";\n"
     "} // namespace runtime::contracts::generated\n"
