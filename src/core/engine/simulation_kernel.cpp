@@ -221,6 +221,9 @@ flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_na
     SpawnParams params{side, x, y, z, heading, pitch, roll, vx, vy, vz};
     auto e = factory->spawn(ecs, unit_name, params);
     if (e.is_valid()) {
+        // Install transfer-only vector schemas after the factory has allocated
+        // the first simulation entity, preserving the canonical entity id.
+        ensure_state_transfer_component_reflection();
         e.add<SimObject>(); // Tag for cleanup
         // Factory-owned ChildOf descendants (for example an embarked helo)
         // are part of the native ECS truth closure.  Tag them after the
