@@ -8,11 +8,16 @@ from pathlib import Path
 
 import pytest
 
+from python.runtime_bootstrap import ensure_repo_imports
+
 from python.rl.runtime.rollout_gate import FileRolloutDecisionStore
 from python.rl.runtime.rollout_gate import RolloutAdmission
 from python.rl.runtime.rollout_gate import RolloutAdmissionError
 from python.rl.runtime.rollout_gate import build_rollout_decision_envelope
 from python.rl.runtime.rollout_gate import canonical_json_bytes
+
+
+ensure_repo_imports()
 
 
 KEY = b"p5d-local-test-key-0123456789abcdef"
