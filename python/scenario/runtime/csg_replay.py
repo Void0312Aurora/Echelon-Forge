@@ -96,13 +96,15 @@ def _csg_replay_unit_frame(sim, loader) -> list[dict[str, Any]]:
             }
         )
 
-    for entity_id, name in sorted(
-        ((int(entity_id), str(name)) for name, entity_id in loader.entities.items()),
-        key=lambda item: item[0],
-    ):
+    # Runtime entity IDs are allocator state and can differ across platforms.
+    # Replay evidence uses a scenario-order projection ID so the same artifact
+    # validates on Windows and Linux while facade lookups retain the live IDs.
+    for stable_id, (name, runtime_id) in enumerate(loader.entities.items(), start=1):
+        name = str(name)
+        entity_id = int(runtime_id)
         config = config_by_name.get(name, {})
         observation = sim.get_agent_observation(entity_id)
-        append_unit(entity_id, name, config, observation)
+        append_unit(stable_id, name, config, observation)
 
     # The facade setup path keeps embarked inventories as metadata at S0. Keep
     # their stable spectator presence by projecting one stowed aircraft per
