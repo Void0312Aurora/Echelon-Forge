@@ -62,8 +62,38 @@ def test_single_infantry_definition_loads_and_spawns_as_native_ground() -> None:
     assert list(sim.get_unit_health(entity_id)) == [100.0, 100.0]
 
     definition = json.loads(Path(_UNIT).read_text(encoding="utf-8"))
+    assert definition["ground_infantry_capability"] is True
     assert definition["_ground_schema"]["echelon"] == "individual"
     assert definition["_ground_schema"]["platform_family"] == "dismounted_infantry"
+
+
+def test_ground_platoon_does_not_enter_infantry_movement_without_authored_capability() -> None:
+    sim = ef_py.SimulationKernel()
+    assert sim.load_database(_DATABASE)
+    sim.set_terrain_type("flat")
+    platoon_id = int(
+        sim.spawn_unit(
+            ef_py.Side.Blue,
+            "Ground_Platoon_MVP",
+            400.0,
+            100.0,
+            0.0,
+        )
+    )
+
+    command = ef_py.MissionCommand()
+    command.active = True
+    command.cmd_heading_deg = 90.0
+    command.cmd_speed_mps = 1.5
+    command.ground_task_mode = ef_py.GroundTaskMode.MoveStatic
+    sim.set_command_link(platoon_id, 0.0, 0.0)
+    sim.set_mission_command(platoon_id, command)
+    before = tuple(sim.get_unit_position(platoon_id))
+
+    sim.step()
+
+    assert tuple(sim.get_unit_position(platoon_id)) == before
+    assert tuple(sim.get_unit_velocity(platoon_id)) == (0.0, 0.0, 0.0)
 
 
 def test_native_infantry_movement_consumes_ground_command_and_terrain_cost() -> None:

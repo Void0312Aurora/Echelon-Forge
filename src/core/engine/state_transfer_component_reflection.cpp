@@ -14,6 +14,7 @@
 #include "components/domains/air/combat/damage_air.h"
 #include "components/domains/air/combat/weapon_air.h"
 #include "components/domains/ground/combat/damage_ground.h"
+#include "components/domains/ground/ground_capabilities.h"
 #include "components/domains/ground/combat/weapon_ground.h"
 #include "components/domains/air/platform/flight_dynamics_tuning.h"
 #include "components/domains/naval/combat/weapon_naval.h"
@@ -171,6 +172,7 @@ void register_nested_value_reflection(flecs::world &ecs) {
 }
 
 void register_ground_combat_reflection(flecs::world &ecs) {
+    ecs.component<GroundInfantryCapability>();
     ecs.component<GroundWeapon>()
         .member<std::int32_t>("weapon_type", 1, offsetof(GroundWeapon, weapon_type))
         .member<int>("ammunition")

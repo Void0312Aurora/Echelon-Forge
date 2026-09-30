@@ -25,6 +25,7 @@
 #include "components/physics/forces.h"
 #include "components/domains/air/combat/damage_air.h"
 #include "components/domains/ground/combat/damage_ground.h"
+#include "components/domains/ground/ground_capabilities.h"
 #include "components/combat/common/damage_common.h"
 #include "components/combat/common/weapon_common.h"
 #include "components/domains/naval/combat/weapon_naval.h"
@@ -662,6 +663,9 @@ class DefaultUnitFactory : public IUnitFactory {
             ecs_set_name(ecs.c_ptr(), e.id(), nullptr);
         }
         stamp_stable_serial(e);
+        if (def.has_ground_infantry_capability) {
+            e.set<GroundInfantryCapability>({});
+        }
 
         attach_spawn_sensor_suite(e, unit_name, def);
 

@@ -11,6 +11,7 @@
 #include "components/domains/air/combat/damage_air.h"
 #include "components/domains/air/combat/weapon_air.h"
 #include "components/domains/air/platform/flight_dynamics_tuning.h"
+#include "components/domains/ground/ground_capabilities.h"
 #include "components/domains/naval/combat/weapon_naval.h"
 #include "components/domains/naval/platform/embarked_air_ops.h"
 #include "components/domains/naval/platform/submarine_platform.h"
@@ -224,6 +225,8 @@ void register_esm_reset_system(flecs::world &ecs) {
     X(Inertia, "Inertia", "flecs.component.inertia")                                               \
     X(AngularVelocity, "AngularVelocity", "flecs.component.angular_velocity")                      \
     X(GroundState, "GroundState", "flecs.component.ground_state")                                  \
+    X(GroundInfantryCapability, "GroundInfantryCapability",                                          \
+      "flecs.component.ground_infantry_capability")                                                  \
     X(GearState, "GearState", "flecs.component.gear_state")                                        \
     X(Missile, "Missile", "flecs.component.missile")                                               \
     X(Munition, "Munition", "flecs.component.munition")                                            \
@@ -385,7 +388,7 @@ struct ValidationResult {
 };
 
 ValidationResult validate_registry() {
-    if (std::size(kDefaultComponents) != 86) {
+    if (std::size(kDefaultComponents) != 87) {
         return {false, "component contribution count is not the admitted default count"};
     }
     std::unordered_set<std::string_view> component_ids;

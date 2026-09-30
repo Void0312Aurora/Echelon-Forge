@@ -9,16 +9,17 @@ namespace {
 
 // Union of the I52-surveyed recognized top-level keys. Hardcoded here (the draft
 // JSON is NOT read at build or run time, per the census red lines):
-//   * 54 direct top-level keys read by parse_unit_json
+//   * 55 direct top-level keys read by parse_unit_json
 //   * 52 keys read by parse_missile_tuning_json_fields on the top-level entry
 //   * 2 semantic present-but-unread keys (rcs / rcs_profile_ref)
 // Underscore-prefixed annotation keys (_provenance, _real_world, _ground_schema,
 // _deferred_runtime_claims, ...) are accepted separately by the '_' rule.
 const std::unordered_set<std::string> &recognized_top_level_keys() {
     static const std::unordered_set<std::string> keys = {
-        // --- 54 direct top-level keys (parse_unit_json) ---
+        // --- 55 direct top-level keys (parse_unit_json) ---
         "type",
         "name",
+        "ground_infantry_capability",
         "mass_kg",
         "engine_ref",
         "engine",

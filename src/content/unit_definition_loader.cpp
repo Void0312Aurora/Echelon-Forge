@@ -1650,6 +1650,8 @@ bool parse_unit_json(
     }
 
     def.name = entry.value("name", type_str);
+    def.has_ground_infantry_capability =
+        entry.value("ground_infantry_capability", false);
     // Table-driven purely-mechanical direct top-level scalar reads
     // (content/detail/unit_definition_direct_fields.inc, I61 / T11 slice 4
     // bundle 2). The list is expanded at each field's original parse phase so
