@@ -129,17 +129,19 @@ struct RuntimeExecutionProvenanceSources {
 // Rebuild the byte- and host-backed receipt sections from owner-controlled
 // paths. The supplied binding template contributes only semantic identities;
 // every digest and platform field is replaced by an observation.
-[[nodiscard]] bool collect_runtime_execution_bindings_json(
-    const RuntimeExecutionProvenanceSources &sources, std::string_view binding_template_json,
-    std::string &observed_bindings_json, std::string &detail,
-    std::string *verified_request_json = nullptr);
+[[nodiscard]] bool
+collect_runtime_execution_bindings_json(const RuntimeExecutionProvenanceSources &sources,
+                                        std::string_view binding_template_json,
+                                        std::string &observed_bindings_json, std::string &detail,
+                                        std::string *verified_request_json = nullptr);
 // Return the exact validated P5-A plan bytes which SimulationKernel must
 // consume. This deliberately returns the complete plan, rather than a caller-
 // selected resolved-manifest projection, so native admission remains the only
 // extraction boundary.
-[[nodiscard]] bool load_runtime_execution_plan_json(
-    const RuntimeExecutionProvenanceSources &sources, std::string_view receipt_bindings_json,
-    std::string &execution_plan_json, std::string &detail);
+[[nodiscard]] bool
+load_runtime_execution_plan_json(const RuntimeExecutionProvenanceSources &sources,
+                                 std::string_view receipt_bindings_json,
+                                 std::string &execution_plan_json, std::string &detail);
 
 // The native host owns this interface.  A production adapter supplies the
 // durable ArtifactLedger implementation; tests use a deterministic fake.  No
@@ -152,10 +154,10 @@ class RuntimeRunRecorderStore {
     [[nodiscard]] virtual bool commit_header(std::string_view journal_id, std::uint64_t generation,
                                              std::string_view writer_id,
                                              std::string_view header_json, std::string &detail) = 0;
-    [[nodiscard]] virtual bool commit_header_authorized(
-        std::string_view journal_id, std::uint64_t generation, std::string_view writer_id,
-        std::string_view header_json, const RuntimeRunAdmissionCapability &capability,
-        std::string &detail) {
+    [[nodiscard]] virtual bool
+    commit_header_authorized(std::string_view journal_id, std::uint64_t generation,
+                             std::string_view writer_id, std::string_view header_json,
+                             const RuntimeRunAdmissionCapability &capability, std::string &detail) {
         (void)capability;
         return commit_header(journal_id, generation, writer_id, header_json, detail);
     }
@@ -181,8 +183,7 @@ class RuntimeRunRecorderStore {
     [[nodiscard]] virtual bool resume_journal_authorized(
         std::string_view journal_id, std::uint64_t generation, std::string_view writer_id,
         std::string_view header_json, const RuntimeRunAdmissionCapability &capability,
-        std::uint64_t &next_sequence, std::string &last_record_sha256,
-        std::string &detail) {
+        std::uint64_t &next_sequence, std::string &last_record_sha256, std::string &detail) {
         (void)capability;
         return resume_journal(journal_id, generation, writer_id, header_json, next_sequence,
                               last_record_sha256, detail);
@@ -192,44 +193,46 @@ class RuntimeRunRecorderStore {
                                              std::string_view payload,
                                              RuntimeRunRecorderAppendAck &ack,
                                              std::string &detail) = 0;
-    [[nodiscard]] virtual bool append_record_authorized(
-        std::string_view journal_id, std::uint64_t generation, std::string_view writer_id,
-        std::uint64_t sequence, std::string_view payload,
-        const RuntimeRunAdmissionCapability &capability, RuntimeRunRecorderAppendAck &ack,
-        std::string &detail) {
+    [[nodiscard]] virtual bool
+    append_record_authorized(std::string_view journal_id, std::uint64_t generation,
+                             std::string_view writer_id, std::uint64_t sequence,
+                             std::string_view payload,
+                             const RuntimeRunAdmissionCapability &capability,
+                             RuntimeRunRecorderAppendAck &ack, std::string &detail) {
         (void)capability;
         return append_record(journal_id, generation, writer_id, sequence, payload, ack, detail);
     }
-    [[nodiscard]] virtual bool finalize_receipt(std::string_view journal_id,
-                                                std::uint64_t generation,
-                                                std::string_view writer_id,
-                                                std::string_view receipt_json,
-                                                RuntimeRunRecorderFinalizeAck &ack,
-                                                std::string &detail) = 0;
-    [[nodiscard]] virtual bool finalize_receipt_authorized(
-        std::string_view journal_id, std::uint64_t generation, std::string_view writer_id,
-        std::string_view receipt_json, const RuntimeRunAdmissionCapability &capability,
-        RuntimeRunRecorderFinalizeAck &ack, std::string &detail) {
+    [[nodiscard]] virtual bool
+    finalize_receipt(std::string_view journal_id, std::uint64_t generation,
+                     std::string_view writer_id, std::string_view receipt_json,
+                     RuntimeRunRecorderFinalizeAck &ack, std::string &detail) = 0;
+    [[nodiscard]] virtual bool
+    finalize_receipt_authorized(std::string_view journal_id, std::uint64_t generation,
+                                std::string_view writer_id, std::string_view receipt_json,
+                                const RuntimeRunAdmissionCapability &capability,
+                                RuntimeRunRecorderFinalizeAck &ack, std::string &detail) {
         (void)capability;
         return finalize_receipt(journal_id, generation, writer_id, receipt_json, ack, detail);
     }
     [[nodiscard]] virtual bool
     commit_checkpoint(std::string_view journal_id, std::uint64_t generation,
-                      std::string_view writer_id,
-                      std::string_view checkpoint_json, std::string_view validation_json,
-                      RuntimeRunRecorderCheckpointAck &ack, std::string &detail) = 0;
-    [[nodiscard]] virtual bool commit_checkpoint_authorized(
-        std::string_view journal_id, std::uint64_t generation, std::string_view writer_id,
-        std::string_view checkpoint_json, std::string_view validation_json,
-        const RuntimeRunAdmissionCapability &capability, RuntimeRunRecorderCheckpointAck &ack,
-        std::string &detail) {
+                      std::string_view writer_id, std::string_view checkpoint_json,
+                      std::string_view validation_json, RuntimeRunRecorderCheckpointAck &ack,
+                      std::string &detail) = 0;
+    [[nodiscard]] virtual bool
+    commit_checkpoint_authorized(std::string_view journal_id, std::uint64_t generation,
+                                 std::string_view writer_id, std::string_view checkpoint_json,
+                                 std::string_view validation_json,
+                                 const RuntimeRunAdmissionCapability &capability,
+                                 RuntimeRunRecorderCheckpointAck &ack, std::string &detail) {
         (void)capability;
         return commit_checkpoint(journal_id, generation, writer_id, checkpoint_json,
                                  validation_json, ack, detail);
     }
-    [[nodiscard]] virtual bool rehydrate_state_authorized(
-        std::string_view journal_id, const RuntimeRunAdmissionCapability &capability,
-        RuntimeRunRecorderRecoveryState &state, std::string &detail) {
+    [[nodiscard]] virtual bool
+    rehydrate_state_authorized(std::string_view journal_id,
+                               const RuntimeRunAdmissionCapability &capability,
+                               RuntimeRunRecorderRecoveryState &state, std::string &detail) {
         (void)journal_id;
         (void)capability;
         (void)detail;
@@ -241,9 +244,8 @@ class RuntimeRunRecorderStore {
     // Backends that do not expose artifact storage remain useful for recorder
     // unit tests, but cannot author a production completion on their own.
     [[nodiscard]] virtual bool put_artifact(std::string_view bytes, std::string_view media_type,
-                                            std::string_view retention_class,
-                                            std::string &digest, std::string &retrieval_location,
-                                            std::string &detail) {
+                                            std::string_view retention_class, std::string &digest,
+                                            std::string &retrieval_location, std::string &detail) {
         (void)bytes;
         (void)media_type;
         (void)retention_class;
@@ -263,24 +265,23 @@ class RuntimeRunRecorder final {
     // report a monotonic phase boundary; timestamps and durable sequence
     // claims are generated by the recorder at finalization.
     [[nodiscard]] RuntimeRunRecorderStatus note_lifecycle(std::string_view event);
-    [[nodiscard]] RuntimeRunRecorderStatus bind_runtime_identity(
-        std::string_view host_boot_id, std::string_view incarnation_epoch,
-        std::string_view world_id, std::string_view world_epoch,
-        std::string_view episode_id, std::string_view episode_epoch,
-        std::string_view request_id);
+    [[nodiscard]] RuntimeRunRecorderStatus
+    bind_runtime_identity(std::string_view host_boot_id, std::string_view incarnation_epoch,
+                          std::string_view world_id, std::string_view world_epoch,
+                          std::string_view episode_id, std::string_view episode_epoch,
+                          std::string_view request_id);
     [[nodiscard]] RuntimeRunRecorderStatus observe_entity(std::string_view entity_id,
                                                           std::string_view entity_epoch);
     [[nodiscard]] RuntimeRunRecorderStatus append(std::uint64_t sequence, std::string_view payload);
     [[nodiscard]] RuntimeRunRecorderStatus persist_checkpoint(std::string_view checkpoint_json,
                                                               std::string_view validation_json);
-    [[nodiscard]] RuntimeRunRecorderStatus put_artifact(std::string_view name,
-                                                        std::string_view bytes,
-                                                        std::string_view media_type,
-                                                        std::string_view retention_class,
-                                                        std::string &digest,
-                                                        std::string &retrieval_location);
-    [[nodiscard]] RuntimeRunRecorderStatus record_native_result(
-        std::string_view result_digest, std::string_view validation_evidence_sha256);
+    [[nodiscard]] RuntimeRunRecorderStatus
+    put_artifact(std::string_view name, std::string_view bytes, std::string_view media_type,
+                 std::string_view retention_class, std::string &digest,
+                 std::string &retrieval_location);
+    [[nodiscard]] RuntimeRunRecorderStatus
+    record_native_result(std::string_view result_digest,
+                         std::string_view validation_evidence_sha256);
     [[nodiscard]] RuntimeRunRecorderStatus finalize(std::string_view receipt_json);
     [[nodiscard]] RuntimeRunRecorderStatus finalize_observed(std::string_view receipt_template_json,
                                                              std::string_view terminal_state,
@@ -298,8 +299,8 @@ class RuntimeRunRecorder final {
     [[nodiscard]] std::string admission_bindings_json() const;
 
   private:
-    [[nodiscard]] static RuntimeRunAdmissionCapability make_admission_capability(
-        std::string_view run_id, std::string_view writer_id);
+    [[nodiscard]] static RuntimeRunAdmissionCapability
+    make_admission_capability(std::string_view run_id, std::string_view writer_id);
     [[nodiscard]] RuntimeRunRecorderStatus reject(std::string code, std::string detail);
     [[nodiscard]] RuntimeRunRecorderStatus reject_after_admission(std::string code,
                                                                   std::string detail);

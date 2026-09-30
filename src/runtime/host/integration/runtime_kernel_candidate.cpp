@@ -220,22 +220,22 @@ RuntimeKernelCandidate::RuntimeKernelCandidate(RuntimeKernelCandidateConfig conf
             config_.run_execution_sources.request_path.empty() ||
             config_.run_execution_sources.package_path.empty() ||
             config_.run_execution_sources.wheel_path.empty()) {
-            throw std::invalid_argument(
-                "P5-B recorder configuration requires owner-controlled execution provenance sources");
+            throw std::invalid_argument("P5-B recorder configuration requires owner-controlled "
+                                        "execution provenance sources");
         }
         std::string header_detail;
         if (!validate_runtime_run_header_json(config_.run_id, config_.run_header_json,
                                               header_detail)) {
             throw std::invalid_argument("P5-B recorder configuration requires a complete run "
-                                        "admission binding: " + header_detail);
+                                        "admission binding: " +
+                                        header_detail);
         }
         const auto header = nlohmann::json::parse(config_.run_header_json);
         std::string observed_bindings_json;
         std::string verified_request_json;
         if (!collect_runtime_execution_bindings_json(
-                config_.run_execution_sources,
-                header.at("receipt_bindings").dump(), observed_bindings_json, header_detail,
-                &verified_request_json) ||
+                config_.run_execution_sources, header.at("receipt_bindings").dump(),
+                observed_bindings_json, header_detail, &verified_request_json) ||
             observed_bindings_json != header.at("receipt_bindings").dump()) {
             throw std::invalid_argument("P5-B execution provenance differs from admitted header: " +
                                         header_detail);
@@ -259,8 +259,7 @@ RuntimeKernelCandidate::RuntimeKernelCandidate(RuntimeKernelCandidateConfig conf
         if (config_.plan.plan_id.empty() && config_.plan.plan_sha256.empty()) {
             config_.plan = header_plan;
         } else if (config_.plan != header_plan) {
-            throw std::invalid_argument(
-                "P5-B recorder plan differs from the admitted run binding");
+            throw std::invalid_argument("P5-B recorder plan differs from the admitted run binding");
         }
         if (!config_.resolved_manifest_json.empty() &&
             config_.resolved_manifest_json != execution_plan_json) {
@@ -270,10 +269,9 @@ RuntimeKernelCandidate::RuntimeKernelCandidate(RuntimeKernelCandidateConfig conf
         config_.resolved_manifest_json = std::move(execution_plan_json);
         admitted_execution_plan_sha256_ = admitted_plan.at("plan_sha256").get<std::string>();
         const auto admitted_plan_document = nlohmann::json::parse(config_.resolved_manifest_json);
-        admitted_resolved_manifest_sha256_ =
-            admitted_plan_document.at("input_bindings")
-                .at("resolved_manifest_sha256")
-                .get<std::string>();
+        admitted_resolved_manifest_sha256_ = admitted_plan_document.at("input_bindings")
+                                                 .at("resolved_manifest_sha256")
+                                                 .get<std::string>();
         run_recorder_ = std::make_unique<RuntimeRunRecorder>(*config_.run_recorder_store,
                                                              config_.run_id, config_.run_writer_id);
         const auto admission = run_recorder_->admit(config_.run_header_json);
@@ -287,25 +285,24 @@ RuntimeKernelCandidate::RuntimeKernelCandidate(RuntimeKernelCandidateConfig conf
                       ? std::make_shared<SimulationKernel>()
                       : std::make_shared<SimulationKernel>(config_.resolved_manifest_json);
         if (admitted_seed_.has_value() && admitted_time_step_ns_.has_value()) {
-            const auto configuration =
-                nlohmann::json{{"event", "runtime_configuration"},
-                               {"phase", "intent"},
-                               {"seed", *admitted_seed_},
-                               {"time_step_ns", *admitted_time_step_ns_}}
-                    .dump();
+            const auto configuration = nlohmann::json{
+                {"event", "runtime_configuration"},
+                {"phase", "intent"},
+                {"seed", *admitted_seed_},
+                {"time_step_ns",
+                 *admitted_time_step_ns_}}.dump();
             if (!run_recorder_->append(run_recorder_->next_sequence(), configuration)) {
                 throw std::runtime_error(
                     "P5-B runtime configuration intent could not be made durable");
             }
             kernel_->reset(*admitted_seed_);
             kernel_->set_time_step(static_cast<double>(*admitted_time_step_ns_) / 1'000'000'000.0);
-            const auto applied =
-                nlohmann::json{{"event", "runtime_configuration"},
-                               {"phase", "outcome"},
-                               {"seed", *admitted_seed_},
-                               {"time_step_ns", *admitted_time_step_ns_},
-                               {"applied", true}}
-                    .dump();
+            const auto applied = nlohmann::json{
+                {"event", "runtime_configuration"},
+                {"phase", "outcome"},
+                {"seed", *admitted_seed_},
+                {"time_step_ns", *admitted_time_step_ns_},
+                {"applied", true}}.dump();
             if (!run_recorder_->append(run_recorder_->next_sequence(), applied)) {
                 throw std::runtime_error(
                     "P5-B runtime configuration outcome could not be made durable");
@@ -361,8 +358,7 @@ RuntimeKernelCandidate::RuntimeKernelCandidate(RuntimeKernelCandidateConfig conf
                 const auto arguments =
                     nlohmann::json{{"error", error.what()}, {"phase", "candidate_construction"}};
                 (void)record_mutation("construction_failed", arguments.dump());
-                (void)finalize_observed(config_.run_receipt_template_json, "failed",
-                                        error.what());
+                (void)finalize_observed(config_.run_receipt_template_json, "failed", error.what());
             } catch (...) {
             }
         }
@@ -462,8 +458,7 @@ RuntimeHostStatus RuntimeKernelCandidate::initialize_candidate() {
         const auto lifecycle = run_recorder_->note_lifecycle("validation");
         if (!lifecycle) {
             return {.error = RuntimeHostError::InvalidArgument,
-                    .detail = "P5-B validation lifecycle evidence failed: " +
-                              lifecycle.detail};
+                    .detail = "P5-B validation lifecycle evidence failed: " + lifecycle.detail};
         }
     }
     const auto published =
@@ -496,8 +491,7 @@ RuntimeHostStatus RuntimeKernelCandidate::initialize_candidate() {
         const auto publication = run_recorder_->note_lifecycle("publication");
         if (!publication) {
             return {.error = RuntimeHostError::InvalidArgument,
-                    .detail = "P5-B publication lifecycle evidence failed: " +
-                              publication.detail};
+                    .detail = "P5-B publication lifecycle evidence failed: " + publication.detail};
         }
         const auto episode = run_recorder_->note_lifecycle("episode");
         if (!episode) {
@@ -536,8 +530,8 @@ RuntimeHostStatus RuntimeKernelCandidate::start() {
             return {.error = RuntimeHostError::InvalidArgument,
                     .detail = initialized.detail + "; durable rejection evidence append failed"};
         }
-        const auto finalized = finalize_observed(config_.run_receipt_template_json, "rejected",
-                                                 initialized.detail);
+        const auto finalized =
+            finalize_observed(config_.run_receipt_template_json, "rejected", initialized.detail);
         if (!finalized) {
             return {.error = RuntimeHostError::InvalidArgument,
                     .detail =
@@ -588,24 +582,24 @@ void RuntimeKernelCandidate::terminalize_evidence_failure(std::string_view reaso
     }
 }
 
-RuntimeRunRecorderStatus RuntimeKernelCandidate::finalize_observed(
-    std::string_view receipt_template_json, std::string_view terminal_state,
-    std::string_view terminal_reason) {
+RuntimeRunRecorderStatus
+RuntimeKernelCandidate::finalize_observed(std::string_view receipt_template_json,
+                                          std::string_view terminal_state,
+                                          std::string_view terminal_reason) {
     if (run_recorder_ == nullptr)
         return {false, "recorder.absent", "candidate has no configured P5-B recorder"};
     const auto admitted_bindings = run_recorder_->admission_bindings_json();
     if (!admitted_bindings.empty()) {
         std::string observed_bindings;
         std::string detail;
-        if (!collect_runtime_execution_bindings_json(config_.run_execution_sources,
-                                                     admitted_bindings, observed_bindings, detail) ||
+        if (!collect_runtime_execution_bindings_json(
+                config_.run_execution_sources, admitted_bindings, observed_bindings, detail) ||
             observed_bindings != admitted_bindings) {
             terminal_state = "failed";
             terminal_reason = "execution provenance changed after admission";
         }
     }
-    return run_recorder_->finalize_observed(receipt_template_json, terminal_state,
-                                            terminal_reason);
+    return run_recorder_->finalize_observed(receipt_template_json, terminal_state, terminal_reason);
 }
 
 void RuntimeKernelCandidate::arm_terminal_receipt_for_test() noexcept {
@@ -636,21 +630,20 @@ RuntimeShutdownResult RuntimeKernelCandidate::shutdown(std::uint64_t now_tick,
     // Evidence loss fail-stops further truth mutation, but it must never hold
     // resources alive.  A rejected recorder is reconciled later as
     // crashed/incomplete; shutdown still follows the host's terminal path.
-    bool evidence_failed = run_recorder_ != nullptr &&
-                           run_recorder_->state() == RuntimeRunRecorderState::Rejected;
+    bool evidence_failed =
+        run_recorder_ != nullptr && run_recorder_->state() == RuntimeRunRecorderState::Rejected;
     if (run_recorder_ != nullptr && run_recorder_->admitted() &&
         !run_recorder_->note_lifecycle("drain"))
         evidence_failed = true;
-    if (run_recorder_ != nullptr && run_recorder_->admitted() &&
-        !record_mutation("shutdown"))
+    if (run_recorder_ != nullptr && run_recorder_->admitted() && !record_mutation("shutdown"))
         evidence_failed = true;
     const auto result = host_.begin_shutdown(now_tick, deadline_tick);
     if (result.status && kernel_ != nullptr) {
         terminal_state_bytes_ = observed_state_bytes();
-        terminal_state_sha256_ = terminal_state_bytes_.has_value()
-                                     ? std::optional<std::string>(runtime_state_payload_sha256(
-                                           *terminal_state_bytes_))
-                                     : std::nullopt;
+        terminal_state_sha256_ =
+            terminal_state_bytes_.has_value()
+                ? std::optional<std::string>(runtime_state_payload_sha256(*terminal_state_bytes_))
+                : std::nullopt;
         kernel_->shutdown();
         stopped_ = true;
         if (run_recorder_ != nullptr && run_recorder_->admitted() &&
@@ -710,9 +703,8 @@ RuntimeRunRecorderStatus RuntimeKernelCandidate::finalize_run(std::string_view r
     std::string artifact_digest;
     std::string retrieval_location;
     const auto artifact_status = run_recorder_->put_artifact(
-        "runtime-state", state_payload,
-        "application/vnd.echelon-forge.runtime-state.v1+octets", "run-retained",
-        artifact_digest, retrieval_location);
+        "runtime-state", state_payload, "application/vnd.echelon-forge.runtime-state.v1+octets",
+        "run-retained", artifact_digest, retrieval_location);
     if (!artifact_status) return artifact_status;
     const auto result_status = run_recorder_->record_native_result(*state_sha256, *state_sha256);
     if (!result_status) return result_status;
@@ -751,9 +743,9 @@ RuntimeKernelCandidate::persist_checkpoint(std::string_view checkpoint_json,
         if (!episode.well_formed())
             return {false, "recorder.checkpoint", "candidate lacks an active episode scope"};
         payload["world_fragments"] = nlohmann::json::array({nlohmann::json{
-            {"episode_ids", nlohmann::json::array({
-                                  "episode-" + std::to_string(episode.episode_id.high) + "-" +
-                                  std::to_string(episode.episode_id.low)})},
+            {"episode_ids",
+             nlohmann::json::array({"episode-" + std::to_string(episode.episode_id.high) + "-" +
+                                    std::to_string(episode.episode_id.low)})},
             {"fragment_sequence", "0"},
             {"state_sha256", state_sha256},
             {"world_id", "world-" + std::to_string(episode.world.world_slot)}}});
@@ -762,12 +754,9 @@ RuntimeKernelCandidate::persist_checkpoint(std::string_view checkpoint_json,
             return {false, "recorder.checkpoint", "checkpoint lacks an admitted execution binding"};
         const auto admitted_bindings = nlohmann::json::parse(admitted_bindings_json);
         payload["release_id"] = admitted_bindings.at("release_binding").at("release_id");
-        payload["decision_id"] =
-            admitted_bindings.at("release_binding").at("rollout_decision_id");
-        payload["target_reader_generation_min"] =
-            admitted_bindings.at("reader_generation_min");
-        payload["target_reader_generation_max"] =
-            admitted_bindings.at("reader_generation_max");
+        payload["decision_id"] = admitted_bindings.at("release_binding").at("rollout_decision_id");
+        payload["target_reader_generation_min"] = admitted_bindings.at("reader_generation_min");
+        payload["target_reader_generation_max"] = admitted_bindings.at("reader_generation_max");
         const auto canonical_payload =
             runtime::authority_contracts::canonical_authority_json(payload.dump());
         if (!canonical_payload.has_value())
@@ -900,8 +889,8 @@ RuntimeKernelCandidate::spawn_unit(const RuntimeWorldRef &world, const WorldSpaw
             request.side, request.type_name, request.x, request.y, request.z, request.heading,
             request.pitch, request.roll, request.vx, request.vy, request.vz);
         if (!entity.is_valid()) {
-            const bool outcome_recorded =
-                record_outcome("spawn_unit", false, R"({"reason":"kernel returned invalid entity"})");
+            const bool outcome_recorded = record_outcome(
+                "spawn_unit", false, R"({"reason":"kernel returned invalid entity"})");
             if (!outcome_recorded)
                 terminalize_evidence_failure("durable spawn failure outcome append failed");
             lease_admission.lease.settle();
@@ -914,11 +903,11 @@ RuntimeKernelCandidate::spawn_unit(const RuntimeWorldRef &world, const WorldSpaw
         if (!outcome_recorded)
             terminalize_evidence_failure("durable spawn outcome append failed after mutation");
         if (outcome_recorded && result.has_value()) {
-            const auto observed = run_recorder_ == nullptr
-                                      ? RuntimeRunRecorderStatus{true, {}, {}}
-                                      : run_recorder_->observe_entity(
-                                            "entity-" + std::to_string(entity.id()),
-                                            std::to_string(result->entity_generation));
+            const auto observed =
+                run_recorder_ == nullptr
+                    ? RuntimeRunRecorderStatus{true, {}, {}}
+                    : run_recorder_->observe_entity("entity-" + std::to_string(entity.id()),
+                                                    std::to_string(result->entity_generation));
             if (!observed) {
                 terminalize_evidence_failure("durable entity observation append failed");
                 lease_admission.lease.settle();
@@ -1149,8 +1138,7 @@ bool RuntimeKernelCandidate::try_set_entity_kinematics(const RuntimeEntityRef &e
             {"state_sha256", runtime::authority_contracts::sha256_hex(kinematics_arguments.dump())}}
             .dump());
     if (!outcome_recorded)
-        terminalize_evidence_failure(
-            "durable kinematics outcome append failed after mutation");
+        terminalize_evidence_failure("durable kinematics outcome append failed after mutation");
     lease_admission.lease.settle();
     (void)host_.release_shadow_episode(episode_admission.capability);
     return outcome_recorded;
