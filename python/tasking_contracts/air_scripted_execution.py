@@ -8,7 +8,7 @@ depend on RL.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -26,6 +26,9 @@ from .scripted_takeoff import ScriptedTakeoffController
 
 
 AIR_SCRIPTED_EXECUTION_MODEL_ID = "air.execution.phase_scripted"
+
+if TYPE_CHECKING:
+    from .air_scripted_registry import AIR_SCRIPTED_MODEL_REGISTRY
 
 
 class AirScriptedExecutionModel:
