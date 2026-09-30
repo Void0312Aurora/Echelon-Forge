@@ -90,10 +90,12 @@ python tools/maintenance/dto_schema/parse_xmacro.py path/to/fields.inc `
 
 ## Coverage and hand-written exceptions
 
-All 102 registered schemas map 1:1 onto a C++ `.inc` fragment; exactly one
+All 110 registered schemas map 1:1 onto a C++ `.inc` fragment; exactly one
 of them (`safety_runtime_inputs`) also renders a Python builder, consumed by
 `gym_envs/scenario_loader/reward_runtime/safety.py`. `--manifest` prints the
-full mapping. Notable history:
+full mapping. The eight `runtime_contracts` schemas generate the P3-A public
+field lists under `include/echelon_forge/runtime_contracts/detail/`; the other
+registered fragments remain under `src/`. Notable history:
 
 - The scenario-generation lineage pair
   (`scenario_generation_evidence_ref`, `scenario_generation_request_metadata`)

@@ -431,6 +431,38 @@ EXPECTED_REGISTRATIONS = {
     "src/runtime/contracts/detail/engagement/recent_engagement_events.inc",
     14,
   ),
+  "tools/maintenance/dto_schema/schemas/runtime_contracts/runtime_identity_128_fields.py": (
+    "include/echelon_forge/runtime_contracts/detail/runtime_identity_128_fields.inc",
+    2,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_contracts/runtime_host_identity_fields.py": (
+    "include/echelon_forge/runtime_contracts/detail/runtime_host_identity_fields.inc",
+    2,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_contracts/runtime_incarnation_ref_fields.py": (
+    "include/echelon_forge/runtime_contracts/detail/runtime_incarnation_ref_fields.inc",
+    2,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_contracts/runtime_world_ref_fields.py": (
+    "include/echelon_forge/runtime_contracts/detail/runtime_world_ref_fields.inc",
+    3,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_contracts/runtime_entity_ref_fields.py": (
+    "include/echelon_forge/runtime_contracts/detail/runtime_entity_ref_fields.inc",
+    3,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_contracts/runtime_episode_ref_fields.py": (
+    "include/echelon_forge/runtime_contracts/detail/runtime_episode_ref_fields.inc",
+    3,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_contracts/runtime_request_ref_fields.py": (
+    "include/echelon_forge/runtime_contracts/detail/runtime_request_ref_fields.inc",
+    2,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_contracts/runtime_result_ref_fields.py": (
+    "include/echelon_forge/runtime_contracts/detail/runtime_result_ref_fields.inc",
+    1,
+  ),
 }
 
 EXPECTED_PYTHON_BUILDERS = {

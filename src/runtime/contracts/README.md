@@ -1,6 +1,20 @@
-# `src/runtime/contracts` Boundary
+# Runtime Contracts Boundaries
 
-`runtime/contracts` stores the stable DTOs shared between `runtime/facade` and lower-level runtime owners. Types here may be referenced by the facade, engine, Python bindings, and tests, but they must not own world state, ECS registries, or system scheduling logic.
+`src/runtime/contracts` stores repository-internal maintained DTOs plus
+explicitly identified compatibility DTOs shared between `runtime/facade` and
+lower-level runtime owners. Types here may be referenced by the facade, engine,
+Python bindings, and tests, but they must not own world state, ECS registries,
+or system scheduling logic. P3-A makes the bare `WorldEntityRef` identity
+predecessor transitional; it does not downgrade the lifecycle of unrelated
+command, tasking, composition, policy, or evidence contracts in this directory.
+
+The P3-A public identity family instead lives under
+`include/echelon_forge/runtime_contracts/` and is owned by the independent
+`ef_runtime_contracts` target. Those `v1` value contracts separate stable host
+identity from published incarnation and carry every enclosing generation. They
+remain same-build/in-process types: their native bytes are not a wire/storage
+format, and P3-B must supply the singular canonical JSON projection. No current
+facade, engine, binding, or maintained caller has cut over to this target.
 
 The contract surface is multi-domain/common-first. `world_batch_contracts.h`
 currently carries typed platform setup, terrain/wind/zones, maintained
@@ -41,13 +55,20 @@ canonical fixtures live in
 
 ## Generated detail layout
 
-Generated X-macro lists under `detail/` are grouped by contract domain:
+Generated X-macro lists under `src/runtime/contracts/detail/` are grouped by contract domain:
 `damage`, `engagement`, `kill_chain`, `learning`, `platform`, `scenario`, and
-`tasking`. Keep new generated lists in the matching contract directory and
-update the corresponding declarative source in
+`tasking`. The public identity field lists under
+`include/echelon_forge/runtime_contracts/detail/` are generated from the
+`runtime_contracts` schema package. Keep new generated lists in the matching
+contract directory and update the corresponding declarative source in
 `tools/maintenance/dto_schema/schemas/<domain>/`; the schema and output domains
 need not have the same name. Do not add flat `.inc` files directly to `detail/`.
 
 ## Migration Notes
 
-This directory is the likely starting point for a future `ef_contracts` target. New facade-facing types should be placed here first and then consumed by the facade or engine implementation. When adding domain-specific fields, prefer `common` plus explicit domain slices over widening shared contracts with air-, naval-, or ground-only semantics.
+New engine-independent host/world/entity/episode/request/result identity types
+belong in the versioned public target and its existing schema family. Existing
+maintained contracts keep their current lifecycle unless a later reviewed
+P3/P5 decision explicitly names their successor and adapter/retirement gates.
+When adding domain-specific fields, prefer `common` plus explicit domain slices
+over widening shared contracts with air-, naval-, or ground-only semantics.
