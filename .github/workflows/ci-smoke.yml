@@ -16,6 +16,29 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
+            CMakeLists.txt
+            cmake
+            examples
+            game
+            gym_envs
+            include
+            packages
+            pyproject.toml
+            python
+            requirements
+            scenarios
+            scripts
+            src
+            tests
+            tools
+            train.py
+            evaluate.py
+            world_model_train.py
+            _world_model_train_impl
+          sparse-checkout-cone-mode: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -29,6 +52,7 @@ jobs:
         run: >-
           cmake -S . -B build-p5b-windows -A x64
           -DBUILD_TESTING=ON
+          "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
           -DEF_FETCHCONTENT_REVALIDATE_PINS=OFF
 
       - name: Build P5-B native qualification targets
