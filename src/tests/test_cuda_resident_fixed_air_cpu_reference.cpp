@@ -9,7 +9,7 @@
 
 #include "runtime/contracts/cuda_resident_fixed_air_fixture_contract.h"
 
-TEST_CASE("RB4 CPU reference preserves fixed-air kinematics and reset parity") {
+TEST_CASE("CUDA-resident CPU reference preserves fixed-air kinematics and reset parity") {
     using namespace runtime::cuda_resident;
 
     FlecsCpuBackend backend(2);
