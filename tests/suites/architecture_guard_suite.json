@@ -20,6 +20,7 @@
     "tests/architecture/composition/test_runtime_authority_schema_surface.py",
     "tests/architecture/composition/test_runtime_host_batch_parity_contract.py",
     "tests/architecture/composition/test_runtime_host_candidate_contract.py",
+    "tests/architecture/runtime_host/test_runtime_kernel_candidate_contract.py",
     "tests/architecture/composition/test_runtime_profile_projection_contract.py",
     "tests/architecture/composition/test_runtime_state_transfer_candidate_contract.py",
     "tests/architecture/composition/test_simulation_composition_contract.py",
