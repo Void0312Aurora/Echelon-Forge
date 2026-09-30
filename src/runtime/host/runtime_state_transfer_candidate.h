@@ -242,9 +242,8 @@ class RuntimeEpisodeBarrierCapability {
     friend class RuntimeStateTransferValidator;
     explicit RuntimeEpisodeBarrierCapability(
         std::shared_ptr<RuntimeEpisodeBarrierToken> token) noexcept;
-    [[nodiscard]] RuntimeStateTransferStatus bind_for_host(
-        const RuntimeIdentity128 &host_instance_nonce,
-        std::uint64_t world_slot) noexcept;
+    [[nodiscard]] RuntimeStateTransferStatus
+    bind_for_host(const RuntimeIdentity128 &host_instance_nonce, std::uint64_t world_slot) noexcept;
     std::shared_ptr<RuntimeEpisodeBarrierToken> token_;
 };
 
@@ -261,14 +260,15 @@ class RuntimeEpisodeCoordinatorCandidate {
     create(const RuntimeEpisodeCoordinatorConfig &config);
 
     RuntimeEpisodeCoordinatorCandidate(const RuntimeEpisodeCoordinatorCandidate &) = delete;
-    RuntimeEpisodeCoordinatorCandidate &operator=(const RuntimeEpisodeCoordinatorCandidate &) = delete;
+    RuntimeEpisodeCoordinatorCandidate &
+    operator=(const RuntimeEpisodeCoordinatorCandidate &) = delete;
     RuntimeEpisodeCoordinatorCandidate(RuntimeEpisodeCoordinatorCandidate &&) noexcept = default;
-    RuntimeEpisodeCoordinatorCandidate &operator=(RuntimeEpisodeCoordinatorCandidate &&) noexcept = default;
+    RuntimeEpisodeCoordinatorCandidate &
+    operator=(RuntimeEpisodeCoordinatorCandidate &&) noexcept = default;
     ~RuntimeEpisodeCoordinatorCandidate();
 
     [[nodiscard]] RuntimeEpisodeTransitionResult
-    submit(const RuntimeEpisodeTransitionIntent &intent,
-           RuntimeNativeEpisodeControl &control);
+    submit(const RuntimeEpisodeTransitionIntent &intent, RuntimeNativeEpisodeControl &control);
     [[nodiscard]] RuntimeStateTransferStatus
     acknowledge_receipt(const RuntimeEpisodeTransitionReceipt &receipt);
     [[nodiscard]] RuntimeEpisodeBarrierAdmission
@@ -448,22 +448,17 @@ class RuntimeHostQuiescenceCapability {
     friend class RuntimeStateTransferValidator;
     explicit RuntimeHostQuiescenceCapability(
         std::shared_ptr<RuntimeHostQuiescenceToken> token) noexcept;
-    [[nodiscard]] static RuntimeHostQuiescenceCapability mint_for_host(
-        const RuntimeIncarnationRef &source_slot,
-        std::string source_plan_sha256,
-        std::string target_plan_sha256,
-        RuntimeIdentity128 candidate_resource_identity,
-        std::shared_ptr<RuntimeStateTransferOwnerRegistry> source_owner_registry,
-        std::shared_ptr<RuntimeStateTransferOwnerRegistry> target_owner_registry,
-        const RuntimeIdentity128 &host_instance_nonce,
-        std::function<bool()> host_revalidate,
-        std::function<void()> host_rollback,
-        std::function<bool()> host_begin_transfer,
-        std::function<bool()> host_claim_transfer,
-        std::function<void()> host_end_transfer,
-        std::uint64_t lifecycle_ticket,
-        std::uint64_t candidate_sequence,
-        std::uint64_t mutation_fence_sequence);
+    [[nodiscard]] static RuntimeHostQuiescenceCapability
+    mint_for_host(const RuntimeIncarnationRef &source_slot, std::string source_plan_sha256,
+                  std::string target_plan_sha256, RuntimeIdentity128 candidate_resource_identity,
+                  std::shared_ptr<RuntimeStateTransferOwnerRegistry> source_owner_registry,
+                  std::shared_ptr<RuntimeStateTransferOwnerRegistry> target_owner_registry,
+                  const RuntimeIdentity128 &host_instance_nonce,
+                  std::function<bool()> host_revalidate, std::function<void()> host_rollback,
+                  std::function<bool()> host_begin_transfer,
+                  std::function<bool()> host_claim_transfer,
+                  std::function<void()> host_end_transfer, std::uint64_t lifecycle_ticket,
+                  std::uint64_t candidate_sequence, std::uint64_t mutation_fence_sequence);
     std::shared_ptr<RuntimeHostQuiescenceToken> token_;
 };
 
@@ -493,14 +488,12 @@ class RuntimeValidatedStateTransfer {
     explicit RuntimeValidatedStateTransfer(
         std::shared_ptr<RuntimeValidatedStateTransferState> state) noexcept;
 
-    [[nodiscard]] RuntimeStateTransferStatus
-    prepare_for_host(const RuntimeIncarnationRef &expected_source,
-                     std::string_view expected_source_plan_sha256,
-                     std::string_view expected_target_plan_sha256,
-                     const RuntimeIdentity128 &expected_candidate_resource_identity,
-                     std::uint64_t expected_lifecycle_ticket,
-                     std::uint64_t expected_candidate_sequence,
-                     std::uint64_t expected_mutation_fence_sequence);
+    [[nodiscard]] RuntimeStateTransferStatus prepare_for_host(
+        const RuntimeIncarnationRef &expected_source, std::string_view expected_source_plan_sha256,
+        std::string_view expected_target_plan_sha256,
+        const RuntimeIdentity128 &expected_candidate_resource_identity,
+        std::uint64_t expected_lifecycle_ticket, std::uint64_t expected_candidate_sequence,
+        std::uint64_t expected_mutation_fence_sequence);
     void commit_for_host() noexcept;
     void abort_for_host() noexcept;
 
@@ -526,18 +519,14 @@ class RuntimeStateTransferValidator {
     validate(RuntimeStateTransferValidationRequest &&request);
 };
 
-[[nodiscard]] std::string
-runtime_state_payload_sha256(const std::vector<std::uint8_t> &payload);
+[[nodiscard]] std::string runtime_state_payload_sha256(const std::vector<std::uint8_t> &payload);
 [[nodiscard]] std::vector<std::uint8_t>
 runtime_state_canonical_payload(const RuntimeStateCensusEntry &entry);
+[[nodiscard]] std::string runtime_state_census_entry_sha256(const RuntimeStateCensusEntry &entry);
 [[nodiscard]] std::string
-runtime_state_census_entry_sha256(const RuntimeStateCensusEntry &entry);
+canonical_episode_transition_intent_bytes(const RuntimeEpisodeTransitionIntent &intent);
 [[nodiscard]] std::string
-canonical_episode_transition_intent_bytes(
-    const RuntimeEpisodeTransitionIntent &intent);
-[[nodiscard]] std::string
-canonical_episode_transition_receipt_bytes(
-    const RuntimeEpisodeTransitionReceipt &receipt);
+canonical_episode_transition_receipt_bytes(const RuntimeEpisodeTransitionReceipt &receipt);
 [[nodiscard]] std::string_view runtime_state_category_name(RuntimeStateCategory category) noexcept;
 [[nodiscard]] std::string_view
 runtime_state_disposition_name(RuntimeStateDisposition disposition) noexcept;

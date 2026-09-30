@@ -165,8 +165,8 @@ struct RuntimeCandidateHandle {
     RuntimeHostTransactionKind transaction_kind = RuntimeHostTransactionKind::Initial;
 
     [[nodiscard]] bool well_formed() const noexcept {
-        return host.well_formed() && host_instance_nonce.well_formed() &&
-               lifecycle_ticket != 0 && candidate_sequence != 0;
+        return host.well_formed() && host_instance_nonce.well_formed() && lifecycle_ticket != 0 &&
+               candidate_sequence != 0;
     }
     bool operator==(const RuntimeCandidateHandle &) const = default;
 };
@@ -333,12 +333,10 @@ class RuntimeHostCandidate {
     [[nodiscard]] RuntimeHostStatus
     validate_candidate(const RuntimeCandidateHandle &handle,
                        const RuntimeCandidateValidationProof &proof);
-    [[nodiscard]] RuntimePublicationResult
-    commit_initial(const RuntimeCandidateHandle &handle,
-                   const RuntimeInitialCommitProof &proof);
-    [[nodiscard]] RuntimeHostStatus
-    prepare_replacement(const RuntimeCandidateHandle &handle,
-                        RuntimeTransferCommitProof &&proof);
+    [[nodiscard]] RuntimePublicationResult commit_initial(const RuntimeCandidateHandle &handle,
+                                                          const RuntimeInitialCommitProof &proof);
+    [[nodiscard]] RuntimeHostStatus prepare_replacement(const RuntimeCandidateHandle &handle,
+                                                        RuntimeTransferCommitProof &&proof);
     [[nodiscard]] RuntimeReplacementQuiescenceResult
     quiesce_replacement_source(const RuntimeCandidateHandle &handle);
     [[nodiscard]] RuntimeHostStatus
@@ -348,13 +346,11 @@ class RuntimeHostCandidate {
     commit_prepared_candidate(const RuntimeCandidateHandle &handle);
     [[nodiscard]] RuntimeHostStatus abort_candidate(const RuntimeCandidateHandle &handle);
 
-    [[nodiscard]] RuntimeHostStatus
-    mark_active_faulted(const RuntimeIncarnationRef &expected_slot,
-                        std::uint64_t fault_deadline_tick = 0);
+    [[nodiscard]] RuntimeHostStatus mark_active_faulted(const RuntimeIncarnationRef &expected_slot,
+                                                        std::uint64_t fault_deadline_tick = 0);
     [[nodiscard]] RuntimeShadowEpisodeAdmission
     admit_shadow_episode(RuntimeNativeEpisodeCapability &&native_episode);
-    [[nodiscard]] RuntimeShadowEpisodeAdmission
-    issue_shadow_episode(std::uint64_t world_slot);
+    [[nodiscard]] RuntimeShadowEpisodeAdmission issue_shadow_episode(std::uint64_t world_slot);
     [[nodiscard]] RuntimeHostStatus
     release_shadow_episode(const RuntimeShadowEpisodeCapability &capability);
     [[nodiscard]] RuntimeEpisodeTransitionResult
@@ -365,11 +361,10 @@ class RuntimeHostCandidate {
                                     std::uint64_t expected_step_sequence);
     [[nodiscard]] RuntimeEpisodeBarrierAdmission
     open_shadow_replacement_barrier(std::uint64_t world_slot);
-    [[nodiscard]] RuntimeLeaseAdmission acquire_lease(
-                                                      const RuntimeShadowEpisodeCapability &episode,
+    [[nodiscard]] RuntimeLeaseAdmission acquire_lease(const RuntimeShadowEpisodeCapability &episode,
                                                       RuntimeLeaseKind kind);
-    [[nodiscard]] RuntimeHostStatus
-    validate_result(const RuntimeInstanceLease &lease, const RuntimeResultRef &result) const;
+    [[nodiscard]] RuntimeHostStatus validate_result(const RuntimeInstanceLease &lease,
+                                                    const RuntimeResultRef &result) const;
 
     [[nodiscard]] RuntimeShutdownResult begin_shutdown(std::uint64_t now_tick,
                                                        std::uint64_t deadline_tick);

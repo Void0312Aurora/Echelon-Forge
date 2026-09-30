@@ -17,7 +17,9 @@ namespace {
 
 constexpr std::size_t kMaxTransitionReceipts = 4096;
 
-RuntimeStateTransferStatus success() { return {}; }
+RuntimeStateTransferStatus success() {
+    return {};
+}
 
 RuntimeStateTransferStatus failure(RuntimeStateTransferError error, std::string detail) {
     return {.error = error, .detail = std::move(detail)};
@@ -51,8 +53,7 @@ RuntimeIdentity128 mint_nonce() {
     } catch (...) {
         output = {};
     }
-    const std::uint64_t fallback =
-        fallback_sequence.fetch_add(1, std::memory_order_relaxed);
+    const std::uint64_t fallback = fallback_sequence.fetch_add(1, std::memory_order_relaxed);
     output.low ^= fallback == 0 ? 1 : fallback;
     if (!output.well_formed()) {
         output.low = fallback == 0 ? 1 : fallback;
@@ -61,19 +62,16 @@ RuntimeIdentity128 mint_nonce() {
 }
 
 constexpr std::array<std::uint32_t, 64> kSha256RoundConstants = {
-    0x428a2f98U, 0x71374491U, 0xb5c0fbcfU, 0xe9b5dba5U, 0x3956c25bU,
-    0x59f111f1U, 0x923f82a4U, 0xab1c5ed5U, 0xd807aa98U, 0x12835b01U,
-    0x243185beU, 0x550c7dc3U, 0x72be5d74U, 0x80deb1feU, 0x9bdc06a7U,
-    0xc19bf174U, 0xe49b69c1U, 0xefbe4786U, 0x0fc19dc6U, 0x240ca1ccU,
-    0x2de92c6fU, 0x4a7484aaU, 0x5cb0a9dcU, 0x76f988daU, 0x983e5152U,
-    0xa831c66dU, 0xb00327c8U, 0xbf597fc7U, 0xc6e00bf3U, 0xd5a79147U,
-    0x06ca6351U, 0x14292967U, 0x27b70a85U, 0x2e1b2138U, 0x4d2c6dfcU,
-    0x53380d13U, 0x650a7354U, 0x766a0abbU, 0x81c2c92eU, 0x92722c85U,
-    0xa2bfe8a1U, 0xa81a664bU, 0xc24b8b70U, 0xc76c51a3U, 0xd192e819U,
-    0xd6990624U, 0xf40e3585U, 0x106aa070U, 0x19a4c116U, 0x1e376c08U,
-    0x2748774cU, 0x34b0bcb5U, 0x391c0cb3U, 0x4ed8aa4aU, 0x5b9cca4fU,
-    0x682e6ff3U, 0x748f82eeU, 0x78a5636fU, 0x84c87814U, 0x8cc70208U,
-    0x90befffaU, 0xa4506cebU, 0xbef9a3f7U, 0xc67178f2U,
+    0x428a2f98U, 0x71374491U, 0xb5c0fbcfU, 0xe9b5dba5U, 0x3956c25bU, 0x59f111f1U, 0x923f82a4U,
+    0xab1c5ed5U, 0xd807aa98U, 0x12835b01U, 0x243185beU, 0x550c7dc3U, 0x72be5d74U, 0x80deb1feU,
+    0x9bdc06a7U, 0xc19bf174U, 0xe49b69c1U, 0xefbe4786U, 0x0fc19dc6U, 0x240ca1ccU, 0x2de92c6fU,
+    0x4a7484aaU, 0x5cb0a9dcU, 0x76f988daU, 0x983e5152U, 0xa831c66dU, 0xb00327c8U, 0xbf597fc7U,
+    0xc6e00bf3U, 0xd5a79147U, 0x06ca6351U, 0x14292967U, 0x27b70a85U, 0x2e1b2138U, 0x4d2c6dfcU,
+    0x53380d13U, 0x650a7354U, 0x766a0abbU, 0x81c2c92eU, 0x92722c85U, 0xa2bfe8a1U, 0xa81a664bU,
+    0xc24b8b70U, 0xc76c51a3U, 0xd192e819U, 0xd6990624U, 0xf40e3585U, 0x106aa070U, 0x19a4c116U,
+    0x1e376c08U, 0x2748774cU, 0x34b0bcb5U, 0x391c0cb3U, 0x4ed8aa4aU, 0x5b9cca4fU, 0x682e6ff3U,
+    0x748f82eeU, 0x78a5636fU, 0x84c87814U, 0x8cc70208U, 0x90befffaU, 0xa4506cebU, 0xbef9a3f7U,
+    0xc67178f2U,
 };
 
 std::string sha256_hex(std::string_view input) {
@@ -102,11 +100,9 @@ std::string sha256_hex(std::string_view input) {
         }
         for (std::size_t index = 16; index < words.size(); ++index) {
             const std::uint32_t s0 = std::rotr(words[index - 15], 7) ^
-                                     std::rotr(words[index - 15], 18) ^
-                                     (words[index - 15] >> 3U);
+                                     std::rotr(words[index - 15], 18) ^ (words[index - 15] >> 3U);
             const std::uint32_t s1 = std::rotr(words[index - 2], 17) ^
-                                     std::rotr(words[index - 2], 19) ^
-                                     (words[index - 2] >> 10U);
+                                     std::rotr(words[index - 2], 19) ^ (words[index - 2] >> 10U);
             words[index] = words[index - 16] + s0 + words[index - 7] + s1;
         }
 
@@ -119,13 +115,11 @@ std::string sha256_hex(std::string_view input) {
         std::uint32_t g = hash[6];
         std::uint32_t h = hash[7];
         for (std::size_t index = 0; index < words.size(); ++index) {
-            const std::uint32_t sum1 = std::rotr(e, 6) ^ std::rotr(e, 11) ^
-                                       std::rotr(e, 25);
+            const std::uint32_t sum1 = std::rotr(e, 6) ^ std::rotr(e, 11) ^ std::rotr(e, 25);
             const std::uint32_t choose = (e & f) ^ ((~e) & g);
             const std::uint32_t temporary1 =
                 h + sum1 + choose + kSha256RoundConstants[index] + words[index];
-            const std::uint32_t sum0 = std::rotr(a, 2) ^ std::rotr(a, 13) ^
-                                       std::rotr(a, 22);
+            const std::uint32_t sum0 = std::rotr(a, 2) ^ std::rotr(a, 13) ^ std::rotr(a, 22);
             const std::uint32_t majority = (a & b) ^ (a & c) ^ (b & c);
             const std::uint32_t temporary2 = sum0 + majority;
             h = g;
@@ -189,8 +183,7 @@ void append_episode(std::string &output, std::string_view prefix,
     append_number(output, std::string(prefix) + "_world_generation",
                   episode.world.world_generation);
     append_identity(output, std::string(prefix) + "_episode_id", episode.episode_id);
-    append_number(output, std::string(prefix) + "_episode_generation",
-                  episode.episode_generation);
+    append_number(output, std::string(prefix) + "_episode_generation", episode.episode_generation);
 }
 
 std::string intent_fingerprint(const RuntimeEpisodeTransitionIntent &intent) {
@@ -210,8 +203,7 @@ CoordinatorRegistry &coordinator_registry() {
 bool reserve_world(const RuntimeWorldRef &world) {
     CoordinatorRegistry &registry = coordinator_registry();
     std::lock_guard<std::mutex> lock(registry.mutex);
-    if (std::find(registry.worlds.begin(), registry.worlds.end(), world) !=
-        registry.worlds.end()) {
+    if (std::find(registry.worlds.begin(), registry.worlds.end(), world) != registry.worlds.end()) {
         return false;
     }
     registry.worlds.push_back(world);
@@ -222,8 +214,7 @@ void release_world(const RuntimeWorldRef &world) noexcept {
     try {
         CoordinatorRegistry &registry = coordinator_registry();
         std::lock_guard<std::mutex> lock(registry.mutex);
-        const auto position =
-            std::find(registry.worlds.begin(), registry.worlds.end(), world);
+        const auto position = std::find(registry.worlds.begin(), registry.worlds.end(), world);
         if (position != registry.worlds.end()) {
             registry.worlds.erase(position);
         }
@@ -285,8 +276,8 @@ struct RuntimeEpisodeCoordinatorState {
         : episode(config.initial_episode), phase(config.initial_phase),
           step_sequence(config.initial_step_sequence),
           barrier_sequence(config.initial_barrier_sequence),
-          snapshot_id(config.initial_snapshot_id),
-          snapshot_sha256(config.initial_snapshot_sha256), coordinator_nonce(mint_nonce()) {}
+          snapshot_id(config.initial_snapshot_id), snapshot_sha256(config.initial_snapshot_sha256),
+          coordinator_nonce(mint_nonce()) {}
 
     ~RuntimeEpisodeCoordinatorState() { release_world(episode.world); }
 
@@ -502,14 +493,15 @@ RuntimeStateTransferStatus validate_profile(const RuntimeStateTransferProfile &p
     return success();
 }
 
-RuntimeStateTransferStatus validate_category_semantics(
-    const RuntimeStateCensusEntry &entry,
-    const RuntimeEpisodeCoordinatorSnapshot &barrier_snapshot) {
+RuntimeStateTransferStatus
+validate_category_semantics(const RuntimeStateCensusEntry &entry,
+                            const RuntimeEpisodeCoordinatorSnapshot &barrier_snapshot) {
     switch (entry.category) {
     case RuntimeStateCategory::CompositionProviderSystemGraph:
         if (entry.disposition != RuntimeStateDisposition::Rederive) {
-            return failure(RuntimeStateTransferError::DispositionMismatch,
-                           "composition/provider/system graph must be rebuilt from the closed plan");
+            return failure(
+                RuntimeStateTransferError::DispositionMismatch,
+                "composition/provider/system graph must be rebuilt from the closed plan");
         }
         break;
     case RuntimeStateCategory::EcsComponentTruth:
@@ -540,8 +532,7 @@ RuntimeStateTransferStatus validate_category_semantics(
         }
         break;
     case RuntimeStateCategory::InFlightRequestsResults:
-        if (entry.disposition == RuntimeStateDisposition::Transfer &&
-            !entry.replay_idempotent) {
+        if (entry.disposition == RuntimeStateDisposition::Transfer && !entry.replay_idempotent) {
             return failure(RuntimeStateTransferError::UnsettledWork,
                            "in-flight replay requires an explicit idempotency proof");
         }
@@ -555,8 +546,9 @@ RuntimeStateTransferStatus validate_category_semantics(
         break;
     case RuntimeStateCategory::ExternalSideEffects:
         if (entry.disposition == RuntimeStateDisposition::Reject) {
-            return failure(RuntimeStateTransferError::ReplacementRejected,
-                           "profile rejects replacement while external side effects are unresolved");
+            return failure(
+                RuntimeStateTransferError::ReplacementRejected,
+                "profile rejects replacement while external side effects are unresolved");
         }
         if (entry.disposition != RuntimeStateDisposition::Drain &&
             entry.disposition != RuntimeStateDisposition::NotApplicable) {
@@ -592,9 +584,9 @@ RuntimeStateTransferStatus validate_category_semantics(
     return success();
 }
 
-RuntimeStateTransferStatus validate_entry(
-    const RuntimeStateCensusRowPolicy &policy, const RuntimeStateCensusEntry &entry,
-    const RuntimeEpisodeCoordinatorSnapshot &barrier_snapshot) {
+RuntimeStateTransferStatus
+validate_entry(const RuntimeStateCensusRowPolicy &policy, const RuntimeStateCensusEntry &entry,
+               const RuntimeEpisodeCoordinatorSnapshot &barrier_snapshot) {
     if (entry.owner_id != policy.owner_id) {
         return failure(RuntimeStateTransferError::OwnerMismatch,
                        "state category owner does not match the admitted profile");
@@ -660,11 +652,12 @@ RuntimeStateTransferStatus validate_entry(
     return validate_category_semantics(entry, barrier_snapshot);
 }
 
-std::string canonical_state_bundle_bytes(
-    const RuntimeStateTransferProfile &profile, const RuntimeStateCensus &census,
-    const std::vector<RuntimeStateOwnerArtifact> &artifacts,
-    const RuntimeStateTransferEvidence &evidence,
-    const RuntimeEpisodeCoordinatorSnapshot &barrier_snapshot) {
+std::string
+canonical_state_bundle_bytes(const RuntimeStateTransferProfile &profile,
+                             const RuntimeStateCensus &census,
+                             const std::vector<RuntimeStateOwnerArtifact> &artifacts,
+                             const RuntimeStateTransferEvidence &evidence,
+                             const RuntimeEpisodeCoordinatorSnapshot &barrier_snapshot) {
     std::string output("echelon_forge.runtime_state_transfer_bundle.v1\n");
     append_text(output, "profile_id", profile.profile_id);
     append_number(output, "profile_generation", profile.profile_generation);
@@ -680,13 +673,11 @@ std::string canonical_state_bundle_bytes(
 
     std::vector<RuntimeStateCensusEntry> sorted = census.entries;
     std::sort(sorted.begin(), sorted.end(), [](const auto &lhs, const auto &rhs) {
-        return static_cast<std::uint8_t>(lhs.category) <
-               static_cast<std::uint8_t>(rhs.category);
+        return static_cast<std::uint8_t>(lhs.category) < static_cast<std::uint8_t>(rhs.category);
     });
     for (const RuntimeStateCensusEntry &entry : sorted) {
         append_text(output, "category", runtime_state_category_name(entry.category));
-        append_text(output, "disposition",
-                    runtime_state_disposition_name(entry.disposition));
+        append_text(output, "disposition", runtime_state_disposition_name(entry.disposition));
         append_text(output, "owner_id", entry.owner_id);
         append_text(output, "schema_id", entry.schema_id);
         append_number(output, "schema_generation", entry.schema_generation);
@@ -695,15 +686,12 @@ std::string canonical_state_bundle_bytes(
                       entry.canonical_payload.size());
         output.push_back('\n');
         append_text(output, "payload_sha256", entry.canonical_payload_sha256);
-        append_text(output, "semantic_evidence_sha256",
-                    entry.semantic_evidence_sha256);
-        append_number(output, "unknown_truth_fields",
-                      entry.contains_unknown_truth_fields ? 1 : 0);
+        append_text(output, "semantic_evidence_sha256", entry.semantic_evidence_sha256);
+        append_number(output, "unknown_truth_fields", entry.contains_unknown_truth_fields ? 1 : 0);
         append_number(output, "replay_idempotent", entry.replay_idempotent ? 1 : 0);
         append_number(output, "item_count", entry.item_count);
         append_number(output, "settled_item_count", entry.settled_item_count);
-        append_number(output, "sequence_high_watermark",
-                      entry.sequence_high_watermark);
+        append_number(output, "sequence_high_watermark", entry.sequence_high_watermark);
         append_number(output, "rng_draw_position", entry.rng_draw_position);
         append_number(output, "simulation_tick", entry.simulation_tick);
         append_number(output, "step_sequence", entry.step_sequence);
@@ -716,11 +704,9 @@ std::string canonical_state_bundle_bytes(
                          static_cast<std::uint8_t>(rhs.category);
               });
     for (const RuntimeStateOwnerArtifact &artifact : sorted_artifacts) {
-        append_text(output, "artifact_category",
-                    runtime_state_category_name(artifact.category));
+        append_text(output, "artifact_category", runtime_state_category_name(artifact.category));
         append_text(output, "artifact_schema_id", artifact.schema_id);
-        append_number(output, "artifact_schema_generation",
-                      artifact.schema_generation);
+        append_number(output, "artifact_schema_generation", artifact.schema_generation);
         append_number(output, "artifact_payload_size", artifact.payload.size());
         output.append(reinterpret_cast<const char *>(artifact.payload.data()),
                       artifact.payload.size());
@@ -733,16 +719,14 @@ std::string canonical_state_bundle_bytes(
 std::string canonical_state_entry_bytes(const RuntimeStateCensusEntry &entry) {
     std::string output("echelon_forge.runtime_state_census_entry.v1\n");
     append_text(output, "category", runtime_state_category_name(entry.category));
-    append_text(output, "disposition",
-                runtime_state_disposition_name(entry.disposition));
+    append_text(output, "disposition", runtime_state_disposition_name(entry.disposition));
     append_text(output, "owner_id", entry.owner_id);
     append_text(output, "schema_id", entry.schema_id);
     append_number(output, "schema_generation", entry.schema_generation);
     append_text(output, "state_content_sha256", entry.state_content_sha256);
     append_text(output, "canonical_payload_sha256", entry.canonical_payload_sha256);
     append_text(output, "semantic_evidence_sha256", entry.semantic_evidence_sha256);
-    append_number(output, "unknown_truth_fields",
-                  entry.contains_unknown_truth_fields ? 1 : 0);
+    append_number(output, "unknown_truth_fields", entry.contains_unknown_truth_fields ? 1 : 0);
     append_number(output, "replay_idempotent", entry.replay_idempotent ? 1 : 0);
     append_number(output, "item_count", entry.item_count);
     append_number(output, "settled_item_count", entry.settled_item_count);
@@ -758,8 +742,7 @@ std::string canonical_state_entry_bytes(const RuntimeStateCensusEntry &entry) {
     return output;
 }
 
-bool same_source_census(const RuntimeStateCensus &expected,
-                        const RuntimeStateCensus &observed) {
+bool same_source_census(const RuntimeStateCensus &expected, const RuntimeStateCensus &observed) {
     if (expected.contract_generation != observed.contract_generation ||
         expected.profile_id != observed.profile_id ||
         expected.profile_generation != observed.profile_generation ||
@@ -770,11 +753,11 @@ bool same_source_census(const RuntimeStateCensus &expected,
         return false;
     }
     for (const RuntimeStateCensusEntry &expected_entry : expected.entries) {
-        const auto observed_entry = std::find_if(
-            observed.entries.begin(), observed.entries.end(),
-            [&](const RuntimeStateCensusEntry &entry) {
-                return entry.category == expected_entry.category;
-            });
+        const auto observed_entry =
+            std::find_if(observed.entries.begin(), observed.entries.end(),
+                         [&](const RuntimeStateCensusEntry &entry) {
+                             return entry.category == expected_entry.category;
+                         });
         if (observed_entry == observed.entries.end() ||
             canonical_state_entry_bytes(expected_entry) !=
                 canonical_state_entry_bytes(*observed_entry)) {
@@ -784,10 +767,9 @@ bool same_source_census(const RuntimeStateCensus &expected,
     return true;
 }
 
-RuntimeStateTransferStatus validate_source_artifacts(
-    const RuntimeStateTransferProfile &profile,
-    const RuntimeStateCensus &census,
-    const RuntimeStateOwnerExport &source_export) {
+RuntimeStateTransferStatus validate_source_artifacts(const RuntimeStateTransferProfile &profile,
+                                                     const RuntimeStateCensus &census,
+                                                     const RuntimeStateOwnerExport &source_export) {
     if (source_export.artifacts.size() != kRuntimeStateCategoryCount) {
         return failure(RuntimeStateTransferError::MissingCategory,
                        "owner source export does not contain one artifact per category");
@@ -811,18 +793,16 @@ RuntimeStateTransferStatus validate_source_artifacts(
         }
     }
     for (const RuntimeStateCensusRowPolicy &policy : profile.rows) {
-        const auto entry = std::find_if(
-            census.entries.begin(), census.entries.end(),
-            [&](const RuntimeStateCensusEntry &candidate) {
-                return candidate.category == policy.category;
-            });
+        const auto entry = std::find_if(census.entries.begin(), census.entries.end(),
+                                        [&](const RuntimeStateCensusEntry &candidate) {
+                                            return candidate.category == policy.category;
+                                        });
         const auto *artifact = artifacts[static_cast<std::size_t>(policy.category)];
         if (entry == census.entries.end() || artifact == nullptr ||
             artifact->schema_id != policy.schema_id ||
             artifact->schema_generation != entry->schema_generation ||
             (policy.disposition == RuntimeStateDisposition::Transfer &&
-             (artifact->payload.empty() ||
-              artifact->payload != entry->canonical_payload))) {
+             (artifact->payload.empty() || artifact->payload != entry->canonical_payload))) {
             return failure(RuntimeStateTransferError::PayloadDigestMismatch,
                            "owner source artifact is not bound to its census schema");
         }
@@ -862,8 +842,7 @@ std::string_view runtime_state_category_name(RuntimeStateCategory category) noex
     return "unsupported";
 }
 
-std::string_view
-runtime_state_disposition_name(RuntimeStateDisposition disposition) noexcept {
+std::string_view runtime_state_disposition_name(RuntimeStateDisposition disposition) noexcept {
     switch (disposition) {
     case RuntimeStateDisposition::Transfer:
         return "transfer";
@@ -942,12 +921,11 @@ std::string_view runtime_state_schema_id(RuntimeStateCategory category) noexcept
 }
 
 std::string runtime_state_payload_sha256(const std::vector<std::uint8_t> &payload) {
-    return sha256_hex(std::string_view(
-        reinterpret_cast<const char *>(payload.data()), payload.size()));
+    return sha256_hex(
+        std::string_view(reinterpret_cast<const char *>(payload.data()), payload.size()));
 }
 
-std::vector<std::uint8_t> runtime_state_canonical_payload(
-    const RuntimeStateCensusEntry &entry) {
+std::vector<std::uint8_t> runtime_state_canonical_payload(const RuntimeStateCensusEntry &entry) {
     std::string output("echelon_forge.runtime_state_payload.v1\n");
     append_text(output, "category", runtime_state_category_name(entry.category));
     append_text(output, "owner_id", entry.owner_id);
@@ -968,8 +946,8 @@ std::string runtime_state_census_entry_sha256(const RuntimeStateCensusEntry &ent
     return sha256_hex(canonical_state_entry_bytes(entry));
 }
 
-std::string canonical_episode_transition_receipt_bytes(
-    const RuntimeEpisodeTransitionReceipt &receipt) {
+std::string
+canonical_episode_transition_receipt_bytes(const RuntimeEpisodeTransitionReceipt &receipt) {
     std::string output("echelon_forge.runtime_episode_transition_receipt.v1\n");
     append_number(output, "protocol_generation", receipt.protocol_generation);
     append_number(output, "kind", static_cast<std::uint8_t>(receipt.kind));
@@ -978,8 +956,7 @@ std::string canonical_episode_transition_receipt_bytes(
     append_episode(output, "episode_after", receipt.episode_after);
     append_number(output, "previous_step_sequence", receipt.previous_step_sequence);
     append_number(output, "resulting_step_sequence", receipt.resulting_step_sequence);
-    append_number(output, "resulting_phase",
-                  static_cast<std::uint8_t>(receipt.resulting_phase));
+    append_number(output, "resulting_phase", static_cast<std::uint8_t>(receipt.resulting_phase));
     append_number(output, "terminal", receipt.terminal ? 1 : 0);
     append_number(output, "reset_applied", receipt.reset_applied ? 1 : 0);
     append_identity(output, "snapshot_id", receipt.snapshot_id);
@@ -988,8 +965,8 @@ std::string canonical_episode_transition_receipt_bytes(
     return output;
 }
 
-std::string canonical_episode_transition_intent_bytes(
-    const RuntimeEpisodeTransitionIntent &intent) {
+std::string
+canonical_episode_transition_intent_bytes(const RuntimeEpisodeTransitionIntent &intent) {
     std::string output("echelon_forge.runtime_episode_transition_intent.v1\n");
     append_number(output, "protocol_generation", intent.protocol_generation);
     append_number(output, "kind", static_cast<std::uint8_t>(intent.kind));
@@ -1008,15 +985,14 @@ bool RuntimeEpisodeTransitionReceipt::well_formed() const noexcept {
                episode_before.well_formed() && episode_after.well_formed() &&
                snapshot_id.well_formed() && is_lower_hex_sha256(snapshot_sha256) &&
                is_lower_hex_sha256(receipt_sha256) &&
-               sha256_hex(canonical_episode_transition_receipt_bytes(*this)) ==
-                   receipt_sha256;
+               sha256_hex(canonical_episode_transition_receipt_bytes(*this)) == receipt_sha256;
     } catch (...) {
         return false;
     }
 }
 
-RuntimeEpisodeCoordinatorCreateResult RuntimeEpisodeCoordinatorCandidate::create(
-    const RuntimeEpisodeCoordinatorConfig &config) {
+RuntimeEpisodeCoordinatorCreateResult
+RuntimeEpisodeCoordinatorCandidate::create(const RuntimeEpisodeCoordinatorConfig &config) {
     if (config.production_authorized) {
         return {.status = failure(RuntimeStateTransferError::ProductionAuthorityForbidden,
                                   "P4-B coordinator is dark/shadow only"),
@@ -1028,8 +1004,7 @@ RuntimeEpisodeCoordinatorCreateResult RuntimeEpisodeCoordinatorCandidate::create
                                   "initial coordinator phase must be running or terminal"),
                 .coordinator = {}};
     }
-    if (!config.initial_episode.well_formed() ||
-        !config.initial_snapshot_id.well_formed() ||
+    if (!config.initial_episode.well_formed() || !config.initial_snapshot_id.well_formed() ||
         !is_lower_hex_sha256(config.initial_snapshot_sha256)) {
         return {.status = failure(RuntimeStateTransferError::InvalidArgument,
                                   "initial episode coordinator state is malformed"),
@@ -1059,8 +1034,9 @@ RuntimeEpisodeCoordinatorCandidate::RuntimeEpisodeCoordinatorCandidate(
 
 RuntimeEpisodeCoordinatorCandidate::~RuntimeEpisodeCoordinatorCandidate() = default;
 
-RuntimeEpisodeTransitionResult RuntimeEpisodeCoordinatorCandidate::submit(
-    const RuntimeEpisodeTransitionIntent &intent, RuntimeNativeEpisodeControl &control) {
+RuntimeEpisodeTransitionResult
+RuntimeEpisodeCoordinatorCandidate::submit(const RuntimeEpisodeTransitionIntent &intent,
+                                           RuntimeNativeEpisodeControl &control) {
     std::unique_lock<std::mutex> lock(state_->mutex);
     if (intent.production_authorized) {
         return {.status = failure(RuntimeStateTransferError::ProductionAuthorityForbidden,
@@ -1068,14 +1044,13 @@ RuntimeEpisodeTransitionResult RuntimeEpisodeCoordinatorCandidate::submit(
     }
     if (intent.protocol_generation != kRuntimeEpisodeHandshakeGeneration ||
         !supported_intent(intent.kind) || !intent.expected_episode.well_formed() ||
-        !intent.idempotency_key.well_formed() ||
-        !is_lower_hex_sha256(intent.payload_sha256)) {
+        !intent.idempotency_key.well_formed() || !is_lower_hex_sha256(intent.payload_sha256)) {
         return {.status = failure(RuntimeStateTransferError::InvalidArgument,
                                   "episode transition intent is malformed")};
     }
     const std::string fingerprint = intent_fingerprint(intent);
-    const auto existing = std::find_if(
-        state_->receipts.begin(), state_->receipts.end(), [&](const auto &record) {
+    const auto existing =
+        std::find_if(state_->receipts.begin(), state_->receipts.end(), [&](const auto &record) {
             return record.idempotency_key == intent.idempotency_key;
         });
     if (existing != state_->receipts.end()) {
@@ -1123,10 +1098,8 @@ RuntimeEpisodeTransitionResult RuntimeEpisodeCoordinatorCandidate::submit(
         }
         command.authorized_resulting_step_sequence = step_before + 1;
     } else {
-        if (state_->episode.episode_generation ==
-                std::numeric_limits<std::uint64_t>::max() ||
-            state_->episode.world.world_generation ==
-                std::numeric_limits<std::uint64_t>::max() ||
+        if (state_->episode.episode_generation == std::numeric_limits<std::uint64_t>::max() ||
+            state_->episode.world.world_generation == std::numeric_limits<std::uint64_t>::max() ||
             state_->barrier_sequence == std::numeric_limits<std::uint64_t>::max()) {
             return {.status = failure(RuntimeStateTransferError::SequenceExhausted,
                                       "reset episode or barrier sequence is exhausted")};
@@ -1159,8 +1132,7 @@ RuntimeEpisodeTransitionResult RuntimeEpisodeCoordinatorCandidate::submit(
         return {.status = failure(RuntimeStateTransferError::NativeMutationFailed,
                                   "native mutation was not applied")};
     }
-    if (!mutation.snapshot_id.well_formed() ||
-        !is_lower_hex_sha256(mutation.snapshot_sha256) ||
+    if (!mutation.snapshot_id.well_formed() || !is_lower_hex_sha256(mutation.snapshot_sha256) ||
         (intent.kind == RuntimeEpisodeIntentKind::Reset && mutation.terminal)) {
         if (reset_world_reserved) {
             release_world(state_->episode.world);
@@ -1199,8 +1171,8 @@ RuntimeEpisodeTransitionResult RuntimeEpisodeCoordinatorCandidate::submit(
         };
         if (intent.kind == RuntimeEpisodeIntentKind::Action) {
             state_->step_sequence = command.authorized_resulting_step_sequence;
-            state_->phase = mutation.terminal ? RuntimeEpisodePhase::Terminal
-                                              : RuntimeEpisodePhase::Running;
+            state_->phase =
+                mutation.terminal ? RuntimeEpisodePhase::Terminal : RuntimeEpisodePhase::Running;
             receipt.resulting_step_sequence = state_->step_sequence;
             receipt.resulting_phase = state_->phase;
             receipt.terminal = mutation.terminal;
@@ -1219,8 +1191,7 @@ RuntimeEpisodeTransitionResult RuntimeEpisodeCoordinatorCandidate::submit(
         state_->snapshot_id = mutation.snapshot_id;
         state_->snapshot_sha256 = mutation.snapshot_sha256;
         truth_state_advanced = true;
-        receipt.receipt_sha256 =
-            sha256_hex(canonical_episode_transition_receipt_bytes(receipt));
+        receipt.receipt_sha256 = sha256_hex(canonical_episode_transition_receipt_bytes(receipt));
         state_->receipts.push_back({.idempotency_key = intent.idempotency_key,
                                     .intent_fingerprint = fingerprint,
                                     .receipt = receipt});
@@ -1251,10 +1222,9 @@ RuntimeStateTransferStatus RuntimeEpisodeCoordinatorCandidate::acknowledge_recei
         return failure(RuntimeStateTransferError::ConcurrentMutation,
                        "receipt acknowledgement cannot race a native episode mutation");
     }
-    const auto found = std::find_if(
-        state_->receipts.begin(), state_->receipts.end(), [&](const auto &record) {
-            return record.idempotency_key == receipt.idempotency_key &&
-                   record.receipt == receipt;
+    const auto found =
+        std::find_if(state_->receipts.begin(), state_->receipts.end(), [&](const auto &record) {
+            return record.idempotency_key == receipt.idempotency_key && record.receipt == receipt;
         });
     if (found == state_->receipts.end()) {
         if (receipt.resulting_step_sequence <= state_->compacted_step_sequence &&
@@ -1270,27 +1240,26 @@ RuntimeStateTransferStatus RuntimeEpisodeCoordinatorCandidate::acknowledge_recei
     state_->compacted_barrier_sequence =
         std::max(state_->compacted_barrier_sequence, receipt.barrier_sequence);
     state_->compacted_receipt_sha256 = receipt.receipt_sha256;
-    state_->receipts.erase(
-        std::remove_if(state_->receipts.begin(), state_->receipts.end(), [&](const auto &record) {
-            return record.receipt.resulting_step_sequence <= state_->compacted_step_sequence &&
-                   record.receipt.barrier_sequence <= state_->compacted_barrier_sequence;
-        }),
-        state_->receipts.end());
+    state_->receipts.erase(std::remove_if(state_->receipts.begin(), state_->receipts.end(),
+                                          [&](const auto &record) {
+                                              return record.receipt.resulting_step_sequence <=
+                                                         state_->compacted_step_sequence &&
+                                                     record.receipt.barrier_sequence <=
+                                                         state_->compacted_barrier_sequence;
+                                          }),
+                           state_->receipts.end());
     return success();
 }
 
-RuntimeEpisodeBarrierAdmission
-RuntimeEpisodeCoordinatorCandidate::open_replacement_barrier(
-    const RuntimeEpisodeRef &expected_episode,
-    std::uint64_t expected_step_sequence) {
+RuntimeEpisodeBarrierAdmission RuntimeEpisodeCoordinatorCandidate::open_replacement_barrier(
+    const RuntimeEpisodeRef &expected_episode, std::uint64_t expected_step_sequence) {
     std::lock_guard<std::mutex> lock(state_->mutex);
     if (!same_episode(expected_episode, state_->episode) ||
         expected_step_sequence != state_->step_sequence) {
         return {.status = failure(RuntimeStateTransferError::StaleIntent,
                                   "replacement barrier expectation is stale")};
     }
-    if (state_->phase != RuntimeEpisodePhase::Terminal ||
-        state_->mutation_in_progress) {
+    if (state_->phase != RuntimeEpisodePhase::Terminal || state_->mutation_in_progress) {
         return {.status = failure(RuntimeStateTransferError::BarrierRequired,
                                   "replacement requires the terminal native episode barrier")};
     }
@@ -1314,15 +1283,12 @@ RuntimeEpisodeCoordinatorCandidate::open_replacement_barrier(
     token->coordinator_nonce = state_->coordinator_nonce;
     token->barrier_nonce = state_->open_barrier_nonce;
     token->snapshot = snapshot;
-    return {.status = success(),
-            .capability = RuntimeEpisodeBarrierCapability(std::move(token))};
+    return {.status = success(), .capability = RuntimeEpisodeBarrierCapability(std::move(token))};
 }
 
-RuntimeNativeEpisodeAdmission
-RuntimeEpisodeCoordinatorCandidate::issue_episode_capability() {
+RuntimeNativeEpisodeAdmission RuntimeEpisodeCoordinatorCandidate::issue_episode_capability() {
     std::lock_guard<std::mutex> lock(state_->mutex);
-    if (state_->phase != RuntimeEpisodePhase::Running ||
-        state_->mutation_in_progress) {
+    if (state_->phase != RuntimeEpisodePhase::Running || state_->mutation_in_progress) {
         return {.status = failure(RuntimeStateTransferError::AdmissionClosed,
                                   "native episode is not admitting shadow work"),
                 .capability = {}};
@@ -1332,8 +1298,7 @@ RuntimeEpisodeCoordinatorCandidate::issue_episode_capability() {
     token->coordinator_nonce = state_->coordinator_nonce;
     token->episode = state_->episode;
     token->step_sequence = state_->step_sequence;
-    return {.status = success(),
-            .capability = RuntimeNativeEpisodeCapability(std::move(token))};
+    return {.status = success(), .capability = RuntimeNativeEpisodeCapability(std::move(token))};
 }
 
 RuntimeIdentity128 RuntimeEpisodeCoordinatorCandidate::coordinator_nonce() const noexcept {
@@ -1392,8 +1357,8 @@ RuntimeNativeEpisodeCapability::RuntimeNativeEpisodeCapability(
     RuntimeNativeEpisodeCapability &&other) noexcept
     : token_(std::move(other.token_)) {}
 
-RuntimeNativeEpisodeCapability &RuntimeNativeEpisodeCapability::operator=(
-    RuntimeNativeEpisodeCapability &&other) noexcept {
+RuntimeNativeEpisodeCapability &
+RuntimeNativeEpisodeCapability::operator=(RuntimeNativeEpisodeCapability &&other) noexcept {
     if (this != &other) {
         token_ = std::move(other.token_);
     }
@@ -1435,8 +1400,8 @@ RuntimeIdentity128 RuntimeNativeEpisodeCapability::coordinator_nonce() const noe
     return token_ == nullptr ? RuntimeIdentity128{} : token_->coordinator_nonce;
 }
 
-RuntimeStateTransferStatus RuntimeNativeEpisodeCapability::consume_for_host(
-    const RuntimeIncarnationRef &expected_source) {
+RuntimeStateTransferStatus
+RuntimeNativeEpisodeCapability::consume_for_host(const RuntimeIncarnationRef &expected_source) {
     if (token_ == nullptr) {
         return failure(RuntimeStateTransferError::InvalidArgument,
                        "native episode capability is empty");
@@ -1480,9 +1445,8 @@ RuntimeStateTransferStatus RuntimeNativeEpisodeCapability::validate_for_host(
         return failure(RuntimeStateTransferError::BarrierRequired,
                        "native episode capability was not claimed by the host");
     }
-    const auto coordinator = token_->coordinator_owner != nullptr
-                                 ? token_->coordinator_owner
-                                 : token_->coordinator.lock();
+    const auto coordinator = token_->coordinator_owner != nullptr ? token_->coordinator_owner
+                                                                  : token_->coordinator.lock();
     if (coordinator == nullptr) {
         return failure(RuntimeStateTransferError::StaleIntent,
                        "native episode coordinator no longer exists");
@@ -1511,8 +1475,8 @@ RuntimeEpisodeBarrierCapability::RuntimeEpisodeBarrierCapability(
     RuntimeEpisodeBarrierCapability &&other) noexcept
     : token_(std::move(other.token_)) {}
 
-RuntimeEpisodeBarrierCapability &RuntimeEpisodeBarrierCapability::operator=(
-    RuntimeEpisodeBarrierCapability &&other) noexcept {
+RuntimeEpisodeBarrierCapability &
+RuntimeEpisodeBarrierCapability::operator=(RuntimeEpisodeBarrierCapability &&other) noexcept {
     if (this != &other) {
         release_unclaimed_barrier(token_);
         token_ = std::move(other.token_);
@@ -1555,8 +1519,9 @@ RuntimeIdentity128 RuntimeEpisodeBarrierCapability::coordinator_nonce() const no
     return token_ == nullptr ? RuntimeIdentity128{} : token_->coordinator_nonce;
 }
 
-RuntimeStateTransferStatus RuntimeEpisodeBarrierCapability::bind_for_host(
-    const RuntimeIdentity128 &host_instance_nonce, std::uint64_t world_slot) noexcept {
+RuntimeStateTransferStatus
+RuntimeEpisodeBarrierCapability::bind_for_host(const RuntimeIdentity128 &host_instance_nonce,
+                                               std::uint64_t world_slot) noexcept {
     if (token_ == nullptr || !host_instance_nonce.well_formed()) {
         return failure(RuntimeStateTransferError::InvalidArgument,
                        "cannot bind an empty episode barrier to a host");
@@ -1586,8 +1551,8 @@ RuntimeHostQuiescenceCapability::RuntimeHostQuiescenceCapability(
     RuntimeHostQuiescenceCapability &&other) noexcept
     : token_(std::move(other.token_)) {}
 
-RuntimeHostQuiescenceCapability &RuntimeHostQuiescenceCapability::operator=(
-    RuntimeHostQuiescenceCapability &&other) noexcept {
+RuntimeHostQuiescenceCapability &
+RuntimeHostQuiescenceCapability::operator=(RuntimeHostQuiescenceCapability &&other) noexcept {
     if (this != &other) {
         release_unclaimed_quiescence(token_);
         token_ = std::move(other.token_);
@@ -1600,20 +1565,14 @@ RuntimeHostQuiescenceCapability::~RuntimeHostQuiescenceCapability() {
 }
 
 RuntimeHostQuiescenceCapability RuntimeHostQuiescenceCapability::mint_for_host(
-    const RuntimeIncarnationRef &source_slot,
-    std::string source_plan_sha256,
-    std::string target_plan_sha256,
-    RuntimeIdentity128 candidate_resource_identity,
+    const RuntimeIncarnationRef &source_slot, std::string source_plan_sha256,
+    std::string target_plan_sha256, RuntimeIdentity128 candidate_resource_identity,
     std::shared_ptr<RuntimeStateTransferOwnerRegistry> source_owner_registry,
     std::shared_ptr<RuntimeStateTransferOwnerRegistry> target_owner_registry,
-    const RuntimeIdentity128 &host_instance_nonce,
-    std::function<bool()> host_revalidate,
-    std::function<void()> host_rollback,
-    std::function<bool()> host_begin_transfer,
-    std::function<bool()> host_claim_transfer,
-    std::function<void()> host_end_transfer,
-    std::uint64_t lifecycle_ticket,
-    std::uint64_t candidate_sequence,
+    const RuntimeIdentity128 &host_instance_nonce, std::function<bool()> host_revalidate,
+    std::function<void()> host_rollback, std::function<bool()> host_begin_transfer,
+    std::function<bool()> host_claim_transfer, std::function<void()> host_end_transfer,
+    std::uint64_t lifecycle_ticket, std::uint64_t candidate_sequence,
     std::uint64_t mutation_fence_sequence) {
     auto token = std::make_shared<RuntimeHostQuiescenceToken>();
     token->source_slot = source_slot;
@@ -1640,8 +1599,7 @@ bool RuntimeHostQuiescenceCapability::valid() const noexcept {
     }
     try {
         std::lock_guard<std::mutex> lock(token_->mutex);
-        return !token_->claimed && !token_->released &&
-               token_->source_slot.well_formed() &&
+        return !token_->claimed && !token_->released && token_->source_slot.well_formed() &&
                is_lower_hex_sha256(token_->source_plan_sha256) &&
                is_lower_hex_sha256(token_->target_plan_sha256) &&
                token_->candidate_resource_identity.well_formed() &&
@@ -1651,9 +1609,8 @@ bool RuntimeHostQuiescenceCapability::valid() const noexcept {
                static_cast<bool>(token_->host_revalidate) &&
                static_cast<bool>(token_->host_begin_transfer) &&
                static_cast<bool>(token_->host_claim_transfer) &&
-               static_cast<bool>(token_->host_end_transfer) &&
-               token_->lifecycle_ticket != 0 && token_->candidate_sequence != 0 &&
-               token_->mutation_fence_sequence != 0;
+               static_cast<bool>(token_->host_end_transfer) && token_->lifecycle_ticket != 0 &&
+               token_->candidate_sequence != 0 && token_->mutation_fence_sequence != 0;
     } catch (...) {
         return false;
     }
@@ -1671,8 +1628,8 @@ RuntimeIdentity128 RuntimeHostQuiescenceCapability::candidate_resource_identity(
     return token_ == nullptr ? RuntimeIdentity128{} : token_->candidate_resource_identity;
 }
 
-RuntimeStateTransferValidationResult RuntimeStateTransferValidator::validate(
-    RuntimeStateTransferValidationRequest &&request) {
+RuntimeStateTransferValidationResult
+RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&request) {
     RuntimeStateTransferStatus status = validate_profile(request.profile);
     if (!status) {
         return {.status = status, .transfer = {}};
@@ -1690,14 +1647,13 @@ RuntimeStateTransferValidationResult RuntimeStateTransferValidator::validate(
     const auto quiescence_token = request.host_quiescence.token_;
     if (quiescence_token->source_owner_registry == nullptr ||
         quiescence_token->target_owner_registry == nullptr) {
-        return {.status = failure(RuntimeStateTransferError::SemanticEvidenceMissing,
-                                  "state transfer requires host-bound source and target owner registries"),
+        return {.status = failure(
+                    RuntimeStateTransferError::SemanticEvidenceMissing,
+                    "state transfer requires host-bound source and target owner registries"),
                 .transfer = {}};
     }
-    if ((request.census.contract_generation !=
-             kRuntimeStateTransferContractGeneration &&
-         request.census.contract_generation !=
-             kRuntimeStateTransferPreviousGeneration) ||
+    if ((request.census.contract_generation != kRuntimeStateTransferContractGeneration &&
+         request.census.contract_generation != kRuntimeStateTransferPreviousGeneration) ||
         request.census.profile_id != request.profile.profile_id ||
         request.census.profile_generation != request.profile.profile_generation ||
         !request.census.source_slot.well_formed() ||
@@ -1716,8 +1672,9 @@ RuntimeStateTransferValidationResult RuntimeStateTransferValidator::validate(
             quiescence_token->target_plan_sha256 != request.profile.target_plan_sha256 ||
             quiescence_token->mutation_fence_sequence !=
                 request.evidence.source_final_mutation_fence_sequence) {
-            return {.status = failure(RuntimeStateTransferError::StaleIntent,
-                                      "state census does not bind the current host quiescence fence"),
+            return {.status =
+                        failure(RuntimeStateTransferError::StaleIntent,
+                                "state census does not bind the current host quiescence fence"),
                     .transfer = {}};
         }
     }
@@ -1732,13 +1689,13 @@ RuntimeStateTransferValidationResult RuntimeStateTransferValidator::validate(
         if (!barrier_token->host_bound ||
             barrier_token->host_instance_nonce != quiescence_token->host_instance_nonce ||
             barrier_token->world_slot != barrier_token->snapshot.episode.world.world_slot) {
-            return {.status = failure(RuntimeStateTransferError::StaleIntent,
-                                      "episode barrier is not bound to the quiesced host authority"),
+            return {.status =
+                        failure(RuntimeStateTransferError::StaleIntent,
+                                "episode barrier is not bound to the quiesced host authority"),
                     .transfer = {}};
         }
     }
-    const RuntimeEpisodeCoordinatorSnapshot barrier_snapshot =
-        request.episode_barrier.snapshot();
+    const RuntimeEpisodeCoordinatorSnapshot barrier_snapshot = request.episode_barrier.snapshot();
     if (barrier_snapshot.phase != RuntimeEpisodePhase::ReplacementBarrier ||
         barrier_snapshot.episode.world.incarnation != request.census.source_slot) {
         return {.status = failure(RuntimeStateTransferError::StaleIntent,
@@ -1749,8 +1706,7 @@ RuntimeStateTransferValidationResult RuntimeStateTransferValidator::validate(
     // Pin the host/candidate before asking any owner to read source truth.  A
     // blocking export/import callback must not race candidate reclamation.
     HostTransferReservationGuard transfer_reservation;
-    if (!quiescence_token->host_begin_transfer ||
-        !quiescence_token->host_begin_transfer()) {
+    if (!quiescence_token->host_begin_transfer || !quiescence_token->host_begin_transfer()) {
         return {.status = failure(RuntimeStateTransferError::StaleIntent,
                                   "host transfer reservation was revoked before source export"),
                 .transfer = {}};
@@ -1781,17 +1737,15 @@ RuntimeStateTransferValidationResult RuntimeStateTransferValidator::validate(
         }
     }
     for (const RuntimeStateCensusRowPolicy &policy : request.profile.rows) {
-        status = validate_entry(policy,
-                                *entries[static_cast<std::size_t>(policy.category)],
+        status = validate_entry(policy, *entries[static_cast<std::size_t>(policy.category)],
                                 barrier_snapshot);
         if (!status) {
             return {.status = status, .transfer = {}};
         }
     }
 
-    RuntimeStateOwnerExport source_export =
-        quiescence_token->source_owner_registry->export_source(
-            request.profile, request.census.source_slot, barrier_snapshot);
+    RuntimeStateOwnerExport source_export = quiescence_token->source_owner_registry->export_source(
+        request.profile, request.census.source_slot, barrier_snapshot);
     if (!source_export.status) {
         return {.status = source_export.status, .transfer = {}};
     }
@@ -1808,8 +1762,7 @@ RuntimeStateTransferValidationResult RuntimeStateTransferValidator::validate(
 
     RuntimeStateOwnerImportReceipt owner_receipt =
         quiescence_token->target_owner_registry->import_and_observe(
-            request.profile, source_export,
-            request.host_quiescence.candidate_resource_identity());
+            request.profile, source_export, request.host_quiescence.candidate_resource_identity());
     ImportTransactionAbortGuard import_abort{
         .transaction = owner_receipt.transaction,
         .active = owner_receipt.transaction != nullptr,
@@ -1823,14 +1776,13 @@ RuntimeStateTransferValidationResult RuntimeStateTransferValidator::validate(
                 .transfer = {}};
     }
     if (owner_receipt.candidate_resource_identity !=
-        request.host_quiescence.candidate_resource_identity() ||
+            request.host_quiescence.candidate_resource_identity() ||
         owner_receipt.observations.size() != kRuntimeStateCategoryCount) {
         return {.status = failure(RuntimeStateTransferError::SemanticEvidenceMissing,
                                   "owner receipt is not bound to the complete candidate import"),
                 .transfer = {}};
     }
-    std::array<const RuntimeStateOwnerObservation *, kRuntimeStateCategoryCount>
-        observations{};
+    std::array<const RuntimeStateOwnerObservation *, kRuntimeStateCategoryCount> observations{};
     for (const RuntimeStateOwnerObservation &observation : owner_receipt.observations) {
         if (!supported_category(observation.category)) {
             return {.status = failure(RuntimeStateTransferError::SchemaMismatch,
@@ -1846,40 +1798,33 @@ RuntimeStateTransferValidationResult RuntimeStateTransferValidator::validate(
         observations[index] = &observation;
     }
     for (const RuntimeStateCensusRowPolicy &policy : request.profile.rows) {
-        const RuntimeStateCensusEntry &entry =
-            *entries[static_cast<std::size_t>(policy.category)];
+        const RuntimeStateCensusEntry &entry = *entries[static_cast<std::size_t>(policy.category)];
         const RuntimeStateOwnerObservation &observation =
             *observations[static_cast<std::size_t>(policy.category)];
-        const auto artifact = std::find_if(
-            source_export.artifacts.begin(), source_export.artifacts.end(),
-            [&](const RuntimeStateOwnerArtifact &candidate) {
-                return candidate.category == policy.category;
-            });
+        const auto artifact =
+            std::find_if(source_export.artifacts.begin(), source_export.artifacts.end(),
+                         [&](const RuntimeStateOwnerArtifact &candidate) {
+                             return candidate.category == policy.category;
+                         });
         if (artifact == source_export.artifacts.end()) {
             return {.status = failure(RuntimeStateTransferError::MissingCategory,
                                       "owner receipt has no source artifact"),
                     .transfer = {}};
         }
         RuntimeStateCensusEntry normalized_entry = entry;
-        normalized_entry.schema_generation =
-            kRuntimeStateTransferContractGeneration;
-        if (entry.schema_generation !=
-            kRuntimeStateTransferContractGeneration) {
-            normalized_entry.canonical_payload =
-                runtime_state_canonical_payload(normalized_entry);
+        normalized_entry.schema_generation = kRuntimeStateTransferContractGeneration;
+        if (entry.schema_generation != kRuntimeStateTransferContractGeneration) {
+            normalized_entry.canonical_payload = runtime_state_canonical_payload(normalized_entry);
             normalized_entry.canonical_payload_sha256 =
                 runtime_state_payload_sha256(normalized_entry.canonical_payload);
         }
-        if (observation.owner_id != policy.owner_id ||
-            observation.schema_id != policy.schema_id ||
+        if (observation.owner_id != policy.owner_id || observation.schema_id != policy.schema_id ||
             observation.source_schema_generation != entry.schema_generation ||
             observation.schema_generation != kRuntimeStateTransferContractGeneration ||
             observation.candidate_resource_identity !=
                 request.host_quiescence.candidate_resource_identity() ||
-            !observation.exact_schema_decoded ||
-            observation.contains_unknown_truth_fields ||
-            observation.contains_raw_process_handle ||
-            observation.item_count != entry.item_count ||
+            !observation.exact_schema_decoded || observation.contains_unknown_truth_fields ||
+            observation.contains_raw_process_handle || observation.item_count != entry.item_count ||
             observation.settled_item_count != entry.settled_item_count ||
             observation.source_entry_sha256 != runtime_state_census_entry_sha256(entry) ||
             observation.source_artifact_payload_sha256 != artifact->payload_sha256 ||
@@ -1887,8 +1832,9 @@ RuntimeStateTransferValidationResult RuntimeStateTransferValidator::validate(
             observation.candidate_entry_sha256 !=
                 runtime_state_census_entry_sha256(normalized_entry) ||
             observation.semantic_replay_sha256 != entry.semantic_evidence_sha256) {
-            return {.status = failure(RuntimeStateTransferError::SemanticEvidenceMissing,
-                                      "owner receipt does not prove exact source/import/replay equality"),
+            return {.status =
+                        failure(RuntimeStateTransferError::SemanticEvidenceMissing,
+                                "owner receipt does not prove exact source/import/replay equality"),
                     .transfer = {}};
         }
     }
@@ -1903,32 +1849,28 @@ RuntimeStateTransferValidationResult RuntimeStateTransferValidator::validate(
         state->source_slot = request.census.source_slot;
         state->source_plan_sha256 = request.profile.source_plan_sha256;
         state->target_plan_sha256 = request.profile.target_plan_sha256;
-        state->state_bundle_sha256 = sha256_hex(canonical_state_bundle_bytes(
-            request.profile, request.census, source_export.artifacts,
-            request.evidence, barrier_snapshot));
-        state->transfer_fence_sequence =
-            request.evidence.source_final_mutation_fence_sequence;
+        state->state_bundle_sha256 = sha256_hex(
+            canonical_state_bundle_bytes(request.profile, request.census, source_export.artifacts,
+                                         request.evidence, barrier_snapshot));
+        state->transfer_fence_sequence = request.evidence.source_final_mutation_fence_sequence;
         state->episode_barrier_sequence = barrier_snapshot.barrier_sequence;
         state->source_barrier_snapshot = barrier_snapshot;
         state->lifecycle_ticket = quiescence_token->lifecycle_ticket;
         state->candidate_sequence = quiescence_token->candidate_sequence;
-        state->candidate_resource_identity =
-            quiescence_token->candidate_resource_identity;
+        state->candidate_resource_identity = quiescence_token->candidate_resource_identity;
         state->quiescence_token = quiescence_token;
         state->barrier_token = barrier_token;
         state->coordinator_owner = barrier_token->coordinator.lock();
         state->import_transaction = owner_receipt.transaction;
-        if (!quiescence_token->host_claim_transfer ||
-            !quiescence_token->host_claim_transfer()) {
+        if (!quiescence_token->host_claim_transfer || !quiescence_token->host_claim_transfer()) {
             return {.status = failure(RuntimeStateTransferError::StaleIntent,
                                       "host transfer changed before capability claim"),
                     .transfer = {}};
         }
         {
-            std::scoped_lock capability_locks(quiescence_token->mutex,
-                                              barrier_token->mutex);
-            if (quiescence_token->claimed || quiescence_token->released ||
-                barrier_token->claimed || barrier_token->released) {
+            std::scoped_lock capability_locks(quiescence_token->mutex, barrier_token->mutex);
+            if (quiescence_token->claimed || quiescence_token->released || barrier_token->claimed ||
+                barrier_token->released) {
                 return {.status = failure(RuntimeStateTransferError::BarrierReplay,
                                           "host or episode barrier was already consumed"),
                         .transfer = {}};
@@ -1938,8 +1880,7 @@ RuntimeStateTransferValidationResult RuntimeStateTransferValidator::validate(
         }
         state->host_end_transfer = transfer_reservation.disarm();
         import_abort.disarm();
-        return {.status = success(),
-                .transfer = RuntimeValidatedStateTransfer(std::move(state))};
+        return {.status = success(), .transfer = RuntimeValidatedStateTransfer(std::move(state))};
     } catch (...) {
         return {.status = failure(RuntimeStateTransferError::InvalidArgument,
                                   "state-transfer capability allocation failed"),
@@ -1955,8 +1896,8 @@ RuntimeValidatedStateTransfer::RuntimeValidatedStateTransfer(
     RuntimeValidatedStateTransfer &&other) noexcept
     : state_(std::move(other.state_)) {}
 
-RuntimeValidatedStateTransfer &RuntimeValidatedStateTransfer::operator=(
-    RuntimeValidatedStateTransfer &&other) noexcept {
+RuntimeValidatedStateTransfer &
+RuntimeValidatedStateTransfer::operator=(RuntimeValidatedStateTransfer &&other) noexcept {
     if (this != &other) {
         abort_for_host();
         state_ = std::move(other.state_);
@@ -1964,7 +1905,9 @@ RuntimeValidatedStateTransfer &RuntimeValidatedStateTransfer::operator=(
     return *this;
 }
 
-RuntimeValidatedStateTransfer::~RuntimeValidatedStateTransfer() { abort_for_host(); }
+RuntimeValidatedStateTransfer::~RuntimeValidatedStateTransfer() {
+    abort_for_host();
+}
 
 bool RuntimeValidatedStateTransfer::valid() const noexcept {
     if (state_ == nullptr) {
@@ -1984,13 +1927,11 @@ RuntimeIncarnationRef RuntimeValidatedStateTransfer::source_slot() const noexcep
 }
 
 std::string_view RuntimeValidatedStateTransfer::target_plan_sha256() const noexcept {
-    return state_ == nullptr ? std::string_view{} :
-                               std::string_view(state_->target_plan_sha256);
+    return state_ == nullptr ? std::string_view{} : std::string_view(state_->target_plan_sha256);
 }
 
 std::string_view RuntimeValidatedStateTransfer::state_bundle_sha256() const noexcept {
-    return state_ == nullptr ? std::string_view{} :
-                               std::string_view(state_->state_bundle_sha256);
+    return state_ == nullptr ? std::string_view{} : std::string_view(state_->state_bundle_sha256);
 }
 
 std::uint64_t RuntimeValidatedStateTransfer::transfer_fence_sequence() const noexcept {
@@ -2007,15 +1948,15 @@ RuntimeValidatedStateTransfer::source_barrier_snapshot() const noexcept {
                              : state_->source_barrier_snapshot;
 }
 
-void RuntimeValidatedStateTransfer::abandon() noexcept { abort_for_host(); }
+void RuntimeValidatedStateTransfer::abandon() noexcept {
+    abort_for_host();
+}
 
 RuntimeStateTransferStatus RuntimeValidatedStateTransfer::prepare_for_host(
-    const RuntimeIncarnationRef &expected_source,
-    std::string_view expected_source_plan_sha256,
+    const RuntimeIncarnationRef &expected_source, std::string_view expected_source_plan_sha256,
     std::string_view expected_target_plan_sha256,
     const RuntimeIdentity128 &expected_candidate_resource_identity,
-    std::uint64_t expected_lifecycle_ticket,
-    std::uint64_t expected_candidate_sequence,
+    std::uint64_t expected_lifecycle_ticket, std::uint64_t expected_candidate_sequence,
     std::uint64_t expected_mutation_fence_sequence) {
     if (state_ == nullptr) {
         return failure(RuntimeStateTransferError::InvalidArgument,
@@ -2081,33 +2022,32 @@ void RuntimeValidatedStateTransfer::commit_for_host() noexcept {
             import_transaction->commit();
         }
         {
-        std::lock_guard<std::mutex> state_lock(state_->mutex);
-        if (state_->lifecycle != RuntimeValidatedTransferLifecycle::Committing) {
-            return;
-        }
-        const auto token = state_->barrier_token;
-        if (token != nullptr) {
-            std::lock_guard<std::mutex> token_lock(token->mutex);
-            const auto coordinator = token->coordinator.lock();
-            if (coordinator != nullptr) {
-                std::lock_guard<std::mutex> coordinator_lock(coordinator->mutex);
-                if (coordinator->phase == RuntimeEpisodePhase::ReplacementBarrier &&
-                    coordinator->open_barrier_nonce == token->barrier_nonce) {
-                    coordinator->phase = RuntimeEpisodePhase::TransferCommitted;
-                    coordinator->open_barrier_nonce = {};
-                }
+            std::lock_guard<std::mutex> state_lock(state_->mutex);
+            if (state_->lifecycle != RuntimeValidatedTransferLifecycle::Committing) {
+                return;
             }
-            token->released = true;
-        }
-        state_->lifecycle = RuntimeValidatedTransferLifecycle::Committed;
-        if (state_->quiescence_token != nullptr) {
-            std::lock_guard<std::mutex> quiescence_lock(
-                state_->quiescence_token->mutex);
-            state_->quiescence_token->released = true;
-            state_->quiescence_token->host_rollback = {};
-        }
-        state_->coordinator_owner.reset();
-        end_transfer = std::move(state_->host_end_transfer);
+            const auto token = state_->barrier_token;
+            if (token != nullptr) {
+                std::lock_guard<std::mutex> token_lock(token->mutex);
+                const auto coordinator = token->coordinator.lock();
+                if (coordinator != nullptr) {
+                    std::lock_guard<std::mutex> coordinator_lock(coordinator->mutex);
+                    if (coordinator->phase == RuntimeEpisodePhase::ReplacementBarrier &&
+                        coordinator->open_barrier_nonce == token->barrier_nonce) {
+                        coordinator->phase = RuntimeEpisodePhase::TransferCommitted;
+                        coordinator->open_barrier_nonce = {};
+                    }
+                }
+                token->released = true;
+            }
+            state_->lifecycle = RuntimeValidatedTransferLifecycle::Committed;
+            if (state_->quiescence_token != nullptr) {
+                std::lock_guard<std::mutex> quiescence_lock(state_->quiescence_token->mutex);
+                state_->quiescence_token->released = true;
+                state_->quiescence_token->host_rollback = {};
+            }
+            state_->coordinator_owner.reset();
+            end_transfer = std::move(state_->host_end_transfer);
         }
         if (end_transfer) {
             end_transfer();
@@ -2126,15 +2066,15 @@ void RuntimeValidatedStateTransfer::abort_for_host() noexcept {
         std::function<void()> end_transfer;
         std::shared_ptr<RuntimeStateOwnerImportTransaction> import_transaction;
         {
-        std::lock_guard<std::mutex> state_lock(state_->mutex);
-        if (state_->lifecycle == RuntimeValidatedTransferLifecycle::Committed ||
-            state_->lifecycle == RuntimeValidatedTransferLifecycle::Aborted ||
-            state_->lifecycle == RuntimeValidatedTransferLifecycle::Committing ||
-            state_->lifecycle == RuntimeValidatedTransferLifecycle::Aborting) {
-            return;
-        }
-        state_->lifecycle = RuntimeValidatedTransferLifecycle::Aborting;
-        import_transaction = std::move(state_->import_transaction);
+            std::lock_guard<std::mutex> state_lock(state_->mutex);
+            if (state_->lifecycle == RuntimeValidatedTransferLifecycle::Committed ||
+                state_->lifecycle == RuntimeValidatedTransferLifecycle::Aborted ||
+                state_->lifecycle == RuntimeValidatedTransferLifecycle::Committing ||
+                state_->lifecycle == RuntimeValidatedTransferLifecycle::Aborting) {
+                return;
+            }
+            state_->lifecycle = RuntimeValidatedTransferLifecycle::Aborting;
+            import_transaction = std::move(state_->import_transaction);
         }
         if (import_transaction != nullptr) {
             // Abort provisional target state before reopening the source, and
@@ -2142,33 +2082,32 @@ void RuntimeValidatedStateTransfer::abort_for_host() noexcept {
             import_transaction->abort();
         }
         {
-        std::lock_guard<std::mutex> state_lock(state_->mutex);
-        if (state_->lifecycle != RuntimeValidatedTransferLifecycle::Aborting) {
-            return;
-        }
-        const auto token = state_->barrier_token;
-        if (token != nullptr) {
-            std::lock_guard<std::mutex> token_lock(token->mutex);
-            const auto coordinator = token->coordinator.lock();
-            if (coordinator != nullptr) {
-                std::lock_guard<std::mutex> coordinator_lock(coordinator->mutex);
-                if (coordinator->phase == RuntimeEpisodePhase::ReplacementBarrier &&
-                    coordinator->open_barrier_nonce == token->barrier_nonce) {
-                    coordinator->phase = RuntimeEpisodePhase::Terminal;
-                    coordinator->open_barrier_nonce = {};
-                }
+            std::lock_guard<std::mutex> state_lock(state_->mutex);
+            if (state_->lifecycle != RuntimeValidatedTransferLifecycle::Aborting) {
+                return;
             }
-            token->released = true;
-        }
-        state_->lifecycle = RuntimeValidatedTransferLifecycle::Aborted;
-        if (state_->quiescence_token != nullptr) {
-            std::lock_guard<std::mutex> quiescence_lock(
-                state_->quiescence_token->mutex);
-            state_->quiescence_token->released = true;
-            rollback = std::move(state_->quiescence_token->host_rollback);
-        }
-        state_->coordinator_owner.reset();
-        end_transfer = std::move(state_->host_end_transfer);
+            const auto token = state_->barrier_token;
+            if (token != nullptr) {
+                std::lock_guard<std::mutex> token_lock(token->mutex);
+                const auto coordinator = token->coordinator.lock();
+                if (coordinator != nullptr) {
+                    std::lock_guard<std::mutex> coordinator_lock(coordinator->mutex);
+                    if (coordinator->phase == RuntimeEpisodePhase::ReplacementBarrier &&
+                        coordinator->open_barrier_nonce == token->barrier_nonce) {
+                        coordinator->phase = RuntimeEpisodePhase::Terminal;
+                        coordinator->open_barrier_nonce = {};
+                    }
+                }
+                token->released = true;
+            }
+            state_->lifecycle = RuntimeValidatedTransferLifecycle::Aborted;
+            if (state_->quiescence_token != nullptr) {
+                std::lock_guard<std::mutex> quiescence_lock(state_->quiescence_token->mutex);
+                state_->quiescence_token->released = true;
+                rollback = std::move(state_->quiescence_token->host_rollback);
+            }
+            state_->coordinator_owner.reset();
+            end_transfer = std::move(state_->host_end_transfer);
         }
         if (rollback) {
             rollback();
