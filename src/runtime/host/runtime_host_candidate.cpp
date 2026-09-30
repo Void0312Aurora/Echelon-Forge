@@ -2568,463 +2568,455 @@ RuntimeHostCandidate::acquire_lease(const RuntimeShadowEpisodeCapability &episod
                     .lease = {},
                     .request_ref = {}};
         }
-        const auto coordinator = state_->world_coordinators.find(episode.episode_.world.world_slot);
-        if (coordinator == state_->world_coordinators.end() || coordinator->second == nullptr) {
-            return {.status = failure(RuntimeHostError::StaleReference,
-                                      "episode world slot has no host-owned coordinator"),
-                    .lease = {},
-                    .request_ref = {}};
-        }
-        const RuntimeEpisodeCoordinatorSnapshot episode_snapshot = coordinator->second->snapshot();
-        if (kind == RuntimeLeaseKind::TruthMutating &&
-            episode_snapshot.phase == RuntimeEpisodePhase::Terminal) {
-            return {.status = failure(
-                        RuntimeHostError::AdmissionClosed,
-                        "truth-mutating lease is closed at terminal episode; use reset intent"),
-                    .lease = {},
-                    .request_ref = {}};
-        }
-        if (!increment_nonzero(state_->last_request_sequence)) {
-            return {.status = failure(RuntimeHostError::RequestSequenceExhausted,
-                                      "request sequence exhausted"),
-                    .lease = {},
-                    .request_ref = {}};
-        }
-        RuntimeRequestRef request_ref = {.episode = episode.episode_,
-                                         .request_sequence = state_->last_request_sequence};
-        if (kind == RuntimeLeaseKind::TruthMutating) {
-            ++active->truth_mutating_leases;
-        } else {
-            ++active->read_only_result_leases;
-        }
-        auto token = std::make_shared<RuntimeLeaseToken>(state_, active, request_ref, kind);
-        return {.status = success(),
-                .lease = RuntimeInstanceLease(std::move(token)),
-                .request_ref = request_ref};
     }
+    const auto coordinator = state_->world_coordinators.find(episode.episode_.world.world_slot);
+    if (coordinator == state_->world_coordinators.end() || coordinator->second == nullptr) {
+        return {.status = failure(RuntimeHostError::StaleReference,
+                                  "episode world slot has no host-owned coordinator"),
+                .lease = {},
+                .request_ref = {}};
+    }
+    const RuntimeEpisodeCoordinatorSnapshot episode_snapshot = coordinator->second->snapshot();
+    if (kind == RuntimeLeaseKind::TruthMutating &&
+        episode_snapshot.phase == RuntimeEpisodePhase::Terminal) {
+        return {.status =
+                    failure(RuntimeHostError::AdmissionClosed,
+                            "truth-mutating lease is closed at terminal episode; use reset intent"),
+                .lease = {},
+                .request_ref = {}};
+    }
+    if (!increment_nonzero(state_->last_request_sequence)) {
+        return {.status = failure(RuntimeHostError::RequestSequenceExhausted,
+                                  "request sequence exhausted"),
+                .lease = {},
+                .request_ref = {}};
+    }
+    RuntimeRequestRef request_ref = {.episode = episode.episode_,
+                                     .request_sequence = state_->last_request_sequence};
+    if (kind == RuntimeLeaseKind::TruthMutating) {
+        ++active->truth_mutating_leases;
+    } else {
+        ++active->read_only_result_leases;
+    }
+    auto token = std::make_shared<RuntimeLeaseToken>(state_, active, request_ref, kind);
+    return {.status = success(),
+            .lease = RuntimeInstanceLease(std::move(token)),
+            .request_ref = request_ref};
+}
 
-    RuntimeHostStatus RuntimeHostCandidate::validate_result(const RuntimeInstanceLease &lease,
-                                                            const RuntimeResultRef &result) const {
-        if (!result.well_formed() || result.request != lease.request_ref()) {
-            return failure(RuntimeHostError::ResultMismatch,
-                           "result identity does not match the admitted lease");
-        }
-        const std::shared_ptr<RuntimeLeaseToken> token = lease.token_;
-        std::unique_lock<std::mutex> lock(state_->mutex);
-        if (token == nullptr || token->state != state_ || token->slot == nullptr) {
-            return failure(RuntimeHostError::StaleReference, "lease belongs to another host");
-        }
-        if (!token->active.load(std::memory_order_acquire)) {
-            return failure(RuntimeHostError::StaleReference,
-                           "lease was settled before terminal-result admission");
-        }
-        if (token->slot->state == RuntimeSlotState::Active &&
-            token->slot->result_publication_open) {
-            bool expected = false;
-            return token->result_accepted.compare_exchange_strong(expected, true)
-                       ? success()
-                       : failure(RuntimeHostError::DuplicateResult,
-                                 "terminal result was already accepted for this request");
-        }
-        if (token->slot->state == RuntimeSlotState::Draining &&
-            token->lease_kind == RuntimeLeaseKind::ReadOnlyResult &&
-            token->slot->result_publication_open) {
-            bool expected = false;
-            return token->result_accepted.compare_exchange_strong(expected, true)
-                       ? success()
-                       : failure(RuntimeHostError::DuplicateResult,
-                                 "terminal result was already accepted for this request");
-        }
+RuntimeHostStatus RuntimeHostCandidate::validate_result(const RuntimeInstanceLease &lease,
+                                                        const RuntimeResultRef &result) const {
+    if (!result.well_formed() || result.request != lease.request_ref()) {
+        return failure(RuntimeHostError::ResultMismatch,
+                       "result identity does not match the admitted lease");
+    }
+    const std::shared_ptr<RuntimeLeaseToken> token = lease.token_;
+    std::unique_lock<std::mutex> lock(state_->mutex);
+    if (token == nullptr || token->state != state_ || token->slot == nullptr) {
+        return failure(RuntimeHostError::StaleReference, "lease belongs to another host");
+    }
+    if (!token->active.load(std::memory_order_acquire)) {
         return failure(RuntimeHostError::StaleReference,
-                       "slot no longer permits result publication for this lease");
+                       "lease was settled before terminal-result admission");
     }
+    if (token->slot->state == RuntimeSlotState::Active && token->slot->result_publication_open) {
+        bool expected = false;
+        return token->result_accepted.compare_exchange_strong(expected, true)
+                   ? success()
+                   : failure(RuntimeHostError::DuplicateResult,
+                             "terminal result was already accepted for this request");
+    }
+    if (token->slot->state == RuntimeSlotState::Draining &&
+        token->lease_kind == RuntimeLeaseKind::ReadOnlyResult &&
+        token->slot->result_publication_open) {
+        bool expected = false;
+        return token->result_accepted.compare_exchange_strong(expected, true)
+                   ? success()
+                   : failure(RuntimeHostError::DuplicateResult,
+                             "terminal result was already accepted for this request");
+    }
+    return failure(RuntimeHostError::StaleReference,
+                   "slot no longer permits result publication for this lease");
+}
 
-    RuntimeShutdownResult RuntimeHostCandidate::begin_shutdown(std::uint64_t now_tick,
-                                                               std::uint64_t deadline_tick) {
-        const bool injected_loss =
-            invoke_cas_fault_injector(state_, RuntimeSlotCasOperation::ShutdownUnpublish);
-        std::unique_lock<std::mutex> lock(state_->mutex);
-        if (state_->host_state == RuntimeHostState::Stopped) {
-            return {.status = success(),
-                    .shutdown_ticket = state_->shutdown_ticket,
-                    .state = RuntimeHostState::Stopped,
-                    .publication_ticket = state_->last_publication_ticket};
-        }
-        if (state_->host_state == RuntimeHostState::FailStopped) {
-            return {.status = failure(RuntimeHostError::QuarantineUnresolved,
-                                      "host is fail-stopped with unresolved resources"),
-                    .shutdown_ticket = state_->shutdown_ticket,
-                    .state = RuntimeHostState::FailStopped,
-                    .publication_ticket = state_->last_publication_ticket};
-        }
-        if (state_->host_state == RuntimeHostState::ShuttingDown) {
-            RuntimeHostStatus status = progress_shutdown(*state_, lock, now_tick);
-            return {.status = status,
-                    .shutdown_ticket = state_->shutdown_ticket,
-                    .state = state_->host_state,
-                    .publication_ticket = state_->last_publication_ticket};
-        }
-        if (!increment_nonzero(state_->last_lifecycle_ticket)) {
-            state_->host_state = RuntimeHostState::FailStopped;
-            return {.status =
-                        failure(RuntimeHostError::TicketExhausted, "shutdown ticket exhausted"),
-                    .shutdown_ticket = 0,
-                    .state = state_->host_state,
-                    .publication_ticket = state_->last_publication_ticket};
-        }
-        state_->shutdown_ticket = state_->last_lifecycle_ticket;
-        state_->shutdown_deadline_tick = std::max(now_tick, deadline_tick);
-        const std::shared_ptr<RuntimeHostSlot> active =
-            state_->active.load(std::memory_order_acquire);
-        if (active != nullptr && active->state == RuntimeSlotState::Publishing) {
-            return {.status =
-                        failure(RuntimeHostError::ShutdownPending,
-                                "shutdown is waiting for target import publication to finish"),
-                    .shutdown_ticket = state_->shutdown_ticket,
-                    .state = state_->host_state,
-                    .publication_ticket = state_->last_publication_ticket};
-        }
-        if (state_->native_episode_submissions_in_flight != 0 ||
-            state_->state_transfers_in_flight.load(std::memory_order_acquire) != 0) {
-            return {
-                .status = failure(
-                    RuntimeHostError::ShutdownPending,
-                    "shutdown is waiting for native episode or state-transfer callbacks to settle"),
+RuntimeShutdownResult RuntimeHostCandidate::begin_shutdown(std::uint64_t now_tick,
+                                                           std::uint64_t deadline_tick) {
+    const bool injected_loss =
+        invoke_cas_fault_injector(state_, RuntimeSlotCasOperation::ShutdownUnpublish);
+    std::unique_lock<std::mutex> lock(state_->mutex);
+    if (state_->host_state == RuntimeHostState::Stopped) {
+        return {.status = success(),
                 .shutdown_ticket = state_->shutdown_ticket,
-                .state = state_->host_state,
+                .state = RuntimeHostState::Stopped,
                 .publication_ticket = state_->last_publication_ticket};
-        }
-        state_->host_state = RuntimeHostState::ShuttingDown;
-
-        if (active != nullptr) {
-            const RuntimeSlotState prior_active_state = active->state;
-            const bool prior_admission_open = active->admission_open;
-            const bool prior_result_publication_open = active->result_publication_open;
-            active->admission_open = false;
-            active->result_publication_open = false;
-            active->state = RuntimeSlotState::ShuttingDown;
-            std::shared_ptr<RuntimeHostSlot> expected = active;
-            const RuntimeHostStatus unpublished =
-                compare_exchange_active(*state_, expected, {}, injected_loss);
-            if (!unpublished) {
-                active->state = prior_active_state;
-                active->admission_open = prior_admission_open;
-                active->result_publication_open = prior_result_publication_open;
-                state_->host_state = active->state == RuntimeSlotState::ActiveFaulted
-                                         ? RuntimeHostState::Faulted
-                                         : RuntimeHostState::Active;
-                return {.status = unpublished,
-                        .shutdown_ticket = state_->shutdown_ticket,
-                        .state = state_->host_state,
-                        .publication_ticket = state_->last_publication_ticket};
-            }
-            const RuntimeHostStatus cancellation = cancel_slot(*state_, lock, active);
-            if (!cancellation) {
-                state_->shutdown_pending = active;
-                return {.status = cancellation,
-                        .shutdown_ticket = state_->shutdown_ticket,
-                        .state = state_->host_state,
-                        .publication_ticket = state_->last_publication_ticket};
-            }
-            state_->shutdown_pending = active;
-        }
+    }
+    if (state_->host_state == RuntimeHostState::FailStopped) {
+        return {.status = failure(RuntimeHostError::QuarantineUnresolved,
+                                  "host is fail-stopped with unresolved resources"),
+                .shutdown_ticket = state_->shutdown_ticket,
+                .state = RuntimeHostState::FailStopped,
+                .publication_ticket = state_->last_publication_ticket};
+    }
+    if (state_->host_state == RuntimeHostState::ShuttingDown) {
         RuntimeHostStatus status = progress_shutdown(*state_, lock, now_tick);
         return {.status = status,
                 .shutdown_ticket = state_->shutdown_ticket,
                 .state = state_->host_state,
                 .publication_ticket = state_->last_publication_ticket};
     }
+    if (!increment_nonzero(state_->last_lifecycle_ticket)) {
+        state_->host_state = RuntimeHostState::FailStopped;
+        return {.status = failure(RuntimeHostError::TicketExhausted, "shutdown ticket exhausted"),
+                .shutdown_ticket = 0,
+                .state = state_->host_state,
+                .publication_ticket = state_->last_publication_ticket};
+    }
+    state_->shutdown_ticket = state_->last_lifecycle_ticket;
+    state_->shutdown_deadline_tick = std::max(now_tick, deadline_tick);
+    const std::shared_ptr<RuntimeHostSlot> active = state_->active.load(std::memory_order_acquire);
+    if (active != nullptr && active->state == RuntimeSlotState::Publishing) {
+        return {.status = failure(RuntimeHostError::ShutdownPending,
+                                  "shutdown is waiting for target import publication to finish"),
+                .shutdown_ticket = state_->shutdown_ticket,
+                .state = state_->host_state,
+                .publication_ticket = state_->last_publication_ticket};
+    }
+    if (state_->native_episode_submissions_in_flight != 0 ||
+        state_->state_transfers_in_flight.load(std::memory_order_acquire) != 0) {
+        return {.status = failure(
+                    RuntimeHostError::ShutdownPending,
+                    "shutdown is waiting for native episode or state-transfer callbacks to settle"),
+                .shutdown_ticket = state_->shutdown_ticket,
+                .state = state_->host_state,
+                .publication_ticket = state_->last_publication_ticket};
+    }
+    state_->host_state = RuntimeHostState::ShuttingDown;
 
-    RuntimeHostStatus RuntimeHostCandidate::poll(std::uint64_t now_tick) {
-        std::unique_lock<std::mutex> lock(state_->mutex);
-        const std::shared_ptr<RuntimeHostSlot> active_before_probe =
-            state_->active.load(std::memory_order_acquire);
-        const bool candidate_timeout_cas_expected =
-            state_->candidate != nullptr && active_before_probe != nullptr &&
-            state_->candidate->lifecycle_deadline_tick != 0 &&
-            now_tick >= state_->candidate->lifecycle_deadline_tick &&
-            !no_truth_leases(*active_before_probe) &&
-            (active_before_probe->state == RuntimeSlotState::Quiescing ||
-             active_before_probe->state == RuntimeSlotState::RecoveryQuiesced);
-        const bool fault_timeout_cas_expected =
-            state_->host_state == RuntimeHostState::Faulted && active_before_probe != nullptr &&
-            active_before_probe->state == RuntimeSlotState::ActiveFaulted &&
-            now_tick >= active_before_probe->drain_deadline_tick;
-        lock.unlock();
-        const bool injected_quiesce_loss =
-            candidate_timeout_cas_expected &&
-            invoke_cas_fault_injector(state_, RuntimeSlotCasOperation::QuiesceTimeoutUnpublish);
-        const bool injected_fault_loss =
-            fault_timeout_cas_expected &&
-            invoke_cas_fault_injector(state_, RuntimeSlotCasOperation::FaultTimeoutUnpublish);
-        lock.lock();
-        apply_pending_quiescence_rollback(*state_);
-        const RuntimeHostStatus candidate_deadline =
-            progress_candidate_deadline(*state_, lock, now_tick, injected_quiesce_loss);
-        if (!candidate_deadline) {
-            return candidate_deadline;
+    if (active != nullptr) {
+        const RuntimeSlotState prior_active_state = active->state;
+        const bool prior_admission_open = active->admission_open;
+        const bool prior_result_publication_open = active->result_publication_open;
+        active->admission_open = false;
+        active->result_publication_open = false;
+        active->state = RuntimeSlotState::ShuttingDown;
+        std::shared_ptr<RuntimeHostSlot> expected = active;
+        const RuntimeHostStatus unpublished =
+            compare_exchange_active(*state_, expected, {}, injected_loss);
+        if (!unpublished) {
+            active->state = prior_active_state;
+            active->admission_open = prior_admission_open;
+            active->result_publication_open = prior_result_publication_open;
+            state_->host_state = active->state == RuntimeSlotState::ActiveFaulted
+                                     ? RuntimeHostState::Faulted
+                                     : RuntimeHostState::Active;
+            return {.status = unpublished,
+                    .shutdown_ticket = state_->shutdown_ticket,
+                    .state = state_->host_state,
+                    .publication_ticket = state_->last_publication_ticket};
         }
-        const RuntimeHostStatus fault_deadline =
-            progress_fault_deadline(*state_, lock, now_tick, injected_fault_loss);
-        if (!fault_deadline) {
-            return fault_deadline;
+        const RuntimeHostStatus cancellation = cancel_slot(*state_, lock, active);
+        if (!cancellation) {
+            state_->shutdown_pending = active;
+            return {.status = cancellation,
+                    .shutdown_ticket = state_->shutdown_ticket,
+                    .state = state_->host_state,
+                    .publication_ticket = state_->last_publication_ticket};
         }
-        if (state_->host_state == RuntimeHostState::Stopped ||
-            state_->host_state == RuntimeHostState::FailStopped) {
-            return state_->host_state == RuntimeHostState::Stopped
-                       ? success()
-                       : failure(RuntimeHostError::QuarantineUnresolved,
-                                 "host is fail-stopped with unresolved resources");
-        }
-        if (state_->draining != nullptr) {
-            const std::shared_ptr<RuntimeHostSlot> draining = state_->draining;
-            if (no_leases(*draining)) {
-                if (reclaim_slot(*state_, lock, draining)) {
-                    clear_slot_reference(*state_, draining);
-                } else if (draining->state == RuntimeSlotState::Quarantined) {
-                    state_->draining.reset();
-                    retain_quarantine(*state_, draining);
-                }
-            } else if (now_tick >= draining->drain_deadline_tick) {
+        state_->shutdown_pending = active;
+    }
+    RuntimeHostStatus status = progress_shutdown(*state_, lock, now_tick);
+    return {.status = status,
+            .shutdown_ticket = state_->shutdown_ticket,
+            .state = state_->host_state,
+            .publication_ticket = state_->last_publication_ticket};
+}
+
+RuntimeHostStatus RuntimeHostCandidate::poll(std::uint64_t now_tick) {
+    std::unique_lock<std::mutex> lock(state_->mutex);
+    const std::shared_ptr<RuntimeHostSlot> active_before_probe =
+        state_->active.load(std::memory_order_acquire);
+    const bool candidate_timeout_cas_expected =
+        state_->candidate != nullptr && active_before_probe != nullptr &&
+        state_->candidate->lifecycle_deadline_tick != 0 &&
+        now_tick >= state_->candidate->lifecycle_deadline_tick &&
+        !no_truth_leases(*active_before_probe) &&
+        (active_before_probe->state == RuntimeSlotState::Quiescing ||
+         active_before_probe->state == RuntimeSlotState::RecoveryQuiesced);
+    const bool fault_timeout_cas_expected =
+        state_->host_state == RuntimeHostState::Faulted && active_before_probe != nullptr &&
+        active_before_probe->state == RuntimeSlotState::ActiveFaulted &&
+        now_tick >= active_before_probe->drain_deadline_tick;
+    lock.unlock();
+    const bool injected_quiesce_loss =
+        candidate_timeout_cas_expected &&
+        invoke_cas_fault_injector(state_, RuntimeSlotCasOperation::QuiesceTimeoutUnpublish);
+    const bool injected_fault_loss =
+        fault_timeout_cas_expected &&
+        invoke_cas_fault_injector(state_, RuntimeSlotCasOperation::FaultTimeoutUnpublish);
+    lock.lock();
+    apply_pending_quiescence_rollback(*state_);
+    const RuntimeHostStatus candidate_deadline =
+        progress_candidate_deadline(*state_, lock, now_tick, injected_quiesce_loss);
+    if (!candidate_deadline) {
+        return candidate_deadline;
+    }
+    const RuntimeHostStatus fault_deadline =
+        progress_fault_deadline(*state_, lock, now_tick, injected_fault_loss);
+    if (!fault_deadline) {
+        return fault_deadline;
+    }
+    if (state_->host_state == RuntimeHostState::Stopped ||
+        state_->host_state == RuntimeHostState::FailStopped) {
+        return state_->host_state == RuntimeHostState::Stopped
+                   ? success()
+                   : failure(RuntimeHostError::QuarantineUnresolved,
+                             "host is fail-stopped with unresolved resources");
+    }
+    if (state_->draining != nullptr) {
+        const std::shared_ptr<RuntimeHostSlot> draining = state_->draining;
+        if (no_leases(*draining)) {
+            if (reclaim_slot(*state_, lock, draining)) {
+                clear_slot_reference(*state_, draining);
+            } else if (draining->state == RuntimeSlotState::Quarantined) {
                 state_->draining.reset();
-                return move_to_quarantine(*state_, draining);
+                retain_quarantine(*state_, draining);
             }
+        } else if (now_tick >= draining->drain_deadline_tick) {
+            state_->draining.reset();
+            return move_to_quarantine(*state_, draining);
         }
-        if (state_->host_state == RuntimeHostState::ShuttingDown) {
-            return progress_shutdown(*state_, lock, now_tick);
-        }
+    }
+    if (state_->host_state == RuntimeHostState::ShuttingDown) {
+        return progress_shutdown(*state_, lock, now_tick);
+    }
+    return success();
+}
+
+RuntimeHostStatus RuntimeHostCandidate::retry_quarantined_reclamation() {
+    std::unique_lock<std::mutex> lock(state_->mutex);
+    if (state_->quarantined.empty()) {
         return success();
     }
+    bool unresolved = false;
+    const auto retained = state_->quarantined;
 
-    RuntimeHostStatus RuntimeHostCandidate::retry_quarantined_reclamation() {
-        std::unique_lock<std::mutex> lock(state_->mutex);
-        if (state_->quarantined.empty()) {
-            return success();
+    // First resolve any replacement publication whose owner transaction was
+    // left ambiguous.  The source slot is intentionally kept quarantined
+    // until this classification completes, so reclamation cannot destroy the
+    // rollback target before the durable transaction is settled.
+    for (const std::shared_ptr<RuntimeHostSlot> &quarantined : retained) {
+        if (quarantined == nullptr || quarantined->rollback_target == nullptr ||
+            !quarantined->owner_publication_recovery_pending ||
+            quarantined->state != RuntimeSlotState::Quarantined ||
+            (!quarantined->validated_transfer.ambiguous() &&
+             !quarantined->validated_transfer.committed() &&
+             !quarantined->validated_transfer.aborted())) {
+            continue;
         }
-        bool unresolved = false;
-        const auto retained = state_->quarantined;
-
-        // First resolve any replacement publication whose owner transaction was
-        // left ambiguous.  The source slot is intentionally kept quarantined
-        // until this classification completes, so reclamation cannot destroy the
-        // rollback target before the durable transaction is settled.
-        for (const std::shared_ptr<RuntimeHostSlot> &quarantined : retained) {
-            if (quarantined == nullptr || quarantined->rollback_target == nullptr ||
-                !quarantined->owner_publication_recovery_pending ||
-                quarantined->state != RuntimeSlotState::Quarantined ||
-                (!quarantined->validated_transfer.ambiguous() &&
-                 !quarantined->validated_transfer.committed() &&
-                 !quarantined->validated_transfer.aborted())) {
+        const std::shared_ptr<RuntimeHostSlot> rollback_target = quarantined->rollback_target;
+        lock.unlock();
+        const RuntimeStateTransferStatus recovered =
+            quarantined->validated_transfer.recover_for_host(0, quarantined->drain_deadline_tick);
+        lock.lock();
+        if (!recovered) {
+            unresolved = true;
+            continue;
+        }
+        if (quarantined->validated_transfer.committed()) {
+            std::shared_ptr<RuntimeHostSlot> expected;
+            const RuntimeHostStatus published =
+                compare_exchange_active(*state_, expected, quarantined, false);
+            if (!published) {
+                unresolved = true;
                 continue;
             }
-            const std::shared_ptr<RuntimeHostSlot> rollback_target = quarantined->rollback_target;
+            quarantined->state = RuntimeSlotState::Active;
+            quarantined->owner_publication_recovery_pending = false;
+            quarantined->admission_open = true;
+            quarantined->result_publication_open = true;
+            rollback_target->state = RuntimeSlotState::Draining;
+            rollback_target->admission_open = false;
+            rollback_target->result_publication_open = true;
+            rollback_target->drain_deadline_tick = quarantined->drain_deadline_tick;
+            state_->draining = rollback_target;
+            state_->rollback_world_authority.clear();
+            state_->rollback_world_coordinators.clear();
+            state_->host_state = RuntimeHostState::Active;
+            state_->quarantined.erase(
+                std::remove(state_->quarantined.begin(), state_->quarantined.end(), quarantined),
+                state_->quarantined.end());
             lock.unlock();
-            const RuntimeStateTransferStatus recovered =
-                quarantined->validated_transfer.recover_for_host(0,
-                                                                 quarantined->drain_deadline_tick);
+            quarantined->validated_transfer.release_host_transfer_fence();
             lock.lock();
-            if (!recovered) {
-                unresolved = true;
-                continue;
-            }
-            if (quarantined->validated_transfer.committed()) {
-                std::shared_ptr<RuntimeHostSlot> expected;
-                const RuntimeHostStatus published =
-                    compare_exchange_active(*state_, expected, quarantined, false);
-                if (!published) {
-                    unresolved = true;
-                    continue;
-                }
-                quarantined->state = RuntimeSlotState::Active;
-                quarantined->owner_publication_recovery_pending = false;
-                quarantined->admission_open = true;
-                quarantined->result_publication_open = true;
-                rollback_target->state = RuntimeSlotState::Draining;
-                rollback_target->admission_open = false;
-                rollback_target->result_publication_open = true;
-                rollback_target->drain_deadline_tick = quarantined->drain_deadline_tick;
-                state_->draining = rollback_target;
-                state_->rollback_world_authority.clear();
-                state_->rollback_world_coordinators.clear();
-                state_->host_state = RuntimeHostState::Active;
-                state_->quarantined.erase(std::remove(state_->quarantined.begin(),
-                                                      state_->quarantined.end(), quarantined),
-                                          state_->quarantined.end());
-                lock.unlock();
-                quarantined->validated_transfer.release_host_transfer_fence();
-                lock.lock();
-                continue;
-            }
-            if (quarantined->validated_transfer.aborted()) {
-                std::shared_ptr<RuntimeHostSlot> expected;
-                const RuntimeHostStatus published =
-                    compare_exchange_active(*state_, expected, rollback_target, false);
-                if (!published) {
-                    unresolved = true;
-                    continue;
-                }
-                if (!state_->rollback_world_authority.empty() ||
-                    !state_->rollback_world_coordinators.empty()) {
-                    state_->world_authority = std::move(state_->rollback_world_authority);
-                    state_->world_coordinators = std::move(state_->rollback_world_coordinators);
-                }
-                rollback_target->state = RuntimeSlotState::Active;
-                rollback_target->admission_open = true;
-                rollback_target->result_publication_open = true;
-                rollback_target->final_transfer_fence_sequence = 0;
-                rollback_target->quiescence_capability_live.store(false, std::memory_order_release);
-                state_->host_state = RuntimeHostState::Active;
-                quarantined->state = RuntimeSlotState::CandidateFailed;
-                quarantined->owner_publication_recovery_pending = false;
-                quarantined->admission_open = false;
-                quarantined->result_publication_open = false;
-                state_->quarantined.erase(std::remove(state_->quarantined.begin(),
-                                                      state_->quarantined.end(), quarantined),
-                                          state_->quarantined.end());
-                state_->quarantined.erase(std::remove(state_->quarantined.begin(),
-                                                      state_->quarantined.end(), rollback_target),
-                                          state_->quarantined.end());
-                lock.unlock();
-                quarantined->validated_transfer.release_host_transfer_fence();
-                lock.lock();
-                if (!reclaim_slot(*state_, lock, quarantined)) {
-                    unresolved = true;
-                }
-            }
+            continue;
         }
-
-        for (const std::shared_ptr<RuntimeHostSlot> &quarantined : retained) {
-            if (quarantined == nullptr || quarantined->state != RuntimeSlotState::Quarantined) {
-                continue;
-            }
-            const bool waits_for_replacement =
-                std::any_of(retained.begin(), retained.end(), [&](const auto &candidate) {
-                    return candidate != nullptr &&
-                           candidate->state == RuntimeSlotState::Quarantined &&
-                           candidate->owner_publication_recovery_pending &&
-                           candidate->rollback_target == quarantined;
-                });
-            if (waits_for_replacement) {
+        if (quarantined->validated_transfer.aborted()) {
+            std::shared_ptr<RuntimeHostSlot> expected;
+            const RuntimeHostStatus published =
+                compare_exchange_active(*state_, expected, rollback_target, false);
+            if (!published) {
                 unresolved = true;
                 continue;
             }
-            if (!no_leases(*quarantined)) {
-                unresolved = true;
-                continue;
+            if (!state_->rollback_world_authority.empty() ||
+                !state_->rollback_world_coordinators.empty()) {
+                state_->world_authority = std::move(state_->rollback_world_authority);
+                state_->world_coordinators = std::move(state_->rollback_world_coordinators);
             }
+            rollback_target->state = RuntimeSlotState::Active;
+            rollback_target->admission_open = true;
+            rollback_target->result_publication_open = true;
+            rollback_target->final_transfer_fence_sequence = 0;
+            rollback_target->quiescence_capability_live.store(false, std::memory_order_release);
+            state_->host_state = RuntimeHostState::Active;
+            quarantined->state = RuntimeSlotState::CandidateFailed;
+            quarantined->owner_publication_recovery_pending = false;
+            quarantined->admission_open = false;
+            quarantined->result_publication_open = false;
+            state_->quarantined.erase(
+                std::remove(state_->quarantined.begin(), state_->quarantined.end(), quarantined),
+                state_->quarantined.end());
+            state_->quarantined.erase(std::remove(state_->quarantined.begin(),
+                                                  state_->quarantined.end(), rollback_target),
+                                      state_->quarantined.end());
+            lock.unlock();
+            quarantined->validated_transfer.release_host_transfer_fence();
+            lock.lock();
             if (!reclaim_slot(*state_, lock, quarantined)) {
                 unresolved = true;
+            }
+        }
+    }
+
+    for (const std::shared_ptr<RuntimeHostSlot> &quarantined : retained) {
+        if (quarantined == nullptr || quarantined->state != RuntimeSlotState::Quarantined) {
+            continue;
+        }
+        const bool waits_for_replacement =
+            std::any_of(retained.begin(), retained.end(), [&](const auto &candidate) {
+                return candidate != nullptr && candidate->state == RuntimeSlotState::Quarantined &&
+                       candidate->owner_publication_recovery_pending &&
+                       candidate->rollback_target == quarantined;
+            });
+        if (waits_for_replacement) {
+            unresolved = true;
+            continue;
+        }
+        if (!no_leases(*quarantined)) {
+            unresolved = true;
+            continue;
+        }
+        if (!reclaim_slot(*state_, lock, quarantined)) {
+            unresolved = true;
+            continue;
+        }
+        clear_slot_reference(*state_, quarantined);
+    }
+    if (unresolved) {
+        return failure(RuntimeHostError::QuarantineUnresolved,
+                       "one or more quarantined resources remain retained");
+    }
+    if (state_->host_state == RuntimeHostState::ShuttingDown) {
+        return progress_shutdown(*state_, lock, state_->shutdown_deadline_tick);
+    }
+    return state_->host_state == RuntimeHostState::FailStopped
+               ? failure(RuntimeHostError::HostTerminal,
+                         "resources were released but fail-stopped host remains terminal")
+               : success();
+}
+
+RuntimeHostSnapshot RuntimeHostCandidate::snapshot() const {
+    std::unique_lock<std::mutex> lock(state_->mutex);
+    const std::shared_ptr<RuntimeHostSlot> active = state_->active.load(std::memory_order_acquire);
+    std::vector<RuntimeSlotSnapshot> quarantined;
+    quarantined.reserve(state_->quarantined.size());
+    for (const std::shared_ptr<RuntimeHostSlot> &slot : state_->quarantined) {
+        quarantined.push_back(snapshot_slot(*slot));
+    }
+    RuntimeHostSnapshot output{
+        .identity = state_->identity,
+        .mode = state_->config.mode,
+        .state = state_->host_state,
+        .host_instance_nonce = state_->host_instance_nonce,
+        .production_authorized = state_->production_authorized,
+        .last_lifecycle_ticket = state_->last_lifecycle_ticket,
+        .last_request_sequence = state_->last_request_sequence,
+        .shutdown_ticket = state_->shutdown_ticket,
+        .last_publication_ticket = state_->last_publication_ticket,
+        .active = active == nullptr ? std::nullopt
+                                    : std::optional<RuntimeSlotSnapshot>(snapshot_slot(*active)),
+        .candidate = state_->candidate == nullptr
+                         ? std::nullopt
+                         : std::optional<RuntimeSlotSnapshot>(snapshot_slot(*state_->candidate)),
+        .draining = state_->draining == nullptr
+                        ? std::nullopt
+                        : std::optional<RuntimeSlotSnapshot>(snapshot_slot(*state_->draining)),
+        .quarantined = std::move(quarantined),
+        .shutdown_pending =
+            state_->shutdown_pending == nullptr
+                ? std::nullopt
+                : std::optional<RuntimeSlotSnapshot>(snapshot_slot(*state_->shutdown_pending)),
+        .retired_incarnation_high_watermark = state_->retired_incarnation_high_watermark,
+    };
+    return output;
+}
+
+std::size_t RuntimeHostCandidate::orphaned_host_count() noexcept {
+    try {
+        HostOrphanRegistry &registry = orphan_registry();
+        std::lock_guard<std::mutex> lock(registry.mutex);
+        return registry.hosts.size();
+    } catch (...) {
+        return 0;
+    }
+}
+
+RuntimeHostStatus RuntimeHostCandidate::retry_orphaned_reclamation() {
+    std::vector<std::shared_ptr<RuntimeHostSharedState>> states;
+    {
+        HostOrphanRegistry &registry = orphan_registry();
+        std::lock_guard<std::mutex> lock(registry.mutex);
+        states = registry.hosts;
+    }
+
+    bool unresolved = false;
+    for (const std::shared_ptr<RuntimeHostSharedState> &state : states) {
+        std::unique_lock<std::mutex> lock(state->mutex);
+        const auto quarantined = state->quarantined;
+        for (const std::shared_ptr<RuntimeHostSlot> &slot : quarantined) {
+            if (!no_leases(*slot) || !reclaim_slot(*state, lock, slot)) {
+                unresolved = true;
                 continue;
             }
-            clear_slot_reference(*state_, quarantined);
+            clear_slot_reference(*state, slot);
         }
-        if (unresolved) {
-            return failure(RuntimeHostError::QuarantineUnresolved,
-                           "one or more quarantined resources remain retained");
-        }
-        if (state_->host_state == RuntimeHostState::ShuttingDown) {
-            return progress_shutdown(*state_, lock, state_->shutdown_deadline_tick);
-        }
-        return state_->host_state == RuntimeHostState::FailStopped
-                   ? failure(RuntimeHostError::HostTerminal,
-                             "resources were released but fail-stopped host remains terminal")
-                   : success();
-    }
-
-    RuntimeHostSnapshot RuntimeHostCandidate::snapshot() const {
-        std::unique_lock<std::mutex> lock(state_->mutex);
-        const std::shared_ptr<RuntimeHostSlot> active =
-            state_->active.load(std::memory_order_acquire);
-        std::vector<RuntimeSlotSnapshot> quarantined;
-        quarantined.reserve(state_->quarantined.size());
-        for (const std::shared_ptr<RuntimeHostSlot> &slot : state_->quarantined) {
-            quarantined.push_back(snapshot_slot(*slot));
-        }
-        RuntimeHostSnapshot output{
-            .identity = state_->identity,
-            .mode = state_->config.mode,
-            .state = state_->host_state,
-            .host_instance_nonce = state_->host_instance_nonce,
-            .production_authorized = state_->production_authorized,
-            .last_lifecycle_ticket = state_->last_lifecycle_ticket,
-            .last_request_sequence = state_->last_request_sequence,
-            .shutdown_ticket = state_->shutdown_ticket,
-            .last_publication_ticket = state_->last_publication_ticket,
-            .active = active == nullptr
-                          ? std::nullopt
-                          : std::optional<RuntimeSlotSnapshot>(snapshot_slot(*active)),
-            .candidate = state_->candidate == nullptr ? std::nullopt
-                                                      : std::optional<RuntimeSlotSnapshot>(
-                                                            snapshot_slot(*state_->candidate)),
-            .draining = state_->draining == nullptr
-                            ? std::nullopt
-                            : std::optional<RuntimeSlotSnapshot>(snapshot_slot(*state_->draining)),
-            .quarantined = std::move(quarantined),
-            .shutdown_pending =
-                state_->shutdown_pending == nullptr
-                    ? std::nullopt
-                    : std::optional<RuntimeSlotSnapshot>(snapshot_slot(*state_->shutdown_pending)),
-            .retired_incarnation_high_watermark = state_->retired_incarnation_high_watermark,
-        };
-        return output;
-    }
-
-    std::size_t RuntimeHostCandidate::orphaned_host_count() noexcept {
-        try {
-            HostOrphanRegistry &registry = orphan_registry();
-            std::lock_guard<std::mutex> lock(registry.mutex);
-            return registry.hosts.size();
-        } catch (...) {
-            return 0;
-        }
-    }
-
-    RuntimeHostStatus RuntimeHostCandidate::retry_orphaned_reclamation() {
-        std::vector<std::shared_ptr<RuntimeHostSharedState>> states;
-        {
-            HostOrphanRegistry &registry = orphan_registry();
-            std::lock_guard<std::mutex> lock(registry.mutex);
-            states = registry.hosts;
-        }
-
-        bool unresolved = false;
-        for (const std::shared_ptr<RuntimeHostSharedState> &state : states) {
-            std::unique_lock<std::mutex> lock(state->mutex);
-            const auto quarantined = state->quarantined;
-            for (const std::shared_ptr<RuntimeHostSlot> &slot : quarantined) {
-                if (!no_leases(*slot) || !reclaim_slot(*state, lock, slot)) {
-                    unresolved = true;
-                    continue;
-                }
-                clear_slot_reference(*state, slot);
-            }
-            if (state->host_state == RuntimeHostState::ShuttingDown) {
-                const RuntimeHostStatus status = progress_shutdown(*state, lock, 0);
-                if (!status && status.error != RuntimeHostError::ShutdownPending) {
-                    unresolved = true;
-                }
+        if (state->host_state == RuntimeHostState::ShuttingDown) {
+            const RuntimeHostStatus status = progress_shutdown(*state, lock, 0);
+            if (!status && status.error != RuntimeHostError::ShutdownPending) {
+                unresolved = true;
             }
         }
-
-        {
-            HostOrphanRegistry &registry = orphan_registry();
-            std::lock_guard<std::mutex> orphan_lock(registry.mutex);
-            std::erase_if(registry.hosts, [](const auto &state) {
-                std::lock_guard<std::mutex> state_lock(state->mutex);
-                const bool no_owned_slots =
-                    state->active.load(std::memory_order_acquire) == nullptr &&
-                    state->candidate == nullptr && state->draining == nullptr &&
-                    state->shutdown_pending == nullptr && state->quarantined.empty();
-                if (no_owned_slots) {
-                    state->orphan_handoff_recorded = false;
-                }
-                return no_owned_slots;
-            });
-            unresolved = unresolved || !registry.hosts.empty();
-        }
-        return unresolved ? failure(RuntimeHostError::QuarantineUnresolved,
-                                    "one or more orphaned host resources remain retained")
-                          : success();
     }
+
+    {
+        HostOrphanRegistry &registry = orphan_registry();
+        std::lock_guard<std::mutex> orphan_lock(registry.mutex);
+        std::erase_if(registry.hosts, [](const auto &state) {
+            std::lock_guard<std::mutex> state_lock(state->mutex);
+            const bool no_owned_slots = state->active.load(std::memory_order_acquire) == nullptr &&
+                                        state->candidate == nullptr && state->draining == nullptr &&
+                                        state->shutdown_pending == nullptr &&
+                                        state->quarantined.empty();
+            if (no_owned_slots) {
+                state->orphan_handoff_recorded = false;
+            }
+            return no_owned_slots;
+        });
+        unresolved = unresolved || !registry.hosts.empty();
+    }
+    return unresolved ? failure(RuntimeHostError::QuarantineUnresolved,
+                                "one or more orphaned host resources remain retained")
+                      : success();
+}
 
 } // namespace runtime::host
