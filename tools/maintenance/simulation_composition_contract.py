@@ -1336,6 +1336,8 @@ DEFAULT_COMPONENTS = (
   "Velocity",
   "Alliance",
   "KeyEntity",
+  "StableEntitySerial",
+  "StableIdentityState",
   "MovementCommand",
   "MissionCommandControlState",
   "PilotAction",

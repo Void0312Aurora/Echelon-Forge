@@ -1,5 +1,6 @@
 #include "simulation_kernel.h"
 
+#include "components/basic/stable_identity.h"
 #include "components/physics/instruments.h"
 #include "core/interfaces/acoustic_model.h"
 #include "core/interfaces/control_model.h"
@@ -140,6 +141,11 @@ void SimulationKernel::reset(unsigned int seed) {
     ecs_reset_clock(ecs.c_ptr());
 
     rng.seed(seed);
+    // Episode identity restarts with the episode: serials are 1..N in creation order after
+    // every reset, and draws mix the reset seed. The constructor reaches this through its
+    // default reset(42), which is also the seed `rng` is given there, so a kernel used before
+    // any explicit reset already stamps.
+    ecs.set<StableIdentityState>({1, static_cast<std::uint64_t>(seed)});
     world_state_mutated_ = true;
 
     spdlog::info("Simulation Reset with seed {}", seed);

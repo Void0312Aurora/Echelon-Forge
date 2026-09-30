@@ -39,15 +39,11 @@ Vec3 world_to_body(const Transform &t, double wx, double wy, double wz) {
 }
 
 uint64_t splitmix64(uint64_t &state) {
-    uint64_t z = (state += 0x9e3779b97f4a7c15ULL);
-    z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ULL;
-    z = (z ^ (z >> 27)) * 0x94d049bb133111ebULL;
-    return z ^ (z >> 31);
+    return stochastic_draw::splitmix64_weyl_next(state);
 }
 
 double rand_uniform01(uint64_t &state) {
-    // 53 random bits / 2^53
-    return (splitmix64(state) >> 11) * (1.0 / 9007199254740992.0);
+    return stochastic_draw::stream_uniform01(splitmix64(state));
 }
 
 bool check_hitbox(const Vec3 &local_p, const Hitbox &box) {

@@ -3,6 +3,7 @@
 #include "components/basic/common.h"
 #include "components/systems/ew.h"
 #include "components/combat/common/weapon_common.h"
+#include "core/interfaces/stochastic_draw.h"
 #include "models/domains/naval/naval_sensor_maritime_adapter.h"
 
 #include <algorithm>
@@ -33,22 +34,9 @@ double math_deg_to_nav_deg(double math_deg) {
     return wrap_angle_360(90.0 - math_deg);
 }
 
-uint64_t splitmix64(uint64_t seed) {
-    uint64_t z = seed + 0x9e3779b97f4a7c15ULL;
-    z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ULL;
-    z = (z ^ (z >> 27)) * 0x94d049bb133111ebULL;
-    return z ^ (z >> 31);
-}
-
-double rand_uniform01(uint64_t seed) {
-    uint64_t z = splitmix64(seed);
-    return (z >> 11) * (1.0 / 9007199254740992.0);
-}
-
-double rand_normal(uint64_t seed_a, uint64_t seed_b) {
-    double u1 = std::max(1e-12, rand_uniform01(seed_a));
-    double u2 = rand_uniform01(seed_b);
-    return std::sqrt(-2.0 * std::log(u1)) * std::cos(2.0 * std::numbers::pi_v<double> * u2);
+double rand_normal(double u1, double u2) {
+    const double safe_u1 = std::max(1e-12, u1);
+    return std::sqrt(-2.0 * std::log(safe_u1)) * std::cos(2.0 * std::numbers::pi_v<double> * u2);
 }
 
 double clamp_sensor_probability(double value) {
@@ -379,10 +367,10 @@ class DefaultSensorModel : public ISensorModel {
                 detection_prob *= range_factor;
                 detection_prob = clamp_sensor_probability(detection_prob);
 
-                uint64_t seed_base = static_cast<uint64_t>(current_time * 1000.0);
-                uint64_t seed_det = seed_base ^ (owner.id() * 0x9e3779b97f4a7c15ULL) ^
-                                    (target_e.id() * 0xbf58476d1ce4e5b9ULL);
-                if (rand_uniform01(seed_det) > detection_prob) {
+                const uint64_t seed_det =
+                    stochastic_draw::draw_seed(world, stochastic_draw::DrawSite::radar_detection,
+                                               current_time, {owner, target_e});
+                if (stochastic_draw::uniform01(seed_det) > detection_prob) {
                     return;
                 }
 
@@ -396,13 +384,18 @@ class DefaultSensorModel : public ISensorModel {
                 double noisy_bearing = rel_bearing;
                 if (sensor.bearing_noise_std > 0.0) {
                     noisy_bearing +=
-                        rand_normal(seed_det ^ 0x12345678ULL, seed_det ^ 0x9abcdef0ULL) *
+                        rand_normal(
+                            stochastic_draw::uniform01(stochastic_draw::lane(seed_det, 1)),
+                            stochastic_draw::uniform01(stochastic_draw::lane(seed_det, 2))) *
                         sensor.bearing_noise_std;
                 }
                 double noisy_range = dist;
                 if (sensor.range_noise_std > 0.0) {
-                    noisy_range += rand_normal(seed_det ^ 0x87654321ULL, seed_det ^ 0x0fedcba9ULL) *
-                                   sensor.range_noise_std;
+                    noisy_range +=
+                        rand_normal(
+                            stochastic_draw::uniform01(stochastic_draw::lane(seed_det, 3)),
+                            stochastic_draw::uniform01(stochastic_draw::lane(seed_det, 4))) *
+                        sensor.range_noise_std;
                 }
                 noisy_range = std::max(0.0, noisy_range);
 
@@ -450,8 +443,11 @@ class DefaultSensorModel : public ISensorModel {
 
                 double measured_vr = v_closing;
                 if (sensor.velocity_noise_std > 0.0) {
-                    measured_vr += rand_normal(seed_det ^ 0x24681357ULL, seed_det ^ 0x13572468ULL) *
-                                   sensor.velocity_noise_std;
+                    measured_vr +=
+                        rand_normal(
+                            stochastic_draw::uniform01(stochastic_draw::lane(seed_det, 5)),
+                            stochastic_draw::uniform01(stochastic_draw::lane(seed_det, 6))) *
+                        sensor.velocity_noise_std;
                 }
 
                 const bool bearing_only =

@@ -32,7 +32,16 @@ def _fire_action(*, fire: bool) -> np.ndarray:
   return action.reshape(1, -1)
 
 
+# The episode seed is pinned. Without it, WorldBatchVecEnv draws the reset seed from the global
+# np.random, and since the stable-identity package the detection (site 5) and command-link
+# (site 7) draws mix that seed. An earlier test in the same process that consumed np.random
+# could then change whether this scenario's release is observed. Depending on a fixed seed is
+# legitimate; depending on unrelated test order is not.
+_EPISODE_SEED = 20260618
+
+
 def _run_until_release(env: WorldBatchVecEnv, *, max_steps: int = 120) -> tuple[float, bool, dict]:
+  env.seed(_EPISODE_SEED)
   env.reset()
   last_info: dict = {}
   for step in range(int(max_steps)):

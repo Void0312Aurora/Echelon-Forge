@@ -378,6 +378,16 @@
       "registration_id": "flecs.component.sonar"
     },
     {
+      "component_id": "StableEntitySerial",
+      "plugin_id": "builtin.core_runtime",
+      "registration_id": "flecs.component.stable_entity_serial"
+    },
+    {
+      "component_id": "StableIdentityState",
+      "plugin_id": "builtin.core_runtime",
+      "registration_id": "flecs.component.stable_identity_state"
+    },
+    {
       "component_id": "StallState",
       "plugin_id": "builtin.core_runtime",
       "registration_id": "flecs.component.stall_state"

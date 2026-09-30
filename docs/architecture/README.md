@@ -50,6 +50,12 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
   standard above; Node, CUDA, broader profiles/providers, external plugins, and
   complete replay remain held residuals.
 
+## Active Work
+
+- [Stable entity identity for stochastic draws](work/active/stable_entity_identity/README.md):
+  English-only task package replacing raw Flecs ids in per-engagement and
+  per-detection seeds with a per-world serial and the reset seed.
+
 ## Open Issues
 
 - [System modularization issue](work/issues/modularization_plan.md): draft
