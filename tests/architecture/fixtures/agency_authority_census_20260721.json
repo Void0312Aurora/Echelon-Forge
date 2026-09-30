@@ -200,7 +200,7 @@
     {
       "file": "python/tasking_contracts/air/strategy/action.py",
       "tokens": ["authorization_to_fire"],
-      "token_counts": {"authorization_to_fire": 2},
+      "token_counts": {"authorization_to_fire": 3},
       "categories": ["gating"],
       "form": "scripted-strategy-action-adapter",
       "semantic": "The RL-independent Air action adapter uses the declared authorization_to_fire input when constructing the maintained fire and station action fields. It does not grant authority, resolve holder conflicts, or write mission-command authority state.",
