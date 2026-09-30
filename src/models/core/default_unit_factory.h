@@ -644,14 +644,19 @@ class DefaultUnitFactory : public IUnitFactory {
 
         resolve_spawn_orientation(params, heading_init, pitch_init, roll_init);
 
+        auto reserved_spawn_entity =
+            ecs.lookup("__echelon_forge_transfer_reflection_spawn_reservation");
         auto e =
-            ecs.entity()
+            (reserved_spawn_entity.is_valid() ? reserved_spawn_entity : ecs.entity())
                 .set<Transform>({params.x, params.y, params.z, heading_init, pitch_init, roll_init})
                 .set<Velocity>({params.vx, params.vy, params.vz})
                 .set<Alliance>({params.side})
                 .set<KeyEntity>({def.type})
                 .set<Health>({def.health.current_hp, def.health.max_hp, def.health.mission_kill,
                               def.health.mobility_kill, def.health.sensor_kill});
+        if (reserved_spawn_entity.is_valid()) {
+            ecs_set_name(ecs.c_ptr(), e.id(), nullptr);
+        }
 
         attach_spawn_sensor_suite(e, unit_name, def);
 

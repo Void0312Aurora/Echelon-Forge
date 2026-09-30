@@ -23,6 +23,11 @@
 #include <string>
 #include <vector>
 
+namespace {
+constexpr const char *kTransferReflectionSpawnReservation =
+    "__echelon_forge_transfer_reflection_spawn_reservation";
+}
+
 SimulationKernel::SimulationKernel()
     : SimulationKernel(runtime::providers::default_compatibility_resolved_manifest_json()) {}
 
@@ -219,11 +224,16 @@ flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_na
     // Optional: Check existence first or trust spawn to handle it.
     // The factory->spawn is responsible for lookup now.
     SpawnParams params{side, x, y, z, heading, pitch, roll, vx, vy, vz};
+    auto reserved_spawn_entity = ecs.entity();
+    reserved_spawn_entity.set_name(kTransferReflectionSpawnReservation);
+    ensure_state_transfer_component_reflection();
     auto e = factory->spawn(ecs, unit_name, params);
     if (e.is_valid()) {
-        // Install transfer-only vector schemas after the factory has allocated
-        // the first simulation entity, preserving the canonical entity id.
-        ensure_state_transfer_component_reflection();
+        if (e.id() == reserved_spawn_entity.id()) {
+            ecs_set_name(ecs.c_ptr(), e.id(), nullptr);
+        } else if (ecs_is_alive(ecs.c_ptr(), reserved_spawn_entity.id())) {
+            reserved_spawn_entity.destruct();
+        }
         e.add<SimObject>(); // Tag for cleanup
         // Factory-owned ChildOf descendants (for example an embarked helo)
         // are part of the native ECS truth closure.  Tag them after the
@@ -241,6 +251,9 @@ flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_na
             });
             descendant.add<SimObject>();
         }
+    }
+    if (!e.is_valid() && ecs_is_alive(ecs.c_ptr(), reserved_spawn_entity.id())) {
+        reserved_spawn_entity.destruct();
     }
     return e;
 }
