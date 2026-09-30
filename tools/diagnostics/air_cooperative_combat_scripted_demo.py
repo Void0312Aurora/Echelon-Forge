@@ -71,13 +71,24 @@ def run_demo(
         flight_shaping_backend="compiled",
         worker_threads=1,
     )
-    if int(vec_env.slots_per_world) != len(slot_metadata):
-        vec_env.close()
-        raise RuntimeError(
-            f"scenario roster/runtime slot mismatch: metadata={len(slot_metadata)} runtime={vec_env.slots_per_world}"
-        )
-    agents = [
-        DecisionRuntimeAgent(
+    agents: list[DecisionRuntimeAgent] = []
+    accepted_steps: list[list[int]] = []
+    release_steps: list[list[int]] = []
+    decision_reports: list[dict[str, Any]] = []
+    last_infos: list[dict[str, Any]] = []
+    steps_run = 0
+    try:
+        vec_env.seed(int(seed))
+        observation_batch = vec_env.reset()
+        runtime_slot_metadata = tuple(vec_env.cooperative_slot_metadata())
+        if int(vec_env.slots_per_world) != len(slot_metadata) or len(runtime_slot_metadata) != len(slot_metadata):
+            raise RuntimeError(
+                "scenario roster/runtime slot mismatch: "
+                f"metadata={len(slot_metadata)} runtime={vec_env.slots_per_world} "
+                f"provider={len(runtime_slot_metadata)}"
+            )
+        agents.extend(
+            DecisionRuntimeAgent(
             DecisionRuntimeAgentSpec(
                 agent_id=f"air-combat-cooperative-{name.lower()}",
                 model_id=AIR_SCRIPTED_ENGAGEMENT_MODEL_ID,
@@ -102,20 +113,13 @@ def run_demo(
                 )
             ),
         )
-        for name in slot_names
-    ]
-    accepted_steps: list[list[int]] = [[] for _ in agents]
-    release_steps: list[list[int]] = [[] for _ in agents]
-    decision_reports: list[dict[str, Any]] = [{} for _ in agents]
-    last_infos: list[dict[str, Any]] = [{} for _ in agents]
-    steps_run = 0
-    try:
-        vec_env.seed(int(seed))
-        observation_batch = vec_env.reset()
-        target_owner = [
-            str(getattr(vec_env._slots[index].loader, "primary_target_name", ""))
-            for index in range(len(agents))
-        ]
+            for name in slot_names
+        )
+        accepted_steps = [[] for _ in agents]
+        release_steps = [[] for _ in agents]
+        decision_reports = [{} for _ in agents]
+        last_infos = [{} for _ in agents]
+        target_owner = [str(item.get("target_owner_name", "")) for item in runtime_slot_metadata]
         for slot_index, agent in enumerate(agents):
             observation = {key: np.asarray(value)[slot_index] for key, value in observation_batch.items()}
             agent.reset(
