@@ -348,7 +348,6 @@ def test_native_infantry_ground_rifle_requires_track_and_applies_damage() -> Non
     assert not sim.fire_ground_weapon(
         attacker_id, target_id, int(ef_py.GroundWeaponType.Rifle)
     )
-
     track = ef_py.Detection()
     track.target_id = target_id
     track.range = 100.0
@@ -378,6 +377,30 @@ def test_native_infantry_ground_rifle_requires_track_and_applies_damage() -> Non
     # The native weapon owns a cooldown; an immediate second trigger is rejected.
     assert not sim.fire_ground_weapon(
         attacker_id, target_id, int(ef_py.GroundWeaponType.Rifle)
+    )
+
+
+def test_ground_platoon_does_not_acquire_or_fire_infantry_rifle() -> None:
+    sim = ef_py.SimulationKernel()
+    assert sim.load_database(_DATABASE)
+    platoon_id = int(
+        sim.spawn_unit(ef_py.Side.Blue, "Ground_Platoon_MVP", 0.0, 0.0, 0.0)
+    )
+    target_id = int(
+        sim.spawn_unit(
+            ef_py.Side.Red, "Ground_Infantry_Soldier_MVP", 100.0, 0.0, 0.0
+        )
+    )
+
+    assert float(sim.get_ground_weapon_state(platoon_id)[0]) == pytest.approx(0.0)
+    track = ef_py.Detection()
+    track.target_id = target_id
+    track.range = 100.0
+    track.local_sensor_hit = True
+    sim.set_contact_list(platoon_id, [track])
+
+    assert not sim.fire_ground_weapon(
+        platoon_id, target_id, int(ef_py.GroundWeaponType.Rifle)
     )
 
 

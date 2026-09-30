@@ -10,6 +10,7 @@
 #include "components/combat/common/weapon_common.h"
 #include "components/domains/naval/combat/weapon_naval.h"
 #include "components/domains/ground/combat/weapon_ground.h"
+#include "components/domains/ground/ground_capabilities.h"
 #include "components/command/mission_command.h"
 #include "components/command/pilot_action.h"
 #include "components/physics/dynamics.h"
@@ -1150,7 +1151,8 @@ bool SimulationKernelWeaponReleaseService::fire_ground_weapon(uint64_t attacker_
     auto attacker = ecs_.entity(attacker_id);
     auto target = ecs_.entity(target_id);
     if (!attacker.is_valid() || !target.is_valid() || !entity_is_ground(ecs_, attacker_id) ||
-        !entity_is_ground(ecs_, target_id) || attacker_id == target_id) {
+        !entity_is_ground(ecs_, target_id) || !attacker.has<GroundInfantryCapability>() ||
+        !target.has<GroundInfantryCapability>() || attacker_id == target_id) {
         return false;
     }
     if (!target.has<StableEntitySerial>()) {
@@ -1231,7 +1233,8 @@ bool SimulationKernelWeaponReleaseService::fire_ground_weapon(uint64_t attacker_
 bool SimulationKernelWeaponReleaseService::fire_ground_weapon_from_mission_command(
     uint64_t attacker_id) {
     auto attacker = ecs_.entity(attacker_id);
-    if (!attacker.is_valid() || !entity_is_ground(ecs_, attacker_id)) {
+    if (!attacker.is_valid() || !entity_is_ground(ecs_, attacker_id) ||
+        !attacker.has<GroundInfantryCapability>()) {
         return false;
     }
 
