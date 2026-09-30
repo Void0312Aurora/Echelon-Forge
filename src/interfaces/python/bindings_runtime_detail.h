@@ -25,6 +25,8 @@ void bind_runtime_platform_world(nb::module_ &m);
 void bind_runtime_tasking_world(nb::module_ &m);
 void bind_runtime_engine(nb::module_ &m);
 void bind_runtime_facade(nb::module_ &m);
+// Production package registration omits raw engine and GPU bindings.
+void bind_runtime_facade_only(nb::module_ &m);
 
 // bind_runtime_engagement() sub-slices.
 //

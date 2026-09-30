@@ -14,6 +14,8 @@ option(EF_ENABLE_CUDA_RESIDENT_BACKEND "Enable experimental CUDA-resident world-
 option(EF_ENABLE_PROJECT_WARNINGS "Enable warning flags for maintained project targets" ON)
 option(EF_ENABLE_COMPILER_CACHE "Route C/C++ compiles through a compiler cache (sccache/ccache) when one is installed" OFF)
 option(EF_FETCHCONTENT_REVALIDATE_PINS "Re-run the git update/patch steps of the pinned FetchContent dependencies on every configure" ON)
+option(EF_PRODUCTION_FACADE_ONLY "Build the production Python module with facade/contracts only" OFF)
+option(EF_BUILD_DIAGNOSTICS_BINDINGS "Build the explicit opt-in ef_py_diagnostics raw binding module" OFF)
 
 function(ef_enable_project_warnings target_name)
     if (NOT EF_ENABLE_PROJECT_WARNINGS)
@@ -604,6 +606,32 @@ target_link_libraries(ef_facade PUBLIC
     Threads::Threads
 )
 
+# Production Python uses a private shared backend so its extension link map
+# contains one facade-owned import unit instead of publishing ef_core or the
+# mixed experimental GPU archive. Diagnostics keeps the raw targets separate.
+add_library(ef_facade_backend SHARED
+    ${EF_CORE_SOURCES}
+    ${EF_RUNTIME_FACADE_SOURCES}
+    src/gpu/gpu_flight_shaping_runtime.cpp
+    src/gpu/gpu_interaction_broadphase_runtime.cpp
+)
+target_include_directories(ef_facade_backend PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_compile_definitions(ef_facade_backend PRIVATE EF_FACADE_BACKEND_BUILD=1)
+target_link_libraries(ef_facade_backend PRIVATE
+    ef_composition
+    ef_content
+    ef_runtime_authority_contracts
+    flecs::flecs
+    spdlog::spdlog
+    nlohmann_json::nlohmann_json
+    Threads::Threads
+)
+install(TARGETS ef_facade_backend
+    RUNTIME DESTINATION lib
+    LIBRARY DESTINATION lib
+)
 # --- Standalone App ---
 # We keep src/main.cpp for local C++ testing, but now it needs to include/use SimulationKernel
 # (main.cpp consumes SimulationKernel directly and references no facade symbol,
@@ -675,12 +703,38 @@ set(EF_PYTHON_BINDING_SOURCES
     src/interfaces/python/bindings_runtime_tasking_world.cpp
     src/interfaces/python/bindings_runtime_engine.cpp
     src/interfaces/python/bindings_runtime_facade.cpp
+    src/interfaces/python/bindings_runtime_facade_only.cpp
     src/interfaces/python/bindings_gpu.cpp
 )
+
+set(EF_PYTHON_DIAGNOSTICS_BINDING_SOURCES ${EF_PYTHON_BINDING_SOURCES})
+if (EF_PRODUCTION_FACADE_ONLY)
+    list(FILTER EF_PYTHON_BINDING_SOURCES EXCLUDE REGEX "bindings_core|bindings_gpu|bindings_runtime\.cpp$|bindings_runtime_engine\.cpp$")
+    # The maintained scenario/world-batch path needs only the core enum DTOs;
+    # keep the SimulationKernel and diagnostic core slices quarantined.
+    list(APPEND EF_PYTHON_BINDING_SOURCES
+        src/interfaces/python/bindings_core_enums.cpp
+        src/interfaces/python/bindings_core_instruments.cpp
+        src/interfaces/python/bindings_core_unit_data.cpp
+        src/interfaces/python/bindings_core_observation.cpp
+        src/interfaces/python/bindings_gpu_facade_only.cpp
+        # These are maintained contract helpers, not engine owners. Compile
+        # them into the extension so the private backend DLL exports only the
+        # RuntimeFacade class and never becomes a catch-all symbol provider.
+        ${EF_CORE_MISSION_SOURCES}
+        ${EF_CORE_GEOMETRY_SOURCES}
+        src/runtime/compatibility/runtime_facade_visual_observation.cpp
+        src/gpu/gpu_visual_runtime.cpp
+        src/gpu/gpu_execution_observation_runtime.cpp
+    )
+endif()
 
 # --- Python Module ---
 nanobind_add_module(ef_py
     ${EF_PYTHON_BINDING_SOURCES}
+)
+target_include_directories(ef_py PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 # bindings_runtime.cpp/bindings_gpu.cpp reference RuntimeFacade symbols, so the
 # bindings link the facade unit ahead of ef_core.  ef_core stays a *direct*
@@ -690,7 +744,30 @@ nanobind_add_module(ef_py
 # status that makes CMake repeat it after ef_gpu_experiments on the
 # single-pass MinGW link line.  Dropping it in favour of the transitive edge
 # through ef_facade could reorder that repetition away.
-target_link_libraries(ef_py PRIVATE ef_facade ef_core)
+if (EF_PRODUCTION_FACADE_ONLY)
+    target_compile_definitions(ef_py PRIVATE
+        EF_PRODUCTION_FACADE_ONLY=1
+        EF_FACADE_BACKEND_CONSUMER=1
+    )
+    target_link_libraries(ef_py PRIVATE
+        ef_facade_backend
+        flecs::flecs
+        spdlog::spdlog
+        nlohmann_json::nlohmann_json
+        Threads::Threads
+    )
+else()
+    target_link_libraries(ef_py PRIVATE ef_facade ef_core)
+endif()
+
+if (EF_BUILD_DIAGNOSTICS_BINDINGS)
+    nanobind_add_module(ef_py_diagnostics
+        ${EF_PYTHON_DIAGNOSTICS_BINDING_SOURCES}
+    )
+    target_compile_definitions(ef_py_diagnostics PRIVATE EF_PYTHON_DIAGNOSTICS_MODULE=1)
+    target_link_libraries(ef_py_diagnostics PRIVATE ef_facade ef_core ef_gpu_experiments)
+    install(TARGETS ef_py_diagnostics DESTINATION diagnostics)
+endif()
 
 # --- Experimental GPU Scaffolding ---
 set(EF_GPU_MAINTAINED_HELPER_SOURCES
@@ -784,14 +861,14 @@ if (EF_ENABLE_CUDA_EXPERIMENTS)
     )
 endif()
 
-if (UNIX AND NOT APPLE)
+if (NOT EF_PRODUCTION_FACADE_ONLY AND UNIX AND NOT APPLE)
     target_link_libraries(ef_py PRIVATE
         -Wl,--start-group
         ef_core
         ef_gpu_experiments
         -Wl,--end-group
     )
-else()
+elseif (NOT EF_PRODUCTION_FACADE_ONLY)
     target_link_libraries(ef_py PRIVATE ef_gpu_experiments)
 endif()
 

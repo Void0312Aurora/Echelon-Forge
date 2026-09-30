@@ -244,13 +244,32 @@ jobs:
           assert database.is_dir(), database
           assert scenario.is_file(), scenario
 
-          kernel = ef_py.SimulationKernel()
-          assert kernel.load_database(str(database))
-          kernel.shutdown()
+          assert hasattr(ef_py, "RuntimeFacade")
+          assert hasattr(ef_py, "RuntimeBatchConfig")
+          assert hasattr(ef_py, "SafetyRuntimeInputs")
+          assert hasattr(ef_py, "compute_execution_observation_batch_numpy")
+          assert not hasattr(ef_py, "SimulationKernel")
+          assert not hasattr(ef_py, "WorldBatchRuntime")
+          assert not hasattr(ef_py, "probe_gpu_device")
 
-          env = WorldBatchVecEnv(scenario_path=str(scenario), n_envs=1, step_info_mode="off")
+          facade = ef_py.RuntimeFacade(ef_py.RuntimeBatchConfig())
+          assert facade.world_count() == 0
+
+          env = WorldBatchVecEnv(
+              scenario_path=str(scenario),
+              n_envs=1,
+              include_visual=True,
+              include_proprio=False,
+              visual_downsample=2,
+              step_info_mode="off",
+          )
           observation = env.reset()
           assert observation is not None
+          assert observation["visual"].shape == (1, 24, 48, 10)
+          step_result = env.step([env.action_space.sample()])
+          assert step_result is not None
+          assert len(step_result) == 4
+          assert step_result[0]["visual"].shape == (1, 24, 48, 10)
           env.close()
           PY
           )

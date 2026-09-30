@@ -6,6 +6,7 @@
     "tests/architecture/agency/test_authority_representation_boundary.py",
     "tests/architecture/build_system/test_cmake_target_readiness.py",
     "tests/architecture/build_system/test_cuda_surface_wiring.py",
+    "tests/architecture/build_system/test_production_facade_package_boundary.py",
     "tests/architecture/causal_runtime/test_same_window_edge_validation.py",
     "tests/architecture/causal_runtime/test_stage_node_manifest_registry.py",
     "tests/architecture/command_tasking/test_dto_domain_shell_guard.py",
