@@ -6,16 +6,31 @@
 #include "components/basic/tags.h"
 #include "core/interfaces/stable_entity_identity.h"
 #include "components/command/legacy_command_bridge.h"
+#include "components/physics/instruments.h"
 #include "components/systems/ew.h"
+
+inline void project_countermeasure_instrument(InstrumentState &instrument,
+                                              const Countermeasures &cm, double current_time) {
+    instrument.countermeasure_chaff_remaining = cm.chaff_count;
+    instrument.countermeasure_flare_remaining = cm.flare_count;
+    instrument.countermeasure_release_interval_s = cm.release_interval;
+    instrument.countermeasure_last_release_time_s = cm.last_release_time;
+    instrument.countermeasure_auto_mode = cm.auto_mode;
+    instrument.countermeasure_snapshot_stage = 31;
+    instrument.countermeasure_snapshot_time_s = current_time;
+    instrument.countermeasure_snapshot_post_ew = true;
+}
 
 inline void register_ew_system(flecs::world &ecs) {
     // 1. Chaff Release System
-    ecs.system<Countermeasures, const Transform, const Velocity>("EW_Release_Chaff")
+    ecs.system<Countermeasures, InstrumentState, const Transform, const Velocity>(
+           "EW_Release_Chaff")
         .run([](flecs::iter &it) {
             while (it.next()) {
                 auto cm = it.field<Countermeasures>(0);
-                auto p = it.field<const Transform>(1);
-                auto v = it.field<const Velocity>(2);
+                auto instrument = it.field<InstrumentState>(1);
+                auto p = it.field<const Transform>(2);
+                auto v = it.field<const Velocity>(3);
 
                 const ecs_world_info_t *info = ecs_get_world_info(it.world().c_ptr());
                 double current_time = info ? (double)info->world_time_total : 0.0;
@@ -45,18 +60,21 @@ inline void register_ew_system(flecs::world &ecs) {
                             spdlog::debug("Unit {} released Chaff. Remaining: {}",
                                           it.entity(i).id(), cm[i].chaff_count);
                         }
+                        project_countermeasure_instrument(instrument[i], cm[i], current_time);
                     }
                 }
             }
         });
 
     // 2. Flare Release System
-    ecs.system<Countermeasures, const Transform, const Velocity>("EW_Release_Flare")
+    ecs.system<Countermeasures, InstrumentState, const Transform, const Velocity>(
+           "EW_Release_Flare")
         .run([](flecs::iter &it) {
             while (it.next()) {
                 auto cm = it.field<Countermeasures>(0);
-                auto p = it.field<const Transform>(1);
-                auto v = it.field<const Velocity>(2);
+                auto instrument = it.field<InstrumentState>(1);
+                auto p = it.field<const Transform>(2);
+                auto v = it.field<const Velocity>(3);
 
                 const ecs_world_info_t *info = ecs_get_world_info(it.world().c_ptr());
                 double current_time = info ? (double)info->world_time_total : 0.0;
@@ -82,6 +100,7 @@ inline void register_ew_system(flecs::world &ecs) {
                             spdlog::debug("Unit {} released Flare. Remaining: {}",
                                           it.entity(i).id(), cm[i].flare_count);
                         }
+                        project_countermeasure_instrument(instrument[i], cm[i], current_time);
                     }
                 }
             }
