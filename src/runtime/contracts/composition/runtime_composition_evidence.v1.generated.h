@@ -26,7 +26,7 @@ inline constexpr std::string_view kProfileProjectionSha256 =
 inline constexpr std::string_view kResolverContractVersion =
     "echelon_forge.simulation_composition_resolver.v1";
 inline constexpr std::string_view kExecutableGraphSha256 =
-    "fce6fef9020200d4a57c2b50c97051837801f4201b2b918b0d051af3a9958aae";
+    "ad00da86583a6da290eb4db550f520c323fe76e10778760ecf07affcd048cad6";
 inline constexpr std::string_view kStageContractVersion = "1.0.0";
 inline constexpr std::string_view kHostMode = "native_cpp";
 inline constexpr std::string_view kBindingVersion = "native.v1";
