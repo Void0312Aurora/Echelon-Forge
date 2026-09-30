@@ -422,8 +422,12 @@ bool RuntimeFileArtifactLedgerStore::active_fence(std::string_view stream_id,
     }
     try {
         const auto state = Json::parse(bytes.begin(), bytes.end());
-        if (state.dump() != bytes || state.value("generation", 0ULL) != generation ||
-            state.value("writer_id", "") != writer_id) {
+        if (!state.is_object() || state.dump() != bytes || state.size() != 3U ||
+            !state.contains("generation") || !state.contains("stream_id") ||
+            !state.contains("writer_id") ||
+            state.at("generation").get<std::uint64_t>() != generation ||
+            state.at("stream_id").get<std::string>() != stream_id ||
+            state.at("writer_id").get<std::string>() != writer_id) {
             detail = "stale or absent native ArtifactLedger fence";
             return false;
         }
