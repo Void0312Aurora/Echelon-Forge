@@ -86,6 +86,10 @@ def run_demo(*, scenario_path: str, seed: int, max_steps: int) -> dict[str, Any]
                 action_dim=AIR_COMBAT_HYBRID_ACTION_DIM,
                 dt=0.05,
                 mission_obs_mode=AIR_COMBAT_C2_ROE_V2,
+                # The cooperative fixture's F-16 loadout exposes station 1;
+                # pass that capability into each model so a legal release can
+                # reach the native fire gate.
+                weapon_station_id=1,
             ),
         )
         for name in slot_names

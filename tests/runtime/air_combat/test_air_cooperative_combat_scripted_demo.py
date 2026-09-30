@@ -17,6 +17,8 @@ def test_cooperative_combat_scripted_demo_releases_from_both_aircraft_and_termin
     assert result["termination_reasons"] == ["combat_win", "combat_win"]
     assert all(result["fire_once_accepted_steps"])
     assert all(result["release_executed_steps"])
+    assert all(report["weapon_station_valid"] for report in result["scripted_decision_reports"])
+    assert all(report["weapon_station_id"] == 1 for report in result["scripted_decision_reports"])
     assert result["playable_boundary"] == "multi_aircraft_scripted_c2_roe_terminal_demo"
 
 
