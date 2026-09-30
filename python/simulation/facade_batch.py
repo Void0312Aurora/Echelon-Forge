@@ -94,6 +94,7 @@ class FacadeBatchBackend:
         *,
         mode: str = "nav_v2_cooperative_takeoff_v1",
         ils: Mapping[EntityKey, Sequence[float]] | None = None,
+        mission_facts: Mapping[EntityKey, Mapping[str, Any]] | None = None,
         max_contacts: int = 8,
         max_rwr: int = 8,
     ) -> tuple[dict[str, Any], ...]:
@@ -104,6 +105,7 @@ class FacadeBatchBackend:
         current = self.snapshot()
         commands = self.read_command_chain()["mission_commands"]
         ils_by_key = {} if ils is None else dict(ils)
+        facts_by_key = {} if mission_facts is None else dict(mission_facts)
         return tuple(
             build_air_scripted_observation(
                 observation,
@@ -111,6 +113,7 @@ class FacadeBatchBackend:
                 commands[index] if index < len(commands) else None,
                 mode=mode,
                 ils=ils_by_key.get(entity_key, (0.0, 0.0, 0.0, 0.0)),
+                mission_facts=facts_by_key.get(entity_key),
                 max_contacts=max_contacts,
                 max_rwr=max_rwr,
             )
@@ -154,6 +157,85 @@ class FacadeBatchBackend:
         self.submit_pilot_reports({key: value.pilot_report for key, value in decisions.items()})
         self.submit_mission_commands({key: value.mission_command for key, value in decisions.items()})
 
+    def apply_launch_requests(
+        self,
+        requests: Sequence[Any],
+        *,
+        diagnostic_only: bool = False,
+    ) -> tuple[Any, ...]:
+        """Apply raw launch requests only for explicit diagnostics/tests."""
+
+        self._require_ready()
+        if not diagnostic_only:
+            raise PermissionError(
+                "raw launch requests are diagnostic-only; use maintained pilot actions or commands"
+            )
+        if not isinstance(requests, Sequence) or isinstance(requests, (str, bytes)):
+            raise TypeError("facade batch launch requests require a sequence")
+        return tuple(self.facade.apply_launch_requests_batch(list(requests)))
+
+    def export_engagement_events(
+        self,
+        *,
+        entity_keys: Sequence[EntityKey] | None = None,
+        include_launch_requests: bool = True,
+        include_launch_events: bool = True,
+        include_damage_reports: bool = True,
+        include_effects_events: bool = True,
+        include_track_packets: bool = False,
+    ) -> Any:
+        """Export the declared engagement event packet for controlled entities."""
+
+        self._require_ready()
+        keys = self._entity_keys if entity_keys is None else tuple(entity_keys)
+        unexpected = set(keys).difference(self._entity_keys)
+        if unexpected:
+            raise KeyError(f"facade batch engagement export targets uncontrolled entities: {sorted(unexpected)}")
+        request = ef_py.EngagementBatchRequest()
+        request.refs = self._engagement_refs_for(keys)
+        request.include_launch_requests = bool(include_launch_requests)
+        request.include_launch_events = bool(include_launch_events)
+        request.include_damage_reports = bool(include_damage_reports)
+        request.include_effects_events = bool(include_effects_events)
+        request.include_track_packets = bool(include_track_packets)
+        return self.facade.export_engagement_event_packet(request)
+
+    def evaluate_air_combat_terminal(
+        self,
+        *,
+        own_entity_ids: Sequence[int | EntityKey],
+        target_entity_ids: Sequence[int | EntityKey],
+        entity_keys: Sequence[EntityKey] | None = None,
+    ) -> Any:
+        """Evaluate Air terminal state from the facade-owned event packet."""
+
+        if self.world_count > 1:
+            bare_ids = [
+                value
+                for values in (own_entity_ids, target_entity_ids)
+                for value in values
+                if not isinstance(value, (tuple, list)) or len(value) != 2
+            ]
+            if bare_ids:
+                raise ValueError(
+                    "facade batch multi-world terminal evaluation requires world-qualified entity keys"
+                )
+
+        from .air.terminal import AirCombatTerminalEvaluator
+
+        packet = self.export_engagement_events(
+            entity_keys=entity_keys,
+            include_launch_requests=False,
+            include_launch_events=True,
+            include_damage_reports=True,
+            include_effects_events=True,
+        )
+        return AirCombatTerminalEvaluator().evaluate(
+            packet,
+            own_entity_ids=own_entity_ids,
+            target_entity_ids=target_entity_ids,
+        )
+
     def read_command_chain(self) -> dict[str, tuple[Any, ...]]:
         self._require_ready()
         refs = self._refs()
@@ -194,9 +276,23 @@ class FacadeBatchBackend:
             getattr(self.facade, method)(assignments)
 
     def _refs(self) -> list[Any]:
+        return self._refs_for(self._entity_keys)
+
+    @staticmethod
+    def _refs_for(keys: Sequence[EntityKey]) -> list[Any]:
         refs = []
-        for world_index, entity_id in self._entity_keys:
+        for world_index, entity_id in keys:
             ref = ef_py.WorldEntityRef()
+            ref.world_index = world_index
+            ref.entity_id = entity_id
+            refs.append(ref)
+        return refs
+
+    @staticmethod
+    def _engagement_refs_for(keys: Sequence[EntityKey]) -> list[Any]:
+        refs = []
+        for world_index, entity_id in keys:
+            ref = ef_py.EngagementEntityRef()
             ref.world_index = world_index
             ref.entity_id = entity_id
             refs.append(ref)

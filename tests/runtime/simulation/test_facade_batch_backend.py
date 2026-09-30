@@ -95,6 +95,18 @@ def test_facade_batch_runs_two_agents_and_roundtrips_scripted_c2_order() -> None
                 cmd_heading_deg=90.0,
                 cmd_altitude_m=1200.0,
                 cmd_speed_mps=180.0,
+                roe_state=3,
+                authorization_to_fire=True,
+                assigned_target_id=9002,
+                assigned_target_track_id=7002,
+                assigned_target_source_id=lead_key[1],
+                assigned_target_snapshot_time_s=0.0,
+                engagement_authority_holder_id=lead_key[1],
+                engagement_authority_grantor_id=100,
+                task_group_id=17,
+                objective_node_id=42,
+                objective_area_id=9,
+                threat_state=4,
             ),
             waypoint_count=3,
             remaining_waypoints=3,
@@ -108,11 +120,21 @@ def test_facade_batch_runs_two_agents_and_roundtrips_scripted_c2_order() -> None
         assert direct_chain["leader_intents"][0].shared_core.command_code == decision.leader_intent.command_code
         assert direct_chain["pilot_reports"][0].shared_core.sender_id == lead_key[1]
         assert direct_chain["mission_commands"][0].shared_core.command_code == decision.mission_command.command_code
+        assert direct_chain["leader_intents"][0].shared_core.assigned_target_id == 9002
+        assert direct_chain["leader_intents"][0].shared_core.assigned_target_track_id == 7002
+        assert direct_chain["leader_intents"][0].shared_core.authorization_to_fire is True
+        assert direct_chain["mission_commands"][0].shared_core.assigned_target_id == 9002
+        assert direct_chain["mission_commands"][0].shared_core.assigned_target_track_id == 7002
+        assert direct_chain["mission_commands"][0].shared_core.authorization_to_fire is True
+        assert direct_chain["pilot_reports"][0].shared_core.task_group_id == 17
 
         current = backend.step({lead_key: _action(1.0), wing_key: _action(0.25)})
         assert len(current.observations) == 2
         assert all(float(obs.sim_time) > 0.0 for obs in current.observations)
         assert float(current.instruments[0].throttle_pos) > float(current.instruments[1].throttle_pos)
+        persisted_chain = backend.read_command_chain()
+        assert persisted_chain["mission_commands"][0].shared_core.assigned_target_id == 9002
+        assert persisted_chain["pilot_reports"][0].shared_core.sender_id == lead_key[1]
         with pytest.raises(KeyError, match="uncontrolled"):
             backend.step({(0, 999999): _action(1.0)})
 
@@ -135,5 +157,38 @@ def test_facade_batch_requires_reset_and_rejects_invalid_roster() -> None:
             backend.step({})
         with pytest.raises(ValueError, match="controlled spawn indices"):
             backend.reset()
+    finally:
+        backend.close()
+
+
+def test_facade_batch_seed_derives_one_seed_per_world() -> None:
+    backend = create_single_backend(
+        backend_id="facade_batch",
+        database_path=DATABASE,
+        setup_factory=_setup,
+        world_count=3,
+    )
+    try:
+        assert backend.seed(17) == (17, 18, 19)
+    finally:
+        backend.close()
+
+
+def test_facade_batch_multiworld_terminal_requires_world_qualified_ids() -> None:
+    backend = create_single_backend(
+        backend_id="facade_batch",
+        database_path=DATABASE,
+        setup_factory=_setup,
+        world_count=2,
+    )
+    try:
+        backend.seed(17)
+        snapshot = backend.reset()
+        with pytest.raises(ValueError, match="world-qualified"):
+            backend.evaluate_air_combat_terminal(
+                own_entity_ids=(snapshot.entity_keys[0][1],),
+                target_entity_ids=(snapshot.entity_keys[1][1],),
+                entity_keys=snapshot.entity_keys,
+            )
     finally:
         backend.close()

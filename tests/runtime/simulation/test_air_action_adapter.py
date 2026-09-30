@@ -7,6 +7,10 @@ from python.runtime_bootstrap import ensure_repo_imports
 
 ensure_repo_imports()
 
+from gym_envs.universal_env_parts import (  # noqa: E402
+    AIR_EW_HYBRID_V1_ACTION_MODE,
+    build_pilot_action as build_maintained_pilot_action,
+)
 from python.simulation.air.action import build_pilot_action  # noqa: E402
 
 
@@ -44,3 +48,49 @@ def test_takeoff_action_projects_gear_from_instrument_state() -> None:
     assert pilot.stick_pitch == pytest.approx(0.2)
     assert pilot.throttle == pytest.approx(0.8)
     assert pilot.gear_handle == 1.0
+
+
+def test_ew_hybrid_action_projects_countermeasure_bits() -> None:
+    action = np.zeros((14,), dtype=np.float32)
+    action[12] = 1.0
+    action[13] = 1.0
+
+    pilot = build_pilot_action(action, action_mode="air_ew_hybrid_v1")
+
+    assert pilot.program_chaff is True
+    assert pilot.program_flare is True
+
+
+def test_ew_hybrid_action_matches_maintained_transport_for_all_slots() -> None:
+    fields = (
+        "stick_pitch",
+        "stick_roll",
+        "rudder",
+        "throttle",
+        "gear_handle",
+        "flaps",
+        "speedbrake",
+        "brake_left",
+        "brake_right",
+        "brake",
+        "radar_active",
+        "radar_scan_az",
+        "radar_scan_el",
+        "tms_up",
+        "master_arm",
+        "fire_weapon",
+        "fire_gun",
+        "weapon_select_id",
+        "program_chaff",
+        "program_flare",
+        "jettison_emergency",
+    )
+    # Each one-hot vector exercises one slot while keeping the other slots at
+    # the canonical neutral value used by both transport owners.
+    for index in range(14):
+        action = np.zeros((14,), dtype=np.float32)
+        action[index] = 1.0
+        direct = build_pilot_action(action, action_mode="air_ew_hybrid_v1")
+        maintained = build_maintained_pilot_action(action, action_mode=AIR_EW_HYBRID_V1_ACTION_MODE)
+        for field in fields:
+            assert getattr(direct, field) == getattr(maintained, field), (index, field)

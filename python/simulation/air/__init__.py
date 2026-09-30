@@ -17,6 +17,7 @@ from .observation import (
 )
 from .director import AirDirectorDecision, AirDirectorInput, AirScriptedDirector
 from .action import (
+    AIR_EW_HYBRID_ACTION_DIM,
     AIR_FULL_ACTION_DIM,
     AIR_TAKEOFF2_ACTION_DIM,
     AIR_TAKEOFF4_ACTION_DIM,
@@ -24,6 +25,15 @@ from .action import (
     half_to_unit,
 )
 from .demo import AirFacadeDemoTrace, build_demo_setup, run_facade_scripted_demo
+from .engagement import (
+    AirEngagementDecision,
+    AirEngagementFacts,
+    AirScriptedEngagementController,
+)
+from .runtime import AirEngagementRuntimeInput, AirScriptedEngagementRuntimeModel
+from .ew import AirEWDecision, AirScriptedEWController
+from .coordination import AirScriptedRosterCoordinator, AirTargetAssignment
+from .terminal import AirCombatTerminalEvaluator, AirCombatTerminalState
 
 __all__ = [
     "AIR_SCRIPTED_MAX_CONTACTS",
@@ -33,6 +43,7 @@ __all__ = [
     "AirDirectorInput",
     "AirScriptedDirector",
     "AIR_FULL_ACTION_DIM",
+    "AIR_EW_HYBRID_ACTION_DIM",
     "AIR_TAKEOFF2_ACTION_DIM",
     "AIR_TAKEOFF4_ACTION_DIM",
     "CompiledAirC2TaskOrderProjection",
@@ -48,4 +59,15 @@ __all__ = [
     "build_demo_setup",
     "make_scripted_c2_task_manager",
     "run_facade_scripted_demo",
+    "AirEngagementDecision",
+    "AirEngagementFacts",
+    "AirScriptedEngagementController",
+    "AirEngagementRuntimeInput",
+    "AirScriptedEngagementRuntimeModel",
+    "AirEWDecision",
+    "AirScriptedEWController",
+    "AirScriptedRosterCoordinator",
+    "AirTargetAssignment",
+    "AirCombatTerminalEvaluator",
+    "AirCombatTerminalState",
 ]

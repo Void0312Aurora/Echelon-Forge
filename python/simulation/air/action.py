@@ -11,6 +11,7 @@ import numpy as np
 AIR_FULL_ACTION_DIM = 17
 AIR_TAKEOFF4_ACTION_DIM = 4
 AIR_TAKEOFF2_ACTION_DIM = 2
+AIR_EW_HYBRID_ACTION_DIM = 14
 
 
 def half_to_unit(value: float) -> float:
@@ -25,6 +26,7 @@ def build_pilot_action(action: Any, *, action_mode: str = "full", instrument_sta
         "full": AIR_FULL_ACTION_DIM,
         "takeoff4": AIR_TAKEOFF4_ACTION_DIM,
         "takeoff2": AIR_TAKEOFF2_ACTION_DIM,
+        "air_ew_hybrid_v1": AIR_EW_HYBRID_ACTION_DIM,
     }.get(mode)
     if expected is None or values.size != expected:
         raise ValueError(f"unsupported Air action mode/shape: {mode!r}, {values.shape}")
@@ -50,6 +52,21 @@ def build_pilot_action(action: Any, *, action_mode: str = "full", instrument_sta
         pilot.fire_weapon = bool(values[14] > 0.5)
         pilot.fire_gun = bool(values[15] > 0.5)
         pilot.weapon_select_id = int(np.clip(float(values[16]) * 7.0, 0.0, 7.0))
+    elif mode == "air_ew_hybrid_v1":
+        # EW hybrid v1 shares the combat-hybrid prefix: scan azimuth, scan
+        # elevation, then radar-active.  Keep the tail slots reserved for the
+        # countermeasure extension.
+        pilot.gear_handle = 0.0
+        pilot.flaps = 0.0
+        pilot.speedbrake = 0.0
+        pilot.radar_scan_az = float(values[4]) * 60.0
+        pilot.radar_scan_el = float(values[5]) * 30.0
+        pilot.radar_active = bool(values[6] > 0.5)
+        pilot.tms_up = bool(values[7] > 0.5)
+        pilot.master_arm = bool(values[8] > 0.5)
+        pilot.fire_weapon = bool(values[9] > 0.5)
+        pilot.fire_gun = bool(values[10] > 0.5)
+        pilot.weapon_select_id = int(np.clip(round(float(values[11])), 0, 7))
     else:
         pilot.radar_active = False
         pilot.radar_scan_az = 0.0
@@ -59,8 +76,8 @@ def build_pilot_action(action: Any, *, action_mode: str = "full", instrument_sta
         pilot.fire_weapon = False
         pilot.fire_gun = False
         pilot.weapon_select_id = 0
-    pilot.program_chaff = False
-    pilot.program_flare = False
+    pilot.program_chaff = bool(values[12] > 0.5) if mode == "air_ew_hybrid_v1" else False
+    pilot.program_flare = bool(values[13] > 0.5) if mode == "air_ew_hybrid_v1" else False
     pilot.jettison_emergency = False
     return pilot
 
@@ -74,6 +91,7 @@ def _float(value: Any, name: str, default: float = 0.0) -> float:
 
 __all__ = [
     "AIR_FULL_ACTION_DIM",
+    "AIR_EW_HYBRID_ACTION_DIM",
     "AIR_TAKEOFF2_ACTION_DIM",
     "AIR_TAKEOFF4_ACTION_DIM",
     "build_pilot_action",
