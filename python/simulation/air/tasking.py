@@ -22,6 +22,11 @@ from python.tasking_contracts.air.tasking.c2_policy import (
 )
 from python.tasking_contracts.common.bridge_views import mission_command_view
 from python.tasking_contracts.common.mission_defs import is_landing_command_code
+from python.tasking_contracts.common.task_order import (
+    apply_common_task_order_defaults,
+    apply_common_task_order_overrides,
+    infer_common_tactical_unit_type,
+)
 
 
 def _enum_or_default(namespace: Any, raw_value: Any, default_value: Any) -> Any:
@@ -49,61 +54,9 @@ def _scenario_task_order_cfg(loader: Any) -> dict[str, Any] | None:
 def _apply_authored_order_fields(order: Any, spec: dict[str, Any] | None, *, assignee_id: int) -> None:
     if not isinstance(spec, dict):
         return
+    apply_common_task_order_overrides(order, spec, assignee_id=assignee_id)
     if hasattr(order, "active"):
         order.active = bool(spec.get("active", True))
-    for name, caster in (
-        ("active", bool),
-        ("task_id", int),
-        ("priority", int),
-        ("issuer_id", int),
-        ("assignee_id", int),
-        ("assignee_kind", int),
-        ("element_id", int),
-        ("package_id", int),
-        ("formation_contract_id", int),
-        ("formation_role_id", int),
-        ("formation_template_id", int),
-        ("lead_aircraft_id", int),
-        ("join_policy_id", int),
-        ("mutual_support_mode", int),
-        ("objective_area_id", int),
-        ("objective_node_id", int),
-        ("parent_node_id", int),
-        ("rejoin_policy_id", int),
-        ("support_sector_id", int),
-        ("task_group_id", int),
-        ("wingman_slot_id", int),
-        ("supported_node_id", int),
-        ("supporting_node_id", int),
-        ("role_code", int),
-        ("relative_slot_code", int),
-        ("recovery_site_id", int),
-        ("officer_in_tactical_command", int),
-        ("issue_time_s", float),
-        ("anchor_x_m", float),
-        ("anchor_y_m", float),
-        ("anchor_z_m", float),
-        ("station_radius_m", float),
-        ("station_leg_length_m", float),
-        ("station_heading_deg", float),
-        ("altitude_block_min_m", float),
-        ("altitude_block_max_m", float),
-        ("target_altitude_m", float),
-        ("speed_min_mps", float),
-        ("speed_max_mps", float),
-        ("target_speed_mps", float),
-        ("on_station_time_s", float),
-        ("fuel_bingo_override_kg", float),
-        ("takeoff_interval_s", float),
-        ("tactical_cadence_hz", float),
-        ("entry_condition_code", int),
-        ("exit_condition_code", int),
-        ("recovery_base_id", int),
-        ("recovery_runway_id", int),
-        ("warfare_role_code", int),
-    ):
-        if name in spec and hasattr(order, name):
-            setattr(order, name, caster(spec.get(name, getattr(order, name))))
     if hasattr(order, "assignee_id"):
         order.assignee_id = int(spec.get("assignee_id", assignee_id))
     if "task_type" in spec:
@@ -149,6 +102,7 @@ def apply_task_order_overrides(
     if not isinstance(order_spec, dict):
         return order
     _apply_authored_order_fields(order, order_spec, assignee_id=int(default_assignee_id))
+    apply_common_task_order_defaults(order)
     return order
 
 
@@ -170,12 +124,11 @@ def _apply_air_defaults(order: Any, *, task_name: str) -> None:
         if int(task_family) != int(getattr(ef_py.TaskFamily, "Unspecified", 0)):
             order.task_family = task_family
     if hasattr(order, "tactical_unit_type") and int(order.tactical_unit_type) == int(getattr(ef_py.TacticalUnitType, "Unspecified", 0)):
-        if int(getattr(order, "element_id", 0) or 0) > 0:
-            order.tactical_unit_type = ef_py.TacticalUnitType.TacticalUnit
-        elif int(getattr(order, "package_id", 0) or 0) > 0:
-            order.tactical_unit_type = ef_py.TacticalUnitType.MissionPackage
-        else:
-            order.tactical_unit_type = ef_py.TacticalUnitType.Platform
+        order.tactical_unit_type = getattr(
+            ef_py.TacticalUnitType,
+            infer_common_tactical_unit_type(order),
+            ef_py.TacticalUnitType.Platform,
+        )
     if hasattr(order, "command_relationship") and int(order.command_relationship) == int(getattr(ef_py.CommandRelationship, "None", 0)):
         order.command_relationship = getattr(ef_py.CommandRelationship, "TACON", order.command_relationship)
     if hasattr(order, "authority_scope") and int(order.authority_scope) == int(getattr(ef_py.AuthorityScope, "Unspecified", 0)):

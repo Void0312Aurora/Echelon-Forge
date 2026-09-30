@@ -577,7 +577,7 @@ class ScriptedCooperativeCoordinationDirector:
                     apply_common_task_order_overrides(
                         task_order,
                         member_task,
-                        default_assignee_id=int(slot_state.entity_id),
+                        assignee_id=int(slot_state.entity_id),
                     )
                 from python.tasking_contracts.common.task_order import apply_common_task_order_defaults
 
