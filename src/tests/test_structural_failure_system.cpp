@@ -686,8 +686,8 @@ TEST_SUITE("aircraft_damage_lifecycle") {
         breakup.last_breakup_event_id = 77;
         auto aircraft = world.entity().set<StructuralBreakupState>(breakup);
 
-        record_terminal_wreck_lifecycle(aircraft, &recorder,
-                                             GroundImpactLifecycle::CrashedWreck, 12.5);
+        record_terminal_wreck_lifecycle(aircraft, &recorder, GroundImpactLifecycle::CrashedWreck,
+                                        12.5);
 
         REQUIRE(recorder.lifecycle_transition_events.size() == 1);
         const LifecycleTransitionEvent &event = recorder.lifecycle_transition_events[0];
