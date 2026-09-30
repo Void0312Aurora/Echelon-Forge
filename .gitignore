@@ -79,6 +79,8 @@ docs/paper/**
 !tools/archive/
 !tools/archive/**
 artifacts/
+!docs/domains/naval/work/active/carrier_strike_group_engagement/artifacts/
+!docs/domains/naval/work/active/carrier_strike_group_engagement/artifacts/*.replay.json
 logs/
 compat_data/
 ipc/

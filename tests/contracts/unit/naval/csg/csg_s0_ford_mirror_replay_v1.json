@@ -1,0 +1,8 @@
+{
+  "type": "unit_regression",
+  "check_kind": "naval_csg_replay",
+  "seed": 20260930,
+  "max_steps": 240,
+  "scenario": "scenarios/naval/csg/csg_s0_ford_mirror_v1.json",
+  "replay": "docs/domains/naval/work/active/carrier_strike_group_engagement/artifacts/csg_s0_ford_mirror_v1.replay.json"
+}

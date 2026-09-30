@@ -1,0 +1,29 @@
+{
+  "name": "Naval CSG S0 Ford vs Fujian Replay",
+  "description": "Agent-free CSG-S0 spectator profile. Replays the checked-in native state frames for the named Ford versus Fujian composition.",
+  "scenario": "scenarios/naval/csg/csg_s0_ford_vs_fujian_named_v1.json",
+  "asset_registry": "examples/viz/assets/registry/default.json",
+  "session": {
+    "mode": "replay",
+    "replay": "docs/domains/naval/work/active/carrier_strike_group_engagement/artifacts/csg_s0_ford_vs_fujian_named_v1.replay.json",
+    "pause_on_done": true
+  },
+  "startup": {
+    "speed": 1,
+    "auto_start": false
+  },
+  "ui": {
+    "presentation_mode": "MAP",
+    "camera_mode": "FREE",
+    "focus_unit": "BLUE_CSG12__cvn78",
+    "tactical_zoom": 0.85,
+    "tactical_workspace": "cop",
+    "tactical_layers": {
+      "environment": true,
+      "tracks": true,
+      "datalinks": false,
+      "sensor_rings": false,
+      "weapons": false
+    }
+  }
+}
