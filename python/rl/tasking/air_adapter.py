@@ -11,9 +11,9 @@ from .common_core_profile import (
     apply_task_order_common_core_spec,
 )
 from .leader_tasking import RuleBasedLeaderPhaseManager
-from .air_c2_task_order_projection import AirC2TaskOrderProjection
 from python.tasking_contracts.air.tasking.c2_manager import ScriptedC2TaskManager
 from python.tasking_contracts.air.tasking.c2_observation import C2ReportTypeCodes
+from python.simulation.air.tasking import CompiledAirC2TaskOrderProjection
 from python.rl.profile.air_profile import (
     build_kernel_mission_command,
     infer_air_task_family,
@@ -47,7 +47,7 @@ def make_scripted_c2_task_manager(**kwargs: object) -> ScriptedC2TaskManager:
 
     options = dict(kwargs)
     options.setdefault("report_type_codes", _compiled_c2_report_type_codes())
-    options.setdefault("task_order_projection", AirC2TaskOrderProjection())
+    options.setdefault("task_order_projection", CompiledAirC2TaskOrderProjection())
     return ScriptedC2TaskManager(**options)
 
 

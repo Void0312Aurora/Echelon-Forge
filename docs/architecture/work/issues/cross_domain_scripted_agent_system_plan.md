@@ -2458,3 +2458,83 @@ to a dedicated owner-local evidence document.
   algorithms. DTO construction, common-core normalization, compiled tasking
   projection, WorldBatch execution, and complete no-RL playable command/report
   closure remain open; Air stays `playable_candidate`.
+
+### 2026-09-27 — Simulation-side compiled Air C2 adapter
+
+- Starting commit: `ede77ea6`.
+- Change batch: add `python/simulation/air/tasking.py` as a compiled simulation
+  adapter for the neutral `ScriptedC2TaskManager`. It binds `ef_py` report
+  codes, creates a missing `TaskOrder`, projects Air task types and route
+  blocks, preserves authored common task-order fields, and applies Air
+  defaults. The adapter imports neither RL packages nor environment packages.
+- Consumer/test update: add the physical boundary test and a simulation-side
+  factory smoke test. The neutral manager can now be instantiated from a
+  simulation package without importing `python.rl`; the existing RL adapter
+  remains in place until full consumer migration and parity evidence are
+  complete.
+- Evidence: focused simulation and boundary tests passed `4 passed`; the
+  related architecture, leader, Air tasking, mission, and simulation suite
+  passed `216 passed, 10 subtests passed`; Python compilation and
+  `git diff --check` passed. A field-level probe matched the existing compiled
+  projection for populated orders across `TASK_CAP`, `TASK_SCRAMBLE`,
+  `TASK_RTB`, and `TASK_RECOVER_LAND` when no authored override is being
+  re-applied.
+- Boundary decision: the simulation-side DTO adapter is now a concrete
+  no-RL construction path for Air C2, but it does not yet replace the RL
+  adapter, remove the RL-owned common-core profile, or prove a complete no-RL
+  playable scenario. Air remains `playable_candidate`; the next closure is
+  adapter migration plus command/report execution evidence.
+
+### 2026-09-27 — RL Air entry delegates C2 projection to simulation
+
+- Starting commit: `91c6883c`.
+- Change batch: update `python/rl/tasking/air_adapter.py` so its maintained
+  C2-manager entry injects `CompiledAirC2TaskOrderProjection` from
+  `python/simulation/air/tasking.py`. Existing RL-facing call sites remain
+  source-compatible, while compiled Air task-order DTO ownership moves to the
+  simulation adapter. The old RL projection file remains only for the leader
+  task-order override helper and is not deleted in this batch.
+- Regression repair: the simulation adapter now matches the existing
+  common-core force-refresh semantics for task family and coordination mode;
+  this preserves `CAP -> RTB` retasking behavior and authored field handling.
+- Evidence: the focused leader/profile/physical-layer/simulation batch passed
+  `43 passed`; the related architecture, leader, Air tasking, mission, and
+  simulation suite passed `217 passed, 10 subtests passed`; Python
+  compilation and `git diff --check` passed.
+- Boundary decision: the RL entry no longer selects the RL-owned compiled C2
+  projection by default. The RL profile/common-core surface, leader task-order
+  override helper, WorldBatch provider, and complete no-RL command/report
+  playable episode remain open; Air stays `playable_candidate`.
+
+### 2026-09-27 — Remove the duplicate RL Air C2 projection module
+
+- Starting commit: `e853de84`.
+- Change batch: move the remaining authored task-order override helper into
+  `python/simulation/air/tasking.py`, update the Air leader and cooperative
+  world director consumers, and delete the unused
+  `python/rl/tasking/air_c2_task_order_projection.py` module. This removes the
+  duplicate compiled DTO implementation rather than retaining a forwarding
+  compatibility shell.
+- Evidence: the focused leader/profile/cooperative/simulation/tasking-contract
+  suite passed `106 passed`; Python compilation and `git diff --check` passed.
+  A broader command that included legacy runtime-facade path tests reported
+  four unrelated failures because those tests still read the removed
+  `python/tasking_contracts/bridge_views.py` path instead of the maintained
+  `python/tasking_contracts/common/bridge_views.py` location; no Air migration
+  test failed.
+- Boundary decision: compiled Air C2 task-order projection and authored
+  overrides now have one simulation-side owner. The RL common-core profile,
+  leader DTO construction, WorldBatch provider, and complete no-RL playable
+  episode remain open; Air stays `playable_candidate`.
+
+### 2026-09-27 — Restore canonical bridge architecture test path
+
+- Starting commit: `e9e604e1`.
+- Change batch: update the runtime-facade architecture test helper to read the
+  maintained `python/tasking_contracts/common/bridge_views.py` location after
+  the earlier physical-layer move removed the old flat path.
+- Evidence: `tests/architecture/runtime_facade/test_runtime_escape_hatches.py`
+  passed `28 passed`; this is a test-path correction only and does not change
+  runtime behavior.
+- Boundary decision: the runtime-facade escape-hatch gate is green again; it
+  does not alter the open no-RL WorldBatch provider or Air playable boundary.

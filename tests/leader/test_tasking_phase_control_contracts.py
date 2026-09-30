@@ -10,7 +10,7 @@ from python.runtime_bootstrap import ensure_repo_imports
 ensure_repo_imports()
 
 from python.rl.tasking import air_adapter as _air_adapter_module
-from python.rl.tasking import air_c2_task_order_projection as _air_projection_module
+from python.simulation.air import tasking as _simulation_air_tasking_module
 from python.rl.tasking.air_adapter import make_scripted_c2_task_manager
 from python.rl.tasking.leader_tasking import RuleBasedLeaderPhaseManager
 from python.tasking_contracts.air.tasking.c2_manager import ScriptedC2TaskManager
@@ -81,7 +81,7 @@ def _patched_tasking_ef():
   with (
     mock.patch.object(_leader_tasking_module, "ef_py", _FAKE_EF),
     mock.patch.object(_air_adapter_module, "ef_py", _FAKE_EF),
-    mock.patch.object(_air_projection_module, "ef_py", _FAKE_EF),
+    mock.patch.object(_simulation_air_tasking_module, "ef_py", _FAKE_EF),
   ):
     yield
 

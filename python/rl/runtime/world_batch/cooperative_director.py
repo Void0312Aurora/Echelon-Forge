@@ -566,9 +566,9 @@ class ScriptedCooperativeCoordinationDirector:
         if task_order is not None:
             member_task = getattr(slot_state.control_slot, "task_order_overrides", None)
             if isinstance(member_task, dict):
-                from python.rl.tasking.leader_tasking import _apply_task_order_overrides
+                from python.simulation.air.tasking import apply_task_order_overrides
 
-                _apply_task_order_overrides(
+                apply_task_order_overrides(
                     task_order,
                     member_task,
                     default_assignee_id=int(slot_state.entity_id),
