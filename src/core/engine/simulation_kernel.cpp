@@ -383,13 +383,11 @@ std::array<double, 7> SimulationKernel::get_ground_field_semantic_observation(do
     ensure_active("get_ground_field_semantic_observation");
     if (IEnvironmentModel *model = environment_model()) {
         const auto observation = model->get_ground_field_semantic_observation(x, y);
-        return {observation.configured ? 1.0 : 0.0,
-                observation.nearest_tree_line_distance_m,
-                observation.nearest_tree_line_bearing_deg,
-                observation.nearest_settlement_distance_m,
-                observation.nearest_settlement_bearing_deg,
-                observation.in_tree_line ? 1.0 : 0.0,
-                observation.in_settlement ? 1.0 : 0.0};
+        return {
+            observation.configured ? 1.0 : 0.0,         observation.nearest_tree_line_distance_m,
+            observation.nearest_tree_line_bearing_deg,  observation.nearest_settlement_distance_m,
+            observation.nearest_settlement_bearing_deg, observation.in_tree_line ? 1.0 : 0.0,
+            observation.in_settlement ? 1.0 : 0.0};
     }
     return {0.0, -1.0, 0.0, -1.0, 0.0, 0.0, 0.0};
 }

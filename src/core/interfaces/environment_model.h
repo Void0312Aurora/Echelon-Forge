@@ -101,8 +101,8 @@ class IEnvironmentModel {
     // cover, and fire-control authority.
     virtual bool load_arnis_field_overlay(const std::string & /*overlay_path*/) { return false; }
 
-    virtual GroundFieldSemanticObservation
-    get_ground_field_semantic_observation(double /*x*/, double /*y*/) {
+    virtual GroundFieldSemanticObservation get_ground_field_semantic_observation(double /*x*/,
+                                                                                 double /*y*/) {
         return {};
     }
 

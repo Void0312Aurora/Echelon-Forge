@@ -239,9 +239,9 @@ bool read_feature_geometries(const std::filesystem::path &path, bool bridges,
 
 bool field_overlay_evidence_is_held(const Json &evidence) {
     if (!evidence.is_object()) return false;
-    for (const char *key : {"metadata_only", "no_runtime_setup_application",
-                            "no_movement_release", "no_passability_release",
-                            "no_los_cover_release", "no_fire_control_release"}) {
+    for (const char *key :
+         {"metadata_only", "no_runtime_setup_application", "no_movement_release",
+          "no_passability_release", "no_los_cover_release", "no_fire_control_release"}) {
         if (!evidence.value(key, false)) return false;
     }
     return true;
@@ -265,10 +265,8 @@ bool read_field_overlay(const std::filesystem::path &path, const RasterGrid &bas
     const auto &entries = root.value("entries", Json{});
     if (!entries.is_array()) return false;
 
-    const double min_x = std::min(base.origin.x,
-                                  base.origin.x + (base.width - 1) * base.step_x);
-    const double min_y = std::min(base.origin.y,
-                                  base.origin.y + (base.height - 1) * base.step_y);
+    const double min_x = std::min(base.origin.x, base.origin.x + (base.width - 1) * base.step_x);
+    const double min_y = std::min(base.origin.y, base.origin.y + (base.height - 1) * base.step_y);
     const double extent_x = std::abs(base.step_x) * static_cast<double>(base.width - 1);
     const double extent_y = std::abs(base.step_y) * static_cast<double>(base.height - 1);
     constexpr double kOverlayExtentToleranceM = 2.0;
@@ -288,8 +286,7 @@ bool read_field_overlay(const std::filesystem::path &path, const RasterGrid &bas
     for (const auto &entry : entries) {
         if (!entry.is_object()) return false;
         const std::string kind = entry.value("overlay_kind", "");
-        if (kind != "tree_line" && kind != "settlement_anchor" &&
-            kind != "settlement_structure") {
+        if (kind != "tree_line" && kind != "settlement_anchor" && kind != "settlement_structure") {
             continue;
         }
         if (!field_overlay_evidence_is_held(entry.value("evidence", Json{}))) return false;
@@ -350,15 +347,13 @@ double distance_squared_to_field_feature(const ArnisFeatureGeometry &feature, do
         const double dx = x2 - x1;
         const double dy = y2 - y1;
         const double length_squared = dx * dx + dy * dy;
-        const double projection = length_squared > 0.0
-                                      ? std::clamp(((x - x1) * dx + (y - y1) * dy) /
-                                                       length_squared,
-                                                   0.0, 1.0)
-                                      : 0.0;
+        const double projection =
+            length_squared > 0.0
+                ? std::clamp(((x - x1) * dx + (y - y1) * dy) / length_squared, 0.0, 1.0)
+                : 0.0;
         const double candidate_x = x1 + projection * dx;
         const double candidate_y = y1 + projection * dy;
-        const double candidate = RasterGrid::distance_squared_to_segment(
-            x, y, x1, y1, x2, y2);
+        const double candidate = RasterGrid::distance_squared_to_segment(x, y, x1, y1, x2, y2);
         if (candidate < best) {
             best = candidate;
             nearest_x = candidate_x;
@@ -668,13 +663,13 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
     }
 
     GroundFieldSemanticObservation get_ground_field_semantic_observation(double x,
-                                                                          double y) override {
+                                                                         double y) override {
         GroundFieldSemanticObservation observation;
         observation.configured = raster_layer_.field_overlay_loaded;
         if (!observation.configured) return observation;
 
-        auto inspect = [x, y](const std::vector<ArnisFeatureGeometry> &features,
-                              double &distance, double &bearing, bool &inside) {
+        auto inspect = [x, y](const std::vector<ArnisFeatureGeometry> &features, double &distance,
+                              double &bearing, bool &inside) {
             double best = std::numeric_limits<double>::infinity();
             double best_x = x;
             double best_y = y;
@@ -699,20 +694,17 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
             }
             distance = std::sqrt(std::max(0.0, best));
             if (distance > 0.0) {
-                bearing = std::fmod(std::atan2(best_x - x, best_y - y) *
-                                        180.0 / std::numbers::pi_v<double> +
-                                        360.0,
-                                    360.0);
+                bearing = std::fmod(
+                    std::atan2(best_x - x, best_y - y) * 180.0 / std::numbers::pi_v<double> + 360.0,
+                    360.0);
             } else {
                 bearing = 0.0;
             }
         };
 
-        inspect(raster_layer_.tree_line_features,
-                observation.nearest_tree_line_distance_m,
+        inspect(raster_layer_.tree_line_features, observation.nearest_tree_line_distance_m,
                 observation.nearest_tree_line_bearing_deg, observation.in_tree_line);
-        inspect(raster_layer_.settlement_features,
-                observation.nearest_settlement_distance_m,
+        inspect(raster_layer_.settlement_features, observation.nearest_settlement_distance_m,
                 observation.nearest_settlement_bearing_deg, observation.in_settlement);
         return observation;
     }

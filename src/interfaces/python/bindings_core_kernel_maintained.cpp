@@ -99,11 +99,9 @@ void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel> &ker
              "'gaussian_hill', 'mountain')",
              nb::arg("terrain_type"))
         .def("load_arnis_terrain_bundle", &SimulationKernel::load_arnis_terrain_bundle,
-             "Load a verified Arnis continuous raster bundle directory",
-             nb::arg("bundle_root"))
-         .def("load_arnis_field_overlay", &SimulationKernel::load_arnis_field_overlay,
-              "Load a metadata-only Arnis field overlay",
-              nb::arg("overlay_path"))
+             "Load a verified Arnis continuous raster bundle directory", nb::arg("bundle_root"))
+        .def("load_arnis_field_overlay", &SimulationKernel::load_arnis_field_overlay,
+             "Load a metadata-only Arnis field overlay", nb::arg("overlay_path"))
         .def(
             "get_ground_terrain_observation",
             [](SimulationKernel &self, double x, double y) {
