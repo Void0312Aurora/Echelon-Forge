@@ -15,6 +15,7 @@
 #include "components/domains/air/combat/weapon_air.h"
 #include "components/domains/air/platform/flight_dynamics_tuning.h"
 #include "components/domains/naval/combat/weapon_naval.h"
+#include "components/domains/naval/command/mission_command_naval.h"
 #include "components/domains/naval/platform/embarked_air_ops.h"
 #include "components/domains/naval/platform/ship_platform.h"
 #include "components/domains/naval/platform/submarine_platform.h"
@@ -702,6 +703,30 @@ void register_command_scalar_reflection(flecs::world &ecs) {
         .member<MissionCommandNaval>("naval", 1, base_offset<MissionCommand, MissionCommandNaval>())
         .member<MissionCommandGround>("ground", 1,
                                       base_offset<MissionCommand, MissionCommandGround>());
+    ecs.component<NavalCommandIntent>()
+        .member<double>("cmd_heading_deg")
+        .member<double>("cmd_speed_mps")
+        .member<double>("cmd_depth_m")
+        .member<int>("command_code")
+        .member<std::uint64_t>("route_ref_id")
+        .member<int>("roe_state")
+        .member<std::uint64_t>("engagement_authority_holder_id")
+        .member<std::uint64_t>("engagement_authority_grantor_id")
+        .member<std::uint64_t>("assigned_target_id")
+        .member<int>("threat_state")
+        .member<std::uint64_t>("assigned_target_track_id")
+        .member<std::uint64_t>("assigned_target_source_id")
+        .member<double>("assigned_target_snapshot_time_s")
+        .member<bool>("authorization_to_fire")
+        .member<bool>("active")
+        .member<std::uint64_t>("reference_entity_id")
+        .member<double>("station_radius_m")
+        .member<double>("station_bearing_deg")
+        .member<std::uint64_t>("embarked_helo_entity_id")
+        .member<bool>("launch_helo")
+        .member<bool>("recover_helo")
+        .member<bool>("relay_oth_targeting")
+        .member<double>("last_relay_refresh_time_s");
 
     ecs.component<PendingMissionControlCommand>().member<MissionCommandControlState>(
         "control_state");
