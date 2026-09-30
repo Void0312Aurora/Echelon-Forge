@@ -14,6 +14,7 @@ struct RuntimeFacadeVisualObservationExport {
     std::vector<float> flat;
 };
 
-RuntimeFacadeVisualObservationExport render_runtime_facade_visual_observation_batch(
-    const RuntimeFacade &facade, const std::vector<WorldEntityRef> &refs, int downsample,
-    bool use_gpu);
+RuntimeFacadeVisualObservationExport
+render_runtime_facade_visual_observation_batch(const RuntimeFacade &facade,
+                                               const std::vector<WorldEntityRef> &refs,
+                                               int downsample, bool use_gpu);

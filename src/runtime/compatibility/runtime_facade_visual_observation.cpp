@@ -34,11 +34,12 @@ bool default_environment_snapshots_equal(const DefaultEnvironmentSnapshot &lhs,
     return true;
 }
 
-}  // namespace
+} // namespace
 
-RuntimeFacadeVisualObservationExport render_runtime_facade_visual_observation_batch(
-    const RuntimeFacade &facade, const std::vector<WorldEntityRef> &refs, int downsample,
-    bool use_gpu) {
+RuntimeFacadeVisualObservationExport
+render_runtime_facade_visual_observation_batch(const RuntimeFacade &facade,
+                                               const std::vector<WorldEntityRef> &refs,
+                                               int downsample, bool use_gpu) {
     const int factor = std::max(1, downsample);
     const auto scenes =
         facade.collect_visual_binding_compatibility_scenes_batch(refs, factor, use_gpu);
@@ -73,10 +74,10 @@ RuntimeFacadeVisualObservationExport render_runtime_facade_visual_observation_ba
 
     if (can_batch && !requests.empty()) {
         if (use_gpu) {
-            out.flat = gpu::render_visual_experiment_batch_export_from_snapshot(
-                           requests, objects_batch,
-                           snapshots.front().valid ? &snapshots.front() : nullptr)
-                           .flat;
+            out.flat =
+                gpu::render_visual_experiment_batch_export_from_snapshot(
+                    requests, objects_batch, snapshots.front().valid ? &snapshots.front() : nullptr)
+                    .flat;
         } else {
             out.flat = gpu::render_visual_reference_cpu_batch_from_snapshot(
                 requests, objects_batch, snapshots.front().valid ? &snapshots.front() : nullptr);
@@ -85,13 +86,12 @@ RuntimeFacadeVisualObservationExport render_runtime_facade_visual_observation_ba
     }
 
     for (std::size_t idx = 0; idx < requests.size(); ++idx) {
-        auto rendered = use_gpu
-                            ? gpu::render_visual_experiment_from_snapshot(
-                                  requests[idx], objects_batch[idx],
-                                  snapshots[idx].valid ? &snapshots[idx] : nullptr)
-                            : gpu::render_visual_reference_cpu_from_snapshot(
-                                  requests[idx], objects_batch[idx],
-                                  snapshots[idx].valid ? &snapshots[idx] : nullptr);
+        auto rendered = use_gpu ? gpu::render_visual_experiment_from_snapshot(
+                                      requests[idx], objects_batch[idx],
+                                      snapshots[idx].valid ? &snapshots[idx] : nullptr)
+                                : gpu::render_visual_reference_cpu_from_snapshot(
+                                      requests[idx], objects_batch[idx],
+                                      snapshots[idx].valid ? &snapshots[idx] : nullptr);
         std::copy(rendered.begin(), rendered.end(),
                   out.flat.begin() + static_cast<std::ptrdiff_t>(idx * out.frame_size));
     }

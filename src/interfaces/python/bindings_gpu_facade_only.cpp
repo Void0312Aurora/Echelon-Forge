@@ -16,9 +16,10 @@
 
 namespace {
 
-gpu::ExecutionObservationBatchRequest make_request(
-    const InstrumentState &inst, const MissionObservationInputs &mission_inputs,
-    const float *ils, int max_contacts, int max_rwr, const AgentObservation &truth) {
+gpu::ExecutionObservationBatchRequest make_request(const InstrumentState &inst,
+                                                   const MissionObservationInputs &mission_inputs,
+                                                   const float *ils, int max_contacts, int max_rwr,
+                                                   const AgentObservation &truth) {
     gpu::ExecutionObservationBatchRequest req{};
     req.inst.alt_baro_m = inst.alt_baro_m;
     req.inst.alt_radar_m = inst.alt_radar_m;
@@ -85,8 +86,7 @@ gpu::ExecutionObservationBatchRequest make_request(
         req.mission.route_dist_m = mission_inputs.route_guidance.dist_m;
         req.mission.route_reward_xtk_m = mission_inputs.route_guidance.reward_xtk_m;
         req.mission.route_reward_dtg_m = mission_inputs.route_guidance.reward_dtg_m;
-        req.mission.route_direct_to_track_deg =
-            mission_inputs.route_guidance.direct_to_track_deg;
+        req.mission.route_direct_to_track_deg = mission_inputs.route_guidance.direct_to_track_deg;
         req.mission.route_reward_desired_track_deg =
             mission_inputs.route_guidance.reward_desired_track_deg;
         req.mission.route_next_turn_deg = mission_inputs.route_guidance.next_turn_deg;
@@ -109,7 +109,7 @@ gpu::ExecutionObservationBatchRequest make_request(
     return req;
 }
 
-}  // namespace
+} // namespace
 
 void bind_gpu_facade_only(nb::module_ &m) {
     m.def(
@@ -139,9 +139,8 @@ void bind_gpu_facade_only(nb::module_ &m) {
            nb::ndarray<nb::numpy, const float, nb::ndim<2>, nb::c_contig> ils_batch,
            int max_contacts, int max_rwr, bool use_gpu) {
             if (inst_batch.size() != truth_batch.size() ||
-                inst_batch.size() != mission_inputs_batch.size() ||
-                ils_batch.ndim() != 2 || ils_batch.shape(0) != inst_batch.size() ||
-                ils_batch.shape(1) < 4) {
+                inst_batch.size() != mission_inputs_batch.size() || ils_batch.ndim() != 2 ||
+                ils_batch.shape(0) != inst_batch.size() || ils_batch.shape(1) < 4) {
                 throw std::invalid_argument("invalid observation batch shape or sizes");
             }
             if (use_gpu) {
@@ -163,13 +162,14 @@ void bind_gpu_facade_only(nb::module_ &m) {
                 contacts.push_back(truth_batch[i].contacts);
                 rwr.push_back(truth_batch[i].rwr_warnings);
             }
-            const int mode = mission_inputs_batch.empty() ? 0 : mission_inputs_batch.front().mode_code;
+            const int mode =
+                mission_inputs_batch.empty() ? 0 : mission_inputs_batch.front().mode_code;
             const size_t instrument_count = gpu::kExecutionObservationInstrumentCount;
             const size_t mission_count = gpu::execution_observation_mission_float_count(mode);
             const size_t contact_count = static_cast<size_t>(std::max(0, max_contacts)) * 5u;
             const size_t rwr_count = static_cast<size_t>(std::max(0, max_rwr)) * 4u;
-            const size_t per_request = gpu::execution_observation_output_float_count(
-                max_contacts, max_rwr, mode);
+            const size_t per_request =
+                gpu::execution_observation_output_float_count(max_contacts, max_rwr, mode);
             const auto flat = gpu::compute_execution_observation_reference_cpu_batch(
                 requests, contacts, rwr, max_contacts, max_rwr);
             const size_t batch = inst_batch.size();
@@ -209,8 +209,8 @@ void bind_gpu_facade_only(nb::module_ &m) {
         "compute_world_batch_visual_observation_batch_numpy",
         [](RuntimeFacade &facade, const std::vector<WorldEntityRef> &refs, int downsample,
            bool use_gpu) {
-            auto outputs = render_runtime_facade_visual_observation_batch(
-                facade, refs, downsample, use_gpu);
+            auto outputs =
+                render_runtime_facade_visual_observation_batch(facade, refs, downsample, use_gpu);
             size_t shape[4] = {
                 outputs.batch_size,
                 static_cast<size_t>(outputs.out_h),
@@ -230,8 +230,8 @@ void bind_gpu_facade_only(nb::module_ &m) {
                 throw std::invalid_argument(
                     "facade-only visual export does not expose a device-resident view");
             }
-            auto outputs = render_runtime_facade_visual_observation_batch(
-                facade, refs, downsample, false);
+            auto outputs =
+                render_runtime_facade_visual_observation_batch(facade, refs, downsample, false);
             size_t shape[4] = {
                 outputs.batch_size,
                 static_cast<size_t>(outputs.out_h),
@@ -239,8 +239,7 @@ void bind_gpu_facade_only(nb::module_ &m) {
                 static_cast<size_t>(arb::ARB_CHANNELS),
             };
             return nb::make_tuple(
-                visual_tensor_to_numpy<nb::ndim<4>>(std::move(outputs.flat), 4, shape),
-                nb::none());
+                visual_tensor_to_numpy<nb::ndim<4>>(std::move(outputs.flat), 4, shape), nb::none());
         },
         nb::arg("runtime_facade"), nb::arg("refs"), nb::arg("downsample") = 1,
         nb::arg("use_gpu") = false);
