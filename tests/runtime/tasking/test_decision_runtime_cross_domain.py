@@ -40,19 +40,19 @@ def _air_observation() -> dict[str, np.ndarray]:
 
 def test_scripted_runtime_spec_constructor_covers_all_maintained_domains() -> None:
     specs = (
-        ScriptedRuntimeAgentSpec(
+        DecisionRuntimeAgentSpec(
             agent_id="air:lead",
             model_id=AIR_SCRIPTED_EXECUTION_MODEL_ID,
             domain="air",
             role_id="autopilot_controller",
         ),
-        ScriptedRuntimeAgentSpec(
+        DecisionRuntimeAgentSpec(
             agent_id="naval:screen",
             model_id=NAVAL_STATION_HOLD_MODEL_ID,
             domain="naval",
             role_id="naval_warfare_commander",
         ),
-        ScriptedRuntimeAgentSpec(
+        DecisionRuntimeAgentSpec(
             agent_id="joint:director",
             model_id="joint.scripted_coordination.v1",
             domain="joint",
