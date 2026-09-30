@@ -26,9 +26,7 @@ from .common_core_profile import (
     apply_pilot_report_common_core_defaults,
     apply_task_order_common_core_defaults,
 )
-from .air_c2_task_order_projection import (
-    apply_task_order_overrides as _apply_task_order_overrides,
-)
+from python.simulation.air.tasking import apply_task_order_overrides as _apply_task_order_overrides
 from python.tasking_contracts.common.mission_defs import (
     COMMAND_CODE_LANDING,
     LANDING_PHASE_NAMES,

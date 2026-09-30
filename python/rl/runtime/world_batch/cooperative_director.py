@@ -6,7 +6,7 @@ from typing import Any
 import ef_py
 import numpy as np
 
-from python.rl.tasking.bridge import resolve_loader_time_step
+from python.rl.tasking.bridge import resolve_loader_time_step, tasking_profile_for_loader
 
 from .state import CooperativeSlotState, CooperativeWorldState
 
@@ -539,40 +539,53 @@ class ScriptedCooperativeCoordinationDirector:
         assigned_target_name = str(mission_cmd.get("assigned_target_name", "") or "").strip()
         assigned_target_id = _coerce_optional_int(mission_cmd.get("assigned_target_id", 0), 0)
         if assigned_target_name:
-            resolved_target_id = 0
             try:
                 resolved_target_id = _coerce_optional_int(
                     getattr(loader, "entities", {}).get(assigned_target_name, 0), 0
                 )
+                if resolved_target_id <= 0:
+                    assigned_target_id = 0
+                else:
+                    assigned_target_id = resolved_target_id
             except Exception:
-                resolved_target_id = 0
-            if resolved_target_id > 0:
-                assigned_target_id = resolved_target_id
-            else:
-                # An explicit roster target is an override.  If it cannot be
-                # resolved, clear both the command and derived lookup so a
-                # stale scenario target cannot authorize a release.
                 assigned_target_id = 0
-                mission_cmd["assigned_target_id"] = 0
-                mission_cmd["assigned_target_name"] = ""
-                loader.primary_target_id = 0
-                loader.primary_target_name = ""
         if assigned_target_id > 0:
             mission_cmd["assigned_target_id"] = int(assigned_target_id)
             loader.primary_target_id = int(assigned_target_id)
             loader.primary_target_name = assigned_target_name
+        elif assigned_target_name:
+            mission_cmd["assigned_target_id"] = 0
+            loader.primary_target_id = None
+            loader.primary_target_name = ""
 
         task_order = getattr(loader, "task_order", None)
         if task_order is not None:
             member_task = getattr(slot_state.control_slot, "task_order_overrides", None)
             if isinstance(member_task, dict):
-                from python.rl.tasking.leader_tasking import _apply_task_order_overrides
+                live_task_type = getattr(task_order, "task_type", None)
+                profile = tasking_profile_for_loader(loader)
+                domain_apply = getattr(profile, "apply_task_order_overrides", None)
+                if callable(domain_apply):
+                    domain_apply(
+                        task_order,
+                        member_task,
+                        default_assignee_id=int(slot_state.entity_id),
+                    )
+                else:
+                    from python.tasking_contracts.common.task_order import apply_common_task_order_overrides
 
-                _apply_task_order_overrides(
-                    task_order,
-                    member_task,
-                    default_assignee_id=int(slot_state.entity_id),
-                )
+                    apply_common_task_order_overrides(
+                        task_order,
+                        member_task,
+                        assignee_id=int(slot_state.entity_id),
+                    )
+                from python.tasking_contracts.common.task_order import apply_common_task_order_defaults
+
+                apply_common_task_order_defaults(task_order)
+                # Authored roster metadata may fill neutral fields, but the
+                # live C2 transition owner controls task_type after reset.
+                if live_task_type is not None and hasattr(task_order, "task_type"):
+                    _assign_attr_if_present(task_order, "task_type", live_task_type)
             if hasattr(task_order, "takeoff_procedure_id"):
                 _assign_attr_if_present(
                     task_order,
