@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "components/combat/common/missile_seeker_state.h"
+#include "components/combat/common/missile_world_tracker_state.h"
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"
 
@@ -21,13 +22,26 @@ struct WarheadProfile {
     double gurney_constant_mps = std::numeric_limits<double>::quiet_NaN();
     double fragment_mass_kg = std::numeric_limits<double>::quiet_NaN();
     double fragment_count = std::numeric_limits<double>::quiet_NaN();
+    std::string fragment_angular_distribution = "legacy_scalar";
+    double fragment_polar_concentration = std::numeric_limits<double>::quiet_NaN();
+    double fragment_isotropic_fraction = std::numeric_limits<double>::quiet_NaN();
+    double fragment_azimuthal_modulation = std::numeric_limits<double>::quiet_NaN();
+    std::uint32_t fragment_azimuthal_lobes = 0;
+    double fragment_azimuthal_phase_deg = std::numeric_limits<double>::quiet_NaN();
+    std::string continuous_rod_spatial_model = "legacy_side_sweep";
+    double continuous_rod_band_half_angle_deg = std::numeric_limits<double>::quiet_NaN();
+    std::uint32_t continuous_rod_azimuthal_samples = 0;
+    std::uint32_t continuous_rod_polar_samples = 0;
+    double continuous_rod_azimuthal_phase_deg = std::numeric_limits<double>::quiet_NaN();
     double projection_radius_fraction = std::numeric_limits<double>::quiet_NaN();
     double projection_min_radius_m = std::numeric_limits<double>::quiet_NaN();
     double projection_max_radius_m = std::numeric_limits<double>::quiet_NaN();
     double projection_min_effect_scale = std::numeric_limits<double>::quiet_NaN();
+    double projection_curve_floor_effect_scale = std::numeric_limits<double>::quiet_NaN();
     double projection_max_effect_scale = std::numeric_limits<double>::quiet_NaN();
     double projection_falloff_exponent = std::numeric_limits<double>::quiet_NaN();
     std::uint32_t projection_max_projected_hitboxes = 0;
+    bool projection_near_field_floor_enabled = true;
     bool synthetic = true;
     bool damage_scalar_synthetic = true;
     std::string provenance = "synthetic_legacy_damage";
@@ -79,6 +93,31 @@ inline std::string fuze_profile_type(const FuzeProfile &profile) {
     return profile.type.empty() ? "proximity" : profile.type;
 }
 
+struct MissileGuidanceAccelerationVectorDiagnostics {
+    double x_mps2 = 0.0;
+    double y_mps2 = 0.0;
+    double z_mps2 = 0.0;
+    double magnitude_mps2 = 0.0;
+};
+
+struct MissileGuidanceAccelerationDiagnostics {
+    MissileGuidanceAccelerationVectorDiagnostics capture{};
+    MissileGuidanceAccelerationVectorDiagnostics pn{};
+    MissileGuidanceAccelerationVectorDiagnostics apn{};
+    MissileGuidanceAccelerationVectorDiagnostics preclamp{};
+    MissileGuidanceAccelerationVectorDiagnostics postclamp{};
+};
+
+inline MissileGuidanceAccelerationVectorDiagnostics
+make_missile_guidance_acceleration_diagnostics(const Math::Vector3 &value) {
+    return {
+        value.x,
+        value.y,
+        value.z,
+        std::sqrt(value.x * value.x + value.y * value.y + value.z * value.z),
+    };
+}
+
 // Shared missile component used by common guidance/effects surfaces. Its
 // seeker/guidance runtime remains air-shaped and should not be read as a
 // complete cross-domain weapon model.
@@ -98,6 +137,14 @@ struct Missile {
     double max_flight_time_s;        // Hard self-destruct time (s)
     double nav_gain;                 // PN gain (dimensionless)
     bool active;                     // If false, missile is dead/inert
+
+    // Selectable production PN law. Legacy remains the default until a weapon profile opts in.
+    int pn_los_rate_source = 0;          // 0=legacy body-frame rates, 1=world-frame LOS history
+    int target_kinematics_estimator = 0; // 0=legacy, 1=world CV, 2=world constant-acceleration
+    int capture_guidance_mode = 1;       // 0=disabled, 1=legacy pursuit schedule
+    double target_tracker_alpha = std::numeric_limits<double>::quiet_NaN();
+    double target_tracker_beta = std::numeric_limits<double>::quiet_NaN();
+    double target_tracker_gamma = std::numeric_limits<double>::quiet_NaN();
 
     // Deterministic RNG state for probabilistic hit/kill logic (seeded at launch).
     uint64_t rng_state = 0;
@@ -163,6 +210,11 @@ struct Missile {
     double filtered_closing_speed_mps = 0.0;
     double bearing_rate_deg_s = 0.0;
     double elevation_rate_deg_s = 0.0;
+    bool guidance_previous_world_los_valid = false;
+    double guidance_previous_world_los_x = 0.0;
+    double guidance_previous_world_los_y = 0.0;
+    double guidance_previous_world_los_z = 0.0;
+    double guidance_previous_world_los_time_s = -1.0;
     double last_track_time_s = -1.0;
     double track_memory_timeout_s = 0.75;
 
@@ -209,9 +261,27 @@ struct Missile {
     double target_track_ax_mps2 = 0.0;
     double target_track_ay_mps2 = 0.0;
     double target_track_az_mps2 = 0.0;
+    missile_guidance::WorldCvAlphaBetaTrackerState world_cv_target_tracker{};
+    missile_guidance::WorldCvaAlphaBetaGammaTrackerState world_cva_target_tracker{};
+    bool target_measurement_fresh = false;
+    bool target_measurement_rejected_nonmonotonic = false;
+    std::uint32_t target_duplicate_measurement_count = 0;
+    double target_measurement_age_s = std::numeric_limits<double>::infinity();
+    double target_estimator_update_dt_s = 0.0;
+    double target_measurement_x_m = std::numeric_limits<double>::quiet_NaN();
+    double target_measurement_y_m = std::numeric_limits<double>::quiet_NaN();
+    double target_measurement_z_m = std::numeric_limits<double>::quiet_NaN();
+    double target_prediction_x_m = std::numeric_limits<double>::quiet_NaN();
+    double target_prediction_y_m = std::numeric_limits<double>::quiet_NaN();
+    double target_prediction_z_m = std::numeric_limits<double>::quiet_NaN();
+    double target_residual_x_m = 0.0;
+    double target_residual_y_m = 0.0;
+    double target_residual_z_m = 0.0;
+    double target_residual_norm_m = 0.0;
     double guidance_lead_time_s = 0.0;
     double guidance_lead_blend = 0.0;
     double guidance_apn_lateral_accel_mps2 = 0.0;
+    MissileGuidanceAccelerationDiagnostics guidance_acceleration_diagnostics{};
     double autopilot_filter_state_mps2 = 0.0;
     double autopilot_rate_state_mps3 = 0.0;
     double autopilot_actuator_state_mps2 = 0.0;

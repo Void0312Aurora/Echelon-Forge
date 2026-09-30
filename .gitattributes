@@ -20,3 +20,7 @@ tests/architecture/composition/fixtures/owner_authority_registry.v1.json -text
 tests/architecture/composition/fixtures/default_runtime_profile_projection.v1.json -text
 tests/architecture/composition/fixtures/default_compatibility_manifest.requested.json -text
 tests/architecture/composition/fixtures/default_compatibility_manifest.resolved.json -text
+
+# Launch-decision provenance inputs are hashed as canonical Git LF blobs.
+examples/config/training/active/air_combat/*.json -text
+tests/fixtures/launch_decision_reorg/v2/canonical_provenance_v1.json -text

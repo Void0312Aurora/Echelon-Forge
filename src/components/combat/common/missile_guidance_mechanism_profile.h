@@ -6,6 +6,17 @@ struct MissileGuidanceMechanismProfile {
     static constexpr int kCaptureOff = 0;
     static constexpr int kCaptureOn = 1;
 
+    static constexpr int kCaptureBaseInverseRange = 0;
+    static constexpr int kCaptureBaseReferenceRange = 1;
+
+    static constexpr int kCaptureTerminalCurrentClamped = 0;
+    static constexpr int kCaptureTerminalUnity = 1;
+    static constexpr int kCaptureTerminalReciprocalUnclamped = 2;
+
+    static constexpr int kCaptureLeadCurrentSchedule = 0;
+    static constexpr int kCaptureLeadConstantMax = 1;
+    static constexpr int kCaptureLeadOff = 2;
+
     static constexpr int kPnLegacyBodyRates = 0;
     static constexpr int kPnOff = 1;
     static constexpr int kPnWorldLosHistory = 2;
@@ -23,6 +34,9 @@ struct MissileGuidanceMechanismProfile {
 
     bool active = false;
     int capture_mode = kCaptureOn;
+    int capture_base_range_mode = kCaptureBaseInverseRange;
+    int capture_terminal_weight_mode = kCaptureTerminalCurrentClamped;
+    int capture_lead_blend_mode = kCaptureLeadCurrentSchedule;
     int pn_mode = kPnLegacyBodyRates;
     int lead_mode = kLeadQuadratic;
     int kinematics_source = kKinematicsTrack;
@@ -42,6 +56,10 @@ struct MissileGuidanceMechanismProfile {
     double capture_accel_y_mps2 = 0.0;
     double capture_accel_z_mps2 = 0.0;
     double capture_accel_mps2 = 0.0;
+    double capture_lateral_error = 0.0;
+    double capture_base_range_factor = 0.0;
+    double capture_terminal_weight = 0.0;
+    double capture_raw_accel_mps2 = 0.0;
     double pn_accel_x_mps2 = 0.0;
     double pn_accel_y_mps2 = 0.0;
     double pn_accel_z_mps2 = 0.0;

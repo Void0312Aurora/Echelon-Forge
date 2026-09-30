@@ -5,11 +5,22 @@ template <typename ResolveSystemSeverity, typename ApplySystemEffect>
 void apply_default_effects_spatial_projection(
     DefaultEffectsScratch &scratch, const HitboxConfig &hitboxes, bool structured_air_target,
     const Missile &missile, const WarheadSpatialProjectionProfile &warhead_projection,
-    const Vec3 &local_imp, const Vec3 &missile_axis_body, const Vec3 &warhead_orientation_axis_body,
-    double closure_mps, SystemHealth *sys_health, ResolveSystemSeverity &&resolve_system_severity,
+    const Vec3 &local_imp, const Vec3 &missile_axis_body,
+    const WarheadOrientationFrame &warhead_orientation_frame, double closure_mps,
+    SystemHealth *sys_health, ResolveSystemSeverity &&resolve_system_severity,
     ApplySystemEffect &&apply_system_effect) {
     const bool broad_spatial_projection =
         warhead_uses_broad_spatial_projection(missile.warhead_profile);
+    const ContinuousRodRingBandSample rod_ring_band_settings =
+        resolve_continuous_rod_ring_band_settings(missile);
+    if (rod_ring_band_settings.active) {
+        scratch.continuous_rod_ring_band_active = true;
+        scratch.continuous_rod_spatial_model = rod_ring_band_settings.spatial_model;
+        scratch.continuous_rod_band_half_angle_deg = rod_ring_band_settings.band_half_angle_deg;
+        scratch.continuous_rod_azimuthal_sample_count =
+            rod_ring_band_settings.azimuthal_sample_count;
+        scratch.continuous_rod_polar_sample_count = rod_ring_band_settings.polar_sample_count;
+    }
     if (structured_air_target && (!scratch.structure_hit || broad_spatial_projection) &&
         !hitboxes.hitboxes.empty()) {
         std::vector<SpatialProjectionCandidate> candidates;
@@ -44,8 +55,8 @@ void apply_default_effects_spatial_projection(
                     component_projected_exposure_scale(local_imp, component);
                 return make_default_effects_spatial_projection_candidate(
                     missile, warhead_projection, local_imp, missile_axis_body,
-                    warhead_orientation_axis_body, component_box, &parent_box, &component,
-                    distance_m, spatial_radius_m, exposure_scale, closure_mps, out_candidate);
+                    warhead_orientation_frame, component_box, &parent_box, &component, distance_m,
+                    spatial_radius_m, exposure_scale, closure_mps, out_candidate);
             };
         const auto make_box_projection_candidate = [&](const Hitbox &box,
                                                        SpatialProjectionCandidate *out_candidate) {
@@ -56,7 +67,7 @@ void apply_default_effects_spatial_projection(
             const double exposure_scale = hitbox_projected_exposure_scale(local_imp, box);
             return make_default_effects_spatial_projection_candidate(
                 missile, warhead_projection, local_imp, missile_axis_body,
-                warhead_orientation_axis_body, box, &box, nullptr, distance_m, spatial_radius_m,
+                warhead_orientation_frame, box, &box, nullptr, distance_m, spatial_radius_m,
                 exposure_scale, closure_mps, out_candidate);
         };
         const auto collect_component_projection_candidates = [&](const Hitbox &parent_box) {
@@ -143,6 +154,7 @@ void apply_default_effects_spatial_projection(
                 continue;
             }
             const DamageComponent *projected_component = candidate.component;
+            record_default_effects_spatial_projection_trace(scratch, candidate);
             record_default_effects_warhead_effect_sample(
                 scratch, candidate.effect_scale, candidate.armor_scale * candidate.exposure_scale,
                 candidate.armor_scale, candidate.exposure_scale,
@@ -175,6 +187,7 @@ void apply_default_effects_spatial_projection(
                     }
                 }
                 for (const SpatialProjectionCandidate &component_candidate : component_candidates) {
+                    record_default_effects_spatial_projection_trace(scratch, component_candidate);
                     record_default_effects_warhead_effect_sample(
                         scratch, component_candidate.effect_scale,
                         component_candidate.armor_scale * component_candidate.exposure_scale,

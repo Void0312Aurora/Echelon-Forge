@@ -8,10 +8,11 @@ Document kind: `plan`
 Lifecycle: `draft`
 Canonical: `docs/domains/air/work/issues/kill_chain_expectation_envelope.md`
 Owner: `domains/air`
-Last verified: `2026-08-08`
+Last verified: `2026-09-16`
 
-Status: draft planning issue for air-to-air kill-chain expectation envelopes;
-not a current runtime or test contract.
+Status: active planning issue for the remaining air-to-air kill-chain
+expectation envelope. The v2 diagnostic identity contract below is maintained;
+the proposed envelope policy remains a draft and is not a runtime contract.
 
 This draft records candidate review vocabulary and an envelope shape for
 air-to-air kill-chain expectation checks. It does not claim real AIM-120C, real
@@ -19,10 +20,11 @@ F-16C, deterministic-fuze, Pk, or runtime calibration authority.
 
 ## Authorization Boundary
 
-This draft does not authorize implementation, runtime retuning, descriptor
-edits, harness or schema changes, calibration, reward changes, or training
-acceptance. Any such work requires a separately authorized owner-local work
-package with its own scope, tests, review, and acceptance evidence.
+This issue does not authorize further runtime retuning, descriptor edits,
+calibration, reward changes, or training acceptance. The v2 diagnostic identity
+slice described below was implemented under separate owner authorization; any
+additional harness or schema change still requires bounded scope, tests, and
+review.
 
 ## Scope
 
@@ -66,6 +68,29 @@ Current schema label:
 ```text
 a2.kill_chain_expectation_envelope.v0
 ```
+
+## Current V2 Diagnostic Identity Contract
+
+The maintained diagnostic harness uses baseline
+`P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS`. The report root and every populated
+case-grid and heatmap row carry the same `expectation_baseline_id`; consumers
+reject v1, missing, unknown, or mixed identities.
+
+| Artifact | Current schema |
+| --- | --- |
+| before report | `a2.kill_chain_expectation_before_report.v2` |
+| case-grid row | `a2.kill_chain_expectation_case_grid.v2` |
+| heatmap row | `a2.kill_chain_expectation_heatmap_row.v2` |
+| stage attribution | `a2.kill_chain_expectation_stage_attribution.v2` |
+| response diagnosis | `a2.kill_chain_expectation_response_diagnosis.v3` |
+| expectation-envelope audit | `a2.kill_chain_expectation_envelope_audit.v2` |
+
+The accepted mapping contains 93 signed cells (`N=63`, `M=2`, `O=28`). Its
+bounded independent review record is retained in the
+[P11 rebaseline evidence package](../../../../systems/weapons/evidence/kill_chain_p11_expectation_rebaseline_20260915/README.md).
+That review accepts the mapping only; it does not admit the current code
+revision, close terminal-track residuals, or establish real-weapon authority.
+The older dated review pages remain unchanged v1 snapshots.
 
 ## Human-Defined Inputs
 

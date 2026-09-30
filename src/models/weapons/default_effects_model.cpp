@@ -78,8 +78,8 @@ class DefaultEffectsModel : public IEffectsModel {
             const double closure_mps = resolve_closure_mps(missile_entity, target_entity);
             const Vec3 missile_axis_body =
                 missile_velocity_axis_in_target_body(missile_entity, *t_tgt);
-            const Vec3 warhead_orientation_axis_body =
-                missile_forward_axis_in_target_body(*t_msl, *t_tgt);
+            const WarheadOrientationFrame warhead_orientation_frame =
+                warhead_orientation_frame_in_target_body(*t_msl, *t_tgt);
 
             DefaultEffectsScratch scratch{missile.rng_state};
             const double severity = std::clamp(missile.damage / 180.0, 0.15, 0.65);
@@ -119,15 +119,15 @@ class DefaultEffectsModel : public IEffectsModel {
             };
             DefaultEffectsSystemEffectApplicator apply_system_effect{system_effect_context};
             const auto populate_result = [&]() {
-                populate_default_effects_result(result, scratch, warhead_orientation_axis_body);
+                populate_default_effects_result(result, scratch, warhead_orientation_frame.forward);
             };
             apply_default_effects_direct_hitboxes(scratch, *hitboxes, structured_air_target,
-                                                  missile, local_imp, warhead_orientation_axis_body,
+                                                  missile, local_imp, warhead_orientation_frame,
                                                   missile_axis_body, closure_mps, sys_health,
                                                   resolve_system_severity, apply_system_effect);
             apply_default_effects_spatial_projection(
                 scratch, *hitboxes, structured_air_target, missile, warhead_projection, local_imp,
-                missile_axis_body, warhead_orientation_axis_body, closure_mps, sys_health,
+                missile_axis_body, warhead_orientation_frame, closure_mps, sys_health,
                 resolve_system_severity, apply_system_effect);
             if (resolve_default_effects_domain_platform_consequences(
                     domain_target, scratch, target_entity, missile, local_imp, closure_mps,

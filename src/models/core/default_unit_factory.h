@@ -1102,6 +1102,36 @@ class DefaultUnitFactory : public IUnitFactory {
                                          def.missile_tuning.apn_target_accel_gain,
                                          MissileGuidanceDefaults::kDefaultApnTargetAccelGain)
                                    : MissileGuidanceDefaults::kDefaultApnTargetAccelGain;
+        missile_runtime.pn_los_rate_source =
+            def.has_missile_tuning && def.missile_tuning.pn_los_rate_source ==
+                                          static_cast<int>(MissilePnLosRateSource::WorldLosHistory)
+                ? static_cast<int>(MissilePnLosRateSource::WorldLosHistory)
+                : MissileGuidanceDefaults::kDefaultPnLosRateSource;
+        missile_runtime.target_kinematics_estimator =
+            def.has_missile_tuning &&
+                    (def.missile_tuning.target_kinematics_estimator ==
+                         static_cast<int>(MissileTargetKinematicsEstimator::WorldCv) ||
+                     def.missile_tuning.target_kinematics_estimator ==
+                         static_cast<int>(MissileTargetKinematicsEstimator::WorldCva))
+                ? def.missile_tuning.target_kinematics_estimator
+                : MissileGuidanceDefaults::kDefaultTargetKinematicsEstimator;
+        missile_runtime.capture_guidance_mode =
+            def.has_missile_tuning && def.missile_tuning.capture_guidance_mode ==
+                                          static_cast<int>(MissileCaptureGuidanceMode::Disabled)
+                ? static_cast<int>(MissileCaptureGuidanceMode::Disabled)
+                : MissileGuidanceDefaults::kDefaultCaptureGuidanceMode;
+        missile_runtime.target_tracker_alpha =
+            def.has_missile_tuning && std::isfinite(def.missile_tuning.target_tracker_alpha)
+                ? std::clamp(def.missile_tuning.target_tracker_alpha, 0.0, 1.0)
+                : MissileGuidanceDefaults::kWorldCvTrackerAlpha;
+        missile_runtime.target_tracker_beta =
+            def.has_missile_tuning && std::isfinite(def.missile_tuning.target_tracker_beta)
+                ? std::clamp(def.missile_tuning.target_tracker_beta, 0.0, 2.0)
+                : MissileGuidanceDefaults::kWorldCvTrackerBeta;
+        missile_runtime.target_tracker_gamma =
+            def.has_missile_tuning && std::isfinite(def.missile_tuning.target_tracker_gamma)
+                ? std::clamp(def.missile_tuning.target_tracker_gamma, 0.0, 1.0)
+                : MissileGuidanceDefaults::kWorldCvaTrackerGamma;
         missile_runtime.warhead_profile =
             def.has_missile_tuning && def.missile_tuning.has_warhead_profile
                 ? def.missile_tuning.warhead_profile

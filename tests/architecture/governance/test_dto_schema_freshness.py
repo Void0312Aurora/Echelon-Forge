@@ -25,7 +25,7 @@ _SAFETY_SCHEMA = (
 EXPECTED_REGISTRATIONS = {
   "tools/maintenance/dto_schema/schemas/damage/effects_event_fields.py": (
     "src/runtime/contracts/detail/damage/effects_event_fields.inc",
-    135,
+    168,
   ),
   "tools/maintenance/dto_schema/schemas/learning/flight_shaping_shared_fields.py": (
     "src/core/mission/runtime/detail/flight_shaping_shared_fields.inc",

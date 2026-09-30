@@ -1,0 +1,26 @@
+{
+  "schema_version": "a2.retained_review_packet_manifest.v1",
+  "packet_id": "continuous_rod_ring_band_admission_20260914",
+  "created_on": "2026-09-14",
+  "producer": "tools/geometry/continuous_rod_ring_band_admission.py",
+  "claim": "The explicit expanding ring-band mechanism passes structural admission.",
+  "non_claims": ["vulnerability calibration", "real-weapon performance", "pk authority"],
+  "source_report": {
+    "path": "artifacts/kill_chain/20260915/raw_review_packets/continuous_rod_ring_band_admission_20260914/continuous_rod_ring_band_admission_20260914.json",
+    "git_blob_oid": "47db759f899b60dcc0a2b96286003e7610891535",
+    "bytes": 1039115,
+    "availability": "git_history_only"
+  },
+  "retained_outputs": {
+    "figure": {
+      "path": "docs/systems/effects/reviews/continuous_rod_ring_band_admission_20260914/continuous-rod-ring-band-evidence.png",
+      "sha256": "5aa10b844bff7a1f845db3e08c873a6748e7d9b028f549492dc67209547de063",
+      "bytes": 306245
+    }
+  },
+  "retention": {
+    "reason": "Preserve the selected ring-band admission surface without raw runs.",
+    "consumer": "continuous-rod ring-band review",
+    "rights_boundary": "Repository-internal synthetic engineering evidence."
+  }
+}

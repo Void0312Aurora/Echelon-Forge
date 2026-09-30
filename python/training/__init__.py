@@ -13,9 +13,12 @@ from .bootstrap import (
 )
 from .cli import build_train_arg_parser
 from .deps import (
+    LaunchDecisionConfigMigrationError,
     apply_policy_kwargs_feature_extractor_classes,
     get_policy_kwargs,
+    launch_decision_config_migration_metadata,
     load_training_dependencies,
+    translate_launch_decision_config,
 )
 from .vec_env_factory import (
     build_cooperative_world_batch_vec_env,
@@ -27,6 +30,7 @@ from .vec_env_factory import (
 
 __all__ = [
     "TrainingBootstrap",
+    "LaunchDecisionConfigMigrationError",
     "apply_global_seed",
     "apply_leader_action_bias",
     "apply_policy_kwargs_feature_extractor_classes",
@@ -38,10 +42,12 @@ __all__ = [
     "get_policy_kwargs",
     "infer_full_action_safe_defaults",
     "load_training_dependencies",
+    "launch_decision_config_migration_metadata",
     "maybe_initialize_hmoe_from_shared",
     "prepare_training_bootstrap",
     "print_test_only_preflight_runtime_summary",
     "print_training_bootstrap_summary",
     "resolve_vec_env_spec",
     "warn_execution_visual_rollout_memory",
+    "translate_launch_decision_config",
 ]

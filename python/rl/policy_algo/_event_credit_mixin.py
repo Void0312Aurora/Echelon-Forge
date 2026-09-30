@@ -716,6 +716,20 @@ class _EventCreditMixin:
         return [param for param in credit_head.parameters() if param.requires_grad]
 
     def _event_policy_margin_parameters(self) -> list[th.nn.Parameter]:
+        owner_getter = getattr(self.policy, "get_launch_decision_owner_contract", None)
+        role_getter = getattr(self.policy, "get_launch_decision_parameters", None)
+        if callable(owner_getter) and callable(role_getter):
+            contract = owner_getter()
+            mode = getattr(getattr(contract, "mode", None), "value", "")
+            if mode == "auxiliary_only_v1":
+                raise ValueError(
+                    "event-policy-margin cannot update sampled launch logits in auxiliary_only_v1"
+                )
+            if mode == "direct_boundary_v1_strict":
+                return role_getter(("hybrid_event_head",))
+            if mode in {"governed_composed_v1", "adapter_coupled_v1"}:
+                return role_getter(tuple(getattr(contract, "trainable_parameter_roles", ())))
+
         selected: list[th.nn.Parameter] = []
         action_net = getattr(self.policy, "action_net", None)
         if action_net is not None:
@@ -762,6 +776,9 @@ class _EventCreditMixin:
             else:
                 grad_norm = 0.0
             max_grad_norm_seen = max(max_grad_norm_seen, grad_norm)
+            record_update = getattr(self.policy, "record_launch_decision_update", None)
+            if callable(record_update):
+                record_update("event_policy_margin", selected_params)
             self.policy.optimizer.step()
             self.policy.optimizer.zero_grad(set_to_none=True)
             last_margin_loss = margin_loss

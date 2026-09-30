@@ -17,6 +17,7 @@
 #include "content/unit_definition_loader.h"
 #include "components/tasking/task_order.h"
 #include "components/tasking/leader_intent.h"
+#include "models/weapons/missile_guidance_types.h"
 
 #include <doctest/doctest.h>
 
@@ -25,6 +26,7 @@
 #include <fstream>
 #include <numbers>
 #include <string>
+#include <utility>
 #include <vector>
 
 // ---------------------------------------------------------------------------
@@ -74,6 +76,45 @@ TEST_SUITE("components_basic") {
         REQUIRE(definitions.size() == 1);
         CHECK(definitions.front().name == "preexisting_definition");
         CHECK(error.find("bad_evidence.json") != std::string::npos);
+
+        std::filesystem::remove_all(root);
+    }
+
+    TEST_CASE("unit definition loader rejects unknown warhead model selectors transactionally") {
+        const std::filesystem::path root =
+            std::filesystem::temp_directory_path() / "ef_warhead_selector_transaction_test";
+        std::filesystem::remove_all(root);
+        std::filesystem::create_directories(root);
+
+        for (const auto &[field, value] : std::vector<std::pair<std::string, std::string>>{
+                 {"fragment_angular_distribution", "polar_azimuth_typo"},
+                 {"continuous_rod_spatial_model", "ring_band_typo"},
+             }) {
+            const std::filesystem::path definition_path = root / "missile.json";
+            {
+                std::ofstream definition(definition_path);
+                definition << R"json({
+  "name": "Invalid_Warhead_Selector",
+  "type": "Missile",
+  "esm": {},
+  "warhead": {
+    ")json" << field << R"json(": ")json"
+                           << value << R"json("
+  }
+})json";
+            }
+
+            UnitDefinition sentinel{};
+            sentinel.name = "preexisting_definition";
+            std::vector<UnitDefinition> definitions{sentinel};
+            std::string error;
+
+            CHECK_FALSE(load_unit_definitions_json(root.string(), definitions, &error));
+            REQUIRE(definitions.size() == 1);
+            CHECK(definitions.front().name == "preexisting_definition");
+            CHECK(error.find(field) != std::string::npos);
+            CHECK(error.find(value) != std::string::npos);
+        }
 
         std::filesystem::remove_all(root);
     }
@@ -381,6 +422,23 @@ TEST_SUITE("components_basic") {
         CHECK(h.max_hp == doctest::Approx(0.0));
     }
 
+    TEST_CASE("missile production guidance acceleration diagnostics are explicit and zero safe") {
+        Missile missile{};
+        const auto &diagnostics = missile.guidance_acceleration_diagnostics;
+        CHECK(diagnostics.capture.magnitude_mps2 == doctest::Approx(0.0));
+        CHECK(diagnostics.pn.magnitude_mps2 == doctest::Approx(0.0));
+        CHECK(diagnostics.apn.magnitude_mps2 == doctest::Approx(0.0));
+        CHECK(diagnostics.preclamp.magnitude_mps2 == doctest::Approx(0.0));
+        CHECK(diagnostics.postclamp.magnitude_mps2 == doctest::Approx(0.0));
+
+        const auto vector =
+            make_missile_guidance_acceleration_diagnostics(Math::Vector3{3.0, -4.0, 12.0});
+        CHECK(vector.x_mps2 == doctest::Approx(3.0));
+        CHECK(vector.y_mps2 == doctest::Approx(-4.0));
+        CHECK(vector.z_mps2 == doctest::Approx(12.0));
+        CHECK(vector.magnitude_mps2 == doctest::Approx(13.0));
+    }
+
     // --- Dynamics / Transform --------------------------------------------------
 
     TEST_CASE("transform_default_is_origin") {
@@ -399,6 +457,165 @@ TEST_SUITE("components_basic") {
         // SimObject is a tag component — its existence is the only contract.
         SimObject so{};
         (void)so;
+    }
+
+    TEST_CASE("missile guidance mechanisms parse strictly and preserve unset defaults") {
+        const std::filesystem::path valid_path =
+            std::filesystem::temp_directory_path() / "ef_missile_pn_source_valid.json";
+        {
+            std::ofstream file(valid_path);
+            file << R"json({
+  "name": "PN_Source_Parse_Test",
+  "type": "Missile",
+  "flight_model": {"max_speed": 1000.0, "max_g": 30.0, "max_turn_rate": 25.0},
+  "guidance": {
+    "pn_los_rate_source": "world_los_history",
+    "target_kinematics_estimator": "world_cva",
+    "capture_guidance_mode": "disabled",
+    "target_tracker_alpha": 0.20,
+    "target_tracker_beta": 0.02,
+    "target_tracker_gamma": 0.5
+  }
+})json";
+        }
+
+        std::vector<UnitDefinition> definitions;
+        std::string error;
+        REQUIRE(load_unit_definitions_json(valid_path.string(), definitions, &error));
+        REQUIRE(definitions.size() == 1);
+        CHECK(definitions[0].missile_tuning.pn_los_rate_source ==
+              static_cast<int>(MissilePnLosRateSource::WorldLosHistory));
+        CHECK(definitions[0].missile_tuning.target_kinematics_estimator ==
+              static_cast<int>(MissileTargetKinematicsEstimator::WorldCva));
+        CHECK(definitions[0].missile_tuning.capture_guidance_mode ==
+              static_cast<int>(MissileCaptureGuidanceMode::Disabled));
+        CHECK(definitions[0].missile_tuning.target_tracker_alpha == doctest::Approx(0.20));
+        CHECK(definitions[0].missile_tuning.target_tracker_beta == doctest::Approx(0.02));
+        CHECK(definitions[0].missile_tuning.target_tracker_gamma == doctest::Approx(0.5));
+        std::filesystem::remove(valid_path);
+
+        const std::filesystem::path default_path =
+            std::filesystem::temp_directory_path() / "ef_missile_pn_source_default.json";
+        {
+            std::ofstream file(default_path);
+            file << R"json({
+  "name": "PN_Source_Default_Test",
+  "type": "Missile",
+  "flight_model": {"max_speed": 1000.0, "max_g": 30.0, "max_turn_rate": 25.0}
+})json";
+        }
+        definitions.clear();
+        error.clear();
+        REQUIRE(load_unit_definitions_json(default_path.string(), definitions, &error));
+        REQUIRE(definitions.size() == 1);
+        CHECK(definitions[0].missile_tuning.pn_los_rate_source == -1);
+        CHECK(definitions[0].missile_tuning.target_kinematics_estimator == -1);
+        CHECK(definitions[0].missile_tuning.capture_guidance_mode == -1);
+        std::filesystem::remove(default_path);
+
+        const std::filesystem::path invalid_path =
+            std::filesystem::temp_directory_path() / "ef_missile_pn_source_invalid.json";
+        {
+            std::ofstream file(invalid_path);
+            file << R"json({
+  "name": "PN_Source_Invalid_Test",
+  "type": "Missile",
+  "flight_model": {"max_speed": 1000.0, "max_g": 30.0, "max_turn_rate": 25.0},
+  "guidance": {"pn_los_rate_source": "truth_oracle"}
+})json";
+        }
+        definitions.clear();
+        error.clear();
+        CHECK_FALSE(load_unit_definitions_json(invalid_path.string(), definitions, &error));
+        CHECK(error.find("Unknown pn_los_rate_source") != std::string::npos);
+        std::filesystem::remove(invalid_path);
+
+        const std::filesystem::path invalid_estimator_path =
+            std::filesystem::temp_directory_path() / "ef_missile_target_estimator_invalid.json";
+        {
+            std::ofstream file(invalid_estimator_path);
+            file << R"json({
+  "name": "Target_Estimator_Invalid_Test",
+  "type": "Missile",
+  "flight_model": {"max_speed": 1000.0, "max_g": 30.0, "max_turn_rate": 25.0},
+  "guidance": {"target_kinematics_estimator": "truth_oracle"}
+})json";
+        }
+        definitions.clear();
+        error.clear();
+        CHECK_FALSE(
+            load_unit_definitions_json(invalid_estimator_path.string(), definitions, &error));
+        CHECK(error.find("Unknown target_kinematics_estimator") != std::string::npos);
+        std::filesystem::remove(invalid_estimator_path);
+
+        const std::filesystem::path invalid_capture_path =
+            std::filesystem::temp_directory_path() / "ef_missile_capture_mode_invalid.json";
+        {
+            std::ofstream file(invalid_capture_path);
+            file << R"json({
+  "name": "Capture_Mode_Invalid_Test",
+  "type": "Missile",
+  "flight_model": {"max_speed": 1000.0, "max_g": 30.0, "max_turn_rate": 25.0},
+  "guidance": {"capture_guidance_mode": "magic_pursuit"}
+})json";
+        }
+        definitions.clear();
+        error.clear();
+        CHECK_FALSE(load_unit_definitions_json(invalid_capture_path.string(), definitions, &error));
+        CHECK(error.find("Unknown capture_guidance_mode") != std::string::npos);
+        std::filesystem::remove(invalid_capture_path);
+    }
+
+    TEST_CASE("missile tracker gains fail closed at content boundary") {
+        const std::filesystem::path root =
+            std::filesystem::temp_directory_path() / "ef_missile_tracker_gain_validation";
+        std::filesystem::remove_all(root);
+        std::filesystem::create_directories(root);
+
+        UnitDefinition sentinel{};
+        sentinel.name = "preexisting_definition";
+        std::vector<UnitDefinition> definitions{sentinel};
+        std::string error;
+        struct InvalidGainCase {
+            const char *field;
+            double value;
+        };
+        const InvalidGainCase invalid_cases[] = {
+            {"target_tracker_alpha", -0.01},
+            {"target_tracker_alpha", 1.01},
+            {"target_tracker_beta", -0.01},
+            {"target_tracker_beta", 2.01},
+        };
+        for (const auto &test_case : invalid_cases) {
+            {
+                std::ofstream file(root / "missile.json");
+                file << "{\"name\":\"Invalid_Tracker_Gain\",\"type\":\"Missile\","
+                        "\"guidance\":{\""
+                     << test_case.field << "\":" << test_case.value << "}}";
+            }
+            definitions = {sentinel};
+            error.clear();
+            CHECK_FALSE(load_unit_definitions_json(root.string(), definitions, &error));
+            REQUIRE(definitions.size() == 1);
+            CHECK(definitions.front().name == "preexisting_definition");
+            CHECK(error.find(test_case.field) != std::string::npos);
+        }
+
+        {
+            std::ofstream file(root / "missile.json");
+            file << R"json({
+  "name": "Boundary_Tracker_Gains",
+  "type": "Missile",
+  "guidance": {"target_tracker_alpha": 1.0, "target_tracker_beta": 2.0}
+})json";
+        }
+        definitions = {sentinel};
+        error.clear();
+        REQUIRE(load_unit_definitions_json(root.string(), definitions, &error));
+        REQUIRE(definitions.size() == 2);
+        CHECK(definitions.back().missile_tuning.target_tracker_alpha == doctest::Approx(1.0));
+        CHECK(definitions.back().missile_tuning.target_tracker_beta == doctest::Approx(2.0));
+        std::filesystem::remove_all(root);
     }
 
 } // TEST_SUITE components_basic

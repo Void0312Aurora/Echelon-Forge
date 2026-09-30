@@ -1,0 +1,31 @@
+{
+  "schema_version": "a2.retained_review_packet_manifest.v1",
+  "packet_id": "warhead_spatial_structural_admission_20260913",
+  "created_on": "2026-09-13",
+  "producer": "tools/geometry/warhead_spatial_structural_admission.py",
+  "claim": "The synthetic warhead spatial trace passes the bounded structural gate recorded in the review.",
+  "non_claims": ["continuous-rod admission", "real-weapon performance", "pk authority"],
+  "source_report": {
+    "path": "artifacts/kill_chain/20260915/raw_review_packets/warhead_spatial_structural_admission_20260913/warhead_spatial_structural_admission_baseline_20260913.json",
+    "git_blob_oid": "437689e31672497da31d7150bdc1a47aa5ea645b",
+    "bytes": 2730480,
+    "availability": "git_history_only"
+  },
+  "retained_outputs": {
+    "review": {
+      "path": "docs/systems/effects/reviews/warhead_spatial_structural_admission_20260913/README.md",
+      "sha256": "3d3ca3b251b632c0c18bf9955e4e78d2b9a84fa62436582c759d9773a7585a2e",
+      "bytes": 2976
+    },
+    "review_zh": {
+      "path": "docs/systems/effects/reviews/warhead_spatial_structural_admission_20260913/README.zh.md",
+      "sha256": "872789cb705a22e28c2cb318b3d117a3675a5c943f4cb22ec776c4e1ad7df7df",
+      "bytes": 1685
+    }
+  },
+  "retention": {
+    "reason": "Preserve the bounded structural review without raw runs.",
+    "consumer": "warhead spatial structural review",
+    "rights_boundary": "Repository-internal synthetic engineering evidence."
+  }
+}

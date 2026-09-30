@@ -17,10 +17,15 @@ _REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
 if _REPO_ROOT_HINT not in sys.path:
   sys.path.insert(0, _REPO_ROOT_HINT)
 
-from tools.diagnostics.common import add_kces_before_report_args, finite_float_or_none, write_json_output
+from tools.diagnostics.common import (
+  add_kces_before_report_args,
+  finite_float_or_none,
+  require_expectation_baseline_identity,
+  write_json_output,
+)
 
-SCHEMA_VERSION = "a2.kill_chain_expectation_envelope_audit.v1"
-ENVELOPE_SCHEMA_VERSION = "a2.kill_chain_expectation_envelope.v0"
+SCHEMA_VERSION = "a2.kill_chain_expectation_envelope_audit.v2"
+ENVELOPE_SCHEMA_VERSION = "a2.kill_chain_expectation_envelope.v1"
 DEFAULT_VARIANT = "REV-RUNTIME-PROJECTION"
 DEFAULT_TARGET_MOTION_LAYER = "nonmaneuvering_constant_velocity"
 RESPONSE_ORDER = {
@@ -238,6 +243,9 @@ def audit_row(row: dict[str, Any]) -> dict[str, Any]:
 
   return {
     "schema_version": ENVELOPE_SCHEMA_VERSION,
+    "expectation_baseline_id": str(
+      _nested_get(row, "identity", "expectation_baseline_id") or ""
+    ),
     "profile_id": str(_nested_get(row, "identity", "profile_id") or ""),
     "case_id": str(_nested_get(row, "identity", "case_id") or ""),
     "grid_tier": str(_nested_get(row, "identity", "grid_tier") or ""),
@@ -301,6 +309,8 @@ def _axis(rows: list[dict[str, Any]]) -> tuple[list[float], list[float]]:
 def _write_detail_csv(path: Path, *, rows: list[dict[str, Any]]) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
   fields = [
+    "schema_version",
+    "expectation_baseline_id",
     "case_id",
     "range_km",
     "signed_bearing_deg",
@@ -348,13 +358,26 @@ def _write_matrix_csv(
   }
   with path.open("w", newline="", encoding="utf-8") as handle:
     writer = csv.writer(handle, lineterminator="\n")
-    writer.writerow(["range_km"] + [f"{bearing:g}" for bearing in bearings])
+    writer.writerow(
+      ["schema_version", "expectation_baseline_id", "range_km"]
+      + [f"{bearing:g}" for bearing in bearings]
+    )
     for range_km in ranges:
       values = []
       for bearing in bearings:
         row = by_cell.get((range_km, bearing))
         values.append("" if row is None else str(row["envelope_cell_status"]))
-      writer.writerow([f"{range_km:g}", *values])
+      baseline_id = next(
+        (
+          str(row["expectation_baseline_id"])
+          for row in rows
+          if row.get("expectation_baseline_id")
+        ),
+        "",
+      )
+      writer.writerow(
+        [ENVELOPE_SCHEMA_VERSION, baseline_id, f"{range_km:g}", *values]
+      )
 
 def _group_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
   by_launch = Counter(row["launch_class"] for row in rows)
@@ -446,6 +469,7 @@ def generate_envelope_audit(
   date_stamp: str | None = None,
 ) -> dict[str, Any]:
   report = _read_report(input_path)
+  expectation_baseline_id = require_expectation_baseline_identity(report)
   selected = _selected_rows(
     report,
     variant=variant,
@@ -473,6 +497,7 @@ def generate_envelope_audit(
     "schema_version": SCHEMA_VERSION,
     "status": "generated",
     "envelope_schema_version": ENVELOPE_SCHEMA_VERSION,
+    "expectation_baseline_id": expectation_baseline_id,
     "input_path": str(input_path),
     "manifest_path": str(manifest_path),
     "summary_markdown": str(summary_path),

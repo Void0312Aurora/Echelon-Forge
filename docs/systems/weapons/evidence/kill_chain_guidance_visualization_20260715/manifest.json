@@ -1,0 +1,59 @@
+{
+  "schema_version": "a2.evidence_package_manifest.v1",
+  "created_at_utc": "2026-09-16T13:38:37Z",
+  "producer": {
+    "tool": "tools/diagnostics/kill_chain_guidance_calibration_visualize.py",
+    "source_report_date": "2026-07-15"
+  },
+  "claim": "Three unsmoothed calibration heatmaps support retaining nav_gain=4.0 with promotion held.",
+  "non_claims": [
+    "default_promotion",
+    "maneuver_or_apn_authority",
+    "real_weapon_performance",
+    "target_vulnerability",
+    "pk_authority"
+  ],
+  "inputs": {
+    "stage4_report": {
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715.json",
+      "sha256": "72fd560589732f4e0bf6de3c23c1091e10428e17b00d62d01c705dd8c23306be",
+      "bytes": 3530470,
+      "availability": "not_retained_in_git"
+    },
+    "stage5_report": {
+      "path": "artifacts/kill_chain/20260915/raw_review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715.json",
+      "sha256": "a30486a6cd55d68d4e571f1f6a504e0149422b8daa5299208245e6a614cd0221",
+      "bytes": 85733,
+      "availability": "not_retained_in_git"
+    }
+  },
+  "outputs": {
+    "launch_class_png": {
+      "path": "docs/systems/weapons/evidence/kill_chain_guidance_visualization_20260715/launch_class.png",
+      "sha256": "334f5fe4b000710b4d2b848d4cafefadf18a8c8d0ea3a8752a9bb68c882b9afb",
+      "bytes": 170429
+    },
+    "rho_edge_png": {
+      "path": "docs/systems/weapons/evidence/kill_chain_guidance_visualization_20260715/rho_edge.png",
+      "sha256": "ed65e35796d80d3b7fd48a16cdb93e09fcca3b4a3a9dae265884489e209d6ed9",
+      "bytes": 135883
+    },
+    "state_changes_png": {
+      "path": "docs/systems/weapons/evidence/kill_chain_guidance_visualization_20260715/state_changes.png",
+      "sha256": "7688576c68b436777549e6311c6dc3c80958fe5a790efca4f4ebe1180b438017",
+      "bytes": 192921
+    }
+  },
+  "decision": {
+    "selected_nav_gain": 4.0,
+    "promotion_status": "held"
+  },
+  "retention": {
+    "reason": "Preserve selected human-readable decision surfaces without raw experiment directories.",
+    "consumer": [
+      "kill-chain guidance baseline review",
+      "tools/diagnostics/kill_chain_guidance_calibration_visualize.py"
+    ],
+    "rights_boundary": "Repository-internal synthetic engineering evidence; no third-party assets."
+  }
+}

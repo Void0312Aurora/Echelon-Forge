@@ -5,6 +5,7 @@
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"
 #include "components/systems/sensor.h"
+#include "models/weapons/missile_guidance_types.h"
 
 void bind_simulation_kernel_diagnostics_missile_runtime_surface(
     nb::class_<SimulationKernel> &kernel) {
@@ -44,6 +45,28 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                 out["warhead_gurney_constant_mps"] = missile->warhead_profile.gurney_constant_mps;
                 out["warhead_fragment_mass_kg"] = missile->warhead_profile.fragment_mass_kg;
                 out["warhead_fragment_count"] = missile->warhead_profile.fragment_count;
+                out["warhead_fragment_angular_distribution"] =
+                    missile->warhead_profile.fragment_angular_distribution;
+                out["warhead_continuous_rod_spatial_model"] =
+                    missile->warhead_profile.continuous_rod_spatial_model;
+                out["warhead_continuous_rod_band_half_angle_deg"] =
+                    missile->warhead_profile.continuous_rod_band_half_angle_deg;
+                out["warhead_continuous_rod_azimuthal_samples"] =
+                    missile->warhead_profile.continuous_rod_azimuthal_samples;
+                out["warhead_continuous_rod_polar_samples"] =
+                    missile->warhead_profile.continuous_rod_polar_samples;
+                out["warhead_continuous_rod_azimuthal_phase_deg"] =
+                    missile->warhead_profile.continuous_rod_azimuthal_phase_deg;
+                out["warhead_fragment_polar_concentration"] =
+                    missile->warhead_profile.fragment_polar_concentration;
+                out["warhead_fragment_isotropic_fraction"] =
+                    missile->warhead_profile.fragment_isotropic_fraction;
+                out["warhead_fragment_azimuthal_modulation"] =
+                    missile->warhead_profile.fragment_azimuthal_modulation;
+                out["warhead_fragment_azimuthal_lobes"] =
+                    missile->warhead_profile.fragment_azimuthal_lobes;
+                out["warhead_fragment_azimuthal_phase_deg"] =
+                    missile->warhead_profile.fragment_azimuthal_phase_deg;
                 out["warhead_projection_radius_fraction"] =
                     missile->warhead_profile.projection_radius_fraction;
                 out["warhead_projection_min_radius_m"] =
@@ -52,12 +75,16 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                     missile->warhead_profile.projection_max_radius_m;
                 out["warhead_projection_min_effect_scale"] =
                     missile->warhead_profile.projection_min_effect_scale;
+                out["warhead_projection_curve_floor_effect_scale"] =
+                    missile->warhead_profile.projection_curve_floor_effect_scale;
                 out["warhead_projection_max_effect_scale"] =
                     missile->warhead_profile.projection_max_effect_scale;
                 out["warhead_projection_falloff_exponent"] =
                     missile->warhead_profile.projection_falloff_exponent;
                 out["warhead_projection_max_projected_hitboxes"] =
                     missile->warhead_profile.projection_max_projected_hitboxes;
+                out["warhead_projection_near_field_floor_enabled"] =
+                    missile->warhead_profile.projection_near_field_floor_enabled;
                 out["warhead_provenance"] = missile->warhead_profile.provenance;
                 out["fuze_type"] = missile->fuze_profile.type;
                 out["fuze_trigger_radius_m"] = missile->fuze_profile.trigger_radius_m;
@@ -73,6 +100,12 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                 out["last_guidance_time_s"] = missile->last_guidance_time;
                 out["max_flight_time_s"] = missile->max_flight_time_s;
                 out["nav_gain"] = missile->nav_gain;
+                out["pn_los_rate_source"] = missile->pn_los_rate_source;
+                out["target_kinematics_estimator"] = missile->target_kinematics_estimator;
+                out["capture_guidance_mode"] = missile->capture_guidance_mode;
+                out["target_tracker_alpha"] = missile->target_tracker_alpha;
+                out["target_tracker_beta"] = missile->target_tracker_beta;
+                out["target_tracker_gamma"] = missile->target_tracker_gamma;
                 out["apn_target_accel_gain"] = missile->apn_target_accel_gain;
                 out["autopilot_order"] = missile->autopilot_order;
                 out["autopilot_damping"] = missile->autopilot_damping;
@@ -142,9 +175,68 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                 out["target_track_ax_mps2"] = missile->target_track_ax_mps2;
                 out["target_track_ay_mps2"] = missile->target_track_ay_mps2;
                 out["target_track_az_mps2"] = missile->target_track_az_mps2;
+                const bool uses_world_cva =
+                    missile->target_kinematics_estimator ==
+                    static_cast<int>(MissileTargetKinematicsEstimator::WorldCva);
+                out["target_measurement_timestamp_s"] =
+                    uses_world_cva ? missile->world_cva_target_tracker.last_measurement_time_s
+                                   : missile->world_cv_target_tracker.last_measurement_time_s;
+                out["target_measurement_age_s"] = missile->target_measurement_age_s;
+                out["target_measurement_fresh"] = missile->target_measurement_fresh;
+                out["target_measurement_rejected_nonmonotonic"] =
+                    missile->target_measurement_rejected_nonmonotonic;
+                out["target_duplicate_measurement_count"] =
+                    missile->target_duplicate_measurement_count;
+                out["target_estimator_update_dt_s"] = missile->target_estimator_update_dt_s;
+                out["target_estimator_sample_count"] =
+                    uses_world_cva ? missile->world_cva_target_tracker.accepted_measurement_count
+                                   : missile->world_cv_target_tracker.accepted_measurement_count;
+                out["target_velocity_valid"] =
+                    uses_world_cva ? missile->world_cva_target_tracker.velocity_valid
+                                   : missile->world_cv_target_tracker.velocity_valid;
+                out["target_acceleration_valid"] =
+                    uses_world_cva && missile->world_cva_target_tracker.acceleration_valid;
+                out["target_acceleration_estimator_sample_count"] =
+                    uses_world_cva ? missile->world_cva_target_tracker.accepted_measurement_count
+                                   : 0;
+                out["target_acceleration_x_mps2"] = missile->target_track_ax_mps2;
+                out["target_acceleration_y_mps2"] = missile->target_track_ay_mps2;
+                out["target_acceleration_z_mps2"] = missile->target_track_az_mps2;
+                out["target_measurement_x_m"] = missile->target_measurement_x_m;
+                out["target_measurement_y_m"] = missile->target_measurement_y_m;
+                out["target_measurement_z_m"] = missile->target_measurement_z_m;
+                out["target_prediction_x_m"] = missile->target_prediction_x_m;
+                out["target_prediction_y_m"] = missile->target_prediction_y_m;
+                out["target_prediction_z_m"] = missile->target_prediction_z_m;
+                out["target_residual_x_m"] = missile->target_residual_x_m;
+                out["target_residual_y_m"] = missile->target_residual_y_m;
+                out["target_residual_z_m"] = missile->target_residual_z_m;
+                out["target_residual_norm_m"] = missile->target_residual_norm_m;
                 out["guidance_lead_time_s"] = missile->guidance_lead_time_s;
                 out["guidance_lead_blend"] = missile->guidance_lead_blend;
                 out["guidance_apn_lateral_accel_mps2"] = missile->guidance_apn_lateral_accel_mps2;
+                const MissileGuidanceAccelerationDiagnostics &guidance_accel =
+                    missile->guidance_acceleration_diagnostics;
+                out["guidance_capture_accel_x_mps2"] = guidance_accel.capture.x_mps2;
+                out["guidance_capture_accel_y_mps2"] = guidance_accel.capture.y_mps2;
+                out["guidance_capture_accel_z_mps2"] = guidance_accel.capture.z_mps2;
+                out["guidance_capture_accel_mps2"] = guidance_accel.capture.magnitude_mps2;
+                out["guidance_pn_accel_x_mps2"] = guidance_accel.pn.x_mps2;
+                out["guidance_pn_accel_y_mps2"] = guidance_accel.pn.y_mps2;
+                out["guidance_pn_accel_z_mps2"] = guidance_accel.pn.z_mps2;
+                out["guidance_pn_accel_mps2"] = guidance_accel.pn.magnitude_mps2;
+                out["guidance_apn_accel_x_mps2"] = guidance_accel.apn.x_mps2;
+                out["guidance_apn_accel_y_mps2"] = guidance_accel.apn.y_mps2;
+                out["guidance_apn_accel_z_mps2"] = guidance_accel.apn.z_mps2;
+                out["guidance_apn_accel_mps2"] = guidance_accel.apn.magnitude_mps2;
+                out["guidance_preclamp_accel_x_mps2"] = guidance_accel.preclamp.x_mps2;
+                out["guidance_preclamp_accel_y_mps2"] = guidance_accel.preclamp.y_mps2;
+                out["guidance_preclamp_accel_z_mps2"] = guidance_accel.preclamp.z_mps2;
+                out["guidance_preclamp_accel_mps2"] = guidance_accel.preclamp.magnitude_mps2;
+                out["guidance_postclamp_accel_x_mps2"] = guidance_accel.postclamp.x_mps2;
+                out["guidance_postclamp_accel_y_mps2"] = guidance_accel.postclamp.y_mps2;
+                out["guidance_postclamp_accel_z_mps2"] = guidance_accel.postclamp.z_mps2;
+                out["guidance_postclamp_accel_mps2"] = guidance_accel.postclamp.magnitude_mps2;
                 out["current_speed_mps"] = missile->current_speed_mps;
                 out["commanded_lateral_accel_mps2"] = missile->commanded_lateral_accel_mps2;
                 out["commanded_lateral_accel_x_mps2"] = missile->commanded_lateral_accel_x_mps2;
@@ -181,6 +273,12 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                     mechanism_profile && mechanism_profile->active;
                 if (mechanism_profile) {
                     out["guidance_mechanism_capture_mode"] = mechanism_profile->capture_mode;
+                    out["guidance_capture_base_range_mode"] =
+                        mechanism_profile->capture_base_range_mode;
+                    out["guidance_capture_terminal_weight_mode"] =
+                        mechanism_profile->capture_terminal_weight_mode;
+                    out["guidance_capture_lead_blend_mode"] =
+                        mechanism_profile->capture_lead_blend_mode;
                     out["guidance_mechanism_pn_mode"] = mechanism_profile->pn_mode;
                     out["guidance_mechanism_lead_mode"] = mechanism_profile->lead_mode;
                     out["guidance_mechanism_kinematics_source"] =
@@ -193,6 +291,14 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                     out["guidance_capture_accel_y_mps2"] = mechanism_profile->capture_accel_y_mps2;
                     out["guidance_capture_accel_z_mps2"] = mechanism_profile->capture_accel_z_mps2;
                     out["guidance_capture_accel_mps2"] = mechanism_profile->capture_accel_mps2;
+                    out["guidance_capture_lateral_error"] =
+                        mechanism_profile->capture_lateral_error;
+                    out["guidance_capture_base_range_factor"] =
+                        mechanism_profile->capture_base_range_factor;
+                    out["guidance_capture_terminal_weight"] =
+                        mechanism_profile->capture_terminal_weight;
+                    out["guidance_capture_raw_accel_mps2"] =
+                        mechanism_profile->capture_raw_accel_mps2;
                     out["guidance_pn_accel_x_mps2"] = mechanism_profile->pn_accel_x_mps2;
                     out["guidance_pn_accel_y_mps2"] = mechanism_profile->pn_accel_y_mps2;
                     out["guidance_pn_accel_z_mps2"] = mechanism_profile->pn_accel_z_mps2;

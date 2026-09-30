@@ -11,8 +11,14 @@
     "guidance": {
         "type": "ActiveRadar",
         "active_seek_range": 16000.0,
+        "pn_los_rate_source": "world_los_history",
+        "target_kinematics_estimator": "world_cva",
+        "capture_guidance_mode": "disabled",
+        "target_tracker_alpha": 0.2,
+        "target_tracker_beta": 0.02,
+        "target_tracker_gamma": 0.5,
         "nav_gain": 4.0,
-        "apn_target_accel_gain": 0.5,
+        "apn_target_accel_gain": 0.125,
         "autopilot_tau_s": 0.04,
         "max_accel_response_g_per_s": 500.0
     },

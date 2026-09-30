@@ -231,7 +231,9 @@ def _make_warhead_profile(family: str) -> object:
   return profile
 
 
-def _spawn_structured_f16_pair(sim: object) -> tuple[int, int]:
+def _spawn_structured_f16_pair(
+  sim: object, *, target_heading_deg: float = 180.0
+) -> tuple[int, int]:
   attacker_id = int(
     sim.spawn_unit(
       ef_py.Side.Blue,
@@ -254,7 +256,7 @@ def _spawn_structured_f16_pair(sim: object) -> tuple[int, int]:
       0.0,
       500.0,
       5000.0,
-      180.0,
+      float(target_heading_deg),
       0.0,
       0.0,
       0.0,

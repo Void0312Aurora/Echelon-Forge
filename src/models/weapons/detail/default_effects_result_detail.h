@@ -67,6 +67,45 @@ void populate_default_effects_result(EffectsResult &result, const DefaultEffects
     result.direct_hitbox_intersection = scratch.direct_hitbox_intersection;
     result.projected_hitbox_count = scratch.projected_hitbox_count;
     result.spatial_effect_scale = scratch.spatial_effect_scale;
+    result.spatial_projection_trace_valid = scratch.spatial_projection_trace_valid;
+    result.spatial_projection_effect_scale = scratch.spatial_projection_effect_scale;
+    result.spatial_projection_base_scale = scratch.spatial_projection_base_scale;
+    result.spatial_projection_curve_floor_scale = scratch.spatial_projection_curve_floor_scale;
+    result.spatial_projection_near_field_floor = scratch.spatial_projection_near_field_floor;
+    result.spatial_projection_floor_selected_scale =
+        scratch.spatial_projection_floor_selected_scale;
+    result.spatial_projection_preclamp_scale = scratch.spatial_projection_preclamp_scale;
+    result.spatial_projection_min_bound = scratch.spatial_projection_min_bound;
+    result.spatial_projection_max_bound = scratch.spatial_projection_max_bound;
+    result.spatial_projection_axis_weight = scratch.spatial_projection_axis_weight;
+    result.spatial_projection_orientation_weight = scratch.spatial_projection_orientation_weight;
+    result.spatial_projection_armor_scale = scratch.spatial_projection_armor_scale;
+    result.spatial_projection_exposure_scale = scratch.spatial_projection_exposure_scale;
+    result.spatial_projection_sampling_scale = scratch.spatial_projection_sampling_scale;
+    result.spatial_projection_near_field_floor_applied =
+        scratch.spatial_projection_near_field_floor_applied;
+    result.spatial_projection_effect_scale_clamped =
+        scratch.spatial_projection_effect_scale_clamped;
+    result.fragment_angular_distribution_active = scratch.fragment_angular_distribution_active;
+    result.fragment_angular_distribution = scratch.fragment_angular_distribution;
+    result.fragment_angular_signed_polar_cosine = scratch.fragment_angular_signed_polar_cosine;
+    result.fragment_angular_polar_angle_deg = scratch.fragment_angular_polar_angle_deg;
+    result.fragment_angular_azimuth_deg = scratch.fragment_angular_azimuth_deg;
+    result.fragment_angular_polar_density = scratch.fragment_angular_polar_density;
+    result.fragment_angular_azimuth_density = scratch.fragment_angular_azimuth_density;
+    result.fragment_angular_density = scratch.fragment_angular_density;
+    result.continuous_rod_ring_band_active = scratch.continuous_rod_ring_band_active;
+    result.continuous_rod_ring_band_intersection = scratch.continuous_rod_ring_band_intersection;
+    result.continuous_rod_spatial_model = scratch.continuous_rod_spatial_model;
+    result.continuous_rod_band_half_angle_deg = scratch.continuous_rod_band_half_angle_deg;
+    result.continuous_rod_azimuthal_sample_count = scratch.continuous_rod_azimuthal_sample_count;
+    result.continuous_rod_polar_sample_count = scratch.continuous_rod_polar_sample_count;
+    result.continuous_rod_intersecting_azimuthal_sample_count =
+        scratch.continuous_rod_intersecting_azimuthal_sample_count;
+    result.continuous_rod_angular_coverage_fraction =
+        scratch.continuous_rod_angular_coverage_fraction;
+    result.continuous_rod_nearest_intersection_distance_m =
+        scratch.continuous_rod_nearest_intersection_distance_m;
     result.mechanism_armor_scale = scratch.sampled_armor_scale;
     result.mechanism_exposure_scale = scratch.sampled_exposure_scale;
     result.mechanism_effect_scale = scratch.sampled_mechanism_scale;

@@ -1,12 +1,18 @@
 #pragma once
 
-enum class MissileSeekerMode {
-    Track = 0,
-    Memory = 1,
-    Ballistic = 2,
-};
+#include "components/combat/common/missile_guidance_types.h"
 
 struct MissileGuidanceDefaults {
+    static constexpr int kDefaultPnLosRateSource =
+        static_cast<int>(MissilePnLosRateSource::LegacyBodyRates);
+    static constexpr int kDefaultTargetKinematicsEstimator =
+        static_cast<int>(MissileTargetKinematicsEstimator::LegacyPolarDifference);
+    static constexpr int kDefaultCaptureGuidanceMode =
+        static_cast<int>(MissileCaptureGuidanceMode::LegacyPursuit);
+    static constexpr double kWorldCvTrackerAlpha = 0.20;
+    static constexpr double kWorldCvTrackerBeta = 0.02;
+    static constexpr double kWorldCvaTrackerGamma = 0.5;
+    static constexpr double kWorldCvaTrackerMinimumAccelerationBaselineS = 3.0;
     static constexpr double kTrackFilterTauS = 0.12;
     static constexpr double kTrackMemoryTimeoutS = 0.75;
     static constexpr double kBoostTimeS = 3.0;
