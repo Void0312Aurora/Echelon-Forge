@@ -157,8 +157,8 @@ TEST_SUITE("stable_entity_identity") {
             CHECK(state->episode_seed == 42);
         }
         REQUIRE(kernel.load_database("examples/config/database"));
-        auto first = kernel.spawn_unit(Side::Blue, "F-16C_Block50", 0.0, 0.0, 5000.0, 0.0, 0.0,
-                                       0.0, 200.0, 0.0, 0.0);
+        auto first = kernel.spawn_unit(Side::Blue, "F-16C_Block50", 0.0, 0.0, 5000.0, 0.0, 0.0, 0.0,
+                                       200.0, 0.0, 0.0);
         REQUIRE(first.is_valid());
         CHECK(first.get<StableEntitySerial>()->value == 1);
 
@@ -181,8 +181,8 @@ TEST_SUITE("stable_entity_identity") {
         kernel.reset(11);
         auto a = kernel.spawn_unit(Side::Blue, "F-16C_Block50", 0.0, 0.0, 5000.0, 0.0, 0.0, 0.0,
                                    200.0, 0.0, 0.0);
-        auto b = kernel.spawn_unit(Side::Blue, "F-16C_Block50", 1000.0, 0.0, 5000.0, 0.0, 0.0,
-                                   0.0, 200.0, 0.0, 0.0);
+        auto b = kernel.spawn_unit(Side::Blue, "F-16C_Block50", 1000.0, 0.0, 5000.0, 0.0, 0.0, 0.0,
+                                   200.0, 0.0, 0.0);
         REQUIRE(a.is_valid());
         REQUIRE(b.is_valid());
 
@@ -228,8 +228,8 @@ TEST_SUITE("stable_entity_identity") {
                                          0.0, 200.0, 0.0, 0.0);
         auto target = kernel.spawn_unit(Side::Red, "F-16C_Block50", 0.0, 20000.0, 5000.0, 180.0,
                                         0.0, 0.0, 200.0, 0.0, 0.0);
-        auto ship = kernel.spawn_unit(Side::Blue, "DDG-51_Flight_I_ASW_Helo_MVP", 50000.0, 0.0,
-                                      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        auto ship = kernel.spawn_unit(Side::Blue, "DDG-51_Flight_I_ASW_Helo_MVP", 50000.0, 0.0, 0.0,
+                                      0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         REQUIRE(shooter.is_valid());
         REQUIRE(target.is_valid());
         REQUIRE(ship.is_valid());
@@ -307,9 +307,8 @@ TEST_SUITE("stable_entity_identity") {
         {
             auto lease = kernel.acquire_world_lease();
             flecs::world &world = lease.world();
-            auto unstamped = world.entity()
-                                 .set<Transform>({0.0, 1000.0, 10.0, 0.0, 0.0, 0.0})
-                                 .add<SimObject>();
+            auto unstamped =
+                world.entity().set<Transform>({0.0, 1000.0, 10.0, 0.0, 0.0, 0.0}).add<SimObject>();
             unstamped_id = unstamped.id();
             Detection det{};
             det.target_id = unstamped_id;
@@ -327,8 +326,8 @@ TEST_SUITE("stable_entity_identity") {
         auto b = world.entity();
         stamp_stable_serial(a);
         stamp_stable_serial(b);
-        using stochastic_draw::DrawSite;
         using stochastic_draw::draw_seed;
+        using stochastic_draw::DrawSite;
 
         const std::uint64_t base = draw_seed(world, DrawSite::naval_gun_ciws, 1.25, {a, b}, {3});
         CHECK(base == draw_seed(world, DrawSite::naval_gun_ciws, 1.25, {a, b}, {3}));
@@ -349,7 +348,8 @@ TEST_SUITE("stable_entity_identity") {
         // entities first (moving every raw id) draws the same seed for the same serials.
         flecs::world shifted;
         install_stable_identity_state(shifted, 1235);
-        for (int index = 0; index < 17; ++index) shifted.entity();
+        for (int index = 0; index < 17; ++index)
+            shifted.entity();
         auto sa = shifted.entity();
         auto sb = shifted.entity();
         stamp_stable_serial(sa);
