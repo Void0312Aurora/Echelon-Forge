@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from .clone import _clone_runtime_mission_command, _clone_scenario_value
@@ -33,14 +34,17 @@ def _normalize_runtime_mission_command(
 
     task_cfg = task_cfg if isinstance(task_cfg, dict) else {}
     normalized = _clone_runtime_mission_command(cmd)
-    normalized["command_code"] = int(normalized.get("command_code", 0))
-    normalized["target_heading"] = float(normalized.get("target_heading", 0.0))
-    normalized["target_altitude"] = float(normalized.get("target_altitude", 0.0))
-    normalized["target_speed"] = float(normalized.get("target_speed", 0.0))
+    normalized["command_code"] = _coerce_nonnegative_int(normalized.get("command_code", 0), 0)
+    normalized["target_heading"] = _finite_float(normalized.get("target_heading", 0.0))
+    normalized["target_altitude"] = _finite_float(normalized.get("target_altitude", 0.0))
+    normalized["target_speed"] = _finite_float(normalized.get("target_speed", 0.0))
     normalized["route_ref_id"] = _coerce_nonnegative_int(normalized.get("route_ref_id", 0), 0)
     normalized["takeoff_procedure_code"] = _coerce_nonnegative_int(normalized.get("takeoff_procedure_code", 0), 0)
     normalized["takeoff_clearance_code"] = _coerce_nonnegative_int(normalized.get("takeoff_clearance_code", 0), 0)
-    normalized["takeoff_interval_s"] = float(normalized.get("takeoff_interval_s", 0.0))
+    normalized["takeoff_interval_s"] = max(
+        0.0,
+        _finite_float(normalized.get("takeoff_interval_s", 0.0)),
+    )
     normalized["runway_slot_code"] = _coerce_nonnegative_int(normalized.get("runway_slot_code", 0), 0)
 
     recovery_base_id = _coerce_nonnegative_int(
@@ -77,6 +81,16 @@ def _normalize_runtime_mission_command(
     return normalized
 
 
+def _finite_float(value: Any, default: float = 0.0) -> float:
+    """Coerce authored mission numerics without admitting NaN or infinity."""
+
+    try:
+        candidate = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return float(default)
+    return candidate if math.isfinite(candidate) else float(default)
+
+
 def _normalize_runtime_waypoints(mission_cmd: dict[str, Any] | None) -> list[dict[str, Any]]:
     if not isinstance(mission_cmd, dict):
         return []
@@ -88,8 +102,9 @@ def _normalize_runtime_waypoints(mission_cmd: dict[str, Any] | None) -> list[dic
         if value is None:
             return default
         try:
-            return float(value)
-        except Exception:
+            candidate = float(value)
+            return candidate if math.isfinite(candidate) else default
+        except (TypeError, ValueError, OverflowError):
             return default
 
     default_alt = _f(mission_cmd.get("target_altitude", 0.0), 0.0) or 0.0

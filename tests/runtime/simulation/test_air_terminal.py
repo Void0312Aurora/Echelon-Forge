@@ -31,6 +31,7 @@ def test_air_terminal_evaluator_requires_destroyed_damage_report_for_win() -> No
     assert won.status == "combat_win"
     assert won.reason == "all_targets_destroyed"
     assert won.damage_report_ids == (2,)
+    assert won.destroyed_target_keys == ((0, 20),)
 
 
 def test_air_terminal_evaluator_prefers_own_loss_over_target_win() -> None:

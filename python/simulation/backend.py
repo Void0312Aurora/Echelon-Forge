@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from importlib import import_module
-from typing import Any, Callable, Protocol, runtime_checkable
+from typing import Any, Callable, Mapping, Protocol, Sequence, runtime_checkable
 
 
 @runtime_checkable
@@ -27,6 +27,15 @@ class SimulationBatchBackend(Protocol):
 
 
 @runtime_checkable
+class SimulationCooperativeBatchBackend(SimulationBatchBackend, Protocol):
+    """Public cooperative metadata surface shared by batch providers."""
+
+    slots_per_world: int
+
+    def cooperative_slot_metadata(self) -> Sequence[Mapping[str, Any]]: ...
+
+
+@runtime_checkable
 class SimulationExecutionRuntime(Protocol):
     """Single-world execution wrapper surface used by trajectory diagnostics."""
 
@@ -38,7 +47,7 @@ class SimulationExecutionRuntime(Protocol):
 
 
 SingleBackendFactory = Callable[..., SimulationBatchBackend]
-CooperativeBackendFactory = Callable[..., SimulationBatchBackend]
+CooperativeBackendFactory = Callable[..., SimulationCooperativeBatchBackend]
 ExecutionRuntimeFactory = Callable[..., SimulationExecutionRuntime]
 
 
@@ -66,6 +75,7 @@ class SimulationBackendRegistration:
 
 _REGISTRATIONS: dict[str, SimulationBackendRegistration] = {}
 _BUILTIN_BACKEND_ID = "world_batch"
+_RESERVED_BACKEND_IDS = frozenset({_BUILTIN_BACKEND_ID, "facade_batch"})
 
 
 def register_backend(registration: SimulationBackendRegistration) -> None:
@@ -73,6 +83,8 @@ def register_backend(registration: SimulationBackendRegistration) -> None:
 
     if not isinstance(registration, SimulationBackendRegistration):
         raise TypeError("simulation backend registration has an invalid type")
+    if registration.backend_id in _RESERVED_BACKEND_IDS:
+        raise ValueError(f"simulation backend id is reserved by the built-in provider: {registration.backend_id}")
     if registration.backend_id in _REGISTRATIONS:
         raise ValueError(f"simulation backend already registered: {registration.backend_id}")
     _REGISTRATIONS[registration.backend_id] = registration
@@ -134,7 +146,7 @@ def create_single_backend(*, backend_id: str = _BUILTIN_BACKEND_ID, **kwargs: An
 
 def create_cooperative_backend(
     *, backend_id: str = _BUILTIN_BACKEND_ID, **kwargs: Any
-) -> SimulationBatchBackend:
+) -> SimulationCooperativeBatchBackend:
     """Construct a cooperative provider without exposing its implementation path."""
 
     factory = _resolve_backend(backend_id).cooperative_factory
@@ -157,6 +169,7 @@ def create_single_execution_runtime(
 __all__ = [
     "SimulationBackendRegistration",
     "SimulationBatchBackend",
+    "SimulationCooperativeBatchBackend",
     "SimulationExecutionRuntime",
     "create_cooperative_backend",
     "create_single_backend",

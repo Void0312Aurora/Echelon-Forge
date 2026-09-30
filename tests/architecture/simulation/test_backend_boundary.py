@@ -44,6 +44,16 @@ class _FakeExecutionRuntime:
         return None
 
 
+class _FakeCooperativeBackend(_FakeBackend):
+    slots_per_world = 2
+
+    def cooperative_slot_metadata(self):
+        return (
+            {"entity_name": "BlueLead", "formation_role_id": "Lead", "target_owner_name": "RedLead"},
+            {"entity_name": "BlueWing", "formation_role_id": "Wingman", "target_owner_name": "RedWing"},
+        )
+
+
 def test_simulation_backend_import_is_dependency_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
     original_import = builtins.__import__
 
@@ -77,6 +87,35 @@ def test_registered_backend_is_constructed_through_neutral_factory() -> None:
         module._REGISTRATIONS.pop(backend_id, None)
 
 
+def test_builtin_backend_ids_cannot_be_shadowed_before_lazy_resolution() -> None:
+    module = importlib.import_module("python.simulation.backend")
+    registration = module.SimulationBackendRegistration(
+        backend_id="world_batch",
+        cooperative_factory=_FakeCooperativeBackend,
+    )
+    with pytest.raises(ValueError, match="reserved"):
+        module.register_backend(registration)
+    assert "world_batch" not in module._REGISTRATIONS
+
+
+def test_cooperative_backend_exposes_provider_neutral_slot_metadata() -> None:
+    module = importlib.import_module("python.simulation.backend")
+    backend_id = "test.fake.cooperative"
+    module.register_backend(
+        module.SimulationBackendRegistration(
+            backend_id=backend_id,
+            cooperative_factory=_FakeCooperativeBackend,
+        )
+    )
+    try:
+        backend = module.create_cooperative_backend(backend_id=backend_id)
+        assert isinstance(backend, module.SimulationCooperativeBatchBackend)
+        assert backend.slots_per_world == 2
+        assert backend.cooperative_slot_metadata()[1]["target_owner_name"] == "RedWing"
+    finally:
+        module._REGISTRATIONS.pop(backend_id, None)
+
+
 def test_execution_only_provider_is_a_valid_backend_registration() -> None:
     module = importlib.import_module("python.simulation.backend")
     backend_id = "test.execution.only"
@@ -104,6 +143,11 @@ def test_provider_import_is_lazy_and_scripted_entries_use_backend_boundary() -> 
         assert "from python.simulation import" in text
         assert "from python.rl.runtime.world_batch" not in text
         assert "from python.rl.runtime.cooperative_world_batch_vec_env" not in text
+    cooperative_demo = (
+        REPO_ROOT / "tools" / "diagnostics" / "air_cooperative_combat_scripted_demo.py"
+    ).read_text(encoding="utf-8")
+    assert "cooperative_slot_metadata()" in cooperative_demo
+    assert "vec_env._slots" not in cooperative_demo
     trajectory_text = (
         REPO_ROOT / "tools" / "diagnostics" / "flight_trajectory" / "takeoff_to_landing.py"
     ).read_text(encoding="utf-8")

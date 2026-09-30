@@ -6,10 +6,15 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
 import numpy as np
+
+_REPO_ROOT_HINT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if _REPO_ROOT_HINT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT_HINT)
 
 from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
@@ -19,7 +24,6 @@ ensure_repo_imports()
 from python.tasking_contracts.air.engagement.model import (  # noqa: E402
     AIR_COMBAT_C2_ROE_V2,
     AIR_COMBAT_HYBRID_ACTION_DIM,
-    AIR_FULL_ACTION_DIM,
     AIR_SCRIPTED_ENGAGEMENT_MODEL_ID,
 )
 from python.tasking_contracts.common.decision_runtime import (  # noqa: E402
@@ -63,9 +67,9 @@ def run_demo(
     post_launch_assessment: bool,
 ) -> dict[str, Any]:
     action_mode = str(action_mode).strip().lower()
-    if action_mode not in {"air_combat_hybrid_v1", "full"}:
-        raise ValueError("action_mode must be 'air_combat_hybrid_v1' or 'full'")
-    action_dim = AIR_COMBAT_HYBRID_ACTION_DIM if action_mode == "air_combat_hybrid_v1" else AIR_FULL_ACTION_DIM
+    if action_mode != "air_combat_hybrid_v1":
+        raise ValueError("the scripted combat demo requires action_mode='air_combat_hybrid_v1'")
+    action_dim = AIR_COMBAT_HYBRID_ACTION_DIM
     vec_env = create_single_backend(
         scenario_path=os.path.abspath(str(scenario_path)),
         n_envs=1,

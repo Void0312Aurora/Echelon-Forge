@@ -41,8 +41,8 @@ inline void register_ew_system(flecs::world &ecs) {
                             (current_time - cm[i].last_chaff_release_time >=
                              cm[i].release_interval)) {
                             cm[i].chaff_count--;
-                            cm[i].last_chaff_release_time = current_time;
                             cm[i].last_release_time = current_time;
+                            cm[i].last_chaff_release_time = current_time;
 
                             // Spawn Chaff Entity
                             it.world()
@@ -83,8 +83,8 @@ inline void register_ew_system(flecs::world &ecs) {
                             (current_time - cm[i].last_flare_release_time >=
                              cm[i].release_interval)) {
                             cm[i].flare_count--;
-                            cm[i].last_flare_release_time = current_time;
                             cm[i].last_release_time = current_time;
+                            cm[i].last_flare_release_time = current_time;
 
                             it.world()
                                 .entity()

@@ -1,8 +1,8 @@
 """Dependency-terminal runtime for independent decision models.
 
 The runtime owns only the common scheduling envelope: model lifecycle, clock
-monotonicity, decision cadence, action hold/expiry, provenance context, and
-active-roster routing. Observation, action, intent, and report payloads stay
+monotonicity, decision cadence, decision-output caching, provenance context,
+and active-roster routing. Observation, action, intent, and report payloads stay
 opaque and remain owned by domain adapters. This module deliberately does not
 import RL, gym, NumPy, native bindings, or a simulation runtime.
 """
@@ -22,7 +22,6 @@ DECISION_RUNTIME_STATUS_TERMINATED = "terminated"
 DECISION_RUNTIME_STATUS_CLOSED = "closed"
 DECISION_RUNTIME_ACTION_DECIDED = "decided"
 DECISION_RUNTIME_ACTION_HELD = "held"
-DECISION_RUNTIME_ACTION_EXPIRED = "expired"
 
 
 def _finite_nonnegative(value: float, *, name: str) -> float:
@@ -45,8 +44,6 @@ class DecisionRuntimeAgentSpec:
     role_id: str
     model_kind: str = "scripted"
     decision_period_s: float = 0.0
-    action_hold_s: float = 0.0
-    action_expiry_s: float | None = None
     communication_state: str = "available"
     authority_scope: str = "unspecified"
     active: bool = True
@@ -78,13 +75,6 @@ class DecisionRuntimeAgentSpec:
             "decision_period_s",
             _finite_nonnegative(self.decision_period_s, name="decision_period_s"),
         )
-        object.__setattr__(self, "action_hold_s", _finite_nonnegative(self.action_hold_s, name="action_hold_s"))
-        if self.action_expiry_s is not None:
-            object.__setattr__(
-                self,
-                "action_expiry_s",
-                _finite_nonnegative(self.action_expiry_s, name="action_expiry_s"),
-            )
 
 
 @dataclass(frozen=True)
@@ -101,7 +91,6 @@ class DecisionRuntimeReport:
     decision_index: int
     observation_version: str
     action_source: str
-    action_expiry_s: float | None
     communication_state: str
     runtime_status: str
 
@@ -122,14 +111,29 @@ class DecisionRuntimeAgent:
             raise TypeError("decision runtime agent requires DecisionRuntimeAgentSpec")
         if not isinstance(model, DecisionModel):
             raise TypeError("decision runtime agent model must implement reset/decide/close")
+        declared_kind = getattr(model, "model_kind", None)
+        if declared_kind is None:
+            declared_kind = getattr(model, "_decision_model_kind", None)
+        if declared_kind is None:
+            raise ValueError(
+                f"decision model {spec.model_id!r} must declare model_kind before direct runtime construction"
+            )
+        normalized_kind = str(declared_kind).strip().lower()
+        if normalized_kind not in DECISION_MODEL_KINDS:
+            raise ValueError(f"decision model {spec.model_id!r} declares unknown model kind: {declared_kind!r}")
+        if normalized_kind != spec.model_kind:
+            raise ValueError(
+                f"decision model kind mismatch for {spec.model_id!r}: "
+                f"spec={spec.model_kind!r}, model={normalized_kind!r}"
+            )
         self.spec = spec
         self.model = model
         self.status = DECISION_RUNTIME_STATUS_READY
         self.episode_seed: int | None = None
         self.reset_index = 0
         self._last_clock_s: float | None = None
+        self._last_decision_clock_s: float | None = None
         self._next_decision_s: float = 0.0
-        self._action_expiry_s: float | None = None
         self._last_action: Any = None
         self._has_action = False
         self._decision_index = 0
@@ -143,8 +147,8 @@ class DecisionRuntimeAgent:
         self.reset_index += 1
         self.episode_seed = None if episode_seed is None else int(episode_seed)
         self._last_clock_s = None
+        self._last_decision_clock_s = None
         self._next_decision_s = 0.0
-        self._action_expiry_s = None
         self._last_action = None
         self._has_action = False
         self._decision_index = 0
@@ -189,14 +193,17 @@ class DecisionRuntimeAgent:
         self._last_clock_s = now
         observation_key = str(observation_version)
 
-        expired = self._has_action and self._action_expiry_s is not None and now >= self._action_expiry_s
         due = (
             bool(force_decide)
             or not self._has_action
-            or expired
             or now >= self._next_decision_s
         )
         if due:
+            decision_dt = (
+                0.0
+                if self._last_decision_clock_s is None
+                else now - self._last_decision_clock_s
+            )
             model_context = dict(context) if isinstance(context, Mapping) else {}
             model_context.update(
                 {
@@ -206,7 +213,7 @@ class DecisionRuntimeAgent:
                     "role_id": self.spec.role_id,
                     "model_kind": self.spec.model_kind,
                     "clock_s": now,
-                    "dt_s": dt,
+                    "dt_s": decision_dt,
                     "observation_version": observation_key,
                     "communication_state": self.spec.communication_state,
                     "authority_scope": self.spec.authority_scope,
@@ -215,17 +222,21 @@ class DecisionRuntimeAgent:
                     "replay_identity": self.replay_identity,
                 }
             )
-            self._last_action = self.model.decide(observation=observation, context=model_context, dt=dt)
+            self._last_action = self.model.decide(
+                observation=observation,
+                context=model_context,
+                dt=decision_dt,
+            )
+            self._last_decision_clock_s = now
             self._has_action = True
             self._decision_index += 1
             self._next_decision_s = now + self.spec.decision_period_s
-            expiry = self.spec.action_expiry_s
-            if expiry is None:
-                expiry = self.spec.action_hold_s
-            self._action_expiry_s = None if expiry <= 0.0 else now + expiry
             source = DECISION_RUNTIME_ACTION_DECIDED
         else:
-            source = DECISION_RUNTIME_ACTION_EXPIRED if expired else DECISION_RUNTIME_ACTION_HELD
+            # This is a decision-output cache hit. Action validity, expiry,
+            # interpolation, and drop behavior belong to the maintained
+            # facade ActionHoldPolicy.
+            source = DECISION_RUNTIME_ACTION_HELD
 
         report = DecisionRuntimeReport(
             agent_id=self.spec.agent_id,
@@ -238,7 +249,6 @@ class DecisionRuntimeAgent:
             decision_index=self._decision_index,
             observation_version=observation_key,
             action_source=source,
-            action_expiry_s=self._action_expiry_s,
             communication_state=self.spec.communication_state,
             runtime_status=self.status,
         )
@@ -323,13 +333,18 @@ class DecisionRuntimeRoster:
     ) -> dict[str, DecisionRuntimeStep]:
         versions = observation_versions or {}
         contexts = context_by_agent or {}
-        results: dict[str, DecisionRuntimeStep] = {}
-        for agent_id in sorted(self._agents):
-            agent = self._agents[agent_id]
-            if not agent.spec.active:
-                continue
+        active_ids = tuple(
+            agent_id
+            for agent_id in sorted(self._agents)
+            if self._agents[agent_id].spec.active
+        )
+        for agent_id in active_ids:
             if agent_id not in observations:
                 raise KeyError(f"missing observation for active decision runtime agent: {agent_id}")
+
+        results: dict[str, DecisionRuntimeStep] = {}
+        for agent_id in active_ids:
+            agent = self._agents[agent_id]
             results[agent_id] = agent.step(
                 observation=observations[agent_id],
                 clock_s=clock_s,
@@ -353,7 +368,6 @@ class DecisionRuntimeRoster:
 
 __all__ = [
     "DECISION_RUNTIME_ACTION_DECIDED",
-    "DECISION_RUNTIME_ACTION_EXPIRED",
     "DECISION_RUNTIME_ACTION_HELD",
     "DECISION_RUNTIME_STATUS_CLOSED",
     "DECISION_RUNTIME_STATUS_READY",

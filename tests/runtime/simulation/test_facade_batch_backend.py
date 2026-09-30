@@ -132,6 +132,8 @@ def test_facade_batch_runs_two_agents_and_roundtrips_scripted_c2_order() -> None
         assert len(current.observations) == 2
         assert all(float(obs.sim_time) > 0.0 for obs in current.observations)
         assert float(current.instruments[0].throttle_pos) > float(current.instruments[1].throttle_pos)
+        with pytest.raises(KeyError, match="every controlled entity"):
+            backend.step({lead_key: _action(0.1)})
         persisted_chain = backend.read_command_chain()
         assert persisted_chain["mission_commands"][0].shared_core.assigned_target_id == 9002
         assert persisted_chain["pilot_reports"][0].shared_core.sender_id == lead_key[1]

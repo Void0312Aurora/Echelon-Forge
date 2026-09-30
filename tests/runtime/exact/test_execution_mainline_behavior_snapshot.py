@@ -51,6 +51,8 @@ _EXPECTED_STEPS = (
             "tracked_total": 0.01,
             "untracked": 0.0,
         },
+        # The physical Air observation projection is the maintained source for
+        # the 42-value instrument vector.
         "instruments": (5902.3701, 2444.0850),
     },
     {

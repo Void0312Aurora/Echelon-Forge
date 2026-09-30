@@ -2,7 +2,11 @@ import math
 
 import numpy as np
 
-from python.tasking_contracts.common.mission_defs import is_landing_command_code
+from python.tasking_contracts.common.mission_defs import (
+    COMMAND_CODE_LANDING,
+    is_landing_command_code,
+    parse_command_code,
+)
 from python.tasking_contracts.common.bridge_views import has_mission_command_dict, mission_command_view, resolve_loader_time_step
 from python.scenario.compiler import (
     _build_lnav_runtime_config,
@@ -10,6 +14,35 @@ from python.scenario.compiler import (
     _normalize_runtime_mission_command,
     materialize_runtime_waypoint_cache,
 )
+from gym_envs.scenario_loader.spatial_runtime.geometry import declared_runway_id, select_ils_beacon
+
+
+def _declared_runway_frame(loader, x_m: float, y_m: float, runway_id: int | None):
+    """Query the declared recovery runway, failing closed on an old adapter."""
+
+    try:
+        if runway_id is None:
+            return loader.get_runway_local_frame(float(x_m), float(y_m))
+        return loader.get_runway_local_frame(float(x_m), float(y_m), runway_id=int(runway_id))
+    except TypeError:
+        if runway_id is not None:
+            return False, 0.0, 0.0, 0.0, 0.0
+        raise
+
+
+def _declared_ils_observation(loader, x_m: float, y_m: float, alt_m: float, runway_id: int | None):
+    """Query ILS on the declared recovery runway, failing closed on an old adapter."""
+
+    try:
+        if runway_id is None:
+            return loader.get_ils_observation(float(x_m), float(y_m), float(alt_m))
+        return loader.get_ils_observation(
+            float(x_m), float(y_m), float(alt_m), runway_id=int(runway_id)
+        )
+    except TypeError:
+        if runway_id is not None:
+            return None
+        raise
 
 
 def landing_post_transition_terminal_ready(loader) -> bool:
@@ -26,14 +59,17 @@ def landing_post_transition_terminal_ready(loader) -> bool:
     if truth is None or inst is None:
         return False
 
+    recovery_runway_id = declared_runway_id(loader)
+    truth_x = float(getattr(truth, "x", 0.0))
+    truth_y = float(getattr(truth, "y", 0.0))
+
     valid_runway_frame = False
     along_m = 0.0
     cross_m = 0.0
     runway_len_m = 0.0
     try:
-        valid_runway_frame, along_m, cross_m, runway_len_m, _rw_wid = loader.get_runway_local_frame(
-            float(getattr(truth, "x", 0.0)),
-            float(getattr(truth, "y", 0.0)),
+        valid_runway_frame, along_m, cross_m, runway_len_m, _rw_wid = _declared_runway_frame(
+            loader, truth_x, truth_y, recovery_runway_id
         )
     except Exception:
         valid_runway_frame = False
@@ -51,7 +87,7 @@ def landing_post_transition_terminal_ready(loader) -> bool:
         return False
 
     try:
-        beacon = loader._nearest_ils_beacon(float(getattr(truth, "x", 0.0)), float(getattr(truth, "y", 0.0)))
+        beacon = select_ils_beacon(loader, truth_x, truth_y, runway_id=recovery_runway_id)
     except Exception:
         beacon = None
     if beacon is None:
@@ -63,12 +99,16 @@ def landing_post_transition_terminal_ready(loader) -> bool:
         return False
 
     try:
-        ils = loader.get_ils_observation(
-            float(getattr(truth, "x", 0.0)),
-            float(getattr(truth, "y", 0.0)),
+        ils = _declared_ils_observation(
+            loader,
+            truth_x,
+            truth_y,
             float(getattr(inst, "alt_baro", 0.0)),
+            recovery_runway_id,
         )
     except Exception:
+        return False
+    if ils is None:
         return False
     dme_m = float(ils[3]) if len(ils) >= 4 else float("inf")
     max_dme_m = float(post.get("terminal_ready_dme_m_max", 18000.0))
@@ -79,7 +119,11 @@ def landing_post_transition_terminal_ready(loader) -> bool:
 def post_waypoint_transition_ready(loader) -> bool:
     if not isinstance(loader.post_waypoint_transition, dict) or not loader.post_waypoint_transition:
         return False
-    next_cmd_code = int(loader.post_waypoint_transition.get("command_code", 4))
+    next_cmd_code = parse_command_code(
+        loader.post_waypoint_transition.get("command_code"), default=COMMAND_CODE_LANDING
+    )
+    if next_cmd_code is None:
+        return False
     if not is_landing_command_code(next_cmd_code):
         return True
 
@@ -98,7 +142,9 @@ def apply_pending_landing_vector(loader, *, sync_to_kernel: bool = True) -> bool
     post = loader.post_waypoint_transition
     if not isinstance(post, dict) or not post:
         return False
-    next_cmd_code = int(post.get("command_code", 4))
+    next_cmd_code = parse_command_code(post.get("command_code"), default=COMMAND_CODE_LANDING)
+    if next_cmd_code is None:
+        return False
     if not is_landing_command_code(next_cmd_code):
         return False
     if loader.waypoints and int(getattr(loader, "waypoint_idx", 0) or 0) < len(loader.waypoints):
@@ -113,8 +159,11 @@ def apply_pending_landing_vector(loader, *, sync_to_kernel: bool = True) -> bool
         truth = None
     if truth is None:
         return False
+    recovery_runway_id = declared_runway_id(loader)
+    truth_x = float(getattr(truth, "x", 0.0))
+    truth_y = float(getattr(truth, "y", 0.0))
     try:
-        beacon = loader._nearest_ils_beacon(float(getattr(truth, "x", 0.0)), float(getattr(truth, "y", 0.0)))
+        beacon = select_ils_beacon(loader, truth_x, truth_y, runway_id=recovery_runway_id)
     except Exception:
         beacon = None
     if not isinstance(beacon, dict):
@@ -156,7 +205,11 @@ def maybe_activate_post_waypoint_transition(loader, *, sync_to_kernel: bool = Tr
 def defer_landing_post_transition_until_next_update(loader) -> bool:
     if not isinstance(loader.post_waypoint_transition, dict) or not loader.post_waypoint_transition:
         return False
-    next_cmd_code = int(loader.post_waypoint_transition.get("command_code", 4))
+    next_cmd_code = parse_command_code(
+        loader.post_waypoint_transition.get("command_code"), default=COMMAND_CODE_LANDING
+    )
+    if next_cmd_code is None:
+        return False
     if not is_landing_command_code(next_cmd_code):
         return False
     scenario_data = getattr(loader, "scenario_data", {}) or {}
@@ -175,12 +228,15 @@ def activate_post_waypoint_transition(loader, *, sync_to_kernel: bool = True) ->
     if not isinstance(next_cmd, dict):
         return None
 
+    next_command_code = parse_command_code(next_cmd.get("command_code"), default=COMMAND_CODE_LANDING)
+    if next_command_code is None:
+        return None
     target_heading = float(next_cmd.get("target_heading", cmd_view.float_field("target_heading", 0.0)))
     if loader.rotate_mission_heading_with_world and abs(float(loader.world_yaw_deg)) > 1.0e-6:
         target_heading = (target_heading + float(loader.world_yaw_deg)) % 360.0
 
     loader.mission_cmd = {
-        "command_code": int(next_cmd.get("command_code", 4)),
+        "command_code": int(next_command_code),
         "target_heading": float(target_heading),
         "target_altitude": float(next_cmd.get("target_altitude", cmd_view.float_field("target_altitude", 0.0))),
         "target_speed": float(next_cmd.get("target_speed", cmd_view.float_field("target_speed", 0.0))),
@@ -254,8 +310,24 @@ def activate_post_waypoint_transition(loader, *, sync_to_kernel: bool = True) ->
 
 def update_behaviors(loader, sim_time, *, truth=None, inst=None, sync_to_kernel: bool = True):
     loader._apply_waypoint_guidance_update(truth=truth, inst=inst)
+    tasking_runtime = getattr(loader, "_scripted_tasking_runtime", None)
+    if tasking_runtime is not None:
+        tasking_runtime.update(
+            loader,
+            sim_time_s=float(sim_time),
+            truth=truth,
+            inst=inst,
+            sync_to_kernel=False,
+        )
     loader._update_command_chain(sim_time, truth=truth, inst=inst, sync_to_kernel=False)
-    if not loader._defer_landing_post_transition_until_next_update():
+    # A direct scripted tasking runtime owns C2 transitions outside the leader
+    # decision window. It still needs the existing pending-vector guidance while
+    # its recovery gate is closed; the leader environment keeps its historical
+    # deferred owner behavior.
+    if (
+        not loader._defer_landing_post_transition_until_next_update()
+        or tasking_runtime is not None
+    ):
         loader._maybe_activate_post_waypoint_transition(sync_to_kernel=False)
     loader.update_scripted_opponents(float(sim_time))
     if sync_to_kernel:

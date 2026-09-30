@@ -1,5 +1,5 @@
-"""Joint task-graph coordination and compiled projection adapters."""
+"""Joint task-graph coordination, runtime, and compiled projection adapters."""
 
 from __future__ import annotations
 
-__all__ = ["coordination", "projection"]
+__all__ = ["command_link", "coordination", "projection", "runtime"]

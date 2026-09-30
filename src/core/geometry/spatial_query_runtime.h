@@ -117,9 +117,10 @@ class CompiledScenarioGeometry {
     void set_route_leg_origin(double x_m, double y_m);
     void add_route_waypoint(const SpatialRouteWaypoint &waypoint);
 
-    SpatialRunwayFrameResult query_runway_local_frame(double x_m, double y_m) const;
+    SpatialRunwayFrameResult query_runway_local_frame(double x_m, double y_m,
+                                                      int runway_id = -1) const;
     SpatialILSResult query_ils(double x_m, double y_m, double alt_m,
-                               double threshold_crossing_height_m) const;
+                               double threshold_crossing_height_m, int runway_id = -1) const;
     SpatialRouteQueryResult query_route_guidance(const SpatialRouteQueryOptions &options) const;
 
   private:

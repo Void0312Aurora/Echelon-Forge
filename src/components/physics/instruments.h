@@ -58,6 +58,8 @@ struct InstrumentState {
     double countermeasure_release_interval_s = -1.0;
     double countermeasure_last_release_time_s = -1.0;
     bool countermeasure_auto_mode = false;
+    // Snapshot provenance for EW consumers. The regular instrument pass is
+    // stage 24; EW-owned projection is stage 31 when a post-EW view exists.
     int countermeasure_snapshot_stage = 24;
     double countermeasure_snapshot_time_s = -1.0;
     bool countermeasure_snapshot_post_ew = false;

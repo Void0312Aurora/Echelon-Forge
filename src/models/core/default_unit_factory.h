@@ -952,7 +952,7 @@ class DefaultUnitFactory : public IUnitFactory {
             e.set<RWR>({-80.0, {}, {}, {}, false});
             e.set<ESMReceiver>({-85.0, 250000.0, true, {}});
             e.set<Jammer>({false, 0.0, 0.0, JammingType::NoiseBarrage, 0.0});
-            e.set<Countermeasures>({0, 0, 1.0, 0.0, false});
+            e.set<Countermeasures>({0, 0, 1.0, 0.0, -1.0, -1.0, false});
         }
         if (def.has_esm_data) {
             e.set<ESMReceiver>(def.esm_data);

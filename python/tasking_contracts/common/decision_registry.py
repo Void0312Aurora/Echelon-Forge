@@ -152,6 +152,15 @@ class DecisionModelRegistry:
                 f"decision model factory {registration.model_id!r} returned an object "
                 "without reset/decide/close lifecycle methods"
             )
+        # The registry declaration is the single source of truth for models
+        # created through it. Runtime agents can reject an explicitly tagged
+        # model that is paired with an incompatible spec.
+        for attribute in ("model_kind", "_decision_model_kind"):
+            try:
+                setattr(model, attribute, registration.model_kind)
+                break
+            except Exception:
+                continue
         return model
 
     def create_for(

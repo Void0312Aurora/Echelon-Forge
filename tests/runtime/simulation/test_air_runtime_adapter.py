@@ -61,7 +61,6 @@ def test_air_scripted_controller_uses_common_runtime_hold_and_replay_identity() 
             role_id="air_tactical_engagement_controller",
             model_kind="scripted",
             decision_period_s=1.0,
-            action_hold_s=0.5,
             authority_scope="air:engagement",
         ),
             AirScriptedEngagementRuntimeModel(

@@ -139,6 +139,7 @@ def test_cooperative_combat_default_and_recording_adapter_routes_have_terminal_p
             action_dim=AIR_COMBAT_HYBRID_ACTION_DIM,
             dt=0.05,
             mission_obs_mode=AIR_COMBAT_C2_ROE_V2,
+            weapon_station_id=1,
             observation_adapter=observation_adapter,
             action_adapter=action_adapter,
         )

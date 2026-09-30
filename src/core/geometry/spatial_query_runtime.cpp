@@ -93,8 +93,8 @@ void CompiledScenarioGeometry::add_route_waypoint(const SpatialRouteWaypoint &wa
     route_waypoints_.push_back(next);
 }
 
-SpatialRunwayFrameResult CompiledScenarioGeometry::query_runway_local_frame(double x_m,
-                                                                            double y_m) const {
+SpatialRunwayFrameResult CompiledScenarioGeometry::query_runway_local_frame(double x_m, double y_m,
+                                                                            int runway_id) const {
     SpatialRunwayFrameResult out{};
     if (runways_.empty()) {
         return out;
@@ -103,6 +103,9 @@ SpatialRunwayFrameResult CompiledScenarioGeometry::query_runway_local_frame(doub
     const SpatialRunwayDefinition *best = nullptr;
     double best_d2 = std::numeric_limits<double>::infinity();
     for (const auto &runway : runways_) {
+        if (runway_id >= 0 && runway.runway_id != runway_id) {
+            continue;
+        }
         double dx = x_m - runway.center_x_m;
         double dy = y_m - runway.center_y_m;
         double d2 = dx * dx + dy * dy;
@@ -135,7 +138,8 @@ SpatialRunwayFrameResult CompiledScenarioGeometry::query_runway_local_frame(doub
 }
 
 SpatialILSResult CompiledScenarioGeometry::query_ils(double x_m, double y_m, double alt_m,
-                                                     double threshold_crossing_height_m) const {
+                                                     double threshold_crossing_height_m,
+                                                     int runway_id) const {
     SpatialILSResult out{};
     if (runways_.empty()) {
         return out;
@@ -144,6 +148,9 @@ SpatialILSResult CompiledScenarioGeometry::query_ils(double x_m, double y_m, dou
     const SpatialRunwayDefinition *best = nullptr;
     double best_d2 = std::numeric_limits<double>::infinity();
     for (const auto &runway : runways_) {
+        if (runway_id >= 0 && runway.runway_id != runway_id) {
+            continue;
+        }
         double dx = x_m - runway.center_x_m;
         double dy = y_m - runway.center_y_m;
         double d2 = dx * dx + dy * dy;

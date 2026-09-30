@@ -434,11 +434,11 @@ class ScenarioLoader:
     def _query_runway_frame_result(self, x_m: float, y_m: float):
         return _query_runway_frame_result_impl(self, x_m, y_m)
 
-    def get_runway_local_frame(self, x_m: float, y_m: float):
-        return _get_runway_local_frame_impl(self, x_m, y_m)
+    def get_runway_local_frame(self, x_m: float, y_m: float, runway_id: int | None = None):
+        return _get_runway_local_frame_impl(self, x_m, y_m, runway_id=runway_id)
 
-    def get_ils_observation(self, x_m: float, y_m: float, alt_m: float):
-        return _get_ils_observation_impl(self, x_m, y_m, alt_m)
+    def get_ils_observation(self, x_m: float, y_m: float, alt_m: float, runway_id: int | None = None):
+        return _get_ils_observation_impl(self, x_m, y_m, alt_m, runway_id=runway_id)
 
     def _randomize_mission(self):
         _randomize_mission_impl(self)

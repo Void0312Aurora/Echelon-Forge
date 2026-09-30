@@ -129,6 +129,13 @@ class ScriptedJointTaskGraph:
         node_ids = tuple(node.node_id for node in nodes)
         if len(set(node_ids)) != len(node_ids):
             raise ValueError("joint task graph node_id values must be unique")
+        joint_node_ids = tuple(
+            node.node_id for node in nodes if node.active and node.domain == "joint"
+        )
+        if len(joint_node_ids) != 1:
+            raise ValueError(
+                "joint task graph must contain exactly one active joint director"
+            )
         raw_edges = raw.get("authority_edges", [])
         if not isinstance(raw_edges, (list, tuple)):
             raise TypeError("joint task graph authority_edges must be a list")
@@ -156,6 +163,26 @@ class ScriptedJointTaskGraph:
     def active_node_ids(self) -> tuple[str, ...]:
         return tuple(node.node_id for node in self.nodes if node.active)
 
+    def command_target_ids(self, source_node_id: str) -> tuple[str, ...]:
+        """Return active children reachable through declared command edges."""
+
+        source = str(source_node_id).strip()
+        active = set(self.active_node_ids())
+        targets = {
+            edge.child_node_id
+            for edge in self.authority_edges
+            if edge.parent_node_id == source
+            and str(edge.relationship).strip().lower() == "commands"
+            and edge.child_node_id in active
+        }
+        return tuple(node_id for node_id in self.active_node_ids() if node_id in targets)
+
+    def joint_director_ids(self) -> tuple[str, ...]:
+        return tuple(node.node_id for node in self.nodes if node.active and node.domain == "joint")
+
+    def allows_command(self, source_node_id: str, target_node_id: str) -> bool:
+        return str(target_node_id).strip() in set(self.command_target_ids(source_node_id))
+
 
 @dataclass(frozen=True)
 class ScriptedJointCoordinationIntent:
@@ -173,6 +200,7 @@ class ScriptedJointCoordinationIntent:
 
 
 class ScriptedJointCoordinationModel:
+    model_kind = "scripted"
     """Emit graph-scoped coordination intents without reading domain geometry."""
 
     def __init__(self, *, producer_id: str = "joint:director") -> None:
@@ -206,7 +234,7 @@ class ScriptedJointCoordinationModel:
             graph_id=self._graph.graph_id,
             task_group_id=self._graph.task_group_id,
             coordination_mode=self._graph.coordination_mode,
-            target_node_ids=self._graph.active_node_ids(),
+            target_node_ids=self._graph.command_target_ids(self.producer_id),
             clock_s=float(model_context.get("clock_s", 0.0)),
             observation_version=str(model_context.get("observation_version", "")),
             communication_state=str(model_context.get("communication_state", "available")),

@@ -3,9 +3,10 @@ import math
 import numpy as np
 from python.angles import bearing_deg, wrap_signed_deg
 from python.tasking_contracts.common.bridge_views import mission_command_view
+from .geometry import declared_runway_id
 
 
-def get_runway_local_frame(loader, x_m: float, y_m: float):
+def get_runway_local_frame(loader, x_m: float, y_m: float, runway_id: int | None = None):
     """
     Returns a geometry-only runway frame derived from the nearest ILS beacon.
 
@@ -16,7 +17,12 @@ def get_runway_local_frame(loader, x_m: float, y_m: float):
       length_m: float
       width_m: float
     """
-    frame = loader._query_runway_frame_result(float(x_m), float(y_m))
+    if runway_id is None:
+        frame = loader._query_runway_frame_result(float(x_m), float(y_m))
+    elif loader._spatial_geometry is None:
+        frame = None
+    else:
+        frame = loader._spatial_geometry.query_runway_local_frame(float(x_m), float(y_m), int(runway_id))
     if frame is None:
         return False, 0.0, 0.0, 0.0, 0.0
     return (
@@ -28,7 +34,7 @@ def get_runway_local_frame(loader, x_m: float, y_m: float):
     )
 
 
-def get_ils_observation(loader, x_m: float, y_m: float, alt_m: float):
+def get_ils_observation(loader, x_m: float, y_m: float, alt_m: float, runway_id: int | None = None):
     """
     Returns a small navigation observation vector:
     [ils_valid, loc_dev, gs_dev, dme_m]
@@ -45,11 +51,13 @@ def get_ils_observation(loader, x_m: float, y_m: float, alt_m: float):
         threshold_crossing_height_m = max(0.0, float(cmd_view.float_field("threshold_crossing_height_m", 0.0)))
     except Exception:
         threshold_crossing_height_m = 0.0
+    selected_runway_id = declared_runway_id(loader) if runway_id is None else int(runway_id)
     ils = loader._spatial_geometry.query_ils(
         float(x_m),
         float(y_m),
         float(alt_m),
         float(threshold_crossing_height_m),
+        -1 if selected_runway_id is None else int(selected_runway_id),
     )
     return np.array(
         [

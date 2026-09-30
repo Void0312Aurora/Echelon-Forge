@@ -15,3 +15,12 @@ def test_facade_batch_provider_uses_only_compiled_simulation_binding() -> None:
     assert "WorldBatchRuntime" not in source
     assert "RuntimeFacade(" in source
     assert "apply_world_setup(" in source
+
+
+def test_joint_facade_router_is_a_readback_checked_simulation_adapter() -> None:
+    source = (REPO_ROOT / "python" / "simulation" / "joint" / "facade.py").read_text(encoding="utf-8")
+    assert "python.rl" not in source
+    assert "gym_envs" not in source
+    assert "read_command_chain" in source
+    assert "readback mismatch" in source
+    assert "JointFacadeReportRouter" in source

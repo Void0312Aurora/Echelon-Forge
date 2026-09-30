@@ -70,7 +70,10 @@ def air_combat_hybrid_effective_action(action: np.ndarray, *, previous_intent=No
         effective_prefix[idx] = 1.0 if float(prefix[idx]) > 0.5 else 0.0
     for idx in (7, 9, 10):
         effective_prefix[idx] = 1.0 if float(prefix[idx]) > 0.5 and float(prev[idx]) <= 0.5 else 0.0
-    effective_prefix[11] = float(np.clip(round(float(prefix[11])), 0, 7))
+    # Discrete weapon stations use floor quantization across every maintained
+    # Air transport path; rounding would make half-step actions disagree with
+    # the direct facade adapter.
+    effective_prefix[11] = float(np.floor(np.clip(prefix[11], 0.0, 7.0)))
     if raw.size == ew_dim:
         return np.concatenate((effective_prefix, raw[combat_dim:]), axis=0).astype(
             np.float32,
@@ -128,7 +131,7 @@ def build_pilot_action(action: np.ndarray, *, action_mode: str, inst_now=None):
         pilot_act.master_arm = bool(action[8] > 0.5)
         pilot_act.fire_weapon = bool(action[9] > 0.5)
         pilot_act.fire_gun = bool(action[10] > 0.5)
-        pilot_act.weapon_select_id = int(np.clip(round(float(action[11])), 0, 7))
+        pilot_act.weapon_select_id = int(np.clip(float(action[11]), 0.0, 7.0))
         pilot_act.program_chaff = False
         pilot_act.program_flare = False
         pilot_act.jettison_emergency = False
@@ -152,7 +155,7 @@ def build_pilot_action(action: np.ndarray, *, action_mode: str, inst_now=None):
         pilot_act.master_arm = bool(action[8] > 0.5)
         pilot_act.fire_weapon = bool(action[9] > 0.5)
         pilot_act.fire_gun = bool(action[10] > 0.5)
-        pilot_act.weapon_select_id = int(np.clip(round(float(action[11])), 0, 7))
+        pilot_act.weapon_select_id = int(np.clip(float(action[11]), 0.0, 7.0))
         pilot_act.program_chaff = bool(action[12] > 0.5)
         pilot_act.program_flare = bool(action[13] > 0.5)
         pilot_act.jettison_emergency = False

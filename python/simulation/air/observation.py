@@ -13,13 +13,15 @@ from typing import Any, Mapping, Sequence
 import numpy as np
 
 from python.mission_obs_taxonomy import (
-    MISSION_OBS_NAV_V2_COOPERATIVE_TAKEOFF_V1,
+    MISSION_OBS_BASIC,
     mission_observation_dim,
     mission_observation_field_index,
 )
 
 
-AIR_SCRIPTED_MISSION_MODE = MISSION_OBS_NAV_V2_COOPERATIVE_TAKEOFF_V1
+# The direct facade adapter projects only the basic command slice by default.
+# Rich NAV-v2 route/role fields require an explicit provider with those facts.
+AIR_SCRIPTED_MISSION_MODE = MISSION_OBS_BASIC
 AIR_SCRIPTED_MAX_CONTACTS = 8
 AIR_SCRIPTED_MAX_RWR = 8
 _COMMAND_OWNED_MISSION_FIELDS = frozenset(

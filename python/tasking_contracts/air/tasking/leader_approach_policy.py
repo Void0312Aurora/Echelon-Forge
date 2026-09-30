@@ -65,12 +65,12 @@ class ScriptedLeaderApproachPolicy:
             return LeaderApproachDecision(False)
         if not bool(state.c2_task_allows_approach):
             return LeaderApproachDecision(False)
+        if bool(state.c2_recovery_task) and not bool(state.post_transition_ready):
+            return LeaderApproachDecision(False)
         if is_landing_command_code(int(state.current_command_code)):
             return LeaderApproachDecision(False)
         if not is_landing_command_code(int(state.post_transition_command_code)):
             return LeaderApproachDecision(False)
-        if bool(state.c2_recovery_task) and int(state.remaining_waypoints) <= 0:
-            return LeaderApproachDecision(bool(state.post_transition_ready))
         if int(state.remaining_waypoints) > max(int(state.terminal_waypoint_count), 0):
             return LeaderApproachDecision(False)
         if float(state.altitude_agl_m) <= float(state.rollout_alt_agl_m):

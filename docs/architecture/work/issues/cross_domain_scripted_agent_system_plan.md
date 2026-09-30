@@ -2897,3 +2897,197 @@ to a dedicated owner-local evidence document.
   persistence sub-gate. It does not prove successful landing geometry,
   platform-specific terminal damage, EW jammer/data-link completion, or the
   cross-domain task-graph consumer. Air remains `playable_candidate`.
+
+### 2026-09-27 — Joint task-graph common-runtime consumer
+
+- Starting commit: `a5081454`.
+- Change batch: add `ScriptedJointRuntimeConsumer` as a physically layered
+  Joint contract adapter. It resolves each active graph node through the
+  registry owned by that node's domain, constructs the common
+  `DecisionRuntimeRoster`, injects the graph only into the Joint coordinator,
+  and leaves Air/Naval observations and actions opaque to the common layer.
+  Missing domain registries, role/model mismatches, and graphs without active
+  executable nodes fail closed.
+- Evidence: the Joint coordination/runtime and physical-layer tests passed
+  `9 passed`. A single graph drove the maintained Air execution model, Naval
+  station adapter, and Joint coordination producer under one replayable
+  roster; all three emitted domain-labelled runtime reports, Air/Naval action
+  shapes remained domain-owned, and the second clock tick held all actions.
+- Boundary decision: this closes the Joint task-graph-to-common-runtime
+  consumer sub-gate. It does not create a compiled `CoordinationIntentPacket`
+  storage path (none is currently maintained), a native Air/Naval mixed-world
+  scenario, or promote Naval/Ground beyond their existing adapter/static
+  labels. The next Joint slice must bind this consumer to an admitted native
+  command-link or scenario owner before claiming cross-domain playable status.
+
+### 2026-09-27 — Current scripted Air C2 episode boundary
+
+- Direct verification: the maintained
+  `takeoff_to_landing_continuous_eval_v1` entry was run through the standalone
+  scripted CLI with seed `0`, zero randomization, and the local compiled
+  binding. It terminated after `16638` steps with
+  `success_objective`, `mission_status=[4,1,1,1]`, command code `4`,
+  `landing_ils`, on-runway geometry, and ground speed below the success gate.
+- Negative companion result: the task-only
+  `takeoff_to_landing_c2_task_demo_v1` entry ran the same scripted CLI to its
+  `16000`-step budget and timed out with `mission_status=[3,0,0,0]`, final
+  command code `3`, no landing transition, and the aircraft still airborne.
+  This exact task-only command is retained as a scenario-selection/route
+  residual and is not retried unchanged.
+- Boundary decision: the no-RL Air flight controller has a current successful
+  full-route episode, while task-driven C2 without authored waypoints remains
+  open. The result does not promote Air to final `playable`, because the
+  command/report episode gate requires task updates, report validity, and
+  terminal transition evidence on the same no-RL route.
+
+### 2026-09-27 — Joint opaque command-link delivery
+
+- Starting commit: `c00a8e76`.
+- Change batch: add `ScriptedJointCommandLink` and connect it to
+  `ScriptedJointRuntimeConsumer`. The link validates active graph endpoints,
+  preserves sequence and delivery order, supports deterministic non-negative
+  delay, rejects clock reversal, and exposes delivered envelopes as opaque
+  per-node context. It does not decode Air/Naval payloads or write a compiled
+  `CoordinationIntentPacket` store.
+- Evidence: Joint runtime, command-link, and physical-layer tests passed
+  `10 passed`, including a three-node Air/Naval/Joint route with delayed
+  delivery and a clock/endpoint fail-closed test. The `0.1 + 0.2` delivery
+  boundary is handled with a bounded floating-point equality tolerance so a
+  scheduled command is not lost to binary representation.
+- Boundary decision: this closes the neutral command-link ordering/delay
+  sub-gate and gives domain consumers an explicit opaque inbox. It does not
+  establish native command-link delivery, communication-loss policy, domain
+  execution/report closure, or Joint playable status.
+
+### 2026-09-27 — Joint facade command routing and Naval owner residual
+
+- Starting commit: `0319dd24`.
+- Change batch: add `JointFacadeCommandRouter` under the simulation Joint
+  layer. It maps graph node IDs to controlled facade entity keys, invokes
+  explicit domain-owned command builders, submits the resulting maintained
+  mission-command assignments, and requires common-field readback before
+  acknowledging delivery. The router ignores only explicitly named Joint
+  director nodes and never decodes service payloads.
+- Evidence: the mixed-roster probe routes the Air envelope to an
+  `F-16C_Block50` facade entity and reads back `command_code=2`. The maintained
+  `DDG-51_Flight_I_ASW_Helo_MVP` fixture still reads back the default
+  `active=false`, `command_code=0` through `RuntimeFacade`; setting the agent
+  flag does not change this result. A separate direct `WorldBatchRuntime`
+  probe delivers the same ASW-helo command and reads back code 32 with
+  `station_radius_m=14000`, but that path is not the facade provider under
+  test. Focused facade/router tests remain fail-closed, and the simulation
+  boundary test confirms no RL/Gym import.
+- Boundary decision: Air has a readback-verified Joint-to-facade command
+  route. The Naval `RuntimeFacade` path remains a concrete native-owner
+  residual; the direct `WorldBatchRuntime` result is a bounded alternative,
+  not a mixed-domain playable claim. Joint remains `bounded_adapter` until a
+  maintained Naval command owner, reports, recovery, and full scenario
+  lifecycle are supplied.
+
+### 2026-09-27 — Joint Naval facade residual recheck
+
+- Follow-up to `7fde60ba`: rechecked the maintained
+  `DDG-51_Flight_I_ASW_Helo_MVP` fixture through the exact `RuntimeFacade`
+  route, including `is_agent=true`. The readback still remains at
+  `active=false`, `command_code=0`, so the router continues to fail closed.
+- Evidence: a separate direct `WorldBatchRuntime` probe delivers the ASW-helo
+  command and reads back `active=true`, `command_code=32`, and
+  `station_radius_m=14000`. This narrows the issue to the facade provider path
+  rather than proving a general Naval platform capability. No database files
+  were changed and the unsupported Arleigh-Burke type is not promoted.
+- Boundary decision: retain the Naval and Joint `bounded_adapter` labels. The
+  direct world-runtime route is an alternative owner candidate; it does not
+  close the facade residual or establish mixed-domain playable behavior.
+
+### 2026-09-27 — Agent spawn command-link admission closes facade delivery
+
+- Starting commit: `2b6b37c2`.
+- Change batch: `WorldBatchRuntime::spawn_from_request` now interprets the
+  maintained `WorldSpawnRequest.is_agent` field as explicit local-control
+  authority and materializes a zero-latency, zero-drop `CommandLink` for that
+  spawned entity. This uses the existing maintained command surface; it does
+  not expose the raw kernel or add a compatibility shell.
+- Evidence: the rebuilt `ef_py` facade path routes the mixed Air/Naval graph;
+  Air reads back `command_code=2`, Naval reads back `active=true`,
+  `command_code=32`, and `station_radius_m=14000`. The focused facade and
+  boundary suite passed `3 passed`; the build completed under the configured
+  Visual Studio environment. The router still checks common-field readback
+  before acknowledging delivery.
+- Boundary decision: the concrete Naval facade command-delivery residual is
+  closed for explicitly admitted agent spawns. Naval remains `bounded_adapter`
+  because station geometry, reports, recovery, effects, reset/replay, and a
+  full Naval scenario are still open. Joint remains `bounded_adapter` until
+  those domain owners are connected to a mixed playable scenario.
+
+### 2026-09-27 — Joint facade report routing sub-gate
+
+- Starting commit: `fcccacb3`.
+- Change batch: add `JointFacadeReportRouter` beside the command router. It
+  sends opaque Joint envelopes to explicit domain-owned pilot-report builders,
+  submits maintained reports through `FacadeBatchBackend`, and verifies the
+  common `active` and `sender_id` fields before acknowledging delivery. Air,
+  Naval, and Ground payload slices remain outside the Joint layer.
+- Evidence: the mixed Air/Naval facade test now routes both commands and pilot
+  reports through the rebuilt native facade; the readback asserts an active Air
+  report and the Naval sender identity. Focused facade and boundary tests remain
+  `3 passed`, with no RL/Gym import in the adapter.
+- Boundary decision: this closes a native report-transport sub-gate for the
+  admitted mixed roster. It does not claim domain report validity, station or
+  flight progress, recovery, communication-loss policy, reset/replay of a full
+  Joint episode, or Joint playable status.
+
+### 2026-09-27 — Direct Air C2 tasking runtime closure
+
+- Starting commit: `e34c7404`.
+- Change batch: add `python/simulation/air/tasking_runtime.py` as the
+  simulation-side lifecycle adapter for the neutral Air C2 manager. WorldBatch
+  enables it only for scenarios declaring `meta.initial_c2_task`; the adapter
+  resets the task state, updates it after navigation and before the existing
+  leader command-chain owner, records transitions, and leaves the RL leader
+  decision window untouched. The direct trajectory diagnostic now emits the
+  initial task plus the complete C2 sequence and final report-validity state.
+  The task-demo recovery configuration narrows its terminal-ready geometry so
+  the existing pending recovery vector can establish runway alignment before
+  landing command activation.
+- Evidence: the Air tasking adapter, execution-transition, simulation-boundary,
+  and backend-boundary suites passed `23 passed, 11 subtests passed`. The
+  direct no-RL CLI run used
+  `takeoff_to_landing_c2_task_demo_v1.json`, seed `0`, zero randomization, and
+  max `18000`; it terminated at step `15407` with
+  `success_objective`, `mission_status=[4,1,1,1]`, command code `4`,
+  `landing_ils`, `c2_transition_sequence=[TASK_SCRAMBLE,TASK_CAP,TASK_RTB,TASK_RECOVER_LAND]`,
+  `c2_report_valid=true`, and runway cross-track `0.831 m`. The PNG and JSON
+  were written under `build-scripted-agent/c2-task-runtime-final.*` and the
+  rendered trajectory was inspected.
+- Boundary decision: this closes the direct single-seed Air task-driven
+  command/report episode sub-gate. It does not promote Air beyond
+  `playable_candidate`; accepted seed coverage, deterministic reset/replay for
+  this new C2 route, visualization process/render acceptance, named-platform
+  terminal effects, EW/data-link constraints, formation parity, and large-scale
+  demonstration remain open. The task-only scenario without
+  `meta.initial_c2_task` remains a leader-window evaluation surface and is not
+  silently reclassified by this batch.
+
+### 2026-09-27 — Direct Air combat demo entrypoint and terminal record
+
+- Starting commit: `66805149`.
+- Change batch: add the repository-root import bootstrap used by the maintained
+  single-aircraft and cooperative Air combat diagnostics. This makes both
+  RL-independent demos directly executable from the repository root without an
+  ambient `PYTHONPATH`; the simulation, decision runtime, and native action
+  owners are unchanged.
+- Evidence: direct single-aircraft execution of
+  `air_combat_1v1_c2_roe_terminal_generic_aircraft_surrogate_v1.json`, seed
+  `20260516`, terminated after `203` steps with `combat_win`, accepted and
+  executed the scripted release at step `2`, and produced the expected native
+  terminal reward. Direct cooperative `2v1` execution of
+  `cooperative_air_2v1_scripted_c2_roe_engagement_v1.json` terminated after
+  `202` steps with `combat_win` for both roster slots; both slots accepted and
+  executed a release at step `2`. The focused facade, terminal-surrogate, and
+  cooperative suites passed `12 passed` with the local `ef_py` build selected.
+- Boundary decision: this closes the executable direct-demo and bounded generic
+  terminal-record sub-gate for single-aircraft and 2v1 scripted Air combat. It
+  does not establish named-platform damage authority, calibrated post-launch
+  assessment, EW/data-link constraints, formation mission parity, accepted
+  seed coverage, visualization acceptance, or large-scale Air playable status;
+  Air remains `playable_candidate`.

@@ -630,6 +630,21 @@ TEST_SUITE("simulation_kernel_smoke") {
         CHECK(entity.get<MissionCommandPendingQueue>() != nullptr);
     }
 
+    TEST_CASE("database_command_link_qos_survives_agent_spawn") {
+        SimulationKernel kernel;
+        REQUIRE(kernel.load_database("examples/config/database"));
+        kernel.reset(42);
+
+        auto entity = kernel.spawn_unit(Side::Blue, "DDG-51_Flight_I_ASW_Helo_MVP", 0.0, 0.0,
+                                        1200.0, 90.0, 0.0, 0.0, 0.0, 180.0, 0.0);
+        REQUIRE(entity.is_valid());
+
+        const CommandLink *link = entity.get<CommandLink>();
+        REQUIRE(link != nullptr);
+        CHECK(link->latency_s == doctest::Approx(0.2));
+        CHECK(link->drop_prob == doctest::Approx(0.0));
+    }
+
     TEST_CASE("command_surface_sets_and_reads_maintained_tasking_components") {
         SimulationKernel kernel;
         kernel.reset(42);

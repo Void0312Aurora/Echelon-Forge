@@ -129,9 +129,10 @@ void bind_episode_geometry(nb::module_ &m) {
         .def("add_route_waypoint", &CompiledScenarioGeometry::add_route_waypoint,
              nb::arg("waypoint"))
         .def("query_runway_local_frame", &CompiledScenarioGeometry::query_runway_local_frame,
-             nb::arg("x_m"), nb::arg("y_m"))
+             nb::arg("x_m"), nb::arg("y_m"), nb::arg("runway_id") = -1)
         .def("query_ils", &CompiledScenarioGeometry::query_ils, nb::arg("x_m"), nb::arg("y_m"),
-             nb::arg("alt_m"), nb::arg("threshold_crossing_height_m") = 0.0)
+             nb::arg("alt_m"), nb::arg("threshold_crossing_height_m") = 0.0,
+             nb::arg("runway_id") = -1)
         .def("query_route_guidance", &CompiledScenarioGeometry::query_route_guidance,
              nb::arg("options"));
 }

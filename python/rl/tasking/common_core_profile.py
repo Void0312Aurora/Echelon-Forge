@@ -161,21 +161,9 @@ def _infer_common_coordination_mode(
 
 
 def _common_tactical_unit_type_from_spec(order_spec: dict[str, Any]) -> Any:
-    if _coerce_positive_int(order_spec.get("package_id", 0)) > 0:
-        return getattr(ef_py.TacticalUnitType, "MissionPackage")
-    if _coerce_positive_int(order_spec.get("element_id", 0)) > 0:
-        return getattr(ef_py.TacticalUnitType, "TacticalUnit")
+    from python.tasking_contracts.common.task_order import infer_common_tactical_unit_type
 
-    assignee_kind = _enum_or_default(
-        ef_py.AssigneeKind,
-        order_spec.get("assignee_kind"),
-        getattr(ef_py.AssigneeKind, "Aircraft", 0),
-    )
-    if _enum_value(assignee_kind) == _enum_value(getattr(ef_py.AssigneeKind, "Package")):
-        return getattr(ef_py.TacticalUnitType, "MissionPackage")
-    if _enum_value(assignee_kind) == _enum_value(getattr(ef_py.AssigneeKind, "Element")):
-        return getattr(ef_py.TacticalUnitType, "TacticalUnit")
-    return getattr(ef_py.TacticalUnitType, "Platform")
+    return getattr(ef_py.TacticalUnitType, infer_common_tactical_unit_type(order_spec))
 
 
 def _normalize_common_task_order_spec(order_spec: dict[str, Any] | None) -> dict[str, Any]:

@@ -35,6 +35,7 @@ class AirEngagementRuntimeInput:
 
 
 class AirScriptedEngagementRuntimeModel:
+    model_kind = "scripted"
     """Expose the Air controller through the neutral DecisionModel lifecycle."""
 
     def __init__(

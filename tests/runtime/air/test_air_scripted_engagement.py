@@ -200,6 +200,20 @@ def test_engagement_model_can_consume_a_maintained_weapon_profile() -> None:
     model.close()
 
 
+def test_engagement_model_fails_closed_without_declared_weapon_station() -> None:
+    model = AirScriptedEngagementModel()
+    hold = _observation(contact=True, fire_window=False)
+    open_window = _observation(contact=True, fire_window=True)
+    model.reset(context={"observation": hold, "phase_name": "stable_flight"})
+    action = model.decide(observation=open_window, context={"phase_name": "stable_flight"}, dt=0.05)
+    assert action[13] == 0.0
+    assert action[14] == 0.0
+    assert action[16] == 0.0
+    assert model.last_decision_info["weapon_station_valid"] is False
+    assert model.last_decision_info["fire_rejected_reason"] == "invalid_weapon_station"
+    model.close()
+
+
 def test_engagement_model_rejects_non_c2_roe_mission_shapes() -> None:
     model = AirScriptedEngagementModel(weapon_station_id=1)
     obs = {"instruments": np.zeros((31,), dtype=np.float32), "mission": np.zeros((4,), dtype=np.float32)}
@@ -242,6 +256,7 @@ def test_engagement_model_injects_observation_and_action_adapters_with_default_p
     model = AirScriptedEngagementModel(
         observation_adapter=observation_adapter,
         action_adapter=action_adapter,
+        weapon_station_id=1,
     )
     model.reset(context={"observation": observation, "phase_name": "stable_flight"})
     action = model.decide(observation=observation, context={"phase_name": "stable_flight"}, dt=0.05)
