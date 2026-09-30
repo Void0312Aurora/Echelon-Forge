@@ -5,9 +5,9 @@ from types import SimpleNamespace
 from python.simulation.air.terminal import AirCombatTerminalEvaluator
 
 
-def _report(*, target_id: int, destroyed: bool, report_id: int) -> SimpleNamespace:
+def _report(*, target_id: int, destroyed: bool, report_id: int, world_index: int = 0) -> SimpleNamespace:
     return SimpleNamespace(
-        target=SimpleNamespace(entity_id=target_id),
+        target=SimpleNamespace(entity_id=target_id, world_index=world_index),
         destroyed=destroyed,
         report_id=report_id,
     )
@@ -50,3 +50,14 @@ def test_air_terminal_evaluator_prefers_own_loss_over_target_win() -> None:
     assert state.reason == "own_entity_destroyed"
     assert state.destroyed_own_ids == (10,)
     assert state.destroyed_target_ids == (20,)
+
+
+def test_air_terminal_evaluator_keeps_world_identity_when_entity_ids_repeat() -> None:
+    evaluator = AirCombatTerminalEvaluator()
+    state = evaluator.evaluate(
+        SimpleNamespace(damage_reports=[_report(target_id=20, destroyed=True, report_id=5, world_index=1)]),
+        own_entity_ids=((0, 10),),
+        target_entity_ids=((1, 20),),
+    )
+    assert state.status == "combat_win"
+    assert state.destroyed_target_keys == ((1, 20),)

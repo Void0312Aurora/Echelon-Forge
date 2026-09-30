@@ -107,7 +107,8 @@ def test_facade_batch_routes_scripted_launch_and_engagement_event_packet() -> No
         assert list(current.observations[0].contacts)
 
         events = backend.apply_launch_requests(
-            (_launch_request(blue_key[1], red_key[1], float(current.observations[0].sim_time)),)
+            (_launch_request(blue_key[1], red_key[1], float(current.observations[0].sim_time)),),
+            diagnostic_only=True,
         )
         assert len(events) == 1
         assert bool(events[0].accepted) is True
