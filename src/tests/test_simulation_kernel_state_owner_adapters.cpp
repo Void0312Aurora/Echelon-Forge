@@ -1333,10 +1333,8 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
                                                           "AircraftVulnerabilityProfile",
                                                           "SystemHealth", "ComponentDamageState"};
         const std::set<std::string_view> target_rederived_services{
-            "EffectsModelRef",     "EngagementEventRecorderRef",
-            "SensorModelRef",      "AcousticModelRef",
-            "ControlModelRef",     "GuidanceModelRef",
-            "EnvironmentModelRef", "WeaponReleaseServiceRef",
+            "EffectsModelRef", "EngagementEventRecorderRef", "SensorModelRef", "AcousticModelRef",
+            "ControlModelRef", "GuidanceModelRef", "EnvironmentModelRef", "WeaponReleaseServiceRef",
             // Authored ground capabilities are rederived from unit content;
             // the zero-sized Flecs tag has no transfer payload.
             "GroundInfantryCapability"};

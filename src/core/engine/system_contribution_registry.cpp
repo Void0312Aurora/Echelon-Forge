@@ -225,8 +225,8 @@ void register_esm_reset_system(flecs::world &ecs) {
     X(Inertia, "Inertia", "flecs.component.inertia")                                               \
     X(AngularVelocity, "AngularVelocity", "flecs.component.angular_velocity")                      \
     X(GroundState, "GroundState", "flecs.component.ground_state")                                  \
-    X(GroundInfantryCapability, "GroundInfantryCapability",                                          \
-      "flecs.component.ground_infantry_capability")                                                  \
+    X(GroundInfantryCapability, "GroundInfantryCapability",                                        \
+      "flecs.component.ground_infantry_capability")                                                \
     X(GearState, "GearState", "flecs.component.gear_state")                                        \
     X(Missile, "Missile", "flecs.component.missile")                                               \
     X(Munition, "Munition", "flecs.component.munition")                                            \
