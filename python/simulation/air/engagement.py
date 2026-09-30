@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from typing import Any, Mapping
 
 import numpy as np
@@ -36,6 +37,32 @@ class AirEngagementFacts:
     engagement_authority_holder_id: int = 0
     engagement_authority_grantor_id: int = 0
     roe_state: int = 0
+
+    def __post_init__(self) -> None:
+        for name in (
+            "shot_budget_remaining",
+            "own_missiles_in_flight_count",
+            "target_range_m",
+            "target_track_age_s",
+        ):
+            value = float(getattr(self, name))
+            if not math.isfinite(value) or value < 0.0:
+                raise ValueError(f"Air engagement fact {name} must be finite and non-negative")
+        for name in (
+            "assigned_target_id",
+            "assigned_target_track_id",
+            "assigned_target_source_id",
+            "engagement_authority_holder_id",
+            "engagement_authority_grantor_id",
+            "roe_state",
+        ):
+            value = getattr(self, name)
+            try:
+                numeric = int(value)
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise ValueError(f"Air engagement fact {name} must be a non-negative integer") from exc
+            if numeric != value or numeric < 0:
+                raise ValueError(f"Air engagement fact {name} must be a non-negative integer")
 
     def as_mapping(self) -> dict[str, float | int]:
         return {
@@ -76,12 +103,14 @@ class AirScriptedEngagementController:
         model: AirScriptedEngagementModel | None = None,
         dt: float = 0.05,
         mission_obs_mode: str = AIR_COMBAT_C2_ROE_V2,
+        weapon_station_id: int | None = None,
     ) -> None:
         self.mission_obs_mode = str(mission_obs_mode).strip().lower() or AIR_COMBAT_C2_ROE_V2
         self.model = model or AirScriptedEngagementModel(
             action_dim=17,
             dt=dt,
             mission_obs_mode=self.mission_obs_mode,
+            weapon_station_id=weapon_station_id,
         )
         self._closed = False
 

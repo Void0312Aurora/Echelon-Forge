@@ -109,7 +109,8 @@ def test_scripted_ew_controller_responds_to_native_launch_warning() -> None:
         hold.throttle = 1.0
         current = backend.step({blue_key: hold, red_key: hold})
         launch = backend.apply_launch_requests(
-            (_launch_request(red_key[1], blue_key[1], float(current.observations[1].sim_time)),)
+            (_launch_request(red_key[1], blue_key[1], float(current.observations[1].sim_time)),),
+            diagnostic_only=True,
         )
         assert launch[0].accepted is True
 

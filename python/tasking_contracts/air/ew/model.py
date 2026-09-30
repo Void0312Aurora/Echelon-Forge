@@ -103,8 +103,9 @@ class AirScriptedEWActionModel:
 
     def __init__(self, *, dt: float = 0.05, max_rwr: int = 4) -> None:
         self.dt = float(dt) if float(dt) > 1.0e-6 else 0.05
-        self.flight_model = AirScriptedExecutionModel(action_dim=AIR_EW_HYBRID_ACTION_DIM, dt=self.dt)
+        self.flight_model = AirScriptedExecutionModel(action_dim=4, dt=self.dt)
         self.ew_model = AirScriptedEWModel(max_rwr=max_rwr)
+        self.last_intent: AirScriptedEWIntent | None = None
         self._closed = False
 
     def reset(self, *, context: Any) -> None:
@@ -115,6 +116,7 @@ class AirScriptedEWActionModel:
             raise TypeError("Air scripted EW action reset requires context['observation']")
         self.flight_model.reset(context={"observation": observation, "phase_name": context.get("phase_name", "")})
         self.ew_model.reset(context=context)
+        self.last_intent = None
         self._closed = False
 
     def decide(self, *, observation: Any, context: Any, dt: float) -> np.ndarray:
@@ -123,11 +125,16 @@ class AirScriptedEWActionModel:
         if not isinstance(observation, Mapping):
             raise TypeError("Air scripted EW action observation must be a mapping")
         model_context = context if isinstance(context, Mapping) else {}
-        action = np.asarray(
+        flight_action = np.asarray(
             self.flight_model.decide(observation=observation, context=model_context, dt=dt),
             dtype=np.float32,
         ).reshape(-1)
+        if flight_action.size != 4:
+            raise ValueError(f"Air EW flight model must emit four flight controls, got {flight_action.shape}")
+        action = np.zeros((AIR_EW_HYBRID_ACTION_DIM,), dtype=np.float32)
+        action[:4] = flight_action
         intent = self.ew_model.decide(observation=observation, context=model_context, dt=dt)
+        self.last_intent = intent
         action[12] = 1.0 if intent.countermeasure_plan in {"request_chaff", "request_chaff_and_flare"} else 0.0
         action[13] = 1.0 if intent.countermeasure_plan in {"request_flare", "request_chaff_and_flare"} else 0.0
         return action

@@ -71,11 +71,9 @@ class AirScriptedEWController:
             ),
             dtype=np.float32,
         ).reshape(-1)
-        intent = self.model.ew_model.decide(
-            observation=scripted_observation,
-            context=context,
-            dt=float(dt if dt is not None else self.model.dt),
-        )
+        intent = self.model.last_intent
+        if intent is None:
+            raise RuntimeError("Air scripted EW action model did not retain its decision intent")
         return AirEWDecision(
             action=action,
             pilot_action=build_pilot_action(
