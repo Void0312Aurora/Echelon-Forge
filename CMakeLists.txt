@@ -951,10 +951,12 @@ add_executable(ef_runtime_kernel_candidate_parity_test
     src/tests/test_runtime_kernel_candidate_parity.cpp
 )
 target_link_libraries(ef_runtime_kernel_candidate_parity_test PRIVATE
+    $<$<PLATFORM_ID:Linux>:-Wl,--start-group>
     ef_runtime_kernel_candidate
     ef_facade
     ef_runtime_state_owner_adapters_candidate
     ef_gpu_experiments
+    $<$<PLATFORM_ID:Linux>:-Wl,--end-group>
     doctest::doctest
 )
 target_include_directories(ef_runtime_kernel_candidate_parity_test PRIVATE
