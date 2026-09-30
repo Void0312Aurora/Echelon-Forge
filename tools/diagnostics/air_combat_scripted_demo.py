@@ -88,6 +88,9 @@ def run_demo(
         action_dim=action_dim,
         dt=0.05,
         mission_obs_mode=AIR_COMBAT_C2_ROE_V2,
+        # The fixture declares station 1 through the maintained loadout seam;
+        # the model fails closed if a runtime omits or invalidates it.
+        weapon_station_id=1,
     )
     agent = ScriptedRuntimeAgent(
         ScriptedRuntimeAgentSpec(

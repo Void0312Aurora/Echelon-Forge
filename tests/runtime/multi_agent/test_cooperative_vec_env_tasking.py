@@ -299,6 +299,125 @@ def _cooperative_takeoff_to_cruise_scenario() -> dict:
 
 
 class CooperativeVecEnvTaskingTests(unittest.TestCase):
+  def test_roster_mission_overrides_refresh_each_slot_target_owner(self) -> None:
+    if CooperativeWorldBatchVecEnv is None:
+      self.skipTest("gymnasium is not available in the active interpreter")
+    with open(_COOPERATIVE_AIR_2V2_SCENARIO_PATH, "r", encoding="utf-8") as f:
+      scenario = json.load(f)
+    members = scenario["cooperative_roster"]["members"]
+    members[0]["mission_command_overrides"] = {
+      "assigned_target_name": "Red_Lead",
+      "authorization_to_fire": True,
+      "engage_order_state": 2,
+      "shot_policy_state": 3,
+      "shot_budget_remaining": 1,
+    }
+    members[1]["mission_command_overrides"] = {
+      "assigned_target_name": "Red_Wing",
+      "authorization_to_fire": True,
+      "engage_order_state": 2,
+      "shot_policy_state": 3,
+      "shot_budget_remaining": 1,
+    }
+    with tempfile.TemporaryDirectory() as tmpdir:
+      scenario_path = f"{tmpdir}/cooperative_target_override_scenario.json"
+      with open(scenario_path, "w", encoding="utf-8") as f:
+        json.dump(scenario, f, ensure_ascii=True)
+      vec_env = CooperativeWorldBatchVecEnv(
+        scenario_path=scenario_path,
+        n_envs=1,
+        include_visual=False,
+        include_proprio=True,
+        action_mode="full",
+        mission_obs_mode="air_combat_c2_roe_v2",
+      )
+      try:
+        vec_env.reset()
+        lead = vec_env._slots[0]
+        wing = vec_env._slots[1]
+        self.assertIsNotNone(lead)
+        self.assertIsNotNone(wing)
+        assert lead is not None
+        assert wing is not None
+        self.assertEqual(lead.loader.primary_target_name, "Red_Lead")
+        self.assertEqual(wing.loader.primary_target_name, "Red_Wing")
+        self.assertEqual(
+          int(lead.loader.mission_cmd["assigned_target_id"]),
+          int(lead.loader.entities["Red_Lead"]),
+        )
+        self.assertEqual(
+          int(wing.loader.mission_cmd["assigned_target_id"]),
+          int(wing.loader.entities["Red_Wing"]),
+        )
+        self.assertTrue(bool(lead.loader.mission_cmd["authorization_to_fire"]))
+        self.assertTrue(bool(wing.loader.mission_cmd["authorization_to_fire"]))
+      finally:
+        vec_env.close()
+
+  def test_roster_unknown_explicit_target_clears_stale_assignment(self) -> None:
+    if CooperativeWorldBatchVecEnv is None:
+      self.skipTest("gymnasium is not available in the active interpreter")
+    with open(_COOPERATIVE_AIR_2V2_SCENARIO_PATH, "r", encoding="utf-8") as f:
+      scenario = json.load(f)
+    scenario["cooperative_roster"]["members"][0]["mission_command_overrides"] = {
+      "assigned_target_name": "Unknown_Target",
+      "assigned_target_id": 999999,
+      "authorization_to_fire": True,
+      "engage_order_state": 2,
+      "shot_policy_state": 3,
+      "shot_budget_remaining": 1,
+    }
+    with tempfile.TemporaryDirectory() as tmpdir:
+      scenario_path = f"{tmpdir}/cooperative_unknown_target_scenario.json"
+      with open(scenario_path, "w", encoding="utf-8") as f:
+        json.dump(scenario, f, ensure_ascii=True)
+      vec_env = CooperativeWorldBatchVecEnv(
+        scenario_path=scenario_path,
+        n_envs=1,
+        include_visual=False,
+        include_proprio=True,
+        action_mode="full",
+        mission_obs_mode="air_combat_c2_roe_v2",
+      )
+      try:
+        vec_env.reset()
+        lead = vec_env._slots[0]
+        self.assertIsNotNone(lead)
+        assert lead is not None
+        self.assertEqual(int(lead.loader.mission_cmd["assigned_target_id"]), 0)
+        self.assertEqual(int(getattr(lead.loader, "primary_target_id", 0)), 0)
+        self.assertEqual(str(getattr(lead.loader, "primary_target_name", "")), "")
+      finally:
+        vec_env.close()
+
+  def test_cooperative_air_combat_proprio_uses_gated_action(self) -> None:
+    if CooperativeWorldBatchVecEnv is None:
+      self.skipTest("gymnasium is not available in the active interpreter")
+    vec_env = CooperativeWorldBatchVecEnv(
+      scenario_path=str(_COOPERATIVE_AIR_2V2_SCENARIO_PATH),
+      n_envs=1,
+      include_visual=False,
+      include_proprio=True,
+      action_mode="air_combat_hybrid_v1",
+      mission_obs_mode="air_combat_c2_roe_v2",
+    )
+    try:
+      vec_env.reset()
+      lead = vec_env._slots[0]
+      self.assertIsNotNone(lead)
+      assert lead is not None
+      lead.loader.mission_cmd["authorization_to_fire"] = False
+      actions = np.zeros((2, 12), dtype=np.float32)
+      actions[0, 8] = 1.0
+      actions[0, 9] = 1.0
+      actions[0, 11] = 1.0
+      obs, _rewards, _dones, infos = vec_env.step(actions)
+      self.assertEqual(float(lead.last_action[9]), 0.0)
+      self.assertEqual(float(np.asarray(obs["proprio"])[0, 9]), 0.0)
+      self.assertFalse(bool(infos[0].get("fire_once_accepted", False)))
+    finally:
+      vec_env.close()
+
   def test_multi_agent_runtime_view_task_order_export_uses_maintained_contracts_only(self) -> None:
     class _Loader:
       active_roster = []

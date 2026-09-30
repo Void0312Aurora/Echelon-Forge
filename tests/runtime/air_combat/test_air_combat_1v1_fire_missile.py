@@ -479,6 +479,8 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
       action[0, 9] = 1.0
       action[0, 13] = 1.0
       action[0, 14] = 1.0
+      # Full mode encodes station 1 as the normalized categorical value 1/7.
+      action[0, 16] = 1.0 / 7.0
 
       initial_missiles = int(getattr(env.envs[0].last_truth, "missiles_remaining", -1))
       self.assertEqual(initial_missiles, 4)
@@ -493,6 +495,18 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
           break
 
       self.assertTrue(fired)
+
+      request = ef_py.EngagementBatchRequest()
+      ref = ef_py.EngagementEntityRef()
+      ref.world_index = 0
+      ref.entity_id = int(env.envs[0].agent_id)
+      request.refs = [ref]
+      packet = env.runtime_facade.export_engagement_event_packet(request)
+      self.assertGreaterEqual(len(packet.launch_events), 1)
+      self.assertIn(
+        "AIM-120C-7",
+        [event.selected_munition for event in packet.launch_events],
+      )
     finally:
       env.close()
 

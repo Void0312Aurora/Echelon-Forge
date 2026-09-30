@@ -1568,3 +1568,236 @@ to a dedicated owner-local evidence document.
 - Continuation choice: retain the three doctrines as opt-in scenario inputs;
   next admission work must supply scenario ownership, complete cadence/report
   semantics, and the cooperative hostile-threat owner decision.
+
+### 2026-09-25 — Air scripted weapon selector and native consequence recheck
+
+- Root-cause finding: the scripted C2/ROE producer had been writing selector
+  `0` for both maintained Air action transports. The existing transport maps
+  that value to no valid station, so the compiled release path accepted a
+  `legacy:missile` fallback even though the database-backed F-16 loadout had
+  generated station-1 `AIM-120C-7` stores. This was an action-contract bug, not
+  a missing `DefaultUnitFactory` loadout materialization.
+- Change batch: encode station 1 as `1/7` in the 17-element `full` transport
+  and as categorical value `1` in `air_combat_hybrid_v1`; add model-level and
+  compiled WorldBatch regression assertions that the accepted launch includes
+  `AIM-120C-7`.
+- Focused verification: the Air engagement, hybrid action, and maintained
+  fire-missile tests passed `18 passed, 2 subtests passed`. A maintained
+  compiled Stage 1 run with seed `20260516` then exported a native packet with
+  nearest approach at `43.1280 s`, miss distance `0.6321 m`, closure
+  `657.4265 m/s`, and a triggered `15.0 m` fuze. The target consequence was
+  `detonated_no_effect` with `destroyed=false` and loss state
+  `combat_capable`.
+- Evidence boundary: the scripted release now reaches the database weapon and
+  native near-approach/fuze path; this does not close target vulnerability,
+  damage-effect, terminal combat, or post-launch assessment acceptance. Air
+  remains `playable_candidate`, and the Stage 1 C2/ROE path remains an accepted
+  release demonstration rather than a playable terminal engagement.
+- Continuation choice: retain the selector fix as the baseline and keep the
+  terminal gate focused on the native effect/damage owner. Do not substitute a
+  Python-side kill or silently widen the target model to claim terminal success.
+
+### 2026-09-25 — Air C2/ROE native terminal surrogate
+
+- Change batch: add the maintained
+  `air_combat_1v1_c2_roe_terminal_generic_aircraft_surrogate_v1.json` scenario
+  and `test_air_scripted_terminal_surrogate.py`. The scenario uses the
+  built-in generic `Aircraft` factory definition as an explicit terminal-chain
+  surrogate; it does not alter the named-platform database profiles.
+- Focused verification: the compiled no-RL CLI with seed `20260516` accepted
+  the scripted release at step `2`, terminated at step `203` with native
+  `combat_win`, and awarded the existing `combat_win_bonus` of `1500.0`.
+  The regression passed `1 passed` in `15.15s`; Python compilation and
+  `git diff --check` passed.
+- Evidence boundary: this closes an end-to-end playable terminal demo for the
+  declared generic surrogate, including C2/ROE, database weapon selection,
+  native missile/effects/damage, and objective termination. It does not close
+  named-platform vulnerability calibration, MQ-9 terminal consequence,
+  tactical evasion, red weapons, or formation combat. Air remains
+  `playable_candidate`; the surrogate is not a promotion to `playable`.
+- Continuation choice: retain this scenario as the bounded terminal-chain
+  baseline while keeping the Stage 1 MQ-9 target on the native damage-effect
+  investigation path. Any future promotion must name the target model and
+  evidence boundary separately.
+
+### 2026-09-26 — Air delayed online-sensor burst geometry
+
+- Root-cause finding: an `online_sensor` delayed fuze stored no trigger-frame
+  burst point, so delayed resolution fell back to the missile transform from a
+  later ECS frame. With a `0.015 s` delay and `0.05 s` step this moved the
+  effective burst by tens of metres and made the native effect result depend on
+  frame cadence.
+- Change batch: preserve the sensor-trigger-frame missile point, expose the
+  stored detonation coordinates through the native missile diagnostics surface,
+  and reproject that point from the trigger-frame target-relative geometry when
+  the delayed effect resolves. Add a maintained regression at the coarse step
+  that fails the previous drift and keeps the effect within the bounded
+  trigger-frame envelope.
+- Focused verification: clean `ef_py` rebuild completed `139/139`; the final
+  Air suite passed `85 passed, 8 subtests passed`, including
+  `test_online_sensor_delayed_burst_projection.py` and the existing launch,
+  fuze, scripted engagement, generic terminal surrogate, and hybrid-action
+  tests. `git diff --check` passed before commit `8d143940`.
+- Maintained Stage 1 MQ-9 CLI recheck with seed `20260516` still accepted the
+  database release at step `282` but ended at step `2400` with
+  `combat_timeout`, `pending_assessment=true`, and no terminal kill. This is
+  direct evidence that the geometry fix does not close the named-platform
+  damage/effects or post-launch assessment chain.
+- Evidence boundary: the native delayed online-sensor geometry is now stable
+  for the maintained coarse-step regression and remains observable in the
+  diagnostic packet. This does not establish named-platform damage authority,
+  stable MQ-9 terminal kill, post-launch assessment, evasion, red weapons,
+  formation combat, or a promotion beyond `playable_candidate`.
+- Continuation choice: use this fix as the native effects prerequisite for a
+  later named-platform terminal slice; keep the generic-Aircraft surrogate as
+  the only bounded terminal-chain demonstration and do not add a Python-side
+  kill substitute.
+
+### 2026-09-26 — Air named-platform live damage after trigger-frame fix
+
+- Evidence recheck: the maintained MQ-9/AIM-120 live consumer path was rerun
+  after the delayed online-sensor geometry fix. At the fixed `8000 m` setup it
+  records `damage_applied`, a `3.28 m` miss, a direct hitbox intersection, three
+  projected hitboxes, four component loads, negative system-health delta, and
+  `mission_kill=true` while the target entity remains active. At the fixed
+  `14000 m` setup it records `damage_applied`, a `3.73 m` miss, three projected
+  hitboxes, four component loads, and a negative system-health delta without a
+  terminal loss state.
+- Change batch: update the two maintained MQ-9 live-chain assertions that still
+  encoded the pre-fix `detonated_no_effect`/zero-component outcome. The tests
+  now require native damage evidence and explicitly retain the synthetic,
+  unvalidated vulnerability boundary through `_assert_mq9_event_is_non_authoritative`.
+- Focused verification: the consumer wrapper passed `14 passed, 7 xfailed,
+  4 subtests passed`; the full `tests/runtime/air_combat/weapon_guidance_realism`
+  package passed `171 passed, 33 xfailed, 217 subtests passed` in the local
+  run. The prior clean native build remains the artifact under test.
+- Evidence boundary: this establishes a reproducible native named-platform
+  damage/effects path for two controlled live geometries, including one
+  mission-kill consequence. It does not establish calibrated MQ-9 Pk or fuze
+  authority, deterministic terminal destruction, post-launch assessment
+  closure, evasion, red weapons, formation combat, or a promotion beyond
+  `playable_candidate`.
+- Continuation choice: keep the generic-Aircraft surrogate as the only bounded
+  terminal `combat_win` demonstration, use the MQ-9 cases as native consequence
+  fixtures, and investigate terminal/post-launch closure separately rather
+  than widening projection radii or substituting a Python kill.
+
+### 2026-09-26 — Air roster-driven 4v4 EW scale demonstration
+
+- Change batch: generalize `tools/diagnostics/air_cooperative_ew_scripted_demo.py`
+  to resolve controllable slots and formation roles from the scenario-owned
+  roster instead of hard-coding Lead/Wing. The runner now supports any positive
+  roster size, uses the scenario time step for scripted runtime clocks, and
+  preserves the world-owner update path. Add the maintained
+  `cooperative_air_4v4_scripted_ew_response_v1.json` scenario with two Blue
+  elements and four Red scripted opponents.
+- Focused verification: the maintained cooperative EW test passed `3 passed`.
+  With seed `20260516` and `204` steps, all four slots remained running, the
+  owner roster was `[4, 0, 0, 0]`, all four Red opponent reports were active,
+  and the warning/request traces were Lead-A `[42, 82, 122, 162, 202]`,
+  Wing-A `[42, 82, 122, 162, 202]`, Lead-B `[162, 202]`, and Wing-B `[202]`.
+  Chaff samples were `[60,59,58,57,56]`, `[60,59,58,57,56]`, `[60,59]`, and
+  `[60]` respectively, with flare remaining `30` in every sample. The same
+  seed replay matched roster, warning/request, resource, report, and scripted
+  identity traces.
+- Evidence boundary: this establishes a roster-driven four-slot, two-element
+  EW response and resource-isolation demonstration at a larger scale. It does
+  not establish terminal combat, full multi-aircraft weapon employment,
+  jammer/ESM, communication loss, tactical reassignment, formation combat
+  mission parity, or a full visualization/large-scale combat claim. EW remains
+  `entry_surface_incomplete`; Air remains `playable_candidate`.
+- Continuation choice: retain the 4v4 scenario as the bounded scale baseline;
+  use the same roster contract for later 8+ slot or joint demonstrations only
+  after command/report and native weapon ownership gates are separately
+  evidenced.
+
+### 2026-09-26 — Air cooperative multi-aircraft C2/ROE terminal slice
+
+- Change batch: admit the existing Air `air_combat_hybrid_v1` event-action gate
+  and post-step finalizer in `CooperativeWorldBatchVecEnv` at per-slot scope;
+  preserve each slot's previous policy intent and pre-step truth, reset the
+  event state with the slot, and project native event fields into each slot's
+  report. Add the RL-independent
+  `tools/diagnostics/air_cooperative_combat_scripted_demo.py` runner and the
+  maintained `cooperative_air_2v1_scripted_c2_roe_engagement_v1.json` scenario.
+- Focused verification: the maintained cooperative combat test passed `2
+  passed`; seed `20260516` reached `combat_win` at step `202` with both
+  Blue slots reporting `fire_once_accepted` and `release_executed` at step `2`.
+  The paired run reproduced the roster, event steps, decision reports, and
+  scripted identities. The cooperative runtime compatibility regression and
+  existing EW regressions also passed (`7 passed, 17 deselected`).
+- Evidence boundary: this closes a bounded two-aircraft, one-shared-world
+  native weapon-release and terminal-objective route using the generic
+  `Aircraft` target surrogate. It does not establish named-platform
+  vulnerability calibration, multi-target assignment, red weapons, formation
+  mission parity, communication loss, tactical reassignment, visualization,
+  or a large-scale terminal combat claim. Air remains
+  `playable_candidate`.
+- Continuation choice: retain the 2v1 route as the first cooperative weapon
+  baseline; next close per-member target/task override ownership and broaden
+  only after native report/replay evidence is retained. Keep the generic
+  target explicitly marked as a terminal surrogate.
+
+### 2026-09-26 — Air cooperative per-member mission target ownership
+
+- Change batch: make the already-declared roster
+  `mission_command_overrides` an effective director-owned seam. Cooperative
+  slot loaders now receive non-formation/non-takeoff member command fields,
+  including C2/ROE and assigned-target fields; a member's target name is
+  resolved back to the slot-local `assigned_target_id` and `primary_target_id`
+  after the override so the observation, objective, and event gate share one
+  target owner. Formation and takeoff fields remain under their existing
+  director progression logic.
+- Focused verification: the new target-owner regression passed, and the full
+  cooperative tasking and observation files passed `19 passed` each. The test
+  mutates the maintained 2v2 roster so Lead owns `Red_Lead` and Wing owns
+  `Red_Wing`, then verifies the slot-local name, ID, and C2 authorization
+  fields after reset.
+- Evidence boundary: this closes the roster-to-mission target projection
+  contract, not a multi-target terminal engagement. It does not by itself
+  prove target reassignment, data-link loss, formation mission parity, or
+  calibrated named-platform consequences.
+- Continuation choice: use the owner seam for a paired generic-Aircraft
+  two-target scenario, retaining the same native event/replay gates before
+  widening the Air scale claim.
+
+### 2026-09-26 — Air cooperative two-target terminal demonstration
+
+- Change batch: add `cooperative_air_2v2_scripted_c2_roe_terminal_v1.json`
+  with two generic `Aircraft` targets and slot-owned `Red_A`/`Red_B`
+  assignments. Extend the RL-independent cooperative combat CLI to report the
+  resolved per-slot target owner.
+- Focused verification: the maintained combat test file passed `3 passed`.
+  With seed `20260516` the two slots resolved to `Red_A` and `Red_B`, each
+  recorded native `fire_once_accepted` and `release_executed`, and both ended
+  with `combat_win`; a paired run matched event steps, target owners, reports,
+  decision counts, and runtime identities.
+- Evidence boundary: this is a bounded two-aircraft/two-target terminal
+  surrogate demonstration. It does not establish target reassignment under
+  communication loss, red weapons, formation mission parity, named-platform
+  calibration, visualization, or large-scale terminal combat.
+- Continuation choice: retain the two-target trace as the multi-aircraft
+  baseline; next inspect command/report closure and formation behavior before
+  moving to 4+ aircraft terminal composition.
+
+### 2026-09-26 — Air cooperative 4v4 terminal scale demonstration
+
+- Change batch: add `cooperative_air_4v4_scripted_c2_roe_terminal_v1.json`
+  with two declared Blue elements, four slot-owned generic-Aircraft targets,
+  and the same native C2/ROE event route used by the 2v2 baseline. Extend the
+  maintained combat regression to four active scripted slots.
+- Focused verification: the maintained cooperative combat test file passed `4
+  passed`. With seed `20260516`, target owners resolved as `Red_A`, `Red_B`,
+  `Red_C`, and `Red_D`; all four slots recorded `fire_once_accepted` and
+  `release_executed`, ended with `combat_win` without truncation, and retained
+  four unique scripted runtime identities. The paired run matched event
+  steps, target owners, terminal reasons, decision reports, decision counts,
+  and identities.
+- Evidence boundary: this is a bounded four-aircraft/two-element terminal
+  surrogate demonstration. The generic targets have no red weapons and do not
+  provide calibrated named-platform vulnerability, formation mission parity,
+  communication loss, tactical reassignment, visualization, or a full
+  command/report presentation claim.
+- Continuation choice: retain 4v4 as the current large-scale scripted combat
+  baseline; inspect formation/report and visualization gates before widening
+  the label or adding joint tasking.

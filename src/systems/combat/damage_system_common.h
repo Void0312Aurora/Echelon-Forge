@@ -718,6 +718,30 @@ damage_effective_detonation_world_point(const Missile &missile, const Transform 
     };
 }
 
+inline std::array<double, 3>
+damage_online_sensor_detonation_world_point(const Missile &missile,
+                                            const Transform &target_transform,
+                                            const Transform &fallback_missile_transform) {
+    if (!std::isfinite(missile.fuze_detonation_x) || !std::isfinite(missile.fuze_detonation_y) ||
+        !std::isfinite(missile.fuze_detonation_z) ||
+        !std::isfinite(missile.proximity_last_target_x_m) ||
+        !std::isfinite(missile.proximity_last_target_y_m) ||
+        !std::isfinite(missile.proximity_last_target_z_m)) {
+        return damage_effective_detonation_world_point(missile, target_transform,
+                                                       fallback_missile_transform, false, false);
+    }
+
+    Transform target_at_trigger = target_transform;
+    target_at_trigger.x = missile.proximity_last_target_x_m;
+    target_at_trigger.y = missile.proximity_last_target_y_m;
+    target_at_trigger.z = missile.proximity_last_target_z_m;
+    const auto local_point =
+        damage_world_point_to_local_body(target_at_trigger, missile.fuze_detonation_x,
+                                         missile.fuze_detonation_y, missile.fuze_detonation_z);
+    return damage_local_body_point_to_world(target_transform, local_point[0], local_point[1],
+                                            local_point[2]);
+}
+
 inline std::array<double, 3> damage_velocity_axis_in_target_body(const Transform &target_transform,
                                                                  const Velocity *missile_velocity) {
     if (!missile_velocity) {
@@ -1006,8 +1030,11 @@ inline void register_damage_system_common(flecs::world &ecs) {
                             : m[i].fuse_distance;
                     const double fuze_reliability =
                         std::clamp(m[i].fuze_profile.reliability, 0.0, 1.0);
-                    const auto detonation_world = damage_effective_detonation_world_point(
-                        m[i], *t_pos, p[i], contact_fuze, timed_fuze);
+                    const auto detonation_world =
+                        online_sensor_trigger
+                            ? damage_online_sensor_detonation_world_point(m[i], *t_pos, p[i])
+                            : damage_effective_detonation_world_point(m[i], *t_pos, p[i],
+                                                                      contact_fuze, timed_fuze);
                     p[i].x = detonation_world[0];
                     p[i].y = detonation_world[1];
                     p[i].z = detonation_world[2];
@@ -1399,9 +1426,12 @@ inline void register_damage_system_common(flecs::world &ecs) {
                                                         : current_time;
                 m[i].fuze_detonation_time_s = m[i].fuze_nearest_approach_time_s + fuze_delay_s;
                 if (online_sensor_trigger) {
-                    m[i].fuze_detonation_x = std::numeric_limits<double>::quiet_NaN();
-                    m[i].fuze_detonation_y = std::numeric_limits<double>::quiet_NaN();
-                    m[i].fuze_detonation_z = std::numeric_limits<double>::quiet_NaN();
+                    // Preserve the sensor-trigger-frame burst candidate. Falling
+                    // back to the next ECS frame's missile transform can move the
+                    // burst tens of metres when the delay is shorter than the step.
+                    m[i].fuze_detonation_x = p[i].x;
+                    m[i].fuze_detonation_y = p[i].y;
+                    m[i].fuze_detonation_z = p[i].z;
                 } else {
                     const auto detonation_world = damage_effective_detonation_world_point(
                         m[i], *t_pos, p[i], contact_fuze, timed_fuze);

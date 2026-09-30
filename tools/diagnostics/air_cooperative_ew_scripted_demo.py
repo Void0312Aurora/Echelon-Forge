@@ -28,8 +28,42 @@ from python.tasking_contracts.scripted_runtime import (  # noqa: E402
 DEFAULT_SCENARIO = resolve_repo_path(
     "scenarios", "air_combat", "cooperative_air_2v2_scripted_ew_response_v1.json"
 )
-_SLOT_NAMES = ("Lead", "Wing")
-_SLOT_ROLES = ("ElementLead", "Wingman")
+
+
+def _cooperative_slot_metadata(scenario_path: str) -> tuple[dict[str, str], ...]:
+    """Resolve runner slots from the scenario-owned cooperative roster."""
+
+    with open(os.path.abspath(str(scenario_path)), "r", encoding="utf-8") as handle:
+        scenario = json.load(handle)
+    roster = scenario.get("cooperative_roster", scenario.get("active_controllable_roster", {}))
+    raw_members = roster.get("members", []) if isinstance(roster, dict) else []
+    slots: list[dict[str, str]] = []
+    if isinstance(raw_members, list):
+        for member in raw_members:
+            if not isinstance(member, dict) or not bool(member.get("is_agent", True)):
+                continue
+            name = str(member.get("entity", member.get("entity_name", ""))).strip()
+            if not name:
+                continue
+            slots.append(
+                {
+                    "entity_name": name,
+                    "formation_role_id": str(member.get("formation_role_id", "")).strip()
+                    or "Unspecified",
+                }
+            )
+    if slots:
+        return tuple(slots)
+
+    entities = scenario.get("entities", [])
+    if isinstance(entities, list):
+        for entity in entities:
+            if not isinstance(entity, dict) or not bool(entity.get("is_agent", False)):
+                continue
+            name = str(entity.get("name", "")).strip()
+            if name:
+                slots.append({"entity_name": name, "formation_role_id": "Unspecified"})
+    return tuple(slots)
 
 
 def _json_value(value: Any) -> Any:
@@ -57,6 +91,12 @@ def run_demo(
             "response_doctrine must be 'observe_only', 'countermeasure_ready', 'chaff_only', or 'flare_only'"
         )
 
+    slot_metadata = _cooperative_slot_metadata(scenario_path)
+    if not slot_metadata:
+        raise ValueError("cooperative scenario must declare at least one controllable roster member")
+    slot_names = tuple(item["entity_name"] for item in slot_metadata)
+    slot_roles = tuple(item["formation_role_id"] for item in slot_metadata)
+
     vec_env = CooperativeWorldBatchVecEnv(
         scenario_path=os.path.abspath(str(scenario_path)),
         n_envs=1,
@@ -68,6 +108,22 @@ def run_demo(
         flight_shaping_backend="compiled",
         worker_threads=1,
     )
+    if int(vec_env.slots_per_world) != len(slot_metadata):
+        vec_env.close()
+        raise RuntimeError(
+            "scenario roster/runtime slot mismatch: "
+            f"metadata={len(slot_metadata)} runtime={vec_env.slots_per_world}"
+        )
+    slot_count = len(slot_metadata)
+    scenario_time_step = 0.05
+    with open(os.path.abspath(str(scenario_path)), "r", encoding="utf-8") as handle:
+        scenario_environment = json.load(handle).get("environment", {})
+    if isinstance(scenario_environment, dict):
+        try:
+            scenario_time_step = float(scenario_environment.get("time_step", scenario_time_step))
+        except (TypeError, ValueError):
+            scenario_time_step = 0.05
+    scenario_time_step = max(1.0e-6, scenario_time_step)
     agents = [
         ScriptedRuntimeAgent(
             ScriptedRuntimeAgentSpec(
@@ -81,19 +137,19 @@ def run_demo(
                 domain="air",
                 role_id="air_ew_action_controller",
                 model_id=AIR_SCRIPTED_EW_ACTION_MODEL_ID,
-                dt=0.05,
+                dt=scenario_time_step,
                 max_rwr=4,
             ),
         )
-        for name in _SLOT_NAMES
+        for name in slot_names
     ]
-    launch_warning_steps: list[list[int]] = [[], []]
-    countermeasure_request_steps: list[list[int]] = [[], []]
-    countermeasure_state_samples: list[list[dict[str, Any]]] = [[], []]
-    last_infos: list[dict[str, Any]] = [{}, {}]
-    terminated = [False, False]
-    truncated = [False, False]
-    last_runtime_steps: list[Any] = [None, None]
+    launch_warning_steps: list[list[int]] = [[] for _ in range(slot_count)]
+    countermeasure_request_steps: list[list[int]] = [[] for _ in range(slot_count)]
+    countermeasure_state_samples: list[list[dict[str, Any]]] = [[] for _ in range(slot_count)]
+    last_infos: list[dict[str, Any]] = [{} for _ in range(slot_count)]
+    terminated = [False for _ in range(slot_count)]
+    truncated = [False for _ in range(slot_count)]
+    last_runtime_steps: list[Any] = [None for _ in range(slot_count)]
     scripted_opponent_reports_at_last_request: dict[str, dict[str, Any]] = {}
     steps_run = 0
     try:
@@ -124,7 +180,7 @@ def run_demo(
                     launch_warning_steps[slot_index].append(step)
                 runtime_step = agent.step(
                     observation=observation,
-                    clock_s=float(step - 1) * 0.05,
+                    clock_s=float(step - 1) * scenario_time_step,
                     observation_version=f"air-ew-cooperative:{slot_index}:{step - 1}",
                     context={
                         "phase_name": "stable_flight",
@@ -141,7 +197,7 @@ def run_demo(
             observation_batch, _rewards, dones, infos = vec_env.step(
                 np.asarray(actions, dtype=np.float32)
             )
-            for slot_index in range(2):
+            for slot_index in range(slot_count):
                 last_infos[slot_index] = dict(infos[slot_index]) if len(infos) > slot_index else {}
                 instrument = vec_env._slots[slot_index].last_inst
                 if countermeasure_request_steps[slot_index] and countermeasure_request_steps[slot_index][-1] == step:
@@ -185,12 +241,12 @@ def run_demo(
                 ],
                 "roster": [
                     {
-                        "entity_name": _SLOT_NAMES[index],
-                        "formation_role_id": _SLOT_ROLES[index],
+                        "entity_name": slot_names[index],
+                        "formation_role_id": slot_roles[index],
                         "scripted_opponent_owner": index == 0,
                         "scripted_opponent_count": len(vec_env._slots[index].loader.scripted_opponents),
                     }
-                    for index in range(2)
+                    for index in range(slot_count)
                 ],
                 "scripted_opponent_reports": scripted_opponent_reports_at_last_request,
                 "launch_warning_steps": launch_warning_steps,
