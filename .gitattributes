@@ -31,6 +31,10 @@ tests/architecture/composition/fixtures/run_receipt.v1.json -text
 # Candidate release packages are byte-addressed provenance fixtures, not text.
 tests/architecture/composition/fixtures/*.bin -text
 
+# CSG replay artifacts bind the scenario's raw bytes into their identity.
+scenarios/naval/csg/csg_s0_ford_vs_fujian_named_v1.json -text
+scenarios/naval/csg/csg_s0_ford_mirror_v1.json -text
+
 # Launch-decision provenance inputs are hashed as canonical Git LF blobs.
 examples/config/training/active/air_combat/*.json -text
 tests/fixtures/launch_decision_reorg/v2/canonical_provenance_v1.json -text
