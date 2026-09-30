@@ -442,6 +442,30 @@ class TaskingPhaseControlTests(unittest.TestCase):
       )
     )
 
+  def test_phase_manager_fails_closed_on_malformed_post_transition_command(self):
+    manager = RuleBasedLeaderPhaseManager(terminal_waypoint_count=2)
+    loader = _make_phase_loader(
+      c2_task_name=ScriptedC2TaskManager.TASK_RECOVER_LAND,
+      ils_obs=[1.0, 0.18, 0.22, 9500.0],
+      runway_frame=(True, -600.0, 900.0, 3000.0, 45.0),
+      runway_heading_deg=90.0,
+    )
+    loader.post_waypoint_transition["command_code"] = "not-a-command"
+
+    self.assertFalse(
+      manager._should_arm_approach(
+        loader=loader,
+        truth=SimpleNamespace(x=-9200.0, y=50.0),
+        alt_agl_m=900.0,
+        heading_deg=104.0,
+        ils_valid=True,
+        loc_abs=0.18,
+        gs_abs=0.22,
+        dme_m=9500.0,
+        remaining_waypoints=2,
+      )
+    )
+
   def test_phase_manager_preserves_route_command_but_clears_route_ref_after_exhaustion(self):
     manager = RuleBasedLeaderPhaseManager(terminal_waypoint_count=2)
     loader = _make_phase_loader(

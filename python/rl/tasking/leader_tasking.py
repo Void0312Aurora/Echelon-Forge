@@ -35,6 +35,7 @@ from python.tasking_contracts.common.mission_defs import (
     TAKEOFF_PHASE_NAMES,
     command_code_for_phase_name,
     is_landing_command_code,
+    parse_command_code,
 )
 from python.tasking_contracts.air.tasking.c2_manager import ScriptedC2TaskManager as _ScriptedC2TaskManager
 from python.tasking_contracts.air.tasking.leader_phase_policy import (
@@ -615,10 +616,13 @@ class RuleBasedLeaderPhaseManager:
             return False
         c2_task_name = str(getattr(loader, "c2_task_name", "")).strip().upper()
         current_command_code = mission_command_view(loader).int_field("command_code", 0)
-        try:
-            post_command_code = int(post.get("command_code", COMMAND_CODE_LANDING))
-        except Exception:
-            post_command_code = int(COMMAND_CODE_LANDING)
+        raw_post_command_code = post.get("command_code")
+        post_command_code = parse_command_code(
+            raw_post_command_code,
+            default=COMMAND_CODE_LANDING,
+        )
+        if raw_post_command_code is not None and post_command_code is None:
+            return False
         if c2_task_name and c2_task_name != _ScriptedC2TaskManager.TASK_RECOVER_LAND:
             return False
         if is_landing_command_code(current_command_code) or not is_landing_command_code(post_command_code):
