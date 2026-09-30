@@ -988,6 +988,37 @@ TEST_SUITE("runtime_run_recorder") {
         std::filesystem::remove_all(root, cleanup_error);
     }
 
+    TEST_CASE("native file ArtifactLedger rejects a cross-stream fence swap") {
+        const auto root = std::filesystem::temp_directory_path() /
+                          "echelon-forge-p5b-native-ledger-cross-stream-fence";
+        std::error_code cleanup_error;
+        std::filesystem::remove_all(root, cleanup_error);
+        REQUIRE(seed_authority_blobs(root));
+        {
+            runtime::host::RuntimeFileArtifactLedgerStore store(root, runtime_ledger_access());
+            runtime::host::RuntimeRunRecorder recorder(store, "run-1", "writer-1");
+            REQUIRE(recorder.admit(vector_run_header("run-1")));
+
+            std::string detail;
+            std::uint64_t other_generation = 0;
+            REQUIRE(store.acquire_fence("journal:run-2", "writer-2", other_generation, detail));
+            REQUIRE(other_generation == 1U);
+            const auto run_one_fence = root / "fences" /
+                                       (runtime::authority_contracts::sha256_hex("journal:run-1") +
+                                        ".json");
+            const auto run_two_fence = root / "fences" /
+                                       (runtime::authority_contracts::sha256_hex("journal:run-2") +
+                                        ".json");
+            std::filesystem::copy_file(run_two_fence, run_one_fence,
+                                       std::filesystem::copy_options::overwrite_existing);
+
+            const auto append = recorder.append(recorder.next_sequence(), "step-after-swap");
+            CHECK_FALSE(append);
+            CHECK(append.detail.find("stale or absent") != std::string::npos);
+        }
+        std::filesystem::remove_all(root, cleanup_error);
+    }
+
     TEST_CASE("native recorder replaces caller checkpoint references with durable ownership") {
         const auto root = std::filesystem::temp_directory_path() /
                           "echelon-forge-p5b-native-ledger-checkpoint-refs";
