@@ -70,6 +70,7 @@ class AirScriptedEngagementModel:
         assessor: AirPostLaunchAssessor | None = None,
         observation_adapter: AirObservationAdapter | None = None,
         action_adapter: AirActionAdapter | None = None,
+        weapon_station_id: int | None = 1,
     ) -> None:
         if int(action_dim) not in _SUPPORTED_ACTION_DIMS:
             raise ValueError(
@@ -87,6 +88,7 @@ class AirScriptedEngagementModel:
             transition_alt_agl_m=transition_alt_agl_m,
             runway_length_m=runway_length_m,
         )
+        self.weapon_station_id = weapon_station_id
         if weapon_envelope is not None and weapon_profile_path is not None:
             raise ValueError("provide weapon_envelope or weapon_profile_path, not both")
         if weapon_profile_path is not None:
@@ -175,6 +177,7 @@ class AirScriptedEngagementModel:
         authorized = bool(values["authorization_to_fire"] > 0.5)
         pending_assessment = bool(values["pending_assessment"] > 0.5)
         budget_available = bool(values["shot_budget_remaining"] > 0.5)
+        station_id = self._resolve_weapon_station_id(context)
         event_info = context.get("last_event_info") if isinstance(context, dict) else None
         assessment_input = self._assessment_input(
             event_info=event_info,
@@ -200,10 +203,13 @@ class AirScriptedEngagementModel:
             contact_bearing_deg=tactical_observation.contact_bearing_deg,
             contact_elevation_deg=tactical_observation.contact_elevation_deg,
             closing_speed_mps=tactical_observation.closing_speed_mps,
-            observation_version=tactical_observation.mission_obs_mode,
+            observation_version=(
+                str(context.get("observation_version", ""))
+                if isinstance(context, Mapping)
+                else ""
+            ),
         )
         decision = self.planner.decide(context=planning_context)
-        action = self.planner.apply_decision_guidance(action, decision)
 
         request_fire = bool(decision.fire_recommended)
         action_application = self.action_adapter.apply(
@@ -215,7 +221,10 @@ class AirScriptedEngagementModel:
                 fire_window_open=fire_window,
                 assessment_blocked=assessment_gate,
                 request_fire=request_fire,
-                station_id=1,
+                station_id=station_id,
+                guidance_roll=decision.guidance_roll,
+                guidance_pitch=decision.guidance_pitch,
+                guidance_throttle=decision.guidance_throttle,
             ),
         )
         action = np.asarray(action_application.action, dtype=np.float32).reshape(-1)
@@ -237,11 +246,28 @@ class AirScriptedEngagementModel:
             "pending_assessment": pending_assessment,
             "post_launch_assessment": assessment_report.as_dict(),
             "shot_budget_remaining": float(values["shot_budget_remaining"]),
+            "weapon_station_id": station_id,
+            "weapon_station_valid": station_id is not None,
             "fire_requested": bool(action_application.fire_pulse > 0.5),
             "tactical_plan": tactical_plan,
             "tactical_decision": decision.as_dict(),
         }
         return action
+
+    def _resolve_weapon_station_id(self, context: Any) -> int | None:
+        raw = self.weapon_station_id
+        if isinstance(context, Mapping) and "weapon_station_id" in context:
+            raw = context.get("weapon_station_id")
+        if raw is None or isinstance(raw, bool):
+            return None
+        try:
+            numeric = float(raw)
+        except (TypeError, ValueError):
+            return None
+        if not np.isfinite(numeric) or numeric != float(int(numeric)):
+            return None
+        station_id = int(numeric)
+        return station_id if 0 <= station_id <= 7 else None
 
     def close(self) -> None:
         self.flight_model.close()

@@ -151,6 +151,79 @@ def test_action_adapter_owns_full_layout_and_fire_latch_transport() -> None:
     assert reset.fire_pulse == 1.0
 
 
+def test_action_adapter_projects_planner_guidance_before_fire_fields() -> None:
+    adapter = AirActionLayoutAdapter(action_dim=17)
+    intent = AirTacticalActionIntent(
+        target_contact_present=True,
+        authorization_to_fire=True,
+        shot_budget_available=True,
+        fire_window_open=True,
+        assessment_blocked=False,
+        request_fire=False,
+        station_id=1,
+        guidance_roll=0.2,
+        guidance_pitch=-0.3,
+        guidance_throttle=0.1,
+    )
+    action = adapter.apply(np.zeros((17,), dtype=np.float32), intent=intent).action
+
+    assert action[0] == pytest.approx(-0.3)
+    assert action[1] == pytest.approx(0.2)
+    assert action[3] == pytest.approx(0.1)
+
+
+class _DecisionOnlyPlanner:
+    def reset(self) -> None:
+        pass
+
+    def decide(self, *, context: AirPlanningContext) -> AirTacticalDecision:
+        return AirTacticalDecision(
+            mode="reposition",
+            selected_candidate="intercept",
+            fire_recommended=False,
+            guidance_roll=0.15,
+            guidance_pitch=-0.1,
+            guidance_throttle=0.05,
+            diagnostics={"observation_version": context.observation_version},
+        )
+
+
+class _RecordingActionAdapter:
+    def __init__(self) -> None:
+        self.delegate = AirActionLayoutAdapter(action_dim=17)
+        self.last_intent: AirTacticalActionIntent | None = None
+
+    def reset(self) -> None:
+        self.delegate.reset()
+
+    def apply(self, action: np.ndarray, *, intent: AirTacticalActionIntent) -> AirActionApplication:
+        self.last_intent = intent
+        return self.delegate.apply(action, intent=intent)
+
+
+def test_engagement_model_accepts_planner_without_raw_action_mutator() -> None:
+    observation = _engagement_observation()
+    action_adapter = _RecordingActionAdapter()
+    model = AirScriptedEngagementModel(
+        planner=_DecisionOnlyPlanner(),
+        action_adapter=action_adapter,
+    )
+    model.reset(context={"observation": observation, "phase_name": "stable_flight"})
+    action = model.decide(
+        observation=observation,
+        context={"phase_name": "stable_flight", "observation_version": "trace-v7"},
+        dt=0.05,
+    )
+
+    assert action.shape == (17,)
+    assert action_adapter.last_intent is not None
+    assert action_adapter.last_intent.guidance_pitch == pytest.approx(-0.1)
+    assert action_adapter.last_intent.guidance_roll == pytest.approx(0.15)
+    assert action_adapter.last_intent.guidance_throttle == pytest.approx(0.05)
+    assert model.last_decision_info["tactical_decision"]["diagnostics"]["observation_version"] == "trace-v7"
+    model.close()
+
+
 def test_default_assessor_accepts_typed_input_without_changing_outcome() -> None:
     report = AirPostLaunchAssessment().assess(
         inputs=AirAssessmentInput(

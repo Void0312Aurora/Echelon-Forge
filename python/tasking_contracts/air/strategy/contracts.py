@@ -166,13 +166,22 @@ class AirTacticalActionIntent:
     fire_window_open: bool
     assessment_blocked: bool
     request_fire: bool
-    station_id: int = 1
+    station_id: int | None = 1
+    guidance_roll: float = 0.0
+    guidance_pitch: float = 0.0
+    guidance_throttle: float = 0.0
 
     def __post_init__(self) -> None:
-        station_id = int(self.station_id)
-        if station_id < 0:
-            raise ValueError("station_id must be non-negative")
-        object.__setattr__(self, "station_id", station_id)
+        if self.station_id is not None:
+            station_id = int(self.station_id)
+            if station_id < 0 or station_id > 7:
+                raise ValueError("station_id must be within the maintained range [0, 7]")
+            object.__setattr__(self, "station_id", station_id)
+        for name in ("guidance_roll", "guidance_pitch", "guidance_throttle"):
+            value = _finite(getattr(self, name), name=name)
+            if abs(value) > 1.0:
+                raise ValueError(f"{name} must be within [-1, 1]")
+            object.__setattr__(self, name, value)
 
 
 @dataclass(frozen=True)
@@ -200,9 +209,6 @@ class AirTacticalPlanner(Protocol):
         ...
 
     def decide(self, *, context: AirPlanningContext) -> AirTacticalDecision:
-        ...
-
-    def apply_decision_guidance(self, action: Any, decision: AirTacticalDecision) -> Any:
         ...
 
 

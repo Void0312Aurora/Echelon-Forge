@@ -160,6 +160,23 @@ def test_engagement_model_fails_closed_for_invalid_weapon_station() -> None:
     model.close()
 
 
+def test_engagement_model_accepts_context_station_override_and_fails_closed_when_missing() -> None:
+    model = AirScriptedEngagementModel(weapon_station_id=1)
+    hold = _observation(contact=True, fire_window=False)
+    open_window = _observation(contact=True, fire_window=True)
+    model.reset(context={"observation": hold, "phase_name": "stable_flight"})
+    action = model.decide(
+        observation=open_window,
+        context={"phase_name": "stable_flight", "weapon_station_id": None},
+        dt=0.05,
+    )
+
+    assert action[13] == 0.0
+    assert action[14] == 0.0
+    assert model.last_decision_info["weapon_station_valid"] is False
+    model.close()
+
+
 def test_engagement_model_is_registered_as_an_adapter_until_runtime_gate_closes() -> None:
     entries = AIR_SCRIPTED_MODEL_REGISTRY.resolve(
         domain="air",

@@ -41,6 +41,12 @@ class AirActionLayoutAdapter:
             raise ValueError(
                 f"Air action adapter received {values.size} values, expected {self.action_dim}"
             )
+        # Guidance projection belongs to this layout adapter. The planner
+        # returns a decision record and never mutates the raw flight vector.
+        if self.action_dim >= 4:
+            values[0] = float(np.clip(values[0] + intent.guidance_pitch, -1.0, 1.0))
+            values[1] = float(np.clip(values[1] + intent.guidance_roll, -1.0, 1.0))
+            values[3] = float(np.clip(values[3] + intent.guidance_throttle, 0.0, 1.0))
         tms_pulse = 1.0 if intent.target_contact_present and not self._last_target_contact else 0.0
         master_arm = (
             1.0
@@ -49,17 +55,23 @@ class AirActionLayoutAdapter:
             and intent.shot_budget_available
             else 0.0
         )
-        fire_pulse = 1.0 if intent.request_fire and not self._fire_latched else 0.0
-        if not intent.fire_window_open or intent.assessment_blocked or not intent.shot_budget_available:
-            self._fire_latched = False
-        elif intent.request_fire:
-            self._fire_latched = True
+        legal_fire_request = bool(
+            intent.request_fire
+            and intent.fire_window_open
+            and not intent.assessment_blocked
+            and intent.shot_budget_available
+            and intent.target_contact_present
+            and intent.authorization_to_fire
+        )
+        fire_pulse = 1.0 if legal_fire_request and not self._fire_latched else 0.0
+        self._fire_latched = bool(legal_fire_request)
         self._last_target_contact = bool(intent.target_contact_present)
 
         station_available = (
             intent.target_contact_present
             and intent.authorization_to_fire
             and intent.shot_budget_available
+            and intent.station_id is not None
         )
         if self.action_dim == AIR_FULL_ACTION_DIM:
             values[9] = 1.0
