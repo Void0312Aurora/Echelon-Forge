@@ -1209,12 +1209,11 @@ bool SimulationKernelWeaponReleaseService::fire_ground_weapon(uint64_t attacker_
     const std::uint64_t launch_event_id = launch_recorder_.record_legacy_launch_event(
         attacker_id, target_id, 0, "ground:rifle", "ground:rifle", -1, cooldown, current_time);
 
-    const double hit_probability = std::clamp(
-        std::isfinite(weapon.hit_probability) ? weapon.hit_probability : 0.0, 0.0, 1.0);
+    const double hit_probability =
+        std::clamp(std::isfinite(weapon.hit_probability) ? weapon.hit_probability : 0.0, 0.0, 1.0);
     const std::uint64_t seed = splitmix64(
-        static_cast<std::uint64_t>(current_time * 1000.0) ^
-        (attacker_id * 0x9e3779b97f4a7c15ULL) ^ (target_id * 0xbf58476d1ce4e5b9ULL) ^
-        (static_cast<std::uint64_t>(weapon_type_code) << 32));
+        static_cast<std::uint64_t>(current_time * 1000.0) ^ (attacker_id * 0x9e3779b97f4a7c15ULL) ^
+        (target_id * 0xbf58476d1ce4e5b9ULL) ^ (static_cast<std::uint64_t>(weapon_type_code) << 32));
     const double sample = (splitmix64(seed) >> 11) * (1.0 / 9007199254740992.0);
     if (sample > hit_probability) {
         return true;

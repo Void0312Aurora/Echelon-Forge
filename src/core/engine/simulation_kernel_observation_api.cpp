@@ -423,8 +423,8 @@ std::vector<double> SimulationKernel::get_ground_weapon_state(uint64_t entity_id
     const double current_time = info ? static_cast<double>(info->world_time_total) : 0.0;
     const double cooldown_remaining =
         std::isfinite(weapon.last_fire_time_s)
-            ? std::max(0.0, std::max(0.0, weapon.cooldown_s) + weapon.last_fire_time_s -
-                                current_time)
+            ? std::max(0.0,
+                       std::max(0.0, weapon.cooldown_s) + weapon.last_fire_time_s - current_time)
             : 0.0;
     return {
         1.0,
@@ -433,8 +433,7 @@ std::vector<double> SimulationKernel::get_ground_weapon_state(uint64_t entity_id
         static_cast<double>(std::max(0, weapon.maximum_ammunition)),
         std::isfinite(weapon.damage_per_hit) ? weapon.damage_per_hit : 0.0,
         std::isfinite(weapon.engagement_range_m) ? weapon.engagement_range_m : 0.0,
-        std::clamp(std::isfinite(weapon.hit_probability) ? weapon.hit_probability : 0.0, 0.0,
-                   1.0),
+        std::clamp(std::isfinite(weapon.hit_probability) ? weapon.hit_probability : 0.0, 0.0, 1.0),
         cooldown_remaining,
     };
 }

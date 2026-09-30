@@ -236,7 +236,7 @@ void register_esm_reset_system(flecs::world &ecs) {
     X(PilotWeaponReleaseState, "PilotWeaponReleaseState",                                          \
       "flecs.component.pilot_weapon_release_state")                                                \
     X(NavalWeaponSystem, "NavalWeaponSystem", "flecs.component.naval_weapon_system")               \
-    X(GroundWeaponState, "GroundWeaponState", "flecs.component.ground_weapon_state")             \
+    X(GroundWeaponState, "GroundWeaponState", "flecs.component.ground_weapon_state")               \
     X(Jammer, "Jammer", "flecs.component.jammer")                                                  \
     X(Countermeasures, "Countermeasures", "flecs.component.countermeasures")                       \
     X(RWR, "RWR", "flecs.component.rwr")                                                           \
