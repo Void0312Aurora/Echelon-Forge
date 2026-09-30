@@ -358,17 +358,11 @@ std::array<double, 5> SimulationKernel::get_ground_terrain_observation(double x,
     ensure_active("get_ground_terrain_observation");
     if (IEnvironmentModel *model = environment_model()) {
         const IEnvironmentModel::TerrainCell cell = model->get_terrain_at(x, y);
-        return {cell.elevation,
-                static_cast<double>(cell.type),
-                cell.friction_mult,
-                cell.roughness,
+        return {cell.elevation, static_cast<double>(cell.type), cell.friction_mult, cell.roughness,
                 cell.vegetation_density};
     }
     return {std::numeric_limits<double>::quiet_NaN(),
-            static_cast<double>(IEnvironmentModel::SurfaceType::Obstacle),
-            0.0,
-            1.0,
-            1.0};
+            static_cast<double>(IEnvironmentModel::SurfaceType::Obstacle), 0.0, 1.0, 1.0};
 }
 
 void SimulationKernel::set_maritime_state(double sea_state, double wave_heading_deg,

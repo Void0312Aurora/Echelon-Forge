@@ -51,8 +51,8 @@ struct RasterGrid {
     double resolution; // Meters per cell
     double step_x = 0.0;
     double step_y = 0.0;
-    int width;         // Number of columns (X)
-    int height;        // Number of rows (Y)
+    int width;  // Number of columns (X)
+    int height; // Number of rows (Y)
     std::vector<IEnvironmentModel::SurfaceType>
         data; // Row-major (y * width + x) (Or standard image layout)
     std::vector<double> elevation;
@@ -61,15 +61,15 @@ struct RasterGrid {
     std::vector<ArnisFeatureGeometry> bridge_features;
     bool arnis_metric_bundle = false;
 
-    static double distance_squared_to_segment(double x, double y, double x1, double y1,
-                                              double x2, double y2) {
+    static double distance_squared_to_segment(double x, double y, double x1, double y1, double x2,
+                                              double y2) {
         const double dx = x2 - x1;
         const double dy = y2 - y1;
         const double length_squared = dx * dx + dy * dy;
-        const double projection = length_squared > 0.0
-                                      ? std::clamp(((x - x1) * dx + (y - y1) * dy) / length_squared,
-                                                   0.0, 1.0)
-                                      : 0.0;
+        const double projection =
+            length_squared > 0.0
+                ? std::clamp(((x - x1) * dx + (y - y1) * dy) / length_squared, 0.0, 1.0)
+                : 0.0;
         const double nearest_x = x1 + projection * dx;
         const double nearest_y = y1 + projection * dy;
         const double offset_x = x - nearest_x;
@@ -84,8 +84,8 @@ struct RasterGrid {
         for (std::size_t i = 0, j = points.size() - 1; i < points.size(); j = i++) {
             const auto &[xi, yi] = points[i];
             const auto &[xj, yj] = points[j];
-            const bool crosses = ((yi > y) != (yj > y)) &&
-                                 (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+            const bool crosses =
+                ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
             if (crosses) inside = !inside;
         }
         return inside;
@@ -182,8 +182,7 @@ bool read_binary_bytes(const std::filesystem::path &path, std::size_t expected_b
 }
 
 bool json_finite_pair(const Json &value, double &first, double &second) {
-    if (!value.is_array() || value.size() != 2 || !value[0].is_number() ||
-        !value[1].is_number()) {
+    if (!value.is_array() || value.size() != 2 || !value[0].is_number() || !value[1].is_number()) {
         return false;
     }
     first = value[0].get<double>();
@@ -212,9 +211,8 @@ bool read_feature_geometries(const std::filesystem::path &path, bool bridges,
         const std::string geometry_type = geometry.value("type", "");
         if (geometry_type != "LineString" && geometry_type != "Polygon") return false;
         const auto &raw_coordinates = geometry.at("coordinates");
-        const auto &coordinates = geometry_type == "LineString"
-                                      ? raw_coordinates
-                                      : raw_coordinates.at(0);
+        const auto &coordinates =
+            geometry_type == "LineString" ? raw_coordinates : raw_coordinates.at(0);
         if (!coordinates.is_array() || coordinates.size() < 2) return false;
         ArnisFeatureGeometry parsed;
         parsed.polygon = geometry_type == "Polygon";
@@ -326,7 +324,8 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
             return 0.0;
         }
         double raster_elevation = 0.0;
-        if (raster_layer_.arnis_metric_bundle && raster_layer_.get_elevation(x, y, raster_elevation)) {
+        if (raster_layer_.arnis_metric_bundle &&
+            raster_layer_.get_elevation(x, y, raster_elevation)) {
             return raster_elevation;
         }
         constexpr double kPeakX = 25000.0, kPeakY = 25000.0, kPeakH = 2000.0, kSigmaSq = 25000000.0;
@@ -586,7 +585,8 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
                 const std::string kind = artifact.value("kind", "");
                 if (kind == "elevation_raster") elevation_artifact = &artifact;
                 if (kind == "landcover_raster") landcover_artifact = &artifact;
-                if (kind == "vector_features" && artifact.value("feature_class", "") == "hydrology") {
+                if (kind == "vector_features" &&
+                    artifact.value("feature_class", "") == "hydrology") {
                     hydrology_artifact = &artifact;
                 }
                 if (kind == "vector_features" && artifact.value("feature_class", "") == "road") {
@@ -669,7 +669,8 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
             }
             if (road_artifact != nullptr) {
                 const fs::path road_path = resolve_child(*road_artifact);
-                if (road_path.empty() || !read_feature_geometries(road_path, true, bridge_features)) {
+                if (road_path.empty() ||
+                    !read_feature_geometries(road_path, true, bridge_features)) {
                     return false;
                 }
             }

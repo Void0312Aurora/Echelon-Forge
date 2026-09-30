@@ -352,9 +352,9 @@ void register_esm_reset_system(flecs::world &ecs) {
     X("builtin.system.logistics", "register_logistics_system", "common", "legacy.stage.32", 32,    \
       "builtin.system.ew", register_logistics_system)                                              \
     X("builtin.system.naval_logistics", "register_naval_logistics_system", "naval",                \
-      "legacy.stage.33", 33, "builtin.system.logistics", register_naval_logistics_system)         \
-    X("builtin.system.ground_infantry_movement", "register_ground_infantry_movement_system",      \
-      "ground", "legacy.stage.34", 34, "builtin.system.naval_logistics",                      \
+      "legacy.stage.33", 33, "builtin.system.logistics", register_naval_logistics_system)          \
+    X("builtin.system.ground_infantry_movement", "register_ground_infantry_movement_system",       \
+      "ground", "legacy.stage.34", 34, "builtin.system.naval_logistics",                           \
       register_ground_infantry_movement_system)
 
 #define EF_KERNEL_SYSTEM_CONTRIBUTIONS(X)                                                          \

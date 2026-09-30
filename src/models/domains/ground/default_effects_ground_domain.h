@@ -85,9 +85,8 @@ select_default_effects_ground_domain_target(flecs::entity target_entity,
     return DefaultEffectsGroundDomainTargetSelection{
         .structured_damage_target =
             is_structured_ground_damage_target(target_entity, ground_damage_component),
-        .ground_damage = static_cast<GroundPlatformDamageState *>(
-            ecs_get_mut_id(target_entity.world().c_ptr(), target_entity.id(),
-                           ground_damage_component)),
+        .ground_damage = static_cast<GroundPlatformDamageState *>(ecs_get_mut_id(
+            target_entity.world().c_ptr(), target_entity.id(), ground_damage_component)),
     };
 }
 
@@ -108,14 +107,15 @@ inline bool resolve_default_effects_ground_direct_structure_hit(const HitboxConf
     return false;
 }
 
-inline DefaultEffectsGroundSpatialScales make_default_effects_ground_spatial_scales(
-    const DefaultEffectsScratch &scratch, bool direct_structure_hit) {
+inline DefaultEffectsGroundSpatialScales
+make_default_effects_ground_spatial_scales(const DefaultEffectsScratch &scratch,
+                                           bool direct_structure_hit) {
     const auto hit_scale = [](bool hit, double scale) {
         return hit ? std::clamp(scale, 0.05, 1.0) : 0.0;
     };
     const auto mechanism_scale = [&scratch, &hit_scale](bool hit) {
-        return hit_scale(
-            hit, std::max(scratch.spatial_effect_scale, scratch.sampled_mechanism_scale));
+        return hit_scale(hit,
+                         std::max(scratch.spatial_effect_scale, scratch.sampled_mechanism_scale));
     };
     return DefaultEffectsGroundSpatialScales{
         .structure = hit_scale(direct_structure_hit, scratch.spatial_effect_scale),
@@ -136,9 +136,9 @@ void apply_default_effects_ground_platform_consequence_blocks(
     // Mobile ground elements lose the shared mobility projection at a higher
     // rate than air or naval platforms: there is no altitude or buoyancy
     // reserve to fall back on once the running gear is gone.
-    platform_damage.mobility_capability -= localized_effect_delta(
-        0.16, 0.18, resolved_severity, warhead_effects.control_scale,
-        std::max(scales.mobility, scales.blast));
+    platform_damage.mobility_capability -=
+        localized_effect_delta(0.16, 0.18, resolved_severity, warhead_effects.control_scale,
+                               std::max(scales.mobility, scales.blast));
     platform_damage.mission_capability -= localized_effect_delta(
         0.10, 0.12, resolved_severity, warhead_effects.mission_scale, scales.suppression);
     platform_damage.survivability_margin -= localized_effect_delta(
@@ -215,12 +215,12 @@ void project_ground_damage_state_to_platform(const GroundPlatformDamageState &gr
 // finalize has resolved the authoritative `PlatformLossState`. It reads the
 // projection; it does not re-derive thresholds.
 void project_shared_loss_state_onto_ground_state(const PlatformDamageState &platform_damage,
-                                                 Health *hp, GroundPlatformDamageState &ground_damage) {
+                                                 Health *hp,
+                                                 GroundPlatformDamageState &ground_damage) {
     ground_damage.mobility_kill = platform_damage.mobility_kill;
     ground_damage.mission_kill = platform_damage.mission_kill;
-    ground_damage.element_destroyed =
-        platform_damage.loss_state == PlatformLossState::Lost ||
-        (hp != nullptr && hp->current_hp <= 0.0);
+    ground_damage.element_destroyed = platform_damage.loss_state == PlatformLossState::Lost ||
+                                      (hp != nullptr && hp->current_hp <= 0.0);
 }
 
 inline bool resolve_default_effects_ground_domain_consequences(
@@ -258,16 +258,15 @@ inline bool resolve_default_effects_ground_domain_consequences(
                 mechanism_load.surface_incidence_cos);
         }
         if (mechanism_load.rod_cut_margin > 0.0) {
-            ground_damage->track_integrity -= localized_effect_delta(
-                0.06, 0.09, resolved_severity, warhead_effects.control_scale,
-                std::max(scales.mobility, scales.structure));
+            ground_damage->track_integrity -=
+                localized_effect_delta(0.06, 0.09, resolved_severity, warhead_effects.control_scale,
+                                       std::max(scales.mobility, scales.structure));
         }
         clamp_ground_platform_damage_state(*ground_damage);
 
         if (platform_damage != nullptr) {
-            apply_default_effects_ground_platform_consequence_blocks(scales, resolved_severity,
-                                                                     warhead_effects,
-                                                                     *platform_damage);
+            apply_default_effects_ground_platform_consequence_blocks(
+                scales, resolved_severity, warhead_effects, *platform_damage);
             project_ground_damage_state_to_platform(*ground_damage, *platform_damage);
         }
     }

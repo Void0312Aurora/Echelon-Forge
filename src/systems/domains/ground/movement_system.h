@@ -35,14 +35,12 @@ inline double surface_speed_multiplier(IEnvironmentModel::SurfaceType surface) {
 
 inline double slope_deg(IEnvironmentModel &environment, double x, double y) {
     constexpr double kSampleHalfSpanM = 5.0;
-    const double east_gradient =
-        (environment.get_terrain_elevation(x + kSampleHalfSpanM, y) -
-         environment.get_terrain_elevation(x - kSampleHalfSpanM, y)) /
-        (2.0 * kSampleHalfSpanM);
-    const double north_gradient =
-        (environment.get_terrain_elevation(x, y + kSampleHalfSpanM) -
-         environment.get_terrain_elevation(x, y - kSampleHalfSpanM)) /
-        (2.0 * kSampleHalfSpanM);
+    const double east_gradient = (environment.get_terrain_elevation(x + kSampleHalfSpanM, y) -
+                                  environment.get_terrain_elevation(x - kSampleHalfSpanM, y)) /
+                                 (2.0 * kSampleHalfSpanM);
+    const double north_gradient = (environment.get_terrain_elevation(x, y + kSampleHalfSpanM) -
+                                   environment.get_terrain_elevation(x, y - kSampleHalfSpanM)) /
+                                  (2.0 * kSampleHalfSpanM);
     if (!std::isfinite(east_gradient) || !std::isfinite(north_gradient)) {
         return std::numeric_limits<double>::quiet_NaN();
     }
@@ -84,8 +82,7 @@ inline void stop(Velocity &velocity) {
 // kinematic drift for the admitted move contract. Route intent, bridge
 // admission, stance, cover, and observation export remain separate owners.
 inline void register_ground_infantry_movement_system(flecs::world &ecs) {
-    ecs.system<Transform, Velocity, const KeyEntity, const MissionCommand>(
-           "GroundInfantryMovement")
+    ecs.system<Transform, Velocity, const KeyEntity, const MissionCommand>("GroundInfantryMovement")
         .kind(flecs::OnUpdate)
         .run([](flecs::iter &it) {
             const EnvironmentModelRef *environment_ref = it.world().get<EnvironmentModelRef>();
@@ -112,18 +109,21 @@ inline void register_ground_infantry_movement_system(flecs::world &ecs) {
                         continue;
                     }
 
-                    const auto terrain = environment->get_terrain_at(transform[i].x, transform[i].y);
+                    const auto terrain =
+                        environment->get_terrain_at(transform[i].x, transform[i].y);
                     const double surface_multiplier =
                         ground_infantry_movement_detail::surface_speed_multiplier(terrain.type);
-                    const double slope_multiplier = ground_infantry_movement_detail::slope_speed_multiplier(
-                        ground_infantry_movement_detail::slope_deg(
-                            *environment, transform[i].x, transform[i].y));
+                    const double slope_multiplier =
+                        ground_infantry_movement_detail::slope_speed_multiplier(
+                            ground_infantry_movement_detail::slope_deg(*environment, transform[i].x,
+                                                                       transform[i].y));
                     const double stance_multiplier =
-                        ground_infantry_movement_detail::stance_speed_multiplier(ground_task.stance);
+                        ground_infantry_movement_detail::stance_speed_multiplier(
+                            ground_task.stance);
                     const double effective_speed =
                         ground_infantry_movement_detail::finite_nonnegative(
-                            command[i].cmd_speed_mps) * surface_multiplier * slope_multiplier *
-                        stance_multiplier;
+                            command[i].cmd_speed_mps) *
+                        surface_multiplier * slope_multiplier * stance_multiplier;
                     if (effective_speed <= 0.0) {
                         ground_infantry_movement_detail::stop(velocity[i]);
                         continue;
