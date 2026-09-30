@@ -11,10 +11,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-from ..common.scripted_registry import (
-    ScriptedDecisionModel,
-    ScriptedModelRegistration,
-    ScriptedModelRegistry,
+from ..common.decision_registry import (
+    DecisionModel,
+    DecisionModelRegistration,
+    DecisionModelRegistry,
 )
 
 
@@ -222,13 +222,14 @@ def make_joint_scripted_coordination_model(**kwargs: Any) -> ScriptedJointCoordi
     return ScriptedJointCoordinationModel(**kwargs)
 
 
-JOINT_SCRIPTED_MODEL_REGISTRY = ScriptedModelRegistry(
+JOINT_SCRIPTED_MODEL_REGISTRY = DecisionModelRegistry(
     (
-        ScriptedModelRegistration(
+        DecisionModelRegistration(
             model_id=JOINT_SCRIPTED_COORDINATION_MODEL_ID,
             domain="joint",
             role_ids=("joint_coordination_director",),
             factory=make_joint_scripted_coordination_model,
+            model_kind="scripted",
             status="adapter",
             note=(
                 "Versioned task-graph coordination producer; domain execution "

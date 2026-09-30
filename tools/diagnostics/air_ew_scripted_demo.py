@@ -16,14 +16,14 @@ from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 ensure_repo_imports()
 
-from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv  # noqa: E402
+from python.simulation import create_single_backend  # noqa: E402
 from python.tasking_contracts.air.ew.model import (  # noqa: E402
     AIR_SCRIPTED_EW_ACTION_MODEL_ID,
 )
 from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY  # noqa: E402
-from python.tasking_contracts.common.scripted_runtime import (  # noqa: E402
-    ScriptedRuntimeAgent,
-    ScriptedRuntimeAgentSpec,
+from python.tasking_contracts.common.decision_runtime import (  # noqa: E402
+    DecisionRuntimeAgent,
+    DecisionRuntimeAgentSpec,
 )
 
 
@@ -61,7 +61,7 @@ def run_demo(
             "response_doctrine must be 'observe_only', 'countermeasure_ready', 'chaff_only', or 'flare_only'"
         )
 
-    vec_env = WorldBatchVecEnv(
+    vec_env = create_single_backend(
         scenario_path=os.path.abspath(str(scenario_path)),
         n_envs=1,
         include_visual=False,
@@ -79,8 +79,8 @@ def run_demo(
         dt=0.05,
         max_rwr=4,
     )
-    agent = ScriptedRuntimeAgent(
-        ScriptedRuntimeAgentSpec(
+    agent = DecisionRuntimeAgent(
+        DecisionRuntimeAgentSpec(
             agent_id="air-ew-scripted-demo",
             model_id=AIR_SCRIPTED_EW_ACTION_MODEL_ID,
             domain="air",

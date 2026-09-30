@@ -3,6 +3,7 @@
 - Document kind: review
 - Lifecycle: maintained
 - Date: 2026-09-25
+- Last verified: 2026-09-26
 - Owner: architecture/cross-domain-agency
 - Scope: current evidence boundary for the independent scripted-agent line
 
@@ -29,19 +30,24 @@ open. The Air label stays `playable_candidate`.
 ### Air Algorithm Substitution Status
 
 The Air row above records the current planner, weapon-profile, and conservative
-assessment evidence. Their pure modules are now physically layered under
-`python/tasking_contracts/air/strategy/`; the former flat paths are compatibility
-shells. They remain independently testable and RL/native independent. The inner
-strategy seam is still an open residual:
+assessment evidence. Their pure modules are physically layered under
+`python/tasking_contracts/air/strategy/`; the former flat paths have been
+removed. They remain independently testable and RL/native independent.
 
-- accepted: complete-model replacement through `ScriptedModelRegistry`,
-  independent unit testing of the default planner/assessor, and explicit
-  provenance for weapon-profile inputs;
-- deferred: observation/action protocol injection, adapter extraction, and
-  versioned strategy selection;
-- promotion rule: do not label strategy composition complete until the
-  ALG-0 through ALG-4 gates in the main plan pass. This residual does not
-  block unrelated Naval, Ground, Joint, or EW work.
+- accepted: complete-model replacement through `DecisionModelRegistry`;
+  typed planner, assessor, observation, and action protocols; independently
+  injectable default implementations; weapon-profile provenance; and compiled
+  2v1 terminal parity between default and recording observation/action adapters;
+- conditional: a versioned second strategy profile remains ALG-4 work only
+  when a second maintained consumer is named. No parallel global strategy
+  registry is admitted;
+- promotion rule: algorithm substitution evidence does not close command/report,
+  named-platform effects, EW, visualization, or the full Air `playable` gate.
+
+The standalone Air CLI now completes the maintained single-world flight
+scenario without a training configuration or checkpoint for the recorded
+seed-0 run. Its shared world-batch substrate still lives in `python.rl.runtime`;
+the successful CLI record does not establish package-level RL isolation.
 
 ## Label rules
 

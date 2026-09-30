@@ -14,7 +14,7 @@ from python.tasking_contracts.air.ew.model import (
     AirScriptedEWModel,
 )
 from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY
-from python.tasking_contracts.common.scripted_registry import ScriptedDecisionModel
+from python.tasking_contracts.common.decision_registry import DecisionModel
 try:
     from gym_envs.universal_env_parts import (
         AIR_EW_HYBRID_V1_ACTION_MODE,
@@ -35,7 +35,7 @@ def _observation(*rows: list[float]) -> dict[str, np.ndarray]:
 
 def test_ew_model_uses_rwr_only_and_emits_declared_observation_intent() -> None:
     model = AirScriptedEWModel(max_rwr=4)
-    assert isinstance(model, ScriptedDecisionModel)
+    assert isinstance(model, DecisionModel)
     model.reset(context={"observation_version": "rwr:0"})
     intent = model.decide(
         observation=_observation([45.0, 0.8, 1.0, 1.0], [-30.0, 0.3, 0.0, 0.0]),

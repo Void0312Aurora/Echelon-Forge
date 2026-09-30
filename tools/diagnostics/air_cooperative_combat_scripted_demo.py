@@ -16,16 +16,16 @@ from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 ensure_repo_imports()
 
-from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv  # noqa: E402
+from python.simulation import create_cooperative_backend  # noqa: E402
 from python.tasking_contracts.air.engagement.model import (  # noqa: E402
     AIR_COMBAT_C2_ROE_V2,
     AIR_COMBAT_HYBRID_ACTION_DIM,
     AIR_SCRIPTED_ENGAGEMENT_MODEL_ID,
 )
 from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY  # noqa: E402
-from python.tasking_contracts.common.scripted_runtime import (  # noqa: E402
-    ScriptedRuntimeAgent,
-    ScriptedRuntimeAgentSpec,
+from python.tasking_contracts.common.decision_runtime import (  # noqa: E402
+    DecisionRuntimeAgent,
+    DecisionRuntimeAgentSpec,
 )
 from tools.diagnostics.air_cooperative_ew_scripted_demo import _cooperative_slot_metadata  # noqa: E402
 
@@ -59,7 +59,7 @@ def run_demo(
         raise ValueError("cooperative scenario must declare at least one controllable roster member")
     slot_names = tuple(item["entity_name"] for item in slot_metadata)
     slot_roles = tuple(item["formation_role_id"] for item in slot_metadata)
-    vec_env = CooperativeWorldBatchVecEnv(
+    vec_env = create_cooperative_backend(
         scenario_path=os.path.abspath(str(scenario_path)),
         n_envs=1,
         include_visual=False,
@@ -77,8 +77,8 @@ def run_demo(
             f"scenario roster/runtime slot mismatch: metadata={len(slot_metadata)} runtime={vec_env.slots_per_world}"
         )
     agents = [
-        ScriptedRuntimeAgent(
-            ScriptedRuntimeAgentSpec(
+        DecisionRuntimeAgent(
+            DecisionRuntimeAgentSpec(
                 agent_id=f"air-combat-cooperative-{name.lower()}",
                 model_id=AIR_SCRIPTED_ENGAGEMENT_MODEL_ID,
                 domain="air",

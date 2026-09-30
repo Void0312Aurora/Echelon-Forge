@@ -30,11 +30,11 @@ from python.tasking_contracts.common.scripted_capability import (
     parse_scripted_capability,
     resolve_scripted_model_id,
 )
-from python.tasking_contracts.common.scripted_runtime import (
-    ScriptedRuntimeAgent,
-    ScriptedRuntimeAgentSpec,
+from python.tasking_contracts.common.decision_runtime import (
+    DecisionRuntimeAgent,
+    DecisionRuntimeAgentSpec,
 )
-from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
+from python.simulation import create_cooperative_backend
 from python.training.bootstrap import validate_declared_training_entry_env_surface, validate_declared_training_entry_paths
 from python.experiment.report_envelope import add_report_envelope_arg, apply_report_envelope
 from tools.diagnostics.common import add_json_out_arg, add_model_load_args, add_probe_run_args
@@ -89,7 +89,7 @@ def _finite_float(value: Any, default: float = 0.0) -> float:
     return out if np.isfinite(out) else float(default)
 
 
-def _slot_control_summary(env: CooperativeWorldBatchVecEnv) -> list[dict[str, Any]]:
+def _slot_control_summary(env: Any) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for idx, slot in enumerate(env.slot_control_slots()):
         out.append(
@@ -111,7 +111,7 @@ def _slot_control_summary(env: CooperativeWorldBatchVecEnv) -> list[dict[str, An
     return out
 
 
-def _active_roster_summary(env: CooperativeWorldBatchVecEnv) -> list[dict[str, Any]]:
+def _active_roster_summary(env: Any) -> list[dict[str, Any]]:
     for slot_state in getattr(env, "_slots", []):
         if slot_state is None:
             continue
@@ -139,7 +139,7 @@ def _active_roster_summary(env: CooperativeWorldBatchVecEnv) -> list[dict[str, A
     return []
 
 
-def _surface_gate_summary(env: CooperativeWorldBatchVecEnv) -> dict[str, Any]:
+def _surface_gate_summary(env: Any) -> dict[str, Any]:
     loader = None
     for slot_state in getattr(env, "_slots", []) or []:
         if slot_state is not None:
@@ -269,7 +269,7 @@ def _run_fixed_action_eval(
         else _load_train_config_unchecked(train_config_path)
     )
     env_settings = _build_env_settings(train_config)
-    env = CooperativeWorldBatchVecEnv(
+    env = create_cooperative_backend(
         scenario_path=os.path.abspath(scenario_path),
         n_envs=1,
         worker_threads=max(1, int(worker_threads)),
@@ -343,7 +343,7 @@ def run_baseline_eval(
 ) -> dict[str, Any]:
     train_config = _load_validated_train_config(scenario_path, train_config_path)
     env_settings = _build_env_settings(train_config)
-    env = CooperativeWorldBatchVecEnv(
+    env = create_cooperative_backend(
         scenario_path=os.path.abspath(scenario_path),
         n_envs=1,
         worker_threads=max(1, int(worker_threads)),
@@ -371,8 +371,8 @@ def run_baseline_eval(
             ),
             "naval.primary",
         )
-        scripted_runtime_agent = ScriptedRuntimeAgent(
-            ScriptedRuntimeAgentSpec(
+        scripted_runtime_agent = DecisionRuntimeAgent(
+            DecisionRuntimeAgentSpec(
                 agent_id=agent_id,
                 model_id=_scripted_model_id_for_scenario(scenario_path),
                 domain="naval",

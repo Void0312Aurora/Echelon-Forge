@@ -12,7 +12,7 @@ INFORMATION_TRANSFORM_CONTRACTS = (
   REPO_ROOT / "src" / "runtime" / "contracts" / "information_transform_contracts.h"
 )
 FACADE_TYPES = REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_types.h"
-AGENT_SHIM = REPO_ROOT / "python" / "rl" / "runtime" / "agent_shim.py"
+AGENT_SHIM = REPO_ROOT / "python" / "tasking_contracts" / "common" / "agent_contracts.py"
 RUNTIME_FACADE_ESCAPE_HATCH_HELPERS = (
   REPO_ROOT / "tests" / "architecture" / "runtime_facade" / "helpers.py"
 )

@@ -16,46 +16,50 @@ from .execution.model import (
     AIR_SCRIPTED_EXECUTION_MODEL_ID,
     make_air_scripted_execution_model,
 )
-from ..common.scripted_registry import ScriptedModelRegistration, ScriptedModelRegistry
+from ..common.decision_registry import DecisionModelRegistration, DecisionModelRegistry
 
 
-AIR_SCRIPTED_MODEL_REGISTRY = ScriptedModelRegistry(
+AIR_SCRIPTED_MODEL_REGISTRY = DecisionModelRegistry(
     (
-        ScriptedModelRegistration(
+        DecisionModelRegistration(
             model_id=AIR_SCRIPTED_EXECUTION_MODEL_ID,
             domain="air",
             role_ids=("autopilot_controller",),
             factory=make_air_scripted_execution_model,
+            model_kind="scripted",
             status="maintained",
             note="Composed takeoff, stable-flight, and landing execution model.",
         ),
-        ScriptedModelRegistration(
+        DecisionModelRegistration(
             model_id=AIR_SCRIPTED_ENGAGEMENT_MODEL_ID,
             domain="air",
             role_ids=("air_tactical_engagement_controller",),
             factory=make_air_scripted_engagement_model,
+            model_kind="scripted",
             status="adapter",
             note=(
                 "C2/ROE-derived tactical event overlay composed with the neutral "
                 "Air phase execution model; direct scenario admission remains open."
             ),
         ),
-        ScriptedModelRegistration(
+        DecisionModelRegistration(
             model_id=AIR_SCRIPTED_EW_MODEL_ID,
             domain="air",
             role_ids=("air_ew_controller",),
             factory=make_air_scripted_ew_model,
+            model_kind="scripted",
             status="adapter",
             note=(
                 "RWR-derived EW response intent; countermeasure and jammer "
                 "native action ownership remains open."
             ),
         ),
-        ScriptedModelRegistration(
+        DecisionModelRegistration(
             model_id=AIR_SCRIPTED_EW_ACTION_MODEL_ID,
             domain="air",
             role_ids=("air_ew_action_controller",),
             factory=make_air_scripted_ew_action_model,
+            model_kind="scripted",
             status="adapter",
             note=(
                 "Versioned 14-element EW action extension; native acceptance "

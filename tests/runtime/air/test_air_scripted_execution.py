@@ -8,7 +8,7 @@ from python.tasking_contracts.air.execution.model import (
     AirScriptedExecutionModel,
 )
 from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY
-from python.tasking_contracts.common.scripted_registry import ScriptedDecisionModel
+from python.tasking_contracts.common.decision_registry import DecisionModel
 from python.tasking_contracts.air.execution.landing import ScriptedLandingController
 from gym_envs.leader_env_parts.scripted_exec import ScriptedExecutiveController
 
@@ -28,7 +28,7 @@ def _observation(*, altitude_agl_m: float = 50.0, command_code: int = 1) -> dict
 
 def test_air_model_is_a_neutral_scripted_lifecycle_consumer() -> None:
     model = AirScriptedExecutionModel(action_dim=17, dt=0.05)
-    assert isinstance(model, ScriptedDecisionModel)
+    assert isinstance(model, DecisionModel)
 
     obs = _observation()
     model.reset(context={"observation": obs, "phase_name": "scramble"})

@@ -19,14 +19,15 @@ ensure_repo_imports()
 from python.tasking_contracts.air.engagement.model import (  # noqa: E402
     AIR_COMBAT_C2_ROE_V2,
     AIR_COMBAT_HYBRID_ACTION_DIM,
+    AIR_FULL_ACTION_DIM,
     AIR_SCRIPTED_ENGAGEMENT_MODEL_ID,
 )
-from python.tasking_contracts.common.scripted_runtime import (  # noqa: E402
-    ScriptedRuntimeAgent,
-    ScriptedRuntimeAgentSpec,
+from python.tasking_contracts.common.decision_runtime import (  # noqa: E402
+    DecisionRuntimeAgent,
+    DecisionRuntimeAgentSpec,
 )
 from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY  # noqa: E402
-from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv  # noqa: E402
+from python.simulation import create_single_backend  # noqa: E402
 
 
 DEFAULT_SCENARIO = resolve_repo_path(
@@ -62,10 +63,10 @@ def run_demo(
     post_launch_assessment: bool,
 ) -> dict[str, Any]:
     action_mode = str(action_mode).strip().lower()
-    if action_mode != "air_combat_hybrid_v1":
-        raise ValueError("air combat scripted demo only supports action_mode='air_combat_hybrid_v1'")
-    action_dim = AIR_COMBAT_HYBRID_ACTION_DIM
-    vec_env = WorldBatchVecEnv(
+    if action_mode not in {"air_combat_hybrid_v1", "full"}:
+        raise ValueError("action_mode must be 'air_combat_hybrid_v1' or 'full'")
+    action_dim = AIR_COMBAT_HYBRID_ACTION_DIM if action_mode == "air_combat_hybrid_v1" else AIR_FULL_ACTION_DIM
+    vec_env = create_single_backend(
         scenario_path=os.path.abspath(str(scenario_path)),
         n_envs=1,
         include_visual=False,
@@ -92,8 +93,8 @@ def run_demo(
         # the model fails closed if a runtime omits or invalidates it.
         weapon_station_id=1,
     )
-    agent = ScriptedRuntimeAgent(
-        ScriptedRuntimeAgentSpec(
+    agent = DecisionRuntimeAgent(
+        DecisionRuntimeAgentSpec(
             agent_id="air-combat-scripted-demo",
             model_id=AIR_SCRIPTED_ENGAGEMENT_MODEL_ID,
             domain="air",

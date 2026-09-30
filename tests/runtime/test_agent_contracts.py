@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from python.rl.runtime.agent_shim import (
+from python.tasking_contracts.common.agent_contracts import (
   ADAPTER_PROJECTION,
   ALLOWED_MERGE_POLICIES,
   DIAGNOSTICS_ONLY,

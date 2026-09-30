@@ -38,7 +38,7 @@ behavior.
 ## Current Dependency Map
 
 ```text
-ScriptedModelRegistry / ScriptedRuntimeAgent
+DecisionModelRegistry / DecisionRuntimeAgent
                 |
                 v
 AirScriptedEngagementModel
@@ -66,7 +66,7 @@ assessor remain replaceable algorithms behind their typed protocols.
 | `AirPostLaunchAssessment` | high in unit tests, medium in runtime | replace only if it returns the current report fields | `AirPostLaunchAssessor` protocol |
 | Mission/contact decoding | high | replace through `AirObservationAdapter` | typed `AirTacticalObservation` |
 | 17/12 element action mapping | high | replace through `AirActionAdapter` | typed `AirActionApplication` |
-| Whole engagement model | high | replace through existing model registry | keep `ScriptedDecisionModel` lifecycle |
+| Whole engagement model | high | replace through existing model registry | keep `DecisionModel` lifecycle |
 
 ## Target Composition
 

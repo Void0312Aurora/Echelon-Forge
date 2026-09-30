@@ -90,7 +90,7 @@ script registry.
 
 ### F5 — RL-adjacent adapters still own several maintained seams
 
-`python/rl/runtime/agent_shim.py` contains provenance labels, maintained versus
+`python/tasking_contracts/common/agent_contracts.py` contains provenance labels, maintained versus
 diagnostics-only status, action-intent metadata, and policy-route construction.
 `python/rl/tasking/leader_tasking.py` owns the scripted C2/leader phase
 implementation and imports `ef_py` plus the RL tasking bridge.
@@ -166,7 +166,7 @@ src/runtime/contracts/policy_contracts.h
 src/interfaces/python/bindings_runtime_policy.cpp
         │
         ├── python/tasking_contracts/common/agency_registry.py
-        ├── python/rl/runtime/agent_shim.py
+        ├── python/tasking_contracts/common/agent_contracts.py
         └── python/rl/runtime/world_batch/adapter.py
 
 python/tasking_contracts  <── gym_envs
@@ -182,6 +182,14 @@ python.rl.tasking / python.rl.profile / python.rl.runtime
         ├── profile dispatch and scripted C2
         ├── world-batch and cooperative director
         └── RL-facing adapters and training entry points
+
+## Post-census ownership update — 2026-09-27
+
+The former python/rl/runtime/agent_shim.py location is historical baseline evidence.
+The maintained Python-side role, provenance, belief, and intent contracts now
+live in python/tasking_contracts/common/agent_contracts.py; the old module was removed
+without a forwarding shell. The world-batch adapter remains an RL-owned runtime
+adapter, but it consumes the neutral contracts from python/tasking_contracts.
 
 examples / tools / scenarios / tests
         └── operator, fixture, evaluation, and compatibility consumers
