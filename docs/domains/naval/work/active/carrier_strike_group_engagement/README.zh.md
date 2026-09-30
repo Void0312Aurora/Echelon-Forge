@@ -4,10 +4,11 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/domains/naval/work/active/carrier_strike_group_engagement/README.md`
 Owner: `domains/naval`
-Last verified: `2026-09-28`
+Last verified: `2026-09-30`
 
-状态：`2026-09-28` active。`P0 Boundary` 已于 `2026-09-28` 获 owner 接受；`CSG-S0` 已开始，
-首先进行 `S0-A` 兵力编制调研。
+状态：`2026-09-30` active。`P0 Boundary`、`S0-A`..`S0-D` 与 `S0-X` 已接受；`S0-B` 大地坐标放置已在
+`087c1928` 验证。S0-X 已补齐两套原生确定性回放产物与无 agent 的 spectator profile。本包本身仍开放，
+因为后续阶段尚未实现。
 
 语言：
 
@@ -52,19 +53,20 @@ Last verified: `2026-09-28`
 
 ## 当前状态
 
-于 `2026-09-28` 在 `work/naval-mechanisms` 的 `5fa7fc9e` 上测得；完整清单见
+初始清单于 `2026-09-28` 在 `work/naval-mechanisms` 的 `5fa7fc9e` 上测得；当前检查点为
+`2026-09-30` 的 `087c1928`。完整清单与 S0-X 运行时证据见
 [当前状态](carrier_strike_group_engagement_current_status_20260928.md)。
 
 | 领域 | 状态 | 证据 | 边界 |
 | --- | --- | --- | --- |
-| 海军平台 | 有界内容 | `examples/config/database/ships/units/*.json`（DDG-51 Flight I、ASW 直升机型 DDG、Kilo MVP、红方水面占位、T-AKE） | 无航母、巡洋舰、055/052D、攻击型核潜艇或中方补给舰 |
+| 海军平台 | S0 实名内容 | `examples/config/database/**/csg/{us,cn}/` 与 S0-C 内容测试 | S0 挂载已完成内容和生成证据；反舰与鱼雷机制仍延期 |
 | 舰艇 / 潜艇机动 | 运动学 | `ship_motion_system.h`、`submarine_motion_system.h` | 仅速度/航向/深度限速；无水动力、回转圈、航路跟随或毁伤耦合 |
 | 指令投影 | 已接受 | `NavalCommandIntent` | 每舰一个护航站位；无多舰编队或编队指挥层级 |
-| 水面探测 | 有界 | 雷达含海杂波、大气波导与地平线代理 | 平面世界；无大地坐标系 |
+| 水面探测 | 有界 | 雷达含海杂波、大气波导与地平线代理 | 探测地平线仍是平面世界；S0 放置已使用共享大地坐标系 |
 | 水下探测 | 仅被动 | `sonar_system.h`、`default_acoustic_model.cpp` | 直接读取所有舰艇/潜艇真实位置；无主动声呐、传播剖面、拖曳阵或浮标 |
 | 海军武器 | 有界 | `weapon_naval.h`、`naval_mission_weapon_release_system.h` | 舰炮与 CIWS 为单次命中掷骰；VLS 仅经飞行员动作路径；无反舰导弹、舰空导弹族或鱼雷 |
 | 海军毁伤 | 合成 | `DM-N1` profile | 仅命中 hitbox 舱室时写入；舰艇机动不读毁伤状态 |
-| 航母航空 | 缺失 | 无 | 无弹射、拦阻、甲板/机库容量、出动架次或舰上着舰 |
+| 航母航空 | S0 仅库存 | `meta.csg.groups[*].embarked_inventory` 与实名机型记录 | 无飞行甲板接触面或甲板周转；S2 前库存飞机不是活动实体 |
 | 空战底座 | main 上已维护；脚本栈未合并 | 空战场景；`origin/codex/scripted-stack-*` | 复用而不重新接管；无舰载机单位 |
 | 海军学习策略 | 缺失 | `examples/config/training/active/naval/` 下三个冒烟入口 | 无检查点或训练结果 |
 
@@ -101,7 +103,7 @@ Last verified: `2026-09-28`
 | 阶段 | 场景 | 海军自有工作（系统依赖见下方登记） | 宣称上限 | 状态 |
 | --- | --- | --- | --- | --- |
 | `P0 Boundary` | 无 | 包范围、阶段阶梯、宣称上限、参数出处策略 | 仅文档 | accepted |
-| `CSG-S0` | 双方完整编制静态生成 | 实名单位与挂载及参数出处；编队组成的场景 schema | `G0` | active |
+| `CSG-S0` | 双方完整编制静态生成 | 实名单位、编组 schema 与共享大地坐标放置 | `G0` | `2026-09-30` accepted；S0-X 回放/可视化已闭合 |
 | `CSG-S1` | 双方编队航渡 | 编队与护航几何；航路跟随；回转与航速响应；毁伤-机动耦合；编队补给调度 | `G1`-`G2` | planned |
 | `CSG-S2` | 甲板周转：出动波次、CAP、回收 | 弹射与拦阻循环；甲板、升降机与机库容量；出动架次；回收航线；舰载直升机作业 | `G3` | planned |
 | `CSG-S3` | 相互搜索与战术态势 | 海军传感器平台适配器与编队航迹上报；海军辐射管制条令 | `G4` | planned |
@@ -123,7 +125,7 @@ Last verified: `2026-09-28`
 
 | 机制 | 系统 owner | owner 工作包 | 需要它的阶段 | 海军自有部分 |
 | --- | --- | --- | --- | --- |
-| 大地坐标系与地球曲率 | `systems/physics` | [大地坐标系](../../../../../systems/physics/work/active/geodetic_frame/README.zh.md)（已开） | `CSG-S0` 及此后所有阶段 | 无 |
+| 大地坐标系与地球曲率 | `systems/physics` | [大地坐标系](../../../../../systems/physics/work/active/geodetic_frame/README.zh.md)（`P3-A`/`P3-B` 已接受） | `CSG-S0` 及此后所有阶段 | 无 |
 | 分层环境：陆地、淡水、海洋、水深、海岸线、海况、风、昼夜、海洋声学数据 | `systems/environment` | [环境运行时](../../../../../systems/environment/work/active/environment_runtime/README.zh.md)（已开）；海洋数据线在其 `P2 Contract` 之后开启 | `CSG-S1`；`S2` 甲板限制；`S3` 探测；`U1` 深度限制；`U2` 水声 | 舰艇耐波性响应 |
 | 传感器探测、地平线使用、去除真值读取 | `systems/sensing` | 于 `CSG-S3` 开启 | `S3`、`U2` | 海军雷达与声呐平台适配器 |
 | 数据链、编队指挥层级、识别 | `systems/command-tasking`（关系沿用 Joint 基线） | 于 `CSG-S3` 开启 | `S1` 层级、`S3`、`S5` | 海军编队角色 |
@@ -173,9 +175,12 @@ Last verified: `2026-09-28`
 
 ## 遗留与下一步
 
-- `P0 Boundary` 需要 owner 审阅本 README、任务簇与验收门。
-- `CSG-S0` 是首个实现阶段，需要[大地坐标系](../../../../../systems/physics/work/active/geodetic_frame/README.zh.md)
-  工作包提供的锚点与换算；兵力编制调研可以先于它们开始。
+- `S0-X` 已接受。两套回放产物位于
+  `docs/domains/naval/work/active/carrier_strike_group_engagement/artifacts/`，由
+  `naval_csg_replay` 合同重新生成并逐帧校验；两个
+  `examples/viz/profiles/naval_csg_s0_*_replay.json` profile 通过既有地图/状态可视化合同播放这些帧，
+  不需要 agent；配套的 `*_spectator.json` profile 直接步进原生 kernel。`CSG-S1` 与 `CSG-U1` 现在可以派发。
+- [大地坐标系](../../../../../systems/physics/work/active/geodetic_frame/README.zh.md) 工作包的锚点与换算已被两套 S0 场景消费。
 - `CSG-S1`/`CSG-S2` 的吞吐量记录将决定统一高保真步进能否承载完整编制。混合步长需另行决策；
   本包不预设采用。
 
