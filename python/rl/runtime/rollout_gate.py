@@ -404,6 +404,11 @@ class RolloutAdmission:
             raise RolloutAdmissionError("rollout slot decision digest mismatch")
         if not isinstance(raw["admissions_open"], bool) or not isinstance(raw["writer_advancement_frozen"], bool):
             raise RolloutAdmissionError("rollout slot admission flags are invalid")
+        if (raw["admissions_open"], raw["writer_advancement_frozen"]) not in {
+            (True, False),
+            (False, True),
+        }:
+            raise RolloutAdmissionError("rollout slot admission flags are invalid")
         reasons = raw["kill_switch_reasons"]
         if not isinstance(reasons, list) or any(not isinstance(reason, str) or not reason for reason in reasons) or reasons != sorted(set(reasons)):
             raise RolloutAdmissionError("rollout kill-switch reasons are invalid")
@@ -456,15 +461,16 @@ class FileRolloutDecisionStore:
         if not self.path.exists():
             return None
         try:
-            raw = json.loads(self.path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as error:
+            raw_bytes = self.path.read_bytes()
+            raw = json.loads(raw_bytes.decode("utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
             raise RolloutAdmissionError("rollout slot is unreadable") from error
-        if not isinstance(raw, Mapping) or set(raw) != SLOT_FIELDS:
-            raise RolloutAdmissionError("rollout slot fields are invalid")
-        validate_rollout_envelope(
-            raw["decision"],
+        RolloutAdmission.from_document(
+            raw,
+            source_path=self.path,
             verification_key=self.signing_key,
             expected_key_id=self.key_id,
+            require_canonical_bytes=raw_bytes,
         )
         return dict(raw)
 

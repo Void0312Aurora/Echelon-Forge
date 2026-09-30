@@ -143,6 +143,25 @@ def test_rollout_slot_tamper_and_wrong_key_fail_closed(tmp_path: Path) -> None:
         RolloutAdmission.from_slot(path, verification_key=hashlib.sha256(KEY).digest(), expected_key_id=KEY_ID)
 
 
+def test_internal_rollout_slot_reader_rejects_derived_field_tampering(tmp_path: Path) -> None:
+    path = tmp_path / "rollout.json"
+    store = FileRolloutDecisionStore(path, writer_id="release-controller", signing_key=KEY, key_id=KEY_ID)
+    store.commit(_envelope(state="prepared", sequence=0, decision_id="decision-0"))
+    original = path.read_bytes()
+    for field, value in (
+        ("decision_sha256", "0" * 64),
+        ("admissions_open", False),
+        ("writer_advancement_frozen", True),
+        ("kill_switch_reasons", ["forged-reason"]),
+    ):
+        raw = json.loads(original.decode("utf-8"))
+        raw[field] = value
+        path.write_bytes(canonical_json_bytes(raw))
+        with pytest.raises(RolloutAdmissionError):
+            store._read_unlocked()
+        path.write_bytes(original)
+
+
 def test_maintained_adapter_requires_explicit_production_admission(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
