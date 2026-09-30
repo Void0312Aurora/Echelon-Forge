@@ -70,7 +70,6 @@ def test_retirement_gate_requires_stable_admission_and_explicit_attestation() ->
             cutover_attestation=None,
         )
 
-
 def test_retirement_gate_rejects_pre_stable_rollout() -> None:
     inventory = rebuild_inventory.load_fixture()
     admission = _stable_admission()

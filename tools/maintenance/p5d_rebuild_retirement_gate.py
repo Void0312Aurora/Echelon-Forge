@@ -174,4 +174,3 @@ def build_retirement_proof(
         "native_test_capability_retained": True,
         "cutover_attestation": attestation,
     }
-
