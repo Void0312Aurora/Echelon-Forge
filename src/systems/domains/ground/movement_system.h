@@ -134,8 +134,9 @@ inline void register_ground_infantry_movement_system(flecs::world &ecs) {
                             ground_task.stance);
                     const double effective_speed =
                         ground_infantry_movement_detail::finite_nonnegative(
-                            command[i].cmd_speed_mps) * surface_multiplier * slope_multiplier *
-                        vegetation_multiplier * stance_multiplier;
+                            command[i].cmd_speed_mps) *
+                        surface_multiplier * slope_multiplier * vegetation_multiplier *
+                        stance_multiplier;
                     if (effective_speed <= 0.0) {
                         ground_infantry_movement_detail::stop(velocity[i]);
                         continue;

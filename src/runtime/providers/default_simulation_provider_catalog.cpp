@@ -206,8 +206,8 @@ class SimulationKernelWeaponReleaseDamageBridge final : public IWeaponReleaseDam
         // local origin is the bounded body-center impact used by the current
         // ground hitbox bootstrap; no separate ground damage shortcut is
         // introduced here.
-        return kernel_.debug_apply_local_proximity_hit(
-            attacker_id, target_id, 0.0, 0.0, 0.0, damage, 1.0);
+        return kernel_.debug_apply_local_proximity_hit(attacker_id, target_id, 0.0, 0.0, 0.0,
+                                                       damage, 1.0);
     }
 
   private:
