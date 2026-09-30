@@ -38,16 +38,6 @@
       "note": "Moved with the physical Air tasking contract layer; this entry pins the prose boundary at the maintained owner rather than the retired RL-facing shim."
     },
     {
-      "file": "python/rl/tasking/leader_tasking.py",
-      "tokens": ["allowed to directly author"],
-      "token_counts": {"allowed to directly author": 1},
-      "categories": ["scope"],
-      "form": "docstring-convention",
-      "semantic": "ScriptedC2TaskManager authority-scope folklore: the C2 layer may consume shared situation data and pilot reports but is *not* allowed to directly author low-level mission commands (that authority belongs to the leader layer). Enforced only by prose today; matched on the prose (docstring) surface.",
-      "owner": "T9 tasking-authority surface",
-      "note": "Prime example of authority as folklore rather than inspectable data. Prose-surface token."
-    },
-    {
       "file": "python/rl/tasking/common_core_profile.py",
       "tokens": ["AuthorityScope", "CommandRelationship", "NavalWarfareRole", "command_relationship", "commander_id", "ground_commander_id", "infer_command_relationship", "officer_in_tactical_command", "warfare_role_code"],
       "token_counts": {"AuthorityScope": 3, "CommandRelationship": 3, "NavalWarfareRole": 3, "command_relationship": 11, "commander_id": 3, "ground_commander_id": 5, "infer_command_relationship": 4, "officer_in_tactical_command": 15, "warfare_role_code": 27},
