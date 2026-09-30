@@ -6,6 +6,7 @@
 #include <atomic>
 #include <filesystem>
 #include <limits>
+#include <mutex>
 #include <stdexcept>
 #include <unordered_map>
 #include <utility>
@@ -116,26 +117,33 @@ class RuntimeKernelCandidate::Control final : public RuntimeInstanceControl {
     std::shared_ptr<RuntimeStateTransferOwnerRegistry>
     state_transfer_owner_registry() const noexcept override { return registry_; }
     bool begin_state_transfer() noexcept override {
-        bool expected = false;
-        return !released_ &&
-               transfer_active_.compare_exchange_strong(expected, true,
-                                                        std::memory_order_acq_rel);
+        std::lock_guard<std::mutex> lock(lifecycle_mutex_);
+        if (released_ || transfer_active_) return false;
+        transfer_active_ = true;
+        return true;
     }
     void end_state_transfer() noexcept override {
-        transfer_active_.store(false, std::memory_order_release);
+        std::lock_guard<std::mutex> lock(lifecycle_mutex_);
+        transfer_active_ = false;
     }
     bool transfer_active() const noexcept {
-        return transfer_active_.load(std::memory_order_acquire);
+        std::lock_guard<std::mutex> lock(lifecycle_mutex_);
+        return transfer_active_;
     }
     bool request_cooperative_cancel() noexcept override {
+        std::lock_guard<std::mutex> lock(lifecycle_mutex_);
         cancellation_acknowledged_ = true;
         return true;
     }
     bool release_resources() noexcept override {
+        std::lock_guard<std::mutex> lock(lifecycle_mutex_);
         released_ = true;
         return true;
     }
-    bool resources_released() const noexcept override { return released_; }
+    bool resources_released() const noexcept override {
+        std::lock_guard<std::mutex> lock(lifecycle_mutex_);
+        return released_;
+    }
 
     void bind_registry(std::shared_ptr<RuntimeStateTransferOwnerRegistry> registry) {
         registry_ = std::move(registry);
@@ -150,9 +158,10 @@ class RuntimeKernelCandidate::Control final : public RuntimeInstanceControl {
     std::shared_ptr<SimulationKernel> kernel_;
     std::shared_ptr<Native> native_;
     std::shared_ptr<RuntimeStateTransferOwnerRegistry> registry_;
+    mutable std::mutex lifecycle_mutex_;
     bool cancellation_acknowledged_ = false;
     bool released_ = false;
-    std::atomic_bool transfer_active_{false};
+    bool transfer_active_ = false;
 };
 
 RuntimeKernelCandidate::RuntimeKernelCandidate(RuntimeKernelCandidateConfig config)
