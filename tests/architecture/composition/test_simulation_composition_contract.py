@@ -185,10 +185,10 @@ def test_default_compatibility_fixture_is_valid_and_resolves() -> None:
   resolved = contract.resolve_manifest(requested)
   assert resolved == _read_json(RESOLVED)
   assert len(requested["providers"]) == 11
-  assert len(requested["component_contributions"]) == 85
-  assert len(requested["system_contributions"]) == 34
+  assert len(requested["component_contributions"]) == 88
+  assert len(requested["system_contributions"]) == 35
   assert len(resolved["provider_construction_order"]) == 11
-  assert len(resolved["system_registration_order"]) == 34
+  assert len(resolved["system_registration_order"]) == 35
 
 
 def test_default_fixture_tracks_current_component_and_system_registration() -> None:
@@ -209,7 +209,7 @@ def test_default_fixture_tracks_current_component_and_system_registration() -> N
     r"X\(([^,]+),\s*\"([^\"]+)\",\s*\"([^\"]+)\"\)",
     component_block,
   )
-  assert len(component_rows) == 85
+  assert len(component_rows) == 88
   assert {(row[1], row[2]) for row in component_rows} == {
     (row["component_id"], row["registration_id"])
     for row in requested["component_contributions"]
@@ -224,7 +224,7 @@ def test_default_fixture_tracks_current_component_and_system_registration() -> N
     r"\"([^\"]+)\",\s*(\d+),\s*\"([^\"]*)\"",
     system_block,
   )
-  assert len(system_rows) == 34
+  assert len(system_rows) == 35
   assert [row[0] for row in sorted(system_rows, key=lambda row: int(row[4]))] == (
     _read_json(RESOLVED)["system_registration_order"]
   )

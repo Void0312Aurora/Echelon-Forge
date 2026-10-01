@@ -30,6 +30,45 @@ def test_wp22_bindings_core_keeps_explicit_diagnostics_and_legacy_allowlists() -
   assert "set_contact_list" in BINDINGS_DIAGNOSTICS_ALLOWLIST
   assert "debug_set_legacy_movement_command" in BINDINGS_LEGACY_ALLOWLIST
 
+
+def test_wp22_ground_native_probe_surface_is_exactly_its_allowlist_and_never_maintained() -> None:
+  """Native-probe Ground tooling stays quarantined and enumerable.
+
+  The surface serves `native_probe_only` tooling, so its names must be exactly the
+  allowlist (no silent growth), each registered once (a second `.def` on an earlier
+  surface would silently shadow it through nanobind overload order), and no Ground
+  or Arnis name may appear on the maintained surface, where it would read as
+  supported API.
+  """
+  text = bindings_core_text()
+  assert "bind_simulation_kernel_diagnostics_ground_native_probe_surface(simulation_kernel);" in text
+  ground_block = _extract_function_block(
+    text,
+    "void bind_simulation_kernel_diagnostics_ground_native_probe_surface(",
+  )
+  ground_names = set(re.findall(r'\.def\s*\(\s*"([^"]+)"', ground_block))
+  assert ground_names == BINDINGS_GROUND_NATIVE_PROBE_ALLOWLIST
+
+  class_start = text.index('nb::class_<SimulationKernel> simulation_kernel(m, "SimulationKernel");')
+  every_registration = re.findall(r'\.def\s*\(\s*"([^"]+)"', text[class_start:])
+  duplicated = sorted(
+    name
+    for name in BINDINGS_GROUND_NATIVE_PROBE_ALLOWLIST
+    if every_registration.count(name) != 1
+  )
+  assert duplicated == [], f"native-probe Ground bindings registered more than once: {duplicated}"
+
+  maintained_block = _extract_function_block(
+    text,
+    "void bind_simulation_kernel_maintained_surface(",
+  )
+  maintained_names = set(re.findall(r'\.def\s*\(\s*"([^"]+)"', maintained_block))
+  leaked = sorted(name for name in maintained_names if re.search(r"ground|arnis", name))
+  assert leaked == [], (
+    "Ground/Arnis bindings belong on the native-probe surface until a reviewed Ground "
+    f"owner package promotes a facade/contract replacement; found on maintained: {leaked}"
+  )
+
 def test_wp22_bindings_core_direct_world_entity_drilling_stays_quarantined() -> None:
   text = bindings_core_text()
   maintained_block = _extract_function_block(
@@ -143,7 +182,15 @@ def test_wp22_bindings_core_still_exposes_broad_surface_as_quarantined_fact() ->
   # which this count guard silently missed until 2026-08-13.
   # 87 -> 86 on 2026-08-13: the dead-binding sweep removed get_egi_state
   # (zero python consumers; the EGI component itself stays alive in C++).
-  assert len(names) == 86, (
+  # 86 -> 87: PR #35 (merge cfb9924e, 2026-09-17) landed
+  # debug_set_contact_list_preserve_timestamps (diagnostics override). Its commit
+  # 5dca2af6 was rebased onto the 86-pin commit e08db6af, so the pin never saw it;
+  # it is now on the diagnostics allowlist.
+  # The Ground native-probe surface is counted separately, by name, so the
+  # broad count stays the pre-Ground baseline instead of absorbing it.
+  ground_native_probe = [name for name in names if name in BINDINGS_GROUND_NATIVE_PROBE_ALLOWLIST]
+  assert len(ground_native_probe) == len(BINDINGS_GROUND_NATIVE_PROBE_ALLOWLIST)
+  assert len(names) - len(ground_native_probe) == 87, (
     "WP22-E expects the broad SimulationKernel binding count to stay explicit; "
     "update this guard only with a deliberate allowlist reshaping change"
   )

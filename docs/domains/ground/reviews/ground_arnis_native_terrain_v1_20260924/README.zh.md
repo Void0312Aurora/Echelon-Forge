@@ -1,0 +1,53 @@
+# Ground Arnis 原生地形 v1
+
+语言：[英文规范页](README.md)；本页为中文配套。
+
+Document kind: `review`
+Lifecycle: `maintained`
+Canonical: `docs/domains/ground/reviews/ground_arnis_native_terrain_v1_20260924/README.md`
+Owner: `domains/ground`
+Accepted: `2026-09-24`
+Last verified: `2026-09-29`
+
+本包已于 `2026-09-24` 接受并冻结，此处作为存档记录保留。其长期事实已并入
+[Ground 特化基线](../../standards/specialization_baseline.zh.md)。
+
+## 目的
+
+让现有 Arnis 东部平原测试包服务于维护中的原生陆战单兵移动切片，同时不把
+fixture 元数据悄悄冒充成运行时真值。
+
+## 已准入合同
+
+- `SimulationKernel.load_arnis_terrain_bundle(bundle_root)` 是显式 provider 入口。
+- provider 只接受声明 `no_held_capability_release=true` 的
+  `arnis_cmo_bundle.v1` bundle。
+- 高程和地表覆盖 artifact 必须有匹配且为正的 shape、匹配的有限原点/步长元数据、
+  安全的子路径、精确字节长度以及有限的小端 float 高程。
+- 原生 environment 直接按带符号米制网格采样。永久水面和未知/nodata 单元会让当前
+  有界单兵移动停下；农地/草地/树覆盖目前共用软土移动代价。
+- `SimulationKernel.get_ground_terrain_observation(x, y)` 向训练侧 adapter 和诊断暴露
+  原生采样，字段为 `(elevation, surface_type, friction, roughness, vegetation_density)`。
+- 原生 provider 消费 Arnis 水文和桥梁道路矢量，提供有界点采样：河流走廊是水面，声明的
+  桥面线段覆盖水面并成为硬压实通行面。
+- `SimulationKernel.get_ground_transition_movement_observation(...)` 复用同一组线段采样，
+  按指定姿态返回最小/平均综合移动倍率。移动系统在局部过渡准入后消费平均倍率；这仍是
+  线段代价观察，不是路线代价栅格或一般通行性产品。按姿态的归约由 Ground 负责
+  （`src/systems/domains/ground/movement_effects.h`）；共享环境 provider 只提供与领域无关的
+  点采样和过渡查询。
+- 加载具有事务性：候选包无效时返回 `false`，不替换当前 provider 栅格。
+
+## 明确的非目标
+
+本包不提供路线图、一般通行性或视线查询，不消费树线/聚落掩体语义，也不把 RL 训练接到
+原生 reset/step/replay；同样不宣称自动 runtime setup 或完整地形物理。
+
+## 证据
+
+- `tests/runtime/ground/test_ground_infantry_native_unit.py`
+- `tests/training/test_ground_infantry_contracts.py`
+- `src/models/environment/default_environment_model.cpp`
+- `src/core/engine/simulation_kernel.cpp`
+
+2026-09-24 批次使用固定的 Windows 依赖完成构建。Arnis 移动测试和陆战训练契约测试
+通过（`5 passed`）。路线/通行性、掩体/观测和 RL 门仍明确开放。

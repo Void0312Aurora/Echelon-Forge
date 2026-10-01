@@ -393,6 +393,9 @@ BINDINGS_DIAGNOSTICS_ALLOWLIST = {
   "debug_get_aircraft_vulnerability_evidence_state",
   "debug_get_aircraft_vulnerability_authority_state",
   "debug_set_unit_truth_state",
+  # Diagnostics override surface; the world-frame CV target tracker work
+  # (5dca2af6) bound it without registering it here.
+  "debug_set_contact_list_preserve_timestamps",
   "set_contact_list",
   "set_missile_guidance_mechanism_profile",
   "set_missile_tuning",
@@ -407,6 +410,24 @@ BINDINGS_DIAGNOSTICS_ALLOWLIST = {
 BINDINGS_LEGACY_ALLOWLIST = {
   "debug_set_legacy_movement_command",
   "debug_get_legacy_movement_command",
+}
+
+# Ground native-probe surface (`bind_simulation_kernel_diagnostics_ground_native_probe_surface`).
+# `native_probe_only` tooling for the bounded single-soldier Ground slice. It is
+# deliberately not maintained API: a reviewed Ground owner package must replace it
+# with a facade/contract before any of these names is promoted.
+BINDINGS_GROUND_NATIVE_PROBE_ALLOWLIST = {
+  "load_arnis_terrain_bundle",
+  "load_arnis_field_overlay",
+  "get_ground_terrain_observation",
+  "get_ground_slope_deg",
+  "get_ground_movement_effect_observation",
+  "get_ground_field_semantic_observation",
+  "get_ground_transition_observation",
+  "get_ground_transition_movement_observation",
+  "fire_ground_weapon",
+  "fire_ground_weapon_from_mission_command",
+  "get_ground_weapon_state",
 }
 
 MISSION_COMMAND_CONTROL_STATE = (

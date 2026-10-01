@@ -51,7 +51,7 @@ It covers:
 
 - verified `src/*/domains/<domain>/` ownership roots;
 - existing replaceable-model interfaces and their current composition points;
-- the missing Ground system owner;
+- the bounded Ground system owner admission and its residual gaps;
 - dependency rules needed to evaluate later moves.
 
 It does not define a second architecture baseline, a new plugin system, or a
@@ -62,8 +62,8 @@ new all-domain runtime stack.
 | Root | Current domain owners | Verified role | Current limitation |
 | --- | --- | --- | --- |
 | [`src/components/domains/`](../../../../src/components/domains/README.md) | `air`, `naval`, `ground` | Domain-owned ECS data, command/tasking extensions, platform data, and narrow combat/status slices. | Ground is a static G0/G1 command/tasking and placeholder component surface, not full land runtime. |
-| [`src/systems/domains/`](../../../../src/systems/domains/README.md) | `air`, `naval` | Released per-tick domain systems for air flight behavior and naval motion/operations. | There is no `src/systems/domains/ground/` owner. |
-| [`src/models/domains/`](../../../../src/models/domains/README.md) | `air`, `naval`, `ground` | Domain model implementations, adapters, and explicit placeholder routes consumed by shared defaults. | Ground contains an effects placeholder route, not maintained movement, sensing, fires, damage, or terrain models. |
+| [`src/systems/domains/`](../../../../src/systems/domains/README.md) | `air`, `naval`, `ground` | Released per-tick domain systems for air flight behavior, naval motion/operations, and the admitted Ground infantry movement/damage slices. | Ground remains partial: route following, passability, sensing, fires, logistics, and observation export are not admitted. |
+| [`src/models/domains/`](../../../../src/models/domains/README.md) | `air`, `naval`, `ground` | Domain model implementations, adapters, and explicit placeholder routes consumed by shared defaults. | Ground contains the effects route; movement is a bounded system consumer of the shared environment interface, not a full terrain model. |
 
 Shared and transitional roots remain real implementation surfaces:
 
@@ -103,17 +103,16 @@ The current Ground surface is deliberately incomplete:
   owns static command/tasking fields and placeholder combat data;
 - [`src/models/domains/ground/default_effects_ground_domain.h`](../../../../src/models/domains/ground/default_effects_ground_domain.h)
   is an explicit placeholder route;
-- [`src/systems/combat/damage_system_ground.h`](../../../../src/systems/combat/damage_system_ground.h)
-  is a no-op include/register shell and explicitly does not claim maintained
-  Ground damage behavior;
-- `src/systems/domains/ground/` does not exist.
+- [`src/systems/domains/ground/`](../../../../src/systems/domains/ground/)
+  owns the admitted `GroundInfantryMovement` and ground damage response slices;
+  the movement slice is documented in
+  [`Ground Infantry Movement v1`](../../../../docs/domains/ground/reviews/ground_infantry_movement_v1_20260924/README.md).
 
-Consequently, this issue must not present Ground movement, sensing, fires,
-damage, terrain control, or a complete land-domain tick loop as implemented.
-Before any Ground system owner can be admitted, a separate work package must
-name its stage coverage, components, consumed and produced packets, read/write
-sets, clock and latency policy, facade visibility, compatibility behavior, and
-parity/regression tests, as required by the strict baseline.
+Consequently, this issue must not present Ground route movement, sensing, fires,
+terrain control, or a complete land-domain tick loop as implemented. The bounded
+infantry admission names its stage, command/environment reads, latency policy,
+and regression tests; later Ground slices still require their own package and
+acceptance evidence.
 
 ## Dependency Rules
 
@@ -158,14 +157,14 @@ commitment:
 - propose a bounded composition change only if it reduces a measured boundary
   violation without changing behavior.
 
-### Candidate B: Ground System Admission Design
+### Candidate B: Ground System Admission Design (partially landed)
 
-- decide whether the first real Ground runtime slice is movement, sensing,
-  fires, damage, or terrain;
-- define one stage-local contract and its evidence instead of creating an empty
-  `src/systems/domains/ground/` tree;
-- keep the existing no-op damage shell and effects placeholder explicitly
-  non-authoritative until that slice passes its admission gates.
+- The first bounded slice is individual-infantry movement: `MoveStatic` plus
+  shared surface/slope lookup and horizontal kinematic drift.
+- Its stage-local contract and evidence live in
+  `docs/domains/ground/reviews/ground_infantry_movement_v1_20260924/`.
+- Route movement, sensing, fires, passability, and complete damage semantics
+  remain separate residuals and must not be inferred from this admission.
 
 ### Candidate C: Transitional Root Cleanup
 

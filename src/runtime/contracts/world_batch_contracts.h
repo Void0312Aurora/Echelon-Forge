@@ -510,6 +510,7 @@ inline void apply_mission_command_maintained_batch_contract_to_compatibility_she
     ground.objective_node_id = contract.ground_static_task.objective_node_id;
     ground.ground_commander_id = contract.ground_static_task.ground_commander_id;
     ground.tactical_cadence_hz = contract.ground_static_task.tactical_cadence_hz;
+    ground.stance = contract.ground_static_task.stance;
 }
 
 [[nodiscard]] inline MissionCommandCompatibilityTransportShell

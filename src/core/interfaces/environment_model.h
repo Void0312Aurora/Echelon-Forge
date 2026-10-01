@@ -1,7 +1,10 @@
 #pragma once
 
 #include "components/basic/environment_data.h"
+#include <cmath>
 #include <cstdint>
+#include <limits>
+#include <numbers>
 #include <string>
 
 class IEnvironmentModel {
@@ -26,6 +29,24 @@ class IEnvironmentModel {
 
     // Terrain Query
     virtual double get_terrain_elevation(double x, double y) = 0;
+
+    // Bounded local slope observation shared by Ground movement and training
+    // adapters. This is a terrain gradient, not a climbability or physics
+    // decision.
+    virtual double get_ground_slope_deg(double x, double y) {
+        constexpr double kSampleHalfSpanM = 5.0;
+        const double east_gradient = (get_terrain_elevation(x + kSampleHalfSpanM, y) -
+                                      get_terrain_elevation(x - kSampleHalfSpanM, y)) /
+                                     (2.0 * kSampleHalfSpanM);
+        const double north_gradient = (get_terrain_elevation(x, y + kSampleHalfSpanM) -
+                                       get_terrain_elevation(x, y - kSampleHalfSpanM)) /
+                                      (2.0 * kSampleHalfSpanM);
+        if (!std::isfinite(east_gradient) || !std::isfinite(north_gradient)) {
+            return std::numeric_limits<double>::quiet_NaN();
+        }
+        return std::atan(std::hypot(east_gradient, north_gradient)) * 180.0 /
+               std::numbers::pi_v<double>;
+    }
 
     // Line of Sight Check (true if clear, false if blocked)
     virtual bool check_line_of_sight(double x1, double y1, double z1, double x2, double y2,
@@ -56,6 +77,26 @@ class IEnvironmentModel {
         double runway_heading;     // Degrees (NAV), only valid if type == Concrete
     };
 
+    struct GroundFieldSemanticObservation {
+        bool configured = false;
+        double nearest_tree_line_distance_m = -1.0;
+        double nearest_tree_line_bearing_deg = 0.0;
+        double nearest_settlement_distance_m = -1.0;
+        double nearest_settlement_bearing_deg = 0.0;
+        bool in_tree_line = false;
+        bool in_settlement = false;
+    };
+
+    struct GroundTransitionObservation {
+        bool configured = false;
+        bool passable = false;
+        SurfaceType destination_surface = SurfaceType::Obstacle;
+        bool water_blocked = false;
+        bool obstacle_blocked = false;
+        bool bridge_admitted = false;
+        double distance_m = 0.0;
+    };
+
     virtual TerrainCell get_terrain_at(double x, double y) = 0;
 
     // Dynamic Configuration
@@ -80,6 +121,28 @@ class IEnvironmentModel {
     // "legacy"/"hill"/"gaussian_hill"/"mountain" preserve the historical procedural mountain.
     // Unknown terrain profiles must fail closed instead of falling back to that profile.
     virtual void set_terrain_type(const std::string & /*terrain_type*/) {}
+
+    // Load a verified Arnis continuous raster bundle into the environment
+    // provider. Providers that do not support this repository-native bundle
+    // remain fail-closed by returning false.
+    virtual bool load_arnis_terrain_bundle(const std::string & /*bundle_root*/) { return false; }
+
+    // Load the companion metadata-only overlay. Providers must keep its
+    // tree-line/settlement semantics separate from movement, passability,
+    // cover, and fire-control authority.
+    virtual bool load_arnis_field_overlay(const std::string & /*overlay_path*/) { return false; }
+
+    virtual GroundFieldSemanticObservation get_ground_field_semantic_observation(double /*x*/,
+                                                                                 double /*y*/) {
+        return {};
+    }
+
+    virtual GroundTransitionObservation get_ground_transition_observation(double /*from_x*/,
+                                                                          double /*from_y*/,
+                                                                          double /*to_x*/,
+                                                                          double /*to_y*/) {
+        return {};
+    }
 
     // Maritime-state configuration used by surface-ship runtime proxies.
     // set_maritime_state() activates a full environment override; clear_maritime_state() returns

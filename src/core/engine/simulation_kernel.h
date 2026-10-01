@@ -193,6 +193,18 @@ class SimulationKernel {
     void set_sun_direction(double azimuth_deg, double elevation_deg);
     Vec3 get_sun_direction() const;
     void set_terrain_type(const std::string &terrain_type);
+    bool load_arnis_terrain_bundle(const std::string &bundle_root);
+    bool load_arnis_field_overlay(const std::string &overlay_path);
+    std::array<double, 5> get_ground_terrain_observation(double x, double y);
+    double get_ground_slope_deg(double x, double y);
+    std::array<double, 8> get_ground_movement_effect_observation(double x, double y,
+                                                                 int stance_code);
+    std::array<double, 7> get_ground_field_semantic_observation(double x, double y);
+    std::array<double, 7> get_ground_transition_observation(double from_x, double from_y,
+                                                            double to_x, double to_y);
+    std::array<double, 10> get_ground_transition_movement_observation(double from_x, double from_y,
+                                                                      double to_x, double to_y,
+                                                                      int stance_code);
     void set_maritime_state(double sea_state, double wave_heading_deg = 0.0,
                             double wave_period_s = 8.0);
     void clear_maritime_state();
@@ -262,6 +274,9 @@ class SimulationKernel {
     std::vector<double> debug_get_naval_weapon_counts(
         uint64_t entity_id); // [mounts, total_ready_vls, total_ready_gun, total_ready_ciws]
     std::vector<double>
+    get_ground_weapon_state(uint64_t entity_id); // [present, selected_type, ammo, max_ammo, damage,
+                                                 // range, hit_prob, cooldown_remaining]
+    std::vector<double>
     get_unit_fuel(uint64_t entity_id); // Returns [internal, max_internal, external, max_external]
     std::vector<double> debug_get_naval_stores(
         uint64_t entity_id); // [fuel_cur, fuel_max, missile_cur, missile_max, dry_cur, dry_max]
@@ -299,6 +314,8 @@ class SimulationKernel {
     // Weapon Interface: Fire missile
     flecs::entity fire_missile(uint64_t attacker_id, uint64_t target_id);
     bool fire_naval_weapon(uint64_t attacker_id, uint64_t target_id, int weapon_type_code);
+    bool fire_ground_weapon(uint64_t attacker_id, uint64_t target_id, int weapon_type_code);
+    bool fire_ground_weapon_from_mission_command(uint64_t attacker_id);
     bool debug_apply_proximity_hit(uint64_t attacker_id, uint64_t target_id, double damage,
                                    double fuse_distance);
     bool debug_apply_local_proximity_hit(uint64_t attacker_id, uint64_t target_id,

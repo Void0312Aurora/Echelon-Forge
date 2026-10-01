@@ -13,15 +13,15 @@
     },
     "profile_projection": {
       "path": "tests/architecture/composition/fixtures/default_runtime_profile_projection.v1.json",
-      "sha256": "4e38d89d3c70e8c5aedb147592d0d652522b9285b22d166d24695b03bfd2674c"
+      "sha256": "4aa17300992e65e92f47c2e3c8a4b770a25ce2d37029322756980aefc496ff14"
     },
     "requested_manifest": {
       "path": "tests/architecture/composition/fixtures/default_compatibility_manifest.requested.json",
-      "sha256": "b0db3cb421d6c03f50aac8d9fa8b47d7f2858ea7229bfca882a311ea464ef1c7"
+      "sha256": "b5c73d45289fa60ba396dabd96e268e2de0b88120165aa82567d0b87c190566f"
     },
     "resolved_manifest": {
       "path": "tests/architecture/composition/fixtures/default_compatibility_manifest.resolved.json",
-      "sha256": "fa69258ee482ae67de4435ac869899b452a665a33ee59c008bf1e7304523ae60"
+      "sha256": "2cce4c424c42dfb0950a2e732b1173e0621376afce85df0ac2a5bc17acf6dedc"
     }
   }
 }

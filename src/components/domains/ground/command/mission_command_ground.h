@@ -11,6 +11,7 @@ struct MissionCommandGround {
         std::uint64_t objective_node_id = 0;
         std::uint64_t ground_commander_id = 0;
         double tactical_cadence_hz = 1.0;
+        GroundStance stance = GroundStance::Stand;
 
         bool operator==(const StaticTaskDirective &) const = default;
     };
@@ -20,6 +21,7 @@ struct MissionCommandGround {
     std::uint64_t objective_node_id = 0;
     std::uint64_t ground_commander_id = 0;
     double tactical_cadence_hz = 1.0;
+    GroundStance stance = GroundStance::Stand;
 };
 
 // Maintained ground-domain owner slice projected through MissionCommand compatibility shells.
@@ -35,5 +37,6 @@ mission_command_ground_static_task_directive(
         .objective_node_id = ground.objective_node_id,
         .ground_commander_id = ground.ground_commander_id,
         .tactical_cadence_hz = ground.tactical_cadence_hz,
+        .stance = ground.stance,
     };
 }

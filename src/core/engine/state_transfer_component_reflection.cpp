@@ -13,6 +13,9 @@
 #include "components/command/legacy_command.h"
 #include "components/domains/air/combat/damage_air.h"
 #include "components/domains/air/combat/weapon_air.h"
+#include "components/domains/ground/combat/damage_ground.h"
+#include "components/domains/ground/ground_capabilities.h"
+#include "components/domains/ground/combat/weapon_ground.h"
 #include "components/domains/air/platform/flight_dynamics_tuning.h"
 #include "components/domains/naval/combat/weapon_naval.h"
 #include "components/domains/naval/platform/embarked_air_ops.h"
@@ -166,6 +169,36 @@ void register_nested_value_reflection(flecs::world &ecs) {
     ecs.component<std::vector<EmitterDetection>>().opaque(vector_support<EmitterDetection>);
     ecs.component<std::vector<WeaponStation>>().opaque(vector_support<WeaponStation>);
     ecs.component<std::vector<SystemTrack>>().opaque(vector_support<SystemTrack>);
+}
+
+void register_ground_combat_reflection(flecs::world &ecs) {
+    ecs.component<GroundInfantryCapability>();
+    ecs.component<GroundWeapon>()
+        .member<std::int32_t>("weapon_type", 1, offsetof(GroundWeapon, weapon_type))
+        .member<int>("ammunition")
+        .member<int>("maximum_ammunition")
+        .member<double>("damage_per_hit")
+        .member<double>("engagement_range_m")
+        .member<double>("hit_probability")
+        .member<double>("cooldown_s")
+        .member<double>("last_fire_time_s");
+    ecs.component<std::vector<GroundWeapon>>().opaque(vector_support<GroundWeapon>);
+    ecs.component<GroundWeaponState>()
+        .member<std::vector<GroundWeapon>>("weapons")
+        .member<std::int32_t>("selected_weapon_index");
+    ecs.component<GroundPlatformDamageState>()
+        .member<double>("mobility_integrity")
+        .member<double>("track_integrity")
+        .member<double>("fire_severity")
+        .member<double>("ignition_source_severity")
+        .member<double>("fire_suppression_integrity")
+        .member<double>("structural_integrity")
+        .member<double>("ongoing_structural_damage")
+        .member<double>("casualty_fraction")
+        .member<double>("command_integrity")
+        .member<bool>("mobility_kill")
+        .member<bool>("mission_kill")
+        .member<bool>("element_destroyed");
 }
 
 void register_platform_state_reflection(flecs::world &ecs) {
@@ -1113,6 +1146,7 @@ void register_aircraft_baseline_reflection(flecs::world &ecs) {
 void register_state_transfer_component_reflection(flecs::world &ecs) {
     register_standard_container_reflection(ecs);
     register_nested_value_reflection(ecs);
+    register_ground_combat_reflection(ecs);
     register_platform_state_reflection(ecs);
     register_remaining_scalar_reflection(ecs);
     register_basic_reflection(ecs);

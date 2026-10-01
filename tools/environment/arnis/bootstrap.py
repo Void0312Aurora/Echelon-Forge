@@ -46,6 +46,8 @@ def _run(
         env=env,
         check=check,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
@@ -255,7 +257,11 @@ def _install_binary(
         raise ArnisBootstrapError(f"Arnis build failed:\n{completed.stdout}\n{completed.stderr}")
     built_binary = build_dir / "release" / "arnis"
     if not built_binary.is_file():
-        raise ArnisBootstrapError(f"built Arnis binary is missing: {built_binary}")
+        windows_binary = built_binary.with_suffix(".exe")
+        if windows_binary.is_file():
+            built_binary = windows_binary
+        else:
+            raise ArnisBootstrapError(f"built Arnis binary is missing: {built_binary}")
     install_dir.mkdir(parents=True, exist_ok=True)
     installed_binary = install_dir / "arnis-cmo"
     shutil.copy2(built_binary, installed_binary)

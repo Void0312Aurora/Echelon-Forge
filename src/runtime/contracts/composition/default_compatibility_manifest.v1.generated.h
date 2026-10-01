@@ -177,9 +177,24 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "registration_id": "flecs.component.gear_state"
       },
       {
+        "component_id": "GroundInfantryCapability",
+        "plugin_id": "builtin.core_runtime",
+        "registration_id": "flecs.component.ground_infantry_capability"
+      },
+      {
+        "component_id": "GroundPlatformDamageState",
+        "plugin_id": "builtin.core_runtime",
+        "registration_id": "flecs.component.ground_platform_damage_state"
+      },
+      {
         "component_id": "GroundState",
         "plugin_id": "builtin.core_runtime",
         "registration_id": "flecs.component.ground_state"
+      },
+      {
+        "component_id": "GroundWeaponState",
+        "plugin_id": "builtin.core_runtime",
+        "registration_id": "flecs.component.ground_weapon_state"
       },
       {
         "component_id": "GuidanceModelRef",
@@ -238,7 +253,8 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
       },
       {
         "component_id": "Loadout",
-        "plugin_id": "builtin.core_runtime",
+        "plugin_id": "built)EFJSON",
+    R"EFJSON(in.core_runtime",
         "registration_id": "flecs.component.loadout"
       },
       {
@@ -255,8 +271,7 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "component_id": "MassProperties",
         "plugin_id": "builtin.core_runtime",
         "registration_id": "flecs.component.mass_properties"
-    )EFJSON",
-    R"EFJSON(  },
+      },
       {
         "component_id": "Missile",
         "plugin_id": "builtin.core_runtime",
@@ -487,7 +502,8 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "after_provider_ids": [],
         "cardinality": "one_per_scope",
         "configuration": {},
-        "conflicts": [],
+       )EFJSON",
+    R"EFJSON( "conflicts": [],
         "implementation_version": "1.0.0",
         "offered_services": [
           "simulation.acoustic.model"
@@ -504,8 +520,7 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
       },
       {
         "after_provider_ids": [],
-      )EFJSON",
-    R"EFJSON(  "cardinality": "one_per_scope",
+        "cardinality": "one_per_scope",
         "configuration": {},
         "conflicts": [],
         "implementation_version": "1.0.0",
@@ -731,7 +746,8 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "cardinality": "one_per_parent",
         "parent_scope": "world",
         "rebuild_trigger": "reset_or_episode_completion",
-        "scope": "episode"
+        "scope": "episode)EFJSON",
+    R"EFJSON("
       }
     ],
     "service_bindings": [
@@ -749,8 +765,7 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
       },
       {
         "consumer_id": "builtin.guidance.default",
-        "consumer_ki)EFJSON",
-    R"EFJSON(nd": "provider",
+        "consumer_kind": "provider",
         "provider_id": "builtin.engagement_event_store",
         "service_key": "runtime.engagement_event_recorder"
       },
@@ -816,6 +831,12 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
       },
       {
         "consumer_id": "builtin.system.ground_contact",
+        "consumer_kind": "system",
+        "provider_id": "builtin.environment.default",
+        "service_key": "simulation.environment.model"
+      },
+      {
+        "consumer_id": "builtin.system.ground_infantry_movement",
         "consumer_kind": "system",
         "provider_id": "builtin.environment.default",
         "service_key": "simulation.environment.model"
@@ -968,7 +989,8 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "plugin_id": "builtin.core_runtime",
         "provided_components": [],
         "read_state_shards": [],
-        "registration_factory_id": "register_aircraft_damage_system",
+        "registration_factory_id": ")EFJSON",
+    R"EFJSON(register_aircraft_damage_system",
         "required_barriers": [],
         "required_capabilities": [],
         "required_components": [],
@@ -992,8 +1014,7 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "read_state_shards": [],
         "registration_factory_id": "register_command_lag_system",
         "required_barriers": [],
-        "required_capabilities": [)EFJSON",
-    R"EFJSON(],
+        "required_capabilities": [],
         "required_components": [],
         "required_services": [],
         "semantic_stage_ids": [],
@@ -1223,6 +1244,31 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
       },
       {
         "after": [
+          "builtin.system.naval_logistics"
+        ],
+        "before": [],
+        "conflicts": [],
+        "contribution_id": "builtin.system.ground_infantry_movement",
+        "domain": "ground",
+        "executable_node_id)EFJSON",
+    R"EFJSON(s": [
+          "GroundInfantryMovement"
+        ],
+        "plugin_id": "builtin.core_runtime",
+        "provided_components": [],
+        "read_state_shards": [],
+        "registration_factory_id": "register_ground_infantry_movement_system",
+        "required_barriers": [],
+        "required_capabilities": [],
+        "required_components": [],
+        "required_services": [
+          "simulation.environment.model"
+        ],
+        "semantic_stage_ids": [],
+        "write_state_shards": []
+      },
+      {
+        "after": [
           "builtin.system.rotational_integration"
         ],
         "before": [],
@@ -1256,8 +1302,7 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "executable_node_ids": [
           "UpdateInstruments"
         ],
-   )EFJSON",
-    R"EFJSON(     "plugin_id": "builtin.core_runtime",
+        "plugin_id": "builtin.core_runtime",
         "provided_components": [],
         "read_state_shards": [],
         "registration_factory_id": "register_instrument_system",
@@ -1460,7 +1505,8 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "provided_components": [],
         "read_state_shards": [],
         "registration_factory_id": "register_rotational_integration_system",
-        "required_barriers": [],
+        "required_barr)EFJSON",
+    R"EFJSON(iers": [],
         "required_capabilities": [],
         "required_components": [],
         "required_services": [],
@@ -1510,8 +1556,7 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "required_services": [
           "simulation.environment.model"
         ],
-        "sem)EFJSON",
-    R"EFJSON(antic_stage_ids": [],
+        "semantic_stage_ids": [],
         "write_state_shards": []
       },
       {
@@ -1631,8 +1676,8 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
     "builtin.weapon_release.damage_bridge",
     "builtin.weapon_release.service"
   ],
-  "requested_manifest_sha256": "d35fc20bdd9ec50448ed7dd70da218cb735edb14dfd0fbe3122779783f0f164b",
-  "resolved_manifest_sha256": "4fb0170b00f9b3008f37adfa99c3134bed836501fe6267fd302719926736434f",
+  "requested_manifest_sha256": "b17fd07c4fdeef3a8c7ae64f7cb89772b3a1665aad2b83f1d1ce58a9d344fb8f",
+  "resolved_manifest_sha256": "45426d3dfc24a4d74986e11567854f5c19b996c50cef38da33c87e3e93083417",
   "resolver_contract_version": "echelon_forge.simulation_composition_resolver.v1",
   "schema_version": "echelon_forge.resolved_simulation_composition.v1",
   "system_registration_order": [
@@ -1669,16 +1714,17 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
     "builtin.system.ground_damage",
     "builtin.system.ew",
     "builtin.system.logistics",
-    "builtin.system.naval_logistics"
+    "builtin.system.naval_logistics",
+    "builtin.system.ground_infantry_movement"
   ]
 }
 )EFJSON",
 };
 
 inline constexpr std::string_view kDefaultCompatibilityRequestedSha256 =
-    "d35fc20bdd9ec50448ed7dd70da218cb735edb14dfd0fbe3122779783f0f164b";
+    "b17fd07c4fdeef3a8c7ae64f7cb89772b3a1665aad2b83f1d1ce58a9d344fb8f";
 inline constexpr std::string_view kDefaultCompatibilityResolvedSha256 =
-    "4fb0170b00f9b3008f37adfa99c3134bed836501fe6267fd302719926736434f";
+    "45426d3dfc24a4d74986e11567854f5c19b996c50cef38da33c87e3e93083417";
 
 inline constexpr std::string_view kDefaultBackendProfileId = "cpu_exact.reference";
 inline constexpr std::string_view kDefaultBackendProviderId = "builtin.backend.flecs_cpu";

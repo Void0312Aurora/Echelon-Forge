@@ -554,6 +554,55 @@ TEST_SUITE("stable_entity_identity") {
         CHECK(site3_roll_at(505) != site3_roll_at(506));
     }
 
+    TEST_CASE("site 4 (ground direct fire): reset seed drives the hit roll") {
+        auto ground_hit_at = [](std::uint64_t reset_seed) {
+            SimulationKernel kernel;
+            REQUIRE(kernel.load_database("examples/config/database"));
+            kernel.reset(reset_seed);
+            auto shooter = kernel.spawn_unit(Side::Blue, "Ground_Infantry_Soldier_MVP", 0.0, 0.0,
+                                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            auto target = kernel.spawn_unit(Side::Red, "Ground_Infantry_Soldier_MVP", 50.0, 0.0,
+                                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            REQUIRE(shooter.is_valid());
+            REQUIRE(target.is_valid());
+            auto *weapons = shooter.get_mut<GroundWeaponState>();
+            REQUIRE(weapons != nullptr);
+            REQUIRE_FALSE(weapons->weapons.empty());
+            weapons->weapons[0].hit_probability = 0.5;
+            weapons->weapons[0].engagement_range_m = 300.0;
+            Detection det{};
+            det.target_id = target.id();
+            det.range = 50.0;
+            shooter.set<ContactList>({{det}});
+            const bool fired = kernel.fire_ground_weapon(
+                shooter.id(), target.id(), static_cast<int>(weapons->weapons[0].weapon_type));
+            REQUIRE(fired);
+            return target.get<Health>()->current_hp;
+        };
+        CHECK(ground_hit_at(606) == ground_hit_at(606));
+
+        auto ground_roll_at = [](std::uint64_t reset_seed) {
+            SimulationKernel kernel;
+            REQUIRE(kernel.load_database("examples/config/database"));
+            kernel.reset(reset_seed);
+            auto shooter = kernel.spawn_unit(Side::Blue, "Ground_Infantry_Soldier_MVP", 0.0, 0.0,
+                                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            auto target = kernel.spawn_unit(Side::Red, "Ground_Infantry_Soldier_MVP", 50.0, 0.0,
+                                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            REQUIRE(shooter.is_valid());
+            REQUIRE(target.is_valid());
+            const auto *weapons = shooter.get<GroundWeaponState>();
+            REQUIRE(weapons != nullptr);
+            REQUIRE_FALSE(weapons->weapons.empty());
+            auto lease = kernel.acquire_world_lease();
+            return stochastic_draw::uniform01(stochastic_draw::draw_seed(
+                lease.world(), stochastic_draw::DrawSite::ground_direct_fire, 0.0,
+                {shooter, target}, {static_cast<std::uint64_t>(weapons->weapons[0].weapon_type)}));
+        };
+        CHECK(ground_roll_at(606) == ground_roll_at(606));
+        CHECK(ground_roll_at(606) != ground_roll_at(607));
+    }
+
     TEST_CASE("census-change invariance: extra registrations before spawning leave serials and "
               "draw seeds unchanged") {
         // Acceptance Gate item 2: registering extra components and allocating extra entities

@@ -168,9 +168,24 @@
       "registration_id": "flecs.component.gear_state"
     },
     {
+      "component_id": "GroundInfantryCapability",
+      "plugin_id": "builtin.core_runtime",
+      "registration_id": "flecs.component.ground_infantry_capability"
+    },
+    {
+      "component_id": "GroundPlatformDamageState",
+      "plugin_id": "builtin.core_runtime",
+      "registration_id": "flecs.component.ground_platform_damage_state"
+    },
+    {
       "component_id": "GroundState",
       "plugin_id": "builtin.core_runtime",
       "registration_id": "flecs.component.ground_state"
+    },
+    {
+      "component_id": "GroundWeaponState",
+      "plugin_id": "builtin.core_runtime",
+      "registration_id": "flecs.component.ground_weapon_state"
     },
     {
       "component_id": "GuidanceModelRef",
@@ -809,6 +824,12 @@
       "service_key": "simulation.environment.model"
     },
     {
+      "consumer_id": "builtin.system.ground_infantry_movement",
+      "consumer_kind": "system",
+      "provider_id": "builtin.environment.default",
+      "service_key": "simulation.environment.model"
+    },
+    {
       "consumer_id": "builtin.system.guidance",
       "consumer_kind": "system",
       "provider_id": "builtin.guidance.default",
@@ -1205,6 +1226,30 @@
       "required_capabilities": [],
       "required_components": [],
       "required_services": [],
+      "semantic_stage_ids": [],
+      "write_state_shards": []
+    },
+    {
+      "after": [
+        "builtin.system.naval_logistics"
+      ],
+      "before": [],
+      "conflicts": [],
+      "contribution_id": "builtin.system.ground_infantry_movement",
+      "domain": "ground",
+      "executable_node_ids": [
+        "GroundInfantryMovement"
+      ],
+      "plugin_id": "builtin.core_runtime",
+      "provided_components": [],
+      "read_state_shards": [],
+      "registration_factory_id": "register_ground_infantry_movement_system",
+      "required_barriers": [],
+      "required_capabilities": [],
+      "required_components": [],
+      "required_services": [
+        "simulation.environment.model"
+      ],
       "semantic_stage_ids": [],
       "write_state_shards": []
     },

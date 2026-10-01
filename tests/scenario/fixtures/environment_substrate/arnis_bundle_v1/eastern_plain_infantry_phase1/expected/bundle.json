@@ -1,0 +1,238 @@
+{
+  "artifacts": [
+    {
+      "artifact_id": "artifact:provenance",
+      "byte_length": 2544,
+      "kind": "provenance",
+      "media_type": "application/json",
+      "metadata": {
+        "lineage": {
+          "block_derived": false,
+          "representation": "continuous_metric_2_5d",
+          "source_stage": "continuous_bundle_provenance",
+          "storage": "json"
+        }
+      },
+      "path": "provenance.json",
+      "sha256": "9d67f24fbfc7aaf83e319eb60a27f67509bcdaebc65eebeb1978e43c7277bfe2"
+    },
+    {
+      "artifact_id": "artifact:elevation",
+      "byte_length": 9168780,
+      "dtype": "float32_le",
+      "kind": "elevation_raster",
+      "media_type": "application/vnd.arnis-cmo.raster-f32le",
+      "metadata": {
+        "contributing_sources": {
+          "usgs_3dep": 25
+        },
+        "grid_registration": "point",
+        "lineage": {
+          "minecraft_y_roundtrip": false,
+          "minecraft_y_transform_applied": false,
+          "representation": "continuous_metric_2_5d",
+          "source_stage": "postprocessed_metric_dem",
+          "storage": "float32_le",
+          "vertical_quantization_step_m": null
+        },
+        "minecraft_scaling_applied": false,
+        "missing_source_units": 0,
+        "origin_xy_m": [
+          -858.0073894697963,
+          667.1983592199944
+        ],
+        "processing_stage": "postprocess_meters_pre_minecraft_scale",
+        "semantics": "arnis_postprocessed_ground_surface",
+        "source_provider": "usgs_3dep",
+        "step_xy_m": [
+          1.00000861243566,
+          -1.0002542170071909
+        ],
+        "uncertainty_status": "not_reported",
+        "units": "m",
+        "vertical_datum": "source_provider_native_unspecified",
+        "world_shape": [
+          1335,
+          1717
+        ]
+      },
+      "path": "rasters/elevation.f32le",
+      "sha256": "bdf039fb46ddba2b4df33d859d2bfd4defbcfd550ee60638f3720aee6b93f287",
+      "shape": [
+        1335,
+        1717
+      ]
+    },
+    {
+      "artifact_id": "artifact:landcover",
+      "byte_length": 2292195,
+      "dtype": "uint8",
+      "kind": "landcover_raster",
+      "media_type": "application/vnd.arnis-cmo.raster-u8",
+      "metadata": {
+        "class_legend": {
+          "0": "unknown_nodata",
+          "10": "tree_cover",
+          "100": "moss_lichen",
+          "20": "shrubland",
+          "30": "grassland",
+          "40": "cropland",
+          "50": "built_up",
+          "60": "bare_sparse_vegetation",
+          "70": "snow_ice",
+          "80": "permanent_water",
+          "90": "herbaceous_wetland",
+          "95": "mangroves"
+        },
+        "classification_scheme": "ESA_WorldCover_2021_v200",
+        "grid_registration": "point",
+        "lineage": {
+          "block_palette_roundtrip": false,
+          "representation": "continuous_metric_2_5d",
+          "source_stage": "source_classification_metric_grid",
+          "storage": "uint8"
+        },
+        "origin_xy_m": [
+          -858.0073894697963,
+          667.1983592199944
+        ],
+        "semantics": "esa_worldcover_source_classification_metric_grid",
+        "source_native_resolution_m": 10.0,
+        "step_xy_m": [
+          1.00000861243566,
+          -1.0002542170071909
+        ]
+      },
+      "path": "rasters/landcover.u8",
+      "sha256": "5912fe7633681b356840be010484f62bf06a7b9112b49d23bd018ce9ef8f0ef7",
+      "shape": [
+        1335,
+        1717
+      ]
+    },
+    {
+      "artifact_id": "artifact:building",
+      "byte_length": 13374,
+      "feature_class": "building",
+      "feature_count": 4,
+      "kind": "vector_features",
+      "media_type": "application/vnd.arnis-cmo.features+json",
+      "metadata": {
+        "lineage": {
+          "block_projection_applied": false,
+          "quantization_step_m": null,
+          "representation": "continuous_metric_2_5d",
+          "source_stage": "projected_from_wgs84_f64",
+          "storage": "json_float64"
+        }
+      },
+      "path": "vectors/buildings.cmo.json",
+      "sha256": "c901c969032a8795ea97b999fd1fc15a2def5eb2b2f220b06f178db31f98d753"
+    },
+    {
+      "artifact_id": "artifact:hydrology",
+      "byte_length": 4974,
+      "feature_class": "hydrology",
+      "feature_count": 2,
+      "kind": "vector_features",
+      "media_type": "application/vnd.arnis-cmo.features+json",
+      "metadata": {
+        "lineage": {
+          "block_projection_applied": false,
+          "quantization_step_m": null,
+          "representation": "continuous_metric_2_5d",
+          "source_stage": "projected_from_wgs84_f64",
+          "storage": "json_float64"
+        }
+      },
+      "path": "vectors/hydrology.cmo.json",
+      "sha256": "945b5517e2665f6a899aa3bff5131e80be17ff0ea9d1bbd4c7161ede483489e3"
+    },
+    {
+      "artifact_id": "artifact:road",
+      "byte_length": 17906,
+      "feature_class": "road",
+      "feature_count": 5,
+      "kind": "vector_features",
+      "media_type": "application/vnd.arnis-cmo.features+json",
+      "metadata": {
+        "lineage": {
+          "block_projection_applied": false,
+          "quantization_step_m": null,
+          "representation": "continuous_metric_2_5d",
+          "source_stage": "projected_from_wgs84_f64",
+          "storage": "json_float64"
+        }
+      },
+      "path": "vectors/roads.cmo.json",
+      "sha256": "2d8d525d6d3f778f142b57de96ab817de2589dbf4ef8977236d51592f3731157"
+    }
+  ],
+  "bbox_wgs84": {
+    "max_lat": 39.506,
+    "max_lon": -98.49,
+    "min_lat": 39.494,
+    "min_lon": -98.51
+  },
+  "bundle_id": "arnis-cmo-bundle:ff526c9d89edfb62ae454e6c",
+  "capability_claims": [],
+  "content_digest_sha256": "ff526c9d89edfb62ae454e6c9a70ddef100e4e5eb0d53a7623b4e9e32de72f34",
+  "contract_version": "arnis_cmo_bundle.v1",
+  "coordinate_frame": "local_enu_m",
+  "generator": {
+    "exporter_patch_id": "0001-cmo-continuous-bundle-export-v1",
+    "exporter_patch_sha256": "26536836d46aa7bc3e03da3449b4c52391f096527ab58f365d5dd4b96b9052ee",
+    "exporter_version": "cmo.phase1.v1",
+    "id": "arnis",
+    "upstream_revision": "af521c99124b5e07ecba018ea54f2ac47b6441d5",
+    "version": "3.0.0"
+  },
+  "lineage": {
+    "anvil_region_read": false,
+    "contract": "arnis_continuous_metric.v1",
+    "elevation": {
+      "minecraft_y_roundtrip": false,
+      "minecraft_y_transform_applied": false,
+      "source_stage": "postprocessed_metric_dem",
+      "storage": "float32_le",
+      "vertical_quantization_step_m": null
+    },
+    "export_stage": "post_semantic_processing_pre_render_quantization",
+    "geometry": {
+      "block_projection_applied": false,
+      "quantization_step_m": null,
+      "source_stage": "projected_from_wgs84_f64",
+      "storage": "json_float64"
+    },
+    "landcover": {
+      "block_palette_roundtrip": false,
+      "source_stage": "source_classification_metric_grid"
+    },
+    "minecraft_world_read": false,
+    "representation": "continuous_metric_2_5d",
+    "voxelization_applied": false
+  },
+  "no_held_capability_release": true,
+  "region_extent": {
+    "max_x": 858.0073894697963,
+    "max_y": 667.1983592199944,
+    "min_x": -858.0073894697963,
+    "min_y": -667.1407662675982
+  },
+  "request": {
+    "deterministic_seed": 0,
+    "overture": false,
+    "projection": "arnis_local_scaled_web_mercator_r6371000_normalized_to_local_enu",
+    "request_id": "arnis-import:6e12f07f117f6972e83e6a28",
+    "rotation_deg": 0.0,
+    "scale": 1.0,
+    "source_input_sha256": "d3360d901c5d45bc98ddcefd65b3f2ddf1d00cf13e6d3af252773a17aaaaec60"
+  },
+  "tile_scheme": {
+    "columns": 1,
+    "halo_m": 0.0,
+    "rows": 1,
+    "tile_id": "tile:arnis-6e12f07f117f6972:r0000:c0000",
+    "tile_scheme_id": "arnis-6e12f07f117f6972"
+  }
+}

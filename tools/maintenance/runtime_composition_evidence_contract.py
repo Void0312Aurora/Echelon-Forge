@@ -158,9 +158,24 @@ def _registry_graph() -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[
       r'X\("([^"]+)",\s*"([^"]+)",\s*(\d+),', kernel_block
     )
   ]
-  if len(components) != 85 or len(systems) != 34 or len(kernel_systems) != 3:
+  # Census tripwire. A change to the registry is a change to what the simulation
+  # composes, so it must be re-affirmed here by hand before the derived surfaces
+  # below are regenerated. Reporting the found census is the point: an earlier
+  # revision named only the expected counts, which left the reader of a failure
+  # unable to tell what the registry had actually grown to.
+  census = (len(components), len(kernel_systems), len(systems))
+  if census != (88, 3, 35):
     raise ContractError(
-      [ValidationIssue("evidence.registry_drift", "$", "expected 85 components, 3 kernel systems, and 34 resolved systems")]
+      [
+        ValidationIssue(
+          "evidence.registry_drift",
+          "$",
+          f"registry census is {census[0]} components, {census[1]} kernel systems and {census[2]} resolved systems; "
+          "the recorded census is 88 components, 3 kernel systems and 35 resolved systems. Re-affirm this pin, then "
+          "regenerate the projection, evidence, closure and host-batch reference in that order "
+          "(docs/architecture/work/issues/runtime_composition_registry_sync.md).",
+        )
+      ]
     )
   return components, kernel_systems, systems
 

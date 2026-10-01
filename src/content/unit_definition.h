@@ -228,6 +228,7 @@ struct UnitDefinition {
     NavalWeaponSystem naval_weapon_system;
     bool has_embarked_air_ops = false;
     EmbarkedAirOps embarked_air_ops;
+    bool has_ground_infantry_capability = false;
     HitboxConfig damage_model;
     bool has_aircraft_vulnerability = false;
     AircraftVulnerabilityProfile aircraft_vulnerability;

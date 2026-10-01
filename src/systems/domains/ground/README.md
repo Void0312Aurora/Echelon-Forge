@@ -1,0 +1,62 @@
+# `src/systems/domains/ground` Boundary
+
+`systems/domains/ground` contains the per-tick progression logic for ground
+platforms. It consumes `components/domains/ground/combat` and the shared combat
+damage surface, but does not own mission/tasking orchestration or facades.
+
+This directory owns two bounded systems: the ground damage response and the
+single-agent infantry movement primitive. It is not a complete ground runtime:
+route following, general passability, sensing, fires, logistics, and observation
+export remain outside this admission. The damage system matches spawned ground
+entities and advances the ground-owned state, while `GroundInfantryMovement`
+consumes the maintained `MissionCommand` ground slice and applies deterministic
+surface/slope/vegetation costs plus the environment's local sampled transition
+check. `OccupyStatic` and `SupportStatic` are explicit position-hold commands;
+they stop the bounded infantry primitive without claiming cover, concealment,
+sensing, or fire-control behavior. The shared `movement_effects.h` helper also
+owns the reported movement multipliers, so training observations do not
+reimplement the movement formula.
+
+## Allowed
+
+- Per-tick progression of the ground-owned damage state and its projection into
+  the shared platform capability fields.
+- Deterministic horizontal movement for individual Ground fixtures with an active
+  `MissionCommandGround::MoveStatic` directive, using shared terrain surface,
+  slope, and vegetation queries.
+- Deterministic zero-velocity position hold for active `OccupyStatic` and
+  `SupportStatic` directives; these are tasking actions, not cover or fire
+  semantics.
+- Damage-control sequencing for ground elements: fire load, ignition sources,
+  structural loss, and casualties.
+- Calls into the shared `systems/combat/damage_system_common.h` helpers, so
+  ground loss semantics stay shared rather than forked.
+
+## Forbidden
+
+- Defining ground platform components or command/tasking DTOs.
+- Mission rewards, termination, scenario compilation, or episode transitions.
+- Python bindings, facades, training scripts, or multi-world owners.
+- Ground route following, general passability planning, formations, sensing, or
+  fires, none of which this slice implements or claims.
+- A ground-only scheduler, packet family, or command/status pipeline.
+
+## Current Files
+
+- [damage_system_ground.h](damage_system_ground.h)
+  - Registers `GroundDamageStateUpdate`, advancing `GroundPlatformDamageState`
+    and projecting it through `sync_platform_damage_loss_state`.
+- [movement_system.h](movement_system.h)
+  - Registers `GroundInfantryMovement`, the bounded `MoveStatic` consumer and
+    kinematic step for the individual infantry fixture.
+- [movement_effects.h](movement_effects.h)
+  - Owns the shared surface, slope, vegetation, and stance speed multipliers
+    used by movement and the bounded native observation API, and the
+    stance-dependent segment reduction (`evaluate_transition_movement_effects`)
+    built on the environment's domain-neutral terrain and transition queries.
+
+## Dependency Direction
+
+This directory may consume `components/domains/ground`, `components/combat`, and
+the shared combat damage helpers. It should not depend on `runtime/facade`,
+`interfaces/python`, training/scenario glue, or a sibling domain.

@@ -60,6 +60,10 @@ packet 只作为归档 provenance。
 - [架构与性能研究后续](work/issues/architecture_and_performance_research_followup.md)
 - [Runtime facade contract](work/issues/runtime_facade_contract_plan.md)
 - [C++ 依赖与 DTO 残差](work/issues/cpp_dependency_and_dto_residuals.md)
+- [Runtime composition registry sync](work/issues/runtime_composition_registry_sync.md)：
+  registry 变更后重新生成组合证据的因果顺序。
+- [随机抽样的稳定实体身份](work/issues/stable_entity_identity_for_stochastic_draws.md)：
+  draft；以 Flecs 原始 id 作种子，在 registry 变更、无关生成或同种子 reset 后不可复现。
 - [Exact-runtime refactor](work/issues/exact_runtime/cpp_exact_runtime_refactor_plan.md)
 - [GPU 主线集成检查表](work/issues/exact_runtime/gpu_execution_mainline_integration_checklist.md)
 

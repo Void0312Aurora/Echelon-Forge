@@ -1,0 +1,67 @@
+{
+  "contract_version": "ground_field_map_acceptance.v1",
+  "evidence": {
+    "bundle_lineage_checked": true,
+    "no_los_cover_release": true,
+    "no_movement_release": true,
+    "no_passability_release": true,
+    "no_runtime_setup_application": true,
+    "overlay_metadata_only": true
+  },
+  "fail_closed": false,
+  "failures": [],
+  "landcover": {
+    "built_up_fraction": 0.002912492174531399,
+    "class_counts": {
+      "10": 268991,
+      "30": 1160542,
+      "40": 772775,
+      "50": 6676,
+      "60": 1125,
+      "80": 82086
+    },
+    "class_fractions": {
+      "10": 0.11735083620721623,
+      "30": 0.5063016017398171,
+      "40": 0.3371331845676306,
+      "50": 0.002912492174531399,
+      "60": 0.0004907959401359832,
+      "80": 0.03581108937066873
+    },
+    "open_landcover_codes": [
+      30,
+      40,
+      60,
+      90
+    ],
+    "open_landcover_fraction": 0.8439255822475836,
+    "tree_cover_fraction": 0.11735083620721623
+  },
+  "overlay_counts": {
+    "bridge_crossing": 1,
+    "farmland_area": 4,
+    "river_corridor": 2,
+    "settlement_anchor": 2,
+    "settlement_structure": 4,
+    "tree_line": 3
+  },
+  "profile_id": "eastern_plain_infantry_phase1",
+  "terrain": {
+    "elevation_max_m": 453.78753662109375,
+    "elevation_min_m": 443.9601135253906,
+    "fraction_below_10deg": 0.963299802,
+    "fraction_below_5deg": 0.919909014,
+    "sample_stride": 3.0,
+    "slope_mean_deg": 1.963091392,
+    "slope_p50_deg": 0.946460258,
+    "slope_p95_deg": 7.890974436,
+    "slope_p99_deg": 18.091110917
+  },
+  "thresholds": {
+    "max_slope_p95_deg": 8.0,
+    "max_tree_cover_fraction": 0.2,
+    "min_fraction_below_5deg": 0.85,
+    "min_open_landcover_fraction": 0.65
+  },
+  "valid": true
+}

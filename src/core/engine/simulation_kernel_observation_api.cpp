@@ -7,6 +7,7 @@
 #include "components/combat/common/damage_common.h"
 #include "components/combat/common/weapon_common.h"
 #include "components/domains/naval/combat/weapon_naval.h"
+#include "components/domains/ground/combat/weapon_ground.h"
 #include "components/physics/dynamics.h"
 #include "components/physics/instruments.h"
 #include "components/physics/performance.h"
@@ -403,6 +404,37 @@ std::vector<double> SimulationKernel::debug_get_naval_weapon_counts(uint64_t ent
         ready_vls,
         ready_gun,
         ready_ciws,
+    };
+}
+
+std::vector<double> SimulationKernel::get_ground_weapon_state(uint64_t entity_id) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_ground_weapon_state");
+    const auto e = ecs.entity(entity_id);
+    const GroundWeaponState *state = e.is_alive() ? e.get<GroundWeaponState>() : nullptr;
+    if (!state || state->selected_weapon_index < 0 ||
+        static_cast<std::size_t>(state->selected_weapon_index) >= state->weapons.size()) {
+        return {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    }
+
+    const GroundWeapon &weapon =
+        state->weapons[static_cast<std::size_t>(state->selected_weapon_index)];
+    const ecs_world_info_t *info = ecs_get_world_info(ecs.c_ptr());
+    const double current_time = info ? static_cast<double>(info->world_time_total) : 0.0;
+    const double cooldown_remaining =
+        std::isfinite(weapon.last_fire_time_s) && weapon.last_fire_time_s >= 0.0
+            ? std::max(0.0,
+                       std::max(0.0, weapon.cooldown_s) + weapon.last_fire_time_s - current_time)
+            : 0.0;
+    return {
+        1.0,
+        static_cast<double>(static_cast<int>(weapon.weapon_type)),
+        static_cast<double>(std::max(0, weapon.ammunition)),
+        static_cast<double>(std::max(0, weapon.maximum_ammunition)),
+        std::isfinite(weapon.damage_per_hit) ? weapon.damage_per_hit : 0.0,
+        std::isfinite(weapon.engagement_range_m) ? weapon.engagement_range_m : 0.0,
+        std::clamp(std::isfinite(weapon.hit_probability) ? weapon.hit_probability : 0.0, 0.0, 1.0),
+        cooldown_remaining,
     };
 }
 

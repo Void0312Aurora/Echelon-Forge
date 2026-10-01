@@ -18,11 +18,11 @@ def test_a2_structured_air_effects_do_not_write_rl_score_authority() -> None:
     in text
   )
   assert re.search(
-    r"if\s*\(\s*hp\s*&&\s*!structured_air_target\s*&&\s*"
+    r"if\s*\(\s*hp\s*&&\s*!structured_domain_target\s*&&\s*"
     r"apply_legacy_health_damage\s*\(",
     text,
   ), (
-    "legacy HP/Score damage must stay behind the non-structured-air gate "
+    "legacy HP/Score damage must stay behind the non-structured-domain gate "
     "in DefaultEffectsModel"
   )
   assert "score->" not in text

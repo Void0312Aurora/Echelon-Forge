@@ -6,8 +6,11 @@
 
 - `air/`：air-domain flight control、aero state、aerodynamic force/moment 与 propulsion system。
 - `naval/`：naval ship/submarine motion、embarked-air token runtime、naval logistics 与 naval weapon-release bridge system。
+- `ground/`：受限的单兵 movement 与 ground damage response；route following、passability、
+  sensing、fires、logistics 和 observation export 仍不在准入范围内。
 
-当前没有 `ground/` runtime owner。ground-contact primitive 仍保留在 `systems/physics`，直到 land movement、sensing、fires、damage 与 terrain runtime ownership 被接受。
+Ground owner 仍是有意保持部分实现。ground-contact primitive 继续保留在
+`systems/physics`；域目录只拥有已明确准入的 movement 与 damage 切片。
 
 ## 依赖方向
 

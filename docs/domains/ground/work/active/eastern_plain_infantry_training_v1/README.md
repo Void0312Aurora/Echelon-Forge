@@ -1,0 +1,154 @@
+# Eastern Plain Infantry Training v1
+
+Document kind: `work-package`
+Lifecycle: `active`
+Owner: `domains/ground` with `systems/environment` input
+Status: `native-probe-tooling-and-source-fixture`; production `WorldBatch` remains held
+
+This work package introduces a fictionalized agricultural-plain map profile and a
+single dismounted infantry schema. It is deliberately a movement and environment
+observation slice; its RL action contract does not introduce weapon employment or
+targeting. A separate native runtime probe covers bounded direct fire, while the
+native Gym adapter remains outside production `WorldBatch`.
+
+## Scope
+
+The map profile is a small eastern-European-plain analogue composed of broad fields,
+three narrow tree belts, two small settlements, a river, a bridge, and farm tracks.
+It uses a flat, non-conflict US central-plains elevation/landcover analogue; the
+geometry is synthetic and does not point to a real battlefield. Arnis phase 1 is
+used for the frozen continuous metric source (DEM, landcover, roads, buildings, and
+hydrology). A companion metadata overlay carries the source tags that the current
+Arnis CMO exporter does not promote to vector feature classes: farmland, tree line,
+settlement anchors, and crossing intent.
+
+The companion overlay is not a navigation graph. It is not collision, passability,
+line-of-sight, cover, concealment, fire-control, or damage authority. Those products
+must be derived by their own owners and consumed only after a fail-closed contract is
+accepted.
+
+## Current artifacts
+
+- Frozen Arnis request and synthetic OSM input:
+  `tests/scenario/fixtures/environment_substrate/arnis_bundle_v1/eastern_plain_infantry_phase1/`.
+- Native individual unit schema:
+  `examples/config/database/ground/units/ground_infantry_soldier_mvp.json`.
+- Training contract (not yet a train.py entry point):
+  `examples/config/training/active/ground/eastern_plain_infantry_single_v1.contract.json`.
+- Metadata-only semantic overlay builder:
+  `tools/environment/arnis/field_overlay.py`.
+- Offline composition gate:
+  `tools/environment/arnis/field_acceptance.py`. The sample must pass slope,
+  open-landcover, tree-cover, and semantic-count thresholds before passability
+  derivation is considered.
+- Deterministic contract/proxy scaffold:
+  `python/rl/ground/infantry_proxy.py`. It is explicitly engineering-proxy-only
+  and is not a native Ground runtime or RL training entry point.
+- Gymnasium contract harness:
+  `python/rl/ground/proxy_env.py` (`GroundInfantryProxyEnv`). It exercises the
+  RL reset/step/observation/reward/termination/trace boundary only; its
+  authority remains `engineering_proxy_only`. Its observation space is finite
+  over the verified fixture extent and episode horizon, and it exposes an
+  explicit goal-relative vector; reset rejects unknown goal terrain rather than
+  allowing an unbounded mission target into the contract.
+- Native single-soldier training probe:
+  `python/rl/ground/native_probe.py` (`GroundInfantryNativeProbe`). It drives
+  the compiled kernel through reset/step/trace/replay and exposes the admitted
+  terrain, owner-derived movement-effect, field-semantic, and weapon-state observations. Its authority is
+  `native_probe_only`; it is not a production WorldBatch environment.
+  The kernel methods it calls are bound on the dedicated Ground native-probe
+  surface (`bindings_core_kernel_diagnostics_ground.cpp`), outside the
+  maintained `SimulationKernel` API. The WP22-E guard requires that surface to be
+  exactly its named allowlist, each name registered once, and rejects any
+  Ground/Arnis-named binding on the maintained surface.
+  It also exposes a read-only validation of the configured direct waypoint
+  polyline. That validator reuses the native sampled transition evidence and
+  reports the first blocked segment; it is sequence validation only, not a
+  route graph or path planner.
+  Each native step trace also records the sampled segment movement effects
+  (minimum/average combined multiplier and sample count), so a policy trace can
+  distinguish start-cell cost from the terrain crossed during the step.
+- Gymnasium adapter over the native probe:
+  `python/rl/ground/native_env.py` (`GroundInfantryNativeEnv`). It preserves
+  the probe's reset/step/replay authority and is also explicitly
+  `native_probe_only`; it is a tooling surface, not a WorldBatch promotion.
+  The native observation includes the active waypoint relative state (goal
+  delta and distance) plus a waypoint index/count for a fixed direct sequence,
+  so a policy can learn the S1 task without hidden access to probe internals;
+  it also carries native health and command state for traceability, and
+  terminates explicitly on final-waypoint reach or incapacitation. Advancing to
+  the next configured point is sequence bookkeeping, not route planning or a
+  new fire authority.
+  Its trace also distinguishes terminal reasons from `max_steps` and
+  `blocked_step_limit` truncation, so a training loop can fail closed without
+  inferring why an episode stopped.
+  Its native Gym action space is a normalized three-field vector for heading,
+  speed, and stance; `route_intent=direct` is fixed metadata rather than a fake
+  action dimension. Held route intents remain available only through the
+  engineering proxy until a native route owner exists.
+  Fixed-waypoint preflight also retains native sampled movement-effect tuples
+  for every segment; this is terrain-cost evidence, not a route graph or
+  planner.
+- Maintained command projection:
+  `python/rl/ground/command.py`. It carries heading/speed, native stance, and
+  the existing Ground static-task slice through the batch contract, while
+  rejecting route fields that the current native command shape cannot
+  represent.
+
+The proxy observation now includes explicit tree-line and settlement distance/
+bearing values plus river/bridge flags. The native provider now also admits the
+same tree-line/settlement distance/bearing and in-feature flags from the held
+metadata overlay, without releasing cover or passability. Track observation
+export remains held.
+The engineering proxy can enumerate a declared bridge overlay into a
+replayable waypoint polyline for route-contract tests; this remains explicitly
+proxy-only and is not a native route graph or general passability product.
+
+The `expected/` bundle has now been generated and verified with the pinned Arnis
+v3.0.0 CMO patch, and the preview plus `field_acceptance.json` are retained. The
+elevation and landcover providers remain network/cache backed, so this is a verified
+evidence snapshot rather than a promise that any future network re-run will be
+byte-identical.
+
+## Single-soldier curriculum
+
+1. **S0 contract/reset** — one named soldier, fixed seed, byte-equivalent initial
+   observation and replay trace.
+2. **S1 flat waypoint** — deterministic step and route progress on a simple surface;
+   no crossing or held semantic is silently traversable.
+3. **S2 terrain cost** — slope, landcover, farm track, river, and bridge passability
+   become explicit products with owners and provenance.
+4. **S3 observation** — tree-line and settlement observations are reported with
+   unknown values preserved; the RL contract does not expose the separate native
+   direct-fire probe.
+5. **S4 team transition** — only after the single-agent gates pass, add squad/command
+   relationships and then revisit the existing ground damage slice.
+
+The first runtime implementation should be a scripted controller and a deterministic
+step/replay harness. Reinforcement learning is downstream of reset, action,
+observation, reward, termination, and replay contracts; it must not be used to hide
+missing terrain semantics.
+
+The current native-runtime measurement and residuals are recorded in
+[`native_runtime_blockers.md`](native_runtime_blockers.md). The native slice now
+covers one deterministic `MoveStatic` step with surface/slope/vegetation cost,
+explicit Arnis raster loading, bounded river/bridge surfaces, terrain
+observation, and a fixed-direct-waypoint-sequence native Gym adapter; the substitute still
+keeps route/cover semantics moving without releasing a general passability
+claim.
+
+The acceptance suite also drives a soldier across the fixture river through the
+declared bridge segment in one bounded step. The native position crosses the
+river while retaining sampled movement effects and `bridge_admitted` evidence;
+this proves only the admitted local bridge transition, not bridge finding or
+route-level crossing planning.
+
+## Explicit held items
+
+- automatic Arnis runtime setup and tree-line/settlement map-provider consumption;
+- route graph and passability mask;
+- general slope/wet-ground policy and route-level river-crossing planning
+  (local slope cost and sampled river/bridge transitions are admitted);
+- line-of-sight, cover, concealment, and exposure model;
+- ground track/sensor observation export (terrain sampling is admitted separately);
+- fatigue, medical, logistics, indirect fires, suppression, and full combat integration.

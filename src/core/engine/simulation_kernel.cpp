@@ -15,6 +15,7 @@
 #include "runtime/providers/default_simulation_provider_catalog.h"
 #include "runtime/contracts/authority/runtime_authority_contract.h"
 #include "runtime/contracts/composition/resolved_execution_plan.v1.generated.h"
+#include "systems/domains/ground/movement_effects.h"
 
 #include <spdlog/spdlog.h>
 
@@ -338,6 +339,140 @@ void SimulationKernel::set_terrain_type(const std::string &terrain_type) {
     if (IEnvironmentModel *model = environment_model()) {
         model->set_terrain_type(terrain_type);
     }
+}
+
+bool SimulationKernel::load_arnis_terrain_bundle(const std::string &bundle_root) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("load_arnis_terrain_bundle");
+    if (IEnvironmentModel *model = environment_model()) {
+        const bool loaded = model->load_arnis_terrain_bundle(bundle_root);
+        if (loaded) {
+            world_state_mutated_ = true;
+        }
+        return loaded;
+    }
+    return false;
+}
+
+bool SimulationKernel::load_arnis_field_overlay(const std::string &overlay_path) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("load_arnis_field_overlay");
+    if (IEnvironmentModel *model = environment_model()) {
+        const bool loaded = model->load_arnis_field_overlay(overlay_path);
+        if (loaded) {
+            world_state_mutated_ = true;
+        }
+        return loaded;
+    }
+    return false;
+}
+
+std::array<double, 5> SimulationKernel::get_ground_terrain_observation(double x, double y) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_ground_terrain_observation");
+    if (IEnvironmentModel *model = environment_model()) {
+        const IEnvironmentModel::TerrainCell cell = model->get_terrain_at(x, y);
+        return {cell.elevation, static_cast<double>(cell.type), cell.friction_mult, cell.roughness,
+                cell.vegetation_density};
+    }
+    return {std::numeric_limits<double>::quiet_NaN(),
+            static_cast<double>(IEnvironmentModel::SurfaceType::Obstacle), 0.0, 1.0, 1.0};
+}
+
+double SimulationKernel::get_ground_slope_deg(double x, double y) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_ground_slope_deg");
+    if (IEnvironmentModel *model = environment_model()) {
+        return model->get_ground_slope_deg(x, y);
+    }
+    return std::numeric_limits<double>::quiet_NaN();
+}
+
+std::array<double, 8> SimulationKernel::get_ground_movement_effect_observation(double x, double y,
+                                                                               int stance_code) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_ground_movement_effect_observation");
+    if (IEnvironmentModel *model = environment_model()) {
+        const auto terrain = model->get_terrain_at(x, y);
+        const auto observation = ground_infantry_movement_detail::evaluate_movement_effects(
+            terrain, model->get_ground_slope_deg(x, y), static_cast<GroundStance>(stance_code));
+        return {static_cast<double>(observation.surface),
+                observation.slope_deg,
+                observation.vegetation_density,
+                observation.surface_multiplier,
+                observation.slope_multiplier,
+                observation.vegetation_multiplier,
+                observation.stance_multiplier,
+                observation.combined_multiplier};
+    }
+    return {static_cast<double>(IEnvironmentModel::SurfaceType::Obstacle),
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0};
+}
+
+std::array<double, 7> SimulationKernel::get_ground_field_semantic_observation(double x, double y) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_ground_field_semantic_observation");
+    if (IEnvironmentModel *model = environment_model()) {
+        const auto observation = model->get_ground_field_semantic_observation(x, y);
+        return {
+            observation.configured ? 1.0 : 0.0,         observation.nearest_tree_line_distance_m,
+            observation.nearest_tree_line_bearing_deg,  observation.nearest_settlement_distance_m,
+            observation.nearest_settlement_bearing_deg, observation.in_tree_line ? 1.0 : 0.0,
+            observation.in_settlement ? 1.0 : 0.0};
+    }
+    return {0.0, -1.0, 0.0, -1.0, 0.0, 0.0, 0.0};
+}
+
+std::array<double, 7> SimulationKernel::get_ground_transition_observation(double from_x,
+                                                                          double from_y,
+                                                                          double to_x,
+                                                                          double to_y) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_ground_transition_observation");
+    if (IEnvironmentModel *model = environment_model()) {
+        const auto observation =
+            model->get_ground_transition_observation(from_x, from_y, to_x, to_y);
+        return {observation.configured ? 1.0 : 0.0,
+                observation.passable ? 1.0 : 0.0,
+                static_cast<double>(observation.destination_surface),
+                observation.water_blocked ? 1.0 : 0.0,
+                observation.obstacle_blocked ? 1.0 : 0.0,
+                observation.bridge_admitted ? 1.0 : 0.0,
+                observation.distance_m};
+    }
+    return {0.0, 0.0, static_cast<double>(IEnvironmentModel::SurfaceType::Obstacle), 0.0, 1.0,
+            0.0, 0.0};
+}
+
+std::array<double, 10> SimulationKernel::get_ground_transition_movement_observation(
+    double from_x, double from_y, double to_x, double to_y, int stance_code) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("get_ground_transition_movement_observation");
+    if (IEnvironmentModel *model = environment_model()) {
+        const auto observation =
+            ground_infantry_movement_detail::evaluate_transition_movement_effects(
+                *model, from_x, from_y, to_x, to_y, static_cast<GroundStance>(stance_code));
+        return {observation.transition.configured ? 1.0 : 0.0,
+                observation.transition.passable ? 1.0 : 0.0,
+                static_cast<double>(observation.transition.destination_surface),
+                observation.transition.water_blocked ? 1.0 : 0.0,
+                observation.transition.obstacle_blocked ? 1.0 : 0.0,
+                observation.transition.bridge_admitted ? 1.0 : 0.0,
+                observation.transition.distance_m,
+                observation.minimum_combined_multiplier,
+                observation.average_combined_multiplier,
+                static_cast<double>(observation.sample_count)};
+    }
+    return {0.0, 0.0, static_cast<double>(IEnvironmentModel::SurfaceType::Obstacle),
+            0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0,
+            0.0};
 }
 
 void SimulationKernel::set_maritime_state(double sea_state, double wave_heading_deg,

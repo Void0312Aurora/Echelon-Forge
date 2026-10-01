@@ -6,7 +6,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/domains/ground/standards/specialization_baseline.md`
 Owner: `domains/ground`
-Last verified: `2026-08-08`
+Last verified: `2026-09-29`
 
 ## 范围
 
@@ -41,13 +41,63 @@ held 的执行行为。
   `platform_family=dismounted_unit` 和 `doctrine_family=land_tactics`。
 - `src/components/domains/ground/` 拥有 Ground component slice。当前 command/tasking
   slice 仅是静态 G0/G1 元数据，不是执行动力学。
-- `src/models/domains/ground/` 拥有显式 effects placeholder route，用于保留旧有的
-  finalize-only 行为；它不是已释放的 Ground effects model。
 - 原生与 compatibility-shell Ground 场景使用共享 loader 和 tasking bridge，
   不建立私有 Ground runtime 路径。
+- `Ground_Infantry_Soldier_MVP` 是原生的单兵 fixture，其 `MoveStatic` 命令由受限的
+  `GroundInfantryMovement` 系统消费。该系统应用地表与坡度速度代价并推进一个水平
+  运动学步；它不建立 route following 或完整的单兵动力学模型。
+- 默认 environment provider 可以通过
+  `SimulationKernel.load_arnis_terrain_bundle(bundle_root)` 显式加载已验证的 Arnis
+  `arnis_cmo_bundle.v1` 连续高程/地表覆盖栅格对；这是显式的 provider 加载操作，不是自动
+  runtime setup（`tests/runtime/ground/test_ground_infantry_native_unit.py`）。
+- 原生 provider 对声明的 Arnis 水文与桥梁道路矢量做有界点分类采样：河流走廊是水面，声明的
+  桥面线段覆盖水面并成为硬压实通行面。这是有界的局部采样，不是路线图或一般通行性产品
+  （`tests/runtime/ground/test_ground_infantry_native_unit.py`）。
+- 移动代价同时考虑姿态、地表、坡度与植被。一次采样的单 tick 过渡观测（5 m 线段间隔）为
+  `GroundInfantryMovement` 提供其消费的平均综合移动倍率，同一局部过渡检查会在一个单 tick
+  线段触及水面或未知/障碍单元时阻止该次推进而不推进 transform。这是局部线段代价观测与过渡
+  阻断，不是路线级代价栅格或一般通行性掩码
+  （`tests/runtime/ground/test_ground_infantry_native_unit.py`）。
+- 为单兵 fixture 准入了有界原生直射切片：`GroundWeaponState` 与
+  `SimulationKernel.fire_ground_weapon` 要求存在被跟踪的敌方 Ground 目标、有限的步枪射程、
+  弹药与冷却时间，并在命中成功时进入共享 effects/damage bridge。这是确定性的近距离代理；
+  它不宣称视线、掩体、压制、弹道或完整火控模型
+  （`tests/runtime/ground/test_ground_infantry_native_unit.py`）。这些原生 probe 绑定位于
+  被隔离的 `bindings_core_kernel_diagnostics_ground.cpp` 诊断面，不在维护中的
+  `SimulationKernel` 绑定面上。
 
-当前不存在已接受的 `src/systems/domains/ground/` owner。该目录不存在表示 Ground
-runtime-system ownership 仍保持 held，并不把 Ground 执行语义授权给其他领域。
+## 已注册且可达，但不构成能力
+
+`src/models/domains/ground/` 拥有结构化的 ground effects 路由。只有在 ground 自有的
+`GroundPlatformDamageState` 与共享的 hitbox、system-health、platform-damage 界面同时
+存在时它才选中目标；它把战斗部机制负载写进 ground state，把该 state 投影到共享
+capability 字段，然后调用共享 finalize。组件 id 在组合路径里按 world 解析一次并传给该
+路由——effects 侧不再靠解析组件类型去找它——因此该路由会选中，机制会运行。`2026-09-22`
+实测：一次结构命中后共享 capability 向量为 `[0.8167, 1.0000, 0.9010, 0.8680]`，而不是
+placeholder 兜底的"全零并被摧毁"；在多 world 进程里每个 world 都给出同一后果。修复与
+测量记录见
+[Ground Damage Effects Route Repair](../../../domains/ground/reviews/ground_damage_effects_route_repair_20260922/README.md)。
+
+机制可达仍不等于能力。这不是已释放的 Ground effects model：任何 Ground 任务、场景或
+observation 声明都不得以它为依据。在目前所有已上线 Ground 单位使用的合成 bootstrap 表面上，
+任何弹头类型的 Ground 命中都不会降低 mobility：effects
+model 只对结构化空中目标估算弹头机理载荷，因此在该表面上永远到不了底盘的 mobility 和履带
+分支。`2026-09-28` 撤回了"命中应降低 mobility"这一期望，没有用未校准的物理去满足它。若
+authored 的 Ground `damage_model`声明了 `engine`/`fuel` 系统，则是另一处已记录的已知暴露：
+它会经由一个既有的通用非空中系统名系数到达 `mobility_capability`，该系数在 route-repair
+包中被记录并限定范围，而不被当作 Ground 损伤真实度。现行契约
+由一个运行时测试钉住，按部件推导机动损失的后续议题及其进入条件记录在 route-repair 包中。
+定位该缺陷的**修复前**测量见
+[DM-G1 可达性诊断](../../../systems/combat/reviews/ground_damage_reachability_20260921.md)。
+
+`src/systems/domains/ground/` 拥有 Ground 的 per-tick systems 面。地面损伤响应由
+`src/systems/domains/ground/damage_system_ground.h` 注册为默认组合 stage 30 的
+`builtin.system.ground_damage`，另由
+`src/systems/domains/ground/movement_system.h` 注册
+`builtin.system.ground_infantry_movement` 为 stage 34。后者只是单兵 fixture 的受限
+单步消费者，不释放 route movement、passability、sensing、fires、logistics 或
+observation export。准入记录见
+[Ground Infantry Movement v1](../reviews/ground_infantry_movement_v1_20260924/README.zh.md)。
 
 ## 内容与 Capability 规则
 
@@ -57,25 +107,30 @@ runtime-system ownership 仍保持 held，并不把 Ground 执行语义授权给
   和静态 task/status 链的证据。
 - 生成 `Aircraft` 的 compatibility-shell 场景可以继续作为 regression fixture，
   但必须声明该边界，也不得被引用为原生 Ground 平台证据。
-- 当前 `ground_mobility_flat_deferred` 声明和
+- platoon 的 `ground_mobility_flat_deferred` 声明和
   `static_or_caller_initial_velocity_only` 行为不得被描述为 route movement 或
-  terrain mobility。
+  terrain mobility。单兵声明只能引用上面准入的受限 `MoveStatic` 地表/坡度步。
 - 后续 Ground system、model 或场景必须扩展共享 runtime stage 与合同，不得引入
   Ground 私有 scheduler、packet family 或 command/status pipeline。
 
 ## Held 边界
 
-当前维护面尚未建立：
+在上面准入的有界局部切片之外，当前维护面尚未建立：
 
-- route following、movement dynamics、terrain traversal、passability、cover、
-  concealment、obstacle 或 breach behavior；
-- Ground sensing、line-of-sight 计算、track fusion、data-link behavior 或
-  observation export；
-- direct fire、indirect fire、effects、damage、suppression、attrition 或 combat runtime；
+- route following、waypoint/路线规划、加速度/疲劳/队形 dynamics、路线图、一般通行性
+  掩码、路线级河流通行规划、obstacle 或 breach behavior（已准入的表面只是局部单 tick 过渡采样与阻断，不是路线产品）；
+- Ground sensing、line-of-sight 计算、cover、concealment、track fusion、data-link
+  behavior，或超出上面所列有界地形/过渡/字段语义观测元组之外的 observation export；
+- indirect fire、suppression、attrition、完整火控、弹道模型或 combat runtime（已准入的直射切片是位于被隔离
+  诊断绑定面上的确定性近距离代理，不是火控或弹道模型；它所驱动的 ground damage 机制仍只是
+  可达机制，不是已释放的 effects 能力）；
 - logistics、sustainment、recovery 或 learned Ground policy；
 - 正式 Ground `CommandPacket`、`ObservationPacket` 或 `TrackPacket` 特化。
 
-这些领域必须先具备独立标准与验收证据，任务或场景才能把它们声明为维护中能力。
+这些领域必须先具备独立标准与验收证据，任务或场景才能把它们声明为维护中能力。机制可达
+不是这种证据：ground damage 机制现在会运行，并对运行时套件所测的那一次命中给出上面的
+实测后果，但这仍不使 effects、damage、suppression 或 attrition 成为 Ground 能力、场景
+声明或本域可以依赖的模型。
 
 ## 验证
 
@@ -83,9 +138,11 @@ runtime-system ownership 仍保持 held，并不把 Ground 执行语义授权给
 
 - [Ground component 边界](../../../../src/components/domains/ground/README.zh.md)
 - [Ground tasking component 边界](../../../../src/components/domains/ground/tasking/README.zh.md)
-- [Ground model placeholder 边界](../../../../src/models/domains/ground/README.zh.md)
+- [Ground model 边界](../../../../src/models/domains/ground/README.zh.md)
 - [Ground 原生平台 schema 测试](../../../../tests/runtime/ground/test_ground_native_platform_schema.py)
 - [Ground 原生静态场景测试](../../../../tests/runtime/ground/test_ground_native_static_scenario.py)
+- [Ground 原生单兵移动测试](../../../../tests/runtime/ground/test_ground_infantry_native_unit.py)
+- [Ground 损伤响应测试](../../../../tests/runtime/ground/test_ground_damage_response.py)
 - [Ground realism-gradient 护栏](../../../../tests/architecture/ground/test_realism_gradient_guardrails.py)
 
 ## 非目标

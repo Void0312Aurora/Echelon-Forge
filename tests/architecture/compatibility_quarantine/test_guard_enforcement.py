@@ -103,6 +103,14 @@ SIM_DIRECT_ACCESS_ALLOWLIST = {
       "tests/",
     },
   },
+  # Bounded single-soldier Ground training probe. It calls only the quarantined
+  # `BINDINGS_GROUND_NATIVE_PROBE_ALLOWLIST` surface and is not a maintained runtime
+  # owner; a reviewed Ground facade/contract must replace it before promotion.
+  "native_probe_only": {
+    "files": {
+      "python/rl/ground/native_probe.py",
+    },
+  },
 }
 
 LEGACY_COMMAND_DIRECT_INCLUDE_ALLOWLIST = {

@@ -1,0 +1,42 @@
+{
+  "name": "Ground_Infantry_Soldier_MVP",
+  "type": "Ground",
+  "ground_infantry_capability": true,
+  "mass_kg": 85.0,
+  "health": {
+    "current_hp": 100.0,
+    "max_hp": 100.0
+  },
+  "has_score": true,
+  "has_command_link": true,
+  "command_link": {
+    "latency_s": 0.15,
+    "drop_prob": 0.0
+  },
+  "has_data_link": false,
+  "_ground_schema": {
+    "specialization": "ground",
+    "service_profile": "Army",
+    "tasking_profile": "ground",
+    "tactical_unit_type": "TacticalUnit",
+    "echelon": "individual",
+    "platform_family": "dismounted_infantry",
+    "doctrine_family": "land_tactics",
+    "mobility_declaration": "foot_mobility_field_training_v1",
+    "movement_behavior": "native_static_step_with_surface_slope_and_stance_cost_v1"
+  },
+  "_training_boundary": {
+    "role": "single_agent_navigation_and_environment_observation",
+    "weapon_employment": "bounded_native_direct_fire_v1",
+    "map_profile": "eastern_plain_infantry_phase1",
+    "runtime_status": "native_single_step_contract"
+  },
+  "_deferred_runtime_claims": [
+    "route following, acceleration, fatigue, formation, and passability",
+    "slope, wet-ground, river, bridge, and obstacle passability",
+    "tree-line masking, cover, and line-of-sight",
+    "ground sensing, track fusion, and entity observation export",
+    "indirect fires, line-of-sight, cover, effects beyond the shared damage bridge, or suppression",
+    "logistics, fatigue, medical state, or sustainment behavior"
+  ]
+}

@@ -1370,6 +1370,7 @@ DEFAULT_COMPONENTS = (
   "Inertia",
   "AngularVelocity",
   "GroundState",
+  "GroundInfantryCapability",
   "GearState",
   "Missile",
   "Munition",
@@ -1377,6 +1378,7 @@ DEFAULT_COMPONENTS = (
   "WeaponCooldown",
   "PilotWeaponReleaseState",
   "NavalWeaponSystem",
+  "GroundWeaponState",
   "Jammer",
   "Countermeasures",
   "RWR",
@@ -1409,6 +1411,7 @@ DEFAULT_COMPONENTS = (
   "PlatformDamageState",
   "AircraftDamageState",
   "AircraftDamageBaseline",
+  "GroundPlatformDamageState",
   "EffectsModelRef",
   "EngagementEventRecorderRef",
   "SensorModelRef",
@@ -1454,6 +1457,7 @@ DEFAULT_SYSTEMS = (
   ("builtin.system.ew", "register_ew_system", "cross_domain", ()),
   ("builtin.system.logistics", "register_logistics_system", "common", ()),
   ("builtin.system.naval_logistics", "register_naval_logistics_system", "naval", ()),
+  ("builtin.system.ground_infantry_movement", "register_ground_infantry_movement_system", "ground", ("simulation.environment.model",)),
 )
 
 EXACT_NODE_BY_SYSTEM = {
@@ -1477,6 +1481,7 @@ EXACT_NODE_BY_SYSTEM = {
   "builtin.system.instrument": ("UpdateInstruments",),
   "builtin.system.ew": ("EW_Release_Chaff", "EW_Release_Flare", "EW_Lifetime_Manager"),
   "builtin.system.logistics": ("FuelConsumption", "MassUpdate", "LogisticsAction", "ResupplyLogic"),
+  "builtin.system.ground_infantry_movement": ("GroundInfantryMovement",),
 }
 
 

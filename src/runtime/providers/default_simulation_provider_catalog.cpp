@@ -5,6 +5,7 @@
 #include "runtime/providers/internal/default_simulation_provider_catalog_test_access.h"
 #endif
 
+#include "components/domains/ground/combat/damage_ground.h"
 #include "components/physics/instruments.h"
 #include "core/engine/simulation_kernel.h"
 #include "core/engine/simulation_kernel_engagement_event_store.h"
@@ -199,6 +200,16 @@ class SimulationKernelWeaponReleaseDamageBridge final : public IWeaponReleaseDam
         return kernel_.debug_apply_proximity_hit(attacker_id, target_id, damage, fuse_distance);
     }
 
+    bool apply_direct_hit(std::uint64_t attacker_id, std::uint64_t target_id,
+                          double damage) override {
+        // Keep ground direct fire on the shared effects/damage route. The
+        // local origin is the bounded body-center impact used by the current
+        // ground hitbox bootstrap; no separate ground damage shortcut is
+        // introduced here.
+        return kernel_.debug_apply_local_proximity_hit(attacker_id, target_id, 0.0, 0.0, 0.0,
+                                                       damage, 1.0);
+    }
+
   private:
     SimulationKernel &kernel_;
 };
@@ -332,7 +343,12 @@ register_default_factories(composition::ProviderCatalog &catalog, SimulationKern
         kEffectsProviderId, contracts::CompositionScope::world,
         {{std::string(contracts::kServiceEffectsModel), &typeid(IEffectsModel)}},
         [&world, fail_effect_provider](composition::ProviderConstructionContext &context) {
-            auto service = make_default_effects_model();
+            // Resolved once per world, here: after the registered components exist and
+            // before the model is constructed, so the id is the one the spawn path writes.
+            // This world-scoped step is the composition path's to own; a model translation
+            // unit that resolves the component type itself reaches a different id, which is
+            // what made the ground effects route unreachable.
+            auto service = make_default_effects_model(world.id<GroundPlatformDamageState>());
             IEffectsModel *pointer = service.get();
             adopt_singleton_effect(context, world, &EffectsModelRef::model, pointer,
                                    fail_effect_provider == kEffectsProviderId);

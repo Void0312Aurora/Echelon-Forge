@@ -41,9 +41,9 @@
     },
     {
       "authority_kind": "resolved_composition_plan",
-      "blob_sha256": "598b66b2169d2b8926132279be9e68d73129724faf38315e3017ad1b40820b0a",
+      "blob_sha256": "d42f2482e179ee447356339230eceb0f8d3d042cc46597a04b37be9b36671af8",
       "media_type": "application/vnd.echelon-forge.resolved-composition-plan-envelope.v1+json",
-      "size": 39331,
+      "size": 40487,
       "writer_generation": "1",
       "reader_generation_min": "1",
       "reader_generation_max": "2",
@@ -56,9 +56,9 @@
     },
     {
       "authority_kind": "resolved_composition_plan",
-      "blob_sha256": "a3e649edd30dc0a8f0095790c2db7e9cc9d8efdd890cdb43095a9e7e979f73a8",
+      "blob_sha256": "3674eb6aa2be2cee4cdc671b153791c567008de96aa50914ba26296f4b2a7689",
       "media_type": "application/vnd.echelon-forge.resolved-composition-plan-envelope.v1+json",
-      "size": 39331,
+      "size": 40487,
       "writer_generation": "2",
       "reader_generation_min": "2",
       "reader_generation_max": "2",
@@ -71,7 +71,7 @@
     },
     {
       "authority_kind": "state_checkpoint",
-      "blob_sha256": "54ef02493aaf551c69048e3998901814d8a29cc2ff8df4c0bc35011932311a1c",
+      "blob_sha256": "5a1c9380be1d72eb44e5a3fd9ce859ecf28c6ceb07bfa9ce2f9a613462c4c897",
       "media_type": "application/vnd.echelon-forge.state-checkpoint-envelope.v1+json",
       "size": 1172,
       "writer_generation": "1",

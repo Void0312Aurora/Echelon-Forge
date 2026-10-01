@@ -1,0 +1,232 @@
+{
+  "contract_version": "ground_infantry_training.v1",
+  "status": "contract_only",
+  "purpose": "Deterministic single-soldier navigation and environment-observation curriculum on a fictional agricultural plain.",
+  "safety_boundary": {
+    "fictionalized_map": true,
+    "no_real_battlefield_coordinates": true,
+    "weapon_employment": false,
+    "targeting_or_fire_control": false
+  },
+  "map_profile": {
+    "id": "eastern_plain_infantry_phase1",
+    "arnis_request": "tests/scenario/fixtures/environment_substrate/arnis_bundle_v1/eastern_plain_infantry_phase1/request.json",
+    "arnis_bundle_status": "verified_export_snapshot",
+    "companion_overlay": "field_overlay.v1",
+    "required_semantics": [
+      "farmland_area",
+      "tree_line",
+      "settlement_area",
+      "river_corridor",
+      "bridge_crossing",
+      "road_and_track_network",
+      "elevation_and_landcover"
+    ],
+    "runtime_consumption": "held_until_passability_and_observation_owners_exist"
+  },
+  "agent": {
+    "unit_definition": "examples/config/database/ground/units/ground_infantry_soldier_mvp.json",
+    "count": 1,
+    "spawn_policy": "fixed_seed_named_spawn",
+    "initial_role": "dismounted_infantry_navigator"
+  },
+  "native_runtime_surfaces": {
+    "direct_fire": {
+      "status": "bounded_native_probe",
+      "entrypoint": "SimulationKernel.fire_ground_weapon",
+      "command_entrypoint": "SimulationKernel.fire_ground_weapon_from_mission_command",
+      "probe_entrypoint": "GroundInfantryNativeProbe.fire_from_mission_command",
+      "observation_entrypoint": "SimulationKernel.get_ground_weapon_state",
+      "observation_fields": ["present", "selected_type", "ammunition", "maximum_ammunition", "damage_per_hit", "engagement_range_m", "hit_probability", "cooldown_remaining"],
+      "weapon": "rifle",
+      "requires": ["hostile_ground_contact", "range", "ammunition", "cooldown", "fire_authority"],
+      "does_not_claim": ["line_of_sight", "cover", "suppression", "ballistics", "indirect_fire"]
+    },
+    "field_semantics": {
+      "status": "bounded_metadata_observation",
+      "load_entrypoint": "SimulationKernel.load_arnis_field_overlay",
+      "entrypoint": "SimulationKernel.get_ground_field_semantic_observation",
+      "fields": ["configured", "tree_distance_m", "tree_bearing_deg", "settlement_distance_m", "settlement_bearing_deg", "in_tree_line", "in_settlement"],
+      "does_not_claim": ["movement", "passability", "cover", "concealment", "line_of_sight", "fire_control"]
+    },
+    "transition": {
+      "status": "bounded_native_transition_probe",
+      "entrypoint": "SimulationKernel.get_ground_transition_observation",
+      "fields": ["configured", "passable", "destination_surface", "water_blocked", "obstacle_blocked", "bridge_admitted", "distance_m"],
+      "sampling_interval_m": 5.0,
+      "does_not_claim": ["route_graph", "waypoint_planning", "cover", "line_of_sight"]
+    },
+    "transition_effects": {
+      "status": "bounded_native_segment_movement_observation",
+      "entrypoint": "SimulationKernel.get_ground_transition_movement_observation",
+      "fields": ["configured", "passable", "destination_surface", "water_blocked", "obstacle_blocked", "bridge_admitted", "distance_m", "minimum_combined_multiplier", "average_combined_multiplier", "sample_count"],
+      "sampling_interval_m": 5.0,
+      "does_not_claim": ["route_graph", "waypoint_planning", "climbability", "fatigue", "full_physics"]
+    },
+    "terrain_effects": {
+      "status": "bounded_native_observation",
+      "entrypoint": "SimulationKernel.get_ground_movement_effect_observation",
+      "fields": ["surface_type", "slope_deg", "vegetation_density", "surface_speed_multiplier", "slope_speed_multiplier", "vegetation_speed_multiplier", "stance_speed_multiplier", "combined_speed_multiplier"],
+      "does_not_claim": ["climbability", "fatigue", "full_physics"]
+    },
+    "direct_sequence_validation": {
+      "status": "bounded_native_read_only_validation",
+      "entrypoint": "GroundInfantryNativeProbe.validate_waypoint_sequence",
+      "fields": ["passable", "segment_count", "total_distance_m", "blocked_segment_index", "blocked_reason", "segment_observations"],
+      "segment_observation_fields": ["configured", "passable", "destination_surface", "water_blocked", "obstacle_blocked", "bridge_admitted", "distance_m"],
+      "segment_movement_observation_fields": ["configured", "passable", "destination_surface", "water_blocked", "obstacle_blocked", "bridge_admitted", "distance_m", "minimum_combined_multiplier", "average_combined_multiplier", "sample_count"],
+      "does_not_claim": ["route_graph", "path_planning", "cover", "line_of_sight"]
+    },
+    "proxy_bridge_route": {
+      "status": "engineering_proxy_only",
+      "entrypoint": "GroundFieldProxy.plan_bridge_route",
+      "fields": ["passable", "waypoints_xy_m", "total_distance_m", "bridge_segment_index", "blocked_reason"],
+      "route_boundary": "declared_bridge_proxy_only",
+      "does_not_claim": ["native_authority", "route_graph", "general_passability", "cover", "line_of_sight"]
+    }
+  },
+  "action_space": {
+    "status": "bounded_native_probe_and_proxy",
+    "native_status": "implemented_in_native_probe_only",
+    "native_action_fields": ["heading_normalized", "speed_fraction", "stance_normalized"],
+    "native_route_intent": "direct_only_metadata",
+    "replay_entrypoint": "GroundInfantryNativeProbe.replay",
+    "fields": [
+      {"name":"desired_heading_deg","type":"continuous","range":[-180.0,180.0]},
+      {"name":"desired_speed_fraction","type":"continuous","range":[0.0,1.0]},
+      {"name":"stance","type":"categorical","values":["stand","crouch","prone"]},
+      {"name":"route_intent","type":"categorical","values":["direct","follow_track","seek_cover","cross_bridge"]}
+    ],
+    "release_gate": "movement_step_and_blocked_transition_are_deterministic"
+  },
+  "rl_harness": {
+    "status": "non_production_proxy_and_native_probe",
+    "entrypoint": "python.rl.ground.proxy_env:GroundInfantryProxyEnv",
+    "authority": "native_probe_only_for_native_entrypoint",
+    "native_probe": {
+      "status": "native_probe_only",
+      "entrypoint": "python.rl.ground.native_probe:GroundInfantryNativeProbe",
+      "authority": "native_probe_only",
+      "production_boundary": "not_world_batch",
+      "waypoint_boundary": "fixed_direct_sequence_only"
+    },
+    "native_env": {
+      "status": "native_probe_only",
+      "entrypoint": "python.rl.ground.native_env:GroundInfantryNativeEnv",
+      "production_boundary": "not_world_batch",
+      "observation_owner": "GroundInfantryNativeProbe",
+      "observation_bounds": "finite_source_backed_fixture_or_probe_horizon",
+      "termination_reasons": ["waypoint_reached", "agent_incapacitated"],
+      "truncation_reasons": ["max_steps", "blocked_step_limit"],
+      "observation_fields": ["position_local_enu_m", "velocity_local_enu_mps", "terrain", "terrain_effects", "movement_effects", "field_semantics", "weapon_state", "health_state", "command_state", "mission_state", "waypoint_state", "state"],
+      "action_boundary": "normalized_heading_speed_stance_with_direct_route_metadata",
+      "waypoint_boundary": "fixed_direct_sequence_only"
+    },
+    "proxy_env": {
+      "status": "engineering_proxy_only",
+      "entrypoint": "python.rl.ground.proxy_env:GroundInfantryProxyEnv",
+      "production_boundary": "not_world_batch",
+      "observation_bounds": "finite_fixture_map_and_episode_horizon",
+      "goal_boundary": "known_proxy_terrain_only"
+    },
+    "promotion_gate": "native_ground_reset_step_replay_and_terrain_owner"
+  },
+  "command_projection": {
+    "status": "partial_transport_only",
+    "entrypoint": "python.rl.ground.command:build_ground_infantry_maintained_assignment",
+    "representable_fields": [
+      "desired_heading_deg",
+      "desired_speed_fraction",
+      "stance",
+      "ground_static_task",
+      "ground_static_task_mode"
+    ],
+    "held_fields": ["route_intent"],
+    "execution_gate": "native_ground_movement_consumer"
+  },
+  "observation_space": {
+    "status": "bounded_native_probe_and_proxy",
+    "proxy_status": "implemented_in_engineering_proxy_only",
+    "native_status": "implemented_in_native_probe_only",
+    "proxy_entrypoint": "python.rl.ground.proxy_env:GroundInfantryProxyEnv",
+    "fields": [
+      "position_local_enu_m",
+      "velocity_local_enu_mps",
+      "heading_and_stance",
+      "elevation_and_slope",
+      "terrain_movement_effects",
+      "landcover_class",
+      "nearest_tree_line_distance_and_bearing",
+      "nearest_settlement_distance_and_bearing",
+      "river_and_bridge_state",
+      "mission_goal_relative_state",
+      "waypoint_index_and_count",
+      "health_and_command_state",
+      "route_progress_and_blocked_reason",
+      "health_and_command_link_state"
+    ],
+    "unknown_value_policy": "explicit_unknown_with_provenance",
+    "release_gate": "every_field_has_a_single_owner_and_replayable_source"
+  },
+  "reward": {
+    "status": "bounded_native_probe_and_proxy",
+    "native_terms": ["distance_delta_to_waypoint", "blocked_attempt_penalty"],
+    "terms": {
+      "progress_to_waypoint": {"sign":"positive","owner":"mission_progress"},
+      "route_adherence": {"sign":"positive","owner":"route_contract"},
+      "unsafe_terrain_or_blocked_attempt": {"sign":"negative","owner":"passability"},
+      "unmasked_exposure": {"sign":"negative","owner":"los_cover_future"},
+      "survival_and_health": {"sign":"positive","owner":"agent_state"}
+    },
+    "anti_shortcut_rules": [
+      "no reward for teleporting or leaving the map extent",
+      "blocked transitions must not advance mission progress",
+      "unknown terrain semantics cannot silently become passable"
+    ]
+  },
+  "termination": {
+    "conditions": [
+      "waypoint_reached",
+      "timeout",
+      "invalid_or_blocked_transition_limit",
+      "agent_incapacitated",
+      "environment_contract_failure"
+    ],
+    "fail_closed_on_missing_semantics": true
+  },
+  "curriculum": [
+    {
+      "stage": "S0_contract_and_reset",
+      "goal": "spawn one soldier, reset with a fixed seed, and reproduce the same initial observation",
+      "depends_on": []
+    },
+    {
+      "stage": "S1_flat_waypoint",
+      "goal": "follow a short route without crossing a river or entering held semantics",
+      "depends_on": ["S0_contract_and_reset"]
+    },
+    {
+      "stage": "S2_terrain_cost",
+      "goal": "consume elevation, slope, farmland, track, and river/bridge passability",
+      "depends_on": ["S1_flat_waypoint"]
+    },
+    {
+      "stage": "S3_tree_line_and_settlement_observation",
+      "goal": "observe, report, and route around semantic overlays without releasing fire behavior",
+      "depends_on": ["S2_terrain_cost"]
+    },
+    {
+      "stage": "S4_team_transition",
+      "goal": "only after single-agent replay and observation gates pass, add squad/command relationships",
+      "depends_on": ["S3_tree_line_and_settlement_observation"]
+    }
+  ],
+  "acceptance_gates": [
+    "same seed produces byte-equivalent reset observation",
+    "one action produces one authoritative transition",
+    "blocked movement is observable and does not move the agent",
+    "river crossing is only possible through an explicitly admitted crossing",
+    "tree-line and settlement semantics carry provenance and remain metadata-only until released",
+    "episode trace can be replayed without a live network provider"
+  ]
+}

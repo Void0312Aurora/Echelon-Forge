@@ -42,6 +42,9 @@ namespace {
 
 class DefaultEffectsModel : public IEffectsModel {
   public:
+    explicit DefaultEffectsModel(flecs::id_t ground_damage_component)
+        : ground_damage_component_(ground_damage_component) {}
+
     EffectsResult on_proximity_hit(flecs::world world, flecs::entity missile_entity,
                                    const Missile &missile, flecs::entity target_entity) override {
         EffectsResult result;
@@ -53,11 +56,23 @@ class DefaultEffectsModel : public IEffectsModel {
         }
 
         const DefaultEffectsDomainTargetSelection domain_target =
-            route_default_effects_target_domain(target_entity);
-        const bool structured_air_target = domain_target.structured_damage_target;
+            route_default_effects_target_domain(target_entity, ground_damage_component_);
+        // Two distinct questions, and conflating them was a defect:
+        //
+        // - `structured_domain_target` asks whether the target carries a full
+        //   geometric damage model, so the legacy one-shot HP path may not
+        //   short-circuit it. That is true for every structured domain, air and
+        //   ground alike.
+        // - `structured_air_target` asks whether the AIR component and warhead
+        //   machinery applies. The air warhead/spatial-projection profiles and
+        //   the air consequence path must stay gated on an actual air target;
+        //   handing a ground target the air warhead machinery changes component
+        //   failure sampling for non-air damage events.
+        const bool structured_domain_target = domain_target.structured_damage_target;
+        const bool structured_air_target = domain_target.is_air_target;
 
         Health *hp = target_entity.get_mut<Health>();
-        if (hp && !structured_air_target &&
+        if (hp && !structured_domain_target &&
             apply_legacy_health_damage(target_entity, missile, score, *hp)) {
             return result;
         }
@@ -131,8 +146,9 @@ class DefaultEffectsModel : public IEffectsModel {
                 missile_axis_body, warhead_orientation_frame, closure_mps, sys_health,
                 resolve_system_severity, apply_system_effect);
             if (resolve_default_effects_domain_platform_consequences(
-                    domain_target, scratch, target_entity, missile, local_imp, closure_mps,
-                    severity, warhead_effects, platform_damage, component_damage, hp)) {
+                    domain_target, scratch, target_entity, missile, hitboxes, local_imp,
+                    closure_mps, severity, warhead_effects, platform_damage,
+                    domain_target.ground_damage, component_damage, hp)) {
                 populate_result();
                 return result;
             }
@@ -148,10 +164,16 @@ class DefaultEffectsModel : public IEffectsModel {
 
         return result;
     }
+
+  private:
+    // Resolved once per world by the composition path and passed down. This model holds it
+    // only so the route can address the component the spawn path wrote; it does not resolve
+    // component identity itself.
+    flecs::id_t ground_damage_component_ = 0;
 };
 
 } // namespace
 
-std::unique_ptr<IEffectsModel> make_default_effects_model() {
-    return std::make_unique<DefaultEffectsModel>();
+std::unique_ptr<IEffectsModel> make_default_effects_model(flecs::id_t ground_damage_component) {
+    return std::make_unique<DefaultEffectsModel>(ground_damage_component);
 }

@@ -11,6 +11,8 @@
 #include "components/domains/air/combat/damage_air.h"
 #include "components/domains/air/combat/weapon_air.h"
 #include "components/domains/air/platform/flight_dynamics_tuning.h"
+#include "components/domains/ground/ground_capabilities.h"
+#include "components/domains/ground/combat/weapon_ground.h"
 #include "components/domains/naval/combat/weapon_naval.h"
 #include "components/domains/naval/platform/embarked_air_ops.h"
 #include "components/domains/naval/platform/submarine_platform.h"
@@ -31,7 +33,6 @@
 
 #include "systems/combat/damage_system_air.h"
 #include "systems/combat/damage_system_common.h"
-#include "systems/combat/damage_system_ground.h"
 #include "systems/combat/damage_system_naval.h"
 #include "systems/combat/guidance_system.h"
 #include "systems/combat/pilot_weapon_release_system.h"
@@ -43,6 +44,8 @@
 #include "systems/domains/air/aerodynamics_system.h"
 #include "systems/domains/air/control_system.h"
 #include "systems/domains/air/propulsion_system.h"
+#include "systems/domains/ground/damage_system_ground.h"
+#include "systems/domains/ground/movement_system.h"
 #include "systems/domains/naval/embarked_air_ops_system.h"
 #include "systems/domains/naval/naval_logistics_system.h"
 #include "systems/domains/naval/naval_mission_weapon_release_system.h"
@@ -223,6 +226,8 @@ void register_esm_reset_system(flecs::world &ecs) {
     X(Inertia, "Inertia", "flecs.component.inertia")                                               \
     X(AngularVelocity, "AngularVelocity", "flecs.component.angular_velocity")                      \
     X(GroundState, "GroundState", "flecs.component.ground_state")                                  \
+    X(GroundInfantryCapability, "GroundInfantryCapability",                                        \
+      "flecs.component.ground_infantry_capability")                                                \
     X(GearState, "GearState", "flecs.component.gear_state")                                        \
     X(Missile, "Missile", "flecs.component.missile")                                               \
     X(Munition, "Munition", "flecs.component.munition")                                            \
@@ -231,6 +236,7 @@ void register_esm_reset_system(flecs::world &ecs) {
     X(PilotWeaponReleaseState, "PilotWeaponReleaseState",                                          \
       "flecs.component.pilot_weapon_release_state")                                                \
     X(NavalWeaponSystem, "NavalWeaponSystem", "flecs.component.naval_weapon_system")               \
+    X(GroundWeaponState, "GroundWeaponState", "flecs.component.ground_weapon_state")               \
     X(Jammer, "Jammer", "flecs.component.jammer")                                                  \
     X(Countermeasures, "Countermeasures", "flecs.component.countermeasures")                       \
     X(RWR, "RWR", "flecs.component.rwr")                                                           \
@@ -265,6 +271,8 @@ void register_esm_reset_system(flecs::world &ecs) {
     X(AircraftDamageState, "AircraftDamageState", "flecs.component.aircraft_damage_state")         \
     X(AircraftDamageBaseline, "AircraftDamageBaseline",                                            \
       "flecs.component.aircraft_damage_baseline")                                                  \
+    X(GroundPlatformDamageState, "GroundPlatformDamageState",                                      \
+      "flecs.component.ground_platform_damage_state")                                              \
     X(EffectsModelRef, "EffectsModelRef", "flecs.component.effects_model_ref")                     \
     X(EngagementEventRecorderRef, "EngagementEventRecorderRef",                                    \
       "flecs.component.engagement_event_recorder_ref")                                             \
@@ -349,7 +357,10 @@ void register_esm_reset_system(flecs::world &ecs) {
     X("builtin.system.logistics", "register_logistics_system", "common", "legacy.stage.32", 32,    \
       "builtin.system.ew", register_logistics_system)                                              \
     X("builtin.system.naval_logistics", "register_naval_logistics_system", "naval",                \
-      "legacy.stage.33", 33, "builtin.system.logistics", register_naval_logistics_system)
+      "legacy.stage.33", 33, "builtin.system.logistics", register_naval_logistics_system)          \
+    X("builtin.system.ground_infantry_movement", "register_ground_infantry_movement_system",       \
+      "ground", "legacy.stage.34", 34, "builtin.system.naval_logistics",                           \
+      register_ground_infantry_movement_system)
 
 #define EF_KERNEL_SYSTEM_CONTRIBUTIONS(X)                                                          \
     X("builtin.kernel.system.rwr_reset", "kernel.pre_update.00", 0, register_rwr_reset_system)     \
@@ -379,7 +390,7 @@ struct ValidationResult {
 };
 
 ValidationResult validate_registry() {
-    if (std::size(kDefaultComponents) != 85) {
+    if (std::size(kDefaultComponents) != 88) {
         return {false, "component contribution count is not the admitted default count"};
     }
     std::unordered_set<std::string_view> component_ids;
@@ -389,7 +400,7 @@ ValidationResult validate_registry() {
             return {false, "component contribution registry is empty or duplicated"};
         }
     }
-    if (std::size(kDefaultSystems) != 34) {
+    if (std::size(kDefaultSystems) != 35) {
         return {false, "system contribution count is not the admitted default count"};
     }
     if (std::size(kKernelSystems) != 3 || kKernelSystems[0].stage_order != 0 ||
