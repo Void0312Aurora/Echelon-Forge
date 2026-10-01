@@ -3165,3 +3165,33 @@ to a dedicated owner-local evidence document.
   angle, bandwidth mismatch, standoff/escort jamming, the jammer strobe as an
   ESM/RWR emission, or power/resource limits. EW stays
   `entry_surface_incomplete`; Air stays `playable_candidate`.
+
+### 2026-10-01 — Air EW doctrine slices and pre-existing red closure
+
+- Starting commit: `e35faaba`.
+- Change batch: `d018ebbd` adds the `burst` countermeasure dispense program
+  (dispense only for a declared `dispense_burst_s` after a warning onset or a
+  newly warned threat bearing outside a declared association gate; both
+  parameters are scenario doctrine with no default); `54876a83` routes the
+  jammer doctrine through the cooperative EW roster. `f6135d49`, `a1eee5d3`
+  and `a4c41fd3` (cherry-picked from `work/air-preexisting-reds`) close the
+  three red families present on main `e1e077cb`: the MQ-9 near-range
+  live-chain test is re-decided over 16 seeds (its `mission_kill` label was a
+  per-seed draw outcome, red already at its origin `940641d6`); two
+  unregistered diagnostics bindings are classified and the binding-quarantine (WP22-E) guard made
+  exact; the weapon-release service no longer holds a `SimulationKernel&`
+  back-reference (RNG draws are counted by a stream type, values and order
+  unchanged).
+- Evidence (HEI, `a4c41fd3`): `ef_test` 199/199; runtime pytest (air,
+  simulation, air_combat, bindings) 589 passed / 0 failed; composition,
+  structural, compatibility-quarantine and runtime-profile architecture 244
+  passed / 0 failed; the full architecture suite has 18 further reds
+  (runtime-host P5-D gates, spawn-plan resolution, tool-script governance, Air
+  CLI wrapper path) that are byte-identical on clean main. 1v1 burst 1.0 s /
+  20 deg: requests steps 3-22, inventory 58/28 vs 48/18 continuous. 4v4 with
+  `self_protect_on_lock`: all four slots key their own pod.
+- Boundary decision: Air stays `playable_candidate`; EW stays
+  `entry_surface_incomplete`. Remaining EW residuals: decoy effect on missile
+  seekers (chaff and flare still only consume inventory), calibrated
+  burn-through, DRFM deception, jammer emission strobe, canonical action-mode
+  admission of `air_ew_hybrid_v1/v2`, and an EW terminal objective.
