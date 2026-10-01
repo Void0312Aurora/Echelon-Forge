@@ -303,7 +303,7 @@ class ArnisInfantryFixture:
 
     # -- grid geometry -------------------------------------------------
 
-    def world(self, row: int, column: int) -> tuple[float, float]:
+    def cell_origin_xy_m(self, row: int, column: int) -> tuple[float, float]:
         return (
             self.origin_xy_m[0] + column * self.step_xy_m[0],
             self.origin_xy_m[1] + row * self.step_xy_m[1],
@@ -617,8 +617,8 @@ def _straight_case(
     if best is None:
         raise FixtureCaseError(f"{case_id}: fixture has no straight {cells}-cell run")
     score, row, column, dr, dc = best
-    start = fixture.world(row, column)
-    goal = fixture.world(row + cells * dr, column + cells * dc)
+    start = fixture.cell_origin_xy_m(row, column)
+    goal = fixture.cell_origin_xy_m(row + cells * dr, column + cells * dc)
     if fixture.first_block(start, goal) is not None:
         raise FixtureCaseError(f"{case_id}: derived reach segment is predicted blocked")
     return FixtureCase(
@@ -692,8 +692,8 @@ def slope_band_cases(fixture: ArnisInfantryFixture, *, goal_radius_m: float) -> 
         if chosen is None:
             raise FixtureCaseError(f"slope_band:{name}: fixture cannot populate this band")
         row, column, dr, dc, in_band = chosen
-        start = fixture.world(row, column)
-        goal = fixture.world(row + cells * dr, column + cells * dc)
+        start = fixture.cell_origin_xy_m(row, column)
+        goal = fixture.cell_origin_xy_m(row + cells * dr, column + cells * dc)
         if fixture.first_block(start, goal) is not None:
             raise FixtureCaseError(f"slope_band:{name}: derived segment is predicted blocked")
         cases.append(
@@ -760,10 +760,10 @@ def _approach_block_case(
         if best is None:
             continue
         k, dr, dc = best
-        goal = fixture.world(goal_row, goal_column)
+        goal = fixture.cell_origin_xy_m(goal_row, goal_column)
         if k * fixture.sample_spacing_m <= goal_radius_m:
             continue  # the goal radius would be reachable from the bank
-        start = fixture.world(goal_row + (k + cells) * dr, goal_column + (k + cells) * dc)
+        start = fixture.cell_origin_xy_m(goal_row + (k + cells) * dr, goal_column + (k + cells) * dc)
         predicted = fixture.first_block(start, goal)
         if predicted is None:
             raise FixtureCaseError(f"{case_id}: derived block segment is predicted passable")
@@ -866,8 +866,8 @@ def edge_cases(fixture: ArnisInfantryFixture, *, goal_radius_m: float) -> list[F
         if outbound is None:
             raise FixtureCaseError(f"edge:{name}: no passable inward run reaches this edge")
         row, column = outbound
-        start = fixture.world(row + cells * inward[0], column + cells * inward[1])
-        goal = fixture.world(row - cells * inward[0], column - cells * inward[1])
+        start = fixture.cell_origin_xy_m(row + cells * inward[0], column + cells * inward[1])
+        goal = fixture.cell_origin_xy_m(row - cells * inward[0], column - cells * inward[1])
         predicted = fixture.first_block(start, goal)
         if predicted is None or predicted[1] != OBSTACLE_TRANSITION_BLOCKED:
             raise FixtureCaseError(f"edge:{name}: outbound segment must leave the raster")
@@ -893,8 +893,8 @@ def edge_cases(fixture: ArnisInfantryFixture, *, goal_radius_m: float) -> list[F
                 break
         if parallel is None:
             raise FixtureCaseError(f"edge:{name}: no passable run along this edge")
-        start = fixture.world(*parallel[0])
-        goal = fixture.world(*parallel[-1])
+        start = fixture.cell_origin_xy_m(*parallel[0])
+        goal = fixture.cell_origin_xy_m(*parallel[-1])
         if fixture.first_block(start, goal) is not None:
             raise FixtureCaseError(f"edge:{name}: parallel segment is predicted blocked")
         cases.append(
