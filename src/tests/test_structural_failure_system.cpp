@@ -9,6 +9,7 @@
 #include "systems/combat/structural_consequence_system.h"
 #include "systems/combat/structural_failure_system.h"
 #include "systems/physics/ground_contact_system.h"
+#include "systems/system_contribution_registry.h"
 
 #include <doctest/doctest.h>
 #include <flecs.h>
@@ -18,6 +19,17 @@
 #include <vector>
 
 namespace {
+
+// Raw-world fixture: components are registered through the admitted registry, in registry order,
+// never as a per-test subset. Flecs caches a component id per C++ type for the whole process
+// (first registration wins). A raw world that registers its own subset in a local order claims
+// ids that a later world expects for other types, and the later world aborts with
+// INCONSISTENT_NAME. Which ids collide depends on the case order, so the defect shows only under
+// a filter such as `ef_test --test-suite=aircraft_damage_lifecycle`. Same defect class as the
+// stable-identity raw-world fixture in test_stable_entity_identity.cpp.
+void register_admitted_components(flecs::world &world) {
+    runtime::systems::register_default_component_contributions(world);
+}
 
 void set_component_damage(ComponentDamageState &damage, const std::string &name, double integrity,
                           const std::string &mode, double mode_severity = -1.0) {
@@ -121,9 +133,7 @@ struct StructuralStepResult {
 
 StructuralStepResult run_single_aircraft_structural_step(const ComponentDamageState &damage) {
     flecs::world world;
-    world.component<ComponentDamageState>();
-    world.component<StructuralBreakupState>();
-    world.component<KeyEntity>();
+    register_admitted_components(world);
     CapturingStructuralRecorder recorder;
     world.set<EngagementEventRecorderRef>({&recorder});
     register_structural_failure_system(world);
@@ -279,9 +289,7 @@ TEST_SUITE("structural_failure_state") {
 
     TEST_CASE("ECS system attaches and updates StructuralBreakupState on aircraft only") {
         flecs::world world;
-        world.component<ComponentDamageState>();
-        world.component<StructuralBreakupState>();
-        world.component<KeyEntity>();
+        register_admitted_components(world);
         register_structural_failure_system(world);
 
         ComponentDamageState aircraft_damage{};
@@ -519,12 +527,7 @@ TEST_SUITE("structural_consequence") {
 
     TEST_CASE("ECS bridge consumes structural breakup after structural failure update") {
         flecs::world world;
-        world.component<ComponentDamageState>();
-        world.component<StructuralBreakupState>();
-        world.component<KeyEntity>();
-        world.component<Health>();
-        world.component<PlatformDamageState>();
-        world.component<AircraftDamageState>();
+        register_admitted_components(world);
         register_structural_failure_system(world);
         register_structural_consequence_system(world);
 
@@ -559,12 +562,7 @@ TEST_SUITE("structural_consequence") {
 
     TEST_CASE("ECS bridge records chain-linked platform consequence event") {
         flecs::world world;
-        world.component<ComponentDamageState>();
-        world.component<StructuralBreakupState>();
-        world.component<KeyEntity>();
-        world.component<Health>();
-        world.component<PlatformDamageState>();
-        world.component<AircraftDamageState>();
+        register_admitted_components(world);
         SimulationKernelEngagementEventStore store(world);
         world.set<EngagementEventRecorderRef>({&store});
         register_structural_failure_system(world);
@@ -620,12 +618,7 @@ TEST_SUITE("structural_consequence") {
 
     TEST_CASE("sequential breakup records aircraft-scalar consequence after platform saturation") {
         flecs::world world;
-        world.component<ComponentDamageState>();
-        world.component<StructuralBreakupState>();
-        world.component<KeyEntity>();
-        world.component<Health>();
-        world.component<PlatformDamageState>();
-        world.component<AircraftDamageState>();
+        register_admitted_components(world);
         SimulationKernelEngagementEventStore store(world);
         world.set<EngagementEventRecorderRef>({&store});
         register_structural_failure_system(world);
@@ -675,7 +668,7 @@ TEST_SUITE("aircraft_damage_lifecycle") {
 
     TEST_CASE("terminal wreck lifecycle helper records only chain-linked structural aircraft") {
         flecs::world world;
-        world.component<StructuralBreakupState>();
+        register_admitted_components(world);
         CapturingStructuralRecorder recorder;
         StructuralBreakupState breakup{};
         breakup.breakup_state = StructuralBreakupPhase::PartialDetachment;
@@ -704,6 +697,7 @@ TEST_SUITE("aircraft_damage_lifecycle") {
 
     TEST_CASE("same tick ground impact and structural breakup records terminal wreck lifecycle") {
         flecs::world world;
+        register_admitted_components(world);
         FlatTestEnvironment environment;
         SimulationKernelEngagementEventStore store(world);
         world.set<EngagementEventRecorderRef>({&store});
@@ -753,14 +747,7 @@ TEST_SUITE("aircraft_damage_lifecycle") {
 
     TEST_CASE("progressive fire loss remains observable only until ground impact") {
         flecs::world world;
-        world.component<KeyEntity>();
-        world.component<Health>();
-        world.component<PlatformDamageState>();
-        world.component<AircraftDamageState>();
-        world.component<GroundState>();
-        world.component<PilotAction>();
-        world.component<Propulsion>();
-        world.component<Sensor>();
+        register_admitted_components(world);
         register_aircraft_damage_system(world);
 
         AircraftDamageState aircraft_damage{};
@@ -915,9 +902,7 @@ TEST_SUITE("structural_failure_break_modes") {
 
     TEST_CASE("wing_loss remains irreversible after component integrity is restored") {
         flecs::world world;
-        world.component<ComponentDamageState>();
-        world.component<StructuralBreakupState>();
-        world.component<KeyEntity>();
+        register_admitted_components(world);
         CapturingStructuralRecorder recorder;
         world.set<EngagementEventRecorderRef>({&recorder});
         register_structural_failure_system(world);
@@ -951,9 +936,7 @@ TEST_SUITE("structural_failure_events") {
 
     TEST_CASE("ECS system writes structural breakup events only for new group transitions") {
         flecs::world world;
-        world.component<ComponentDamageState>();
-        world.component<StructuralBreakupState>();
-        world.component<KeyEntity>();
+        register_admitted_components(world);
         CapturingStructuralRecorder recorder;
         world.set<EngagementEventRecorderRef>({&recorder});
         register_structural_failure_system(world);
@@ -999,9 +982,7 @@ TEST_SUITE("structural_failure_events") {
 
     TEST_CASE("undamaged aircraft writes no structural breakup events") {
         flecs::world world;
-        world.component<ComponentDamageState>();
-        world.component<StructuralBreakupState>();
-        world.component<KeyEntity>();
+        register_admitted_components(world);
         CapturingStructuralRecorder recorder;
         world.set<EngagementEventRecorderRef>({&recorder});
         register_structural_failure_system(world);
@@ -1020,9 +1001,7 @@ TEST_SUITE("structural_failure_events") {
 
     TEST_CASE("multi-axis transition writes synthetic structural breakup event") {
         flecs::world world;
-        world.component<ComponentDamageState>();
-        world.component<StructuralBreakupState>();
-        world.component<KeyEntity>();
+        register_admitted_components(world);
         CapturingStructuralRecorder recorder;
         world.set<EngagementEventRecorderRef>({&recorder});
         register_structural_failure_system(world);
@@ -1049,6 +1028,7 @@ TEST_SUITE("structural_failure_events") {
 
     TEST_CASE("event store assigns structural breakup cause from recent component damage") {
         flecs::world world;
+        register_admitted_components(world);
         SimulationKernelEngagementEventStore store(world);
         constexpr std::uint64_t target_id = 42;
 
@@ -1088,9 +1068,7 @@ TEST_SUITE("structural_failure_events") {
 
     TEST_CASE("structural breakup emits diagnostics-only detached-part lifecycle event") {
         flecs::world world;
-        world.component<ComponentDamageState>();
-        world.component<StructuralBreakupState>();
-        world.component<KeyEntity>();
+        register_admitted_components(world);
         SimulationKernelEngagementEventStore store(world);
         world.set<EngagementEventRecorderRef>({&store});
         register_structural_failure_system(world);

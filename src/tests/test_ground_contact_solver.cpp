@@ -22,6 +22,7 @@
 #include "systems/physics/ground_contact_system.h"
 #include "systems/physics/leapfrog_system.h"
 #include "systems/physics/rotational_system.h"
+#include "systems/system_contribution_registry.h"
 
 #include <doctest/doctest.h>
 #include <flecs.h>
@@ -69,6 +70,10 @@ struct ContactRig {
 
     ContactRig(double mass_kg, double gear_height_m, double z0_m, const Velocity &v0,
                const ExternalLoad &load, const PilotAction &pilot) {
+        // Admitted components first, in registry order: flecs caches component ids per C++
+        // type for the whole process, so a raw world must not claim ids in a local order
+        // (see the raw-world fixture in test_structural_failure_system.cpp).
+        runtime::systems::register_default_component_contributions(world);
         world.set<EnvironmentModelRef>({&environment});
         world.component<ExternalLoad>();
         world.system<ForceAccumulator>("ContactTestClearForces")
