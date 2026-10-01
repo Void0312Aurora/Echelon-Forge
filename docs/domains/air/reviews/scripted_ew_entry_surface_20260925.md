@@ -108,6 +108,23 @@ countermeasure resources, release cadence, and threat-response doctrine. Only
 the identity, authority, clock, provenance, communication, and lifecycle
 envelope may be shared with other domains.
 
+## 2026-10-01 native owner repair
+
+The step `[42, 82]` traces above are superseded. They came from a MAWS
+producer that ran only on radar-scan frames while `RWR_Reset` cleared the fact
+every frame. With `MAWS_Update` as the single per-frame owner, the 1v1 demo
+warns on every frame from step 3 (Red's first missile) through step 120, and
+the native dispenser releases one chaff and one flare per 0.5 s from that
+first warning. The 2v2 demo warns Lead from step 123 and Wing from step 163;
+the 4v4 demo warns its slots from steps 3, 3, 123 and 163. RWR rows are now
+ordered launch > lock > plain before the 4-row observation budget, so no slot
+loses a native launch warning to truncation. The maintained tests pin these
+contracts rather than step lists; see the plan ledger entry of 2026-10-01.
+
+Chaff and flare still have no effect on missile seekers: guidance accepts only
+detections of the assigned target. The decoy effect is a separate mechanism
+slice.
+
 ## Required closure slices
 
 1. **Observation contract:** RWR/MAWS source-specific launch evidence and its

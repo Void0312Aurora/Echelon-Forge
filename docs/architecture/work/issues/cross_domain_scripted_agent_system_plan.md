@@ -3091,3 +3091,42 @@ to a dedicated owner-local evidence document.
   assessment, EW/data-link constraints, formation mission parity, accepted
   seed coverage, visualization acceptance, or large-scale Air playable status;
   Air remains `playable_candidate`.
+
+### 2026-10-01 — Air EW native owner repair and scripted regression closure
+
+- Starting commit: `e1e077cb` (origin/main); worktree `.worktrees/air-ew`,
+  branch `work/air-electronic-warfare`.
+- Blocker evidence: on clean main the four EW demo tests
+  (`test_air_ew_replay.py` x2, `test_air_cooperative_ew_demo.py` x2) and five
+  scripted Air tests were red. The EW expectations `[42, 82]` were an artifact
+  of the earlier MAWS producer living inside the radar scan (scan period 2.0 s,
+  40 steps) while `RWR_Reset` cleared the fact every frame.
+- Change batch (`749fe264`, `408c7546`, `c4d66307`, `2170e11b`):
+  `MAWS_Update` is the single launch-fact owner; an out-of-envelope missile no
+  longer ends the pass for every remaining owner; launch rows are attributed
+  per source and MAWS-only rows carry the owner-to-missile bearing; a
+  countermeasure dispenser that never fired is release-ready; RWR rows are
+  ordered launch > lock > plain before the fixed row budget (the 4v4 Blue_B
+  wing previously lost 18 of 18 native launch warnings to truncation). The EW
+  demo tests now assert the native contract (one contiguous warning run from
+  the first inbound missile, requests equal warnings, one release per 0.5 s
+  interval per requested store) instead of a cadence artifact. The scripted
+  regressions were closed at their owners (class-level `model_kind`, facade
+  roster-before-coverage validation, owner-declared default mission slice,
+  frame-identity pin, seed-independent component-consequence check).
+- Evidence (HEI, Release, `-j32`): `ef_test` 196/196; runtime pytest
+  (air, simulation, air_combat, bindings) 6 failed -> 1 failed after the last
+  commit, the remaining red being
+  `test_mq9_aim120_near_range_live_chain_records_launch_effect_damage`, red on
+  main; architecture 4 failed, identical to main (the binding-quarantine and weapon-release
+  structure guards). Measured traces: 1v1 warnings from step 3, 2v2 Lead 123 /
+  Wing 163, 4v4 slots 3/3/123/163, every slot consuming one chaff and one flare
+  per 10 steps.
+- Boundary decision: this closes the native observation/resource side of EW
+  required closure slices 1 and 2 for the maintained demos. It does not admit a
+  jammer command owner, a decoy effect on missile seekers (chaff and flare still
+  only consume inventory), canonical action-mode admission, an EW terminal
+  objective, or the continuous-dispense doctrine question (the scripted model
+  requests a release on every warned frame; a burst program is a doctrine
+  follow-up). EW stays `entry_surface_incomplete`; Air stays
+  `playable_candidate`.
