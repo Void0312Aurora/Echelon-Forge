@@ -36,6 +36,13 @@ from ..common.decision_registry import (
     DecisionModelRegistration,
     DecisionModelRegistry,
 )
+from ..common.scripted_capability import ScriptedCapabilityManifest
+from .capability import (
+    GROUND_INFANTRY_SCRIPTED_REQUIRED_CAPABILITIES,
+    ground_domain_label,
+    held_ground_capabilities,
+    require_ground_capabilities,
+)
 
 
 GROUND_INFANTRY_SCRIPTED_MODEL_ID = "ground.infantry.objective_occupy_scripted"
@@ -197,9 +204,20 @@ class GroundInfantryScriptedModel:
     def reset(self, *, context: Any) -> None:
         if not isinstance(context, Mapping):
             raise TypeError("Ground scripted reset requires a mapping context")
+        # Disarm first so a rejected reset never leaves a previous task live.
+        self._task = None
         task = context.get("task")
         if not isinstance(task, GroundInfantryObjectiveTask):
             raise TypeError("Ground scripted reset requires a GroundInfantryObjectiveTask")
+        requested = context.get("requested_capabilities", ())
+        if isinstance(requested, str) or not isinstance(requested, (list, tuple)):
+            raise TypeError("Ground scripted requested_capabilities must be a list of ids")
+        # A scenario or commander asking this model for a held capability
+        # (route planning, sensing, indirect fire, ...) fails before any
+        # decision is produced.
+        require_ground_capabilities(
+            GROUND_INFANTRY_SCRIPTED_REQUIRED_CAPABILITIES + tuple(requested)
+        )
         self._task = task
         self._objective_reached = False
         self._last_heading_deg = 0.0
@@ -308,12 +326,31 @@ GROUND_SCRIPTED_MODEL_REGISTRY = DecisionModelRegistry(
 )
 
 
+GROUND_INFANTRY_SCRIPTED_CAPABILITY = ScriptedCapabilityManifest.from_mapping(
+    {
+        "version": "scripted_capability.v1",
+        "domain": "ground",
+        "label": ground_domain_label(),
+        "model_id": GROUND_INFANTRY_SCRIPTED_MODEL_ID,
+        "role_id": GROUND_INFANTRY_CONTROLLER_ROLE_ID,
+        "lifecycle": "reset_decide_close",
+        "evidence_refs": [
+            "source:python/tasking_contracts/ground/execution.py",
+            "source:python/tasking_contracts/ground/capability.py",
+            "test:tests/architecture/tasking_contracts/test_ground_scripted_registry.py",
+        ],
+        "deferred_claims": list(held_ground_capabilities()),
+    }
+)
+
+
 __all__ = [
     "DECISION_REASON_HOLDING",
     "DECISION_REASON_MOVING",
     "DECISION_REASON_NOT_OPERATIONAL",
     "GROUND_DIRECT_ROUTE_INTENT",
     "GROUND_HOLD_TASK_MODES",
+    "GROUND_INFANTRY_SCRIPTED_CAPABILITY",
     "GROUND_INFANTRY_CONTROLLER_ROLE_ID",
     "GROUND_INFANTRY_SCRIPTED_MODEL_ID",
     "GROUND_MOVE_TASK_MODE",
