@@ -17,7 +17,7 @@ import hashlib
 import json
 import math
 from dataclasses import dataclass, replace
-from typing import Any, Callable, Mapping, Sequence
+from typing import Any, Callable, Hashable, Mapping, MutableMapping, Sequence
 
 import numpy as np
 
@@ -117,7 +117,6 @@ class CaseRollout:
         if self.truncation_reason is not None:
             return f"truncated:{self.truncation_reason}"
         return "unterminated"
-
 
 
 def _probe_for_case(case: FixtureCase, *, max_steps: int) -> GroundInfantryNativeProbe:
@@ -335,8 +334,15 @@ def _leaf(value: Any) -> str:
 
 
 def difference_paths(left: Any, right: Any, path: str = "") -> set[str]:
-    """JSON paths whose values differ; list indices collapse to ``[]``."""
+    """JSON paths whose values differ; list indices collapse to ``[]``.
 
+    Values are compared by canonical JSON, the encoding the trace digest
+    hashes. A subtree whose canonical JSON is identical has no differing path,
+    so the walk only descends into subtrees that actually differ.
+    """
+
+    if _leaf(left) == _leaf(right):
+        return set()
     if isinstance(left, Mapping) and isinstance(right, Mapping):
         paths: set[str] = set()
         for key in sorted(set(left) | set(right)):
@@ -353,14 +359,25 @@ def difference_paths(left: Any, right: Any, path: str = "") -> set[str]:
         for left_item, right_item in zip(left, right):
             paths |= difference_paths(left_item, right_item, f"{path}[]")
         return paths
-    return set() if _leaf(left) == _leaf(right) else {path}
+    return {path}
 
 
-def replay_determinism(case: FixtureCase, *, seed: int, alternate_seed: int) -> dict[str, Any]:
+def replay_determinism(
+    case: FixtureCase,
+    *,
+    seed: int,
+    alternate_seed: int,
+    reference: CaseRollout | None = None,
+) -> dict[str, Any]:
     """Same-seed, probe-replay, and cross-seed determinism evidence for one case.
 
-    * ``same_seed_identical``: a second env rollout with the same seed gives a
-      byte-identical canonical trace (digest and first divergent record).
+    * ``same_seed_identical``: two independent env rollouts with the same seed
+      give a byte-identical canonical trace. ``reference`` may supply the
+      first of them: an earlier default-horizon rollout of this case and seed
+      (for example the acceptance-matrix row's), so the same-seed check does
+      not repeat it. Without one, a second rollout here is compared record by
+      record. On a digest mismatch with ``reference``, a further same-seed
+      rollout localizes ``same_seed_first_divergent_record``.
     * ``probe_replay_identical``: ``GroundInfantryNativeProbe.replay`` of the
       recorded controller actions reproduces the env's probe trace exactly.
     * ``cross_seed_difference_paths``: every trace path that differs when only
@@ -368,9 +385,21 @@ def replay_determinism(case: FixtureCase, *, seed: int, alternate_seed: int) -> 
     """
 
     max_steps = case_step_budget(case, seed=seed)
+    if reference is not None and (reference.case_id, reference.seed) != (case.case_id, seed):
+        raise ValueError(
+            f"{case.case_id}: reference rollout is {reference.case_id!r} seed {reference.seed}, not seed {seed}"
+        )
     first = run_case(case, seed=seed, max_steps=max_steps, keep_records=True)
     assert first.records is not None and first.actions is not None
-    second = run_case(case, seed=seed, max_steps=max_steps, compare_records=first.records)
+    same_seed_identical = reference is not None and (
+        reference.max_steps == max_steps and reference.digest == first.digest
+    )
+    first_divergent: int | None = None
+    if not same_seed_identical:
+        second = run_case(case, seed=seed, max_steps=max_steps, compare_records=first.records)
+        first_divergent = second.first_divergent_record
+        if reference is None:
+            same_seed_identical = second.digest == first.digest and first_divergent is None
     probe = _probe_for_case(case, max_steps=max_steps)
     replayed = probe.replay(
         [GroundInfantryNativeEnv._probe_action(action) for action in first.actions],
@@ -387,8 +416,9 @@ def replay_determinism(case: FixtureCase, *, seed: int, alternate_seed: int) -> 
         "alternate_seed": alternate_seed,
         "records": len(first.records),
         "trace_sha256": first.digest,
-        "same_seed_identical": second.digest == first.digest and second.first_divergent_record is None,
-        "same_seed_first_divergent_record": second.first_divergent_record,
+        "same_seed_reference": "supplied_rollout" if reference is not None else "second_rollout",
+        "same_seed_identical": same_seed_identical,
+        "same_seed_first_divergent_record": first_divergent,
         "probe_replay_identical": probe_identical,
         "cross_seed_identical": alternate.digest == first.digest,
         "cross_seed_difference_paths": cross_paths,
@@ -398,19 +428,58 @@ def replay_determinism(case: FixtureCase, *, seed: int, alternate_seed: int) -> 
     }
 
 
+RolloutCache = MutableMapping[Hashable, CaseRollout]
+"""Scripted default-horizon rollouts shared across reports (see :func:`cached_rollout`)."""
+
+
+def _rollout_key(case: FixtureCase, seed: int) -> Hashable:
+    # Every input that determines the scripted default-horizon rollout: the
+    # reset seed, the route, and the block geometry the step budget reads.
+    return (
+        int(seed),
+        case.case_id,
+        case.start_xy_m,
+        case.waypoints_xy_m,
+        case.approach_xy_m,
+        case.block_distance_m,
+    )
+
+
+def cached_rollout(case: FixtureCase, *, seed: int, rollouts: RolloutCache | None) -> CaseRollout:
+    """Scripted default-horizon rollout of ``case``, reused from ``rollouts``.
+
+    ``rollouts`` lets the acceptance matrix, the curriculum stages, and the
+    replay-determinism reference share one native rollout per case and seed
+    instead of re-running it. A missing entry is run and stored.
+    """
+
+    if rollouts is None:
+        return run_case(case, seed=seed)
+    key = _rollout_key(case, seed)
+    rollout = rollouts.get(key)
+    if rollout is None:
+        rollout = rollouts[key] = run_case(case, seed=seed)
+    return rollout
+
+
 def build_acceptance_matrix(
     *,
     seed: int,
     fixture: ArnisInfantryFixture | None = None,
     cases: Sequence[FixtureCase] | None = None,
+    rollouts: RolloutCache | None = None,
 ) -> dict[str, Any]:
-    """Run every derived case and return a deterministic matrix report."""
+    """Run every derived case and return a deterministic matrix report.
+
+    ``rollouts`` is an optional per-seed cache shared with the curriculum
+    runner; see :func:`cached_rollout`.
+    """
 
     fixture = fixture or ArnisInfantryFixture()
     cases = tuple(cases) if cases is not None else derive_acceptance_cases(
         fixture, goal_radius_m=CONTRACT_GOAL_RADIUS_M
     )
-    rows = [matrix_row(case, run_case(case, seed=seed)) for case in cases]
+    rows = [matrix_row(case, cached_rollout(case, seed=seed, rollouts=rollouts)) for case in cases]
     summary: dict[str, dict[str, int]] = {}
     for row in rows:
         bucket = summary.setdefault(row["category"], {"cases": 0, "pass": 0, "fail": 0})
@@ -439,7 +508,9 @@ __all__ = [
     "CONTRACT_TIME_STEP_S",
     "CaseRollout",
     "HELD_CLAIMS",
+    "RolloutCache",
     "build_acceptance_matrix",
+    "cached_rollout",
     "case_failures",
     "case_step_budget",
     "difference_paths",

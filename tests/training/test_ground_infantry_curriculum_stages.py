@@ -22,7 +22,6 @@ from python.rl.ground.curriculum import (
 from python.rl.ground.fixture_cases import ArnisInfantryFixture
 
 
-_SEED = 42
 _CONTRACT = (
     DEFAULT_STAGES_PATH.parent / "eastern_plain_infantry_single_v1.contract.json"
 )
@@ -33,9 +32,12 @@ def config() -> dict:
     return load_stage_config()
 
 
-@pytest.fixture(scope="module")
-def fixture() -> ArnisInfantryFixture:
-    return ArnisInfantryFixture()
+# The fixture view, its derived cases, and the scripted rollouts are session
+# fixtures (tests/training/conftest.py) shared with the acceptance matrix, so
+# a stage row reuses the matrix's rollout of the same case and seed.
+@pytest.fixture
+def fixture(ground_infantry_fixture: ArnisInfantryFixture) -> ArnisInfantryFixture:
+    return ground_infantry_fixture
 
 
 def test_stage_config_is_native_probe_tooling_aligned_with_the_training_contract(config: dict) -> None:
@@ -61,8 +63,12 @@ def test_stage_thresholds_are_sourced_from_field_acceptance(config: dict, fixtur
             assert reference["key"] in fixture.field_acceptance[section]
 
 
-def test_s1_admits_only_flat_open_reach_cases(config: dict, fixture: ArnisInfantryFixture) -> None:
-    cases, rejected = stage_cases("S1_flat_waypoint", config=config, fixture=fixture)
+def test_s1_admits_only_flat_open_reach_cases(
+    config: dict, fixture: ArnisInfantryFixture, ground_acceptance_cases
+) -> None:
+    cases, rejected = stage_cases(
+        "S1_flat_waypoint", config=config, fixture=fixture, cases=ground_acceptance_cases
+    )
     threshold = fixture.field_acceptance["thresholds"]["max_slope_p95_deg"]
     open_codes = set(fixture.field_acceptance["landcover"]["open_landcover_codes"])
     assert cases
@@ -76,30 +82,57 @@ def test_s1_admits_only_flat_open_reach_cases(config: dict, fixture: ArnisInfant
 
 
 def test_s2_admits_terrain_cost_bridge_and_blocked_cases_but_not_held(
-    config: dict, fixture: ArnisInfantryFixture
+    config: dict, fixture: ArnisInfantryFixture, ground_acceptance_cases
 ) -> None:
-    cases, rejected = stage_cases("S2_terrain_cost", config=config, fixture=fixture)
+    cases, rejected = stage_cases(
+        "S2_terrain_cost", config=config, fixture=fixture, cases=ground_acceptance_cases
+    )
     categories = {case.category for case in cases}
     assert {"slope_band", "water_or_obstacle", "bridge"} <= categories
     assert {case.expected for case in cases} == {"reach", "block"}
     assert all(case_id.startswith("held:") for case_id in rejected)
 
 
-def test_unknown_stage_fails_closed(config: dict, fixture: ArnisInfantryFixture) -> None:
+def test_unknown_stage_fails_closed(
+    config: dict, fixture: ArnisInfantryFixture, ground_acceptance_cases
+) -> None:
     with pytest.raises(CurriculumStageError, match="unknown curriculum stage"):
-        stage_cases("S3_tree_line_and_settlement_observation", config=config, fixture=fixture)
+        stage_cases(
+            "S3_tree_line_and_settlement_observation",
+            config=config,
+            fixture=fixture,
+            cases=ground_acceptance_cases,
+        )
 
 
-def test_unsourced_threshold_fails_closed(config: dict, fixture: ArnisInfantryFixture) -> None:
+def test_unsourced_threshold_fails_closed(
+    config: dict, fixture: ArnisInfantryFixture, ground_acceptance_cases
+) -> None:
     tampered = json.loads(json.dumps(config))
     tampered["stages"][0]["admit"]["max_segment_slope"] = {"source": "inline", "key": "max_slope_p95_deg"}
     with pytest.raises(CurriculumStageError, match="unsupported threshold source"):
-        stage_cases("S1_flat_waypoint", config=tampered, fixture=fixture)
+        stage_cases("S1_flat_waypoint", config=tampered, fixture=fixture, cases=ground_acceptance_cases)
 
 
 @pytest.mark.parametrize("stage_id", ["S1_flat_waypoint", "S2_terrain_cost"])
-def test_scripted_baseline_satisfies_each_stage(config: dict, fixture: ArnisInfantryFixture, stage_id: str) -> None:
-    report = run_stage(stage_id, seed=_SEED, config=config, fixture=fixture)
+def test_scripted_baseline_satisfies_each_stage(
+    config: dict,
+    fixture: ArnisInfantryFixture,
+    ground_acceptance_cases,
+    ground_acceptance_seed: int,
+    ground_rollouts: dict,
+    ground_acceptance_matrix: dict,
+    stage_id: str,
+) -> None:
+    report = run_stage(
+        stage_id,
+        seed=ground_acceptance_seed,
+        config=config,
+        fixture=fixture,
+        cases=ground_acceptance_cases,
+        rollouts=ground_rollouts,
+    )
+    matrix_rows = {row["case_id"]: row for row in ground_acceptance_matrix["rows"]}
     failing = {row["case_id"]: row["failures"] for row in report["rows"] if row["verdict"] != "pass"}
     assert not failing, failing
     assert report["valid"] is True
@@ -107,6 +140,9 @@ def test_scripted_baseline_satisfies_each_stage(config: dict, fixture: ArnisInfa
     assert report["baseline"]["pass"] == report["admitted_cases"]
     for row in report["rows"]:
         assert (row["termination_reason"] is None) != (row["truncation_reason"] is None)
+        # A stage row is the matrix row of the same case and seed, plus the
+        # stage's own acceptance gates.
+        assert row["trace_sha256"] == matrix_rows[row["case_id"]]["trace_sha256"]
     if stage_id == "S1_flat_waypoint":
         assert report["baseline"]["block"] == 0
     else:
@@ -114,11 +150,15 @@ def test_scripted_baseline_satisfies_each_stage(config: dict, fixture: ArnisInfa
         assert report["open_decisions"]
 
 
-def test_stage_ppo_smoke_consumes_the_native_stage_env(config: dict, fixture: ArnisInfantryFixture) -> None:
+def test_stage_ppo_smoke_consumes_the_native_stage_env(
+    config: dict, fixture: ArnisInfantryFixture, ground_acceptance_cases, ground_acceptance_seed: int
+) -> None:
     pytest.importorskip("stable_baselines3")
     from python.rl.ground.curriculum import ppo_smoke
 
-    cases, _rejected = stage_cases("S1_flat_waypoint", config=config, fixture=fixture)
-    smoke = ppo_smoke(cases[0], seed=_SEED, total_timesteps=8)
+    cases, _rejected = stage_cases(
+        "S1_flat_waypoint", config=config, fixture=fixture, cases=ground_acceptance_cases
+    )
+    smoke = ppo_smoke(cases[0], seed=ground_acceptance_seed, total_timesteps=8)
     assert smoke["total_timesteps"] == 8
     assert smoke["claim"] == "pipeline_smoke_only_not_a_learning_result"

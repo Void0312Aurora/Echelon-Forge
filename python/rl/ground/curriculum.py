@@ -21,10 +21,11 @@ from typing import Any, Mapping, Sequence
 from .acceptance_matrix import (
     CONTRACT_GOAL_RADIUS_M,
     HELD_CLAIMS,
+    RolloutCache,
+    cached_rollout,
     case_failures,
     case_step_budget,
     matrix_row,
-    run_case,
 )
 from .fixture_cases import ArnisInfantryFixture, FixtureCase, FixtureCaseError, derive_acceptance_cases
 
@@ -118,15 +119,22 @@ def stage_cases(
     *,
     config: Mapping[str, Any] | None = None,
     fixture: ArnisInfantryFixture | None = None,
+    cases: Sequence[FixtureCase] | None = None,
 ) -> tuple[tuple[FixtureCase, ...], dict[str, list[str]]]:
-    """Admitted cases for a stage, plus the rejection reasons of the rest."""
+    """Admitted cases for a stage, plus the rejection reasons of the rest.
+
+    ``cases`` is the derived acceptance case set of ``fixture``; it is derived
+    here when omitted.
+    """
 
     config = config or load_stage_config()
     fixture = fixture or ArnisInfantryFixture()
     admit = _stage(config, stage_id)["admit"]
+    if cases is None:
+        cases = derive_acceptance_cases(fixture, goal_radius_m=CONTRACT_GOAL_RADIUS_M)
     admitted: list[FixtureCase] = []
     rejected: dict[str, list[str]] = {}
-    for case in derive_acceptance_cases(fixture, goal_radius_m=CONTRACT_GOAL_RADIUS_M):
+    for case in cases:
         reasons = _admission_rejections(fixture, case, admit)
         if reasons:
             rejected[case.case_id] = reasons
@@ -202,16 +210,23 @@ def run_stage(
     config: Mapping[str, Any] | None = None,
     fixture: ArnisInfantryFixture | None = None,
     ppo_timesteps: int | None = None,
+    cases: Sequence[FixtureCase] | None = None,
+    rollouts: RolloutCache | None = None,
 ) -> dict[str, Any]:
-    """Run the scripted baseline over every admitted case of a stage."""
+    """Run the scripted baseline over every admitted case of a stage.
+
+    ``cases`` is the derived case set of ``fixture`` (derived when omitted).
+    ``rollouts`` shares scripted rollouts with other stages or with the
+    acceptance matrix; see :func:`python.rl.ground.acceptance_matrix.cached_rollout`.
+    """
 
     config = config or load_stage_config()
     fixture = fixture or ArnisInfantryFixture()
     stage = _stage(config, stage_id)
-    cases, rejected = stage_cases(stage_id, config=config, fixture=fixture)
+    admitted, rejected = stage_cases(stage_id, config=config, fixture=fixture, cases=cases)
     rows = []
-    for case in cases:
-        rollout = run_case(case, seed=seed)
+    for case in admitted:
+        rollout = cached_rollout(case, seed=seed, rollouts=rollouts)
         row = matrix_row(case, rollout)
         row["failures"] = _stage_failures(case, row, stage["acceptance"])
         row["verdict"] = "pass" if not row["failures"] else "fail"
@@ -242,7 +257,7 @@ def run_stage(
         ],
     }
     if ppo_timesteps is not None:
-        report["ppo_smoke"] = ppo_smoke(cases[0], seed=seed, total_timesteps=ppo_timesteps)
+        report["ppo_smoke"] = ppo_smoke(admitted[0], seed=seed, total_timesteps=ppo_timesteps)
     return report
 
 
@@ -255,9 +270,20 @@ def run_curriculum(
 ) -> dict[str, Any]:
     config = load_stage_config(config_path)
     fixture = ArnisInfantryFixture()
+    cases = derive_acceptance_cases(fixture, goal_radius_m=CONTRACT_GOAL_RADIUS_M)
+    # Stages admit overlapping case subsets; each case is rolled out once.
+    rollouts: RolloutCache = {}
     stage_ids = list(stage_ids or [stage["stage"] for stage in config["stages"]])
     stages = [
-        run_stage(stage_id, seed=seed, config=config, fixture=fixture, ppo_timesteps=ppo_timesteps)
+        run_stage(
+            stage_id,
+            seed=seed,
+            config=config,
+            fixture=fixture,
+            ppo_timesteps=ppo_timesteps,
+            cases=cases,
+            rollouts=rollouts,
+        )
         for stage_id in stage_ids
     ]
     return {

@@ -14,25 +14,18 @@ import pytest
 
 from python.rl.ground.acceptance_matrix import (
     CONTRACT_BLOCKED_STEP_LIMIT,
-    CONTRACT_GOAL_RADIUS_M,
     build_acceptance_matrix,
+    cached_rollout,
     case_failures,
     run_case,
 )
-from python.rl.ground.fixture_cases import ArnisInfantryFixture, derive_acceptance_cases
 
 
-_SEED = 42
-
-
-@pytest.fixture(scope="module")
-def fixture() -> ArnisInfantryFixture:
-    return ArnisInfantryFixture()
-
-
-@pytest.fixture(scope="module")
-def matrix(fixture: ArnisInfantryFixture) -> dict:
-    return build_acceptance_matrix(seed=_SEED, fixture=fixture)
+# The matrix, its case set, and its rollouts are session fixtures
+# (tests/training/conftest.py), shared with the replay and curriculum modules.
+@pytest.fixture
+def matrix(ground_acceptance_matrix: dict) -> dict:
+    return ground_acceptance_matrix
 
 
 def test_native_acceptance_matrix_has_every_derived_category(matrix: dict) -> None:
@@ -94,30 +87,60 @@ def test_native_acceptance_matrix_records_held_building_behaviour(matrix: dict) 
         assert row["outcome"] in {"reach", "block"}
 
 
-def test_native_acceptance_matrix_flags_a_wrong_expectation(fixture: ArnisInfantryFixture) -> None:
-    cases = derive_acceptance_cases(fixture, goal_radius_m=CONTRACT_GOAL_RADIUS_M)
-    control = next(case for case in cases if case.case_id.endswith(":off_bridge_control"))
+def test_native_acceptance_matrix_flags_a_wrong_expectation(
+    ground_acceptance_cases, ground_acceptance_seed: int, ground_rollouts: dict, matrix: dict
+) -> None:
+    control = next(case for case in ground_acceptance_cases if case.case_id.endswith(":off_bridge_control"))
     wrong = replace(control, expected="reach", expected_block_reason=None)
-    rollout = run_case(control, seed=_SEED)
+    rollout = cached_rollout(control, seed=ground_acceptance_seed, rollouts=ground_rollouts)
     failures = case_failures(wrong, rollout)
     assert "outcome:block" in failures
     assert any(failure.startswith("preflight_blocked:") for failure in failures)
 
 
 def test_native_acceptance_matrix_short_horizon_truncates_instead_of_passing(
-    fixture: ArnisInfantryFixture,
+    ground_acceptance_cases, ground_acceptance_seed: int
 ) -> None:
-    cases = derive_acceptance_cases(fixture, goal_radius_m=CONTRACT_GOAL_RADIUS_M)
-    crossing = next(case for case in cases if case.case_id.endswith(":crossing"))
-    rollout = run_case(crossing, seed=_SEED, max_steps=CONTRACT_BLOCKED_STEP_LIMIT)
+    crossing = next(case for case in ground_acceptance_cases if case.case_id.endswith(":crossing"))
+    rollout = run_case(crossing, seed=ground_acceptance_seed, max_steps=CONTRACT_BLOCKED_STEP_LIMIT)
     assert rollout.truncation_reason == "max_steps"
     assert "outcome:truncated:max_steps" in case_failures(crossing, rollout)
 
 
-def test_native_acceptance_matrix_trace_digests_repeat_for_the_same_seed(
-    fixture: ArnisInfantryFixture, matrix: dict
+def test_native_acceptance_matrix_rollout_cache_is_keyed_by_seed_and_route(
+    ground_acceptance_cases, ground_acceptance_seed: int, ground_rollouts: dict, matrix: dict
 ) -> None:
-    again = build_acceptance_matrix(seed=_SEED, fixture=fixture)
-    assert [(row["case_id"], row["trace_sha256"]) for row in again["rows"]] == [
-        (row["case_id"], row["trace_sha256"]) for row in matrix["rows"]
-    ]
+    # One shared rollout per (seed, case route): a hit returns the matrix's own
+    # rollout, while another seed or a moved route is a new key, never stale.
+    case = next(case for case in ground_acceptance_cases if case.case_id.endswith(":off_bridge_control"))
+    cached = cached_rollout(case, seed=ground_acceptance_seed, rollouts=ground_rollouts)
+    assert cached is cached_rollout(case, seed=ground_acceptance_seed, rollouts=ground_rollouts)
+    assert cached.digest == {row["case_id"]: row for row in matrix["rows"]}[case.case_id]["trace_sha256"]
+    scratch = dict(ground_rollouts)
+    other_seed = cached_rollout(case, seed=ground_acceptance_seed + 1, rollouts=scratch)
+    assert other_seed is not cached and other_seed.seed == ground_acceptance_seed + 1
+    moved = replace(
+        case,
+        expected="reach",
+        expected_block_reason=None,
+        waypoints_xy_m=(case.approach_xy_m,),
+        block_distance_m=None,
+        approach_xy_m=None,
+    )
+    assert cached_rollout(moved, seed=ground_acceptance_seed, rollouts=scratch) is not cached
+    assert len(scratch) == len(ground_rollouts) + 2
+
+
+def test_native_acceptance_matrix_report_is_independent_of_the_rollout_cache(
+    ground_acceptance_cases, ground_acceptance_seed: int, ground_infantry_fixture, matrix: dict
+) -> None:
+    # Same-seed digest identity over the full matrix is checked case by case
+    # in the replay-determinism module against independent rollouts; here a
+    # cache-free build of a case subset must reproduce the shared report rows.
+    subset = [case for case in ground_acceptance_cases if case.category == "water_or_obstacle"]
+    assert subset
+    again = build_acceptance_matrix(
+        seed=ground_acceptance_seed, fixture=ground_infantry_fixture, cases=subset
+    )
+    rows = {row["case_id"]: row for row in matrix["rows"]}
+    assert again["rows"] == [rows[case.case_id] for case in subset]

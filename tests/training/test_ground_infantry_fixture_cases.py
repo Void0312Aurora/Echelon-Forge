@@ -14,6 +14,7 @@ from pathlib import Path
 
 import pytest
 
+from python.rl.ground.acceptance_matrix import CONTRACT_GOAL_RADIUS_M
 from python.rl.ground.fixture_cases import (
     ArnisInfantryFixture,
     FixtureCaseError,
@@ -34,17 +35,19 @@ _FIXTURE_DIR = (
     / "eastern_plain_infantry_phase1"
 )
 # The native probe's own goal-radius default; no matrix-local coefficient.
-_GOAL_RADIUS_M = 5.0
+_GOAL_RADIUS_M = CONTRACT_GOAL_RADIUS_M
 
 
-@pytest.fixture(scope="module")
-def fixture() -> ArnisInfantryFixture:
-    return ArnisInfantryFixture(_FIXTURE_DIR)
+# Session fixtures (tests/training/conftest.py), shared with the matrix and
+# curriculum modules. The determinism check below re-derives independently.
+@pytest.fixture
+def fixture(ground_infantry_fixture) -> ArnisInfantryFixture:
+    return ground_infantry_fixture
 
 
-@pytest.fixture(scope="module")
-def cases(fixture: ArnisInfantryFixture):
-    return derive_acceptance_cases(fixture, goal_radius_m=_GOAL_RADIUS_M)
+@pytest.fixture
+def cases(ground_acceptance_cases):
+    return ground_acceptance_cases
 
 
 def test_case_derivation_is_deterministic(cases) -> None:
