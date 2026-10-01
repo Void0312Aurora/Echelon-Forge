@@ -105,6 +105,8 @@ class CaseRollout:
     first_divergent_record: int | None
     records: tuple[Mapping[str, Any], ...] | None
     actions: tuple[tuple[float, ...], ...] | None
+    # Canonical JSON line of each kept record, as hashed into ``digest``.
+    record_lines: tuple[bytes, ...] | None = None
 
     @property
     def outcome(self) -> str:
@@ -195,16 +197,19 @@ def run_case(
     preflight = dict(info["route_validation"])
     digest = hashlib.sha256()
     kept: list[dict[str, Any]] = []
+    kept_lines: list[bytes] = []
     first_divergent: int | None = None
     record_index = 0
 
     def record(entry: dict[str, Any]) -> None:
         nonlocal first_divergent, record_index
-        digest.update(_canonical(entry))
+        line = _canonical(entry)
+        digest.update(line)
         if keep_records:
             kept.append(entry)
+            kept_lines.append(line)
         if compare_records is not None and first_divergent is None:
-            if record_index >= len(compare_records) or _canonical(compare_records[record_index]) != _canonical(entry):
+            if record_index >= len(compare_records) or _canonical(compare_records[record_index]) != line:
                 first_divergent = record_index
         record_index += 1
 
@@ -266,6 +271,7 @@ def run_case(
         ),
         records=tuple(kept) if keep_records else None,
         actions=tuple(actions) if keep_records else None,
+        record_lines=tuple(kept_lines) if keep_records else None,
     )
 
 
@@ -362,6 +368,26 @@ def difference_paths(left: Any, right: Any, path: str = "") -> set[str]:
     return {path}
 
 
+def _record_difference_paths(left: CaseRollout, right: CaseRollout) -> set[str]:
+    """``difference_paths`` over two kept traces, reusing their canonical lines.
+
+    Equal canonical lines mean equal records, so only the records whose lines
+    differ are walked.
+    """
+
+    assert left.records is not None and left.record_lines is not None
+    assert right.records is not None and right.record_lines is not None
+    if len(left.records) != len(right.records):
+        return {"[]#length"}
+    paths: set[str] = set()
+    for left_line, right_line, left_record, right_record in zip(
+        left.record_lines, right.record_lines, left.records, right.records
+    ):
+        if left_line != right_line:
+            paths |= difference_paths(left_record, right_record, "[]")
+    return paths
+
+
 def replay_determinism(
     case: FixtureCase,
     *,
@@ -409,7 +435,7 @@ def replay_determinism(
     probe_identical = trace_digest(list(replayed)) == trace_digest(env_traces)
     alternate = run_case(case, seed=alternate_seed, max_steps=max_steps, keep_records=True)
     assert alternate.records is not None
-    cross_paths = sorted(difference_paths(list(first.records), list(alternate.records)))
+    cross_paths = sorted(_record_difference_paths(first, alternate))
     return {
         "case_id": case.case_id,
         "seed": seed,

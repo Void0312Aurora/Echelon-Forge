@@ -17,6 +17,7 @@ from python.rl.ground.acceptance_matrix import (
     cached_rollout,
     difference_paths,
     replay_determinism,
+    run_case,
 )
 
 
@@ -102,6 +103,12 @@ def test_replay_determinism_without_a_reference_compares_two_fresh_rollouts(
     )
     assert evidence["same_seed_reference"] == "second_rollout"
     assert evidence["same_seed_identical"] is True, evidence
+    # The line-skipping cross-seed walk equals the plain full-trace walk.
+    first = run_case(case, seed=ground_acceptance_seed, keep_records=True)
+    alternate = run_case(case, seed=ground_acceptance_seed + 1, keep_records=True)
+    assert set(evidence["cross_seed_difference_paths"]) == difference_paths(
+        list(first.records), list(alternate.records)
+    )
 
 
 def test_replay_determinism_flags_a_mismatched_reference(
