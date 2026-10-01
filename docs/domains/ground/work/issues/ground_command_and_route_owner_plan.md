@@ -9,8 +9,17 @@ Canonical: `docs/domains/ground/work/issues/ground_command_and_route_owner_plan.
 Owner: `domains/ground`
 Last verified: `2026-10-01`
 Content status: read-only repository analysis on origin/main `71912e2a7` plus the
-WP5 ledger entry on `codex/army-ground-integration` (`204a15918`). This document
-proposes decisions and sequencing. It authorizes no implementation.
+Ground scripted admission ledger entry on `codex/army-ground-integration`
+(`204a15918`). This document proposes decisions and sequencing. It authorizes no
+implementation.
+
+Terms used below:
+
+- WP5 means the cross-domain plan's "Ground admission and capability gate"
+  package and its 2026-10-01 scripted admission slice.
+- WP6 means the cross-domain plan's "Multi-unit, communication, and cross-domain
+  coordination" package.
+- GC-n means a work packet defined by this plan.
 
 Inputs:
 
@@ -20,8 +29,9 @@ Inputs:
 - [Ground specialization baseline](../../standards/specialization_baseline.md)
 - [Ground minimal task structure](../../standards/minimal_task_structure.md)
 - [Ground Systems Owner Admission](../../reviews/ground_systems_owner_admission_20260921/README.md)
-- [Cross-Domain Scripted Agent System Plan](../../../../architecture/work/issues/cross_domain_scripted_agent_system_plan.md),
-  WP5, WP6, and the 2026-10-01 WP5 ledger entry
+- [Cross-Domain Scripted Agent System Plan](../../../../architecture/work/issues/cross_domain_scripted_agent_system_plan.md):
+  the Ground admission and multi-unit coordination packages, and the 2026-10-01
+  Ground scripted admission ledger entry
 - [Runtime Composition Registry Sync](../../../../architecture/work/issues/runtime_composition_registry_sync.md),
   Repair Order and the layered-army-stack addendum
 - [Stable Entity Identity For Stochastic Draws](../../../../architecture/work/issues/stable_entity_identity_for_stochastic_draws.md)
@@ -43,7 +53,8 @@ work but does not plan it.
 
 The outcome this plan unblocks:
 
-- the WP5 scripted Ground model can run from a maintained scenario through
+- the scripted Ground model from the Ground admission slice can run from a
+  maintained scenario through
   `RuntimeFacade`/`WorldBatch`, not the quarantined native-probe bindings on a
   bare `SimulationKernel`;
 - a production Ground RL adapter can then be built on the same contracts once
@@ -102,7 +113,8 @@ The outcome this plan unblocks:
 - The same function samples the segment at a hard-coded `5.0` m spacing
   (`std::ceil(distance_m / 5.0)`). The value is not derived from the loaded
   raster's metric step. When the raster step is finer than 5 m, a feature one
-  cell wide can fall between samples. The spacing is also not reported to the
+  cell wide can fall between samples, and any fixed spacing can miss a segment
+  that clips a cell corner. The spacing is also not reported to the
   caller, so a trace cannot say which resolution produced a verdict.
 - Route sequencing exists only in Python tooling.
   `GroundInfantryNativeProbe.validate_waypoint_sequence()` and its waypoint
@@ -126,7 +138,7 @@ The outcome this plan unblocks:
 
 ### Consumers that are blocked
 
-- The WP5 scripted model `ground.infantry.objective_occupy_scripted` lives in
+- The scripted model `ground.infantry.objective_occupy_scripted` lives in
   `python/tasking_contracts/ground/` on `codex/army-ground-integration`
   (`204a15918`); it is not yet on origin/main. Its ledger entry records that the
   HEI replay used the quarantined native-probe kernel surface and a
@@ -192,9 +204,13 @@ Recommendation: B.
   semantics unchanged.
 - Each declared waypoint carries an authored arrival radius. There is no Ground
   default. In particular the Air `SpatialRouteWaypoint::radius_m = 500.0`
-  default must not leak into Ground. Load-time validation rejects a radius
-  smaller than one tick of travel at the unit's maximum admitted speed. That
-  bound is derived from the unit's speed and the step; it is not a tuned value.
+  default must not leak into Ground. Load-time validation rejects a missing,
+  non-finite, or non-positive radius.
+- Arrival is tested on the swept tick segment: the closest approach of the
+  tick's start-to-end segment to the waypoint is within the radius. A test on the
+  end position alone would make a valid radius depend on step size and speed, and
+  a fast step could skip a waypoint. The swept test needs no step-dependent lower
+  bound and no tuned tolerance.
 - Waypoint geometry never enters the command. The command says which route and
   how to execute it; the catalog says what the route is.
 
@@ -217,14 +233,19 @@ assignments directly, which is enough for the outcome this plan unblocks.
 | --- | --- | --- |
 | A | `IEnvironmentModel` grows route and passability products | Puts infantry mobility policy in the shared environment. This repeats the stance mistake undone on 2026-09-28 and makes Naval/Air consumers carry Ground semantics. |
 | B | A Ground-owned system computes everything, including terrain sampling | Duplicates raster access and bridge geometry outside the environment owner. Two terrain readers would drift. |
-| C | Split by kind. The environment returns domain-neutral segment facts: per-sample surface class, declared-feature membership (water body, bridge deck), elevation and slope, the sample spacing used, and source provenance (D4). A Ground-owned pure policy turns facts into the infantry passability verdict and movement cost. | Moves the `passable` verdict out of `default_environment_model.cpp` and changes the transition observation shape. Every consumer of `GroundTransitionObservation.passable` must move to the Ground verdict in the same packet. |
+| C | Split by kind. The environment returns domain-neutral segment facts: per-traversed-cell surface class and path length, declared-feature membership (water body, bridge deck), elevation and slope, and source provenance (D4). A Ground-owned pure policy turns facts into the infantry passability verdict and movement cost. | Moves the `passable` verdict out of `default_environment_model.cpp` and changes the transition observation shape. Every consumer of `GroundTransitionObservation.passable` must move to the Ground verdict in the same packet. |
 
 Recommendation: C.
 
-- Sample spacing is derived from the loaded raster, not fixed. The rule: spacing
-  is at most half of `min(|step_x|, |step_y|)`, so consecutive samples cannot
-  straddle a whole cell. Spacing and sample count are part of the returned facts.
-  Removing the `5.0` m literal is part of this decision, not a later cleanup.
+- The segment query visits every raster cell the segment crosses (grid
+  traversal over the loaded `step_x`/`step_y`), instead of sampling at a spacing.
+  No spacing parameter remains to tune, and corner clips are not missed. For
+  per-cell classes the movement cost becomes a path-length-weighted average,
+  which is exact for a piecewise-constant raster. Declared bridge and water
+  features are vector geometry, so their membership is a segment-geometry
+  intersection, not a raster lookup. The traversal method and traversed cell
+  count are part of the returned facts. Removing the `5.0` m literal is part of
+  this decision, not a later cleanup.
 - The infantry passability policy (what blocks, how a declared bridge admits) and
   the movement cost policy (`evaluate_transition_movement_effects`) sit together
   under the Ground owner. Both the movement system and the facade route
@@ -250,8 +271,8 @@ Recommendation: C.
 Recommendation: B.
 
 - `GroundTerrainQueryProvenance` carries the terrain bundle digest, the field
-  overlay digest, raster `step_x`/`step_y`, the sample spacing and count, and the
-  query kind (own-cell, segment, route leg). The digests are computed when the
+  overlay digest, raster `step_x`/`step_y`, the traversal method and traversed cell
+  count, and the query kind (own-cell, segment, route leg). The digests are computed when the
   bundle and overlay are loaded. This analysis did not verify whether the Arnis
   manifest already carries per-file digests. GC-0 establishes that, and the
   loader reuses them if present.
@@ -269,8 +290,8 @@ Recommendation: B.
   the scripted model keeps reading its assigned target from its own mission
   command.
 - Execution evidence: the movement system records what it consumed each tick
-  (resolved leg, blocked reason, the sample count and average multiplier it
-  applied, provenance digest reference) in the execution-state component (D5).
+  (resolved leg, blocked reason, the traversed cell count and length-weighted
+  multiplier it applied, provenance digest reference) in the execution-state component (D5).
   The export reads that record. It does not recompute a transition, which is what
   the probe does today.
 
@@ -353,7 +374,9 @@ for GC-3. Everything else is serial.
     bundle and overlay for world creation? `ground_platoon_native_static_occupy_v1`
     proves platoon spawn, not terrain.
   - What does the facade observation export include for a Ground entity today?
-  - What are the raster metric steps of the eastern-plain fixture?
+  - What are the raster metric steps of the eastern-plain fixture? Is
+    `get_terrain_at` a nearest-cell or an interpolated lookup, and how is slope
+    computed? Grid traversal must follow the lookup's own cell definition.
   - Which components does the `army-los` line plan to register?
 - Write set: an evidence section appended to this plan, or a sibling evidence
   file under `docs/domains/ground/work/issues/`.
@@ -364,7 +387,7 @@ for GC-3. Everything else is serial.
 ### GC-1 — Environment facts / Ground policy split (C++, no registry change)
 
 - Scope: D3. The environment transition query returns domain-neutral facts
-  with derived spacing and a provenance record. The infantry passability verdict
+  from exact grid traversal, with a provenance record. The infantry passability verdict
   moves to the Ground policy beside `evaluate_transition_movement_effects`.
   `GroundInfantryMovement` and every consumer listed in GC-0 use the Ground
   verdict. The `5.0` m literal is removed. The bundle and overlay loaders record
@@ -377,11 +400,12 @@ for GC-3. Everything else is serial.
   translation for the changed tuple shape, `python/rl/ground/native_probe.py`
   where it reads the verdict, and the Ground runtime and training tests.
 - Acceptance evidence:
-  - a synthetic raster with a water feature one cell wide, finer than the old
-    spacing, is now blocked;
+  - on a synthetic raster, a one-cell water feature narrower than the old 5 m
+    spacing is blocked, and so is a segment that only clips a water cell's
+    corner;
   - the eastern-plain native acceptance suite and the bridge crossing pass;
   - every changed movement trace value is listed before and after with its
-    cause (finer sampling). No silent behaviour drift.
+    cause (exact traversal). No silent behaviour drift.
   - `IEnvironmentModel` no longer contains an infantry verdict.
   - The census pin is unchanged (checked, not assumed).
 - Entry condition: GC-0. The `army-los` line has landed on main, or the two
@@ -420,8 +444,8 @@ for GC-3. Everything else is serial.
 - Scope: D2 and D5. Add the scenario content schema for declared Ground routes:
   a polyline with an authored arrival radius per waypoint and a content-derived
   `route_ref_id`. Add load-time validation: every leg passes the GC-1 Ground
-  verdict, and every radius is at least one tick of travel at the maximum
-  admitted speed. Add `GroundRouteExecutionState` (and `GroundRouteCatalogRef`
+  verdict, and every radius is present, finite, and positive. Arrival uses the
+  swept-segment test from D2. Add `GroundRouteExecutionState` (and `GroundRouteCatalogRef`
   if GC-0 requires it). Add the route-following phase in `GroundInfantryMovement`
   with leg advancement on arrival and the per-tick execution record. Then run the
   regeneration chain once, in the Repair Order.
@@ -434,7 +458,9 @@ for GC-3. Everything else is serial.
     bridge executes to completion with leg transitions in the record;
   - a route with an impassable leg is rejected at load with the leg index and
     reason;
-  - a route missing a radius, or with one below the derived bound, is rejected;
+  - a route with a missing or non-positive radius is rejected;
+  - a waypoint passed through mid-tick, with the end position outside the radius,
+    still advances the leg;
   - same-seed replay is byte-identical;
   - the census pin moves to the value GC-0 predicted;
   - Cordis `npm test` is green;
@@ -476,7 +502,7 @@ for GC-3. Everything else is serial.
 ### GC-5 — Scenario-routed scripted Ground AI through the facade (Python and content)
 
 - Scope: a maintained Ground scenario declaring the eastern-plain terrain, a
-  declared route, and the single soldier. The WP5 scripted model is routed by
+  declared route, and the single soldier. The scripted Ground model is routed by
   the scenario manifest through `DecisionRuntimeRoster`. It emits maintained
   MissionCommand assignments through the facade batch path and reads the facade
   observation. Its `route_intent` becomes `declared_route` where the scenario
@@ -484,15 +510,16 @@ for GC-3. Everything else is serial.
 - Write set: `python/tasking_contracts/ground/` (once on main), the scenario
   and manifest content, the Ground capability label declaration and its tests
   (`route_execution_declared` moves from held to `admitted_bounded`;
-  `route_planning` stays held), and the WP5 ledger entry in the cross-domain
+  `route_planning` stays held), and the Ground admission ledger entry in the cross-domain
   plan.
 - Acceptance evidence:
-  - the facade replay reproduces the WP5 HEI evidence classes (move, latched
+  - the facade replay reproduces the Ground admission HEI evidence classes (move, latched
     hold, cadence, byte-identical same-seed replay) without touching any
     native-probe name;
   - a structural test asserts that the routed path imports no
     `native_probe_only` surface.
-- Entry condition: GC-4b. `codex/army-ground-integration` (WP5) is on main.
+- Entry condition: GC-4b. `codex/army-ground-integration` (the Ground
+  scripted admission slice) is on main.
 
 ### GC-6 — Native-probe retirement (C++ and Python, P8 regen)
 
@@ -520,7 +547,7 @@ for GC-3. Everything else is serial.
 | Route planning and path finding, including promoting `GroundFieldProxy.plan_bridge_route()` | No accepted planner owner. Declared-route validation is the bounded claim. |
 | General passability mask or route-level cost grid | No consumer needs it for declared routes. It would be a new environment product with its own provenance. |
 | Route fields on `TaskOrderGround`, `LeaderIntentGround`, `PilotReportGround` | The binding note holds their trailing Ground fields. This plan's consumers emit MissionCommand directly. Adding them needs a standards update to `minimal_task_structure.md`. |
-| Multi-unit routes and formation | WP6 work, with no Ground formation owner. |
+| Multi-unit routes and formation | Belongs to the cross-domain multi-unit coordination package. There is no Ground formation owner. |
 | Acceleration, fatigue, and turning dynamics | No Ground dynamics owner. Movement remains a bounded kinematic step. |
 | Line-of-sight, cover, concealment, authored hitboxes | Item 5. Owned by the `army-los` line. |
 | Ground sensing and hostile track export in the observation block | Ground sensing is held. Contacts stay scenario-declared. |
@@ -540,7 +567,7 @@ for GC-3. Everything else is serial.
   scenario waypoints. If Ground used a load-order key, joint tooling could
   misread it. Mitigation: use the same content-derived convention, interpreted
   only under `DeclaredRoute` on Ground entities.
-- Finer sampling changes existing traces (GC-1). Mitigation: a before/after
+- Exact traversal changes existing traces (GC-1). Mitigation: a before/after
   table with causes. Nothing is left unexplained.
 - The MissionCommand layout change in GC-2 touches every domain's
   serialization surfaces. Mitigation: GC-2 measures and regenerates any moved
@@ -549,7 +576,8 @@ for GC-3. Everything else is serial.
   If it is refused, GC-4a must fall back to a labelled `diagnostics_only` export.
   That keeps the scripted AI on diagnostics and blocks GC-5. This is the
   largest schedule risk.
-- External dependency: WP5 is not on main. GC-5 cannot start until
+- External dependency: the Ground scripted admission slice is not on main.
+  GC-5 cannot start until
   `codex/army-ground-integration` lands.
 - Evidence host: P7 recapture follows the HEI convention. HEI availability
   gates GC-3 and GC-6.
@@ -566,8 +594,8 @@ for GC-3. Everything else is serial.
    `src/systems/domains/ground/movement_effects.h` to
    `src/models/domains/ground/` as part of GC-1?
 4. Q4: Accept fail-closed loading when a Ground waypoint has no authored arrival
-   radius? This deliberately breaks reuse of the Air `SpatialRouteWaypoint`
-   default.
+   radius, plus the swept-segment arrival test? This deliberately breaks reuse of
+   the Air `SpatialRouteWaypoint` default and its end-position semantics.
 5. Q5: Should route following be a phase in `GroundInfantryMovement` (D5-B) or
    its own stage (D5-C, one more resolved system)?
 6. Q6: Retire the raw `fire_ground_weapon` binding in GC-6, or keep it as a
