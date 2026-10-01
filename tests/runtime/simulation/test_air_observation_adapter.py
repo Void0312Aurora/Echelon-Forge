@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from python.mission_obs_taxonomy import mission_observation_field_index
+from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index
 from python.simulation.air.engagement import AirEngagementFacts
 from python.simulation.air.observation import (
     AIR_SCRIPTED_MISSION_MODE,
@@ -85,7 +85,12 @@ def test_air_observation_projection_keeps_named_instrument_and_mission_fields() 
     assert np.allclose(vector[[0, 3, 9, 37, 38, 39, 40, 41]], [180.0, 1195.0, 90.0, 4.0, 1.0, 2.0, 3.0, 4.0])
     assert mission[mission_observation_field_index(AIR_SCRIPTED_MISSION_MODE, "command_code")] == 1.0
     assert mission[mission_observation_field_index(AIR_SCRIPTED_MISSION_MODE, "target_altitude_m")] == 1500.0
-    assert mission[mission_observation_field_index(AIR_SCRIPTED_MISSION_MODE, "takeoff_clearance_code")] == 4.0
+    # The default direct-facade slice is the basic command projection; NAV-v2
+    # takeoff fields exist only when a caller selects that mode explicitly.
+    assert mission.shape == (int(mission_observation_dim(AIR_SCRIPTED_MISSION_MODE)),)
+    takeoff_mode = "nav_v2_cooperative_takeoff_v1"
+    takeoff_mission = build_air_mission_vector(command, mode=takeoff_mode)
+    assert takeoff_mission[mission_observation_field_index(takeoff_mode, "takeoff_clearance_code")] == 4.0
 
 
 def test_air_observation_projection_pads_native_contacts_and_rwr() -> None:

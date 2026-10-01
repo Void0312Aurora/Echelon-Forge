@@ -38,6 +38,8 @@ class AirScriptedEWIntent:
 class AirScriptedEWModel:
     """Interpret RWR rows without accessing truth state or native components."""
 
+    model_kind = "scripted"
+
     def __init__(self, *, max_rwr: int = 4) -> None:
         if int(max_rwr) <= 0:
             raise ValueError("Air scripted EW max_rwr must be positive")
@@ -100,6 +102,8 @@ class AirScriptedEWModel:
 
 class AirScriptedEWActionModel:
     """Compose flight control with the versioned 14-element EW action mode."""
+
+    model_kind = "scripted"
 
     def __init__(self, *, dt: float = 0.05, max_rwr: int = 4) -> None:
         self.dt = float(dt) if float(dt) > 1.0e-6 else 0.05

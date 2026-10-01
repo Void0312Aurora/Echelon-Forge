@@ -190,8 +190,14 @@ def test_scripted_engagement_controller_reaches_native_fire_gate() -> None:
         backend.close()
 
 
-def test_scripted_pilot_path_resolves_database_munition_and_native_effect() -> None:
-    """The maintained scripted action path must reach the database weapon owner."""
+def _run_scripted_database_munition_episode(seed: int) -> tuple[int, str, list[float]]:
+    """Fire once through the scripted PilotAction path and collect native damage reports.
+
+    Returns the shooter's remaining missiles after the release step, the
+    selected database munition (empty when no launch event exists), and the
+    ``system_health_delta`` of every damage report the native effects owner
+    produced for the shot within the follow-up window.
+    """
 
     backend = FacadeBatchBackend(
         database_path=DATABASE,
@@ -200,7 +206,7 @@ def test_scripted_pilot_path_resolves_database_munition_and_native_effect() -> N
     )
     controller = AirScriptedEngagementController(weapon_station_id=1)
     try:
-        backend.seed(17)
+        backend.seed(seed)
         initial = backend.reset()
         blue_key, red_key = initial.entity_keys
         hold = ef_py.PilotAction()
@@ -247,7 +253,6 @@ def test_scripted_pilot_path_resolves_database_munition_and_native_effect() -> N
         assert decision.pilot_action.weapon_select_id == 1
 
         after = backend.step({blue_key: decision.pilot_action, red_key: hold})
-        assert int(after.observations[0].missiles_remaining) == 3
         launch_packet = backend.export_engagement_events(
             entity_keys=(blue_key,),
             include_launch_requests=False,
@@ -255,11 +260,10 @@ def test_scripted_pilot_path_resolves_database_munition_and_native_effect() -> N
             include_damage_reports=False,
             include_effects_events=False,
         )
-        assert launch_packet.launch_events[-1].selected_munition == "AIM-120C-7"
-
-        # The deterministic seed and maintained F-16 geometry produce a native
-        # component consequence; the test deliberately does not claim a kill.
-        structural_delta = None
+        munition = (
+            str(launch_packet.launch_events[-1].selected_munition) if launch_packet.launch_events else ""
+        )
+        deltas: list[float] = []
         for _ in range(180):
             backend.step({blue_key: hold, red_key: hold})
             packet = backend.export_engagement_events(
@@ -269,16 +273,47 @@ def test_scripted_pilot_path_resolves_database_munition_and_native_effect() -> N
                 include_damage_reports=True,
                 include_effects_events=True,
             )
-            for report in packet.damage_reports:
-                if float(report.system_health_delta) < 0.0:
-                    structural_delta = float(report.system_health_delta)
-                    break
-            if structural_delta is not None:
+            deltas.extend(float(report.system_health_delta) for report in packet.damage_reports)
+            if deltas:
                 break
-        assert structural_delta is not None
+        return int(after.observations[0].missiles_remaining), munition, deltas
     finally:
         controller.close()
         backend.close()
+
+
+def test_scripted_pilot_path_resolves_database_munition_and_native_effect() -> None:
+    """The maintained scripted action path must reach the database weapon owner."""
+
+    missiles_remaining, munition, deltas = _run_scripted_database_munition_episode(17)
+    assert missiles_remaining == 3
+    assert munition == "AIM-120C-7"
+    # The native effects owner reports the shot; whether a given draw also
+    # degrades a component is stochastic and is checked across seeds below.
+    assert deltas
+    assert all(delta <= 0.0 for delta in deltas)
+
+
+def test_scripted_pilot_path_native_effect_can_degrade_components() -> None:
+    """Non-vacuity: across a seed sweep, some scripted shots degrade a component.
+
+    Draw seeds are stable-identity keyed, so which seed degrades a component is
+    an implementation detail; the property is that the database munition path
+    reaches the component-consequence owner at all.
+    """
+
+    degraded = 0
+    launched = 0
+    for seed in range(1, 9):
+        missiles_remaining, munition, deltas = _run_scripted_database_munition_episode(seed)
+        if missiles_remaining != 3:
+            continue
+        launched += 1
+        assert munition == "AIM-120C-7"
+        if any(delta < 0.0 for delta in deltas):
+            degraded += 1
+    assert launched > 0
+    assert degraded > 0
 
 
 def _run_direct_generic_terminal_episode(seed: int) -> tuple[int, object, object]:

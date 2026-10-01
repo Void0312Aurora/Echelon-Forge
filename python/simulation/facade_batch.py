@@ -123,7 +123,7 @@ class FacadeBatchBackend:
     def air_scripted_observations(
         self,
         *,
-        mode: str = "nav_v2_cooperative_takeoff_v1",
+        mode: str | None = None,
         ils: Mapping[EntityKey, Sequence[float]] | None = None,
         mission_facts: Mapping[EntityKey, Mapping[str, Any]] | None = None,
         max_contacts: int = 8,
@@ -131,7 +131,11 @@ class FacadeBatchBackend:
     ) -> tuple[dict[str, Any], ...]:
         """Build neutral Air observations from native facade state."""
         self._require_ready()
-        from .air.observation import build_air_scripted_observation
+        from .air.observation import AIR_SCRIPTED_MISSION_MODE, build_air_scripted_observation
+
+        # The Air observation owner declares the default mission slice; richer
+        # NAV-v2 modes need a caller that supplies their route/role facts.
+        mission_mode = AIR_SCRIPTED_MISSION_MODE if mode is None else mode
 
         current = self.snapshot()
         commands = self.read_command_chain()["mission_commands"]
@@ -142,7 +146,7 @@ class FacadeBatchBackend:
                 observation,
                 instrument,
                 commands[index] if index < len(commands) else None,
-                mode=mode,
+                mode=mission_mode,
                 ils=ils_by_key.get(entity_key, (0.0, 0.0, 0.0, 0.0)),
                 mission_facts=facts_by_key.get(entity_key),
                 max_contacts=max_contacts,
@@ -154,13 +158,15 @@ class FacadeBatchBackend:
         )
 
     def step(self, actions: Mapping[EntityKey, Any]) -> FacadeBatchSnapshot:
-        self._require_ready()
-        if not isinstance(actions, Mapping):
-            raise TypeError("facade batch step requires an entity-keyed mapping")
-        missing = set(self._entity_keys).difference(actions)
-        if missing:
-            raise KeyError(f"facade batch step requires actions for every controlled entity: {sorted(missing)}")
-        self._submit("set_pilot_actions_batch", "WorldPilotActionAssignment", "action", actions)
+        # Roster membership is validated before coverage so an action for an
+        # uncontrolled entity is reported as such, not as a missing action.
+        self._submit(
+            "set_pilot_actions_batch",
+            "WorldPilotActionAssignment",
+            "action",
+            actions,
+            require_complete=True,
+        )
         self.facade.step_batch()
         return self.snapshot()
 
@@ -282,13 +288,28 @@ class FacadeBatchBackend:
         self._closed = True
         self._entity_keys = ()
 
-    def _submit(self, method: str, assignment_type: str, field_name: str, payloads: Mapping[EntityKey, Any], projection: str | None = None) -> None:
+    def _submit(
+        self,
+        method: str,
+        assignment_type: str,
+        field_name: str,
+        payloads: Mapping[EntityKey, Any],
+        projection: str | None = None,
+        *,
+        require_complete: bool = False,
+    ) -> None:
         self._require_ready()
         if not isinstance(payloads, Mapping):
             raise TypeError(f"facade batch {method} requires an entity-keyed mapping")
         unexpected = set(payloads).difference(self._entity_keys)
         if unexpected:
             raise KeyError(f"facade batch {method} targets uncontrolled entities: {sorted(unexpected)}")
+        if require_complete:
+            missing = set(self._entity_keys).difference(payloads)
+            if missing:
+                raise KeyError(
+                    f"facade batch {method} requires actions for every controlled entity: {sorted(missing)}"
+                )
         assignments = []
         assignment_class = getattr(ef_py, assignment_type)
         for world_index, entity_id in self._entity_keys:
