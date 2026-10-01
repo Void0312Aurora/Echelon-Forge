@@ -49,13 +49,13 @@
   "terrain": {
     "elevation_max_m": 453.78753662109375,
     "elevation_min_m": 443.9601135253906,
-    "fraction_below_10deg": 0.9632998019491342,
-    "fraction_below_5deg": 0.9199090142557406,
+    "fraction_below_10deg": 0.963299802,
+    "fraction_below_5deg": 0.919909014,
     "sample_stride": 3.0,
-    "slope_mean_deg": 1.963091254234314,
-    "slope_p50_deg": 0.9464602470397949,
-    "slope_p95_deg": 7.890973854064922,
-    "slope_p99_deg": 18.091107940673833
+    "slope_mean_deg": 1.963091392,
+    "slope_p50_deg": 0.946460258,
+    "slope_p95_deg": 7.890974436,
+    "slope_p99_deg": 18.091110917
   },
   "thresholds": {
     "max_slope_p95_deg": 8.0,

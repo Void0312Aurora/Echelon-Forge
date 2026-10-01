@@ -17,6 +17,14 @@ import numpy as np
 
 
 FIELD_ACCEPTANCE_CONTRACT_VERSION = "ground_field_map_acceptance.v1"
+# Decimal places kept for derived slope metrics: 1e-9 deg / 1e-9 fraction is
+# far below any acceptance threshold and far above float64 ulp differences
+# between host math libraries.
+REPORT_DECIMALS = 9
+
+
+def _report_value(value: float) -> float:
+    return round(float(value), REPORT_DECIMALS)
 
 
 class FieldAcceptanceError(ValueError):
@@ -67,17 +75,22 @@ def _slope_metrics(elevation: np.ndarray, artifact: dict[str, Any]) -> dict[str,
     if not math.isfinite(dx) or not math.isfinite(dy) or dx <= 0.0 or dy <= 0.0:
         raise FieldAcceptanceError("elevation metric steps must be positive and finite")
     stride = max(1, int(max(elevation.shape) / 512))
-    sampled = np.asarray(elevation[::stride, ::stride], dtype=np.float32)
+    # The report is a checked-in evidence artifact compared for equality on
+    # every host. Float32 accumulation and the platform atan implementation
+    # differ in the last bits between Windows and Linux builds, so the field is
+    # evaluated in float64, the mean is an exactly rounded sum, and reported
+    # metrics carry a fixed decimal precision far coarser than that ulp noise.
+    sampled = np.asarray(elevation[::stride, ::stride], dtype=np.float64)
     gy, gx = np.gradient(sampled, dy * stride, dx * stride)
     slope = np.degrees(np.arctan(np.sqrt(gx * gx + gy * gy)))
     return {
         "sample_stride": float(stride),
-        "slope_mean_deg": float(np.mean(slope)),
-        "slope_p50_deg": float(np.percentile(slope, 50)),
-        "slope_p95_deg": float(np.percentile(slope, 95)),
-        "slope_p99_deg": float(np.percentile(slope, 99)),
-        "fraction_below_5deg": float(np.mean(slope < 5.0)),
-        "fraction_below_10deg": float(np.mean(slope < 10.0)),
+        "slope_mean_deg": _report_value(math.fsum(slope.ravel().tolist()) / slope.size),
+        "slope_p50_deg": _report_value(np.percentile(slope, 50)),
+        "slope_p95_deg": _report_value(np.percentile(slope, 95)),
+        "slope_p99_deg": _report_value(np.percentile(slope, 99)),
+        "fraction_below_5deg": _report_value(np.count_nonzero(slope < 5.0) / slope.size),
+        "fraction_below_10deg": _report_value(np.count_nonzero(slope < 10.0) / slope.size),
         "elevation_min_m": float(np.min(elevation)),
         "elevation_max_m": float(np.max(elevation)),
     }
