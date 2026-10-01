@@ -6,7 +6,6 @@
 #include <cstdint>
 #include <array>
 #include <mutex>
-#include <random>
 #include <string>
 #include <string_view>
 
@@ -24,6 +23,7 @@ class ISensorModel;
 class IUnitFactory;
 class IWeaponReleaseService;
 class SimulationKernel;
+class SimulationKernelRngStream;
 struct MissileTuning;
 
 namespace runtime::providers {
@@ -61,11 +61,13 @@ class DefaultSimulationComposition {
     friend class ::SimulationKernel;
     friend composition::CompositionResult<std::unique_ptr<DefaultSimulationComposition>>
     build_default_simulation_composition(SimulationKernel &kernel, flecs::world &world,
-                                         MissileTuning &missile_tuning, std::mt19937 &rng,
+                                         MissileTuning &missile_tuning,
+                                         SimulationKernelRngStream &rng,
                                          std::string_view resolved_manifest_json);
     friend composition::CompositionResult<std::unique_ptr<DefaultSimulationComposition>>
     build_default_simulation_composition_impl(SimulationKernel &kernel, flecs::world &world,
-                                              MissileTuning &missile_tuning, std::mt19937 &rng,
+                                              MissileTuning &missile_tuning,
+                                              SimulationKernelRngStream &rng,
                                               std::string_view resolved_manifest_json,
                                               std::string_view fail_effect_provider);
 
@@ -88,7 +90,7 @@ validate_default_simulation_composition_manifest(std::string_view resolved_manif
 
 [[nodiscard]] DefaultSimulationCompositionResult
 build_default_simulation_composition(SimulationKernel &kernel, flecs::world &world,
-                                     MissileTuning &missile_tuning, std::mt19937 &rng,
+                                     MissileTuning &missile_tuning, SimulationKernelRngStream &rng,
                                      std::string_view resolved_manifest_json);
 
 } // namespace runtime::providers

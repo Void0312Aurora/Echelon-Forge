@@ -84,21 +84,15 @@ bool debug_boundary_rejects_missing_serial(flecs::entity entity, const char *ope
 
 // Sites 1-2 keep their two mt19937 draws, in the same order, and pass the 64-bit word as
 // `words`, together with the local offset words this site has always mixed in, so the mt19937
-// stream position is unchanged. The transfer counter is advanced alongside the native stream.
-uint64_t make_debug_synthetic_missile_seed(const flecs::world &ecs, std::mt19937 &rng,
-                                           std::uint64_t &draw_position, flecs::entity attacker,
-                                           flecs::entity target, double sim_time_s,
-                                           double local_forward_m, double local_right_m,
-                                           double local_up_m) {
-    if (draw_position > std::numeric_limits<std::uint64_t>::max() - 2) {
-        throw std::overflow_error("SimulationKernel RNG draw position is exhausted");
-    }
-    const uint64_t word1 = static_cast<uint64_t>(rng());
-    const uint64_t word2 = static_cast<uint64_t>(rng());
-    draw_position += 2;
+// stream position is unchanged. The kernel's RNG stream counts both words for state transfer.
+uint64_t make_debug_synthetic_missile_seed(const flecs::world &ecs, SimulationKernelRngStream &rng,
+                                           flecs::entity attacker, flecs::entity target,
+                                           double sim_time_s, double local_forward_m,
+                                           double local_right_m, double local_up_m) {
+    const auto words = rng.draw_words<2>();
     const uint64_t state = stochastic_draw::draw_seed(
         ecs, stochastic_draw::DrawSite::debug_synthetic_missile, sim_time_s, {attacker, target},
-        {word1, word2, static_cast<uint64_t>(std::llround(local_forward_m * 1000.0)),
+        {words[0], words[1], static_cast<uint64_t>(std::llround(local_forward_m * 1000.0)),
          static_cast<uint64_t>(std::llround(local_right_m * 1000.0)),
          static_cast<uint64_t>(std::llround(local_up_m * 1000.0))});
     return state == 0 ? 0x6a09e667f3bcc909ULL : state;
@@ -260,8 +254,8 @@ bool SimulationKernel::debug_apply_proximity_hit(uint64_t attacker_id, uint64_t 
         make_synthetic_warhead_profile(damage, fuse_distance, "debug_synthetic_warhead");
     synthetic.fuze_profile =
         make_synthetic_fuze_profile(fuse_distance, "debug_synthetic_fuze_distance");
-    synthetic.rng_state = make_debug_synthetic_missile_seed(ecs, rng, rng_draw_position_, attacker,
-                                                            target, seed_sim_time, 0.0, 0.0, 0.0);
+    synthetic.rng_state =
+        make_debug_synthetic_missile_seed(ecs, rng, attacker, target, seed_sim_time, 0.0, 0.0, 0.0);
     synthetic.proximity_min_dist_m = 0.0;
     synthetic.proximity_last_dist_m = 0.0;
     synthetic.proximity_engaged = true;
@@ -365,9 +359,8 @@ bool SimulationKernel::debug_apply_local_proximity_hit(uint64_t attacker_id, uin
         make_synthetic_warhead_profile(damage, fuse_distance, "debug_synthetic_warhead");
     synthetic.fuze_profile =
         make_synthetic_fuze_profile(fuse_distance, "debug_synthetic_fuze_distance");
-    synthetic.rng_state = make_debug_synthetic_missile_seed(ecs, rng, rng_draw_position_, attacker,
-                                                            target, seed_sim_time, local_forward_m,
-                                                            local_right_m, local_up_m);
+    synthetic.rng_state = make_debug_synthetic_missile_seed(
+        ecs, rng, attacker, target, seed_sim_time, local_forward_m, local_right_m, local_up_m);
     synthetic.proximity_min_dist_m = 0.0;
     synthetic.proximity_last_dist_m = 0.0;
     synthetic.proximity_engaged = true;
@@ -513,9 +506,8 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_an
     synthetic.warhead_profile = resolved_profile;
     synthetic.fuze_profile =
         make_synthetic_fuze_profile(fuse_distance, "debug_profiled_fuze_distance");
-    synthetic.rng_state = make_debug_synthetic_missile_seed(ecs, rng, rng_draw_position_, attacker,
-                                                            target, seed_sim_time, local_forward_m,
-                                                            local_right_m, local_up_m);
+    synthetic.rng_state = make_debug_synthetic_missile_seed(
+        ecs, rng, attacker, target, seed_sim_time, local_forward_m, local_right_m, local_up_m);
     synthetic.proximity_min_dist_m = 0.0;
     synthetic.proximity_last_dist_m = 0.0;
     synthetic.proximity_engaged = true;

@@ -3,27 +3,26 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
-#include <random>
 #include <string>
 
 #include <flecs.h>
 
+#include "core/engine/simulation_kernel_rng_stream.h"
 #include "core/interfaces/weapon_release_damage_bridge.h"
 #include "core/interfaces/weapon_release_service.h"
 
 class IEngagementEventRecorder;
 class IEngagementLaunchRecorder;
 class IUnitFactory;
-class SimulationKernel;
 struct MissileTuning;
 struct PilotAction;
 struct UnitDefinition;
 
 class SimulationKernelWeaponReleaseService final : public IWeaponReleaseService {
   public:
-    SimulationKernelWeaponReleaseService(SimulationKernel &kernel, flecs::world &ecs,
-                                         IUnitFactory &unit_factory, MissileTuning &missile_tuning,
-                                         std::mt19937 &rng,
+    SimulationKernelWeaponReleaseService(flecs::world &ecs, IUnitFactory &unit_factory,
+                                         MissileTuning &missile_tuning,
+                                         SimulationKernelRngStream &rng,
                                          IEngagementLaunchRecorder &launch_recorder,
                                          IEngagementEventRecorder &damage_recorder,
                                          IWeaponReleaseDamageBridge &damage_bridge);
@@ -48,10 +47,9 @@ class SimulationKernelWeaponReleaseService final : public IWeaponReleaseService 
     resolve_missile_launch_definition(flecs::entity attacker, const PilotAction *pilot) const;
 
     flecs::world &ecs_;
-    SimulationKernel &kernel_;
     IUnitFactory &unit_factory_;
     MissileTuning &missile_tuning_;
-    std::mt19937 &rng_;
+    SimulationKernelRngStream &rng_;
     IEngagementLaunchRecorder &launch_recorder_;
     IEngagementEventRecorder &damage_recorder_;
     IWeaponReleaseDamageBridge &damage_bridge_;
