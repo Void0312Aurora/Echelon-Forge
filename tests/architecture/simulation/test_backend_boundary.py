@@ -12,6 +12,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 BACKEND_PATH = REPO_ROOT / "python" / "simulation" / "backend.py"
 SCRIPTED_ENTRYPOINTS = (
     REPO_ROOT / "tools" / "diagnostics" / "air_combat_scripted_demo.py",
+    REPO_ROOT / "tools" / "diagnostics" / "air_combat_ew_scripted_demo.py",
     REPO_ROOT / "tools" / "diagnostics" / "air_ew_scripted_demo.py",
     REPO_ROOT / "tools" / "diagnostics" / "air_cooperative_combat_scripted_demo.py",
     REPO_ROOT / "tools" / "diagnostics" / "air_cooperative_ew_scripted_demo.py",
