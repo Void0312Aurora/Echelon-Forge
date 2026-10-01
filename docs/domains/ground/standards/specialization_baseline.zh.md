@@ -6,7 +6,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/domains/ground/standards/specialization_baseline.md`
 Owner: `domains/ground`
-Last verified: `2026-09-29`
+Last verified: `2026-10-01`
 
 ## 范围
 
@@ -65,6 +65,26 @@ held 的执行行为。
   （`tests/runtime/ground/test_ground_infantry_native_unit.py`）。这些原生 probe 绑定位于
   被隔离的 `bindings_core_kernel_diagnostics_ground.cpp` 诊断面，不在维护中的
   `SimulationKernel` 绑定面上。
+- 单兵 fixture 的脚本决策模型已在中立 `DecisionModelRegistry` 后注册为
+  `ground.infantry.objective_occupy_scripted`（`adapter`，角色
+  `ground_infantry_controller`，`python/tasking_contracts/ground/`）。它只消费自身位置、
+  自身可用状态，以及从自身 mission command 读回的、由指挥员下达的指派目标与开火授权，并输出
+  已准入的命令形状：在到达任务容差之前为 `MoveStatic` 航向/速度/姿态且 `route_intent=direct`，
+  之后锁定为 `OccupyStatic`/`SupportStatic` 保持。开火请求以该指派与授权为输入闸门；
+  原生 `fire_ground_weapon_from_mission_command` 闸门保留 holder、接触、射程、弹药与冷却的
+  放行权，模型不写任何权限。在原生 kernel 上它能到达并保持目标点，同一 seed 下逐字节重放一致，
+  士兵为权限 holder 时被原生闸门接受、由其他实体持有时被拒绝，且仅改变敌方几何时决策不变
+  （`tests/runtime/ground/test_ground_scripted_native_replay.py`）。该重放使用被隔离的
+  native-probe 面，不是生产 `WorldBatch` 路径。
+- Ground 脚本能力标签在 `python/tasking_contracts/ground/capability.py` 中逐能力声明。
+  `admitted_bounded`（各有具名运行时 owner）：`single_unit_movement`、`static_hold`、
+  `local_terrain_interaction`、`bounded_direct_fire_request`。`held`：
+  `route_planning`、`general_passability`、`line_of_sight_cover_concealment`、
+  `ground_sensing_track_export`、`observation_export`、`effects_damage_consequence`、
+  `indirect_fire`、`suppression`、`logistics`、`multi_unit_formation`。请求 held 能力会
+  fail closed。领域标签由移动、地形交互、感知、火力、effects、damage 与观测导出闸门推导，
+  只要其中任一 owner 仍为 held 就是 `bounded_adapter`；它 MUST NOT 被报告为 `playable`
+  （`tests/architecture/tasking_contracts/test_ground_capability_labels.py`）。
 
 ## 已注册且可达，但不构成能力
 
@@ -143,6 +163,8 @@ observation export。准入记录见
 - [Ground 原生静态场景测试](../../../../tests/runtime/ground/test_ground_native_static_scenario.py)
 - [Ground 原生单兵移动测试](../../../../tests/runtime/ground/test_ground_infantry_native_unit.py)
 - [Ground 损伤响应测试](../../../../tests/runtime/ground/test_ground_damage_response.py)
+- [Ground 脚本原生重放测试](../../../../tests/runtime/ground/test_ground_scripted_native_replay.py)
+- [Ground 脚本能力标签测试](../../../../tests/architecture/tasking_contracts/test_ground_capability_labels.py)
 - [Ground realism-gradient 护栏](../../../../tests/architecture/ground/test_realism_gradient_guardrails.py)
 
 ## 非目标

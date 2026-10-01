@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/domains/ground/README.md`
 Owner: `domains/ground`
-Last verified: `2026-09-29`
+Last verified: `2026-10-01`
 
 Ground owner 定义陆上领域特化语义，但不把 Army 军种条令变成一条私有 runtime
 栈。它拥有 Ground 专属平台身份和静态 task/status 词汇。Joint 关系、Army
@@ -55,6 +55,17 @@ service-profile 解释以及跨域 runtime 架构仍由各自 owner 负责。
   runtime-system owner。Route movement、passability、sensing、间接火力、共享
   damage bridge 之外的 effects、suppression、logistics 和 Ground observation
   export 仍作为**能力**保持 held。
+- Ground 在中立的 `DecisionModelRegistry` 后注册了一个脚本决策模型：
+  `ground.infantry.objective_occupy_scripted`（`adapter`，角色
+  `ground_infantry_controller`，位于 `python/tasking_contracts/ground/`）。它以
+  `MoveStatic` 航向/速度/姿态把一名步兵移动到任务给定的目标点，随后以 `OccupyStatic`
+  或 `SupportStatic` 保持位置。只有当指挥员已在其自身 mission command 上指派目标并授权开火时，
+  它才发出开火请求；放行权仍属于原生 `fire_ground_weapon_from_mission_command` 闸门。
+  其逐能力标签位于 `python/tasking_contracts/ground/capability.py`：单兵移动、静态保持、
+  局部地形交互和受限直射请求为 `admitted_bounded`；路线规划、一般通行性、视线/掩体/隐蔽、
+  感知与航迹导出、观测导出、effects/damage 后果、间接火力、压制、后勤和多单位编队为
+  `held`，请求其中任何一项都会 fail closed。推导出的 Ground 脚本标签是
+  `bounded_adapter`，不是 `playable`。
 
 目录位置不会扩大上述声明。当前证据证明的是原生身份和静态 task/status 链，
 而不是完整 land-combat runtime。

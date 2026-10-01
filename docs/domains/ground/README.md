@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/domains/ground/README.md`
 Owner: `domains/ground`
-Last verified: `2026-09-29`
+Last verified: `2026-10-01`
 
 The Ground owner defines land-domain specialization semantics without turning
 Army service doctrine into a private runtime stack. It owns Ground-specific
@@ -68,6 +68,23 @@ remain with their respective owners.
   complete Ground runtime-system owner. Route movement, passability, sensing,
   indirect fires, effects beyond the shared damage bridge, suppression,
   logistics, and Ground observation export remain held as capabilities.
+- One scripted decision model is registered for Ground behind the neutral
+  `DecisionModelRegistry`: `ground.infantry.objective_occupy_scripted`
+  (`adapter`, role `ground_infantry_controller`, in
+  `python/tasking_contracts/ground/`). It moves one infantry soldier to a
+  task-supplied objective with `MoveStatic` heading/speed/stance, then holds
+  with `OccupyStatic` or `SupportStatic`. It requests fire only when the
+  commander has assigned a target and authorized fire on its own mission
+  command; the native `fire_ground_weapon_from_mission_command` gate stays the
+  release authority. Its per-capability labels live in
+  `python/tasking_contracts/ground/capability.py`: single-unit movement,
+  static hold, local terrain interaction, and the bounded direct-fire request
+  are `admitted_bounded`; route planning, general passability, line of
+  sight/cover/concealment, sensing and track export, observation export,
+  effects/damage consequence, indirect fire, suppression, logistics, and
+  multi-unit formation are `held`, and a request for any of them fails
+  closed. The derived Ground scripted label is `bounded_adapter`, not
+  `playable`.
 
 Directory placement does not broaden those claims. The current evidence proves
 native identity and a static task/status chain, not a complete land-combat

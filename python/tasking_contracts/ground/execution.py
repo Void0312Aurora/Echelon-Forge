@@ -338,6 +338,8 @@ GROUND_INFANTRY_SCRIPTED_CAPABILITY = ScriptedCapabilityManifest.from_mapping(
             "source:python/tasking_contracts/ground/execution.py",
             "source:python/tasking_contracts/ground/capability.py",
             "test:tests/architecture/tasking_contracts/test_ground_scripted_registry.py",
+            "test:tests/architecture/tasking_contracts/test_ground_capability_labels.py",
+            "test:tests/runtime/ground/test_ground_scripted_native_replay.py",
         ],
         "deferred_claims": list(held_ground_capabilities()),
     }
