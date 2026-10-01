@@ -304,6 +304,11 @@
         "registration_id": "flecs.component.munition"
       },
       {
+        "component_id": "NavalCommandIntent",
+        "plugin_id": "builtin.core_runtime",
+        "registration_id": "flecs.component.naval_command_intent"
+      },
+      {
         "component_id": "NavalStores",
         "plugin_id": "builtin.core_runtime",
         "registration_id": "flecs.component.naval_stores"
@@ -1662,8 +1667,8 @@
     "builtin.weapon_release.damage_bridge",
     "builtin.weapon_release.service"
   ],
-  "requested_manifest_sha256": "b17fd07c4fdeef3a8c7ae64f7cb89772b3a1665aad2b83f1d1ce58a9d344fb8f",
-  "resolved_manifest_sha256": "45426d3dfc24a4d74986e11567854f5c19b996c50cef38da33c87e3e93083417",
+  "requested_manifest_sha256": "51a09dc082a48cbed8f311512d48ee245b5b69512bfa63bfe38d8343f84c8ba9",
+  "resolved_manifest_sha256": "791847a129734e9ab632a8eff9a3a141d13bda9bba76093440dc9269a63d3796",
   "resolver_contract_version": "echelon_forge.simulation_composition_resolver.v1",
   "schema_version": "echelon_forge.resolved_simulation_composition.v1",
   "system_registration_order": [
