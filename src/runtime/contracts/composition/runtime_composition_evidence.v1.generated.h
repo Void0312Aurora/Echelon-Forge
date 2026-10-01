@@ -16,9 +16,9 @@ inline constexpr std::string_view kCompositionId = "builtin.default_compatibilit
 inline constexpr std::string_view kRequestedProfileId = "builtin.default_compatibility";
 inline constexpr std::string_view kRequestedProfileVersion = "1.0.0";
 inline constexpr std::string_view kRequestedManifestSha256 =
-    "d35fc20bdd9ec50448ed7dd70da218cb735edb14dfd0fbe3122779783f0f164b";
+    "796721f17c1a995dbb26cc23a950287c96b0511d950aedbe71169d4b5d5aa4cc";
 inline constexpr std::string_view kResolvedManifestSha256 =
-    "4fb0170b00f9b3008f37adfa99c3134bed836501fe6267fd302719926736434f";
+    "50afe7755149225662774531be5eaf39794ebb246e6ccdcc42040fde9720bf56";
 inline constexpr std::string_view kCatalogLockSha256 =
     "ec36d4f134e003e852a87f0dc2edb8095bbd798855d88b099e0174d45efa7f94";
 inline constexpr std::string_view kProfileProjectionSha256 =

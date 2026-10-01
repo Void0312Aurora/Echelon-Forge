@@ -17,11 +17,11 @@
     },
     "requested_manifest": {
       "path": "tests/architecture/composition/fixtures/default_compatibility_manifest.requested.json",
-      "sha256": "b0db3cb421d6c03f50aac8d9fa8b47d7f2858ea7229bfca882a311ea464ef1c7"
+      "sha256": "f62d0cbd4e355b30b6950dedc6a1e20c9dee7ef7941e2110378284777e7ea97f"
     },
     "resolved_manifest": {
       "path": "tests/architecture/composition/fixtures/default_compatibility_manifest.resolved.json",
-      "sha256": "fa69258ee482ae67de4435ac869899b452a665a33ee59c008bf1e7304523ae60"
+      "sha256": "82ab547b9a2c30361d62807c17d47cf9e9e6d033fbdf9105b90fd17129404b8a"
     }
   }
 }
