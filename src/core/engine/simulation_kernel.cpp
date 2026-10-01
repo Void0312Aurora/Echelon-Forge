@@ -174,7 +174,6 @@ void SimulationKernel::reset(unsigned int seed) {
     ecs_reset_clock(ecs.c_ptr());
 
     rng.seed(seed);
-    rng_draw_position_ = 0;
     // Episode identity restarts with the episode: serials are 1..N in creation order after
     // every reset, and draws mix the reset seed. The constructor reaches this through its
     // default reset(42), which is also the seed `rng` is given there, so a kernel used before
@@ -222,13 +221,6 @@ void SimulationKernel::set_time_step(double dt) {
     }
     time_step = dt;
     world_state_mutated_ = true;
-}
-
-void SimulationKernel::record_rng_draws_for_state_transfer(std::uint64_t count) {
-    if (count > std::numeric_limits<std::uint64_t>::max() - rng_draw_position_) {
-        throw std::overflow_error("SimulationKernel RNG draw position is exhausted");
-    }
-    rng_draw_position_ += count;
 }
 
 flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_name, double x,

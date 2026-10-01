@@ -10,6 +10,7 @@ namespace runtime::providers {
 
 [[nodiscard]] DefaultSimulationCompositionResult
 build_default_simulation_composition_for_testing(SimulationKernel &kernel, flecs::world &world,
-                                                 MissileTuning &missile_tuning, std::mt19937 &rng);
+                                                 MissileTuning &missile_tuning,
+                                                 SimulationKernelRngStream &rng);
 
 } // namespace runtime::providers
