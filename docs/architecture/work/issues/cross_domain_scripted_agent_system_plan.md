@@ -344,7 +344,7 @@ bootstrap. Do not label ground as fully playable until movement, terrain
 interaction, sensing, fires, effects, damage, and observation export each have
 an admitted runtime owner and evidence.
 
-Initial WP5 slice: `python/tasking_contracts/ground/` registers
+Initial Ground admission slice: `python/tasking_contracts/ground/` registers
 `ground.infantry.objective_occupy_scripted` (`adapter`) behind the neutral
 registry and declares per-capability Ground labels. The derived Ground label
 is `bounded_adapter`; see the 2026-10-01 ledger entry.
@@ -371,7 +371,7 @@ capability manifests, CLI/viz smoke paths, and performance baselines.
 
 | Capability | Air | Naval | Ground | Required evidence |
 | --- | --- | --- | --- | --- |
-| Common reset/step/report lifecycle | first complete target | bounded reuse | bounded single-soldier adapter (WP5) | contract and replay tests |
+| Common reset/step/report lifecycle | first complete target | bounded reuse | bounded single-soldier adapter | contract and replay tests |
 | Single-unit playable loop | WP3 | WP4 bounded loop | bounded move/hold replay on the native probe surface; no scenario, CLI, or viz | scenario + CLI + viz |
 | Multi-unit roster routing | WP3/WP6 | later bounded extension | later | world-batch parity |
 | Sensor/track-based decision | required for realistic combat | bounded contact products | held | provenance and negative tests |
@@ -3097,7 +3097,7 @@ to a dedicated owner-local evidence document.
   seed coverage, visualization acceptance, or large-scale Air playable status;
   Air remains `playable_candidate`.
 
-### 2026-10-01 — WP5 Ground scripted admission slice
+### 2026-10-01 — Ground scripted admission slice
 
 - Starting commit: `09b8f661` (top of the layered army stack).
 - Affected owners: Ground domain, cross-domain agency contracts, and the
@@ -3113,7 +3113,8 @@ to a dedicated owner-local evidence document.
   fire request is input-gated on the assignment and authorization; the native
   `fire_ground_weapon_from_mission_command` gate remains the release
   authority. `python/tasking_contracts/ground/capability.py` declares the
-  per-capability labels and derives the domain label from this WP5 gate.
+  per-capability labels and derives the domain label from the Ground
+  admission gate above.
 - Capability labels: `admitted_bounded` for `single_unit_movement`,
   `static_hold`, `local_terrain_interaction`, and
   `bounded_direct_fire_request`; `held` for `route_planning`,
