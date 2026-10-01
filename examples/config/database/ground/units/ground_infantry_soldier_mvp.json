@@ -2,6 +2,17 @@
   "name": "Ground_Infantry_Soldier_MVP",
   "type": "Ground",
   "ground_infantry_capability": true,
+  "ground_infantry_posture": {
+    "stand": {"eye_height_m": 1.6, "center_of_mass_height_m": 1.0},
+    "crouch": {"eye_height_m": 1.1, "center_of_mass_height_m": 0.7},
+    "prone": {"eye_height_m": 0.3, "center_of_mass_height_m": 0.15}
+  },
+  "_ground_infantry_posture_provenance": {
+    "status": "engineering_proxy",
+    "meaning": "heights above local terrain: eye_height_m is the sight point, center_of_mass_height_m is the sight-line target point for the synthetic body-center hit",
+    "basis": "round-number adult-soldier estimates; not derived from a cited anthropometric dataset or firing-posture definition",
+    "follow_up": "TLOS-F1 in docs/systems/environment/work/active/terrain_line_of_sight_v1/README.md"
+  },
   "mass_kg": 85.0,
   "health": {
     "current_hp": 100.0,
@@ -34,9 +45,9 @@
   "_deferred_runtime_claims": [
     "route following, acceleration, fatigue, formation, and passability",
     "slope, wet-ground, river, bridge, and obstacle passability",
-    "tree-line masking, cover, and line-of-sight",
+    "tree-line masking, cover, and concealment (terrain line of sight is admitted for the bounded rifle gate only)",
     "ground sensing, track fusion, and entity observation export",
-    "indirect fires, line-of-sight, cover, effects beyond the shared damage bridge, or suppression",
+    "indirect fires, cover, effects beyond the shared damage bridge, or suppression",
     "logistics, fatigue, medical state, or sustainment behavior"
   ]
 }

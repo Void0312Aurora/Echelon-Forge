@@ -701,6 +701,54 @@ void parse_sonar_json_fields(const nlohmann::json &s, Sonar *out_sonar) {
     *out_sonar = sonar;
 }
 
+// `ground_infantry_posture`: authored per-stance heights above terrain. A
+// present block must be complete and positive; a malformed block is a content
+// error rather than a silent default, because the direct-fire sight line reads
+// these heights.
+bool parse_ground_infantry_posture_json(const nlohmann::json &src,
+                                        GroundInfantryCapability *out_posture, std::string *error) {
+    if (!out_posture) return false;
+    if (!src.is_object()) {
+        if (error) *error = "ground_infantry_posture must be an object";
+        return false;
+    }
+    const auto parse_one = [&](const char *stance, GroundInfantryPostureGeometry *out) {
+        if (!src.contains(stance) || !src[stance].is_object()) {
+            if (error) *error = std::string("ground_infantry_posture.") + stance + " is required";
+            return false;
+        }
+        const auto &node = src[stance];
+        for (const char *key : {"eye_height_m", "center_of_mass_height_m"}) {
+            if (!node.contains(key) || !node[key].is_number()) {
+                if (error) {
+                    *error = std::string("ground_infantry_posture.") + stance + "." + key +
+                             " must be a number";
+                }
+                return false;
+            }
+        }
+        GroundInfantryPostureGeometry geometry{};
+        geometry.eye_height_m = node["eye_height_m"].get<double>();
+        geometry.center_of_mass_height_m = node["center_of_mass_height_m"].get<double>();
+        if (!ground_infantry_posture_geometry_valid(geometry)) {
+            if (error) {
+                *error = std::string("ground_infantry_posture.") + stance +
+                         " heights must be finite and positive";
+            }
+            return false;
+        }
+        *out = geometry;
+        return true;
+    };
+    GroundInfantryCapability parsed{};
+    if (!parse_one("stand", &parsed.stand) || !parse_one("crouch", &parsed.crouch) ||
+        !parse_one("prone", &parsed.prone)) {
+        return false;
+    }
+    *out_posture = parsed;
+    return true;
+}
+
 bool parse_unit_type(const std::string &value, UnitType *out_type) {
     if (!out_type) return false;
     // spdlog::info("Parsing unit type: '{}'", value);
@@ -1651,6 +1699,13 @@ bool parse_unit_json(
 
     def.name = entry.value("name", type_str);
     def.has_ground_infantry_capability = entry.value("ground_infantry_capability", false);
+    def.ground_infantry_posture = {};
+    if (entry.contains("ground_infantry_posture")) {
+        if (!parse_ground_infantry_posture_json(entry["ground_infantry_posture"],
+                                                &def.ground_infantry_posture, error)) {
+            return false;
+        }
+    }
     // Table-driven purely-mechanical direct top-level scalar reads
     // (content/detail/unit_definition_direct_fields.inc, I61 / T11 slice 4
     // bundle 2). The list is expanded at each field's original parse phase so

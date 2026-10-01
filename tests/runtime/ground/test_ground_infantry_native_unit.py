@@ -459,6 +459,9 @@ def test_native_infantry_consumes_arnis_raster_and_stops_on_water() -> None:
 def test_native_infantry_ground_rifle_requires_track_and_applies_damage() -> None:
     sim = ef_py.SimulationKernel()
     assert sim.load_database(_DATABASE)
+    # The rifle gate fails closed without measured terrain; this pair is
+    # terrain-visible over the frozen fixture.
+    assert sim.load_arnis_terrain_bundle(str(_ARNIS_BUNDLE))
     attacker_id = int(
         sim.spawn_unit(ef_py.Side.Blue, "Ground_Infantry_Soldier_MVP", 0.0, 0.0, 0.0)
     )
@@ -537,6 +540,9 @@ def test_ground_platoon_does_not_acquire_or_fire_infantry_rifle() -> None:
 def test_native_infantry_ground_rifle_mission_command_requires_authority() -> None:
     sim = ef_py.SimulationKernel()
     assert sim.load_database(_DATABASE)
+    # The rifle gate fails closed without measured terrain; this pair is
+    # terrain-visible over the frozen fixture.
+    assert sim.load_arnis_terrain_bundle(str(_ARNIS_BUNDLE))
     attacker_id = int(
         sim.spawn_unit(ef_py.Side.Blue, "Ground_Infantry_Soldier_MVP", 0.0, 0.0, 0.0)
     )
@@ -564,3 +570,66 @@ def test_native_infantry_ground_rifle_mission_command_requires_authority() -> No
     command.authorization_to_fire = True
     sim.set_mission_command(attacker_id, command)
     assert sim.fire_ground_weapon_from_mission_command(attacker_id)
+
+
+def _rifle_track(target_id: int, range_m: float) -> "ef_py.Detection":
+    track = ef_py.Detection()
+    track.target_id = target_id
+    track.range = range_m
+    track.detection_prob_used = 1.0
+    track.sensor_type = int(ef_py.SensorType.Visual)
+    track.local_sensor_hit = True
+    return track
+
+
+def _command_stance(sim: "ef_py.SimulationKernel", entity_id: int, stance: "ef_py.GroundStance") -> None:
+    sim.set_command_link(entity_id, 0.0, 0.0)
+    command = sim.get_mission_command(entity_id)
+    command.ground_stance = stance
+    sim.set_mission_command(entity_id, command)
+
+
+def test_native_infantry_rifle_fails_closed_without_measured_terrain() -> None:
+    sim = ef_py.SimulationKernel()
+    assert sim.load_database(_DATABASE)
+    attacker_id = int(
+        sim.spawn_unit(ef_py.Side.Blue, "Ground_Infantry_Soldier_MVP", 0.0, 0.0, 0.0)
+    )
+    target_id = int(
+        sim.spawn_unit(ef_py.Side.Red, "Ground_Infantry_Soldier_MVP", 100.0, 0.0, 0.0)
+    )
+    sim.set_contact_list(attacker_id, [_rifle_track(target_id, 100.0)])
+    before = list(sim.get_ground_weapon_state(attacker_id))
+
+    # No measured elevation raster: line of sight is unknown, never visible.
+    assert not sim.fire_ground_weapon(attacker_id, target_id, int(ef_py.GroundWeaponType.Rifle))
+    assert list(sim.get_ground_weapon_state(attacker_id)) == before
+
+
+def test_native_infantry_rifle_respects_terrain_line_of_sight_by_stance() -> None:
+    sim = ef_py.SimulationKernel()
+    assert sim.load_database(_DATABASE)
+    assert sim.load_arnis_terrain_bundle(str(_ARNIS_BUNDLE))
+    # Over the frozen fixture, the 100 m east sight line from the origin clears
+    # the micro-relief standing (eye 1.6 m to centre 1.0 m) but not prone
+    # (0.3 m to 0.15 m); the clearance is measured from the raster itself.
+    attacker_id = int(
+        sim.spawn_unit(ef_py.Side.Blue, "Ground_Infantry_Soldier_MVP", 0.0, 0.0, 0.0)
+    )
+    target_id = int(
+        sim.spawn_unit(ef_py.Side.Red, "Ground_Infantry_Soldier_MVP", 100.0, 0.0, 0.0)
+    )
+    sim.set_contact_list(attacker_id, [_rifle_track(target_id, 100.0)])
+    _command_stance(sim, attacker_id, ef_py.GroundStance.Prone)
+    _command_stance(sim, target_id, ef_py.GroundStance.Prone)
+    before = list(sim.get_ground_weapon_state(attacker_id))
+    target_before = list(sim.get_unit_health(target_id))
+
+    assert not sim.fire_ground_weapon(attacker_id, target_id, int(ef_py.GroundWeaponType.Rifle))
+    assert list(sim.get_ground_weapon_state(attacker_id)) == before
+    assert list(sim.get_unit_health(target_id)) == target_before
+
+    _command_stance(sim, attacker_id, ef_py.GroundStance.Stand)
+    _command_stance(sim, target_id, ef_py.GroundStance.Stand)
+    assert sim.fire_ground_weapon(attacker_id, target_id, int(ef_py.GroundWeaponType.Rifle))
+    assert sim.get_ground_weapon_state(attacker_id)[2] == pytest.approx(before[2] - 1.0)

@@ -15,6 +15,7 @@
 #include "components/combat/common/damage_common.h"
 #include "components/combat/common/weapon_common.h"
 #include "components/domains/naval/combat/weapon_naval.h"
+#include "components/domains/ground/ground_capabilities.h"
 #include "components/systems/ew.h"
 #include "components/systems/sonar.h"
 #include "components/domains/naval/platform/embarked_air_ops.h"
@@ -229,6 +230,9 @@ struct UnitDefinition {
     bool has_embarked_air_ops = false;
     EmbarkedAirOps embarked_air_ops;
     bool has_ground_infantry_capability = false;
+    // Authored `ground_infantry_posture` heights; copied onto the spawned
+    // GroundInfantryCapability. Zero (unauthored) fails closed in consumers.
+    GroundInfantryCapability ground_infantry_posture{};
     HitboxConfig damage_model;
     bool has_aircraft_vulnerability = false;
     AircraftVulnerabilityProfile aircraft_vulnerability;
