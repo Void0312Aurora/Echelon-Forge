@@ -15,7 +15,6 @@
 #include "components/domains/air/combat/weapon_air.h"
 #include "components/domains/ground/combat/damage_ground.h"
 #include "components/domains/ground/ground_capabilities.h"
-#include "components/domains/ground/combat/weapon_ground.h"
 #include "components/domains/air/platform/flight_dynamics_tuning.h"
 #include "components/domains/naval/combat/weapon_naval.h"
 #include "components/domains/naval/platform/embarked_air_ops.h"
@@ -173,19 +172,6 @@ void register_nested_value_reflection(flecs::world &ecs) {
 
 void register_ground_combat_reflection(flecs::world &ecs) {
     ecs.component<GroundInfantryCapability>();
-    ecs.component<GroundWeapon>()
-        .member<std::int32_t>("weapon_type", 1, offsetof(GroundWeapon, weapon_type))
-        .member<int>("ammunition")
-        .member<int>("maximum_ammunition")
-        .member<double>("damage_per_hit")
-        .member<double>("engagement_range_m")
-        .member<double>("hit_probability")
-        .member<double>("cooldown_s")
-        .member<double>("last_fire_time_s");
-    ecs.component<std::vector<GroundWeapon>>().opaque(vector_support<GroundWeapon>);
-    ecs.component<GroundWeaponState>()
-        .member<std::vector<GroundWeapon>>("weapons")
-        .member<std::int32_t>("selected_weapon_index");
     ecs.component<GroundPlatformDamageState>()
         .member<double>("mobility_integrity")
         .member<double>("track_integrity")
