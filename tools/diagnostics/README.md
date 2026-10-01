@@ -70,6 +70,11 @@ Current diagnostics and probes:
   - Mission runtime helper microbenchmark.
 - `world_batch_vec_env`
   - WorldBatchVecEnv training-adapter benchmark.
+- `native_world_batch_step`
+  - Native `WorldBatchRuntime` step throughput over a worlds x units x threads
+    sweep, with worker-pool occupancy (`busy / (wall * threads)`), process
+    CPU/wall, optional per-system Flecs time shares (`--system-timing`), and
+    `--baseline` / `--max-regression` comparison against an earlier run.
 - `policy_observation_bridge`
   - Policy-observation bridge benchmark.
 - `air_combat_post_launch_assessment`
@@ -131,6 +136,14 @@ Run multiple maintained benchmarks from one config:
 ./.venv/bin/python tools/diagnostics/run_benchmark_suite.py \
   --config examples/config/diagnostics/benchmark_suite_runtime_phase14_mainline.json \
   --json-out /tmp/runtime_phase14_mainline.json
+```
+
+Measure native batch-step throughput and worker-pool occupancy, then gate a
+later build against the saved result:
+
+```bash
+./.venv/bin/python tools/diagnostics/benchmark.py   --family native_world_batch_step   --worlds 8,32,64 --units 2,8 --threads 1,8,16,32 --system-timing   --json-out /tmp/native_world_batch_step.json
+./.venv/bin/python tools/diagnostics/benchmark.py   --family native_world_batch_step   --worlds 8,32,64 --units 2,8 --threads 1,8,16,32   --baseline /tmp/native_world_batch_step.json --max-regression 0.10
 ```
 
 Run one benchmark family through the unified CLI:

@@ -47,6 +47,11 @@ BENCHMARK_FAMILIES: dict[str, BenchmarkFamily] = {
         description="WorldBatchVecEnv training-adapter benchmark.",
         module_path="tools.diagnostics.benchmarks.world_batch_vec_env",
     ),
+    "native_world_batch_step": BenchmarkFamily(
+        name="native_world_batch_step",
+        description="Native WorldBatchRuntime step throughput and worker-pool occupancy benchmark.",
+        module_path="tools.diagnostics.benchmarks.native_world_batch_step",
+    ),
     "policy_observation_bridge": BenchmarkFamily(
         name="policy_observation_bridge",
         description="Policy-observation bridge benchmark.",

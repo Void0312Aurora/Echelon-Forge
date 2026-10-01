@@ -1,0 +1,30 @@
+{
+  "name": "native_world_batch_occupancy",
+  "shared_args": [],
+  "jobs": [
+    {
+      "name": "native_world_batch_step_scaling",
+      "family": "native_world_batch_step",
+      "args": [
+        "--worlds", "8,32,64",
+        "--units", "2,8",
+        "--threads", "1,8,16,32",
+        "--steps", "100",
+        "--warmup", "10",
+        "--repeats", "3"
+      ]
+    },
+    {
+      "name": "native_world_batch_step_system_profile",
+      "family": "native_world_batch_step",
+      "args": [
+        "--worlds", "32",
+        "--units", "2,8",
+        "--threads", "1",
+        "--steps", "60",
+        "--repeats", "2",
+        "--system-timing"
+      ]
+    }
+  ]
+}

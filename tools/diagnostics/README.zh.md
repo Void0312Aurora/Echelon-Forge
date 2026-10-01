@@ -58,6 +58,11 @@
   - 任务运行时辅助微基准。
 - `world_batch_vec_env`
   - WorldBatchVecEnv 训练适配器基准。
+- `native_world_batch_step`
+  - 原生 `WorldBatchRuntime` 步进吞吐基准，按 worlds x units x threads
+    扫描，报告工作线程池占用率（`busy / (wall * threads)`）、进程 CPU/wall、
+    可选的各 Flecs 系统耗时占比（`--system-timing`），并可用
+    `--baseline` / `--max-regression` 与先前结果对比。
 - `policy_observation_bridge`
   - 策略观察桥接基准。
 - `air_combat_post_launch_assessment`
@@ -117,6 +122,13 @@ cmake --build build-gpu --target ef_gpu_visual_candidate_phase0_probe -j
 ./.venv/bin/python tools/diagnostics/run_benchmark_suite.py \
   --config examples/config/diagnostics/benchmark_suite_runtime_phase14_mainline.json \
   --json-out /tmp/runtime_phase14_mainline.json
+```
+
+测量原生批量步进吞吐与线程池占用率，并用保存的结果为后续构建设门：
+
+```bash
+./.venv/bin/python tools/diagnostics/benchmark.py   --family native_world_batch_step   --worlds 8,32,64 --units 2,8 --threads 1,8,16,32 --system-timing   --json-out /tmp/native_world_batch_step.json
+./.venv/bin/python tools/diagnostics/benchmark.py   --family native_world_batch_step   --worlds 8,32,64 --units 2,8 --threads 1,8,16,32   --baseline /tmp/native_world_batch_step.json --max-regression 0.10
 ```
 
 通过统一 CLI 运行一个基准族：
