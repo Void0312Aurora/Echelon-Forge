@@ -55,6 +55,8 @@ class AirScriptedEngagementModel:
     is accepted by the runtime.
     """
 
+    model_kind = "scripted"
+
     def __init__(
         self,
         *,

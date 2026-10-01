@@ -11,6 +11,8 @@ from python.simulation import create_scenario_backend, create_single_backend
 from python.simulation.air.tasking import make_scripted_c2_task_manager
 from python.simulation.air.director import AirDirectorInput, AirScriptedDirector
 from python.tasking_contracts.air.execution import AirScriptedExecutionModel
+from python.mission_obs_taxonomy import mission_observation_dim
+from python.simulation.air.observation import AIR_SCRIPTED_MISSION_MODE
 
 
 DATABASE = resolve_repo_path("examples", "config", "database")
@@ -81,7 +83,9 @@ def test_facade_batch_runs_two_agents_and_roundtrips_scripted_c2_order() -> None
         assert observations[0]["instruments"].shape == (42,)
         assert observations[0]["contacts"].shape == (8, 5)
         assert observations[0]["rwr"].shape == (8, 4)
-        assert observations[0]["mission"].shape[0] >= 4
+        assert observations[0]["mission"].shape == (mission_observation_dim(AIR_SCRIPTED_MISSION_MODE),)
+        explicit = backend.air_scripted_observations(mode="nav_v2_cooperative_takeoff_v1")
+        assert explicit[0]["mission"].shape == (mission_observation_dim("nav_v2_cooperative_takeoff_v1"),)
         scripted_model = AirScriptedExecutionModel(action_dim=17)
         scripted_action = scripted_model.step(observations[0], phase_name="transit_to_station")
         assert scripted_action.shape == (17,)
