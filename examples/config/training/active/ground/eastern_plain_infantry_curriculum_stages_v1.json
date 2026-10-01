@@ -1,0 +1,88 @@
+{
+  "contract_version": "ground_infantry_curriculum_stages.v1",
+  "status": "native_probe_tooling",
+  "authority": "native_probe_only",
+  "production_boundary": "not_world_batch",
+  "training_contract": "examples/config/training/active/ground/eastern_plain_infantry_single_v1.contract.json",
+  "fixture": "tests/scenario/fixtures/environment_substrate/arnis_bundle_v1/eastern_plain_infantry_phase1",
+  "case_source": "python.rl.ground.fixture_cases:derive_acceptance_cases",
+  "runner": "python.rl.ground.curriculum:run_stage",
+  "env": {
+    "entrypoint": "python.rl.ground.native_env:GroundInfantryNativeEnv",
+    "parameters": "native_probe_contract_defaults",
+    "horizon": "native_preflight_worst_multiplier_route_budget",
+    "reward": "native_env_contract_unchanged",
+    "termination": "native_env_contract_unchanged"
+  },
+  "baseline_controller": "python.rl.ground.acceptance_matrix:heading_to_goal_action",
+  "stages": [
+    {
+      "stage": "S1_flat_waypoint",
+      "contract_goal": "follow a short route without crossing a river or entering held semantics",
+      "admit": {
+        "expected": ["reach"],
+        "categories": ["landcover", "slope_band", "raster_edge"],
+        "requires_bridge_admission": false,
+        "max_segment_slope": {
+          "source": "field_acceptance.thresholds",
+          "key": "max_slope_p95_deg"
+        },
+        "landcover_codes": {
+          "source": "field_acceptance.landcover",
+          "key": "open_landcover_codes"
+        },
+        "exclude_overlay_kinds": ["tree_line", "settlement_structure", "river_corridor"],
+        "exclude_building_footprints": true
+      },
+      "acceptance": {
+        "baseline_outcome": "reach",
+        "allow_blocked_steps": false,
+        "fail_closed_on_empty_stage": true
+      }
+    },
+    {
+      "stage": "S2_terrain_cost",
+      "contract_goal": "consume elevation, slope, farmland, track, and river/bridge passability",
+      "admit": {
+        "expected": ["reach", "block"],
+        "categories": ["landcover", "slope_band", "water_or_obstacle", "raster_edge", "bridge"],
+        "requires_bridge_admission": null,
+        "max_segment_slope": null,
+        "landcover_codes": null,
+        "exclude_overlay_kinds": [],
+        "exclude_building_footprints": true
+      },
+      "acceptance": {
+        "baseline_outcome": "matches_fixture_expectation",
+        "allow_blocked_steps": true,
+        "fail_closed_on_empty_stage": true
+      }
+    }
+  ],
+  "held": [
+    "route_planning",
+    "line_of_sight",
+    "cover",
+    "sensing",
+    "multi_agent",
+    "farm_track_cost_owner",
+    "building_collision"
+  ],
+  "open_decisions": [
+    {
+      "id": "s2_reward_for_blocked_goals",
+      "stage": "S2_terrain_cost",
+      "statement": "S2 block cases place the waypoint inside water or outside the raster; the native env reward (distance delta minus blocked-attempt penalty) is reused unchanged, so a policy is only penalised, never rewarded, for reaching the bank. Whether S2 needs a stop-at-bank or reroute reward is a contract decision, not a coefficient this runner may add."
+    },
+    {
+      "id": "s2_farm_track_cost",
+      "stage": "S2_terrain_cost",
+      "statement": "Track road features are not consumed by native movement (only bridge-flagged roads are), so S2 cannot exercise farm-track cost until a track surface owner exists."
+    },
+    {
+      "id": "held_building_footprints",
+      "stage": "S2_terrain_cost",
+      "statement": "Building footprints are traversable natively; they are excluded from S1/S2 until a collision owner decides their passability."
+    }
+  ]
+}
