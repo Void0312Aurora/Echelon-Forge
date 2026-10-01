@@ -129,6 +129,64 @@ step/replay harness. Reinforcement learning is downstream of reset, action,
 observation, reward, termination, and replay contracts; it must not be used to hide
 missing terrain semantics.
 
+## Native acceptance matrix and S1/S2 stage runner
+
+The evidence for item 3 of the Remaining unblock package (extend native
+reset/step/replay acceptance over more of the Arnis-derived map) is now
+data-driven.
+
+`python/rl/ground/fixture_cases.py` derives every start/goal case from the
+verified bundle data; no case coordinate is hand-typed. Its inputs are the
+bundle manifest, the landcover and elevation rasters, the hydrology, road, and
+building vectors, the companion overlay, and `field_acceptance.json`. The case
+categories are:
+
+- one reach case per traversable landcover class present;
+- one reach case per slope band, with band edges at the retained p50/p95/p99
+  slope percentiles;
+- block cases into landcover water and into each declared hydrology feature;
+- an outbound (block) case and an edge-parallel (reach) case for each raster
+  edge;
+- the declared bridge crossing, plus an off-bridge control;
+- held building-footprint cases.
+
+`python/rl/ground/acceptance_matrix.py` runs each case through
+`GroundInfantryNativeEnv` under a scripted heading-to-goal controller. For
+each case it records:
+
+- the `validate_waypoint_sequence` preflight verdict;
+- the rollout outcome and its terminal or truncation reason;
+- a canonical trace SHA-256.
+
+A case fails closed when the native outcome disagrees with the fixture-derived
+expectation, or when the rollout ends without an explicit reason. The step
+horizon comes from the native preflight's worst sampled movement multiplier;
+the matrix adds no coefficient of its own.
+
+Replay determinism holds on three checks:
+
+- a same-seed second rollout is byte-identical;
+- the probe `replay(actions, seed=...)` reproduces the env trace;
+- changing only the reset seed changes nothing but the recorded `trace.seed`
+  field.
+
+`python/rl/ground/curriculum.py` runs S1 (flat waypoint) and S2 (terrain cost)
+from the data config
+`examples/config/training/active/ground/eastern_plain_infantry_curriculum_stages_v1.json`.
+
+- S1 admission thresholds resolve by key from `field_acceptance.json`
+  (`max_slope_p95_deg`, `open_landcover_codes`).
+- Held overlay kinds and building footprints are excluded.
+- The scripted baseline result is recorded per stage.
+- An optional SB3 PPO smoke reuses `default_ppo.json`, capped to one short
+  rollout.
+- Reward and termination are the native env contract, unchanged.
+
+Status and open decisions are recorded in
+[`native_runtime_blockers.md`](native_runtime_blockers.md). All of this is
+`native_probe_only` tooling. It is not `train.py`, not WorldBatch, and not a
+route graph or planner.
+
 The current native-runtime measurement and residuals are recorded in
 [`native_runtime_blockers.md`](native_runtime_blockers.md). The native slice now
 covers one deterministic `MoveStatic` step with surface/slope/vegetation cost,
@@ -150,5 +208,9 @@ route-level crossing planning.
 - general slope/wet-ground policy and route-level river-crossing planning
   (local slope cost and sampled river/bridge transitions are admitted);
 - line-of-sight, cover, concealment, and exposure model;
+- farm-track movement cost (native movement does not consume track road
+  vectors);
+- building-footprint collision (footprints are traversable natively and are
+  excluded from S1/S2);
 - ground track/sensor observation export (terrain sampling is admitted separately);
 - fatigue, medical, logistics, indirect fires, suppression, and full combat integration.
