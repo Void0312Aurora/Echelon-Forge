@@ -802,6 +802,8 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
             event.source_id = det.source_id;
             event.bearing = det.bearing_deg;
             event.signal_strength = det.signal_strength;
+            // Jammer strobes (det.is_jammer) carry no lock or guidance
+            // evidence, so they project as plain emitter rows.
             event.is_lock = det.is_radar_lock;
             event.is_launch = det.is_missile_guidance;
             obs.rwr_warnings.push_back(event);

@@ -12,11 +12,13 @@ enum class JammingType {
 };
 
 struct Jammer {
-    bool is_active;         // Is transmitting
-    double power_watts;     // Effective Radiated Power (ERP)
-    double bandwidth_mhz;   // Bandwidth coverage
-    JammingType type;       // Technique
-    double effective_angle; // Beam width (deg)
+    bool is_active;       // Is transmitting
+    double power_watts;   // Effective Radiated Power (ERP)
+    double bandwidth_mhz; // Bandwidth coverage
+    JammingType type;     // Technique
+    // Full main-beam width (deg), centred on the platform nose. A pod without
+    // a positive beam width radiates omnidirectionally.
+    double effective_angle;
     // Command admission. A pod is commandable only when it is installed (it
     // has a positive ERP); `type` is then the technique the pilot selected.
     // A database `is_active` is the initial switch position. It persists only
@@ -24,10 +26,59 @@ struct Jammer {
     // the whole cockpit state and carries the ECM switch every frame. The
     // transmit-start stamp is < 0 while the pod is in standby.
     double transmit_start_time_s = -1.0;
+    // Burn-through range (m) of this pod, at its own ERP, against a target of
+    // kBurnThroughReferenceRcsM2. Zero means the pod carries no burn-through
+    // data and the legacy proxy constant applies (see jammer_burn_through_range_m).
+    double burn_through_reference_m = 0.0;
+    // Power concentration of the NoiseSpot technique relative to barrage:
+    // spot jams with effective power power_watts * spot_power_gain. 1.0 makes
+    // spot and barrage identical.
+    double spot_power_gain = 1.0;
+    // Range offset (m) of the DRFM false target the victim radar reports
+    // beyond burn-through. 0.0 makes DRFM inert.
+    double drfm_range_offset_m = 0.0;
 };
 
 inline bool jammer_installed(const Jammer &jammer) {
     return std::isfinite(jammer.power_watts) && jammer.power_watts > 0.0;
+}
+
+// An installed pod whose switch is on radiates, whatever the technique.
+inline bool jammer_transmitting(const Jammer &jammer) {
+    return jammer.is_active && jammer_installed(jammer);
+}
+
+// Reference target of Jammer::burn_through_reference_m (m^2).
+inline constexpr double kBurnThroughReferenceRcsM2 = 5.0;
+
+// Engineering proxy, uncalibrated: K in R_bt = K * sqrt(sigma / P_j), fitted
+// to the single point R_bt = 20 km at sigma = 5 m^2 and P_j = 1 kW. It is the
+// sensor model's original constant and applies only to pods whose data
+// carries no burn_through_reference_m.
+inline constexpr double kLegacyBurnThroughConstant = 283000.0;
+
+// Power the technique puts on the victim radar. The 1 W floor is the sensor
+// model's original guard against a zero-power pod.
+inline double jammer_effective_power_watts(const Jammer &jammer) {
+    const double p_j = jammer.power_watts > 1.0 ? jammer.power_watts : 1.0;
+    if (jammer.type == JammingType::NoiseSpot && std::isfinite(jammer.spot_power_gain) &&
+        jammer.spot_power_gain > 0.0) {
+        return p_j * jammer.spot_power_gain;
+    }
+    return p_j;
+}
+
+// Range inside which the victim radar's return from a target of `rcs_m2`
+// overpowers the pod: R_bt = K * sqrt(sigma / P_eff), K = R_ref * sqrt(P_j / 5).
+// With burn_through_reference_m set, R_bt equals it against 5 m^2 at the
+// pod's own ERP and shrinks as 1 / sqrt(spot_power_gain).
+inline double jammer_burn_through_range_m(const Jammer &jammer, double rcs_m2) {
+    const double p_j = jammer.power_watts > 1.0 ? jammer.power_watts : 1.0;
+    const double k = jammer.burn_through_reference_m > 0.0
+                         ? jammer.burn_through_reference_m *
+                               std::sqrt(p_j / kBurnThroughReferenceRcsM2)
+                         : kLegacyBurnThroughConstant;
+    return k * std::sqrt(rcs_m2 / jammer_effective_power_watts(jammer));
 }
 
 // Maps a cockpit ECM technique code onto the native technique. Unknown codes
@@ -116,6 +167,9 @@ struct EmitterDetection {
     double signal_strength = 0.0;
     bool is_radar_lock = false;
     bool is_missile_guidance = false;
+    // A jammer strobe rather than a radar emission. A platform whose radar
+    // and pod both radiate yields one detection of each kind.
+    bool is_jammer = false;
 };
 
 struct ESMReceiver {

@@ -164,6 +164,67 @@ void append_rwr_detection_from_radar(const Sensor &sensor, flecs::entity emitter
     }
 }
 
+// Range out to which a passive receiver hears an emitter: the receiver's own
+// detection range, else the scanning ESM sensor's range.
+double esm_receiver_range_m(const flecs::entity &owner, const Sensor &esm_sensor) {
+    const ESMReceiver *owner_esm = owner.get<ESMReceiver>();
+    if (owner_esm && owner_esm->max_detection_range_m > 0.0) {
+        return owner_esm->max_detection_range_m;
+    }
+    return esm_sensor.max_range;
+}
+
+// A transmitting pod is an RF emitter whatever its technique. It is described
+// as an emitter detectable out to the listening receiver's range; its ERP is
+// the emitter-strength proxy, as the reference range is for a radar.
+bool entity_has_jammer_emitter(const flecs::entity &entity, double receiver_range_m,
+                               Sensor *out_emitter, double *out_erp_watts) {
+    const Jammer *jammer = entity.get<Jammer>();
+    if (!jammer || !jammer_transmitting(*jammer)) {
+        return false;
+    }
+    if (out_emitter) {
+        *out_emitter = Sensor{};
+        out_emitter->max_range = receiver_range_m;
+        out_emitter->reference_range_m = receiver_range_m;
+    }
+    if (out_erp_watts) {
+        *out_erp_watts = jammer->power_watts;
+    }
+    return true;
+}
+
+void record_esm_detection(ESMReceiver &owner_esm, flecs::entity emitter, const Sensor &esm_sensor,
+                          const Sensor &emitter_sensor, double emitter_power_proxy, bool is_jammer,
+                          double dist_m, double rel_bearing_deg) {
+    const double max_range = owner_esm.max_detection_range_m > 0.0
+                                 ? owner_esm.max_detection_range_m
+                                 : std::max(esm_sensor.max_range, emitter_sensor.max_range * 2.0);
+    if (dist_m > max_range) {
+        return;
+    }
+
+    const double emitter_strength = emitter_power_proxy / std::max(1.0, dist_m * dist_m);
+    auto existing = std::find_if(owner_esm.detections.begin(), owner_esm.detections.end(),
+                                 [&](const EmitterDetection &det) {
+                                     return det.source_id == emitter.id() &&
+                                            det.is_jammer == is_jammer;
+                                 });
+    EmitterDetection det{};
+    det.source_id = emitter.id();
+    det.bearing_deg = rel_bearing_deg;
+    det.signal_strength = emitter_strength;
+    // A jammer strobe is never lock or launch evidence.
+    det.is_radar_lock = !is_jammer && emitter.has<Missile>();
+    det.is_missile_guidance = !is_jammer && emitter.has<Missile>();
+    det.is_jammer = is_jammer;
+    if (existing == owner_esm.detections.end()) {
+        owner_esm.detections.push_back(det);
+    } else if (det.signal_strength >= existing->signal_strength) {
+        *existing = det;
+    }
+}
+
 void append_esm_detection_from_emitter(flecs::entity owner, flecs::entity emitter,
                                        const Sensor &esm_sensor, double dist_m,
                                        double rel_bearing_deg) {
@@ -173,33 +234,39 @@ void append_esm_detection_from_emitter(flecs::entity owner, flecs::entity emitte
     }
 
     Sensor emitter_radar{};
-    if (!entity_has_radar_emitter(emitter, &emitter_radar)) {
-        return;
+    if (entity_has_radar_emitter(emitter, &emitter_radar)) {
+        record_esm_detection(*owner_esm, emitter, esm_sensor, emitter_radar,
+                             std::max(1.0, emitter_radar.reference_range_m), false, dist_m,
+                             rel_bearing_deg);
     }
+    Sensor jammer_emitter{};
+    double jammer_erp_watts = 0.0;
+    if (entity_has_jammer_emitter(emitter, esm_receiver_range_m(owner, esm_sensor),
+                                  &jammer_emitter, &jammer_erp_watts)) {
+        record_esm_detection(*owner_esm, emitter, esm_sensor, jammer_emitter,
+                             std::max(1.0, jammer_erp_watts), true, dist_m, rel_bearing_deg);
+    }
+}
 
-    const double max_range = owner_esm->max_detection_range_m > 0.0
-                                 ? owner_esm->max_detection_range_m
-                                 : std::max(esm_sensor.max_range, emitter_radar.max_range * 2.0);
-    if (dist_m > max_range) {
-        return;
+// True when the radar at `radar_t` lies inside the main beam of the pod on the
+// platform at `jammer_t`. The beam is centred on the platform nose; a pod
+// without a positive beam width radiates omnidirectionally.
+bool jammer_beam_covers(const Jammer &jammer, const Transform &jammer_t,
+                        const Transform &radar_t) {
+    if (!(jammer.effective_angle > 0.0)) {
+        return true;
     }
-
-    const double emitter_strength =
-        std::max(1.0, emitter_radar.reference_range_m) / std::max(1.0, dist_m * dist_m);
-    auto existing =
-        std::find_if(owner_esm->detections.begin(), owner_esm->detections.end(),
-                     [&](const EmitterDetection &det) { return det.source_id == emitter.id(); });
-    EmitterDetection det{};
-    det.source_id = emitter.id();
-    det.bearing_deg = rel_bearing_deg;
-    det.signal_strength = emitter_strength;
-    det.is_radar_lock = emitter.has<Missile>();
-    det.is_missile_guidance = emitter.has<Missile>();
-    if (existing == owner_esm->detections.end()) {
-        owner_esm->detections.push_back(det);
-    } else if (det.signal_strength >= existing->signal_strength) {
-        *existing = det;
+    const Vector3 nose = Math::body_to_world(Vector3{1.0, 0.0, 0.0}, jammer_t);
+    const double lx = radar_t.x - jammer_t.x;
+    const double ly = radar_t.y - jammer_t.y;
+    const double lz = radar_t.z - jammer_t.z;
+    const double los = std::sqrt(lx * lx + ly * ly + lz * lz);
+    if (los <= 0.0) {
+        return true;
     }
+    const double cos_off = std::clamp((nose.x * lx + nose.y * ly + nose.z * lz) / los, -1.0, 1.0);
+    const double off_boresight_deg = std::acos(cos_off) * 180.0 / std::numbers::pi_v<double>;
+    return off_boresight_deg <= 0.5 * jammer.effective_angle;
 }
 
 class DefaultSensorModel : public ISensorModel {
@@ -354,11 +421,13 @@ class DefaultSensorModel : public ISensorModel {
                 }
                 double rcs = rcs_for_detection(target_e, owner_transform, target_t);
                 if (sensor.type == static_cast<int>(SensorType::ESM)) {
-                    Sensor emitter_radar{};
-                    if (!entity_has_radar_emitter(target_e, &emitter_radar)) {
+                    Sensor emitter{};
+                    if (!entity_has_radar_emitter(target_e, &emitter) &&
+                        !entity_has_jammer_emitter(target_e, esm_receiver_range_m(owner, sensor),
+                                                   &emitter, nullptr)) {
                         return;
                     }
-                    rcs = std::max(5.0, emitter_radar.reference_rcs_m2);
+                    rcs = std::max(5.0, emitter.reference_rcs_m2);
                 }
                 double snr_db =
                     compute_snr_db(sensor, dist, rcs, attenuation_factor, doppler_factor);
@@ -409,21 +478,21 @@ class DefaultSensorModel : public ISensorModel {
                         signal_strength = rcs;
                     }
 
-                    // Phase 3: Suppression Jamming (Burn-Through)
+                    // Phase 3: self-protection jamming by the target's pod. It
+                    // acts only on a radar inside its main beam and only beyond
+                    // burn-through (Jammer::burn_through_reference_m).
                     const Jammer *jammer = target_e.get<Jammer>();
                     if (jammer && jammer->is_active &&
-                        (jammer->type == JammingType::NoiseBarrage ||
-                         jammer->type == JammingType::NoiseSpot)) {
-
-                        // Burn-Through Range: R_bt = K * sqrt(sigma / P_j)
-                        // K derived from R_bt=20km, sigma=5, P_j=1000 => K ~ 283000
-                        const double K_BT = 283000.0;
-                        double p_j = jammer->power_watts > 1.0 ? jammer->power_watts : 1.0;
-                        double r_bt = K_BT * std::sqrt(rcs / p_j);
-
+                        jammer_beam_covers(*jammer, target_t, owner_transform)) {
+                        const double r_bt = jammer_burn_through_range_m(*jammer, rcs);
                         if (dist > r_bt) {
-                            // Jamming Effective: Target hidden (Noise suppressed)
-                            return;
+                            if (jammer->type != JammingType::DeceptionDRFM) {
+                                // Noise suppression: the target is hidden.
+                                return;
+                            }
+                            // Range deception: the radar keeps a contact on the
+                            // DRFM false target, displaced in range only.
+                            noisy_range = std::max(0.0, noisy_range + jammer->drfm_range_offset_m);
                         }
                     }
                 } else if (sensor.type == static_cast<int>(SensorType::Infrared)) {

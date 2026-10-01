@@ -12,7 +12,13 @@
         "bandwidth_mhz": 2000.0,
         "type": "NoiseBarrage",
         "effective_angle": 60.0,
-        "is_active": false
+        "is_active": false,
+        "burn_through_reference_m": 20011.121907579294,
+        "burn_through_provenance": "engineering proxy: reproduces the pre-existing K_BT=283000 calibration point (R_bt=20 km at 5 m^2, 1 kW); uncalibrated",
+        "spot_power_gain": 1.0,
+        "spot_power_gain_provenance": "engineering proxy: 1.0 keeps NoiseSpot identical to NoiseBarrage; no sourced spot/barrage power-density ratio admitted; uncalibrated",
+        "drfm_range_offset_m": 0.0,
+        "drfm_range_offset_provenance": "engineering proxy: 0.0 keeps DRFM range deception inert; no sourced false-target offset admitted; uncalibrated"
     },
     "countermeasures": {
         "chaff_count": 60,

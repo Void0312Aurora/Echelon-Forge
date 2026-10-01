@@ -1597,6 +1597,12 @@ void parse_electronic_warfare_json_fields(const nlohmann::json &entry, UnitDefin
             jammer.value("bandwidth_mhz", def.jammer_data.bandwidth_mhz);
         def.jammer_data.effective_angle =
             jammer.value("effective_angle", def.jammer_data.effective_angle);
+        def.jammer_data.burn_through_reference_m =
+            jammer.value("burn_through_reference_m", def.jammer_data.burn_through_reference_m);
+        def.jammer_data.spot_power_gain =
+            jammer.value("spot_power_gain", def.jammer_data.spot_power_gain);
+        def.jammer_data.drfm_range_offset_m =
+            jammer.value("drfm_range_offset_m", def.jammer_data.drfm_range_offset_m);
         const std::string jammer_type = jammer.value("type", "NoiseBarrage");
         if (jammer_type == "NoiseSpot") {
             def.jammer_data.type = JammingType::NoiseSpot;

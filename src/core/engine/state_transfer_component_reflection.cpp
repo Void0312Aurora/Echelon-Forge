@@ -124,7 +124,8 @@ void register_nested_value_reflection(flecs::world &ecs) {
         .member<double>("bearing_deg")
         .member<double>("signal_strength")
         .member<bool>("is_radar_lock")
-        .member<bool>("is_missile_guidance");
+        .member<bool>("is_missile_guidance")
+        .member<bool>("is_jammer");
     ecs.component<MissileApproachWarning>()
         .member<std::uint64_t>("source_id")
         .member<std::uint64_t>("missile_id")
@@ -824,7 +825,10 @@ void register_resource_scalar_reflection(flecs::world &ecs) {
         .member<double>("bandwidth_mhz")
         .member<std::int32_t>("type", 1, offsetof(Jammer, type))
         .member<double>("effective_angle")
-        .member<double>("transmit_start_time_s");
+        .member<double>("transmit_start_time_s")
+        .member<double>("burn_through_reference_m")
+        .member<double>("spot_power_gain")
+        .member<double>("drfm_range_offset_m");
     ecs.component<Countermeasures>()
         .member<int>("chaff_count")
         .member<int>("flare_count")
