@@ -8,7 +8,7 @@ Document kind: `plan`
 Lifecycle: `draft`
 Canonical: `docs/architecture/work/issues/runtime_composition_registry_sync.md`
 Owner: `architecture/runtime-composition`
-Last verified: `2026-09-21`
+Last verified: `2026-10-01`
 Content status: remediation record opened after the ground systems-owner package
 found the composition evidence chain disagreeing with the component registry. The
 derived-surface repair below is complete and measured; the CI push trigger is
@@ -19,7 +19,8 @@ deliberately left alone and that residual is recorded here.
 > kept byte-for-byte as that branch's record. `work/army-mechanisms` differs from it in
 > ways a reader would otherwise misapply here. The differences are listed in
 > [Addendum: `work/army-mechanisms` (2026-09-28)](#addendum-workarmy-mechanisms-2026-09-28).
-> Read that section before relying on any count, component name or tool mode below.
+> The [layered army stack addendum](#addendum-layered-army-stack-on-main-e1e077cb-2026-10-01)
+> supersedes that branch snapshot. Read the addenda before relying on any count below.
 
 ## Scope
 
@@ -328,3 +329,66 @@ finding as the original record. Steps 3–9 were redone:
 - The closure admitted `native_probe.py` under the generic compatibility disposition. Its
   real disposition is the `native_probe_only` quarantine enforced by the WP22-E Ground
   native-probe allowlist. The closure tool has no fail-closed guard for new Python callers.
+
+## Addendum: layered army stack on main `e1e077cb` (2026-10-01)
+
+The army line was re-cut into four stacked layers on main `e1e077cb`. Each layer carries its
+own census pin and regenerates the evidence chain once, in the [Repair Order](#repair-order).
+This supersedes the `work/army-mechanisms` snapshot above. That branch is retained only as
+the pre-split history.
+
+| Layer | Branch | Registry additions over the layer below | Census `(components, kernel, resolved)` |
+| --- | --- | --- | --- |
+| main | `main` (`e1e077cb`) | none | `(85, 3, 34)` |
+| L1 foundation | `codex/army-ground-foundation` | `GroundInfantryCapability`, `GroundPlatformDamageState`, `builtin.system.ground_infantry_movement` (stage 34) | `(87, 3, 35)` |
+| L2 direct fire | `codex/army-direct-fire` | `GroundWeaponState` | `(88, 3, 35)` |
+| L3 training | `codex/army-infantry-training` | none | `(88, 3, 35)` |
+| L4 records | `codex/army-composition-evidence` | none; documents and Ground tests only | `(88, 3, 35)` |
+
+The pins are in `tools/maintenance/runtime_composition_evidence_contract.py`,
+`src/tests/test_composition_lifecycle.cpp`, and the three composition contract tests.
+
+**P7 evidence convention.** Main keeps a single host/batch parity record at
+`tests/architecture/composition/fixtures/default_runtime_host_batch_parity.windows_msvc.v1.json`.
+The stack keeps that path, and the content of every layer is captured on HEI
+(Linux, GCC 13.3, release). The record's `hosts[].environment` states that platform, so the
+file name names the evidence slot, not the capture host. The earlier
+`work/army-mechanisms` experiment with a second `linux_gcc` record is not carried forward.
+Choosing a host-neutral path name is a decision for the P7 owner on main.
+
+**What each layer regenerated.** L1 and L2 regenerated the profile projection, the evidence,
+the resolved plan, the Cordis pins and producer outputs, the authority vectors, the ledger
+fixtures, the run receipt, the P7 parity and semantic reference, and the P8 closure. L3
+changes no registry entry. Its only evidence delta is the P8 caller inventory, which gains
+`python/rl/ground/native_probe.py` under `simulation_kernel.default_compatibility`, plus a
+P7 recapture. The semantic reference moves only at L1 (entity id `582 → 584`); later layers
+change hashes only.
+
+**Measured on HEI.** Every layer:
+
+- builds the main CI target list with `-j32`;
+- passes CTest `release` 12/12, and `ef_test_all` plus `runtime_host_candidate_boundary`;
+- passes the smoke suite;
+- reproduces every Cordis fixture byte-for-byte (`npm test` green).
+
+At L3, `ef_test` passes 192/192. The Air and naval runtime suites fail the same 6 nodes as a
+main `e1e077cb` build on the same host (434 passed, 38 xfailed): the cooperative and scripted
+EW demos and `test_mq9_aim120_near_range_live_chain_records_launch_effect_damage`. The other
+reds on the stack are also red on main:
+
+- the Ground MVP `ground_task_mode` scenarios;
+- the WP22 binding-count guards;
+- the P5-D runtime-host gates;
+- the cooperative `WorldBatch` pair;
+- `runtime_bootstrap_import_plan_cache`, which fails on HEI only.
+
+**Residuals carried by the stack:**
+
+- The semantic reference still pins raw Flecs entity ids, so every census change forces a
+  recapture. Re-keying it on `StableEntitySerial` is the residual named in
+  [Stable Entity Identity For Stochastic Draws](stable_entity_identity_for_stochastic_draws.md).
+- The closure still admits `native_probe.py` under the generic compatibility disposition,
+  although the WP22-E allowlist quarantines it as `native_probe_only`. The closure tool still
+  has no fail-closed guard for new Python callers.
+- The parity timings come from a shared host. They pass the budget with margin, but they are
+  not a trend baseline.
