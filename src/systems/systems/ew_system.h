@@ -21,7 +21,45 @@ inline void project_countermeasure_instrument(InstrumentState &instrument,
     instrument.countermeasure_snapshot_post_ew = true;
 }
 
+inline void project_jammer_instrument(InstrumentState &instrument, const Jammer *jammer) {
+    if (jammer && jammer_installed(*jammer)) {
+        instrument.jammer_transmitting = jammer->is_active;
+        instrument.jammer_mode = static_cast<int>(jammer->type);
+        instrument.jammer_transmit_start_time_s = jammer->transmit_start_time_s;
+    } else {
+        instrument.jammer_transmitting = false;
+        instrument.jammer_mode = -1;
+        instrument.jammer_transmit_start_time_s = -1.0;
+    }
+}
+
 inline void register_ew_system(flecs::world &ecs) {
+    // 0. Self-protection jammer command owner. It runs inside the EW node
+    // before the dispensers, so the radar scan of the next frame (SensorSystem
+    // precedes EW in the OnUpdate order) sees the admitted transmit state. An
+    // active PilotAction is the cockpit switch state; without one the suite's
+    // database state holds.
+    ecs.system<Jammer, InstrumentState>("EW_Jammer_Control").run([](flecs::iter &it) {
+        while (it.next()) {
+            auto jammer = it.field<Jammer>(0);
+            auto instrument = it.field<InstrumentState>(1);
+            const ecs_world_info_t *info = ecs_get_world_info(it.world().c_ptr());
+            const double current_time = info ? (double)info->world_time_total : 0.0;
+            for (auto i : it) {
+                const ResolvedJammerCommand command = resolve_jammer_command(it.entity(i));
+                if (command.commanded) {
+                    apply_jammer_command(jammer[i], command.transmit, command.mode_code,
+                                         current_time);
+                } else if (jammer[i].is_active && jammer[i].transmit_start_time_s < 0.0 &&
+                           jammer_installed(jammer[i])) {
+                    // Database-initialised transmit state: stamp its start.
+                    jammer[i].transmit_start_time_s = current_time;
+                }
+                project_jammer_instrument(instrument[i], &jammer[i]);
+            }
+        }
+    });
+
     // 1. Chaff Release System
     ecs.system<Countermeasures, InstrumentState, const Transform, const Velocity>(
            "EW_Release_Chaff")

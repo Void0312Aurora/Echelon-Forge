@@ -11,6 +11,10 @@ AIR_COMBAT_HYBRID_V1_ACTION_MODE = "air_combat_hybrid_v1"
 AIR_COMBAT_HYBRID_V1_ACTION_DIM = 12
 AIR_EW_HYBRID_V1_ACTION_MODE = "air_ew_hybrid_v1"
 AIR_EW_HYBRID_V1_ACTION_DIM = 14
+# v2 appends the self-protection jammer: [14] transmit switch, [15] technique
+# code (0 barrage, 1 spot, 2 DRFM). v1 indices are unchanged.
+AIR_EW_HYBRID_V2_ACTION_MODE = "air_ew_hybrid_v2"
+AIR_EW_HYBRID_V2_ACTION_DIM = 16
 _ACTION_DIMS = {
     "full": 17,
     "takeoff2": 2,
@@ -18,6 +22,7 @@ _ACTION_DIMS = {
     NAVAL_STATION3_ACTION_MODE: 3,
     AIR_COMBAT_HYBRID_V1_ACTION_MODE: AIR_COMBAT_HYBRID_V1_ACTION_DIM,
     AIR_EW_HYBRID_V1_ACTION_MODE: AIR_EW_HYBRID_V1_ACTION_DIM,
+    AIR_EW_HYBRID_V2_ACTION_MODE: AIR_EW_HYBRID_V2_ACTION_DIM,
 }
 _FULL_ACTION_LOW = np.array(
     [-1.0, -1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
@@ -40,6 +45,12 @@ _AIR_EW_HYBRID_V1_ACTION_LOW = np.concatenate(
 ).astype(np.float32, copy=False)
 _AIR_EW_HYBRID_V1_ACTION_HIGH = np.concatenate(
     [_AIR_COMBAT_HYBRID_V1_ACTION_HIGH, np.array([1.0, 1.0], dtype=np.float32)]
+).astype(np.float32, copy=False)
+_AIR_EW_HYBRID_V2_ACTION_LOW = np.concatenate(
+    [_AIR_EW_HYBRID_V1_ACTION_LOW, np.array([0.0, 0.0], dtype=np.float32)]
+).astype(np.float32, copy=False)
+_AIR_EW_HYBRID_V2_ACTION_HIGH = np.concatenate(
+    [_AIR_EW_HYBRID_V1_ACTION_HIGH, np.array([1.0, 2.0], dtype=np.float32)]
 ).astype(np.float32, copy=False)
 
 
@@ -69,6 +80,12 @@ def make_action_space(action_mode: str):
         return spaces.Box(
             low=_AIR_EW_HYBRID_V1_ACTION_LOW,
             high=_AIR_EW_HYBRID_V1_ACTION_HIGH,
+            dtype=np.float32,
+        )
+    if action_mode == AIR_EW_HYBRID_V2_ACTION_MODE:
+        return spaces.Box(
+            low=_AIR_EW_HYBRID_V2_ACTION_LOW,
+            high=_AIR_EW_HYBRID_V2_ACTION_HIGH,
             dtype=np.float32,
         )
     if action_mode == "takeoff2":

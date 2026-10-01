@@ -12,6 +12,8 @@ AIR_FULL_ACTION_DIM = 17
 AIR_TAKEOFF4_ACTION_DIM = 4
 AIR_TAKEOFF2_ACTION_DIM = 2
 AIR_EW_HYBRID_ACTION_DIM = 14
+AIR_EW_HYBRID_V2_ACTION_DIM = 16
+_EW_MODES = ("air_ew_hybrid_v1", "air_ew_hybrid_v2")
 
 
 def half_to_unit(value: float) -> float:
@@ -27,6 +29,7 @@ def build_pilot_action(action: Any, *, action_mode: str = "full", instrument_sta
         "takeoff4": AIR_TAKEOFF4_ACTION_DIM,
         "takeoff2": AIR_TAKEOFF2_ACTION_DIM,
         "air_ew_hybrid_v1": AIR_EW_HYBRID_ACTION_DIM,
+        "air_ew_hybrid_v2": AIR_EW_HYBRID_V2_ACTION_DIM,
     }.get(mode)
     if expected is None or values.size != expected:
         raise ValueError(f"unsupported Air action mode/shape: {mode!r}, {values.shape}")
@@ -52,7 +55,7 @@ def build_pilot_action(action: Any, *, action_mode: str = "full", instrument_sta
         pilot.fire_weapon = bool(values[14] > 0.5)
         pilot.fire_gun = bool(values[15] > 0.5)
         pilot.weapon_select_id = int(np.clip(float(values[16]) * 7.0, 0.0, 7.0))
-    elif mode == "air_ew_hybrid_v1":
+    elif mode in _EW_MODES:
         # EW hybrid v1 shares the combat-hybrid prefix: scan azimuth, scan
         # elevation, then radar-active.  Keep the tail slots reserved for the
         # countermeasure extension.
@@ -79,8 +82,13 @@ def build_pilot_action(action: Any, *, action_mode: str = "full", instrument_sta
         pilot.fire_weapon = False
         pilot.fire_gun = False
         pilot.weapon_select_id = 0
-    pilot.program_chaff = bool(values[12] > 0.5) if mode == "air_ew_hybrid_v1" else False
-    pilot.program_flare = bool(values[13] > 0.5) if mode == "air_ew_hybrid_v1" else False
+    pilot.program_chaff = bool(values[12] > 0.5) if mode in _EW_MODES else False
+    pilot.program_flare = bool(values[13] > 0.5) if mode in _EW_MODES else False
+    # v2 tail: jammer transmit switch and floor-quantized technique code.
+    pilot.jammer_transmit = bool(values[14] > 0.5) if mode == "air_ew_hybrid_v2" else False
+    pilot.jammer_mode = (
+        int(np.floor(np.clip(float(values[15]), 0.0, 2.0))) if mode == "air_ew_hybrid_v2" else 0
+    )
     pilot.jettison_emergency = False
     return pilot
 
@@ -95,6 +103,7 @@ def _float(value: Any, name: str, default: float = 0.0) -> float:
 __all__ = [
     "AIR_FULL_ACTION_DIM",
     "AIR_EW_HYBRID_ACTION_DIM",
+    "AIR_EW_HYBRID_V2_ACTION_DIM",
     "AIR_TAKEOFF2_ACTION_DIM",
     "AIR_TAKEOFF4_ACTION_DIM",
     "build_pilot_action",

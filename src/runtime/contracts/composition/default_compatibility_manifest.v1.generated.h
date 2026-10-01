@@ -1118,6 +1118,7 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "contribution_id": "builtin.system.ew",
         "domain": "cross_domain",
         "executable_node_ids": [
+          "EW_Jammer_Control",
           "EW_Lifetime_Manager",
           "EW_Release_Chaff",
           "EW_Release_Flare"
@@ -1254,10 +1255,10 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "contribution_id": "builtin.system.instrument",
         "domain": "common",
         "executable_node_ids": [
-          "UpdateInstruments"
+          "Up)EFJSON",
+    R"EFJSON(dateInstruments"
         ],
-   )EFJSON",
-    R"EFJSON(     "plugin_id": "builtin.core_runtime",
+        "plugin_id": "builtin.core_runtime",
         "provided_components": [],
         "read_state_shards": [],
         "registration_factory_id": "register_instrument_system",
@@ -1508,10 +1509,10 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "required_capabilities": [],
         "required_components": [],
         "required_services": [
-          "simulation.environment.model"
+          "simulation.environment)EFJSON",
+    R"EFJSON(.model"
         ],
-        "sem)EFJSON",
-    R"EFJSON(antic_stage_ids": [],
+        "semantic_stage_ids": [],
         "write_state_shards": []
       },
       {
@@ -1631,8 +1632,8 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
     "builtin.weapon_release.damage_bridge",
     "builtin.weapon_release.service"
   ],
-  "requested_manifest_sha256": "d35fc20bdd9ec50448ed7dd70da218cb735edb14dfd0fbe3122779783f0f164b",
-  "resolved_manifest_sha256": "4fb0170b00f9b3008f37adfa99c3134bed836501fe6267fd302719926736434f",
+  "requested_manifest_sha256": "796721f17c1a995dbb26cc23a950287c96b0511d950aedbe71169d4b5d5aa4cc",
+  "resolved_manifest_sha256": "50afe7755149225662774531be5eaf39794ebb246e6ccdcc42040fde9720bf56",
   "resolver_contract_version": "echelon_forge.simulation_composition_resolver.v1",
   "schema_version": "echelon_forge.resolved_simulation_composition.v1",
   "system_registration_order": [
@@ -1676,9 +1677,9 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
 };
 
 inline constexpr std::string_view kDefaultCompatibilityRequestedSha256 =
-    "d35fc20bdd9ec50448ed7dd70da218cb735edb14dfd0fbe3122779783f0f164b";
+    "796721f17c1a995dbb26cc23a950287c96b0511d950aedbe71169d4b5d5aa4cc";
 inline constexpr std::string_view kDefaultCompatibilityResolvedSha256 =
-    "4fb0170b00f9b3008f37adfa99c3134bed836501fe6267fd302719926736434f";
+    "50afe7755149225662774531be5eaf39794ebb246e6ccdcc42040fde9720bf56";
 
 inline constexpr std::string_view kDefaultBackendProfileId = "cpu_exact.reference";
 inline constexpr std::string_view kDefaultBackendProviderId = "builtin.backend.flecs_cpu";

@@ -63,6 +63,11 @@ struct InstrumentState {
     int countermeasure_snapshot_stage = 24;
     double countermeasure_snapshot_time_s = -1.0;
     bool countermeasure_snapshot_post_ew = false;
+    // Self-protection jammer projection. jammer_mode is the JammingType code
+    // of the installed pod, or -1 when no pod is installed.
+    bool jammer_transmitting = false;
+    int jammer_mode = -1;
+    double jammer_transmit_start_time_s = -1.0;
 
     // 6. EGI / Navigation (What pilot sees on HSD/TSD)
     double lat_deg;          // Latitude (from EGI)

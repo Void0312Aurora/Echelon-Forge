@@ -197,3 +197,71 @@ def test_ew_action_model_maps_single_countermeasure_doctrine_to_one_tail_bit() -
     assert tuple(chaff[12:14]) == (1.0, 0.0)
     assert tuple(flare[12:14]) == (0.0, 1.0)
     model.close()
+
+
+def test_ew_model_jammer_doctrine_keys_pod_on_lock_and_holds_emcon_otherwise() -> None:
+    model = AirScriptedEWModel(max_rwr=4)
+    model.reset(context={})
+    context = {"jammer_doctrine": "self_protect_on_lock", "jammer_technique": "deception_drfm"}
+    locked = model.decide(observation=_observation([10.0, 0.4, 1.0, 0.0]), context=context, dt=0.05)
+    assert locked.jammer_transmit is True
+    assert locked.jammer_mode == "deception_drfm"
+    assert locked.jammer_technique_code == 2
+
+    # A painting radar without lock or launch keeps the pod in standby.
+    painted = model.decide(observation=_observation([10.0, 0.4, 0.0, 0.0]), context=context, dt=0.05)
+    assert painted.jammer_transmit is False
+    assert painted.jammer_mode == "standby"
+
+    held = model.decide(
+        observation=_observation([10.0, 0.4, 1.0, 1.0]), context={"jammer_doctrine": "hold"}, dt=0.05
+    )
+    assert held.jammer_transmit is False
+    assert held.jammer_mode == "unchanged"
+
+    with pytest.raises(ValueError, match="jammer doctrine"):
+        model.decide(observation=_observation(), context={"jammer_doctrine": "always"}, dt=0.05)
+    with pytest.raises(ValueError, match="jammer technique"):
+        model.decide(
+            observation=_observation(),
+            context={"jammer_doctrine": "self_protect_on_lock", "jammer_technique": "laser"},
+            dt=0.05,
+        )
+    model.close()
+
+
+@pytest.mark.skipif(AIR_EW_HYBRID_V1_ACTION_MODE is None, reason="compiled ef_py action surface is unavailable")
+def test_ew_v2_action_model_projects_jammer_tail_to_pilot_action() -> None:
+    from gym_envs.universal_env_parts import AIR_EW_HYBRID_V2_ACTION_MODE
+    from python.simulation.air.action import build_pilot_action as build_direct_pilot_action
+    from python.tasking_contracts.air.ew.model import AIR_EW_HYBRID_V2_ACTION_DIM
+
+    model = AirScriptedEWActionModel(action_dim=AIR_EW_HYBRID_V2_ACTION_DIM)
+    obs = {
+        "instruments": np.zeros((31,), dtype=np.float32),
+        "mission": np.asarray([1.0, 90.0, 1000.0, 120.0], dtype=np.float32),
+        "rwr": np.asarray([[0.0, 0.8, 1.0, 0.0]], dtype=np.float32),
+    }
+    model.reset(context={"observation": obs, "phase_name": "stable_flight"})
+    action = model.decide(
+        observation=obs,
+        context={"jammer_doctrine": "self_protect_on_lock", "jammer_technique": "noise_spot"},
+        dt=0.05,
+    )
+    model.close()
+    assert action.shape == (AIR_EW_HYBRID_V2_ACTION_DIM,)
+    assert tuple(action[14:16]) == (1.0, 1.0)
+    assert expected_action_dim(AIR_EW_HYBRID_V2_ACTION_MODE) == AIR_EW_HYBRID_V2_ACTION_DIM
+    space = make_action_space(AIR_EW_HYBRID_V2_ACTION_MODE)
+    assert space.shape == (AIR_EW_HYBRID_V2_ACTION_DIM,)
+
+    for pilot in (
+        build_pilot_action(action, action_mode=AIR_EW_HYBRID_V2_ACTION_MODE),
+        build_direct_pilot_action(action, action_mode=AIR_EW_HYBRID_V2_ACTION_MODE),
+    ):
+        assert pilot.jammer_transmit is True
+        assert pilot.jammer_mode == 1
+    # v1 never carries a jammer request.
+    v1 = build_pilot_action(action[:14], action_mode=AIR_EW_HYBRID_V1_ACTION_MODE)
+    assert v1.jammer_transmit is False
+    assert v1.jammer_mode == 0

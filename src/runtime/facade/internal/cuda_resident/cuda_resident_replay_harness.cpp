@@ -42,6 +42,8 @@ void append_pilot_action(std::string &out, const PilotAction &action) {
     append_token(out, replay_canonical_bool(action.jettison_emergency));
     append_token(out, replay_canonical_bool(action.program_chaff));
     append_token(out, replay_canonical_bool(action.program_flare));
+    append_token(out, replay_canonical_bool(action.jammer_transmit));
+    append_token(out, std::to_string(action.jammer_mode));
     append_token(out, replay_canonical_bool(action.active));
 }
 

@@ -54,7 +54,7 @@ bool flight_controls_are_supported(const PilotAction &action) {
            action.radar_scan_az == 0.0 && action.radar_scan_el == 0.0 && !action.tms_up &&
            !action.master_arm && !action.fire_weapon && !action.fire_gun &&
            action.weapon_select_id == 0 && !action.jettison_emergency && !action.program_chaff &&
-           !action.program_flare;
+           !action.program_flare && !action.jammer_transmit && action.jammer_mode == 0;
 }
 
 CudaWorldKinematicsState to_cuda_kinematics(const WorldSpawnRequest &spawn) {

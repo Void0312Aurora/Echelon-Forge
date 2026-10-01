@@ -18,6 +18,9 @@ ensure_repo_imports()
 
 from python.simulation import create_single_backend  # noqa: E402
 from python.tasking_contracts.air.ew.model import (  # noqa: E402
+    AIR_EW_HYBRID_ACTION_DIM,
+    AIR_EW_HYBRID_V2_ACTION_DIM,
+    AIR_EW_JAMMER_DOCTRINES,
     AIR_SCRIPTED_EW_ACTION_MODEL_ID,
 )
 from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY  # noqa: E402
@@ -54,19 +57,34 @@ def run_demo(
     seed: int,
     max_steps: int,
     response_doctrine: str,
+    jammer_doctrine: str | None = None,
 ) -> dict[str, Any]:
     doctrine = str(response_doctrine).strip().lower()
     if doctrine not in {"observe_only", "countermeasure_ready", "chaff_only", "flare_only"}:
         raise ValueError(
             "response_doctrine must be 'observe_only', 'countermeasure_ready', 'chaff_only', or 'flare_only'"
         )
+    # Without a jammer doctrine the demo keeps the v1 (countermeasure-only)
+    # action mode, so its maintained traces are unchanged.
+    jammer = None if jammer_doctrine is None else str(jammer_doctrine).strip().lower()
+    if jammer is not None and jammer not in AIR_EW_JAMMER_DOCTRINES:
+        raise ValueError(f"jammer_doctrine must be one of {AIR_EW_JAMMER_DOCTRINES}")
+    action_mode = "air_ew_hybrid_v1" if jammer is None else "air_ew_hybrid_v2"
+    action_dim = AIR_EW_HYBRID_ACTION_DIM if jammer is None else AIR_EW_HYBRID_V2_ACTION_DIM
+    model_context = {
+        "phase_name": "stable_flight",
+        "response_doctrine": doctrine,
+        "mission_obs_mode": "basic",
+    }
+    if jammer is not None:
+        model_context["jammer_doctrine"] = jammer
 
     vec_env = create_single_backend(
         scenario_path=os.path.abspath(str(scenario_path)),
         n_envs=1,
         include_visual=False,
         include_proprio=False,
-        action_mode="air_ew_hybrid_v1",
+        action_mode=action_mode,
         mission_obs_mode="basic",
         execution_step_runtime_mode="compiled",
         flight_shaping_backend="compiled",
@@ -78,6 +96,7 @@ def run_demo(
         model_id=AIR_SCRIPTED_EW_ACTION_MODEL_ID,
         dt=0.05,
         max_rwr=4,
+        action_dim=action_dim,
     )
     agent = DecisionRuntimeAgent(
         DecisionRuntimeAgentSpec(
@@ -92,6 +111,8 @@ def run_demo(
     launch_warning_steps: list[int] = []
     countermeasure_request_steps: list[int] = []
     countermeasure_state_samples: list[dict[str, Any]] = []
+    jammer_request_steps: list[int] = []
+    jammer_transmit_steps: list[int] = []
     last_info: dict[str, Any] = {}
     last_runtime_step = None
     terminated = False
@@ -102,12 +123,7 @@ def run_demo(
         observation_batch = vec_env.reset()
         observation = _unbatch(observation_batch)
         agent.reset(
-            context={
-                "observation": observation,
-                "phase_name": "stable_flight",
-                "response_doctrine": doctrine,
-                "mission_obs_mode": "basic",
-            },
+            context={"observation": observation, **model_context},
             episode_seed=int(seed),
         )
         for step in range(1, max(1, int(max_steps)) + 1):
@@ -119,19 +135,19 @@ def run_demo(
                 observation=observation,
                 clock_s=float(step - 1) * 0.05,
                 observation_version=f"air-ew:{step - 1}",
-                context={
-                    "phase_name": "stable_flight",
-                    "response_doctrine": doctrine,
-                    "mission_obs_mode": "basic",
-                },
+                context=dict(model_context),
             )
             last_runtime_step = runtime_step
             action = np.asarray(runtime_step.action, dtype=np.float32).reshape(-1)
             if action.size >= 14 and bool(np.any(action[12:14] > 0.5)):
                 countermeasure_request_steps.append(step)
+            if action.size >= 16 and bool(action[14] > 0.5):
+                jammer_request_steps.append(step)
             observation_batch, _rewards, dones, infos = vec_env.step(action.reshape(1, -1))
             last_info = dict(infos[0]) if infos else {}
             instrument = vec_env.envs[0].last_inst
+            if bool(getattr(instrument, "jammer_transmitting", False)):
+                jammer_transmit_steps.append(step)
             if action.size >= 14 and bool(np.any(action[12:14] > 0.5)):
                 countermeasure_state_samples.append(
                     {
@@ -152,8 +168,9 @@ def run_demo(
             {
                 "scenario": os.path.abspath(str(scenario_path)),
                 "seed": int(seed),
-                "action_mode": "air_ew_hybrid_v1",
+                "action_mode": action_mode,
                 "response_doctrine": doctrine,
+                "jammer_doctrine": jammer,
                 "max_steps": int(max_steps),
                 "steps": int(steps_run),
                 "terminated": bool(terminated),
@@ -162,6 +179,8 @@ def run_demo(
                 "launch_warning_steps": launch_warning_steps,
                 "countermeasure_request_steps": countermeasure_request_steps,
                 "countermeasure_state_samples": countermeasure_state_samples,
+                "jammer_request_steps": jammer_request_steps,
+                "jammer_transmit_steps": jammer_transmit_steps,
                 "scripted_runtime_identity": agent.replay_identity,
                 "scripted_runtime_decisions": int(last_runtime_step.report.decision_index)
                 if last_runtime_step is not None
@@ -184,6 +203,12 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("observe_only", "countermeasure_ready", "chaff_only", "flare_only"),
         default="countermeasure_ready",
     )
+    parser.add_argument(
+        "--jammer_doctrine",
+        choices=AIR_EW_JAMMER_DOCTRINES,
+        default=None,
+        help="enable the air_ew_hybrid_v2 jammer tail with this doctrine",
+    )
     parser.add_argument("--json_out", default="")
     return parser
 
@@ -195,6 +220,7 @@ def main() -> int:
         seed=args.seed,
         max_steps=args.max_steps,
         response_doctrine=args.response_doctrine,
+        jammer_doctrine=args.jammer_doctrine,
     )
     rendered = json.dumps(payload, indent=2, ensure_ascii=True)
     if args.json_out:

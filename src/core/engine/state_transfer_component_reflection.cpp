@@ -295,6 +295,8 @@ void register_remaining_scalar_reflection(flecs::world &ecs) {
         .member<bool>("jettison_emergency")
         .member<bool>("program_chaff")
         .member<bool>("program_flare")
+        .member<bool>("jammer_transmit")
+        .member<int>("jammer_mode")
         .member<bool>("active");
     ecs.component<EngineTuning>()
         .member<bool>("enabled")
@@ -821,7 +823,8 @@ void register_resource_scalar_reflection(flecs::world &ecs) {
         .member<double>("power_watts")
         .member<double>("bandwidth_mhz")
         .member<std::int32_t>("type", 1, offsetof(Jammer, type))
-        .member<double>("effective_angle");
+        .member<double>("effective_angle")
+        .member<double>("transmit_start_time_s");
     ecs.component<Countermeasures>()
         .member<int>("chaff_count")
         .member<int>("flare_count")

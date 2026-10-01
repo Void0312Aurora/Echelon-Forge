@@ -18,6 +18,12 @@ struct ResolvedCompatibilityCountermeasureCommand {
     bool release_flare = false;
 };
 
+struct ResolvedJammerCommand {
+    bool commanded = false; // An active PilotAction owns the ECM switch.
+    bool transmit = false;
+    int mode_code = 0;
+};
+
 struct ResolvedCompatibilityMessageCommand {
     bool send = false;
     int msg_type = 0;
@@ -63,6 +69,24 @@ resolve_compatibility_countermeasure_command(const EntityT &entity) {
                                                         entity.template get<ActionCommand>());
 }
 
+// The ECM switch has no legacy ActionCommand counterpart, so only the
+// maintained PilotAction cockpit surface can command the jammer.
+inline ResolvedJammerCommand resolve_jammer_command(const PilotAction *pilot) {
+    ResolvedJammerCommand resolved;
+    if (const PilotAction *active_pilot = active_pilot_action(pilot)) {
+        resolved.commanded = true;
+        resolved.transmit = active_pilot->jammer_transmit;
+        resolved.mode_code = active_pilot->jammer_mode;
+    }
+    return resolved;
+}
+
+template <typename EntityT>
+    requires(!std::is_pointer_v<std::remove_reference_t<EntityT>>)
+inline ResolvedJammerCommand resolve_jammer_command(const EntityT &entity) {
+    return resolve_jammer_command(entity.template get<PilotAction>());
+}
+
 inline bool resolved_compatibility_jettison_tanks(const PilotAction *pilot,
                                                   const ActionCommand *legacy_action) {
     if (const PilotAction *active_pilot = active_pilot_action(pilot)) {
@@ -81,9 +105,8 @@ inline bool resolved_compatibility_jettison_tanks(const ActionCommand *legacy_ac
 template <typename EntityT>
     requires(!std::is_pointer_v<std::remove_reference_t<EntityT>>)
 inline bool resolved_compatibility_jettison_tanks(const EntityT &entity) {
-    return resolved_compatibility_jettison_tanks(
-        entity.template get<PilotAction>(),
-        entity.template get<ActionCommand>());
+    return resolved_compatibility_jettison_tanks(entity.template get<PilotAction>(),
+                                                 entity.template get<ActionCommand>());
 }
 
 inline ResolvedCompatibilityMessageCommand

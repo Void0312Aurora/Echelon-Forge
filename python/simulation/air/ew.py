@@ -9,6 +9,7 @@ import numpy as np
 
 from python.tasking_contracts.air.ew.model import (
     AIR_EW_HYBRID_ACTION_DIM,
+    AIR_EW_HYBRID_V2_ACTION_DIM,
     AirScriptedEWActionModel,
     AirScriptedEWIntent,
 )
@@ -31,15 +32,30 @@ class AirScriptedEWController:
 
     def __init__(self, *, model: AirScriptedEWActionModel | None = None, dt: float = 0.05) -> None:
         self.model = model or AirScriptedEWActionModel(dt=dt)
+        self.action_mode = (
+            "air_ew_hybrid_v2"
+            if int(getattr(self.model, "action_dim", AIR_EW_HYBRID_ACTION_DIM)) == AIR_EW_HYBRID_V2_ACTION_DIM
+            else "air_ew_hybrid_v1"
+        )
         self._closed = False
 
-    def reset(self, *, observation: Any, instruments: Any, command: Any = None, phase_name: str = "stable_flight", doctrine: str = "observe_only") -> None:
+    def reset(
+        self,
+        *,
+        observation: Any,
+        instruments: Any,
+        command: Any = None,
+        phase_name: str = "stable_flight",
+        doctrine: str = "observe_only",
+        jammer_doctrine: str = "hold",
+    ) -> None:
         scripted_observation = build_air_scripted_observation(observation, instruments, command)
         self.model.reset(
             context={
                 "observation": scripted_observation,
                 "phase_name": phase_name,
                 "response_doctrine": doctrine,
+                "jammer_doctrine": jammer_doctrine,
             }
         )
         self._closed = False
@@ -52,6 +68,7 @@ class AirScriptedEWController:
         command: Any = None,
         phase_name: str = "stable_flight",
         doctrine: str = "observe_only",
+        jammer_doctrine: str = "hold",
         observation_version: str = "",
         dt: float | None = None,
     ) -> AirEWDecision:
@@ -61,6 +78,7 @@ class AirScriptedEWController:
         context: Mapping[str, Any] = {
             "phase_name": phase_name,
             "response_doctrine": doctrine,
+            "jammer_doctrine": jammer_doctrine,
             "observation_version": observation_version,
         }
         action = np.asarray(
@@ -78,7 +96,7 @@ class AirScriptedEWController:
             action=action,
             pilot_action=build_pilot_action(
                 action,
-                action_mode="air_ew_hybrid_v1",
+                action_mode=self.action_mode,
                 instrument_state=instruments,
             ),
             intent=intent,

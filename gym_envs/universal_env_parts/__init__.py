@@ -15,6 +15,8 @@ __all__ = [
     "AIR_COMBAT_HYBRID_V1_ACTION_MODE",
     "AIR_EW_HYBRID_V1_ACTION_DIM",
     "AIR_EW_HYBRID_V1_ACTION_MODE",
+    "AIR_EW_HYBRID_V2_ACTION_DIM",
+    "AIR_EW_HYBRID_V2_ACTION_MODE",
     "add_air_combat_event_action_info",
     "air_combat_event_action_contract_present",
     "air_combat_hybrid_effective_action",
@@ -66,6 +68,8 @@ _EXPORTS: dict[str, tuple[str, str]] = {
     "AIR_COMBAT_HYBRID_V1_ACTION_MODE": (".spaces", "AIR_COMBAT_HYBRID_V1_ACTION_MODE"),
     "AIR_EW_HYBRID_V1_ACTION_DIM": (".spaces", "AIR_EW_HYBRID_V1_ACTION_DIM"),
     "AIR_EW_HYBRID_V1_ACTION_MODE": (".spaces", "AIR_EW_HYBRID_V1_ACTION_MODE"),
+    "AIR_EW_HYBRID_V2_ACTION_DIM": (".spaces", "AIR_EW_HYBRID_V2_ACTION_DIM"),
+    "AIR_EW_HYBRID_V2_ACTION_MODE": (".spaces", "AIR_EW_HYBRID_V2_ACTION_MODE"),
     "add_air_combat_event_action_info": (".air_combat_event_action", "add_air_combat_event_action_info"),
     "air_combat_event_action_contract_present": (
         ".air_combat_event_action",

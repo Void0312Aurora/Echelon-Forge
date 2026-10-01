@@ -63,6 +63,8 @@ def test_rb8_trace_identity_covers_forbidden_control_fields() -> None:
         "jettison_emergency",
         "program_chaff",
         "program_flare",
+        "jammer_transmit",
+        "jammer_mode",
     ):
         assert field in harness
 
