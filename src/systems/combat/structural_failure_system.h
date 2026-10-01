@@ -49,23 +49,65 @@ inline double structural_near_field_mode_loss(std::string_view mode, double seve
     return 0.0;
 }
 
-inline bool has_tg_p7_split_surface(const ComponentDamageState &component_damage) {
-    static constexpr std::array<std::string_view, 8> kSplitReceivers = {
-        "engine_core_afterburner_segment",        "engine_core_hot_section_segment",
-        "engine_core_forward_compressor_segment", "wing_spar_center_left_inner_wing_segment",
-        "wing_spar_center_left_root_segment",     "wing_spar_center_carrythrough_segment",
-        "wing_spar_center_right_root_segment",    "wing_spar_center_right_inner_wing_segment",
-    };
+// Map keys for the structural receivers evaluated on every StructuralFailureUpdate step. They
+// are materialized once so the per-step lookups into the std::string-keyed ComponentDamageState
+// maps reuse an existing key instead of constructing (and heap-allocating) one per lookup.
+struct StructuralComponentKeys {
+    std::string wing_spar_center{"wing_spar_center"};
+    std::string wing_spar_center_left_inner_wing_segment{
+        "wing_spar_center_left_inner_wing_segment"};
+    std::string wing_spar_center_left_root_segment{"wing_spar_center_left_root_segment"};
+    std::string wing_spar_center_carrythrough_segment{"wing_spar_center_carrythrough_segment"};
+    std::string wing_spar_center_right_root_segment{"wing_spar_center_right_root_segment"};
+    std::string wing_spar_center_right_inner_wing_segment{
+        "wing_spar_center_right_inner_wing_segment"};
+    std::string left_aileron_actuator{"left_aileron_actuator"};
+    std::string left_leading_edge_flap_actuator{"left_leading_edge_flap_actuator"};
+    std::string left_wing_fuel_cell{"left_wing_fuel_cell"};
+    std::string right_aileron_actuator{"right_aileron_actuator"};
+    std::string right_leading_edge_flap_actuator{"right_leading_edge_flap_actuator"};
+    std::string right_wing_fuel_cell{"right_wing_fuel_cell"};
+    std::string engine_core{"engine_core"};
+    std::string engine_core_afterburner_segment{"engine_core_afterburner_segment"};
+    std::string engine_core_hot_section_segment{"engine_core_hot_section_segment"};
+    std::string engine_core_forward_compressor_segment{"engine_core_forward_compressor_segment"};
+    std::string afterburner_nozzle{"afterburner_nozzle"};
+    std::string left_horizontal_tail_actuator_or_surface_component{
+        "left_horizontal_tail_actuator_or_surface_component"};
+    std::string right_horizontal_tail_actuator_or_surface_component{
+        "right_horizontal_tail_actuator_or_surface_component"};
+    std::string rudder_actuator{"rudder_actuator"};
+    std::string center_fuselage_fuel_cell{"center_fuselage_fuel_cell"};
+    std::string dedicated_intake_lip_or_duct_component{"dedicated_intake_lip_or_duct_component"};
+};
 
-    return std::any_of(kSplitReceivers.begin(), kSplitReceivers.end(), [&](std::string_view name) {
-        return component_damage.component_integrity.find(std::string(name)) !=
-               component_damage.component_integrity.end();
-    });
+inline const StructuralComponentKeys &structural_component_keys() {
+    static const StructuralComponentKeys keys;
+    return keys;
 }
 
-inline bool component_failed_at(const ComponentDamageState &component_damage, std::string_view name,
-                                double threshold) {
-    const std::string key{name};
+inline bool has_tg_p7_split_surface(const ComponentDamageState &component_damage,
+                                    const StructuralComponentKeys &keys) {
+    const std::array<const std::string *, 8> split_receivers = {
+        &keys.engine_core_afterburner_segment,
+        &keys.engine_core_hot_section_segment,
+        &keys.engine_core_forward_compressor_segment,
+        &keys.wing_spar_center_left_inner_wing_segment,
+        &keys.wing_spar_center_left_root_segment,
+        &keys.wing_spar_center_carrythrough_segment,
+        &keys.wing_spar_center_right_root_segment,
+        &keys.wing_spar_center_right_inner_wing_segment,
+    };
+
+    return std::any_of(split_receivers.begin(), split_receivers.end(),
+                       [&](const std::string *name) {
+                           return component_damage.component_integrity.find(*name) !=
+                                  component_damage.component_integrity.end();
+                       });
+}
+
+inline bool component_failed_at(const ComponentDamageState &component_damage,
+                                const std::string &key, double threshold) {
     const auto integrity_it = component_damage.component_integrity.find(key);
     if (integrity_it == component_damage.component_integrity.end() ||
         integrity_it->second > threshold) {
@@ -77,8 +119,7 @@ inline bool component_failed_at(const ComponentDamageState &component_damage, st
 }
 
 inline double structural_component_near_field_loss(const ComponentDamageState &component_damage,
-                                                   std::string_view name) {
-    const std::string key{name};
+                                                   const std::string &key) {
     const auto integrity_it = component_damage.component_integrity.find(key);
     if (integrity_it == component_damage.component_integrity.end()) {
         return 0.0;
@@ -103,14 +144,14 @@ inline double structural_component_near_field_loss(const ComponentDamageState &c
 }
 
 inline bool cumulative_structural_loss_at(const ComponentDamageState &component_damage,
-                                          std::initializer_list<std::string_view> names,
+                                          std::initializer_list<const std::string *> names,
                                           double cumulative_threshold,
                                           std::uint32_t minimum_component_count,
                                           double minimum_component_loss) {
     double cumulative_loss = 0.0;
     std::uint32_t damaged_component_count = 0;
-    for (const std::string_view name : names) {
-        const double loss = structural_component_near_field_loss(component_damage, name);
+    for (const std::string *name : names) {
+        const double loss = structural_component_near_field_loss(component_damage, *name);
         cumulative_loss += loss;
         if (loss >= minimum_component_loss) {
             ++damaged_component_count;
@@ -268,7 +309,8 @@ inline std::vector<std::string> component_names_for_group(StructuralBreakGroup g
 inline StructuralBreakupState
 evaluate_structural_breakup_state(const ComponentDamageState &component_damage,
                                   const StructuralBreakupState &prior = StructuralBreakupState{}) {
-    const bool tg_p7 = has_tg_p7_split_surface(component_damage);
+    const StructuralComponentKeys &keys = structural_component_keys();
+    const bool tg_p7 = has_tg_p7_split_surface(component_damage, keys);
     std::uint32_t newly_failed_groups = 0;
 
     if (tg_p7) {
@@ -276,18 +318,20 @@ evaluate_structural_breakup_state(const ComponentDamageState &component_damage,
         constexpr double kWingNearFieldComponentLossThreshold = 0.05;
         constexpr std::uint32_t kWingNearFieldMinimumComponentCount = 2;
         const bool left_wing_primary =
-            component_failed_at(component_damage, "wing_spar_center_left_inner_wing_segment",
+            component_failed_at(component_damage, keys.wing_spar_center_left_inner_wing_segment,
                                 0.25) ||
-            component_failed_at(component_damage, "wing_spar_center_left_root_segment", 0.25);
+            component_failed_at(component_damage, keys.wing_spar_center_left_root_segment, 0.25);
         const std::uint32_t left_wing_contributors =
-            (component_failed_at(component_damage, "left_aileron_actuator", 0.25) ? 1u : 0u) +
-            (component_failed_at(component_damage, "left_leading_edge_flap_actuator", 0.25) ? 1u
-                                                                                            : 0u) +
-            (component_failed_at(component_damage, "left_wing_fuel_cell", 0.25) ? 1u : 0u);
+            (component_failed_at(component_damage, keys.left_aileron_actuator, 0.25) ? 1u : 0u) +
+            (component_failed_at(component_damage, keys.left_leading_edge_flap_actuator, 0.25)
+                 ? 1u
+                 : 0u) +
+            (component_failed_at(component_damage, keys.left_wing_fuel_cell, 0.25) ? 1u : 0u);
         const bool left_wing_near_field_loss = cumulative_structural_loss_at(
             component_damage,
-            {"wing_spar_center_left_inner_wing_segment", "wing_spar_center_left_root_segment",
-             "left_aileron_actuator", "left_leading_edge_flap_actuator", "left_wing_fuel_cell"},
+            {&keys.wing_spar_center_left_inner_wing_segment,
+             &keys.wing_spar_center_left_root_segment, &keys.left_aileron_actuator,
+             &keys.left_leading_edge_flap_actuator, &keys.left_wing_fuel_cell},
             kWingNearFieldCumulativeLossThreshold, kWingNearFieldMinimumComponentCount,
             kWingNearFieldComponentLossThreshold);
         add_group_if(newly_failed_groups,
@@ -295,18 +339,20 @@ evaluate_structural_breakup_state(const ComponentDamageState &component_damage,
                      StructuralBreakGroup::WingLeft);
 
         const bool right_wing_primary =
-            component_failed_at(component_damage, "wing_spar_center_right_root_segment", 0.25) ||
-            component_failed_at(component_damage, "wing_spar_center_right_inner_wing_segment",
+            component_failed_at(component_damage, keys.wing_spar_center_right_root_segment, 0.25) ||
+            component_failed_at(component_damage, keys.wing_spar_center_right_inner_wing_segment,
                                 0.25);
         const std::uint32_t right_wing_contributors =
-            (component_failed_at(component_damage, "right_aileron_actuator", 0.25) ? 1u : 0u) +
-            (component_failed_at(component_damage, "right_leading_edge_flap_actuator", 0.25) ? 1u
-                                                                                             : 0u) +
-            (component_failed_at(component_damage, "right_wing_fuel_cell", 0.25) ? 1u : 0u);
+            (component_failed_at(component_damage, keys.right_aileron_actuator, 0.25) ? 1u : 0u) +
+            (component_failed_at(component_damage, keys.right_leading_edge_flap_actuator, 0.25)
+                 ? 1u
+                 : 0u) +
+            (component_failed_at(component_damage, keys.right_wing_fuel_cell, 0.25) ? 1u : 0u);
         const bool right_wing_near_field_loss = cumulative_structural_loss_at(
             component_damage,
-            {"wing_spar_center_right_root_segment", "wing_spar_center_right_inner_wing_segment",
-             "right_aileron_actuator", "right_leading_edge_flap_actuator", "right_wing_fuel_cell"},
+            {&keys.wing_spar_center_right_root_segment,
+             &keys.wing_spar_center_right_inner_wing_segment, &keys.right_aileron_actuator,
+             &keys.right_leading_edge_flap_actuator, &keys.right_wing_fuel_cell},
             kWingNearFieldCumulativeLossThreshold, kWingNearFieldMinimumComponentCount,
             kWingNearFieldComponentLossThreshold);
         add_group_if(newly_failed_groups,
@@ -315,53 +361,59 @@ evaluate_structural_breakup_state(const ComponentDamageState &component_damage,
                      StructuralBreakGroup::WingRight);
 
         const std::uint32_t failed_engine_segments =
-            (component_failed_at(component_damage, "engine_core_afterburner_segment", 0.15) ? 1u
-                                                                                            : 0u) +
-            (component_failed_at(component_damage, "engine_core_hot_section_segment", 0.15) ? 1u
-                                                                                            : 0u) +
-            (component_failed_at(component_damage, "engine_core_forward_compressor_segment", 0.15)
+            (component_failed_at(component_damage, keys.engine_core_afterburner_segment, 0.15)
+                 ? 1u
+                 : 0u) +
+            (component_failed_at(component_damage, keys.engine_core_hot_section_segment, 0.15)
+                 ? 1u
+                 : 0u) +
+            (component_failed_at(component_damage, keys.engine_core_forward_compressor_segment,
+                                 0.15)
                  ? 1u
                  : 0u);
         const bool engine_segment_co_condition =
-            component_failed_at(component_damage, "engine_core_afterburner_segment", 0.40) ||
-            component_failed_at(component_damage, "engine_core_hot_section_segment", 0.40) ||
-            component_failed_at(component_damage, "engine_core_forward_compressor_segment", 0.40);
+            component_failed_at(component_damage, keys.engine_core_afterburner_segment, 0.40) ||
+            component_failed_at(component_damage, keys.engine_core_hot_section_segment, 0.40) ||
+            component_failed_at(component_damage, keys.engine_core_forward_compressor_segment,
+                                0.40);
         const bool afterburner_co_failure =
-            component_failed_at(component_damage, "afterburner_nozzle", 0.25) &&
+            component_failed_at(component_damage, keys.afterburner_nozzle, 0.25) &&
             engine_segment_co_condition;
         add_group_if(newly_failed_groups, failed_engine_segments >= 2u || afterburner_co_failure,
                      StructuralBreakGroup::EngineRight);
 
         add_group_if(
             newly_failed_groups,
-            component_failed_at(component_damage, "wing_spar_center_carrythrough_segment", 0.20),
+            component_failed_at(component_damage, keys.wing_spar_center_carrythrough_segment, 0.20),
             StructuralBreakGroup::Fuselage);
     } else {
         constexpr double kWingNearFieldCumulativeLossThreshold = 0.20;
         constexpr double kWingNearFieldComponentLossThreshold = 0.05;
         constexpr std::uint32_t kWingNearFieldMinimumComponentCount = 2;
         const bool shared_spar_failed =
-            component_failed_at(component_damage, "wing_spar_center", 0.25);
+            component_failed_at(component_damage, keys.wing_spar_center, 0.25);
         const std::uint32_t left_wing_contributors =
-            (component_failed_at(component_damage, "left_aileron_actuator", 0.25) ? 1u : 0u) +
-            (component_failed_at(component_damage, "left_leading_edge_flap_actuator", 0.25) ? 1u
-                                                                                            : 0u) +
-            (component_failed_at(component_damage, "left_wing_fuel_cell", 0.25) ? 1u : 0u);
+            (component_failed_at(component_damage, keys.left_aileron_actuator, 0.25) ? 1u : 0u) +
+            (component_failed_at(component_damage, keys.left_leading_edge_flap_actuator, 0.25)
+                 ? 1u
+                 : 0u) +
+            (component_failed_at(component_damage, keys.left_wing_fuel_cell, 0.25) ? 1u : 0u);
         const std::uint32_t right_wing_contributors =
-            (component_failed_at(component_damage, "right_aileron_actuator", 0.25) ? 1u : 0u) +
-            (component_failed_at(component_damage, "right_leading_edge_flap_actuator", 0.25) ? 1u
-                                                                                             : 0u) +
-            (component_failed_at(component_damage, "right_wing_fuel_cell", 0.25) ? 1u : 0u);
+            (component_failed_at(component_damage, keys.right_aileron_actuator, 0.25) ? 1u : 0u) +
+            (component_failed_at(component_damage, keys.right_leading_edge_flap_actuator, 0.25)
+                 ? 1u
+                 : 0u) +
+            (component_failed_at(component_damage, keys.right_wing_fuel_cell, 0.25) ? 1u : 0u);
         const bool left_wing_near_field_loss = cumulative_structural_loss_at(
             component_damage,
-            {"wing_spar_center", "left_aileron_actuator", "left_leading_edge_flap_actuator",
-             "left_wing_fuel_cell"},
+            {&keys.wing_spar_center, &keys.left_aileron_actuator,
+             &keys.left_leading_edge_flap_actuator, &keys.left_wing_fuel_cell},
             kWingNearFieldCumulativeLossThreshold, kWingNearFieldMinimumComponentCount,
             kWingNearFieldComponentLossThreshold);
         const bool right_wing_near_field_loss = cumulative_structural_loss_at(
             component_damage,
-            {"wing_spar_center", "right_aileron_actuator", "right_leading_edge_flap_actuator",
-             "right_wing_fuel_cell"},
+            {&keys.wing_spar_center, &keys.right_aileron_actuator,
+             &keys.right_leading_edge_flap_actuator, &keys.right_wing_fuel_cell},
             kWingNearFieldCumulativeLossThreshold, kWingNearFieldMinimumComponentCount,
             kWingNearFieldComponentLossThreshold);
         add_group_if(newly_failed_groups,
@@ -373,30 +425,32 @@ evaluate_structural_breakup_state(const ComponentDamageState &component_damage,
                          right_wing_near_field_loss,
                      StructuralBreakGroup::WingRight);
 
-        const bool engine_core_failed = component_failed_at(component_damage, "engine_core", 0.15);
+        const bool engine_core_failed =
+            component_failed_at(component_damage, keys.engine_core, 0.15);
         const bool afterburner_co_failure =
-            component_failed_at(component_damage, "afterburner_nozzle", 0.25) &&
-            component_failed_at(component_damage, "engine_core", 0.40);
+            component_failed_at(component_damage, keys.afterburner_nozzle, 0.25) &&
+            component_failed_at(component_damage, keys.engine_core, 0.40);
         add_group_if(newly_failed_groups, engine_core_failed || afterburner_co_failure,
                      StructuralBreakGroup::EngineRight);
     }
 
     add_group_if(newly_failed_groups,
                  component_failed_at(component_damage,
-                                     "left_horizontal_tail_actuator_or_surface_component", 0.20),
+                                     keys.left_horizontal_tail_actuator_or_surface_component, 0.20),
                  StructuralBreakGroup::TailLeft);
     add_group_if(newly_failed_groups,
                  component_failed_at(component_damage,
-                                     "right_horizontal_tail_actuator_or_surface_component", 0.20),
+                                     keys.right_horizontal_tail_actuator_or_surface_component,
+                                     0.20),
                  StructuralBreakGroup::TailRight);
     add_group_if(newly_failed_groups,
-                 component_failed_at(component_damage, "rudder_actuator", 0.25),
+                 component_failed_at(component_damage, keys.rudder_actuator, 0.25),
                  StructuralBreakGroup::VerticalTail);
-    add_group_if(
-        newly_failed_groups,
-        component_failed_at(component_damage, "center_fuselage_fuel_cell", 0.30) ||
-            component_failed_at(component_damage, "dedicated_intake_lip_or_duct_component", 0.20),
-        StructuralBreakGroup::Fuselage);
+    add_group_if(newly_failed_groups,
+                 component_failed_at(component_damage, keys.center_fuselage_fuel_cell, 0.30) ||
+                     component_failed_at(component_damage,
+                                         keys.dedicated_intake_lip_or_duct_component, 0.20),
+                 StructuralBreakGroup::Fuselage);
 
     StructuralBreakupState next = prior;
     next.active_structural_groups |= newly_failed_groups;
