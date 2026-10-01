@@ -180,18 +180,31 @@ def _loader_cfg(loader: Any) -> tuple[dict[str, Any], dict[str, Any]]:
     return rewards, meta
 
 
-def _cfg_value(loader: Any, name: str, default: Any = None) -> Any:
-    rewards, meta = _loader_cfg(loader)
+def _cfg_lookup(
+    rewards: dict[str, Any], meta: dict[str, Any], name: str, default: Any = None
+) -> Any:
     if name in meta:
         return meta.get(name)
     return rewards.get(name, default)
 
 
-def _cfg_float(loader: Any, name: str, default: float) -> float:
+def _cfg_lookup_float(
+    rewards: dict[str, Any], meta: dict[str, Any], name: str, default: float
+) -> float:
     try:
-        return float(_cfg_value(loader, name, default))
+        return float(_cfg_lookup(rewards, meta, name, default))
     except Exception:
         return float(default)
+
+
+def _cfg_value(loader: Any, name: str, default: Any = None) -> Any:
+    rewards, meta = _loader_cfg(loader)
+    return _cfg_lookup(rewards, meta, name, default)
+
+
+def _cfg_float(loader: Any, name: str, default: float) -> float:
+    rewards, meta = _loader_cfg(loader)
+    return _cfg_lookup_float(rewards, meta, name, default)
 
 
 def _add_term(rb: dict[str, float], name: str, value: float) -> float:
@@ -257,40 +270,54 @@ def air_combat_damage_shaping_enabled(loader: Any) -> bool:
     return is_air_combat_profile(loader)
 
 
+# Every per-field consequence scale key, target role first. The enable check below
+# runs on every env step, so the key strings are built once here.
+_DAMAGE_CONSEQUENCE_SCALE_KEYS = tuple(
+    key
+    for role in ("target", "self")
+    for key in (
+        f"air_combat_{role}_damage_consequence_scale",
+        *(
+            f"air_combat_{role}_damage_consequence_{field}_scale"
+            for field in sorted(
+                set(_AIRCRAFT_DAMAGE_DECREASE_FIELDS)
+                | set(_AIRCRAFT_DAMAGE_INCREASE_FIELDS)
+                | set(_AIRCRAFT_DAMAGE_FLAG_FIELDS)
+                | set(_GROUND_CONSEQUENCE_REWARD_FIELDS)
+            )
+        ),
+    )
+)
+
+
+def _any_cfg_scale_nonzero(loader: Any, keys: Any) -> bool:
+    # One config fetch for the whole scan; each key resolves meta-first exactly
+    # like _cfg_float.
+    rewards, meta = _loader_cfg(loader)
+    return any(abs(_cfg_lookup_float(rewards, meta, key, 0.0)) > 0.0 for key in keys)
+
+
 def air_combat_damage_consequence_shaping_enabled(loader: Any) -> bool:
     explicit = _cfg_value(loader, "air_combat_damage_consequence_shaping_enabled", None)
     if explicit is None:
         explicit = _cfg_value(loader, "combat_damage_consequence_shaping_enabled", None)
     if explicit is not None:
         return _as_bool(explicit, False)
-    field_names = (
-        set(_AIRCRAFT_DAMAGE_DECREASE_FIELDS)
-        | set(_AIRCRAFT_DAMAGE_INCREASE_FIELDS)
-        | set(_AIRCRAFT_DAMAGE_FLAG_FIELDS)
-        | set(_GROUND_CONSEQUENCE_REWARD_FIELDS)
-    )
-    for role in ("target", "self"):
-        prefix = f"air_combat_{role}_damage_consequence"
-        if abs(_cfg_float(loader, f"{prefix}_scale", 0.0)) > 0.0:
-            return True
-        for field in field_names:
-            if abs(_cfg_float(loader, f"{prefix}_{field}_scale", 0.0)) > 0.0:
-                return True
-    return False
+    return _any_cfg_scale_nonzero(loader, _DAMAGE_CONSEQUENCE_SCALE_KEYS)
 
 
 def air_combat_release_shaping_enabled(loader: Any) -> bool:
     explicit = _cfg_value(loader, "air_combat_release_shaping_enabled", None)
     if explicit is not None:
         return _as_bool(explicit, False)
-    return any(
-        abs(_cfg_float(loader, key, 0.0)) > 0.0
-        for key in (
+    return _any_cfg_scale_nonzero(
+        loader,
+        (
             "air_combat_first_release_bonus",
             "air_combat_release_bonus",
             "air_combat_repeat_release_penalty",
             "air_combat_invalid_fire_penalty",
-        )
+        ),
     )
 
 
@@ -298,7 +325,7 @@ def air_combat_c2_roe_release_discipline_enabled(loader: Any) -> bool:
     explicit = _cfg_value(loader, "air_combat_c2_roe_release_discipline_enabled", None)
     if explicit is not None:
         return _as_bool(explicit, False)
-    return any(abs(_cfg_float(loader, key, 0.0)) > 0.0 for key in _C2_ROE_REWARD_KEYS)
+    return _any_cfg_scale_nonzero(loader, _C2_ROE_REWARD_KEYS)
 
 
 def air_combat_c2_roe_state_from_mapping(
