@@ -320,10 +320,11 @@ class GroundInfantryNativeProbe:
             "target_damage_after": after,
             "weapon_before": weapon_before,
             "weapon_after": weapon_after,
+            "requires": ["terrain_line_of_sight"],
             "does_not_claim": [
                 "target_selection",
-                "line_of_sight",
                 "cover",
+                "concealment",
                 "suppression",
                 "ballistics",
             ],

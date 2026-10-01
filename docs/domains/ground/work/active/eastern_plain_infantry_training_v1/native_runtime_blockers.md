@@ -3,7 +3,7 @@
 Document kind: `work-package evidence`
 Lifecycle: `active`
 Owner: `domains/ground`
-Last verified: `2026-09-29`
+Last verified: `2026-10-01`
 
 ## What was blocked and is now admitted
 
@@ -55,8 +55,9 @@ The native release service now admits one bounded Ground direct-fire path. A
 Ground attacker must carry the default rifle state, an explicit hostile Ground
 contact, and a valid range/ammunition/cooldown state. A successful shot records
 the legacy launch seam and enters the shared effects/damage bridge at the
-current body-center hitbox bootstrap. This is a deterministic close-range
-training proxy: it does not provide line of sight, cover, suppression,
+current body-center hitbox bootstrap. Since `2026-10-01` release also requires
+terrain line of sight (item 5 below). This is a deterministic close-range
+training proxy: it does not provide cover, concealment, suppression,
 ballistics, indirect fire, or target-selection automation.
 The explicit `fire_ground_weapon_from_mission_command` entrypoint additionally
 requires an active assigned target and matching fire authority; it is a single
@@ -192,7 +193,16 @@ reviewed Ground owner package must:
 4. retain the proxy tests as diagnostics until native behavior supersedes them;
 5. replace the rifle's synthetic body-center hit with authored infantry
    hitboxes and a reviewed line-of-sight/cover owner before widening weapon
-   employment.
+   employment. **Partly unblocked `2026-10-01`:** the line-of-sight owner is the
+   environment's domain-neutral
+   [terrain line-of-sight query](../../../../../systems/environment/work/active/terrain_line_of_sight_v1/README.md),
+   and the rifle gate consumes it before the hit roll: the sight line runs from
+   the shooter's eye height to the target's centre-of-mass height for each held
+   stance, and blocked or unknown terrain rejects the shot without consuming a
+   round. The posture heights are authored `engineering_proxy` content
+   (follow-up `TLOS-F1`). Still held: authored infantry hitboxes (the hit point
+   is still the synthetic body centre), cover and concealment from vegetation
+   and buildings, suppression, and ballistics.
 
 The training contract remains `contract_only`; the current proxy and native Gym
 adapter are intentionally not `train.py` or production `WorldBatch` entries.

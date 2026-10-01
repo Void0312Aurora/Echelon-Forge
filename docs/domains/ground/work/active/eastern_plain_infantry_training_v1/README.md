@@ -149,6 +149,7 @@ route-level crossing planning.
 - route graph and passability mask;
 - general slope/wet-ground policy and route-level river-crossing planning
   (local slope cost and sampled river/bridge transitions are admitted);
-- line-of-sight, cover, concealment, and exposure model;
+- cover, concealment, and exposure model (bare-earth terrain line of sight
+  gates the native rifle probe; it is not exposed in the RL contract);
 - ground track/sensor observation export (terrain sampling is admitted separately);
 - fatigue, medical, logistics, indirect fires, suppression, and full combat integration.

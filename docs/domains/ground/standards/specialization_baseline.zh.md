@@ -6,7 +6,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/domains/ground/standards/specialization_baseline.md`
 Owner: `domains/ground`
-Last verified: `2026-09-29`
+Last verified: `2026-10-01`
 
 ## 范围
 
@@ -60,9 +60,13 @@ held 的执行行为。
   （`tests/runtime/ground/test_ground_infantry_native_unit.py`）。
 - 为单兵 fixture 准入了有界原生直射切片：`GroundWeaponState` 与
   `SimulationKernel.fire_ground_weapon` 要求存在被跟踪的敌方 Ground 目标、有限的步枪射程、
-  弹药与冷却时间，并在命中成功时进入共享 effects/damage bridge。这是确定性的近距离代理；
-  它不宣称视线、掩体、压制、弹道或完整火控模型
-  （`tests/runtime/ground/test_ground_infantry_native_unit.py`）。这些原生 probe 绑定位于
+  弹药与冷却时间，并在命中成功时进入共享 effects/damage bridge。只有当环境的地形视线查询
+  报告从射手眼高到目标质心高度（均按各自所保持姿态取自 authored 内容）的视线可见时才会
+  释放；地形遮挡、地形未知或姿态几何未 authored 时，在消耗任何弹药、冷却或命中抽样之前
+  拒绝射击。姿态高度是 `engineering_proxy` 内容，不是已校准的人体测量数据。这是确定性的
+  近距离代理；它不宣称掩体、隐蔽、压制、弹道、间接火力或完整火控模型
+  （`tests/runtime/ground/test_ground_infantry_native_unit.py`、
+  `src/tests/test_ground_direct_fire_line_of_sight.cpp`）。这些原生 probe 绑定位于
   被隔离的 `bindings_core_kernel_diagnostics_ground.cpp` 诊断面，不在维护中的
   `SimulationKernel` 绑定面上。
 
@@ -119,8 +123,9 @@ observation export。准入记录见
 
 - route following、waypoint/路线规划、加速度/疲劳/队形 dynamics、路线图、一般通行性
   掩码、路线级河流通行规划、obstacle 或 breach behavior（已准入的表面只是局部单 tick 过渡采样与阻断，不是路线产品）；
-- Ground sensing、line-of-sight 计算、cover、concealment、track fusion、data-link
-  behavior，或超出上面所列有界地形/过渡/字段语义观测元组之外的 observation export；
+- Ground sensing、超出有界步枪裸地地形闸门之外的 line of sight、cover、concealment、
+  track fusion、data-link behavior，或超出上面所列有界地形/过渡/字段语义观测元组之外的
+  observation export；
 - indirect fire、suppression、attrition、完整火控、弹道模型或 combat runtime（已准入的直射切片是位于被隔离
   诊断绑定面上的确定性近距离代理，不是火控或弹道模型；它所驱动的 ground damage 机制仍只是
   可达机制，不是已释放的 effects 能力）；
