@@ -10,8 +10,13 @@
 #include "components/systems/logistics.h"
 
 inline void register_naval_logistics_system(flecs::world &ecs) {
+    // The provider query is compiled once per world instead of on every run. It stays uncached,
+    // like the per-run query it replaces, so the provider iteration order is unchanged; the run
+    // delegate owns the handle and flecs frees it with the system.
+    auto provider_q =
+        ecs.query<const LogisticsNode, const Transform, const Velocity, const NavalStores>();
     ecs.system<ResupplyState, NavalStores, const Transform, const Velocity>("NavalUnderwayResupply")
-        .run([&](flecs::iter &it) {
+        .run([provider_q](flecs::iter &it) {
             while (it.next()) {
                 struct UnderwayProviderSnapshot {
                     flecs::entity entity;
@@ -27,9 +32,6 @@ inline void register_naval_logistics_system(flecs::world &ecs) {
                 };
 
                 std::vector<UnderwayProviderSnapshot> providers;
-                auto provider_q = it.world()
-                                      .query<const LogisticsNode, const Transform, const Velocity,
-                                             const NavalStores>();
                 provider_q.each([&](flecs::entity e, const LogisticsNode &node, const Transform &t,
                                     const Velocity &v, const NavalStores &naval_stores) {
                     if (!node.underway_replenishment_enabled) {
