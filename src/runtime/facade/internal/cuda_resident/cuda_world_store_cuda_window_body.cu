@@ -705,7 +705,17 @@ __global__ void window_commit_body_kernel(
 cudaError_t launch_window_commit_body(CudaWorldStoreDeviceAllocation *allocation,
                                       std::uint8_t slot_index) noexcept {
     if (allocation == nullptr) return cudaErrorInvalidValue;
-    constexpr unsigned int threads = 128;
+    // The body's busiest unit is the per-SM FP64 pipe (ncu: 27% busy with one
+    // warp, 84% at a full grid), so throughput scales with the number of SMs
+    // the worlds are spread over. A fixed 128-thread block packed 4096 worlds
+    // onto 32 of 82 SMs; the smallest block that keeps maximum residency
+    // spreads the same grid over more SMs without lowering the full-grid cap.
+    if (allocation->window_body_threads == 0) {
+        const cudaError_t status = smallest_full_occupancy_block_size(
+            window_commit_body_kernel, &allocation->window_body_threads);
+        if (status != cudaSuccess) return status;
+    }
+    const auto threads = static_cast<unsigned int>(allocation->window_body_threads);
     const unsigned int blocks =
         static_cast<unsigned int>((allocation->world_capacity + threads - 1) / threads);
     std::uint8_t *slot = allocation->state_slots[slot_index];
@@ -740,8 +750,17 @@ cudaError_t launch_window_commit_body(CudaWorldStoreDeviceAllocation *allocation
 
 bool query_cuda_world_store_window_commit_body_kernel_resources(
     CudaBarrierKernelResources *resources, std::string *error) {
+    int threads = 0;
+    const cudaError_t status =
+        smallest_full_occupancy_block_size(window_commit_body_kernel, &threads);
+    if (status != cudaSuccess) {
+        if (error != nullptr) {
+            *error = cuda_error_message("derive window_commit_body_kernel block size", status);
+        }
+        return false;
+    }
     return query_cuda_kernel_resources(window_commit_body_kernel, "window_commit_body_kernel",
-                                       resources, error);
+                                       resources, error, threads);
 }
 
 } // namespace runtime::cuda_resident::detail

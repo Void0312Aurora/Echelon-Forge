@@ -98,6 +98,8 @@
   - 基于保留的宽阶段帮助程序的通信候选生成的 C++ 阶段 0 GPU 探针。
 - [ef_gpu_visual_candidate_phase0_probe](../../src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.cpp)
   - 基于保留的宽阶段帮助程序的视觉对象候选生成的 C++ 阶段 0 GPU 探针。
+- [ef_cuda_resident_window_probe](../../src/tools/experimental/cuda_resident_window_probe.cpp)
+  - CUDA 常驻固定翼窗口在指定世界数下的墙钟 / Nsight 剖析目标（需 `-DEF_ENABLE_CUDA_RESIDENT_BACKEND=ON`；一致性仍由 replay/full-window 测试负责）。
 
 ## GPU 阶段 0 构建
 
@@ -112,6 +114,7 @@ cmake --build build-gpu --target ef_gpu_interaction_broadphase_phase0_probe -j
 cmake --build build-gpu --target ef_gpu_sensor_candidate_phase0_probe -j
 cmake --build build-gpu --target ef_gpu_comm_candidate_phase0_probe -j
 cmake --build build-gpu --target ef_gpu_visual_candidate_phase0_probe -j
+cmake --build build-gpu --target ef_cuda_resident_window_probe -j
 ```
 
 示例探针运行：

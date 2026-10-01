@@ -162,6 +162,9 @@ struct CudaWorldStoreDeviceAllocation {
     std::size_t world_capacity = 0;
     std::uint8_t active_lifecycle_slot = 0;
     std::uint8_t active_state_slot = 0;
+    // window_commit_body_kernel block size, derived once per allocation by
+    // smallest_full_occupancy_block_size on the allocating device.
+    int window_body_threads = 0;
 };
 
 inline std::string cuda_error_message(const char *operation, cudaError_t status) {
@@ -225,9 +228,52 @@ __device__ inline bool increment_would_overflow(std::uint64_t value) {
 [[nodiscard]] cudaError_t launch_window_commit_body(CudaWorldStoreDeviceAllocation *allocation,
                                                     std::uint8_t slot) noexcept;
 
+// Smallest whole-warp block size at which `kernel` still reaches its maximum
+// theoretical occupancy on the current device. For a per-world kernel with no
+// block-level cooperation (no shared memory, no __syncthreads), block size only
+// decides how warps are spread over SMs: the smallest block that loses no
+// residency spreads a small grid over the most SMs and gives a large grid the
+// finest wave tail. Derived from the occupancy API and device attributes, so it
+// tracks register usage and the per-SM block limit of whatever device runs it.
+template <typename Kernel>
+cudaError_t smallest_full_occupancy_block_size(Kernel kernel, int *threads_per_block) noexcept {
+    if (threads_per_block == nullptr) return cudaErrorInvalidValue;
+    int device = 0;
+    cudaError_t status = cudaGetDevice(&device);
+    int warp = 0;
+    int device_block_limit = 0;
+    if (status == cudaSuccess) status = cudaDeviceGetAttribute(&warp, cudaDevAttrWarpSize, device);
+    if (status == cudaSuccess) {
+        status = cudaDeviceGetAttribute(&device_block_limit, cudaDevAttrMaxThreadsPerBlock, device);
+    }
+    cudaFuncAttributes attributes{};
+    if (status == cudaSuccess) status = cudaFuncGetAttributes(&attributes, kernel);
+    if (status != cudaSuccess) return status;
+    const int block_limit = device_block_limit < attributes.maxThreadsPerBlock
+                                ? device_block_limit
+                                : attributes.maxThreadsPerBlock;
+    if (warp <= 0 || block_limit < warp) return cudaErrorInvalidConfiguration;
+    int best_block = 0;
+    int best_resident_threads = 0;
+    for (int block = warp; block <= block_limit; block += warp) {
+        int active_blocks = 0;
+        status = cudaOccupancyMaxActiveBlocksPerMultiprocessor(&active_blocks, kernel, block, 0);
+        if (status != cudaSuccess) return status;
+        // Strictly greater keeps the smallest block at the maximum.
+        if (active_blocks * block > best_resident_threads) {
+            best_resident_threads = active_blocks * block;
+            best_block = block;
+        }
+    }
+    if (best_block == 0) return cudaErrorInvalidConfiguration;
+    *threads_per_block = best_block;
+    return cudaSuccess;
+}
+
 template <typename Kernel>
 bool query_cuda_kernel_resources(Kernel kernel, const char *name,
-                                 CudaBarrierKernelResources *resources, std::string *error) {
+                                 CudaBarrierKernelResources *resources, std::string *error,
+                                 int threads_per_block = 128) {
     if (resources == nullptr) {
         if (error != nullptr)
             *error = std::string("CUDA ") + name + " resource query requires an output";
@@ -239,7 +285,6 @@ bool query_cuda_kernel_resources(Kernel kernel, const char *name,
         if (error != nullptr) *error = cuda_error_message(name, status);
         return false;
     }
-    constexpr int threads_per_block = 128;
     int active_blocks = 0;
     status =
         cudaOccupancyMaxActiveBlocksPerMultiprocessor(&active_blocks, kernel, threads_per_block, 0);

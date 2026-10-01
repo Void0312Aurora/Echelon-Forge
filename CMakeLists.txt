@@ -928,6 +928,15 @@ target_link_libraries(ef_gpu_visual_candidate_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 
+# Resident-backend window-throughput probe: wall-clock and ncu target for the
+# fixed-air resident kernels at world counts the parity tests never reach.
+add_executable(ef_cuda_resident_window_probe EXCLUDE_FROM_ALL
+    src/tools/experimental/cuda_resident_window_probe.cpp
+)
+target_link_libraries(ef_cuda_resident_window_probe PRIVATE
+    ef_cuda_resident_backend
+)
+
 # --- Testing ---
 # 5. doctest (C++ unit test framework)
 include(CTest)

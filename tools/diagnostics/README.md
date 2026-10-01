@@ -110,6 +110,8 @@ Frozen experimental GPU helper phase-0 probes:
   - C++ phase-0 GPU probe for communication candidate generation built on the retained broadphase helper.
 - [ef_gpu_visual_candidate_phase0_probe](../../src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.cpp)
   - C++ phase-0 GPU probe for visual-object candidate generation built on the retained broadphase helper.
+- [ef_cuda_resident_window_probe](../../src/tools/experimental/cuda_resident_window_probe.cpp)
+  - CUDA-resident fixed-air window wall-clock / Nsight target at chosen world counts (needs `-DEF_ENABLE_CUDA_RESIDENT_BACKEND=ON`; parity stays with the replay/full-window tests).
 
 ## GPU Phase 0 Build
 
@@ -126,6 +128,7 @@ cmake --build build-gpu --target ef_gpu_interaction_broadphase_phase0_probe -j
 cmake --build build-gpu --target ef_gpu_sensor_candidate_phase0_probe -j
 cmake --build build-gpu --target ef_gpu_comm_candidate_phase0_probe -j
 cmake --build build-gpu --target ef_gpu_visual_candidate_phase0_probe -j
+cmake --build build-gpu --target ef_cuda_resident_window_probe -j
 ```
 
 Example probe runs:
