@@ -19,6 +19,8 @@ AIR_SCRIPTED_EW_MODEL_ID = "air.ew.rwr_response_scripted"
 AIR_SCRIPTED_EW_ACTION_MODEL_ID = "air.ew.rwr_action_scripted"
 AIR_EW_HYBRID_ACTION_DIM = 14
 AIR_EW_HYBRID_V2_ACTION_DIM = 16
+# First EW tail index; [0:12] is the shared ``air_combat_hybrid_v1`` prefix.
+AIR_EW_ACTION_TAIL_START = 12
 # Jammer doctrines. ``hold`` never transmits. ``self_protect_on_lock`` keys the
 # pod while a hostile radar holds a lock or a launch is warned, and returns it
 # to standby when the threat clears (emission control otherwise).
@@ -50,6 +52,26 @@ class AirScriptedEWIntent:
     observation_version: str
     jammer_transmit: bool = False
     jammer_technique_code: int = 0
+
+
+def air_ew_action_tail(intent: AirScriptedEWIntent, *, action_dim: int) -> np.ndarray:
+    """Project an EW intent onto the versioned action tail after index 11.
+
+    The tail is ``[chaff, flare]`` for ``air_ew_hybrid_v1`` and adds
+    ``[jammer_transmit, technique_code]`` for ``air_ew_hybrid_v2``. It never
+    covers the shared 12-element combat prefix.
+    """
+
+    dim = int(action_dim)
+    if dim not in (AIR_EW_HYBRID_ACTION_DIM, AIR_EW_HYBRID_V2_ACTION_DIM):
+        raise ValueError(f"Air EW action_dim must be 14 or 16, got {action_dim}")
+    tail = np.zeros((dim - AIR_EW_ACTION_TAIL_START,), dtype=np.float32)
+    tail[0] = 1.0 if intent.countermeasure_plan in {"request_chaff", "request_chaff_and_flare"} else 0.0
+    tail[1] = 1.0 if intent.countermeasure_plan in {"request_flare", "request_chaff_and_flare"} else 0.0
+    if dim == AIR_EW_HYBRID_V2_ACTION_DIM:
+        tail[2] = 1.0 if intent.jammer_transmit else 0.0
+        tail[3] = float(intent.jammer_technique_code)
+    return tail
 
 
 class AirScriptedEWModel:
@@ -228,11 +250,7 @@ class AirScriptedEWActionModel:
         action[:4] = flight_action
         intent = self.ew_model.decide(observation=observation, context=model_context, dt=dt)
         self.last_intent = intent
-        action[12] = 1.0 if intent.countermeasure_plan in {"request_chaff", "request_chaff_and_flare"} else 0.0
-        action[13] = 1.0 if intent.countermeasure_plan in {"request_flare", "request_chaff_and_flare"} else 0.0
-        if self.action_dim == AIR_EW_HYBRID_V2_ACTION_DIM:
-            action[14] = 1.0 if intent.jammer_transmit else 0.0
-            action[15] = float(intent.jammer_technique_code)
+        action[AIR_EW_ACTION_TAIL_START:] = air_ew_action_tail(intent, action_dim=self.action_dim)
         return action
 
     def close(self) -> None:
@@ -250,6 +268,7 @@ def make_air_scripted_ew_action_model(**kwargs: Any) -> AirScriptedEWActionModel
 
 
 __all__ = [
+    "AIR_EW_ACTION_TAIL_START",
     "AIR_EW_HYBRID_ACTION_DIM",
     "AIR_EW_HYBRID_V2_ACTION_DIM",
     "AIR_EW_DISPENSE_PROGRAMS",
@@ -260,6 +279,7 @@ __all__ = [
     "AirScriptedEWActionModel",
     "AirScriptedEWIntent",
     "AirScriptedEWModel",
+    "air_ew_action_tail",
     "make_air_scripted_ew_action_model",
     "make_air_scripted_ew_model",
 ]
