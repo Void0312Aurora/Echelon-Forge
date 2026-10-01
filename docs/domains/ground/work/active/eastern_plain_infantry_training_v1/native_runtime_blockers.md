@@ -3,7 +3,7 @@
 Document kind: `work-package evidence`
 Lifecycle: `active`
 Owner: `domains/ground`
-Last verified: `2026-09-29`
+Last verified: `2026-10-01`
 
 ## What was blocked and is now admitted
 
@@ -188,7 +188,10 @@ reviewed Ground owner package must:
 2. extend the bounded vector sampling into route/passability and observation
    provenance as runtime contracts rather than fixture-local assumptions;
 3. extend the existing native reset/step/replay acceptance tests over more of
-   the Arnis-derived map before considering any production RL adapter;
+   the Arnis-derived map before considering any production RL adapter
+   (**evidence landed 2026-10-01 at `native_probe_only` scope**, see
+   [Item 3 acceptance matrix](#item-3-acceptance-matrix); this alone does not
+   admit a production RL adapter, which still needs items 1, 2, and 5);
 4. retain the proxy tests as diagnostics until native behavior supersedes them;
 5. replace the rifle's synthetic body-center hit with authored infantry
    hitboxes and a reviewed line-of-sight/cover owner before widening weapon
@@ -199,6 +202,76 @@ adapter are intentionally not `train.py` or production `WorldBatch` entries.
 The admitted native surfaces provide only local sampled passability and terrain
 effects; they are not a general route/passability mask, line-of-sight model, or
 automatic map-provider integration.
+
+## Item 3 acceptance matrix
+
+Evidence path:
+
+- case derivation: `python/rl/ground/fixture_cases.py`
+  (`derive_acceptance_cases`), tested offline by
+  `tests/training/test_ground_infantry_fixture_cases.py`;
+- native matrix: `python/rl/ground/acceptance_matrix.py`
+  (`build_acceptance_matrix`), tested by
+  `tests/training/test_ground_infantry_native_acceptance_matrix.py`;
+- replay determinism:
+  `tests/training/test_ground_infantry_native_replay_determinism.py`;
+- S1/S2 stages: `python/rl/ground/curriculum.py` with
+  `examples/config/training/active/ground/eastern_plain_infantry_curriculum_stages_v1.json`,
+  tested by `tests/training/test_ground_infantry_curriculum_stages.py`.
+
+Cases are derived from the bundle, overlay, and field-acceptance data rather
+than typed coordinates. On the checked-in fixture at seed 42 the matrix has 26
+cases. All of them match their fixture-derived expectation under the native
+probe (measured on the Linux army build, 2026-10-01):
+
+| Category | Cases | Expected | Native outcome |
+|---|---|---|---|
+| landcover (tree, grass, crop, built-up, bare) | 5 | reach | reach |
+| slope band (<p50, p50-p95, p95-p99, >p99) | 4 | reach | reach |
+| water (landcover water, river line, floodplain polygon) | 3 | block | `water_transition_blocked`, then `blocked_step_limit` |
+| raster edge (outbound x4 / parallel x4) | 8 | block / reach | `obstacle_transition_blocked` / reach |
+| bridge (crossing / off-bridge control) | 2 | reach / block | reach with `bridge_admitted` on every step / water block |
+| held building footprint | 4 | held | reach (recorded only) |
+
+The native preflight rejects every block case with the same reason the rollout
+reports, and every rollout ends with exactly one termination or truncation
+reason.
+
+Determinism:
+
+- a same-seed rollout is byte-identical;
+- probe `replay` reproduces the env trace;
+- seed 42 and seed 43 differ only in the recorded `trace.seed` field, because
+  the single-soldier slice draws no seeded randomness.
+
+The scripted heading-to-goal baseline passes both stages:
+
+- S1: 7 admitted flat, open-landcover reach cases;
+- S2: 22 admitted cases, 14 reach and 8 fail-closed blocks.
+
+The SB3 PPO smoke completes one short rollout and update on an S1 case. This is
+pipeline evidence, not a learning result.
+
+Open decisions, recorded in the stage config and not resolved by this tooling:
+
+- S2 block cases place the waypoint in water or outside the raster. The native
+  reward (distance delta minus blocked-attempt penalty) is reused unchanged. A
+  stop-at-bank or reroute objective would be a contract change, not a
+  coefficient this runner may add.
+- Farm-track cost cannot be exercised, because native movement consumes only
+  bridge-flagged road vectors.
+- Building footprints are traversable natively: all four held cases reach the
+  footprint centroid. A collision/cover owner must decide their passability;
+  until then they are excluded from S1 and S2.
+- The native slope query uses a +/-5 m central difference, while slope bands
+  use the field-acceptance estimator. Band membership is therefore a
+  fixture-level label, not a native slope classification.
+- Near the raster boundary the native slope saturates, because the central
+  difference samples out-of-raster elevation. The edge-parallel cases
+  therefore run at the 0.20 slope-multiplier floor.
+
+Still held: route planning, line of sight and cover, sensing, and multi-agent
+behaviour.
 
 ## Verification residual outside this slice
 

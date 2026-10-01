@@ -96,6 +96,52 @@ engineering proxy 现在可以仅基于声明的桥面 overlay 生成可重放�
 reset、action、observation、reward、termination、replay 契约之后，不能用训练曲线
 掩盖缺失的地形语义。
 
+## 原生验收矩阵与 S1/S2 阶段运行器
+
+“剩余解阻包”第 3 项（把原生 reset/step/replay 验收扩展到更多 Arnis 地图区域）
+的证据现已改为数据驱动。
+
+`python/rl/ground/fixture_cases.py` 从已验证的 bundle 数据推导全部起点/目标用例，
+不手写任何坐标。输入为 bundle manifest、地表覆盖与高程栅格、水系/道路/建筑矢量、
+伴随 overlay 以及 `field_acceptance.json`。用例类别如下：
+
+- 每种存在的可通行地表类别一个 reach 用例；
+- 每个坡度带一个 reach 用例，带边界取保留的 p50/p95/p99 坡度分位数；
+- 进入地表水体、以及进入每个声明水系要素的 block 用例；
+- 每条栅格边界一个出界（block）用例和一个沿边（reach）用例；
+- 声明桥面的跨河用例，外加一个桥外对照；
+- 保持 held 的建筑足迹用例。
+
+`python/rl/ground/acceptance_matrix.py` 在脚本“朝目标航向”控制器下，通过
+`GroundInfantryNativeEnv` 运行每个用例，并为每个用例记录：
+
+- `validate_waypoint_sequence` 预检结论；
+- rollout 结果及其终止或截断原因；
+- 规范化 trace SHA-256。
+
+原生结果与 fixture 推导的预期不一致，或 rollout 未以显式原因结束时，用例
+fail closed。步数上限取自原生预检的最差采样移动倍率，矩阵不引入任何自身系数。
+
+重放确定性通过以下三项检查：
+
+- 同 seed 的第二次 rollout 逐字节一致；
+- probe `replay(actions, seed=...)` 能复现 env trace；
+- 仅改变 reset seed 时，唯一变化的是记录的 `trace.seed` 字段。
+
+`python/rl/ground/curriculum.py` 依据数据配置
+`examples/config/training/active/ground/eastern_plain_infantry_curriculum_stages_v1.json`
+运行 S1（平面航路点）与 S2（地形代价）。
+
+- S1 的准入阈值按键名从 `field_acceptance.json` 读取（`max_slope_p95_deg`、
+  `open_landcover_codes`）。
+- 排除 held overlay 类别与建筑足迹。
+- 每个阶段记录一次脚本基线结果。
+- 可选的 SB3 PPO smoke 复用 `default_ppo.json`，并限制为一次短 rollout。
+- reward 与 termination 原样沿用原生 env 契约。
+
+状态与待决事项见 [`native_runtime_blockers.md`](native_runtime_blockers.md)。以上全部
+是 `native_probe_only` 工具，不是 `train.py`、不是 WorldBatch，也不是路线图或规划器。
+
 当前原生 runtime 的测量结果和剩余问题记录在
 [`native_runtime_blockers.md`](native_runtime_blockers.md)。原生切片现在覆盖一个带
 地表/坡度/植被代价的确定性 `MoveStatic` 步、显式 Arnis 栅格加载、有限河流/桥面过渡、
@@ -112,5 +158,7 @@ reset、action、observation、reward、termination、replay 契约之后，不�
 - 路网与通行性 mask；
 - 一般化坡度/湿地策略和路线级河流渡越规划（局部坡度代价与采样河流/桥面过渡已准入）；
 - 视线、掩体、隐蔽和暴露模型；
+- 农道移动代价（原生移动不消费 track 道路矢量）；
+- 建筑足迹碰撞（原生可穿越足迹，已从 S1/S2 排除）；
 - Ground track/sensor observation export（地形采样已单独准入）；
 - 疲劳、医疗、后勤、间接火力、压制和完整战斗接入。
