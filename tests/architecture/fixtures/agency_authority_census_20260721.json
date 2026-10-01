@@ -80,12 +80,12 @@
     {
       "file": "python/rl/profile/ground_profile.py",
       "tokens": ["AuthorityScope", "CommandRelationship", "authorization_to_fire", "command_relationship", "ground_commander_id", "infer_command_relationship", "officer_in_tactical_command"],
-      "token_counts": {"AuthorityScope": 1, "CommandRelationship": 2, "authorization_to_fire": 5, "command_relationship": 6, "ground_commander_id": 3, "infer_command_relationship": 1, "officer_in_tactical_command": 1},
+      "token_counts": {"AuthorityScope": 1, "CommandRelationship": 2, "authorization_to_fire": 5, "command_relationship": 7, "ground_commander_id": 3, "infer_command_relationship": 1, "officer_in_tactical_command": 1},
       "categories": ["arbitration", "delegation", "role", "scope"],
       "form": "default+delegation+precedence",
-      "semantic": "Ground profile command-relationship/authority-scope defaults, officer_in_tactical_command (OTC) and ground_commander_id delegation/role inference, the infer_command_relationship delegation rule, and a leader-intent-over-mission-command fire-authorization precedence in build_kernel_mission_command (leader_intent.authorization_to_fire wins over mission_cmd when the leader carries the field, lines 428-431). Arbitration grounded (I47 repair P1-2) by the leader-vs-mission fire-authorization priority, not only defaults/delegation.",
+      "semantic": "Ground profile command-relationship/authority-scope defaults, officer_in_tactical_command (OTC) and ground_commander_id delegation/role inference, the infer_command_relationship delegation rule, and a leader-intent-over-mission-command fire-authorization precedence in build_kernel_mission_command (leader_intent.authorization_to_fire wins over mission_cmd when the leader carries the field, lines 456-459). apply_task_order_overrides projects the authored command_relationship enum at the Ground adapter boundary; it copies the authored value and resolves no conflict. Arbitration grounded (I47 repair P1-2) by the leader-vs-mission fire-authorization priority, not only defaults/delegation.",
       "owner": "T9 tasking-authority surface",
-      "note": "Repair round 1: added arbitration (leader-vs-mission fire-authorization precedence, confirmed at build_kernel_mission_command lines 428-431). Repair round 2: pins the snake_case command_relationship + the infer_command_relationship definition; category set is pinned exactly in the gate."
+      "note": "Repair round 1: added arbitration (leader-vs-mission fire-authorization precedence, confirmed at build_kernel_mission_command, now lines 456-459). Repair round 2: pins the snake_case command_relationship + the infer_command_relationship definition; category set is pinned exactly in the gate. 2026-10-01: command_relationship 6 -> 7 for the Ground task-order adapter (authored-field projection, same categories)."
     },
     {
       "file": "python/rl/profile/naval_profile.py",
