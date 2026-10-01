@@ -441,8 +441,8 @@ class ArnisInfantryFixture:
         ]
         return self.hydrology_mask | np.isin(self.landcover, np.asarray(water_codes, dtype=np.uint8))
 
-    def overlay_polygon_mask(self) -> np.ndarray:
-        """Union of every overlay polygon (held metadata semantics)."""
+    def overlay_polygon_mask(self, kinds: Sequence[str] | None = None) -> np.ndarray:
+        """Union of overlay polygons (all, or only ``kinds``); held metadata."""
 
         row_axis, column_axis = self._axes
         min_x = float(min(column_axis[0], column_axis[-1]))
@@ -452,13 +452,49 @@ class ArnisInfantryFixture:
             geometry = entry.get("geometry", {})
             if geometry.get("geometry_type") != "polygon":
                 continue
+            if kinds is not None and entry.get("overlay_kind") not in kinds:
+                continue
             # Overlay coordinates are logical offsets from the raster minimum
             # corner, the same translation the native overlay loader applies.
             points = tuple((min_x + float(x), min_y + float(y)) for x, y in geometry["points"])
             mask |= self._geometry_mask(points, polygon=True, width_m=0.0)
         return mask
 
+    @cached_property
+    def building_mask(self) -> np.ndarray:
+        mask = np.zeros(self.shape, dtype=bool)
+        for feature in self.buildings:
+            mask |= self._feature_mask(feature)
+        return mask
+
     # -- point / segment prediction -----------------------------------
+
+    def segment_cells(self, case: FixtureCase) -> tuple[tuple[int, int], ...]:
+        """Raster cells sampled at raster spacing along every case segment."""
+
+        cells: list[tuple[int, int]] = []
+        points = (case.start_xy_m,) + case.waypoints_xy_m
+        for start, end in zip(points, points[1:]):
+            distance = math.hypot(end[0] - start[0], end[1] - start[1])
+            samples = max(1, int(math.ceil(distance / self.sample_spacing_m)))
+            for index in range(samples + 1):
+                fraction = index / samples
+                cell = self.cell(
+                    start[0] + (end[0] - start[0]) * fraction,
+                    start[1] + (end[1] - start[1]) * fraction,
+                )
+                if cell is not None and (not cells or cells[-1] != cell):
+                    cells.append(cell)
+        return tuple(cells)
+
+    def stride_slope_at(self, cell: tuple[int, int]) -> float:
+        """Field-acceptance slope at the nearest sample of the acceptance grid."""
+
+        stride = self.slope_stride
+        slope = self.stride_slope_deg
+        row = min(slope.shape[0] - 1, int(round(cell[0] / stride)))
+        column = min(slope.shape[1] - 1, int(round(cell[1] / stride)))
+        return float(slope[row, column])
 
     def block_reason(self, x_m: float, y_m: float) -> str | None:
         # Vector semantics are evaluated at the continuous point and take
