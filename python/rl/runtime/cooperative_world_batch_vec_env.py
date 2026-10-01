@@ -25,6 +25,7 @@ from gym_envs.universal_env import (
     add_air_combat_event_action_info,
     air_combat_hybrid_effective_action,
     apply_air_combat_event_action_gate,
+    build_ew_state_observation,
     build_step_info_minimal,
     finalize_air_combat_event_action_info,
     is_air_combat_hybrid_action_mode,
@@ -124,6 +125,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         render_mode: str | None = None,
         include_visual: bool = False,
         include_proprio: bool = False,
+        include_ew_state: bool = False,
         action_mode: str = "full",
         mission_obs_mode: str = "basic",
         visual_downsample: int = 1,
@@ -151,6 +153,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         self.render_mode = render_mode
         self.include_visual = bool(include_visual)
         self.include_proprio = bool(include_proprio)
+        self.include_ew_state = bool(include_ew_state)
         self.action_mode = str(action_mode)
         self.mission_obs_mode = str(mission_obs_mode).strip().lower()
         self.visual_downsample = max(1, int(visual_downsample))
@@ -220,6 +223,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             obs_size=self.obs_size,
             max_contacts=self.max_contacts,
             max_rwr=self.max_rwr,
+            include_ew_state=self.include_ew_state,
         )
 
         self._worlds = [
@@ -281,6 +285,14 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         """Inject the declared observation-view owner into the shared C3 builder."""
 
         return observation_view.own_ship_attr(truth, field)
+
+    def _observation_sim_time(self, truth: Any) -> float:
+        """World time of the observation snapshot, read through the declared owner."""
+
+        try:
+            return float(self._observation_own_ship_field_reader(truth, "sim_time"))
+        except Exception:
+            return -1.0
 
     def _slot_refs(self, slot_indices: list[int]) -> list[Any]:
         refs: list[Any] = []
@@ -616,6 +628,11 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 last_action=slot_state.last_action,
                 action_dim=int(self.action_space.shape[0]),
             )
+            if self.include_ew_state:
+                obs["ew_state"] = build_ew_state_observation(
+                    inst_batch[batch_idx],
+                    self._observation_sim_time(truth_batch[batch_idx]),
+                )
             if self.include_visual:
                 obs["visual"] = np.asarray(slot_state.visual_cache, dtype=np.float32)
             obs_batch.append(self._attach_temporal_history(slot_state, obs))

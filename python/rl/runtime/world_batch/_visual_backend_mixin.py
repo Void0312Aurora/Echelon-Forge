@@ -126,6 +126,9 @@ class _WorldBatchVecEnvVisualBackendMixin:
         if self.include_proprio:
             obs_torch["proprio"] = torch.as_tensor(self.buf_obs["proprio"], device=target_device)
 
+        if getattr(self, "include_ew_state", False):
+            obs_torch["ew_state"] = torch.as_tensor(self.buf_obs["ew_state"], device=target_device)
+
         if self.include_visual:
             if self._policy_visual_device_view is not None:
                 visual = torch.from_dlpack(self._policy_visual_device_view)

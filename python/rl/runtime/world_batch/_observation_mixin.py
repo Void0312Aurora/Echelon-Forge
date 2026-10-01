@@ -12,6 +12,7 @@ import time
 from gym_envs.universal_env import (
     append_temporal_history,
     attach_temporal_history,
+    build_ew_state_observation,
     make_temporal_history_buffer,
     naval_policy_instruments,
     temporal_history_enabled,
@@ -218,8 +219,21 @@ class _WorldBatchVecEnvObservationMixin:
                 last_action=handle.last_action,
                 action_dim=int(self.action_space.shape[0]),
             )
+            if getattr(self, "include_ew_state", False):
+                obs["ew_state"] = build_ew_state_observation(
+                    inst_batch[batch_idx],
+                    self._observation_sim_time(truth_batch[batch_idx]),
+                )
             obs_batch.append(self._attach_temporal_history(env_idx, self._attach_visual_observation(env_idx, obs)))
         return obs_batch
+
+    def _observation_sim_time(self, truth: Any) -> float:
+        """World time of the observation snapshot, read through the declared owner."""
+
+        try:
+            return float(self._observation_own_ship_field_reader(truth, "sim_time"))
+        except Exception:
+            return -1.0
 
     def _observation_timing_snapshot(self) -> dict[str, float]:
         return observation_timing_snapshot(getattr(self, "last_observation_build_timing", None))

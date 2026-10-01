@@ -8,7 +8,7 @@ usage: policy_execution_eval.py [-h] [--mode {cooperative,single}] --scenario
                                 [--visual_downsample VISUAL_DOWNSAMPLE]
                                 [--visual_update_interval VISUAL_UPDATE_INTERVAL]
                                 [--temporal_history_len TEMPORAL_HISTORY_LEN]
-                                [--action_mode {full,takeoff2,takeoff4,naval_station3,air_combat_hybrid_v1}]
+                                [--action_mode {full,takeoff2,takeoff4,naval_station3,air_combat_hybrid_v1,air_ew_hybrid_v1,air_ew_hybrid_v2}]
                                 [--execution_step_runtime_mode {compiled}]
                                 [--step_info_mode {full,terminal,off}]
                                 [--flight_shaping_backend {auto,compiled,gpu_host}]
@@ -39,7 +39,7 @@ options:
   --visual_downsample VISUAL_DOWNSAMPLE
   --visual_update_interval VISUAL_UPDATE_INTERVAL
   --temporal_history_len TEMPORAL_HISTORY_LEN
-  --action_mode {full,takeoff2,takeoff4,naval_station3,air_combat_hybrid_v1}
+  --action_mode {full,takeoff2,takeoff4,naval_station3,air_combat_hybrid_v1,air_ew_hybrid_v1,air_ew_hybrid_v2}
   --execution_step_runtime_mode {compiled}
   --step_info_mode {full,terminal,off}
   --flight_shaping_backend {auto,compiled,gpu_host}

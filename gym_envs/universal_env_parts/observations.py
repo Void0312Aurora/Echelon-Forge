@@ -5,6 +5,7 @@ import numpy as np
 from gym_envs import observation_view
 
 from .common import ef_py
+from .spaces import EW_STATE_DIM
 
 
 # G4 information-state declaration (architecture design doc §3/§15; facility in
@@ -51,6 +52,58 @@ def naval_policy_instruments(inst_vec: np.ndarray) -> np.ndarray:
         if idx < flat.size:
             out[idx] = flat[idx]
     return out.reshape(np.asarray(inst_vec).shape)
+
+
+def _elapsed_since(stamp_s: float, sim_time_s: float) -> float:
+    """Seconds since a native time stamp, or -1 when the stamp or the clock is absent (< 0)."""
+
+    if not np.isfinite(stamp_s) or stamp_s < 0.0 or not np.isfinite(sim_time_s) or sim_time_s < 0.0:
+        return -1.0
+    return float(max(0.0, sim_time_s - stamp_s))
+
+
+def build_ew_state_observation(inst, sim_time_s: float) -> np.ndarray:
+    """Project the native InstrumentState EW fields to the ``ew_state`` vector.
+
+    ``inst`` is the policy InstrumentState the observation was built from and
+    ``sim_time_s`` the world time of that snapshot (``AgentObservation.sim_time``).
+    Absent equipment keeps the native -1 sentinels; elapsed times are -1 when
+    the native stamp is -1 (never released / not transmitting).
+    """
+
+    def _num(name: str, default: float) -> float:
+        try:
+            return float(getattr(inst, name))
+        except (AttributeError, TypeError, ValueError):
+            return float(default)
+
+    sim_time = float(sim_time_s)
+    chaff = _num("countermeasure_chaff_remaining", -1.0)
+    flare = _num("countermeasure_flare_remaining", -1.0)
+    has_dispenser = chaff >= 0.0 or flare >= 0.0
+    since_release = (
+        _elapsed_since(_num("countermeasure_last_release_time_s", -1.0), sim_time) if has_dispenser else -1.0
+    )
+    jammer_mode = _num("jammer_mode", -1.0)
+    has_pod = jammer_mode >= 0.0
+    transmitting = 1.0 if (has_pod and bool(getattr(inst, "jammer_transmitting", False))) else 0.0
+    since_transmit = (
+        _elapsed_since(_num("jammer_transmit_start_time_s", -1.0), sim_time) if transmitting > 0.5 else -1.0
+    )
+    out = np.array(
+        [
+            max(-1.0, chaff),
+            max(-1.0, flare),
+            since_release,
+            transmitting,
+            float(np.clip(jammer_mode, -1.0, 2.0)),
+            since_transmit,
+        ],
+        dtype=np.float32,
+    )
+    if out.shape != (EW_STATE_DIM,):  # pragma: no cover - layout guard
+        raise AssertionError(f"ew_state layout drifted: {out.shape}")
+    return np.nan_to_num(out, nan=-1.0, posinf=-1.0, neginf=-1.0)
 
 
 def downsample_visual_mean(visual: np.ndarray, factor: int) -> np.ndarray:
@@ -220,4 +273,9 @@ def build_universal_observation(
     return obs
 
 
-__all__ = ["build_universal_observation", "downsample_visual_mean", "naval_policy_instruments"]
+__all__ = [
+    "build_ew_state_observation",
+    "build_universal_observation",
+    "downsample_visual_mean",
+    "naval_policy_instruments",
+]

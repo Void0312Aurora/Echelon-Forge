@@ -41,6 +41,7 @@ def _make_args(**overrides):
   base = {
     "include_visual": None,
     "include_proprio": None,
+    "include_ew_state": None,
     "mission_obs_mode": None,
     "visual_downsample": None,
     "visual_update_interval": None,
@@ -84,6 +85,30 @@ def _make_args(**overrides):
       "air_combat_hybrid_v1",
       id="air_combat_hybrid_action_mode",
     ),
+    pytest.param(
+      {"action_mode": "air_ew_hybrid_v1"},
+      "action_mode",
+      "air_ew_hybrid_v1",
+      id="air_ew_hybrid_v1_action_mode",
+    ),
+    pytest.param(
+      {"action_mode": " air_ew_hybrid_v2 "},
+      "action_mode",
+      "air_ew_hybrid_v2",
+      id="air_ew_hybrid_v2_action_mode",
+    ),
+    pytest.param(
+      {},
+      "include_ew_state",
+      False,
+      id="ew_state_observation_off_by_default",
+    ),
+    pytest.param(
+      {"include_ew_state": True, "action_mode": "air_ew_hybrid_v2"},
+      "include_ew_state",
+      True,
+      id="ew_state_observation_opt_in",
+    ),
   ],
 )
 def test_resolve_env_settings_normalizes_single_field(env, field, expected) -> None:
@@ -91,10 +116,25 @@ def test_resolve_env_settings_normalizes_single_field(env, field, expected) -> N
   assert resolved[field] == expected
 
 
+def test_resolve_env_settings_cli_override_wins_for_ew_state_flag() -> None:
+  resolved = resolve_env_settings({"env": {"include_ew_state": True}}, _make_args(include_ew_state=False))
+  assert resolved["include_ew_state"] is False
+
+
 # A removed/unknown value must raise ValueError with a specific message.
 @pytest.mark.parametrize(
   ("env", "args_overrides", "message"),
   [
+    pytest.param(
+      {"action_mode": "air_ew_hybrid_v3"}, {},
+      "Unknown action_mode in merged env config",
+      id="unknown_ew_action_mode_version",
+    ),
+    pytest.param(
+      {"action_mode": "bogus"}, {},
+      "Unknown action_mode in merged env config",
+      id="unknown_action_mode",
+    ),
     pytest.param(
       {"execution_step_runtime_mode": "legacy"}, {},
       "execution_step_runtime_mode='legacy' has been removed",
@@ -263,10 +303,30 @@ class ModeChoiceSurfaceParityTests(unittest.TestCase):
   def test_action_modes_pin_canonical_content_and_order(self) -> None:
     # Content pin: adding/removing/renaming an action mode must be a reviewed
     # owner change, and every derived surface follows this tuple.
-    expected = ("full", "takeoff2", "takeoff4", "naval_station3", "air_combat_hybrid_v1")
-    self.assertEqual(len(ACTION_MODES), 5)
+    expected = (
+      "full",
+      "takeoff2",
+      "takeoff4",
+      "naval_station3",
+      "air_combat_hybrid_v1",
+      "air_ew_hybrid_v1",
+      "air_ew_hybrid_v2",
+    )
+    self.assertEqual(len(ACTION_MODES), 7)
     for idx, name in enumerate(expected):
       self.assertEqual(ACTION_MODES[idx], name)
+
+  def test_admitted_action_modes_all_have_transport_spaces(self) -> None:
+    # Canonical admission is only meaningful if every admitted mode has a
+    # declared env transport surface with a matching width.
+    from gym_envs.universal_env_parts.spaces import expected_action_dim, make_action_space
+
+    for mode in ACTION_MODES:
+      with self.subTest(action_mode=mode):
+        space = make_action_space(mode)
+        self.assertEqual(tuple(space.shape), (expected_action_dim(mode),))
+    self.assertEqual(expected_action_dim("air_ew_hybrid_v1"), 14)
+    self.assertEqual(expected_action_dim("air_ew_hybrid_v2"), 16)
 
   def test_mission_obs_mode_names_follow_mode_code_order(self) -> None:
     self.assertEqual(MISSION_OBS_MODE_NAMES, tuple(MISSION_OBS_MODE_CODE_BY_NAME))

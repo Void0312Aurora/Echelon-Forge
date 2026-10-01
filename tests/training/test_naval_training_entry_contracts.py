@@ -42,6 +42,9 @@ RECOVERY_SCENARIO = Path("scenarios/naval/ddg51_take1_screen_threat_roe_offstati
 FORBIDDEN_ACTION_MODES = (
   "takeoff2",
   "takeoff4",
+  # Canonically admitted Air EW modes must still be refused by the naval entry guard.
+  "air_ew_hybrid_v1",
+  "air_ew_hybrid_v2",
 )
 FORBIDDEN_MISSION_OBS_MODES = (
   "basic",

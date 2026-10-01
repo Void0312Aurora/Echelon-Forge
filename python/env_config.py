@@ -7,7 +7,19 @@ from python.mission_obs_taxonomy import VALID_MISSION_OBS_MODES
 
 # Canonical ordered mode surfaces. CLI choice lists and validation sets must
 # derive from these tuples instead of re-writing the literals.
-ACTION_MODES = ("full", "takeoff2", "takeoff4", "naval_station3", "air_combat_hybrid_v1")
+ACTION_MODES = (
+    "full",
+    "takeoff2",
+    "takeoff4",
+    "naval_station3",
+    "air_combat_hybrid_v1",
+    # Versioned Air EW extensions of air_combat_hybrid_v1: v1 appends the
+    # chaff/flare program switches (14D), v2 also appends the self-protection
+    # jammer transmit switch and technique code (16D). Indices 0..11 keep the
+    # air_combat_hybrid_v1 layout.
+    "air_ew_hybrid_v1",
+    "air_ew_hybrid_v2",
+)
 EXECUTION_STEP_RUNTIME_MODES = ("compiled",)
 STEP_INFO_MODES = ("full", "terminal", "off")
 FLIGHT_SHAPING_BACKENDS = ("auto", "compiled", "gpu_host")
@@ -107,6 +119,9 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
         include_visual = bool(include_visual)
 
     include_proprio = _merge_config_value(args, "include_proprio", env_cfg, default=False, coerce=bool)
+    # Opt-in Air EW observation component (``ew_state``); off by default so
+    # every existing observation space keeps its exact key set and shapes.
+    include_ew_state = _merge_config_value(args, "include_ew_state", env_cfg, default=False, coerce=bool)
     action_mode = _merge_config_value(args, "action_mode", env_cfg, default="full", coerce=str)
     mission_obs_mode = _merge_config_value(args, "mission_obs_mode", env_cfg, default="basic", coerce=str)
     visual_downsample = _merge_config_value(args, "visual_downsample", env_cfg, default=1, coerce=int)
@@ -152,6 +167,7 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
     return {
         "include_visual": bool(include_visual),
         "include_proprio": bool(include_proprio),
+        "include_ew_state": bool(include_ew_state),
         "action_mode": action_mode,
         "mission_obs_mode": mission_obs_mode,
         "visual_downsample": visual_downsample,
