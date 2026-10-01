@@ -320,6 +320,38 @@ class GroundProfileSemanticTests(unittest.TestCase):
 
     self.assertIs(tasking_bridge.tasking_profile_for_loader(loader), tasking_bridge.resolve_tasking_profile("air"))
 
+  def test_loader_profile_follows_live_loader_state_across_repeated_queries(self) -> None:
+    # Profile resolution is memoized by candidate value; the loader state it
+    # reads is mutable and reassigned mid-episode, so every query must follow
+    # the live task_order / mission_cmd / scenario_data.
+    air = tasking_bridge.resolve_tasking_profile("air")
+    ground = tasking_bridge.resolve_tasking_profile("ground")
+    naval = tasking_bridge.resolve_tasking_profile("naval")
+    loader = SimpleNamespace(scenario_data={}, task_order=ef_py.TaskOrder(), mission_cmd={})
+    for _ in range(2):
+      self.assertIs(tasking_bridge.tasking_profile_for_loader(loader), air)
+
+    army_task = ef_py.TaskOrder()
+    army_task.service_profile = ef_py.ServiceProfile.Army
+    loader.task_order = army_task
+    self.assertIs(tasking_bridge.tasking_profile_for_loader(loader), ground)
+
+    loader.mission_cmd = {"tasking_profile": "naval"}
+    self.assertIs(tasking_bridge.tasking_profile_for_loader(loader), naval)
+
+    loader.scenario_data["tasking_profile"] = "air"
+    self.assertIs(tasking_bridge.tasking_profile_for_loader(loader), air)
+
+    loader.scenario_data = {"mission_command": {"service_profile": "navy"}}
+    loader.mission_cmd = {}
+    loader.task_order = None
+    self.assertIs(tasking_bridge.tasking_profile_for_loader(loader), naval)
+
+    loader.scenario_data = {"service_profile": "Armie"}
+    for _ in range(2):
+      with self.assertRaisesRegex(ValueError, "Unknown tasking profile"):
+        tasking_bridge.tasking_profile_for_loader(loader)
+
   def test_normalize_task_order_spec_uses_ground_defaults(self) -> None:
     cases = {
       "TASK_MOVE": (

@@ -58,11 +58,53 @@ _ground = _ProfileModuleProxy("ground_adapter")
 _naval = _ProfileModuleProxy("naval_adapter")
 
 
+# Profile resolution is a pure function of the candidate *values* (plus the
+# bound `ef_py.ServiceProfile` type the values are compared against), but it is
+# queried several times per env-step from the training hot path. The loader
+# state it reads (`scenario_data`, `task_order`, `mission_cmd`) is mutable and
+# reassigned mid-episode, so callers keep reading the live candidates on every
+# call; only the value -> profile-name mapping is memoized. Memoization is
+# restricted to immutable value types (exact `str` and the bound enum type), so
+# a cached entry can never go stale, and failed resolutions raise uncached.
+_PROFILE_NAME_CACHE: dict[tuple[Any, ...], str | None] = {}
+_EXPLICIT_PROFILE_DECISION_CACHE: dict[tuple[Any, ...], str | None] = {}
+_INFERRED_PROFILE_CACHE: dict[tuple[Any, ...], str | None] = {}
+
+
+_PROFILE_CACHE_MISS = object()
+
+
+def _profile_value_cache_key(
+    service_profile: Any, candidates: tuple[Any, ...]
+) -> tuple[Any, ...] | None:
+    # `None`, exact `str` and bound-enum values never compare equal across
+    # those types, so the values alone (plus the enum type) form a sound key.
+    for candidate in candidates:
+        candidate_type = type(candidate)
+        if (
+            candidate is not None
+            and candidate_type is not str
+            and candidate_type is not service_profile
+        ):
+            return None
+    return (service_profile, *candidates)
+
+
 def _normalized_profile_name(profile_name: Any | None) -> str | None:
     if profile_name is None:
         return None
-
     service_profile = getattr(ef_py, "ServiceProfile", None)
+    key = _profile_value_cache_key(service_profile, (profile_name,))
+    if key is None:
+        return _normalized_profile_name_uncached(profile_name, service_profile)
+    normalized = _PROFILE_NAME_CACHE.get(key, _PROFILE_CACHE_MISS)
+    if normalized is _PROFILE_CACHE_MISS:
+        normalized = _normalized_profile_name_uncached(profile_name, service_profile)
+        _PROFILE_NAME_CACHE[key] = normalized
+    return normalized
+
+
+def _normalized_profile_name_uncached(profile_name: Any, service_profile: Any) -> str | None:
     if service_profile is not None:
         if profile_name == getattr(service_profile, "Unspecified", object()):
             return None
@@ -137,23 +179,81 @@ def tasking_profile_for_loader(loader: Any):
 
     task_order = getattr(loader, "task_order", None)
     mission_cmd = mission_command_dict(loader)
-    explicit_profile_candidates = [
+    service_profile = getattr(ef_py, "ServiceProfile", None)
+    explicit_profile_candidates = (
         scenario_data.get("tasking_profile", None) if isinstance(scenario_data, dict) else None,
         mission_cfg.get("tasking_profile", None) if isinstance(mission_cfg, dict) else None,
         getattr(task_order, "tasking_profile", None),
         mission_cmd.get("tasking_profile", None),
-    ]
-    profile = _resolve_profile_from_candidates(*explicit_profile_candidates, strict=True)
-    if profile is not _air or any(_normalized_profile_name(candidate) == "air" for candidate in explicit_profile_candidates):
-        return profile
+    )
+    explicit_profile_name = _memoized_profile_resolution(
+        _EXPLICIT_PROFILE_DECISION_CACHE,
+        _explicit_profile_decision,
+        service_profile,
+        explicit_profile_candidates,
+    )
+    if explicit_profile_name is not None:
+        return _profile_for_name(explicit_profile_name)
 
-    inferred_profile_candidates = [
+    inferred_profile_candidates = (
         getattr(task_order, "service_profile", None),
         mission_cmd.get("service_profile", None),
         mission_cfg.get("service_profile", None) if isinstance(mission_cfg, dict) else None,
         scenario_data.get("service_profile", None) if isinstance(scenario_data, dict) else None,
-    ]
-    return _resolve_profile_from_candidates(*inferred_profile_candidates, strict=True)
+    )
+    inferred_profile_name = _memoized_profile_resolution(
+        _INFERRED_PROFILE_CACHE,
+        _inferred_profile_name,
+        service_profile,
+        inferred_profile_candidates,
+    )
+    return _profile_for_name(inferred_profile_name)
+
+
+def _resolved_profile_name(profile: Any) -> str:
+    if profile is _ground:
+        return "ground"
+    if profile is _naval:
+        return "naval"
+    return "air"
+
+
+def _profile_for_name(profile_name: str) -> Any:
+    if profile_name == "ground":
+        return _ground
+    if profile_name == "naval":
+        return _naval
+    return _air
+
+
+def _explicit_profile_decision(candidates: tuple[Any, ...]) -> str | None:
+    """Return the decisive explicit profile name, or None to fall through to inference."""
+    profile = _resolve_profile_from_candidates(*candidates, strict=True)
+    if profile is not _air or any(
+        _normalized_profile_name(candidate) == "air" for candidate in candidates
+    ):
+        return _resolved_profile_name(profile)
+    return None
+
+
+def _inferred_profile_name(candidates: tuple[Any, ...]) -> str:
+    return _resolved_profile_name(_resolve_profile_from_candidates(*candidates, strict=True))
+
+
+def _memoized_profile_resolution(
+    cache: dict[tuple[Any, ...], str | None],
+    resolve: Any,
+    service_profile: Any,
+    candidates: tuple[Any, ...],
+) -> str | None:
+    key = _profile_value_cache_key(service_profile, candidates)
+    if key is None:
+        return resolve(candidates)
+    resolved = cache.get(key, _PROFILE_CACHE_MISS)
+    if resolved is _PROFILE_CACHE_MISS:
+        resolved = resolve(candidates)
+        cache[key] = resolved
+    return resolved
 
 
 def normalize_task_order_spec(order_spec: dict[str, Any] | None, *, loader: Any | None = None) -> dict[str, Any]:
