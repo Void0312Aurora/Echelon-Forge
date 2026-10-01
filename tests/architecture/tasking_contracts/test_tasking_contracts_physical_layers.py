@@ -43,7 +43,7 @@ def test_domain_packages_have_role_specific_subdirectories() -> None:
         "weapons.py",
     }
     assert _py_names(CONTRACT_ROOT / "naval") == {"__init__.py", "execution.py"}
-    assert _py_names(CONTRACT_ROOT / "ground") == {"__init__.py", "execution.py"}
+    assert _py_names(CONTRACT_ROOT / "ground") == {"__init__.py", "capability.py", "execution.py"}
     assert _py_names(CONTRACT_ROOT / "joint") == {
         "__init__.py",
         "command_link.py",
