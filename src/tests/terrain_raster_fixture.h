@@ -109,4 +109,27 @@ class ScopedBundle {
     return raster;
 }
 
+// `width` x `height` cells at `step_m`, laid out like `east_west_ridge`:
+// x in [0, (width - 1) * step_m], y in [0, (height - 1) * step_m], row 0 at the
+// top. Each cell centre holds the plane
+// `base_m + east_gradient * x + north_gradient * y`; choose dyadic values so the
+// float32 cells are exact.
+[[nodiscard]] inline SyntheticRaster inclined_plane(int width, int height, double step_m,
+                                                    double base_m, double east_gradient,
+                                                    double north_gradient) {
+    SyntheticRaster raster;
+    raster.width = width;
+    raster.height = height;
+    raster.origin_x = 0.0;
+    raster.origin_y = static_cast<double>(height - 1) * step_m;
+    raster.step_x = step_m;
+    raster.step_y = -step_m;
+    raster.elevation = [=](int col, int row) {
+        const double x = static_cast<double>(col) * step_m;
+        const double y = static_cast<double>(height - 1 - row) * step_m;
+        return static_cast<float>(base_m + east_gradient * x + north_gradient * y);
+    };
+    return raster;
+}
+
 } // namespace terrain_raster_fixture

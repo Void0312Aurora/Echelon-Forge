@@ -1079,6 +1079,7 @@ set(EF_TEST_SOURCES
     src/tests/test_default_effects_model.cpp
     src/tests/test_stable_entity_identity.cpp
     src/tests/test_terrain_line_of_sight.cpp
+    src/tests/test_environment_raster_boundary.cpp
     src/tests/test_ground_direct_fire_line_of_sight.cpp
 )
 
