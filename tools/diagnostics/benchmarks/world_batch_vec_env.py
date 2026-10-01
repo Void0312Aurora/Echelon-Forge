@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -74,6 +75,47 @@ def _time_steps(vec_env, action_batch, *, steps: int) -> tuple[float, dict[str, 
         1000.0 * elapsed / float(max(1, int(steps)) * max(1, int(vec_env.num_envs))),
         average_timing_sums(timing_sums, count=timing_count),
     )
+
+
+# Wall-clock measurement fields excluded from the rollout fingerprint: the
+# per-step "timing" dict and the episode record's "t" (seconds since start).
+_ROLLOUT_WALL_CLOCK_KEYS = {"timing"}
+_EPISODE_WALL_CLOCK_KEYS = {"t"}
+
+
+def _canonical_rollout_bytes(value, *, skip_keys=_ROLLOUT_WALL_CLOCK_KEYS) -> bytes:
+    """Deterministic encoding of obs/reward/done/info (arrays by dtype/shape/bytes, floats by hex)."""
+    if isinstance(value, dict):
+        parts = []
+        for key, item in sorted(value.items(), key=lambda kv: str(kv[0])):
+            if key in skip_keys:
+                continue
+            nested_skip = _EPISODE_WALL_CLOCK_KEYS if key == "episode" else _ROLLOUT_WALL_CLOCK_KEYS
+            parts.append(
+                str(key).encode() + b":" + _canonical_rollout_bytes(item, skip_keys=nested_skip)
+            )
+        return b"{" + b",".join(parts) + b"}"
+    if isinstance(value, (list, tuple)):
+        return b"[" + b",".join(_canonical_rollout_bytes(item) for item in value) + b"]"
+    if isinstance(value, np.ndarray):
+        array = np.ascontiguousarray(value)
+        return f"nd{array.dtype.str}{array.shape}".encode() + hashlib.sha1(array.tobytes()).digest()
+    if isinstance(value, np.generic):
+        return _canonical_rollout_bytes(value.item())
+    if isinstance(value, float):
+        return value.hex().encode()
+    return repr(value).encode()
+
+
+def _rollout_fingerprint(vec_env, action_batch, *, steps: int, seed: int) -> str:
+    digest = hashlib.sha1()
+    vec_env.seed(int(seed))
+    digest.update(_canonical_rollout_bytes(vec_env.reset()))
+    for step_idx in range(max(1, int(steps))):
+        obs, rewards, dones, infos = vec_env.step(action_batch[step_idx])
+        for part in (obs, rewards, dones, infos):
+            digest.update(_canonical_rollout_bytes(part))
+    return digest.hexdigest()
 
 
 def _build_action_batch(*, steps: int, n_envs: int, action_dim: int, seed: int) -> list[np.ndarray]:
@@ -178,6 +220,15 @@ def main() -> int:
         default="warn",
         help="Simulation log level for the benchmark process (for example: trace, debug, info, warn, error).",
     )
+    parser.add_argument(
+        "--rollout-fingerprint",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help=(
+            "After timing, re-seed and replay the same action batch untimed and print a SHA-1 over "
+            "obs/reward/done/info (timing and episode wall time excluded) for exact A/B equality checks."
+        ),
+    )
     parser.add_argument("--json-out", default="", help="Optional JSON output path.")
     args = parser.parse_args()
 
@@ -223,6 +274,13 @@ def main() -> int:
             action_batch,
             steps=int(args.steps),
         )
+        rollout_fingerprint = (
+            _rollout_fingerprint(
+                batch_vec, action_batch, steps=int(args.steps), seed=int(args.seed)
+            )
+            if bool(args.rollout_fingerprint)
+            else None
+        )
         visual_stats = visual_runtime_stats_dict()
         flight_shaping_stats = flight_shaping_runtime_stats_dict()
         effective_world_batch_threads = int(batch_vec.runtime_facade.effective_worker_threads())
@@ -262,6 +320,7 @@ def main() -> int:
         "world_batch_ms_per_env_step": float(batch_step_ms),
         "world_batch_reset_timing_ms_per_env": batch_reset_timing,
         "world_batch_step_timing_ms_per_env_step": batch_step_timing,
+        "rollout_fingerprint": rollout_fingerprint,
     }
 
     print("World Batch VecEnv Benchmark")
@@ -297,6 +356,8 @@ def main() -> int:
             "world batch step timing  : "
             f"{json.dumps(results['world_batch_step_timing_ms_per_env_step'], ensure_ascii=True, sort_keys=True)}"
         )
+    if results["rollout_fingerprint"] is not None:
+        print(f"rollout fingerprint       : {results['rollout_fingerprint']}")
     write_json_output(str(args.json_out), results)
     return 0
 

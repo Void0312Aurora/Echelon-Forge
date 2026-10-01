@@ -412,3 +412,31 @@ def test_world_batch_step_evaluation_reuses_batch_mission_inputs(tmp_path) -> No
         assert reused_values.tobytes() == fresh_values.tobytes()
     finally:
         vec_env.close()
+
+def test_world_batch_rollout_fingerprint_is_seed_deterministic_and_action_sensitive(tmp_path) -> None:
+    # Imported here: the benchmark module chdirs to the repo root on import.
+    import tools.diagnostics.benchmarks.world_batch_vec_env as benchmark_module
+
+    scenario_path = _write_scenario(tmp_path, _inline_vec_env_route_transition_scenario())
+
+    def _fingerprint(action_seed: int) -> str:
+        vec_env = WorldBatchVecEnv(
+            scenario_path=scenario_path,
+            n_envs=2,
+            include_visual=False,
+            include_proprio=False,
+        )
+        try:
+            actions = benchmark_module._build_action_batch(
+                steps=3,
+                n_envs=2,
+                action_dim=int(vec_env.action_space.shape[0]),
+                seed=action_seed,
+            )
+            return benchmark_module._rollout_fingerprint(vec_env, actions, steps=3, seed=123)
+        finally:
+            vec_env.close()
+
+    reference = _fingerprint(7)
+    assert _fingerprint(7) == reference
+    assert _fingerprint(8) != reference
