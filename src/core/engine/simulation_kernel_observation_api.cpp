@@ -808,6 +808,19 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
         }
     }
 
+    // Threat priority: every consumer truncates to a fixed row budget
+    // (max_rwr), so launch evidence must precede lock evidence, which must
+    // precede plain emitter rows.  Signal strengths come from different
+    // sensors on different scales, so they are not compared; the stable sort
+    // keeps detection order within each class.
+    std::stable_sort(obs.rwr_warnings.begin(), obs.rwr_warnings.end(),
+                     [](const RWREvent &lhs, const RWREvent &rhs) {
+                         if (lhs.is_launch != rhs.is_launch) {
+                             return lhs.is_launch;
+                         }
+                         return lhs.is_lock && !rhs.is_lock;
+                     });
+
     // Weapons check (Placeholder)
     const Ammo *ammo = e.get<Ammo>();
     const WeaponCooldown *cooldown = e.get<WeaponCooldown>();

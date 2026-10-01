@@ -139,6 +139,46 @@ TEST_SUITE("air_ew_native") {
         CHECK(launches.front().bearing == doctest::Approx(-90.0));
     }
 
+    TEST_CASE("rwr rows are ordered launch, then lock, then plain emitters") {
+        SimulationKernel kernel;
+        kernel.reset(14);
+        auto owner = spawn_aircraft(kernel, Side::Blue, 0.0, 0.0, 0.0);
+        auto launcher = spawn_aircraft(kernel, Side::Red, 0.0, 20000.0, 180.0);
+        std::vector<flecs::entity> painters;
+        for (int index = 0; index < 4; ++index) {
+            painters.push_back(
+                spawn_aircraft(kernel, Side::Red, 3000.0 * (index + 1), 9000.0, 180.0));
+        }
+        {
+            auto lease = kernel.acquire_world_lease();
+            place_missile(lease.world(), launcher.id(), owner.id(), 0.0, 6000.0);
+        }
+        REQUIRE(kernel.run_exact_stage_direct("MAWS_Update"));
+        {
+            // Four plain painters are detected before the launch fact is
+            // merged, and the last painter also holds a lock.
+            auto lease = kernel.acquire_world_lease();
+            RWR *rwr = lease.world().entity(owner.id()).get_mut<RWR>();
+            REQUIRE(rwr != nullptr);
+            for (const auto &painter : painters) {
+                rwr->detected_radar_ids.push_back(painter.id());
+            }
+            rwr->locking_radar_ids.push_back(painters.back().id());
+        }
+
+        const AgentObservation obs = kernel.get_agent_observation(owner.id());
+        REQUIRE(obs.rwr_warnings.size() == 5);
+        // A four-row consumer keeps the launch row and the lock row.
+        CHECK(obs.rwr_warnings[0].is_launch);
+        CHECK(obs.rwr_warnings[0].source_id == launcher.id());
+        CHECK(obs.rwr_warnings[1].is_lock);
+        CHECK(obs.rwr_warnings[1].source_id == painters.back().id());
+        // Plain rows keep their detection order.
+        CHECK(obs.rwr_warnings[2].source_id == painters[0].id());
+        CHECK(obs.rwr_warnings[3].source_id == painters[1].id());
+        CHECK(obs.rwr_warnings[4].source_id == painters[2].id());
+    }
+
     TEST_CASE("countermeasure release admission treats a negative stamp as never released") {
         CHECK(countermeasure_release_ready(-1.0, 0.5, 0.0));
         CHECK(countermeasure_release_ready(-1.0, 0.5, 0.05));
