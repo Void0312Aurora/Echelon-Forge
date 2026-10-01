@@ -72,7 +72,7 @@
     {
       "id": "s2_reward_for_blocked_goals",
       "stage": "S2_terrain_cost",
-      "statement": "S2 block cases place the waypoint inside water or outside the raster; the native env reward (distance delta minus blocked-attempt penalty) is reused unchanged, so a policy is only penalised, never rewarded, for reaching the bank. Whether S2 needs a stop-at-bank or reroute reward is a contract decision, not a coefficient this runner may add."
+      "statement": "S2 block cases place the waypoint inside water or outside the raster; the native env reward (distance delta minus blocked-attempt penalty) is reused unchanged, so a policy collects progress reward while approaching the bank and then only the blocked-attempt penalty until blocked_step_limit truncation; nothing distinguishes a correct stop-at-bank from a failure. Whether S2 needs a stop-at-bank or reroute objective is a contract decision, not a coefficient this runner may add."
     },
     {
       "id": "s2_farm_track_cost",
