@@ -8,6 +8,7 @@
 #include "components/basic/common.h"
 #include "components/combat/common/weapon_common.h"
 #include "components/command/pilot_action.h"
+#include "components/physics/instruments.h"
 #include "components/systems/ew.h"
 
 #include <doctest/doctest.h>
@@ -284,5 +285,63 @@ TEST_SUITE("air_ew_native") {
         CHECK(countermeasure_release_ready(0.05, 0.5, 0.55));
         // A stamp of exactly zero is a real release at t=0, not "never".
         CHECK_FALSE(countermeasure_release_ready(0.0, 0.5, 0.25));
+    }
+    TEST_CASE("cockpit jammer switch drives the native pod through EW_Jammer_Control") {
+        SimulationKernel kernel;
+        kernel.reset(15);
+        auto owner = spawn_aircraft(kernel, Side::Blue, 0.0, 0.0, 0.0);
+        REQUIRE(owner.is_valid());
+        {
+            auto lease = kernel.acquire_world_lease();
+            Jammer *pod = lease.world().entity(owner.id()).get_mut<Jammer>();
+            REQUIRE(pod != nullptr);
+            // Install a pod on the generic airframe; the default suite has none.
+            pod->power_watts = 1000.0;
+            pod->bandwidth_mhz = 2000.0;
+            pod->effective_angle = 60.0;
+        }
+
+        PilotAction action{};
+        action.active = true;
+        action.jammer_transmit = true;
+        action.jammer_mode = 2;
+        kernel.set_pilot_action(owner.id(), action);
+        REQUIRE(kernel.run_exact_stage_direct("EW_Jammer_Control"));
+        {
+            auto lease = kernel.acquire_world_lease();
+            auto entity = lease.world().entity(owner.id());
+            const Jammer *pod = entity.get<Jammer>();
+            const InstrumentState *instrument = entity.get<InstrumentState>();
+            REQUIRE(pod != nullptr);
+            REQUIRE(instrument != nullptr);
+            CHECK(pod->is_active);
+            CHECK(pod->type == JammingType::DeceptionDRFM);
+            CHECK(instrument->jammer_transmitting);
+            CHECK(instrument->jammer_mode == static_cast<int>(JammingType::DeceptionDRFM));
+        }
+
+        action.jammer_transmit = false;
+        kernel.set_pilot_action(owner.id(), action);
+        REQUIRE(kernel.run_exact_stage_direct("EW_Jammer_Control"));
+        auto lease = kernel.acquire_world_lease();
+        auto entity = lease.world().entity(owner.id());
+        CHECK_FALSE(entity.get<Jammer>()->is_active);
+        CHECK_FALSE(entity.get<InstrumentState>()->jammer_transmitting);
+    }
+
+    TEST_CASE("an uninstalled pod ignores the cockpit switch and reports no jammer") {
+        SimulationKernel kernel;
+        kernel.reset(16);
+        auto owner = spawn_aircraft(kernel, Side::Blue, 0.0, 0.0, 0.0);
+        PilotAction action{};
+        action.active = true;
+        action.jammer_transmit = true;
+        kernel.set_pilot_action(owner.id(), action);
+        REQUIRE(kernel.run_exact_stage_direct("EW_Jammer_Control"));
+        auto lease = kernel.acquire_world_lease();
+        auto entity = lease.world().entity(owner.id());
+        CHECK_FALSE(entity.get<Jammer>()->is_active);
+        CHECK_FALSE(entity.get<InstrumentState>()->jammer_transmitting);
+        CHECK(entity.get<InstrumentState>()->jammer_mode == -1);
     }
 }
