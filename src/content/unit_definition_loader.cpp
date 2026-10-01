@@ -1525,6 +1525,10 @@ bool parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefin
                 "midcourse_datalink_supported", missile_tuning.midcourse_datalink_supported);
             missile_tuning.lobl_required =
                 guidance.value("lobl_required", missile_tuning.lobl_required);
+            missile_tuning.seeker_decoy_rejection =
+                guidance.value("decoy_rejection", missile_tuning.seeker_decoy_rejection);
+            missile_tuning.seeker_resolution_cell_m =
+                guidance.value("resolution_cell_m", missile_tuning.seeker_resolution_cell_m);
         }
         if (entry.contains("warhead") && entry["warhead"].is_object()) {
             if (!parse_warhead_json_fields(entry["warhead"], &missile_tuning, error)) {
@@ -1620,7 +1624,25 @@ void parse_electronic_warfare_json_fields(const nlohmann::json &entry, UnitDefin
         def.cms_data.last_flare_release_time =
             cms.value("last_flare_release_time", def.cms_data.last_release_time);
         def.cms_data.auto_mode = cms.value("auto_mode", def.cms_data.auto_mode);
+        def.cms_data.chaff_rcs_m2 = cms.value("chaff_rcs_m2", def.cms_data.chaff_rcs_m2);
+        def.cms_data.flare_ir_intensity =
+            cms.value("flare_ir_intensity", def.cms_data.flare_ir_intensity);
+        def.cms_data.chaff_lifetime_s =
+            cms.value("chaff_lifetime_s", def.cms_data.chaff_lifetime_s);
+        def.cms_data.flare_lifetime_s =
+            cms.value("flare_lifetime_s", def.cms_data.flare_lifetime_s);
     }
+    // An absent or non-positive expendable signature/lifetime resolves to the
+    // historical engineering default, so existing suites spawn exactly what the
+    // pre-data dispenser spawned.
+    def.cms_data.chaff_rcs_m2 =
+        countermeasure_positive_or(def.cms_data.chaff_rcs_m2, kDefaultChaffRcsM2);
+    def.cms_data.flare_ir_intensity =
+        countermeasure_positive_or(def.cms_data.flare_ir_intensity, kDefaultFlareIrIntensity);
+    def.cms_data.chaff_lifetime_s =
+        countermeasure_positive_or(def.cms_data.chaff_lifetime_s, kDefaultChaffLifetimeS);
+    def.cms_data.flare_lifetime_s =
+        countermeasure_positive_or(def.cms_data.flare_lifetime_s, kDefaultFlareLifetimeS);
 
     if (entry.contains("esm") && entry["esm"].is_object()) {
         const auto &esm = entry["esm"];

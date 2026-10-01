@@ -18,6 +18,11 @@
         "chaff_count": 60,
         "flare_count": 30,
         "release_interval": 0.5,
-        "auto_mode": true
+        "auto_mode": true,
+        "chaff_rcs_m2": 50.0,
+        "flare_ir_intensity": 500.0,
+        "chaff_lifetime_s": 20.0,
+        "flare_lifetime_s": 10.0,
+        "provenance": "engineering proxy: the pre-existing hard-coded dispenser defaults (chaff RCS 50 m^2 for 20 s, flare IR 500 relative units for 10 s), uncalibrated"
     }
 }

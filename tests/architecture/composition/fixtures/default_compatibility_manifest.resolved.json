@@ -114,6 +114,11 @@
         "registration_id": "flecs.component.data_link"
       },
       {
+        "component_id": "Decoy",
+        "plugin_id": "builtin.core_runtime",
+        "registration_id": "flecs.component.decoy"
+      },
+      {
         "component_id": "EGI",
         "plugin_id": "builtin.core_runtime",
         "registration_id": "flecs.component.egi"
@@ -1618,8 +1623,8 @@
     "builtin.weapon_release.damage_bridge",
     "builtin.weapon_release.service"
   ],
-  "requested_manifest_sha256": "796721f17c1a995dbb26cc23a950287c96b0511d950aedbe71169d4b5d5aa4cc",
-  "resolved_manifest_sha256": "50afe7755149225662774531be5eaf39794ebb246e6ccdcc42040fde9720bf56",
+  "requested_manifest_sha256": "9809859ca5f81c10e004038bf3f121ba4ed537fed96dbb87a85714a3130cb23c",
+  "resolved_manifest_sha256": "4dd2d9d39b16c3feee864ac925ef6048684e5d8fcbf51b50012d75da91db913a",
   "resolver_contract_version": "echelon_forge.simulation_composition_resolver.v1",
   "schema_version": "echelon_forge.resolved_simulation_composition.v1",
   "system_registration_order": [
