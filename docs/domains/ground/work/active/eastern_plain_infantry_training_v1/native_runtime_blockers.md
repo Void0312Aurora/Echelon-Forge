@@ -286,6 +286,80 @@ Open decisions, recorded in the stage config and not resolved by this tooling:
 Still held: route planning, line of sight and cover, sensing, and multi-agent
 behaviour.
 
+## Item 5 infantry hit volumes
+
+Design (`2026-10-01`, branch `codex/army-combat-infantry-hitbox`). This
+replaces the rifle's synthetic body-centre hit. It does not add cover,
+concealment, suppression, ballistics, dispersion, armour, or a wound model.
+
+**Representation.** Each held stance in `ground_infantry_posture` carries a
+`hit_volumes` object with exactly one `head`, one `torso`, and one `legs` box.
+Each box uses the shared `damage_model.hitboxes` keys and frame. `offset` is
+the box centre and `size` is its extent, both `[forward, right, up]` in metres.
+The soldier's body frame has its origin at the ground contact point. Forward
+follows the entity heading, and up is height above the local terrain surface,
+the same reference the posture eye heights use. The runtime copy is a
+fixed-size field on `GroundInfantryCapability`, so the change adds no ECS
+component or system.
+
+The loader compiles the target's shared `HitboxConfig` from the standing
+volumes, one shared `Hitbox` per region. For this unit it replaces the generic
+2 m whole-body bootstrap box. A unit that authors hit volumes must not also
+author `damage_model`.
+
+**Shot resolution** (`src/systems/domains/ground/direct_fire_hit_volume.h`):
+
+1. The rifle tries the regions in a fixed aim order, centre of mass first:
+   torso, then head, then legs. For each region, the aim point is that volume's
+   centre. The sight line runs from the shooter's eye to the aim point, and the
+   environment's terrain line-of-sight query is asked about that line.
+2. The sight segment is expressed in the target's body frame. Its first entry
+   into any of the held stance's volumes gives the hit region and hit point
+   (slab intersection).
+3. If terrain blocks the segment before that entry point, the aim point is
+   masked and the rifle tries the next region. This is the case when the
+   query's first blocking distance is shorter than the entry distance. A
+   blocking sample past the entry point lies inside the target's own footprint
+   and does not mask the volume.
+4. If every aim point is masked, the shot is rejected before release. This
+   keeps the existing gate contract: no round is consumed, no cooldown starts,
+   no launch is recorded, and no hit roll is drawn. Unknown terrain, an
+   unavailable environment, unknown posture, and missing hit volumes also
+   reject before release. Missing volumes never fall back to the body centre.
+
+**Randomness.** The single `draw_seed(DrawSite::ground_direct_fire, ...)` hit
+roll is unchanged. Region choice is deterministic geometry, so no `DrawSite`
+is added.
+
+**What reaches the shared damage bridge.**
+`IWeaponReleaseDamageBridge::apply_direct_hit` takes the local impact point
+instead of the provider's hard-coded origin. In every domain the shared
+`HitboxConfig` is static spawn content, so here it holds the standing region
+inventory. The rifle maps the held-stance hit point to the same normalised
+position inside the same region's standing box, an exact per-axis affine map.
+The shared effects route therefore always resolves the region that the Ground
+owner chose, and it does not mutate the target's damage geometry on each shot.
+
+**Provenance.** The volume extents are `engineering_proxy` round-number
+estimates chosen to contain the authored posture eye and centre-of-mass
+heights. They are not taken from a cited anthropometric dataset. Follow-up
+`HB-F1` has this entry condition: a cited anthropometric source or
+firing-posture definition, which replaces the values and the
+`engineering_proxy` label together.
+
+**Held follow-ups:**
+
+- `HB-F1`: calibrated volumes (above).
+- `HB-F2`: the shared `HitboxConfig` remains the standing inventory. A
+  non-rifle effects path that hits infantry, such as a future indirect-fire
+  burst, therefore sees standing geometry. Entry condition: a second Ground
+  damage consumer. The posture owner, not the weapon path, should then publish
+  stance-resolved damage geometry, which needs a registry-reviewed system.
+- `HB-F3`: a region-specific wound and lethality model. Today every region
+  reaches the same Ground structural consequence path.
+- Dispersion and ballistics: whenever the roll succeeds, the aim point is hit
+  exactly.
+
 ## Verification residual outside this slice
 
 The two integration residuals this section recorded on `2026-09-25` are closed on
