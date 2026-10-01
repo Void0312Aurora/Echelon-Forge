@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from importlib import import_module
 from typing import Any
 
@@ -42,9 +43,16 @@ from python.tasking_contracts.common.bridge_views import (
 class _ProfileModuleProxy:
     def __init__(self, module_name: str):
         self._module_name = str(module_name)
+        self._qualified_name = f"{__package__}.{self._module_name}"
 
     def _module(self):
-        return import_module(f"{__package__}.{self._module_name}")
+        # Equivalent to import_module() for an already-imported module (it
+        # returns the sys.modules entry), without the importlib round trip on
+        # every per-step attribute access.
+        module = sys.modules.get(self._qualified_name)
+        if module is None:
+            module = import_module(self._qualified_name)
+        return module
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self._module(), name)
