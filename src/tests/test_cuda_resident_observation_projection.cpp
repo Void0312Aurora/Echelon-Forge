@@ -49,7 +49,9 @@ std::vector<WorldPilotActionAssignment> make_actions(const std::vector<std::uint
 void check_resource(const runtime::cuda_resident::CudaBarrierKernelResources &resource) {
     CHECK(resource.registers_per_thread > 0);
     CHECK(resource.local_bytes_per_thread >= 0);
-    CHECK(resource.threads_per_block == 128);
+    // The fused body's block size is derived from the occupancy API.
+    CHECK(resource.threads_per_block > 0);
+    CHECK(resource.threads_per_block % 32 == 0);
     CHECK(resource.active_blocks_per_multiprocessor > 0);
     CHECK(resource.theoretical_occupancy > 0.0);
     CHECK(resource.theoretical_occupancy <= 1.0);

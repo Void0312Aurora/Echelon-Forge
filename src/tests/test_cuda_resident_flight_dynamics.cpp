@@ -26,7 +26,9 @@ void check_kernel_resources(const runtime::cuda_resident::CudaBarrierKernelResou
     CAPTURE(resources.active_warps_per_multiprocessor);
     CAPTURE(resources.theoretical_occupancy);
     CHECK(resources.registers_per_thread > 0);
-    CHECK(resources.threads_per_block == 128);
+    // The fused body's block size is derived from the occupancy API.
+    CHECK(resources.threads_per_block > 0);
+    CHECK(resources.threads_per_block % 32 == 0);
     CHECK(resources.active_blocks_per_multiprocessor > 0);
     CHECK(resources.active_warps_per_multiprocessor > 0);
     CHECK(resources.theoretical_occupancy > 0.0);
