@@ -159,6 +159,9 @@ def test_one_air_roster_can_route_execution_engagement_and_ew_roles() -> None:
         model_id=AIR_SCRIPTED_ENGAGEMENT_MODEL_ID,
         action_dim=17,
         dt=0.05,
+        # Since 20fb170a the engagement model fires only from a declared
+        # station; the fixture loadout exposes station 1.
+        weapon_station_id=1,
     )
     ew_model = AIR_SCRIPTED_MODEL_REGISTRY.create_for(
         domain="air",
