@@ -58,6 +58,8 @@ def run_demo(
     max_steps: int,
     response_doctrine: str,
     jammer_doctrine: str | None = None,
+    dispense_burst_s: float | None = None,
+    dispense_bearing_gate_deg: float | None = None,
 ) -> dict[str, Any]:
     doctrine = str(response_doctrine).strip().lower()
     if doctrine not in {"observe_only", "countermeasure_ready", "chaff_only", "flare_only"}:
@@ -78,6 +80,14 @@ def run_demo(
     }
     if jammer is not None:
         model_context["jammer_doctrine"] = jammer
+    # A burst program is opt-in and both its parameters are declared by the
+    # caller; without them the continuous program keeps the maintained trace.
+    if (dispense_burst_s is None) != (dispense_bearing_gate_deg is None):
+        raise ValueError("burst dispense needs both dispense_burst_s and dispense_bearing_gate_deg")
+    if dispense_burst_s is not None:
+        model_context["dispense_program"] = "burst"
+        model_context["dispense_burst_s"] = float(dispense_burst_s)
+        model_context["dispense_bearing_gate_deg"] = float(dispense_bearing_gate_deg)
 
     vec_env = create_single_backend(
         scenario_path=os.path.abspath(str(scenario_path)),
@@ -171,6 +181,7 @@ def run_demo(
                 "action_mode": action_mode,
                 "response_doctrine": doctrine,
                 "jammer_doctrine": jammer,
+                "dispense_program": model_context.get("dispense_program", "continuous"),
                 "max_steps": int(max_steps),
                 "steps": int(steps_run),
                 "terminated": bool(terminated),
@@ -209,6 +220,8 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="enable the air_ew_hybrid_v2 jammer tail with this doctrine",
     )
+    parser.add_argument("--dispense_burst_s", type=float, default=None)
+    parser.add_argument("--dispense_bearing_gate_deg", type=float, default=None)
     parser.add_argument("--json_out", default="")
     return parser
 
@@ -221,6 +234,8 @@ def main() -> int:
         max_steps=args.max_steps,
         response_doctrine=args.response_doctrine,
         jammer_doctrine=args.jammer_doctrine,
+        dispense_burst_s=args.dispense_burst_s,
+        dispense_bearing_gate_deg=args.dispense_bearing_gate_deg,
     )
     rendered = json.dumps(payload, indent=2, ensure_ascii=True)
     if args.json_out:

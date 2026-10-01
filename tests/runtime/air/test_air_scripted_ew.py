@@ -265,3 +265,52 @@ def test_ew_v2_action_model_projects_jammer_tail_to_pilot_action() -> None:
     v1 = build_pilot_action(action[:14], action_mode=AIR_EW_HYBRID_V1_ACTION_MODE)
     assert v1.jammer_transmit is False
     assert v1.jammer_mode == 0
+
+
+def test_ew_burst_program_dispenses_on_onset_and_new_threats_only() -> None:
+    model = AirScriptedEWModel(max_rwr=4)
+    model.reset(context={})
+    context = {
+        "response_doctrine": "countermeasure_ready",
+        "dispense_program": "burst",
+        "dispense_burst_s": 0.5,
+        "dispense_bearing_gate_deg": 20.0,
+    }
+    first_threat = _observation([30.0, 1.0, 0.0, 1.0])
+    plans = [model.decide(observation=first_threat, context=context, dt=0.05).countermeasure_plan for _ in range(12)]
+    # Onset opens a 0.5 s burst (10 decisions at 0.05 s), then the program holds.
+    assert plans[:10] == ["request_chaff_and_flare"] * 10
+    assert plans[10:] == ["program_hold"] * 2
+
+    # A second launch from a new bearing re-arms the burst; drift inside the
+    # association gate does not.
+    drifted = _observation([35.0, 1.0, 0.0, 1.0])
+    assert model.decide(observation=drifted, context=context, dt=0.05).countermeasure_plan == "program_hold"
+    two_threats = _observation([35.0, 1.0, 0.0, 1.0], [-80.0, 1.0, 0.0, 1.0])
+    assert model.decide(observation=two_threats, context=context, dt=0.05).countermeasure_plan == (
+        "request_chaff_and_flare"
+    )
+
+    # Warning clears, then a fresh onset re-arms.
+    assert model.decide(observation=_observation(), context=context, dt=0.05).countermeasure_plan == "hold"
+    assert model.decide(observation=first_threat, context=context, dt=0.05).countermeasure_plan == (
+        "request_chaff_and_flare"
+    )
+    model.close()
+
+
+def test_ew_burst_program_requires_declared_doctrine_parameters() -> None:
+    model = AirScriptedEWModel()
+    model.reset(context={})
+    warned = _observation([0.0, 1.0, 0.0, 1.0])
+    with pytest.raises(ValueError, match="dispense_burst_s"):
+        model.decide(observation=warned, context={"dispense_program": "burst"}, dt=0.05)
+    with pytest.raises(ValueError, match="dispense_bearing_gate_deg"):
+        model.decide(
+            observation=warned,
+            context={"dispense_program": "burst", "dispense_burst_s": 1.0},
+            dt=0.05,
+        )
+    with pytest.raises(ValueError, match="dispense program"):
+        model.decide(observation=warned, context={"dispense_program": "ripple"}, dt=0.05)
+    model.close()

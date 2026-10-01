@@ -25,6 +25,14 @@ AIR_EW_HYBRID_V2_ACTION_DIM = 16
 AIR_EW_JAMMER_DOCTRINES = ("hold", "self_protect_on_lock")
 # Technique codes shared with the native JammingType (0 barrage, 1 spot, 2 DRFM).
 AIR_EW_JAMMER_TECHNIQUE_CODES = {"noise_barrage": 0, "noise_spot": 1, "deception_drfm": 2}
+# Countermeasure dispense programs. ``continuous`` requests a release on every
+# warned frame (the native release interval meters it). ``burst`` requests a
+# release only for ``dispense_burst_s`` seconds after each launch-warning
+# onset or each newly warned threat bearing (outside
+# ``dispense_bearing_gate_deg`` of every previously warned bearing), then holds
+# while the same threat set persists. Both are doctrine (tactics) settings the
+# scenario must declare; they are not physical constants and have no default.
+AIR_EW_DISPENSE_PROGRAMS = ("continuous", "burst")
 
 
 @dataclass(frozen=True)
@@ -54,13 +62,46 @@ class AirScriptedEWModel:
             raise ValueError("Air scripted EW max_rwr must be positive")
         self.max_rwr = int(max_rwr)
         self._closed = False
+        self._reset_program_state()
+
+    def _reset_program_state(self) -> None:
+        self._warned_bearings: tuple[float, ...] = ()
+        self._burst_elapsed_s: float | None = None
 
     def reset(self, *, context: Any) -> None:
         del context
         self._closed = False
+        self._reset_program_state()
+
+    def _burst_active(self, *, launch_bearings: tuple[float, ...], context: Mapping[str, Any], dt: float) -> bool:
+        # Both program parameters are scenario doctrine; neither has a default.
+        burst_s = float(context.get("dispense_burst_s", 0.0))
+        if not np.isfinite(burst_s) or burst_s <= 0.0:
+            raise ValueError("Air EW burst dispense program requires a positive dispense_burst_s")
+        gate_deg = float(context.get("dispense_bearing_gate_deg", 0.0))
+        if not np.isfinite(gate_deg) or gate_deg <= 0.0:
+            raise ValueError("Air EW burst dispense program requires a positive dispense_bearing_gate_deg")
+        # A launch row carries no source id in the declared observation, so a
+        # new threat is a launch row whose bearing is outside the association
+        # gate of every bearing warned on the previous decision.
+        new_threat = any(
+            all(abs(((bearing - previous) + 180.0) % 360.0 - 180.0) > gate_deg for previous in self._warned_bearings)
+            for bearing in launch_bearings
+        )
+        if new_threat:
+            self._burst_elapsed_s = 0.0
+        elif self._burst_elapsed_s is not None:
+            self._burst_elapsed_s += max(0.0, float(dt))
+        self._warned_bearings = launch_bearings
+        # The burst covers [onset, onset + burst_s); the tolerance keeps the
+        # boundary decision out despite floating-point accumulation of dt.
+        return (
+            bool(launch_bearings)
+            and self._burst_elapsed_s is not None
+            and self._burst_elapsed_s + 1.0e-9 < burst_s
+        )
 
     def decide(self, *, observation: Any, context: Any, dt: float) -> AirScriptedEWIntent:
-        del dt
         if self._closed:
             raise RuntimeError("Air scripted EW model is closed")
         if not isinstance(observation, Mapping):
@@ -83,11 +124,21 @@ class AirScriptedEWModel:
             launch_warning = bool(np.any(rows[:, 3] > 0.5))
         threat_detected = bool(rows.shape[0] and np.any(rows[:, 1] > 0.0))
         doctrine = str(context.get("response_doctrine", "observe_only")) if isinstance(context, Mapping) else "observe_only"
-        if launch_warning and doctrine == "countermeasure_ready":
+        program = str(context.get("dispense_program", "continuous")) if isinstance(context, Mapping) else "continuous"
+        if program not in AIR_EW_DISPENSE_PROGRAMS:
+            raise ValueError(f"unknown Air EW dispense program: {program!r}")
+        launch_bearings = tuple(float(row[0]) for row in rows if float(row[3]) > 0.5)
+        if program == "burst":
+            dispense_due = self._burst_active(launch_bearings=launch_bearings, context=context, dt=dt)
+        else:
+            dispense_due = launch_warning
+        if launch_warning and not dispense_due and doctrine != "observe_only":
+            countermeasure_plan = "program_hold"
+        elif dispense_due and doctrine == "countermeasure_ready":
             countermeasure_plan = "request_chaff_and_flare"
-        elif launch_warning and doctrine == "chaff_only":
+        elif dispense_due and doctrine == "chaff_only":
             countermeasure_plan = "request_chaff"
-        elif launch_warning and doctrine == "flare_only":
+        elif dispense_due and doctrine == "flare_only":
             countermeasure_plan = "request_flare"
         elif launch_warning:
             countermeasure_plan = "countermeasure_deferred"
@@ -201,6 +252,7 @@ def make_air_scripted_ew_action_model(**kwargs: Any) -> AirScriptedEWActionModel
 __all__ = [
     "AIR_EW_HYBRID_ACTION_DIM",
     "AIR_EW_HYBRID_V2_ACTION_DIM",
+    "AIR_EW_DISPENSE_PROGRAMS",
     "AIR_EW_JAMMER_DOCTRINES",
     "AIR_EW_JAMMER_TECHNIQUE_CODES",
     "AIR_SCRIPTED_EW_ACTION_MODEL_ID",
