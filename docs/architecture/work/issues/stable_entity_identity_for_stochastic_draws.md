@@ -5,13 +5,39 @@ Language:
 - Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
-Lifecycle: `draft`
+Lifecycle: `superseded`
 Canonical: `docs/architecture/work/issues/stable_entity_identity_for_stochastic_draws.md`
 Owner: `architecture/runtime-composition`
-Last verified: `2026-09-28`
-Content status: defect record and remediation plan. Opened from the Ground
-`work/army-mechanisms` repair after two Air realism nodes flipped. Nothing below is
-implemented yet.
+Last verified: `2026-10-01`
+Content status: superseded defect record. Replaced by the main-line package
+[Stable Entity Identity For Stochastic Draws](../active/stable_entity_identity/README.md),
+which supersedes the design below and owns its acceptance. The measurement and inventory
+are kept as the original finding, taken on the pre-fix base build; they no longer describe
+the tree. Current state on the army stack is recorded under
+[Resolution On The Army Stack](#resolution-on-the-army-stack-2026-10-01).
+
+## Resolution On The Army Stack (`2026-10-01`)
+
+Main implements the package (`StableEntitySerial`, `StableIdentityState`, reset episode
+seeds, the single `stochastic_draw::draw_seed` path and its structural guard) and reserves
+`DrawSite` value 4 for Ground direct fire. Its two obligations on this line are met by
+`6935b2b92` on `codex/army-direct-fire`:
+
+- `fire_ground_weapon` draws through `draw_seed(DrawSite::ground_direct_fire, …)` and
+  rejects a target without a `StableEntitySerial` at the API boundary;
+- the native suite carries `site 4 (ground direct fire): reset seed drives the hit roll`,
+  which pins equal draws for one reset seed and differing draws for two.
+
+The census is main's 85 plus army's own admissions. The per-layer counts and the
+regenerated evidence are recorded in
+[runtime_composition_registry_sync.md](runtime_composition_registry_sync.md). The two Air
+nodes listed under [Known Exposures](#known-exposures-on-other-lines) were re-decided by the
+main package (`SI-P4-B`); on the army stack the Air and naval suites show the same failure
+set as main `e1e077cb`, measured on HEI.
+
+Not claimed here: the frozen host/batch semantic reference still pins raw Flecs entity ids
+(`582` on main, `584` on the army stack). Re-keying it is out of scope for the main package
+(its decision 7) and remains the residual named below.
 
 ## Defect
 
