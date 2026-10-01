@@ -292,9 +292,22 @@ _DAMAGE_CONSEQUENCE_SCALE_KEYS = tuple(
 
 def _any_cfg_scale_nonzero(loader: Any, keys: Any) -> bool:
     # One config fetch for the whole scan; each key resolves meta-first exactly
-    # like _cfg_float.
+    # like _cfg_float. A key absent from both mappings resolves to the 0.0
+    # default and can never be nonzero, so only present keys are converted.
     rewards, meta = _loader_cfg(loader)
-    return any(abs(_cfg_lookup_float(rewards, meta, key, 0.0)) > 0.0 for key in keys)
+    for key in keys:
+        if key in meta:
+            value = meta[key]
+        elif key in rewards:
+            value = rewards[key]
+        else:
+            continue
+        try:
+            if abs(float(value)) > 0.0:
+                return True
+        except Exception:
+            continue
+    return False
 
 
 def air_combat_damage_consequence_shaping_enabled(loader: Any) -> bool:

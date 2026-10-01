@@ -4,6 +4,9 @@ import unittest
 from types import SimpleNamespace
 
 from gym_envs.scenario_loader.reward_runtime.air_combat import (
+  air_combat_c2_roe_release_discipline_enabled,
+  air_combat_damage_consequence_shaping_enabled,
+  air_combat_release_shaping_enabled,
   apply_air_combat_reward_surface,
   combat_entity_terminal_state,
 )
@@ -232,6 +235,40 @@ def _consequence_sim(
   sim.debug_get_ground_contact_state = lambda entity_id: list(sim.ground.get(int(entity_id), []))
   sim.is_unit_active = lambda entity_id: True
   return sim
+
+
+class AirCombatRewardShapingImplicitEnableTests(unittest.TestCase):
+  # Without an explicit *_enabled flag, a shaping family is enabled iff any of
+  # its scale keys resolves (meta-first, then rewards) to a nonzero float.
+  def test_absent_zero_and_non_numeric_scales_do_not_enable(self) -> None:
+    for rewards in (
+      {},
+      {"air_combat_target_damage_consequence_scale": 0.0},
+      {"air_combat_self_damage_consequence_scale": "not-a-number"},
+      {"air_combat_target_damage_consequence_scale": None},
+    ):
+      with self.subTest(rewards=rewards):
+        self.assertFalse(air_combat_damage_consequence_shaping_enabled(_loader(rewards)))
+
+  def test_any_nonzero_scale_enables_each_family(self) -> None:
+    self.assertTrue(
+      air_combat_damage_consequence_shaping_enabled(
+        _loader({"air_combat_self_damage_consequence_scale": "-0.5"})
+      )
+    )
+    self.assertTrue(air_combat_release_shaping_enabled(_loader({"air_combat_invalid_fire_penalty": -0.05})))
+    self.assertTrue(
+      air_combat_c2_roe_release_discipline_enabled(_loader({"air_combat_roe_hold_fire_bonus": 1.0}))
+    )
+
+  def test_meta_scale_shadows_reward_scale(self) -> None:
+    key = "air_combat_target_damage_consequence_scale"
+    shadowed = _loader({key: 2.0})
+    shadowed._compiled_meta_cfg = {key: 0.0}
+    self.assertFalse(air_combat_damage_consequence_shaping_enabled(shadowed))
+    meta_only = _loader({key: 0.0})
+    meta_only._compiled_meta_cfg = {key: 3.0}
+    self.assertTrue(air_combat_damage_consequence_shaping_enabled(meta_only))
 
 
 class AirCombatRewardSurfaceTests(unittest.TestCase):
