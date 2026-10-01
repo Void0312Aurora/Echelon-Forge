@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/systems/environment/README.md`
 Owner: `systems/environment`
-Last verified: `2026-08-08`
+Last verified: `2026-10-01`
 
 本 owner 负责跨域环境 manifest、来源准入、生成器/catalog 合同、projection
 payload、compiler ingestion 与环境派生产品。Ground 场景提供了第一批需求，但不拥有
@@ -37,6 +37,13 @@ payload、compiler ingestion 与环境派生产品。Ground 场景提供了第�
 
 这些 review 没有授权 environment-runtime `G1`。后续 runtime 包必须在
 `systems/environment/work/active/` 下单独建立范围与验收证据。
+
+## 进行中的工作
+
+- [Terrain Line Of Sight v1](work/active/terrain_line_of_sight_v1/README.md)（英文工作面）：
+  `IEnvironmentModel` 上的领域中立地形视线查询，按已加载 Arnis 栅格的网格尺寸采样；
+  没有实测高程面时 fail closed（`unknown`）。有界 Ground 步枪闸门是其第一个消费者。
+  它只是裸地几何答案，不是掩体、隐蔽或传感器模型。
 
 ## 当前实现入口
 

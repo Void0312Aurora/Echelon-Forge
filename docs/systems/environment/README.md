@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/systems/environment/README.md`
 Owner: `systems/environment`
-Last verified: `2026-08-08`
+Last verified: `2026-10-01`
 
 This owner covers cross-domain environment manifests, source admission,
 generation/catalog contracts, projection payloads, compiler ingestion, and
@@ -40,6 +40,15 @@ The names in the historical work packages refer to different scopes:
 No environment-runtime `G1` work is authorized by these reviews. A later
 runtime package must open under `systems/environment/work/active/` with its own
 scope and acceptance evidence.
+
+## Active Work
+
+- [Terrain Line Of Sight v1](work/active/terrain_line_of_sight_v1/README.md):
+  a domain-neutral terrain line-of-sight query on `IEnvironmentModel`, sampled
+  at the loaded Arnis raster's cell size and fail-closed (`unknown`) without a
+  measured elevation surface. The bounded Ground rifle gate is its first
+  consumer. It is a bare-earth geometric answer, not cover, concealment, or a
+  sensor model.
 
 ## Current Implementation Routes
 

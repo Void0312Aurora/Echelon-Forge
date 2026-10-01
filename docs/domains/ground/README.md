@@ -50,9 +50,14 @@ remain with their respective owners.
 - `GroundWeaponState` and `SimulationKernel.fire_ground_weapon` now admit a
   bounded native direct-fire slice for the individual infantry fixture: a
   tracked hostile Ground target, finite rifle range, ammunition, cooldown, and
-  the shared effects/damage bridge are required. This is a deterministic
-  close-range proxy; it does not claim line of sight, cover, suppression,
-  ballistics, indirect fire, or a complete fire-control model.
+  the shared effects/damage bridge are required. Before release the shot must
+  also have terrain line of sight from the shooter's eye height to the target's
+  centre-of-mass height (authored `engineering_proxy` posture content, chosen by
+  the held stance), answered by the environment's
+  [terrain line-of-sight query](../../systems/environment/work/active/terrain_line_of_sight_v1/README.md);
+  blocked or unknown terrain rejects it without consuming a round. This is a
+  deterministic close-range proxy; it does not claim cover, concealment,
+  suppression, ballistics, indirect fire, or a complete fire-control model.
 - `src/systems/domains/ground/damage_system_ground.h` registers `GroundDamageStateUpdate`
   as a `domain = ground` system at stage 30 of the default composition. It matches
   the spawned ground entity and advances the ground-owned

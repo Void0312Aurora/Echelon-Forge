@@ -39,8 +39,8 @@
       "observation_entrypoint": "SimulationKernel.get_ground_weapon_state",
       "observation_fields": ["present", "selected_type", "ammunition", "maximum_ammunition", "damage_per_hit", "engagement_range_m", "hit_probability", "cooldown_remaining"],
       "weapon": "rifle",
-      "requires": ["hostile_ground_contact", "range", "ammunition", "cooldown", "fire_authority"],
-      "does_not_claim": ["line_of_sight", "cover", "suppression", "ballistics", "indirect_fire"]
+      "requires": ["hostile_ground_contact", "range", "ammunition", "cooldown", "fire_authority", "terrain_line_of_sight"],
+      "does_not_claim": ["cover", "concealment", "suppression", "ballistics", "indirect_fire"]
     },
     "field_semantics": {
       "status": "bounded_metadata_observation",

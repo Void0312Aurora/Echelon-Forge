@@ -73,9 +73,17 @@ The following surfaces are implemented and test-backed:
   `GroundWeaponState` plus `SimulationKernel.fire_ground_weapon` require a
   tracked hostile Ground contact, finite rifle range, ammunition, and
   cooldown, and enter the shared effects/damage bridge on a successful shot.
-  This is a deterministic close-range proxy; it does not claim line of
-  sight, cover, suppression, ballistics, indirect fire, or a complete
-  fire-control model (`tests/runtime/ground/test_ground_infantry_native_unit.py`).
+  The shot is released only when the environment's terrain line-of-sight
+  query reports the sight line visible, from the shooter's authored eye
+  height to the target's authored centre-of-mass height for each held
+  stance; blocked terrain, unknown terrain, or unauthored posture geometry
+  rejects it before any round, cooldown, or hit roll is consumed. The
+  posture heights are `engineering_proxy` content, not calibrated
+  anthropometry. This is a deterministic close-range proxy; it does not
+  claim cover, concealment, suppression, ballistics, indirect fire, or a
+  complete fire-control model
+  (`tests/runtime/ground/test_ground_infantry_native_unit.py`,
+  `src/tests/test_ground_direct_fire_line_of_sight.cpp`).
   These native probe bindings live on the quarantined
   `bindings_core_kernel_diagnostics_ground.cpp` diagnostics surface, not the
   maintained `SimulationKernel` binding surface.
@@ -181,9 +189,10 @@ slices admitted above:
   dynamics, a route graph, a general passability mask, or route-level
   river-crossing planning, obstacles, or breach behavior (the admitted surface
   is a local one-tick transition sample and block, not a route product);
-- Ground sensing, line-of-sight computation, cover, concealment, track
-  fusion, data-link behavior, or observation export beyond the bounded
-  terrain/transition/field-semantic observation tuples named above;
+- Ground sensing, line of sight beyond the bare-earth terrain gate on the
+  bounded rifle, cover, concealment, track fusion, data-link behavior, or
+  observation export beyond the bounded terrain/transition/field-semantic
+  observation tuples named above;
 - indirect fire, suppression, attrition, full fire control, ballistics, or a
   combat runtime
   (the admitted direct-fire slice is a deterministic close-range proxy on a

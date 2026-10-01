@@ -207,7 +207,8 @@ route-level crossing planning.
 - route graph and passability mask;
 - general slope/wet-ground policy and route-level river-crossing planning
   (local slope cost and sampled river/bridge transitions are admitted);
-- line-of-sight, cover, concealment, and exposure model;
+- cover, concealment, and exposure model (bare-earth terrain line of sight
+  gates the native rifle probe; it is not exposed in the RL contract);
 - farm-track movement cost (native movement does not consume track road
   vectors);
 - building-footprint collision (footprints are traversable natively and are

@@ -358,7 +358,9 @@ def test_native_ground_probe_fires_once_through_authorized_fixed_contact() -> No
     assert result.trace["weapon_after"][2] == pytest.approx(
         result.trace["weapon_before"][2] - 1.0
     )
-    assert "line_of_sight" in result.trace["does_not_claim"]
+    assert result.trace["requires"] == ["terrain_line_of_sight"]
+    assert "line_of_sight" not in result.trace["does_not_claim"]
+    assert "cover" in result.trace["does_not_claim"]
 
     rejected = probe.fire_from_mission_command()
     assert rejected.success is False

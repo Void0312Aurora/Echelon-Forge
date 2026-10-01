@@ -40,8 +40,11 @@ service-profile 解释以及跨域 runtime 架构仍由各自 owner 负责。
   track/sensor observation export 仍保持 held；河流/桥面地表采样已有限准入。
 - `GroundWeaponState` 与 `SimulationKernel.fire_ground_weapon` 已为单兵 fixture
   准入一个有界原生直射切片：必须有敌方 Ground 目标的接触记录，并满足步枪射程、弹药、
-  冷却与共享 effects/damage bridge 条件。这是确定性的近距离代理，不宣称视线、掩体、
-  压制、弹道、间接火力或完整火控模型。
+  冷却与共享 effects/damage bridge 条件。释放前还必须具备从射手眼高到目标质心高度
+  （按所保持姿态选取的 `engineering_proxy` 姿态内容）的地形视线，由环境的
+  [地形视线查询](../../systems/environment/work/active/terrain_line_of_sight_v1/README.md)
+  回答；地形遮挡或未知时拒绝射击且不消耗弹药。这是确定性的近距离代理，不宣称掩体、
+  隐蔽、压制、弹道、间接火力或完整火控模型。
 - `src/systems/domains/ground/damage_system_ground.h` 注册 `GroundDamageStateUpdate` 为默认
   组合 stage 30 的 `domain = ground` 系统。它**能匹配到**已生成的 ground 实体并推进
   ground 自有的 `GroundPlatformDamageState`，而且通往该 state 的 effects 路由可达：组件 id

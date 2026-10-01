@@ -43,6 +43,9 @@ def test_single_infantry_contract_is_staged_before_runtime_training_entry() -> N
     assert contract["native_runtime_surfaces"]["direct_fire"]["command_entrypoint"] == "SimulationKernel.fire_ground_weapon_from_mission_command"
     assert contract["native_runtime_surfaces"]["direct_fire"]["probe_entrypoint"] == "GroundInfantryNativeProbe.fire_from_mission_command"
     assert contract["native_runtime_surfaces"]["direct_fire"]["observation_entrypoint"] == "SimulationKernel.get_ground_weapon_state"
+    assert "terrain_line_of_sight" in contract["native_runtime_surfaces"]["direct_fire"]["requires"]
+    assert "line_of_sight" not in contract["native_runtime_surfaces"]["direct_fire"]["does_not_claim"]
+    assert "cover" in contract["native_runtime_surfaces"]["direct_fire"]["does_not_claim"]
     assert contract["native_runtime_surfaces"]["direct_fire"]["observation_fields"] == [
         "present",
         "selected_type",
