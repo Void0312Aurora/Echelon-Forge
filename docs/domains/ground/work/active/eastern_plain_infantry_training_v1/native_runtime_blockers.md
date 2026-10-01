@@ -187,7 +187,10 @@ reviewed Ground owner package must:
 1. define the native action/command component and its relationship to the
    maintained command-chain batch bindings;
 2. extend the bounded vector sampling into route/passability and observation
-   provenance as runtime contracts rather than fixture-local assumptions;
+   provenance as runtime contracts rather than fixture-local assumptions
+   (items 1 and 2 are planned in
+   [Ground Command And Route Owner Plan](../../issues/ground_command_and_route_owner_plan.md),
+   packets GC-0 to GC-6);
 3. extend the existing native reset/step/replay acceptance tests over more of
    the Arnis-derived map before considering any production RL adapter
    (**evidence landed 2026-10-01 at `native_probe_only` scope**, see
