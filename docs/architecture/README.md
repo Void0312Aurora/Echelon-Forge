@@ -56,6 +56,9 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
 - [Stable entity identity for stochastic draws](work/active/stable_entity_identity/README.md):
   English-only task package replacing raw Flecs ids in per-engagement and
   per-detection seeds with a per-world serial and the reset seed.
+- [Simulation performance](work/active/simulation_performance/README.md):
+  English-only task package with the native world-batch step benchmark and
+  worker-pool occupancy detection, plus measured step-path optimizations.
 
 ## Open Issues
 

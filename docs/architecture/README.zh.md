@@ -51,6 +51,9 @@ packet 只作为归档 provenance。
 - [随机抽样的稳定实体标识](work/active/stable_entity_identity/README.md)：
   仅英文的 task 包；把逐交战、逐探测 seed 中的原始 Flecs id 替换为
   每个 world 的 serial 与 reset seed。
+- [仿真性能](work/active/simulation_performance/README.md)：
+  仅英文的 task 包；包含原生 world-batch 步进基准与工作线程池占用率检测，
+  以及经测量的步进路径优化。
 
 ## 开放问题
 
