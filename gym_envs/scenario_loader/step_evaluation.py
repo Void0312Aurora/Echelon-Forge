@@ -491,6 +491,7 @@ def prepare_step_evaluation(
     max_steps: int,
     mission_obs_mode: str | None = None,
     compact_output: bool = False,
+    mission_observation_inputs=None,
 ):
     cached = get_cached_step_evaluation(
         loader,
@@ -511,6 +512,7 @@ def prepare_step_evaluation(
         steps=int(steps),
         max_steps=int(max_steps),
         mission_obs_mode=mission_obs_mode,
+        mission_observation_inputs=mission_observation_inputs,
     )
     truncated = bool(entry["truncated"])
     mission_inputs = entry.get("mission_observation_inputs")

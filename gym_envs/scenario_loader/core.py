@@ -861,6 +861,7 @@ class ScenarioLoader:
         max_steps: int,
         mission_obs_mode: str | None = None,
         compact_output: bool = False,
+        mission_observation_inputs=None,
     ):
         return _prepare_step_evaluation_impl(
             self,
@@ -872,6 +873,7 @@ class ScenarioLoader:
             max_steps=max_steps,
             mission_obs_mode=mission_obs_mode,
             compact_output=compact_output,
+            mission_observation_inputs=mission_observation_inputs,
         )
 
 

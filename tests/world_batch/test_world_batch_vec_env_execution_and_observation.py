@@ -13,6 +13,7 @@ ensure_repo_imports()
 
 import torch  # noqa: E402
 
+import ef_py  # noqa: E402
 import python.rl.runtime.world_batch._observation_mixin as observation_mixin_module  # noqa: E402
 import python.rl.runtime.world_batch.vec_env as vec_env_module  # noqa: E402
 from python.rl.policy_algo.device_dict_rollout_buffer import DeviceDictRolloutBuffer  # noqa: E402
@@ -366,5 +367,48 @@ def test_world_batch_vec_env_reports_timing_breakdown(tmp_path) -> None:
         assert "batch_step_ms" in infos[0]["timing"]
         assert "command_sync_ms" in infos[0]["timing"]
         assert "total_ms" in infos[0]["timing"]
+    finally:
+        vec_env.close()
+
+
+def test_world_batch_step_evaluation_reuses_batch_mission_inputs(tmp_path) -> None:
+    # The per-env step evaluation reuses the mission-observation inputs the
+    # batch observation pass built from the same truth/inst objects; they must
+    # evaluate to exactly what a fresh rebuild would.
+    scenario_path = _write_scenario(tmp_path, _inline_vec_env_route_transition_scenario())
+    vec_env = WorldBatchVecEnv(
+        scenario_path=scenario_path,
+        n_envs=2,
+        include_visual=False,
+        include_proprio=False,
+        mission_obs_mode="nav_v2",
+    )
+    try:
+        vec_env.seed(123)
+        vec_env.reset()
+        loader = vec_env.envs[0].loader
+        original_prepare = loader._prepare_step_evaluation
+        captured: list[tuple[Any, Any]] = []
+
+        def _capturing_prepare(**kwargs):
+            # Rebuild at call time: later stages of the step advance loader
+            # state (e.g. waypoint progress), so a post-step rebuild differs.
+            fresh = loader._build_mission_observation_runtime_inputs(
+                "nav_v2",
+                truth=kwargs["truth"],
+                inst=kwargs["inst_obj"],
+            )
+            captured.append((kwargs.get("mission_observation_inputs"), fresh))
+            return original_prepare(**kwargs)
+
+        loader._prepare_step_evaluation = _capturing_prepare
+        vec_env.step(np.zeros((2, int(vec_env.action_space.shape[0])), dtype=np.float32))
+
+        assert len(captured) == 1
+        reused, fresh = captured[0]
+        assert reused is not None
+        reused_values = np.asarray(ef_py.compute_mission_observation(reused).values)
+        fresh_values = np.asarray(ef_py.compute_mission_observation(fresh).values)
+        assert reused_values.tobytes() == fresh_values.tobytes()
     finally:
         vec_env.close()

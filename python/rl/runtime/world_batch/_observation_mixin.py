@@ -159,6 +159,11 @@ class _WorldBatchVecEnvObservationMixin:
             "step_eval_prepare_ms": float(step_eval_prepare_ms),
         }
 
+        python_owned_mission = bool(
+            self._handles[target_indices[0]].loader._python_owned_mission_observation_mode(
+                self.mission_obs_mode
+            )
+        )
         obs_batch = []
         for batch_idx, env_idx in enumerate(target_indices):
             handle = self._handles[env_idx]
@@ -181,6 +186,15 @@ class _WorldBatchVecEnvObservationMixin:
             if step_eval_batch is not None and batch_idx < len(step_eval_batch):
                 step_eval = step_eval_batch[batch_idx]
             elif hasattr(handle.loader, "_prepare_step_evaluation"):
+                # The batch observation pass already built this env's mission
+                # observation inputs from the same truth/inst objects; reuse
+                # them instead of rebuilding (python-owned modes were built
+                # for the compiled fallback mode, so those still rebuild).
+                reuse_mission_inputs = (
+                    mission_inputs_batch[batch_idx]
+                    if not python_owned_mission and batch_idx < len(mission_inputs_batch)
+                    else None
+                )
                 try:
                     step_eval = handle.loader._prepare_step_evaluation(
                         truth=truth_batch[batch_idx],
@@ -190,6 +204,7 @@ class _WorldBatchVecEnvObservationMixin:
                         steps=int(handle.steps),
                         max_steps=int(handle.max_steps),
                         mission_obs_mode=self.mission_obs_mode,
+                        mission_observation_inputs=reuse_mission_inputs,
                     )
                 except Exception:
                     step_eval = None
