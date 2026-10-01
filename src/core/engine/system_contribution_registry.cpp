@@ -207,6 +207,7 @@ void register_esm_reset_system(flecs::world &ecs) {
     X(NavalWeaponSystem, "NavalWeaponSystem", "flecs.component.naval_weapon_system")               \
     X(Jammer, "Jammer", "flecs.component.jammer")                                                  \
     X(Countermeasures, "Countermeasures", "flecs.component.countermeasures")                       \
+    X(Decoy, "Decoy", "flecs.component.decoy")                                                     \
     X(RWR, "RWR", "flecs.component.rwr")                                                           \
     X(ESMReceiver, "ESMReceiver", "flecs.component.esmreceiver")                                   \
     X(RCSProfile, "RCSProfile", "flecs.component.rcsprofile")                                      \
@@ -353,7 +354,7 @@ struct ValidationResult {
 };
 
 ValidationResult validate_registry() {
-    if (std::size(kDefaultComponents) != 85) {
+    if (std::size(kDefaultComponents) != 86) {
         return {false, "component contribution count is not the admitted default count"};
     }
     std::unordered_set<std::string_view> component_ids;

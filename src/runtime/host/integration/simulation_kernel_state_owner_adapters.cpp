@@ -977,6 +977,7 @@ bool scalar_entity_reference_field(std::string_view field) {
         "issuer_id",
         "lead_aircraft_id",
         "msg_recipient",
+        "owner_id",
         "partner_entity_id",
         "receiver_id",
         "recovery_base_id",

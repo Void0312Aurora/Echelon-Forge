@@ -1379,6 +1379,7 @@ DEFAULT_COMPONENTS = (
   "NavalWeaponSystem",
   "Jammer",
   "Countermeasures",
+  "Decoy",
   "RWR",
   "ESMReceiver",
   "RCSProfile",
