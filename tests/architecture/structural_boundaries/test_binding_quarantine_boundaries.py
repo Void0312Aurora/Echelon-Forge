@@ -188,7 +188,9 @@ def test_wp22_bindings_core_still_exposes_broad_surface_as_quarantined_fact() ->
   # it is now on the diagnostics allowlist.
   # 87 -> 89: Geodetic Frame P3-B added the maintained
   # set_geodetic_anchor/get_geodetic_anchor pair (scenario anchor of the local
-  # frame, consumed by the scenario kernel-apply path).
+  # frame, consumed by the scenario kernel-apply path). The base still carries
+  # one unallowlisted diagnostics binding (debug_get_countermeasure_state, from
+  # 2b1d936e), an inherited red that this package does not absorb into the pin.
   # The Ground native-probe surface is counted separately, by name, so the
   # broad count stays the pre-Ground baseline instead of absorbing it.
   ground_native_probe = [name for name in names if name in BINDINGS_GROUND_NATIVE_PROBE_ALLOWLIST]
