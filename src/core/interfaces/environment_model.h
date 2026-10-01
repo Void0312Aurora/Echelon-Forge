@@ -30,17 +30,32 @@ class IEnvironmentModel {
     // Terrain Query
     virtual double get_terrain_elevation(double x, double y) = 0;
 
+    // Half span of the bounded local slope window: the documented 5 m
+    // terrain-gradient sample of Ground movement.
+    static constexpr double kGroundSlopeSampleHalfSpanM = 5.0;
+
     // Bounded local slope observation shared by Ground movement and training
     // adapters. This is a terrain gradient, not a climbability or physics
-    // decision.
+    // decision. The default is a central difference over a surface that is
+    // defined everywhere. A provider whose elevation authority is a bounded
+    // measured raster must never difference across its edge: it takes the
+    // window in whole cells, clamps it to the raster (one-sided at an edge),
+    // and returns NaN, meaning slope unavailable, off the raster or where an
+    // axis holds a single cell. Consumers treat NaN as no admitted movement.
     virtual double get_ground_slope_deg(double x, double y) {
-        constexpr double kSampleHalfSpanM = 5.0;
-        const double east_gradient = (get_terrain_elevation(x + kSampleHalfSpanM, y) -
-                                      get_terrain_elevation(x - kSampleHalfSpanM, y)) /
-                                     (2.0 * kSampleHalfSpanM);
-        const double north_gradient = (get_terrain_elevation(x, y + kSampleHalfSpanM) -
-                                       get_terrain_elevation(x, y - kSampleHalfSpanM)) /
-                                      (2.0 * kSampleHalfSpanM);
+        constexpr double kHalfSpanM = kGroundSlopeSampleHalfSpanM;
+        const double east_gradient =
+            (get_terrain_elevation(x + kHalfSpanM, y) - get_terrain_elevation(x - kHalfSpanM, y)) /
+            (2.0 * kHalfSpanM);
+        const double north_gradient =
+            (get_terrain_elevation(x, y + kHalfSpanM) - get_terrain_elevation(x, y - kHalfSpanM)) /
+            (2.0 * kHalfSpanM);
+        return ground_slope_deg_from_gradient(east_gradient, north_gradient);
+    }
+
+    // Slope angle of an elevation gradient; NaN when either component is not
+    // finite.
+    static double ground_slope_deg_from_gradient(double east_gradient, double north_gradient) {
         if (!std::isfinite(east_gradient) || !std::isfinite(north_gradient)) {
             return std::numeric_limits<double>::quiet_NaN();
         }
