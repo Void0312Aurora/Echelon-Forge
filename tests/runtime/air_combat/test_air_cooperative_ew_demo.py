@@ -159,3 +159,33 @@ def test_cooperative_ew_4v4_routes_all_roster_slots_and_replays() -> None:
     ):
         assert first[key] == second[key]
     assert first["scripted_runtime_identity"] == second["scripted_runtime_identity"]
+
+
+def test_cooperative_ew_jammer_doctrine_keys_each_slot_pod_independently() -> None:
+    result = run_demo(
+        scenario_path=_SCENARIO_4V4_PATH,
+        seed=20260516,
+        max_steps=_MAX_STEPS,
+        response_doctrine="countermeasure_ready",
+        jammer_doctrine="self_protect_on_lock",
+    )
+    assert result["action_mode"] == "air_ew_hybrid_v2"
+    assert result["termination_reasons"] == ["running"] * 4
+    # Every slot carries the F-16C gen-4 pod; self_protect_on_lock keys it on
+    # hostile lock or launch, so each slot transmits at least from its first
+    # launch warning to the window end. The countermeasure contract is the v1
+    # one and is unchanged by the jammer tail.
+    for slot in range(4):
+        warnings = result["launch_warning_steps"][slot]
+        transmitting = set(result["jammer_transmit_steps"][slot])
+        if warnings:
+            assert set(range(warnings[0], _MAX_STEPS + 1)) <= transmitting
+        assert transmitting, f"slot {slot} never keyed its pod"
+    baseline = run_demo(
+        scenario_path=_SCENARIO_4V4_PATH,
+        seed=20260516,
+        max_steps=_MAX_STEPS,
+        response_doctrine="countermeasure_ready",
+    )
+    assert baseline["action_mode"] == "air_ew_hybrid_v1"
+    assert all(not steps for steps in baseline["jammer_transmit_steps"])
