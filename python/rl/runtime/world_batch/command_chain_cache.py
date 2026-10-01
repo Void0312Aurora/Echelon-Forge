@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from operator import attrgetter
 from typing import Any
 
 import ef_py
@@ -67,9 +68,22 @@ def __getattr__(name: str) -> Any:
     return _bound_fields(binding_name)
 
 
+@lru_cache(maxsize=None)
+def _fields_getter(field_names: tuple[str, ...]) -> Any:
+    # attrgetter reads every field in C and always returns a tuple for 2+
+    # names; single/zero-field lists keep the generic per-field path.
+    return attrgetter(*field_names) if len(field_names) > 1 else None
+
+
 def command_contract_snapshot(value: Any, field_names: tuple[str, ...]) -> tuple[Any, ...] | None:
     if value is None:
         return None
+    getter = _fields_getter(field_names)
+    if getter is not None:
+        try:
+            return getter(value)
+        except Exception:
+            pass
     out: list[Any] = []
     for name in field_names:
         try:
@@ -140,6 +154,12 @@ def _projection_snapshot(
 ) -> tuple[tuple[str, Any], ...] | None:
     if value is None:
         return None
+    getter = _fields_getter(field_names)
+    if getter is not None:
+        try:
+            return tuple(zip(field_names, getter(value)))
+        except AttributeError:
+            pass
     return tuple((name, getattr(value, name, None)) for name in field_names)
 
 
