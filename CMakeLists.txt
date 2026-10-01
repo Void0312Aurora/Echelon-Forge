@@ -1063,6 +1063,7 @@ set(EF_TEST_SOURCES
     src/tests/test_geodesy.cpp
     src/tests/test_ground_contact_solver.cpp
     src/tests/test_world_cv_alpha_beta_tracker.cpp
+    src/tests/test_track_manager_system.cpp
     src/tests/test_kalman_seeker.cpp
     src/tests/test_structural_failure_system.cpp
     src/tests/test_control_surface_damage_coupling.cpp

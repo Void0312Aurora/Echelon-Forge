@@ -11,6 +11,16 @@
 #include "components/systems/data_link.h"
 #include "components/systems/comm.h"
 
+// Alliance of the entity a contact or data-link message refers to. A track may outlive its
+// target: a contact list or link message can still name an entity destroyed earlier in the
+// same step (a CIWS intercept, a platform loss). Such an id is not alive, and flecs asserts
+// `ecs_is_alive` on `get` in debug builds, so the lookup checks liveness first. A dead or
+// unknown target has no alliance, which classifies the track as Unknown.
+inline const Alliance *referenced_entity_alliance(flecs::world world, uint64_t entity_id) {
+    const flecs::entity entity = world.entity(entity_id);
+    return entity.is_alive() ? entity.get<Alliance>() : nullptr;
+}
+
 inline TrackClass classify_track_from_alliance(const Alliance *owner_alliance,
                                                const Alliance *target_alliance) {
     if (!owner_alliance || !target_alliance) {
@@ -154,7 +164,7 @@ inline SystemTrack make_track_from_contact(const Detection &contact, const Trans
     track.elevation = contact.elevation;
     track.main_source = local_track_source_from_contact(contact);
     track.local_source = track.main_source;
-    const Alliance *target_alliance = world.entity(contact.target_id).get<Alliance>();
+    const Alliance *target_alliance = referenced_entity_alliance(world, contact.target_id);
     track.classification = classify_track_from_alliance(owner_alliance, target_alliance);
     track.status = TrackStatus::Tentative;
     track.confidence = 0.25;
@@ -196,7 +206,7 @@ inline SystemTrack make_track_from_report(const CommPacket &msg, const Transform
     track.vz = msg.velocity_z;
     track.main_source = TrackSource::DataLink;
     track.local_source = TrackSource::None;
-    const Alliance *target_alliance = world.entity(msg.entity_ref).get<Alliance>();
+    const Alliance *target_alliance = referenced_entity_alliance(world, msg.entity_ref);
     track.classification = classify_track_from_alliance(owner_alliance, target_alliance);
     track.status = TrackStatus::Confirmed;
     track.confidence = std::max(0.5, msg.quality);
@@ -297,7 +307,7 @@ inline void register_track_manager_system(flecs::world &ecs) {
                                 track.elevation = contact.elevation;
                                 track.local_source = local_track_source_from_contact(contact);
                                 const Alliance *target_alliance =
-                                    it.world().entity(contact.target_id).get<Alliance>();
+                                    referenced_entity_alliance(it.world(), contact.target_id);
                                 track.classification =
                                     classify_track_from_alliance(owner_alliance, target_alliance);
                                 track.status = TrackStatus::Confirmed;
@@ -343,7 +353,7 @@ inline void register_track_manager_system(flecs::world &ecs) {
                             track.elevation = contact.elevation;
                             track.local_source = local_track_source_from_contact(contact);
                             const Alliance *target_alliance =
-                                it.world().entity(contact.target_id).get<Alliance>();
+                                referenced_entity_alliance(it.world(), contact.target_id);
                             track.classification =
                                 classify_track_from_alliance(owner_alliance, target_alliance);
                             track.last_local_update_time = current_time;
@@ -423,7 +433,7 @@ inline void register_track_manager_system(flecs::world &ecs) {
                                             track.vz = 0.75 * track.vz + 0.25 * msg.velocity_z;
                                         }
                                         const Alliance *target_alliance =
-                                            it.world().entity(msg.entity_ref).get<Alliance>();
+                                            referenced_entity_alliance(it.world(), msg.entity_ref);
                                         const TrackClass local_classification =
                                             classify_track_from_alliance(owner_alliance,
                                                                          target_alliance);
@@ -493,7 +503,7 @@ inline void register_track_manager_system(flecs::world &ecs) {
                                             std::max(track.confirm_window_progress,
                                                      std::max(sensor[i].confirm_hits_m, 1));
                                         const Alliance *target_alliance =
-                                            it.world().entity(msg.entity_ref).get<Alliance>();
+                                            referenced_entity_alliance(it.world(), msg.entity_ref);
                                         const TrackClass local_classification =
                                             classify_track_from_alliance(owner_alliance,
                                                                          target_alliance);

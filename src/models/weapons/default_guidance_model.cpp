@@ -1391,7 +1391,11 @@ class DefaultGuidanceModel : public IGuidanceModel {
                         continue;
                     }
 
-                    const Alliance *target_alliance = world.entity(c.target_id).get<Alliance>();
+                    // A contact can outlive its target within a step; `get` on a dead id
+                    // asserts in debug flecs, so a dead target has no alliance here.
+                    const flecs::entity contact_target = world.entity(c.target_id);
+                    const Alliance *target_alliance =
+                        contact_target.is_alive() ? contact_target.get<Alliance>() : nullptr;
                     if (missile_alliance && target_alliance &&
                         missile_alliance->side == target_alliance->side) {
                         continue;
