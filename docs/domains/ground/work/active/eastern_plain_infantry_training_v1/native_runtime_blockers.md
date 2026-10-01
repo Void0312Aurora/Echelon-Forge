@@ -279,9 +279,14 @@ Open decisions, recorded in the stage config and not resolved by this tooling:
 - The native slope query uses a +/-5 m central difference, while slope bands
   use the field-acceptance estimator. Band membership is therefore a
   fixture-level label, not a native slope classification.
-- Near the raster boundary the native slope saturates, because the central
-  difference samples out-of-raster elevation. The edge-parallel cases
-  therefore run at the 0.20 slope-multiplier floor.
+- Resolved `2026-10-01`: near the raster boundary the native slope used to
+  saturate (about 88.7 degrees), because the central difference sampled the
+  procedural fallback outside the raster. The slope window is now clamped to
+  measured raster cells, with a one-sided difference at the edge (see
+  [Terrain Line Of Sight v1](../../../../../systems/environment/work/active/terrain_line_of_sight_v1/README.md)).
+  Re-measured edge-parallel cases (seed 42): east 596, north 593, south 607,
+  west 1264 steps. The west edge is genuinely steeper (about 24 degrees at the
+  start cell).
 
 Still held: route planning, line of sight and cover, sensing, and multi-agent
 behaviour.
