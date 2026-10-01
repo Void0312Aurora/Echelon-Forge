@@ -226,6 +226,16 @@
       "semantic": "The RL-independent Air observation adapter decodes the declared authorization_to_fire mission field into the typed tactical observation. It does not grant authority, resolve holder conflicts, or write mission-command authority state.",
       "owner": "air/scripted-agent strategy layer",
       "note": "Registered during the 2026-09-27 neutral contract ownership migration; observation decoding remains a read-only domain adapter."
+    },
+    {
+      "file": "python/tasking_contracts/ground/execution.py",
+      "tokens": ["authorization_to_fire"],
+      "token_counts": {"authorization_to_fire": 3},
+      "categories": ["gating"],
+      "form": "scripted-observation-gate",
+      "semantic": "The RL-independent Ground infantry adapter reads the commander-issued authorization_to_fire flag from the soldier's own mission command as an input gate for its fire request. It does not grant authority, resolve holder conflicts, or write mission-command authority state; the native fire_ground_weapon_from_mission_command gate remains the release authority.",
+      "owner": "ground/scripted-agent adapter",
+      "note": "Registered with the Ground scripted-model admission; the three occurrences are the typed observation field, its bool validation, and the decision gate."
     }
   ]
 }
