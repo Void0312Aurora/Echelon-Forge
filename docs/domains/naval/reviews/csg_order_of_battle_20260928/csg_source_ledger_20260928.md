@@ -4,7 +4,7 @@ Document kind: `review`
 Lifecycle: `maintained`
 Canonical: `docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_source_ledger_20260928.md`
 Owner: `domains/naval`
-Last verified: `2026-09-28`
+Last verified: `2026-10-01`
 
 Language: English canonical only; no Chinese companion (dated research evidence).
 
@@ -321,6 +321,34 @@ Generated from the four `S0-A` research files by deduplicating source IDs. `Cate
 | `p5-us-weapon-agm158c-lockheedmartin` | US | C | engineering | Lockheed Martin | LRASM Fast Facts (repo manifest; repo tiered C) | https://www.lockheedmartin.com/content/dam/lockheed-martin/mfc/documents/business-area-landing/25-10652_ADSW_LRASM_Fast_Facts.pdf | 2026-09-13 (repo) | public web page; values and short summaries retained | acquired | non-authoritative |
 | `p5-us-weapon-agm158c-navair` | US | A | official-document | DON FMB / NAVAIR | FY25 WPN Book – OASuW/LRASM (repo manifest) | https://www.secnav.navy.mil/fmc/fmb/Documents/25pres/WPN_Book.pdf | 2026-09-13 (repo) | public web page; values and short summaries retained | acquired | non-authoritative |
 | `p5-us-weapon-aim120d-navair` | US | A | official-document | NAVAIR | AMRAAM (repo manifest) | https://www.navair.navy.mil/product/AMRAAM | per repo manifest | public web page; values and short summaries retained | acquired | non-authoritative |
+
+## CSG-S1 Maneuvering Addendum (`2026-10-01`)
+
+Sources admitted for the `CSG-S1-B` ship maneuvering law
+(`src/components/domains/naval/platform/ship_maneuvering.h`). They are cited by
+the ship records' `_provenance.parameters` entries for `max_accel_mps2`,
+`max_decel_mps2`, `steady_turning_diameter_m`, and `steady_turn_speed_ratio`.
+They are not counted in the `S0-A` counts below.
+
+| Source ID | Side | Tier | Category | Publisher | Title | Stable ref | Accessed | Rights / availability | Ingest status | Authority status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `csg-us-ddg-usni-proc-200206` | US | B | analysis | USNI Proceedings (A. N. P. Essenhigh, M. T. Franken) | Handling the Arleigh Burkes - Part Three (June 2002), quoting NSWC "DDG-51 Class Tactical and Maneuvering Characteristics" (1997) and "DDG-79 Performance and Special Trials Results" (2001) | https://www.usni.org/magazines/proceedings/2002/june/handling-arleigh-burkes-part-three | 2026-10-01 | public web page; values and short summaries retained | acquired | non-authoritative |
+| `ref-abs-vessel-maneuverability-2017` | neutral | B | engineering | American Bureau of Shipping | Guide for Vessel Maneuverability (2017), Appendix 4: Lyster and Knights (1979) turning-circle prediction equations | https://ww2.eagle.org/content/dam/eagle/rules-and-guides/current/conventional_ocean_service/145_vesselmaneuverability/Vessel_Maneuverability_Guide_e-Feb17.pdf | 2026-10-01 | public PDF; equations and short summaries retained | acquired | non-authoritative |
+| `ref-imo-msc137-76` | neutral | A | official-document | International Maritime Organization | Resolution MSC.137(76), Standards for Ship Manoeuvrability (2002) | https://wwwcdn.imo.org/localresources/en/KnowledgeCentre/IndexofIMOResolutions/MSCResolutions/MSC.137(76).pdf | 2026-10-01 | public PDF; criteria and short summaries retained | acquired | non-authoritative |
+| `ref-seamanship-turning-speed-loss` | neutral | C | community | Marine Teacher | Turning Circles and Stopping Distances (effect of a turn on speed) | https://www.marineteacher.com/turning-circle | 2026-10-01 | public web page; values and short summaries retained | acquired | non-authoritative |
+
+Values taken from them: Flight I flank from rest in 74 s / 820 yd and flank to
+stop in 66 s / 470 yd (the IIA stops "five seconds faster ... but in 70 more
+yards"); Flight IIA 111 s / 1,250 yd and 61 s / 540 yd; Lyster-Knights
+TD/L = 0.910 STD/L + 0.424 V/sqrt(L) + 0.675 and V_T/V_S = 0.074 TD/L + 0.149
+(eqs. A4.2, A4.5, validity L 55-350 m, single-screw basis); IMO tactical
+diameter <= 5 L and advance <= 4.5 L at 90 % of the speed at 85 % MCR. The
+Lyster-Knights basis is single-screw hulls with block coefficient 0.56-0.88,
+so its steady-turn speed ratio is used only for the T-AKE record, the one hull
+inside that range. Every other record takes the seamanship rule of thumb from
+`ref-seamanship-turning-speed-loss` (under full wheel, about one quarter of the
+speed lost after 90 deg and about one third after 180 deg, then steady) as a
+labelled proxy, 0.67.
 
 ## Access Gaps
 

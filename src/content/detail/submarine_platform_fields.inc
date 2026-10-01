@@ -22,7 +22,7 @@
 // This is deliberately a separate .inc from ship_platform_fields.inc: the two
 // platform families are distinct component structs with disjoint parse seams,
 // and their same-named members (length_m, beam_m, draft_m, max_accel_mps2,
-// max_decel_mps2, max_turn_rate_deg_s, crew) carry DIFFERENT struct default
+// max_decel_mps2, crew) carry DIFFERENT struct default
 // tokens per family, so a shared list would need family-tagged duplicate rows
 // with conflicting default tokens and would break the one-struct/one-list
 // review parity that the default token exists to provide.

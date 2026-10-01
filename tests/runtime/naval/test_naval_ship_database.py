@@ -197,8 +197,16 @@ class NavalShipDatabaseTests(unittest.TestCase):
     self.assertAlmostEqual(float(kernel.get_unit_position(int(ddg))[2]), 0.0, places=6)
     self.assertAlmostEqual(float(kernel.get_unit_heading(int(ddg))), 90.0, places=6)
 
-    for _ in range(1500):
+    # Spawned above flank speed with no engine order, the hull sheds the excess
+    # under resistance and the speed regulator (closed-loop time constant about
+    # 10 s at flank for this hull), settling at the flank speed it can hold.
+    previous_speed = math.hypot(float(ddg_vx), float(ddg_vy))
+    for _ in range(6000):
       kernel.step()
+      vx, vy, _ = kernel.get_unit_velocity(int(ddg))
+      speed = math.hypot(float(vx), float(vy))
+      self.assertLessEqual(speed, previous_speed + 1.0e-9)
+      previous_speed = speed
     ddg_vx, ddg_vy, _ = kernel.get_unit_velocity(int(ddg))
     self.assertAlmostEqual(math.hypot(float(ddg_vx), float(ddg_vy)), 15.43, places=2)
 
@@ -371,15 +379,29 @@ class NavalShipDatabaseTests(unittest.TestCase):
     cmd.cmd_speed_mps = 10.29
     kernel.set_mission_command(int(ddg), cmd)
 
+    # A 90 deg course change at 20 kt: the heading leaves 90 deg gradually
+    # (yaw-rate lag), never turns faster than the full-rudder circle allows,
+    # and closes on 000 without overshoot. At 20 kt a destroyer needs about a
+    # minute and a half for the turn, so the run covers 150 s.
+    dt = float(kernel.get_time_step())
+    steady_turn_radius_m = 0.5 * 491.0
     kernel.step()
     first_heading = float(kernel.get_unit_heading(int(ddg)))
     self.assertLess(first_heading, 90.0)
-    self.assertGreater(first_heading, 0.0)
+    self.assertGreater(first_heading, 89.0)
 
-    for _ in range(2250):
+    previous_heading = first_heading
+    for _ in range(int(round(150.0 / dt))):
       kernel.step()
+      heading = float(kernel.get_unit_heading(int(ddg)))
+      vx, vy, _ = kernel.get_unit_velocity(int(ddg))
+      speed = math.hypot(float(vx), float(vy))
+      self.assertLessEqual(heading, previous_heading + 1.0e-9)
+      self.assertGreaterEqual(heading, -1.0e-9)
+      max_step_deg = math.degrees(max(speed, 10.29) / steady_turn_radius_m * dt)
+      self.assertLessEqual(previous_heading - heading, max_step_deg + 1.0e-6)
+      previous_heading = heading
     final_heading = float(kernel.get_unit_heading(int(ddg)))
-    self.assertLess(final_heading, first_heading)
     self.assertTrue(final_heading < 1.0 or final_heading > 359.0)
 
   def test_ship_mission_command_honors_link_latency_without_starvation(self) -> None:
@@ -491,10 +513,11 @@ class NavalShipDatabaseTests(unittest.TestCase):
         "economical_speed_mps": 10.29,
         "range_nm": 4400.0,
         "range_speed_mps": 10.29,
-        "max_accel_mps2": 0.14,
-        "max_decel_mps2": 0.2,
-        "max_turn_rate_deg_s": 2.4,
-        "low_speed_turn_factor": 0.3,
+        "max_accel_mps2": 0.3646,
+        "max_decel_mps2": 0.1436,
+        "steady_turning_diameter_m": 491.0,
+        "nomoto_time_constant": 1.0,
+        "steady_turn_speed_ratio": 0.465,
         "steerageway_speed_mps": 1.0,
         "sea_state": 5.0,
         "wave_heading_deg": 90.0,
@@ -557,10 +580,11 @@ class NavalShipDatabaseTests(unittest.TestCase):
         "economical_speed_mps": 10.29,
         "range_nm": 4400.0,
         "range_speed_mps": 10.29,
-        "max_accel_mps2": 0.14,
-        "max_decel_mps2": 0.2,
-        "max_turn_rate_deg_s": 2.4,
-        "low_speed_turn_factor": 0.3,
+        "max_accel_mps2": 0.3646,
+        "max_decel_mps2": 0.1436,
+        "steady_turning_diameter_m": 491.0,
+        "nomoto_time_constant": 1.0,
+        "steady_turn_speed_ratio": 0.465,
         "steerageway_speed_mps": 1.0,
         "wave_heading_deg": 0.0,
         "wave_period_s": 8.0,
@@ -598,8 +622,8 @@ class NavalShipDatabaseTests(unittest.TestCase):
       heading=0.0,
       pitch=0.0,
       roll=0.0,
-      vx=15.43,
-      vy=0.0,
+      vx=0.0,
+      vy=15.43,
       vz=0.0,
     )
     rough_ddg = rough_kernel.spawn_unit(
@@ -611,8 +635,8 @@ class NavalShipDatabaseTests(unittest.TestCase):
       heading=0.0,
       pitch=0.0,
       roll=0.0,
-      vx=15.43,
-      vy=0.0,
+      vx=0.0,
+      vy=15.43,
       vz=0.0,
     )
 
@@ -633,7 +657,10 @@ class NavalShipDatabaseTests(unittest.TestCase):
     calm_kernel.set_mission_command(int(calm_ddg), calm_cmd)
     rough_kernel.set_mission_command(int(rough_ddg), rough_cmd)
 
-    for _ in range(1500):
+    # Both hulls hold course 000 into head seas; only the declared seaway speed
+    # loss differs. The rough-sea hull sheds its excess speed with the
+    # closed-loop surge time constant (about 10 s), so the run covers 100 s.
+    for _ in range(6000):
       calm_kernel.step()
       rough_kernel.step()
 

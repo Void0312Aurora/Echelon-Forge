@@ -22,7 +22,7 @@
 // This is deliberately a separate .inc from submarine_platform_fields.inc:
 // the two platform families are distinct component structs with disjoint parse
 // seams, and their same-named members (length_m, beam_m, draft_m,
-// max_accel_mps2, max_decel_mps2, max_turn_rate_deg_s, crew) carry DIFFERENT
+// max_accel_mps2, max_decel_mps2, crew) carry DIFFERENT
 // struct default tokens per family, so a shared list would need family-tagged
 // duplicate rows with conflicting default tokens and would break the
 // one-struct/one-list review parity that the default token exists to provide.
@@ -52,8 +52,9 @@ EF_SHIP_PLATFORM_FIELD(double, range_nm, 0.0)
 EF_SHIP_PLATFORM_FIELD(double, range_speed_mps, 0.0)
 EF_SHIP_PLATFORM_FIELD(double, max_accel_mps2, 0.12)
 EF_SHIP_PLATFORM_FIELD(double, max_decel_mps2, 0.18)
-EF_SHIP_PLATFORM_FIELD(double, max_turn_rate_deg_s, 2.0)
-EF_SHIP_PLATFORM_FIELD(double, low_speed_turn_factor, 0.25)
+EF_SHIP_PLATFORM_FIELD(double, steady_turning_diameter_m, 0.0)
+EF_SHIP_PLATFORM_FIELD(double, nomoto_time_constant, 1.0)
+EF_SHIP_PLATFORM_FIELD(double, steady_turn_speed_ratio, 1.0)
 EF_SHIP_PLATFORM_FIELD(double, steerageway_speed_mps, 0.5)
 EF_SHIP_PLATFORM_FIELD(double, sea_state, 0.0)
 EF_SHIP_PLATFORM_FIELD(double, wave_heading_deg, 0.0)

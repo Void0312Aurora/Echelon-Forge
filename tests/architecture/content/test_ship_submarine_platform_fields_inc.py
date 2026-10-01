@@ -5,14 +5,14 @@ scalar field reads of ``parse_unit_json``'s ``ship_platform`` and
 ``submarine_platform`` object blocks (content/unit_definition_loader.cpp) onto
 two single-source X-macro lists:
 
-- ``src/content/detail/ship_platform_fields.inc`` (22 ShipPlatform members)
+- ``src/content/detail/ship_platform_fields.inc`` (23 ShipPlatform members)
 - ``src/content/detail/submarine_platform_fields.inc`` (15 SubmarinePlatform
   members)
 
 Two lists rather than one shared list: the families are distinct component
 structs with disjoint parse seams, and their same-named members (``length_m``,
 ``beam_m``, ``draft_m``, ``max_accel_mps2``, ``max_decel_mps2``,
-``max_turn_rate_deg_s``, ``crew``) carry DIFFERENT struct default tokens per
+``crew``) carry DIFFERENT struct default tokens per
 family, so a shared list would need family-tagged duplicate rows with
 conflicting default tokens and would break the one-struct/one-list review
 parity (``test_shared_member_names_have_diverging_default_tokens`` pins the
@@ -135,8 +135,9 @@ _SHIP_FIELDS: tuple[tuple[str, str, str], ...] = (
     ("range_speed_mps", "double", "0.0"),
     ("max_accel_mps2", "double", "0.12"),
     ("max_decel_mps2", "double", "0.18"),
-    ("max_turn_rate_deg_s", "double", "2.0"),
-    ("low_speed_turn_factor", "double", "0.25"),
+    ("steady_turning_diameter_m", "double", "0.0"),
+    ("nomoto_time_constant", "double", "1.0"),
+    ("steady_turn_speed_ratio", "double", "1.0"),
     ("steerageway_speed_mps", "double", "0.5"),
     ("sea_state", "double", "0.0"),
     ("wave_heading_deg", "double", "0.0"),
@@ -415,10 +416,9 @@ def test_shared_member_names_have_diverging_default_tokens() -> None:
         "length_m",
         "max_accel_mps2",
         "max_decel_mps2",
-        "max_turn_rate_deg_s",
     ]
     diverging = [name for name in shared if ship[name] != submarine[name]]
-    assert diverging == ["max_accel_mps2", "max_decel_mps2", "max_turn_rate_deg_s"], (
+    assert diverging == ["max_accel_mps2", "max_decel_mps2"], (
         "default-token divergence between the families changed; revisit the "
         "one-.inc-per-family decision note in both .inc headers"
     )

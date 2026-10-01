@@ -11,10 +11,19 @@ struct ShipPlatform {
     double economical_speed_mps = 0.0;
     double range_nm = 0.0;
     double range_speed_mps = 0.0;
+    // Surge and steering law: components/domains/naval/platform/ship_maneuvering.h.
+    // Full-ahead acceleration from rest; with quadratic resistance it also fixes
+    // the resistance coefficient a / U_max^2.
     double max_accel_mps2 = 0.12;
+    // Full-astern (backing) deceleration authority, added to resistance.
     double max_decel_mps2 = 0.18;
-    double max_turn_rate_deg_s = 2.0;
-    double low_speed_turn_factor = 0.25;
+    // Steady full-rudder turning diameter. 0 declares no rudder authority.
+    double steady_turning_diameter_m = 0.0;
+    // Non-dimensional Nomoto yaw time constant T' (T = T' L / U).
+    double nomoto_time_constant = 1.0;
+    // Speed in a steady full-rudder turn as a fraction of the approach speed at
+    // an unchanged engine order. 1 declares no turn speed loss.
+    double steady_turn_speed_ratio = 1.0;
     double steerageway_speed_mps = 0.5;
     double sea_state = 0.0;
     double wave_heading_deg = 0.0;

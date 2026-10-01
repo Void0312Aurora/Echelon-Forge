@@ -1086,6 +1086,10 @@ class DefaultUnitFactory : public IUnitFactory {
         if (def.type != UnitType::Ship && def.type != UnitType::Submarine) {
             e.set<Inertia>(inertia_guess);
             e.set<AngularVelocity>({0.0, 0.0, 0.0});
+        } else if (def.has_ship_platform) {
+            // Ship yaw rate state of the maneuvering law (ShipMotion). Ships carry
+            // no Inertia or ForceAccumulator, so no rigid-body integrator reads it.
+            e.set<AngularVelocity>({0.0, 0.0, 0.0});
         }
         if (def.type != UnitType::Ship && def.type != UnitType::Submarine) {
             e.set<GroundState>({false, 0.0}); // Initialize Ground Contact

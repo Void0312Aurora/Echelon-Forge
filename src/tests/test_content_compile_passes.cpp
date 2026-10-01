@@ -656,8 +656,9 @@ TEST_SUITE("content_compile_passes") {
     "range_speed_mps": 9.5,
     "max_accel_mps2": 0.35,
     "max_decel_mps2": 0.45,
-    "max_turn_rate_deg_s": 3.5,
-    "low_speed_turn_factor": 0.55,
+    "steady_turning_diameter_m": 610.5,
+    "nomoto_time_constant": 0.85,
+    "steady_turn_speed_ratio": 0.55,
     "steerageway_speed_mps": 1.5,
     "sea_state": 4.5,
     "wave_heading_deg": 45.5,
@@ -740,8 +741,9 @@ TEST_SUITE("content_compile_passes") {
         CHECK(ship.range_speed_mps == doctest::Approx(9.5));
         CHECK(ship.max_accel_mps2 == doctest::Approx(0.35));
         CHECK(ship.max_decel_mps2 == doctest::Approx(0.45));
-        CHECK(ship.max_turn_rate_deg_s == doctest::Approx(3.5));
-        CHECK(ship.low_speed_turn_factor == doctest::Approx(0.55));
+        CHECK(ship.steady_turning_diameter_m == doctest::Approx(610.5));
+        CHECK(ship.nomoto_time_constant == doctest::Approx(0.85));
+        CHECK(ship.steady_turn_speed_ratio == doctest::Approx(0.55));
         CHECK(ship.steerageway_speed_mps == doctest::Approx(1.5));
         CHECK(ship.sea_state == doctest::Approx(4.5));
         CHECK(ship.wave_heading_deg == doctest::Approx(45.5));
@@ -775,8 +777,9 @@ TEST_SUITE("content_compile_passes") {
         CHECK_FALSE(absent_defs[0].has_ship_platform);
         CHECK(absent_defs[0].ship_platform.max_accel_mps2 == doctest::Approx(0.12));
         CHECK(absent_defs[0].ship_platform.max_decel_mps2 == doctest::Approx(0.18));
-        CHECK(absent_defs[0].ship_platform.max_turn_rate_deg_s == doctest::Approx(2.0));
-        CHECK(absent_defs[0].ship_platform.low_speed_turn_factor == doctest::Approx(0.25));
+        CHECK(absent_defs[0].ship_platform.steady_turning_diameter_m == doctest::Approx(0.0));
+        CHECK(absent_defs[0].ship_platform.nomoto_time_constant == doctest::Approx(1.0));
+        CHECK(absent_defs[0].ship_platform.steady_turn_speed_ratio == doctest::Approx(1.0));
         CHECK(absent_defs[0].ship_platform.steerageway_speed_mps == doctest::Approx(0.5));
         CHECK(absent_defs[0].ship_platform.wave_period_s == doctest::Approx(8.0));
         CHECK(absent_defs[0].ship_platform.max_roll_deg_sea_state_6 == doctest::Approx(8.0));
