@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
@@ -125,6 +126,14 @@ DEFAULT_C2_TASK_SEQUENCE = [
     "TASK_RTB",
     "TASK_RECOVER_LAND",
 ]
+
+
+def _sha256_file(path: str) -> str:
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _scenario_tasking_profile(scenario_data: object) -> str:
@@ -915,6 +924,8 @@ class VizSession:
     def status_payload(self) -> dict:
         return {
             "scenario": str(self.scenario),
+            "mode": str(getattr(self.args, "mode", "") or "live"),
+            "replay": str(getattr(self.args, "replay", "") or ""),
             "running": bool(self.simulation_running),
             "paused": bool(self.simulation_paused),
             "ready": bool(self.ready),
@@ -949,6 +960,148 @@ class VizSession:
             self._release_runtime_resources()
             self._notify_status()
 
+    @staticmethod
+    def _csg_tactical_overlays(units: list[dict]) -> dict:
+        # S0 only exposes native unit state. Sensor and datalink overlays need
+        # authoritative engine telemetry before they can be rendered.
+        return {"sensor_rings": [], "datalinks": [], "tracks": [], "nav": [], "weapons": []}
+
+    def _run_spectator_loop(self) -> None:
+        """Stream native CSG frames without constructing a training environment."""
+        from python.scenario.runtime.csg_replay import iter_csg_spectator_frames
+
+        scenario_path = str(getattr(self.args, "scenario", self.scenario) or self.scenario)
+        seed = int(getattr(self.args, "seed", None) or 20260930)
+        frames = iter_csg_spectator_frames(scenario_path, seed=seed)
+        scenario_data = {}
+        if scenario_path and os.path.isfile(scenario_path):
+            with open(scenario_path, "r", encoding="utf-8") as handle:
+                scenario_data = json.load(handle)
+        zones = scenario_data.get("environment", {}).get("zones", []) if isinstance(scenario_data, dict) else []
+        self.map_data = {
+            "contract_version": VIZ_MAP_SETUP_CONTRACT_VERSION,
+            "zones": zones,
+            "environment_overlays": build_environment_overlay_payload(scenario_data),
+            "illumination": resolve_scenario_illumination(scenario_data, sim=None),
+            "geodetic_frame": resolve_scenario_geodetic_frame(scenario_data, sim=None),
+        }
+        self.nav_data = None
+        self.socketio.emit("map_setup", self.map_data)
+        self.socketio.emit("speed_update", {"value": float(self.sim_speed)})
+        self.ready = True
+        self._notify_status()
+
+        frame = None
+        while not self.stop_requested:
+            if not self.simulation_running or self.simulation_paused:
+                self.socketio.sleep(0.05)
+                continue
+            frame = next(frames, None)
+            if frame is None:
+                self.simulation_running = False
+                self.simulation_paused = True
+                self._notify_status()
+                continue
+            units = list(frame.get("units", []))
+            self.socketio.emit(
+                "state_update",
+                {
+                    "contract_version": VIZ_STATE_FRAME_CONTRACT_VERSION,
+                    "tick": float(frame.get("sim_time_s", frame.get("tick", 0.0))),
+                    "units": units,
+                    "mission_status": None,
+                    "tactical": self._csg_tactical_overlays(units),
+                    "spectator": {"native": True, "agent_free": True},
+                },
+            )
+            speed = max(0.05, float(self.sim_speed))
+            self.socketio.sleep(max(0.01, float(scenario_data.get("environment", {}).get("time_step", 0.5))) / speed)
+
+    def _run_replay_loop(self) -> None:
+        """Play a checked-in CSG state-frame artifact through the normal viz wire contract."""
+        replay_path = str(getattr(self.args, "replay", "") or "").strip()
+        if not replay_path:
+            raise ValueError("replay mode requires --replay or profile session.replay")
+        if not os.path.isfile(replay_path):
+            raise FileNotFoundError(f"CSG replay artifact not found: {replay_path}")
+        with open(replay_path, "r", encoding="utf-8") as handle:
+            artifact = json.load(handle)
+        if artifact.get("schema") != "csg.s0.replay.v1":
+            raise ValueError(f"unsupported replay schema: {artifact.get('schema')!r}")
+        scenario_path = str(self.scenario or "").strip()
+        if not scenario_path or not os.path.isfile(scenario_path):
+            raise FileNotFoundError(
+                "CSG replay requires the profile scenario file to validate scenario identity: "
+                f"{scenario_path or '<missing>'}"
+            )
+        expected_scenario_sha256 = str(artifact.get("scenario_sha256") or "").strip().lower()
+        if len(expected_scenario_sha256) != 64:
+            raise ValueError("CSG replay artifact is missing a valid scenario_sha256")
+        actual_scenario_sha256 = _sha256_file(scenario_path)
+        if actual_scenario_sha256 != expected_scenario_sha256:
+            raise ValueError(
+                "CSG replay scenario identity mismatch: "
+                f"artifact={expected_scenario_sha256}, loaded={actual_scenario_sha256}"
+            )
+        frames = artifact.get("frames")
+        if not isinstance(frames, list) or not frames:
+            raise ValueError("CSG replay artifact has no frames")
+
+        scenario_data = {}
+        if self.scenario and os.path.isfile(self.scenario):
+            with open(self.scenario, "r", encoding="utf-8") as handle:
+                scenario_data = json.load(handle)
+        zones = scenario_data.get("environment", {}).get("zones", []) if isinstance(scenario_data, dict) else []
+        environment_overlays = build_environment_overlay_payload(scenario_data)
+        self.map_data = {
+            "contract_version": VIZ_MAP_SETUP_CONTRACT_VERSION,
+            "zones": zones,
+            "environment_overlays": environment_overlays,
+            "illumination": resolve_scenario_illumination(scenario_data, sim=None),
+            "geodetic_frame": resolve_scenario_geodetic_frame(scenario_data, sim=None),
+        }
+        self.nav_data = None
+        self.socketio.emit("map_setup", self.map_data)
+        self.socketio.emit("speed_update", {"value": float(self.sim_speed)})
+        self.ready = True
+        self._notify_status()
+
+        frame_index = 0
+        while not self.stop_requested:
+            if not self.simulation_running or self.simulation_paused:
+                self.socketio.sleep(0.05)
+                continue
+
+            frame = frames[frame_index]
+            units = list(frame.get("units", [])) if isinstance(frame, dict) else []
+            state = {
+                "contract_version": VIZ_STATE_FRAME_CONTRACT_VERSION,
+                "tick": float(frame.get("sim_time_s", frame.get("tick", frame_index))),
+                "units": units,
+                "mission_status": None,
+                "tactical": self._csg_tactical_overlays(units),
+                "replay": {
+                    "schema": str(artifact.get("schema")),
+                    "frame": int(frame_index),
+                    "frame_count": len(frames),
+                    "scenario": str(artifact.get("scenario", self.scenario)),
+                },
+            }
+            self.socketio.emit("state_update", state)
+
+            if frame_index >= len(frames) - 1:
+                self.simulation_running = False
+                self.simulation_paused = True
+                self._notify_status()
+                continue
+            frame_index += 1
+            try:
+                frame_dt = max(0.01, float(frames[frame_index].get("sim_time_s", 0.0)) - float(frame.get("sim_time_s", 0.0)))
+            except Exception:
+                frame_dt = 0.5
+            speed = max(0.05, float(self.sim_speed))
+            self.socketio.sleep(frame_dt / speed)
+
     def _run_loop_inner(self) -> None:
         args = self.args
         # Do not reset the stop event here: a stop arriving before the worker
@@ -956,6 +1109,12 @@ class VizSession:
         # slow (env construction, model load), so it also checks the stop
         # signal at its expensive milestones to keep reload waits bounded.
         if self.stop_requested:
+            return
+        if str(getattr(args, "mode", "") or "").strip().lower() == "replay":
+            self._run_replay_loop()
+            return
+        if str(getattr(args, "mode", "") or "").strip().lower() == "spectator":
+            self._run_spectator_loop()
             return
         train_config = _load_train_config_for_viz(getattr(args, "model", None), getattr(args, "train_config", None))
         leader_mode = _is_leader_train_config(train_config)

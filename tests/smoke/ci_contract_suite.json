@@ -30,6 +30,10 @@
     "tests/contracts/unit/comm/scenario_loader_common_core_semantics.json",
     "tests/contracts/unit/comm/scenario_loader_mission_semantics.json",
     "tests/contracts/unit/config/env_config_resolution.json",
-    "tests/contracts/unit/world_model/replay_expert_actions.json"
+    "tests/contracts/unit/world_model/replay_expert_actions.json",
+    "tests/contracts/unit/naval/csg/csg_s0_ford_vs_fujian_named_v1.json",
+    "tests/contracts/unit/naval/csg/csg_s0_ford_mirror_v1.json",
+    "tests/contracts/unit/naval/csg/csg_s0_ford_vs_fujian_named_replay_v1.json",
+    "tests/contracts/unit/naval/csg/csg_s0_ford_mirror_replay_v1.json"
   ]
 }
