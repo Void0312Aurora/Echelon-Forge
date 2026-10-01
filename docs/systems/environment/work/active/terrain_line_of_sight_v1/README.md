@@ -55,6 +55,51 @@ what a non-visible answer means for a shot (rejection before release).
    the existing `GroundInfantryCapability` component. No component or system
    is added to the default registry.
 
+## Raster Edge
+
+No terrain query reads elevation from outside a loaded measured raster.
+Beyond the edge, `get_terrain_elevation` returns the procedural fallback
+surface, which is not terrain, so a difference taken across the edge is
+meaningless. Each query handles the edge explicitly:
+
+| Query | Behaviour at and beyond the raster edge |
+|---|---|
+| `get_terrain_line_of_sight_observation` | Reads raster cells only. An endpoint or interior sample off the raster gives `unknown` (`EndpointOutsideRaster` / `SampleOutsideRaster`). |
+| `get_ground_slope_deg` | Reads raster cells only. The documented 5 m half span (`IEnvironmentModel::kGroundSlopeSampleHalfSpanM`) becomes whole cells per axis, at least one. It is clamped to the raster, so an edge cell takes a one-sided difference over the cells that exist, divided by the metric distance between the sampled cell centres. Off the raster, or on an axis with a single cell, the result is NaN (unavailable). |
+| `get_terrain_at`, `get_ground_transition_observation` | Off-raster cells are `Obstacle`, so a move off the raster blocks as before. |
+| Ground movement cost | Consumes the slope query. NaN gives a zero multiplier, so movement is not admitted. |
+
+The span is kept rather than replaced by the cell size. It is the documented
+movement-sample contract of the
+[Arnis native terrain](../../../../../domains/ground/reviews/ground_arnis_native_terrain_v1_20260924/README.md)
+slice. On the 1 m Arnis grid it is the same +/-5 cell difference used inland
+before this change, so only edge-adjacent cells change. Clamping, rather than
+returning unavailable whenever the full window does not fit, keeps every cell
+on the raster movable. It is the same edge treatment as the field-acceptance
+estimator (`numpy.gradient`, one-sided at the boundary). Procedural and `flat`
+profiles are defined everywhere and keep the interface's central difference.
+
+Effect on the eastern-plain fixture (seed 42, HEI): the edge-parallel cases
+leave the 0.20 slope floor. The native slope at the edge cells was about 88.7
+degrees and is now the terrain's own value. The east, north, and south
+parallel cases reach in 593 to 607 steps, matching inland cases (about 600).
+The west parallel case takes 1264 steps, because that edge is genuinely steep:
+22 to 24 degrees at the start, measured as 15 to 17 degrees east-west plus
+about 20 degrees north-south directly from the raster. Step budgets are
+derived by native preflight, so no test pins these counts.
+
+Still open: off the raster, the point elevation (`get_terrain_elevation` and
+`TerrainCell.elevation`) is still the procedural fallback. Air and physics
+consumers use it, so making it unavailable would change their contract. This
+package does not decide that.
+
+Evidence: native doctest suite `environment_raster_boundary`
+(`src/tests/test_environment_raster_boundary.cpp`). It covers the exact slope
+on every cell of an inclined plane including edges and corners, a clamped
+window beside a cliff, NaN slope off the raster and on a single-cell axis, and
+off-raster moves still blocking. On the base the suite fails; edge cells read
+about 86 degrees on a 15.6 degree plane.
+
 ## Height Provenance
 
 The current values are `engineering_proxy`: round-number estimates of an
