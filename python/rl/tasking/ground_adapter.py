@@ -10,6 +10,7 @@ from .common_core_profile import (
 )
 from .leader_tasking import RuleBasedLeaderPhaseManager
 from python.rl.profile.ground_profile import (
+    apply_task_order_overrides,
     build_kernel_mission_command,
     infer_command_relationship,
     infer_coordination_mode,
@@ -36,6 +37,7 @@ __all__ = [
     "apply_pilot_report_common_core_spec",
     "apply_task_order_common_core_defaults",
     "apply_task_order_common_core_spec",
+    "apply_task_order_overrides",
     "build_kernel_mission_command",
     "infer_command_relationship",
     "infer_coordination_mode",

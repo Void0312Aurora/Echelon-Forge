@@ -20,13 +20,13 @@ from python.rl.tasking.bridge import (
     landing_reference_heading_deg as _bridge_landing_reference_heading_deg,
     mission_command_view,
     sync_loader_command_chain,
+    tasking_profile_for_loader,
 )
 from .common_core_profile import (
     apply_leader_intent_common_core_defaults,
     apply_pilot_report_common_core_defaults,
     apply_task_order_common_core_defaults,
 )
-from python.simulation.air.tasking import apply_task_order_overrides as _apply_task_order_overrides
 from python.tasking_contracts.common.mission_defs import (
     COMMAND_CODE_LANDING,
     LANDING_PHASE_NAMES,
@@ -544,7 +544,10 @@ class RuleBasedLeaderPhaseManager:
         order.altitude_block_max_m = max(order.altitude_block_min_m, order.target_altitude_m + 500.0)
         order.speed_min_mps = max(0.0, order.target_speed_mps - 40.0)
         order.speed_max_mps = max(order.speed_min_mps, order.target_speed_mps + 40.0)
-        order = _apply_task_order_overrides(
+        # Authored task-order fields carry domain enums (Ground task mode, Naval
+        # station and warfare role), so the loader's tasking profile owns the
+        # projection; a single domain's adapter would drop the others' fields.
+        order = tasking_profile_for_loader(loader).apply_task_order_overrides(
             order,
             _scenario_task_order_cfg(loader),
             default_assignee_id=int(getattr(loader, "agent_id", 0) or 0),

@@ -9,6 +9,7 @@ from .common_core_profile import (
     apply_task_order_common_core_spec,
 )
 from .leader_tasking import RuleBasedLeaderPhaseManager
+from python.simulation.air.tasking import apply_task_order_overrides
 from python.simulation.air.tasking import make_scripted_c2_task_manager as _make_scripted_c2_task_manager
 from python.rl.profile.air_profile import (
     build_kernel_mission_command,
@@ -41,6 +42,7 @@ __all__ = [
     "apply_pilot_report_common_core_spec",
     "apply_task_order_common_core_defaults",
     "apply_task_order_common_core_spec",
+    "apply_task_order_overrides",
     "build_kernel_mission_command",
     "infer_air_task_family",
     "infer_air_task_type",

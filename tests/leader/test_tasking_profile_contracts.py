@@ -276,6 +276,40 @@ class GroundProfileSemanticTests(unittest.TestCase):
 
     self.assertIs(profile, tasking_bridge.resolve_tasking_profile("air"))
 
+  def test_phase_manager_projects_authored_ground_task_mode_through_ground_profile(self) -> None:
+    # The leader phase manager owns no domain enums: the loader's tasking profile
+    # must project the authored task order, or Ground task mode is silently lost.
+    loader = SimpleNamespace(
+      agent_id=4301,
+      sim=_DummySim(),
+      mission_cmd={},
+      waypoints=[],
+      waypoint_idx=0,
+      scenario_data={
+        "tasking_profile": "ground",
+        "task_order": {
+          "tasking_profile": "ground",
+          "task_name": "TASK_SUPPORT",
+          "service_profile": "Army",
+          "element_id": 4501,
+          "supported_node_id": 4601,
+          "supporting_node_id": 4501,
+          "ground_task_mode": "SupportStatic",
+        },
+      },
+      mission_phase_name="idle",
+      post_waypoint_transition=None,
+    )
+    loader.get_ils_observation = lambda *args, **kwargs: [0.0, 0.0, 0.0, 99999.0]
+
+    order = RuleBasedLeaderPhaseManager()._build_task_order(loader, sim_time_s=0.0)
+
+    self.assertEqual(order.service_profile, ef_py.ServiceProfile.Army)
+    self.assertEqual(order.ground_task_mode, ef_py.GroundTaskMode.SupportStatic)
+    self.assertEqual(order.command_relationship, ef_py.CommandRelationship.Support)
+    self.assertEqual(order.coordination_mode, ef_py.CoordinationMode.Support)
+    self.assertEqual(int(order.supported_node_id), 4601)
+
   def test_loader_profile_infers_ground_from_army_service_profile(self) -> None:
     task = ef_py.TaskOrder()
     task.service_profile = ef_py.ServiceProfile.Army

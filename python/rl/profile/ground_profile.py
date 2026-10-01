@@ -15,6 +15,10 @@ from python.rl.profile.common_core_defaults import (
     tactical_unit_type_default,
     task_family_default,
 )
+from python.tasking_contracts.common.task_order import (
+    apply_common_task_order_defaults,
+    apply_common_task_order_overrides,
+)
 
 
 def _army_service_profile() -> Any:
@@ -303,6 +307,30 @@ def normalize_task_order_spec(order_spec: dict[str, Any] | None) -> dict[str, An
                 tactical_unit_type=normalized.get("tactical_unit_type"),
             )
     return normalized
+
+
+def apply_task_order_overrides(order: Any, order_spec: dict[str, Any] | None, *, default_assignee_id: int) -> Any:
+    """Apply common fields and Ground enum fields at the Ground adapter boundary."""
+
+    if not isinstance(order_spec, dict):
+        return order
+    normalized = normalize_task_order_spec(order_spec)
+    apply_common_task_order_overrides(order, normalized, assignee_id=int(default_assignee_id))
+    enum_fields = (
+        "task_type",
+        "service_profile",
+        "task_family",
+        "tactical_unit_type",
+        "command_relationship",
+        "authority_scope",
+        "coordination_mode",
+        "ground_task_mode",
+    )
+    for field_name in enum_fields:
+        if field_name in normalized and hasattr(order, field_name):
+            setattr(order, field_name, normalized[field_name])
+    apply_common_task_order_defaults(order)
+    return order
 
 
 def task_observation_codes(task: Any | None, *, fallback_phase_id: int = 0) -> tuple[float, float, float]:
