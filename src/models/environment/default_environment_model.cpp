@@ -119,25 +119,80 @@ struct RasterGrid {
                            [x, y](const auto &feature) { return contains(feature, x, y); });
     }
 
-    bool index_for(double x, double y, std::size_t &index) const {
-        const double sx = step_x != 0.0 ? step_x : resolution;
-        const double sy = step_y != 0.0 ? step_y : resolution;
+    double cell_step_x() const { return step_x != 0.0 ? step_x : resolution; }
+    double cell_step_y() const { return step_y != 0.0 ? step_y : resolution; }
+
+    // The cell containing (x, y). Every raster lookup (surface, elevation,
+    // landcover, slope) resolves through this one cell definition.
+    bool cell_for(double x, double y, long long &col, long long &row) const {
+        const double sx = cell_step_x();
+        const double sy = cell_step_y();
         if (!std::isfinite(sx) || !std::isfinite(sy) || sx == 0.0 || sy == 0.0 || width <= 0 ||
             height <= 0) {
             return false;
         }
         const double col_f = (x - origin.x) / sx;
         const double row_f = (y - origin.y) / sy;
-        const auto col = static_cast<long long>(std::llround(col_f));
-        const auto row = static_cast<long long>(std::llround(row_f));
-        if (col < 0 || row < 0 || col >= width || row >= height ||
-            std::abs(col_f - static_cast<double>(col)) > 0.51 ||
-            std::abs(row_f - static_cast<double>(row)) > 0.51) {
-            return false;
-        }
+        col = static_cast<long long>(std::llround(col_f));
+        row = static_cast<long long>(std::llround(row_f));
+        return col >= 0 && row >= 0 && col < width && row < height &&
+               std::abs(col_f - static_cast<double>(col)) <= 0.51 &&
+               std::abs(row_f - static_cast<double>(row)) <= 0.51;
+    }
+
+    bool index_for(double x, double y, std::size_t &index) const {
+        long long col = 0;
+        long long row = 0;
+        if (!cell_for(x, y, col, row)) return false;
         index = static_cast<std::size_t>(row) * static_cast<std::size_t>(width) +
                 static_cast<std::size_t>(col);
         return index < static_cast<std::size_t>(width) * static_cast<std::size_t>(height);
+    }
+
+    // Elevation gradient (dz/dx, dz/dy) at the cell containing (x, y), read
+    // from raster cells only. Per axis the half window is `half_span_m` in
+    // whole cells of that axis (at least one, the finest difference the grid
+    // holds) and is clamped to the raster, so no sample lies outside it: at an
+    // edge cell the difference is one-sided, and the window always contains
+    // the query cell. The divisor is the metric distance between the two
+    // sampled cell centres. Returns false off the raster, or when an axis
+    // holds a single cell, since no in-raster difference then exists.
+    bool elevation_gradient(double x, double y, double half_span_m, double &east_gradient,
+                            double &north_gradient) const {
+        long long col = 0;
+        long long row = 0;
+        if (!cell_for(x, y, col, row) || !std::isfinite(half_span_m) || half_span_m <= 0.0 ||
+            elevation.size() !=
+                static_cast<std::size_t>(width) * static_cast<std::size_t>(height)) {
+            return false;
+        }
+        const auto clamped_window = [half_span_m](long long centre, long long count, double step,
+                                                  long long &low, long long &high) {
+            const long long half =
+                std::max<long long>(1, std::llround(half_span_m / std::abs(step)));
+            low = std::max<long long>(0, centre - half);
+            high = std::min<long long>(count - 1, centre + half);
+            return high > low;
+        };
+        long long west = 0;
+        long long east = 0;
+        long long first_row = 0;
+        long long last_row = 0;
+        if (!clamped_window(col, width, cell_step_x(), west, east) ||
+            !clamped_window(row, height, cell_step_y(), first_row, last_row)) {
+            return false;
+        }
+        const auto at = [this](long long sample_col, long long sample_row) {
+            return elevation[static_cast<std::size_t>(sample_row) *
+                                 static_cast<std::size_t>(width) +
+                             static_cast<std::size_t>(sample_col)];
+        };
+        // Rows advance by the signed `step_y`, so this is dz/dy in the world frame.
+        east_gradient =
+            (at(east, row) - at(west, row)) / (static_cast<double>(east - west) * cell_step_x());
+        north_gradient = (at(col, last_row) - at(col, first_row)) /
+                         (static_cast<double>(last_row - first_row) * cell_step_y());
+        return std::isfinite(east_gradient) && std::isfinite(north_gradient);
     }
 
     // Helper: World (x,y) -> Grid Index
@@ -479,6 +534,26 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
         constexpr double kPeakX = 25000.0, kPeakY = 25000.0, kPeakH = 2000.0, kSigmaSq = 25000000.0;
         double d2 = (x - kPeakX) * (x - kPeakX) + (y - kPeakY) * (y - kPeakY);
         return kPeakH * std::exp(-d2 / (2.0 * kSigmaSq));
+    }
+
+    double get_ground_slope_deg(double x, double y) override {
+        // The procedural and `flat` surfaces are defined everywhere, so the
+        // interface's central difference never leaves them.
+        if (!raster_layer_.arnis_metric_bundle || flat_terrain_) {
+            return IEnvironmentModel::get_ground_slope_deg(x, y);
+        }
+        // Over the measured raster, elevation beyond the edge is the
+        // procedural fallback, not terrain, so the gradient is taken from
+        // raster cells only. The documented 5 m half span is kept and expressed
+        // in whole cells; on the 1 m Arnis grid inland this is the same +/-5
+        // cell difference as before.
+        double east_gradient = 0.0;
+        double north_gradient = 0.0;
+        if (!raster_layer_.elevation_gradient(x, y, kGroundSlopeSampleHalfSpanM, east_gradient,
+                                              north_gradient)) {
+            return std::numeric_limits<double>::quiet_NaN();
+        }
+        return ground_slope_deg_from_gradient(east_gradient, north_gradient);
     }
 
     bool check_line_of_sight(double x1, double y1, double z1, double x2, double y2,
