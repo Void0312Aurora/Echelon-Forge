@@ -1,8 +1,9 @@
 #pragma once
 
 // Test-only writer for a minimal `arnis_cmo_bundle.v1` elevation/landcover
-// raster pair, so terrain queries can be exercised over exact synthetic relief
-// through the provider's real bundle loader (no private test seam).
+// raster pair, plus optional road vectors, so terrain queries can be exercised
+// over exact synthetic relief and features through the provider's real bundle
+// loader (no private test seam).
 
 #include <cstdint>
 #include <filesystem>
@@ -25,6 +26,12 @@ struct SyntheticRaster {
     double step_y = -1.0;
     // Elevation by (column, row); row 0 is at origin_y, advancing by step_y.
     std::function<float(int, int)> elevation;
+    // ESA WorldCover class by (column, row). Unset means class 30 (grassland)
+    // everywhere: open terrain.
+    std::function<std::uint8_t(int, int)> landcover;
+    // `arnis_cmo_features` road features in the local ENU frame. Empty means
+    // the bundle declares no road artifact.
+    nlohmann::json road_features = nlohmann::json::array();
 };
 
 class ScopedBundle {
@@ -43,8 +50,15 @@ class ScopedBundle {
                     raster.elevation(col, row);
             }
         }
-        // ESA WorldCover class 30 (grassland) everywhere: open terrain.
-        const std::vector<std::uint8_t> landcover(cells, 30);
+        std::vector<std::uint8_t> landcover(cells, 30);
+        if (raster.landcover) {
+            for (int row = 0; row < raster.height; ++row) {
+                for (int col = 0; col < raster.width; ++col) {
+                    landcover[static_cast<std::size_t>(row) * raster.width + col] =
+                        raster.landcover(col, row);
+                }
+            }
+        }
         write_bytes("rasters/elevation.f32le", elevation.data(), cells * sizeof(float));
         write_bytes("rasters/landcover.u8", landcover.data(), cells);
 
@@ -53,7 +67,7 @@ class ScopedBundle {
             {"step_xy_m", {raster.step_x, raster.step_y}},
         };
         const nlohmann::json shape = {raster.height, raster.width};
-        const nlohmann::json bundle = {
+        nlohmann::json bundle = {
             {"contract_version", "arnis_cmo_bundle.v1"},
             {"no_held_capability_release", true},
             {"artifacts",
@@ -70,6 +84,18 @@ class ScopedBundle {
                   {"metadata", metadata}},
              }},
         };
+        if (!raster.road_features.empty()) {
+            std::filesystem::create_directories(root_ / "vectors");
+            const nlohmann::json roads = {{"schema", "arnis_cmo_features"},
+                                          {"schema_version", 1},
+                                          {"coordinate_frame", "local_enu_m"},
+                                          {"feature_class", "road"},
+                                          {"features", raster.road_features}};
+            std::ofstream(root_ / "vectors/roads.cmo.json") << roads.dump();
+            bundle["artifacts"].push_back({{"kind", "vector_features"},
+                                           {"feature_class", "road"},
+                                           {"path", "vectors/roads.cmo.json"}});
+        }
         std::ofstream(root_ / "bundle.json") << bundle.dump();
     }
 
