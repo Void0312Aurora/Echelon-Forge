@@ -996,6 +996,12 @@ inline void register_damage_system_common(flecs::world &ecs) {
                     continue;
                 }
 
+                // A seeker seduced by a decoy keeps flying at it, but a decoy
+                // is never a fuze target: it takes no damage and yields no
+                // hit or kill credit. The missile ends through the existing
+                // lost-target path when the decoy expires, or by timeout.
+                if (target_entity.has<Decoy>()) continue;
+
                 const Transform *t_pos = target_entity.get<Transform>();
                 if (!t_pos) continue;
 

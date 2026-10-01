@@ -297,6 +297,16 @@ struct Missile {
     bool midcourse_datalink_supported = false;
     bool terminal_seeker_active = true;
 
+    // Seeker decoy discrimination. Rejection 1.0 = perfect (no decoy can
+    // capture the seeker); a zero resolution cell makes decoys ineligible.
+    // The defaults keep a seeker inert to decoys unless weapon data opts in.
+    double seeker_decoy_rejection = 1.0;
+    double seeker_resolution_cell_m = 0.0;
+    // Decoys already drawn against by this seeker (by stable serial, so the
+    // record never dangles when a decoy expires): each decoy gets
+    // one seduction draw per missile, the first time it becomes eligible.
+    std::vector<std::uint64_t> evaluated_decoy_serials; // StableEntitySerial values
+
     WarheadProfile warhead_profile{};
     FuzeProfile fuze_profile{};
 };

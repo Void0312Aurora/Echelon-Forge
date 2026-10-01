@@ -283,7 +283,7 @@ bool decode_f64_vector(const nlohmann::json &encoded, std::vector<double> *value
 
 nlohmann::json encode_missile(const Missile &missile) {
     nlohmann::json encoded{
-        {"schema", "missile-runtime.v3"},     {"attacker_id", missile.attacker_id},
+        {"schema", "missile-runtime.v4"},     {"attacker_id", missile.attacker_id},
         {"target_id", missile.target_id},     {"rng_state", missile.rng_state},
         {"seeker_mode", missile.seeker_mode}, {"autopilot_order", missile.autopilot_order},
     };
@@ -299,6 +299,10 @@ nlohmann::json encode_missile(const Missile &missile) {
 #define EF_ENCODE_VECTOR(name) encoded[#name] = encode_f64_vector(missile.name);
     EF_P4B_MISSILE_VECTOR_FIELDS(EF_ENCODE_VECTOR)
 #undef EF_ENCODE_VECTOR
+    encoded["seeker_decoy_rejection"] = f64_bits(missile.seeker_decoy_rejection);
+    encoded["seeker_resolution_cell_m"] = f64_bits(missile.seeker_resolution_cell_m);
+    // Stable serials, not ECS ids: they are logical identity and need no remap.
+    encoded["evaluated_decoy_serials"] = missile.evaluated_decoy_serials;
 
     auto &ekf_state = encoded["ekf_state"];
     ekf_state = {{"initialized", missile.ekf_state.initialized},
@@ -356,7 +360,7 @@ nlohmann::json encode_missile(const Missile &missile) {
 
 bool decode_missile(const nlohmann::json &encoded, Missile *missile) {
     if (missile == nullptr || !encoded.is_object() ||
-        encoded.value("schema", "") != "missile-runtime.v3" ||
+        encoded.value("schema", "") != "missile-runtime.v4" ||
         encoded.size() != encode_missile(Missile{}).size()) {
         return false;
     }
@@ -381,6 +385,22 @@ bool decode_missile(const nlohmann::json &encoded, Missile *missile) {
     if (!decode_f64_vector(encoded.at(#name), &candidate.name)) return false;
         EF_P4B_MISSILE_VECTOR_FIELDS(EF_DECODE_VECTOR)
 #undef EF_DECODE_VECTOR
+        if (!decode_f64_bits(encoded.at("seeker_decoy_rejection"),
+                             &candidate.seeker_decoy_rejection) ||
+            !decode_f64_bits(encoded.at("seeker_resolution_cell_m"),
+                             &candidate.seeker_resolution_cell_m)) {
+            return false;
+        }
+        const auto &decoy_serials = encoded.at("evaluated_decoy_serials");
+        if (!decoy_serials.is_array()) {
+            return false;
+        }
+        for (const auto &serial : decoy_serials) {
+            if (!serial.is_number_unsigned()) {
+                return false;
+            }
+            candidate.evaluated_decoy_serials.push_back(serial.get<std::uint64_t>());
+        }
 
         const auto &ekf_state = encoded.at("ekf_state");
         if (!only_object_keys(ekf_state, {"initialized", "last_predict_time_s", "x", "P"}) ||

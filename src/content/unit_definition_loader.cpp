@@ -1525,6 +1525,10 @@ bool parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefin
                 "midcourse_datalink_supported", missile_tuning.midcourse_datalink_supported);
             missile_tuning.lobl_required =
                 guidance.value("lobl_required", missile_tuning.lobl_required);
+            missile_tuning.seeker_decoy_rejection =
+                guidance.value("decoy_rejection", missile_tuning.seeker_decoy_rejection);
+            missile_tuning.seeker_resolution_cell_m =
+                guidance.value("resolution_cell_m", missile_tuning.seeker_resolution_cell_m);
         }
         if (entry.contains("warhead") && entry["warhead"].is_object()) {
             if (!parse_warhead_json_fields(entry["warhead"], &missile_tuning, error)) {

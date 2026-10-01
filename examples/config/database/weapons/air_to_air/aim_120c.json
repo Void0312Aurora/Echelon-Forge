@@ -20,7 +20,10 @@
         "nav_gain": 4.0,
         "apn_target_accel_gain": 0.125,
         "autopilot_tau_s": 0.04,
-        "max_accel_response_g_per_s": 500.0
+        "max_accel_response_g_per_s": 500.0,
+        "decoy_rejection": 0.7,
+        "resolution_cell_m": 300.0,
+        "decoy_provenance": "engineering proxy: uncalibrated active-radar chaff discrimination; rejection and resolution cell are placeholders pending sourced seeker data"
     },
     "warhead": {
         "type": "blast_fragmentation",

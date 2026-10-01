@@ -34,6 +34,7 @@ enum class DrawSite : std::uint64_t {
     radar_detection = 5,
     acoustic_detection = 6,
     command_link_drop = 7,
+    decoy_seduction = 8,
 };
 
 inline constexpr std::uint64_t kSplitmix64Gamma = 0x9e3779b97f4a7c15ULL;

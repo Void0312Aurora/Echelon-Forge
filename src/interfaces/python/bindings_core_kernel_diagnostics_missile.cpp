@@ -159,6 +159,10 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                 out["seeker_has_valid_track"] = missile->seeker_has_valid_track;
                 out["seeker_has_range"] = missile->seeker_has_range;
                 out["seeker_mode"] = missile->seeker_mode;
+                out["target_id"] = missile->target_id;
+                out["seeker_decoy_rejection"] = missile->seeker_decoy_rejection;
+                out["seeker_resolution_cell_m"] = missile->seeker_resolution_cell_m;
+                out["evaluated_decoy_count"] = missile->evaluated_decoy_serials.size();
                 out["filtered_bearing_deg"] = missile->filtered_bearing_deg;
                 out["filtered_elevation_deg"] = missile->filtered_elevation_deg;
                 out["filtered_range_m"] = missile->filtered_range_m;
