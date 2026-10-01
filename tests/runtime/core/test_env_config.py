@@ -41,6 +41,7 @@ def _make_args(**overrides):
   base = {
     "include_visual": None,
     "include_proprio": None,
+    "include_ew_state": None,
     "mission_obs_mode": None,
     "visual_downsample": None,
     "visual_update_interval": None,
@@ -96,11 +97,28 @@ def _make_args(**overrides):
       "air_ew_hybrid_v2",
       id="air_ew_hybrid_v2_action_mode",
     ),
+    pytest.param(
+      {},
+      "include_ew_state",
+      False,
+      id="ew_state_observation_off_by_default",
+    ),
+    pytest.param(
+      {"include_ew_state": True, "action_mode": "air_ew_hybrid_v2"},
+      "include_ew_state",
+      True,
+      id="ew_state_observation_opt_in",
+    ),
   ],
 )
 def test_resolve_env_settings_normalizes_single_field(env, field, expected) -> None:
   resolved = resolve_env_settings({"env": env}, _make_args())
   assert resolved[field] == expected
+
+
+def test_resolve_env_settings_cli_override_wins_for_ew_state_flag() -> None:
+  resolved = resolve_env_settings({"env": {"include_ew_state": True}}, _make_args(include_ew_state=False))
+  assert resolved["include_ew_state"] is False
 
 
 # A removed/unknown value must raise ValueError with a specific message.
