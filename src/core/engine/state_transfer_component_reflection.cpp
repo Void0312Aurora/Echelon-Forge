@@ -172,7 +172,13 @@ void register_nested_value_reflection(flecs::world &ecs) {
 }
 
 void register_ground_combat_reflection(flecs::world &ecs) {
-    ecs.component<GroundInfantryCapability>();
+    ecs.component<GroundInfantryPostureGeometry>()
+        .member<double>("eye_height_m")
+        .member<double>("center_of_mass_height_m");
+    ecs.component<GroundInfantryCapability>()
+        .member<GroundInfantryPostureGeometry>("stand")
+        .member<GroundInfantryPostureGeometry>("crouch")
+        .member<GroundInfantryPostureGeometry>("prone");
     ecs.component<GroundWeapon>()
         .member<std::int32_t>("weapon_type", 1, offsetof(GroundWeapon, weapon_type))
         .member<int>("ammunition")

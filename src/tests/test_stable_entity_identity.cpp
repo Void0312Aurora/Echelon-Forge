@@ -558,6 +558,11 @@ TEST_SUITE("stable_entity_identity") {
         auto ground_hit_at = [](std::uint64_t reset_seed) {
             SimulationKernel kernel;
             REQUIRE(kernel.load_database("examples/config/database"));
+            // The rifle gate fails closed without measured terrain, so the draw is
+            // exercised over the frozen Arnis fixture, where this pair is visible.
+            REQUIRE(kernel.load_arnis_terrain_bundle(
+                "tests/scenario/fixtures/environment_substrate/arnis_bundle_v1/"
+                "eastern_plain_infantry_phase1/expected"));
             kernel.reset(reset_seed);
             auto shooter = kernel.spawn_unit(Side::Blue, "Ground_Infantry_Soldier_MVP", 0.0, 0.0,
                                              0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);

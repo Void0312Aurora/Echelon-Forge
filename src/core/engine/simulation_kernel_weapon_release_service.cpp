@@ -20,9 +20,11 @@
 #include "content/unit_definition.h"
 #include "core/interfaces/stable_entity_identity.h"
 #include "core/interfaces/stochastic_draw.h"
+#include "core/interfaces/environment_model.h"
 #include "core/interfaces/unit_factory.h"
 #include "models/weapons/missile_guidance_types.h"
 #include "models/weapons/naval_weapon_mounts.h"
+#include "systems/domains/ground/direct_fire_line_of_sight.h"
 
 #include <spdlog/spdlog.h>
 
@@ -1208,6 +1210,24 @@ bool SimulationKernelWeaponReleaseService::fire_ground_weapon(uint64_t attacker_
     const double cooldown = std::max(0.0, weapon.cooldown_s);
     if (std::isfinite(weapon.last_fire_time_s) && weapon.last_fire_time_s >= 0.0 &&
         current_time - weapon.last_fire_time_s < cooldown) {
+        return false;
+    }
+
+    // Terrain line of sight gates release before any state changes: a blocked
+    // or unknown sight line consumes no ammunition, starts no cooldown, records
+    // no launch, and draws no hit roll. Unknown terrain fails closed.
+    const GroundInfantryCapability *attacker_capability = attacker.get<GroundInfantryCapability>();
+    const GroundInfantryCapability *target_capability = target.get<GroundInfantryCapability>();
+    const EnvironmentModelRef *environment_ref = ecs_.get<EnvironmentModelRef>();
+    const auto sight = ground_direct_fire_detail::evaluate_ground_direct_fire_line_of_sight(
+        environment_ref ? environment_ref->model : nullptr, *attacker_transform,
+        *attacker_capability,
+        ground_direct_fire_detail::held_ground_stance(attacker.get<MissionCommand>()),
+        *target_transform, *target_capability,
+        ground_direct_fire_detail::held_ground_stance(target.get<MissionCommand>()));
+    if (sight.gate != ground_direct_fire_detail::GroundDirectFireSightGate::Visible) {
+        spdlog::debug("fire_ground_weapon rejected target {}: {}", target_id,
+                      ground_direct_fire_detail::ground_direct_fire_sight_gate_name(sight.gate));
         return false;
     }
 
