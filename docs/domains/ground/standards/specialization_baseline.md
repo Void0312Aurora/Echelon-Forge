@@ -6,7 +6,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/domains/ground/standards/specialization_baseline.md`
 Owner: `domains/ground`
-Last verified: `2026-09-29`
+Last verified: `2026-10-01`
 
 ## Scope
 
@@ -79,6 +79,38 @@ The following surfaces are implemented and test-backed:
   These native probe bindings live on the quarantined
   `bindings_core_kernel_diagnostics_ground.cpp` diagnostics surface, not the
   maintained `SimulationKernel` binding surface.
+- A scripted decision model for the infantry fixture is registered behind the
+  neutral `DecisionModelRegistry` as
+  `ground.infantry.objective_occupy_scripted` (`adapter`, role
+  `ground_infantry_controller`, `python/tasking_contracts/ground/`). It
+  consumes only own position, own operational state, and the commander-issued
+  assigned target and fire authorization read back from its own mission
+  command, and emits the admitted command shape: `MoveStatic`
+  heading/speed/stance with `route_intent=direct` until the task tolerance is
+  reached, then a latched `OccupyStatic`/`SupportStatic` hold. A fire request
+  is input-gated on that assignment and authorization; the native
+  `fire_ground_weapon_from_mission_command` gate keeps holder, contact, range,
+  ammunition, and cooldown authority, and the model writes no authority. On
+  the native kernel it reaches and holds the objective, replays
+  byte-identically for one seed, is accepted by the native gate when the
+  soldier is the authority holder and rejected when another entity holds it,
+  and makes identical decisions when only hostile geometry changes
+  (`tests/runtime/ground/test_ground_scripted_native_replay.py`). The
+  replay uses the quarantined native-probe surface, not a production
+  `WorldBatch` path.
+- Ground scripted capability labels are declared per capability in
+  `python/tasking_contracts/ground/capability.py`. `admitted_bounded`, each
+  with a named runtime owner: `single_unit_movement`, `static_hold`,
+  `local_terrain_interaction`, `bounded_direct_fire_request`. `held`:
+  `route_planning`, `general_passability`, `line_of_sight_cover_concealment`,
+  `ground_sensing_track_export`, `observation_export`,
+  `effects_damage_consequence`, `indirect_fire`, `suppression`, `logistics`,
+  `multi_unit_formation`. A request for a held capability fails closed. The
+  domain label is derived from the movement, terrain-interaction, sensing,
+  fires, effects, damage, and observation-export gate and is
+  `bounded_adapter` while any of those owners is held; it MUST NOT be
+  reported as `playable`
+  (`tests/architecture/tasking_contracts/test_ground_capability_labels.py`).
 
 ## Registered And Reachable, But Not A Capability
 
@@ -180,6 +212,8 @@ Current evidence anchors:
 - [Ground native static scenario tests](../../../../tests/runtime/ground/test_ground_native_static_scenario.py)
 - [Ground native infantry movement test](../../../../tests/runtime/ground/test_ground_infantry_native_unit.py)
 - [Ground damage response tests](../../../../tests/runtime/ground/test_ground_damage_response.py)
+- [Ground scripted native replay tests](../../../../tests/runtime/ground/test_ground_scripted_native_replay.py)
+- [Ground scripted capability label tests](../../../../tests/architecture/tasking_contracts/test_ground_capability_labels.py)
 - [Ground realism-gradient guardrails](../../../../tests/architecture/ground/test_realism_gradient_guardrails.py)
 
 ## Non-goals
