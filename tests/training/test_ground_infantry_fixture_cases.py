@@ -20,6 +20,7 @@ from python.rl.ground.fixture_cases import (
     FixtureCaseError,
     OBSTACLE_TRANSITION_BLOCKED,
     WATER_TRANSITION_BLOCKED,
+    case_parameters_digest,
     case_segment_length_m,
     derive_acceptance_cases,
 )
@@ -55,6 +56,23 @@ def test_case_derivation_is_deterministic(cases) -> None:
     assert json.dumps([case.as_dict() for case in cases], sort_keys=True) == json.dumps(
         [case.as_dict() for case in again], sort_keys=True
     )
+    assert case_parameters_digest(cases) == case_parameters_digest(again)
+    assert case_parameters_digest(cases) == case_parameters_digest([case.as_dict() for case in again])
+
+
+def test_public_import_path_re_exports_the_split_modules() -> None:
+    from python.rl.ground import (
+        fixture_case_contract,
+        fixture_case_derivers,
+        fixture_cases,
+        fixture_map,
+    )
+
+    owners = (fixture_case_contract, fixture_case_derivers, fixture_map)
+    for name in fixture_cases.__all__:
+        exported = getattr(fixture_cases, name)
+        owner = next((module for module in owners if name in module.__all__), fixture_cases)
+        assert getattr(owner, name) is exported, name
 
 
 def test_every_traversable_landcover_class_present_has_one_reach_case(

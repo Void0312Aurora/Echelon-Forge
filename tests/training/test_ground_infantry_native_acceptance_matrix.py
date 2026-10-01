@@ -14,10 +14,16 @@ import pytest
 
 from python.rl.ground.acceptance_matrix import (
     CONTRACT_BLOCKED_STEP_LIMIT,
+    CONTRACT_GOAL_RADIUS_M,
     build_acceptance_matrix,
     cached_rollout,
     case_failures,
     run_case,
+)
+from python.rl.ground.fixture_cases import (
+    ArnisInfantryFixture,
+    case_parameters_digest,
+    derive_acceptance_cases,
 )
 
 
@@ -144,3 +150,56 @@ def test_native_acceptance_matrix_report_is_independent_of_the_rollout_cache(
     )
     rows = {row["case_id"]: row for row in matrix["rows"]}
     assert again["rows"] == [rows[case.case_id] for case in subset]
+
+
+def _expected_case_ids(fixture: ArnisInfantryFixture, bridge_intervals: dict[int, int]) -> list[str]:
+    """Case-id list implied by the fixture's own data, in derivation order."""
+
+    present = fixture.present_landcover_codes
+    traversable = [code for code in present if fixture.landcover_block_reason(code) is None]
+    blocking = [code for code in present if fixture.landcover_block_reason(code) is not None]
+    return [
+        *(f"landcover:{fixture.legend[code]}" for code in traversable),
+        *(f"slope_band:{name}" for name, _low, _high in fixture.slope_bands()),
+        *(f"water:landcover:{fixture.legend[code]}" for code in blocking),
+        *(
+            f"water:hydrology:{index}:{'polygon' if feature.polygon else 'line'}"
+            for index, feature in enumerate(fixture.hydrology)
+        ),
+        *(
+            f"edge:{edge}:{kind}"
+            for edge in ("west", "east", "north", "south")
+            for kind in ("outbound", "parallel")
+        ),
+        *(
+            f"bridge:{bridge}:{interval}:{kind}"
+            for bridge in range(len(fixture.bridges))
+            for interval in range(bridge_intervals[bridge])
+            for kind in ("crossing", "off_bridge_control")
+        ),
+        *(f"held:building:{index}" for index in range(len(fixture.buildings))),
+    ]
+
+
+def test_native_acceptance_matrix_pins_its_case_ids_and_case_parameters(matrix: dict) -> None:
+    # Pinned from the matrix report itself: its case-id list must be the one
+    # the fixture data implies, and its recorded parameter digest must match
+    # both its own case records and an independent fresh derivation through
+    # the public ``python.rl.ground.fixture_cases`` import path.
+    fresh_fixture = ArnisInfantryFixture()
+    fresh = derive_acceptance_cases(fresh_fixture, goal_radius_m=CONTRACT_GOAL_RADIUS_M)
+    intervals = {
+        bridge: sum(
+            1
+            for case_id in matrix["case_ids"]
+            if case_id.startswith(f"bridge:{bridge}:") and case_id.endswith(":crossing")
+        )
+        for bridge in range(len(fresh_fixture.bridges))
+    }
+    assert all(count > 0 for count in intervals.values())
+    assert matrix["case_ids"] == _expected_case_ids(fresh_fixture, intervals)
+    assert matrix["case_ids"] == [row["case_id"] for row in matrix["rows"]]
+    assert matrix["case_ids"] == [case["case_id"] for case in matrix["cases"]]
+    assert matrix["case_parameters_sha256"] == case_parameters_digest(matrix["cases"])
+    assert matrix["case_parameters_sha256"] == case_parameters_digest(fresh)
+    assert [case.as_dict() for case in fresh] == matrix["cases"]

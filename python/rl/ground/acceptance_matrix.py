@@ -21,7 +21,12 @@ from typing import Any, Callable, Hashable, Mapping, MutableMapping, Sequence
 
 import numpy as np
 
-from .fixture_cases import ArnisInfantryFixture, FixtureCase, derive_acceptance_cases
+from .fixture_cases import (
+    ArnisInfantryFixture,
+    FixtureCase,
+    case_parameters_digest,
+    derive_acceptance_cases,
+)
 from .native_env import GroundInfantryNativeEnv
 from .native_probe import GroundInfantryNativeProbe
 
@@ -521,6 +526,10 @@ def build_acceptance_matrix(
         "summary": summary,
         "valid": all(row["verdict"] == "pass" for row in rows),
         "rows": rows,
+        "case_ids": [case.case_id for case in cases],
+        # Digest of every derived case parameter (start, waypoints, block
+        # geometry, derivation), so a report pins the exact case set it ran.
+        "case_parameters_sha256": case_parameters_digest(cases),
         "cases": [case.as_dict() for case in cases],
         "does_not_claim": list(HELD_CLAIMS),
     }
