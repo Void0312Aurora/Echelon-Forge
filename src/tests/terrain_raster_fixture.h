@@ -1,0 +1,112 @@
+#pragma once
+
+// Test-only writer for a minimal `arnis_cmo_bundle.v1` elevation/landcover
+// raster pair, so terrain queries can be exercised over exact synthetic relief
+// through the provider's real bundle loader (no private test seam).
+
+#include <cstdint>
+#include <filesystem>
+#include <fstream>
+#include <functional>
+#include <random>
+#include <string>
+#include <vector>
+
+#include <nlohmann/json.hpp>
+
+namespace terrain_raster_fixture {
+
+struct SyntheticRaster {
+    int width = 0;
+    int height = 0;
+    double origin_x = 0.0;
+    double origin_y = 0.0;
+    double step_x = 1.0;
+    double step_y = -1.0;
+    // Elevation by (column, row); row 0 is at origin_y, advancing by step_y.
+    std::function<float(int, int)> elevation;
+};
+
+class ScopedBundle {
+  public:
+    explicit ScopedBundle(const SyntheticRaster &raster) {
+        std::random_device device;
+        root_ = std::filesystem::temp_directory_path() /
+                ("ef_terrain_los_" + std::to_string(device()) + "_" + std::to_string(device()));
+        std::filesystem::create_directories(root_ / "rasters");
+        const std::size_t cells =
+            static_cast<std::size_t>(raster.width) * static_cast<std::size_t>(raster.height);
+        std::vector<float> elevation(cells);
+        for (int row = 0; row < raster.height; ++row) {
+            for (int col = 0; col < raster.width; ++col) {
+                elevation[static_cast<std::size_t>(row) * raster.width + col] =
+                    raster.elevation(col, row);
+            }
+        }
+        // ESA WorldCover class 30 (grassland) everywhere: open terrain.
+        const std::vector<std::uint8_t> landcover(cells, 30);
+        write_bytes("rasters/elevation.f32le", elevation.data(), cells * sizeof(float));
+        write_bytes("rasters/landcover.u8", landcover.data(), cells);
+
+        const nlohmann::json metadata = {
+            {"origin_xy_m", {raster.origin_x, raster.origin_y}},
+            {"step_xy_m", {raster.step_x, raster.step_y}},
+        };
+        const nlohmann::json shape = {raster.height, raster.width};
+        const nlohmann::json bundle = {
+            {"contract_version", "arnis_cmo_bundle.v1"},
+            {"no_held_capability_release", true},
+            {"artifacts",
+             {
+                 {{"kind", "elevation_raster"},
+                  {"path", "rasters/elevation.f32le"},
+                  {"shape", shape},
+                  {"byte_length", cells * sizeof(float)},
+                  {"metadata", metadata}},
+                 {{"kind", "landcover_raster"},
+                  {"path", "rasters/landcover.u8"},
+                  {"shape", shape},
+                  {"byte_length", cells},
+                  {"metadata", metadata}},
+             }},
+        };
+        std::ofstream(root_ / "bundle.json") << bundle.dump();
+    }
+
+    ScopedBundle(const ScopedBundle &) = delete;
+    ScopedBundle &operator=(const ScopedBundle &) = delete;
+
+    ~ScopedBundle() {
+        std::error_code ignored;
+        std::filesystem::remove_all(root_, ignored);
+    }
+
+    [[nodiscard]] std::string root() const { return root_.string(); }
+
+  private:
+    void write_bytes(const char *relative, const void *data, std::size_t size) const {
+        std::ofstream file(root_ / relative, std::ios::binary);
+        file.write(static_cast<const char *>(data), static_cast<std::streamsize>(size));
+    }
+
+    std::filesystem::path root_;
+};
+
+// 21 x 21 cells at 1 m: x in [0, 20], y in [0, 20] (row 0 at y = 20).
+// `ridge_height_m` is added along the column x = 10; elsewhere the surface
+// sits at `base_m`.
+[[nodiscard]] inline SyntheticRaster east_west_ridge(float base_m, float ridge_height_m) {
+    SyntheticRaster raster;
+    raster.width = 21;
+    raster.height = 21;
+    raster.origin_x = 0.0;
+    raster.origin_y = 20.0;
+    raster.step_x = 1.0;
+    raster.step_y = -1.0;
+    raster.elevation = [base_m, ridge_height_m](int col, int) {
+        return col == 10 ? base_m + ridge_height_m : base_m;
+    };
+    return raster;
+}
+
+} // namespace terrain_raster_fixture

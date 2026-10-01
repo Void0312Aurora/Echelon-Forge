@@ -741,6 +741,76 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
         return observation;
     }
 
+    TerrainLineOfSightObservation
+    get_terrain_line_of_sight_observation(double from_x, double from_y, double from_height_m,
+                                          double to_x, double to_y, double to_height_m) override {
+        using Status = TerrainLineOfSightStatus;
+        using Reason = TerrainLineOfSightUnknownReason;
+        TerrainLineOfSightObservation observation;
+        // Only the measured raster is an elevation authority. The procedural
+        // hill and the `flat` profile are synthetic surfaces, so a sight line
+        // over them is unknown rather than visible.
+        if (!raster_layer_.arnis_metric_bundle || flat_terrain_) {
+            return observation;
+        }
+        observation.elevation_source = TerrainElevationSource::ArnisMetricRaster;
+        // Sample at the raster's own metric cell size: finer sampling cannot
+        // see more relief than the grid holds, coarser sampling could skip a
+        // one-cell crest.
+        observation.sample_spacing_m =
+            std::min(std::abs(raster_layer_.step_x), std::abs(raster_layer_.step_y));
+        const bool finite_input = std::isfinite(from_x) && std::isfinite(from_y) &&
+                                  std::isfinite(to_x) && std::isfinite(to_y) &&
+                                  std::isfinite(from_height_m) && std::isfinite(to_height_m);
+        if (!finite_input || from_height_m < 0.0 || to_height_m < 0.0 ||
+            !std::isfinite(observation.sample_spacing_m) || observation.sample_spacing_m <= 0.0) {
+            observation.unknown_reason = Reason::InvalidInput;
+            return observation;
+        }
+        observation.distance_m = std::hypot(to_x - from_x, to_y - from_y);
+        double from_terrain = 0.0;
+        double to_terrain = 0.0;
+        if (!raster_layer_.get_elevation(from_x, from_y, from_terrain) ||
+            !raster_layer_.get_elevation(to_x, to_y, to_terrain)) {
+            observation.unknown_reason = Reason::EndpointOutsideRaster;
+            return observation;
+        }
+        observation.from_absolute_height_m = from_terrain + from_height_m;
+        observation.to_absolute_height_m = to_terrain + to_height_m;
+
+        const std::size_t intervals =
+            std::max<std::size_t>(1, static_cast<std::size_t>(std::ceil(
+                                         observation.distance_m / observation.sample_spacing_m)));
+        for (std::size_t index = 1; index < intervals; ++index) {
+            const double fraction = static_cast<double>(index) / static_cast<double>(intervals);
+            const double x = from_x + (to_x - from_x) * fraction;
+            const double y = from_y + (to_y - from_y) * fraction;
+            double terrain = 0.0;
+            if (!raster_layer_.get_elevation(x, y, terrain)) {
+                observation.unknown_reason = Reason::SampleOutsideRaster;
+                return observation;
+            }
+            observation.sample_count += 1;
+            const double ray =
+                observation.from_absolute_height_m +
+                (observation.to_absolute_height_m - observation.from_absolute_height_m) * fraction;
+            if (terrain > ray) {
+                observation.status = Status::Blocked;
+                observation.unknown_reason = Reason::None;
+                observation.has_blocking_sample = true;
+                observation.blocking_x = x;
+                observation.blocking_y = y;
+                observation.blocking_distance_m = observation.distance_m * fraction;
+                observation.blocking_terrain_height_m = terrain;
+                observation.blocking_ray_height_m = ray;
+                return observation;
+            }
+        }
+        observation.status = Status::Visible;
+        observation.unknown_reason = Reason::None;
+        return observation;
+    }
+
     void clear_zones() override { zones_.clear(); }
 
     void add_zone(const std::string &name, double x, double y, double width, double length,

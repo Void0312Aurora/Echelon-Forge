@@ -97,6 +97,57 @@ class IEnvironmentModel {
         double distance_m = 0.0;
     };
 
+    // Domain-neutral terrain line of sight over the measured elevation surface.
+    // `Unknown` is never a visibility claim: consumers must fail closed on it.
+    enum class TerrainLineOfSightStatus : std::uint8_t {
+        Unknown = 0,
+        Visible = 1,
+        Blocked = 2,
+    };
+
+    enum class TerrainLineOfSightUnknownReason : std::uint8_t {
+        None = 0,
+        NoMeasuredElevation = 1,   // no metric raster loaded, or a synthetic profile active
+        InvalidInput = 2,          // non-finite coordinate or negative/non-finite height
+        EndpointOutsideRaster = 3, // an endpoint has no raster elevation sample
+        SampleOutsideRaster = 4,   // an interior sample has no raster elevation sample
+    };
+
+    enum class TerrainElevationSource : std::uint8_t {
+        None = 0,
+        ArnisMetricRaster = 1,
+    };
+
+    struct TerrainLineOfSightObservation {
+        TerrainLineOfSightStatus status = TerrainLineOfSightStatus::Unknown;
+        TerrainLineOfSightUnknownReason unknown_reason =
+            TerrainLineOfSightUnknownReason::NoMeasuredElevation;
+        TerrainElevationSource elevation_source = TerrainElevationSource::None;
+        // Provenance: the raster's metric cell size and the interior samples evaluated.
+        double sample_spacing_m = 0.0;
+        std::uint32_t sample_count = 0;
+        double distance_m = 0.0;
+        // Absolute ray endpoints: terrain elevation plus the caller's height.
+        double from_absolute_height_m = std::numeric_limits<double>::quiet_NaN();
+        double to_absolute_height_m = std::numeric_limits<double>::quiet_NaN();
+        // First sample whose terrain is strictly above the ray (Blocked only).
+        bool has_blocking_sample = false;
+        double blocking_x = 0.0;
+        double blocking_y = 0.0;
+        double blocking_distance_m = 0.0;
+        double blocking_terrain_height_m = 0.0;
+        double blocking_ray_height_m = 0.0;
+    };
+
+    // Heights are above the local terrain surface at each endpoint. Providers
+    // without a measured elevation surface keep this fail-closed default.
+    virtual TerrainLineOfSightObservation
+    get_terrain_line_of_sight_observation(double /*from_x*/, double /*from_y*/,
+                                          double /*from_height_above_terrain_m*/, double /*to_x*/,
+                                          double /*to_y*/, double /*to_height_above_terrain_m*/) {
+        return {};
+    }
+
     virtual TerrainCell get_terrain_at(double x, double y) = 0;
 
     // Dynamic Configuration
