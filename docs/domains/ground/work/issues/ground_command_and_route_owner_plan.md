@@ -11,7 +11,9 @@ Last verified: `2026-10-01`
 Content status: read-only repository analysis on origin/main `71912e2a7` plus the
 Ground scripted admission ledger entry on `codex/army-ground-integration`
 (`204a15918`). This document proposes decisions and sequencing. It authorizes no
-implementation.
+implementation. GC-0 facts are recorded in the
+[GC-0 census](ground_command_and_route_owner_gc0_census.md) on base `3e6ce9956`.
+Decisions below are amended where the census contradicted them.
 
 Terms used below:
 
@@ -111,8 +113,11 @@ The outcome this plan unblocks:
   The 2026-09-28 move of stance semantics into `movement_effects.h` already
   established the direction that Ground semantics leave the environment.
 - The same function samples the segment at a hard-coded `5.0` m spacing
-  (`std::ceil(distance_m / 5.0)`). The value is not derived from the loaded
-  raster's metric step. When the raster step is finer than 5 m, a feature one
+  (`std::ceil(distance_m / 5.0)`). Two more 5 m literals sit on the same path:
+  the movement-cost average in `movement_effects.h:110-111` and the slope
+  central difference in `IEnvironmentModel::get_ground_slope_deg` (census F6).
+  The value is not derived from the loaded raster's metric step, which is about
+  1 m on the eastern-plain fixture (census F8). When the raster step is finer than 5 m, a feature one
   cell wide can fall between samples, and any fixed spacing can miss a segment
   that clips a cell corner. The spacing is also not reported to the
   caller, so a trace cannot say which resolution produced a verdict.
@@ -151,8 +156,9 @@ The outcome this plan unblocks:
 ### Composition cost baseline
 
 The composition census pin in
-`tools/maintenance/runtime_composition_evidence_contract.py` is
-`(88, 3, 35)` (components, kernel systems, resolved systems) on this base. Any
+`tools/maintenance/runtime_composition_evidence_contract.py:167` is
+`(88, 3, 35)` (components, kernel systems, resolved systems) on this base. The
+component-count literal sites are listed in census F13. Any
 new registered component or system changes the pin and forces the full causal
 regeneration chain from the registry-sync Repair Order: the census pin, the
 profile projection, the Cordis artifact and descriptor pins, the Cordis producer
@@ -196,15 +202,23 @@ layer emits is what the movement system reads.
 Recommendation: B.
 
 - `route_ref_id` is already shared-core, transported by `shared_core` in the
-  maintained batch contract, and reflected. Ground adopts the Air identity
-  convention: the id is derived from the canonical route geometry, not from
-  load order or Flecs ids, so it is stable across composition changes.
+  maintained batch contract, and reflected. No native system reads it today
+  (census F2). Ground adopts the Air identity convention: the id is a content
+  hash of the canonical route geometry, not load order or Flecs ids, so it is
+  stable across composition changes. Ground reuses the hash function, not the
+  Air payload. The Ground payload is `{idx, x, y, arrival_radius_m}` with a
+  Ground domain tag, so a Ground route never shares an id with an Air route.
+  The hash exists today as three identical Python copies (census F2). Ground
+  adds one canonical helper rather than a fourth copy. The native catalog loader
+  (GC-3) computes the same id, and a cross-language test pins both to the same
+  value.
 - `route_ref_id` is interpreted by Ground only when
   `route_intent == DeclaredRoute`. `Direct` keeps today's heading/speed
   semantics unchanged.
 - Each declared waypoint carries an authored arrival radius. There is no Ground
   default. In particular the Air `SpatialRouteWaypoint::radius_m = 500.0`
-  default must not leak into Ground. Load-time validation rejects a missing,
+  default (`src/core/geometry/spatial_query_runtime.h:27`, floored to 1 m at
+  `spatial_query_runtime.cpp:263`) must not leak into Ground. Load-time validation rejects a missing,
   non-finite, or non-positive radius.
 - Arrival is tested on the swept tick segment: the closest approach of the
   tick's start-to-end segment to the waypoint is within the radius. A test on the
@@ -219,7 +233,9 @@ layout. The packet must update `mission_command_ground_*` projections, the
 schema-owned `.inc` field list for the maintained batch contract (owned by
 `tools/maintenance/dto_schema`), `apply_mission_command_maintained_batch_contract_to_compatibility_shell`,
 `state_transfer_component_reflection.cpp`, JSON round-trip, episode equality,
-and the nanobind class. It does not add a registered component, so the census
+and the nanobind class. The current `MissionCommandGround` reflection omits the
+existing `stance` field (census F1), so GC-2 reflects `stance` with the new
+directive. It does not add a registered component, so the census
 pin should not move. Whether the Cordis or P7 hashes move because of a layout
 change is not assumed. GC-2 measures it and regenerates whatever moves.
 
@@ -255,8 +271,9 @@ Recommendation: C.
   `src/models/domains/ground/` (systems may include models; models must not
   include systems). Today `movement_effects.h` sits in
   `src/systems/domains/ground/`. Relocating it is not required for correctness,
-  because runtime may call systems. The owner should decide whether GC-1 moves
-  it (open question Q3).
+  because runtime may call systems. GC-0 recommends the move in GC-1 (Q3):
+  `src/core/engine/simulation_kernel.cpp:18` already includes the systems
+  header, and the GC-4a facade query would add another such include.
 - Route planning (finding a route) stays held. The Ground owner validates and
   executes declared routes only.
 
@@ -268,24 +285,35 @@ Recommendation: C.
 | B | Add a typed Ground terrain block to the facade observation export. A `GroundTerrainQueryProvenance` record is attached per block. The packet-level `InformationStateSource` carries a new terrain-prior source label. | Touches the facade observation contract and `policy_contracts.h` labels. Needs review from `architecture/cross-domain-agency`. |
 | C | Label the terrain block `WorldTruth` diagnostics | Honest about origin but makes it `diagnostics_only` under `decision_belief_requires_diagnostics_only`. A scripted or learned policy could then never consume it on a maintained path. |
 
-Recommendation: B.
+Recommendation: B, amended by GC-0 (census F5). The typed terrain block and
+`GroundTerrainQueryProvenance` stay. The packet keeps the existing
+`AgentObservation` / `facade_observation_packet` / `maintained` source, and no
+new information-state layer is proposed.
 
 - `GroundTerrainQueryProvenance` carries the terrain bundle digest, the field
   overlay digest, raster `step_x`/`step_y`, the traversal method and traversed cell
-  count, and the query kind (own-cell, segment, route leg). The digests are computed when the
-  bundle and overlay are loaded. This analysis did not verify whether the Arnis
-  manifest already carries per-file digests. GC-0 establishes that, and the
-  loader reuses them if present.
-- Information-state label: map-derived terrain facts are authored prior
-  knowledge available to the unit, like a map. They are not live truth about
-  other entities, and they are not sensed. They need their own maintained label,
-  for example information-state layer `TerrainPrior` with source label
-  `ground_terrain_database_prior`. The existing labels in
-  [`policy_contracts.h`](../../../../../src/runtime/contracts/policy_contracts.h)
-  have no slot for this. `AgentObservation` and `SensedState` would overstate
-  what the unit perceived; `WorldTruth` would forbid use. Adding the label is a
-  cross-domain contract change and needs that owner's acceptance (open question
-  Q2).
+  count, and the query kind (own-cell, segment, route leg). The digests come from the bundle
+  manifest, which already carries a SHA-256 per artifact. The field overlay
+  carries one too. The native loader reads none of them today (census F8). GC-1
+  makes the loader verify and record them.
+- Information-state label (amended by GC-0). The draft proposed a new
+  `TerrainPrior` layer because `AgentObservation` would "overstate what the unit
+  perceived". The maintained standard does not define `AgentObservation` as
+  perceived data. It defines it as the consumer-shaped packet an agent is allowed
+  to see, selected by the view spec
+  (`docs/architecture/standards/simulation_system_architecture_design.md:138,141`).
+  Sensing is `SensedState` (`:135`). Own-state kinematics already ride in
+  `AgentObservation` on that basis. Map-derived own-state terrain facts fit the
+  same definition, and `facade_observation_packet` is already a maintained source
+  that an agent role may consume
+  ([`policy_contracts.h`](../../../../../src/runtime/contracts/policy_contracts.h)
+  `:218-221`, `:362-375`). The prior-versus-sensed distinction is carried where
+  it is exact: in the block's query kind and source digests in
+  `GroundTerrainQueryProvenance`. A separate layer would change a maintained
+  standard owned by `architecture/system-design` and the closed layer set at
+  `policy_contracts.h:159-166`. Neither owner has a position on record (census
+  F5). Whether `architecture/cross-domain-agency` accepts the existing label for
+  this block is open question Q2.
 - Hostile contacts are not part of this block. Ground sensing stays held, and
   the scripted model keeps reading its assigned target from its own mission
   command.
@@ -312,8 +340,13 @@ the regeneration chain runs exactly once.
   when the command is applied, and no catalog ref is needed: `(89, 3, 35)`. If
   they do not, the component holds only the reference and progress, and a
   world-scoped `GroundRouteCatalogRef` (modelled on `EnvironmentModelRef`) gives
-  the movement system the geometry: `(90, 3, 35)`. GC-0 answers this before
-  GC-3 starts. The plan does not guess.
+  the movement system the geometry: `(90, 3, 35)`. GC-0 answer (census F1, F9):
+  reflection already carries `std::vector` members through `vector_support<T>`,
+  and no CUDA-resident fixture contract names a Ground component, so the
+  predicted census is `(89, 3, 35)`. That holds only if the catalog is reachable
+  at command-apply time without ECS storage (runtime world-setup state). If GC-3
+  needs the catalog in ECS, the census is `(90, 3, 35)`. GC-3 states which
+  before it starts.
 - C is not rejected on principle. If the owner prefers the separate stage (open
   question Q5), the cost row above applies and the same single-packet rule holds.
 - The movement system must never write `MissionCommand`. Commands are inputs.
@@ -322,9 +355,9 @@ the regeneration chain runs exactly once.
 
 Cost common to B and C: the full regeneration chain on the shared composition
 pins. That includes a P7 recapture on HEI and a P8 closure update. Census bumps
-from other lines (`.worktrees/army-los` may add a line-of-sight or rifle-gate
-component) must be serialized with GC-3 on main, or batched into it by
-agreement. Two lines must not bump the pin independently.
+from other lines must be serialized with GC-3 on main, or batched into it by
+agreement. The `army-los` line added no registered component. Its content is
+already on the base, and the pin is unchanged (census F14). Two lines must not bump the pin independently.
 
 ### D6 — Retiring or promoting the native-probe bindings
 
@@ -342,7 +375,7 @@ to carry facade work.
 | `load_arnis_terrain_bundle`, `load_arnis_field_overlay` | Scenario-declared environment content loaded at world creation by the scenario loader, with digests recorded | GC-4, GC-5 |
 | `get_ground_terrain_observation`, `get_ground_slope_deg`, `get_ground_movement_effect_observation`, `get_ground_field_semantic_observation` | Ground own-state terrain block in the facade observation export (D4) | GC-4 |
 | `get_ground_transition_observation`, `get_ground_transition_movement_observation` | Facade route validation batch query plus the per-tick execution record (D3, D4, D5) | GC-4 |
-| `fire_ground_weapon` | None. A raw release without command authority has no production role. Retire it once no test needs it. | GC-6 |
+| `fire_ground_weapon` | None. A raw release without command authority has no production role. Retire it once no test needs it. Its only callers are five assertions in `tests/runtime/ground/test_ground_infantry_native_unit.py` (census F12). | GC-6 |
 | `fire_ground_weapon_from_mission_command`, `get_ground_weapon_state` | Out of scope. Held with the direct-fire and line-of-sight owner (item 5). They stay on the allowlist. | held |
 
 Retiring the probe caller also removes `python/rl/ground/native_probe.py` from
@@ -365,6 +398,13 @@ for GC-3. Everything else is serial.
 
 ### GC-0 — Contract census (docs and read-only probes, no C++)
 
+- Status: done 2026-10-01 at base `3e6ce9956`. Evidence:
+  [GC-0 census](ground_command_and_route_owner_gc0_census.md), F1 to F14. It ran
+  before the plan review that its entry condition names, so that review now has
+  the facts. Grep could not settle these items: whether the facade exporter emits
+  an `AgentObservation` row for a Ground entity (F11), what the overlay `sha256`
+  digests and whether a native SHA-256 is linked (F8), and the
+  resolved-system-count literal sites (F13).
 - Scope: establish the facts the decisions depend on.
   - Can state-transfer reflection and the CUDA-resident fixture contracts carry
     a component with a variable-length member? (D5)
@@ -390,15 +430,24 @@ for GC-3. Everything else is serial.
   from exact grid traversal, with a provenance record. The infantry passability verdict
   moves to the Ground policy beside `evaluate_transition_movement_effects`.
   `GroundInfantryMovement` and every consumer listed in GC-0 use the Ground
-  verdict. The `5.0` m literal is removed. The bundle and overlay loaders record
-  digests.
+  verdict. All three 5 m literals are removed (census F6): the transition verdict
+  sampling, the movement-cost sampling at `movement_effects.h:110-111`, and the
+  slope half-span at `environment_model.h:37`. Traversal and slope follow the
+  raster's nearest-cell definition: cell centres at `origin + i*step` and edges
+  at half a step (`default_environment_model.cpp:122-141`). The loaders verify
+  and record the manifest's per-artifact SHA-256 values (census F8). If no native
+  SHA-256 is linked, GC-1 stops and raises the dependency choice. It does not add
+  one silently.
 - Write set: `src/core/interfaces/environment_model.h`,
   `src/models/environment/default_environment_model.cpp`, the Ground policy
   header (`src/systems/domains/ground/movement_effects.h`, or a new
   `src/models/domains/ground/` home if Q3 says move it),
-  `src/systems/domains/ground/movement_system.h`, the native-probe binding
-  translation for the changed tuple shape, `python/rl/ground/native_probe.py`
-  where it reads the verdict, and the Ground runtime and training tests.
+  `src/systems/domains/ground/movement_system.h`, the native-probe tuple
+  translation in `src/core/engine/simulation_kernel.cpp` (`:432-470`, plus its
+  `movement_effects.h` include at `:18` if the header moves),
+  `python/rl/ground/native_probe.py` where it reads the verdict, and the Ground
+  runtime and training tests. The verdict consumers to migrate are listed in
+  census F7.
 - Acceptance evidence:
   - on a synthetic raster, a one-cell water feature narrower than the old 5 m
     spacing is blocked, and so is a segment that only clips a water cell's
@@ -408,9 +457,10 @@ for GC-3. Everything else is serial.
     cause (exact traversal). No silent behaviour drift.
   - `IEnvironmentModel` no longer contains an infantry verdict.
   - The census pin is unchanged (checked, not assumed).
-- Entry condition: GC-0. The `army-los` line has landed on main, or the two
-  owners have agreed a merge order, because both touch `environment_model.h`
-  and the default environment model.
+- Entry condition: GC-0 (done). The `army-los` content is already on the base
+  (census F14), so it no longer gates GC-1. Any line still editing
+  `environment_model.h` or `default_environment_model.cpp` lands first or agrees
+  a merge order.
 
 ### GC-2 — Ground route directive in the command contract (C++ and bindings)
 
@@ -437,7 +487,11 @@ for GC-3. Everything else is serial.
   - `command.py` tests for accept and reject;
   - the measured effect on the census, Cordis, and P7 hashes, with whatever moved
     regenerated.
-- Entry condition: GC-0. Parallel with GC-1.
+- Entry condition: GC-0 (done). Parallel with GC-1. The facts behind it: the
+  directive is one new `.inc` row (`ground_route`) beside `ground_static_task`,
+  one projection line, and one apply block (census F4). `route_ref_id` needs no
+  new transport. GC-2 also reflects the existing `stance` field (census F1) and
+  adds a reflection round-trip test over every `MissionCommandGround` field.
 
 ### GC-3 — Route catalog and native route execution (C++, regen)
 
@@ -468,7 +522,9 @@ for GC-3. Everything else is serial.
   - the two Air realism flips are attributed to the stable-identity residual and
     nothing else flips.
 - Entry condition: GC-1 and GC-2 on main. No other line has an unmerged census
-  bump. GC-0's reflection answer is recorded.
+  bump. GC-0's reflection answer is recorded
+  (census F1, F9: predicted `(89, 3, 35)`), and GC-3 has stated where the
+  catalog lives at command-apply time.
 
 ### GC-4a — Facade Ground terrain observation and route validation (C++ and Python)
 
@@ -478,8 +534,10 @@ for GC-3. Everything else is serial.
   policy as movement. Terrain bundle and overlay become scenario-declared and are
   loaded at world creation.
 - Write set: `src/runtime/facade/` observation and query surfaces and their
-  `.inc` lists, `src/runtime/contracts/policy_contracts.h` (label only, after Q2
-  is accepted), the scenario loader environment declaration, nanobind
+  `.inc` lists, `policy_contracts.h` only if Q2 requires a new layer, the
+  scenario terrain declaration (`WorldTerrainAssignment`, the scenario
+  compiler's terrain types, and world setup in `world_batch_runtime.cpp`; today
+  only procedural `terrain_type` exists, census F10), nanobind
   registration for the new facade surfaces, and tests.
 - Acceptance evidence:
   - parity test: for the eastern-plain fixture, each probe tuple equals the
@@ -487,7 +545,9 @@ for GC-3. Everything else is serial.
   - provenance digests match the loaded files;
   - a `DecisionBelief` built from the block validates under
     `decision_belief_has_valid_provenance` without `diagnostics_only`.
-- Entry condition: GC-1. Q2 is accepted by `architecture/cross-domain-agency`.
+- Entry condition: GC-1. Q2 answered by `architecture/cross-domain-agency`. If
+  Q2 requires a separate layer, `architecture/system-design` amends the
+  information-state standard first.
 
 ### GC-4b — Facade route execution export (C++ and Python)
 
@@ -572,9 +632,11 @@ for GC-3. Everything else is serial.
 - The MissionCommand layout change in GC-2 touches every domain's
   serialization surfaces. Mitigation: GC-2 measures and regenerates any moved
   hash in the same packet.
-- Cross-owner contract: the terrain-prior label changes `policy_contracts.h`.
-  If it is refused, GC-4a must fall back to a labelled `diagnostics_only` export.
-  That keeps the scripted AI on diagnostics and blocks GC-5. This is the
+- Cross-owner contract (Q2). The amended D4 needs no `policy_contracts.h` change
+  if the existing `facade_observation_packet` label is accepted. If the agency
+  owner requires a separate layer, the standard owned by
+  `architecture/system-design` changes first. A `diagnostics_only` fallback
+  would keep the scripted AI on diagnostics and block GC-5. This remains the
   largest schedule risk.
 - External dependency: the Ground scripted admission slice is not on main.
   GC-5 cannot start until
@@ -586,17 +648,37 @@ for GC-3. Everything else is serial.
 
 ## Open Questions For The Owner
 
-1. Q1: Accept reuse of shared-core `route_ref_id` with the content-derived
-   convention? The alternative is a Ground-owned route id field.
-2. Q2: Will `architecture/cross-domain-agency` admit a terrain-prior
-   information-state label as a maintained observation source?
-3. Q3: Should the stateless Ground mobility policy move from
-   `src/systems/domains/ground/movement_effects.h` to
-   `src/models/domains/ground/` as part of GC-1?
-4. Q4: Accept fail-closed loading when a Ground waypoint has no authored arrival
-   radius, plus the swept-segment arrival test? This deliberately breaks reuse of
-   the Air `SpatialRouteWaypoint` default and its end-position semantics.
-5. Q5: Should route following be a phase in `GroundInfantryMovement` (D5-B) or
-   its own stage (D5-C, one more resolved system)?
-6. Q6: Retire the raw `fire_ground_weapon` binding in GC-6, or keep it as a
-   diagnostics-only name with the held fire surfaces?
+GC-0 dispositions; facts are in the census. "Main session" marks a technical
+choice that the facts settle. "Owner" marks a question for the user.
+
+1. Q1: reuse shared-core `route_ref_id` with the content-derived convention?
+   Facts: F2. There is no native reader, and Air hashes a different payload.
+   Disposition: main session. Reuse it, with the Ground payload and domain tag
+   from D2 and one canonical helper pinned across Python and C++.
+2. Q2: which label for the Ground terrain block? Facts: F5. Disposition: owner
+   (`architecture/cross-domain-agency`, through the user). The question: does a
+   map-derived, own-state Ground terrain block in the facade observation packet
+   ride on the existing `AgentObservation` / `facade_observation_packet` /
+   `maintained` source, with prior-versus-sensed carried in
+   `GroundTerrainQueryProvenance`? Or does the agency owner require a separate
+   information-state layer, which also needs `architecture/system-design` to
+   amend the maintained standard? Q2 gates GC-4a only.
+3. Q3: move `movement_effects.h` to `src/models/domains/ground/` in GC-1? Facts:
+   the directory exists (`default_effects_ground_domain.h`), and
+   `simulation_kernel.cpp:18` includes the systems header today. Disposition:
+   main session. Move it in GC-1, which rewrites the header anyway.
+4. Q4: require an authored radius on every Ground waypoint (fail closed at load)
+   and test arrival on the swept segment? Facts: F3. Disposition: main session,
+   under the standing rule against untraceable defaults. Accept.
+5. Q5: route following as a phase in `GroundInfantryMovement`, or as its own
+   stage? Facts: D5-C moves the resolved count to 36. That needs a sweep of
+   resolved-count literal sites that GC-0 did not enumerate (F13), stage-order
+   evidence, and a P7 semantic reference change. Disposition: main session.
+   D5-B.
+6. Q6: retire the raw `fire_ground_weapon` binding? Facts: F12. Its only callers
+   are five assertions in one test, and the scripted model uses the
+   command-gated name. Disposition: main session. Retire it in GC-6, and migrate
+   or delete those assertions.
+
+GC-1 and GC-2 wait on one user answer: accept D1 to D6 as amended by GC-0. Q2
+does not gate GC-1 or GC-2.

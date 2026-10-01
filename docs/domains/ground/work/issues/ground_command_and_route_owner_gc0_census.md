@@ -206,3 +206,120 @@ Struct: `src/core/interfaces/environment_model.h:90-98`.
 Not consumers of the native field: `python/rl/ground/infantry_proxy.py:258` and
 `tests/training/test_ground_infantry_proxy.py:156,170` read the proxy's own plan
 object.
+
+## F8 — Arnis manifest digests and eastern-plain raster step (D4, GC-1)
+
+- The bundle manifest carries a SHA-256 per artifact:
+  `tests/scenario/fixtures/environment_substrate/arnis_bundle_v1/eastern_plain_infantry_phase1/expected/bundle.json:17`
+  (provenance), `:60` (elevation raster), `:107` (landcover raster), `:130` and
+  `:149` (vector features). The bundle directory also has a `checksums.sha256`
+  file. The field overlay has a `sha256` key at
+  `.../eastern_plain_infantry_phase1/field_overlay.json:725`; what it digests
+  was not checked.
+- The native loader neither reads nor verifies any of them: there is no
+  `sha256` or `digest` reference in
+  `src/models/environment/default_environment_model.cpp`
+  (`load_arnis_terrain_bundle` at `:859`, `load_arnis_field_overlay` at
+  `:1020`). Whether a SHA-256 implementation is already linked into the native
+  build was not checked.
+- Eastern-plain metric step: `step_xy_m = [1.00000861243566, -1.0002542170071909]`
+  (`bundle.json:47-50`), `world_shape [1335, 1717]` (`:54-57`). The 5 m spacing
+  in F6 therefore skips about four of every five cells. A one-cell water or
+  obstacle feature can fall between samples on this fixture.
+
+## F9 — CUDA-resident fixture contracts (D5)
+
+- No `src/runtime/contracts/cuda_resident*.h` contract names a Ground
+  component. The only Ground reference is the string `"ground"` in the bounded
+  Air execution forbidden-feature list at
+  `src/runtime/contracts/cuda_resident_backend_admission.h:145-161` (`:159`).
+- Conclusion: a new Ground component, with or without a vector member, does not
+  enter any resident fixture contract. This was checked by grep, not by building
+  the CUDA target.
+
+## F10 — Scenario-declared terrain for world creation (GC-4a, GC-5)
+
+- `WorldTerrainAssignment` carries only `world_index` and `terrain_type`
+  (`src/runtime/contracts/detail/platform/world_terrain_assignment.inc`).
+  `WorldBatchRuntime` passes the type to `set_terrain_type` at
+  `src/core/engine/world_batch_runtime.cpp:501-512`.
+- The scenario compiler accepts only the procedural types
+  `{flat, legacy, hill, gaussian_hill, mountain}`
+  (`python/scenario/compiler/common.py:116-117`).
+- `scenarios/ground/ground_platoon_native_static_occupy_v1.json:72` declares
+  `terrain_type: flat`. The only bundle reference in a profile,
+  `examples/viz/profiles/ground_chicago_environment_debug.json:6`, is labelled
+  display-only (`:3`).
+- Conclusion: today no scenario can declare an Arnis bundle or overlay for world
+  creation. The only load path is the native-probe pair. GC-4a must add the
+  declaration to `WorldTerrainAssignment`, the scenario compiler, and the world
+  setup.
+
+## F11 — Facade observation content for a Ground entity (D4)
+
+- `ObservationBatchPacket` fields
+  (`src/runtime/facade/detail/batch/observation_batch_packet.inc:7-13`):
+  `snapshot_version`, `barrier_id`, `source_time_s`, `provenance` (default
+  `AgentObservation` / `facade_observation_packet` / `maintained`), `refs`,
+  `agent_observations`, `instrument_states`.
+- `AgentObservation` (`src/core/interfaces/observation.h:30-50`) is generic own
+  kinematics, health, contacts, RWR, and Air-shaped systems fields
+  (`gear_state`, `throttle`). It has no terrain, stance, or Ground task field.
+- Not verified: whether the exporter emits an `AgentObservation` row for a Ground
+  entity at all. GC-4a's parity test settles it.
+
+## F12 — Ground native-probe bindings and callers (D6)
+
+Bindings in `bind_simulation_kernel_diagnostics_ground_native_probe_surface`
+(`src/interfaces/python/bindings_core_kernel_diagnostics_ground.cpp:13`); the
+allowlist is `tests/architecture/structural_boundaries/helpers.py:419-431`, with
+its comment at `:414-417`.
+
+| Binding | Def line | Python callers |
+| --- | --- | --- |
+| `load_arnis_terrain_bundle` | `:16` | `python/rl/ground/native_probe.py`; `tests/runtime/ground/test_ground_infantry_native_unit.py`; `tests/runtime/ground/test_ground_scripted_native_replay.py` |
+| `load_arnis_field_overlay` | `:18` | `native_probe.py`; `test_ground_infantry_native_unit.py`; `test_ground_scripted_native_replay.py`; `tests/training/test_ground_infantry_contracts.py` |
+| `get_ground_terrain_observation` | `:21` | `native_probe.py`; `test_ground_infantry_native_unit.py` |
+| `get_ground_slope_deg` | `:29` | `native_probe.py`; `test_ground_infantry_native_unit.py` |
+| `get_ground_movement_effect_observation` | `:32` | `native_probe.py`; `test_ground_infantry_contracts.py` |
+| `get_ground_field_semantic_observation` | `:43` | `native_probe.py`; `test_ground_infantry_native_unit.py`; `test_ground_infantry_contracts.py` |
+| `get_ground_transition_observation` | `:54` | `native_probe.py`; `test_ground_infantry_native_unit.py`; `test_ground_infantry_contracts.py` |
+| `get_ground_transition_movement_observation` | `:65` | `native_probe.py`; `test_ground_infantry_native_unit.py`; `test_ground_infantry_contracts.py` |
+| `fire_ground_weapon` | `:78` | `test_ground_infantry_native_unit.py:481,500,511,535,605` only |
+| `fire_ground_weapon_from_mission_command` | `:81` | `native_probe.py`; `python/tasking_contracts/ground/capability.py`; `python/tasking_contracts/ground/execution.py`; `test_ground_infantry_native_unit.py`; `test_ground_scripted_native_replay.py`; `test_ground_infantry_contracts.py` |
+| `get_ground_weapon_state` | `:85` | `native_probe.py`; `test_ground_infantry_native_unit.py`; `test_ground_scripted_native_replay.py`; `test_ground_infantry_contracts.py` |
+
+Def lines for multi-line `.def(` entries are the line holding the name string.
+The scripted model (`python/tasking_contracts/ground/`) depends on
+`fire_ground_weapon_from_mission_command`, which stays held. It does not call the
+raw `fire_ground_weapon`. Native C++ callers: `movement_effects.h` is included by
+`src/core/engine/simulation_kernel.cpp:18` for the probe tuples, so `core/engine`
+reaches into `systems/` today.
+
+## F13 — Census pin and literal sites (D5, GC-3)
+
+- Pin: `tools/maintenance/runtime_composition_evidence_contract.py:167`
+  (`census != (88, 3, 35)`), message at `:174`.
+- Component-count literal `88`: `src/tests/test_composition_lifecycle.cpp:624,646`;
+  `tests/architecture/composition/test_runtime_composition_evidence_contract.py:60`;
+  `tests/architecture/composition/test_runtime_profile_projection_contract.py:46`;
+  `tests/architecture/composition/test_simulation_composition_contract.py:188,212`.
+  Resolved-system-count literals (`35`) were not enumerated; D5-C would need that
+  sweep.
+
+## F14 — The `army-los` line (GC-1 entry)
+
+- `codex/army-ground-line-of-sight` tip `c8a869223` is not an ancestor of the
+  base or of origin/main, but its content is already on the base: a two-dot diff
+  `3e6ce9956..c8a869223` over `environment_model.h`, `default_environment_model.cpp`,
+  `state_transfer_component_reflection.cpp`, and `ground_capabilities.h` is
+  empty. The terrain line-of-sight query is on the base at
+  `environment_model.h:145` and `default_environment_model.cpp:744-769`.
+- It adds no registered component. It gives the existing
+  `GroundInfantryCapability` posture-geometry members (reflection at
+  `state_transfer_component_reflection.cpp:180-181`), and the pin at its tip is
+  still `(88, 3, 35)` (`runtime_composition_evidence_contract.py:167` at
+  `c8a869223`).
+- The session brief says another line is editing the environment model. The
+  worktree `codex/army-env-raster-edge` sits at the base and was not inspected.
+  That line, not `army-los`, is the live file conflict for GC-1.
