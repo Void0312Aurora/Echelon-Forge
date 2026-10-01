@@ -160,3 +160,24 @@ def test_air_engagement_facts_reject_malformed_provider_values(field: str, value
     }
     with pytest.raises(ValueError, match=field):
         AirEngagementFacts(**kwargs)
+
+
+@pytest.mark.parametrize(
+    "field",
+    ("assigned_target_id", "assigned_target_track_id", "engagement_authority_holder_id"),
+)
+def test_air_engagement_facts_reject_incomplete_fire_admission(field: str) -> None:
+    kwargs = {
+        "authorization_to_fire": True,
+        "target_contact_present": True,
+        "fire_mask_open": True,
+        "launch_window_open": True,
+        "quality_window_ready": True,
+        "shot_budget_remaining": 1.0,
+        "assigned_target_id": 17,
+        "assigned_target_track_id": 17,
+        "engagement_authority_holder_id": 23,
+    }
+    kwargs[field] = 0
+    with pytest.raises(ValueError, match=field):
+        AirEngagementFacts(**kwargs)

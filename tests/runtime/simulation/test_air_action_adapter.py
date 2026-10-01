@@ -8,6 +8,7 @@ from python.runtime_bootstrap import ensure_repo_imports
 ensure_repo_imports()
 
 from gym_envs.universal_env_parts import (  # noqa: E402
+    AIR_COMBAT_HYBRID_V1_ACTION_MODE,
     AIR_EW_HYBRID_V1_ACTION_MODE,
     build_pilot_action as build_maintained_pilot_action,
 )
@@ -48,6 +49,31 @@ def test_takeoff_action_projects_gear_from_instrument_state() -> None:
     assert pilot.stick_pitch == pytest.approx(0.2)
     assert pilot.throttle == pytest.approx(0.8)
     assert pilot.gear_handle == 1.0
+
+
+def test_full_air_action_uses_floor_weapon_station_quantization() -> None:
+    action = np.zeros((17,), dtype=np.float32)
+    action[16] = 0.5
+
+    pilot = build_pilot_action(action, action_mode="full")
+
+    assert pilot.weapon_select_id == 3
+
+
+@pytest.mark.parametrize(
+    "action_mode, action_dim",
+    [(AIR_COMBAT_HYBRID_V1_ACTION_MODE, 12), (AIR_EW_HYBRID_V1_ACTION_MODE, 14)],
+)
+def test_hybrid_weapon_station_uses_floor_quantization(action_mode: str, action_dim: int) -> None:
+    action = np.zeros((action_dim,), dtype=np.float32)
+    action[11] = 1.5
+
+    maintained = build_maintained_pilot_action(action, action_mode=action_mode)
+
+    assert maintained.weapon_select_id == 1
+    if action_mode == AIR_EW_HYBRID_V1_ACTION_MODE:
+        direct = build_pilot_action(action, action_mode=action_mode)
+        assert direct.weapon_select_id == maintained.weapon_select_id
 
 
 def test_ew_hybrid_action_projects_countermeasure_bits() -> None:

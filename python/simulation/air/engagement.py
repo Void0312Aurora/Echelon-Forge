@@ -63,6 +63,18 @@ class AirEngagementFacts:
                 raise ValueError(f"Air engagement fact {name} must be a non-negative integer") from exc
             if numeric != value or numeric < 0:
                 raise ValueError(f"Air engagement fact {name} must be a non-negative integer")
+        # A present target contact and an open fire authorization are only
+        # admissible with the identities that make them attributable.
+        if self.target_contact_present and self.assigned_target_id <= 0:
+            raise ValueError("Air engagement fact assigned_target_id is required when a target contact is present")
+        if self.target_contact_present and self.assigned_target_track_id <= 0:
+            raise ValueError(
+                "Air engagement fact assigned_target_track_id is required when a target contact is present"
+            )
+        if self.authorization_to_fire and self.engagement_authority_holder_id <= 0:
+            raise ValueError(
+                "Air engagement fact engagement_authority_holder_id is required when fire is authorized"
+            )
 
     def as_mapping(self) -> dict[str, float | int]:
         return {
