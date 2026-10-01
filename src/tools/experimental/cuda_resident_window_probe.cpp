@@ -7,7 +7,12 @@
 // reference (the replay/full-window tests own parity).
 //
 // Usage: ef_cuda_resident_window_probe [--worlds 1,64,4096] [--warmup N]
-//        [--windows N] [--resetup-every N] [--export]
+//        [--windows N] [--resetup-every N] [--export] [--fixture-sticks]
+//        [--digest]
+//
+// --digest prints an FNV-1a hash over the bit patterns of every resident
+// numeric field after the run, so a kernel change can be proven bit-identical
+// (run with --warmup 0 --windows <= --resetup-every for a deterministic trace).
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
@@ -41,13 +46,15 @@ struct Args {
     // 16 keeps every timed window inside the admitted envelope.
     int resetup_every = 16;
     bool export_state = false;
+    bool fixture_sticks = false;
+    bool digest = false;
 };
 
-std::size_t parse_size(const std::string &value, const char *name) {
+std::size_t parse_size(const std::string &value, const char *name, bool allow_zero = false) {
     char *end = nullptr;
     const unsigned long long parsed = std::strtoull(value.c_str(), &end, 10);
-    if (end == value.c_str() || *end != '\0' || parsed == 0) {
-        throw std::invalid_argument(std::string("invalid positive integer for ") + name);
+    if (end == value.c_str() || *end != '\0' || (parsed == 0 && !allow_zero)) {
+        throw std::invalid_argument(std::string("invalid integer for ") + name);
     }
     return static_cast<std::size_t>(parsed);
 }
@@ -67,13 +74,17 @@ Args parse_args(int argc, char **argv) {
             while (std::getline(list, item, ','))
                 args.worlds.push_back(parse_size(item, "--worlds"));
         } else if (flag == "--warmup") {
-            args.warmup = static_cast<int>(parse_size(next(), "--warmup"));
+            args.warmup = static_cast<int>(parse_size(next(), "--warmup", true));
         } else if (flag == "--windows") {
             args.windows = static_cast<int>(parse_size(next(), "--windows"));
         } else if (flag == "--resetup-every") {
             args.resetup_every = static_cast<int>(parse_size(next(), "--resetup-every"));
         } else if (flag == "--export") {
             args.export_state = true;
+        } else if (flag == "--fixture-sticks") {
+            args.fixture_sticks = true;
+        } else if (flag == "--digest") {
+            args.digest = true;
         } else {
             throw std::invalid_argument("unknown flag " + flag);
         }
@@ -106,7 +117,8 @@ std::vector<WorldSpawnRequest> make_spawns(std::size_t worlds) {
     return spawns;
 }
 
-std::vector<WorldPilotActionAssignment> make_actions(const std::vector<std::uint64_t> &ids) {
+std::vector<WorldPilotActionAssignment> make_actions(const std::vector<std::uint64_t> &ids,
+                                                     bool fixture_sticks) {
     std::vector<WorldPilotActionAssignment> assignments(ids.size());
     for (std::size_t world = 0; world < ids.size(); ++world) {
         const auto &input = runtime::cuda_resident::kCudaResidentFlightDynamicsFirstInputs
@@ -115,9 +127,9 @@ std::vector<WorldPilotActionAssignment> make_actions(const std::vector<std::uint
         // Sticks stay inside the control-preparation manual deadband so the
         // fixture autopilot holds attitude; held fixture stick deflection
         // leaves the fixed-air envelope within ~64 windows even at dt=0.05.
-        action.stick_pitch = 0.0;
-        action.stick_roll = 0.0;
-        action.rudder = 0.0;
+        action.stick_pitch = fixture_sticks ? input.stick_pitch : 0.0;
+        action.stick_roll = fixture_sticks ? input.stick_roll : 0.0;
+        action.rudder = fixture_sticks ? input.rudder : 0.0;
         action.throttle = input.throttle;
         action.flaps = 0.1F;
         action.active = true;
@@ -132,6 +144,60 @@ void print_resources(const char *name, const CudaBarrierKernelResources &r, bool
               << ", \"active_blocks_per_sm\": " << r.active_blocks_per_multiprocessor
               << ", \"theoretical_occupancy\": " << r.theoretical_occupancy << "}"
               << (comma ? ",\n" : "\n");
+}
+
+// FNV-1a over the bit patterns of every resident numeric field. The hashed
+// structs are all-8-byte members (no padding), which the static_asserts pin.
+class StateDigest {
+  public:
+    template <typename T> void bytes(const T &value) {
+        const auto *data = reinterpret_cast<const unsigned char *>(&value);
+        for (std::size_t i = 0; i < sizeof(T); ++i) {
+            hash_ = (hash_ ^ data[i]) * 1099511628211ULL;
+        }
+    }
+    void flag(bool value) { bytes(static_cast<std::uint8_t>(value)); }
+    [[nodiscard]] std::uint64_t value() const noexcept { return hash_; }
+
+  private:
+    std::uint64_t hash_ = 14695981039346656037ULL;
+};
+
+std::uint64_t digest_state(const runtime::cuda_resident::CudaWorldStoreStateSnapshot &state) {
+    using namespace runtime::cuda_resident;
+    static_assert(sizeof(CudaWorldKinematicsState) == 9 * sizeof(double));
+    static_assert(sizeof(CudaWorldDynamicsState) == 20 * sizeof(double));
+    static_assert(sizeof(CudaWorldInstrumentState) == 23 * sizeof(double));
+    static_assert(sizeof(CudaWorldObservationState) == 16 * sizeof(double));
+    static_assert(sizeof(CudaWorldRewardState) == 4 * sizeof(double));
+    StateDigest digest;
+    for (const CudaWorldResidentState &world : state.worlds) {
+        const CudaWorldObservationProjectionState &projection = world.observation_projection;
+        digest.bytes(world.kinematics);
+        digest.bytes(world.dynamics);
+        digest.bytes(projection.instrument);
+        digest.bytes(projection.observation);
+        digest.bytes(projection.reward);
+        digest.flag(projection.termination.terminated);
+        digest.flag(projection.termination.truncated);
+        digest.bytes(projection.termination.reason_code);
+        digest.bytes(projection.termination.snapshot_version);
+        digest.flag(projection.events_empty);
+        digest.bytes(world.prepared_controls.stick_roll_filt);
+        digest.bytes(world.prepared_controls.stick_pitch_filt);
+        digest.bytes(world.prepared_controls.stick_yaw_filt);
+        digest.bytes(world.prepared_controls.stick_yaw_cmd);
+        digest.flag(world.prepared_controls.valid);
+        digest.flag(world.prepared_controls.manual_takeover);
+        digest.bytes(world.prepared_controls.control_version);
+        digest.bytes(world.clock_tick);
+        digest.bytes(world.simulation_time_s);
+        digest.bytes(world.global_version);
+        digest.bytes(world.barrier_sequence);
+        digest.bytes(world.barrier);
+        digest.bytes(world.shard_versions);
+    }
+    return digest.value();
 }
 
 double percentile(std::vector<double> values, double q) {
@@ -160,7 +226,8 @@ void run_case(std::size_t worlds, const Args &args) {
         });
     };
     const auto setup = run_setup();
-    std::vector<WorldPilotActionAssignment> actions = make_actions(setup.entity_ids);
+    std::vector<WorldPilotActionAssignment> actions =
+        make_actions(setup.entity_ids, args.fixture_sticks);
     std::vector<WorldEntityRef> refs(worlds);
     for (std::size_t world = 0; world < worlds; ++world) {
         refs[world] = {.world_index = world, .entity_id = setup.entity_ids[world]};
@@ -180,7 +247,7 @@ void run_case(std::size_t worlds, const Args &args) {
     auto maybe_resetup = [&]() {
         if (since_setup < args.resetup_every) return;
         const auto again = run_setup();
-        actions = make_actions(again.entity_ids);
+        actions = make_actions(again.entity_ids, args.fixture_sticks);
         for (std::size_t world = 0; world < worlds; ++world) {
             refs[world].entity_id = again.entity_ids[world];
         }
@@ -207,7 +274,14 @@ void run_case(std::size_t worlds, const Args &args) {
               << ", \"window_us_p50\": " << p50
               << ", \"window_us_p90\": " << percentile(samples_us, 0.90)
               << ", \"world_steps_per_s_p50\": " << static_cast<double>(worlds) * 1.0e6 / p50
-              << ", \"state_slot_bytes\": " << backend.store_diagnostics().state_slot_bytes << "}";
+              << ", \"state_slot_bytes\": " << backend.store_diagnostics().state_slot_bytes;
+    if (args.digest) {
+        auto &store =
+            runtime::cuda_resident::testing::CudaResidentBackendTestAccess::world_store(backend);
+        std::cout << ", \"state_digest\": \"" << std::hex << digest_state(Access::read_state(store))
+                  << std::dec << "\"";
+    }
+    std::cout << "}";
 }
 
 } // namespace
