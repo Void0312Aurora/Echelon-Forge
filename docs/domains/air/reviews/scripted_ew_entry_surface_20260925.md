@@ -138,9 +138,14 @@ slice.
    consumption through the maintained WorldBatch path. A scenario/config
    owner, flare/cadence report, and canonical action-mode admission remain
    open.
-3. **Jammer command contract:** decide whether jammer activation is a direct
-   Air intent or a command-layer product, then add a native owner for
-   activation, bandwidth/angle/type, power/resource limits, and shutdown.
+3. **Jammer command contract:** decided 2026-10-01 as a direct Air cockpit
+   intent (`PilotAction.jammer_transmit` / `jammer_mode`). The native
+   `EW_Jammer_Control` owner admits activation, technique and shutdown against
+   an installed pod and reports them through `InstrumentState`; the versioned
+   `air_ew_hybrid_v2` action carries it and the scripted model has a
+   `self_protect_on_lock` doctrine. Open: power/resource limits, beam angle and
+   bandwidth effects, DRFM deception, the jammer strobe as an emission, and a
+   calibrated burn-through model.
 4. **Direct scenario gate:** build a lock/launch-warning scenario with finite
    inventory, release interval, communication state, and a report that proves
    the scripted action was accepted and changed native EW state. Native

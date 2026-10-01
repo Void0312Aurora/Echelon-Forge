@@ -3130,3 +3130,38 @@ to a dedicated owner-local evidence document.
   requests a release on every warned frame; a burst program is a doctrine
   follow-up). EW stays `entry_surface_incomplete`; Air stays
   `playable_candidate`.
+
+### 2026-10-01 — Air EW native jammer command owner
+
+- Starting commit: `53cad60b`; worktree `.worktrees/air-ew`.
+- Decision (EW review closure slice 3): jammer activation is a direct Air
+  cockpit intent, not a command-layer product. The ECM panel lives on
+  `PilotAction` (`jammer_transmit`, `jammer_mode`) next to the countermeasure
+  program switches; emission-control policy from C2 remains a later
+  MissionCommand constraint, not a second owner of the switch.
+- Change batch (`40f7fbb6`, `1eda7b7b`, `e9fbc448`): native
+  `EW_Jammer_Control` (first node of `builtin.system.ew`) admits the switch
+  against an installed pod (positive ERP) and a known technique code, stamps
+  the transmit start, and projects jammer state into `InstrumentState`; the
+  CUDA resident backend rejects jammer requests as unsupported. Transport
+  `air_ew_hybrid_v2` (16 = v1 + transmit + technique) is added on both the
+  gym and direct adapters; v1 is unchanged. The scripted EW model gains the
+  `hold` (default) and `self_protect_on_lock` jammer doctrines. Composition
+  evidence was resealed in the documented order (closed plan, evidence,
+  authority vectors, ledger fixtures, Cordis bundle/provenance, host-batch
+  parity on HEI linux/gcc, closure, run receipt).
+- Evidence (HEI): `ef_test` 199/199; composition 151 passed / 1 skipped;
+  runtime pytest 1 failed (main's mq9 consumer-validation red); architecture
+  only main's 4 structure-guard reds; Cordis `node --test` 27/27. Runtime
+  probe: from 60 km head-on Red's APG-68 tracks an unjammed Blue on 520/600
+  frames and a barrage-jamming Blue on 0/600; from 40 km jamming holds only
+  until burn-through (100/600 vs 600/600). The 1v1 EW demo with
+  `--jammer_doctrine self_protect_on_lock` keys the pod on every locked frame
+  (steps 3-120).
+- Boundary decision: this closes the jammer command/state/report owner. It
+  does not calibrate the burn-through model (the sensor model's `K_BT`
+  constant remains an uncalibrated proxy owned by systems/sensing), does not
+  model DRFM deception (admitted and reported, no radar effect), beam
+  angle, bandwidth mismatch, standoff/escort jamming, the jammer strobe as an
+  ESM/RWR emission, or power/resource limits. EW stays
+  `entry_surface_incomplete`; Air stays `playable_candidate`.
