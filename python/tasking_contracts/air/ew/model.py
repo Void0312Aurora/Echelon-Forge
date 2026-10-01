@@ -18,7 +18,11 @@ AIR_SCRIPTED_EW_MODEL_ID = "air.ew.rwr_response_scripted"
 AIR_SCRIPTED_EW_ACTION_MODEL_ID = "air.ew.rwr_action_scripted"
 AIR_EW_HYBRID_ACTION_DIM = 14
 AIR_EW_HYBRID_V2_ACTION_DIM = 16
+# First EW tail index; [0:12] is the shared ``air_combat_hybrid_v1`` prefix.
 AIR_EW_ACTION_TAIL_START = 12
+# Jammer doctrines. ``hold`` never transmits. ``self_protect_on_lock`` keys the
+# pod while a hostile radar holds a lock or a launch is warned, and returns it
+# to standby when the threat clears (emission control otherwise).
 AIR_EW_JAMMER_DOCTRINES = ("hold", "self_protect_on_lock")
 AIR_EW_JAMMER_TECHNIQUE_CODES = {"noise_barrage": 0, "noise_spot": 1, "deception_drfm": 2}
 AIR_EW_DISPENSE_PROGRAMS = ("continuous", "burst")
@@ -42,7 +46,12 @@ class AirScriptedEWIntent:
 
 
 def air_ew_action_tail(intent: AirScriptedEWIntent, *, action_dim: int) -> np.ndarray:
-    """Project an EW intent onto the versioned action tail."""
+    """Project an EW intent onto the versioned action tail after index 11.
+
+    The tail is ``[chaff, flare]`` for ``air_ew_hybrid_v1`` and adds
+    ``[jammer_transmit, technique_code]`` for ``air_ew_hybrid_v2``. It never
+    covers the shared 12-element combat prefix.
+    """
 
     dim = int(action_dim)
     if dim not in (AIR_EW_HYBRID_ACTION_DIM, AIR_EW_HYBRID_V2_ACTION_DIM):

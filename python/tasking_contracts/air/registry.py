@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
+from .combat_ew.model import (
+    AIR_COMBAT_EW_ROLE_ID,
+    AIR_SCRIPTED_COMBAT_EW_MODEL_ID,
+    make_air_scripted_combat_ew_model,
+)
 from .engagement.model import (
     AIR_SCRIPTED_ENGAGEMENT_MODEL_ID,
     make_air_scripted_engagement_model,
@@ -64,6 +69,20 @@ AIR_SCRIPTED_MODEL_REGISTRY = DecisionModelRegistry(
             note=(
                 "Versioned 14/16-element EW action extension; native acceptance "
                 "and replay/roster gates remain open."
+            ),
+        ),
+        DecisionModelRegistration(
+            model_id=AIR_SCRIPTED_COMBAT_EW_MODEL_ID,
+            domain="air",
+            role_ids=(AIR_COMBAT_EW_ROLE_ID,),
+            factory=make_air_scripted_combat_ew_model,
+            model_kind="scripted",
+            status="adapter",
+            note=(
+                "C2/ROE engagement prefix unchanged plus the RWR-derived "
+                "air_ew_hybrid_v1/v2 countermeasure and jammer tail on one "
+                "aircraft; chaff and flare still do not decoy seekers, and "
+                "canonical action-mode admission remains open."
             ),
         ),
     )
