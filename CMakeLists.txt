@@ -1087,6 +1087,7 @@ set(EF_TEST_SOURCES
     src/tests/test_air_ew_rf_contract.cpp
     src/tests/test_air_ew_esm.cpp
     src/tests/test_air_ew_native.cpp
+    src/tests/test_simulation_kernel_rng_stream.cpp
 )
 
 add_executable(ef_test ${EF_TEST_SOURCES})

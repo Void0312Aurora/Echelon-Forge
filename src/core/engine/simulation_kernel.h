@@ -29,6 +29,7 @@
 #include "components/basic/tags.h"
 #include "core/engine/engagement_event_types.h"
 #include "core/engine/simulation_kernel_missile_tuning.h"
+#include "core/engine/simulation_kernel_rng_stream.h"
 #include "core/interfaces/unit_data.h"
 #include "core/interfaces/observation.h"
 #include "core/interfaces/environment_model.h"
@@ -43,7 +44,6 @@ class IGuidanceModel;
 struct UnitDefinition;
 class IEngagementEventStore;
 class SimulationKernelCompositionTestAccess;
-class SimulationKernelWeaponReleaseService;
 
 namespace runtime::providers {
 class DefaultSimulationComposition;
@@ -347,7 +347,6 @@ class SimulationKernel {
 
   private:
     friend class SimulationKernelCompositionTestAccess;
-    friend class SimulationKernelWeaponReleaseService;
     friend class runtime::host::integration::SimulationKernelStateOwnerBridge;
     void ensure_active(const char *operation) const;
     void ensure_state_transfer_component_reflection();
@@ -371,15 +370,12 @@ class SimulationKernel {
     [[nodiscard]] IGuidanceModel *guidance_model() const noexcept;
     [[nodiscard]] IEngagementEventStore *engagement_event_store() const noexcept;
     [[nodiscard]] IWeaponReleaseService *weapon_release_service() const noexcept;
-    void record_rng_draws_for_state_transfer(std::uint64_t count);
 
     flecs::world ecs;
     double time_step = 1.0 / 60.0; // 60 Hz by default
 
-    // Deterministic RNG (using std::mt19937 for MVP as planned, better than rand())
-    // In production we might use Xoshiro/PCG
-    std::mt19937 rng;
-    std::uint64_t rng_draw_position_ = 0;
+    // Deterministic reset-seeded mt19937 stream plus its state-transfer draw position.
+    SimulationKernelRngStream rng;
 
     MissileTuning missile_tuning_;
     std::unique_ptr<runtime::providers::DefaultSimulationComposition> composition_;

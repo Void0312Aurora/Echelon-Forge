@@ -322,7 +322,8 @@ make_factory(std::string_view provider_id, contracts::CompositionScope scope,
 
 composition::CompositionStatus
 register_default_factories(composition::ProviderCatalog &catalog, SimulationKernel &kernel,
-                           flecs::world &world, MissileTuning &missile_tuning, std::mt19937 &rng,
+                           flecs::world &world, MissileTuning &missile_tuning,
+                           SimulationKernelRngStream &rng,
                            std::string_view fail_effect_provider = {}) {
     const auto register_factory = [&](std::shared_ptr<composition::IProviderFactory> factory) {
         return catalog.register_factory(std::move(factory));
@@ -475,7 +476,7 @@ register_default_factories(composition::ProviderCatalog &catalog, SimulationKern
     status = register_factory(make_factory(
         kWeaponReleaseProviderId, contracts::CompositionScope::world,
         {{std::string(contracts::kServiceWeaponRelease), &typeid(IWeaponReleaseService)}},
-        [&kernel, &world, &missile_tuning, &rng,
+        [&world, &missile_tuning, &rng,
          fail_effect_provider](composition::ProviderConstructionContext &context) {
             auto unit_factory = context.service<IUnitFactory>(contracts::kServiceUnitFactory);
             auto event_store =
@@ -487,7 +488,7 @@ register_default_factories(composition::ProviderCatalog &catalog, SimulationKern
                     kWeaponReleaseProviderId, "weapon-release dependency is unavailable"));
             }
             auto service = make_simulation_kernel_weapon_release_service(
-                kernel, world, *unit_factory.try_get(), missile_tuning, rng, *event_store.try_get(),
+                world, *unit_factory.try_get(), missile_tuning, rng, *event_store.try_get(),
                 *event_store.try_get(), *damage_bridge.try_get());
             IWeaponReleaseService *pointer = service.get();
             adopt_singleton_effect(context, world, &WeaponReleaseServiceRef::service, pointer,
@@ -700,8 +701,9 @@ void DefaultSimulationComposition::stop() noexcept {
 }
 
 DefaultSimulationCompositionResult build_default_simulation_composition_impl(
-    SimulationKernel &kernel, flecs::world &world, MissileTuning &missile_tuning, std::mt19937 &rng,
-    std::string_view resolved_manifest_json, std::string_view fail_effect_provider) {
+    SimulationKernel &kernel, flecs::world &world, MissileTuning &missile_tuning,
+    SimulationKernelRngStream &rng, std::string_view resolved_manifest_json,
+    std::string_view fail_effect_provider) {
     composition::ProviderCatalog catalog;
     auto catalog_status = register_default_factories(catalog, kernel, world, missile_tuning, rng,
                                                      fail_effect_provider);
@@ -739,7 +741,7 @@ DefaultSimulationCompositionResult build_default_simulation_composition_impl(
 
 DefaultSimulationCompositionResult
 build_default_simulation_composition(SimulationKernel &kernel, flecs::world &world,
-                                     MissileTuning &missile_tuning, std::mt19937 &rng,
+                                     MissileTuning &missile_tuning, SimulationKernelRngStream &rng,
                                      std::string_view resolved_manifest_json) {
     return build_default_simulation_composition_impl(kernel, world, missile_tuning, rng,
                                                      resolved_manifest_json, {});
@@ -765,7 +767,8 @@ validate_default_simulation_composition_manifest(std::string_view resolved_manif
 #if defined(EF_RUNTIME_COMPOSITION_TESTING)
 DefaultSimulationCompositionResult
 build_default_simulation_composition_for_testing(SimulationKernel &kernel, flecs::world &world,
-                                                 MissileTuning &missile_tuning, std::mt19937 &rng) {
+                                                 MissileTuning &missile_tuning,
+                                                 SimulationKernelRngStream &rng) {
     constexpr std::string_view fail_effect_provider = kWeaponReleaseProviderId;
     const std::string resolved_json = default_compatibility_resolved_manifest_json();
     return build_default_simulation_composition_impl(kernel, world, missile_tuning, rng,

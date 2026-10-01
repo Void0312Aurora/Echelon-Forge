@@ -2030,7 +2030,7 @@ std::string SimulationKernelStateOwnerBridge::serialize_rng(SimulationKernel &ke
     auto lock = kernel.acquire_composition_operation();
     kernel.ensure_active("state_transfer_export_rng");
     std::ostringstream output;
-    output << "rng.v2\n" << kernel.rng_draw_position_ << '\n' << kernel.rng;
+    output << "rng.v2\n" << kernel.rng.draw_position() << '\n' << kernel.rng.engine();
     return output.str();
 }
 
@@ -2042,8 +2042,7 @@ bool SimulationKernelStateOwnerBridge::restore_rng(SimulationKernel &kernel,
     if (!decode_rng_state(text(payload), &restored)) {
         return false;
     }
-    kernel.rng = restored.engine;
-    kernel.rng_draw_position_ = restored.draw_position;
+    kernel.rng.restore(restored.engine, restored.draw_position);
     kernel.world_state_mutated_ = true;
     return true;
 }
@@ -2549,7 +2548,7 @@ SimulationKernelStateOwnerBridge::create_registry(SimulationKernelStateOwnerRegi
                 .schema_id = policy->schema_id,
                 .schema_generation = kRuntimeStateTransferContractGeneration,
                 .rng_draw_position =
-                    category == RuntimeStateCategory::RngState ? kernel->rng_draw_position_ : 0,
+                    category == RuntimeStateCategory::RngState ? kernel->rng.draw_position() : 0,
                 .step_sequence = barrier.step_sequence,
                 .barrier_sequence = barrier.barrier_sequence,
             };
