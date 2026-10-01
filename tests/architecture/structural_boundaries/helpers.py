@@ -383,6 +383,10 @@ BINDINGS_DIAGNOSTICS_ALLOWLIST = {
   "debug_get_ground_contact_state",
   "debug_get_last_scan_time",
   "debug_get_contact_count",
+  # Diagnostics platform-state surface; the native countermeasure resource
+  # gate (2b1d936e, landed with the scripted Air stack PR #59) bound it as a
+  # read-only EW resource snapshot without registering it here.
+  "debug_get_countermeasure_state",
   "debug_get_mass_state",
   "debug_get_pending_movement_command",
   "debug_get_pending_action_command",
@@ -393,6 +397,9 @@ BINDINGS_DIAGNOSTICS_ALLOWLIST = {
   "debug_get_aircraft_vulnerability_evidence_state",
   "debug_get_aircraft_vulnerability_authority_state",
   "debug_set_unit_truth_state",
+  # Diagnostics override surface; the world-frame CV target tracker work
+  # (5dca2af6) bound it without registering it here.
+  "debug_set_contact_list_preserve_timestamps",
   "set_contact_list",
   "set_missile_guidance_mechanism_profile",
   "set_missile_tuning",
