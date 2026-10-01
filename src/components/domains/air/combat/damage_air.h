@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "components/combat/common/damage_common.h"
@@ -240,6 +241,130 @@ inline double damage_component_axis_availability(double availability, double axi
                       0.0, 1.0);
 }
 
+// Which aircraft-damage aggregates a component system name feeds. The flags are
+// a pure function of the system string, evaluated with the same substring
+// predicates the derivation has always used.
+struct AircraftDamageSystemClass {
+    bool control_surface = false;
+    bool hydraulic = false;
+    bool avionics = false;
+    bool command_navigation = false;
+    bool propulsion = false;
+    bool fuel = false;
+    bool structure = false;
+    bool fire_suppression = false;
+    bool crew = false;
+};
+
+// Per-axis control authority a control-surface component carries, a pure
+// function of the component key.
+struct AircraftControlAxisWeights {
+    double roll = 0.0;
+    double pitch = 0.0;
+    double yaw = 0.0;
+};
+
+inline AircraftDamageSystemClass classify_aircraft_damage_system(const std::string &system) {
+    AircraftDamageSystemClass out;
+    out.control_surface = damage_dependency_system_is_air_control_surface(system);
+    out.hydraulic = damage_dependency_system_name_matches(system, "hydraulic");
+    out.avionics = damage_dependency_system_is_air_sensor(system) ||
+                   damage_dependency_system_name_matches(system, "avionics") ||
+                   damage_dependency_system_name_matches(system, "data_link");
+    out.command_navigation = damage_dependency_system_name_matches(system, "command") ||
+                             damage_dependency_system_name_matches(system, "navigation");
+    out.propulsion = damage_dependency_system_is_air_propulsion(system);
+    out.fuel = damage_dependency_system_is_air_fuel(system);
+    out.structure = damage_dependency_system_is_air_structure(system);
+    out.fire_suppression = damage_dependency_system_is_fire_suppression(system);
+    out.crew = damage_dependency_system_name_matches(system, "cockpit") ||
+               damage_dependency_system_name_matches(system, "pilot") ||
+               damage_dependency_system_name_matches(system, "crew");
+    return out;
+}
+
+inline AircraftControlAxisWeights
+classify_aircraft_control_axis_weights(const std::string &component_key) {
+    const bool side_specific = damage_dependency_system_name_matches(component_key, "left") ||
+                               damage_dependency_system_name_matches(component_key, "right");
+    const bool aileron_like = damage_dependency_system_name_matches(component_key, "aileron") ||
+                              damage_dependency_system_name_matches(component_key, "elevon") ||
+                              damage_dependency_system_name_matches(component_key, "flaperon");
+    const bool elevator_like =
+        damage_dependency_system_name_matches(component_key, "elevator") ||
+        damage_dependency_system_name_matches(component_key, "horizontal_tail") ||
+        damage_dependency_system_name_matches(component_key, "stabilator") ||
+        damage_dependency_system_name_matches(component_key, "elevon");
+    const bool flap_like = damage_dependency_system_name_matches(component_key, "flap");
+    const bool spoiler_like = damage_dependency_system_name_matches(component_key, "spoiler");
+    const bool thrust_vector_like =
+        damage_dependency_system_name_matches(component_key, "thrust_vector") ||
+        damage_dependency_system_name_matches(component_key, "vector_actuator");
+    const bool cyclic_like = damage_dependency_system_name_matches(component_key, "cyclic");
+    const bool collective_like = damage_dependency_system_name_matches(component_key, "collective");
+    const bool rudder_like = damage_dependency_system_name_matches(component_key, "rudder");
+
+    AircraftControlAxisWeights out;
+    if (aileron_like) {
+        out.roll = std::max(out.roll, 1.0);
+    }
+    if (spoiler_like) {
+        out.roll = std::max(out.roll, 0.85);
+    }
+    if (flap_like && side_specific) {
+        out.roll = std::max(out.roll, 0.55);
+    }
+    if (cyclic_like) {
+        out.roll = std::max(out.roll, 0.80);
+    }
+    if (elevator_like) {
+        out.pitch = std::max(out.pitch, 0.70);
+    }
+    if (flap_like) {
+        out.pitch = std::max(out.pitch, 0.55);
+    }
+    if (thrust_vector_like) {
+        out.pitch = std::max(out.pitch, 0.75);
+        out.yaw = std::max(out.yaw, 0.75);
+    }
+    if (cyclic_like) {
+        out.pitch = std::max(out.pitch, 0.65);
+    }
+    if (collective_like) {
+        out.pitch = std::max(out.pitch, 0.80);
+    }
+    if (rudder_like) {
+        out.yaw = std::max(out.yaw, 1.0);
+    }
+    return out;
+}
+
+// The derivation runs for every aircraft on every step, while the set of
+// distinct system names and component keys is fixed by the loaded unit
+// definitions. Memoizing the two pure classifiers per thread removes the
+// per-step substring scans without sharing state between worker threads;
+// unordered_map element references stay valid across rehashing.
+inline const AircraftDamageSystemClass &
+cached_aircraft_damage_system_class(const std::string &system) {
+    thread_local std::unordered_map<std::string, AircraftDamageSystemClass> cache;
+    auto it = cache.find(system);
+    if (it == cache.end()) {
+        it = cache.emplace(system, classify_aircraft_damage_system(system)).first;
+    }
+    return it->second;
+}
+
+inline const AircraftControlAxisWeights &
+cached_aircraft_control_axis_weights(const std::string &component_key) {
+    thread_local std::unordered_map<std::string, AircraftControlAxisWeights> cache;
+    auto it = cache.find(component_key);
+    if (it == cache.end()) {
+        it = cache.emplace(component_key, classify_aircraft_control_axis_weights(component_key))
+                 .first;
+    }
+    return it->second;
+}
+
 inline void
 derive_aircraft_damage_from_component_state(const ComponentDamageState &component_damage,
                                             AircraftDamageState &aircraft_damage) {
@@ -258,121 +383,62 @@ derive_aircraft_damage_from_component_state(const ComponentDamageState &componen
             }
         }
 
-        const std::string &system = system_it->second;
-        if (damage_dependency_system_is_air_control_surface(system)) {
+        const AircraftDamageSystemClass &system_class =
+            cached_aircraft_damage_system_class(system_it->second);
+        if (system_class.control_surface) {
             aircraft_damage.flight_control_integrity =
                 std::min(aircraft_damage.flight_control_integrity, availability);
-            const bool side_specific =
-                damage_dependency_system_name_matches(component_key, "left") ||
-                damage_dependency_system_name_matches(component_key, "right");
-            const bool aileron_like =
-                damage_dependency_system_name_matches(component_key, "aileron") ||
-                damage_dependency_system_name_matches(component_key, "elevon") ||
-                damage_dependency_system_name_matches(component_key, "flaperon");
-            const bool elevator_like =
-                damage_dependency_system_name_matches(component_key, "elevator") ||
-                damage_dependency_system_name_matches(component_key, "horizontal_tail") ||
-                damage_dependency_system_name_matches(component_key, "stabilator") ||
-                damage_dependency_system_name_matches(component_key, "elevon");
-            const bool flap_like = damage_dependency_system_name_matches(component_key, "flap");
-            const bool spoiler_like =
-                damage_dependency_system_name_matches(component_key, "spoiler");
-            const bool thrust_vector_like =
-                damage_dependency_system_name_matches(component_key, "thrust_vector") ||
-                damage_dependency_system_name_matches(component_key, "vector_actuator");
-            const bool cyclic_like = damage_dependency_system_name_matches(component_key, "cyclic");
-            const bool collective_like =
-                damage_dependency_system_name_matches(component_key, "collective");
-            const bool rudder_like = damage_dependency_system_name_matches(component_key, "rudder");
-
-            double roll_weight = 0.0;
-            double pitch_weight = 0.0;
-            double yaw_weight = 0.0;
-            if (aileron_like) {
-                roll_weight = std::max(roll_weight, 1.0);
-            }
-            if (spoiler_like) {
-                roll_weight = std::max(roll_weight, 0.85);
-            }
-            if (flap_like && side_specific) {
-                roll_weight = std::max(roll_weight, 0.55);
-            }
-            if (cyclic_like) {
-                roll_weight = std::max(roll_weight, 0.80);
-            }
-            if (elevator_like) {
-                pitch_weight = std::max(pitch_weight, 0.70);
-            }
-            if (flap_like) {
-                pitch_weight = std::max(pitch_weight, 0.55);
-            }
-            if (thrust_vector_like) {
-                pitch_weight = std::max(pitch_weight, 0.75);
-                yaw_weight = std::max(yaw_weight, 0.75);
-            }
-            if (cyclic_like) {
-                pitch_weight = std::max(pitch_weight, 0.65);
-            }
-            if (collective_like) {
-                pitch_weight = std::max(pitch_weight, 0.80);
-            }
-            if (rudder_like) {
-                yaw_weight = std::max(yaw_weight, 1.0);
-            }
-            if (roll_weight > 0.0) {
+            const AircraftControlAxisWeights &weights =
+                cached_aircraft_control_axis_weights(component_key);
+            if (weights.roll > 0.0) {
                 aircraft_damage.roll_control_integrity =
                     std::min(aircraft_damage.roll_control_integrity,
-                             damage_component_axis_availability(availability, roll_weight));
+                             damage_component_axis_availability(availability, weights.roll));
             }
-            if (pitch_weight > 0.0) {
+            if (weights.pitch > 0.0) {
                 aircraft_damage.pitch_control_integrity =
                     std::min(aircraft_damage.pitch_control_integrity,
-                             damage_component_axis_availability(availability, pitch_weight));
+                             damage_component_axis_availability(availability, weights.pitch));
             }
-            if (yaw_weight > 0.0) {
+            if (weights.yaw > 0.0) {
                 aircraft_damage.yaw_control_integrity =
                     std::min(aircraft_damage.yaw_control_integrity,
-                             damage_component_axis_availability(availability, yaw_weight));
+                             damage_component_axis_availability(availability, weights.yaw));
             }
-            if (damage_dependency_system_name_matches(system, "hydraulic")) {
+            if (system_class.hydraulic) {
                 aircraft_damage.hydraulic_integrity =
                     std::min(aircraft_damage.hydraulic_integrity, availability);
                 aircraft_damage.hydraulic_pressure_availability =
                     std::min(aircraft_damage.hydraulic_pressure_availability, availability);
             }
         }
-        if (damage_dependency_system_is_air_sensor(system) ||
-            damage_dependency_system_name_matches(system, "avionics") ||
-            damage_dependency_system_name_matches(system, "data_link")) {
+        if (system_class.avionics) {
             aircraft_damage.avionics_integrity =
                 std::min(aircraft_damage.avionics_integrity, availability);
         }
-        if (damage_dependency_system_name_matches(system, "command") ||
-            damage_dependency_system_name_matches(system, "navigation")) {
+        if (system_class.command_navigation) {
             aircraft_damage.command_navigation_integrity =
                 std::min(aircraft_damage.command_navigation_integrity, availability);
             aircraft_damage.avionics_integrity =
                 std::min(aircraft_damage.avionics_integrity, availability);
         }
-        if (damage_dependency_system_is_air_propulsion(system)) {
+        if (system_class.propulsion) {
             aircraft_damage.propulsion_integrity =
                 std::min(aircraft_damage.propulsion_integrity, availability);
         }
-        if (damage_dependency_system_is_air_fuel(system)) {
+        if (system_class.fuel) {
             aircraft_damage.fuel_system_integrity =
                 std::min(aircraft_damage.fuel_system_integrity, availability);
         }
-        if (damage_dependency_system_is_air_structure(system)) {
+        if (system_class.structure) {
             aircraft_damage.structural_integrity =
                 std::min(aircraft_damage.structural_integrity, availability);
         }
-        if (damage_dependency_system_is_fire_suppression(system)) {
+        if (system_class.fire_suppression) {
             aircraft_damage.fire_suppression_integrity =
                 std::min(aircraft_damage.fire_suppression_integrity, availability);
         }
-        if (damage_dependency_system_name_matches(system, "cockpit") ||
-            damage_dependency_system_name_matches(system, "pilot") ||
-            damage_dependency_system_name_matches(system, "crew")) {
+        if (system_class.crew) {
             aircraft_damage.crew_effectiveness =
                 std::min(aircraft_damage.crew_effectiveness, availability);
             aircraft_damage.pilot_effectiveness =

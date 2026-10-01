@@ -1062,6 +1062,7 @@ set(EF_TEST_SOURCES
     src/tests/test_kalman_seeker.cpp
     src/tests/test_structural_failure_system.cpp
     src/tests/test_control_surface_damage_coupling.cpp
+    src/tests/test_aircraft_damage_derivation.cpp
     src/tests/test_world_batch_backend_contract.cpp
     # Only the CUDA-resident suites without a second home stay here.  The
     # lifecycle, state, device-consumer, performance and replay translation
@@ -1265,6 +1266,8 @@ add_test(NAME structural_failure_events COMMAND ef_test --test-suite=structural_
 add_test(NAME structural_failure_break_modes COMMAND ef_test --test-suite=structural_failure_break_modes)
 add_test(NAME structural_consequence COMMAND ef_test --test-suite=structural_consequence)
 add_test(NAME aircraft_damage_lifecycle COMMAND ef_test --test-suite=aircraft_damage_lifecycle)
+add_test(NAME aircraft_damage_derivation COMMAND ef_test --test-suite=aircraft_damage_derivation)
+set_tests_properties(aircraft_damage_derivation PROPERTIES WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 add_test(NAME world_batch_runtime COMMAND ef_test --test-suite=world_batch_runtime)
 add_test(NAME cuda_resident_lifecycle COMMAND ef_cuda_resident_lifecycle_test)
 add_test(NAME cuda_resident_replay COMMAND ef_cuda_resident_replay_test)
@@ -1336,6 +1339,7 @@ set_tests_properties(
     structural_failure_break_modes
     structural_consequence
     aircraft_damage_lifecycle
+    aircraft_damage_derivation
     world_batch_runtime
     default_effects_model
     PROPERTIES LABELS "nightly;native"
