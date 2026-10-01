@@ -5,6 +5,21 @@ import pytest
 from .helpers import *
 
 
+# The near-range live chain has a deterministic geometry (same miss distance on every seed),
+# but two outcomes come from the fired missile's `rng_state` draws: the 0.94-reliability fuze
+# roll, and the synthetic component-failure sigmoid that decides whether mobility capability
+# also drops below the kill threshold. The pinned-seed `mission_kill` assertion added in
+# 940641d6 was draw luck: at that commit (before the stable-identity package) the same seed
+# already gave `mobility_kill` on HEI, and on one kernel it changed from one episode to the
+# next. K = 16 fixed seeds, derived from the test's original seed (20260607), the same scheme
+# as the stable-identity SI-P4-B rewrites.
+_MQ9_NEAR_RANGE_SEED_BASE = 20260607
+_MQ9_NEAR_RANGE_SEED_COUNT = 16
+_MQ9_NEAR_RANGE_SEEDS = tuple(
+  _MQ9_NEAR_RANGE_SEED_BASE + 97 * i for i in range(_MQ9_NEAR_RANGE_SEED_COUNT)
+)
+
+
 def _spawn_f16_mq9_pair(
   sim: ef_py.SimulationKernel,
   *,
@@ -68,9 +83,10 @@ def _launch_and_drive_mq9_case(
   *,
   range_m: float,
   max_steps: int = 3600,
+  seed: int = 20260607,
 ) -> tuple[ef_py.SimulationKernel, int, int, int, dict[str, float | bool], dict]:
   sim = ef_py.SimulationKernel()
-  sim.reset(20260607)
+  sim.reset(int(seed))
   if not sim.load_database(_DB_PATH):
     raise AssertionError("failed to load runtime database")
   sim.set_time_step(1.0 / 60.0)
@@ -303,64 +319,105 @@ class Mq9Aim120ValidationRuntimeMixin:
   def test_mq9_aim120_near_range_live_chain_records_launch_effect_damage(
     self,
   ) -> None:
-    sim, _shooter_id, target_id, missile_id, result, missile_runtime = (
-      _launch_and_drive_mq9_case(range_m=8000.0)
-    )
+    """The 8 km live chain records launch, a fuzed effect, damage and a mission kill.
 
-    self.assertFalse(bool(result["missile_active"]))
-    self.assertTrue(bool(result["target_active"]))
-    self.assertTrue(sim.is_unit_active(target_id))
-    self.assertTrue(math.isfinite(float(result["proximity_min_dist_m"])))
-    self.assertAlmostEqual(
-      float(missile_runtime["mass_total_kg"]),
-      152.0,
-      delta=1.0e-6,
-    )
-    self.assertAlmostEqual(
-      float(missile_runtime["max_speed_mps"]),
-      1372.0,
-      delta=1.0e-6,
-    )
-    self.assertAlmostEqual(
-      float(missile_runtime["seeker_lock_range_m"]),
-      16000.0,
-      delta=1.0e-6,
-    )
-    self.assertEqual(int(missile_runtime["sensor_type"]), int(ef_py.SensorType.Radar))
+    The launch, trigger and geometry are deterministic and are asserted on every seed. Two
+    outcomes are draws on the fired missile's `rng_state`: the fuze reliability roll, and the
+    synthetic component-failure sigmoid, which decides whether mobility capability also falls
+    to the kill threshold. The premise is that the fuze detonated
+    (`outcome_state == "damage_applied"`). The only other outcome allowed is a recorded
+    `fuze_no_detonation` with no damage; those seeds are counted. On every seed that meets the
+    premise, the property is the damage chain plus a mission kill that keeps the target
+    alive. `loss_state_to` must follow the native precedence ladder over the report's own kill
+    flags (mobility, then sensor, then mission, as in `sync_platform_damage_loss_state`). It
+    is not pinned to one draw's label. At least one seed must meet the premise.
+    """
+    premise_failures: list[int] = []
+    premise_satisfied = 0
+    for seed in _MQ9_NEAR_RANGE_SEEDS:
+      sim, _shooter_id, target_id, missile_id, result, missile_runtime = (
+        _launch_and_drive_mq9_case(range_m=8000.0, seed=seed)
+      )
 
-    events = sim.export_recent_engagement_events()
-    self.assertEqual(len(events.launch_events), 1)
-    self.assertEqual(len(events.effects_events), 1)
-    self.assertEqual(len(events.damage_reports), 1)
-    effect = events.effects_events[0]
-    report = events.damage_reports[0]
+      self.assertFalse(bool(result["missile_active"]), f"seed {seed}")
+      self.assertTrue(bool(result["target_active"]), f"seed {seed}")
+      self.assertTrue(sim.is_unit_active(target_id), f"seed {seed}")
+      self.assertTrue(math.isfinite(float(result["proximity_min_dist_m"])), f"seed {seed}")
+      self.assertAlmostEqual(
+        float(missile_runtime["mass_total_kg"]),
+        152.0,
+        delta=1.0e-6,
+      )
+      self.assertAlmostEqual(
+        float(missile_runtime["max_speed_mps"]),
+        1372.0,
+        delta=1.0e-6,
+      )
+      self.assertAlmostEqual(
+        float(missile_runtime["seeker_lock_range_m"]),
+        16000.0,
+        delta=1.0e-6,
+      )
+      self.assertEqual(int(missile_runtime["sensor_type"]), int(ef_py.SensorType.Radar))
 
-    self.assertEqual(int(effect.munition.entity_id), missile_id)
-    self.assertEqual(int(effect.target.entity_id), target_id)
-    self.assertEqual(str(effect.trigger_type), "proximity_fuze")
-    self.assertEqual(str(effect.fuze_type), "radar_proximity")
-    self.assertEqual(str(effect.effect_family), "blast_fragmentation")
-    self.assertGreaterEqual(float(effect.miss_distance_m), 0.0)
-    self.assertTrue(math.isfinite(float(effect.miss_distance_m)))
-    self.assertEqual(str(effect.outcome_state), "damage_applied")
-    self.assertTrue(bool(effect.direct_hitbox_intersection))
-    self.assertGreaterEqual(int(effect.projected_hitbox_count), 1)
-    self.assertGreater(int(effect.component_hit_count), 0)
-    self.assertNotEqual(str(effect.component_primary_name), "")
-    self.assertNotEqual(str(effect.component_primary_system), "")
-    self.assertGreater(float(effect.spatial_effect_scale), 0.0)
-    self.assertAlmostEqual(float(report.hp_delta), 0.0, delta=1.0e-6)
-    self.assertLess(float(report.system_health_delta), 0.0)
-    self.assertFalse(bool(report.destroyed))
-    self.assertEqual(str(report.loss_state_to), "mission_kill")
-    self.assertTrue(bool(report.mission_kill))
-    _assert_mq9_event_is_non_authoritative(self, effect)
+      events = sim.export_recent_engagement_events()
+      self.assertEqual(len(events.launch_events), 1, f"seed {seed}")
+      self.assertEqual(len(events.effects_events), 1, f"seed {seed}")
+      self.assertEqual(len(events.damage_reports), 1, f"seed {seed}")
+      effect = events.effects_events[0]
+      report = events.damage_reports[0]
 
-    overlay = _aircraft_damage_overlay(sim, target_id)
-    self.assertLess(overlay["structure"], 1.0)
-    self.assertLess(overlay["flight_control"], 1.0)
-    self.assertLess(overlay["fuel"], 1.0)
-    self.assertGreater(overlay["fuel_leak"], 0.0)
+      self.assertEqual(int(effect.munition.entity_id), missile_id, f"seed {seed}")
+      self.assertEqual(int(effect.target.entity_id), target_id, f"seed {seed}")
+      self.assertEqual(str(effect.trigger_type), "proximity_fuze", f"seed {seed}")
+      self.assertEqual(str(effect.fuze_type), "radar_proximity", f"seed {seed}")
+      self.assertEqual(str(effect.effect_family), "blast_fragmentation", f"seed {seed}")
+      self.assertGreaterEqual(float(effect.miss_distance_m), 0.0, f"seed {seed}")
+      self.assertTrue(math.isfinite(float(effect.miss_distance_m)), f"seed {seed}")
+      self.assertAlmostEqual(float(report.hp_delta), 0.0, delta=1.0e-6, msg=f"seed {seed}")
+      self.assertFalse(bool(report.destroyed), f"seed {seed}")
+
+      if str(effect.outcome_state) != "damage_applied":
+        # The fuze reliability roll is the only allowed reason to miss the premise. A
+        # detonation that applies no damage must still fail here.
+        self.assertEqual(str(effect.outcome_state), "fuze_no_detonation", f"seed {seed}")
+        self.assertAlmostEqual(
+          float(report.system_health_delta), 0.0, delta=1.0e-6, msg=f"seed {seed}"
+        )
+        self.assertEqual(str(report.loss_state_to), "combat_capable", f"seed {seed}")
+        premise_failures.append(seed)
+        continue
+      premise_satisfied += 1
+
+      self.assertTrue(bool(effect.direct_hitbox_intersection), f"seed {seed}")
+      self.assertGreaterEqual(int(effect.projected_hitbox_count), 1, f"seed {seed}")
+      self.assertGreater(int(effect.component_hit_count), 0, f"seed {seed}")
+      self.assertNotEqual(str(effect.component_primary_name), "", f"seed {seed}")
+      self.assertNotEqual(str(effect.component_primary_system), "", f"seed {seed}")
+      self.assertGreater(float(effect.spatial_effect_scale), 0.0, f"seed {seed}")
+      self.assertLess(float(report.system_health_delta), 0.0, f"seed {seed}")
+      self.assertTrue(bool(report.mission_kill), f"seed {seed}")
+      if bool(report.mobility_kill):
+        expected_loss_state = "mobility_kill"
+      elif bool(report.sensor_kill):
+        expected_loss_state = "sensor_kill"
+      else:
+        expected_loss_state = "mission_kill"
+      self.assertEqual(str(report.loss_state_to), expected_loss_state, f"seed {seed}")
+      _assert_mq9_event_is_non_authoritative(self, effect)
+
+      overlay = _aircraft_damage_overlay(sim, target_id)
+      self.assertLess(overlay["structure"], 1.0, f"seed {seed}")
+      self.assertLess(overlay["flight_control"], 1.0, f"seed {seed}")
+      self.assertLess(overlay["fuel"], 1.0, f"seed {seed}")
+      self.assertGreater(overlay["fuel_leak"], 0.0, f"seed {seed}")
+
+    self.assertGreater(
+      premise_satisfied,
+      0,
+      f"no seed among {_MQ9_NEAR_RANGE_SEEDS} detonated the fuze "
+      f"(premise failed on all seeds: {premise_failures})",
+    )
 
   def test_mq9_aim120_longer_range_live_chain_is_auditable_without_lethality_claim(
     self,
