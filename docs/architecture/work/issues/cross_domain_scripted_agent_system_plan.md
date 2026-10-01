@@ -344,6 +344,11 @@ bootstrap. Do not label ground as fully playable until movement, terrain
 interaction, sensing, fires, effects, damage, and observation export each have
 an admitted runtime owner and evidence.
 
+Initial WP5 slice: `python/tasking_contracts/ground/` registers
+`ground.infantry.objective_occupy_scripted` (`adapter`) behind the neutral
+registry and declares per-capability Ground labels. The derived Ground label
+is `bounded_adapter`; see the 2026-10-01 ledger entry.
+
 ### WP6 — Multi-unit, communication, and cross-domain coordination
 
 Add roster-level coordination, role-split routing, communication loss/latency,
@@ -366,8 +371,8 @@ capability manifests, CLI/viz smoke paths, and performance baselines.
 
 | Capability | Air | Naval | Ground | Required evidence |
 | --- | --- | --- | --- | --- |
-| Common reset/step/report lifecycle | first complete target | bounded reuse | schema-only until runtime admission | contract and replay tests |
-| Single-unit playable loop | WP3 | WP4 bounded loop | not yet admitted | scenario + CLI + viz |
+| Common reset/step/report lifecycle | first complete target | bounded reuse | bounded single-soldier adapter (WP5) | contract and replay tests |
+| Single-unit playable loop | WP3 | WP4 bounded loop | bounded move/hold replay on the native probe surface; no scenario, CLI, or viz | scenario + CLI + viz |
 | Multi-unit roster routing | WP3/WP6 | later bounded extension | later | world-batch parity |
 | Sensor/track-based decision | required for realistic combat | bounded contact products | held | provenance and negative tests |
 | Full effects/damage authority | current air evidence scope must be stated per scenario | future/limited | held | domain owner gate |
@@ -3091,3 +3096,53 @@ to a dedicated owner-local evidence document.
   assessment, EW/data-link constraints, formation mission parity, accepted
   seed coverage, visualization acceptance, or large-scale Air playable status;
   Air remains `playable_candidate`.
+
+### 2026-10-01 — WP5 Ground scripted admission slice
+
+- Starting commit: `09b8f661` (top of the layered army stack).
+- Affected owners: Ground domain, cross-domain agency contracts, and the
+  authority census.
+- Change batch: add `python/tasking_contracts/ground/` with
+  `ground.infantry.objective_occupy_scripted` (`scripted`, `adapter`, role
+  `ground_infantry_controller`) behind the neutral `DecisionModelRegistry`.
+  The model consumes a typed own-state observation (position, operational
+  state, and the commander-issued assigned target and fire authorization read
+  back from its own mission command) plus a task-supplied objective. It emits
+  `MoveStatic` heading/speed/stance with `route_intent=direct` until the
+  objective tolerance, then a latched `OccupyStatic`/`SupportStatic` hold. A
+  fire request is input-gated on the assignment and authorization; the native
+  `fire_ground_weapon_from_mission_command` gate remains the release
+  authority. `python/tasking_contracts/ground/capability.py` declares the
+  per-capability labels and derives the domain label from this WP5 gate.
+- Capability labels: `admitted_bounded` for `single_unit_movement`,
+  `static_hold`, `local_terrain_interaction`, and
+  `bounded_direct_fire_request`; `held` for `route_planning`,
+  `general_passability`, `line_of_sight_cover_concealment`,
+  `ground_sensing_track_export`, `observation_export`,
+  `effects_damage_consequence`, `indirect_fire`, `suppression`, `logistics`,
+  and `multi_unit_formation`. A reset that requests a held capability fails
+  closed. The derived Ground label is `bounded_adapter`.
+- Evidence: pure contract tests for registry lookup, fail-closed
+  domain/role/kind/status selection, held-manifest routing, the move/hold/
+  fire-request decisions, and `DecisionRuntimeRoster` scheduling; a negative
+  test per held capability. On HEI with the army Linux build, the native
+  replay drove the model through the roster on the Arnis eastern-plain
+  fixture: move then latched hold with a fixed native position,
+  decide/held cadence, byte-identical same-seed replay, an authorized request
+  accepted by the native gate with one round consumed, every request rejected
+  when another entity holds engagement authority, and identical decisions when
+  only the hostile's position changes. The authority census gained one
+  attributed `gating` entry for the adapter.
+- Boundary decision: Ground moves from `held` to `bounded_adapter` for this
+  single-soldier slice only. The replay uses the quarantined native-probe
+  kernel surface and a scenario-declared fixture contact, because Ground
+  sensing is held; it is not a production `WorldBatch`, scenario-loader, CLI,
+  or visualization path. The representative static platoon scenario keeps
+  its `held` `ground_commander` manifest. Ground is not `playable` or
+  `playable_candidate`.
+- Follow-ups and entry conditions: a facade/`WorldBatch` Ground command and
+  observation route (entry: a reviewed Ground owner package replacing the
+  native-probe bindings); a scenario manifest that routes this model (entry:
+  that facade route plus a maintained scenario); held capabilities are
+  promoted one at a time only with a named runtime owner and evidence, which
+  then changes the label declaration and its tests together.
