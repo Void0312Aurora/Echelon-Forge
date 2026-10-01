@@ -3178,7 +3178,7 @@ to a dedicated owner-local evidence document.
   three red families present on main `e1e077cb`: the MQ-9 near-range
   live-chain test is re-decided over 16 seeds (its `mission_kill` label was a
   per-seed draw outcome, red already at its origin `940641d6`); two
-  unregistered diagnostics bindings are classified and the binding-quarantine (WP22-E) guard made
+  unregistered diagnostics bindings are classified and the binding-quarantine guard made
   exact; the weapon-release service no longer holds a `SimulationKernel&`
   back-reference (RNG draws are counted by a stream type, values and order
   unchanged).
