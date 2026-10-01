@@ -104,6 +104,7 @@ class CaseRollout:
     digest: str
     first_divergent_record: int | None
     records: tuple[Mapping[str, Any], ...] | None
+    actions: tuple[tuple[float, ...], ...] | None
 
     @property
     def outcome(self) -> str:
@@ -217,11 +218,15 @@ def run_case(
     terminated = truncated = False
     termination_reason = truncation_reason = None
     blocked_reasons: list[str] = []
+    actions: list[tuple[float, ...]] = []
     bridge_steps = 0
     total_reward = 0.0
     steps = 0
     while not (terminated or truncated):
-        observation, reward, terminated, truncated, info = env.step(controller(observation))
+        action = controller(observation)
+        if keep_records:
+            actions.append(tuple(float(value) for value in np.asarray(action).reshape(-1)))
+        observation, reward, terminated, truncated, info = env.step(action)
         steps += 1
         total_reward += reward
         record(
@@ -261,6 +266,7 @@ def run_case(
             else record_index
         ),
         records=tuple(kept) if keep_records else None,
+        actions=tuple(actions) if keep_records else None,
     )
 
 
@@ -324,6 +330,74 @@ def matrix_row(case: FixtureCase, rollout: CaseRollout) -> dict[str, Any]:
     }
 
 
+def _leaf(value: Any) -> str:
+    return json.dumps(value, sort_keys=True)
+
+
+def difference_paths(left: Any, right: Any, path: str = "") -> set[str]:
+    """JSON paths whose values differ; list indices collapse to ``[]``."""
+
+    if isinstance(left, Mapping) and isinstance(right, Mapping):
+        paths: set[str] = set()
+        for key in sorted(set(left) | set(right)):
+            child = f"{path}.{key}" if path else str(key)
+            if key not in left or key not in right:
+                paths.add(child)
+            else:
+                paths |= difference_paths(left[key], right[key], child)
+        return paths
+    if isinstance(left, (list, tuple)) and isinstance(right, (list, tuple)):
+        if len(left) != len(right):
+            return {f"{path}[]#length"}
+        paths = set()
+        for left_item, right_item in zip(left, right):
+            paths |= difference_paths(left_item, right_item, f"{path}[]")
+        return paths
+    return set() if _leaf(left) == _leaf(right) else {path}
+
+
+def replay_determinism(case: FixtureCase, *, seed: int, alternate_seed: int) -> dict[str, Any]:
+    """Same-seed, probe-replay, and cross-seed determinism evidence for one case.
+
+    * ``same_seed_identical``: a second env rollout with the same seed gives a
+      byte-identical canonical trace (digest and first divergent record).
+    * ``probe_replay_identical``: ``GroundInfantryNativeProbe.replay`` of the
+      recorded controller actions reproduces the env's probe trace exactly.
+    * ``cross_seed_difference_paths``: every trace path that differs when only
+      the reset seed changes.
+    """
+
+    max_steps = case_step_budget(case, seed=seed)
+    first = run_case(case, seed=seed, max_steps=max_steps, keep_records=True)
+    assert first.records is not None and first.actions is not None
+    second = run_case(case, seed=seed, max_steps=max_steps, compare_records=first.records)
+    probe = _probe_for_case(case, max_steps=max_steps)
+    replayed = probe.replay(
+        [GroundInfantryNativeEnv._probe_action(action) for action in first.actions],
+        seed=seed,
+    )
+    env_traces = [record["trace"] for record in first.records]
+    probe_identical = trace_digest(list(replayed)) == trace_digest(env_traces)
+    alternate = run_case(case, seed=alternate_seed, max_steps=max_steps, keep_records=True)
+    assert alternate.records is not None
+    cross_paths = sorted(difference_paths(list(first.records), list(alternate.records)))
+    return {
+        "case_id": case.case_id,
+        "seed": seed,
+        "alternate_seed": alternate_seed,
+        "records": len(first.records),
+        "trace_sha256": first.digest,
+        "same_seed_identical": second.digest == first.digest and second.first_divergent_record is None,
+        "same_seed_first_divergent_record": second.first_divergent_record,
+        "probe_replay_identical": probe_identical,
+        "cross_seed_identical": alternate.digest == first.digest,
+        "cross_seed_difference_paths": cross_paths,
+        "cross_seed_outcome_identical": (
+            alternate.outcome == first.outcome and alternate.steps == first.steps
+        ),
+    }
+
+
 def build_acceptance_matrix(
     *,
     seed: int,
@@ -368,6 +442,8 @@ __all__ = [
     "build_acceptance_matrix",
     "case_failures",
     "case_step_budget",
+    "difference_paths",
+    "replay_determinism",
     "heading_to_goal_action",
     "matrix_row",
     "minimum_route_multiplier",

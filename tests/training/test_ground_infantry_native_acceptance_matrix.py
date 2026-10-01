@@ -112,3 +112,12 @@ def test_native_acceptance_matrix_short_horizon_truncates_instead_of_passing(
     rollout = run_case(crossing, seed=_SEED, max_steps=CONTRACT_BLOCKED_STEP_LIMIT)
     assert rollout.truncation_reason == "max_steps"
     assert "outcome:truncated:max_steps" in case_failures(crossing, rollout)
+
+
+def test_native_acceptance_matrix_trace_digests_repeat_for_the_same_seed(
+    fixture: ArnisInfantryFixture, matrix: dict
+) -> None:
+    again = build_acceptance_matrix(seed=_SEED, fixture=fixture)
+    assert [(row["case_id"], row["trace_sha256"]) for row in again["rows"]] == [
+        (row["case_id"], row["trace_sha256"]) for row in matrix["rows"]
+    ]
