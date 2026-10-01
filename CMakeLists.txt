@@ -1078,6 +1078,7 @@ set(EF_TEST_SOURCES
     src/tests/test_default_effects_model.cpp
     src/tests/test_stable_entity_identity.cpp
     src/tests/test_air_ew_native.cpp
+    src/tests/test_air_ew_decoy.cpp
 )
 
 add_executable(ef_test ${EF_TEST_SOURCES})
