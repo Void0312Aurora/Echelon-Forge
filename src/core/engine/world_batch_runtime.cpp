@@ -12,11 +12,18 @@
 #include <algorithm>
 #include <bit>
 #include <atomic>
+#include <chrono>
 #include <cmath>
+#include <condition_variable>
 #include <exception>
+#include <functional>
 #include <mutex>
 #include <stdexcept>
 #include <thread>
+
+#if defined(__unix__) || defined(__APPLE__)
+#include <unistd.h>
+#endif
 
 namespace {
 
@@ -25,56 +32,238 @@ size_t hardware_thread_count() noexcept {
     return hc == 0U ? 1U : static_cast<size_t>(hc);
 }
 
-template <typename Fn>
-void parallel_for_index(size_t task_count, size_t requested_threads, Fn &&fn) {
-    if (task_count == 0) {
-        return;
-    }
-    const size_t thread_count =
-        std::min(task_count, requested_threads == 0 ? hardware_thread_count()
-                                                    : std::max<size_t>(1, requested_threads));
-    if (thread_count <= 1) {
-        for (size_t i = 0; i < task_count; ++i) {
-            fn(i);
+std::uint64_t steady_now_ns() noexcept {
+    return static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                          std::chrono::steady_clock::now().time_since_epoch())
+                                          .count());
+}
+
+// Identifies the process that created a pool's threads. After fork() the child
+// inherits the pool object but none of its threads, so dispatch must not wait on
+// them there.
+long current_process_id() noexcept {
+#if defined(__unix__) || defined(__APPLE__)
+    return static_cast<long>(::getpid());
+#else
+    return 0;
+#endif
+}
+
+} // namespace
+
+// Persistent worker threads for WorldBatchRuntime batch dispatch. Spawning and
+// joining std::threads on every batch call cost more than a whole world step at
+// small per-world workloads, so the workers are created once and parked on a
+// condition variable between dispatches. A dispatch hands out contiguous index
+// chunks exactly as the previous per-call implementation did (chunk k runs on
+// participant k, the calling thread runs the last chunk), so the world-to-thread
+// assignment and the first-exception propagation semantics are unchanged.
+class WorldBatchWorkerPool {
+  public:
+    WorldBatchWorkerPool() = default;
+    WorldBatchWorkerPool(const WorldBatchWorkerPool &) = delete;
+    WorldBatchWorkerPool &operator=(const WorldBatchWorkerPool &) = delete;
+
+    ~WorldBatchWorkerPool() {
+        if (owner_process_id_ != current_process_id()) {
+            // Forked child: the threads live only in the parent process.
+            for (auto &worker : workers_) {
+                worker.detach();
+            }
+            return;
         }
-        return;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            stopping_ = true;
+        }
+        work_cv_.notify_all();
+        for (auto &worker : workers_) {
+            worker.join();
+        }
     }
 
-    const size_t chunk_size = (task_count + thread_count - 1) / thread_count;
-    std::vector<std::thread> workers;
-    workers.reserve(thread_count - 1);
+    // Runs fn(i) for i in [0, task_count) over `participants` threads, the caller
+    // included. Returns false without running anything when another dispatch owns
+    // the pool (a nested batch call from inside a task, or a concurrent call from a
+    // second host thread); the caller then runs the work inline instead.
+    bool try_run(size_t task_count, size_t participants, const std::function<void(size_t)> &fn) {
+        if (owner_process_id_ != current_process_id()) {
+            return false;
+        }
+        std::unique_lock<std::mutex> dispatch(dispatch_mutex_, std::try_to_lock);
+        if (!dispatch.owns_lock()) {
+            return false;
+        }
+        ensure_workers(participants - 1);
+        const size_t chunk_size = (task_count + participants - 1) / participants;
+        const std::uint64_t wall_begin = steady_now_ns();
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            job_fn_ = &fn;
+            job_task_count_ = task_count;
+            job_chunk_size_ = chunk_size;
+            job_workers_ = participants - 1;
+            pending_workers_ = participants - 1;
+            job_busy_ns_ = 0;
+            first_exception_ = nullptr;
+            ++generation_;
+        }
+        work_cv_.notify_all();
 
-    std::exception_ptr first_exception;
-    std::mutex exception_mutex;
+        // The caller runs the chunk after the workers' chunks.
+        const size_t caller_begin = std::min(task_count, (participants - 1) * chunk_size);
+        const std::uint64_t caller_busy = run_range(fn, caller_begin, task_count);
 
-    auto run_range = [&](size_t begin, size_t end) {
+        std::unique_lock<std::mutex> lock(mutex_);
+        done_cv_.wait(lock, [&] { return pending_workers_ == 0; });
+        job_fn_ = nullptr;
+        const std::uint64_t wall = steady_now_ns() - wall_begin;
+        stats_.dispatch_count += 1;
+        stats_.task_count += task_count;
+        stats_.wall_ns += wall;
+        stats_.thread_wall_ns += wall * participants;
+        stats_.busy_ns += caller_busy + job_busy_ns_;
+        std::exception_ptr failure = first_exception_;
+        first_exception_ = nullptr;
+        lock.unlock();
+        dispatch.unlock();
+        if (failure != nullptr) {
+            std::rethrow_exception(failure);
+        }
+        return true;
+    }
+
+    void record_serial_dispatch(size_t task_count, std::uint64_t wall_ns) noexcept {
+        std::lock_guard<std::mutex> lock(mutex_);
+        stats_.dispatch_count += 1;
+        stats_.serial_dispatch_count += 1;
+        stats_.task_count += task_count;
+        stats_.wall_ns += wall_ns;
+        stats_.thread_wall_ns += wall_ns;
+        stats_.busy_ns += wall_ns;
+    }
+
+    [[nodiscard]] WorldBatchWorkerPoolStats stats() const noexcept {
+        std::lock_guard<std::mutex> lock(mutex_);
+        WorldBatchWorkerPoolStats out = stats_;
+        out.pool_threads = workers_.size();
+        return out;
+    }
+
+    void reset_stats() noexcept {
+        std::lock_guard<std::mutex> lock(mutex_);
+        stats_ = WorldBatchWorkerPoolStats{};
+    }
+
+  private:
+    void ensure_workers(size_t count) {
+        while (workers_.size() < count) {
+            const size_t worker_index = workers_.size();
+            std::uint64_t seen_generation = 0;
+            {
+                std::lock_guard<std::mutex> lock(mutex_);
+                seen_generation = generation_;
+            }
+            workers_.emplace_back([this, worker_index, seen_generation] {
+                worker_loop(worker_index, seen_generation);
+            });
+        }
+    }
+
+    std::uint64_t run_range(const std::function<void(size_t)> &fn, size_t begin,
+                            size_t end) noexcept {
+        const std::uint64_t busy_begin = steady_now_ns();
         for (size_t i = begin; i < end; ++i) {
             try {
                 fn(i);
             } catch (...) {
-                std::lock_guard<std::mutex> lock(exception_mutex);
-                if (first_exception == nullptr) {
-                    first_exception = std::current_exception();
+                std::lock_guard<std::mutex> lock(mutex_);
+                if (first_exception_ == nullptr) {
+                    first_exception_ = std::current_exception();
                 }
                 break;
             }
         }
-    };
+        return steady_now_ns() - busy_begin;
+    }
 
-    size_t begin = 0;
-    for (size_t worker_idx = 1; worker_idx < thread_count; ++worker_idx) {
-        const size_t end = std::min(task_count, begin + chunk_size);
-        workers.emplace_back(run_range, begin, end);
-        begin = end;
+    void worker_loop(size_t worker_index, std::uint64_t seen_generation) {
+        for (;;) {
+            const std::function<void(size_t)> *fn = nullptr;
+            size_t begin = 0;
+            size_t end = 0;
+            {
+                std::unique_lock<std::mutex> lock(mutex_);
+                work_cv_.wait(lock, [&] { return stopping_ || generation_ != seen_generation; });
+                if (stopping_) {
+                    return;
+                }
+                seen_generation = generation_;
+                if (worker_index >= job_workers_) {
+                    // Not a participant of this dispatch (fewer threads requested).
+                    continue;
+                }
+                fn = job_fn_;
+                begin = std::min(job_task_count_, worker_index * job_chunk_size_);
+                end = std::min(job_task_count_, begin + job_chunk_size_);
+            }
+            const std::uint64_t busy = run_range(*fn, begin, end);
+            {
+                std::lock_guard<std::mutex> lock(mutex_);
+                job_busy_ns_ += busy;
+                if (--pending_workers_ == 0) {
+                    done_cv_.notify_one();
+                }
+            }
+        }
     }
-    run_range(begin, task_count);
-    for (auto &worker : workers) {
-        worker.join();
+
+    const long owner_process_id_ = current_process_id();
+    std::mutex dispatch_mutex_;
+    mutable std::mutex mutex_;
+    std::condition_variable work_cv_;
+    std::condition_variable done_cv_;
+    std::vector<std::thread> workers_;
+    const std::function<void(size_t)> *job_fn_ = nullptr;
+    size_t job_task_count_ = 0;
+    size_t job_chunk_size_ = 0;
+    size_t job_workers_ = 0;
+    size_t pending_workers_ = 0;
+    std::uint64_t generation_ = 0;
+    std::uint64_t job_busy_ns_ = 0;
+    std::exception_ptr first_exception_;
+    bool stopping_ = false;
+    WorldBatchWorkerPoolStats stats_;
+};
+
+void WorldBatchRuntime::WorkerPoolDeleter::operator()(WorldBatchWorkerPool *pool) const noexcept {
+    delete pool;
+}
+
+template <typename Fn>
+void WorldBatchRuntime::parallel_for_index(size_t task_count, Fn &&fn) const {
+    if (task_count == 0) {
+        return;
     }
-    if (first_exception != nullptr) {
-        std::rethrow_exception(first_exception);
+    // A moved-from runtime has no pool until resize() gives it one again.
+    WorldBatchWorkerPool *const pool = worker_pool_.get();
+    const size_t thread_count = resolve_worker_threads(task_count);
+    if (pool != nullptr && thread_count > 1) {
+        const std::function<void(size_t)> task = [&fn](size_t i) { fn(i); };
+        if (pool->try_run(task_count, thread_count, task)) {
+            return;
+        }
+    }
+    const std::uint64_t begin = steady_now_ns();
+    for (size_t i = 0; i < task_count; ++i) {
+        fn(i);
+    }
+    if (pool != nullptr) {
+        pool->record_serial_dispatch(task_count, steady_now_ns() - begin);
     }
 }
+
+namespace {
 
 template <typename Item>
 std::vector<std::vector<size_t>> group_item_indices_by_world(size_t world_count,
@@ -232,6 +421,10 @@ WorldBatchRuntime::WorldBatchRuntime(size_t world_count) {
 }
 
 void WorldBatchRuntime::resize(size_t world_count) {
+    if (!worker_pool_) {
+        // Threads start on the first multi-threaded dispatch, not here.
+        worker_pool_.reset(new WorldBatchWorkerPool());
+    }
     const size_t existing_count = worlds_.size();
     if (world_count < existing_count) {
         worlds_.resize(world_count);
@@ -240,6 +433,9 @@ void WorldBatchRuntime::resize(size_t world_count) {
         for (size_t i = existing_count; i < world_count; ++i) {
             worlds_.push_back(std::make_unique<SimulationKernel>(
                 std::string(runtime::contracts::generated::kDefaultResolvedExecutionPlanJson)));
+            if (system_timing_enabled_) {
+                worlds_.back()->set_system_timing_enabled(true);
+            }
         }
     }
 }
@@ -293,6 +489,36 @@ size_t WorldBatchRuntime::resolve_worker_threads(size_t task_count) const noexce
 
 size_t WorldBatchRuntime::effective_worker_threads() const noexcept {
     return resolve_worker_threads(worlds_.size());
+}
+
+WorldBatchWorkerPoolStats WorldBatchRuntime::worker_pool_stats() const noexcept {
+    return worker_pool_ ? worker_pool_->stats() : WorldBatchWorkerPoolStats{};
+}
+
+void WorldBatchRuntime::reset_worker_pool_stats() noexcept {
+    if (worker_pool_) {
+        worker_pool_->reset_stats();
+    }
+}
+
+void WorldBatchRuntime::set_system_timing_enabled(bool enabled) {
+    system_timing_enabled_ = enabled;
+    parallel_for_index(worlds_.size(),
+                       [&](size_t i) { worlds_[i]->set_system_timing_enabled(enabled); });
+}
+
+std::vector<WorldSystemTiming> WorldBatchRuntime::system_timings() const {
+    std::vector<WorldSystemTiming> out;
+    for (size_t world_index = 0; world_index < worlds_.size(); ++world_index) {
+        for (auto &[name, seconds] : worlds_[world_index]->system_timings()) {
+            out.push_back(WorldSystemTiming{
+                .world_index = world_index,
+                .system_name = std::move(name),
+                .time_spent_s = seconds,
+            });
+        }
+    }
+    return out;
 }
 
 std::uint64_t
@@ -381,7 +607,7 @@ WorldBatchRuntime::export_recent_engagement_events(size_t world_index) const {
 }
 
 void WorldBatchRuntime::reset_batch(const std::vector<uint32_t> &seeds) {
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t i) {
+    parallel_for_index(worlds_.size(), [&](size_t i) {
         uint32_t seed = static_cast<uint32_t>(42 + i);
         if (seeds.size() == worlds_.size()) {
             seed = seeds[i];
@@ -393,7 +619,7 @@ void WorldBatchRuntime::reset_batch(const std::vector<uint32_t> &seeds) {
 }
 
 void WorldBatchRuntime::step_batch() {
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t i) { worlds_[i]->step(); });
+    parallel_for_index(worlds_.size(), [&](size_t i) { worlds_[i]->step(); });
 }
 
 void WorldBatchRuntime::step_worlds(const std::vector<uint64_t> &world_indices) {
@@ -401,14 +627,14 @@ void WorldBatchRuntime::step_worlds(const std::vector<uint64_t> &world_indices) 
         return;
     }
     validate_unique_world_indices(worlds_.size(), world_indices, "step_worlds");
-    parallel_for_index(world_indices.size(), worker_threads_, [&](size_t i) {
+    parallel_for_index(world_indices.size(), [&](size_t i) {
         checked_world(static_cast<size_t>(world_indices[i])).step();
     });
 }
 
 bool WorldBatchRuntime::load_database(const std::string &path) {
     std::atomic<bool> ok{true};
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t i) {
+    parallel_for_index(worlds_.size(), [&](size_t i) {
         if (!worlds_[i]->load_database(path)) {
             ok.store(false, std::memory_order_relaxed);
         }
@@ -420,7 +646,7 @@ bool WorldBatchRuntime::load_unit_definitions(const std::string &path, std::stri
     std::atomic<bool> ok{true};
     std::string first_error;
     std::mutex error_mutex;
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t i) {
+    parallel_for_index(worlds_.size(), [&](size_t i) {
         std::string local_error;
         const bool local_ok = worlds_[i]->load_unit_definitions(path, &local_error);
         if (!local_ok) {
@@ -440,18 +666,16 @@ bool WorldBatchRuntime::load_unit_definitions(const std::string &path, std::stri
 }
 
 void WorldBatchRuntime::set_time_step(double dt) {
-    parallel_for_index(worlds_.size(), worker_threads_,
-                       [&](size_t i) { worlds_[i]->set_time_step(dt); });
+    parallel_for_index(worlds_.size(), [&](size_t i) { worlds_[i]->set_time_step(dt); });
 }
 
 void WorldBatchRuntime::clear_zones_batch(const std::vector<uint64_t> &world_indices) {
     if (world_indices.empty()) {
-        parallel_for_index(worlds_.size(), worker_threads_,
-                           [&](size_t i) { worlds_[i]->clear_zones(); });
+        parallel_for_index(worlds_.size(), [&](size_t i) { worlds_[i]->clear_zones(); });
         return;
     }
     validate_unique_world_indices(worlds_.size(), world_indices, "clear_zones_batch");
-    parallel_for_index(world_indices.size(), worker_threads_, [&](size_t i) {
+    parallel_for_index(world_indices.size(), [&](size_t i) {
         checked_world(static_cast<size_t>(world_indices[i])).clear_zones();
     });
 }
@@ -460,7 +684,7 @@ std::vector<uint64_t>
 WorldBatchRuntime::spawn_units_batch(const std::vector<WorldSpawnRequest> &requests) {
     std::vector<uint64_t> out(requests.size(), 0);
     const auto grouped = group_item_indices_by_world(worlds_.size(), requests);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
+    parallel_for_index(worlds_.size(), [&](size_t world_index) {
         auto &world = checked_world(world_index);
         for (const size_t item_index : grouped[world_index]) {
             out[item_index] = spawn_from_request(world, requests[item_index]);
@@ -486,7 +710,7 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_setup_batch(
     const auto zone_grouped = group_item_indices_by_world(worlds_.size(), zones);
     const auto spawn_grouped = group_item_indices_by_world(worlds_.size(), requests);
 
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
+    parallel_for_index(worlds_.size(), [&](size_t world_index) {
         auto &world = checked_world(world_index);
         world_batch_setup::apply_world_setup(
             world, world_index, worlds_.size(), seeds, terrain_assignments,
@@ -547,7 +771,7 @@ double WorldBatchRuntime::world_time_step(std::size_t world_index) const {
 void WorldBatchRuntime::set_pilot_actions_batch(
     const std::vector<WorldPilotActionAssignment> &assignments) {
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
+    parallel_for_index(worlds_.size(), [&](size_t world_index) {
         auto &world = checked_world(world_index);
         SimulationKernelCommandSurface commands(world);
         for (const size_t item_index : grouped[world_index]) {
@@ -560,7 +784,7 @@ void WorldBatchRuntime::set_pilot_actions_batch(
 void WorldBatchRuntime::set_command_links_batch(
     const std::vector<WorldCommandLinkAssignment> &assignments) {
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
+    parallel_for_index(worlds_.size(), [&](size_t world_index) {
         auto &world = checked_world(world_index);
         for (const size_t item_index : grouped[world_index]) {
             const auto &item = assignments[item_index];
@@ -580,7 +804,7 @@ WorldBatchRuntime::apply_launch_requests_batch(const std::vector<LaunchRequest> 
         }
         grouped[world_index].push_back(item_index);
     }
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
+    parallel_for_index(worlds_.size(), [&](size_t world_index) {
         auto &world = checked_world(world_index);
         for (const size_t item_index : grouped[world_index]) {
             const auto &request = requests[item_index];
@@ -642,7 +866,7 @@ WorldBatchRuntime::apply_launch_requests_batch(const std::vector<LaunchRequest> 
 void WorldBatchRuntime::set_mission_commands_batch(
     const std::vector<WorldMissionCommandAssignment> &assignments) {
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
+    parallel_for_index(worlds_.size(), [&](size_t world_index) {
         auto &world = checked_world(world_index);
         SimulationKernelCommandSurface commands(world);
         for (const size_t item_index : grouped[world_index]) {
@@ -655,7 +879,7 @@ void WorldBatchRuntime::set_mission_commands_batch(
 void WorldBatchRuntime::set_mission_commands_maintained_batch(
     const std::vector<WorldMissionCommandMaintainedAssignment> &assignments) {
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
+    parallel_for_index(worlds_.size(), [&](size_t world_index) {
         auto &world = checked_world(world_index);
         SimulationKernelCommandSurface commands(world);
         for (const size_t item_index : grouped[world_index]) {
@@ -670,7 +894,7 @@ void WorldBatchRuntime::set_mission_commands_maintained_batch(
 void WorldBatchRuntime::set_task_orders_maintained_batch(
     const std::vector<WorldTaskOrderMaintainedAssignment> &assignments) {
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
+    parallel_for_index(worlds_.size(), [&](size_t world_index) {
         auto &world = checked_world(world_index);
         SimulationKernelCommandSurface commands(world);
         for (const size_t item_index : grouped[world_index]) {
@@ -685,7 +909,7 @@ void WorldBatchRuntime::set_task_orders_maintained_batch(
 void WorldBatchRuntime::set_leader_intents_batch(
     const std::vector<WorldLeaderIntentAssignment> &assignments) {
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
+    parallel_for_index(worlds_.size(), [&](size_t world_index) {
         auto &world = checked_world(world_index);
         SimulationKernelCommandSurface commands(world);
         for (const size_t item_index : grouped[world_index]) {
@@ -698,7 +922,7 @@ void WorldBatchRuntime::set_leader_intents_batch(
 void WorldBatchRuntime::set_leader_intents_maintained_batch(
     const std::vector<WorldLeaderIntentMaintainedAssignment> &assignments) {
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
+    parallel_for_index(worlds_.size(), [&](size_t world_index) {
         auto &world = checked_world(world_index);
         SimulationKernelCommandSurface commands(world);
         for (const size_t item_index : grouped[world_index]) {
@@ -713,7 +937,7 @@ void WorldBatchRuntime::set_leader_intents_maintained_batch(
 void WorldBatchRuntime::set_pilot_reports_batch(
     const std::vector<WorldPilotReportAssignment> &assignments) {
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
+    parallel_for_index(worlds_.size(), [&](size_t world_index) {
         auto &world = checked_world(world_index);
         SimulationKernelCommandSurface commands(world);
         for (const size_t item_index : grouped[world_index]) {
@@ -726,7 +950,7 @@ void WorldBatchRuntime::set_pilot_reports_batch(
 void WorldBatchRuntime::set_pilot_reports_maintained_batch(
     const std::vector<WorldPilotReportMaintainedAssignment> &assignments) {
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
+    parallel_for_index(worlds_.size(), [&](size_t world_index) {
         auto &world = checked_world(world_index);
         SimulationKernelCommandSurface commands(world);
         for (const size_t item_index : grouped[world_index]) {
@@ -741,7 +965,7 @@ void WorldBatchRuntime::set_pilot_reports_maintained_batch(
 std::vector<AgentObservation>
 WorldBatchRuntime::get_agent_observations_batch(const std::vector<WorldEntityRef> &refs) const {
     std::vector<AgentObservation> out(refs.size());
-    parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
+    parallel_for_index(refs.size(), [&](size_t i) {
         const auto &ref = refs[i];
         out[i] = checked_world(static_cast<size_t>(ref.world_index))
                      .get_agent_observation(ref.entity_id);
@@ -765,7 +989,7 @@ InstrumentState WorldBatchRuntime::safe_get_instrument_state(const SimulationKer
 std::vector<InstrumentState>
 WorldBatchRuntime::get_instrument_states_batch(const std::vector<WorldEntityRef> &refs) const {
     std::vector<InstrumentState> out(refs.size());
-    parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
+    parallel_for_index(refs.size(), [&](size_t i) {
         const auto &ref = refs[i];
         out[i] = safe_get_instrument_state(checked_world(static_cast<size_t>(ref.world_index)),
                                            ref.entity_id);
@@ -776,7 +1000,7 @@ WorldBatchRuntime::get_instrument_states_batch(const std::vector<WorldEntityRef>
 std::vector<std::vector<CommPacket>>
 WorldBatchRuntime::get_unit_messages_batch(const std::vector<WorldEntityRef> &refs) const {
     std::vector<std::vector<CommPacket>> out(refs.size());
-    parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
+    parallel_for_index(refs.size(), [&](size_t i) {
         const auto &ref = refs[i];
         out[i] =
             checked_world(static_cast<size_t>(ref.world_index)).get_unit_messages(ref.entity_id);
@@ -787,7 +1011,7 @@ WorldBatchRuntime::get_unit_messages_batch(const std::vector<WorldEntityRef> &re
 std::vector<MissionCommand>
 WorldBatchRuntime::get_mission_commands_batch(const std::vector<WorldEntityRef> &refs) const {
     std::vector<MissionCommand> out(refs.size());
-    parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
+    parallel_for_index(refs.size(), [&](size_t i) {
         const auto &ref = refs[i];
         const SimulationKernelCommandReadSurface commands(
             checked_world(static_cast<size_t>(ref.world_index)));
@@ -800,7 +1024,7 @@ std::vector<MissionCommandMaintainedBatchContract>
 WorldBatchRuntime::get_mission_commands_maintained_batch(
     const std::vector<WorldEntityRef> &refs) const {
     std::vector<MissionCommandMaintainedBatchContract> out(refs.size());
-    parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
+    parallel_for_index(refs.size(), [&](size_t i) {
         const auto &ref = refs[i];
         const SimulationKernelCommandReadSurface commands(
             checked_world(static_cast<size_t>(ref.world_index)));
@@ -813,7 +1037,7 @@ WorldBatchRuntime::get_mission_commands_maintained_batch(
 std::vector<TaskOrderMaintainedBatchContract>
 WorldBatchRuntime::get_task_orders_maintained_batch(const std::vector<WorldEntityRef> &refs) const {
     std::vector<TaskOrderMaintainedBatchContract> out(refs.size());
-    parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
+    parallel_for_index(refs.size(), [&](size_t i) {
         const auto &ref = refs[i];
         const SimulationKernelCommandReadSurface commands(
             checked_world(static_cast<size_t>(ref.world_index)));
@@ -825,7 +1049,7 @@ WorldBatchRuntime::get_task_orders_maintained_batch(const std::vector<WorldEntit
 std::vector<LeaderIntent>
 WorldBatchRuntime::get_leader_intents_batch(const std::vector<WorldEntityRef> &refs) const {
     std::vector<LeaderIntent> out(refs.size());
-    parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
+    parallel_for_index(refs.size(), [&](size_t i) {
         const auto &ref = refs[i];
         const SimulationKernelCommandReadSurface commands(
             checked_world(static_cast<size_t>(ref.world_index)));
@@ -838,7 +1062,7 @@ std::vector<LeaderIntentMaintainedBatchContract>
 WorldBatchRuntime::get_leader_intents_maintained_batch(
     const std::vector<WorldEntityRef> &refs) const {
     std::vector<LeaderIntentMaintainedBatchContract> out(refs.size());
-    parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
+    parallel_for_index(refs.size(), [&](size_t i) {
         const auto &ref = refs[i];
         const SimulationKernelCommandReadSurface commands(
             checked_world(static_cast<size_t>(ref.world_index)));
@@ -850,7 +1074,7 @@ WorldBatchRuntime::get_leader_intents_maintained_batch(
 std::vector<PilotReport>
 WorldBatchRuntime::get_pilot_reports_batch(const std::vector<WorldEntityRef> &refs) const {
     std::vector<PilotReport> out(refs.size());
-    parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
+    parallel_for_index(refs.size(), [&](size_t i) {
         const auto &ref = refs[i];
         const SimulationKernelCommandReadSurface commands(
             checked_world(static_cast<size_t>(ref.world_index)));
@@ -863,7 +1087,7 @@ std::vector<PilotReportMaintainedBatchContract>
 WorldBatchRuntime::get_pilot_reports_maintained_batch(
     const std::vector<WorldEntityRef> &refs) const {
     std::vector<PilotReportMaintainedBatchContract> out(refs.size());
-    parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
+    parallel_for_index(refs.size(), [&](size_t i) {
         const auto &ref = refs[i];
         const SimulationKernelCommandReadSurface commands(
             checked_world(static_cast<size_t>(ref.world_index)));

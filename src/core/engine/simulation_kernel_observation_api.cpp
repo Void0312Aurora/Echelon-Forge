@@ -827,3 +827,40 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
 
     return obs;
 }
+
+void SimulationKernel::set_system_timing_enabled(bool enabled) {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("set_system_timing_enabled");
+    ecs_world_t *world = ecs.c_ptr();
+    if (enabled) {
+        ecs_iter_t it = ecs_each_id(world, EcsSystem);
+        while (ecs_each_next(&it)) {
+            for (int32_t i = 0; i < it.count; ++i) {
+                if (const ecs_system_t *system = ecs_system_get(world, it.entities[i])) {
+                    const_cast<ecs_system_t *>(system)->time_spent = 0;
+                }
+            }
+        }
+    }
+    ecs_measure_system_time(world, enabled);
+}
+
+std::vector<std::pair<std::string, double>> SimulationKernel::system_timings() const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("system_timings");
+    std::vector<std::pair<std::string, double>> out;
+    const ecs_world_t *world = ecs.c_ptr();
+    ecs_iter_t it = ecs_each_id(world, EcsSystem);
+    while (ecs_each_next(&it)) {
+        for (int32_t i = 0; i < it.count; ++i) {
+            const ecs_system_t *system = ecs_system_get(world, it.entities[i]);
+            if (system == nullptr) {
+                continue;
+            }
+            const char *name = ecs_get_name(world, it.entities[i]);
+            out.emplace_back(name != nullptr ? std::string(name) : std::string(),
+                             static_cast<double>(system->time_spent));
+        }
+    }
+    return out;
+}

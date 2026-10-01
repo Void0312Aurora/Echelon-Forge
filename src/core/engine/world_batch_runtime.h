@@ -33,6 +33,30 @@ struct WorldCompositionDiagnostics {
     std::array<std::uint64_t, 5> scope_generations{};
 };
 
+// Cumulative accounting of the batch worker pool since construction or the last
+// reset_worker_pool_stats(). Every batch dispatch adds its wall time once and the
+// busy time of each participating thread (the calling thread included), so
+// busy_ns / (wall_ns * threads) is the pool occupancy of the measured window.
+struct WorldBatchWorkerPoolStats {
+    std::uint64_t dispatch_count = 0;
+    std::uint64_t serial_dispatch_count = 0;
+    std::uint64_t task_count = 0;
+    std::uint64_t wall_ns = 0;
+    std::uint64_t thread_wall_ns = 0;
+    std::uint64_t busy_ns = 0;
+    std::size_t pool_threads = 0;
+};
+
+// Per-world cumulative Flecs system execution time, collected only while
+// system timing is enabled on the batch.
+struct WorldSystemTiming {
+    std::size_t world_index = 0;
+    std::string system_name;
+    double time_spent_s = 0.0;
+};
+
+class WorldBatchWorkerPool;
+
 class WorldBatchRuntime {
   public:
     explicit WorldBatchRuntime(size_t world_count = 0);
@@ -47,6 +71,15 @@ class WorldBatchRuntime {
     void set_worker_threads(size_t worker_threads) noexcept { worker_threads_ = worker_threads; }
     size_t worker_threads() const noexcept { return worker_threads_; }
     size_t effective_worker_threads() const noexcept;
+    [[nodiscard]] WorldBatchWorkerPoolStats worker_pool_stats() const noexcept;
+    void reset_worker_pool_stats() noexcept;
+
+    // Diagnostics only: toggles Flecs per-system time measurement on every world.
+    // Measurement adds a clock read around each system run, so it stays off on
+    // the maintained path and is enabled only by benchmark/occupancy tooling.
+    void set_system_timing_enabled(bool enabled);
+    [[nodiscard]] bool system_timing_enabled() const noexcept { return system_timing_enabled_; }
+    [[nodiscard]] std::vector<WorldSystemTiming> system_timings() const;
 
     std::uint64_t spawn_unit_from_world_spawn_request(const WorldSpawnRequest &request);
     std::uint64_t spawn_typed_platform_unit(const TypedPlatformSpawnRequest &request);
@@ -143,7 +176,12 @@ class WorldBatchRuntime {
                                                       int downsample, bool use_gpu = false) const;
 
   private:
+    struct WorkerPoolDeleter {
+        void operator()(WorldBatchWorkerPool *pool) const noexcept;
+    };
+
     size_t resolve_worker_threads(size_t task_count) const noexcept;
+    template <typename Fn> void parallel_for_index(size_t task_count, Fn &&fn) const;
     static InstrumentState safe_get_instrument_state(const SimulationKernel &world,
                                                      uint64_t entity_id);
     SimulationKernel &checked_world(size_t index);
@@ -151,4 +189,8 @@ class WorldBatchRuntime {
 
     std::vector<std::unique_ptr<SimulationKernel>> worlds_;
     size_t worker_threads_ = 1;
+    bool system_timing_enabled_ = false;
+    // Persistent workers reused across batch calls; created lazily on the first
+    // dispatch that needs more than one thread and grown on demand.
+    std::unique_ptr<WorldBatchWorkerPool, WorkerPoolDeleter> worker_pool_;
 };

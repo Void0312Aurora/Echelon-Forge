@@ -11,6 +11,19 @@
 #include "runtime/facade/runtime_facade.h"
 
 void bind_runtime_engine(nb::module_ &m) {
+    nb::class_<WorldBatchWorkerPoolStats>(m, "WorldBatchWorkerPoolStats")
+        .def_ro("dispatch_count", &WorldBatchWorkerPoolStats::dispatch_count)
+        .def_ro("serial_dispatch_count", &WorldBatchWorkerPoolStats::serial_dispatch_count)
+        .def_ro("task_count", &WorldBatchWorkerPoolStats::task_count)
+        .def_ro("wall_ns", &WorldBatchWorkerPoolStats::wall_ns)
+        .def_ro("thread_wall_ns", &WorldBatchWorkerPoolStats::thread_wall_ns)
+        .def_ro("busy_ns", &WorldBatchWorkerPoolStats::busy_ns)
+        .def_ro("pool_threads", &WorldBatchWorkerPoolStats::pool_threads);
+    nb::class_<WorldSystemTiming>(m, "WorldSystemTiming")
+        .def_ro("world_index", &WorldSystemTiming::world_index)
+        .def_ro("system_name", &WorldSystemTiming::system_name)
+        .def_ro("time_spent_s", &WorldSystemTiming::time_spent_s);
+
     nb::class_<WorldBatchRuntime>(m, "WorldBatchRuntime")
         .def(nb::init<size_t>(), nb::arg("world_count") = 0)
         .def("world_count", &WorldBatchRuntime::world_count)
@@ -19,6 +32,12 @@ void bind_runtime_engine(nb::module_ &m) {
              nb::arg("worker_threads"))
         .def("worker_threads", &WorldBatchRuntime::worker_threads)
         .def("effective_worker_threads", &WorldBatchRuntime::effective_worker_threads)
+        .def("worker_pool_stats", &WorldBatchRuntime::worker_pool_stats)
+        .def("reset_worker_pool_stats", &WorldBatchRuntime::reset_worker_pool_stats)
+        .def("set_system_timing_enabled", &WorldBatchRuntime::set_system_timing_enabled,
+             nb::arg("enabled"))
+        .def("system_timing_enabled", &WorldBatchRuntime::system_timing_enabled)
+        .def("system_timings", &WorldBatchRuntime::system_timings)
         .def("world_raw_quarantine",
              nb::overload_cast<size_t>(&WorldBatchRuntime::world_raw_quarantine),
              nb::rv_policy::reference_internal, nb::arg("index"))

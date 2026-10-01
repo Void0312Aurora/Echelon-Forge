@@ -184,6 +184,10 @@ class SimulationKernel {
     [[nodiscard]] std::uint64_t world_composition_generation() const noexcept;
     [[nodiscard]] std::array<std::uint64_t, 5> composition_scope_generations() const noexcept;
     [[nodiscard]] std::string executable_composition_graph_sha256() const;
+    // Diagnostics only: Flecs per-system time measurement. Enabling zeroes every
+    // system's accumulated time so a read covers exactly the enabled window.
+    void set_system_timing_enabled(bool enabled);
+    [[nodiscard]] std::vector<std::pair<std::string, double>> system_timings() const;
     // Configuration
     bool load_database(const std::string &path);
     void clear_zones();
