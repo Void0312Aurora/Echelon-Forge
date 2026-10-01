@@ -30,6 +30,38 @@ def test_wp22_bindings_core_keeps_explicit_diagnostics_and_legacy_allowlists() -
   assert "set_contact_list" in BINDINGS_DIAGNOSTICS_ALLOWLIST
   assert "debug_set_legacy_movement_command" in BINDINGS_LEGACY_ALLOWLIST
 
+  # The allowlists are the exact classification of the quarantined surfaces, not
+  # just a superset of their debug_-prefixed names. A binding on a diagnostics,
+  # override or legacy surface must be listed (whatever its prefix). A listed
+  # name must not also be registered on the maintained surface.
+  def _registered(block: str) -> set[str]:
+    return set(re.findall(r'\.def\s*\(\s*"([^"]+)"', block))
+
+  quarantined_names = (
+    _registered(_diagnostics_introspection_text(text))
+    | _registered(
+      _extract_function_block(text, "void bind_simulation_kernel_diagnostics_override_surface(")
+    )
+    | _registered(
+      _extract_function_block(
+        text, "void bind_simulation_kernel_legacy_compatibility_debug_surface("
+      )
+    )
+  )
+  maintained_names = _registered(
+    _extract_function_block(text, "void bind_simulation_kernel_maintained_surface(")
+  )
+  allowlisted = BINDINGS_DIAGNOSTICS_ALLOWLIST | BINDINGS_LEGACY_ALLOWLIST
+  assert sorted(quarantined_names - allowlisted) == [], (
+    "binding on a quarantined surface requires an explicit WP22-E allowlist entry"
+  )
+  assert sorted(allowlisted - quarantined_names) == [], (
+    "WP22-E allowlist entry is not registered on a quarantined surface"
+  )
+  assert sorted(allowlisted & maintained_names) == [], (
+    "WP22-E allowlisted binding must not also be on the maintained surface"
+  )
+
 def test_wp22_bindings_core_direct_world_entity_drilling_stays_quarantined() -> None:
   text = bindings_core_text()
   maintained_block = _extract_function_block(
@@ -143,7 +175,15 @@ def test_wp22_bindings_core_still_exposes_broad_surface_as_quarantined_fact() ->
   # which this count guard silently missed until 2026-08-13.
   # 87 -> 86 on 2026-08-13: the dead-binding sweep removed get_egi_state
   # (zero python consumers; the EGI component itself stays alive in C++).
-  assert len(names) == 86, (
+  # 86 -> 87: PR #35 (merge cfb9924e, 2026-09-17) landed
+  # debug_set_contact_list_preserve_timestamps (diagnostics override). Its commit
+  # 5dca2af6 was rebased onto the 86-pin commit e08db6af, so the pin never saw it;
+  # it is now on the diagnostics allowlist.
+  # 87 -> 88: PR #59 (merge 98fbd1e6, 2026-10-01) landed
+  # debug_get_countermeasure_state (diagnostics platform state, read-only EW
+  # resource snapshot) from 2b1d936e without touching this pin; it is now on the
+  # diagnostics allowlist.
+  assert len(names) == 88, (
     "WP22-E expects the broad SimulationKernel binding count to stay explicit; "
     "update this guard only with a deliberate allowlist reshaping change"
   )
