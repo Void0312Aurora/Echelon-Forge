@@ -7,7 +7,19 @@ from python.mission_obs_taxonomy import VALID_MISSION_OBS_MODES
 
 # Canonical ordered mode surfaces. CLI choice lists and validation sets must
 # derive from these tuples instead of re-writing the literals.
-ACTION_MODES = ("full", "takeoff2", "takeoff4", "naval_station3", "air_combat_hybrid_v1")
+ACTION_MODES = (
+    "full",
+    "takeoff2",
+    "takeoff4",
+    "naval_station3",
+    "air_combat_hybrid_v1",
+    # Versioned Air EW extensions of air_combat_hybrid_v1: v1 appends the
+    # chaff/flare program switches (14D), v2 also appends the self-protection
+    # jammer transmit switch and technique code (16D). Indices 0..11 keep the
+    # air_combat_hybrid_v1 layout.
+    "air_ew_hybrid_v1",
+    "air_ew_hybrid_v2",
+)
 EXECUTION_STEP_RUNTIME_MODES = ("compiled",)
 STEP_INFO_MODES = ("full", "terminal", "off")
 FLIGHT_SHAPING_BACKENDS = ("auto", "compiled", "gpu_host")

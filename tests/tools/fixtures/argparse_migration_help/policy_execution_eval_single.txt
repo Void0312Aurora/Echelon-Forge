@@ -8,7 +8,7 @@ usage: policy_execution_eval.py [-h] [--mode {cooperative,single}] --scenario
                                 [--visual_downsample VISUAL_DOWNSAMPLE]
                                 [--visual_update_interval VISUAL_UPDATE_INTERVAL]
                                 [--temporal_history_len TEMPORAL_HISTORY_LEN]
-                                [--action_mode {full,takeoff2,takeoff4,naval_station3,air_combat_hybrid_v1}]
+                                [--action_mode {full,takeoff2,takeoff4,naval_station3,air_combat_hybrid_v1,air_ew_hybrid_v1,air_ew_hybrid_v2}]
                                 [--json_out JSON_OUT] [--max_steps MAX_STEPS]
 
 Evaluate single-agent and cooperative learned execution policies.
@@ -33,6 +33,6 @@ options:
   --visual_downsample VISUAL_DOWNSAMPLE
   --visual_update_interval VISUAL_UPDATE_INTERVAL
   --temporal_history_len TEMPORAL_HISTORY_LEN
-  --action_mode {full,takeoff2,takeoff4,naval_station3,air_combat_hybrid_v1}
+  --action_mode {full,takeoff2,takeoff4,naval_station3,air_combat_hybrid_v1,air_ew_hybrid_v1,air_ew_hybrid_v2}
   --json_out JSON_OUT   Optional JSON output path.
   --max_steps MAX_STEPS
