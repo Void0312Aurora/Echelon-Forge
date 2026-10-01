@@ -3195,3 +3195,55 @@ to a dedicated owner-local evidence document.
   seekers (chaff and flare still only consume inventory), calibrated
   burn-through, DRFM deception, jammer emission strobe, canonical action-mode
   admission of `air_ew_hybrid_v1/v2`, and an EW terminal objective.
+
+### 2026-10-01 — Air combat engagement composed with the scripted EW response
+
+- Starting commit: `aa5912dd`; worktree `.worktrees/air-ew-script`.
+- Change batch: `eb0daaa3` adds `AirScriptedCombatEWModel`
+  (`air.combat_ew.c2_roe_ew_scripted`, role `air_combat_ew_controller`,
+  `adapter`). It owns one 12-element C2/ROE engagement model and one RWR EW
+  model. Composition rule: `[0:12]` is the engagement action unchanged and the
+  EW intent fills only the `air_ew_hybrid_v1/v2` tail (`[12:14]`
+  chaff/flare, `[14:16]` jammer transmit/technique); the EW intent never
+  overrides flight control, radar, or the weapon request, and the environment
+  fire gate keeps release authority. The EW tail projection is shared through
+  `air_ew_action_tail`. `411e56a1` adds the terminal scenario
+  `scenarios/air_combat/air_combat_1v1_c2_roe_ew_terminal_v1.json` (the 1v1
+  C2/ROE terminal generic-aircraft surrogate with the Red surrogate running the
+  maintained scripted opponent and live missiles; Blue is the database F-16C
+  with the gen-4 EW suite) and the RL-independent
+  `tools/diagnostics/air_combat_ew_scripted_demo.py`.
+- Evidence (HEI, seed `20260516`): both `air_ew_hybrid_v1` and
+  `air_ew_hybrid_v2` with `self_protect_on_lock` close `combat_win` at step
+  201 (shot accepted and released on step 2, mission status
+  `[0, 0, 0, 1]`). Red's first missile raises a native launch warning on step
+  163 and it stays raised through step 201; the scripted requests match the
+  warned frames exactly. Native inventory is 60/30 on step 162 and falls to
+  59/29 on step 163, then one chaff and one flare per 10 steps to 56/26 on step
+  200. The v2 pod is requested on steps 163-201 and reported transmitting on
+  every sampled step 163-200; the `hold` doctrine never transmits. Burst
+  1.0 s / 20 deg requests steps 163-182 only. The combined prefix is
+  bit-for-bit equal to a standalone engagement model on a fire/assess/warning
+  sequence for 14 and 16 dims, and the same-seed replay reproduces the whole
+  report. The vec env auto-resets inside the terminal step, so native EW
+  samples stop at step 200 and the report says so.
+- Gates (HEI, `411e56a1`): `ef_test` 199/199; runtime pytest (air,
+  simulation, air_combat, bindings) 604 passed / 38 xfailed / 0 failed;
+  composition, structural, compatibility-quarantine and runtime-profile
+  architecture 242 passed / 3 skipped / 0 failed; scripted-agent, simulation,
+  agency architecture and runtime tasking 83 passed / 2 failed, both also red at
+  `aa5912dd` (the Air CLI wrapper-path guard, and
+  `test_one_air_roster_can_route_execution_engagement_and_ew_roles`, whose
+  engagement fixture declares no weapon station, so the model fails closed
+  with `invalid_weapon_station` and never pulses fire). The
+  backend-boundary reserved-id test is order-dependent at `aa5912dd` too: it
+  fails after any demo that resolves the built-in backend in the same process.
+- Boundary decision: this closes the terminal half of EW review closure slice
+  4 (direct scenario gate) for one aircraft: a scripted action is accepted,
+  changes native countermeasure and jammer state, and the episode ends on a
+  native terminal objective. It is not an EW terminal objective: the outcome
+  is decided by Blue's missile, and the EW response does not change it on this
+  fixture because chaff and flare still have no seeker effect. Red is a generic
+  Aircraft surrogate, communication state is not exercised, and
+  `air_ew_hybrid_v1/v2` remain outside the canonical action modes. EW stays
+  `entry_surface_incomplete`; Air stays `playable_candidate`.

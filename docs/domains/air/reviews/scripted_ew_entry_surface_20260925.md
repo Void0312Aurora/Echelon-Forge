@@ -150,8 +150,13 @@ slice.
    inventory, release interval, communication state, and a report that proves
    the scripted action was accepted and changed native EW state. Native
    launch-warning observation, low-level inventory decrement, and maintained
-   chaff consumption are now verified independently; a complete cadence,
-   flare, and terminal scripted-action report remains open.
+   chaff consumption are now verified independently. The 2026-10-01
+   combat-EW slice (`air_combat_1v1_c2_roe_ew_terminal_v1` with
+   `tools/diagnostics/air_combat_ew_scripted_demo.py`) adds the terminal
+   scripted-action report for one aircraft: warning-matched chaff and flare
+   requests, interval-gated native consumption, jammer transmit on requested
+   frames, and native `combat_win` closure. Communication state, a hostile
+   named platform, and an objective decided by the EW response remain open.
 5. **Replay and multi-aircraft gate:** repeat the EW scenario under reset/replay
    and route distinct EW roles through the existing cooperative roster before
    any `playable` label.
