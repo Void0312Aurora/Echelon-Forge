@@ -1,0 +1,38 @@
+{
+    "name": "CSG_CN_J-15T_AESA",
+    "type": "Sensor",
+    "sensor": {
+        "max_range": 160000.0,
+        "fov_deg": 120.0,
+        "scan_period": 1.0,
+        "detection_prob": 0.90,
+        "bearing_noise_std": 0.45,
+        "range_noise_std": 18.0,
+        "track_memory_s": 6.0,
+        "range_power": 2.0,
+        "aspect_influence": 0.28,
+        "doppler_notch_width": 18.0
+    },
+    "_real_world": {
+        "class": "AESA fire-control radar, designation not officially disclosed; probably the same radar fitted to the land-based J-11D",
+        "variant_scope": "J-15T carrier-based Flanker-derivative multirole fighter nose radar, replacing the baseline J-15's mechanically-scanned Type 1493 pulse-Doppler set",
+        "hulls": [],
+        "public_equipment": ["New AESA radar behind a canted, pitot-less radome (TWZ, The Aviationist); 'probably the same as used on the J-11D' (TWZ); radar confirmed compatible with PL-10/PL-15 (TWZ)"]
+    },
+    "_provenance": {
+        "modeling_note": "Primary fire-control radar for J-15T per the task's requirement. TWZ (Tier B) confirms the J-15T carries a new AESA behind a distinctively canted, pitot-less radome, assessed as probably identical to the J-11D's AESA, and confirms weapon compatibility (PL-10/PL-15) but publishes no detection-range or scan-performance figures — no PRC disclosure exists. max_range is an engineering_estimate proxy set slightly below the CSG_CN_J-35_AESA record (a full 5th-generation, purpose-designed stealth-fighter radar) and close to the repo CSG_US_APG-79 (150 km, contemporary Western carrier-fighter AESA), reflecting that the J-15T's AESA is a retrofit onto a 4.5-generation Flanker-derivative airframe rather than a clean-sheet 5th-generation design. All scan/track/noise parameters are proxies patterned on the repo CSG_US_APG-79 and this packet's CSG_CN_J-35_AESA records; no public figures exist for any of them.",
+        "sources": ["csg-cn-j15t-twz-radar", "csg-cn-j15-wiki-radar"],
+        "parameters": {
+            "sensor.max_range": {"value_basis": "proxy", "source_ids": ["csg-cn-j15t-twz-radar"], "tier": "proxy", "note": "engineering_estimate 160 km; TWZ confirms an AESA fit (probably J-11D-derived) but publishes no range figure. Set close to the repo CSG_US_APG-79's 150 km, slightly above reflecting the AESA's newer generation than the baseline Type 1493"},
+            "sensor.fov_deg": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_APG-79/CSG_CN_J-35_AESA pattern; no public figure"},
+            "sensor.scan_period": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy close to the repo CSG_US_APG-79's 1.0 s; no public figure"},
+            "sensor.detection_prob": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy close to the repo CSG_US_APG-79's 0.92, nudged down slightly given the total absence of independent performance corroboration; no public figure"},
+            "sensor.bearing_noise_std": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_APG-79 pattern, nudged up marginally reflecting a retrofit installation vs a clean-sheet design; no public figure"},
+            "sensor.range_noise_std": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_APG-79 pattern, nudged up marginally, same basis as bearing_noise_std; no public figure"},
+            "sensor.track_memory_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_APG-79 pattern; no public figure"},
+            "sensor.range_power": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged (radar-equation exponent, not platform-specific)"},
+            "sensor.aspect_influence": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy close to the repo CSG_US_APG-79 pattern; no public figure"},
+            "sensor.doppler_notch_width": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy close to the repo CSG_US_APG-79 pattern; no public figure"}
+        }
+    }
+}

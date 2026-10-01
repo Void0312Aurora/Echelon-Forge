@@ -1,0 +1,28 @@
+{
+    "name": "CSG_US_AE1107C",
+    "type": "Engine",
+    "engine": {
+        "mil_thrust_n": 28000.0,
+        "ab_thrust_n": 28000.0,
+        "sfc_mil": 0.46,
+        "sfc_ab": 0.46,
+        "bypass_ratio": 0.0
+    },
+    "_real_world": {
+        "class": "Rolls-Royce (Allison) AE1107C turboshaft",
+        "variant_scope": "AE1107C as fitted to CMV-22B Osprey (optional CVW-8 branch, count 0 in the 2025-26 deployment; twin-engine tiltrotor installation)",
+        "hulls": [],
+        "public_equipment": ["2 x AE1107C, 7,000 shp each (Rolls-Royce official specification)"]
+    },
+    "_provenance": {
+        "modeling_note": "CMV-22B is the optional CVW-8 COD branch (count 0 in the 2025-26 baseline; CVW-8 flew C-2A per the OOB page). AE1107C is a turboshaft driving proprotors, not a thrust-producing jet engine; same schema limitation as the other CSG turboshaft/turboprop records (CSG_US_T700-GE-401C, CSG_US_T56-A-427A, CSG_US_T56-A-425): the loader's Engine block has no shaft-horsepower field, so mil_thrust_n/ab_thrust_n is an engineering_estimate equivalent static thrust from the sourced 7,000 shp rating via the same T[N]~=4.0*shp proxy factor; not a real thrust figure.",
+        "sources": ["csg-us-ae1107c-rollsroyce"],
+        "parameters": {
+            "engine.mil_thrust_n": {"value_basis": "engineering_estimate", "source_ids": ["csg-us-ae1107c-rollsroyce"], "tier": "est", "note": "7,000 shp sourced from Rolls-Royce official AE 1107C product page; converted via T[N]=4.0*shp proxy factor since the loader has no shp field and this is a proprotor-drive turboshaft, not a thrust engine"},
+            "engine.ab_thrust_n": {"value_basis": "engineering_estimate", "source_ids": ["csg-us-ae1107c-rollsroyce"], "tier": "est", "note": "set equal to mil_thrust_n; turboshaft has no afterburner stage"},
+            "engine.sfc_mil": {"value_basis": "proxy", "source_ids": ["csg-us-t700-geaerospace"], "tier": "proxy", "note": "no public SFC found for AE1107C; proxy from the T700-401C/-701C GE datasheet's Maximum(10-min) SFC figure (0.462 lb/SHP-hr, rounded), a comparable-class modern turboshaft"},
+            "engine.sfc_ab": {"value_basis": "proxy", "source_ids": ["csg-us-t700-geaerospace"], "tier": "proxy", "note": "same proxy reasoning as sfc_mil"},
+            "engine.bypass_ratio": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "0.0 placeholder; not a meaningful concept for a turboshaft"}
+        }
+    }
+}

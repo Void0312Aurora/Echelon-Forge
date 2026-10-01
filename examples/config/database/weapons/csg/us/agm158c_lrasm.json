@@ -1,0 +1,87 @@
+{
+    "name": "CSG_US_AGM-158C_LRASM",
+    "type": "Missile",
+    "mass_kg": 1135.0,
+    "max_flight_time_s": 1500.0,
+    "flight_model": {
+        "max_speed": 260.0,
+        "max_g": 6.0,
+        "max_turn_rate": 8.0
+    },
+    "guidance": {
+        "type": "ActiveRadar",
+        "active_seek_range": 20000.0,
+        "pn_los_rate_source": "world_los_history",
+        "target_kinematics_estimator": "world_cva",
+        "capture_guidance_mode": "disabled",
+        "target_tracker_alpha": 0.2,
+        "target_tracker_beta": 0.02,
+        "target_tracker_gamma": 0.5,
+        "nav_gain": 3.5,
+        "apn_target_accel_gain": 0.1,
+        "autopilot_tau_s": 0.15,
+        "max_accel_response_g_per_s": 40.0
+    },
+    "warhead": {
+        "type": "blast_fragmentation",
+        "mass_kg": 452.0,
+        "lethal_radius": 20.0,
+        "damage": 340.0,
+        "explosive_mass_kg": 200.0,
+        "case_mass_kg": 252.0,
+        "projection_radius_fraction": 0.55,
+        "projection_max_radius_m": 26.0,
+        "projection_max_projected_hitboxes": 4
+    },
+    "fuze": {
+        "type": "contact",
+        "trigger_radius_m": 0.0,
+        "delay_s": 0.012,
+        "reliability": 0.93
+    },
+    "_real_world": {
+        "designation": "AGM-158C LRASM (Long Range Anti-Ship Missile), LRASM 1.1 fleet configuration",
+        "role": "Long-range, low-observable, autonomous-terminal-homing anti-ship cruise missile; F/A-18E/F is the threshold CVW-8 carrier launch platform",
+        "range_nmi": ">200 (precise C-1 range classified)",
+        "guidance_real": "GPS/INS (anti-jam) midcourse with datalink; passive RF + imaging-infrared (IIR) terminal seeker; autonomous target selection/discrimination without reliance on continuous GPS or datalink in the terminal phase",
+        "speed": "High subsonic, low-observable sea-skimming terminal profile",
+        "status": "content_only_no_mechanism",
+        "mount_mapping": "none — no NavalWeaponType exists for anti-ship missiles (per authoring_standard.md's Mechanism Gaps section); placed in CVW-8 aircraft default_loadout and _real_world.weapon_inventory as a content-only record; the repo already carries a P5-packet reference record (eq-us-weapon-agm158c) for this weapon, this CSG record supplies the full Missile-schema flight/guidance/warhead/fuze fields that reference lacked"
+    },
+    "_provenance": {
+        "sources": ["csg-us-lrasm-navair-oob", "csg-us-lrasm-lockheedmartin-oob", "csg-us-lrasm-dote-fy25"],
+        "parameters": {
+            "mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-lrasm-navair-oob", "csg-us-lrasm-lockheedmartin-oob"], "tier": "est", "note": "1,020-1,250 kg bounded estimate per the CSG order-of-battle page (NAVAIR A + Lockheed Martin C); midpoint 1,135 kg used"},
+            "max_flight_time_s": {"value_basis": "proxy", "source_ids": ["csg-us-lrasm-navair-oob"], "tier": "proxy", "note": "engineering estimate derived from the sourced >200 nmi range (370+ km) at the used 260 m/s cruise-speed proxy; precise C-1 range is classified per the OOB page"},
+            "flight_model.max_speed": {"value_basis": "proxy", "source_ids": ["csg-us-lrasm-lockheedmartin-oob"], "tier": "C-est", "note": "'High subsonic' qualitative figure per Lockheed Martin (OOB page); ~0.8 Mach sea-level ~260 m/s used as engineering estimate, no precise public number"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public maneuver-load figure; engineering estimate for a sea-skimming low-observable anti-ship cruise missile's terminal maneuver, matching the repo CSG_US_Harpoon_Ship_Launched pattern"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate marginally above the repo CSG_US_Harpoon_Ship_Launched's 10.0, reflecting LRASM's more capable autonomous terminal maneuvering per public qualitative claims, not quantified"},
+            "guidance.type": {"value_basis": "sourced", "source_ids": ["csg-us-lrasm-navair-oob", "csg-us-lrasm-lockheedmartin-oob"], "tier": "A", "note": "GPS/INS midcourse + datalink, passive RF + IIR terminal seeker, autonomous target selection, per NAVAIR/Lockheed Martin (OOB page); ActiveRadar is used as the nearest matching real engine seeker_type since the engine's guidance.type vocabulary has no passive-RF/IIR-fusion category, and this record has no functional mount regardless (mechanism gap)"},
+            "guidance.active_seek_range": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public seeker acquisition range (sensor weighting/terminal seeker performance explicitly classified per the OOB page); engineering estimate marginally above the repo CSG_US_Harpoon_Ship_Launched's 18000.0, reflecting LRASM's more advanced multi-mode terminal seeker qualitatively, not quantified"},
+            "guidance.pn_los_rate_source": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard engine guidance-model wiring default, not a sourced weapon characteristic; record has no functional mount regardless"},
+            "guidance.target_kinematics_estimator": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard engine guidance-model wiring default, same basis as pn_los_rate_source"},
+            "guidance.capture_guidance_mode": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "disabled: no terminal capture-guidance submode is modeled for this mechanism-gap weapon"},
+            "guidance.target_tracker_alpha": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard alpha-beta-gamma tracker filter constant, engine convention shared across missile records, not weapon-specific"},
+            "guidance.target_tracker_beta": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.target_tracker_gamma": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.nav_gain": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo CSG_US_Harpoon_Ship_Launched pattern; no public guidance-law constant"},
+            "guidance.apn_target_accel_gain": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo CSG_US_Harpoon_Ship_Launched pattern"},
+            "guidance.autopilot_tau_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo CSG_US_Harpoon_Ship_Launched pattern"},
+            "guidance.max_accel_response_g_per_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering-estimate marginally below the repo CSG_US_Harpoon_Ship_Launched's 60.0, consistent with the lower flight_model.max_g used here"},
+            "warhead.type": {"value_basis": "sourced", "source_ids": ["csg-us-lrasm-navair-oob", "csg-us-lrasm-lockheedmartin-oob"], "tier": "A", "note": "1,000-lb class WDU-42/B-family penetrating blast-fragmentation warhead per NAVAIR/Lockheed Martin (OOB page)"},
+            "warhead.mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-lrasm-navair-oob", "csg-us-lrasm-lockheedmartin-oob"], "tier": "A", "note": "450-454 kg (1,000-lb class WDU-42/B family) per the OOB page; midpoint 452 kg used"},
+            "warhead.lethal_radius": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "engineering-estimate surrogate scaled above the repo CSG_US_Harpoon_Ship_Launched's 15.0, proportional to LRASM's roughly double warhead mass; no public lethal-radius figure"},
+            "warhead.damage": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "engineering-estimate surrogate scaled above the repo CSG_US_Harpoon_Ship_Launched's 260.0, proportional to warhead mass; no public damage-effectiveness figure"},
+            "warhead.explosive_mass_kg": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering-estimate HE/case split of the sourced 452 kg total warhead mass, no public split figure"},
+            "warhead.case_mass_kg": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering-estimate HE/case split, see explosive_mass_kg; case mass set relatively high consistent with the WDU-42/B family's penetrating-warhead design intent"},
+            "warhead.projection_radius_fraction": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "copied from the repo CSG_US_Harpoon_Ship_Launched's projection-geometry pattern"},
+            "warhead.projection_max_radius_m": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "scaled above the repo CSG_US_Harpoon_Ship_Launched's 20.0, proportional to this warhead's larger lethal_radius"},
+            "warhead.projection_max_projected_hitboxes": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering-estimate marginally above the repo CSG_US_Harpoon_Ship_Launched's 3, reflecting the larger warhead's wider fragmentation footprint; not a quantified figure"},
+            "fuze.type": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public fuze timing data; contact fuze is the nearest real engine-recognized fuze family for a penetrating anti-ship warhead's impact/delay exploder, matching the repo CSG_US_Harpoon_Ship_Launched pattern"},
+            "fuze.trigger_radius_m": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "0.0 consistent with a contact-fuze trigger radius; no public influence-fuze standoff distance"},
+            "fuze.delay_s": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public fuze timing data; engineering-estimate scaffold marginally above the repo CSG_US_Harpoon_Ship_Launched's 0.01, consistent with a larger penetrating warhead's slightly longer delay"},
+            "fuze.reliability": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public reliability figure; engineering-estimate scaffold marginally above the repo CSG_US_Harpoon_Ship_Launched's 0.92, reflecting LRASM's newer/more mature fielded status (LRASM 1.1, fielded Nov 2023 per DOT&E FY25) qualitatively, not quantified"}
+        },
+        "modeling_notes": ["No functional mount exists (mechanism gap, anti-ship missile); content-only for CVW-8 aircraft default_loadout and _real_world.weapon_inventory. Fleet configuration per DOT&E FY25 (OOB page): all AGM-158C upgraded to LRASM 1.1; the extended-range AGM-158C-3 variant is excluded from the 2025-26 baseline and not modeled. F/A-18E/F is the threshold carrier launch platform (not F-35C internal carriage)."]
+    }
+}

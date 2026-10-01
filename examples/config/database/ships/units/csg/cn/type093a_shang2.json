@@ -1,0 +1,196 @@
+{
+    "name": "CSG_CN_Type093A_Shang2",
+    "type": "Submarine",
+    "submarine_platform": {
+        "submerged_displacement_kg": 7000000.0,
+        "length_m": 110.0,
+        "beam_m": 11.0,
+        "draft_m": 8.0,
+        "max_speed_submerged_mps": 15.4,
+        "quiet_speed_mps": 5.1,
+        "max_accel_mps2": 0.1,
+        "max_decel_mps2": 0.13,
+        "max_turn_rate_deg_s": 1.8,
+        "max_depth_rate_mps": 1.5,
+        "nominal_patrol_depth_m": 240.0,
+        "max_operating_depth_m": 400.0,
+        "acoustic_stealth_bias_db": -6.0,
+        "self_noise_per_speed_db": 1.6,
+        "crew": 100
+    },
+    "health": {
+        "current_hp": 3000.0,
+        "max_hp": 3000.0
+    },
+    "sensor_ref": "CSG_CN_PLAN_Naval_ESM",
+    "sensor_refs": [],
+    "esm": {
+        "sensitivity_dbm": -90.0,
+        "max_detection_range_m": 240000.0,
+        "classify_emitters": true
+    },
+    "mounted_sonars": [
+        {
+            "label": "type_093b_bow_sonar",
+            "sonar": {
+                "mode": "Active",
+                "max_range_m": 26000.0,
+                "scan_period_s": 9.0,
+                "detection_threshold_db": 5.0,
+                "track_memory_s": 26.0,
+                "bearing_noise_std_deg": 1.2,
+                "range_noise_std_m": 450.0,
+                "directivity_gain_db": 10.0,
+                "self_noise_per_speed_db": 0.9,
+                "ambient_noise_db": 68.0,
+                "source_level_reference_db": 228.0,
+                "source_level_speed_factor_db": 1.5,
+                "transmission_loss_alpha_db_per_km": 0.07,
+                "layer_break_penalty_db": 3.5,
+                "convergence_zone_bonus_m": 42000.0,
+                "baffle_exclusion_deg": 40.0,
+                "ownship_quieting_speed_mps": 4.0,
+                "active_ping_source_level_db": 228.0,
+                "confirm_hits_m": 2,
+                "confirm_window_n": 3,
+                "passive_only": false,
+                "bearing_only": false
+            }
+        },
+        {
+            "label": "type_093b_towed_array",
+            "sonar": {
+                "mode": "Passive",
+                "max_range_m": 50000.0,
+                "scan_period_s": 6.0,
+                "detection_threshold_db": 3.0,
+                "track_memory_s": 32.0,
+                "bearing_noise_std_deg": 0.8,
+                "range_noise_std_m": 800.0,
+                "directivity_gain_db": 14.0,
+                "self_noise_per_speed_db": 0.6,
+                "ambient_noise_db": 65.0,
+                "source_level_reference_db": 0.0,
+                "source_level_speed_factor_db": 0.0,
+                "transmission_loss_alpha_db_per_km": 0.05,
+                "layer_break_penalty_db": 2.5,
+                "convergence_zone_bonus_m": 60000.0,
+                "baffle_exclusion_deg": 0.0,
+                "ownship_quieting_speed_mps": 5.0,
+                "active_ping_source_level_db": 0.0,
+                "confirm_hits_m": 2,
+                "confirm_window_n": 3,
+                "passive_only": true,
+                "bearing_only": false
+            }
+        }
+    ],
+    "has_command_link": true,
+    "command_link": {
+        "latency_s": 0.4,
+        "drop_prob": 0.02
+    },
+    "has_data_link": true,
+    "data_link_network_id": 2,
+    "damage_model": {
+        "hitboxes": [
+            {
+                "offset": [40.0, 0.0, 0.0],
+                "size": [22.0, 11.0, 8.0],
+                "armor": 2.0,
+                "systems": ["bow_sonar", "torpedo_room"],
+                "components": [
+                    {"name": "bow_sonar_array", "system": "sonar_sensor"},
+                    {"name": "torpedo_tube_bank_1", "system": "weapons_combat_stowage"},
+                    {"name": "torpedo_tube_bank_2", "system": "weapons_combat_stowage"},
+                    {"name": "reload_torpedo_stowage", "system": "cargo_combat_ammunition_stowage"}
+                ]
+            },
+            {
+                "offset": [8.0, 0.0, 3.0],
+                "size": [30.0, 11.0, 9.0],
+                "armor": 3.0,
+                "systems": ["command", "periscope_mast"],
+                "components": [
+                    {"name": "control_room", "system": "command"},
+                    {"name": "sail_masts_periscope_esm", "system": "command"}
+                ]
+            },
+            {
+                "offset": [-25.0, 0.0, 0.0],
+                "size": [35.0, 11.0, 9.0],
+                "armor": 2.0,
+                "systems": ["reactor", "propulsion"],
+                "components": [
+                    {"name": "pwr_reactor_plant", "system": "propulsion_engineering"},
+                    {"name": "steam_turbine_set", "system": "propulsion_engineering"}
+                ]
+            },
+            {
+                "offset": [-48.0, 0.0, 0.0],
+                "size": [15.0, 8.0, 7.0],
+                "armor": 1.0,
+                "systems": ["stern", "towed_array_winch"],
+                "components": [
+                    {"name": "pump_jet_propulsor", "system": "propulsion_engineering"},
+                    {"name": "towed_array_winch_stern", "system": "sonar_sensor"}
+                ]
+            }
+        ]
+    },
+    "_real_world": {
+        "class": "Shang II-class (Type 093A) nuclear attack submarine (SSN)",
+        "primary_role": "Undersea escort / ASW screen (analyst-inferred CSG presence, never PRC-confirmed per OOB Arbitrated Corrections)",
+        "public_equipment": [
+            "No VLS -- weapons launched exclusively via torpedo tubes per Carlson & Wang CMSI CMR-30 (cited by Wikipedia, C-tier but load-bearing claim)",
+            "6 x torpedo tubes (533mm), Yu-6 heavyweight torpedo, YJ-18 (submarine-launched variant) via tube",
+            "Bow sonar array + flank/towed arrays (unspecified designation, per ONI/USNI)",
+            "Improved quieting over Type 093 (original) per USNI/ONI B/A-tier"
+        ],
+        "weapon_inventory": [
+            {"weapon_ref": "CSG_CN_Yu-6", "status": "content_only_no_mechanism", "representative_load": 12, "note": "heavyweight torpedo, tube-launched"},
+            {"weapon_ref": "CSG_CN_YJ-18A", "status": "content_only_no_mechanism", "representative_load": 4, "note": "submarine-launched ASCM variant via torpedo tube per ONI 2015 (A-tier); shares the ship-launched YJ-18A Missile record per authoring standard reuse convention -- no separate submarine-launched file"}
+        ],
+        "loadout_note": "NO vls_sam / gun_5in / ciws mount exists on this hull -- consistent with the ssn_virginia_blk3_4.json template's convention that submarines carry no naval_weapon_system.mounts[] block at all; all weapons are content_only_no_mechanism, documented here only",
+        "sonar_note": "Reuses the packet's CSG_CN_Type_093B_Bow_Sonar and CSG_CN_Type_093B_Towed_Array sensor modules inline per decision (no source distinguishes sonar performance between 093A and 093B; the two hulls differ by VLS/loadout, not sonar fit)"
+    },
+    "_provenance": {
+        "unit_conversions": [
+            "submerged displacement ~7,000 t (Wikipedia/Federation of American Scientists aggregation, C-tier, consistent across multiple secondary sources); no A/B-tier official figure",
+            "length ~110 m / beam ~11 m (Wikipedia/GlobalSecurity aggregation, C-tier); no A/B-tier official figure",
+            "max speed submerged >25 kt is the only widely repeated figure (C-tier, various); engineering_estimate 30 kt (15.4 m/s) used as a reasoned midpoint consistent with the Type 093-family's improved-quieting narrative"
+        ],
+        "sources": [
+            "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md#type-093a093b-shang-ii-class-ssn",
+            "csg-cn-ssn-usni-oni-20260305", "csg-cn-093-wiki", "csg-cn-093-globalsecurity", "csg-cn-093-navaltechnology",
+            "csg-cn-093-seaforces", "csg-cn-ssn-kirchberger-uscc-2023", "csg-cn-ssn-armyrecognition-navyday2025"
+        ],
+        "parameters": {
+            "damage_model.hitboxes.components.system": {"value_basis": "engineering_estimate", "note": "component system tags follow the packet-wide convention; 4-zone layout follows the ssn_virginia_blk3_4.json bow/command/reactor/stern pattern"},
+            "submarine_platform.submerged_displacement_kg": {"value_basis": "proxy", "source_ids": ["csg-cn-093-wiki", "csg-cn-093-globalsecurity"], "tier": "C", "note": "~7,000t is a widely repeated secondary-source aggregation, no A/B official figure exists"},
+            "submarine_platform.length_m": {"value_basis": "proxy", "source_ids": ["csg-cn-093-wiki"], "tier": "C", "note": "~110m, secondary-source aggregation"},
+            "submarine_platform.beam_m": {"value_basis": "proxy", "source_ids": ["csg-cn-093-wiki"], "tier": "C", "note": "~11m, secondary-source aggregation"},
+            "submarine_platform.draft_m": {"value_basis": "engineering_estimate", "note": "not public at any tier; engineering estimate scaled from length/beam ratio typical of Han/Shang-family hulls"},
+            "submarine_platform.max_speed_submerged_mps": {"value_basis": "engineering_estimate", "note": "'>25kt' is the only repeated C-tier figure; 30kt engineering estimate used as a reasoned midpoint for an improved-quieting SSN of this displacement class"},
+            "submarine_platform.quiet_speed_mps": {"value_basis": "engineering_estimate", "note": "no source; engineering estimate ~1/3 of max speed, consistent with the packet's other submerged-platform proxies"},
+            "submarine_platform.crew": {"value_basis": "proxy", "source_ids": ["csg-cn-093-wiki"], "tier": "C", "note": "~100, secondary-source aggregation, no A/B figure"},
+            "submarine_platform.acoustic_stealth_bias_db": {"value_basis": "engineering_estimate", "note": "-6dB relative to a non-stealth baseline, reflecting the qualitative 'improved quieting over Type 093 (original)' claim (USNI/ONI, B/A-tier for the qualitative claim, no numeric dB figure exists)"},
+            "submarine_platform.max_accel_mps2": {"value_basis": "engineering_estimate", "note": "not public; engineering estimate consistent with the packet's other submerged-platform proxies and the ssn_virginia_blk3_4.json template"},
+            "submarine_platform.max_decel_mps2": {"value_basis": "engineering_estimate", "note": "not public; engineering estimate consistent with max_accel_mps2"},
+            "submarine_platform.max_turn_rate_deg_s": {"value_basis": "engineering_estimate", "note": "not public; engineering estimate typical of a nuclear attack submarine of this size"},
+            "submarine_platform.max_depth_rate_mps": {"value_basis": "engineering_estimate", "note": "not public; engineering estimate consistent with the ssn_virginia_blk3_4.json template proxy"},
+            "submarine_platform.nominal_patrol_depth_m": {"value_basis": "engineering_estimate", "note": "not public; engineering estimate below max_operating_depth_m consistent with the ssn_virginia_blk3_4.json template convention"},
+            "submarine_platform.max_operating_depth_m": {"value_basis": "engineering_estimate", "note": "not public at any tier; engineering estimate typical of a modern nuclear attack submarine, no PLAN-specific figure exists"},
+            "submarine_platform.self_noise_per_speed_db": {"value_basis": "engineering_estimate", "note": "not public; engineering estimate consistent with the packet's acoustic_stealth_bias_db reasoning"},
+            "_real_world.loadout_note": {"value_basis": "sourced", "source_ids": ["csg-cn-093-wiki"], "tier": "C", "note": "No VLS per Carlson & Wang CMSI CMR-30 (cited by Wikipedia); this is a load-bearing C-tier claim per decision #3, distinguishing 093A structurally from 093B's VLS fit"},
+            "mounted_sonars": {"value_basis": "engineering_estimate", "note": "reuses the packet's shared Type_093B_Bow_Sonar / Type_093B_Towed_Array sonar parameter sets inline per the packet's own decision that no source distinguishes sonar performance between 093A and 093B"},
+            "data_link_network_id": {"value_basis": "engineering_estimate", "note": "2: PLAN CSG network membership scaffold value"}
+        },
+        "modeling_notes": [
+            "Health scaled at a lower per-tonne rate than surface ships (submarines are more fragile per unit mass in the packet's existing US SSN convention); consistent with ssn_virginia_blk3_4.json's health-to-displacement ratio.",
+            "No naval_weapon_system.mounts[] block at all -- submarines have zero functional NavalWeaponType mounts in this engine; all torpedo/ASCM content is content_only_no_mechanism per the ssn_virginia_blk3_4.json template precedent.",
+            "SSN escort presence in a Fujian CSG is an analyst assumption, never PRC-confirmed, per the OOB's own Arbitrated Corrections -- retained here only as a doctrinally-plausible unit record, not as a claim of confirmed order-of-battle inclusion.",
+            "093A and 093B are written as two distinct Submarine records per decision #3: they share sonar fit but differ in weapon loadout (093A: torpedo-tube only, no VLS; 093B: adds a 24-cell VLS per ONI A-tier baseline)."
+        ]
+    }
+}

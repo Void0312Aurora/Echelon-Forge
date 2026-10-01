@@ -7,6 +7,7 @@ from typing import Any
 from .clone import _clone_scenario_value
 from .common import (
     DEFAULT_TERRAIN_TYPE,
+    resolve_environment_geodetic_anchor,
     resolve_environment_terrain_config,
     _coerce_nonnegative_int,
     _SURFACE_TYPE_MAP,
@@ -212,6 +213,8 @@ class CompiledWorldLayoutTemplate:
     sea_state: float
     wave_heading_deg: float
     wave_period_s: float
+    geodetic_anchor: tuple[float, float, float]
+    geodetic_anchor_source: str
     env_randomization: dict[str, Any]
     primary_runway_heading_deg: float | None
     wind_ref_alt_m: float
@@ -236,6 +239,7 @@ def _compile_world_layout_template(merged_scenario_data: dict[str, Any]) -> Comp
     maritime_cfg = env_cfg.get("maritime", {})
     if not isinstance(maritime_cfg, dict):
         maritime_cfg = {}
+    geodetic_anchor, geodetic_anchor_source = resolve_environment_geodetic_anchor(env_cfg)
 
     zones_out: list[CompiledZoneLayoutTemplate] = []
     zone_defs = env_cfg.get("zones", [])
@@ -338,6 +342,8 @@ def _compile_world_layout_template(merged_scenario_data: dict[str, Any]) -> Comp
         sea_state=float(maritime_cfg.get("sea_state", 0.0)),
         wave_heading_deg=float(maritime_cfg.get("wave_heading_deg", 0.0)),
         wave_period_s=float(maritime_cfg.get("wave_period_s", 8.0)),
+        geodetic_anchor=geodetic_anchor,
+        geodetic_anchor_source=geodetic_anchor_source,
         env_randomization=_clone_scenario_value(env_cfg.get("randomization", {}))
         if isinstance(env_cfg.get("randomization", {}), dict)
         else {},

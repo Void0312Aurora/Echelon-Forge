@@ -1,0 +1,426 @@
+{
+    "name": "CSG_CN_Z-20F",
+    "type": "Aircraft",
+    "airframe": {
+        "empty_mass_kg": 7000.0,
+        "max_fuel_kg": 1800.0,
+        "drag_coefficient": 0.045,
+        "reference_area": 20.0,
+        "length_m": 17.5,
+        "wingspan_m": 3.5,
+        "height_m": 4.5,
+        "configuration": "Conventional"
+    },
+    "health": {
+        "current_hp": 70.0,
+        "max_hp": 70.0
+    },
+    "damage_model": {
+        "vulnerability": {
+            "synthetic": true,
+            "calibrated": false,
+            "pk_authority": false,
+            "deterministic_fuze_authority": false,
+            "provenance": "CSG S0-C synthetic naval-ASW-helicopter vulnerability scaffold (packet 4, solo worker); geometry scaled from the base Z-20 catalog leaf dimensions (Tier C/B), mechanism thresholds proxied from the repo mh60r_seahawk.json template pattern; requires calibration before deterministic fuze/Pk claims",
+            "evidence_dataset_ref": "",
+            "calibration_status": "unvalidated",
+            "blast_scale": 1.0,
+            "fragmentation_scale": 1.0,
+            "continuous_rod_scale": 1.0,
+            "hit_to_kill_scale": 1.0,
+            "nose_aspect_scale": 1.0,
+            "beam_aspect_scale": 1.0,
+            "tail_aspect_scale": 1.0,
+            "high_closure_scale": 1.0,
+            "low_closure_scale": 1.0,
+            "near_miss_scale": 1.0,
+            "direct_hit_scale": 1.0
+        },
+        "hitboxes": [
+            {
+                "offset": [3.0, 0.0, 0.3],
+                "size": [1.8, 1.5, 1.3],
+                "armor": 2.5,
+                "systems": ["cockpit", "radar", "avionics"],
+                "components": [
+                    {
+                        "name": "chin_surface_search_radar",
+                        "system": "radar_avionics",
+                        "offset": [3.7, 0.0, -0.3],
+                        "size": [0.4, 0.35, 0.3],
+                        "armor": 2.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.25, "blast_fragmentation": 1.15, "continuous_rod": 0.90, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "nose_eo_ir_turret",
+                        "system": "sensor",
+                        "offset": [3.6, 0.0, -0.5],
+                        "size": [0.3, 0.3, 0.3],
+                        "armor": 2.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.25, "blast_fragmentation": 1.15, "continuous_rod": 0.90, "hit_to_kill": 1.30},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "cockpit_crew_station",
+                        "system": "cockpit",
+                        "offset": [2.8, 0.0, 0.4],
+                        "size": [1.2, 1.4, 1.0],
+                        "armor": 3.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 1.00, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    }
+                ]
+            },
+            {
+                "offset": [-0.5, 0.0, 0.4],
+                "size": [3.2, 1.9, 1.5],
+                "armor": 3.0,
+                "systems": ["fuel", "avionics", "data_link", "mission_system"],
+                "components": [
+                    {
+                        "name": "asw_mission_console",
+                        "system": "mission_avionics",
+                        "offset": [-0.3, 0.0, 0.2],
+                        "size": [1.6, 1.4, 0.8],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 0.95, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "main_fuel_tank",
+                        "system": "fuel",
+                        "offset": [-0.8, 0.0, 0.6],
+                        "size": [2.4, 1.6, 0.5],
+                        "armor": 2.5,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.75, "fragmentation": 1.05, "blast_fragmentation": 0.95, "continuous_rod": 0.85, "hit_to_kill": 1.10},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "data_link_terminal",
+                        "system": "data_link",
+                        "offset": [-0.2, -0.7, 0.5],
+                        "size": [0.4, 0.3, 0.3],
+                        "armor": 2.5,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.20, "blast_fragmentation": 1.10, "continuous_rod": 0.90, "hit_to_kill": 1.25},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "flight_control_computer",
+                        "system": "flight_control",
+                        "offset": [-1.0, 0.3, -0.2],
+                        "size": [0.35, 0.35, 0.3],
+                        "armor": 3.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.90, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 1.00, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    }
+                ]
+            },
+            {
+                "offset": [-1.0, 0.0, 1.6],
+                "size": [1.5, 1.5, 1.2],
+                "armor": 2.5,
+                "systems": ["engine"],
+                "components": [
+                    {
+                        "name": "left_engine_core",
+                        "system": "engine",
+                        "offset": [-1.0, 0.6, 1.7],
+                        "size": [1.1, 0.5, 0.5],
+                        "armor": 3.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 0.90, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "engine_cores",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 0.5,
+                        "critical": false
+                    },
+                    {
+                        "name": "right_engine_core",
+                        "system": "engine",
+                        "offset": [-1.0, -0.6, 1.7],
+                        "size": [1.1, 0.5, 0.5],
+                        "armor": 3.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 0.90, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "engine_cores",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 0.5,
+                        "critical": false
+                    },
+                    {
+                        "name": "main_transmission_gearbox",
+                        "system": "propulsion_transmission",
+                        "offset": [-1.0, 0.0, 1.4],
+                        "size": [0.7, 0.6, 0.5],
+                        "armor": 3.5,
+                        "threshold_scale": 1.00,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 0.95, "hit_to_kill": 1.10},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "engine", "target_system": "engine", "edge_type": "structural_support", "scale": 0.9, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    }
+                ]
+            },
+            {
+                "offset": [-1.0, 0.0, 2.4],
+                "size": [1.2, 8.5, 0.5],
+                "armor": 2.0,
+                "systems": ["rotor", "structure"],
+                "components": [
+                    {
+                        "name": "main_rotor_hub",
+                        "system": "rotor_structure",
+                        "offset": [-1.0, 0.0, 2.5],
+                        "size": [0.6, 0.6, 0.4],
+                        "armor": 3.0,
+                        "threshold_scale": 1.00,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 0.95, "hit_to_kill": 1.10},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "main_rotor_blades",
+                        "system": "rotor_structure",
+                        "offset": [-1.0, 0.0, 2.6],
+                        "size": [1.0, 8.0, 0.15],
+                        "armor": 1.5,
+                        "threshold_scale": 1.25,
+                        "mechanism_thresholds": {"blast": 0.75, "fragmentation": 1.30, "blast_fragmentation": 1.20, "continuous_rod": 0.85, "hit_to_kill": 1.35},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [-7.5, 0.0, 1.0],
+                "size": [1.5, 1.2, 1.8],
+                "armor": 2.0,
+                "systems": ["tail", "rotor", "structure"],
+                "components": [
+                    {
+                        "name": "tail_rotor_assembly",
+                        "system": "rotor_structure",
+                        "offset": [-8.0, 0.0, 1.6],
+                        "size": [0.5, 1.0, 1.0],
+                        "armor": 2.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.20, "blast_fragmentation": 1.10, "continuous_rod": 0.90, "hit_to_kill": 1.25},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "tail_boom_structure",
+                        "system": "tail_structure",
+                        "offset": [-7.0, 0.0, 0.7],
+                        "size": [1.2, 0.5, 0.5],
+                        "armor": 2.5,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {"blast": 0.85, "fragmentation": 1.10, "blast_fragmentation": 1.00, "continuous_rod": 1.05, "hit_to_kill": 1.15},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "tail_rotor_drive_shaft",
+                        "system": "propulsion_transmission",
+                        "offset": [-6.0, 0.0, 1.0],
+                        "size": [2.0, 0.15, 0.15],
+                        "armor": 2.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {"blast": 0.80, "fragmentation": 1.15, "blast_fragmentation": 1.05, "continuous_rod": 0.90, "hit_to_kill": 1.20},
+                        "redundancy_group_id": "",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "engine", "target_system": "engine", "edge_type": "structural_support", "scale": 0.6, "provenance": "CSG S0-C geometry-scaling scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    }
+                ]
+            }
+        ]
+    },
+    "flight_model": {
+        "max_speed": 97.0,
+        "min_speed": 0.0,
+        "max_turn_rate": 25.0,
+        "max_climb_rate": 8.0,
+        "max_accel": 3.0,
+        "max_g": 2.5,
+        "min_g": -0.5,
+        "takeoff_speed": 0.0,
+        "landing_speed": 0.0,
+        "taxi_turn_rate": 15.0
+    },
+    "landing_gear": {
+        "can_use_unpaved": true,
+        "rolling_friction_coeff": 0.03,
+        "max_load_factor": 4.0,
+        "contact_height_m": 1.2
+    },
+    "engine_ref": "CSG_CN_WZ-10",
+    "mounted_sensors": [
+        {
+            "label": "Chin Surface-Search Radar",
+            "sensor": {
+                "type": "Radar",
+                "max_range": 70000.0,
+                "fov_deg": 300.0,
+                "scan_period": 4.0,
+                "detection_prob": 0.83,
+                "bearing_noise_std": 0.55,
+                "range_noise_std": 55.0,
+                "track_memory_s": 15.0,
+                "range_power": 4.0,
+                "aspect_influence": 0.30,
+                "doppler_notch_width": 5.0
+            }
+        }
+    ],
+    "mounted_sonars": [
+        {
+            "label": "Dipping Sonar",
+            "sonar": {
+                "mode": "Active",
+                "max_range_m": 5000.0,
+                "scan_period_s": 20.0,
+                "detection_threshold_db": 9.0,
+                "track_memory_s": 30.0,
+                "bearing_noise_std_deg": 2.2,
+                "range_noise_std_m": 160.0,
+                "directivity_gain_db": 10.0,
+                "self_noise_per_speed_db": 0.0,
+                "ambient_noise_db": 65.0,
+                "source_level_reference_db": 215.0,
+                "source_level_speed_factor_db": 0.0,
+                "transmission_loss_alpha_db_per_km": 0.1,
+                "layer_break_penalty_db": 4.0,
+                "convergence_zone_bonus_m": 0.0,
+                "baffle_exclusion_deg": 0.0,
+                "ownship_quieting_speed_mps": 0.0,
+                "active_ping_source_level_db": 215.0,
+                "confirm_hits_m": 2,
+                "confirm_window_n": 3,
+                "passive_only": false,
+                "bearing_only": false
+            }
+        }
+    ],
+    "rcs_profile_ref": "CSG_CN_Z-20_RCS",
+    "has_data_link": true,
+    "data_link_network_id": 2,
+    "has_command_link": true,
+    "command_link": {
+        "latency_s": 0.2,
+        "drop_prob": 0.03
+    },
+    "hardpoints": [
+        {"station_id": 1, "type": ["Pylon", "StubWing"], "capacity_kg": 400.0},
+        {"station_id": 2, "type": ["Pylon", "StubWing"], "capacity_kg": 400.0}
+    ],
+    "default_loadout": {
+        "1": "CSG_CN_Yu-7",
+        "2": "CSG_CN_YJ-9_Family_Light_ASM"
+    },
+    "ammo": {
+        "missile_count": 2,
+        "max_missile_count": 2
+    },
+    "_real_world": {
+        "designation": "Z-20F",
+        "role": "Shipborne anti-submarine warfare (ASW) helicopter for the Fujian escort/CSG",
+        "membership": "\"Z-20 series shipborne helicopters\" named in official Fujian air-wing membership statement (csg-cn-fujian-plan-spokesperson, A)",
+        "deployment": "2 on deck at commissioning, armed with light anti-ship missiles (csg-cn-z20f-aviationist, B; Aviationist identifies the missiles as YJ-9 family)",
+        "sensors": "Chin surface-search radar, nose EO/IR, stub wings (csg-cn-z20f-flightglobal, csg-cn-z20f-mwm, csg-cn-z20f-dsa, B); dipping sonar (ALFS-like), MAD, left-side sonobuoy launcher are C-only (csg-cn-z20f-globaltimes, B for dipping-sonar role fit; MAD/sonobuoy launcher C)",
+        "weapons": "Yu-7 324mm lightweight torpedo; YJ-9-family anti-ship missile (B for association); up to 8x KD-10 per some sources (C/B split noted in the OOB doc)",
+        "base_airframe": "Naval-variant deltas not public; base Z-20 catalog leaf figures reused per task instruction",
+        "engines": "2x WZ-10, ~1,790kW (2,400shp) each (csg-cn-z20-catalog, B; catalog band 1,600-2,000kW is C)",
+        "mtow": "~10,000kg base Z-20 (C); naval MTOW not public, engineering_estimate 10,000-10,800kg using MH-60R (~10,400kg) as analogue",
+        "speed_range": "Max speed 320-360km/h; range 560-600km (base airframe, C)",
+        "service_ceiling": "5,400-6,000m (C)",
+        "crew": "2 flight crew base (C); ASW mission crew not public, engineering_estimate 3-4 total including sensor operators (modeled here as 2 crew stations: cockpit + mission console, consistent with a compact tactical helicopter rather than a larger MH-60R-class crew)",
+        "endurance": "ASW time on station not public; engineering_estimate 1.5-2.5h at 100-150km radius",
+        "status": "content_only_full_damage_model; Yu-7 reused unchanged from the existing repo record per task instruction (not duplicated); YJ-9_Family_Light_ASM is the packet's most speculative proxy weapon"
+    },
+    "_provenance": {
+        "sources": ["csg-cn-fujian-plan-spokesperson", "csg-cn-z20f-aviationist", "csg-cn-z20f-flightglobal", "csg-cn-z20f-mwm", "csg-cn-z20f-dsa", "csg-cn-z20f-globaltimes", "csg-cn-z20-catalog", "examples/config/database/weapons/csg/cn/yu_7.json"],
+        "modeling_note": "Full hand-authored damage model (5 hitboxes) following the repo mh60r_seahawk.json helicopter template pattern directly. Geometry scaled from the base Z-20 catalog leaf dimensions (length/rotor diameter approximated from the UH-60/Z-20 class, Tier B/C). Sonar and radar fields fully inlined per-mount in mounted_sensors/mounted_sonars, matching the mh60r_seahawk.json convention exactly (the underlying values are the same as the standalone CSG_CN_Z-20F_Radar/CSG_CN_Z-20F_Dipping_Sonar module records written earlier this packet, but the aircraft record does not reference them by name -- it duplicates their field values inline, since that is how the engine's DefaultUnitFactory parses mounted_sensors/mounted_sonars for any aircraft/helicopter unit). Twin engines share redundancy_group_id 'engine_cores'; main transmission gearbox, main rotor hub/blades, and tail rotor assembly/drive shaft modeled as distinct rotor/transmission components per the task's explicit instruction for helicopters. VTOL flight model: takeoff_speed/landing_speed/min_speed = 0.0 per the mh60r_seahawk.json convention.",
+        "parameters": {
+            "airframe.empty_mass_kg": {"value_basis": "proxy", "source_ids": ["csg-cn-z20-catalog"], "tier": "proxy", "note": "no public naval-variant empty mass; engineering estimate consistent with the base Z-20/UH-60 class (~7,000kg), same basis as the base catalog leaf"},
+            "airframe.max_fuel_kg": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate typical of the UH-60/Z-20 class internal fuel"},
+            "airframe.drag_coefficient": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo mh60r_seahawk.json convention; no public figure"},
+            "airframe.reference_area": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo mh60r_seahawk.json convention scaled to the Z-20's slightly larger rotor diameter; no public figure"},
+            "airframe.length_m": {"value_basis": "proxy", "source_ids": ["csg-cn-z20-catalog"], "tier": "proxy", "note": "engineering estimate consistent with the UH-60/Z-20 class fuselage length (~17.5m rotor-tip to rotor-tip class); naval-variant delta not public"},
+            "airframe.wingspan_m": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "represents stub-wing span for hardpoint mounting, not rotor diameter; engineering estimate, no public figure"},
+            "airframe.height_m": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering estimate consistent with the UH-60/Z-20 class; no public figure"},
+            "airframe.configuration": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "Conventional: helicopter, not a Flanker-derivative; irrelevant regardless since this record hand-authors its own full damage_model"},
+            "flight_model.max_speed": {"value_basis": "sourced", "source_ids": ["csg-cn-z20-catalog"], "tier": "C", "note": "320-360km/h base airframe; upper bound 360km/h = 100 m/s used, adjusted down slightly to 97 m/s reflecting the added ASW mission equipment drag/weight, per the conversion 1km/h=0.277778m/s"},
+            "flight_model.min_speed": {"value_basis": "sourced", "source_ids": [], "tier": "C", "note": "0.0: VTOL helicopter, matching the mh60r_seahawk.json convention"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate typical of a medium naval helicopter, matched to the mh60r_seahawk.json convention"},
+            "flight_model.max_climb_rate": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate typical of the UH-60/Z-20 class"},
+            "flight_model.max_accel": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate consistent with max_g"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate typical of a medium naval helicopter, matched to the mh60r_seahawk.json convention"},
+            "flight_model.min_g": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo mh60r_seahawk.json convention"},
+            "flight_model.takeoff_speed": {"value_basis": "sourced", "source_ids": [], "tier": "C", "note": "0.0: VTOL helicopter, matching the mh60r_seahawk.json convention"},
+            "flight_model.landing_speed": {"value_basis": "sourced", "source_ids": [], "tier": "C", "note": "0.0: VTOL helicopter, matching the mh60r_seahawk.json convention"},
+            "flight_model.taxi_turn_rate": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo mh60r_seahawk.json convention; no public figure"},
+            "landing_gear.can_use_unpaved": {"value_basis": "sourced", "source_ids": [], "tier": "C", "note": "true: matches the mh60r_seahawk.json helicopter convention (though this aircraft operates primarily from ship deck)"},
+            "landing_gear.rolling_friction_coeff": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo mh60r_seahawk.json convention; no public figure"},
+            "landing_gear.max_load_factor": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "engineering estimate reflecting deck-landing gear (harpoon-grid/RAST-analogous securing); no public figure"},
+            "landing_gear.contact_height_m": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "engineering estimate consistent with the UH-60/Z-20 class landing gear height"},
+            "engine_ref": {"value_basis": "sourced", "source_ids": ["csg-cn-z20-catalog"], "tier": "B", "note": "2x WZ-10, ~1,790kW each; see the CSG_CN_WZ-10 engine module record's own provenance for the full sourcing chain"},
+            "mounted_sensors": {"value_basis": "sourced", "source_ids": ["csg-cn-z20f-flightglobal", "csg-cn-z20f-mwm", "csg-cn-z20f-dsa"], "tier": "B", "note": "chin surface-search radar existence and role confirmed by FlightGlobal/Military Watch/DSA. Radar fields inlined unchanged from the standalone CSG_CN_Z-20F_Radar module record (this same packet), per the mh60r_seahawk.json schema precedent that mounted_sensors/mounted_sonars are parsed generically per unit and the sensor/sonar object is inlined per-mount rather than referenced by name; proxy-copied from the repo APS-153/MH-60R analogue"},
+            "mounted_sonars": {"value_basis": "sourced", "source_ids": ["csg-cn-z20f-globaltimes"], "tier": "B", "note": "dipping sonar role fit confirmed by Global Times for open-seas ASW. Sonar fields inlined unchanged from the standalone CSG_CN_Z-20F_Dipping_Sonar module record (this same packet), same inlining convention as mounted_sensors; proxy-copied from the repo AQS-22_ALFS, nudged down for assessed PLAN ASW maturity gap"},
+            "rcs_profile_ref": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "see the CSG_CN_Z-20_RCS module record's own provenance (shared with Z-20J)"},
+            "hardpoints": {"value_basis": "sourced", "source_ids": ["csg-cn-z20f-flightglobal"], "tier": "B", "note": "2 stub-wing stations confirmed by the sourced 'stub wings' feature; capacities engineering-estimated consistent with a light torpedo (Yu-7, ~245kg class) plus a lightweight ASM on the opposite side"},
+            "default_loadout": {"value_basis": "sourced", "source_ids": ["csg-cn-fujian-plan-spokesperson", "csg-cn-z20f-aviationist"], "tier": "B", "note": "1x Yu-7 (lightweight torpedo, reused unchanged from the existing repo CSG_CN_Yu-7 record per task instruction, verified name string) + 1x YJ-9_Family_Light_ASM (lightweight anti-ship missile, per Aviationist's identification of the deployment-day armament as 'YJ-9 family', though the specific weapon record itself is fully proxy per its own provenance)"},
+            "ammo": {"value_basis": "sourced", "source_ids": [], "tier": "proxy", "note": "2 missiles/torpedoes matches this record's 2 populated default_loadout stations"},
+            "has_data_link": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "true: standard convention for a modern networked ASW helicopter coordinating with the CSG's ASW picture"},
+            "data_link_network_id": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "2 = PLAN per the task's fixed convention"},
+            "has_command_link": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "true: standard convention"},
+            "command_link.latency_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo mh60r_seahawk.json convention; no public figure"},
+            "command_link.drop_prob": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy; no public figure"},
+            "damage_model": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "single consolidated entry per authoring_standard: all hitbox/component geometry, offsets, sizes, armor, thresholds, and redundancy values are synthetic engineering scaffolding, following the repo mh60r_seahawk.json helicopter template pattern (5 hitboxes: nose/cockpit+radar+EO/IR, center fuselage+ASW mission console+fuel+data-link, twin engine/transmission bay sharing redundancy_group_id 'engine_cores', main rotor hub/blades, tail boom+tail rotor+drive shaft). Not independently sourced; consistent with every other aircraft damage model in this repo"}
+        }
+    }
+}

@@ -1,0 +1,101 @@
+{
+    "name": "CSG_CN_Yu-6",
+    "type": "Missile",
+    "mass_kg": 1550.0,
+    "max_flight_time_s": 1100.0,
+    "flight_model": {
+        "max_speed": 33.4,
+        "max_g": 3.0,
+        "max_turn_rate": 11.0
+    },
+    "guidance": {
+        "type": "Infrared",
+        "active_seek_range": 1200.0,
+        "pn_los_rate_source": "world_los_history",
+        "target_kinematics_estimator": "world_cva",
+        "capture_guidance_mode": "disabled",
+        "target_tracker_alpha": 0.2,
+        "target_tracker_beta": 0.02,
+        "target_tracker_gamma": 0.5,
+        "nav_gain": 2.4,
+        "apn_target_accel_gain": 0.08,
+        "autopilot_tau_s": 0.5,
+        "max_accel_response_g_per_s": 9.0
+    },
+    "warhead": {
+        "type": "blast",
+        "mass_kg": 275.0,
+        "lethal_radius": 19.0,
+        "damage": 580.0,
+        "explosive_mass_kg": 165.0,
+        "case_mass_kg": 110.0,
+        "projection_radius_fraction": 0.5,
+        "projection_max_radius_m": 24.0,
+        "projection_max_projected_hitboxes": 4,
+        "provenance": "No public warhead mass for Yu-6; engineering_estimate ~250-300 kg per OOB (Mk48-class analogy, 267-295 kg); 275 kg midpoint used. Explosive/case split, lethal radius, and damage are engineering-estimate surrogates for a heavyweight torpedo warhead, following the repo's mk48_adcap.json pattern (underwater/keel-breaking damage calibrated higher per kg than aircraft-delivered warheads)."
+    },
+    "fuze": {
+        "type": "contact",
+        "trigger_radius_m": 0.0,
+        "delay_s": 0.005,
+        "reliability": 0.9,
+        "provenance": "Proximity + contact fuze per OOB (csg-cn-yu6-wiki, C-only); exact timing data not public, engineering-estimate contact/magnetic-influence fuze scaffold used, following the repo's mk48_adcap.json pattern."
+    },
+    "_real_world": {
+        "designation": "Yu-6 (533 mm heavyweight torpedo)",
+        "role": "Dual-purpose heavyweight torpedo (ASW + ASuW); Mk 48-class PLAN counterpart",
+        "speed_kt": ">65 kt (C-only, single-source lineage via GlobalSecurity Chinese-language material)",
+        "range_nmi": ">45 km at cruise speed, not at 65 kt (C-only); engineering_estimate two-speed profile by Otto-II Mk48-class analogy (~38 km @ 55 kt / ~50 km @ 40 kt)",
+        "depth": "not public; engineering_estimate ~800 m by Mk48 Mod 4-class analogy, not asserted as PLAN-specific",
+        "guidance_real": "Wire guidance + active/passive acoustic homing + wake homing (wake-homing stated in PRC-origin descriptions; wire length not public)",
+        "propulsion": "Otto Fuel II (monopropellant thermal)",
+        "status": "content_only_no_mechanism",
+        "mount_mapping": "none — no NavalWeaponType exists for torpedoes; placed only in _real_world.weapon_inventory (Type 093B torpedo-room capacity not public)"
+    },
+    "_provenance": {
+        "sources": [
+            "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md#yu-6-533-mm-heavyweight-torpedo-submarine-launched",
+            "csg-cn-yu6-gs",
+            "csg-cn-yu6-wiki",
+            "csg-cn-yu6-ni"
+        ],
+        "parameters": {
+            "warhead.type": {"value_basis": "engineering_estimate", "note": "blast: no public detonation-mechanism detail beyond HE fill; generic blast is the nearest real engine-recognized warhead type for an underwater HE torpedo warhead, following the repo's mk48_adcap.json convention"},
+            "warhead.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "fuze.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "mass_kg": {"value_basis": "proxy", "note": "no public launch-mass figure; engineering estimate scaled from the sourced 533 mm diameter and Mk48-class role/dimensions analogy (Mk48 ADCAP is 1,698.5 kg; Yu-6 estimated somewhat lighter given no confirmed comparable overall length)"},
+            "max_flight_time_s": {"value_basis": "proxy", "note": "engineering estimate derived from the OOB's engineering_estimate two-speed range profile (~38 km @ 55 kt) at the sourced >65 kt attack speed's lower-bound proxy"},
+            "flight_model.max_speed": {"value_basis": "proxy", "source_ids": ["csg-cn-yu6-gs", "csg-cn-yu6-wiki"], "tier": "C-only", "note": ">65 kt attack speed (C-only, single-source lineage); 65 kt = 33.4 m/s used directly as the sourced lower-bound figure"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "note": "no public maneuver-load figure; low value consistent with a heavyweight torpedo's hydrodynamic turn limits, matched to the repo's mk48_adcap.json convention"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "note": "no public figure; engineering estimate for a wire-guided heavyweight torpedo's rudder-limited turn rate"},
+            "guidance.type": {"value_basis": "proxy", "source_ids": ["csg-cn-yu6-gs"], "tier": "C-only", "note": "wire guidance + active/passive acoustic homing + wake homing per OOB (C-only); modeled as Infrared here only as the nearest available non-radar engine seeker_type placeholder, since the engine's guidance.type loader only recognizes ActiveRadar/Radar or IR/Infrared and has no acoustic-homing category (same limitation noted in the repo's mk48_adcap.json for PassiveAcoustic, but that value is not validated against the loader's actual vocabulary either; this record follows the same documentation-only convention since the weapon has no functional mount anyway)"},
+            "guidance.active_seek_range": {"value_basis": "proxy", "note": "no public active-sonar acquisition range; engineering estimate typical of a heavyweight-torpedo active acoustic seeker, matched to the repo's mk48_adcap.json convention"},
+            "guidance.pn_los_rate_source": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, not a sourced weapon characteristic; record has no functional mount regardless"},
+            "guidance.target_kinematics_estimator": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, same basis as pn_los_rate_source"},
+            "guidance.capture_guidance_mode": {"value_basis": "engineering_estimate", "note": "disabled: no terminal capture-guidance submode modeled for this mechanism-gap weapon"},
+            "guidance.target_tracker_alpha": {"value_basis": "engineering_estimate", "note": "standard alpha-beta-gamma tracker filter constant, engine convention shared across missile records, not weapon-specific"},
+            "guidance.target_tracker_beta": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.target_tracker_gamma": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.nav_gain": {"value_basis": "engineering_estimate", "note": "proportional-navigation gain scaffold; no public guidance-law constant, set low consistent with a torpedo's slower closing-speed homing loop, matched to the repo's mk48_adcap.json convention"},
+            "guidance.apn_target_accel_gain": {"value_basis": "engineering_estimate", "note": "augmented-PN target-acceleration compensation gain scaffold, not sourced per-weapon"},
+            "guidance.autopilot_tau_s": {"value_basis": "engineering_estimate", "note": "autopilot response time-constant scaffold; set slower than an airframe missile, consistent with a torpedo's hydrodynamic control response"},
+            "guidance.max_accel_response_g_per_s": {"value_basis": "engineering_estimate", "note": "autopilot response-rate scaffold; set low consistent with a torpedo's control-surface response versus an airframe missile"},
+            "warhead.mass_kg": {"value_basis": "proxy", "note": "engineering_estimate ~250-300 kg per OOB by Mk48-class analogy (267-295 kg); 275 kg midpoint used, no public figure"},
+            "warhead.lethal_radius": {"value_basis": "proxy", "note": "engineering-estimate surrogate for a heavyweight torpedo warhead against a ship hull, no sourced lethal-radius figure, matched to the repo's mk48_adcap.json convention"},
+            "warhead.damage": {"value_basis": "proxy", "note": "engineering-estimate surrogate, calibrated higher than aircraft-delivered warheads of similar mass because underwater/keel-breaking damage mechanisms are more effective per kg, matched to the repo's mk48_adcap.json convention"},
+            "warhead.explosive_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split of the proxy 275 kg total warhead mass, no public split figure"},
+            "warhead.case_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split, see explosive_mass_kg"},
+            "warhead.projection_radius_fraction": {"value_basis": "proxy", "note": "copied from the repo's mk48_adcap.json projection-geometry template, scaled for a blast-only underwater warhead"},
+            "warhead.projection_max_radius_m": {"value_basis": "proxy", "note": "copied/scaled from the mk48_adcap.json template pattern for this warhead's lethal_radius"},
+            "warhead.projection_max_projected_hitboxes": {"value_basis": "proxy", "note": "copied from the mk48_adcap.json template pattern"},
+            "fuze.type": {"value_basis": "proxy", "source_ids": ["csg-cn-yu6-wiki"], "tier": "C-only", "note": "proximity + contact fuze per OOB (C-only); contact is the nearest real engine-recognized fuze family, per the loader's 4-value fuze.type vocabulary"},
+            "fuze.trigger_radius_m": {"value_basis": "engineering_estimate", "note": "0.0 consistent with a contact-fuze trigger radius; no public influence-fuze standoff distance"},
+            "fuze.delay_s": {"value_basis": "engineering_estimate", "note": "no public fuze timing data; engineering-estimate scaffold typical of a contact/magnetic-influence exploder"},
+            "fuze.reliability": {"value_basis": "engineering_estimate", "note": "no public reliability figure; engineering-estimate scaffold value"}
+        },
+        "modeling_notes": [
+            "No functional mount exists (mechanism gap, torpedo); content-only for _real_world.weapon_inventory. Launch platforms per OOB: Type 039 Song, 039A/B Yuan, Type 093/093A/093B Shang SSN (533 mm tubes); Type 093B (this packet's SSN escort) torpedo loadout is not public.",
+            "No A/B-tier source found giving any Yu-6 performance number; ONI 2015 does not list PLAN torpedo performance at all. Every numeric field in this record is C-only sourced or engineering_estimate/proxy — the highest-risk record in this packet's weapons set for outcome sensitivity."
+        ]
+    }
+}

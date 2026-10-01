@@ -1,0 +1,276 @@
+{
+    "name": "CSG_CN_Fujian_Type003",
+    "type": "Ship",
+    "ship_platform": {
+        "displacement_light_kg": 0.0,
+        "displacement_full_load_kg": 82500000.0,
+        "length_m": 316.0,
+        "beam_m": 76.0,
+        "draft_m": 11.0,
+        "height_above_waterline_m": 55.0,
+        "max_speed_mps": 15.95,
+        "economical_speed_mps": 10.29,
+        "range_nm": 9000.0,
+        "range_speed_mps": 10.29,
+        "max_accel_mps2": 0.08,
+        "max_decel_mps2": 0.12,
+        "max_turn_rate_deg_s": 1.0,
+        "low_speed_turn_factor": 0.25,
+        "steerageway_speed_mps": 1.0,
+        "sea_state": 0.0,
+        "wave_heading_deg": 0.0,
+        "wave_period_s": 8.0,
+        "max_roll_deg_sea_state_6": 6.0,
+        "max_pitch_deg_sea_state_6": 2.0,
+        "added_resistance_fraction_sea_state_6": 0.1,
+        "crew": 3000
+    },
+    "health": {
+        "current_hp": 82500.0,
+        "max_hp": 82500.0
+    },
+    "naval_stores": {
+        "fuel_units_current": 400.0,
+        "fuel_units_max": 400.0,
+        "missile_units_current": 80.0,
+        "missile_units_max": 80.0,
+        "dry_cargo_units_current": 60.0,
+        "dry_cargo_units_max": 60.0,
+        "can_receive_underway": true,
+        "can_provide_underway": false
+    },
+    "sensor_ref": "CSG_CN_Fujian_Island_AESA_Volume_Search",
+    "sensor_refs": [
+        "CSG_CN_Type_366_Surface_Search",
+        "CSG_CN_PLAN_Naval_ESM"
+    ],
+    "esm": {
+        "sensitivity_dbm": -90.0,
+        "max_detection_range_m": 280000.0,
+        "classify_emitters": true
+    },
+    "embarked_air_ops": {
+        "enabled": true,
+        "helo_unit_name": "CSG_CN_Z-20F",
+        "launch_altitude_m": 180.0,
+        "launch_offset_forward_m": -120.0,
+        "launch_offset_starboard_m": 30.0,
+        "recover_range_m": 250.0,
+        "relay_refresh_s": 2.0,
+        "relay_oth_targeting": true
+    },
+    "has_command_link": true,
+    "command_link": {
+        "latency_s": 0.2,
+        "drop_prob": 0.0
+    },
+    "has_data_link": true,
+    "data_link_network_id": 2,
+    "naval_weapon_system": {
+        "mounts": [
+            {
+                "mount_id": "hhq10_launcher_1",
+                "weapon_type": "ciws",
+                "ready_count": 24,
+                "max_ready_count": 24,
+                "ammo_per_shot": 1,
+                "cooldown_s": 3.0,
+                "last_fire_time": -1.0,
+                "engagement_range_m": 9000.0,
+                "projectile_speed_mps": 850.0,
+                "hit_probability": 0.75,
+                "damage_per_hit": 200.0,
+                "consumes_ready_count": true,
+                "can_intercept_missiles": true,
+                "fire_control_channel": "hhq10_local_mvp",
+                "target_domain": "missile",
+                "provenance_note": "4 x HHQ-10 point-defense missile launchers per OOB (csg-cn-fujian-navaltech B, csg-cn-fujian-csis-chinapower B, '4 x missile-based point defence'). Cells-per-launcher conflict: 24 (csg-cn-fujian-idsa, forum-sourced) vs 18 (CSIS, Liaoning/Shandong analogy); this mount uses 24 per the IDSA figure with the CSIS 18-cell alternate noted. This record represents ONE of the 4 launchers per the authoring standard's per-mount JSON structure; the other 3 are documented in _real_world.weapon_inventory as additional HHQ-10 mounts rather than separately instantiated mount_ids, consistent with the DDG-51 template's phalanx_ciws single-mount-representative convention"
+            },
+            {
+                "mount_id": "type1130_ciws_1",
+                "weapon_type": "ciws",
+                "ready_count": 60,
+                "max_ready_count": 60,
+                "ammo_per_shot": 1,
+                "cooldown_s": 0.5,
+                "last_fire_time": -1.0,
+                "engagement_range_m": 3000.0,
+                "projectile_speed_mps": 1050.0,
+                "hit_probability": 0.7,
+                "damage_per_hit": 999.0,
+                "consumes_ready_count": true,
+                "can_intercept_missiles": true,
+                "fire_control_channel": "ciws_local_mvp",
+                "target_domain": "missile",
+                "provenance_note": "1 of 4 x Type 1130 (H/PJ-11) 30mm CIWS per OOB (csg-cn-fujian-navaltech B, csg-cn-fujian-csis-chinapower B, 'at least 4'; designation csg-cn-fujian-idsa B and zh-wiki C). Engagement range/speed/damage carried from the repo's existing Type 1130-family CIWS MVP calibration pattern (no public muzzle velocity/range beyond qualitative point-defense role). This record represents 1 of the 4 mounts per the per-mount JSON structure; remaining 3 documented in _real_world"
+            }
+        ]
+    },
+    "damage_model": {
+        "hitboxes": [
+            {
+                "offset": [110.0, 0.0, 12.0],
+                "size": [90.0, 76.0, 20.0],
+                "armor": 0.0,
+                "systems": ["bow_catapults", "forward_flight_deck", "ammunition_stowage"],
+                "components": [
+                    {"name": "emals_catapult_bow_1", "system": "aviation_mission_facilities"},
+                    {"name": "emals_catapult_bow_2", "system": "aviation_mission_facilities"},
+                    {"name": "forward_aircraft_elevator", "system": "aviation_mission_facilities"},
+                    {"name": "ammunition_elevator_port_aft", "system": "cargo_combat_ammunition_stowage"}
+                ]
+            },
+            {
+                "offset": [20.0, 25.0, 30.0],
+                "size": [40.0, 20.0, 25.0],
+                "armor": 0.0,
+                "systems": ["island_superstructure", "main_radar", "command"],
+                "components": [
+                    {"name": "island_aesa_array_forward", "system": "radar"},
+                    {"name": "island_aesa_array_port", "system": "radar"},
+                    {"name": "island_aesa_array_starboard", "system": "radar"},
+                    {"name": "island_aesa_array_aft", "system": "radar"},
+                    {"name": "carrier_air_traffic_control_center", "system": "command"},
+                    {"name": "flag_bridge_command_center", "system": "command"}
+                ]
+            },
+            {
+                "offset": [-20.0, 0.0, 8.0],
+                "size": [100.0, 76.0, 22.0],
+                "armor": 0.0,
+                "systems": ["waist_catapult", "angled_deck", "arresting_gear", "aviation_fuel"],
+                "components": [
+                    {"name": "emals_catapult_waist_3", "system": "aviation_mission_facilities"},
+                    {"name": "arresting_gear_wire_set", "system": "aviation_mission_facilities"},
+                    {"name": "aft_aircraft_elevator", "system": "aviation_mission_facilities"},
+                    {"name": "aviation_fuel_stores", "system": "cargo_fuel_stowage"},
+                    {"name": "hangar_deck_bay", "system": "aviation_mission_facilities"}
+                ]
+            },
+            {
+                "offset": [-130.0, 0.0, 3.0],
+                "size": [80.0, 76.0, 18.0],
+                "armor": 0.0,
+                "systems": ["propulsion_engineering", "reactor_boiler_spaces", "aft_torpedo_defense"],
+                "components": [
+                    {"name": "steam_turbine_1", "system": "propulsion_engineering"},
+                    {"name": "steam_turbine_2", "system": "propulsion_engineering"},
+                    {"name": "boiler_plant_1", "system": "propulsion_engineering"},
+                    {"name": "boiler_plant_2", "system": "propulsion_engineering"},
+                    {"name": "anti_torpedo_launcher_6tube_324mm", "system": "weapons_combat_stowage"},
+                    {"name": "anti_swimmer_launcher_12tube", "system": "weapons_combat_stowage"}
+                ]
+            }
+        ]
+    },
+    "_real_world": {
+        "class": "Fujian-class (Type 003) aircraft carrier",
+        "hull": "CV-18 Fujian",
+        "primary_role": "CATOBAR fleet carrier, CSG flagship",
+        "commissioned": "2025-11-05, Sanya (home port)",
+        "public_equipment": [
+            "3 x electromagnetic catapults (2 bow, 1 waist)",
+            "Electromagnetic/arrested recovery, 4 wires",
+            "2 x starboard aircraft elevators, >=1 port ammunition elevator",
+            "5 marked helicopter spots",
+            "4 x HHQ-10 point-defense missile launchers",
+            "4 x Type 1130 (H/PJ-11) 30mm CIWS",
+            "6-tube 324mm anti-torpedo launcher, 12-tube anti-swimmer launcher, 24/32-cell 122mm multipurpose rocket launcher (mount count not public)",
+            "Island-integrated fixed-face AESA main radar, designation not officially disclosed"
+        ],
+        "aviation_facilities": {
+            "catapults": "3 electromagnetic (2 bow, 1 waist) per csg-cn-fujian-mnd (EM type, A) and csg-cn-fujian-usni-commission (count, B)",
+            "arresting_gear": "Arrested recovery confirmed, 4 wires, reported electromagnetic (csg-cn-fujian-xinhua-emals-2025-09 A for arrested landing; csg-cn-fujian-navaltech B for 4 wires; 'electromagnetic arresting gear' itself is C-only)",
+            "elevators": "2 aircraft elevators, both starboard (one fwd, one aft of island, csg-cn-fujian-navaltech B); >=1 ammunition elevator, port side aft (csg-cn-fujian-sina-2022 C-only)",
+            "angled_deck_angle_deg": "~6 (csg-cn-fujian-cnn-deck B, former USN officers' imagery estimate; USN carriers ~9 deg)",
+            "hangar": "not public; engineering_estimate ~30 aircraft hangar capacity, ~24-30 on deck (csg-cn-fujian-sina-2022 C-only qualitative claim of '>24 fighter-size aircraft plus several helicopters')"
+        },
+        "embarked_air_ops_note": "embarked_air_ops.helo_unit_name references the repo's existing MH-60R_MVP unit as a placeholder for Z-20F (ASW helicopter, ~6 per OOB engineering_estimate); packet 4 is expected to write the real Z-20F record, at which point this reference should be updated. Fixed-wing air wing (J-35, J-15T, J-15D/DT, KJ-600, GJ-21) and additional Z-20J/Z-20S/Z-18 rotary types are not separately modeled as embarked_air_ops entries since the engine's embarked_air_ops schema supports only a single helo_unit_name reference; fixed-wing carrier aviation has no equivalent engine mechanism in this schema and is documented only in _real_world for now",
+        "weapon_inventory": [
+            {"weapon_ref": "CSG_CN_HHQ-10", "status": "ciws_mount", "representative_load": 96, "note": "4 launchers x 24 cells (IDSA C-only figure; CSIS B-tier alternate is 18 cells/launcher = 72 total); this record instantiates 1 of the 4 as a functional ciws mount, remaining 3 documented here only"},
+            {"weapon_ref": "CSG_CN_Type_1130", "status": "ciws_mount", "representative_load": 4, "note": "4 x Type 1130 (H/PJ-11) 30mm CIWS mounts; this record instantiates 1 as a functional ciws mount, remaining 3 documented here only. No standalone CSG_CN_Type_1130 Missile/ammunition record exists in this packet (gun-type CIWS ammunition is not separately modeled as a Missile record, consistent with the US Phalanx CIWS convention)"}
+        ]
+    },
+    "_provenance": {
+        "unit_conversions": [
+            "full-load displacement >80,000 t (csg-cn-fujian-mnd, A); planning range 80,000-85,000 t per OOB; 82,500 t midpoint used, converted to 82,500,000 kg",
+            "length overall (flight deck) 316 m (csg-cn-fujian-csis-chinapower, B, imagery-derived)",
+            "flight-deck width (max) 76 m (csg-cn-fujian-csis-chinapower, B, labelled 'beam')",
+            "draft ~11 m (csg-cn-fujian-wiki-zh, C-only; naval-encyclopedia gives 9 m C, range 9-11 m)",
+            "max speed ~30-31 kt -> 15.95 m/s at 31 kt (csg-cn-fujian-csis-chinapower, B)",
+            "endurance ~8,000-10,000 nmi (csg-cn-fujian-reuters-commission, B, 'some analysts' estimate refuelling after ~10,000 nmi); 9,000 nmi midpoint used"
+        ],
+        "sources": [
+            "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md#fujian-type-003",
+            "csg-cn-fujian-mnd", "csg-cn-fujian-xinhua", "csg-cn-fujian-csis-chinapower", "csg-cn-fujian-navaltech",
+            "csg-cn-fujian-idsa", "csg-cn-fujian-twz-2024", "csg-cn-fujian-usni-commission", "csg-cn-fujian-indsr-2025",
+            "csg-cn-fujian-reuters-commission", "csg-cn-fujian-wiki-zh", "csg-cn-fujian-plan-spokesperson",
+            "csg-cn-fujian-xinhua-emals-2025-09", "csg-cn-fujian-sina-2022", "csg-cn-fujian-cnn-deck", "csg-cn-fujian-eurasiareview",
+            "csg-cn-fujian-nsj", "csg-cn-type346b-deagel"
+        ],
+        "parameters": {
+            "damage_model.hitboxes.components.system": {"value_basis": "engineering_estimate", "note": "component system tags follow the packet-wide convention: propulsion->propulsion_engineering, aviation facilities->aviation_mission_facilities, radar->radar, weapons/countermeasures->weapons_combat_stowage, cargo/ammunition holds by content"},
+            "ship_platform.displacement_light_kg": {"value_basis": "engineering_estimate", "note": "0.0: no public light-displacement figure; only full-load displacement is used by the repo's health-scaling convention, consistent with the T-AOE-6 template's treatment"},
+            "ship_platform.displacement_full_load_kg": {"value_basis": "proxy", "source_ids": ["csg-cn-fujian-mnd"], "tier": "A (floor) + B/C (range)", "note": ">80,000 t is the only A-tier figure (explicit lower bound only); 82,500 t midpoint of the OOB's stated 80,000-85,000 t planning range used"},
+            "ship_platform.length_m": {"value_basis": "sourced", "source_ids": ["csg-cn-fujian-csis-chinapower"], "tier": "B", "note": "316 m, imagery-estimated; TWZ ~317 m corroborates (B)"},
+            "ship_platform.beam_m": {"value_basis": "sourced", "source_ids": ["csg-cn-fujian-csis-chinapower"], "tier": "B", "note": "76 m flight-deck max width, labelled 'beam' by CSIS; waterline beam ~40 m (C-only, csg-cn-fujian-wiki-zh) is a distinct narrower figure not used here since ship_platform.beam_m represents the overall hull envelope consistent with flight-deck-width carriers in the repo's schema convention"},
+            "ship_platform.draft_m": {"value_basis": "proxy", "source_ids": ["csg-cn-fujian-wiki-zh"], "tier": "C-only", "note": "~11 m; naval-encyclopedia gives 9 m (C), range 9-11 m; upper bound used as a conservative choice"},
+            "ship_platform.height_above_waterline_m": {"value_basis": "engineering_estimate", "note": "no public island/mast height figure; engineering estimate typical of a large fleet carrier's island structure"},
+            "ship_platform.max_speed_mps": {"value_basis": "sourced", "source_ids": ["csg-cn-fujian-csis-chinapower"], "tier": "B", "note": "~30-31 kt, 31 kt upper bound used -> 15.95 m/s"},
+            "ship_platform.economical_speed_mps": {"value_basis": "engineering_estimate", "note": "no public economical/cruise speed figure; engineering estimate well below max speed, consistent with the packet's other ship records"},
+            "ship_platform.range_nm": {"value_basis": "proxy", "source_ids": ["csg-cn-fujian-reuters-commission"], "tier": "B", "note": "Reuters: 'some analysts' estimate refuelling after ~10,000 nmi; en-wiki 8,000-10,000 (C); 9,000 nmi midpoint used"},
+            "ship_platform.range_speed_mps": {"value_basis": "engineering_estimate", "note": "no public speed-basis for the range figure; paired with economical_speed_mps per the packet's convention"},
+            "ship_platform.max_accel_mps2": {"value_basis": "engineering_estimate", "note": "no public acceleration figure; engineering estimate for a large steam-turbine carrier hull, lower than the destroyer-class MVP given greater displacement"},
+            "ship_platform.max_decel_mps2": {"value_basis": "engineering_estimate", "note": "consistent with max_accel_mps2"},
+            "ship_platform.max_turn_rate_deg_s": {"value_basis": "engineering_estimate", "note": "no public turn-rate figure; engineering estimate for a large carrier hull's limited maneuverability, lower than destroyer-class records"},
+            "ship_platform.low_speed_turn_factor": {"value_basis": "engineering_estimate", "note": "standard engine maneuvering-model scaffold constant, shared convention across the packet"},
+            "ship_platform.steerageway_speed_mps": {"value_basis": "engineering_estimate", "note": "no public figure; typical of a large hull"},
+            "ship_platform.max_roll_deg_sea_state_6": {"value_basis": "engineering_estimate", "note": "no public seakeeping figure; large carrier hulls roll less than destroyers, engineering estimate accordingly lower"},
+            "ship_platform.max_pitch_deg_sea_state_6": {"value_basis": "engineering_estimate", "note": "consistent with max_roll_deg_sea_state_6"},
+            "ship_platform.added_resistance_fraction_sea_state_6": {"value_basis": "engineering_estimate", "note": "no public figure; engineering estimate typical of a large displacement hull"},
+            "ship_platform.crew": {"value_basis": "sourced", "source_ids": ["csg-cn-fujian-csis-chinapower"], "tier": "B", "note": "~2,000 ship's company + ~1,000 air wing personnel = ~3,000 total per OOB (B, estimate); en-wiki ~3,000 agrees (C)"},
+            "naval_stores.fuel_units_max": {"value_basis": "engineering_estimate", "note": "no public fuel-capacity-to-units conversion exists; scaffold value scaled above the T-AOE-6 replenishment ship given the carrier's much larger displacement and aviation-fuel needs"},
+            "naval_stores.missile_units_max": {"value_basis": "engineering_estimate", "note": "no public ammunition-capacity figure; scaffold value for HHQ-10/Type-1130 point-defense reload stowage"},
+            "naval_stores.dry_cargo_units_max": {"value_basis": "engineering_estimate", "note": "no public dry-stores figure; scaffold value for a large carrier's extended-deployment stores"},
+            "esm.sensitivity_dbm": {"value_basis": "engineering_estimate", "note": "standard engine ESM scaffold value, shared convention across the packet's ESM-equipped hulls"},
+            "esm.max_detection_range_m": {"value_basis": "engineering_estimate", "note": "matches the packet's shared CSG_CN_PLAN_Naval_ESM module max_range, consistent with sensor_refs entry"},
+            "naval_weapon_system.mounts[hhq10_launcher_1].ready_count": {"value_basis": "proxy", "source_ids": ["csg-cn-fujian-idsa"], "tier": "C-only", "note": "24 cells per launcher (IDSA, forum-sourced); CSIS gives 18 cells/launcher by Liaoning/Shandong analogy (B) as the noted alternate"},
+            "naval_weapon_system.mounts[hhq10_launcher_1].engagement_range_m": {"value_basis": "proxy", "note": "carried from the packet's CSG_CN_HHQ-10 Missile record's engagement envelope (AFCEA export-derived FL-3000N ~9km figure, B)"},
+            "naval_weapon_system.mounts[hhq10_launcher_1].projectile_speed_mps": {"value_basis": "proxy", "note": "carried from the packet's CSG_CN_HHQ-10 Missile record"},
+            "naval_weapon_system.mounts[hhq10_launcher_1].damage_per_hit": {"value_basis": "engineering_estimate", "note": "engineering-estimate abstraction consistent with the packet's HHQ-10 warhead-lethality calibration"},
+            "naval_weapon_system.mounts[type1130_ciws_1].ready_count": {"value_basis": "proxy", "note": "no public per-mount round count; carried from the repo's existing Type 1130-family CIWS MVP calibration pattern"},
+            "naval_weapon_system.mounts[type1130_ciws_1].engagement_range_m": {"value_basis": "proxy", "note": "no public range figure beyond qualitative point-defense role; carried from the repo's existing 30mm CIWS MVP calibration"},
+            "naval_weapon_system.mounts[type1130_ciws_1].projectile_speed_mps": {"value_basis": "proxy", "note": "no public muzzle velocity; carried from the repo's existing 30mm CIWS MVP calibration"},
+            "naval_weapon_system.mounts[type1130_ciws_1].damage_per_hit": {"value_basis": "engineering_estimate", "note": "999.0: standard engine scaffold value for a can_intercept_missiles ciws mount, shared convention across the packet"},
+            "naval_weapon_system.mounts.mount_id": {"value_basis": "engineering_estimate", "note": "identifier string, not a physical characteristic"},
+            "naval_weapon_system.mounts.weapon_type": {"value_basis": "engineering_estimate", "note": "engine NavalWeaponType enum classification per the task's mount-mapping rules"},
+            "naval_weapon_system.mounts.max_ready_count": {"value_basis": "engineering_estimate", "note": "set equal to ready_count"},
+            "naval_weapon_system.mounts.ammo_per_shot": {"value_basis": "engineering_estimate", "note": "standard engine scaffold value (1 round per shot)"},
+            "naval_weapon_system.mounts.consumes_ready_count": {"value_basis": "engineering_estimate", "note": "standard engine scaffold flag (true)"},
+            "naval_weapon_system.mounts.fire_control_channel": {"value_basis": "engineering_estimate", "note": "internal fire-control wiring identifier, not a sourced characteristic"},
+            "naval_weapon_system.mounts.provenance_note": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold, superseded by this structured _provenance.parameters block"},
+            "naval_weapon_system.mounts.last_fire_time": {"value_basis": "engineering_estimate", "note": "-1.0 sentinel meaning never-fired"},
+            "naval_weapon_system.mounts.can_intercept_missiles": {"value_basis": "sourced", "note": "true for both ciws-type mounts (HHQ-10 point-defense and Type 1130 gun-CIWS are both documented anti-missile point-defense systems per OOB)"},
+            "naval_weapon_system.mounts.target_domain": {"value_basis": "sourced", "note": "missile for both mounts, consistent with their documented point-defense role"},
+            "naval_weapon_system.mounts.hit_probability": {"value_basis": "engineering_estimate", "note": "no public engagement-effectiveness figure; engineering estimate carried from the packet's per-weapon-type MVP calibrations"},
+            "naval_weapon_system.mounts.cooldown_s": {"value_basis": "proxy", "note": "no public per-mount cycle-rate figure; carried from the packet's per-weapon-type MVP calibrations"},
+            "sensor_ref": {"value_basis": "sourced", "source_ids": ["csg-cn-fujian-navaltech", "csg-cn-fujian-twz-2024"], "tier": "B", "note": "island-integrated fixed-face AESA main radar, named by role since designation is not officially disclosed ('Type 346B' is C-only speculation per CSIS 'TBD'); references the packet's CSG_CN_Fujian_Island_AESA_Volume_Search sensor module"},
+            "embarked_air_ops.helo_unit_name": {"value_basis": "engineering_estimate", "note": "Z-20F ASW helicopters per the S0-A Fujian air-wing table; replaced the MH-60R_MVP placeholder once the S0-C helicopter records existed (main thread, 2026-09-29)"},
+            "embarked_air_ops.launch_altitude_m": {"value_basis": "engineering_estimate", "note": "carried from the DDG-51 template's embarked_air_ops scaffold convention"},
+            "embarked_air_ops.launch_offset_forward_m": {"value_basis": "engineering_estimate", "note": "negative (aft) offset reflecting the carrier's helicopter spots being aft of the island per OOB (5 marked spots, csg-cn-fujian-navaltech B); engineering estimate, not measured from imagery"},
+            "embarked_air_ops.launch_offset_starboard_m": {"value_basis": "engineering_estimate", "note": "engineering estimate consistent with a starboard-island carrier layout"},
+            "embarked_air_ops.recover_range_m": {"value_basis": "engineering_estimate", "note": "no public figure; engineering estimate scaled slightly above the DDG-51 template given the carrier's larger flight deck"},
+            "embarked_air_ops.relay_refresh_s": {"value_basis": "engineering_estimate", "note": "carried from the DDG-51 template's scaffold convention"},
+            "embarked_air_ops.relay_oth_targeting": {"value_basis": "engineering_estimate", "note": "carried from the DDG-51 template's scaffold convention"},
+            "data_link_network_id": {"value_basis": "engineering_estimate", "note": "2: PLAN CSG network membership scaffold value per the packet's authoring-standard convention (PLAN = 2)"}
+        },
+        "modeling_notes": [
+            "Health scaled as one HP per metric tonne of full-load displacement, consistent with the packet's other ship records.",
+            "naval_weapon_system.mounts[] instantiates only 1 of the 4 HHQ-10 launchers and 1 of the 4 Type 1130 CIWS mounts as functional ciws-type mounts, per the DDG-51 template's per-mount-representative convention (that record likewise instantiates only 1 of DDG-81's 2 Phalanx mounts). The remaining 3 of each are documented in _real_world.weapon_inventory with representative_load figures, not separately instantiated as duplicate mount_ids, since the task's mount rules do not require one mount_id per physical launcher.",
+            "No gun_5in mount: Fujian carries no main gun per OOB (point-defense missiles and CIWS only, consistent with a large carrier hull prioritizing flight-deck space).",
+            "Fixed-wing air wing (J-35/J-15T/J-15D-DT/KJ-600/GJ-21) is documented only in _real_world per the task's carrier-specific instructions; the engine's embarked_air_ops schema supports only a single referenced helo unit and has no mechanism for fixed-wing carrier aviation, consistent with how the US Ford-class carrier record (if any) would need to handle the same schema limitation. This record follows the task's explicit instruction to reference MH-60R_MVP as a Z-20F placeholder only.",
+            "Anti-torpedo/anti-swimmer/122mm rocket launchers (IDSA, B-sourcing-quality forum-derived list) have no NavalWeaponType mount and are documented only as damage_model.hitboxes components, not in weapon_inventory, since they are point-defense/countermeasure systems rather than offensive weapons with Missile records in this packet's scope.",
+            "4-hitbox zoning (bow catapults/flight deck, island/radar/command, waist catapult/hangar/aviation fuel, aft propulsion/torpedo defense) chosen to give each major real system its own damageable zone per task instruction, following the DDG-51/T-AOE-6 templates' pattern scaled up for a much larger hull."
+        ]
+    }
+}

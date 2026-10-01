@@ -10,6 +10,7 @@
 #include "components/basic/common.h"
 #include "components/command/mission_command.h"
 #include "components/command/pilot_action.h"
+#include "components/physics/geodesy.h"
 #include "components/tasking/leader_intent.h"
 #include "components/tasking/pilot_report.h"
 #include "components/tasking/task_order.h"
@@ -36,6 +37,15 @@ struct WorldSunAssignment {
     std::uint64_t world_index = 0;
     double azimuth_deg = 0.0;
     double elevation_deg = 45.0;
+};
+
+// Geodetic anchor of one world's local frame (Geodetic Frame P3-B). Defaults
+// are the documented default anchor, geodesy::kDefaultGeodeticAnchor.
+struct WorldGeodeticAnchorAssignment {
+    std::uint64_t world_index = 0;
+    double latitude_deg = geodesy::kDefaultGeodeticAnchor.latitude_deg;
+    double longitude_deg = geodesy::kDefaultGeodeticAnchor.longitude_deg;
+    double height_m = geodesy::kDefaultGeodeticAnchor.height_m;
 };
 
 struct WorldZoneDefinition {

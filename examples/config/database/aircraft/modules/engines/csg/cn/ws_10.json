@@ -1,0 +1,28 @@
+{
+    "name": "CSG_CN_WS-10H",
+    "type": "Engine",
+    "engine": {
+        "mil_thrust_n": 89000.0,
+        "ab_thrust_n": 120100.0,
+        "sfc_mil": 0.80,
+        "sfc_ab": 1.95,
+        "bypass_ratio": 0.57
+    },
+    "_real_world": {
+        "class": "Shenyang WS-10 (Taihang) family afterburning turbofan, WS-10H naval variant",
+        "variant_scope": "WS-10-series as fitted to J-15T/J-15D carrier-based aircraft; some airframes may still fly the Russian AL-31F pending full WS-10 fleet conversion",
+        "hulls": [],
+        "public_equipment": ["WS-10H (naval WS-10 variant): 27,000 lbf (120.1 kN) maximum afterburning thrust (Deagel); baseline WS-10A/B family 120-142 kN class (GlobalSecurity, ORF, Wikipedia)"]
+    },
+    "_provenance": {
+        "modeling_note": "Powerplant for J-15T (and, per the task's explicit uncertainty flag, J-15D by analogy) as instructed. The OOB page notes 'some J-15T may still fly AL-31F' (forum-sourced, C-only) — this record models the WS-10H figure as the primary/target fit since the task specifies WS-10 for these airframes; the AL-31F alternative is not separately modeled (no distinct record requested) but is flagged here per the task's instruction to note the uncertainty. Deagel's WS-10H-specific figure (27,000 lbf max thrust, naming it explicitly as the J-15-fitted variant) is used for ab_thrust_n; mil_thrust_n, sfc, and bypass_ratio have no WS-10H-specific public figures and are engineering_estimate proxies derived from the general WS-10A/B family's published 120-142 kN class and 7.5-9.0 thrust-to-weight ratios (GlobalSecurity, ORF, Wikipedia), scaled toward the lower/earlier end of that family since the navalized WS-10H is reported closer to the original WS-10A/B generation than to the later WS-10C used on J-20.",
+        "sources": ["csg-cn-ws10h-deagel", "csg-cn-ws10-globalsecurity", "csg-cn-ws10-orf", "csg-cn-ws10-wiki"],
+        "parameters": {
+            "engine.mil_thrust_n": {"value_basis": "proxy", "source_ids": ["csg-cn-ws10-globalsecurity"], "tier": "proxy", "note": "engineering_estimate ~89,000 N (20,000 lbf class) dry thrust, scaled from the WS-10B/C family's reported military-thrust figures (GlobalSecurity: WS-10B military thrust ~9 tonnes-force class by analogy) down toward the earlier WS-10H/A generation; no WS-10H-specific dry-thrust figure is public"},
+            "engine.ab_thrust_n": {"value_basis": "sourced", "source_ids": ["csg-cn-ws10h-deagel"], "tier": "C", "note": "27,000 lbf = 120,101 N maximum afterburning thrust, per Deagel's WS-10H entry naming this variant explicitly as the J-15-fitted version ('WS-10H refers to the engine variant powering the J-15 carrier-based aircraft... maximum output of 27,000 pounds of thrust')"},
+            "engine.sfc_mil": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate patterned on the repo F414-GE-400 template's sfc_mil, nudged down slightly reflecting the WS-10 family's larger core/higher-bypass-than-WS-21 architecture; no public figure"},
+            "engine.sfc_ab": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate, same basis as sfc_mil; no public figure"},
+            "engine.bypass_ratio": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate 0.57, consistent with the WS-10 family's publicly described CFM56/AL-31FN-derived medium-bypass architecture (ORF); no exact public bypass-ratio figure for WS-10H specifically"}
+        }
+    }
+}

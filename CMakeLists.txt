@@ -680,6 +680,7 @@ set(EF_PYTHON_BINDING_SOURCES
     src/interfaces/python/bindings_episode_termination.cpp
     src/interfaces/python/bindings_episode_execution_runtime.cpp
     src/interfaces/python/bindings_episode_state_batch.cpp
+    src/interfaces/python/bindings_episode_geodesy.cpp
     src/interfaces/python/bindings_runtime.cpp
     # bind_runtime() domain slices, listed in nanobind registration order.
     src/interfaces/python/bindings_runtime_runtime.cpp
@@ -1059,7 +1060,10 @@ set(EF_TEST_SOURCES
     src/tests/test_components_basic.cpp
     src/tests/test_content_compile_passes.cpp
     src/tests/test_aero_physics_common.cpp
+    src/tests/test_geodesy.cpp
+    src/tests/test_ground_contact_solver.cpp
     src/tests/test_world_cv_alpha_beta_tracker.cpp
+    src/tests/test_track_manager_system.cpp
     src/tests/test_kalman_seeker.cpp
     src/tests/test_structural_failure_system.cpp
     src/tests/test_control_surface_damage_coupling.cpp

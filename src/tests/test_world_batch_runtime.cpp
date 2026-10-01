@@ -101,6 +101,32 @@ TEST_SUITE("world_batch_runtime") {
         CHECK(calm.wind_velocity.z == doctest::Approx(0.0));
     }
 
+    TEST_CASE("world setup applies a per-world geodetic anchor and resets undeclared worlds") {
+        WorldBatchRuntime runtime(2);
+        WorldGeodeticAnchorAssignment south_china_sea{};
+        south_china_sea.world_index = 1;
+        south_china_sea.latitude_deg = 18.2;
+        south_china_sea.longitude_deg = 109.5;
+        runtime.apply_world_setup_batch({1, 2}, {}, {}, {}, {}, {}, {}, {south_china_sea});
+
+        const auto world0 = runtime.world_raw_quarantine(0).get_geodetic_anchor();
+        const auto world1 = runtime.world_raw_quarantine(1).get_geodetic_anchor();
+        CHECK(world0.latitude_deg == doctest::Approx(geodesy::kDefaultGeodeticAnchor.latitude_deg));
+        CHECK(world1.latitude_deg == doctest::Approx(18.2));
+        CHECK(world1.longitude_deg == doctest::Approx(109.5));
+
+        // A re-setup without an anchor returns every world to the default.
+        runtime.apply_world_setup_batch({3, 4}, {}, {}, {}, {});
+        CHECK(runtime.world_raw_quarantine(1).get_geodetic_anchor().latitude_deg ==
+              doctest::Approx(geodesy::kDefaultGeodeticAnchor.latitude_deg));
+
+        // A non-finite anchor fails closed instead of producing NaN positions.
+        WorldGeodeticAnchorAssignment polar{};
+        polar.latitude_deg = 90.0;
+        CHECK_THROWS_AS(runtime.apply_world_setup_batch({5, 6}, {}, {}, {}, {}, {}, {}, {polar}),
+                        std::invalid_argument);
+    }
+
     TEST_CASE("visual compatibility scenes own snapshots across world shutdown") {
         WorldBatchRuntime runtime(1);
         auto &world = runtime.world_raw_quarantine(0);

@@ -1,0 +1,62 @@
+{
+    "name": "CSG_US_Virginia_Towed_Array",
+    "type": "Sensor",
+    "sonar": {
+        "mode": "Passive",
+        "max_range_m": 50000.0,
+        "scan_period_s": 6.0,
+        "detection_threshold_db": 4.0,
+        "track_memory_s": 30.0,
+        "bearing_noise_std_deg": 1.0,
+        "range_noise_std_m": 850.0,
+        "directivity_gain_db": 11.0,
+        "self_noise_per_speed_db": 0.6,
+        "ambient_noise_db": 67.0,
+        "source_level_reference_db": 0.0,
+        "source_level_speed_factor_db": 0.0,
+        "transmission_loss_alpha_db_per_km": 0.06,
+        "layer_break_penalty_db": 3.0,
+        "convergence_zone_bonus_m": 55000.0,
+        "baffle_exclusion_deg": 0.0,
+        "ownship_quieting_speed_mps": 4.5,
+        "active_ping_source_level_db": 0.0,
+        "confirm_hits_m": 2,
+        "confirm_window_n": 3,
+        "passive_only": true,
+        "bearing_only": false
+    },
+    "_real_world": {
+        "class": "TB-34 (fat-line) and TB-29/TB-33 (thin-line) towed arrays",
+        "variant_scope": "Virginia-class SSN, Block III/IV.",
+        "hulls": ["Virginia Block III/IV (generic, SSN-784..801)"],
+        "public_equipment": ["TB-34 towed array", "TB-29/TB-33 towed array"]
+    },
+    "_provenance": {
+        "modeling_note": "Passive towed array for the Virginia SSN, distinct from the LAB bow sonar mount as required by the authoring standard (bow/flank/towed as separate mounts). Detection ranges and source levels are not public (R18/R19); values are engineering estimates following the same towed-array-vs-hull-sonar scaling logic used for CSG_US_TB-37U_Towed_Array, adjusted slightly for a quieter nuclear submarine platform (lower ambient_noise_db, lower self_noise_per_speed_db).",
+        "sources": ["csg-us-ssn-seaforces"],
+        "parameters": {
+            "sonar.mode": {"value_basis": "sourced", "source_ids": ["csg-us-ssn-seaforces"], "tier": "A", "note": "TB-34/TB-29/TB-33 are passive listening arrays"},
+            "sonar.max_range_m": {"value_basis": "proxy", "note": "not public (R18/R19); engineering estimate, towed-array scaling from the SSN LAB bow sonar baseline"},
+            "sonar.scan_period_s": {"value_basis": "proxy", "note": "no public figure; engineering estimate close to CSG_US_TB-37U_Towed_Array's DDG towed-array baseline"},
+            "sonar.detection_threshold_db": {"value_basis": "proxy", "note": "no public figure; engineering estimate slightly better than the TB-37U baseline, reflecting a quieter SSN platform"},
+            "sonar.track_memory_s": {"value_basis": "proxy", "note": "no public figure; engineering estimate close to the TB-37U baseline"},
+            "sonar.bearing_noise_std_deg": {"value_basis": "proxy", "note": "no public figure; engineering estimate close to the TB-37U baseline"},
+            "sonar.range_noise_std_m": {"value_basis": "proxy", "note": "no public figure; engineering estimate close to the TB-37U baseline"},
+            "sonar.directivity_gain_db": {"value_basis": "proxy", "note": "engineering estimate: towed line arrays have higher directivity gain than a hull-mounted bow array, close to the TB-37U baseline"},
+            "sonar.self_noise_per_speed_db": {"value_basis": "proxy", "note": "no public figure; engineering estimate better than the TB-37U baseline, reflecting the quieter Virginia SSN platform vs a surface DDG"},
+            "sonar.ambient_noise_db": {"value_basis": "proxy", "note": "no public figure; engineering estimate better than the TB-37U baseline, same quieter-platform reasoning"},
+            "sonar.source_level_reference_db": {"value_basis": "engineering_estimate", "note": "0.0: passive-only array, no active source level applies"},
+            "sonar.source_level_speed_factor_db": {"value_basis": "engineering_estimate", "note": "0.0: passive-only array, no active source-level speed dependency"},
+            "sonar.transmission_loss_alpha_db_per_km": {"value_basis": "proxy", "note": "no public figure; carried close to the TB-37U baseline (generic underwater transmission-loss constant)"},
+            "sonar.layer_break_penalty_db": {"value_basis": "proxy", "note": "no public figure; carried close to the TB-37U baseline"},
+            "sonar.convergence_zone_bonus_m": {"value_basis": "proxy", "note": "no public figure; engineering estimate scaled with max_range_m, close to TB-37U baseline"},
+            "sonar.baffle_exclusion_deg": {"value_basis": "engineering_estimate", "note": "0.0: towed array trails well astern of the hull's own baffles, consistent with the TB-37U record's convention"},
+            "sonar.ownship_quieting_speed_mps": {"value_basis": "proxy", "note": "no public figure; engineering estimate close to the TB-37U baseline"},
+            "sonar.active_ping_source_level_db": {"value_basis": "engineering_estimate", "note": "0.0: passive-only array, no active ping capability modeled"},
+            "sonar.confirm_hits_m": {"value_basis": "engineering_estimate", "note": "standard engine detection-confirmation default, not sourced per-platform"},
+            "sonar.confirm_window_n": {"value_basis": "engineering_estimate", "note": "standard engine detection-confirmation default, not sourced per-platform"},
+            "sonar.passive_only": {"value_basis": "sourced", "source_ids": ["csg-us-ssn-seaforces"], "tier": "A", "note": "TB-34/29/33 towed arrays have no active transmit mode"},
+            "sonar.bearing_only": {"value_basis": "engineering_estimate", "note": "false: modern towed arrays support range estimation via multi-array triangulation/TMA, not bearing-only, consistent with the TB-37U record's convention"}
+        }
+    }
+}

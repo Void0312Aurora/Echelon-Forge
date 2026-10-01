@@ -45,14 +45,16 @@ void bind_runtime_engine(nb::module_ &m) {
         .def("apply_world_setup_batch", &WorldBatchRuntime::apply_world_setup_batch,
              nb::arg("seeds"), nb::arg("terrain_assignments"), nb::arg("wind_assignments"),
              nb::arg("zones"), nb::arg("requests"), nb::arg("time_steps") = std::vector<double>{},
-             nb::arg("sun_assignments") = std::vector<WorldSunAssignment>{})
+             nb::arg("sun_assignments") = std::vector<WorldSunAssignment>{},
+             nb::arg("geodetic_anchor_assignments") = std::vector<WorldGeodeticAnchorAssignment>{})
         .def("apply_world_layout", &WorldBatchRuntime::apply_world_layout, nb::arg("world_index"),
              nb::arg("seed"), nb::arg("terrain_type"), nb::arg("wind_speed_mps"),
              nb::arg("wind_dir_from_deg"), nb::arg("wind_shear_mps_per_km"),
              nb::arg("maritime_configured"), nb::arg("sea_state"), nb::arg("wave_heading_deg"),
              nb::arg("wave_period_s"), nb::arg("zones"), nb::arg("requests"),
              nb::arg("time_steps") = std::vector<double>{}, nb::arg("sun_azimuth_deg") = 0.0,
-             nb::arg("sun_elevation_deg") = 45.0)
+             nb::arg("sun_elevation_deg") = 45.0,
+             nb::arg("geodetic_anchor") = WorldGeodeticAnchorAssignment{})
         .def("world_time_step", &WorldBatchRuntime::world_time_step, nb::arg("world_index"))
         .def("set_pilot_actions_batch", &WorldBatchRuntime::set_pilot_actions_batch,
              nb::arg("assignments"))

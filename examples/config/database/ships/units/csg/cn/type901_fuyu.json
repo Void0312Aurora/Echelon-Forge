@@ -1,0 +1,177 @@
+{
+    "name": "CSG_CN_Type901_Fuyu",
+    "type": "Ship",
+    "ship_platform": {
+        "displacement_light_kg": 0.0,
+        "displacement_full_load_kg": 48000000.0,
+        "length_m": 241.0,
+        "beam_m": 30.0,
+        "draft_m": 6.0,
+        "height_above_waterline_m": 32.0,
+        "max_speed_mps": 12.86,
+        "economical_speed_mps": 9.26,
+        "range_nm": 12000.0,
+        "range_speed_mps": 9.26,
+        "max_accel_mps2": 0.09,
+        "max_decel_mps2": 0.12,
+        "max_turn_rate_deg_s": 1.4,
+        "low_speed_turn_factor": 0.35,
+        "steerageway_speed_mps": 1.2,
+        "sea_state": 0.0,
+        "wave_heading_deg": 0.0,
+        "wave_period_s": 8.0,
+        "max_roll_deg_sea_state_6": 7.0,
+        "max_pitch_deg_sea_state_6": 2.8,
+        "added_resistance_fraction_sea_state_6": 0.15,
+        "crew": 250
+    },
+    "health": {
+        "current_hp": 48000.0,
+        "max_hp": 48000.0
+    },
+    "naval_stores": {
+        "fuel_units_current": 400.0,
+        "fuel_units_max": 400.0,
+        "missile_units_current": 60.0,
+        "missile_units_max": 60.0,
+        "dry_cargo_units_current": 120.0,
+        "dry_cargo_units_max": 120.0,
+        "can_receive_underway": false,
+        "can_provide_underway": true
+    },
+    "naval_logistics": {
+        "underway_replenishment_enabled": true,
+        "min_separation_m": 45.0,
+        "max_separation_m": 60.0,
+        "max_relative_speed_mps": 0.5,
+        "transfer_rate_fuel_units_per_s": 2.5,
+        "transfer_rate_missile_units_per_s": 0.15,
+        "transfer_rate_dry_cargo_units_per_s": 1.0
+    },
+    "sensor_ref": "CSG_CN_Type_901_Navigation_Radar",
+    "sensor_refs": [
+        "CSG_CN_PLAN_Naval_ESM"
+    ],
+    "esm": {
+        "sensitivity_dbm": -82.0,
+        "max_detection_range_m": 180000.0,
+        "classify_emitters": false
+    },
+    "embarked_air_ops": {
+        "enabled": true,
+        "helo_unit_name": "CSG_CN_Z-20J",
+        "max_sorties_per_cycle": 2,
+        "launch_interval_s": 480.0,
+        "recovery_interval_s": 420.0,
+        "turnaround_time_s": 900.0
+    },
+    "has_command_link": true,
+    "command_link": {
+        "latency_s": 0.25,
+        "drop_prob": 0.0
+    },
+    "has_data_link": true,
+    "data_link_network_id": 2,
+    "damage_model": {
+        "hitboxes": [
+            {
+                "offset": [80.0, 0.0, 4.0],
+                "size": [45.0, 30.0, 14.0],
+                "armor": 0.0,
+                "systems": ["fuel_stowage", "bridge"],
+                "components": [
+                    {"name": "fuel_cargo_tanks_forward", "system": "cargo_fuel_stowage"},
+                    {"name": "navigation_bridge", "system": "command"}
+                ]
+            },
+            {
+                "offset": [20.0, 0.0, 6.0],
+                "size": [60.0, 30.0, 16.0],
+                "armor": 0.0,
+                "systems": ["replenishment_stations", "dry_cargo"],
+                "components": [
+                    {"name": "starboard_replenishment_station", "system": "cargo_hold_structure"},
+                    {"name": "port_replenishment_station", "system": "cargo_hold_structure"},
+                    {"name": "dry_cargo_hold_amidships", "system": "cargo_hold_structure"}
+                ]
+            },
+            {
+                "offset": [-40.0, 0.0, 4.0],
+                "size": [55.0, 30.0, 14.0],
+                "armor": 0.0,
+                "systems": ["ammunition_stowage", "engineering"],
+                "components": [
+                    {"name": "missile_ammunition_cargo_hold", "system": "cargo_combat_ammunition_stowage"},
+                    {"name": "main_propulsion_diesel_plant", "system": "propulsion_engineering"}
+                ]
+            },
+            {
+                "offset": [-95.0, 0.0, 5.0],
+                "size": [25.0, 25.0, 12.0],
+                "armor": 0.0,
+                "systems": ["hangar", "flight_deck"],
+                "components": [
+                    {"name": "helicopter_hangar_z8_z18", "system": "aviation_mission_facilities"},
+                    {"name": "aft_flight_deck", "system": "aviation_mission_facilities"}
+                ]
+            }
+        ]
+    },
+    "_real_world": {
+        "class": "Fuyu-class (Type 901) fast combat support ship (AOE)",
+        "hull_examples": "Hulls 901 Hulunhu, 902 Chaganhu -- fast fleet-oiler/AOE dedicated to carrier group logistics",
+        "primary_role": "CSG fuel/missile/dry-cargo replenishment; sole hull class purpose-designed to keep pace with Fujian's carrier battle group speed profile",
+        "public_equipment": [
+            "No combat weapon systems -- point-defense-only or unarmed per public reporting (USCC/Jane's, B-tier); this record carries no naval_weapon_system.mounts[] block",
+            "Underway replenishment rigs, both beams, for fuel/dry cargo/ordnance",
+            "2 x Z-8/Z-18 helicopter capacity (hangar + flight deck), vertical replenishment (VERTREP)",
+            "Navigation/surface-search radar only (no combat sensor suite reported at any tier)"
+        ],
+        "weapon_inventory": [],
+        "loadout_note": "No weapons of any kind assigned to this packet for Type 901 -- purely a logistics platform. naval_weapon_system block omitted entirely, consistent with taoe6_supply.json template precedent (US replenishment ships also carry no combat mounts)."
+    },
+    "_provenance": {
+        "unit_conversions": [
+            "full load displacement ~48,000 t (USCC 2020 report / Jane's 2019, both B-tier, within the commonly cited 45,000-48,000t range for this class)",
+            "length ~241 m (791 ft), beam ~30 m (98 ft) (Jane's/Wikipedia aggregation, B/C-tier)",
+            "max speed ~25 kt (12.86 m/s) (USCC/Jane's, B-tier, consistent with the class's design requirement to keep pace with a carrier group)",
+            "range ~12,000 nmi at economical speed (Wikipedia, C-tier, consistent with the class's long-endurance AOE role); no A-tier figure"
+        ],
+        "sources": [
+            "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md#type-901-fuyu-class-aoe",
+            "csg-cn-901-uscc-2020", "csg-cn-901-janes-2019", "csg-cn-901-wiki"
+        ],
+        "parameters": {
+            "embarked_air_ops.helo_unit_name": {"value_basis": "engineering_estimate", "note": "Z-20J naval utility helicopter for VERTREP; replaced the MH-60R_MVP placeholder once the S0-C helicopter records existed (main thread, 2026-09-29)"},
+            "damage_model.hitboxes.components.system": {"value_basis": "engineering_estimate", "note": "component system tags follow the packet-wide convention; 4-zone layout adapted from taoe6_supply.json's cargo/engineering/aviation pattern"},
+            "ship_platform.displacement_full_load_kg": {"value_basis": "sourced", "source_ids": ["csg-cn-901-uscc-2020", "csg-cn-901-janes-2019"], "tier": "B", "note": "45,000-48,000t commonly cited range; 48,000t upper-bound value used"},
+            "ship_platform.length_m": {"value_basis": "sourced", "source_ids": ["csg-cn-901-janes-2019"], "tier": "B", "note": "~241m (791ft)"},
+            "ship_platform.beam_m": {"value_basis": "proxy", "source_ids": ["csg-cn-901-wiki"], "tier": "C", "note": "~30m (98ft), secondary-source aggregation"},
+            "ship_platform.draft_m": {"value_basis": "engineering_estimate", "note": "not public; engineering estimate typical of a large AOE hull at this displacement/length"},
+            "ship_platform.max_speed_mps": {"value_basis": "sourced", "source_ids": ["csg-cn-901-uscc-2020"], "tier": "B", "note": "~25kt, design requirement to match carrier group speed"},
+            "ship_platform.range_nm": {"value_basis": "proxy", "source_ids": ["csg-cn-901-wiki"], "tier": "C", "note": "~12,000nmi, secondary-source aggregation, no A/B figure"},
+            "ship_platform.crew": {"value_basis": "engineering_estimate", "note": "not public; engineering estimate ~250 typical of a large fleet oiler/AOE of this displacement"},
+            "ship_platform.displacement_light_kg": {"value_basis": "engineering_estimate", "note": "not public; left at 0.0 placeholder, consistent with the packet's other ship records"},
+            "ship_platform.height_above_waterline_m": {"value_basis": "engineering_estimate", "note": "not public; engineering estimate typical of a large AOE hull of this length/beam"},
+            "ship_platform.economical_speed_mps": {"value_basis": "engineering_estimate", "note": "not public; engineering estimate consistent with the packet's other ship records' economical-speed proxy"},
+            "ship_platform.range_speed_mps": {"value_basis": "engineering_estimate", "note": "not public; set equal to economical_speed_mps per the packet's convention for the range basis speed"},
+            "ship_platform.max_accel_mps2": {"value_basis": "engineering_estimate", "note": "not public; engineering estimate scaled from the taoe6_supply.json template proxy for a comparable large auxiliary hull"},
+            "ship_platform.max_decel_mps2": {"value_basis": "engineering_estimate", "note": "not public; engineering estimate scaled from the taoe6_supply.json template proxy"},
+            "ship_platform.max_turn_rate_deg_s": {"value_basis": "engineering_estimate", "note": "not public; engineering estimate typical of a large auxiliary hull of this length/beam"},
+            "ship_platform.low_speed_turn_factor": {"value_basis": "engineering_estimate", "note": "not public; carried from the taoe6_supply.json template proxy convention"},
+            "ship_platform.steerageway_speed_mps": {"value_basis": "engineering_estimate", "note": "not public; carried from the taoe6_supply.json template proxy convention"},
+            "ship_platform.max_roll_deg_sea_state_6": {"value_basis": "engineering_estimate", "note": "not public; carried from the taoe6_supply.json template proxy convention"},
+            "ship_platform.max_pitch_deg_sea_state_6": {"value_basis": "engineering_estimate", "note": "not public; carried from the taoe6_supply.json template proxy convention"},
+            "ship_platform.added_resistance_fraction_sea_state_6": {"value_basis": "engineering_estimate", "note": "not public; carried from the taoe6_supply.json template proxy convention"},
+            "naval_logistics.transfer_rate_fuel_units_per_s": {"value_basis": "proxy", "note": "scaled from the repo's existing taoe6_supply.json transfer-rate convention at a comparable displacement, since no PLAN-specific transfer-rate figure is public"},
+            "sensor_ref": {"value_basis": "engineering_estimate", "note": "references the packet's own CSG_CN_Type_901_Navigation_Radar module (all fields engineering_estimate/proxy per that module's own log entry #7), since no combat sensor suite is publicly reported for this hull at any tier"},
+            "embarked_air_ops.max_sorties_per_cycle": {"value_basis": "sourced", "source_ids": ["csg-cn-901-wiki"], "tier": "C", "note": "2 x Z-8/Z-18 helicopter capacity per hangar/flight-deck fit; sortie-cycle timing fields (launch_interval_s/recovery_interval_s/turnaround_time_s) are engineering_estimate, scaled from the taoe6_supply.json logistics-ship template"},
+            "data_link_network_id": {"value_basis": "engineering_estimate", "note": "2: PLAN CSG network membership scaffold value"}
+        },
+        "modeling_notes": [
+            "Health scaled at one HP per metric tonne of full-load displacement, consistent with the packet's other ship records.",
+            "No naval_weapon_system.mounts[] block at all -- Type 901 carries no combat weapon systems per any source at any tier; this follows the taoe6_supply.json template precedent exactly (US replenishment ships in this repo also omit the block entirely rather than including an empty mounts array).",
+            "naval_logistics and embarked_air_ops both follow the taoe6_supply.json logistics-ship schema variant (max_sorties_per_cycle/launch_interval_s/recovery_interval_s/turnaround_time_s), not the combat-escort embarked_air_ops variant used on Fujian/055/052D/054A/054B."
+        ]
+    }
+}

@@ -13,6 +13,46 @@ ensure_repo_imports()
 import ef_py # noqa: E402
 
 
+# --- DM-N1 naval damage-response profile surface -------------------------------
+#
+# `NavalDamageResponseProfile` entries live in
+# `src/components/domains/naval/combat/damage_naval.h` and
+# `src/systems/combat/damage_system_naval.h` resolves one profile per platform.
+# The response is observed through `get_unit_damage_state` (the capability
+# projection) and `debug_get_naval_weapon_counts` (the mount state it reads).
+
+# `get_unit_damage_state` vector: [mission, mobility, sensor, survivability].
+_RESPONSE_MISSION = 0
+_RESPONSE_MOBILITY = 1
+_RESPONSE_SENSOR = 2
+_RESPONSE_SURVIVABILITY = 3
+
+# `debug_get_naval_weapon_counts` vector:
+# [mount_count, ready_vls_sam, ready_deck_gun, ready_ciws].
+_RESPONSE_COUNT_MOUNTS = 0
+_RESPONSE_COUNT_VLS = 1
+_RESPONSE_COUNT_GUN = 2
+_RESPONSE_COUNT_CIWS = 3
+
+# `NavalWeaponType` code for the CIWS mount at the kernel `fire_naval_weapon`
+# boundary (the enum itself is not bound into `ef_py`).
+_RESPONSE_CIWS_TYPE_CODE = 3
+
+# DDG-51 hitbox-routed aim points in target-body local metres. Which protected
+# systems the shared effects path damages is what makes the naval fire and
+# flooding channels reachable at runtime:
+#   box 1 forward  (+45, 0, +3): forward_vls / forward_gun / combat_system
+#   box 2 midships (  0, 0, +8): aegis_radar / command / data_link
+#   box 3 aft      (-35, 0, +2): engineering / aft_vls / fuel
+# Only the engineering/fuel family seeds `ongoing_hull_breach` and
+# `flooding_severity`, so only the aft aim point exercises the flooding channel.
+_RESPONSE_AIM_FORWARD_M = (45.0, 0.0, 3.0)
+_RESPONSE_AIM_AFT_ENGINEERING_M = (-35.0, 0.0, 2.0)
+
+_RESPONSE_HIT_DAMAGE = 160.0
+_RESPONSE_HIT_FUSE_DISTANCE_M = 80.0
+
+
 class NavalShipDatabaseTests(unittest.TestCase):
   _OPEN_WATER_X = 1_000_000.0
   _OPEN_WATER_Y = 1_000_000.0
@@ -69,11 +109,13 @@ class NavalShipDatabaseTests(unittest.TestCase):
       vy=10.29,
       vz=0.0,
     )
+    # SLQ-32 (loader-default 10 m mount) against the emitter's 25 m SPS-67
+    # antenna has a 33.6 km smooth-earth radio horizon at 4/3 earth.
     emitter = kernel.spawn_unit(
       ef_py.Side.Red,
       "DDG-51_Flight_I_USS_Arleigh_Burke",
       self._OPEN_WATER_X,
-      self._OPEN_WATER_Y + 80_000.0,
+      self._OPEN_WATER_Y + 30_000.0,
       0.0,
       heading=180.0,
       pitch=0.0,
@@ -1049,6 +1091,41 @@ class NavalShipDatabaseTests(unittest.TestCase):
     self.assertLess(int(after[3]), int(before[3]))
     self.assertFalse(kernel.is_unit_active(int(missile)))
 
+  def test_set_mission_command_activates_the_naval_projection(self) -> None:
+    """The setter's activation contract must reach NavalCommandIntent too."""
+    kernel = ef_py.SimulationKernel()
+    kernel.reset(65)
+    kernel.set_time_step(0.5)
+    self.assertTrue(kernel.load_database(resolve_repo_path("examples", "config", "database")))
+
+    ddg = int(
+      kernel.spawn_unit(
+        ef_py.Side.Blue,
+        "DDG-51_Flight_I_USS_Arleigh_Burke",
+        0.0,
+        0.0,
+        0.0,
+        heading=90.0,
+        pitch=0.0,
+        roll=0.0,
+        vx=10.29,
+        vy=0.0,
+        vz=0.0,
+      )
+    )
+    kernel.set_command_link(ddg, 0.0, 0.0)
+
+    mission = ef_py.MissionCommand()
+    mission.active = False
+    mission.cmd_heading_deg = 0.0
+    mission.cmd_speed_mps = 10.29
+    kernel.set_mission_command(ddg, mission)
+    self.assertTrue(bool(kernel.get_mission_command(ddg).active))
+
+    for _ in range(20):
+      kernel.step()
+    self.assertLess(float(kernel.get_unit_heading(ddg)), 90.0)
+
   def test_damage_state_can_continue_degrading_after_initial_hit(self) -> None:
     kernel = ef_py.SimulationKernel()
     kernel.reset(62)
@@ -1089,6 +1166,268 @@ class NavalShipDatabaseTests(unittest.TestCase):
 
     self.assertLess(float(later[0]), float(initial[0]))
     self.assertLess(float(later[3]), float(initial[3]))
+
+  # --- DM-N1 response-profile tests -------------------------------------------
+
+  def _response_spawn_ddg(self, kernel, y: float) -> int:
+    entity_id = int(
+      kernel.spawn_unit(
+        ef_py.Side.Red,
+        "DDG-51_Flight_I_USS_Arleigh_Burke",
+        0.0,
+        y,
+        0.0,
+        heading=0.0,
+        pitch=0.0,
+        roll=0.0,
+        vx=0.0,
+        vy=0.0,
+        vz=0.0,
+      )
+    )
+    self.assertTrue(kernel.is_unit_active(entity_id))
+    return entity_id
+
+  def _response_spawn_probe(self, kernel, y: float = 1500.0) -> int:
+    return int(
+      kernel.spawn_unit(
+        ef_py.Side.Blue,
+        "Aircraft",
+        0.0,
+        y,
+        0.0,
+        heading=180.0,
+        pitch=0.0,
+        roll=0.0,
+        vx=0.0,
+        vy=0.0,
+        vz=0.0,
+      )
+    )
+
+  def _response_aim_hit(self, kernel, probe_id: int, target_id: int,
+                        aim_m: tuple[float, float, float]) -> None:
+    # The local variant is required: `debug_apply_proximity_hit` places the
+    # impact at local (0, 0, 2.0) for a non-air target, which is outside the DDG
+    # hitboxes, so it cannot select a compartment and cannot reach the
+    # breach/flooding family.
+    self.assertTrue(
+      kernel.debug_apply_local_proximity_hit(
+        probe_id,
+        target_id,
+        aim_m[0],
+        aim_m[1],
+        aim_m[2],
+        _RESPONSE_HIT_DAMAGE,
+        _RESPONSE_HIT_FUSE_DISTANCE_M,
+      )
+    )
+
+  def _response_counts(self, kernel, entity_id: int) -> list[float]:
+    counts = kernel.debug_get_naval_weapon_counts(entity_id)
+    self.assertEqual(len(counts), 4)
+    return [float(value) for value in counts]
+
+  def _response_force_surface_contact(self, kernel, ship_id: int, target_id: int,
+                                      range_m: float) -> None:
+    detection = ef_py.Detection()
+    detection.target_id = int(target_id)
+    detection.range = float(range_m)
+    detection.bearing = 0.0
+    detection.elevation = 0.0
+    detection.closing_speed = 0.0
+    detection.signal_strength = 1.0
+    detection.sensor_type = int(ef_py.SensorType.Radar)
+    detection.local_sensor_hit = True
+    detection.timestamp = 0.0
+    kernel.set_contact_list(ship_id, [detection])
+
+  def _response_state_after_one_second(self, time_step_s: float) -> list[float]:
+    kernel = ef_py.SimulationKernel()
+    kernel.reset(20260922)
+    kernel.set_time_step(time_step_s)
+    self.assertTrue(kernel.load_database(resolve_repo_path("examples", "config", "database")))
+    ship_id = self._response_spawn_ddg(kernel, 0.0)
+    probe_id = self._response_spawn_probe(kernel)
+    self._response_aim_hit(kernel, probe_id, ship_id, _RESPONSE_AIM_AFT_ENGINEERING_M)
+
+    for _ in range(int(round(1.0 / time_step_s))):
+      kernel.step()
+    return [float(value) for value in kernel.get_unit_damage_state(ship_id)]
+
+  def test_response_profile_projection_is_clamped_and_monotone(self) -> None:
+    """The declared profile's projection degrades, never rises, and clamps.
+
+    A forward hit damages the combat-system family, which seeds fire severity and
+    drives the mission/sensor channels. The declared coefficients are per-second
+    rates, so the honest assertions are: every channel is monotonically
+    non-increasing, the affected channels continue to degrade, and all values
+    remain inside their capability clamps.
+    """
+    kernel = ef_py.SimulationKernel()
+    kernel.reset(20260921)
+    self.assertTrue(kernel.load_database(resolve_repo_path("examples", "config", "database")))
+    ship_id = self._response_spawn_ddg(kernel, 0.0)
+    probe_id = self._response_spawn_probe(kernel)
+
+    self._response_aim_hit(kernel, probe_id, ship_id, _RESPONSE_AIM_FORWARD_M)
+
+    initial = [float(v) for v in kernel.get_unit_damage_state(ship_id)]
+    self.assertEqual(len(initial), 4)
+    self.assertTrue(any(value < 0.999 for value in initial))
+
+    samples = [initial]
+    for _ in range(4):
+      for _ in range(20):
+        kernel.step()
+      samples.append([float(v) for v in kernel.get_unit_damage_state(ship_id)])
+
+    labels = ("mission", "mobility", "sensor", "survivability")
+    for index, label in enumerate(labels):
+      for previous, current in zip(samples, samples[1:]):
+        self.assertLessEqual(
+          current[index],
+          previous[index] + 1.0e-12,
+          f"{label} capability must never increase",
+        )
+      self.assertLessEqual(samples[-1][index], initial[index])
+
+    self.assertLess(samples[-1][_RESPONSE_MISSION], samples[0][_RESPONSE_MISSION])
+    self.assertGreaterEqual(samples[-1][_RESPONSE_MISSION], 0.0)
+    self.assertLess(samples[-1][_RESPONSE_SENSOR], samples[0][_RESPONSE_SENSOR])
+    self.assertLess(samples[-1][_RESPONSE_SURVIVABILITY], samples[0][_RESPONSE_SURVIVABILITY])
+    self.assertTrue(kernel.is_unit_active(ship_id))
+
+  def test_breach_driven_flooding_grows_while_fire_decays(self) -> None:
+    """Breach ingress and fire decay move the two channel families apart.
+
+    An aft engineering/fuel hit is the only DDG aim point that seeds
+    `ongoing_hull_breach`, so this is the reachable runtime instance of the
+    breach-to-flooding coupling. Across two equal-length windows the
+    flooding-driven channel (mobility) loses more capability per step later than
+    earlier, while the fire-driven channel (mission) loses less: flooding
+    accumulates toward its ingress/decay balance while fire decays away.
+    Survivability carries both, so its ratio sits between the two.
+    """
+    kernel = ef_py.SimulationKernel()
+    kernel.reset(20260921)
+    self.assertTrue(kernel.load_database(resolve_repo_path("examples", "config", "database")))
+    ship_id = self._response_spawn_ddg(kernel, 0.0)
+    probe_id = self._response_spawn_probe(kernel)
+
+    self._response_aim_hit(kernel, probe_id, ship_id, _RESPONSE_AIM_AFT_ENGINEERING_M)
+    hit = [float(v) for v in kernel.get_unit_damage_state(ship_id)]
+
+    # The hit routed to the aft engineering/fuel compartment only, so the
+    # radar/command family in the midships hitbox is untouched.
+    self.assertEqual(hit[_RESPONSE_SENSOR], 1.0)
+
+    def losses(steps: int) -> tuple[float, float, float]:
+      before = [float(v) for v in kernel.get_unit_damage_state(ship_id)]
+      for _ in range(steps):
+        kernel.step()
+      after = [float(v) for v in kernel.get_unit_damage_state(ship_id)]
+      return (
+        before[_RESPONSE_MISSION] - after[_RESPONSE_MISSION],
+        before[_RESPONSE_MOBILITY] - after[_RESPONSE_MOBILITY],
+        before[_RESPONSE_SURVIVABILITY] - after[_RESPONSE_SURVIVABILITY],
+      )
+
+    early_mission, early_mobility, early_survivability = losses(40)
+    late_mission, late_mobility, late_survivability = losses(40)
+
+    for label, value in (
+      ("early mission", early_mission),
+      ("late mission", late_mission),
+      ("early mobility", early_mobility),
+      ("late mobility", late_mobility),
+      ("early survivability", early_survivability),
+      ("late survivability", late_survivability),
+    ):
+      self.assertGreater(value, 0.0, f"{label} loss must stay positive")
+
+    self.assertGreater(late_mobility, early_mobility)
+    self.assertLess(late_mission, early_mission)
+
+    mission_ratio = late_mission / early_mission
+    mobility_ratio = late_mobility / early_mobility
+    self.assertLess(mission_ratio, 1.0)
+    self.assertGreater(mobility_ratio, 1.0)
+
+    survivability_ratio = late_survivability / early_survivability
+    self.assertGreater(survivability_ratio, mission_ratio)
+    self.assertLess(survivability_ratio, mobility_ratio)
+
+  def test_damage_response_rates_use_elapsed_step_time(self) -> None:
+    """Changing the fixed step does not multiply the declared rates by tick count."""
+    half_second = self._response_state_after_one_second(0.5)
+    one_second = self._response_state_after_one_second(1.0)
+    for half_value, one_value in zip(half_second, one_second):
+      self.assertAlmostEqual(half_value, one_value, delta=5.0e-5)
+
+  def test_mount_state_is_neutral_on_the_parity_default_profile(self) -> None:
+    """The shipped default profile does not consume weapon-mount state.
+
+    `mount_response_weight` is 0.0 on the parity default, so two identically
+    damaged hulls evolve identically no matter how many rounds one of them has
+    spent. This is the declared-coupling invariant: the mount input is read and
+    projected, but it scales nothing until a profile declares a nonzero weight.
+    """
+    kernel = ef_py.SimulationKernel()
+    kernel.reset(20260921)
+    self.assertTrue(kernel.load_database(resolve_repo_path("examples", "config", "database")))
+    engaged_id = self._response_spawn_ddg(kernel, 0.0)
+    probe_id = self._response_spawn_probe(kernel)
+    pristine_id = self._response_spawn_ddg(kernel, 1000.0)
+
+    pristine_counts = self._response_counts(kernel, pristine_id)
+    self.assertEqual(int(pristine_counts[_RESPONSE_COUNT_GUN]), 20)
+    self.assertEqual(int(pristine_counts[_RESPONSE_COUNT_VLS]), 90)
+    self.assertEqual(int(pristine_counts[_RESPONSE_COUNT_CIWS]), 60)
+
+    # Spend a deterministic CIWS burst on the engaged hull only. CIWS fires a
+    # fixed three-round burst, so the spent count does not depend on the hull's
+    # hit roll. The probe satisfies its close-in tracking requirement at 1500 m.
+    self._response_force_surface_contact(kernel, engaged_id, probe_id, 1500.0)
+    self.assertTrue(kernel.fire_naval_weapon(engaged_id, probe_id, _RESPONSE_CIWS_TYPE_CODE))
+    engaged_counts = self._response_counts(kernel, engaged_id)
+    self.assertGreater(
+      int(pristine_counts[_RESPONSE_COUNT_CIWS]),
+      int(engaged_counts[_RESPONSE_COUNT_CIWS]),
+      "the engagement must actually spend mount rounds",
+    )
+    self.assertEqual(int(engaged_counts[_RESPONSE_COUNT_GUN]), int(pristine_counts[_RESPONSE_COUNT_GUN]))
+
+    # Identical damage on both hulls through a fresh probe, so the engaged hull
+    # cannot have lost its hit source to the burst.
+    damage_probe_id = self._response_spawn_probe(kernel)
+    self._response_aim_hit(kernel, damage_probe_id, engaged_id, _RESPONSE_AIM_AFT_ENGINEERING_M)
+    self._response_aim_hit(kernel, damage_probe_id, pristine_id, _RESPONSE_AIM_AFT_ENGINEERING_M)
+
+    engaged_initial = [float(v) for v in kernel.get_unit_damage_state(engaged_id)]
+    pristine_initial = [float(v) for v in kernel.get_unit_damage_state(pristine_id)]
+    for index in range(4):
+      self.assertAlmostEqual(engaged_initial[index], pristine_initial[index], places=9)
+
+    for _ in range(60):
+      kernel.step()
+
+    engaged_later = [float(v) for v in kernel.get_unit_damage_state(engaged_id)]
+    pristine_later = [float(v) for v in kernel.get_unit_damage_state(pristine_id)]
+    for index in range(4):
+      self.assertAlmostEqual(engaged_later[index], pristine_later[index], places=9)
+
+    # The damage response is identical despite different mount state, while both
+    # hulls kept their distinct mount state throughout.
+    self.assertGreater(engaged_initial[_RESPONSE_MOBILITY] - engaged_later[_RESPONSE_MOBILITY], 0.0)
+    self.assertEqual(
+      int(self._response_counts(kernel, engaged_id)[_RESPONSE_COUNT_CIWS]),
+      int(engaged_counts[_RESPONSE_COUNT_CIWS]),
+    )
+    self.assertEqual(
+      int(self._response_counts(kernel, pristine_id)[_RESPONSE_COUNT_CIWS]),
+      int(pristine_counts[_RESPONSE_COUNT_CIWS]),
+    )
 
 
 if __name__ == "__main__":

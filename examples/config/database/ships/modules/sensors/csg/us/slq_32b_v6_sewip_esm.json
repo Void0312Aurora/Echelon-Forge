@@ -1,0 +1,52 @@
+{
+    "name": "CSG_US_SLQ-32B_V6_SEWIP_ESM",
+    "type": "Sensor",
+    "sensor": {
+        "type": "ESM",
+        "max_range": 300000.0,
+        "fov_deg": 360.0,
+        "scan_period": 1.0,
+        "detection_prob": 0.96,
+        "bearing_noise_std": 1.5,
+        "range_noise_std": 0.0,
+        "track_memory_s": 20.0,
+        "range_power": 2.0,
+        "aspect_influence": 0.0,
+        "doppler_notch_width": 0.0,
+        "reference_snr_db": 12.0,
+        "reference_range_m": 90000.0,
+        "reference_rcs_m2": 5.0,
+        "bearing_only": true,
+        "bearing_only_min_range_m": 1500.0,
+        "environment_domain": "SurfaceMaritime"
+    },
+    "_real_world": {
+        "class": "AN/SLQ-32B(V)6 electronic warfare suite with SEWIP Block 2",
+        "variant_scope": "CVN-78 Ford fit; the DDG-51 CSG-S0 records reuse the existing SLQ-32_Passive_ESM_MVP module instead of this one.",
+        "hulls": ["CVN-78 Gerald R. Ford"],
+        "public_equipment": ["AN/SLQ-32B(V)6", "SEWIP Block 2"]
+    },
+    "_provenance": {
+        "modeling_note": "Passive ESM proxy for the Ford's AN/SLQ-32B(V)6 with SEWIP Block 2. No public detection range or sensitivity exists; the range and noise values are copied unchanged from the repo's existing SLQ-32_Passive_ESM_MVP template (bearing-only maritime ESM MVP), which itself is a community-derived approximation, since SEWIP Block 2 is a sensitivity/processing upgrade over the baseline SLQ-32 and no admissible source quantifies the improvement.",
+        "sources": ["csg-us-cvn78-dote-fy25"],
+        "parameters": {
+            "sensor.type": {"value_basis": "sourced", "source_ids": ["csg-us-cvn78-dote-fy25"], "tier": "A", "note": "SLQ-32B(V)6 is an electronic support measures suite; ESM is the matching engine sensor type"},
+            "sensor.max_range": {"value_basis": "proxy", "note": "copied from ships/modules/sensors/slq_32_passive_esm_mvp.json; no public SEWIP Block 2 sensitivity/range delta over baseline SLQ-32"},
+            "sensor.fov_deg": {"value_basis": "proxy", "note": "copied from slq_32_passive_esm_mvp.json template"},
+            "sensor.scan_period": {"value_basis": "proxy", "note": "copied from slq_32_passive_esm_mvp.json template"},
+            "sensor.detection_prob": {"value_basis": "proxy", "note": "copied from slq_32_passive_esm_mvp.json template"},
+            "sensor.bearing_noise_std": {"value_basis": "proxy", "note": "copied from slq_32_passive_esm_mvp.json template"},
+            "sensor.range_noise_std": {"value_basis": "engineering_estimate", "note": "0.0: bearing-only ESM has no independent range measurement, copied from template"},
+            "sensor.track_memory_s": {"value_basis": "proxy", "note": "copied from slq_32_passive_esm_mvp.json template"},
+            "sensor.range_power": {"value_basis": "engineering_estimate", "note": "radar-equation exponent, standard engine default, copied from template"},
+            "sensor.aspect_influence": {"value_basis": "engineering_estimate", "note": "0.0 disables RCS aspect-angle modeling, copied from template"},
+            "sensor.doppler_notch_width": {"value_basis": "engineering_estimate", "note": "0.0: not applicable to a passive ESM receiver, copied from template"},
+            "sensor.reference_snr_db": {"value_basis": "proxy", "note": "radar-equation calibration constant copied from template, paired with reference_range_m/reference_rcs_m2"},
+            "sensor.reference_range_m": {"value_basis": "proxy", "note": "paired calibration constant, see reference_snr_db; copied from template"},
+            "sensor.reference_rcs_m2": {"value_basis": "engineering_estimate", "note": "5 m^2 generic reference emitter/RCS, engine convention, copied from template"},
+            "sensor.bearing_only": {"value_basis": "sourced", "source_ids": ["csg-us-cvn78-dote-fy25"], "tier": "A", "note": "true: ESM systems detect and bear emitters passively, no independent ranging; copied from template convention"},
+            "sensor.bearing_only_min_range_m": {"value_basis": "proxy", "note": "copied from slq_32_passive_esm_mvp.json template"},
+            "sensor.environment_domain": {"value_basis": "engineering_estimate", "note": "surface/maritime domain selected for a shipborne ESM suite per authoring standard"}
+        }
+    }
+}

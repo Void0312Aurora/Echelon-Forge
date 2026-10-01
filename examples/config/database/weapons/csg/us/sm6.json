@@ -1,0 +1,90 @@
+{
+    "name": "CSG_US_SM-6_Block_I_IA",
+    "type": "Missile",
+    "mass_kg": 1497.0,
+    "max_flight_time_s": 140.0,
+    "flight_model": {
+        "max_speed": 1190.5,
+        "max_g": 20.0,
+        "max_turn_rate": 15.0
+    },
+    "guidance": {
+        "type": "ActiveRadar",
+        "active_seek_range": 25000.0,
+        "pn_los_rate_source": "world_los_history",
+        "target_kinematics_estimator": "world_cva",
+        "capture_guidance_mode": "disabled",
+        "target_tracker_alpha": 0.2,
+        "target_tracker_beta": 0.02,
+        "target_tracker_gamma": 0.5,
+        "nav_gain": 4.0,
+        "apn_target_accel_gain": 0.125,
+        "autopilot_tau_s": 0.05,
+        "max_accel_response_g_per_s": 350.0
+    },
+    "warhead": {
+        "type": "blast_fragmentation",
+        "mass_kg": 64.0,
+        "lethal_radius": 13.0,
+        "damage": 230.0,
+        "explosive_mass_kg": 25.6,
+        "case_mass_kg": 38.4,
+        "projection_radius_fraction": 0.55,
+        "projection_max_radius_m": 17.0,
+        "projection_max_projected_hitboxes": 3,
+        "provenance": "Warhead mass n/p per OOB (csg-us-sm6-csis, C-est); Tier C commonly cites ~64 kg, not independently verified. Lethal radius/damage/case-explosive split are engineering-estimate surrogates following the aim_120c.json blast-fragmentation pattern."
+    },
+    "fuze": {
+        "type": "radar_proximity",
+        "trigger_radius_m": 13.0,
+        "delay_s": 0.015,
+        "reliability": 0.93,
+        "provenance": "No public fuze timing data (n/p); engineering-estimate scaffold values consistent with an active-radar-guided SAM/anti-air missile."
+    },
+    "_real_world": {
+        "designation": "SM-6 Block I/IA (RIM-174 ERAM)",
+        "role": "Extended-range AAW, terminal BMD, and ASuW SAM, VLS-launched (Mk 41); supports NIFC-CA/CEC engage-on-remote",
+        "range_nmi": "130 published / up to ~200-250 estimated (conflict; OOB uses 130-200 nmi)",
+        "speed_mach": "Mach 3.5 (C-est)",
+        "guidance_real": "Dual-mode active (AMRAAM-derived) + semi-active seeker",
+        "mount_mapping": "vls_sam"
+    },
+    "_provenance": {
+        "sources": ["csg-us-sm-navy", "csg-us-sm6-csis", "csg-us-sm6-wiki", "csg-us-sm6-defpost", "csg-us-sm6-rtx"],
+        "parameters": {
+            "warhead.type": {"value_basis": "engineering_estimate", "note": "blast_fragmentation: mass n/p per OOB; generic blast_fragmentation is the standard SAM warhead family assumed following the aim_120c.json pattern"},
+            "warhead.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "fuze.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-sm-navy"], "tier": "A", "note": "~3,300 lb = 1,497 kg launch weight"},
+            "max_flight_time_s": {"value_basis": "proxy", "note": "engineering estimate derived from the 130-200 nmi OOB range band at the Mach 3.5 proxy speed"},
+            "flight_model.max_speed": {"value_basis": "proxy", "source_ids": ["csg-us-sm6-wiki", "csg-us-sm6-defpost"], "tier": "C-est", "note": "Mach 3.5 sea-level ~= 1190.5 m/s"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "note": "no public maneuver-load figure; engineering estimate consistent with an AMRAAM-derived active seeker/airframe lineage scaled for a larger extended-range interceptor"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "note": "no public figure; engineering estimate consistent with max_g for an extended-range AAW/ASuW/terminal-BMD interceptor"},
+            "guidance.type": {"value_basis": "sourced", "source_ids": ["csg-us-sm-navy"], "tier": "A", "note": "dual-mode active (AMRAAM-derived) + semi-active seeker per OOB; ActiveRadar is the matching real engine seeker_type for the dominant active mode. VLS mount override makes this documentation-only for VLS-launched use"},
+            "guidance.active_seek_range": {"value_basis": "proxy", "note": "no public active-seeker acquisition range; engineering estimate consistent with an AMRAAM-derived active seeker scaled for a larger interceptor"},
+            "guidance.pn_los_rate_source": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, not a sourced weapon characteristic; VLS mount override makes this documentation-only for VLS-launched use"},
+            "guidance.target_kinematics_estimator": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, same basis as pn_los_rate_source"},
+            "guidance.capture_guidance_mode": {"value_basis": "engineering_estimate", "note": "disabled: no terminal capture-guidance submode is modeled beyond the dual-mode active/semi-active homing already described"},
+            "guidance.target_tracker_alpha": {"value_basis": "engineering_estimate", "note": "standard alpha-beta-gamma tracker filter constant, engine convention shared across missile records, not weapon-specific"},
+            "guidance.target_tracker_beta": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.target_tracker_gamma": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.nav_gain": {"value_basis": "engineering_estimate", "note": "proportional-navigation gain scaffold; no public guidance-law constant, set high consistent with SM-6's active-seeker terminal homing against maneuvering targets including terminal-BMD"},
+            "guidance.apn_target_accel_gain": {"value_basis": "engineering_estimate", "note": "augmented-PN target-acceleration compensation gain scaffold, consistent with engaging maneuvering aircraft/missiles and reentry vehicles; not sourced per-weapon"},
+            "guidance.autopilot_tau_s": {"value_basis": "engineering_estimate", "note": "autopilot response time-constant scaffold; fast, consistent with a high-speed extended-range interceptor's terminal maneuver"},
+            "guidance.max_accel_response_g_per_s": {"value_basis": "engineering_estimate", "note": "autopilot response-rate scaffold consistent with flight_model.max_g"},
+            "warhead.mass_kg": {"value_basis": "proxy", "source_ids": ["csg-us-sm6-csis"], "tier": "C-est", "note": "mass n/p; Tier C ~64 kg not verified"},
+            "warhead.lethal_radius": {"value_basis": "proxy", "note": "engineering-estimate surrogate following the aim_120c.json blast-fragmentation pattern, scaled for this warhead's mass"},
+            "warhead.damage": {"value_basis": "proxy", "note": "engineering-estimate surrogate, no public damage-effectiveness figure"},
+            "warhead.explosive_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split of the proxy 64 kg total warhead mass, no public split figure"},
+            "warhead.case_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split, see explosive_mass_kg"},
+            "warhead.projection_radius_fraction": {"value_basis": "proxy", "note": "copied from the weapons/air_to_air/aim_120c.json blast-fragmentation projection-geometry template"},
+            "warhead.projection_max_radius_m": {"value_basis": "proxy", "note": "copied/scaled from the aim_120c.json template pattern for this warhead's lethal_radius"},
+            "warhead.projection_max_projected_hitboxes": {"value_basis": "proxy", "note": "copied from the aim_120c.json template pattern"},
+            "fuze.type": {"value_basis": "engineering_estimate", "note": "no public fuze timing data (n/p); radar_proximity is the matching real engine-recognized fuze type consistent with an active-radar-guided SAM/anti-air missile"},
+            "fuze.trigger_radius_m": {"value_basis": "proxy", "note": "no public fuze timing data (n/p); engineering-estimate scaffold value matching warhead.lethal_radius"},
+            "fuze.delay_s": {"value_basis": "proxy", "note": "no public fuze timing data (n/p); engineering-estimate scaffold value"},
+            "fuze.reliability": {"value_basis": "proxy", "note": "no public reliability figure; engineering-estimate scaffold value"}
+        },
+        "modeling_notes": ["Range figure conflicts between sources (130 nmi Wikipedia vs 370 km CSIS); OOB resolves to use 130-200 nmi band. Not directly represented as a JSON field; kinematics carried by flight_model.max_speed and guidance.active_seek_range instead.", "Engine note: for a vls_sam mount, simulation_kernel_weapon_release_service.cpp (~line 644-654) overrides the fired missile's speed/turn_rate/fuse_distance/damage/max_flight_time_s from the ship record's naval_weapon_system.mounts[] fields, not from this standalone Missile record. This record is documentation/reference only for VLS-launched SM-6; the ship record's mount fields drive actual in-engine outcomes."]
+    }
+}

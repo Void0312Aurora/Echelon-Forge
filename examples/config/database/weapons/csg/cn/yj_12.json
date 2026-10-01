@@ -1,0 +1,94 @@
+{
+    "name": "CSG_CN_YJ-12",
+    "type": "Missile",
+    "mass_kg": 2500.0,
+    "max_flight_time_s": 650.0,
+    "flight_model": {
+        "max_speed": 2.5,
+        "max_g": 10.0,
+        "max_turn_rate": 5.0
+    },
+    "guidance": {
+        "type": "ActiveRadar",
+        "active_seek_range": 40000.0,
+        "pn_los_rate_source": "world_los_history",
+        "target_kinematics_estimator": "world_cva",
+        "capture_guidance_mode": "disabled",
+        "target_tracker_alpha": 0.2,
+        "target_tracker_beta": 0.02,
+        "target_tracker_gamma": 0.5,
+        "nav_gain": 3.5,
+        "apn_target_accel_gain": 0.1,
+        "autopilot_tau_s": 0.12,
+        "max_accel_response_g_per_s": 60.0
+    },
+    "warhead": {
+        "type": "blast_fragmentation",
+        "mass_kg": 250.0,
+        "lethal_radius": 20.0,
+        "damage": 320.0,
+        "explosive_mass_kg": 130.0,
+        "case_mass_kg": 120.0,
+        "projection_radius_fraction": 0.55,
+        "projection_max_radius_m": 24.0,
+        "projection_max_projected_hitboxes": 4,
+        "provenance": "No public warhead mass for YJ-12. Engineering-estimate surrogate scaled up from the repo/packet YJ-83K pattern given YJ-12's much larger ~2,500 kg supersonic-ramjet airframe class, comparable to a large supersonic ASCM such as the Russian P-800 Oniks class."
+    },
+    "fuze": {
+        "type": "contact",
+        "trigger_radius_m": 0.0,
+        "delay_s": 0.01,
+        "reliability": 0.88,
+        "provenance": "No public fuze timing data; engineering-estimate impact/delay fuze scaffold, scaled up from YJ-83K for a large supersonic ASCM."
+    },
+    "_real_world": {
+        "designation": "YJ-12 (air-launched baseline); ship-launched YJ-12A and coastal YJ-12B variants also exist",
+        "role": "Supersonic ramjet-powered air-launched anti-ship cruise missile (ASCM), also attributed to J-15 per PRC media",
+        "carrier_platforms": "J-15T (external, per Chinese military media; does not fit internally in J-35 per the OOB doc's LO-loadout table) (csg-cn-yj12-csis-img, csg-cn-yj12-usni-2026, B)",
+        "dod_system_reach": "3,100-4,000 km for H-6+YJ-12/YJ-83 combined bomber radius (~3,500km) + missile; NOT missile-only (csg-cn-dod-cmpr-2025, A)",
+        "range_class": "Class figure derived by analogy to the ship-launched YJ-12/YJ-18-class 270-290 nmi (~500-537 km) figure cited by USNI (2026) for the broader YJ-12/YJ-18 supersonic ASCM class (csg-cn-yj20-usni-2026, B), though this class figure describes the ship-launched round and may not transfer directly to the air-launched variant, which typically has shorter powered range due to a smaller rocket-boost/ramjet-transition profile when launched at lower altitude/speed than a ballistic-boosted ship-launched round",
+        "propulsion": "Supersonic ramjet-sustained cruise (well-established public characterization for the YJ-12 family)",
+        "status": "content_only_no_mechanism (air-launch spawns a generic missile per authoring_standard; no functional NavalWeaponType anti-ship mount exists yet in the engine mechanism set)"
+    },
+    "_provenance": {
+        "sources": ["csg-cn-yj12-csis-img", "csg-cn-yj12-usni-2026", "csg-cn-dod-cmpr-2025", "csg-cn-yj20-usni-2026", "csg-cn-j15t-usni-yj15"],
+        "parameters": {
+            "warhead.type": {"value_basis": "engineering_estimate", "note": "blast_fragmentation is the standard ASCM warhead family assumed following the repo's harpoon_ship.json/YJ-83K pattern; no PLAN source describes detonation mechanism"},
+            "warhead.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "fuze.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "mass_kg": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "no public mass figure for YJ-12; engineering-estimate scaled to the large supersonic-ramjet ASCM class (comparable to the ~3,000 kg P-800 Oniks/BrahMos class, sized down slightly given YJ-12's smaller reported ~200mm booster diameter class), reflecting a large external-carriage air-launched round consistent with the OOB doc noting it does not fit internally in J-35"},
+            "max_flight_time_s": {"value_basis": "proxy", "source_ids": ["csg-cn-yj20-usni-2026"], "tier": "B", "note": "engineering estimate derived from the sourced ~270-290 nmi (~500-537 km) class figure for the broader YJ-12/YJ-18 supersonic ASCM family (USNI 2026, B) at the estimated Mach 2.5 supersonic ramjet-sustained cruise speed; this class figure describes the ship-launched round and may overstate the air-launched variant's practical range, flagged as a proxy risk"},
+            "flight_model.max_speed": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "Mach 2.5: no specific public number for YJ-12's cruise speed, but supersonic ramjet propulsion is a well-established public characterization for this missile family; Mach 2.5 is a representative mid-range estimate for a ramjet-sustained ASCM (comparable Western/Russian analogs cruise Mach 2-3)"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public maneuver-load figure; engineering estimate for a large supersonic sea-skimming ASCM, lower agility than a smaller subsonic missile given the larger airframe mass"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public figure; engineering estimate consistent with max_g"},
+            "guidance.type": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "ActiveRadar: no public seeker-type confirmation for YJ-12 specifically, but assumed consistent with the standard PLA supersonic ASCM terminal active-radar seeker convention shared with YJ-83K/YJ-18A"},
+            "guidance.active_seek_range": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "no public active-radar seeker acquisition range; engineering estimate scaled up from YJ-83K's proxy given YJ-12's larger seeker aperture (larger diameter airframe)"},
+            "guidance.pn_los_rate_source": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default; record has no functional mount regardless"},
+            "guidance.target_kinematics_estimator": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default"},
+            "guidance.capture_guidance_mode": {"value_basis": "engineering_estimate", "note": "disabled: no terminal capture-guidance submode modeled for this mechanism-gap weapon"},
+            "guidance.target_tracker_alpha": {"value_basis": "engineering_estimate", "note": "standard alpha-beta-gamma tracker filter constant, engine convention shared across missile records"},
+            "guidance.target_tracker_beta": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.target_tracker_gamma": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.nav_gain": {"value_basis": "engineering_estimate", "note": "proportional-navigation gain scaffold; no public guidance-law constant, matched to the repo harpoon_ship.json/YJ-83K convention for a maneuvering-surface-target ASCM"},
+            "guidance.apn_target_accel_gain": {"value_basis": "engineering_estimate", "note": "augmented-PN target-acceleration compensation gain scaffold, consistent with engaging a maneuvering surface target"},
+            "guidance.autopilot_tau_s": {"value_basis": "engineering_estimate", "note": "autopilot response time-constant scaffold; faster than YJ-83K reflecting the supersonic terminal-phase profile"},
+            "guidance.max_accel_response_g_per_s": {"value_basis": "engineering_estimate", "note": "autopilot response-rate scaffold consistent with flight_model.max_g"},
+            "warhead.mass_kg": {"value_basis": "proxy", "note": "no public warhead mass; engineering-estimate surrogate scaled up from the packet's YJ-83K pattern given YJ-12's much larger airframe class, comparable to other large supersonic ASCM warheads"},
+            "warhead.lethal_radius": {"value_basis": "proxy", "note": "engineering-estimate surrogate, scaled up from YJ-83K consistent with the larger estimated warhead mass and higher supersonic terminal-impact energy"},
+            "warhead.damage": {"value_basis": "proxy", "note": "engineering-estimate surrogate, no public damage-effectiveness figure"},
+            "warhead.explosive_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split of the estimated total warhead mass, no public split figure"},
+            "warhead.case_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split, see explosive_mass_kg"},
+            "warhead.projection_radius_fraction": {"value_basis": "proxy", "note": "copied from the packet's YJ-83K/harpoon_ship.json-derived projection-geometry template"},
+            "warhead.projection_max_radius_m": {"value_basis": "proxy", "note": "scaled from this warhead's larger estimated lethal_radius per repo convention"},
+            "warhead.projection_max_projected_hitboxes": {"value_basis": "proxy", "note": "scaled up from the packet's YJ-83K template pattern given the larger warhead"},
+            "fuze.type": {"value_basis": "engineering_estimate", "note": "no public fuze timing data; contact fuze scaffold, same convention as YJ-83K"},
+            "fuze.trigger_radius_m": {"value_basis": "engineering_estimate", "note": "0.0 consistent with a contact-fuze trigger radius"},
+            "fuze.delay_s": {"value_basis": "engineering_estimate", "note": "no public fuze timing data; engineering-estimate scaffold"},
+            "fuze.reliability": {"value_basis": "engineering_estimate", "note": "no public reliability figure; engineering-estimate scaffold value, slightly lower than YJ-83K reflecting the more limited independent confirmation of air-launched carriage"}
+        },
+        "modeling_notes": [
+            "Per the OOB doc's J-35 loadout table (line 142): YJ-83K and YJ-12 'do not fit internally' in J-35's weapons bay; carrying them is external and non-LO. This record is therefore wired only into J-15T's external default_loadout, not J-35's, per the task's requirement that J-35's internal-vs-external carriage follow the page.",
+            "No functional mount exists for air-launched ASCMs of this class (mechanism gap, same as YJ-83K/YJ-18A/YJ-20); content-only. Air-launch path still spawns a generic missile per authoring_standard."
+        ]
+    }
+}

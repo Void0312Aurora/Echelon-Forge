@@ -1,0 +1,38 @@
+{
+    "name": "CSG_CN_Z-20F_Radar",
+    "type": "Sensor",
+    "sensor": {
+        "max_range": 70000.0,
+        "fov_deg": 300.0,
+        "scan_period": 4.0,
+        "detection_prob": 0.83,
+        "bearing_noise_std": 0.55,
+        "range_noise_std": 55.0,
+        "track_memory_s": 15.0,
+        "range_power": 4.0,
+        "aspect_influence": 0.30,
+        "doppler_notch_width": 5.0
+    },
+    "_real_world": {
+        "class": "Chin-mounted surface-search radar, designation not publicly disclosed",
+        "variant_scope": "Z-20F naval ASW/utility helicopter surface-search radar",
+        "hulls": [],
+        "public_equipment": ["Chin surface-search radar (FlightGlobal, B); 'large surface-search radar within a distinctive radome' confirmed by imagery (Military Watch, Defence Security Asia); designation and detection-range figures not public"]
+    },
+    "_provenance": {
+        "modeling_note": "Surface-search radar for Z-20F per the task's requirement. No PRC designation or performance figures are public for this radar; multiple B-tier imagery-based sources (FlightGlobal, Military Watch, Defence Security Asia) confirm only its physical presence and general surface-search role, comparable functionally to the MH-60R's APS-153. All numeric fields are engineering_estimate proxies copied from the repo CSG_US_APS-153 record (aircraft/modules/sensors/csg/us/aps_153.json), the closest analogous naval-helicopter surface-search radar in the database, since Z-20F's mission profile (naval ASW/utility helicopter, chin-mounted surface-search radar) closely parallels the MH-60R's APS-153 fit and no Z-20F-specific figures exist to differentiate them.",
+        "sources": ["csg-cn-z20f-flightglobal-radar", "csg-cn-z20f-mwm-radar", "csg-cn-z20f-dsa-radar"],
+        "parameters": {
+            "sensor.max_range": {"value_basis": "proxy", "source_ids": ["csg-cn-z20f-flightglobal-radar"], "tier": "proxy", "note": "engineering_estimate proxy copied from the repo CSG_US_APS-153 record (65 km, nudged to 70 km); FlightGlobal/Military Watch/Defence Security Asia confirm the radar's presence and surface-search role but publish no detection-range figure"},
+            "sensor.fov_deg": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_APS-153 record; no public figure"},
+            "sensor.scan_period": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_APS-153 record; no public figure"},
+            "sensor.detection_prob": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_APS-153 record, nudged down slightly reflecting the total absence of independent performance corroboration for this radar; no public figure"},
+            "sensor.bearing_noise_std": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_APS-153 record; no public figure"},
+            "sensor.range_noise_std": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_APS-153 record; no public figure"},
+            "sensor.track_memory_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_APS-153 record; no public figure"},
+            "sensor.range_power": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo CSG_US_APS-153 record (radar-equation exponent, not platform-specific)"},
+            "sensor.aspect_influence": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_APS-153 record; no public figure"},
+            "sensor.doppler_notch_width": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from the repo CSG_US_APS-153 record; no public figure"}
+        }
+    }
+}

@@ -1,0 +1,28 @@
+{
+    "name": "CSG_CN_WS-21",
+    "type": "Engine",
+    "engine": {
+        "mil_thrust_n": 60000.0,
+        "ab_thrust_n": 93200.0,
+        "sfc_mil": 0.85,
+        "sfc_ab": 1.90,
+        "bypass_ratio": 0.45
+    },
+    "_real_world": {
+        "class": "Guizhou WS-21 (also reported as WS-13X) low-bypass afterburning turbofan",
+        "variant_scope": "WS-21 as fitted to the early-production carrier-based J-35 (interim powerplant pending the WS-19)",
+        "hulls": [],
+        "public_equipment": ["WS-21, ~93.2 kN (20,950 lbf) afterburning thrust, derivative/stretch of the WS-13E, first close-up imagery Dec 2025 (Defence Security Asia, Wikipedia)"]
+    },
+    "_provenance": {
+        "modeling_note": "Interim engine for the carrier-based J-35 per the task's explicit instruction (the OOB page's J-35 Engines row lists 'WS-21 (interim, 87-93 kN AB each)'; WS-19 is the intended production engine and is not separately modeled unless the branch is exercised — see CSG_CN_WS-19 companion record). No PRC official disclosure exists; all figures are Tier C (Wikipedia, Defence Security Asia, migflug), cross-confirmed across 3 independent web sources for the afterburning thrust figure. No public dry/military thrust, SFC, or bypass ratio figures exist; those fields are engineering_estimate proxies patterned on the repo CSG_US_F414-GE-400 template's structure, scaled to this engine's smaller/lower-bypass class as described qualitatively by Defence Security Asia (~60 kN dry thrust estimate, bypass ratio 0.4-0.5 estimate) and by analogy to the WS-13 family lineage.",
+        "sources": ["csg-cn-ws21-wiki-j35", "csg-cn-ws21-dsa", "csg-cn-ws21-migflug"],
+        "parameters": {
+            "engine.mil_thrust_n": {"value_basis": "sourced", "source_ids": ["csg-cn-ws21-dsa"], "tier": "C-est", "note": "Defence Security Asia estimates ~60 kN dry thrust for the WS-21; no PRC official figure exists"},
+            "engine.ab_thrust_n": {"value_basis": "sourced", "source_ids": ["csg-cn-ws21-wiki-j35", "csg-cn-ws21-migflug"], "tier": "C", "note": "93.2 kN (20,950-21,000 lbf) afterburning thrust, consistent across Wikipedia and migflug, both citing the same imagery-era assessment; OOB page range 87.2-93.2 kN, upper bound used"},
+            "engine.sfc_mil": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate patterned on the repo F414-GE-400 template's sfc_mil, nudged up slightly reflecting the WS-13-family lineage's generally less fuel-efficient dry cruise vs Western engines of this thrust class; no public figure"},
+            "engine.sfc_ab": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate, same basis as sfc_mil; no public figure"},
+            "engine.bypass_ratio": {"value_basis": "sourced", "source_ids": ["csg-cn-ws21-dsa"], "tier": "C-est", "note": "Defence Security Asia's 'estimated 0.4-0.5' bypass ratio for the WS-21, midpoint 0.45 used"}
+        }
+    }
+}

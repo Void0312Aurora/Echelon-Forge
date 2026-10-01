@@ -1,0 +1,42 @@
+{
+    "name": "CSG_US_ALQ99_NGJ_MB",
+    "type": "EWSuite",
+    "rwr": {
+        "sensitivity_dbm": -92.0
+    },
+    "jammer": {
+        "power_watts": 1500.0,
+        "bandwidth_mhz": 19936.0,
+        "type": "NoiseBarrage",
+        "effective_angle": 90.0,
+        "is_active": false
+    },
+    "countermeasures": {
+        "chaff_count": 60,
+        "flare_count": 30,
+        "release_interval": 0.5,
+        "auto_mode": true
+    },
+    "_real_world": {
+        "class": "EA-18G Growler offensive electronic-attack suite: AN/ALQ-218 receiver + AN/ALQ-99 Tactical Jamming System pods (transitioning to AN/ALQ-249 Next Generation Jammer-Mid Band)",
+        "variant_scope": "EA-18G Growler airborne electronic attack loadout, external wing/centerline jamming pods plus internal ALQ-218 receiver, replacing the retired EA-6B Prowler in the CVW",
+        "hulls": [],
+        "public_equipment": ["AN/ALQ-99 TJS: 64 MHz - 20 GHz across 10 bands (Wikipedia, NAVAIR)", "AN/ALQ-249 NGJ-MB, mid-band successor pod, in fielding alongside ALQ-99 (TWZ, NAVAIR)"]
+    },
+    "_provenance": {
+        "modeling_note": "EA-18G's own offensive stand-off/escort jamming suite, distinct from the Super Hornet self-protection suite (CSG_US_ALQ-214_ALR-67, also fitted internally to the EA-18G). This record represents the externally-carried ALQ-99/NGJ-MB jamming pods plus the ALQ-218 wide-band receiver. No public power_watts, precise per-band bandwidth, or jamming effective_angle figures exist (classified). jammer.bandwidth_mhz reuses the same 64 MHz-20 GHz-derived span as the ALR-67/ALQ-214 record for consistency, since ALQ-99's own sourced frequency range (Wikipedia's Band 1-10 table, 64 MHz to 20 GHz) covers effectively the same span; jammer.power_watts and effective_angle are proxy, scaled modestly above the internal self-protection jammer (CSG_US_ALQ-214_ALR-67) to reflect ALQ-99/NGJ-MB's higher-power stand-off/escort-jamming role versus a self-protection-only system, not a quantified public figure. jammer.type is set to NoiseBarrage since ALQ-99 is publicly described as a noise-jamming tactical jamming system (vs ALQ-214's deception/repeater design), the clearest sourced qualitative distinction available.",
+        "sources": ["csg-us-alq99-wiki", "csg-us-alq99-navair", "csg-us-alq249-twz"],
+        "parameters": {
+            "rwr.sensitivity_dbm": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate marginally better than CSG_US_ALQ-214_ALR-67's -90.0, reflecting the EA-18G's dedicated ALQ-218 wide-band receiver role; not a quantified public figure"},
+            "jammer.power_watts": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate above CSG_US_ALQ-214_ALR-67's 1000.0, reflecting ALQ-99/NGJ-MB's stand-off/escort jamming role vs a self-protection-only jammer; no public power figure (classified)"},
+            "jammer.bandwidth_mhz": {"value_basis": "sourced", "source_ids": ["csg-us-alq99-wiki"], "tier": "B", "note": "AN/ALQ-99's own published frequency range is 64 MHz to 20 GHz across 10 jamming bands (Wikipedia, cross-confirmed by NAVAIR's product page describing the system generally); span expressed in MHz as (20000-64)~=19936"},
+            "jammer.type": {"value_basis": "sourced", "source_ids": ["csg-us-alq99-wiki", "csg-us-alq99-navair"], "tier": "C-est", "note": "ALQ-99 is publicly described as a noise/barrage tactical jamming system (vs ALQ-214's deception/repeater design); mapped to the NoiseBarrage enum value as the closest qualitative match"},
+            "jammer.effective_angle": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate above CSG_US_ALQ-214_ALR-67's 60.0, reflecting wing-pod-mounted stand-off jamming's wider coverage intent vs an internal self-protection jammer; no public figure"},
+            "jammer.is_active": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "false: default-off state, activated at runtime by mission logic"},
+            "countermeasures.chaff_count": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from repo Generic_Gen4_EW baseline; no public per-sortie figure"},
+            "countermeasures.flare_count": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from repo Generic_Gen4_EW baseline; no public figure"},
+            "countermeasures.release_interval": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from repo Generic_Gen4_EW baseline; no public figure"},
+            "countermeasures.auto_mode": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "true: matches repo Generic_Gen4_EW baseline convention"}
+        }
+    }
+}

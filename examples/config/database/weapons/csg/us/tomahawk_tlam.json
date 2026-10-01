@@ -1,0 +1,91 @@
+{
+    "name": "CSG_US_Tomahawk_TLAM_Block_IV_V",
+    "type": "Missile",
+    "mass_kg": 1510.0,
+    "max_flight_time_s": 3600.0,
+    "flight_model": {
+        "max_speed": 240.0,
+        "max_g": 4.0,
+        "max_turn_rate": 8.0
+    },
+    "guidance": {
+        "type": "GpsInsWaypoint",
+        "active_seek_range": 0.0,
+        "pn_los_rate_source": "world_los_history",
+        "target_kinematics_estimator": "world_cva",
+        "capture_guidance_mode": "disabled",
+        "target_tracker_alpha": 0.2,
+        "target_tracker_beta": 0.02,
+        "target_tracker_gamma": 0.5,
+        "nav_gain": 2.0,
+        "apn_target_accel_gain": 0.05,
+        "autopilot_tau_s": 0.3,
+        "max_accel_response_g_per_s": 20.0
+    },
+    "warhead": {
+        "type": "blast",
+        "mass_kg": 453.6,
+        "lethal_radius": 25.0,
+        "damage": 500.0,
+        "explosive_mass_kg": 272.2,
+        "case_mass_kg": 181.4,
+        "projection_radius_fraction": 0.5,
+        "projection_max_radius_m": 30.0,
+        "projection_max_projected_hitboxes": 4,
+        "provenance": "1,000-lb class unitary warhead per OOB (csg-us-tomahawk-navy, A) = 453.6 kg. Explosive/case split, lethal radius, and damage are engineering-estimate surrogates; no public HE fraction admitted."
+    },
+    "fuze": {
+        "type": "contact",
+        "trigger_radius_m": 0.0,
+        "delay_s": 0.05,
+        "reliability": 0.95,
+        "provenance": "Land-attack unitary warhead fuzing is not detailed in the OOB; engineering-estimate impact/delay fuze scaffold typical of a 1,000-lb class land-attack warhead."
+    },
+    "_real_world": {
+        "designation": "Tomahawk Block IV/V (TLAM-E)",
+        "role": "Long-range land-attack cruise missile, VLS-launched (Mk 41)",
+        "range_nmi": 900,
+        "speed": "High subsonic; Tier C ~0.75 Mach / ~880 km/h (not verified)",
+        "guidance_real": "INS, TERCOM, DSMAC, GPS; two-way satcom retargeting, loiter capability",
+        "status": "content_only_no_mechanism",
+        "mount_mapping": "none — no NavalWeaponType exists for land-attack cruise missiles; placed only in _real_world.weapon_inventory on ship records"
+    },
+    "_provenance": {
+        "sources": ["csg-us-tomahawk-navy", "csg-us-tomahawk-navair"],
+        "parameters": {
+            "warhead.type": {"value_basis": "engineering_estimate", "note": "blast: no public detonation-mechanism detail beyond the 1,000-lb class unitary warhead mass; generic blast is the nearest real engine-recognized warhead type"},
+            "warhead.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "fuze.provenance": {"value_basis": "engineering_estimate", "note": "legacy inline provenance-note scaffold string, superseded by this structured _provenance.parameters block; retained as descriptive metadata, not a runtime scalar"},
+            "mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-tomahawk-navair"], "tier": "A", "note": "3,330 lb with booster = 1,510 kg"},
+            "max_flight_time_s": {"value_basis": "proxy", "note": "reflects Tomahawk's published loiter capability (up to ~1 hour), not a direct sourced endurance figure for this record's exact flight profile"},
+            "flight_model.max_speed": {"value_basis": "proxy", "source_ids": ["csg-us-tomahawk-navy"], "tier": "C-est", "note": "Navy states 'high subsonic' only (A); Tier C ~0.75 Mach at low altitude ~240 m/s used as engineering estimate"},
+            "flight_model.max_g": {"value_basis": "engineering_estimate", "note": "no public maneuver-load figure; low value consistent with a subsonic cruise missile's waypoint-following flight profile, not a dogfighting airframe"},
+            "flight_model.max_turn_rate": {"value_basis": "engineering_estimate", "note": "no public figure; engineering estimate for a cruise missile's gentle waypoint-turn profile"},
+            "guidance.type": {"value_basis": "sourced", "source_ids": ["csg-us-tomahawk-navy"], "tier": "A", "note": "INS/TERCOM/DSMAC/GPS waypoint land-attack guidance; no active seeker for this non-MST variant. The engine's guidance.type string loader (unit_definition_loader.cpp:1506-1512) only recognizes ActiveRadar/Radar or IR/Infrared as a seeker_type; a waypoint-guidance missile has no matching engine seeker category, and this record has no functional mount anyway (mechanism gap), so the field is descriptive metadata only"},
+            "guidance.active_seek_range": {"value_basis": "engineering_estimate", "note": "0.0: no active terminal seeker exists on this land-attack variant (unlike the MST variant), consistent with guidance.type"},
+            "guidance.pn_los_rate_source": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, not a sourced weapon characteristic; record has no functional mount regardless"},
+            "guidance.target_kinematics_estimator": {"value_basis": "engineering_estimate", "note": "standard engine guidance-model wiring default, same basis as pn_los_rate_source"},
+            "guidance.capture_guidance_mode": {"value_basis": "engineering_estimate", "note": "disabled: no terminal capture-guidance submode is modeled; this is a waypoint land-attack weapon with no functional mount"},
+            "guidance.target_tracker_alpha": {"value_basis": "engineering_estimate", "note": "standard alpha-beta-gamma tracker filter constant, engine convention shared across missile records, not weapon-specific"},
+            "guidance.target_tracker_beta": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.target_tracker_gamma": {"value_basis": "engineering_estimate", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.nav_gain": {"value_basis": "engineering_estimate", "note": "proportional-navigation gain scaffold; low value since this is a waypoint-following weapon with no maneuvering terminal homing"},
+            "guidance.apn_target_accel_gain": {"value_basis": "engineering_estimate", "note": "augmented-PN target-acceleration compensation gain scaffold, not applicable to a fixed-target land-attack weapon but retained for schema completeness"},
+            "guidance.autopilot_tau_s": {"value_basis": "engineering_estimate", "note": "autopilot response time-constant scaffold, consistent with a cruise missile's gentle-maneuver flight control"},
+            "guidance.max_accel_response_g_per_s": {"value_basis": "engineering_estimate", "note": "autopilot response-rate scaffold; low value consistent with a subsonic waypoint-following cruise missile"},
+            "warhead.mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-tomahawk-navy"], "tier": "A", "note": "1,000-lb class unitary = 453.6 kg"},
+            "warhead.lethal_radius": {"value_basis": "proxy", "note": "engineering-estimate surrogate; no public HE fraction or lethal-radius figure admitted"},
+            "warhead.damage": {"value_basis": "proxy", "note": "engineering-estimate surrogate, no public damage-effectiveness figure"},
+            "warhead.explosive_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split of the sourced 453.6 kg total warhead mass, no public split figure"},
+            "warhead.case_mass_kg": {"value_basis": "proxy", "note": "engineering-estimate HE/case split, see explosive_mass_kg"},
+            "warhead.projection_radius_fraction": {"value_basis": "proxy", "note": "copied from the weapons/air_to_air/aim_120c.json blast projection-geometry template, scaled for this warhead's larger mass"},
+            "warhead.projection_max_radius_m": {"value_basis": "proxy", "note": "copied/scaled from the aim_120c.json template pattern for this warhead's lethal_radius"},
+            "warhead.projection_max_projected_hitboxes": {"value_basis": "proxy", "note": "copied from the aim_120c.json template pattern"},
+            "fuze.type": {"value_basis": "engineering_estimate", "note": "land-attack unitary warhead fuzing is not detailed in the OOB; contact fuze is the nearest real engine-recognized fuze family per the loader's 4-value fuze.type vocabulary"},
+            "fuze.trigger_radius_m": {"value_basis": "engineering_estimate", "note": "0.0 consistent with a contact-fuze trigger radius"},
+            "fuze.delay_s": {"value_basis": "engineering_estimate", "note": "no public fuze timing data; engineering-estimate impact/delay fuze scaffold typical of a 1,000-lb class land-attack warhead"},
+            "fuze.reliability": {"value_basis": "engineering_estimate", "note": "no public reliability figure; engineering-estimate scaffold value"}
+        },
+        "modeling_notes": ["This record has no functional NavalWeaponType mount and is written for _real_world.weapon_inventory reference only, per the authoring standard's mechanism-gap rule for land-attack cruise missiles. max_flight_time_s (1 hour) reflects Tomahawk's published loiter capability, not a direct sourced figure."]
+    }
+}

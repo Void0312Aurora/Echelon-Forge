@@ -62,6 +62,7 @@ def build_batch_world_setup_request(
     spawn_requests: list[Any],
     time_steps: list[float],
     sun_assignments: list[Any] | None = None,
+    geodetic_anchor_assignments: list[Any] | None = None,
 ):
     if not hasattr(ef_py, "BatchWorldSetupRequest"):
         raise RuntimeError(
@@ -77,6 +78,8 @@ def build_batch_world_setup_request(
     request.wind_assignments = list(wind_assignments)
     if sun_assignments is not None and hasattr(request, "sun_assignments"):
         request.sun_assignments = list(sun_assignments)
+    if geodetic_anchor_assignments is not None:
+        request.geodetic_anchor_assignments = list(geodetic_anchor_assignments)
     request.zones = list(zones)
     request.spawn_requests = list(spawn_requests)
     request.time_steps = [float(value) for value in time_steps]
@@ -107,6 +110,7 @@ def build_runtime_world_layout_request(
     time_steps: list[float],
     sun_azimuth_deg: float = 0.0,
     sun_elevation_deg: float = 45.0,
+    geodetic_anchor: tuple[float, float, float] | None = None,
 ):
     if not hasattr(ef_py, "RuntimeWorldLayoutRequest"):
         raise RuntimeError(
@@ -129,6 +133,10 @@ def build_runtime_world_layout_request(
     request.zones = list(zones)
     request.spawn_requests = list(spawn_requests)
     request.time_steps = [float(value) for value in list(time_steps)]
+    if geodetic_anchor is not None:
+        request.anchor_latitude_deg = float(geodetic_anchor[0])
+        request.anchor_longitude_deg = float(geodetic_anchor[1])
+        request.anchor_height_m = float(geodetic_anchor[2])
     return request
 
 
@@ -184,6 +192,7 @@ def apply_world_setup_payload_maintained(
     spawn_requests: list[Any],
     time_steps: list[float],
     sun_assignments: list[Any] | None = None,
+    geodetic_anchor_assignments: list[Any] | None = None,
 ) -> list[int]:
     normalized_terrain_assignments, _ = normalize_world_setup_terrain_assignments(
         terrain_assignments,
@@ -197,6 +206,7 @@ def apply_world_setup_payload_maintained(
         spawn_requests=spawn_requests,
         time_steps=time_steps,
         sun_assignments=sun_assignments,
+        geodetic_anchor_assignments=geodetic_anchor_assignments,
     )
     return apply_world_setup_request_maintained(setup_target, request)
 

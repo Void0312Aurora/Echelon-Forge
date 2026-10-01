@@ -249,14 +249,15 @@ const std::vector<ExactStepStageContractDescriptor> &exact_gpu_stage_contract_in
          "both accumulator torques and cached lift/drag coefficients."},
         {14, "GroundContact", "OnUpdate", "physics", true, true,
          string_list({"ForceAccumulator", "Transform", "Velocity", "Mass", "GroundState",
-                      "LandingGear", "AngularVelocity", "PilotAction", "MissionCommandControlState",
-                      "GearState", "Health", "EnvironmentModelRef"}),
-         string_list({"ForceAccumulator", "Velocity", "GroundState", "GearState", "Health"}),
-         string_list({"hidden_dynamics.force_accumulator", "truth.vz", "packed.GroundState",
-                      "packed.GearState", "terminal"}),
+                      "LandingGear", "AngularVelocity", "Inertia", "PilotAction",
+                      "MissionCommandControlState", "ControlLawState", "GearState", "Health",
+                      "EnvironmentModelRef"}),
+         string_list({"ForceAccumulator", "GroundState", "GearState", "Health"}),
+         string_list({"hidden_dynamics.force_accumulator", "packed.GroundState", "packed.GearState",
+                      "terminal"}),
          string_list({"ComputeAerodynamics"}),
          "Apply normal force, braking, steering, and ground-restoring torques from bridge-resolved "
-         "ground control.",
+         "ground control, solved semi-implicitly against the downstream integrator updates.",
          "Maintained ground-control semantics resolve through MissionCommandControlState and "
          "PilotAction via the air-control bridge. Legacy movement mirrors only survive upstream as "
          "optional compatibility projections."},

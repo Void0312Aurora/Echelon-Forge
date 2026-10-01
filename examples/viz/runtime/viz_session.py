@@ -47,6 +47,7 @@ from python.world_model.features import (
     nav_tracking_features,
 )
 from examples.viz.runtime.environment_overlays import build_environment_overlay_payload
+from examples.viz.runtime.geodetic_frame import resolve_scenario_geodetic_frame
 from examples.viz.runtime.illumination import resolve_scenario_illumination
 from examples.viz.runtime.unit_semantics import infer_echelon
 from examples.viz.runtime.action_utils import normalize_fixed_action
@@ -1645,11 +1646,13 @@ class VizSession:
         zones = scenario_data.get("environment", {}).get("zones", [])
         environment_overlays = build_environment_overlay_payload(scenario_data)
         illumination = resolve_scenario_illumination(scenario_data, sim=sim_env.sim)
+        geodetic_frame = resolve_scenario_geodetic_frame(scenario_data, sim=sim_env.sim)
         self.map_data = {
             "contract_version": VIZ_MAP_SETUP_CONTRACT_VERSION,
             "zones": zones,
             "environment_overlays": environment_overlays,
             "illumination": illumination,
+            "geodetic_frame": geodetic_frame,
         }
         print("=" * 60)
         print("MAP DATA SENT TO VIZ:")

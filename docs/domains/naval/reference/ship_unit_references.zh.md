@@ -8,7 +8,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/domains/naval/reference/ship_unit_references.md`
 Owner: `domains/naval`
-Last verified: `2026-08-08`
+Last verified: `2026-09-29`
 
 状态：naval specialization 的维护中舰艇单位参考基线。
 
@@ -122,12 +122,19 @@ Navy service profile 拥有军种层组织与权限解释。本 Naval 参考页�
   社区资料推算值，并非公开性能权威；通用 `Ammo` 组件仍存在于其他位置，但它
   已不是唯一的 naval 库存 surface
 
-当前基于地平线的运行时示例：
+按地平线推导的配置距离（历史依据）：
 
-- `DDG-51` 水面搜索：
-  `3.57 * (sqrt(25 m owner antenna) + sqrt(5 m target)) = 25.8 nmi = 46.3 km`
-- `T-AKE-1` 导航/水面搜索：
-  `3.57 * (sqrt(15 m owner antenna) + sqrt(5 m target)) = 19.6 nmi = 36.3 km`
+- `DDG-51` 水面搜索的 `max_range` 46.3 km 按
+  `3.57 * (sqrt(25 m owner antenna) + sqrt(5 m target)) = 25.8 nmi` 推导
+- `T-AKE-1` 导航/水面搜索的 `max_range` 36.3 km 按
+  `3.57 * (sqrt(15 m owner antenna) + sqrt(5 m target)) = 19.6 nmi` 推导
+
+自 `2026-09-29` 起，配置的 `max_range` 只是仪表量程上限。所有视距类传感器还要经过
+[大地坐标框架](../../../systems/physics/work/active/geodetic_frame/README.zh.md)
+工作包提供的共享光滑地球地平线判定：射频传感器用 4/3 等效地球，可见光与红外传感器用
+NGA Pub. No. 9 的光学折射系数，高度取传感器挂载高度与目标雷达显著高度。对 25 m 的
+SPS-67 天线和 `T-AKE-1`（雷达显著高度 7.5 m），该地平线为 31.9 km，因此约束水面探测的
+是地平线，而不是 `max_range`。
 
 这些内容应被理解为维护中的建模假设，而不是条令主张。
 

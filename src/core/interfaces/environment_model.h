@@ -1,6 +1,7 @@
 #pragma once
 
 #include "components/basic/environment_data.h"
+#include "components/physics/geodesy.h"
 #include <cmath>
 #include <cstdint>
 #include <limits>
@@ -152,7 +153,27 @@ class IEnvironmentModel {
                                     double /*wave_period_s*/) {}
     virtual void clear_maritime_state() {}
     virtual MaritimeState get_maritime_state() const { return {}; }
+
+    // Geodetic frame of this world (Geodetic Frame P3-B): the scenario anchor of
+    // the local frame and the reference earth. A world whose scenario declares no
+    // anchor keeps `geodesy::kDefaultGeodeticAnchor`. Like the other environment
+    // settings, the anchor survives kernel reset.
+    virtual void set_geodetic_anchor(const geodesy::GeodeticAnchor & /*anchor*/) {}
+    virtual geodesy::GeodeticAnchor get_geodetic_anchor() const {
+        return geodesy::kDefaultGeodeticAnchor;
+    }
+    virtual geodesy::EarthModel get_earth_model() const { return {}; }
 };
+
+// Geodetic position of a local-frame point in the world that owns `env`; falls
+// back to the documented default anchor when no environment is bound.
+inline geodesy::GeodeticPosition environment_local_to_geodetic(const IEnvironmentModel *env,
+                                                               double x_m, double y_m, double z_m) {
+    const geodesy::GeodeticAnchor anchor =
+        env ? env->get_geodetic_anchor() : geodesy::kDefaultGeodeticAnchor;
+    const geodesy::EarthModel earth = env ? env->get_earth_model() : geodesy::EarthModel{};
+    return geodesy::local_to_geodetic(earth, anchor, {x_m, y_m, z_m});
+}
 
 struct EnvironmentModelRef {
     IEnvironmentModel *model;

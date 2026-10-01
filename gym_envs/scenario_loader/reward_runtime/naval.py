@@ -47,11 +47,54 @@ def _cfg_float(cfg: dict[str, Any], name: str, default: float) -> float:
         return float(default)
 
 
+# Terms this surface computes on every step, whatever the geometry, as opposed to
+# terms gated on an event (contact, shared track, ROE hold, an action having been
+# taken). A declared term must appear in the breakdown even when its value is
+# exactly zero, because the surface is observed as a key set: the station policy
+# test and `tools/eval/naval_station_policy_eval.py` both read the emitted names,
+# and the eval gate fails the run on `required_reward_terms_missing`. `_add_term`
+# drops exact zeros to keep shared breakdowns sparse, and a ship sitting exactly on
+# station has zero station error and exactly zero separation error — precisely the
+# state in which a dropped key reads as "the term is missing" rather than as "the
+# term is zero".
+DECLARED_NAVAL_TERMS = frozenset(
+    {
+        "naval_station_error_penalty",
+        "naval_screen_separation_penalty",
+    }
+)
+
+
 def _add_term(rb: dict[str, float], name: str, value: float) -> float:
     v = float(value)
     if v != 0.0:
         rb[name] = float(rb.get(name, 0.0) + v)
     return v
+
+
+def _add_declared_term(rb: dict[str, float], name: str, value: float) -> float:
+    """Record a declared naval surface term, including an exactly-zero value.
+
+    See `DECLARED_NAVAL_TERMS`. Terms gated on an event stay on `_add_term`, so an
+    absent gated term keeps meaning "the event did not happen".
+    """
+    v = float(value)
+    rb[name] = float(rb.get(name, 0.0) + v)
+    return v
+
+
+def _merge_naval_terms(rb: dict[str, float], terms: dict[str, float]) -> None:
+    """Merge a computed term dict into the breakdown, declared terms included.
+
+    The merge is where the zero got dropped a second time: `_station_reward_terms`
+    can record a declared zero, and merging its dict with `_add_term` discarded it
+    again, so the fix has to live on both sides of the boundary.
+    """
+    for name, value in terms.items():
+        if name in DECLARED_NAVAL_TERMS:
+            _add_declared_term(rb, name, value)
+        else:
+            _add_term(rb, name, value)
 
 
 def _entity_position(sim: Any, entity_id: int) -> tuple[float, float] | None:
@@ -174,7 +217,7 @@ def _station_reward_terms(loader: Any, sim: Any, truth: Any, cfg: dict[str, Any]
     error_norm = station_error_m / norm_m
     if clip > 0.0:
         error_norm = min(error_norm, clip)
-    reward += _add_term(
+    reward += _add_declared_term(
         terms,
         "naval_station_error_penalty",
         -abs(_cfg_float(cfg, "naval_station_error_weight", 0.04)) * error_norm,
@@ -205,7 +248,7 @@ def _station_reward_terms(loader: Any, sim: Any, truth: Any, cfg: dict[str, Any]
     sep_clip = max(0.0, _cfg_float(cfg, "naval_screen_separation_clip", 4.0))
     if sep_clip > 0.0:
         sep_norm = min(sep_norm, sep_clip)
-    reward += _add_term(
+    reward += _add_declared_term(
         terms,
         "naval_screen_separation_penalty",
         -abs(_cfg_float(cfg, "naval_screen_separation_weight", 0.02)) * sep_norm,
@@ -271,13 +314,11 @@ def apply_naval_reward_surface(
 
     station_reward, station_terms, station_error_m = _station_reward_terms(loader, sim, truth, cfg)
     next_reward += station_reward
-    for name, value in station_terms.items():
-        _add_term(rb, name, value)
+    _merge_naval_terms(rb, station_terms)
 
     action_reward, action_terms = _naval_station_action_penalty_terms(loader, cfg)
     next_reward += action_reward
-    for name, value in action_terms.items():
-        _add_term(rb, name, value)
+    _merge_naval_terms(rb, action_terms)
 
     target_id = int(getattr(loader, "primary_target_id", 0) or 0)
     target_track = _target_track(truth, target_id)

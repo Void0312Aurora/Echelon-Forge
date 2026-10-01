@@ -4,6 +4,7 @@
 #include "components/systems/ew.h"
 #include "components/combat/common/weapon_common.h"
 #include "core/interfaces/stochastic_draw.h"
+#include "components/physics/geodesy.h"
 #include "models/domains/naval/naval_sensor_maritime_adapter.h"
 
 #include <algorithm>
@@ -111,12 +112,6 @@ double pd_from_snr_db(const Sensor &sensor, double snr_db) {
     return clamp_sensor_probability(logistic);
 }
 
-double horizon_distance_m(double h1_m, double h2_m) {
-    const double h1 = std::max(0.0, h1_m);
-    const double h2 = std::max(0.0, h2_m);
-    return 3570.0 * (std::sqrt(h1) + std::sqrt(h2));
-}
-
 bool entity_has_radar_emitter(const flecs::entity &entity, Sensor *out_emitter) {
     if (const Sensor *inline_sensor = entity.get<Sensor>()) {
         if (inline_sensor->type == static_cast<int>(SensorType::Radar)) {
@@ -137,6 +132,66 @@ bool entity_has_radar_emitter(const flecs::entity &entity, Sensor *out_emitter) 
         }
     }
     return false;
+}
+
+double horizon_refraction_factor(const Sensor &sensor) {
+    // Visual and infrared sensors see the optical sea horizon; every
+    // radio-frequency sensor (radar, ESM, RWR, data-link receivers) uses the
+    // 4/3 effective-earth radius. Both factors are sourced in geodesy.h.
+    if (sensor.type == static_cast<int>(SensorType::Visual) ||
+        sensor.type == static_cast<int>(SensorType::Infrared)) {
+        return geodesy::kStandardOpticalRefractionFactor;
+    }
+    return geodesy::kStandardRefractionFactor;
+}
+
+double sensor_height_above_surface_m(const Sensor &sensor, const Transform &owner_transform) {
+    // The sensor sits at its declared mount height above the platform's
+    // reference point; z is height above the reference sphere in the geodetic
+    // frame (a ship's z is its waterline).
+    return std::max(0.0, owner_transform.z) + std::max(0.0, sensor.antenna_height_m);
+}
+
+double target_height_above_surface_m(const Sensor &sensor, const flecs::entity &target,
+                                     const Transform &target_transform) {
+    const double z_m = std::max(0.0, target_transform.z);
+    // A passive ESM receiver sees the emitting antenna, not the hull.
+    if (sensor.type == static_cast<int>(SensorType::ESM)) {
+        Sensor emitter_radar{};
+        if (entity_has_radar_emitter(target, &emitter_radar)) {
+            return z_m + std::max(0.0, emitter_radar.antenna_height_m);
+        }
+    }
+    // Ships expose their radar-significant height above the waterline through
+    // the naval adapter (the sensor's maritime target-height prior applies
+    // there). Any other target is a point at its own height, so a sea-skimming
+    // missile is seen late rather than lifted to a surface-ship prior.
+    const double ship_height_m =
+        naval::sensor::ship_target_horizon_height_m(sensor, target, target_transform);
+    return ship_height_m >= 0.0 ? z_m + ship_height_m : z_m;
+}
+
+// Smooth-earth horizon gate shared by every line-of-sight sensor type
+// (Geodetic Frame P3-A). The limit is the exact smooth-sphere line-of-sight
+// boundary for the two heights, compared against the horizontal separation in
+// the local frame (an azimuthal-equidistant projection, so the separation
+// matches the great-circle arc to well under 0.1 % inside the declared frame
+// extent). Anomalous propagation that the environment declares (maritime
+// ducting) extends the limit by the same bonus that extends the range gate.
+bool within_smooth_earth_horizon(const Sensor &sensor, const Transform &owner_transform,
+                                 const flecs::entity &target, const Transform &target_transform,
+                                 double horizontal_dist_m, double anomalous_propagation_bonus_m) {
+    if (sensor.type == static_cast<int>(SensorType::Sonar)) {
+        return true; // acoustic propagation is not a line-of-sight path
+    }
+    const double re =
+        geodesy::effective_radius_m(geodesy::EarthModel{}, horizon_refraction_factor(sensor));
+    const double horizon_limit_m =
+        geodesy::two_way_horizon_arc_m(
+            re, sensor_height_above_surface_m(sensor, owner_transform),
+            target_height_above_surface_m(sensor, target, target_transform)) +
+        std::max(0.0, anomalous_propagation_bonus_m);
+    return horizontal_dist_m <= horizon_limit_m;
 }
 
 void append_rwr_detection_from_radar(const Sensor &sensor, flecs::entity emitter,
@@ -241,23 +296,9 @@ class DefaultSensorModel : public ISensorModel {
             if (dist_sq > max_sq) return;
             double dist = std::sqrt(dist_sq);
 
-            if (sensor.type == static_cast<int>(SensorType::Radar) &&
-                sensor.enforce_radar_horizon &&
-                sensor.environment_domain ==
-                    static_cast<int>(SensorEnvironmentDomain::SurfaceMaritime)) {
-                const double owner_height = std::max(1.0, sensor.antenna_height_m);
-                const double target_height =
-                    naval::sensor::maritime_radar_target_height_m(sensor, target_e, target_t);
-                // Treat the configured max_range for maritime radars as the baseline
-                // public-runtime horizon proxy. This avoids double-penalizing modules
-                // such as SPS-67 whose public runtime range is already calibrated from
-                // owner/target mast heights.
-                const double configured_baseline =
-                    std::max(sensor.max_range, horizon_distance_m(owner_height, target_height));
-                const double horizon_limit = configured_baseline + maritime_bonus_m;
-                if (dist > horizon_limit) {
-                    return;
-                }
+            if (!within_smooth_earth_horizon(sensor, owner_transform, target_e, target_t,
+                                             std::sqrt(dx * dx + dy * dy), maritime_bonus_m)) {
+                return; // below the smooth-earth horizon
             }
 
             // Phase 2 & 3: Environment Checks

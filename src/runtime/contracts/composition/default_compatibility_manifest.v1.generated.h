@@ -313,6 +313,11 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "registration_id": "flecs.component.munition"
       },
       {
+        "component_id": "NavalCommandIntent",
+        "plugin_id": "builtin.core_runtime",
+        "registration_id": "flecs.component.naval_command_intent"
+      },
+      {
         "component_id": "NavalStores",
         "plugin_id": "builtin.core_runtime",
         "registration_id": "flecs.component.naval_stores"
@@ -494,7 +499,8 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "implementation_id": "echelon_forge.native_builtin",
         "plugin_id": "builtin.core_runtime",
         "plugin_version": "1.0.0",
-        "required_capabilities": []
+        "requi)EFJSON",
+    R"EFJSON(red_capabilities": []
       }
     ],
     "providers": [
@@ -502,8 +508,7 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "after_provider_ids": [],
         "cardinality": "one_per_scope",
         "configuration": {},
-       )EFJSON",
-    R"EFJSON( "conflicts": [],
+        "conflicts": [],
         "implementation_version": "1.0.0",
         "offered_services": [
           "simulation.acoustic.model"
@@ -741,13 +746,13 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "parent_scope": "batch",
         "rebuild_trigger": "world_replacement_or_composition_change",
         "scope": "world"
-      },
+)EFJSON",
+    R"EFJSON(      },
       {
         "cardinality": "one_per_parent",
         "parent_scope": "world",
         "rebuild_trigger": "reset_or_episode_completion",
-        "scope": "episode)EFJSON",
-    R"EFJSON("
+        "scope": "episode"
       }
     ],
     "service_bindings": [
@@ -985,12 +990,12 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "conflicts": [],
         "contribution_id": "builtin.system.aircraft_damage",
         "domain": "air",
-        "executable_node_ids": [],
+        "e)EFJSON",
+    R"EFJSON(xecutable_node_ids": [],
         "plugin_id": "builtin.core_runtime",
         "provided_components": [],
         "read_state_shards": [],
-        "registration_factory_id": ")EFJSON",
-    R"EFJSON(register_aircraft_damage_system",
+        "registration_factory_id": "register_aircraft_damage_system",
         "required_barriers": [],
         "required_capabilities": [],
         "required_components": [],
@@ -1245,13 +1250,13 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
       {
         "after": [
           "builtin.system.naval_logistics"
-        ],
+        ])EFJSON",
+    R"EFJSON(,
         "before": [],
         "conflicts": [],
         "contribution_id": "builtin.system.ground_infantry_movement",
         "domain": "ground",
-        "executable_node_id)EFJSON",
-    R"EFJSON(s": [
+        "executable_node_ids": [
           "GroundInfantryMovement"
         ],
         "plugin_id": "builtin.core_runtime",
@@ -1501,12 +1506,12 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "executable_node_ids": [
           "RotationalIntegrate"
         ],
-        "plugin_id": "builtin.core_runtime",
+        "plugin_id": "builtin.core_run)EFJSON",
+    R"EFJSON(time",
         "provided_components": [],
         "read_state_shards": [],
         "registration_factory_id": "register_rotational_integration_system",
-        "required_barr)EFJSON",
-    R"EFJSON(iers": [],
+        "required_barriers": [],
         "required_capabilities": [],
         "required_components": [],
         "required_services": [],
@@ -1676,8 +1681,8 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
     "builtin.weapon_release.damage_bridge",
     "builtin.weapon_release.service"
   ],
-  "requested_manifest_sha256": "b17fd07c4fdeef3a8c7ae64f7cb89772b3a1665aad2b83f1d1ce58a9d344fb8f",
-  "resolved_manifest_sha256": "45426d3dfc24a4d74986e11567854f5c19b996c50cef38da33c87e3e93083417",
+  "requested_manifest_sha256": "51a09dc082a48cbed8f311512d48ee245b5b69512bfa63bfe38d8343f84c8ba9",
+  "resolved_manifest_sha256": "791847a129734e9ab632a8eff9a3a141d13bda9bba76093440dc9269a63d3796",
   "resolver_contract_version": "echelon_forge.simulation_composition_resolver.v1",
   "schema_version": "echelon_forge.resolved_simulation_composition.v1",
   "system_registration_order": [
@@ -1722,9 +1727,9 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
 };
 
 inline constexpr std::string_view kDefaultCompatibilityRequestedSha256 =
-    "b17fd07c4fdeef3a8c7ae64f7cb89772b3a1665aad2b83f1d1ce58a9d344fb8f";
+    "51a09dc082a48cbed8f311512d48ee245b5b69512bfa63bfe38d8343f84c8ba9";
 inline constexpr std::string_view kDefaultCompatibilityResolvedSha256 =
-    "45426d3dfc24a4d74986e11567854f5c19b996c50cef38da33c87e3e93083417";
+    "791847a129734e9ab632a8eff9a3a141d13bda9bba76093440dc9269a63d3796";
 
 inline constexpr std::string_view kDefaultBackendProfileId = "cpu_exact.reference";
 inline constexpr std::string_view kDefaultBackendProviderId = "builtin.backend.flecs_cpu";

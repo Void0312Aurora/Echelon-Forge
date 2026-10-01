@@ -81,6 +81,7 @@ struct SetupRequest {
     VectorBatchView<WorldSpawnRequest> spawn_requests;
     VectorBatchView<double> time_steps;
     VectorBatchView<WorldSunAssignment> sun_assignments;
+    VectorBatchView<WorldGeodeticAnchorAssignment> geodetic_anchor_assignments;
 
     std::size_t world_index = 0;
     std::uint32_t seed = 0;
@@ -94,6 +95,9 @@ struct SetupRequest {
     double wave_period_s = 8.0;
     double sun_azimuth_deg = 0.0;
     double sun_elevation_deg = 45.0;
+    double anchor_latitude_deg = geodesy::kDefaultGeodeticAnchor.latitude_deg;
+    double anchor_longitude_deg = geodesy::kDefaultGeodeticAnchor.longitude_deg;
+    double anchor_height_m = geodesy::kDefaultGeodeticAnchor.height_m;
 
     const WorldSpawnRequest *world_spawn_request = nullptr;
     const TypedPlatformSpawnRequest *typed_platform_spawn_request = nullptr;

@@ -10,6 +10,8 @@
 #include "components/combat/common/damage_common.h"
 #include "components/combat/health.h"
 #include "components/combat/common/weapon_common.h"
+#include "components/domains/naval/combat/damage_naval.h"
+#include "components/domains/naval/combat/weapon_naval.h"
 #include "components/physics/instruments.h"
 #include "components/physics/dynamics.h"
 #include "components/command/pilot_action.h"
@@ -380,6 +382,21 @@ TEST_SUITE("components_basic") {
     TEST_CASE("mission_command_default_phase_is_zero") {
         MissionCommand mc{};
         CHECK(mc.cmd_heading_deg == doctest::Approx(0.0));
+    }
+
+    TEST_CASE("naval_damage_mount_ready_fraction_uses_clamped_per_mount_fraction") {
+        NavalWeaponMountDefinition half_ready{};
+        half_ready.ready_count = 5;
+        half_ready.max_ready_count = 10;
+        NavalWeaponMountDefinition over_ready{};
+        over_ready.ready_count = 20;
+        over_ready.max_ready_count = 10;
+        NavalWeaponMountDefinition invalid{};
+        invalid.ready_count = 0;
+        invalid.max_ready_count = 0;
+
+        const std::vector<NavalWeaponMountDefinition> mounts{half_ready, over_ready, invalid};
+        CHECK(naval_damage_mount_ready_fraction(mounts) == doctest::Approx(0.75));
     }
 
     // --- TaskOrder / LeaderIntent smoke ----------------------------------------

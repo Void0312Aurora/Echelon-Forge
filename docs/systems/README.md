@@ -18,10 +18,13 @@ kept with the applicable nested owner. The current cross-domain realism gate is
 ## Current Owner Routes
 
 - Environment owner: [environment systems](environment/README.md), including
-  G0 and Arnis acceptance boundaries.
+  G0 and Arnis acceptance boundaries. Active runtime package:
+  [environment runtime](environment/work/active/environment_runtime/README.md) (planning).
 - Command/tasking issues: [C2 communication](command-tasking/work/issues/c2_communication.md) and [operation layer](command-tasking/work/issues/operation_layer.md).
 - Command/tasking reference: [agency authority census](command-tasking/reference/agency_authority_census_20260721.md) and [authority-representation adjudication](command-tasking/reference/t9_authority_representation_adjudication_20260726.md).
 - Physics issues: [physics engine roadmap](physics/work/issues/physics_engine_roadmap.md).
+  Active package: [geodetic frame](physics/work/active/geodetic_frame/README.md) (planning).
+  Physics reviews: [semi-implicit ground contact](physics/reviews/semi_implicit_ground_contact_20260930/README.md).
 - Sensing issues: [sensor and situation plan](sensing/work/issues/sensor_situation.md).
 - Weapons issues: [engagement roadmap](weapons/work/issues/weapons_engagement.md), [implementation notes](weapons/work/issues/weapons_engagement_impl.md), and [termination logic](weapons/work/issues/engagement_termination.md); retained guidance evidence is under [guidance mechanism review](weapons/reviews/kill_chain_guidance_mechanism_20260715/README.md).
 - Effects issues: [damage-model calibration residuals](effects/work/issues/damage_model_calibration_residuals.md), [damage/control authority coupling](effects/work/issues/damage_control_authority_coupling_gap/README.md), and [lethality/geometry fidelity](effects/work/issues/lethality_hitbox_geometry_fidelity_gap/README.md).

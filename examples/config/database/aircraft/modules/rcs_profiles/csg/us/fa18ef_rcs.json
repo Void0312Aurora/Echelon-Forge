@@ -1,0 +1,28 @@
+{
+    "name": "CSG_US_FA18EF_RCS",
+    "type": "RCSProfile",
+    "rcs": {
+        "frontal_rcs": 0.1,
+        "side_rcs": 3.0,
+        "rear_rcs": 1.0,
+        "top_rcs": 2.5,
+        "bottom_rcs": 2.5
+    },
+    "_real_world": {
+        "class": "F/A-18E/F Super Hornet Block II/III radar cross section, reduced-signature design features (edge alignment, RAM coatings) but not a low-observable airframe",
+        "variant_scope": "F/A-18E/F Super Hornet, clean/light-loadout frontal aspect",
+        "hulls": [],
+        "public_equipment": ["Super Hornet publicly cited as '0.1 m2 class' frontal RCS (GlobalSecurity.org RCS comparison table, citing multiple public sources)"]
+    },
+    "_provenance": {
+        "modeling_note": "GlobalSecurity.org's RCS comparison table lists 'F-18 E/F Super Hornet: 0.1 class', a widely-repeated public figure for the reduced-signature frontal aspect (NAVAIR confirms qualitative reduced-RCS design features but gives no number). Not a repo-existing profile: the generic Standard_Fighter_RCS (5.0 frontal) and LO_Fighter_RCS (0.01 frontal) both bracket the Super Hornet's real class-figure incorrectly (5.0 is a legacy-Hornet/F-16-class RCS about 50x too high; 0.01 is F-22-class stealth, understating the Super Hornet by 10x), so a new CSG-specific profile is warranted rather than reuse. side_rcs/rear_rcs/top_rcs/bottom_rcs have no public figures and are engineering_estimate proxies scaled from the sourced frontal figure using the same frontal:side:rear:top/bottom ratio pattern as the repo's own Standard_Fighter_RCS (5:25:8:20:20, i.e. side~5x frontal, rear~1.6x frontal, top/bottom~4x frontal), since broadside/top aspects present much larger reflective area on any non-stealth-optimized airframe regardless of absolute scale.",
+        "sources": ["csg-us-fa18ef-rcs-globalsecurity", "csg-us-fa18ef-rcs-navair-aesa"],
+        "parameters": {
+            "rcs.frontal_rcs": {"value_basis": "sourced", "source_ids": ["csg-us-fa18ef-rcs-globalsecurity"], "tier": "C-est", "note": "0.1 m2 class, publicly cited frontal-aspect figure (GlobalSecurity.org comparison table); precise classified figure not public"},
+            "rcs.side_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:side ratio (~1:5); no public Super Hornet side-aspect figure"},
+            "rcs.rear_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:rear ratio (~1:1.6); no public figure"},
+            "rcs.top_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:top ratio (~1:4); no public figure"},
+            "rcs.bottom_rcs": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "scaled from frontal_rcs using the repo Standard_Fighter_RCS's frontal:bottom ratio (~1:4); no public figure"}
+        }
+    }
+}

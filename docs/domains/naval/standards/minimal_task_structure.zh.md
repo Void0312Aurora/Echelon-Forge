@@ -64,7 +64,7 @@ naval specialization 拥有的最小执行词汇是：
 
 - `task_family = Escort`
 - `coordination_mode = Support`
-- `warfare_role_code = SupportCoordinator`
+- `warfare_role_code = LogisticsCoordinator`
 - `naval_station_type = Support`
 - `officer_in_tactical_command` 是承担 support 的任务编组或任务单元。
 

@@ -14,7 +14,11 @@ from .clone import (
     _extract_runtime_agent_spawn_context,
 )
 from .common import (
+    DEFAULT_GEODETIC_ANCHOR,
     DEFAULT_TERRAIN_TYPE,
+    GEODETIC_ANCHOR_SOURCE_DEFAULT,
+    GEODETIC_ANCHOR_SOURCE_EXPLICIT,
+    resolve_environment_geodetic_anchor,
     COMPATIBILITY_TERRAIN_TYPES,
     REPO_ROOT,
     TERRAIN_TYPE_SOURCE_COMPATIBILITY,
@@ -35,6 +39,12 @@ from .common import (
     resolve_environment_terrain_config,
     _stable_ref_id,
     _SURFACE_TYPE_MAP,
+)
+from .group_composition import (
+    expand_group_composition,
+    geodesic_destination_deg,
+    station_local_offset_m,
+    validate_group_composition,
 )
 from .generation_request import (
     SCENARIO_GENERATION_EVIDENCE_KINDS,
@@ -101,13 +111,21 @@ from .waypoint_cache import (
 
 
 __all__ = [
+    "expand_group_composition",
+    "geodesic_destination_deg",
+    "station_local_offset_m",
+    "validate_group_composition",
     "REPO_ROOT",
     "_SCALAR_TYPES",
     "_OBJECTIVE_PROPERTY_MAP",
     "_OBJECTIVE_OP_MAP",
     "_OBJECTIVE_DYNAMIC_TARGET_MAP",
     "_SURFACE_TYPE_MAP",
+    "DEFAULT_GEODETIC_ANCHOR",
     "DEFAULT_TERRAIN_TYPE",
+    "GEODETIC_ANCHOR_SOURCE_DEFAULT",
+    "GEODETIC_ANCHOR_SOURCE_EXPLICIT",
+    "resolve_environment_geodetic_anchor",
     "VALID_TERRAIN_TYPES",
     "COMPATIBILITY_TERRAIN_TYPES",
     "TERRAIN_TYPE_SOURCE_EXPLICIT",

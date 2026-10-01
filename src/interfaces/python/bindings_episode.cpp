@@ -12,4 +12,5 @@ void bind_episode(nb::module_ &m) {
     bind_episode_termination(m);
     bind_episode_execution_runtime(m);
     bind_episode_state_batch(m);
+    bind_episode_geodesy(m);
 }

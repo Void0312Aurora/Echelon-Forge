@@ -115,9 +115,9 @@
       "english": "docs/domains/ground/README.md",
       "chinese": "docs/domains/ground/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "a85b349447b619d3f7db0dce2b6bbaa214f0e30747642d5b9d64bbf2e3097f0c",
-      "chinese_hash": "072f211d33b3eb737c3ff2d680ca2d30642ac04ab95f505d4355b8f2acdae6aa"
+      "last_verified": "2026-09-28",
+      "english_hash": "2062238afac1d39f9d35a4ab765248d76fa50ad5be017c4ed9eb26891b6fcc85",
+      "chinese_hash": "324321436c95665fa0f74d53188e771e4a1316f0e97edb5897a5607673562f23"
     },
     {
       "pair_id": "domains/ground/standards/minimal_task_structure",
@@ -624,6 +624,15 @@
       "chinese_hash": "755b151f945ccab1695a2543160cf59a4999d430003a37a02465b324fb194bd4"
     },
     {
+      "pair_id": "systems/README",
+      "english": "docs/systems/README.md",
+      "chinese": "docs/systems/README.zh.md",
+      "source_of_truth": "english",
+      "last_verified": "2026-09-30",
+      "english_hash": "1c890d3b20796e4123e80c1fe1355de3553e58f53af2d01cc234f617dfd828be",
+      "chinese_hash": "4c7a6dd8a95c1df8de42bddea2808f8820c7f01a795c47d2d159aed070e6a54e"
+    },
+    {
       "pair_id": "systems/command-tasking/reference/agency_authority_census_20260721",
       "english": "docs/systems/command-tasking/reference/agency_authority_census_20260721.md",
       "chinese": "docs/systems/command-tasking/reference/agency_authority_census_20260721.zh.md",
@@ -646,9 +655,9 @@
       "english": "docs/systems/environment/README.md",
       "chinese": "docs/systems/environment/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "a298b87f57abeebe64c5f1baba1f408d7952cd5425531b71928134fe7541e214",
-      "chinese_hash": "78984456ef368e2bc81ff2c4ddb5637b25f086cd4377ab35d2dd937d10a2047d"
+      "last_verified": "2026-09-28",
+      "english_hash": "e6adb3ccafb54f91e56d9d2fe13d3173277393e82602535456d4dc653e12448c",
+      "chinese_hash": "1b066d3be4b41ddd823e93a0a003949befc39336b476e3bfb0145069bbd8d884"
     },
     {
       "pair_id": "systems/README",

@@ -1,0 +1,87 @@
+{
+    "name": "CSG_US_AIM-120D",
+    "type": "Missile",
+    "mass_kg": 162.4,
+    "max_flight_time_s": 50.0,
+    "flight_model": {
+        "max_speed": 1372.0,
+        "max_g": 35.0,
+        "max_turn_rate": 30.0
+    },
+    "guidance": {
+        "type": "ActiveRadar",
+        "active_seek_range": 18000.0,
+        "pn_los_rate_source": "world_los_history",
+        "target_kinematics_estimator": "world_cva",
+        "capture_guidance_mode": "disabled",
+        "target_tracker_alpha": 0.2,
+        "target_tracker_beta": 0.02,
+        "target_tracker_gamma": 0.5,
+        "nav_gain": 4.0,
+        "apn_target_accel_gain": 0.125,
+        "autopilot_tau_s": 0.04,
+        "max_accel_response_g_per_s": 500.0
+    },
+    "warhead": {
+        "type": "blast_fragmentation",
+        "mass_kg": 18.6,
+        "lethal_radius": 15.0,
+        "damage": 190.0,
+        "explosive_mass_kg": 7.4,
+        "case_mass_kg": 11.2,
+        "projection_radius_fraction": 0.60,
+        "projection_max_radius_m": 20.0,
+        "projection_max_projected_hitboxes": 3
+    },
+    "fuze": {
+        "type": "radar_proximity",
+        "trigger_radius_m": 15.0,
+        "delay_s": 0.015,
+        "reliability": 0.95
+    },
+    "_real_world": {
+        "designation": "AIM-120D AMRAAM",
+        "role": "Beyond-visual-range air-to-air missile, primary long-range weapon for F/A-18E/F Block III, EA-18G, F-35C",
+        "range_nmi": "Classified (Navy explicitly classifies both range and speed per NAVAIR)",
+        "guidance_real": "Inertial midcourse + launch-aircraft datalink; active radar terminal homing; home-on-jam capability (an improvement over the AIM-120C-7's guidance suite)",
+        "speed": "Classified (repo AIM-120C-7 template's Mach ~4/1372 m/s used as the closest sourced same-family anchor)",
+        "status": "content_only_functional_mount_via_air_launch",
+        "mount_mapping": "referenced by CVW-8 aircraft default_loadout as an air-to-air weapon; no distinct AIM-120D vs AIM-120C-7 mechanism differentiation exists in the engine beyond the Missile record's own flight_model/guidance/warhead fields"
+    },
+    "_provenance": {
+        "sources": ["csg-us-aim120d-navair-oob"],
+        "parameters": {
+            "mass_kg": {"value_basis": "sourced", "source_ids": ["csg-us-aim120d-navair-oob"], "tier": "A", "note": "358 lb = 162.4 kg per CSG order-of-battle page's NAVAIR-sourced AIM-120D row"},
+            "max_flight_time_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "no public range/speed figure (Navy explicitly classifies both per the OOB page); proxy close to the repo AIM-120C-7 template's 45.0 s, nudged slightly up reflecting AIM-120D's publicly-claimed range improvement over the -C7 without a quantified figure"},
+            "flight_model.max_speed": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "classified; proxy copied unchanged from the repo AIM-120C-7 template (weapons/air_to_air/aim_120c.json) as the closest same-family sourced anchor"},
+            "flight_model.max_g": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo AIM-120C-7 template; no public figure"},
+            "flight_model.max_turn_rate": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo AIM-120C-7 template; no public figure"},
+            "guidance.type": {"value_basis": "sourced", "source_ids": ["csg-us-aim120d-navair-oob"], "tier": "A", "note": "active radar terminal homing with inertial midcourse + datalink + home-on-jam per NAVAIR (OOB page); ActiveRadar is the matching real engine seeker_type"},
+            "guidance.active_seek_range": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "classified; proxy copied unchanged from the repo AIM-120C-7 template"},
+            "guidance.pn_los_rate_source": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard engine guidance-model wiring default, not a sourced weapon characteristic"},
+            "guidance.target_kinematics_estimator": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard engine guidance-model wiring default, same basis as pn_los_rate_source"},
+            "guidance.capture_guidance_mode": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "disabled: no terminal capture-guidance submode modeled beyond the base active-radar terminal phase"},
+            "guidance.target_tracker_alpha": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard alpha-beta-gamma tracker filter constant, engine convention shared across missile records, not weapon-specific"},
+            "guidance.target_tracker_beta": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.target_tracker_gamma": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "standard tracker filter constant, same basis as target_tracker_alpha"},
+            "guidance.nav_gain": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo AIM-120C-7 template; no public guidance-law constant"},
+            "guidance.apn_target_accel_gain": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo AIM-120C-7 template"},
+            "guidance.autopilot_tau_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo AIM-120C-7 template"},
+            "guidance.max_accel_response_g_per_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo AIM-120C-7 template"},
+            "warhead.type": {"value_basis": "sourced", "source_ids": ["csg-us-aim120d-navair-oob"], "tier": "A", "note": "blast-fragmentation warhead confirmed per NAVAIR (OOB page)"},
+            "warhead.mass_kg": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "no public AIM-120D-specific warhead mass; engineering estimate scaled marginally above the repo AIM-120C-7 template's 18.144 kg, same WDU-33/B-family warhead class"},
+            "warhead.lethal_radius": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo AIM-120C-7 template; no public figure"},
+            "warhead.damage": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering-estimate surrogate, marginally above the repo AIM-120C-7 template's 180.0; no public damage-effectiveness figure"},
+            "warhead.explosive_mass_kg": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering-estimate HE/case split of warhead.mass_kg, same ratio as the repo AIM-120C-7 template"},
+            "warhead.case_mass_kg": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering-estimate HE/case split, see explosive_mass_kg"},
+            "warhead.projection_radius_fraction": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "copied unchanged from the repo AIM-120C-7 template's blast-fragmentation projection geometry"},
+            "warhead.projection_max_radius_m": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "copied unchanged from the repo AIM-120C-7 template"},
+            "warhead.projection_max_projected_hitboxes": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "copied unchanged from the repo AIM-120C-7 template"},
+            "fuze.type": {"value_basis": "sourced", "source_ids": ["csg-us-aim120d-navair-oob"], "tier": "A", "note": "active-radar proximity fuze confirmed per NAVAIR (OOB page)"},
+            "fuze.trigger_radius_m": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "copied unchanged from the repo AIM-120C-7 template; no public standoff distance"},
+            "fuze.delay_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "copied unchanged from the repo AIM-120C-7 template; no public fuze timing data"},
+            "fuze.reliability": {"value_basis": "engineering_estimate", "source_ids": [], "tier": "proxy", "note": "engineering-estimate marginally above the repo AIM-120C-7 template's 0.94, reflecting the newer -D variant's incremental reliability improvements per general public AMRAAM program reporting, not a quantified figure"}
+        },
+        "modeling_notes": ["Functional mount via standard air-launched missile mechanism (no CSG-specific mechanism gap for air-to-air weapons, unlike naval anti-ship/torpedo types). Range and speed are explicitly classified by the Navy per the OOB page; the repo AIM-120C-7 template is used as the same-family sourced anchor for all unclassified-adjacent flight/guidance scaffold fields."]
+    }
+}

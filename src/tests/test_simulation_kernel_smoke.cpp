@@ -13,6 +13,7 @@
 #include "components/command/command_link.h"
 #include "components/command/command_link_qos.h"
 #include "components/domains/naval/combat/weapon_naval.h"
+#include "components/domains/naval/command/mission_command_naval.h"
 #include "components/physics/control_surface.h"
 #include "components/physics/dynamics.h"
 #include "components/physics/forces.h"
@@ -711,6 +712,37 @@ TEST_SUITE("simulation_kernel_smoke") {
         CHECK(got_report.active);
         CHECK(got_report.sender_id == e.id());
         CHECK(got_report.status_value == doctest::Approx(2.0));
+    }
+
+    TEST_CASE("naval_mission_command_projection_is_executed_for_ships_only") {
+        SimulationKernel kernel;
+        kernel.reset(42);
+
+        const auto ship =
+            kernel.spawn_unit(Side::Blue, "Ship", 0.0, 0.0, 0.0, 90.0, 0.0, 0.0, 0.0, 10.0, 0.0);
+        const auto aircraft = kernel.spawn_unit(Side::Blue, "Aircraft", 0.0, 0.0, 5000.0, 0.0, 0.0,
+                                                0.0, 100.0, 0.0, 0.0);
+        REQUIRE(ship.is_valid());
+        REQUIRE(aircraft.is_valid());
+
+        MissionCommand mission{};
+        mission.command_code = kMissionCommandCodeNavalSurfaceEngage;
+        mission.cmd_heading_deg = 135.0;
+        mission.cmd_speed_mps = 12.0;
+        mission.active = false;
+        kernel.set_mission_command(ship.id(), mission);
+        kernel.set_mission_command(aircraft.id(), mission);
+
+        auto world_lease = kernel.acquire_world_lease();
+        const auto ship_entity = world_lease.world().entity(ship.id());
+        const auto aircraft_entity = world_lease.world().entity(aircraft.id());
+        const auto *naval_intent = ship_entity.get<NavalCommandIntent>();
+        REQUIRE(naval_intent != nullptr);
+        CHECK(naval_intent->active);
+        CHECK(naval_intent->command_code == kMissionCommandCodeNavalSurfaceEngage);
+        CHECK(naval_intent->cmd_heading_deg == doctest::Approx(135.0));
+        CHECK(naval_intent->cmd_speed_mps == doctest::Approx(12.0));
+        CHECK(aircraft_entity.get<NavalCommandIntent>() == nullptr);
     }
 
     TEST_CASE("is_unit_active_returns_false_for_unknown_id") {

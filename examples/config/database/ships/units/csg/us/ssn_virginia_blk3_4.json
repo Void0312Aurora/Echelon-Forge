@@ -1,0 +1,216 @@
+{
+    "name": "CSG_US_SSN_Virginia_Block_III_IV",
+    "type": "Submarine",
+    "submarine_platform": {
+        "submerged_displacement_kg": 7800000.0,
+        "length_m": 114.8,
+        "beam_m": 10.36,
+        "draft_m": 9.5,
+        "max_speed_submerged_mps": 12.86,
+        "quiet_speed_mps": 5.0,
+        "max_accel_mps2": 0.04,
+        "max_decel_mps2": 0.06,
+        "max_turn_rate_deg_s": 1.2,
+        "max_depth_rate_mps": 2.5,
+        "nominal_patrol_depth_m": 150.0,
+        "max_operating_depth_m": 244.0,
+        "acoustic_stealth_bias_db": -14.0,
+        "self_noise_per_speed_db": 0.6,
+        "crew": 145
+    },
+    "health": {
+        "current_hp": 7800.0,
+        "max_hp": 7800.0
+    },
+    "mounted_sonars": [
+        {
+            "label": "virginia_lab_bow_sonar",
+            "sonar": {
+                "mode": "Passive",
+                "max_range_m": 32000.0,
+                "scan_period_s": 5.0,
+                "detection_threshold_db": 3.5,
+                "track_memory_s": 30.0,
+                "bearing_noise_std_deg": 1.0,
+                "range_noise_std_m": 600.0,
+                "directivity_gain_db": 10.0,
+                "self_noise_per_speed_db": 0.5,
+                "ambient_noise_db": 66.0,
+                "source_level_reference_db": 0.0,
+                "source_level_speed_factor_db": 0.0,
+                "transmission_loss_alpha_db_per_km": 0.07,
+                "layer_break_penalty_db": 3.5,
+                "convergence_zone_bonus_m": 45000.0,
+                "baffle_exclusion_deg": 40.0,
+                "ownship_quieting_speed_mps": 5.0,
+                "active_ping_source_level_db": 0.0,
+                "confirm_hits_m": 2,
+                "confirm_window_n": 3,
+                "passive_only": true,
+                "bearing_only": false
+            }
+        },
+        {
+            "label": "virginia_towed_array",
+            "sonar": {
+                "mode": "Passive",
+                "max_range_m": 50000.0,
+                "scan_period_s": 6.0,
+                "detection_threshold_db": 3.0,
+                "track_memory_s": 32.0,
+                "bearing_noise_std_deg": 0.8,
+                "range_noise_std_m": 900.0,
+                "directivity_gain_db": 13.0,
+                "self_noise_per_speed_db": 0.4,
+                "ambient_noise_db": 64.0,
+                "source_level_reference_db": 0.0,
+                "source_level_speed_factor_db": 0.0,
+                "transmission_loss_alpha_db_per_km": 0.06,
+                "layer_break_penalty_db": 3.0,
+                "convergence_zone_bonus_m": 60000.0,
+                "baffle_exclusion_deg": 0.0,
+                "ownship_quieting_speed_mps": 5.5,
+                "active_ping_source_level_db": 0.0,
+                "confirm_hits_m": 2,
+                "confirm_window_n": 3,
+                "passive_only": true,
+                "bearing_only": false
+            }
+        }
+    ],
+    "has_command_link": true,
+    "command_link": {
+        "latency_s": 0.3,
+        "drop_prob": 0.02
+    },
+    "has_data_link": true,
+    "data_link_network_id": 1,
+    "damage_model": {
+        "hitboxes": [
+            {
+                "offset": [40.0, 0.0, 0.0],
+                "size": [30.0, 10.36, 9.0],
+                "armor": 0.0,
+                "systems": ["torpedo_room", "bow_sonar", "forward_ballast"],
+                "components": [
+                    {"name": "lab_bow_sonar_array", "system": "sonar_sensor"},
+                    {"name": "torpedo_room_4_tube_21in", "system": "weapons_combat_stowage"},
+                    {"name": "torpedo_reload_racks", "system": "weapons_combat_stowage"}
+                ]
+            },
+            {
+                "offset": [10.0, 0.0, 2.0],
+                "size": [26.0, 10.36, 9.0],
+                "armor": 0.0,
+                "systems": ["vertical_payload_tubes", "command", "combat_system"],
+                "components": [
+                    {"name": "virginia_payload_tube_1", "system": "vls"},
+                    {"name": "virginia_payload_tube_2", "system": "vls"},
+                    {"name": "control_room_combat_system", "system": "command"},
+                    {"name": "photonics_mast_1", "system": "sensor_mast"},
+                    {"name": "photonics_mast_2", "system": "sensor_mast"}
+                ]
+            },
+            {
+                "offset": [-35.0, 0.0, 0.0],
+                "size": [40.0, 10.36, 9.0],
+                "armor": 0.0,
+                "systems": ["reactor", "propulsion", "aft_ballast"],
+                "components": [
+                    {"name": "s9g_reactor", "system": "propulsion_engineering"},
+                    {"name": "steam_turbine_pump_jet", "system": "propulsion_engineering"},
+                    {"name": "reduction_gear", "system": "propulsion_engineering"}
+                ]
+            },
+            {
+                "offset": [-52.0, 0.0, 3.0],
+                "size": [10.0, 6.0, 6.0],
+                "armor": 0.0,
+                "systems": ["towed_array_winch", "stern_plane_actuators"],
+                "components": [
+                    {"name": "tb34_towed_array_winch", "system": "sonar_sensor"},
+                    {"name": "stern_control_surfaces", "system": "control_surfaces"}
+                ]
+            }
+        ]
+    },
+    "_real_world": {
+        "class": "Virginia-class attack submarine",
+        "variant_scope": "Block III / Block IV",
+        "primary_role": "SSN — ISR, ASW/ASuW, land-attack strike, special operations support",
+        "public_equipment": [
+            "S9G reactor, 1 shaft, pump-jet propulsor",
+            "LAB (Large Aperture Bow) sonar array + BQQ-10 sonar suite",
+            "TB-34/TB-29/TB-33 towed arrays",
+            "2 x photonics masts (no periscope)",
+            "4 x 21-in torpedo tubes",
+            "2 x Virginia Payload Tubes (6-cell each, Block III+), 12 Tomahawk vertical payload",
+            "Torpedo room capacity ~25 weapons (torpedo-sized, incl. Tomahawk/Mk 48)"
+        ],
+        "weapon_inventory": [
+            {"weapon_ref": "CSG_US_Mk48_ADCAP", "status": "content_only_no_mechanism", "representative_load": 20, "note": "primary heavyweight torpedo, fired from 4x 21-in tubes; no NavalWeaponType mount exists for torpedo tubes"},
+            {"weapon_ref": "CSG_US_Tomahawk_TLAM_Block_IV_V", "status": "content_only_no_mechanism", "representative_load": 12, "note": "Block III/IV carries 12 in the 2 Virginia Payload Tubes (vertical, 6 each); additional rounds possible via torpedo room in place of Mk48"},
+            {"weapon_ref": "CSG_US_Tomahawk_Maritime_Strike_Block_Va", "status": "content_only_no_mechanism", "representative_load": 0, "note": "submarine fielding planned early 2026 per OOB (C-est); included as a documented near-term capability, not assumed already loaded"}
+        ]
+    },
+    "_provenance": {
+        "unit_conversions": [
+            "1 ft = 0.3048 m",
+            "length 377 ft -> 114.8 m (csg-us-virginia-navy, A)",
+            "beam 34 ft -> 10.36 m (csg-us-virginia-navy, A)",
+            "test depth >800 ft/244 m used as max_operating_depth_m (csg-us-virginia-navy, A, lower-bound-only figure per OOB R17-style caveat)"
+        ],
+        "sources": [
+            "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_ford_20260928.md#ssn_virginia_blk3_4",
+            "csg-us-virginia-navy", "csg-us-virginia-globalsecurity", "csg-us-virginia-wiki"
+        ],
+        "parameters": {
+            "damage_model.hitboxes.components.system": {"value_basis": "engineering_estimate", "note": "S0-C packet-1 follow-up (main thread, 2026-09-29): component system tags renamed so each routes to a platform damage axis (propulsion->propulsion_engineering, sonar->sonar_sensor, aviation facilities->aviation_mission_*, weapons/countermeasures->*_combat, cargo holds by content: fuel, combat ammunition, or hold structure). Geometry, thresholds, and every numeric value unchanged."},
+            "submarine_platform.submerged_displacement_kg": {"value_basis": "sourced", "source_ids": ["csg-us-virginia-navy"], "tier": "A", "note": "~7,800 long tons submerged, converted at approx 1:1 (submerged displacement quoted directly in tons, treated as metric-equivalent per OOB convention)"},
+            "submarine_platform.length_m": {"value_basis": "sourced", "source_ids": ["csg-us-virginia-navy"], "tier": "A", "note": "377 ft -> 114.8 m"},
+            "submarine_platform.beam_m": {"value_basis": "sourced", "source_ids": ["csg-us-virginia-navy"], "tier": "A", "note": "34 ft -> 10.36 m"},
+            "submarine_platform.draft_m": {"value_basis": "proxy", "note": "no public draft figure isolated in the OOB excerpt; engineering estimate proportionally scaled from the repo's Kilo-class MVP draft ratio applied to Virginia's sourced beam/length"},
+            "submarine_platform.max_speed_submerged_mps": {"value_basis": "sourced", "source_ids": ["csg-us-virginia-navy"], "tier": "A", "note": "official figure is explicit lower bound only ('25+ kt'); 12.86 m/s = 25 kt used as the conservative floor, not an upper estimate"},
+            "submarine_platform.quiet_speed_mps": {"value_basis": "proxy", "note": "no public quiet-speed figure; engineering estimate scaled from the repo's Kilo-class MVP quiet_speed_mps proportionally to Virginia's higher max speed"},
+            "submarine_platform.max_accel_mps2": {"value_basis": "engineering_estimate", "note": "no public acceleration figure; engineering estimate for a nuclear-powered pump-jet-propulsion SSN hull, consistent with the repo's Kilo-class MVP convention scaled for Virginia's higher power plant"},
+            "submarine_platform.max_decel_mps2": {"value_basis": "engineering_estimate", "note": "no public deceleration figure; engineering estimate consistent with max_accel_mps2"},
+            "submarine_platform.max_turn_rate_deg_s": {"value_basis": "engineering_estimate", "note": "no public turn-rate figure; engineering estimate for a single-shaft SSN hull's submerged maneuverability"},
+            "submarine_platform.max_depth_rate_mps": {"value_basis": "engineering_estimate", "note": "no public dive/climb-rate figure; engineering estimate typical of a modern SSN hull, consistent with the repo's Kilo-class MVP convention"},
+            "submarine_platform.nominal_patrol_depth_m": {"value_basis": "engineering_estimate", "note": "no public typical-patrol-depth figure (classified); engineering estimate set well within the sourced >244 m test-depth floor, consistent with standard SSN operating practice"},
+            "submarine_platform.max_operating_depth_m": {"value_basis": "sourced", "source_ids": ["csg-us-virginia-navy"], "tier": "A", "note": "test depth '>800 ft' is explicit lower bound only; 244 m (800 ft) used as floor value, consistent with the OOB's R17 lower-bound-only caveat pattern applied elsewhere (Mk48 speed/range)"},
+            "submarine_platform.acoustic_stealth_bias_db": {"value_basis": "proxy", "note": "no public self-noise/stealth figure (classified); estimate set more favorable than the repo's Kilo-class MVP (-6.0 dB) reflecting Virginia's newer-generation quieting technology, magnitude not calibrated to any source"},
+            "submarine_platform.self_noise_per_speed_db": {"value_basis": "engineering_estimate", "note": "no public self-noise-vs-speed figure (classified); engineering estimate consistent with the repo's Kilo-class MVP convention, scaled slightly lower reflecting Virginia's newer-generation quieting technology"},
+            "submarine_platform.crew": {"value_basis": "sourced", "source_ids": ["csg-us-virginia-navy"], "tier": "A", "note": "145 per OOB"},
+            "mounted_sonars.label": {"value_basis": "engineering_estimate", "note": "identifier string for each mounted sonar, not a physical characteristic requiring sourcing"},
+            "mounted_sonars.sonar.mode": {"value_basis": "sourced", "source_ids": ["csg-us-virginia-navy"], "tier": "A", "note": "both LAB bow sonar and towed array are passive-only per documented submarine sonar-suite doctrine (no active pinging in normal ASW/ISR posture)"},
+            "mounted_sonars.sonar.max_range_m": {"value_basis": "proxy", "note": "LAB bow sonar and TB-34/29/33 towed arrays are sourced as fitted (A), but no public detection-range figures exist; range parameters are engineering-estimate proxies inlined from the packet's virginia_lab_bow_sonar.json / virginia_towed_array.json module records"},
+            "mounted_sonars.sonar.scan_period_s": {"value_basis": "engineering_estimate", "note": "no public scan-cycle figure; engineering-estimate scaffold value inlined from the corresponding module record, same basis as max_range_m"},
+            "mounted_sonars.sonar.detection_threshold_db": {"value_basis": "engineering_estimate", "note": "no public detection-threshold figure; engineering-estimate scaffold value inlined from the corresponding module record"},
+            "mounted_sonars.sonar.track_memory_s": {"value_basis": "engineering_estimate", "note": "no public track-memory figure; engineering-estimate scaffold value inlined from the corresponding module record"},
+            "mounted_sonars.sonar.bearing_noise_std_deg": {"value_basis": "engineering_estimate", "note": "no public bearing-accuracy figure; engineering-estimate scaffold value inlined from the corresponding module record"},
+            "mounted_sonars.sonar.range_noise_std_m": {"value_basis": "engineering_estimate", "note": "no public range-accuracy figure; engineering-estimate scaffold value inlined from the corresponding module record"},
+            "mounted_sonars.sonar.directivity_gain_db": {"value_basis": "engineering_estimate", "note": "no public array-directivity figure (classified); engineering-estimate scaffold value inlined from the corresponding module record"},
+            "mounted_sonars.sonar.self_noise_per_speed_db": {"value_basis": "engineering_estimate", "note": "no public self-noise-vs-speed figure; engineering-estimate scaffold value inlined from the corresponding module record"},
+            "mounted_sonars.sonar.ambient_noise_db": {"value_basis": "engineering_estimate", "note": "standard engine ambient-ocean-noise scaffold constant, not independently sourced per hull"},
+            "mounted_sonars.sonar.source_level_reference_db": {"value_basis": "engineering_estimate", "note": "0.0: both mounted sonars are passive-only and never actively ping, so no source level applies"},
+            "mounted_sonars.sonar.source_level_speed_factor_db": {"value_basis": "engineering_estimate", "note": "0.0: same basis as source_level_reference_db, passive-only sonars"},
+            "mounted_sonars.sonar.transmission_loss_alpha_db_per_km": {"value_basis": "engineering_estimate", "note": "standard engine acoustic-propagation scaffold constant, not independently sourced per hull"},
+            "mounted_sonars.sonar.layer_break_penalty_db": {"value_basis": "engineering_estimate", "note": "standard engine acoustic-propagation scaffold constant, same basis as transmission_loss_alpha_db_per_km"},
+            "mounted_sonars.sonar.convergence_zone_bonus_m": {"value_basis": "engineering_estimate", "note": "no public convergence-zone detection figure; engineering-estimate scaffold value inlined from the corresponding module record"},
+            "mounted_sonars.sonar.baffle_exclusion_deg": {"value_basis": "proxy", "source_ids": ["csg-us-virginia-navy"], "tier": "est", "note": "bow sonar's stern baffle-exclusion cone is a known submarine-sonar-geometry characteristic (qualitative fact, A); the exact 40-degree figure is an engineering estimate. Towed array has 0.0 (omnidirectional along its own axis, no ownship baffle in the same sense), consistent with the packet's towed-array module convention"},
+            "mounted_sonars.sonar.ownship_quieting_speed_mps": {"value_basis": "engineering_estimate", "note": "no public quieting-speed threshold; engineering-estimate scaffold value inlined from the corresponding module record"},
+            "mounted_sonars.sonar.active_ping_source_level_db": {"value_basis": "engineering_estimate", "note": "0.0: both mounted sonars are passive-only, same basis as source_level_reference_db"},
+            "mounted_sonars.sonar.confirm_hits_m": {"value_basis": "engineering_estimate", "note": "standard engine detection-confirmation scaffold constant, not independently sourced per hull"},
+            "mounted_sonars.sonar.confirm_window_n": {"value_basis": "engineering_estimate", "note": "standard engine detection-confirmation scaffold constant, same basis as confirm_hits_m"},
+            "mounted_sonars.sonar.passive_only": {"value_basis": "sourced", "source_ids": ["csg-us-virginia-navy"], "tier": "A", "note": "true: both LAB bow sonar and towed array operate passive-only per documented submarine sonar-suite doctrine"},
+            "mounted_sonars.sonar.bearing_only": {"value_basis": "engineering_estimate", "note": "false: both mounted sonars are modeled as full bearing+range passive sensors, not bearing-only, consistent with the corresponding module records"},
+            "weapon_inventory[Mk48].representative_load": {"value_basis": "proxy", "note": "torpedo-room capacity ~25 torpedo-sized weapons total (sourced, A) split against 12 Tomahawk in VPTs; 20 assumed as a representative peacetime ASW-heavy load, not a fixed figure"}
+        },
+        "modeling_notes": [
+            "Health scaled as one HP per metric tonne of submerged displacement, consistent with ship-record convention (repo's Kilo-class MVP uses the same scaling).",
+            "No naval_weapon_system.mounts[] block: none of Virginia's weapons (Mk48 torpedo, Tomahawk TLAM/MST, VLA-family successors) map onto the engine's 3 functional NavalWeaponType values (vls_sam, gun_5in, ciws) since none are a VLS-launched SAM, deck gun, or CIWS mount. All weapons are therefore content_only_no_mechanism in _real_world.weapon_inventory, consistent with how these same weapon records are treated on the DDG records for any non-VLS/gun/CIWS weapon.",
+            "damage_model.hitboxes[] is a deviation from the repo's existing Kilo_Class_MVP example (which has no damage_model.hitboxes at all), added here because the task explicitly requires 'each ship/sub needs explicit damage_model.hitboxes with components[] naming real systems.' 4 zones chosen (bow/torpedo room, command/VPT, reactor/propulsion, stern/towed-array winch) to give distinct real-system groupings consistent with the DDG records' pattern; component naming follows the corrected name/system-only DamageComponent schema (no hp field), matching the fix already applied to ddg51_flight_iia.json and ddg51_flight_ii.json.",
+            "Virginia Payload Tubes modeled only as named damage components (virginia_payload_tube_1/2), not as naval_weapon_system mounts, since VPT-launched Tomahawk has no engine mount mechanism (content_only_no_mechanism, same as the DDGs' Tomahawk handling)."
+        ]
+    }
+}

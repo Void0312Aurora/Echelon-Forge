@@ -6,7 +6,7 @@
 #include <flecs.h>
 
 #include "components/basic/common.h"
-#include "components/command/mission_command.h"
+#include "components/domains/naval/command/mission_command_naval.h"
 #include "components/domains/naval/platform/submarine_platform.h"
 
 inline void register_submarine_motion_system(flecs::world &ecs) {
@@ -20,18 +20,18 @@ inline void register_submarine_motion_system(flecs::world &ecs) {
                 const double dt = it.delta_time() > 0.0 ? it.delta_time() : 1.0 / 60.0;
 
                 for (auto i : it) {
-                    const MissionCommand *mission_cmd = it.entity(i).get<MissionCommand>();
+                    const NavalCommandIntent *naval_intent = it.entity(i).get<NavalCommandIntent>();
 
                     double target_heading_deg = transform[i].heading;
                     double target_speed_mps = std::hypot(velocity[i].vx, velocity[i].vy);
                     double target_depth_m = std::max(0.0, -transform[i].z);
                     bool active = false;
 
-                    if (mission_cmd && mission_cmd->active) {
+                    if (naval_intent && naval_intent->active) {
                         target_heading_deg =
-                            Math::normalize_heading_deg(mission_cmd->cmd_heading_deg);
-                        target_speed_mps = std::max(0.0, mission_cmd->cmd_speed_mps);
-                        target_depth_m = std::clamp(std::max(0.0, mission_cmd->cmd_altitude_m), 0.0,
+                            Math::normalize_heading_deg(naval_intent->cmd_heading_deg);
+                        target_speed_mps = std::max(0.0, naval_intent->cmd_speed_mps);
+                        target_depth_m = std::clamp(std::max(0.0, naval_intent->cmd_depth_m), 0.0,
                                                     std::max(0.0, sub[i].max_operating_depth_m));
                         active = true;
                     }

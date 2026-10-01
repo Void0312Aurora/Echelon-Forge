@@ -1346,6 +1346,7 @@ DEFAULT_COMPONENTS = (
   "LeaderIntent",
   "PendingMissionCommand",
   "MissionCommandPendingQueue",
+  "NavalCommandIntent",
   "ActionCommand",
   "ActionSpaceConfig",
   "CommandLag",

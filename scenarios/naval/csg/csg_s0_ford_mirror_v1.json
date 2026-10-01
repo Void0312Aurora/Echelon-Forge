@@ -1,0 +1,731 @@
+{
+  "scenario_name": "CSG-S0 Ford CSG vs Ford CSG, symmetric mirror, static",
+  "description": "CSG-S0 symmetric-mirror variant: both sides field the Ford CSG platform set, placed as mirror images across the midline, so mechanism defects can be isolated before asymmetric named-platform effects are read.",
+  "tasking_profile": "naval",
+  "environment": {
+    "time_step": 0.5,
+    "max_steps": 240,
+    "terrain_type": "flat",
+    "wind": {
+      "speed_mps": 0.0,
+      "dir_from_deg": 0.0,
+      "shear_mps_per_km": 0.0
+    },
+    "maritime": {
+      "sea_state": 2.0,
+      "wave_heading_deg": 90.0,
+      "wave_period_s": 7.0
+    },
+    "geodetic_anchor": {
+      "latitude_deg": 21.0,
+      "longitude_deg": 125.0
+    }
+  },
+  "meta": {
+    "stage": "CSG-S0",
+    "variant": "mirror",
+    "claim_ceiling": "G0",
+    "csg": {
+      "reserved": {
+        "observation_boundary": "per-group track picture and own-group status (CSG-S3)",
+        "action_boundary": "group command intents: formation, EMCON, launch waves, strike tasking (CSG-S1..S5)",
+        "termination_events": "carrier mission kill, group attrition threshold, scenario time (CSG-S6)",
+        "note": "named only at CSG-S0; frozen at CSG-S6"
+      }
+    }
+  },
+  "groups": [
+    {
+      "group_id": "BLUE_CSG12",
+      "side": "Blue",
+      "oob_ref": "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_ford_20260928.md",
+      "guide": {
+        "geo": {
+          "latitude_deg": 20.993905,
+          "longitude_deg": 123.555086
+        },
+        "axis_deg": 89.48
+      },
+      "branches": {
+        "taoe_instead_of_tao": false,
+        "f35c_squadron": false,
+        "cmv22b_cod": false
+      },
+      "members": [
+        {
+          "member_id": "cvn78",
+          "oob_row": "cvn78_ford",
+          "type": "CSG_US_CVN-78_Gerald_R_Ford",
+          "role": "carrier",
+          "station": {
+            "range_m": 0.0
+          },
+          "provenance": {
+            "count_basis": "sourced",
+            "source_ids": [
+              "csg-us-usff-2026"
+            ]
+          },
+          "hull": "CVN-78 Gerald R. Ford"
+        },
+        {
+          "member_id": "ddg96",
+          "oob_row": "ddg51_flt2a",
+          "type": "CSG_US_DDG-51_Flight_IIA",
+          "role": "escort_aaw",
+          "station": {
+            "range_m": 22000.0,
+            "bearing_rel_deg": -30.0
+          },
+          "provenance": {
+            "count_basis": "sourced",
+            "source_ids": [
+              "csg-us-usff-2026",
+              "csg-us-ddg51-navy-factfile"
+            ],
+            "note": "station geometry is an engineering_estimate: a layered screen with area-AAW escorts 18-25 km toward the threat axis, the ASW ship on the flank or astern, the SSN about 40 km ahead, and the replenishment ship 8 km astern; the S0-A pages give no screen distances"
+          },
+          "hull": "DDG-96 Bainbridge"
+        },
+        {
+          "member_id": "ddg81",
+          "oob_row": "ddg51_flt2a",
+          "type": "CSG_US_DDG-51_Flight_IIA",
+          "role": "escort_aaw",
+          "station": {
+            "range_m": 22000.0,
+            "bearing_rel_deg": 30.0
+          },
+          "provenance": {
+            "count_basis": "sourced",
+            "source_ids": [
+              "csg-us-usff-2026",
+              "csg-us-ddg51-navy-factfile"
+            ],
+            "note": "station geometry is an engineering_estimate: a layered screen with area-AAW escorts 18-25 km toward the threat axis, the ASW ship on the flank or astern, the SSN about 40 km ahead, and the replenishment ship 8 km astern; the S0-A pages give no screen distances"
+          },
+          "hull": "DDG-81 Winston S. Churchill"
+        },
+        {
+          "member_id": "ddg72",
+          "oob_row": "ddg51_flt2",
+          "type": "CSG_US_DDG-51_Flight_II",
+          "role": "escort_asw",
+          "station": {
+            "range_m": 15000.0,
+            "bearing_rel_deg": 180.0
+          },
+          "provenance": {
+            "count_basis": "sourced",
+            "source_ids": [
+              "csg-us-usff-2026",
+              "csg-us-ddg51-navy-factfile"
+            ],
+            "note": "station geometry is an engineering_estimate: a layered screen with area-AAW escorts 18-25 km toward the threat axis, the ASW ship on the flank or astern, the SSN about 40 km ahead, and the replenishment ship 8 km astern; the S0-A pages give no screen distances"
+          },
+          "hull": "DDG-72 Mahan"
+        },
+        {
+          "member_id": "ddg_fill",
+          "oob_row": "ddg51_flt2a",
+          "type": "CSG_US_DDG-51_Flight_IIA",
+          "role": "escort_aaw",
+          "station": {
+            "range_m": 12000.0,
+            "bearing_rel_deg": 0.0
+          },
+          "provenance": {
+            "count_basis": "doctrinal_fill",
+            "source_ids": [
+              "csg-us-usff-2026",
+              "csg-us-cg-seapower-2026"
+            ],
+            "note": "4th large surface combatant in the retiring CG-47 slot"
+          },
+          "hull": "generic DDG-51 Flight IIA (air-defence commander slot)"
+        },
+        {
+          "member_id": "ssn",
+          "oob_row": "ssn_virginia_blk3_4",
+          "type": "CSG_US_SSN_Virginia_Block_III_IV",
+          "role": "ssn",
+          "station": {
+            "range_m": 40000.0,
+            "bearing_rel_deg": 0.0,
+            "depth_m": 150.0
+          },
+          "provenance": {
+            "count_basis": "doctrinal_fill",
+            "source_ids": [
+              "csg-us-ssn-navy-factfile"
+            ],
+            "note": "station geometry is an engineering_estimate: a layered screen with area-AAW escorts 18-25 km toward the threat axis, the ASW ship on the flank or astern, the SSN about 40 km ahead, and the replenishment ship 8 km astern; the S0-A pages give no screen distances"
+          },
+          "hull": "generic Virginia Block III/IV"
+        },
+        {
+          "member_id": "tao",
+          "oob_row": "tao205_john_lewis",
+          "type": "CSG_US_T-AO-205_John_Lewis",
+          "role": "logistics",
+          "station": {
+            "range_m": 8000.0,
+            "bearing_rel_deg": 180.0
+          },
+          "provenance": {
+            "count_basis": "doctrinal_fill",
+            "source_ids": [
+              "csg-us-tao-navy-factfile"
+            ],
+            "note": "station geometry is an engineering_estimate: a layered screen with area-AAW escorts 18-25 km toward the threat axis, the ASW ship on the flank or astern, the SSN about 40 km ahead, and the replenishment ship 8 km astern; the S0-A pages give no screen distances"
+          },
+          "hull": "generic T-AO-205"
+        },
+        {
+          "member_id": "taoe",
+          "oob_row": "taoe6_supply",
+          "type": "CSG_US_T-AOE-6_Supply",
+          "role": "logistics",
+          "station": {
+            "range_m": 8000.0,
+            "bearing_rel_deg": 170.0
+          },
+          "provenance": {
+            "count_basis": "engineering_estimate",
+            "source_ids": [
+              "csg-us-taoe-navy"
+            ],
+            "note": "alternative CLF branch, count 0 nominal"
+          },
+          "hull": "T-AOE-6 Supply",
+          "branch": "taoe_instead_of_tao"
+        },
+        {
+          "member_id": "vfa_e",
+          "oob_row": "ac_fa18e",
+          "type": "CSG_US_FA-18E_Block_III",
+          "count": 33,
+          "role": "air_wing",
+          "embarked_on": "cvn78",
+          "provenance": {
+            "count_basis": "engineering_estimate",
+            "source_ids": [
+              "csg-us-usff-2026",
+              "csg-us-cvw-ndu"
+            ],
+            "note": "3 squadrons x 11 (estimate)"
+          }
+        },
+        {
+          "member_id": "vfa_f",
+          "oob_row": "ac_fa18f",
+          "type": "CSG_US_FA-18F_Block_III",
+          "count": 11,
+          "role": "air_wing",
+          "embarked_on": "cvn78",
+          "provenance": {
+            "count_basis": "engineering_estimate",
+            "source_ids": [
+              "csg-us-usff-2026",
+              "csg-us-cvw-ndu"
+            ]
+          }
+        },
+        {
+          "member_id": "vaq",
+          "oob_row": "ac_ea18g",
+          "type": "CSG_US_EA-18G_Growler",
+          "count": 5,
+          "role": "air_wing",
+          "embarked_on": "cvn78",
+          "provenance": {
+            "count_basis": "engineering_estimate",
+            "source_ids": [
+              "csg-us-usff-2026",
+              "csg-us-cvw-ndu"
+            ]
+          }
+        },
+        {
+          "member_id": "vaw",
+          "oob_row": "ac_e2d",
+          "type": "CSG_US_E-2D_Advanced_Hawkeye",
+          "count": 4,
+          "role": "air_wing",
+          "embarked_on": "cvn78",
+          "provenance": {
+            "count_basis": "engineering_estimate",
+            "source_ids": [
+              "csg-us-usff-2026",
+              "csg-us-cvw-ndu"
+            ]
+          }
+        },
+        {
+          "member_id": "hsc",
+          "oob_row": "ac_mh60s",
+          "type": "CSG_US_MH-60S_Knighthawk",
+          "count": 8,
+          "role": "air_wing",
+          "embarked_on": "cvn78",
+          "provenance": {
+            "count_basis": "engineering_estimate",
+            "source_ids": [
+              "csg-us-usff-2026",
+              "csg-us-cvw-ndu"
+            ]
+          }
+        },
+        {
+          "member_id": "hsm_cvn",
+          "oob_row": "ac_mh60r",
+          "type": "CSG_US_MH-60R_Seahawk",
+          "count": 5,
+          "role": "air_wing",
+          "embarked_on": "cvn78",
+          "provenance": {
+            "count_basis": "doctrinal_fill",
+            "source_ids": [
+              "csg-us-hsm-wiki"
+            ],
+            "note": "HSM-70's 11 MH-60R: 5 on the CVN and 2 on each Flight IIA hangar ship (the page's 7/2/2 split with one detachment moved to the doctrinal 4th DDG)"
+          }
+        },
+        {
+          "member_id": "hsm_ddg96",
+          "oob_row": "ac_mh60r",
+          "type": "CSG_US_MH-60R_Seahawk",
+          "count": 2,
+          "role": "air_wing",
+          "embarked_on": "ddg96",
+          "provenance": {
+            "count_basis": "engineering_estimate",
+            "source_ids": [
+              "csg-us-hsm-wiki"
+            ]
+          }
+        },
+        {
+          "member_id": "hsm_ddg81",
+          "oob_row": "ac_mh60r",
+          "type": "CSG_US_MH-60R_Seahawk",
+          "count": 2,
+          "role": "air_wing",
+          "embarked_on": "ddg81",
+          "provenance": {
+            "count_basis": "engineering_estimate",
+            "source_ids": [
+              "csg-us-hsm-wiki"
+            ]
+          }
+        },
+        {
+          "member_id": "hsm_fill",
+          "oob_row": "ac_mh60r",
+          "type": "CSG_US_MH-60R_Seahawk",
+          "count": 2,
+          "role": "air_wing",
+          "embarked_on": "ddg_fill",
+          "provenance": {
+            "count_basis": "doctrinal_fill",
+            "source_ids": [
+              "csg-us-hsm-wiki"
+            ]
+          }
+        },
+        {
+          "member_id": "vrc",
+          "oob_row": "ac_c2a",
+          "type": "CSG_US_C-2A_Greyhound",
+          "count": 2,
+          "role": "air_wing",
+          "embarked_on": "cvn78",
+          "provenance": {
+            "count_basis": "sourced",
+            "source_ids": [
+              "csg-us-cvw8-dvids-2026"
+            ]
+          }
+        },
+        {
+          "member_id": "vfa_f35c",
+          "oob_row": "ac_f35c",
+          "type": "CSG_US_F-35C_Lightning_II",
+          "count": 10,
+          "role": "air_wing",
+          "embarked_on": "cvn78",
+          "provenance": {
+            "count_basis": "engineering_estimate",
+            "source_ids": [
+              "csg-us-cvw-seapower-2020"
+            ],
+            "note": "optional squadron; 0 in the as-deployed wing"
+          },
+          "branch": "f35c_squadron"
+        },
+        {
+          "member_id": "vrm",
+          "oob_row": "ac_cmv22b",
+          "type": "CSG_US_CMV-22B_Osprey",
+          "count": 3,
+          "role": "air_wing",
+          "embarked_on": "cvn78",
+          "provenance": {
+            "count_basis": "engineering_estimate",
+            "source_ids": [
+              "csg-us-cvw-seapower-2020"
+            ],
+            "note": "optional COD branch"
+          },
+          "branch": "cmv22b_cod"
+        }
+      ]
+    },
+    {
+      "group_id": "RED_MIRROR_CSG12",
+      "side": "Red",
+      "oob_ref": "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_ford_20260928.md",
+      "guide": {
+        "geo": {
+          "latitude_deg": 20.993905,
+          "longitude_deg": 126.444914
+        },
+        "axis_deg": 270.52
+      },
+      "branches": {
+        "taoe_instead_of_tao": false,
+        "f35c_squadron": false,
+        "cmv22b_cod": false
+      },
+      "members": [
+        {
+          "member_id": "cvn78",
+          "oob_row": "cvn78_ford",
+          "type": "CSG_US_CVN-78_Gerald_R_Ford",
+          "role": "carrier",
+          "station": {
+            "range_m": 0.0
+          },
+          "provenance": {
+            "count_basis": "sourced",
+            "source_ids": [
+              "csg-us-usff-2026"
+            ]
+          },
+          "hull": "CVN-78 Gerald R. Ford"
+        },
+        {
+          "member_id": "ddg96",
+          "oob_row": "ddg51_flt2a",
+          "type": "CSG_US_DDG-51_Flight_IIA",
+          "role": "escort_aaw",
+          "station": {
+            "range_m": 22000.0,
+            "bearing_rel_deg": -30.0
+          },
+          "provenance": {
+            "count_basis": "sourced",
+            "source_ids": [
+              "csg-us-usff-2026",
+              "csg-us-ddg51-navy-factfile"
+            ],
+            "note": "station geometry is an engineering_estimate: a layered screen with area-AAW escorts 18-25 km toward the threat axis, the ASW ship on the flank or astern, the SSN about 40 km ahead, and the replenishment ship 8 km astern; the S0-A pages give no screen distances"
+          },
+          "hull": "DDG-96 Bainbridge"
+        },
+        {
+          "member_id": "ddg81",
+          "oob_row": "ddg51_flt2a",
+          "type": "CSG_US_DDG-51_Flight_IIA",
+          "role": "escort_aaw",
+          "station": {
+            "range_m": 22000.0,
+            "bearing_rel_deg": 30.0
+          },
+          "provenance": {
+            "count_basis": "sourced",
+            "source_ids": [
+              "csg-us-usff-2026",
+              "csg-us-ddg51-navy-factfile"
+            ],
+            "note": "station geometry is an engineering_estimate: a layered screen with area-AAW escorts 18-25 km toward the threat axis, the ASW ship on the flank or astern, the SSN about 40 km ahead, and the replenishment ship 8 km astern; the S0-A pages give no screen distances"
+          },
+          "hull": "DDG-81 Winston S. Churchill"
+        },
+        {
+          "member_id": "ddg72",
+          "oob_row": "ddg51_flt2",
+          "type": "CSG_US_DDG-51_Flight_II",
+          "role": "escort_asw",
+          "station": {
+            "range_m": 15000.0,
+            "bearing_rel_deg": 180.0
+          },
+          "provenance": {
+            "count_basis": "sourced",
+            "source_ids": [
+              "csg-us-usff-2026",
+              "csg-us-ddg51-navy-factfile"
+            ],
+            "note": "station geometry is an engineering_estimate: a layered screen with area-AAW escorts 18-25 km toward the threat axis, the ASW ship on the flank or astern, the SSN about 40 km ahead, and the replenishment ship 8 km astern; the S0-A pages give no screen distances"
+          },
+          "hull": "DDG-72 Mahan"
+        },
+        {
+          "member_id": "ddg_fill",
+          "oob_row": "ddg51_flt2a",
+          "type": "CSG_US_DDG-51_Flight_IIA",
+          "role": "escort_aaw",
+          "station": {
+            "range_m": 12000.0,
+            "bearing_rel_deg": 0.0
+          },
+          "provenance": {
+            "count_basis": "doctrinal_fill",
+            "source_ids": [
+              "csg-us-usff-2026",
+              "csg-us-cg-seapower-2026"
+            ],
+            "note": "4th large surface combatant in the retiring CG-47 slot"
+          },
+          "hull": "generic DDG-51 Flight IIA (air-defence commander slot)"
+        },
+        {
+          "member_id": "ssn",
+          "oob_row": "ssn_virginia_blk3_4",
+          "type": "CSG_US_SSN_Virginia_Block_III_IV",
+          "role": "ssn",
+          "station": {
+            "range_m": 40000.0,
+            "bearing_rel_deg": 0.0,
+            "depth_m": 150.0
+          },
+          "provenance": {
+            "count_basis": "doctrinal_fill",
+            "source_ids": [
+              "csg-us-ssn-navy-factfile"
+            ],
+            "note": "station geometry is an engineering_estimate: a layered screen with area-AAW escorts 18-25 km toward the threat axis, the ASW ship on the flank or astern, the SSN about 40 km ahead, and the replenishment ship 8 km astern; the S0-A pages give no screen distances"
+          },
+          "hull": "generic Virginia Block III/IV"
+        },
+        {
+          "member_id": "tao",
+          "oob_row": "tao205_john_lewis",
+          "type": "CSG_US_T-AO-205_John_Lewis",
+          "role": "logistics",
+          "station": {
+            "range_m": 8000.0,
+            "bearing_rel_deg": 180.0
+          },
+          "provenance": {
+            "count_basis": "doctrinal_fill",
+            "source_ids": [
+              "csg-us-tao-navy-factfile"
+            ],
+            "note": "station geometry is an engineering_estimate: a layered screen with area-AAW escorts 18-25 km toward the threat axis, the ASW ship on the flank or astern, the SSN about 40 km ahead, and the replenishment ship 8 km astern; the S0-A pages give no screen distances"
+          },
+          "hull": "generic T-AO-205"
+        },
+        {
+          "member_id": "taoe",
+          "oob_row": "taoe6_supply",
+          "type": "CSG_US_T-AOE-6_Supply",
+          "role": "logistics",
+          "station": {
+            "range_m": 8000.0,
+            "bearing_rel_deg": 170.0
+          },
+          "provenance": {
+            "count_basis": "engineering_estimate",
+            "source_ids": [
+              "csg-us-taoe-navy"
+            ],
+            "note": "alternative CLF branch, count 0 nominal"
+          },
+          "hull": "T-AOE-6 Supply",
+          "branch": "taoe_instead_of_tao"
+        },
+        {
+          "member_id": "vfa_e",
+          "oob_row": "ac_fa18e",
+          "type": "CSG_US_FA-18E_Block_III",
+          "count": 33,
+          "role": "air_wing",
+          "embarked_on": "cvn78",
+          "provenance": {
+            "count_basis": "engineering_estimate",
+            "source_ids": [
+              "csg-us-usff-2026",
+              "csg-us-cvw-ndu"
+            ],
+            "note": "3 squadrons x 11 (estimate)"
+          }
+        },
+        {
+          "member_id": "vfa_f",
+          "oob_row": "ac_fa18f",
+          "type": "CSG_US_FA-18F_Block_III",
+          "count": 11,
+          "role": "air_wing",
+          "embarked_on": "cvn78",
+          "provenance": {
+            "count_basis": "engineering_estimate",
+            "source_ids": [
+              "csg-us-usff-2026",
+              "csg-us-cvw-ndu"
+            ]
+          }
+        },
+        {
+          "member_id": "vaq",
+          "oob_row": "ac_ea18g",
+          "type": "CSG_US_EA-18G_Growler",
+          "count": 5,
+          "role": "air_wing",
+          "embarked_on": "cvn78",
+          "provenance": {
+            "count_basis": "engineering_estimate",
+            "source_ids": [
+              "csg-us-usff-2026",
+              "csg-us-cvw-ndu"
+            ]
+          }
+        },
+        {
+          "member_id": "vaw",
+          "oob_row": "ac_e2d",
+          "type": "CSG_US_E-2D_Advanced_Hawkeye",
+          "count": 4,
+          "role": "air_wing",
+          "embarked_on": "cvn78",
+          "provenance": {
+            "count_basis": "engineering_estimate",
+            "source_ids": [
+              "csg-us-usff-2026",
+              "csg-us-cvw-ndu"
+            ]
+          }
+        },
+        {
+          "member_id": "hsc",
+          "oob_row": "ac_mh60s",
+          "type": "CSG_US_MH-60S_Knighthawk",
+          "count": 8,
+          "role": "air_wing",
+          "embarked_on": "cvn78",
+          "provenance": {
+            "count_basis": "engineering_estimate",
+            "source_ids": [
+              "csg-us-usff-2026",
+              "csg-us-cvw-ndu"
+            ]
+          }
+        },
+        {
+          "member_id": "hsm_cvn",
+          "oob_row": "ac_mh60r",
+          "type": "CSG_US_MH-60R_Seahawk",
+          "count": 5,
+          "role": "air_wing",
+          "embarked_on": "cvn78",
+          "provenance": {
+            "count_basis": "doctrinal_fill",
+            "source_ids": [
+              "csg-us-hsm-wiki"
+            ],
+            "note": "HSM-70's 11 MH-60R: 5 on the CVN and 2 on each Flight IIA hangar ship (the page's 7/2/2 split with one detachment moved to the doctrinal 4th DDG)"
+          }
+        },
+        {
+          "member_id": "hsm_ddg96",
+          "oob_row": "ac_mh60r",
+          "type": "CSG_US_MH-60R_Seahawk",
+          "count": 2,
+          "role": "air_wing",
+          "embarked_on": "ddg96",
+          "provenance": {
+            "count_basis": "engineering_estimate",
+            "source_ids": [
+              "csg-us-hsm-wiki"
+            ]
+          }
+        },
+        {
+          "member_id": "hsm_ddg81",
+          "oob_row": "ac_mh60r",
+          "type": "CSG_US_MH-60R_Seahawk",
+          "count": 2,
+          "role": "air_wing",
+          "embarked_on": "ddg81",
+          "provenance": {
+            "count_basis": "engineering_estimate",
+            "source_ids": [
+              "csg-us-hsm-wiki"
+            ]
+          }
+        },
+        {
+          "member_id": "hsm_fill",
+          "oob_row": "ac_mh60r",
+          "type": "CSG_US_MH-60R_Seahawk",
+          "count": 2,
+          "role": "air_wing",
+          "embarked_on": "ddg_fill",
+          "provenance": {
+            "count_basis": "doctrinal_fill",
+            "source_ids": [
+              "csg-us-hsm-wiki"
+            ]
+          }
+        },
+        {
+          "member_id": "vrc",
+          "oob_row": "ac_c2a",
+          "type": "CSG_US_C-2A_Greyhound",
+          "count": 2,
+          "role": "air_wing",
+          "embarked_on": "cvn78",
+          "provenance": {
+            "count_basis": "sourced",
+            "source_ids": [
+              "csg-us-cvw8-dvids-2026"
+            ]
+          }
+        },
+        {
+          "member_id": "vfa_f35c",
+          "oob_row": "ac_f35c",
+          "type": "CSG_US_F-35C_Lightning_II",
+          "count": 10,
+          "role": "air_wing",
+          "embarked_on": "cvn78",
+          "provenance": {
+            "count_basis": "engineering_estimate",
+            "source_ids": [
+              "csg-us-cvw-seapower-2020"
+            ],
+            "note": "optional squadron; 0 in the as-deployed wing"
+          },
+          "branch": "f35c_squadron"
+        },
+        {
+          "member_id": "vrm",
+          "oob_row": "ac_cmv22b",
+          "type": "CSG_US_CMV-22B_Osprey",
+          "count": 3,
+          "role": "air_wing",
+          "embarked_on": "cvn78",
+          "provenance": {
+            "count_basis": "engineering_estimate",
+            "source_ids": [
+              "csg-us-cvw-seapower-2020"
+            ],
+            "note": "optional COD branch"
+          },
+          "branch": "cmv22b_cod"
+        }
+      ]
+    }
+  ]
+}

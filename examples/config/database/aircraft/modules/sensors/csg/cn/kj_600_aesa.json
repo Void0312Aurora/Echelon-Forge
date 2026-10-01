@@ -1,0 +1,38 @@
+{
+    "name": "CSG_CN_KJ-600_AESA",
+    "type": "Sensor",
+    "sensor": {
+        "max_range": 380000.0,
+        "fov_deg": 360.0,
+        "scan_period": 5.0,
+        "detection_prob": 0.85,
+        "bearing_noise_std": 0.5,
+        "range_noise_std": 60.0,
+        "track_memory_s": 20.0,
+        "range_power": 4.0,
+        "aspect_influence": 0.30,
+        "doppler_notch_width": 6.0
+    },
+    "_real_world": {
+        "class": "Large-aperture AESA search/track radar in a dorsal radome",
+        "variant_scope": "KJ-600 carrier-based AEW&C aircraft primary mission sensor",
+        "hulls": [],
+        "public_equipment": ["AESA in dorsal radome (institute attribution unconfirmed); array layout not public (OOB page, B); claimed track capacity >200 targets (C-only); claimed detection ranges >400 km vs fighter/surface, ~270 km vs cruise missile, 320 km vs stealth target (C-only, propaganda-grade per OOB page's own characterization)"]
+    },
+    "_provenance": {
+        "modeling_note": "Primary AEW&C sensor for KJ-600 (C2Node) per the task's requirement. No PRC official performance disclosure exists. The OOB page itself flags the Chinese-media detection-range claims (>400 km vs fighter/ship, ~270 km vs cruise missile, 320 km vs stealth) as C-only 'propaganda-grade' and instead offers its own engineering_estimate via the radar-horizon formula for a 9 km-altitude AEW platform against a sea-skimming target (4.12 x (sqrt(9000 ft)+sqrt(target_ft)) ~= 400 km), converging with the higher end of the Chinese claims for that specific low-altitude geometry. max_range here is set to 380 km, just below that horizon-limited estimate and consistent with the OOB page's own reasoning; the engine's smooth-earth horizon binding (since Geodetic Frame P3-A) will further cap effective detection against low targets at spawn/runtime regardless of this instrumented figure, per the schema spec's guidance for surface-search-capable sensors. fov_deg is 360 reflecting the rotating dorsal radome (analogous to the repo E-2D/CSG_US_APY-9 record's rotodome). Scan/track/noise parameters are proxies patterned on the repo CSG_US_APY-9 (E-2D) sensor record, the closest analogous AEW&C AESA in the database; no public figures exist for any of them.",
+        "sources": ["csg-cn-kj600-gs", "csg-cn-kj600-casi", "csg-cn-kj600-deagel-radar"],
+        "parameters": {
+            "sensor.max_range": {"value_basis": "sourced", "source_ids": ["csg-cn-kj600-gs"], "tier": "C-est", "note": "engineering_estimate 380 km, derived from the OOB page's own radar-horizon reasoning for a 9 km-altitude AEW platform against a sea-skimming target (~400 km horizon-limited detection), set slightly below that ceiling; the Chinese-media >400 km/320 km-vs-stealth claims themselves are explicitly C-only/propaganda-grade per the OOB page and are not used directly"},
+            "sensor.fov_deg": {"value_basis": "engineering_estimate", "source_ids": ["csg-cn-kj600-casi"], "tier": "proxy", "note": "360 degrees: reflects the rotating dorsal radome configuration described by CASI/army-university and consistent with the repo CSG_US_APY-9 (E-2D rotodome) record's convention"},
+            "sensor.scan_period": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy patterned on the repo CSG_US_APY-9 record (E-2D rotodome); no public figure"},
+            "sensor.detection_prob": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy patterned on the repo CSG_US_APY-9 record; no public figure"},
+            "sensor.bearing_noise_std": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy patterned on the repo CSG_US_APY-9 record; no public figure"},
+            "sensor.range_noise_std": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy patterned on the repo CSG_US_APY-9 record's long-range AEW noise budget; no public figure"},
+            "sensor.track_memory_s": {"value_basis": "proxy", "source_ids": ["csg-cn-kj600-gs"], "tier": "proxy", "note": "engineering_estimate consistent with the OOB page's C-only claimed track capacity (>200 tracks), scaled to a plausible track-memory duration by analogy to the repo CSG_US_APY-9 record; no direct public figure for this specific parameter"},
+            "sensor.range_power": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied unchanged from the repo CSG_US_APY-9 record (radar-equation exponent, not platform-specific)"},
+            "sensor.aspect_influence": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy patterned on the repo CSG_US_APY-9 record; no public figure"},
+            "sensor.doppler_notch_width": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy patterned on the repo CSG_US_APY-9 record; no public figure"}
+        }
+    }
+}

@@ -41,6 +41,13 @@ No environment-runtime `G1` work is authorized by these reviews. A later
 runtime package must open under `systems/environment/work/active/` with its own
 scope and acceptance evidence.
 
+The first such package is
+[Environment Runtime](work/active/environment_runtime/README.md)
+(planning, opened `2026-09-28`). It is the single runtime authority for the
+layered environment — land, freshwater, sea, and atmosphere on one vertical
+datum — and it migrates the Ground native-terrain runtime onto shared,
+domain-neutral queries. Ocean data acquisition is a later line of this owner.
+
 ## Current Implementation Routes
 
 - Manifest and validators: `python/scenario/environment_substrate/`

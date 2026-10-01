@@ -63,6 +63,10 @@ service-profile 解释以及跨域 runtime 架构仍由各自 owner 负责。
 
 - [环境系统](../../systems/environment/README.zh.md)：跨域 substrate contract 与保留的
   G0/Arnis 验收边界。
+- [环境运行时](../../systems/environment/work/active/environment_runtime/README.zh.md)：
+  共享的分层运行时环境（planning）。陆军原生地形工作须使用其与域无关的查询；其计划中的迁移
+  会把 `origin/work/army-mechanisms` 上的运行时地形移出共享接口与实现，陆军的姿态、通行性、
+  过渡代价与场地语义逻辑保留在陆军域。
 - [Ground 缺陷清单](reviews/ground_domain_defect_inventory_20260522.zh.md)：带日期的
   review 快照；开放项需要按当前状态重新核验。
 - [Ground 单兵移动 v1](reviews/ground_infantry_movement_v1_20260924/README.zh.md)与

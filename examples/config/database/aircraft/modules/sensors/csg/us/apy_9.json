@@ -1,0 +1,38 @@
+{
+    "name": "CSG_US_APY-9",
+    "type": "Sensor",
+    "sensor": {
+        "max_range": 601000.0,
+        "fov_deg": 360.0,
+        "scan_period": 6.0,
+        "detection_prob": 0.97,
+        "bearing_noise_std": 0.8,
+        "range_noise_std": 80.0,
+        "track_memory_s": 20.0,
+        "range_power": 2.0,
+        "aspect_influence": 0.0,
+        "doppler_notch_width": 12.0
+    },
+    "_real_world": {
+        "class": "Lockheed Martin AN/APY-9 UHF AESA surveillance radar",
+        "variant_scope": "AN/APY-9 as fitted to E-2D Advanced Hawkeye (mechanical 360-degree rotation with a 90-degree electronic sector scan)",
+        "hulls": [],
+        "public_equipment": ["AN/APY-9 UHF AESA, mechanical + electronic scan, 360 degree coverage with 90-degree electronic sector; ~300-350 nmi search range (CSG order-of-battle page, Tier C-est)"]
+    },
+    "_provenance": {
+        "modeling_note": "AEW&C primary sensor for CVW-8's E-2D (modeled as a C2Node per the e3_sentry.json precedent). max_range is taken from the CSG order-of-battle page's C-est band (~300-350 nmi; USNI News says 'at least 300 nmi', Wikipedia says ~350 nmi against an unspecified target RCS), using the midpoint 325 nmi = 601 km. The 360-degree mechanical + 90-degree electronic sector scan and the AESA/UHF radar type are Tier A/B (Lockheed Martin, DOT&E FY25). scan_period/detection_prob/noise/track_memory fields have no public figures and are proxy values patterned on the repo e3_sentry.json inline AWACS sensor block (aircraft/units/e3_sentry.json), a comparable long-range rotating-AEW radar, scaled up modestly for detection_prob and track_memory to reflect the newer AESA generation and NIFC-CA role.",
+        "sources": ["csg-us-apy9-lockheed", "csg-us-e2d-dote-fy25", "csg-us-apy9-usni", "csg-us-apy9-wiki"],
+        "parameters": {
+            "sensor.max_range": {"value_basis": "sourced", "source_ids": ["csg-us-apy9-usni", "csg-us-apy9-wiki"], "tier": "C-est", "note": "midpoint of the OOB page's 300-350 nmi C-est band; 325 nmi x 1852 = 601,900 m, rounded 601000 m"},
+            "sensor.fov_deg": {"value_basis": "sourced", "source_ids": ["csg-us-apy9-lockheed", "csg-us-e2d-dote-fy25"], "tier": "A", "note": "360-degree mechanical rotation confirmed by Lockheed Martin and DOT&E FY25 per the OOB page"},
+            "sensor.scan_period": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "engineering_estimate faster than repo e3_sentry's 10.0 s (AESA electronic sector scan component vs pure mechanical AWACS rotation), not a quantified public figure"},
+            "sensor.detection_prob": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy close to repo e3_sentry's 0.99, marginally reduced pending calibration; no public figure"},
+            "sensor.bearing_noise_std": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy close to repo e3_sentry's 1.0"},
+            "sensor.range_noise_std": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy close to repo e3_sentry's 100.0, scaled slightly down for the newer AESA"},
+            "sensor.track_memory_s": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from repo e3_sentry's 20.0"},
+            "sensor.range_power": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from repo e3_sentry (radar-equation exponent, not platform-specific)"},
+            "sensor.aspect_influence": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy copied from repo e3_sentry's 0.0 (omnidirectional AEW radar, aspect-independent)"},
+            "sensor.doppler_notch_width": {"value_basis": "proxy", "source_ids": [], "tier": "proxy", "note": "proxy close to repo e3_sentry's 10.0"}
+        }
+    }
+}

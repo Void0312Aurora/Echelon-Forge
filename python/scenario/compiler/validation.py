@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from .common import resolve_environment_geodetic_anchor
+
 
 def _format_source(source_path: str) -> str:
     return source_path or "<unknown>"
@@ -91,7 +93,7 @@ def validate_scenario_compiler_shape(
             source_path=source_path,
         )
 
-    for field_name in ("imports", "entities", "objectives", "zones"):
+    for field_name in ("imports", "entities", "objectives", "zones", "groups"):
         _require_optional_list(
             scenario_data,
             field_name,
@@ -133,6 +135,11 @@ def validate_scenario_compiler_shape(
 
     env_cfg = scenario_data.get("environment", {})
     if isinstance(env_cfg, dict):
+        if "geodetic_anchor" in env_cfg:
+            try:
+                resolve_environment_geodetic_anchor(env_cfg)
+            except ValueError as exc:
+                raise ValueError(f"{context} {exc}: {_format_source(source_path)}") from exc
         env_zones = env_cfg.get("zones", [])
         if "zones" in env_cfg and not isinstance(env_zones, list):
             raise ValueError(
