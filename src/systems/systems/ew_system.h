@@ -39,8 +39,8 @@ inline void register_ew_system(flecs::world &ecs) {
                     const auto command = resolve_compatibility_countermeasure_command(it.entity(i));
                     if (command.release_chaff) {
                         if (cm[i].chaff_count > 0 &&
-                            (current_time - cm[i].last_chaff_release_time >=
-                             cm[i].release_interval)) {
+                            countermeasure_release_ready(cm[i].last_chaff_release_time,
+                                                         cm[i].release_interval, current_time)) {
                             cm[i].chaff_count--;
                             cm[i].last_release_time = current_time;
                             cm[i].last_chaff_release_time = current_time;
@@ -83,8 +83,8 @@ inline void register_ew_system(flecs::world &ecs) {
                     const auto command = resolve_compatibility_countermeasure_command(it.entity(i));
                     if (command.release_flare) {
                         if (cm[i].flare_count > 0 &&
-                            (current_time - cm[i].last_flare_release_time >=
-                             cm[i].release_interval)) {
+                            countermeasure_release_ready(cm[i].last_flare_release_time,
+                                                         cm[i].release_interval, current_time)) {
                             cm[i].flare_count--;
                             cm[i].last_release_time = current_time;
                             cm[i].last_flare_release_time = current_time;

@@ -754,7 +754,16 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
             // Current struct: bool is_locked.
             // So we just flag it.
 
-            event.is_launch = rwr->is_missile_launch;
+            // Launch evidence is source-specific: only the launcher that MAWS
+            // attributed, or the inbound missile's own seeker, carries it.
+            event.is_launch = std::find(rwr->missile_launch_source_ids.begin(),
+                                        rwr->missile_launch_source_ids.end(),
+                                        source_id) != rwr->missile_launch_source_ids.end() ||
+                              std::any_of(rwr->missile_approach_warnings.begin(),
+                                          rwr->missile_approach_warnings.end(),
+                                          [source_id](const MissileApproachWarning &warning) {
+                                              return warning.missile_id == source_id;
+                                          });
 
             obs.rwr_warnings.push_back(event);
         }
@@ -771,6 +780,17 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
             event.source_id = source_id;
             event.signal_strength = 1.0;
             event.is_launch = true;
+            // A MAWS-only row reports where the approaching missile is, not
+            // where the (possibly unseen) launcher is.  MAWS_Update appends
+            // warnings in missile order, so the first match is deterministic.
+            const auto approach = std::find_if(rwr->missile_approach_warnings.begin(),
+                                               rwr->missile_approach_warnings.end(),
+                                               [source_id](const MissileApproachWarning &warning) {
+                                                   return warning.source_id == source_id;
+                                               });
+            if (approach != rwr->missile_approach_warnings.end()) {
+                event.bearing = approach->bearing_deg;
+            }
             obs.rwr_warnings.push_back(event);
         }
     }
