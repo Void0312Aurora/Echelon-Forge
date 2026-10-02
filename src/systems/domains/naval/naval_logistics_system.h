@@ -10,7 +10,8 @@
 #include "components/systems/logistics.h"
 
 inline void register_naval_logistics_system(flecs::world &ecs) {
-    // Compile provider discovery once per world; the query remains uncached and preserves iteration order.
+    // Compile provider discovery once per world. The query remains uncached and
+    // preserves iteration order.
     auto provider_q =
         ecs.query<const LogisticsNode, const Transform, const Velocity, const NavalStores>();
     ecs.system<ResupplyState, NavalStores, const Transform, const Velocity>("NavalUnderwayResupply")
