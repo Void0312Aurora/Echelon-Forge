@@ -10,8 +10,12 @@
 #include "components/systems/logistics.h"
 
 inline void register_naval_logistics_system(flecs::world &ecs) {
+    // Compile provider discovery once per world. The query remains uncached and
+    // preserves iteration order.
+    auto provider_q =
+        ecs.query<const LogisticsNode, const Transform, const Velocity, const NavalStores>();
     ecs.system<ResupplyState, NavalStores, const Transform, const Velocity>("NavalUnderwayResupply")
-        .run([&](flecs::iter &it) {
+        .run([provider_q](flecs::iter &it) {
             while (it.next()) {
                 struct UnderwayProviderSnapshot {
                     flecs::entity entity;
@@ -27,9 +31,6 @@ inline void register_naval_logistics_system(flecs::world &ecs) {
                 };
 
                 std::vector<UnderwayProviderSnapshot> providers;
-                auto provider_q = it.world()
-                                      .query<const LogisticsNode, const Transform, const Velocity,
-                                             const NavalStores>();
                 provider_q.each([&](flecs::entity e, const LogisticsNode &node, const Transform &t,
                                     const Velocity &v, const NavalStores &naval_stores) {
                     if (!node.underway_replenishment_enabled) {
