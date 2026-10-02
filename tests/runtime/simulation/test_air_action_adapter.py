@@ -9,6 +9,7 @@ ensure_repo_imports()
 
 from gym_envs.universal_env_parts import (  # noqa: E402
     AIR_EW_HYBRID_V1_ACTION_MODE,
+    AIR_COMBAT_HYBRID_V1_ACTION_MODE,
     build_pilot_action as build_maintained_pilot_action,
 )
 from python.simulation.air.action import build_pilot_action  # noqa: E402
@@ -59,6 +60,26 @@ def test_ew_hybrid_action_projects_countermeasure_bits() -> None:
 
     assert pilot.program_chaff is True
     assert pilot.program_flare is True
+
+
+@pytest.mark.parametrize(
+    "action_mode, index",
+    [(AIR_COMBAT_HYBRID_V1_ACTION_MODE, 11), ("air_ew_hybrid_v1", 11)],
+)
+def test_hybrid_weapon_station_uses_floor_quantization(action_mode: str, index: int) -> None:
+    action = np.zeros((12 if action_mode == AIR_COMBAT_HYBRID_V1_ACTION_MODE else 14,), dtype=np.float32)
+    action[index] = 1.5
+
+    direct = (
+        build_pilot_action(action, action_mode=action_mode)
+        if action_mode != AIR_COMBAT_HYBRID_V1_ACTION_MODE
+        else None
+    )
+    maintained = build_maintained_pilot_action(action, action_mode=action_mode)
+
+    assert maintained.weapon_select_id == 1
+    if direct is not None:
+        assert direct.weapon_select_id == maintained.weapon_select_id
 
 
 def test_ew_hybrid_action_matches_maintained_transport_for_all_slots() -> None:

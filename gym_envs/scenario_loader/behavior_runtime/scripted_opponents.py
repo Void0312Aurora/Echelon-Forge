@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from examples.agents import RedScriptedAgent
+from python.scenario.runtime.red_scripted_agent import RedScriptedAgent
 from python.tasking_contracts.common.bridge_views import loader_owned_scripted_opponent_kernel_view
 
 

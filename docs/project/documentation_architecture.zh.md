@@ -9,7 +9,7 @@ Document kind: `plan`
 Lifecycle: `maintained`
 Canonical: `docs/project/documentation_architecture.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-08`
+Last verified: `2026-10-02`
 
 ## 目标
 
@@ -30,6 +30,8 @@ Last verified: `2026-08-08`
 `archive/` 是唯一逻辑生命周期终点，不进入维护源审计。第一阶段不创建该小写
 路径，因为它在 Windows 的大小写不敏感文件系统上与旧 `docs/Archive/` 冲突。
 既有归档树继续冻结；解决该冲突属于单独的历史迁移，本文不授权重写归档文档。
+已接受的 owner 计划可以为范围受限的历史证据保留冻结的 `work/archive/` 包。这些包
+属于 Tier C，排除在维护审计之外，也不能替代 owner README 或当前 standard。
 
 ## 域内结构
 

@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/systems/README.md`
 Owner: `cross-domain simulation systems`
-Last verified: `2026-08-08`
+Last verified: `2026-10-02`
 
 本目标区域拥有跨任务领域复用的 environment、physics、sensing、command/tasking、
 weapons、effects/damage 文档，避免共享机制被重复塞入 air、naval、ground。
@@ -23,9 +23,12 @@ weapons、effects/damage 文档，避免共享机制被重复塞入 air、naval�
   活跃工作包：[大地坐标系](physics/work/active/geodetic_frame/README.zh.md)（planning）。
   Physics reviews：[半隐式地面接触](physics/reviews/semi_implicit_ground_contact_20260930/README.zh.md)。
 - Sensing issues：[传感器与态势计划](sensing/work/issues/sensor_situation.md)。
-- Weapons issues：[交战路线图](weapons/work/issues/weapons_engagement.md)、[实现笔记](weapons/work/issues/weapons_engagement_impl.md)和[终止逻辑](weapons/work/issues/engagement_termination.md)；保留 guidance 证据位于[制导机制评审](weapons/reviews/kill_chain_guidance_mechanism_20260715/README.zh.md)。
+- Weapons issues：[交战路线图](weapons/work/issues/weapons_engagement.md)、[实现笔记](weapons/work/issues/weapons_engagement_impl.md)和[终止逻辑](weapons/work/issues/engagement_termination.md)；较早的 guidance 保留证据位于[制导机制评审](weapons/reviews/kill_chain_guidance_mechanism_20260715/README.zh.md)，当前范围受限的 P11 mapping 保留在[期望重基线 evidence 包](weapons/evidence/kill_chain_p11_expectation_rebaseline_20260915/README.md)。
 - Effects issues：[毁伤模型校准残差](effects/work/issues/damage_model_calibration_residuals.md)、[毁伤/控制权威耦合](effects/work/issues/damage_control_authority_coupling_gap/README.zh.md)与[杀伤/几何保真度](effects/work/issues/lethality_hitbox_geometry_fidelity_gap/README.zh.md)。
 - Effects reviews：[F-16C 目标几何](effects/reviews/f16c_target_geometry_20260614/README.zh.md)、[开火时机窗口诊断](effects/reviews/fire_timing_window_position_effect_20260615/README.zh.md)与[kill-chain 机制解耦](effects/reviews/kill_chain_mechanism_decoupling_20260621/README.zh.md)。
+
+P11 包接受了带 residuals 的 93-cell synthetic expectation mapping；它不准入当前代码
+revision，也不构成真实武器或 Pk authority。维护中的 air issue 拥有 schema 与 held 边界细节。
 
 `work/issues` 页面是规划输入，不是实施权威。带日期评审保留原证据边界，不能视为
 对当前状态的重新核验。

@@ -17,6 +17,7 @@ from .models import (
     ScenarioZoneLayout,
 )
 from .roster import active_roster_world_entity_refs, find_active_roster_member, resolve_active_controllable_roster
+from .red_scripted_agent import RedScriptedAgent
 from .world_setup import (
     apply_runtime_world_layout_request_maintained,
     apply_world_setup_payload_maintained,
@@ -37,6 +38,7 @@ __all__ = [
     "ScenarioSpawnLayout",
     "ScenarioWorldLayout",
     "ScenarioZoneLayout",
+    "RedScriptedAgent",
     "active_roster_world_entity_refs",
     "apply_runtime_world_yaw_inplace",
     "apply_world_layout_to_kernel",

@@ -67,6 +67,11 @@ packet 只作为归档 provenance。
 - [Exact-runtime refactor](work/issues/exact_runtime/cpp_exact_runtime_refactor_plan.md)
 - [GPU 主线集成检查表](work/issues/exact_runtime/gpu_execution_mainline_integration_checklist.md)
 
+## 当前工作
+
+- [仿真实验平台](work/active/simulation_experiment_platform/README.md)：版本化 session、状态身份、
+  replay、分支时间线与训练投影。当前包尚未把维护中的 runtime snapshot/restore 实现纳入权威能力。
+
 ## 评审
 
 - [长期架构治理计划审查 — 2026-08-25（英文）](reviews/long_horizon_architecture_governance_plan_review_20260825.md)：

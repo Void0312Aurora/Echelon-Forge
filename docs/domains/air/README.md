@@ -8,7 +8,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/domains/air/README.md`
 Owner: `domains/air`
-Last verified: `2026-08-08`
+Last verified: `2026-10-02`
 
 Status: maintained owner entrypoint for current air-specialization interfaces.
 
@@ -26,8 +26,9 @@ surfaces:
 - pilot action semantics exposed by the environment and `PilotAction`
 - air-specialized command/tasking semantics layered on top of common core
 - air-specific pilot reporting extensions
-- air-to-air kill-chain expectation-envelope review vocabulary, currently as a
-  draft plan rather than a runtime contract
+- air-to-air kill-chain expectation-envelope review vocabulary, with the P11
+  synthetic mapping accepted with residuals; the envelope policy remains a
+  draft rather than a runtime contract
 - the broader Air improvement backlog, which records candidates rather than
   authorized implementation
 
@@ -70,6 +71,18 @@ authorize implementation or runtime retuning.
 
 The Air improvement backlog is likewise a draft issue surface. Its entries are
 candidates until a separately authorized work package promotes them.
+
+## Current Diagnostic Baseline
+
+The maintained diagnostic identity is
+`P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS`. The bounded evidence package
+accepts a 93-cell synthetic mapping (`N=63`, `M=2`, `O=28`) and records the
+terminal-track residuals. It does not admit the current code revision, change a
+timeout or descriptor, or establish real AIM-120C, deterministic-fuze,
+lethality, or probability-of-kill authority. See the
+[P11 rebaseline evidence package](../../systems/weapons/evidence/kill_chain_p11_expectation_rebaseline_20260915/README.md)
+and the [expectation-envelope issue](work/issues/kill_chain_expectation_envelope.md)
+for the current schema and held boundary.
 
 ## Current Code Alignment
 

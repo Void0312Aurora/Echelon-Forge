@@ -8,7 +8,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/domains/air/README.md`
 Owner: `domains/air`
-Last verified: `2026-08-08`
+Last verified: `2026-10-02`
 
 状态：当前维护中的 air-specialization 接口 owner 入口。
 
@@ -23,7 +23,8 @@ Last verified: `2026-08-08`
 - 环境与 `PilotAction` 暴露的 pilot action 语义
 - 建立在 common core 之上的 air-specialized command/tasking 语义
 - air-specific 的 pilot reporting 扩展
-- 空空杀伤链期望包络 review 词汇，目前是 draft plan，而不是 runtime contract
+- 空空杀伤链期望包络 review 词汇；P11 synthetic mapping 已带 residuals 接受，
+  但包络政策仍是 draft，不是 runtime contract
 - 更广泛的 Air 改进 backlog；其中记录的是候选项，不是已授权实现
 
 它不负责：
@@ -64,6 +65,16 @@ runtime retuning。
 
 Air 改进 backlog 同样属于 draft issue surface。其条目在被单独授权的 work package 提升前
 都只是候选项。
+
+## 当前诊断基线
+
+维护中的诊断 identity 是
+`P11-REBASELINE-20260915-ACCEPTED-WITH-RESIDUALS`。范围受限的 evidence 包接受了
+93-cell synthetic mapping（`N=63`、`M=2`、`O=28`），并记录 terminal-track residuals。
+它不准入当前代码 revision，不改变 timeout 或 descriptor，也不构成真实 AIM-120C、
+deterministic-fuze、lethality 或 probability-of-kill authority。当前 schema 与 held
+边界见 [P11 rebaseline evidence 包](../../systems/weapons/evidence/kill_chain_p11_expectation_rebaseline_20260915/README.md)
+和[expectation-envelope issue](work/issues/kill_chain_expectation_envelope.md)。
 
 ## 当前代码对齐点
 

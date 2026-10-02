@@ -68,6 +68,7 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
 - [Architecture and performance research follow-up](work/issues/architecture_and_performance_research_followup.md)
 - [Runtime facade contract](work/issues/runtime_facade_contract_plan.md)
 - [C++ dependency and DTO residuals](work/issues/cpp_dependency_and_dto_residuals.md)
+- [Python dependency boundaries](work/issues/python_dependency_boundaries.md): executable import and layer-boundary census with a ratcheted transition register.
 - [Runtime composition registry sync](work/issues/runtime_composition_registry_sync.md):
   the causal order for regenerating composition evidence after a registry change.
 - [Stable entity identity for stochastic draws](work/issues/stable_entity_identity_for_stochastic_draws.md):
@@ -75,6 +76,13 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
   unrelated spawns, or same-seed resets.
 - [Exact-runtime refactor](work/issues/exact_runtime/cpp_exact_runtime_refactor_plan.md)
 - [GPU mainline integration checklist](work/issues/exact_runtime/gpu_execution_mainline_integration_checklist.md)
+
+## Active Work
+
+- [Simulation experiment platform](work/active/simulation_experiment_platform/README.md):
+  versioned sessions, state identity, replay, branch timelines, and training
+  projections. The current package does not yet admit a maintained runtime
+  snapshot/restore implementation.
 
 ## Reviews
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import os
-import json
 from pathlib import Path
 import subprocess
 import sys
@@ -46,7 +45,7 @@ def test_air_scripted_cli_manifest_route_fails_closed_for_held_capability(tmp_pa
     assert 'getattr(sim_env, "scenario_path"' not in source
     assert 'runway_beacon.get("length"' in source
 
-    from python.tasking_contracts.scripted_capability import (
+    from python.tasking_contracts.common.scripted_capability import (
         parse_scripted_capability,
         resolve_scripted_model_id,
     )
@@ -140,43 +139,6 @@ def test_air_scripted_cli_import_and_config_selection_without_rl_or_native() -> 
     )
     assert result.returncode == 0, result.stderr
     assert "scripted-cli-import-and-args-ok" in result.stdout
-
-
-def test_air_scripted_cli_manifest_route_fails_closed_for_held_capability(tmp_path: Path) -> None:
-    import json
-
-    from python.tasking_contracts.common.scripted_capability import (
-        parse_scripted_capability,
-        resolve_scripted_model_id,
-    )
-
-    scenario_path = tmp_path / "held_air.json"
-    scenario_path.write_text(
-        json.dumps(
-            {
-                "scripted_capability": {
-                    "version": "scripted_capability.v1",
-                    "domain": "air",
-                    "label": "held",
-                    "model_id": None,
-                    "role_id": "autopilot_controller",
-                    "lifecycle": "reset_decide_close",
-                    "evidence_refs": ["test:held"],
-                    "deferred_claims": ["runtime admission"],
-                }
-            }
-        ),
-        encoding="utf-8",
-    )
-    manifest = parse_scripted_capability(json.loads(scenario_path.read_text(encoding="utf-8")))
-    with pytest.raises(ValueError, match="held"):
-        resolve_scripted_model_id(
-            manifest,
-            expected_domain="air",
-            expected_role_id="autopilot_controller",
-        )
-
-
 def test_air_cli_selects_declared_runway_length_for_scripted_controller() -> None:
     from types import SimpleNamespace
 
