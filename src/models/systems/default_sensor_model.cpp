@@ -468,10 +468,15 @@ class DefaultSensorModel : public ISensorModel {
                         }
                     }
                 } else if (sensor.type == static_cast<int>(SensorType::Infrared)) {
-                    // IR: Prop to Heat / R^2
-                    // Hack: If target has Lifetime (Decoy) assume Flare
-                    if (target_e.has<Lifetime>()) {
-                        signal_strength = 500.0 / dist_sq;
+                    // IR: Prop to Heat / R^2. A flare radiates its authored IR
+                    // intensity; chaff is not an IR source; any other entity
+                    // keeps the platform proxy signature.
+                    const Decoy *decoy = target_e.get<Decoy>();
+                    if (decoy && decoy->kind == DecoyKind::Chaff) {
+                        return;
+                    }
+                    if (decoy && decoy->kind == DecoyKind::Flare) {
+                        signal_strength = decoy->signature / dist_sq;
                     } else {
                         signal_strength = 50.0 / dist_sq;
                     }

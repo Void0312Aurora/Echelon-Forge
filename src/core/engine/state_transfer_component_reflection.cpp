@@ -879,7 +879,18 @@ void register_resource_scalar_reflection(flecs::world &ecs) {
         .member<int>("flare_count")
         .member<double>("release_interval")
         .member<double>("last_release_time")
-        .member<bool>("auto_mode");
+        .member<double>("last_chaff_release_time")
+        .member<double>("last_flare_release_time")
+        .member<bool>("auto_mode")
+        .member<double>("chaff_rcs_m2")
+        .member<double>("flare_ir_intensity")
+        .member<double>("chaff_lifetime_s")
+        .member<double>("flare_lifetime_s");
+    ecs.component<Decoy>()
+        .member<std::int32_t>("kind", 1, offsetof(Decoy, kind))
+        .member<std::uint64_t>("owner_id")
+        .member<double>("release_time_s")
+        .member<double>("signature");
     ecs.component<RCSProfile>()
         .member<double>("frontal_rcs")
         .member<double>("side_rcs")

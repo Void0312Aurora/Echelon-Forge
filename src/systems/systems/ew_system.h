@@ -48,11 +48,18 @@ inline void register_ew_system(flecs::world &ecs) {
                             // Spawn Chaff Entity
                             // Creation is deferred inside this system; the stamp advances
                             // the live identity counter immediately, in iteration order.
+                            const double chaff_rcs =
+                                countermeasure_positive_or(cm[i].chaff_rcs_m2, kDefaultChaffRcsM2);
                             auto chaff = it.world().entity();
                             chaff.set<Transform>({p[i].x, p[i].y, p[i].z, 0.0, 0.0, 0.0})
                                 .set<Velocity>({v[i].vx * 0.1, v[i].vy * 0.1, v[i].vz * 0.1})
-                                .set<RCSProfile>({50.0, 50.0, 50.0})
-                                .set<Lifetime>({20.0, 0.0})
+                                .set<RCSProfile>({chaff_rcs, chaff_rcs, chaff_rcs})
+                                .set<Lifetime>({countermeasure_positive_or(cm[i].chaff_lifetime_s,
+                                                                           kDefaultChaffLifetimeS),
+                                                0.0})
+                                .set<Decoy>({DecoyKind::Chaff,
+                                             static_cast<std::uint64_t>(it.entity(i).id()),
+                                             current_time, chaff_rcs})
                                 .set<KeyEntity>({UnitType::Unknown})
                                 .add<SimObject>();
                             stamp_stable_serial(chaff);
@@ -92,7 +99,14 @@ inline void register_ew_system(flecs::world &ecs) {
                             auto flare = it.world().entity();
                             flare.set<Transform>({p[i].x, p[i].y, p[i].z, 0.0, 0.0, 0.0})
                                 .set<Velocity>({v[i].vx, v[i].vy, v[i].vz})
-                                .set<Lifetime>({10.0, 0.0})
+                                .set<Lifetime>({countermeasure_positive_or(cm[i].flare_lifetime_s,
+                                                                           kDefaultFlareLifetimeS),
+                                                0.0})
+                                .set<Decoy>({DecoyKind::Flare,
+                                             static_cast<std::uint64_t>(it.entity(i).id()),
+                                             current_time,
+                                             countermeasure_positive_or(cm[i].flare_ir_intensity,
+                                                                        kDefaultFlareIrIntensity)})
                                 .set<KeyEntity>({UnitType::Unknown})
                                 .add<SimObject>();
                             stamp_stable_serial(flare);
