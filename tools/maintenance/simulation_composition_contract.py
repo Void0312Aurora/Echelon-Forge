@@ -1382,6 +1382,7 @@ DEFAULT_COMPONENTS = (
   "GroundWeaponState",
   "Jammer",
   "Countermeasures",
+  "Decoy",
   "RWR",
   "ESMReceiver",
   "RCSProfile",
