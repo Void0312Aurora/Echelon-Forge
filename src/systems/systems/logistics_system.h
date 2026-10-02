@@ -102,11 +102,12 @@ inline void register_logistics_system(flecs::world &ecs) {
     // to query bases.
 
     // We register the system to run on Units that *might* resupply
-    ecs.system<Transform, Velocity>("ResupplyLogic").run([&](flecs::iter &it) {
+    // Compile base discovery once per world; the uncached query preserves iteration order.
+    auto base_q = ecs.query<const LogisticsNode, const Transform>();
+    ecs.system<Transform, Velocity>("ResupplyLogic").run([base_q](flecs::iter &it) {
         while (it.next()) {
             // Pre-fetch bases to avoid query every entity
             std::vector<std::tuple<flecs::entity, double, double, double, double>> bases;
-            auto base_q = it.world().query<const LogisticsNode, const Transform>();
             base_q.each([&](flecs::entity e, const LogisticsNode &node, const Transform &t) {
                 if (node.supply_radius_m > 0.0) {
                     bases.emplace_back(e, t.x, t.y, t.z, node.supply_radius_m);
