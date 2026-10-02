@@ -10,7 +10,8 @@ permissions:
 
 jobs:
   cleanup:
-    if: github.event.head_commit.message == 'chore: start one-time branch cleanup'
+    if: >-
+      ${{ github.event.head_commit.message == 'chore: start one-time branch cleanup retry' }}
     runs-on: ubuntu-latest
     steps:
       - name: Delete superseded branches
