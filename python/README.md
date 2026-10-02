@@ -39,7 +39,7 @@ src/interfaces/python -> ef_py
 ## Subdirectory Conventions
 
 - `scenario/`
-  - Main implementation for packaged scenario compilation and runtime, maintained in the `compiler/` and `runtime/` subdomains.
+  - Main implementation for packaged scenario compilation and runtime, maintained in the `compiler/` and `runtime/` subdomains. The scenario runtime owns the diagnostic scripted-opponent fixture at `runtime/red_scripted_agent.py`; it is not a playable-policy admission.
 - `rl/`
   - Main Python RL line, including runtime, policy_algo, tasking, planning, profile, and support.
 - `training/`

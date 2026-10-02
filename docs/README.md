@@ -9,7 +9,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/README.md`
 Owner: `project documentation`
-Last verified: `2026-08-12`
+Last verified: `2026-10-02`
 
 `docs/` is organized by content ownership. Document kind is expressed inside
 the owning area; retirement is a lifecycle endpoint recorded in a ledger rather
@@ -37,19 +37,25 @@ All maintained `standards`, `plan`, and `task` sources route through their
 content owners. Use the [Document Alignment Map](engineering/documentation/reference/document_alignment_map.md)
 for the distributed authority map.
 
-The `Archive/`, `evaluation/`, `manual/`, `plan/`, and `task/` containers held
-historical storage only and were retired on 2026-08-13. Git history is the
-archive: every retired file is listed in the
+The legacy `Archive/`, `evaluation/`, `manual/`, `plan/`, and `task/` containers
+held historical storage only and were retired on 2026-08-13. Owner-local
+`work/archive/` packages created by an accepted owner program are a separate,
+frozen Tier C retention surface; they remain readable for provenance but are
+excluded from maintained audits and do not define current authority. Git
+history is the archive for the retired legacy containers: every retired file
+is listed in the
 [Retired Documentation Ledger](archive_ledger.md) with the
 `git show <commit>:<path>` address that still retrieves it, and the
 machine-readable form is `engineering/documentation/reference/retired_documents.json`.
 Owner-local archives retired at the same time are listed in the
 [Retired Systems Archive Ledger](systems/archive_ledger.md).
 
-Do not reintroduce an `archive/`, `Archive/`, or `temp/` path component under
-`docs/`; `tests/architecture/governance/test_archive_retirement.py` fails the
-build if one reappears. Retire a document by deleting it and adding a ledger
-row, and route content that is still current to its owner instead.
+Do not recreate the retired top-level containers or add a new archive tree
+outside an explicitly frozen owner-local `work/archive/` package. The
+`temp/` path component remains forbidden. The
+`tests/architecture/governance/test_archive_retirement.py` gate checks these
+boundaries. Retire a document by deleting it and adding a ledger row, and
+route content that is still current to its owner instead.
 
 ## Direct Operational Routes
 
@@ -74,10 +80,11 @@ row, and route content that is still current to its owner instead.
 3. Directory presence is not a capability claim.
 4. A plan, task, review, reference, or standard retains its document kind after
    migration; the directory owner does not change its evidentiary boundary.
-5. Retention is retirement: a superseded document is deleted and recorded in an
-   archive ledger rather than kept under an `archive/` path. There is no
-   maintained archive directory to audit, and the legacy `docs/Archive/`
-   case-collision that once blocked a `docs/archive/` endpoint is gone with it.
+5. Retention is retirement for the legacy containers: a superseded document is
+   deleted and recorded in an archive ledger. Frozen owner-local
+   `work/archive/` packages remain historical retention only; they are excluded
+   from maintained audits and cannot replace the owner README or current
+   standard.
 
 ## Language And Rights
 

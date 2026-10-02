@@ -1,0 +1,24 @@
+# ARMOR — Stryker Reconnaissance Vehicle
+
+Source ID: `p5-us-ground-m1127-armor-army`
+Tier: `A`
+Publisher: U.S. Army Armor School / ARMOR
+Title: The Stryker Reconnaissance Vehicle
+URL: https://www.benning.army.mil/armor/eARMOR/content/issues/2003/JUL_AUG/ArmorJulyAugust2003web.pdf
+Accessed: 2026-09-13
+Domain: ground
+Equipment: M1127 RV
+Retention: manifest and extracted parameter notes only
+Retrieval:
+  status: not_recorded
+  method: not_recorded
+  returned: not_recorded
+  did_not_return: not_recorded
+Rights status: not_recorded
+Provenance status: manifest+retention
+Residual status: open
+Scope status: partial
+
+## Use
+
+M1127-specific engine, transmission, speed, range, crew, armament, C4ISR, and wheel/CTIS details.

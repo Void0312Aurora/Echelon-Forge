@@ -9,7 +9,7 @@ Document kind: `plan`
 Lifecycle: `maintained`
 Canonical: `docs/project/documentation_architecture.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-08`
+Last verified: `2026-10-02`
 
 ## Objective
 
@@ -33,6 +33,9 @@ maintained source audit. It is not materialized during Phase 1 because the
 lowercase path collides with legacy `docs/Archive/` on case-insensitive Windows
 filesystems. Existing archive trees remain frozen; resolving that collision is
 a separate historical migration and this plan does not authorize rewrites.
+Accepted owner programs may retain a frozen `work/archive/` package for bounded
+historical evidence. Such packages are Tier C, excluded from maintained audits,
+and never replace the owner README or current standard.
 
 ## Internal Shape
 

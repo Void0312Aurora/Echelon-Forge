@@ -1,0 +1,51 @@
+{
+  "schema_version": "python_dependency_transition.v1",
+  "description": "Exact, attributed cross-layer Python imports that are retained while neutral contracts and runtime inversion points are implemented. Each entry is a ratchet: it may not grow and becomes stale when the edge is removed.",
+  "entries": [
+    {
+      "kind": "python_import",
+      "source": "gym_envs.leader_env_parts.execution_runtime.policy_runtime",
+      "target": "python.rl.control.wrappers",
+      "owner": "gym_envs and python.rl runtime owners",
+      "reason": "The environment execution path still resolves the policy action-wrapper specification through the RL control package.",
+      "exit_condition": "Expose the wrapper specification through a neutral execution contract owned below gym_envs, then remove this deferred import.",
+      "max_sites": 1
+    },
+    {
+      "kind": "python_import",
+      "source": "gym_envs.leader_env_parts.execution_runtime.policy_runtime",
+      "target": "python.rl.runtime.single_world_batch_runtime",
+      "owner": "gym_envs and python.rl runtime owners",
+      "reason": "The maintained execution path is currently constructed by the RL world-batch runtime and is imported lazily to avoid an eager cycle.",
+      "exit_condition": "Invert construction through a neutral runtime factory or host-owned protocol, then remove the deferred import.",
+      "max_sites": 1
+    },
+    {
+      "kind": "python_import",
+      "source": "gym_envs.leader_env_parts.policy",
+      "target": "python.rl.policy_algo.ppo_adaptive_kl",
+      "owner": "python.rl policy owner",
+      "reason": "Legacy checkpoint compatibility still selects the maintained AdaptiveKLPPO implementation from the environment policy adapter.",
+      "exit_condition": "Move algorithm selection behind a policy loading protocol owned by the orchestration/runtime boundary, then remove this import.",
+      "max_sites": 1
+    },
+    {
+      "kind": "python_import",
+      "source": "gym_envs.leader_env_parts.runtime_facade",
+      "target": "python.rl.runtime.leader_window_runtime",
+      "owner": "gym_envs and python.rl runtime owners",
+      "reason": "Leader window runtime selection remains implemented in the RL runtime package and is resolved lazily by the environment facade.",
+      "exit_condition": "Make the leader window runtime a host-provided protocol or neutral runtime service, then remove this import.",
+      "max_sites": 1
+    },
+    {
+      "kind": "python_import",
+      "source": "python.scenario.runtime.csg_replay",
+      "target": "python.rl.runtime.world_batch.adapter",
+      "owner": "scenario replay and RL runtime owners",
+      "reason": "The maintained CSG replay evidence path still resolves the runtime facade adapter lazily for live world projection.",
+      "exit_condition": "Route replay projection through a neutral scenario-runtime protocol or host-provided facade, then remove this deferred import.",
+      "max_sites": 2
+    }
+  ]
+}

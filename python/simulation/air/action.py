@@ -66,7 +66,10 @@ def build_pilot_action(action: Any, *, action_mode: str = "full", instrument_sta
         pilot.master_arm = bool(values[8] > 0.5)
         pilot.fire_weapon = bool(values[9] > 0.5)
         pilot.fire_gun = bool(values[10] > 0.5)
-        pilot.weapon_select_id = int(np.clip(round(float(values[11])), 0, 7))
+        # The maintained action contract uses floor quantization for the
+        # discrete weapon station.  Rounding here would select the next
+        # station at every half-step and make the direct facade path diverge.
+        pilot.weapon_select_id = int(np.clip(float(values[11]), 0.0, 7.0))
     else:
         pilot.radar_active = False
         pilot.radar_scan_az = 0.0

@@ -9,10 +9,11 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/README.md`
 Owner: `project documentation`
-Last verified: `2026-08-12`
+Last verified: `2026-10-02`
 
-`docs/` 按内容所有权组织。文档类型在所属区域内表达；退役是生命周期终点，记录在
-台账里，而不是以 archive 目录形式留在树内与当前权威竞争。
+`docs/` 按内容所有权组织。文档类型在所属区域内表达；旧容器的退役记录在台账里，
+而不是以 archive 目录形式留在树内与当前权威竞争；冻结的 owner-local `work/archive/`
+包是明确排除在维护审计之外的历史保留面。
 
 ## 目标所有权根
 
@@ -35,14 +36,17 @@ Last verified: `2026-08-12`
 所有维护中的 `standards`、`plan` 与 `task` 源均已路由到内容 owner。当前分布式
 权威映射见[文档对齐映射](engineering/documentation/reference/document_alignment_map.zh.md)。
 
-`Archive/`、`evaluation/`、`manual/`、`plan/` 与 `task/` 容器只承担历史存储，已于
-2026-08-13 退役。Git 历史即归档：每个被退役文件都列在
+旧的 `Archive/`、`evaluation/`、`manual/`、`plan/` 与 `task/` 容器只承担历史存储，已于
+2026-08-13 退役。已接受 owner 计划产生的 owner-local `work/archive/` 包属于另一类
+冻结的 Tier C 保留面：它们可用于 provenance，但不纳入维护审计，也不构成当前权威。
+对已退役的旧容器，Git 历史即归档：每个被退役文件都列在
 [退役文档台账](archive_ledger.md) 中，并附可继续取回内容的
 `git show <commit>:<path>` 地址；机器可读形式为
 `engineering/documentation/reference/retired_documents.json`。同批退役的 owner
 本地归档列在[退役 systems 归档台账](systems/archive_ledger.md)。
 
-不得在 `docs/` 下重新引入 `archive/`、`Archive/` 或 `temp/` 路径组件；一旦出现，
+不得重建已退役的顶层容器，也不得在明确冻结的 owner-local `work/archive/` 包之外
+新增 archive 树。`temp/` 路径组件仍然禁止。一旦越过这些边界，
 `tests/architecture/governance/test_archive_retirement.py` 会让构建失败。退役文档的
 方式是删除文件并补一行台账；仍然有效的内容应改为路由到其 owner。
 
@@ -67,9 +71,9 @@ Last verified: `2026-08-12`
 3. 目录存在不等于能力已经成立。
 4. plan、task、review、reference、standard 迁移后仍保留原文档类型；目录 owner
    不会扩大其证据边界。
-5. 保留即退役：被取代的文档直接删除并登记到归档台账，不再以 `archive/` 路径
-   留存。树内已没有需要审计的归档目录，旧 `docs/Archive/` 曾经阻挡
-   `docs/archive/` 终点的大小写冲突也随之消失。
+5. 对旧容器而言，保留即退役：被取代的文档直接删除并登记到归档台账。冻结的
+   owner-local `work/archive/` 包只承担历史保留，仍排除在维护审计之外，也不能替代
+   owner README 或当前 standard。
 
 ## 语言与权利
 

@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/systems/README.md`
 Owner: `cross-domain simulation systems`
-Last verified: `2026-08-08`
+Last verified: `2026-10-02`
 
 This target area owns environment, physics, sensing, command/tasking, weapons,
 and effects/damage documentation that applies across mission domains. It keeps
@@ -26,9 +26,13 @@ kept with the applicable nested owner. The current cross-domain realism gate is
   Active package: [geodetic frame](physics/work/active/geodetic_frame/README.md) (planning).
   Physics reviews: [semi-implicit ground contact](physics/reviews/semi_implicit_ground_contact_20260930/README.md).
 - Sensing issues: [sensor and situation plan](sensing/work/issues/sensor_situation.md).
-- Weapons issues: [engagement roadmap](weapons/work/issues/weapons_engagement.md), [implementation notes](weapons/work/issues/weapons_engagement_impl.md), and [termination logic](weapons/work/issues/engagement_termination.md); retained guidance evidence is under [guidance mechanism review](weapons/reviews/kill_chain_guidance_mechanism_20260715/README.md).
+- Weapons issues: [engagement roadmap](weapons/work/issues/weapons_engagement.md), [implementation notes](weapons/work/issues/weapons_engagement_impl.md), and [termination logic](weapons/work/issues/engagement_termination.md); older retained guidance evidence is under [guidance mechanism review](weapons/reviews/kill_chain_guidance_mechanism_20260715/README.md), while the current bounded P11 mapping is retained in the [expectation rebaseline evidence package](weapons/evidence/kill_chain_p11_expectation_rebaseline_20260915/README.md).
 - Effects issues: [damage-model calibration residuals](effects/work/issues/damage_model_calibration_residuals.md), [damage/control authority coupling](effects/work/issues/damage_control_authority_coupling_gap/README.md), and [lethality/geometry fidelity](effects/work/issues/lethality_hitbox_geometry_fidelity_gap/README.md).
 - Effects reviews: [F-16C target geometry](effects/reviews/f16c_target_geometry_20260614/README.md), [fire-timing window diagnosis](effects/reviews/fire_timing_window_position_effect_20260615/README.md), and [kill-chain mechanism decoupling](effects/reviews/kill_chain_mechanism_decoupling_20260621/README.md).
+
+The P11 package accepts a 93-cell synthetic expectation mapping with residuals;
+it does not admit the current code revision or real-weapon/Pk authority. The
+maintained air issue owns the schema and held-boundary details.
 
 `work/issues` pages are planning inputs, not implementation authority. Dated
 reviews retain their original evidence boundary and are not current-state
