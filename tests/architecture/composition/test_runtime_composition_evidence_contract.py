@@ -54,10 +54,10 @@ def test_default_evidence_fixture_schema_and_generated_header_are_fresh() -> Non
   )
 
 
-def test_executable_graph_hash_joins_owner_registry_89_plus_3_plus_35() -> None:
+def test_executable_graph_hash_joins_owner_registry_90_plus_3_plus_35() -> None:
   resolved = _inputs()[-1]
   payload = evidence._graph_payload(resolved)
-  assert len(payload["component_contributions"]) == 89
+  assert len(payload["component_contributions"]) == 90
   assert len(payload["kernel_system_contributions"]) == 3
   assert len(payload["resolved_system_contributions"]) == 35
   assert [row["contribution_id"] for row in payload["kernel_system_contributions"]] == [
