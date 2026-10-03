@@ -113,6 +113,11 @@
       "registration_id": "flecs.component.data_link"
     },
     {
+      "component_id": "Decoy",
+      "plugin_id": "builtin.core_runtime",
+      "registration_id": "flecs.component.decoy"
+    },
+    {
       "component_id": "EGI",
       "plugin_id": "builtin.core_runtime",
       "registration_id": "flecs.component.egi"
