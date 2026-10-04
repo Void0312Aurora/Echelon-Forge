@@ -30,3 +30,10 @@ def test_scripted_air_observation_projection_has_no_rl_or_gym_imports() -> None:
             elif isinstance(node, ast.ImportFrom):
                 imports.append(node.module or "")
         assert not any(any(token in name for token in forbidden) for name in imports), path
+
+
+def test_scripted_air_demo_selects_the_native_provider_through_the_registry() -> None:
+    source = (ROOT / "python" / "simulation" / "air" / "demo.py").read_text(encoding="utf-8")
+    assert "from .. import create_scenario_backend" in source
+    assert "create_scenario_backend(" in source
+    assert "FacadeBatchBackend(" not in source

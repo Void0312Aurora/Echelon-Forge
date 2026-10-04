@@ -2645,6 +2645,21 @@ to a dedicated owner-local evidence document.
   and replay, terminal orchestration, and default-provider promotion remain
   open.
 
+### 2026-10-05 — Direct Air facade demo routed through the scenario registry
+
+- Change batch: update `python.simulation.air.demo` to construct its native
+  Air scenario through `create_scenario_backend(backend_id="facade_batch")`.
+  The demo keeps its compiled DTO setup factory and direct Air decision loop,
+  but no longer constructs `FacadeBatchBackend` by class name.
+- Evidence: the focused simulation architecture suite passed `20 passed`, the
+  changed module compiled cleanly, `git diff --check` passed, and the
+  dependency census reports `2,547` Python import sites, `2,510 allowed`,
+  `37 compatibility`, and zero findings.
+- Boundary decision: one maintained no-RL Air scenario consumer now uses the
+  registry-owned native scenario surface. The facade setup remains a small
+  caller-authored demo; this does not establish a general scenario compiler,
+  multi-phase replay contract, or Air `playable` promotion.
+
 ### 2026-09-27 — Direct compiled simulation backend provider
 
 - Starting commit: `e189b169`.

@@ -13,7 +13,8 @@ from python.tasking_contracts.air.execution import AirScriptedExecutionModel
 
 from .action import build_pilot_action
 from .director import AirDirectorInput, AirScriptedDirector
-from ..facade_batch import EntityKey, FacadeBatchBackend
+from .. import create_scenario_backend
+from ..facade_batch import EntityKey
 
 
 @dataclass(frozen=True)
@@ -62,7 +63,8 @@ def run_facade_scripted_demo(
 
     if int(steps) <= 0:
         raise ValueError("Air facade demo steps must be positive")
-    backend = FacadeBatchBackend(
+    backend = create_scenario_backend(
+        backend_id="facade_batch",
         database_path=str(database_path),
         setup_factory=build_demo_setup,
         world_count=1,
