@@ -133,6 +133,26 @@ def test_execution_only_provider_is_a_valid_backend_registration() -> None:
         module._REGISTRATIONS.pop(backend_id, None)
 
 
+def test_execution_wrapper_spec_is_resolved_lazily_through_boundary(monkeypatch: pytest.MonkeyPatch) -> None:
+    module = importlib.import_module("python.simulation.backend")
+    calls: list[str] = []
+
+    class _Provider:
+        @staticmethod
+        def get_action_wrapper_spec(config: dict[str, Any]):
+            calls.append(str(config["mode"]))
+            return object, {"mode": config["mode"]}
+
+    def load_provider(name: str):
+        if name == "python.rl.control.wrappers":
+            return _Provider()
+        pytest.fail(name)
+
+    monkeypatch.setattr(module, "import_module", load_provider)
+    assert module.resolve_execution_wrapper_spec({"mode": "test"}) == (object, {"mode": "test"})
+    assert calls == ["test"]
+
+
 def test_provider_import_is_lazy_and_scripted_entries_use_backend_boundary() -> None:
     source = BACKEND_PATH.read_text(encoding="utf-8")
     assert 'import_module("python.rl.runtime.world_batch.vec_env")' in source
@@ -156,5 +176,9 @@ def test_provider_import_is_lazy_and_scripted_entries_use_backend_boundary() -> 
     policy_runtime_text = (
         REPO_ROOT / "gym_envs" / "leader_env_parts" / "execution_runtime" / "policy_runtime.py"
     ).read_text(encoding="utf-8")
-    assert "from python.simulation import create_single_execution_runtime" in policy_runtime_text
+    assert (
+        "from python.simulation import create_single_execution_runtime, resolve_execution_wrapper_spec"
+        in policy_runtime_text
+    )
     assert "from python.rl.runtime.single_world_batch_runtime" not in policy_runtime_text
+    assert "from python.rl.control.wrappers" not in policy_runtime_text

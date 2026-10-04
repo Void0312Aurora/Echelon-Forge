@@ -4,15 +4,6 @@
   "entries": [
     {
       "kind": "python_import",
-      "source": "gym_envs.leader_env_parts.execution_runtime.policy_runtime",
-      "target": "python.rl.control.wrappers",
-      "owner": "gym_envs and python.rl runtime owners",
-      "reason": "The environment execution path still resolves the policy action-wrapper specification through the RL control package.",
-      "exit_condition": "Expose the wrapper specification through a neutral execution contract owned below gym_envs, then remove this deferred import.",
-      "max_sites": 1
-    },
-    {
-      "kind": "python_import",
       "source": "gym_envs.leader_env_parts.policy",
       "target": "python.rl.policy_algo.ppo_adaptive_kl",
       "owner": "python.rl policy owner",

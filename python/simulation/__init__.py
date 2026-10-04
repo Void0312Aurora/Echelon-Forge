@@ -14,6 +14,7 @@ from .backend import (
     create_single_backend,
     create_single_execution_runtime,
     register_backend,
+    resolve_execution_wrapper_spec,
 )
 
 __all__ = [
@@ -24,5 +25,6 @@ __all__ = [
     "create_cooperative_backend",
     "create_single_backend",
     "create_single_execution_runtime",
+    "resolve_execution_wrapper_spec",
     "register_backend",
 ]

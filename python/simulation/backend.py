@@ -166,6 +166,22 @@ def create_single_execution_runtime(
     return factory(**kwargs)
 
 
+def resolve_execution_wrapper_spec(
+    config: Mapping[str, Any],
+) -> tuple[type | None, dict[str, Any] | None]:
+    """Resolve an execution wrapper through the neutral simulation boundary.
+
+    The maintained wrapper implementation remains a provider detail. Loading it
+    here keeps environment construction independent from the RL control package
+    while preserving the provider's existing lazy import behavior.
+    """
+
+    provider = import_module("python.rl.control.wrappers")
+    resolver = getattr(provider, "get_action_wrapper_spec")
+    wrapper_class, wrapper_kwargs = resolver(config)
+    return wrapper_class, wrapper_kwargs
+
+
 __all__ = [
     "SimulationBackendRegistration",
     "SimulationBatchBackend",
@@ -174,5 +190,6 @@ __all__ = [
     "create_cooperative_backend",
     "create_single_backend",
     "create_single_execution_runtime",
+    "resolve_execution_wrapper_spec",
     "register_backend",
 ]

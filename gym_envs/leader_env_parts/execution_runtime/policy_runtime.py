@@ -9,7 +9,7 @@ import torch
 
 from gym_envs.scenario_loader import normalize_execution_step_runtime_mode
 from python.env_config import resolve_env_settings
-from python.simulation import create_single_execution_runtime
+from python.simulation import create_single_execution_runtime, resolve_execution_wrapper_spec
 
 from ..policy import FrozenExecutionPolicyAdapter, load_policy
 from ..scripted_exec import ScriptedExecutiveController
@@ -45,9 +45,6 @@ def build_execution_runtime(env: Any):
 
 
 def resolve_execution_env_spec(env: Any):
-    # Deferred: action-wrapper spec lives in python.rl.control.
-    from python.rl.control.wrappers import get_action_wrapper_spec
-
     exec_cfg = env.load_execution_config()
     env_settings = resolve_env_settings(exec_cfg, env.make_execution_args_stub())
     if env.execution_step_runtime_mode is not None:
@@ -55,7 +52,7 @@ def resolve_execution_env_spec(env: Any):
             env.execution_step_runtime_mode
         )
     env_settings["collect_step_timing"] = bool(env.collect_step_timing)
-    wrapper_class, wrapper_kwargs = get_action_wrapper_spec(exec_cfg)
+    wrapper_class, wrapper_kwargs = resolve_execution_wrapper_spec(exec_cfg)
     env._execution_env_settings = dict(env_settings)
     env._execution_wrapper_class = wrapper_class
     env._execution_wrapper_kwargs = None if wrapper_kwargs is None else dict(wrapper_kwargs)
