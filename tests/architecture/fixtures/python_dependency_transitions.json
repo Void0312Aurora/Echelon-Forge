@@ -13,15 +13,6 @@
     },
     {
       "kind": "python_import",
-      "source": "gym_envs.leader_env_parts.execution_runtime.policy_runtime",
-      "target": "python.rl.runtime.single_world_batch_runtime",
-      "owner": "gym_envs and python.rl runtime owners",
-      "reason": "The maintained execution path is currently constructed by the RL world-batch runtime and is imported lazily to avoid an eager cycle.",
-      "exit_condition": "Invert construction through a neutral runtime factory or host-owned protocol, then remove the deferred import.",
-      "max_sites": 1
-    },
-    {
-      "kind": "python_import",
       "source": "gym_envs.leader_env_parts.policy",
       "target": "python.rl.policy_algo.ppo_adaptive_kl",
       "owner": "python.rl policy owner",

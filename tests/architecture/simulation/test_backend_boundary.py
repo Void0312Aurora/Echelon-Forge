@@ -153,3 +153,8 @@ def test_provider_import_is_lazy_and_scripted_entries_use_backend_boundary() -> 
     ).read_text(encoding="utf-8")
     assert "from python.simulation import create_single_execution_runtime" in trajectory_text
     assert "from python.rl.runtime.single_world_batch_runtime" not in trajectory_text
+    policy_runtime_text = (
+        REPO_ROOT / "gym_envs" / "leader_env_parts" / "execution_runtime" / "policy_runtime.py"
+    ).read_text(encoding="utf-8")
+    assert "from python.simulation import create_single_execution_runtime" in policy_runtime_text
+    assert "from python.rl.runtime.single_world_batch_runtime" not in policy_runtime_text

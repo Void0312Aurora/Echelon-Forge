@@ -9,6 +9,7 @@ import torch
 
 from gym_envs.scenario_loader import normalize_execution_step_runtime_mode
 from python.env_config import resolve_env_settings
+from python.simulation import create_single_execution_runtime
 
 from ..policy import FrozenExecutionPolicyAdapter, load_policy
 from ..scripted_exec import ScriptedExecutiveController
@@ -33,10 +34,8 @@ def build_execution_runtime(env: Any):
             "Leader execution requires execution_world_batch_runtime=True; "
             "raw UniversalEnv fallback has been removed"
         )
-    # Deferred: world-batch runtime owner lives in python.rl (mutual gym_envs dependency).
-    from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
-
-    return build_single_world_batch_execution_runtime(
+    return create_single_execution_runtime(
+        backend_id="world_batch",
         scenario_path=env.scenario_path,
         env_settings=env_settings,
         wrapper_class=wrapper_class,

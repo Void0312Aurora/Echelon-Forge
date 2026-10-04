@@ -138,4 +138,4 @@ def test_cmake_target_graph_rejects_a_synthetic_back_edge(tmp_path: Path) -> Non
 def test_cmake_target_graph_preserves_real_command_line_numbers() -> None:
   edges = build_edges(Path("CMakeLists.txt"))
 
-  assert next(edge for edge in edges if edge.source == "ef_core" and edge.target == "ef_content").line == 557
+  assert next(edge for edge in edges if edge.source == "ef_core" and edge.target == "ef_content").line == 551

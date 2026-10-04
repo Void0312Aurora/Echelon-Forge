@@ -375,7 +375,6 @@ GYM_ENVS_PYTHON_RL_RESIDUAL_ALLOWLIST: dict[str, set[tuple[str, str, str]]] = {
         ("python.rl.tasking.bridge", "task_observation_codes", FORM_DEFERRED),
     },
     "gym_envs/leader_env_parts/execution_runtime/policy_runtime.py": {
-        ("python.rl.runtime.single_world_batch_runtime", "build_single_world_batch_execution_runtime", FORM_DEFERRED),
         ("python.rl.control.wrappers", "get_action_wrapper_spec", FORM_DEFERRED),
     },
     "gym_envs/leader_env_parts/policy.py": {
