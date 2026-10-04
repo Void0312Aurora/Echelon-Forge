@@ -29,6 +29,9 @@ class _FakeBackend:
     def step(self, actions: Any) -> tuple[Any, ...]:
         return actions, [], [False], [{}]
 
+    def snapshot(self) -> dict[str, Any]:
+        return {"ready": True}
+
     def close(self) -> None:
         return None
 
@@ -83,6 +86,25 @@ def test_registered_backend_is_constructed_through_neutral_factory() -> None:
         assert isinstance(backend, _FakeBackend)
         assert backend.seed(7) == 7
         assert backend.reset() == {"ready": True}
+    finally:
+        module._REGISTRATIONS.pop(backend_id, None)
+
+
+def test_scenario_provider_has_an_explicit_setup_snapshot_factory() -> None:
+    module = importlib.import_module("python.simulation.backend")
+    backend_id = "test.native.scenario"
+    module.register_backend(
+        module.SimulationBackendRegistration(
+            backend_id=backend_id,
+            scenario_factory=_FakeBackend,
+            implementation_owner="python.simulation.test_provider",
+            requires_rl=False,
+        )
+    )
+    try:
+        backend = module.create_scenario_backend(backend_id=backend_id)
+        assert isinstance(backend, module.SimulationScenarioBackend)
+        assert backend.snapshot() == {"ready": True}
     finally:
         module._REGISTRATIONS.pop(backend_id, None)
 
@@ -144,6 +166,7 @@ def test_builtin_provider_ownership_is_explicit_and_queryable(monkeypatch: pytes
         facade = module.get_backend_registration("facade_batch")
         assert facade.implementation_owner == "python.simulation.facade_batch"
         assert facade.requires_rl is False
+        assert facade.scenario_factory is _FakeBackend
     finally:
         module._REGISTRATIONS.pop("world_batch", None)
         module._REGISTRATIONS.pop("facade_batch", None)

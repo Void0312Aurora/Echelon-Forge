@@ -2628,6 +2628,23 @@ to a dedicated owner-local evidence document.
   replacement for the WorldBatch vector API, and it does not promote the
   default provider or close the remaining native scenario lifecycle gates.
 
+### 2026-10-05 — Explicit native scenario-provider surface
+
+- Change batch: add `SimulationScenarioBackend`, `scenario_factory`, and
+  `python.simulation.create_scenario_backend()`. The compiled `facade_batch`
+  provider now advertises its setup, snapshot, entity-keyed action, and close
+  lifecycle through this dedicated surface while retaining its existing
+  explicit compatibility construction entry.
+- Evidence: the focused simulation architecture suite passed `19 passed`; the
+  dependency census reports `2,546` Python import sites, `2,509 allowed`,
+  `37 compatibility`, and zero findings. Python compilation and
+  `git diff --check` passed.
+- Boundary decision: the native provider no longer needs to masquerade as a
+  WorldBatch vector implementation when used as a scenario backend. The
+  setup factory is still caller-supplied, and scenario compilation, full reset
+  and replay, terminal orchestration, and default-provider promotion remain
+  open.
+
 ### 2026-09-27 — Direct compiled simulation backend provider
 
 - Starting commit: `e189b169`.

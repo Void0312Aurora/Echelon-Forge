@@ -46,9 +46,25 @@ class SimulationExecutionRuntime(Protocol):
     def close(self) -> Any: ...
 
 
+@runtime_checkable
+class SimulationScenarioBackend(Protocol):
+    """Native scenario-provider surface with explicit setup and snapshots."""
+
+    def seed(self, seed: int) -> Any: ...
+
+    def reset(self) -> Any: ...
+
+    def snapshot(self) -> Any: ...
+
+    def step(self, actions: Mapping[Any, Any]) -> Any: ...
+
+    def close(self) -> Any: ...
+
+
 SingleBackendFactory = Callable[..., SimulationBatchBackend]
 CooperativeBackendFactory = Callable[..., SimulationCooperativeBatchBackend]
 ExecutionRuntimeFactory = Callable[..., SimulationExecutionRuntime]
+ScenarioBackendFactory = Callable[..., SimulationScenarioBackend]
 
 
 @dataclass(frozen=True)
@@ -63,6 +79,7 @@ class SimulationBackendRegistration:
     single_factory: SingleBackendFactory | None = None
     cooperative_factory: CooperativeBackendFactory | None = None
     execution_factory: ExecutionRuntimeFactory | None = None
+    scenario_factory: ScenarioBackendFactory | None = None
     implementation_owner: str = "python.simulation"
     requires_rl: bool = False
 
@@ -70,7 +87,12 @@ class SimulationBackendRegistration:
         backend_id = str(self.backend_id).strip().lower()
         if not backend_id:
             raise ValueError("simulation backend_id must be non-empty")
-        if self.single_factory is None and self.cooperative_factory is None and self.execution_factory is None:
+        if (
+            self.single_factory is None
+            and self.cooperative_factory is None
+            and self.execution_factory is None
+            and self.scenario_factory is None
+        ):
             raise ValueError("simulation backend must expose at least one factory")
         implementation_owner = str(self.implementation_owner).strip()
         if not implementation_owner:
@@ -125,6 +147,7 @@ def _load_facade_batch_backend() -> SimulationBackendRegistration:
         backend_id="facade_batch",
         single_factory=provider.FacadeBatchBackend,
         cooperative_factory=provider.FacadeBatchBackend,
+        scenario_factory=provider.FacadeBatchBackend,
         implementation_owner="python.simulation.facade_batch",
         requires_rl=False,
     )
@@ -181,6 +204,17 @@ def create_single_execution_runtime(
     factory = _resolve_backend(backend_id).execution_factory
     if factory is None:
         raise ValueError(f"simulation backend {backend_id!r} has no execution factory")
+    return factory(**kwargs)
+
+
+def create_scenario_backend(
+    *, backend_id: str = "facade_batch", **kwargs: Any
+) -> SimulationScenarioBackend:
+    """Construct a setup/snapshot scenario provider through the backend seam."""
+
+    factory = _resolve_backend(backend_id).scenario_factory
+    if factory is None:
+        raise ValueError(f"simulation backend {backend_id!r} has no scenario factory")
     return factory(**kwargs)
 
 
@@ -252,9 +286,11 @@ __all__ = [
     "SimulationBatchBackend",
     "SimulationCooperativeBatchBackend",
     "SimulationExecutionRuntime",
+    "SimulationScenarioBackend",
     "create_cooperative_backend",
     "create_single_backend",
     "create_single_execution_runtime",
+    "create_scenario_backend",
     "get_backend_registration",
     "create_leader_window_runtime",
     "create_scenario_runtime_adapter",
