@@ -2677,6 +2677,23 @@ to a dedicated owner-local evidence document.
   compiled `ef_py` artifact is absent. No Air `playable` promotion is claimed
   from the runner's presence alone.
 
+### 2026-10-05 — Air EW accepted-seed and replay gate runner
+
+- Change batch: add `tools/diagnostics/air_ew_seed_matrix.py`. It runs the
+  maintained scripted EW response demo for an explicit accepted seed set
+  (default `20260516`), checks launch-warning/request parity, verifies the
+  native instrument resource projection for the selected response doctrine,
+  requires a complete scripted decision trace, and reruns each seed in the
+  same process for exact JSON replay equality.
+- Evidence: the source boundary test, Python compilation, and `git diff
+  --check` are the initial gate for this runner. Its native scenario execution
+  remains blocked in this worktree because the local compiled `ef_py` artifact
+  is absent.
+- Boundary decision: the accepted EW response/replay gate is now executable
+  and fail-closed for the existing countermeasure boundary. It does not claim
+  jammer or ESM action ownership, communication-loss/data-link semantics,
+  terminal EW objectives, or Air `playable` promotion.
+
 ### 2026-09-27 — Direct compiled simulation backend provider
 
 - Starting commit: `e189b169`.
