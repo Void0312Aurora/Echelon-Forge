@@ -223,6 +223,40 @@ def test_execution_policy_loader_keeps_algorithm_provider_lazy(monkeypatch: pyte
     assert ppo_result[2] == "cpu"
 
 
+def test_execution_policy_loader_can_preserve_diagnostic_ppo_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+    module = importlib.import_module("python.simulation.backend")
+
+    class _FailingPolicy:
+        @staticmethod
+        def load(path: str, *, device: str):
+            raise RuntimeError("incompatible adaptive checkpoint")
+
+    class _AdaptiveProvider:
+        AdaptiveKLPPO = _FailingPolicy
+
+    class _StableBaselines:
+        class PPO:
+            @staticmethod
+            def load(path: str, *, device: str):
+                return ("ppo-fallback", path, device)
+
+    def load_provider(name: str):
+        if name == "python.rl.policy_algo.ppo_adaptive_kl":
+            return _AdaptiveProvider()
+        if name == "stable_baselines3":
+            return _StableBaselines()
+        pytest.fail(name)
+
+    monkeypatch.setattr(module, "import_module", load_provider)
+    result = module.load_execution_policy(
+        "model.zip",
+        algo_name="AdaptiveKLPPO",
+        device="cpu",
+        fallback_on_error=True,
+    )
+    assert result[0] == "ppo-fallback"
+
+
 def test_scenario_runtime_adapter_is_provider_lazy(monkeypatch: pytest.MonkeyPatch) -> None:
     module = importlib.import_module("python.simulation.backend")
 
@@ -262,7 +296,7 @@ def test_provider_import_is_lazy_and_scripted_entries_use_backend_boundary() -> 
     trajectory_text = (
         REPO_ROOT / "tools" / "diagnostics" / "flight_trajectory" / "takeoff_to_landing.py"
     ).read_text(encoding="utf-8")
-    assert "from python.simulation import create_single_execution_runtime" in trajectory_text
+    assert "create_single_execution_runtime" in trajectory_text
     assert "from python.rl.runtime.single_world_batch_runtime" not in trajectory_text
     policy_runtime_text = (
         REPO_ROOT / "gym_envs" / "leader_env_parts" / "execution_runtime" / "policy_runtime.py"
@@ -297,6 +331,21 @@ def test_evaluation_and_visualization_entries_use_backend_boundary() -> None:
         REPO_ROOT / "tools" / "eval" / "eval_utils.py",
         REPO_ROOT / "tools" / "eval" / "policy_execution_eval.py",
         REPO_ROOT / "examples" / "viz" / "runtime" / "viz_session.py",
+    )
+    for path in entrypoints:
+        source = path.read_text(encoding="utf-8")
+        assert "from python.rl.runtime" not in source, path
+        assert "from python.rl.control.wrappers" not in source, path
+        assert "from python.rl.policy_algo" not in source, path
+        assert "from python.simulation" in source, path
+
+
+def test_diagnostic_entries_use_backend_boundary() -> None:
+    entrypoints = (
+        REPO_ROOT / "tools" / "diagnostics" / "flight_trajectory" / "runway_drift_sweep.py",
+        REPO_ROOT / "tools" / "diagnostics" / "flight_trajectory" / "takeoff_to_landing.py",
+        REPO_ROOT / "tools" / "diagnostics" / "cooperative_trajectory_base.py",
+        REPO_ROOT / "tools" / "diagnostics" / "diagnose_cooperative_trajectory.py",
     )
     for path in entrypoints:
         source = path.read_text(encoding="utf-8")

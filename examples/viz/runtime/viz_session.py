@@ -1148,7 +1148,12 @@ class VizSession:
                 else:
                     print(f"Loading PPO model from {model_path}...")
                     algo_name = str(getattr(args, "algo", "auto")).strip()
-                    self.model = load_execution_policy(model_path, algo_name=algo_name, device="cpu")
+                    self.model = load_execution_policy(
+                        model_path,
+                        algo_name=algo_name,
+                        device="cpu",
+                        fallback_on_error=True,
+                    )
             except Exception as e:
                 print(f"Error loading model: {e}")
                 self.model = None

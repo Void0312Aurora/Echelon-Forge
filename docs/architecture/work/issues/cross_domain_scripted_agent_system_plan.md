@@ -2560,6 +2560,24 @@ to a dedicated owner-local evidence document.
   promote the no-RL WorldBatch provider to the default; those remain separate
   migration work.
 
+### 2026-10-04 — Flight and cooperative diagnostics provider migration
+
+- Change batch: route the runway-drift sweep, takeoff-to-landing diagnostic,
+  cooperative trajectory base, and cooperative trajectory CLI through
+  `python.simulation` for WorldBatch execution, wrapper resolution, and policy
+  loading. The existing explicit PPO fallback behavior is retained behind the
+  provider helper for diagnostic callers.
+- Evidence: the changed diagnostic files compiled cleanly, `git diff --check`
+  passed, and the simulation boundary suite passed after updating its source
+  assertions. The repository policy census reports `2,547` Python import sites,
+  `2,510 allowed`, `37 compatibility`, and zero findings. Full native episode
+  execution remains unavailable in this worktree because no local `ef_py`
+  artifact is present.
+- Boundary decision: maintained flight/cooperative diagnostics now use the
+  same simulation provider seam as evaluation and visualization. The selected
+  `world_batch` implementation remains RL-owned and lazy; this batch does not
+  claim an independent provider or alter the Air capability label.
+
 ### 2026-09-27 — Direct compiled simulation backend provider
 
 - Starting commit: `e189b169`.

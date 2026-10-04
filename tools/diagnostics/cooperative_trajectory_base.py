@@ -18,9 +18,11 @@ from python.runtime_bootstrap import ensure_repo_imports
 ensure_repo_imports()
 
 from python.env_config import resolve_env_settings
-from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
-from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
-from python.rl.control.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec
+from python.simulation import (
+    create_cooperative_backend,
+    load_execution_policy,
+    resolve_execution_wrapper_spec,
+)
 
 
 CLEARANCE_LABELS = {
@@ -41,17 +43,12 @@ from tools.diagnostics.common import load_json_config as load_json_config  # noq
 
 
 def load_policy_cpu(model_path: str, algo: str):
-    load_path = model_path[:-4] if model_path.endswith(".zip") else model_path
-    algo_name = str(algo).strip()
-    if algo_name in ("auto", "AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
-        try:
-            return AdaptiveKLPPO.load(load_path, device="cpu")
-        except Exception:
-            if algo_name != "auto":
-                raise
-    from stable_baselines3 import PPO
-
-    return PPO.load(load_path, device="cpu")
+    return load_execution_policy(
+        model_path,
+        algo_name=str(algo).strip(),
+        device="cpu",
+        fallback_on_error=True,
+    )
 
 
 def make_env_settings(train_config: dict[str, Any]) -> dict[str, Any]:
@@ -70,8 +67,8 @@ def make_env_settings(train_config: dict[str, Any]) -> dict[str, Any]:
 
 
 def cooperative_action_wrapper_kwargs(train_config: dict[str, Any], *, scripted: bool) -> dict[str, Any] | None:
-    wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
-    if wrapper_class is not MultiTimescaleActionWrapper:
+    wrapper_class, wrapper_kwargs = resolve_execution_wrapper_spec(train_config)
+    if getattr(wrapper_class, "__name__", "") != "MultiTimescaleActionWrapper":
         return None
     kwargs = dict(wrapper_kwargs or {})
     if scripted:
@@ -83,7 +80,7 @@ def cooperative_action_wrapper_kwargs(train_config: dict[str, Any], *, scripted:
 
 
 def apply_curriculum_stage(
-    env: CooperativeWorldBatchVecEnv,
+    env: Any,
     train_config: dict[str, Any],
     stage_index: int | None,
 ) -> dict[str, Any]:
@@ -256,7 +253,7 @@ def first_step(samples: list[dict[str, Any]], predicate) -> int | None:
 
 
 def run_episode(
-    env: CooperativeWorldBatchVecEnv,
+    env: Any,
     model,
     *,
     scripted: bool,

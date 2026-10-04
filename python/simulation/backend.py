@@ -200,6 +200,7 @@ def load_execution_policy(
     model_path: str,
     algo_name: str = "auto",
     device: str = "cpu",
+    fallback_on_error: bool = False,
 ) -> Any:
     """Load a frozen execution policy through the provider boundary."""
 
@@ -214,7 +215,7 @@ def load_execution_policy(
         try:
             return adaptive_kl.load(load_path, device=device)
         except Exception:
-            if algo_norm != "auto":
+            if algo_norm != "auto" and not bool(fallback_on_error):
                 raise
     stable_baselines = import_module("stable_baselines3")
     return stable_baselines.PPO.load(load_path, device=device)
