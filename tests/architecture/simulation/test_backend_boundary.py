@@ -153,6 +153,41 @@ def test_execution_wrapper_spec_is_resolved_lazily_through_boundary(monkeypatch:
     assert calls == ["test"]
 
 
+def test_leader_window_runtime_selection_is_provider_lazy(monkeypatch: pytest.MonkeyPatch) -> None:
+    module = importlib.import_module("python.simulation.backend")
+
+    class _Local:
+        def __init__(self, env: Any):
+            self.env = env
+
+    class _WorldBatch(_Local):
+        pass
+
+    class _Provider:
+        LocalLeaderWindowRuntime = _Local
+        WorldBatchLeaderWindowRuntime = _WorldBatch
+
+    class _Env:
+        execution_world_batch_runtime = True
+        _exec_runtime = object()
+
+    class _BatchEnv(_Env):
+        class _Runtime:
+            def rollout_window(self):
+                return None
+
+        _exec_runtime = _Runtime()
+
+    def load_provider(name: str):
+        if name == "python.rl.runtime.leader_window_runtime":
+            return _Provider()
+        pytest.fail(name)
+
+    monkeypatch.setattr(module, "import_module", load_provider)
+    assert isinstance(module.create_leader_window_runtime(_Env()), _Local)
+    assert isinstance(module.create_leader_window_runtime(_BatchEnv()), _WorldBatch)
+
+
 def test_provider_import_is_lazy_and_scripted_entries_use_backend_boundary() -> None:
     source = BACKEND_PATH.read_text(encoding="utf-8")
     assert 'import_module("python.rl.runtime.world_batch.vec_env")' in source
@@ -182,3 +217,8 @@ def test_provider_import_is_lazy_and_scripted_entries_use_backend_boundary() -> 
     )
     assert "from python.rl.runtime.single_world_batch_runtime" not in policy_runtime_text
     assert "from python.rl.control.wrappers" not in policy_runtime_text
+    runtime_facade_text = (
+        REPO_ROOT / "gym_envs" / "leader_env_parts" / "runtime_facade.py"
+    ).read_text(encoding="utf-8")
+    assert "from python.simulation import create_leader_window_runtime" in runtime_facade_text
+    assert "from python.rl.runtime.leader_window_runtime" not in runtime_facade_text

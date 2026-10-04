@@ -41,11 +41,12 @@ transitional and must be registered one edge at a time.
 
 `RedScriptedAgent` is now owned by `python.scenario.runtime.red_scripted_agent`.
 The old `examples.agents` path remains a compatibility export for callers, but
-the maintained scenario loader no longer depends on the examples layer. Two
+the maintained scenario loader no longer depends on the examples layer. One
 direct environment-to-policy/runtime imports remain in the transition register
 until neutral runtime protocols or inversion points replace them. Leader
-execution runtime construction and wrapper-spec resolution now go through
-`python.simulation` and no longer import their RL implementations directly.
+execution runtime construction, wrapper-spec resolution, and leader-window
+runtime selection now go through `python.simulation` and no longer import their
+RL implementations directly.
 
 ## Verification
 
@@ -71,7 +72,7 @@ The current 2026-10-04 baseline from that command is 1,107 Python modules, 2,553
 resolved Python import sites, 561 C/C++ source files, 1,723 quoted include
 sites, and 72 CMake link sites representing 66 unique target edges. No Python,
 C++ file, or CMake target multi-node cycle is present. The Python policy
-classifies 2,512 edges as allowed, 37 as compatibility, and 4 as transitional;
+classifies 2,513 edges as allowed, 37 as compatibility, and 3 as transitional;
 there are no unregistered forbidden edges. These counts use the maintained
 scanner scope above and are not expected to equal the issue's initial census
 because that census did not specify identical roots, file suffixes, or edge

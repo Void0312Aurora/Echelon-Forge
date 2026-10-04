@@ -182,6 +182,20 @@ def resolve_execution_wrapper_spec(
     return wrapper_class, wrapper_kwargs
 
 
+def create_leader_window_runtime(env: Any) -> Any:
+    """Create the leader-window provider selected by the active execution runtime."""
+
+    provider = import_module("python.rl.runtime.leader_window_runtime")
+    execution_runtime = getattr(env, "_exec_runtime", None)
+    if bool(getattr(env, "execution_world_batch_runtime", False)) and hasattr(
+        execution_runtime, "rollout_window"
+    ):
+        runtime_class = getattr(provider, "WorldBatchLeaderWindowRuntime")
+    else:
+        runtime_class = getattr(provider, "LocalLeaderWindowRuntime")
+    return runtime_class(env)
+
+
 __all__ = [
     "SimulationBackendRegistration",
     "SimulationBatchBackend",
@@ -190,6 +204,7 @@ __all__ = [
     "create_cooperative_backend",
     "create_single_backend",
     "create_single_execution_runtime",
+    "create_leader_window_runtime",
     "resolve_execution_wrapper_spec",
     "register_backend",
 ]

@@ -377,10 +377,6 @@ GYM_ENVS_PYTHON_RL_RESIDUAL_ALLOWLIST: dict[str, set[tuple[str, str, str]]] = {
     "gym_envs/leader_env_parts/policy.py": {
         ("python.rl.policy_algo.ppo_adaptive_kl", "AdaptiveKLPPO", FORM_DEFERRED),
     },
-    "gym_envs/leader_env_parts/runtime_facade.py": {
-        ("python.rl.runtime.leader_window_runtime", "LocalLeaderWindowRuntime", FORM_DEFERRED),
-        ("python.rl.runtime.leader_window_runtime", "WorldBatchLeaderWindowRuntime", FORM_DEFERRED),
-    },
     "gym_envs/scenario_loader/behavior_runtime/command_chain.py": {
         ("python.rl.tasking.bridge", "build_kernel_mission_command", FORM_DEFERRED),
     },

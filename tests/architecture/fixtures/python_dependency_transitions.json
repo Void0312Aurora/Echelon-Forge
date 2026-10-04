@@ -13,15 +13,6 @@
     },
     {
       "kind": "python_import",
-      "source": "gym_envs.leader_env_parts.runtime_facade",
-      "target": "python.rl.runtime.leader_window_runtime",
-      "owner": "gym_envs and python.rl runtime owners",
-      "reason": "Leader window runtime selection remains implemented in the RL runtime package and is resolved lazily by the environment facade.",
-      "exit_condition": "Make the leader window runtime a host-provided protocol or neutral runtime service, then remove this import.",
-      "max_sites": 1
-    },
-    {
-      "kind": "python_import",
       "source": "python.scenario.runtime.csg_replay",
       "target": "python.rl.runtime.world_batch.adapter",
       "owner": "scenario replay and RL runtime owners",
