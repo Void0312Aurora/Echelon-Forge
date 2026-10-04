@@ -21,5 +21,7 @@ def test_air_seed_matrix_is_a_native_scripted_gate() -> None:
     assert not any(any(token in name for token in forbidden) for name in imports)
     assert "DEFAULT_ACCEPTED_SEEDS = (0, 1, 2)" in source
     assert "_episode_fingerprint" in source
+    assert "scenario_candidate = Path(str(scenario_path))" in source
+    assert "value.shape" in source
     assert "c2_report_valid" in source
     assert "replay_equal" in source

@@ -39,6 +39,7 @@ def _episode_fingerprint(data: dict[str, Any]) -> str:
         value = data[key]
         digest.update(str(key).encode("ascii"))
         digest.update(value.dtype.str.encode("ascii"))
+        digest.update(json.dumps(tuple(int(size) for size in value.shape)).encode("ascii"))
         digest.update(value.tobytes())
     digest.update(json.dumps(list(data["baseline_mode"]), separators=(",", ":")).encode("utf-8"))
     return digest.hexdigest()
@@ -86,7 +87,10 @@ def run_seed_matrix(
     normalized_seeds = tuple(int(seed) for seed in seeds)
     if not normalized_seeds or len(set(normalized_seeds)) != len(normalized_seeds):
         raise ValueError("Air C2 seed matrix requires a non-empty set of unique seeds")
-    resolved_scenario = os.path.abspath(str(scenario_path))
+    scenario_candidate = Path(str(scenario_path))
+    if not scenario_candidate.is_absolute():
+        scenario_candidate = repo_root / scenario_candidate
+    resolved_scenario = str(scenario_candidate.resolve())
     records: list[SeedGateRecord] = []
     for seed in normalized_seeds:
         first = _run_once(
