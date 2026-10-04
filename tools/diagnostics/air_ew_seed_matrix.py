@@ -74,12 +74,19 @@ def _validate_record(
             f"Air EW seed gate resource trace length mismatch for seed {seed}: "
             f"requests={len(requests)}, samples={len(samples)}"
         )
+    initial = data.get("initial_countermeasure_state")
+    if not isinstance(initial, dict):
+        raise RuntimeError(f"Air EW seed gate has no reset-time resource baseline for seed {seed}")
+    initial_chaff = int(initial.get("chaff_remaining", -1))
+    initial_flare = int(initial.get("flare_remaining", -1))
+    if initial_chaff < 0 or initial_flare < 0:
+        raise RuntimeError(f"Air EW seed gate has invalid reset-time resources for seed {seed}: {initial}")
     previous_chaff: int | None = None
     previous_flare: int | None = None
     for sample in samples:
         chaff = int(sample.get("chaff_remaining", -1))
         flare = int(sample.get("flare_remaining", -1))
-        if chaff < 0 or flare < 0:
+        if chaff < 0 or flare < 0 or chaff > initial_chaff or flare > initial_flare:
             raise RuntimeError(f"Air EW seed gate has invalid resource sample for seed {seed}: {sample}")
         if previous_chaff is not None and chaff > previous_chaff:
             raise RuntimeError(f"Air EW chaff inventory increased for seed {seed}")
@@ -89,11 +96,11 @@ def _validate_record(
         previous_flare = flare
     if response_doctrine in {"countermeasure_ready", "chaff_only"} and min(
         int(sample["chaff_remaining"]) for sample in samples
-    ) >= 60:
+    ) >= initial_chaff:
         raise RuntimeError(f"Air EW chaff request did not consume native inventory for seed {seed}")
     if response_doctrine in {"countermeasure_ready", "flare_only"} and min(
         int(sample["flare_remaining"]) for sample in samples
-    ) >= 30:
+    ) >= initial_flare:
         raise RuntimeError(f"Air EW flare request did not consume native inventory for seed {seed}")
     decisions = int(data.get("scripted_runtime_decisions", 0))
     if decisions != int(data.get("steps", 0)):

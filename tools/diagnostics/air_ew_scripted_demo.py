@@ -101,6 +101,11 @@ def run_demo(
         vec_env.seed(int(seed))
         observation_batch = vec_env.reset()
         observation = _unbatch(observation_batch)
+        initial_instrument = vec_env.envs[0].last_inst
+        initial_countermeasure_state = {
+            "chaff_remaining": int(getattr(initial_instrument, "countermeasure_chaff_remaining", -1)),
+            "flare_remaining": int(getattr(initial_instrument, "countermeasure_flare_remaining", -1)),
+        }
         agent.reset(
             context={
                 "observation": observation,
@@ -162,6 +167,7 @@ def run_demo(
                 "launch_warning_steps": launch_warning_steps,
                 "countermeasure_request_steps": countermeasure_request_steps,
                 "countermeasure_state_samples": countermeasure_state_samples,
+                "initial_countermeasure_state": initial_countermeasure_state,
                 "scripted_runtime_identity": agent.replay_identity,
                 "scripted_runtime_decisions": int(last_runtime_step.report.decision_index)
                 if last_runtime_step is not None

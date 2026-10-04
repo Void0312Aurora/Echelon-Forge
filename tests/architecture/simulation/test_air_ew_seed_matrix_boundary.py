@@ -22,5 +22,6 @@ def test_air_ew_seed_matrix_is_a_native_scripted_gate() -> None:
     assert "DEFAULT_ACCEPTED_SEEDS = (20260516,)" in source
     assert "_fingerprint" in source
     assert "countermeasure_request_steps" in source
+    assert "initial_countermeasure_state" in source
     assert "native_countermeasure_state" in source
     assert "playable_boundary" in source
