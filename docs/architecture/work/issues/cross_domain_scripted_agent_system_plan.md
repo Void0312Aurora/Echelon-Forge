@@ -2539,6 +2539,27 @@ to a dedicated owner-local evidence document.
 - Boundary decision: the runtime-facade escape-hatch gate is green again; it
   does not alter the open no-RL WorldBatch provider or Air playable boundary.
 
+### 2026-10-04 — Evaluation and visualization provider boundary closure
+
+- Starting commit: `d74b23a3d`.
+- Change batch: route the maintained policy evaluator, shared evaluation
+  helper, and visualization session through `python.simulation` for execution
+  runtime creation, cooperative/single WorldBatch construction, wrapper
+  resolution, and frozen policy loading. These entries no longer import
+  `python.rl.runtime`, `python.rl.control`, or `python.rl.policy_algo`
+  directly; the existing `world_batch` implementation remains the selected
+  provider and is loaded lazily by the boundary.
+- Evidence: the simulation backend architecture suite passed `11 passed`;
+  the three changed Python entries compiled cleanly and `git diff --check`
+  passed. The broader evaluation contract suite could not collect because
+  this worktree has no local `ef_py` build artifact, which is the repository's
+  existing fail-closed environment guard.
+- Boundary decision: operator evaluation and visualization entry points now
+  share the same simulation selection seam as scripted diagnostics. This does
+  not make the RL provider independent, change learned-policy semantics, or
+  promote the no-RL WorldBatch provider to the default; those remain separate
+  migration work.
+
 ### 2026-09-27 — Direct compiled simulation backend provider
 
 - Starting commit: `e189b169`.

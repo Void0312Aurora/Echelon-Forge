@@ -288,3 +288,19 @@ def test_provider_import_is_lazy_and_scripted_entries_use_backend_boundary() -> 
     ).read_text(encoding="utf-8")
     assert "from python.simulation import create_leader_window_runtime" in runtime_facade_text
     assert "from python.rl.runtime.leader_window_runtime" not in runtime_facade_text
+
+
+def test_evaluation_and_visualization_entries_use_backend_boundary() -> None:
+    """Maintained operator entries must not select RL runtime providers directly."""
+
+    entrypoints = (
+        REPO_ROOT / "tools" / "eval" / "eval_utils.py",
+        REPO_ROOT / "tools" / "eval" / "policy_execution_eval.py",
+        REPO_ROOT / "examples" / "viz" / "runtime" / "viz_session.py",
+    )
+    for path in entrypoints:
+        source = path.read_text(encoding="utf-8")
+        assert "from python.rl.runtime" not in source, path
+        assert "from python.rl.control.wrappers" not in source, path
+        assert "from python.rl.policy_algo" not in source, path
+        assert "from python.simulation" in source, path

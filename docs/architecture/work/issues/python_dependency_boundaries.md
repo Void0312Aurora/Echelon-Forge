@@ -46,7 +46,10 @@ direct environment-to-policy/runtime imports remain in the transition register.
 Leader execution runtime construction, wrapper-spec resolution, leader-window
 runtime selection, and frozen execution policy loading now go through
 `python.simulation` and no longer import their RL implementations directly.
-CSG replay adapter creation also uses that provider boundary.
+CSG replay adapter creation also uses that provider boundary. The maintained
+policy-evaluation and visualization entries now use the same factories for
+single/cooperative world construction, wrapper resolution, and policy loading;
+their RL provider remains lazy behind `python.simulation`.
 
 ## Verification
 
@@ -68,11 +71,11 @@ The policy-only gate can be inspected or used as a CI command:
 python -m tools.architecture.dependency_policy --format summary
 ```
 
-The current 2026-10-04 baseline from that command is 1,107 Python modules, 2,555
+The current 2026-10-04 baseline from that command is 1,107 Python modules, 2,550
 resolved Python import sites, 561 C/C++ source files, 1,723 quoted include
 sites, and 72 CMake link sites representing 66 unique target edges. No Python,
 C++ file, or CMake target multi-node cycle is present. The Python policy
-classifies 2,518 edges as allowed and 37 as compatibility, with no transitional
+classifies 2,513 edges as allowed and 37 as compatibility, with no transitional
 edges remaining;
 there are no unregistered forbidden edges. These counts use the maintained
 scanner scope above and are not expected to equal the issue's initial census

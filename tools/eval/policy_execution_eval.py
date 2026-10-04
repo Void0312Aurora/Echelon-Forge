@@ -18,9 +18,11 @@ from python.runtime_bootstrap import ensure_repo_imports
 
 ensure_repo_imports()
 
-from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
-from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
-from python.rl.control.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec
+from python.simulation import (
+    create_cooperative_backend,
+    create_single_execution_runtime,
+    resolve_execution_wrapper_spec,
+)
 from tools.eval.eval_utils import format_stats
 from tools.eval.sb3_eval_base import (
     add_common_sb3_eval_args,
@@ -36,14 +38,14 @@ VALID_MODES = {"single", "cooperative"}
 
 def _build_single_env(scenario_path: str, train_config: dict[str, Any], args: argparse.Namespace):
     env_settings = make_env_settings(train_config, args, include_runtime_overrides=False)
-    wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
+    wrapper_class, wrapper_kwargs = resolve_execution_wrapper_spec(train_config)
     runtime_cfg = train_config.get("runtime", {}) if isinstance(train_config.get("runtime", {}), dict) else {}
     if not bool(runtime_cfg.get("world_batch_vec_env", False)):
         raise ValueError(
             "single policy execution eval requires runtime.world_batch_vec_env=true; "
             "raw UniversalEnv fallback has been removed from maintained eval paths"
         )
-    env = build_single_world_batch_execution_runtime(
+    env = create_single_execution_runtime(
         scenario_path=os.path.abspath(scenario_path),
         env_settings=env_settings,
         wrapper_class=wrapper_class,
@@ -189,14 +191,14 @@ def _run_single_eval(args: argparse.Namespace) -> int:
 
 
 def _cooperative_action_wrapper_kwargs(train_config: dict[str, Any]) -> dict[str, Any] | None:
-    wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
-    if wrapper_class is not MultiTimescaleActionWrapper:
+    wrapper_class, wrapper_kwargs = resolve_execution_wrapper_spec(train_config)
+    if getattr(wrapper_class, "__name__", "") != "MultiTimescaleActionWrapper":
         return None
     return dict(wrapper_kwargs or {})
 
 
 def _apply_curriculum_stage(
-    env: CooperativeWorldBatchVecEnv,
+    env: Any,
     train_config: dict[str, Any],
     stage_index: int | None,
 ) -> dict[str, Any]:
@@ -251,7 +253,7 @@ def _mission_status_summary(info: dict[str, Any]) -> dict[str, float | bool]:
 
 
 def _run_world_episode(
-    env: CooperativeWorldBatchVecEnv,
+    env: Any,
     model,
     *,
     seed: int,
@@ -379,7 +381,7 @@ def _run_cooperative_eval(args: argparse.Namespace) -> int:
     env_settings = make_env_settings(train_config, args, include_runtime_overrides=True)
     model = load_sb3_policy(os.path.abspath(args.model), algo=str(args.algo), device=str(args.device))
     action_wrapper_kwargs = _cooperative_action_wrapper_kwargs(train_config)
-    env = CooperativeWorldBatchVecEnv(
+    env = create_cooperative_backend(
         scenario_path=os.path.abspath(args.scenario),
         n_envs=max(1, int(args.n_worlds)),
         action_wrapper_kwargs=action_wrapper_kwargs,
