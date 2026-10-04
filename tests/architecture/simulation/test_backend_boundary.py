@@ -223,6 +223,27 @@ def test_execution_policy_loader_keeps_algorithm_provider_lazy(monkeypatch: pyte
     assert ppo_result[2] == "cpu"
 
 
+def test_scenario_runtime_adapter_is_provider_lazy(monkeypatch: pytest.MonkeyPatch) -> None:
+    module = importlib.import_module("python.simulation.backend")
+
+    class _Adapter:
+        def __init__(self, world_count: int, *, marker: str):
+            self.world_count = world_count
+            self.marker = marker
+
+    class _Provider:
+        RuntimeFacadeAdapter = _Adapter
+
+    def load_provider(name: str):
+        if name == "python.rl.runtime.world_batch.adapter":
+            return _Provider()
+        pytest.fail(name)
+
+    monkeypatch.setattr(module, "import_module", load_provider)
+    adapter = module.create_scenario_runtime_adapter(1, marker="csg")
+    assert (adapter.world_count, adapter.marker) == (1, "csg")
+
+
 def test_provider_import_is_lazy_and_scripted_entries_use_backend_boundary() -> None:
     source = BACKEND_PATH.read_text(encoding="utf-8")
     assert 'import_module("python.rl.runtime.world_batch.vec_env")' in source
@@ -257,6 +278,11 @@ def test_provider_import_is_lazy_and_scripted_entries_use_backend_boundary() -> 
     ).read_text(encoding="utf-8")
     assert "from python.simulation import load_execution_policy" in policy_text
     assert "from python.rl.policy_algo.ppo_adaptive_kl" not in policy_text
+    csg_replay_text = (
+        REPO_ROOT / "python" / "scenario" / "runtime" / "csg_replay.py"
+    ).read_text(encoding="utf-8")
+    assert "from python.simulation import create_scenario_runtime_adapter" in csg_replay_text
+    assert "from python.rl.runtime.world_batch.adapter" not in csg_replay_text
     runtime_facade_text = (
         REPO_ROOT / "gym_envs" / "leader_env_parts" / "runtime_facade.py"
     ).read_text(encoding="utf-8")

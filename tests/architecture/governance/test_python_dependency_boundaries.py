@@ -49,7 +49,7 @@ def test_python_dependency_inventory_has_no_unresolved_internal_imports_or_cycle
   ] == 0
 
 
-def test_transition_register_is_nonempty_and_bounded() -> None:
+def test_transition_register_is_bounded() -> None:
   transitions = load_transitions()
 
   assert EXCEPTION_PATH.is_file()
@@ -89,7 +89,27 @@ def test_new_reverse_dependency_is_rejected(inventory: Inventory) -> None:
 
 
 def test_transition_growth_is_rejected(inventory: Inventory) -> None:
-  transition = next(iter(load_transitions().values()))
+  transitions = load_transitions()
+  synthetic_transition = False
+  if not transitions:
+    synthetic_transition = True
+    synthetic_key = (
+      "python_import",
+      "gym_envs.synthetic",
+      "python.rl.policy_algo.ppo_adaptive_kl",
+    )
+    transitions = {
+      synthetic_key: {
+        "kind": synthetic_key[0],
+        "source": synthetic_key[1],
+        "target": synthetic_key[2],
+        "owner": "test",
+        "reason": "test",
+        "exit_condition": "test",
+        "max_sites": 1,
+      }
+    }
+  transition = next(iter(transitions.values()))
   injected = DependencyEdge(
     str(transition["kind"]),
     str(transition["source"]),
@@ -97,9 +117,10 @@ def test_transition_growth_is_rejected(inventory: Inventory) -> None:
     "gym_envs/synthetic.py",
     1,
   )
+  injected_edges = (injected, injected) if synthetic_transition else (injected,)
   changed = Inventory(
     inventory.python_modules,
-    (*inventory.python_edges, injected),
+    (*inventory.python_edges, *injected_edges),
     inventory.cpp_files,
     inventory.cpp_edges,
     inventory.cmake_edges,
@@ -108,7 +129,7 @@ def test_transition_growth_is_rejected(inventory: Inventory) -> None:
 
   assert any(
     finding.code == "transition_growth" and finding.source == injected.source
-    for finding in check_python_policy(changed, load_transitions())
+    for finding in check_python_policy(changed, transitions)
   )
 
 

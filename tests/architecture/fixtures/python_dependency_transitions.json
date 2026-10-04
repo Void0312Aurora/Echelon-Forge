@@ -2,14 +2,5 @@
   "schema_version": "python_dependency_transition.v1",
   "description": "Exact, attributed cross-layer Python imports that are retained while neutral contracts and runtime inversion points are implemented. Each entry is a ratchet: it may not grow and becomes stale when the edge is removed.",
   "entries": [
-    {
-      "kind": "python_import",
-      "source": "python.scenario.runtime.csg_replay",
-      "target": "python.rl.runtime.world_batch.adapter",
-      "owner": "scenario replay and RL runtime owners",
-      "reason": "The maintained CSG replay evidence path still resolves the runtime facade adapter lazily for live world projection.",
-      "exit_condition": "Route replay projection through a neutral scenario-runtime protocol or host-provided facade, then remove this deferred import.",
-      "max_sites": 2
-    }
   ]
 }

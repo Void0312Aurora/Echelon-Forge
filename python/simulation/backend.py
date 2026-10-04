@@ -220,6 +220,14 @@ def load_execution_policy(
     return stable_baselines.PPO.load(load_path, device=device)
 
 
+def create_scenario_runtime_adapter(world_count: int = 1, **kwargs: Any) -> Any:
+    """Create the scenario runtime adapter through the selected provider."""
+
+    provider = import_module("python.rl.runtime.world_batch.adapter")
+    adapter_class = getattr(provider, "RuntimeFacadeAdapter")
+    return adapter_class(int(world_count), **kwargs)
+
+
 __all__ = [
     "SimulationBackendRegistration",
     "SimulationBatchBackend",
@@ -229,6 +237,7 @@ __all__ = [
     "create_single_backend",
     "create_single_execution_runtime",
     "create_leader_window_runtime",
+    "create_scenario_runtime_adapter",
     "load_execution_policy",
     "resolve_execution_wrapper_spec",
     "register_backend",
