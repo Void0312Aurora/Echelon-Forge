@@ -348,10 +348,17 @@ def test_diagnostic_entries_use_backend_boundary() -> None:
         REPO_ROOT / "tools" / "diagnostics" / "diagnose_cooperative_trajectory.py",
         REPO_ROOT / "tools" / "diagnostics" / "benchmarks" / "world_batch_vec_env.py",
         REPO_ROOT / "tools" / "diagnostics" / "benchmarks" / "air_combat_post_launch_assessment.py",
+        REPO_ROOT / "tools" / "diagnostics" / "air_combat_weapon_employment_process_probe.py",
+        REPO_ROOT
+        / "tools"
+        / "diagnostics"
+        / "_air_combat_weapon_employment_process_probe_impl"
+        / "probe_env.py",
     )
     for path in entrypoints:
         source = path.read_text(encoding="utf-8")
         assert "from python.rl.runtime" not in source, path
         assert "from python.rl.control.wrappers" not in source, path
         assert "from python.rl.policy_algo" not in source, path
-        assert "from python.simulation" in source, path
+        if path.name != "probe_env.py":
+            assert "from python.simulation" in source, path

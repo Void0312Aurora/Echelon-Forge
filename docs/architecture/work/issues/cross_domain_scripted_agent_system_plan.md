@@ -2592,6 +2592,23 @@ to a dedicated owner-local evidence document.
   directly. Training-internal benchmarks and rollout-governance maintenance
   scripts remain intentionally RL-owned and are outside this provider slice.
 
+### 2026-10-05 — Air weapon-process probe lazy provider migration
+
+- Change batch: remove module-load imports of the RL wrapper and WorldBatch
+  runtime from the Air weapon-employment process probe and its batch adapter.
+  The default constructor now uses `python.simulation.create_single_backend`;
+  lazy compatibility handles preserve the probe's existing module-level
+  constructor and wrapper override seams.
+- Evidence: the changed files compiled cleanly, `git diff --check` passed, the
+  simulation boundary suite passed `13 passed`, and the policy census reports
+  `2,543` Python import sites, `2,506 allowed`, `37 compatibility`, and zero
+  findings. Native snapshot execution remains blocked by the missing local
+  `ef_py` artifact in this worktree.
+- Boundary decision: this removes the last direct RL runtime selection from
+  the active Air weapon-process diagnostic while retaining its explicit test
+  substitution surface. Training-internal diagnostics and rollout-governance
+  scripts remain RL-owned by design.
+
 ### 2026-09-27 — Direct compiled simulation backend provider
 
 - Starting commit: `e189b169`.

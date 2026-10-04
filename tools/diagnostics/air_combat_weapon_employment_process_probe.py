@@ -19,11 +19,7 @@ from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 ensure_repo_imports()
 
-from python.rl.control.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec
-from python.rl.runtime.single_world_batch_runtime import (
-    build_single_world_batch_execution_runtime,
-)
-from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv
+from python.simulation import create_single_backend, resolve_execution_wrapper_spec
 from tools.eval.sb3_eval_base import load_json_config, load_sb3_policy
 from tools.diagnostics.common import (
     add_json_out_arg,
@@ -129,6 +125,42 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.summariz
 )
 from tools.diagnostics import mlf9_statistical_trends
 
+
+class _LazyProviderType:
+    """Callable compatibility handle that resolves an RL provider only on use."""
+
+    def __init__(self, provider_module: str, export_name: str):
+        self._provider_module = str(provider_module)
+        self._export_name = str(export_name)
+
+    def _resolve(self):
+        from importlib import import_module
+
+        provider = import_module(self._provider_module)
+        return getattr(provider, self._export_name)
+
+    def __call__(self, *args, **kwargs):
+        return self._resolve()(*args, **kwargs)
+
+    def __getattr__(self, name: str):
+        return getattr(self._resolve(), name)
+
+    @property
+    def __name__(self) -> str:
+        return self._export_name
+
+    def __repr__(self) -> str:
+        return f"<lazy provider {self._provider_module}.{self._export_name}>"
+
+
+# These handles preserve the historical module-level override seams used by
+# process-probe tests and downstream diagnostics without importing RL modules
+# while this module is loaded.
+MultiTimescaleActionWrapper = _LazyProviderType(
+    "python.rl.control.wrappers", "MultiTimescaleActionWrapper"
+)
+WorldBatchVecEnv = _LazyProviderType("python.rl.runtime.world_batch.vec_env", "WorldBatchVecEnv")
+get_action_wrapper_spec = resolve_execution_wrapper_spec
 _CANONICAL_WORLD_BATCH_VEC_ENV = WorldBatchVecEnv
 
 __all__ = (
@@ -223,7 +255,11 @@ def _build_env(scenario_path: str, train_config: dict[str, Any] | None):
     env_cfg = train_config.get("env", {}) if isinstance(train_config, dict) else {}
     env_cfg = env_cfg if isinstance(env_cfg, dict) else {}
     wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
-    if wrapper_class is not None and wrapper_class is not MultiTimescaleActionWrapper:
+    wrapper_is_multi_timescale = (
+        wrapper_class is MultiTimescaleActionWrapper
+        or getattr(wrapper_class, "__name__", "") == "MultiTimescaleActionWrapper"
+    )
+    if wrapper_class is not None and not wrapper_is_multi_timescale:
         raise ValueError(
             "air-combat process diagnostics only supports maintained WorldBatchVecEnv "
             f"or MultiTimescaleActionWrapper controller configs; got {wrapper_class!r}"
@@ -245,7 +281,7 @@ def _build_env(scenario_path: str, train_config: dict[str, Any] | None):
         "step_info_mode": "full",
         "action_wrapper_kwargs": (
             dict(wrapper_kwargs or {})
-            if wrapper_class is MultiTimescaleActionWrapper
+            if wrapper_is_multi_timescale
             else None
         ),
     }
@@ -258,12 +294,12 @@ def _build_env(scenario_path: str, train_config: dict[str, Any] | None):
             **env_settings,
         )
     else:
-        runtime = build_single_world_batch_execution_runtime(
+        vec_env = create_single_backend(
             scenario_path=os.path.abspath(scenario_path),
-            env_settings=env_settings,
+            n_envs=1,
             worker_threads=1,
+            **env_settings,
         )
-        vec_env = runtime.world_vec
     return _BatchSingleWorldProbeEnv(vec_env)
 
 
