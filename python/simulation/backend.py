@@ -63,6 +63,8 @@ class SimulationBackendRegistration:
     single_factory: SingleBackendFactory | None = None
     cooperative_factory: CooperativeBackendFactory | None = None
     execution_factory: ExecutionRuntimeFactory | None = None
+    implementation_owner: str = "python.simulation"
+    requires_rl: bool = False
 
     def __post_init__(self) -> None:
         backend_id = str(self.backend_id).strip().lower()
@@ -70,7 +72,13 @@ class SimulationBackendRegistration:
             raise ValueError("simulation backend_id must be non-empty")
         if self.single_factory is None and self.cooperative_factory is None and self.execution_factory is None:
             raise ValueError("simulation backend must expose at least one factory")
+        implementation_owner = str(self.implementation_owner).strip()
+        if not implementation_owner:
+            raise ValueError("simulation backend implementation_owner must be non-empty")
+        if not isinstance(self.requires_rl, bool):
+            raise TypeError("simulation backend requires_rl must be a bool")
         object.__setattr__(self, "backend_id", backend_id)
+        object.__setattr__(self, "implementation_owner", implementation_owner)
 
 
 _REGISTRATIONS: dict[str, SimulationBackendRegistration] = {}
@@ -104,6 +112,8 @@ def _load_builtin_backend() -> SimulationBackendRegistration:
             "build_single_world_batch_execution_runtime",
             None,
         ),
+        implementation_owner="python.rl.runtime",
+        requires_rl=True,
     )
     _REGISTRATIONS.setdefault(registration.backend_id, registration)
     return _REGISTRATIONS[registration.backend_id]
@@ -115,6 +125,8 @@ def _load_facade_batch_backend() -> SimulationBackendRegistration:
         backend_id="facade_batch",
         single_factory=provider.FacadeBatchBackend,
         cooperative_factory=provider.FacadeBatchBackend,
+        implementation_owner="python.simulation.facade_batch",
+        requires_rl=False,
     )
     _REGISTRATIONS.setdefault(registration.backend_id, registration)
     return _REGISTRATIONS[registration.backend_id]
@@ -133,6 +145,12 @@ def _resolve_backend(backend_id: str) -> SimulationBackendRegistration:
         known = ", ".join(sorted(_REGISTRATIONS)) or "<none>"
         raise KeyError(f"unknown simulation backend {key!r}; registered={known}")
     return registration
+
+
+def get_backend_registration(backend_id: str) -> SimulationBackendRegistration:
+    """Inspect the selected provider and its dependency ownership."""
+
+    return _resolve_backend(backend_id)
 
 
 def create_single_backend(*, backend_id: str = _BUILTIN_BACKEND_ID, **kwargs: Any) -> SimulationBatchBackend:
@@ -237,6 +255,7 @@ __all__ = [
     "create_cooperative_backend",
     "create_single_backend",
     "create_single_execution_runtime",
+    "get_backend_registration",
     "create_leader_window_runtime",
     "create_scenario_runtime_adapter",
     "load_execution_policy",

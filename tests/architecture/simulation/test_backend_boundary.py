@@ -87,6 +87,68 @@ def test_registered_backend_is_constructed_through_neutral_factory() -> None:
         module._REGISTRATIONS.pop(backend_id, None)
 
 
+def test_backend_registration_validates_dependency_ownership_metadata() -> None:
+    module = importlib.import_module("python.simulation.backend")
+    registration = module.SimulationBackendRegistration(
+        backend_id="test.metadata.simulation",
+        single_factory=_FakeBackend,
+        implementation_owner="python.simulation.test_provider",
+        requires_rl=False,
+    )
+    assert registration.implementation_owner == "python.simulation.test_provider"
+    assert registration.requires_rl is False
+    with pytest.raises(ValueError, match="implementation_owner"):
+        module.SimulationBackendRegistration(
+            backend_id="test.empty.owner",
+            single_factory=_FakeBackend,
+            implementation_owner=" ",
+        )
+    with pytest.raises(TypeError, match="requires_rl"):
+        module.SimulationBackendRegistration(
+            backend_id="test.invalid.requires_rl",
+            single_factory=_FakeBackend,
+            requires_rl=1,
+        )
+
+
+def test_builtin_provider_ownership_is_explicit_and_queryable(monkeypatch: pytest.MonkeyPatch) -> None:
+    module = importlib.import_module("python.simulation.backend")
+    module._REGISTRATIONS.pop("world_batch", None)
+    module._REGISTRATIONS.pop("facade_batch", None)
+
+    class _Provider:
+        WorldBatchVecEnv = _FakeBackend
+        CooperativeWorldBatchVecEnv = _FakeCooperativeBackend
+        build_single_world_batch_execution_runtime = _FakeExecutionRuntime
+
+    class _FacadeProvider:
+        FacadeBatchBackend = _FakeBackend
+
+    def load_provider(name: str):
+        if name in {
+            "python.rl.runtime.world_batch.vec_env",
+            "python.rl.runtime.cooperative_world_batch_vec_env",
+            "python.rl.runtime.single_world_batch_runtime",
+        }:
+            return _Provider()
+        if name == "python.simulation.facade_batch":
+            return _FacadeProvider()
+        pytest.fail(name)
+
+    monkeypatch.setattr(module, "import_module", load_provider)
+    try:
+        world_batch = module.get_backend_registration("world_batch")
+        assert world_batch.implementation_owner == "python.rl.runtime"
+        assert world_batch.requires_rl is True
+
+        facade = module.get_backend_registration("facade_batch")
+        assert facade.implementation_owner == "python.simulation.facade_batch"
+        assert facade.requires_rl is False
+    finally:
+        module._REGISTRATIONS.pop("world_batch", None)
+        module._REGISTRATIONS.pop("facade_batch", None)
+
+
 def test_builtin_backend_ids_cannot_be_shadowed_before_lazy_resolution() -> None:
     module = importlib.import_module("python.simulation.backend")
     registration = module.SimulationBackendRegistration(

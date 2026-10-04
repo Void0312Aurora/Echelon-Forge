@@ -2609,6 +2609,25 @@ to a dedicated owner-local evidence document.
   substitution surface. Training-internal diagnostics and rollout-governance
   scripts remain RL-owned by design.
 
+### 2026-10-05 — Simulation provider dependency ownership admission
+
+- Change batch: extend `SimulationBackendRegistration` with explicit
+  `implementation_owner` and `requires_rl` metadata, expose the selected
+  registration through `python.simulation.get_backend_registration`, and mark
+  the built-ins explicitly. `world_batch` remains owned by
+  `python.rl.runtime` and requires RL; `facade_batch` is owned by
+  `python.simulation.facade_batch` and does not require RL.
+- Evidence: the backend boundary test now validates metadata types and
+  non-empty ownership values, and exercises both built-in ownership labels
+  through the neutral lookup. The focused simulation architecture suite passed
+  `18 passed`, the dependency census reports `2,545` Python import sites,
+  `2,508 allowed`, `37 compatibility`, and zero findings, and no construction
+  default or provider import path changed in this batch.
+- Boundary decision: the no-RL provider now has an inspectable ownership
+  contract at the registry seam. This does not make `facade_batch` a drop-in
+  replacement for the WorldBatch vector API, and it does not promote the
+  default provider or close the remaining native scenario lifecycle gates.
+
 ### 2026-09-27 — Direct compiled simulation backend provider
 
 - Starting commit: `e189b169`.
