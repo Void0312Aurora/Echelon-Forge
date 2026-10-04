@@ -68,7 +68,7 @@ The policy-only gate can be inspected or used as a CI command:
 python -m tools.architecture.dependency_policy --format summary
 ```
 
-The current 2026-10-04 baseline from that command is 1,107 Python modules, 2,553
+The current 2026-10-04 baseline from that command is 1,107 Python modules, 2,555
 resolved Python import sites, 561 C/C++ source files, 1,723 quoted include
 sites, and 72 CMake link sites representing 66 unique target edges. No Python,
 C++ file, or CMake target multi-node cycle is present. The Python policy
