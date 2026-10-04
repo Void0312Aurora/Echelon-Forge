@@ -71,6 +71,8 @@ void bind_core_weapon_profiles(nb::module_ &m) {
         .def_rw("target_tracker_beta", &MissileTuning::target_tracker_beta)
         .def_rw("target_tracker_gamma", &MissileTuning::target_tracker_gamma)
         .def_rw("apn_target_accel_gain", &MissileTuning::apn_target_accel_gain)
+        .def_rw("seeker_decoy_rejection", &MissileTuning::seeker_decoy_rejection)
+        .def_rw("seeker_resolution_cell_m", &MissileTuning::seeker_resolution_cell_m)
         .def_rw("autopilot_damping", &MissileTuning::autopilot_damping)
         .def_prop_rw(
             "autopilot_order", [](const MissileTuning &self) { return self.autopilot_order; },

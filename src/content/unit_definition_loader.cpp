@@ -10,6 +10,7 @@
 #include <array>
 #include <cmath>
 #include <filesystem>
+#include <limits>
 #include <unordered_map>
 
 #include "components/combat/common/missile_guidance_types.h"
@@ -433,6 +434,37 @@ void parse_missile_tuning_json_fields(const nlohmann::json &src,
     tuning.target_tracker_gamma = src.value("target_tracker_gamma", tuning.target_tracker_gamma);
 
     *out_tuning = tuning;
+}
+
+bool validate_missile_discrimination_json_fields(const nlohmann::json &src, const char *scope,
+                                                 std::string *error) {
+    if (!src.is_object()) {
+        return true;
+    }
+    const auto validate = [&](const char *key, double minimum, double maximum,
+                              bool inclusive_minimum) {
+        if (!src.contains(key)) {
+            return true;
+        }
+        const auto &value = src.at(key);
+        const bool is_number = value.is_number();
+        const double parsed = is_number ? value.get<double>() : 0.0;
+        const bool lower_valid = inclusive_minimum ? parsed >= minimum : parsed > minimum;
+        if (is_number && std::isfinite(parsed) && lower_valid && parsed <= maximum) {
+            return true;
+        }
+        if (error) {
+            *error = std::string(scope) + "." + key + " must be finite and in [" +
+                     std::to_string(minimum) + ", " + std::to_string(maximum) + "]";
+            if (!inclusive_minimum) {
+                *error = std::string(scope) + "." + key + " must be finite and greater than " +
+                         std::to_string(minimum);
+            }
+        }
+        return false;
+    };
+    return validate("decoy_rejection", 0.0, 1.0, true) &&
+           validate("resolution_cell_m", 0.0, std::numeric_limits<double>::max(), true);
 }
 
 bool validate_missile_tracker_gains(const MissileTuningDefinition &tuning, std::string *error) {
@@ -1471,9 +1503,16 @@ bool parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefin
         if (!parse_capture_guidance_mode(entry, &missile_tuning.capture_guidance_mode, error)) {
             return false;
         }
+        if (!validate_missile_discrimination_json_fields(entry, "missile", error)) {
+            return false;
+        }
         parse_missile_tuning_json_fields(entry, &missile_tuning);
 
         if (entry.contains("missile_tuning") && entry["missile_tuning"].is_object()) {
+            if (!validate_missile_discrimination_json_fields(entry["missile_tuning"],
+                                                             "missile_tuning", error)) {
+                return false;
+            }
             if (!parse_pn_los_rate_source(entry["missile_tuning"],
                                           &missile_tuning.pn_los_rate_source, error)) {
                 return false;
@@ -1490,6 +1529,9 @@ bool parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefin
         }
         if (entry.contains("guidance") && entry["guidance"].is_object()) {
             const auto &guidance = entry["guidance"];
+            if (!validate_missile_discrimination_json_fields(guidance, "guidance", error)) {
+                return false;
+            }
             if (!parse_pn_los_rate_source(guidance, &missile_tuning.pn_los_rate_source, error)) {
                 return false;
             }
@@ -1524,6 +1566,10 @@ bool parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefin
                 "midcourse_datalink_supported", missile_tuning.midcourse_datalink_supported);
             missile_tuning.lobl_required =
                 guidance.value("lobl_required", missile_tuning.lobl_required);
+            missile_tuning.seeker_decoy_rejection =
+                guidance.value("decoy_rejection", missile_tuning.seeker_decoy_rejection);
+            missile_tuning.seeker_resolution_cell_m =
+                guidance.value("resolution_cell_m", missile_tuning.seeker_resolution_cell_m);
         }
         if (entry.contains("warhead") && entry["warhead"].is_object()) {
             if (!parse_warhead_json_fields(entry["warhead"], &missile_tuning, error)) {
@@ -1582,7 +1628,31 @@ void parse_command_link_json_fields(const nlohmann::json &entry, UnitDefinition 
     }
 }
 
-void parse_electronic_warfare_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
+bool validate_countermeasure_json_fields(const nlohmann::json &cms, std::string *error) {
+    if (!cms.is_object()) {
+        return true;
+    }
+    for (const char *key :
+         {"chaff_rcs_m2", "flare_ir_intensity", "chaff_lifetime_s", "flare_lifetime_s"}) {
+        if (!cms.contains(key)) {
+            continue;
+        }
+        const auto &value = cms.at(key);
+        const double parsed = value.is_number() ? value.get<double>() : 0.0;
+        if (value.is_number() && std::isfinite(parsed) && parsed > 0.0) {
+            continue;
+        }
+        if (error) {
+            *error = std::string("countermeasures.") + key +
+                     " must be finite and greater than 0 when authored";
+        }
+        return false;
+    }
+    return true;
+}
+
+bool parse_electronic_warfare_json_fields(const nlohmann::json &entry, UnitDefinition &def,
+                                          std::string *error) {
     if (entry.contains("rwr") && entry["rwr"].is_object()) {
         const auto &rwr = entry["rwr"];
         def.rwr_data.sensitivity_dbm = rwr.value("sensitivity_dbm", def.rwr_data.sensitivity_dbm);
@@ -1608,6 +1678,9 @@ void parse_electronic_warfare_json_fields(const nlohmann::json &entry, UnitDefin
 
     if (entry.contains("countermeasures") && entry["countermeasures"].is_object()) {
         const auto &cms = entry["countermeasures"];
+        if (!validate_countermeasure_json_fields(cms, error)) {
+            return false;
+        }
         def.cms_data.chaff_count = cms.value("chaff_count", def.cms_data.chaff_count);
         def.cms_data.flare_count = cms.value("flare_count", def.cms_data.flare_count);
         def.cms_data.release_interval =
@@ -1619,7 +1692,24 @@ void parse_electronic_warfare_json_fields(const nlohmann::json &entry, UnitDefin
         def.cms_data.last_flare_release_time =
             cms.value("last_flare_release_time", def.cms_data.last_release_time);
         def.cms_data.auto_mode = cms.value("auto_mode", def.cms_data.auto_mode);
+        def.cms_data.chaff_rcs_m2 = cms.value("chaff_rcs_m2", def.cms_data.chaff_rcs_m2);
+        def.cms_data.flare_ir_intensity =
+            cms.value("flare_ir_intensity", def.cms_data.flare_ir_intensity);
+        def.cms_data.chaff_lifetime_s =
+            cms.value("chaff_lifetime_s", def.cms_data.chaff_lifetime_s);
+        def.cms_data.flare_lifetime_s =
+            cms.value("flare_lifetime_s", def.cms_data.flare_lifetime_s);
     }
+    // An absent expendable signature/lifetime resolves to the historical
+    // engineering default. Present values were validated above and are retained.
+    def.cms_data.chaff_rcs_m2 =
+        countermeasure_positive_or(def.cms_data.chaff_rcs_m2, kDefaultChaffRcsM2);
+    def.cms_data.flare_ir_intensity =
+        countermeasure_positive_or(def.cms_data.flare_ir_intensity, kDefaultFlareIrIntensity);
+    def.cms_data.chaff_lifetime_s =
+        countermeasure_positive_or(def.cms_data.chaff_lifetime_s, kDefaultChaffLifetimeS);
+    def.cms_data.flare_lifetime_s =
+        countermeasure_positive_or(def.cms_data.flare_lifetime_s, kDefaultFlareLifetimeS);
 
     if (entry.contains("esm") && entry["esm"].is_object()) {
         const auto &esm = entry["esm"];
@@ -1630,6 +1720,7 @@ void parse_electronic_warfare_json_fields(const nlohmann::json &entry, UnitDefin
         def.esm_data.classify_emitters =
             esm.value("classify_emitters", def.esm_data.classify_emitters);
     }
+    return true;
 }
 } // namespace
 
@@ -1762,7 +1853,9 @@ bool parse_unit_json(
                                       def.data_link_max_reports_per_update))
             : def.data_link_max_reports_per_update;
 
-    parse_electronic_warfare_json_fields(entry, def);
+    if (!parse_electronic_warfare_json_fields(entry, def, error)) {
+        return false;
+    }
 
     return true;
 }

@@ -120,6 +120,11 @@ struct MissileTuningDefinition {
     bool lobl_required = false;
     bool midcourse_datalink_supported = false;
     bool use_kalman_seeker = false;
+    // Seeker decoy discrimination, from the weapon `guidance` object keys
+    // `decoy_rejection` / `resolution_cell_m`. NaN = not authored, which the
+    // launch path resolves to perfect rejection (decoys inert).
+    double seeker_decoy_rejection = std::numeric_limits<double>::quiet_NaN();
+    double seeker_resolution_cell_m = std::numeric_limits<double>::quiet_NaN();
     WarheadProfile warhead_profile{};
     bool has_warhead_profile = false;
     FuzeProfile fuze_profile{};

@@ -1157,6 +1157,40 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
                                                               unknown_codec_json.end());
         CHECK_FALSE(integration::SimulationKernelStateOwnerBridge::restore_world(
             target, unknown_codec_payload));
+
+        auto previous_missile_document = nlohmann::json::parse(source_world);
+        std::string previous_missile_name;
+        bool previous_missile_found = false;
+        for (auto &result : previous_missile_document.at("results")) {
+            auto &components = result.at("components");
+            if (!components.contains("Missile")) {
+                continue;
+            }
+            previous_missile_name = result.at("name").get<std::string>();
+            auto &missile = components.at("Missile");
+            missile["schema"] = "missile-runtime.v3";
+            missile.erase("seeker_decoy_rejection");
+            missile.erase("seeker_resolution_cell_m");
+            missile.erase("evaluated_decoy_serials");
+            previous_missile_found = true;
+            break;
+        }
+        REQUIRE(previous_missile_found);
+        const auto previous_missile_json = previous_missile_document.dump();
+        const std::vector<std::uint8_t> previous_missile_payload(previous_missile_json.begin(),
+                                                                 previous_missile_json.end());
+        REQUIRE(integration::SimulationKernelStateOwnerBridge::restore_world(
+            target, previous_missile_payload));
+        {
+            auto lease = target.acquire_world_lease();
+            const auto restored_missile = lease.world().lookup(previous_missile_name.c_str());
+            REQUIRE(restored_missile.is_valid());
+            const auto *missile = restored_missile.get<Missile>();
+            REQUIRE(missile != nullptr);
+            CHECK(missile->seeker_decoy_rejection == doctest::Approx(1.0));
+            CHECK(missile->seeker_resolution_cell_m == doctest::Approx(0.0));
+            CHECK(missile->evaluated_decoy_serials.empty());
+        }
         REQUIRE(integration::SimulationKernelStateOwnerBridge::restore_world(target, payload));
         CHECK(integration::SimulationKernelStateOwnerBridge::serialize_world(target) ==
               source_world);

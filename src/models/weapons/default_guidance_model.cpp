@@ -9,12 +9,15 @@
 #include <vector>
 
 #include "components/basic/common.h"
+#include "components/basic/stable_identity.h"
 #include "components/combat/common/missile_guidance_mechanism_profile.h"
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"
+#include "components/systems/ew.h"
 #include "components/systems/sensor.h"
 #include "core/interfaces/environment_model.h"
 #include "core/interfaces/engagement_event_recorder.h"
+#include "core/interfaces/stochastic_draw.h"
 #include "models/physics/aerodynamics_common.h"
 #include "models/weapons/kalman_seeker.h"
 #include "models/weapons/missile_guidance_math.h"
@@ -844,6 +847,156 @@ bool detection_matches_assigned_target(const Missile &missile, const Detection &
     return missile.target_id == 0 || det.target_id == missile.target_id;
 }
 
+// Seeker admission shared by target selection and decoy seduction: the
+// launcher and same-side contacts are never candidates, and a contact must be
+// usable for guidance and inside the seeker lock range and field of view.
+bool contact_passes_seeker_filters(flecs::world world, const Missile &missile,
+                                   const Alliance *missile_alliance, const Detection &c) {
+    if (c.target_id == missile.attacker_id) {
+        return false;
+    }
+    const flecs::entity contact_target = world.entity(c.target_id);
+    const Alliance *target_alliance =
+        contact_target.is_alive() ? contact_target.get<Alliance>() : nullptr;
+    if (missile_alliance && target_alliance && missile_alliance->side == target_alliance->side) {
+        return false;
+    }
+    if (!detection_is_usable_for_guidance(missile, c)) {
+        return false;
+    }
+    if (missile.seeker_lock_range > 0.0 && c.range > missile.seeker_lock_range) {
+        return false;
+    }
+    if (missile.seeker_fov_deg > 0.0 && std::abs(c.bearing) > missile.seeker_fov_deg * 0.5) {
+        return false;
+    }
+    if (!c.local_sensor_hit && missile.terminal_seeker_active) {
+        return false;
+    }
+    return true;
+}
+
+// Chaff can only seduce a radar seeker and a flare only an IR seeker.
+bool decoy_matches_seeker_physics(const Decoy &decoy, int seeker_type) {
+    switch (decoy.kind) {
+    case DecoyKind::Chaff:
+        return seeker_type == static_cast<int>(SensorType::Radar);
+    case DecoyKind::Flare:
+        return seeker_type == static_cast<int>(SensorType::Infrared);
+    }
+    return false;
+}
+
+// Decoy seduction. A decoy released by the missile's assigned target, seen by
+// the missile's own seeker this frame, matching its physics and inside its
+// resolution cell around the target, gets one draw per missile over its
+// lifetime. It captures the seeker with probability
+//   p = (1 - decoy_rejection) * s_d / (s_d + s_t),
+// where s_d and s_t are the decoy's and the assigned target's signal strength
+// in this frame's contact list (s_t = 0 when the target is not seen). On
+// capture the decoy becomes the assigned target, and the normal selection
+// below then tracks it. Rejection 1.0 or a zero resolution cell is inert.
+void apply_decoy_seduction(flecs::world world, flecs::entity missile_entity, Missile &missile,
+                           const ContactList &contacts, const Alliance *missile_alliance) {
+    if (!(missile.seeker_resolution_cell_m > 0.0) || missile.target_id == 0) {
+        return;
+    }
+    const double capture_scale = 1.0 - std::clamp(missile.seeker_decoy_rejection, 0.0, 1.0);
+    if (!(capture_scale > 0.0)) {
+        return;
+    }
+    const Sensor *seeker = missile_entity.get<Sensor>();
+    if (seeker == nullptr || !missile_entity.has<StableEntitySerial>()) {
+        return;
+    }
+    const flecs::entity target = world.entity(missile.target_id);
+    if (!target.is_alive()) {
+        return;
+    }
+    const Transform *target_transform = target.get<Transform>();
+    if (target_transform == nullptr) {
+        return;
+    }
+
+    double target_signal = 0.0;
+    for (const auto &c : contacts.contacts) {
+        if (c.target_id == missile.target_id &&
+            contact_passes_seeker_filters(world, missile, missile_alliance, c)) {
+            target_signal = std::max(target_signal, c.signal_strength);
+        }
+    }
+
+    const double cell_sq = missile.seeker_resolution_cell_m * missile.seeker_resolution_cell_m;
+    struct DecoyCandidate {
+        std::uint64_t serial = 0;
+        flecs::entity entity;
+        const Decoy *decoy = nullptr;
+        double signal = 0.0;
+    };
+    std::vector<DecoyCandidate> candidates;
+    for (const auto &c : contacts.contacts) {
+        // Only the missile's own seeker can be seduced.
+        if (c.target_id == missile.target_id || !c.local_sensor_hit ||
+            !contact_passes_seeker_filters(world, missile, missile_alliance, c)) {
+            continue;
+        }
+        const flecs::entity decoy_entity = world.entity(c.target_id);
+        if (!decoy_entity.is_alive()) {
+            continue;
+        }
+        const Decoy *decoy = decoy_entity.get<Decoy>();
+        if (decoy == nullptr || decoy->owner_id != missile.target_id ||
+            !decoy_matches_seeker_physics(*decoy, seeker->type) ||
+            !std::isfinite(decoy->release_time_s) || decoy->release_time_s < 0.0) {
+            continue;
+        }
+        const StableEntitySerial *serial = decoy_entity.get<StableEntitySerial>();
+        const Transform *decoy_transform = decoy_entity.get<Transform>();
+        if (serial == nullptr || decoy_transform == nullptr) {
+            continue;
+        }
+        const double dx = decoy_transform->x - target_transform->x;
+        const double dy = decoy_transform->y - target_transform->y;
+        const double dz = decoy_transform->z - target_transform->z;
+        if (!(dx * dx + dy * dy + dz * dz <= cell_sq)) {
+            continue;
+        }
+        auto &evaluated = missile.evaluated_decoy_serials;
+        if (std::find(evaluated.begin(), evaluated.end(), serial->value) != evaluated.end()) {
+            continue;
+        }
+        if (std::find_if(candidates.begin(), candidates.end(),
+                         [&](const DecoyCandidate &candidate) {
+                             return candidate.serial == serial->value;
+                         }) != candidates.end()) {
+            continue;
+        }
+        candidates.push_back(
+            {serial->value, decoy_entity, decoy, std::max(0.0, c.signal_strength)});
+    }
+    std::sort(candidates.begin(), candidates.end(),
+              [](const DecoyCandidate &lhs, const DecoyCandidate &rhs) {
+                  if (lhs.serial != rhs.serial) {
+                      return lhs.serial < rhs.serial;
+                  }
+                  return lhs.entity.id() < rhs.entity.id();
+              });
+    for (const DecoyCandidate &candidate : candidates) {
+        missile.evaluated_decoy_serials.push_back(candidate.serial);
+        const double decoy_signal = candidate.signal;
+        const double signal_share =
+            target_signal > 0.0 ? decoy_signal / (decoy_signal + target_signal) : 1.0;
+        const double capture_probability = capture_scale * signal_share;
+        const std::uint64_t seed = stochastic_draw::draw_seed(
+            world, stochastic_draw::DrawSite::decoy_seduction, candidate.decoy->release_time_s,
+            {missile_entity, candidate.entity});
+        if (stochastic_draw::uniform01(seed) < capture_probability) {
+            missile.target_id = static_cast<std::uint64_t>(candidate.entity.id());
+            return;
+        }
+    }
+}
+
 Vec3 guidance_estimated_target_position_world(const Missile &missile, const Transform &transform) {
     const Vec3 los_world =
         missile_guidance::normalize(missile_guidance::world_los_from_relative_angles(
@@ -1386,32 +1539,9 @@ class DefaultGuidanceModel : public IGuidanceModel {
             const Alliance *missile_alliance = missile_entity.get<Alliance>();
 
             if (contacts) {
+                apply_decoy_seduction(world, missile_entity, missile, *contacts, missile_alliance);
                 for (const auto &c : contacts->contacts) {
-                    if (c.target_id == missile.attacker_id) {
-                        continue;
-                    }
-
-                    // A contact can outlive its target within a step; `get` on a dead id
-                    // asserts in debug flecs, so a dead target has no alliance here.
-                    const flecs::entity contact_target = world.entity(c.target_id);
-                    const Alliance *target_alliance =
-                        contact_target.is_alive() ? contact_target.get<Alliance>() : nullptr;
-                    if (missile_alliance && target_alliance &&
-                        missile_alliance->side == target_alliance->side) {
-                        continue;
-                    }
-
-                    if (!detection_is_usable_for_guidance(missile, c)) {
-                        continue;
-                    }
-                    if (missile.seeker_lock_range > 0.0 && c.range > missile.seeker_lock_range) {
-                        continue;
-                    }
-                    if (missile.seeker_fov_deg > 0.0 &&
-                        std::abs(c.bearing) > missile.seeker_fov_deg * 0.5) {
-                        continue;
-                    }
-                    if (!c.local_sensor_hit && missile.terminal_seeker_active) {
+                    if (!contact_passes_seeker_filters(world, missile, missile_alliance, c)) {
                         continue;
                     }
 

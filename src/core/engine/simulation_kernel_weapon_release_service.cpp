@@ -225,7 +225,9 @@ bool has_explicit_global_missile_tuning(const MissileTuning &tuning) {
            std::isfinite(tuning.max_launch_off_boresight_deg) || tuning.lobl_required ||
            tuning.midcourse_datalink_supported || tuning.use_kalman_seeker ||
            tuning.explicit_overrides != 0 || std::isfinite(tuning.apn_target_accel_gain) ||
-           tuning.has_warhead_profile || tuning.has_fuze_profile;
+           std::isfinite(tuning.seeker_decoy_rejection) ||
+           std::isfinite(tuning.seeker_resolution_cell_m) || tuning.has_warhead_profile ||
+           tuning.has_fuze_profile;
 }
 
 std::string naval_weapon_type_name(NavalWeaponType weapon_type) {
@@ -302,6 +304,8 @@ MissileTuning to_runtime_missile_tuning(const MissileTuningDefinition &src) {
     out.lobl_required = src.lobl_required;
     out.midcourse_datalink_supported = src.midcourse_datalink_supported;
     out.use_kalman_seeker = src.use_kalman_seeker;
+    out.seeker_decoy_rejection = src.seeker_decoy_rejection;
+    out.seeker_resolution_cell_m = src.seeker_resolution_cell_m;
     out.warhead_profile = src.warhead_profile;
     out.has_warhead_profile = src.has_warhead_profile;
     out.fuze_profile = src.fuze_profile;
@@ -339,6 +343,10 @@ void overlay_missile_tuning(MissileTuning *base, const MissileTuning &overlay) {
         base->target_tracker_gamma = overlay.target_tracker_gamma;
     if (std::isfinite(overlay.apn_target_accel_gain))
         base->apn_target_accel_gain = overlay.apn_target_accel_gain;
+    if (std::isfinite(overlay.seeker_decoy_rejection))
+        base->seeker_decoy_rejection = overlay.seeker_decoy_rejection;
+    if (std::isfinite(overlay.seeker_resolution_cell_m))
+        base->seeker_resolution_cell_m = overlay.seeker_resolution_cell_m;
     if (std::isfinite(overlay.sensor_max_range)) base->sensor_max_range = overlay.sensor_max_range;
     if (std::isfinite(overlay.sensor_fov_deg)) base->sensor_fov_deg = overlay.sensor_fov_deg;
     if (std::isfinite(overlay.sensor_scan_period))
@@ -607,6 +615,15 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     if (has_explicit_global_missile_tuning(missile_tuning_)) {
         overlay_missile_tuning(&resolved_tuning, missile_tuning_);
     }
+    const auto authored_decoy_field_is_valid = [](double value, double minimum, double maximum) {
+        return std::isnan(value) || (std::isfinite(value) && value >= minimum && value <= maximum);
+    };
+    if (!authored_decoy_field_is_valid(resolved_tuning.seeker_decoy_rejection, 0.0, 1.0) ||
+        !authored_decoy_field_is_valid(resolved_tuning.seeker_resolution_cell_m, 0.0,
+                                       std::numeric_limits<double>::max())) {
+        spdlog::warn("fire_missile rejected invalid authored decoy discrimination tuning");
+        return flecs::entity::null();
+    }
     if (!missile_launch_envelope_allows(resolved_tuning, det)) {
         return flecs::entity::null();
     }
@@ -861,6 +878,14 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     missile.target_tracker_beta = missile_target_tracker_beta;
     missile.target_tracker_gamma = missile_target_tracker_gamma;
     missile.apn_target_accel_gain = missile_apn_target_accel_gain;
+    // Decoy discrimination: unauthored data keeps the seeker inert to decoys
+    // (perfect rejection, no resolution cell).
+    missile.seeker_decoy_rejection = std::isfinite(resolved_tuning.seeker_decoy_rejection)
+                                         ? resolved_tuning.seeker_decoy_rejection
+                                         : 1.0;
+    missile.seeker_resolution_cell_m = std::isfinite(resolved_tuning.seeker_resolution_cell_m)
+                                           ? resolved_tuning.seeker_resolution_cell_m
+                                           : 0.0;
     missile.autopilot_order = nonnegative_or_default(resolved_tuning.autopilot_order, 1);
     missile.autopilot_damping = positive_or_default(resolved_tuning.autopilot_damping, 1.0);
     missile.guidance_mach_transonic_start = resolved_tuning.mach_transonic_start;

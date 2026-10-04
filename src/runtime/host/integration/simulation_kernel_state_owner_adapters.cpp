@@ -283,7 +283,7 @@ bool decode_f64_vector(const nlohmann::json &encoded, std::vector<double> *value
 
 nlohmann::json encode_missile(const Missile &missile) {
     nlohmann::json encoded{
-        {"schema", "missile-runtime.v3"},     {"attacker_id", missile.attacker_id},
+        {"schema", "missile-runtime.v4"},     {"attacker_id", missile.attacker_id},
         {"target_id", missile.target_id},     {"rng_state", missile.rng_state},
         {"seeker_mode", missile.seeker_mode}, {"autopilot_order", missile.autopilot_order},
     };
@@ -299,6 +299,10 @@ nlohmann::json encode_missile(const Missile &missile) {
 #define EF_ENCODE_VECTOR(name) encoded[#name] = encode_f64_vector(missile.name);
     EF_P4B_MISSILE_VECTOR_FIELDS(EF_ENCODE_VECTOR)
 #undef EF_ENCODE_VECTOR
+    encoded["seeker_decoy_rejection"] = f64_bits(missile.seeker_decoy_rejection);
+    encoded["seeker_resolution_cell_m"] = f64_bits(missile.seeker_resolution_cell_m);
+    // Stable serials, not ECS ids: they are logical identity and need no remap.
+    encoded["evaluated_decoy_serials"] = missile.evaluated_decoy_serials;
 
     auto &ekf_state = encoded["ekf_state"];
     ekf_state = {{"initialized", missile.ekf_state.initialized},
@@ -355,9 +359,15 @@ nlohmann::json encode_missile(const Missile &missile) {
 }
 
 bool decode_missile(const nlohmann::json &encoded, Missile *missile) {
-    if (missile == nullptr || !encoded.is_object() ||
-        encoded.value("schema", "") != "missile-runtime.v3" ||
-        encoded.size() != encode_missile(Missile{}).size()) {
+    if (missile == nullptr || !encoded.is_object()) {
+        return false;
+    }
+    const std::string schema = encoded.value("schema", "");
+    const bool legacy_v3 = schema == "missile-runtime.v3";
+    const bool current_v4 = schema == "missile-runtime.v4";
+    const std::size_t current_field_count = encode_missile(Missile{}).size();
+    const std::size_t expected_field_count = current_field_count - (legacy_v3 ? 3 : 0);
+    if ((!legacy_v3 && !current_v4) || encoded.size() != expected_field_count) {
         return false;
     }
     Missile candidate{};
@@ -381,6 +391,30 @@ bool decode_missile(const nlohmann::json &encoded, Missile *missile) {
     if (!decode_f64_vector(encoded.at(#name), &candidate.name)) return false;
         EF_P4B_MISSILE_VECTOR_FIELDS(EF_DECODE_VECTOR)
 #undef EF_DECODE_VECTOR
+        if (legacy_v3) {
+            // v3 predates decoy discrimination.  Keep its inert component
+            // defaults so importing an active missile cannot invent a new
+            // seduction behavior.
+            candidate.seeker_decoy_rejection = 1.0;
+            candidate.seeker_resolution_cell_m = 0.0;
+        } else {
+            if (!decode_f64_bits(encoded.at("seeker_decoy_rejection"),
+                                 &candidate.seeker_decoy_rejection) ||
+                !decode_f64_bits(encoded.at("seeker_resolution_cell_m"),
+                                 &candidate.seeker_resolution_cell_m)) {
+                return false;
+            }
+            const auto &decoy_serials = encoded.at("evaluated_decoy_serials");
+            if (!decoy_serials.is_array()) {
+                return false;
+            }
+            for (const auto &serial : decoy_serials) {
+                if (!serial.is_number_unsigned()) {
+                    return false;
+                }
+                candidate.evaluated_decoy_serials.push_back(serial.get<std::uint64_t>());
+            }
+        }
 
         const auto &ekf_state = encoded.at("ekf_state");
         if (!only_object_keys(ekf_state, {"initialized", "last_predict_time_s", "x", "P"}) ||
@@ -977,6 +1011,7 @@ bool scalar_entity_reference_field(std::string_view field) {
         "issuer_id",
         "lead_aircraft_id",
         "msg_recipient",
+        "owner_id",
         "partner_entity_id",
         "receiver_id",
         "recovery_base_id",

@@ -17,6 +17,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 using content_compile::ContentDiagnostic;
@@ -174,6 +175,40 @@ TEST_SUITE("content_compile_passes") {
             content_compile::validate_unit_json_entry(unknown_json, "unknown.json");
         REQUIRE(diagnostics.size() == 1);
         CHECK(diagnostics[0].key == "totally_unknown_key");
+
+        fs::remove_all(directory);
+    }
+
+    TEST_CASE("authored EW and seeker discrimination values reject invalid content") {
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_decoy_content_validation_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::vector<std::pair<std::string, nlohmann::json>> cases = {
+            {"chaff_rcs_m2", nlohmann::json{{"type", "Aircraft"}}},
+            {"flare_ir_intensity", nlohmann::json{{"type", "Aircraft"}}},
+            {"chaff_lifetime_s", nlohmann::json{{"type", "Aircraft"}}},
+            {"flare_lifetime_s", nlohmann::json{{"type", "Aircraft"}}},
+            {"decoy_rejection", nlohmann::json{{"type", "Missile"}}},
+            {"resolution_cell_m", nlohmann::json{{"type", "Missile"}}},
+        };
+        for (const auto &[field, base] : cases) {
+            nlohmann::json entry = base;
+            entry["name"] = "Invalid_" + field;
+            if (field == "decoy_rejection" || field == "resolution_cell_m") {
+                entry["guidance"] = {{field, field == "decoy_rejection" ? 1.1 : -1.0}};
+            } else {
+                entry["countermeasures"] = {{field, 0.0}};
+            }
+            const fs::path path = directory / (field + ".json");
+            { std::ofstream(path) << entry.dump(2); }
+
+            std::vector<UnitDefinition> definitions;
+            std::string error;
+            CHECK_FALSE(load_unit_definitions_json(path.string(), definitions, &error));
+            CHECK(error.find(field) != std::string::npos);
+        }
 
         fs::remove_all(directory);
     }
