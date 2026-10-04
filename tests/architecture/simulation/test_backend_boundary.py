@@ -188,6 +188,41 @@ def test_leader_window_runtime_selection_is_provider_lazy(monkeypatch: pytest.Mo
     assert isinstance(module.create_leader_window_runtime(_BatchEnv()), _WorldBatch)
 
 
+def test_execution_policy_loader_keeps_algorithm_provider_lazy(monkeypatch: pytest.MonkeyPatch) -> None:
+    module = importlib.import_module("python.simulation.backend")
+
+    class _Policy:
+        @staticmethod
+        def load(path: str, *, device: str):
+            return ("adaptive", path, device)
+
+    class _AdaptiveProvider:
+        AdaptiveKLPPO = _Policy
+
+    class _StableBaselines:
+        class PPO:
+            @staticmethod
+            def load(path: str, *, device: str):
+                return ("ppo", path, device)
+
+    def load_provider(name: str):
+        if name == "python.rl.policy_algo.ppo_adaptive_kl":
+            return _AdaptiveProvider()
+        if name == "stable_baselines3":
+            return _StableBaselines()
+        pytest.fail(name)
+
+    monkeypatch.setattr(module, "import_module", load_provider)
+    adaptive_result = module.load_execution_policy("model.zip", device="cpu")
+    assert adaptive_result[0] == "adaptive"
+    assert adaptive_result[1].endswith("\\model")
+    assert adaptive_result[2] == "cpu"
+    ppo_result = module.load_execution_policy("model", algo_name="PPO", device="cpu")
+    assert ppo_result[0] == "ppo"
+    assert ppo_result[1].endswith("\\model")
+    assert ppo_result[2] == "cpu"
+
+
 def test_provider_import_is_lazy_and_scripted_entries_use_backend_boundary() -> None:
     source = BACKEND_PATH.read_text(encoding="utf-8")
     assert 'import_module("python.rl.runtime.world_batch.vec_env")' in source
@@ -217,6 +252,11 @@ def test_provider_import_is_lazy_and_scripted_entries_use_backend_boundary() -> 
     )
     assert "from python.rl.runtime.single_world_batch_runtime" not in policy_runtime_text
     assert "from python.rl.control.wrappers" not in policy_runtime_text
+    policy_text = (
+        REPO_ROOT / "gym_envs" / "leader_env_parts" / "policy.py"
+    ).read_text(encoding="utf-8")
+    assert "from python.simulation import load_execution_policy" in policy_text
+    assert "from python.rl.policy_algo.ppo_adaptive_kl" not in policy_text
     runtime_facade_text = (
         REPO_ROOT / "gym_envs" / "leader_env_parts" / "runtime_facade.py"
     ).read_text(encoding="utf-8")

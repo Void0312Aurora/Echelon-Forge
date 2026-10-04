@@ -196,6 +196,30 @@ def create_leader_window_runtime(env: Any) -> Any:
     return runtime_class(env)
 
 
+def load_execution_policy(
+    model_path: str,
+    algo_name: str = "auto",
+    device: str = "cpu",
+) -> Any:
+    """Load a frozen execution policy through the provider boundary."""
+
+    from python.artifact_paths import resolve_artifact_path
+
+    resolved_path = resolve_artifact_path(model_path) or str(model_path)
+    load_path = resolved_path[:-4] if str(resolved_path).endswith(".zip") else str(resolved_path)
+    algo_norm = str(algo_name or "auto").strip()
+    if algo_norm in ("auto", "AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
+        provider = import_module("python.rl.policy_algo.ppo_adaptive_kl")
+        adaptive_kl = getattr(provider, "AdaptiveKLPPO")
+        try:
+            return adaptive_kl.load(load_path, device=device)
+        except Exception:
+            if algo_norm != "auto":
+                raise
+    stable_baselines = import_module("stable_baselines3")
+    return stable_baselines.PPO.load(load_path, device=device)
+
+
 __all__ = [
     "SimulationBackendRegistration",
     "SimulationBatchBackend",
@@ -205,6 +229,7 @@ __all__ = [
     "create_single_backend",
     "create_single_execution_runtime",
     "create_leader_window_runtime",
+    "load_execution_policy",
     "resolve_execution_wrapper_spec",
     "register_backend",
 ]

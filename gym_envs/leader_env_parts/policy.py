@@ -4,28 +4,12 @@ from typing import Any
 
 import numpy as np
 import torch
-from stable_baselines3 import PPO
 
-from python.artifact_paths import resolve_artifact_path
+from python.simulation import load_execution_policy
 
 
 def load_policy(model_path: str, algo_name: str = "auto", device: str = "cpu"):
-    resolved_path = resolve_artifact_path(model_path) or str(model_path)
-    load_path = resolved_path[:-4] if str(resolved_path).endswith(".zip") else str(resolved_path)
-    algo_norm = str(algo_name or "auto").strip()
-    if algo_norm in ("auto", "AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
-        # Deferred: AdaptiveKLPPO lives in python.rl.policy_algo (algorithm
-        # entanglement). Kept OUTSIDE the try so an ImportError surfaces
-        # immediately (pre-I27 semantics); only runtime load failures fall
-        # back to plain PPO under algo="auto".
-        from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
-
-        try:
-            return AdaptiveKLPPO.load(load_path, device=device)
-        except Exception:
-            if algo_norm != "auto":
-                raise
-    return PPO.load(load_path, device=device)
+    return load_execution_policy(model_path, algo_name=algo_name, device=device)
 
 
 class FrozenExecutionPolicyAdapter:
