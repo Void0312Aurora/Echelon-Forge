@@ -359,9 +359,15 @@ nlohmann::json encode_missile(const Missile &missile) {
 }
 
 bool decode_missile(const nlohmann::json &encoded, Missile *missile) {
-    if (missile == nullptr || !encoded.is_object() ||
-        encoded.value("schema", "") != "missile-runtime.v4" ||
-        encoded.size() != encode_missile(Missile{}).size()) {
+    if (missile == nullptr || !encoded.is_object()) {
+        return false;
+    }
+    const std::string schema = encoded.value("schema", "");
+    const bool legacy_v3 = schema == "missile-runtime.v3";
+    const bool current_v4 = schema == "missile-runtime.v4";
+    const std::size_t current_field_count = encode_missile(Missile{}).size();
+    const std::size_t expected_field_count = current_field_count - (legacy_v3 ? 3 : 0);
+    if ((!legacy_v3 && !current_v4) || encoded.size() != expected_field_count) {
         return false;
     }
     Missile candidate{};
@@ -385,21 +391,29 @@ bool decode_missile(const nlohmann::json &encoded, Missile *missile) {
     if (!decode_f64_vector(encoded.at(#name), &candidate.name)) return false;
         EF_P4B_MISSILE_VECTOR_FIELDS(EF_DECODE_VECTOR)
 #undef EF_DECODE_VECTOR
-        if (!decode_f64_bits(encoded.at("seeker_decoy_rejection"),
-                             &candidate.seeker_decoy_rejection) ||
-            !decode_f64_bits(encoded.at("seeker_resolution_cell_m"),
-                             &candidate.seeker_resolution_cell_m)) {
-            return false;
-        }
-        const auto &decoy_serials = encoded.at("evaluated_decoy_serials");
-        if (!decoy_serials.is_array()) {
-            return false;
-        }
-        for (const auto &serial : decoy_serials) {
-            if (!serial.is_number_unsigned()) {
+        if (legacy_v3) {
+            // v3 predates decoy discrimination.  Keep its inert component
+            // defaults so importing an active missile cannot invent a new
+            // seduction behavior.
+            candidate.seeker_decoy_rejection = 1.0;
+            candidate.seeker_resolution_cell_m = 0.0;
+        } else {
+            if (!decode_f64_bits(encoded.at("seeker_decoy_rejection"),
+                                 &candidate.seeker_decoy_rejection) ||
+                !decode_f64_bits(encoded.at("seeker_resolution_cell_m"),
+                                 &candidate.seeker_resolution_cell_m)) {
                 return false;
             }
-            candidate.evaluated_decoy_serials.push_back(serial.get<std::uint64_t>());
+            const auto &decoy_serials = encoded.at("evaluated_decoy_serials");
+            if (!decoy_serials.is_array()) {
+                return false;
+            }
+            for (const auto &serial : decoy_serials) {
+                if (!serial.is_number_unsigned()) {
+                    return false;
+                }
+                candidate.evaluated_decoy_serials.push_back(serial.get<std::uint64_t>());
+            }
         }
 
         const auto &ekf_state = encoded.at("ekf_state");

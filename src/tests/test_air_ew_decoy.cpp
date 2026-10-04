@@ -122,6 +122,23 @@ bool even_split_capture(SimulationKernel &kernel, unsigned seed) {
     return missile.target_id == flare;
 }
 
+bool lowest_serial_capture_wins(SimulationKernel &kernel, bool reverse_contacts) {
+    const Engagement e = launch(kernel, 92, SensorType::Infrared, 0.0, 150.0);
+    const std::uint64_t first = place_decoy(kernel, DecoyKind::Flare, e.target, 50.0);
+    const std::uint64_t second = place_decoy(kernel, DecoyKind::Flare, e.target, -40.0);
+    const Detection first_contact = seen(first, 4850.0, 0.0, 1.0);
+    const Detection second_contact = seen(second, 4960.0, 0.0, 1.0);
+    if (reverse_contacts) {
+        set_missile_contacts(kernel, e.missile, {second_contact, first_contact});
+    } else {
+        set_missile_contacts(kernel, e.missile, {first_contact, second_contact});
+    }
+    REQUIRE(guide(kernel));
+    const Missile missile = missile_state(kernel, e.missile);
+    REQUIRE(missile.evaluated_decoy_serials.size() == 1);
+    return missile.target_id == first;
+}
+
 } // namespace
 
 TEST_SUITE("air_ew_decoy") {
@@ -136,6 +153,12 @@ TEST_SUITE("air_ew_decoy") {
         missile = missile_state(kernel, unauthored.missile);
         CHECK(missile.seeker_decoy_rejection == doctest::Approx(1.0));
         CHECK(missile.seeker_resolution_cell_m == doctest::Approx(0.0));
+    }
+
+    TEST_CASE("decoy capture is stable when the contact list order changes") {
+        SimulationKernel kernel;
+        CHECK(lowest_serial_capture_wins(kernel, false));
+        CHECK(lowest_serial_capture_wins(kernel, true));
     }
 
     TEST_CASE("a flare in the target's cell captures an IR seeker with zero rejection") {

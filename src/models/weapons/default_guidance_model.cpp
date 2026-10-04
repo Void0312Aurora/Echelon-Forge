@@ -927,6 +927,13 @@ void apply_decoy_seduction(flecs::world world, flecs::entity missile_entity, Mis
     }
 
     const double cell_sq = missile.seeker_resolution_cell_m * missile.seeker_resolution_cell_m;
+    struct DecoyCandidate {
+        std::uint64_t serial = 0;
+        flecs::entity entity;
+        const Decoy *decoy = nullptr;
+        double signal = 0.0;
+    };
+    std::vector<DecoyCandidate> candidates;
     for (const auto &c : contacts.contacts) {
         // Only the missile's own seeker can be seduced.
         if (c.target_id == missile.target_id || !c.local_sensor_hit ||
@@ -958,17 +965,33 @@ void apply_decoy_seduction(flecs::world world, flecs::entity missile_entity, Mis
         if (std::find(evaluated.begin(), evaluated.end(), serial->value) != evaluated.end()) {
             continue;
         }
-        evaluated.push_back(serial->value);
-
-        const double decoy_signal = std::max(0.0, c.signal_strength);
+        if (std::find_if(candidates.begin(), candidates.end(),
+                         [&](const DecoyCandidate &candidate) {
+                             return candidate.serial == serial->value;
+                         }) != candidates.end()) {
+            continue;
+        }
+        candidates.push_back(
+            {serial->value, decoy_entity, decoy, std::max(0.0, c.signal_strength)});
+    }
+    std::sort(candidates.begin(), candidates.end(),
+              [](const DecoyCandidate &lhs, const DecoyCandidate &rhs) {
+                  if (lhs.serial != rhs.serial) {
+                      return lhs.serial < rhs.serial;
+                  }
+                  return lhs.entity.id() < rhs.entity.id();
+              });
+    for (const DecoyCandidate &candidate : candidates) {
+        missile.evaluated_decoy_serials.push_back(candidate.serial);
+        const double decoy_signal = candidate.signal;
         const double signal_share =
             target_signal > 0.0 ? decoy_signal / (decoy_signal + target_signal) : 1.0;
         const double capture_probability = capture_scale * signal_share;
-        const std::uint64_t seed =
-            stochastic_draw::draw_seed(world, stochastic_draw::DrawSite::decoy_seduction,
-                                       decoy->release_time_s, {missile_entity, decoy_entity});
+        const std::uint64_t seed = stochastic_draw::draw_seed(
+            world, stochastic_draw::DrawSite::decoy_seduction, candidate.decoy->release_time_s,
+            {missile_entity, candidate.entity});
         if (stochastic_draw::uniform01(seed) < capture_probability) {
-            missile.target_id = static_cast<std::uint64_t>(decoy_entity.id());
+            missile.target_id = static_cast<std::uint64_t>(candidate.entity.id());
             return;
         }
     }

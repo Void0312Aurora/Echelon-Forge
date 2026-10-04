@@ -615,6 +615,15 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     if (has_explicit_global_missile_tuning(missile_tuning_)) {
         overlay_missile_tuning(&resolved_tuning, missile_tuning_);
     }
+    const auto authored_decoy_field_is_valid = [](double value, double minimum, double maximum) {
+        return std::isnan(value) || (std::isfinite(value) && value >= minimum && value <= maximum);
+    };
+    if (!authored_decoy_field_is_valid(resolved_tuning.seeker_decoy_rejection, 0.0, 1.0) ||
+        !authored_decoy_field_is_valid(resolved_tuning.seeker_resolution_cell_m, 0.0,
+                                       std::numeric_limits<double>::max())) {
+        spdlog::warn("fire_missile rejected invalid authored decoy discrimination tuning");
+        return flecs::entity::null();
+    }
     if (!missile_launch_envelope_allows(resolved_tuning, det)) {
         return flecs::entity::null();
     }
@@ -871,12 +880,12 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     missile.apn_target_accel_gain = missile_apn_target_accel_gain;
     // Decoy discrimination: unauthored data keeps the seeker inert to decoys
     // (perfect rejection, no resolution cell).
-    missile.seeker_decoy_rejection =
-        std::isfinite(resolved_tuning.seeker_decoy_rejection)
-            ? std::clamp(resolved_tuning.seeker_decoy_rejection, 0.0, 1.0)
-            : 1.0;
-    missile.seeker_resolution_cell_m =
-        nonnegative_or_default(resolved_tuning.seeker_resolution_cell_m, 0.0);
+    missile.seeker_decoy_rejection = std::isfinite(resolved_tuning.seeker_decoy_rejection)
+                                         ? resolved_tuning.seeker_decoy_rejection
+                                         : 1.0;
+    missile.seeker_resolution_cell_m = std::isfinite(resolved_tuning.seeker_resolution_cell_m)
+                                           ? resolved_tuning.seeker_resolution_cell_m
+                                           : 0.0;
     missile.autopilot_order = nonnegative_or_default(resolved_tuning.autopilot_order, 1);
     missile.autopilot_damping = positive_or_default(resolved_tuning.autopilot_damping, 1.0);
     missile.guidance_mach_transonic_start = resolved_tuning.mach_transonic_start;

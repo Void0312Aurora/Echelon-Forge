@@ -213,6 +213,10 @@ def test_p4b_simulation_kernel_adapter_is_dark_complete_and_strict() -> None:
     assert "RuntimeStateOwnerAdapterRegistry" in adapter_source
     assert "validate_component_payload" in adapter_source
     assert "descriptor.strict = true" in adapter_source
+    assert 'schema == "missile-runtime.v3"' in adapter_source
+    assert 'schema == "missile-runtime.v4"' in adapter_source
+    assert "candidate.seeker_decoy_rejection = 1.0" in adapter_source
+    assert "candidate.seeker_resolution_cell_m = 0.0" in adapter_source
     assert "decode_entity_references" in adapter_source
     assert "python-mirror-rederive.v2" in adapter_source
     assert "backend-resource-rederive.v2" in adapter_source
@@ -230,6 +234,8 @@ def test_p4b_simulation_kernel_adapter_is_dark_complete_and_strict() -> None:
     assert "side-effect-outbox.v2" in adapter_source
     assert "telemetry-rederive.v2" in adapter_source
     assert "unknown_truth" in adapter_test
+    assert "previous_missile" in adapter_test
+    assert 'missile["schema"] = "missile-runtime.v3"' in adapter_test
     assert "CHECK_FALSE" in adapter_test
     assert "ef_runtime_state_owner_adapters_candidate" in cmake
     assert "install(TARGETS ef_runtime_state_owner_adapters_candidate" not in cmake

@@ -2489,7 +2489,9 @@ runtime_state_decoder_replay_matrix() noexcept {
              .unknown_field_policy = RuntimeStateUnknownFieldPolicy::Reject,
              .replay_policy = RuntimeStateReplayPolicy::Transfer,
              .migration_sha256 =
-                 "5111035f03d8744cc88aa0e9716c86d1f14cace9a4c86bd1853570909bbcaf0f"},
+                 // SHA-256 of the bounded missile-runtime.v3 -> v4 migration
+                 // declaration: new decoy fields import as inert defaults.
+             "84b0bb312e53b50e55e9fd48566bb08a8b23194f621d2331b1b6d41e37e992a7"},
             {.category = RuntimeStateCategory::RngState,
              .disposition = RuntimeStateDisposition::Transfer,
              .owner_id = "native.rng-owner",
