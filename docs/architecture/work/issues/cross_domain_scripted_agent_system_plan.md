@@ -2578,6 +2578,20 @@ to a dedicated owner-local evidence document.
   `world_batch` implementation remains RL-owned and lazy; this batch does not
   claim an independent provider or alter the Air capability label.
 
+### 2026-10-04 — Benchmark provider construction migration
+
+- Change batch: route the maintained WorldBatch performance benchmark and
+  Air post-launch assessment benchmark through `python.simulation` for their
+  single-provider construction. Their benchmark-specific native timing and
+  assessment surfaces remain unchanged.
+- Evidence: both benchmark entries compiled cleanly, `git diff --check`
+  passed, the simulation boundary suite passed `13 passed`, and the policy
+  census reports `2,546` Python import sites, `2,509 allowed`, `37
+  compatibility`, and zero findings.
+- Boundary decision: these benchmarks no longer select the RL runtime module
+  directly. Training-internal benchmarks and rollout-governance maintenance
+  scripts remain intentionally RL-owned and are outside this provider slice.
+
 ### 2026-09-27 — Direct compiled simulation backend provider
 
 - Starting commit: `e189b169`.

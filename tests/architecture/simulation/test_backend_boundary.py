@@ -346,6 +346,8 @@ def test_diagnostic_entries_use_backend_boundary() -> None:
         REPO_ROOT / "tools" / "diagnostics" / "flight_trajectory" / "takeoff_to_landing.py",
         REPO_ROOT / "tools" / "diagnostics" / "cooperative_trajectory_base.py",
         REPO_ROOT / "tools" / "diagnostics" / "diagnose_cooperative_trajectory.py",
+        REPO_ROOT / "tools" / "diagnostics" / "benchmarks" / "world_batch_vec_env.py",
+        REPO_ROOT / "tools" / "diagnostics" / "benchmarks" / "air_combat_post_launch_assessment.py",
     )
     for path in entrypoints:
         source = path.read_text(encoding="utf-8")
