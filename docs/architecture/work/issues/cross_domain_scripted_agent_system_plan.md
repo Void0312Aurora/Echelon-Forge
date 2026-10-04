@@ -2660,6 +2660,23 @@ to a dedicated owner-local evidence document.
   caller-authored demo; this does not establish a general scenario compiler,
   multi-phase replay contract, or Air `playable` promotion.
 
+### 2026-10-05 — Air C2 accepted-seed and replay gate runner
+
+- Change batch: add `tools/diagnostics/flight_trajectory/air_c2_seed_matrix.py`.
+  It runs the maintained scripted C2 episode for an explicit accepted seed
+  set (default `0,1,2`), reruns each seed in the same process, hashes the full
+  trajectory and command arrays, and fails closed unless every record reaches
+  `success_objective`, reports `[4,1,1,1]`, has a valid C2 report, reaches the
+  landing command with runway geometry, and reproduces exactly.
+- Evidence: the source boundary test and focused simulation architecture suite
+  passed `21 passed`; the runner compiles cleanly, `git diff --check` passed,
+  and the dependency census reports `2,549` Python import sites, `2,512
+  allowed`, `37 compatibility`, and zero findings.
+- Boundary decision: the accepted-seed/replay gate is now executable and
+  fail-closed, but it has not been run in this worktree because the local
+  compiled `ef_py` artifact is absent. No Air `playable` promotion is claimed
+  from the runner's presence alone.
+
 ### 2026-09-27 — Direct compiled simulation backend provider
 
 - Starting commit: `e189b169`.
