@@ -178,6 +178,55 @@ bool radar_sees_jammer_target(const Jammer &jammer, double target_heading_deg) {
            contacts.contacts.end();
 }
 
+EmitterDetection esm_detection_for_classifier(bool classify_emitters) {
+    SimulationKernel kernel;
+    kernel.reset(181);
+    auto owner = kernel.spawn_unit(Side::Blue, "Aircraft", 0.0, 0.0, kAltitudeM, 0.0, 0.0, 0.0,
+                                   0.0, 0.0, 0.0);
+    REQUIRE(owner.is_valid());
+
+    auto lease = kernel.acquire_world_lease();
+    flecs::world &world = lease.world();
+    world.entity(owner.id()).set<ESMReceiver>({-85.0, 100000.0, classify_emitters, {}});
+
+    Sensor emitter_radar{};
+    emitter_radar.type = static_cast<int>(SensorType::Radar);
+    emitter_radar.max_range = 100000.0;
+    emitter_radar.reference_range_m = 100000.0;
+    emitter_radar.reference_rcs_m2 = 5.0;
+    emitter_radar.antenna_height_m = 25.0;
+    auto emitter = world.entity()
+                       .set<Transform>({0.0, 30000.0, kAltitudeM, 180.0, 0.0, 0.0})
+                       .set<Velocity>({0.0, 0.0, 0.0})
+                       .set<KeyEntity>({UnitType::Aircraft})
+                       .set<Alliance>({Side::Red})
+                       .set<Sensor>(emitter_radar)
+                       .set<Missile>(Missile{});
+    REQUIRE(emitter.is_valid());
+    stamp_stable_serial(emitter);
+
+    Sensor esm_sensor{};
+    esm_sensor.type = static_cast<int>(SensorType::ESM);
+    esm_sensor.max_range = 100000.0;
+    esm_sensor.fov_deg = 360.0;
+    esm_sensor.detection_prob = 1.0;
+    esm_sensor.range_power = 50.0;
+    esm_sensor.reference_snr_db = 100.0;
+    esm_sensor.reference_range_m = 100000.0;
+    esm_sensor.reference_rcs_m2 = 5.0;
+    esm_sensor.pfa = 1.0e-6;
+
+    ContactList contacts;
+    auto model = make_default_sensor_model();
+    const Transform owner_transform = *world.entity(owner.id()).get<Transform>();
+    model->scan(world, world.entity(owner.id()), owner_transform, esm_sensor, contacts, 0.0);
+    REQUIRE(contacts.contacts.size() == 1);
+    const ESMReceiver *receiver = world.entity(owner.id()).get<ESMReceiver>();
+    REQUIRE(receiver != nullptr);
+    REQUIRE(receiver->detections.size() == 1);
+    return receiver->detections.front();
+}
+
 } // namespace
 
 TEST_SUITE("air_ew_decoy") {
@@ -496,5 +545,19 @@ TEST_SUITE("air_ew_decoy") {
 
         const Jammer drfm_beam{true, 1000.0, 2000.0, JammingType::DeceptionDRFM, 60.0};
         CHECK(radar_sees_jammer_target(drfm_beam, 180.0));
+    }
+
+    TEST_CASE("ESM classifier gates lock and guidance labels without hiding presence") {
+        const EmitterDetection classified = esm_detection_for_classifier(true);
+        CHECK(classified.source_id != 0);
+        CHECK(classified.signal_strength > 0.0);
+        CHECK(classified.is_radar_lock);
+        CHECK(classified.is_missile_guidance);
+
+        const EmitterDetection unclassified = esm_detection_for_classifier(false);
+        CHECK(unclassified.source_id != 0);
+        CHECK(unclassified.signal_strength > 0.0);
+        CHECK_FALSE(unclassified.is_radar_lock);
+        CHECK_FALSE(unclassified.is_missile_guidance);
     }
 }

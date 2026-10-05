@@ -3316,3 +3316,20 @@ to a dedicated owner-local evidence document.
   ESM sensitivity/classification semantics, multi-aircraft EW parity, terminal
   objective closure, and canonical action-mode admission remain open; Air is
   still `playable_candidate`.
+
+### 2026-10-05 — Air ESM classifier flag semantics
+
+- Starting commit: `fc7844ad4`.
+- Change batch: make `ESMReceiver.classify_emitters` control the lock and
+  missile-guidance labels projected into `EmitterDetection`. ESM presence,
+  source identity, bearing, and signal strength remain available when the
+  receiver is configured for detection without classification.
+- Evidence: the rebuilt native `ef_test` passed `236` test cases and `154714`
+  assertions, including classified and unclassified ESM detections. The
+  focused Python EW suite remained green at `18 passed`.
+- Boundary decision: this closes only the receiver classification flag
+  semantics. `sensitivity_dbm` remains open because the current emitter and
+  sensor contracts do not provide a shared RF-power reference for a truthful
+  dBm threshold; no arbitrary conversion was added. DRFM false tracks,
+  multi-aircraft EW parity, terminal objective closure, and canonical
+  action-mode admission remain open; Air is still `playable_candidate`.

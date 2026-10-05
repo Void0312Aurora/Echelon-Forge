@@ -297,8 +297,11 @@ void append_esm_detection_from_emitter(flecs::entity owner, flecs::entity emitte
     det.source_id = emitter.id();
     det.bearing_deg = rel_bearing_deg;
     det.signal_strength = emitter_strength;
-    det.is_radar_lock = emitter.has<Missile>();
-    det.is_missile_guidance = emitter.has<Missile>();
+    // Presence and bearing remain observable when classification is disabled,
+    // but lock/guidance labels require the receiver's authored classifier.
+    const bool classified = owner_esm->classify_emitters;
+    det.is_radar_lock = classified && emitter.has<Missile>();
+    det.is_missile_guidance = classified && emitter.has<Missile>();
     if (existing == owner_esm->detections.end()) {
         owner_esm->detections.push_back(det);
     } else if (det.signal_strength >= existing->signal_strength) {
