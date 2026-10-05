@@ -3353,4 +3353,9 @@ to a dedicated owner-local evidence document.
   routing slice. It does not establish jammer effectiveness in a terminal
   combat objective, DRFM false-track behavior, RF-band calibration, or
   canonical `python.env_config.ACTION_MODES` admission; v2 remains opt-in
-  and Air remains `playable_candidate`.
+  and Air remains `playable_candidate`. Running the v2 EW runner against the
+  existing cooperative terminal-surrogate scenario produced no jammer
+  requests and stayed `running`; that fixture has no hostile emitter route
+  and the EW runner has no weapon-employment owner. A separate scenario must
+  combine an EW threat with a terminal objective before terminal EW closure
+  can be claimed.

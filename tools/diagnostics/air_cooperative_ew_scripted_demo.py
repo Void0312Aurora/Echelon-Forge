@@ -6,10 +6,16 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
 import numpy as np
+
+
+_REPO_ROOT_HINT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if _REPO_ROOT_HINT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT_HINT)
 
 from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
@@ -294,6 +300,12 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("observe_only", "countermeasure_ready", "chaff_only", "flare_only"),
         default="countermeasure_ready",
     )
+    parser.add_argument(
+        "--jammer_doctrine",
+        choices=("hold", "self_protect_on_lock"),
+        default=None,
+        help="enable the opt-in air_ew_hybrid_v2 jammer tail with this doctrine",
+    )
     parser.add_argument("--json_out", default="")
     return parser
 
@@ -305,6 +317,7 @@ def main() -> int:
         seed=args.seed,
         max_steps=args.max_steps,
         response_doctrine=args.response_doctrine,
+        jammer_doctrine=args.jammer_doctrine,
     )
     rendered = json.dumps(payload, indent=2, ensure_ascii=True)
     if args.json_out:
