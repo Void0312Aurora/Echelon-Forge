@@ -33,6 +33,7 @@ from .engagement import (
 )
 from .runtime import AirEngagementRuntimeInput, AirScriptedEngagementRuntimeModel
 from .scenario_runtime import (
+    AirFacadeFrame,
     AirFacadeReplayReceipt,
     AirFacadeScenarioRun,
     AirFacadeScenarioRuntime,
@@ -74,6 +75,7 @@ __all__ = [
     "AirEngagementRuntimeInput",
     "AirScriptedEngagementRuntimeModel",
     "AirFacadeReplayReceipt",
+    "AirFacadeFrame",
     "AirFacadeScenarioRun",
     "AirFacadeScenarioRuntime",
     "AirFacadeStepResult",

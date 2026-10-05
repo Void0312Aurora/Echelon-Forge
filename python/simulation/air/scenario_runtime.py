@@ -44,6 +44,18 @@ class AirFacadeStepResult:
     command_chain: Mapping[str, tuple[Any, ...]]
     terminal: AirCombatTerminalState | None
     replay_identities: tuple[str, ...]
+    frame: "AirFacadeFrame"
+
+
+@dataclass(frozen=True)
+class AirFacadeFrame:
+    """Stable semantic frame captured after one provider step."""
+
+    step_index: int
+    sim_time_s: tuple[float, ...]
+    positions_m: tuple[tuple[float, float, float], ...]
+    phases: tuple[str, ...]
+    action_norms: tuple[tuple[float, float], ...]
 
 
 @dataclass(frozen=True)
@@ -60,6 +72,7 @@ class AirFacadeScenarioRun:
     action_norms: tuple[tuple[float, ...], ...]
     terminal: AirCombatTerminalState | None
     replay_identities: tuple[str, ...]
+    frames: tuple[AirFacadeFrame, ...]
 
     def replay_receipt(self) -> "AirFacadeReplayReceipt":
         return AirFacadeReplayReceipt.from_run(self)
@@ -78,6 +91,7 @@ class AirFacadeReplayReceipt:
     final_sim_time_s: tuple[float, ...]
     final_positions_m: tuple[tuple[float, float, float], ...]
     action_norms: tuple[tuple[float, ...], ...]
+    frames: tuple[AirFacadeFrame, ...]
     terminal_status: str | None
     terminal_reason: str | None
     digest: str
@@ -94,6 +108,7 @@ class AirFacadeReplayReceipt:
             "final_sim_time_s": list(run.final_sim_time_s),
             "final_positions_m": [list(position) for position in run.final_positions_m],
             "action_norms": [list(norms) for norms in run.action_norms],
+            "frames": [_frame_payload(frame) for frame in run.frames],
             "terminal_status": None if run.terminal is None else run.terminal.status,
             "terminal_reason": None if run.terminal is None else run.terminal.reason,
         }
@@ -108,6 +123,7 @@ class AirFacadeReplayReceipt:
             final_sim_time_s=tuple(payload["final_sim_time_s"]),
             final_positions_m=tuple(tuple(values) for values in payload["final_positions_m"]),
             action_norms=tuple(tuple(values) for values in payload["action_norms"]),
+            frames=tuple(_frame_from_payload(value) for value in payload["frames"]),
             terminal_status=payload["terminal_status"],
             terminal_reason=payload["terminal_reason"],
             digest=digest,
@@ -124,6 +140,7 @@ class AirFacadeReplayReceipt:
             "final_sim_time_s": list(self.final_sim_time_s),
             "final_positions_m": [list(values) for values in self.final_positions_m],
             "action_norms": [list(values) for values in self.action_norms],
+            "frames": [_frame_payload(frame) for frame in self.frames],
             "terminal_status": self.terminal_status,
             "terminal_reason": self.terminal_reason,
             "digest": self.digest,
@@ -176,6 +193,7 @@ class AirFacadeScenarioRuntime:
         self._initial_times: tuple[float, ...] = ()
         self._step_index = 0
         self._terminal: AirCombatTerminalState | None = None
+        self._frames: list[AirFacadeFrame] = []
         self._closed = False
 
     @property
@@ -231,6 +249,7 @@ class AirFacadeScenarioRuntime:
         self._current = current
         self._step_index = 0
         self._terminal = None
+        self._frames = []
         self._align_terminal_roster(keys)
         return current
 
@@ -269,6 +288,7 @@ class AirFacadeScenarioRuntime:
         command_chain = self._read_command_chain()
         observations = self._scripted_observations()
         actions: dict[EntityKey, Any] = {}
+        step_action_norms: dict[EntityKey, tuple[float, float]] = {}
         for index, key in enumerate(keys):
             runtime_step = self._agents[key].step(
                 observation=observations[index],
@@ -282,6 +302,10 @@ class AirFacadeScenarioRuntime:
             self._action_history[key].extend(
                 (float(np.linalg.norm(values)), float(np.max(np.abs(values))))
             )
+            step_action_norms[key] = (
+                float(np.linalg.norm(values)),
+                float(np.max(np.abs(values))),
+            )
             actions[key] = build_pilot_action(
                 values,
                 action_mode="full",
@@ -291,6 +315,13 @@ class AirFacadeScenarioRuntime:
         next_snapshot = self.backend.step(actions)
         self._current = next_snapshot
         self._step_index += 1
+        frame = _build_frame(
+            next_snapshot,
+            step_index=self._step_index,
+            decisions=decisions,
+            action_norms=step_action_norms,
+        )
+        self._frames.append(frame)
         self._terminal = self._evaluate_terminal()
         return AirFacadeStepResult(
             step_index=self._step_index,
@@ -300,6 +331,7 @@ class AirFacadeScenarioRuntime:
             command_chain=command_chain,
             terminal=self._terminal,
             replay_identities=self.replay_identities,
+            frame=frame,
         )
 
     def run(self, *, seed: int, steps: int) -> AirFacadeScenarioRun:
@@ -328,6 +360,7 @@ class AirFacadeScenarioRuntime:
             ),
             terminal=self._terminal,
             replay_identities=self.replay_identities,
+            frames=tuple(self._frames),
         )
 
     def close(self) -> None:
@@ -420,8 +453,49 @@ def _canonical_digest(payload: Mapping[str, Any]) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
+def _build_frame(
+    snapshot: Any,
+    *,
+    step_index: int,
+    decisions: Mapping[EntityKey, AirDirectorDecision],
+    action_norms: Mapping[EntityKey, tuple[float, float]],
+) -> AirFacadeFrame:
+    keys = tuple(snapshot.entity_keys)
+    return AirFacadeFrame(
+        step_index=int(step_index),
+        sim_time_s=tuple(float(obs.sim_time) for obs in snapshot.observations),
+        positions_m=tuple(
+            tuple(round(float(getattr(obs, name)), 6) for name in ("x", "y", "z"))
+            for obs in snapshot.observations
+        ),
+        phases=tuple(str(decisions[key].phase_name) for key in keys),
+        action_norms=tuple(tuple(round(float(value), 6) for value in action_norms[key]) for key in keys),
+    )
+
+
+def _frame_payload(frame: AirFacadeFrame) -> dict[str, Any]:
+    return {
+        "step_index": frame.step_index,
+        "sim_time_s": list(frame.sim_time_s),
+        "positions_m": [list(values) for values in frame.positions_m],
+        "phases": list(frame.phases),
+        "action_norms": [list(values) for values in frame.action_norms],
+    }
+
+
+def _frame_from_payload(payload: Mapping[str, Any]) -> AirFacadeFrame:
+    return AirFacadeFrame(
+        step_index=int(payload["step_index"]),
+        sim_time_s=tuple(float(value) for value in payload["sim_time_s"]),
+        positions_m=tuple(tuple(float(value) for value in values) for values in payload["positions_m"]),
+        phases=tuple(str(value) for value in payload["phases"]),
+        action_norms=tuple(tuple(float(value) for value in values) for values in payload["action_norms"]),
+    )
+
+
 __all__ = [
     "AirFacadeReplayReceipt",
+    "AirFacadeFrame",
     "AirFacadeScenarioRuntime",
     "AirFacadeScenarioRun",
     "AirFacadeStepResult",

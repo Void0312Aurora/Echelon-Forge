@@ -3465,10 +3465,11 @@ to a dedicated owner-local evidence document.
   `no_terminal_damage_report` as expected for that smoke fixture.
 - The run now emits an `air.facade.replay.v1` receipt whose canonical digest
   excludes reset-unstable native entity IDs and includes the slot replay
-  identities, command-driven phase history, simulation times, positions, action
-  summaries, and terminal status/reason. Two independent Python processes
-  produced the same digest for seed `31` and three steps:
-  `864d5d48e9a55f0c352f5401eb3e7faaee6512ed45dfdffa9ae2e94b15d192e4`.
+  identities, per-step semantic frames, command-driven phase history,
+  simulation times, positions, action summaries, and terminal status/reason.
+  Two independent Python processes produced the same digest for seed `31` and
+  three steps:
+  `86618925a356eb9d25ffa07d24812da4344e0111f6ce32902c651d919bf6d4af`.
 - Boundary decision: command/report ordering, provider-owned terminal
   invocation, and a process-independent replay receipt are now simulation-
   owned. Visualization lifecycle, default-provider promotion, and a

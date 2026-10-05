@@ -82,6 +82,8 @@ def test_air_scenario_runtime_replays_compiled_path_semantics() -> None:
     assert first.final_positions_m == second.final_positions_m
     assert first.action_norms == second.action_norms
     assert first.replay_identities == second.replay_identities
+    assert len(first.frames) == len(second.frames) == 3
+    assert first.frames == second.frames
     first_receipt = first.replay_receipt()
     second_receipt = second.replay_receipt()
     assert first_receipt.digest == second_receipt.digest
