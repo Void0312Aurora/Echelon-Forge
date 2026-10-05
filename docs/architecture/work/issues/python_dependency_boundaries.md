@@ -51,6 +51,13 @@ policy-evaluation and visualization entries now use the same factories for
 single/cooperative world construction, wrapper resolution, and policy loading;
 their RL provider remains lazy behind `python.simulation`.
 
+The native `facade_batch` scenario surface also accepts a compiled
+`scenario_path` or an already compiled scenario and materializes it through the
+shared scenario compiler/runtime setup seam. Callers may still provide an
+explicit setup factory for small compatibility fixtures. This removes the
+requirement for a no-RL scenario consumer to hand-author native setup DTOs;
+terminal orchestration and default-provider promotion remain separate gates.
+
 ## Verification
 
 Run the focused gate from the repository root:

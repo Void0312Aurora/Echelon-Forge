@@ -2660,6 +2660,25 @@ to a dedicated owner-local evidence document.
   caller-authored demo; this does not establish a general scenario compiler,
   multi-phase replay contract, or Air `playable` promotion.
 
+### 2026-10-05 — Native scenario provider consumes compiled scenario paths
+
+- Change batch: extend `python.simulation.facade_batch.FacadeBatchBackend` to
+  accept either a maintained `scenario_path` or an already compiled scenario in
+  addition to its compatibility `setup_factory`. The provider now uses the
+  shared `ScenarioCompiler` and `load_compiled_scenario_for_setup_target`
+  surface to materialize native world layouts, seeds, randomization, and
+  controlled entity keys without importing `python.rl`.
+- Evidence: the facade batch, direct Air demo, backend boundary, and scenario
+  setup boundary suites passed `33 passed`; the changed modules compiled and
+  `git diff --check` passed. A direct native probe reset the maintained
+  `air_combat_1v1_headon_sensor_smoke_v1.json` scenario twice through
+  `create_scenario_backend(backend_id="facade_batch")` and observed two
+  controlled native entities at simulation time `0.0` on both resets.
+- Boundary decision: this closes the caller-authored setup requirement for the
+  native scenario-provider entry. Full command/report orchestration, terminal
+  lifecycle, cross-process replay, and default-provider promotion remain open;
+  the WorldBatch provider remains the RL-owned default.
+
 ### 2026-10-05 — Air C2 accepted-seed and replay gate runner
 
 - Change batch: add `tools/diagnostics/flight_trajectory/air_c2_seed_matrix.py`.
