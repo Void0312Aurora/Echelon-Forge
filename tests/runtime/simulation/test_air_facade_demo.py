@@ -51,6 +51,12 @@ def test_air_scenario_runtime_owns_compiled_command_chain_and_terminal_lifecycle
         assert result.terminal is not None
         assert result.terminal.status == "running"
         assert result.terminal.reason == "no_terminal_damage_report"
+        first_own_key = runtime.own_entity_keys[0]
+        runtime.reset(23)
+        assert runtime.own_entity_keys[0] != first_own_key
+        replay_step = runtime.step()
+        assert replay_step.terminal is not None
+        assert replay_step.terminal.status == "running"
     finally:
         runtime.close()
 
