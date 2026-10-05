@@ -185,6 +185,16 @@ def test_builtin_backend_ids_cannot_be_shadowed_before_lazy_resolution() -> None
     assert "world_batch" not in module._REGISTRATIONS
 
 
+def test_vector_and_execution_factories_require_explicit_provider_selection() -> None:
+    module = importlib.import_module("python.simulation.backend")
+    with pytest.raises(ValueError, match="backend_id is required"):
+        module.create_single_backend()
+    with pytest.raises(ValueError, match="backend_id is required"):
+        module.create_cooperative_backend()
+    with pytest.raises(ValueError, match="backend_id is required"):
+        module.create_single_execution_runtime()
+
+
 def test_cooperative_backend_exposes_provider_neutral_slot_metadata() -> None:
     module = importlib.import_module("python.simulation.backend")
     backend_id = "test.fake.cooperative"

@@ -486,6 +486,7 @@ def main() -> int:
     env_settings = make_env_settings(train_config)
     action_wrapper_kwargs = cooperative_action_wrapper_kwargs(train_config, scripted=bool(args.scripted))
     env = create_cooperative_backend(
+        backend_id="world_batch",
         scenario_path=os.path.abspath(args.scenario),
         n_envs=1,
         action_wrapper_kwargs=action_wrapper_kwargs,

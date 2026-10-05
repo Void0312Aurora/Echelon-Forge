@@ -70,7 +70,7 @@ def test_p5d_maintained_python_inventory_has_facade_entrypoints() -> None:
         "python/rl/runtime/world_batch/adapter.py": "class RuntimeFacadeAdapter",
         "python/testing/contracts/loader_command_chain.py": "RuntimeFacadeAdapter",
         "python/tasking_contracts/bridge_views.py": "class LoaderOwnedRuntimeView",
-        "examples/viz/web_viz/server.py": "RuntimeFacade",
+        "examples/viz/web_viz/server.py": "create_scenario_backend",
         "tools/maintenance/p5d_process_rollback_drill.py": "RuntimeFacadeAdapter",
     }
     for relative, marker in expected.items():

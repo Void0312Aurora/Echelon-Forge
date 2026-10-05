@@ -295,6 +295,7 @@ def _build_env(scenario_path: str, train_config: dict[str, Any] | None):
         )
     else:
         vec_env = create_single_backend(
+            backend_id="world_batch",
             scenario_path=os.path.abspath(scenario_path),
             n_envs=1,
             worker_threads=1,

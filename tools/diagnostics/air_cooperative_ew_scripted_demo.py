@@ -108,6 +108,7 @@ def run_demo(
     slot_roles = tuple(item["formation_role_id"] for item in slot_metadata)
 
     vec_env = create_cooperative_backend(
+        backend_id="world_batch",
         scenario_path=os.path.abspath(str(scenario_path)),
         n_envs=1,
         include_visual=False,

@@ -53,6 +53,7 @@ def _managed_action() -> np.ndarray:
 
 def _make_env(args: argparse.Namespace, *, enabled: bool):
     return create_single_backend(
+        backend_id="world_batch",
         scenario_path=os.path.abspath(str(args.scenario)),
         env_settings={
             "include_visual": False,

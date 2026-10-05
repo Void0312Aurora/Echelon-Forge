@@ -46,6 +46,7 @@ def _build_single_env(scenario_path: str, train_config: dict[str, Any], args: ar
             "raw UniversalEnv fallback has been removed from maintained eval paths"
         )
     env = create_single_execution_runtime(
+        backend_id="world_batch",
         scenario_path=os.path.abspath(scenario_path),
         env_settings=env_settings,
         wrapper_class=wrapper_class,
@@ -382,6 +383,7 @@ def _run_cooperative_eval(args: argparse.Namespace) -> int:
     model = load_sb3_policy(os.path.abspath(args.model), algo=str(args.algo), device=str(args.device))
     action_wrapper_kwargs = _cooperative_action_wrapper_kwargs(train_config)
     env = create_cooperative_backend(
+        backend_id="world_batch",
         scenario_path=os.path.abspath(args.scenario),
         n_envs=max(1, int(args.n_worlds)),
         action_wrapper_kwargs=action_wrapper_kwargs,

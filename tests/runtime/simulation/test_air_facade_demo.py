@@ -7,6 +7,7 @@ from python.simulation.air.demo import run_facade_scripted_demo
 from python.simulation import create_scenario_backend
 from python.simulation.air.scenario_runtime import AirFacadeScenarioRuntime
 from python.simulation.air.terminal import AirCombatTerminalState
+from python.simulation.air.replay import AirFacadeReplaySession
 
 
 DATABASE = resolve_repo_path("examples", "config", "database")
@@ -125,3 +126,23 @@ def test_air_scenario_runtime_stops_bounded_run_at_terminal(monkeypatch) -> None
     assert all(len(phases) == 1 for phases in run.phases)
     assert all(len(norms) == 2 for norms in run.action_norms)
     assert run.terminal is terminal
+    loaded = first_receipt.load_json(receipt_path)
+    assert loaded.digest == first_receipt.digest
+    assert loaded.verify() is True
+
+    replay = AirFacadeReplaySession(loaded)
+    assert replay.status == replay.READY
+    replay.start()
+    assert replay.status == replay.RUNNING
+    assert replay.step() == loaded.frames[0]
+    replay.pause()
+    assert replay.status == replay.PAUSED
+    replay.resume()
+    assert list(replay.iter_frames()) == list(loaded.frames[1:])
+    assert replay.status == replay.COMPLETED
+    assert replay.step() is None
+
+    tampered = loaded.as_dict()
+    tampered["frames"][0]["positions_m"][0][0] += 1.0
+    with pytest.raises(ValueError, match="digest mismatch"):
+        loaded.from_dict(tampered)

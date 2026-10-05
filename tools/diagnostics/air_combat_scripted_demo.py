@@ -71,6 +71,7 @@ def run_demo(
         raise ValueError("the scripted combat demo requires action_mode='air_combat_hybrid_v1'")
     action_dim = AIR_COMBAT_HYBRID_ACTION_DIM
     vec_env = create_single_backend(
+        backend_id="world_batch",
         scenario_path=os.path.abspath(str(scenario_path)),
         n_envs=1,
         include_visual=False,

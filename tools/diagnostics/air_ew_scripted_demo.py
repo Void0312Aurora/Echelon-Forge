@@ -91,6 +91,7 @@ def run_demo(
         )
 
     vec_env = create_single_backend(
+        backend_id="world_batch",
         scenario_path=os.path.abspath(str(scenario_path)),
         n_envs=1,
         include_visual=False,
