@@ -3463,7 +3463,14 @@ to a dedicated owner-local evidence document.
   for three steps twice with equal phases, times, positions, and action norms;
   one-step command-chain and event-terminal checks stayed `running` with
   `no_terminal_damage_report` as expected for that smoke fixture.
-- Boundary decision: command/report ordering and provider-owned terminal
-  invocation are now simulation-owned. Cross-process replay receipts,
-  visualization lifecycle, default-provider promotion, and a named-platform
-  terminal objective remain open; no Air `playable` promotion is claimed.
+- The run now emits an `air.facade.replay.v1` receipt whose canonical digest
+  excludes reset-unstable native entity IDs and includes the slot replay
+  identities, command-driven phase history, simulation times, positions, action
+  summaries, and terminal status/reason. Two independent Python processes
+  produced the same digest for seed `31` and three steps:
+  `864d5d48e9a55f0c352f5401eb3e7faaee6512ed45dfdffa9ae2e94b15d192e4`.
+- Boundary decision: command/report ordering, provider-owned terminal
+  invocation, and a process-independent replay receipt are now simulation-
+  owned. Visualization lifecycle, default-provider promotion, and a
+  named-platform terminal objective remain open; no Air `playable` promotion
+  is claimed.

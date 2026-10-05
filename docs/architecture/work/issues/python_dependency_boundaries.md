@@ -60,7 +60,9 @@ the simulation-owned Air scenario runtime now performs the maintained
 director -> command/report chain -> observation/action projection -> provider
 step ordering, while optional terminal status is read only through the
 event-owned facade evaluator. Default-provider promotion remains a separate
-gate.
+gate. The runtime's canonical `air.facade.replay.v1` receipt hashes semantic
+slot evidence without reset-unstable native entity IDs, so replay comparison
+can be performed across independent processes without importing RL.
 
 ## Verification
 

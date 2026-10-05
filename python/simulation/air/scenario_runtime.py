@@ -11,6 +11,8 @@ Gym dependency.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import json
 from types import SimpleNamespace
 from typing import Any, Callable, Mapping, Sequence
 
@@ -48,6 +50,7 @@ class AirFacadeStepResult:
 class AirFacadeScenarioRun:
     """Replay-friendly evidence emitted by the scenario runtime."""
 
+    seed: int
     entity_keys: tuple[EntityKey, ...]
     phases: tuple[tuple[str, ...], ...]
     steps: int
@@ -57,6 +60,74 @@ class AirFacadeScenarioRun:
     action_norms: tuple[tuple[float, ...], ...]
     terminal: AirCombatTerminalState | None
     replay_identities: tuple[str, ...]
+
+    def replay_receipt(self) -> "AirFacadeReplayReceipt":
+        return AirFacadeReplayReceipt.from_run(self)
+
+
+@dataclass(frozen=True)
+class AirFacadeReplayReceipt:
+    """Canonical process-independent replay evidence for one Air run."""
+
+    schema_version: str
+    seed: int
+    steps: int
+    replay_identities: tuple[str, ...]
+    phases: tuple[tuple[str, ...], ...]
+    initial_sim_time_s: tuple[float, ...]
+    final_sim_time_s: tuple[float, ...]
+    final_positions_m: tuple[tuple[float, float, float], ...]
+    action_norms: tuple[tuple[float, ...], ...]
+    terminal_status: str | None
+    terminal_reason: str | None
+    digest: str
+
+    @classmethod
+    def from_run(cls, run: AirFacadeScenarioRun) -> "AirFacadeReplayReceipt":
+        payload = {
+            "schema_version": "air.facade.replay.v1",
+            "seed": int(run.seed),
+            "steps": int(run.steps),
+            "replay_identities": list(run.replay_identities),
+            "phases": [list(phases) for phases in run.phases],
+            "initial_sim_time_s": list(run.initial_sim_time_s),
+            "final_sim_time_s": list(run.final_sim_time_s),
+            "final_positions_m": [list(position) for position in run.final_positions_m],
+            "action_norms": [list(norms) for norms in run.action_norms],
+            "terminal_status": None if run.terminal is None else run.terminal.status,
+            "terminal_reason": None if run.terminal is None else run.terminal.reason,
+        }
+        digest = _canonical_digest(payload)
+        return cls(
+            schema_version=payload["schema_version"],
+            seed=int(payload["seed"]),
+            steps=int(payload["steps"]),
+            replay_identities=tuple(payload["replay_identities"]),
+            phases=tuple(tuple(values) for values in payload["phases"]),
+            initial_sim_time_s=tuple(payload["initial_sim_time_s"]),
+            final_sim_time_s=tuple(payload["final_sim_time_s"]),
+            final_positions_m=tuple(tuple(values) for values in payload["final_positions_m"]),
+            action_norms=tuple(tuple(values) for values in payload["action_norms"]),
+            terminal_status=payload["terminal_status"],
+            terminal_reason=payload["terminal_reason"],
+            digest=digest,
+        )
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": self.schema_version,
+            "seed": self.seed,
+            "steps": self.steps,
+            "replay_identities": list(self.replay_identities),
+            "phases": [list(values) for values in self.phases],
+            "initial_sim_time_s": list(self.initial_sim_time_s),
+            "final_sim_time_s": list(self.final_sim_time_s),
+            "final_positions_m": [list(values) for values in self.final_positions_m],
+            "action_norms": [list(values) for values in self.action_norms],
+            "terminal_status": self.terminal_status,
+            "terminal_reason": self.terminal_reason,
+            "digest": self.digest,
+        }
 
 
 class AirFacadeScenarioRuntime:
@@ -241,6 +312,7 @@ class AirFacadeScenarioRuntime:
             self.step()
         current = self.current_snapshot
         return AirFacadeScenarioRun(
+            seed=int(seed),
             entity_keys=tuple(current.entity_keys),
             phases=tuple(tuple(self._phase_history[key]) for key in current.entity_keys),
             steps=int(steps),
@@ -343,4 +415,14 @@ def _normalize_indices(values: Sequence[int] | None) -> tuple[int, ...] | None:
     return normalized
 
 
-__all__ = ["AirFacadeScenarioRuntime", "AirFacadeScenarioRun", "AirFacadeStepResult"]
+def _canonical_digest(payload: Mapping[str, Any]) -> str:
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+__all__ = [
+    "AirFacadeReplayReceipt",
+    "AirFacadeScenarioRuntime",
+    "AirFacadeScenarioRun",
+    "AirFacadeStepResult",
+]
