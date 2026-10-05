@@ -36,5 +36,9 @@ struct PilotAction {
     bool program_chaff;
     bool program_flare;
 
+    // Self-protection jammer cockpit switch. The mode is a JammingType code.
+    bool jammer_transmit = false;
+    int jammer_mode = 0;
+
     bool active;             // Validity flag
 };

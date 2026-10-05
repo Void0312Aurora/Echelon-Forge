@@ -1136,6 +1136,7 @@
       "contribution_id": "builtin.system.ew",
       "domain": "cross_domain",
       "executable_node_ids": [
+        "EW_Jammer_Control",
         "EW_Lifetime_Manager",
         "EW_Release_Chaff",
         "EW_Release_Flare"

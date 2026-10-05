@@ -62,7 +62,7 @@ AIR_SCRIPTED_MODEL_REGISTRY = DecisionModelRegistry(
             model_kind="scripted",
             status="adapter",
             note=(
-                "Versioned 14-element EW action extension; native acceptance "
+                "Versioned 14/16-element EW action extension; native acceptance "
                 "and replay/roster gates remain open."
             ),
         ),

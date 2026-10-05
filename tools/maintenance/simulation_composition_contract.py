@@ -1481,7 +1481,7 @@ EXACT_NODE_BY_SYSTEM = {
   "builtin.system.sensor": ("SensorSystem",),
   "builtin.system.data_link": ("DataLinkFusionSystem",),
   "builtin.system.instrument": ("UpdateInstruments",),
-  "builtin.system.ew": ("EW_Release_Chaff", "EW_Release_Flare", "EW_Lifetime_Manager"),
+  "builtin.system.ew": ("EW_Jammer_Control", "EW_Release_Chaff", "EW_Release_Flare", "EW_Lifetime_Manager"),
   "builtin.system.logistics": ("FuelConsumption", "MassUpdate", "LogisticsAction", "ResupplyLogic"),
   "builtin.system.ground_infantry_movement": ("GroundInfantryMovement",),
 }

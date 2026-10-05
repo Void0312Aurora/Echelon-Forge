@@ -18,6 +18,12 @@ struct ResolvedCompatibilityCountermeasureCommand {
     bool release_flare = false;
 };
 
+struct ResolvedJammerCommand {
+    bool commanded = false;
+    bool transmit = false;
+    int mode_code = 0;
+};
+
 struct ResolvedCompatibilityMessageCommand {
     bool send = false;
     int msg_type = 0;
@@ -61,6 +67,22 @@ inline ResolvedCompatibilityCountermeasureCommand
 resolve_compatibility_countermeasure_command(const EntityT &entity) {
     return resolve_compatibility_countermeasure_command(entity.template get<PilotAction>(),
                                                         entity.template get<ActionCommand>());
+}
+
+inline ResolvedJammerCommand resolve_jammer_command(const PilotAction *pilot) {
+    ResolvedJammerCommand resolved;
+    if (const PilotAction *active_pilot = active_pilot_action(pilot)) {
+        resolved.commanded = true;
+        resolved.transmit = active_pilot->jammer_transmit;
+        resolved.mode_code = active_pilot->jammer_mode;
+    }
+    return resolved;
+}
+
+template <typename EntityT>
+    requires(!std::is_pointer_v<std::remove_reference_t<EntityT>>)
+inline ResolvedJammerCommand resolve_jammer_command(const EntityT &entity) {
+    return resolve_jammer_command(entity.template get<PilotAction>());
 }
 
 inline bool resolved_compatibility_jettison_tanks(const PilotAction *pilot,

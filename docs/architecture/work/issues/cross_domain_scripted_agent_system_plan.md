@@ -2685,14 +2685,37 @@ to a dedicated owner-local evidence document.
   native instrument resource projection for the selected response doctrine,
   requires a complete scripted decision trace, and reruns each seed in the
   same process for exact JSON replay equality.
-- Evidence: the source boundary test, Python compilation, and `git diff
-  --check` are the initial gate for this runner. Its native scenario execution
-  remains blocked in this worktree because the local compiled `ef_py` artifact
-  is absent.
-- Boundary decision: the accepted EW response/replay gate is now executable
-  and fail-closed for the existing countermeasure boundary. It does not claim
-  jammer or ESM action ownership, communication-loss/data-link semantics,
-  terminal EW objectives, or Air `playable` promotion.
+- Evidence: the Air EW contract suite passed `13 passed`; the Visual Studio
+  Ninja build completed `ef_core`, `ef_py`, and `ef_test`; the accepted seed
+  `20260516` ran for `120` steps twice with exact JSON replay equality,
+  launch-warning/request parity, and native countermeasure inventory
+  monotonicity. Python compilation, generated composition checks, and
+  `git diff --check` passed. The gate output records
+  `playable_boundary=ew_response_demo_without_terminal_objective`.
+- Boundary decision: the accepted EW response/replay gate is executable and
+  fail-closed for the countermeasure boundary. The gate still does not claim
+  terminal EW objectives, communication-loss/data-link semantics, or Air
+  `playable` promotion.
+
+### 2026-10-05 — Air EW jammer command owner and versioned response slice
+
+- Change batch: extend the opt-in `air_ew_hybrid_v2` action surface with
+  `jammer_transmit` and a quantized jammer technique code; add the typed
+  scripted jammer doctrine and burst countermeasure program; resolve the
+  fields through `PilotAction` and the legacy command bridge; and add the
+  native `EW_Jammer_Control` owner with instrument projection for active state,
+  technique, and transmit start time. The existing v1 action indices remain
+  unchanged.
+- Evidence: `air_ew_hybrid_v2` compiled and ran through the maintained
+  head-on scenario; the demo observed jammer request and native transmit
+  steps, while the v2 contract tests passed as part of `13 passed`. The
+  composition manifest and generated authority artifacts were regenerated and
+  validated, including the migration closure and dependency census with zero
+  findings.
+- Boundary decision: jammer activation now has an Air-native command owner
+  and a versioned transport seam. ESM interpretation, jammer effectiveness,
+  multi-aircraft EW coordination, terminal objectives, and canonical action
+  mode admission remain open; no `playable` promotion is made.
 
 ### 2026-09-27 — Direct compiled simulation backend provider
 

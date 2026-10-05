@@ -38,5 +38,7 @@ void bind_command_pilot_action(nb::module_ &m) {
         .def_rw("jettison_emergency", &PilotAction::jettison_emergency)
         .def_rw("program_chaff", &PilotAction::program_chaff)
         .def_rw("program_flare", &PilotAction::program_flare)
+        .def_rw("jammer_transmit", &PilotAction::jammer_transmit)
+        .def_rw("jammer_mode", &PilotAction::jammer_mode)
         .def_rw("active", &PilotAction::active);
 }

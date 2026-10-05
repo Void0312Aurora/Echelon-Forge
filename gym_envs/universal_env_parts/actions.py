@@ -7,6 +7,7 @@ from .naval_actions import build_naval_station_action_transport, is_naval_statio
 from .spaces import (
     AIR_COMBAT_HYBRID_V1_ACTION_MODE,
     AIR_EW_HYBRID_V1_ACTION_MODE,
+    AIR_EW_HYBRID_V2_ACTION_MODE,
     expected_action_dim,
 )
 
@@ -41,18 +42,28 @@ def is_air_combat_hybrid_action_mode(action_mode: str) -> bool:
     return str(action_mode) in {
         AIR_COMBAT_HYBRID_V1_ACTION_MODE,
         AIR_EW_HYBRID_V1_ACTION_MODE,
+        AIR_EW_HYBRID_V2_ACTION_MODE,
     }
 
 
 def is_air_ew_hybrid_action_mode(action_mode: str) -> bool:
-    return str(action_mode) == AIR_EW_HYBRID_V1_ACTION_MODE
+    return str(action_mode) in {AIR_EW_HYBRID_V1_ACTION_MODE, AIR_EW_HYBRID_V2_ACTION_MODE}
+
+
+def jammer_mode_code(value: float) -> int:
+    """Floor-quantize the EW v2 jammer technique slot."""
+
+    return int(np.floor(np.clip(float(value), 0.0, 2.0)))
 
 
 def air_combat_hybrid_effective_action(action: np.ndarray, *, previous_intent=None) -> np.ndarray:
     raw = np.asarray(action, dtype=np.float32).reshape(-1)
     combat_dim = expected_action_dim(AIR_COMBAT_HYBRID_V1_ACTION_MODE)
-    ew_dim = expected_action_dim(AIR_EW_HYBRID_V1_ACTION_MODE)
-    if raw.size not in {combat_dim, ew_dim}:
+    ew_dims = {
+        expected_action_dim(AIR_EW_HYBRID_V1_ACTION_MODE),
+        expected_action_dim(AIR_EW_HYBRID_V2_ACTION_MODE),
+    }
+    if raw.size not in {combat_dim, *ew_dims}:
         raise ValueError(
             f"Action shape mismatch for action_mode='{AIR_COMBAT_HYBRID_V1_ACTION_MODE}': "
             f"got {raw.shape}."
@@ -74,7 +85,7 @@ def air_combat_hybrid_effective_action(action: np.ndarray, *, previous_intent=No
     # Air transport path; rounding would make half-step actions disagree with
     # the direct facade adapter.
     effective_prefix[11] = float(np.floor(np.clip(prefix[11], 0.0, 7.0)))
-    if raw.size == ew_dim:
+    if raw.size in ew_dims:
         return np.concatenate((effective_prefix, raw[combat_dim:]), axis=0).astype(
             np.float32,
             copy=False,
@@ -137,7 +148,7 @@ def build_pilot_action(action: np.ndarray, *, action_mode: str, inst_now=None):
         pilot_act.jettison_emergency = False
         return pilot_act
 
-    if action_mode == AIR_EW_HYBRID_V1_ACTION_MODE:
+    if action_mode in (AIR_EW_HYBRID_V1_ACTION_MODE, AIR_EW_HYBRID_V2_ACTION_MODE):
         pilot_act.stick_pitch = float(action[0])
         pilot_act.stick_roll = float(action[1])
         pilot_act.rudder = float(action[2])
@@ -158,6 +169,8 @@ def build_pilot_action(action: np.ndarray, *, action_mode: str, inst_now=None):
         pilot_act.weapon_select_id = int(np.clip(float(action[11]), 0.0, 7.0))
         pilot_act.program_chaff = bool(action[12] > 0.5)
         pilot_act.program_flare = bool(action[13] > 0.5)
+        pilot_act.jammer_transmit = bool(action[14] > 0.5) if action_mode == AIR_EW_HYBRID_V2_ACTION_MODE else False
+        pilot_act.jammer_mode = jammer_mode_code(action[15]) if action_mode == AIR_EW_HYBRID_V2_ACTION_MODE else 0
         pilot_act.jettison_emergency = False
         return pilot_act
 
@@ -178,6 +191,8 @@ def build_pilot_action(action: np.ndarray, *, action_mode: str, inst_now=None):
     pilot_act.weapon_select_id = 0
     pilot_act.program_chaff = False
     pilot_act.program_flare = False
+    pilot_act.jammer_transmit = False
+    pilot_act.jammer_mode = 0
     pilot_act.jettison_emergency = False
 
     if action_mode == "takeoff2":
@@ -202,5 +217,6 @@ __all__ = [
     "half_to_unit",
     "is_air_combat_hybrid_action_mode",
     "is_air_ew_hybrid_action_mode",
+    "jammer_mode_code",
     "normalize_action",
 ]
