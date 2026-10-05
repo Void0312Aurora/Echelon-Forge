@@ -112,6 +112,55 @@ double pd_from_snr_db(const Sensor &sensor, double snr_db) {
     return clamp_sensor_probability(logistic);
 }
 
+constexpr double kReferenceJammerBandwidthMhz = 2000.0;
+
+double jammer_bandwidth_factor(const Jammer &jammer) {
+    if (!std::isfinite(jammer.bandwidth_mhz) || jammer.bandwidth_mhz <= 0.0) {
+        return 0.0;
+    }
+    // The maintained Gen4 suite uses 2 GHz as its baseline. Until sensors
+    // carry an authored RF band, treat wider coverage as full-band and
+    // narrower coverage as the corresponding fraction of available power.
+    return std::clamp(jammer.bandwidth_mhz / kReferenceJammerBandwidthMhz, 0.0, 1.0);
+}
+
+bool jammer_covers_receiver(const Jammer &jammer, const Transform &jammer_transform,
+                            const Transform &receiver_transform) {
+    if (!std::isfinite(jammer.effective_angle) || jammer.effective_angle <= 0.0) {
+        return true; // Legacy/omnidirectional fixture semantics.
+    }
+    const double dx = receiver_transform.x - jammer_transform.x;
+    const double dy = receiver_transform.y - jammer_transform.y;
+    const double bearing_math_deg = std::atan2(dy, dx) * 180.0 / std::numbers::pi_v<double>;
+    const double bearing_nav_deg = math_deg_to_nav_deg(bearing_math_deg);
+    const double relative_bearing =
+        normalize_angle_deg(bearing_nav_deg - jammer_transform.heading);
+    const double half_angle = std::clamp(jammer.effective_angle, 0.0, 360.0) * 0.5;
+    return std::abs(relative_bearing) <= half_angle;
+}
+
+bool jammer_suppresses_radar(const Jammer &jammer, const Transform &jammer_transform,
+                             const Transform &receiver_transform, double target_rcs_m2,
+                             double distance_m) {
+    if (!jammer_installed(jammer) || !jammer.is_active ||
+        (jammer.type != JammingType::NoiseBarrage && jammer.type != JammingType::NoiseSpot) ||
+        !jammer_covers_receiver(jammer, jammer_transform, receiver_transform)) {
+        return false;
+    }
+    const double bandwidth_factor = jammer_bandwidth_factor(jammer);
+    if (bandwidth_factor <= 0.0) {
+        return false;
+    }
+
+    // Burn-through is based on jammer power density. This is deliberately a
+    // bounded proxy until the Sensor contract carries an authored RF band.
+    const double effective_power =
+        std::max(1.0, jammer.power_watts) * bandwidth_factor;
+    const double burn_through_range =
+        283000.0 * std::sqrt(std::max(1.0e-6, target_rcs_m2) / effective_power);
+    return distance_m > burn_through_range;
+}
+
 bool entity_has_radar_emitter(const flecs::entity &entity, Sensor *out_emitter) {
     if (const Sensor *inline_sensor = entity.get<Sensor>()) {
         if (inline_sensor->type == static_cast<int>(SensorType::Radar)) {
@@ -450,22 +499,14 @@ class DefaultSensorModel : public ISensorModel {
                         signal_strength = rcs;
                     }
 
-                    // Phase 3: Suppression Jamming (Burn-Through)
+                    // Phase 3: bounded suppression jamming (burn-through). The
+                    // radar remains visible outside the jammer's beam, below
+                    // its authored bandwidth, or for a DRFM technique; those
+                    // cases require a separate seeker/false-track model.
                     const Jammer *jammer = target_e.get<Jammer>();
-                    if (jammer && jammer->is_active &&
-                        (jammer->type == JammingType::NoiseBarrage ||
-                         jammer->type == JammingType::NoiseSpot)) {
-
-                        // Burn-Through Range: R_bt = K * sqrt(sigma / P_j)
-                        // K derived from R_bt=20km, sigma=5, P_j=1000 => K ~ 283000
-                        const double K_BT = 283000.0;
-                        double p_j = jammer->power_watts > 1.0 ? jammer->power_watts : 1.0;
-                        double r_bt = K_BT * std::sqrt(rcs / p_j);
-
-                        if (dist > r_bt) {
-                            // Jamming Effective: Target hidden (Noise suppressed)
-                            return;
-                        }
+                    if (jammer && jammer_suppresses_radar(*jammer, target_t, owner_transform,
+                                                          rcs, dist)) {
+                        return;
                     }
                 } else if (sensor.type == static_cast<int>(SensorType::Infrared)) {
                     // IR: Prop to Heat / R^2. A flare radiates its authored IR

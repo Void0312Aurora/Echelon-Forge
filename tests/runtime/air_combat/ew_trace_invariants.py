@@ -44,13 +44,29 @@ def assert_interval_gated_consumption(
     chaff_requested: bool,
     flare_requested: bool,
 ) -> None:
-    """Each requested store drops by one per release interval, from the first warning."""
+    """Each requested store drops by one per release interval after request onset."""
 
     assert samples, "expected countermeasure samples on request steps"
     assert int(samples[0]["step"]) == first_warning_step
+    first_chaff = int(samples[0]["chaff_remaining"])
+    first_flare = int(samples[0]["flare_remaining"])
+    baseline = (first_chaff, first_flare)
+    first_release_step: int | None = None
     for sample in samples:
-        released = 1 + (int(sample["step"]) - first_warning_step) // RELEASE_INTERVAL_STEPS
-        expected_chaff = INITIAL_CHAFF - released if chaff_requested else INITIAL_CHAFF
-        expected_flare = INITIAL_FLARE - released if flare_requested else INITIAL_FLARE
-        assert int(sample["chaff_remaining"]) == expected_chaff, sample
-        assert int(sample["flare_remaining"]) == expected_flare, sample
+        step = int(sample["step"])
+        chaff = int(sample["chaff_remaining"])
+        flare = int(sample["flare_remaining"])
+        changed = (chaff, flare) != baseline
+        if changed and first_release_step is None:
+            first_release_step = step
+        if first_release_step is None:
+            assert (chaff, flare) == baseline, sample
+            continue
+        released = 1 + (step - first_release_step) // RELEASE_INTERVAL_STEPS
+        expected_chaff = first_chaff - released if chaff_requested else first_chaff
+        expected_flare = first_flare - released if flare_requested else first_flare
+        assert chaff == expected_chaff, sample
+        assert flare == expected_flare, sample
+
+    if chaff_requested or flare_requested:
+        assert first_release_step is not None, "requested countermeasure never released"

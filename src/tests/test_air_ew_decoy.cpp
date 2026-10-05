@@ -139,6 +139,45 @@ bool lowest_serial_capture_wins(SimulationKernel &kernel, bool reverse_contacts)
     return missile.target_id == first;
 }
 
+bool radar_sees_jammer_target(const Jammer &jammer, double target_heading_deg) {
+    SimulationKernel kernel;
+    kernel.reset(180);
+    auto owner = kernel.spawn_unit(Side::Blue, "Aircraft", 0.0, 0.0, kAltitudeM, 0.0, 0.0, 0.0,
+                                   0.0, 0.0, 0.0);
+    REQUIRE(owner.is_valid());
+
+    auto lease = kernel.acquire_world_lease();
+    flecs::world &world = lease.world();
+    auto target = world.entity()
+                      .set<Transform>({0.0, 30000.0, kAltitudeM, target_heading_deg, 0.0, 0.0})
+                      .set<Velocity>({0.0, 0.0, 0.0})
+                      .set<KeyEntity>({UnitType::Aircraft})
+                      .set<Alliance>({Side::Red})
+                      .set<RCSProfile>({5.0, 5.0, 5.0})
+                      .set<Jammer>(jammer);
+    REQUIRE(target.is_valid());
+    stamp_stable_serial(target);
+
+    Sensor radar{};
+    radar.type = static_cast<int>(SensorType::Radar);
+    radar.max_range = 100000.0;
+    radar.fov_deg = 360.0;
+    radar.detection_prob = 1.0;
+    radar.range_power = 50.0;
+    radar.reference_snr_db = 100.0;
+    radar.reference_range_m = 100000.0;
+    radar.reference_rcs_m2 = 5.0;
+    radar.pfa = 1.0e-6;
+
+    ContactList contacts;
+    auto model = make_default_sensor_model();
+    const Transform owner_transform = *world.entity(owner.id()).get<Transform>();
+    model->scan(world, world.entity(owner.id()), owner_transform, radar, contacts, 0.0);
+    return std::find_if(contacts.contacts.begin(), contacts.contacts.end(),
+                        [&](const Detection &det) { return det.target_id == target.id(); }) !=
+           contacts.contacts.end();
+}
+
 } // namespace
 
 TEST_SUITE("air_ew_decoy") {
@@ -445,5 +484,17 @@ TEST_SUITE("air_ew_decoy") {
         const double dist_sq = 2000.0 * 2000.0;
         CHECK(flare_det->signal_strength == doctest::Approx(640.0 / dist_sq));
         CHECK(find(chaff.id()) == contacts.contacts.end());
+    }
+
+    TEST_CASE("noise jamming is bounded by beam, bandwidth, and technique") {
+        const Jammer full_band_beam{true, 1000.0, 2000.0, JammingType::NoiseBarrage, 60.0};
+        CHECK_FALSE(radar_sees_jammer_target(full_band_beam, 180.0));
+        CHECK(radar_sees_jammer_target(full_band_beam, 0.0));
+
+        const Jammer narrow_band_beam{true, 1000.0, 100.0, JammingType::NoiseBarrage, 60.0};
+        CHECK(radar_sees_jammer_target(narrow_band_beam, 180.0));
+
+        const Jammer drfm_beam{true, 1000.0, 2000.0, JammingType::DeceptionDRFM, 60.0};
+        CHECK(radar_sees_jammer_target(drfm_beam, 180.0));
     }
 }

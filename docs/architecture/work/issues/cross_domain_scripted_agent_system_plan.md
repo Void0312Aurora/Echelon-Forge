@@ -3293,3 +3293,26 @@ to a dedicated owner-local evidence document.
   `151 passed, 1 skipped`; Cordis package tests passed `27/27`; closure
   validation passed. This refresh changes evidence identities only; it does not
   widen the held Node-host or broader-profile boundaries.
+
+### 2026-10-05 — Air EW bounded jammer effectiveness slice
+
+- Starting commit: `4565986f9`.
+- Change batch: make radar suppression depend on the authored jammer contract:
+  active installed NoiseBarrage/NoiseSpot transmitters now use power scaled by
+  the maintained 2 GHz Gen4 bandwidth baseline and must cover the radar
+  receiver with their effective beam. The existing burn-through proxy remains
+  bounded and deterministic. The EW replay invariant now treats the first
+  inventory decrement as request onset, so pre-release warning frames are
+  checked against the authored baseline rather than an assumed immediate
+  release.
+- Evidence: the rebuilt native `ef_test` passed the complete `air_ew_decoy`
+  suite (`235` test cases, `154696` assertions), including beam-in/beam-out,
+  narrow-band, and DRFM cases. The focused Python EW suite passed `18 passed`.
+  The native target compiled under the configured Visual Studio environment and
+  `git diff --check` is clean.
+- Boundary decision: this closes only the bounded noise-jammer visibility
+  slice. DRFM false-track/deception behavior remains intentionally unmodeled,
+  because no radar RF band is authored in the current `Sensor` contract.
+  ESM sensitivity/classification semantics, multi-aircraft EW parity, terminal
+  objective closure, and canonical action-mode admission remain open; Air is
+  still `playable_candidate`.
