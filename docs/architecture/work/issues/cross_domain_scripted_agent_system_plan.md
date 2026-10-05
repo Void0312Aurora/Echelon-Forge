@@ -3333,3 +3333,24 @@ to a dedicated owner-local evidence document.
   dBm threshold; no arbitrary conversion was added. DRFM false tracks,
   multi-aircraft EW parity, terminal objective closure, and canonical
   action-mode admission remain open; Air is still `playable_candidate`.
+
+### 2026-10-05 — Air EW cooperative jammer routing probe
+
+- Starting commit: `3a025e441`.
+- Change batch: make the maintained cooperative EW runner accept an optional
+  `jammer_doctrine`. With `self_protect_on_lock`, it selects the opt-in
+  `air_ew_hybrid_v2` action surface, passes a 16-element action contract to
+  each slot, and records both the per-slot jammer request and the native
+  `jammer_transmitting` projection. The default path remains the v1
+  countermeasure route.
+- Evidence: the hostile 2v2 scenario at seed `20260516` ran for the full
+  204-step budget; both slots emitted jammer requests and each request trace
+  matched its native transmit trace. The new paired-run test reproduces the
+  owner roster, warnings, countermeasure samples, jammer traces, opponent
+  reports, decisions, and runtime identities. The focused cooperative EW
+  suite passed with this v2 route.
+- Boundary decision: this closes only the multi-aircraft v2 command/state
+  routing slice. It does not establish jammer effectiveness in a terminal
+  combat objective, DRFM false-track behavior, RF-band calibration, or
+  canonical `python.env_config.ACTION_MODES` admission; v2 remains opt-in
+  and Air remains `playable_candidate`.

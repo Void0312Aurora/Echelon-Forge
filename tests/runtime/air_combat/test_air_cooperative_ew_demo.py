@@ -89,6 +89,46 @@ def test_cooperative_ew_demo_replays_owner_and_two_slot_trace() -> None:
     assert first["scripted_runtime_identity"] == second["scripted_runtime_identity"]
 
 
+def test_cooperative_ew_v2_routes_jammer_per_slot_and_replays() -> None:
+    first = run_demo(
+        scenario_path=_SCENARIO_PATH,
+        seed=20260516,
+        max_steps=_MAX_STEPS,
+        response_doctrine="countermeasure_ready",
+        jammer_doctrine="self_protect_on_lock",
+    )
+    second = run_demo(
+        scenario_path=_SCENARIO_PATH,
+        seed=20260516,
+        max_steps=_MAX_STEPS,
+        response_doctrine="countermeasure_ready",
+        jammer_doctrine="self_protect_on_lock",
+    )
+
+    assert first["action_mode"] == "air_ew_hybrid_v2"
+    assert first["jammer_doctrine"] == "self_protect_on_lock"
+    assert first["steps"] == _MAX_STEPS
+    assert first["terminated"] == [False, False]
+    assert all(first["jammer_request_steps"][slot] for slot in range(2))
+    assert first["jammer_request_steps"] == first["jammer_transmit_steps"]
+    for key in (
+        "steps",
+        "terminated",
+        "truncated",
+        "termination_reasons",
+        "roster",
+        "launch_warning_steps",
+        "countermeasure_request_steps",
+        "countermeasure_state_samples",
+        "jammer_request_steps",
+        "jammer_transmit_steps",
+        "scripted_opponent_reports",
+        "scripted_runtime_decisions",
+    ):
+        assert first[key] == second[key]
+    assert first["scripted_runtime_identity"] == second["scripted_runtime_identity"]
+
+
 def test_cooperative_ew_4v4_routes_all_roster_slots_and_replays() -> None:
     first = run_demo(
         scenario_path=_SCENARIO_4V4_PATH,
