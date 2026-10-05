@@ -941,10 +941,16 @@ class VizSession:
     def pause(self) -> None:
         print("Pause Signal Received")
         self.simulation_paused = True
+        replay_session = self._replay_session
+        if replay_session is not None and replay_session.status == replay_session.RUNNING:
+            replay_session.pause()
 
     def resume(self) -> None:
         print("Resume Signal Received")
         self.simulation_paused = False
+        replay_session = self._replay_session
+        if replay_session is not None and replay_session.status == replay_session.PAUSED:
+            replay_session.resume()
 
     def stop(self) -> None:
         # Signal only; the worker thread owns the env and performs cleanup in
@@ -954,6 +960,9 @@ class VizSession:
         self._stop_event.set()
         self.simulation_running = False
         self.simulation_paused = False
+        replay_session = self._replay_session
+        if replay_session is not None:
+            replay_session.stop()
         self.ready = False
         self.map_data = None
         self.nav_data = None
