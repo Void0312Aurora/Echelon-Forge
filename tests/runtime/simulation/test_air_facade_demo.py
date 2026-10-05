@@ -61,7 +61,7 @@ def test_air_scenario_runtime_owns_compiled_command_chain_and_terminal_lifecycle
         runtime.close()
 
 
-def test_air_scenario_runtime_replays_compiled_path_semantics() -> None:
+def test_air_scenario_runtime_replays_compiled_path_semantics(tmp_path) -> None:
     traces = []
     for _ in range(2):
         backend = create_scenario_backend(
@@ -89,3 +89,5 @@ def test_air_scenario_runtime_replays_compiled_path_semantics() -> None:
     assert first_receipt.digest == second_receipt.digest
     assert first_receipt.as_dict()["digest"] == first_receipt.digest
     assert "entity_keys" not in first_receipt.as_dict()
+    receipt_path = first_receipt.write_json(tmp_path / "air-replay.json")
+    assert receipt_path.read_text(encoding="utf-8").endswith("\n")

@@ -13,6 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Callable, Mapping, Sequence
 
@@ -145,6 +146,16 @@ class AirFacadeReplayReceipt:
             "terminal_reason": self.terminal_reason,
             "digest": self.digest,
         }
+
+    def write_json(self, path: str | Path) -> Path:
+        """Persist the canonical receipt for an external replay check."""
+
+        target = Path(path)
+        target.write_text(
+            json.dumps(self.as_dict(), sort_keys=True, separators=(",", ":"), ensure_ascii=True) + "\n",
+            encoding="utf-8",
+        )
+        return target
 
 
 class AirFacadeScenarioRuntime:
