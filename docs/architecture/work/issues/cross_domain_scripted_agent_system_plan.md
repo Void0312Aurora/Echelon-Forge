@@ -3475,3 +3475,18 @@ to a dedicated owner-local evidence document.
   owned. Visualization lifecycle, default-provider promotion, and a
   named-platform terminal objective remain open; no Air `playable` promotion
   is claimed.
+
+### 2026-10-05 — Authority-field regression alignment
+
+- Change batch: update the standalone Air engagement regression fixture to
+  provide the now-required `engagement_authority_holder_id` in both the
+  maintained command DTO and the facts packet. This keeps the test on the
+  same fail-closed authority contract used by the simulation-owned command
+  chain.
+- Evidence: the previously failing repeat-fire assessment test now passes;
+  the full facade engagement suite is `5 passed, 1 failed`. The remaining
+  failure is the separate native structural-damage expectation and is not a
+  simulation/RL dependency-boundary failure.
+- Boundary decision: the authority-field regression is closed for the
+  decoupling plan. Native weapon geometry/effect evidence remains outside this
+  plan's scope.
