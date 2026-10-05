@@ -12,6 +12,7 @@ MODULES = (
     ROOT / "python" / "simulation" / "air" / "demo.py",
     ROOT / "python" / "simulation" / "air" / "engagement.py",
     ROOT / "python" / "simulation" / "air" / "runtime.py",
+    ROOT / "python" / "simulation" / "air" / "scenario_runtime.py",
     ROOT / "python" / "simulation" / "air" / "ew.py",
     ROOT / "python" / "simulation" / "air" / "coordination.py",
     ROOT / "python" / "simulation" / "air" / "terminal.py",

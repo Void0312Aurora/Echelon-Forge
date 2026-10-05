@@ -3442,3 +3442,28 @@ to a dedicated owner-local evidence document.
 - Boundary decision: this closes observation transport and policy-token
   projection only. It does not make EW action modes canonical, add temporal EW
   history, or establish calibrated EW effects or a playable Air capability.
+
+### 2026-10-05 — Simulation-owned Air command/report orchestration
+
+- Change batch: add `python.simulation.air.scenario_runtime.AirFacadeScenarioRuntime`
+  as the no-RL scenario lifecycle owner. It seeds and resets a scenario
+  provider, materializes neutral Air observations, produces the direct
+  director decision, submits the complete maintained task-order/leader-intent/
+  pilot-report/mission-command chain, projects the execution model output into
+  a native pilot action, advances the provider, and optionally evaluates the
+  event-owned Air terminal state.
+- The direct facade demo now delegates its loop to this runtime. The runtime
+  also exposes per-step command-chain evidence and replay-friendly semantic
+  run evidence. Each slot uses the common `DecisionRuntimeAgent` lifecycle and
+  publishes a seed/reset replay identity; terminal groups may be bound by
+  controlled-roster slot so native entity IDs can change across reset without
+  invalidating the contract.
+- Evidence: the focused facade/demo/backend/observation-boundary suites passed
+  `10 passed`. A compiled `air_combat_1v1_headon_sensor_smoke_v1.json` path ran
+  for three steps twice with equal phases, times, positions, and action norms;
+  one-step command-chain and event-terminal checks stayed `running` with
+  `no_terminal_damage_report` as expected for that smoke fixture.
+- Boundary decision: command/report ordering and provider-owned terminal
+  invocation are now simulation-owned. Cross-process replay receipts,
+  visualization lifecycle, default-provider promotion, and a named-platform
+  terminal objective remain open; no Air `playable` promotion is claimed.
