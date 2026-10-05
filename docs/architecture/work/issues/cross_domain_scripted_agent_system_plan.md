@@ -3269,3 +3269,27 @@ to a dedicated owner-local evidence document.
   assessment, EW/data-link constraints, formation mission parity, accepted
   seed coverage, visualization acceptance, or large-scale Air playable status;
   Air remains `playable_candidate`.
+
+### 2026-10-05 — Air C2 accepted-seed gate and composition evidence refresh
+
+- C2 gate result: the rebuilt `ef_py` path ran the maintained
+  `air_c2_seed_matrix.py` runner with default seeds `0,1,2`. Seed `0` stopped
+  at step `14951` with `off_runway_terminate`,
+  `mission_status=[0,0,0,-1]`, final command code `4`,
+  `c2_report_valid=true`, and `final_on_runway_geom=0.0`. A zero-randomization
+  seed `7` replay reproduced the same terminal geometry class. The C2 task
+  sequence reached `TASK_SCRAMBLE -> TASK_CAP -> TASK_RTB ->
+  TASK_RECOVER_LAND`; the seed-0 same-process replay was byte-equal, so the
+  remaining failure is terminal lateral landing geometry rather than replay
+  nondeterminism or missing C2 report closure.
+- Boundary decision: the prior single-seed C2 success record remains historical
+  evidence, but the current accepted-seed gate is not passed. Air remains
+  `playable_candidate`; do not promote the route until the controller lands
+  inside the strict runway geometry for the accepted seed set.
+- Composition evidence refresh: the current branch regenerated the Cordis
+  profile bundle/package pins, run-receipt vector, package provenance and
+  diagnostics, P7 native/Python parity evidence, semantic reference, and P8
+  migration closure from the rebuilt current tree. The composition suite passed
+  `151 passed, 1 skipped`; Cordis package tests passed `27/27`; closure
+  validation passed. This refresh changes evidence identities only; it does not
+  widen the held Node-host or broader-profile boundaries.
