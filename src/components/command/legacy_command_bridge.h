@@ -103,9 +103,8 @@ inline bool resolved_compatibility_jettison_tanks(const ActionCommand *legacy_ac
 template <typename EntityT>
     requires(!std::is_pointer_v<std::remove_reference_t<EntityT>>)
 inline bool resolved_compatibility_jettison_tanks(const EntityT &entity) {
-    return resolved_compatibility_jettison_tanks(
-        entity.template get<PilotAction>(),
-        entity.template get<ActionCommand>());
+    return resolved_compatibility_jettison_tanks(entity.template get<PilotAction>(),
+                                                 entity.template get<ActionCommand>());
 }
 
 inline ResolvedCompatibilityMessageCommand

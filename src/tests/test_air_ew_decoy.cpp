@@ -142,8 +142,8 @@ bool lowest_serial_capture_wins(SimulationKernel &kernel, bool reverse_contacts)
 bool radar_sees_jammer_target(const Jammer &jammer, double target_heading_deg) {
     SimulationKernel kernel;
     kernel.reset(180);
-    auto owner = kernel.spawn_unit(Side::Blue, "Aircraft", 0.0, 0.0, kAltitudeM, 0.0, 0.0, 0.0,
-                                   0.0, 0.0, 0.0);
+    auto owner = kernel.spawn_unit(Side::Blue, "Aircraft", 0.0, 0.0, kAltitudeM, 0.0, 0.0, 0.0, 0.0,
+                                   0.0, 0.0);
     REQUIRE(owner.is_valid());
 
     auto lease = kernel.acquire_world_lease();
@@ -181,8 +181,8 @@ bool radar_sees_jammer_target(const Jammer &jammer, double target_heading_deg) {
 EmitterDetection esm_detection_for_classifier(bool classify_emitters) {
     SimulationKernel kernel;
     kernel.reset(181);
-    auto owner = kernel.spawn_unit(Side::Blue, "Aircraft", 0.0, 0.0, kAltitudeM, 0.0, 0.0, 0.0,
-                                   0.0, 0.0, 0.0);
+    auto owner = kernel.spawn_unit(Side::Blue, "Aircraft", 0.0, 0.0, kAltitudeM, 0.0, 0.0, 0.0, 0.0,
+                                   0.0, 0.0);
     REQUIRE(owner.is_valid());
 
     auto lease = kernel.acquire_world_lease();

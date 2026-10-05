@@ -133,8 +133,7 @@ bool jammer_covers_receiver(const Jammer &jammer, const Transform &jammer_transf
     const double dy = receiver_transform.y - jammer_transform.y;
     const double bearing_math_deg = std::atan2(dy, dx) * 180.0 / std::numbers::pi_v<double>;
     const double bearing_nav_deg = math_deg_to_nav_deg(bearing_math_deg);
-    const double relative_bearing =
-        normalize_angle_deg(bearing_nav_deg - jammer_transform.heading);
+    const double relative_bearing = normalize_angle_deg(bearing_nav_deg - jammer_transform.heading);
     const double half_angle = std::clamp(jammer.effective_angle, 0.0, 360.0) * 0.5;
     return std::abs(relative_bearing) <= half_angle;
 }
@@ -154,8 +153,7 @@ bool jammer_suppresses_radar(const Jammer &jammer, const Transform &jammer_trans
 
     // Burn-through is based on jammer power density. This is deliberately a
     // bounded proxy until the Sensor contract carries an authored RF band.
-    const double effective_power =
-        std::max(1.0, jammer.power_watts) * bandwidth_factor;
+    const double effective_power = std::max(1.0, jammer.power_watts) * bandwidth_factor;
     const double burn_through_range =
         283000.0 * std::sqrt(std::max(1.0e-6, target_rcs_m2) / effective_power);
     return distance_m > burn_through_range;
@@ -507,8 +505,8 @@ class DefaultSensorModel : public ISensorModel {
                     // its authored bandwidth, or for a DRFM technique; those
                     // cases require a separate seeker/false-track model.
                     const Jammer *jammer = target_e.get<Jammer>();
-                    if (jammer && jammer_suppresses_radar(*jammer, target_t, owner_transform,
-                                                          rcs, dist)) {
+                    if (jammer &&
+                        jammer_suppresses_radar(*jammer, target_t, owner_transform, rcs, dist)) {
                         return;
                     }
                 } else if (sensor.type == static_cast<int>(SensorType::Infrared)) {
