@@ -3404,3 +3404,22 @@ to a dedicated owner-local evidence document.
   parity, or final Air `playable` status. Requests may continue after the
   native jammer transmit window, so request presence is not an effectiveness
   result.
+
+### 2026-10-05 — Air EW opt-in RL observation projection
+
+- Starting commit: `a12f6993a`.
+- Change batch: add the opt-in `ew_state` observation key to the maintained
+  single-world and cooperative batch runtimes. The six-element float32 vector
+  projects native countermeasure inventory/release timing and jammer
+  transmit/mode timing through the declared observation owner. Transformer and
+  visual Transformer extractors add a token only when that key is present;
+  temporal extraction rejects it explicitly because no EW history contract
+  exists. The default observation key set and shapes remain unchanged.
+- Evidence: the focused RL/EW and environment-configuration tests passed
+  `38 passed`; the policy transformer/optimizer regressions passed in the same
+  run. The action modes `air_ew_hybrid_v1/v2` remain available to direct
+  diagnostics and composed runners but are not added to canonical
+  `python.env_config.ACTION_MODES` by this slice.
+- Boundary decision: this closes observation transport and policy-token
+  projection only. It does not make EW action modes canonical, add temporal EW
+  history, or establish calibrated EW effects or a playable Air capability.

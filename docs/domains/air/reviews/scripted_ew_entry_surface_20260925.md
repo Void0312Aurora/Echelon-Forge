@@ -138,6 +138,13 @@ transmit window; this is command/state evidence, not jammer effectiveness.
 The generic targets, uncalibrated jammer proxy, and inventory-only
 countermeasure behavior keep this below a playable EW claim.
 
+The RL-facing observation bridge now exposes an opt-in `ew_state` key with
+native countermeasure and jammer state/timing. It is wired through single-world
+and cooperative batch observations and adds a Transformer token only when the
+key is declared. The default observation shapes are unchanged, temporal
+extractors reject the key until an EW history contract exists, and
+`air_ew_hybrid_v1/v2` remain outside canonical `ACTION_MODES` admission.
+
 The EW path must remain Air-owned for jammer modes, RWR/ESM interpretation,
 countermeasure resources, release cadence, and threat-response doctrine. Only
 the identity, authority, clock, provenance, communication, and lifecycle
@@ -170,7 +177,11 @@ envelope may be shared with other domains.
    hostile cooperative v2 request/native projection, and the cooperative
    terminal replay are now covered. Full formation parity and any `playable`
    label remain open.
-6. **Cooperative hostile-threat owner:** scripted opponents are now built and
+6. **RL observation gate:** the opt-in `ew_state` vector and policy-token
+   projection are covered for single-world and cooperative batch runtimes;
+   default observation keys remain stable. Temporal EW history and canonical
+   action-mode admission remain open.
+7. **Cooperative hostile-threat owner:** scripted opponents are now built and
    updated once by the shared-world routing loader; non-owner slot loaders do
    not duplicate those controllers. The maintained 2v2 scenario proves this
    owner split, source-driven response, and paired-run replay. Its terminal
