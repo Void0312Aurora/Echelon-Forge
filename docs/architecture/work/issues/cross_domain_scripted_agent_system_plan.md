@@ -3359,3 +3359,25 @@ to a dedicated owner-local evidence document.
   and the EW runner has no weapon-employment owner. A separate scenario must
   combine an EW threat with a terminal objective before terminal EW closure
   can be claimed.
+
+### 2026-10-05 — Air EW single-aircraft terminal composition
+
+- Starting commit: `89c5da967`.
+- Change batch: migrate the maintained `air.combat_ew.c2_roe_ew_scripted`
+  composition, which preserves the 12-element C2/ROE engagement prefix and
+  appends the versioned EW v1/v2 tail. Add a hostile 1v1 generic-Aircraft
+  terminal surrogate with a scripted Red missile owner, a direct diagnostic,
+  and model/runtime regression tests. The fixture reads native launch warning,
+  countermeasure inventory, jammer transmission, C2/ROE release acceptance,
+  and terminal combat state; it does not write native components from Python.
+- Evidence: the combined Air/EW regression passed `34 passed`. With seed
+  `20260516` and `air_ew_hybrid_v2`, the fixture accepted and executed the
+  Blue release at step `2`, produced continuous launch-warning and
+  countermeasure requests at steps `163..201`, projected native jammer
+  transmission through step `200`, and terminated at step `201` with
+  `combat_win`. The paired v1/v2 and same-seed replay assertions passed.
+- Boundary decision: this closes the bounded single-aircraft terminal
+  composition and native EW state/readback slice. It does not claim calibrated
+  seeker decoy effects, calibrated jammer burn-through, DRFM false tracks,
+  RF-band sensitivity semantics, cooperative terminal EW closure, canonical
+  action-mode admission, or final Air `playable` status.
