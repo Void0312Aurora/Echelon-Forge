@@ -1,0 +1,154 @@
+{
+  "scenario_name": "Cooperative Air 2v2 Scripted C2 ROE EW Terminal V1",
+  "description": "Two scripted Blue aircraft share one Air world, engage two generic targets, and answer world-owned Red scripted missile launches with native countermeasure and jammer actions before the shared terminal objective closes.",
+  "realism_gradient": {
+    "domain": "air_combat",
+    "workline": "cooperative_2v2_c2_roe_ew",
+    "stage": "A1-S2-terminal-ew",
+    "stage_name": "cooperative_multi_aircraft_terminal_surrogate_with_ew_self_protection",
+    "training_goal": "Prove per-slot C2/ROE release ownership, hostile source-specific launch warnings, native EW response state, and shared terminal closure.",
+    "engagement_scope": "two-ship BVR-like engagement against two generic targets with scripted hostile missiles",
+    "deferred_realism": [
+      "target evasion",
+      "calibrated named-platform vulnerability",
+      "chaff/flare seeker seduction",
+      "calibrated jammer burn-through",
+      "DRFM false-track behavior",
+      "datalink degradation and tactical reassignment",
+      "formation mission parity beyond the declared roster contract"
+    ]
+  },
+  "environment": {
+    "time_step": 0.05,
+    "max_steps": 600,
+    "terrain_type": "flat",
+    "wind": {"speed_mps": 0.0, "dir_from_deg": 0.0, "shear_mps_per_km": 0.0}
+  },
+  "mission_command": {
+    "command_code": 2,
+    "target_heading": 0.0,
+    "target_altitude": 7000.0,
+    "target_speed": 230.0,
+    "assigned_target_name": "Red_A",
+    "roe_state": 2,
+    "wcs_state": 2,
+    "authorization_to_fire": true,
+    "engage_order_state": 2,
+    "target_identity_state": 3,
+    "shot_policy_state": 3,
+    "shot_budget_remaining": 1,
+    "pending_assessment": false,
+    "own_missiles_in_flight_count": 0
+  },
+  "entities": [
+    {
+      "name": "Blue_A_Lead",
+      "type": "F-16C_Block50",
+      "side": "Blue",
+      "pos": [0.0, 0.0, 7000.0],
+      "vel": [0.0, 230.0, 0.0],
+      "heading": 0.0,
+      "is_agent": true,
+      "ammo": {"missiles_remaining": 4, "max_missiles": 4},
+      "weapon_cooldown": {"cooldown_s": 0.75, "last_fire_time": -1.0}
+    },
+    {
+      "name": "Blue_B_Wing",
+      "type": "F-16C_Block50",
+      "side": "Blue",
+      "pos": [-180.0, -120.0, 7000.0],
+      "vel": [0.0, 230.0, 0.0],
+      "heading": 0.0,
+      "is_agent": true,
+      "ammo": {"missiles_remaining": 4, "max_missiles": 4},
+      "weapon_cooldown": {"cooldown_s": 0.75, "last_fire_time": -1.0}
+    },
+    {
+      "name": "Red_A",
+      "type": "Aircraft",
+      "side": "Red",
+      "pos": [0.0, 12000.0, 7000.0],
+      "vel": [0.0, -160.0, 0.0],
+      "heading": 180.0,
+      "scripted_agent": {
+        "name": "red_scripted_agent",
+        "target_name": "Blue_A_Lead",
+        "cruise_speed_mps": 220.0,
+        "attack_speed_mps": 260.0,
+        "defensive_speed_mps": 290.0,
+        "threat_range_m": 9000.0,
+        "merge_range_m": 3500.0,
+        "fire_range_m": 9000.0,
+        "beam_offset_deg": 85.0
+      },
+      "ammo": {"missiles_remaining": 4, "max_missiles": 4},
+      "weapon_cooldown": {"cooldown_s": 0.75, "last_fire_time": -1.0}
+    },
+    {
+      "name": "Red_B",
+      "type": "Aircraft",
+      "side": "Red",
+      "pos": [-180.0, 12180.0, 7000.0],
+      "vel": [0.0, -160.0, 0.0],
+      "heading": 180.0,
+      "scripted_agent": {
+        "name": "red_scripted_agent",
+        "target_name": "Blue_B_Wing",
+        "cruise_speed_mps": 220.0,
+        "attack_speed_mps": 260.0,
+        "defensive_speed_mps": 290.0,
+        "threat_range_m": 9000.0,
+        "merge_range_m": 3500.0,
+        "fire_range_m": 9000.0,
+        "beam_offset_deg": 85.0
+      },
+      "ammo": {"missiles_remaining": 4, "max_missiles": 4},
+      "weapon_cooldown": {"cooldown_s": 0.75, "last_fire_time": -1.0}
+    }
+  ],
+  "cooperative_roster": {
+    "team_id": 7103,
+    "element_id": 7103,
+    "policy_route": "shared_execution",
+    "members": [
+      {
+        "entity": "Blue_A_Lead",
+        "role_code": 21,
+        "formation_role_id": "ElementLead",
+        "relative_slot_code": 11,
+        "policy_route": "shared_execution",
+        "mission_command_overrides": {"assigned_target_name": "Red_A"}
+      },
+      {
+        "entity": "Blue_B_Wing",
+        "role_code": 22,
+        "formation_role_id": "Wingman",
+        "relative_slot_code": 12,
+        "policy_route": "shared_execution",
+        "reference_entity": "Blue_A_Lead",
+        "mission_command_overrides": {"assigned_target_name": "Red_B"}
+      }
+    ]
+  },
+  "objectives": [
+    {
+      "type": "conditional",
+      "reward": 1500.0,
+      "conditions": [{"property": "target_active", "op": "<=", "value": 0.0}]
+    }
+  ],
+  "rewards": {
+    "survival": 0.0,
+    "crash_penalty": -1000.0,
+    "air_combat_release_shaping_enabled": true,
+    "air_combat_first_release_bonus": 300.0,
+    "air_combat_release_bonus": 0.0,
+    "air_combat_repeat_release_penalty": -5.0,
+    "air_combat_invalid_fire_penalty": 0.0,
+    "air_combat_c2_roe_release_discipline_enabled": true,
+    "air_combat_roe_valid_authorized_release_bonus": 50.0,
+    "air_combat_roe_authorized_first_release_bonus": 100.0,
+    "air_combat_roe_pending_assessment_penalty": 0.0,
+    "air_combat_roe_authorized_reattack_bonus": 0.0
+  }
+}

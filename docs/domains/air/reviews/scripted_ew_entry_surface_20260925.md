@@ -37,10 +37,11 @@ countermeasure and jammer command/state seams, including a native MAWS
 launch-warning fact, a database-backed EW **state** vocabulary, typed
 RWR-derived intents, a maintained compiled countermeasure action/replay trace,
 and native jammer state reporting, plus a bounded single-aircraft terminal
-surrogate. It does not support a playable EW decision claim. The versioned
+surrogate and a bounded cooperative two-aircraft terminal surrogate. It does
+not support a playable EW decision claim. The versioned
 action extensions remain outside canonical action-mode admission, while
-calibrated ESM/effectiveness semantics and cooperative terminal ownership
-remain incomplete.
+calibrated ESM/effectiveness semantics and cooperative formation parity remain
+incomplete.
 
 ## Direct observation probe
 
@@ -125,8 +126,17 @@ countermeasure requests from step `163` through terminal step `201`, observed
 native jammer transmission through step `200`, and terminated with
 `combat_win`. The v1/v2 and same-seed replay tests reproduce these records.
 This is a single-aircraft generic-surrogate terminal adapter; it does not
-close cooperative terminal EW, calibrated jammer/decoy effects, or canonical
-action-mode admission.
+claim calibrated jammer/decoy effects or canonical action-mode admission. The
+maintained cooperative terminal surrogate
+`cooperative_air_2v2_scripted_c2_roe_ew_terminal_v1.json` now closes a bounded
+two-aircraft shared objective with per-slot target ownership and world-owned
+Red scripted missile threats. At seed `20260516`, both slots released at step
+`2`, Lead warnings ran `163..212`, Wing warnings ran `183..212`, native jammer
+transmission was observed through steps `206` and `211`, and both slots ended
+with `combat_win` at step `212`. The request trace can outlast the native
+transmit window; this is command/state evidence, not jammer effectiveness.
+The generic targets, uncalibrated jammer proxy, and inventory-only
+countermeasure behavior keep this below a playable EW claim.
 
 The EW path must remain Air-owned for jammer modes, RWR/ESM interpretation,
 countermeasure resources, release cadence, and threat-response doctrine. Only
@@ -150,14 +160,16 @@ envelope may be shared with other domains.
    transmit start time. Bounded noise-jammer beam/band suppression is tested;
    calibrated burn-through, RF-band semantics, DRFM effects, and resource
    limits remain open.
-4. **Direct scenario gate:** the single-aircraft terminal surrogate now
+4. **Direct scenario gate:** the single-aircraft terminal surrogate and the
+   cooperative two-aircraft terminal surrogate now
    combines finite inventory, release interval, hostile launch warning, C2/ROE
-   release acceptance, jammer state readback, and terminal `combat_win` in one
-   replayed trace. Cooperative terminal EW and calibrated effect ownership
+   release acceptance, jammer state readback, and terminal `combat_win` in
+   replayed traces. Calibrated effect ownership and formation mission parity
    remain open.
-5. **Replay and multi-aircraft gate:** single-aircraft v1/v2 reset/replay and
-   hostile cooperative v2 request/native projection are now covered. Full
-   cooperative terminal EW replay and any `playable` label remain open.
+5. **Replay and multi-aircraft gate:** single-aircraft v1/v2 reset/replay,
+   hostile cooperative v2 request/native projection, and the cooperative
+   terminal replay are now covered. Full formation parity and any `playable`
+   label remain open.
 6. **Cooperative hostile-threat owner:** scripted opponents are now built and
    updated once by the shared-world routing loader; non-owner slot loaders do
    not duplicate those controllers. The maintained 2v2 scenario proves this

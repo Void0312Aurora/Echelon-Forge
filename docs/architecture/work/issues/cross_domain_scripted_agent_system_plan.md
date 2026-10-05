@@ -3381,3 +3381,26 @@ to a dedicated owner-local evidence document.
   seeker decoy effects, calibrated jammer burn-through, DRFM false tracks,
   RF-band sensitivity semantics, cooperative terminal EW closure, canonical
   action-mode admission, or final Air `playable` status.
+
+### 2026-10-05 — Air EW cooperative terminal composition
+
+- Starting commit: `d83935f62`.
+- Change batch: add `cooperative_air_2v2_scripted_c2_roe_ew_terminal_v1.json`
+  and its RL-independent diagnostic. The runner composes the existing per-slot
+  C2/ROE release model with the versioned EW v2 tail, keeps the Red scripted
+  missile owners world-owned, and records target ownership, launch warnings,
+  countermeasure state, jammer requests/transmission, and terminal state.
+- Evidence: the focused cooperative terminal EW regression passed `2 passed`;
+  the combined EW regression passed `16 passed`. With seed `20260516`, both
+  Blue slots accepted and executed a release at step `2`, received source-driven
+  warnings (Lead `163..212`, Wing `183..212`), issued countermeasure and jammer
+  requests, observed native jammer transmission (Lead through `206`, Wing
+  through `211`), and terminated at step `212` with `combat_win` for both
+  slots. The paired run reproduced the full recorded trace.
+- Boundary decision: this closes a bounded cooperative multi-aircraft terminal
+  surrogate and owner/replay evidence. It does not claim chaff/flare seeker
+  seduction, calibrated jammer burn-through, DRFM false tracks, RF-band
+  sensitivity semantics, canonical action-mode admission, formation mission
+  parity, or final Air `playable` status. Requests may continue after the
+  native jammer transmit window, so request presence is not an effectiveness
+  result.
