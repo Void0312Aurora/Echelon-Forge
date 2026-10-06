@@ -46,9 +46,25 @@ class SimulationExecutionRuntime(Protocol):
     def close(self) -> Any: ...
 
 
+@runtime_checkable
+class SimulationScenarioBackend(Protocol):
+    """Native scenario-provider surface with explicit setup and snapshots."""
+
+    def seed(self, seed: int) -> Any: ...
+
+    def reset(self) -> Any: ...
+
+    def snapshot(self) -> Any: ...
+
+    def step(self, actions: Mapping[Any, Any]) -> Any: ...
+
+    def close(self) -> Any: ...
+
+
 SingleBackendFactory = Callable[..., SimulationBatchBackend]
 CooperativeBackendFactory = Callable[..., SimulationCooperativeBatchBackend]
 ExecutionRuntimeFactory = Callable[..., SimulationExecutionRuntime]
+ScenarioBackendFactory = Callable[..., SimulationScenarioBackend]
 
 
 @dataclass(frozen=True)
@@ -63,14 +79,28 @@ class SimulationBackendRegistration:
     single_factory: SingleBackendFactory | None = None
     cooperative_factory: CooperativeBackendFactory | None = None
     execution_factory: ExecutionRuntimeFactory | None = None
+    scenario_factory: ScenarioBackendFactory | None = None
+    implementation_owner: str = "python.simulation"
+    requires_rl: bool = False
 
     def __post_init__(self) -> None:
         backend_id = str(self.backend_id).strip().lower()
         if not backend_id:
             raise ValueError("simulation backend_id must be non-empty")
-        if self.single_factory is None and self.cooperative_factory is None and self.execution_factory is None:
+        if (
+            self.single_factory is None
+            and self.cooperative_factory is None
+            and self.execution_factory is None
+            and self.scenario_factory is None
+        ):
             raise ValueError("simulation backend must expose at least one factory")
+        implementation_owner = str(self.implementation_owner).strip()
+        if not implementation_owner:
+            raise ValueError("simulation backend implementation_owner must be non-empty")
+        if not isinstance(self.requires_rl, bool):
+            raise TypeError("simulation backend requires_rl must be a bool")
         object.__setattr__(self, "backend_id", backend_id)
+        object.__setattr__(self, "implementation_owner", implementation_owner)
 
 
 _REGISTRATIONS: dict[str, SimulationBackendRegistration] = {}
@@ -104,6 +134,8 @@ def _load_builtin_backend() -> SimulationBackendRegistration:
             "build_single_world_batch_execution_runtime",
             None,
         ),
+        implementation_owner="python.rl.runtime",
+        requires_rl=True,
     )
     _REGISTRATIONS.setdefault(registration.backend_id, registration)
     return _REGISTRATIONS[registration.backend_id]
@@ -115,6 +147,9 @@ def _load_facade_batch_backend() -> SimulationBackendRegistration:
         backend_id="facade_batch",
         single_factory=provider.FacadeBatchBackend,
         cooperative_factory=provider.FacadeBatchBackend,
+        scenario_factory=provider.FacadeBatchBackend,
+        implementation_owner="python.simulation.facade_batch",
+        requires_rl=False,
     )
     _REGISTRATIONS.setdefault(registration.backend_id, registration)
     return _REGISTRATIONS[registration.backend_id]
@@ -133,6 +168,12 @@ def _resolve_backend(backend_id: str) -> SimulationBackendRegistration:
         known = ", ".join(sorted(_REGISTRATIONS)) or "<none>"
         raise KeyError(f"unknown simulation backend {key!r}; registered={known}")
     return registration
+
+
+def get_backend_registration(backend_id: str) -> SimulationBackendRegistration:
+    """Inspect the selected provider and its dependency ownership."""
+
+    return _resolve_backend(backend_id)
 
 
 def create_single_backend(*, backend_id: str = _BUILTIN_BACKEND_ID, **kwargs: Any) -> SimulationBatchBackend:
@@ -166,13 +207,94 @@ def create_single_execution_runtime(
     return factory(**kwargs)
 
 
+def create_scenario_backend(
+    *, backend_id: str = "facade_batch", **kwargs: Any
+) -> SimulationScenarioBackend:
+    """Construct a setup/snapshot scenario provider through the backend seam."""
+
+    factory = _resolve_backend(backend_id).scenario_factory
+    if factory is None:
+        raise ValueError(f"simulation backend {backend_id!r} has no scenario factory")
+    return factory(**kwargs)
+
+
+def resolve_execution_wrapper_spec(
+    config: Mapping[str, Any],
+) -> tuple[type | None, dict[str, Any] | None]:
+    """Resolve an execution wrapper through the neutral simulation boundary.
+
+    The maintained wrapper implementation remains a provider detail. Loading it
+    here keeps environment construction independent from the RL control package
+    while preserving the provider's existing lazy import behavior.
+    """
+
+    provider = import_module("python.rl.control.wrappers")
+    resolver = getattr(provider, "get_action_wrapper_spec")
+    wrapper_class, wrapper_kwargs = resolver(config)
+    return wrapper_class, wrapper_kwargs
+
+
+def create_leader_window_runtime(env: Any) -> Any:
+    """Create the leader-window provider selected by the active execution runtime."""
+
+    provider = import_module("python.rl.runtime.leader_window_runtime")
+    execution_runtime = getattr(env, "_exec_runtime", None)
+    if bool(getattr(env, "execution_world_batch_runtime", False)) and hasattr(
+        execution_runtime, "rollout_window"
+    ):
+        runtime_class = getattr(provider, "WorldBatchLeaderWindowRuntime")
+    else:
+        runtime_class = getattr(provider, "LocalLeaderWindowRuntime")
+    return runtime_class(env)
+
+
+def load_execution_policy(
+    model_path: str,
+    algo_name: str = "auto",
+    device: str = "cpu",
+    fallback_on_error: bool = False,
+) -> Any:
+    """Load a frozen execution policy through the provider boundary."""
+
+    from python.artifact_paths import resolve_artifact_path
+
+    resolved_path = resolve_artifact_path(model_path) or str(model_path)
+    load_path = resolved_path[:-4] if str(resolved_path).endswith(".zip") else str(resolved_path)
+    algo_norm = str(algo_name or "auto").strip()
+    if algo_norm in ("auto", "AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
+        provider = import_module("python.rl.policy_algo.ppo_adaptive_kl")
+        adaptive_kl = getattr(provider, "AdaptiveKLPPO")
+        try:
+            return adaptive_kl.load(load_path, device=device)
+        except Exception:
+            if algo_norm != "auto" and not bool(fallback_on_error):
+                raise
+    stable_baselines = import_module("stable_baselines3")
+    return stable_baselines.PPO.load(load_path, device=device)
+
+
+def create_scenario_runtime_adapter(world_count: int = 1, **kwargs: Any) -> Any:
+    """Create the scenario runtime adapter through the selected provider."""
+
+    provider = import_module("python.rl.runtime.world_batch.adapter")
+    adapter_class = getattr(provider, "RuntimeFacadeAdapter")
+    return adapter_class(int(world_count), **kwargs)
+
+
 __all__ = [
     "SimulationBackendRegistration",
     "SimulationBatchBackend",
     "SimulationCooperativeBatchBackend",
     "SimulationExecutionRuntime",
+    "SimulationScenarioBackend",
     "create_cooperative_backend",
     "create_single_backend",
     "create_single_execution_runtime",
+    "create_scenario_backend",
+    "get_backend_registration",
+    "create_leader_window_runtime",
+    "create_scenario_runtime_adapter",
+    "load_execution_policy",
+    "resolve_execution_wrapper_spec",
     "register_backend",
 ]

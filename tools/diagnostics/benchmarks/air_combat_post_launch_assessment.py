@@ -22,10 +22,7 @@ from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 ensure_repo_imports()
 
-from python.rl.runtime.single_world_batch_runtime import (  # noqa: E402
-    build_single_world_batch_execution_runtime,
-)
-from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv  # noqa: E402
+from python.simulation import create_single_backend  # noqa: E402
 
 
 DEFAULT_SCENARIO = resolve_repo_path(
@@ -54,8 +51,8 @@ def _managed_action() -> np.ndarray:
     return action.reshape(1, -1)
 
 
-def _make_env(args: argparse.Namespace, *, enabled: bool) -> WorldBatchVecEnv:
-    runtime = build_single_world_batch_execution_runtime(
+def _make_env(args: argparse.Namespace, *, enabled: bool):
+    return create_single_backend(
         scenario_path=os.path.abspath(str(args.scenario)),
         env_settings={
             "include_visual": False,
@@ -75,11 +72,10 @@ def _make_env(args: argparse.Namespace, *, enabled: bool) -> WorldBatchVecEnv:
         },
         worker_threads=int(args.worker_threads),
     )
-    return runtime.world_vec
 
 
 def _run_episode(
-    env: WorldBatchVecEnv,
+    env: Any,
     *,
     seed: int,
     post_steps: int,

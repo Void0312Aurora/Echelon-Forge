@@ -374,17 +374,6 @@ GYM_ENVS_PYTHON_RL_RESIDUAL_ALLOWLIST: dict[str, set[tuple[str, str, str]]] = {
     "gym_envs/leader_env_parts/decision_runtime/observations.py": {
         ("python.rl.tasking.bridge", "task_observation_codes", FORM_DEFERRED),
     },
-    "gym_envs/leader_env_parts/execution_runtime/policy_runtime.py": {
-        ("python.rl.runtime.single_world_batch_runtime", "build_single_world_batch_execution_runtime", FORM_DEFERRED),
-        ("python.rl.control.wrappers", "get_action_wrapper_spec", FORM_DEFERRED),
-    },
-    "gym_envs/leader_env_parts/policy.py": {
-        ("python.rl.policy_algo.ppo_adaptive_kl", "AdaptiveKLPPO", FORM_DEFERRED),
-    },
-    "gym_envs/leader_env_parts/runtime_facade.py": {
-        ("python.rl.runtime.leader_window_runtime", "LocalLeaderWindowRuntime", FORM_DEFERRED),
-        ("python.rl.runtime.leader_window_runtime", "WorldBatchLeaderWindowRuntime", FORM_DEFERRED),
-    },
     "gym_envs/scenario_loader/behavior_runtime/command_chain.py": {
         ("python.rl.tasking.bridge", "build_kernel_mission_command", FORM_DEFERRED),
     },

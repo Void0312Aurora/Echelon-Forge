@@ -8,7 +8,6 @@ from typing import Any
 import numpy as np
 
 import ef_py
-from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv
 
 
 def _base_env(env):
@@ -23,7 +22,7 @@ def _single_obs(batch_obs: dict[str, Any]) -> dict[str, Any]:
 
 
 class _BatchSingleWorldProbeView:
-    def __init__(self, vec_env: WorldBatchVecEnv):
+    def __init__(self, vec_env: Any):
         self._vec_env = vec_env
         self._sim_proxy = _BatchSingleWorldSimProxy(vec_env)
 
@@ -65,7 +64,7 @@ class _BatchSingleWorldProbeView:
 
 
 class _BatchSingleWorldSimProxy:
-    def __init__(self, vec_env: WorldBatchVecEnv):
+    def __init__(self, vec_env: Any):
         self._vec_env = vec_env
 
     @property
@@ -101,7 +100,7 @@ class _BatchSingleWorldSimProxy:
 
 
 class _BatchSingleWorldProbeEnv:
-    def __init__(self, vec_env: WorldBatchVecEnv):
+    def __init__(self, vec_env: Any):
         self._vec_env = vec_env
         self._view = _BatchSingleWorldProbeView(vec_env)
 

@@ -46,7 +46,7 @@ def add_common_env_args(
 def make_single_world_batch_env_from_args(args, *, mission_obs_mode: str | None = None):
     bootstrap_repo_imports()
 
-    from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
+    from python.simulation import create_single_execution_runtime
 
     env_settings = {
         "include_visual": bool(getattr(args, "include_visual", False)),
@@ -55,7 +55,7 @@ def make_single_world_batch_env_from_args(args, *, mission_obs_mode: str | None 
     }
     if mission_obs_mode is not None:
         env_settings["mission_obs_mode"] = str(mission_obs_mode)
-    env = build_single_world_batch_execution_runtime(
+    env = create_single_execution_runtime(
         scenario_path=str(args.scenario),
         env_settings=env_settings,
         worker_threads=1,

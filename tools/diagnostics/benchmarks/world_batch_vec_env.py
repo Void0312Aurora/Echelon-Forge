@@ -27,7 +27,7 @@ from python.runtime_bootstrap import configure_sim_log_level, ensure_repo_import
 REPO_ROOT = ensure_repo_imports()
 os.chdir(REPO_ROOT)
 
-from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv  # noqa: E402
+from python.simulation import create_single_backend  # noqa: E402
 import ef_py  # noqa: E402
 from tools.diagnostics.common import (  # noqa: E402
     average_timing_sums,
@@ -214,7 +214,7 @@ def main() -> int:
         "execution_step_batch_prepare": bool(args.execution_step_batch_prepare),
         **env_kwargs,
     }
-    batch_vec = WorldBatchVecEnv(**batch_vec_kwargs)
+    batch_vec = create_single_backend(**batch_vec_kwargs)
     gpu_device_info = gpu_device_info_dict()
     try:
         batch_reset_ms, batch_reset_timing = _time_reset(batch_vec, iters=int(args.reset_iters), seed_base=int(args.seed))

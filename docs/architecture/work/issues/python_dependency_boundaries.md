@@ -41,9 +41,15 @@ transitional and must be registered one edge at a time.
 
 `RedScriptedAgent` is now owned by `python.scenario.runtime.red_scripted_agent`.
 The old `examples.agents` path remains a compatibility export for callers, but
-the maintained scenario loader no longer depends on the examples layer. The
-four direct environment-to-policy/runtime imports remain in the transition
-register until neutral runtime protocols or inversion points replace them.
+the maintained scenario loader no longer depends on the examples layer. No
+direct environment-to-policy/runtime imports remain in the transition register.
+Leader execution runtime construction, wrapper-spec resolution, leader-window
+runtime selection, and frozen execution policy loading now go through
+`python.simulation` and no longer import their RL implementations directly.
+CSG replay adapter creation also uses that provider boundary. The maintained
+policy-evaluation and visualization entries now use the same factories for
+single/cooperative world construction, wrapper resolution, and policy loading;
+their RL provider remains lazy behind `python.simulation`.
 
 ## Verification
 
@@ -65,11 +71,12 @@ The policy-only gate can be inspected or used as a CI command:
 python -m tools.architecture.dependency_policy --format summary
 ```
 
-The current 2026-10-02 baseline from that command is 1,106 Python modules, 2,552
-resolved Python import sites, 560 C/C++ source files, 1,708 quoted include
+The current 2026-10-05 baseline from that command is 1,107 Python modules, 2,547
+resolved Python import sites, 561 C/C++ source files, 1,723 quoted include
 sites, and 72 CMake link sites representing 66 unique target edges. No Python,
 C++ file, or CMake target multi-node cycle is present. The Python policy
-classifies 2,509 edges as allowed, 37 as compatibility, and 6 as transitional;
+classifies 2,510 edges as allowed and 37 as compatibility, with no transitional
+edges remaining;
 there are no unregistered forbidden edges. These counts use the maintained
 scanner scope above and are not expected to equal the issue's initial census
 because that census did not specify identical roots, file suffixes, or edge

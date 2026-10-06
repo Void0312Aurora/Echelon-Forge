@@ -2539,6 +2539,127 @@ to a dedicated owner-local evidence document.
 - Boundary decision: the runtime-facade escape-hatch gate is green again; it
   does not alter the open no-RL WorldBatch provider or Air playable boundary.
 
+### 2026-10-04 — Evaluation and visualization provider boundary closure
+
+- Starting commit: `d74b23a3d`.
+- Change batch: route the maintained policy evaluator, shared evaluation
+  helper, and visualization session through `python.simulation` for execution
+  runtime creation, cooperative/single WorldBatch construction, wrapper
+  resolution, and frozen policy loading. These entries no longer import
+  `python.rl.runtime`, `python.rl.control`, or `python.rl.policy_algo`
+  directly; the existing `world_batch` implementation remains the selected
+  provider and is loaded lazily by the boundary.
+- Evidence: the simulation backend architecture suite passed `11 passed`;
+  the three changed Python entries compiled cleanly and `git diff --check`
+  passed. The broader evaluation contract suite could not collect because
+  this worktree has no local `ef_py` build artifact, which is the repository's
+  existing fail-closed environment guard.
+- Boundary decision: operator evaluation and visualization entry points now
+  share the same simulation selection seam as scripted diagnostics. This does
+  not make the RL provider independent, change learned-policy semantics, or
+  promote the no-RL WorldBatch provider to the default; those remain separate
+  migration work.
+
+### 2026-10-04 — Flight and cooperative diagnostics provider migration
+
+- Change batch: route the runway-drift sweep, takeoff-to-landing diagnostic,
+  cooperative trajectory base, and cooperative trajectory CLI through
+  `python.simulation` for WorldBatch execution, wrapper resolution, and policy
+  loading. The existing explicit PPO fallback behavior is retained behind the
+  provider helper for diagnostic callers.
+- Evidence: the changed diagnostic files compiled cleanly, `git diff --check`
+  passed, and the simulation boundary suite passed after updating its source
+  assertions. The repository policy census reports `2,547` Python import sites,
+  `2,510 allowed`, `37 compatibility`, and zero findings. Full native episode
+  execution remains unavailable in this worktree because no local `ef_py`
+  artifact is present.
+- Boundary decision: maintained flight/cooperative diagnostics now use the
+  same simulation provider seam as evaluation and visualization. The selected
+  `world_batch` implementation remains RL-owned and lazy; this batch does not
+  claim an independent provider or alter the Air capability label.
+
+### 2026-10-04 — Benchmark provider construction migration
+
+- Change batch: route the maintained WorldBatch performance benchmark and
+  Air post-launch assessment benchmark through `python.simulation` for their
+  single-provider construction. Their benchmark-specific native timing and
+  assessment surfaces remain unchanged.
+- Evidence: both benchmark entries compiled cleanly, `git diff --check`
+  passed, the simulation boundary suite passed `13 passed`, and the policy
+  census reports `2,546` Python import sites, `2,509 allowed`, `37
+  compatibility`, and zero findings.
+- Boundary decision: these benchmarks no longer select the RL runtime module
+  directly. Training-internal benchmarks and rollout-governance maintenance
+  scripts remain intentionally RL-owned and are outside this provider slice.
+
+### 2026-10-05 — Air weapon-process probe lazy provider migration
+
+- Change batch: remove module-load imports of the RL wrapper and WorldBatch
+  runtime from the Air weapon-employment process probe and its batch adapter.
+  The default constructor now uses `python.simulation.create_single_backend`;
+  lazy compatibility handles preserve the probe's existing module-level
+  constructor and wrapper override seams.
+- Evidence: the changed files compiled cleanly, `git diff --check` passed, the
+  simulation boundary suite passed `13 passed`, and the policy census reports
+  `2,543` Python import sites, `2,506 allowed`, `37 compatibility`, and zero
+  findings. Native snapshot execution remains blocked by the missing local
+  `ef_py` artifact in this worktree.
+- Boundary decision: this removes the last direct RL runtime selection from
+  the active Air weapon-process diagnostic while retaining its explicit test
+  substitution surface. Training-internal diagnostics and rollout-governance
+  scripts remain RL-owned by design.
+
+### 2026-10-05 — Simulation provider dependency ownership admission
+
+- Change batch: extend `SimulationBackendRegistration` with explicit
+  `implementation_owner` and `requires_rl` metadata, expose the selected
+  registration through `python.simulation.get_backend_registration`, and mark
+  the built-ins explicitly. `world_batch` remains owned by
+  `python.rl.runtime` and requires RL; `facade_batch` is owned by
+  `python.simulation.facade_batch` and does not require RL.
+- Evidence: the backend boundary test now validates metadata types and
+  non-empty ownership values, and exercises both built-in ownership labels
+  through the neutral lookup. The focused simulation architecture suite passed
+  `18 passed`, the dependency census reports `2,545` Python import sites,
+  `2,508 allowed`, `37 compatibility`, and zero findings, and no construction
+  default or provider import path changed in this batch.
+- Boundary decision: the no-RL provider now has an inspectable ownership
+  contract at the registry seam. This does not make `facade_batch` a drop-in
+  replacement for the WorldBatch vector API, and it does not promote the
+  default provider or close the remaining native scenario lifecycle gates.
+
+### 2026-10-05 — Explicit native scenario-provider surface
+
+- Change batch: add `SimulationScenarioBackend`, `scenario_factory`, and
+  `python.simulation.create_scenario_backend()`. The compiled `facade_batch`
+  provider now advertises its setup, snapshot, entity-keyed action, and close
+  lifecycle through this dedicated surface while retaining its existing
+  explicit compatibility construction entry.
+- Evidence: the focused simulation architecture suite passed `19 passed`; the
+  dependency census reports `2,546` Python import sites, `2,509 allowed`,
+  `37 compatibility`, and zero findings. Python compilation and
+  `git diff --check` passed.
+- Boundary decision: the native provider no longer needs to masquerade as a
+  WorldBatch vector implementation when used as a scenario backend. The
+  setup factory is still caller-supplied, and scenario compilation, full reset
+  and replay, terminal orchestration, and default-provider promotion remain
+  open.
+
+### 2026-10-05 — Direct Air facade demo routed through the scenario registry
+
+- Change batch: update `python.simulation.air.demo` to construct its native
+  Air scenario through `create_scenario_backend(backend_id="facade_batch")`.
+  The demo keeps its compiled DTO setup factory and direct Air decision loop,
+  but no longer constructs `FacadeBatchBackend` by class name.
+- Evidence: the focused simulation architecture suite passed `20 passed`, the
+  changed module compiled cleanly, `git diff --check` passed, and the
+  dependency census reports `2,547` Python import sites, `2,510 allowed`,
+  `37 compatibility`, and zero findings.
+- Boundary decision: one maintained no-RL Air scenario consumer now uses the
+  registry-owned native scenario surface. The facade setup remains a small
+  caller-authored demo; this does not establish a general scenario compiler,
+  multi-phase replay contract, or Air `playable` promotion.
+
 ### 2026-09-27 — Direct compiled simulation backend provider
 
 - Starting commit: `e189b169`.

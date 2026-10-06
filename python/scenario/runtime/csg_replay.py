@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from python.runtime_bootstrap import resolve_repo_path
+from python.simulation import create_scenario_runtime_adapter
 
 
 CSG_REPLAY_SCHEMA = "csg.s0.replay.v1"
@@ -137,8 +138,6 @@ def _csg_replay_unit_frame(sim, loader) -> list[dict[str, Any]]:
 
 def capture_csg_replay(scenario_path: str, *, seed: int, max_steps: int | None = None) -> dict[str, Any]:
     """Run an agent-free CSG scenario and capture deterministic state frames."""
-    from python.rl.runtime.world_batch.adapter import RuntimeFacadeAdapter
-
     scenario_abs = resolve_repo_path(scenario_path)
     with open(scenario_abs, "rb") as handle:
         scenario_sha256 = hashlib.sha256(handle.read()).hexdigest()
@@ -146,7 +145,7 @@ def capture_csg_replay(scenario_path: str, *, seed: int, max_steps: int | None =
         raw_scenario = json.load(handle)
 
     database = resolve_repo_path("examples", "config", "database")
-    adapter = RuntimeFacadeAdapter(1)
+    adapter = create_scenario_runtime_adapter(1)
     if not adapter.load_database(database):
         raise RuntimeError(f"database load failed for {scenario_abs}")
     loader = adapter.make_scenario_loader(0)
@@ -205,8 +204,6 @@ def iter_csg_spectator_frames(
     max_steps: int | None = None,
 ):
     """Yield native CSG state frames for a no-agent spectator session."""
-    from python.rl.runtime.world_batch.adapter import RuntimeFacadeAdapter
-
     scenario_abs = resolve_repo_path(scenario_path)
     with open(scenario_abs, "r", encoding="utf-8") as handle:
         raw_scenario = json.load(handle)
@@ -218,7 +215,7 @@ def iter_csg_spectator_frames(
         raise ValueError("CSG spectator max_steps must be non-negative")
     time_step_s = float(environment.get("time_step", 0.5))
 
-    adapter = RuntimeFacadeAdapter(1)
+    adapter = create_scenario_runtime_adapter(1)
     if not adapter.load_database(resolve_repo_path("examples", "config", "database")):
         raise RuntimeError(f"database load failed for {scenario_abs}")
     loader = adapter.make_scenario_loader(0)

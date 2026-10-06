@@ -35,7 +35,7 @@ from python.runtime_bootstrap import ensure_repo_imports
 REPO_ROOT = ensure_repo_imports()
 os.chdir(REPO_ROOT)
 
-from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
+from python.simulation import create_cooperative_backend
 from tools.diagnostics.common import add_model_load_args, add_probe_run_args
 from tools.diagnostics.cooperative_trajectory_base import (
     SLOT_COLORS,
@@ -351,12 +351,12 @@ def _plot_waypoint_trace(ax, traces: list[list[dict[str, Any]]], slot_meta: list
 def _trace_note(task: str, terminated: bool) -> str:
     if task == TASK_TAKEOFF:
         return (
-            "Per-step traces stop at the last pre-reset sample because CooperativeWorldBatchVecEnv "
+            "Per-step traces stop at the last pre-reset sample because the cooperative WorldBatch "
             "auto-resets the world on terminal transitions."
         )
     if terminated:
         return (
-            "Per-step traces stop at the last pre-reset sample because CooperativeWorldBatchVecEnv "
+            "Per-step traces stop at the last pre-reset sample because the cooperative WorldBatch "
             "auto-resets the world on terminal transitions."
         )
     return "Trace stopped at max_world_steps before termination; use a higher limit for full-episode export."
@@ -485,7 +485,7 @@ def main() -> int:
     train_config = load_json_config(os.path.abspath(args.train_config))
     env_settings = make_env_settings(train_config)
     action_wrapper_kwargs = cooperative_action_wrapper_kwargs(train_config, scripted=bool(args.scripted))
-    env = CooperativeWorldBatchVecEnv(
+    env = create_cooperative_backend(
         scenario_path=os.path.abspath(args.scenario),
         n_envs=1,
         action_wrapper_kwargs=action_wrapper_kwargs,

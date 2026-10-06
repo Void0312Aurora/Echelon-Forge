@@ -7,6 +7,7 @@ import ef_py
 import numpy as np
 
 from python.tasking_contracts.common.timing_utils import coerce_timing_dict
+from python.simulation import create_leader_window_runtime
 
 from .bridges import LeaderCommandBridge
 from .common import load_json_dict, make_args_stub
@@ -57,15 +58,7 @@ class LeaderRuntimeFacadeMixin:
         return self._exec_runtime.unwrapped
 
     def _build_default_leader_window_runtime(self):
-        from python.rl.runtime.leader_window_runtime import (
-            LocalLeaderWindowRuntime,
-            WorldBatchLeaderWindowRuntime,
-        )
-
-        execution_runtime = getattr(self, "_exec_runtime", None)
-        if bool(getattr(self, "execution_world_batch_runtime", False)) and hasattr(execution_runtime, "rollout_window"):
-            return WorldBatchLeaderWindowRuntime(self)
-        return LocalLeaderWindowRuntime(self)
+        return create_leader_window_runtime(self)
 
     def _ensure_leader_window_runtime(self):
         runtime = getattr(self, "_leader_window_runtime", None)

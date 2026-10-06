@@ -10,10 +10,17 @@ from .backend import (
     SimulationBatchBackend,
     SimulationCooperativeBatchBackend,
     SimulationExecutionRuntime,
+    SimulationScenarioBackend,
     create_cooperative_backend,
+    create_leader_window_runtime,
+    create_scenario_runtime_adapter,
+    get_backend_registration,
+    load_execution_policy,
     create_single_backend,
     create_single_execution_runtime,
+    create_scenario_backend,
     register_backend,
+    resolve_execution_wrapper_spec,
 )
 
 __all__ = [
@@ -21,8 +28,15 @@ __all__ = [
     "SimulationBatchBackend",
     "SimulationCooperativeBatchBackend",
     "SimulationExecutionRuntime",
+    "SimulationScenarioBackend",
     "create_cooperative_backend",
+    "create_leader_window_runtime",
+    "create_scenario_runtime_adapter",
+    "get_backend_registration",
+    "load_execution_policy",
     "create_single_backend",
     "create_single_execution_runtime",
+    "create_scenario_backend",
+    "resolve_execution_wrapper_spec",
     "register_backend",
 ]

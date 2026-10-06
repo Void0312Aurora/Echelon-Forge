@@ -37,10 +37,12 @@ from python.tasking_contracts.common.scripted_capability import (
 from python.tasking_contracts.air.execution.landing import ScriptedLandingController
 from python.tasking_contracts.air.execution.stable_flight import ScriptedStableFlightController
 from python.tasking_contracts.air.execution.takeoff import ScriptedTakeoffController
-from python.rl.control.wrappers import get_action_wrapper_spec
-from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
-from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv
+from python.simulation import (
+    create_cooperative_backend,
+    create_single_backend,
+    load_execution_policy,
+    resolve_execution_wrapper_spec,
+)
 from python.world_model.features import (
     DEFAULT_ANGLE_DEG_INDICES,
     angle_sincos_features,
@@ -814,7 +816,7 @@ def _infer_visual_update_interval(train_config: dict | None, requested_interval:
 def _cooperative_action_wrapper_kwargs(train_config: dict | None) -> dict | None:
     if not isinstance(train_config, dict):
         return None
-    _wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
+    _wrapper_class, wrapper_kwargs = resolve_execution_wrapper_spec(train_config)
     if wrapper_kwargs is None:
         return None
     return dict(wrapper_kwargs)
@@ -1145,23 +1147,13 @@ class VizSession:
                     self.model = _WorldModelPolicy(model_path, device="cpu")
                 else:
                     print(f"Loading PPO model from {model_path}...")
-                    if model_path.endswith(".zip"):
-                        model_path = model_path[:-4]
                     algo_name = str(getattr(args, "algo", "auto")).strip()
-                    algo_cls = AdaptiveKLPPO if algo_name in ("auto", "AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL") else None
-                    load_err = None
-                    if algo_cls is not None:
-                        try:
-                            self.model = algo_cls.load(model_path, device="cpu")
-                        except Exception as e:
-                            load_err = e
-                            self.model = None
-                    if self.model is None:
-                        from stable_baselines3 import PPO
-
-                        self.model = PPO.load(model_path, device="cpu")
-                        if load_err is not None and algo_name != "auto":
-                            print(f"[WARN] failed to load with {algo_name}: {load_err}; fell back to PPO")
+                    self.model = load_execution_policy(
+                        model_path,
+                        algo_name=algo_name,
+                        device="cpu",
+                        fallback_on_error=True,
+                    )
             except Exception as e:
                 print(f"Error loading model: {e}")
                 self.model = None
@@ -1173,7 +1165,7 @@ class VizSession:
             leader_mode = True
 
         if train_config is not None and not leader_mode and not cooperative_mode:
-            wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
+            wrapper_class, wrapper_kwargs = resolve_execution_wrapper_spec(train_config)
             if wrapper_kwargs is not None:
                 wrapper_kwargs = dict(wrapper_kwargs)
         elif train_config is not None and cooperative_mode:
@@ -1259,7 +1251,7 @@ class VizSession:
             runtime_cfg = train_config.get("runtime", {}) if isinstance(train_config, dict) else {}
             if not isinstance(runtime_cfg, dict):
                 runtime_cfg = {}
-            self.env = WorldBatchVecEnv(
+            self.env = create_single_backend(
                 scenario_path=args.scenario,
                 n_envs=1,
                 action_mode=action_mode,
@@ -1309,7 +1301,7 @@ class VizSession:
                 f"mission_obs_mode={mission_obs_mode}, visual_downsample={visual_downsample}, "
                 f"visual_update_interval={visual_update_interval})"
             )
-            self.env = CooperativeWorldBatchVecEnv(
+            self.env = create_cooperative_backend(
                 scenario_path=args.scenario,
                 n_envs=1,
                 include_visual=include_visual,

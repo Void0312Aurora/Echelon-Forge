@@ -31,7 +31,7 @@ from python.runtime_bootstrap import ensure_repo_imports
 BASE_DIR = ensure_repo_imports()
 
 from python.tasking_contracts.air.execution.takeoff import ScriptedTakeoffController, scripted_takeoff_action
-from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
+from python.simulation import create_single_execution_runtime
 
 
 def _parse_seeds(spec: str) -> list[int]:
@@ -248,7 +248,7 @@ def main() -> int:
     args = p.parse_args()
 
     seeds = _parse_seeds(args.seeds)
-    env = build_single_world_batch_execution_runtime(
+    env = create_single_execution_runtime(
         scenario_path=args.scenario,
         env_settings={
             "action_mode": args.action_mode,

@@ -54,7 +54,11 @@ from python.tasking_contracts.common.decision_runtime import (
     DecisionRuntimeAgent,
     DecisionRuntimeAgentSpec,
 )
-from python.simulation import create_single_execution_runtime
+from python.simulation import (
+    create_single_execution_runtime,
+    load_execution_policy,
+    resolve_execution_wrapper_spec,
+)
 from gym_envs.scenario_loader.spatial_runtime.geometry import select_ils_beacon
 from tools.diagnostics.common import add_model_load_args, add_probe_run_args
 
@@ -148,19 +152,12 @@ def _optional_finite_float(value: Any) -> float | None:
 
 
 def _load_policy(model_path: str, algo: str):
-    load_path = model_path[:-4] if model_path.endswith(".zip") else model_path
-    algo_name = str(algo).strip()
-    if algo_name in ("auto", "AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
-        from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
-
-        try:
-            return AdaptiveKLPPO.load(load_path, device="cpu")
-        except Exception:
-            if algo_name != "auto":
-                raise
-    from stable_baselines3 import PPO
-
-    return PPO.load(load_path, device="cpu")
+    return load_execution_policy(
+        model_path,
+        algo_name=str(algo).strip(),
+        device="cpu",
+        fallback_on_error=True,
+    )
 
 
 def _resolve_train_config(path: str | None) -> dict[str, Any] | None:
@@ -196,9 +193,7 @@ def _make_env(
         wrapper_class = None
         wrapper_kwargs = None
     else:
-        from python.rl.control.wrappers import get_action_wrapper_spec
-
-        wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config or {})
+        wrapper_class, wrapper_kwargs = resolve_execution_wrapper_spec(train_config or {})
 
     env = create_single_execution_runtime(
         scenario_path=os.path.abspath(scenario_path),
