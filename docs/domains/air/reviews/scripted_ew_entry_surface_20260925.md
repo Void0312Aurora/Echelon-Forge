@@ -6,6 +6,17 @@
 - Scope: entry surface for an RL-independent scripted electronic-warfare role
 - Verdict: `entry_surface_incomplete`
 
+## 2026-10-06 implementation scope
+
+PRs #99-#101 merged the data-driven burn-through, pod main-beam geometry,
+NoiseSpot gain, same-target DRFM range offset, and transmitting-pod ESM proxy.
+These are bounded mechanism claims, not calibrated J/S or ghost tracks. The
+[authorized EW completion package](../work/active/ew_completion/README.md)
+tracks ESM RF/age/classification, resource/effect, temporal, cooperative,
+canonical-admission and terminal work in dependency order. Its first data and
+observation layers do not change this review's `entry_surface_incomplete`
+verdict or the Air capability label.
+
 ## 2026-10-05 recheck
 
 The entry surface remains incomplete, but the earlier jammer-owner statement

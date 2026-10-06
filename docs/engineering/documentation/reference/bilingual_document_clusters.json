@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-30",
+  "generated_at": "2026-10-06",
   "root": "docs",
   "pairs": [
     {
@@ -61,9 +61,9 @@
       "english": "docs/domains/air/README.md",
       "chinese": "docs/domains/air/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-12",
-      "english_hash": "afdfd7c453c80125e4945f6647e3793a9c1d62373d963366e35aa20af6bce61d",
-      "chinese_hash": "e22a3f14e499a019726398f60fb263bc5affdc103ec970cb97ce5e1772052bf3"
+      "last_verified": "2026-10-06",
+      "english_hash": "256d3f7188a9fffe2e0e629632799e3bce3fd330d7abc1d80b87dffbabc58ecc",
+      "chinese_hash": "a799b83027e2e5f36ae320ddd952eea360962604d4cbd8831ae4f8c49d6a75ae"
     },
     {
       "pair_id": "domains/air/reference/landing_task",

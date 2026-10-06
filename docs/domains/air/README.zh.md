@@ -116,3 +116,4 @@ deterministic-fuze、lethality 或 probability-of-kill authority。当前 schema
 - [空空杀伤链期望包络](work/issues/kill_chain_expectation_envelope.md)
 - [Kill-chain 期望标准化评审](reviews/kill_chain_expectation_standardization_20260706/README.zh.md)
 - [Learning owner 的活跃空战工作](../../learning/README.zh.md)
+- [已授权的 EW 完善工作](work/active/ew_completion/README.zh.md)

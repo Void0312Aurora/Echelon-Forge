@@ -8,8 +8,10 @@ from .tasking import (
 from .observation import (
     AIR_SCRIPTED_MAX_CONTACTS,
     AIR_SCRIPTED_MAX_RWR,
+    AIR_SCRIPTED_MAX_ESM,
     AIR_SCRIPTED_MISSION_MODE,
     build_air_contact_matrix,
+    build_air_esm_matrix,
     build_air_instrument_vector,
     build_air_mission_vector,
     build_air_rwr_matrix,
@@ -48,6 +50,7 @@ from .terminal import AirCombatTerminalEvaluator, AirCombatTerminalState
 __all__ = [
     "AIR_SCRIPTED_MAX_CONTACTS",
     "AIR_SCRIPTED_MAX_RWR",
+    "AIR_SCRIPTED_MAX_ESM",
     "AIR_SCRIPTED_MISSION_MODE",
     "AirDirectorDecision",
     "AirDirectorInput",
@@ -60,6 +63,7 @@ __all__ = [
     "CompiledAirC2TaskOrderProjection",
     "apply_task_order_overrides",
     "build_air_contact_matrix",
+    "build_air_esm_matrix",
     "build_air_instrument_vector",
     "build_air_mission_vector",
     "build_air_rwr_matrix",

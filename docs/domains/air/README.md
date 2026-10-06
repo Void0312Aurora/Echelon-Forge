@@ -131,3 +131,4 @@ That layering matters:
 - [Air-To-Air Kill-Chain Expectation Envelope](work/issues/kill_chain_expectation_envelope.md)
 - [Kill-chain expectation standardization review](reviews/kill_chain_expectation_standardization_20260706/README.md)
 - [Learning-owned active Air-combat work](../../learning/README.md)
+- [Authorized EW completion](work/active/ew_completion/README.md)
