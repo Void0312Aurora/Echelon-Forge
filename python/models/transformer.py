@@ -363,6 +363,16 @@ def preprocess_proprio_tensor(proprio: torch.Tensor) -> torch.Tensor:
     return _sanitize_features(proprio.float().clone())
 
 
+# Opt-in Air EW observation component (``include_ew_state=True``). Unit-scale
+# symlog keeps the -1 "absent" sentinels distinct from zero counts/elapsed times
+# while compressing inventory counts and elapsed seconds.
+EW_STATE_KEY = "ew_state"
+
+
+def preprocess_ew_state_tensor(ew_state: torch.Tensor) -> torch.Tensor:
+    return _sanitize_features(_symlog(ew_state.float(), scale=1.0))
+
+
 def preprocess_visual_tensor(visual: torch.Tensor) -> torch.Tensor:
     return _sanitize_features(torch.clamp(visual.float().clone(), -10.0, 10.0))
 
@@ -408,6 +418,8 @@ def preprocess_transformer_observations(observations: Mapping[str, torch.Tensor]
     }
     if "proprio" in observations:
         processed["proprio"] = preprocess_proprio_tensor(observations["proprio"])
+    if EW_STATE_KEY in observations:
+        processed[EW_STATE_KEY] = preprocess_ew_state_tensor(observations[EW_STATE_KEY])
     if "visual" in observations:
         processed["visual"] = preprocess_visual_tensor(observations["visual"])
     return processed
@@ -460,11 +472,16 @@ class TransformerExtractor(BaseFeaturesExtractor):
             self.embed_proprio = nn.Linear(proprio_dim, self.d_model)
         else:
             self.embed_proprio = None
-        
+        # Opt-in EW token. Its parameters exist only when the space declares
+        # ``ew_state``, so EW-free policies keep their exact parameter set.
+        self.has_ew_state = EW_STATE_KEY in observation_space.spaces
+
         # Learnable "Type Embeddings" to distinguish token sources
-        # 0=Instruments, 1=Contact, 2=RWR, 3=Mission, 4=Proprio(optional)
-        self.type_embed = nn.Embedding(5 if self.has_proprio else 4, self.d_model)
-        
+        # 0=Instruments, 1=Contact, 2=RWR, 3=Mission, 4=Proprio(optional),
+        # then EW(optional) after the present optional tokens.
+        n_types = 4 + int(self.has_proprio) + int(self.has_ew_state)
+        self.type_embed = nn.Embedding(n_types, self.d_model)
+
         # Register type indices as buffers (not parameters, but move with model)
         self.register_buffer('idx_inst', torch.tensor(0))
         self.register_buffer('idx_contact', torch.tensor(1))
@@ -472,7 +489,10 @@ class TransformerExtractor(BaseFeaturesExtractor):
         self.register_buffer('idx_mission', torch.tensor(3))
         if self.has_proprio:
             self.register_buffer('idx_proprio', torch.tensor(4))
-        
+        if self.has_ew_state:
+            self.embed_ew_state = nn.Linear(int(observation_space[EW_STATE_KEY].shape[0]), self.d_model)
+            self.register_buffer('idx_ew_state', torch.tensor(n_types - 1))
+
         # 2. Transformer
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=self.d_model,
@@ -537,9 +557,13 @@ class TransformerExtractor(BaseFeaturesExtractor):
                 s_proprio = processed["proprio"]
                 emb_proprio = self.embed_proprio(s_proprio).unsqueeze(1) + self.type_embed(self.idx_proprio)
                 emb_parts.append(emb_proprio)
-            
+            if self.has_ew_state:
+                emb_parts.append(
+                    self.embed_ew_state(processed[EW_STATE_KEY]).unsqueeze(1) + self.type_embed(self.idx_ew_state)
+                )
+
             # 3. Concat Sequence
-            # Order: [Instruments, Mission, Proprio?, Contacts..., RWR...]
+            # Order: [Instruments, Mission, Proprio?, EW?, Contacts..., RWR...]
             sequence = torch.cat([*emb_parts, emb_contacts, emb_rwr], dim=1)
             
             # 4. Transform with optional gradient checkpointing
@@ -595,6 +619,14 @@ class TemporalTransformerExtractor(BaseFeaturesExtractor):
             raise ValueError(
                 "TemporalTransformerExtractor requires temporal_history_len>1 observation keys; "
                 f"missing={missing}"
+            )
+        if EW_STATE_KEY in observation_space.spaces:
+            # The temporal path encodes history frames only and there is no
+            # ew_state history; refusing is explicit instead of silently
+            # dropping the opt-in EW observation.
+            raise ValueError(
+                "TemporalTransformerExtractor does not consume the opt-in 'ew_state' observation; "
+                "use include_ew_state=False or TransformerExtractor/TransformerVisualExtractor"
             )
 
         self.d_model = int(features_dim)
@@ -766,6 +798,7 @@ class TransformerVisualExtractor(BaseFeaturesExtractor):
             self.embed_proprio = nn.Linear(proprio_dim, self.d_model)
         else:
             self.embed_proprio = None
+        self.has_ew_state = EW_STATE_KEY in observation_space.spaces
 
         if "visual" not in observation_space.spaces:
             raise ValueError(
@@ -827,8 +860,10 @@ class TransformerVisualExtractor(BaseFeaturesExtractor):
 
         self.embed_visual = nn.Linear(n_flatten, self.d_model)
 
-        # Type embeddings: 0=Instruments, 1=Contact, 2=RWR, 3=Mission, 4=Visual, 5=Proprio(optional)
-        self.type_embed = nn.Embedding(6 if self.has_proprio else 5, self.d_model)
+        # Type embeddings: 0=Instruments, 1=Contact, 2=RWR, 3=Mission, 4=Visual, 5=Proprio(optional),
+        # then EW(optional) after the present optional tokens.
+        n_types = 5 + int(self.has_proprio) + int(self.has_ew_state)
+        self.type_embed = nn.Embedding(n_types, self.d_model)
         self.register_buffer("idx_inst", torch.tensor(0))
         self.register_buffer("idx_contact", torch.tensor(1))
         self.register_buffer("idx_rwr", torch.tensor(2))
@@ -836,6 +871,9 @@ class TransformerVisualExtractor(BaseFeaturesExtractor):
         self.register_buffer("idx_visual", torch.tensor(4))
         if self.has_proprio:
             self.register_buffer("idx_proprio", torch.tensor(5))
+        if self.has_ew_state:
+            self.embed_ew_state = nn.Linear(int(observation_space[EW_STATE_KEY].shape[0]), self.d_model)
+            self.register_buffer("idx_ew_state", torch.tensor(n_types - 1))
 
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=self.d_model,
@@ -898,6 +936,10 @@ class TransformerVisualExtractor(BaseFeaturesExtractor):
                 s_proprio = processed["proprio"]
                 emb_proprio = self.embed_proprio(s_proprio).unsqueeze(1) + self.type_embed(self.idx_proprio)
                 emb_parts.append(emb_proprio)
+            if self.has_ew_state:
+                emb_parts.append(
+                    self.embed_ew_state(processed[EW_STATE_KEY]).unsqueeze(1) + self.type_embed(self.idx_ew_state)
+                )
             sequence = torch.cat([*emb_parts, emb_visual, emb_contacts, emb_rwr], dim=1)
 
             if self._use_checkpointing and self.training:

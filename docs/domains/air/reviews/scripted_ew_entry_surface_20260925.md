@@ -6,28 +6,42 @@
 - Scope: entry surface for an RL-independent scripted electronic-warfare role
 - Verdict: `entry_surface_incomplete`
 
+## 2026-10-05 recheck
+
+The entry surface remains incomplete, but the earlier jammer-owner statement
+is no longer current. The opt-in `air_ew_hybrid_v2` vector now carries a
+transmit bit and technique code, `PilotAction` and the legacy command bridge
+resolve that request, and `EW_Jammer_Control` owns the native state transition
+and instrument projection. The compiled head-on demo observed matching jammer
+request and native transmit steps. ESM interpretation, effectiveness,
+multi-aircraft coordination, terminal objectives, and canonical action-mode
+admission remain open.
+
 ## Verified current surfaces
 
 | Surface | Current evidence | Consequence |
 | --- | --- | --- |
 | EW data | `examples/config/database/aircraft/modules/ew_suites/gen4_standard.json` declares an RWR, a 1000 W noise-barrage jammer, chaff/flare counts, a release interval, and auto mode. The loader now preserves `ew_suite_ref` through the deferred materialize boundary. | Database data can now reach native EW component initialization for spawned units, but it still does not admit a maintained scripted EW action path. |
 | Native components | `src/components/systems/ew.h` defines `Jammer`, `Countermeasures`, `RWR`, `EmitterDetection`, and `ESMReceiver`. | The component vocabulary can carry EW state, ESM detections, and resource/cooldown data. |
-| Native EW systems | `src/systems/systems/ew_system.h` runs chaff release, flare release, and lifetime management. | Countermeasure effects have a system owner; jammer activation and ESM decision effects do not have a comparable command system in this header. |
+| Native EW systems | `src/systems/systems/ew_system.h` owns jammer command/state projection, chaff release, flare release, and lifetime management. | Countermeasure and jammer activation/state projection have native owners; jammer effectiveness and ESM decision effects remain open. |
 | Observation | `gym_envs/universal_env_parts/observations.py` exports `rwr` rows as bearing, signal strength, lock, and launch-warning fields; instruments also expose `rwr_active`. Native MAWS now records active inbound missiles by launch platform and exposes source-specific `is_launch` rows through `SimulationKernel::get_agent_observation`. The maintained `InstrumentState` read surface now projects chaff/flare counts, release interval, last release time, and auto mode, with `-1` for an absent component. | A scripted agent can consume declared RWR/MAWS evidence without World Truth, and a maintained report can read native countermeasure state. ESM/jammer state is not part of the maintained observation payload shown here. |
-| Command transport | `PilotAction` exposes `program_chaff` and `program_flare`; `legacy_command_bridge.h` resolves those fields into countermeasure commands. | The low-level transport exists, but it is not exposed by the maintained `full` or `air_combat_hybrid_v1` action vectors. |
-| Current action mapping | `gym_envs/universal_env_parts/actions.py` sets `program_chaff` and `program_flare` to `False` for the maintained action modes. | A scripted EW model cannot currently perform countermeasure actions through the normal Air action path. There is no maintained jammer action field. |
-| Versioned action extension | `air_ew_hybrid_v1` adds two explicit tail fields for chaff and flare and maps them to `PilotAction`; it remains outside the canonical `python.env_config.ACTION_MODES` list until a scenario/config owner and acceptance gate are admitted. `tools/diagnostics/air_ew_scripted_demo.py` drives this mode with the registered scripted EW action model. | The transport shape is testable without changing existing full/hybrid indices. The maintained demo observed launch-warning rows at steps 42 and 82, requested both countermeasures at those steps, and reported native chaff consumption from 60 to 59 after the release interval. Explicit `flare_only` doctrine now produces the same warning/request steps with chaff held at 60 and flare consumed from 30 to 29. |
-| Scripted producer | `python/tasking_contracts/air/ew/model.py` is registered in the aggregate Air registry as `air.ew.rwr_response_scripted` (`adapter`, `air_ew_controller`). It emits a typed RWR-derived intent and marks `native_action_owner_required`. | The producer is a contract/decision slice only. It is not an accepted countermeasure or jammer action, and it does not change the EW capability label. |
+| Command transport | `PilotAction` and `legacy_command_bridge.h` resolve chaff/flare requests plus the opt-in jammer transmit and technique fields. | The low-level transport is maintained for `air_ew_hybrid_v1` countermeasures and the opt-in `air_ew_hybrid_v2` jammer extension; neither is canonical action-mode admission. |
+| Current action mapping | `air_ew_hybrid_v1` preserves the existing 14-element prefix and `air_ew_hybrid_v2` appends two jammer fields. | The scripted EW model can now drive native countermeasure and jammer requests through explicit versioned surfaces. ESM interpretation, effectiveness, and canonical action-mode admission remain open. |
+| Versioned action extension | `air_ew_hybrid_v1` adds chaff/flare tail fields; `air_ew_hybrid_v2` adds jammer transmit and technique fields without changing existing indices. The standalone and composed scripted Air models drive both through registered action surfaces. | The compiled single-aircraft and cooperative terminal surrogates observe jammer request/transmit steps with native state readback; the extension remains outside the canonical `python.env_config.ACTION_MODES` list pending broader acceptance, calibrated effects, and formation parity. |
+| Scripted producer | `python/tasking_contracts/air/ew/model.py` is registered in the aggregate Air registry as `air.ew.rwr_response_scripted` (`adapter`, `air_ew_controller`). It emits typed RWR-derived countermeasure and jammer intents. | The producer now has maintained versioned native action seams, but it is not an accepted canonical action mode and does not change the EW capability label. |
 
 ## Boundary
 
-The current evidence supports an EW **observation** role, including a native
-MAWS launch-warning fact, a database-backed EW **state** vocabulary, a typed
-RWR-derived scripted producer, a maintained compiled countermeasure action
-trace, and native countermeasure state reporting. It does not support a
-playable EW decision claim. The 14-element action extension remains outside
-the canonical action-mode admission, and jammer command/state/report
-ownership remains incomplete.
+The current evidence supports an EW **response** role with native
+countermeasure and jammer command/state seams, including a native MAWS
+launch-warning fact, a database-backed EW **state** vocabulary, typed
+RWR-derived intents, a maintained compiled countermeasure action/replay trace,
+and native jammer state reporting, plus a bounded single-aircraft terminal
+surrogate and a bounded cooperative two-aircraft terminal surrogate. It does
+not support a playable EW decision claim. The versioned
+action extensions remain outside canonical action-mode admission, while
+calibrated ESM/effectiveness semantics and cooperative formation parity remain
+incomplete.
 
 ## Direct observation probe
 
@@ -103,6 +117,34 @@ steps, native resource samples, and runtime identities exactly. This closes a
 bounded hostile cooperative EW replay gate while leaving full formation mission
 replay and terminal combat outside this review.
 
+The maintained single-aircraft terminal surrogate
+`air_combat_1v1_c2_roe_ew_terminal_v1.json` composes the same C2/ROE
+engagement prefix with the versioned EW tail and a world-owned scripted Red
+missile opponent. At seed `20260516`, the v2 run accepted and executed the
+Blue release at step `2`, observed continuous launch-warning and
+countermeasure requests from step `163` through terminal step `201`, observed
+native jammer transmission through step `200`, and terminated with
+`combat_win`. The v1/v2 and same-seed replay tests reproduce these records.
+This is a single-aircraft generic-surrogate terminal adapter; it does not
+claim calibrated jammer/decoy effects or canonical action-mode admission. The
+maintained cooperative terminal surrogate
+`cooperative_air_2v2_scripted_c2_roe_ew_terminal_v1.json` now closes a bounded
+two-aircraft shared objective with per-slot target ownership and world-owned
+Red scripted missile threats. At seed `20260516`, both slots released at step
+`2`, Lead warnings ran `163..212`, Wing warnings ran `183..212`, native jammer
+transmission was observed through steps `206` and `211`, and both slots ended
+with `combat_win` at step `212`. The request trace can outlast the native
+transmit window; this is command/state evidence, not jammer effectiveness.
+The generic targets, uncalibrated jammer proxy, and inventory-only
+countermeasure behavior keep this below a playable EW claim.
+
+The RL-facing observation bridge now exposes an opt-in `ew_state` key with
+native countermeasure and jammer state/timing. It is wired through single-world
+and cooperative batch observations and adds a Transformer token only when the
+key is declared. The default observation shapes are unchanged, temporal
+extractors reject the key until an EW history contract exists, and
+`air_ew_hybrid_v1/v2` remain outside canonical `ACTION_MODES` admission.
+
 The EW path must remain Air-owned for jammer modes, RWR/ESM interpretation,
 countermeasure resources, release cadence, and threat-response doctrine. Only
 the identity, authority, clock, provenance, communication, and lifecycle
@@ -116,24 +158,30 @@ envelope may be shared with other domains.
    remain to be maintained and documented.
 2. **Countermeasure action contract:** the versioned `air_ew_hybrid_v1`
    extension exposes chaff/flare request fields and maps them to `PilotAction`
-   without changing existing full/hybrid indices. The compiled head-on demo
-   and Air fixture now show launch-warning-driven requests and native chaff
-   consumption through the maintained WorldBatch path. A scenario/config
-   owner, flare/cadence report, and canonical action-mode admission remain
-   open.
-3. **Jammer command contract:** decide whether jammer activation is a direct
-   Air intent or a command-layer product, then add a native owner for
-   activation, bandwidth/angle/type, power/resource limits, and shutdown.
-4. **Direct scenario gate:** build a lock/launch-warning scenario with finite
-   inventory, release interval, communication state, and a report that proves
-   the scripted action was accepted and changed native EW state. Native
-   launch-warning observation, low-level inventory decrement, and maintained
-   chaff consumption are now verified independently; a complete cadence,
-   flare, and terminal scripted-action report remains open.
-5. **Replay and multi-aircraft gate:** repeat the EW scenario under reset/replay
-   and route distinct EW roles through the existing cooperative roster before
-   any `playable` label.
-6. **Cooperative hostile-threat owner:** scripted opponents are now built and
+   without changing existing full/hybrid indices. The compiled head-on demo,
+   single-aircraft terminal surrogate, and hostile cooperative scenario now
+   show launch-warning-driven requests and native chaff consumption through
+   maintained paths. Canonical action-mode admission remains open.
+3. **Jammer command contract:** the v2 jammer fields now have a native Air
+   command owner and instrument projection for active state, technique, and
+   transmit start time. Bounded noise-jammer beam/band suppression is tested;
+   calibrated burn-through, RF-band semantics, DRFM effects, and resource
+   limits remain open.
+4. **Direct scenario gate:** the single-aircraft terminal surrogate and the
+   cooperative two-aircraft terminal surrogate now
+   combines finite inventory, release interval, hostile launch warning, C2/ROE
+   release acceptance, jammer state readback, and terminal `combat_win` in
+   replayed traces. Calibrated effect ownership and formation mission parity
+   remain open.
+5. **Replay and multi-aircraft gate:** single-aircraft v1/v2 reset/replay,
+   hostile cooperative v2 request/native projection, and the cooperative
+   terminal replay are now covered. Full formation parity and any `playable`
+   label remain open.
+6. **RL observation gate:** the opt-in `ew_state` vector and policy-token
+   projection are covered for single-world and cooperative batch runtimes;
+   default observation keys remain stable. Temporal EW history and canonical
+   action-mode admission remain open.
+7. **Cooperative hostile-threat owner:** scripted opponents are now built and
    updated once by the shared-world routing loader; non-owner slot loaders do
    not duplicate those controllers. The maintained 2v2 scenario proves this
    owner split, source-driven response, and paired-run replay. Its terminal

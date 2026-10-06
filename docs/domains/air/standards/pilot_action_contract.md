@@ -185,11 +185,19 @@ The kernel-facing `PilotAction` fields currently exposed are grouped as:
 - `jettison_emergency`
 - `program_chaff`
 - `program_flare`
+- `jammer_transmit`
 
 ### Selectors And Validity
 
 - `weapon_select_id`
+- `jammer_mode` (the `JammingType` code for an explicit EW v2 command)
 - `active`
+
+`jammer_mode = -1` is the compatibility sentinel for action surfaces that do
+not expose the EW v2 jammer tail. Such a `PilotAction` carries no jammer
+command, so it cannot stand down a pod that is already transmitting. The EW v2
+surface always supplies a mode code in `0..2`, including when
+`jammer_transmit` is false to explicitly disable transmission.
 
 ## Interpretation Rules
 

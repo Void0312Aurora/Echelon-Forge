@@ -127,6 +127,7 @@ class WorldBatchVecEnv(
         render_mode: str | None = None,
         include_visual: bool = False,
         include_proprio: bool = False,
+        include_ew_state: bool = False,
         action_mode: str = "full",
         mission_obs_mode: str = "basic",
         visual_downsample: int = 1,
@@ -172,6 +173,7 @@ class WorldBatchVecEnv(
         self.n_envs = max(1, int(n_envs))
         self.include_visual = bool(include_visual)
         self.include_proprio = bool(include_proprio)
+        self.include_ew_state = bool(include_ew_state)
         self.action_mode = str(action_mode)
         self.mission_obs_mode = str(mission_obs_mode).strip().lower()
         self.visual_downsample = max(1, int(visual_downsample))
@@ -296,6 +298,7 @@ class WorldBatchVecEnv(
             obs_size=self.obs_size,
             max_contacts=self.max_contacts,
             max_rwr=self.max_rwr,
+            include_ew_state=self.include_ew_state,
         )
 
         self._handles = [

@@ -6,10 +6,16 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
 import numpy as np
+
+
+_REPO_ROOT_HINT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if _REPO_ROOT_HINT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT_HINT)
 
 from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
@@ -84,12 +90,16 @@ def run_demo(
     seed: int,
     max_steps: int,
     response_doctrine: str,
+    jammer_doctrine: str | None = None,
 ) -> dict[str, Any]:
     doctrine = str(response_doctrine).strip().lower()
     if doctrine not in {"observe_only", "countermeasure_ready", "chaff_only", "flare_only"}:
         raise ValueError(
             "response_doctrine must be 'observe_only', 'countermeasure_ready', 'chaff_only', or 'flare_only'"
         )
+    jammer = None if jammer_doctrine is None else str(jammer_doctrine).strip().lower()
+    if jammer not in {None, "hold", "self_protect_on_lock"}:
+        raise ValueError("jammer_doctrine must be 'hold' or 'self_protect_on_lock'")
 
     slot_metadata = _cooperative_slot_metadata(scenario_path)
     if not slot_metadata:
@@ -102,7 +112,7 @@ def run_demo(
         n_envs=1,
         include_visual=False,
         include_proprio=False,
-        action_mode="air_ew_hybrid_v1",
+        action_mode="air_ew_hybrid_v2" if jammer is not None else "air_ew_hybrid_v1",
         mission_obs_mode="basic",
         execution_step_runtime_mode="compiled",
         flight_shaping_backend="compiled",
@@ -115,6 +125,7 @@ def run_demo(
             f"metadata={len(slot_metadata)} runtime={vec_env.slots_per_world}"
         )
     slot_count = len(slot_metadata)
+    action_dim = 16 if jammer is not None else 14
     scenario_time_step = 0.05
     with open(os.path.abspath(str(scenario_path)), "r", encoding="utf-8") as handle:
         scenario_environment = json.load(handle).get("environment", {})
@@ -139,6 +150,7 @@ def run_demo(
                 model_id=AIR_SCRIPTED_EW_ACTION_MODEL_ID,
                 dt=scenario_time_step,
                 max_rwr=4,
+                action_dim=action_dim,
             ),
         )
         for name in slot_names
@@ -146,6 +158,8 @@ def run_demo(
     launch_warning_steps: list[list[int]] = [[] for _ in range(slot_count)]
     countermeasure_request_steps: list[list[int]] = [[] for _ in range(slot_count)]
     countermeasure_state_samples: list[list[dict[str, Any]]] = [[] for _ in range(slot_count)]
+    jammer_request_steps: list[list[int]] = [[] for _ in range(slot_count)]
+    jammer_transmit_steps: list[list[int]] = [[] for _ in range(slot_count)]
     last_infos: list[dict[str, Any]] = [{} for _ in range(slot_count)]
     terminated = [False for _ in range(slot_count)]
     truncated = [False for _ in range(slot_count)]
@@ -165,6 +179,7 @@ def run_demo(
                     "phase_name": "stable_flight",
                     "response_doctrine": doctrine,
                     "mission_obs_mode": "basic",
+                    **({"jammer_doctrine": jammer} if jammer is not None else {}),
                 },
                 episode_seed=int(seed),
             )
@@ -186,12 +201,15 @@ def run_demo(
                         "phase_name": "stable_flight",
                         "response_doctrine": doctrine,
                         "mission_obs_mode": "basic",
+                        **({"jammer_doctrine": jammer} if jammer is not None else {}),
                     },
                 )
                 last_runtime_steps[slot_index] = runtime_step
                 action = np.asarray(runtime_step.action, dtype=np.float32).reshape(-1)
                 if action.size >= 14 and bool(np.any(action[12:14] > 0.5)):
                     countermeasure_request_steps[slot_index].append(step)
+                if action.size >= 16 and bool(action[14] > 0.5):
+                    jammer_request_steps[slot_index].append(step)
                 actions.append(action)
 
             observation_batch, _rewards, dones, infos = vec_env.step(
@@ -200,6 +218,8 @@ def run_demo(
             for slot_index in range(slot_count):
                 last_infos[slot_index] = dict(infos[slot_index]) if len(infos) > slot_index else {}
                 instrument = vec_env._slots[slot_index].last_inst
+                if bool(getattr(instrument, "jammer_transmitting", False)):
+                    jammer_transmit_steps[slot_index].append(step)
                 if countermeasure_request_steps[slot_index] and countermeasure_request_steps[slot_index][-1] == step:
                     scripted_opponent_reports_at_last_request = {
                         str(entity_id): dict(report)
@@ -230,8 +250,9 @@ def run_demo(
             {
                 "scenario": os.path.abspath(str(scenario_path)),
                 "seed": int(seed),
-                "action_mode": "air_ew_hybrid_v1",
+                "action_mode": "air_ew_hybrid_v2" if jammer is not None else "air_ew_hybrid_v1",
                 "response_doctrine": doctrine,
+                "jammer_doctrine": jammer,
                 "max_steps": int(max_steps),
                 "steps": int(steps_run),
                 "terminated": terminated,
@@ -252,6 +273,8 @@ def run_demo(
                 "launch_warning_steps": launch_warning_steps,
                 "countermeasure_request_steps": countermeasure_request_steps,
                 "countermeasure_state_samples": countermeasure_state_samples,
+                "jammer_request_steps": jammer_request_steps,
+                "jammer_transmit_steps": jammer_transmit_steps,
                 "scripted_runtime_identity": [agent.replay_identity for agent in agents],
                 "scripted_runtime_decisions": [
                     int(step.report.decision_index) if step is not None else 0
@@ -277,6 +300,12 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("observe_only", "countermeasure_ready", "chaff_only", "flare_only"),
         default="countermeasure_ready",
     )
+    parser.add_argument(
+        "--jammer_doctrine",
+        choices=("hold", "self_protect_on_lock"),
+        default=None,
+        help="enable the opt-in air_ew_hybrid_v2 jammer tail with this doctrine",
+    )
     parser.add_argument("--json_out", default="")
     return parser
 
@@ -288,6 +317,7 @@ def main() -> int:
         seed=args.seed,
         max_steps=args.max_steps,
         response_doctrine=args.response_doctrine,
+        jammer_doctrine=args.jammer_doctrine,
     )
     rendered = json.dumps(payload, indent=2, ensure_ascii=True)
     if args.json_out:

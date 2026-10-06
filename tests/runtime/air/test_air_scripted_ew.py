@@ -111,6 +111,7 @@ def test_ew_action_model_emits_versioned_extension_and_is_registered_as_adapter(
 
 
 def test_ew_hybrid_routes_combat_prefix_through_both_maintained_consumers() -> None:
+    pytest.importorskip("ef_py", reason="compiled ef_py action surface is unavailable")
     from gym_envs.universal_env_parts.actions import (
         air_combat_hybrid_effective_action,
         is_air_combat_hybrid_action_mode,
@@ -174,6 +175,121 @@ def test_ew_model_supports_explicit_single_countermeasure_doctrines() -> None:
     assert chaff.countermeasure_plan == "request_chaff"
     assert flare.countermeasure_plan == "request_flare"
     model.close()
+
+
+def test_ew_model_jammer_doctrine_keys_pod_on_lock_and_holds_emcon_otherwise() -> None:
+    model = AirScriptedEWModel(max_rwr=4)
+    model.reset(context={})
+    context = {"jammer_doctrine": "self_protect_on_lock", "jammer_technique": "deception_drfm"}
+    locked = model.decide(observation=_observation([10.0, 0.4, 1.0, 0.0]), context=context, dt=0.05)
+    assert locked.jammer_transmit is True
+    assert locked.jammer_mode == "deception_drfm"
+    assert locked.jammer_technique_code == 2
+    painted = model.decide(observation=_observation([10.0, 0.4, 0.0, 0.0]), context=context, dt=0.05)
+    assert painted.jammer_transmit is False
+    assert painted.jammer_mode == "standby"
+    held = model.decide(
+        observation=_observation([10.0, 0.4, 1.0, 1.0]),
+        context={"jammer_doctrine": "hold"},
+        dt=0.05,
+    )
+    assert held.jammer_transmit is False
+    assert held.jammer_mode == "unchanged"
+    with pytest.raises(ValueError, match="jammer doctrine"):
+        model.decide(observation=_observation(), context={"jammer_doctrine": "always"}, dt=0.05)
+    with pytest.raises(ValueError, match="jammer technique"):
+        model.decide(
+            observation=_observation(),
+            context={"jammer_doctrine": "self_protect_on_lock", "jammer_technique": "laser"},
+            dt=0.05,
+        )
+    model.close()
+
+
+def test_ew_burst_program_dispenses_on_onset_and_new_threats_only() -> None:
+    model = AirScriptedEWModel(max_rwr=4)
+    model.reset(context={})
+    context = {
+        "response_doctrine": "countermeasure_ready",
+        "dispense_program": "burst",
+        "dispense_burst_s": 0.5,
+        "dispense_bearing_gate_deg": 20.0,
+    }
+    first_threat = _observation([30.0, 1.0, 0.0, 1.0])
+    plans = [
+        model.decide(observation=first_threat, context=context, dt=0.05).countermeasure_plan
+        for _ in range(12)
+    ]
+    assert plans[:10] == ["request_chaff_and_flare"] * 10
+    assert plans[10:] == ["program_hold"] * 2
+    assert (
+        model.decide(
+            observation=_observation([35.0, 1.0, 0.0, 1.0]), context=context, dt=0.05
+        ).countermeasure_plan
+        == "program_hold"
+    )
+    two_threats = _observation([35.0, 1.0, 0.0, 1.0], [-80.0, 1.0, 0.0, 1.0])
+    assert (
+        model.decide(observation=two_threats, context=context, dt=0.05).countermeasure_plan
+        == "request_chaff_and_flare"
+    )
+    assert model.decide(observation=_observation(), context=context, dt=0.05).countermeasure_plan == "hold"
+    assert (
+        model.decide(observation=first_threat, context=context, dt=0.05).countermeasure_plan
+        == "request_chaff_and_flare"
+    )
+    model.close()
+
+
+def test_ew_burst_program_requires_declared_doctrine_parameters() -> None:
+    model = AirScriptedEWModel()
+    model.reset(context={})
+    warned = _observation([0.0, 1.0, 0.0, 1.0])
+    with pytest.raises(ValueError, match="dispense_burst_s"):
+        model.decide(observation=warned, context={"dispense_program": "burst"}, dt=0.05)
+    with pytest.raises(ValueError, match="dispense_bearing_gate_deg"):
+        model.decide(
+            observation=warned,
+            context={"dispense_program": "burst", "dispense_burst_s": 1.0},
+            dt=0.05,
+        )
+    with pytest.raises(ValueError, match="dispense program"):
+        model.decide(observation=warned, context={"dispense_program": "ripple"}, dt=0.05)
+    model.close()
+
+
+@pytest.mark.skipif(AIR_EW_HYBRID_V1_ACTION_MODE is None, reason="compiled ef_py action surface is unavailable")
+def test_ew_v2_action_model_projects_jammer_tail_to_pilot_action() -> None:
+    from gym_envs.universal_env_parts import AIR_EW_HYBRID_V2_ACTION_MODE
+    from python.simulation.air.action import build_pilot_action as build_direct_pilot_action
+    from python.tasking_contracts.air.ew.model import AIR_EW_HYBRID_V2_ACTION_DIM
+
+    model = AirScriptedEWActionModel(action_dim=AIR_EW_HYBRID_V2_ACTION_DIM)
+    obs = {
+        "instruments": np.zeros((31,), dtype=np.float32),
+        "mission": np.asarray([1.0, 90.0, 1000.0, 120.0], dtype=np.float32),
+        "rwr": np.asarray([[0.0, 0.8, 1.0, 0.0]], dtype=np.float32),
+    }
+    model.reset(context={"observation": obs, "phase_name": "stable_flight"})
+    action = model.decide(
+        observation=obs,
+        context={"jammer_doctrine": "self_protect_on_lock", "jammer_technique": "noise_spot"},
+        dt=0.05,
+    )
+    model.close()
+    assert action.shape == (AIR_EW_HYBRID_V2_ACTION_DIM,)
+    assert tuple(action[14:16]) == (1.0, 1.0)
+    assert expected_action_dim(AIR_EW_HYBRID_V2_ACTION_MODE) == AIR_EW_HYBRID_V2_ACTION_DIM
+    assert make_action_space(AIR_EW_HYBRID_V2_ACTION_MODE).shape == (AIR_EW_HYBRID_V2_ACTION_DIM,)
+    for pilot in (
+        build_pilot_action(action, action_mode=AIR_EW_HYBRID_V2_ACTION_MODE),
+        build_direct_pilot_action(action, action_mode=AIR_EW_HYBRID_V2_ACTION_MODE),
+    ):
+        assert pilot.jammer_transmit is True
+        assert pilot.jammer_mode == 1
+    v1 = build_pilot_action(action[:14], action_mode=AIR_EW_HYBRID_V1_ACTION_MODE)
+    assert v1.jammer_transmit is False
+    assert v1.jammer_mode == -1
 
 
 def test_ew_action_model_maps_single_countermeasure_doctrine_to_one_tail_bit() -> None:

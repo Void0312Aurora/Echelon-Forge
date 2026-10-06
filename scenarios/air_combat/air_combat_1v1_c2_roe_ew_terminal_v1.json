@@ -1,0 +1,129 @@
+{
+  "scenario_name": "Air Combat 1v1 C2 ROE EW Terminal V1",
+  "description": "Terminal C2/ROE engagement with an EW self-protection response for the no-RL scripted Air combat-EW path. Derived from the 1v1 C2/ROE terminal generic-aircraft surrogate: Blue keeps the database-backed F-16C Block 50 (gen-4 EW suite: RWR/MAWS, chaff/flare inventory, release interval, self-protection jammer pod) and the same single-shot C2/ROE contract, while the Red generic Aircraft surrogate now runs the maintained scripted opponent with live missiles so Blue receives native launch warnings before the terminal objective closes.",
+  "realism_gradient": {
+    "domain": "air_combat",
+    "workline": "1v1",
+    "stage": "A1-S1-terminal-surrogate-ew",
+    "stage_name": "c2_roe_native_terminal_chain_with_ew_self_protection_generic_aircraft_surrogate",
+    "training_goal": "Exercise the scripted C2/ROE release-to-native-terminal chain while the same aircraft answers a hostile launch with native countermeasure and jammer actions.",
+    "engagement_range_m": [10000.0, 14000.0],
+    "realism_scope": [
+      "C2/ROE authorization",
+      "database-backed AIM-120C-7 selection",
+      "native missile lifecycle",
+      "native effects and damage report",
+      "objective termination",
+      "hostile scripted missile launch",
+      "native MAWS launch warning",
+      "native countermeasure inventory and release interval",
+      "native self-protection jammer command"
+    ],
+    "deferred_realism": [
+      "named-platform vulnerability calibration",
+      "chaff/flare decoy effect on missile seekers",
+      "calibrated jammer burn-through",
+      "peer BVR tactics",
+      "classified or calibrated ROE doctrine"
+    ]
+  },
+  "environment": {
+    "time_step": 0.05,
+    "max_steps": 600,
+    "terrain_type": "flat",
+    "wind": {
+      "speed_mps": 0.0,
+      "dir_from_deg": 0.0,
+      "shear_mps_per_km": 0.0
+    }
+  },
+  "mission_command": {
+    "command_code": 2,
+    "target_heading": 0.0,
+    "target_altitude": 7000.0,
+    "target_speed": 230.0,
+    "assigned_target_name": "Red_Generic",
+    "roe_state": 2,
+    "wcs_state": 2,
+    "authorization_to_fire": true,
+    "engage_order_state": 2,
+    "target_identity_state": 3,
+    "shot_policy_state": 1,
+    "shot_budget_remaining": 1,
+    "pending_assessment": false,
+    "own_missiles_in_flight_count": 0
+  },
+  "entities": [
+    {
+      "name": "Blue_Fighter",
+      "type": "F-16C_Block50",
+      "side": "Blue",
+      "pos": [0.0, 0.0, 7000.0],
+      "vel": [0.0, 230.0, 0.0],
+      "heading": 0.0,
+      "is_agent": true,
+      "ammo": {
+        "missiles_remaining": 4,
+        "max_missiles": 4
+      },
+      "weapon_cooldown": {
+        "cooldown_s": 0.75,
+        "last_fire_time": -1.0
+      }
+    },
+    {
+      "name": "Red_Generic",
+      "type": "Aircraft",
+      "side": "Red",
+      "pos": [0.0, 12000.0, 7000.0],
+      "vel": [0.0, -160.0, 0.0],
+      "heading": 180.0,
+      "scripted_agent": {
+        "name": "red_scripted_agent",
+        "target_name": "Blue_Fighter",
+        "cruise_speed_mps": 220.0,
+        "attack_speed_mps": 260.0,
+        "defensive_speed_mps": 290.0,
+        "threat_range_m": 9000.0,
+        "merge_range_m": 3500.0,
+        "fire_range_m": 9000.0,
+        "beam_offset_deg": 85.0
+      },
+      "ammo": {
+        "missiles_remaining": 4,
+        "max_missiles": 4
+      },
+      "weapon_cooldown": {
+        "cooldown_s": 0.75,
+        "last_fire_time": -1.0
+      }
+    }
+  ],
+  "objectives": [
+    {
+      "type": "conditional",
+      "reward": 1500.0,
+      "conditions": [
+        {
+          "property": "target_active",
+          "op": "<=",
+          "value": 0.0
+        }
+      ]
+    }
+  ],
+  "rewards": {
+    "survival": 0.0,
+    "crash_penalty": -1000.0,
+    "air_combat_release_shaping_enabled": true,
+    "air_combat_first_release_bonus": 300.0,
+    "air_combat_c2_roe_release_discipline_enabled": true,
+    "air_combat_roe_authorized_radar_active_bonus": 1.0,
+    "air_combat_roe_authorized_tms_up_bonus": 2.0,
+    "air_combat_roe_authorized_master_arm_bonus": 1.0,
+    "air_combat_roe_authorized_weapon_selected_bonus": 1.0,
+    "air_combat_roe_authorized_fire_attempt_bonus": 5.0,
+    "air_combat_roe_valid_authorized_release_bonus": 50.0,
+    "air_combat_roe_authorized_first_release_bonus": 100.0
+  }
+}

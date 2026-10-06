@@ -17,7 +17,51 @@ struct Jammer {
     double bandwidth_mhz;   // Bandwidth coverage
     JammingType type;       // Technique
     double effective_angle; // Beam width (deg)
+    double transmit_start_time_s = -1.0;
 };
+
+inline bool jammer_installed(const Jammer &jammer) {
+    return std::isfinite(jammer.power_watts) && jammer.power_watts > 0.0;
+}
+
+inline bool jamming_type_from_code(int code, JammingType &out) {
+    switch (code) {
+    case 0:
+        out = JammingType::NoiseBarrage;
+        return true;
+    case 1:
+        out = JammingType::NoiseSpot;
+        return true;
+    case 2:
+        out = JammingType::DeceptionDRFM;
+        return true;
+    default:
+        return false;
+    }
+}
+
+inline bool apply_jammer_command(Jammer &jammer, bool transmit, int mode_code,
+                                 double current_time_s) {
+    if (!jammer_installed(jammer)) {
+        return false;
+    }
+    JammingType requested_type = jammer.type;
+    if (transmit && !jamming_type_from_code(mode_code, requested_type)) {
+        return false;
+    }
+    const bool was_active = jammer.is_active;
+    const JammingType was_type = jammer.type;
+    jammer.is_active = transmit;
+    if (transmit) {
+        jammer.type = requested_type;
+        if (!was_active) {
+            jammer.transmit_start_time_s = current_time_s;
+        }
+    } else {
+        jammer.transmit_start_time_s = -1.0;
+    }
+    return was_active != jammer.is_active || was_type != jammer.type;
+}
 
 struct Countermeasures {
     int chaff_count;          // Remaining Chaff

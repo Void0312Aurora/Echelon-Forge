@@ -11,6 +11,29 @@ AIR_COMBAT_HYBRID_V1_ACTION_MODE = "air_combat_hybrid_v1"
 AIR_COMBAT_HYBRID_V1_ACTION_DIM = 12
 AIR_EW_HYBRID_V1_ACTION_MODE = "air_ew_hybrid_v1"
 AIR_EW_HYBRID_V1_ACTION_DIM = 14
+AIR_EW_HYBRID_V2_ACTION_MODE = "air_ew_hybrid_v2"
+AIR_EW_HYBRID_V2_ACTION_DIM = 16
+# Opt-in Air EW observation component. Layout (float32, shape (6,)):
+#   [0] chaff_remaining                     (count, -1 when no dispenser)
+#   [1] flare_remaining                     (count, -1 when no dispenser)
+#   [2] seconds_since_last_release          (s, -1 never released / no dispenser)
+#   [3] jammer_transmitting                 (0/1)
+#   [4] jammer_mode                         (JammingType code 0..2, -1 no pod)
+#   [5] seconds_since_jammer_transmit_start (s, -1 not transmitting / no pod)
+# The key is only present when ``include_ew_state=True``; it never changes the
+# instrument vector width or any other observation key.
+EW_STATE_OBSERVATION_KEY = "ew_state"
+EW_STATE_FIELDS = (
+    "chaff_remaining",
+    "flare_remaining",
+    "seconds_since_last_release",
+    "jammer_transmitting",
+    "jammer_mode",
+    "seconds_since_jammer_transmit_start",
+)
+EW_STATE_DIM = len(EW_STATE_FIELDS)
+EW_STATE_LOW = np.array([-1.0, -1.0, -1.0, 0.0, -1.0, -1.0], dtype=np.float32)
+EW_STATE_HIGH = np.array([np.inf, np.inf, np.inf, 1.0, 2.0, np.inf], dtype=np.float32)
 _ACTION_DIMS = {
     "full": 17,
     "takeoff2": 2,
@@ -18,6 +41,7 @@ _ACTION_DIMS = {
     NAVAL_STATION3_ACTION_MODE: 3,
     AIR_COMBAT_HYBRID_V1_ACTION_MODE: AIR_COMBAT_HYBRID_V1_ACTION_DIM,
     AIR_EW_HYBRID_V1_ACTION_MODE: AIR_EW_HYBRID_V1_ACTION_DIM,
+    AIR_EW_HYBRID_V2_ACTION_MODE: AIR_EW_HYBRID_V2_ACTION_DIM,
 }
 _FULL_ACTION_LOW = np.array(
     [-1.0, -1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
@@ -40,6 +64,12 @@ _AIR_EW_HYBRID_V1_ACTION_LOW = np.concatenate(
 ).astype(np.float32, copy=False)
 _AIR_EW_HYBRID_V1_ACTION_HIGH = np.concatenate(
     [_AIR_COMBAT_HYBRID_V1_ACTION_HIGH, np.array([1.0, 1.0], dtype=np.float32)]
+).astype(np.float32, copy=False)
+_AIR_EW_HYBRID_V2_ACTION_LOW = np.concatenate(
+    [_AIR_EW_HYBRID_V1_ACTION_LOW, np.array([0.0, 0.0], dtype=np.float32)]
+).astype(np.float32, copy=False)
+_AIR_EW_HYBRID_V2_ACTION_HIGH = np.concatenate(
+    [_AIR_EW_HYBRID_V1_ACTION_HIGH, np.array([1.0, 2.0], dtype=np.float32)]
 ).astype(np.float32, copy=False)
 
 
@@ -69,6 +99,12 @@ def make_action_space(action_mode: str):
         return spaces.Box(
             low=_AIR_EW_HYBRID_V1_ACTION_LOW,
             high=_AIR_EW_HYBRID_V1_ACTION_HIGH,
+            dtype=np.float32,
+        )
+    if action_mode == AIR_EW_HYBRID_V2_ACTION_MODE:
+        return spaces.Box(
+            low=_AIR_EW_HYBRID_V2_ACTION_LOW,
+            high=_AIR_EW_HYBRID_V2_ACTION_HIGH,
             dtype=np.float32,
         )
     if action_mode == "takeoff2":
@@ -105,6 +141,7 @@ def make_observation_space(
     obs_size: int = 42,
     max_contacts: int = 10,
     max_rwr: int = 4,
+    include_ew_state: bool = False,
 ):
     if spaces is None:
         raise ModuleNotFoundError("gymnasium is required to build observation spaces.")
@@ -120,6 +157,13 @@ def make_observation_space(
             low=action_space.low.astype(np.float32, copy=False),
             high=action_space.high.astype(np.float32, copy=False),
             shape=action_space.shape,
+            dtype=np.float32,
+        )
+    if include_ew_state:
+        obs_spaces[EW_STATE_OBSERVATION_KEY] = spaces.Box(
+            low=EW_STATE_LOW,
+            high=EW_STATE_HIGH,
+            shape=(EW_STATE_DIM,),
             dtype=np.float32,
         )
     history_len = max(1, int(temporal_history_len))
@@ -167,6 +211,15 @@ def make_observation_space(
 __all__ = [
     "AIR_COMBAT_HYBRID_V1_ACTION_DIM",
     "AIR_COMBAT_HYBRID_V1_ACTION_MODE",
+    "AIR_EW_HYBRID_V1_ACTION_DIM",
+    "AIR_EW_HYBRID_V1_ACTION_MODE",
+    "AIR_EW_HYBRID_V2_ACTION_DIM",
+    "AIR_EW_HYBRID_V2_ACTION_MODE",
+    "EW_STATE_DIM",
+    "EW_STATE_FIELDS",
+    "EW_STATE_HIGH",
+    "EW_STATE_LOW",
+    "EW_STATE_OBSERVATION_KEY",
     "expected_action_dim",
     "make_action_space",
     "make_observation_space",

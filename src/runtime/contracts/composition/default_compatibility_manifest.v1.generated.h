@@ -1149,6 +1149,7 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "contribution_id": "builtin.system.ew",
         "domain": "cross_domain",
         "executable_node_ids": [
+          "EW_Jammer_Control",
           "EW_Lifetime_Manager",
           "EW_Release_Chaff",
           "EW_Release_Flare"
@@ -1248,9 +1249,9 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         "required_barriers": [],
         "required_capabilities": [],
         "required_components": [],
-        "required_services": [],
-        ")EFJSON",
-    R"EFJSON(semantic_stage_ids": [],
+        "re)EFJSON",
+    R"EFJSON(quired_services": [],
+        "semantic_stage_ids": [],
         "write_state_shards": []
       },
       {
@@ -1506,8 +1507,8 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
         ],
         "before": [],
         "conflicts": [],
-        "contribution_id": "builtin.system.rotational_integra)EFJSON",
-    R"EFJSON(tion",
+        "contribution_id": "bu)EFJSON",
+    R"EFJSON(iltin.system.rotational_integration",
         "domain": "air",
         "executable_node_ids": [
           "RotationalIntegrate"
@@ -1686,8 +1687,8 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
     "builtin.weapon_release.damage_bridge",
     "builtin.weapon_release.service"
   ],
-  "requested_manifest_sha256": "c0770bab1ac7cb74677dcb46baabc0b33cc2e19a2344bc7227fe83842467e482",
-  "resolved_manifest_sha256": "426dbcb70f6655261bd23ab605307b203ad421d95b4771594461a2736541d386",
+  "requested_manifest_sha256": "f53d527676ee9b0c58e82adb5038f5baec6231005e6423773f5a5acf22ce82d2",
+  "resolved_manifest_sha256": "696a70f3667b934e80d5525e7204a21b8c8e4ce4b6c67bfe54aac98f058e9728",
   "resolver_contract_version": "echelon_forge.simulation_composition_resolver.v1",
   "schema_version": "echelon_forge.resolved_simulation_composition.v1",
   "system_registration_order": [
@@ -1732,9 +1733,9 @@ inline constexpr std::array<std::string_view, 7> kDefaultCompatibilityResolvedJs
 };
 
 inline constexpr std::string_view kDefaultCompatibilityRequestedSha256 =
-    "c0770bab1ac7cb74677dcb46baabc0b33cc2e19a2344bc7227fe83842467e482";
+    "f53d527676ee9b0c58e82adb5038f5baec6231005e6423773f5a5acf22ce82d2";
 inline constexpr std::string_view kDefaultCompatibilityResolvedSha256 =
-    "426dbcb70f6655261bd23ab605307b203ad421d95b4771594461a2736541d386";
+    "696a70f3667b934e80d5525e7204a21b8c8e4ce4b6c67bfe54aac98f058e9728";
 
 inline constexpr std::string_view kDefaultBackendProfileId = "cpu_exact.reference";
 inline constexpr std::string_view kDefaultBackendProviderId = "builtin.backend.flecs_cpu";

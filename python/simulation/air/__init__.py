@@ -18,6 +18,7 @@ from .observation import (
 from .director import AirDirectorDecision, AirDirectorInput, AirScriptedDirector
 from .action import (
     AIR_EW_HYBRID_ACTION_DIM,
+    AIR_EW_HYBRID_V2_ACTION_DIM,
     AIR_FULL_ACTION_DIM,
     AIR_TAKEOFF2_ACTION_DIM,
     AIR_TAKEOFF4_ACTION_DIM,
@@ -45,6 +46,7 @@ __all__ = [
     "AirScriptedDirector",
     "AIR_FULL_ACTION_DIM",
     "AIR_EW_HYBRID_ACTION_DIM",
+    "AIR_EW_HYBRID_V2_ACTION_DIM",
     "AIR_TAKEOFF2_ACTION_DIM",
     "AIR_TAKEOFF4_ACTION_DIM",
     "CompiledAirC2TaskOrderProjection",

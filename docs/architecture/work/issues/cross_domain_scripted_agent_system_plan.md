@@ -2660,6 +2660,63 @@ to a dedicated owner-local evidence document.
   caller-authored demo; this does not establish a general scenario compiler,
   multi-phase replay contract, or Air `playable` promotion.
 
+### 2026-10-05 — Air C2 accepted-seed and replay gate runner
+
+- Change batch: add `tools/diagnostics/flight_trajectory/air_c2_seed_matrix.py`.
+  It runs the maintained scripted C2 episode for an explicit accepted seed
+  set (default `0,1,2`), reruns each seed in the same process, hashes the full
+  trajectory and command arrays, and fails closed unless every record reaches
+  `success_objective`, reports `[4,1,1,1]`, has a valid C2 report, reaches the
+  landing command with runway geometry, and reproduces exactly.
+- Evidence: the source boundary test and focused simulation architecture suite
+  passed `21 passed`; the runner compiles cleanly, `git diff --check` passed,
+  and the dependency census reports `2,549` Python import sites, `2,512
+  allowed`, `37 compatibility`, and zero findings.
+- Boundary decision: the accepted-seed/replay gate is now executable and
+  fail-closed, but it has not been run in this worktree because the local
+  compiled `ef_py` artifact is absent. No Air `playable` promotion is claimed
+  from the runner's presence alone.
+
+### 2026-10-05 — Air EW accepted-seed and replay gate runner
+
+- Change batch: add `tools/diagnostics/air_ew_seed_matrix.py`. It runs the
+  maintained scripted EW response demo for an explicit accepted seed set
+  (default `20260516`), checks launch-warning/request parity, verifies the
+  native instrument resource projection for the selected response doctrine,
+  requires a complete scripted decision trace, and reruns each seed in the
+  same process for exact JSON replay equality.
+- Evidence: the Air EW contract suite passed `13 passed`; the Visual Studio
+  Ninja build completed `ef_core`, `ef_py`, and `ef_test`; the accepted seed
+  `20260516` ran for `120` steps twice with exact JSON replay equality,
+  launch-warning/request parity, and native countermeasure inventory
+  monotonicity. Python compilation, generated composition checks, and
+  `git diff --check` passed. The gate output records
+  `playable_boundary=ew_response_demo_without_terminal_objective`.
+- Boundary decision: the accepted EW response/replay gate is executable and
+  fail-closed for the countermeasure boundary. The gate still does not claim
+  terminal EW objectives, communication-loss/data-link semantics, or Air
+  `playable` promotion.
+
+### 2026-10-05 — Air EW jammer command owner and versioned response slice
+
+- Change batch: extend the opt-in `air_ew_hybrid_v2` action surface with
+  `jammer_transmit` and a quantized jammer technique code; add the typed
+  scripted jammer doctrine and burst countermeasure program; resolve the
+  fields through `PilotAction` and the legacy command bridge; and add the
+  native `EW_Jammer_Control` owner with instrument projection for active state,
+  technique, and transmit start time. The existing v1 action indices remain
+  unchanged.
+- Evidence: `air_ew_hybrid_v2` compiled and ran through the maintained
+  head-on scenario; the demo observed jammer request and native transmit
+  steps, while the v2 contract tests passed as part of `13 passed`. The
+  composition manifest and generated authority artifacts were regenerated and
+  validated, including the migration closure and dependency census with zero
+  findings.
+- Boundary decision: jammer activation now has an Air-native command owner
+  and a versioned transport seam. ESM interpretation, jammer effectiveness,
+  multi-aircraft EW coordination, terminal objectives, and canonical action
+  mode admission remain open; no `playable` promotion is made.
+
 ### 2026-09-27 — Direct compiled simulation backend provider
 
 - Starting commit: `e189b169`.
@@ -3212,3 +3269,157 @@ to a dedicated owner-local evidence document.
   assessment, EW/data-link constraints, formation mission parity, accepted
   seed coverage, visualization acceptance, or large-scale Air playable status;
   Air remains `playable_candidate`.
+
+### 2026-10-05 — Air C2 accepted-seed gate and composition evidence refresh
+
+- C2 gate result: the rebuilt `ef_py` path ran the maintained
+  `air_c2_seed_matrix.py` runner with default seeds `0,1,2`. Seed `0` stopped
+  at step `14951` with `off_runway_terminate`,
+  `mission_status=[0,0,0,-1]`, final command code `4`,
+  `c2_report_valid=true`, and `final_on_runway_geom=0.0`. A zero-randomization
+  seed `7` replay reproduced the same terminal geometry class. The C2 task
+  sequence reached `TASK_SCRAMBLE -> TASK_CAP -> TASK_RTB ->
+  TASK_RECOVER_LAND`; the seed-0 same-process replay was byte-equal, so the
+  remaining failure is terminal lateral landing geometry rather than replay
+  nondeterminism or missing C2 report closure.
+- Boundary decision: the prior single-seed C2 success record remains historical
+  evidence, but the current accepted-seed gate is not passed. Air remains
+  `playable_candidate`; do not promote the route until the controller lands
+  inside the strict runway geometry for the accepted seed set.
+- Composition evidence refresh: the current branch regenerated the Cordis
+  profile bundle/package pins, run-receipt vector, package provenance and
+  diagnostics, P7 native/Python parity evidence, semantic reference, and P8
+  migration closure from the rebuilt current tree. The composition suite passed
+  `151 passed, 1 skipped`; Cordis package tests passed `27/27`; closure
+  validation passed. This refresh changes evidence identities only; it does not
+  widen the held Node-host or broader-profile boundaries.
+
+### 2026-10-05 — Air EW bounded jammer effectiveness slice
+
+- Starting commit: `4565986f9`.
+- Change batch: make radar suppression depend on the authored jammer contract:
+  active installed NoiseBarrage/NoiseSpot transmitters now use power scaled by
+  the maintained 2 GHz Gen4 bandwidth baseline and must cover the radar
+  receiver with their effective beam. The existing burn-through proxy remains
+  bounded and deterministic. The EW replay invariant now treats the first
+  inventory decrement as request onset, so pre-release warning frames are
+  checked against the authored baseline rather than an assumed immediate
+  release.
+- Evidence: the rebuilt native `ef_test` passed the complete `air_ew_decoy`
+  suite (`235` test cases, `154696` assertions), including beam-in/beam-out,
+  narrow-band, and DRFM cases. The focused Python EW suite passed `18 passed`.
+  The native target compiled under the configured Visual Studio environment and
+  `git diff --check` is clean.
+- Boundary decision: this closes only the bounded noise-jammer visibility
+  slice. DRFM false-track/deception behavior remains intentionally unmodeled,
+  because no radar RF band is authored in the current `Sensor` contract.
+  ESM sensitivity/classification semantics, multi-aircraft EW parity, terminal
+  objective closure, and canonical action-mode admission remain open; Air is
+  still `playable_candidate`.
+
+### 2026-10-05 — Air ESM classifier flag semantics
+
+- Starting commit: `fc7844ad4`.
+- Change batch: make `ESMReceiver.classify_emitters` control the lock and
+  missile-guidance labels projected into `EmitterDetection`. ESM presence,
+  source identity, bearing, and signal strength remain available when the
+  receiver is configured for detection without classification.
+- Evidence: the rebuilt native `ef_test` passed `236` test cases and `154714`
+  assertions, including classified and unclassified ESM detections. The
+  focused Python EW suite remained green at `18 passed`.
+- Boundary decision: this closes only the receiver classification flag
+  semantics. `sensitivity_dbm` remains open because the current emitter and
+  sensor contracts do not provide a shared RF-power reference for a truthful
+  dBm threshold; no arbitrary conversion was added. DRFM false tracks,
+  multi-aircraft EW parity, terminal objective closure, and canonical
+  action-mode admission remain open; Air is still `playable_candidate`.
+
+### 2026-10-05 — Air EW cooperative jammer routing probe
+
+- Starting commit: `3a025e441`.
+- Change batch: make the maintained cooperative EW runner accept an optional
+  `jammer_doctrine`. With `self_protect_on_lock`, it selects the opt-in
+  `air_ew_hybrid_v2` action surface, passes a 16-element action contract to
+  each slot, and records both the per-slot jammer request and the native
+  `jammer_transmitting` projection. The default path remains the v1
+  countermeasure route.
+- Evidence: the hostile 2v2 scenario at seed `20260516` ran for the full
+  204-step budget; both slots emitted jammer requests and each request trace
+  matched its native transmit trace. The new paired-run test reproduces the
+  owner roster, warnings, countermeasure samples, jammer traces, opponent
+  reports, decisions, and runtime identities. The focused cooperative EW
+  suite passed with this v2 route.
+- Boundary decision: this closes only the multi-aircraft v2 command/state
+  routing slice. It does not establish jammer effectiveness in a terminal
+  combat objective, DRFM false-track behavior, RF-band calibration, or
+  canonical `python.env_config.ACTION_MODES` admission; v2 remains opt-in
+  and Air remains `playable_candidate`. Running the v2 EW runner against the
+  existing cooperative terminal-surrogate scenario produced no jammer
+  requests and stayed `running`; that fixture has no hostile emitter route
+  and the EW runner has no weapon-employment owner. A separate scenario must
+  combine an EW threat with a terminal objective before terminal EW closure
+  can be claimed.
+
+### 2026-10-05 — Air EW single-aircraft terminal composition
+
+- Starting commit: `89c5da967`.
+- Change batch: migrate the maintained `air.combat_ew.c2_roe_ew_scripted`
+  composition, which preserves the 12-element C2/ROE engagement prefix and
+  appends the versioned EW v1/v2 tail. Add a hostile 1v1 generic-Aircraft
+  terminal surrogate with a scripted Red missile owner, a direct diagnostic,
+  and model/runtime regression tests. The fixture reads native launch warning,
+  countermeasure inventory, jammer transmission, C2/ROE release acceptance,
+  and terminal combat state; it does not write native components from Python.
+- Evidence: the combined Air/EW regression passed `34 passed`. With seed
+  `20260516` and `air_ew_hybrid_v2`, the fixture accepted and executed the
+  Blue release at step `2`, produced continuous launch-warning and
+  countermeasure requests at steps `163..201`, projected native jammer
+  transmission through step `200`, and terminated at step `201` with
+  `combat_win`. The paired v1/v2 and same-seed replay assertions passed.
+- Boundary decision: this closes the bounded single-aircraft terminal
+  composition and native EW state/readback slice. It does not claim calibrated
+  seeker decoy effects, calibrated jammer burn-through, DRFM false tracks,
+  RF-band sensitivity semantics, cooperative terminal EW closure, canonical
+  action-mode admission, or final Air `playable` status.
+
+### 2026-10-05 — Air EW cooperative terminal composition
+
+- Starting commit: `d83935f62`.
+- Change batch: add `cooperative_air_2v2_scripted_c2_roe_ew_terminal_v1.json`
+  and its RL-independent diagnostic. The runner composes the existing per-slot
+  C2/ROE release model with the versioned EW v2 tail, keeps the Red scripted
+  missile owners world-owned, and records target ownership, launch warnings,
+  countermeasure state, jammer requests/transmission, and terminal state.
+- Evidence: the focused cooperative terminal EW regression passed `2 passed`;
+  the combined EW regression passed `16 passed`. With seed `20260516`, both
+  Blue slots accepted and executed a release at step `2`, received source-driven
+  warnings (Lead `163..212`, Wing `183..212`), issued countermeasure and jammer
+  requests, observed native jammer transmission (Lead through `206`, Wing
+  through `211`), and terminated at step `212` with `combat_win` for both
+  slots. The paired run reproduced the full recorded trace.
+- Boundary decision: this closes a bounded cooperative multi-aircraft terminal
+  surrogate and owner/replay evidence. It does not claim chaff/flare seeker
+  seduction, calibrated jammer burn-through, DRFM false tracks, RF-band
+  sensitivity semantics, canonical action-mode admission, formation mission
+  parity, or final Air `playable` status. Requests may continue after the
+  native jammer transmit window, so request presence is not an effectiveness
+  result.
+
+### 2026-10-05 — Air EW opt-in RL observation projection
+
+- Starting commit: `a12f6993a`.
+- Change batch: add the opt-in `ew_state` observation key to the maintained
+  single-world and cooperative batch runtimes. The six-element float32 vector
+  projects native countermeasure inventory/release timing and jammer
+  transmit/mode timing through the declared observation owner. Transformer and
+  visual Transformer extractors add a token only when that key is present;
+  temporal extraction rejects it explicitly because no EW history contract
+  exists. The default observation key set and shapes remain unchanged.
+- Evidence: the focused RL/EW and environment-configuration tests passed
+  `38 passed`; the policy transformer/optimizer regressions passed in the same
+  run. The action modes `air_ew_hybrid_v1/v2` remain available to direct
+  diagnostics and composed runners but are not added to canonical
+  `python.env_config.ACTION_MODES` by this slice.
+- Boundary decision: this closes observation transport and policy-token
+  projection only. It does not make EW action modes canonical, add temporal EW
+  history, or establish calibrated EW effects or a playable Air capability.

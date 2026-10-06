@@ -132,6 +132,8 @@
     "tests/architecture/runtime_spine/test_web_viz_facade_caller.py",
     "tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py",
     "tests/architecture/simulation/test_backend_boundary.py",
+    "tests/architecture/simulation/test_air_seed_matrix_boundary.py",
+    "tests/architecture/simulation/test_air_ew_seed_matrix_boundary.py",
     "tests/architecture/simulation/test_air_observation_boundary.py",
     "tests/architecture/simulation/test_facade_batch_boundary.py",
     "tests/architecture/tasking_contracts/test_simulation_air_tasking_boundary.py",

@@ -319,6 +319,12 @@ class NonFiniteTrainingProbe:
                     tracer.check("extractor.proc.proprio", processed["proprio"])
                     tracer.check("extractor.emb_proprio", emb_proprio)
                     emb_parts.append(emb_proprio)
+                if getattr(self, "has_ew_state", False):
+                    emb_ew_state = self.embed_ew_state(processed["ew_state"]).unsqueeze(1) + self.type_embed(
+                        self.idx_ew_state
+                    )
+                    tracer.check("extractor.emb_ew_state", emb_ew_state)
+                    emb_parts.append(emb_ew_state)
 
                 sequence = th.cat([*emb_parts, emb_contacts, emb_rwr], dim=1)
                 tracer.check("extractor.sequence", sequence)
