@@ -303,12 +303,12 @@ bool record_esm_detection(ESMReceiver &owner_esm, flecs::entity emitter, const S
     if (dist_m > max_range) {
         return false;
     }
-    const bool has_rf = rf_emission_valid(emitter_sensor.rf_eirp_watts,
-                                         emitter_sensor.rf_frequency_mhz,
-                                         emitter_sensor.rf_bandwidth_mhz);
+    const bool has_rf =
+        rf_emission_valid(emitter_sensor.rf_eirp_watts, emitter_sensor.rf_frequency_mhz,
+                          emitter_sensor.rf_bandwidth_mhz);
     const bool authored_rf = emitter_sensor.rf_eirp_watts != 0.0 ||
-        emitter_sensor.rf_frequency_mhz != 0.0 ||
-        (!is_jammer && emitter_sensor.rf_bandwidth_mhz != 0.0);
+                             emitter_sensor.rf_frequency_mhz != 0.0 ||
+                             (!is_jammer && emitter_sensor.rf_bandwidth_mhz != 0.0);
     if (!has_rf && (owner_esm.require_rf_contract || authored_rf)) return false;
     double received_dbm = 0.0;
     if (has_rf) {
@@ -339,8 +339,11 @@ bool record_esm_detection(ESMReceiver &owner_esm, flecs::entity emitter, const S
     det.sensitivity_margin_db = has_rf ? received_dbm - owner_esm.sensitivity_dbm : 0.0;
     det.observed_time_s = current_time;
     const int required = std::max(1, owner_esm.confirmation_scans);
-    det.confirmation_count = existing == owner_esm.detections.end() ? 1 :
-        std::min(required, existing->confirmation_count + (current_time > existing->observed_time_s ? 1 : 0));
+    det.confirmation_count =
+        existing == owner_esm.detections.end()
+            ? 1
+            : std::min(required, existing->confirmation_count +
+                                     (current_time > existing->observed_time_s ? 1 : 0));
     det.confidence = std::min(1.0, static_cast<double>(det.confirmation_count) / required);
     const bool classified = owner_esm.classify_emitters && det.confidence >= 1.0;
     det.classification_known = classified;
@@ -350,9 +353,9 @@ bool record_esm_detection(ESMReceiver &owner_esm, flecs::entity emitter, const S
     if (existing == owner_esm.detections.end()) {
         owner_esm.detections.push_back(det);
     } else if (current_time > existing->observed_time_s ||
-               (det.has_rf_power != existing->has_rf_power ? det.has_rf_power :
-                det.has_rf_power ? det.received_power_dbm >= existing->received_power_dbm :
-                                   det.signal_strength >= existing->signal_strength)) {
+               (det.has_rf_power != existing->has_rf_power ? det.has_rf_power
+                : det.has_rf_power ? det.received_power_dbm >= existing->received_power_dbm
+                                   : det.signal_strength >= existing->signal_strength)) {
         *existing = det;
     }
     return true;
@@ -369,12 +372,14 @@ bool append_esm_detection_from_emitter(flecs::entity owner, flecs::entity emitte
     const auto record_radar = [&](const Sensor &radar) {
         if (radar.type == static_cast<int>(SensorType::Radar)) {
             detected |= record_esm_detection(*owner_esm, emitter, esm_sensor, radar,
-                std::max(1.0, radar.reference_range_m), false, dist_m, rel_bearing_deg, current_time);
+                                             std::max(1.0, radar.reference_range_m), false, dist_m,
+                                             rel_bearing_deg, current_time);
         }
     };
     if (const Sensor *radar = emitter.get<Sensor>()) record_radar(*radar);
     if (const auto *mounted = emitter.get<MountedSensors>()) {
-        for (const auto &mount : mounted->mounts) record_radar(mount.sensor);
+        for (const auto &mount : mounted->mounts)
+            record_radar(mount.sensor);
     }
     Sensor jammer_emitter{};
     double jammer_erp_watts = 0.0;
@@ -383,12 +388,14 @@ bool append_esm_detection_from_emitter(flecs::entity owner, flecs::entity emitte
         const Jammer *pod = emitter.get<Jammer>();
         // Legacy pods retain the historical omnidirectional passive-emission proxy.
         // Explicit RF EIRP is the main-beam value; no sidelobe model is authored.
-        const bool directional_rf = rf_emission_valid(jammer_emitter.rf_eirp_watts,
-            jammer_emitter.rf_frequency_mhz, jammer_emitter.rf_bandwidth_mhz);
-        if (pod && (!directional_rf ||
-                    jammer_covers_receiver(*pod, *emitter.get<Transform>(), *owner.get<Transform>()))) {
+        const bool directional_rf =
+            rf_emission_valid(jammer_emitter.rf_eirp_watts, jammer_emitter.rf_frequency_mhz,
+                              jammer_emitter.rf_bandwidth_mhz);
+        if (pod && (!directional_rf || jammer_covers_receiver(*pod, *emitter.get<Transform>(),
+                                                              *owner.get<Transform>()))) {
             detected |= record_esm_detection(*owner_esm, emitter, esm_sensor, jammer_emitter,
-                              std::max(1.0, jammer_erp_watts), true, dist_m, rel_bearing_deg, current_time);
+                                             std::max(1.0, jammer_erp_watts), true, dist_m,
+                                             rel_bearing_deg, current_time);
         }
     }
     return detected;
@@ -640,7 +647,8 @@ class DefaultSensorModel : public ISensorModel {
                     append_rwr_detection_from_radar(sensor, owner, target_e, dist, false);
                 } else if (sensor.type == static_cast<int>(SensorType::ESM)) {
                     if (!append_esm_detection_from_emitter(owner, target_e, sensor, dist,
-                                                      normalize_angle_deg(noisy_bearing), current_time)) {
+                                                           normalize_angle_deg(noisy_bearing),
+                                                           current_time)) {
                         return;
                     }
                 }

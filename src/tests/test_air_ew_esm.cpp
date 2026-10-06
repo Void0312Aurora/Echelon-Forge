@@ -51,7 +51,11 @@ struct Fixture {
         owner = kernel.spawn_unit(Side::Blue, "Aircraft", 0, 0, 5000, 0, 0, 0, 0, 0, 0).id();
         emitter = kernel.spawn_unit(Side::Red, "Aircraft", 0, 10000, 5000, 180, 0, 0, 0, 0, 0).id();
         auto lease = kernel.acquire_world_lease();
-        lease.world().entity(owner).set<ESMReceiver>(strict_receiver()).remove<Sensor>().remove<MountedSensors>();
+        lease.world()
+            .entity(owner)
+            .set<ESMReceiver>(strict_receiver())
+            .remove<Sensor>()
+            .remove<MountedSensors>();
         lease.world().entity(emitter).set<Sensor>(rf_radar()).remove<MountedSensors>();
     }
     ContactList scan(double time = 0.0) {
@@ -75,7 +79,7 @@ struct Fixture {
         lease.world().entity(emitter).set<Sensor>(s);
     }
 };
-}
+} // namespace
 
 TEST_SUITE("air_ew_esm") {
     TEST_CASE("RF sensitivity and band gates deny both emitter and passive contact") {
@@ -113,7 +117,8 @@ TEST_SUITE("air_ew_esm") {
         }
         REQUIRE(f.scan().contacts.size() == 1);
         REQUIRE(f.receiver().detections.size() == 1);
-        CHECK(f.receiver().detections.front().received_power_dbm == doctest::Approx(-62.4477832219));
+        CHECK(f.receiver().detections.front().received_power_dbm ==
+              doctest::Approx(-62.4477832219));
     }
 
     TEST_CASE("legacy proxy is explicit and strict receivers reject missing RF data") {
@@ -141,7 +146,8 @@ TEST_SUITE("air_ew_esm") {
         }
         REQUIRE(f.scan().contacts.size() == 1);
         REQUIRE(f.receiver().detections.size() == 1);
-        CHECK(f.receiver().detections.front().received_power_dbm == doctest::Approx(-62.4477832219));
+        CHECK(f.receiver().detections.front().received_power_dbm ==
+              doctest::Approx(-62.4477832219));
         CHECK(f.receiver().detections.front().confirmation_count == 1);
         auto r = strict_receiver();
         r.require_rf_contract = false;
@@ -152,7 +158,8 @@ TEST_SUITE("air_ew_esm") {
         f.scan();
         REQUIRE(f.receiver().detections.size() == 1);
         CHECK(f.receiver().detections.front().has_rf_power);
-        CHECK(f.receiver().detections.front().received_power_dbm == doctest::Approx(-62.4477832219));
+        CHECK(f.receiver().detections.front().received_power_dbm ==
+              doctest::Approx(-62.4477832219));
     }
 
     TEST_CASE("confirmation counts distinct scan times and expires before reacquisition") {
@@ -170,7 +177,8 @@ TEST_SUITE("air_ew_esm") {
         f.scan(1.0);
         CHECK(f.receiver().detections.front().confidence == 1.0);
         CHECK(f.receiver().detections.front().classification_known);
-        CHECK(f.receiver().detections.front().received_power_dbm == doctest::Approx(-72.4477832219));
+        CHECK(f.receiver().detections.front().received_power_dbm ==
+              doctest::Approx(-72.4477832219));
         // Newer weaker scans replace the prior stronger measurement.
         f.scan(3.01);
         CHECK(f.receiver().detections.front().confirmation_count == 1);
@@ -253,6 +261,4 @@ TEST_SUITE("air_ew_esm") {
         f.kernel.reset(161);
         CHECK(f.kernel.get_agent_observation(f.owner).esm_detections.empty());
     }
-
-
 }
