@@ -177,7 +177,11 @@ Based on the repository aircraft examples. Units follow the field suffix unless 
 | --- | --- | --- |
 | `rwr.sensitivity_dbm`, `.detect_band`, `.library_generation`, `.is_active` | dBm, band, generation, boolean | RWR sensitivity, band coverage, library generation, and activation. |
 | `jammer.power_watts`, `.bandwidth_mhz`, `.type`, `.effective_angle`, `.is_active` | W, MHz, string, deg, boolean | Jammer output, bandwidth, mode, effective angle, and activation. |
+| `jammer.burn_through_reference_m`, `.spot_power_gain`, `.drfm_range_offset_m` | m, multiplier, m | Authored burn-through calibration, NoiseSpot concentration gain, and DRFM false-target range offset. The first two must be finite and greater than 0; the DRFM offset may be signed but must be finite. |
+| `jammer.*_provenance` | string | Provenance notes for the authored jammer calibration fields. |
 | `countermeasures.chaff_count`, `.flare_count`, `.release_interval`, `.auto_mode` | count, count, s, boolean | Countermeasure inventory and release behavior. |
+| `countermeasures.chaff_rcs_m2`, `.flare_ir_intensity`, `.chaff_lifetime_s`, `.flare_lifetime_s` | m^2, relative units, s, s | Authored expendable signatures and persistence durations; each numeric value must be finite and greater than 0. |
+| `countermeasures.provenance` | string | Provenance note for countermeasure signature and lifetime inputs. |
 
 ### RCS Profile
 

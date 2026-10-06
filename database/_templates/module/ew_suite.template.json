@@ -15,13 +15,24 @@
     "bandwidth_mhz": 0,
     "type": "",
     "effective_angle": 0,
-    "is_active": false
+    "is_active": false,
+    "burn_through_reference_m": 1.0,
+    "burn_through_provenance": "",
+    "spot_power_gain": 1.0,
+    "spot_power_gain_provenance": "",
+    "drfm_range_offset_m": 0.0,
+    "drfm_range_offset_provenance": ""
   },
   "countermeasures": {
     "_comment": "Countermeasure placeholders.",
     "chaff_count": 0,
     "flare_count": 0,
     "release_interval": 0,
-    "auto_mode": false
+    "auto_mode": false,
+    "chaff_rcs_m2": 1.0,
+    "flare_ir_intensity": 1.0,
+    "chaff_lifetime_s": 1.0,
+    "flare_lifetime_s": 1.0,
+    "provenance": ""
   }
 }
