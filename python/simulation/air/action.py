@@ -85,7 +85,11 @@ def build_pilot_action(action: Any, *, action_mode: str = "full", instrument_sta
     pilot.program_chaff = bool(values[12] > 0.5) if mode in _EW_MODES else False
     pilot.program_flare = bool(values[13] > 0.5) if mode in _EW_MODES else False
     pilot.jammer_transmit = bool(values[14] > 0.5) if mode == "air_ew_hybrid_v2" else False
-    pilot.jammer_mode = int(np.floor(np.clip(float(values[15]), 0.0, 2.0))) if mode == "air_ew_hybrid_v2" else 0
+    pilot.jammer_mode = (
+        int(np.floor(np.clip(float(values[15]), 0.0, 2.0)))
+        if mode == "air_ew_hybrid_v2"
+        else -1
+    )
     pilot.jettison_emergency = False
     return pilot
 

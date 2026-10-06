@@ -289,7 +289,7 @@ def test_ew_v2_action_model_projects_jammer_tail_to_pilot_action() -> None:
         assert pilot.jammer_mode == 1
     v1 = build_pilot_action(action[:14], action_mode=AIR_EW_HYBRID_V1_ACTION_MODE)
     assert v1.jammer_transmit is False
-    assert v1.jammer_mode == 0
+    assert v1.jammer_mode == -1
 
 
 def test_ew_action_model_maps_single_countermeasure_doctrine_to_one_tail_bit() -> None:

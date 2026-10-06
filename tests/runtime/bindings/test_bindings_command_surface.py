@@ -428,6 +428,8 @@ class BindingsCommandSurfaceTests(unittest.TestCase):
         "flaps",
         "gear_handle",
         "jettison_emergency",
+        "jammer_mode",
+        "jammer_transmit",
         "master_arm",
         "program_chaff",
         "program_flare",

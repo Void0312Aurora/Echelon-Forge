@@ -170,7 +170,11 @@ def build_pilot_action(action: np.ndarray, *, action_mode: str, inst_now=None):
         pilot_act.program_chaff = bool(action[12] > 0.5)
         pilot_act.program_flare = bool(action[13] > 0.5)
         pilot_act.jammer_transmit = bool(action[14] > 0.5) if action_mode == AIR_EW_HYBRID_V2_ACTION_MODE else False
-        pilot_act.jammer_mode = jammer_mode_code(action[15]) if action_mode == AIR_EW_HYBRID_V2_ACTION_MODE else 0
+        pilot_act.jammer_mode = (
+            jammer_mode_code(action[15])
+            if action_mode == AIR_EW_HYBRID_V2_ACTION_MODE
+            else -1
+        )
         pilot_act.jettison_emergency = False
         return pilot_act
 
@@ -192,7 +196,7 @@ def build_pilot_action(action: np.ndarray, *, action_mode: str, inst_now=None):
     pilot_act.program_chaff = False
     pilot_act.program_flare = False
     pilot_act.jammer_transmit = False
-    pilot_act.jammer_mode = 0
+    pilot_act.jammer_mode = -1
     pilot_act.jettison_emergency = False
 
     if action_mode == "takeoff2":

@@ -36,9 +36,11 @@ struct PilotAction {
     bool program_chaff;
     bool program_flare;
 
-    // Self-protection jammer cockpit switch. The mode is a JammingType code.
+    // Self-protection jammer cockpit switch. A negative mode means that this
+    // legacy/v1 transport carries no jammer command; v2 supplies 0..2 even
+    // when the explicit command is transmit=false.
     bool jammer_transmit = false;
-    int jammer_mode = 0;
+    int jammer_mode = -1;
 
     bool active; // Validity flag
 };

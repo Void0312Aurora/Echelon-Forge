@@ -176,11 +176,18 @@ suppression 的主要机制。
 - `jettison_emergency`
 - `program_chaff`
 - `program_flare`
+- `jammer_transmit`
 
 ### 选择器与有效位
 
 - `weapon_select_id`
+- `jammer_mode`（显式 EW v2 指令的 `JammingType` 编码）
 - `active`
+
+对于没有暴露 EW v2 jammer tail 的动作面，`jammer_mode = -1` 表示兼容传输
+中没有 jammer 指令。这样的 `PilotAction` 不会关闭已经处于发射状态的吊舱。
+EW v2 动作面始终提供 `0..2` 的 mode code；即使
+`jammer_transmit` 为 false，也会用它表达显式关闭发射。
 
 ## 解释规则
 

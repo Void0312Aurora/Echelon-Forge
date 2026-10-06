@@ -1102,6 +1102,9 @@ void register_instrument_reflection(flecs::world &ecs) {
         .member<double>("wind_dir_deg")
         .member<bool>("gps_available")
         .member<double>("position_uncertainty_m")
+        .member<bool>("jammer_transmitting")
+        .member<int>("jammer_mode")
+        .member<double>("jammer_transmit_start_time_s")
         .member<double>("gear_stress")
         .member<bool>("gear_collapsed")
         .member<bool>("on_runway");

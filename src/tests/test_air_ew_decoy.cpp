@@ -12,6 +12,7 @@
 #include "components/combat/common/weapon_common.h"
 #include "components/combat/health.h"
 #include "components/combat/scoring.h"
+#include "components/command/legacy_command_bridge.h"
 #include "components/command/pilot_action.h"
 #include "components/systems/ew.h"
 #include "components/systems/sensor.h"
@@ -545,6 +546,26 @@ TEST_SUITE("air_ew_decoy") {
 
         const Jammer drfm_beam{true, 1000.0, 2000.0, JammingType::DeceptionDRFM, 60.0};
         CHECK(radar_sees_jammer_target(drfm_beam, 180.0));
+    }
+
+    TEST_CASE("ordinary pilot frames preserve an active jammer while v2 can turn it off") {
+        Jammer jammer{true, 1000.0, 2000.0, JammingType::NoiseBarrage, 60.0};
+
+        PilotAction ordinary{};
+        ordinary.active = true;
+        const ResolvedJammerCommand absent = resolve_jammer_command(&ordinary);
+        CHECK_FALSE(absent.commanded);
+        CHECK(jammer.is_active);
+
+        PilotAction explicit_off{};
+        explicit_off.active = true;
+        explicit_off.jammer_transmit = false;
+        explicit_off.jammer_mode = 0;
+        const ResolvedJammerCommand off = resolve_jammer_command(&explicit_off);
+        REQUIRE(off.commanded);
+        REQUIRE_FALSE(off.transmit);
+        CHECK(apply_jammer_command(jammer, off.transmit, off.mode_code, 1.0));
+        CHECK_FALSE(jammer.is_active);
     }
 
     TEST_CASE("ESM classifier gates lock and guidance labels without hiding presence") {

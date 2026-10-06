@@ -72,6 +72,12 @@ resolve_compatibility_countermeasure_command(const EntityT &entity) {
 inline ResolvedJammerCommand resolve_jammer_command(const PilotAction *pilot) {
     ResolvedJammerCommand resolved;
     if (const PilotAction *active_pilot = active_pilot_action(pilot)) {
+        // The v1 action surfaces share this carrier but cannot express jammer
+        // intent. Keep their default sentinel as command absence so an
+        // already-active pod is not shut down by an ordinary flight frame.
+        if (active_pilot->jammer_mode < 0) {
+            return resolved;
+        }
         resolved.commanded = true;
         resolved.transmit = active_pilot->jammer_transmit;
         resolved.mode_code = active_pilot->jammer_mode;
