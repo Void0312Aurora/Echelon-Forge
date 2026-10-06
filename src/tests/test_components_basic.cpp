@@ -635,4 +635,61 @@ TEST_SUITE("components_basic") {
         std::filesystem::remove_all(root);
     }
 
+    TEST_CASE("authored jammer calibration fields fail closed at content boundary") {
+        const std::filesystem::path root =
+            std::filesystem::temp_directory_path() / "ef_jammer_calibration_validation";
+        std::filesystem::remove_all(root);
+        std::filesystem::create_directories(root);
+
+        UnitDefinition sentinel{};
+        sentinel.name = "preexisting_definition";
+        std::vector<UnitDefinition> definitions{sentinel};
+        std::string error;
+        struct InvalidJammerCase {
+            const char *field;
+            const char *value;
+        };
+        const InvalidJammerCase invalid_cases[] = {
+            {"burn_through_reference_m", "-1.0"},
+            {"burn_through_reference_m", "0.0"},
+            {"spot_power_gain", "0.0"},
+            {"drfm_range_offset_m", "null"},
+        };
+        for (const auto &test_case : invalid_cases) {
+            {
+                std::ofstream file(root / "aircraft.json");
+                file << "{\"name\":\"Invalid_Jammer_Calibration\",\"type\":\"Aircraft\","
+                        "\"jammer\":{\""
+                     << test_case.field << "\":" << test_case.value << "}}";
+            }
+            definitions = {sentinel};
+            error.clear();
+            CHECK_FALSE(load_unit_definitions_json(root.string(), definitions, &error));
+            REQUIRE(definitions.size() == 1);
+            CHECK(definitions.front().name == "preexisting_definition");
+            CHECK(error.find(test_case.field) != std::string::npos);
+        }
+
+        {
+            std::ofstream file(root / "aircraft.json");
+            file << R"json({
+  "name": "Boundary_Jammer_Calibration",
+  "type": "Aircraft",
+  "jammer": {
+    "burn_through_reference_m": 0.000001,
+    "spot_power_gain": 0.000001,
+    "drfm_range_offset_m": -3000.0
+  }
+})json";
+        }
+        definitions = {sentinel};
+        error.clear();
+        REQUIRE(load_unit_definitions_json(root.string(), definitions, &error));
+        REQUIRE(definitions.size() == 2);
+        CHECK(definitions.back().jammer_data.burn_through_reference_m == doctest::Approx(0.000001));
+        CHECK(definitions.back().jammer_data.spot_power_gain == doctest::Approx(0.000001));
+        CHECK(definitions.back().jammer_data.drfm_range_offset_m == doctest::Approx(-3000.0));
+        std::filesystem::remove_all(root);
+    }
+
 } // TEST_SUITE components_basic

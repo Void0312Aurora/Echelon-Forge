@@ -1651,6 +1651,45 @@ bool validate_countermeasure_json_fields(const nlohmann::json &cms, std::string 
     return true;
 }
 
+bool validate_jammer_json_fields(const nlohmann::json &jammer, std::string *error) {
+    if (!jammer.is_object()) {
+        return true;
+    }
+
+    const auto validate_number = [&](const char *key, const auto &predicate,
+                                     const char *constraint) {
+        if (!jammer.contains(key)) {
+            return true;
+        }
+        const auto &value = jammer.at(key);
+        if (value.is_number()) {
+            const double parsed = value.get<double>();
+            if (std::isfinite(parsed) && predicate(parsed)) {
+                return true;
+            }
+        }
+        if (error) {
+            *error = std::string("jammer.") + key + " must be " + constraint + " when authored";
+        }
+        return false;
+    };
+
+    if (!validate_number(
+            "burn_through_reference_m", [](double value) { return value > 0.0; },
+            "finite and greater than 0")) {
+        return false;
+    }
+    if (!validate_number(
+            "spot_power_gain", [](double value) { return value > 0.0; },
+            "finite and greater than 0")) {
+        return false;
+    }
+    if (!validate_number("drfm_range_offset_m", [](double) { return true; }, "finite")) {
+        return false;
+    }
+    return true;
+}
+
 bool parse_electronic_warfare_json_fields(const nlohmann::json &entry, UnitDefinition &def,
                                           std::string *error) {
     if (entry.contains("rwr") && entry["rwr"].is_object()) {
@@ -1660,12 +1699,21 @@ bool parse_electronic_warfare_json_fields(const nlohmann::json &entry, UnitDefin
 
     if (entry.contains("jammer") && entry["jammer"].is_object()) {
         const auto &jammer = entry["jammer"];
+        if (!validate_jammer_json_fields(jammer, error)) {
+            return false;
+        }
         def.jammer_data.is_active = jammer.value("is_active", def.jammer_data.is_active);
         def.jammer_data.power_watts = jammer.value("power_watts", def.jammer_data.power_watts);
         def.jammer_data.bandwidth_mhz =
             jammer.value("bandwidth_mhz", def.jammer_data.bandwidth_mhz);
         def.jammer_data.effective_angle =
             jammer.value("effective_angle", def.jammer_data.effective_angle);
+        def.jammer_data.burn_through_reference_m =
+            jammer.value("burn_through_reference_m", def.jammer_data.burn_through_reference_m);
+        def.jammer_data.spot_power_gain =
+            jammer.value("spot_power_gain", def.jammer_data.spot_power_gain);
+        def.jammer_data.drfm_range_offset_m =
+            jammer.value("drfm_range_offset_m", def.jammer_data.drfm_range_offset_m);
         const std::string jammer_type = jammer.value("type", "NoiseBarrage");
         if (jammer_type == "NoiseSpot") {
             def.jammer_data.type = JammingType::NoiseSpot;

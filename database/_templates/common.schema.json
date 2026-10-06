@@ -284,6 +284,32 @@
           "type": "number",
           "description": "Effective angular coverage."
         },
+        "burn_through_reference_m": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Authored burn-through range against the reference target and ERP."
+        },
+        "burn_through_provenance": {
+          "type": "string",
+          "description": "Provenance note for the burn-through calibration."
+        },
+        "spot_power_gain": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "NoiseSpot power concentration relative to barrage."
+        },
+        "spot_power_gain_provenance": {
+          "type": "string",
+          "description": "Provenance note for the NoiseSpot gain."
+        },
+        "drfm_range_offset_m": {
+          "type": "number",
+          "description": "DRFM false-target range offset beyond burn-through."
+        },
+        "drfm_range_offset_provenance": {
+          "type": "string",
+          "description": "Provenance note for the DRFM range offset."
+        },
         "is_active": {
           "type": "boolean",
           "description": "Active flag."
@@ -314,6 +340,30 @@
         "auto_mode": {
           "type": "boolean",
           "description": "Automatic release flag."
+        },
+        "chaff_rcs_m2": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Chaff radar cross-section."
+        },
+        "flare_ir_intensity": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Flare infrared intensity."
+        },
+        "chaff_lifetime_s": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Chaff persistence duration."
+        },
+        "flare_lifetime_s": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Flare persistence duration."
+        },
+        "provenance": {
+          "type": "string",
+          "description": "Provenance note for countermeasure signatures."
         }
       },
       "required": [],
