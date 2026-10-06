@@ -7,13 +7,16 @@ import numpy as np
 import pytest
 
 from python.runtime_bootstrap import resolve_repo_path
-from python.simulation import create_single_backend
+from python.simulation import create_scenario_backend, create_single_backend
 from python.simulation.air.tasking import make_scripted_c2_task_manager
 from python.simulation.air.director import AirDirectorInput, AirScriptedDirector
 from python.tasking_contracts.air.execution import AirScriptedExecutionModel
 
 
 DATABASE = resolve_repo_path("examples", "config", "database")
+SCENARIO = resolve_repo_path(
+    "scenarios", "air_combat", "air_combat_1v1_headon_sensor_smoke_v1.json"
+)
 
 
 def _setup(seeds: tuple[int, ...]) -> ef_py.BatchWorldSetupRequest:
@@ -172,6 +175,25 @@ def test_facade_batch_seed_derives_one_seed_per_world() -> None:
     )
     try:
         assert backend.seed(17) == (17, 18, 19)
+    finally:
+        backend.close()
+
+
+def test_facade_scenario_backend_compiles_and_materializes_without_setup_factory() -> None:
+    backend = create_scenario_backend(
+        backend_id="facade_batch",
+        database_path=DATABASE,
+        scenario_path=SCENARIO,
+    )
+    try:
+        backend.seed(23)
+        first = backend.reset()
+        replay = backend.reset()
+        assert len(first.entity_keys) == len(replay.entity_keys) == 2
+        assert all(entity_id > 0 for _, entity_id in first.entity_keys + replay.entity_keys)
+        assert first.entity_keys != replay.entity_keys
+        assert [float(obs.sim_time) for obs in first.observations] == [0.0, 0.0]
+        assert [float(obs.sim_time) for obs in replay.observations] == [0.0, 0.0]
     finally:
         backend.close()
 

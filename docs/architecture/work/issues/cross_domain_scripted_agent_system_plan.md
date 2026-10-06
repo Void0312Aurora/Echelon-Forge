@@ -2660,6 +2660,25 @@ to a dedicated owner-local evidence document.
   caller-authored demo; this does not establish a general scenario compiler,
   multi-phase replay contract, or Air `playable` promotion.
 
+### 2026-10-05 — Native scenario provider consumes compiled scenario paths
+
+- Change batch: extend `python.simulation.facade_batch.FacadeBatchBackend` to
+  accept either a maintained `scenario_path` or an already compiled scenario in
+  addition to its compatibility `setup_factory`. The provider now uses the
+  shared `ScenarioCompiler` and `load_compiled_scenario_for_setup_target`
+  surface to materialize native world layouts, seeds, randomization, and
+  controlled entity keys without importing `python.rl`.
+- Evidence: the facade batch, direct Air demo, backend boundary, and scenario
+  setup boundary suites passed `33 passed`; the changed modules compiled and
+  `git diff --check` passed. A direct native probe reset the maintained
+  `air_combat_1v1_headon_sensor_smoke_v1.json` scenario twice through
+  `create_scenario_backend(backend_id="facade_batch")` and observed two
+  controlled native entities at simulation time `0.0` on both resets.
+- Boundary decision: this closes the caller-authored setup requirement for the
+  native scenario-provider entry. Full command/report orchestration, terminal
+  lifecycle, cross-process replay, and default-provider promotion remain open;
+  the WorldBatch provider remains the RL-owned default.
+
 ### 2026-10-05 — Air C2 accepted-seed and replay gate runner
 
 - Change batch: add `tools/diagnostics/flight_trajectory/air_c2_seed_matrix.py`.
@@ -3423,3 +3442,51 @@ to a dedicated owner-local evidence document.
 - Boundary decision: this closes observation transport and policy-token
   projection only. It does not make EW action modes canonical, add temporal EW
   history, or establish calibrated EW effects or a playable Air capability.
+
+### 2026-10-05 — Simulation-owned Air command/report orchestration
+
+- Change batch: add `python.simulation.air.scenario_runtime.AirFacadeScenarioRuntime`
+  as the no-RL scenario lifecycle owner. It seeds and resets a scenario
+  provider, materializes neutral Air observations, produces the direct
+  director decision, submits the complete maintained task-order/leader-intent/
+  pilot-report/mission-command chain, projects the execution model output into
+  a native pilot action, advances the provider, and optionally evaluates the
+  event-owned Air terminal state.
+- The direct facade demo now delegates its loop to this runtime. The runtime
+  also exposes per-step command-chain evidence and replay-friendly semantic
+  run evidence. Each slot uses the common `DecisionRuntimeAgent` lifecycle and
+  publishes a seed/reset replay identity; terminal groups may be bound by
+  controlled-roster slot so native entity IDs can change across reset without
+  invalidating the contract.
+- Evidence: the focused facade/demo/backend/observation-boundary suites passed
+  `10 passed`. A compiled `air_combat_1v1_headon_sensor_smoke_v1.json` path ran
+  for three steps twice with equal phases, times, positions, and action norms;
+  one-step command-chain and event-terminal checks stayed `running` with
+  `no_terminal_damage_report` as expected for that smoke fixture.
+- The run now emits an `air.facade.replay.v1` receipt whose canonical digest
+  excludes reset-unstable native entity IDs and includes the slot replay
+  identities, per-step semantic frames, command-driven phase history,
+  simulation times, positions, action summaries, and terminal status/reason.
+  Two independent Python processes produced the same digest for seed `31` and
+  three steps:
+  `86618925a356eb9d25ffa07d24812da4344e0111f6ce32902c651d919bf6d4af`.
+- Boundary decision: command/report ordering, provider-owned terminal
+  invocation, and a process-independent replay receipt are now simulation-
+  owned. Visualization lifecycle, default-provider promotion, and a
+  named-platform terminal objective remain open; no Air `playable` promotion
+  is claimed.
+
+### 2026-10-05 — Authority-field regression alignment
+
+- Change batch: update the standalone Air engagement regression fixture to
+  provide the now-required `engagement_authority_holder_id` in both the
+  maintained command DTO and the facts packet. This keeps the test on the
+  same fail-closed authority contract used by the simulation-owned command
+  chain.
+- Evidence: the previously failing repeat-fire assessment test now passes;
+  the full facade engagement suite is `5 passed, 1 failed`. The remaining
+  failure is the separate native structural-damage expectation and is not a
+  simulation/RL dependency-boundary failure.
+- Boundary decision: the authority-field regression is closed for the
+  decoupling plan. Native weapon geometry/effect evidence remains outside this
+  plan's scope.

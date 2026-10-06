@@ -28,13 +28,22 @@ class FacadeBatchBackend:
         self,
         *,
         database_path: str,
-        setup_factory: SetupFactory,
+        setup_factory: SetupFactory | None = None,
+        scenario_path: str | None = None,
+        compiled_scenario: Any | None = None,
+        randomization_overrides: Mapping[str, Any] | None = None,
         world_count: int = 1,
         controlled_spawn_indices: Sequence[int] | None = None,
         worker_threads: int = 1,
     ) -> None:
-        if not callable(setup_factory):
+        if setup_factory is not None and not callable(setup_factory):
             raise TypeError("facade batch setup_factory must be callable")
+        if scenario_path is not None and compiled_scenario is not None:
+            raise ValueError("facade batch accepts either scenario_path or compiled_scenario, not both")
+        if setup_factory is None and scenario_path is None and compiled_scenario is None:
+            raise ValueError(
+                "facade batch requires setup_factory, scenario_path, or compiled_scenario"
+            )
         if int(world_count) <= 0 or int(worker_threads) <= 0:
             raise ValueError("facade batch world_count and worker_threads must be positive")
         config = ef_py.RuntimeBatchConfig()
@@ -43,12 +52,17 @@ class FacadeBatchBackend:
         self.facade = ef_py.RuntimeFacade(config)
         if not self.facade.load_database(str(database_path)):
             raise RuntimeError(f"facade batch could not load database: {database_path}")
-        self.world_count = int(world_count)
+        self._world_count = int(world_count)
         self.setup_factory = setup_factory
+        self.scenario_path = None if scenario_path is None else str(scenario_path)
+        self.compiled_scenario = compiled_scenario
+        self.randomization_overrides = (
+            None if randomization_overrides is None else dict(randomization_overrides)
+        )
         self.controlled_spawn_indices = None if controlled_spawn_indices is None else tuple(
             int(index) for index in controlled_spawn_indices
         )
-        self._seeds = tuple(42 for _ in range(self.world_count))
+        self._seeds = tuple(42 for _ in range(self._world_count))
         self._entity_keys: tuple[EntityKey, ...] = ()
         self._ready = False
         self._closed = False
@@ -56,29 +70,82 @@ class FacadeBatchBackend:
     def seed(self, seed: int) -> tuple[int, ...]:
         self._require_open()
         value = int(seed) & 0xFFFFFFFF
-        self._seeds = tuple((value + index) & 0xFFFFFFFF for index in range(self.world_count))
+        self._seeds = tuple((value + index) & 0xFFFFFFFF for index in range(self._world_count))
         return self._seeds
 
     def reset(self) -> FacadeBatchSnapshot:
         self._require_open()
         self._ready = False
         self._entity_keys = ()
-        setup = self.setup_factory(self._seeds)
-        spawns = list(getattr(setup, "spawn_requests", ()) or ())
-        if len(list(getattr(setup, "seeds", ()) or ())) != self.world_count:
-            raise ValueError("facade batch setup must contain one seed per world")
-        indices = self.controlled_spawn_indices
-        if indices is None:
-            indices = tuple(range(len(spawns)))
-        if not indices or len(set(indices)) != len(indices) or any(index < 0 or index >= len(spawns) for index in indices):
-            raise ValueError("facade batch controlled spawn indices must be unique and in range")
-        result = self.facade.apply_world_setup(setup)
-        entity_ids = tuple(int(value) for value in result.entity_ids)
-        if len(entity_ids) != len(spawns) or any(value <= 0 for value in entity_ids):
-            raise RuntimeError("facade batch setup did not materialize every declared spawn")
-        self._entity_keys = tuple((int(spawns[index].world_index), entity_ids[index]) for index in indices)
+        if self.setup_factory is not None:
+            setup = self.setup_factory(self._seeds)
+            spawns = list(getattr(setup, "spawn_requests", ()) or ())
+            if len(list(getattr(setup, "seeds", ()) or ())) != self._world_count:
+                raise ValueError("facade batch setup must contain one seed per world")
+            indices = self._validate_controlled_indices(len(spawns))
+            result = self.facade.apply_world_setup(setup)
+            entity_ids = tuple(int(value) for value in result.entity_ids)
+            if len(entity_ids) != len(spawns) or any(value <= 0 for value in entity_ids):
+                raise RuntimeError("facade batch setup did not materialize every declared spawn")
+            self._entity_keys = tuple(
+                (int(spawns[index].world_index), entity_ids[index]) for index in indices
+            )
+        else:
+            from python.scenario.compiler import ScenarioCompiler
+            from python.scenario.runtime import load_compiled_scenario_for_setup_target
+
+            compiled = self.compiled_scenario
+            if compiled is None:
+                compiled = ScenarioCompiler.compile_path(str(self.scenario_path))
+                self.compiled_scenario = compiled
+            applied_worlds = load_compiled_scenario_for_setup_target(
+                self,
+                compiled,
+                seeds=self._seeds,
+                randomization_overrides=self.randomization_overrides,
+            )
+            if len(applied_worlds) != self._world_count:
+                raise RuntimeError("facade batch scenario setup did not materialize every world")
+            template_spawns = tuple(
+                getattr(getattr(compiled, "runtime_metadata", None), "layout_template", None).spawns
+            )
+            keys: list[EntityKey] = []
+            for world_index, applied in enumerate(applied_worlds):
+                indices = self._validate_controlled_indices(len(template_spawns))
+                for index in indices:
+                    spawn = template_spawns[index]
+                    entity_id = int(applied.entities.get(spawn.entity_name, 0))
+                    if entity_id <= 0:
+                        raise RuntimeError(
+                            "facade batch scenario setup did not materialize controlled spawn "
+                            f"{spawn.entity_name!r} in world {world_index}"
+                        )
+                    keys.append((int(world_index), entity_id))
+            self._entity_keys = tuple(keys)
         self._ready = True
         return self.snapshot()
+
+    def world_count(self) -> int:
+        """Expose provider-neutral world cardinality to scenario materializers."""
+
+        return int(self._world_count)
+
+    def apply_world_setup(self, request: Any) -> Any:
+        """Apply a maintained setup request for the scenario materializer."""
+
+        self._require_open()
+        return self.facade.apply_world_setup(request)
+
+    def _validate_controlled_indices(self, spawn_count: int) -> tuple[int, ...]:
+        indices = self.controlled_spawn_indices
+        if indices is None:
+            indices = tuple(range(int(spawn_count)))
+        indices = tuple(int(index) for index in indices)
+        if not indices or len(set(indices)) != len(indices) or any(
+            index < 0 or index >= int(spawn_count) for index in indices
+        ):
+            raise ValueError("facade batch controlled spawn indices must be unique and in range")
+        return indices
 
     def snapshot(self) -> FacadeBatchSnapshot:
         self._require_ready()
@@ -157,6 +224,9 @@ class FacadeBatchBackend:
         self._require_ready()
         if not isinstance(actions, Mapping):
             raise TypeError("facade batch step requires an entity-keyed mapping")
+        unexpected = set(actions).difference(self._entity_keys)
+        if unexpected:
+            raise KeyError(f"facade batch step targets uncontrolled entities: {sorted(unexpected)}")
         missing = set(self._entity_keys).difference(actions)
         if missing:
             raise KeyError(f"facade batch step requires actions for every controlled entity: {sorted(missing)}")
@@ -240,7 +310,7 @@ class FacadeBatchBackend:
     ) -> Any:
         """Evaluate Air terminal state from the facade-owned event packet."""
 
-        if self.world_count > 1:
+        if self._world_count > 1:
             bare_ids = [
                 value
                 for values in (own_entity_ids, target_entity_ids)

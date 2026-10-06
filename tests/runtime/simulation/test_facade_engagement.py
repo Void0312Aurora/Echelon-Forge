@@ -401,6 +401,7 @@ def test_scripted_engagement_controller_blocks_repeat_fire_during_assessment() -
             "authorization_to_fire": True,
             "assigned_target_id": 9,
             "assigned_target_track_id": 9,
+            "engagement_authority_holder_id": 1,
         },
     )()
     facts = AirEngagementFacts(
@@ -414,6 +415,7 @@ def test_scripted_engagement_controller_blocks_repeat_fire_during_assessment() -
         target_range_m=16000.0,
         assigned_target_id=9,
         assigned_target_track_id=9,
+        engagement_authority_holder_id=1,
     )
     try:
         controller.reset(

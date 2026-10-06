@@ -32,6 +32,13 @@ from .engagement import (
     AirScriptedEngagementController,
 )
 from .runtime import AirEngagementRuntimeInput, AirScriptedEngagementRuntimeModel
+from .scenario_runtime import (
+    AirFacadeFrame,
+    AirFacadeReplayReceipt,
+    AirFacadeScenarioRun,
+    AirFacadeScenarioRuntime,
+    AirFacadeStepResult,
+)
 from .tasking_runtime import AirScriptedTaskingRuntime
 from .ew import AirEWDecision, AirScriptedEWController
 from .coordination import AirScriptedRosterCoordinator, AirTargetAssignment
@@ -67,6 +74,11 @@ __all__ = [
     "AirScriptedEngagementController",
     "AirEngagementRuntimeInput",
     "AirScriptedEngagementRuntimeModel",
+    "AirFacadeReplayReceipt",
+    "AirFacadeFrame",
+    "AirFacadeScenarioRun",
+    "AirFacadeScenarioRuntime",
+    "AirFacadeStepResult",
     "AirScriptedTaskingRuntime",
     "AirEWDecision",
     "AirScriptedEWController",

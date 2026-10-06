@@ -51,6 +51,19 @@ policy-evaluation and visualization entries now use the same factories for
 single/cooperative world construction, wrapper resolution, and policy loading;
 their RL provider remains lazy behind `python.simulation`.
 
+The native `facade_batch` scenario surface also accepts a compiled
+`scenario_path` or an already compiled scenario and materializes it through the
+shared scenario compiler/runtime setup seam. Callers may still provide an
+explicit setup factory for small compatibility fixtures. This removes the
+requirement for a no-RL scenario consumer to hand-author native setup DTOs;
+the simulation-owned Air scenario runtime now performs the maintained
+director -> command/report chain -> observation/action projection -> provider
+step ordering, while optional terminal status is read only through the
+event-owned facade evaluator. Default-provider promotion remains a separate
+gate. The runtime's canonical `air.facade.replay.v1` receipt hashes semantic
+slot frames without reset-unstable native entity IDs, so replay comparison can
+be performed across independent processes without importing RL.
+
 ## Verification
 
 Run the focused gate from the repository root:
@@ -75,7 +88,7 @@ The current 2026-10-05 baseline from that command is 1,107 Python modules, 2,551
 resolved Python import sites, 561 C/C++ source files, 1,723 quoted include
 sites, and 72 CMake link sites representing 66 unique target edges. No Python,
 C++ file, or CMake target multi-node cycle is present. The Python policy
-classifies 2,514 edges as allowed and 37 as compatibility, with no transitional
+classifies 2,564 edges as allowed and 37 as compatibility, with no transitional
 edges remaining;
 there are no unregistered forbidden edges. These counts use the maintained
 scanner scope above and are not expected to equal the issue's initial census
