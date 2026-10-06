@@ -151,11 +151,10 @@ bool jammer_suppresses_radar(const Jammer &jammer, const Transform &jammer_trans
         return false;
     }
 
-    // Burn-through is based on jammer power density. This is deliberately a
-    // bounded proxy until the Sensor contract carries an authored RF band.
-    const double effective_power = std::max(1.0, jammer.power_watts) * bandwidth_factor;
+    // The authored pod calibration is preferred; bandwidth remains an
+    // explicit power-density factor for legacy and narrow-band fixtures.
     const double burn_through_range =
-        283000.0 * std::sqrt(std::max(1.0e-6, target_rcs_m2) / effective_power);
+        jammer_burn_through_range_m(jammer, target_rcs_m2) / std::sqrt(bandwidth_factor);
     return distance_m > burn_through_range;
 }
 
@@ -179,6 +178,23 @@ bool entity_has_radar_emitter(const flecs::entity &entity, Sensor *out_emitter) 
         }
     }
     return false;
+}
+
+bool entity_has_jammer_emitter(const flecs::entity &entity, double receiver_range_m,
+                               Sensor *out_emitter, double *out_erp_watts) {
+    const Jammer *jammer = entity.get<Jammer>();
+    if (!jammer || !jammer_transmitting(*jammer)) {
+        return false;
+    }
+    if (out_emitter) {
+        *out_emitter = Sensor{};
+        out_emitter->max_range = receiver_range_m;
+        out_emitter->reference_range_m = receiver_range_m;
+    }
+    if (out_erp_watts) {
+        *out_erp_watts = jammer->power_watts;
+    }
+    return true;
 }
 
 double horizon_refraction_factor(const Sensor &sensor) {
@@ -266,6 +282,45 @@ void append_rwr_detection_from_radar(const Sensor &sensor, flecs::entity emitter
     }
 }
 
+double esm_receiver_range_m(const flecs::entity &owner, const Sensor &esm_sensor) {
+    const ESMReceiver *owner_esm = owner.get<ESMReceiver>();
+    if (owner_esm && owner_esm->max_detection_range_m > 0.0) {
+        return owner_esm->max_detection_range_m;
+    }
+    return esm_sensor.max_range;
+}
+
+void record_esm_detection(ESMReceiver &owner_esm, flecs::entity emitter,
+                          const Sensor &esm_sensor, const Sensor &emitter_sensor,
+                          double emitter_power_proxy, bool is_jammer, double dist_m,
+                          double rel_bearing_deg) {
+    const double max_range = owner_esm.max_detection_range_m > 0.0
+                                 ? owner_esm.max_detection_range_m
+                                 : std::max(esm_sensor.max_range, emitter_sensor.max_range * 2.0);
+    if (dist_m > max_range) {
+        return;
+    }
+    const double emitter_strength = emitter_power_proxy / std::max(1.0, dist_m * dist_m);
+    auto existing = std::find_if(
+        owner_esm.detections.begin(), owner_esm.detections.end(),
+        [&](const EmitterDetection &det) {
+            return det.source_id == emitter.id() && det.is_jammer == is_jammer;
+        });
+    EmitterDetection det{};
+    det.source_id = emitter.id();
+    det.bearing_deg = rel_bearing_deg;
+    det.signal_strength = emitter_strength;
+    const bool classified = owner_esm.classify_emitters;
+    det.is_radar_lock = !is_jammer && classified && emitter.has<Missile>();
+    det.is_missile_guidance = !is_jammer && classified && emitter.has<Missile>();
+    det.is_jammer = is_jammer;
+    if (existing == owner_esm.detections.end()) {
+        owner_esm.detections.push_back(det);
+    } else if (det.signal_strength >= existing->signal_strength) {
+        *existing = det;
+    }
+}
+
 void append_esm_detection_from_emitter(flecs::entity owner, flecs::entity emitter,
                                        const Sensor &esm_sensor, double dist_m,
                                        double rel_bearing_deg) {
@@ -273,37 +328,18 @@ void append_esm_detection_from_emitter(flecs::entity owner, flecs::entity emitte
     if (!owner_esm) {
         return;
     }
-
     Sensor emitter_radar{};
-    if (!entity_has_radar_emitter(emitter, &emitter_radar)) {
-        return;
+    if (entity_has_radar_emitter(emitter, &emitter_radar)) {
+        record_esm_detection(*owner_esm, emitter, esm_sensor, emitter_radar,
+                             std::max(1.0, emitter_radar.reference_range_m), false, dist_m,
+                             rel_bearing_deg);
     }
-
-    const double max_range = owner_esm->max_detection_range_m > 0.0
-                                 ? owner_esm->max_detection_range_m
-                                 : std::max(esm_sensor.max_range, emitter_radar.max_range * 2.0);
-    if (dist_m > max_range) {
-        return;
-    }
-
-    const double emitter_strength =
-        std::max(1.0, emitter_radar.reference_range_m) / std::max(1.0, dist_m * dist_m);
-    auto existing =
-        std::find_if(owner_esm->detections.begin(), owner_esm->detections.end(),
-                     [&](const EmitterDetection &det) { return det.source_id == emitter.id(); });
-    EmitterDetection det{};
-    det.source_id = emitter.id();
-    det.bearing_deg = rel_bearing_deg;
-    det.signal_strength = emitter_strength;
-    // Presence and bearing remain observable when classification is disabled,
-    // but lock/guidance labels require the receiver's authored classifier.
-    const bool classified = owner_esm->classify_emitters;
-    det.is_radar_lock = classified && emitter.has<Missile>();
-    det.is_missile_guidance = classified && emitter.has<Missile>();
-    if (existing == owner_esm->detections.end()) {
-        owner_esm->detections.push_back(det);
-    } else if (det.signal_strength >= existing->signal_strength) {
-        *existing = det;
+    Sensor jammer_emitter{};
+    double jammer_erp_watts = 0.0;
+    if (entity_has_jammer_emitter(emitter, esm_receiver_range_m(owner, esm_sensor),
+                                  &jammer_emitter, &jammer_erp_watts)) {
+        record_esm_detection(*owner_esm, emitter, esm_sensor, jammer_emitter,
+                             std::max(1.0, jammer_erp_watts), true, dist_m, rel_bearing_deg);
     }
 }
 
@@ -446,7 +482,9 @@ class DefaultSensorModel : public ISensorModel {
                 double rcs = rcs_for_detection(target_e, owner_transform, target_t);
                 if (sensor.type == static_cast<int>(SensorType::ESM)) {
                     Sensor emitter_radar{};
-                    if (!entity_has_radar_emitter(target_e, &emitter_radar)) {
+                    if (!entity_has_radar_emitter(target_e, &emitter_radar) &&
+                        !entity_has_jammer_emitter(target_e, esm_receiver_range_m(owner, sensor),
+                                                   &emitter_radar, nullptr)) {
                         return;
                     }
                     rcs = std::max(5.0, emitter_radar.reference_rcs_m2);
@@ -500,14 +538,21 @@ class DefaultSensorModel : public ISensorModel {
                         signal_strength = rcs;
                     }
 
-                    // Phase 3: bounded suppression jamming (burn-through). The
-                    // radar remains visible outside the jammer's beam, below
-                    // its authored bandwidth, or for a DRFM technique; those
-                    // cases require a separate seeker/false-track model.
                     const Jammer *jammer = target_e.get<Jammer>();
                     if (jammer &&
                         jammer_suppresses_radar(*jammer, target_t, owner_transform, rcs, dist)) {
                         return;
+                    }
+                    if (jammer && jammer_installed(*jammer) && jammer->is_active &&
+                        jammer->type == JammingType::DeceptionDRFM &&
+                        jammer_covers_receiver(*jammer, target_t, owner_transform) &&
+                        jammer_bandwidth_factor(*jammer) > 0.0) {
+                        const double burn_through_range =
+                            jammer_burn_through_range_m(*jammer, rcs) /
+                            std::sqrt(jammer_bandwidth_factor(*jammer));
+                        if (dist > burn_through_range) {
+                            noisy_range = std::max(0.0, noisy_range + jammer->drfm_range_offset_m);
+                        }
                     }
                 } else if (sensor.type == static_cast<int>(SensorType::Infrared)) {
                     // IR: Prop to Heat / R^2. A flare radiates its authored IR
