@@ -17,11 +17,47 @@ struct Jammer {
     double bandwidth_mhz;   // Bandwidth coverage
     JammingType type;       // Technique
     double effective_angle; // Beam width (deg)
+    // A commandable pod is installed only when it has positive ERP. The
+    // database switch is the initial position; an active PilotAction owns the
+    // per-frame transmit state and the transmit-start timestamp.
     double transmit_start_time_s = -1.0;
+    // Authored burn-through range against a 5 m^2 target at this pod's ERP.
+    // Zero preserves the historical engineering proxy.
+    double burn_through_reference_m = 0.0;
+    // NoiseSpot power concentration relative to barrage; 1.0 keeps them equal.
+    double spot_power_gain = 1.0;
+    // DRFM false-target range offset beyond burn-through. Zero is inert.
+    double drfm_range_offset_m = 0.0;
 };
 
 inline bool jammer_installed(const Jammer &jammer) {
     return std::isfinite(jammer.power_watts) && jammer.power_watts > 0.0;
+}
+
+inline bool jammer_transmitting(const Jammer &jammer) {
+    return jammer.is_active && jammer_installed(jammer);
+}
+
+inline constexpr double kBurnThroughReferenceRcsM2 = 5.0;
+inline constexpr double kLegacyBurnThroughConstant = 283000.0;
+
+inline double jammer_effective_power_watts(const Jammer &jammer) {
+    const double p_j = jammer.power_watts > 1.0 ? jammer.power_watts : 1.0;
+    if (jammer.type == JammingType::NoiseSpot && std::isfinite(jammer.spot_power_gain) &&
+        jammer.spot_power_gain > 0.0) {
+        return p_j * jammer.spot_power_gain;
+    }
+    return p_j;
+}
+
+inline double jammer_burn_through_range_m(const Jammer &jammer, double rcs_m2) {
+    const double p_j = jammer.power_watts > 1.0 ? jammer.power_watts : 1.0;
+    const double k = jammer.burn_through_reference_m > 0.0
+                         ? jammer.burn_through_reference_m *
+                               std::sqrt(p_j / kBurnThroughReferenceRcsM2)
+                         : kLegacyBurnThroughConstant;
+    const double safe_rcs = rcs_m2 > 1.0e-6 ? rcs_m2 : 1.0e-6;
+    return k * std::sqrt(safe_rcs / jammer_effective_power_watts(jammer));
 }
 
 inline bool jamming_type_from_code(int code, JammingType &out) {
@@ -121,6 +157,7 @@ struct EmitterDetection {
     double signal_strength = 0.0;
     bool is_radar_lock = false;
     bool is_missile_guidance = false;
+    bool is_jammer = false;
 };
 
 struct ESMReceiver {
