@@ -6,6 +6,7 @@ from python.runtime_bootstrap import resolve_repo_path
 from python.simulation.air.demo import run_facade_scripted_demo
 from python.simulation import create_scenario_backend
 from python.simulation.air.scenario_runtime import AirFacadeScenarioRuntime
+from python.simulation.air.terminal import AirCombatTerminalState
 
 
 DATABASE = resolve_repo_path("examples", "config", "database")
@@ -91,3 +92,36 @@ def test_air_scenario_runtime_replays_compiled_path_semantics(tmp_path) -> None:
     assert "entity_keys" not in first_receipt.as_dict()
     receipt_path = first_receipt.write_json(tmp_path / "air-replay.json")
     assert receipt_path.read_text(encoding="utf-8").endswith("\n")
+
+
+def test_air_scenario_runtime_stops_bounded_run_at_terminal(monkeypatch) -> None:
+    backend = create_scenario_backend(
+        backend_id="facade_batch",
+        database_path=DATABASE,
+        scenario_path=SCENARIO,
+    )
+    terminal = AirCombatTerminalState(
+        status="combat_win",
+        reason="test_terminal",
+        destroyed_target_ids=(2,),
+        destroyed_own_ids=(),
+        destroyed_target_keys=((0, 2),),
+        destroyed_own_keys=(),
+        damage_report_ids=(1,),
+    )
+    monkeypatch.setattr(backend, "evaluate_air_combat_terminal", lambda **_: terminal)
+    runtime = AirFacadeScenarioRuntime(
+        backend,
+        own_slot_indices=(0,),
+        target_slot_indices=(1,),
+    )
+    try:
+        run = runtime.run(seed=23, steps=5)
+    finally:
+        runtime.close()
+
+    assert run.steps == 1
+    assert len(run.frames) == 1
+    assert all(len(phases) == 1 for phases in run.phases)
+    assert all(len(norms) == 2 for norms in run.action_norms)
+    assert run.terminal is terminal

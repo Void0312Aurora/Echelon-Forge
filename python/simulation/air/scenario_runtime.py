@@ -353,12 +353,14 @@ class AirFacadeScenarioRuntime:
         self.reset(int(seed))
         for _ in range(int(steps)):
             self.step()
+            if self._terminal is not None and self._terminal.status != "running":
+                break
         current = self.current_snapshot
         return AirFacadeScenarioRun(
             seed=int(seed),
             entity_keys=tuple(current.entity_keys),
             phases=tuple(tuple(self._phase_history[key]) for key in current.entity_keys),
-            steps=int(steps),
+            steps=self._step_index,
             initial_sim_time_s=self._initial_times,
             final_sim_time_s=tuple(float(obs.sim_time) for obs in current.observations),
             final_positions_m=tuple(
