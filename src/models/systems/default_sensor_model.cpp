@@ -290,10 +290,9 @@ double esm_receiver_range_m(const flecs::entity &owner, const Sensor &esm_sensor
     return esm_sensor.max_range;
 }
 
-void record_esm_detection(ESMReceiver &owner_esm, flecs::entity emitter,
-                          const Sensor &esm_sensor, const Sensor &emitter_sensor,
-                          double emitter_power_proxy, bool is_jammer, double dist_m,
-                          double rel_bearing_deg) {
+void record_esm_detection(ESMReceiver &owner_esm, flecs::entity emitter, const Sensor &esm_sensor,
+                          const Sensor &emitter_sensor, double emitter_power_proxy, bool is_jammer,
+                          double dist_m, double rel_bearing_deg) {
     const double max_range = owner_esm.max_detection_range_m > 0.0
                                  ? owner_esm.max_detection_range_m
                                  : std::max(esm_sensor.max_range, emitter_sensor.max_range * 2.0);
@@ -302,8 +301,7 @@ void record_esm_detection(ESMReceiver &owner_esm, flecs::entity emitter,
     }
     const double emitter_strength = emitter_power_proxy / std::max(1.0, dist_m * dist_m);
     auto existing = std::find_if(
-        owner_esm.detections.begin(), owner_esm.detections.end(),
-        [&](const EmitterDetection &det) {
+        owner_esm.detections.begin(), owner_esm.detections.end(), [&](const EmitterDetection &det) {
             return det.source_id == emitter.id() && det.is_jammer == is_jammer;
         });
     EmitterDetection det{};
@@ -336,8 +334,8 @@ void append_esm_detection_from_emitter(flecs::entity owner, flecs::entity emitte
     }
     Sensor jammer_emitter{};
     double jammer_erp_watts = 0.0;
-    if (entity_has_jammer_emitter(emitter, esm_receiver_range_m(owner, esm_sensor),
-                                  &jammer_emitter, &jammer_erp_watts)) {
+    if (entity_has_jammer_emitter(emitter, esm_receiver_range_m(owner, esm_sensor), &jammer_emitter,
+                                  &jammer_erp_watts)) {
         record_esm_detection(*owner_esm, emitter, esm_sensor, jammer_emitter,
                              std::max(1.0, jammer_erp_watts), true, dist_m, rel_bearing_deg);
     }
