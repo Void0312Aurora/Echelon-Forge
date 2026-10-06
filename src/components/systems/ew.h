@@ -28,6 +28,8 @@ struct Jammer {
     double spot_power_gain = 1.0;
     // DRFM false-target range offset beyond burn-through. Zero is inert.
     double drfm_range_offset_m = 0.0;
+    double rf_eirp_watts = 0.0;
+    double rf_frequency_mhz = 0.0;
 };
 
 inline bool jammer_installed(const Jammer &jammer) {
@@ -158,6 +160,13 @@ struct EmitterDetection {
     bool is_radar_lock = false;
     bool is_missile_guidance = false;
     bool is_jammer = false;
+    double received_power_dbm = 0.0; // Valid only when has_rf_power is true.
+    bool has_rf_power = false;
+    double sensitivity_margin_db = 0.0;
+    double observed_time_s = -1.0;
+    double confidence = 0.0; // Fraction of required distinct scans, not a Pd.
+    int confirmation_count = 0;
+    bool classification_known = false;
 };
 
 struct ESMReceiver {
@@ -165,7 +174,21 @@ struct ESMReceiver {
     double max_detection_range_m = 250000.0;
     bool classify_emitters = true;
     std::vector<EmitterDetection> detections{};
+    // Zero bounds accept any band; strict receivers reject legacy emitters.
+    double frequency_min_mhz = 0.0;
+    double frequency_max_mhz = 0.0;
+    double memory_s = 0.0; // Zero preserves the historical per-step reset.
+    int confirmation_scans = 1;
+    bool require_rf_contract = false;
 };
+
+inline void expire_esm_detections(ESMReceiver &esm, double current_time_s) {
+    std::erase_if(esm.detections, [&](const EmitterDetection &det) {
+        return esm.memory_s <= 0.0 || det.observed_time_s < 0.0 ||
+               current_time_s < det.observed_time_s ||
+               current_time_s - det.observed_time_s > esm.memory_s;
+    });
+}
 
 // RCS Profile for Geometric RCS (Optional but recommended)
 struct RCSProfile {

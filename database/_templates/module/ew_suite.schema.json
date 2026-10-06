@@ -22,6 +22,10 @@
       "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Rwr",
       "description": "RWR inputs."
     },
+    "esm": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Esm",
+      "description": "Passive ESM receiver inputs."
+    },
     "jammer": {
       "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Jammer",
       "description": "Jammer inputs."

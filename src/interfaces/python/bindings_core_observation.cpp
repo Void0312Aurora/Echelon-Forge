@@ -20,6 +20,7 @@ void bind_core_observation(nb::module_ &m) {
         .def_ro("health", &AgentObservation::health)
         .def_ro("contacts", &AgentObservation::contacts)
         .def_ro("rwr_warnings", &AgentObservation::rwr_warnings)
+        .def_ro("esm_detections", &AgentObservation::esm_detections)
         .def_ro("missiles_remaining", &AgentObservation::missiles_remaining)
         .def_ro("can_fire", &AgentObservation::can_fire)
         .def_ro("gear_state", &AgentObservation::gear_state)

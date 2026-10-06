@@ -7,6 +7,7 @@
 #include "components/physics/instruments.h"
 #include "components/systems/track_management.h"
 #include "components/systems/ew.h"
+#include "content/unit_definition.h"
 #include "core/engine/simulation_kernel.h"
 #include "systems/system_contribution_registry.h"
 
@@ -2010,6 +2011,53 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         target_registry.reset();
         std::filesystem::remove(source_path, remove_error);
         std::filesystem::remove(target_path, remove_error);
+    }
+
+    TEST_CASE("legacy sensor reflection imports inline and mounted flags without permitting mixed RF shapes") {
+        using Bridge = runtime::host::integration::SimulationKernelStateOwnerBridge;
+        using json = nlohmann::json;
+        SimulationKernel kernel;
+        kernel.reset(71);
+        auto unit = kernel.spawn_unit(Side::Blue, "Aircraft", 0, 0, 5000, 0, 0, 0, 0, 0, 0);
+        REQUIRE(unit.is_valid());
+        {
+            auto lease = kernel.acquire_world_lease();
+            auto entity = lease.world().entity(unit.id());
+            entity.set_name("EWLegacy");
+            auto sensor = make_unit_definition_default_sensor();
+            sensor.enable_ducting = true;
+            sensor.sea_clutter_enabled = false;
+            sensor.bearing_only = true;
+            sensor.rf_eirp_watts = sensor.rf_frequency_mhz = sensor.rf_bandwidth_mhz = 0.0;
+            entity.set<Sensor>(sensor).set<MountedSensors>({{{sensor, "LegacyMount"}}});
+        }
+        const auto current = json::parse(Bridge::serialize_world(kernel));
+        auto legacy = current;
+        for (auto &result : legacy["results"]) {
+            if (result["name"] != "EWLegacy") continue;
+            auto &components = result["components"];
+            const auto legacy_shape = [](json &sensor) {
+                sensor.erase("rf_eirp_watts");
+                sensor.erase("rf_frequency_mhz");
+                sensor.erase("rf_bandwidth_mhz");
+                sensor["enforce_radar_horizon"] = true;
+                sensor["enable_ducting"] = false;
+                sensor["sea_clutter_enabled"] = true;
+                sensor["bearing_only"] = false; // Historical padding byte, discarded.
+            };
+            legacy_shape(components["Sensor"]);
+            legacy_shape(components["MountedSensors"]["mounts"][0]["sensor"]);
+        }
+        const auto legacy_text = legacy.dump();
+        REQUIRE(Bridge::restore_world(kernel, {legacy_text.begin(), legacy_text.end()}));
+        CHECK(json::parse(Bridge::serialize_world(kernel)) == current);
+        // An old field plus new RF fields is ambiguous and rejected atomically.
+        for (auto &result : legacy["results"]) {
+            if (result["name"] == "EWLegacy") result["components"]["Sensor"]["rf_eirp_watts"] = 100.0;
+        }
+        const auto mixed_text = legacy.dump();
+        CHECK_FALSE(Bridge::restore_world(kernel, {mixed_text.begin(), mixed_text.end()}));
+        CHECK(json::parse(Bridge::serialize_world(kernel)) == current);
     }
 
 } // TEST_SUITE

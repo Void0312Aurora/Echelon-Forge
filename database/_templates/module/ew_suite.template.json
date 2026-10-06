@@ -9,6 +9,17 @@
     "library_generation": 0,
     "is_active": false
   },
+  "esm": {
+    "_comment": "Legacy-compatible receiver defaults; RF bands and multi-scan memory require explicit authoring.",
+    "frequency_min_mhz": 0,
+    "frequency_max_mhz": 0,
+    "sensitivity_dbm": -85,
+    "max_detection_range_m": 250000,
+    "memory_s": 0,
+    "confirmation_scans": 1,
+    "require_rf_contract": false,
+    "classify_emitters": true
+  },
   "jammer": {
     "_comment": "Jammer placeholders.",
     "power_watts": 0,

@@ -27,6 +27,24 @@ struct RWREvent {
     bool is_launch;     // Is this a missile guidance signal?
 };
 
+// Passive observation: no emitter range, position or fire-control target solution.
+// source_id preserves the existing RWR source correlation contract.
+struct ESMEvent {
+    uint64_t source_id = 0;
+    double bearing_deg = 0.0;
+    double signal_strength = 0.0;
+    double received_power_dbm = 0.0;
+    bool has_rf_power = false;
+    double sensitivity_margin_db = 0.0;
+    double observed_time_s = -1.0;
+    double age_s = 0.0;
+    double confidence = 0.0;
+    bool classification_known = false;
+    bool is_jammer = false;
+    bool is_lock = false;
+    bool is_guidance = false;
+};
+
 struct AgentObservation {
     double sim_time;
     uint64_t id;
@@ -41,6 +59,7 @@ struct AgentObservation {
     // Sensor Picture
     std::vector<TrackData> contacts;
     std::vector<RWREvent> rwr_warnings;
+    std::vector<ESMEvent> esm_detections;
     
     
     // Weapons status

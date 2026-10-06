@@ -48,6 +48,10 @@ struct Sensor {
     bool sea_clutter_enabled;        // Apply sea-clutter loss proxy
     bool bearing_only;               // Passive-only contact; range omitted in output
     int type;                        // See SensorType
+    // Optional, explicitly authored isotropic RF emission. All zero is legacy.
+    double rf_eirp_watts = 0.0;
+    double rf_frequency_mhz = 0.0;
+    double rf_bandwidth_mhz = 0.0;
 };
 
 struct SensorMount {
