@@ -733,6 +733,24 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
     }
 
     // RWR Warnings (Electronic Warfare)
+    const auto append_rwr_event = [&obs](RWREvent event) {
+        const auto existing = std::find_if(obs.rwr_warnings.begin(), obs.rwr_warnings.end(),
+                                           [source_id = event.source_id](const RWREvent &row) {
+                                               return row.source_id == source_id;
+                                           });
+        if (existing == obs.rwr_warnings.end()) {
+            obs.rwr_warnings.push_back(event);
+            return;
+        }
+
+        if (event.signal_strength > existing->signal_strength) {
+            existing->bearing = event.bearing;
+            existing->signal_strength = event.signal_strength;
+        }
+        existing->is_lock = existing->is_lock || event.is_lock;
+        existing->is_launch = existing->is_launch || event.is_launch;
+    };
+
     const RWR *rwr = e.get<RWR>();
     if (rwr) {
         for (uint64_t source_id : rwr->detected_radar_ids) {
@@ -788,22 +806,15 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
 
             event.is_launch = rwr->is_missile_launch;
 
-            obs.rwr_warnings.push_back(event);
+            append_rwr_event(event);
         }
 
         for (uint64_t source_id : rwr->missile_launch_source_ids) {
-            auto existing = std::find_if(
-                obs.rwr_warnings.begin(), obs.rwr_warnings.end(),
-                [source_id](const RWREvent &event) { return event.source_id == source_id; });
-            if (existing != obs.rwr_warnings.end()) {
-                existing->is_launch = true;
-                continue;
-            }
             RWREvent event{};
             event.source_id = source_id;
             event.signal_strength = 1.0;
             event.is_launch = true;
-            obs.rwr_warnings.push_back(event);
+            append_rwr_event(event);
         }
     }
 
@@ -814,9 +825,11 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
             event.source_id = det.source_id;
             event.bearing = det.bearing_deg;
             event.signal_strength = det.signal_strength;
+            // Jammer strobes (det.is_jammer) carry no lock or guidance
+            // evidence, so they project as plain emitter rows.
             event.is_lock = det.is_radar_lock;
             event.is_launch = det.is_missile_guidance;
-            obs.rwr_warnings.push_back(event);
+            append_rwr_event(event);
         }
     }
 
