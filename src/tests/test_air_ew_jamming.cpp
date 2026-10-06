@@ -250,8 +250,7 @@ TEST_SUITE("air_ew_jamming") {
         // The gain belongs to the spot technique; barrage ignores it.
         Jammer barrage_with_gain = barrage;
         barrage_with_gain.spot_power_gain = 4.0;
-        CHECK(jammer_burn_through_range_m(barrage_with_gain, 5.0) ==
-              doctest::Approx(r_bt_barrage));
+        CHECK(jammer_burn_through_range_m(barrage_with_gain, 5.0) == doctest::Approx(r_bt_barrage));
 
         // Between the two burn-through ranges, barrage burns through and the
         // gain-4 spot still denies the track.
@@ -324,8 +323,8 @@ TEST_SUITE("air_ew_jamming") {
 
         // Any technique radiates, and the beam does not gate the ESM view
         // (the pod faces away from the receiver here).
-        for (const JammingType type : {JammingType::NoiseBarrage, JammingType::NoiseSpot,
-                                       JammingType::DeceptionDRFM}) {
+        for (const JammingType type :
+             {JammingType::NoiseBarrage, JammingType::NoiseSpot, JammingType::DeceptionDRFM}) {
             clear_esm(kernel, pair.radar);
             install_pod(kernel, pair.jammer, gen4_pod(type), true);
             const auto strobe = scan_for(kernel, pair.radar, pair.jammer, probe_esm());
