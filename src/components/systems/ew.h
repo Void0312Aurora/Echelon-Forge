@@ -52,10 +52,10 @@ inline double jammer_effective_power_watts(const Jammer &jammer) {
 
 inline double jammer_burn_through_range_m(const Jammer &jammer, double rcs_m2) {
     const double p_j = jammer.power_watts > 1.0 ? jammer.power_watts : 1.0;
-    const double k = jammer.burn_through_reference_m > 0.0
-                         ? jammer.burn_through_reference_m *
-                               std::sqrt(p_j / kBurnThroughReferenceRcsM2)
-                         : kLegacyBurnThroughConstant;
+    const double k =
+        jammer.burn_through_reference_m > 0.0
+            ? jammer.burn_through_reference_m * std::sqrt(p_j / kBurnThroughReferenceRcsM2)
+            : kLegacyBurnThroughConstant;
     const double safe_rcs = rcs_m2 > 1.0e-6 ? rcs_m2 : 1.0e-6;
     return k * std::sqrt(safe_rcs / jammer_effective_power_watts(jammer));
 }
