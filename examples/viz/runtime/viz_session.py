@@ -1240,8 +1240,12 @@ class VizSession:
                 self._notify_status()
                 break
             frame_dt = 0.05
-            if len(frame.sim_time_s) > 1:
-                frame_dt = max(0.01, float(frame.sim_time_s[1]) - float(frame.sim_time_s[0]))
+            current_time = float(frame.sim_time_s[0]) if frame.sim_time_s else None
+            next_index = replay_session.frame_index + 1
+            if current_time is not None and next_index < len(receipt.frames):
+                next_frame = receipt.frames[next_index]
+                if next_frame.sim_time_s:
+                    frame_dt = max(0.01, float(next_frame.sim_time_s[0]) - current_time)
             self.socketio.sleep(frame_dt / max(0.05, float(self.sim_speed)))
 
     def _run_loop_inner(self) -> None:

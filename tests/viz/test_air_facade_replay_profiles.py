@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from argparse import Namespace
 
+import pytest
+
 from python.runtime_bootstrap import resolve_repo_path
 from python.simulation import create_scenario_backend
 from python.simulation.air import AirFacadeScenarioRuntime
@@ -17,6 +19,7 @@ SCENARIO = resolve_repo_path(
 class _ReplaySocket:
     def __init__(self) -> None:
         self.events: list[tuple[str, object]] = []
+        self.sleeps: list[float] = []
         self.session: VizSession | None = None
 
     def emit(self, event: str, payload=None, **_kwargs) -> None:
@@ -27,8 +30,8 @@ class _ReplaySocket:
                 assert self.session is not None
                 self.session.stop()
 
-    def sleep(self, _seconds: float) -> None:
-        return None
+    def sleep(self, seconds: float) -> None:
+        self.sleeps.append(float(seconds))
 
 
 def _write_receipt(path) -> None:
@@ -72,3 +75,4 @@ def test_air_facade_replay_is_consumed_by_the_visualization_lifecycle(tmp_path) 
     assert states[-1]["replay"]["frame_count"] == 3
     assert len(states[-1]["units"]) == 2
     assert session.last_error == ""
+    assert socket.sleeps == pytest.approx([0.05, 0.05])
