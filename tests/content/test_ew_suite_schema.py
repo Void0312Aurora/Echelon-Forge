@@ -52,6 +52,18 @@ class EwSuiteSchemaTests(unittest.TestCase):
                     with self.assertRaises(ValidationError):
                         validator.validate({**values, key: 0.0})
 
+        jammer_validator = Draft202012Validator(common["$defs"]["Jammer"])
+        jammer_validator.validate({"max_continuous_transmit_s": 5.0, "cooldown_s": 0.0})
+        for malformed in (
+            {"max_continuous_transmit_s": 5.0},
+            {"cooldown_s": 2.0},
+            {"max_continuous_transmit_s": 0.0, "cooldown_s": 2.0},
+            {"max_continuous_transmit_s": 5.0, "cooldown_s": -1.0},
+        ):
+            with self.subTest(budget=malformed):
+                with self.assertRaises(ValidationError):
+                    jammer_validator.validate(malformed)
+
     def test_receiver_schema_rejects_partial_bands_and_unretained_confirmations(self) -> None:
         common = json.loads(COMMON_SCHEMA.read_text(encoding="utf-8"))
         validator = Draft202012Validator(common["$defs"]["Esm"])

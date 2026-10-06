@@ -3,6 +3,7 @@
 #include "components/systems/ew.h"
 #include "components/systems/rf_signal.h"
 #include "components/systems/sensor.h"
+#include "components/physics/instruments.h"
 #include "content/unit_definition_loader.h"
 #include <flecs.h>
 #include <doctest/doctest.h>
@@ -86,6 +87,32 @@ TEST_SUITE("air_ew_rf_contract") {
         CHECK(restored_esm.detections.front().observed_time_s == 1.25);
         CHECK(restored_esm.detections.front().confidence == doctest::Approx(2.0 / 3.0));
         CHECK(restored_esm.detections.front().confirmation_count == 2);
+
+        Jammer jammer{};
+        jammer.max_continuous_transmit_s = 12.0;
+        jammer.cooldown_s = 4.0;
+        jammer.transmit_elapsed_s = 3.0;
+        jammer.cooldown_until_time_s = 17.0;
+        const auto jammer_json = world.to_json(&jammer);
+        Jammer restored_jammer{};
+        REQUIRE(world.from_json(&restored_jammer, jammer_json.c_str()) != nullptr);
+        CHECK(restored_jammer.max_continuous_transmit_s == 12.0);
+        CHECK(restored_jammer.cooldown_s == 4.0);
+        CHECK(restored_jammer.transmit_elapsed_s == 3.0);
+        CHECK(restored_jammer.cooldown_until_time_s == 17.0);
+
+        InstrumentState instrument{};
+        instrument.jammer_budget_enabled = true;
+        instrument.jammer_transmit_remaining_s = 9.0;
+        instrument.jammer_cooldown_remaining_s = 2.0;
+        instrument.jammer_snapshot_time_s = 15.0;
+        const auto instrument_json = world.to_json(&instrument);
+        InstrumentState restored_instrument{};
+        REQUIRE(world.from_json(&restored_instrument, instrument_json.c_str()) != nullptr);
+        CHECK(restored_instrument.jammer_budget_enabled);
+        CHECK(restored_instrument.jammer_transmit_remaining_s == 9.0);
+        CHECK(restored_instrument.jammer_cooldown_remaining_s == 2.0);
+        CHECK(restored_instrument.jammer_snapshot_time_s == 15.0);
     }
 
     TEST_CASE("RF content loads inline mounted and jammer fields and rejects malformed groups "
@@ -105,7 +132,9 @@ TEST_SUITE("air_ew_rf_contract") {
              {{"power_watts", 1000.0},
               {"rf_eirp_watts", 100.0},
               {"rf_frequency_mhz", 1000.0},
-              {"bandwidth_mhz", 20.0}}},
+              {"bandwidth_mhz", 20.0},
+              {"max_continuous_transmit_s", 5.0},
+              {"cooldown_s", 0.0}}},
             {"esm",
              {{"require_rf_contract", true},
               {"frequency_min_mhz", 900.0},
@@ -121,9 +150,11 @@ TEST_SUITE("air_ew_rf_contract") {
         REQUIRE(definitions[0].mounted_sensors.mounts.size() == 1);
         CHECK(definitions[0].mounted_sensors.mounts[0].sensor.rf_frequency_mhz == 1000.0);
         CHECK(definitions[0].jammer_data.rf_eirp_watts == 100.0);
+        CHECK(definitions[0].jammer_data.max_continuous_transmit_s == 5.0);
+        CHECK(definitions[0].jammer_data.cooldown_s == 0.0);
         CHECK(definitions[0].esm_data.require_rf_contract);
         CHECK(definitions[0].esm_data.confirmation_scans == 2);
-        for (int defect = 0; defect < 9; ++defect) {
+        for (int defect = 0; defect < 12; ++defect) {
             CAPTURE(defect);
             auto bad = good;
             if (defect == 0) bad["sensor"].erase("rf_frequency_mhz");
@@ -135,15 +166,26 @@ TEST_SUITE("air_ew_rf_contract") {
             if (defect == 6) bad["esm"]["memory_s"] = 0.0;
             if (defect == 7) bad["esm"]["sensitivity_dbm"] = nullptr;
             if (defect == 8) bad["esm"]["require_rf_contract"] = "true";
+            if (defect == 9) bad["jammer"].erase("max_continuous_transmit_s");
+            if (defect == 10) bad["jammer"]["cooldown_s"] = -1.0;
+            if (defect == 11) bad["jammer"].erase("cooldown_s");
             { std::ofstream(path) << json{{"units", json::array({good, bad})}}; }
             std::vector<UnitDefinition> sentinel(1);
             sentinel[0].name = "Retain";
             error.clear();
             CHECK_FALSE(load_unit_definitions_json(path.string(), sentinel, &error));
-            const char *expected[] = {
-                "rf_frequency_mhz", "rf_eirp_watts",      "rf_bandwidth_mhz",
-                "bandwidth_mhz",    "confirmation_scans", "frequency bounds",
-                "memory_s",         "sensitivity_dbm",    "require_rf_contract"};
+            const char *expected[] = {"rf_frequency_mhz",
+                                      "rf_eirp_watts",
+                                      "rf_bandwidth_mhz",
+                                      "bandwidth_mhz",
+                                      "confirmation_scans",
+                                      "frequency bounds",
+                                      "memory_s",
+                                      "sensitivity_dbm",
+                                      "require_rf_contract",
+                                      "max_continuous_transmit_s",
+                                      "cooldown_s",
+                                      "cooldown_s"};
             CHECK(error.find(expected[defect]) != std::string::npos);
             REQUIRE(sentinel.size() == 1);
             CHECK(sentinel.front().name == "Retain");

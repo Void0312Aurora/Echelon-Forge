@@ -1690,6 +1690,28 @@ bool validate_jammer_json_fields(const nlohmann::json &jammer, std::string *erro
     if (!validate_number("drfm_range_offset_m", [](double) { return true; }, "finite")) {
         return false;
     }
+    if (jammer.contains("max_continuous_transmit_s") || jammer.contains("cooldown_s")) {
+        if (!jammer.contains("max_continuous_transmit_s")) {
+            if (error)
+                *error = "jammer.max_continuous_transmit_s must be authored with the "
+                         "burst/cooldown group";
+            return false;
+        }
+        if (!validate_number(
+                "max_continuous_transmit_s", [](double value) { return value > 0.0; },
+                "finite and greater than 0")) {
+            return false;
+        }
+        if (!jammer.contains("cooldown_s")) {
+            if (error) *error = "jammer.cooldown_s must be authored with the burst/cooldown group";
+            return false;
+        }
+        if (!validate_number(
+                "cooldown_s", [](double value) { return value >= 0.0; },
+                "finite and greater than or equal to 0")) {
+            return false;
+        }
+    }
     return true;
 }
 
@@ -1721,6 +1743,9 @@ bool parse_electronic_warfare_json_fields(const nlohmann::json &entry, UnitDefin
             jammer.value("spot_power_gain", def.jammer_data.spot_power_gain);
         def.jammer_data.drfm_range_offset_m =
             jammer.value("drfm_range_offset_m", def.jammer_data.drfm_range_offset_m);
+        def.jammer_data.max_continuous_transmit_s =
+            jammer.value("max_continuous_transmit_s", def.jammer_data.max_continuous_transmit_s);
+        def.jammer_data.cooldown_s = jammer.value("cooldown_s", def.jammer_data.cooldown_s);
         const std::string jammer_type = jammer.value("type", "NoiseBarrage");
         if (jammer_type == "NoiseSpot") {
             def.jammer_data.type = JammingType::NoiseSpot;

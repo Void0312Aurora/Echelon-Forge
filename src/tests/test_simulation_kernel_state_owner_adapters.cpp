@@ -862,9 +862,18 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         REQUIRE(source_target.is_valid());
         {
             auto lease = source.acquire_world_lease();
+            Jammer jammer{};
+            jammer.is_active = true;
+            jammer.power_watts = 1000.0;
+            jammer.bandwidth_mhz = 2000.0;
+            jammer.type = JammingType::DeceptionDRFM;
+            jammer.effective_angle = 60.0;
+            jammer.transmit_start_time_s = 0.0;
+            jammer.max_continuous_transmit_s = 30.0;
+            jammer.cooldown_s = 4.0;
             lease.world()
                 .entity(source_lead.id())
-                .set<Jammer>({true, 1000.0, 2000.0, JammingType::DeceptionDRFM, 60.0, 9.0})
+                .set<Jammer>(jammer)
                 .set<InstrumentState>(InstrumentState{});
         }
         REQUIRE(source.run_exact_stage_direct("EW_Jammer_Control"));
@@ -986,11 +995,16 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
             REQUIRE(restored_jammer != nullptr);
             CHECK(restored_jammer->is_active);
             CHECK(restored_jammer->type == JammingType::DeceptionDRFM);
+            CHECK(restored_jammer->max_continuous_transmit_s == 30.0);
+            CHECK(restored_jammer->cooldown_s == 4.0);
             const auto *restored_instrument = target_lead.get<InstrumentState>();
             REQUIRE(restored_instrument != nullptr);
             CHECK(restored_instrument->jammer_transmitting);
             CHECK(restored_instrument->jammer_mode == static_cast<int>(JammingType::DeceptionDRFM));
-            CHECK(restored_instrument->jammer_transmit_start_time_s == doctest::Approx(9.0));
+            CHECK(restored_instrument->jammer_transmit_start_time_s == doctest::Approx(0.0));
+            CHECK(restored_instrument->jammer_budget_enabled);
+            CHECK(restored_instrument->jammer_transmit_remaining_s == doctest::Approx(30.0));
+            CHECK(restored_instrument->jammer_snapshot_time_s == doctest::Approx(0.0));
         }
         CHECK(target_lead_id != source_lead.id());
         CHECK(target_target_id != source_target.id());

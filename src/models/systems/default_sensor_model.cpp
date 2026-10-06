@@ -115,13 +115,24 @@ double pd_from_snr_db(const Sensor &sensor, double snr_db) {
 
 constexpr double kReferenceJammerBandwidthMhz = 2000.0;
 
-double jammer_bandwidth_factor(const Jammer &jammer) {
+double jammer_bandwidth_factor(const Jammer &jammer, const Sensor &radar) {
     if (!std::isfinite(jammer.bandwidth_mhz) || jammer.bandwidth_mhz <= 0.0) {
         return 0.0;
     }
-    // The maintained Gen4 suite uses 2 GHz as its baseline. Until sensors
-    // carry an authored RF band, treat wider coverage as full-band and
-    // narrower coverage as the corresponding fraction of available power.
+    const bool jammer_has_rf = jammer.rf_eirp_watts != 0.0 || jammer.rf_frequency_mhz != 0.0;
+    if (jammer_has_rf) {
+        if (!rf_emission_valid(jammer.rf_eirp_watts, jammer.rf_frequency_mhz,
+                               jammer.bandwidth_mhz) ||
+            !rf_emission_valid(radar.rf_eirp_watts, radar.rf_frequency_mhz,
+                               radar.rf_bandwidth_mhz)) {
+            return 0.0;
+        }
+        const double overlap = rf_band_overlap(jammer.rf_frequency_mhz, jammer.bandwidth_mhz,
+                                               radar.rf_frequency_mhz, radar.rf_bandwidth_mhz);
+        return std::clamp(overlap / jammer.bandwidth_mhz, 0.0, 1.0);
+    }
+    // Legacy jammer definitions retain the maintained 2 GHz baseline and
+    // treat narrower coverage as the corresponding fraction of available power.
     return std::clamp(jammer.bandwidth_mhz / kReferenceJammerBandwidthMhz, 0.0, 1.0);
 }
 
@@ -141,13 +152,13 @@ bool jammer_covers_receiver(const Jammer &jammer, const Transform &jammer_transf
 
 bool jammer_suppresses_radar(const Jammer &jammer, const Transform &jammer_transform,
                              const Transform &receiver_transform, double target_rcs_m2,
-                             double distance_m) {
-    if (!jammer_installed(jammer) || !jammer.is_active ||
+                             const Sensor &radar, double distance_m, double current_time) {
+    if (!jammer_transmitting_at(jammer, current_time) ||
         (jammer.type != JammingType::NoiseBarrage && jammer.type != JammingType::NoiseSpot) ||
         !jammer_covers_receiver(jammer, jammer_transform, receiver_transform)) {
         return false;
     }
-    const double bandwidth_factor = jammer_bandwidth_factor(jammer);
+    const double bandwidth_factor = jammer_bandwidth_factor(jammer, radar);
     if (bandwidth_factor <= 0.0) {
         return false;
     }
@@ -182,9 +193,9 @@ bool entity_has_radar_emitter(const flecs::entity &entity, Sensor *out_emitter) 
 }
 
 bool entity_has_jammer_emitter(const flecs::entity &entity, double receiver_range_m,
-                               Sensor *out_emitter, double *out_erp_watts) {
+                               Sensor *out_emitter, double *out_erp_watts, double current_time) {
     const Jammer *jammer = entity.get<Jammer>();
-    if (!jammer || !jammer_transmitting(*jammer)) {
+    if (!jammer || !jammer_transmitting_at(*jammer, current_time)) {
         return false;
     }
     if (out_emitter) {
@@ -384,7 +395,7 @@ bool append_esm_detection_from_emitter(flecs::entity owner, flecs::entity emitte
     Sensor jammer_emitter{};
     double jammer_erp_watts = 0.0;
     if (entity_has_jammer_emitter(emitter, esm_receiver_range_m(owner, esm_sensor), &jammer_emitter,
-                                  &jammer_erp_watts)) {
+                                  &jammer_erp_watts, current_time)) {
         const Jammer *pod = emitter.get<Jammer>();
         // Legacy pods retain the historical omnidirectional passive-emission proxy.
         // Explicit RF EIRP is the main-beam value; no sidelobe model is authored.
@@ -542,7 +553,7 @@ class DefaultSensorModel : public ISensorModel {
                     Sensor emitter_radar{};
                     if (!entity_has_radar_emitter(target_e, &emitter_radar) &&
                         !entity_has_jammer_emitter(target_e, esm_receiver_range_m(owner, sensor),
-                                                   &emitter_radar, nullptr)) {
+                                                   &emitter_radar, nullptr, current_time)) {
                         return;
                     }
                     rcs = std::max(5.0, emitter_radar.reference_rcs_m2);
@@ -597,17 +608,17 @@ class DefaultSensorModel : public ISensorModel {
                     }
 
                     const Jammer *jammer = target_e.get<Jammer>();
-                    if (jammer &&
-                        jammer_suppresses_radar(*jammer, target_t, owner_transform, rcs, dist)) {
+                    if (jammer && jammer_suppresses_radar(*jammer, target_t, owner_transform, rcs,
+                                                          sensor, dist, current_time)) {
                         return;
                     }
-                    if (jammer && jammer_installed(*jammer) && jammer->is_active &&
+                    if (jammer && jammer_transmitting_at(*jammer, current_time) &&
                         jammer->type == JammingType::DeceptionDRFM &&
                         jammer_covers_receiver(*jammer, target_t, owner_transform) &&
-                        jammer_bandwidth_factor(*jammer) > 0.0) {
+                        jammer_bandwidth_factor(*jammer, sensor) > 0.0) {
                         const double burn_through_range =
                             jammer_burn_through_range_m(*jammer, rcs) /
-                            std::sqrt(jammer_bandwidth_factor(*jammer));
+                            std::sqrt(jammer_bandwidth_factor(*jammer, sensor));
                         if (dist > burn_through_range) {
                             noisy_range = std::max(0.0, noisy_range + jammer->drfm_range_offset_m);
                         }

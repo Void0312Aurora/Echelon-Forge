@@ -889,7 +889,11 @@ void register_resource_scalar_reflection(flecs::world &ecs) {
         .member<double>("spot_power_gain")
         .member<double>("drfm_range_offset_m")
         .member<double>("rf_eirp_watts")
-        .member<double>("rf_frequency_mhz");
+        .member<double>("rf_frequency_mhz")
+        .member<double>("max_continuous_transmit_s")
+        .member<double>("cooldown_s")
+        .member<double>("transmit_elapsed_s")
+        .member<double>("cooldown_until_time_s");
     ecs.component<Countermeasures>()
         .member<int>("chaff_count")
         .member<int>("flare_count")
@@ -1135,7 +1139,11 @@ void register_instrument_reflection(flecs::world &ecs) {
         .member<double>("position_uncertainty_m")
         .member<double>("gear_stress")
         .member<bool>("gear_collapsed")
-        .member<bool>("on_runway");
+        .member<bool>("on_runway")
+        .member<bool>("jammer_budget_enabled")
+        .member<double>("jammer_transmit_remaining_s")
+        .member<double>("jammer_cooldown_remaining_s")
+        .member<double>("jammer_snapshot_time_s");
 }
 
 void register_air_tuning_reflection(flecs::world &ecs) {

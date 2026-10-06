@@ -88,4 +88,9 @@ struct InstrumentState {
     double gear_stress;  // Accumulated gear stress (0.0-1.0)
     bool gear_collapsed; // Has gear failed?
     bool on_runway;      // Is aircraft on paved surface?
+    // Post-EW resource receipt; -1 is absent equipment or an unlimited budget.
+    bool jammer_budget_enabled = false;
+    double jammer_transmit_remaining_s = -1.0;
+    double jammer_cooldown_remaining_s = -1.0;
+    double jammer_snapshot_time_s = -1.0;
 };

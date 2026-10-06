@@ -12,6 +12,7 @@
 #include "content/unit_definition.h"
 #include "core/interfaces/sensor_model.h"
 #include "core/mission/runtime/execution_observation_runtime.h"
+#include "systems/systems/ew_system.h"
 
 #include <doctest/doctest.h>
 #include <flecs.h>
@@ -130,7 +131,8 @@ void move_jammer(SimulationKernel &kernel, std::uint64_t entity_id, double range
 // One scan of `sensor` from `owner_id` through the world's composed sensor
 // model; returns the contact on `target_id`, if any.
 std::optional<Detection> scan_for(SimulationKernel &kernel, std::uint64_t owner_id,
-                                  std::uint64_t target_id, const Sensor &sensor) {
+                                  std::uint64_t target_id, const Sensor &sensor,
+                                  double current_time = 0.0) {
     auto lease = kernel.acquire_world_lease();
     flecs::world &world = lease.world();
     const SensorModelRef *model_ref = world.get<SensorModelRef>();
@@ -139,7 +141,7 @@ std::optional<Detection> scan_for(SimulationKernel &kernel, std::uint64_t owner_
     flecs::entity owner = world.entity(owner_id);
     const Transform owner_t = *owner.get<Transform>();
     ContactList contacts;
-    model_ref->model->scan(world, owner, owner_t, sensor, contacts, 0.0);
+    model_ref->model->scan(world, owner, owner_t, sensor, contacts, current_time);
     const auto found =
         std::find_if(contacts.contacts.begin(), contacts.contacts.end(),
                      [&](const Detection &det) { return det.target_id == target_id; });
@@ -269,7 +271,79 @@ TEST_SUITE("air_ew_jamming") {
         CHECK(scan_for(kernel, pair.radar, pair.jammer, probe_radar()).has_value());
     }
 
-    TEST_CASE("drfm displaces the reported range beyond burn-through only") {
+    TEST_CASE("explicit RF jamming requires a valid overlapping radar band") {
+        Jammer pod = gen4_pod(JammingType::NoiseBarrage);
+        pod.rf_eirp_watts = 100.0;
+        pod.rf_frequency_mhz = 1000.0;
+        pod.bandwidth_mhz = 20.0;
+        const double range_m = 1.1 * jammer_burn_through_range_m(pod, 5.0);
+
+        SimulationKernel kernel;
+        kernel.reset(48);
+        const Pair pair = spawn_pair(kernel, range_m, 180.0);
+        install_pod(kernel, pair.jammer, pod, true);
+
+        Sensor matching = probe_radar();
+        matching.rf_eirp_watts = 100.0;
+        matching.rf_frequency_mhz = 1000.0;
+        matching.rf_bandwidth_mhz = 20.0;
+        CHECK_FALSE(scan_for(kernel, pair.radar, pair.jammer, matching).has_value());
+
+        Sensor partial_overlap = matching;
+        partial_overlap.rf_frequency_mhz = 1005.0;
+        CHECK(scan_for(kernel, pair.radar, pair.jammer, partial_overlap).has_value());
+
+        Sensor off_band = matching;
+        off_band.rf_frequency_mhz = 1100.0;
+        CHECK(scan_for(kernel, pair.radar, pair.jammer, off_band).has_value());
+
+        Sensor legacy_receiver = probe_radar();
+        CHECK(scan_for(kernel, pair.radar, pair.jammer, legacy_receiver).has_value());
+    }
+
+    TEST_CASE("jammer burst budget stops transmission and enforces cooldown") {
+        Jammer pod = gen4_pod(JammingType::NoiseBarrage);
+        pod.max_continuous_transmit_s = 1.0;
+        pod.cooldown_s = 2.0;
+
+        CHECK(apply_jammer_command(pod, true, 0, 10.0));
+        CHECK(jammer_transmitting_at(pod, 10.5));
+        advance_jammer_budget(pod, 11.0);
+        CHECK_FALSE(pod.is_active);
+        CHECK(pod.transmit_elapsed_s == doctest::Approx(1.0));
+        CHECK(pod.cooldown_until_time_s == doctest::Approx(13.0));
+        CHECK_FALSE(jammer_transmitting_at(pod, 11.0));
+        CHECK_FALSE(apply_jammer_command(pod, true, 0, 12.0));
+        CHECK_FALSE(pod.is_active);
+
+        advance_jammer_budget(pod, 13.0);
+        CHECK(pod.cooldown_until_time_s == -1.0);
+        CHECK(apply_jammer_command(pod, true, 0, 13.0));
+        CHECK(jammer_transmitting_at(pod, 13.25));
+        CHECK(apply_jammer_command(pod, false, 0, 13.25));
+        CHECK_FALSE(jammer_transmitting_at(pod, 13.25));
+        CHECK(pod.cooldown_until_time_s == doctest::Approx(15.25));
+        InstrumentState receipt{};
+        project_jammer_instrument(receipt, &pod, 14.0);
+        CHECK_FALSE(receipt.jammer_transmitting);
+        CHECK(receipt.jammer_budget_enabled);
+        CHECK(receipt.jammer_transmit_remaining_s == doctest::Approx(0.75));
+        CHECK(receipt.jammer_cooldown_remaining_s == doctest::Approx(1.25));
+        CHECK(receipt.jammer_snapshot_time_s == doctest::Approx(14.0));
+
+        SimulationKernel kernel;
+        kernel.reset(49);
+        const Pair pair = spawn_pair(kernel, 40000.0, 180.0);
+        Jammer effect_window = gen4_pod(JammingType::NoiseBarrage);
+        effect_window.max_continuous_transmit_s = 1.0;
+        effect_window.cooldown_s = 2.0;
+        effect_window.transmit_start_time_s = 0.0;
+        install_pod(kernel, pair.jammer, effect_window, true);
+        CHECK_FALSE(scan_for(kernel, pair.radar, pair.jammer, probe_radar(), 0.5).has_value());
+        CHECK(scan_for(kernel, pair.radar, pair.jammer, probe_radar(), 1.0).has_value());
+    }
+
+    TEST_CASE("signed drfm displaces the same target range beyond burn-through only") {
         constexpr double kOffsetM = 3000.0;
         const double r_bt = jammer_burn_through_range_m(gen4_pod(JammingType::DeceptionDRFM), 5.0);
         const double beyond_m = 2.0 * r_bt;
@@ -296,6 +370,15 @@ TEST_SUITE("air_ew_jamming") {
         REQUIRE(deceived.has_value());
         CHECK(deceived->range == doctest::Approx(beyond_m + kOffsetM));
         CHECK(deceived->bearing == doctest::Approx(clear->bearing));
+
+        Jammer shortening = deceiving;
+        shortening.drfm_range_offset_m = -kOffsetM;
+        install_pod(kernel, pair.jammer, shortening, true);
+        const auto shortened = scan_for(kernel, pair.radar, pair.jammer, probe_radar());
+        REQUIRE(shortened.has_value());
+        CHECK(shortened->target_id == pair.jammer);
+        CHECK(shortened->range == doctest::Approx(beyond_m - kOffsetM));
+        CHECK(shortened->bearing == doctest::Approx(clear->bearing));
 
         // Outside the beam the radar sees the true range.
         move_jammer(kernel, pair.jammer, beyond_m, 0.0);

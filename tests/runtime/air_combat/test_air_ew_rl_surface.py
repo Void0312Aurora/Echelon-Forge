@@ -109,6 +109,9 @@ class AirEWHybridV2WorldBatchTests(unittest.TestCase):
 
       inst = env.envs[0].last_inst
       self.assertGreaterEqual(int(inst.jammer_mode), 0, "premise: the scenario F-16C carries a jammer pod")
+      self.assertFalse(bool(inst.jammer_budget_enabled))
+      self.assertEqual(float(inst.jammer_transmit_remaining_s), -1.0)
+      self.assertEqual(float(inst.jammer_cooldown_remaining_s), -1.0)
 
       # Transmit with spot noise (technique code 1.x floors to 1).
       action = _cruise_action(16)
@@ -119,6 +122,7 @@ class AirEWHybridV2WorldBatchTests(unittest.TestCase):
       self.assertTrue(bool(inst.jammer_transmitting))
       self.assertEqual(int(inst.jammer_mode), 1)
       self.assertGreaterEqual(float(inst.jammer_transmit_start_time_s), 0.0)
+      self.assertGreaterEqual(float(inst.jammer_snapshot_time_s), 0.0)
 
       # Releasing the transmit switch stands the pod down.
       env.step(_cruise_action(16))

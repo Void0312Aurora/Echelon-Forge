@@ -182,6 +182,7 @@ Based on the repository aircraft examples. Units follow the field suffix unless 
 | `rwr.sensitivity_dbm`, `.detect_band`, `.library_generation`, `.is_active` | dBm, band, generation, boolean | RWR sensitivity, band coverage, library generation, and activation. |
 | `jammer.power_watts`, `.bandwidth_mhz`, `.type`, `.effective_angle`, `.is_active` | W, MHz, string, deg, boolean | Jammer output, bandwidth, mode, effective angle, and activation. |
 | `jammer.burn_through_reference_m`, `.spot_power_gain`, `.drfm_range_offset_m` | m, multiplier, m | Authored burn-through calibration, NoiseSpot concentration gain, and DRFM false-target range offset. The first two must be finite and greater than 0; the DRFM offset may be signed but must be finite. |
+| `jammer.max_continuous_transmit_s`, `.cooldown_s` | s, s | Optional transmit burst and cooldown budget. Author both together; burst must be positive and cooldown may be zero. |
 | `jammer.*_provenance` | string | Provenance notes for the authored jammer calibration fields. |
 | `jammer.rf_eirp_watts`, `.rf_frequency_mhz` | W EIRP, MHz | Optional explicit RF contract. EIRP describes a main-beam value; legacy `power_watts` remains a separate ERP-like jamming input. |
 | `countermeasures.chaff_count`, `.flare_count`, `.release_interval`, `.auto_mode` | count, count, s, boolean | Countermeasure inventory and release behavior. |

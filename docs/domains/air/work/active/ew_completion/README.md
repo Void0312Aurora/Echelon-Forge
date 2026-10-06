@@ -1,12 +1,12 @@
 # Air EW Completion
 
-Status: `2026-10-06` active; E1 local gates passed, stacked PR publication/review pending.
+Status: `2026-10-07` active; E1 and bounded E2 local gates passed. E1 stack review and the cancelled #104 CUDA provisioning check remain open.
 
 Document kind: plan
 Lifecycle: active
 Canonical: docs/domains/air/work/active/ew_completion/README.md
 Owner: domains/air
-Last verified: 2026-10-06
+Last verified: 2026-10-07
 
 Language:
 
@@ -35,6 +35,7 @@ named-scenario playability and platform calibration.
 | Jamming | merged | native `test_air_ew_jamming.cpp`, PRs #99-#101 | target-attached binary noise denial and same-target DRFM range offset |
 | RF/ESM data | E1 local pass | `test_air_ew_rf_contract.cpp` | explicit emission groups, receiver band/sensitivity/memory/confirmation |
 | ESM observations | E1 local pass | `test_air_ew_esm.cpp`, Python Air adapter | no range/position solution, no canonical RL shape change |
+| Jammer resources/effect | E2 local pass | `test_air_ew_jamming.cpp`, jammer schema and state-owner suite | RF overlap gating, burst/cooldown receipts, signed same-target DRFM range offset |
 | Temporal/cooperative/admission/terminal | queued | task cluster file | no promotion of Air capability or canonical modes |
 
 ## Scope
@@ -49,8 +50,8 @@ separate authored evidence and are not implied by this engineering model.
 
 | Cluster | Goal | Entry | Exit | State |
 | --- | --- | --- | --- | --- |
-| E1 | RF/ESM contract and observation | merged jamming baseline | native negative cases, content validation, Python projection, state roundtrip | active |
-| E2 | Jammer resources and effectiveness | E1 verified | bounded band/effect decision, cooldown/duty resource state and signed DRFM behavior with negative cases | queued |
+| E1 | RF/ESM contract and observation | merged jamming baseline | native negative cases, content validation, Python projection, state roundtrip | PR stack open |
+| E2 | Jammer resources and effectiveness | E1 verified | bounded band/effect decision, cooldown/duty resource state and signed DRFM behavior with negative cases | local pass; PR pending |
 | E3 | EW temporal history | E1/E2 verified | opt-in history state, reset/replay, compatible policy extraction | queued |
 | E4 | Cooperative EW | E2/E3 verified | loss/latency, stale intent expiry, reassignment and role/resource isolation | queued |
 | E5 | Canonical action admission | E3/E4 verified | explicit compatible mode registration and observation/action acceptance | queued |
@@ -96,6 +97,23 @@ passes; additional scope requires a named follow-on cluster, not silent widening
   confirmation confidence, classification-known, jammer, lock, guidance. Source
   identity is omitted. `include_esm=True` opts in without altering default keys.
 
+### E2 jammer semantics
+
+- A jammer with an explicit RF contract only affects a radar with a complete RF
+  contract and positive band overlap. The overlap divided by jammer bandwidth
+  scales the bounded burn-through proxy; disjoint bands have no effect. Legacy
+  jammer definitions keep the existing bandwidth proxy.
+- Jammer `rf_eirp_watts` remains an emission input for passive ESM. Jamming
+  effectiveness continues to use the separate ERP-like `power_watts` input and
+  its burn-through calibration; the two power quantities are not converted.
+- `max_continuous_transmit_s` and `cooldown_s` are an optional paired budget.
+  Omitted fields preserve unlimited legacy transmission; an exhausted burst
+  stops and enters cooldown, and a manual stop also begins cooldown. Instrument
+  state carries remaining burst time, remaining cooldown and snapshot time.
+- Signed DRFM offsets alter the reported range of the same target only beyond
+  burn-through and within the jammer beam. This does not create an independent
+  ghost track.
+
 ### Validation
 
 Local E1 stack implementation validation, MSVC Release / Python 3.12:
@@ -116,6 +134,19 @@ Local E1 stack implementation validation, MSVC Release / Python 3.12:
   and 484 assertions; content schema passed three tests and ten subtests.
 - `git diff --check` passed. Remote checks/review remain publication gates.
 
+Local E2 mechanism validation, MSVC Release / Python 3.12:
+
+- Rebuilt `ef_test`, `ef_py`, and `ef_runtime_host_candidate_test` from the
+  E2 worktree after refreshing its configured build directory.
+- Full `ef_test`: 257 cases, 155102 assertions passed.
+- State-owner adapter suite: 16 cases, 489 assertions passed, including jammer
+  budget reflection and post-EW instrument receipts.
+- Eight focused Python modules passed 73 tests and 46 subtests, including EW
+  suite schema, Air facade/observation, RL surface, bindings and replay.
+- PR #103 checks are all green. PR #104's fast, nightly, Windows and Linux
+  checks pass; its CUDA job was cancelled during toolchain installation, so
+  that required check remains unresolved rather than code-failed.
+
 ## Acceptance Gate
 
 E1 can be mergeable only after RF sensitivity/band/legacy/malformed negatives,
@@ -125,11 +156,18 @@ The first PR defines content/state/passive DTO contracts; the second activates
 the sensing model, DTO projection and optional Python adapter.
 Publication/checks/review remain distinct gates. E6, not E1, owns playability.
 
+E2's local mechanism gate passes explicit RF overlap and off-band behavior,
+budget stop/cooldown/recovery, instrument and state roundtrips, signed DRFM, and
+the legacy jamming regressions. The PR stack still needs remote check closure and
+review before merge.
+
 ## Residuals And Next Steps
 
-- E2 owns external/support-jammer composition, frequency-sensitive radar denial,
-  duty/cooldown budget and richer DRFM mechanics; current denial is attached to
-  the sensed target and no ghost-track lifecycle exists.
+- External/support-jammer composition is not implemented by this E2 slice and
+  needs a separately scoped follow-up before that capability is claimed.
+- Frequency overlap and burn-through remain engineering proxies, not calibrated
+  J/S or platform performance. Independent DRFM ghost-track lifecycle remains
+  out of scope.
 - E3 owns history-enabled RL policy compatibility; E1 adds no canonical RL key.
 - E4 owns formation and command delivery acceptance; existing 2v2 terminal
   surrogates do not establish these gates.

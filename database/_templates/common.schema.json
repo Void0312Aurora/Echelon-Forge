@@ -349,6 +349,16 @@
           "exclusiveMinimum": 0,
           "description": "Center frequency for the explicit jammer RF emission."
         },
+        "max_continuous_transmit_s": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Maximum continuous transmit burst before cooldown."
+        },
+        "cooldown_s": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Cooldown after stopping or exhausting a transmit burst."
+        },
         "is_active": {
           "type": "boolean",
           "description": "Active flag."
@@ -368,6 +378,12 @@
         "rf_frequency_mhz": [
           "rf_eirp_watts",
           "bandwidth_mhz"
+        ],
+        "max_continuous_transmit_s": [
+          "cooldown_s"
+        ],
+        "cooldown_s": [
+          "max_continuous_transmit_s"
         ]
       },
       "allOf": [
