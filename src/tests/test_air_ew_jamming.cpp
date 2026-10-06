@@ -11,6 +11,7 @@
 #include "components/systems/sensor.h"
 #include "content/unit_definition.h"
 #include "core/interfaces/sensor_model.h"
+#include "core/mission/runtime/execution_observation_runtime.h"
 
 #include <doctest/doctest.h>
 #include <flecs.h>
@@ -378,5 +379,16 @@ TEST_SUITE("air_ew_jamming") {
         for (const auto &det : detections) {
             CHECK(det.source_id == pair.jammer);
         }
+
+        const AgentObservation public_observation = kernel.get_agent_observation(pair.radar);
+        REQUIRE(public_observation.rwr_warnings.size() == 1);
+        CHECK(public_observation.rwr_warnings.front().source_id == pair.jammer);
+        const auto bounded_air_projection = compute_execution_observation_runtime(
+            InstrumentState{}, public_observation, 0.0, 0.0, 0.0, 0.0, 0, 1);
+        REQUIRE(bounded_air_projection.rwr_values.size() == 4);
+        CHECK(bounded_air_projection.rwr_values[0] ==
+              doctest::Approx(public_observation.rwr_warnings.front().bearing));
+        CHECK(bounded_air_projection.rwr_values[1] ==
+              doctest::Approx(public_observation.rwr_warnings.front().signal_strength));
     }
 }
