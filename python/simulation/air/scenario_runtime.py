@@ -114,21 +114,116 @@ class AirFacadeReplayReceipt:
             "terminal_reason": None if run.terminal is None else run.terminal.reason,
         }
         digest = _canonical_digest(payload)
-        return cls(
-            schema_version=payload["schema_version"],
-            seed=int(payload["seed"]),
-            steps=int(payload["steps"]),
-            replay_identities=tuple(payload["replay_identities"]),
-            phases=tuple(tuple(values) for values in payload["phases"]),
-            initial_sim_time_s=tuple(payload["initial_sim_time_s"]),
-            final_sim_time_s=tuple(payload["final_sim_time_s"]),
-            final_positions_m=tuple(tuple(values) for values in payload["final_positions_m"]),
-            action_norms=tuple(tuple(values) for values in payload["action_norms"]),
-            frames=tuple(_frame_from_payload(value) for value in payload["frames"]),
-            terminal_status=payload["terminal_status"],
-            terminal_reason=payload["terminal_reason"],
-            digest=digest,
-        )
+        return cls.from_dict({**payload, "digest": digest})
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "AirFacadeReplayReceipt":
+        """Load and integrity-check a serialized replay receipt."""
+
+        if not isinstance(payload, Mapping):
+            raise TypeError("Air replay receipt payload must be a mapping")
+        raw = dict(payload)
+        schema_version = str(raw.get("schema_version", ""))
+        if schema_version != "air.facade.replay.v1":
+            raise ValueError(f"unsupported Air replay schema: {schema_version!r}")
+        supplied_digest = str(raw.get("digest", "")).strip().lower()
+        if len(supplied_digest) != 64:
+            raise ValueError("Air replay receipt is missing a valid digest")
+        unsigned = dict(raw)
+        unsigned.pop("digest", None)
+        expected_digest = _canonical_digest(unsigned)
+        if supplied_digest != expected_digest:
+            raise ValueError(
+                "Air replay receipt digest mismatch: "
+                f"artifact={supplied_digest}, computed={expected_digest}"
+            )
+        try:
+            frames = tuple(_frame_from_payload(value) for value in raw["frames"])
+            steps = int(raw["steps"])
+            if steps <= 0 or len(frames) != steps:
+                raise ValueError("Air replay receipt steps must equal its non-empty frame count")
+            if any(frame.step_index != index for index, frame in enumerate(frames, start=1)):
+                raise ValueError("Air replay receipt frame indices must be contiguous from one")
+            roster_count = len(raw["replay_identities"])
+            if roster_count <= 0:
+                raise ValueError("Air replay receipt must contain at least one replay identity")
+            for field in (
+                "phases",
+                "initial_sim_time_s",
+                "final_sim_time_s",
+                "final_positions_m",
+                "action_norms",
+            ):
+                if len(raw[field]) != roster_count:
+                    raise ValueError(f"Air replay receipt field {field!r} has an invalid roster length")
+            if any(len(values) != steps for values in raw["phases"]):
+                raise ValueError("Air replay receipt phase history length must equal steps")
+            if any(len(values) != 3 for values in raw["final_positions_m"]):
+                raise ValueError("Air replay receipt final positions must be three-dimensional")
+            if any(len(values) != steps * 2 for values in raw["action_norms"]):
+                raise ValueError("Air replay receipt action norms must contain two values per step")
+            for frame in frames:
+                if len(frame.positions_m) != roster_count or len(frame.phases) != roster_count:
+                    raise ValueError("Air replay receipt frame roster does not match replay identities")
+                if len(frame.sim_time_s) != roster_count or len(frame.action_norms) != roster_count:
+                    raise ValueError("Air replay receipt frame fields have an invalid roster length")
+                if any(len(position) != 3 for position in frame.positions_m):
+                    raise ValueError("Air replay receipt frame positions must be three-dimensional")
+                if any(len(norms) != 2 for norms in frame.action_norms):
+                    raise ValueError("Air replay receipt frame action norms must contain two values")
+            receipt = cls(
+                schema_version=schema_version,
+                seed=int(raw["seed"]),
+                steps=steps,
+                replay_identities=tuple(str(value) for value in raw["replay_identities"]),
+                phases=tuple(tuple(str(value) for value in values) for values in raw["phases"]),
+                initial_sim_time_s=tuple(float(value) for value in raw["initial_sim_time_s"]),
+                final_sim_time_s=tuple(float(value) for value in raw["final_sim_time_s"]),
+                final_positions_m=tuple(
+                    tuple(float(value) for value in values) for values in raw["final_positions_m"]
+                ),
+                action_norms=tuple(
+                    tuple(float(value) for value in values) for values in raw["action_norms"]
+                ),
+                frames=frames,
+                terminal_status=(
+                    None if raw.get("terminal_status") is None else str(raw["terminal_status"])
+                ),
+                terminal_reason=(
+                    None if raw.get("terminal_reason") is None else str(raw["terminal_reason"])
+                ),
+                digest=supplied_digest,
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            if isinstance(exc, ValueError) and str(exc).startswith("Air replay receipt"):
+                raise
+            raise ValueError(f"invalid Air replay receipt payload: {exc}") from exc
+        receipt.verify()
+        return receipt
+
+    @classmethod
+    def load_json(cls, path: str | Path) -> "AirFacadeReplayReceipt":
+        """Read a canonical replay receipt from disk and validate its digest."""
+
+        target = Path(path)
+        try:
+            payload = json.loads(target.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"invalid Air replay receipt JSON: {target}") from exc
+        return cls.from_dict(payload)
+
+    def verify(self) -> bool:
+        """Verify that the in-memory receipt still matches its canonical digest."""
+
+        payload = self.as_dict()
+        supplied_digest = str(payload.pop("digest", "")).strip().lower()
+        expected_digest = _canonical_digest(payload)
+        if supplied_digest != expected_digest:
+            raise ValueError(
+                "Air replay receipt digest mismatch: "
+                f"artifact={supplied_digest}, computed={expected_digest}"
+            )
+        return True
 
     def as_dict(self) -> dict[str, Any]:
         return {

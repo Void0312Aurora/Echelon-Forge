@@ -176,8 +176,16 @@ def get_backend_registration(backend_id: str) -> SimulationBackendRegistration:
     return _resolve_backend(backend_id)
 
 
-def create_single_backend(*, backend_id: str = _BUILTIN_BACKEND_ID, **kwargs: Any) -> SimulationBatchBackend:
-    """Construct a single-world provider without exposing its implementation path."""
+def create_single_backend(*, backend_id: str | None = None, **kwargs: Any) -> SimulationBatchBackend:
+    """Construct an explicitly selected single-world provider.
+
+    The former implicit ``world_batch`` default is retired.  Training and
+    evaluation callers must name their provider, which prevents a no-RL
+    scenario provider from being selected accidentally at a vector boundary.
+    """
+
+    if backend_id is None:
+        raise ValueError("single-world backend_id is required; select 'world_batch' explicitly")
 
     factory = _resolve_backend(backend_id).single_factory
     if factory is None:
@@ -186,9 +194,12 @@ def create_single_backend(*, backend_id: str = _BUILTIN_BACKEND_ID, **kwargs: An
 
 
 def create_cooperative_backend(
-    *, backend_id: str = _BUILTIN_BACKEND_ID, **kwargs: Any
+    *, backend_id: str | None = None, **kwargs: Any
 ) -> SimulationCooperativeBatchBackend:
-    """Construct a cooperative provider without exposing its implementation path."""
+    """Construct an explicitly selected cooperative provider."""
+
+    if backend_id is None:
+        raise ValueError("cooperative backend_id is required; select 'world_batch' explicitly")
 
     factory = _resolve_backend(backend_id).cooperative_factory
     if factory is None:
@@ -197,9 +208,12 @@ def create_cooperative_backend(
 
 
 def create_single_execution_runtime(
-    *, backend_id: str = _BUILTIN_BACKEND_ID, **kwargs: Any
+    *, backend_id: str | None = None, **kwargs: Any
 ) -> SimulationExecutionRuntime:
     """Construct a single-world execution wrapper through the backend seam."""
+
+    if backend_id is None:
+        raise ValueError("execution backend_id is required; select 'world_batch' explicitly")
 
     factory = _resolve_backend(backend_id).execution_factory
     if factory is None:

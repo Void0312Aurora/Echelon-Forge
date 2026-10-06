@@ -206,6 +206,7 @@ def main() -> int:
     )
 
     batch_vec_kwargs = {
+        "backend_id": "world_batch",
         "scenario_path": scenario_path,
         "n_envs": int(args.n_envs),
         "worker_threads": args.world_batch_threads,

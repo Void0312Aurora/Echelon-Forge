@@ -25,7 +25,7 @@ from .action import (
     build_pilot_action,
     half_to_unit,
 )
-from .demo import AirFacadeDemoTrace, build_demo_setup, run_facade_scripted_demo
+from .demo import AirFacadeDemoTrace, run_facade_scripted_demo
 from .engagement import (
     AirEngagementDecision,
     AirEngagementFacts,
@@ -39,6 +39,7 @@ from .scenario_runtime import (
     AirFacadeScenarioRuntime,
     AirFacadeStepResult,
 )
+from .replay import AirFacadeReplaySession
 from .tasking_runtime import AirScriptedTaskingRuntime
 from .ew import AirEWDecision, AirScriptedEWController
 from .coordination import AirScriptedRosterCoordinator, AirTargetAssignment
@@ -66,7 +67,6 @@ __all__ = [
     "build_pilot_action",
     "half_to_unit",
     "AirFacadeDemoTrace",
-    "build_demo_setup",
     "make_scripted_c2_task_manager",
     "run_facade_scripted_demo",
     "AirEngagementDecision",
@@ -79,6 +79,7 @@ __all__ = [
     "AirFacadeScenarioRun",
     "AirFacadeScenarioRuntime",
     "AirFacadeStepResult",
+    "AirFacadeReplaySession",
     "AirScriptedTaskingRuntime",
     "AirEWDecision",
     "AirScriptedEWController",

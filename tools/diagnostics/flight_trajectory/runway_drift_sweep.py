@@ -249,6 +249,7 @@ def main() -> int:
 
     seeds = _parse_seeds(args.seeds)
     env = create_single_execution_runtime(
+        backend_id="world_batch",
         scenario_path=args.scenario,
         env_settings={
             "action_mode": args.action_mode,

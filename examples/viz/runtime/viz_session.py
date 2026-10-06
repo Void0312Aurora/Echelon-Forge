@@ -166,6 +166,49 @@ def _pretty_label(name: str | None) -> str:
     return text.replace("_", " ").title()
 
 
+def _air_facade_replay_units(frame, scenario_data: dict) -> list[dict]:
+    """Project semantic Air replay slots into the existing state-frame shape."""
+
+    entities = scenario_data.get("entities", []) if isinstance(scenario_data, dict) else []
+    if not isinstance(entities, list):
+        entities = []
+    units: list[dict] = []
+    for index, position in enumerate(frame.positions_m):
+        config = entities[index] if index < len(entities) and isinstance(entities[index], dict) else {}
+        name = str(config.get("name") or f"air:slot:{index}")
+        side = str(config.get("side") or "Unknown")
+        platform_type = str(config.get("type") or "Aircraft")
+        heading = float(config.get("heading", 0.0) or 0.0)
+        phases = frame.phases[index] if index < len(frame.phases) else ""
+        norms = frame.action_norms[index] if index < len(frame.action_norms) else ()
+        units.append(
+            {
+                "id": index + 1,
+                "name": name,
+                "side": side,
+                "type": "Aircraft",
+                "platform_type": platform_type,
+                "echelon": "platform",
+                "service_profile": "BlueAir" if side == "Blue" else "RedAir" if side == "Red" else "",
+                "x": float(position[0]),
+                "y": float(position[1]),
+                "z": float(position[2]),
+                "heading": heading,
+                "pitch": 0.0,
+                "roll": 0.0,
+                "speed": 0.0,
+                "ias": 0.0,
+                "hp": 100.0,
+                "max_hp": 100.0,
+                "active": True,
+                "is_active": True,
+                "mission_phase": str(phases),
+                "action_norm": [float(value) for value in norms],
+            }
+        )
+    return units
+
+
 def _infer_c2_task(phase_name: str | None, *, command_code: int | None = None) -> str:
     phase = normalize_phase_name(phase_name)
     if phase == "rtb":
@@ -840,6 +883,7 @@ class VizSession:
         self.ready = False
         self.env = None
         self.model = None
+        self._replay_session = None
         self.episode_return = 0.0
         self.map_data = None
         self.nav_data = None
@@ -851,6 +895,12 @@ class VizSession:
         return self._stop_event.is_set()
 
     def _release_runtime_resources(self) -> None:
+        replay_session = self._replay_session
+        self._replay_session = None
+        if replay_session is not None:
+            close_fn = getattr(replay_session, "close", None)
+            if callable(close_fn):
+                close_fn()
         env = self.env
         self.env = None
         self.model = None
@@ -891,10 +941,16 @@ class VizSession:
     def pause(self) -> None:
         print("Pause Signal Received")
         self.simulation_paused = True
+        replay_session = self._replay_session
+        if replay_session is not None and replay_session.status == replay_session.RUNNING:
+            replay_session.pause()
 
     def resume(self) -> None:
         print("Resume Signal Received")
         self.simulation_paused = False
+        replay_session = self._replay_session
+        if replay_session is not None and replay_session.status == replay_session.PAUSED:
+            replay_session.resume()
 
     def stop(self) -> None:
         # Signal only; the worker thread owns the env and performs cleanup in
@@ -904,6 +960,9 @@ class VizSession:
         self._stop_event.set()
         self.simulation_running = False
         self.simulation_paused = False
+        replay_session = self._replay_session
+        if replay_session is not None:
+            replay_session.stop()
         self.ready = False
         self.map_data = None
         self.nav_data = None
@@ -924,7 +983,7 @@ class VizSession:
         self._notify_status()
 
     def status_payload(self) -> dict:
-        return {
+        payload = {
             "scenario": str(self.scenario),
             "mode": str(getattr(self.args, "mode", "") or "live"),
             "replay": str(getattr(self.args, "replay", "") or ""),
@@ -935,6 +994,9 @@ class VizSession:
             "speed": float(self.sim_speed),
             "error": str(self.last_error),
         }
+        if self._replay_session is not None:
+            payload["replay_state"] = self._replay_session.status_payload()
+        return payload
 
     def report_error(self, message: str) -> None:
         self.last_error = str(message)
@@ -1028,6 +1090,9 @@ class VizSession:
             raise FileNotFoundError(f"CSG replay artifact not found: {replay_path}")
         with open(replay_path, "r", encoding="utf-8") as handle:
             artifact = json.load(handle)
+        if artifact.get("schema_version") == "air.facade.replay.v1":
+            self._run_air_facade_replay_loop(artifact)
+            return
         if artifact.get("schema") != "csg.s0.replay.v1":
             raise ValueError(f"unsupported replay schema: {artifact.get('schema')!r}")
         scenario_path = str(self.scenario or "").strip()
@@ -1103,6 +1168,85 @@ class VizSession:
                 frame_dt = 0.5
             speed = max(0.05, float(self.sim_speed))
             self.socketio.sleep(frame_dt / speed)
+
+    def _run_air_facade_replay_loop(self, artifact: dict) -> None:
+        """Consume a validated simulation-owned Air receipt on the viz wire."""
+
+        from python.simulation.air.replay import AirFacadeReplaySession
+        from python.simulation.air.scenario_runtime import AirFacadeReplayReceipt
+
+        receipt = AirFacadeReplayReceipt.from_dict(artifact)
+        replay_session = AirFacadeReplaySession(receipt)
+        self._replay_session = replay_session
+        scenario_data: dict = {}
+        scenario_path = str(self.scenario or "").strip()
+        if scenario_path and os.path.isfile(scenario_path):
+            with open(scenario_path, "r", encoding="utf-8") as handle:
+                loaded = json.load(handle)
+            if isinstance(loaded, dict):
+                scenario_data = loaded
+        environment = scenario_data.get("environment", {})
+        if not isinstance(environment, dict):
+            environment = {}
+        zones = environment.get("zones", [])
+        if not isinstance(zones, list):
+            zones = []
+        self.map_data = {
+            "contract_version": VIZ_MAP_SETUP_CONTRACT_VERSION,
+            "zones": zones,
+            "environment_overlays": build_environment_overlay_payload(scenario_data),
+            "illumination": resolve_scenario_illumination(scenario_data, sim=None),
+            "geodetic_frame": resolve_scenario_geodetic_frame(scenario_data, sim=None),
+        }
+        self.nav_data = None
+        self.socketio.emit("map_setup", self.map_data)
+        self.socketio.emit("speed_update", {"value": float(self.sim_speed)})
+        replay_session.start()
+        self.ready = True
+        self._notify_status()
+
+        while not self.stop_requested:
+            if not self.simulation_running or self.simulation_paused:
+                self.socketio.sleep(0.05)
+                continue
+            frame = replay_session.step()
+            if frame is None:
+                self.simulation_running = False
+                self.simulation_paused = True
+                self._notify_status()
+                break
+            units = _air_facade_replay_units(frame, scenario_data)
+            self.socketio.emit(
+                "state_update",
+                {
+                    "contract_version": VIZ_STATE_FRAME_CONTRACT_VERSION,
+                    "tick": float(frame.sim_time_s[0]) if frame.sim_time_s else float(frame.step_index),
+                    "units": units,
+                    "mission_status": None,
+                    "tactical": self._csg_tactical_overlays(units),
+                    "replay": {
+                        "schema": receipt.schema_version,
+                        "frame": int(replay_session.frame_index),
+                        "frame_count": int(receipt.steps),
+                        "seed": int(receipt.seed),
+                        "digest": receipt.digest,
+                        "status": replay_session.status,
+                    },
+                },
+            )
+            if replay_session.status == replay_session.COMPLETED:
+                self.simulation_running = False
+                self.simulation_paused = True
+                self._notify_status()
+                break
+            frame_dt = 0.05
+            current_time = float(frame.sim_time_s[0]) if frame.sim_time_s else None
+            next_index = replay_session.frame_index + 1
+            if current_time is not None and next_index < len(receipt.frames):
+                next_frame = receipt.frames[next_index]
+                if next_frame.sim_time_s:
+                    frame_dt = max(0.01, float(next_frame.sim_time_s[0]) - current_time)
+            self.socketio.sleep(frame_dt / max(0.05, float(self.sim_speed)))
 
     def _run_loop_inner(self) -> None:
         args = self.args
@@ -1252,6 +1396,7 @@ class VizSession:
             if not isinstance(runtime_cfg, dict):
                 runtime_cfg = {}
             self.env = create_single_backend(
+                backend_id="world_batch",
                 scenario_path=args.scenario,
                 n_envs=1,
                 action_mode=action_mode,
@@ -1302,6 +1447,7 @@ class VizSession:
                 f"visual_update_interval={visual_update_interval})"
             )
             self.env = create_cooperative_backend(
+                backend_id="world_batch",
                 scenario_path=args.scenario,
                 n_envs=1,
                 include_visual=include_visual,

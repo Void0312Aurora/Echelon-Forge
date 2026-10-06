@@ -56,6 +56,7 @@ def make_single_world_batch_env_from_args(args, *, mission_obs_mode: str | None 
     if mission_obs_mode is not None:
         env_settings["mission_obs_mode"] = str(mission_obs_mode)
     env = create_single_execution_runtime(
+        backend_id="world_batch",
         scenario_path=str(args.scenario),
         env_settings=env_settings,
         worker_threads=1,

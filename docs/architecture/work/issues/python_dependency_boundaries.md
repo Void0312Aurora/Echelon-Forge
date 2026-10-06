@@ -64,6 +64,16 @@ gate. The runtime's canonical `air.facade.replay.v1` receipt hashes semantic
 slot frames without reset-unstable native entity IDs, so replay comparison can
 be performed across independent processes without importing RL.
 
+The implicit `world_batch` fallback has now been retired from the single,
+cooperative, and single-execution factory entry points. RL and evaluation
+callers name `backend_id="world_batch"` explicitly; no-RL scenario and
+visualization callers use `create_scenario_backend` with `facade_batch`. The
+web visualization example follows that scenario-owned Air runtime and the
+visualization session consumes validated Air receipts through
+`AirFacadeReplaySession`. The retained `world_batch` implementation is still
+the explicit vectorized training provider, so deleting it is outside this
+decoupling slice.
+
 ## Verification
 
 Run the focused gate from the repository root:

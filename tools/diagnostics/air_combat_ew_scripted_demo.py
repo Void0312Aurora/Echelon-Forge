@@ -120,6 +120,7 @@ def run_demo(
         model_context["dispense_bearing_gate_deg"] = float(dispense_bearing_gate_deg)
 
     vec_env = create_single_backend(
+        backend_id="world_batch",
         scenario_path=os.path.abspath(str(scenario_path)),
         n_envs=1,
         include_visual=False,

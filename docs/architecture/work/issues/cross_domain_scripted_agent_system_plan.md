@@ -3490,3 +3490,32 @@ to a dedicated owner-local evidence document.
 - Boundary decision: the authority-field regression is closed for the
   decoupling plan. Native weapon geometry/effect evidence remains outside this
   plan's scope.
+
+### 2026-10-06 — Provider cutover, Air replay consumption, and visualization lifecycle
+
+- The implicit `world_batch` defaults on `create_single_backend`,
+  `create_cooperative_backend`, and `create_single_execution_runtime` are
+  retired. Maintained RL/evaluation callers now select
+  `backend_id="world_batch"` explicitly; the facade scenario path remains the
+  no-RL default through `create_scenario_backend`.
+- The old web-viz direct `RuntimeFacade` setup/step loop is retired. The
+  maintained example now constructs `facade_batch`, runs
+  `AirFacadeScenarioRuntime`, and closes that runtime in the worker's final
+  lifecycle block. The RL `world_batch` implementation remains an explicit
+  training provider and is not deleted because vectorized training/evaluation
+  still consumes its API.
+- `AirFacadeReplayReceipt` now has a checked load path (`from_dict`,
+  `load_json`, and `verify`) and `AirFacadeReplaySession` owns replay start,
+  pause, resume, stop, reset, frame stepping, completion, and close. The
+  existing visualization session consumes `air.facade.replay.v1` through the
+  same state-frame wire contract and emits the receipt digest and completion
+  status.
+- Evidence: the Air facade runtime/replay suite covers receipt round-trip,
+  tamper rejection, deterministic frames, and the complete replay lifecycle;
+  the web-viz source contract now points at the simulation-owned scenario
+  runtime. A legacy native weapon-damage assertion remains outside this
+  decoupling gate.
+- Boundary decision: provider selection, replay consumption, and the Air
+  visualization lifecycle are closed for this slice. Retiring the RL
+  `world_batch` vector implementation would require a separate training API
+  replacement and is intentionally not claimed here.

@@ -196,6 +196,7 @@ def _make_env(
         wrapper_class, wrapper_kwargs = resolve_execution_wrapper_spec(train_config or {})
 
     env = create_single_execution_runtime(
+        backend_id="world_batch",
         scenario_path=os.path.abspath(scenario_path),
         env_settings=env_settings,
         wrapper_class=wrapper_class,

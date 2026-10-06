@@ -270,6 +270,7 @@ def _run_fixed_action_eval(
     )
     env_settings = _build_env_settings(train_config)
     env = create_cooperative_backend(
+        backend_id="world_batch",
         scenario_path=os.path.abspath(scenario_path),
         n_envs=1,
         worker_threads=max(1, int(worker_threads)),
@@ -344,6 +345,7 @@ def run_baseline_eval(
     train_config = _load_validated_train_config(scenario_path, train_config_path)
     env_settings = _build_env_settings(train_config)
     env = create_cooperative_backend(
+        backend_id="world_batch",
         scenario_path=os.path.abspath(scenario_path),
         n_envs=1,
         worker_threads=max(1, int(worker_threads)),
