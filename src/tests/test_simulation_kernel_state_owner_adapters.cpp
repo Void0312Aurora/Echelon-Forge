@@ -2013,7 +2013,8 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         std::filesystem::remove(target_path, remove_error);
     }
 
-    TEST_CASE("legacy sensor reflection imports inline and mounted flags without permitting mixed RF shapes") {
+    TEST_CASE("legacy sensor reflection imports inline and mounted flags without permitting mixed "
+              "RF shapes") {
         using Bridge = runtime::host::integration::SimulationKernelStateOwnerBridge;
         using json = nlohmann::json;
         SimulationKernel kernel;
@@ -2053,7 +2054,8 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         CHECK(json::parse(Bridge::serialize_world(kernel)) == current);
         // An old field plus new RF fields is ambiguous and rejected atomically.
         for (auto &result : legacy["results"]) {
-            if (result["name"] == "EWLegacy") result["components"]["Sensor"]["rf_eirp_watts"] = 100.0;
+            if (result["name"] == "EWLegacy")
+                result["components"]["Sensor"]["rf_eirp_watts"] = 100.0;
         }
         const auto mixed_text = legacy.dump();
         CHECK_FALSE(Bridge::restore_world(kernel, {mixed_text.begin(), mixed_text.end()}));

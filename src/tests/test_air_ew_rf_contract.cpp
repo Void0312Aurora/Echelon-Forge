@@ -28,13 +28,12 @@ ESMReceiver strict_receiver() {
     r.sensitivity_dbm = -85.0;
     return r;
 }
-}
+} // namespace
 
 TEST_SUITE("air_ew_rf_contract") {
     TEST_CASE("free space receive power has correct units and distance/frequency scaling") {
         // 100 W EIRP at 1 GHz, 10 km: 112.4478 dB free-space loss, 50 dBm transmit.
-        CHECK(rf_received_power_dbm(100.0, 1000.0, 10000.0) ==
-              doctest::Approx(-62.4477832219));
+        CHECK(rf_received_power_dbm(100.0, 1000.0, 10000.0) == doctest::Approx(-62.4477832219));
         const double base = rf_received_power_dbm(100.0, 1000.0, 10000.0);
         CHECK(rf_received_power_dbm(100.0, 1000.0, 20000.0) - base ==
               doctest::Approx(-6.0205999133));
@@ -89,17 +88,30 @@ TEST_SUITE("air_ew_rf_contract") {
         CHECK(restored_esm.detections.front().confirmation_count == 2);
     }
 
-    TEST_CASE("RF content loads inline mounted and jammer fields and rejects malformed groups atomically") {
+    TEST_CASE("RF content loads inline mounted and jammer fields and rejects malformed groups "
+              "atomically") {
         using json = nlohmann::json;
         const auto path = std::filesystem::temp_directory_path() / "ef_air_ew_rf_content_test.json";
-        const json emission = {{"type", "Radar"}, {"rf_eirp_watts", 100.0},
-                               {"rf_frequency_mhz", 1000.0}, {"rf_bandwidth_mhz", 20.0}};
-        const json good = {{"type", "Aircraft"}, {"name", "RF_Test"}, {"sensor", emission},
+        const json emission = {{"type", "Radar"},
+                               {"rf_eirp_watts", 100.0},
+                               {"rf_frequency_mhz", 1000.0},
+                               {"rf_bandwidth_mhz", 20.0}};
+        const json good = {
+            {"type", "Aircraft"},
+            {"name", "RF_Test"},
+            {"sensor", emission},
             {"mounted_sensors", json::array({{{"label", "RF"}, {"sensor", emission}}})},
-            {"jammer", {{"power_watts", 1000.0}, {"rf_eirp_watts", 100.0},
-                         {"rf_frequency_mhz", 1000.0}, {"bandwidth_mhz", 20.0}}},
-            {"esm", {{"require_rf_contract", true}, {"frequency_min_mhz", 900.0},
-                     {"frequency_max_mhz", 1100.0}, {"memory_s", 2.0}, {"confirmation_scans", 2}}}};
+            {"jammer",
+             {{"power_watts", 1000.0},
+              {"rf_eirp_watts", 100.0},
+              {"rf_frequency_mhz", 1000.0},
+              {"bandwidth_mhz", 20.0}}},
+            {"esm",
+             {{"require_rf_contract", true},
+              {"frequency_min_mhz", 900.0},
+              {"frequency_max_mhz", 1100.0},
+              {"memory_s", 2.0},
+              {"confirmation_scans", 2}}}};
         { std::ofstream(path) << good; }
         std::string error;
         std::vector<UnitDefinition> definitions;
@@ -128,9 +140,10 @@ TEST_SUITE("air_ew_rf_contract") {
             sentinel[0].name = "Retain";
             error.clear();
             CHECK_FALSE(load_unit_definitions_json(path.string(), sentinel, &error));
-            const char *expected[] = {"rf_frequency_mhz", "rf_eirp_watts", "rf_bandwidth_mhz",
-                "bandwidth_mhz", "confirmation_scans", "frequency bounds", "memory_s",
-                "sensitivity_dbm", "require_rf_contract"};
+            const char *expected[] = {
+                "rf_frequency_mhz", "rf_eirp_watts",      "rf_bandwidth_mhz",
+                "bandwidth_mhz",    "confirmation_scans", "frequency bounds",
+                "memory_s",         "sensitivity_dbm",    "require_rf_contract"};
             CHECK(error.find(expected[defect]) != std::string::npos);
             REQUIRE(sentinel.size() == 1);
             CHECK(sentinel.front().name == "Retain");

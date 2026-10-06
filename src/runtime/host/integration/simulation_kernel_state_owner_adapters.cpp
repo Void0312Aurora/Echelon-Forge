@@ -1706,8 +1706,8 @@ bool validate_component_payload(ecs_world_t *world, std::string_view component_n
 // must never accept the retired field as a way to bypass their schema.
 bool normalize_legacy_sensor_reflection(nlohmann::json &sensor) {
     if (!sensor.is_object() || !sensor.contains("enforce_radar_horizon")) return true;
-    for (const char *key : {"enforce_radar_horizon", "enable_ducting",
-                           "sea_clutter_enabled", "bearing_only"}) {
+    for (const char *key :
+         {"enforce_radar_horizon", "enable_ducting", "sea_clutter_enabled", "bearing_only"}) {
         if (!sensor.contains(key) || !sensor[key].is_boolean()) return false;
     }
     for (const char *key : {"rf_eirp_watts", "rf_frequency_mhz", "rf_bandwidth_mhz"}) {
@@ -1755,16 +1755,19 @@ bool SimulationKernelStateOwnerBridge::restore_world(SimulationKernel &kernel,
         }
         for (auto &result : document.at("results")) {
             if (!result.is_object() || !result.contains("components") ||
-                !result["components"].is_object()) return false;
+                !result["components"].is_object())
+                return false;
             auto &components = result["components"];
             if (components.contains("Sensor") &&
-                !normalize_legacy_sensor_reflection(components["Sensor"])) return false;
+                !normalize_legacy_sensor_reflection(components["Sensor"]))
+                return false;
             if (components.contains("MountedSensors") && components["MountedSensors"].is_object() &&
                 components["MountedSensors"].contains("mounts") &&
                 components["MountedSensors"]["mounts"].is_array()) {
                 for (auto &mount : components["MountedSensors"]["mounts"]) {
                     if (mount.is_object() && mount.contains("sensor") &&
-                        !normalize_legacy_sensor_reflection(mount["sensor"])) return false;
+                        !normalize_legacy_sensor_reflection(mount["sensor"]))
+                        return false;
                 }
             }
         }

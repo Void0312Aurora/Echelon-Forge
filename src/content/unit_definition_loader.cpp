@@ -1705,8 +1705,10 @@ bool parse_electronic_warfare_json_fields(const nlohmann::json &entry, UnitDefin
         if (!validate_jammer_json_fields(jammer, error)) {
             return false;
         }
-        def.jammer_data.rf_eirp_watts = jammer.value("rf_eirp_watts", def.jammer_data.rf_eirp_watts);
-        def.jammer_data.rf_frequency_mhz = jammer.value("rf_frequency_mhz", def.jammer_data.rf_frequency_mhz);
+        def.jammer_data.rf_eirp_watts =
+            jammer.value("rf_eirp_watts", def.jammer_data.rf_eirp_watts);
+        def.jammer_data.rf_frequency_mhz =
+            jammer.value("rf_frequency_mhz", def.jammer_data.rf_frequency_mhz);
         def.jammer_data.is_active = jammer.value("is_active", def.jammer_data.is_active);
         def.jammer_data.power_watts = jammer.value("power_watts", def.jammer_data.power_watts);
         def.jammer_data.bandwidth_mhz =
@@ -1767,11 +1769,15 @@ bool parse_electronic_warfare_json_fields(const nlohmann::json &entry, UnitDefin
     if (entry.contains("esm") && entry["esm"].is_object()) {
         const auto &esm = entry["esm"];
         def.has_esm_data = true;
-        def.esm_data.frequency_min_mhz = esm.value("frequency_min_mhz", def.esm_data.frequency_min_mhz);
-        def.esm_data.frequency_max_mhz = esm.value("frequency_max_mhz", def.esm_data.frequency_max_mhz);
+        def.esm_data.frequency_min_mhz =
+            esm.value("frequency_min_mhz", def.esm_data.frequency_min_mhz);
+        def.esm_data.frequency_max_mhz =
+            esm.value("frequency_max_mhz", def.esm_data.frequency_max_mhz);
         def.esm_data.memory_s = esm.value("memory_s", def.esm_data.memory_s);
-        def.esm_data.confirmation_scans = esm.value("confirmation_scans", def.esm_data.confirmation_scans);
-        def.esm_data.require_rf_contract = esm.value("require_rf_contract", def.esm_data.require_rf_contract);
+        def.esm_data.confirmation_scans =
+            esm.value("confirmation_scans", def.esm_data.confirmation_scans);
+        def.esm_data.require_rf_contract =
+            esm.value("require_rf_contract", def.esm_data.require_rf_contract);
         def.esm_data.sensitivity_dbm = esm.value("sensitivity_dbm", def.esm_data.sensitivity_dbm);
         def.esm_data.max_detection_range_m =
             esm.value("max_detection_range_m", def.esm_data.max_detection_range_m);
@@ -1783,15 +1789,17 @@ bool parse_electronic_warfare_json_fields(const nlohmann::json &entry, UnitDefin
 } // namespace
 
 // Validate only runtime-consumed RF and ESM declarations. An absent RF group is legacy.
-bool validate_rf_emission(const nlohmann::json &node, const char *band_key,
-                          std::string *error) {
+bool validate_rf_emission(const nlohmann::json &node, const char *band_key, std::string *error) {
     if (!node.is_object()) return true;
     if (!node.contains("rf_eirp_watts") && !node.contains("rf_frequency_mhz") &&
-        !node.contains("rf_bandwidth_mhz")) return true;
+        !node.contains("rf_bandwidth_mhz"))
+        return true;
     for (const char *key : {"rf_eirp_watts", "rf_frequency_mhz", band_key}) {
         if (!node.contains(key) || !node[key].is_number() ||
             !std::isfinite(node[key].get<double>()) || node[key].get<double>() <= 0.0) {
-            if (error) *error = std::string(key) + " must be authored, finite and positive for RF emission";
+            if (error)
+                *error =
+                    std::string(key) + " must be authored, finite and positive for RF emission";
             return false;
         }
     }
@@ -1804,15 +1812,17 @@ bool validate_rf_emission(const nlohmann::json &node, const char *band_key,
 
 bool validate_rf_content(const nlohmann::json &entry, std::string *error) {
     if (entry.contains("sensor") &&
-        !validate_rf_emission(entry["sensor"], "rf_bandwidth_mhz", error)) return false;
+        !validate_rf_emission(entry["sensor"], "rf_bandwidth_mhz", error))
+        return false;
     if (entry.contains("mounted_sensors") && entry["mounted_sensors"].is_array()) {
         for (const auto &mount : entry["mounted_sensors"]) {
             if (mount.is_object() && mount.contains("sensor") &&
-                !validate_rf_emission(mount["sensor"], "rf_bandwidth_mhz", error)) return false;
+                !validate_rf_emission(mount["sensor"], "rf_bandwidth_mhz", error))
+                return false;
         }
     }
-    if (entry.contains("jammer") &&
-        !validate_rf_emission(entry["jammer"], "bandwidth_mhz", error)) return false;
+    if (entry.contains("jammer") && !validate_rf_emission(entry["jammer"], "bandwidth_mhz", error))
+        return false;
     if (!entry.contains("esm")) return true;
     const auto &esm = entry["esm"];
     if (!esm.is_object()) {
@@ -1820,11 +1830,13 @@ bool validate_rf_content(const nlohmann::json &entry, std::string *error) {
         return false;
     }
     for (const char *key : {"frequency_min_mhz", "frequency_max_mhz", "memory_s",
-                           "max_detection_range_m", "sensitivity_dbm"}) {
-        if (esm.contains(key) && (!esm[key].is_number() ||
-            !std::isfinite(esm[key].get<double>()) ||
-            (std::string(key) != "sensitivity_dbm" && esm[key].get<double>() < 0.0))) {
-            if (error) *error = std::string(key) + " must be finite (and nonnegative except sensitivity_dbm)";
+                            "max_detection_range_m", "sensitivity_dbm"}) {
+        if (esm.contains(key) &&
+            (!esm[key].is_number() || !std::isfinite(esm[key].get<double>()) ||
+             (std::string(key) != "sensitivity_dbm" && esm[key].get<double>() < 0.0))) {
+            if (error)
+                *error =
+                    std::string(key) + " must be finite (and nonnegative except sensitivity_dbm)";
             return false;
         }
     }
@@ -1834,9 +1846,10 @@ bool validate_rf_content(const nlohmann::json &entry, std::string *error) {
             return false;
         }
     }
-    if (esm.contains("confirmation_scans") && (!esm["confirmation_scans"].is_number_integer() ||
-        esm["confirmation_scans"].get<double>() < 1.0 ||
-        esm["confirmation_scans"].get<double>() > std::numeric_limits<int>::max())) {
+    if (esm.contains("confirmation_scans") &&
+        (!esm["confirmation_scans"].is_number_integer() ||
+         esm["confirmation_scans"].get<double>() < 1.0 ||
+         esm["confirmation_scans"].get<double>() > std::numeric_limits<int>::max())) {
         if (error) *error = "confirmation_scans must be a positive int";
         return false;
     }
