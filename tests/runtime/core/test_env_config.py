@@ -86,6 +86,18 @@ def _make_args(**overrides):
       id="air_combat_hybrid_action_mode",
     ),
     pytest.param(
+      {"action_mode": " air_ew_hybrid_v1 "},
+      "action_mode",
+      "air_ew_hybrid_v1",
+      id="air_ew_v1_action_mode",
+    ),
+    pytest.param(
+      {"action_mode": "air_ew_hybrid_v2"},
+      "action_mode",
+      "air_ew_hybrid_v2",
+      id="air_ew_v2_action_mode",
+    ),
+    pytest.param(
       {},
       "include_ew_state",
       False,
@@ -113,6 +125,16 @@ def test_resolve_env_settings_cli_override_wins_for_ew_state_flag() -> None:
 @pytest.mark.parametrize(
   ("env", "args_overrides", "message"),
   [
+    pytest.param(
+      {"action_mode": "air_ew_hybrid_v3"}, {},
+      "Unknown action_mode",
+      id="unimplemented_ew_action_version",
+    ),
+    pytest.param(
+      {}, {"action_mode": "air_ew_hybrid_v3"},
+      "Unknown action_mode",
+      id="unimplemented_cli_ew_action_version",
+    ),
     pytest.param(
       {"execution_step_runtime_mode": "legacy"}, {},
       "execution_step_runtime_mode='legacy' has been removed",
@@ -281,8 +303,11 @@ class ModeChoiceSurfaceParityTests(unittest.TestCase):
   def test_action_modes_pin_canonical_content_and_order(self) -> None:
     # Content pin: adding/removing/renaming an action mode must be a reviewed
     # owner change, and every derived surface follows this tuple.
-    expected = ("full", "takeoff2", "takeoff4", "naval_station3", "air_combat_hybrid_v1")
-    self.assertEqual(len(ACTION_MODES), 5)
+    expected = (
+      "full", "takeoff2", "takeoff4", "naval_station3", "air_combat_hybrid_v1",
+      "air_ew_hybrid_v1", "air_ew_hybrid_v2",
+    )
+    self.assertEqual(len(ACTION_MODES), 7)
     for idx, name in enumerate(expected):
       self.assertEqual(ACTION_MODES[idx], name)
 

@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/domains/air/standards/pilot_action_contract.md`
 Owner: `domains/air`
-Last verified: `2026-08-08`
+Last verified: `2026-10-07`
 
 状态：当前维护中的 air action input 特化基线，包含 A5 runtime
 event-action overlay；本文档本身不接受 learned-policy behavior。
@@ -42,6 +42,8 @@ event-action overlay；本文档本身不接受 learned-policy behavior。
 | `takeoff2` | 2 | 起飞课程用简化动作面 |
 | `takeoff4` | 4 | 带横侧向控制的起飞简化动作面 |
 | `air_combat_hybrid_v1` | 12 | `1v1` 空战训练面：连续飞行轴 + hybrid 作战命令语义 |
+| `air_ew_hybrid_v1` | 14 | 原作战传输向量加 chaff/flare 请求 |
+| `air_ew_hybrid_v2` | 16 | v1 EW 向量加 jammer 发射/技术请求 |
 
 `takeoff2` 与 `takeoff4` 是训练导向的 reduced interface，并不直接暴露完整 `PilotAction`。
 
@@ -90,6 +92,28 @@ numeric transport vector，但 policy 合同是 hybrid：部分维度按 Bernoul
 该模式下 `proprio` 与 `proprio_history` 记录送往 `PilotAction` 的 effective
 transport action，而不是 raw policy intent。因此对于 pulse 维度，policy command
 持续为高时只有上升沿步骤显示为 `1`，后续 held 步骤显示为 `0`。
+
+## EW 版本化传输与准入
+
+`air_ew_hybrid_v1/v2` 已在 `python.env_config.ACTION_MODES` 中显式注册，训练和评估
+CLI 从该列表取得选项。原有五项顺序与动作索引保持不变，`ew_state` 仍需显式启用。
+
+前 12 个索引沿用 `air_combat_hybrid_v1` 的传输及运行时事件门控。EW 扩展如下：
+
+| 索引 | 字段 | 解释 |
+| --- | --- | --- |
+| 12 | `program_chaff` | 值大于 0.5 时请求投放；原生库存与间隔约束生效 |
+| 13 | `program_flare` | 值大于 0.5 时请求投放；原生库存与间隔约束生效 |
+| 14（v2） | `jammer_transmit` | 值大于 0.5 时请求发射；原生预算与冷却约束生效 |
+| 15（v2） | `jammer_mode` | 裁剪后向下取整至 0..2：NoiseBarrage、NoiseSpot、DeceptionDRFM |
+
+本轮准入验证现有 Box 动作 PPO 路径，测试位于 `test_air_ew_admission.py`；它不代表
+训练质量验收。专用 `hybrid_action_spec='air_combat_hybrid_v1'` 分布仍限定 12 维，
+会拒绝 EW 空间；EW 名称也不是受支持的混合分布规范。注册动作模式不扩展其
+Bernoulli/categorical 策略语义。
+
+编队角色门控由 `ew_formation_commanders` 独立启用，只允许或阻止 v2 jammer 请求。
+请求、资源消耗、发射状态、测量效果及命名终局验收各有独立证据。
 
 ## A5 受约束事件动作 Overlay
 

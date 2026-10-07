@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/domains/air/standards/pilot_action_contract.md`
 Owner: `domains/air`
-Last verified: `2026-08-08`
+Last verified: `2026-10-07`
 
 Status: specialization baseline for maintained air action input,
 including the A5 runtime event-action overlay; this page does not by itself
@@ -44,6 +44,8 @@ The Air action modes covered by this standard are:
 | `takeoff2` | 2 | reduced takeoff curriculum surface |
 | `takeoff4` | 4 | reduced takeoff surface with lateral controls |
 | `air_combat_hybrid_v1` | 12 | `1v1` air-combat training surface with continuous flight axes plus hybrid combat-command semantics |
+| `air_ew_hybrid_v1` | 14 | existing combat transport plus chaff/flare requests |
+| `air_ew_hybrid_v2` | 16 | v1 EW transport plus jammer transmit/technique requests |
 
 `takeoff2` and `takeoff4` are training-oriented reduced interfaces. They do not
 expose the full `PilotAction` surface directly.
@@ -96,6 +98,35 @@ The `proprio` and `proprio_history` observations for this mode record the
 effective transport action sent toward `PilotAction`, not the raw policy intent.
 For pulse dimensions, a held policy command therefore appears as `1` only on the
 rising-edge step and `0` on subsequent held steps.
+
+## Versioned EW Transport And Admission
+
+Both EW modes are explicit entries in `python.env_config.ACTION_MODES`; training
+and evaluation CLI choices derive from that registry. The first five registry
+entries keep their order. EW remains opt-in, including the `ew_state` observation.
+
+The first twelve action indices preserve `air_combat_hybrid_v1` transport and
+runtime event gating. EW adds:
+
+| Index | v1/v2 field | Interpretation |
+| --- | --- | --- |
+| 12 | `program_chaff` | request when value is greater than 0.5; native inventory/cadence applies |
+| 13 | `program_flare` | request when value is greater than 0.5; native inventory/cadence applies |
+| 14 (v2) | `jammer_transmit` | request when value is greater than 0.5; native budget/cooldown applies |
+| 15 (v2) | `jammer_mode` | clip/floor code to 0..2: NoiseBarrage, NoiseSpot, DeceptionDRFM |
+
+The admitted learned-policy consumer is the existing Box-action PPO path;
+configuration/factory/native-state and short PPO update tests are in
+`tests/runtime/air_combat/test_air_ew_admission.py`. This does not establish
+training quality. The specialized `hybrid_action_spec='air_combat_hybrid_v1'`
+distribution requires 12 dimensions and rejects EW spaces; EW names are not
+accepted hybrid distribution specifications. Its Bernoulli/categorical policy
+semantics are not extended by action-mode admission.
+
+Formation role gating is separately opt-in through `ew_formation_commanders`.
+It permits or blocks v2 jammer requests without changing combat/chaff/flare
+indices. Native request acceptance, resource use and transmit state are separate
+from measured effect and named terminal acceptance.
 
 ## A5 Constrained Event-Action Overlay
 

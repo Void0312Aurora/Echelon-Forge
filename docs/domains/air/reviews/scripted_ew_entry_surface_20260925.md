@@ -6,6 +6,22 @@
 - Scope: entry surface for an RL-independent scripted electronic-warfare role
 - Verdict: `entry_surface_incomplete`
 
+## 2026-10-07 admission update
+
+The E1-E5 completion stack now covers passive RF/ESM semantics, bounded jammer
+budgets, EW temporal history, shared command delivery and bounded formation
+roles. E5 registers `air_ew_hybrid_v1/v2` in canonical `ACTION_MODES`, preserving
+the old registry order and action prefix. Config/CLI, single/cooperative training
+factories, native resource/jammer state and standard Box-action PPO updates pass
+the focused admission gate. The specialized 12D hybrid policy still rejects
+14/16D EW spaces. See the [action contract](../standards/pilot_action_contract.md).
+
+The dated probes below retain their original acceptance scope; their older
+statements that canonical admission or temporal EW history is absent are
+superseded by this update. E6 named effect/resource/terminal acceptance and stack
+review are pending, so `entry_surface_incomplete` and the capability label remain
+unchanged. No calibrated platform effect or learned-policy success is claimed.
+
 ## 2026-10-06 implementation scope
 
 PRs #99-#101 merged the data-driven burn-through, pod main-beam geometry,

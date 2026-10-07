@@ -1,6 +1,6 @@
 # Air EW Completion
 
-Status: `2026-10-07` active; E1-E4 local mechanism gates pass. PRs #103-#107 have green normal checks; reviews are pending, and #104's CUDA toolchain job timed out during provisioning. E4-B is PR #108 with checks/review pending.
+Status: `2026-10-07` active; E1-E5 local mechanism gates pass. PRs #103-#107 have green normal checks; reviews are pending, and #104's CUDA toolchain job timed out during provisioning. E4-B is PR #108 with checks/review pending. E5 awaits publication; E6 is queued.
 
 Document kind: plan
 Lifecycle: active
@@ -39,7 +39,8 @@ named-scenario playability and platform calibration.
 | EW temporal history/policy | E3 local pass | `test_air_ew_temporal.py`, `TemporalTransformerExtractor` | opt-in EW history, valid-frame mask, reset/replay and policy checkpoint roundtrip |
 | Shared command delivery | E4-A local pass | common scripted link and Joint compatibility/lifecycle tests | transport capability only; no Air role or native EW effect |
 | Formation EW roles | E4-B local pass | `test_air_ew_formation.py`, cooperative environment | bounded self-protection permission; explicit communication inputs |
-| Admission/terminal | queued | task cluster file | no promotion of Air capability or canonical modes |
+| Canonical EW action admission | E5 local pass | `test_air_ew_admission.py`, action contract | explicit 14/16D Box transports; specialized 12D hybrid distribution remains separate |
+| Named terminal acceptance | queued | task cluster file | no Air capability promotion |
 
 ## Scope
 
@@ -58,7 +59,7 @@ separate authored evidence and are not implied by this engineering model.
 | E3 | EW temporal history | E1/E2 verified | opt-in history state, reset/replay, compatible policy extraction | local pass; PR #106 checks pass, review pending |
 | E4-A | Shared command delivery | E3 verified | seeded delay/loss, TTL, receipts, node availability, Joint compatibility | local pass; PR #107 checks pass, review pending |
 | E4-B | Cooperative Air EW | E4-A available | formation role orders, loss/expiry, reassignment and per-slot/resource isolation | local pass; PR #108 checks/review pending |
-| E5 | Canonical action admission | E3/E4 verified | explicit compatible mode registration and observation/action acceptance | queued |
+| E5 | Canonical action admission | E3/E4 verified | explicit compatible mode registration and observation/action acceptance | local pass; publication/review pending |
 | E6 | Named terminal gate | E1-E5 verified | seed matrix, terminal reasons, objectives, effect/resource receipts, replay and residual verdict | queued |
 
 ## Task Clusters
@@ -262,6 +263,20 @@ budget stop/cooldown/recovery, instrument and state roundtrips, signed DRFM, and
 the legacy jamming regressions. The PR stack still needs remote check closure and
 review before merge.
 
+### E5 admission receipt
+
+`air_ew_hybrid_v1` (14D) and `air_ew_hybrid_v2` (16D) are appended to the
+canonical registry. CLI/config, execution/cooperative training factories,
+native countermeasure/jammer readback, optional EW state and standard PPO
+updates pass. Unsupported v3 config and the specialized 12D hybrid consumer are
+rejected; existing registry order, action prefix and default observation layout
+are preserved. See the [action contract](../../../standards/pilot_action_contract.md).
+
+The focused config/admission/EW-surface/bootstrap selection passed 61 tests and
+2 subtests on the E5 branch using the E1-E4 native build. E5 changes only Python
+admission/tests and documentation; no native mechanism or policy distribution
+is changed. Learned-policy quality and named EW terminal acceptance remain open.
+
 ## Residuals And Next Steps
 
 - External/support-jammer composition is not implemented by this E2 slice and
@@ -280,7 +295,7 @@ review before merge.
   aircraft-loss inference and external/support jamming remain separate work.
 - The three reproduced old cooperative failures need a scoped follow-up before
   claiming that the full cooperative suite or broader C2 surface is closed.
-- E5 owns canonical action-mode admission; E6 owns named terminal acceptance.
+- E5 locally passes canonical action-mode admission; E6 owns named terminal acceptance.
 - Historical sensor reflection included an absent `enforce_radar_horizon`
   member. E1 removes it, verifies current reflection, and normalizes the exact
   legacy inline/mounted sensor shape before strict import. Ambiguous mixed

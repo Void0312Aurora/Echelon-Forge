@@ -1,7 +1,8 @@
 """Opt-in RL observation projection for the versioned Air EW state.
 
 Pins the bounded slice that exposes the opt-in ``ew_state`` observation
-component while leaving canonical env-config action admission unchanged:
+component; canonical env-config admission is separately pinned by
+``test_air_ew_admission.py``:
 
 * a world-batch env built with ``air_ew_hybrid_v2`` steps and its native
   PilotAction carries the countermeasure/jammer tail (read back from the
