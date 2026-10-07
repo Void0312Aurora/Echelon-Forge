@@ -48,9 +48,10 @@ RESPONSE_DOCTRINES = ("observe_only", "countermeasure_ready", "chaff_only", "fla
 PLAYABLE_BOUNDARY = (
     "bounded_multi_aircraft_terminal_ew_surrogate: two scripted Blue aircraft "
     "close a native shared terminal objective while their EW tails are accepted "
-    "by the native dispenser and jammer owners. Chaff and flare only consume "
-    "inventory, jammer burn-through is an uncalibrated proxy, DRFM false tracks "
-    "are not modeled, and the generic Aircraft targets are surrogates; this is "
+    "by the native dispenser and jammer owners. This fixture measures chaff/flare "
+    "inventory changes and jammer transmission, without proving seeker seduction "
+    "or calibrated suppression. Independent DRFM ghost tracks remain open, "
+    "and the generic Aircraft targets are surrogates; this is "
     "not a playable EW claim."
 )
 
@@ -275,6 +276,7 @@ def run_demo(
                 "native_state_sample_last_step": int(
                     steps_run - 1 if any(terminated) or any(truncated) else steps_run
                 ),
+                "native_countermeasure_state": "instrument_state_projection",
                 "playable_boundary": PLAYABLE_BOUNDARY,
                 "last_infos": last_infos,
             }
