@@ -1,5 +1,4 @@
 #include "simulation_kernel_weapon_release_service.h"
-#include "simulation_kernel.h"
 #include "simulation_kernel_missile_tuning.h"
 
 #include "core/interfaces/engagement_event_recorder.h"
@@ -479,11 +478,11 @@ bool missile_launch_envelope_allows(const MissileTuning &tuning, const Detection
 } // namespace
 
 SimulationKernelWeaponReleaseService::SimulationKernelWeaponReleaseService(
-    SimulationKernel &kernel, flecs::world &ecs, IUnitFactory &unit_factory,
-    MissileTuning &missile_tuning, std::mt19937 &rng, IEngagementLaunchRecorder &launch_recorder,
+    flecs::world &ecs, IUnitFactory &unit_factory, MissileTuning &missile_tuning,
+    SimulationKernelRngStream &rng, IEngagementLaunchRecorder &launch_recorder,
     IEngagementEventRecorder &damage_recorder, IWeaponReleaseDamageBridge &damage_bridge)
-    : ecs_(ecs), kernel_(kernel), unit_factory_(unit_factory), missile_tuning_(missile_tuning),
-      rng_(rng), launch_recorder_(launch_recorder), damage_recorder_(damage_recorder),
+    : ecs_(ecs), unit_factory_(unit_factory), missile_tuning_(missile_tuning), rng_(rng),
+      launch_recorder_(launch_recorder), damage_recorder_(damage_recorder),
       damage_bridge_(damage_bridge) {}
 
 std::optional<SimulationKernelWeaponReleaseService::ResolvedMissileLaunchDefinition>
@@ -845,13 +844,12 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
 
     // Site 2 (missile release): keeps its two mt19937 draws, in the same order, passed as
     // `words` alongside the entropy word they always mixed in, so the mt19937 stream position
-    // is unchanged (Decision 3).
-    kernel_.record_rng_draws_for_state_transfer(2);
-    const uint64_t missile_release_rng_word1 = static_cast<uint64_t>(rng_());
-    const uint64_t missile_release_rng_word2 = static_cast<uint64_t>(rng_());
-    const uint64_t missile_seed = stochastic_draw::draw_seed(
-        ecs_, stochastic_draw::DrawSite::missile_release, current_time,
-        {attacker, missile_release_target}, {missile_release_rng_word1, missile_release_rng_word2});
+    // is unchanged (Decision 3). The stream counts both words for state transfer itself.
+    const auto missile_release_rng_words = rng_.draw_words<2>();
+    const uint64_t missile_seed =
+        stochastic_draw::draw_seed(ecs_, stochastic_draw::DrawSite::missile_release, current_time,
+                                   {attacker, missile_release_target},
+                                   {missile_release_rng_words[0], missile_release_rng_words[1]});
 
     const Mass mass = make_missile_mass_state(missile_total_mass_kg, propellant_mass_kg);
     const MassProperties mass_properties = make_missile_mass_properties(mass, reference_area_m2);
