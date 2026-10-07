@@ -53,7 +53,7 @@ separate authored evidence and are not implied by this engineering model.
 | --- | --- | --- | --- | --- |
 | E1 | RF/ESM contract and observation | merged jamming baseline | native negative cases, content validation, Python projection, state roundtrip | PR stack open |
 | E2 | Jammer resources and effectiveness | E1 verified | bounded band/effect decision, cooldown/duty resource state and signed DRFM behavior with negative cases | PR #105 checks pass; review pending |
-| E3 | EW temporal history | E1/E2 verified | opt-in history state, reset/replay, compatible policy extraction | local pass; PR pending |
+| E3 | EW temporal history | E1/E2 verified | opt-in history state, reset/replay, compatible policy extraction | local pass; PR #106 checks/review pending |
 | E4 | Cooperative EW | E2/E3 verified | loss/latency, stale intent expiry, reassignment and role/resource isolation | queued |
 | E5 | Canonical action admission | E3/E4 verified | explicit compatible mode registration and observation/action acceptance | queued |
 | E6 | Named terminal gate | E1-E5 verified | seed matrix, terminal reasons, objectives, effect/resource receipts, replay and residual verdict | queued |
@@ -199,7 +199,7 @@ review before merge.
 - Frequency overlap and burn-through remain engineering proxies, not calibrated
   J/S or platform performance. Independent DRFM ghost-track lifecycle remains
   out of scope.
-- E3 is based on E2 PR #105; its PR publication, remote CI and review are pending.
+- E3 is PR #106 based on PR #105; remote CI and review are pending.
 - E3 keeps canonical action modes unchanged; model quality and learned-policy
   success still require their own evaluation evidence.
 - E4 owns formation and command delivery acceptance; existing 2v2 terminal

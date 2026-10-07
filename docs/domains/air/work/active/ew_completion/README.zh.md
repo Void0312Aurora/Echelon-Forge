@@ -33,7 +33,7 @@ Inputs:
 
 ## Phase Plan
 
-E1 RF/ESM → E2 干扰与资源 → E3 时序 → E4 协同 → E5 动作准入 → E6 终局验收。E3 当前为本地通过、PR 待检。
+E1 RF/ESM → E2 干扰与资源 → E3 时序 → E4 协同 → E5 动作准入 → E6 终局验收。E3 的 PR #106 当前等待远端检查和审阅。
 
 ## Task Clusters
 

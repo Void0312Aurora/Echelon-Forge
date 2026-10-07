@@ -8,7 +8,8 @@ Last verified: 2026-10-07
 
 Status: `2026-10-07` E1/E2 local gates passed; finite execution plan for
 [Air EW Completion](README.md). PR #103-#105 normal checks pass; their reviews
-remain open, and #104's CUDA toolchain setup timed out. E3 local gates pass; publication is pending.
+remain open, and #104's CUDA toolchain setup timed out. E3 local gates pass;
+PR #106 is open with remote checks and review pending.
 
 ## Boundary Decision
 
@@ -28,7 +29,7 @@ The exact model and reasoning controls are not exposed by this execution packet.
 | E1-A | main thread | high shared contract / n/a / n/a | Complete optional RF groups, ESM configuration, transactional loader, schema and state reflection. | `src/components/systems/{sensor,ew,rf_signal}.h`, content loader, reflection/state adapters, database templates, native/content tests, this package and Air indexes | platform RF calibration; active sensing behavior | malformed/missing/nonpositive fields denied; defaults stable; current/legacy state tests | independently compiled contract PR and focused gates pass | first; serial | 1 + 2 repair | active |
 | E1-B | main thread | high shared sensing / n/a / n/a | Apply ESM threshold/band/beam gates, age/confirmation, passive DTO and optional Python projection. | default sensor model, ESM reset, observation API/DTO/bindings, Python Air adapter, native/facade tests, this package | canonical action or RL admission; emitter range/position solution | sensitivity boundary, weak/out-of-band, legacy/strict, multi-mount, same-time dedup, weaker refresh, expiry/reset, classification masks | compiled stack head and EW/Python regressions pass | after E1-A; serial | 1 + 2 repair | active |
 | E2 | main thread | high EW mechanism / n/a / n/a | Define bounded jammer band/effect/resource behavior and signed DRFM. | EW components, content/schema/reflection, action/sensing systems, observations and focused tests | calibrated J/S; independent ghost tracks without a separate lifecycle contract | inactive/off-band/off-beam/burn-through negatives, budget depletion/recovery, DRFM sign and source identity | authored defaults and effect/resource receipts agree with mechanism tests | after E1; serial | 1 + 2 repair | local-pass / PR #105 checks pass, review pending |
-| E3 | main thread | high policy integration / n/a / n/a | Integrate opt-in EW history and maintained temporal policy extraction. | Python Air observation/history, policy extractors, reset/replay and compatibility tests | world-truth inference; training-success claim | absent-key compatibility, first-frame masks, reset, same-seed replay, built-policy consumption | real supported policy path consumes declared history | after E1/E2; serial | 1 + 2 repair | local-pass / publication pending |
+| E3 | main thread | high policy integration / n/a / n/a | Integrate opt-in EW history and maintained temporal policy extraction. | Python Air observation/history, policy extractors, reset/replay and compatibility tests | world-truth inference; training-success claim | absent-key compatibility, first-frame masks, reset, same-seed replay, built-policy consumption | real supported policy path consumes declared history | after E1/E2; serial | 1 + 2 repair | local-pass / PR #106 CI and review pending |
 | E4 | main thread | high cooperative command / n/a / n/a | Integrate formation EW roles with command loss/latency. | Air command/tasking/formation adapters, maintained transport, cooperative fixtures and tests | bypass of command transport; broader fleet doctrine | delayed/dropped/expired intents, leader loss/reassignment, per-slot isolation, replay | supported formation path preserves roles/resources under failure cases | after E2/E3; serial | 1 + 2 repair | planned |
 | E5 | main thread | high public admission / n/a / n/a | Admit a versioned EW action mode through the supported environment. | action-mode registry, environment/config/space mappings, action/native state tests and standards | shifting existing indices; unsupported consumer promotion | factory/space/action/native-state roundtrip; old modes stable; unsupported config rejection | maintained consumer and compatibility gates pass | after E3/E4; serial | 1 + 2 repair | planned |
 | E6 | main thread | high terminal acceptance / n/a / n/a | Publish named EW scenario acceptance and residual verdict. | named scenario/contracts, evaluation/replay receipts, capability roster, Air docs | unmeasured playability or learned-policy claim | success/failure/timeout, fixed seeds, measured effects/resources, roster and replay | named acceptance passes with explicit residual owners | after E1-E5; serial final | 1 + 2 repair | planned |
@@ -105,11 +106,11 @@ package README and were reproduced on this branch.
 
 ## Residual Map
 
-Immediate: complete review for PRs #103-#105 and close PR #104's CUDA toolchain
-setup check, which timed out before source compilation.
+Immediate: validate PR #106 and complete review for PRs #103-#105; close
+PR #104's CUDA toolchain setup check, which timed out before source compilation.
 
-Follow-on: publish and validate the E3 PR, then implement E4 cooperative command,
-E5 canonical admission, and E6 named terminal acceptance in order.
+Follow-on: implement E4 cooperative command, E5 canonical admission, and E6
+named terminal acceptance in order.
 
 Deferred: real-platform RF calibration, emitter libraries, antenna sidelobes,
 pulse processing, calibrated J/S and independent ghost-track lifecycle.
