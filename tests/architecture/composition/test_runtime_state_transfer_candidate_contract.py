@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import ast
+import hashlib
+import re
 from pathlib import Path
 
 
@@ -22,6 +24,12 @@ KERNEL_ADAPTER_HEADER = (
 KERNEL_ADAPTER_SOURCE = KERNEL_ADAPTER_HEADER.with_suffix(".cpp")
 KERNEL_ADAPTER_TEST = (
     REPO_ROOT / "src" / "tests" / "test_simulation_kernel_state_owner_adapters.cpp"
+)
+COMPONENT_REFLECTION = REPO_ROOT / "src/core/engine/state_transfer_component_reflection.cpp"
+ECS_MIGRATION_FUNCTIONS = (
+    "decode_missile",
+    "normalize_legacy_sensor_reflection",
+    "normalize_legacy_ecs_sensors",
 )
 CMAKE = REPO_ROOT / "CMakeLists.txt"
 MIRROR = REPO_ROOT / "tests" / "runtime" / "shadow_runtime_episode_mirror.py"
@@ -53,6 +61,21 @@ def _enum_members(header: str, enum_name: str) -> tuple[str, ...]:
         for line in body.splitlines()
         if line.strip() and not line.lstrip().startswith("//")
     )
+
+
+def _cpp_function_source(source: str, name: str) -> str:
+    signature = re.search(rf"\bbool\s+{re.escape(name)}\s*\(", source)
+    assert signature is not None, f"missing ECS migration implementation: {name}"
+    opening = source.index("{", signature.end())
+    depth = 0
+    for index in range(opening, len(source)):
+        if source[index] == "{":
+            depth += 1
+        elif source[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return " ".join(source[signature.start():index + 1].split())
+    raise AssertionError(f"unterminated ECS migration implementation: {name}")
 
 
 def test_p4b_census_is_exactly_the_frozen_twelve_category_contract() -> None:
@@ -239,6 +262,43 @@ def test_p4b_simulation_kernel_adapter_is_dark_complete_and_strict() -> None:
     assert "CHECK_FALSE" in adapter_test
     assert "ef_runtime_state_owner_adapters_candidate" in cmake
     assert "install(TARGETS ef_runtime_state_owner_adapters_candidate" not in cmake
+
+
+def test_ecs_migration_digest_tracks_every_previous_generation_decoder() -> None:
+    adapter_source = KERNEL_ADAPTER_SOURCE.read_text(encoding="utf-8")
+    transfer_source = SOURCE.read_text(encoding="utf-8")
+    implementation_names = tuple(re.findall(
+        r"// ECS truth migration implementation: (\w+)", adapter_source
+    ))
+    assert implementation_names == ECS_MIGRATION_FUNCTIONS
+    normalizers = set(re.findall(r"\bbool\s+(normalize_legacy_\w+)\s*\(", adapter_source))
+    assert normalizers == set(ECS_MIGRATION_FUNCTIONS[1:])
+    decoders = re.findall(r"\bbool\s+(decode_\w+)\s*\(", adapter_source)
+    previous_generation_decoders = {
+        name for name in decoders
+        if re.search(r"\blegacy_\w+|\bprevious_\w+", _cpp_function_source(adapter_source, name))
+        or len(set(re.findall(
+            r'schema == "([^"]+)"', _cpp_function_source(adapter_source, name)
+        ))) > 1
+    }
+    assert previous_generation_decoders == {"decode_missile"}
+    # Include the field tables used by the custom Missile codec and reflected
+    # serialized truth. Later stack layers extending ECS fields must repin.
+    missile_field_tables = adapter_source.split("// clang-format off", 1)[1].split(
+        "// clang-format on", 1
+    )[0]
+    canonical = "\n".join([
+        *(_cpp_function_source(adapter_source, name) for name in ECS_MIGRATION_FUNCTIONS),
+        " ".join(missile_field_tables.split()),
+        " ".join(COMPONENT_REFLECTION.read_text(encoding="utf-8").split()),
+    ])
+    implementation_digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    ecs_rule = transfer_source.split(
+        ".category = RuntimeStateCategory::EcsComponentTruth,", 1
+    )[1].split(".category =", 1)[0]
+    declaration = re.search(r'"([0-9a-f]{64})"', ecs_rule)
+    assert declaration is not None
+    assert declaration.group(1) == implementation_digest
 
 
 def test_p4b_python_is_a_strict_native_receipt_mirror_without_reset_authority() -> None:
