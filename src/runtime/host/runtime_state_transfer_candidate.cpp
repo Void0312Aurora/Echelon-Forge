@@ -2491,7 +2491,8 @@ runtime_state_decoder_replay_matrix() noexcept {
              .migration_sha256 =
                  // SHA-256 of normalized Missile/Sensor migration code,
                  // Missile field tables and serialized component reflection.
-                 // Pinned by test_runtime_state_transfer_candidate_contract.py.
+                 // Pinned by
+                 // test_runtime_state_transfer_candidate_contract.py.
              "32a9ec5ecd7b16128425611f89d6fd0a4276dcf8e40c48092bdd47f963e38cd0"},
             {.category = RuntimeStateCategory::RngState,
              .disposition = RuntimeStateDisposition::Transfer,
