@@ -37,7 +37,8 @@ named-scenario playability and platform calibration.
 | ESM observations | E1 local pass | `test_air_ew_esm.cpp`, Python Air adapter | no range/position solution, no canonical RL shape change |
 | Jammer resources/effect | E2 local pass | `test_air_ew_jamming.cpp`, jammer schema and state-owner suite | RF overlap gating, burst/cooldown receipts, signed same-target DRFM range offset |
 | EW temporal history/policy | E3 local pass | `test_air_ew_temporal.py`, `TemporalTransformerExtractor` | opt-in EW history, valid-frame mask, reset/replay and policy checkpoint roundtrip |
-| Cooperative/admission/terminal | queued | task cluster file | no promotion of Air capability or canonical modes |
+| Shared command delivery | E4-A local pass | common scripted link and Joint compatibility/lifecycle tests | transport capability only; no Air role or native EW effect |
+| Formation EW/admission/terminal | queued | task cluster file | no promotion of Air capability or canonical modes |
 
 ## Scope
 
@@ -53,8 +54,9 @@ separate authored evidence and are not implied by this engineering model.
 | --- | --- | --- | --- | --- |
 | E1 | RF/ESM contract and observation | merged jamming baseline | native negative cases, content validation, Python projection, state roundtrip | PR stack open |
 | E2 | Jammer resources and effectiveness | E1 verified | bounded band/effect decision, cooldown/duty resource state and signed DRFM behavior with negative cases | PR #105 checks pass; review pending |
-| E3 | EW temporal history | E1/E2 verified | opt-in history state, reset/replay, compatible policy extraction | local pass; PR #106 checks/review pending |
-| E4 | Cooperative EW | E2/E3 verified | loss/latency, stale intent expiry, reassignment and role/resource isolation | queued |
+| E3 | EW temporal history | E1/E2 verified | opt-in history state, reset/replay, compatible policy extraction | local pass; PR #106 checks pass, review pending |
+| E4-A | Shared command delivery | E3 verified | seeded delay/loss, TTL, receipts, node availability, Joint compatibility | local pass; PR pending |
+| E4-B | Cooperative Air EW | E4-A available | formation role orders, loss/expiry, reassignment and per-slot/resource isolation | queued |
 | E5 | Canonical action admission | E3/E4 verified | explicit compatible mode registration and observation/action acceptance | queued |
 | E6 | Named terminal gate | E1-E5 verified | seed matrix, terminal reasons, objectives, effect/resource receipts, replay and residual verdict | queued |
 
@@ -131,6 +133,21 @@ passes; additional scope requires a named follow-on cluster, not silent widening
   gradients. This demonstrates supported policy consumption, not training
   success or improved combat performance.
 
+### E4-A shared delivery semantics
+
+- `ScriptedCommandLink` carries opaque caller-owned immutable payloads over
+  declared command edges. Defaults preserve lossless delayed delivery; optional
+  loss is seeded, and expiry is measured from issue time with an exclusive end.
+- Expiration wins at the exact delivery boundary. Unavailable sources/targets
+  cancel their pending commands; restoration does not revive cancelled items.
+  Air consumers remain responsible for clearing already accepted role leases.
+- Receipts retain the latest 256 transport events; totals survive until reset.
+  A delivery receipt does not mean that a domain model accepted the payload.
+- The existing Joint graph adapter preserves command-edge authorization. Its
+  durable inbox checks TTL again at the slower domain decision, so a previously
+  delivered command can expire before consumption. This drop is a consumer
+  filter, not a new transport receipt.
+
 ### Validation
 
 Local E1 stack implementation validation, MSVC Release / Python 3.12:
@@ -178,6 +195,18 @@ Local E3 temporal-policy validation, using the unchanged E2 native build:
 - `ruff check` and `git diff --check` passed for the E3 changes. Local execution
   used CPU Torch; CUDA device-bridge execution remains unverified locally.
 
+Local E4-A delivery validation, using the unchanged E2 native build:
+
+- Shared lifecycle, Joint coordination/consumer, native CommandLink QoS and
+  tasking-contract architecture suites passed 87 tests. They cover delayed
+  ordering, seeded loss/reset replay, expiry boundaries, unavailable-node
+  cancellation, unrelated successor delivery, and TTL at domain consumption.
+- No native source changed. This verifies shared transport and Joint regression;
+  Air formation roles and native role/resource acceptance remain E4-B work.
+- `ruff check` and `git diff --check` passed for the delivery changes.
+- Document-link audit: 12 passed; the existing duplicate bilingual registry
+  entry still fails (75 rows, 74 unique pair IDs), as recorded for E1.
+
 ## Acceptance Gate
 
 E1 can be mergeable only after RF sensitivity/band/legacy/malformed negatives,
@@ -199,11 +228,15 @@ review before merge.
 - Frequency overlap and burn-through remain engineering proxies, not calibrated
   J/S or platform performance. Independent DRFM ghost-track lifecycle remains
   out of scope.
-- E3 is PR #106 based on PR #105; remote CI and review are pending.
+- E3 is PR #106 based on PR #105; remote CI passes and review is pending.
 - E3 keeps canonical action modes unchanged; model quality and learned-policy
   success still require their own evaluation evidence.
-- E4 owns formation and command delivery acceptance; existing 2v2 terminal
-  surrogates do not establish these gates.
+- E4-A adds shared opaque delivery with deterministic delay/loss, expiry,
+  bounded receipts and node availability. Its Joint adapter regression passes;
+  it does not assign Air EW roles or change native EW actions.
+- E4-B still owns formation role delivery, leader reassignment, slot/resource
+  isolation and replay in a maintained Air cooperative path. Existing 2v2
+  terminal surrogates do not establish these gates.
 - E5 owns canonical action-mode admission; E6 owns named terminal acceptance.
 - Historical sensor reflection included an absent `enforce_radar_horizon`
   member. E1 removes it, verifies current reflection, and normalizes the exact

@@ -106,7 +106,7 @@ class ScriptedJointRuntimeConsumer:
             if node_id == self._joint_director_id:
                 context.setdefault("task_graph", self.graph)
             contexts[node_id] = context
-        self.command_link.reset()
+        self.command_link.reset(seed=episode_seed)
         self.last_delivered_commands = ()
         for inbox in self._pending_command_inboxes.values():
             inbox.clear()
@@ -128,6 +128,8 @@ class ScriptedJointRuntimeConsumer:
         *,
         clock_s: float,
         delay_s: float = 0.0,
+        ttl_s: float | None = None,
+        drop_prob: float = 0.0,
     ) -> tuple[JointCommandLinkEnvelope, ...]:
         """Route one Joint intent to its declared active graph targets."""
 
@@ -150,6 +152,8 @@ class ScriptedJointRuntimeConsumer:
                     payload=intent,
                     clock_s=clock_s,
                     delay_s=delay_s,
+                    ttl_s=ttl_s,
+                    drop_prob=drop_prob,
                 )
             )
         return tuple(envelopes)
@@ -169,6 +173,13 @@ class ScriptedJointRuntimeConsumer:
         self.last_delivered_commands = delivered
         for envelope in delivered:
             self._pending_command_inboxes.setdefault(envelope.target_node_id, []).append(envelope)
+        # TTL also applies when a slower domain decision consumes its inbox.
+        for node_id, pending in self._pending_command_inboxes.items():
+            self._pending_command_inboxes[node_id] = [
+                envelope
+                for envelope in pending
+                if envelope.expires_at_s is None or float(clock_s) < envelope.expires_at_s
+            ]
         supplied = context_by_node or {}
         routed_contexts: dict[str, Any] = {
             node_id: (dict(value) if isinstance(value, Mapping) else {})

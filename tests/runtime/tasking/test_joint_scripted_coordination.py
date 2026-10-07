@@ -105,10 +105,10 @@ def test_joint_coordination_producer_runs_through_neutral_runtime() -> None:
         DecisionRuntimeAgentSpec(
             agent_id="joint:director",
             model_id=JOINT_SCRIPTED_COORDINATION_MODEL_ID,
-              domain="joint",
-              role_id="joint_coordination_director",
-              decision_period_s=1.0,
-              communication_state="available",
+            domain="joint",
+            role_id="joint_coordination_director",
+            decision_period_s=1.0,
+            communication_state="available",
             authority_scope="task_graph_coordination",
         ),
         model,
@@ -342,6 +342,59 @@ def test_joint_command_link_rejects_unknown_nodes_and_clock_reversal() -> None:
         assert link.deliver(clock_s=2.0)[0].payload == {"command": "hold"}
     finally:
         link.close()
+
+
+@pytest.mark.parametrize("ttl_s,drop_prob,expected", [(0.5, 0.0, 0), (2.0, 0.0, 1), (2.0, 1.0, 0)])
+def test_joint_inbox_checks_lifetime_at_domain_decision(
+    monkeypatch, ttl_s, drop_prob, expected
+) -> None:
+    consumer = ScriptedJointRuntimeConsumer(
+        ScriptedJointTaskGraph.from_mapping(_graph()),
+        registries={
+            "air": AIR_SCRIPTED_MODEL_REGISTRY,
+            "naval": NAVAL_SCRIPTED_MODEL_REGISTRY,
+            "joint": JOINT_SCRIPTED_MODEL_REGISTRY,
+        },
+        factory_kwargs_by_node={
+            "air:lead": {"action_dim": 17, "dt": 0.05},
+            "naval:screen": {"action_dim": 3},
+        },
+    )
+    observation = {
+        "instruments": np.zeros(31, dtype=np.float32),
+        "mission": np.asarray([1, 90, 1000, 120], dtype=np.float32),
+    }
+    observations = {"air:lead": observation, "naval:screen": None, "joint:director": {}}
+    received = []
+    model = consumer.roster.agent("air:lead").model
+    original_decide = model.decide
+
+    def capture(*, observation, context=None, dt=0.0):
+        received.append(tuple(context.get("joint_command_inbox", ())))
+        return original_decide(observation=observation, context=context, dt=dt)
+
+    monkeypatch.setattr(model, "decide", capture)
+    try:
+        consumer.reset(
+            context_by_node={"air:lead": {"observation": observation, "phase_name": "scramble"}},
+            episode_seed=19,
+        )
+        first = consumer.step(observations=observations, clock_s=0.0)
+        consumer.route_intent(
+            first["joint:director"].action,
+            clock_s=0.1,
+            delay_s=0.2,
+            ttl_s=ttl_s,
+            drop_prob=drop_prob,
+        )
+        consumer.step(observations=observations, clock_s=0.3)
+        assert len(received) == 1
+        assert bool(consumer.pending_command_inboxes) == (drop_prob == 0.0)
+        consumer.step(observations=observations, clock_s=1.0)
+        assert len(received[-1]) == expected
+        assert consumer.pending_command_inboxes == {}
+    finally:
+        consumer.close()
 
 
 def test_joint_command_link_rejects_support_only_edges() -> None:
