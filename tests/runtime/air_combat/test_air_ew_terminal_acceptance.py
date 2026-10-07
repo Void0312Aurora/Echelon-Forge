@@ -249,3 +249,28 @@ def test_source_change_during_execution_is_rejected(
 
     with pytest.raises(ValueError, match="source changed during execution"):
         run_terminal_acceptance(single_runner=runner, cooperative_runner=runner)
+
+
+def test_frozen_receipt_source_revision_is_an_ancestor_of_current_head() -> None:
+    receipt_path = (
+        acceptance.REPO_ROOT
+        / "docs/domains/air/work/active/ew_completion/artifacts/"
+        "ew_named_terminal_acceptance_20261007.json"
+    )
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    source_revision = receipt.get("source_revision")
+
+    assert receipt.get("accepted") is True
+    assert receipt.get("source_dirty") is False
+    assert receipt.get("receipt_reproducible") is True
+    assert isinstance(source_revision, str) and len(source_revision) == 40
+    ancestor = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", source_revision, "HEAD"],
+        cwd=acceptance.REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert ancestor.returncode == 0, (
+        f"frozen receipt source {source_revision} must be an ancestor of current HEAD"
+    )
