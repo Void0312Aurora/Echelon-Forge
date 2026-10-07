@@ -1,6 +1,6 @@
 # Air EW Completion
 
-Status: `2026-10-07` active; E1/E2 local gates and E3 temporal-policy gates pass. PRs #103-#105 have green normal checks; reviews are pending, and #104's CUDA toolchain job timed out during provisioning.
+Status: `2026-10-07` active; E1-E4 local mechanism gates pass. PRs #103-#107 have green normal checks; reviews are pending, and #104's CUDA toolchain job timed out during provisioning. E4-B awaits publication.
 
 Document kind: plan
 Lifecycle: active
@@ -38,7 +38,8 @@ named-scenario playability and platform calibration.
 | Jammer resources/effect | E2 local pass | `test_air_ew_jamming.cpp`, jammer schema and state-owner suite | RF overlap gating, burst/cooldown receipts, signed same-target DRFM range offset |
 | EW temporal history/policy | E3 local pass | `test_air_ew_temporal.py`, `TemporalTransformerExtractor` | opt-in EW history, valid-frame mask, reset/replay and policy checkpoint roundtrip |
 | Shared command delivery | E4-A local pass | common scripted link and Joint compatibility/lifecycle tests | transport capability only; no Air role or native EW effect |
-| Formation EW/admission/terminal | queued | task cluster file | no promotion of Air capability or canonical modes |
+| Formation EW roles | E4-B local pass | `test_air_ew_formation.py`, cooperative environment | bounded self-protection permission; explicit communication inputs |
+| Admission/terminal | queued | task cluster file | no promotion of Air capability or canonical modes |
 
 ## Scope
 
@@ -55,8 +56,8 @@ separate authored evidence and are not implied by this engineering model.
 | E1 | RF/ESM contract and observation | merged jamming baseline | native negative cases, content validation, Python projection, state roundtrip | PR stack open |
 | E2 | Jammer resources and effectiveness | E1 verified | bounded band/effect decision, cooldown/duty resource state and signed DRFM behavior with negative cases | PR #105 checks pass; review pending |
 | E3 | EW temporal history | E1/E2 verified | opt-in history state, reset/replay, compatible policy extraction | local pass; PR #106 checks pass, review pending |
-| E4-A | Shared command delivery | E3 verified | seeded delay/loss, TTL, receipts, node availability, Joint compatibility | local pass; PR pending |
-| E4-B | Cooperative Air EW | E4-A available | formation role orders, loss/expiry, reassignment and per-slot/resource isolation | queued |
+| E4-A | Shared command delivery | E3 verified | seeded delay/loss, TTL, receipts, node availability, Joint compatibility | local pass; PR #107 checks pass, review pending |
+| E4-B | Cooperative Air EW | E4-A available | formation role orders, loss/expiry, reassignment and per-slot/resource isolation | local pass; PR pending |
 | E5 | Canonical action admission | E3/E4 verified | explicit compatible mode registration and observation/action acceptance | queued |
 | E6 | Named terminal gate | E1-E5 verified | seed matrix, terminal reasons, objectives, effect/resource receipts, replay and residual verdict | queued |
 
@@ -148,6 +149,29 @@ passes; additional scope requires a named follow-on cluster, not silent widening
   delivered command can expire before consumption. This drop is a consumer
   filter, not a new transport receipt.
 
+### E4-B formation role semantics
+
+- `ew_formation_commanders` explicitly enables a same-team roster in the
+  maintained cooperative environment with `air_ew_hybrid_v2`. Member names are
+  scoped to each world; no role is implicitly assigned at reset.
+- Only the first available declared commander can issue `emission_hold` or
+  `self_protect` leases. Each order traverses the shared link and needs a positive
+  finite TTL. A self-protection lease permits that aircraft's policy jammer
+  request; it does not create requests or provide escort/support jamming.
+- Expiry, declared member loss, or commander change removes accepted leases.
+  Restoration requires a new order. Authority epochs reject delayed commands
+  from an earlier command tenure; older delivery cannot overwrite a newer order.
+- Filtering only covers action indices 14-15. Combat and local chaff/flare
+  indices remain unchanged, and native systems retain resource/effect ownership.
+  The default unconfigured path keeps its previous action behavior.
+- Role receipts are bounded to 256 per world. Step info carries a per-member
+  summary and the latest receipt at the action decision clock, not a new policy
+  observation or a post-physics clock. Reset/auto-reset starts a fresh role/link
+  lifecycle, while terminal info retains the old episode's receipt.
+- Communication availability, delay and loss are explicit scripted-link inputs.
+  This slice does not automatically map native DataLink/CommandLink status or
+  infer aircraft destruction from hidden truth.
+
 ### Validation
 
 Local E1 stack implementation validation, MSVC Release / Python 3.12:
@@ -207,6 +231,23 @@ Local E4-A delivery validation, using the unchanged E2 native build:
 - Document-link audit: 12 passed; the existing duplicate bilingual registry
   entry still fails (75 rows, 74 unique pair IDs), as recorded for E1.
 
+Local E4-B formation validation, using the unchanged E2 native build:
+
+- Final selection passed 109 tests across formation EW, cooperative EW demos,
+  temporal state/policy, tasking architecture, WorldBatch adapter, shared/Joint
+  command lifecycle and native CommandLink QoS.
+- Tests observe delayed/lost/expired jammer permission in actual native state,
+  commander loss and successor orders, member/world and chaff/flare isolation,
+  exact seeded environment replay, reset, authority epochs, out-of-order
+  rejection, and the default path's unchanged jammer requests.
+- A broader run passed 95 tests and three subtests with three old cooperative
+  failures. All three reproduced with the original E4-A environment source at
+  `f931d84c1`: Python-only fire-authorization mutation, old warning step indices,
+  and `int(None)` for an absent target. They are recorded residuals, not E4
+  regressions or evidence of general cooperative suite closure.
+- Native sources are unchanged. Lint and whitespace checks pass. The named
+  terminal/capability verdict remains E6 work.
+
 ## Acceptance Gate
 
 E1 can be mergeable only after RF sensitivity/band/legacy/malformed negatives,
@@ -234,9 +275,11 @@ review before merge.
 - E4-A adds shared opaque delivery with deterministic delay/loss, expiry,
   bounded receipts and node availability. Its Joint adapter regression passes;
   it does not assign Air EW roles or change native EW actions.
-- E4-B still owns formation role delivery, leader reassignment, slot/resource
-  isolation and replay in a maintained Air cooperative path. Existing 2v2
-  terminal surrogates do not establish these gates.
+- E4-B locally verifies bounded role delivery, declared communication loss and
+  reassignment, slot/resource isolation and replay. Native link-state mapping,
+  aircraft-loss inference and external/support jamming remain separate work.
+- The three reproduced old cooperative failures need a scoped follow-up before
+  claiming that the full cooperative suite or broader C2 surface is closed.
 - E5 owns canonical action-mode admission; E6 owns named terminal acceptance.
 - Historical sensor reflection included an absent `enforce_radar_horizon`
   member. E1 removes it, verifies current reflection, and normalizes the exact

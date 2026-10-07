@@ -9,8 +9,8 @@ Last verified: 2026-10-07
 Status: `2026-10-07` E1/E2 local gates passed; finite execution plan for
 [Air EW Completion](README.md). PR #103-#105 normal checks pass; their reviews
 remain open, and #104's CUDA toolchain setup timed out. E3 local gates pass;
-PR #106 checks pass and review is pending. E4-A local command-delivery gates
-pass; E4-B Air formation integration remains queued.
+PRs #106/#107 checks pass and review is pending. E4-A/E4-B local delivery and
+formation gates pass; E4-B publication remains pending.
 
 ## Boundary Decision
 
@@ -31,8 +31,8 @@ The exact model and reasoning controls are not exposed by this execution packet.
 | E1-B | main thread | high shared sensing / n/a / n/a | Apply ESM threshold/band/beam gates, age/confirmation, passive DTO and optional Python projection. | default sensor model, ESM reset, observation API/DTO/bindings, Python Air adapter, native/facade tests, this package | canonical action or RL admission; emitter range/position solution | sensitivity boundary, weak/out-of-band, legacy/strict, multi-mount, same-time dedup, weaker refresh, expiry/reset, classification masks | compiled stack head and EW/Python regressions pass | after E1-A; serial | 1 + 2 repair | active |
 | E2 | main thread | high EW mechanism / n/a / n/a | Define bounded jammer band/effect/resource behavior and signed DRFM. | EW components, content/schema/reflection, action/sensing systems, observations and focused tests | calibrated J/S; independent ghost tracks without a separate lifecycle contract | inactive/off-band/off-beam/burn-through negatives, budget depletion/recovery, DRFM sign and source identity | authored defaults and effect/resource receipts agree with mechanism tests | after E1; serial | 1 + 2 repair | local-pass / PR #105 checks pass, review pending |
 | E3 | main thread | high policy integration / n/a / n/a | Integrate opt-in EW history and maintained temporal policy extraction. | Python Air observation/history, policy extractors, reset/replay and compatibility tests | world-truth inference; training-success claim | absent-key compatibility, first-frame masks, reset, same-seed replay, built-policy consumption | real supported policy path consumes declared history | after E1/E2; serial | 1 + 2 repair | local-pass / PR #106 CI and review pending |
-| E4-A | main thread | high shared delivery / n/a / n/a | Add seeded opaque command delivery with delay, loss, expiry, bounded receipts, and node availability; preserve the Joint adapter. | `python/tasking_contracts/common/command_link.py`, Joint adapter/consumer and focused tests | Air role interpretation or native effects | deterministic loss/replay, expiry boundary, unavailable-node cancellation, delayed ordering, Joint inbox TTL, native-link regression | shared transport and existing Joint consumer gates pass | after E3; serial | 1 + 2 repair | local-pass; PR pending |
-| E4-B | main thread | high cooperative Air / n/a / n/a | Integrate formation EW role orders over the shared transport. | Air command/tasking/formation adapters, maintained cooperative environment and fixtures | bypass of command transport; broader fleet doctrine | delayed/dropped/expired roles, leader loss/reassignment, per-slot isolation, replay and resource isolation | supported formation path preserves roles/resources under failure cases | after E4-A; serial | 1 + 2 repair | queued |
+| E4-A | main thread | high shared delivery / n/a / n/a | Add seeded opaque command delivery with delay, loss, expiry, bounded receipts, and node availability; preserve the Joint adapter. | `python/tasking_contracts/common/command_link.py`, Joint adapter/consumer and focused tests | Air role interpretation or native effects | deterministic loss/replay, expiry boundary, unavailable-node cancellation, delayed ordering, Joint inbox TTL, native-link regression | shared transport and existing Joint consumer gates pass | after E3; serial | 1 + 2 repair | local-pass / PR #107 checks pass, review pending |
+| E4-B | main thread | high cooperative Air / n/a / n/a | Integrate formation EW role orders over the shared transport. | Air command/tasking/formation adapters, maintained cooperative environment and fixtures | bypass of command transport; broader fleet doctrine; automatic native link/truth mapping | delayed/dropped/expired roles, declared leader loss/reassignment, per-slot isolation, replay and resource isolation | supported formation path preserves bounded self-protection roles/resources under failure cases | after E4-A; serial | 1 + 2 repair | local-pass; PR pending |
 | E5 | main thread | high public admission / n/a / n/a | Admit a versioned EW action mode through the supported environment. | action-mode registry, environment/config/space mappings, action/native state tests and standards | shifting existing indices; unsupported consumer promotion | factory/space/action/native-state roundtrip; old modes stable; unsupported config rejection | maintained consumer and compatibility gates pass | after E3/E4; serial | 1 + 2 repair | planned |
 | E6 | main thread | high terminal acceptance / n/a / n/a | Publish named EW scenario acceptance and residual verdict. | named scenario/contracts, evaluation/replay receipts, capability roster, Air docs | unmeasured playability or learned-policy claim | success/failure/timeout, fixed seeds, measured effects/resources, roster and replay | named acceptance passes with explicit residual owners | after E1-E5; serial final | 1 + 2 repair | planned |
 
@@ -108,12 +108,14 @@ package README and were reproduced on this branch.
 
 ## Residual Map
 
-Immediate: validate PR #106 and complete review for PRs #103-#105; close
+Immediate: publish E4-B and complete review for PRs #103-#107; close
 PR #104's CUDA toolchain setup check, which timed out before source compilation.
 
-Follow-on: implement E4-B Air formation roles, then E5 canonical admission and
-E6 named terminal acceptance in order. E4-A's PR is a transport dependency, not
-formation EW acceptance.
+Follow-on: implement E5 canonical admission and E6 named terminal acceptance in
+order. Resolve the three reproduced cooperative baseline test failures in a
+separate bounded C2/fixture follow-up before claiming general cooperative
+closure. Automatic native link/aircraft-loss mapping and support jamming are
+not part of E4-B's self-protection permission gate.
 
 Deferred: real-platform RF calibration, emitter libraries, antenna sidelobes,
 pulse processing, calibrated J/S and independent ghost-track lifecycle.
