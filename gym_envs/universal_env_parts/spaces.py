@@ -198,6 +198,19 @@ def make_observation_space(
             shape=(history_len, int(action_space.shape[0])),
             dtype=np.float32,
         )
+        if include_ew_state:
+            obs_spaces["ew_state_history"] = spaces.Box(
+                low=-np.inf,
+                high=np.inf,
+                shape=(history_len, EW_STATE_DIM),
+                dtype=np.float32,
+            )
+            obs_spaces["temporal_valid_mask"] = spaces.Box(
+                low=0.0,
+                high=1.0,
+                shape=(history_len,),
+                dtype=np.float32,
+            )
     if include_visual:
         obs_spaces["visual"] = spaces.Box(
             low=-np.inf,

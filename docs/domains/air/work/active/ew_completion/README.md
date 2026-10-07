@@ -1,6 +1,6 @@
 # Air EW Completion
 
-Status: `2026-10-07` active; E1 and bounded E2 local gates passed. E1 stack review and the cancelled #104 CUDA provisioning check remain open.
+Status: `2026-10-07` active; E1/E2 local gates and E3 temporal-policy gates pass. PRs #103-#105 have green normal checks; reviews are pending, and #104's CUDA toolchain job timed out during provisioning.
 
 Document kind: plan
 Lifecycle: active
@@ -36,7 +36,8 @@ named-scenario playability and platform calibration.
 | RF/ESM data | E1 local pass | `test_air_ew_rf_contract.cpp` | explicit emission groups, receiver band/sensitivity/memory/confirmation |
 | ESM observations | E1 local pass | `test_air_ew_esm.cpp`, Python Air adapter | no range/position solution, no canonical RL shape change |
 | Jammer resources/effect | E2 local pass | `test_air_ew_jamming.cpp`, jammer schema and state-owner suite | RF overlap gating, burst/cooldown receipts, signed same-target DRFM range offset |
-| Temporal/cooperative/admission/terminal | queued | task cluster file | no promotion of Air capability or canonical modes |
+| EW temporal history/policy | E3 local pass | `test_air_ew_temporal.py`, `TemporalTransformerExtractor` | opt-in EW history, valid-frame mask, reset/replay and policy checkpoint roundtrip |
+| Cooperative/admission/terminal | queued | task cluster file | no promotion of Air capability or canonical modes |
 
 ## Scope
 
@@ -51,8 +52,8 @@ separate authored evidence and are not implied by this engineering model.
 | Cluster | Goal | Entry | Exit | State |
 | --- | --- | --- | --- | --- |
 | E1 | RF/ESM contract and observation | merged jamming baseline | native negative cases, content validation, Python projection, state roundtrip | PR stack open |
-| E2 | Jammer resources and effectiveness | E1 verified | bounded band/effect decision, cooldown/duty resource state and signed DRFM behavior with negative cases | local pass; PR pending |
-| E3 | EW temporal history | E1/E2 verified | opt-in history state, reset/replay, compatible policy extraction | queued |
+| E2 | Jammer resources and effectiveness | E1 verified | bounded band/effect decision, cooldown/duty resource state and signed DRFM behavior with negative cases | PR #105 checks pass; review pending |
+| E3 | EW temporal history | E1/E2 verified | opt-in history state, reset/replay, compatible policy extraction | local pass; PR pending |
 | E4 | Cooperative EW | E2/E3 verified | loss/latency, stale intent expiry, reassignment and role/resource isolation | queued |
 | E5 | Canonical action admission | E3/E4 verified | explicit compatible mode registration and observation/action acceptance | queued |
 | E6 | Named terminal gate | E1-E5 verified | seed matrix, terminal reasons, objectives, effect/resource receipts, replay and residual verdict | queued |
@@ -114,6 +115,22 @@ passes; additional scope requires a named follow-on cluster, not silent widening
   burn-through and within the jammer beam. This does not create an independent
   ghost track.
 
+### E3 temporal policy semantics
+
+- `ew_state` remains opt-in. When it is enabled with `temporal_history_len > 1`,
+  the environment adds `ew_state_history` and `temporal_valid_mask`; defaults
+  and non-EW temporal observation keys remain unchanged.
+- Reset pads are masked out of temporal attention. History belongs to each
+  environment/formation slot and is cleared on reset; terminal observations keep
+  the episode's final history before auto-reset starts a new one.
+- The mask identifies real observation frames, not emitter presence, ESM
+  confidence, or a valid RF detection. A reset's current frame remains valid
+  even when EW fields contain their documented absent sentinels.
+- `TemporalTransformerExtractor` encodes EW state per frame. The valid mask
+  prevents padded frames from contributing as attention keys or receiving
+  gradients. This demonstrates supported policy consumption, not training
+  success or improved combat performance.
+
 ### Validation
 
 Local E1 stack implementation validation, MSVC Release / Python 3.12:
@@ -143,9 +160,23 @@ Local E2 mechanism validation, MSVC Release / Python 3.12:
   budget reflection and post-EW instrument receipts.
 - Eight focused Python modules passed 73 tests and 46 subtests, including EW
   suite schema, Air facade/observation, RL surface, bindings and replay.
-- PR #103 checks are all green. PR #104's fast, nightly, Windows and Linux
-  checks pass; its CUDA job was cancelled during toolchain installation, so
-  that required check remains unresolved rather than code-failed.
+- PR #103 and PR #105 checks are green. PR #104's fast, nightly, Windows and
+  Linux checks pass; its CUDA job ended during toolchain installation after
+  the job timeout. That required check remains unresolved and is not a source
+  compile verdict. Reviews for PRs #103-#105 remain pending.
+
+Local E3 temporal-policy validation, using the unchanged E2 native build:
+
+- E3 temporal acceptance passed eight focused tests, including padding and
+  gradient isolation, reset/terminal behavior, seeded replay, cooperative-slot
+  isolation, configured PPO training, prediction, and checkpoint roundtrip.
+- The broader temporal/EW compatibility selection passed 22 tests across the
+  Air EW, temporal extractor and WorldBatch adapter suites.
+- The maintained Air training-entry contract suite passed 21 tests and 42
+  subtests. A strict load of an actual pre-E3 extractor state dict succeeded,
+  and non-EW temporal forward outputs matched exactly in train and eval modes.
+- `ruff check` and `git diff --check` passed for the E3 changes. Local execution
+  used CPU Torch; CUDA device-bridge execution remains unverified locally.
 
 ## Acceptance Gate
 
@@ -168,7 +199,9 @@ review before merge.
 - Frequency overlap and burn-through remain engineering proxies, not calibrated
   J/S or platform performance. Independent DRFM ghost-track lifecycle remains
   out of scope.
-- E3 owns history-enabled RL policy compatibility; E1 adds no canonical RL key.
+- E3 is based on E2 PR #105; its PR publication, remote CI and review are pending.
+- E3 keeps canonical action modes unchanged; model quality and learned-policy
+  success still require their own evaluation evidence.
 - E4 owns formation and command delivery acceptance; existing 2v2 terminal
   surrogates do not establish these gates.
 - E5 owns canonical action-mode admission; E6 owns named terminal acceptance.

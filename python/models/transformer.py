@@ -613,22 +613,27 @@ class TemporalTransformerExtractor(BaseFeaturesExtractor):
     ):
         super().__init__(observation_space, features_dim)
 
-        required = ("instruments_history", "contacts_history", "rwr_history", "mission_history", "proprio_history")
+        required = (
+            "instruments_history",
+            "contacts_history",
+            "rwr_history",
+            "mission_history",
+            "proprio_history",
+        )
         missing = [key for key in required if key not in observation_space.spaces]
         if missing:
             raise ValueError(
                 "TemporalTransformerExtractor requires temporal_history_len>1 observation keys; "
                 f"missing={missing}"
             )
-        if EW_STATE_KEY in observation_space.spaces:
-            # The temporal path encodes history frames only and there is no
-            # ew_state history; refusing is explicit instead of silently
-            # dropping the opt-in EW observation.
+        ew_keys = (EW_STATE_KEY, "ew_state_history", "temporal_valid_mask")
+        present_ew_keys = [key for key in ew_keys if key in observation_space.spaces]
+        if present_ew_keys and len(present_ew_keys) != len(ew_keys):
             raise ValueError(
-                "TemporalTransformerExtractor does not consume the opt-in 'ew_state' observation; "
-                "use include_ew_state=False or TransformerExtractor/TransformerVisualExtractor"
+                "TemporalTransformerExtractor requires ew_state, ew_state_history and "
+                "temporal_valid_mask together; "
+                f"missing={[key for key in ew_keys if key not in observation_space.spaces]}"
             )
-
         self.d_model = int(features_dim)
         self.use_amp = bool(use_amp)
         self.amp_dtype = _normalize_amp_dtype(amp_dtype)
@@ -641,6 +646,10 @@ class TemporalTransformerExtractor(BaseFeaturesExtractor):
         proprio_shape = observation_space["proprio_history"].shape
         self.history_len = int(instruments_shape[0])
         self.has_proprio = True
+        self.has_ew_state = "ew_state_history" in observation_space.spaces
+        for key in required:
+            if int(observation_space[key].shape[0]) != self.history_len:
+                raise ValueError(f"{key} must have history length {self.history_len}")
 
         self.embed_instruments = nn.Linear(int(instruments_shape[-1]), self.d_model)
         self.embed_contact = nn.Linear(int(contacts_shape[-1]), self.d_model)
@@ -648,13 +657,25 @@ class TemporalTransformerExtractor(BaseFeaturesExtractor):
         self.embed_mission = nn.Linear(int(mission_shape[-1]), self.d_model)
         self.embed_proprio = nn.Linear(int(proprio_shape[-1]), self.d_model)
 
-        # 0=Instruments, 1=Mission, 2=Proprio, 3=Contact, 4=RWR
-        self.type_embed = nn.Embedding(5, self.d_model)
+        if self.has_ew_state:
+            ew_state_shape = observation_space["ew_state_history"].shape
+            if ew_state_shape != (self.history_len, int(observation_space[EW_STATE_KEY].shape[0])):
+                raise ValueError(
+                    "ew_state_history must match the history length and ew_state width"
+                )
+            if observation_space["temporal_valid_mask"].shape != (self.history_len,):
+                raise ValueError("temporal_valid_mask must match the history length")
+            self.embed_ew_state = nn.Linear(int(ew_state_shape[-1]), self.d_model)
+
+        # 0=Instruments, 1=Mission, 2=Proprio, 3=Contact, 4=RWR, 5=EW state
+        self.type_embed = nn.Embedding(6 if self.has_ew_state else 5, self.d_model)
         self.register_buffer("idx_inst", torch.tensor(0))
         self.register_buffer("idx_mission", torch.tensor(1))
         self.register_buffer("idx_proprio", torch.tensor(2))
         self.register_buffer("idx_contact", torch.tensor(3))
         self.register_buffer("idx_rwr", torch.tensor(4))
+        if self.has_ew_state:
+            self.register_buffer("idx_ew_state", torch.tensor(5))
 
         frame_layer = nn.TransformerEncoderLayer(
             d_model=self.d_model,
@@ -663,11 +684,14 @@ class TemporalTransformerExtractor(BaseFeaturesExtractor):
             dropout=0.0,
             batch_first=True,
         )
-        self.frame_transformer = nn.TransformerEncoder(frame_layer, num_layers=int(n_layers), enable_nested_tensor=False)
+        self.frame_transformer = nn.TransformerEncoder(
+            frame_layer, num_layers=int(n_layers), enable_nested_tensor=False
+        )
 
+        self.temporal_n_heads = int(temporal_n_heads if temporal_n_heads is not None else n_heads)
         temporal_layer = nn.TransformerEncoderLayer(
             d_model=self.d_model,
-            nhead=int(temporal_n_heads if temporal_n_heads is not None else n_heads),
+            nhead=self.temporal_n_heads,
             dim_feedforward=self.d_model * 4,
             dropout=0.0,
             batch_first=True,
@@ -699,6 +723,7 @@ class TemporalTransformerExtractor(BaseFeaturesExtractor):
         rwr: torch.Tensor,
         mission: torch.Tensor,
         proprio: torch.Tensor,
+        ew_state: torch.Tensor | None = None,
     ) -> torch.Tensor:
         b, t, _ = instruments.shape
         inst_flat = instruments.reshape(b * t, instruments.shape[-1])
@@ -708,12 +733,24 @@ class TemporalTransformerExtractor(BaseFeaturesExtractor):
         rwr_flat = rwr.reshape(b * t, rwr.shape[-2], rwr.shape[-1])
 
         emb_inst = self.embed_instruments(inst_flat).unsqueeze(1) + self.type_embed(self.idx_inst)
-        emb_mission = self.embed_mission(mission_flat).unsqueeze(1) + self.type_embed(self.idx_mission)
-        emb_proprio = self.embed_proprio(proprio_flat).unsqueeze(1) + self.type_embed(self.idx_proprio)
+        emb_mission = self.embed_mission(mission_flat).unsqueeze(1) + self.type_embed(
+            self.idx_mission
+        )
+        emb_proprio = self.embed_proprio(proprio_flat).unsqueeze(1) + self.type_embed(
+            self.idx_proprio
+        )
         emb_contacts = self.embed_contact(contacts_flat) + self.type_embed(self.idx_contact)
         emb_rwr = self.embed_rwr(rwr_flat) + self.type_embed(self.idx_rwr)
 
-        frame_tokens = torch.cat([emb_inst, emb_mission, emb_proprio, emb_contacts, emb_rwr], dim=1)
+        frame_parts = [emb_inst, emb_mission, emb_proprio]
+        if self.has_ew_state:
+            if ew_state is None:
+                raise ValueError("ew_state_history is required by this temporal extractor")
+            ew_flat = ew_state.reshape(b * t, ew_state.shape[-1])
+            frame_parts.append(
+                self.embed_ew_state(ew_flat).unsqueeze(1) + self.type_embed(self.idx_ew_state)
+            )
+        frame_tokens = torch.cat([*frame_parts, emb_contacts, emb_rwr], dim=1)
         if self._use_checkpointing and self.training:
             from torch.utils.checkpoint import checkpoint
 
@@ -736,25 +773,54 @@ class TemporalTransformerExtractor(BaseFeaturesExtractor):
             rwr = _preprocess_rwr_sequence(observations["rwr_history"])
             mission = _preprocess_mission_sequence(observations["mission_history"])
             proprio = _preprocess_proprio_sequence(observations["proprio_history"])
+            ew_state = (
+                preprocess_ew_state_tensor(observations["ew_state_history"])
+                if self.has_ew_state
+                else None
+            )
 
-            frame_embeddings = self._encode_frames(instruments, contacts, rwr, mission, proprio)
-            frame_embeddings = frame_embeddings + self.temporal_pos_embed[:, : frame_embeddings.shape[1], :]
+            frame_embeddings = self._encode_frames(
+                instruments, contacts, rwr, mission, proprio, ew_state
+            )
+            frame_embeddings = (
+                frame_embeddings + self.temporal_pos_embed[:, : frame_embeddings.shape[1], :]
+            )
             seq_len = int(frame_embeddings.shape[1])
+            valid_mask = None
             causal_mask = torch.triu(
                 torch.ones((seq_len, seq_len), dtype=torch.bool, device=frame_embeddings.device),
                 diagonal=1,
             )
+            if self.has_ew_state:
+                raw_mask = observations["temporal_valid_mask"].to(device=frame_embeddings.device)
+                if raw_mask.shape != frame_embeddings.shape[:2]:
+                    raise ValueError("temporal_valid_mask must match the batch and history length")
+                valid_mask = torch.isfinite(raw_mask) & (raw_mask > 0.5)
+                frame_embeddings = torch.where(valid_mask.unsqueeze(-1), frame_embeddings, 0.0)
+                causal_mask = causal_mask.unsqueeze(0) | (~valid_mask).unsqueeze(1)
+                # A padding query has no earlier valid keys. Let it attend to
+                # itself to avoid an all-masked softmax/NaN, while valid queries
+                # still exclude every padded key at every temporal layer.
+                diagonal = torch.arange(seq_len, device=frame_embeddings.device)
+                causal_mask[:, diagonal, diagonal] = False
+                causal_mask = causal_mask.repeat_interleave(self.temporal_n_heads, dim=0)
             if self._use_checkpointing and self.training:
                 from torch.utils.checkpoint import checkpoint
 
                 x = frame_embeddings
                 for layer in self.temporal_transformer.layers:
-                    x = checkpoint(lambda hidden, layer=layer: layer(hidden, src_mask=causal_mask), x, use_reentrant=False)
+                    x = checkpoint(
+                        lambda hidden, layer=layer: layer(hidden, src_mask=causal_mask),
+                        x,
+                        use_reentrant=False,
+                    )
                 temporal_out = x
             else:
                 temporal_out = self.temporal_transformer(frame_embeddings, mask=causal_mask)
             latest = temporal_out[:, -1, :]
             out = self.ln_final(latest)
+            if valid_mask is not None:
+                out = torch.where(valid_mask[:, -1, None], out, 0.0)
         return out.float()
 
 

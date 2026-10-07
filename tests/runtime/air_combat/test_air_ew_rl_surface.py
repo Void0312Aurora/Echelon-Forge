@@ -422,7 +422,7 @@ class AirEWPolicyStackTests(unittest.TestCase):
     finally:
       env.close()
 
-  def test_temporal_extractor_refuses_ew_state_explicitly(self) -> None:
+  def test_temporal_extractor_consumes_ew_state_history_and_valid_mask(self) -> None:
     if PPO is None:
       self.skipTest("stable_baselines3 is not available in the active interpreter")
     from gymnasium import spaces
@@ -441,8 +441,9 @@ class AirEWPolicyStackTests(unittest.TestCase):
       include_ew_state=True,
     )
     self.assertIsInstance(space, spaces.Dict)
-    with self.assertRaisesRegex(ValueError, "does not consume the opt-in 'ew_state'"):
-      TemporalTransformerExtractor(space, features_dim=32, n_heads=4, n_layers=1)
+    extractor = TemporalTransformerExtractor(space, features_dim=32, n_heads=4, n_layers=1)
+    self.assertTrue(extractor.has_ew_state)
+    self.assertEqual(int(extractor.type_embed.num_embeddings), 6)
 
 
 if __name__ == "__main__":

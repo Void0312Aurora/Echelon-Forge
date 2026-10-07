@@ -13,7 +13,10 @@ TEMPORAL_HISTORY_KEYS = (
     "rwr",
     "mission",
     "proprio",
+    "ew_state",
 )
+_HISTORY_VALID_KEY = "_history_valid"
+TEMPORAL_VALID_MASK_KEY = "temporal_valid_mask"
 
 
 def temporal_history_enabled(history_len: int | None) -> bool:
@@ -53,7 +56,10 @@ def reset_temporal_history(
     current = _history_frame_from_obs(obs, int(action_dim))
     zero = {key: np.zeros_like(value, dtype=np.float32) for key, value in current.items()}
     for _ in range(max(0, int(history_len) - 1)):
-        history.append({key: value.copy() for key, value in zero.items()})
+        padded = {key: value.copy() for key, value in zero.items()}
+        padded[_HISTORY_VALID_KEY] = np.array(0.0, dtype=np.float32)
+        history.append(padded)
+    current[_HISTORY_VALID_KEY] = np.array(1.0, dtype=np.float32)
     history.append({key: value.copy() for key, value in current.items()})
 
 
@@ -65,9 +71,13 @@ def append_temporal_history(
     action_dim: int,
 ) -> None:
     if len(history) <= 0:
-        reset_temporal_history(history, obs, history_len=int(history_len), action_dim=int(action_dim))
+        reset_temporal_history(
+            history, obs, history_len=int(history_len), action_dim=int(action_dim)
+        )
         return
-    history.append(_history_frame_from_obs(obs, int(action_dim)))
+    current = _history_frame_from_obs(obs, int(action_dim))
+    current[_HISTORY_VALID_KEY] = np.array(1.0, dtype=np.float32)
+    history.append(current)
 
 
 def attach_temporal_history(
@@ -80,17 +90,20 @@ def attach_temporal_history(
     frames = list(history)
     if len(frames) <= 0:
         reset_buf = make_temporal_history_buffer(int(history_len))
-        reset_temporal_history(reset_buf, obs, history_len=int(history_len), action_dim=int(action_dim))
+        reset_temporal_history(
+            reset_buf, obs, history_len=int(history_len), action_dim=int(action_dim)
+        )
         frames = list(reset_buf)
     if len(frames) < int(history_len):
         pad_source = frames[0]
-        pads = [
-            {key: np.zeros_like(value, dtype=np.float32) for key, value in pad_source.items()}
-            for _ in range(int(history_len) - len(frames))
-        ]
+        pads = []
+        for _ in range(int(history_len) - len(frames)):
+            pad = {key: np.zeros_like(value, dtype=np.float32) for key, value in pad_source.items()}
+            pad[_HISTORY_VALID_KEY] = np.array(0.0, dtype=np.float32)
+            pads.append(pad)
         frames = [*pads, *frames]
     elif len(frames) > int(history_len):
-        frames = frames[-int(history_len):]
+        frames = frames[-int(history_len) :]
 
     for key in TEMPORAL_HISTORY_KEYS:
         if key == "proprio" and all(key not in frame for frame in frames):
@@ -100,11 +113,20 @@ def attach_temporal_history(
         if len(values) != int(history_len):
             continue
         obs[f"{key}_history"] = np.stack(values, axis=0).astype(np.float32, copy=False)
+    # Only the opt-in EW temporal layout adds a mask. Existing temporal
+    # observation/checkpoint layouts retain their exact keys when EW is off.
+    if "ew_state" in obs:
+        valid_values = [
+            np.asarray(frame.get(_HISTORY_VALID_KEY, 1.0), dtype=np.float32).reshape(())
+            for frame in frames
+        ]
+        obs[TEMPORAL_VALID_MASK_KEY] = np.stack(valid_values, axis=0).astype(np.float32, copy=False)
     return obs
 
 
 __all__ = [
     "TEMPORAL_HISTORY_KEYS",
+    "TEMPORAL_VALID_MASK_KEY",
     "append_temporal_history",
     "attach_temporal_history",
     "make_temporal_history_buffer",
