@@ -317,7 +317,7 @@ def main() -> int:
     if args.json_out:
         output_path = Path(args.json_out).resolve()
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(rendered + "\n", encoding="utf-8")
+        output_path.write_text(rendered + "\n", encoding="utf-8", newline="\n")
     print(rendered)
     return 0
 

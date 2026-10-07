@@ -6,7 +6,7 @@
 - Scope: entry surface for an RL-independent scripted electronic-warfare role
 - Verdict: `entry_surface_incomplete`
 
-## 2026-10-07 admission update
+## 2026-10-07 admission and scoped terminal update
 
 The E1-E5 completion stack now covers passive RF/ESM semantics, bounded jammer
 budgets, EW temporal history, shared command delivery and bounded formation
@@ -18,9 +18,20 @@ the focused admission gate. The specialized 12D hybrid policy still rejects
 
 The dated probes below retain their original acceptance scope; their older
 statements that canonical admission or temporal EW history is absent are
-superseded by this update. E6 named effect/resource/terminal acceptance and stack
-review are pending, so `entry_surface_incomplete` and the capability label remain
-unchanged. No calibrated platform effect or learned-policy success is claimed.
+superseded by this update. The E6
+[frozen terminal receipt](../work/active/ew_completion/artifacts/ew_named_terminal_acceptance_20261007.json)
+closes both named single-aircraft and 2v2 engineering surrogates at two seeds,
+with native inventory/transmit readback and mandatory same-seed replay. Its
+validator rejects failure/timeout and missing or inconsistent evidence; the
+focused demo/acceptance selection passes 34 tests.
+
+This acceptance does not measure seeker seduction or radar suppression within
+the terminal objective, nor establish EW's causal contribution to a win. The
+broader effect/non-surrogate/visualization gates and stack review remain open,
+so `entry_surface_incomplete` and the capability label stay unchanged. No
+calibrated platform effect or learned-policy success is claimed. Older statements
+about missing canonical admission, jammer ownership, history or bounded terminal
+acceptance describe dated probes, not the current completion stack.
 
 ## 2026-10-06 implementation scope
 

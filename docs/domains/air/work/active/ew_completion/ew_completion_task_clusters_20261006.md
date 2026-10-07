@@ -10,9 +10,10 @@ Status: `2026-10-07` E1/E2 local gates passed; finite execution plan for
 [Air EW Completion](README.md). PR #103-#105 normal checks pass; their reviews
 remain open, and #104's CUDA toolchain setup timed out. E3 local gates pass;
 PRs #106/#107 checks pass and review is pending. E4-A/E4-B local delivery and
-formation gates pass; E4-B is PR #108 with checks/review pending.
-E5 canonical admission passes its local factory/native-state/PPO gate; publication
-and review are pending. E6 named terminal acceptance is next.
+formation gates pass; E4-B is PR #108 with checks passed and review pending.
+E5 is PR #109 with local admission and remote checks passed, review pending.
+E6's named surrogate terminal/replay gate passes locally; causal EW effects,
+non-surrogate objectives and stack review remain open.
 
 ## Boundary Decision
 
@@ -34,9 +35,9 @@ The exact model and reasoning controls are not exposed by this execution packet.
 | E2 | main thread | high EW mechanism / n/a / n/a | Define bounded jammer band/effect/resource behavior and signed DRFM. | EW components, content/schema/reflection, action/sensing systems, observations and focused tests | calibrated J/S; independent ghost tracks without a separate lifecycle contract | inactive/off-band/off-beam/burn-through negatives, budget depletion/recovery, DRFM sign and source identity | authored defaults and effect/resource receipts agree with mechanism tests | after E1; serial | 1 + 2 repair | local-pass / PR #105 checks pass, review pending |
 | E3 | main thread | high policy integration / n/a / n/a | Integrate opt-in EW history and maintained temporal policy extraction. | Python Air observation/history, policy extractors, reset/replay and compatibility tests | world-truth inference; training-success claim | absent-key compatibility, first-frame masks, reset, same-seed replay, built-policy consumption | real supported policy path consumes declared history | after E1/E2; serial | 1 + 2 repair | local-pass / PR #106 CI and review pending |
 | E4-A | main thread | high shared delivery / n/a / n/a | Add seeded opaque command delivery with delay, loss, expiry, bounded receipts, and node availability; preserve the Joint adapter. | `python/tasking_contracts/common/command_link.py`, Joint adapter/consumer and focused tests | Air role interpretation or native effects | deterministic loss/replay, expiry boundary, unavailable-node cancellation, delayed ordering, Joint inbox TTL, native-link regression | shared transport and existing Joint consumer gates pass | after E3; serial | 1 + 2 repair | local-pass / PR #107 checks pass, review pending |
-| E4-B | main thread | high cooperative Air / n/a / n/a | Integrate formation EW role orders over the shared transport. | Air command/tasking/formation adapters, maintained cooperative environment and fixtures | bypass of command transport; broader fleet doctrine; automatic native link/truth mapping | delayed/dropped/expired roles, declared leader loss/reassignment, per-slot isolation, replay and resource isolation | supported formation path preserves bounded self-protection roles/resources under failure cases | after E4-A; serial | 1 + 2 repair | local-pass / PR #108 CI and review pending |
-| E5 | main thread | high public admission / n/a / n/a | Admit a versioned EW action mode through the supported environment. | action-mode registry, environment/config/space mappings, action/native state tests and standards | shifting existing indices; unsupported consumer promotion | factory/space/action/native-state roundtrip; old modes stable; unsupported config rejection | maintained consumer and compatibility gates pass | after E3/E4; serial | 1 + 2 repair | local-pass / publication and review pending |
-| E6 | main thread | high terminal acceptance / n/a / n/a | Publish named EW scenario acceptance and residual verdict. | named scenario/contracts, evaluation/replay receipts, capability roster, Air docs | unmeasured playability or learned-policy claim | success/failure/timeout, fixed seeds, measured effects/resources, roster and replay | named acceptance passes with explicit residual owners | after E1-E5; serial final | 1 + 2 repair | planned |
+| E4-B | main thread | high cooperative Air / n/a / n/a | Integrate formation EW role orders over the shared transport. | Air command/tasking/formation adapters, maintained cooperative environment and fixtures | bypass of command transport; broader fleet doctrine; automatic native link/truth mapping | delayed/dropped/expired roles, declared leader loss/reassignment, per-slot isolation, replay and resource isolation | supported formation path preserves bounded self-protection roles/resources under failure cases | after E4-A; serial | 1 + 2 repair | local-pass / PR #108 checks pass, review pending |
+| E5 | main thread | high public admission / n/a / n/a | Admit a versioned EW action mode through the supported environment. | action-mode registry, environment/config/space mappings, action/native state tests and standards | shifting existing indices; unsupported consumer promotion | factory/space/action/native-state roundtrip; old modes stable; unsupported config rejection | maintained consumer and compatibility gates pass | after E3/E4; serial | 1 + 2 repair | local-pass / PR #109 checks pass, review pending |
+| E6 | main thread | high terminal acceptance / n/a / n/a | Publish named EW scenario acceptance and residual verdict. | named scenario/contracts, evaluation/replay receipts, capability roster, Air docs | unmeasured playability or learned-policy claim | success/failure/timeout rejection, fixed seeds, measured resources/transmission, roster and replay | scoped named acceptance passes with explicit residual owners; causal EW-effect gate stays open | after E1-E5; serial final | 1 + 2 repair | scoped local-pass / CI and review pending |
 
 ## Dispatch Rules
 
@@ -110,17 +111,68 @@ package README and were reproduced on this branch.
 
 ## Residual Map
 
-Immediate: validate PR #108 and complete review for PRs #103-#108; close
+Immediate: complete review for PRs #103-#109 and CI/review for the E6 slice; close
 PR #104's CUDA toolchain setup check, which timed out before source compilation.
 
-Follow-on: E5 admission passes locally; implement E6 named terminal acceptance.
-Resolve the three reproduced cooperative baseline test failures in a
+Follow-on: E5 admission and the named surrogate E6 gate pass locally. Connect
+EW effect mechanisms to non-surrogate mission objectives and validate their
+causal contribution. Resolve the three reproduced cooperative baseline test failures in a
 separate bounded C2/fixture follow-up before claiming general cooperative
 closure. Automatic native link/aircraft-loss mapping and support jamming are
 not part of E4-B's self-protection permission gate.
 
 Deferred: real-platform RF calibration, emitter libraries, antenna sidelobes,
 pulse processing, calibrated J/S and independent ghost-track lifecycle.
+
+## E6 Scoped Acceptance Receipt
+
+Status: `pass` for named engineering-surrogate terminal/resource/transmit/replay
+acceptance; `partial` for wider EW effectiveness/playability. Implementation
+commit: `ef1073886b5e73749cc7b05aca782d3be1777edb`. The
+[machine-readable receipt](artifacts/ew_named_terminal_acceptance_20261007.json)
+was produced from that clean tree and the unchanged E2 native build, with the
+actual extension hash. E3-E6 change no native source.
+
+| Scenario | Seed | Terminal step | Outcome | Chaff / flare consumed | Native jammer transmit frames | Same-seed replay |
+| --- | --- | --- | --- | --- | --- | --- |
+| `air_combat_1v1_c2_roe_ew_terminal_v1` | 20260516 | 201 | combat_win | 4 / 4 | 38 | equal |
+| same | 20261007 | 204 | combat_win | 5 / 5 | 41 | equal |
+| `cooperative_air_2v2_scripted_c2_roe_ew_terminal_v1` | 20260516 | 212 | both combat_win | Lead 5 / 5; Wing 3 / 3 | Lead 44; Wing 48 | equal |
+| same | 20261007 | 263 | both combat_win | Lead 3 / 3; Wing 8 / 8 | Lead 24; Wing 80 | equal |
+
+Each slot emits one accepted/native release, maps launch warnings to
+countermeasure requests, and preserves roster-owned `Red_A`/`Red_B` targets with
+opponent owner counts `[2,0]`. Some request frames have no native transmit
+receipt; the trace records those states separately and does not attribute the
+difference to a specific cause. Inventory consumption is the measured
+pre-terminal lower bound, excluding the auto-reset terminal frame.
+
+```powershell
+$env:CMO_BUILD_DIR = 'D:\workshop\Research\Echelon-Forge\build-ew-next'
+$env:OMP_NUM_THREADS = '1'
+python tools/diagnostics/air_ew_terminal_acceptance.py --json_out docs/domains/air/work/active/ew_completion/artifacts/ew_named_terminal_acceptance_20261007.json
+python -m pytest -q tests/runtime/air_combat/test_air_ew_terminal_acceptance.py tests/runtime/air_combat/test_air_combat_ew_scripted_demo.py tests/runtime/air_combat/test_air_cooperative_combat_ew_scripted_demo.py
+```
+
+The selection passed 34 tests. Negative tests mutate real reports to reject
+loss, timeout, unfinished members, exhausted budgets, missing inventory change,
+missing transmit state, post-reset samples, missing baseline, incorrect roster
+ownership, missing slot arrays and replay drift. They test acceptance failure
+behavior, not full runtime failure/timeout dynamics. CLI replay cannot be skipped.
+
+### Residual Owners
+
+| Residual | Owner / next evidence | Closure boundary |
+| --- | --- | --- |
+| Non-surrogate EW mission and causal effect | Air EW/scenario validation: connect native decoy capture or radar denial to declared objective, with mechanism-off negative controls | surrogate wins and inventory/transmit receipts cannot close this gate |
+| Real-platform RF, J/S, seeker and vulnerability calibration | Air content/physics validation: traceable platform data and calibrated cross-seed effects | no numerical performance claim from authored proxy defaults |
+| Native link/loss mapping and escort/support jamming | Air tasking/runtime: declared native communication inputs and support-effect ownership | E4-B only grants self-protection permission |
+| Independent DRFM ghost tracks | Air sensing/EW: track identity, association, expiry/reset and deception negatives | same-target range offset is insufficient |
+| Three cooperative baseline failures and command-queue saturation | Air C2/runtime: separate bounded fixture/queue investigation; earlier direct probes emitted pending-queue-full warnings, while the frozen E6 matrix log had none | terminal success does not establish full cooperative/C2 closure; saturation was not stress-tested |
+| PR review, #104 CUDA provisioning and visualization/playable gate | Maintainer/CI and Air acceptance: final checks/review, toolchain run and render/process evidence | keep stack open and Air label `playable_candidate` / EW review `entry_surface_incomplete` |
+
+The package remains active. These are role owners and required evidence,
+not newly dispatched implementation work or a promotion decision.
 
 ## E1 stack
 

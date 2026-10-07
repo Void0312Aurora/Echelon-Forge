@@ -1,6 +1,6 @@
 # Air EW Completion
 
-Status: `2026-10-07` active; E1-E5 local mechanism gates pass. PRs #103-#107 have green normal checks; reviews are pending, and #104's CUDA toolchain job timed out during provisioning. E4-B is PR #108 with checks/review pending. E5 awaits publication; E6 is queued.
+Status: `2026-10-07` active; E1-E5 local mechanism gates and E6's named surrogate terminal gate pass. PRs #103-#109 have green normal checks; reviews are pending, and #104's CUDA toolchain job timed out during provisioning. E6 is on `codex/air-ew-terminal-acceptance`; remote checks/review remain open. Non-surrogate EW effectiveness and playable acceptance remain open.
 
 Document kind: plan
 Lifecycle: active
@@ -40,7 +40,7 @@ named-scenario playability and platform calibration.
 | Shared command delivery | E4-A local pass | common scripted link and Joint compatibility/lifecycle tests | transport capability only; no Air role or native EW effect |
 | Formation EW roles | E4-B local pass | `test_air_ew_formation.py`, cooperative environment | bounded self-protection permission; explicit communication inputs |
 | Canonical EW action admission | E5 local pass | `test_air_ew_admission.py`, action contract | explicit 14/16D Box transports; specialized 12D hybrid distribution remains separate |
-| Named terminal acceptance | queued | task cluster file | no Air capability promotion |
+| Named terminal acceptance | E6 scoped local pass | `air_ew_terminal_acceptance.py`, frozen seed receipt | engineering surrogates; no Air capability promotion or causal EW-effect verdict |
 
 ## Scope
 
@@ -58,9 +58,9 @@ separate authored evidence and are not implied by this engineering model.
 | E2 | Jammer resources and effectiveness | E1 verified | bounded band/effect decision, cooldown/duty resource state and signed DRFM behavior with negative cases | PR #105 checks pass; review pending |
 | E3 | EW temporal history | E1/E2 verified | opt-in history state, reset/replay, compatible policy extraction | local pass; PR #106 checks pass, review pending |
 | E4-A | Shared command delivery | E3 verified | seeded delay/loss, TTL, receipts, node availability, Joint compatibility | local pass; PR #107 checks pass, review pending |
-| E4-B | Cooperative Air EW | E4-A available | formation role orders, loss/expiry, reassignment and per-slot/resource isolation | local pass; PR #108 checks/review pending |
-| E5 | Canonical action admission | E3/E4 verified | explicit compatible mode registration and observation/action acceptance | local pass; publication/review pending |
-| E6 | Named terminal gate | E1-E5 verified | seed matrix, terminal reasons, objectives, effect/resource receipts, replay and residual verdict | queued |
+| E4-B | Cooperative Air EW | E4-A available | formation role orders, loss/expiry, reassignment and per-slot/resource isolation | local pass; PR #108 checks pass, review pending |
+| E5 | Canonical action admission | E3/E4 verified | explicit compatible mode registration and observation/action acceptance | local pass; PR #109 checks pass, review pending |
+| E6 | Named terminal gate | E1-E5 verified | seed matrix, terminal reasons, objectives, resource/state receipts, replay and residual verdict | scoped local pass; causal EW-effect gate remains open |
 
 ## Task Clusters
 
@@ -275,7 +275,34 @@ are preserved. See the [action contract](../../../standards/pilot_action_contrac
 The focused config/admission/EW-surface/bootstrap selection passed 61 tests and
 2 subtests on the E5 branch using the E1-E4 native build. E5 changes only Python
 admission/tests and documentation; no native mechanism or policy distribution
-is changed. Learned-policy quality and named EW terminal acceptance remain open.
+is changed. Learned-policy quality remains open; the scoped terminal receipt follows.
+
+### E6 named terminal receipt
+
+The [frozen receipt](artifacts/ew_named_terminal_acceptance_20261007.json) was
+generated through the CLI from clean commit
+`ef1073886b5e73749cc7b05aca782d3be1777edb`, using the unchanged E2 native build.
+It records the actual `ef_py` module hash, scenario hashes and replay trace hashes.
+Both named single-aircraft and 2v2 fixtures close with `combat_win` at seeds
+`20260516` and `20261007`, before the 600-step budget. Every controlled member
+has accepted/native weapon release, warning/request parity, chaff/flare inventory
+loss and native jammer transmission. Same-seed replay is mandatory.
+
+The focused acceptance/demo regression passed 34 tests. Negative receipt tests
+reject losses, timeouts, unfinished members, budget exhaustion, missing resources
+or transmission, post-reset samples, missing pre-request baselines, incorrect
+roster ownership and replay drift. These are acceptance-validator negatives;
+they do not establish all simulation loss/timeout dynamics.
+
+Measured inventory is the decrement from the first request's preceding native
+snapshot to the final pre-terminal sample. The terminal step auto-resets, so the
+reported depletion is a pre-terminal lower bound. A jammer request need not
+produce transmission on every frame. The fixtures have generic Aircraft targets,
+and neither inventory loss nor transmission measures seeker seduction, radar
+suppression or EW's causal contribution to the win. E6 closes this named
+engineering gate with those residuals; the wider effectiveness/playable verdict
+remains incomplete. Full scenario rows and residual owners are in the
+[task-cluster receipt](ew_completion_task_clusters_20261006.md#e6-scoped-acceptance-receipt).
 
 ## Residuals And Next Steps
 
@@ -295,7 +322,9 @@ is changed. Learned-policy quality and named EW terminal acceptance remain open.
   aircraft-loss inference and external/support jamming remain separate work.
 - The three reproduced old cooperative failures need a scoped follow-up before
   claiming that the full cooperative suite or broader C2 surface is closed.
-- E5 locally passes canonical action-mode admission; E6 owns named terminal acceptance.
+- E5 is PR #109 with green checks and pending review. E6 passes the named
+  surrogate terminal/replay gate; real-platform EW objectives and causal effect
+  acceptance remain follow-on work owned by Air EW/scenario validation.
 - Historical sensor reflection included an absent `enforce_radar_horizon`
   member. E1 removes it, verifies current reflection, and normalizes the exact
   legacy inline/mounted sensor shape before strict import. Ambiguous mixed

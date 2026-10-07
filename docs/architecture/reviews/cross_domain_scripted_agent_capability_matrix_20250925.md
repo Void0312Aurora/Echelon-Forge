@@ -3,7 +3,7 @@
 - Document kind: review
 - Lifecycle: maintained
 - Date: 2026-09-25
-- Last verified: 2026-09-27
+- Last verified: 2026-10-07 (Air EW supplement; other domain rows retain dated scope)
 - Owner: architecture/cross-domain-agency
 - Scope: current evidence boundary for the independent scripted-agent line
 
@@ -111,6 +111,26 @@ presence cannot raise a label.
   terminates with `success_objective`, `mission_status=[4,1,1,1]`, a valid
   final report, and runway geometry; this is a single-seed direct closure, not
   a final Air promotion.
+
+### 2026-10-07 Air EW evidence supplement
+
+The [Air EW completion stack](../../domains/air/work/active/ew_completion/README.md)
+adds RF/passive ESM gates, bounded jammer budgets and signed same-target DRFM,
+optional temporal EW policy consumption, seeded opaque command delivery, finite
+self-protection formation permissions and canonical 14/16D Box-action admission.
+The Air row's older deferrals of canonical EW admission and jammer command
+ownership are superseded by these scoped implementations, pending stack review.
+
+The [frozen named terminal receipt](../../domains/air/work/active/ew_completion/artifacts/ew_named_terminal_acceptance_20261007.json)
+records two seeds for single-aircraft and shared 2v2 engineering surrogates,
+native accepted releases, warning/request and inventory receipts, jammer
+transmission, roster ownership and same-seed replay. The validator/demo selection
+passes 34 tests and rejects failed, timed-out or inconsistent receipts.
+These terminal fixtures do not measure seeker seduction, calibrated suppression
+or EW's causal contribution to success. They do not enable E4-B role gates by
+default or establish full formation mission parity. Non-surrogate effects,
+native communication mapping, support jamming, independent ghost tracks and
+visualization remain open. The Air label stays `playable_candidate`.
 
 ## Required machine-readable manifest shape
 
