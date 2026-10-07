@@ -30,6 +30,32 @@ def test_wp22_bindings_core_keeps_explicit_diagnostics_and_legacy_allowlists() -
   assert "set_contact_list" in BINDINGS_DIAGNOSTICS_ALLOWLIST
   assert "debug_set_legacy_movement_command" in BINDINGS_LEGACY_ALLOWLIST
 
+  # Classify every quarantined name, including bindings without debug_ prefixes.
+  # The Ground native-probe surface retains its own exact allowlist below.
+  def _registered(block: str) -> set[str]:
+    return set(re.findall(r'\.def\s*\(\s*"([^"]+)"', block))
+
+  quarantined_names = (
+    _registered(_diagnostics_introspection_text(text))
+    | _registered(
+      _extract_function_block(text, "void bind_simulation_kernel_diagnostics_override_surface(")
+    )
+    | _registered(
+      _extract_function_block(text, "void bind_simulation_kernel_legacy_compatibility_debug_surface(")
+    )
+  )
+  maintained_names = _registered(
+    _extract_function_block(text, "void bind_simulation_kernel_maintained_surface(")
+  )
+  allowlisted = BINDINGS_DIAGNOSTICS_ALLOWLIST | BINDINGS_LEGACY_ALLOWLIST
+  assert quarantined_names == allowlisted, (
+    f"unclassified bindings: {sorted(quarantined_names - allowlisted)}; "
+    f"stale allowlist entries: {sorted(allowlisted - quarantined_names)}"
+  )
+  assert not allowlisted & maintained_names, (
+    f"quarantined binding also on maintained surface: {sorted(allowlisted & maintained_names)}"
+  )
+
 
 def test_wp22_ground_native_probe_surface_is_exactly_its_allowlist_and_never_maintained() -> None:
   """Native-probe Ground tooling stays quarantined and enumerable.
@@ -188,14 +214,14 @@ def test_wp22_bindings_core_still_exposes_broad_surface_as_quarantined_fact() ->
   # it is now on the diagnostics allowlist.
   # 87 -> 89: Geodetic Frame P3-B added the maintained
   # set_geodetic_anchor/get_geodetic_anchor pair (scenario anchor of the local
-  # frame, consumed by the scenario kernel-apply path). The base still carries
-  # one unallowlisted diagnostics binding (debug_get_countermeasure_state, from
-  # 2b1d936e), an inherited red that this package does not absorb into the pin.
+  # frame, consumed by the scenario kernel-apply path).
+  # 89 -> 90: classify the inherited debug_get_countermeasure_state binding
+  # (2b1d936e, PR #59) as the read-only diagnostics resource snapshot it is.
   # The Ground native-probe surface is counted separately, by name, so the
   # broad count stays the pre-Ground baseline instead of absorbing it.
   ground_native_probe = [name for name in names if name in BINDINGS_GROUND_NATIVE_PROBE_ALLOWLIST]
   assert len(ground_native_probe) == len(BINDINGS_GROUND_NATIVE_PROBE_ALLOWLIST)
-  assert len(names) - len(ground_native_probe) == 89, (
+  assert len(names) - len(ground_native_probe) == 90, (
     "WP22-E expects the broad SimulationKernel binding count to stay explicit; "
     "update this guard only with a deliberate allowlist reshaping change"
   )
