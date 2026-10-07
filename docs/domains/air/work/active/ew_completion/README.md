@@ -280,9 +280,11 @@ is changed. Learned-policy quality remains open; the scoped terminal receipt fol
 ### E6 named terminal receipt
 
 The [frozen receipt](artifacts/ew_named_terminal_acceptance_20261007.json) was
-generated through the CLI from clean commit
-`ef1073886b5e73749cc7b05aca782d3be1777edb`, using the unchanged E2 native build.
-It records the actual `ef_py` module hash, scenario hashes and replay trace hashes.
+regenerated through the CLI from clean stack commit
+`b033f5b4bc5931f13d54a12e44b1f7cfdb2a77a2`, after the state-transfer repairs.
+The `ef_py` module was rebuilt from that stack before generation; the receipt
+records its hash along with the scenario and replay trace hashes. A focused test
+requires the frozen receipt's source revision to remain an ancestor of `HEAD`.
 Both named single-aircraft and 2v2 fixtures close with `combat_win` at seeds
 `20260516` and `20261007`, before the 600-step budget. Every controlled member
 has accepted/native weapon release, warning/request parity, chaff/flare inventory

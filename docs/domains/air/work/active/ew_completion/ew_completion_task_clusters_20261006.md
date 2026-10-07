@@ -127,11 +127,13 @@ pulse processing, calibrated J/S and independent ghost-track lifecycle.
 ## E6 Scoped Acceptance Receipt
 
 Status: `pass` for named engineering-surrogate terminal/resource/transmit/replay
-acceptance; `partial` for wider EW effectiveness/playability. Implementation
-commit: `ef1073886b5e73749cc7b05aca782d3be1777edb`. The
+acceptance; `partial` for wider EW effectiveness/playability. Receipt source
+revision: `b033f5b4bc5931f13d54a12e44b1f7cfdb2a77a2`. The
 [machine-readable receipt](artifacts/ew_named_terminal_acceptance_20261007.json)
-was produced from that clean tree and the unchanged E2 native build, with the
-actual extension hash. E3-E6 change no native source.
+was regenerated from that clean tree after rebuilding the current stack's
+Windows native extension; it records the actual extension hash. A focused test
+requires the receipt source revision to remain an ancestor of the current HEAD.
+E3-E6 acceptance logic changes no native source.
 
 | Scenario | Seed | Terminal step | Outcome | Chaff / flare consumed | Native jammer transmit frames | Same-seed replay |
 | --- | --- | --- | --- | --- | --- | --- |

@@ -62,8 +62,9 @@ E5 将 14 维 `air_ew_hybrid_v1` 与 16 维 `air_ew_hybrid_v2` 追加到规范�
 12 维 `hybrid_action_spec` 仍拒绝 EW 空间，没有扩展其混合分布语义。
 配置/准入/EW 投影/bootstrap 选择通过 61 项测试和 2 项子测试；这不代表训练质量。
 
-E6 的[冻结验收记录](artifacts/ew_named_terminal_acceptance_20261007.json)来自干净提交
-`ef1073886b5e73749cc7b05aca782d3be1777edb`，附有场景、实际原生模块与重放轨迹哈希。
+E6 的[冻结验收记录](artifacts/ew_named_terminal_acceptance_20261007.json)已在状态迁移修复后，
+从干净栈提交 `b033f5b4bc5931f13d54a12e44b1f7cfdb2a77a2` 重新生成。生成前已从当前栈源码
+重编译 `ef_py`，记录实际扩展、场景与重放轨迹哈希；聚焦测试要求收据来源提交必须是当前 `HEAD` 的祖先。
 单机与 2v2 在种子 `20260516`、`20261007` 下均以 `combat_win` 终止，早于 600 步预算。
 各受控成员都有原生武器发射、告警/请求对应、chaff/flare 库存下降和 jammer 发射读数，
 同种子重放一致。验收器与现有演示通过 36 项测试；单机与 2v2 的真实原生预算耗尽
