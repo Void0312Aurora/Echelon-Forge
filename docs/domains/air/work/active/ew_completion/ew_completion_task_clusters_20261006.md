@@ -154,11 +154,13 @@ python tools/diagnostics/air_ew_terminal_acceptance.py --json_out docs/domains/a
 python -m pytest -q tests/runtime/air_combat/test_air_ew_terminal_acceptance.py tests/runtime/air_combat/test_air_combat_ew_scripted_demo.py tests/runtime/air_combat/test_air_cooperative_combat_ew_scripted_demo.py
 ```
 
-The selection passed 34 tests. Negative tests mutate real reports to reject
-loss, timeout, unfinished members, exhausted budgets, missing inventory change,
-missing transmit state, post-reset samples, missing baseline, incorrect roster
-ownership, missing slot arrays and replay drift. They test acceptance failure
-behavior, not full runtime failure/timeout dynamics. CLI replay cannot be skipped.
+The selection passed 36 tests. Native single-aircraft and cooperative scenarios
+with a two-step environment budget both emitted timeout reports and were rejected
+by their acceptance validators. Other negative tests mutate real reports to
+reject loss, unfinished members, exhausted acceptance budgets, missing inventory
+change, missing transmit state, post-reset samples, missing baseline, incorrect
+roster ownership, missing slot arrays and replay drift. Full combat-loss dynamics
+remain unverified. CLI replay cannot be skipped.
 
 ### Residual Owners
 

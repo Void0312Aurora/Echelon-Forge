@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 from copy import deepcopy
+from pathlib import Path
 
 import pytest
 
@@ -107,6 +109,33 @@ def test_consumption_includes_the_first_request(matrix_and_reports) -> None:
         source["countermeasure_state_samples"][0]["chaff_remaining"]
         - source["countermeasure_state_samples"][-1]["chaff_remaining"]
     )
+
+
+@pytest.mark.parametrize("cooperative", [False, True])
+def test_native_timeout_is_reported_and_rejected(tmp_path: Path, cooperative: bool) -> None:
+    fixture = json.loads(Path(SCENARIOS[int(cooperative)]["path"]).read_text(encoding="utf-8"))
+    # Exhaust the native environment budget before the diagnostic runner's
+    # budget, so rejection checks a genuine timeout rather than a cut-off run.
+    fixture["environment"]["max_steps"] = 2
+    scenario_path = tmp_path / "native_timeout.json"
+    scenario_path.write_text(json.dumps(fixture), encoding="utf-8")
+    runner = run_cooperative_demo if cooperative else run_single_demo
+    report = runner(
+        scenario_path=str(scenario_path),
+        seed=DEFAULT_SEEDS[1],
+        max_steps=3,
+        response_doctrine="countermeasure_ready",
+        jammer_doctrine="self_protect_on_lock",
+    )
+    assert report["steps"] == 2
+    assert report["truncated"] == ([True, True] if cooperative else True)
+    if cooperative:
+        assert report["termination_reasons"] == ["combat_timeout", "combat_timeout"]
+    else:
+        assert report["termination_reason"] == "timeout"
+    validator = validate_cooperative_report if cooperative else validate_single_report
+    with pytest.raises(ValueError, match="timed out"):
+        validator(report, max_steps=3)
 
 
 @pytest.mark.parametrize("cooperative", [False, True])

@@ -288,11 +288,13 @@ Both named single-aircraft and 2v2 fixtures close with `combat_win` at seeds
 has accepted/native weapon release, warning/request parity, chaff/flare inventory
 loss and native jammer transmission. Same-seed replay is mandatory.
 
-The focused acceptance/demo regression passed 34 tests. Negative receipt tests
-reject losses, timeouts, unfinished members, budget exhaustion, missing resources
-or transmission, post-reset samples, missing pre-request baselines, incorrect
-roster ownership and replay drift. These are acceptance-validator negatives;
-they do not establish all simulation loss/timeout dynamics.
+The focused acceptance/demo regression passed 36 tests. Native single-aircraft
+and cooperative environments were also run to a two-step budget; both emitted
+timeout reports and the acceptance validators rejected them. Corrupted receipt
+tests reject losses, unfinished members, exhausted acceptance budgets, missing
+resources or transmission, post-reset samples, missing pre-request baselines,
+incorrect roster ownership and replay drift. Full combat-loss dynamics remain
+unverified.
 
 Measured inventory is the decrement from the first request's preceding native
 snapshot to the final pre-terminal sample. The terminal step auto-resets, so the
