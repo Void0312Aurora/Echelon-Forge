@@ -50,6 +50,10 @@ void bind_core_instruments(nb::module_ &m) {
         .def_rw("jammer_transmitting", &InstrumentState::jammer_transmitting)
         .def_rw("jammer_mode", &InstrumentState::jammer_mode)
         .def_rw("jammer_transmit_start_time_s", &InstrumentState::jammer_transmit_start_time_s)
+        .def_rw("jammer_budget_enabled", &InstrumentState::jammer_budget_enabled)
+        .def_rw("jammer_transmit_remaining_s", &InstrumentState::jammer_transmit_remaining_s)
+        .def_rw("jammer_cooldown_remaining_s", &InstrumentState::jammer_cooldown_remaining_s)
+        .def_rw("jammer_snapshot_time_s", &InstrumentState::jammer_snapshot_time_s)
         // EGI / Navigation
         .def_rw("lat", &InstrumentState::lat_deg)
         .def_rw("lon", &InstrumentState::lon_deg)

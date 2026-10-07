@@ -1084,6 +1084,8 @@ set(EF_TEST_SOURCES
     src/tests/test_stable_entity_identity.cpp
     src/tests/test_air_ew_decoy.cpp
     src/tests/test_air_ew_jamming.cpp
+    src/tests/test_air_ew_rf_contract.cpp
+    src/tests/test_air_ew_esm.cpp
 )
 
 add_executable(ef_test ${EF_TEST_SOURCES})

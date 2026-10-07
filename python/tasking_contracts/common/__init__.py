@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 __all__ = [
+    "command_link",
     "agency_registry",
     "agent_contracts",
     "bridge_views",

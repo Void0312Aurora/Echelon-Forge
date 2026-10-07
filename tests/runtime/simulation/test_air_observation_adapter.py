@@ -10,6 +10,7 @@ from python.simulation.air.engagement import AirEngagementFacts
 from python.simulation.air.observation import (
     AIR_SCRIPTED_MISSION_MODE,
     build_air_contact_matrix,
+    build_air_esm_matrix,
     build_air_instrument_vector,
     build_air_mission_vector,
     build_air_scripted_observation,
@@ -85,7 +86,11 @@ def test_air_observation_projection_keeps_named_instrument_and_mission_fields() 
     assert np.allclose(vector[[0, 3, 9, 37, 38, 39, 40, 41]], [180.0, 1195.0, 90.0, 4.0, 1.0, 2.0, 3.0, 4.0])
     assert mission[mission_observation_field_index(AIR_SCRIPTED_MISSION_MODE, "command_code")] == 1.0
     assert mission[mission_observation_field_index(AIR_SCRIPTED_MISSION_MODE, "target_altitude_m")] == 1500.0
-    assert mission[mission_observation_field_index(AIR_SCRIPTED_MISSION_MODE, "takeoff_clearance_code")] == 4.0
+    takeoff_mode = "nav_v2_cooperative_takeoff_v1"
+    takeoff = build_air_mission_vector(command, mode=takeoff_mode)
+    assert takeoff[mission_observation_field_index(takeoff_mode, "takeoff_clearance_code")] == 4.0
+    with pytest.raises(ValueError, match="Unknown mission observation field"):
+        mission_observation_field_index(AIR_SCRIPTED_MISSION_MODE, "takeoff_clearance_code")
 
 
 def test_air_observation_projection_pads_native_contacts_and_rwr() -> None:
@@ -100,6 +105,36 @@ def test_air_observation_projection_pads_native_contacts_and_rwr() -> None:
     assert np.allclose(projected["contacts"][0], [12000.0, 4.0, -1.0, 100.0, 0.5])
     assert np.allclose(projected["rwr"][0], [-20.0, 0.8, 1.0, 0.0])
     assert np.count_nonzero(projected["contacts"][1:]) == 0
+
+
+def test_esm_observation_projection_preserves_age_confidence_and_classification_boundary() -> None:
+    observation = SimpleNamespace(
+        esm_detections=[
+            SimpleNamespace(
+                bearing_deg=-25.0,
+                received_power_dbm=-71.0,
+                has_rf_power=True,
+                sensitivity_margin_db=14.0,
+                age_s=0.25,
+                confidence=0.5,
+                classification_known=False,
+                is_jammer=True,
+                is_lock=False,
+                is_guidance=False,
+                range=1.0,
+                target_id=99,
+            )
+        ]
+    )
+
+    matrix = build_air_esm_matrix(observation)
+    projected = build_air_scripted_observation(observation, _instrument(), None, include_esm=True)
+
+    assert matrix.shape == (8, 10)
+    assert np.allclose(matrix[0], [-25.0, -71.0, 1.0, 14.0, 0.25, 0.5, 0.0, 0.0, 0.0, 0.0])
+    assert np.count_nonzero(matrix[1:]) == 0
+    assert np.array_equal(projected["esm"], matrix)
+    assert "esm" not in build_air_scripted_observation(observation, _instrument(), None)
 
 
 def test_air_observation_projection_accepts_declared_combat_facts() -> None:
@@ -185,3 +220,11 @@ def test_air_engagement_facts_reject_incomplete_fire_admission(field: str, value
     kwargs[field] = value
     with pytest.raises(ValueError, match=field):
         AirEngagementFacts(**kwargs)
+
+
+def test_coasting_esm_is_not_a_current_lock_or_guidance_warning() -> None:
+    row = SimpleNamespace(bearing_deg=10.0, age_s=0.1, confidence=1.0,
+                          classification_known=True, is_jammer=True,
+                          is_lock=True, is_guidance=True)
+    matrix = build_air_esm_matrix(SimpleNamespace(esm_detections=[row]))
+    assert np.array_equal(matrix[0, 6:], [1.0, 1.0, 0.0, 0.0])

@@ -47,6 +47,7 @@ from gym_envs.universal_env_parts import (
     validate_naval_action_mode_for_loader,
 )
 from python.env_config import VALID_FLIGHT_SHAPING_BACKENDS, VALID_STEP_INFO_MODES
+from python.tasking_contracts.air.ew.formation import AirFormationEWRuntime
 from python.rl.runtime.multi_agent_runtime import MultiAgentControlSlot, MultiAgentWorldRuntimeView
 from python.rl.support.sb3_vec_env_compat import (
     VecEnv,
@@ -140,6 +141,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         database_path: str | None = None,
         worker_threads: int | None = None,
         action_wrapper_kwargs: dict[str, Any] | None = None,
+        ew_formation_commanders: tuple[str, ...] | None = None,
     ) -> None:
         if gym is None:  # pragma: no cover
             raise ModuleNotFoundError(
@@ -170,6 +172,17 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         self.flight_shaping_backend = _normalize_flight_shaping_backend(flight_shaping_backend)
         self.collect_step_timing = bool(collect_step_timing)
         self._action_wrapper_kwargs = dict(action_wrapper_kwargs or {})
+        if ew_formation_commanders is not None and (
+            self.action_mode != "air_ew_hybrid_v2"
+            or isinstance(ew_formation_commanders, str)
+            or not isinstance(ew_formation_commanders, (tuple, list))
+            or not ew_formation_commanders
+        ):
+            raise ValueError("ew_formation_commanders requires a non-empty roster and air_ew_hybrid_v2")
+        self._ew_formation_commanders = (
+            None if ew_formation_commanders is None else tuple(ew_formation_commanders)
+        )
+        self._ew_runtimes: dict[int, AirFormationEWRuntime] = {}
         if self.execution_step_runtime_mode == "legacy":
             raise ValueError("execution_step_runtime_mode='legacy' has been removed from maintained VecEnv paths")
         if self.step_info_mode not in VALID_STEP_INFO_MODES:
@@ -267,6 +280,46 @@ class CooperativeWorldBatchVecEnv(VecEnv):
     def set_leader_overrides(self, overrides: dict | None) -> None:
         for world in self._worlds:
             world.set_leader_overrides(overrides)
+
+    def _ew_world_clock(self, world_index: int) -> float:
+        world = self._worlds[world_index]
+        slot = self._slots[world.slot_indices[0]]
+        return float(slot.steps) * float(resolve_loader_time_step(slot.loader))
+
+    def _ew_runtime(self, world_index: int) -> AirFormationEWRuntime:
+        if self._closed or world_index not in self._ew_runtimes:
+            raise RuntimeError("formation EW must be enabled and reset in an open world")
+        return self._ew_runtimes[world_index]
+
+    def send_ew_role_order(
+        self,
+        *,
+        source_member_id: str,
+        target_member_id: str,
+        role_id: str,
+        world_index: int = 0,
+        delay_s: float = 0.0,
+        ttl_s: float = 1.0,
+        drop_prob: float = 0.0,
+    ) -> Any:
+        """Send a finite Air EW role lease at this world's next action clock."""
+        return self._ew_runtime(world_index).issue(
+            source_member_id=source_member_id,
+            target_member_id=target_member_id,
+            role_id=role_id,
+            clock_s=self._ew_world_clock(world_index),
+            delay_s=delay_s,
+            ttl_s=ttl_s,
+            drop_prob=drop_prob,
+        )
+
+    def set_ew_member_available(
+        self, member_id: str, *, available: bool, world_index: int = 0,
+    ) -> None:
+        """Declare communication availability; no native truth inference."""
+        self._ew_runtime(world_index).set_member_available(
+            member_id, available=available, clock_s=self._ew_world_clock(world_index),
+        )
 
     def _batch_observation_backend_mode(self) -> str:
         return resolve_batch_observation_backend_mode(
@@ -786,6 +839,19 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         if world.routing_loader is None:
             raise RuntimeError(f"world {world_index} has no cooperative routing loader")
 
+        if self._ew_formation_commanders is not None:
+            members = self._world_slot_states(world)
+            teams = {member.control_slot.team_id for member in members}
+            if len(teams) != 1 or None in teams:
+                raise ValueError("Air formation EW requires a single declared controlled team")
+            previous = self._ew_runtimes.pop(int(world_index), None)
+            if previous is not None:
+                previous.close()
+            self._ew_runtimes[int(world_index)] = AirFormationEWRuntime(
+                member_ids=(member.entity_name for member in members),
+                commander_ids=self._ew_formation_commanders, seed=normalized_seed,
+            )
+
         world.view = MultiAgentWorldRuntimeView(
             runtime=self._runtime_adapter,
             loader=world.routing_loader,
@@ -960,6 +1026,9 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 raise RuntimeError(f"world {world.world_index} has not been reset")
             actions_by_entity_id: dict[int, np.ndarray] = {}
             inst_by_entity_id: dict[int, Any] = {}
+            ew_runtime = self._ew_runtimes.get(int(world.world_index))
+            if ew_runtime is not None:
+                ew_runtime.advance(clock_s=self._ew_world_clock(int(world.world_index)))
             for slot_index in world.slot_indices:
                 slot_state = self._slots[slot_index]
                 if slot_state is None:
@@ -998,6 +1067,13 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                         naval_action_sync_world_indices.add(int(world.world_index))
                 # Proprioception must describe the action that survived the
                 # runtime event gate, never the pre-gate policy intent.
+                if ew_runtime is not None:
+                    effective_action = ew_runtime.filter_action(
+                        slot_state.entity_name, effective_action
+                    )
+                    slot_state.loader._last_effective_action = np.asarray(
+                        effective_action, dtype=np.float32
+                    ).copy()
                 slot_state.last_action = np.asarray(effective_action, dtype=np.float32).copy()
                 actions_by_entity_id[int(slot_state.entity_id)] = effective_action
                 inst_by_entity_id[int(slot_state.entity_id)] = slot_state.last_inst
@@ -1149,6 +1225,9 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 timing["reward_info_ms"] += (time.perf_counter() - reward_t0) * 1000.0
 
             prepared = prepared_by_slot.get(int(slot_index))
+            ew_runtime = self._ew_runtimes.get(int(world.world_index))
+            if ew_runtime is not None:
+                info["air_ew_formation"] = ew_runtime.snapshot(slot_state.entity_name)
             if slot_state.action_controller is not None and prepared is not None:
                 obs, reward, info = slot_state.action_controller.finalize_step_result(obs, reward, info, prepared)
             slot_state.last_obs = obs
@@ -1343,6 +1422,9 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         return self._obs_from_buf(), np.copy(self.buf_rews), np.copy(self.buf_dones), list(self.buf_infos)
 
     def close(self) -> None:
+        for runtime in self._ew_runtimes.values():
+            runtime.close()
+        self._ew_runtimes.clear()
         self._actions = None
         self._closed = True
 

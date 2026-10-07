@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <cmath>
 #include <vector>
 #include <cstdint>
@@ -28,6 +29,13 @@ struct Jammer {
     double spot_power_gain = 1.0;
     // DRFM false-target range offset beyond burn-through. Zero is inert.
     double drfm_range_offset_m = 0.0;
+    double rf_eirp_watts = 0.0;
+    double rf_frequency_mhz = 0.0;
+    // Optional engineering burst/cooldown contract. Both zero is unlimited.
+    double max_continuous_transmit_s = 0.0;
+    double cooldown_s = 0.0;
+    double transmit_elapsed_s = 0.0;
+    double cooldown_until_time_s = -1.0;
 };
 
 inline bool jammer_installed(const Jammer &jammer) {
@@ -36,6 +44,51 @@ inline bool jammer_installed(const Jammer &jammer) {
 
 inline bool jammer_transmitting(const Jammer &jammer) {
     return jammer.is_active && jammer_installed(jammer);
+}
+
+inline bool jammer_budget_enabled(const Jammer &jammer) {
+    return std::isfinite(jammer.max_continuous_transmit_s) &&
+           jammer.max_continuous_transmit_s > 0.0 && std::isfinite(jammer.cooldown_s) &&
+           jammer.cooldown_s >= 0.0;
+}
+
+inline bool jammer_budget_valid(const Jammer &jammer) {
+    return (jammer.max_continuous_transmit_s == 0.0 && jammer.cooldown_s == 0.0) ||
+           jammer_budget_enabled(jammer);
+}
+
+inline bool jammer_transmitting_at(const Jammer &jammer, double current_time_s) {
+    if (!jammer_transmitting(jammer) || !jammer_budget_valid(jammer)) return false;
+    if (!jammer_budget_enabled(jammer)) return true;
+    return std::isfinite(current_time_s) && jammer.transmit_start_time_s >= 0.0 &&
+           current_time_s >= jammer.transmit_start_time_s &&
+           current_time_s < jammer.transmit_start_time_s + jammer.max_continuous_transmit_s &&
+           (jammer.cooldown_until_time_s < 0.0 || current_time_s >= jammer.cooldown_until_time_s);
+}
+
+inline void advance_jammer_budget(Jammer &jammer, double current_time_s) {
+    if (!std::isfinite(current_time_s) || !jammer_budget_valid(jammer)) {
+        jammer.is_active = false;
+        jammer.transmit_start_time_s = -1.0;
+        return;
+    }
+    if (jammer.is_active && jammer_installed(jammer)) {
+        if (jammer.transmit_start_time_s < 0.0) jammer.transmit_start_time_s = current_time_s;
+        jammer.transmit_elapsed_s = std::max(0.0, current_time_s - jammer.transmit_start_time_s);
+        if (jammer_budget_enabled(jammer) &&
+            jammer.transmit_elapsed_s >= jammer.max_continuous_transmit_s) {
+            jammer.cooldown_until_time_s =
+                jammer.transmit_start_time_s + jammer.max_continuous_transmit_s + jammer.cooldown_s;
+            jammer.transmit_elapsed_s = jammer.max_continuous_transmit_s;
+            jammer.is_active = false;
+            jammer.transmit_start_time_s = -1.0;
+        }
+    }
+    if (!jammer.is_active && jammer.cooldown_until_time_s >= 0.0 &&
+        current_time_s >= jammer.cooldown_until_time_s) {
+        jammer.cooldown_until_time_s = -1.0;
+        jammer.transmit_elapsed_s = 0.0;
+    }
 }
 
 inline constexpr double kBurnThroughReferenceRcsM2 = 5.0;
@@ -78,7 +131,8 @@ inline bool jamming_type_from_code(int code, JammingType &out) {
 
 inline bool apply_jammer_command(Jammer &jammer, bool transmit, int mode_code,
                                  double current_time_s) {
-    if (!jammer_installed(jammer)) {
+    if (!jammer_installed(jammer) || !jammer_budget_valid(jammer) ||
+        !std::isfinite(current_time_s)) {
         return false;
     }
     JammingType requested_type = jammer.type;
@@ -87,11 +141,20 @@ inline bool apply_jammer_command(Jammer &jammer, bool transmit, int mode_code,
     }
     const bool was_active = jammer.is_active;
     const JammingType was_type = jammer.type;
+    advance_jammer_budget(jammer, current_time_s);
+    if (transmit && jammer.cooldown_until_time_s > current_time_s) {
+        return was_active != jammer.is_active;
+    }
+    if (!transmit && jammer.is_active && jammer_budget_enabled(jammer)) {
+        jammer.cooldown_until_time_s = current_time_s + jammer.cooldown_s;
+    }
+    const bool starts_transmit = transmit && !jammer.is_active;
     jammer.is_active = transmit;
     if (transmit) {
         jammer.type = requested_type;
-        if (!was_active) {
+        if (starts_transmit) {
             jammer.transmit_start_time_s = current_time_s;
+            jammer.transmit_elapsed_s = 0.0;
         }
     } else {
         jammer.transmit_start_time_s = -1.0;
@@ -158,6 +221,13 @@ struct EmitterDetection {
     bool is_radar_lock = false;
     bool is_missile_guidance = false;
     bool is_jammer = false;
+    double received_power_dbm = 0.0; // Valid only when has_rf_power is true.
+    bool has_rf_power = false;
+    double sensitivity_margin_db = 0.0;
+    double observed_time_s = -1.0;
+    double confidence = 0.0; // Fraction of required distinct scans, not a Pd.
+    int confirmation_count = 0;
+    bool classification_known = false;
 };
 
 struct ESMReceiver {
@@ -165,7 +235,21 @@ struct ESMReceiver {
     double max_detection_range_m = 250000.0;
     bool classify_emitters = true;
     std::vector<EmitterDetection> detections{};
+    // Zero bounds accept any band; strict receivers reject legacy emitters.
+    double frequency_min_mhz = 0.0;
+    double frequency_max_mhz = 0.0;
+    double memory_s = 0.0; // Zero preserves the historical per-step reset.
+    int confirmation_scans = 1;
+    bool require_rf_contract = false;
 };
+
+inline void expire_esm_detections(ESMReceiver &esm, double current_time_s) {
+    std::erase_if(esm.detections, [&](const EmitterDetection &det) {
+        return esm.memory_s <= 0.0 || det.observed_time_s < 0.0 ||
+               current_time_s < det.observed_time_s ||
+               current_time_s - det.observed_time_s > esm.memory_s;
+    });
+}
 
 // RCS Profile for Geometric RCS (Optional but recommended)
 struct RCSProfile {

@@ -1,0 +1,136 @@
+{
+  "schema_version": "air_ew_named_terminal_acceptance_v1",
+  "source_revision": "b033f5b4bc5931f13d54a12e44b1f7cfdb2a77a2",
+  "source_dirty": false,
+  "receipt_reproducible": true,
+  "native_module": {
+    "path": "D:\\workshop\\Research\\Echelon-Forge\\build-ew-next\\ef_py.cp312-win_amd64.pyd",
+    "sha256": "cdca74e743e8d78752f04af6a2d8c1bb0cdcdb979ddd2b9b76b268cff74d3105"
+  },
+  "accepted": true,
+  "acceptance_scope": "rl_independent_named_terminal_engineering_surrogates",
+  "playable_capability_promotion": false,
+  "max_steps": 600,
+  "seeds": [
+    20260516,
+    20261007
+  ],
+  "replay_checked": true,
+  "scenarios": [
+    {
+      "scenario_id": "air_combat_1v1_c2_roe_ew_terminal_v1",
+      "scenario_path": "scenarios/air_combat/air_combat_1v1_c2_roe_ew_terminal_v1.json",
+      "scenario_sha256": "a02a97a3ec99cd4771e9b95453e157a2f4b3edf1f2a0ce0213982f3573d6943d",
+      "formation": false,
+      "seeds": [
+        {
+          "scenario_id": "air_combat_1v1_c2_roe_ew_terminal_v1",
+          "seed": 20260516,
+          "steps": 201,
+          "terminal_reason": "combat_win",
+          "accepted_release_count": 1,
+          "chaff_consumed": 4,
+          "flare_consumed": 4,
+          "jammer_request_steps": 39,
+          "native_jammer_transmit_steps": 38,
+          "replay_equal": true,
+          "trace_sha256": "4d6ab429eb51c371029478aec588060de2157825a1b56d2091e107af60f57d81"
+        },
+        {
+          "scenario_id": "air_combat_1v1_c2_roe_ew_terminal_v1",
+          "seed": 20261007,
+          "steps": 204,
+          "terminal_reason": "combat_win",
+          "accepted_release_count": 1,
+          "chaff_consumed": 5,
+          "flare_consumed": 5,
+          "jammer_request_steps": 42,
+          "native_jammer_transmit_steps": 41,
+          "replay_equal": true,
+          "trace_sha256": "1a24bbc92ca2ce6d9ddb3556b004ed23faa5a26ac524ff24179965c6732f881b"
+        }
+      ]
+    },
+    {
+      "scenario_id": "cooperative_air_2v2_scripted_c2_roe_ew_terminal_v1",
+      "scenario_path": "scenarios/air_combat/cooperative_air_2v2_scripted_c2_roe_ew_terminal_v1.json",
+      "scenario_sha256": "5be1484eae7f02a9803f1d4e9074bd1da79aa46fbcab54cfa71f0ac55534edb6",
+      "formation": true,
+      "seeds": [
+        {
+          "scenario_id": "cooperative_air_2v2_scripted_c2_roe_ew_terminal_v1",
+          "seed": 20260516,
+          "steps": 212,
+          "slot_receipts": [
+            {
+              "entity_name": "Blue_A_Lead",
+              "target_owner_name": "Red_A",
+              "terminal_reason": "combat_win",
+              "accepted_release_count": 1,
+              "chaff_consumed": 5,
+              "flare_consumed": 5,
+              "jammer_request_steps": 50,
+              "native_jammer_transmit_steps": 44
+            },
+            {
+              "entity_name": "Blue_B_Wing",
+              "target_owner_name": "Red_B",
+              "terminal_reason": "combat_win",
+              "accepted_release_count": 1,
+              "chaff_consumed": 3,
+              "flare_consumed": 3,
+              "jammer_request_steps": 49,
+              "native_jammer_transmit_steps": 48
+            }
+          ],
+          "replay_equal": true,
+          "trace_sha256": "50ff070515d4fedc90f7dbe968c74c7b20c8e5f780554d1f36b2765836b95401"
+        },
+        {
+          "scenario_id": "cooperative_air_2v2_scripted_c2_roe_ew_terminal_v1",
+          "seed": 20261007,
+          "steps": 263,
+          "slot_receipts": [
+            {
+              "entity_name": "Blue_A_Lead",
+              "target_owner_name": "Red_A",
+              "terminal_reason": "combat_win",
+              "accepted_release_count": 1,
+              "chaff_consumed": 3,
+              "flare_consumed": 3,
+              "jammer_request_steps": 81,
+              "native_jammer_transmit_steps": 24
+            },
+            {
+              "entity_name": "Blue_B_Wing",
+              "target_owner_name": "Red_B",
+              "terminal_reason": "combat_win",
+              "accepted_release_count": 1,
+              "chaff_consumed": 8,
+              "flare_consumed": 8,
+              "jammer_request_steps": 81,
+              "native_jammer_transmit_steps": 80
+            }
+          ],
+          "replay_equal": true,
+          "trace_sha256": "8d5bef38dd28272362607e1aa947c41bedc4deac0e39dcaec979a1c7e5200dcc"
+        }
+      ]
+    }
+  ],
+  "accepted_evidence": [
+    "named single-aircraft and cooperative 2v2 terminal objectives close with combat_win",
+    "every controlled roster member emits an accepted release and receives native EW state readback",
+    "launch warnings map to countermeasure requests and chaff/flare inventory decreases",
+    "jammer requests map to native transmit-state receipts",
+    "same-seed terminal and EW traces replay exactly for the listed fields"
+  ],
+  "residuals": [
+    "generic Aircraft opponents and terminal objectives are engineering surrogates",
+    "countermeasure inventory loss is measured; seeker seduction is not part of this terminal gate",
+    "jammer transmit state is measured; calibrated radar suppression or burn-through is not",
+    "RF platform calibration, emitter libraries, sidelobes, pulse processing and calibrated J/S remain open",
+    "independent DRFM ghost-track lifecycle remains open",
+    "this acceptance does not establish learned-policy quality or promote the Air/EW playable label"
+  ]
+}

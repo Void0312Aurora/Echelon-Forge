@@ -821,14 +821,27 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
     const ESMReceiver *esm = e.get<ESMReceiver>();
     if (esm) {
         for (const auto &det : esm->detections) {
+            const double age = obs.sim_time - det.observed_time_s;
+            if (det.observed_time_s < 0.0 || age < -1.0e-9 ||
+                age > std::max(0.0, esm->memory_s) + 1.0e-9)
+                continue;
+            obs.esm_detections.push_back(
+                {det.source_id, det.bearing_deg, det.signal_strength, det.received_power_dbm,
+                 det.has_rf_power, det.sensitivity_margin_db, det.observed_time_s,
+                 std::max(0.0, age), det.confidence, det.classification_known,
+                 det.classification_known && det.is_jammer,
+                 det.classification_known && age <= 1.0e-9 && det.is_radar_lock,
+                 det.classification_known && age <= 1.0e-9 && det.is_missile_guidance});
+            // Coasting bearings remain inspectable, but cannot assert a current lock/launch.
+            if (age > 1.0e-9) continue;
             RWREvent event{};
             event.source_id = det.source_id;
             event.bearing = det.bearing_deg;
             event.signal_strength = det.signal_strength;
             // Jammer strobes (det.is_jammer) carry no lock or guidance
             // evidence, so they project as plain emitter rows.
-            event.is_lock = det.is_radar_lock;
-            event.is_launch = det.is_missile_guidance;
+            event.is_lock = det.classification_known && det.is_radar_lock;
+            event.is_launch = det.classification_known && det.is_missile_guidance;
             append_rwr_event(event);
         }
     }

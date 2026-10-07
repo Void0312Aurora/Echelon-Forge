@@ -32,7 +32,7 @@ def test_domain_packages_have_role_specific_subdirectories() -> None:
     assert _py_names(CONTRACT_ROOT / "air") == {"__init__.py", "registry.py"}
     assert _py_names(CONTRACT_ROOT / "air" / "execution") >= {"__init__.py", "model.py"}
     assert _py_names(CONTRACT_ROOT / "air" / "engagement") == {"__init__.py", "model.py"}
-    assert _py_names(CONTRACT_ROOT / "air" / "ew") == {"__init__.py", "model.py"}
+    assert _py_names(CONTRACT_ROOT / "air" / "ew") == {"__init__.py", "model.py", "formation.py"}
     assert _py_names(CONTRACT_ROOT / "air" / "strategy") >= {
         "__init__.py",
         "assessment.py",

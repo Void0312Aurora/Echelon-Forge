@@ -107,6 +107,21 @@
         "doppler_notch_width": {
           "type": "number",
           "description": "Doppler notch width."
+        },
+        "rf_eirp_watts": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Explicit isotropic RF emission EIRP."
+        },
+        "rf_frequency_mhz": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Center frequency for the explicit RF emission."
+        },
+        "rf_bandwidth_mhz": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Occupied bandwidth for the explicit RF emission."
         }
       },
       "required": [],
@@ -114,7 +129,21 @@
       "patternProperties": {
         "^_": {}
       },
-      "description": "Sensor performance inputs."
+      "description": "Sensor performance inputs.",
+      "dependentRequired": {
+        "rf_eirp_watts": [
+          "rf_frequency_mhz",
+          "rf_bandwidth_mhz"
+        ],
+        "rf_frequency_mhz": [
+          "rf_eirp_watts",
+          "rf_bandwidth_mhz"
+        ],
+        "rf_bandwidth_mhz": [
+          "rf_eirp_watts",
+          "rf_frequency_mhz"
+        ]
+      }
     },
     "Sonar": {
       "type": "object",
@@ -310,6 +339,26 @@
           "type": "string",
           "description": "Provenance note for the DRFM range offset."
         },
+        "rf_eirp_watts": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Explicit jammer RF EIRP, separate from the legacy ERP input."
+        },
+        "rf_frequency_mhz": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Center frequency for the explicit jammer RF emission."
+        },
+        "max_continuous_transmit_s": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Maximum continuous transmit burst before cooldown."
+        },
+        "cooldown_s": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Cooldown after stopping or exhausting a transmit burst."
+        },
         "is_active": {
           "type": "boolean",
           "description": "Active flag."
@@ -320,7 +369,48 @@
       "patternProperties": {
         "^_": {}
       },
-      "description": "Jammer inputs."
+      "description": "Jammer inputs.",
+      "dependentRequired": {
+        "rf_eirp_watts": [
+          "rf_frequency_mhz",
+          "bandwidth_mhz"
+        ],
+        "rf_frequency_mhz": [
+          "rf_eirp_watts",
+          "bandwidth_mhz"
+        ],
+        "max_continuous_transmit_s": [
+          "cooldown_s"
+        ],
+        "cooldown_s": [
+          "max_continuous_transmit_s"
+        ]
+      },
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "required": [
+                  "rf_eirp_watts"
+                ]
+              },
+              {
+                "required": [
+                  "rf_frequency_mhz"
+                ]
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "bandwidth_mhz": {
+                "exclusiveMinimum": 0
+              }
+            }
+          }
+        }
+      ]
     },
     "Countermeasures": {
       "type": "object",
@@ -372,6 +462,97 @@
         "^_": {}
       },
       "description": "Countermeasure inputs."
+    },
+    "Esm": {
+      "type": "object",
+      "properties": {
+        "frequency_min_mhz": {
+          "type": "number",
+          "minimum": 0
+        },
+        "frequency_max_mhz": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sensitivity_dbm": {
+          "type": "number"
+        },
+        "max_detection_range_m": {
+          "type": "number",
+          "minimum": 0
+        },
+        "memory_s": {
+          "type": "number",
+          "minimum": 0
+        },
+        "confirmation_scans": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "require_rf_contract": {
+          "type": "boolean"
+        },
+        "classify_emitters": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "description": "Passive emitter observation thresholds and memory.",
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "frequency_min_mhz": {
+                  "const": 0
+                },
+                "frequency_max_mhz": {
+                  "const": 0
+                }
+              }
+            },
+            {
+              "required": [
+                "frequency_min_mhz",
+                "frequency_max_mhz"
+              ],
+              "properties": {
+                "frequency_min_mhz": {
+                  "exclusiveMinimum": 0
+                },
+                "frequency_max_mhz": {
+                  "exclusiveMinimum": 0
+                }
+              }
+            }
+          ]
+        },
+        {
+          "if": {
+            "required": [
+              "confirmation_scans"
+            ],
+            "properties": {
+              "confirmation_scans": {
+                "minimum": 2
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "memory_s"
+            ],
+            "properties": {
+              "memory_s": {
+                "exclusiveMinimum": 0
+              }
+            }
+          }
+        }
+      ]
     },
     "Vulnerability": {
       "type": "object",

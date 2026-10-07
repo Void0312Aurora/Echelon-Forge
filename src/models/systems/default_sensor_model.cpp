@@ -2,6 +2,7 @@
 #include "core/interfaces/environment_model.h"
 #include "components/basic/common.h"
 #include "components/systems/ew.h"
+#include "components/systems/rf_signal.h"
 #include "components/combat/common/weapon_common.h"
 #include "core/interfaces/stochastic_draw.h"
 #include "components/physics/geodesy.h"
@@ -114,13 +115,24 @@ double pd_from_snr_db(const Sensor &sensor, double snr_db) {
 
 constexpr double kReferenceJammerBandwidthMhz = 2000.0;
 
-double jammer_bandwidth_factor(const Jammer &jammer) {
+double jammer_bandwidth_factor(const Jammer &jammer, const Sensor &radar) {
     if (!std::isfinite(jammer.bandwidth_mhz) || jammer.bandwidth_mhz <= 0.0) {
         return 0.0;
     }
-    // The maintained Gen4 suite uses 2 GHz as its baseline. Until sensors
-    // carry an authored RF band, treat wider coverage as full-band and
-    // narrower coverage as the corresponding fraction of available power.
+    const bool jammer_has_rf = jammer.rf_eirp_watts != 0.0 || jammer.rf_frequency_mhz != 0.0;
+    if (jammer_has_rf) {
+        if (!rf_emission_valid(jammer.rf_eirp_watts, jammer.rf_frequency_mhz,
+                               jammer.bandwidth_mhz) ||
+            !rf_emission_valid(radar.rf_eirp_watts, radar.rf_frequency_mhz,
+                               radar.rf_bandwidth_mhz)) {
+            return 0.0;
+        }
+        const double overlap = rf_band_overlap(jammer.rf_frequency_mhz, jammer.bandwidth_mhz,
+                                               radar.rf_frequency_mhz, radar.rf_bandwidth_mhz);
+        return std::clamp(overlap / jammer.bandwidth_mhz, 0.0, 1.0);
+    }
+    // Legacy jammer definitions retain the maintained 2 GHz baseline and
+    // treat narrower coverage as the corresponding fraction of available power.
     return std::clamp(jammer.bandwidth_mhz / kReferenceJammerBandwidthMhz, 0.0, 1.0);
 }
 
@@ -140,13 +152,13 @@ bool jammer_covers_receiver(const Jammer &jammer, const Transform &jammer_transf
 
 bool jammer_suppresses_radar(const Jammer &jammer, const Transform &jammer_transform,
                              const Transform &receiver_transform, double target_rcs_m2,
-                             double distance_m) {
-    if (!jammer_installed(jammer) || !jammer.is_active ||
+                             const Sensor &radar, double distance_m, double current_time) {
+    if (!jammer_transmitting_at(jammer, current_time) ||
         (jammer.type != JammingType::NoiseBarrage && jammer.type != JammingType::NoiseSpot) ||
         !jammer_covers_receiver(jammer, jammer_transform, receiver_transform)) {
         return false;
     }
-    const double bandwidth_factor = jammer_bandwidth_factor(jammer);
+    const double bandwidth_factor = jammer_bandwidth_factor(jammer, radar);
     if (bandwidth_factor <= 0.0) {
         return false;
     }
@@ -181,15 +193,18 @@ bool entity_has_radar_emitter(const flecs::entity &entity, Sensor *out_emitter) 
 }
 
 bool entity_has_jammer_emitter(const flecs::entity &entity, double receiver_range_m,
-                               Sensor *out_emitter, double *out_erp_watts) {
+                               Sensor *out_emitter, double *out_erp_watts, double current_time) {
     const Jammer *jammer = entity.get<Jammer>();
-    if (!jammer || !jammer_transmitting(*jammer)) {
+    if (!jammer || !jammer_transmitting_at(*jammer, current_time)) {
         return false;
     }
     if (out_emitter) {
         *out_emitter = Sensor{};
         out_emitter->max_range = receiver_range_m;
         out_emitter->reference_range_m = receiver_range_m;
+        out_emitter->rf_eirp_watts = jammer->rf_eirp_watts;
+        out_emitter->rf_frequency_mhz = jammer->rf_frequency_mhz;
+        out_emitter->rf_bandwidth_mhz = jammer->bandwidth_mhz;
     }
     if (out_erp_watts) {
         *out_erp_watts = jammer->power_watts;
@@ -290,16 +305,38 @@ double esm_receiver_range_m(const flecs::entity &owner, const Sensor &esm_sensor
     return esm_sensor.max_range;
 }
 
-void record_esm_detection(ESMReceiver &owner_esm, flecs::entity emitter, const Sensor &esm_sensor,
+bool record_esm_detection(ESMReceiver &owner_esm, flecs::entity emitter, const Sensor &esm_sensor,
                           const Sensor &emitter_sensor, double emitter_power_proxy, bool is_jammer,
-                          double dist_m, double rel_bearing_deg) {
+                          double dist_m, double rel_bearing_deg, double current_time) {
     const double max_range = owner_esm.max_detection_range_m > 0.0
                                  ? owner_esm.max_detection_range_m
                                  : std::max(esm_sensor.max_range, emitter_sensor.max_range * 2.0);
     if (dist_m > max_range) {
-        return;
+        return false;
     }
+    const bool has_rf =
+        rf_emission_valid(emitter_sensor.rf_eirp_watts, emitter_sensor.rf_frequency_mhz,
+                          emitter_sensor.rf_bandwidth_mhz);
+    const bool authored_rf = emitter_sensor.rf_eirp_watts != 0.0 ||
+                             emitter_sensor.rf_frequency_mhz != 0.0 ||
+                             (!is_jammer && emitter_sensor.rf_bandwidth_mhz != 0.0);
+    if (!has_rf && (owner_esm.require_rf_contract || authored_rf)) return false;
+    double received_dbm = 0.0;
+    if (has_rf) {
+        if (owner_esm.frequency_max_mhz > owner_esm.frequency_min_mhz &&
+            rf_band_overlap(emitter_sensor.rf_frequency_mhz, emitter_sensor.rf_bandwidth_mhz,
+                            (owner_esm.frequency_min_mhz + owner_esm.frequency_max_mhz) * 0.5,
+                            owner_esm.frequency_max_mhz - owner_esm.frequency_min_mhz) <= 0.0) {
+            return false;
+        }
+        received_dbm = rf_received_power_dbm(emitter_sensor.rf_eirp_watts,
+                                             emitter_sensor.rf_frequency_mhz, dist_m);
+        if (received_dbm < owner_esm.sensitivity_dbm) return false;
+    }
+    // RWR consumers retain their existing dimensionless proxy scale. Physical
+    // received power is carried separately, so mW never mixes with legacy scores.
     const double emitter_strength = emitter_power_proxy / std::max(1.0, dist_m * dist_m);
+    if (owner_esm.memory_s > 0.0) expire_esm_detections(owner_esm, current_time);
     auto existing = std::find_if(
         owner_esm.detections.begin(), owner_esm.detections.end(), [&](const EmitterDetection &det) {
             return det.source_id == emitter.id() && det.is_jammer == is_jammer;
@@ -308,37 +345,71 @@ void record_esm_detection(ESMReceiver &owner_esm, flecs::entity emitter, const S
     det.source_id = emitter.id();
     det.bearing_deg = rel_bearing_deg;
     det.signal_strength = emitter_strength;
-    const bool classified = owner_esm.classify_emitters;
+    det.received_power_dbm = received_dbm;
+    det.has_rf_power = has_rf;
+    det.sensitivity_margin_db = has_rf ? received_dbm - owner_esm.sensitivity_dbm : 0.0;
+    det.observed_time_s = current_time;
+    const int required = std::max(1, owner_esm.confirmation_scans);
+    det.confirmation_count =
+        existing == owner_esm.detections.end()
+            ? 1
+            : std::min(required, existing->confirmation_count +
+                                     (current_time > existing->observed_time_s ? 1 : 0));
+    det.confidence = std::min(1.0, static_cast<double>(det.confirmation_count) / required);
+    const bool classified = owner_esm.classify_emitters && det.confidence >= 1.0;
+    det.classification_known = classified;
     det.is_radar_lock = !is_jammer && classified && emitter.has<Missile>();
     det.is_missile_guidance = !is_jammer && classified && emitter.has<Missile>();
     det.is_jammer = is_jammer;
     if (existing == owner_esm.detections.end()) {
         owner_esm.detections.push_back(det);
-    } else if (det.signal_strength >= existing->signal_strength) {
+    } else if (current_time > existing->observed_time_s ||
+               (det.has_rf_power != existing->has_rf_power ? det.has_rf_power
+                : det.has_rf_power ? det.received_power_dbm >= existing->received_power_dbm
+                                   : det.signal_strength >= existing->signal_strength)) {
         *existing = det;
     }
+    return true;
 }
 
-void append_esm_detection_from_emitter(flecs::entity owner, flecs::entity emitter,
+bool append_esm_detection_from_emitter(flecs::entity owner, flecs::entity emitter,
                                        const Sensor &esm_sensor, double dist_m,
-                                       double rel_bearing_deg) {
+                                       double rel_bearing_deg, double current_time) {
     ESMReceiver *owner_esm = owner.get_mut<ESMReceiver>();
     if (!owner_esm) {
-        return;
+        return false;
     }
-    Sensor emitter_radar{};
-    if (entity_has_radar_emitter(emitter, &emitter_radar)) {
-        record_esm_detection(*owner_esm, emitter, esm_sensor, emitter_radar,
-                             std::max(1.0, emitter_radar.reference_range_m), false, dist_m,
-                             rel_bearing_deg);
+    bool detected = false;
+    const auto record_radar = [&](const Sensor &radar) {
+        if (radar.type == static_cast<int>(SensorType::Radar)) {
+            detected |= record_esm_detection(*owner_esm, emitter, esm_sensor, radar,
+                                             std::max(1.0, radar.reference_range_m), false, dist_m,
+                                             rel_bearing_deg, current_time);
+        }
+    };
+    if (const Sensor *radar = emitter.get<Sensor>()) record_radar(*radar);
+    if (const auto *mounted = emitter.get<MountedSensors>()) {
+        for (const auto &mount : mounted->mounts)
+            record_radar(mount.sensor);
     }
     Sensor jammer_emitter{};
     double jammer_erp_watts = 0.0;
     if (entity_has_jammer_emitter(emitter, esm_receiver_range_m(owner, esm_sensor), &jammer_emitter,
-                                  &jammer_erp_watts)) {
-        record_esm_detection(*owner_esm, emitter, esm_sensor, jammer_emitter,
-                             std::max(1.0, jammer_erp_watts), true, dist_m, rel_bearing_deg);
+                                  &jammer_erp_watts, current_time)) {
+        const Jammer *pod = emitter.get<Jammer>();
+        // Legacy pods retain the historical omnidirectional passive-emission proxy.
+        // Explicit RF EIRP is the main-beam value; no sidelobe model is authored.
+        const bool directional_rf =
+            rf_emission_valid(jammer_emitter.rf_eirp_watts, jammer_emitter.rf_frequency_mhz,
+                              jammer_emitter.rf_bandwidth_mhz);
+        if (pod && (!directional_rf || jammer_covers_receiver(*pod, *emitter.get<Transform>(),
+                                                              *owner.get<Transform>()))) {
+            detected |= record_esm_detection(*owner_esm, emitter, esm_sensor, jammer_emitter,
+                                             std::max(1.0, jammer_erp_watts), true, dist_m,
+                                             rel_bearing_deg, current_time);
+        }
     }
+    return detected;
 }
 
 class DefaultSensorModel : public ISensorModel {
@@ -482,7 +553,7 @@ class DefaultSensorModel : public ISensorModel {
                     Sensor emitter_radar{};
                     if (!entity_has_radar_emitter(target_e, &emitter_radar) &&
                         !entity_has_jammer_emitter(target_e, esm_receiver_range_m(owner, sensor),
-                                                   &emitter_radar, nullptr)) {
+                                                   &emitter_radar, nullptr, current_time)) {
                         return;
                     }
                     rcs = std::max(5.0, emitter_radar.reference_rcs_m2);
@@ -537,17 +608,17 @@ class DefaultSensorModel : public ISensorModel {
                     }
 
                     const Jammer *jammer = target_e.get<Jammer>();
-                    if (jammer &&
-                        jammer_suppresses_radar(*jammer, target_t, owner_transform, rcs, dist)) {
+                    if (jammer && jammer_suppresses_radar(*jammer, target_t, owner_transform, rcs,
+                                                          sensor, dist, current_time)) {
                         return;
                     }
-                    if (jammer && jammer_installed(*jammer) && jammer->is_active &&
+                    if (jammer && jammer_transmitting_at(*jammer, current_time) &&
                         jammer->type == JammingType::DeceptionDRFM &&
                         jammer_covers_receiver(*jammer, target_t, owner_transform) &&
-                        jammer_bandwidth_factor(*jammer) > 0.0) {
+                        jammer_bandwidth_factor(*jammer, sensor) > 0.0) {
                         const double burn_through_range =
                             jammer_burn_through_range_m(*jammer, rcs) /
-                            std::sqrt(jammer_bandwidth_factor(*jammer));
+                            std::sqrt(jammer_bandwidth_factor(*jammer, sensor));
                         if (dist > burn_through_range) {
                             noisy_range = std::max(0.0, noisy_range + jammer->drfm_range_offset_m);
                         }
@@ -586,8 +657,11 @@ class DefaultSensorModel : public ISensorModel {
                 if (sensor.type == static_cast<int>(SensorType::Radar)) {
                     append_rwr_detection_from_radar(sensor, owner, target_e, dist, false);
                 } else if (sensor.type == static_cast<int>(SensorType::ESM)) {
-                    append_esm_detection_from_emitter(owner, target_e, sensor, dist,
-                                                      normalize_angle_deg(noisy_bearing));
+                    if (!append_esm_detection_from_emitter(owner, target_e, sensor, dist,
+                                                           normalize_angle_deg(noisy_bearing),
+                                                           current_time)) {
+                        return;
+                    }
                 }
 
                 out_contacts.contacts.push_back(

@@ -393,6 +393,9 @@ void parse_sensor_json_fields(const nlohmann::json &s, Sensor *out_sensor,
     sensor.enable_ducting = s.value("enable_ducting", sensor.enable_ducting);
     sensor.sea_clutter_enabled = s.value("sea_clutter_enabled", sensor.sea_clutter_enabled);
     sensor.bearing_only = s.value("bearing_only", sensor.bearing_only);
+    sensor.rf_eirp_watts = s.value("rf_eirp_watts", sensor.rf_eirp_watts);
+    sensor.rf_frequency_mhz = s.value("rf_frequency_mhz", sensor.rf_frequency_mhz);
+    sensor.rf_bandwidth_mhz = s.value("rf_bandwidth_mhz", sensor.rf_bandwidth_mhz);
 
     sensor.type = parse_sensor_type_code(s.value("type", default_sensor_type));
     sensor.environment_domain =
@@ -1687,6 +1690,28 @@ bool validate_jammer_json_fields(const nlohmann::json &jammer, std::string *erro
     if (!validate_number("drfm_range_offset_m", [](double) { return true; }, "finite")) {
         return false;
     }
+    if (jammer.contains("max_continuous_transmit_s") || jammer.contains("cooldown_s")) {
+        if (!jammer.contains("max_continuous_transmit_s")) {
+            if (error)
+                *error = "jammer.max_continuous_transmit_s must be authored with the "
+                         "burst/cooldown group";
+            return false;
+        }
+        if (!validate_number(
+                "max_continuous_transmit_s", [](double value) { return value > 0.0; },
+                "finite and greater than 0")) {
+            return false;
+        }
+        if (!jammer.contains("cooldown_s")) {
+            if (error) *error = "jammer.cooldown_s must be authored with the burst/cooldown group";
+            return false;
+        }
+        if (!validate_number(
+                "cooldown_s", [](double value) { return value >= 0.0; },
+                "finite and greater than or equal to 0")) {
+            return false;
+        }
+    }
     return true;
 }
 
@@ -1702,6 +1727,10 @@ bool parse_electronic_warfare_json_fields(const nlohmann::json &entry, UnitDefin
         if (!validate_jammer_json_fields(jammer, error)) {
             return false;
         }
+        def.jammer_data.rf_eirp_watts =
+            jammer.value("rf_eirp_watts", def.jammer_data.rf_eirp_watts);
+        def.jammer_data.rf_frequency_mhz =
+            jammer.value("rf_frequency_mhz", def.jammer_data.rf_frequency_mhz);
         def.jammer_data.is_active = jammer.value("is_active", def.jammer_data.is_active);
         def.jammer_data.power_watts = jammer.value("power_watts", def.jammer_data.power_watts);
         def.jammer_data.bandwidth_mhz =
@@ -1714,6 +1743,9 @@ bool parse_electronic_warfare_json_fields(const nlohmann::json &entry, UnitDefin
             jammer.value("spot_power_gain", def.jammer_data.spot_power_gain);
         def.jammer_data.drfm_range_offset_m =
             jammer.value("drfm_range_offset_m", def.jammer_data.drfm_range_offset_m);
+        def.jammer_data.max_continuous_transmit_s =
+            jammer.value("max_continuous_transmit_s", def.jammer_data.max_continuous_transmit_s);
+        def.jammer_data.cooldown_s = jammer.value("cooldown_s", def.jammer_data.cooldown_s);
         const std::string jammer_type = jammer.value("type", "NoiseBarrage");
         if (jammer_type == "NoiseSpot") {
             def.jammer_data.type = JammingType::NoiseSpot;
@@ -1762,6 +1794,15 @@ bool parse_electronic_warfare_json_fields(const nlohmann::json &entry, UnitDefin
     if (entry.contains("esm") && entry["esm"].is_object()) {
         const auto &esm = entry["esm"];
         def.has_esm_data = true;
+        def.esm_data.frequency_min_mhz =
+            esm.value("frequency_min_mhz", def.esm_data.frequency_min_mhz);
+        def.esm_data.frequency_max_mhz =
+            esm.value("frequency_max_mhz", def.esm_data.frequency_max_mhz);
+        def.esm_data.memory_s = esm.value("memory_s", def.esm_data.memory_s);
+        def.esm_data.confirmation_scans =
+            esm.value("confirmation_scans", def.esm_data.confirmation_scans);
+        def.esm_data.require_rf_contract =
+            esm.value("require_rf_contract", def.esm_data.require_rf_contract);
         def.esm_data.sensitivity_dbm = esm.value("sensitivity_dbm", def.esm_data.sensitivity_dbm);
         def.esm_data.max_detection_range_m =
             esm.value("max_detection_range_m", def.esm_data.max_detection_range_m);
@@ -1772,6 +1813,83 @@ bool parse_electronic_warfare_json_fields(const nlohmann::json &entry, UnitDefin
 }
 } // namespace
 
+// Validate only runtime-consumed RF and ESM declarations. An absent RF group is legacy.
+bool validate_rf_emission(const nlohmann::json &node, const char *band_key, std::string *error) {
+    if (!node.is_object()) return true;
+    if (!node.contains("rf_eirp_watts") && !node.contains("rf_frequency_mhz") &&
+        !node.contains("rf_bandwidth_mhz"))
+        return true;
+    for (const char *key : {"rf_eirp_watts", "rf_frequency_mhz", band_key}) {
+        if (!node.contains(key) || !node[key].is_number() ||
+            !std::isfinite(node[key].get<double>()) || node[key].get<double>() <= 0.0) {
+            if (error)
+                *error =
+                    std::string(key) + " must be authored, finite and positive for RF emission";
+            return false;
+        }
+    }
+    if (std::string(band_key) == "bandwidth_mhz" && node.contains("rf_bandwidth_mhz")) {
+        if (error) *error = "jammer RF emission uses bandwidth_mhz, not rf_bandwidth_mhz";
+        return false;
+    }
+    return true;
+}
+
+bool validate_rf_content(const nlohmann::json &entry, std::string *error) {
+    if (entry.contains("sensor") &&
+        !validate_rf_emission(entry["sensor"], "rf_bandwidth_mhz", error))
+        return false;
+    if (entry.contains("mounted_sensors") && entry["mounted_sensors"].is_array()) {
+        for (const auto &mount : entry["mounted_sensors"]) {
+            if (mount.is_object() && mount.contains("sensor") &&
+                !validate_rf_emission(mount["sensor"], "rf_bandwidth_mhz", error))
+                return false;
+        }
+    }
+    if (entry.contains("jammer") && !validate_rf_emission(entry["jammer"], "bandwidth_mhz", error))
+        return false;
+    if (!entry.contains("esm")) return true;
+    const auto &esm = entry["esm"];
+    if (!esm.is_object()) {
+        if (error) *error = "esm must be an object";
+        return false;
+    }
+    for (const char *key : {"frequency_min_mhz", "frequency_max_mhz", "memory_s",
+                            "max_detection_range_m", "sensitivity_dbm"}) {
+        if (esm.contains(key) &&
+            (!esm[key].is_number() || !std::isfinite(esm[key].get<double>()) ||
+             (std::string(key) != "sensitivity_dbm" && esm[key].get<double>() < 0.0))) {
+            if (error)
+                *error =
+                    std::string(key) + " must be finite (and nonnegative except sensitivity_dbm)";
+            return false;
+        }
+    }
+    for (const char *key : {"classify_emitters", "require_rf_contract"}) {
+        if (esm.contains(key) && !esm[key].is_boolean()) {
+            if (error) *error = std::string(key) + " must be boolean";
+            return false;
+        }
+    }
+    if (esm.contains("confirmation_scans") &&
+        (!esm["confirmation_scans"].is_number_integer() ||
+         esm["confirmation_scans"].get<double>() < 1.0 ||
+         esm["confirmation_scans"].get<double>() > std::numeric_limits<int>::max())) {
+        if (error) *error = "confirmation_scans must be a positive int";
+        return false;
+    }
+    const double lo = esm.value("frequency_min_mhz", 0.0), hi = esm.value("frequency_max_mhz", 0.0);
+    if (!(lo == 0.0 && hi == 0.0) && !(hi > lo && lo > 0.0)) {
+        if (error) *error = "ESM frequency bounds must both be zero or positive and ordered";
+        return false;
+    }
+    if (esm.value("confirmation_scans", 1) > 1 && esm.value("memory_s", 0.0) <= 0.0) {
+        if (error) *error = "ESM multiple confirmation scans require positive memory_s";
+        return false;
+    }
+    return true;
+}
+
 // Helper to parse a single JSON object (unit definition)
 bool parse_unit_json(
     const nlohmann::json &entry, UnitDefinition &def, std::string *error,
@@ -1781,6 +1899,7 @@ bool parse_unit_json(
         return false;
     }
 
+    if (!validate_rf_content(entry, error)) return false;
     std::string type_str = entry["type"].get<std::string>();
     if (!parse_unit_type(type_str, &def.type) || def.type == UnitType::Unknown) {
         if (error) *error = "Unknown unit type: " + type_str;

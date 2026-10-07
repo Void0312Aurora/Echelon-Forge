@@ -24,6 +24,7 @@ from python.mission_obs_taxonomy import (
 AIR_SCRIPTED_MISSION_MODE = MISSION_OBS_BASIC
 AIR_SCRIPTED_MAX_CONTACTS = 8
 AIR_SCRIPTED_MAX_RWR = 8
+AIR_SCRIPTED_MAX_ESM = 8
 _COMMAND_OWNED_MISSION_FIELDS = frozenset(
     {
         "authorization_to_fire",
@@ -124,6 +125,30 @@ def build_air_rwr_matrix(observation: Any, *, max_rwr: int = AIR_SCRIPTED_MAX_RW
     return out
 
 
+def build_air_esm_matrix(observation: Any, *, max_esm: int = AIR_SCRIPTED_MAX_ESM) -> np.ndarray:
+    """Project passive ESM rows without range, position, or emitter identity."""
+
+    out = np.zeros((int(max_esm), 10), dtype=np.float32)
+    rows = list(getattr(observation, "esm_detections", ()) or ())[: int(max_esm)]
+    for index, detection in enumerate(rows):
+        confidence = _float_field(detection, "confidence")
+        known = bool(_bool_field(detection, "classification_known")) and confidence >= 1.0
+        fresh = _float_field(detection, "age_s") <= 1.0e-9
+        out[index] = [
+            _float_field(detection, "bearing_deg"),
+            _float_field(detection, "received_power_dbm"),
+            _bool_field(detection, "has_rf_power"),
+            _float_field(detection, "sensitivity_margin_db"),
+            _float_field(detection, "age_s"),
+            _float_field(detection, "confidence"),
+            _bool_field(detection, "classification_known"),
+            _bool_field(detection, "is_jammer") if known else 0.0,
+            _bool_field(detection, "is_lock") if known and fresh else 0.0,
+            _bool_field(detection, "is_guidance") if known and fresh else 0.0,
+        ]
+    return np.nan_to_num(out, nan=0.0, posinf=0.0, neginf=0.0)
+
+
 def build_air_mission_vector(
     command: Any,
     *,
@@ -194,16 +219,21 @@ def build_air_scripted_observation(
     ils: Sequence[float] = (0.0, 0.0, 0.0, 0.0),
     max_contacts: int = AIR_SCRIPTED_MAX_CONTACTS,
     max_rwr: int = AIR_SCRIPTED_MAX_RWR,
+    max_esm: int = AIR_SCRIPTED_MAX_ESM,
+    include_esm: bool = False,
     mission_facts: Mapping[str, Any] | None = None,
 ) -> dict[str, np.ndarray]:
     """Build the neutral scripted Air observation dictionary."""
 
-    return {
+    result = {
         "instruments": build_air_instrument_vector(instrument_state, ils=ils),
         "contacts": build_air_contact_matrix(observation, max_contacts=max_contacts),
         "rwr": build_air_rwr_matrix(observation, max_rwr=max_rwr),
         "mission": build_air_mission_vector(command, mode=mode, mission_facts=mission_facts),
     }
+    if include_esm:
+        result["esm"] = build_air_esm_matrix(observation, max_esm=max_esm)
+    return result
 
 
 def _field(value: Any, name: str, default: Any = 0.0) -> Any:
@@ -238,8 +268,10 @@ def _bool_field(value: Any, name: str) -> float:
 __all__ = [
     "AIR_SCRIPTED_MAX_CONTACTS",
     "AIR_SCRIPTED_MAX_RWR",
+    "AIR_SCRIPTED_MAX_ESM",
     "AIR_SCRIPTED_MISSION_MODE",
     "build_air_contact_matrix",
+    "build_air_esm_matrix",
     "build_air_instrument_vector",
     "build_air_mission_vector",
     "build_air_rwr_matrix",

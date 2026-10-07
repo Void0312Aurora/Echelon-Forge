@@ -129,7 +129,14 @@ void register_nested_value_reflection(flecs::world &ecs) {
         .member<double>("signal_strength")
         .member<bool>("is_radar_lock")
         .member<bool>("is_missile_guidance")
-        .member<bool>("is_jammer");
+        .member<bool>("is_jammer")
+        .member<double>("received_power_dbm")
+        .member<bool>("has_rf_power")
+        .member<double>("sensitivity_margin_db")
+        .member<double>("observed_time_s")
+        .member<double>("confidence")
+        .member<int>("confirmation_count")
+        .member<bool>("classification_known");
     ecs.component<WeaponStation>()
         .member<int>("station_id")
         .member<bool>("is_occupied")
@@ -880,7 +887,13 @@ void register_resource_scalar_reflection(flecs::world &ecs) {
         .member<double>("transmit_start_time_s")
         .member<double>("burn_through_reference_m")
         .member<double>("spot_power_gain")
-        .member<double>("drfm_range_offset_m");
+        .member<double>("drfm_range_offset_m")
+        .member<double>("rf_eirp_watts")
+        .member<double>("rf_frequency_mhz")
+        .member<double>("max_continuous_transmit_s")
+        .member<double>("cooldown_s")
+        .member<double>("transmit_elapsed_s")
+        .member<double>("cooldown_until_time_s");
     ecs.component<Countermeasures>()
         .member<int>("chaff_count")
         .member<int>("flare_count")
@@ -993,7 +1006,12 @@ void register_sensor_and_queue_reflection(flecs::world &ecs) {
         .member<double>("sensitivity_dbm")
         .member<double>("max_detection_range_m")
         .member<bool>("classify_emitters")
-        .member<std::vector<EmitterDetection>>("detections");
+        .member<std::vector<EmitterDetection>>("detections")
+        .member<double>("frequency_min_mhz")
+        .member<double>("frequency_max_mhz")
+        .member<double>("memory_s")
+        .member<int>("confirmation_scans")
+        .member<bool>("require_rf_contract");
     ecs.component<Loadout>().member<std::vector<WeaponStation>>("stations");
     ecs.component<TrackDatabase>()
         .member<std::vector<SystemTrack>>("tracks")
@@ -1030,11 +1048,13 @@ void register_sensor_and_queue_reflection(flecs::world &ecs) {
         .member<double>("ducting_max_bonus_m")
         .member<double>("bearing_only_min_range_m")
         .member<int>("environment_domain")
-        .member<bool>("enforce_radar_horizon")
         .member<bool>("enable_ducting")
         .member<bool>("sea_clutter_enabled")
         .member<bool>("bearing_only")
-        .member<int>("type");
+        .member<int>("type")
+        .member<double>("rf_eirp_watts")
+        .member<double>("rf_frequency_mhz")
+        .member<double>("rf_bandwidth_mhz");
     ecs.component<SensorMount>().member<Sensor>("sensor").member<std::string>("label");
     ecs.component<std::vector<SensorMount>>().opaque(vector_support<SensorMount>);
     ecs.component<MountedSensors>().member<std::vector<SensorMount>>("mounts");
@@ -1119,7 +1139,11 @@ void register_instrument_reflection(flecs::world &ecs) {
         .member<double>("position_uncertainty_m")
         .member<double>("gear_stress")
         .member<bool>("gear_collapsed")
-        .member<bool>("on_runway");
+        .member<bool>("on_runway")
+        .member<bool>("jammer_budget_enabled")
+        .member<double>("jammer_transmit_remaining_s")
+        .member<double>("jammer_cooldown_remaining_s")
+        .member<double>("jammer_snapshot_time_s");
 }
 
 void register_air_tuning_reflection(flecs::world &ecs) {

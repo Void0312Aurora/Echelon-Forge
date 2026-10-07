@@ -187,6 +187,10 @@
       "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/DefinitionRef",
       "description": "Sensor reference."
     },
+    "esm": {
+      "$ref": "urn:echelon-forge:equipment-common:v1#/$defs/Esm",
+      "description": "Inline passive ESM receiver configuration."
+    },
     "sensor_refs": {
       "type": "array",
       "items": {

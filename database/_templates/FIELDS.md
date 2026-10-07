@@ -87,7 +87,10 @@ Based on the repository aircraft examples. Units follow the field suffix unless 
 | `ship_platform.added_resistance_fraction_sea_state_6` | fraction | Added resistance at sea state 6. |
 | `ship_platform.crew` | persons | Crew count. |
 | `sensor_ref`, `sensor_refs[]` | reference(s) | Ship sensor definitions. |
-| `esm.sensitivity_dbm`, `.max_detection_range_m`, `.classify_emitters` | dBm, m, boolean | Passive ESM sensitivity, detection range, and classification behavior. |
+| `esm.frequency_min_mhz`, `.frequency_max_mhz` | MHz | Optional receiver band bounds; both zero means unrestricted. |
+| `esm.sensitivity_dbm`, `.max_detection_range_m` | dBm, m | Passive ESM threshold and range ceiling. RF-backed observations use free-space received power at the authored receiver sensitivity. |
+| `esm.memory_s`, `.confirmation_scans` | s, scans | Retained bearing age and distinct-scan confirmation requirement. Multiple scans require positive memory. |
+| `esm.require_rf_contract`, `.classify_emitters` | boolean | Reject emitters without explicit RF inputs; disclose emitter classification only after required confirmations. |
 | `command_link.latency_s`, `.drop_prob` | s, probability | Command-link latency and loss probability. |
 | `data_link_network_id` | integer | Example network identifier; current materialization may overwrite it. |
 | `naval_stores.*_current`, `*_max` | abstract units | Current and maximum fuel, missile, and dry-cargo store levels. |
@@ -170,6 +173,7 @@ Based on the repository aircraft examples. Units follow the field suffix unless 
 | `max_range`, `fov_deg`, `scan_period` | m, deg, s | Detection range, field of view, and scan cadence. |
 | `detection_prob`, `bearing_noise_std`, `range_noise_std` | probability, deg, m | Detection probability and measurement noise. |
 | `track_memory_s`, `range_power`, `aspect_influence`, `doppler_notch_width` | s, model-defined, model-defined, model-defined | Track retention and simplified radar terms. |
+| `rf_eirp_watts`, `rf_frequency_mhz`, `rf_bandwidth_mhz` | W EIRP, MHz, MHz | Optional emission contract. Omit all three for the legacy proxy; an authored group must be complete, finite, and positive. An ESM receiver can reject missing groups with `require_rf_contract`. |
 
 ### EW Suite
 
@@ -178,7 +182,9 @@ Based on the repository aircraft examples. Units follow the field suffix unless 
 | `rwr.sensitivity_dbm`, `.detect_band`, `.library_generation`, `.is_active` | dBm, band, generation, boolean | RWR sensitivity, band coverage, library generation, and activation. |
 | `jammer.power_watts`, `.bandwidth_mhz`, `.type`, `.effective_angle`, `.is_active` | W, MHz, string, deg, boolean | Jammer output, bandwidth, mode, effective angle, and activation. |
 | `jammer.burn_through_reference_m`, `.spot_power_gain`, `.drfm_range_offset_m` | m, multiplier, m | Authored burn-through calibration, NoiseSpot concentration gain, and DRFM false-target range offset. The first two must be finite and greater than 0; the DRFM offset may be signed but must be finite. |
+| `jammer.max_continuous_transmit_s`, `.cooldown_s` | s, s | Optional transmit burst and cooldown budget. Author both together; burst must be positive and cooldown may be zero. |
 | `jammer.*_provenance` | string | Provenance notes for the authored jammer calibration fields. |
+| `jammer.rf_eirp_watts`, `.rf_frequency_mhz` | W EIRP, MHz | Optional explicit RF contract. EIRP describes a main-beam value; legacy `power_watts` remains a separate ERP-like jamming input. |
 | `countermeasures.chaff_count`, `.flare_count`, `.release_interval`, `.auto_mode` | count, count, s, boolean | Countermeasure inventory and release behavior. |
 | `countermeasures.chaff_rcs_m2`, `.flare_ir_intensity`, `.chaff_lifetime_s`, `.flare_lifetime_s` | m^2, relative units, s, s | Authored expendable signatures and persistence durations; each numeric value must be finite and greater than 0. |
 | `countermeasures.provenance` | string | Provenance note for countermeasure signature and lifetime inputs. |

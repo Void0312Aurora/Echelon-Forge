@@ -145,6 +145,8 @@ class _WorldBatchVecEnvVisualBackendMixin:
                 "rwr_history",
                 "mission_history",
                 "proprio_history",
+                "ew_state_history",
+                "temporal_valid_mask",
             ):
                 if key in self.buf_obs:
                     obs_torch[key] = torch.as_tensor(self.buf_obs[key], device=target_device)

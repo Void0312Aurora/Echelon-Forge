@@ -358,6 +358,7 @@ nlohmann::json encode_missile(const Missile &missile) {
     return encoded;
 }
 
+// ECS truth migration implementation: decode_missile
 bool decode_missile(const nlohmann::json &encoded, Missile *missile) {
     if (missile == nullptr || !encoded.is_object()) {
         return false;
@@ -1700,6 +1701,56 @@ bool validate_component_payload(ecs_world_t *world, std::string_view component_n
     return valid;
 }
 
+// ECS truth migration implementation: normalize_legacy_sensor_reflection
+// The historical Sensor meta table inserted a bool absent from the struct.
+// Its four serialized bools therefore contain enable/sea/bearing/padding.
+// Normalize that exact legacy shape before strict decoding; current RF shapes
+// must never accept the retired field as a way to bypass their schema.
+bool normalize_legacy_sensor_reflection(nlohmann::json &sensor) {
+    if (!sensor.is_object() || !sensor.contains("enforce_radar_horizon")) return true;
+    for (const char *key :
+         {"enforce_radar_horizon", "enable_ducting", "sea_clutter_enabled", "bearing_only"}) {
+        if (!sensor.contains(key) || !sensor[key].is_boolean()) return false;
+    }
+    for (const char *key : {"rf_eirp_watts", "rf_frequency_mhz", "rf_bandwidth_mhz"}) {
+        if (sensor.contains(key)) return false;
+    }
+    const bool enable = sensor["enforce_radar_horizon"].get<bool>();
+    const bool sea = sensor["enable_ducting"].get<bool>();
+    const bool bearing = sensor["sea_clutter_enabled"].get<bool>();
+    sensor.erase("enforce_radar_horizon");
+    sensor["enable_ducting"] = enable;
+    sensor["sea_clutter_enabled"] = sea;
+    sensor["bearing_only"] = bearing;
+    return true;
+}
+
+// ECS truth migration implementation: normalize_legacy_ecs_sensors
+bool normalize_legacy_ecs_sensors(nlohmann::json &document) {
+    for (auto &result : document.at("results")) {
+        if (!result.is_object() || !result.contains("components") ||
+            !result["components"].is_object()) {
+            return false;
+        }
+        auto &components = result["components"];
+        if (components.contains("Sensor") &&
+            !normalize_legacy_sensor_reflection(components["Sensor"])) {
+            return false;
+        }
+        if (components.contains("MountedSensors") && components["MountedSensors"].is_object() &&
+            components["MountedSensors"].contains("mounts") &&
+            components["MountedSensors"]["mounts"].is_array()) {
+            for (auto &mount : components["MountedSensors"]["mounts"]) {
+                if (mount.is_object() && mount.contains("sensor") &&
+                    !normalize_legacy_sensor_reflection(mount["sensor"])) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
 bool SimulationKernelStateOwnerBridge::restore_world(SimulationKernel &kernel,
                                                      const std::vector<std::uint8_t> &payload) {
     // Validate and stage the complete document before mutating the live ECS.
@@ -1730,6 +1781,7 @@ bool SimulationKernelStateOwnerBridge::restore_world(SimulationKernel &kernel,
             !document.at("child_of").is_array()) {
             return false;
         }
+        if (!normalize_legacy_ecs_sensors(document)) return false;
         std::unordered_map<std::string, std::uint64_t> logical_entities;
         logical_entities.reserve(document.at("results").size());
         std::uint64_t logical_entity_id = 1;

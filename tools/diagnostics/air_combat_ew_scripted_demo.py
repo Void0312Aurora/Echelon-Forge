@@ -54,10 +54,9 @@ RESPONSE_DOCTRINES = ("observe_only", "countermeasure_ready", "chaff_only", "fla
 PLAYABLE_BOUNDARY = (
     "bounded_terminal_adapter: one scripted aircraft closes a native terminal "
     "objective while its EW tail is accepted by the native dispenser and jammer "
-    "owners. Chaff and flare only consume inventory (no seeker decoy effect), "
-    "jammer burn-through is uncalibrated, the opponent is a generic Aircraft "
-    "surrogate, and air_ew_hybrid_v1/v2 are not canonical action modes; this "
-    "is not a playable EW claim."
+    "owners. This fixture measures chaff/flare inventory changes rather than "
+    "seeker seduction, and jammer transmission rather than calibrated suppression. "
+    "The opponent is a generic Aircraft surrogate; this is not a playable EW claim."
 )
 
 

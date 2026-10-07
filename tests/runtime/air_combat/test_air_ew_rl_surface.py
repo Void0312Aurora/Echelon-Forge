@@ -1,7 +1,8 @@
 """Opt-in RL observation projection for the versioned Air EW state.
 
 Pins the bounded slice that exposes the opt-in ``ew_state`` observation
-component while leaving canonical env-config action admission unchanged:
+component; canonical env-config admission is separately pinned by
+``test_air_ew_admission.py``:
 
 * a world-batch env built with ``air_ew_hybrid_v2`` steps and its native
   PilotAction carries the countermeasure/jammer tail (read back from the
@@ -109,6 +110,9 @@ class AirEWHybridV2WorldBatchTests(unittest.TestCase):
 
       inst = env.envs[0].last_inst
       self.assertGreaterEqual(int(inst.jammer_mode), 0, "premise: the scenario F-16C carries a jammer pod")
+      self.assertFalse(bool(inst.jammer_budget_enabled))
+      self.assertEqual(float(inst.jammer_transmit_remaining_s), -1.0)
+      self.assertEqual(float(inst.jammer_cooldown_remaining_s), -1.0)
 
       # Transmit with spot noise (technique code 1.x floors to 1).
       action = _cruise_action(16)
@@ -119,6 +123,7 @@ class AirEWHybridV2WorldBatchTests(unittest.TestCase):
       self.assertTrue(bool(inst.jammer_transmitting))
       self.assertEqual(int(inst.jammer_mode), 1)
       self.assertGreaterEqual(float(inst.jammer_transmit_start_time_s), 0.0)
+      self.assertGreaterEqual(float(inst.jammer_snapshot_time_s), 0.0)
 
       # Releasing the transmit switch stands the pod down.
       env.step(_cruise_action(16))
@@ -418,7 +423,7 @@ class AirEWPolicyStackTests(unittest.TestCase):
     finally:
       env.close()
 
-  def test_temporal_extractor_refuses_ew_state_explicitly(self) -> None:
+  def test_temporal_extractor_consumes_ew_state_history_and_valid_mask(self) -> None:
     if PPO is None:
       self.skipTest("stable_baselines3 is not available in the active interpreter")
     from gymnasium import spaces
@@ -437,8 +442,9 @@ class AirEWPolicyStackTests(unittest.TestCase):
       include_ew_state=True,
     )
     self.assertIsInstance(space, spaces.Dict)
-    with self.assertRaisesRegex(ValueError, "does not consume the opt-in 'ew_state'"):
-      TemporalTransformerExtractor(space, features_dim=32, n_heads=4, n_layers=1)
+    extractor = TemporalTransformerExtractor(space, features_dim=32, n_heads=4, n_layers=1)
+    self.assertTrue(extractor.has_ew_state)
+    self.assertEqual(int(extractor.type_embed.num_embeddings), 6)
 
 
 if __name__ == "__main__":

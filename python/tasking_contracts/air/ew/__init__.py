@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from .formation import AirFormationEWRuntime, AirFormationEWRoleOrder
 from .model import (
     AirScriptedEWActionModel,
     AirScriptedEWIntent,
@@ -11,6 +12,8 @@ from .model import (
 )
 
 __all__ = [
+    "AirFormationEWRuntime",
+    "AirFormationEWRoleOrder",
     "AirScriptedEWActionModel",
     "AirScriptedEWIntent",
     "AirScriptedEWModel",

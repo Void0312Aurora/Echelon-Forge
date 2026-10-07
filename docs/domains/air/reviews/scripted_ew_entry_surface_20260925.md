@@ -6,6 +6,44 @@
 - Scope: entry surface for an RL-independent scripted electronic-warfare role
 - Verdict: `entry_surface_incomplete`
 
+## 2026-10-07 admission and scoped terminal update
+
+The E1-E5 completion stack now covers passive RF/ESM semantics, bounded jammer
+budgets, EW temporal history, shared command delivery and bounded formation
+roles. E5 registers `air_ew_hybrid_v1/v2` in canonical `ACTION_MODES`, preserving
+the old registry order and action prefix. Config/CLI, single/cooperative training
+factories, native resource/jammer state and standard Box-action PPO updates pass
+the focused admission gate. The specialized 12D hybrid policy still rejects
+14/16D EW spaces. See the [action contract](../standards/pilot_action_contract.md).
+
+The dated probes below retain their original acceptance scope; their older
+statements that canonical admission or temporal EW history is absent are
+superseded by this update. The E6
+[frozen terminal receipt](../work/active/ew_completion/artifacts/ew_named_terminal_acceptance_20261007.json)
+closes both named single-aircraft and 2v2 engineering surrogates at two seeds,
+with native inventory/transmit readback and mandatory same-seed replay. Its
+validator rejects failure/timeout and missing or inconsistent evidence; the
+focused demo/acceptance selection passes 34 tests.
+
+This acceptance does not measure seeker seduction or radar suppression within
+the terminal objective, nor establish EW's causal contribution to a win. The
+broader effect/non-surrogate/visualization gates and stack review remain open,
+so `entry_surface_incomplete` and the capability label stay unchanged. No
+calibrated platform effect or learned-policy success is claimed. Older statements
+about missing canonical admission, jammer ownership, history or bounded terminal
+acceptance describe dated probes, not the current completion stack.
+
+## 2026-10-06 implementation scope
+
+PRs #99-#101 merged the data-driven burn-through, pod main-beam geometry,
+NoiseSpot gain, same-target DRFM range offset, and transmitting-pod ESM proxy.
+These are bounded mechanism claims, not calibrated J/S or ghost tracks. The
+[authorized EW completion package](../work/active/ew_completion/README.md)
+tracks ESM RF/age/classification, resource/effect, temporal, cooperative,
+canonical-admission and terminal work in dependency order. Its first data and
+observation layers do not change this review's `entry_surface_incomplete`
+verdict or the Air capability label.
+
 ## 2026-10-05 recheck
 
 The entry surface remains incomplete, but the earlier jammer-owner statement

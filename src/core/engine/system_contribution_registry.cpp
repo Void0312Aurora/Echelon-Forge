@@ -181,7 +181,10 @@ void register_maws_update_system(flecs::world &ecs) {
 void register_esm_reset_system(flecs::world &ecs) {
     ecs.system<ESMReceiver>("ESM_Reset")
         .kind(flecs::PreUpdate)
-        .each([](flecs::entity, ESMReceiver &esm) { esm.detections.clear(); });
+        .each([](flecs::entity entity, ESMReceiver &esm) {
+            const auto *info = ecs_get_world_info(entity.world().c_ptr());
+            expire_esm_detections(esm, info ? static_cast<double>(info->world_time_total) : 0.0);
+        });
 }
 
 #define EF_DEFAULT_COMPONENT_CONTRIBUTIONS(X)                                                      \
