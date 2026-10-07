@@ -89,7 +89,7 @@ def test_leader_scripted_entry_uses_neutral_runtime_envelope() -> None:
     assert controller.runtime_report.domain == "air"
     assert controller.runtime_report.action_source == "decided"
     assert controller.runtime_report.decision_index == 2
-    assert controller.runtime_report.observation_version == "reset:1:step:1"
+    assert controller.runtime_report.observation_version == "obs:1:reset:1"
     first_runtime_agent = controller._runtime_agent
     controller.reset(observation, episode_seed=8)
     assert controller._runtime_agent is first_runtime_agent

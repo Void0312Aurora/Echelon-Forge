@@ -33,8 +33,11 @@ def test_air_scripted_cli_keeps_learned_wrapper_path_separate() -> None:
     source = CLI_PATH.read_text(encoding="utf-8")
     assert "if scripted:" in source
     assert "wrapper_class = None" in source
-    assert "get_action_wrapper_spec(train_config or {})" in source
-    assert "scripted_model.decide" in source
+    assert "resolve_execution_wrapper_spec(train_config or {})" in source
+    # Since b0bc8b66 the CLI drives the scripted model only through the neutral
+    # decision runtime, never by calling the model directly.
+    assert "scripted_runtime_agent.step(" in source
+    assert "scripted_model.decide" not in source
     assert "scripted_runtime_agent.close" in source
 
 

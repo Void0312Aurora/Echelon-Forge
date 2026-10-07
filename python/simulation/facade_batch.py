@@ -190,7 +190,7 @@ class FacadeBatchBackend:
     def air_scripted_observations(
         self,
         *,
-        mode: str = "nav_v2_cooperative_takeoff_v1",
+        mode: str | None = None,
         ils: Mapping[EntityKey, Sequence[float]] | None = None,
         mission_facts: Mapping[EntityKey, Mapping[str, Any]] | None = None,
         max_contacts: int = 8,
@@ -198,7 +198,9 @@ class FacadeBatchBackend:
     ) -> tuple[dict[str, Any], ...]:
         """Build neutral Air observations from native facade state."""
         self._require_ready()
-        from .air.observation import build_air_scripted_observation
+        from .air.observation import AIR_SCRIPTED_MISSION_MODE, build_air_scripted_observation
+
+        mission_mode = AIR_SCRIPTED_MISSION_MODE if mode is None else mode
 
         current = self.snapshot()
         commands = self.read_command_chain()["mission_commands"]
@@ -209,7 +211,7 @@ class FacadeBatchBackend:
                 observation,
                 instrument,
                 commands[index] if index < len(commands) else None,
-                mode=mode,
+                mode=mission_mode,
                 ils=ils_by_key.get(entity_key, (0.0, 0.0, 0.0, 0.0)),
                 mission_facts=facts_by_key.get(entity_key),
                 max_contacts=max_contacts,
