@@ -1011,6 +1011,7 @@ bool scalar_entity_reference_field(std::string_view field) {
         "ground_commander_id",
         "issuer_id",
         "lead_aircraft_id",
+        "missile_id",
         "msg_recipient",
         "owner_id",
         "partner_entity_id",
@@ -1049,7 +1050,8 @@ bool action_message_arg_is_entity_reference(const nlohmann::json &value) {
 }
 
 bool vector_entity_reference_field(std::string_view field) {
-    return field == "detected_radar_ids" || field == "locking_radar_ids";
+    return field == "detected_radar_ids" || field == "locking_radar_ids" ||
+           field == "missile_launch_source_ids";
 }
 
 bool encode_entity_references(nlohmann::json &value,
@@ -1059,10 +1061,21 @@ bool encode_entity_references(nlohmann::json &value,
     const auto encode_scalar = [&entity_keys, unresolved_detail](nlohmann::json &candidate,
                                                                  bool require_remap,
                                                                  std::string_view reference_field) {
-        if (!candidate.is_number_unsigned() && !candidate.is_number_integer()) {
+        std::uint64_t raw = 0;
+        if (candidate.is_string()) {
+            // Flecs emits generation-bearing uint64 ids as decimal strings.
+            // They still require logical rebinding after delete/recreate.
+            const auto &encoded = candidate.get_ref<const std::string &>();
+            const auto [end, error] =
+                std::from_chars(encoded.data(), encoded.data() + encoded.size(), raw);
+            if (error != std::errc{} || end != encoded.data() + encoded.size()) {
+                return false;
+            }
+        } else if (candidate.is_number_unsigned() || candidate.is_number_integer()) {
+            raw = candidate.get<std::uint64_t>();
+        } else {
             return true;
         }
-        const auto raw = candidate.get<std::uint64_t>();
         if (raw == 0) {
             return true;
         }

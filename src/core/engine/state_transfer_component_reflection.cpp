@@ -137,6 +137,10 @@ void register_nested_value_reflection(flecs::world &ecs) {
         .member<double>("confidence")
         .member<int>("confirmation_count")
         .member<bool>("classification_known");
+    ecs.component<MissileApproachWarning>()
+        .member<std::uint64_t>("source_id")
+        .member<std::uint64_t>("missile_id")
+        .member<double>("bearing_deg");
     ecs.component<WeaponStation>()
         .member<int>("station_id")
         .member<bool>("is_occupied")
@@ -176,6 +180,8 @@ void register_nested_value_reflection(flecs::world &ecs) {
 
     ecs.component<std::vector<Detection>>().opaque(vector_support<Detection>);
     ecs.component<std::vector<EmitterDetection>>().opaque(vector_support<EmitterDetection>);
+    ecs.component<std::vector<MissileApproachWarning>>().opaque(
+        vector_support<MissileApproachWarning>);
     ecs.component<std::vector<WeaponStation>>().opaque(vector_support<WeaponStation>);
     ecs.component<std::vector<SystemTrack>>().opaque(vector_support<SystemTrack>);
 }
@@ -1001,7 +1007,9 @@ void register_sensor_and_queue_reflection(flecs::world &ecs) {
         .member<double>("sensitivity_dbm")
         .member<std::vector<std::uint64_t>>("detected_radar_ids")
         .member<std::vector<std::uint64_t>>("locking_radar_ids")
-        .member<bool>("is_missile_launch");
+        .member<std::vector<std::uint64_t>>("missile_launch_source_ids")
+        .member<bool>("is_missile_launch")
+        .member<std::vector<MissileApproachWarning>>("missile_approach_warnings");
     ecs.component<ESMReceiver>()
         .member<double>("sensitivity_dbm")
         .member<double>("max_detection_range_m")

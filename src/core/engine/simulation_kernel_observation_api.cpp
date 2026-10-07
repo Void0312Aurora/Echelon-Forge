@@ -804,7 +804,16 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
             // Current struct: bool is_locked.
             // So we just flag it.
 
-            event.is_launch = rwr->is_missile_launch;
+            // A launch is attributed to the launcher or inbound seeker, never to
+            // every emitter that happens to paint an aircraft under warning.
+            event.is_launch = std::find(rwr->missile_launch_source_ids.begin(),
+                                        rwr->missile_launch_source_ids.end(),
+                                        source_id) != rwr->missile_launch_source_ids.end() ||
+                              std::any_of(rwr->missile_approach_warnings.begin(),
+                                          rwr->missile_approach_warnings.end(),
+                                          [source_id](const MissileApproachWarning &warning) {
+                                              return warning.missile_id == source_id;
+                                          });
 
             append_rwr_event(event);
         }
@@ -814,6 +823,15 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
             event.source_id = source_id;
             event.signal_strength = 1.0;
             event.is_launch = true;
+            // A MAWS-only row carries the inbound missile's relative bearing.
+            const auto approach = std::find_if(rwr->missile_approach_warnings.begin(),
+                                               rwr->missile_approach_warnings.end(),
+                                               [source_id](const MissileApproachWarning &warning) {
+                                                   return warning.source_id == source_id;
+                                               });
+            if (approach != rwr->missile_approach_warnings.end()) {
+                event.bearing = approach->bearing_deg;
+            }
             append_rwr_event(event);
         }
     }
@@ -845,6 +863,14 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
             append_rwr_event(event);
         }
     }
+
+    // All bounded consumers truncate this merged RWR/ESM surface, so keep
+    // launch evidence ahead of locks and preserve source order within a class.
+    std::stable_sort(obs.rwr_warnings.begin(), obs.rwr_warnings.end(),
+                     [](const RWREvent &lhs, const RWREvent &rhs) {
+                         if (lhs.is_launch != rhs.is_launch) return lhs.is_launch;
+                         return lhs.is_lock && !rhs.is_lock;
+                     });
 
     // Weapons check (Placeholder)
     const Ammo *ammo = e.get<Ammo>();
