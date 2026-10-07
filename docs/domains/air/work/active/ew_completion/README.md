@@ -1,6 +1,6 @@
 # Air EW Completion
 
-Status: `2026-10-07` active; E1-E4 local mechanism gates pass. PRs #103-#107 have green normal checks; reviews are pending, and #104's CUDA toolchain job timed out during provisioning. E4-B awaits publication.
+Status: `2026-10-07` active; E1-E4 local mechanism gates pass. PRs #103-#107 have green normal checks; reviews are pending, and #104's CUDA toolchain job timed out during provisioning. E4-B is PR #108 with checks/review pending.
 
 Document kind: plan
 Lifecycle: active
@@ -57,7 +57,7 @@ separate authored evidence and are not implied by this engineering model.
 | E2 | Jammer resources and effectiveness | E1 verified | bounded band/effect decision, cooldown/duty resource state and signed DRFM behavior with negative cases | PR #105 checks pass; review pending |
 | E3 | EW temporal history | E1/E2 verified | opt-in history state, reset/replay, compatible policy extraction | local pass; PR #106 checks pass, review pending |
 | E4-A | Shared command delivery | E3 verified | seeded delay/loss, TTL, receipts, node availability, Joint compatibility | local pass; PR #107 checks pass, review pending |
-| E4-B | Cooperative Air EW | E4-A available | formation role orders, loss/expiry, reassignment and per-slot/resource isolation | local pass; PR pending |
+| E4-B | Cooperative Air EW | E4-A available | formation role orders, loss/expiry, reassignment and per-slot/resource isolation | local pass; PR #108 checks/review pending |
 | E5 | Canonical action admission | E3/E4 verified | explicit compatible mode registration and observation/action acceptance | queued |
 | E6 | Named terminal gate | E1-E5 verified | seed matrix, terminal reasons, objectives, effect/resource receipts, replay and residual verdict | queued |
 
