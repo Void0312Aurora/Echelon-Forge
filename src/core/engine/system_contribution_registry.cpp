@@ -68,6 +68,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <numbers>
 #include <stdexcept>
 #include <string>
 #include <unordered_set>
@@ -81,52 +82,15 @@ template <typename T> void register_component(flecs::world &ecs) {
 }
 
 void register_rwr_reset_system(flecs::world &ecs) {
-    ecs.system<RWR, const Transform>("RWR_Reset").kind(flecs::PreUpdate).run([](flecs::iter &it) {
-        auto missile_query = it.world().query<const Missile, const Transform>();
-        struct MissileSnapshot {
-            std::uint64_t entity_id;
-            Missile missile;
-            Transform transform;
-        };
-        std::vector<MissileSnapshot> missiles;
-        missile_query.each(
-            [&](flecs::entity missile_entity, const Missile &missile, const Transform &transform) {
-                missiles.push_back({missile_entity.id(), missile, transform});
-            });
-        while (it.next()) {
-            auto rwr = it.field<RWR>(0);
-            auto transforms = it.field<const Transform>(1);
-            for (auto i : it) {
-                const auto owner_id = it.entity(i).id();
-                const auto owner_transform = transforms[i];
-                rwr[i].detected_radar_ids.clear();
-                rwr[i].locking_radar_ids.clear();
-                rwr[i].missile_launch_source_ids.clear();
-                rwr[i].is_missile_launch = false;
-                for (const auto &snapshot : missiles) {
-                    const auto &missile = snapshot.missile;
-                    const auto &missile_transform = snapshot.transform;
-                    if (!missile.active || missile.target_id != owner_id) {
-                        continue;
-                    }
-                    const double dx = missile_transform.x - owner_transform.x;
-                    const double dy = missile_transform.y - owner_transform.y;
-                    const double dz = missile_transform.z - owner_transform.z;
-                    const double distance_m = std::sqrt(dx * dx + dy * dy + dz * dz);
-                    if (!std::isfinite(distance_m) || distance_m > 120000.0) {
-                        return;
-                    }
-                    const uint64_t source_id =
-                        missile.attacker_id != 0 ? missile.attacker_id : snapshot.entity_id;
-                    if (std::find(rwr[i].missile_launch_source_ids.begin(),
-                                  rwr[i].missile_launch_source_ids.end(),
-                                  source_id) == rwr[i].missile_launch_source_ids.end()) {
-                        rwr[i].missile_launch_source_ids.push_back(source_id);
-                    }
-                    rwr[i].is_missile_launch = true;
-                }
-            }
-        }
+    // RWR_Reset only clears the per-frame emitter facts.  The launch fact has a
+    // single owner (MAWS_Update, kernel.pre_update.02) so the two pre-update
+    // stages cannot disagree about which missiles are warned.
+    ecs.system<RWR>("RWR_Reset").kind(flecs::PreUpdate).each([](flecs::entity, RWR &rwr) {
+        rwr.detected_radar_ids.clear();
+        rwr.locking_radar_ids.clear();
+        rwr.missile_launch_source_ids.clear();
+        rwr.missile_approach_warnings.clear();
+        rwr.is_missile_launch = false;
     });
 }
 
@@ -149,6 +113,7 @@ void register_maws_update_system(flecs::world &ecs) {
             auto owner_transform = it.field<const Transform>(1);
             for (auto i : it) {
                 rwr[i].missile_launch_source_ids.clear();
+                rwr[i].missile_approach_warnings.clear();
                 rwr[i].is_missile_launch = false;
                 const uint64_t owner_id = it.entity(i).id();
                 for (const auto &snapshot : missiles) {
@@ -161,8 +126,10 @@ void register_maws_update_system(flecs::world &ecs) {
                     const double dy = missile_transform.y - owner_transform[i].y;
                     const double dz = missile_transform.z - owner_transform[i].z;
                     const double distance_m = std::sqrt(dx * dx + dy * dy + dz * dz);
+                    // A missile outside the warning envelope only skips that
+                    // missile; it must not end the pass for other owners.
                     if (!std::isfinite(distance_m) || distance_m > 120000.0) {
-                        return;
+                        continue;
                     }
                     rwr[i].is_missile_launch = true;
                     const uint64_t source_id =
@@ -172,6 +139,14 @@ void register_maws_update_system(flecs::world &ecs) {
                                   source_id) == rwr[i].missile_launch_source_ids.end()) {
                         rwr[i].missile_launch_source_ids.push_back(source_id);
                     }
+                    // Approach bearing is owner->missile, relative to the
+                    // owner's nose in the NAV convention used by RWR rows.
+                    const double nav_deg =
+                        90.0 - std::atan2(dy, dx) * 180.0 / std::numbers::pi_v<double>;
+                    double relative_deg = nav_deg - owner_transform[i].heading;
+                    relative_deg = std::remainder(relative_deg, 360.0);
+                    rwr[i].missile_approach_warnings.push_back(
+                        {source_id, snapshot.entity_id, relative_deg});
                 }
             }
         }
