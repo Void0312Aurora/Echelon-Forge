@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from copy import deepcopy
 from pathlib import Path
 
 import pytest
 
+from tools.diagnostics import air_ew_terminal_acceptance as acceptance
 from tools.diagnostics.air_ew_terminal_acceptance import (
     DEFAULT_MAX_STEPS,
     DEFAULT_SEEDS,
@@ -15,7 +17,15 @@ from tools.diagnostics.air_ew_terminal_acceptance import (
     SCENARIOS,
     validate_cooperative_report,
     validate_single_report,
+    _source_provenance,
 )
+
+
+@pytest.fixture(autouse=True)
+def clean_source(monkeypatch) -> None:
+    # Scenario/receipt tests isolate provenance; the real Git helper and dirty
+    # admission boundary are exercised separately below.
+    monkeypatch.setattr(acceptance, "_source_provenance", lambda: ("a" * 40, False))
 
 
 @pytest.fixture(scope="module")
@@ -27,10 +37,12 @@ def matrix_and_reports() -> tuple[dict, dict]:
         reports[(kwargs["scenario_path"], kwargs["seed"])] = report
         return report
 
-    matrix = run_terminal_acceptance(
-        single_runner=lambda **kwargs: capture(run_single_demo, **kwargs),
-        cooperative_runner=lambda **kwargs: capture(run_cooperative_demo, **kwargs),
-    )
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(acceptance, "_source_provenance", lambda: ("a" * 40, False))
+        matrix = run_terminal_acceptance(
+            single_runner=lambda **kwargs: capture(run_single_demo, **kwargs),
+            cooperative_runner=lambda **kwargs: capture(run_cooperative_demo, **kwargs),
+        )
     return matrix, reports
 
 
@@ -39,7 +51,8 @@ def test_named_terminal_matrix_closes_and_replays_fixed_seeds(matrix_and_reports
     assert matrix["accepted"] is True
     assert matrix["playable_capability_promotion"] is False
     assert matrix["replay_checked"] is True
-    assert matrix["receipt_reproducible"] is (not matrix["source_dirty"])
+    assert matrix["source_dirty"] is False
+    assert matrix["receipt_reproducible"] is True
     assert len(matrix["source_revision"]) == 40
     assert len(matrix["native_module"]["sha256"]) == 64
     assert len(matrix["scenarios"]) == 2
@@ -179,3 +192,60 @@ def test_same_seed_replay_mismatch_is_rejected(matrix_and_reports) -> None:
 def test_invalid_seed_matrix_or_budget_is_rejected(seeds, budget) -> None:
     with pytest.raises(ValueError):
         run_terminal_acceptance(seeds=seeds, max_steps=budget)
+
+
+@pytest.mark.parametrize("change", ["tracked", "staged", "untracked"])
+def test_source_provenance_detects_committed_and_dirty_source(tmp_path, change) -> None:
+    def git(*args):
+        return subprocess.run(
+            ["git", *args], cwd=tmp_path, check=True, capture_output=True, text=True,
+        ).stdout.strip()
+
+    git("init", "--quiet")
+    tracked = tmp_path / "source.py"
+    tracked.write_text("committed = True\n", encoding="utf-8")
+    git("add", "source.py")
+    git("-c", "user.name=Provenance Test", "-c", "user.email=provenance@example.invalid",
+        "commit", "--quiet", "-m", "baseline")
+    revision = git("rev-parse", "HEAD")
+    assert _source_provenance(tmp_path) == (revision, False)
+    if change == "untracked":
+        (tmp_path / "new_source.py").write_text("uncommitted = True\n", encoding="utf-8")
+    else:
+        tracked.write_text("committed = False\n", encoding="utf-8")
+        if change == "staged":
+            git("add", "source.py")
+    assert _source_provenance(tmp_path) == (revision, True)
+
+
+def test_dirty_source_is_rejected_before_running_or_publishing(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(acceptance, "_source_provenance", lambda: ("a" * 40, True))
+    calls = []
+
+    def runner(**kwargs):
+        calls.append(kwargs)
+        pytest.fail("dirty source must be rejected before scenario execution")
+
+    with pytest.raises(ValueError, match="requires clean committed source"):
+        run_terminal_acceptance(single_runner=runner, cooperative_runner=runner)
+    assert calls == []
+    output = tmp_path / "receipt.json"
+    monkeypatch.setattr(acceptance.sys, "argv", ["acceptance", "--json_out", str(output)])
+    with pytest.raises(ValueError, match="requires clean committed source"):
+        acceptance.main()
+    assert not output.exists()
+
+
+@pytest.mark.parametrize("final_revision,final_dirty", [("a" * 40, True), ("b" * 40, False)])
+def test_source_change_during_execution_is_rejected(
+    matrix_and_reports, monkeypatch, final_revision, final_dirty,
+) -> None:
+    _matrix, reports = matrix_and_reports
+    provenance = iter([("a" * 40, False), (final_revision, final_dirty)])
+    monkeypatch.setattr(acceptance, "_source_provenance", lambda: next(provenance))
+
+    def runner(**kwargs):
+        return deepcopy(reports[(kwargs["scenario_path"], kwargs["seed"])])
+
+    with pytest.raises(ValueError, match="source changed during execution"):
+        run_terminal_acceptance(single_runner=runner, cooperative_runner=runner)

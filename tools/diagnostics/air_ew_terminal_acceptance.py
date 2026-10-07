@@ -218,6 +218,17 @@ def validate_cooperative_report(report: dict[str, Any], *, max_steps: int) -> di
     }
 
 
+def _source_provenance(repo_root: Path = REPO_ROOT) -> tuple[str, bool]:
+    revision = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=repo_root, check=True, capture_output=True, text=True,
+    ).stdout.strip()
+    source_dirty = bool(subprocess.run(
+        ["git", "status", "--porcelain=v1", "--untracked-files=all"],
+        cwd=repo_root, check=True, capture_output=True, text=True,
+    ).stdout.strip())
+    return revision, source_dirty
+
+
 def run_terminal_acceptance(
     *,
     seeds: tuple[int, ...] = DEFAULT_SEEDS,
@@ -233,12 +244,8 @@ def run_terminal_acceptance(
     if type(max_steps) is not int or max_steps <= 0:
         raise ValueError("max_steps must be positive")
 
-    revision = subprocess.run(
-        ["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, check=True, capture_output=True, text=True,
-    ).stdout.strip()
-    source_dirty = bool(subprocess.run(
-        ["git", "status", "--porcelain=v1"], cwd=REPO_ROOT, check=True, capture_output=True, text=True,
-    ).stdout.strip())
+    revision, source_dirty = _source_provenance()
+    _require(not source_dirty, "terminal acceptance requires clean committed source")
     scenario_records = []
     for scenario in SCENARIOS:
         records = []
@@ -273,6 +280,12 @@ def run_terminal_acceptance(
         )
 
     native_path = Path(sys.modules["ef_py"].__file__).resolve()
+    native_sha256 = hashlib.sha256(native_path.read_bytes()).hexdigest()
+    final_revision, final_source_dirty = _source_provenance()
+    _require(
+        final_revision == revision and not final_source_dirty,
+        "terminal acceptance source changed during execution",
+    )
     return {
         "schema_version": "air_ew_named_terminal_acceptance_v1",
         "source_revision": revision,
@@ -280,7 +293,7 @@ def run_terminal_acceptance(
         "receipt_reproducible": not source_dirty,
         "native_module": {
             "path": str(native_path),
-            "sha256": hashlib.sha256(native_path.read_bytes()).hexdigest(),
+            "sha256": native_sha256,
         },
         "accepted": True,
         "acceptance_scope": "rl_independent_named_terminal_engineering_surrogates",
