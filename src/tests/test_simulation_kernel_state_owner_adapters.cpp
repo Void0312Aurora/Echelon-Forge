@@ -2027,6 +2027,136 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         std::filesystem::remove(target_path, remove_error);
     }
 
+    TEST_CASE("RWR approach warnings rebind all entity references in the destination world") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        using json = nlohmann::json;
+        SimulationKernel source;
+        SimulationKernel target;
+        source.reset(71);
+        target.reset(72);
+        auto owner = source.spawn_unit(Side::Blue, "Aircraft", 0, 0, 5000, 0, 0, 0, 0, 0, 0);
+        auto launcher = source.spawn_unit(Side::Red, "Aircraft", 1000, 0, 5000, 0, 0, 0, 0, 0, 0);
+        auto inbound = source.spawn_unit(Side::Red, "Aircraft", 500, 0, 5000, 0, 0, 0, 0, 0, 0);
+        REQUIRE(owner.is_valid());
+        REQUIRE(launcher.is_valid());
+        REQUIRE(inbound.is_valid());
+        {
+            auto lease = source.acquire_world_lease();
+            lease.world().entity(launcher.id()).set_name("EWLauncher");
+            lease.world().entity(inbound.id()).set_name("EWInbound");
+            RWR rwr{};
+            rwr.sensitivity_dbm = -82.0;
+            rwr.detected_radar_ids = {launcher.id()};
+            rwr.locking_radar_ids = {launcher.id()};
+            rwr.missile_launch_source_ids = {launcher.id()};
+            rwr.is_missile_launch = true;
+            rwr.missile_approach_warnings = {{launcher.id(), inbound.id(), 37.5}};
+            lease.world().entity(owner.id()).set_name("EWOwner").set<RWR>(rwr);
+        }
+        // Consume destination ids to distinguish rebinding from retaining source ids.
+        {
+            auto lease = target.acquire_world_lease();
+            for (int index = 0; index < 3; ++index) {
+                REQUIRE(lease.world().entity().is_valid());
+            }
+        }
+        const auto current = Bridge::serialize_world(source);
+        REQUIRE(Bridge::restore_world(target, {current.begin(), current.end()}));
+        // Reimport to exercise recycled, generation-bearing destination ids too.
+        REQUIRE(Bridge::restore_world(target, {current.begin(), current.end()}));
+        {
+            auto lease = target.acquire_world_lease();
+            const auto target_owner = lease.world().lookup("EWOwner");
+            const auto target_launcher = lease.world().lookup("EWLauncher");
+            const auto target_inbound = lease.world().lookup("EWInbound");
+            REQUIRE(target_owner.is_valid());
+            REQUIRE(target_launcher.is_valid());
+            REQUIRE(target_inbound.is_valid());
+            CHECK(target_launcher.id() != launcher.id());
+            CHECK(target_inbound.id() != inbound.id());
+            const auto *rwr = target_owner.get<RWR>();
+            REQUIRE(rwr != nullptr);
+            CHECK(rwr->sensitivity_dbm == -82.0);
+            CHECK(rwr->is_missile_launch);
+            REQUIRE(rwr->detected_radar_ids.size() == 1);
+            CHECK(rwr->detected_radar_ids.front() == target_launcher.id());
+            REQUIRE(rwr->locking_radar_ids.size() == 1);
+            CHECK(rwr->locking_radar_ids.front() == target_launcher.id());
+            REQUIRE(rwr->missile_launch_source_ids.size() == 1);
+            CHECK(rwr->missile_launch_source_ids.front() == target_launcher.id());
+            REQUIRE(rwr->missile_approach_warnings.size() == 1);
+            const auto &warning = rwr->missile_approach_warnings.front();
+            CHECK(warning.source_id == target_launcher.id());
+            CHECK(warning.missile_id == target_inbound.id());
+            CHECK(warning.bearing_deg == 37.5);
+        }
+        CHECK(json::parse(Bridge::serialize_world(target)) == json::parse(current));
+    }
+
+    TEST_CASE(
+        "legacy RWR reflection defaults new warning vectors without retaining live warnings") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        using json = nlohmann::json;
+        bool launch_warning = true;
+        SUBCASE("legacy launch flag set") {
+            launch_warning = true;
+        }
+        SUBCASE("legacy launch flag clear") {
+            launch_warning = false;
+        }
+        SimulationKernel kernel;
+        kernel.reset(71);
+        auto unit = kernel.spawn_unit(Side::Blue, "Aircraft", 0, 0, 5000, 0, 0, 0, 0, 0, 0);
+        REQUIRE(unit.is_valid());
+        {
+            auto lease = kernel.acquire_world_lease();
+            RWR rwr{};
+            rwr.sensitivity_dbm = -82.0;
+            rwr.detected_radar_ids = {unit.id()};
+            rwr.locking_radar_ids = {unit.id()};
+            rwr.missile_launch_source_ids = {unit.id()};
+            rwr.is_missile_launch = launch_warning;
+            rwr.missile_approach_warnings = {{unit.id(), unit.id(), 37.5}};
+            lease.world().entity(unit.id()).set_name("EWLegacyRWR").set<RWR>(rwr);
+        }
+        auto legacy = json::parse(Bridge::serialize_world(kernel));
+        bool found_rwr = false;
+        for (auto &result : legacy["results"]) {
+            if (result["name"] != "EWLegacyRWR") continue;
+            found_rwr = true;
+            auto &rwr = result["components"]["RWR"];
+            REQUIRE(rwr.erase("missile_launch_source_ids") == 1);
+            REQUIRE(rwr.erase("missile_approach_warnings") == 1);
+        }
+        REQUIRE(found_rwr);
+        const auto legacy_text = legacy.dump();
+        REQUIRE(Bridge::restore_world(kernel, {legacy_text.begin(), legacy_text.end()}));
+        {
+            auto lease = kernel.acquire_world_lease();
+            const auto restored = lease.world().lookup("EWLegacyRWR");
+            REQUIRE(restored.is_valid());
+            const auto *rwr = restored.get<RWR>();
+            REQUIRE(rwr != nullptr);
+            CHECK(rwr->sensitivity_dbm == -82.0);
+            CHECK(rwr->is_missile_launch == launch_warning);
+            REQUIRE(rwr->detected_radar_ids.size() == 1);
+            CHECK(rwr->detected_radar_ids.front() == restored.id());
+            REQUIRE(rwr->locking_radar_ids.size() == 1);
+            CHECK(rwr->locking_radar_ids.front() == restored.id());
+            CHECK(rwr->missile_launch_source_ids.empty());
+            CHECK(rwr->missile_approach_warnings.empty());
+        }
+        for (auto &result : legacy["results"]) {
+            if (result["name"] != "EWLegacyRWR") continue;
+            auto &rwr = result["components"]["RWR"];
+            rwr["missile_launch_source_ids"] = json::array();
+            rwr["missile_approach_warnings"] = json::array();
+        }
+        const auto delta = json::diff(legacy, json::parse(Bridge::serialize_world(kernel)));
+        INFO(delta.dump());
+        CHECK(delta.empty());
+    }
+
     TEST_CASE("legacy sensor reflection imports inline and mounted flags without permitting mixed "
               "RF shapes") {
         using Bridge = runtime::host::integration::SimulationKernelStateOwnerBridge;
