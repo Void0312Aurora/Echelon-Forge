@@ -383,6 +383,8 @@ BINDINGS_DIAGNOSTICS_ALLOWLIST = {
   "debug_get_ground_contact_state",
   "debug_get_last_scan_time",
   "debug_get_contact_count",
+  # Read-only EW resource snapshot on the diagnostics platform-state surface.
+  "debug_get_countermeasure_state",
   "debug_get_mass_state",
   "debug_get_pending_movement_command",
   "debug_get_pending_action_command",
