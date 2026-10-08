@@ -36,8 +36,7 @@ packet 只作为归档 provenance。
   演进的 active program。P0 authority/baseline、P1 target decision，以及完整的
   P3-A/P3-B/P3-C public contract、authority-envelope、ledger 与 compatibility
   foundation，以及 P4-A dark/shadow host lifecycle 与 P4-B/P4-C internal
-  candidate task 已接受；P2 control-lifecycle 与 P5-P8 仍开放，尚无 production
-  truth 发布、runtime 迁移或 production cutover 被接受。
+  candidate task 已接受。其后 P2-A/P2-B 控制基线、受限 P5-D 切换和生产 rebuild authority 退役、P6 CI 治理、P7 本地留存及 P8 Windows CPU 单进程验收均已记录；更广的外部 host/多进程拓扑仍 fail-closed，不能视为全面生产发布。
 
 ## 已完成工作
 
@@ -63,7 +62,7 @@ packet 只作为归档 provenance。
 - [Runtime composition registry sync](work/issues/runtime_composition_registry_sync.md)：
   registry 变更后重新生成组合证据的因果顺序。
 - [随机抽样的稳定实体身份](work/issues/stable_entity_identity_for_stochastic_draws.md)：
-  draft；以 Flecs 原始 id 作种子，在 registry 变更、无关生成或同种子 reset 后不可复现。
+  已被主线有界稳定身份实现取代的历史缺陷记录；语义参考中的实体标识兼容仍有后续残余。
 - [Exact-runtime refactor](work/issues/exact_runtime/cpp_exact_runtime_refactor_plan.md)
 - [GPU 主线集成检查表](work/issues/exact_runtime/gpu_execution_mainline_integration_checklist.md)
 

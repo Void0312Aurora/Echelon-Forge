@@ -28,8 +28,8 @@ Last verified: `2026-09-30`
 - [空域 owner README](../../../../air/README.zh.md)
 - [梯度逼真度原则](../../../../../systems/standards/gradient_realism_principles.zh.md)
 - [子项目创建标准](../../../../../engineering/automation/rules/subproject_creation_standard.zh.md)
-- 未合并的装备调研目录 `origin/codex/database-scaffold`
-  （`database/research/equipment/catalog/**`），仅作参数来源
+- 已位于 `main` 的装备调研目录 `database/research/equipment/catalog/**`，
+  仅作为参数及来源参考，不代表对应装备已获仿真能力准入
 
 ## 目的
 
@@ -67,7 +67,7 @@ Last verified: `2026-09-30`
 | 海军武器 | 有界 | `weapon_naval.h`、`naval_mission_weapon_release_system.h` | 舰炮与 CIWS 为单次命中掷骰；VLS 仅经飞行员动作路径；无反舰导弹、舰空导弹族或鱼雷 |
 | 海军毁伤 | 合成 | `DM-N1` profile | 仅命中 hitbox 舱室时写入；舰艇机动不读毁伤状态 |
 | 航母航空 | S0 仅库存 | `meta.csg.groups[*].embarked_inventory` 与实名机型记录 | 无飞行甲板接触面或甲板周转；S2 前库存飞机不是活动实体 |
-| 空战底座 | main 上已维护；脚本栈未合并 | 空战场景；`origin/codex/scripted-stack-*` | 复用而不重新接管；无舰载机单位 |
+| 空战底座 | Air 脚本运行时和契约已合入 `main` | 空战场景；`python/simulation/air/` 和 `python/tasking_contracts/air/` | 复用而不重新接管；不代表航母甲板周期或 CSG S2 已验收 |
 | 海军学习策略 | 缺失 | `examples/config/training/active/naval/` 下三个冒烟入口 | 无检查点或训练结果 |
 
 ## 范围

@@ -1,12 +1,12 @@
 # Air EW Completion
 
-Status: `2026-10-07` active; E1-E5 local mechanism gates and E6's named surrogate terminal gate pass. PRs #103-#109 have green normal checks; reviews are pending, and #104's CUDA toolchain job timed out during provisioning. E6 is on `codex/air-ew-terminal-acceptance`; remote checks/review remain open. Non-surrogate EW effectiveness and playable acceptance remain open.
+Status: `2026-10-08` active for residual EW effectiveness and playability. E1-E5 and the E6 named surrogate terminal gate landed in `main` via PRs #103-#110 (merged 2026-10-07), with follow-up recovery in #112-#116. The historical #104 CUDA provisioning timeout is not a CUDA source failure or runtime qualification. Calibrated EW performance, causal contribution to combat outcomes, and broader playable acceptance remain unproven.
 
 Document kind: plan
 Lifecycle: active
 Canonical: docs/domains/air/work/active/ew_completion/README.md
 Owner: domains/air
-Last verified: 2026-10-07
+Last verified: 2026-10-08
 
 Language:
 
@@ -54,13 +54,13 @@ separate authored evidence and are not implied by this engineering model.
 
 | Cluster | Goal | Entry | Exit | State |
 | --- | --- | --- | --- | --- |
-| E1 | RF/ESM contract and observation | merged jamming baseline | native negative cases, content validation, Python projection, state roundtrip | PR stack open |
-| E2 | Jammer resources and effectiveness | E1 verified | bounded band/effect decision, cooldown/duty resource state and signed DRFM behavior with negative cases | PR #105 checks pass; review pending |
-| E3 | EW temporal history | E1/E2 verified | opt-in history state, reset/replay, compatible policy extraction | local pass; PR #106 checks pass, review pending |
-| E4-A | Shared command delivery | E3 verified | seeded delay/loss, TTL, receipts, node availability, Joint compatibility | local pass; PR #107 checks pass, review pending |
-| E4-B | Cooperative Air EW | E4-A available | formation role orders, loss/expiry, reassignment and per-slot/resource isolation | local pass; PR #108 checks pass, review pending |
-| E5 | Canonical action admission | E3/E4 verified | explicit compatible mode registration and observation/action acceptance | local pass; PR #109 checks pass, review pending |
-| E6 | Named terminal gate | E1-E5 verified | seed matrix, terminal reasons, objectives, resource/state receipts, replay and residual verdict | scoped local pass; causal EW-effect gate remains open |
+| E1 | RF/ESM contract and observation | merged jamming baseline | native negative cases, content validation, Python projection, state roundtrip | merged (#103-#104), bounded gate |
+| E2 | Jammer resources and effectiveness | E1 verified | bounded band/effect decision, cooldown/duty resource state and signed DRFM behavior with negative cases | merged (#105), engineering-proxy gate |
+| E3 | EW temporal history | E1/E2 verified | opt-in history state, reset/replay, compatible policy extraction | merged (#106), scoped gate |
+| E4-A | Shared command delivery | E3 verified | seeded delay/loss, TTL, receipts, node availability, Joint compatibility | merged (#107), scoped gate |
+| E4-B | Cooperative Air EW | E4-A available | formation role orders, loss/expiry, reassignment and per-slot/resource isolation | merged (#108), scoped gate |
+| E5 | Canonical action admission | E3/E4 verified | explicit compatible mode registration and observation/action acceptance | merged (#109), scoped gate |
+| E6 | Named terminal gate | E1-E5 verified | seed matrix, terminal reasons, objectives, resource/state receipts, replay and residual verdict | merged (#110), surrogate-only gate; causal effect open |
 
 ## Task Clusters
 
@@ -174,6 +174,8 @@ passes; additional scope requires a named follow-on cluster, not silent widening
   infer aircraft destruction from hidden truth.
 
 ### Validation
+
+The following validation receipts preserve their original **pre-merge checkpoint**. Any pending PR review/check statements within those historical records do not describe today's integration state.
 
 Local E1 stack implementation validation, MSVC Release / Python 3.12:
 
@@ -315,7 +317,7 @@ remains incomplete. Full scenario rows and residual owners are in the
 - Frequency overlap and burn-through remain engineering proxies, not calibrated
   J/S or platform performance. Independent DRFM ghost-track lifecycle remains
   out of scope.
-- E3 is PR #106 based on PR #105; remote CI passes and review is pending.
+- E3 landed as PR #106 after PR #105; its historical validation results remain preserved above.
 - E3 keeps canonical action modes unchanged; model quality and learned-policy
   success still require their own evaluation evidence.
 - E4-A adds shared opaque delivery with deterministic delay/loss, expiry,
@@ -326,9 +328,7 @@ remains incomplete. Full scenario rows and residual owners are in the
   aircraft-loss inference and external/support jamming remain separate work.
 - The three reproduced old cooperative failures need a scoped follow-up before
   claiming that the full cooperative suite or broader C2 surface is closed.
-- E5 is PR #109 with green checks and pending review. E6 passes the named
-  surrogate terminal/replay gate; real-platform EW objectives and causal effect
-  acceptance remain follow-on work owned by Air EW/scenario validation.
+- E5/E6 landed as PRs #109-#110. E6 passes the named surrogate terminal/replay gate; real-platform EW objectives and causal effect acceptance remain follow-on work owned by Air EW/scenario validation.
 - Historical sensor reflection included an absent `enforce_radar_horizon`
   member. E1 removes it, verifies current reflection, and normalizes the exact
   legacy inline/mounted sensor shape before strict import. Ambiguous mixed

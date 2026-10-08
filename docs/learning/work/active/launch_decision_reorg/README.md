@@ -1,7 +1,6 @@
 # Launch-Decision Architecture Reorganization
 
-Status: 2026-09-24 implementation complete; owner verdict `Mergeable` on the
-target branch `codex/launch-decision-reorg`.
+Status: `2026-10-08` implementation integrated into `main` via PRs #39-#42 on 2026-09-29. The previous `Mergeable` verdict was the pre-merge owner checkpoint. This closes architecture/implementation integration, not learned-firing effectiveness or behavioral acceptance.
 
 Language:
 
@@ -26,7 +25,7 @@ Document kind: task
 Lifecycle: maintained
 Canonical: docs/learning/work/active/launch_decision_reorg/README.md
 Owner: learning/policy-architecture
-Last verified: 2026-09-24
+Last verified: 2026-10-08
 Content status: owner-finalized and implemented through C0-C5 after the blocked
 review findings were resolved in the plan. No further independent review gate is
 required for this stream.

@@ -19,9 +19,7 @@ Last verified: `2026-08-08`
 当前 C++ surface 已经是多域口径，但成熟度并不均匀。air/execution 是最深的维护中路径。
 naval 已有平台组件、command/tasking owner slice、舰艇/潜艇/舰载航空 token runtime、
 weapon-release hook 和 engagement evidence export，但还不是完整 naval mission runtime。
-ground 仍是 bootstrap/evidence-only：`UnitType::Ground` 与 typed platform capability
-evidence 已存在，land movement、sensing、terrain ownership、fires、damage 和 full ground
-runtime 仍 held。
+Ground 除静态 tasking 外，已有受限原生单兵移动、显式 Arnis 地形采样及依赖跟踪目标的步枪直射与共享毁伤探针。通用寻路、感知、压制和生产级 Ground WorldBatch 执行仍未准入。
 
 当前维护中的依赖方向应理解为：
 

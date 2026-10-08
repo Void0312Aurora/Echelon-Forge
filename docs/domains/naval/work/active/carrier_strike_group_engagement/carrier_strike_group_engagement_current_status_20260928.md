@@ -86,7 +86,7 @@ filesystem 91 % full. That host inventory has not been refreshed here.
 | uniform high-fidelity stepping may not carry the full order of battle | this package | throughput records at `CSG-S1`/`CSG-S2` |
 | no flight-deck contact surface: embarked aircraft stay inventory (the gear-contact step-size limit was closed `2026-09-30` by [Semi-Implicit Ground Contact](../../../../../systems/physics/reviews/semi_implicit_ground_contact_20260930/README.md)) | `systems/physics` with this package | `CSG-S2` deck cycle |
 | Air-domain seams for carrier aviation | Air owner, via this package | `S2-B` dispatch |
-| the unmerged scripted-agent stack may be required for group scripting | architecture owner | `S5-B` dispatch |
+| scripted-agent contracts and Air runtime have merged; CSG-specific group scripting remains unadmitted | architecture / Naval owners | `S5-B` dispatch |
 
 ## Next Action Order
 

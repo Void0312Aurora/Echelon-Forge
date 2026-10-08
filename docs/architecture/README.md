@@ -40,8 +40,7 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
   baseline, P1 target decisions, the complete P3-A/P3-B/P3-C public contract,
   authority-envelope, ledger, and compatibility foundations, and the P4-A
   dark/shadow host lifecycle and the P4-B/P4-C internal candidate tasks are
-  accepted; P2 control-lifecycle and P5-P8 remain open, while no production
-  truth publication, runtime migration or production cutover is accepted.
+  accepted. P2-A/P2-B controls, bounded P5-D rollout and retirement of production rebuild authority, P6 lane governance, P7 local retention, and P8 Windows CPU in-process acceptance are now recorded. Wider deployment and external-host topologies remain fail-closed; bounded acceptance is not a general production release.
 
 ## Completed Work
 
@@ -72,8 +71,7 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
 - [Runtime composition registry sync](work/issues/runtime_composition_registry_sync.md):
   the causal order for regenerating composition evidence after a registry change.
 - [Stable entity identity for stochastic draws](work/issues/stable_entity_identity_for_stochastic_draws.md):
-  draft; seeds keyed on raw Flecs ids are not reproducible across registry changes,
-  unrelated spawns, or same-seed resets.
+  superseded historical defect; bounded stable identity has landed in `main`, with semantic-reference portability still tracked separately.
 - [Exact-runtime refactor](work/issues/exact_runtime/cpp_exact_runtime_refactor_plan.md)
 - [GPU mainline integration checklist](work/issues/exact_runtime/gpu_execution_mainline_integration_checklist.md)
 

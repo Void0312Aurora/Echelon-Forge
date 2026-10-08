@@ -5,9 +5,7 @@ Status: `2026-06-01` multi-domain maintenance note.
 Echelon Forge has a simulation kernel based on **ECS (flecs)**. The air/execution
 path remains the most mature runtime and training surface, while naval has
 maintained pre-fire tasking/contact evidence plus bounded weapon-release and
-engagement-event hooks. Ground has early tasking/schema evidence at the project
-level, but the maintained C++ `src` surface is limited to setup/type/capability
-evidence and aircraft/terrain ground-contact primitives. The description below
+engagement-event hooks. Ground has static command/tasking owners plus bounded native single-infantry movement, explicit Arnis terrain sampling, tracked-hostile rifle-fire and shared damage probes. The description below
 is based on the current repository implementation; it is not a release claim
 for complete naval or ground combat runtime.
 
@@ -51,9 +49,7 @@ for complete naval or ground combat runtime.
 - Naval support is currently pre-fire/tasking/contact oriented with bounded
   weapon-release and engagement-event evidence hooks; do not infer complete
   naval weapon-outcome authority from these entries.
-- Ground support is currently schema/setup/bootstrap oriented in C++ `src`;
-  there is no maintained C++ ground command/tasking owner, and movement,
-  sensing, terrain, fires, damage, and full ground runtime behavior remain held.
+- Ground has C++ command/tasking components, bounded `GroundInfantryMovement`, terrain-cost samples, rifle-fire and shared damage probes. It does not yet provide production Ground `WorldBatch`, general sensing, routes, suppression, logistics or full land combat.
 
 ## 2) Key Limitations (The Most Sensitive Part for "Training Going Astray")
 

@@ -30,8 +30,9 @@ Inputs:
 - [Air owner README](../../../../air/README.md)
 - [Gradient Realism Principles](../../../../../systems/standards/gradient_realism_principles.md)
 - [Subproject Creation Standard](../../../../../engineering/automation/rules/subproject_creation_standard.md)
-- Unmerged equipment research catalog on `origin/codex/database-scaffold`
-  (`database/research/equipment/catalog/**`), used as a parameter source only
+- Equipment research catalog under `database/research/equipment/catalog/**` on
+  `main`, used as parameter/source references only; inventory coverage does not
+  constitute an admitted combat platform or CSG capability
 
 ## Purpose
 
@@ -79,7 +80,7 @@ records the full inventory and the S0-X runtime evidence.
 | Naval weapons | bounded | `src/components/domains/naval/combat/weapon_naval.h`; `naval_mission_weapon_release_system.h` | gun and CIWS resolve as one hit roll; VLS only via the pilot-action path; no anti-ship missile, ship SAM family, or torpedo |
 | Naval damage | synthetic | `DM-N1` profile in `src/components/domains/naval/combat/damage_naval.h`; `src/systems/combat/damage_system_naval.h` | compartment effects seed only on hitbox hits; ship motion ignores the damage state |
 | Carrier aviation | S0 inventory only | `meta.csg.groups[*].embarked_inventory`; named aircraft records | no flight-deck contact surface or deck cycle; inventory aircraft are not live entities until S2 |
-| Air combat substrate | maintained on `main`; scripted stack unmerged | air combat scenarios; `origin/codex/scripted-stack-*` | reused, not re-owned; no carrier-based aircraft unit exists |
+| Air combat substrate | Air scripted runtime/contracts merged on `main` | air combat scenarios; `python/simulation/air/` and `python/tasking_contracts/air/` | reused, not re-owned; no carrier deck cycle or CSG S2 acceptance implied |
 | Learned naval policy | absent | three smoke entries under `examples/config/training/active/naval/` | no checkpoint or training result |
 
 ## Scope

@@ -11,7 +11,7 @@ by air, naval, and early ground-aware setup flows.
 
 - Air: mature command, tasking, mission/episode, physics, observation, and RL-facing execution paths.
 - Naval: maintained platform components, command/tasking owner slices, ship/submarine/embarked-air token runtime, and tasking/engagement evidence surfaces are present. This is not a claim that a complete naval mission runtime exists.
-- Ground: early bootstrap only. `UnitType::Ground` and typed-platform capability evidence exist, and shared terrain assignment plus aircraft/terrain ground-contact primitives are available. These are not a land-domain terrain or movement runtime; ground movement, sensing, terrain ownership, fires, damage, and full ground runtime remain held.
+- Ground: alongside static tasking and typed platform capabilities, bounded native `GroundInfantryMovement`, explicit Arnis terrain sampling, tracked-hostile rifle fire and shared damage probes exist. This is not full navigation, sensing, suppression, formation, logistics or a production land-combat runtime. See `docs/domains/ground/standards/specialization_baseline.md`.
 
 ## Dependency Direction
 
