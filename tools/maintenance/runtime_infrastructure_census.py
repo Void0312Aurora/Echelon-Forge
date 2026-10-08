@@ -92,8 +92,11 @@ def census() -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--compact", action="store_true", help="Omit individual file rows for the committed summary")
     args = parser.parse_args()
     report = census()
+    if args.compact:
+        report.pop("files")
     args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
     print(json.dumps({"totals": report["totals"], "groups": report["inclusive_issue_snapshot_folders"]}))
 

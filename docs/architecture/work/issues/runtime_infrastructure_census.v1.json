@@ -130,7 +130,7 @@
     "root": "tracked src/",
     "target_graph": "existing source CMake scanner; syntactic union of branches, excludes variable/generator-expression resolution"
   },
-  "source_revision": "55752527a2dc1d96df2221d0f452a020b3f8e0f5",
+  "source_revision": "79d5bdf652001bd61909a32195b4db46f093fd1b",
   "source_target_reachability": {
     "ef_facade": [
       "ef_composition",
@@ -599,9 +599,9 @@
     "excluded_loc": {
       "generated": 1838,
       "included": 99114,
-      "tests": 24291
+      "tests": 24360
     },
-    "inclusive_physical_loc": 125243,
+    "inclusive_physical_loc": 125312,
     "maintained_files": 408,
     "maintained_physical_loc": 99114,
     "tracked_files": 463

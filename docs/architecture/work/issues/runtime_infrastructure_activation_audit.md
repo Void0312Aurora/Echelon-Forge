@@ -2,11 +2,12 @@
 
 Issue: #126
 Owner: architecture / runtime maintainers
-Source snapshot: `55752527a` (the #125 branch head; this audit changes no C++ source)
+Source snapshot: `79d5bdf652001bd61909a32195b4db46f093fd1b` (after the #125 parent update; this audit changes no C++ implementation)
 
 ## Reproducible census
 
 Run `python -m tools.maintenance.runtime_infrastructure_census --output report.json`.
+Add `--compact` to reproduce the committed summary without individual file rows.
 The tool uses Git-tracked `src/` files with `.h/.hpp/.cpp/.cc/.cxx` extensions.
 Physical lines include blanks/comments. The inclusive view matches the issue's
 convention; the maintenance view excludes test/vendor/generated directories and
@@ -24,8 +25,8 @@ the committed compact report keeps totals, groups and target edges.
 | `src/systems/physics` | 8 | 1,778 | 1,778 |
 | `src/systems/domains/air` | 5 | 905 | 905 |
 
-All tracked C++ in this scope totals 463 files/125,243 lines; after exclusions,
-408 files/99,114 lines remain (24,291 test lines, 1,838 generated lines, no vendor
+All tracked C++ in this scope totals 463 files/125,312 lines; after exclusions,
+408 files/99,114 lines remain (24,360 test lines, 1,838 generated lines, no vendor
 files in this tracked scope). Air-owned component/model/system folders add
 1,449/910/905 lines; common physics, weapons, engine, content and other models
 also serve air behavior. The two narrow system folders are not the whole physics
