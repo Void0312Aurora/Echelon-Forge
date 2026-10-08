@@ -4,11 +4,11 @@
   "symbol": "SimulationKernel::rebuild_world_composition",
   "references": {
     "src/core/engine/simulation_kernel.cpp": [
-      352,
-      354
+      600,
+      602
     ],
     "src/core/engine/simulation_kernel.h": [
-      331
+      360
     ],
     "src/core/engine/testing/simulation_kernel_composition_test_access.cpp": [
       14,
@@ -18,28 +18,28 @@
       17
     ],
     "src/tests/test_simulation_kernel_smoke.cpp": [
-      79,
-      87,
-      99,
-      106,
-      144,
-      196,
-      207,
-      250
+      80,
+      88,
+      100,
+      107,
+      145,
+      197,
+      209,
+      252
     ]
   },
   "implementation_references": {
     "src/core/engine/simulation_kernel.cpp": [
-      352,
-      354
+      600,
+      602
     ],
     "src/core/engine/simulation_kernel.h": [
-      331
+      360
     ]
   },
   "callable_references": {
     "src/core/engine/simulation_kernel.h": [
-      331
+      360
     ],
     "src/core/engine/testing/simulation_kernel_composition_test_access.cpp": [
       16
@@ -54,14 +54,14 @@
       17
     ],
     "src/tests/test_simulation_kernel_smoke.cpp": [
-      79,
-      87,
-      99,
-      106,
-      144,
-      196,
-      207,
-      250
+      80,
+      88,
+      100,
+      107,
+      145,
+      197,
+      209,
+      252
     ]
   },
   "production_callable_references": {},
@@ -78,5 +78,5 @@
   "reachability_state": "retired_production_authority_test_seam_retained",
   "retired": true,
   "retirement_gate": "single production cutover plus rollback-window retention and rebuild gate",
-  "inventory_sha256": "c757c10a3e2004acff0276b47887be172e572c2c90603ce434eda61543acdc7e"
+  "inventory_sha256": "cb12ec000b6839d44b809495377fe6f578a4916145c93f8f96d60957997ed267"
 }

@@ -1,0 +1,609 @@
+{
+  "inclusive_issue_snapshot_folders": {
+    "src/runtime/composition": {
+      "files": 12,
+      "physical_loc": 4878
+    },
+    "src/runtime/contracts": {
+      "files": 35,
+      "physical_loc": 10940
+    },
+    "src/runtime/facade": {
+      "files": 35,
+      "physical_loc": 7825
+    },
+    "src/runtime/host": {
+      "files": 14,
+      "physical_loc": 17424
+    },
+    "src/systems/domains/air": {
+      "files": 5,
+      "physical_loc": 905
+    },
+    "src/systems/physics": {
+      "files": 8,
+      "physical_loc": 1778
+    }
+  },
+  "maintained_groups": {
+    "src/components": {
+      "files": 52,
+      "physical_loc": 4676
+    },
+    "src/components/domains/air": {
+      "files": 9,
+      "physical_loc": 1449
+    },
+    "src/components/domains/ground": {
+      "files": 8,
+      "physical_loc": 330
+    },
+    "src/components/domains/naval": {
+      "files": 12,
+      "physical_loc": 902
+    },
+    "src/content": {
+      "files": 5,
+      "physical_loc": 3050
+    },
+    "src/core": {
+      "files": 73,
+      "physical_loc": 15172
+    },
+    "src/interfaces": {
+      "files": 67,
+      "physical_loc": 6700
+    },
+    "src/models": {
+      "files": 23,
+      "physical_loc": 11873
+    },
+    "src/models/domains/air": {
+      "files": 2,
+      "physical_loc": 910
+    },
+    "src/models/domains/ground": {
+      "files": 1,
+      "physical_loc": 307
+    },
+    "src/models/domains/naval": {
+      "files": 2,
+      "physical_loc": 126
+    },
+    "src/other": {
+      "files": 14,
+      "physical_loc": 2589
+    },
+    "src/runtime/composition": {
+      "files": 12,
+      "physical_loc": 4878
+    },
+    "src/runtime/contracts": {
+      "files": 32,
+      "physical_loc": 9102
+    },
+    "src/runtime/facade": {
+      "files": 35,
+      "physical_loc": 7825
+    },
+    "src/runtime/host": {
+      "files": 14,
+      "physical_loc": 17424
+    },
+    "src/systems": {
+      "files": 19,
+      "physical_loc": 5557
+    },
+    "src/systems/domains/air": {
+      "files": 5,
+      "physical_loc": 905
+    },
+    "src/systems/domains/ground": {
+      "files": 3,
+      "physical_loc": 361
+    },
+    "src/systems/domains/naval": {
+      "files": 5,
+      "physical_loc": 763
+    },
+    "src/systems/physics": {
+      "files": 8,
+      "physical_loc": 1778
+    },
+    "src/tools": {
+      "files": 7,
+      "physical_loc": 2437
+    }
+  },
+  "schema_version": "echelon_forge.runtime_infrastructure_census.v1",
+  "scope": {
+    "domain_comparison": "folder ownership only; shared physics/core/models are not assigned to a complete domain capability",
+    "excluded": "tests/test directory, vendor/third_party/third-party/external directory, generated/_generated directory, *.generated.h/*.gen.h",
+    "extensions": [
+      ".cc",
+      ".cpp",
+      ".cxx",
+      ".h",
+      ".hpp"
+    ],
+    "loc": "physical splitlines, including blanks/comments; no logical LOC claim",
+    "root": "tracked src/",
+    "target_graph": "existing source CMake scanner; syntactic union of branches, excludes variable/generator-expression resolution"
+  },
+  "source_revision": "55752527a2dc1d96df2221d0f452a020b3f8e0f5",
+  "source_target_reachability": {
+    "ef_facade": [
+      "ef_composition",
+      "ef_content",
+      "ef_core",
+      "ef_facade",
+      "ef_runtime_authority_contracts"
+    ],
+    "ef_py": [
+      "ef_composition",
+      "ef_content",
+      "ef_core",
+      "ef_facade",
+      "ef_facade_backend",
+      "ef_gpu_experiments",
+      "ef_py",
+      "ef_runtime_authority_contracts"
+    ],
+    "ef_runtime_kernel_candidate": [
+      "ef_composition",
+      "ef_content",
+      "ef_core",
+      "ef_runtime_authority_contracts",
+      "ef_runtime_contracts",
+      "ef_runtime_host_candidate",
+      "ef_runtime_kernel_candidate",
+      "ef_runtime_run_recorder",
+      "ef_runtime_state_owner_adapters_candidate"
+    ]
+  },
+  "target_edges": [
+    {
+      "line": 640,
+      "path": "CMakeLists.txt",
+      "source": "ef_app",
+      "target": "ef_core"
+    },
+    {
+      "line": 640,
+      "path": "CMakeLists.txt",
+      "source": "ef_app",
+      "target": "ef_facade"
+    },
+    {
+      "line": 640,
+      "path": "CMakeLists.txt",
+      "source": "ef_app",
+      "target": "ef_gpu_experiments"
+    },
+    {
+      "line": 1162,
+      "path": "CMakeLists.txt",
+      "source": "ef_backend_provider_migration_test",
+      "target": "ef_core"
+    },
+    {
+      "line": 1162,
+      "path": "CMakeLists.txt",
+      "source": "ef_backend_provider_migration_test",
+      "target": "ef_facade"
+    },
+    {
+      "line": 1172,
+      "path": "CMakeLists.txt",
+      "source": "ef_backend_provider_migration_test",
+      "target": "ef_facade"
+    },
+    {
+      "line": 1162,
+      "path": "CMakeLists.txt",
+      "source": "ef_backend_provider_migration_test",
+      "target": "ef_gpu_experiments"
+    },
+    {
+      "line": 1172,
+      "path": "CMakeLists.txt",
+      "source": "ef_backend_provider_migration_test",
+      "target": "ef_gpu_experiments"
+    },
+    {
+      "line": 1194,
+      "path": "CMakeLists.txt",
+      "source": "ef_composition_evidence_test",
+      "target": "ef_core"
+    },
+    {
+      "line": 1194,
+      "path": "CMakeLists.txt",
+      "source": "ef_composition_evidence_test",
+      "target": "ef_facade"
+    },
+    {
+      "line": 1204,
+      "path": "CMakeLists.txt",
+      "source": "ef_composition_evidence_test",
+      "target": "ef_facade"
+    },
+    {
+      "line": 1194,
+      "path": "CMakeLists.txt",
+      "source": "ef_composition_evidence_test",
+      "target": "ef_gpu_experiments"
+    },
+    {
+      "line": 1204,
+      "path": "CMakeLists.txt",
+      "source": "ef_composition_evidence_test",
+      "target": "ef_gpu_experiments"
+    },
+    {
+      "line": 1125,
+      "path": "CMakeLists.txt",
+      "source": "ef_composition_lifecycle_test",
+      "target": "ef_composition"
+    },
+    {
+      "line": 1144,
+      "path": "CMakeLists.txt",
+      "source": "ef_cordis_runtime_conformance_test",
+      "target": "ef_composition"
+    },
+    {
+      "line": 1144,
+      "path": "CMakeLists.txt",
+      "source": "ef_cordis_runtime_conformance_test",
+      "target": "ef_core"
+    },
+    {
+      "line": 1144,
+      "path": "CMakeLists.txt",
+      "source": "ef_cordis_runtime_conformance_test",
+      "target": "ef_runtime_authority_contracts"
+    },
+    {
+      "line": 551,
+      "path": "CMakeLists.txt",
+      "source": "ef_core",
+      "target": "ef_composition"
+    },
+    {
+      "line": 551,
+      "path": "CMakeLists.txt",
+      "source": "ef_core",
+      "target": "ef_content"
+    },
+    {
+      "line": 551,
+      "path": "CMakeLists.txt",
+      "source": "ef_core",
+      "target": "ef_runtime_authority_contracts"
+    },
+    {
+      "line": 1263,
+      "path": "CMakeLists.txt",
+      "source": "ef_cuda_resident_full_window_test",
+      "target": "ef_cuda_resident_backend"
+    },
+    {
+      "line": 1263,
+      "path": "CMakeLists.txt",
+      "source": "ef_cuda_resident_full_window_test",
+      "target": "ef_cuda_resident_full_window_runner"
+    },
+    {
+      "line": 1232,
+      "path": "CMakeLists.txt",
+      "source": "ef_cuda_resident_lifecycle_test",
+      "target": "ef_cuda_resident_backend"
+    },
+    {
+      "line": 1251,
+      "path": "CMakeLists.txt",
+      "source": "ef_cuda_resident_replay_test",
+      "target": "ef_cuda_resident_backend"
+    },
+    {
+      "line": 595,
+      "path": "CMakeLists.txt",
+      "source": "ef_facade",
+      "target": "ef_core"
+    },
+    {
+      "line": 622,
+      "path": "CMakeLists.txt",
+      "source": "ef_facade_backend",
+      "target": "ef_composition"
+    },
+    {
+      "line": 622,
+      "path": "CMakeLists.txt",
+      "source": "ef_facade_backend",
+      "target": "ef_content"
+    },
+    {
+      "line": 622,
+      "path": "CMakeLists.txt",
+      "source": "ef_facade_backend",
+      "target": "ef_runtime_authority_contracts"
+    },
+    {
+      "line": 922,
+      "path": "CMakeLists.txt",
+      "source": "ef_gpu_comm_candidate_phase0_probe",
+      "target": "ef_gpu_experiments"
+    },
+    {
+      "line": 894,
+      "path": "CMakeLists.txt",
+      "source": "ef_gpu_execution_observation_phase0_probe",
+      "target": "ef_gpu_experiments"
+    },
+    {
+      "line": 852,
+      "path": "CMakeLists.txt",
+      "source": "ef_gpu_experiments",
+      "target": "ef_core"
+    },
+    {
+      "line": 901,
+      "path": "CMakeLists.txt",
+      "source": "ef_gpu_flight_shaping_phase0_probe",
+      "target": "ef_gpu_experiments"
+    },
+    {
+      "line": 908,
+      "path": "CMakeLists.txt",
+      "source": "ef_gpu_interaction_broadphase_phase0_probe",
+      "target": "ef_gpu_experiments"
+    },
+    {
+      "line": 915,
+      "path": "CMakeLists.txt",
+      "source": "ef_gpu_sensor_candidate_phase0_probe",
+      "target": "ef_gpu_experiments"
+    },
+    {
+      "line": 929,
+      "path": "CMakeLists.txt",
+      "source": "ef_gpu_visual_candidate_phase0_probe",
+      "target": "ef_gpu_experiments"
+    },
+    {
+      "line": 887,
+      "path": "CMakeLists.txt",
+      "source": "ef_gpu_visual_phase0_probe",
+      "target": "ef_gpu_experiments"
+    },
+    {
+      "line": 762,
+      "path": "CMakeLists.txt",
+      "source": "ef_py",
+      "target": "ef_core"
+    },
+    {
+      "line": 867,
+      "path": "CMakeLists.txt",
+      "source": "ef_py",
+      "target": "ef_core"
+    },
+    {
+      "line": 762,
+      "path": "CMakeLists.txt",
+      "source": "ef_py",
+      "target": "ef_facade"
+    },
+    {
+      "line": 754,
+      "path": "CMakeLists.txt",
+      "source": "ef_py",
+      "target": "ef_facade_backend"
+    },
+    {
+      "line": 867,
+      "path": "CMakeLists.txt",
+      "source": "ef_py",
+      "target": "ef_gpu_experiments"
+    },
+    {
+      "line": 874,
+      "path": "CMakeLists.txt",
+      "source": "ef_py",
+      "target": "ef_gpu_experiments"
+    },
+    {
+      "line": 770,
+      "path": "CMakeLists.txt",
+      "source": "ef_py_diagnostics",
+      "target": "ef_core"
+    },
+    {
+      "line": 770,
+      "path": "CMakeLists.txt",
+      "source": "ef_py_diagnostics",
+      "target": "ef_facade"
+    },
+    {
+      "line": 770,
+      "path": "CMakeLists.txt",
+      "source": "ef_py_diagnostics",
+      "target": "ef_gpu_experiments"
+    },
+    {
+      "line": 948,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_authority_contract_test",
+      "target": "ef_runtime_authority_contracts"
+    },
+    {
+      "line": 459,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_authority_contracts",
+      "target": "ef_composition"
+    },
+    {
+      "line": 982,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_contracts_compile_test",
+      "target": "ef_runtime_contracts"
+    },
+    {
+      "line": 372,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_host_candidate",
+      "target": "ef_runtime_contracts"
+    },
+    {
+      "line": 992,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_host_candidate_test",
+      "target": "ef_core"
+    },
+    {
+      "line": 992,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_host_candidate_test",
+      "target": "ef_runtime_host_candidate"
+    },
+    {
+      "line": 992,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_host_candidate_test",
+      "target": "ef_runtime_state_owner_adapters_candidate"
+    },
+    {
+      "line": 440,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_kernel_candidate",
+      "target": "ef_core"
+    },
+    {
+      "line": 440,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_kernel_candidate",
+      "target": "ef_runtime_run_recorder"
+    },
+    {
+      "line": 440,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_kernel_candidate",
+      "target": "ef_runtime_state_owner_adapters_candidate"
+    },
+    {
+      "line": 1032,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_kernel_candidate_parity_test",
+      "target": "ef_core"
+    },
+    {
+      "line": 1032,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_kernel_candidate_parity_test",
+      "target": "ef_facade"
+    },
+    {
+      "line": 1032,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_kernel_candidate_parity_test",
+      "target": "ef_gpu_experiments"
+    },
+    {
+      "line": 1032,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_kernel_candidate_parity_test",
+      "target": "ef_runtime_kernel_candidate"
+    },
+    {
+      "line": 1032,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_kernel_candidate_parity_test",
+      "target": "ef_runtime_state_owner_adapters_candidate"
+    },
+    {
+      "line": 1007,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_kernel_candidate_test",
+      "target": "ef_core"
+    },
+    {
+      "line": 1007,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_kernel_candidate_test",
+      "target": "ef_runtime_kernel_candidate"
+    },
+    {
+      "line": 1007,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_kernel_candidate_test",
+      "target": "ef_runtime_state_owner_adapters_candidate"
+    },
+    {
+      "line": 463,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_run_recorder",
+      "target": "ef_runtime_authority_contracts"
+    },
+    {
+      "line": 964,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_run_recorder_test",
+      "target": "ef_runtime_authority_contracts"
+    },
+    {
+      "line": 964,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_run_recorder_test",
+      "target": "ef_runtime_run_recorder"
+    },
+    {
+      "line": 420,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_state_owner_adapters_candidate",
+      "target": "ef_core"
+    },
+    {
+      "line": 420,
+      "path": "CMakeLists.txt",
+      "source": "ef_runtime_state_owner_adapters_candidate",
+      "target": "ef_runtime_host_candidate"
+    },
+    {
+      "line": 1103,
+      "path": "CMakeLists.txt",
+      "source": "ef_test",
+      "target": "ef_core"
+    },
+    {
+      "line": 1103,
+      "path": "CMakeLists.txt",
+      "source": "ef_test",
+      "target": "ef_cuda_resident_backend"
+    },
+    {
+      "line": 1103,
+      "path": "CMakeLists.txt",
+      "source": "ef_test",
+      "target": "ef_facade"
+    },
+    {
+      "line": 1103,
+      "path": "CMakeLists.txt",
+      "source": "ef_test",
+      "target": "ef_gpu_experiments"
+    }
+  ],
+  "totals": {
+    "excluded_loc": {
+      "generated": 1838,
+      "included": 99114,
+      "tests": 24291
+    },
+    "inclusive_physical_loc": 125243,
+    "maintained_files": 408,
+    "maintained_physical_loc": 99114,
+    "tracked_files": 463
+  }
+}
