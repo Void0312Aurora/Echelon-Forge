@@ -582,3 +582,69 @@ TEST_SUITE("air_ew_decoy") {
         CHECK_FALSE(unclassified.is_missile_guidance);
     }
 }
+
+TEST_CASE("released decoy positions advance exactly once with velocity and lifetime") {
+    for (double direction : {-1.0, 1.0}) {
+        SimulationKernel kernel;
+        kernel.reset(331);
+        kernel.set_time_step(0.05);
+        auto owner = kernel.spawn_unit(Side::Blue, "Aircraft", 0, 0, 3000, 0, 0, 0, direction * 120,
+                                       direction * 200, direction * 8);
+        {
+            auto lease = kernel.acquire_world_lease();
+            Countermeasures cm{};
+            cm.chaff_count = cm.flare_count = 1;
+            cm.release_interval = 10;
+            cm.chaff_lifetime_s = cm.flare_lifetime_s = 0.25;
+            lease.world().entity(owner.id()).set<Countermeasures>(cm);
+        }
+        PilotAction action{};
+        action.active = action.program_chaff = action.program_flare = true;
+        kernel.set_pilot_action(owner.id(), action);
+        kernel.step();
+        struct Released {
+            ecs_entity_t id;
+            Transform position;
+            Velocity velocity;
+            double age;
+            std::uint64_t serial;
+        };
+        std::vector<Released> released;
+        {
+            auto lease = kernel.acquire_world_lease();
+            lease.world().each([&](flecs::entity e, Decoy &, Transform &p, Velocity &v, Lifetime &l,
+                                   StableEntitySerial &s) {
+                released.push_back({e.id(), p, v, l.current_age, s.value});
+            });
+        }
+        REQUIRE(released.size() == 2);
+        CHECK(released[0].serial != released[1].serial);
+        action.program_chaff = action.program_flare = false;
+        kernel.set_pilot_action(owner.id(), action);
+        for (int step = 1; step <= 3; ++step) {
+            kernel.step();
+            auto lease = kernel.acquire_world_lease();
+            for (const auto &initial : released) {
+                auto e = lease.world().entity(initial.id);
+                REQUIRE(e.is_alive());
+                const auto *p = e.get<Transform>();
+                const double elapsed = step * 0.05;
+                CAPTURE(direction);
+                CAPTURE(step);
+                CAPTURE(initial.velocity.vx);
+                CAPTURE(p->x);
+                CAPTURE(initial.position.x);
+                CHECK(p->x == doctest::Approx(initial.position.x + initial.velocity.vx * elapsed));
+                CHECK(p->y == doctest::Approx(initial.position.y + initial.velocity.vy * elapsed));
+                CHECK(p->z == doctest::Approx(initial.position.z + initial.velocity.vz * elapsed));
+                CHECK(e.get<Lifetime>()->current_age == doctest::Approx(initial.age + elapsed));
+                CHECK(e.get<StableEntitySerial>()->value == initial.serial);
+            }
+        }
+        for (int step = 0; step < 4; ++step)
+            kernel.step();
+        auto lease = kernel.acquire_world_lease();
+        for (const auto &initial : released)
+            CHECK_FALSE(lease.world().entity(initial.id).is_alive());
+    }
+}
