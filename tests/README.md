@@ -111,6 +111,11 @@ Contract execution lives in [python/testing/contracts/](../python/testing/contra
 
 ## Contract Batch Failure Policy
 
+Selected contracts require completed assertions by default. Both runners report
+`PASS`/`FAIL`/`SKIP` counts; a selected skip makes the run fail, including mixed
+pass/skip and all-skipped runs. Use `--allow-skips` explicitly for optional or
+frozen artifacts. This opt-in accepts skips but never accepts failed assertions.
+
 `tests/runners/test_contract_batches.py` currently resolves batch groups by checked-in path globs. If a selected glob is empty or any selected contract fails, the batch exits non-zero. In other words, the current batch runner is an operational hard-fail mechanism for the selected files.
 
 That execution behavior is separate from the intended semantic tier of a contract. Tiers such as `gating`, `frozen`, `supplemental`, `diagnostic`, and `archive` still need a metadata or manifest layer before the runner can enforce different failure policies. Until that layer exists, path location and README text are documentation only; they do not soften a selected batch failure.
